@@ -337,6 +337,9 @@ class CommandStreamReceiver {
     DispatchMode getDispatchMode() const {
         return this->dispatchMode;
     }
+    void addAdditionalAllocationForResidency(GraphicsAllocation *graphicsAllocation) {
+        this->additionalAllocationsForResidency.push_back(graphicsAllocation);
+    }
 
     LogicalStateHelper *getLogicalStateHelper() const;
 
@@ -389,6 +392,7 @@ class CommandStreamReceiver {
     GraphicsAllocation *perDssBackedBuffer = nullptr;
     GraphicsAllocation *clearColorAllocation = nullptr;
     GraphicsAllocation *workPartitionAllocation = nullptr;
+    StackVec<GraphicsAllocation *, 1> additionalAllocationsForResidency;
 
     MultiGraphicsAllocation *tagsMultiAllocation = nullptr;
 

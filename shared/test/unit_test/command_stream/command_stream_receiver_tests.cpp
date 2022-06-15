@@ -98,6 +98,18 @@ HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenTimestampTypeIs32b) {
     EXPECT_EQ(expectedOffset, tag->getGlobalStartOffset());
 }
 
+HWTEST_F(CommandStreamReceiverTest, whenAddingAdditionalAllocationForResidencyThenItIsRegisteredInCsr) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    EXPECT_TRUE(csr.additionalAllocationsForResidency.empty());
+
+    MockGraphicsAllocation allocation{};
+    csr.addAdditionalAllocationForResidency(&allocation);
+
+    EXPECT_EQ(1u, csr.additionalAllocationsForResidency.size());
+    EXPECT_EQ(&allocation, csr.additionalAllocationsForResidency[0]);
+}
+
 HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenFlagsAreSetCorrectly) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.initProgrammingFlags();

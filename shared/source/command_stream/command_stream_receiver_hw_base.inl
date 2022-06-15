@@ -515,6 +515,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     this->makeResident(*tagAllocation);
 
+    for (auto &additionalAllocationForResidency : additionalAllocationsForResidency) {
+        this->makeResident(*additionalAllocationForResidency);
+    }
+
     if (globalFenceAllocation) {
         makeResident(*globalFenceAllocation);
     }
@@ -771,6 +775,9 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
             surfacesForSubmit.reserve(resourcePackage.size() + 1);
             for (auto &surface : resourcePackage) {
                 surfacesForSubmit.push_back(surface);
+            }
+            for (auto &additionalAllocationForResidency : additionalAllocationsForResidency) {
+                surfacesForSubmit.push_back(additionalAllocationForResidency);
             }
 
             // make sure we flush DC if needed

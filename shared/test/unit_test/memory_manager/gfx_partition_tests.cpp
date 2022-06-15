@@ -10,6 +10,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/os_memory.h"
 #include "shared/source/utilities/cpu_info.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_gfx_partition.h"
 
 #include "gtest/gtest.h"
@@ -163,6 +164,24 @@ TEST(GfxPartitionTest, GivenFullRange48BitSvmWhenTestingGfxPartitionThenAllExpec
     uint64_t gfxBase = MemoryConstants::maxSvmAddress + 1;
 
     testGfxPartition(gfxPartition, gfxBase, gfxTop, gfxBase);
+}
+
+TEST(GfxPartitionTest, GivenEnabledEotWaWhenInitializingHeapsThenInternalHeapsHave4GBMinusOnePageRange) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableEotWa.set(true);
+    for (auto &addressRange : {48, 57}) {
+        MockGfxPartition gfxPartition;
+        gfxPartition.init(maxNBitValue(addressRange), reservedCpuAddressRangeSize, 0, 1);
+
+        auto expectedSize = 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize64k;
+        EXPECT_EQ(gfxPartition.getHeapSize(HeapIndex::HEAP_INTERNAL), expectedSize);
+        EXPECT_EQ(gfxPartition.getHeapSize(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY), expectedSize);
+
+        auto fullSize = 4 * MemoryConstants::gigaByte;
+
+        EXPECT_EQ(gfxPartition.getHeapSize(HeapIndex::HEAP_EXTERNAL), fullSize);
+        EXPECT_EQ(gfxPartition.getHeapSize(HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY), fullSize);
+    }
 }
 
 TEST(GfxPartitionTest, GivenFullRange47BitSvmWhenTestingGfxPartitionThenAllExpectationsAreMet) {

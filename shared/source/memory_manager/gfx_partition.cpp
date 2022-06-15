@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -237,7 +237,11 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
             heapInitExternalWithFrontWindow(HeapAssigner::mapExternalWindowIndex(heap), heapAllocate(heap, externalFrontWindowSize),
                                             externalFrontWindowSize);
         } else if (HeapAssigner::isInternalHeap(heap)) {
-            heapInitWithFrontWindow(heap, gfxBase, gfxHeap32Size, GfxPartition::internalFrontWindowPoolSize);
+            auto heapSize = gfxHeap32Size;
+            if (DebugManager.flags.EnableEotWa.get()) {
+                heapSize = 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize64k;
+            }
+            heapInitWithFrontWindow(heap, gfxBase, heapSize, GfxPartition::internalFrontWindowPoolSize);
             heapInitFrontWindow(HeapAssigner::mapInternalWindowIndex(heap), gfxBase, GfxPartition::internalFrontWindowPoolSize);
         } else {
             heapInit(heap, gfxBase, gfxHeap32Size);

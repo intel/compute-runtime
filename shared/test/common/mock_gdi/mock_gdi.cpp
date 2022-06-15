@@ -388,11 +388,13 @@ NTSTATUS __stdcall D3DKMTQueryResourceInfoFromNtHandle(IN OUT D3DKMT_QUERYRESOUR
     return STATUS_SUCCESS;
 }
 
+uint8_t lockedData[0x20000]{};
+
 NTSTATUS __stdcall D3DKMTLock2(IN OUT D3DKMT_LOCK2 *lock2) {
     if (lock2->hAllocation == 0 || lock2->hDevice == 0) {
         return STATUS_INVALID_PARAMETER;
     }
-    lock2->pData = (void *)65536;
+    lock2->pData = reinterpret_cast<void *>((reinterpret_cast<uintptr_t>(lockedData) + 0x10000) & (-0xFFFF));
     return STATUS_SUCCESS;
 }
 
