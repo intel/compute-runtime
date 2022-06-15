@@ -22,6 +22,7 @@ struct MockDebugSessionWindows : DebugSessionWindows {
     using DebugSessionWindows::closeAsyncThread;
     using DebugSessionWindows::debugHandle;
     using DebugSessionWindows::ElfRange;
+    using DebugSessionWindows::getSbaBufferGpuVa;
     using DebugSessionWindows::initialize;
     using DebugSessionWindows::invalidHandle;
     using DebugSessionWindows::moduleDebugAreaCaptured;
@@ -29,6 +30,8 @@ struct MockDebugSessionWindows : DebugSessionWindows {
     using DebugSessionWindows::readAllocationDebugData;
     using DebugSessionWindows::readAndHandleEvent;
     using DebugSessionWindows::readGpuMemory;
+    using DebugSessionWindows::readSbaBuffer;
+    using DebugSessionWindows::runEscape;
     using DebugSessionWindows::startAsyncThread;
     using DebugSessionWindows::wddm;
     using DebugSessionWindows::writeGpuMemory;
@@ -50,6 +53,18 @@ struct MockDebugSessionWindows : DebugSessionWindows {
         return DebugSessionWindows::readAndHandleEvent(timeoutMs);
     }
 
+    NTSTATUS runEscape(KM_ESCAPE_INFO &escapeInfo) override {
+        if (shouldEscapeReturnStatusNotSuccess) {
+            escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus = DBGUMD_RETURN_DEBUGGER_ATTACH_DEVICE_BUSY;
+            return STATUS_SUCCESS;
+        }
+        if (shouldEscapeCallFail) {
+            return STATUS_WAIT_1;
+        }
+
+        return L0::DebugSessionWindows::runEscape(escapeInfo);
+    }
+
     void ensureThreadStopped(ze_device_thread_t thread, uint64_t context) {
         auto threadId = convertToThreadId(thread);
         if (allThreads.find(threadId) == allThreads.end()) {
@@ -61,6 +76,8 @@ struct MockDebugSessionWindows : DebugSessionWindows {
     ze_result_t resultInitialize = ZE_RESULT_FORCE_UINT32;
     ze_result_t resultReadAndHandleEvent = ZE_RESULT_FORCE_UINT32;
     static constexpr uint64_t mockDebugHandle = 1;
+    bool shouldEscapeReturnStatusNotSuccess = false;
+    bool shouldEscapeCallFail = false;
 };
 
 struct DebugApiWindowsFixture : public DeviceFixture {
@@ -79,6 +96,68 @@ struct DebugApiWindowsFixture : public DeviceFixture {
 };
 
 using DebugApiWindowsTest = Test<DebugApiWindowsFixture>;
+
+TEST_F(DebugApiWindowsTest, GivenReadOfGpuVaFailDueToEscapeCallFailureWhenTryingToReadSbaThenErrorIsReported) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
+    session->shouldEscapeCallFail = true;
+    ze_device_thread_t thread{0, 0, 0, 0};
+    SbaTrackedAddresses sbaBuffer;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->readSbaBuffer(session->convertToThreadId(thread), sbaBuffer));
+}
+
+TEST_F(DebugApiWindowsTest, GivenReadOfGpuVaFailDueToEscapeCallReturnsSuccessButEscapeReturnStatusIsNotSuccessWhenReadSbaBufferThenErrorIsReported) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
+    session->shouldEscapeReturnStatusNotSuccess = true;
+    ze_device_thread_t thread{0, 0, 0, 0};
+    SbaTrackedAddresses sbaBuffer;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->readSbaBuffer(session->convertToThreadId(thread), sbaBuffer));
+}
+
+TEST_F(DebugApiWindowsTest, GivenSbaBufferGpuVaAvailableWhenReadingSbaBufferThenSuccessIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
+    ze_device_thread_t thread;
+    thread.slice = 1;
+    thread.subslice = 1;
+    thread.eu = 1;
+    thread.thread = 1;
+    session->ensureThreadStopped(thread, 0x12345);
+    SbaTrackedAddresses sbaBuffer;
+
+    session->wddm = mockWddm;
+    session->allContexts.insert(0x12345);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readSbaBuffer(session->convertToThreadId(thread), sbaBuffer));
+    EXPECT_EQ(sbaBuffer.Version, 0xaa);
+    EXPECT_EQ(sbaBuffer.BindlessSamplerStateBaseAddress, 0xaaaaaaaaaaaaaaaa);
+}
+
+TEST_F(DebugApiWindowsTest, GivenEscapeCallToReadMMIOReturnsSuccessWhenReadingSbaBufferGpuVaThenValidGpuVaIsObtained) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
+    session->wddm = mockWddm;
+    uint64_t gpuVa = 0;
+    session->getSbaBufferGpuVa(gpuVa);
+    EXPECT_EQ(mockWddm->mockGpuVa, gpuVa);
+}
+
+TEST_F(DebugApiWindowsTest, GivenNoMemoryHandleWhenReadSbaBufferCalledThenErrorIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
+    ze_device_thread_t thread{0, 0, 0, 0};
+    SbaTrackedAddresses sbaBuffer;
+
+    session->wddm = mockWddm;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, session->readSbaBuffer(session->convertToThreadId(thread), sbaBuffer));
+}
 
 TEST_F(DebugApiWindowsTest, givenDebugAttachIsNotAvailableWhenGetDebugPropertiesCalledThenNoFlagIsReturned) {
     zet_device_debug_properties_t debugProperties = {};

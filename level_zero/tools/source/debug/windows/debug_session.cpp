@@ -7,6 +7,8 @@
 
 #include "level_zero/tools/source/debug/windows/debug_session.h"
 
+#include "shared/source/helpers/register_offsets.h"
+
 namespace L0 {
 
 DebugSession *createDebugSessionHelper(const zet_debug_config_t &config, Device *device, int debugFd);
@@ -456,8 +458,39 @@ bool DebugSessionWindows::readModuleDebugArea() {
     return false;
 }
 
-ze_result_t DebugSessionWindows::readSbaBuffer(EuThread::ThreadId, NEO::SbaTrackedAddresses &sbaBuffer) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+ze_result_t DebugSessionWindows::readSbaBuffer(EuThread::ThreadId threadId, NEO::SbaTrackedAddresses &sbaBuffer) {
+    uint64_t gpuVa = 0;
+    getSbaBufferGpuVa(gpuVa);
+    if (gpuVa == 0) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    uint64_t memoryHandle = DebugSessionWindows::invalidHandle;
+    memoryHandle = allThreads[threadId]->getMemoryHandle();
+    if (memoryHandle == EuThread::invalidHandle) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+    return readGpuMemory(memoryHandle, reinterpret_cast<char *>(&sbaBuffer), sizeof(sbaBuffer), gpuVa);
+}
+
+void DebugSessionWindows::getSbaBufferGpuVa(uint64_t &gpuVa) {
+    KM_ESCAPE_INFO escapeInfo = {0};
+    escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_READ_MMIO;
+    escapeInfo.KmEuDbgL0EscapeInfo.MmioReadParams.MmioOffset = CS_GPR_R15;
+    escapeInfo.KmEuDbgL0EscapeInfo.MmioReadParams.RegisterOutBufferPtr = reinterpret_cast<uint64_t>(&gpuVa);
+
+    auto status = runEscape(escapeInfo);
+    if (STATUS_SUCCESS != status) {
+        PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_READ_MMIO: Escape Failed - Status: %d", status);
+        return;
+    }
+    if (DBGUMD_RETURN_ESCAPE_SUCCESS != escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus) {
+        PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_READ_MMIO: Failed - EscapeReturnStatus: %d\n", escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+        return;
+    }
+
+    PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_READ_MMIO: SUCCESS - gpuVa: 0x%ullx\n", gpuVa);
+    return;
 }
 
 } // namespace L0

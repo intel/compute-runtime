@@ -64,8 +64,9 @@ struct DebugSessionWindows : DebugSessionImp {
 
     ThreadHelper asyncThread;
     std::mutex asyncThreadMutex;
+    MOCKABLE_VIRTUAL void getSbaBufferGpuVa(uint64_t &gpuVa);
 
-    NTSTATUS runEscape(KM_ESCAPE_INFO &escapeInfo);
+    MOCKABLE_VIRTUAL NTSTATUS runEscape(KM_ESCAPE_INFO &escapeInfo);
 
     bool moduleDebugAreaCaptured = false;
     uint32_t processId = 0;
