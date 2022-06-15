@@ -358,6 +358,69 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenValidArgumentsWhenZetMetricGetProp
     EXPECT_EQ(metricProperties.resultType, ZET_VALUE_TYPE_UINT64);
 }
 
+TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceIsEnumeratedAfterSubDeviceWhenZetMetricGetIsCalledThenMetricGroupCountIsSameForRootAndSubDevice) {
+
+    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    Mock<IConcurrentGroup_1_5> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.SymbolName = "OA";
+    metricsConcurrentGroupParams.Description = "OA description";
+
+    Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
+    metricsSetParams.MetricsCount = 0;
+    metricsSetParams.SymbolName = "Metric set name";
+    metricsSetParams.ShortName = "Metric set description";
+    metricsSetParams.MetricsCount = 1;
+
+    Mock<IMetric_1_0> metric;
+    TMetricParams_1_0 metricParams = {};
+    metricParams.SymbolName = "Metric symbol name";
+    metricParams.ShortName = "Metric short name";
+    metricParams.LongName = "Metric long name";
+    metricParams.ResultType = MetricsDiscovery::TMetricResultType::RESULT_UINT64;
+    metricParams.MetricType = MetricsDiscovery::TMetricType::METRIC_TYPE_RATIO;
+
+    openMetricsAdapterDeviceAndSubDeviceNoCountVerify(0);
+
+    EXPECT_CALL(metricsDevice, GetParams())
+        .WillRepeatedly(Return(&metricsDeviceParams));
+
+    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
+        .WillRepeatedly(Return(&metricsConcurrentGroup));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetParams())
+        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
+        .WillRepeatedly(Return(&metricsSet));
+
+    EXPECT_CALL(metricsSet, GetParams())
+        .WillRepeatedly(Return(&metricsSetParams));
+
+    EXPECT_CALL(metricsSet, GetMetric(_))
+        .WillRepeatedly(Return(&metric));
+
+    EXPECT_CALL(metric, GetParams())
+        .WillRepeatedly(Return(&metricParams));
+
+    EXPECT_CALL(metricsSet, SetApiFiltering(_))
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+
+    uint32_t subDeviceMetricGroupCount = 0;
+    auto &subDeviceImp = *static_cast<DeviceImp *>(deviceImp.subDevices[0]);
+    EXPECT_EQ(zetMetricGroupGet(subDeviceImp.toHandle(), &subDeviceMetricGroupCount, nullptr), ZE_RESULT_SUCCESS);
+
+    uint32_t rootDeviceMetricGroupCount = 0;
+    EXPECT_EQ(zetMetricGroupGet(devices[0]->toHandle(), &rootDeviceMetricGroupCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(rootDeviceMetricGroupCount, 1u);
+    EXPECT_EQ(subDeviceMetricGroupCount, rootDeviceMetricGroupCount);
+}
+
 TEST_F(MetricEnumerationMultiDeviceTest, givenCorrectRawDataHeaderWhenZetMetricGroupCalculateMetricValuesExpIsCalledTwiceThenReturnsSuccess) {
 
     auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);

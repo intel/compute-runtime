@@ -268,6 +268,39 @@ void MetricMultiDeviceFixture::openMetricsAdapterSubDevice(uint32_t subDeviceInd
         .WillOnce(Return(TCompletionCode::CC_OK));
 }
 
+void MetricMultiDeviceFixture::openMetricsAdapterDeviceAndSubDeviceNoCountVerify(uint32_t subDeviceIndex) {
+
+    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenAdapterGroup(_))
+        .WillRepeatedly(DoAll(::testing::SetArgPointee<0>(&adapterGroup), Return(TCompletionCode::CC_OK)));
+
+    EXPECT_CALL(adapter, OpenMetricsSubDevice(_, _))
+        .WillRepeatedly(DoAll(::testing::SetArgPointee<1>(&metricsDevice), Return(TCompletionCode::CC_OK)));
+
+    EXPECT_CALL(adapter, CloseMetricsDevice(_))
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(*mockMetricEnumeration, getMetricsAdapter())
+        .WillRepeatedly(Return(&adapter));
+
+    EXPECT_CALL(adapterGroup, Close())
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(*mockMetricEnumerationSubDevices[subDeviceIndex]->g_mockApi, MockOpenAdapterGroup(_))
+        .WillRepeatedly(DoAll(::testing::SetArgPointee<0>(&adapterGroup), Return(TCompletionCode::CC_OK)));
+
+    EXPECT_CALL(adapter, OpenMetricsDevice(_))
+        .WillRepeatedly(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
+
+    EXPECT_CALL(adapter, CloseMetricsDevice(_))
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(*mockMetricEnumerationSubDevices[subDeviceIndex], getMetricsAdapter())
+        .WillRepeatedly(Return(&adapter));
+
+    EXPECT_CALL(adapterGroup, Close())
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+}
+
 void MetricMultiDeviceFixture::openMetricsAdapterGroup() {
 
     EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())

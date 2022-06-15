@@ -241,6 +241,11 @@ ze_result_t MetricEnumeration::cacheMetricInformation() {
         return result;
     }
 
+    // Avoid repeated cacheing for the sub-device
+    if (getMetricGroupCount() > 0) {
+        return ZE_RESULT_SUCCESS;
+    }
+
     DEBUG_BREAK_IF(pMetricsDevice == nullptr);
 
     MetricsDiscovery::TMetricsDeviceParams_1_2 *pMetricsDeviceParams = pMetricsDevice->GetParams();

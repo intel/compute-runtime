@@ -175,6 +175,7 @@ class MetricMultiDeviceFixture : public MultiDeviceFixture {
     void TearDown();
     void openMetricsAdapter();
     void openMetricsAdapterSubDevice(uint32_t subDeviceIndex);
+    void openMetricsAdapterDeviceAndSubDeviceNoCountVerify(uint32_t subDeviceIndex);
     void openMetricsAdapterGroup();
 
   public:
