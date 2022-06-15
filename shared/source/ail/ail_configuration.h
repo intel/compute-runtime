@@ -44,9 +44,14 @@ class AILConfiguration {
 
     virtual void apply(RuntimeCapabilityTable &runtimeCapabilityTable);
 
+    virtual void modifyKernelIfRequired(std::string &kernel) = 0;
+
   protected:
     virtual void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) = 0;
     std::string processName;
+
+    bool sourcesContainKernel(const std::string &kernelSources, std::string_view kernelName) const;
+    MOCKABLE_VIRTUAL bool isKernelHashCorrect(const std::string &kernelSources, uint64_t expectedHash) const;
 };
 
 extern AILConfiguration *ailConfigurationTable[IGFX_MAX_PRODUCT];
@@ -60,6 +65,8 @@ class AILConfigurationHw : public AILConfiguration {
     }
 
     void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) override;
+
+    void modifyKernelIfRequired(std::string &kernel) override;
 };
 
 template <PRODUCT_FAMILY product>
@@ -68,4 +75,5 @@ struct EnableAIL {
         ailConfigurationTable[product] = &AILConfigurationHw<product>::get();
     }
 };
+
 } // namespace NEO

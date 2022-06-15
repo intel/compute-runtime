@@ -7,6 +7,7 @@
 
 #include "opencl/test/unit_test/program/program_tests.h"
 
+#include "shared/source/ail/ail_configuration.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
@@ -694,6 +695,27 @@ HWTEST_F(ProgramFromBinaryTest, givenIsaAllocationUsedByMultipleCsrsWhenItIsDele
     pProgram->cleanCurrentKernelInfo(rootDeviceIndex);
     EXPECT_TRUE(csr0.requiresInstructionCacheFlush);
     EXPECT_TRUE(csr1.requiresInstructionCacheFlush);
+}
+
+TEST_F(ProgramFromSourceTest, givenEmptyAilWhenCreateProgramWithSourcesThenSourcesDoNotChange) {
+
+    VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
+    ailConfigurationTable[productFamily] = nullptr;
+    const char *sources[] = {"kernel() {}"};
+    size_t knownSourceSize = strlen(sources[0]);
+
+    auto pProgram = Program::create<MockProgram>(
+        pContext,
+        1,
+        sources,
+        &knownSourceSize,
+        retVal);
+
+    ASSERT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_STREQ(sources[0], pProgram->sourceCode.c_str());
+    pProgram->release();
 }
 
 TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSuccessOrCorrectErrorCodeIsReturned) {

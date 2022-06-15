@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/ail/ail_configuration.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/constants.h"
@@ -73,6 +74,13 @@ T *Program::create(
         lengths);
 
     if (CL_SUCCESS == retVal) {
+
+        auto &hwInfo = pContext->getDevice(0)->getHardwareInfo();
+        auto ail = AILConfiguration::get(hwInfo.platform.eProductFamily);
+        if (ail) {
+            ail->modifyKernelIfRequired(combinedString);
+        }
+
         program = new T(pContext, false, pContext->getDevices());
         program->sourceCode.swap(combinedString);
         program->createdFrom = CreatedFrom::SOURCE;
