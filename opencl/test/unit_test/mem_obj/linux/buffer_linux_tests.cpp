@@ -115,6 +115,16 @@ TEST_F(ValidExportHostPtr, givenInvalidPropertiesWithDmaBufWhenValidateInputAndC
     clReleaseMemObject(buffer);
 }
 
+TEST_F(ValidExportHostPtr, givenInvalidPropertiesWithOpaqueWin32WhenValidateInputAndCreateBufferThenNullptrIsReturned) {
+    cl_mem_properties properties[] = {CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR, 0x1234, 0};
+    cl_mem buffer = BufferFunctions::validateInputAndCreateBuffer(context.get(), properties, flags, 0, g_scTestBufferSizeInBytes, nullptr, retVal);
+
+    EXPECT_EQ(retVal, CL_INVALID_PROPERTY);
+    EXPECT_EQ(buffer, nullptr);
+
+    clReleaseMemObject(buffer);
+}
+
 TEST_F(ValidExportHostPtr, givenPropertiesWithDmaBufWhenValidateInputAndCreateBufferThenCorrectBufferIsSet) {
 
     cl_mem_properties properties[] = {CL_EXTERNAL_MEMORY_HANDLE_DMA_BUF_KHR, 0x1234, 0};

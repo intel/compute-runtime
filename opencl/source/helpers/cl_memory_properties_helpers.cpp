@@ -39,6 +39,10 @@ bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_int
                 handle = static_cast<uint64_t>(properties[i + 1]);
                 handleType = static_cast<uint64_t>(UnifiedSharingHandleType::LinuxFd);
                 break;
+            case CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR:
+                handle = static_cast<uint64_t>(properties[i + 1]);
+                handleType = static_cast<uint64_t>(UnifiedSharingHandleType::Win32Nt);
+                break;
             default:
                 return false;
             }

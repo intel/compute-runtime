@@ -102,11 +102,37 @@ struct ValidExportHostPtr
     Buffer *buffer = nullptr;
 };
 
-TEST_F(ValidExportHostPtr, givenPropertiesWithDmaBufWhenValidateInputAndCreateBufferThenCorrectBufferIsSet) {
+TEST_F(ValidExportHostPtr, givenPropertiesWithDmaBufWhenValidateInputAndCreateBufferThenInvalidPropertyIsSet) {
     cl_mem_properties properties[] = {CL_EXTERNAL_MEMORY_HANDLE_DMA_BUF_KHR, 0x1234, 0};
     auto buffer = BufferFunctions::validateInputAndCreateBuffer(context.get(), properties, flags, 0, g_scTestBufferSizeInBytes, nullptr, retVal);
     EXPECT_EQ(retVal, CL_INVALID_PROPERTY);
     EXPECT_EQ(nullptr, buffer);
+
+    clReleaseMemObject(buffer);
+}
+
+TEST_F(ValidExportHostPtr, givenInvalidPropertiesWithNtHandleWhenValidateInputAndCreateBufferThenCorrectBufferIsSet) {
+
+    osHandle invalidHandle = static_cast<MockMemoryManager *>(pClExecutionEnvironment->memoryManager.get())->invalidSharedHandle;
+    cl_mem_properties properties[] = {CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR, invalidHandle, 0};
+    cl_mem buffer = BufferFunctions::validateInputAndCreateBuffer(context.get(), properties, flags, 0, g_scTestBufferSizeInBytes, nullptr, retVal);
+
+    EXPECT_EQ(retVal, CL_INVALID_MEM_OBJECT);
+    EXPECT_EQ(static_cast<MockMemoryManager *>(pClExecutionEnvironment->memoryManager.get())->capturedSharedHandle, properties[1]);
+    EXPECT_EQ(buffer, nullptr);
+
+    clReleaseMemObject(buffer);
+}
+
+TEST_F(ValidExportHostPtr, givenPropertiesWithNtHandleWhenValidateInputAndCreateBufferThenCorrectBufferIsSet) {
+
+    cl_mem_properties properties[] = {CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR, 0x1234, 0};
+    cl_mem buffer = BufferFunctions::validateInputAndCreateBuffer(context.get(), properties, flags, 0, g_scTestBufferSizeInBytes, nullptr, retVal);
+
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(static_cast<MockMemoryManager *>(pClExecutionEnvironment->memoryManager.get())->capturedSharedHandle, properties[1]);
+    EXPECT_EQ(static_cast<Buffer *>(buffer)->getGraphicsAllocation(0u)->getAllocationType(), NEO::AllocationType::SHARED_BUFFER);
+    EXPECT_NE(buffer, nullptr);
 
     clReleaseMemObject(buffer);
 }

@@ -223,15 +223,16 @@ HWTEST_F(ImportNTHandle, whenCallingCreateGraphicsAllocationFromMultipleSharedHa
     EXPECT_EQ(nullptr, ptr);
 }
 
+constexpr size_t invalidHandle = 0xffffffff;
+
 HWTEST_F(ImportNTHandle, givenNotExistingNTHandleWhenCreatingDeviceMemoryThenErrorIsReturned) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     ze_device_mem_alloc_desc_t devProperties = {};
     devProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MEMORY_PROPERTIES;
 
-    uint64_t imageHandle = 0x1;
     ze_external_memory_import_win32_handle_t importNTHandle = {};
-    importNTHandle.handle = &imageHandle;
+    importNTHandle.handle = reinterpret_cast<void *>(invalidHandle);
     importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
     importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
     devProperties.pNext = &importNTHandle;
