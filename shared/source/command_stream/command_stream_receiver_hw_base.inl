@@ -533,6 +533,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         makeResident(*workPartitionAllocation);
     }
 
+    if (logicalStateHelper) {
+        logicalStateHelper->writeStreamInline(commandStreamCSR);
+    }
+
     // If the CSR has work in its CS, flush it before the task
     bool submitTask = commandStreamStartTask != commandStreamTask.getUsed();
     bool submitCSR = (commandStreamStartCSR != commandStreamCSR.getUsed()) || this->isMultiOsContextCapable();

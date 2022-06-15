@@ -8,9 +8,11 @@
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_logical_state_helper.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
@@ -58,6 +60,66 @@ HWTEST_F(EnqueueHandlerTest, GivenCommandStreamWithoutKernelWhenCommandEnqueuedT
     mockCmdQ->enqueueCommandWithoutKernel(surfaces, 1, &mockCmdQ->getCS(0), 0, blocking, enqueueProperties, timestampPacketDependencies,
                                           eventsRequest, eventBuilder, 0, csrDeps, nullptr);
     EXPECT_EQ(allocation->getTaskCount(mockCmdQ->getGpgpuCommandStreamReceiver().getOsContext().getContextId()), 1u);
+}
+
+HWTEST_F(EnqueueHandlerTest, givenLogicalStateHelperWhenDispatchingCommandsThenAddLastCommand) {
+    using MI_NOOP = typename FamilyType::MI_NOOP;
+
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    auto logicalStateHelper = new LogicalStateHelperMock<FamilyType>();
+
+    auto &ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> &>(mockCmdQ->getGpgpuCommandStreamReceiver());
+    ultCsr.logicalStateHelper.reset(logicalStateHelper);
+
+    auto surface = std::make_unique<NullSurface>();
+    EventsRequest eventsRequest(0, nullptr, nullptr);
+    EventBuilder eventBuilder;
+    Surface *surfaces[] = {surface.get()};
+    bool blocking = true;
+
+    TimestampPacketDependencies timestampPacketDependencies;
+
+    CsrDependencies csrDeps;
+    EnqueueProperties enqueueProperties(false, false, false, true, false, nullptr);
+
+    EXPECT_EQ(0u, logicalStateHelper->writeStreamInlineCalledCounter);
+
+    mockCmdQ->enqueueCommandWithoutKernel(surfaces, 1, &mockCmdQ->getCS(0), 0, blocking, enqueueProperties, timestampPacketDependencies,
+                                          eventsRequest, eventBuilder, 0, csrDeps, nullptr);
+
+    EXPECT_EQ(1u, logicalStateHelper->writeStreamInlineCalledCounter);
+
+    HardwareParse cmdParser;
+    cmdParser.parseCommands<FamilyType>(ultCsr.commandStream);
+
+    auto miNoop = find<MI_NOOP *>(cmdParser.cmdList.begin(), cmdParser.cmdList.end());
+    bool miNoopFound = false;
+    uint32_t cmdsAfterNoop = 0;
+
+    while (miNoop != cmdParser.cmdList.end()) {
+        auto miNoopCmd = genCmdCast<MI_NOOP *>(*miNoop);
+        if (miNoopCmd->getIdentificationNumber() == 0x123) {
+            miNoopFound = true;
+            break;
+        }
+
+        miNoop = find<MI_NOOP *>(++miNoop, cmdParser.cmdList.end());
+    }
+
+    miNoop++;
+
+    while (miNoop != cmdParser.cmdList.end()) {
+        auto miNoopCmd = genCmdCast<MI_NOOP *>(*miNoop);
+
+        if (miNoopCmd == nullptr) {
+            cmdsAfterNoop++;
+        }
+
+        miNoop++;
+    }
+
+    EXPECT_TRUE(miNoopFound);
+    EXPECT_EQ(1u, cmdsAfterNoop);
 }
 
 template <bool enabled>
