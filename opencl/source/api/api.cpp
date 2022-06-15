@@ -5946,11 +5946,6 @@ cl_int CL_API_CALL clGetKernelMaxConcurrentWorkGroupCountINTEL(cl_command_queue 
         return retVal;
     }
 
-    if (globalWorkOffset == nullptr) {
-        retVal = CL_INVALID_GLOBAL_OFFSET;
-        return retVal;
-    }
-
     if (localWorkSize == nullptr) {
         retVal = CL_INVALID_WORK_GROUP_SIZE;
         return retVal;
