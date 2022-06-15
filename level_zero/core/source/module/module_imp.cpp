@@ -50,7 +50,6 @@ NEO::ConstStringRef greaterThan4GbRequired = "-ze-opt-greater-than-4GB-buffer-re
 NEO::ConstStringRef hasBufferOffsetArg = "-ze-intel-has-buffer-offset-arg";
 NEO::ConstStringRef debugKernelEnable = "-ze-kernel-debug-enable";
 NEO::ConstStringRef enableLibraryCompile = "-library-compilation";
-NEO::ConstStringRef enableGlobalVariableSymbols = "-take-global-address";
 } // namespace BuildOptions
 
 ModuleTranslationUnit::ModuleTranslationUnit(L0::Device *device)
@@ -668,7 +667,7 @@ void ModuleImp::createBuildOptions(const char *pBuildFlags, std::string &apiOpti
         moveBuildOption(internalBuildOptions, apiOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired, BuildOptions::greaterThan4GbRequired);
         moveBuildOption(internalBuildOptions, apiOptions, NEO::CompilerOptions::allowZebin, NEO::CompilerOptions::allowZebin);
         this->libraryExportEnabled = moveBuildOption(apiOptions, apiOptions, BuildOptions::enableLibraryCompile, BuildOptions::enableLibraryCompile);
-        this->globalExportEnabled = moveBuildOption(apiOptions, apiOptions, BuildOptions::enableGlobalVariableSymbols, BuildOptions::enableGlobalVariableSymbols);
+
         createBuildExtraOptions(apiOptions, internalBuildOptions);
     }
     if (NEO::ApiSpecificConfig::getBindlessConfiguration()) {
@@ -676,9 +675,6 @@ void ModuleImp::createBuildOptions(const char *pBuildFlags, std::string &apiOpti
     }
     if (!this->libraryExportEnabled && NEO::DebugManager.flags.EnableProgramSymbolTableGeneration.get()) {
         NEO::CompilerOptions::concatenateAppend(apiOptions, BuildOptions::enableLibraryCompile.str());
-    }
-    if (!this->globalExportEnabled && NEO::DebugManager.flags.EnableGlobalSymbolGeneration.get()) {
-        NEO::CompilerOptions::concatenateAppend(apiOptions, BuildOptions::enableGlobalVariableSymbols.str());
     }
 }
 

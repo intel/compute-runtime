@@ -31,7 +31,6 @@ extern NEO::ConstStringRef greaterThan4GbRequired;
 extern NEO::ConstStringRef hasBufferOffsetArg;
 extern NEO::ConstStringRef debugKernelEnable;
 extern NEO::ConstStringRef enableLibraryCompile;
-extern NEO::ConstStringRef enableGlobalVariableSymbols;
 } // namespace BuildOptions
 
 struct ModuleTranslationUnit {
@@ -161,7 +160,6 @@ struct ModuleImp : public Module {
     bool isFullyLinked = false;
     bool allocatePrivateMemoryPerDispatch = true;
     bool libraryExportEnabled = false;
-    bool globalExportEnabled = false;
     ModuleType type;
     NEO::Linker::UnresolvedExternals unresolvedExternalsInfo{};
     std::set<NEO::GraphicsAllocation *> importedSymbolAllocations{};
