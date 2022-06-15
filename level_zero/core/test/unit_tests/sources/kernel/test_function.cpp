@@ -301,6 +301,15 @@ TEST_F(KernelImpSuggestMaxCooperativeGroupCountTests, GivenNoBarriersOrSlmUsedWh
     EXPECT_EQ(expected, getMaxWorkGroupCount());
 }
 
+TEST_F(KernelImpSuggestMaxCooperativeGroupCountTests, GivenNoBarriersOrSlmUsedAndDSSCountEqualZeroWhenCalculatingMaxCooperativeGroupCountThenResultIsCalculatedWithSimd) {
+    auto workGroupSize = lws[0] * lws[1] * lws[2];
+    auto expected = availableThreadCount / Math::divideAndRoundUp(workGroupSize, simd);
+    auto mutableHwInfo = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    mutableHwInfo->gtSystemInfo.DualSubSliceCount = 0;
+
+    EXPECT_EQ(expected, getMaxWorkGroupCount());
+}
+
 TEST_F(KernelImpSuggestMaxCooperativeGroupCountTests, GivenBarriersWhenCalculatingMaxCooperativeGroupCountThenResultIsCalculatedWithRegardToBarriersCount) {
     usesBarriers = 1;
     auto expected = dssCount * (maxBarrierCount / usesBarriers);
