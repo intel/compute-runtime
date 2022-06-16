@@ -21,7 +21,7 @@ namespace L0 {
 
 struct DebugSessionWindows : DebugSessionImp {
     DebugSessionWindows(const zet_debug_config_t &config, Device *device) : DebugSessionImp(config, device), processId(config.pid) {}
-    ~DebugSessionWindows();
+    ~DebugSessionWindows() override;
 
     ze_result_t initialize() override;
     bool closeConnection() override;
