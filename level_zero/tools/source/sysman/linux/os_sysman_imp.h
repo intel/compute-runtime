@@ -53,8 +53,6 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     PlatformMonitoringTech *getPlatformMonitoringTechAccess(uint32_t subDeviceId);
     Device *getDeviceHandle();
     SysmanDeviceImp *getSysmanDeviceImp();
-    std::string getPciRootPortDirectoryPath(std::string realPciPath);
-    std::string getPciRootPortDirectoryPathForReset(std::string realPciPath);
     std::string getPciCardBusDirectoryPath(std::string realPciPath);
     void releasePmtObject();
     ze_result_t createPmtHandles();
@@ -80,6 +78,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
     bool diagnosticsReset = false;
     Device *pDevice = nullptr;
+    std::string gtDevicePath;
 
   protected:
     FsAccess *pFsAccess = nullptr;

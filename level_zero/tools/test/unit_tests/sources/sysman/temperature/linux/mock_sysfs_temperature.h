@@ -32,7 +32,7 @@ constexpr uint64_t offsetForNoSubDevices = 0x60;
 constexpr uint8_t computeIndexForNoSubDevices = 9;
 constexpr uint8_t globalIndexForNoSubDevices = 3;
 const std::string baseTelemSysFS("/sys/class/intel_pmt");
-std::string rootPciPathOfGpuDeviceInTemperature = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
+std::string gpuUpstreamPortPathInTemperature = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
 const std::string realPathTelem1 = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem1";
 const std::string realPathTelem2 = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem2";
 const std::string realPathTelem3 = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem3";
@@ -61,7 +61,7 @@ struct Mock<TemperaturePmt> : public TemperaturePmt {
     }
 
     void mockedInit(FsAccess *pFsAccess) {
-        if (ZE_RESULT_SUCCESS != PlatformMonitoringTech::enumerateRootTelemIndex(pFsAccess, rootPciPathOfGpuDeviceInTemperature)) {
+        if (ZE_RESULT_SUCCESS != PlatformMonitoringTech::enumerateRootTelemIndex(pFsAccess, gpuUpstreamPortPathInTemperature)) {
             return;
         }
         telemetryDeviceEntry = "/sys/class/intel_pmt/telem2/telem";

@@ -51,7 +51,7 @@ class ZesPmtFixtureMultiDevice : public SysmanMultiDeviceFixture {
             .WillByDefault(::testing::Invoke(pTestFsAccess.get(), &Mock<PmtFsAccess>::getRealPathSuccess));
         ON_CALL(*pTestFsAccess.get(), fileExists(_))
             .WillByDefault(::testing::Invoke(pTestFsAccess.get(), &Mock<PmtFsAccess>::isFileExists));
-        PlatformMonitoringTech::create(deviceHandles, pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt, mapOfSubDeviceIdToPmtObject);
+        PlatformMonitoringTech::create(deviceHandles, pTestFsAccess.get(), gpuUpstreamPortPathInPmt, mapOfSubDeviceIdToPmtObject);
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {
@@ -70,50 +70,50 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesTh
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenenumerateRootTelemIndexThenCheckForErrorIflistDirectoryFails) {
     EXPECT_CALL(*pTestFsAccess.get(), listDirectory(_, _))
         .WillOnce(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt));
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), gpuUpstreamPortPathInPmt));
 }
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenenumerateRootTelemIndexThenCheckForErrorIfgetRealPathFails) {
     EXPECT_CALL(*pTestFsAccess.get(), getRealPath(_, _))
         .WillRepeatedly(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
-    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt));
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), gpuUpstreamPortPathInPmt));
 }
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenWhenenumerateRootTelemIndexThenCheckForErrorIfgetRealPathSuccessButNoTelemetryNodeAndGPUDeviceShareRootPciPort) {
     EXPECT_CALL(*pTestFsAccess.get(), getRealPath(_, _))
         .Times(5)
         .WillRepeatedly(::testing::DoAll(::testing::SetArgReferee<1>("/sys/devices/pci0000:89/0000:89:02.0/0000:8e:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem1"), Return(ZE_RESULT_SUCCESS)));
-    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt));
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), gpuUpstreamPortPathInPmt));
 }
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenTelemDirectoryContainNowTelemEntryWhenenumerateRootTelemIndexThenCheckForError) {
     ON_CALL(*pTestFsAccess.get(), listDirectory(_, _))
         .WillByDefault(::testing::Invoke(pTestFsAccess.get(), &Mock<PmtFsAccess>::listDirectoryNoTelemNode));
-    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt));
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), gpuUpstreamPortPathInPmt));
 }
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesThenCheckForErrorThatCouldHappenDuringWhileValidatingTelemNode) {
     EXPECT_CALL(*pTestFsAccess.get(), getRealPath(_, _))
         .WillRepeatedly(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
-    PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt);
+    PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), gpuUpstreamPortPathInPmt);
     auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
-    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), gpuUpstreamPortPathInPmt), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 }
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesThenCheckForErrorThatCouldHappenDuringGUIDRead) {
     EXPECT_CALL(*pTestFsAccess.get(), read(_, Matcher<std::string &>(_)))
         .WillOnce(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
-    PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt);
+    PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), gpuUpstreamPortPathInPmt);
     auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
-    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt), ZE_RESULT_ERROR_NOT_AVAILABLE);
+    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), gpuUpstreamPortPathInPmt), ZE_RESULT_ERROR_NOT_AVAILABLE);
 }
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesThenCheckForErrorIfGUIDReadValueIsNotSupported) {
     EXPECT_CALL(*pTestFsAccess.get(), read(_, Matcher<std::string &>(_)))
         .WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(""), Return(ZE_RESULT_SUCCESS)));
-    PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt);
+    PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), gpuUpstreamPortPathInPmt);
     auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
-    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), gpuUpstreamPortPathInPmt), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenSomeKeyWhenCallingreadValueWithUint64TypeThenCheckForErrorBranches) {
@@ -133,9 +133,9 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenSomeKeyWhenCallingreadValueWithUint32TypeT
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesThenCheckForErrorThatCouldHappenDuringbaseOffsetRead) {
     EXPECT_CALL(*pTestFsAccess.get(), read(_, Matcher<uint64_t &>(_)))
         .WillOnce(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
-    PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt);
+    PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), gpuUpstreamPortPathInPmt);
     auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
-    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt), ZE_RESULT_ERROR_NOT_AVAILABLE);
+    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), gpuUpstreamPortPathInPmt), ZE_RESULT_ERROR_NOT_AVAILABLE);
 }
 
 inline static int openMock(const char *pathname, int flags) {
@@ -246,7 +246,7 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenDoingPMTInitThenPMTmapOfS
                                                      deviceProperties.subdeviceId);
         UNRECOVERABLE_IF(nullptr == pPmt);
         PublicPlatformMonitoringTech::doInitPmtObject(pTestFsAccess.get(), deviceProperties.subdeviceId, pPmt,
-                                                      rootPciPathOfGpuDeviceInPmt, mapOfSubDeviceIdToPmtObject);
+                                                      gpuUpstreamPortPathInPmt, mapOfSubDeviceIdToPmtObject);
         auto subDeviceIdToPmtEntry = mapOfSubDeviceIdToPmtObject.find(deviceProperties.subdeviceId);
         EXPECT_EQ(subDeviceIdToPmtEntry->second, pPmt);
         delete pPmt;
@@ -264,7 +264,7 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenBaseOffsetReadFailWhenDoingPMTInitThenPMTm
                                                      deviceProperties.subdeviceId);
         UNRECOVERABLE_IF(nullptr == pPmt);
         PublicPlatformMonitoringTech::doInitPmtObject(pTestFsAccess.get(), deviceProperties.subdeviceId, pPmt,
-                                                      rootPciPathOfGpuDeviceInPmt, mapOfSubDeviceIdToPmtObject);
+                                                      gpuUpstreamPortPathInPmt, mapOfSubDeviceIdToPmtObject);
         EXPECT_TRUE(mapOfSubDeviceIdToPmtObject.empty());
     }
 }
@@ -311,7 +311,7 @@ class ZesPmtFixtureNoSubDevice : public SysmanDeviceFixture {
             .WillByDefault(::testing::Invoke(pTestFsAccess.get(), &Mock<PmtFsAccess>::getRealPathSuccess));
         ON_CALL(*pTestFsAccess.get(), fileExists(_))
             .WillByDefault(::testing::Invoke(pTestFsAccess.get(), &Mock<PmtFsAccess>::isFileExists));
-        PlatformMonitoringTech::create(deviceHandles, pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt, mapOfSubDeviceIdToPmtObject);
+        PlatformMonitoringTech::create(deviceHandles, pTestFsAccess.get(), gpuUpstreamPortPathInPmt, mapOfSubDeviceIdToPmtObject);
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {

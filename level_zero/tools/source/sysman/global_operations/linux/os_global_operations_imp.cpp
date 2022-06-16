@@ -121,7 +121,6 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
 
     result = pProcfsAccess->listProcesses(processes);
     if (ZE_RESULT_SUCCESS != result) {
-
         return result;
     }
     for (auto &&pid : processes) {
@@ -137,7 +136,6 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
             } else {
                 // Device is in use by another process.
                 // Don't reset while in use.
-
                 return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
             }
         }
@@ -149,14 +147,12 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     if (!(deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED)) {
         result = pSysfsAccess->unbindDevice(resetName);
         if (ZE_RESULT_SUCCESS != result) {
-
             return result;
         }
         result = pLinuxSysmanImp->osWarmReset();
         if (ZE_RESULT_SUCCESS == result) {
             return pLinuxSysmanImp->initDevice();
         }
-
         return result;
     }
 
@@ -175,7 +171,6 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     // Unbind the device from the kernel driver.
     result = pSysfsAccess->unbindDevice(resetName);
     if (ZE_RESULT_SUCCESS != result) {
-
         return result;
     }
 
@@ -183,7 +178,6 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     // after we check, kill them here.
     result = pProcfsAccess->listProcesses(processes);
     if (ZE_RESULT_SUCCESS != result) {
-
         return result;
     }
     std::vector<::pid_t> deviceUsingPids;
@@ -192,7 +186,6 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
         std::vector<int> fds;
         pLinuxSysmanImp->getPidFdsForOpenDevice(pProcfsAccess, pSysfsAccess, pid, fds);
         if (!fds.empty()) {
-
             // Kill all processes that have the device open.
             pProcfsAccess->kill(pid);
             deviceUsingPids.push_back(pid);
@@ -210,7 +203,6 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
 
                 return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
             }
-
             struct ::timespec timeout = {.tv_sec = 0, .tv_nsec = 1000};
             ::nanosleep(&timeout, NULL);
             end = std::chrono::steady_clock::now();
@@ -220,14 +212,12 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     // Reset the device.
     result = pFsAccess->write(resetPath, "1");
     if (ZE_RESULT_SUCCESS != result) {
-
         return result;
     }
 
     // Rebind the device to the kernel driver.
     result = pSysfsAccess->bindDevice(resetName);
     if (ZE_RESULT_SUCCESS != result) {
-
         return result;
     }
 

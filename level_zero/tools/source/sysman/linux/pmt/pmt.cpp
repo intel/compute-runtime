@@ -74,8 +74,8 @@ bool compareTelemNodes(std::string &telemNode1, std::string &telemNode2) {
     return indexForTelemNode1 < indexForTelemNode2;
 }
 
-// Check if Telemetry node(say /sys/class/intel_pmt/telem1) and rootPciPathOfGpuDevice share same PCI Root port
-static bool isValidTelemNode(FsAccess *pFsAccess, const std::string &rootPciPathOfGpuDevice, const std::string sysfsTelemNode) {
+// Check if Telemetry node(say /sys/class/intel_pmt/telem1) and gpuUpstreamPortPath share same PCI Root port
+static bool isValidTelemNode(FsAccess *pFsAccess, const std::string &gpuUpstreamPortPath, const std::string sysfsTelemNode) {
     std::string realPathOfTelemNode;
     auto result = pFsAccess->getRealPath(sysfsTelemNode, realPathOfTelemNode);
     if (result != ZE_RESULT_SUCCESS) {
@@ -83,14 +83,15 @@ static bool isValidTelemNode(FsAccess *pFsAccess, const std::string &rootPciPath
     }
 
     // Example: If
-    // rootPciPathOfGpuDevice = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
+    // gpuUpstreamPortPath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
     // realPathOfTelemNode = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem1";
-    // As rootPciPathOfGpuDevice is a substring og realPathOfTelemNode , hence both sysfs telemNode and GPU device share same PCI Root.
+    // As gpuUpstreamPortPath is a substring of realPathOfTelemNode , hence both sysfs telemNode and GPU device share same PCI Root.
+    // the PMT is part of the OOBMSM sitting on a switch port 0000:8b:02.0 attached to the upstream port/ Also known as CardBus
     // Hence this telem node entry is valid for GPU device.
-    return (realPathOfTelemNode.compare(0, rootPciPathOfGpuDevice.size(), rootPciPathOfGpuDevice) == 0);
+    return (realPathOfTelemNode.compare(0, gpuUpstreamPortPath.size(), gpuUpstreamPortPath) == 0);
 }
 
-ze_result_t PlatformMonitoringTech::enumerateRootTelemIndex(FsAccess *pFsAccess, std::string &rootPciPathOfGpuDevice) {
+ze_result_t PlatformMonitoringTech::enumerateRootTelemIndex(FsAccess *pFsAccess, std::string &gpuUpstreamPortPath) {
     std::vector<std::string> listOfTelemNodes;
     auto result = pFsAccess->listDirectory(baseTelemSysFS, listOfTelemNodes);
     if (ZE_RESULT_SUCCESS != result) {
@@ -111,7 +112,7 @@ ze_result_t PlatformMonitoringTech::enumerateRootTelemIndex(FsAccess *pFsAccess,
     // Then listOfTelemNodes would contain telem1, telem2, telem3
     std::sort(listOfTelemNodes.begin(), listOfTelemNodes.end(), compareTelemNodes); // sort listOfTelemNodes, to arange telem nodes in ascending order
     for (const auto &telemNode : listOfTelemNodes) {
-        if (isValidTelemNode(pFsAccess, rootPciPathOfGpuDevice, baseTelemSysFS + "/" + telemNode)) {
+        if (isValidTelemNode(pFsAccess, gpuUpstreamPortPath, baseTelemSysFS + "/" + telemNode)) {
             auto indexString = telemNode.substr(telem.size(), telemNode.size());
             rootDeviceTelemNodeIndex = stoi(indexString); // if telemNode is telemN, then rootDeviceTelemNodeIndex = N
             return ZE_RESULT_SUCCESS;
@@ -120,7 +121,7 @@ ze_result_t PlatformMonitoringTech::enumerateRootTelemIndex(FsAccess *pFsAccess,
     return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
 }
 
-ze_result_t PlatformMonitoringTech::init(FsAccess *pFsAccess, const std::string &rootPciPathOfGpuDevice) {
+ze_result_t PlatformMonitoringTech::init(FsAccess *pFsAccess, const std::string &gpuUpstreamPortPath) {
     std::string telemNode = telem + std::to_string(rootDeviceTelemNodeIndex);
     if (isSubdevice) {
         uint32_t telemNodeIndex = 0;
@@ -131,7 +132,7 @@ ze_result_t PlatformMonitoringTech::init(FsAccess *pFsAccess, const std::string 
         telemNode = telem + std::to_string(telemNodeIndex);
     }
     std::string baseTelemSysFSNode = baseTelemSysFS + "/" + telemNode;
-    if (!isValidTelemNode(pFsAccess, rootPciPathOfGpuDevice, baseTelemSysFSNode)) {
+    if (!isValidTelemNode(pFsAccess, gpuUpstreamPortPath, baseTelemSysFSNode)) {
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
 
@@ -172,9 +173,9 @@ PlatformMonitoringTech::PlatformMonitoringTech(FsAccess *pFsAccess, ze_bool_t on
 }
 
 void PlatformMonitoringTech::doInitPmtObject(FsAccess *pFsAccess, uint32_t subdeviceId, PlatformMonitoringTech *pPmt,
-                                             const std::string &rootPciPathOfGpuDevice,
+                                             const std::string &gpuUpstreamPortPath,
                                              std::map<uint32_t, L0::PlatformMonitoringTech *> &mapOfSubDeviceIdToPmtObject) {
-    if (pPmt->init(pFsAccess, rootPciPathOfGpuDevice) == ZE_RESULT_SUCCESS) {
+    if (pPmt->init(pFsAccess, gpuUpstreamPortPath) == ZE_RESULT_SUCCESS) {
         mapOfSubDeviceIdToPmtObject.emplace(subdeviceId, pPmt);
         return;
     }
@@ -182,9 +183,9 @@ void PlatformMonitoringTech::doInitPmtObject(FsAccess *pFsAccess, uint32_t subde
 }
 
 void PlatformMonitoringTech::create(const std::vector<ze_device_handle_t> &deviceHandles,
-                                    FsAccess *pFsAccess, std::string &rootPciPathOfGpuDevice,
+                                    FsAccess *pFsAccess, std::string &gpuUpstreamPortPath,
                                     std::map<uint32_t, L0::PlatformMonitoringTech *> &mapOfSubDeviceIdToPmtObject) {
-    if (ZE_RESULT_SUCCESS == PlatformMonitoringTech::enumerateRootTelemIndex(pFsAccess, rootPciPathOfGpuDevice)) {
+    if (ZE_RESULT_SUCCESS == PlatformMonitoringTech::enumerateRootTelemIndex(pFsAccess, gpuUpstreamPortPath)) {
         for (const auto &deviceHandle : deviceHandles) {
             uint32_t subdeviceId = 0;
             ze_bool_t onSubdevice = false;
@@ -192,7 +193,7 @@ void PlatformMonitoringTech::create(const std::vector<ze_device_handle_t> &devic
             auto pPmt = new PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId);
             UNRECOVERABLE_IF(nullptr == pPmt);
             PlatformMonitoringTech::doInitPmtObject(pFsAccess, subdeviceId, pPmt,
-                                                    rootPciPathOfGpuDevice, mapOfSubDeviceIdToPmtObject);
+                                                    gpuUpstreamPortPath, mapOfSubDeviceIdToPmtObject);
         }
     }
 }

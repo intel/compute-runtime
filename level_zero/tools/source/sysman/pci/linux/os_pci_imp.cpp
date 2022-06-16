@@ -274,7 +274,7 @@ void LinuxPciImp::pciCardBusConfigRead() {
     std::string pciConfigNode;
     std::string rootPortPath;
     pSysfsAccess->getRealPath(deviceDir, pciConfigNode);
-    rootPortPath = pLinuxSysmanImp->getPciRootPortDirectoryPath(pciConfigNode);
+    rootPortPath = pLinuxSysmanImp->getPciCardBusDirectoryPath(pciConfigNode);
     pciConfigNode = rootPortPath + "/config";
     int fdConfig = -1;
     fdConfig = this->openFunction(pciConfigNode.c_str(), O_RDONLY);

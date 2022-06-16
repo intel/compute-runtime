@@ -274,8 +274,8 @@ struct Mock<PowerPmt> : public PowerPmt {
     Mock<PowerPmt>(FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : PowerPmt(pFsAccess, onSubdevice, subdeviceId) {}
 
     void mockedInit(FsAccess *pFsAccess) {
-        std::string rootPciPathOfGpuDevice = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
-        if (ZE_RESULT_SUCCESS != PlatformMonitoringTech::enumerateRootTelemIndex(pFsAccess, rootPciPathOfGpuDevice)) {
+        std::string gpuUpstreamPortPath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
+        if (ZE_RESULT_SUCCESS != PlatformMonitoringTech::enumerateRootTelemIndex(pFsAccess, gpuUpstreamPortPath)) {
             return;
         }
 

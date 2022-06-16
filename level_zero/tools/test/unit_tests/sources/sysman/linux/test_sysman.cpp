@@ -301,18 +301,6 @@ TEST_F(SysmanDeviceFixture, GivenPmuInterfaceHandleWhenCallinggetPmuInterfaceThe
     EXPECT_EQ(pLinuxSysmanImp->getPmuInterface(), pLinuxSysmanImp->pPmuInterface);
 }
 
-TEST_F(SysmanDeviceFixture, GivenValidPciPathWhileGettingRootPciPortThenReturnedPathIs2LevelUpThenTheCurrentPath) {
-    const std::string mockBdf = "0000:00:02.0";
-    const std::string mockRealPath = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/" + mockBdf;
-    const std::string mockRealPath2LevelsUp = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0";
-
-    std::string pciRootPort1 = pLinuxSysmanImp->getPciRootPortDirectoryPath(mockRealPath);
-    EXPECT_EQ(pciRootPort1, mockRealPath2LevelsUp);
-
-    std::string pciRootPort2 = pLinuxSysmanImp->getPciRootPortDirectoryPath("device");
-    EXPECT_EQ(pciRootPort2, "device");
-}
-
 TEST_F(SysmanDeviceFixture, GivenValidPciPathWhileGettingCardBusPortThenReturnedPathIs1LevelUpThenTheCurrentPath) {
     const std::string mockBdf = "0000:00:02.0";
     const std::string mockRealPath = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/" + mockBdf;
@@ -322,18 +310,6 @@ TEST_F(SysmanDeviceFixture, GivenValidPciPathWhileGettingCardBusPortThenReturned
     EXPECT_EQ(pciRootPort1, mockRealPath1LevelUp);
 
     std::string pciRootPort2 = pLinuxSysmanImp->getPciCardBusDirectoryPath("device");
-    EXPECT_EQ(pciRootPort2, "device");
-}
-
-TEST_F(SysmanDeviceFixture, GivenValidPciPathWhileGettingRootPciPortThenReturnedPathIs1LevelAfterPCIePath) {
-    const std::string mockBdf = "0000:00:02.0";
-    const std::string mockRealPath = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/" + mockBdf;
-    const std::string mockRootPortPath = "/sys/devices/pci0000:00/0000:00:01.0";
-
-    std::string pciRootPort1 = pLinuxSysmanImp->getPciRootPortDirectoryPathForReset(mockRealPath);
-    EXPECT_EQ(pciRootPort1, mockRootPortPath);
-
-    std::string pciRootPort2 = pLinuxSysmanImp->getPciRootPortDirectoryPathForReset("device");
     EXPECT_EQ(pciRootPort2, "device");
 }
 
