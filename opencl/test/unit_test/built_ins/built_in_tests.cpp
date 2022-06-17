@@ -1539,9 +1539,9 @@ TEST_F(BuiltInTests, givenCreateProgramFromSourceWhenForceToStatelessRequiredOr3
 
     const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     if (compilerHwInfoConfig.isForceToStatelessRequired() || is32bit) {
-        EXPECT_THAT(builtinInternalOptions, testing::HasSubstr(std::string(CompilerOptions::greaterThan4gbBuffersRequired)));
+        EXPECT_TRUE(hasSubstr(builtinInternalOptions, std::string(CompilerOptions::greaterThan4gbBuffersRequired)));
     } else {
-        EXPECT_THAT(builtinInternalOptions, testing::Not(testing::HasSubstr(std::string(CompilerOptions::greaterThan4gbBuffersRequired))));
+        EXPECT_FALSE(hasSubstr(builtinInternalOptions, std::string(CompilerOptions::greaterThan4gbBuffersRequired)));
     }
 }
 

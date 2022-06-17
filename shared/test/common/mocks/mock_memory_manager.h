@@ -13,8 +13,6 @@
 #include "shared/test/common/mocks/mock_host_ptr_manager.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
-#include "gmock/gmock.h"
-
 namespace NEO {
 
 template <class T>
