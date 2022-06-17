@@ -1006,6 +1006,244 @@ TEST_F(ModuleStaticLinkTests, givenSingleModuleProvidedForSpirVStaticLinkAndBuil
     runSprivLinkBuildWithOneModule();
 }
 
+using ModuleOptionsTests = Test<DeviceFixture>;
+
+HWTEST_F(ModuleOptionsTests, givenFailureDuringGenCompileThenAttemptCompileFails) {
+    auto mockCompiler = new MockCompilerInterface();
+    auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
+
+    auto mockTranslationUnit = new MockModuleTranslationUnit(device);
+    mockTranslationUnit->failGenCompile = true;
+
+    uint8_t spirvData{};
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = &spirvData;
+    moduleDesc.inputSize = sizeof(spirvData);
+
+    Module module(device, nullptr, ModuleType::User);
+    module.translationUnit.reset(mockTranslationUnit);
+
+    bool success = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_FALSE(success);
+}
+
+HWTEST_F(ModuleOptionsTests, givenValidModuleWithGlobalSymbolFlagThenGenCompileAttemptSucceeds) {
+    auto mockCompiler = new MockCompilerInterface();
+    auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
+
+    auto mockTranslationUnit = new MockModuleTranslationUnit(device);
+    mockTranslationUnit->options.append(BuildOptions::enableGlobalVariableSymbols.str());
+    mockTranslationUnit->requireGlobalExport = true;
+    uint8_t spirvData{};
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = &spirvData;
+    moduleDesc.inputSize = sizeof(spirvData);
+
+    Module module(device, nullptr, ModuleType::User);
+    module.translationUnit.reset(mockTranslationUnit);
+
+    bool success = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_TRUE(success);
+}
+
+HWTEST_F(ModuleOptionsTests, givenModuleWithGlobalSymbolFlagThenGenCompileAttemptSucceedsAfterGlobalFlagRemoved) {
+    auto mockCompiler = new MockCompilerInterface();
+    auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
+
+    auto mockTranslationUnit = new MockModuleTranslationUnit(device);
+    mockTranslationUnit->options.append(BuildOptions::enableGlobalVariableSymbols.str());
+    mockTranslationUnit->requireGlobalExport = false;
+    mockTranslationUnit->failGenCompileCounter = 1;
+    uint8_t spirvData{};
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = &spirvData;
+    moduleDesc.inputSize = sizeof(spirvData);
+
+    Module module(device, nullptr, ModuleType::User);
+    module.translationUnit.reset(mockTranslationUnit);
+
+    bool success = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_TRUE(success);
+
+    size_t optionPos = std::string::npos;
+    optionPos = mockTranslationUnit->options.find(BuildOptions::enableGlobalVariableSymbols.str().c_str());
+    EXPECT_EQ(optionPos, std::string::npos);
+}
+
+HWTEST_F(ModuleOptionsTests, givenModuleWithGlobalSymbolFlagRequiredThenGenCompileAttemptFails) {
+    auto mockCompiler = new MockCompilerInterface();
+    auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
+
+    auto mockTranslationUnit = new MockModuleTranslationUnit(device);
+    mockTranslationUnit->options.append(BuildOptions::enableGlobalVariableSymbols.str());
+    mockTranslationUnit->requireGlobalExport = true;
+    mockTranslationUnit->failGenCompile = true;
+    uint8_t spirvData{};
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = &spirvData;
+    moduleDesc.inputSize = sizeof(spirvData);
+
+    Module module(device, nullptr, ModuleType::User);
+    module.translationUnit.reset(mockTranslationUnit);
+
+    bool success = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_FALSE(success);
+
+    size_t optionPos = std::string::npos;
+    optionPos = mockTranslationUnit->options.find(BuildOptions::enableGlobalVariableSymbols.str().c_str());
+    EXPECT_NE(optionPos, std::string::npos);
+}
+
+HWTEST_F(ModuleOptionsTests, givenValidModuleWithLibrarySymbolFlagThenGenCompileAttemptSucceeds) {
+    auto mockCompiler = new MockCompilerInterface();
+    auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
+
+    auto mockTranslationUnit = new MockModuleTranslationUnit(device);
+    mockTranslationUnit->options.append(BuildOptions::enableLibraryCompile.str());
+    mockTranslationUnit->requireLibraryExport = true;
+    uint8_t spirvData{};
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = &spirvData;
+    moduleDesc.inputSize = sizeof(spirvData);
+
+    Module module(device, nullptr, ModuleType::User);
+    module.translationUnit.reset(mockTranslationUnit);
+
+    bool success = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_TRUE(success);
+}
+
+HWTEST_F(ModuleOptionsTests, givenModuleWithLibrarySymbolFlagThenGenCompileAttemptSucceedsAfterLibraryFlagRemoved) {
+    auto mockCompiler = new MockCompilerInterface();
+    auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
+
+    auto mockTranslationUnit = new MockModuleTranslationUnit(device);
+    mockTranslationUnit->options.append(BuildOptions::enableLibraryCompile.str().c_str());
+    mockTranslationUnit->requireLibraryExport = false;
+    mockTranslationUnit->failGenCompileCounter = 2;
+    uint8_t spirvData{};
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = &spirvData;
+    moduleDesc.inputSize = sizeof(spirvData);
+
+    Module module(device, nullptr, ModuleType::User);
+    module.translationUnit.reset(mockTranslationUnit);
+
+    bool success = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_TRUE(success);
+
+    size_t optionPos = std::string::npos;
+    optionPos = mockTranslationUnit->options.find(BuildOptions::enableLibraryCompile.str().c_str());
+    EXPECT_EQ(optionPos, std::string::npos);
+}
+
+HWTEST_F(ModuleOptionsTests, givenModuleWithLibrarySymbolFlagRequiredThenGenCompileAttemptFailsInRetry) {
+    auto mockCompiler = new MockCompilerInterface();
+    auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
+
+    auto mockTranslationUnit = new MockModuleTranslationUnit(device);
+    mockTranslationUnit->options.append(BuildOptions::enableLibraryCompile.str());
+    mockTranslationUnit->requireLibraryExport = true;
+    mockTranslationUnit->failGenCompileCounter = 3;
+    uint8_t spirvData{};
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = &spirvData;
+    moduleDesc.inputSize = sizeof(spirvData);
+
+    Module module(device, nullptr, ModuleType::User);
+    module.translationUnit.reset(mockTranslationUnit);
+
+    bool success = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_FALSE(success);
+
+    size_t optionPos = std::string::npos;
+    optionPos = mockTranslationUnit->options.find(BuildOptions::enableLibraryCompile.str().c_str());
+    EXPECT_NE(optionPos, std::string::npos);
+}
+
+HWTEST_F(ModuleOptionsTests, givenModuleWithLibraryAndGlobalSymbolFlagsRequiredThenGenCompileAttemptFailsInRetry) {
+    auto mockCompiler = new MockCompilerInterface();
+    auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
+
+    auto mockTranslationUnit = new MockModuleTranslationUnit(device);
+    mockTranslationUnit->options.append(BuildOptions::enableLibraryCompile.str());
+    mockTranslationUnit->options.append(BuildOptions::enableGlobalVariableSymbols.str());
+    mockTranslationUnit->requireGlobalExport = true;
+    mockTranslationUnit->requireLibraryExport = true;
+    mockTranslationUnit->failGenCompile = true;
+    uint8_t spirvData{};
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = &spirvData;
+    moduleDesc.inputSize = sizeof(spirvData);
+
+    Module module(device, nullptr, ModuleType::User);
+    module.translationUnit.reset(mockTranslationUnit);
+
+    bool success = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_FALSE(success);
+
+    size_t optionPos = std::string::npos;
+    optionPos = mockTranslationUnit->options.find(BuildOptions::enableLibraryCompile.str().c_str());
+    EXPECT_NE(optionPos, std::string::npos);
+    optionPos = mockTranslationUnit->options.find(BuildOptions::enableGlobalVariableSymbols.str().c_str());
+    EXPECT_NE(optionPos, std::string::npos);
+}
+
+HWTEST_F(ModuleOptionsTests, givenModuleWithLibraryAndGlobalSymbolFlagsAndGenCompileFailsInAllSingleRemovalThenGenCompileAttemptSuccedsInRetry) {
+    auto mockCompiler = new MockCompilerInterface();
+    auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
+
+    auto mockTranslationUnit = new MockModuleTranslationUnit(device);
+    mockTranslationUnit->options.append(BuildOptions::enableLibraryCompile.str());
+    mockTranslationUnit->options.append(BuildOptions::enableGlobalVariableSymbols.str());
+    mockTranslationUnit->requireGlobalExport = false;
+    mockTranslationUnit->requireLibraryExport = false;
+    mockTranslationUnit->failGenCompileCounter = 3;
+    uint8_t spirvData{};
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = &spirvData;
+    moduleDesc.inputSize = sizeof(spirvData);
+
+    Module module(device, nullptr, ModuleType::User);
+    module.translationUnit.reset(mockTranslationUnit);
+
+    bool success = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_TRUE(success);
+
+    size_t optionPos = std::string::npos;
+    optionPos = mockTranslationUnit->options.find(BuildOptions::enableLibraryCompile.str().c_str());
+    EXPECT_EQ(optionPos, std::string::npos);
+    optionPos = mockTranslationUnit->options.find(BuildOptions::enableGlobalVariableSymbols.str().c_str());
+    EXPECT_EQ(optionPos, std::string::npos);
+}
+
 using ModuleLinkingTest = Test<DeviceFixture>;
 
 HWTEST_F(ModuleLinkingTest, whenExternFunctionsAllocationIsPresentThenItsBeingAddedToResidencyContainer) {
@@ -1959,14 +2197,14 @@ struct MockModuleTU : public L0::ModuleTranslationUnit {
     MockModuleTU(L0::Device *device) : L0::ModuleTranslationUnit(device) {}
 
     bool buildFromSpirV(const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions,
-                        const ze_module_constants_t *pConstants) override {
+                        const ze_module_constants_t *pConstants, bool libraryExportRequired, bool globalExportRequired) override {
         wasBuildFromSpirVCalled = true;
         return true;
     }
 
-    bool createFromNativeBinary(const char *input, size_t inputSize) override {
+    bool createFromNativeBinary(const char *input, size_t inputSize, bool libraryExportRequired, bool globalExportRequired) override {
         wasCreateFromNativeBinaryCalled = true;
-        return L0::ModuleTranslationUnit::createFromNativeBinary(input, inputSize);
+        return L0::ModuleTranslationUnit::createFromNativeBinary(input, inputSize, libraryExportRequired, globalExportRequired);
     }
 
     bool wasBuildFromSpirVCalled = false;
@@ -2094,13 +2332,13 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpRequir
 
     emptyProgram.elfHeader->machine = copyHwInfo.platform.eProductFamily;
     L0::ModuleTranslationUnit moduleTuValid(this->device);
-    bool success = moduleTuValid.createFromNativeBinary(reinterpret_cast<const char *>(emptyProgram.storage.data()), emptyProgram.storage.size());
+    bool success = moduleTuValid.createFromNativeBinary(reinterpret_cast<const char *>(emptyProgram.storage.data()), emptyProgram.storage.size(), false, false);
     EXPECT_TRUE(success);
 
     emptyProgram.elfHeader->machine = copyHwInfo.platform.eProductFamily;
     ++emptyProgram.elfHeader->machine;
     L0::ModuleTranslationUnit moduleTuInvalid(this->device);
-    success = moduleTuInvalid.createFromNativeBinary(reinterpret_cast<const char *>(emptyProgram.storage.data()), emptyProgram.storage.size());
+    success = moduleTuInvalid.createFromNativeBinary(reinterpret_cast<const char *>(emptyProgram.storage.data()), emptyProgram.storage.size(), false, false);
     EXPECT_FALSE(success);
 }
 
@@ -2130,7 +2368,7 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpPacked
 
     auto arData = encoder.encode();
     L0::ModuleTranslationUnit moduleTuValid(this->device);
-    bool success = moduleTuValid.createFromNativeBinary(reinterpret_cast<const char *>(arData.data()), arData.size());
+    bool success = moduleTuValid.createFromNativeBinary(reinterpret_cast<const char *>(arData.data()), arData.size(), false, false);
     EXPECT_TRUE(success);
     EXPECT_NE(moduleTuValid.packedDeviceBinarySize, arData.size());
 }
@@ -2143,7 +2381,7 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromZebinThenAppendAllowZebinFla
 
     zebin.elfHeader->machine = copyHwInfo.platform.eProductFamily;
     L0::ModuleTranslationUnit moduleTu(this->device);
-    bool success = moduleTu.createFromNativeBinary(reinterpret_cast<const char *>(zebin.storage.data()), zebin.storage.size());
+    bool success = moduleTu.createFromNativeBinary(reinterpret_cast<const char *>(zebin.storage.data()), zebin.storage.size(), false, false);
     EXPECT_TRUE(success);
 
     auto expectedOptions = " " + NEO::CompilerOptions::allowZebin.str();
@@ -2172,7 +2410,7 @@ kernels:
     zebin.elfHeader->machine = copyHwInfo.platform.eProductFamily;
 
     L0::ModuleTranslationUnit moduleTuValid(this->device);
-    bool success = moduleTuValid.createFromNativeBinary(reinterpret_cast<const char *>(zebin.storage.data()), zebin.storage.size());
+    bool success = moduleTuValid.createFromNativeBinary(reinterpret_cast<const char *>(zebin.storage.data()), zebin.storage.size(), false, false);
     EXPECT_TRUE(success);
 
     EXPECT_NE(nullptr, moduleTuValid.programInfo.linkerInput.get());
@@ -2231,7 +2469,7 @@ HWTEST_F(ModuleTranslationUnitTest, WhenBuildOptionsAreNullThenReuseExistingOpti
     moduleTu.options = "abcd";
     pMockCompilerInterface->failBuild = true;
 
-    auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
+    auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr, false, false);
     EXPECT_FALSE(ret);
     EXPECT_STREQ("abcd", moduleTu.options.c_str());
     EXPECT_STREQ("abcd", pMockCompilerInterface->receivedApiOptions.c_str());
@@ -2246,7 +2484,7 @@ HWTEST_F(ModuleTranslationUnitTest, WhenBuildOptionsAreNullThenReuseExistingOpti
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(1);
 
     MockModuleTranslationUnit moduleTu(this->device);
-    auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
+    auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr, false, false);
     EXPECT_TRUE(ret);
     EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("cl-intel-greater-than-4GB-buffer-required"), std::string::npos);
 }
@@ -2256,7 +2494,7 @@ HWTEST_F(ModuleTranslationUnitTest, givenInternalOptionsThenLSCCachePolicyIsSet)
     auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
     rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);
     MockModuleTranslationUnit moduleTu(this->device);
-    auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
+    auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr, false, false);
     const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     EXPECT_TRUE(ret);
     auto expectedPolicy = compilerHwInfoConfig.getCachingPolicyOptions(false);
@@ -2275,7 +2513,7 @@ HWTEST2_F(ModuleTranslationUnitTest, givenDebugFlagSetToWbWhenGetInternalOptions
     auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
     rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);
     MockModuleTranslationUnit moduleTu(this->device);
-    auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
+    auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr, false, false);
     EXPECT_TRUE(ret);
     EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-store-cache-default=7 -cl-load-cache-default=4"), std::string::npos);
 }
@@ -2288,7 +2526,7 @@ HWTEST2_F(ModuleTranslationUnitTest, givenDebugFlagSetForceAllResourcesUncachedW
     auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
     rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);
     MockModuleTranslationUnit moduleTu(this->device);
-    auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
+    auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr, false, false);
     EXPECT_TRUE(ret);
     EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-store-cache-default=1 -cl-load-cache-default=1"), std::string::npos);
 }
@@ -2298,7 +2536,7 @@ HWTEST2_F(ModuleTranslationUnitTest, givenAtLeastXeHpgCoreWhenGetInternalOptions
     auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
     rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);
     MockModuleTranslationUnit moduleTu(this->device);
-    auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
+    auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr, false, false);
     EXPECT_TRUE(ret);
     EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-store-cache-default=2 -cl-load-cache-default=4"), std::string::npos);
 }
@@ -2309,7 +2547,7 @@ HWTEST_F(ModuleTranslationUnitTest, givenForceToStatelessRequiredWhenBuildingMod
     rootDeviceEnvironment->compilerInterface.reset(mockCompilerInterface);
 
     MockModuleTranslationUnit moduleTu(device);
-    auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
+    auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr, false, false);
     EXPECT_TRUE(ret);
 
     const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
@@ -2408,6 +2646,117 @@ TEST(BuildOptions, givenSrcOptionNameInSrcNamesWhenMovingBuildOptionsThenOptionI
     EXPECT_EQ(std::string::npos, srcNames.find(NEO::CompilerOptions::optDisable.str()));
 }
 
+TEST_F(ModuleTest, givenBuildOptionsWhenEnableProgramSymbolTableGenerationIsEnabledThenEnableLibraryCompileIsSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableProgramSymbolTableGeneration.set(1);
+    auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::User);
+    ASSERT_NE(nullptr, module);
+
+    std::string buildOptions;
+    std::string internalBuildOptions;
+
+    module->createBuildOptions("", buildOptions, internalBuildOptions);
+
+    EXPECT_TRUE(NEO::CompilerOptions::contains(buildOptions, BuildOptions::enableLibraryCompile));
+}
+
+TEST_F(ModuleTest, givenBuildOptionsWhenEnableProgramSymbolTableGenerationIsDisabledThenEnableLibraryCompileIsNotSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableProgramSymbolTableGeneration.set(0);
+    auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::User);
+    ASSERT_NE(nullptr, module);
+
+    std::string buildOptions;
+    std::string internalBuildOptions;
+
+    module->createBuildOptions("", buildOptions, internalBuildOptions);
+
+    EXPECT_FALSE(NEO::CompilerOptions::contains(buildOptions, BuildOptions::enableLibraryCompile));
+}
+
+TEST_F(ModuleTest, givenBuildOptionsWithEnableLibraryCompileWhenEnableProgramSymbolTableGenerationIsDisabledThenEnableLibraryCompileIsSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableProgramSymbolTableGeneration.set(0);
+    auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::User);
+    ASSERT_NE(nullptr, module);
+
+    std::string buildOptions;
+    std::string internalBuildOptions;
+
+    module->createBuildOptions(BuildOptions::enableLibraryCompile.str().c_str(), buildOptions, internalBuildOptions);
+
+    EXPECT_TRUE(NEO::CompilerOptions::contains(buildOptions, BuildOptions::enableLibraryCompile));
+}
+
+TEST_F(ModuleTest, givenBuildOptionsWithEnableLibraryCompileWhenEnableProgramSymbolTableGenerationIsEnabledThenEnableLibraryCompileIsSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableProgramSymbolTableGeneration.set(1);
+    auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::User);
+    ASSERT_NE(nullptr, module);
+
+    std::string buildOptions;
+    std::string internalBuildOptions;
+
+    module->createBuildOptions(BuildOptions::enableLibraryCompile.str().c_str(), buildOptions, internalBuildOptions);
+
+    EXPECT_TRUE(NEO::CompilerOptions::contains(buildOptions, BuildOptions::enableLibraryCompile));
+}
+
+TEST_F(ModuleTest, givenBuildOptionsWhenEnableGlobalSymbolGenerationIsEnabledThenEnableGlobalVariableSymbolsIsSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableGlobalSymbolGeneration.set(1);
+    auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::User);
+    ASSERT_NE(nullptr, module);
+
+    std::string buildOptions;
+    std::string internalBuildOptions;
+
+    module->createBuildOptions("", buildOptions, internalBuildOptions);
+
+    EXPECT_TRUE(NEO::CompilerOptions::contains(buildOptions, BuildOptions::enableGlobalVariableSymbols));
+}
+
+TEST_F(ModuleTest, givenBuildOptionsWhenEnableGlobalSymbolGenerationIsDisabledThenEnableGlobalVariableSymbolsIsNotSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableGlobalSymbolGeneration.set(0);
+    auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::User);
+    ASSERT_NE(nullptr, module);
+
+    std::string buildOptions;
+    std::string internalBuildOptions;
+
+    module->createBuildOptions("", buildOptions, internalBuildOptions);
+
+    EXPECT_FALSE(NEO::CompilerOptions::contains(buildOptions, BuildOptions::enableGlobalVariableSymbols));
+}
+
+TEST_F(ModuleTest, givenBuildOptionsWithEnableGlobalVariableSymbolsWhenEnableGlobalSymbolGenerationIsDisabledThenEnableGlobalVariableSymbolsIsSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableGlobalSymbolGeneration.set(0);
+    auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::User);
+    ASSERT_NE(nullptr, module);
+
+    std::string buildOptions;
+    std::string internalBuildOptions;
+
+    module->createBuildOptions(BuildOptions::enableGlobalVariableSymbols.str().c_str(), buildOptions, internalBuildOptions);
+
+    EXPECT_TRUE(NEO::CompilerOptions::contains(buildOptions, BuildOptions::enableGlobalVariableSymbols));
+}
+
+TEST_F(ModuleTest, givenBuildOptionsWithEnableGlobalVariableSymbolsWhenEnableGlobalSymbolGenerationIsEnabledThenEnableGlobalVariableSymbolsIsSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableGlobalSymbolGeneration.set(1);
+    auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::User);
+    ASSERT_NE(nullptr, module);
+
+    std::string buildOptions;
+    std::string internalBuildOptions;
+
+    module->createBuildOptions(BuildOptions::enableGlobalVariableSymbols.str().c_str(), buildOptions, internalBuildOptions);
+
+    EXPECT_TRUE(NEO::CompilerOptions::contains(buildOptions, BuildOptions::enableGlobalVariableSymbols));
+}
 TEST_F(ModuleTest, givenInternalOptionsWhenBindlessEnabledThenBindlesOptionsPassed) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseBindlessMode.set(1);
@@ -2623,7 +2972,7 @@ TEST_F(ModuleInitializeTest, whenModuleInitializeIsCalledThenCorrectResultIsRetu
     class MyMockModuleTU : public MockModuleTU {
       public:
         using MockModuleTU::MockModuleTU;
-        bool createFromNativeBinary(const char *input, size_t inputSize) override { return true; }
+        bool createFromNativeBinary(const char *input, size_t inputSize, bool libraryExportRequired, bool globalExportRequired) override { return true; }
     };
 
     const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);

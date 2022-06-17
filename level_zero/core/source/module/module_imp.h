@@ -33,21 +33,24 @@ extern NEO::ConstStringRef greaterThan4GbRequired;
 extern NEO::ConstStringRef hasBufferOffsetArg;
 extern NEO::ConstStringRef debugKernelEnable;
 extern NEO::ConstStringRef profileFlags;
+extern NEO::ConstStringRef enableLibraryCompile;
+extern NEO::ConstStringRef enableGlobalVariableSymbols;
 } // namespace BuildOptions
 
 struct ModuleTranslationUnit {
     ModuleTranslationUnit(L0::Device *device);
     virtual ~ModuleTranslationUnit();
     MOCKABLE_VIRTUAL bool buildFromSpirV(const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions,
-                                         const ze_module_constants_t *pConstants);
+                                         const ze_module_constants_t *pConstants, bool libraryExportRequired, bool globalExportRequired);
     MOCKABLE_VIRTUAL bool staticLinkSpirV(std::vector<const char *> inputSpirVs, std::vector<uint32_t> inputModuleSizes, const char *buildOptions, const char *internalBuildOptions,
-                                          std::vector<const ze_module_constants_t *> specConstants);
-    MOCKABLE_VIRTUAL bool createFromNativeBinary(const char *input, size_t inputSize);
+                                          std::vector<const ze_module_constants_t *> specConstants, bool libraryExportRequired, bool globalExportRequired);
+    MOCKABLE_VIRTUAL bool createFromNativeBinary(const char *input, size_t inputSize, bool libraryExportRequired, bool globalExportRequired);
     MOCKABLE_VIRTUAL bool processUnpackedBinary();
     std::vector<uint8_t> generateElfFromSpirV(std::vector<const char *> inputSpirVs, std::vector<uint32_t> inputModuleSizes);
     bool processSpecConstantInfo(NEO::CompilerInterface *compilerInterface, const ze_module_constants_t *pConstants, const char *input, uint32_t inputSize);
     std::string generateCompilerOptions(const char *buildOptions, const char *internalBuildOptions);
     MOCKABLE_VIRTUAL bool compileGenBinary(NEO::TranslationInput inputArgs, bool staticLink);
+    MOCKABLE_VIRTUAL bool attemptGenBinaryCompile(NEO::TranslationInput inputArgs, bool staticLink, bool libraryExportRequired, bool globalExportRequired);
     void updateBuildLog(const std::string &newLogEntry);
     void processDebugData();
     L0::Device *device = nullptr;
@@ -171,6 +174,8 @@ struct ModuleImp : public Module {
     bool isFullyLinked = false;
     bool allocatePrivateMemoryPerDispatch = true;
     bool isZebinBinary = false;
+    bool libraryExportRequired = false;
+    bool globalExportRequired = false;
     ModuleType type;
     NEO::Linker::UnresolvedExternals unresolvedExternalsInfo{};
     std::set<NEO::GraphicsAllocation *> importedSymbolAllocations{};
