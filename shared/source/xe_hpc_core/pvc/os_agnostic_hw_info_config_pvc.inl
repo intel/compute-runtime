@@ -184,3 +184,23 @@ template <>
 bool HwInfoConfigHw<gfxProduct>::isAssignEngineRoundRobinSupported() const {
     return false;
 }
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isComputeDispatchAllWalkerEnableInComputeWalkerRequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <>
+uint32_t HwInfoConfigHw<gfxProduct>::getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const {
+    return PVC::isXlA0(hwInfo) ? 8u : 16u;
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const {
+    return true;
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isIpSamplingSupported(const HardwareInfo &hwInfo) const {
+    return PVC::isXt(hwInfo);
+}

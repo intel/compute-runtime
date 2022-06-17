@@ -32,8 +32,6 @@ struct PVC : public XE_HPC_COREFamily {
     static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static void setupHardwareInfoMultiTileBase(HardwareInfo *hwInfo, bool setupMultiTile);
     static void adjustHardwareInfo(HardwareInfo *hwInfo);
-    static bool isXlA0(const HardwareInfo &hwInfo);
-    static bool isAtMostXtA0(const HardwareInfo &hwInfo);
 
     static constexpr uint8_t pvcBaseDieRevMask = 0b111000; // [3:5]
     static constexpr uint8_t pvcBaseDieA0Masked = 0;       // [3:5] == 0
@@ -48,6 +46,15 @@ struct PVC : public XE_HPC_COREFamily {
         return it != PVC_XT_IDS.end();
     }
 
+    static bool isXlA0(const HardwareInfo &hwInfo) {
+        auto revId = hwInfo.platform.usRevId & pvcSteppingBits;
+        return (revId < 0x3);
+    }
+
+    static bool isAtMostXtA0(const HardwareInfo &hwInfo) {
+        auto revId = hwInfo.platform.usRevId & pvcSteppingBits;
+        return (revId <= 0x3);
+    }
     static constexpr uint32_t pvcSteppingBits = 0b111;
 };
 

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/test.h"
@@ -24,6 +25,14 @@ XE_HPC_CORETEST_F(WalkerDispatchTestsXeHpcCore, givenXeHpcWhenEncodeAdditionalWa
     {
         EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, walkerArgs);
         EXPECT_FALSE(walkerCmd.getComputeDispatchAllWalkerEnable());
+    }
+
+    {
+        const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+        uint32_t expectedValue = hwInfoConfig.isComputeDispatchAllWalkerEnableInComputeWalkerRequired(hwInfo);
+        walkerArgs.kernelExecutionType = KernelExecutionType::Concurrent;
+        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, walkerArgs);
+        EXPECT_EQ(expectedValue, walkerCmd.getComputeDispatchAllWalkerEnable());
     }
 
     {
