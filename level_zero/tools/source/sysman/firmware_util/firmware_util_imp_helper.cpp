@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/tools/source/sysman/linux/firmware_util/firmware_util_imp.h"
+#include "level_zero/tools/source/sysman/firmware_util/firmware_util_imp.h"
 
 std::vector<std ::string> deviceSupportedFwTypes = {"GSC", "OptionROM"};
 

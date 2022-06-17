@@ -13,6 +13,7 @@
 #include "sysman/linux/os_sysman_imp.h"
 
 namespace L0 {
+class FirmwareUtil;
 
 class LinuxDiagnosticsImp : public OsDiagnostics, NEO::NonCopyableOrMovableClass {
   public:

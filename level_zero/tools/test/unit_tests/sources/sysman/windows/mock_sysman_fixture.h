@@ -29,6 +29,7 @@ namespace ult {
 
 class PublicWddmSysmanImp : public L0::WddmSysmanImp {
   public:
+    using WddmSysmanImp::pFwUtilInterface;
     using WddmSysmanImp::pKmdSysManager;
 };
 

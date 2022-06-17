@@ -6,6 +6,7 @@
  */
 
 #include "level_zero/tools/source/sysman/firmware/linux/os_firmware_imp.h"
+#include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
 
 const std::string iafPath = "device/";
 const std::string iafDirectory = "iaf.";

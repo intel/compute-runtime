@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/tools/source/sysman/linux/firmware_util/firmware_util.h"
+#include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
 
 #include <cinttypes>
 #include <mutex>
@@ -64,7 +64,7 @@ extern pIgscDeviceClose deviceClose;
 
 class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
   public:
-    FirmwareUtilImp(const std::string &pciBDF);
+    FirmwareUtilImp(uint16_t domain, uint8_t bus, uint8_t device, uint8_t function);
     ~FirmwareUtilImp() override;
     ze_result_t fwDeviceInit() override;
     ze_result_t getFirstDevice(igsc_device_info *) override;
@@ -86,6 +86,9 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     ze_result_t fwFlashIafPsc(void *pImage, uint32_t size);
     ze_result_t fwCallGetstatusExt(uint32_t &supportedTests, uint32_t &ifrApplied, uint32_t &prevErrors, uint32_t &pendingReset);
 
+    using OsLibraryLoadPtr = std::add_pointer<NEO::OsLibrary *(const std::string &)>::type;
+    static OsLibraryLoadPtr osLibraryLoadFunction;
+    static std::string fwUtilLibraryName;
     std::string fwDevicePath{};
     struct igsc_device_handle fwDeviceHandle = {};
     bool loadEntryPoints();

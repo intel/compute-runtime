@@ -5,6 +5,7 @@
  *
  */
 
+#include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
 #include "level_zero/tools/source/sysman/ras/linux/os_ras_imp_prelim.h"
 
 #include "sysman/linux/os_sysman_imp.h"

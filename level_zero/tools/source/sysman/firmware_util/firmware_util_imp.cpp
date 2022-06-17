@@ -1,16 +1,15 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "level_zero/tools/source/sysman/linux/firmware_util/firmware_util_imp.h"
+#include "level_zero/tools/source/sysman/firmware_util/firmware_util_imp.h"
 
 #include "shared/source/utilities/directory.h"
 
 namespace L0 {
-const std::string fwUtilLibraryFile = "libigsc.so.0";
 const std::string fwDeviceInitByDevice = "igsc_device_init_by_device_info";
 const std::string fwDeviceGetDeviceInfo = "igsc_device_get_device_info";
 const std::string fwDeviceFwVersion = "igsc_device_fw_version";
@@ -59,6 +58,8 @@ static void progressFunc(uint32_t done, uint32_t total, void *ctx) {
     uint32_t percent = (done * 100) / total;
     PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stdout, "Progess: %d/%d:%d/%\n", done, total, percent);
 }
+
+FirmwareUtilImp::OsLibraryLoadPtr FirmwareUtilImp::osLibraryLoadFunction(NEO::OsLibrary::load);
 
 ze_result_t FirmwareUtilImp::getFirstDevice(igsc_device_info *info) {
     igsc_device_iterator *iter;
@@ -172,9 +173,8 @@ ze_result_t FirmwareUtilImp::fwFlashOprom(void *pImage, uint32_t size) {
     return ZE_RESULT_SUCCESS;
 }
 
-FirmwareUtilImp::FirmwareUtilImp(const std::string &pciBDF) {
-    NEO::parseBdfString(pciBDF.c_str(), domain, bus, device, function);
-};
+FirmwareUtilImp::FirmwareUtilImp(uint16_t domain, uint8_t bus, uint8_t device, uint8_t function) : domain(domain), bus(bus), device(device), function(function) {
+}
 
 FirmwareUtilImp::~FirmwareUtilImp() {
     if (nullptr != libraryHandle) {
@@ -184,10 +184,10 @@ FirmwareUtilImp::~FirmwareUtilImp() {
     }
 };
 
-FirmwareUtil *FirmwareUtil::create(const std::string &pciBDF) {
-    FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp(pciBDF);
+FirmwareUtil *FirmwareUtil::create(uint16_t domain, uint8_t bus, uint8_t device, uint8_t function) {
+    FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp(domain, bus, device, function);
     UNRECOVERABLE_IF(nullptr == pFwUtilImp);
-    pFwUtilImp->libraryHandle = NEO::OsLibrary::load(fwUtilLibraryFile);
+    pFwUtilImp->libraryHandle = FirmwareUtilImp::osLibraryLoadFunction(FirmwareUtilImp::fwUtilLibraryName);
     if (pFwUtilImp->libraryHandle == nullptr || pFwUtilImp->loadEntryPoints() == false) {
         if (nullptr != pFwUtilImp->libraryHandle) {
             delete pFwUtilImp->libraryHandle;

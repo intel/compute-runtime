@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,21 +10,16 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/tools/source/sysman/firmware_util/igsc_wrapper.h"
 #include <level_zero/zes_api.h>
 
-#ifdef IGSC_PRESENT
-#include "igsc_lib.h"
-#else
-typedef struct igsc_device_info {
-} igsc_device_info_t;
-#endif
 #include <string>
 #include <vector>
 
 namespace L0 {
 class FirmwareUtil {
   public:
-    static FirmwareUtil *create(const std::string &pciBDF);
+    static FirmwareUtil *create(uint16_t domain, uint8_t bus, uint8_t device, uint8_t function);
     virtual ze_result_t fwDeviceInit() = 0;
     virtual ze_result_t getFirstDevice(igsc_device_info *) = 0;
     virtual ze_result_t getFwVersion(std::string fwType, std::string &firmwareVersion) = 0;

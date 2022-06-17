@@ -11,9 +11,10 @@
 
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 
-#include "sysman/linux/firmware_util/firmware_util.h"
+#include "sysman/firmware_util/firmware_util.h"
 
 namespace L0 {
 
@@ -52,14 +53,15 @@ ze_result_t LinuxSysmanImp::init() {
 }
 
 void LinuxSysmanImp::createFwUtilInterface() {
-    std::string realRootPath;
-    auto result = pSysfsAccess->getRealPath("device", realRootPath);
-    if (ZE_RESULT_SUCCESS != result) {
+    ze_pci_ext_properties_t pPciProperties;
+    if (ZE_RESULT_SUCCESS != pDevice->getPciProperties(&pPciProperties)) {
         return;
     }
-    auto rootPciPathOfGpuDevice = getPciRootPortDirectoryPath(realRootPath);
-    auto loc = realRootPath.find_last_of('/');
-    pFwUtilInterface = FirmwareUtil::create(realRootPath.substr(loc + 1, std::string::npos));
+    uint16_t domain = static_cast<uint16_t>(pPciProperties.address.domain);
+    uint8_t bus = static_cast<uint8_t>(pPciProperties.address.bus);
+    uint8_t device = static_cast<uint8_t>(pPciProperties.address.device);
+    uint8_t function = static_cast<uint8_t>(pPciProperties.address.function);
+    pFwUtilInterface = FirmwareUtil::create(domain, bus, device, function);
 }
 
 ze_result_t LinuxSysmanImp::createPmtHandles() {

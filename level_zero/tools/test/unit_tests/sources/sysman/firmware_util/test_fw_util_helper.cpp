@@ -7,8 +7,8 @@
 
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/tools/source/sysman/linux/firmware_util/firmware_util_imp.h"
-#include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_fw_util_fixture.h"
+#include "level_zero/tools/source/sysman/firmware_util/firmware_util_imp.h"
+#include "level_zero/tools/test/unit_tests/sources/sysman/firmware_util/mock_fw_util_fixture.h"
 
 extern bool sysmanUltsEnable;
 
@@ -22,8 +22,7 @@ TEST(LinuxFwEccTest, GivenGetProcAddrCallFailsWhenFirmwareUtilChecksEccGetAndSet
         GTEST_SKIP();
     }
 
-    std::string pciBdf("0000:00:00.0");
-    FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp(pciBdf);
+    FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp(0, 0, 0, 0);
     pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(new MockOsLibrary());
     uint8_t currentState = 0;
     uint8_t pendingState = 0;

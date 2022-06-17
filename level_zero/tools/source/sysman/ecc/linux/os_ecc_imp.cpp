@@ -8,6 +8,7 @@
 #include "level_zero/tools/source/sysman/ecc/linux/os_ecc_imp.h"
 
 #include "level_zero/tools/source/sysman/ecc/ecc_imp.h"
+#include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
 
 namespace L0 {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "sysman/linux/os_sysman_imp.h"
 
 namespace L0 {
+class FirmwareUtil;
 
 class LinuxFirmwareImp : public OsFirmware, NEO::NonCopyableOrMovableClass {
   public:

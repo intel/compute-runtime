@@ -1,13 +1,15 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/os_interface/debug_env_reader.h"
+#include "shared/test/common/mocks/mock_driver_info.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/tools/test/unit_tests/sources/sysman/firmware_util/mock_fw_util_fixture.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/windows/mock_sysman_fixture.h"
 
 namespace L0 {
@@ -32,6 +34,17 @@ TEST_F(SysmanDeviceFixture, GivenMockEnvValuesWhenGettingEnvValueThenCorrectValu
     ASSERT_NE(IoFunctions::mockableEnvValues, nullptr);
     EnvironmentVariableReader envVarReader;
     EXPECT_EQ(envVarReader.getSetting("ZES_ENABLE_SYSMAN", false), true);
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenGettingFwUtilInterfaceAndGetPciBdfFailsThenFailureIsReturned) {
+    auto deviceImp = static_cast<L0::DeviceImp *>(pWddmSysmanImp->getDeviceHandle());
+
+    deviceImp->driverInfo.reset(nullptr);
+    FirmwareUtil *pFwUtilInterfaceOld = pWddmSysmanImp->pFwUtilInterface;
+    pWddmSysmanImp->pFwUtilInterface = nullptr;
+
+    EXPECT_EQ(pWddmSysmanImp->getFwUtilInterface(), nullptr);
+    pWddmSysmanImp->pFwUtilInterface = pFwUtilInterfaceOld;
 }
 
 } // namespace ult

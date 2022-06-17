@@ -5,6 +5,7 @@
  *
  */
 
+#include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
 #include "level_zero/tools/source/sysman/global_operations/linux/os_global_operations_imp.h"
 
 namespace L0 {

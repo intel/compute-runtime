@@ -11,7 +11,6 @@
 #include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/tools/source/sysman/linux/firmware_util/firmware_util.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/pmt/pmt.h"
 #include "level_zero/tools/source/sysman/linux/pmu/pmu_imp.h"
@@ -23,6 +22,7 @@
 namespace L0 {
 
 class PmuInterface;
+class FirmwareUtil;
 
 class ExecutionEnvironmentRefCountRestore {
   public:

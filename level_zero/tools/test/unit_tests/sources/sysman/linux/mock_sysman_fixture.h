@@ -15,7 +15,7 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/sysman/sysman.h"
-#include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_fw_util_fixture.h"
+#include "level_zero/tools/test/unit_tests/sources/sysman/firmware_util/mock_fw_util_fixture.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_procfs_access_fixture.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysfs_access_fixture.h"
 
@@ -53,7 +53,7 @@ class SysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
   public:
     Mock<LinuxSysfsAccess> *pSysfsAccess = nullptr;
     Mock<LinuxProcfsAccess> *pProcfsAccess = nullptr;
-    MockLinuxFwUtilInterface *pFwUtilInterface = nullptr;
+    MockFwUtilInterface *pFwUtilInterface = nullptr;
     void SetUp() override {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
@@ -69,7 +69,7 @@ class SysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
         pOsSysman = pSysmanDeviceImp->pOsSysman;
         pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pOsSysman);
 
-        pFwUtilInterface = new MockLinuxFwUtilInterface();
+        pFwUtilInterface = new MockFwUtilInterface();
         pSysfsAccess = new NiceMock<Mock<LinuxSysfsAccess>>;
         pProcfsAccess = new NiceMock<Mock<LinuxProcfsAccess>>;
         pLinuxSysmanImp->pFwUtilInterface = pFwUtilInterface;
@@ -102,7 +102,7 @@ class SysmanMultiDeviceFixture : public MultiDeviceFixture, public ::testing::Te
   public:
     Mock<LinuxSysfsAccess> *pSysfsAccess = nullptr;
     Mock<LinuxProcfsAccess> *pProcfsAccess = nullptr;
-    MockLinuxFwUtilInterface *pFwUtilInterface = nullptr;
+    MockFwUtilInterface *pFwUtilInterface = nullptr;
     void SetUp() override {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
@@ -124,7 +124,7 @@ class SysmanMultiDeviceFixture : public MultiDeviceFixture, public ::testing::Te
         pOsSysman = pSysmanDeviceImp->pOsSysman;
         pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pOsSysman);
 
-        pFwUtilInterface = new MockLinuxFwUtilInterface();
+        pFwUtilInterface = new MockFwUtilInterface();
         pSysfsAccess = new NiceMock<Mock<LinuxSysfsAccess>>;
         pProcfsAccess = new NiceMock<Mock<LinuxProcfsAccess>>;
         pLinuxSysmanImp->pFwUtilInterface = pFwUtilInterface;

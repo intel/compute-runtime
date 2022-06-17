@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/test/common/mocks/mock_driver_info.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
@@ -344,6 +345,17 @@ TEST_F(SysmanDeviceFixture, GivenNullDrmHandleWhenGettingDrmHandleThenValidDrmHa
 TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenProductFamilyFromDeviceThenValidCorrectProductFamilyIsReturned) {
     auto productFamily = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getHardwareInfo().platform.eProductFamily;
     EXPECT_EQ(productFamily, pLinuxSysmanImp->getProductFamily());
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenGettingFwUtilInterfaceAndGetPciBdfFailsThenFailureIsReturned) {
+    auto deviceImp = static_cast<L0::DeviceImp *>(pLinuxSysmanImp->getDeviceHandle());
+
+    deviceImp->driverInfo.reset(nullptr);
+    FirmwareUtil *pFwUtilInterfaceOld = pLinuxSysmanImp->pFwUtilInterface;
+    pLinuxSysmanImp->pFwUtilInterface = nullptr;
+
+    EXPECT_EQ(pLinuxSysmanImp->getFwUtilInterface(), nullptr);
+    pLinuxSysmanImp->pFwUtilInterface = pFwUtilInterfaceOld;
 }
 
 TEST_F(SysmanMultiDeviceFixture, GivenValidDeviceHandleHavingSubdevicesWhenValidatingSysmanHandlesForSubdevicesThenSysmanHandleForSubdeviceWillBeSameAsSysmanHandleForDevice) {
