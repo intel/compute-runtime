@@ -66,12 +66,36 @@ struct MockModuleTranslationUnit : public L0::ModuleTranslationUnit {
     }
 
     bool compileGenBinary(NEO::TranslationInput inputArgs, bool staticLink) override {
+        if (failGenCompile || failGenCompileCounter > 0) {
+            failGenCompileCounter = failGenCompileCounter - 1;
+            return false;
+        }
         if (unpackedDeviceBinarySize && unpackedDeviceBinary) {
             return true;
         } else {
             return ModuleTranslationUnit::compileGenBinary(inputArgs, staticLink);
         }
     }
+
+    bool attemptGenBinaryCompile(NEO::TranslationInput inputArgs, bool staticLink, bool libraryExportRequired, bool globalExportRequired) override {
+        bool libraryExport = libraryExportRequired;
+        bool globalExport = globalExportRequired;
+        if (requireGlobalExport) {
+            globalExport = true;
+        }
+        if (requireLibraryExport) {
+            libraryExport = true;
+        }
+        if (unpackedDeviceBinarySize && unpackedDeviceBinary) {
+            return true;
+        } else {
+            return ModuleTranslationUnit::attemptGenBinaryCompile(inputArgs, staticLink, libraryExport, globalExport);
+        }
+    }
+    bool failGenCompile = false;
+    bool requireGlobalExport = false;
+    bool requireLibraryExport = false;
+    int failGenCompileCounter = 0;
 };
 
 struct MockModule : public L0::ModuleImp {
