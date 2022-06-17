@@ -54,7 +54,7 @@ if(WIN32)
                      COMMAND WORKING_DIRECTORY ${TargetDir}
                      COMMAND echo Target Directory is: ${TargetDir}
                      COMMAND echo Running Windows dll tests
-                     COMMAND igdrcl_windows_dll_tests
+                     COMMAND igdrcl_windows_dll_tests --slices 1 --subslices 2 --eu_per_ss 4
   )
   add_dependencies(run_ocl_tests run_windows_dll_tests)
 
