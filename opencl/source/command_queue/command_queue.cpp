@@ -137,7 +137,7 @@ void CommandQueue::initializeGpgpu() const {
             !this->isSpecialCommandQueue &&
             !this->queueFamilySelected &&
             !(getCmdQueueProperties<cl_queue_priority_khr>(propertiesVector.data(), CL_QUEUE_PRIORITY_KHR) & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_LOW_KHR)) &&
-            hwHelper.isAssignEngineRoundRobinSupported() &&
+            hwHelper.isAssignEngineRoundRobinSupported(hwInfo) &&
             this->isAssignEngineRoundRobinEnabled();
 
         if (assignEngineRoundRobin) {

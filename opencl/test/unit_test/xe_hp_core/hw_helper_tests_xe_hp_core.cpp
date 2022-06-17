@@ -191,7 +191,7 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenDisablePipeControlFlagIsEnabledWh
 
 XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenXeHPAndLaterPlatformWhenCheckAssignEngineRoundRobinSupportedThenReturnFalse) {
     auto &hwHelper = HwHelperHw<FamilyType>::get();
-    EXPECT_FALSE(hwHelper.isAssignEngineRoundRobinSupported());
+    EXPECT_FALSE(hwHelper.isAssignEngineRoundRobinSupported(*defaultHwInfo));
 }
 
 using HwInfoConfigTestXE_HP_CORE = ::testing::Test;

@@ -124,7 +124,7 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, WhenCheckingSipWAThenFalseIsReturned) {
 
 XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenXeHPAndLaterPlatformWhenCheckAssignEngineRoundRobinSupportedThenReturnFalse) {
     auto &hwHelper = HwHelperHw<FamilyType>::get();
-    EXPECT_FALSE(hwHelper.isAssignEngineRoundRobinSupported());
+    EXPECT_FALSE(hwHelper.isAssignEngineRoundRobinSupported(*defaultHwInfo));
 }
 
 XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenHwHelperWhenCheckTimestampWaitSupportThenReturnFalse) {

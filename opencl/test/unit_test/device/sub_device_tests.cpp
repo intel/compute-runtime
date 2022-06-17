@@ -994,7 +994,7 @@ HWTEST_F(EngineInstancedDeviceTests, whenCreateMultipleCommandQueuesThenEnginesA
     auto &hwInfo = rootDevice->getHardwareInfo();
     const auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    if (!hwHelper.isAssignEngineRoundRobinSupported()) {
+    if (!hwHelper.isAssignEngineRoundRobinSupported(hwInfo)) {
         GTEST_SKIP();
     }
 
@@ -1040,7 +1040,7 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignBitfieldwWe
     auto &hwInfo = rootDevice->getHardwareInfo();
     const auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    if (!hwHelper.isAssignEngineRoundRobinSupported()) {
+    if (!hwHelper.isAssignEngineRoundRobinSupported(hwInfo)) {
         GTEST_SKIP();
     }
 
@@ -1089,7 +1089,7 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignNTo1wWenCre
     auto &hwInfo = rootDevice->getHardwareInfo();
     const auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    if (!hwHelper.isAssignEngineRoundRobinSupported()) {
+    if (!hwHelper.isAssignEngineRoundRobinSupported(hwInfo)) {
         GTEST_SKIP();
     }
 
@@ -1136,7 +1136,7 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignNTo1AndCmdQ
     auto &hwInfo = rootDevice->getHardwareInfo();
     const auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    if (!hwHelper.isAssignEngineRoundRobinSupported()) {
+    if (!hwHelper.isAssignEngineRoundRobinSupported(hwInfo)) {
         GTEST_SKIP();
     }
 
@@ -1184,7 +1184,7 @@ HWTEST_F(EngineInstancedDeviceTests, givenEnableCmdQRoundRobindEngineAssignDisab
     auto &hwInfo = rootDevice->getHardwareInfo();
     const auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    if (!hwHelper.isAssignEngineRoundRobinSupported()) {
+    if (!hwHelper.isAssignEngineRoundRobinSupported(hwInfo)) {
         GTEST_SKIP();
     }
 

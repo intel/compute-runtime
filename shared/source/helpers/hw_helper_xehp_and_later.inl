@@ -152,7 +152,7 @@ uint32_t HwHelperHw<GfxFamily>::getPlanarYuvMaxHeight() const {
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isAssignEngineRoundRobinSupported() const {
+bool HwHelperHw<GfxFamily>::isAssignEngineRoundRobinSupported(const HardwareInfo &hwInfo) const {
     return false;
 }
 

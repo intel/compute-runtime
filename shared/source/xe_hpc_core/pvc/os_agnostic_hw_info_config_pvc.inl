@@ -179,3 +179,8 @@ template <>
 bool HwInfoConfigHw<gfxProduct>::isImplicitScalingSupported(const HardwareInfo &hwInfo) const {
     return getSteppingFromHwRevId(hwInfo) >= REVISION_B;
 }
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isAssignEngineRoundRobinSupported() const {
+    return false;
+}

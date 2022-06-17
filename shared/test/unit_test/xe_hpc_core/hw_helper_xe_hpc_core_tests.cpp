@@ -66,6 +66,7 @@ XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenHwHelperWhenCheckTimestampWaitSupp
 }
 
 XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenXeHPCPlatformWhenCheckAssignEngineRoundRobinSupportedThenReturnTrue) {
+    auto hwInfo = *defaultHwInfo;
     auto &hwHelper = HwHelperHw<FamilyType>::get();
-    EXPECT_TRUE(hwHelper.isAssignEngineRoundRobinSupported());
+    EXPECT_EQ(hwHelper.isAssignEngineRoundRobinSupported(hwInfo), HwInfoConfig::get(hwInfo.platform.eProductFamily)->isAssignEngineRoundRobinSupported());
 }

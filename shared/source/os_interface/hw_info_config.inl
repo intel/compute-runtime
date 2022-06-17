@@ -223,6 +223,11 @@ bool HwInfoConfigHw<gfxProduct>::isPrefetchDisablingRequired(const HardwareInfo 
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isAssignEngineRoundRobinSupported() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 std::pair<bool, bool> HwInfoConfigHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
     return {false, false};
 }

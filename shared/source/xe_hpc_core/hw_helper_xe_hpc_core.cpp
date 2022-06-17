@@ -371,8 +371,8 @@ int32_t HwHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
 }
 
 template <>
-bool HwHelperHw<Family>::isAssignEngineRoundRobinSupported() const {
-    return true;
+bool HwHelperHw<Family>::isAssignEngineRoundRobinSupported(const HardwareInfo &hwInfo) const {
+    return HwInfoConfig::get(hwInfo.platform.eProductFamily)->isAssignEngineRoundRobinSupported();
 }
 
 template <>
