@@ -392,7 +392,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenUnifiedSharedMemoryWhenMultiStoragePlace
     EXPECT_EQ(proposedTiles, storageInfo.memoryBanks);
 }
 
-TEST_F(MultiDeviceStorageInfoTest, givenUnifiedSharedMemoryWhenKmdMigrationIsUsedThenPreferredTileIsUsed) {
+TEST_F(MultiDeviceStorageInfoTest, givenUnifiedSharedMemoryOnMultiTileWhenKmdMigrationIsEnabledThenAllTilesAreUsed) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseKmdMigration.set(1);
 
@@ -400,13 +400,9 @@ TEST_F(MultiDeviceStorageInfoTest, givenUnifiedSharedMemoryWhenKmdMigrationIsUse
 
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
 
-    DeviceBitfield preferredTile;
     EXPECT_TRUE(properties.subDevicesBitfield.count() > 1);
-    const auto leastOccupiedBank = memoryManager->getLocalMemoryUsageBankSelector(properties.allocationType, properties.rootDeviceIndex)->getLeastOccupiedBank(properties.subDevicesBitfield);
-    UNRECOVERABLE_IF(!properties.subDevicesBitfield.test(leastOccupiedBank));
-    preferredTile.set(leastOccupiedBank);
 
-    EXPECT_EQ(preferredTile, storageInfo.memoryBanks);
+    EXPECT_EQ(allTilesMask, storageInfo.memoryBanks);
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenLeastOccupiedBankAndOtherBitsEnabledInSubDeviceBitfieldWhenCreateStorageInfoThenTakeLeastOccupiedBankAsMemoryBank) {

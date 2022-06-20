@@ -4070,13 +4070,13 @@ TEST_F(DrmMemoryManagerTest, givenPageFaultIsSupportedAndKmdMigrationEnabledForB
     MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
 
-    for (auto useKmdMigrationForBuffer : {-1, 0, 1}) {
-        DebugManager.flags.UseKmdMigrationForBuffers.set(useKmdMigrationForBuffer);
+    for (auto useKmdMigrationForBuffers : {-1, 0, 1}) {
+        DebugManager.flags.UseKmdMigrationForBuffers.set(useKmdMigrationForBuffers);
 
         std::vector<BufferObject *> bufferObjects;
         allocation.bindBO(&bo, &osContext, vmHandleId, &bufferObjects, true);
 
-        if (useKmdMigrationForBuffer > 0) {
+        if (useKmdMigrationForBuffers > 0) {
             EXPECT_TRUE(allocation.shouldAllocationPageFault(&drm));
             EXPECT_FALSE(bo.isExplicitResidencyRequired());
         } else {

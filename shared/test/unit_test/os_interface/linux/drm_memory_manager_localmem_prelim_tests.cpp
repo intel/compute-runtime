@@ -488,10 +488,11 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSetVmAdviseAtomicAttributeWhe
     }
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationAndUsmInitialPlacementSetWhenCreateSharedUnifiedMemoryAllocationThenKmdMigratedAllocationIsCreatedWithCorrectRegionsOrder) {
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationAndUsmInitialPlacementSetToGpuWhenCreateUnifiedSharedMemoryWithOverridenMultiStoragePlacementThenKmdMigratedAllocationIsCreatedWithCorrectRegionsOrder) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseKmdMigration.set(1);
     DebugManager.flags.UsmInitialPlacement.set(1);
+    DebugManager.flags.OverrideMultiStoragePlacement.set(0x1);
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
@@ -530,11 +531,10 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationAndUsmInitialP
     unifiedMemoryManager.freeSVMAlloc(ptr);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationAndUsmInitialPlacementSetWhenCreateSharedUnifiedMemoryAllocationWithMultiStoragePlacementThenKmdMigratedAllocationIsCreatedWithCorrectRegionsOrder) {
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationAndUsmInitialPlacementSetToGpuWhenCreateSharedUnifiedMemoryAllocationOnMultiTileArchitectureThenKmdMigratedAllocationIsCreatedWithCorrectRegionsOrder) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseKmdMigration.set(1);
     DebugManager.flags.UsmInitialPlacement.set(1);
-    DebugManager.flags.OverrideMultiStoragePlacement.set(0xF);
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
