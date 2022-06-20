@@ -30,10 +30,10 @@
 #include "level_zero/tools/source/debug/linux/prelim/debug_session.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "common/StateSaveAreaHeader.h"
 
-#include "gmock/gmock.h"
 #include <atomic>
 #include <fstream>
 #include <queue>
@@ -827,9 +827,9 @@ TEST(DebugSessionTest, GivenLogsEnabledWhenPrintContextVmsCalledThenMapIsPrinted
 
     auto map = ::testing::internal::GetCapturedStdout();
 
-    EXPECT_THAT(map, testing::HasSubstr(std::string("INFO: Context - VM map:")));
-    EXPECT_THAT(map, testing::HasSubstr(std::string("Context = 0 : 1")));
-    EXPECT_THAT(map, testing::HasSubstr(std::string("Context = 1 : 2")));
+    EXPECT_TRUE(hasSubstr(map, std::string("INFO: Context - VM map:")));
+    EXPECT_TRUE(hasSubstr(map, std::string("Context = 0 : 1")));
+    EXPECT_TRUE(hasSubstr(map, std::string("Context = 1 : 2")));
 }
 
 TEST(DebugSessionTest, GivenLogsDisabledWhenPrintContextVmsCalledThenMapIsiNotPrinted) {
@@ -4825,7 +4825,7 @@ TEST_F(DebugApiLinuxTest, GivenContextParamEventWhenTypeIsParamEngineThenEventIs
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].engines[0].engine_instance);
 
     auto infoMessage = ::testing::internal::GetCapturedStdout();
-    EXPECT_THAT(infoMessage, testing::HasSubstr(std::string("I915_CONTEXT_PARAM_ENGINES ctx_id = 20 param = 10 value = 0")));
+    EXPECT_TRUE(hasSubstr(infoMessage, std::string("I915_CONTEXT_PARAM_ENGINES ctx_id = 20 param = 10 value = 0")));
 }
 
 TEST_F(DebugApiLinuxTest, GivenDebuggerErrorLogsWhenContextParamWithInvalidContextIsHandledThenErrorIsPrinted) {
@@ -4895,7 +4895,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerInfoLogsWhenHandlingContextParamEventWith
               session->clientHandleToConnection[contextParamEvent.client_handle]->contextsCreated.find(77));
 
     auto errorMessage = ::testing::internal::GetCapturedStdout();
-    EXPECT_THAT(errorMessage, testing::HasSubstr(std::string("client_handle = 1 ctx_handle = 20\n\nINFO: I915_CONTEXT_PARAM UNHANDLED = 1\n")));
+    EXPECT_TRUE(hasSubstr(errorMessage, std::string("client_handle = 1 ctx_handle = 20\n\nINFO: I915_CONTEXT_PARAM UNHANDLED = 1\n")));
 }
 
 TEST_F(DebugApiLinuxTest, WhenCallingThreadControlForInterruptThenProperIoctlsIsCalled) {
@@ -5184,9 +5184,9 @@ TEST_F(DebugApiLinuxTest, givenEnginesEventHandledThenLrcToContextHandleMapIsFil
     EXPECT_EQ(40u, session->clientHandleToConnection[clientHandle]->lrcToContextHandle[5]);
 
     auto infoMessage = ::testing::internal::GetCapturedStdout();
-    EXPECT_THAT(infoMessage, testing::HasSubstr(std::string("ENGINES event: client_handle = 34, ctx_handle = 20, num_engines = 2 CREATE")));
-    EXPECT_THAT(infoMessage, testing::HasSubstr(std::string("ENGINES event: client_handle = 34, ctx_handle = 40, num_engines = 4 CREATE")));
-    EXPECT_THAT(infoMessage, testing::HasSubstr(std::string("ENGINES event: client_handle = 34, ctx_handle = 20, num_engines = 2 DESTROY")));
+    EXPECT_TRUE(hasSubstr(infoMessage, std::string("ENGINES event: client_handle = 34, ctx_handle = 20, num_engines = 2 CREATE")));
+    EXPECT_TRUE(hasSubstr(infoMessage, std::string("ENGINES event: client_handle = 34, ctx_handle = 40, num_engines = 4 CREATE")));
+    EXPECT_TRUE(hasSubstr(infoMessage, std::string("ENGINES event: client_handle = 34, ctx_handle = 20, num_engines = 2 DESTROY")));
 }
 
 using DebugApiLinuxAttentionTest = Test<DebugApiLinuxFixture>;

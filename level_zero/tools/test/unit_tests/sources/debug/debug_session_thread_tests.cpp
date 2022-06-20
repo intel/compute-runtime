@@ -9,6 +9,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -16,7 +17,6 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
 
-#include "gmock/gmock.h"
 namespace L0 {
 namespace ult {
 
@@ -481,9 +481,9 @@ TEST(DebugSession, GivenLogsEnabledWhenPrintBitmaskCalledThenBitmaskIsPrinted) {
 
     auto output = ::testing::internal::GetCapturedStdout();
 
-    EXPECT_THAT(output, testing::HasSubstr(std::string("\nINFO: Bitmask: ")));
-    EXPECT_THAT(output, testing::HasSubstr(std::string("[0] = 0x0000404080808080")));
-    EXPECT_THAT(output, testing::HasSubstr(std::string("[1] = 0x1111ffff1111ffff")));
+    EXPECT_TRUE(hasSubstr(output, std::string("\nINFO: Bitmask: ")));
+    EXPECT_TRUE(hasSubstr(output, std::string("[0] = 0x0000404080808080")));
+    EXPECT_TRUE(hasSubstr(output, std::string("[1] = 0x1111ffff1111ffff")));
 }
 
 TEST(DebugSession, GivenLogsDisabledWhenPrintBitmaskCalledThenBitmaskIsNotPrinted) {
