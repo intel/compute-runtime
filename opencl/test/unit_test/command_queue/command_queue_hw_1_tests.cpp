@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_builtins.h"
@@ -367,7 +368,7 @@ HWTEST_F(CommandQueueHwTest, GivenEventWhenEnqueuingBlockedMapUnmapOperationThen
     pHwQ->virtualEvent = nullptr;
 
     pHwQ->virtualEvent = &event;
-    //virtual event from regular event to stored in previousVirtualEvent
+    // virtual event from regular event to stored in previousVirtualEvent
     pHwQ->virtualEvent->incRefInternal();
 
     MockEventBuilder eventBuilder(returnEvent);
@@ -503,7 +504,7 @@ HWTEST_F(CommandQueueHwTest, whenReleaseQueueCalledThenFlushIsCalled) {
     mockCmdQ->incRefInternal();
     releaseQueue(mockCmdQ, retVal);
     EXPECT_TRUE(mockCmdQ->flushCalled);
-    //this call will release the queue
+    // this call will release the queue
     mockCmdQ->decRefInternal();
 }
 
@@ -643,7 +644,7 @@ HWTEST_F(CommandQueueHwRefCountTest, givenBlockedCmdQWhenNewBlockedEnqueueReplac
     // UserEvent is set to complete and event tree is unblocked, queue has only 1 refference to itself after this operation
     EXPECT_EQ(2, mockCmdQ->getRefInternalCount());
 
-    //this call will release the queue
+    // this call will release the queue
     releaseQueue(mockCmdQ, retVal);
 }
 
@@ -669,7 +670,7 @@ HWTEST_F(CommandQueueHwRefCountTest, givenBlockedCmdQWithOutputEventAsVirtualEve
 
     mockCmdQ->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, &eventOut);
 
-    //output event increments
+    // output event increments
     EXPECT_EQ(3, mockCmdQ->getRefInternalCount());
 
     mockCmdQ->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, nullptr);
@@ -714,7 +715,7 @@ HWTEST_F(CommandQueueHwRefCountTest, givenSeriesOfBlockedEnqueuesWhenEveryEventI
 
     mockCmdQ->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, &eventOut);
 
-    //output event increments refCount
+    // output event increments refCount
     EXPECT_EQ(3, mockCmdQ->getRefInternalCount());
 
     mockCmdQ->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, nullptr);
@@ -764,7 +765,7 @@ HWTEST_F(CommandQueueHwRefCountTest, givenSeriesOfBlockedEnqueuesWhenCmdQIsRelea
 
     mockCmdQ->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, &eventOut);
 
-    //output event increments refCount
+    // output event increments refCount
     EXPECT_EQ(3, mockCmdQ->getRefInternalCount());
 
     mockCmdQ->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, nullptr);
@@ -974,7 +975,7 @@ HWTEST_F(CommandQueueHwTest, givenBlockedInOrderCmdQueueAndAsynchronouslyComplet
     *mockCSR->getTagAddress() = 0u;
     cmdQHw->taskLevel = 23;
     cmdQHw->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, nullptr);
-    //new virtual event is created on enqueue, bind it to the created virtual event
+    // new virtual event is created on enqueue, bind it to the created virtual event
     EXPECT_NE(cmdQHw->virtualEvent, virtualEvent);
 
     EXPECT_EQ(virtualEvent->peekExecutionStatus(), CL_QUEUED);
@@ -985,7 +986,7 @@ HWTEST_F(CommandQueueHwTest, givenBlockedInOrderCmdQueueAndAsynchronouslyComplet
     // +1 for next level after virtualEvent is unblocked
     // +1 as virtualEvent was a parent for event with actual command that is being submitted
     EXPECT_EQ(virtualEventTaskLevel + 2, cmdQHw->taskLevel);
-    //command being submitted was dependant only on virtual event hence only +1
+    // command being submitted was dependant only on virtual event hence only +1
     EXPECT_EQ(virtualEventTaskLevel + 1, mockCSR->lastTaskLevelToFlushTask);
     *mockCSR->getTagAddress() = initialHardwareTag;
     virtualEvent->decRefInternal();
@@ -1091,7 +1092,7 @@ HWTEST_F(CommandQueueHwTest, givenKernelSplitEnqueueReadBufferWhenBlockedThenEnq
     std::map<GraphicsAllocation *, uint32_t>::iterator it = csr.makeResidentAllocations.begin();
     for (; it != csr.makeResidentAllocations.end(); it++) {
         uint32_t expected = 1u;
-        //Buffer surface will be added three times (for each kernel from split and as a base range of enqueueReadBuffer call)
+        // Buffer surface will be added three times (for each kernel from split and as a base range of enqueueReadBuffer call)
         if (it->first == bufferAllocation) {
             expected = 3u;
         }
@@ -1161,32 +1162,57 @@ HWTEST_F(CommandQueueHwTest, givenNoGpuHangWhenFinishingCommandQueueHwThenWaitFo
     EXPECT_EQ(CL_SUCCESS, finishResult);
 }
 
-HWTEST2_F(CommandQueueHwTest, givenCommandSvmMapAndDirectSubmissionEnabledAndUpdateTagFromWaitEnabledWhenCheckIsCacheFlushCommandThenReturnTrue, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandQueueHwTest, givenDirectSubmissionEnabledAndUpdateTagFromWaitEnabledWhenEnqueueSvmMapThenOperationTypeIsExplicitCacheFlush, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
+    RootDeviceIndicesContainer rootDeviceIndices = {rootDeviceIndex, rootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{rootDeviceIndex, pDevice->getDeviceBitfield()}};
+
     MockCommandQueueHw<FamilyType> mockCmdQueueHw{context, pClDevice, nullptr};
+    auto allocation = context->getSVMAllocsManager()->createSVMAlloc(1, SVMAllocsManager::SvmAllocationProperties{}, rootDeviceIndices, deviceBitfields);
 
-    mockCmdQueueHw.getUltCommandStreamReceiver().directSubmissionAvailable = false;
-    ASSERT_FALSE(mockCmdQueueHw.getUltCommandStreamReceiver().isDirectSubmissionEnabled());
-    DebugManager.flags.UpdateTaskCountFromWait.set(0);
-    ASSERT_FALSE(mockCmdQueueHw.getUltCommandStreamReceiver().isUpdateTagFromWaitEnabled());
-    EXPECT_FALSE(mockCmdQueueHw.isCacheFlushCommand(CL_COMMAND_SVM_MAP));
+    {
+        mockCmdQueueHw.getUltCommandStreamReceiver().directSubmissionAvailable = false;
+        ASSERT_FALSE(mockCmdQueueHw.getUltCommandStreamReceiver().isDirectSubmissionEnabled());
+        DebugManager.flags.UpdateTaskCountFromWait.set(0);
+        ASSERT_FALSE(mockCmdQueueHw.getUltCommandStreamReceiver().isUpdateTagFromWaitEnabled());
 
-    mockCmdQueueHw.getUltCommandStreamReceiver().directSubmissionAvailable = true;
-    ASSERT_TRUE(mockCmdQueueHw.getUltCommandStreamReceiver().isDirectSubmissionEnabled());
-    DebugManager.flags.UpdateTaskCountFromWait.set(0);
-    ASSERT_FALSE(mockCmdQueueHw.getUltCommandStreamReceiver().isUpdateTagFromWaitEnabled());
-    EXPECT_FALSE(mockCmdQueueHw.isCacheFlushCommand(CL_COMMAND_SVM_MAP));
+        auto status = mockCmdQueueHw.enqueueSVMMap(true, 0, allocation, 1, 0, nullptr, nullptr, false);
+        ASSERT_EQ(status, CL_SUCCESS);
+        EXPECT_EQ(mockCmdQueueHw.latestSentEnqueueType, EnqueueProperties::Operation::EnqueueWithoutSubmission);
+    }
 
-    mockCmdQueueHw.getUltCommandStreamReceiver().directSubmissionAvailable = false;
-    ASSERT_FALSE(mockCmdQueueHw.getUltCommandStreamReceiver().isDirectSubmissionEnabled());
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    ASSERT_TRUE(mockCmdQueueHw.getUltCommandStreamReceiver().isUpdateTagFromWaitEnabled());
-    EXPECT_FALSE(mockCmdQueueHw.isCacheFlushCommand(CL_COMMAND_SVM_MAP));
+    {
+        mockCmdQueueHw.getUltCommandStreamReceiver().directSubmissionAvailable = true;
+        ASSERT_TRUE(mockCmdQueueHw.getUltCommandStreamReceiver().isDirectSubmissionEnabled());
+        DebugManager.flags.UpdateTaskCountFromWait.set(0);
+        ASSERT_FALSE(mockCmdQueueHw.getUltCommandStreamReceiver().isUpdateTagFromWaitEnabled());
 
-    mockCmdQueueHw.getUltCommandStreamReceiver().directSubmissionAvailable = true;
-    ASSERT_TRUE(mockCmdQueueHw.getUltCommandStreamReceiver().isDirectSubmissionEnabled());
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    ASSERT_TRUE(mockCmdQueueHw.getUltCommandStreamReceiver().isUpdateTagFromWaitEnabled());
-    EXPECT_TRUE(mockCmdQueueHw.isCacheFlushCommand(CL_COMMAND_SVM_MAP));
-    EXPECT_FALSE(mockCmdQueueHw.isCacheFlushCommand(CL_COMMAND_NDRANGE_KERNEL));
+        auto status = mockCmdQueueHw.enqueueSVMMap(true, 0, allocation, 1, 0, nullptr, nullptr, false);
+        ASSERT_EQ(status, CL_SUCCESS);
+        EXPECT_EQ(mockCmdQueueHw.latestSentEnqueueType, EnqueueProperties::Operation::EnqueueWithoutSubmission);
+    }
+
+    {
+        mockCmdQueueHw.getUltCommandStreamReceiver().directSubmissionAvailable = false;
+        ASSERT_FALSE(mockCmdQueueHw.getUltCommandStreamReceiver().isDirectSubmissionEnabled());
+        DebugManager.flags.UpdateTaskCountFromWait.set(3);
+        ASSERT_TRUE(mockCmdQueueHw.getUltCommandStreamReceiver().isUpdateTagFromWaitEnabled());
+
+        auto status = mockCmdQueueHw.enqueueSVMMap(true, 0, allocation, 1, 0, nullptr, nullptr, false);
+        ASSERT_EQ(status, CL_SUCCESS);
+        EXPECT_EQ(mockCmdQueueHw.latestSentEnqueueType, EnqueueProperties::Operation::EnqueueWithoutSubmission);
+    }
+
+    {
+        mockCmdQueueHw.getUltCommandStreamReceiver().directSubmissionAvailable = true;
+        ASSERT_TRUE(mockCmdQueueHw.getUltCommandStreamReceiver().isDirectSubmissionEnabled());
+        DebugManager.flags.UpdateTaskCountFromWait.set(3);
+        ASSERT_TRUE(mockCmdQueueHw.getUltCommandStreamReceiver().isUpdateTagFromWaitEnabled());
+
+        auto status = mockCmdQueueHw.enqueueSVMMap(true, 0, allocation, 1, 0, nullptr, nullptr, false);
+        ASSERT_EQ(status, CL_SUCCESS);
+        EXPECT_EQ(mockCmdQueueHw.latestSentEnqueueType, EnqueueProperties::Operation::ExplicitCacheFlush);
+    }
+
+    context->getSVMAllocsManager()->freeSVMAlloc(allocation);
 }

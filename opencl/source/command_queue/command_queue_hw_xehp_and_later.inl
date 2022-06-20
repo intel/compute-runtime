@@ -41,13 +41,7 @@ void CommandQueueHw<Family>::submitCacheFlush(Surface **surfaces,
 
 template <>
 bool CommandQueueHw<Family>::isCacheFlushCommand(uint32_t commandType) const {
-    if (commandType == CL_COMMAND_RESOURCE_BARRIER) {
-        return true;
-    } else if (commandType == CL_COMMAND_SVM_MAP) {
-        CommandStreamReceiver &computeCommandStreamReceiver = this->getGpgpuCommandStreamReceiver();
-        return computeCommandStreamReceiver.isDirectSubmissionEnabled() && computeCommandStreamReceiver.isUpdateTagFromWaitEnabled();
-    }
-    return false;
+    return commandType == CL_COMMAND_RESOURCE_BARRIER;
 }
 
 template <>

@@ -255,7 +255,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     }
 
     CompletionStamp completionStamp = {CompletionStamp::notReady, taskLevel, 0};
-    const EnqueueProperties enqueueProperties(false, !multiDispatchInfo.empty(), isCacheFlushCommand(commandType),
+    bool svmMapNeedsDcFlush = commandType == CL_COMMAND_SVM_MAP && computeCommandStreamReceiver.isDirectSubmissionEnabled() && computeCommandStreamReceiver.isUpdateTagFromWaitEnabled();
+    const EnqueueProperties enqueueProperties(false, !multiDispatchInfo.empty(), isCacheFlushCommand(commandType) || svmMapNeedsDcFlush,
                                               flushDependenciesForNonKernelCommand, isMarkerWithProfiling, &blitPropertiesContainer);
 
     if (!blockQueue && isOOQEnabled()) {
