@@ -419,11 +419,11 @@ class MockAppendMemoryCopy : public CommandListCoreFamily<gfxCoreFamily> {
                                          Builtin builtin, const ze_copy_region_t *dstRegion,
                                          uint32_t dstPitch, size_t dstOffset,
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
-                                         size_t srcOffset, ze_event_handle_t hSignalEvent,
+                                         size_t srcOffset, Event *signalEvent,
                                          uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override {
         srcAlignedPtr = srcAlignedAllocation->alignedAllocationPtr;
         dstAlignedPtr = dstAlignedAllocation->alignedAllocationPtr;
-        return L0::CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(dstAlignedAllocation, srcAlignedAllocation, builtin, dstRegion, dstPitch, dstOffset, srcRegion, srcPitch, srcOffset, hSignalEvent, numWaitEvents, phWaitEvents);
+        return L0::CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(dstAlignedAllocation, srcAlignedAllocation, builtin, dstRegion, dstPitch, dstOffset, srcRegion, srcPitch, srcOffset, signalEvent, numWaitEvents, phWaitEvents);
     }
 
     ze_result_t appendMemoryCopyKernel3d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
@@ -431,11 +431,11 @@ class MockAppendMemoryCopy : public CommandListCoreFamily<gfxCoreFamily> {
                                          uint32_t dstPitch, uint32_t dstSlicePitch, size_t dstOffset,
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                          uint32_t srcSlicePitch, size_t srcOffset,
-                                         ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
+                                         Event *signalEvent, uint32_t numWaitEvents,
                                          ze_event_handle_t *phWaitEvents) override {
         srcAlignedPtr = srcAlignedAllocation->alignedAllocationPtr;
         dstAlignedPtr = dstAlignedAllocation->alignedAllocationPtr;
-        return L0::CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(dstAlignedAllocation, srcAlignedAllocation, builtin, dstRegion, dstPitch, dstSlicePitch, dstOffset, srcRegion, srcPitch, srcSlicePitch, srcOffset, hSignalEvent, numWaitEvents, phWaitEvents);
+        return L0::CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(dstAlignedAllocation, srcAlignedAllocation, builtin, dstRegion, dstPitch, dstSlicePitch, dstOffset, srcRegion, srcPitch, srcSlicePitch, srcOffset, signalEvent, numWaitEvents, phWaitEvents);
     }
 
     ze_result_t appendMemoryCopyBlitRegion(NEO::GraphicsAllocation *srcAllocation,

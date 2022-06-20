@@ -1326,7 +1326,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(Align
                                                                            uint32_t srcPitch,
                                                                            uint32_t srcSlicePitch,
                                                                            size_t srcOffset,
-                                                                           ze_event_handle_t hSignalEvent,
+                                                                           Event *signalEvent,
                                                                            uint32_t numWaitEvents,
                                                                            ze_event_handle_t *phWaitEvents) {
 
@@ -1375,7 +1375,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(Align
     launchParams.isDestinationAllocationInSystemMemory =
         (dstAllocationType == NEO::AllocationType::BUFFER_HOST_MEMORY) ||
         (dstAllocationType == NEO::AllocationType::EXTERNAL_HOST_PTR);
-    return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinFunction->toHandle(), &dispatchFuncArgs, hSignalEvent, numWaitEvents,
+    return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinFunction->toHandle(), &dispatchFuncArgs, signalEvent, numWaitEvents,
                                                                     phWaitEvents, launchParams);
 }
 
@@ -1389,7 +1389,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(Align
                                                                            const ze_copy_region_t *srcRegion,
                                                                            uint32_t srcPitch,
                                                                            size_t srcOffset,
-                                                                           ze_event_handle_t hSignalEvent,
+                                                                           Event *signalEvent,
                                                                            uint32_t numWaitEvents,
                                                                            ze_event_handle_t *phWaitEvents) {
 
@@ -1436,7 +1436,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(Align
         (dstAllocationType == NEO::AllocationType::BUFFER_HOST_MEMORY) ||
         (dstAllocationType == NEO::AllocationType::EXTERNAL_HOST_PTR);
     return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinFunction->toHandle(),
-                                                                    &dispatchFuncArgs, hSignalEvent,
+                                                                    &dispatchFuncArgs, signalEvent,
                                                                     numWaitEvents,
                                                                     phWaitEvents,
                                                                     launchParams);
