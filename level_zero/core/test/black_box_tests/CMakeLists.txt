@@ -6,26 +6,27 @@
 
 set(L0_BLACK_BOX_TEST_PROJECT_FOLDER "ze_intel_gpu/black_box_tests")
 set(TEST_TARGETS
-    zello_timestamp
-    zello_world_gpu
-    zello_world_jitc_ocloc
-    zello_ipc_copy_dma_buf
-    zello_ipc_copy_dma_buf_p2p
+    zello_commandlist_immediate
     zello_copy
-    zello_copy_only
     zello_copy_fence
     zello_copy_image
-    zello_world_usm
-    zello_world_global_work_offset
-    zello_scratch
-    zello_fence
-    zello_printf
-    zello_image
-    zello_image_view
+    zello_copy_only
     zello_dynamic_link
     zello_events
-    zello_immediate
+    zello_fence
     zello_host_pointer
+    zello_image
+    zello_image_view
+    zello_immediate
+    zello_ipc_copy_dma_buf
+    zello_ipc_copy_dma_buf_p2p
+    zello_printf
+    zello_scratch
+    zello_timestamp
+    zello_world_global_work_offset
+    zello_world_gpu
+    zello_world_jitc_ocloc
+    zello_world_usm
 )
 
 include_directories(common)
@@ -56,6 +57,12 @@ foreach(TEST_NAME ${TEST_TARGETS})
   target_link_libraries(${TEST_NAME} PUBLIC ${TARGET_NAME_L0})
 
   set_target_properties(${TEST_NAME} PROPERTIES FOLDER ${L0_BLACK_BOX_TEST_PROJECT_FOLDER})
+
+  target_sources(${TEST_NAME} PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+                 ${CMAKE_CURRENT_SOURCE_DIR}/common/zello_common.h
+                 ${CMAKE_CURRENT_SOURCE_DIR}/common/zello_compile.h
+  )
 endforeach()
 
 target_link_libraries(zello_world_jitc_ocloc PUBLIC ocloc_lib)
@@ -64,6 +71,7 @@ target_link_libraries(zello_fence PUBLIC ocloc_lib)
 target_link_libraries(zello_printf PUBLIC ocloc_lib)
 target_link_libraries(zello_image_view PUBLIC ocloc_lib)
 target_link_libraries(zello_dynamic_link PUBLIC ocloc_lib)
+target_link_libraries(zello_commandlist_immediate PUBLIC ocloc_lib)
 if(UNIX)
   target_link_libraries(zello_world_global_work_offset PUBLIC ocloc_lib)
 endif()

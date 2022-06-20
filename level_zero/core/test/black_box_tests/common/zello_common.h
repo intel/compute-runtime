@@ -17,6 +17,9 @@
 #include <string>
 #include <vector>
 
+#define QTR(a) #a
+#define TOSTR(b) QTR(b)
+
 extern bool verbose;
 
 template <bool TerminateOnFailure, typename ResulT>
@@ -100,6 +103,19 @@ inline bool isSyncQueueEnabled(int argc, char *argv[]) {
     }
 
     std::cerr << "Sync Queue detected" << std::endl;
+
+    return true;
+}
+
+inline bool isAubMode(int argc, char *argv[]) {
+    bool enabled = isParamEnabled(argc, argv, "-a", "--aub");
+    if (enabled == false) {
+        return false;
+    }
+
+    if (verbose) {
+        std::cerr << "Aub mode detected";
+    }
 
     return true;
 }
@@ -263,4 +279,71 @@ void initialize(ze_driver_handle_t &driver, ze_context_handle_t &context, ze_dev
 static inline void teardown(ze_context_handle_t context, ze_command_queue_handle_t cmdQueue) {
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
+}
+
+inline const std::vector<const char *> &getResourcesSearchLocations() {
+    static std::vector<const char *> locations {
+        "test_files/spv_modules/",
+#if defined(OS_DATADIR)
+            TOSTR(OS_DATADIR),
+#endif
+    };
+    return locations;
+}
+
+/* read binary file into a non-NULL-terminated string */
+template <typename SizeT>
+inline std::unique_ptr<char[]> readBinaryFile(const std::string &name, SizeT &outSize) {
+    for (const char *base : getResourcesSearchLocations()) {
+        std::string s(base);
+        std::ifstream file(s + name, std::ios_base::in | std::ios_base::binary);
+        if (false == file.good()) {
+            continue;
+        }
+
+        size_t length;
+        file.seekg(0, file.end);
+        length = static_cast<size_t>(file.tellg());
+        file.seekg(0, file.beg);
+
+        auto storage = std::make_unique<char[]>(length);
+        file.read(storage.get(), length);
+
+        outSize = static_cast<SizeT>(length);
+        return storage;
+    }
+    outSize = 0;
+    return nullptr;
+}
+
+template <typename T = uint8_t>
+inline bool validate(const void *expected, const void *tested, size_t len) {
+    bool resultsAreOk = true;
+    size_t offset = 0;
+
+    const T *expectedT = reinterpret_cast<const T *>(expected);
+    const T *testedT = reinterpret_cast<const T *>(tested);
+    uint32_t errorsCount = 0;
+    constexpr uint32_t errorsMax = 20;
+    while (offset < len) {
+        if (expectedT[offset] != testedT[offset]) {
+            resultsAreOk = false;
+            if (verbose == false) {
+                break;
+            }
+
+            std::cerr << "Data mismatch expectedU8[" << offset << "] != testedU8[" << offset
+                      << "]   ->    " << +expectedT[offset] << " != " << +testedT[offset]
+                      << std::endl;
+            ++errorsCount;
+            if (errorsCount >= errorsMax) {
+                std::cerr << "Found " << errorsCount
+                          << " data mismatches - skipping further comparison " << std::endl;
+                break;
+            }
+        }
+        ++offset;
+    }
+
+    return resultsAreOk;
 }

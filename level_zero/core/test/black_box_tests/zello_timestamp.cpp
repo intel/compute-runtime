@@ -58,26 +58,6 @@ void createCmdQueueAndCmdList(ze_context_handle_t &context,
     SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDesc, &cmdList));
 }
 
-void createEventPoolAndEvents(ze_context_handle_t &context,
-                              ze_device_handle_t &device,
-                              ze_event_pool_handle_t &eventPool,
-                              ze_event_pool_flag_t poolFlag,
-                              uint32_t poolSize,
-                              ze_event_handle_t *events) {
-    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
-    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
-    eventPoolDesc.count = poolSize;
-    eventPoolDesc.flags = poolFlag;
-    SUCCESS_OR_TERMINATE(zeEventPoolCreate(context, &eventPoolDesc, 1, &device, &eventPool));
-
-    for (uint32_t i = 0; i < poolSize; i++) {
-        eventDesc.index = i;
-        eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
-        eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
-        SUCCESS_OR_TERMINATE(zeEventCreate(eventPool, &eventDesc, events + i));
-    }
-}
-
 bool testWriteGlobalTimestamp(ze_context_handle_t &context,
                               ze_driver_handle_t &driver,
                               ze_device_handle_t &device) {
@@ -215,7 +195,7 @@ bool testKernelTimestampHostQuery(ze_context_handle_t &context,
 
     ze_event_pool_handle_t eventPool;
     ze_event_handle_t kernelTsEvent;
-    createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, 1, &kernelTsEvent);
+    createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, 1, &kernelTsEvent, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, kernelTsEvent, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
@@ -321,7 +301,7 @@ bool testKernelTimestampApendQuery(ze_context_handle_t &context,
 
     ze_event_pool_handle_t eventPool;
     ze_event_handle_t kernelTsEvent;
-    createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, 1, &kernelTsEvent);
+    createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, 1, &kernelTsEvent, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, kernelTsEvent, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0u, nullptr));
