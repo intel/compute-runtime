@@ -29,6 +29,7 @@ set(IGDRCL_SRCS_tests_helpers
     ${CMAKE_CURRENT_SOURCE_DIR}/static_size3.h
     ${CMAKE_CURRENT_SOURCE_DIR}/test_debug_variables.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_limits.h
 )
 

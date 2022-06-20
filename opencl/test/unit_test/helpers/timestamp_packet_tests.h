@@ -20,24 +20,7 @@
 
 using namespace NEO;
 
-struct TimestampPacketSimpleTests : public ::testing::Test {
-    template <typename FamilyType>
-    void setTagToReadyState(TagNodeBase *tagNode) {
-        auto packetsUsed = tagNode->getPacketsUsed();
-        tagNode->initialize();
-
-        typename FamilyType::TimestampPacketType zeros[4] = {};
-
-        for (uint32_t i = 0; i < TimestampPacketSizeControl::preferredPacketCount; i++) {
-            tagNode->assignDataToAllTimestamps(i, zeros);
-        }
-        tagNode->setPacketsUsed(packetsUsed);
-    }
-
-    const size_t gws[3] = {1, 1, 1};
-};
-
-struct TimestampPacketTests : public TimestampPacketSimpleTests {
+struct TimestampPacketTests : public ::testing::Test {
     struct MockTagNode : public TagNode<TimestampPackets<uint32_t>> {
         using TagNode<TimestampPackets<uint32_t>>::gpuAddress;
     };
@@ -73,6 +56,21 @@ struct TimestampPacketTests : public TimestampPacketSimpleTests {
 
         EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
     };
+
+    template <typename FamilyType>
+    void setTagToReadyState(TagNodeBase *tagNode) {
+        auto packetsUsed = tagNode->getPacketsUsed();
+        tagNode->initialize();
+
+        typename FamilyType::TimestampPacketType zeros[4] = {};
+
+        for (uint32_t i = 0; i < TimestampPacketSizeControl::preferredPacketCount; i++) {
+            tagNode->assignDataToAllTimestamps(i, zeros);
+        }
+        tagNode->setPacketsUsed(packetsUsed);
+    }
+
+    const size_t gws[3] = {1, 1, 1};
 
     ExecutionEnvironment *executionEnvironment;
     std::unique_ptr<MockClDevice> device;
