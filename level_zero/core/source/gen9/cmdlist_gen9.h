@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/gen9/hw_cmds.h"
 #include "shared/source/gen9/hw_info.h"
 
@@ -21,10 +20,6 @@ namespace L0 {
 template <PRODUCT_FAMILY gfxProductFamily>
 struct CommandListProductFamily : public CommandListCoreFamily<IGFX_GEN9_CORE> {
     using CommandListCoreFamily::CommandListCoreFamily;
-
-    void programL3(bool isSLMused) override {
-        NEO::EncodeL3State<GfxFamily>::encode(commandContainer, isSLMused);
-    }
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>

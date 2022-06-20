@@ -48,7 +48,7 @@ struct CommandListCoreFamily : CommandListImp {
 
     using CommandListImp::CommandListImp;
     ze_result_t initialize(Device *device, NEO::EngineGroupType engineGroupType, ze_command_list_flags_t flags) override;
-    virtual void programL3(bool isSLMused);
+    void programL3(bool isSLMused);
     ~CommandListCoreFamily() override;
 
     ze_result_t close() override;
