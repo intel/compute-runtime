@@ -33,13 +33,12 @@ size_t CommandListCoreFamily<gfxCoreFamily>::getReserveSshSize() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(ze_kernel_handle_t hKernel,
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(Kernel *kernel,
                                                                                const ze_group_count_t *threadGroupDimensions,
                                                                                Event *event,
                                                                                const CmdListKernelLaunchParams &launchParams) {
-    const auto kernel = Kernel::fromHandle(hKernel);
-    const auto &kernelDescriptor = kernel->getKernelDescriptor();
     UNRECOVERABLE_IF(kernel == nullptr);
+    const auto &kernelDescriptor = kernel->getKernelDescriptor();
     appendEventForProfiling(event, true, false);
     const auto functionImmutableData = kernel->getImmutableData();
     auto perThreadScratchSize = std::max<std::uint32_t>(this->getCommandListPerThreadScratchSize(),
@@ -201,11 +200,11 @@ inline size_t CommandListCoreFamily<gfxCoreFamily>::estimateBufferSizeMultiTileB
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(ze_kernel_handle_t hKernel,
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(Kernel *kernel,
                                                                           const ze_group_count_t *threadGroupDimensions,
                                                                           Event *event,
                                                                           const CmdListKernelLaunchParams &launchParams) {
-    return appendLaunchKernelWithParams(hKernel, threadGroupDimensions, nullptr, launchParams);
+    return appendLaunchKernelWithParams(kernel, threadGroupDimensions, nullptr, launchParams);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

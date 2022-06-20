@@ -45,7 +45,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenKernelUsingSyncBufferWhen
     kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isCooperative = true;
-    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, launchParams);
+    result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     {
@@ -53,11 +53,11 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenKernelUsingSyncBufferWhen
         VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
         engineGroupType = EngineGroupType::RenderCompute;
         hwRevId = hwConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
-        result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, launchParams);
+        result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
         ze_group_count_t groupCount1{1, 1, 1};
-        result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount1, nullptr, launchParams);
+        result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount1, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     }
 }
@@ -370,7 +370,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenHwSupportsSystemFenceWhen
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     CmdListKernelLaunchParams launchParams = {};
-    result = commandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, event.get(), launchParams);
+    result = commandList->appendLaunchKernelWithParams(&kernel, &groupCount, event.get(), launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList commands;
@@ -437,7 +437,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenHwSupportsSystemFenceWhen
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     CmdListKernelLaunchParams launchParams = {};
-    result = commandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, event.get(), launchParams);
+    result = commandList->appendLaunchKernelWithParams(&kernel, &groupCount, event.get(), launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList commands;
@@ -563,7 +563,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenHwSupportsSystemFenceWhen
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     CmdListKernelLaunchParams launchParams = {};
-    result = commandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, event.get(), launchParams);
+    result = commandList->appendLaunchKernelWithParams(&kernel, &groupCount, event.get(), launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList commands;
@@ -632,7 +632,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenHwSupportsSystemFenceWhen
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     CmdListKernelLaunchParams launchParams = {};
-    result = commandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, event.get(), launchParams);
+    result = commandList->appendLaunchKernelWithParams(&kernel, &groupCount, event.get(), launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList commands;

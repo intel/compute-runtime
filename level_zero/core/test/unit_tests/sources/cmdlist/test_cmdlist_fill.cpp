@@ -46,7 +46,7 @@ class AppendFillFixture : public DeviceFixture {
       public:
         MockCommandList() : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>() {}
 
-        ze_result_t appendLaunchKernelWithParams(ze_kernel_handle_t hKernel,
+        ze_result_t appendLaunchKernelWithParams(Kernel *kernel,
                                                  const ze_group_count_t *pThreadGroupDimensions,
                                                  Event *event,
                                                  const CmdListKernelLaunchParams &launchParams) override {
@@ -55,7 +55,7 @@ class AppendFillFixture : public DeviceFixture {
             }
 
             numberOfCallsToAppendLaunchKernelWithParams++;
-            return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(hKernel,
+            return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(kernel,
                                                                                       pThreadGroupDimensions,
                                                                                       event,
                                                                                       launchParams);

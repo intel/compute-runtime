@@ -47,7 +47,7 @@ HWTEST2_F(CommandListAppendLaunchKernelWithAtomics, givenKernelWithNoGlobalAtomi
     EXPECT_FALSE(pCommandList->commandContainer.lastSentUseGlobalAtomics);
 
     CmdListKernelLaunchParams launchParams = {};
-    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, launchParams);
+    result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_FALSE(pCommandList->commandContainer.lastSentUseGlobalAtomics);
@@ -70,7 +70,7 @@ HWTEST2_F(CommandListAppendLaunchKernelWithAtomics, givenKernelWithGlobalAtomics
     EXPECT_FALSE(pCommandList->commandContainer.lastSentUseGlobalAtomics);
 
     CmdListKernelLaunchParams launchParams = {};
-    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, launchParams);
+    result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_TRUE(pCommandList->commandContainer.lastSentUseGlobalAtomics);
@@ -93,7 +93,7 @@ HWTEST2_F(CommandListAppendLaunchKernelWithAtomics, givenKernelWithGlobalAtomics
     pCommandList->commandContainer.lastSentUseGlobalAtomics = true;
 
     CmdListKernelLaunchParams launchParams = {};
-    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, launchParams);
+    result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_TRUE(pCommandList->commandContainer.lastSentUseGlobalAtomics);
@@ -116,7 +116,7 @@ HWTEST2_F(CommandListAppendLaunchKernelWithAtomics, givenKernelWithNoGlobalAtomi
     pCommandList->commandContainer.lastSentUseGlobalAtomics = true;
 
     CmdListKernelLaunchParams launchParams = {};
-    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, launchParams);
+    result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_FALSE(pCommandList->commandContainer.lastSentUseGlobalAtomics);
@@ -138,7 +138,7 @@ HWTEST2_F(CommandListAppendLaunchKernelWithAtomics, givenKernelWithGlobalAtomics
     EXPECT_FALSE(pCommandList->commandContainer.lastSentUseGlobalAtomics);
 
     CmdListKernelLaunchParams launchParams = {};
-    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, launchParams);
+    result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_FALSE(pCommandList->commandContainer.lastSentUseGlobalAtomics);
@@ -176,7 +176,7 @@ HWTEST2_F(MultTileCommandListAppendLaunchKernelL3Flush, givenKernelWithRegularEv
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
     CmdListKernelLaunchParams launchParams = {};
-    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, event.get(), launchParams);
+    result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, event.get(), launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto gpuAddress = event->getGpuAddress(device) +
@@ -234,7 +234,7 @@ HWTEST2_F(MultTileCommandListAppendLaunchKernelL3Flush, givenKernelWithTimestamp
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
     CmdListKernelLaunchParams launchParams = {};
-    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, event.get(), launchParams);
+    result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, event.get(), launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto gpuAddress = event->getGpuAddress(device) +
@@ -288,7 +288,7 @@ HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithEventAndWithoutWa
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
     CmdListKernelLaunchParams launchParams = {};
-    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, event.get(), launchParams);
+    result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, event.get(), launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
@@ -326,7 +326,7 @@ HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithEventHostScopeWit
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
     CmdListKernelLaunchParams launchParams = {};
-    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, event.get(), launchParams);
+    result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, event.get(), launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(true, event->getL3FlushForCurrenKernel());
@@ -357,7 +357,7 @@ HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithEventZeroScopeWit
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
     CmdListKernelLaunchParams launchParams = {};
-    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, event.get(), launchParams);
+    result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, event.get(), launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(false, event->getL3FlushForCurrenKernel());
@@ -389,7 +389,7 @@ HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithEventHostScopeWit
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
     CmdListKernelLaunchParams launchParams = {};
-    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, event.get(), launchParams);
+    result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, event.get(), launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(true, event->getL3FlushForCurrenKernel());

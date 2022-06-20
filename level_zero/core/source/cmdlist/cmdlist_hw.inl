@@ -210,7 +210,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
         event = Event::fromHandle(hEvent);
     }
 
-    auto res = appendLaunchKernelWithParams(hKernel, threadGroupDimensions,
+    auto res = appendLaunchKernelWithParams(Kernel::fromHandle(hKernel), threadGroupDimensions,
                                             event, launchParams);
 
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
@@ -243,7 +243,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchCooperativeKernel(
 
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isCooperative = true;
-    return appendLaunchKernelWithParams(hKernel, pLaunchFuncArgs,
+    return appendLaunchKernelWithParams(Kernel::fromHandle(hKernel), pLaunchFuncArgs,
                                         event, launchParams);
 }
 
@@ -267,7 +267,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
     appendEventForProfiling(event, true, false);
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isIndirect = true;
-    ret = appendLaunchKernelWithParams(hKernel, pDispatchArgumentsBuffer,
+    ret = appendLaunchKernelWithParams(Kernel::fromHandle(hKernel), pDispatchArgumentsBuffer,
                                        nullptr, launchParams);
     appendSignalEventPostWalker(event, false);
 
@@ -305,7 +305,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
         CmdListKernelLaunchParams launchParams = {};
         launchParams.isIndirect = true;
         launchParams.isPredicate = true;
-        ret = appendLaunchKernelWithParams(phKernels[i],
+        ret = appendLaunchKernelWithParams(Kernel::fromHandle(phKernels[i]),
                                            haveLaunchArguments ? &pLaunchArgumentsBuffer[i] : nullptr,
                                            nullptr, launchParams);
         if (ret) {
@@ -923,7 +923,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(v
         (dstAllocationType == NEO::AllocationType::SVM_CPU) ||
         (dstAllocationType == NEO::AllocationType::EXTERNAL_HOST_PTR);
 
-    return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(builtinFunction->toHandle(), &dispatchFuncArgs, signalEvent, launchParams);
+    return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(builtinFunction, &dispatchFuncArgs, signalEvent, launchParams);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1541,7 +1541,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
         uint32_t groups = static_cast<uint32_t>(size) / groupSizeX;
         ze_group_count_t dispatchFuncArgs{groups, 1u, 1u};
-        res = appendLaunchKernelSplit(builtinFunction->toHandle(), &dispatchFuncArgs, signalEvent, launchParams);
+        res = appendLaunchKernelSplit(builtinFunction, &dispatchFuncArgs, signalEvent, launchParams);
         if (res) {
             return res;
         }
@@ -1555,7 +1555,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             builtinFunction->setArgBufferWithAlloc(0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
             builtinFunction->setArgumentValue(1, sizeof(dstOffset), &dstOffset);
 
-            res = appendLaunchKernelSplit(builtinFunction->toHandle(), &dispatchFuncRemainderArgs, signalEvent, launchParams);
+            res = appendLaunchKernelSplit(builtinFunction, &dispatchFuncRemainderArgs, signalEvent, launchParams);
             if (res) {
                 return res;
             }
@@ -1614,7 +1614,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         appendEventForProfilingAllWalkers(signalEvent, true);
 
         ze_group_count_t dispatchFuncArgs{groups, 1u, 1u};
-        res = appendLaunchKernelSplit(builtinFunction->toHandle(), &dispatchFuncArgs, signalEvent, launchParams);
+        res = appendLaunchKernelSplit(builtinFunction, &dispatchFuncArgs, signalEvent, launchParams);
         if (res) {
             return res;
         }
@@ -1644,7 +1644,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                                                             patternGfxAlloc);
             builtinFunctionRemainder->setArgumentValue(3, sizeof(patternAllocationSize), &patternAllocationSize);
 
-            res = appendLaunchKernelSplit(builtinFunctionRemainder->toHandle(), &dispatchFuncArgs, signalEvent, launchParams);
+            res = appendLaunchKernelSplit(builtinFunctionRemainder, &dispatchFuncArgs, signalEvent, launchParams);
             if (res) {
                 return res;
             }

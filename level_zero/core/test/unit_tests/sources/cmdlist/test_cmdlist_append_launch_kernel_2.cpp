@@ -1227,19 +1227,19 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernel
     pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isCooperative = false;
-    auto result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, launchParams);
+    auto result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     launchParams.isCooperative = true;
-    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, launchParams);
+    result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
     pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
     launchParams.isCooperative = true;
-    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, launchParams);
+    result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     launchParams.isCooperative = false;
-    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, launchParams);
+    result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
@@ -1351,7 +1351,7 @@ HWTEST2_F(MultiTileCommandListAppendLaunchFunctionXeHpCoreTest, givenCooperative
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     auto sizeBefore = commandListWithNonCooperativeKernel->commandContainer.getCommandStream()->getUsed();
     CmdListKernelLaunchParams launchParams = {};
-    result = commandListWithNonCooperativeKernel->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, launchParams);
+    result = commandListWithNonCooperativeKernel->appendLaunchKernelWithParams(kernel.get(), &groupCount, nullptr, launchParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     auto sizeAfter = commandListWithNonCooperativeKernel->commandContainer.getCommandStream()->getUsed();
     GenCmdList cmdList;
@@ -1366,7 +1366,7 @@ HWTEST2_F(MultiTileCommandListAppendLaunchFunctionXeHpCoreTest, givenCooperative
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     sizeBefore = commandListWithCooperativeKernel->commandContainer.getCommandStream()->getUsed();
     launchParams.isCooperative = true;
-    result = commandListWithCooperativeKernel->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, launchParams);
+    result = commandListWithCooperativeKernel->appendLaunchKernelWithParams(kernel.get(), &groupCount, nullptr, launchParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     sizeAfter = commandListWithCooperativeKernel->commandContainer.getCommandStream()->getUsed();
     cmdList.clear();

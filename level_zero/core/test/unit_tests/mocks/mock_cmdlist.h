@@ -68,14 +68,14 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
 
     WhiteBox() : ::L0::CommandListCoreFamily<gfxCoreFamily>(BaseClass::defaultNumIddsPerBlock) {}
 
-    ze_result_t appendLaunchKernelWithParams(ze_kernel_handle_t hKernel,
+    ze_result_t appendLaunchKernelWithParams(::L0::Kernel *kernel,
                                              const ze_group_count_t *threadGroupDimensions,
                                              ::L0::Event *event,
                                              const CmdListKernelLaunchParams &launchParams) override {
 
         usedKernelLaunchParams = launchParams;
         appendKernelEventValue = event;
-        return BaseClass::appendLaunchKernelWithParams(hKernel, threadGroupDimensions,
+        return BaseClass::appendLaunchKernelWithParams(kernel, threadGroupDimensions,
                                                        event, launchParams);
     }
 

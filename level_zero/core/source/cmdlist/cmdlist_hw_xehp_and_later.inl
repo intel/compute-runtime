@@ -121,7 +121,7 @@ void programEventL3Flush(Event *event,
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(ze_kernel_handle_t hKernel,
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(Kernel *kernel,
                                                                                const ze_group_count_t *threadGroupDimensions,
                                                                                Event *event,
                                                                                const CmdListKernelLaunchParams &launchParams) {
@@ -133,7 +133,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     }
     NEO::Device *neoDevice = device->getNEODevice();
 
-    const auto kernel = Kernel::fromHandle(hKernel);
     UNRECOVERABLE_IF(kernel == nullptr);
     const auto functionImmutableData = kernel->getImmutableData();
     auto &kernelDescriptor = kernel->getKernelDescriptor();
@@ -361,14 +360,14 @@ inline size_t CommandListCoreFamily<gfxCoreFamily>::estimateBufferSizeMultiTileB
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(ze_kernel_handle_t hKernel,
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(Kernel *kernel,
                                                                           const ze_group_count_t *threadGroupDimensions,
                                                                           Event *event,
                                                                           const CmdListKernelLaunchParams &launchParams) {
     if (event) {
         event->increaseKernelCount();
     }
-    return appendLaunchKernelWithParams(hKernel, threadGroupDimensions, event, launchParams);
+    return appendLaunchKernelWithParams(kernel, threadGroupDimensions, event, launchParams);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
