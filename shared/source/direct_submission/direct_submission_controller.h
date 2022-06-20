@@ -7,6 +7,9 @@
 
 #pragma once
 
+#include "shared/source/helpers/common_types.h"
+
+#include <array>
 #include <atomic>
 #include <memory>
 #include <mutex>
@@ -41,7 +44,8 @@ class DirectSubmissionController {
 
     void adjustTimeout(CommandStreamReceiver *csr);
 
-    uint32_t ccsCount = 0u;
+    uint32_t maxCcsCount = 1u;
+    std::array<uint32_t, DeviceBitfield().size()> ccsCount = {};
     std::unordered_map<CommandStreamReceiver *, DirectSubmissionState> directSubmissions;
     std::mutex directSubmissionsMutex;
 

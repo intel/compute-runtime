@@ -99,8 +99,14 @@ void DirectSubmissionController::sleep() {
 
 void DirectSubmissionController::adjustTimeout(CommandStreamReceiver *csr) {
     if (EngineHelpers::isCcs(csr->getOsContext().getEngineType())) {
-        this->ccsCount++;
-        if (this->ccsCount > 1u) {
+        for (size_t subDeviceIndex = 0u; subDeviceIndex < csr->getOsContext().getDeviceBitfield().size(); ++subDeviceIndex) {
+            if (csr->getOsContext().getDeviceBitfield().test(subDeviceIndex)) {
+                ++this->ccsCount[subDeviceIndex];
+            }
+        }
+        auto curentMaxCcsCount = std::max_element(this->ccsCount.begin(), this->ccsCount.end());
+        if (*curentMaxCcsCount > this->maxCcsCount) {
+            this->maxCcsCount = *curentMaxCcsCount;
             this->timeout /= this->timeoutDivisor;
         }
     }
