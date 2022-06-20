@@ -1739,6 +1739,19 @@ TEST_F(ProgramTests, GivenStatelessToStatefulIsDisabledWhenProgramIsCreatedThenG
     EXPECT_TRUE(CompilerOptions::contains(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired));
 }
 
+TEST_F(ProgramTests, whenGetInternalOptionsThenLSCPolicyIsSet) {
+    MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
+    auto internalOptions = program.getInternalOptions();
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    auto expectedPolicy = compilerHwInfoConfig.getCachingPolicyOptions();
+    if (expectedPolicy != nullptr) {
+        EXPECT_TRUE(CompilerOptions::contains(internalOptions, expectedPolicy));
+    } else {
+        EXPECT_FALSE(CompilerOptions::contains(internalOptions, "-cl-store-cache-default"));
+        EXPECT_FALSE(CompilerOptions::contains(internalOptions, "-cl-load-cache-default"));
+    }
+}
+
 TEST_F(ProgramTests, WhenCreatingProgramThenBindlessIsEnabledOnlyIfDebugFlagIsEnabled) {
     using namespace testing;
     DebugManagerStateRestore restorer;

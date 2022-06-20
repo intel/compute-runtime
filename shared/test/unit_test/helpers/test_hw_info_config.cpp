@@ -105,3 +105,8 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenIsAdjustWalkOrderAvailableCallTh
     const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     EXPECT_FALSE(hwInfoConfig.isAdjustWalkOrderAvailable(*defaultHwInfo));
 }
+
+HWTEST_F(HwInfoConfigTest, givenCompilerHwInfoConfigWhengetCachingPolicyOptionsThenReturnNullptr) {
+    auto compilerHwInfoConfig = CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    EXPECT_EQ(compilerHwInfoConfig->getCachingPolicyOptions(), nullptr);
+}

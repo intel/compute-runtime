@@ -30,6 +30,7 @@ class CompilerHwInfoConfig {
     virtual bool isForceToStatelessRequired() const = 0;
     virtual void adjustHwInfoForIgc(HardwareInfo &hwInfo) const = 0;
     virtual void setProductConfigForHwInfo(HardwareInfo &hwInfo, AheadOfTimeConfig config) const = 0;
+    virtual const char *getCachingPolicyOptions() const = 0;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -46,6 +47,7 @@ class CompilerHwInfoConfigHw : public CompilerHwInfoConfig {
     bool isForceToStatelessRequired() const override;
     void adjustHwInfoForIgc(HardwareInfo &hwInfo) const override;
     void setProductConfigForHwInfo(HardwareInfo &hwInfo, AheadOfTimeConfig config) const override;
+    const char *getCachingPolicyOptions() const override;
 
   protected:
     CompilerHwInfoConfigHw() = default;

@@ -24,4 +24,9 @@ template <PRODUCT_FAMILY gfxProduct>
 void CompilerHwInfoConfigHw<gfxProduct>::adjustHwInfoForIgc(HardwareInfo &hwInfo) const {
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+const char *CompilerHwInfoConfigHw<gfxProduct>::getCachingPolicyOptions() const {
+    return nullptr;
+};
+
 } // namespace NEO

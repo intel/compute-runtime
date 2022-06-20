@@ -15,6 +15,8 @@
 namespace NEO {
 #ifdef SUPPORT_DG2
 static EnableGfxProductHw<IGFX_DG2> enableGfxProductHwDG2;
+
+#include "shared/source/xe_hpg_core/compiler_hw_info_config_dg2.inl"
 static EnableCompilerHwInfoConfig<IGFX_DG2> enableCompilerHwInfoConfigDG2;
 #endif
 } // namespace NEO
