@@ -13,6 +13,8 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_interface.h"
 
+#include "platforms.h"
+
 namespace NEO {
 constexpr static auto gfxProduct = IGFX_GEMINILAKE;
 
@@ -42,7 +44,7 @@ int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OS
         if (retVal == 0 && ((num == 3) || (num == 6) || (num == 9))) {
             gtSystemInfo->EuCountPerPoolMin = static_cast<uint32_t>(num);
         }
-        //in case of failure or not getting right values, fallback to default
+        // in case of failure or not getting right values, fallback to default
         else {
             if (gtSystemInfo->SubSliceCount == 3) {
                 // Native 3x6, PooledEU 2x9

@@ -18,6 +18,8 @@
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 
+#include "platforms.h"
+
 using PvcUnpackSingleDeviceBinaryAr = ::testing::Test;
 
 PVCTEST_F(PvcUnpackSingleDeviceBinaryAr, WhenFailedToUnpackMatchWithPvcProductConfigThenTryUnpackAnotherBestMatch) {

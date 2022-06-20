@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/hw_info_config_bdw_and_later.inl"
 
 #include "hw_cmds.h"
+#include "platforms.h"
 
 namespace NEO {
 constexpr static auto gfxProduct = IGFX_SKYLAKE;

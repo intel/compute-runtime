@@ -13,7 +13,10 @@
 #include "shared/source/unified_memory/usm_memory_support.h"
 
 #include "igfxfmid.h"
-#include "platforms.h"
+
+namespace AOT {
+enum PRODUCT_CONFIG : uint32_t;
+}
 
 namespace NEO {
 

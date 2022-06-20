@@ -9,6 +9,8 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
+#include "platforms.h"
+
 namespace NEO {
 
 template <>

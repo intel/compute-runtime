@@ -19,10 +19,12 @@
 #include "shared/source/utilities/directory.h"
 #include "shared/source/xe_hp_core/hw_cmds_base.h"
 
+#include "platforms.h"
+
 namespace NEO {
 constexpr static auto gfxProduct = IGFX_XE_HP_SDV;
 const std::map<std::string, std::pair<uint32_t, uint32_t>> guidUuidOffsetMap = {
-    //add new values for guid in the form of {"guid", {offset, size}} for each platform
+    // add new values for guid in the form of {"guid", {offset, size}} for each platform
     {"0xfdc76195", {64u, 8u}}};
 
 #include "shared/source/os_interface/linux/hw_info_config_uuid_xehp_and_later.inl"

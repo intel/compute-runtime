@@ -7,6 +7,8 @@
 
 #include "shared/source/helpers/product_config_helper.h"
 
+#include "platforms.h"
+
 #include <algorithm>
 
 void ProductConfigHelper::adjustDeviceName(std::string &device) {

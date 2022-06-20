@@ -13,6 +13,8 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "platforms.h"
+
 using namespace NEO;
 
 template <typename T>

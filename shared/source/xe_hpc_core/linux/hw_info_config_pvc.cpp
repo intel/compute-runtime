@@ -20,6 +20,8 @@
 #include "shared/source/utilities/directory.h"
 #include "shared/source/xe_hpc_core/hw_cmds.h"
 
+#include "platforms.h"
+
 namespace NEO {
 constexpr static auto gfxProduct = IGFX_PVC;
 const std::map<std::string, std::pair<uint32_t, uint32_t>> guidUuidOffsetMap = {

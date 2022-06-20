@@ -11,8 +11,6 @@
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
 
-#include "platforms.h"
-
 #include <cstddef>
 #include <cstdint>
 #include <igfxfmid.h>

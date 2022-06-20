@@ -180,6 +180,7 @@ create_project_source_tree(${OCLOC_NAME}_lib)
 set_target_properties(${OCLOC_NAME}_lib PROPERTIES FOLDER ${OCLOC_FOLDER_NAME})
 
 set(CLOC_LIB_INCLUDES
+    ${AOT_CONFIG_HEADERS_DIR}
     ${ENGINE_NODE_DIR}
     ${IGC_OCL_ADAPTOR_DIR}
     ${CIF_BASE_DIR}

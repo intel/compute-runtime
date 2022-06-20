@@ -31,6 +31,7 @@ function(generate_shared_lib LIB_NAME MOCKABLE)
   target_compile_definitions(${LIB_NAME} PUBLIC ${NEO_CORE_COMPILE_DEFS} ${NEO__IGC_COMPILE_DEFINITIONS})
 
   target_include_directories(${LIB_NAME} PUBLIC
+                             ${AOT_CONFIG_HEADERS_DIR}
                              ${KMDAF_HEADERS_DIR}
                              ${ENGINE_NODE_DIR}
                              ${NEO__GMM_INCLUDE_DIR}

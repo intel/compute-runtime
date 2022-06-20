@@ -12,6 +12,8 @@
 #include "shared/source/os_interface/hw_info_config_xehp_and_later.inl"
 #include "shared/source/xe_hpc_core/hw_cmds.h"
 
+#include "platforms.h"
+
 namespace NEO {
 constexpr static auto gfxProduct = IGFX_PVC;
 

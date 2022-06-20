@@ -11,6 +11,8 @@
 #include "shared/source/os_interface/hw_info_config.inl"
 #include "shared/source/os_interface/hw_info_config_bdw_and_later.inl"
 
+#include "platforms.h"
+
 namespace NEO {
 constexpr static auto gfxProduct = IGFX_TIGERLAKE_LP;
 
@@ -22,7 +24,7 @@ void HwInfoConfigHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &
     coherencyFlag = true;
     HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     if (hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo)) {
-        //stepping A devices - turn off coherency
+        // stepping A devices - turn off coherency
         coherencyFlag = false;
     }
 }

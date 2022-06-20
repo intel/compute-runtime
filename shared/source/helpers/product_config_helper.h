@@ -8,10 +8,14 @@
 #pragma once
 #include "shared/source/utilities/const_stringref.h"
 
-#include "platforms.h"
-
 #include <sstream>
 #include <string>
+
+namespace AOT {
+enum PRODUCT_CONFIG : uint32_t;
+enum RELEASE : uint32_t;
+enum FAMILY : uint32_t;
+} // namespace AOT
 
 struct AheadOfTimeConfig {
     union {

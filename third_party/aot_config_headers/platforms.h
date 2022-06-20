@@ -12,7 +12,7 @@
 
 namespace AOT {
 
-typedef enum {
+enum PRODUCT_CONFIG : uint32_t {
     UNKNOWN_ISA = 0,
     BDW = 0x02000000,
     SKL = 0x02400009,
@@ -49,9 +49,9 @@ typedef enum {
     PVC_XT_B1 = 0x030f0006,
     PVC_XT_C0 = 0x030f0007,
     CONFIG_MAX_PLATFORM,
-} PRODUCT_CONFIG;
+};
 
-typedef enum {
+enum RELEASE : uint32_t {
     UNKNOWN_RELEASE = 0,
     GEN8_RELEASE,
     GEN9_RELEASE,
@@ -61,9 +61,9 @@ typedef enum {
     XE_HPG_RELEASE,
     XE_HPC_RELEASE,
     RELEASE_MAX,
-} RELEASE;
+};
 
-typedef enum {
+enum FAMILY : uint32_t {
     UNKNOWN_FAMILY = 0,
     GEN8_FAMILY,
     GEN9_FAMILY,
@@ -71,7 +71,7 @@ typedef enum {
     GEN12LP_FAMILY,
     XE_FAMILY,
     FAMILY_MAX,
-} FAMILY;
+};
 
 static const std::map<std::string, FAMILY> familyAcronyms = {
     {"gen8", GEN8_FAMILY},

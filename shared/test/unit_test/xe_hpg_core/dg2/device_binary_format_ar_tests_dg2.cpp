@@ -18,6 +18,8 @@
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 
+#include "platforms.h"
+
 using Dg2UnpackSingleDeviceBinaryAr = ::testing::Test;
 
 DG2TEST_F(Dg2UnpackSingleDeviceBinaryAr, WhenFailedToUnpackMatchWithDg2ProductConfigThenTryUnpackAnotherBestMatch) {
