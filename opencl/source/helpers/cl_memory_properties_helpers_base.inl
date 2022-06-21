@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 
-#include "CL/cl_ext_intel.h"
+#include "CL/cl_ext.h"
 
 namespace NEO {
 

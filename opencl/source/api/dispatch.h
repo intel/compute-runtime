@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,9 +9,7 @@
 
 #include "CL/cl.h"
 #include "CL/cl_ext.h"
-#include "CL/cl_ext_intel.h"
 #include "CL/cl_gl.h"
-#include "CL/cl_gl_ext.h"
 #if defined(_WIN32)
 #include <d3d10_1.h>
 
@@ -21,7 +19,7 @@
 #define CL_DX9_MEDIA_SHARING_INTEL_EXT
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 
-#include "CL/cl_dx9_media_sharing_intel.h"
+#include "CL/cl_dx9_media_sharing.h"
 #else
 #define CL_CONTEXT_D3D10_DEVICE_KHR 0x4014
 #define CL_CONTEXT_D3D10_PREFER_SHARED_RESOURCES_KHR 0x402C
@@ -149,7 +147,7 @@ typedef CL_API_ENTRY cl_mem(CL_API_CALL *KHRpfn_clCreateBuffer)(
     void *hostPtr,
     cl_int *errcodeRet) CL_API_SUFFIX__VERSION_1_0;
 
-typedef CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED
+typedef CL_API_ENTRY CL_API_PREFIX__VERSION_1_1_DEPRECATED
 cl_mem(CL_API_CALL *KHRpfn_clCreateImage2D)(
     cl_context context,
     cl_mem_flags flags,
@@ -158,9 +156,9 @@ cl_mem(CL_API_CALL *KHRpfn_clCreateImage2D)(
     size_t imageHeight,
     size_t imageRowPitch,
     void *hostPtr,
-    cl_int *errcodeRet) CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
+    cl_int *errcodeRet) CL_API_SUFFIX__VERSION_1_1_DEPRECATED;
 
-typedef CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED
+typedef CL_API_ENTRY CL_API_PREFIX__VERSION_1_1_DEPRECATED
 cl_mem(CL_API_CALL *KHRpfn_clCreateImage3D)(
     cl_context context,
     cl_mem_flags flags,
@@ -171,7 +169,7 @@ cl_mem(CL_API_CALL *KHRpfn_clCreateImage3D)(
     size_t imageRowPitch,
     size_t imageSlicePitch,
     void *hostPtr,
-    cl_int *errcodeRet) CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
+    cl_int *errcodeRet) CL_API_SUFFIX__VERSION_1_1_DEPRECATED;
 
 typedef CL_API_ENTRY cl_int(CL_API_CALL *KHRpfn_clRetainMemObject)(
     cl_mem memobj) CL_API_SUFFIX__VERSION_1_0;
@@ -273,8 +271,8 @@ typedef CL_API_ENTRY cl_int(CL_API_CALL *KHRpfn_clBuildProgram)(
     prog_logging_fn funcNotify,
     void *userData) CL_API_SUFFIX__VERSION_1_0;
 
-typedef CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED
-cl_int(CL_API_CALL *KHRpfn_clUnloadCompiler)() CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
+typedef CL_API_ENTRY CL_API_PREFIX__VERSION_1_1_DEPRECATED
+cl_int(CL_API_CALL *KHRpfn_clUnloadCompiler)() CL_API_SUFFIX__VERSION_1_1_DEPRECATED;
 
 typedef CL_API_ENTRY cl_int(CL_API_CALL *KHRpfn_clGetProgramInfo)(
     cl_program program,
@@ -520,23 +518,23 @@ typedef CL_API_ENTRY cl_int(CL_API_CALL *KHRpfn_clEnqueueNativeKernel)(
     const cl_event *eventWaitList,
     cl_event *event) CL_API_SUFFIX__VERSION_1_0;
 
-typedef CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED
+typedef CL_API_ENTRY CL_API_PREFIX__VERSION_1_1_DEPRECATED
 cl_int(CL_API_CALL *KHRpfn_clEnqueueMarker)(
     cl_command_queue commandQueue,
-    cl_event *event) CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
+    cl_event *event) CL_API_SUFFIX__VERSION_1_1_DEPRECATED;
 
-typedef CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED
+typedef CL_API_ENTRY CL_API_PREFIX__VERSION_1_1_DEPRECATED
 cl_int(CL_API_CALL *KHRpfn_clEnqueueWaitForEvents)(
     cl_command_queue commandQueue,
     cl_uint numEvents,
-    const cl_event *eventList) CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
+    const cl_event *eventList) CL_API_SUFFIX__VERSION_1_1_DEPRECATED;
 
-typedef CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED
+typedef CL_API_ENTRY CL_API_PREFIX__VERSION_1_1_DEPRECATED
 cl_int(CL_API_CALL *KHRpfn_clEnqueueBarrier)(
-    cl_command_queue commandQueue) CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
+    cl_command_queue commandQueue) CL_API_SUFFIX__VERSION_1_1_DEPRECATED;
 
-typedef CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED void *(CL_API_CALL *KHRpfn_clGetExtensionFunctionAddress)(
-    const char *functionName)CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
+typedef CL_API_ENTRY CL_API_PREFIX__VERSION_1_1_DEPRECATED void *(CL_API_CALL *KHRpfn_clGetExtensionFunctionAddress)(
+    const char *functionName)CL_API_SUFFIX__VERSION_1_1_DEPRECATED;
 
 typedef CL_API_ENTRY cl_mem(CL_API_CALL *KHRpfn_clCreateFromGLBuffer)(
     cl_context context,
@@ -552,21 +550,21 @@ typedef CL_API_ENTRY cl_mem(CL_API_CALL *KHRpfn_clCreateFromGLTexture)(
     cl_GLuint texture,
     cl_int *errcodeRet) CL_API_SUFFIX__VERSION_1_2;
 
-typedef CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED cl_mem(CL_API_CALL *KHRpfn_clCreateFromGLTexture2D)(
+typedef CL_API_ENTRY CL_API_PREFIX__VERSION_1_1_DEPRECATED cl_mem(CL_API_CALL *KHRpfn_clCreateFromGLTexture2D)(
     cl_context context,
     cl_mem_flags flags,
     cl_GLenum textureTarget,
     cl_GLint miplevel,
     cl_GLuint texture,
-    cl_int *errcodeRet) CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
+    cl_int *errcodeRet) CL_API_SUFFIX__VERSION_1_1_DEPRECATED;
 
-typedef CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED cl_mem(CL_API_CALL *KHRpfn_clCreateFromGLTexture3D)(
+typedef CL_API_ENTRY CL_API_PREFIX__VERSION_1_1_DEPRECATED cl_mem(CL_API_CALL *KHRpfn_clCreateFromGLTexture3D)(
     cl_context context,
     cl_mem_flags flags,
     cl_GLenum textureTarget,
     cl_GLint miplevel,
     cl_GLuint texture,
-    cl_int *errcodeRet) CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
+    cl_int *errcodeRet) CL_API_SUFFIX__VERSION_1_1_DEPRECATED;
 
 typedef CL_API_ENTRY cl_mem(CL_API_CALL *KHRpfn_clCreateFromGLRenderbuffer)(
     cl_context context,

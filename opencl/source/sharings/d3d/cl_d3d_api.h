@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 #include "CL/cl_d3d11.h"
 #include "CL/cl_dx9_media_sharing.h"
 #define CL_DX9_MEDIA_SHARING_INTEL_EXT
-#include "CL/cl_dx9_media_sharing_intel.h"
+#include "CL/cl_dx9_media_sharing.h"
 
 extern CL_API_ENTRY cl_int CL_API_CALL clGetDeviceIDsFromDX9INTEL(
     cl_platform_id platform,

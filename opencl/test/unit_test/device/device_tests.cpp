@@ -745,8 +745,8 @@ HWTEST_F(QueueFamiliesTests, whenGettingQueueFamilyCapabilitiesAllThenReturnCorr
 
 HWTEST_F(QueueFamiliesTests, givenComputeQueueWhenGettingQueueFamilyCapabilitiesThenReturnDefaultCapabilities) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    EXPECT_EQ(CL_QUEUE_DEFAULT_CAPABILITIES_INTEL, device->getQueueFamilyCapabilities(NEO::EngineGroupType::Compute));
-    EXPECT_EQ(CL_QUEUE_DEFAULT_CAPABILITIES_INTEL, device->getQueueFamilyCapabilities(NEO::EngineGroupType::RenderCompute));
+    EXPECT_EQ(static_cast<uint64_t>(CL_QUEUE_DEFAULT_CAPABILITIES_INTEL), device->getQueueFamilyCapabilities(NEO::EngineGroupType::Compute));
+    EXPECT_EQ(static_cast<uint64_t>(CL_QUEUE_DEFAULT_CAPABILITIES_INTEL), device->getQueueFamilyCapabilities(NEO::EngineGroupType::RenderCompute));
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, QueueFamiliesTests, givenCopyQueueWhenGettingQueueFamilyCapabilitiesThenDoNotReturnUnsupportedOperations) {

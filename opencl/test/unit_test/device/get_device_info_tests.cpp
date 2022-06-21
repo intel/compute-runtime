@@ -733,7 +733,7 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSingleDeviceWhenInitializingCapsThen
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(2u, paramRetSize / sizeof(cl_queue_family_properties_intel));
 
-    EXPECT_EQ(CL_QUEUE_DEFAULT_CAPABILITIES_INTEL, families[0].capabilities);
+    EXPECT_EQ(static_cast<uint64_t>(CL_QUEUE_DEFAULT_CAPABILITIES_INTEL), families[0].capabilities);
     EXPECT_EQ(3u, families[0].count);
     EXPECT_EQ(clDevice.getDeviceInfo().queueOnHostProperties, families[0].properties);
 
@@ -756,7 +756,7 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSubDeviceWhenInitializingCapsThenRet
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(2u, paramRetSize / sizeof(cl_queue_family_properties_intel));
 
-    EXPECT_EQ(CL_QUEUE_DEFAULT_CAPABILITIES_INTEL, families[0].capabilities);
+    EXPECT_EQ(static_cast<uint64_t>(CL_QUEUE_DEFAULT_CAPABILITIES_INTEL), families[0].capabilities);
     EXPECT_EQ(3u, families[0].count);
     EXPECT_EQ(clDevice.getDeviceInfo().queueOnHostProperties, families[0].properties);
 
@@ -791,7 +791,7 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSubDeviceWithoutSupportedEngineWhenI
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(2u, paramRetSize / sizeof(cl_queue_family_properties_intel));
 
-        EXPECT_EQ(CL_QUEUE_DEFAULT_CAPABILITIES_INTEL, families[0].capabilities);
+        EXPECT_EQ(static_cast<uint64_t>(CL_QUEUE_DEFAULT_CAPABILITIES_INTEL), families[0].capabilities);
         EXPECT_EQ(3u, families[0].count);
         EXPECT_EQ(clDevice0.getDeviceInfo().queueOnHostProperties, families[0].properties);
 
@@ -807,7 +807,7 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSubDeviceWithoutSupportedEngineWhenI
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(1u, paramRetSize / sizeof(cl_queue_family_properties_intel));
 
-        EXPECT_EQ(CL_QUEUE_DEFAULT_CAPABILITIES_INTEL, families[0].capabilities);
+        EXPECT_EQ(static_cast<uint64_t>(CL_QUEUE_DEFAULT_CAPABILITIES_INTEL), families[0].capabilities);
         EXPECT_EQ(3u, families[0].count);
         EXPECT_EQ(clDevice1.getDeviceInfo().queueOnHostProperties, families[0].properties);
 
@@ -831,7 +831,7 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenDeviceRootDeviceWhenInitializingCaps
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1u, paramRetSize / sizeof(cl_queue_family_properties_intel));
 
-    EXPECT_EQ(CL_QUEUE_DEFAULT_CAPABILITIES_INTEL, families[0].capabilities);
+    EXPECT_EQ(static_cast<uint64_t>(CL_QUEUE_DEFAULT_CAPABILITIES_INTEL), families[0].capabilities);
     EXPECT_EQ(1u, families[0].count);
     EXPECT_EQ(clDevice.getDeviceInfo().queueOnHostProperties, families[0].properties);
 }

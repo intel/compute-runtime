@@ -3821,7 +3821,7 @@ clSetPerformanceConfigurationINTEL(
     return CL_INVALID_OPERATION;
 }
 
-void *clHostMemAllocINTEL(
+CL_API_ENTRY void *CL_API_CALL clHostMemAllocINTEL(
     cl_context context,
     const cl_mem_properties_intel *properties,
     size_t size,
@@ -3861,7 +3861,7 @@ void *clHostMemAllocINTEL(
     return neoContext->getSVMAllocsManager()->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
 }
 
-void *clDeviceMemAllocINTEL(
+CL_API_ENTRY void *CL_API_CALL clDeviceMemAllocINTEL(
     cl_context context,
     cl_device_id device,
     const cl_mem_properties_intel *properties,
@@ -3909,7 +3909,7 @@ void *clDeviceMemAllocINTEL(
     return neoContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
 }
 
-void *clSharedMemAllocINTEL(
+CL_API_ENTRY void *CL_API_CALL clSharedMemAllocINTEL(
     cl_context context,
     cl_device_id device,
     const cl_mem_properties_intel *properties,
@@ -3967,9 +3967,9 @@ void *clSharedMemAllocINTEL(
     return ptr;
 }
 
-cl_int clMemFreeCommon(cl_context context,
-                       const void *ptr,
-                       bool blocking) {
+CL_API_ENTRY cl_int CL_API_CALL clMemFreeCommon(cl_context context,
+                                                const void *ptr,
+                                                bool blocking) {
     Context *neoContext = nullptr;
     auto retVal = validateObjects(withCastToInternal(context, &neoContext));
 
@@ -3988,19 +3988,19 @@ cl_int clMemFreeCommon(cl_context context,
     return CL_SUCCESS;
 }
 
-cl_int clMemFreeINTEL(
+CL_API_ENTRY cl_int CL_API_CALL clMemFreeINTEL(
     cl_context context,
     void *ptr) {
     return clMemFreeCommon(context, ptr, false);
 }
 
-cl_int clMemBlockingFreeINTEL(
+CL_API_ENTRY cl_int CL_API_CALL clMemBlockingFreeINTEL(
     cl_context context,
     void *ptr) {
     return clMemFreeCommon(context, ptr, true);
 }
 
-cl_int clGetMemAllocInfoINTEL(
+CL_API_ENTRY cl_int CL_API_CALL clGetMemAllocInfoINTEL(
     cl_context context,
     const void *ptr,
     cl_mem_info_intel paramName,
@@ -4073,14 +4073,14 @@ cl_int clGetMemAllocInfoINTEL(
     return CL_INVALID_VALUE;
 }
 
-cl_int clSetKernelArgMemPointerINTEL(
+CL_API_ENTRY cl_int CL_API_CALL clSetKernelArgMemPointerINTEL(
     cl_kernel kernel,
     cl_uint argIndex,
     const void *argValue) {
     return clSetKernelArgSVMPointer(kernel, argIndex, argValue);
 }
 
-cl_int clEnqueueMemsetINTEL(
+CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemsetINTEL(
     cl_command_queue commandQueue,
     void *dstPtr,
     cl_int value,
@@ -4104,7 +4104,7 @@ cl_int clEnqueueMemsetINTEL(
     return retVal;
 }
 
-cl_int clEnqueueMemFillINTEL(
+CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemFillINTEL(
     cl_command_queue commandQueue,
     void *dstPtr,
     const void *pattern,
@@ -4130,7 +4130,7 @@ cl_int clEnqueueMemFillINTEL(
     return retVal;
 }
 
-cl_int clEnqueueMemcpyINTEL(
+CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemcpyINTEL(
     cl_command_queue commandQueue,
     cl_bool blocking,
     void *dstPtr,
@@ -4155,7 +4155,7 @@ cl_int clEnqueueMemcpyINTEL(
     return retVal;
 }
 
-cl_int clEnqueueMigrateMemINTEL(
+CL_API_ENTRY cl_int CL_API_CALL clEnqueueMigrateMemINTEL(
     cl_command_queue commandQueue,
     const void *ptr,
     size_t size,
@@ -4180,7 +4180,7 @@ cl_int clEnqueueMigrateMemINTEL(
     return retVal;
 }
 
-cl_int clEnqueueMemAdviseINTEL(
+CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemAdviseINTEL(
     cl_command_queue commandQueue,
     const void *ptr,
     size_t size,

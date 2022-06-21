@@ -22,7 +22,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_image.h"
 
-#include "third_party/opencl_headers/CL/cl_ext_intel.h"
+#include "third_party/opencl_headers/CL/cl_ext.h"
 
 namespace L0 {
 namespace ult {

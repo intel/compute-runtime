@@ -921,7 +921,7 @@ extern CL_API_ENTRY cl_event CL_API_CALL
 clCreateEventFromGLsyncKHR(
     cl_context context,
     cl_GLsync sync,
-    cl_int *errcodeRet) CL_EXT_SUFFIX__VERSION_1_2;
+    cl_int *errcodeRet) CL_API_SUFFIX__VERSION_1_2;
 
 extern CL_API_ENTRY cl_program CL_API_CALL clCreateProgramWithILKHR(
     cl_context context,
@@ -937,14 +937,14 @@ extern CL_API_ENTRY cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeKHR(
     const size_t *globalWorkSize,
     size_t *suggestedLocalWorkSize) CL_API_SUFFIX__VERSION_3_0;
 
-void *clHostMemAllocINTEL(
+CL_API_ENTRY void *CL_API_CALL clHostMemAllocINTEL(
     cl_context context,
     const cl_mem_properties_intel *properties,
     size_t size,
     cl_uint alignment,
     cl_int *errcodeRet);
 
-void *clDeviceMemAllocINTEL(
+CL_API_ENTRY void *CL_API_CALL clDeviceMemAllocINTEL(
     cl_context context,
     cl_device_id device,
     const cl_mem_properties_intel *properties,
@@ -952,7 +952,7 @@ void *clDeviceMemAllocINTEL(
     cl_uint alignment,
     cl_int *errcodeRet);
 
-void *clSharedMemAllocINTEL(
+CL_API_ENTRY void *CL_API_CALL clSharedMemAllocINTEL(
     cl_context context,
     cl_device_id device,
     const cl_mem_properties_intel *properties,
@@ -960,15 +960,15 @@ void *clSharedMemAllocINTEL(
     cl_uint alignment,
     cl_int *errcodeRet);
 
-cl_int clMemFreeINTEL(
+CL_API_ENTRY cl_int CL_API_CALL clMemFreeINTEL(
     cl_context context,
     void *ptr);
 
-cl_int clMemBlockingFreeINTEL(
+CL_API_ENTRY cl_int CL_API_CALL clMemBlockingFreeINTEL(
     cl_context context,
     void *ptr);
 
-cl_int clGetMemAllocInfoINTEL(
+CL_API_ENTRY cl_int CL_API_CALL clGetMemAllocInfoINTEL(
     cl_context context,
     const void *ptr,
     cl_mem_info_intel paramName,
@@ -976,12 +976,12 @@ cl_int clGetMemAllocInfoINTEL(
     void *paramValue,
     size_t *paramValueSizeRet);
 
-cl_int clSetKernelArgMemPointerINTEL(
+CL_API_ENTRY cl_int CL_API_CALL clSetKernelArgMemPointerINTEL(
     cl_kernel kernel,
     cl_uint argIndex,
     const void *argValue);
 
-cl_int clEnqueueMemsetINTEL(
+CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemsetINTEL(
     cl_command_queue commandQueue,
     void *dstPtr,
     cl_int value,
@@ -990,7 +990,7 @@ cl_int clEnqueueMemsetINTEL(
     const cl_event *eventWaitList,
     cl_event *event);
 
-cl_int clEnqueueMemFillINTEL(
+CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemFillINTEL(
     cl_command_queue commandQueue,
     void *dstPtr,
     const void *pattern,
@@ -1000,7 +1000,7 @@ cl_int clEnqueueMemFillINTEL(
     const cl_event *eventWaitList,
     cl_event *event);
 
-cl_int clEnqueueMemcpyINTEL(
+CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemcpyINTEL(
     cl_command_queue commandQueue,
     cl_bool blocking,
     void *dstPtr,
@@ -1010,7 +1010,7 @@ cl_int clEnqueueMemcpyINTEL(
     const cl_event *eventWaitList,
     cl_event *event);
 
-cl_int clEnqueueMigrateMemINTEL(
+CL_API_ENTRY cl_int CL_API_CALL clEnqueueMigrateMemINTEL(
     cl_command_queue commandQueue,
     const void *ptr,
     size_t size,
@@ -1019,7 +1019,7 @@ cl_int clEnqueueMigrateMemINTEL(
     const cl_event *eventWaitList,
     cl_event *event);
 
-cl_int clEnqueueMemAdviseINTEL(
+CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemAdviseINTEL(
     cl_command_queue commandQueue,
     const void *ptr,
     size_t size,

@@ -16,7 +16,7 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
-#include "CL/cl_ext_intel.h"
+#include "CL/cl_ext.h"
 #include "gtest/gtest.h"
 #include "memory_properties_flags.h"
 

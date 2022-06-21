@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/cl_device/cl_device_info.h"
 
-#include "CL/cl_ext_intel.h"
+#include "CL/cl_ext.h"
 #include <CL/cl.h>
 #include <CL/cl_ext.h>
 

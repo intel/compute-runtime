@@ -8,7 +8,7 @@
 #pragma once
 
 #include "CL/cl.h"
-#include "CL/cl_gl_ext.h"
+#include "CL/cl_gl.h"
 
 #include <string>
 

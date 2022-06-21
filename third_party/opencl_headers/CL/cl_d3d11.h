@@ -1,37 +1,35 @@
-/**********************************************************************************
- * Copyright (c) 2008-2015 The Khronos Group Inc.
+/*******************************************************************************
+ * Copyright (c) 2008-2020 The Khronos Group Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and/or associated documentation files (the
- * "Materials"), to deal in the Materials without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Materials, and to
- * permit persons to whom the Materials are furnished to do so, subject to
- * the following conditions:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Materials.
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
- * MODIFICATIONS TO THIS FILE MAY MEAN IT NO LONGER ACCURATELY REFLECTS
- * KHRONOS STANDARDS. THE UNMODIFIED, NORMATIVE VERSIONS OF KHRONOS
- * SPECIFICATIONS AND HEADER INFORMATION ARE LOCATED AT
- *    https://www.khronos.org/registry/
- *
- * THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
- * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- * MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
- **********************************************************************************/
-
-/* $Revision: 11708 $ on $Date: 2010-06-13 23:36:24 -0700 (Sun, 13 Jun 2010) $ */
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
 #ifndef __OPENCL_CL_D3D11_H
 #define __OPENCL_CL_D3D11_H
 
+#if defined(_MSC_VER)
+#if _MSC_VER >=1500
+#pragma warning( push )
+#pragma warning( disable : 4201 )
+#pragma warning( disable : 5105 )
+#endif
+#endif
 #include <d3d11.h>
+#if defined(_MSC_VER)
+#if _MSC_VER >=1500
+#pragma warning( pop )
+#endif
+#endif
 #include <CL/cl.h>
 #include <CL/cl_platform.h>
 
@@ -78,7 +76,7 @@ typedef cl_uint cl_d3d11_device_set_khr;
 
 /******************************************************************************/
 
-typedef CL_API_ENTRY cl_int (CL_API_CALL *clGetDeviceIDsFromD3D11KHR_fn)(
+typedef cl_int (CL_API_CALL *clGetDeviceIDsFromD3D11KHR_fn)(
     cl_platform_id             platform,
     cl_d3d11_device_source_khr d3d_device_source,
     void *                     d3d_object,
@@ -87,27 +85,27 @@ typedef CL_API_ENTRY cl_int (CL_API_CALL *clGetDeviceIDsFromD3D11KHR_fn)(
     cl_device_id *             devices,
     cl_uint *                  num_devices) CL_API_SUFFIX__VERSION_1_2;
 
-typedef CL_API_ENTRY cl_mem (CL_API_CALL *clCreateFromD3D11BufferKHR_fn)(
+typedef cl_mem (CL_API_CALL *clCreateFromD3D11BufferKHR_fn)(
     cl_context     context,
     cl_mem_flags   flags,
     ID3D11Buffer * resource,
     cl_int *       errcode_ret) CL_API_SUFFIX__VERSION_1_2;
 
-typedef CL_API_ENTRY cl_mem (CL_API_CALL *clCreateFromD3D11Texture2DKHR_fn)(
+typedef cl_mem (CL_API_CALL *clCreateFromD3D11Texture2DKHR_fn)(
     cl_context        context,
     cl_mem_flags      flags,
     ID3D11Texture2D * resource,
     UINT              subresource,
     cl_int *          errcode_ret) CL_API_SUFFIX__VERSION_1_2;
 
-typedef CL_API_ENTRY cl_mem (CL_API_CALL *clCreateFromD3D11Texture3DKHR_fn)(
+typedef cl_mem (CL_API_CALL *clCreateFromD3D11Texture3DKHR_fn)(
     cl_context        context,
     cl_mem_flags      flags,
     ID3D11Texture3D * resource,
     UINT              subresource,
     cl_int *          errcode_ret) CL_API_SUFFIX__VERSION_1_2;
 
-typedef CL_API_ENTRY cl_int (CL_API_CALL *clEnqueueAcquireD3D11ObjectsKHR_fn)(
+typedef cl_int (CL_API_CALL *clEnqueueAcquireD3D11ObjectsKHR_fn)(
     cl_command_queue command_queue,
     cl_uint          num_objects,
     const cl_mem *   mem_objects,
@@ -115,13 +113,40 @@ typedef CL_API_ENTRY cl_int (CL_API_CALL *clEnqueueAcquireD3D11ObjectsKHR_fn)(
     const cl_event * event_wait_list,
     cl_event *       event) CL_API_SUFFIX__VERSION_1_2;
 
-typedef CL_API_ENTRY cl_int (CL_API_CALL *clEnqueueReleaseD3D11ObjectsKHR_fn)(
+typedef cl_int (CL_API_CALL *clEnqueueReleaseD3D11ObjectsKHR_fn)(
     cl_command_queue command_queue,
     cl_uint          num_objects,
     const cl_mem *   mem_objects,
     cl_uint          num_events_in_wait_list,
     const cl_event * event_wait_list,
     cl_event *       event) CL_API_SUFFIX__VERSION_1_2;
+
+/***************************************************************
+* cl_intel_sharing_format_query_d3d11
+***************************************************************/
+#define cl_intel_sharing_format_query_d3d11 1
+
+/* when cl_khr_d3d11_sharing is supported */
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clGetSupportedD3D11TextureFormatsINTEL(
+    cl_context context,
+    cl_mem_flags flags,
+    cl_mem_object_type image_type,
+    cl_uint plane,
+    cl_uint num_entries,
+    DXGI_FORMAT* d3d11_formats,
+    cl_uint* num_texture_formats) ;
+
+typedef cl_int (CL_API_CALL *
+clGetSupportedD3D11TextureFormatsINTEL_fn)(
+    cl_context context,
+    cl_mem_flags flags,
+    cl_mem_object_type image_type,
+    cl_uint plane,
+    cl_uint num_entries,
+    DXGI_FORMAT* d3d11_formats,
+    cl_uint* num_texture_formats) ;
 
 #ifdef __cplusplus
 }

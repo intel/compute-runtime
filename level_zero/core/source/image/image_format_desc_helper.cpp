@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "level_zero/core/source/image/image_format_desc_helper.h"
 
-#include "third_party/opencl_headers/CL/cl_ext_intel.h"
+#include "third_party/opencl_headers/CL/cl_ext.h"
 
 namespace L0 {
 

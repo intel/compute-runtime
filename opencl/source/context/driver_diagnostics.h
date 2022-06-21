@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "CL/cl_ext_intel.h"
+#include "CL/cl_ext.h"
 
 namespace NEO {
 
