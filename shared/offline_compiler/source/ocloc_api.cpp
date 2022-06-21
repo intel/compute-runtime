@@ -10,6 +10,7 @@
 #include "shared/offline_compiler/source/decoder/binary_decoder.h"
 #include "shared/offline_compiler/source/decoder/binary_encoder.h"
 #include "shared/offline_compiler/source/multi_command.h"
+#include "shared/offline_compiler/source/ocloc_concat.h"
 #include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/offline_compiler/source/ocloc_fatbinary.h"
 #include "shared/offline_compiler/source/ocloc_validator.h"
@@ -65,6 +66,9 @@ Examples:
 
   Extract driver version
     ocloc query OCL_DRIVER_VERSION
+
+  Concatenate fat binaries
+    ocloc concat <fat binary> <fat binary> ... [-out <concatenated fat binary name>]
 )===";
 
 extern "C" {
@@ -168,6 +172,16 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
             }
 
             return createResult | linkingResult;
+        } else if (numArgs > 1 && NEO::OclocConcat::commandStr == allArgs[1]) {
+            auto arConcat = NEO::OclocConcat(helper.get());
+            auto error = arConcat.initialize(allArgs);
+            if (OclocErrorCode::SUCCESS != error) {
+                arConcat.printHelp();
+                return error;
+            }
+
+            error = arConcat.concatenate();
+            return error;
         } else {
             int retVal = OclocErrorCode::SUCCESS;
 

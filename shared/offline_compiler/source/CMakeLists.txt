@@ -60,6 +60,8 @@ set(CLOC_LIB_SRCS_LIB
     ${OCLOC_DIRECTORY}/source/ocloc_api.h
     ${OCLOC_DIRECTORY}/source/ocloc_arg_helper.cpp
     ${OCLOC_DIRECTORY}/source/ocloc_arg_helper.h
+    ${OCLOC_DIRECTORY}/source/ocloc_concat.cpp
+    ${OCLOC_DIRECTORY}/source/ocloc_concat.h
     ${OCLOC_DIRECTORY}/source/ocloc_dll_options.cpp
     ${OCLOC_DIRECTORY}/source/ocloc_dll_options.h
     ${OCLOC_DIRECTORY}/source/ocloc_error_code.h

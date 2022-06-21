@@ -7,9 +7,12 @@
 
 #include "shared/offline_compiler/source/decoder/helper.h"
 #include "shared/offline_compiler/source/ocloc_api.h"
+#include "shared/offline_compiler/source/ocloc_concat.h"
 #include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/offline_compiler/source/queries.h"
 #include "shared/offline_compiler/source/utilities/get_git_version_info.h"
+#include "shared/source/device_binary_format/ar/ar_decoder.h"
+#include "shared/source/device_binary_format/ar/ar_encoder.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/file_io.h"
@@ -707,4 +710,102 @@ TEST(OclocApiTests, GivenInvalidParameterWhenLinkingThenErrorIsReturned) {
     const std::string expectedExecuteError{"Error: Linker cannot be executed due to unsuccessful initialization!\n"};
     const std::string expectedErrorMessage = expectedInitError + expectedExecuteError;
     EXPECT_EQ(expectedErrorMessage, output);
+}
+
+TEST(OclocApiTests, GivenInvalidCommandLineWhenConcatenatingThenErrorIsReturned) {
+    const char *argv[] = {
+        "ocloc",
+        "concat"};
+    unsigned int argc = sizeof(argv) / sizeof(argv[0]);
+    testing::internal::CaptureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(NEO::OclocErrorCode::INVALID_COMMAND_LINE, retVal);
+    const std::string emptyCommandLineError = "No files to concatenate were provided.\n";
+    const std::string expectedErrorMessage = emptyCommandLineError + NEO::OclocConcat::helpMessage.str();
+    EXPECT_EQ(expectedErrorMessage, output);
+}
+
+TEST(OclocApiTests, GivenValidCommandLineAndFatBinariesWhenConcatenatingThenNewFatBinaryIsCreated) {
+    std::vector<uint8_t> file1(32, 0x0);
+    std::vector<uint8_t> file2(32, 0x10);
+    const std::string file1Name = "file1";
+    const std::string file2Name = "file2";
+
+    std::vector<uint8_t> fatBinary1;
+    {
+        NEO::Ar::ArEncoder arEncoder(true);
+        arEncoder.appendFileEntry(file1Name, ArrayRef<const uint8_t>::fromAny(file1.data(), file1.size()));
+        fatBinary1 = arEncoder.encode();
+    }
+    std::vector<uint8_t> fatBinary2;
+    {
+        NEO::Ar::ArEncoder arEncoder(true);
+        arEncoder.appendFileEntry(file2Name, ArrayRef<const uint8_t>::fromAny(file2.data(), file2.size()));
+        fatBinary2 = arEncoder.encode();
+    }
+
+    const uint8_t *sourcesData[2] = {fatBinary1.data(),
+                                     fatBinary2.data()};
+    const uint64_t sourcesLen[2] = {fatBinary1.size(),
+                                    fatBinary2.size()};
+    const char *sourcesName[2] = {"fatBinary1.ar",
+                                  "fatBinary2.ar"};
+
+    uint32_t numOutputs;
+    uint8_t **outputData;
+    uint64_t *outputLen;
+    char **outputName;
+    const char *argv[] = {
+        "ocloc",
+        "concat",
+        "fatBinary1.ar",
+        "fatBinary2.ar",
+        "-out",
+        "catFatBinary.ar"};
+    unsigned int argc = sizeof(argv) / sizeof(argv[0]);
+    testing::internal::CaptureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             2, sourcesData, sourcesLen, sourcesName,
+                             0, nullptr, nullptr, nullptr,
+                             &numOutputs, &outputData, &outputLen, &outputName);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(NEO::OclocErrorCode::SUCCESS, retVal);
+    EXPECT_TRUE(output.empty());
+
+    uint32_t fatBinaryIdx = std::numeric_limits<uint32_t>::max();
+    for (uint32_t i = 0; i < numOutputs; i++) {
+        if (strcmp(argv[argc - 1], outputName[i]) == 0) {
+            fatBinaryIdx = i;
+            break;
+        }
+    }
+    ASSERT_NE(std::numeric_limits<uint32_t>::max(), fatBinaryIdx);
+
+    std::string errors, warnings;
+    auto ar = NEO::Ar::decodeAr(ArrayRef<const uint8_t>::fromAny(outputData[fatBinaryIdx], static_cast<size_t>(outputLen[fatBinaryIdx])),
+                                errors, warnings);
+    EXPECT_TRUE(errors.empty());
+    EXPECT_TRUE(warnings.empty());
+
+    bool hasFatBinary1 = false;
+    bool hasFatBinary2 = false;
+    for (auto &file : ar.files) {
+        if (file.fileName == file1Name) {
+            hasFatBinary1 = true;
+            ASSERT_EQ(file1.size(), file.fileData.size());
+            EXPECT_EQ(0, memcmp(file1.data(), file.fileData.begin(), file1.size()));
+        } else if (file.fileName == file2Name) {
+            hasFatBinary2 = true;
+            ASSERT_EQ(file2.size(), file.fileData.size());
+            EXPECT_EQ(0, memcmp(file2.data(), file.fileData.begin(), file2.size()));
+        }
+    }
+
+    EXPECT_TRUE(hasFatBinary1);
+    EXPECT_TRUE(hasFatBinary2);
+    oclocFreeOutput(&numOutputs, &outputData, &outputLen, &outputName);
 }
