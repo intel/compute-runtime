@@ -63,11 +63,6 @@ bool HwInfoConfigHw<gfxProduct>::isBFloat16ConversionSupported(const HardwareInf
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::useChannelRedForUnusedShaderChannels() const {
-    return true;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool HwInfoConfigHw<gfxProduct>::isMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const {
     return true;
 }

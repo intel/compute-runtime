@@ -106,7 +106,6 @@ class HwInfoConfig {
     virtual bool isVmBindPatIndexProgrammingSupported() const = 0;
     virtual bool isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const = 0;
-    virtual bool useChannelRedForUnusedShaderChannels() const = 0;
     virtual bool isIpSamplingSupported(const NEO::HardwareInfo &hwInfo) const = 0;
     virtual bool isGrfNumReportedWithScm() const = 0;
     virtual bool isThreadArbitrationPolicyReportedWithScm() const = 0;
@@ -204,7 +203,6 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isVmBindPatIndexProgrammingSupported() const override;
     bool isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const override;
     bool isMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const override;
-    bool useChannelRedForUnusedShaderChannels() const override;
     bool isIpSamplingSupported(const NEO::HardwareInfo &hwInfo) const override;
     bool isGrfNumReportedWithScm() const override;
     bool isThreadArbitrationPolicyReportedWithScm() const override;

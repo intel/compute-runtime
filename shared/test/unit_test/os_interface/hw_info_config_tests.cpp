@@ -357,11 +357,6 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfPatIndexProgrammingSuppor
     EXPECT_FALSE(hwInfoConfig.isVmBindPatIndexProgrammingSupported());
 }
 
-HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfUseChannelRedForUnusedShaderChannelsThenTrueIsReturned, IsAtMostXeHpcCore) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig.useChannelRedForUnusedShaderChannels());
-}
-
 HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfIsTimestampWaitSupportedForEventsThenFalseIsReturned, IsNotXeHpgCore) {
     const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
     EXPECT_FALSE(hwInfoConfig.isTimestampWaitSupportedForEvents());

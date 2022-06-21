@@ -350,12 +350,6 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isMatrixMultiplyAccumulateSupported(const Har
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::useChannelRedForUnusedShaderChannels() const {
-    return false;
-}
-
-template <>
-
 void HwInfoConfigHw<IGFX_UNKNOWN>::updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) {
 }
 
