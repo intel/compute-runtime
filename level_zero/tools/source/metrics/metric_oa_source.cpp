@@ -75,7 +75,7 @@ bool OaMetricSourceImp::loadDependencies() {
     // Set metric context initialization state.
     setInitializationState(result
                                ? ZE_RESULT_SUCCESS
-                               : ZE_RESULT_ERROR_UNKNOWN);
+                               : ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 
     return result;
 }

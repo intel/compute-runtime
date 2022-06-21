@@ -28,7 +28,7 @@ struct MetricEnumeration {
     virtual bool isInitialized();
 
     virtual ze_result_t loadMetricsDiscovery();
-    static const char *getMetricsDiscoveryFilename();
+    void getMetricsDiscoveryFilename(std::vector<const char *> &names) const;
 
   protected:
     ze_result_t initialize();

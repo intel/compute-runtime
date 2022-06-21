@@ -50,7 +50,12 @@ TEST_F(MetricEnumerationTest, givenIncorrectMetricDiscoveryWhenLoadMetricsDiscov
     mockMetricEnumeration->hMetricsDiscovery = nullptr;
     mockMetricEnumeration->openAdapterGroup = nullptr;
 
-    EXPECT_EQ(mockMetricEnumeration->baseLoadMetricsDiscovery(), ZE_RESULT_ERROR_NOT_AVAILABLE);
+    EXPECT_EQ(mockMetricEnumeration->baseLoadMetricsDiscovery(), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+}
+
+TEST_F(MetricEnumerationTest, givenForcingValidAdapterGroupDependenciesAreMet) {
+
+    EXPECT_EQ(mockMetricEnumeration->baseLoadMetricsDiscovery(), ZE_RESULT_SUCCESS);
 }
 
 TEST_F(MetricEnumerationTest, givenIncorrectMetricDiscoveryWhenMetricGroupGetIsCalledThenNoMetricGroupsAreReturned) {

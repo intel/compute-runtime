@@ -22,7 +22,10 @@
 
 namespace L0 {
 
-const char *MetricEnumeration::getMetricsDiscoveryFilename() { return METRICS_DISCOVERY_NAME; }
+void MetricEnumeration::getMetricsDiscoveryFilename(std::vector<const char *> &names) const {
+    names.clear();
+    names.push_back(METRICS_DISCOVERY_NAME);
+}
 
 bool MetricEnumeration::getAdapterId(uint32_t &major, uint32_t &minor) {
 

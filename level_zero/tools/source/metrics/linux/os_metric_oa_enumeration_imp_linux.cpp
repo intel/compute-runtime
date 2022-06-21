@@ -18,7 +18,11 @@
 
 namespace L0 {
 
-const char *MetricEnumeration::getMetricsDiscoveryFilename() { return "libmd.so.1"; }
+void MetricEnumeration::getMetricsDiscoveryFilename(std::vector<const char *> &names) const {
+    names.clear();
+    names.push_back("libigdmd.so.1");
+    names.push_back("libmd.so.1");
+}
 
 bool MetricEnumeration::getAdapterId(uint32_t &adapterMajor, uint32_t &adapterMinor) {
 
