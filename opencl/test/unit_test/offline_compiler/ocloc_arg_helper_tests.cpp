@@ -8,6 +8,8 @@
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include <algorithm>
+
 struct OclocArgHelperTests : public ::testing::Test {
     OclocArgHelperTests() {
         argHelper = std::make_unique<OclocArgHelper>();
