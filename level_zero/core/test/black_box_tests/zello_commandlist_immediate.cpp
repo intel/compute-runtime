@@ -42,7 +42,7 @@ void testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &devi
     cmdQueueDesc.pNext = nullptr;
     cmdQueueDesc.flags = 0;
     cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-    cmdQueueDesc.ordinal = 0;
+    cmdQueueDesc.ordinal = getCommandQueueOrdinal(device);
     cmdQueueDesc.index = 0;
 
     if (useSyncCmdQ) {
@@ -92,7 +92,7 @@ void testAppendMemoryCopyRegion(ze_context_handle_t &context, ze_device_handle_t
     cmdQueueDesc.pNext = nullptr;
     cmdQueueDesc.flags = 0;
     cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-    cmdQueueDesc.ordinal = 0;
+    cmdQueueDesc.ordinal = getCommandQueueOrdinal(device);
     cmdQueueDesc.index = 0;
 
     if (useSyncCmdQ) {
@@ -271,7 +271,7 @@ void testAppendGpuFunction(ze_context_handle_t &context, ze_device_handle_t &dev
     cmdQueueDesc.pNext = nullptr;
     cmdQueueDesc.flags = 0;
     cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-    cmdQueueDesc.ordinal = 0;
+    cmdQueueDesc.ordinal = getCommandQueueOrdinal(device);
     cmdQueueDesc.index = 0;
 
     if (useSyncCmdQ) {

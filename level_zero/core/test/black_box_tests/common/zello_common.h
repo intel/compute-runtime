@@ -291,7 +291,7 @@ inline const std::vector<const char *> &getResourcesSearchLocations() {
     return locations;
 }
 
-/* read binary file into a non-NULL-terminated string */
+// read binary file into a non-NULL-terminated string
 template <typename SizeT>
 inline std::unique_ptr<char[]> readBinaryFile(const std::string &name, SizeT &outSize) {
     for (const char *base : getResourcesSearchLocations()) {
@@ -308,6 +308,32 @@ inline std::unique_ptr<char[]> readBinaryFile(const std::string &name, SizeT &ou
 
         auto storage = std::make_unique<char[]>(length);
         file.read(storage.get(), length);
+
+        outSize = static_cast<SizeT>(length);
+        return storage;
+    }
+    outSize = 0;
+    return nullptr;
+}
+
+// read text file into a NULL-terminated string
+template <typename SizeT>
+inline std::unique_ptr<char[]> readTextFile(const std::string &name, SizeT &outSize) {
+    for (const char *base : getResourcesSearchLocations()) {
+        std::string s(base);
+        std::ifstream file(s + name, std::ios_base::in);
+        if (false == file.good()) {
+            continue;
+        }
+
+        size_t length;
+        file.seekg(0, file.end);
+        length = static_cast<size_t>(file.tellg());
+        file.seekg(0, file.beg);
+
+        auto storage = std::make_unique<char[]>(length + 1);
+        file.read(storage.get(), length);
+        storage[length] = '\0';
 
         outSize = static_cast<SizeT>(length);
         return storage;

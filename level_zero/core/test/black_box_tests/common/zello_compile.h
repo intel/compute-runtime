@@ -20,11 +20,11 @@ std::vector<uint8_t> compileToSpirV(const std::string &src, const std::string &o
     std::vector<uint8_t> ret;
 
     const char *mainFileName = "main.cl";
-    const char *argv[] = {"ocloc", "-q", "-device", "skl", "-file", mainFileName, "", ""};
+    const char *argv[] = {"ocloc", "-q", "-spv_only", "-file", mainFileName, "", ""};
     uint32_t numArgs = sizeof(argv) / sizeof(argv[0]) - 2;
     if (options.size() > 0) {
-        argv[6] = "-options";
-        argv[7] = options.c_str();
+        argv[5] = "-options";
+        argv[6] = options.c_str();
         numArgs += 2;
     }
     const unsigned char *sources[] = {reinterpret_cast<const unsigned char *>(src.c_str())};

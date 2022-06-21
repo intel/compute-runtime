@@ -12,6 +12,7 @@ set(TEST_TARGETS
     zello_copy_image
     zello_copy_only
     zello_dynamic_link
+    zello_dyn_local_arg
     zello_events
     zello_fence
     zello_host_pointer
@@ -72,6 +73,7 @@ target_link_libraries(zello_printf PUBLIC ocloc_lib)
 target_link_libraries(zello_image_view PUBLIC ocloc_lib)
 target_link_libraries(zello_dynamic_link PUBLIC ocloc_lib)
 target_link_libraries(zello_commandlist_immediate PUBLIC ocloc_lib)
+target_link_libraries(zello_dyn_local_arg PUBLIC ocloc_lib)
 if(UNIX)
   target_link_libraries(zello_world_global_work_offset PUBLIC ocloc_lib)
 endif()
