@@ -19,8 +19,6 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include "drm/i915_drm.h"
-
 #include <errno.h>
 #include <fcntl.h>
 #include <map>
@@ -35,7 +33,8 @@
 namespace NEO {
 
 BufferObject::BufferObject(Drm *drm, uint64_t patIndex, int handle, size_t size, size_t maxOsContextCount) : drm(drm), refCount(1), handle(handle), size(size) {
-    this->tilingMode = I915_TILING_NONE;
+    auto ioctlHelper = drm->getIoctlHelper();
+    this->tilingMode = ioctlHelper->getDrmParamValue(DrmParam::TilingNone);
     this->lockedAddress = nullptr;
     this->patIndex = patIndex;
 

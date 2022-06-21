@@ -348,7 +348,8 @@ HWTEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWithMipCount
 
     EXPECT_EQ(1u, this->mock->createParamsHandle);
     EXPECT_EQ(imageSize, this->mock->createParamsSize);
-    __u32 tilingMode = I915_TILING_Y;
+    auto ioctlHelper = this->mock->getIoctlHelper();
+    uint32_t tilingMode = ioctlHelper->getDrmParamValue(DrmParam::TilingY);
     EXPECT_EQ(tilingMode, this->mock->setTilingMode);
     EXPECT_EQ(rowPitch, this->mock->setTilingStride);
     EXPECT_EQ(1u, this->mock->setTilingHandle);
@@ -397,7 +398,8 @@ HWTEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWithMipCount
 
     EXPECT_EQ(1u, this->mock->createParamsHandle);
     EXPECT_EQ(imageSize, this->mock->createParamsSize);
-    __u32 tilingMode = I915_TILING_Y;
+    auto ioctlHelper = this->mock->getIoctlHelper();
+    uint32_t tilingMode = ioctlHelper->getDrmParamValue(DrmParam::TilingY);
     EXPECT_EQ(tilingMode, this->mock->setTilingMode);
     EXPECT_EQ(rowPitch, this->mock->setTilingStride);
     EXPECT_EQ(1u, this->mock->setTilingHandle);
@@ -511,7 +513,8 @@ HWTEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreat
 
     EXPECT_EQ(1u, this->mock->createParamsHandle);
     EXPECT_EQ(imageSize, this->mock->createParamsSize);
-    __u32 tilingMode = I915_TILING_Y;
+    auto ioctlHelper = this->mock->getIoctlHelper();
+    uint32_t tilingMode = ioctlHelper->getDrmParamValue(DrmParam::TilingY);
     EXPECT_EQ(tilingMode, this->mock->setTilingMode);
     EXPECT_EQ(rowPitch, this->mock->setTilingStride);
     EXPECT_EQ(1u, this->mock->setTilingHandle);
@@ -588,7 +591,8 @@ TEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountZ
 
     EXPECT_EQ(0u, this->mock->createParamsHandle);
     EXPECT_EQ(0u, this->mock->createParamsSize);
-    __u32 tilingMode = I915_TILING_NONE;
+    auto ioctlHelper = this->mock->getIoctlHelper();
+    uint32_t tilingMode = ioctlHelper->getDrmParamValue(DrmParam::TilingNone);
     EXPECT_EQ(tilingMode, this->mock->setTilingMode);
     EXPECT_EQ(0u, this->mock->setTilingStride);
     EXPECT_EQ(0u, this->mock->setTilingHandle);
@@ -637,7 +641,8 @@ TEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountN
 
     EXPECT_EQ(0u, this->mock->createParamsHandle);
     EXPECT_EQ(0u, this->mock->createParamsSize);
-    __u32 tilingMode = I915_TILING_NONE;
+    auto ioctlHelper = this->mock->getIoctlHelper();
+    uint32_t tilingMode = ioctlHelper->getDrmParamValue(DrmParam::TilingNone);
     EXPECT_EQ(tilingMode, this->mock->setTilingMode);
     EXPECT_EQ(0u, this->mock->setTilingStride);
     EXPECT_EQ(0u, this->mock->setTilingHandle);
@@ -679,7 +684,8 @@ TEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhen1DarrayImageIsBeingCreat
 
     EXPECT_EQ(0u, this->mock->createParamsHandle);
     EXPECT_EQ(0u, this->mock->createParamsSize);
-    __u32 tilingMode = I915_TILING_NONE;
+    auto ioctlHelper = this->mock->getIoctlHelper();
+    uint32_t tilingMode = ioctlHelper->getDrmParamValue(DrmParam::TilingNone);
     EXPECT_EQ(tilingMode, this->mock->setTilingMode);
     EXPECT_EQ(0u, this->mock->setTilingStride);
     EXPECT_EQ(0u, this->mock->setTilingHandle);
@@ -735,7 +741,8 @@ TEST_F(ClDrmMemoryManagerTest, givenOsHandleWithNonTiledObjectWhenCreateFromShar
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
     mock->ioctl_expected.gemGetTiling = 1;
-    mock->getTilingModeOut = I915_TILING_NONE;
+    auto ioctlHelper = this->mock->getIoctlHelper();
+    mock->getTilingModeOut = ioctlHelper->getDrmParamValue(DrmParam::TilingNone);
 
     osHandle handle = 1u;
     uint32_t boHandle = 2u;
@@ -777,7 +784,8 @@ TEST_F(ClDrmMemoryManagerTest, givenOsHandleWithTileYObjectWhenCreateFromSharedH
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
     mock->ioctl_expected.gemGetTiling = 1;
-    mock->getTilingModeOut = I915_TILING_Y;
+    auto ioctlHelper = this->mock->getIoctlHelper();
+    mock->getTilingModeOut = ioctlHelper->getDrmParamValue(DrmParam::TilingY);
 
     osHandle handle = 1u;
     uint32_t boHandle = 2u;

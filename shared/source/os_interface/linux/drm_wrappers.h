@@ -46,8 +46,6 @@ struct GemSetTiling {
 };
 
 struct GemGetTiling {
-    bool isTilingDisabled() const;
-
     uint32_t handle;
     uint32_t tilingMode;
     uint32_t swizzleMode;
@@ -257,6 +255,8 @@ enum class DrmParam {
     QueryHwconfigTable,
     QueryComputeSlices,
     QueryMemoryRegions,
+    TilingNone,
+    TilingY,
 };
 
 unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest, IoctlHelper *ioctlHelper);

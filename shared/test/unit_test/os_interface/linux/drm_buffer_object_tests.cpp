@@ -55,21 +55,24 @@ TEST_F(DrmBufferObjectTest, GivenDetectedGpuHangDuringEvictUnusedAllocationsWhen
 
 TEST_F(DrmBufferObjectTest, WhenSettingTilingThenCallSucceeds) {
     mock->ioctl_expected.total = 1; //set_tiling
-    auto ret = bo->setTiling(I915_TILING_X, 0);
+    auto tilingY = mock->getIoctlHelper()->getDrmParamValue(DrmParam::TilingY);
+    auto ret = bo->setTiling(tilingY, 0);
     EXPECT_TRUE(ret);
 }
 
 TEST_F(DrmBufferObjectTest, WhenSettingSameTilingThenCallSucceeds) {
     mock->ioctl_expected.total = 0; //set_tiling
-    bo->tileBy(I915_TILING_X);
-    auto ret = bo->setTiling(I915_TILING_X, 0);
+    auto tilingY = mock->getIoctlHelper()->getDrmParamValue(DrmParam::TilingY);
+    bo->tilingMode = tilingY;
+    auto ret = bo->setTiling(tilingY, 0);
     EXPECT_TRUE(ret);
 }
 
 TEST_F(DrmBufferObjectTest, GivenInvalidTilingWhenSettingTilingThenCallFails) {
     mock->ioctl_expected.total = 1; //set_tiling
+    auto tilingY = mock->getIoctlHelper()->getDrmParamValue(DrmParam::TilingY);
     mock->ioctl_res = -1;
-    auto ret = bo->setTiling(I915_TILING_X, 0);
+    auto ret = bo->setTiling(tilingY, 0);
     EXPECT_FALSE(ret);
 }
 

@@ -230,6 +230,10 @@ int IoctlHelper::getDrmParamValueBase(DrmParam drmParam) const {
         return DRM_I915_QUERY_ENGINE_INFO;
     case DrmParam::QueryMemoryRegions:
         return DRM_I915_QUERY_MEMORY_REGIONS;
+    case DrmParam::TilingNone:
+        return I915_TILING_NONE;
+    case DrmParam::TilingY:
+        return I915_TILING_Y;
     default:
         UNRECOVERABLE_IF(true);
         return 0;

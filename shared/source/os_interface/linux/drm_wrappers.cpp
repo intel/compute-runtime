@@ -41,8 +41,6 @@ static_assert(offsetof(GemGetTiling, tilingMode) == offsetof(drm_i915_gem_get_ti
 static_assert(offsetof(GemGetTiling, swizzleMode) == offsetof(drm_i915_gem_get_tiling, swizzle_mode));
 static_assert(offsetof(GemGetTiling, physSwizzleMode) == offsetof(drm_i915_gem_get_tiling, phys_swizzle_mode));
 
-bool GemGetTiling::isTilingDisabled() const { return I915_TILING_NONE == tilingMode; }
-
 static_assert(sizeof(ExecObject) == sizeof(drm_i915_gem_exec_object2));
 
 static_assert(sizeof(ExecBuffer) == sizeof(drm_i915_gem_execbuffer2));

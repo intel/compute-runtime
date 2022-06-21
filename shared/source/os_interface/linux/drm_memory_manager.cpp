@@ -565,7 +565,8 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
     }
     bo->setAddress(gpuRange);
 
-    [[maybe_unused]] auto ret2 = bo->setTiling(I915_TILING_Y, static_cast<uint32_t>(allocationData.imgInfo->rowPitch));
+    auto ioctlHelper = drm.getIoctlHelper();
+    [[maybe_unused]] auto ret2 = bo->setTiling(ioctlHelper->getDrmParamValue(DrmParam::TilingY), static_cast<uint32_t>(allocationData.imgInfo->rowPitch));
     DEBUG_BREAK_IF(ret2 != true);
 
     auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), nullptr, gpuRange, allocationData.imgInfo->size, MemoryPool::SystemCpuInaccessible);
@@ -827,7 +828,8 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
         ret = drm.ioctl(DrmIoctl::GemGetTiling, &getTiling);
 
         if (ret == 0) {
-            if (getTiling.isTilingDisabled()) {
+            auto ioctlHelper = drm.getIoctlHelper();
+            if (getTiling.tilingMode == static_cast<uint32_t>(ioctlHelper->getDrmParamValue(DrmParam::TilingNone))) {
                 properties.imgInfo->linearStorage = true;
             }
         }

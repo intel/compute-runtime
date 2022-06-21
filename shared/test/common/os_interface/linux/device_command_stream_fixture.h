@@ -177,7 +177,7 @@ class DrmMockCustom : public Drm {
     uint32_t setTilingHandle = 0;
     uint32_t setTilingStride = 0;
     //DRM_IOCTL_I915_GEM_GET_TILING
-    uint32_t getTilingModeOut = I915_TILING_NONE;
+    uint32_t getTilingModeOut = 0;
     uint32_t getTilingHandleIn = 0;
     //DRM_IOCTL_PRIME_FD_TO_HANDLE
     uint32_t outputHandle = 0;
