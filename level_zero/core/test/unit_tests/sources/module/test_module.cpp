@@ -1791,7 +1791,7 @@ TEST_F(ModuleFunctionPointerTests, givenInvalidFunctionNameAndModuleWithExported
         {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()}));
 
     kernelImmData->kernelDescriptor = &kernelDescriptor;
-    printf("kern %p\n", kernelImmData->kernelDescriptor);
+
     module0->kernelImmDatas.push_back(std::move(kernelImmData));
 
     module0->symbols["externalFunction"] = relocatedSymbol;
@@ -1824,7 +1824,7 @@ TEST_F(ModuleFunctionPointerTests, givenModuleWithExportedSymbolThenGetFunctionP
         {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()}));
 
     kernelImmData->kernelDescriptor = &kernelDescriptor;
-    printf("kern %p\n", kernelImmData->kernelDescriptor);
+
     module0->kernelImmDatas.push_back(std::move(kernelImmData));
 
     module0->symbols["externalFunction"] = relocatedSymbol;
