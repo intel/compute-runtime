@@ -1129,7 +1129,7 @@ TEST_F(WddmMemoryManagerTest, WhenAllocatingGpuMemThenOsInternalStorageIsPopulat
     }
     MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper());
     // three pages
-    void *ptr = alignedMalloc(3 * 4096, 4096);
+    void *ptr = reinterpret_cast<void *>(0x200000);
     auto *gpuAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, false, 3 * MemoryConstants::pageSize}, ptr);
     // Should be same cpu ptr and gpu ptr
     ASSERT_NE(nullptr, gpuAllocation);
@@ -1141,7 +1141,6 @@ TEST_F(WddmMemoryManagerTest, WhenAllocatingGpuMemThenOsInternalStorageIsPopulat
     EXPECT_NE(static_cast<OsHandleWin *>(fragment->osInternalStorage)->handle, 0);
     EXPECT_NE(static_cast<OsHandleWin *>(fragment->osInternalStorage)->gmm, nullptr);
     memoryManager->freeGraphicsMemory(gpuAllocation);
-    alignedFree(ptr);
 }
 
 TEST_F(WddmMemoryManagerTest, GivenAlignedPointerWhenAllocate32BitMemoryThenGmmCalledWithCorrectPointerAndSize) {
