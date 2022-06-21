@@ -14,8 +14,6 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/os_context.h"
 
-#include "drm/i915_drm.h"
-
 #include <sstream>
 
 namespace NEO {
@@ -283,7 +281,7 @@ bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
             auto bo = bufferObjects[handleId];
             if (bo != nullptr) {
                 if (flags.device_preferred_location) {
-                    region.memoryClass = I915_MEMORY_CLASS_DEVICE;
+                    region.memoryClass = ioctlHelper->getDrmParamValue(DrmParam::MemoryClassDevice);
                     region.memoryInstance = handleId;
                 } else {
                     region.memoryClass = -1;
@@ -304,10 +302,11 @@ bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
 bool DrmAllocation::setMemPrefetch(Drm *drm, uint32_t subDeviceId) {
     bool success = true;
     auto ioctlHelper = drm->getIoctlHelper();
+    auto memoryClassDevice = ioctlHelper->getDrmParamValue(DrmParam::MemoryClassDevice);
 
     for (auto bo : bufferObjects) {
         if (bo != nullptr) {
-            auto region = static_cast<uint32_t>((I915_MEMORY_CLASS_DEVICE << 16u) | subDeviceId);
+            auto region = static_cast<uint32_t>((memoryClassDevice << 16u) | subDeviceId);
             success &= ioctlHelper->setVmPrefetch(drm, bo->peekAddress(), bo->peekSize(), region);
         }
     }

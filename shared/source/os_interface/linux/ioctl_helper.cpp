@@ -204,6 +204,10 @@ int IoctlHelper::getDrmParamValueBase(DrmParam drmParam) const {
         return I915_EXEC_NO_RELOC;
     case DrmParam::ExecRender:
         return I915_EXEC_RENDER;
+    case DrmParam::MemoryClassDevice:
+        return I915_MEMORY_CLASS_DEVICE;
+    case DrmParam::MemoryClassSystem:
+        return I915_MEMORY_CLASS_SYSTEM;
     case DrmParam::ParamChipsetId:
         return I915_PARAM_CHIPSET_ID;
     case DrmParam::ParamRevision:

@@ -917,7 +917,7 @@ bool Drm::queryEngineInfo(bool isSysmanEnabled) {
     auto tileCount = 0u;
     std::vector<DistanceInfo> distanceInfos;
     for (const auto &region : memoryRegions) {
-        if (I915_MEMORY_CLASS_DEVICE == region.region.memoryClass) {
+        if (ioctlHelper->getDrmParamValue(DrmParam::MemoryClassDevice) == region.region.memoryClass) {
             tileCount++;
             DistanceInfo distanceInfo{};
             distanceInfo.region = region.region;

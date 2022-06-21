@@ -11,10 +11,6 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 
-#include "drm/i915_drm.h"
-
-#include <cstdio>
-
 namespace NEO {
 
 class DrmNullDevice : public Drm {

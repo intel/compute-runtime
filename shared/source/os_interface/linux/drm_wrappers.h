@@ -240,6 +240,8 @@ enum class DrmParam {
     ExecDefault,
     ExecNoReloc,
     ExecRender,
+    MemoryClassDevice,
+    MemoryClassSystem,
     ParamChipsetId,
     ParamRevision,
     ParamHasExecSoftpin,
