@@ -16,6 +16,7 @@
 #include "shared/source/os_interface/os_time.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/mock_hw_info_config_hw.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -846,13 +847,6 @@ HWTEST_F(DeviceTest, whenPassingSchedulingHintExpStructToGetPropertiesThenProper
 }
 
 HWTEST2_F(DeviceTest, givenAllThreadArbitrationPoliciesWhenPassingSchedulingHintExpStructToGetPropertiesThenPropertiesWithAllFlagsAreReturned, MatchAny) {
-    struct MockHwInfoConfig : NEO::HwInfoConfigHw<productFamily> {
-        std::vector<int32_t> getKernelSupportedThreadArbitrationPolicies() override {
-            return threadArbPolicies;
-        }
-        std::vector<int32_t> threadArbPolicies;
-    };
-
     const uint32_t rootDeviceIndex = 0u;
     auto hwInfo = *NEO::defaultHwInfo;
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
@@ -860,7 +854,7 @@ HWTEST2_F(DeviceTest, givenAllThreadArbitrationPoliciesWhenPassingSchedulingHint
 
     Mock<L0::DeviceImp> deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
-    MockHwInfoConfig hwInfoConfig{};
+    MockHwInfoConfigHw<productFamily> hwInfoConfig;
     hwInfoConfig.threadArbPolicies = {ThreadArbitrationPolicy::AgeBased,
                                       ThreadArbitrationPolicy::RoundRobin,
                                       ThreadArbitrationPolicy::RoundRobinAfterDependency};
@@ -886,13 +880,6 @@ HWTEST2_F(DeviceTest, givenAllThreadArbitrationPoliciesWhenPassingSchedulingHint
 }
 
 HWTEST2_F(DeviceTest, givenIncorrectThreadArbitrationPolicyWhenPassingSchedulingHintExpStructToGetPropertiesThenNoneIsReturned, MatchAny) {
-    struct MockHwInfoConfig : NEO::HwInfoConfigHw<productFamily> {
-        std::vector<int32_t> getKernelSupportedThreadArbitrationPolicies() override {
-            return threadArbPolicies;
-        }
-        std::vector<int32_t> threadArbPolicies;
-    };
-
     const uint32_t rootDeviceIndex = 0u;
     auto hwInfo = *NEO::defaultHwInfo;
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
@@ -900,7 +887,7 @@ HWTEST2_F(DeviceTest, givenIncorrectThreadArbitrationPolicyWhenPassingScheduling
 
     Mock<L0::DeviceImp> deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
-    MockHwInfoConfig hwInfoConfig{};
+    MockHwInfoConfigHw<productFamily> hwInfoConfig;
     hwInfoConfig.threadArbPolicies = {ThreadArbitrationPolicy::NotPresent};
     VariableBackup<HwInfoConfig *> hwInfoConfigFactoryBackup{&NEO::hwInfoConfigFactory[static_cast<size_t>(hwInfo.platform.eProductFamily)]};
     hwInfoConfigFactoryBackup = &hwInfoConfig;

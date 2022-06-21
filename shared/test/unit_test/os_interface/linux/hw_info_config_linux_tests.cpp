@@ -12,39 +12,10 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
+#include "shared/test/common/helpers/mock_hw_info_config_hw.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 
 #include <cstring>
-
-struct DummyHwConfig : NEO::HwInfoConfigHw<IGFX_UNKNOWN> {
-    int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) override {
-        FeatureTable *featureTable = &hwInfo->featureTable;
-        featureTable->flags.ftrGpGpuMidThreadLevelPreempt = 0;
-        featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = 0;
-        featureTable->flags.ftrGpGpuMidBatchPreempt = 0;
-
-        if (use128MbEdram) {
-            GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
-            gtSystemInfo->EdramSizeInKb = 128 * 1000;
-        }
-        if (enableMidThreadPreemption) {
-            featureTable->flags.ftrGpGpuMidThreadLevelPreempt = 1;
-        }
-        if (enableThreadGroupPreemption) {
-            featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = 1;
-        }
-        if (enableMidBatchPreemption) {
-            featureTable->flags.ftrGpGpuMidBatchPreempt = 1;
-        }
-        return (failOnConfigureHardwareCustom) ? -1 : 0;
-    }
-
-    bool use128MbEdram = false;
-    bool enableMidThreadPreemption = false;
-    bool enableThreadGroupPreemption = false;
-    bool enableMidBatchPreemption = false;
-    bool failOnConfigureHardwareCustom = false;
-};
 
 using namespace NEO;
 
@@ -60,7 +31,7 @@ struct HwInfoConfigTestLinuxDummy : HwInfoConfigTestLinux {
         HwInfoConfigTestLinux::TearDown();
     }
     VariableBackup<HwInfoConfig *> hwInfoConfigFactoryBackup{&NEO::hwInfoConfigFactory[static_cast<size_t>(IGFX_UNKNOWN)]};
-    DummyHwConfig hwConfig;
+    MockHwInfoConfigHw<IGFX_UNKNOWN> hwConfig;
 };
 
 TEST_F(HwInfoConfigTestLinuxDummy, GivenDummyConfigWhenConfiguringHwInfoThenSucceeds) {

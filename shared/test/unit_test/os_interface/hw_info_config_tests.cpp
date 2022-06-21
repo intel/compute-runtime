@@ -11,6 +11,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/mock_hw_info_config_hw.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
@@ -189,16 +190,7 @@ HWTEST_F(HwInfoConfigTest, givenVariousValuesWhenConvertingHwRevIdAndSteppingThe
 }
 
 HWTEST_F(HwInfoConfigTest, givenVariousValuesWhenGettingAubStreamSteppingFromHwRevIdThenReturnValuesAreCorrect) {
-    struct MockHwInfoConfig : HwInfoConfigHw<IGFX_UNKNOWN> {
-        uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const override {
-            return returnedStepping;
-        }
-        std::vector<int32_t> getKernelSupportedThreadArbitrationPolicies() override {
-            return {};
-        }
-        uint32_t returnedStepping = 0;
-    };
-    MockHwInfoConfig mockHwInfoConfig;
+    MockHwInfoConfigHw<IGFX_UNKNOWN> mockHwInfoConfig;
     mockHwInfoConfig.returnedStepping = REVISION_A0;
     EXPECT_EQ(AubMemDump::SteppingValues::A, mockHwInfoConfig.getAubStreamSteppingFromHwRevId(pInHwInfo));
     mockHwInfoConfig.returnedStepping = REVISION_A1;

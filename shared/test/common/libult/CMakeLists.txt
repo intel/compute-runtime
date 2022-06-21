@@ -21,6 +21,10 @@ macro(macro_for_each_platform)
       if(EXISTS ${SRC_FILE})
         list(APPEND neo_libult_common_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
       endif()
+      set(SRC_FILE ${NEO_SHARED_TEST_DIRECTORY}/common${BRANCH_DIR}${CORE_TYPE_LOWER}${BRANCH}${PLATFORM_IT_LOWER}/mock_hw_info_config_${PLATFORM_IT_LOWER}.cpp)
+      if(EXISTS ${SRC_FILE})
+        list(APPEND neo_libult_common_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
+      endif()
     endforeach()
   endforeach()
 endmacro()
@@ -86,6 +90,8 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_leak_listener.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_management.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_management.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/mock_hw_info_config_hw.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/mock_hw_info_config_hw.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/sip_init.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.h

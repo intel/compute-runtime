@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
+#include "shared/test/common/helpers/mock_hw_info_config_hw.h"
 #include "shared/test/common/test_macros/test.h"
 
 using HwHelperTestPvcAndLater = HwHelperTest;
@@ -130,13 +131,8 @@ HWTEST2_F(HwHelperTestPvcAndLater, WhenIsCooperativeDispatchSupportedThenCorrect
         }
         bool isRcsAvailableValue = true;
     };
-    struct MockHwInfoConfig : NEO::HwInfoConfigHw<productFamily> {
-        bool isCooperativeEngineSupported(const HardwareInfo &hwInfo) const override {
-            return isCooperativeEngineSupportedValue;
-        }
-        bool isCooperativeEngineSupportedValue = true;
-    };
-    MockHwInfoConfig hwInfoConfig{};
+
+    MockHwInfoConfigHw<productFamily> hwInfoConfig;
     auto hwInfo = *::defaultHwInfo;
     VariableBackup<HwInfoConfig *> hwInfoConfigFactoryBackup{&NEO::hwInfoConfigFactory[static_cast<size_t>(hwInfo.platform.eProductFamily)]};
     hwInfoConfigFactoryBackup = &hwInfoConfig;

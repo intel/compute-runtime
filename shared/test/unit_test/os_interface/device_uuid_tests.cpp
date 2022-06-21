@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/mock_hw_info_config_hw.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
@@ -17,15 +18,6 @@
 #include "shared/test/common/test_macros/test.h"
 
 namespace NEO {
-
-template <PRODUCT_FAMILY gfxProduct>
-class MockHwInfoConfigHw : public HwInfoConfigHw<gfxProduct> {
-  public:
-    bool getUuid(Device *device, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) const override {
-        return false;
-    }
-};
-
 struct MultipleDeviceBdfUuidTest : public ::testing::Test {
 
     std::unique_ptr<UltDeviceFactory> createDevices(PhysicalDevicePciBusInfo &pciBusInfo, uint32_t numSubDevices) {
