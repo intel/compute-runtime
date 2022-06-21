@@ -21,6 +21,7 @@ set(TEST_TARGETS
     zello_immediate
     zello_ipc_copy_dma_buf
     zello_ipc_copy_dma_buf_p2p
+    zello_multidev
     zello_printf
     zello_scratch
     zello_timestamp
@@ -66,14 +67,16 @@ foreach(TEST_NAME ${TEST_TARGETS})
   )
 endforeach()
 
+target_link_libraries(zello_commandlist_immediate PUBLIC ocloc_lib)
+target_link_libraries(zello_dynamic_link PUBLIC ocloc_lib)
+target_link_libraries(zello_dyn_local_arg PUBLIC ocloc_lib)
+target_link_libraries(zello_fence PUBLIC ocloc_lib)
+target_link_libraries(zello_multidev PUBLIC ocloc_lib)
+target_link_libraries(zello_image_view PUBLIC ocloc_lib)
+target_link_libraries(zello_printf PUBLIC ocloc_lib)
 target_link_libraries(zello_world_jitc_ocloc PUBLIC ocloc_lib)
 target_link_libraries(zello_scratch PUBLIC ocloc_lib)
-target_link_libraries(zello_fence PUBLIC ocloc_lib)
-target_link_libraries(zello_printf PUBLIC ocloc_lib)
-target_link_libraries(zello_image_view PUBLIC ocloc_lib)
-target_link_libraries(zello_dynamic_link PUBLIC ocloc_lib)
-target_link_libraries(zello_commandlist_immediate PUBLIC ocloc_lib)
-target_link_libraries(zello_dyn_local_arg PUBLIC ocloc_lib)
+
 if(UNIX)
   target_link_libraries(zello_world_global_work_offset PUBLIC ocloc_lib)
 endif()

@@ -281,6 +281,49 @@ static inline void teardown(ze_context_handle_t context, ze_command_queue_handle
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 }
 
+inline void printDeviceProperties(const ze_device_properties_t &props) {
+    if (verbose) {
+        std::cout << "Device : "
+                  << "\n"
+                  << " * name : " << props.name << "\n"
+                  << " * type : " << ((props.type == ZE_DEVICE_TYPE_GPU) ? "GPU" : "FPGA") << "\n"
+                  << " * vendorId : " << props.vendorId << "\n"
+                  << " * deviceId : " << props.deviceId << "\n"
+                  << " * subdeviceId : " << props.subdeviceId << "\n"
+                  << " * coreClockRate : " << props.coreClockRate << "\n"
+                  << " * maxMemAllocSize : " << props.maxMemAllocSize << "\n"
+                  << " * maxHardwareContexts : " << props.maxHardwareContexts << "\n"
+                  << " * isSubdevice : " << std::boolalpha << static_cast<bool>(!!(props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE)) << "\n"
+                  << " * eccMemorySupported : " << std::boolalpha << static_cast<bool>(!!(props.flags & ZE_DEVICE_PROPERTY_FLAG_ECC)) << "\n"
+                  << " * onDemandPageFaultsSupported : " << std::boolalpha << static_cast<bool>(!!(props.flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING)) << "\n"
+                  << " * maxCommandQueuePriority  : " << props.maxCommandQueuePriority << "\n"
+                  << " * numThreadsPerEU  : " << props.numThreadsPerEU << "\n"
+                  << " * numEUsPerSubslice  : " << props.numEUsPerSubslice << "\n"
+                  << " * numSubslicesPerSlice  : " << props.numSubslicesPerSlice << "\n"
+                  << " * numSlices  : " << props.numSlices << "\n"
+                  << " * physicalEUSimdWidth  : " << props.physicalEUSimdWidth << "\n"
+                  << " * timerResolution : " << props.timerResolution << "\n";
+    }
+}
+
+inline void printCacheProperties(uint32_t index, const ze_device_cache_properties_t &props) {
+    if (verbose) {
+        std::cout << "Cache properties: \n"
+                  << index << "\n"
+                  << " * User Cache Control : " << std::boolalpha << static_cast<bool>(!!(props.flags & ZE_DEVICE_CACHE_PROPERTY_FLAG_USER_CONTROL)) << "\n"
+                  << " * cache size : " << props.cacheSize << "\n";
+    }
+}
+
+inline void printP2PProperties(const ze_device_p2p_properties_t &props, bool canAccessPeer, uint32_t device0Index, uint32_t device1Index) {
+    if (verbose) {
+        std::cout << " * P2P Properties device " << device0Index << " to peer " << device1Index << "\n";
+        std::cout << "\t* accessSupported: " << std::boolalpha << static_cast<bool>(!!(props.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS)) << "\n";
+        std::cout << "\t* atomicsSupported: " << std::boolalpha << static_cast<bool>(!!(props.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS)) << "\n";
+        std::cout << "\t* canAccessPeer: " << std::boolalpha << static_cast<bool>(canAccessPeer) << "\n";
+    }
+}
+
 inline const std::vector<const char *> &getResourcesSearchLocations() {
     static std::vector<const char *> locations {
         "test_files/spv_modules/",
