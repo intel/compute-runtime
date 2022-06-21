@@ -58,7 +58,11 @@ void PreemptionHelper::programCsrBaseAddress<GfxFamily>(LinearStream &preambleCm
 }
 
 template <>
-void PreemptionHelper::programStateSip<GfxFamily>(LinearStream &preambleCmdStream, Device &device) {
+void PreemptionHelper::programStateSip<GfxFamily>(LinearStream &preambleCmdStream, Device &device, LogicalStateHelper *logicalStateHelper) {
+}
+
+template <>
+void PreemptionHelper::programStateSipCmd<GfxFamily>(LinearStream &preambleCmdStream, GraphicsAllocation *sipAllocation, LogicalStateHelper *logicalStateHelper) {
 }
 
 template <>

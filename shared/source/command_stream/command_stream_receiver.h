@@ -51,6 +51,7 @@ class ScratchSpaceController;
 class HwPerfCounter;
 class HwTimeStamps;
 class TagAllocatorBase;
+class LogicalStateHelper;
 
 template <typename TSize>
 class TimestampPackets;
@@ -337,6 +338,8 @@ class CommandStreamReceiver {
         return this->dispatchMode;
     }
 
+    LogicalStateHelper *getLogicalStateHelper() const;
+
   protected:
     void cleanupResources();
     void printDeviceIndex();
@@ -357,6 +360,7 @@ class CommandStreamReceiver {
     std::unique_ptr<TagAllocatorBase> perfCounterAllocator;
     std::unique_ptr<TagAllocatorBase> timestampPacketAllocator;
     std::unique_ptr<Thread> userPauseConfirmation;
+    std::unique_ptr<LogicalStateHelper> logicalStateHelper;
 
     ResidencyContainer residencyAllocations;
     ResidencyContainer evictionAllocations;

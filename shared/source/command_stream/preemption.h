@@ -18,6 +18,7 @@ namespace NEO {
 class Device;
 class GraphicsAllocation;
 struct KernelDescriptor;
+class LogicalStateHelper;
 
 struct PreemptionFlags {
     PreemptionFlags() {
@@ -57,7 +58,7 @@ class PreemptionHelper {
     static void programCsrBaseAddress(LinearStream &preambleCmdStream, Device &device, const GraphicsAllocation *preemptionCsr);
 
     template <typename GfxFamily>
-    static void programStateSip(LinearStream &preambleCmdStream, Device &device);
+    static void programStateSip(LinearStream &preambleCmdStream, Device &device, LogicalStateHelper *logicalStateHelper);
 
     template <typename GfxFamily>
     static void programStateSipEndWa(LinearStream &cmdStream, Device &device);
@@ -82,6 +83,10 @@ class PreemptionHelper {
 
     template <typename GfxFamily>
     static void programInterfaceDescriptorDataPreemption(INTERFACE_DESCRIPTOR_DATA<GfxFamily> *idd, PreemptionMode preemptionMode);
+
+  protected:
+    template <typename GfxFamily>
+    static void programStateSipCmd(LinearStream &preambleCmdStream, GraphicsAllocation *sipAllocation, LogicalStateHelper *logicalStateHelper);
 };
 
 template <typename GfxFamily>

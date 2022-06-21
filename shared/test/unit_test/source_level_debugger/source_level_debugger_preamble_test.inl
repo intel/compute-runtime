@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDebu
     preambleBuffer.resize(cmdSizePreemptionMidThread);
     LinearStream preambleStream(&*preambleBuffer.begin(), preambleBuffer.size());
 
-    PreemptionHelper::programStateSip<GfxFamily>(preambleStream, *mockDevice);
+    PreemptionHelper::programStateSip<GfxFamily>(preambleStream, *mockDevice, nullptr);
 
     HardwareParse hwParser;
     hwParser.parseCommands<GfxFamily>(preambleStream);
@@ -45,7 +45,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDisa
     preambleBuffer.resize(cmdSizePreemptionMidThread);
     LinearStream preambleStream(&*preambleBuffer.begin(), preambleBuffer.size());
 
-    PreemptionHelper::programStateSip<GfxFamily>(preambleStream, *mockDevice);
+    PreemptionHelper::programStateSip<GfxFamily>(preambleStream, *mockDevice, nullptr);
 
     HardwareParse hwParser;
     hwParser.parseCommands<GfxFamily>(preambleStream);
@@ -70,7 +70,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenPreemptionDisabledAndDebug
     preambleBuffer.resize(cmdSizePreemptionMidThread);
     LinearStream preambleStream(&*preambleBuffer.begin(), preambleBuffer.size());
 
-    PreemptionHelper::programStateSip<GfxFamily>(preambleStream, *mockDevice);
+    PreemptionHelper::programStateSip<GfxFamily>(preambleStream, *mockDevice, nullptr);
 
     HardwareParse hwParser;
     hwParser.parseCommands<GfxFamily>(preambleStream);

@@ -77,7 +77,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, givenMidThreadPreemptionWhenPreambleIs
 
         PreambleHelper<FamilyType>::programPreamble(&preambleStream, *mockDevice, 0U, &csrSurface);
 
-        PreemptionHelper::programStateSip<FamilyType>(preemptionStream, *mockDevice);
+        PreemptionHelper::programStateSip<FamilyType>(preemptionStream, *mockDevice, nullptr);
 
         HardwareParse hwParserPreamble;
         hwParserPreamble.parseCommands<FamilyType>(preambleStream, 0);

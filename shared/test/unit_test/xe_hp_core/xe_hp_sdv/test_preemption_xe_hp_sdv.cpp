@@ -44,7 +44,7 @@ XEHPTEST_F(PreemptionXeHPTest, givenRevisionA0toBWhenProgrammingSipThenGlobalSip
 
         auto expectedGlobalSipWaSize = sizeof(PIPE_CONTROL) + 2 * sizeof(MI_LOAD_REGISTER_IMM);
         EXPECT_EQ(expectedGlobalSipWaSize, requiredSize);
-        PreemptionHelper::programStateSip<FamilyType>(cmdStream, *mockDevice);
+        PreemptionHelper::programStateSip<FamilyType>(cmdStream, *mockDevice, nullptr);
         EXPECT_NE(0U, cmdStream.getUsed());
 
         GenCmdList cmdList;

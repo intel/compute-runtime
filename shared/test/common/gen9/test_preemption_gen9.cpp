@@ -39,7 +39,7 @@ GEN9TEST_F(Gen9PreemptionTests, whenMidThreadPreemptionIsNotAvailableThenDoesNot
     EXPECT_EQ(0U, requiredSize);
 
     LinearStream cmdStream{nullptr, 0};
-    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device);
+    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, nullptr);
     EXPECT_EQ(0U, cmdStream.getUsed());
 }
 
@@ -61,7 +61,7 @@ GEN9TEST_F(Gen9PreemptionTests, whenMidThreadPreemptionIsAvailableThenStateSipIs
     ASSERT_LE(requiredCmdStreamSize, streamStorage.size());
 
     LinearStream cmdStream{streamStorage.begin(), streamStorage.size()};
-    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device);
+    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, nullptr);
 
     HardwareParse hwParsePreamble;
     hwParsePreamble.parseCommands<FamilyType>(cmdStream);
@@ -150,7 +150,7 @@ GEN9TEST_F(Gen9PreemptionTests, givenMidThreadPreemptionModeWhenStateSipIsProgra
     preemptionBuffer.resize(cmdSizePreemptionMidThread);
     LinearStream preemptionStream(&*preemptionBuffer.begin(), preemptionBuffer.size());
 
-    PreemptionHelper::programStateSip<FamilyType>(preemptionStream, *mockDevice);
+    PreemptionHelper::programStateSip<FamilyType>(preemptionStream, *mockDevice, nullptr);
 
     HardwareParse hwParserOnlyPreemption;
     hwParserOnlyPreemption.parseCommands<FamilyType>(preemptionStream, 0);

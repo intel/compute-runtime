@@ -10,7 +10,7 @@ void PreemptionHelper::programCsrBaseAddress<GfxFamily>(LinearStream &preambleCm
 }
 
 template <>
-void PreemptionHelper::programStateSip<GfxFamily>(LinearStream &preambleCmdStream, Device &device) {
+void PreemptionHelper::programStateSip<GfxFamily>(LinearStream &preambleCmdStream, Device &device, LogicalStateHelper *logicalStateHelper) {
     using STATE_SIP = typename GfxFamily::STATE_SIP;
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
 

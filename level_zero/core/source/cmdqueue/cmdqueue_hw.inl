@@ -21,6 +21,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
@@ -44,7 +45,6 @@
 #include <thread>
 
 namespace L0 {
-
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandQueueHw<gfxCoreFamily>::createFence(const ze_fence_desc_t *desc,
                                                        ze_fence_handle_t *phFence) {
@@ -333,7 +333,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         }
 
         if (stateSipRequired) {
-            NEO::PreemptionHelper::programStateSip<GfxFamily>(child, *neoDevice);
+            NEO::PreemptionHelper::programStateSip<GfxFamily>(child, *neoDevice, csr->getLogicalStateHelper());
         }
 
         if (cmdQueuePreemption != commandQueuePreemptionMode) {
@@ -365,6 +365,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     if (programActivePartitionConfig) {
         csrHw->programActivePartitionConfig(child);
+    }
+
+    if (csr->getLogicalStateHelper()) {
+        csr->getLogicalStateHelper()->writeStreamInline(child);
     }
 
     for (auto i = 0u; i < numCommandLists; ++i) {

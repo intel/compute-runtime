@@ -66,7 +66,7 @@ HWTEST_F(EnqueueHandlerTest, givenLogicalStateHelperWhenDispatchingCommandsThenA
     using MI_NOOP = typename FamilyType::MI_NOOP;
 
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
-    auto logicalStateHelper = new LogicalStateHelperMock<FamilyType>();
+    auto logicalStateHelper = new LogicalStateHelperMock<FamilyType>(false);
 
     auto &ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> &>(mockCmdQ->getGpgpuCommandStreamReceiver());
     ultCsr.logicalStateHelper.reset(logicalStateHelper);

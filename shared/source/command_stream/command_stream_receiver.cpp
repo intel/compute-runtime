@@ -22,6 +22,7 @@
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/helpers/string.h"
@@ -891,6 +892,10 @@ void CommandStreamReceiver::printTagAddressContent(uint32_t taskCountToWait, int
         postSyncAddress = ptrOffset(postSyncAddress, this->postSyncWriteOffset);
     }
     PRINT_DEBUG_STRING(true, stdout, "%s", "\n");
+}
+
+LogicalStateHelper *CommandStreamReceiver::getLogicalStateHelper() const {
+    return logicalStateHelper.get();
 }
 
 } // namespace NEO

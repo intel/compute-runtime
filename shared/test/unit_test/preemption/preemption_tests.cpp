@@ -207,7 +207,7 @@ HWTEST_P(PreemptionTest, whenInNonMidThreadModeThenStateSipIsNotProgrammed) {
     StackVec<char, 4096> buffer(requiredSize);
     LinearStream cmdStream(buffer.begin(), buffer.size());
 
-    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *mockDevice);
+    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *mockDevice, nullptr);
     EXPECT_EQ(0u, cmdStream.getUsed());
 }
 

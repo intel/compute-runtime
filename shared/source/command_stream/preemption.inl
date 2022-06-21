@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ void PreemptionHelper::programCsrBaseAddress(LinearStream &preambleCmdStream, De
 }
 
 template <typename GfxFamily>
-void PreemptionHelper::programStateSip(LinearStream &preambleCmdStream, Device &device) {
+void PreemptionHelper::programStateSip(LinearStream &preambleCmdStream, Device &device, LogicalStateHelper *logicalStateHelper) {
     using STATE_SIP = typename GfxFamily::STATE_SIP;
     bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();
     bool isMidThreadPreemption = device.getPreemptionMode() == PreemptionMode::MidThread;
@@ -38,11 +38,18 @@ void PreemptionHelper::programStateSip(LinearStream &preambleCmdStream, Device &
     if (isMidThreadPreemption || debuggingEnabled) {
         auto sipAllocation = SipKernel::getSipKernel(device).getSipAllocation();
 
-        auto sip = reinterpret_cast<STATE_SIP *>(preambleCmdStream.getSpace(sizeof(STATE_SIP)));
-        STATE_SIP cmd = GfxFamily::cmdInitStateSip;
-        cmd.setSystemInstructionPointer(sipAllocation->getGpuAddressToPatch());
-        *sip = cmd;
+        programStateSipCmd<GfxFamily>(preambleCmdStream, sipAllocation, logicalStateHelper);
     }
+}
+
+template <typename GfxFamily>
+void PreemptionHelper::programStateSipCmd(LinearStream &preambleCmdStream, GraphicsAllocation *sipAllocation, LogicalStateHelper *logicalStateHelper) {
+    using STATE_SIP = typename GfxFamily::STATE_SIP;
+
+    auto sip = reinterpret_cast<STATE_SIP *>(preambleCmdStream.getSpace(sizeof(STATE_SIP)));
+    STATE_SIP cmd = GfxFamily::cmdInitStateSip;
+    cmd.setSystemInstructionPointer(sipAllocation->getGpuAddressToPatch());
+    *sip = cmd;
 }
 
 template <typename GfxFamily>

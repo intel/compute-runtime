@@ -32,7 +32,7 @@ GEN12LPTEST_F(Gen12LpPreemptionTests, whenProgramStateSipIsCalledThenStateSipCmd
     LinearStream cmdStream{streamStorage.begin(), streamStorage.size()};
 
     EXPECT_NE(0U, requiredSize);
-    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device);
+    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, nullptr);
     EXPECT_NE(0U, cmdStream.getUsed());
 }
 

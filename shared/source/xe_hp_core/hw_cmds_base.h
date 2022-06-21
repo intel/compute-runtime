@@ -17,8 +17,9 @@
 
 template <class T>
 struct CmdParse;
-namespace NEO {
 
+namespace NEO {
+class LogicalStateHelper;
 struct XeHpCore {
 #include "shared/source/generated/xe_hp_core/hw_cmds_generated_xe_hp_core.inl"
 
@@ -68,6 +69,7 @@ struct XeHpFamily : public XeHpCore {
     using XY_COLOR_BLT = typename GfxFamily::XY_FAST_COLOR_BLT;
     using MI_STORE_REGISTER_MEM_CMD = typename GfxFamily::MI_STORE_REGISTER_MEM;
     using TimestampPacketType = uint32_t;
+    using LogicalStateHelperHw = LogicalStateHelper;
     static const COMPUTE_WALKER cmdInitGpgpuWalker;
     static const CFE_STATE cmdInitCfeState;
     static const INTERFACE_DESCRIPTOR_DATA cmdInitInterfaceDescriptorData;

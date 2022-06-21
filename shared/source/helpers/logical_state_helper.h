@@ -20,7 +20,8 @@ class LogicalStateHelper {
     virtual void writeStreamInline(LinearStream &linearStream) = 0;
 
   protected:
-    LogicalStateHelper() = default;
+    LogicalStateHelper(bool pipelinedState){};
+    LogicalStateHelper() = delete;
 };
 
 } // namespace NEO
