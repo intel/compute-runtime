@@ -190,7 +190,7 @@ ze_result_t IpSamplingMetricGroupImp::calculateMetricValuesExp(const zet_metric_
     const bool calculationCountOnly = *pTotalMetricValueCount == 0;
     ze_result_t result = this->calculateMetricValues(type, rawDataSize, pRawData, pTotalMetricValueCount, pMetricValues);
 
-    if (result == ZE_RESULT_SUCCESS) {
+    if ((result == ZE_RESULT_SUCCESS) || (result == ZE_RESULT_WARNING_DROPPED_DATA)) {
         *pSetCount = 1;
         if (!calculationCountOnly) {
             pMetricCounts[0] = *pTotalMetricValueCount;
@@ -223,6 +223,7 @@ ze_result_t IpSamplingMetricGroupImp::getCalculatedMetricCount(const size_t rawD
 ze_result_t IpSamplingMetricGroupImp::getCalculatedMetricValues(const zet_metric_group_calculation_type_t type, const size_t rawDataSize, const uint8_t *pRawData,
                                                                 uint32_t &metricValueCount,
                                                                 zet_typed_value_t *pCalculatedData) {
+    bool dataOverflow = false;
     StallSumIpDataMap_t stallSumIpDataMap;
 
     // MAX_METRIC_VALUES is not supported yet.
@@ -241,7 +242,7 @@ ze_result_t IpSamplingMetricGroupImp::getCalculatedMetricValues(const zet_metric
     const uint32_t rawReportCount = static_cast<uint32_t>(rawDataSize) / rawReportSize;
 
     for (const uint8_t *pRawIpData = pRawData; pRawIpData < pRawData + (rawReportCount * rawReportSize); pRawIpData += rawReportSize) {
-        stallIpDataMapUpdate(stallSumIpDataMap, pRawIpData);
+        dataOverflow |= stallIpDataMapUpdate(stallSumIpDataMap, pRawIpData);
     }
 
     metricValueCount = std::min<uint32_t>(metricValueCount, static_cast<uint32_t>(stallSumIpDataMap.size()) * properties.metricCount);
@@ -255,7 +256,7 @@ ze_result_t IpSamplingMetricGroupImp::getCalculatedMetricValues(const zet_metric
         ipDataValues.clear();
     }
 
-    return ZE_RESULT_SUCCESS;
+    return dataOverflow ? ZE_RESULT_WARNING_DROPPED_DATA : ZE_RESULT_SUCCESS;
 }
 
 /*
@@ -278,7 +279,7 @@ ze_result_t IpSamplingMetricGroupImp::getCalculatedMetricValues(const zet_metric
  *
  * total size 64 bytes
  */
-void IpSamplingMetricGroupImp::stallIpDataMapUpdate(StallSumIpDataMap_t &stallSumIpDataMap, const uint8_t *pRawIpData) {
+bool IpSamplingMetricGroupImp::stallIpDataMapUpdate(StallSumIpDataMap_t &stallSumIpDataMap, const uint8_t *pRawIpData) {
 
     const uint8_t *tempAddr = pRawIpData;
     uint64_t ip = 0ULL;
@@ -314,9 +315,7 @@ void IpSamplingMetricGroupImp::stallIpDataMapUpdate(StallSumIpDataMap_t &stallSu
     memcpy_s(reinterpret_cast<uint8_t *>(&stallCntrInfo), sizeof(stallCntrInfo), tempAddr, sizeof(stallCntrInfo));
 
     constexpr int overflowDropFlag = (1 << 8);
-    if (stallCntrInfo.flags & overflowDropFlag) {
-        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Stall Sampling Data Lost %s\n", " ");
-    }
+    return stallCntrInfo.flags & overflowDropFlag;
 }
 
 // The order of push_back calls must match the order of metricPropertiesList.

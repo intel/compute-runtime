@@ -418,6 +418,46 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCal
     }
 }
 
+TEST_F(MetricIpSamplingCalculateMetricsTest, GivenDataOverflowOccurredWhenStreamerReadDataIscalledThenCalculateMultipleMetricsValulesExpReturnsOverflowWarning) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+
+    std::vector<zet_typed_value_t> metricValues(30);
+
+    for (auto device : testDevices) {
+
+        uint32_t metricGroupCount = 0;
+        zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
+        std::vector<zet_metric_group_handle_t> metricGroups;
+        metricGroups.resize(metricGroupCount);
+        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
+        ASSERT_NE(metricGroups[0], nullptr);
+        zet_metric_group_properties_t metricGroupProperties;
+        EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
+
+        uint32_t setCount = 0;
+        uint32_t totalMetricValueCount = 0;
+        std::vector<uint32_t> metricCounts(2);
+        EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
+                                                                     ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataVectorOverflowSize, reinterpret_cast<uint8_t *>(rawDataVectorOverflow.data()),
+                                                                     &setCount, &totalMetricValueCount, metricCounts.data(), nullptr),
+                  ZE_RESULT_SUCCESS);
+        EXPECT_TRUE(setCount == 1);
+        EXPECT_TRUE(totalMetricValueCount == 40);
+        EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
+                                                                     ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataVectorOverflowSize, reinterpret_cast<uint8_t *>(rawDataVectorOverflow.data()),
+                                                                     &setCount, &totalMetricValueCount, metricCounts.data(), metricValues.data()),
+                  ZE_RESULT_WARNING_DROPPED_DATA);
+        EXPECT_TRUE(setCount == 1);
+        EXPECT_TRUE(totalMetricValueCount == 20);
+        EXPECT_TRUE(metricCounts[0] == 20);
+        for (uint32_t i = 0; i < totalMetricValueCount; i++) {
+            EXPECT_TRUE(expectedMetricOverflowValues[i].type == metricValues[i].type);
+            EXPECT_TRUE(expectedMetricOverflowValues[i].value.ui64 == metricValues[i].value.ui64);
+        }
+    }
+}
+
 TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWithCALCULATIONTYPEMAXWhenCalculateMetricValuesIsCalledThenErrorUnknownIsReturned) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());

@@ -95,7 +95,7 @@ struct IpSamplingMetricGroupImp : public IpSamplingMetricGroupBase {
     ze_result_t getCalculatedMetricValues(const zet_metric_group_calculation_type_t type, const size_t rawDataSize, const uint8_t *pRawData,
                                           uint32_t &metricValueCount,
                                           zet_typed_value_t *pCalculatedData);
-    void stallIpDataMapUpdate(StallSumIpDataMap_t &, const uint8_t *pRawIpData);
+    bool stallIpDataMapUpdate(StallSumIpDataMap_t &, const uint8_t *pRawIpData);
     void stallSumIpDataToTypedValues(uint64_t ip, StallSumIpData_t &sumIpData, std::vector<zet_typed_value_t> &ipDataValues);
     IpSamplingMetricSourceImp &metricSource;
 };

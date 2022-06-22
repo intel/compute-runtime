@@ -65,11 +65,39 @@ class MetricIpSamplingCalculateMetricsFixture : public MetricIpSamplingFixture {
   public:
     std::vector<MockStallRawIpData> rawDataVector = {{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1000, 0x01},
                                                      {1, 9, 8, 7, 6, 5, 4, 3, 2, 1, 1000, 0x02},
-                                                     {10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 1001, 0x100}, // set the overflow bit in flags
+                                                     {10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 1001, 0x000},
                                                      {10, 90, 80, 70, 60, 50, 40, 30, 20, 10, 1000, 0x3}};
 
     size_t rawDataVectorSize = sizeof(rawDataVector[0]) * rawDataVector.size();
     std::vector<zet_typed_value_t> expectedMetricValues = {
+        {ZET_VALUE_TYPE_UINT64, {1}},
+        {ZET_VALUE_TYPE_UINT64, {11}},
+        {ZET_VALUE_TYPE_UINT64, {11}},
+        {ZET_VALUE_TYPE_UINT64, {11}},
+        {ZET_VALUE_TYPE_UINT64, {11}},
+        {ZET_VALUE_TYPE_UINT64, {11}},
+        {ZET_VALUE_TYPE_UINT64, {11}},
+        {ZET_VALUE_TYPE_UINT64, {11}},
+        {ZET_VALUE_TYPE_UINT64, {11}},
+        {ZET_VALUE_TYPE_UINT64, {11}},
+        {ZET_VALUE_TYPE_UINT64, {10}},
+        {ZET_VALUE_TYPE_UINT64, {110}},
+        {ZET_VALUE_TYPE_UINT64, {110}},
+        {ZET_VALUE_TYPE_UINT64, {110}},
+        {ZET_VALUE_TYPE_UINT64, {110}},
+        {ZET_VALUE_TYPE_UINT64, {110}},
+        {ZET_VALUE_TYPE_UINT64, {110}},
+        {ZET_VALUE_TYPE_UINT64, {110}},
+        {ZET_VALUE_TYPE_UINT64, {110}},
+        {ZET_VALUE_TYPE_UINT64, {110}}};
+
+    std::vector<MockStallRawIpData> rawDataVectorOverflow = {{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1000, 0x01},
+                                                             {1, 9, 8, 7, 6, 5, 4, 3, 2, 1, 1000, 0x02},
+                                                             {10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 1001, 0x100}, // set the overflow bit in flags
+                                                             {10, 90, 80, 70, 60, 50, 40, 30, 20, 10, 1000, 0x3}};
+
+    size_t rawDataVectorOverflowSize = sizeof(rawDataVectorOverflow[0]) * rawDataVectorOverflow.size();
+    std::vector<zet_typed_value_t> expectedMetricOverflowValues = {
         {ZET_VALUE_TYPE_UINT64, {1}},
         {ZET_VALUE_TYPE_UINT64, {11}},
         {ZET_VALUE_TYPE_UINT64, {11}},
