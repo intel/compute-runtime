@@ -79,6 +79,11 @@ HWTEST2_F(HwHelperTestPvcAndLater, givenHwHelperWhenCheckIsUpdateTaskCountFromWa
     EXPECT_TRUE(hwHelper.isUpdateTaskCountFromWaitSupported());
 }
 
+HWTEST2_F(HwHelperTestPvcAndLater, givenHwHelperWhenCheckSsFlushTlbWARequiredThenReturnsFalse, IsAtLeastXeHpcCore) {
+    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    EXPECT_FALSE(hwHelper.isFlushTlbWARequired());
+}
+
 HWTEST2_F(HwHelperTestPvcAndLater, givenComputeEngineAndCooperativeUsageWhenGetEngineGroupTypeIsCalledThenCooperativeComputeGroupTypeIsReturned, IsAtLeastXeHpcCore) {
     auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     auto hwInfo = *::defaultHwInfo;

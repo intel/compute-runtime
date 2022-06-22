@@ -69,4 +69,9 @@ size_t HwHelperHw<Family>::getPaddingForISAAllocation() const {
     return 0xE00;
 }
 
+template <>
+bool HwHelperHw<Family>::isFlushTlbWARequired() const {
+    return false;
+}
+
 } // namespace NEO

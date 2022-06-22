@@ -598,13 +598,18 @@ uint32_t Drm::getVirtualMemoryAddressSpace(uint32_t vmId) {
 }
 
 void Drm::setNewResourceBoundToVM(uint32_t vmHandleId) {
-    const auto &engines = this->rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines();
-    for (const auto &engine : engines) {
-        if (engine.osContext->getDeviceBitfield().test(vmHandleId)) {
-            auto osContextLinux = static_cast<OsContextLinux *>(engine.osContext);
+    auto hwInfo = this->rootDeviceEnvironment.getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
 
-            if (&osContextLinux->getDrm() == this) {
-                osContextLinux->setNewResourceBound(true);
+    if (hwHelper.isFlushTlbWARequired()) {
+        const auto &engines = this->rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines();
+        for (const auto &engine : engines) {
+            if (engine.osContext->getDeviceBitfield().test(vmHandleId)) {
+                auto osContextLinux = static_cast<OsContextLinux *>(engine.osContext);
+
+                if (&osContextLinux->getDrm() == this) {
+                    osContextLinux->setNewResourceBound(true);
+                }
             }
         }
     }
