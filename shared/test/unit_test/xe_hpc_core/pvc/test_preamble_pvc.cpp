@@ -42,7 +42,7 @@ PVCTEST_F(PreambleCfeState, givenXeHpcAndKernelExecutionTypeAndRevisionWhenCalli
         auto expectedValue = (HwInfoConfig::get(hwInfo->platform.eProductFamily)->getSteppingFromHwRevId(*hwInfo) >= REVISION_B) &&
                              kernelExecutionType;
         EXPECT_EQ(expectedValue, cfeState->getComputeDispatchAllWalkerEnable());
-        EXPECT_EQ(expectedValue, cfeState->getSingleSliceDispatchCcsMode());
+        EXPECT_FALSE(cfeState->getSingleSliceDispatchCcsMode());
         EXPECT_FALSE(cfeState->getComputeOverdispatchDisable());
     }
 }

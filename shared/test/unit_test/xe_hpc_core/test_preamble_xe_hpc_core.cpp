@@ -57,7 +57,7 @@ XE_HPC_CORETEST_F(PreambleCfeState, givenKernelExecutionTypeConcurrentAndRevisio
 
     uint32_t expectedValue = hwInfoConfig.isComputeDispatchAllWalkerEnableInCfeStateRequired(hwInfo);
     EXPECT_EQ(expectedValue, cfeState->getComputeDispatchAllWalkerEnable());
-    EXPECT_EQ(expectedValue, cfeState->getSingleSliceDispatchCcsMode());
+    EXPECT_FALSE(cfeState->getSingleSliceDispatchCcsMode());
 }
 
 XE_HPC_CORETEST_F(PreambleCfeState, givenNotSetDebugFlagWhenPreambleCfeStateIsProgrammedThenCFEStateParamsHaveNotSetValue) {

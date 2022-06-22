@@ -30,7 +30,6 @@ void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, c
         const auto programComputeDispatchAllWalkerEnableInCfeState = hwInfoConfig.isComputeDispatchAllWalkerEnableInCfeStateRequired(hwInfo);
         if (programComputeDispatchAllWalkerEnableInCfeState && streamProperties.frontEndState.computeDispatchAllWalkerEnable.value > 0) {
             command->setComputeDispatchAllWalkerEnable(true);
-            command->setSingleSliceDispatchCcsMode(true);
         }
     }
 
