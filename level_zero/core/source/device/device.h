@@ -7,8 +7,7 @@
 
 #pragma once
 
-#include "shared/source/debugger/debugger_l0.h"
-
+#include "level_zero/core/source/debugger/debugger_l0.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
@@ -116,10 +115,10 @@ struct Device : _ze_device_handle_t {
     virtual NEO::PreemptionMode getDevicePreemptionMode() const = 0;
     virtual const NEO::DeviceInfo &getDeviceInfo() const = 0;
     NEO::SourceLevelDebugger *getSourceLevelDebugger() { return getNEODevice()->getSourceLevelDebugger(); }
-    NEO::DebuggerL0 *getL0Debugger() {
+    DebuggerL0 *getL0Debugger() {
         auto debugger = getNEODevice()->getDebugger();
         if (debugger) {
-            return !debugger->isLegacy() ? static_cast<NEO::DebuggerL0 *>(debugger) : nullptr;
+            return !debugger->isLegacy() ? static_cast<DebuggerL0 *>(debugger) : nullptr;
         }
         return nullptr;
     }

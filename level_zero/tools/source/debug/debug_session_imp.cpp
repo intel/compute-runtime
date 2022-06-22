@@ -817,7 +817,7 @@ ze_result_t DebugSessionImp::readSbaRegisters(ze_device_thread_t thread, uint32_
 
     ze_result_t ret = ZE_RESULT_SUCCESS;
 
-    NEO::SbaTrackedAddresses sbaBuffer;
+    SbaTrackedAddresses sbaBuffer;
     ret = readSbaBuffer(convertToThreadId(thread), sbaBuffer);
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;

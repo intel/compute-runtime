@@ -63,7 +63,7 @@ struct DebugSessionMock : public L0::DebugSession {
     ze_result_t writeRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    ze_result_t readSbaBuffer(EuThread::ThreadId threadId, NEO::SbaTrackedAddresses &sbaBuffer) override {
+    ze_result_t readSbaBuffer(EuThread::ThreadId threadId, SbaTrackedAddresses &sbaBuffer) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     void startAsyncThread() override {

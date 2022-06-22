@@ -5,13 +5,16 @@
  *
  */
 
-#include "shared/source/debugger/debugger_l0.inl"
-#include "shared/source/debugger/debugger_l0_base.inl"
+#include "level_zero/core/source/debugger/debugger_l0.inl"
+#include "level_zero/core/source/debugger/debugger_l0_base.inl"
 
 namespace NEO {
 
 struct BDWFamily;
 using GfxFamily = BDWFamily;
 
-template class DebuggerL0Hw<NEO::GfxFamily>;
 } // namespace NEO
+
+namespace L0 {
+template class DebuggerL0Hw<NEO::GfxFamily>;
+} // namespace L0

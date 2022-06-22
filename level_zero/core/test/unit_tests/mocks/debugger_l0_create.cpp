@@ -9,14 +9,17 @@
 
 #include "level_zero/core/test/unit_tests/mocks/mock_l0_debugger.h"
 
-NEO::DebugerL0CreateFn mockDebuggerL0HwFactory[IGFX_MAX_CORE];
+namespace L0 {
+namespace ult {
+DebugerL0CreateFn mockDebuggerL0HwFactory[IGFX_MAX_CORE];
+}
+} // namespace L0
 
-namespace NEO {
-
-std::unique_ptr<Debugger> DebuggerL0::create(NEO::Device *device) {
+namespace L0 {
+std::unique_ptr<NEO::Debugger> DebuggerL0::create(NEO::Device *device) {
     initDebuggingInOs(device->getRootDeviceEnvironment().osInterface.get());
-    auto debugger = mockDebuggerL0HwFactory[device->getHardwareInfo().platform.eRenderCoreFamily](device);
+    auto debugger = ult::mockDebuggerL0HwFactory[device->getHardwareInfo().platform.eRenderCoreFamily](device);
     return std::unique_ptr<DebuggerL0>(debugger);
 }
 
-} // namespace NEO
+} // namespace L0

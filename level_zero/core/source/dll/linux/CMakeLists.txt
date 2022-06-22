@@ -6,6 +6,7 @@
 
 set(L0_SRCS_DLL_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/debugger_l0_linux.cpp
 )
 
 if(NEO_ENABLE_i915_PRELIM_DETECTION)

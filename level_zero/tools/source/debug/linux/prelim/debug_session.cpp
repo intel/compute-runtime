@@ -608,7 +608,7 @@ bool DebugSessionLinux::readModuleDebugArea() {
     memset(this->debugArea.magic, 0, sizeof(this->debugArea.magic));
     auto retVal = readGpuMemory(vm, reinterpret_cast<char *>(&this->debugArea), sizeof(this->debugArea), gpuVa);
 
-    if (retVal != ZE_RESULT_SUCCESS || strncmp(this->debugArea.magic, "dbgarea", sizeof(NEO::DebugAreaHeader::magic)) != 0) {
+    if (retVal != ZE_RESULT_SUCCESS || strncmp(this->debugArea.magic, "dbgarea", sizeof(DebugAreaHeader::magic)) != 0) {
         PRINT_DEBUGGER_ERROR_LOG("Reading Module Debug Area failed, error = %d\n", retVal);
         return false;
     }
@@ -1444,7 +1444,7 @@ bool DebugSessionLinux::readSystemRoutineIdent(EuThread *thread, uint64_t vmHand
     return true;
 }
 
-ze_result_t DebugSessionLinux::readSbaBuffer(EuThread::ThreadId threadId, NEO::SbaTrackedAddresses &sbaBuffer) {
+ze_result_t DebugSessionLinux::readSbaBuffer(EuThread::ThreadId threadId, SbaTrackedAddresses &sbaBuffer) {
     auto vmHandle = allThreads[threadId]->getMemoryHandle();
 
     if (vmHandle == invalidHandle) {

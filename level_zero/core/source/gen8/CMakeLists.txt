@@ -7,6 +7,7 @@
 if(SUPPORT_GEN8)
   set(HW_SOURCES_GEN8
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+      ${CMAKE_CURRENT_SOURCE_DIR}/debugger_gen8.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/enable_family_full_l0_gen8.cpp
   )
 

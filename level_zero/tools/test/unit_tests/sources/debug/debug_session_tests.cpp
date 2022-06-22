@@ -103,7 +103,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
         return DebugSessionImp::writeRegistersImp(thread, type, start, count, pRegisterValues);
     }
 
-    ze_result_t readSbaBuffer(EuThread::ThreadId threadId, NEO::SbaTrackedAddresses &sbaBuffer) override {
+    ze_result_t readSbaBuffer(EuThread::ThreadId threadId, SbaTrackedAddresses &sbaBuffer) override {
         sbaBuffer = sba;
         return readSbaBufferResult;
     }
@@ -246,7 +246,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     std::vector<uint32_t> resumedDevices;
     std::vector<std::vector<ze_device_thread_t>> resumedThreads;
 
-    NEO::SbaTrackedAddresses sba;
+    SbaTrackedAddresses sba;
     uint64_t readMemoryBuffer[64];
     uint64_t regs[16];
 
