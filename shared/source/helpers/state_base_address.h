@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,7 +54,7 @@ struct StateBaseAddressHelper {
         bool useGlobalAtomics,
         bool areMultipleSubDevicesInContext);
 
-    static void appendExtraCacheSettings(STATE_BASE_ADDRESS *stateBaseAddress, GmmHelper *gmmHelper);
+    static void appendExtraCacheSettings(STATE_BASE_ADDRESS *stateBaseAddress);
 
     static void programBindingTableBaseAddress(LinearStream &commandStream, const IndirectHeap &ssh, GmmHelper *gmmHelper);
 

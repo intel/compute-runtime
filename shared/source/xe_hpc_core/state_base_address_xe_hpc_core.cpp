@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 namespace NEO {
 template <>
-void StateBaseAddressHelper<XE_HPC_COREFamily>::appendExtraCacheSettings(STATE_BASE_ADDRESS *stateBaseAddress, GmmHelper *gmmHelper) {
+void StateBaseAddressHelper<XE_HPC_COREFamily>::appendExtraCacheSettings(STATE_BASE_ADDRESS *stateBaseAddress) {
     stateBaseAddress->setL1CachePolicyL1CacheControl(STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP);
 
     if (DebugManager.flags.ForceStatelessL1CachingPolicy.get() != -1) {

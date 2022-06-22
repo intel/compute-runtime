@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -233,4 +233,17 @@ HWTEST2_F(SBATest, givenSurfaceStateHeapWhenNotUsingGlobalHeapBaseThenBindlessSu
         false,
         1u);
     EXPECT_EQ(ssh.getHeapGpuBase(), cmd->getBindlessSurfaceStateBaseAddress());
+}
+
+HWTEST2_F(SBATest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSettingsThenNothingChanged, IsAtMostXeHpCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    auto stateBaseAddress = FamilyType::cmdInitStateBaseAddress;
+    auto expectedStateBaseAddress = FamilyType::cmdInitStateBaseAddress;
+
+    StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(&stateBaseAddress);
+    EXPECT_EQ(0, memcmp(&stateBaseAddress, &expectedStateBaseAddress, sizeof(STATE_BASE_ADDRESS)));
+
+    DebugManager.flags.ForceStatelessL1CachingPolicy.set(2);
+    StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(&stateBaseAddress);
+    EXPECT_EQ(0, memcmp(&stateBaseAddress, &expectedStateBaseAddress, sizeof(STATE_BASE_ADDRESS)));
 }

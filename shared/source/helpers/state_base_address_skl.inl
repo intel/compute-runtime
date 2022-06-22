@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,8 +28,6 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
         uint32_t size = uint32_t(ssh->getMaxAvailableSpace() / 64) - 1;
         stateBaseAddress->setBindlessSurfaceStateSize(size);
     }
-
-    appendExtraCacheSettings(stateBaseAddress, gmmHelper);
 }
 
 template <typename GfxFamily>

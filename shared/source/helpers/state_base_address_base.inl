@@ -103,6 +103,6 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
 }
 
 template <typename GfxFamily>
-void StateBaseAddressHelper<GfxFamily>::appendExtraCacheSettings(STATE_BASE_ADDRESS *stateBaseAddress, GmmHelper *gmmHelper) {}
+void StateBaseAddressHelper<GfxFamily>::appendExtraCacheSettings(STATE_BASE_ADDRESS *stateBaseAddress) {}
 
 } // namespace NEO

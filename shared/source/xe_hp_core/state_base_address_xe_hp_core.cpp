@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 namespace NEO {
 
 template <>
-void StateBaseAddressHelper<XeHpFamily>::appendExtraCacheSettings(STATE_BASE_ADDRESS *stateBaseAddress, GmmHelper *gmmHelper) {
+void StateBaseAddressHelper<XeHpFamily>::appendExtraCacheSettings(STATE_BASE_ADDRESS *stateBaseAddress) {
 }
 
 template struct StateBaseAddressHelper<XeHpFamily>;

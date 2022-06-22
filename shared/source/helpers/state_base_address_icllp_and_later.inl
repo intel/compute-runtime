@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,8 +37,6 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
         stateBaseAddress->setBindlessSurfaceStateMemoryObjectControlState(gmmHelper->getMOCS(l3CacheOnPolicy));
         stateBaseAddress->setBindlessSamplerStateMemoryObjectControlState(gmmHelper->getMOCS(l3CacheOnPolicy));
     }
-
-    appendExtraCacheSettings(stateBaseAddress, gmmHelper);
 }
 
 template <typename GfxFamily>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,6 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     bool overrideBindlessSurfaceStateBase,
     bool useGlobalAtomics,
     bool areMultipleSubDevicesInContext) {
-    appendExtraCacheSettings(stateBaseAddress, gmmHelper);
 }
 
 template <typename GfxFamily>
