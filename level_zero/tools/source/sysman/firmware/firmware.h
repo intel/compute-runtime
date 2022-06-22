@@ -8,6 +8,7 @@
 #pragma once
 #include <level_zero/zes_api.h>
 
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -47,6 +48,7 @@ struct FirmwareHandleContext {
 
   private:
     void createHandle(const std::string &fwType);
+    std::once_flag initFirmwareOnce;
 };
 
 } // namespace L0

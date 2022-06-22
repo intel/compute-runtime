@@ -136,9 +136,6 @@ ze_result_t SysmanDeviceImp::init() {
     if (pFanHandleContext) {
         pFanHandleContext->init();
     }
-    if (pFirmwareHandleContext) {
-        pFirmwareHandleContext->init();
-    }
     if (pDiagnosticsHandleContext) {
         pDiagnosticsHandleContext->init();
     }
