@@ -16,6 +16,7 @@ class GmmHelper;
 class IndirectHeap;
 class LinearStream;
 struct DispatchFlags;
+struct HardwareInfo;
 
 template <typename GfxFamily>
 struct StateBaseAddressHelper {
@@ -54,7 +55,7 @@ struct StateBaseAddressHelper {
         bool useGlobalAtomics,
         bool areMultipleSubDevicesInContext);
 
-    static void appendExtraCacheSettings(STATE_BASE_ADDRESS *stateBaseAddress);
+    static void appendExtraCacheSettings(STATE_BASE_ADDRESS *stateBaseAddress, const HardwareInfo *hwInfo);
 
     static void programBindingTableBaseAddress(LinearStream &commandStream, const IndirectHeap &ssh, GmmHelper *gmmHelper);
 

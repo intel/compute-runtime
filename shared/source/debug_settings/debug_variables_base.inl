@@ -207,6 +207,8 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceWddmLowPriorityContextValue, -1, "Force sch
 DECLARE_DEBUG_VARIABLE(int32_t, FailBuildProgramWithStatefulAccess, -1, "-1: default, 0: disable, 1: enable, Fail build program/module creation whenever stateful access is discovered (except built in kernels).")
 DECLARE_DEBUG_VARIABLE(bool, DisableScratchPages, false, "Disable scratch pages during VM creations")
 DECLARE_DEBUG_VARIABLE(std::string, OverrideDeviceName, std::string("unk"), "Device name to override")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideL1CachePolicyInSurfaceStateAndStateless, -1, "-1: default, >=0 : following policy will be programmed in render surface state (for regular buffers) and stateless L1 caching")
+
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
 DECLARE_DEBUG_VARIABLE(bool, PrintOsContextInitializations, false, "print initialized OsContexts to standard output")

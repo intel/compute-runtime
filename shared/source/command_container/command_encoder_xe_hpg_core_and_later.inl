@@ -14,9 +14,13 @@ namespace NEO {
 
 template <>
 void EncodeSurfaceState<Family>::encodeExtraCacheSettings(R_SURFACE_STATE *surfaceState, const HardwareInfo &hwInfo) {
-    surfaceState->setL1CachePolicyL1CacheControl(R_SURFACE_STATE::L1_CACHE_POLICY_WBP);
+    using L1_CACHE_POLICY = typename R_SURFACE_STATE::L1_CACHE_POLICY;
+    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto cachePolicy = static_cast<L1_CACHE_POLICY>(hwInfoConfig->getL1CachePolicy());
+    surfaceState->setL1CachePolicyL1CacheControl(cachePolicy);
+
     if (DebugManager.flags.OverrideL1CacheControlInSurfaceState.get() != -1) {
-        surfaceState->setL1CachePolicyL1CacheControl(static_cast<R_SURFACE_STATE::L1_CACHE_POLICY>(DebugManager.flags.OverrideL1CacheControlInSurfaceState.get()));
+        surfaceState->setL1CachePolicyL1CacheControl(static_cast<L1_CACHE_POLICY>(DebugManager.flags.OverrideL1CacheControlInSurfaceState.get()));
     }
 }
 

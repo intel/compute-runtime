@@ -119,6 +119,8 @@ class HwInfoConfig {
     virtual bool isCpuCopyNecessary(const void *ptr, MemoryManager *memoryManager) const = 0;
     virtual bool isAdjustWalkOrderAvailable(const HardwareInfo &hwInfo) const = 0;
     virtual bool isAssignEngineRoundRobinSupported() const = 0;
+    virtual uint32_t getDefaultL1CachePolicy() const = 0;
+    virtual uint32_t getL1CachePolicy() const = 0;
 
     MOCKABLE_VIRTUAL ~HwInfoConfig() = default;
 
@@ -216,6 +218,8 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isCpuCopyNecessary(const void *ptr, MemoryManager *memoryManager) const override;
     bool isAdjustWalkOrderAvailable(const HardwareInfo &hwInfo) const override;
     bool isAssignEngineRoundRobinSupported() const override;
+    uint32_t getDefaultL1CachePolicy() const override;
+    uint32_t getL1CachePolicy() const override;
 
   protected:
     HwInfoConfigHw() = default;

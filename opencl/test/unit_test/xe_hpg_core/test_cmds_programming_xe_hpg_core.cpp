@@ -43,7 +43,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenL3ToL1DebugFlagWhenStatele
     EXPECT_EQ(expectedL1CachePolicy, actualL1CachePolocy);
 }
 
-XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenSpecificProductFamilyWhenAppendingSbaThenProgramWtL1CachePolicy) {
+XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenSpecificProductFamilyWhenAppendingSbaThenProgramWBPL1CachePolicy) {
     auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
     AllocationProperties properties(pDevice->getRootDeviceIndex(), 1, AllocationType::BUFFER, pDevice->getDeviceBitfield());
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
@@ -89,7 +89,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenL1CachingOverrideWhenState
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, whenAppendingRssThenProgramWtL1CachePolicy) {
+XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, whenAppendingRssThenProgramWBPL1CachePolicy) {
     auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
     size_t allocationSize = MemoryConstants::pageSize;
     AllocationProperties properties(pDevice->getRootDeviceIndex(), allocationSize, AllocationType::BUFFER, pDevice->getDeviceBitfield());

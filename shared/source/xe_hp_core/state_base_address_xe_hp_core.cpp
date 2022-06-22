@@ -10,7 +10,7 @@
 namespace NEO {
 
 template <>
-void StateBaseAddressHelper<XeHpFamily>::appendExtraCacheSettings(STATE_BASE_ADDRESS *stateBaseAddress) {
+void StateBaseAddressHelper<XeHpFamily>::appendExtraCacheSettings(STATE_BASE_ADDRESS *stateBaseAddress, const HardwareInfo *hwInfo) {
 }
 
 template struct StateBaseAddressHelper<XeHpFamily>;

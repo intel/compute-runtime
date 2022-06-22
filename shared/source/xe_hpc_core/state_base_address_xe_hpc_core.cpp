@@ -8,14 +8,6 @@
 #include "shared/source/helpers/state_base_address_xehp_and_later.inl"
 
 namespace NEO {
-template <>
-void StateBaseAddressHelper<XE_HPC_COREFamily>::appendExtraCacheSettings(STATE_BASE_ADDRESS *stateBaseAddress) {
-    stateBaseAddress->setL1CachePolicyL1CacheControl(STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP);
-
-    if (DebugManager.flags.ForceStatelessL1CachingPolicy.get() != -1) {
-        stateBaseAddress->setL1CachePolicyL1CacheControl(static_cast<typename STATE_BASE_ADDRESS::L1_CACHE_POLICY>(DebugManager.flags.ForceStatelessL1CachingPolicy.get()));
-    }
-}
-
+#include "shared/source/helpers/state_base_address_xe_hpg_core_and_later.inl"
 template struct StateBaseAddressHelper<XE_HPC_COREFamily>;
 } // namespace NEO

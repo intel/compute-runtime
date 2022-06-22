@@ -12,6 +12,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/os_interface/hw_info_config.h"
 
 #include "hw_cmds.h"
 
@@ -101,8 +102,5 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     appendStateBaseAddressParameters(stateBaseAddress, ssh, setGeneralStateBaseAddress, indirectObjectHeapBaseAddress, gmmHelper,
                                      isMultiOsContextCapable, memoryCompressionState, overrideBindlessSurfaceStateBase, useGlobalAtomics, areMultipleSubDevicesInContext);
 }
-
-template <typename GfxFamily>
-void StateBaseAddressHelper<GfxFamily>::appendExtraCacheSettings(STATE_BASE_ADDRESS *stateBaseAddress) {}
 
 } // namespace NEO

@@ -7,6 +7,8 @@
 
 #include "shared/test/common/helpers/state_base_address_tests.h"
 
+#include "shared/source/command_container/command_encoder.h"
+
 using IsBetweenSklAndTgllp = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
 
 HWTEST2_F(SBATest, WhenAppendStateBaseAddressParametersIsCalledThenSBACmdHasBindingSurfaceStateProgrammed, IsBetweenSklAndTgllp) {
@@ -240,10 +242,76 @@ HWTEST2_F(SBATest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSetti
     auto stateBaseAddress = FamilyType::cmdInitStateBaseAddress;
     auto expectedStateBaseAddress = FamilyType::cmdInitStateBaseAddress;
 
-    StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(&stateBaseAddress);
+    StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(&stateBaseAddress, &hardwareInfo);
     EXPECT_EQ(0, memcmp(&stateBaseAddress, &expectedStateBaseAddress, sizeof(STATE_BASE_ADDRESS)));
 
     DebugManager.flags.ForceStatelessL1CachingPolicy.set(2);
-    StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(&stateBaseAddress);
+    StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(&stateBaseAddress, &hardwareInfo);
     EXPECT_EQ(0, memcmp(&stateBaseAddress, &expectedStateBaseAddress, sizeof(STATE_BASE_ADDRESS)));
+}
+
+HWTEST2_F(SBATest, givenDebugFlagSetWhenAppendingSbaThenProgramCorrectL1CachePolicy, IsAtLeastXeHpgCore) {
+    auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
+    AllocationProperties properties(pDevice->getRootDeviceIndex(), 1, AllocationType::BUFFER, pDevice->getDeviceBitfield());
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+
+    IndirectHeap indirectHeap(allocation, 1);
+    auto sbaCmd = FamilyType::cmdInitStateBaseAddress;
+
+    struct {
+        uint32_t option;
+        typename FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY cachePolicy;
+    } testInputs[] = {
+        {0, FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP},
+        {2, FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB},
+        {3, FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WT},
+        {4, FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WS}};
+
+    for (const auto &input : testInputs) {
+        DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(input.option);
+        StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(&sbaCmd, &indirectHeap, true, 0,
+                                                                             pDevice->getRootDeviceEnvironment().getGmmHelper(), false,
+                                                                             MemoryCompressionState::NotApplicable, true, false, 1u);
+
+        EXPECT_EQ(input.cachePolicy, sbaCmd.getL1CachePolicyL1CacheControl());
+    }
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST2_F(SBATest, givenDebugFlagSetWhenAppendingRssThenProgramCorrectL1CachePolicy, IsAtLeastXeHpgCore) {
+    auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
+    size_t allocationSize = MemoryConstants::pageSize;
+    AllocationProperties properties(pDevice->getRootDeviceIndex(), allocationSize, AllocationType::BUFFER, pDevice->getDeviceBitfield());
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+
+    auto rssCmd = FamilyType::cmdInitRenderSurfaceState;
+
+    auto multiGraphicsAllocation = MultiGraphicsAllocation(pDevice->getRootDeviceIndex());
+    multiGraphicsAllocation.addAllocation(allocation);
+
+    EncodeSurfaceStateArgs args;
+    args.outMemory = &rssCmd;
+    args.graphicsAddress = allocation->getGpuAddress();
+    args.size = allocation->getUnderlyingBufferSize();
+    args.mocs = 0;
+    args.numAvailableDevices = pDevice->getNumGenericSubDevices();
+    args.allocation = allocation;
+    args.gmmHelper = pDevice->getGmmHelper();
+    args.areMultipleSubDevicesInContext = true;
+
+    struct {
+        uint32_t option;
+        typename FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY cachePolicy;
+    } testInputs[] = {
+        {0, FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WBP},
+        {2, FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB},
+        {3, FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WT},
+        {4, FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WS}};
+
+    for (const auto &input : testInputs) {
+        DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(input.option);
+        EncodeSurfaceState<FamilyType>::encodeBuffer(args);
+        EXPECT_EQ(input.cachePolicy, rssCmd.getL1CachePolicyL1CacheControl());
+    }
+    memoryManager->freeGraphicsMemory(allocation);
 }

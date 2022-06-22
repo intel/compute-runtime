@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,5 +27,8 @@ void StateBaseAddressHelper<GfxFamily>::appendIohParameters(typename GfxFamily::
         stateBaseAddress->setIndirectObjectBufferSize(ioh->getHeapSizeInPages());
     }
 }
+
+template <typename GfxFamily>
+void StateBaseAddressHelper<GfxFamily>::appendExtraCacheSettings(STATE_BASE_ADDRESS *stateBaseAddress, const HardwareInfo *hwInfo) {}
 
 } // namespace NEO
