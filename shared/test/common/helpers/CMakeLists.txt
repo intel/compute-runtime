@@ -7,6 +7,7 @@
 set(NEO_CORE_HELPERS_TESTS
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}hw_helper_extended_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/aligned_memory_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/bindless_heaps_helper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_tests.inl

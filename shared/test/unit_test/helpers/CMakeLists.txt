@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
-set(IGDRCL_SRCS_tests_helpers
+set(SHARED_SRCS_tests_helpers
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/app_resource_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/array_count_tests.cpp
@@ -34,16 +34,16 @@ set(IGDRCL_SRCS_tests_helpers
 )
 
 if(MSVC OR COMPILER_SUPPORTS_SSE42)
-  list(APPEND IGDRCL_SRCS_tests_helpers
+  list(APPEND SHARED_SRCS_tests_helpers
        ${CMAKE_CURRENT_SOURCE_DIR}/uint16_sse4_tests.cpp
   )
 endif()
 
 if(COMPILER_SUPPORTS_NEON)
-  list(APPEND IGDRCL_SRCS_tests_helpers
+  list(APPEND SHARED_SRCS_tests_helpers
        ${CMAKE_CURRENT_SOURCE_DIR}/uint16_neon_tests.cpp
   )
 endif()
 
-target_sources(${TARGET_NAME} PRIVATE ${IGDRCL_SRCS_tests_helpers})
+target_sources(${TARGET_NAME} PRIVATE ${SHARED_SRCS_tests_helpers})
 add_subdirectories()
