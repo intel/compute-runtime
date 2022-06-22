@@ -106,7 +106,6 @@ class HwHelper {
     virtual bool isBankOverrideRequired(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getGlobalTimeStampBits() const = 0;
     virtual int32_t getDefaultThreadArbitrationPolicy() const = 0;
-    virtual bool isFlushTlbWARequired() const = 0;
     virtual bool useOnlyGlobalTimestamps() const = 0;
     virtual bool useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const = 0;
     virtual bool packedFormatsSupported() const = 0;
@@ -255,8 +254,6 @@ class HwHelperHw : public HwHelper {
     bool isUpdateTaskCountFromWaitSupported() const override;
 
     bool is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const override;
-
-    bool isFlushTlbWARequired() const override;
 
     bool isFenceAllocationRequired(const HardwareInfo &hwInfo) const override;
 

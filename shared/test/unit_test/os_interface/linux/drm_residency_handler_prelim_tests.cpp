@@ -103,10 +103,6 @@ struct DrmMemoryOperationsHandlerBindFixture : public ::testing::Test {
 using DrmMemoryOperationsHandlerBindMultiRootDeviceTest = DrmMemoryOperationsHandlerBindFixture<2u>;
 
 TEST_F(DrmMemoryOperationsHandlerBindMultiRootDeviceTest, whenSetNewResourceBoundToVMThenAllContextsUsingThatVMHasSetNewResourceBound) {
-    if (!HwHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eRenderCoreFamily).isFlushTlbWARequired()) {
-        GTEST_SKIP();
-    }
-
     mock->setNewResourceBoundToVM(1u);
 
     for (const auto &engine : device->getAllEngines()) {

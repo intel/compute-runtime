@@ -522,11 +522,6 @@ size_t HwHelperHw<GfxFamily>::getSingleTimestampPacketSize() const {
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isFlushTlbWARequired() const {
-    return true;
-}
-
-template <typename GfxFamily>
 size_t HwHelperHw<GfxFamily>::getSingleTimestampPacketSizeHw() {
     if (DebugManager.flags.OverrideTimestampPacketSize.get() != -1) {
         if (DebugManager.flags.OverrideTimestampPacketSize.get() == 4) {
