@@ -65,7 +65,21 @@ struct WddmEuDebugInterfaceMock : public WddmMock {
             }
             break;
         }
+        case DBGUMD_ACTION_READ_GFX_MEMORY: {
+            void *dst = reinterpret_cast<void *>(pEscapeInfo->KmEuDbgL0EscapeInfo.ReadGfxMemoryParams.MemoryBufferPtr);
+            size_t size = pEscapeInfo->KmEuDbgL0EscapeInfo.ReadGfxMemoryParams.MemoryBufferSize;
+            memset(dst, 0xaa, size);
+            pEscapeInfo->KmEuDbgL0EscapeInfo.EscapeReturnStatus = escapeReturnStatus;
+            break;
         }
+        case DBGUMD_ACTION_WRITE_GFX_MEMORY:
+            void *src = reinterpret_cast<void *>(pEscapeInfo->KmEuDbgL0EscapeInfo.ReadGfxMemoryParams.MemoryBufferPtr);
+            size_t size = pEscapeInfo->KmEuDbgL0EscapeInfo.ReadGfxMemoryParams.MemoryBufferSize;
+            memcpy(testBuffer, src, size);
+            pEscapeInfo->KmEuDbgL0EscapeInfo.EscapeReturnStatus = escapeReturnStatus;
+            break;
+        }
+
         return ntStatus;
     };
 
@@ -94,11 +108,13 @@ struct WddmEuDebugInterfaceMock : public WddmMock {
 
     bool debugAttachAvailable = true;
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    uint32_t escapeReturnStatus = DBGUMD_RETURN_ESCAPE_SUCCESS;
+    EUDBG_L0DBGUMD_ESCAPE_RETURN_TYPE escapeReturnStatus = DBGUMD_RETURN_ESCAPE_SUCCESS;
 
     uint64_t debugHandle = 0x0DEB0DEB;
     uint32_t dbgUmdEscapeActionCalled[DBGUMD_ACTION_MAX] = {0};
     uint32_t registerAllocationTypeCalled = 0;
+    static constexpr size_t bufferSize = 16;
+    uint8_t testBuffer[bufferSize] = {0};
 };
 
 } // namespace NEO

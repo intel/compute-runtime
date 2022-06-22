@@ -41,6 +41,8 @@ struct DebugSessionWindows : DebugSessionImp {
 
     ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override;
     ze_result_t writeGpuMemory(uint64_t memoryHandle, const char *input, size_t size, uint64_t gpuVa) override;
+    bool isVAElf(const zet_debug_memory_space_desc_t *desc, size_t size);
+    ze_result_t readElfSpace(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer);
 
     ze_result_t readSbaBuffer(EuThread::ThreadId, SbaTrackedAddresses &sbaBuffer) override;
 
@@ -67,8 +69,9 @@ struct DebugSessionWindows : DebugSessionImp {
 
     bool moduleDebugAreaCaptured = false;
     uint32_t processId = 0;
-    uint64_t debugHandle = 0;
     NEO::Wddm *wddm = nullptr;
+    constexpr static uint64_t invalidHandle = std::numeric_limits<uint64_t>::max();
+    uint64_t debugHandle = invalidHandle;
 
     struct ElfRange {
         uint64_t startVA;

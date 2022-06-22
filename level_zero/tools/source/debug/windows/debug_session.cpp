@@ -70,7 +70,7 @@ ze_result_t DebugSessionWindows::initialize() {
 }
 
 bool DebugSessionWindows::closeConnection() {
-    if (debugHandle == 0) {
+    if (debugHandle == invalidHandle) {
         return false;
     }
 
@@ -303,12 +303,94 @@ ze_result_t DebugSessionWindows::readEvent(uint64_t timeout, zet_debug_event_t *
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t DebugSessionWindows::readMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
+ze_result_t DebugSessionWindows::readElfSpace(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+bool DebugSessionWindows::isVAElf(const zet_debug_memory_space_desc_t *desc, size_t size) {
+    std::unique_lock<std::mutex> lock(asyncThreadMutex);
+    for (auto elf : allElfs) {
+        if (desc->address >= elf.startVA && desc->address <= elf.endVA) {
+            if (desc->address + size > elf.endVA) {
+                return false;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+ze_result_t DebugSessionWindows::readMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
+
+    if (debugHandle == invalidHandle) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+
+    if (!isValidGpuAddress(desc->address)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    ze_result_t status = ZE_RESULT_ERROR_UNINITIALIZED;
+    status = sanityMemAccessThreadCheck(thread, desc);
+    if (status != ZE_RESULT_SUCCESS) {
+        return status;
+    }
+
+    if (isVAElf(desc, size)) {
+        return readElfSpace(desc, size, buffer);
+    }
+
+    uint64_t memoryHandle = DebugSessionWindows::invalidHandle;
+
+    if (DebugSession::isThreadAll(thread)) {
+        std::unique_lock<std::mutex> lock(asyncThreadMutex);
+        if (allContexts.empty()) {
+            return ZE_RESULT_ERROR_UNINITIALIZED;
+        }
+        memoryHandle = *allContexts.begin();
+    } else {
+        auto threadId = convertToThreadId(thread);
+        memoryHandle = allThreads[threadId]->getMemoryHandle();
+        if (memoryHandle == EuThread::invalidHandle) {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+    }
+    return readGpuMemory(memoryHandle, static_cast<char *>(buffer), size, desc->address);
+}
+
 ze_result_t DebugSessionWindows::writeMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+
+    if (debugHandle == invalidHandle) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+
+    if (!isValidGpuAddress(desc->address)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    ze_result_t status = ZE_RESULT_ERROR_UNINITIALIZED;
+    status = sanityMemAccessThreadCheck(thread, desc);
+    if (status != ZE_RESULT_SUCCESS) {
+        return status;
+    }
+
+    uint64_t memoryHandle = DebugSessionWindows::invalidHandle;
+
+    if (DebugSession::isThreadAll(thread)) {
+        std::unique_lock<std::mutex> lock(asyncThreadMutex);
+        if (allContexts.empty()) {
+            return ZE_RESULT_ERROR_UNINITIALIZED;
+        }
+        memoryHandle = *allContexts.begin();
+    } else {
+        auto threadId = convertToThreadId(thread);
+        memoryHandle = allThreads[threadId]->getMemoryHandle();
+        if (memoryHandle == EuThread::invalidHandle) {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+    }
+
+    return writeGpuMemory(memoryHandle, static_cast<const char *>(buffer), size, desc->address);
 }
 
 ze_result_t DebugSessionWindows::acknowledgeEvent(const zet_debug_event_t *event) {
@@ -324,11 +406,43 @@ ze_result_t DebugSessionWindows::interruptImp(uint32_t deviceIndex) {
 }
 
 ze_result_t DebugSessionWindows::readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+
+    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+    gpuVa = gmmHelper->decanonize(gpuVa);
+
+    KM_ESCAPE_INFO escapeInfo = {0};
+    escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_READ_GFX_MEMORY;
+    escapeInfo.KmEuDbgL0EscapeInfo.ReadGfxMemoryParams.hContextHandle = memoryHandle;
+    escapeInfo.KmEuDbgL0EscapeInfo.ReadGfxMemoryParams.GpuVirtualAddr = gpuVa;
+    escapeInfo.KmEuDbgL0EscapeInfo.ReadGfxMemoryParams.MemoryBufferSize = static_cast<uint32_t>(size);
+    escapeInfo.KmEuDbgL0EscapeInfo.ReadGfxMemoryParams.MemoryBufferPtr = reinterpret_cast<uint64_t>(output);
+
+    auto status = runEscape(escapeInfo);
+    if (STATUS_SUCCESS != status || DBGUMD_RETURN_ESCAPE_SUCCESS != escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus) {
+        PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_READ_GFX_MEMORY: Failed - ProcessId: %d Status: %d EscapeReturnStatus: %d\n", processId, status, escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+        return DebugSessionWindows::translateEscapeReturnStatusToZeResult(escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t DebugSessionWindows::writeGpuMemory(uint64_t memoryHandle, const char *input, size_t size, uint64_t gpuVa) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+
+    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+    gpuVa = gmmHelper->decanonize(gpuVa);
+
+    KM_ESCAPE_INFO escapeInfo = {0};
+    escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_WRITE_GFX_MEMORY;
+    escapeInfo.KmEuDbgL0EscapeInfo.ReadGfxMemoryParams.hContextHandle = memoryHandle;
+    escapeInfo.KmEuDbgL0EscapeInfo.ReadGfxMemoryParams.GpuVirtualAddr = gpuVa;
+    escapeInfo.KmEuDbgL0EscapeInfo.ReadGfxMemoryParams.MemoryBufferSize = static_cast<uint32_t>(size);
+    escapeInfo.KmEuDbgL0EscapeInfo.ReadGfxMemoryParams.MemoryBufferPtr = reinterpret_cast<uint64_t>(input);
+
+    auto status = runEscape(escapeInfo);
+    if (STATUS_SUCCESS != status || DBGUMD_RETURN_ESCAPE_SUCCESS != escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus) {
+        PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_READ_GFX_MEMORY: Failed - ProcessId: %d Status: %d EscapeReturnStatus: %d\n", processId, status, escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+        return DebugSessionWindows::translateEscapeReturnStatusToZeResult(escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 void DebugSessionWindows::enqueueApiEvent(zet_debug_event_t &debugEvent) {

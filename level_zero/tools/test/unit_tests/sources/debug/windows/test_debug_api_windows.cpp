@@ -21,13 +21,18 @@ struct MockDebugSessionWindows : DebugSessionWindows {
     using DebugSessionWindows::asyncThread;
     using DebugSessionWindows::closeAsyncThread;
     using DebugSessionWindows::debugHandle;
+    using DebugSessionWindows::ElfRange;
     using DebugSessionWindows::initialize;
+    using DebugSessionWindows::invalidHandle;
     using DebugSessionWindows::moduleDebugAreaCaptured;
     using DebugSessionWindows::processId;
     using DebugSessionWindows::readAllocationDebugData;
     using DebugSessionWindows::readAndHandleEvent;
+    using DebugSessionWindows::readGpuMemory;
     using DebugSessionWindows::startAsyncThread;
     using DebugSessionWindows::wddm;
+    using DebugSessionWindows::writeGpuMemory;
+    using L0::DebugSessionImp::isValidGpuAddress;
 
     MockDebugSessionWindows(const zet_debug_config_t &config, L0::Device *device) : DebugSessionWindows(config, device) {}
 
@@ -43,6 +48,14 @@ struct MockDebugSessionWindows : DebugSessionWindows {
             return resultReadAndHandleEvent;
         }
         return DebugSessionWindows::readAndHandleEvent(timeoutMs);
+    }
+
+    void ensureThreadStopped(ze_device_thread_t thread, uint64_t context) {
+        auto threadId = convertToThreadId(thread);
+        if (allThreads.find(threadId) == allThreads.end()) {
+            allThreads[threadId] = std::make_unique<EuThread>(threadId);
+        }
+        allThreads[threadId]->stopThread(context);
     }
 
     ze_result_t resultInitialize = ZE_RESULT_FORCE_UINT32;
@@ -61,7 +74,7 @@ struct DebugApiWindowsFixture : public DeviceFixture {
     void TearDown() {
         DeviceFixture::TearDown();
     }
-
+    static constexpr uint8_t bufferSize = 16;
     WddmEuDebugInterfaceMock *mockWddm = nullptr;
 };
 
@@ -428,6 +441,7 @@ using DebugApiWindowsAsyncThreadTest = Test<DebugApiWindowsFixture>;
 TEST_F(DebugApiWindowsAsyncThreadTest, GivenDebugSessionWhenStartingAndClosingAsyncThreadThenThreadIsStartedAndFinishes) {
     auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
     ASSERT_NE(nullptr, session);
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
     session->wddm = mockWddm;
     session->startAsyncThread();
 
@@ -443,9 +457,8 @@ TEST_F(DebugApiWindowsAsyncThreadTest, GivenDebugSessionWhenStartingAndClosingAs
 TEST_F(DebugApiWindowsAsyncThreadTest, GivenDebugSessionWithAsyncThreadWhenClosingConnectionThenAsyncThreadIsTerminated) {
     auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
     ASSERT_NE(nullptr, session);
-    session->wddm = mockWddm;
     session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
-
+    session->wddm = mockWddm;
     session->startAsyncThread();
 
     EXPECT_TRUE(session->asyncThread.threadActive);
@@ -455,6 +468,384 @@ TEST_F(DebugApiWindowsAsyncThreadTest, GivenDebugSessionWithAsyncThreadWhenClosi
 
     EXPECT_FALSE(session->asyncThread.threadActive);
     EXPECT_TRUE(session->asyncThread.threadFinished);
+}
+
+TEST_F(DebugApiWindowsTest, WhenCallingReadGpuMemoryThenMemoryIsRead) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+    session->wddm = mockWddm;
+
+    char output[bufferSize] = {};
+    auto result = session->readGpuMemory(7, output, bufferSize, 0x1234);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
+
+    for (int i = 0; i < bufferSize; i++) {
+        EXPECT_EQ(static_cast<char>(0xaa), output[i]);
+    }
+}
+
+TEST_F(DebugApiWindowsTest, WhenCallingWriteGpuMemoryThenMemoryIsWritten) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+    session->wddm = mockWddm;
+
+    char input[bufferSize] = {'h', 'e', 'l', 'l', 'o'};
+    auto result = session->writeGpuMemory(7, input, bufferSize, 0x1234);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_WRITE_GFX_MEMORY]);
+    ASSERT_EQ(0, memcmp(input, mockWddm->testBuffer, bufferSize));
+}
+
+TEST_F(DebugApiWindowsTest, GivenInvalidDebugHandleWhenWritingMemoryThenErrorIsReturned) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+    session->wddm = mockWddm;
+    session->debugHandle = MockDebugSessionWindows::invalidHandle;
+
+    ze_device_thread_t thread{0, 0, 0, 0};
+
+    zet_debug_memory_space_desc_t desc = {};
+
+    char output[bufferSize] = {};
+    auto retVal = session->writeMemory(thread, &desc, bufferSize, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, retVal);
+}
+
+TEST_F(DebugApiWindowsTest, GivenInvalidDebugHandleWhenReadingMemoryThenErrorIsReturned) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+    session->wddm = mockWddm;
+    session->debugHandle = MockDebugSessionWindows::invalidHandle;
+
+    ze_device_thread_t thread{0, 0, 0, 0};
+
+    zet_debug_memory_space_desc_t desc = {};
+
+    char output[bufferSize] = {};
+    auto retVal = session->readMemory(thread, &desc, bufferSize, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, retVal);
+}
+TEST_F(DebugApiWindowsTest, GivenInvalidAddressWhenCallingReadMemoryThenErrorIsReturned) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+    session->wddm = mockWddm;
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+
+    ze_device_thread_t thread{0, 0, 0, 0};
+
+    zet_debug_memory_space_desc_t desc;
+    desc.address = 0xf0ffffff00000000;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    EXPECT_FALSE(session->isValidGpuAddress(desc.address));
+
+    char output[bufferSize] = {};
+    auto retVal = session->readMemory(thread, &desc, bufferSize, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, retVal);
+}
+
+TEST_F(DebugApiWindowsTest, GivenInvalidAddressWhenCallingWriteMemoryThenErrorIsReturned) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+    session->wddm = mockWddm;
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+
+    ze_device_thread_t thread{0, 0, 0, 0};
+
+    zet_debug_memory_space_desc_t desc;
+    desc.address = 0xf0ffffff00000000;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    EXPECT_FALSE(session->isValidGpuAddress(desc.address));
+
+    char output[bufferSize] = {};
+    auto retVal = session->writeMemory(thread, &desc, bufferSize, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, retVal);
+}
+
+TEST_F(DebugApiWindowsTest, WhenCallingWriteMemoryForAllThreadThenMemoryIsWritten) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+    session->wddm = mockWddm;
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+
+    ze_device_thread_t thread;
+    thread.slice = UINT32_MAX;
+    thread.subslice = UINT32_MAX;
+    thread.eu = UINT32_MAX;
+    thread.thread = UINT32_MAX;
+    zet_debug_memory_space_desc_t desc;
+    desc.address = 0x1000;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    char input[bufferSize] = {'a', 'b', 'c'};
+    // No context yet created.
+    auto retVal = session->writeMemory(thread, &desc, bufferSize, input);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, retVal);
+
+    session->allContexts.insert(0x12345);
+
+    retVal = session->writeMemory(thread, &desc, bufferSize, input);
+    ASSERT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_WRITE_GFX_MEMORY]);
+    ASSERT_EQ(0, memcmp(input, mockWddm->testBuffer, bufferSize));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+}
+
+TEST_F(DebugApiWindowsTest, WhenCallingWriteMemoryForSingleThreadThenMemoryIsWritten) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+    session->wddm = mockWddm;
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+    session->allContexts.insert(0x12345);
+
+    ze_device_thread_t thread;
+    thread.slice = 1;
+    thread.subslice = 1;
+    thread.eu = 1;
+    thread.thread = 1;
+    zet_debug_memory_space_desc_t desc;
+    desc.address = 0x1000;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    char input[bufferSize] = {'a', 'b', 'c'};
+    session->ensureThreadStopped(thread, EuThread::invalidHandle);
+    auto retVal = session->writeMemory(thread, &desc, bufferSize, input);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
+    ASSERT_EQ(0, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_WRITE_GFX_MEMORY]);
+
+    session->ensureThreadStopped(thread, 0x12345);
+    retVal = session->writeMemory(thread, &desc, bufferSize, input);
+    ASSERT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_WRITE_GFX_MEMORY]);
+    ASSERT_EQ(0, memcmp(input, mockWddm->testBuffer, bufferSize));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+}
+
+TEST_F(DebugApiWindowsTest, WhenCallingReadMemoryForAllThreadThenMemoryIsWritten) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+    session->wddm = mockWddm;
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+
+    ze_device_thread_t thread;
+    thread.slice = UINT32_MAX;
+    thread.subslice = UINT32_MAX;
+    thread.eu = UINT32_MAX;
+    thread.thread = UINT32_MAX;
+    zet_debug_memory_space_desc_t desc;
+    desc.address = 0x1000;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    char output[bufferSize] = {0};
+    // No context yet created.
+    auto retVal = session->readMemory(thread, &desc, bufferSize, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, retVal);
+
+    session->allContexts.insert(0x12345);
+
+    retVal = session->readMemory(thread, &desc, bufferSize, output);
+    ASSERT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
+    for (int i = 0; i < bufferSize; i++) {
+        EXPECT_EQ(static_cast<char>(0xaa), output[i]);
+    }
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+}
+
+TEST_F(DebugApiWindowsTest, WhenCallingReadMemoryForSingleThreadThenMemoryIsRead) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+    session->wddm = mockWddm;
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+    session->allContexts.insert(0x12345);
+
+    ze_device_thread_t thread;
+    thread.slice = 1;
+    thread.subslice = 1;
+    thread.eu = 1;
+    thread.thread = 1;
+    zet_debug_memory_space_desc_t desc;
+    desc.address = 0x1000;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    char output[bufferSize] = {0};
+
+    session->ensureThreadStopped(thread, EuThread::invalidHandle);
+    auto retVal = session->readMemory(thread, &desc, bufferSize, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
+    ASSERT_EQ(0, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
+
+    session->ensureThreadStopped(thread, 0x12345);
+
+    retVal = session->readMemory(thread, &desc, bufferSize, output);
+    ASSERT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
+    for (int i = 0; i < bufferSize; i++) {
+        EXPECT_EQ(static_cast<char>(0xaa), output[i]);
+    }
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+}
+
+TEST_F(DebugApiWindowsTest, WhenCallingReadMemoryForElfThenUnsupportedFeatureIsReturned) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+    session->wddm = mockWddm;
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+    session->allContexts.insert(0x12345);
+
+    uint64_t elfSize = 0xFF;
+    char *elfData = new char[elfSize];
+    memset(elfData, 0xa, elfSize);
+
+    uint64_t elfVaStart = reinterpret_cast<uint64_t>(elfData);
+    uint64_t elfVaEnd = reinterpret_cast<uint64_t>(elfData) + elfSize;
+
+    MockDebugSessionWindows::ElfRange elf = {elfVaStart, elfVaEnd};
+    session->allElfs.push_back(elf);
+    char output[bufferSize] = {0};
+
+    ze_device_thread_t thread;
+    thread.slice = UINT32_MAX;
+    thread.subslice = UINT32_MAX;
+    thread.eu = UINT32_MAX;
+    thread.thread = UINT32_MAX;
+    zet_debug_memory_space_desc_t desc;
+    desc.address = elfVaStart;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+    auto retVal = session->readMemory(thread, &desc, bufferSize, output);
+    ASSERT_EQ(0, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, retVal);
+
+    desc.address = elfVaEnd - 1;
+    retVal = session->readMemory(thread, &desc, bufferSize, output);
+    ASSERT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+
+    delete[] elfData;
+}
+
+TEST_F(DebugApiWindowsTest, WhenCallingWriteMemoryForExpectedFailureCasesThenErrorIsReturned) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+    session->wddm = mockWddm;
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+    session->allContexts.insert(0x12345);
+
+    ze_device_thread_t thread = {};
+    zet_debug_memory_space_desc_t desc;
+    desc.address = 0x2000;
+
+    char output[bufferSize] = {};
+    size_t size = bufferSize;
+
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM;
+    auto retVal = session->writeMemory(thread, &desc, size, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, retVal);
+
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    thread.slice = UINT32_MAX;
+    thread.subslice = 0;
+    thread.eu = 0;
+    thread.thread = 0;
+
+    retVal = session->writeMemory(thread, &desc, size, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, retVal);
+
+    thread.slice = UINT32_MAX;
+    thread.subslice = UINT32_MAX;
+    thread.eu = 0;
+    thread.thread = 0;
+
+    retVal = session->writeMemory(thread, &desc, size, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, retVal);
+
+    thread.slice = UINT32_MAX;
+    thread.subslice = UINT32_MAX;
+    thread.eu = UINT32_MAX;
+    thread.thread = 0;
+
+    retVal = session->writeMemory(thread, &desc, size, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, retVal);
+
+    thread.slice = UINT32_MAX;
+    thread.subslice = UINT32_MAX;
+    thread.eu = UINT32_MAX;
+    thread.thread = UINT32_MAX;
+
+    mockWddm->escapeReturnStatus = DBGUMD_RETURN_INVALID_ARGS;
+    retVal = session->writeMemory(thread, &desc, size, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, retVal);
+    mockWddm->escapeReturnStatus = DBGUMD_RETURN_ESCAPE_SUCCESS;
+
+    thread.slice = 0;
+    thread.subslice = 0;
+    thread.eu = 0;
+    thread.thread = 0;
+
+    retVal = session->writeMemory(thread, &desc, size, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
+}
+
+TEST_F(DebugApiWindowsTest, WhenCallingReadMemoryForExpectedFailureCasesThenErrorIsReturned) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+    session->wddm = mockWddm;
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+    session->allContexts.insert(0x12345);
+
+    ze_device_thread_t thread = {};
+    zet_debug_memory_space_desc_t desc;
+    desc.address = 0x2000;
+
+    char output[bufferSize] = {};
+    size_t size = bufferSize;
+
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM;
+    auto retVal = session->readMemory(thread, &desc, size, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, retVal);
+
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    thread.slice = UINT32_MAX;
+    thread.subslice = 0;
+    thread.eu = 0;
+    thread.thread = 0;
+
+    retVal = session->readMemory(thread, &desc, size, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, retVal);
+
+    thread.slice = UINT32_MAX;
+    thread.subslice = UINT32_MAX;
+    thread.eu = 0;
+    thread.thread = 0;
+
+    retVal = session->readMemory(thread, &desc, size, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, retVal);
+
+    thread.slice = UINT32_MAX;
+    thread.subslice = UINT32_MAX;
+    thread.eu = UINT32_MAX;
+    thread.thread = 0;
+
+    retVal = session->readMemory(thread, &desc, size, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, retVal);
+
+    thread.slice = UINT32_MAX;
+    thread.subslice = UINT32_MAX;
+    thread.eu = UINT32_MAX;
+    thread.thread = UINT32_MAX;
+
+    mockWddm->escapeReturnStatus = DBGUMD_RETURN_INVALID_ARGS;
+    retVal = session->readMemory(thread, &desc, size, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, retVal);
+    mockWddm->escapeReturnStatus = DBGUMD_RETURN_ESCAPE_SUCCESS;
+
+    thread.slice = 0;
+    thread.subslice = 0;
+    thread.eu = 0;
+    thread.thread = 0;
+
+    retVal = session->readMemory(thread, &desc, size, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
 }
 
 } // namespace ult
