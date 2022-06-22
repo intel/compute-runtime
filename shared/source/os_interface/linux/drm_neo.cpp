@@ -1152,7 +1152,7 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
 
         for (auto engineIndex = 0u; engineIndex < engineCount; engineIndex++) {
             if (useVirtualEnginesForBcs && engine->engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy)) {
-                auto mappedBcsEngineType = static_cast<aub_stream::EngineType>(EngineHelpers::mapBcsIndexToEngineType(engineIndex, includeMainCopyEngineInGroup));
+                auto mappedBcsEngineType = this->getBcsTypeToBind(engineIndex, includeMainCopyEngineInGroup);
                 bool isBcsEnabled = rootDeviceEnvironment.getHardwareInfo()->featureTable.ftrBcsInfo.test(EngineHelpers::getBcsIndex(mappedBcsEngineType));
 
                 if (!isBcsEnabled) {
@@ -1183,6 +1183,22 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
 
     retVal = static_cast<unsigned int>(ioctlHelper->getDrmParamValue(DrmParam::ExecDefault));
     return retVal;
+}
+
+constexpr std::array<aub_stream::EngineType, EngineHelpers::numLinkedCopyEngines> optimalBcsSequence = {aub_stream::ENGINE_BCS2, aub_stream::ENGINE_BCS3,
+                                                                                                        aub_stream::ENGINE_BCS4, aub_stream::ENGINE_BCS7,
+                                                                                                        aub_stream::ENGINE_BCS1, aub_stream::ENGINE_BCS5,
+                                                                                                        aub_stream::ENGINE_BCS6, aub_stream::ENGINE_BCS8};
+
+aub_stream::EngineType Drm::getBcsTypeToBind(unsigned int engineIndex, bool includeMain) {
+    if (engineIndex == 0 && includeMain) {
+        return aub_stream::EngineType::ENGINE_BCS;
+    } else {
+        if (includeMain) {
+            engineIndex--;
+        }
+        return optimalBcsSequence[engineIndex];
+    }
 }
 
 void Drm::waitForBind(uint32_t vmHandleId) {
