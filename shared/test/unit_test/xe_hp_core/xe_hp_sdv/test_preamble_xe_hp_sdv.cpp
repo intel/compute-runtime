@@ -35,7 +35,7 @@ XEHPTEST_F(XeHPSlm, givenTglWhenPreambleIsBeingProgrammedThenThreadArbitrationPo
     uint32_t l3Config = PreambleHelper<XeHpFamily>::getL3Config(*defaultHwInfo, true);
     MockDevice mockDevice;
     PreambleHelper<XeHpFamily>::programPreamble(&linearStream, mockDevice, l3Config,
-                                                nullptr);
+                                                nullptr, nullptr);
 
     parseCommands<XeHpFamily>(cs);
 

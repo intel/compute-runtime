@@ -66,9 +66,9 @@ size_t PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(const HardwareInfo
 
 template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programPreamble(LinearStream *pCommandStream, Device &device, uint32_t l3Config,
-                                                GraphicsAllocation *preemptionCsr) {
+                                                GraphicsAllocation *preemptionCsr, LogicalStateHelper *logicalStateHelper) {
     programL3(pCommandStream, l3Config);
-    programPreemption(pCommandStream, device, preemptionCsr);
+    programPreemption(pCommandStream, device, preemptionCsr, logicalStateHelper);
     if (device.isDebuggerActive()) {
         programKernelDebugging(pCommandStream);
     }
@@ -77,8 +77,8 @@ void PreambleHelper<GfxFamily>::programPreamble(LinearStream *pCommandStream, De
 }
 
 template <typename GfxFamily>
-void PreambleHelper<GfxFamily>::programPreemption(LinearStream *pCommandStream, Device &device, GraphicsAllocation *preemptionCsr) {
-    PreemptionHelper::programCsrBaseAddress<GfxFamily>(*pCommandStream, device, preemptionCsr);
+void PreambleHelper<GfxFamily>::programPreemption(LinearStream *pCommandStream, Device &device, GraphicsAllocation *preemptionCsr, LogicalStateHelper *logicalStateHelper) {
+    PreemptionHelper::programCsrBaseAddress<GfxFamily>(*pCommandStream, device, preemptionCsr, logicalStateHelper);
 }
 
 template <typename GfxFamily>

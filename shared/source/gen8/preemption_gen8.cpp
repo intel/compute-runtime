@@ -54,7 +54,11 @@ size_t PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(Device &device, b
 }
 
 template <>
-void PreemptionHelper::programCsrBaseAddress<GfxFamily>(LinearStream &preambleCmdStream, Device &device, const GraphicsAllocation *preemptionCsr) {
+void PreemptionHelper::programCsrBaseAddress<GfxFamily>(LinearStream &preambleCmdStream, Device &device, const GraphicsAllocation *preemptionCsr, LogicalStateHelper *logicalStateHelper) {
+}
+
+template <>
+void PreemptionHelper::programCsrBaseAddressCmd<GfxFamily>(LinearStream &preambleCmdStream, const GraphicsAllocation *preemptionCsr, LogicalStateHelper *logicalStateHelper) {
 }
 
 template <>

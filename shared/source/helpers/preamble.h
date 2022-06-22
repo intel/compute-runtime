@@ -24,6 +24,7 @@ class Device;
 struct DispatchFlags;
 class GraphicsAllocation;
 class LinearStream;
+class LogicalStateHelper;
 struct PipelineSelectArgs;
 struct StreamProperties;
 
@@ -38,7 +39,7 @@ struct PreambleHelper {
                                       const PipelineSelectArgs &pipelineSelectArgs,
                                       const HardwareInfo &hwInfo);
     static void appendProgramPipelineSelect(void *cmd, bool isSpecialModeSelected, const HardwareInfo &hwInfo);
-    static void programPreemption(LinearStream *pCommandStream, Device &device, GraphicsAllocation *preemptionCsr);
+    static void programPreemption(LinearStream *pCommandStream, Device &device, GraphicsAllocation *preemptionCsr, LogicalStateHelper *logicalStateHelper);
     static void addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, EngineGroupType engineGroupType);
     static void appendProgramVFEState(const HardwareInfo &hwInfo, const StreamProperties &streamProperties, void *cmd);
     static void *getSpaceForVfeState(LinearStream *pCommandStream,
@@ -53,7 +54,7 @@ struct PreambleHelper {
     static uint64_t getScratchSpaceAddressOffsetForVfeState(LinearStream *pCommandStream, void *pVfeState);
     static void programAdditionalFieldsInVfeState(VFE_STATE_TYPE *mediaVfeState, const HardwareInfo &hwInfo, bool disableEUFusion);
     static void programPreamble(LinearStream *pCommandStream, Device &device, uint32_t l3Config,
-                                GraphicsAllocation *preemptionCsr);
+                                GraphicsAllocation *preemptionCsr, LogicalStateHelper *logicalStateHelper);
     static void programKernelDebugging(LinearStream *pCommandStream);
     static void programSemaphoreDelay(LinearStream *pCommandStream);
     static uint32_t getL3Config(const HardwareInfo &hwInfo, bool useSLM);

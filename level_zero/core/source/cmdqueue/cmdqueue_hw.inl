@@ -329,7 +329,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         }
 
         if (initialPreemptionMode) {
-            NEO::PreemptionHelper::programCsrBaseAddress<GfxFamily>(child, *neoDevice, csr->getPreemptionAllocation());
+            NEO::PreemptionHelper::programCsrBaseAddress<GfxFamily>(child, *neoDevice, csr->getPreemptionAllocation(), csr->getLogicalStateHelper());
         }
 
         if (stateSipRequired) {

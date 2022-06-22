@@ -24,7 +24,7 @@ HWTEST2_F(TglLpSlm, givenTglLpWhenPreambleIsBeingProgrammedThenThreadArbitration
     uint32_t l3Config = PreambleHelper<TGLLPFamily>::getL3Config(pDevice->getHardwareInfo(), true);
     MockDevice mockDevice;
     PreambleHelper<TGLLPFamily>::programPreamble(&linearStream, mockDevice, l3Config,
-                                                 nullptr);
+                                                 nullptr, nullptr);
 
     parseCommands<TGLLPFamily>(cs);
 

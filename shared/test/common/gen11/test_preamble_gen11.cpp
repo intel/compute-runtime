@@ -125,7 +125,7 @@ GEN11TEST_F(ThreadArbitrationGen11, givenPreambleWhenItIsProgrammedThenThreadArb
     uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(*defaultHwInfo, true);
     MockDevice mockDevice;
     PreambleHelper<FamilyType>::programPreamble(&linearStream, mockDevice, l3Config,
-                                                nullptr);
+                                                nullptr, nullptr);
 
     parseCommands<FamilyType>(cs);
 

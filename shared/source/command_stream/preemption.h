@@ -55,7 +55,7 @@ class PreemptionHelper {
     static size_t getRequiredStateSipCmdSize(Device &device, bool isRcs);
 
     template <typename GfxFamily>
-    static void programCsrBaseAddress(LinearStream &preambleCmdStream, Device &device, const GraphicsAllocation *preemptionCsr);
+    static void programCsrBaseAddress(LinearStream &preambleCmdStream, Device &device, const GraphicsAllocation *preemptionCsr, LogicalStateHelper *logicalStateHelper);
 
     template <typename GfxFamily>
     static void programStateSip(LinearStream &preambleCmdStream, Device &device, LogicalStateHelper *logicalStateHelper);
@@ -85,6 +85,9 @@ class PreemptionHelper {
     static void programInterfaceDescriptorDataPreemption(INTERFACE_DESCRIPTOR_DATA<GfxFamily> *idd, PreemptionMode preemptionMode);
 
   protected:
+    template <typename GfxFamily>
+    static void programCsrBaseAddressCmd(LinearStream &preambleCmdStream, const GraphicsAllocation *preemptionCsr, LogicalStateHelper *logicalStateHelper);
+
     template <typename GfxFamily>
     static void programStateSipCmd(LinearStream &preambleCmdStream, GraphicsAllocation *sipAllocation, LogicalStateHelper *logicalStateHelper);
 };

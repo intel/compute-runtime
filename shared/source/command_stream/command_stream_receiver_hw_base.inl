@@ -925,7 +925,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateSip(LinearStream &cm
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programPreamble(LinearStream &csr, Device &device, uint32_t &newL3Config) {
     if (!this->isPreambleSent) {
-        PreambleHelper<GfxFamily>::programPreamble(&csr, device, newL3Config, this->preemptionAllocation);
+        PreambleHelper<GfxFamily>::programPreamble(&csr, device, newL3Config, this->preemptionAllocation, logicalStateHelper.get());
         this->isPreambleSent = true;
         this->lastSentL3Config = newL3Config;
     }

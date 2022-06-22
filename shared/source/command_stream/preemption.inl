@@ -16,17 +16,22 @@
 namespace NEO {
 
 template <typename GfxFamily>
-void PreemptionHelper::programCsrBaseAddress(LinearStream &preambleCmdStream, Device &device, const GraphicsAllocation *preemptionCsr) {
-    using GPGPU_CSR_BASE_ADDRESS = typename GfxFamily::GPGPU_CSR_BASE_ADDRESS;
-    bool isMidThreadPreemption = device.getPreemptionMode() == PreemptionMode::MidThread;
-    if (isMidThreadPreemption) {
+void PreemptionHelper::programCsrBaseAddress(LinearStream &preambleCmdStream, Device &device, const GraphicsAllocation *preemptionCsr, LogicalStateHelper *logicalStateHelper) {
+    if (device.getPreemptionMode() == PreemptionMode::MidThread) {
         UNRECOVERABLE_IF(nullptr == preemptionCsr);
 
-        auto csr = reinterpret_cast<GPGPU_CSR_BASE_ADDRESS *>(preambleCmdStream.getSpace(sizeof(GPGPU_CSR_BASE_ADDRESS)));
-        GPGPU_CSR_BASE_ADDRESS cmd = GfxFamily::cmdInitGpgpuCsrBaseAddress;
-        cmd.setGpgpuCsrBaseAddress(preemptionCsr->getGpuAddressToPatch());
-        *csr = cmd;
+        programCsrBaseAddressCmd<GfxFamily>(preambleCmdStream, preemptionCsr, logicalStateHelper);
     }
+}
+
+template <typename GfxFamily>
+void PreemptionHelper::programCsrBaseAddressCmd(LinearStream &preambleCmdStream, const GraphicsAllocation *preemptionCsr, LogicalStateHelper *logicalStateHelper) {
+    using GPGPU_CSR_BASE_ADDRESS = typename GfxFamily::GPGPU_CSR_BASE_ADDRESS;
+
+    auto csr = reinterpret_cast<GPGPU_CSR_BASE_ADDRESS *>(preambleCmdStream.getSpace(sizeof(GPGPU_CSR_BASE_ADDRESS)));
+    GPGPU_CSR_BASE_ADDRESS cmd = GfxFamily::cmdInitGpgpuCsrBaseAddress;
+    cmd.setGpgpuCsrBaseAddress(preemptionCsr->getGpuAddressToPatch());
+    *csr = cmd;
 }
 
 template <typename GfxFamily>
