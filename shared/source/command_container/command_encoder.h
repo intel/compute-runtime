@@ -29,6 +29,7 @@ class BindlessHeapsHelper;
 class GmmHelper;
 class LogicalStateHelper;
 class IndirectHeap;
+class LogicalStateHelper;
 class Gmm;
 struct HardwareInfo;
 struct StateComputeModeProperties;
@@ -307,8 +308,8 @@ struct EncodeComputeMode {
     static size_t getCmdSizeForComputeMode(const HardwareInfo &hwInfo, bool hasSharedHandles, bool isRcs);
     static void programComputeModeCommandWithSynchronization(LinearStream &csr, StateComputeModeProperties &properties,
                                                              const PipelineSelectArgs &args, bool hasSharedHandles,
-                                                             const HardwareInfo &hwInfo, bool isRcs);
-    static void programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const HardwareInfo &hwInfo);
+                                                             const HardwareInfo &hwInfo, bool isRcs, LogicalStateHelper *logicalStateHelper);
+    static void programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const HardwareInfo &hwInfo, LogicalStateHelper *logicalStateHelper);
 
     static void adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor);
 };

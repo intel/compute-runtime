@@ -441,11 +441,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenDispatchInterfaceWhen
     DebugManager.flags.ForceGrfNumProgrammingWithScm.set(1);
 
     StreamProperties streamProperties{};
-    streamProperties.stateComputeMode.setProperties(false, 128, 0u, *defaultHwInfo);
-    streamProperties.stateComputeMode.setProperties(false, 128, 0u, *defaultHwInfo);
+    streamProperties.stateComputeMode.setProperties(false, 128, 0u, PreemptionMode::Disabled, *defaultHwInfo);
+    streamProperties.stateComputeMode.setProperties(false, 128, 0u, PreemptionMode::Disabled, *defaultHwInfo);
     EXPECT_FALSE(streamProperties.stateComputeMode.isDirty());
 
-    streamProperties.stateComputeMode.setProperties(false, 256, 0u, *defaultHwInfo);
+    streamProperties.stateComputeMode.setProperties(false, 256, 0u, PreemptionMode::Disabled, *defaultHwInfo);
     EXPECT_TRUE(streamProperties.stateComputeMode.isDirty());
 }
 

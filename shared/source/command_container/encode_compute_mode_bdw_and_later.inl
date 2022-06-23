@@ -14,9 +14,9 @@ namespace NEO {
 template <typename Family>
 inline void EncodeComputeMode<Family>::programComputeModeCommandWithSynchronization(
     LinearStream &csr, StateComputeModeProperties &properties, const PipelineSelectArgs &args,
-    bool hasSharedHandles, const HardwareInfo &hwInfo, bool isRcs) {
+    bool hasSharedHandles, const HardwareInfo &hwInfo, bool isRcs, LogicalStateHelper *logicalStateHelper) {
 
-    EncodeComputeMode<Family>::programComputeModeCommand(csr, properties, hwInfo);
+    EncodeComputeMode<Family>::programComputeModeCommand(csr, properties, hwInfo, nullptr);
 }
 
 template <typename Family>

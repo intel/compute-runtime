@@ -159,6 +159,7 @@ class HwHelper {
     virtual const void *getBatchBufferEndReference() const = 0;
     virtual bool isPlatformFlushTaskEnabled(const NEO::HardwareInfo &hwInfo) const = 0;
     virtual bool isPatIndexFallbackWaRequired() const = 0;
+    virtual bool isDevicePreemptionModeTrackedInScm() const = 0;
 
   protected:
     HwHelper() = default;
@@ -399,6 +400,7 @@ class HwHelperHw : public HwHelper {
     const void *getBatchBufferEndReference() const override;
     bool isPlatformFlushTaskEnabled(const NEO::HardwareInfo &hwInfo) const override;
     bool isPatIndexFallbackWaRequired() const override;
+    bool isDevicePreemptionModeTrackedInScm() const override;
 
   protected:
     static const AuxTranslationMode defaultAuxTranslationMode;

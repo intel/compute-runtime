@@ -15,8 +15,9 @@ struct StateComputeModeProperties {
     StreamProperty zPassAsyncComputeThreadLimit{};
     StreamProperty pixelAsyncComputeThreadLimit{};
     StreamProperty threadArbitrationPolicy{};
+    StreamProperty devicePreemptionMode{};
 
-    void setProperties(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, const HardwareInfo &hwInfo);
+    void setProperties(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode, const HardwareInfo &hwInfo);
     void setProperties(const StateComputeModeProperties &properties);
     bool isDirty() const;
 

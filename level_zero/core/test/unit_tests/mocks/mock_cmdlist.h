@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/logical_state_helper.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"

@@ -38,7 +38,7 @@ size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const HardwareInfo &h
 
 template <typename Family>
 void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties,
-                                                          const HardwareInfo &hwInfo) {
+                                                          const HardwareInfo &hwInfo, LogicalStateHelper *logicalStateHelper) {
     using PIPE_CONTROL = typename Family::PIPE_CONTROL;
     UNRECOVERABLE_IF(properties.threadArbitrationPolicy.value == ThreadArbitrationPolicy::NotPresent);
 

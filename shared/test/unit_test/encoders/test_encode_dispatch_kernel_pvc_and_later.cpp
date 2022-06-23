@@ -83,8 +83,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTestPvcAndLater, givenCommandCon
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     StreamProperties streamProperties{};
-    streamProperties.stateComputeMode.setProperties(false, GrfConfig::LargeGrfNumber, 0u, *defaultHwInfo);
-    EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, *defaultHwInfo);
+    streamProperties.stateComputeMode.setProperties(false, GrfConfig::LargeGrfNumber, 0u, PreemptionMode::Disabled, *defaultHwInfo);
+    EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, *defaultHwInfo, nullptr);
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 

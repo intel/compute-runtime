@@ -40,7 +40,7 @@ size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const HardwareInfo &h
 
 template <typename Family>
 void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties,
-                                                          const HardwareInfo &hwInfo) {
+                                                          const HardwareInfo &hwInfo, LogicalStateHelper *logicalStateHelper) {
 }
 
 template <>

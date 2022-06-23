@@ -384,7 +384,7 @@ HWTEST2_F(CommandEncodeStatesTest, whenProgramComputeModeCommandModeIsCalledThen
     streamProperties.stateComputeMode.threadArbitrationPolicy.value = ThreadArbitrationPolicy::AgeBased;
     streamProperties.stateComputeMode.threadArbitrationPolicy.isDirty = true;
     NEO::EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(),
-                                                                  streamProperties.stateComputeMode, *defaultHwInfo);
+                                                                  streamProperties.stateComputeMode, *defaultHwInfo, nullptr);
 
     if constexpr (TestTraits<gfxCoreFamily>::programComputeModeCommandProgramsThreadArbitrationPolicy) {
         GenCmdList commands;
@@ -409,7 +409,7 @@ HWTEST2_F(CommandEncodeStatesTest, whenProgramComputeModeCommandModeIsCalledThen
     streamProperties.stateComputeMode.threadArbitrationPolicy.value = ThreadArbitrationPolicy::AgeBased;
     streamProperties.stateComputeMode.isCoherencyRequired.isDirty = true;
     NEO::EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(),
-                                                                  streamProperties.stateComputeMode, *defaultHwInfo);
+                                                                  streamProperties.stateComputeMode, *defaultHwInfo, nullptr);
 
     if constexpr (TestTraits<gfxCoreFamily>::programComputeModeCommandProgramsNonCoherent) {
         GenCmdList commands;
@@ -438,6 +438,6 @@ HWTEST2_F(CommandEncodeStatesTest, whenGetCmdSizeForComputeModeThenCorrectValueI
 
     UltDeviceFactory deviceFactory{1, 0};
     auto &csr = deviceFactory.rootDevices[0]->getUltCommandStreamReceiver<FamilyType>();
-    csr.streamProperties.stateComputeMode.setProperties(false, 0, ThreadArbitrationPolicy::AgeBased, *defaultHwInfo);
+    csr.streamProperties.stateComputeMode.setProperties(false, 0, ThreadArbitrationPolicy::AgeBased, PreemptionMode::Disabled, *defaultHwInfo);
     EXPECT_EQ(expectedScmSize, csr.getCmdSizeForComputeMode());
 }

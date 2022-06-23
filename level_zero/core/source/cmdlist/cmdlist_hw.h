@@ -16,9 +16,12 @@
 
 #include "igfxfmid.h"
 
+#include <memory>
+
 namespace NEO {
 enum class ImageType;
-}
+class LogicalStateHelper;
+} // namespace NEO
 
 namespace L0 {
 #pragma pack(1)
@@ -251,6 +254,7 @@ struct CommandListCoreFamily : CommandListImp {
     ze_result_t addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
     void addFlushRequiredCommand(bool flushOperationRequired, Event *signalEvent);
 
+    std::unique_ptr<NEO::LogicalStateHelper> logicalStateHelper;
     size_t cmdListCurrentStartOffset = 0;
     bool containsAnyKernel = false;
 };

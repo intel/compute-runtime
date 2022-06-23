@@ -151,7 +151,7 @@ struct UltCommandStreamReceiverTest
         commandStreamReceiver.lastMediaSamplerConfig = 0;
         commandStreamReceiver.lastSentUseGlobalAtomics = false;
         commandStreamReceiver.streamProperties.stateComputeMode.setProperties(0, GrfConfig::DefaultGrfNumber,
-                                                                              hwHelper.getDefaultThreadArbitrationPolicy(), *defaultHwInfo);
+                                                                              hwHelper.getDefaultThreadArbitrationPolicy(), pDevice->getPreemptionMode(), *defaultHwInfo);
     }
 
     template <typename GfxFamily>
