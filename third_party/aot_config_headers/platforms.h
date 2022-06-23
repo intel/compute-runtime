@@ -74,45 +74,108 @@ enum FAMILY : uint32_t {
 };
 
 static const std::map<std::string, FAMILY> familyAcronyms = {
+#ifdef SUPPORT_GEN8
     {"gen8", GEN8_FAMILY},
+#endif
+#ifdef SUPPORT_GEN9
     {"gen9", GEN9_FAMILY},
+#endif
+#ifdef SUPPORT_GEN11
     {"gen11", GEN11_FAMILY},
+#endif
+#ifdef SUPPORT_GEN12LP
     {"gen12lp", GEN12LP_FAMILY},
+#endif
+#if defined(SUPPORT_XE_HP_CORE) || defined(SUPPORT_XE_HPC_CORE) || defined(SUPPORT_XE_HPG_CORE)
     {"xe", XE_FAMILY},
+#endif
 };
 
 static const std::map<std::string, RELEASE> releaseAcronyms = {
+#ifdef SUPPORT_GEN8
     {"gen8", GEN8_RELEASE},
+#endif
+#ifdef SUPPORT_GEN9
     {"gen9", GEN9_RELEASE},
+#endif
+#ifdef SUPPORT_GEN11
     {"gen11", GEN11_RELEASE},
+#endif
+#ifdef SUPPORT_GEN12LP
     {"gen12lp", GEN12LP_RELEASE},
+#endif
+#ifdef SUPPORT_XE_HP_CORE
     {"xe-hp", XE_HP_RELEASE},
+#endif
+#ifdef SUPPORT_XE_HPG_CORE
     {"xe-hpg", XE_HPG_RELEASE},
+#endif
+#ifdef SUPPORT_XE_HPC_CORE
     {"xe-hpc", XE_HPC_RELEASE},
+#endif
 };
 
 static const std::map<std::string, AOT::PRODUCT_CONFIG> productConfigAcronyms = {
+#ifdef SUPPORT_BDW
     {"bdw", BDW},
+#endif
+#ifdef SUPPORT_SKL
     {"skl", SKL},
+#endif
+#ifdef SUPPORT_KBL
     {"kbl", KBL},
+#endif
+#ifdef SUPPORT_CFL
     {"cfl", CFL},
+#endif
+#ifdef SUPPORT_BXT
     {"apl", APL},
     {"bxt", APL},
+#endif
+#ifdef SUPPORT_GLK
     {"glk", GLK},
+#endif
+#ifdef SUPPORT_WHL
     {"whl", WHL},
+#endif
+#ifdef SUPPORT_AML
     {"aml", AML},
+#endif
+#ifdef SUPPORT_CML
     {"cml", CML},
+#endif
+#ifdef SUPPORT_ICLLP
     {"icllp", ICL},
+#endif
+#ifdef SUPPORT_LKF
     {"lkf", LKF},
+#endif
+#ifdef SUPPORT_EHL
     {"ehl", EHL},
     {"jsl", EHL},
+#endif
+#ifdef SUPPORT_TGLLP
     {"tgllp", TGL},
+#endif
+#ifdef SUPPORT_RKL
     {"rkl", RKL},
+#endif
+#ifdef SUPPORT_RPLS
     {"rpl-s", RPL_S},
+#endif
+#ifdef SUPPORT_ADLS
     {"adl-s", ADL_S},
+#endif
+#ifdef SUPPORT_ADLP
     {"adl-p", ADL_P},
+#endif
+#ifdef SUPPORT_ADLN
     {"adl-n", ADL_N},
+#endif
+#ifdef SUPPORT_DG1
     {"dg1", DG1},
+#endif
+#ifdef SUPPORT_DG2
     {"acm-g10", DG2_G10_C0},
     {"dg2-g10", DG2_G10_C0},
     {"ats-m150", DG2_G10_C0},
@@ -121,7 +184,10 @@ static const std::map<std::string, AOT::PRODUCT_CONFIG> productConfigAcronyms = 
     {"ats-m75", DG2_G11_B1},
     {"acm-g12", DG2_G12_A0},
     {"dg2-g12", DG2_G12_A0},
+#endif
+#ifdef SUPPORT_PVC
     {"pvc-sdv", PVC_XL_A0P},
     {"pvc", PVC_XT_C0},
+#endif
 };
 } // namespace AOT
