@@ -2000,5 +2000,56 @@ HWTEST_F(EventSizeTests, givenDebugFlagwhenCreatingEventPoolThenUseCorrectSizeAn
     }
 }
 
+HWTEST_F(EventTests,
+         WhenHostEventSyncThenExpectDownloadEventAllocationWithEachQuery) {
+    std::map<GraphicsAllocation *, uint32_t> downloadAllocationTrack;
+
+    constexpr uint32_t iterations = 5;
+
+    VariableBackup<volatile uint32_t *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
+    VariableBackup<uint32_t> backupPauseValue(&CpuIntrinsicsTests::pauseValue, Event::STATE_CLEARED);
+    VariableBackup<uint32_t> backupPauseOffset(&CpuIntrinsicsTests::pauseOffset);
+    VariableBackup<std::function<void()>> backupSetupPauseAddress(&CpuIntrinsicsTests::setupPauseAddress);
+
+    auto event = whiteboxCast(Event::create<uint32_t>(eventPool, &eventDesc, device));
+    ASSERT_NE(event, nullptr);
+    ASSERT_NE(nullptr, event->csr);
+    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event->csr);
+    event->setUsingContextEndOffset(false);
+
+    size_t eventCompletionOffset = event->getContextStartOffset();
+    if (event->isUsingContextEndOffset()) {
+        eventCompletionOffset = event->getContextEndOffset();
+    }
+    uint32_t *eventAddress = static_cast<uint32_t *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
+    *eventAddress = Event::STATE_INITIAL;
+
+    CpuIntrinsicsTests::pauseCounter = 0u;
+    CpuIntrinsicsTests::pauseAddress = eventAddress;
+
+    CpuIntrinsicsTests::setupPauseAddress = [&]() {
+        if (CpuIntrinsicsTests::pauseCounter >= iterations) {
+            volatile uint32_t *packet = CpuIntrinsicsTests::pauseAddress;
+            *packet = Event::STATE_SIGNALED;
+        }
+    };
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csr);
+    VariableBackup<std::function<void(GraphicsAllocation & gfxAllocation)>> backupCsrDownloadImpl(&ultCsr->downloadAllocationImpl);
+    ultCsr->downloadAllocationImpl = [&downloadAllocationTrack](GraphicsAllocation &gfxAllocation) {
+        downloadAllocationTrack[&gfxAllocation]++;
+    };
+
+    constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
+    auto result = event->hostSynchronize(timeout);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto eventAllocation = &event->getAllocation(device);
+    uint32_t downloadedAllocations = downloadAllocationTrack[eventAllocation];
+    EXPECT_EQ(iterations + 1, downloadedAllocations);
+
+    event->destroy();
+}
+
 } // namespace ult
 } // namespace L0

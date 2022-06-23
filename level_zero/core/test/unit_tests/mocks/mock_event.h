@@ -19,6 +19,7 @@ namespace ult {
 template <>
 struct WhiteBox<::L0::Event> : public ::L0::Event {
     using BaseClass = ::L0::Event;
+    using BaseClass::csr;
     using BaseClass::hostAddress;
     using BaseClass::l3FlushAppliedOnKernel;
 };

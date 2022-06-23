@@ -136,6 +136,7 @@ ze_result_t EventImp<TagSizeT>::queryStatus() {
         *hostAddr = metricStreamer->getNotificationState();
     }
     this->csr->downloadAllocations();
+    this->csr->downloadAllocation(*eventPool->getAllocation().getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex()));
     return queryStatusEventPackets();
 }
 

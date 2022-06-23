@@ -77,6 +77,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::debugPauseStateAddress;
     using BaseClass::CommandStreamReceiver::deviceBitfield;
     using BaseClass::CommandStreamReceiver::dispatchMode;
+    using BaseClass::CommandStreamReceiver::downloadAllocationImpl;
     using BaseClass::CommandStreamReceiver::executionEnvironment;
     using BaseClass::CommandStreamReceiver::experimentalCmdBuffer;
     using BaseClass::CommandStreamReceiver::flushStamp;
