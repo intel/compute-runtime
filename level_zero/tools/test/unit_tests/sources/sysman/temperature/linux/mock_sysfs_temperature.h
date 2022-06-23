@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,7 +72,12 @@ class TemperatureFsAccess : public FsAccess {};
 
 template <>
 struct Mock<TemperatureFsAccess> : public TemperatureFsAccess {
-    ze_result_t listDirectorySuccess(const std::string directory, std::vector<std::string> &listOfTelemNodes) {
+    ze_result_t mockErrorListDirectory = ZE_RESULT_SUCCESS;
+    ze_result_t mockErrorGetRealPath = ZE_RESULT_SUCCESS;
+    ze_result_t listDirectory(const std::string directory, std::vector<std::string> &listOfTelemNodes) override {
+        if (mockErrorListDirectory != ZE_RESULT_SUCCESS) {
+            return mockErrorListDirectory;
+        }
         if (directory.compare(baseTelemSysFS) == 0) {
             listOfTelemNodes.push_back("telem1");
             listOfTelemNodes.push_back("telem2");
@@ -84,10 +89,10 @@ struct Mock<TemperatureFsAccess> : public TemperatureFsAccess {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    ze_result_t listDirectoryFailure(const std::string directory, std::vector<std::string> &events) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-    ze_result_t getRealPathSuccess(const std::string path, std::string &buf) {
+    ze_result_t getRealPath(const std::string path, std::string &buf) override {
+        if (mockErrorGetRealPath != ZE_RESULT_SUCCESS) {
+            return mockErrorGetRealPath;
+        }
         if (path.compare(sysfsPahTelem1) == 0) {
             buf = realPathTelem1;
         } else if (path.compare(sysfsPahTelem2) == 0) {
@@ -101,16 +106,9 @@ struct Mock<TemperatureFsAccess> : public TemperatureFsAccess {
         } else {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
-
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t getRealPathFailure(const std::string path, std::string &buf) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    MOCK_METHOD(ze_result_t, listDirectory, (const std::string path, std::vector<std::string> &list), (override));
-    MOCK_METHOD(ze_result_t, getRealPath, (const std::string path, std::string &buf), (override));
     Mock<TemperatureFsAccess>() = default;
 };
 

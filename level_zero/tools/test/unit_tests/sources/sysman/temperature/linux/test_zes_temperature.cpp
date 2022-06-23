@@ -94,10 +94,6 @@ class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
         pFsAccess = std::make_unique<NiceMock<Mock<TemperatureFsAccess>>>();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
-        ON_CALL(*pFsAccess.get(), listDirectory(_, _))
-            .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<TemperatureFsAccess>::listDirectorySuccess));
-        ON_CALL(*pFsAccess.get(), getRealPath(_, _))
-            .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<TemperatureFsAccess>::getRealPathSuccess));
 
         uint32_t subDeviceCount = 0;
         Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
@@ -214,10 +210,6 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
         pFsAccess = std::make_unique<NiceMock<Mock<TemperatureFsAccess>>>();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
-        ON_CALL(*pFsAccess.get(), listDirectory(_, _))
-            .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<TemperatureFsAccess>::listDirectorySuccess));
-        ON_CALL(*pFsAccess.get(), getRealPath(_, _))
-            .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<TemperatureFsAccess>::getRealPathSuccess));
 
         uint32_t subDeviceCount = 0;
         Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
@@ -328,13 +320,10 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingUnsupporte
 }
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenValidateEnumerateRootTelemIndexWhengetRealPathFailsThenFailureReturned) {
-    ON_CALL(*pFsAccess.get(), getRealPath(_, _))
-        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<TemperatureFsAccess>::getRealPathFailure));
+    pFsAccess->mockErrorGetRealPath = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE,
               PlatformMonitoringTech::enumerateRootTelemIndex(pFsAccess.get(), rootPciPathOfGpuDevice));
-
-    ON_CALL(*pFsAccess.get(), listDirectory(_, _))
-        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<TemperatureFsAccess>::listDirectoryFailure));
+    pFsAccess->mockErrorListDirectory = ZE_RESULT_ERROR_NOT_AVAILABLE;
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE,
               PlatformMonitoringTech::enumerateRootTelemIndex(pFsAccess.get(), rootPciPathOfGpuDevice));
 
