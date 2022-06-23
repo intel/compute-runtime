@@ -13,6 +13,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/event/event.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/sources/debugger/l0_debugger_fixture.h"
@@ -81,7 +82,7 @@ TEST(Debugger, givenL0DebuggerOFFWhenGettingStateSaveAreaHeaderThenValidSipTypeI
 
     auto isHexadecimalArrayPreferred = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred();
     if (!isHexadecimalArrayPreferred) {
-        auto mockBuiltIns = new MockBuiltins();
+        auto mockBuiltIns = new NEO::MockBuiltins();
         executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
     }
     auto hwInfo = *NEO::defaultHwInfo.get();
@@ -699,7 +700,7 @@ TEST(Debugger, givenNonLegacyDebuggerWhenInitializingDeviceCapsThenUnrecoverable
         }
     };
     auto executionEnvironment = new NEO::ExecutionEnvironment();
-    auto mockBuiltIns = new MockBuiltins();
+    auto mockBuiltIns = new NEO::MockBuiltins();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());

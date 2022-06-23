@@ -5,26 +5,26 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
-#include "level_zero/core/source/image/image_hw.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/sources/debugger/l0_debugger_fixture.h"
 
 namespace L0 {
 namespace ult {
 
-struct SingleAddressSpaceFixture : public Test<DeviceFixture> {
+struct SingleAddressSpaceFixture : public Test<NEO::DeviceFixture> {
     void SetUp() override {
         NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(1);
-        Test<DeviceFixture>::SetUp();
+        Test<NEO::DeviceFixture>::SetUp();
     }
 
     void TearDown() override {
-        Test<DeviceFixture>::TearDown();
+        Test<NEO::DeviceFixture>::TearDown();
     }
 
     DebugManagerStateRestore restorer;
@@ -46,16 +46,16 @@ struct L0DebuggerSingleAddressSpace : public Test<L0DebuggerHwFixture> {
 HWTEST_F(SingleAddressSpaceFixture, givenDebugFlagForceSbaTrackingModeSetWhenDebuggerIsCreatedThenItHasCorrectSingleAddressSpaceValue) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(1);
-    auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
+    auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
     EXPECT_TRUE(debugger->singleAddressSpaceSbaTracking);
 
     NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(0);
-    debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
+    debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
     EXPECT_FALSE(debugger->singleAddressSpaceSbaTracking);
 }
 
 HWTEST_F(SingleAddressSpaceFixture, givenSingleAddressSpaceWhenDebuggerIsCreatedThenSbaTrackingGpuVaIsNotReserved) {
-    auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
+    auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
 
     EXPECT_EQ(0u, debugger->sbaTrackingGpuVa.address);
     EXPECT_EQ(0u, debugger->sbaTrackingGpuVa.size);
@@ -63,7 +63,7 @@ HWTEST_F(SingleAddressSpaceFixture, givenSingleAddressSpaceWhenDebuggerIsCreated
     EXPECT_EQ(0u, debugger->getSbaTrackingGpuVa());
     std::vector<NEO::GraphicsAllocation *> allocations;
 
-    auto &allEngines = device->getNEODevice()->getMemoryManager()->getRegisteredEngines();
+    auto &allEngines = pDevice->getMemoryManager()->getRegisteredEngines();
 
     for (auto &engine : allEngines) {
         auto sbaAllocation = debugger->getSbaTrackingBuffer(engine.osContext->getContextId());
@@ -78,7 +78,7 @@ HWTEST_F(SingleAddressSpaceFixture, givenSingleAddressSpaceWhenDebuggerIsCreated
 }
 
 HWTEST2_F(SingleAddressSpaceFixture, WhenProgrammingSbaTrackingCommandsForSingleAddressSpaceThenAbortIsCalledAndNoCommandsAreAddedToStream, IsAtMostGen11) {
-    auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
+    auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
@@ -108,7 +108,7 @@ HWTEST2_F(SingleAddressSpaceFixture, WhenProgrammingSbaTrackingCommandsForSingle
 }
 
 HWTEST2_F(SingleAddressSpaceFixture, GivenNonZeroSbaAddressesWhenProgrammingSbaTrackingCommandsForSingleAddressSpaceThenCorrectSequenceOfCommandsAreAddedToStream, IsAtLeastGen12lp) {
-    auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
+    auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
@@ -116,13 +116,13 @@ HWTEST2_F(SingleAddressSpaceFixture, GivenNonZeroSbaAddressesWhenProgrammingSbaT
     using MI_MATH = typename FamilyType::MI_MATH;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
-    AllocationProperties commandBufferProperties = {device->getRootDeviceIndex(),
+    AllocationProperties commandBufferProperties = {pDevice->getRootDeviceIndex(),
                                                     true,
                                                     MemoryConstants::pageSize,
                                                     AllocationType::COMMAND_BUFFER,
                                                     false,
-                                                    device->getNEODevice()->getDeviceBitfield()};
-    auto streamAllocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(commandBufferProperties);
+                                                    pDevice->getDeviceBitfield()};
+    auto streamAllocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(commandBufferProperties);
     ASSERT_NE(nullptr, streamAllocation);
 
     NEO::LinearStream cmdStream;
@@ -214,11 +214,11 @@ HWTEST2_F(SingleAddressSpaceFixture, GivenNonZeroSbaAddressesWhenProgrammingSbaT
 
     EXPECT_FALSE(miArb->getPreParserDisable());
 
-    device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(streamAllocation);
+    pDevice->getMemoryManager()->freeGraphicsMemory(streamAllocation);
 }
 
 HWTEST2_F(SingleAddressSpaceFixture, GivenOneNonZeroSbaAddressesWhenProgrammingSbaTrackingCommandsForSingleAddressSpaceThenONlyPartOfCommandsAreAddedToStream, IsAtLeastGen12lp) {
-    auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
+    auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
@@ -226,13 +226,13 @@ HWTEST2_F(SingleAddressSpaceFixture, GivenOneNonZeroSbaAddressesWhenProgrammingS
     using MI_MATH = typename FamilyType::MI_MATH;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
-    AllocationProperties commandBufferProperties = {device->getRootDeviceIndex(),
+    AllocationProperties commandBufferProperties = {pDevice->getRootDeviceIndex(),
                                                     true,
                                                     MemoryConstants::pageSize,
                                                     AllocationType::COMMAND_BUFFER,
                                                     false,
-                                                    device->getNEODevice()->getDeviceBitfield()};
-    auto streamAllocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(commandBufferProperties);
+                                                    pDevice->getDeviceBitfield()};
+    auto streamAllocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(commandBufferProperties);
     ASSERT_NE(nullptr, streamAllocation);
 
     NEO::LinearStream cmdStream;
@@ -310,18 +310,18 @@ HWTEST2_F(SingleAddressSpaceFixture, GivenOneNonZeroSbaAddressesWhenProgrammingS
 
     EXPECT_FALSE(miArb->getPreParserDisable());
 
-    device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(streamAllocation);
+    pDevice->getMemoryManager()->freeGraphicsMemory(streamAllocation);
 }
 
 HWTEST2_F(SingleAddressSpaceFixture, GivenAllZeroSbaAddressesWhenProgrammingSbaTrackingCommandsForSingleAddressSpaceThenNoCommandsAreAddedToStream, IsAtLeastGen12lp) {
-    auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
-    AllocationProperties commandBufferProperties = {device->getRootDeviceIndex(),
+    auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
+    AllocationProperties commandBufferProperties = {pDevice->getRootDeviceIndex(),
                                                     true,
                                                     MemoryConstants::pageSize,
                                                     AllocationType::COMMAND_BUFFER,
                                                     false,
-                                                    device->getNEODevice()->getDeviceBitfield()};
-    auto streamAllocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(commandBufferProperties);
+                                                    pDevice->getDeviceBitfield()};
+    auto streamAllocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(commandBufferProperties);
     ASSERT_NE(nullptr, streamAllocation);
 
     NEO::LinearStream cmdStream;
@@ -333,7 +333,7 @@ HWTEST2_F(SingleAddressSpaceFixture, GivenAllZeroSbaAddressesWhenProgrammingSbaT
     size_t sizeExpected = 0;
     EXPECT_EQ(sizeExpected, cmdStream.getUsed());
 
-    device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(streamAllocation);
+    pDevice->getMemoryManager()->freeGraphicsMemory(streamAllocation);
 }
 
 HWTEST2_F(L0DebuggerSingleAddressSpace, givenDebuggingEnabledWhenCommandListIsExecutedThenValidKernelDebugCommandsAreAdded, IsAtLeastGen12lp) {
