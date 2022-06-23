@@ -27,6 +27,7 @@ namespace NEO {
 
 class BindlessHeapsHelper;
 class GmmHelper;
+class LogicalStateHelper;
 class IndirectHeap;
 class Gmm;
 struct HardwareInfo;
@@ -455,7 +456,7 @@ template <typename GfxFamily>
 struct EncodeMemoryFence {
     static size_t getSystemMemoryFenceSize();
 
-    static void encodeSystemMemoryFence(LinearStream &commandStream, const GraphicsAllocation *globalFenceAllocation);
+    static void encodeSystemMemoryFence(LinearStream &commandStream, const GraphicsAllocation *globalFenceAllocation, LogicalStateHelper *logicalStateHelper);
 };
 
 } // namespace NEO

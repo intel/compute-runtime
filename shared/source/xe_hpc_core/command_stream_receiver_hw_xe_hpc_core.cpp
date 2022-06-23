@@ -34,7 +34,7 @@ template <>
 void CommandStreamReceiverHw<Family>::programEnginePrologue(LinearStream &csr) {
     if (!this->isEnginePrologueSent) {
         if (globalFenceAllocation) {
-            EncodeMemoryFence<Family>::encodeSystemMemoryFence(csr, globalFenceAllocation);
+            EncodeMemoryFence<Family>::encodeSystemMemoryFence(csr, globalFenceAllocation, nullptr);
         }
         this->isEnginePrologueSent = true;
     }

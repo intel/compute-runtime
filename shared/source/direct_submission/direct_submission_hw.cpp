@@ -12,6 +12,7 @@
 namespace NEO {
 DirectSubmissionInputParams::DirectSubmissionInputParams(const CommandStreamReceiver &commandStreamReceiver) : osContext(commandStreamReceiver.getOsContext()), rootDeviceEnvironment(commandStreamReceiver.peekRootDeviceEnvironment()), rootDeviceIndex(commandStreamReceiver.getRootDeviceIndex()) {
     memoryManager = commandStreamReceiver.getMemoryManager();
+    logicalStateHelper = commandStreamReceiver.getLogicalStateHelper();
     globalFenceAllocation = commandStreamReceiver.getGlobalFenceAllocation();
     workPartitionAllocation = commandStreamReceiver.getWorkPartitionAllocation();
     completionFenceAllocation = commandStreamReceiver.getTagAllocation();

@@ -54,6 +54,7 @@ struct BatchBuffer;
 class DirectSubmissionDiagnosticsCollector;
 class FlushStampTracker;
 class GraphicsAllocation;
+class LogicalStateHelper;
 struct HardwareInfo;
 class OsContext;
 class MemoryOperationsHandler;
@@ -62,6 +63,7 @@ struct DirectSubmissionInputParams : NonCopyableClass {
     DirectSubmissionInputParams(const CommandStreamReceiver &commandStreamReceiver);
     OsContext &osContext;
     const RootDeviceEnvironment &rootDeviceEnvironment;
+    LogicalStateHelper *logicalStateHelper = nullptr;
     MemoryManager *memoryManager = nullptr;
     const GraphicsAllocation *globalFenceAllocation = nullptr;
     GraphicsAllocation *workPartitionAllocation = nullptr;
@@ -170,6 +172,7 @@ class DirectSubmissionHw {
     OsContext &osContext;
     const uint32_t rootDeviceIndex;
     MemoryManager *memoryManager = nullptr;
+    LogicalStateHelper *logicalStateHelper = nullptr;
     MemoryOperationsHandler *memoryOperationHandler = nullptr;
     const HardwareInfo *hwInfo = nullptr;
     const GraphicsAllocation *globalFenceAllocation = nullptr;

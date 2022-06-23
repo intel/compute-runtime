@@ -884,7 +884,7 @@ size_t EncodeMemoryFence<Family>::getSystemMemoryFenceSize() {
 }
 
 template <typename Family>
-void EncodeMemoryFence<Family>::encodeSystemMemoryFence(LinearStream &commandStream, const GraphicsAllocation *globalFenceAllocation) {
+void EncodeMemoryFence<Family>::encodeSystemMemoryFence(LinearStream &commandStream, const GraphicsAllocation *globalFenceAllocation, LogicalStateHelper *logicalStateHelper) {
 }
 
 } // namespace NEO

@@ -13,6 +13,7 @@
 #include "shared/source/direct_submission/direct_submission_hw.h"
 #include "shared/source/direct_submission/direct_submission_hw_diagnostic_mode.h"
 #include "shared/source/helpers/flush_stamp.h"
+#include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
@@ -34,6 +35,7 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
     : ringBuffers(RingBufferUse::initialRingBufferCount), osContext(inputParams.osContext), rootDeviceIndex(inputParams.rootDeviceIndex) {
     memoryManager = inputParams.memoryManager;
     globalFenceAllocation = inputParams.globalFenceAllocation;
+    logicalStateHelper = inputParams.logicalStateHelper;
     hwInfo = inputParams.rootDeviceEnvironment.getHardwareInfo();
     memoryOperationHandler = inputParams.rootDeviceEnvironment.memoryOperationsInterface.get();
 
@@ -642,7 +644,11 @@ size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getDiagnosticModeSection() {
 template <typename GfxFamily, typename Dispatcher>
 void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSystemMemoryFenceAddress() {
     UNRECOVERABLE_IF(!this->globalFenceAllocation);
-    EncodeMemoryFence<GfxFamily>::encodeSystemMemoryFence(ringCommandStream, this->globalFenceAllocation);
+    EncodeMemoryFence<GfxFamily>::encodeSystemMemoryFence(ringCommandStream, this->globalFenceAllocation, this->logicalStateHelper);
+
+    if (logicalStateHelper) {
+        logicalStateHelper->writeStreamInline(ringCommandStream);
+    }
 }
 
 template <typename GfxFamily, typename Dispatcher>
