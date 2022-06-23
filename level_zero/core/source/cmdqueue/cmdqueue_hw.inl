@@ -162,6 +162,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     device->activateMetricGroups();
 
+    bool containsAnyRegularCmdList = false;
     size_t totalCmdBuffers = 0;
     uint32_t perThreadScratchSpaceSize = 0;
     uint32_t perThreadPrivateScratchSize = 0;
@@ -177,6 +178,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
         commandList->csr = csr;
         commandList->handleIndirectAllocationResidency();
+
+        containsAnyRegularCmdList |= commandList->cmdListType == CommandList::CommandListType::TYPE_REGULAR;
 
         totalCmdBuffers += commandList->commandContainer.getCmdBufferAllocations().size();
         spaceForResidency += commandList->commandContainer.getResidencyContainer().size();
@@ -266,7 +269,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         linearStreamSizeEstimate += NEO::SWTagsManager::estimateSpaceForSWTags<GfxFamily>();
     }
 
-    bool dispatchPostSync = isDispatchTaskCountPostSyncRequired(hFence);
+    bool dispatchPostSync = isDispatchTaskCountPostSyncRequired(hFence, containsAnyRegularCmdList);
     if (dispatchPostSync) {
         linearStreamSizeEstimate += isCopyOnlyCommandQueue ? NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite() : NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo);
     }
@@ -578,8 +581,8 @@ void CommandQueueHw<gfxCoreFamily>::programPipelineSelect(NEO::LinearStream &com
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandQueueHw<gfxCoreFamily>::isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence) const {
-    return !csr->isUpdateTagFromWaitEnabled() || hFence != nullptr || getSynchronousMode() == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+bool CommandQueueHw<gfxCoreFamily>::isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, bool containsAnyRegularCmdList) const {
+    return containsAnyRegularCmdList || !csr->isUpdateTagFromWaitEnabled() || hFence != nullptr || getSynchronousMode() == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
