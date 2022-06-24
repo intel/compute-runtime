@@ -6,9 +6,10 @@
  */
 
 #pragma once
+#include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/tools/source/sysman/ecc/ecc_imp.h"
 #include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
-#include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
+#include "level_zero/tools/test/unit_tests/sources/sysman/windows/mock_sysman_fixture.h"
 
 namespace L0 {
 namespace ult {
@@ -24,7 +25,7 @@ struct Mock<EccFwInterface> : public EccFwInterface {
     uint8_t mockCurrentState = 0;
     uint8_t mockPendingState = 0;
 
-    ze_result_t fwDeviceInit() override {
+    ze_result_t fwDeviceInit() {
         return mockFwDeviceInit;
     }
 
@@ -44,7 +45,7 @@ struct Mock<EccFwInterface> : public EccFwInterface {
             return mockFwSetEccConfigResult;
         }
 
-        if (mockSetConfig == true) {
+        if (mockSetConfig == static_cast<ze_bool_t>(true)) {
             mockPendingState = newState;
         }
         *currentState = mockCurrentState;

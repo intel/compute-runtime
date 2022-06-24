@@ -5,11 +5,12 @@
  *
  */
 
-#include "level_zero/tools/test/unit_tests/sources/sysman/ecc/linux/mock_ecc.h"
+#include "level_zero/tools/test/unit_tests/sources/sysman/ecc/windows/mock_ecc.h"
 
 extern bool sysmanUltsEnable;
 
 using ::testing::Matcher;
+using ::testing::NiceMock;
 
 namespace L0 {
 namespace ult {
@@ -28,9 +29,9 @@ class ZesEccFixture : public SysmanDeviceFixture {
             GTEST_SKIP();
         }
         SysmanDeviceFixture::SetUp();
-        pFwUtilInterfaceOld = pLinuxSysmanImp->pFwUtilInterface;
+        pFwUtilInterfaceOld = pWddmSysmanImp->pFwUtilInterface;
         pMockFwInterface = std::make_unique<NiceMock<Mock<EccFwInterface>>>();
-        pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface.get();
+        pWddmSysmanImp->pFwUtilInterface = pMockFwInterface.get();
 
         pEccImp = static_cast<L0::EccImp *>(pSysmanDeviceImp->pEcc);
 
@@ -43,7 +44,7 @@ class ZesEccFixture : public SysmanDeviceFixture {
         }
         pEccImp = nullptr;
 
-        pLinuxSysmanImp->pFwUtilInterface = pFwUtilInterfaceOld;
+        pWddmSysmanImp->pFwUtilInterface = pFwUtilInterfaceOld;
         SysmanDeviceFixture::TearDown();
     }
 };
@@ -68,9 +69,9 @@ TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsAbsentWhenCallingEcc
     ze_bool_t eccConfigurable = true;
     ze_bool_t eccAvailable = true;
     EccImp *tempEccImp = new EccImp(pOsSysman);
-    auto deviceImp = static_cast<L0::DeviceImp *>(pLinuxSysmanImp->getDeviceHandle());
+    auto deviceImp = static_cast<L0::DeviceImp *>(pWddmSysmanImp->getDeviceHandle());
     deviceImp->driverInfo.reset(nullptr);
-    pLinuxSysmanImp->pFwUtilInterface = nullptr;
+    pWddmSysmanImp->pFwUtilInterface = nullptr;
     tempEccImp->init();
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, tempEccImp->deviceEccAvailable(&eccAvailable));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, tempEccImp->deviceEccConfigurable(&eccConfigurable));

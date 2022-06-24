@@ -8,7 +8,6 @@ set(L0_SRCS_TOOLS_SYSMAN_ECC
     ${CMAKE_CURRENT_SOURCE_DIR}/ecc.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ecc_imp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ecc_imp.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/os_ecc.h
 )
 
 target_include_directories(${L0_STATIC_LIB_NAME}
