@@ -1,16 +1,15 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/populate_factory.h"
+#include "shared/source/xe_hpc_core/hw_cmds.h"
 
 #include "opencl/source/helpers/cl_hw_helper_base.inl"
 #include "opencl/source/helpers/cl_hw_helper_xehp_and_later.inl"
-
-#include "hw_cmds.h"
 
 namespace NEO {
 

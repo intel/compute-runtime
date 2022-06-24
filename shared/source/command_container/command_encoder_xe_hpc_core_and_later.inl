@@ -8,8 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-
-#include "hw_cmds.h"
+#include "shared/source/xe_hpc_core/hw_cmds.h"
 
 namespace NEO {
 

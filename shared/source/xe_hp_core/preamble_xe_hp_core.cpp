@@ -5,7 +5,7 @@
  *
  */
 
-#include "hw_cmds.h"
+#include "shared/source/xe_hp_core/hw_cmds.h"
 
 namespace NEO {
 struct XeHpFamily;

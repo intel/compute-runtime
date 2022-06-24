@@ -8,8 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
-
-#include "hw_cmds.h"
+#include "shared/source/xe_hpg_core/hw_cmds.h"
 
 namespace NEO {
 

@@ -5,9 +5,8 @@
  *
  */
 
+#include "shared/source/gen11/hw_cmds.h"
 #include "shared/test/common/test_configuration/aub_tests/aub_tests_configuration.inl"
-
-#include "hw_cmds.h"
 
 using namespace NEO;
 

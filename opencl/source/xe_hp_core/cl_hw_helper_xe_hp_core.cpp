@@ -8,12 +8,11 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/populate_factory.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/xe_hp_core/hw_cmds.h"
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/cl_hw_helper_base.inl"
 #include "opencl/source/helpers/cl_hw_helper_xehp_and_later.inl"
-
-#include "hw_cmds.h"
 
 namespace NEO {
 
