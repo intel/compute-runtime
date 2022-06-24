@@ -89,6 +89,28 @@ XE_HPG_CORETEST_F(LriHelperTestsXeHpgCore, whenProgrammingLriCommandThenExpectMm
     EXPECT_TRUE(memcmp(lri, &expectedLri, sizeof(MI_LOAD_REGISTER_IMM)) == 0);
 }
 
+XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenAllocDataWhenSetExtraAllocationDataThenSetLocalMemForProperTypes) {
+    auto &hwHelper = HwHelper::get(renderCoreFamily);
+
+    for (int type = 0; type < static_cast<int>(AllocationType::COUNT); type++) {
+        AllocationProperties allocProperties(0, 1, static_cast<AllocationType>(type), {});
+        AllocationData allocData{};
+        allocData.flags.useSystemMemory = true;
+        allocData.flags.requiresCpuAccess = false;
+
+        hwHelper.setExtraAllocationData(allocData, allocProperties, *defaultHwInfo);
+
+        if (defaultHwInfo->featureTable.flags.ftrLocalMemory &&
+            allocProperties.allocationType == AllocationType::COMMAND_BUFFER) {
+            EXPECT_FALSE(allocData.flags.useSystemMemory);
+            EXPECT_TRUE(allocData.flags.requiresCpuAccess);
+        } else {
+            EXPECT_TRUE(allocData.flags.useSystemMemory);
+            EXPECT_FALSE(allocData.flags.requiresCpuAccess);
+        }
+    }
+}
+
 XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, GivenVariousValuesWhenAlignSlmSizeIsCalledThenCorrectValueIsReturned) {
     EXPECT_EQ(0u, HwHelperHw<FamilyType>::get().alignSlmSize(0));
     EXPECT_EQ(1024u, HwHelperHw<FamilyType>::get().alignSlmSize(1));
