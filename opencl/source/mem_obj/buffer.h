@@ -27,7 +27,7 @@ class MemoryManager;
 struct EncodeSurfaceStateArgs;
 
 using BufferCreatFunc = Buffer *(*)(Context *context,
-                                    MemoryProperties memoryProperties,
+                                    const MemoryProperties &memoryProperties,
                                     cl_mem_flags flags,
                                     cl_mem_flags_intel flagsIntel,
                                     size_t size,
@@ -79,7 +79,7 @@ class Buffer : public MemObj {
                           cl_int &errcodeRet);
 
     static Buffer *create(Context *context,
-                          MemoryProperties properties,
+                          const MemoryProperties &properties,
                           cl_mem_flags flags,
                           cl_mem_flags_intel flagsIntel,
                           size_t size,
@@ -92,7 +92,7 @@ class Buffer : public MemObj {
                                       MultiGraphicsAllocation multiGraphicsAllocation);
 
     static Buffer *createBufferHw(Context *context,
-                                  MemoryProperties memoryProperties,
+                                  const MemoryProperties &memoryProperties,
                                   cl_mem_flags flags,
                                   cl_mem_flags_intel flagsIntel,
                                   size_t size,
@@ -163,11 +163,11 @@ class Buffer : public MemObj {
 
     bool isCompressed(uint32_t rootDeviceIndex) const;
 
-    static bool validateHandleType(MemoryProperties &memoryProperties, UnifiedSharingMemoryDescription &extMem);
+    static bool validateHandleType(const MemoryProperties &memoryProperties, UnifiedSharingMemoryDescription &extMem);
 
   protected:
     Buffer(Context *context,
-           MemoryProperties memoryProperties,
+           const MemoryProperties &memoryProperties,
            cl_mem_flags flags,
            cl_mem_flags_intel flagsIntel,
            size_t size,
@@ -180,7 +180,7 @@ class Buffer : public MemObj {
 
     Buffer();
 
-    static void checkMemory(MemoryProperties memoryProperties,
+    static void checkMemory(const MemoryProperties &memoryProperties,
                             size_t size,
                             void *hostPtr,
                             cl_int &errcodeRet,
@@ -202,7 +202,7 @@ template <typename GfxFamily>
 class BufferHw : public Buffer {
   public:
     BufferHw(Context *context,
-             MemoryProperties memoryProperties,
+             const MemoryProperties &memoryProperties,
              cl_mem_flags flags,
              cl_mem_flags_intel flagsIntel,
              size_t size,
@@ -219,7 +219,7 @@ class BufferHw : public Buffer {
                         bool isReadOnlyArgument, const Device &device, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) override;
 
     static Buffer *create(Context *context,
-                          MemoryProperties memoryProperties,
+                          const MemoryProperties &memoryProperties,
                           cl_mem_flags flags,
                           cl_mem_flags_intel flagsIntel,
                           size_t size,

@@ -43,7 +43,7 @@ ValidateInputAndCreateBufferFunc validateInputAndCreateBuffer = Buffer::validate
 } // namespace BufferFunctions
 
 Buffer::Buffer(Context *context,
-               MemoryProperties memoryProperties,
+               const MemoryProperties &memoryProperties,
                cl_mem_flags flags,
                cl_mem_flags_intel flagsIntel,
                size_t size,
@@ -175,7 +175,7 @@ Buffer *Buffer::create(Context *context,
 }
 
 Buffer *Buffer::create(Context *context,
-                       MemoryProperties memoryProperties,
+                       const MemoryProperties &memoryProperties,
                        cl_mem_flags flags,
                        cl_mem_flags_intel flagsIntel,
                        size_t size,
@@ -456,7 +456,7 @@ Buffer *Buffer::createSharedBuffer(Context *context, cl_mem_flags flags, Sharing
     return sharedBuffer;
 }
 
-void Buffer::checkMemory(MemoryProperties memoryProperties,
+void Buffer::checkMemory(const MemoryProperties &memoryProperties,
                          size_t size,
                          void *hostPtr,
                          cl_int &errcodeRet,
@@ -506,7 +506,6 @@ void Buffer::checkMemory(MemoryProperties memoryProperties,
             errcodeRet = CL_INVALID_HOST_PTR;
         }
     }
-    return;
 }
 
 AllocationType Buffer::getGraphicsAllocationTypeAndCompressionPreference(const MemoryProperties &properties, Context &context,
@@ -669,7 +668,7 @@ bool Buffer::isReadWriteOnCpuPreferred(void *ptr, size_t size, const Device &dev
 }
 
 Buffer *Buffer::createBufferHw(Context *context,
-                               MemoryProperties memoryProperties,
+                               const MemoryProperties &memoryProperties,
                                cl_mem_flags flags,
                                cl_mem_flags_intel flagsIntel,
                                size_t size,

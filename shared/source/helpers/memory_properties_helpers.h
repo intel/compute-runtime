@@ -22,7 +22,7 @@ class MemoryPropertiesHelper {
     };
 
     static AllocationProperties getAllocationProperties(
-        uint32_t rootDeviceIndex, MemoryProperties memoryProperties, bool allocateMemory, size_t size,
+        uint32_t rootDeviceIndex, const MemoryProperties &memoryProperties, bool allocateMemory, size_t size,
         AllocationType type, bool multiStorageResource, const HardwareInfo &hwInfo,
         DeviceBitfield subDevicesBitfieldParam, bool deviceOnlyVisibilty);
 
