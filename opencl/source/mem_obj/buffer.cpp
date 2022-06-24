@@ -181,7 +181,7 @@ Buffer *Buffer::create(Context *context,
                        size_t size,
                        void *hostPtr,
                        cl_int &errcodeRet) {
-    Buffer *pBuffer = nullptr;
+
     errcodeRet = CL_SUCCESS;
 
     MemoryManager *memoryManager = context->getMemoryManager();
@@ -190,86 +190,83 @@ Buffer *Buffer::create(Context *context,
     auto maxRootDeviceIndex = context->getMaxRootDeviceIndex();
     auto multiGraphicsAllocation = MultiGraphicsAllocation(maxRootDeviceIndex);
 
-    AllocationInfoType allocationInfo;
-    allocationInfo.resize(maxRootDeviceIndex + 1u);
+    AllocationInfoType allocationInfos;
+    allocationInfos.resize(maxRootDeviceIndex + 1ull);
 
-    void *ptr = nullptr;
+    const bool useHostPtr = memoryProperties.flags.useHostPtr;
+    const bool copyHostPtr = memoryProperties.flags.copyHostPtr;
+
+    void *allocationCpuPtr = nullptr;
     bool forceCopyHostPtr = false;
-    bool copyExecuted = false;
 
     for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
-        allocationInfo[rootDeviceIndex] = {};
+        allocationInfos[rootDeviceIndex] = {};
+        auto &allocationInfo = allocationInfos[rootDeviceIndex];
 
         auto hwInfo = (&memoryManager->peekExecutionEnvironment())->rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
 
         bool compressionEnabled = MemObjHelper::isSuitableForCompression(HwHelper::compressedBuffersSupported(*hwInfo), memoryProperties, *context,
                                                                          HwHelper::get(hwInfo->platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(size, *hwInfo));
 
-        allocationInfo[rootDeviceIndex].allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, *context, compressionEnabled,
-                                                                                                           memoryManager->isLocalMemorySupported(rootDeviceIndex));
+        allocationInfo.allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, *context, compressionEnabled,
+                                                                                          memoryManager->isLocalMemorySupported(rootDeviceIndex));
 
-        if (ptr) {
-            if (!memoryProperties.flags.useHostPtr) {
-                if (!memoryProperties.flags.copyHostPtr) {
-                    forceCopyHostPtr = true;
-                }
-            }
-            checkMemory(memoryProperties, size, ptr, errcodeRet, allocationInfo[rootDeviceIndex].alignementSatisfied, allocationInfo[rootDeviceIndex].copyMemoryFromHostPtr, memoryManager, rootDeviceIndex, forceCopyHostPtr);
+        if (allocationCpuPtr) {
+            forceCopyHostPtr = !useHostPtr && !copyHostPtr;
+            checkMemory(memoryProperties, size, allocationCpuPtr, errcodeRet, allocationInfo.alignementSatisfied, allocationInfo.copyMemoryFromHostPtr, memoryManager, rootDeviceIndex, forceCopyHostPtr);
         } else {
-            checkMemory(memoryProperties, size, hostPtr, errcodeRet, allocationInfo[rootDeviceIndex].alignementSatisfied, allocationInfo[rootDeviceIndex].copyMemoryFromHostPtr, memoryManager, rootDeviceIndex, false);
+            checkMemory(memoryProperties, size, hostPtr, errcodeRet, allocationInfo.alignementSatisfied, allocationInfo.copyMemoryFromHostPtr, memoryManager, rootDeviceIndex, false);
         }
 
         if (errcodeRet != CL_SUCCESS) {
-            cleanAllGraphicsAllocations(*context, *memoryManager, allocationInfo, false);
+            cleanAllGraphicsAllocations(*context, *memoryManager, allocationInfos, false);
             return nullptr;
         }
 
         if (compressionEnabled) {
-            allocationInfo[rootDeviceIndex].zeroCopyAllowed = false;
-            allocationInfo[rootDeviceIndex].allocateMemory = true;
+            allocationInfo.zeroCopyAllowed = false;
+            allocationInfo.allocateMemory = true;
         }
 
-        if (allocationInfo[rootDeviceIndex].allocationType == AllocationType::BUFFER_HOST_MEMORY) {
-            if (memoryProperties.flags.useHostPtr) {
-                if (allocationInfo[rootDeviceIndex].alignementSatisfied) {
-                    allocationInfo[rootDeviceIndex].allocateMemory = false;
-                    allocationInfo[rootDeviceIndex].zeroCopyAllowed = true;
+        if (useHostPtr) {
+            if (allocationInfo.allocationType == AllocationType::BUFFER_HOST_MEMORY) {
+                if (allocationInfo.alignementSatisfied) {
+                    allocationInfo.zeroCopyAllowed = true;
+                    allocationInfo.allocateMemory = false;
                 } else {
-                    allocationInfo[rootDeviceIndex].zeroCopyAllowed = false;
-                    allocationInfo[rootDeviceIndex].allocateMemory = true;
+                    allocationInfo.zeroCopyAllowed = false;
+                    allocationInfo.allocateMemory = true;
                 }
             }
-        }
 
-        if (memoryProperties.flags.useHostPtr) {
             if (DebugManager.flags.DisableZeroCopyForUseHostPtr.get()) {
-                allocationInfo[rootDeviceIndex].zeroCopyAllowed = false;
-                allocationInfo[rootDeviceIndex].allocateMemory = true;
+                allocationInfo.zeroCopyAllowed = false;
+                allocationInfo.allocateMemory = true;
             }
 
             auto svmManager = context->getSVMAllocsManager();
             if (svmManager) {
                 auto svmData = svmManager->getSVMAlloc(hostPtr);
                 if (svmData) {
-                    allocationInfo[rootDeviceIndex].memory = svmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
-                    allocationInfo[rootDeviceIndex].allocationType = allocationInfo[rootDeviceIndex].memory->getAllocationType();
-                    allocationInfo[rootDeviceIndex].isHostPtrSVM = true;
-                    allocationInfo[rootDeviceIndex].zeroCopyAllowed = allocationInfo[rootDeviceIndex].memory->getAllocationType() == AllocationType::SVM_ZERO_COPY;
-                    allocationInfo[rootDeviceIndex].copyMemoryFromHostPtr = false;
-                    allocationInfo[rootDeviceIndex].allocateMemory = false;
-                    allocationInfo[rootDeviceIndex].mapAllocation = svmData->cpuAllocation;
+                    allocationInfo.memory = svmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+                    allocationInfo.allocationType = allocationInfo.memory->getAllocationType();
+                    allocationInfo.isHostPtrSVM = true;
+                    allocationInfo.zeroCopyAllowed = allocationInfo.memory->getAllocationType() == AllocationType::SVM_ZERO_COPY;
+                    allocationInfo.copyMemoryFromHostPtr = false;
+                    allocationInfo.allocateMemory = false;
+                    allocationInfo.mapAllocation = svmData->cpuAllocation;
                 }
             }
         }
 
         if (context->isSharedContext) {
-            allocationInfo[rootDeviceIndex].zeroCopyAllowed = true;
-            allocationInfo[rootDeviceIndex].copyMemoryFromHostPtr = false;
-            allocationInfo[rootDeviceIndex].allocateMemory = false;
+            allocationInfo.zeroCopyAllowed = true;
+            allocationInfo.copyMemoryFromHostPtr = false;
+            allocationInfo.allocateMemory = false;
         }
 
         if (hostPtr && context->isProvidingPerformanceHints()) {
-            if (allocationInfo[rootDeviceIndex].zeroCopyAllowed) {
+            if (allocationInfo.zeroCopyAllowed) {
                 context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_BUFFER_MEETS_ALIGNMENT_RESTRICTIONS, hostPtr, size);
             } else {
                 context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, CL_BUFFER_DOESNT_MEET_ALIGNMENT_RESTRICTIONS, hostPtr, size, MemoryConstants::pageSize, MemoryConstants::pageSize);
@@ -277,130 +274,137 @@ Buffer *Buffer::create(Context *context,
         }
 
         if (DebugManager.flags.DisableZeroCopyForBuffers.get()) {
-            allocationInfo[rootDeviceIndex].zeroCopyAllowed = false;
+            allocationInfo.zeroCopyAllowed = false;
         }
 
-        if (allocationInfo[rootDeviceIndex].allocateMemory && context->isProvidingPerformanceHints()) {
+        if (allocationInfo.allocateMemory && context->isProvidingPerformanceHints()) {
             context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_BUFFER_NEEDS_ALLOCATE_MEMORY);
         }
 
-        if (!allocationInfo[rootDeviceIndex].memory) {
-            if (ptr) {
-                allocationInfo[rootDeviceIndex].allocateMemory = false;
-                AllocationProperties allocProperties = MemoryPropertiesHelper::getAllocationProperties(rootDeviceIndex, memoryProperties,
-                                                                                                       allocationInfo[rootDeviceIndex].allocateMemory, size, allocationInfo[rootDeviceIndex].allocationType, context->areMultiStorageAllocationsPreferred(),
-                                                                                                       *hwInfo, context->getDeviceBitfieldForAllocation(rootDeviceIndex), context->isSingleDeviceContext());
-                allocProperties.flags.crossRootDeviceAccess = context->getRootDeviceIndices().size() > 1;
-                allocProperties.flags.preferCompressed = compressionEnabled;
-                allocationInfo[rootDeviceIndex].memory = memoryManager->createGraphicsAllocationFromExistingStorage(allocProperties, ptr, multiGraphicsAllocation);
+        if (!allocationInfo.memory) {
+            if (allocationCpuPtr) {
+                allocationInfo.allocateMemory = false;
+            }
+
+            AllocationProperties allocProperties = MemoryPropertiesHelper::getAllocationProperties(rootDeviceIndex, memoryProperties,
+                                                                                                   allocationInfo.allocateMemory, size, allocationInfo.allocationType, context->areMultiStorageAllocationsPreferred(),
+                                                                                                   *hwInfo, context->getDeviceBitfieldForAllocation(rootDeviceIndex), context->isSingleDeviceContext());
+            allocProperties.flags.crossRootDeviceAccess = context->getRootDeviceIndices().size() > 1;
+            allocProperties.flags.preferCompressed = compressionEnabled;
+
+            if (allocationCpuPtr) {
+                allocationInfo.memory = memoryManager->createGraphicsAllocationFromExistingStorage(allocProperties, allocationCpuPtr, multiGraphicsAllocation);
             } else {
-                AllocationProperties allocProperties = MemoryPropertiesHelper::getAllocationProperties(rootDeviceIndex, memoryProperties,
-                                                                                                       allocationInfo[rootDeviceIndex].allocateMemory, size, allocationInfo[rootDeviceIndex].allocationType, context->areMultiStorageAllocationsPreferred(),
-                                                                                                       *hwInfo, context->getDeviceBitfieldForAllocation(rootDeviceIndex), context->isSingleDeviceContext());
-                allocProperties.flags.crossRootDeviceAccess = context->getRootDeviceIndices().size() > 1;
-                allocProperties.flags.preferCompressed = compressionEnabled;
-                allocationInfo[rootDeviceIndex].memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties, hostPtr);
-                if (allocationInfo[rootDeviceIndex].memory) {
-                    ptr = reinterpret_cast<void *>(allocationInfo[rootDeviceIndex].memory->getUnderlyingBuffer());
+                allocationInfo.memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties, hostPtr);
+                if (allocationInfo.memory) {
+                    allocationCpuPtr = allocationInfo.memory->getUnderlyingBuffer();
                 }
             }
         }
 
-        if (allocationInfo[rootDeviceIndex].allocateMemory && allocationInfo[rootDeviceIndex].memory && MemoryPoolHelper::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool())) {
-            memoryManager->addAllocationToHostPtrManager(allocationInfo[rootDeviceIndex].memory);
+        auto isSystemMemory = allocationInfo.memory && MemoryPoolHelper::isSystemMemoryPool(allocationInfo.memory->getMemoryPool());
+
+        if (allocationInfo.allocateMemory && isSystemMemory) {
+            memoryManager->addAllocationToHostPtrManager(allocationInfo.memory);
         }
 
         // if allocation failed for CL_MEM_USE_HOST_PTR case retry with non zero copy path
-        if (memoryProperties.flags.useHostPtr && !allocationInfo[rootDeviceIndex].memory && Buffer::isReadOnlyMemoryPermittedByFlags(memoryProperties)) {
-            allocationInfo[rootDeviceIndex].allocationType = AllocationType::BUFFER_HOST_MEMORY;
-            allocationInfo[rootDeviceIndex].zeroCopyAllowed = false;
-            allocationInfo[rootDeviceIndex].copyMemoryFromHostPtr = true;
+        if (useHostPtr && !allocationInfo.memory && Buffer::isReadOnlyMemoryPermittedByFlags(memoryProperties)) {
+            allocationInfo.allocationType = AllocationType::BUFFER_HOST_MEMORY;
+            allocationInfo.zeroCopyAllowed = false;
+            allocationInfo.copyMemoryFromHostPtr = true;
             AllocationProperties allocProperties = MemoryPropertiesHelper::getAllocationProperties(rootDeviceIndex, memoryProperties,
                                                                                                    true, // allocateMemory
-                                                                                                   size, allocationInfo[rootDeviceIndex].allocationType, context->areMultiStorageAllocationsPreferred(),
+                                                                                                   size, allocationInfo.allocationType, context->areMultiStorageAllocationsPreferred(),
                                                                                                    *hwInfo, context->getDeviceBitfieldForAllocation(rootDeviceIndex), context->isSingleDeviceContext());
             allocProperties.flags.crossRootDeviceAccess = context->getRootDeviceIndices().size() > 1;
-            allocationInfo[rootDeviceIndex].memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties);
+            allocationInfo.memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties);
         }
 
-        if (!allocationInfo[rootDeviceIndex].memory) {
+        if (!allocationInfo.memory) {
             errcodeRet = CL_OUT_OF_HOST_MEMORY;
-            cleanAllGraphicsAllocations(*context, *memoryManager, allocationInfo, false);
+            cleanAllGraphicsAllocations(*context, *memoryManager, allocationInfos, false);
 
             return nullptr;
         }
 
-        if (!MemoryPoolHelper::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool())) {
-            allocationInfo[rootDeviceIndex].zeroCopyAllowed = false;
+        if (!isSystemMemory) {
+            allocationInfo.zeroCopyAllowed = false;
             if (hostPtr) {
-                if (!allocationInfo[rootDeviceIndex].isHostPtrSVM) {
-                    allocationInfo[rootDeviceIndex].copyMemoryFromHostPtr = true;
+                if (!allocationInfo.isHostPtrSVM) {
+                    allocationInfo.copyMemoryFromHostPtr = true;
                 }
             }
-        } else if (allocationInfo[rootDeviceIndex].allocationType == AllocationType::BUFFER && !compressionEnabled) {
-            allocationInfo[rootDeviceIndex].allocationType = AllocationType::BUFFER_HOST_MEMORY;
+        } else if (allocationInfo.allocationType == AllocationType::BUFFER && !compressionEnabled) {
+            allocationInfo.allocationType = AllocationType::BUFFER_HOST_MEMORY;
         }
 
-        allocationInfo[rootDeviceIndex].memory->setAllocationType(allocationInfo[rootDeviceIndex].allocationType);
-        allocationInfo[rootDeviceIndex].memory->setMemObjectsAllocationWithWritableFlags(!(memoryProperties.flags.readOnly || memoryProperties.flags.hostReadOnly || memoryProperties.flags.hostNoAccess));
+        allocationInfo.memory->setAllocationType(allocationInfo.allocationType);
+        auto isWritable = !(memoryProperties.flags.readOnly || memoryProperties.flags.hostReadOnly || memoryProperties.flags.hostNoAccess);
+        allocationInfo.memory->setMemObjectsAllocationWithWritableFlags(isWritable);
 
-        multiGraphicsAllocation.addAllocation(allocationInfo[rootDeviceIndex].memory);
+        multiGraphicsAllocation.addAllocation(allocationInfo.memory);
 
         if (forceCopyHostPtr) {
-            allocationInfo[rootDeviceIndex].copyMemoryFromHostPtr = false;
+            allocationInfo.copyMemoryFromHostPtr = false;
         }
     }
 
     auto rootDeviceIndex = context->getDevice(0u)->getRootDeviceIndex();
+    auto &allocationInfo = allocationInfos[rootDeviceIndex];
     auto memoryStorage = multiGraphicsAllocation.getDefaultGraphicsAllocation()->getUnderlyingBuffer();
 
-    pBuffer = createBufferHw(context,
-                             memoryProperties,
-                             flags,
-                             flagsIntel,
-                             size,
-                             memoryStorage,
-                             (memoryProperties.flags.useHostPtr) ? hostPtr : nullptr,
-                             std::move(multiGraphicsAllocation),
-                             allocationInfo[rootDeviceIndex].zeroCopyAllowed,
-                             allocationInfo[rootDeviceIndex].isHostPtrSVM,
-                             false);
+    auto pBuffer = createBufferHw(context,
+                                  memoryProperties,
+                                  flags,
+                                  flagsIntel,
+                                  size,
+                                  memoryStorage,
+                                  (useHostPtr) ? hostPtr : nullptr,
+                                  std::move(multiGraphicsAllocation),
+                                  allocationInfo.zeroCopyAllowed,
+                                  allocationInfo.isHostPtrSVM,
+                                  false);
 
     if (!pBuffer) {
         errcodeRet = CL_OUT_OF_HOST_MEMORY;
-        cleanAllGraphicsAllocations(*context, *memoryManager, allocationInfo, false);
+        cleanAllGraphicsAllocations(*context, *memoryManager, allocationInfos, false);
 
         return nullptr;
     }
 
     DBG_LOG(LogMemoryObject, __FUNCTION__, "Created Buffer: Handle: ", pBuffer, ", hostPtr: ", hostPtr, ", size: ", size,
-            ", memoryStorage: ", allocationInfo[rootDeviceIndex].memory->getUnderlyingBuffer(),
-            ", GPU address: ", allocationInfo[rootDeviceIndex].memory->getGpuAddress(),
-            ", memoryPool: ", getMemoryPoolString(allocationInfo[rootDeviceIndex].memory));
+            ", memoryStorage: ", allocationInfo.memory->getUnderlyingBuffer(),
+            ", GPU address: ", allocationInfo.memory->getGpuAddress(),
+            ", memoryPool: ", getMemoryPoolString(allocationInfo.memory));
+
+    bool copyExecuted = false;
 
     for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
-        if (memoryProperties.flags.useHostPtr) {
-            if (!allocationInfo[rootDeviceIndex].zeroCopyAllowed && !allocationInfo[rootDeviceIndex].isHostPtrSVM) {
+        auto &allocationInfo = allocationInfos[rootDeviceIndex];
+        if (useHostPtr) {
+            if (!allocationInfo.zeroCopyAllowed && !allocationInfo.isHostPtrSVM) {
                 AllocationProperties properties{rootDeviceIndex,
                                                 false, // allocateMemory
                                                 size, AllocationType::MAP_ALLOCATION,
                                                 false, // isMultiStorageAllocation
                                                 context->getDeviceBitfieldForAllocation(rootDeviceIndex)};
                 properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = true;
-                allocationInfo[rootDeviceIndex].mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
+                allocationInfo.mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
             }
         }
 
-        Buffer::provideCompressionHint(allocationInfo[rootDeviceIndex].memory->isCompressionEnabled(), context, pBuffer);
+        auto isCompressionEnabled = allocationInfo.memory->isCompressionEnabled();
+        Buffer::provideCompressionHint(isCompressionEnabled, context, pBuffer);
 
-        if (allocationInfo[rootDeviceIndex].mapAllocation) {
-            pBuffer->mapAllocations.addAllocation(allocationInfo[rootDeviceIndex].mapAllocation);
+        if (allocationInfo.mapAllocation) {
+            pBuffer->mapAllocations.addAllocation(allocationInfo.mapAllocation);
         }
         pBuffer->setHostPtrMinSize(size);
 
-        if (allocationInfo[rootDeviceIndex].copyMemoryFromHostPtr && !copyExecuted) {
-            auto isLocalMemory = !MemoryPoolHelper::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool());
-            bool gpuCopyRequired = (allocationInfo[rootDeviceIndex].memory->isCompressionEnabled()) || isLocalMemory;
+        if (allocationInfo.copyMemoryFromHostPtr && !copyExecuted) {
+            auto isLocalMemory = !MemoryPoolHelper::isSystemMemoryPool(allocationInfo.memory->getMemoryPool());
+            bool gpuCopyRequired = isCompressionEnabled || isLocalMemory;
 
             if (gpuCopyRequired) {
                 auto &device = pBuffer->getContext()->getDevice(0u)->getDevice();
@@ -409,18 +413,18 @@ Buffer *Buffer::create(Context *context,
                 auto blitMemoryToAllocationResult = BlitOperationResult::Unsupported;
 
                 if (hwInfoConfig->isBlitterFullySupported(hwInfo) && isLocalMemory) {
-                    blitMemoryToAllocationResult = BlitHelperFunctions::blitMemoryToAllocation(device, allocationInfo[rootDeviceIndex].memory, pBuffer->getOffset(), hostPtr, {size, 1, 1});
+                    blitMemoryToAllocationResult = BlitHelperFunctions::blitMemoryToAllocation(device, allocationInfo.memory, pBuffer->getOffset(), hostPtr, {size, 1, 1});
                 }
 
                 if (blitMemoryToAllocationResult != BlitOperationResult::Success) {
                     auto cmdQ = context->getSpecialQueue(rootDeviceIndex);
-                    if (CL_SUCCESS != cmdQ->enqueueWriteBuffer(pBuffer, CL_TRUE, 0, size, hostPtr, allocationInfo[rootDeviceIndex].mapAllocation, 0, nullptr, nullptr)) {
+                    if (CL_SUCCESS != cmdQ->enqueueWriteBuffer(pBuffer, CL_TRUE, 0, size, hostPtr, allocationInfo.mapAllocation, 0, nullptr, nullptr)) {
                         errcodeRet = CL_OUT_OF_RESOURCES;
                     }
                 }
                 copyExecuted = true;
             } else {
-                memcpy_s(allocationInfo[rootDeviceIndex].memory->getUnderlyingBuffer(), size, hostPtr, size);
+                memcpy_s(allocationInfo.memory->getUnderlyingBuffer(), size, hostPtr, size);
                 copyExecuted = true;
             }
         }
