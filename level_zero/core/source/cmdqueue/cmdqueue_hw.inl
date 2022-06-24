@@ -75,482 +75,256 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     ze_fence_handle_t hFence,
     bool performMigration) {
 
-    using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
-    using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
+    auto lockCSR = this->csr->obtainUniqueOwnership();
 
-    auto lockCSR = csr->obtainUniqueOwnership();
+    auto ctx = CommandListExecutionContext{phCommandLists,
+                                           numCommandLists,
+                                           csr->getPreemptionMode(),
+                                           device,
+                                           NEO::Debugger::isDebugEnabled(internalUsage),
+                                           csr->isProgramActivePartitionConfigRequired(),
+                                           performMigration};
 
-    auto anyCommandListWithCooperativeKernels = false;
-    auto anyCommandListWithoutCooperativeKernels = false;
-    bool anyCommandListRequiresDisabledEUFusion = false;
-    bool cachedMOCSAllowed = true;
-    bool performMemoryPrefetch = false;
+    auto ret = validateCommandListsParams(ctx, phCommandLists, numCommandLists);
+    if (ret != ZE_RESULT_SUCCESS) {
+        return ret;
+    }
+
+    this->device->activateMetricGroups();
+
+    if (this->isCopyOnlyCommandQueue) {
+        ret = this->executeCommandListsCopyOnly(ctx, numCommandLists, phCommandLists, hFence);
+    } else {
+        ret = this->executeCommandListsRegular(ctx, numCommandLists, phCommandLists, hFence);
+    }
+
+    return ret;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
+    CommandListExecutionContext &ctx,
+    uint32_t numCommandLists,
+    ze_command_list_handle_t *phCommandLists,
+    ze_fence_handle_t hFence) {
+
+    this->setupCmdListsAndContextParams(ctx, phCommandLists, numCommandLists, hFence);
+    ctx.isDirectSubmissionEnabled = this->csr->isDirectSubmissionEnabled();
+
+    size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeInitial(ctx, phCommandLists, numCommandLists);
+
+    this->csr->getResidencyAllocations().reserve(ctx.spaceForResidency);
+
+    this->handleScratchSpaceAndUpdateGSBAStateDirtyFlag(ctx);
+    this->setFrontEndStateProperties(ctx);
+
+    linearStreamSizeEstimate += this->estimateLinearStreamSizeComplementary(ctx, phCommandLists, numCommandLists);
+    linearStreamSizeEstimate += this->computePreemptionSize(ctx, phCommandLists, numCommandLists);
+    linearStreamSizeEstimate += this->computeDebuggerCmdsSize(ctx);
+    linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(this->device->getHwInfo());
+
+    NEO::LinearStream child(nullptr);
+    if (const auto ret = this->makeAlignedChildStreamAndSetGpuBase(child, linearStreamSizeEstimate); ret != ZE_RESULT_SUCCESS) {
+        return ret;
+    }
+
+    this->allocateGlobalFenceAndMakeItResident();
+    this->allocateWorkPartitionAndMakeItResident();
+    this->allocateTagsManagerHeapsAndMakeThemResidentIfSWTagsEnabled(child);
+    this->csr->programHardwareContext(child);
+    this->makeSbaTrackingBufferResidentIfL0DebuggerEnabled(ctx.isDebugEnabled);
+
+    this->programPipelineSelectIfGpgpuDisabled(child);
+    this->programCommandQueueDebugCmdsForSourceLevelOrL0DebuggerIfEnabled(ctx.isDebugEnabled, child);
+    this->programSbaWithUpdatedGsbaIfDirty(ctx, phCommandLists[0], child);
+    this->programCsrBaseAddressIfPreemptionModeInitial(ctx.isPreemptionModeInitial, child);
+    this->programStateSip(ctx.stateSipRequired, child);
+    this->makePreemptionAllocationResidentForModeMidThread(ctx.isDevicePreemptionModeMidThread);
+    this->makeSipIsaResidentIfSipKernelUsed(ctx);
+    this->makeDebugSurfaceResidentIfNEODebuggerActive(ctx.isNEODebuggerActive(this->device));
+
+    this->programActivePartitionConfig(ctx.isProgramActivePartitionConfigRequired, child);
+    this->encodeKernelArgsBufferAndMakeItResident();
+
+    bool shouldProgramVfe = this->csr->getLogicalStateHelper() && ctx.frontEndStateDirty;
+    this->programFrontEndAndClearDirtyFlag(shouldProgramVfe, ctx, child);
+
+    this->writeCsrStreamInlineIfLogicalStateHelperAvailable(child);
+
+    ctx.statePreemption = ctx.preemptionMode;
+
+    for (auto i = 0u; i < numCommandLists; ++i) {
+        auto commandList = CommandList::fromHandle(phCommandLists[i]);
+        this->updateOneCmdListPreemptionModeAndCtxStatePreemption(ctx, commandList->getCommandListPreemptionMode(), child);
+        this->programOneCmdListFrontEndIfDirty(ctx, commandList, child);
+
+        this->patchCommands(*commandList, this->csr->getScratchSpaceController()->getScratchPatchAddress());
+        this->programOneCmdListBatchBufferStart(commandList, child);
+        this->mergeOneCmdListPipelinedState(commandList);
+    }
+
+    this->collectPrintfContentsFromAllCommandsLists(phCommandLists, numCommandLists);
+    this->migrateSharedAllocationsIfRequested(ctx.isMigrationRequested, phCommandLists[0]);
+    this->prefetchMemoryIfRequested(ctx.performMemoryPrefetch);
+
+    this->programStateSipEndWA(ctx.stateSipRequired, child);
+
+    this->csr->setPreemptionMode(ctx.statePreemption);
+    this->assignCsrTaskCountToFenceIfAvailable(hFence);
+
+    this->dispatchTaskCountPostSyncRegular(ctx.isDispatchTaskCountPostSyncRequired, child);
+
+    this->makeCsrTagAllocationResident();
+    auto submitResult = this->prepareAndSubmitBatchBuffer(ctx, child);
+    this->updateTaskCountAndPostSync(ctx.isDispatchTaskCountPostSyncRequired);
+    this->csr->makeSurfacePackNonResident(this->csr->getResidencyAllocations(), false);
+
+    auto completionResult = this->waitForCommandQueueCompletionAndCleanHeapContainer();
+    ze_result_t retVal = this->handleSubmissionAndCompletionResults(submitResult, completionResult);
+
+    this->csr->getResidencyAllocations().clear();
+
+    return retVal;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
+    CommandListExecutionContext &ctx,
+    uint32_t numCommandLists,
+    ze_command_list_handle_t *phCommandLists,
+    ze_fence_handle_t hFence) {
+
+    this->setupCmdListsAndContextParams(ctx, phCommandLists, numCommandLists, hFence);
+    ctx.isDirectSubmissionEnabled = this->csr->isBlitterDirectSubmissionEnabled();
+
+    size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeInitial(ctx, phCommandLists, numCommandLists);
+
+    this->csr->getResidencyAllocations().reserve(ctx.spaceForResidency);
+
+    this->handleScratchSpaceAndUpdateGSBAStateDirtyFlag(ctx);
+    this->setFrontEndStateProperties(ctx);
+
+    linearStreamSizeEstimate += NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite();
+
+    NEO::LinearStream child(nullptr);
+    if (const auto ret = this->makeAlignedChildStreamAndSetGpuBase(child, linearStreamSizeEstimate); ret != ZE_RESULT_SUCCESS) {
+        return ret;
+    }
+
+    this->allocateGlobalFenceAndMakeItResident();
+    this->allocateWorkPartitionAndMakeItResident();
+    this->allocateTagsManagerHeapsAndMakeThemResidentIfSWTagsEnabled(child);
+    this->csr->programHardwareContext(child);
+    this->makeSbaTrackingBufferResidentIfL0DebuggerEnabled(ctx.isDebugEnabled);
+
+    this->programActivePartitionConfig(ctx.isProgramActivePartitionConfigRequired, child);
+    this->encodeKernelArgsBufferAndMakeItResident();
+
+    this->writeCsrStreamInlineIfLogicalStateHelperAvailable(child);
+
+    for (auto i = 0u; i < numCommandLists; ++i) {
+        auto commandList = CommandList::fromHandle(phCommandLists[i]);
+
+        this->patchCommands(*commandList, this->csr->getScratchSpaceController()->getScratchPatchAddress());
+        this->programOneCmdListBatchBufferStart(commandList, child);
+        this->mergeOneCmdListPipelinedState(commandList);
+    }
+    this->collectPrintfContentsFromAllCommandsLists(phCommandLists, numCommandLists);
+    this->migrateSharedAllocationsIfRequested(ctx.isMigrationRequested, phCommandLists[0]);
+    this->prefetchMemoryIfRequested(ctx.performMemoryPrefetch);
+
+    this->csr->setPreemptionMode(ctx.statePreemption);
+    this->assignCsrTaskCountToFenceIfAvailable(hFence);
+
+    this->dispatchTaskCountPostSyncByMiFlushDw(ctx.isDispatchTaskCountPostSyncRequired, child);
+
+    this->makeCsrTagAllocationResident();
+    auto submitResult = this->prepareAndSubmitBatchBuffer(ctx, child);
+    this->updateTaskCountAndPostSync(ctx.isDispatchTaskCountPostSyncRequired);
+    this->csr->makeSurfacePackNonResident(this->csr->getResidencyAllocations(), false);
+
+    auto completionResult = this->waitForCommandQueueCompletionAndCleanHeapContainer();
+    ze_result_t retVal = this->handleSubmissionAndCompletionResults(submitResult, completionResult);
+
+    this->csr->getResidencyAllocations().clear();
+
+    return retVal;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandQueueHw<gfxCoreFamily>::validateCommandListsParams(
+    CommandListExecutionContext &ctx,
+    ze_command_list_handle_t *phCommandLists,
+    uint32_t numCommandLists) {
 
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
-        if (peekIsCopyOnlyCommandQueue() != commandList->isCopyOnly()) {
+        if (this->peekIsCopyOnlyCommandQueue() != commandList->isCopyOnly()) {
             return ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE;
         }
 
         if (this->activeSubDevices < commandList->partitionCount) {
             return ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE;
         }
-
-        if (commandList->containsCooperativeKernels()) {
-            anyCommandListWithCooperativeKernels = true;
-        } else {
-            anyCommandListWithoutCooperativeKernels = true;
-        }
-
-        if (commandList->getRequiredStreamState().frontEndState.disableEUFusion.value == 1) {
-            anyCommandListRequiresDisabledEUFusion = true;
-        }
-
-        // If the Command List has commands that require uncached MOCS, then any changes to the commands in the queue requires the uncached MOCS
-        if (commandList->requiresQueueUncachedMocs && cachedMOCSAllowed == true) {
-            cachedMOCSAllowed = false;
-        }
-
-        if (commandList->isMemoryPrefetchRequested()) {
-            performMemoryPrefetch = true;
-        }
     }
 
-    bool isMixingRegularAndCooperativeKernelsAllowed = NEO::DebugManager.flags.AllowMixingRegularAndCooperativeKernels.get();
-    if (anyCommandListWithCooperativeKernels && anyCommandListWithoutCooperativeKernels &&
-        (!isMixingRegularAndCooperativeKernelsAllowed)) {
+    if (ctx.anyCommandListWithCooperativeKernels &&
+        ctx.anyCommandListWithoutCooperativeKernels &&
+        (!NEO::DebugManager.flags.AllowMixingRegularAndCooperativeKernels.get())) {
         return ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE;
     }
 
-    size_t spaceForResidency = 0;
-    size_t preemptionSize = 0u;
-    size_t debuggerCmdsSize = 0;
-    constexpr size_t residencyContainerSpaceForPreemption = 2;
-    constexpr size_t residencyContainerSpaceForTagWrite = 1;
-
-    NEO::Device *neoDevice = device->getNEODevice();
-    auto devicePreemption = device->getDevicePreemptionMode();
-    auto contextPreemptionMode = csr->getPreemptionMode();
-    const bool initialPreemptionMode = contextPreemptionMode == NEO::PreemptionMode::Initial;
-    NEO::PreemptionMode statePreemption = contextPreemptionMode;
-
-    const bool stateSipRequired = (initialPreemptionMode && devicePreemption == NEO::PreemptionMode::MidThread) ||
-                                  (neoDevice->getDebugger() && NEO::Debugger::isDebugEnabled(internalUsage));
-
-    if (!isCopyOnlyCommandQueue) {
-        if (initialPreemptionMode) {
-            preemptionSize += NEO::PreemptionHelper::getRequiredPreambleSize<GfxFamily>(*neoDevice);
-        }
-
-        if (stateSipRequired) {
-            preemptionSize += NEO::PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*neoDevice, csr->isRcs());
-        }
-    }
-
-    if (NEO::Debugger::isDebugEnabled(internalUsage) && !commandQueueDebugCmdsProgrammed) {
-        if (neoDevice->getSourceLevelDebugger() != nullptr) {
-            debuggerCmdsSize += NEO::PreambleHelper<GfxFamily>::getKernelDebuggingCommandsSize(true);
-        } else if (device->getL0Debugger()) {
-            debuggerCmdsSize += device->getL0Debugger()->getSbaAddressLoadCommandsSize();
-        }
-    }
-
-    if (devicePreemption == NEO::PreemptionMode::MidThread) {
-        spaceForResidency += residencyContainerSpaceForPreemption;
-    }
-
-    bool directSubmissionEnabled = isCopyOnlyCommandQueue ? csr->isBlitterDirectSubmissionEnabled() : csr->isDirectSubmissionEnabled();
-    bool programActivePartitionConfig = csr->isProgramActivePartitionConfigRequired();
-
-    L0::Fence *fence = nullptr;
-
-    device->activateMetricGroups();
-
-    bool containsAnyRegularCmdList = false;
-    size_t totalCmdBuffers = 0;
-    uint32_t perThreadScratchSpaceSize = 0;
-    uint32_t perThreadPrivateScratchSize = 0;
-    NEO::PageFaultManager *pageFaultManager = nullptr;
-    if (performMigration) {
-        pageFaultManager = device->getDriverHandle()->getMemoryManager()->getPageFaultManager();
-        if (pageFaultManager == nullptr) {
-            performMigration = false;
-        }
-    }
-    for (auto i = 0u; i < numCommandLists; i++) {
-        auto commandList = CommandList::fromHandle(phCommandLists[i]);
-
-        commandList->csr = csr;
-        commandList->handleIndirectAllocationResidency();
-
-        containsAnyRegularCmdList |= commandList->cmdListType == CommandList::CommandListType::TYPE_REGULAR;
-
-        totalCmdBuffers += commandList->commandContainer.getCmdBufferAllocations().size();
-        spaceForResidency += commandList->commandContainer.getResidencyContainer().size();
-        if (!isCopyOnlyCommandQueue) {
-            auto commandListPreemption = commandList->getCommandListPreemptionMode();
-            if (statePreemption != commandListPreemption) {
-                if (preemptionCmdSyncProgramming) {
-                    preemptionSize += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
-                }
-                preemptionSize += NEO::PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(commandListPreemption, statePreemption);
-                statePreemption = commandListPreemption;
-            }
-
-            perThreadScratchSpaceSize = std::max(perThreadScratchSpaceSize, commandList->getCommandListPerThreadScratchSize());
-
-            perThreadPrivateScratchSize = std::max(perThreadPrivateScratchSize, commandList->getCommandListPerThreadPrivateScratchSize());
-
-            if (commandList->getCommandListPerThreadScratchSize() != 0 || commandList->getCommandListPerThreadPrivateScratchSize() != 0) {
-                if (commandList->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE) != nullptr) {
-                    heapContainer.push_back(commandList->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getGraphicsAllocation());
-                }
-                for (auto element : commandList->commandContainer.sshAllocations) {
-                    heapContainer.push_back(element);
-                }
-            }
-        }
-
-        partitionCount = std::max(partitionCount, commandList->partitionCount);
-        commandList->makeResidentAndMigrate(performMigration);
-    }
-
-    size_t linearStreamSizeEstimate = totalCmdBuffers * sizeof(MI_BATCH_BUFFER_START);
-    linearStreamSizeEstimate += csr->getCmdsSizeForHardwareContext();
-    if (directSubmissionEnabled) {
-        linearStreamSizeEstimate += sizeof(MI_BATCH_BUFFER_START);
-    } else {
-        linearStreamSizeEstimate += sizeof(MI_BATCH_BUFFER_END);
-    }
-
-    auto csrHw = reinterpret_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(csr);
-    if (programActivePartitionConfig) {
-        linearStreamSizeEstimate += csrHw->getCmdSizeForActivePartitionConfig();
-    }
-    const auto &hwInfo = this->device->getHwInfo();
-
-    spaceForResidency += residencyContainerSpaceForTagWrite;
-
-    csr->getResidencyAllocations().reserve(spaceForResidency);
-
-    auto scratchSpaceController = csr->getScratchSpaceController();
-    bool gsbaStateDirty = false;
-    bool frontEndStateDirty = false;
-    handleScratchSpace(heapContainer,
-                       scratchSpaceController,
-                       gsbaStateDirty, frontEndStateDirty,
-                       perThreadScratchSpaceSize, perThreadPrivateScratchSize);
-
-    auto &streamProperties = csr->getStreamProperties();
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    auto disableOverdispatch = hwInfoConfig.isDisableOverdispatchAvailable(hwInfo);
-    auto isEngineInstanced = csr->getOsContext().isEngineInstanced();
-    bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
-    if (!isPatchingVfeStateAllowed) {
-        streamProperties.frontEndState.setProperties(anyCommandListWithCooperativeKernels, anyCommandListRequiresDisabledEUFusion,
-                                                     disableOverdispatch, isEngineInstanced, hwInfo);
-    } else {
-        streamProperties.frontEndState.singleSliceDispatchCcsMode.set(isEngineInstanced);
-    }
-    frontEndStateDirty |= (streamProperties.frontEndState.isDirty() && !csr->getLogicalStateHelper());
-
-    gsbaStateDirty |= csr->getGSBAStateDirty();
-    frontEndStateDirty |= csr->getMediaVFEStateDirty();
-    bool gpgpuEnabled = csr->getPreambleSetFlag();
-    if (!isCopyOnlyCommandQueue) {
-
-        if (!gpgpuEnabled) {
-            linearStreamSizeEstimate += estimatePipelineSelect();
-        }
-
-        linearStreamSizeEstimate += estimateFrontEndCmdSizeForMultipleCommandLists(frontEndStateDirty, numCommandLists, phCommandLists);
-
-        if (gsbaStateDirty) {
-            linearStreamSizeEstimate += estimateStateBaseAddressCmdSize();
-        }
-
-        linearStreamSizeEstimate += preemptionSize + debuggerCmdsSize;
-    }
-
-    if (NEO::DebugManager.flags.EnableSWTags.get()) {
-        linearStreamSizeEstimate += NEO::SWTagsManager::estimateSpaceForSWTags<GfxFamily>();
-    }
-
-    bool dispatchPostSync = isDispatchTaskCountPostSyncRequired(hFence, containsAnyRegularCmdList);
-    if (dispatchPostSync) {
-        linearStreamSizeEstimate += isCopyOnlyCommandQueue ? NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite()
-                                                           : NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo);
-    }
-
-    linearStreamSizeEstimate += NEO::EncodeKernelArgsBuffer<GfxFamily>::getKernelArgsBufferCmdsSize(csr->getKernelArgsBufferAllocation(), csr->getLogicalStateHelper());
-
-    size_t alignedSize = alignUp<size_t>(linearStreamSizeEstimate, minCmdBufferPtrAlign);
-    size_t padding = alignedSize - linearStreamSizeEstimate;
-
-    const auto waitStatus = reserveLinearStreamSize(alignedSize);
-    if (waitStatus == NEO::WaitStatus::GpuHang) {
-        return ZE_RESULT_ERROR_DEVICE_LOST;
-    }
-
-    NEO::LinearStream child(commandStream->getSpace(alignedSize), alignedSize);
-    child.setGpuBase(ptrOffset(commandStream->getGpuBase(), commandStream->getUsed() - alignedSize));
-
-    const auto globalFenceAllocation = csr->getGlobalFenceAllocation();
-    if (globalFenceAllocation) {
-        csr->makeResident(*globalFenceAllocation);
-    }
-
-    const auto workPartitionAllocation = csr->getWorkPartitionAllocation();
-    if (workPartitionAllocation) {
-        csr->makeResident(*workPartitionAllocation);
-    }
-
-    if (NEO::DebugManager.flags.EnableSWTags.get()) {
-        NEO::SWTagsManager *tagsManager = neoDevice->getRootDeviceEnvironment().tagsManager.get();
-        UNRECOVERABLE_IF(tagsManager == nullptr);
-        csr->makeResident(*tagsManager->getBXMLHeapAllocation());
-        csr->makeResident(*tagsManager->getSWTagHeapAllocation());
-        tagsManager->insertBXMLHeapAddress<GfxFamily>(child);
-        tagsManager->insertSWTagHeapAddress<GfxFamily>(child);
-    }
-
-    csr->programHardwareContext(child);
-
-    if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger()) {
-        csr->makeResident(*device->getL0Debugger()->getSbaTrackingBuffer(csr->getOsContext().getContextId()));
-    }
-
-    if (!isCopyOnlyCommandQueue) {
-        if (!gpgpuEnabled) {
-            programPipelineSelect(child);
-            csr->setPreambleSetFlag(true);
-        }
-
-        if (NEO::Debugger::isDebugEnabled(internalUsage) && !commandQueueDebugCmdsProgrammed) {
-            if (neoDevice->getSourceLevelDebugger()) {
-                NEO::PreambleHelper<GfxFamily>::programKernelDebugging(&child);
-                commandQueueDebugCmdsProgrammed = true;
-            } else if (device->getL0Debugger()) {
-                device->getL0Debugger()->programSbaAddressLoad(child,
-                                                               device->getL0Debugger()->getSbaTrackingBuffer(csr->getOsContext().getContextId())->getGpuAddress());
-                commandQueueDebugCmdsProgrammed = true;
-            }
-        }
-
-        if (gsbaStateDirty) {
-            auto indirectHeap = CommandList::fromHandle(phCommandLists[0])->commandContainer.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
-            programStateBaseAddress(scratchSpaceController->calculateNewGSH(), indirectHeap->getGraphicsAllocation()->isAllocatedInLocalMemoryPool(), child, cachedMOCSAllowed);
-        }
-
-        if (initialPreemptionMode) {
-            NEO::PreemptionHelper::programCsrBaseAddress<GfxFamily>(child, *neoDevice, csr->getPreemptionAllocation(), csr->getLogicalStateHelper());
-        }
-
-        if (stateSipRequired) {
-            NEO::PreemptionHelper::programStateSip<GfxFamily>(child, *neoDevice, csr->getLogicalStateHelper());
-        }
-
-        const bool sipKernelUsed = devicePreemption == NEO::PreemptionMode::MidThread ||
-                                   (neoDevice->getDebugger() != nullptr && NEO::Debugger::isDebugEnabled(internalUsage));
-
-        if (devicePreemption == NEO::PreemptionMode::MidThread) {
-            csr->makeResident(*csr->getPreemptionAllocation());
-        }
-
-        if (sipKernelUsed) {
-            auto sipIsa = NEO::SipKernel::getSipKernel(*neoDevice).getSipAllocation();
-            csr->makeResident(*sipIsa);
-        }
-
-        if (NEO::Debugger::isDebugEnabled(internalUsage) && neoDevice->getDebugger()) {
-            UNRECOVERABLE_IF(device->getDebugSurface() == nullptr);
-            csr->makeResident(*device->getDebugSurface());
-        }
-    }
-
-    if (programActivePartitionConfig) {
-        csrHw->programActivePartitionConfig(child);
-    }
-
-    NEO::EncodeKernelArgsBuffer<GfxFamily>::encodeKernelArgsBufferCmds(csr->getKernelArgsBufferAllocation(), csr->getLogicalStateHelper());
-
-    if (csr->getKernelArgsBufferAllocation()) {
-        csr->makeResident(*csr->getKernelArgsBufferAllocation());
-    }
-
-    if (csr->getLogicalStateHelper()) {
-        if (frontEndStateDirty && !isCopyOnlyCommandQueue) {
-            programFrontEnd(scratchSpaceController->getScratchPatchAddress(), scratchSpaceController->getPerThreadScratchSpaceSize(), child);
-            frontEndStateDirty = false;
-        }
-
-        csr->getLogicalStateHelper()->writeStreamInline(child, false);
-    }
-
-    statePreemption = contextPreemptionMode;
-
-    for (auto i = 0u; i < numCommandLists; ++i) {
-        auto commandList = CommandList::fromHandle(phCommandLists[i]);
-        auto &cmdBufferAllocations = commandList->commandContainer.getCmdBufferAllocations();
-        auto cmdBufferCount = cmdBufferAllocations.size();
-        bool immediateMode = (commandList->cmdListType == CommandList::CommandListType::TYPE_IMMEDIATE) ? true : false;
-
-        if (!isCopyOnlyCommandQueue) {
-            auto commandListPreemption = commandList->getCommandListPreemptionMode();
-            if (statePreemption != commandListPreemption) {
-                if (NEO::DebugManager.flags.EnableSWTags.get()) {
-                    neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::PipeControlReasonTag>(
-                        child,
-                        *neoDevice,
-                        "ComandList Preemption Mode update", 0u);
-                }
-
-                if (preemptionCmdSyncProgramming) {
-                    NEO::PipeControlArgs args;
-                    NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(child, args);
-                }
-                NEO::PreemptionHelper::programCmdStream<GfxFamily>(child,
-                                                                   commandListPreemption,
-                                                                   statePreemption,
-                                                                   csr->getPreemptionAllocation());
-                statePreemption = commandListPreemption;
-            }
-
-            bool programVfe = frontEndStateDirty;
-            if (isPatchingVfeStateAllowed) {
-                auto &requiredStreamState = commandList->getRequiredStreamState();
-                streamProperties.frontEndState.setProperties(requiredStreamState.frontEndState);
-                programVfe |= streamProperties.frontEndState.isDirty();
-            }
-
-            if (programVfe) {
-                programFrontEnd(scratchSpaceController->getScratchPatchAddress(), scratchSpaceController->getPerThreadScratchSpaceSize(), child);
-                frontEndStateDirty = false;
-            }
-
-            if (isPatchingVfeStateAllowed) {
-                auto &finalStreamState = commandList->getFinalStreamState();
-                streamProperties.frontEndState.setProperties(finalStreamState.frontEndState);
-            }
-        }
-
-        patchCommands(*commandList, scratchSpaceController->getScratchPatchAddress());
-
-        for (size_t iter = 0; iter < cmdBufferCount; iter++) {
-            auto allocation = cmdBufferAllocations[iter];
-            uint64_t startOffset = allocation->getGpuAddress();
-            if (immediateMode && (iter == (cmdBufferCount - 1))) {
-                startOffset = ptrOffset(allocation->getGpuAddress(), commandList->commandContainer.currentLinearStreamStartOffset);
-            }
-            NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&child, startOffset, true);
-        }
-
-        printfFunctionContainer.insert(printfFunctionContainer.end(),
-                                       commandList->getPrintfFunctionContainer().begin(),
-                                       commandList->getPrintfFunctionContainer().end());
-
-        auto commandListImp = static_cast<CommandListImp *>(commandList);
-        if (!immediateMode && commandListImp->getLogicalStateHelper()) {
-            csr->getLogicalStateHelper()->mergePipelinedState(*commandListImp->getLogicalStateHelper());
-        }
-    }
-
-    if (performMigration) {
-        auto commandList = CommandList::fromHandle(phCommandLists[0]);
-        commandList->migrateSharedAllocations();
-    }
-
-    if (performMemoryPrefetch) {
-        auto prefetchManager = device->getDriverHandle()->getMemoryManager()->getPrefetchManager();
-        prefetchManager->migrateAllocationsToGpu(*this->device->getDriverHandle()->getSvmAllocsManager(), *this->device->getNEODevice());
-        performMemoryPrefetch = false;
-    }
-
-    if (!isCopyOnlyCommandQueue && stateSipRequired) {
-        NEO::PreemptionHelper::programStateSipEndWa<GfxFamily>(child, *neoDevice);
-    }
-
-    csr->setPreemptionMode(statePreemption);
-
-    if (hFence) {
-        fence = Fence::fromHandle(hFence);
-        fence->assignTaskCountFromCsr();
-    }
-    if (dispatchPostSync) {
-        dispatchTaskCountPostSync(child, hwInfo);
-    }
-
-    csr->makeResident(*csr->getTagAllocation());
-    void *endingCmd = nullptr;
-    if (directSubmissionEnabled) {
-        auto offset = ptrDiff(child.getCpuBase(), commandStream->getCpuBase()) + child.getUsed();
-        uint64_t startAddress = commandStream->getGraphicsAllocation()->getGpuAddress() + offset;
-        if (NEO::DebugManager.flags.BatchBufferStartPrepatchingWaEnabled.get() == 0) {
-            startAddress = 0;
-        }
-
-        endingCmd = child.getSpace(0);
-        NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&child, startAddress, false);
-    } else {
-        MI_BATCH_BUFFER_END cmd = GfxFamily::cmdInitBatchBufferEnd;
-        auto buffer = child.getSpaceForCmd<MI_BATCH_BUFFER_END>();
-        *(MI_BATCH_BUFFER_END *)buffer = cmd;
-    }
-
-    if (padding) {
-        void *paddingPtr = child.getSpace(padding);
-        memset(paddingPtr, 0, padding);
-    }
-
-    auto ret = submitBatchBuffer(ptrDiff(child.getCpuBase(), commandStream->getCpuBase()), csr->getResidencyAllocations(), endingCmd,
-                                 anyCommandListWithCooperativeKernels);
-
-    this->taskCount = csr->peekTaskCount();
-    if (dispatchPostSync) {
-        csr->setLatestFlushedTaskCount(this->taskCount);
-    }
-
-    csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), false);
-
-    ze_result_t retVal = ZE_RESULT_SUCCESS;
-    if (getSynchronousMode() == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS) {
-        const auto synchronizeResult = this->synchronize(std::numeric_limits<uint64_t>::max());
-        if (synchronizeResult == ZE_RESULT_ERROR_DEVICE_LOST) {
-            retVal = ZE_RESULT_ERROR_DEVICE_LOST;
-        }
-    } else {
-        csr->pollForCompletion();
-    }
-    this->heapContainer.clear();
-
-    if ((ret != NEO::SubmissionStatus::SUCCESS) || (retVal == ZE_RESULT_ERROR_DEVICE_LOST)) {
-        for (auto &gfx : csr->getResidencyAllocations()) {
-            if (csr->peekLatestFlushedTaskCount() == 0) {
-                gfx->releaseUsageInOsContext(csr->getOsContext().getContextId());
-            } else {
-                gfx->updateTaskCount(csr->peekLatestFlushedTaskCount(), csr->getOsContext().getContextId());
-            }
-        }
-        if (retVal != ZE_RESULT_ERROR_DEVICE_LOST) {
-            retVal = ZE_RESULT_ERROR_UNKNOWN;
-        }
-        if (ret == NEO::SubmissionStatus::OUT_OF_MEMORY) {
-            retVal = ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
-        }
-    }
-
-    csr->getResidencyAllocations().clear();
-    return retVal;
+    return ZE_RESULT_SUCCESS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSize, NEO::LinearStream &commandStream) {
+void CommandQueueHw<gfxCoreFamily>::programOneCmdListFrontEndIfDirty(
+    CommandListExecutionContext &ctx,
+    CommandList *commandList,
+    NEO::LinearStream &cmdStream) {
+
+    bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
+    auto &streamProperties = this->csr->getStreamProperties();
+    bool shouldProgramVfe = ctx.frontEndStateDirty;
+
+    if (isPatchingVfeStateAllowed) {
+        auto &requiredStreamState = commandList->getRequiredStreamState();
+        streamProperties.frontEndState.setProperties(requiredStreamState.frontEndState);
+        shouldProgramVfe |= streamProperties.frontEndState.isDirty();
+    }
+
+    this->programFrontEndAndClearDirtyFlag(shouldProgramVfe, ctx, cmdStream);
+
+    if (isPatchingVfeStateAllowed) {
+        auto &finalStreamState = commandList->getFinalStreamState();
+        streamProperties.frontEndState.setProperties(finalStreamState.frontEndState);
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::programFrontEndAndClearDirtyFlag(
+    bool shouldFrontEndBeProgrammed,
+    CommandListExecutionContext &ctx,
+    NEO::LinearStream &cmdStream) {
+
+    if (!shouldFrontEndBeProgrammed) {
+        return;
+    }
+    auto scratchSpaceController = this->csr->getScratchSpaceController();
+    programFrontEnd(scratchSpaceController->getScratchPatchAddress(),
+                    scratchSpaceController->getPerThreadScratchSpaceSize(),
+                    cmdStream);
+    ctx.frontEndStateDirty = false;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSize, NEO::LinearStream &cmdStream) {
     UNRECOVERABLE_IF(csr == nullptr);
     auto &hwInfo = device->getHwInfo();
     auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto engineGroupType = hwHelper.getEngineGroupType(csr->getOsContext().getEngineType(),
                                                        csr->getOsContext().getEngineUsage(), hwInfo);
-    auto pVfeState = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(&commandStream, hwInfo, engineGroupType);
+    auto pVfeState = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(&cmdStream, hwInfo, engineGroupType);
     NEO::PreambleHelper<GfxFamily>::programVfeState(pVfeState,
                                                     hwInfo,
                                                     perThreadScratchSpaceSize,
@@ -601,9 +375,13 @@ size_t CommandQueueHw<gfxCoreFamily>::estimatePipelineSelect() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::programPipelineSelect(NEO::LinearStream &commandStream) {
-    NEO::PipelineSelectArgs args = {0, 0};
-    NEO::PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, args, device->getHwInfo());
+void CommandQueueHw<gfxCoreFamily>::programPipelineSelectIfGpgpuDisabled(NEO::LinearStream &cmdStream) {
+    bool gpgpuEnabled = this->csr->getPreambleSetFlag();
+    if (!gpgpuEnabled) {
+        NEO::PipelineSelectArgs args = {0, 0};
+        NEO::PreambleHelper<GfxFamily>::programPipelineSelect(&cmdStream, args, device->getHwInfo());
+        this->csr->setPreambleSetFlag(true);
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -612,33 +390,637 @@ bool CommandQueueHw<gfxCoreFamily>::isDispatchTaskCountPostSyncRequired(ze_fence
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountPostSync(NEO::LinearStream &commandStream, const NEO::HardwareInfo &hwInfo) {
-    uint64_t postSyncAddress = csr->getTagAllocation()->getGpuAddress();
-    uint32_t postSyncData = csr->peekTaskCount() + 1;
+bool CommandQueueHw<gfxCoreFamily>::getPreemptionCmdProgramming() {
+    return NEO::PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(NEO::PreemptionMode::MidThread, NEO::PreemptionMode::Initial) > 0u;
+}
 
-    if (isCopyOnlyCommandQueue) {
-        NEO::MiFlushArgs args;
-        args.commandWithPostSync = true;
-        args.notifyEnable = csr->isUsedNotifyEnableForPostSync();
-        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, postSyncAddress, postSyncData, args, hwInfo);
-    } else {
-        NEO::PipeControlArgs args;
-        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
-        args.workloadPartitionOffset = partitionCount > 1;
-        args.notifyEnable = csr->isUsedNotifyEnableForPostSync();
-        NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
-            commandStream,
-            NEO::PostSyncMode::ImmediateData,
-            postSyncAddress,
-            postSyncData,
-            hwInfo,
-            args);
+template <GFXCORE_FAMILY gfxCoreFamily>
+CommandQueueHw<gfxCoreFamily>::CommandListExecutionContext::CommandListExecutionContext(
+    ze_command_list_handle_t *phCommandLists,
+    uint32_t numCommandLists,
+    NEO::PreemptionMode contextPreemptionMode,
+    Device *device,
+    bool debugEnabled,
+    bool programActivePartitionConfig,
+    bool performMigration) : preemptionMode{contextPreemptionMode},
+                             statePreemption{contextPreemptionMode},
+                             isPreemptionModeInitial{contextPreemptionMode == NEO::PreemptionMode::Initial},
+                             isDebugEnabled{debugEnabled},
+                             isProgramActivePartitionConfigRequired{programActivePartitionConfig},
+                             isMigrationRequested{performMigration} {
+
+    constexpr size_t residencyContainerSpaceForPreemption = 2;
+    constexpr size_t residencyContainerSpaceForTagWrite = 1;
+
+    for (auto i = 0u; i < numCommandLists; i++) {
+        auto commandList = CommandList::fromHandle(phCommandLists[i]);
+
+        if (commandList->containsCooperativeKernels()) {
+            this->anyCommandListWithCooperativeKernels = true;
+        } else {
+            this->anyCommandListWithoutCooperativeKernels = true;
+        }
+
+        if (commandList->getRequiredStreamState().frontEndState.disableEUFusion.value == 1) {
+            this->anyCommandListRequiresDisabledEUFusion = true;
+        }
+
+        // If the Command List has commands that require uncached MOCS, then any changes to the commands in the queue requires the uncached MOCS
+        if (commandList->requiresQueueUncachedMocs && this->cachedMOCSAllowed == true) {
+            this->cachedMOCSAllowed = false;
+        }
+
+        if (commandList->isMemoryPrefetchRequested()) {
+            this->performMemoryPrefetch = true;
+        }
+    }
+    this->isDevicePreemptionModeMidThread = device->getDevicePreemptionMode() == NEO::PreemptionMode::MidThread;
+    this->stateSipRequired = (this->isPreemptionModeInitial && this->isDevicePreemptionModeMidThread) ||
+                             this->isNEODebuggerActive(device);
+
+    if (this->isDevicePreemptionModeMidThread) {
+        this->spaceForResidency += residencyContainerSpaceForPreemption;
+    }
+    this->spaceForResidency += residencyContainerSpaceForTagWrite;
+
+    if (this->isMigrationRequested && device->getDriverHandle()->getMemoryManager()->getPageFaultManager() == nullptr) {
+        this->isMigrationRequested = false;
     }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandQueueHw<gfxCoreFamily>::getPreemptionCmdProgramming() {
-    return NEO::PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(NEO::PreemptionMode::MidThread, NEO::PreemptionMode::Initial) > 0u;
+bool CommandQueueHw<gfxCoreFamily>::CommandListExecutionContext::isNEODebuggerActive(Device *device) {
+    return device->getNEODevice()->getDebugger() && this->isDebugEnabled;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandQueueHw<gfxCoreFamily>::computeDebuggerCmdsSize(const CommandListExecutionContext &ctx) {
+    size_t debuggerCmdsSize = 0;
+
+    if (ctx.isDebugEnabled && !this->commandQueueDebugCmdsProgrammed) {
+        if (this->device->getNEODevice()->getSourceLevelDebugger()) {
+            debuggerCmdsSize += NEO::PreambleHelper<GfxFamily>::getKernelDebuggingCommandsSize(true);
+        } else if (this->device->getL0Debugger()) {
+            debuggerCmdsSize += device->getL0Debugger()->getSbaAddressLoadCommandsSize();
+        }
+    }
+
+    return debuggerCmdsSize;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandQueueHw<gfxCoreFamily>::computePreemptionSize(
+    CommandListExecutionContext &ctx,
+    ze_command_list_handle_t *phCommandLists,
+    uint32_t numCommandLists) {
+
+    size_t preemptionSize = 0u;
+    NEO::Device *neoDevice = this->device->getNEODevice();
+
+    if (ctx.isPreemptionModeInitial) {
+        preemptionSize += NEO::PreemptionHelper::getRequiredPreambleSize<GfxFamily>(*neoDevice);
+    }
+
+    if (ctx.stateSipRequired) {
+        preemptionSize += NEO::PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*neoDevice, this->csr->isRcs());
+    }
+
+    for (auto i = 0u; i < numCommandLists; i++) {
+        auto commandList = CommandList::fromHandle(phCommandLists[i]);
+        auto commandListPreemption = commandList->getCommandListPreemptionMode();
+
+        if (ctx.statePreemption != commandListPreemption) {
+            if (this->preemptionCmdSyncProgramming) {
+                preemptionSize += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
+            }
+            preemptionSize += NEO::PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(commandListPreemption, ctx.statePreemption);
+            ctx.statePreemption = commandListPreemption;
+        }
+    }
+
+    return preemptionSize;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
+    CommandListExecutionContext &ctx,
+    ze_command_list_handle_t *phCommandLists,
+    uint32_t numCommandLists,
+    ze_fence_handle_t hFence) {
+
+    for (auto i = 0u; i < numCommandLists; i++) {
+        auto commandList = CommandList::fromHandle(phCommandLists[i]);
+
+        commandList->csr = this->csr;
+        commandList->handleIndirectAllocationResidency();
+
+        ctx.containsAnyRegularCmdList |= commandList->cmdListType == CommandList::CommandListType::TYPE_REGULAR;
+        ctx.spaceForResidency += commandList->commandContainer.getResidencyContainer().size();
+        if (!isCopyOnlyCommandQueue) {
+            ctx.perThreadScratchSpaceSize = std::max(ctx.perThreadScratchSpaceSize, commandList->getCommandListPerThreadScratchSize());
+            ctx.perThreadPrivateScratchSize = std::max(ctx.perThreadPrivateScratchSize, commandList->getCommandListPerThreadPrivateScratchSize());
+
+            if (commandList->getCommandListPerThreadScratchSize() != 0 || commandList->getCommandListPerThreadPrivateScratchSize() != 0) {
+                if (commandList->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE) != nullptr) {
+                    heapContainer.push_back(commandList->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getGraphicsAllocation());
+                }
+                for (auto element : commandList->commandContainer.sshAllocations) {
+                    heapContainer.push_back(element);
+                }
+            }
+        }
+
+        this->partitionCount = std::max(this->partitionCount, commandList->partitionCount);
+        commandList->makeResidentAndMigrate(ctx.isMigrationRequested);
+    }
+
+    ctx.isDispatchTaskCountPostSyncRequired = isDispatchTaskCountPostSyncRequired(hFence, ctx.containsAnyRegularCmdList);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeInitial(
+    CommandListExecutionContext &ctx,
+    ze_command_list_handle_t *phCommandLists,
+    uint32_t numCommandLists) {
+
+    using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
+    using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
+
+    size_t linearStreamSizeEstimate = 0u;
+
+    for (auto i = 0u; i < numCommandLists; i++) {
+        auto commandList = CommandList::fromHandle(phCommandLists[i]);
+        linearStreamSizeEstimate += commandList->commandContainer.getCmdBufferAllocations().size();
+    }
+    linearStreamSizeEstimate *= sizeof(MI_BATCH_BUFFER_START);
+    linearStreamSizeEstimate += this->csr->getCmdsSizeForHardwareContext();
+
+    if (ctx.isDirectSubmissionEnabled) {
+        linearStreamSizeEstimate += sizeof(MI_BATCH_BUFFER_START);
+    } else {
+        linearStreamSizeEstimate += sizeof(MI_BATCH_BUFFER_END);
+    }
+
+    auto csrHw = reinterpret_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(this->csr);
+    if (ctx.isProgramActivePartitionConfigRequired) {
+        linearStreamSizeEstimate += csrHw->getCmdSizeForActivePartitionConfig();
+    }
+
+    if (NEO::DebugManager.flags.EnableSWTags.get()) {
+        linearStreamSizeEstimate += NEO::SWTagsManager::estimateSpaceForSWTags<GfxFamily>();
+    }
+
+    linearStreamSizeEstimate += NEO::EncodeKernelArgsBuffer<GfxFamily>::getKernelArgsBufferCmdsSize(this->csr->getKernelArgsBufferAllocation(),
+                                                                                                    this->csr->getLogicalStateHelper());
+
+    return linearStreamSizeEstimate;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::setFrontEndStateProperties(CommandListExecutionContext &ctx) {
+    const auto &hwInfo = this->device->getHwInfo();
+    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto disableOverdispatch = hwInfoConfig.isDisableOverdispatchAvailable(hwInfo);
+
+    auto isEngineInstanced = csr->getOsContext().isEngineInstanced();
+    auto &streamProperties = this->csr->getStreamProperties();
+    bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
+    if (!isPatchingVfeStateAllowed) {
+        streamProperties.frontEndState.setProperties(ctx.anyCommandListWithCooperativeKernels, ctx.anyCommandListRequiresDisabledEUFusion,
+                                                     disableOverdispatch, isEngineInstanced, hwInfo);
+    } else {
+        streamProperties.frontEndState.singleSliceDispatchCcsMode.set(isEngineInstanced);
+    }
+    ctx.frontEndStateDirty |= (streamProperties.frontEndState.isDirty() && !this->csr->getLogicalStateHelper());
+    ctx.frontEndStateDirty |= csr->getMediaVFEStateDirty();
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::handleScratchSpaceAndUpdateGSBAStateDirtyFlag(CommandListExecutionContext &ctx) {
+    handleScratchSpace(this->heapContainer,
+                       this->csr->getScratchSpaceController(),
+                       ctx.gsbaStateDirty, ctx.frontEndStateDirty,
+                       ctx.perThreadScratchSpaceSize, ctx.perThreadPrivateScratchSize);
+    ctx.gsbaStateDirty |= this->csr->getGSBAStateDirty();
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
+    CommandListExecutionContext &ctx,
+    ze_command_list_handle_t *phCommandLists,
+    uint32_t numCommandLists) {
+
+    size_t linearStreamSizeEstimate = 0u;
+    bool gpgpuEnabled = csr->getPreambleSetFlag();
+
+    if (!gpgpuEnabled) {
+        linearStreamSizeEstimate += estimatePipelineSelect();
+    }
+
+    linearStreamSizeEstimate += estimateFrontEndCmdSizeForMultipleCommandLists(ctx.frontEndStateDirty, numCommandLists, phCommandLists);
+
+    if (ctx.gsbaStateDirty) {
+        linearStreamSizeEstimate += estimateStateBaseAddressCmdSize();
+    }
+
+    return linearStreamSizeEstimate;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandQueueHw<gfxCoreFamily>::makeAlignedChildStreamAndSetGpuBase(NEO::LinearStream &child, size_t requiredSize) {
+
+    size_t alignedSize = alignUp<size_t>(requiredSize, this->minCmdBufferPtrAlign);
+
+    if (const auto waitStatus = this->reserveLinearStreamSize(alignedSize); waitStatus == NEO::WaitStatus::GpuHang) {
+        return ZE_RESULT_ERROR_DEVICE_LOST;
+    }
+
+    child.replaceBuffer(this->commandStream->getSpace(alignedSize), alignedSize);
+    child.setGpuBase(ptrOffset(this->commandStream->getGpuBase(), this->commandStream->getUsed() - alignedSize));
+    this->alignedChildStreamPadding = alignedSize - requiredSize;
+    return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::allocateGlobalFenceAndMakeItResident() {
+    const auto globalFenceAllocation = this->csr->getGlobalFenceAllocation();
+    if (globalFenceAllocation) {
+        this->csr->makeResident(*globalFenceAllocation);
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::allocateWorkPartitionAndMakeItResident() {
+    const auto workPartitionAllocation = this->csr->getWorkPartitionAllocation();
+    if (workPartitionAllocation) {
+        this->csr->makeResident(*workPartitionAllocation);
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::allocateTagsManagerHeapsAndMakeThemResidentIfSWTagsEnabled(NEO::LinearStream &cmdStream) {
+    if (NEO::DebugManager.flags.EnableSWTags.get()) {
+        NEO::Device *neoDevice = this->device->getNEODevice();
+        NEO::SWTagsManager *tagsManager = neoDevice->getRootDeviceEnvironment().tagsManager.get();
+        UNRECOVERABLE_IF(tagsManager == nullptr);
+        this->csr->makeResident(*tagsManager->getBXMLHeapAllocation());
+        this->csr->makeResident(*tagsManager->getSWTagHeapAllocation());
+        tagsManager->insertBXMLHeapAddress<GfxFamily>(cmdStream);
+        tagsManager->insertSWTagHeapAddress<GfxFamily>(cmdStream);
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::makeSbaTrackingBufferResidentIfL0DebuggerEnabled(bool isDebugEnabled) {
+    if (isDebugEnabled && this->device->getL0Debugger()) {
+        this->csr->makeResident(*this->device->getL0Debugger()->getSbaTrackingBuffer(this->csr->getOsContext().getContextId()));
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::programCommandQueueDebugCmdsForSourceLevelOrL0DebuggerIfEnabled(bool isDebugEnabled, NEO::LinearStream &cmdStream) {
+    if (isDebugEnabled && !this->commandQueueDebugCmdsProgrammed) {
+        NEO::Device *neoDevice = device->getNEODevice();
+        if (neoDevice->getSourceLevelDebugger()) {
+            NEO::PreambleHelper<GfxFamily>::programKernelDebugging(&cmdStream);
+            this->commandQueueDebugCmdsProgrammed = true;
+        } else if (this->device->getL0Debugger()) {
+            this->device->getL0Debugger()->programSbaAddressLoad(cmdStream,
+                                                                 device->getL0Debugger()->getSbaTrackingBuffer(csr->getOsContext().getContextId())->getGpuAddress());
+            this->commandQueueDebugCmdsProgrammed = true;
+        }
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::programSbaWithUpdatedGsbaIfDirty(
+    CommandListExecutionContext &ctx,
+    ze_command_list_handle_t hCommandList,
+    NEO::LinearStream &cmdStream) {
+
+    if (!ctx.gsbaStateDirty) {
+        return;
+    }
+    auto indirectHeap = CommandList::fromHandle(hCommandList)->commandContainer.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
+    auto scratchSpaceController = this->csr->getScratchSpaceController();
+    programStateBaseAddress(scratchSpaceController->calculateNewGSH(),
+                            indirectHeap->getGraphicsAllocation()->isAllocatedInLocalMemoryPool(),
+                            cmdStream,
+                            ctx.cachedMOCSAllowed);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::programCsrBaseAddressIfPreemptionModeInitial(bool isPreemptionModeInitial, NEO::LinearStream &cmdStream) {
+    if (!isPreemptionModeInitial) {
+        return;
+    }
+    NEO::Device *neoDevice = this->device->getNEODevice();
+    NEO::PreemptionHelper::programCsrBaseAddress<GfxFamily>(cmdStream,
+                                                            *neoDevice,
+                                                            this->csr->getPreemptionAllocation(),
+                                                            this->csr->getLogicalStateHelper());
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::programStateSip(bool isStateSipRequired, NEO::LinearStream &cmdStream) {
+    if (!isStateSipRequired) {
+        return;
+    }
+    NEO::Device *neoDevice = this->device->getNEODevice();
+    NEO::PreemptionHelper::programStateSip<GfxFamily>(cmdStream, *neoDevice, this->csr->getLogicalStateHelper());
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::programStateSipEndWA(bool isStateSipRequired, NEO::LinearStream &cmdStream) {
+    if (!isStateSipRequired) {
+        return;
+    }
+    NEO::Device *neoDevice = this->device->getNEODevice();
+    NEO::PreemptionHelper::programStateSipEndWa<GfxFamily>(cmdStream, *neoDevice);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::updateOneCmdListPreemptionModeAndCtxStatePreemption(
+    CommandListExecutionContext &ctx,
+    NEO::PreemptionMode commandListPreemption,
+    NEO::LinearStream &cmdStream) {
+
+    NEO::Device *neoDevice = this->device->getNEODevice();
+    if (ctx.statePreemption != commandListPreemption) {
+        if (NEO::DebugManager.flags.EnableSWTags.get()) {
+            neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::PipeControlReasonTag>(
+                cmdStream,
+                *neoDevice,
+                "ComandList Preemption Mode update", 0u);
+        }
+
+        if (this->preemptionCmdSyncProgramming) {
+            NEO::PipeControlArgs args;
+            NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(cmdStream, args);
+        }
+        NEO::PreemptionHelper::programCmdStream<GfxFamily>(cmdStream,
+                                                           commandListPreemption,
+                                                           ctx.statePreemption,
+                                                           this->csr->getPreemptionAllocation());
+        ctx.statePreemption = commandListPreemption;
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::makePreemptionAllocationResidentForModeMidThread(bool isDevicePreemptionModeMidThread) {
+    if (isDevicePreemptionModeMidThread) {
+        this->csr->makeResident(*this->csr->getPreemptionAllocation());
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::makeSipIsaResidentIfSipKernelUsed(CommandListExecutionContext &ctx) {
+    NEO::Device *neoDevice = this->device->getNEODevice();
+    if (ctx.isDevicePreemptionModeMidThread || ctx.isNEODebuggerActive(this->device)) {
+        auto sipIsa = NEO::SipKernel::getSipKernel(*neoDevice).getSipAllocation();
+        this->csr->makeResident(*sipIsa);
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::makeDebugSurfaceResidentIfNEODebuggerActive(bool isNEODebuggerActive) {
+    if (!isNEODebuggerActive) {
+        return;
+    }
+    UNRECOVERABLE_IF(this->device->getDebugSurface() == nullptr);
+    this->csr->makeResident(*this->device->getDebugSurface());
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::programActivePartitionConfig(
+    bool isProgramActivePartitionConfigRequired,
+    NEO::LinearStream &cmdStream) {
+
+    if (!isProgramActivePartitionConfigRequired) {
+        return;
+    }
+    auto csrHw = reinterpret_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(this->csr);
+    csrHw->programActivePartitionConfig(cmdStream);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::encodeKernelArgsBufferAndMakeItResident() {
+    NEO::EncodeKernelArgsBuffer<GfxFamily>::encodeKernelArgsBufferCmds(this->csr->getKernelArgsBufferAllocation(),
+                                                                       this->csr->getLogicalStateHelper());
+    if (this->csr->getKernelArgsBufferAllocation()) {
+        this->csr->makeResident(*this->csr->getKernelArgsBufferAllocation());
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::writeCsrStreamInlineIfLogicalStateHelperAvailable(NEO::LinearStream &cmdStream) {
+    if (this->csr->getLogicalStateHelper()) {
+        this->csr->getLogicalStateHelper()->writeStreamInline(cmdStream, false);
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::programOneCmdListBatchBufferStart(CommandList *commandList, NEO::LinearStream &cmdStream) {
+
+    auto &cmdBufferAllocations = commandList->commandContainer.getCmdBufferAllocations();
+    auto cmdBufferCount = cmdBufferAllocations.size();
+    bool isCommandListImmediate = (commandList->cmdListType == CommandList::CommandListType::TYPE_IMMEDIATE) ? true : false;
+
+    for (size_t iter = 0; iter < cmdBufferCount; iter++) {
+        auto allocation = cmdBufferAllocations[iter];
+        uint64_t startOffset = allocation->getGpuAddress();
+        if (isCommandListImmediate && (iter == (cmdBufferCount - 1))) {
+            startOffset = ptrOffset(allocation->getGpuAddress(), commandList->commandContainer.currentLinearStreamStartOffset);
+        }
+        NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&cmdStream, startOffset, true);
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::mergeOneCmdListPipelinedState(CommandList *commandList) {
+
+    bool isCommandListImmediate = (commandList->cmdListType == CommandList::CommandListType::TYPE_IMMEDIATE) ? true : false;
+    auto commandListImp = static_cast<CommandListImp *>(commandList);
+    if (!isCommandListImmediate && commandListImp->getLogicalStateHelper()) {
+        this->csr->getLogicalStateHelper()->mergePipelinedState(*commandListImp->getLogicalStateHelper());
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::collectPrintfContentsFromAllCommandsLists(
+    ze_command_list_handle_t *phCommandLists,
+    uint32_t numCommandLists) {
+
+    for (auto i = 0u; i < numCommandLists; ++i) {
+        auto commandList = CommandList::fromHandle(phCommandLists[i]);
+        this->printfFunctionContainer.insert(this->printfFunctionContainer.end(),
+                                             commandList->getPrintfFunctionContainer().begin(),
+                                             commandList->getPrintfFunctionContainer().end());
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::migrateSharedAllocationsIfRequested(
+    bool isMigrationRequested,
+    ze_command_list_handle_t hCommandList) {
+
+    if (isMigrationRequested) {
+        CommandList::fromHandle(hCommandList)->migrateSharedAllocations();
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::prefetchMemoryIfRequested(bool &isMemoryPrefetchRequested) {
+    if (isMemoryPrefetchRequested) {
+        auto prefetchManager = this->device->getDriverHandle()->getMemoryManager()->getPrefetchManager();
+        prefetchManager->migrateAllocationsToGpu(*this->device->getDriverHandle()->getSvmAllocsManager(),
+                                                 *this->device->getNEODevice());
+        isMemoryPrefetchRequested = false;
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::assignCsrTaskCountToFenceIfAvailable(ze_fence_handle_t hFence) {
+    if (hFence) {
+        Fence::fromHandle(hFence)->assignTaskCountFromCsr();
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountPostSyncByMiFlushDw(
+    bool isDispatchTaskCountPostSyncRequired,
+    NEO::LinearStream &cmdStream) {
+
+    if (!isDispatchTaskCountPostSyncRequired) {
+        return;
+    }
+
+    uint64_t postSyncAddress = this->csr->getTagAllocation()->getGpuAddress();
+    uint32_t postSyncData = this->csr->peekTaskCount() + 1;
+    const auto &hwInfo = this->device->getHwInfo();
+
+    NEO::MiFlushArgs args;
+    args.commandWithPostSync = true;
+    args.notifyEnable = this->csr->isUsedNotifyEnableForPostSync();
+
+    NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(cmdStream, postSyncAddress, postSyncData, args, hwInfo);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountPostSyncRegular(
+    bool isDispatchTaskCountPostSyncRequired,
+    NEO::LinearStream &cmdStream) {
+
+    if (!isDispatchTaskCountPostSyncRequired) {
+        return;
+    }
+
+    uint64_t postSyncAddress = this->csr->getTagAllocation()->getGpuAddress();
+    uint32_t postSyncData = this->csr->peekTaskCount() + 1;
+    const auto &hwInfo = this->device->getHwInfo();
+
+    NEO::PipeControlArgs args;
+    args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
+    args.workloadPartitionOffset = this->partitionCount > 1;
+    args.notifyEnable = this->csr->isUsedNotifyEnableForPostSync();
+    NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
+        cmdStream,
+        NEO::PostSyncMode::ImmediateData,
+        postSyncAddress,
+        postSyncData,
+        hwInfo,
+        args);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::makeCsrTagAllocationResident() {
+    this->csr->makeResident(*this->csr->getTagAllocation());
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+NEO::SubmissionStatus CommandQueueHw<gfxCoreFamily>::prepareAndSubmitBatchBuffer(
+    CommandListExecutionContext &ctx,
+    NEO::LinearStream &innerCommandStream) {
+
+    using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
+
+    auto &outerCommandStream = *this->commandStream;
+
+    void *endingCmd = nullptr;
+    if (ctx.isDirectSubmissionEnabled) {
+        auto offset = ptrDiff(innerCommandStream.getCpuBase(), outerCommandStream.getCpuBase()) + innerCommandStream.getUsed();
+        uint64_t startAddress = outerCommandStream.getGraphicsAllocation()->getGpuAddress() + offset;
+        if (NEO::DebugManager.flags.BatchBufferStartPrepatchingWaEnabled.get() == 0) {
+            startAddress = 0;
+        }
+
+        endingCmd = innerCommandStream.getSpace(0);
+        NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&innerCommandStream, startAddress, false);
+    } else {
+        auto buffer = innerCommandStream.getSpaceForCmd<MI_BATCH_BUFFER_END>();
+        *(MI_BATCH_BUFFER_END *)buffer = GfxFamily::cmdInitBatchBufferEnd;
+    }
+
+    if (this->alignedChildStreamPadding) {
+        void *paddingPtr = innerCommandStream.getSpace(this->alignedChildStreamPadding);
+        memset(paddingPtr, 0, this->alignedChildStreamPadding);
+    }
+
+    return submitBatchBuffer(ptrDiff(innerCommandStream.getCpuBase(), outerCommandStream.getCpuBase()),
+                             csr->getResidencyAllocations(),
+                             endingCmd,
+                             ctx.anyCommandListWithCooperativeKernels);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::updateTaskCountAndPostSync(bool isDispatchTaskCountPostSyncRequired) {
+
+    if (!isDispatchTaskCountPostSyncRequired) {
+        return;
+    }
+    this->taskCount = this->csr->peekTaskCount();
+    this->csr->setLatestFlushedTaskCount(this->taskCount);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandQueueHw<gfxCoreFamily>::waitForCommandQueueCompletionAndCleanHeapContainer() {
+
+    ze_result_t ret = ZE_RESULT_SUCCESS;
+
+    if (this->getSynchronousMode() == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS) {
+        if (const auto syncRet = this->synchronize(std::numeric_limits<uint64_t>::max()); syncRet == ZE_RESULT_ERROR_DEVICE_LOST) {
+            ret = syncRet;
+        }
+    } else {
+        this->csr->pollForCompletion();
+    }
+    this->heapContainer.clear();
+
+    return ret;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandQueueHw<gfxCoreFamily>::handleSubmissionAndCompletionResults(
+    NEO::SubmissionStatus submitRet,
+    ze_result_t completionRet) {
+
+    if ((submitRet != NEO::SubmissionStatus::SUCCESS) || (completionRet == ZE_RESULT_ERROR_DEVICE_LOST)) {
+        for (auto &gfx : this->csr->getResidencyAllocations()) {
+            if (this->csr->peekLatestFlushedTaskCount() == 0) {
+                gfx->releaseUsageInOsContext(this->csr->getOsContext().getContextId());
+            } else {
+                gfx->updateTaskCount(this->csr->peekLatestFlushedTaskCount(), this->csr->getOsContext().getContextId());
+            }
+        }
+        if (completionRet != ZE_RESULT_ERROR_DEVICE_LOST) {
+            completionRet = ZE_RESULT_ERROR_UNKNOWN;
+        }
+        if (submitRet == NEO::SubmissionStatus::OUT_OF_MEMORY) {
+            completionRet = ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+        }
+    }
+
+    return completionRet;
 }
 
 } // namespace L0
