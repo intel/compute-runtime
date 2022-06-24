@@ -11,13 +11,13 @@
 #include "platforms.h"
 
 using namespace NEO;
-using ProductConfigHelperXeHpgCoreTests = ::testing::Test;
+using ProductConfigHelperPvcTests = ::testing::Test;
 
-XE_HPG_CORETEST_F(ProductConfigHelperXeHpgCoreTests, givenVariousVariantsOfAcronymsWhenGetReleaseThenCorrectValueIsReturned) {
-    std::vector<std::string> acronymsVariants = {"xe_hpg_core", "xe_hpg", "xehpg", "XeHpg"};
+PVCTEST_F(ProductConfigHelperPvcTests, givenVariousVariantsOfXeHpcAcronymsWhenGetReleaseThenCorrectValueIsReturned) {
+    std::vector<std::string> acronymsVariants = {"xe_hpc_core", "xe_hpc", "xehpc", "XeHpc"};
     for (auto &acronym : acronymsVariants) {
         ProductConfigHelper::adjustDeviceName(acronym);
         auto ret = ProductConfigHelper::returnReleaseForAcronym(acronym);
-        EXPECT_EQ(ret, AOT::XE_HPG_RELEASE);
+        EXPECT_EQ(ret, AOT::XE_HPC_RELEASE);
     }
 }

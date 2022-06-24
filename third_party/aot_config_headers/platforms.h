@@ -124,9 +124,12 @@ static const std::map<std::string, AOT::PRODUCT_CONFIG> productConfigAcronyms = 
 #endif
 #ifdef SUPPORT_KBL
     {"kbl", KBL},
+    {"aml", AML},
 #endif
 #ifdef SUPPORT_CFL
     {"cfl", CFL},
+    {"cml", CML},
+    {"whl", WHL},
 #endif
 #ifdef SUPPORT_BXT
     {"apl", APL},
@@ -134,15 +137,6 @@ static const std::map<std::string, AOT::PRODUCT_CONFIG> productConfigAcronyms = 
 #endif
 #ifdef SUPPORT_GLK
     {"glk", GLK},
-#endif
-#ifdef SUPPORT_WHL
-    {"whl", WHL},
-#endif
-#ifdef SUPPORT_AML
-    {"aml", AML},
-#endif
-#ifdef SUPPORT_CML
-    {"cml", CML},
 #endif
 #ifdef SUPPORT_ICLLP
     {"icllp", ICL},
@@ -160,10 +154,8 @@ static const std::map<std::string, AOT::PRODUCT_CONFIG> productConfigAcronyms = 
 #ifdef SUPPORT_RKL
     {"rkl", RKL},
 #endif
-#ifdef SUPPORT_RPLS
-    {"rpl-s", RPL_S},
-#endif
 #ifdef SUPPORT_ADLS
+    {"rpl-s", RPL_S},
     {"adl-s", ADL_S},
 #endif
 #ifdef SUPPORT_ADLP
