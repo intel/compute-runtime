@@ -50,7 +50,8 @@ struct PreambleHelper {
                                 uint32_t scratchSize,
                                 uint64_t scratchAddress,
                                 uint32_t maxFrontEndThreads,
-                                const StreamProperties &streamProperties);
+                                const StreamProperties &streamProperties,
+                                LogicalStateHelper *logicalStateHelper);
     static uint64_t getScratchSpaceAddressOffsetForVfeState(LinearStream *pCommandStream, void *pVfeState);
     static void programAdditionalFieldsInVfeState(VFE_STATE_TYPE *mediaVfeState, const HardwareInfo &hwInfo, bool disableEUFusion);
     static void programPreamble(LinearStream *pCommandStream, Device &device, uint32_t l3Config,

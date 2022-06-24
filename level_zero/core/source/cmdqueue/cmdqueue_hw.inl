@@ -246,7 +246,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     } else {
         streamProperties.frontEndState.singleSliceDispatchCcsMode.set(isEngineInstanced);
     }
-    frontEndStateDirty |= streamProperties.frontEndState.isDirty();
+    frontEndStateDirty |= (streamProperties.frontEndState.isDirty() && !csr->getLogicalStateHelper());
 
     gsbaStateDirty |= csr->getGSBAStateDirty();
     frontEndStateDirty |= csr->getMediaVFEStateDirty();
@@ -371,6 +371,11 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     }
 
     if (csr->getLogicalStateHelper()) {
+        if (frontEndStateDirty && !isCopyOnlyCommandQueue) {
+            programFrontEnd(scratchSpaceController->getScratchPatchAddress(), scratchSpaceController->getPerThreadScratchSpaceSize(), child);
+            frontEndStateDirty = false;
+        }
+
         csr->getLogicalStateHelper()->writeStreamInline(child);
     }
 
@@ -530,7 +535,8 @@ void CommandQueueHw<gfxCoreFamily>::programFrontEnd(uint64_t scratchAddress, uin
                                                     perThreadScratchSpaceSize,
                                                     scratchAddress,
                                                     device->getMaxNumHwThreads(),
-                                                    csr->getStreamProperties());
+                                                    csr->getStreamProperties(),
+                                                    csr->getLogicalStateHelper());
     csr->setMediaVFEStateDirty(false);
 }
 

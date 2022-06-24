@@ -40,7 +40,8 @@ void PreambleHelper<GfxFamily>::programVfeState(void *pVfeState,
                                                 uint32_t scratchSize,
                                                 uint64_t scratchAddress,
                                                 uint32_t maxFrontEndThreads,
-                                                const StreamProperties &streamProperties) {
+                                                const StreamProperties &streamProperties,
+                                                LogicalStateHelper *logicalStateHelper) {
     using MEDIA_VFE_STATE = typename GfxFamily::MEDIA_VFE_STATE;
 
     auto pMediaVfeState = reinterpret_cast<MEDIA_VFE_STATE *>(pVfeState);

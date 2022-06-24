@@ -100,10 +100,10 @@ uint32_t PreambleHelper<Family>::getUrbEntryAllocationSize() {
 template <>
 void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, const StreamProperties &streamProperties, void *cmd);
 
-template <>
-void *PreambleHelper<Family>::getSpaceForVfeState(LinearStream *pCommandStream,
-                                                  const HardwareInfo &hwInfo,
-                                                  EngineGroupType engineGroupType) {
+template <typename GfxFamily>
+void *PreambleHelper<GfxFamily>::getSpaceForVfeState(LinearStream *pCommandStream,
+                                                     const HardwareInfo &hwInfo,
+                                                     EngineGroupType engineGroupType) {
     using CFE_STATE = typename Family::CFE_STATE;
     return pCommandStream->getSpace(sizeof(CFE_STATE));
 }
@@ -114,7 +114,8 @@ void PreambleHelper<GfxFamily>::programVfeState(void *pVfeState,
                                                 uint32_t scratchSize,
                                                 uint64_t scratchAddress,
                                                 uint32_t maxFrontEndThreads,
-                                                const StreamProperties &streamProperties) {
+                                                const StreamProperties &streamProperties,
+                                                LogicalStateHelper *logicalStateHelper) {
     using CFE_STATE = typename Family::CFE_STATE;
 
     auto cfeState = reinterpret_cast<CFE_STATE *>(pVfeState);
@@ -143,8 +144,8 @@ uint64_t PreambleHelper<Family>::getScratchSpaceAddressOffsetForVfeState(LinearS
     return 0;
 }
 
-template <>
-size_t PreambleHelper<Family>::getVFECommandsSize() {
+template <typename GfxFamily>
+size_t PreambleHelper<GfxFamily>::getVFECommandsSize() {
     using CFE_STATE = typename Family::CFE_STATE;
     return sizeof(CFE_STATE);
 }

@@ -103,7 +103,7 @@ XEHPTEST_F(XeHPPreambleVfeState, WhenProgramVFEStateIsCalledThenCorrectCfeStateA
 
     auto pCfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, *defaultHwInfo, EngineGroupType::RenderCompute);
     StreamProperties emptyProperties{};
-    PreambleHelper<FamilyType>::programVfeState(pCfeCmd, *defaultHwInfo, 1024u, addressToPatch, 10u, emptyProperties);
+    PreambleHelper<FamilyType>::programVfeState(pCfeCmd, *defaultHwInfo, 1024u, addressToPatch, 10u, emptyProperties, nullptr);
     EXPECT_GE(reinterpret_cast<uintptr_t>(pCfeCmd), reinterpret_cast<uintptr_t>(preambleStream.getCpuBase()));
     EXPECT_LT(reinterpret_cast<uintptr_t>(pCfeCmd), reinterpret_cast<uintptr_t>(preambleStream.getCpuBase()) + preambleStream.getUsed());
 

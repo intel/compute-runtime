@@ -24,7 +24,7 @@ HWTEST2_F(PreambleCfeState, givenXehpAndFlagCFEWeightedDispatchModeDisableSetFal
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::RenderCompute);
     StreamProperties streamProperties{};
     streamProperties.frontEndState.setProperties(false, false, false, false, *defaultHwInfo);
-    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *defaultHwInfo, 0u, 0, 0, streamProperties);
+    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *defaultHwInfo, 0u, 0, 0, streamProperties, nullptr);
     parseCommands<FamilyType>(linearStream);
     auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), cfeStateIt);
@@ -40,7 +40,7 @@ HWTEST2_F(PreambleCfeState, givenXehpAndFlagCFEWeightedDispatchModeDisableSetTru
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::RenderCompute);
     StreamProperties streamProperties{};
     streamProperties.frontEndState.setProperties(false, false, false, false, *defaultHwInfo);
-    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *defaultHwInfo, 0u, 0, 0, streamProperties);
+    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *defaultHwInfo, 0u, 0, 0, streamProperties, nullptr);
     parseCommands<FamilyType>(linearStream);
     auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), cfeStateIt);
@@ -57,7 +57,7 @@ HWTEST2_F(PreambleCfeState, givenXehpAndFlagCFEComputeOverdispatchDisableSetFals
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::RenderCompute);
     StreamProperties streamProperties{};
     streamProperties.frontEndState.setProperties(false, false, false, false, *defaultHwInfo);
-    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *defaultHwInfo, 0u, 0, 0, streamProperties);
+    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *defaultHwInfo, 0u, 0, 0, streamProperties, nullptr);
     parseCommands<FamilyType>(linearStream);
     auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), cfeStateIt);
@@ -73,7 +73,7 @@ HWTEST2_F(PreambleCfeState, givenXehpAndFlagCFEComputeOverdispatchDisableSetTrue
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::RenderCompute);
     StreamProperties streamProperties{};
     streamProperties.frontEndState.setProperties(false, false, false, false, *defaultHwInfo);
-    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *defaultHwInfo, 0u, 0, 0, streamProperties);
+    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *defaultHwInfo, 0u, 0, 0, streamProperties, nullptr);
     parseCommands<FamilyType>(linearStream);
     auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), cfeStateIt);
@@ -91,7 +91,7 @@ HWTEST2_F(PreambleCfeState, givenXehpAndDisabledFusedEuWhenCfeStateProgrammedThe
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, hwInfo, EngineGroupType::RenderCompute);
     StreamProperties streamProperties{};
     streamProperties.frontEndState.setProperties(false, false, false, false, hwInfo);
-    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, hwInfo, 0u, 0, 0, streamProperties);
+    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, hwInfo, 0u, 0, 0, streamProperties, nullptr);
     parseCommands<FamilyType>(linearStream);
     auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), cfeStateIt);
@@ -109,7 +109,7 @@ HWTEST2_F(PreambleCfeState, givenXehpAndEnabledFusedEuWhenCfeStateProgrammedThen
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, hwInfo, EngineGroupType::RenderCompute);
     StreamProperties streamProperties{};
     streamProperties.frontEndState.setProperties(false, false, false, false, hwInfo);
-    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, hwInfo, 0u, 0, 0, streamProperties);
+    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, hwInfo, 0u, 0, 0, streamProperties, nullptr);
     parseCommands<FamilyType>(linearStream);
     auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), cfeStateIt);
