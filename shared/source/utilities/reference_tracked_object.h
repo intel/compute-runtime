@@ -32,18 +32,13 @@ class RefCounter {
         DEBUG_BREAK_IF(curr < 1);
     }
 
-    bool dec() {
-        CT curr = --val;
+    void dec() {
+        [[maybe_unused]] CT curr = --val;
         DEBUG_BREAK_IF(curr < 0);
-        return (curr == 0);
     }
 
     CT decAndReturnCurrent() {
         return --val;
-    }
-
-    bool peekIsZero() const {
-        return (val == 0);
     }
 
   protected:
@@ -86,7 +81,7 @@ class unique_ptr_if_unused : // NOLINT(readability-identifier-naming)
     }
 
     template <typename DT = DataType>
-    static typename std::enable_if<std::is_base_of<ReferenceTrackedObject<DataType>, DT>::value, DeleterFuncType>::type getObjDeleter(DataType *inPtr) {
+    static typename std::enable_if_t<std::is_base_of_v<ReferenceTrackedObject<DataType>, DT>, DeleterFuncType> getObjDeleter(DataType *inPtr) {
         if (inPtr != nullptr) {
             return inPtr->getCustomDeleter();
         }
@@ -94,7 +89,7 @@ class unique_ptr_if_unused : // NOLINT(readability-identifier-naming)
     }
 
     template <typename DT = DataType>
-    static typename std::enable_if<!std::is_base_of<ReferenceTrackedObject<DataType>, DT>::value, DeleterFuncType>::type getObjDeleter(DataType *inPtr) {
+    static typename std::enable_if_t<!std::is_base_of_v<ReferenceTrackedObject<DataType>, DT>, DeleterFuncType> getObjDeleter(DataType *inPtr) {
         return nullptr;
     }
 
@@ -121,6 +116,8 @@ class unique_ptr_if_unused : // NOLINT(readability-identifier-naming)
 template <typename DerivedClass>
 class ReferenceTrackedObject {
   public:
+    using DeleterFuncType = void (*)(DerivedClass *);
+
     virtual ~ReferenceTrackedObject();
 
     int32_t getRefInternalCount() const {
@@ -153,13 +150,8 @@ class ReferenceTrackedObject {
         return decRefInternal();
     }
 
-    using DeleterFuncType = void (*)(DerivedClass *);
     DeleterFuncType getCustomDeleter() const {
         return nullptr;
-    }
-
-    bool peekHasZeroRefcounts() const {
-        return refInternal.peekIsZero();
     }
 
   private:
@@ -171,6 +163,7 @@ class ReferenceTrackedObject {
     RefCounter<> refInternal;
     RefCounter<> refApi;
 };
+
 template <typename DerivedClass>
 inline ReferenceTrackedObject<DerivedClass>::~ReferenceTrackedObject() {
     DEBUG_BREAK_IF(refInternal.peek() > 1);

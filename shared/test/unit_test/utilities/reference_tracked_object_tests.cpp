@@ -15,7 +15,6 @@ namespace NEO {
 TEST(RefCounter, WhenIncrementingAndDecrementingThenCounterIsCorrect) {
     RefCounter<> rc;
     ASSERT_EQ(0, rc.peek());
-    ASSERT_TRUE(rc.peekIsZero());
     int max = 7;
     for (int i = 0; i < max; ++i) {
         rc.inc();
@@ -25,10 +24,8 @@ TEST(RefCounter, WhenIncrementingAndDecrementingThenCounterIsCorrect) {
         rc.dec();
     }
     ASSERT_EQ(1, rc.peek());
-    ASSERT_FALSE(rc.peekIsZero());
     rc.dec();
     ASSERT_EQ(0, rc.peek());
-    ASSERT_TRUE(rc.peekIsZero());
 }
 
 TEST(RefCounter, givenReferenceTrackedObjectWhenDecAndReturnCurrentIsCalledThenMinusOneIsReturned) {
@@ -91,7 +88,7 @@ TEST(UniquePtrIfUnused, WhenDeletingThenDeletionIsDeferred) {
 }
 
 TEST(UniquePtrIfUnused, GivenNoCustomDeleterAtCreationWhenDeletingThenUseDefaultDeleter) {
-    bool deleterWasCalled = false;
+    bool deleterWasCalled{false};
     struct DefaultDeleterTestStruct {
         DefaultDeleterTestStruct(bool *deleterWasCalledFlag)
             : deleterWasCalledFlag(deleterWasCalledFlag) {}
@@ -110,12 +107,11 @@ TEST(UniquePtrIfUnused, GivenNoCustomDeleterAtCreationWhenDeletingThenUseDefault
 
 TEST(UniquePtrIfUnused, GivenCustomDeleterAtCreationWhenDeletingThenUseProvidedDeleter) {
     struct CustomDeleterTestStruct {
-        bool customDeleterWasCalled;
+        bool customDeleterWasCalled{false};
         static void deleter(CustomDeleterTestStruct *ptr) {
             ptr->customDeleterWasCalled = true;
         }
     } customDeleterObj;
-    customDeleterObj.customDeleterWasCalled = false;
     {
         unique_ptr_if_unused<CustomDeleterTestStruct> uptr(&customDeleterObj, true, &CustomDeleterTestStruct::deleter);
     }
@@ -124,17 +120,15 @@ TEST(UniquePtrIfUnused, GivenCustomDeleterAtCreationWhenDeletingThenUseProvidedD
 
 TEST(UniquePtrIfUnused, GivenIntializedWithDerivativeOfReferenceCounterWhenDestroyingThenUseObtainedDeleter) {
     struct ObtainedDeleterTestStruct : public ReferenceTrackedObject<ObtainedDeleterTestStruct> {
-        using DeleterFuncType = void (*)(ObtainedDeleterTestStruct *);
         DeleterFuncType getCustomDeleter() const {
             return &ObtainedDeleterTestStruct::deleter;
         }
 
-        bool obtainedDeleterWasCalled;
+        bool obtainedDeleterWasCalled{false};
         static void deleter(ObtainedDeleterTestStruct *ptr) {
             ptr->obtainedDeleterWasCalled = true;
         }
     } obtainedDeleterObj;
-    obtainedDeleterObj.obtainedDeleterWasCalled = false;
     {
         unique_ptr_if_unused<ObtainedDeleterTestStruct> uptr(&obtainedDeleterObj, true);
     }
@@ -170,9 +164,9 @@ TEST(ReferenceTrackedObject, GivenInternalAndApiReferenceCountWhenDecrementingTh
     {
         bool wasDeleted = false;
         a = new PrimitiveReferenceTrackedObject(5, &wasDeleted);
-        ASSERT_TRUE(a->peekHasZeroRefcounts());
+        ASSERT_EQ(0, a->getRefInternalCount());
         a->incRefApi();
-        ASSERT_FALSE(a->peekHasZeroRefcounts());
+        ASSERT_EQ(1, a->getRefInternalCount());
         {
             ASSERT_FALSE(wasDeleted);
             auto autoDeleter = a->decRefApi();
@@ -189,9 +183,9 @@ TEST(ReferenceTrackedObject, GivenInternalAndApiReferenceCountWhenDecrementingTh
     {
         bool wasDeleted = false;
         a = new PrimitiveReferenceTrackedObject(5, &wasDeleted);
-        ASSERT_TRUE(a->peekHasZeroRefcounts());
+        ASSERT_EQ(0, a->getRefInternalCount());
         a->incRefInternal();
-        ASSERT_FALSE(a->peekHasZeroRefcounts());
+        ASSERT_EQ(1, a->getRefInternalCount());
         a->incRefApi();
         {
             {
@@ -249,7 +243,6 @@ TEST(ReferenceTrackedObject, whenNewReferenceTrackedObjectIsCreatedThenRefcounts
     };
 
     PrimitiveReferenceTrackedObject obj;
-    EXPECT_TRUE(obj.peekHasZeroRefcounts());
     EXPECT_EQ(0, obj.getRefApiCount());
     EXPECT_EQ(0, obj.getRefInternalCount());
 }
