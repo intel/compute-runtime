@@ -13,7 +13,6 @@
 #include "shared/source/utilities/const_stringref.h"
 
 #include "device_ids_configs.h"
-#include "hw_cmds.h"
 #include "platforms.h"
 
 #include <cctype>

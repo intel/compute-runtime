@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/gen9/hw_cmds.h"
 #include "shared/source/helpers/populate_factory.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 

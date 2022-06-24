@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/gen8/hw_cmds.h"
 #include "shared/source/helpers/populate_factory.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"

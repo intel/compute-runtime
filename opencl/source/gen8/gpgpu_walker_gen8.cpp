@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/gen8/hw_cmds.h"
 #include "shared/source/gen8/hw_info.h"
 
 #include "opencl/source/command_queue/gpgpu_walker_bdw_and_later.inl"

@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_stream/experimental_command_buffer.inl"
+#include "shared/source/xe_hp_core/hw_cmds.h"
 
 namespace NEO {
 typedef XeHpFamily GfxFamily;

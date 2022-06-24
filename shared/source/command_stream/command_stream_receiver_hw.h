@@ -16,8 +16,6 @@
 #include "shared/source/helpers/dirty_state_helpers.h"
 #include "shared/source/helpers/hw_info.h"
 
-#include "hw_cmds.h"
-
 #include <optional>
 
 namespace NEO {

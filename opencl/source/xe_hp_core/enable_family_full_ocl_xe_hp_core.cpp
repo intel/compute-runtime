@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/populate_factory.h"
+#include "shared/source/xe_hp_core/hw_cmds.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/helpers/cl_hw_helper.h"

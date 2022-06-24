@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/aub/aub_mapper_base.h"
+#include "shared/source/gen11/hw_cmds.h"
 #include "shared/source/helpers/constants.h"
 
 #include "engine_node.h"

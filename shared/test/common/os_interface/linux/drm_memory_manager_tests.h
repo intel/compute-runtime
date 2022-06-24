@@ -20,6 +20,8 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 
+#include "hw_cmds.h"
+
 #include <memory>
 
 namespace NEO {

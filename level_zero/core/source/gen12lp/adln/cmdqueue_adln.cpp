@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/gen12lp/hw_cmds.h"
+
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.inl"
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw_base.inl"
 

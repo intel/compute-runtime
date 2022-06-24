@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/gen12lp/hw_cmds.h"
 #include "shared/source/gen12lp/hw_info.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
