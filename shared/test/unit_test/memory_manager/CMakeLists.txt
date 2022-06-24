@@ -17,6 +17,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_usage_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_allocate_in_device_pool_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_multi_device_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/memory_pool_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/multi_graphics_allocation_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/page_table_tests.cpp

@@ -3052,13 +3052,6 @@ TEST(MemoryManagerTest, givenStorageInfoWithParamsWhenGettingAllocDataForLocalMe
     EXPECT_FALSE(allocData.storageInfo.systemMemoryPlacement);
 }
 
-TEST(MemoryManagerTest, WhenCallingIsAllocationTypeToCaptureThenScratchAndPrivateTypesReturnTrue) {
-    MockMemoryManager mockMemoryManager;
-
-    EXPECT_TRUE(mockMemoryManager.isAllocationTypeToCapture(AllocationType::SCRATCH_SURFACE));
-    EXPECT_TRUE(mockMemoryManager.isAllocationTypeToCapture(AllocationType::PRIVATE_SURFACE));
-}
-
 TEST(MemoryTransferHelperTest, WhenBlitterIsSelectedButBlitCopyFailsThenFallbackToCopyOnCPU) {
     constexpr uint32_t dataSize = 16;
     uint8_t destData[dataSize] = {};

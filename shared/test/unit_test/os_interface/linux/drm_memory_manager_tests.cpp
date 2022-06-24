@@ -3421,6 +3421,35 @@ TEST(DrmMemoryManager, givenTrackedAllocationTypeWhenFreeingThenRegisteredHandle
     EXPECT_EQ(1u, mockDrm->unregisterCalledCount);
 }
 
+TEST(DrmMemoryManager, givenEnabledResourceRegistrationWhenSshIsAllocatedThenItIsMarkedForCapture) {
+    auto executionEnvironment = new MockExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(1u);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
+    auto mockDrm = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mockDrm, 0u);
+    executionEnvironment->memoryManager = std::make_unique<TestedDrmMemoryManager>(false, false, false, *executionEnvironment);
+
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::MaxSize); i++) {
+        mockDrm->classHandles.push_back(i);
+    }
+    EXPECT_TRUE(mockDrm->resourceRegistrationEnabled());
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0));
+
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(device.get(), nullptr, true);
+
+    auto *ssh = cmdContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto bo = static_cast<DrmAllocation *>(ssh->getGraphicsAllocation())->getBO();
+
+    ASSERT_NE(nullptr, bo);
+    EXPECT_TRUE(bo->isMarkedForCapture());
+}
+
 TEST(DrmMemoryManager, givenNullBoWhenRegisteringBindExtHandleThenEarlyReturn) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1u);

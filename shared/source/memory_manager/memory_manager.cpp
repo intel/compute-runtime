@@ -856,6 +856,8 @@ bool MemoryManager::isAllocationTypeToCapture(AllocationType type) const {
     switch (type) {
     case AllocationType::SCRATCH_SURFACE:
     case AllocationType::PRIVATE_SURFACE:
+    case AllocationType::LINEAR_STREAM:
+    case AllocationType::INTERNAL_HEAP:
         return true;
     default:
         break;
