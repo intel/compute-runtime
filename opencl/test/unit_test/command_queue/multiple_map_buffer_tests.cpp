@@ -21,7 +21,7 @@ struct MultipleMapBufferTest : public ClDeviceFixture, public ::testing::Test {
     template <typename T>
     struct MockBuffer : public BufferHw<T> {
         template <class... Params>
-        MockBuffer(Params... params) : BufferHw<T>(params...) {
+        MockBuffer(Params... params) : BufferHw<T>(std::forward<Params>(params)...) {
             this->createFunction = BufferHw<T>::create;
         };
 
@@ -92,9 +92,10 @@ struct MultipleMapBufferTest : public ClDeviceFixture, public ::testing::Test {
     std::unique_ptr<MockBuffer<FamilyType>> createMockBuffer(bool mapOnGpu) {
         MemoryProperties memoryProperties;
         auto mockAlloc = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+        auto multiGraphicsAllocation = GraphicsAllocationHelper::toMultiGraphicsAllocation(mockAlloc);
 
         auto buffer = new MockBuffer<FamilyType>(context, memoryProperties, 0, 0, 1024, mockAlloc->getUnderlyingBuffer(), mockAlloc->getUnderlyingBuffer(),
-                                                 GraphicsAllocationHelper::toMultiGraphicsAllocation(mockAlloc), false, false, false);
+                                                 std::move(multiGraphicsAllocation), false, false, false);
         if (mapOnGpu) {
             buffer->setSharingHandler(new SharingHandler());
             auto gfxAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());

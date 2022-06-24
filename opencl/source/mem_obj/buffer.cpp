@@ -49,7 +49,7 @@ Buffer::Buffer(Context *context,
                size_t size,
                void *memoryStorage,
                void *hostPtr,
-               MultiGraphicsAllocation multiGraphicsAllocation,
+               MultiGraphicsAllocation &&multiGraphicsAllocation,
                bool zeroCopy,
                bool isHostPtrSVM,
                bool isObjectRedescribed)
@@ -310,7 +310,7 @@ Buffer *Buffer::create(Context *context,
             memoryManager->addAllocationToHostPtrManager(allocationInfo[rootDeviceIndex].memory);
         }
 
-        //if allocation failed for CL_MEM_USE_HOST_PTR case retry with non zero copy path
+        // if allocation failed for CL_MEM_USE_HOST_PTR case retry with non zero copy path
         if (memoryProperties.flags.useHostPtr && !allocationInfo[rootDeviceIndex].memory && Buffer::isReadOnlyMemoryPermittedByFlags(memoryProperties)) {
             allocationInfo[rootDeviceIndex].allocationType = AllocationType::BUFFER_HOST_MEMORY;
             allocationInfo[rootDeviceIndex].zeroCopyAllowed = false;
@@ -535,10 +535,12 @@ Buffer *Buffer::createSubBuffer(cl_mem_flags flags,
     DEBUG_BREAK_IF(nullptr == createFunction);
     MemoryProperties memoryProperties =
         ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &this->context->getDevice(0)->getDevice());
+
+    auto copyMultiGraphicsAllocation = MultiGraphicsAllocation{this->multiGraphicsAllocation};
     auto buffer = createFunction(this->context, memoryProperties, flags, 0, region->size,
                                  ptrOffset(this->memoryStorage, region->origin),
                                  this->hostPtr ? ptrOffset(this->hostPtr, region->origin) : nullptr,
-                                 this->multiGraphicsAllocation,
+                                 std::move(copyMultiGraphicsAllocation),
                                  this->isZeroCopy, this->isHostPtrSVM, false);
 
     if (this->context->isProvidingPerformanceHints()) {
@@ -652,12 +654,12 @@ bool Buffer::isReadWriteOnCpuAllowed(const Device &device) {
 bool Buffer::isReadWriteOnCpuPreferred(void *ptr, size_t size, const Device &device) {
     auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(device.getRootDeviceIndex());
     if (MemoryPoolHelper::isSystemMemoryPool(graphicsAllocation->getMemoryPool())) {
-        //if buffer is not zero copy and pointer is aligned it will be more beneficial to do the transfer on GPU
+        // if buffer is not zero copy and pointer is aligned it will be more beneficial to do the transfer on GPU
         if (!isMemObjZeroCopy() && (reinterpret_cast<uintptr_t>(ptr) & (MemoryConstants::cacheLineSize - 1)) == 0) {
             return false;
         }
 
-        //on low power devices larger transfers are better on the GPU
+        // on low power devices larger transfers are better on the GPU
         if (device.getSpecializedDevice<ClDevice>()->getDeviceInfo().platformLP && size > maxBufferSizeForReadWriteOnCpu) {
             return false;
         }
@@ -674,7 +676,7 @@ Buffer *Buffer::createBufferHw(Context *context,
                                size_t size,
                                void *memoryStorage,
                                void *hostPtr,
-                               MultiGraphicsAllocation multiGraphicsAllocation,
+                               MultiGraphicsAllocation &&multiGraphicsAllocation,
                                bool zeroCopy,
                                bool isHostPtrSVM,
                                bool isImageRedescribed) {
@@ -698,7 +700,7 @@ Buffer *Buffer::createBufferHwFromDevice(const Device *device,
                                          size_t size,
                                          void *memoryStorage,
                                          void *hostPtr,
-                                         MultiGraphicsAllocation multiGraphicsAllocation,
+                                         MultiGraphicsAllocation &&multiGraphicsAllocation,
                                          size_t offset,
                                          bool zeroCopy,
                                          bool isHostPtrSVM,

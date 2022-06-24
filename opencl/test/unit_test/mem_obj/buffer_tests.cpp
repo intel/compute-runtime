@@ -908,7 +908,7 @@ TEST_P(NoHostPtr, GivenNoHostPtrWhenHwBufferCreationFailsThenReturnNullptr) {
                size_t,
                void *,
                void *,
-               MultiGraphicsAllocation,
+               MultiGraphicsAllocation &&,
                bool,
                bool,
                bool)
@@ -1793,7 +1793,9 @@ HWTEST_F(BufferHwFromDeviceTests, givenMultiGraphicsAllocationWhenCreateBufferHw
 
     auto multiGraphicsAllocation = MultiGraphicsAllocation(device->getRootDeviceIndex());
     multiGraphicsAllocation.addAllocation(&svmAlloc);
-    auto buffer = std::unique_ptr<Buffer>(Buffer::createBufferHwFromDevice(device.get(), 0, 0, size, ptr, ptr, multiGraphicsAllocation, 0, true, false, false));
+
+    auto copyMultiGraphicsAllocation = multiGraphicsAllocation;
+    auto buffer = std::unique_ptr<Buffer>(Buffer::createBufferHwFromDevice(device.get(), 0, 0, size, ptr, ptr, std::move(copyMultiGraphicsAllocation), 0, true, false, false));
 
     EXPECT_EQ(device->getRootDeviceIndex(), 0u);
     EXPECT_EQ(buffer->getMultiGraphicsAllocation().getGraphicsAllocations().size(), multiGraphicsAllocation.getGraphicsAllocations().size());

@@ -531,7 +531,7 @@ TEST_F(MemObjMultiRootDeviceTests, WhenMemObjIsCreatedWithMultiGraphicsAllocatio
     auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context->getDevice(0)->getDevice());
     std::unique_ptr<MemObj> memObj(
         new MemObj(context.get(), CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_READ_WRITE, 0,
-                   1, nullptr, nullptr, multiGraphicsAllocation, true, false, false));
+                   1, nullptr, nullptr, std::move(multiGraphicsAllocation), true, false, false));
 
     EXPECT_NE(nullptr, memObj->getMultiGraphicsAllocation().getGraphicsAllocation(0));
     EXPECT_NE(nullptr, memObj->getMultiGraphicsAllocation().getGraphicsAllocation(1));
@@ -552,7 +552,7 @@ TEST_F(MemObjMultiRootDeviceTests, WhenMemObjMapAreCreatedThenAllAllocationAreDe
     auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context->getDevice(1)->getDevice());
     std::unique_ptr<MemObj> memObj(
         new MemObj(context.get(), CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_READ_WRITE, 0,
-                   1, nullptr, nullptr, multiGraphicsAllocation, true, false, false));
+                   1, nullptr, nullptr, std::move(multiGraphicsAllocation), true, false, false));
 
     auto mapAllocation0 = memObj->getMapAllocation(2);
     auto mapAllocation1 = memObj->getMapAllocation(1);
