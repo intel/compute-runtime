@@ -10,8 +10,6 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/logical_state_helper.h"
 
-#include "hw_cmds.h"
-
 namespace NEO {
 
 template <typename GfxFamily>

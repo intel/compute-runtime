@@ -8,7 +8,8 @@
 #pragma once
 #include "shared/source/helpers/aux_translation.h"
 
-#include "hw_cmds.h"
+#include <cstddef>
+#include <vector>
 
 namespace NEO {
 

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/gen12lp/hw_cmds.h"
 #include "shared/source/gen12lp/hw_info.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.inl"

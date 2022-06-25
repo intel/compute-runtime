@@ -12,8 +12,6 @@
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "hw_cmds.h"
-
 template <typename FamilyType>
 struct PreferredSlmTestValues {
     uint32_t preferredSlmAllocationSizePerDss;
