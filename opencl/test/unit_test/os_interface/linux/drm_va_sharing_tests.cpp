@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/common/os_interface/linux/drm_memory_manager_tests.h"
+#include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
+#include "shared/test/common/os_interface/linux/drm_memory_manager_fixture.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/mem_obj/image.h"

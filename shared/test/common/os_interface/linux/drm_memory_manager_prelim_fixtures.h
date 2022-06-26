@@ -15,7 +15,7 @@
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture_prelim.h"
-#include "shared/test/common/os_interface/linux/drm_memory_manager_tests.h"
+#include "shared/test/common/os_interface/linux/drm_memory_manager_fixture.h"
 #include "shared/test/common/os_interface/linux/drm_mock_memory_info.h"
 
 #include "gtest/gtest.h"

@@ -19,7 +19,7 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/os_interface/linux/drm_memory_manager_tests.h"
+#include "shared/test/common/os_interface/linux/drm_memory_manager_fixture.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include <memory>

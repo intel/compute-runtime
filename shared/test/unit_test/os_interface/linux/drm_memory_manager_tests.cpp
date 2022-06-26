@@ -5,17 +5,20 @@
  *
  */
 
-#include "shared/test/common/os_interface/linux/drm_memory_manager_tests.h"
-
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/helpers/surface_format_info.h"
+#include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/test/common/fixtures/memory_allocator_multi_device_fixture.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
+#include "shared/test/common/mocks/linux/mock_drm_command_stream_receiver.h"
+#include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_gfx_partition.h"
 #include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/os_interface/linux/drm_memory_manager_fixture.h"
 #include "shared/test/common/os_interface/linux/drm_mock_cache_info.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/helpers/gtest_helpers.h"

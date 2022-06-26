@@ -181,6 +181,7 @@ set(neo_libult_SRCS_LINUX
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/linux/mock_drm_memory_manager.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_direct_submission_controller_enabled.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/create_drm_memory_manager.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/drm_memory_manager_fixture.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/drm_neo_create.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/options.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/sys_calls_linux_ult.cpp
