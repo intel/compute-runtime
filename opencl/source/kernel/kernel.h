@@ -360,10 +360,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
                                    size_t *localWorkSize);
     uint32_t getMaxWorkGroupCount(const cl_uint workDim, const size_t *localWorkSize, const CommandQueue *commandQueue) const;
 
-    uint64_t getKernelStartOffset(
-        const bool localIdsGenerationByRuntime,
-        const bool kernelUsesLocalIds,
-        const bool isCssUsed) const;
+    uint64_t getKernelStartAddress(const bool localIdsGenerationByRuntime, const bool kernelUsesLocalIds, const bool isCssUsed, const bool returnFullAddress) const;
 
     bool isKernelDebugEnabled() const { return debugEnabled; }
     int32_t setAdditionalKernelExecInfoWithParam(uint32_t paramName, size_t paramValueSize, const void *paramValue);

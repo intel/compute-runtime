@@ -505,7 +505,5 @@ class CommandQueueHw : public CommandQueue {
     void setupEvent(EventBuilder &eventBuilder, cl_event *outEvent, uint32_t cmdType);
 
     bool isBlitAuxTranslationRequired(const MultiDispatchInfo &multiDispatchInfo);
-
-    std::unique_ptr<LogicalStateHelper> logicalStateHelper;
 };
 } // namespace NEO

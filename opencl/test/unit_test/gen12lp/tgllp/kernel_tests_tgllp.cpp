@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ TGLLPTEST_F(KernelTgllpTests, GivenUseOffsetToSkipSetFFIDGPWorkaroundActiveWhenS
         mockKernelWithInternals.kernelInfo.kernelDescriptor.entryPoints.skipSetFFIDGP = additionalOffsetDueToFfid;
 
         for (auto isCcsUsed : ::testing::Bool()) {
-            uint64_t kernelStartOffset = mockKernelWithInternals.mockKernel->getKernelStartOffset(false, false, isCcsUsed);
+            uint64_t kernelStartOffset = mockKernelWithInternals.mockKernel->getKernelStartAddress(false, false, isCcsUsed, false);
 
             if (stepping == REVISION_A0 && isCcsUsed) {
                 EXPECT_EQ(defaultKernelStartOffset + additionalOffsetDueToFfid, kernelStartOffset);

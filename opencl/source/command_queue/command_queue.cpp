@@ -12,6 +12,7 @@
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/timestamp_packet.h"
@@ -1227,6 +1228,10 @@ void CommandQueue::clearLastBcsPackets() {
     for (BcsTimestampPacketContainers &bcsContainers : bcsTimestampPacketContainers) {
         bcsContainers.lastSignalledPacket.moveNodesToNewContainer(*deferredTimestampPackets);
     }
+}
+
+LogicalStateHelper *CommandQueue::getLogicalStateHelper() const {
+    return logicalStateHelper.get();
 }
 
 } // namespace NEO

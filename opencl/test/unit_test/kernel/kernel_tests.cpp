@@ -2845,8 +2845,21 @@ TEST(KernelTest, givenKernelLocalIdGenerationByRuntimeFalseWhenGettingStartOffse
     auto allocationOffset = mockKernel.kernelInfo.getGraphicsAllocation()->getGpuAddressToPatch();
 
     mockKernel.mockKernel->setStartOffset(128);
-    auto offset = mockKernel.mockKernel->getKernelStartOffset(false, true, false);
+    auto offset = mockKernel.mockKernel->getKernelStartAddress(false, true, false, false);
     EXPECT_EQ(allocationOffset + 256u, offset);
+    device->getMemoryManager()->freeGraphicsMemory(mockKernel.kernelInfo.getGraphicsAllocation());
+}
+
+TEST(KernelTest, givenFullAddressRequestWhenAskingForKernelStartAddressThenReturnFullAddress) {
+    auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
+
+    MockKernelWithInternals mockKernel(*device);
+
+    mockKernel.kernelInfo.createKernelAllocation(device->getDevice(), false);
+
+    auto address = mockKernel.mockKernel->getKernelStartAddress(false, true, false, true);
+    EXPECT_EQ(mockKernel.kernelInfo.getGraphicsAllocation()->getGpuAddress(), address);
+
     device->getMemoryManager()->freeGraphicsMemory(mockKernel.kernelInfo.getGraphicsAllocation());
 }
 
@@ -2861,7 +2874,7 @@ TEST(KernelTest, givenKernelLocalIdGenerationByRuntimeTrueAndLocalIdsUsedWhenGet
     auto allocationOffset = mockKernel.kernelInfo.getGraphicsAllocation()->getGpuAddressToPatch();
 
     mockKernel.mockKernel->setStartOffset(128);
-    auto offset = mockKernel.mockKernel->getKernelStartOffset(true, true, false);
+    auto offset = mockKernel.mockKernel->getKernelStartAddress(true, true, false, false);
     EXPECT_EQ(allocationOffset + 128u, offset);
     device->getMemoryManager()->freeGraphicsMemory(mockKernel.kernelInfo.getGraphicsAllocation());
 }
@@ -2877,7 +2890,7 @@ TEST(KernelTest, givenKernelLocalIdGenerationByRuntimeFalseAndLocalIdsNotUsedWhe
     auto allocationOffset = mockKernel.kernelInfo.getGraphicsAllocation()->getGpuAddressToPatch();
 
     mockKernel.mockKernel->setStartOffset(128);
-    auto offset = mockKernel.mockKernel->getKernelStartOffset(false, false, false);
+    auto offset = mockKernel.mockKernel->getKernelStartAddress(false, false, false, false);
     EXPECT_EQ(allocationOffset + 128u, offset);
     device->getMemoryManager()->freeGraphicsMemory(mockKernel.kernelInfo.getGraphicsAllocation());
 }

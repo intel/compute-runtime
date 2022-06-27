@@ -2020,15 +2020,13 @@ void Kernel::addAllocationToCacheFlushVector(uint32_t argIndex, GraphicsAllocati
     }
 }
 
-uint64_t Kernel::getKernelStartOffset(
-    const bool localIdsGenerationByRuntime,
-    const bool kernelUsesLocalIds,
-    const bool isCssUsed) const {
+uint64_t Kernel::getKernelStartAddress(const bool localIdsGenerationByRuntime, const bool kernelUsesLocalIds, const bool isCssUsed, const bool returnFullAddress) const {
 
     uint64_t kernelStartOffset = 0;
 
     if (kernelInfo.getGraphicsAllocation()) {
-        kernelStartOffset = kernelInfo.getGraphicsAllocation()->getGpuAddressToPatch();
+        kernelStartOffset = returnFullAddress ? kernelInfo.getGraphicsAllocation()->getGpuAddress()
+                                              : kernelInfo.getGraphicsAllocation()->getGpuAddressToPatch();
         if (localIdsGenerationByRuntime == false && kernelUsesLocalIds == true) {
             kernelStartOffset += kernelInfo.kernelDescriptor.entryPoints.skipPerThreadDataLoad;
         }
