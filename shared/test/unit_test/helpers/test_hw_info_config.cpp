@@ -106,9 +106,32 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenIsAdjustWalkOrderAvailableCallTh
     EXPECT_FALSE(hwInfoConfig.isAdjustWalkOrderAvailable(*defaultHwInfo));
 }
 
-HWTEST_F(HwInfoConfigTest, givenCompilerHwInfoConfigWhengetCachingPolicyOptionsThenReturnNullptr) {
+HWTEST2_F(HwInfoConfigTest, givenAtMostXeHPWhenGetCachingPolicyOptionsThenReturnNullptr, IsAtMostXeHpCore) {
     auto compilerHwInfoConfig = CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     EXPECT_EQ(compilerHwInfoConfig->getCachingPolicyOptions(), nullptr);
+}
+
+HWTEST2_F(HwInfoConfigTest, givenAtLeastDG2WhenGetCachingPolicyOptionsThenReturnWriteByPassPolicyOption, IsAtLeastXeHpgCore) {
+    auto compilerHwInfoConfig = CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    const char *expectedStr = "-cl-store-cache-default=2 -cl-load-cache-default=4";
+    EXPECT_EQ(0, memcmp(compilerHwInfoConfig->getCachingPolicyOptions(), expectedStr, strlen(expectedStr)));
+}
+
+HWTEST2_F(HwInfoConfigTest, givenAtLeastDG2WhenGetCachingPolicyOptionsThenReturnWriteBackPolicyOption, IsAtLeastXeHpgCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
+
+    auto compilerHwInfoConfig = CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    const char *expectedStr = "-cl-store-cache-default=7 -cl-load-cache-default=4";
+    EXPECT_EQ(0, memcmp(compilerHwInfoConfig->getCachingPolicyOptions(), expectedStr, strlen(expectedStr)));
+}
+
+HWTEST2_F(HwInfoConfigTest, givenCachePolicyWithoutCorrespondingBuildOptionWhenGetCachingPolicyOptionsThenReturnNullptr, IsAtLeastXeHpgCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(1);
+
+    auto compilerHwInfoConfig = CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    EXPECT_EQ(nullptr, compilerHwInfoConfig->getCachingPolicyOptions());
 }
 
 HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigAndDebugFlagWhenGetL1CachePolicyThenReturnCorrectPolicy, IsAtLeastXeHpgCore) {

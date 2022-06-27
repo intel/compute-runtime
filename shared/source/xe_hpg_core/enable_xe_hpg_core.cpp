@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/cache_policy_dg2_and_later.inl"
 #include "shared/source/helpers/compiler_aot_config_bdw_and_later.inl"
 #include "shared/source/helpers/compiler_hw_info_config_base.inl"
 #include "shared/source/helpers/compiler_hw_info_config_bdw_and_later.inl"
@@ -14,9 +15,14 @@
 
 namespace NEO {
 #ifdef SUPPORT_DG2
-static EnableGfxProductHw<IGFX_DG2> enableGfxProductHwDG2;
 
-#include "shared/source/xe_hpg_core/compiler_hw_info_config_dg2.inl"
+template <>
+uint32_t L1CachePolicyHelper<IGFX_DG2>::getDefaultL1CachePolicy() {
+    using GfxFamily = HwMapper<IGFX_DG2>::GfxFamily;
+    return GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP;
+}
+
+static EnableGfxProductHw<IGFX_DG2> enableGfxProductHwDG2;
 static EnableCompilerHwInfoConfig<IGFX_DG2> enableCompilerHwInfoConfigDG2;
 #endif
 } // namespace NEO

@@ -7,6 +7,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -428,16 +429,8 @@ template <PRODUCT_FAMILY gfxProduct>
 bool HwInfoConfigHw<gfxProduct>::isAdjustWalkOrderAvailable(const HardwareInfo &hwInfo) const { return false; }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t HwInfoConfigHw<gfxProduct>::getDefaultL1CachePolicy() const {
-    return 0;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 uint32_t HwInfoConfigHw<gfxProduct>::getL1CachePolicy() const {
-    if (DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.get() != -1) {
-        return DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.get();
-    }
-    return getDefaultL1CachePolicy();
+    return L1CachePolicyHelper<gfxProduct>::getL1CachePolicy();
 }
 
 } // namespace NEO

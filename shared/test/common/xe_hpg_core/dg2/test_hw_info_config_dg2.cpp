@@ -16,7 +16,6 @@ using TestDg2HwInfoConfig = Test<DeviceFixture>;
 
 HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTestWindows, givenHardwareInfoWhenCallingIsAdditionalStateBaseAddressWARequiredThenFalseIsReturned, IGFX_DG2);
 HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTestWindows, givenHardwareInfoWhenCallingIsMaxThreadsForWorkgroupWARequiredThenFalseIsReturned, IGFX_DG2);
-HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, givenCompilerHwInfoConfigWhengetCachingPolicyOptionsThenReturnNullptr, IGFX_DG2);
 
 DG2TEST_F(TestDg2HwInfoConfig, givenDG2WithCSteppingThenAdditionalStateBaseAddressWAIsNotRequired) {
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
@@ -68,11 +67,4 @@ DG2TEST_F(TestDg2HwInfoConfig, givenDG2HwInfoConfigWhenCheckDirectSubmissionSupp
     auto hwInfo = *defaultHwInfo;
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     EXPECT_TRUE(hwInfoConfig.isDirectSubmissionSupported(hwInfo));
-}
-
-DG2TEST_F(TestDg2HwInfoConfig, givenDG2CompilerHwInfoConfigWhengetCachingPolicyOptionsThenReturnCorrectPolicies) {
-    auto hwInfo = *defaultHwInfo;
-    auto compilerHwInfoConfig = CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);
-    const char *expectedStr = "-cl-store-cache-default=7 -cl-load-cache-default=4";
-    EXPECT_EQ(0, memcmp(compilerHwInfoConfig->getCachingPolicyOptions(), expectedStr, strlen(expectedStr)));
 }

@@ -1752,6 +1752,20 @@ TEST_F(ProgramTests, whenGetInternalOptionsThenLSCPolicyIsSet) {
     }
 }
 
+HWTEST2_F(ProgramTests, givenDebugFlagSetToWbWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeHpgCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
+    MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
+    auto internalOptions = program.getInternalOptions();
+    EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-cl-store-cache-default=7 -cl-load-cache-default=4"));
+}
+
+HWTEST2_F(ProgramTests, givenAtLeastDG2WhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeHpgCore) {
+    MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
+    auto internalOptions = program.getInternalOptions();
+    EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-cl-store-cache-default=2 -cl-load-cache-default=4"));
+}
+
 TEST_F(ProgramTests, WhenCreatingProgramThenBindlessIsEnabledOnlyIfDebugFlagIsEnabled) {
     using namespace testing;
     DebugManagerStateRestore restorer;

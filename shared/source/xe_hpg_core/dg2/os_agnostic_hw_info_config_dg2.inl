@@ -210,8 +210,3 @@ bool HwInfoConfigHw<gfxProduct>::isStorageInfoAdjustmentRequired() const {
         return false;
     }
 }
-
-template <>
-uint32_t HwInfoConfigHw<gfxProduct>::getDefaultL1CachePolicy() const {
-    return XE_HPG_COREFamily::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP;
-}

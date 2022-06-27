@@ -53,8 +53,3 @@ void HwInfoConfigHw<gfxProduct>::getKernelExtendedProperties(uint32_t *fp16, uin
     *fp32 = (FP_ATOMIC_EXT_FLAG_GLOBAL_LOAD_STORE | FP_ATOMIC_EXT_FLAG_GLOBAL_ADD | FP_ATOMIC_EXT_FLAG_GLOBAL_MIN_MAX);
     *fp64 = (FP_ATOMIC_EXT_FLAG_GLOBAL_LOAD_STORE | FP_ATOMIC_EXT_FLAG_GLOBAL_ADD | FP_ATOMIC_EXT_FLAG_GLOBAL_MIN_MAX);
 }
-
-template <>
-uint32_t HwInfoConfigHw<gfxProduct>::getDefaultL1CachePolicy() const {
-    return XE_HPC_COREFamily::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP;
-}

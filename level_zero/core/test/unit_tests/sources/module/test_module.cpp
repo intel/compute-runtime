@@ -2306,6 +2306,28 @@ HWTEST_F(ModuleTranslationUnitTest, givenInternalOptionsThenLSCCachePolicyIsSet)
     }
 }
 
+HWTEST2_F(ModuleTranslationUnitTest, givenDebugFlagSetToWbWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeHpgCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
+    auto pMockCompilerInterface = new MockCompilerInterface;
+    auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
+    rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);
+    MockModuleTranslationUnit moduleTu(this->device);
+    auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
+    EXPECT_TRUE(ret);
+    EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-store-cache-default=7 -cl-load-cache-default=4"), std::string::npos);
+}
+
+HWTEST2_F(ModuleTranslationUnitTest, givenAtLeastDG2WhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeHpgCore) {
+    auto pMockCompilerInterface = new MockCompilerInterface;
+    auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
+    rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);
+    MockModuleTranslationUnit moduleTu(this->device);
+    auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
+    EXPECT_TRUE(ret);
+    EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-store-cache-default=2 -cl-load-cache-default=4"), std::string::npos);
+}
+
 HWTEST_F(ModuleTranslationUnitTest, givenForceToStatelessRequiredWhenBuildingModuleThen4GbBuffersAreRequired) {
     auto mockCompilerInterface = new MockCompilerInterface;
     auto &rootDeviceEnvironment = neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
