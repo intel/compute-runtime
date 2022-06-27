@@ -329,6 +329,8 @@ void OfflineCompiler::setFamilyType() {
 
 int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(std::string deviceName, int deviceId) {
     std::vector<PRODUCT_FAMILY> allSupportedProduct{ALL_SUPPORTED_PRODUCT_FAMILIES};
+    std::transform(deviceName.begin(), deviceName.end(), deviceName.begin(), ::tolower);
+
     for (const auto &product : allSupportedProduct) {
         if (0 == strcmp(deviceName.c_str(), hardwarePrefix[product])) {
             hwInfo = *hardwareInfoTable[product];

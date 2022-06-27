@@ -590,6 +590,51 @@ TEST_F(MockOfflineCompilerTests, givenDeprecatedAcronymsWithRevisionWhenInitHwIn
     }
 }
 
+TEST_F(MockOfflineCompilerTests, givenAcronymWithUppercaseWhenInitHwInfoThenSuccessIsReturned) {
+    MockOfflineCompiler mockOfflineCompiler;
+    auto allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->getAllSupportedDeviceConfigs();
+    if (allEnabledDeviceConfigs.empty()) {
+        GTEST_SKIP();
+    }
+
+    for (const auto &deviceMapConfig : allEnabledDeviceConfigs) {
+        if (productFamily == deviceMapConfig.hwInfo->platform.eProductFamily) {
+            if (!deviceMapConfig.acronyms.empty()) {
+                mockOfflineCompiler.deviceName = deviceMapConfig.acronyms.front().str();
+                break;
+            }
+        }
+    }
+    if (mockOfflineCompiler.deviceName.empty()) {
+        GTEST_SKIP();
+    }
+
+    std::transform(mockOfflineCompiler.deviceName.begin(), mockOfflineCompiler.deviceName.end(), mockOfflineCompiler.deviceName.begin(), ::toupper);
+    EXPECT_EQ(mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName), OclocErrorCode::SUCCESS);
+}
+
+TEST_F(MockOfflineCompilerTests, givenDeprecatedAcronymsWithUppercaseWhenInitHwInfoThenSuccessIsReturned) {
+    MockOfflineCompiler mockOfflineCompiler;
+    auto deprecatedAcronyms = mockOfflineCompiler.getDeprecatedDevicesTypes();
+    if (deprecatedAcronyms.empty()) {
+        GTEST_SKIP();
+    }
+    auto acronyms = CompilerOptions::tokenize(deprecatedAcronyms, ',');
+
+    for (const auto &deprecatedAcronym : acronyms) {
+        if (deprecatedAcronym.contains(" ")) {
+            auto name = deprecatedAcronym.str();
+            auto space = name.find(" ");
+            mockOfflineCompiler.deviceName = name.substr(++space, name.size());
+        } else {
+            mockOfflineCompiler.deviceName = deprecatedAcronym.str();
+        }
+
+        std::transform(mockOfflineCompiler.deviceName.begin(), mockOfflineCompiler.deviceName.end(), mockOfflineCompiler.deviceName.begin(), ::toupper);
+        EXPECT_EQ(mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName), OclocErrorCode::SUCCESS);
+    }
+}
+
 HWTEST2_F(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenMaxDualSubSlicesSupportedIsSet, IsAtLeastGen12lp) {
     MockOfflineCompiler mockOfflineCompiler;
     auto allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->getAllSupportedDeviceConfigs();
