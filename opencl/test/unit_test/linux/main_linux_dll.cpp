@@ -894,20 +894,6 @@ TEST(CommandQueueTest, whenCheckEngineTimestampWaitEnabledThenReturnsTrue) {
     EXPECT_TRUE(CommandQueue::isTimestampWaitEnabled());
 }
 
-TEST(CommandQueueTest, givenEnableCmdQRoundRobindEngineAssignSetWhenCheckEngineRoundRobinAssignThenReturnsTrue) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableCmdQRoundRobindEngineAssign.set(1);
-
-    EXPECT_TRUE(CommandQueue::isAssignEngineRoundRobinEnabled());
-}
-
-TEST(CommandQueueTest, givenEnableCmdQRoundRobindEngineAssignSetZeroWhenCheckEngineRoundRobinAssignThenReturnsTrue) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableCmdQRoundRobindEngineAssign.set(0);
-
-    EXPECT_FALSE(CommandQueue::isAssignEngineRoundRobinEnabled());
-}
-
 TEST(PlatformsDestructor, whenGlobalPlatformsDestructorIsCalledThenGlobalPlatformsAreDestroyed) {
     EXPECT_NE(nullptr, platformsImpl);
     platformsDestructor();
