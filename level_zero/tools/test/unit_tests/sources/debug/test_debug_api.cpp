@@ -206,14 +206,14 @@ TEST_F(DebugApiTest, givenNullCountPointerWhenGetRegisterSetPropertiesCalledThen
 TEST_F(DebugApiTest, givenZeroCountWhenGetRegisterSetPropertiesCalledThenCorrectCountIsSet) {
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, nullptr));
-    EXPECT_EQ(10u, count);
+    EXPECT_EQ(11u, count);
 }
 
 TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledAndExtraSpaceIsProvidedThenCorrectPropertiesReturned) {
     uint32_t count = 100;
     std::vector<zet_debug_regset_properties_t> regsetProps(count);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, regsetProps.data()));
-    EXPECT_EQ(10u, count);
+    EXPECT_EQ(11u, count);
 }
 
 TEST_F(DebugApiTest, givenNoStateSaveHeaderWhenGettingRegSetPropertiesThenZeroCountIsReturned) {
@@ -234,12 +234,12 @@ TEST_F(DebugApiTest, givenNonZeroCountAndNullRegsetPointerWhenGetRegisterSetProp
 TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledCorrectPropertiesReturned) {
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, nullptr));
-    EXPECT_EQ(10u, count);
+    EXPECT_EQ(11u, count);
 
     std::vector<zet_debug_regset_properties_t> regsetProps(count);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, regsetProps.data()));
 
-    EXPECT_EQ(10u, count);
+    EXPECT_EQ(11u, count);
 
     auto validateRegsetProps = [](const zet_debug_regset_properties_t &regsetProps,
                                   zet_debug_regset_type_intel_gpu_t type, zet_debug_regset_flags_t flags,
@@ -265,6 +265,8 @@ TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledCorrectPropertiesReturne
     // MME is not present
     validateRegsetProps(regsetProps[8], ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE | ZET_DEBUG_REGSET_FLAG_WRITEABLE, 1, 128, 16);
     validateRegsetProps(regsetProps[9], ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE, ZET_DEBUG_SBA_COUNT_INTEL_GPU, 64, 8);
+    // FC is not present
+    validateRegsetProps(regsetProps[10], ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE | ZET_DEBUG_REGSET_FLAG_WRITEABLE, 1, 32, 4);
 }
 
 TEST(DebugSessionTest, givenDebugSessionWhenConvertingToAndFromHandleCorrectHandleAndPointerIsReturned) {

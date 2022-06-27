@@ -30,6 +30,7 @@ typedef enum _zet_debug_regset_type_intel_gpu_t {
     ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU = 9,     ///< The mme register set
     ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU = 10,     ///< The stack pointer register set
     ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU = 11,    ///< The state base address register set
+    ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU = 12,    ///< The debug register set
     ZET_DEBUG_REGSET_TYPE_FORCE_UINT32 = 0x7fffffff
 } zet_debug_regset_type_intel_gpu_t;
 
