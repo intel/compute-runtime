@@ -688,7 +688,7 @@ if(NOT MSVC)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-noexcept-type") # Added for gtest
     endif()
   endif()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Werror=vla")
 
   if(USE_SANITIZE_UB)
     check_cxx_compiler_flag(-fsanitize=undefined COMPILER_SUPPORTS_UNDEFINED_BEHAVIOR_SANITIZER)

@@ -825,9 +825,9 @@ void testSysmanFirmware(ze_device_handle_t &device, std::string imagePath) {
             std::cout << "firmware version = " << fwProperties.version << std::endl;
         }
         if (imagePath.size() != 0 && imgSize > 0) {
-            char img[imgSize];
-            imageFile.read(img, imgSize);
-            VALIDATECALL(zesFirmwareFlash(handle, img, static_cast<uint32_t>(imgSize)));
+            std::vector<char> img(imgSize);
+            imageFile.read(img.data(), imgSize);
+            VALIDATECALL(zesFirmwareFlash(handle, img.data(), static_cast<uint32_t>(imgSize)));
 
             VALIDATECALL(zesFirmwareGetProperties(handle, &fwProperties));
             if (verbose) {
