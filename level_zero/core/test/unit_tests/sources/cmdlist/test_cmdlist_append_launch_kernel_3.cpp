@@ -487,6 +487,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
         false,
         false,
         false,
+        false,
         false};
     NEO::EncodeDispatchKernel<FamilyType>::encode(commandContainer, dispatchKernelArgs);
 
@@ -691,6 +692,92 @@ HWTEST_F(CommandListAppendLaunchKernelWithImplicitArgs, givenIndirectDispatchWit
     EXPECT_EQ(cmd->getMemoryAddress(), workDimStoreRegisterMemCmd.getMemoryAddress());
 
     context->freeMem(alloc);
+}
+
+struct MultiTileImmediateCommandListAppendLaunchFunctionXeHpCoreFixture : public MultiDeviceModuleFixture {
+    void SetUp() {
+        DebugManager.flags.EnableImplicitScaling.set(1);
+
+        MultiDeviceFixture::numRootDevices = 1u;
+        MultiDeviceFixture::numSubDevices = 2u;
+
+        MultiDeviceModuleFixture::SetUp();
+        createModuleFromBinary(0u);
+        createKernel(0u);
+
+        device = driverHandle->devices[0];
+
+        ze_context_handle_t hContext;
+        ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+        ze_result_t res = device->getDriverHandle()->createContext(&desc, 0u, nullptr, &hContext);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));
+    }
+
+    void TearDown() {
+        contextImp->destroy();
+
+        MultiDeviceModuleFixture::TearDown();
+    }
+
+    ContextImp *contextImp = nullptr;
+    L0::Device *device = nullptr;
+    VariableBackup<bool> backupApiSupport{&NEO::ImplicitScaling::apiSupport, true};
+    VariableBackup<bool> backupLocalMemory{&NEO::OSInterface::osEnableLocalMemory, true};
+};
+
+using MultiTileImmediateCommandListAppendLaunchFunctionXeHpCoreTest = Test<MultiTileImmediateCommandListAppendLaunchFunctionXeHpCoreFixture>;
+
+HWTEST2_F(MultiTileImmediateCommandListAppendLaunchFunctionXeHpCoreTest, givenImplicitScalingWhenUsingImmediateCommandListThenDoNotAddSelfCleanup, IsAtLeastXeHpCore) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    DebugManager.flags.UsePipeControlAfterPartitionedWalker.set(1);
+
+    ze_group_count_t groupCount{128, 1, 1};
+
+    auto immediateCmdList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    immediateCmdList->cmdListType = ::L0::CommandList::CommandListType::TYPE_IMMEDIATE;
+    auto result = immediateCmdList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto cmdStream = immediateCmdList->commandContainer.getCommandStream();
+
+    auto sizeBefore = cmdStream->getUsed();
+    CmdListKernelLaunchParams launchParams = {};
+    result = immediateCmdList->appendLaunchKernelWithParams(kernel.get(), &groupCount, nullptr, launchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    auto sizeAfter = cmdStream->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdStream->getCpuBase(), sizeBefore),
+        sizeAfter - sizeBefore));
+
+    auto itorWalker = find<WALKER_TYPE *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorWalker);
+    auto cmdWalker = genCmdCast<WALKER_TYPE *>(*itorWalker);
+    EXPECT_TRUE(cmdWalker->getWorkloadPartitionEnable());
+
+    auto itorPipeControl = find<PIPE_CONTROL *>(itorWalker, cmdList.end());
+    ASSERT_NE(cmdList.end(), itorPipeControl);
+
+    auto itorStoreDataImm = find<MI_STORE_DATA_IMM *>(itorWalker, itorPipeControl);
+    EXPECT_EQ(itorPipeControl, itorStoreDataImm);
+
+    auto itorBbStart = find<MI_BATCH_BUFFER_START *>(itorPipeControl, cmdList.end());
+    ASSERT_NE(cmdList.end(), itorBbStart);
+
+    auto itorMiAtomic = find<MI_ATOMIC *>(itorBbStart, cmdList.end());
+    EXPECT_EQ(cmdList.end(), itorMiAtomic);
+
+    auto itorSemaphoreWait = find<MI_SEMAPHORE_WAIT *>(itorBbStart, cmdList.end());
+    EXPECT_EQ(cmdList.end(), itorSemaphoreWait);
 }
 
 } // namespace ult

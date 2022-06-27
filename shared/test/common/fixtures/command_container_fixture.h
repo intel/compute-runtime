@@ -52,7 +52,8 @@ class CommandEncodeStatesFixture : public DeviceFixture {
             false,                    // isInternal
             false,                    // isCooperative
             false,                    // isHostScopeSignalEvent
-            false                     // isKernelUsingSystemAllocation
+            false,                    // isKernelUsingSystemAllocation
+            false                     // isKernelDispatchedFromImmediateCmdList
         };
 
         return args;

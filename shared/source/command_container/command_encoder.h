@@ -49,6 +49,7 @@ struct EncodeDispatchKernelArgs {
     bool isCooperative = false;
     bool isHostScopeSignalEvent = false;
     bool isKernelUsingSystemAllocation = false;
+    bool isKernelDispatchedFromImmediateCmdList = false;
 };
 
 struct EncodeWalkerArgs {

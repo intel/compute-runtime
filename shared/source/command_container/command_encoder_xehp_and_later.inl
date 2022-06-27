@@ -281,7 +281,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                                                           args.device->getDeviceBitfield(),
                                                           args.partitionCount,
                                                           true,
-                                                          true,
+                                                          !args.isKernelDispatchedFromImmediateCmdList,
                                                           false,
                                                           workPartitionAllocationGpuVa,
                                                           hwInfo);

@@ -36,7 +36,7 @@ class LinearStream {
     size_t getUsed() const;
 
     uint64_t getGpuBase() const;
-    void setGpuBase(uint64_t);
+    void setGpuBase(uint64_t gpuAddress);
 
     void overrideMaxSize(size_t newMaxSize);
     void replaceBuffer(void *buffer, size_t bufferSize);

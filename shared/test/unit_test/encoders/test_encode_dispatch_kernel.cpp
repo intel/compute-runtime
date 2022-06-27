@@ -1234,6 +1234,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, givenGlobalBindlessHeapsWhenDispatchin
         requiresUncachedMocs,
         false,
         false,
+        false,
         false};
 
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
@@ -1277,6 +1278,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, givenBindlessModeDisabledelWithSampler
         false,
         false,
         requiresUncachedMocs,
+        false,
         false,
         false,
         false};

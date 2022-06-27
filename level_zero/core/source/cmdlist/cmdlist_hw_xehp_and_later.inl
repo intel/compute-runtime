@@ -244,7 +244,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         internalUsage,                                            // isInternal
         launchParams.isCooperative,                               // isCooperative
         isHostSignalScopeEvent,                                   // isHostScopeSignalEvent
-        isKernelUsingSystemAllocation                             // isKernelUsingSystemAllocation
+        isKernelUsingSystemAllocation,                            // isKernelUsingSystemAllocation
+        cmdListType == CommandListType::TYPE_IMMEDIATE            // isKernelDispatchedFromImmediateCmdList
     };
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs);
     this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;
@@ -348,14 +349,14 @@ void CommandListCoreFamily<gfxCoreFamily>::appendMultiTileBarrier(NEO::Device &n
                                                                      hwInfo,
                                                                      0,
                                                                      0,
-                                                                     true,
+                                                                     !(cmdListType == CommandListType::TYPE_IMMEDIATE),
                                                                      true);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline size_t CommandListCoreFamily<gfxCoreFamily>::estimateBufferSizeMultiTileBarrier(const NEO::HardwareInfo &hwInfo) {
     return NEO::ImplicitScalingDispatch<GfxFamily>::getBarrierSize(hwInfo,
-                                                                   true,
+                                                                   !(cmdListType == CommandListType::TYPE_IMMEDIATE),
                                                                    false);
 }
 
