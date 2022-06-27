@@ -252,7 +252,9 @@ bool DrmAllocation::shouldAllocationPageFault(const Drm *drm) {
 
     switch (this->allocationType) {
     case AllocationType::UNIFIED_SHARED_MEMORY:
-        return DebugManager.flags.UseKmdMigration.get();
+        return DebugManager.flags.UseKmdMigration.get() > 0;
+    case AllocationType::BUFFER:
+        return DebugManager.flags.UseKmdMigrationForBuffers.get() > 0;
     default:
         return false;
     }

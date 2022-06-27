@@ -417,6 +417,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideAubDeviceId, -1, "-1 don't override, any
 DECLARE_DEBUG_VARIABLE(int32_t, EnableTimestampPacket, -1, "-1: default, 0: disable, 1:enable. Write Timestamp Packet for each set of gpu walkers")
 DECLARE_DEBUG_VARIABLE(int32_t, AllocateSharedAllocationsWithCpuAndGpuStorage, -1, "When enabled driver creates cpu & gpu storage for shared unified memory allocations. (-1 - devices default mode, 0 - disable, 1 - enable)")
 DECLARE_DEBUG_VARIABLE(int32_t, UseKmdMigration, -1, "-1: devices default mode, 0: disable - pagefault handling by UMD using handler for SIGSEGV, 1: enable - pagefault handling by KMD, GEM objects migrated by KMD upon access)")
+DECLARE_DEBUG_VARIABLE(int32_t, UseKmdMigrationForBuffers, -1, "-1: default mode of kmd migration for buffers (disable), 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceSemaphoreDelayBetweenWaits, -1, "Specifies the minimum number of microseconds allowed for command streamer to wait before re-fetching the data. 0 - poll interval will be equal to the memory latency of the read completion")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceLocalMemoryAccessMode, -1, "-1: don't override, 0: default rules apply, 1: CPU can access local memory, 3: CPU never accesses local memory")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceUserptrAlignment, -1, "-1: no force (4kb), >0: n kb alignment")

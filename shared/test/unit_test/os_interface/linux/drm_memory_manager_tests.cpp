@@ -4046,6 +4046,43 @@ TEST_F(DrmMemoryManagerTest, givenPageFaultIsUnSupportedWhenCallingBindBoOnBuffe
     EXPECT_FALSE(bo.isExplicitResidencyRequired());
 }
 
+TEST_F(DrmMemoryManagerTest, givenPageFaultIsSupportedAndKmdMigrationEnabledForBuffersWhenCallingBindBoOnBufferAllocationThenAllocationShouldPageFaultAndExplicitResidencyIsNotRequired) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableRecoverablePageFaults.set(true);
+
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->initializeMemoryManager();
+
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    EXPECT_FALSE(drm.pageFaultSupported);
+
+    OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.ensureContextInitialized();
+    uint32_t vmHandleId = 0;
+
+    MockBufferObject bo(&drm, 3, 0, 0, 1);
+    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
+    allocation.bufferObjects[0] = &bo;
+
+    for (auto useKmdMigrationForBuffer : {-1, 0, 1}) {
+        DebugManager.flags.UseKmdMigrationForBuffers.set(useKmdMigrationForBuffer);
+
+        std::vector<BufferObject *> bufferObjects;
+        allocation.bindBO(&bo, &osContext, vmHandleId, &bufferObjects, true);
+
+        if (useKmdMigrationForBuffer > 0) {
+            EXPECT_TRUE(allocation.shouldAllocationPageFault(&drm));
+            EXPECT_FALSE(bo.isExplicitResidencyRequired());
+        } else {
+            EXPECT_FALSE(allocation.shouldAllocationPageFault(&drm));
+            EXPECT_TRUE(bo.isExplicitResidencyRequired());
+        }
+    }
+}
+
 TEST_F(DrmMemoryManagerTest, givenPageFaultIsSupportedWhenCallingBindBoOnAllocationThatShouldPageFaultThenExplicitResidencyIsNotRequired) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
