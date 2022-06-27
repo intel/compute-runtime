@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/buffer.h"

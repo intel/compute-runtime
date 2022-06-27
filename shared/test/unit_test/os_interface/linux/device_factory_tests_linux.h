@@ -10,7 +10,6 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
-#include "shared/test/common/test_macros/test.h"
 
 namespace NEO {
 extern Drm **pDrmToReturnFromCreateFunc;

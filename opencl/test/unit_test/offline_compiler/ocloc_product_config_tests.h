@@ -7,8 +7,6 @@
 
 #pragma once
 
-#include "shared/test/common/test_macros/test.h"
-
 #include "opencl/test/unit_test/offline_compiler/mock/mock_offline_compiler.h"
 
 namespace NEO {

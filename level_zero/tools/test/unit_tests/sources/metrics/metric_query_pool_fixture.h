@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/os_interface/device_factory.h"
-#include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
 
