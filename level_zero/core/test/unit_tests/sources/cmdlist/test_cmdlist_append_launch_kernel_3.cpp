@@ -18,6 +18,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/multi_tile_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
@@ -694,39 +695,7 @@ HWTEST_F(CommandListAppendLaunchKernelWithImplicitArgs, givenIndirectDispatchWit
     context->freeMem(alloc);
 }
 
-struct MultiTileImmediateCommandListAppendLaunchFunctionXeHpCoreFixture : public MultiDeviceModuleFixture {
-    void SetUp() {
-        DebugManager.flags.EnableImplicitScaling.set(1);
-
-        MultiDeviceFixture::numRootDevices = 1u;
-        MultiDeviceFixture::numSubDevices = 2u;
-
-        MultiDeviceModuleFixture::SetUp();
-        createModuleFromBinary(0u);
-        createKernel(0u);
-
-        device = driverHandle->devices[0];
-
-        ze_context_handle_t hContext;
-        ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
-        ze_result_t res = device->getDriverHandle()->createContext(&desc, 0u, nullptr, &hContext);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-        contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));
-    }
-
-    void TearDown() {
-        contextImp->destroy();
-
-        MultiDeviceModuleFixture::TearDown();
-    }
-
-    ContextImp *contextImp = nullptr;
-    L0::Device *device = nullptr;
-    VariableBackup<bool> backupApiSupport{&NEO::ImplicitScaling::apiSupport, true};
-    VariableBackup<bool> backupLocalMemory{&NEO::OSInterface::osEnableLocalMemory, true};
-};
-
-using MultiTileImmediateCommandListAppendLaunchFunctionXeHpCoreTest = Test<MultiTileImmediateCommandListAppendLaunchFunctionXeHpCoreFixture>;
+using MultiTileImmediateCommandListAppendLaunchFunctionXeHpCoreTest = Test<MultiTileImmediateCommandListAppendLaunchFunctionFixture>;
 
 HWTEST2_F(MultiTileImmediateCommandListAppendLaunchFunctionXeHpCoreTest, givenImplicitScalingWhenUsingImmediateCommandListThenDoNotAddSelfCleanup, IsAtLeastXeHpCore) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
@@ -742,6 +711,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendLaunchFunctionXeHpCoreTest, givenIm
 
     auto immediateCmdList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     immediateCmdList->cmdListType = ::L0::CommandList::CommandListType::TYPE_IMMEDIATE;
+    immediateCmdList->isFlushTaskSubmissionEnabled = true;
     auto result = immediateCmdList->initialize(device, NEO::EngineGroupType::Compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -778,9 +748,10 @@ HWTEST2_F(MultiTileImmediateCommandListAppendLaunchFunctionXeHpCoreTest, givenIm
     EXPECT_EQ(itorPipeControl, itorStoreDataImm);
 
     auto itorBbStart = find<MI_BATCH_BUFFER_START *>(itorPipeControl, cmdList.end());
+    ASSERT_NE(cmdList.end(), itorBbStart);
     auto cmdBbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*itorBbStart);
     EXPECT_EQ(bbStartGpuAddress, cmdBbStart->getBatchBufferStartAddress());
-    ASSERT_NE(cmdList.end(), itorBbStart);
+    EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH, cmdBbStart->getSecondLevelBatchBuffer());
 
     auto itorMiAtomic = find<MI_ATOMIC *>(itorBbStart, cmdList.end());
     EXPECT_EQ(cmdList.end(), itorMiAtomic);
@@ -789,5 +760,47 @@ HWTEST2_F(MultiTileImmediateCommandListAppendLaunchFunctionXeHpCoreTest, givenIm
     EXPECT_EQ(cmdList.end(), itorSemaphoreWait);
 }
 
+HWTEST2_F(MultiTileImmediateCommandListAppendLaunchFunctionXeHpCoreTest, givenImplicitScalingWhenUsingImmediateCommandListWithoutFlushTaskThenUseSecondaryBuffer, IsAtLeastXeHpCore) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    DebugManager.flags.UsePipeControlAfterPartitionedWalker.set(1);
+
+    ze_group_count_t groupCount{128, 1, 1};
+
+    auto immediateCmdList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    immediateCmdList->cmdListType = ::L0::CommandList::CommandListType::TYPE_IMMEDIATE;
+    immediateCmdList->isFlushTaskSubmissionEnabled = false;
+    auto result = immediateCmdList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto cmdStream = immediateCmdList->commandContainer.getCommandStream();
+
+    auto sizeBefore = cmdStream->getUsed();
+    CmdListKernelLaunchParams launchParams = {};
+    result = immediateCmdList->appendLaunchKernelWithParams(kernel.get(), &groupCount, nullptr, launchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    auto sizeAfter = cmdStream->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdStream->getCpuBase(), sizeBefore),
+        sizeAfter - sizeBefore));
+
+    auto itorWalker = find<WALKER_TYPE *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorWalker);
+    auto cmdWalker = genCmdCast<WALKER_TYPE *>(*itorWalker);
+    EXPECT_TRUE(cmdWalker->getWorkloadPartitionEnable());
+
+    auto itorBbStart = find<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorBbStart);
+    auto cmdBbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*itorBbStart);
+    EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, cmdBbStart->getSecondLevelBatchBuffer());
+}
 } // namespace ult
 } // namespace L0

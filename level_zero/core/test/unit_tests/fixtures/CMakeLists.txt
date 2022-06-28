@@ -15,6 +15,8 @@ set(L0_FIXTURES_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/host_pointer_manager_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/module_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_ipc_fixture.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/multi_tile_fixture.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/multi_tile_fixture.h
 )
 
 add_library(${TARGET_NAME} OBJECT ${L0_FIXTURES_SOURCES} ${NEO_CORE_tests_compiler_mocks})

@@ -350,7 +350,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendMultiTileBarrier(NEO::Device &n
                                                                      0,
                                                                      0,
                                                                      !(cmdListType == CommandListType::TYPE_IMMEDIATE),
-                                                                     true);
+                                                                     !this->isFlushTaskSubmissionEnabled);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

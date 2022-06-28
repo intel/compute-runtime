@@ -84,7 +84,7 @@ HWTEST_F(CommandListAppendBarrier, GivenEventVsNoEventWhenAppendingBarrierThenCo
 template <typename FamilyType>
 void validateMultiTileBarrier(void *cmdBuffer, size_t &parsedOffset,
                               uint64_t gpuFinalSyncAddress, uint64_t gpuCrossTileSyncAddress, uint64_t gpuStartAddress,
-                              bool validateCleanupSection) {
+                              bool validateCleanupSection, bool secondaryBatchBuffer) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
@@ -130,7 +130,11 @@ void validateMultiTileBarrier(void *cmdBuffer, size_t &parsedOffset,
         auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, bbStart);
         EXPECT_EQ(gpuStartAddress, bbStart->getBatchBufferStartAddress());
-        EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+        if (secondaryBatchBuffer) {
+            EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+        } else {
+            EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+        }
         parsedOffset += sizeof(MI_BATCH_BUFFER_START);
     }
     {
@@ -236,7 +240,7 @@ HWTEST2_F(MultiTileCommandListAppendBarrier, WhenAppendingBarrierThenPipeControl
     void *cmdBuffer = ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), usedSpaceBefore);
     size_t parsedOffset = 0;
 
-    validateMultiTileBarrier<FamilyType>(cmdBuffer, parsedOffset, gpuFinalSyncAddress, gpuCrossTileSyncAddress, gpuStartAddress, true);
+    validateMultiTileBarrier<FamilyType>(cmdBuffer, parsedOffset, gpuFinalSyncAddress, gpuCrossTileSyncAddress, gpuStartAddress, true, true);
 
     EXPECT_EQ(expectedUseBuffer, parsedOffset);
 }
@@ -298,7 +302,7 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
     void *cmdBuffer = cmdListStream->getCpuBase();
     size_t parsedOffset = 0;
 
-    validateMultiTileBarrier<FamilyType>(cmdBuffer, parsedOffset, gpuFinalSyncAddress, gpuCrossTileSyncAddress, gpuStartAddress, true);
+    validateMultiTileBarrier<FamilyType>(cmdBuffer, parsedOffset, gpuFinalSyncAddress, gpuCrossTileSyncAddress, gpuStartAddress, true, true);
 
     EXPECT_EQ(expectedUseBuffer, parsedOffset);
 }
@@ -363,7 +367,7 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
     void *cmdBuffer = ptrOffset(cmdListStream->getCpuBase(), useSizeBefore);
     size_t parsedOffset = 0;
 
-    validateMultiTileBarrier<FamilyType>(cmdBuffer, parsedOffset, gpuFinalSyncAddress, gpuCrossTileSyncAddress, gpuStartAddress, true);
+    validateMultiTileBarrier<FamilyType>(cmdBuffer, parsedOffset, gpuFinalSyncAddress, gpuCrossTileSyncAddress, gpuStartAddress, true, true);
     EXPECT_EQ(multiTileBarrierSize, parsedOffset);
 
     cmdBuffer = ptrOffset(cmdBuffer, parsedOffset);
@@ -485,7 +489,7 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
     cmdBuffer = ptrOffset(cmdBuffer, timestampRegisters);
     size_t parsedOffset = 0;
 
-    validateMultiTileBarrier<FamilyType>(cmdBuffer, parsedOffset, gpuFinalSyncAddress, gpuCrossTileSyncAddress, gpuStartAddress, true);
+    validateMultiTileBarrier<FamilyType>(cmdBuffer, parsedOffset, gpuFinalSyncAddress, gpuCrossTileSyncAddress, gpuStartAddress, true, true);
     EXPECT_EQ(multiTileBarrierSize, parsedOffset);
 
     cmdBuffer = ptrOffset(cmdBuffer, (parsedOffset + postBarrierSynchronization));
@@ -517,6 +521,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     auto immediateCommandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
     ASSERT_NE(nullptr, immediateCommandList);
     immediateCommandList->cmdListType = ::L0::CommandList::CommandListType::TYPE_IMMEDIATE;
+    immediateCommandList->isFlushTaskSubmissionEnabled = true;
     ze_result_t returnValue = immediateCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(2u, immediateCommandList->partitionCount);
@@ -586,7 +591,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     ASSERT_NE(cmdList.end(), itorBbStart);
     auto cmdBbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*itorBbStart);
     EXPECT_EQ(bbStartGpuAddress, cmdBbStart->getBatchBufferStartAddress());
-    EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, cmdBbStart->getSecondLevelBatchBuffer());
+    EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH, cmdBbStart->getSecondLevelBatchBuffer());
 
     auto atomicCounter = reinterpret_cast<uint32_t *>(ptrOffset(cmdBbStart, sizeof(MI_BATCH_BUFFER_START)));
     EXPECT_EQ(0u, *atomicCounter);
@@ -599,8 +604,41 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     void *cmdBuffer = ptrOffset(cmdStream->getCpuBase(), usedBeforeSize);
     size_t parsedOffset = 0;
 
-    validateMultiTileBarrier<FamilyType>(cmdBuffer, parsedOffset, 0, crossTileSyncGpuAddress, bbStartGpuAddress, false);
+    validateMultiTileBarrier<FamilyType>(cmdBuffer, parsedOffset, 0, crossTileSyncGpuAddress, bbStartGpuAddress, false, false);
     EXPECT_EQ(expectedSize, parsedOffset);
+}
+
+HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
+          givenMultiTileImmediateCommandListNotUsingFlushTaskWhenAppendingBarrierThenExpectSecondaryBufferStart, IsWithinXeGfxFamily) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    auto immediateCommandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    ASSERT_NE(nullptr, immediateCommandList);
+    immediateCommandList->cmdListType = ::L0::CommandList::CommandListType::TYPE_IMMEDIATE;
+    immediateCommandList->isFlushTaskSubmissionEnabled = false;
+    ze_result_t returnValue = immediateCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_EQ(2u, immediateCommandList->partitionCount);
+
+    auto cmdStream = immediateCommandList->commandContainer.getCommandStream();
+
+    size_t usedBeforeSize = cmdStream->getUsed();
+
+    returnValue = immediateCommandList->appendBarrier(nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    size_t usedAfterSize = cmdStream->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdStream->getCpuBase(), usedBeforeSize),
+        (usedAfterSize - usedBeforeSize)));
+
+    auto itorBbStart = find<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorBbStart);
+    auto cmdBbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*itorBbStart);
+    EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, cmdBbStart->getSecondLevelBatchBuffer());
 }
 
 } // namespace ult
