@@ -61,14 +61,18 @@ class Ioctls {
 class DrmMockSuccess : public Drm {
   public:
     using Drm::setupIoctlHelper;
-    DrmMockSuccess(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(fd, mockPciPath), rootDeviceEnvironment) {}
+    DrmMockSuccess(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(fd, mockPciPath), rootDeviceEnvironment) {
+        setupIoctlHelper(NEO::defaultHwInfo->platform.eProductFamily);
+    }
 
     int ioctl(DrmIoctl request, void *arg) override { return 0; };
 };
 
 class DrmMockFail : public Drm {
   public:
-    DrmMockFail(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, mockPciPath), rootDeviceEnvironment) {}
+    DrmMockFail(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, mockPciPath), rootDeviceEnvironment) {
+        setupIoctlHelper(NEO::defaultHwInfo->platform.eProductFamily);
+    }
 
     int ioctl(DrmIoctl request, void *arg) override { return -1; };
 };

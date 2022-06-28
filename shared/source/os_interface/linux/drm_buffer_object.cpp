@@ -68,7 +68,8 @@ bool BufferObject::close() {
 
     PRINT_DEBUG_STRING(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Calling gem close on handle: BO-%d\n", this->handle);
 
-    int ret = this->drm->ioctl(DrmIoctl::GemClose, &close);
+    auto ioctlHelper = this->drm->getIoctlHelper();
+    int ret = ioctlHelper->ioctl(drm, DrmIoctl::GemClose, &close);
     if (ret != 0) {
         int err = errno;
         PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(GEM_CLOSE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
@@ -101,8 +102,9 @@ bool BufferObject::setTiling(uint32_t mode, uint32_t stride) {
     setTiling.handle = this->handle;
     setTiling.tilingMode = mode;
     setTiling.stride = stride;
+    auto ioctlHelper = this->drm->getIoctlHelper();
 
-    if (this->drm->ioctl(DrmIoctl::GemSetTiling, &setTiling) != 0) {
+    if (ioctlHelper->ioctl(drm, DrmIoctl::GemSetTiling, &setTiling) != 0) {
         return false;
     }
 

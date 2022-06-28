@@ -31,10 +31,11 @@ void DeviceTimeDrm::timestampTypeDetect() {
         return;
 
     reg.offset = (REG_GLOBAL_TIMESTAMP_LDW | 1);
-    err = pDrm->ioctl(DrmIoctl::RegRead, &reg);
+    auto ioctlHelper = pDrm->getIoctlHelper();
+    err = ioctlHelper->ioctl(pDrm, DrmIoctl::RegRead, &reg);
     if (err) {
         reg.offset = REG_GLOBAL_TIMESTAMP_UN;
-        err = pDrm->ioctl(DrmIoctl::RegRead, &reg);
+        err = ioctlHelper->ioctl(pDrm, DrmIoctl::RegRead, &reg);
         if (err) {
             getGpuTime = &DeviceTimeDrm::getGpuTime32;
         } else {
@@ -50,7 +51,8 @@ bool DeviceTimeDrm::getGpuTime32(uint64_t *timestamp) {
 
     reg.offset = REG_GLOBAL_TIMESTAMP_LDW;
 
-    if (pDrm->ioctl(DrmIoctl::RegRead, &reg)) {
+    auto ioctlHelper = pDrm->getIoctlHelper();
+    if (ioctlHelper->ioctl(pDrm, DrmIoctl::RegRead, &reg)) {
         return false;
     }
     *timestamp = reg.value >> 32;
@@ -62,7 +64,8 @@ bool DeviceTimeDrm::getGpuTime36(uint64_t *timestamp) {
 
     reg.offset = REG_GLOBAL_TIMESTAMP_LDW | 1;
 
-    if (pDrm->ioctl(DrmIoctl::RegRead, &reg)) {
+    auto ioctlHelper = pDrm->getIoctlHelper();
+    if (ioctlHelper->ioctl(pDrm, DrmIoctl::RegRead, &reg)) {
         return false;
     }
     *timestamp = reg.value;
@@ -78,11 +81,12 @@ bool DeviceTimeDrm::getGpuTimeSplitted(uint64_t *timestamp) {
     regHi.offset = REG_GLOBAL_TIMESTAMP_UN;
     regLo.offset = REG_GLOBAL_TIMESTAMP_LDW;
 
-    err += pDrm->ioctl(DrmIoctl::RegRead, &regHi);
+    auto ioctlHelper = pDrm->getIoctlHelper();
+    err += ioctlHelper->ioctl(pDrm, DrmIoctl::RegRead, &regHi);
     do {
         tmpHi = regHi.value;
-        err += pDrm->ioctl(DrmIoctl::RegRead, &regLo);
-        err += pDrm->ioctl(DrmIoctl::RegRead, &regHi);
+        err += ioctlHelper->ioctl(pDrm, DrmIoctl::RegRead, &regLo);
+        err += ioctlHelper->ioctl(pDrm, DrmIoctl::RegRead, &regHi);
     } while (err == 0 && regHi.value != tmpHi && --loop);
 
     if (err) {

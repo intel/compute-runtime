@@ -246,8 +246,9 @@ NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size
     userptr.userSize = size;
 
     auto &drm = this->getDrm(rootDeviceIndex);
+    auto ioctlHelper = drm.getIoctlHelper();
 
-    if (drm.ioctl(DrmIoctl::GemUserptr, &userptr) != 0) {
+    if (ioctlHelper->ioctl(&drm, DrmIoctl::GemUserptr, &userptr) != 0) {
         return nullptr;
     }
 
@@ -520,8 +521,9 @@ GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &
     create.size = bufferSize;
 
     auto &drm = getDrm(allocationData.rootDeviceIndex);
+    auto ioctlHelper = drm.getIoctlHelper();
 
-    [[maybe_unused]] auto ret = drm.ioctl(DrmIoctl::GemCreate, &create);
+    [[maybe_unused]] auto ret = ioctlHelper->ioctl(&drm, DrmIoctl::GemCreate, &create);
     DEBUG_BREAK_IF(ret != 0);
 
     auto patIndex = drm.getPatIndex(gmm.get(), allocationData.type, CacheRegion::Default, CachePolicy::WriteBack, false);
@@ -553,8 +555,9 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
     create.size = allocationData.imgInfo->size;
 
     auto &drm = this->getDrm(allocationData.rootDeviceIndex);
+    auto ioctlHelper = drm.getIoctlHelper();
 
-    [[maybe_unused]] auto ret = drm.ioctl(DrmIoctl::GemCreate, &create);
+    [[maybe_unused]] auto ret = ioctlHelper->ioctl(&drm, DrmIoctl::GemCreate, &create);
     DEBUG_BREAK_IF(ret != 0);
 
     auto patIndex = drm.getPatIndex(gmm.get(), allocationData.type, CacheRegion::Default, CachePolicy::WriteBack, false);
@@ -565,7 +568,6 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
     }
     bo->setAddress(gpuRange);
 
-    auto ioctlHelper = drm.getIoctlHelper();
     [[maybe_unused]] auto ret2 = bo->setTiling(ioctlHelper->getDrmParamValue(DrmParam::TilingY), static_cast<uint32_t>(allocationData.imgInfo->rowPitch));
     DEBUG_BREAK_IF(ret2 != true);
 
@@ -682,12 +684,13 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
     auto &drm = this->getDrm(properties.rootDeviceIndex);
 
     bool areBosSharedObjects = true;
+    auto ioctlHelper = drm.getIoctlHelper();
 
     for (auto handle : handles) {
         PrimeHandle openFd = {0, 0, 0};
         openFd.fileDescriptor = handle;
 
-        auto ret = this->getDrm(properties.rootDeviceIndex).ioctl(DrmIoctl::PrimeFdToHandle, &openFd);
+        auto ret = ioctlHelper->ioctl(&drm, DrmIoctl::PrimeFdToHandle, &openFd);
 
         if (ret != 0) {
             [[maybe_unused]] int err = errno;
@@ -772,8 +775,9 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
     openFd.fileDescriptor = handle;
 
     auto &drm = this->getDrm(properties.rootDeviceIndex);
+    auto ioctlHelper = drm.getIoctlHelper();
 
-    auto ret = drm.ioctl(DrmIoctl::PrimeFdToHandle, &openFd);
+    auto ret = ioctlHelper->ioctl(&drm, DrmIoctl::PrimeFdToHandle, &openFd);
 
     if (ret != 0) {
         [[maybe_unused]] int err = errno;
@@ -825,7 +829,8 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
     if (properties.imgInfo) {
         GemGetTiling getTiling{};
         getTiling.handle = boHandle;
-        ret = drm.ioctl(DrmIoctl::GemGetTiling, &getTiling);
+        auto ioctlHelper = drm.getIoctlHelper();
+        ret = ioctlHelper->ioctl(&drm, DrmIoctl::GemGetTiling, &getTiling);
 
         if (ret == 0) {
             auto ioctlHelper = drm.getIoctlHelper();
@@ -1045,7 +1050,9 @@ bool DrmMemoryManager::setDomainCpu(GraphicsAllocation &graphicsAllocation, bool
     setDomain.readDomains = I915_GEM_DOMAIN_CPU;
     setDomain.writeDomain = writeEnable ? I915_GEM_DOMAIN_CPU : 0;
 
-    return getDrm(graphicsAllocation.getRootDeviceIndex()).ioctl(DrmIoctl::GemSetDomain, &setDomain) == 0;
+    auto &drm = this->getDrm(graphicsAllocation.getRootDeviceIndex());
+    auto ioctlHelper = drm.getIoctlHelper();
+    return ioctlHelper->ioctl(&drm, DrmIoctl::GemSetDomain, &setDomain) == 0;
 }
 
 void *DrmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation) {
@@ -1076,13 +1083,15 @@ void DrmMemoryManager::unlockResourceImpl(GraphicsAllocation &graphicsAllocation
     return unlockBufferObject(static_cast<DrmAllocation &>(graphicsAllocation).getBO());
 }
 
-int DrmMemoryManager::obtainFdFromHandle(int boHandle, uint32_t rootDeviceindex) {
+int DrmMemoryManager::obtainFdFromHandle(int boHandle, uint32_t rootDeviceIndex) {
     PrimeHandle openFd{};
 
     openFd.flags = DRM_CLOEXEC | DRM_RDWR;
     openFd.handle = boHandle;
 
-    getDrm(rootDeviceindex).ioctl(DrmIoctl::PrimeHandleToFd, &openFd);
+    auto &drm = this->getDrm(rootDeviceIndex);
+    auto ioctlHelper = drm.getIoctlHelper();
+    ioctlHelper->ioctl(&drm, DrmIoctl::PrimeHandleToFd, &openFd);
 
     return openFd.fileDescriptor;
 }
@@ -1568,11 +1577,12 @@ bool DrmMemoryManager::retrieveMmapOffsetForBufferObject(uint32_t rootDeviceInde
     GemMmapOffset mmapOffset = {};
     mmapOffset.handle = bo.peekHandle();
     mmapOffset.flags = isLocalMemorySupported(rootDeviceIndex) ? mmapOffsetFixed : flags;
-    auto &drm = getDrm(rootDeviceIndex);
-    auto ret = drm.ioctl(DrmIoctl::GemMmapOffset, &mmapOffset);
+    auto &drm = this->getDrm(rootDeviceIndex);
+    auto ioctlHelper = drm.getIoctlHelper();
+    auto ret = ioctlHelper->ioctl(&drm, DrmIoctl::GemMmapOffset, &mmapOffset);
     if (ret != 0 && isLocalMemorySupported(rootDeviceIndex)) {
         mmapOffset.flags = flags;
-        ret = drm.ioctl(DrmIoctl::GemMmapOffset, &mmapOffset);
+        ret = ioctlHelper->ioctl(&drm, DrmIoctl::GemMmapOffset, &mmapOffset);
     }
     if (ret != 0) {
         int err = drm.getErrno();
@@ -1818,8 +1828,9 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
 
     auto &drm = this->getDrm(properties.rootDeviceIndex);
     auto patIndex = drm.getPatIndex(nullptr, properties.allocationType, CacheRegion::Default, CachePolicy::WriteBack, false);
+    auto ioctlHelper = drm.getIoctlHelper();
 
-    auto ret = drm.ioctl(DrmIoctl::PrimeFdToHandle, &openFd);
+    auto ret = ioctlHelper->ioctl(&drm, DrmIoctl::PrimeFdToHandle, &openFd);
     if (ret != 0) {
         int err = drm.getErrno();
         PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRIME_FD_TO_HANDLE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
