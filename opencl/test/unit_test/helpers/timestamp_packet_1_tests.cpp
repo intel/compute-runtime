@@ -27,96 +27,6 @@
 
 using namespace NEO;
 
-HWTEST_F(TimestampPacketTests, givenCommandStreamReceiverHwWhenObtainingPreferredTagPoolSizeThenReturnCorrectValue) {
-    OsContext &osContext = *executionEnvironment->memoryManager->getRegisteredEngines()[0].osContext;
-
-    CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield());
-    EXPECT_EQ(2048u, csr.getPreferredTagPoolSize());
-}
-
-HWTEST_F(TimestampPacketTests, givenDebugFlagSetWhenCreatingAllocatorThenUseCorrectSize) {
-    OsContext &osContext = *executionEnvironment->memoryManager->getRegisteredEngines()[0].osContext;
-
-    {
-        CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield());
-        csr.setupContext(osContext);
-
-        auto allocator = csr.getTimestampPacketAllocator();
-        auto tag = allocator->getTag();
-        auto size = tag->getSinglePacketSize();
-        EXPECT_EQ(4u * sizeof(typename FamilyType::TimestampPacketType), size);
-    }
-
-    {
-        DebugManager.flags.OverrideTimestampPacketSize.set(4);
-
-        CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield());
-        csr.setupContext(osContext);
-
-        auto allocator = csr.getTimestampPacketAllocator();
-        auto tag = allocator->getTag();
-        auto size = tag->getSinglePacketSize();
-        EXPECT_EQ(4u * sizeof(uint32_t), size);
-    }
-
-    {
-        DebugManager.flags.OverrideTimestampPacketSize.set(8);
-
-        CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield());
-        csr.setupContext(osContext);
-
-        auto allocator = csr.getTimestampPacketAllocator();
-        auto tag = allocator->getTag();
-        auto size = tag->getSinglePacketSize();
-        EXPECT_EQ(4u * sizeof(uint64_t), size);
-    }
-
-    {
-        DebugManager.flags.OverrideTimestampPacketSize.set(-1);
-        CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield());
-        csr.setupContext(osContext);
-
-        DebugManager.flags.OverrideTimestampPacketSize.set(12);
-        EXPECT_ANY_THROW(csr.getTimestampPacketAllocator());
-    }
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, TimestampPacketTests, givenInvalidDebugFlagSetWhenCreatingCsrThenExceptionIsThrown) {
-    OsContext &osContext = *executionEnvironment->memoryManager->getRegisteredEngines()[0].osContext;
-    DebugManager.flags.OverrideTimestampPacketSize.set(12);
-
-    EXPECT_ANY_THROW(CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield()));
-}
-
-HWTEST_F(TimestampPacketTests, givenTagAlignmentWhenCreatingAllocatorThenGpuAddressIsAligned) {
-    auto csr = executionEnvironment->memoryManager->getRegisteredEngines()[0].commandStreamReceiver;
-
-    auto &hwHelper = HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
-
-    auto allocator = csr->getTimestampPacketAllocator();
-
-    auto tag1 = allocator->getTag();
-    auto tag2 = allocator->getTag();
-
-    EXPECT_TRUE(isAligned(tag1->getGpuAddress(), hwHelper.getTimestampPacketAllocatorAlignment()));
-    EXPECT_TRUE(isAligned(tag2->getGpuAddress(), hwHelper.getTimestampPacketAllocatorAlignment()));
-}
-
-HWTEST_F(TimestampPacketTests, givenDebugFlagSetWhenCreatingTimestampPacketAllocatorThenDisableReusingAndLimitPoolSize) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.DisableTimestampPacketOptimizations.set(true);
-    OsContext &osContext = *executionEnvironment->memoryManager->getRegisteredEngines()[0].osContext;
-
-    CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield());
-    csr.setupContext(osContext);
-    EXPECT_EQ(1u, csr.getPreferredTagPoolSize());
-
-    auto tag = csr.getTimestampPacketAllocator()->getTag();
-    setTagToReadyState<FamilyType>(tag);
-
-    EXPECT_FALSE(tag->canBeReleased());
-}
-
 HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStreamSizeThenAddPipeControl) {
     MockKernelWithInternals kernel2(*device);
     MockMultiDispatchInfo multiDispatchInfo(device.get(), std::vector<Kernel *>({kernel->mockKernel, kernel2.mockKernel}));
@@ -332,20 +242,6 @@ HWTEST_F(TimestampPacketTests, givenEventsRequestWithEventsWithoutTimestampsWhen
 
     size_t expectedSize = sizeForNodeDependency;
     EXPECT_EQ(expectedSize, TimestampPacketHelper::getRequiredCmdStreamSize<FamilyType>(csrDepsSize3));
-}
-
-HWTEST_F(TimestampPacketTests, whenEstimatingSizeForNodeDependencyThenReturnCorrectValue) {
-    TimestampPackets<uint32_t> tag;
-    MockTagNode mockNode;
-    mockNode.tagForCpuAccess = &tag;
-    mockNode.gpuAddress = 0x1230000;
-
-    size_t sizeForNodeDependency = 0;
-    sizeForNodeDependency += TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependency<FamilyType>(mockNode);
-
-    size_t expectedSize = mockNode.getPacketsUsed() * sizeof(typename FamilyType::MI_SEMAPHORE_WAIT);
-
-    EXPECT_EQ(expectedSize, sizeForNodeDependency);
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWhenDispatchingGpuWalkerThenAddTwoPcForLastWalker) {
