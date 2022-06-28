@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ namespace ult {
 
 class ZesFabricPortFixture : public SysmanDeviceFixture {
   protected:
-    static uint32_t numPorts;
+    static constexpr uint32_t numPorts = 2;
 
     void SetUp() override {
         if (!sysmanUltsEnable) {
@@ -52,8 +52,6 @@ class ZesFabricPortFixture : public SysmanDeviceFixture {
         SysmanDeviceFixture::TearDown();
     }
 };
-
-uint32_t ZesFabricPortFixture::numPorts = 2U;
 
 TEST_F(ZesFabricPortFixture, GivenPortCountZeroWhenCallingZesFabricPortGetThenCountIsReturnedAndVerifyZesFabricPortGetCallSucceeds) {
     uint32_t count = 0U;
