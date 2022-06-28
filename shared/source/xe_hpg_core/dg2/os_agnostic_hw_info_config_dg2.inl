@@ -57,6 +57,11 @@ uint32_t HwInfoConfigHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &
 }
 
 template <>
+bool HwInfoConfigHw<gfxProduct>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
+    return true;
+}
+
+template <>
 bool HwInfoConfigHw<gfxProduct>::isAdditionalStateBaseAddressWARequired(const HardwareInfo &hwInfo) const {
     uint32_t stepping = getSteppingFromHwRevId(hwInfo);
     if (stepping <= REVISION_B) {

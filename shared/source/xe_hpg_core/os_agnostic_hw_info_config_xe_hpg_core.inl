@@ -11,8 +11,3 @@ void HwInfoConfigHw<gfxProduct>::getKernelExtendedProperties(uint32_t *fp16, uin
     *fp32 = FP_ATOMIC_EXT_FLAG_GLOBAL_ADD;
     *fp64 = 0u;
 }
-
-template <>
-bool HwInfoConfigHw<gfxProduct>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
-    return true;
-}
