@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,4 +68,5 @@ namespace NEO {
 template void HardwareParse::findHardwareCommands<BDWFamily>();
 template void HardwareParse::findHardwareCommands<BDWFamily>(IndirectHeap *);
 template const void *HardwareParse::getStatelessArgumentPointer<BDWFamily>(const KernelInfo &kernelInfo, uint32_t indexArg, IndirectHeap &ioh, uint32_t rootDeviceIndex);
+template const typename BDWFamily::RENDER_SURFACE_STATE *HardwareParse::getSurfaceState<BDWFamily>(IndirectHeap *ssh, uint32_t index);
 } // namespace NEO

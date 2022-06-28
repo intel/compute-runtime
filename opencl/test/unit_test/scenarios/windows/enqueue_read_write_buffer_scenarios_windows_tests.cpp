@@ -118,12 +118,12 @@ HWTEST_F(EnqueueBufferWindowsTest, givenMisalignedHostPtrWhenEnqueueReadBufferCa
         if (arg1AsPtr.pointerSize == sizeof(uint64_t)) {
             auto pKernelArg = (uint64_t *)(kernel->getCrossThreadData() + arg1AsPtr.stateless);
             EXPECT_EQ(alignDown(gpuVa, 4), static_cast<uint64_t>(*pKernelArg));
-            EXPECT_EQ(*pKernelArg, surfaceStateDst.getSurfaceBaseAddress());
+            EXPECT_EQ(*pKernelArg, surfaceStateDst->getSurfaceBaseAddress());
 
         } else if (arg1AsPtr.pointerSize == sizeof(uint32_t)) {
             auto pKernelArg = (uint32_t *)(kernel->getCrossThreadData() + arg1AsPtr.stateless);
             EXPECT_EQ(alignDown(gpuVa, 4), static_cast<uint64_t>(*pKernelArg));
-            EXPECT_EQ(static_cast<uint64_t>(*pKernelArg), surfaceStateDst.getSurfaceBaseAddress());
+            EXPECT_EQ(static_cast<uint64_t>(*pKernelArg), surfaceStateDst->getSurfaceBaseAddress());
         }
     }
 

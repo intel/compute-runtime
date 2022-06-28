@@ -106,14 +106,15 @@ HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyRegionC
     GenCmdList genCmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         genCmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
-    auto itor = find<PIPE_CONTROL *>(genCmdList.begin(), genCmdList.end());
-    ASSERT_NE(genCmdList.end(), itor);
-    PIPE_CONTROL *cmd = nullptr;
-    while (itor != genCmdList.end()) {
-        cmd = genCmdCast<PIPE_CONTROL *>(*itor);
-        itor = find<PIPE_CONTROL *>(++itor, genCmdList.end());
+
+    auto pc = genCmdCast<PIPE_CONTROL *>(*genCmdList.rbegin());
+
+    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getHwInfo())) {
+        EXPECT_NE(nullptr, pc);
+        EXPECT_TRUE(pc->getDcFlushEnable());
+    } else {
+        EXPECT_EQ(nullptr, pc);
     }
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), cmd->getDcFlushEnable()); // NOLINT(clang-analyzer-core.CallAndMessage)
 }
 
 HWTEST2_F(AppendMemoryCopy, givenImmediateCommandListWhenAppendingMemoryCopyThenSuccessIsReturned, IsAtLeastSkl) {

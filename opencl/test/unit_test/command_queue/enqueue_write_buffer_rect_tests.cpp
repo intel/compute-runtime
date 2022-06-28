@@ -605,19 +605,19 @@ HWTEST_F(EnqueueReadWriteBufferRectDispatch, givenOffsetResultingInMisalignedPtr
     auto &kernelInfo = kernel->getKernelInfo();
 
     if (hwInfo->capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress) {
-        const auto &surfaceState = getSurfaceState<FamilyType>(&cmdQ->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0), 0);
+        const auto surfaceState = getSurfaceState<FamilyType>(&cmdQ->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0), 0);
 
         if (kernelInfo.getArgDescriptorAt(0).as<ArgDescPointer>().pointerSize == sizeof(uint64_t)) {
             auto pKernelArg = (uint64_t *)(kernel->getCrossThreadData() +
                                            kernelInfo.getArgDescriptorAt(0).as<ArgDescPointer>().stateless);
             EXPECT_EQ(reinterpret_cast<uint64_t>(alignDown(misalignedHostPtr, 4)), *pKernelArg);
-            EXPECT_EQ(*pKernelArg, surfaceState.getSurfaceBaseAddress());
+            EXPECT_EQ(*pKernelArg, surfaceState->getSurfaceBaseAddress());
 
         } else if (kernelInfo.getArgDescriptorAt(0).as<ArgDescPointer>().pointerSize == sizeof(uint32_t)) {
             auto pKernelArg = (uint32_t *)(kernel->getCrossThreadData() +
                                            kernelInfo.getArgDescriptorAt(0).as<ArgDescPointer>().stateless);
             EXPECT_EQ(reinterpret_cast<uint64_t>(alignDown(misalignedHostPtr, 4)), static_cast<uint64_t>(*pKernelArg));
-            EXPECT_EQ(static_cast<uint64_t>(*pKernelArg), surfaceState.getSurfaceBaseAddress());
+            EXPECT_EQ(static_cast<uint64_t>(*pKernelArg), surfaceState->getSurfaceBaseAddress());
         }
     }
 

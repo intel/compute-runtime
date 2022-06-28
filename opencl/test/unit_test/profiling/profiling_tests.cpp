@@ -484,42 +484,6 @@ HWTEST_F(ProfilingTests, givenMarkerEnqueueWhenBlockedEnqueueThenSetGpuPath) {
     userEventObj->release();
 }
 
-HWTEST_F(ProfilingTests, givenMarkerEnqueueWhenBlockedEnqueueThenPipeControlsArePresentInCS) {
-    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
-
-    cl_event event = nullptr;
-    cl_event userEvent = new UserEvent();
-    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ)->enqueueMarkerWithWaitList(1, &userEvent, &event);
-
-    auto eventObj = static_cast<Event *>(event);
-    EXPECT_FALSE(eventObj->isCPUProfilingPath());
-
-    auto userEventObj = static_cast<UserEvent *>(userEvent);
-
-    pCmdQ->flush();
-    userEventObj->setStatus(CL_COMPLETE);
-    Event::waitForEvents(1, &event);
-
-    parseCommands<FamilyType>(*pCmdQ);
-
-    // Check PIPE_CONTROLs
-    auto itorFirstPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), itorFirstPC);
-    auto pFirstPC = genCmdCast<PIPE_CONTROL *>(*itorFirstPC);
-    ASSERT_NE(nullptr, pFirstPC);
-
-    auto itorSecondPC = find<PIPE_CONTROL *>(itorFirstPC, cmdList.end());
-    ASSERT_NE(cmdList.end(), itorSecondPC);
-    auto pSecondPC = genCmdCast<PIPE_CONTROL *>(*itorSecondPC);
-    ASSERT_NE(nullptr, pSecondPC);
-
-    EXPECT_TRUE(static_cast<MockEvent<Event> *>(event)->calcProfilingData());
-
-    eventObj->release();
-    userEventObj->release();
-    pCmdQ->isQueueBlocked();
-}
-
 template <typename TagType>
 struct MockTagNode : public TagNode<TagType> {
   public:

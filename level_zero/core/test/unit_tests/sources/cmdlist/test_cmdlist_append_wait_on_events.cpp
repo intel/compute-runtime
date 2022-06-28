@@ -112,6 +112,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, WhenAppendingWaitOnEventsThenEventGraphic
 
 HWTEST_F(CommandListAppendWaitOnEvent, givenEventWithWaitScopeFlagDeviceWhenAppendingWaitOnEventThenPCWithDcFlushIsGenerated) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
 
     const ze_event_desc_t eventDesc = {
@@ -134,14 +135,21 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenEventWithWaitScopeFlagDeviceWhenAppe
                                                       ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
                                                       usedSpaceAfter));
 
-    auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end()).back();
-    ASSERT_NE(cmdList.end(), itorPC);
-    {
-        auto cmd = genCmdCast<PIPE_CONTROL *>(*itorPC);
-        ASSERT_NE(cmd, nullptr);
+    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
 
+    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getHwInfo())) {
+        itor--;
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*itor);
+
+        ASSERT_NE(nullptr, cmd);
         EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
-        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), cmd->getDcFlushEnable());
+        EXPECT_TRUE(cmd->getDcFlushEnable());
+    } else {
+        if (cmdList.begin() != itor) {
+            itor--;
+            EXPECT_EQ(nullptr, genCmdCast<PIPE_CONTROL *>(*itor));
+        }
     }
 }
 

@@ -103,4 +103,9 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
                                      isMultiOsContextCapable, memoryCompressionState, overrideBindlessSurfaceStateBase, useGlobalAtomics, areMultipleSubDevicesInContext);
 }
 
+template <typename GfxFamily>
+void *StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(LinearStream &cmdStream) {
+    return cmdStream.getSpace(sizeof(STATE_BASE_ADDRESS));
+}
+
 } // namespace NEO

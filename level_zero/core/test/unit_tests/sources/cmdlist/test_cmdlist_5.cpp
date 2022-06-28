@@ -594,6 +594,8 @@ HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenAppendWaitEventsWith
 
 HWTEST_F(CommandListCreate, givenCommandListyWhenAppendWaitEventsWithDcFlushThenPipeControlIsProgrammed) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     auto &commandContainer = commandList->commandContainer;
@@ -605,9 +607,19 @@ HWTEST_F(CommandListCreate, givenCommandListyWhenAppendWaitEventsWithDcFlushThen
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
-    auto itor = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
 
+    auto itor = find<SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
+
+    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getHwInfo())) {
+        itor--;
+        EXPECT_NE(nullptr, genCmdCast<PIPE_CONTROL *>(*itor));
+    } else {
+        if (cmdList.begin() != itor) {
+            itor--;
+            EXPECT_EQ(nullptr, genCmdCast<PIPE_CONTROL *>(*itor));
+        }
+    }
 }
 
 HWTEST_F(CommandListCreate, givenCommandListWhenAppendWaitEventsWithDcFlushThenPipeControlIsProgrammedOnlyOnce) {
@@ -627,11 +639,18 @@ HWTEST_F(CommandListCreate, givenCommandListWhenAppendWaitEventsWithDcFlushThenP
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
 
-    auto itor = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    auto itor = find<SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
-    itor++;
-    auto itor2 = find<SEMAPHORE_WAIT *>(itor, cmdList.end());
-    EXPECT_NE(cmdList.end(), itor2);
+
+    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getHwInfo())) {
+        itor--;
+        EXPECT_NE(nullptr, genCmdCast<PIPE_CONTROL *>(*itor));
+    } else {
+        if (cmdList.begin() != itor) {
+            itor--;
+            EXPECT_EQ(nullptr, genCmdCast<PIPE_CONTROL *>(*itor));
+        }
+    }
 }
 
 HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendWaitEventsWithHostScopeThenPipeControlAndSemWaitAreAddedFromCommandList) {

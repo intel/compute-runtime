@@ -708,9 +708,9 @@ HWTEST_F(EnqueueHandlerTest, givenKernelUsingSyncBufferWhenEnqueuingKernelThenSs
         ClHardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(*mockCmdQ);
 
-        auto &surfaceState = hwParser.getSurfaceState<FamilyType>(&surfaceStateHeap, 0);
+        auto surfaceState = hwParser.getSurfaceState<FamilyType>(&surfaceStateHeap, 0);
         auto pSyncBufferHandler = static_cast<MockSyncBufferHandler *>(pDevice->syncBufferHandler.get());
-        EXPECT_EQ(pSyncBufferHandler->graphicsAllocation->getGpuAddress(), surfaceState.getSurfaceBaseAddress());
+        EXPECT_EQ(pSyncBufferHandler->graphicsAllocation->getGpuAddress(), surfaceState->getSurfaceBaseAddress());
     }
 }
 

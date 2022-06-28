@@ -129,4 +129,5 @@ namespace NEO {
 template void HardwareParse::findHardwareCommands<TGLLPFamily>();
 template void HardwareParse::findHardwareCommands<TGLLPFamily>(IndirectHeap *);
 template const void *HardwareParse::getStatelessArgumentPointer<TGLLPFamily>(const KernelInfo &kernelInfo, uint32_t indexArg, IndirectHeap &ioh, uint32_t rootDeviceIndex);
+template const typename TGLLPFamily::RENDER_SURFACE_STATE *HardwareParse::getSurfaceState<TGLLPFamily>(IndirectHeap *ssh, uint32_t index);
 } // namespace NEO

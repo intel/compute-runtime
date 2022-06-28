@@ -612,13 +612,13 @@ HWTEST_F(EnqueueReadWriteBufferRectDispatch, givenOffsetResultingInMisalignedPtr
             auto pKernelArg = (uint64_t *)(kernel->getCrossThreadData() +
                                            kernelInfo.getArgDescriptorAt(1).as<ArgDescPointer>().stateless);
             EXPECT_EQ(reinterpret_cast<uint64_t>(alignDown(misalignedDstPtr, 4)), *pKernelArg);
-            EXPECT_EQ(*pKernelArg, surfaceStateDst.getSurfaceBaseAddress());
+            EXPECT_EQ(*pKernelArg, surfaceStateDst->getSurfaceBaseAddress());
 
         } else if (kernelInfo.getArgDescriptorAt(1).as<ArgDescPointer>().pointerSize == sizeof(uint32_t)) {
             auto pKernelArg = (uint32_t *)(kernel->getCrossThreadData() +
                                            kernelInfo.getArgDescriptorAt(1).as<ArgDescPointer>().stateless);
             EXPECT_EQ(reinterpret_cast<uint64_t>(alignDown(misalignedDstPtr, 4)), static_cast<uint64_t>(*pKernelArg));
-            EXPECT_EQ(static_cast<uint64_t>(*pKernelArg), surfaceStateDst.getSurfaceBaseAddress());
+            EXPECT_EQ(static_cast<uint64_t>(*pKernelArg), surfaceStateDst->getSurfaceBaseAddress());
         }
     }
 

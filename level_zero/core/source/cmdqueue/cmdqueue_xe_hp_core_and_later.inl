@@ -31,7 +31,8 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         bool isRcs = this->getCsr()->isRcs();
 
         NEO::EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStream, hwInfo, isRcs);
-        auto pSbaCmd = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));
+        auto sbaCmdBuf = static_cast<STATE_BASE_ADDRESS *>(NEO::StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStream));
+
         STATE_BASE_ADDRESS sbaCmd;
         bool multiOsContextCapable = device->isImplicitScalingCapable();
         NEO::StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(&sbaCmd,
@@ -51,12 +52,12 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
                                                                         NEO::MemoryCompressionState::NotApplicable,
                                                                         false,
                                                                         1u);
-        *pSbaCmd = sbaCmd;
+        *sbaCmdBuf = sbaCmd;
 
         auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
         if (hwInfoConfig.isAdditionalStateBaseAddressWARequired(hwInfo)) {
-            pSbaCmd = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));
-            *pSbaCmd = sbaCmd;
+            sbaCmdBuf = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));
+            *sbaCmdBuf = sbaCmd;
         }
 
         if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger()) {

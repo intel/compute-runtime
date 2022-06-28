@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -110,3 +110,5 @@ const char *CmdParse<GenGfxFamily>::getAdditionalCommandName(void *cmd) {
 }
 
 #include "shared/test/common/cmd_parse/cmd_parse_pvc_and_later.inl"
+
+template const typename GenGfxFamily::RENDER_SURFACE_STATE *NEO::HardwareParse::getSurfaceState<GenGfxFamily>(IndirectHeap *ssh, uint32_t index);

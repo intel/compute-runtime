@@ -22,6 +22,8 @@ template <typename GfxFamily>
 struct StateBaseAddressHelper {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
+    static void *getSpaceForSbaCmd(LinearStream &cmdStream);
+
     static void programStateBaseAddress(
         STATE_BASE_ADDRESS *stateBaseAddress,
         const IndirectHeap *dsh,

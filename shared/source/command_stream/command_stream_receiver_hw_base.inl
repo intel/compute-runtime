@@ -205,10 +205,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     if (dispatchFlags.blocking || dispatchFlags.dcFlush || dispatchFlags.guardCommandBufferWithPipeControl) {
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
-            //for ImmediateDispatch we will send this right away, therefore this pipe control will close the level
-            //for BatchedSubmissions it will be nooped and only last ppc in batch will be emitted.
+            // for ImmediateDispatch we will send this right away, therefore this pipe control will close the level
+            // for BatchedSubmissions it will be nooped and only last ppc in batch will be emitted.
             levelClosed = true;
-            //if we guard with ppc, flush dc as well to speed up completion latency
+            // if we guard with ppc, flush dc as well to speed up completion latency
             if (dispatchFlags.guardCommandBufferWithPipeControl) {
                 const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
                 if (hwInfoConfig.isDcFlushAllowed()) {
@@ -385,7 +385,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         lastMemoryCompressionState = memoryCompressionState;
     }
 
-    //Reprogram state base address if required
+    // Reprogram state base address if required
     if (isStateBaseAddressDirty || sourceLevelDebuggerActive) {
         EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStreamCSR, hwInfo, isRcs());
         EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, true, hwInfo, isRcs());
@@ -401,7 +401,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         }
 
         auto stateBaseAddressCmdOffset = commandStreamCSR.getUsed();
-        auto pCmd = static_cast<STATE_BASE_ADDRESS *>(commandStreamCSR.getSpace(sizeof(STATE_BASE_ADDRESS)));
+        auto pCmd = static_cast<STATE_BASE_ADDRESS *>(StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStreamCSR));
         STATE_BASE_ADDRESS cmd;
         auto instructionHeapBaseAddress = getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, getMemoryManager()->isLocalMemoryUsedForIsa(rootDeviceIndex));
         StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
@@ -422,7 +422,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             memoryCompressionState,
             dispatchFlags.useGlobalAtomics,
             dispatchFlags.areMultipleSubDevicesInContext);
-        *pCmd = cmd;
+
+        if (pCmd) {
+            *pCmd = cmd;
+        }
 
         programAdditionalStateBaseAddress(commandStreamCSR, cmd, device);
 
@@ -618,7 +621,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     this->wasSubmittedToSingleSubdevice = dispatchFlags.useSingleSubdevice;
 
-    //check if we are not over the budget, if we are do implicit flush
+    // check if we are not over the budget, if we are do implicit flush
     if (getMemoryManager()->isMemoryBudgetExhausted()) {
         if (this->totalMemoryUsed >= device.getDeviceInfo().globalMemSize / 4) {
             implicitFlush = true;
@@ -726,16 +729,16 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 
             while (nextCommandBuffer && nextCommandBuffer->inspectionId == primaryCmdBuffer->inspectionId) {
 
-                //noop pipe control
+                // noop pipe control
                 if (currentPipeControlForNooping) {
                     if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
                         flatBatchBufferHelper->removePipeControlData(pipeControlLocationSize, currentPipeControlForNooping, hwInfo);
                     }
                     memset(currentPipeControlForNooping, 0, pipeControlLocationSize);
                 }
-                //obtain next candidate for nooping
+                // obtain next candidate for nooping
                 currentPipeControlForNooping = nextCommandBuffer->pipeControlThatMayBeErasedLocation;
-                //track epilogue pipe control
+                // track epilogue pipe control
                 epiloguePipeControlLocation = nextCommandBuffer->epiloguePipeControlLocation;
 
                 flushStampUpdateHelper.insert(nextCommandBuffer->flushStamp->getStampReference());
@@ -744,7 +747,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
                 auto cpuAddressForCommandBufferDestination = ptrOffset(nextCommandBuffer->batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), nextCommandBuffer->batchBuffer.startOffset);
                 auto cpuAddressForCurrentCommandBufferEndingSection = alignUp(ptrOffset(currentBBendLocation, sizeof(MI_BATCH_BUFFER_START)), MemoryConstants::cacheLineSize);
 
-                //if we point to exact same command buffer, then batch buffer start is not needed at all
+                // if we point to exact same command buffer, then batch buffer start is not needed at all
                 if (cpuAddressForCurrentCommandBufferEndingSection == cpuAddressForCommandBufferDestination) {
                     memset(currentBBendLocation, 0u, ptrDiff(cpuAddressForCurrentCommandBufferEndingSection, currentBBendLocation));
                 } else {
@@ -766,7 +769,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
                 surfacesForSubmit.push_back(surface);
             }
 
-            //make sure we flush DC if needed
+            // make sure we flush DC if needed
             if (epiloguePipeControlLocation && MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo)) {
 
                 auto emitDcFlush = true;
@@ -784,7 +787,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
                 break;
             }
 
-            //after flush task level is closed
+            // after flush task level is closed
             this->taskLevel++;
 
             flushStampUpdateHelper.updateAll(flushStamp->peekStamp());
@@ -885,7 +888,7 @@ inline WaitStatus CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNot
     auto status = waitForCompletionWithTimeout(params, taskCountToWait);
     if (status == WaitStatus::NotReady) {
         waitForFlushStamp(flushStampToWait);
-        //now call blocking wait, this is to ensure that task count is reached
+        // now call blocking wait, this is to ensure that task count is reached
         status = waitForCompletionWithTimeout(WaitParams{false, false, 0}, taskCountToWait);
     }
 

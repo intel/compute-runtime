@@ -6,6 +6,10 @@
  */
 
 #include "shared/source/helpers/hw_info.h"
+#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/cmd_parse/hw_parse.h"
+
+#include "gtest/gtest.h"
 
 namespace NEO {
 
@@ -75,6 +79,22 @@ inline uint64_t UnitTestHelper<GfxFamily>::getPipeControlPostSyncAddress(const t
 template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::timestampRegisterHighAddress() {
     return false;
+}
+
+template <typename GfxFamily>
+void UnitTestHelper<GfxFamily>::validateSbaMocs(uint32_t expectedMocs, CommandStreamReceiver &csr) {
+    using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
+
+    HardwareParse hwParse;
+    hwParse.parseCommands<GfxFamily>(csr.getCS(0), 0);
+    auto itorCmd = reverseFind<STATE_BASE_ADDRESS *>(hwParse.cmdList.rbegin(), hwParse.cmdList.rend());
+    EXPECT_NE(hwParse.cmdList.rend(), itorCmd);
+    auto sba = genCmdCast<STATE_BASE_ADDRESS *>(*itorCmd);
+    EXPECT_NE(nullptr, sba);
+
+    auto mocs = sba->getStatelessDataPortAccessMemoryObjectControlState();
+
+    EXPECT_EQ(expectedMocs, mocs);
 }
 
 } // namespace NEO

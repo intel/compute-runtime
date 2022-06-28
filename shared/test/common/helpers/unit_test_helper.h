@@ -80,6 +80,8 @@ struct UnitTestHelper {
     static bool getWorkloadPartitionForStoreRegisterMemCmd(typename GfxFamily::MI_STORE_REGISTER_MEM &storeRegisterMem);
 
     static bool timestampRegisterHighAddress();
+
+    static void validateSbaMocs(uint32_t expectedMocs, CommandStreamReceiver &csr);
 };
 
 } // namespace NEO

@@ -40,7 +40,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
     NEO::EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStream, hwInfo, isRcs);
     NEO::EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStream, {}, true, hwInfo, isRcs);
 
-    auto pSbaCmd = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));
+    auto sbaCmdBuf = static_cast<STATE_BASE_ADDRESS *>(NEO::StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStream));
     STATE_BASE_ADDRESS sbaCmd;
 
     bool useGlobalSshAndDsh = NEO::ApiSpecificConfig::getBindlessConfiguration();
@@ -69,7 +69,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
                                                                     NEO::MemoryCompressionState::NotApplicable,
                                                                     false,
                                                                     1u);
-    *pSbaCmd = sbaCmd;
+    *sbaCmdBuf = sbaCmd;
     csr->setGSBAStateDirty(false);
 
     if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger()) {
