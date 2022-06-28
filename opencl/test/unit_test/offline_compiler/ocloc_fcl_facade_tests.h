@@ -9,7 +9,6 @@
 
 #include "shared/source/helpers/hw_info.h"
 
-#include "gtest/gtest.h"
 #include "mock/mock_argument_helper.h"
 
 namespace NEO {

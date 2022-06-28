@@ -17,7 +17,6 @@
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
 #include "CL/cl.h"
-#include "gtest/gtest.h"
 
 #include <memory>
 

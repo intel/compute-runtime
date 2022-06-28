@@ -19,8 +19,6 @@
 #include "level_zero/experimental/source/tracing/tracing_imp.h"
 #include <level_zero/zet_api.h>
 
-#include "gtest/gtest.h"
-
 #include <array>
 #include <iostream>
 

@@ -13,8 +13,6 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
-#include "gtest/gtest.h"
-
 using namespace NEO;
 
 class ScenarioTest : public ::testing::Test,

@@ -10,8 +10,6 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "gtest/gtest.h"
-
 using namespace NEO;
 
 struct HwInfoConfigTest : public ::testing::Test {

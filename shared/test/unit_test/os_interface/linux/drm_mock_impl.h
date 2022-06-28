@@ -10,7 +10,6 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 
-#include "gtest/gtest.h"
 #include "test_traits_common.h"
 
 using namespace NEO;

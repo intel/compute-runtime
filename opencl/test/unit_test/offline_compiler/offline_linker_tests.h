@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "gtest/gtest.h"
 #include "mock/mock_argument_helper.h"
 #include "mock/mock_ocloc_igc_facade.h"
 #include "mock/mock_offline_linker.h"

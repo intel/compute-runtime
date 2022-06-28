@@ -10,8 +10,6 @@
 
 #include "opencl/source/sharings/d3d/d3d_sharing.h"
 
-#include "gtest/gtest.h"
-
 namespace NEO {
 template <typename D3D>
 class MockD3DSharingFunctions : public D3DSharingFunctions<D3D> {

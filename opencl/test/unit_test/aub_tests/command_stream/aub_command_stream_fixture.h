@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,6 @@
 #include "shared/test/unit_test/tests_configuration.h"
 
 #include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
-
-#include "gtest/gtest.h"
 
 #include <cstdint>
 

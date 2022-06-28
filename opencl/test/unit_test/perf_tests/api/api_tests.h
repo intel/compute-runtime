@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,6 @@
 #include "opencl/test/unit_test/perf_tests/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/perf_tests/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/perf_tests/perf_test_utils.h"
-
-#include "gtest/gtest.h"
 
 namespace NEO {
 

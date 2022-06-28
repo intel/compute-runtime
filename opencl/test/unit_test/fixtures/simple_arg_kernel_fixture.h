@@ -21,7 +21,6 @@
 
 #include "CL/cl.h"
 #include "compiler_options.h"
-#include "gtest/gtest.h"
 
 #include <type_traits>
 

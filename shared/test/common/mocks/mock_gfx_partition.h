@@ -9,8 +9,6 @@
 
 #include "shared/source/memory_manager/gfx_partition.h"
 
-#include "gtest/gtest.h"
-
 using namespace NEO;
 
 class MockGfxPartition : public GfxPartition {

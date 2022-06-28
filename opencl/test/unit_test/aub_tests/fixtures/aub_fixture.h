@@ -23,8 +23,6 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
-#include "gtest/gtest.h"
-
 #include <sstream>
 
 namespace NEO {

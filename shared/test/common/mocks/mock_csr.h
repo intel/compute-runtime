@@ -10,8 +10,6 @@
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
-#include "gtest/gtest.h"
-
 #include <vector>
 
 using namespace NEO;

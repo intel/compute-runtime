@@ -11,8 +11,6 @@
 #include "level_zero/core/source/fence/fence.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
 
-#include "gtest/gtest.h"
-
 namespace L0 {
 namespace ult {
 

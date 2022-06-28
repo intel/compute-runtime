@@ -18,8 +18,6 @@
 #include "shared/test/common/os_interface/linux/drm_memory_manager_fixture.h"
 #include "shared/test/common/os_interface/linux/drm_mock_memory_info.h"
 
-#include "gtest/gtest.h"
-
 class DrmMemoryManagerLocalMemoryPrelimTest : public ::testing::Test {
   public:
     void SetUp() override {

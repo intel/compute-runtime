@@ -10,7 +10,6 @@
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/offline_compiler/source/ocloc_fatbinary.h"
 
-#include "gtest/gtest.h"
 #include "mock/mock_argument_helper.h"
 
 #include <memory>

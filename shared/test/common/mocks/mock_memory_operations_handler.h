@@ -10,8 +10,6 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
-#include "gtest/gtest.h"
-
 namespace NEO {
 
 class GraphicsAllocation;

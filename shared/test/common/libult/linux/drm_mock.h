@@ -16,7 +16,6 @@
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 
 #include "drm/i915_drm.h"
-#include "gtest/gtest.h"
 
 #include <cstdio>
 #include <fstream>

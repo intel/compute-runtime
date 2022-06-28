@@ -13,8 +13,6 @@
 
 #include "opencl/test/unit_test/offline_compiler/mock/mock_argument_helper.h"
 
-#include "gtest/gtest.h"
-
 #include <cstdint>
 #include <memory>
 

@@ -13,8 +13,6 @@
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/libult/linux/drm_mock_prelim_context.h"
 
-#include "gtest/gtest.h"
-
 using namespace NEO;
 
 class DrmQueryMock : public DrmMock {

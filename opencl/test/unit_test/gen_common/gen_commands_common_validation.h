@@ -11,8 +11,6 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 
-#include "gtest/gtest.h"
-
 #include <cstdint>
 
 namespace NEO {

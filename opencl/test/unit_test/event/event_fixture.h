@@ -21,8 +21,6 @@
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
-#include "gtest/gtest.h"
-
 using namespace NEO;
 
 struct EventTest

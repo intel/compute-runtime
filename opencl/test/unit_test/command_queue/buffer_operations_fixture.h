@@ -12,8 +12,6 @@
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 
-#include "gtest/gtest.h"
-
 namespace NEO {
 
 struct EnqueueWriteBufferTypeTest : public CommandEnqueueFixture,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,6 @@
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-
-#include "gtest/gtest.h"
 
 namespace NEO {
 

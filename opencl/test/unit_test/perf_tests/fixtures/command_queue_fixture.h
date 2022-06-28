@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,6 @@
 #include "opencl/source/command_queue/command_queue.h"
 
 #include "CL/cl.h"
-#include "gtest/gtest.h"
 
 namespace NEO {
 
