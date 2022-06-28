@@ -20,7 +20,7 @@ using namespace NEO;
 HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned) {
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
 
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
@@ -49,7 +49,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenCoherencyWithoutShare
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenCoherencyWithSharedHandlesWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned) {
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -90,7 +90,7 @@ struct ForceNonCoherentSupportedMatcher {
 };
 
 HWTEST2_F(ComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenComputeModeIsProgrammedThenCorrectCommandsAreAdded, ForceNonCoherentSupportedMatcher) {
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -140,7 +140,7 @@ HWTEST2_F(ComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenCompute
 }
 
 HWTEST2_F(ComputeModeRequirements, givenCoherencyWithSharedHandlesWhenComputeModeIsProgrammedThenCorrectCommandsAreAdded, ForceNonCoherentSupportedMatcher) {
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -203,7 +203,7 @@ HWTEST2_F(ComputeModeRequirements, givenCoherencyWithSharedHandlesWhenComputeMod
 }
 
 HWTEST2_F(ComputeModeRequirements, givenCoherencyRequirementWithoutSharedHandlesWhenFlushTaskCalledThenProgramCmdOnlyIfChanged, ForceNonCoherentSupportedMatcher) {
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -261,7 +261,7 @@ HWTEST2_F(ComputeModeRequirements, givenCoherencyRequirementWithoutSharedHandles
 }
 
 HWTEST2_F(ComputeModeRequirements, givenCoherencyRequirementWithSharedHandlesWhenFlushTaskCalledThenProgramCmdsWhenNeeded, ForceNonCoherentSupportedMatcher) {
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -311,7 +311,7 @@ HWTEST2_F(ComputeModeRequirements, givenCoherencyRequirementWithSharedHandlesWhe
 }
 
 HWTEST2_F(ComputeModeRequirements, givenFlushWithoutSharedHandlesWhenPreviouslyUsedThenPcAndSCMAreNotProgrammed, ForceNonCoherentSupportedMatcher) {
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -335,7 +335,7 @@ HWTEST2_F(ComputeModeRequirements, givenFlushWithoutSharedHandlesWhenPreviouslyU
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenComputeModeCmdSizeWhenLargeGrfModeChangeIsRequiredThenSCMCommandSizeIsCalculated) {
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -363,7 +363,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenComputeModeCmdSizeWhe
 }
 
 HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfModeChangeIsRequiredThenCorrectCommandsAreAdded, ForceNonCoherentSupportedMatcher) {
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -415,7 +415,7 @@ HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfModeCh
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfModeDoesntChangeThenSCMIsNotAdded) {
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
 
     char buff[1024];
     LinearStream stream(buff, 1024);
@@ -425,7 +425,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenComputeModeProgrammin
 }
 
 HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRFNumberIsLowerThan128ThenSmallGRFModeIsProgrammed, ForceNonCoherentSupportedMatcher) {
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -459,7 +459,7 @@ HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRFNum
 }
 
 HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRFNumberIsGreaterThan128ThenLargeGRFModeIsProgrammed, ForceNonCoherentSupportedMatcher) {
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 

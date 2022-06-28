@@ -14,10 +14,10 @@
 namespace NEO {
 void DeviceFixture::SetUp() {
     hardwareInfo = *defaultHwInfo;
-    SetUpImpl(&hardwareInfo);
+    setUpImpl(&hardwareInfo);
 }
 
-void DeviceFixture::SetUpImpl(const NEO::HardwareInfo *hardwareInfo) {
+void DeviceFixture::setUpImpl(const NEO::HardwareInfo *hardwareInfo) {
     pDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(hardwareInfo, rootDeviceIndex);
     ASSERT_NE(nullptr, pDevice);
 

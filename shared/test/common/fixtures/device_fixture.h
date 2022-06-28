@@ -12,9 +12,9 @@ namespace NEO {
 struct HardwareInfo;
 
 struct DeviceFixture {
-    void SetUp();                                          // NOLINT(readability-identifier-naming)
-    void SetUpImpl(const NEO::HardwareInfo *hardwareInfo); // NOLINT(readability-identifier-naming)
-    void TearDown();                                       // NOLINT(readability-identifier-naming)
+    void SetUp(); // NOLINT(readability-identifier-naming)
+    void setUpImpl(const NEO::HardwareInfo *hardwareInfo);
+    void TearDown(); // NOLINT(readability-identifier-naming)
 
     MockDevice *createWithUsDeviceIdRevId(unsigned short usDeviceId, unsigned short usRevId);
 

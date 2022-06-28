@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -195,7 +195,7 @@ class XeHPAndLaterTileRangeRegisterTest : public DeviceFixture, public ::testing
         hardwareInfo = *defaultHwInfo;
         hardwareInfoSetup[hardwareInfo.platform.eProductFamily](&hardwareInfo, true, 0);
         hardwareInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
-        DeviceFixture::SetUpImpl(&hardwareInfo);
+        DeviceFixture::setUpImpl(&hardwareInfo);
     }
 
     void SetUp() override {

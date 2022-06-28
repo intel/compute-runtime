@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,10 +14,10 @@
 namespace NEO {
 void ClDeviceFixture::SetUp() {
     hardwareInfo = *defaultHwInfo;
-    SetUpImpl(&hardwareInfo);
+    setUpImpl(&hardwareInfo);
 }
 
-void ClDeviceFixture::SetUpImpl(const NEO::HardwareInfo *hardwareInfo) {
+void ClDeviceFixture::setUpImpl(const NEO::HardwareInfo *hardwareInfo) {
     pDevice = MockClDevice::createWithNewExecutionEnvironment<MockDevice>(hardwareInfo, rootDeviceIndex);
     ASSERT_NE(nullptr, pDevice);
     pClExecutionEnvironment = static_cast<MockClExecutionEnvironment *>(pDevice->getExecutionEnvironment());

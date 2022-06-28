@@ -35,7 +35,7 @@ struct ImageAubFixture : public ClDeviceFixture, public AUBCommandStreamFixture 
 
             hardwareInfo = *defaultHwInfo;
             hardwareInfo.capabilityTable.blitterOperationsSupported = true;
-            ClDeviceFixture::SetUpImpl(&hardwareInfo);
+            ClDeviceFixture::setUpImpl(&hardwareInfo);
         } else {
             ClDeviceFixture::SetUp();
         }

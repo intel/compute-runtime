@@ -68,7 +68,7 @@ struct MockBuilder : BuiltinDispatchInfoBuilder {
 
 struct BuiltinParamsCommandQueueHwTests : public CommandQueueHwTest {
 
-    void SetUpImpl(EBuiltInOps::Type operation) {
+    void setUpImpl(EBuiltInOps::Type operation) {
         auto builtIns = new MockBuiltins();
         pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()]->builtins.reset(builtIns);
 
@@ -87,7 +87,7 @@ struct BuiltinParamsCommandQueueHwTests : public CommandQueueHwTest {
 
 HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadWriteBufferCallWhenBuiltinParamsArePassedThenCheckValuesCorectness) {
 
-    SetUpImpl(EBuiltInOps::CopyBufferToBuffer);
+    setUpImpl(EBuiltInOps::CopyBufferToBuffer);
     BufferDefaults::context = context;
     auto buffer = clUniquePtr(BufferHelper<>::create());
 
@@ -121,7 +121,7 @@ HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadWriteBufferCallWhenBu
 
 HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueWriteImageCallWhenBuiltinParamsArePassedThenCheckValuesCorectness) {
 
-    SetUpImpl(EBuiltInOps::CopyBufferToImage3d);
+    setUpImpl(EBuiltInOps::CopyBufferToImage3d);
 
     std::unique_ptr<Image> dstImage(ImageHelper<ImageUseHostPtr<Image2dDefaults>>::create(context));
 
@@ -162,7 +162,7 @@ HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueWriteImageCallWhenBuiltin
 
 HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadImageCallWhenBuiltinParamsArePassedThenCheckValuesCorectness) {
 
-    SetUpImpl(EBuiltInOps::CopyImage3dToBuffer);
+    setUpImpl(EBuiltInOps::CopyImage3dToBuffer);
 
     std::unique_ptr<Image> dstImage(ImageHelper<ImageUseHostPtr<Image2dDefaults>>::create(context));
 
@@ -203,7 +203,7 @@ HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadImageCallWhenBuiltinP
 
 HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadWriteBufferRectCallWhenBuiltinParamsArePassedThenCheckValuesCorectness) {
 
-    SetUpImpl(EBuiltInOps::CopyBufferRect);
+    setUpImpl(EBuiltInOps::CopyBufferRect);
 
     BufferDefaults::context = context;
     auto buffer = clUniquePtr(BufferHelper<>::create());

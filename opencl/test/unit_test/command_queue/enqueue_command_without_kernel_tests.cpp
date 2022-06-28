@@ -277,7 +277,7 @@ HWTEST_F(EnqueueHandlerTest, givenBlitPropertyWhenEnqueueIsBlockedThenRegisterBl
 
 HWTEST_F(DispatchFlagsTests, whenEnqueueCommandWithoutKernelThenPassCorrectDispatchFlags) {
     using CsrType = MockCsrHw2<FamilyType>;
-    SetUpImpl<CsrType>();
+    setUpImpl<CsrType>();
 
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
@@ -303,7 +303,7 @@ HWTEST_F(DispatchFlagsTests, whenEnqueueCommandWithoutKernelThenPassCorrectDispa
 
 HWTEST_F(DispatchFlagsTests, whenEnqueueCommandWithoutKernelThenPassCorrectThrottleHint) {
     using CsrType = MockCsrHw2<FamilyType>;
-    SetUpImpl<CsrType>();
+    setUpImpl<CsrType>();
 
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     mockCmdQ->throttle = QueueThrottle::HIGH;
@@ -328,7 +328,7 @@ HWTEST_F(DispatchFlagsBlitTests, givenBlitEnqueueWhenDispatchingCommandsWithoutK
     DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
     DebugManager.flags.EnableTimestampPacket.set(1);
 
-    SetUpImpl<CsrType>();
+    setUpImpl<CsrType>();
     REQUIRE_FULL_BLITTER_OR_SKIP(&device->getHardwareInfo());
 
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
@@ -373,7 +373,7 @@ HWTEST_F(DispatchFlagsBlitTests, givenN1EnabledWhenDispatchingWithoutKernelThenA
     DebugManager.flags.EnableTimestampPacket.set(1);
     DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
 
-    SetUpImpl<CsrType>();
+    setUpImpl<CsrType>();
     REQUIRE_FULL_BLITTER_OR_SKIP(&device->getHardwareInfo());
 
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
@@ -417,7 +417,7 @@ HWTEST_F(DispatchFlagsBlitTests, givenN1EnabledWhenDispatchingWithoutKernelThenA
 
 HWTEST_F(DispatchFlagsTests, givenMockKernelWhenSettingAdditionalKernelExecInfoThenCorrectValueIsSet) {
     using CsrType = MockCsrHw2<FamilyType>;
-    SetUpImpl<CsrType>();
+    setUpImpl<CsrType>();
 
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());

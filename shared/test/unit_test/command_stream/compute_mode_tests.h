@@ -72,12 +72,12 @@ struct ComputeModeRequirements : public ::testing::Test {
     }
 
     template <typename FamilyType>
-    void SetUpImpl() { // NOLINT(readability-identifier-naming)
-        SetUpImpl<FamilyType>(defaultHwInfo.get());
+    void setUpImpl() {
+        setUpImpl<FamilyType>(defaultHwInfo.get());
     }
 
     template <typename FamilyType>
-    void SetUpImpl(const NEO::HardwareInfo *hardwareInfo) { // NOLINT(readability-identifier-naming)
+    void setUpImpl(const NEO::HardwareInfo *hardwareInfo) {
         device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(hardwareInfo));
         device->executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hardwareInfo);
         device->executionEnvironment->rootDeviceEnvironments[0]->initGmm();

@@ -20,7 +20,7 @@ namespace NEO {
 template <bool setupBlitter>
 struct DispatchFlagsTestsBase : public ::testing::Test {
     template <typename CsrType>
-    void SetUpImpl() { // NOLINT(readability-identifier-naming)
+    void setUpImpl() {
         HardwareInfo hwInfo = *defaultHwInfo;
         if (setupBlitter) {
             hwInfo.capabilityTable.blitterOperationsSupported = true;

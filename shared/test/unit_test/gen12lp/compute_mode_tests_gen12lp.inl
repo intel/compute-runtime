@@ -8,7 +8,7 @@
 #include "shared/test/unit_test/command_stream/compute_mode_tests.h"
 
 HWTEST2_F(ComputeModeRequirements, givenCsrRequestFlagsWithSharedHandlesWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned, IsTGLLP) {
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
@@ -59,7 +59,7 @@ HWTEST2_F(ComputeModeRequirements, givenCsrRequestFlagsWithSharedHandlesWhenComm
 }
 
 HWTEST2_F(ComputeModeRequirements, givenCsrRequestFlagsWithoutSharedHandlesWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned, IsTGLLP) {
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
@@ -107,7 +107,7 @@ HWTEST2_F(ComputeModeRequirements, givenCsrRequestOnEngineCCSWhenCommandSizeIsCa
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
 
-    SetUpImpl<FamilyType>(&hwInfo);
+    setUpImpl<FamilyType>(&hwInfo);
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);

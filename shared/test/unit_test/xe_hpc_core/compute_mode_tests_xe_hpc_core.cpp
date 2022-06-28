@@ -21,7 +21,7 @@ HWTEST2_F(ThreadArbitrationXeHpc, givenXeHpcWhenCallgetDefaultThreadArbitrationP
 using XeHpcComputeModeRequirements = ComputeModeRequirements;
 
 HWTEST2_F(XeHpcComputeModeRequirements, givenNewRequiredThreadArbitrationPolicyWhenComputeModeIsProgrammedThenStateComputeIsProgrammedAgain, IsXeHpcCore) {
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using EU_THREAD_SCHEDULING_MODE_OVERRIDE = typename STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE;
@@ -49,7 +49,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenNewRequiredThreadArbitrationPolicyW
 }
 
 HWTEST2_F(XeHpcComputeModeRequirements, givenRequiredThreadArbitrationPolicyAlreadySetWhenComputeModeIsProgrammedThenStateComputeIsNotProgrammedAgain, IsXeHpcCore) {
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
 
     auto cmdsSize = 0u;
@@ -73,7 +73,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenCo
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
 
@@ -90,7 +90,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenNumGrfRequiredChangedWhenCommandSiz
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
 
     auto numGrfRequired = 128u;
     auto numGrfRequiredChanged = false;
@@ -104,7 +104,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenNumGrfRequiredChangedWhenCommandSiz
 }
 
 HWTEST2_F(XeHpcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfModeDoesntChangeButRequiredThreadArbitrationPolicyIsNewThenSCMIsReloaded, IsXeHpcCore) {
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -118,7 +118,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfM
 }
 
 HWTEST2_F(XeHpcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfModeChangedThenSCMIsReloadedAndLargeGrfModeProgrammed, IsXeHpcCore) {
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -135,7 +135,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfM
 }
 
 HWTEST2_F(XeHpcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfRequiredChangedButValueIsDefaultThenSCMIsReloadedButLargeGrfModeNotProgrammed, IsXeHpcCore) {
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -151,7 +151,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfR
 }
 
 HWTEST2_F(XeHpcComputeModeRequirements, giventhreadArbitrationPolicyWithoutSharedHandlesWhenFlushTaskCalledThenProgramCmdOnlyIfChanged, IsXeHpcCore) {
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
@@ -205,7 +205,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, giventhreadArbitrationPolicyWithoutShare
 }
 
 HWTEST2_F(XeHpcComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenComputeModeIsProgrammedThenCorrectCommandsAreAdded, IsXeHpcCore) {
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -242,7 +242,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenCo
 }
 
 HWTEST2_F(XeHpcComputeModeRequirements, givenCoherencyWithSharedHandlesWhenComputeModeIsProgrammedThenCorrectCommandsAreAdded, IsXeHpcCore) {
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -287,7 +287,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenCoherencyWithSharedHandlesWhenCompu
 }
 
 HWTEST2_F(XeHpcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfModeChangeIsRequiredThenCorrectCommandsAreAdded, IsXeHpcCore) {
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -326,7 +326,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfM
 }
 
 HWTEST2_F(XeHpcComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRFNumberIsLowerThan128ThenSmallGRFModeIsProgrammed, IsXeHpcCore) {
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -350,7 +350,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenComputeModeProgrammingWhenRequiredG
 }
 
 HWTEST2_F(XeHpcComputeModeRequirements, givenComputeModeProgrammingThenCorrectCommandsAreAdded, IsXeHpcCore) {
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
 
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -398,7 +398,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenProgramExtendedPipeControlPriorToNo
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
 
-    SetUpImpl<FamilyType>(&hwInfo);
+    setUpImpl<FamilyType>(&hwInfo);
 
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -443,7 +443,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, GivenSingleCCSEnabledSetupThenCorrectCom
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
 
-    SetUpImpl<FamilyType>(&hwInfo);
+    setUpImpl<FamilyType>(&hwInfo);
 
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;

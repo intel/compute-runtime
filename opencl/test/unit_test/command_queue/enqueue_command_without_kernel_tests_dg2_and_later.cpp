@@ -27,7 +27,7 @@ using IsDG2AndLater = IsAtLeastXeHpgCore;
 
 HWTEST2_F(DispatchFlagsTests, whenSubmittingKernelWithAdditionalKernelExecInfoThenCorrectDispatchFlagIsSet, IsDG2AndLater) {
     using CsrType = MockCsrHw2<FamilyType>;
-    SetUpImpl<CsrType>();
+    setUpImpl<CsrType>();
 
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());

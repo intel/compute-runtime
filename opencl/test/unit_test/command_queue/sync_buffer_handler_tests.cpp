@@ -34,7 +34,7 @@ class SyncBufferEnqueueHandlerTest : public EnqueueHandlerTest {
         hardwareInfo.capabilityTable.blitterOperationsSupported = true;
         uint64_t hwInfoConfig = defaultHardwareInfoConfigTable[productFamily];
         hardwareInfoSetup[productFamily](&hardwareInfo, true, hwInfoConfig);
-        SetUpImpl(&hardwareInfo);
+        setUpImpl(&hardwareInfo);
     }
 
     void TearDown() override {
@@ -44,7 +44,7 @@ class SyncBufferEnqueueHandlerTest : public EnqueueHandlerTest {
         pDevice = nullptr;
     }
 
-    void SetUpImpl(const NEO::HardwareInfo *hardwareInfo) {
+    void setUpImpl(const NEO::HardwareInfo *hardwareInfo) {
         pDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(hardwareInfo);
         ASSERT_NE(nullptr, pDevice);
         pClDevice = new MockClDevice{pDevice};

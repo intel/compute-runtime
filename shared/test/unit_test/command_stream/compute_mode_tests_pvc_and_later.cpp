@@ -12,7 +12,7 @@ using namespace NEO;
 using ComputeModeRequirementsPvcAndLater = ComputeModeRequirements;
 
 HWTEST2_F(ComputeModeRequirementsPvcAndLater, givenComputeModeCmdSizeWhenLargeGrfModeChangeIsRequiredThenSCMAndPcCommandsSizeIsCalculated, IsXeHpcCore) {
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 

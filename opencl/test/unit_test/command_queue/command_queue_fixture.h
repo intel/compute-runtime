@@ -98,7 +98,7 @@ struct CommandQueueHwBlitTest : ClDeviceFixture, ContextFixture, CommandQueueHwF
         DebugManager.flags.EnableBlitterOperationsSupport.set(1);
         DebugManager.flags.EnableTimestampPacket.set(1);
         DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
-        ClDeviceFixture::SetUpImpl(&hwInfo);
+        ClDeviceFixture::setUpImpl(&hwInfo);
         cl_device_id device = pClDevice;
         ContextFixture::SetUp(1, &device);
         cl_command_queue_properties queueProperties = ooq ? CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE : 0;

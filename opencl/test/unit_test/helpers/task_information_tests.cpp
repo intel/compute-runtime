@@ -233,7 +233,7 @@ class MockCsr1 : public CommandStreamReceiverHw<GfxFamily> {
 
 HWTEST_F(DispatchFlagsTests, givenCommandMapUnmapWhenSubmitThenPassCorrectDispatchFlags) {
     using CsrType = MockCsr1<FamilyType>;
-    SetUpImpl<CsrType>();
+    setUpImpl<CsrType>();
 
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
@@ -267,7 +267,7 @@ HWTEST_F(DispatchFlagsTests, givenCommandMapUnmapWhenSubmitThenPassCorrectDispat
 
 HWTEST_F(DispatchFlagsTests, givenCommandComputeKernelWhenSubmitThenPassCorrectDispatchFlags) {
     using CsrType = MockCsr1<FamilyType>;
-    SetUpImpl<CsrType>();
+    setUpImpl<CsrType>();
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
 
@@ -315,7 +315,7 @@ HWTEST_F(DispatchFlagsTests, givenCommandComputeKernelWhenSubmitThenPassCorrectD
 
 HWTEST_F(DispatchFlagsTests, givenClCommandCopyImageWhenSubmitThenFlushTextureCacheHasProperValue) {
     using CsrType = MockCsr1<FamilyType>;
-    SetUpImpl<CsrType>();
+    setUpImpl<CsrType>();
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
 
@@ -364,7 +364,7 @@ HWTEST_F(DispatchFlagsTests, givenClCommandCopyImageWhenSubmitThenFlushTextureCa
 
 HWTEST_F(DispatchFlagsTests, givenCommandWithoutKernelWhenSubmitThenPassCorrectDispatchFlags) {
     using CsrType = MockCsr1<FamilyType>;
-    SetUpImpl<CsrType>();
+    setUpImpl<CsrType>();
 
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
@@ -404,7 +404,7 @@ HWTEST_F(DispatchFlagsTests, givenCommandWithoutKernelWhenSubmitThenPassCorrectD
 
 HWTEST_F(DispatchFlagsTests, givenCommandComputeKernelWhenSubmitThenPassCorrectDispatchHints) {
     using CsrType = MockCsr1<FamilyType>;
-    SetUpImpl<CsrType>();
+    setUpImpl<CsrType>();
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
 

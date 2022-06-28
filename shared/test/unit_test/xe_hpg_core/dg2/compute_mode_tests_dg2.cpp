@@ -23,7 +23,7 @@ HWTEST2_F(ComputeModeRequirements, GivenProgramExtendedPipeControlPriorToNonPipe
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(true);
 
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
 
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -67,7 +67,7 @@ HWTEST2_F(ComputeModeRequirements, GivenMultipleCCSEnabledSetupThenCorrectComman
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
 
-    SetUpImpl<FamilyType>(&hwInfo);
+    setUpImpl<FamilyType>(&hwInfo);
     MockOsContext ccsOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular}));
 
     getCsrHw<FamilyType>()->setupContext(ccsOsContext);
@@ -114,7 +114,7 @@ HWTEST2_F(ComputeModeRequirements, GivenSingleCCSEnabledSetupThenCorrectCommands
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
 
-    SetUpImpl<FamilyType>(&hwInfo);
+    setUpImpl<FamilyType>(&hwInfo);
     MockOsContext ccsOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular}));
 
     getCsrHw<FamilyType>()->setupContext(ccsOsContext);
@@ -168,7 +168,7 @@ HWTEST2_F(ComputeModeRequirements, GivenProgramExtendedPipeControlPriorToNonPipe
 
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    SetUpImpl<FamilyType>();
+    setUpImpl<FamilyType>();
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
 

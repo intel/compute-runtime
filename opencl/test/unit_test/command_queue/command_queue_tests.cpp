@@ -2405,7 +2405,7 @@ TEST_F(CommandQueueWithTimestampPacketTests, givenQueueWhenSettingAndQueryingLas
 using KernelExecutionTypesTests = DispatchFlagsTests;
 HWTEST_F(KernelExecutionTypesTests, givenConcurrentKernelWhileDoingNonBlockedEnqueueThenCorrectKernelTypeIsSetInCSR) {
     using CsrType = MockCsrHw2<FamilyType>;
-    SetUpImpl<CsrType>();
+    setUpImpl<CsrType>();
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     MockKernelWithInternals mockKernelWithInternals(*device.get());
     auto pKernel = mockKernelWithInternals.mockKernel;
@@ -2421,7 +2421,7 @@ HWTEST_F(KernelExecutionTypesTests, givenConcurrentKernelWhileDoingNonBlockedEnq
 
 HWTEST_F(KernelExecutionTypesTests, givenKernelWithDifferentExecutionTypeWhileDoingNonBlockedEnqueueThenKernelTypeInCSRIsChanging) {
     using CsrType = MockCsrHw2<FamilyType>;
-    SetUpImpl<CsrType>();
+    setUpImpl<CsrType>();
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     MockKernelWithInternals mockKernelWithInternals(*device.get());
     auto pKernel = mockKernelWithInternals.mockKernel;
@@ -2443,7 +2443,7 @@ HWTEST_F(KernelExecutionTypesTests, givenKernelWithDifferentExecutionTypeWhileDo
 
 HWTEST_F(KernelExecutionTypesTests, givenConcurrentKernelWhileDoingBlockedEnqueueThenCorrectKernelTypeIsSetInCSR) {
     using CsrType = MockCsrHw2<FamilyType>;
-    SetUpImpl<CsrType>();
+    setUpImpl<CsrType>();
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     MockKernelWithInternals mockKernelWithInternals(*device.get());
     auto pKernel = mockKernelWithInternals.mockKernel;
