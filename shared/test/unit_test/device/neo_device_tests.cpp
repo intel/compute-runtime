@@ -118,31 +118,6 @@ TEST_F(DeviceGetCapsTest, givenMockCompilerInterfaceWhenInitializeCapsIsCalledTh
     EXPECT_EQ(1u, pDevice->getDeviceInfo().maxParameterSize);
 }
 
-TEST_F(DeviceGetCapsTest, whenInitializeCapsIsCalledWithDSSCountSetToZeroThenMaxWorkGroupSizeIsTheSame) {
-    pDevice->initializeCaps();
-    auto maxWorkGroupSizeBefore = pDevice->getDeviceInfo().maxWorkGroupSize;
-
-    auto mutableHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    mutableHwInfo->gtSystemInfo.DualSubSliceCount = 0;
-    pDevice->initializeCaps();
-    auto maxWorkGroupSizeAfter = pDevice->getDeviceInfo().maxWorkGroupSize;
-
-    EXPECT_EQ(maxWorkGroupSizeBefore, maxWorkGroupSizeAfter);
-}
-
-TEST_F(DeviceGetCapsTest, givenSSCountAndDSSCountEqualToZeroAndEuCountPerPoolMinIsSetThenMaxNumEUsPerSliceIsSetAccordingly) {
-    auto mutableHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    mutableHwInfo->gtSystemInfo.EuCountPerPoolMin = 16;
-    mutableHwInfo->featureTable.flags.ftrPooledEuEnabled = 1;
-    mutableHwInfo->gtSystemInfo.SubSliceCount = 0;
-    mutableHwInfo->gtSystemInfo.DualSubSliceCount = 0;
-
-    pDevice->initializeCaps();
-
-    EXPECT_EQ(pDevice->getDeviceInfo().maxNumEUsPerSubSlice, 16ul);
-    EXPECT_EQ(pDevice->getDeviceInfo().maxNumEUsPerDualSubSlice, 16ul);
-}
-
 TEST_F(DeviceGetCapsTest,
        givenImplicitScalingWhenInitializeCapsIsCalledThenMaxMemAllocSizeIsSetCorrectly) {
     DebugManagerStateRestore dbgRestorer;

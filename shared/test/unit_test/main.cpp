@@ -302,7 +302,6 @@ int main(int argc, char **argv) {
     // clang-format off
     gtSystemInfo.SliceCount             = sliceCount;
     gtSystemInfo.SubSliceCount          = gtSystemInfo.SliceCount * subSlicePerSliceCount;
-    gtSystemInfo.DualSubSliceCount      = gtSystemInfo.SubSliceCount;
     gtSystemInfo.EUCount                = gtSystemInfo.SubSliceCount * euPerSubSlice - dieRecovery;
     gtSystemInfo.ThreadCount            = gtSystemInfo.EUCount * threadsPerEu;
     gtSystemInfo.MaxEuPerSubSlice       = std::max(gtSystemInfo.MaxEuPerSubSlice, euPerSubSlice);

@@ -118,14 +118,12 @@ void Device::initializeCaps() {
                             ? CommonConstants::maximalSimdSize
                             : hwHelper.getMinimalSIMDSize();
 
-    uint32_t dualSubsliceCount = systemInfo.DualSubSliceCount == 0 ? systemInfo.SubSliceCount : systemInfo.DualSubSliceCount;
-
     deviceInfo.maxNumEUsPerSubSlice = (systemInfo.EuCountPerPoolMin == 0 || hwInfo.featureTable.flags.ftrPooledEuEnabled == 0)
-                                          ? (systemInfo.EUCount / dualSubsliceCount)
+                                          ? (systemInfo.EUCount / systemInfo.SubSliceCount)
                                           : systemInfo.EuCountPerPoolMin;
-    if (dualSubsliceCount != 0) {
+    if (systemInfo.DualSubSliceCount != 0) {
         deviceInfo.maxNumEUsPerDualSubSlice = (systemInfo.EuCountPerPoolMin == 0 || hwInfo.featureTable.flags.ftrPooledEuEnabled == 0)
-                                                  ? (systemInfo.EUCount / dualSubsliceCount)
+                                                  ? (systemInfo.EUCount / systemInfo.DualSubSliceCount)
                                                   : systemInfo.EuCountPerPoolMin;
 
     } else {

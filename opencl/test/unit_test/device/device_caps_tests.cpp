@@ -1096,7 +1096,7 @@ TEST(DeviceGetCaps, givenDebugFlagToUseMaxSimdSizeForWkgCalculationWhenDeviceCap
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
 
     mySysInfo.EUCount = 24;
-    mySysInfo.DualSubSliceCount = 3;
+    mySysInfo.SubSliceCount = 3;
     mySysInfo.ThreadCount = 24 * 7;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
@@ -1112,7 +1112,7 @@ HWTEST_F(DeviceGetCapsTest, givenDeviceThatHasHighNumberOfExecutionUnitsWhenMaxW
     auto &hwHelper = HwHelper::get(myHwInfo.platform.eRenderCoreFamily);
 
     mySysInfo.EUCount = 32;
-    mySysInfo.DualSubSliceCount = 2;
+    mySysInfo.SubSliceCount = 2;
     mySysInfo.ThreadCount = 32 * hwHelper.getMinimalSIMDSize(); // 128 threads per subslice, in simd 8 gives 1024
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
@@ -1504,18 +1504,19 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceGetCapsTest, givenSysInfoWhenDeviceCreatedThen
     PLATFORM &myPlatform = myHwInfo.platform;
 
     mySysInfo.EUCount = 16;
+    mySysInfo.SubSliceCount = 4;
     mySysInfo.DualSubSliceCount = 2;
     mySysInfo.ThreadCount = 16 * 8;
     myPlatform.usRevId = 0x4;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
     auto minSimd = 8;
 
-    auto expectedWG = (mySysInfo.ThreadCount / mySysInfo.EUCount) * (mySysInfo.EUCount / mySysInfo.DualSubSliceCount) * minSimd;
+    auto expectedWG = (mySysInfo.ThreadCount / mySysInfo.EUCount) * (mySysInfo.EUCount / mySysInfo.SubSliceCount) * minSimd;
 
     EXPECT_EQ(expectedWG, device->sharedDeviceInfo.maxWorkGroupSize);
 }
 
-HWTEST_F(DeviceGetCapsTest, givenDSSDifferentThanZeroAndDifferentThanSubSliceCountWhenDeviceCreatedThenDualSubSliceCountIsSameAsSubSliceCount) {
+HWTEST_F(DeviceGetCapsTest, givenDSSDifferentThanZeroWhenDeviceCreatedThenDualSubSliceCountIsDifferentThanSubSliceCount) {
     HardwareInfo myHwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
     PLATFORM &myPlatform = myHwInfo.platform;
@@ -1527,7 +1528,7 @@ HWTEST_F(DeviceGetCapsTest, givenDSSDifferentThanZeroAndDifferentThanSubSliceCou
     myPlatform.usRevId = 0x4;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
-    EXPECT_EQ(device->sharedDeviceInfo.maxNumEUsPerSubSlice, device->sharedDeviceInfo.maxNumEUsPerDualSubSlice);
+    EXPECT_NE(device->sharedDeviceInfo.maxNumEUsPerSubSlice, device->sharedDeviceInfo.maxNumEUsPerDualSubSlice);
 }
 
 HWTEST_F(DeviceGetCapsTest, givenDSSCountEqualZeroWhenDeviceCreatedThenMaxEuPerDSSEqualMaxEuPerSS) {
