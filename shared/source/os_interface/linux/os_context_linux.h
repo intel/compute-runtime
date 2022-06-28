@@ -21,6 +21,7 @@ class OsContextLinux : public OsContext {
     OsContextLinux(Drm &drm, uint32_t contextId, const EngineDescriptor &engineDescriptor);
 
     unsigned int getEngineFlag() const { return engineFlag; }
+    void setEngineFlag(unsigned int engineFlag) { this->engineFlag = engineFlag; }
     const std::vector<uint32_t> &getDrmContextIds() const { return drmContextIds; }
     const std::vector<uint32_t> &getDrmVmIds() const { return drmVmIds; }
     void setNewResourceBound(bool value) { this->newResourceBound = value; };

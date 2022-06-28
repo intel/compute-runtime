@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
@@ -43,7 +44,7 @@ struct AUBFixture : public AUBCommandStreamFixture,
 
     template <typename FamilyType>
     void testNoopIdXcs(aub_stream::EngineType engineType) {
-        pCommandStreamReceiver->getOsContext().getEngineType() = engineType;
+        static_cast<MockOsContext &>(pCommandStreamReceiver->getOsContext()).engineType = engineType;
 
         typedef typename FamilyType::MI_NOOP MI_NOOP;
 

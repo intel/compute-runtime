@@ -431,7 +431,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationDumpableWhenDumpA
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
     gfxAllocation->setDefaultGmm(new Gmm(pDevice->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
 
-    auto &csrOsContext = aubCsr.getOsContext();
+    auto &csrOsContext = static_cast<MockOsContext &>(aubCsr.getOsContext());
 
     {
         // Non-BCS engine, BCS dump
@@ -458,7 +458,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationDumpableWhenDumpA
 
     {
         // BCS engine, Non-BCS dump
-        csrOsContext.getEngineType() = aub_stream::EngineType::ENGINE_BCS;
+        csrOsContext.engineType = aub_stream::EngineType::ENGINE_BCS;
         EXPECT_TRUE(EngineHelpers::isBcs(csrOsContext.getEngineType()));
         gfxAllocation->setAllocDumpable(true, false);
 
@@ -470,7 +470,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationDumpableWhenDumpA
 
     {
         // BCS engine, BCS dump
-        csrOsContext.getEngineType() = aub_stream::EngineType::ENGINE_BCS;
+        csrOsContext.engineType = aub_stream::EngineType::ENGINE_BCS;
         EXPECT_TRUE(EngineHelpers::isBcs(csrOsContext.getEngineType()));
         gfxAllocation->setAllocDumpable(true, true);
 

@@ -48,9 +48,8 @@ void OsContextLinux::initializeContext() {
     for (auto deviceIndex = 0u; deviceIndex < deviceBitfield.size(); deviceIndex++) {
         if (deviceBitfield.test(deviceIndex)) {
             auto drmVmId = drm.getVirtualMemoryAddressSpace(deviceIndex);
-            auto drmContextId = drm.getIoctlHelper()->createDrmContext(drm, *this, drmVmId);
+            auto drmContextId = drm.getIoctlHelper()->createDrmContext(drm, *this, drmVmId, deviceIndex);
 
-            this->engineFlag = drm.bindDrmContext(drmContextId, deviceIndex, engineType, isEngineInstanced());
             this->drmContextIds.push_back(drmContextId);
 
             if (drm.isPerContextVMRequired()) {

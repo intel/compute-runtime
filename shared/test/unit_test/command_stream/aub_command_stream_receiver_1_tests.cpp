@@ -1120,7 +1120,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
 HWTEST_F(AubCommandStreamReceiverTests, WhenBlitBufferIsCalledThenCounterIsCorrectlyIncremented) {
     auto aubExecutionEnvironment = getEnvironment<UltAubCommandStreamReceiver<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<UltAubCommandStreamReceiver<FamilyType>>();
-    aubCsr->osContext->getEngineType() = aub_stream::ENGINE_BCS;
+    auto osContext = static_cast<MockOsContext *>(aubCsr->osContext);
+    osContext->engineType = aub_stream::ENGINE_BCS;
     EXPECT_EQ(0u, aubCsr->blitBufferCalled);
 
     MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0);

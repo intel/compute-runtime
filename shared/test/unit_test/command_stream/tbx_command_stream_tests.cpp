@@ -967,7 +967,7 @@ HWTEST_F(TbxCommandStreamTests, givenGraphicsAllocationWhenDumpAllocationIsCalle
     EXPECT_FALSE(mockHardwareContext->dumpSurfaceCalled);
     EXPECT_FALSE(gfxAllocation->isAllocDumpable());
 
-    auto &csrOsContext = tbxCsr.getOsContext();
+    auto &csrOsContext = static_cast<MockOsContext &>(tbxCsr.getOsContext());
     {
         // Non-BCS engine, BCS dump
         EXPECT_FALSE(EngineHelpers::isBcs(csrOsContext.getEngineType()));
@@ -993,7 +993,7 @@ HWTEST_F(TbxCommandStreamTests, givenGraphicsAllocationWhenDumpAllocationIsCalle
 
     {
         // BCS engine, Non-BCS dump
-        csrOsContext.getEngineType() = aub_stream::EngineType::ENGINE_BCS;
+        csrOsContext.engineType = aub_stream::EngineType::ENGINE_BCS;
         EXPECT_TRUE(EngineHelpers::isBcs(csrOsContext.getEngineType()));
         gfxAllocation->setAllocDumpable(true, false);
 
@@ -1005,7 +1005,7 @@ HWTEST_F(TbxCommandStreamTests, givenGraphicsAllocationWhenDumpAllocationIsCalle
 
     {
         // BCS engine, BCS dump
-        csrOsContext.getEngineType() = aub_stream::EngineType::ENGINE_BCS;
+        csrOsContext.engineType = aub_stream::EngineType::ENGINE_BCS;
         EXPECT_TRUE(EngineHelpers::isBcs(csrOsContext.getEngineType()));
         gfxAllocation->setAllocDumpable(true, true);
 
