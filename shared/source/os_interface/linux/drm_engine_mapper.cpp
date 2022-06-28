@@ -11,8 +11,6 @@
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 
-#include "drm/i915_drm.h"
-
 namespace NEO {
 
 DrmParam DrmEngineMapper::engineNodeMap(aub_stream::EngineType engineType) {

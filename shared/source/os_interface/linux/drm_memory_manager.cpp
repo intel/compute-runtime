@@ -954,12 +954,10 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromExistingStorag
 uint64_t DrmMemoryManager::getSystemSharedMemory(uint32_t rootDeviceIndex) {
     uint64_t hostMemorySize = MemoryConstants::pageSize * (uint64_t)(sysconf(_SC_PHYS_PAGES));
 
-    GemContextParam getContextParam = {};
-    getContextParam.param = I915_CONTEXT_PARAM_GTT_SIZE;
-    [[maybe_unused]] auto ret = getDrm(rootDeviceIndex).ioctl(DrmIoctl::GemContextGetparam, &getContextParam);
-    DEBUG_BREAK_IF(ret != 0);
+    uint64_t gpuMemorySize = 0u;
 
-    uint64_t gpuMemorySize = getContextParam.value;
+    [[maybe_unused]] auto ret = getDrm(rootDeviceIndex).queryGttSize(gpuMemorySize);
+    DEBUG_BREAK_IF(ret != 0);
 
     return std::min(hostMemorySize, gpuMemorySize);
 }
