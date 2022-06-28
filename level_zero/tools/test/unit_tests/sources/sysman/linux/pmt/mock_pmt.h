@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "level_zero/core/test/unit_tests/mock.h"
 
 #include "sysman/linux/pmt/pmt.h"
 

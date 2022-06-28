@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/tools/source/sysman/global_operations/global_operations_imp.h"
 #include "level_zero/tools/source/sysman/global_operations/linux/os_global_operations_imp.h"
 

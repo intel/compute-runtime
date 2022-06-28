@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/pci/linux/os_pci_imp.h"
 

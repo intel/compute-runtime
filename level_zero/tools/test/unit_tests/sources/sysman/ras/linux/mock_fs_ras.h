@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/tools/source/sysman/ras/linux/os_ras_imp.h"
 
 #include "sysman/linux/fs_access.h"

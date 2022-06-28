@@ -8,7 +8,6 @@
 #pragma once
 
 #include "level_zero/core/source/image/image_hw.h"
-#include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
 
 #include "gtest/gtest.h"

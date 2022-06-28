@@ -8,7 +8,6 @@
 #pragma once
 #include "shared/source/helpers/string.h"
 
-#include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/tools/source/sysman/power/linux/os_power_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
 

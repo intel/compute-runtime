@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/tools/source/sysman/linux/pmu/pmu_imp.h"
 
 using namespace NEO;
