@@ -9,7 +9,6 @@
 
 #include "shared/source/helpers/constants.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 
 #include "gtest/gtest.h"
