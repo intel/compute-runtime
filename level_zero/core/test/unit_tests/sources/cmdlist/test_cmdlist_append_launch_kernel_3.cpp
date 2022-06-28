@@ -745,13 +745,20 @@ HWTEST2_F(MultiTileImmediateCommandListAppendLaunchFunctionXeHpCoreTest, givenIm
     auto result = immediateCmdList->initialize(device, NEO::EngineGroupType::Compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto cmdStream = immediateCmdList->commandContainer.getCommandStream();
-
-    auto sizeBefore = cmdStream->getUsed();
     CmdListKernelLaunchParams launchParams = {};
     result = immediateCmdList->appendLaunchKernelWithParams(kernel.get(), &groupCount, nullptr, launchParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto cmdStream = immediateCmdList->commandContainer.getCommandStream();
+
+    auto sizeBefore = cmdStream->getUsed();
+    result = immediateCmdList->appendLaunchKernelWithParams(kernel.get(), &groupCount, nullptr, launchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     auto sizeAfter = cmdStream->getUsed();
+
+    uint64_t bbStartGpuAddress = cmdStream->getGraphicsAllocation()->getGpuAddress() + sizeBefore;
+    bbStartGpuAddress += sizeof(WALKER_TYPE) + sizeof(PIPE_CONTROL) + sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                         sizeof(MI_BATCH_BUFFER_START) + 3 * sizeof(uint32_t);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
@@ -771,6 +778,8 @@ HWTEST2_F(MultiTileImmediateCommandListAppendLaunchFunctionXeHpCoreTest, givenIm
     EXPECT_EQ(itorPipeControl, itorStoreDataImm);
 
     auto itorBbStart = find<MI_BATCH_BUFFER_START *>(itorPipeControl, cmdList.end());
+    auto cmdBbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*itorBbStart);
+    EXPECT_EQ(bbStartGpuAddress, cmdBbStart->getBatchBufferStartAddress());
     ASSERT_NE(cmdList.end(), itorBbStart);
 
     auto itorMiAtomic = find<MI_ATOMIC *>(itorBbStart, cmdList.end());
