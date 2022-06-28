@@ -65,6 +65,42 @@ HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithWondershareFilmora11IsCa
     EXPECT_EQ(rtTable.blitterOperationsSupported, false);
 }
 
+HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithWondershareFilmora11perf_checkSubprocessIsCalledThenBlitterSupportIsDisabled, IsDG2) {
+    VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
+
+    AILMock<productFamily> ailTemp;
+    ailTemp.processName = "perf_check";
+    ailConfigurationTable[productFamily] = &ailTemp;
+
+    auto ailConfiguration = AILConfiguration::get(productFamily);
+    ASSERT_NE(nullptr, ailConfiguration);
+
+    NEO::RuntimeCapabilityTable rtTable = {};
+    rtTable.blitterOperationsSupported = true;
+
+    ailConfiguration->apply(rtTable);
+
+    EXPECT_EQ(rtTable.blitterOperationsSupported, false);
+}
+
+HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithWondershareFilmora11tlb_player_guiSubprocessIsCalledThenBlitterSupportIsDisabled, IsDG2) {
+    VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
+
+    AILMock<productFamily> ailTemp;
+    ailTemp.processName = "tlb_player_gui";
+    ailConfigurationTable[productFamily] = &ailTemp;
+
+    auto ailConfiguration = AILConfiguration::get(productFamily);
+    ASSERT_NE(nullptr, ailConfiguration);
+
+    NEO::RuntimeCapabilityTable rtTable = {};
+    rtTable.blitterOperationsSupported = true;
+
+    ailConfiguration->apply(rtTable);
+
+    EXPECT_EQ(rtTable.blitterOperationsSupported, false);
+}
+
 HWTEST2_F(AILTests, whenCheckingIfSourcesContainKernelThenCorrectResultIsReturned, IsAtLeastGen12lp) {
     VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
     AILMock<productFamily> ail;
