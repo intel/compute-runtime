@@ -761,6 +761,8 @@ const SIP::regset_desc *DebugSessionImp::typeToRegsetDesc(uint32_t type) {
         return &pStateSaveAreaHeader->regHeader.sp;
     case ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU:
         return &pStateSaveAreaHeader->regHeader.dbg;
+    case ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU:
+        return &pStateSaveAreaHeader->regHeader.fc;
     case ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU:
         return DebugSessionImp::getSbaRegsetDesc();
     default:
@@ -786,6 +788,7 @@ uint32_t DebugSessionImp::typeToRegsetFlags(uint32_t type) {
     case ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU:
     case ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU:
     case ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU:
+    case ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU:
         return ZET_DEBUG_REGSET_FLAG_READABLE | ZET_DEBUG_REGSET_FLAG_WRITEABLE;
 
     case ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU:
@@ -938,6 +941,7 @@ ze_result_t DebugSession::getRegisterSetProperties(Device *device, uint32_t *pCo
     parseRegsetDesc(*DebugSessionImp::getSbaRegsetDesc(), ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU);
 
     parseRegsetDesc(pStateSaveArea->regHeader.dbg, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU);
+    parseRegsetDesc(pStateSaveArea->regHeader.fc, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU);
 
     if (!*pCount || (*pCount > totalRegsetNum)) {
         *pCount = totalRegsetNum;

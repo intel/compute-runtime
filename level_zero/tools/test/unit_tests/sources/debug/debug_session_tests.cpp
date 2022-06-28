@@ -1716,6 +1716,7 @@ TEST_F(DebugSessionRegistersAccessTest, givenTypeToRegsetDescCalledThenCorrectRe
     EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU), &pStateSaveAreaHeader->regHeader.mme);
     EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU), &pStateSaveAreaHeader->regHeader.sp);
     EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU), &pStateSaveAreaHeader->regHeader.dbg);
+    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU), &pStateSaveAreaHeader->regHeader.fc);
     EXPECT_NE(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU), nullptr);
 }
 
@@ -1754,6 +1755,20 @@ TEST_F(DebugSessionRegistersAccessTest, givenInvalidRegistersIndicesWheniWriteRe
     session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugWriteRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 128, 1, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugWriteRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 127, 2, nullptr));
+}
+
+TEST_F(DebugSessionRegistersAccessTest, givenNotReportedRegisterSetAndValidRegisterIndicesWhenReadRegistersCalledThenErrorInvalidArgumentIsReturned) {
+    session->areRequestedThreadsStoppedReturnValue = 1;
+    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+    // MME is not present
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, 0, 1, nullptr));
+}
+
+TEST_F(DebugSessionRegistersAccessTest, givenNotReportedRegisterSetAndValidRegisterIndicesWhenWriteRegistersCalledThenErrorInvalidArgumentIsReturned) {
+    session->areRequestedThreadsStoppedReturnValue = 1;
+    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+    // MME is not present
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugWriteRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, 0, 1, nullptr));
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenInvalidSbaRegistersIndicesWhenReadSbaRegistersCalledThenErrorInvalidArgumentIsReturned) {
