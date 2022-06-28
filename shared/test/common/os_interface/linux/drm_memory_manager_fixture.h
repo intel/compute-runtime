@@ -83,6 +83,15 @@ struct MockedMemoryInfo : public NEO::MemoryInfo {
         handle = 1u;
         return 0u;
     }
+    uint32_t createGemExtWithMultipleRegions(Drm *drm, uint32_t memoryBanks, size_t allocSize, uint32_t &handle) override {
+        if (allocSize == 0) {
+            return EINVAL;
+        }
+        handle = 1u;
+        banks = memoryBanks;
+        return 0u;
+    }
+    uint32_t banks = 0;
 };
 
 class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {

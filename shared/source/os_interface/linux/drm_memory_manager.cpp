@@ -1483,7 +1483,14 @@ BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(Drm *drm, Gmm *
     }
 
     uint32_t handle = 0;
-    auto ret = memoryInfo->createGemExtWithSingleRegion(drm, memoryBanks, size, handle);
+    uint32_t ret = 0;
+
+    auto banks = std::bitset<32>(memoryBanks);
+    if (banks.count() > 1) {
+        ret = memoryInfo->createGemExtWithMultipleRegions(drm, memoryBanks, size, handle);
+    } else {
+        ret = memoryInfo->createGemExtWithSingleRegion(drm, memoryBanks, size, handle);
+    }
 
     if (ret != 0) {
         return nullptr;
@@ -1508,6 +1515,7 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
     auto currentBank = 0u;
     auto iterationOffset = 0u;
     auto banksCnt = storageInfo.getTotalBanksCnt();
+    auto useKmdMigrationForBuffers = (AllocationType::BUFFER == allocation->getAllocationType() && (DebugManager.flags.UseKmdMigrationForBuffers.get() > 0));
 
     auto handles = storageInfo.getNumBanks();
     if (storageInfo.colouringPolicy == ColouringPolicy::ChunkSizeBased) {
@@ -1522,14 +1530,16 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
             currentBank = 0;
             iterationOffset += banksCnt;
         }
-        uint32_t memoryBanks = static_cast<uint32_t>(storageInfo.memoryBanks.to_ulong());
-        if (storageInfo.getNumBanks() > 1) {
-            // check if we have this bank, if not move to next one
-            // we may have holes in memoryBanks that we need to skip i.e. memoryBanks 1101 and 3 handle allocation
-            while (!(memoryBanks & (1u << currentBank))) {
-                currentBank++;
+        auto memoryBanks = static_cast<uint32_t>(storageInfo.memoryBanks.to_ulong());
+        if (!useKmdMigrationForBuffers) {
+            if (storageInfo.getNumBanks() > 1) {
+                // check if we have this bank, if not move to next one
+                // we may have holes in memoryBanks that we need to skip i.e. memoryBanks 1101 and 3 handle allocation
+                while (!(memoryBanks & (1u << currentBank))) {
+                    currentBank++;
+                }
+                memoryBanks &= 1u << currentBank;
             }
-            memoryBanks &= 1u << currentBank;
         }
         auto gmm = allocation->getGmm(handleId);
         auto boSize = alignUp(gmm->gmmResourceInfo->getSizeAllocation(), MemoryConstants::pageSize64k);

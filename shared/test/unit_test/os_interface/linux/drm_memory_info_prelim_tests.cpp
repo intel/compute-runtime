@@ -505,3 +505,44 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsAndPrivateBOSupportedAndIsPerContextV
     ASSERT_TRUE(createExt);
     EXPECT_EQ(std::nullopt, createExt->vmPrivateExt.vmId);
 }
+
+TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithMultipleRegionsThenReturnCorrectValues) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableLocalMemory.set(1);
+
+    std::vector<MemoryRegion> regionInfo(5);
+    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[0].probedSize = 8 * GB;
+    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[1].probedSize = 16 * GB;
+    regionInfo[2].region = {I915_MEMORY_CLASS_DEVICE, 1};
+    regionInfo[2].probedSize = 16 * GB;
+    regionInfo[3].region = {I915_MEMORY_CLASS_DEVICE, 2};
+    regionInfo[3].probedSize = 16 * GB;
+    regionInfo[4].region = {I915_MEMORY_CLASS_DEVICE, 3};
+    regionInfo[4].probedSize = 16 * GB;
+
+    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo);
+    ASSERT_NE(nullptr, memoryInfo);
+
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    uint32_t handle = 0;
+    uint32_t memoryRegions = 0b1011;
+    auto ret = memoryInfo->createGemExtWithMultipleRegions(drm.get(), memoryRegions, 1024, handle);
+    EXPECT_EQ(1u, handle);
+    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(1u, drm->ioctlCallsCount);
+
+    const auto &createExt = drm->context.receivedCreateGemExt;
+    ASSERT_TRUE(createExt);
+    ASSERT_EQ(3u, createExt->memoryRegions.size());
+    EXPECT_EQ(I915_MEMORY_CLASS_DEVICE, createExt->memoryRegions[0].memoryClass);
+    EXPECT_EQ(0u, createExt->memoryRegions[0].memoryInstance);
+    EXPECT_EQ(I915_MEMORY_CLASS_DEVICE, createExt->memoryRegions[1].memoryClass);
+    EXPECT_EQ(1u, createExt->memoryRegions[1].memoryInstance);
+    EXPECT_EQ(I915_MEMORY_CLASS_DEVICE, createExt->memoryRegions[2].memoryClass);
+    EXPECT_EQ(3u, createExt->memoryRegions[2].memoryInstance);
+    EXPECT_EQ(1024u, drm->context.receivedCreateGemExt->size);
+}

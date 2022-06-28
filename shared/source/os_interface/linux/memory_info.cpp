@@ -122,4 +122,22 @@ uint32_t MemoryInfo::createGemExtWithSingleRegion(Drm *drm, uint32_t memoryBanks
     return ret;
 }
 
+uint32_t MemoryInfo::createGemExtWithMultipleRegions(Drm *drm, uint32_t memoryBanks, size_t allocSize, uint32_t &handle) {
+    auto pHwInfo = drm->getRootDeviceEnvironment().getHardwareInfo();
+    auto banks = std::bitset<32>(memoryBanks);
+    MemRegionsVec memRegions{};
+    size_t currentBank = 0;
+    size_t i = 0;
+    while (i < banks.count()) {
+        if (banks.test(currentBank)) {
+            auto regionClassAndInstance = getMemoryRegionClassAndInstance(1u << currentBank, *pHwInfo);
+            memRegions.push_back(regionClassAndInstance);
+            i++;
+        }
+        currentBank++;
+    }
+    auto ret = createGemExt(drm, memRegions, allocSize, handle, {});
+    return ret;
+}
+
 } // namespace NEO

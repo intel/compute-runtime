@@ -37,6 +37,7 @@ class MemoryInfo {
     uint32_t getTileIndex(uint32_t memoryBank, const HardwareInfo &hwInfo);
 
     MOCKABLE_VIRTUAL uint32_t createGemExtWithSingleRegion(Drm *drm, uint32_t memoryBanks, size_t allocSize, uint32_t &handle);
+    MOCKABLE_VIRTUAL uint32_t createGemExtWithMultipleRegions(Drm *drm, uint32_t memoryBanks, size_t allocSize, uint32_t &handle);
 
     const RegionContainer &getDrmRegionInfos() const { return drmQueryRegions; }
 
