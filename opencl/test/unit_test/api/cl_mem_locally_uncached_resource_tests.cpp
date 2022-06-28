@@ -20,8 +20,6 @@
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 
-#include "hw_cmds.h"
-
 using namespace NEO;
 
 namespace clMemLocallyUncachedResourceTests {

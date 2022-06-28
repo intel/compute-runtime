@@ -17,7 +17,6 @@
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/mem_obj/image.h"
 
-#include "hw_cmds.h"
 #include "image_ext.inl"
 
 namespace NEO {

@@ -17,9 +17,6 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/metrics/os_metric_ip_sampling.h"
 
-#include "device_ids_configs.h"
-#include "hw_cmds.h"
-
 namespace NEO {
 namespace SysCalls {
 extern int closeFuncRetVal;

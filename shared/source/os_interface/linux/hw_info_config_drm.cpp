@@ -16,8 +16,6 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/cpu_info.h"
 
-#include "hw_cmds.h"
-
 #include <cstring>
 
 namespace NEO {

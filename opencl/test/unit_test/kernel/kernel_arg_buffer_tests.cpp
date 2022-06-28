@@ -24,7 +24,6 @@
 
 #include "CL/cl.h"
 #include "gtest/gtest.h"
-#include "hw_cmds.h"
 
 #include <memory>
 

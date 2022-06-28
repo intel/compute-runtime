@@ -22,8 +22,6 @@
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 #include "shared/test/unit_test/helpers/gtest_helpers.h"
 
-#include "hw_cmds.h"
-
 using namespace NEO;
 
 using CommandEncodeStatesTest = Test<CommandEncodeStatesFixture>;

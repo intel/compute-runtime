@@ -15,8 +15,6 @@
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/encoders/test_encode_dispatch_kernel_dg2_and_later.h"
 
-#include "hw_cmds.h"
-
 using namespace NEO;
 
 using CommandEncodeStatesTestPvcAndLater = Test<CommandEncodeStatesFixture>;

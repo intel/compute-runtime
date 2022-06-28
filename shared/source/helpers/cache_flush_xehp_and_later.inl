@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,6 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/l3_range.h"
 #include "shared/source/utilities/range.h"
-
-#include "hw_cmds.h"
 
 namespace NEO {
 

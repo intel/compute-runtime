@@ -26,7 +26,6 @@
 #include "compiler_options.h"
 #include "environment.h"
 #include "gtest/gtest.h"
-#include "hw_cmds.h"
 #include "mock/mock_argument_helper.h"
 #include "mock/mock_multi_command.h"
 #include "mock/mock_offline_compiler.h"

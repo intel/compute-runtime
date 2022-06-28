@@ -21,7 +21,6 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
-#include "hw_cmds.h"
 
 #include <memory>
 

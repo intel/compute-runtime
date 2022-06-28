@@ -23,8 +23,6 @@
 #include "shared/test/common/mocks/mock_dispatch_kernel_encoder_interface.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "hw_cmds.h"
-
 #include <memory>
 
 using namespace NEO;

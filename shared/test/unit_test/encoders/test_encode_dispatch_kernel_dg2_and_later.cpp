@@ -15,7 +15,6 @@
 #include "shared/test/common/mocks/mock_dispatch_kernel_encoder_interface.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "hw_cmds.h"
 #include "test_traits_common.h"
 
 using namespace NEO;

@@ -11,8 +11,6 @@
 #include "level_zero/tools/source/metrics/os_metric_ip_sampling.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
 
-#include "hw_cmds.h"
-
 namespace L0 {
 namespace ult {
 

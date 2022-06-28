@@ -11,8 +11,6 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/hw_helper.h"
 
-#include "hw_cmds.h"
-
 #include <algorithm>
 
 namespace NEO {

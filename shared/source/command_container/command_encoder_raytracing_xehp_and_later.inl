@@ -8,8 +8,6 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/hw_info.h"
 
-#include "hw_cmds.h"
-
 namespace NEO {
 
 template <typename GfxFamily>
