@@ -5,17 +5,17 @@
  *
  */
 
-#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
-
-#include "gtest/gtest.h"
+#include "shared/source/gen12lp/hw_cmds_base.h"
 using GenStruct = NEO::GEN12LP;
 using GenGfxFamily = NEO::TGLLPFamily;
+
 #include "shared/test/common/cmd_parse/cmd_parse_base.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_compute_mode.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_gpgpu_walker.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_l3_control.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_mi_arb.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_sip.inl"
+#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.inl"
 

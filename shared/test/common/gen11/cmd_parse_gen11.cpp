@@ -5,15 +5,15 @@
  *
  */
 
-#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
-
-#include "gtest/gtest.h"
+#include "shared/source/gen11/hw_cmds_base.h"
 using GenStruct = NEO::GEN11;
 using GenGfxFamily = NEO::ICLFamily;
+
 #include "shared/test/common/cmd_parse/cmd_parse_base.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_base_mi_arb.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_gpgpu_walker.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_sip.inl"
+#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.inl"
 

@@ -7,6 +7,8 @@
 
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 
+#include "gtest/gtest.h"
+
 // clang-format off
 using namespace NEO;
 using MI_ARB_CHECK                    = GenStruct::MI_ARB_CHECK;

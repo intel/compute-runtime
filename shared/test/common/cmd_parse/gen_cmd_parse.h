@@ -6,8 +6,9 @@
  */
 
 #pragma once
-#include "hw_cmds.h"
 
+#include <cstddef>
+#include <cstdint>
 #include <list>
 #include <vector>
 
