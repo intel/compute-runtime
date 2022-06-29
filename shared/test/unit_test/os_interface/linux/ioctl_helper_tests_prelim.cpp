@@ -6,8 +6,10 @@
  */
 
 #include "shared/source/helpers/string.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "third_party/uapi/prelim/drm/i915_drm.h"
@@ -18,7 +20,9 @@ extern std::vector<uint8_t> getRegionInfo(const std::vector<MemoryRegion> &input
 extern std::vector<uint8_t> getEngineInfo(const std::vector<EngineCapabilities> &inputEngines);
 
 struct IoctlPrelimHelperTests : ::testing::Test {
-    IoctlHelperPrelim20 ioctlHelper{};
+    MockExecutionEnvironment executionEnvironment{};
+    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
+    IoctlHelperPrelim20 ioctlHelper{*drm};
 };
 
 TEST_F(IoctlPrelimHelperTests, whenGettingIoctlRequestValueThenPropertValueIsReturned) {
@@ -111,11 +115,6 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenTranslateToMemoryRegionsThenRetur
         EXPECT_EQ(expectedMemRegions[i].probedSize, memRegions[i].probedSize);
         EXPECT_EQ(expectedMemRegions[i].unallocatedSize, memRegions[i].unallocatedSize);
     }
-}
-
-TEST_F(IoctlPrelimHelperTests, whenCloneIsCalledThenValidPtrIsReturned) {
-    std::unique_ptr<IoctlHelper> cloned(ioctlHelper.clone());
-    EXPECT_NE(nullptr, cloned);
 }
 
 TEST_F(IoctlPrelimHelperTests, givenEmptyRegionInstanceClassWhenCreatingVmControlRegionExtThenNullptrIsReturned) {

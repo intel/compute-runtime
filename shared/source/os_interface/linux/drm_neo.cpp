@@ -989,7 +989,7 @@ void Drm::setupIoctlHelper(const PRODUCT_FAMILY productFamily) {
         std::string prelimVersion = "";
         getPrelimVersion(prelimVersion);
         auto drmVersion = Drm::getDrmVersion(getFileDescriptor());
-        this->ioctlHelper.reset(IoctlHelper::get(productFamily, prelimVersion, drmVersion));
+        this->ioctlHelper = IoctlHelper::get(productFamily, prelimVersion, drmVersion, *this);
     }
 }
 

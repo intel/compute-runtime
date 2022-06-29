@@ -18,11 +18,6 @@ extern bool isQueryDrmTip(const std::vector<uint8_t> &queryInfo);
 extern std::vector<uint8_t> translateToDrmTip(const uint8_t *dataQuery);
 
 template <>
-IoctlHelper *IoctlHelperImpl<gfxProduct>::clone() {
-    return new IoctlHelperImpl<gfxProduct>{};
-}
-
-template <>
 uint32_t IoctlHelperImpl<gfxProduct>::createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) {
     auto ret = IoctlHelperUpstream::createGemExt(drm, memClassInstances, allocSize, handle, vmId);
     if (ret == 0) {

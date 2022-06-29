@@ -25,8 +25,6 @@ class IoctlHelper;
 enum class CacheRegion : uint16_t;
 struct HardwareInfo;
 
-extern IoctlHelper *ioctlHelperFactory[IGFX_MAX_PRODUCT];
-
 struct MemoryRegion {
     MemoryClassInstance region;
     uint64_t probedSize;
@@ -65,10 +63,10 @@ using VmBindExtUserFenceT = uint8_t[56];
 
 class IoctlHelper {
   public:
+    IoctlHelper(Drm &drmArg) : drm(drmArg){};
     virtual ~IoctlHelper() {}
-    static IoctlHelper *get(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion, const std::string &drmVersion);
+    static std::unique_ptr<IoctlHelper> get(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion, const std::string &drmVersion, Drm &drm);
     uint32_t ioctl(Drm *drm, DrmIoctl request, void *arg);
-    virtual IoctlHelper *clone() = 0;
 
     virtual bool isVmBindAvailable(Drm *drm) = 0;
     virtual uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) = 0;
@@ -124,11 +122,14 @@ class IoctlHelper {
     void logExecBuffer(const ExecBuffer &execBuffer, std::stringstream &logger);
     int getDrmParamValueBase(DrmParam drmParam) const;
     unsigned int getIoctlRequestValueBase(DrmIoctl ioctlRequest) const;
+
+  protected:
+    Drm &drm;
 };
 
 class IoctlHelperUpstream : public IoctlHelper {
   public:
-    IoctlHelper *clone() override;
+    using IoctlHelper::IoctlHelper;
 
     bool isVmBindAvailable(Drm *drm) override;
     uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) override;
@@ -176,11 +177,10 @@ class IoctlHelperUpstream : public IoctlHelper {
 template <PRODUCT_FAMILY gfxProduct>
 class IoctlHelperImpl : public IoctlHelperUpstream {
   public:
-    static IoctlHelper *get() {
-        static IoctlHelperImpl<gfxProduct> instance;
-        return &instance;
+    using IoctlHelperUpstream::IoctlHelperUpstream;
+    static std::unique_ptr<IoctlHelper> get(Drm &drm) {
+        return std::make_unique<IoctlHelperImpl<gfxProduct>>(drm);
     }
-    IoctlHelper *clone() override;
 
     uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) override;
     std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) override;
@@ -189,7 +189,7 @@ class IoctlHelperImpl : public IoctlHelperUpstream {
 
 class IoctlHelperPrelim20 : public IoctlHelper {
   public:
-    IoctlHelper *clone() override;
+    using IoctlHelper::IoctlHelper;
 
     bool isVmBindAvailable(Drm *drm) override;
     uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) override;

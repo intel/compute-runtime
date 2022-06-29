@@ -46,7 +46,7 @@ class IoctlHelperPrelimFixture : public ::testing::Test {
         executionEnvironment = std::make_unique<ExecutionEnvironment>();
         executionEnvironment->prepareRootDeviceEnvironments(1);
         drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-        drm->ioctlHelper = std::make_unique<IoctlHelperPrelim20>();
+        drm->ioctlHelper = std::make_unique<IoctlHelperPrelim20>(*drm);
     }
 
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;
@@ -57,7 +57,7 @@ TEST(IoctlHelperPrelimTest, whenGettingVmBindAvailabilityThenProperValueIsReturn
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    IoctlHelperPrelim20 ioctlHelper{};
+    IoctlHelperPrelim20 ioctlHelper{drm};
 
     for (auto &ioctlValue : {0, EINVAL}) {
         drm.context.vmBindQueryReturn = ioctlValue;
@@ -79,7 +79,7 @@ TEST(IoctlHelperPrelimTest, whenVmBindIsCalledThenProperValueIsReturnedBasedOnIo
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    IoctlHelperPrelim20 ioctlHelper{};
+    IoctlHelperPrelim20 ioctlHelper{drm};
 
     VmBindParams vmBindParams{};
 
@@ -95,7 +95,7 @@ TEST(IoctlHelperPrelimTest, whenVmUnbindIsCalledThenProperValueIsReturnedBasedOn
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    IoctlHelperPrelim20 ioctlHelper{};
+    IoctlHelperPrelim20 ioctlHelper{drm};
 
     VmBindParams vmBindParams{};
 

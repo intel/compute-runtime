@@ -15,10 +15,6 @@
 
 namespace NEO {
 
-IoctlHelper *IoctlHelperUpstream::clone() {
-    return new IoctlHelperUpstream{};
-}
-
 bool IoctlHelperUpstream::isVmBindAvailable(Drm *drm) {
     return false;
 }

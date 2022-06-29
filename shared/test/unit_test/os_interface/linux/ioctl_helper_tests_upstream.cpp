@@ -15,14 +15,16 @@
 using namespace NEO;
 
 TEST(IoctlHelperUpstreamTest, whenGettingVmBindAvailabilityThenFalseIsReturned) {
-    IoctlHelperUpstream ioctlHelper{};
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    IoctlHelperUpstream ioctlHelper{*drm};
     EXPECT_FALSE(ioctlHelper.isVmBindAvailable(drm.get()));
 }
 
 TEST(IoctlHelperUpstreamTest, whenGettingIoctlRequestValueThenPropertValueIsReturned) {
-    IoctlHelperUpstream ioctlHelper{};
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    IoctlHelperUpstream ioctlHelper{*drm};
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::Getparam), static_cast<unsigned int>(DRM_IOCTL_I915_GETPARAM));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::GemExecbuffer2), static_cast<unsigned int>(DRM_IOCTL_I915_GEM_EXECBUFFER2));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::GemWait), static_cast<unsigned int>(DRM_IOCTL_I915_GEM_WAIT));
@@ -50,7 +52,9 @@ TEST(IoctlHelperUpstreamTest, whenGettingIoctlRequestValueThenPropertValueIsRetu
 }
 
 TEST(IoctlHelperUpstreamTest, whenGettingDrmParamValueThenPropertValueIsReturned) {
-    IoctlHelperUpstream ioctlHelper{};
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    IoctlHelperUpstream ioctlHelper{*drm};
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassCompute), 4);
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassRender), static_cast<int>(I915_ENGINE_CLASS_RENDER));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassCopy), static_cast<int>(I915_ENGINE_CLASS_COPY));
@@ -82,7 +86,9 @@ TEST(IoctlHelperUpstreamTest, whenGettingDrmParamValueThenPropertValueIsReturned
 }
 
 TEST(IoctlHelperUpstreamTest, whenCreatingVmControlRegionExtThenNullptrIsReturned) {
-    IoctlHelperUpstream ioctlHelper{};
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    IoctlHelperUpstream ioctlHelper{*drm};
     std::optional<MemoryClassInstance> regionInstanceClass = MemoryClassInstance{};
 
     EXPECT_TRUE(regionInstanceClass.has_value());
@@ -94,7 +100,9 @@ TEST(IoctlHelperUpstreamTest, whenCreatingVmControlRegionExtThenNullptrIsReturne
 }
 
 TEST(IoctlHelperUpstreamTest, whenGettingFlagsForVmCreateThenZeroIsReturned) {
-    IoctlHelperUpstream ioctlHelper{};
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    IoctlHelperUpstream ioctlHelper{*drm};
     for (auto &disableScratch : ::testing::Bool()) {
         for (auto &enablePageFault : ::testing::Bool()) {
             for (auto &useVmBind : ::testing::Bool()) {
@@ -106,7 +114,9 @@ TEST(IoctlHelperUpstreamTest, whenGettingFlagsForVmCreateThenZeroIsReturned) {
 }
 
 TEST(IoctlHelperUpstreamTest, whenGettingFlagsForVmBindThenZeroIsReturned) {
-    IoctlHelperUpstream ioctlHelper{};
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    IoctlHelperUpstream ioctlHelper{*drm};
     for (auto &bindCapture : ::testing::Bool()) {
         for (auto &bindImmediate : ::testing::Bool()) {
             for (auto &bindMakeResident : ::testing::Bool()) {
@@ -118,7 +128,9 @@ TEST(IoctlHelperUpstreamTest, whenGettingFlagsForVmBindThenZeroIsReturned) {
 }
 
 TEST(IoctlHelperUpstreamTest, whenGettingVmBindExtFromHandlesThenNullptrIsReturned) {
-    IoctlHelperUpstream ioctlHelper{};
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    IoctlHelperUpstream ioctlHelper{*drm};
     StackVec<uint32_t, 2> bindExtHandles;
     bindExtHandles.push_back(1u);
     bindExtHandles.push_back(2u);
@@ -301,7 +313,7 @@ TEST(IoctlHelperTestsUpstream, whenCreateContextWithAccessCountersIsCalledThenEr
     ASSERT_NE(nullptr, drm);
 
     GemContextCreateExt gcc{};
-    IoctlHelperUpstream ioctlHelper{};
+    IoctlHelperUpstream ioctlHelper{*drm};
 
     EXPECT_EQ(static_cast<uint32_t>(EINVAL), ioctlHelper.createContextWithAccessCounters(drm.get(), gcc));
 }
@@ -312,19 +324,23 @@ TEST(IoctlHelperTestsUpstream, whenCreateCooperativeContexIsCalledThenErrorIsRet
     ASSERT_NE(nullptr, drm);
 
     GemContextCreateExt gcc{};
-    IoctlHelperUpstream ioctlHelper{};
+    IoctlHelperUpstream ioctlHelper{*drm};
 
     EXPECT_EQ(static_cast<uint32_t>(EINVAL), ioctlHelper.createCooperativeContext(drm.get(), gcc));
 }
 
 TEST(IoctlHelperTestsUpstream, whenFillVmBindSetPatThenNothingThrows) {
-    IoctlHelperUpstream ioctlHelper{};
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    IoctlHelperUpstream ioctlHelper{*drm};
     VmBindExtSetPatT vmBindExtSetPat{};
     EXPECT_NO_THROW(ioctlHelper.fillVmBindExtSetPat(vmBindExtSetPat, 0u, 0u));
 }
 
 TEST(IoctlHelperTestsUpstream, whenFillVmBindUserFenceThenNothingThrows) {
-    IoctlHelperUpstream ioctlHelper{};
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    IoctlHelperUpstream ioctlHelper{*drm};
     VmBindExtUserFenceT vmBindExtUserFence{};
     EXPECT_NO_THROW(ioctlHelper.fillVmBindExtUserFence(vmBindExtUserFence, 0u, 0u, 0u));
 }
@@ -335,7 +351,7 @@ TEST(IoctlHelperTestsUpstream, whenVmBindIsCalledThenZeroIsReturned) {
     ASSERT_NE(nullptr, drm);
 
     VmBindParams vmBindParams{};
-    IoctlHelperUpstream ioctlHelper{};
+    IoctlHelperUpstream ioctlHelper{*drm};
     EXPECT_EQ(0, ioctlHelper.vmBind(drm.get(), vmBindParams));
 }
 
@@ -344,19 +360,23 @@ TEST(IoctlHelperTestsUpstream, whenVmUnbindIsCalledThenZeroIsReturned) {
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
 
-    IoctlHelperUpstream ioctlHelper{};
+    IoctlHelperUpstream ioctlHelper{*drm};
     VmBindParams vmBindParams{};
     EXPECT_EQ(0, ioctlHelper.vmUnbind(drm.get(), vmBindParams));
 }
 
 TEST(IoctlHelperTestsUpstream, givenUpstreamWhenGettingEuStallPropertiesThenFailureIsReturned) {
-    IoctlHelperUpstream ioctlHelper{};
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    IoctlHelperUpstream ioctlHelper{*drm};
     std::array<uint64_t, 12u> properties = {};
     EXPECT_FALSE(ioctlHelper.getEuStallProperties(properties, 0x101, 0x102, 0x103, 1, 1));
 }
 
 TEST(IoctlHelperTestsUpstream, givenUpstreamWhenGettingEuStallFdParameterThenZeroIsReturned) {
-    IoctlHelperUpstream ioctlHelper{};
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    IoctlHelperUpstream ioctlHelper{*drm};
     EXPECT_EQ(0u, ioctlHelper.getEuStallFdParameter());
 }
 
@@ -364,7 +384,7 @@ TEST(IoctlHelperTestsUpstream, whenRegisterUuidIsCalledThenReturnNullHandle) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    IoctlHelperUpstream ioctlHelper{};
+    IoctlHelperUpstream ioctlHelper{*drm};
 
     {
         const auto [retVal, handle] = ioctlHelper.registerUuid(drm.get(), "", 0, 0, 0);
@@ -383,7 +403,7 @@ TEST(IoctlHelperTestsUpstream, whenUnregisterUuidIsCalledThenZeroIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    IoctlHelperUpstream ioctlHelper{};
+    IoctlHelperUpstream ioctlHelper{*drm};
     EXPECT_EQ(0, ioctlHelper.unregisterUuid(drm.get(), 0));
 }
 
@@ -391,7 +411,7 @@ TEST(IoctlHelperTestsUpstream, whenIsContextDebugSupportedIsCalledThenFalseIsRet
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    IoctlHelperUpstream ioctlHelper{};
+    IoctlHelperUpstream ioctlHelper{*drm};
     EXPECT_EQ(false, ioctlHelper.isContextDebugSupported(drm.get()));
 }
 
@@ -399,6 +419,6 @@ TEST(IoctlHelperTestsUpstream, whenSetContextDebugFlagIsCalledThenZeroIsReturned
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    IoctlHelperUpstream ioctlHelper{};
+    IoctlHelperUpstream ioctlHelper{*drm};
     EXPECT_EQ(0, ioctlHelper.setContextDebugFlag(drm.get(), 0));
 }

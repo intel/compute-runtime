@@ -28,7 +28,8 @@ namespace L0 {
 namespace ult {
 
 class IoctlHelperPrelim20Mock : public NEO::IoctlHelperPrelim20 {
-
+  public:
+    using NEO::IoctlHelperPrelim20::IoctlHelperPrelim20;
     bool getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize, uint64_t samplingRate,
                               uint64_t pollPeriod, uint64_t engineInstance, uint64_t notifyNReports) override {
         return false;
@@ -43,7 +44,7 @@ class DrmPrelimMock : public DrmMock {
                                                            &inputHwInfo->workaroundTable, &inputHwInfo->gtSystemInfo, inputHwInfo->capabilityTable);
         customHwInfo->gtSystemInfo.MaxDualSubSlicesSupported = 64;
         rootDeviceEnvironment.setHwInfo(customHwInfo.get());
-        this->ioctlHelper = std::make_unique<IoctlHelperPrelim20>();
+        this->ioctlHelper = std::make_unique<IoctlHelperPrelim20>(*this);
         if (invokeQueryEngineInfo) {
             queryEngineInfo(); // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)
         }
@@ -101,7 +102,7 @@ class DrmPrelimMock : public DrmMock {
 
     void setIoctlHelperPrelim20Mock() {
         backUpIoctlHelper = std::move(ioctlHelper);
-        ioctlHelper = static_cast<std::unique_ptr<NEO::IoctlHelper>>(std::make_unique<IoctlHelperPrelim20Mock>());
+        ioctlHelper = static_cast<std::unique_ptr<NEO::IoctlHelper>>(std::make_unique<IoctlHelperPrelim20Mock>(*this));
     }
 
     void restoreIoctlHelperPrelim20() {

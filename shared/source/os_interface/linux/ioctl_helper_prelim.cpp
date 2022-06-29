@@ -24,10 +24,6 @@
 
 namespace NEO {
 
-IoctlHelper *IoctlHelperPrelim20::clone() {
-    return new IoctlHelperPrelim20{};
-}
-
 bool IoctlHelperPrelim20::isVmBindAvailable(Drm *drm) {
     int vmBindSupported = 0;
     GetParam getParam{};

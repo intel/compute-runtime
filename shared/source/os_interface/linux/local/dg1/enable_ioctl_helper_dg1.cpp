@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,13 +7,14 @@
 
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 
+#include <functional>
+
 namespace NEO {
-extern IoctlHelper *ioctlHelperFactory[IGFX_MAX_PRODUCT];
+extern std::optional<std::function<std::unique_ptr<IoctlHelper>(Drm &drm)>> ioctlHelperFactory[IGFX_MAX_PRODUCT];
 
 struct EnableProductIoctlHelperDg1 {
     EnableProductIoctlHelperDg1() {
-        IoctlHelper *pIoctlHelper = IoctlHelperImpl<IGFX_DG1>::get();
-        ioctlHelperFactory[IGFX_DG1] = pIoctlHelper;
+        ioctlHelperFactory[IGFX_DG1] = IoctlHelperImpl<IGFX_DG1>::get;
     }
 };
 

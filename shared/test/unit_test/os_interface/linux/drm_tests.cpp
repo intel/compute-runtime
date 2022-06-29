@@ -1077,8 +1077,12 @@ TEST(DrmQueryTest, givenUapiPrelimVersionWithInvalidPathThenReturnEmptyString) {
 }
 
 TEST(DrmTest, givenInvalidUapiPrelimVersionThenFallbackToBasePrelim) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
     const auto productFamily = defaultHwInfo->platform.eProductFamily;
-    std::unique_ptr<IoctlHelper> ioctlHelper(IoctlHelper::get(productFamily, "-1", "unk"));
+    std::unique_ptr<IoctlHelper> ioctlHelper(IoctlHelper::get(productFamily, "-1", "unk", drm));
     EXPECT_NE(nullptr, ioctlHelper.get());
 }
 
@@ -1227,6 +1231,7 @@ TEST(DrmWrapperTest, WhenGettingRevisionParamValueThenIoctlHelperIsNotNeeded) {
 
 class MockIoctlHelper : public IoctlHelperPrelim20 {
   public:
+    using IoctlHelperPrelim20::IoctlHelperPrelim20;
     unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override {
         return ioctlRequestValue;
     };
@@ -1240,7 +1245,11 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
 };
 
 TEST(DrmWrapperTest, whenGettingDrmParamOrIoctlRequestValueThenUseIoctlHelperWhenAvailable) {
-    MockIoctlHelper ioctlHelper{};
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    MockIoctlHelper ioctlHelper{drm};
     EXPECT_EQ(getIoctlRequestValue(DrmIoctl::Getparam, &ioctlHelper), ioctlHelper.ioctlRequestValue);
     EXPECT_NE(getIoctlRequestValue(DrmIoctl::Getparam, nullptr), getIoctlRequestValue(DrmIoctl::Getparam, &ioctlHelper));
 
