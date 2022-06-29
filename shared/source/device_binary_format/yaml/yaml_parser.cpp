@@ -25,7 +25,7 @@ inline Node &addNode(NodesCache &outNodes, Node &parent) {
     UNRECOVERABLE_IF(outNodes.size() >= outNodes.capacity()); // resize must not grow
     parent.firstChildId = static_cast<NodeId>(outNodes.size());
     parent.lastChildId = static_cast<NodeId>(outNodes.size());
-    outNodes.resize(outNodes.size() + 1);
+    outNodes.push_back(Node());
     auto &curr = *outNodes.rbegin();
     curr.id = parent.lastChildId;
     curr.parentId = parent.id;
@@ -36,7 +36,7 @@ inline Node &addNode(NodesCache &outNodes, Node &parent) {
 inline Node &addNode(NodesCache &outNodes, Node &prevSibling, Node &parent) {
     UNRECOVERABLE_IF(outNodes.size() >= outNodes.capacity()); // resize must not grow
     prevSibling.nextSiblingId = static_cast<NodeId>(outNodes.size());
-    outNodes.resize(outNodes.size() + 1);
+    outNodes.push_back(Node());
     auto &curr = *outNodes.rbegin();
     curr.id = prevSibling.nextSiblingId;
     curr.parentId = parent.id;
@@ -308,7 +308,6 @@ bool tokenize(ConstStringRef text, LinesCache &outLines, TokensCache &outTokens,
 }
 
 void finalizeNode(NodeId nodeId, const TokensCache &tokens, NodesCache &outNodes, std::string &outErrReason, std::string &outWarning) {
-    outNodes.reserve(outNodes.size() + 1);
     auto &node = outNodes[nodeId];
     if (invalidTokenId != node.key) {
         return;
@@ -328,7 +327,7 @@ void finalizeNode(NodeId nodeId, const TokensCache &tokens, NodesCache &outNodes
     UNRECOVERABLE_IF(invalidNodeID == node.lastChildId)
     outNodes[node.lastChildId].nextSiblingId = static_cast<NodeId>(outNodes.size());
 
-    outNodes.resize(outNodes.size() + 1);
+    outNodes.push_back(Node());
     auto &newNode = *outNodes.rbegin();
     newNode.id = static_cast<NodeId>(outNodes.size() - 1);
     newNode.parentId = nodeId;
@@ -349,40 +348,39 @@ bool isEmptyVector(const Token &token, size_t lineId, std::string &outError) {
 }
 
 bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &outNodes, std::string &outErrReason, std::string &outWarning) {
+    const auto tokensCacheSize = tokens.size();
     StackVec<NodeId, 64> nesting;
     size_t lineId = 0U;
     size_t lastUsedLine = 0u;
-    outNodes.resize(1);
+    outNodes.push_back(Node());
     outNodes.rbegin()->id = 0U;
     outNodes.rbegin()->firstChildId = 1U;
     outNodes.rbegin()->lastChildId = 1U;
     nesting.resize(1); // root
-
     while (lineId < lines.size()) {
         if (isUnused(lines[lineId].lineType)) {
             ++lineId;
             continue;
         }
-        reserveBasedOnEstimates(outNodes, static_cast<TokenId>(0), static_cast<TokenId>(tokens.size()), lines[lineId].first);
-
         auto currLineIndent = lines[lineId].indent;
         if (currLineIndent == outNodes.rbegin()->indent) {
             if (lineId > 0u && false == isEmptyVector(tokens[lines[lastUsedLine].first], lastUsedLine, outErrReason)) {
                 return false;
             }
-            outNodes.reserve(outNodes.size() + 1);
+            reserveBasedOnEstimates(outNodes, static_cast<TokenId>(0u), static_cast<TokenId>(tokensCacheSize), lines[lineId].first);
             auto &prev = *outNodes.rbegin();
             auto &parent = outNodes[*nesting.rbegin()];
             auto &curr = addNode(outNodes, prev, parent);
             curr.indent = currLineIndent;
         } else if (currLineIndent > outNodes.rbegin()->indent) {
-            outNodes.reserve(outNodes.size() + 1);
+            reserveBasedOnEstimates(outNodes, static_cast<TokenId>(0u), static_cast<TokenId>(tokensCacheSize), lines[lineId].first);
             auto &parent = *outNodes.rbegin();
             auto &curr = addNode(outNodes, parent);
             curr.indent = currLineIndent;
             nesting.push_back(parent.id);
         } else {
             while (currLineIndent < outNodes[*nesting.rbegin()].indent) {
+                reserveBasedOnEstimates(outNodes, static_cast<TokenId>(0u), static_cast<TokenId>(tokensCacheSize), lines[lineId].first);
                 finalizeNode(*nesting.rbegin(), tokens, outNodes, outErrReason, outWarning);
                 UNRECOVERABLE_IF(nesting.empty());
                 nesting.pop_back();
@@ -392,7 +390,7 @@ bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &o
                 outErrReason = constructYamlError(lineId, tokens[lines[lineId].first].pos, tokens[lines[lineId].first].pos + 1, "Invalid indentation");
                 return false;
             } else {
-                outNodes.reserve(outNodes.size() + 1);
+                reserveBasedOnEstimates(outNodes, static_cast<TokenId>(0u), static_cast<TokenId>(tokensCacheSize), lines[lineId].first);
                 auto &prev = outNodes[*nesting.rbegin()];
                 auto &parent = outNodes[prev.parentId];
                 auto &curr = addNode(outNodes, prev, parent);
@@ -410,21 +408,26 @@ bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &o
                 auto collectionEnd = lines[lineId].last - 1;
                 UNRECOVERABLE_IF(tokens[collectionBeg].traits.type != Token::Type::CollectionBeg || tokens[collectionEnd].traits.type != Token::Type::CollectionEnd);
 
-                auto &parentNode = *outNodes.rbegin();
-                Node *lastAddedNode = nullptr;
+                auto parentNodeId = outNodes.size() - 1;
+                auto previousSiblingId = std::numeric_limits<size_t>::max();
+
                 for (auto currTokenId = collectionBeg + 1; currTokenId < collectionEnd; currTokenId += 2) {
                     auto tokenType = tokens[currTokenId].traits.type;
                     UNRECOVERABLE_IF(tokenType != Token::Type::LiteralNumber && tokenType != Token::Type::LiteralString);
+                    reserveBasedOnEstimates(outNodes, static_cast<TokenId>(0u), static_cast<TokenId>(tokensCacheSize), lines[lineId].first);
 
-                    if (lastAddedNode == nullptr) {
-                        lastAddedNode = &addNode(outNodes, parentNode);
+                    auto &parentNode = outNodes[parentNodeId];
+                    if (previousSiblingId == std::numeric_limits<size_t>::max()) {
+                        addNode(outNodes, parentNode);
                     } else {
-                        lastAddedNode = &addNode(outNodes, *lastAddedNode, parentNode);
+                        auto &previousSibling = outNodes[previousSiblingId];
+                        addNode(outNodes, previousSibling, parentNode);
                     }
-                    lastAddedNode->indent = currLineIndent + 1;
-                    lastAddedNode->value = currTokenId;
+                    previousSiblingId = outNodes.size() - 1;
+                    outNodes[previousSiblingId].indent = currLineIndent + 1;
+                    outNodes[previousSiblingId].value = currTokenId;
                 }
-                nesting.push_back(parentNode.id);
+                nesting.push_back(static_cast<NodeId>(parentNodeId));
             } else if (('#' != tokens[lines[lineId].first + 2]) && ('\n' != tokens[lines[lineId].first + 2])) {
                 outNodes.rbegin()->value = lines[lineId].first + 2;
             }
