@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,28 +80,28 @@ TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenReadFromRegistrySu
     SysCalls::regOpenKeySuccessCount = 1u;
     SysCalls::regQueryValueSuccessCount = 1u;
 
-    EXPECT_EQ(1, registryReader.getSetting("settingSourceInt", 0));
+    EXPECT_EQ(1u, registryReader.getSetting("settingSourceInt", 0));
 }
 
 TEST_F(DebugReaderWithRegistryAndEnvTest, givenInt64DebugKeyWhenReadFromRegistrySucceedsThenReturnObtainedValue) {
     SysCalls::regOpenKeySuccessCount = 1u;
     SysCalls::regQueryValueSuccessCount = 1u;
 
-    EXPECT_EQ(0xffffffffeeeeeeee, registryReader.getSetting("settingSourceInt64", 0));
+    EXPECT_EQ(0xeeeeeeee, registryReader.getSetting("settingSourceInt64", 0));
 }
 
 TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenQueryValueFailsThenObtainValueFromEnv) {
     SysCalls::regOpenKeySuccessCount = 1u;
     SysCalls::regQueryValueSuccessCount = 0u;
 
-    EXPECT_EQ(2, registryReader.getSetting("settingSourceInt", 0));
+    EXPECT_EQ(2u, registryReader.getSetting("settingSourceInt", 0));
 }
 
 TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenOpenKeyFailsThenObtainValueFromEnv) {
     SysCalls::regOpenKeySuccessCount = 0u;
     SysCalls::regQueryValueSuccessCount = 0u;
 
-    EXPECT_EQ(2, registryReader.getSetting("settingSourceInt", 0));
+    EXPECT_EQ(2u, registryReader.getSetting("settingSourceInt", 0));
 }
 
 TEST_F(DebugReaderWithRegistryAndEnvTest, givenStringDebugKeyWhenReadFromRegistrySucceedsThenReturnObtainedValue) {

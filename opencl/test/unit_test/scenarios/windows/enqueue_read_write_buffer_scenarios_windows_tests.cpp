@@ -92,7 +92,7 @@ HWTEST_F(EnqueueBufferWindowsTest, givenMisalignedHostPtrWhenEnqueueReadBufferCa
     buffer->forceDisallowCPUCopy = true;
     auto retVal = cmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, 4, misalignedPtr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(0, cmdQ->lastEnqueuedKernels.size());
+    ASSERT_NE(0u, cmdQ->lastEnqueuedKernels.size());
     Kernel *kernel = cmdQ->lastEnqueuedKernels[0];
 
     auto hostPtrAllocation = cmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage()->getTemporaryAllocations().peekHead();

@@ -34,7 +34,7 @@ WddmMock::WddmMock(RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(std::mak
 };
 
 WddmMock::~WddmMock() {
-    EXPECT_EQ(0, reservedAddresses.size());
+    EXPECT_EQ(0u, reservedAddresses.size());
 }
 
 bool WddmMock::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim, size_t totalSize) {

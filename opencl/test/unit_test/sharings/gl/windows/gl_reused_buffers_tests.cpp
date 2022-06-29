@@ -178,19 +178,19 @@ TEST_F(GlReusedBufferTests, givenMultipleBuffersAndGlobalShareHandleChangedWhenA
     auto graphicsAllocation1 = clBuffer1->getGraphicsAllocation(rootDeviceIndex);
     auto graphicsAllocation2 = clBuffer2->getGraphicsAllocation(rootDeviceIndex);
     ASSERT_EQ(graphicsAllocation1, graphicsAllocation2);
-    ASSERT_EQ(2, graphicsAllocation1->peekReuseCount());
-    ASSERT_EQ(1, graphicsAllocationsForGlBufferReuse->size());
+    ASSERT_EQ(2u, graphicsAllocation1->peekReuseCount());
+    ASSERT_EQ(1u, graphicsAllocationsForGlBufferReuse->size());
 
     bufferInfoOutput.globalShareHandle = 41;
     dllParam.loadBuffer(bufferInfoOutput);
     clBuffer1->peekSharingHandler()->acquire(clBuffer1.get(), rootDeviceIndex);
     auto newGraphicsAllocation = clBuffer1->getGraphicsAllocation(rootDeviceIndex);
-    EXPECT_EQ(1, graphicsAllocationsForGlBufferReuse->size());
+    EXPECT_EQ(1u, graphicsAllocationsForGlBufferReuse->size());
     EXPECT_EQ(newGraphicsAllocation, graphicsAllocationsForGlBufferReuse->at(0).second);
 
     clBuffer2->peekSharingHandler()->acquire(clBuffer2.get(), rootDeviceIndex);
     EXPECT_EQ(clBuffer2->getGraphicsAllocation(rootDeviceIndex), newGraphicsAllocation);
-    EXPECT_EQ(1, graphicsAllocationsForGlBufferReuse->size());
+    EXPECT_EQ(1u, graphicsAllocationsForGlBufferReuse->size());
     EXPECT_EQ(newGraphicsAllocation, graphicsAllocationsForGlBufferReuse->at(0).second);
 
     clBuffer1->peekSharingHandler()->release(clBuffer1.get(), rootDeviceIndex);

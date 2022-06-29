@@ -450,7 +450,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocationWithoutHighPriorityWhenMemory
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
     EXPECT_EQ(1u, wddm->setAllocationPriorityResult.called);
-    EXPECT_EQ(DXGI_RESOURCE_PRIORITY_NORMAL, wddm->setAllocationPriorityResult.uint64ParamPassed);
+    EXPECT_EQ(static_cast<uint64_t>(DXGI_RESOURCE_PRIORITY_NORMAL), wddm->setAllocationPriorityResult.uint64ParamPassed);
 
     memoryManager->freeGraphicsMemory(allocation);
 }

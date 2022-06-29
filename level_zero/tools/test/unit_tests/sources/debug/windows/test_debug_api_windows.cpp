@@ -215,7 +215,7 @@ TEST_F(DebugApiWindowsTest, givenDebugSessionInitializeCalledAndDebugAttachNtSta
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
     EXPECT_FALSE(session->moduleDebugAreaCaptured);
-    EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_ATTACH_DEBUGGER]);
+    EXPECT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_ATTACH_DEBUGGER]);
 }
 
 TEST_F(DebugApiWindowsTest, givenDebugSessionInitializeCalledAndDebugAttachEscapeReturnStatusIsFailedThenErrorUnsupportedFetaureReturned) {
@@ -229,7 +229,7 @@ TEST_F(DebugApiWindowsTest, givenDebugSessionInitializeCalledAndDebugAttachEscap
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
     EXPECT_FALSE(session->moduleDebugAreaCaptured);
-    EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_ATTACH_DEBUGGER]);
+    EXPECT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_ATTACH_DEBUGGER]);
 }
 
 TEST_F(DebugApiWindowsTest, givenDebugSessionInitializeCalledAndEventQueueIsEmptyThenAttachDebuggerAndReadEventEscapesAreInvokedAndErrorNotAvailableReturned) {
@@ -244,8 +244,8 @@ TEST_F(DebugApiWindowsTest, givenDebugSessionInitializeCalledAndEventQueueIsEmpt
 
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
     EXPECT_FALSE(session->moduleDebugAreaCaptured);
-    EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_ATTACH_DEBUGGER]);
-    EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_EVENT]);
+    EXPECT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_ATTACH_DEBUGGER]);
+    EXPECT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_EVENT]);
 }
 
 TEST_F(DebugApiWindowsTest, givenDebugSessionInitializeCalledAndEventQueueIsNotAmptyAndModuleDebugAreaIsNotCapturedThenAttachDebuggerAndReadEventEscapesAreInvokedAndErrorNotAvailableReturned) {
@@ -260,8 +260,8 @@ TEST_F(DebugApiWindowsTest, givenDebugSessionInitializeCalledAndEventQueueIsNotA
 
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
     EXPECT_FALSE(session->moduleDebugAreaCaptured);
-    EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_ATTACH_DEBUGGER]);
-    EXPECT_EQ(2, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_EVENT]);
+    EXPECT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_ATTACH_DEBUGGER]);
+    EXPECT_EQ(2u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_EVENT]);
 }
 
 TEST_F(DebugApiWindowsTest, givenDebugSessionInitializeCalledAndEventQueueIsNotAmptyAndReadAllocationDataFailedThenAttachDebuggerAndReadEventAndReadAllocationDataEscapesAreInvokedAndResultUnknownIsReturned) {
@@ -284,9 +284,9 @@ TEST_F(DebugApiWindowsTest, givenDebugSessionInitializeCalledAndEventQueueIsNotA
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
     EXPECT_FALSE(session->moduleDebugAreaCaptured);
-    EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_ATTACH_DEBUGGER]);
-    EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_EVENT]);
-    EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_ALLOCATION_DATA]);
+    EXPECT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_ATTACH_DEBUGGER]);
+    EXPECT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_EVENT]);
+    EXPECT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_ALLOCATION_DATA]);
 }
 
 TEST_F(DebugApiWindowsTest, givenDebugSessionInitializeCalledAndEventQueueIsNotAmptyAndReadAllocationDataSucceedAndModuleDebugAreaNotCapturedThenAttachDebuggerAndReadEventAndReadAllocationDataEscapesAreInvokedAndResultUnavailableIsReturned) {
@@ -308,9 +308,9 @@ TEST_F(DebugApiWindowsTest, givenDebugSessionInitializeCalledAndEventQueueIsNotA
 
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
     EXPECT_FALSE(session->moduleDebugAreaCaptured);
-    EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_ATTACH_DEBUGGER]);
-    EXPECT_EQ(2, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_EVENT]);
-    EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_ALLOCATION_DATA]);
+    EXPECT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_ATTACH_DEBUGGER]);
+    EXPECT_EQ(2u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_EVENT]);
+    EXPECT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_ALLOCATION_DATA]);
 }
 
 TEST_F(DebugApiWindowsTest, givenDebugSessionInitializeCalledAndEventQueueIsNotAmptyAndModuleDebugAreaIsCapturedThenAttachDebuggerAndReadEventEscapesAreInvokedAndResultSuccessReturned) {
@@ -336,9 +336,9 @@ TEST_F(DebugApiWindowsTest, givenDebugSessionInitializeCalledAndEventQueueIsNotA
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(session->moduleDebugAreaCaptured);
-    EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_ATTACH_DEBUGGER]);
-    EXPECT_EQ(3, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_EVENT]);
-    EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_ALLOCATION_DATA]);
+    EXPECT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_ATTACH_DEBUGGER]);
+    EXPECT_EQ(3u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_EVENT]);
+    EXPECT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_ALLOCATION_DATA]);
     EXPECT_EQ(session->processId, config.pid);
     EXPECT_EQ(session->debugHandle, mockWddm->debugHandle);
 }
@@ -369,14 +369,14 @@ TEST_F(DebugApiWindowsTest, givenDebugSessionInitializedAndCloseConnectionCalled
     auto result = session->initialize();
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_ATTACH_DEBUGGER]);
-    EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_EVENT]);
-    EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_ALLOCATION_DATA]);
+    EXPECT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_ATTACH_DEBUGGER]);
+    EXPECT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_EVENT]);
+    EXPECT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_ALLOCATION_DATA]);
     EXPECT_EQ(session->processId, config.pid);
     EXPECT_EQ(session->debugHandle, mockWddm->debugHandle);
 
     EXPECT_TRUE(session->closeConnection());
-    EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_DETACH_DEBUGGER]);
+    EXPECT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_DETACH_DEBUGGER]);
 }
 
 TEST_F(DebugApiWindowsTest, givenNtStatusFailedWhenReadAndHandleEventCalledThenResultUnknownIsReturned) {
@@ -464,10 +464,10 @@ TEST_F(DebugApiWindowsTest, givenDebugDataEventTypeWhenReadAndHandleEventCalledT
     mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ReadCreateDebugDataParams.DataBufferPtr = 0xa000;
     mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ReadCreateDebugDataParams.DataSize = 8;
     EXPECT_EQ(ZE_RESULT_SUCCESS, session->readAndHandleEvent(100));
-    EXPECT_EQ(1, session->allElfs.size());
+    EXPECT_EQ(1u, session->allElfs.size());
     auto elf = session->allElfs[0];
-    EXPECT_EQ(elf.startVA, 0xa000);
-    EXPECT_EQ(elf.endVA, 0xa008);
+    EXPECT_EQ(elf.startVA, 0xa000u);
+    EXPECT_EQ(elf.endVA, 0xa008u);
 }
 
 TEST_F(DebugApiWindowsTest, givenContextCreateEventTypeWhenReadAndHandleEventCalledThenAllContextsIsSetCorrectly) {
@@ -483,18 +483,18 @@ TEST_F(DebugApiWindowsTest, givenContextCreateEventTypeWhenReadAndHandleEventCal
     mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ContextCreateDestroyEventParams.IsCreated = 1;
     mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ContextCreateDestroyEventParams.IsSIPInstalled = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, session->readAndHandleEvent(100));
-    EXPECT_EQ(0, session->allContexts.size());
+    EXPECT_EQ(0u, session->allContexts.size());
 
     mockWddm->curEvent = 0;
     mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ContextCreateDestroyEventParams.IsSIPInstalled = 1;
     EXPECT_EQ(ZE_RESULT_SUCCESS, session->readAndHandleEvent(100));
-    EXPECT_EQ(1, session->allContexts.size());
-    EXPECT_EQ(1, session->allContexts.count(0xa000));
+    EXPECT_EQ(1u, session->allContexts.size());
+    EXPECT_EQ(1u, session->allContexts.count(0xa000));
 
     mockWddm->curEvent = 0;
     mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ContextCreateDestroyEventParams.IsCreated = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, session->readAndHandleEvent(100));
-    EXPECT_EQ(0, session->allContexts.size());
+    EXPECT_EQ(0u, session->allContexts.size());
 }
 
 TEST(DebugSessionWindowsTest, whenTranslateNtStatusCalledThenCorrectZeResultReturned) {
@@ -557,7 +557,7 @@ TEST_F(DebugApiWindowsTest, WhenCallingReadGpuMemoryThenMemoryIsRead) {
     char output[bufferSize] = {};
     auto result = session->readGpuMemory(7, output, bufferSize, 0x1234);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
+    EXPECT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
 
     for (int i = 0; i < bufferSize; i++) {
         EXPECT_EQ(static_cast<char>(0xaa), output[i]);
@@ -572,8 +572,8 @@ TEST_F(DebugApiWindowsTest, WhenCallingWriteGpuMemoryThenMemoryIsWritten) {
     char input[bufferSize] = {'h', 'e', 'l', 'l', 'o'};
     auto result = session->writeGpuMemory(7, input, bufferSize, 0x1234);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    ASSERT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_WRITE_GFX_MEMORY]);
-    ASSERT_EQ(0, memcmp(input, mockWddm->testBuffer, bufferSize));
+    ASSERT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_WRITE_GFX_MEMORY]);
+    ASSERT_EQ(0u, memcmp(input, mockWddm->testBuffer, bufferSize));
 }
 
 TEST_F(DebugApiWindowsTest, GivenInvalidDebugHandleWhenWritingMemoryThenErrorIsReturned) {
@@ -666,8 +666,8 @@ TEST_F(DebugApiWindowsTest, WhenCallingWriteMemoryForAllThreadThenMemoryIsWritte
     session->allContexts.insert(0x12345);
 
     retVal = session->writeMemory(thread, &desc, bufferSize, input);
-    ASSERT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_WRITE_GFX_MEMORY]);
-    ASSERT_EQ(0, memcmp(input, mockWddm->testBuffer, bufferSize));
+    ASSERT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_WRITE_GFX_MEMORY]);
+    ASSERT_EQ(0u, memcmp(input, mockWddm->testBuffer, bufferSize));
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
 }
 
@@ -691,12 +691,12 @@ TEST_F(DebugApiWindowsTest, WhenCallingWriteMemoryForSingleThreadThenMemoryIsWri
     session->ensureThreadStopped(thread, EuThread::invalidHandle);
     auto retVal = session->writeMemory(thread, &desc, bufferSize, input);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
-    ASSERT_EQ(0, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_WRITE_GFX_MEMORY]);
+    ASSERT_EQ(0u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_WRITE_GFX_MEMORY]);
 
     session->ensureThreadStopped(thread, 0x12345);
     retVal = session->writeMemory(thread, &desc, bufferSize, input);
-    ASSERT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_WRITE_GFX_MEMORY]);
-    ASSERT_EQ(0, memcmp(input, mockWddm->testBuffer, bufferSize));
+    ASSERT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_WRITE_GFX_MEMORY]);
+    ASSERT_EQ(0u, memcmp(input, mockWddm->testBuffer, bufferSize));
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
 }
 
@@ -723,7 +723,7 @@ TEST_F(DebugApiWindowsTest, WhenCallingReadMemoryForAllThreadThenMemoryIsWritten
     session->allContexts.insert(0x12345);
 
     retVal = session->readMemory(thread, &desc, bufferSize, output);
-    ASSERT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
+    ASSERT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
     for (int i = 0; i < bufferSize; i++) {
         EXPECT_EQ(static_cast<char>(0xaa), output[i]);
     }
@@ -751,12 +751,12 @@ TEST_F(DebugApiWindowsTest, WhenCallingReadMemoryForSingleThreadThenMemoryIsRead
     session->ensureThreadStopped(thread, EuThread::invalidHandle);
     auto retVal = session->readMemory(thread, &desc, bufferSize, output);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
-    ASSERT_EQ(0, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
+    ASSERT_EQ(0u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
 
     session->ensureThreadStopped(thread, 0x12345);
 
     retVal = session->readMemory(thread, &desc, bufferSize, output);
-    ASSERT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
+    ASSERT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
     for (int i = 0; i < bufferSize; i++) {
         EXPECT_EQ(static_cast<char>(0xaa), output[i]);
     }
@@ -790,12 +790,12 @@ TEST_F(DebugApiWindowsTest, WhenCallingReadMemoryForElfThenUnsupportedFeatureIsR
     desc.address = elfVaStart;
     desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
     auto retVal = session->readMemory(thread, &desc, bufferSize, output);
-    ASSERT_EQ(0, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
+    ASSERT_EQ(0u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, retVal);
 
     desc.address = elfVaEnd - 1;
     retVal = session->readMemory(thread, &desc, bufferSize, output);
-    ASSERT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
+    ASSERT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
 
     delete[] elfData;

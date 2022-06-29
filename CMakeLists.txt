@@ -529,7 +529,7 @@ if(MSVC)
   if(NOT CMAKE_CXX_FLAGS MATCHES "/WX")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /WX")
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /we4189")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /we4189 /we4388")
     endif()
   endif()
 

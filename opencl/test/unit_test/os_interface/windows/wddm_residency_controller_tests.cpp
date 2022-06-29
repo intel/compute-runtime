@@ -242,11 +242,11 @@ TEST_F(WddmResidencyControllerTest, givenWddmResidencyControllerWhenCallingWasAl
 TEST_F(WddmResidencyControllerTest, givenWddmResidencyControllerThenUpdateLastTrimFenceValueUsesMonitoredFence) {
     *residencyController->getMonitoredFence().cpuAddress = 1234;
     residencyController->updateLastTrimFenceValue();
-    EXPECT_EQ(1234, residencyController->lastTrimFenceValue);
+    EXPECT_EQ(1234u, residencyController->lastTrimFenceValue);
 
     *residencyController->getMonitoredFence().cpuAddress = 12345;
     residencyController->updateLastTrimFenceValue();
-    EXPECT_EQ(12345, residencyController->lastTrimFenceValue);
+    EXPECT_EQ(12345u, residencyController->lastTrimFenceValue);
 }
 
 TEST_F(WddmResidencyControllerWithGdiTest, givenWddmResidencyControllerWhenItIsDestructedThenUnregisterTrimCallback) {

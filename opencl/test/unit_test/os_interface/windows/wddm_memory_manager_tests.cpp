@@ -545,7 +545,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValueOnSomeOfMultipleEngine
 
     memoryManager->handleFenceCompletion(allocation);
     EXPECT_EQ(1u, wddm->waitFromCpuResult.called);
-    EXPECT_EQ(129, wddm->waitFromCpuResult.uint64ParamPassed);
+    EXPECT_EQ(129u, wddm->waitFromCpuResult.uint64ParamPassed);
     EXPECT_EQ(lastEngineFence, wddm->waitFromCpuResult.monitoredFence);
 
     memoryManager->freeGraphicsMemory(allocation);
@@ -1160,7 +1160,7 @@ TEST_F(WddmMemoryManagerTest, GivenUnAlignedPointerAndSizeWhenAllocate32BitMemor
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, size, ptr, AllocationType::BUFFER);
     EXPECT_EQ(reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(gpuAllocation->getDefaultGmm()->resourceParams.pExistingSysMem));
-    EXPECT_EQ(0x2000, gpuAllocation->getDefaultGmm()->resourceParams.ExistingSysMemSize);
+    EXPECT_EQ(0x2000u, gpuAllocation->getDefaultGmm()->resourceParams.ExistingSysMemSize);
     memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
@@ -1575,7 +1575,7 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
     osHandle->gpuPtr = gpuAdress;
     memoryManager->getHostPtrManager()->storeFragment(rootDeviceIndex, fragment);
 
-    auto offset = 80;
+    auto offset = 80u;
     auto allocationPtr = ptrOffset(ptr, offset);
     AllocationData allocationData;
     allocationData.size = size;

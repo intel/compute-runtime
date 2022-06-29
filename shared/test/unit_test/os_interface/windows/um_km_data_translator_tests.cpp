@@ -281,7 +281,7 @@ TEST(WslUmKmDataTranslator, whenOpeningExistingHandleThenResourceInfoIsCopiedBas
 
     UmKmDataTempStorage<GMM_RESOURCE_INFO> gmmResInfoDst2(handleSize);
     gmmHandleAllocator->openHandle(gmmResourceInfoHandle, reinterpret_cast<GMM_RESOURCE_INFO *>(gmmResInfoDst2.data()), sizeof(TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT) + 4);
-    EXPECT_EQ(0, reinterpret_cast<uint64_t>(reinterpret_cast<GMM_RESOURCE_INFO *>(gmmResInfoDst2.data())->GetPrivateData()));
+    EXPECT_EQ(0u, reinterpret_cast<uint64_t>(reinterpret_cast<GMM_RESOURCE_INFO *>(gmmResInfoDst2.data())->GetPrivateData()));
 
     gmmHandleAllocator->destroyHandle(gmmResourceInfoHandle);
 }
@@ -309,13 +309,13 @@ TEST(WslUmKmDataTranslator, whenTranslatingGraphicsPartitionThenResultIsBasedOnW
     dst.Heap32->Base = 0;
     auto ret = translatorV0->translateGmmGfxPartitioningToInternalRepresentation(&dst, sizeof(GMM_GFX_PARTITIONING), src);
     EXPECT_TRUE(ret);
-    EXPECT_EQ(7, dst.Heap32->Base);
+    EXPECT_EQ(7u, dst.Heap32->Base);
 
     src.Heap32->Base = 7;
     dst.Heap32->Base = 0;
     ret = translatorV1->translateGmmGfxPartitioningToInternalRepresentation(&dst, sizeof(GMM_GFX_PARTITIONING), src);
     EXPECT_FALSE(ret);
-    EXPECT_EQ(0, dst.Heap32->Base);
+    EXPECT_EQ(0u, dst.Heap32->Base);
 
     src.Heap32->Base = 7;
     dst.Heap32->Base = 0;
@@ -327,13 +327,13 @@ TEST(WslUmKmDataTranslator, whenTranslatingGraphicsPartitionThenResultIsBasedOnW
     dst.Heap32->Base = 0;
     ret = translatorV0->translateGmmGfxPartitioningFromInternalRepresentation(dst, &src, sizeof(GMM_GFX_PARTITIONING));
     EXPECT_TRUE(ret);
-    EXPECT_EQ(7, dst.Heap32->Base);
+    EXPECT_EQ(7u, dst.Heap32->Base);
 
     src.Heap32->Base = 7;
     dst.Heap32->Base = 0;
     ret = translatorV1->translateGmmGfxPartitioningFromInternalRepresentation(dst, &src, sizeof(GMM_GFX_PARTITIONING));
     EXPECT_FALSE(ret);
-    EXPECT_EQ(0, dst.Heap32->Base);
+    EXPECT_EQ(0u, dst.Heap32->Base);
 
     src.Heap32->Base = 7;
     dst.Heap32->Base = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,7 +74,7 @@ TEST(OSTimeWinTests, givenNoOSInterfaceWhenGetCpuTimeThenReturnsSuccess) {
     auto osTime(OSTime::create(nullptr));
     auto error = osTime->getCpuTime(&time);
     EXPECT_TRUE(error);
-    EXPECT_NE(0, time);
+    EXPECT_NE(0u, time);
 }
 
 TEST(OSTimeWinTests, givenNoOSInterfaceWhenGetCpuGpuTimeThenReturnsError) {
@@ -82,8 +82,8 @@ TEST(OSTimeWinTests, givenNoOSInterfaceWhenGetCpuGpuTimeThenReturnsError) {
     auto osTime(OSTime::create(nullptr));
     auto success = osTime->getCpuGpuTime(&CPUGPUTime);
     EXPECT_FALSE(success);
-    EXPECT_EQ(0, CPUGPUTime.CPUTimeinNS);
-    EXPECT_EQ(0, CPUGPUTime.GPUTimeStamp);
+    EXPECT_EQ(0u, CPUGPUTime.CPUTimeinNS);
+    EXPECT_EQ(0u, CPUGPUTime.GPUTimeStamp);
 }
 
 TEST(OSTimeWinTests, givenOSInterfaceWhenGetCpuGpuTimeThenReturnsSuccess) {
@@ -98,12 +98,12 @@ TEST(OSTimeWinTests, givenOSInterfaceWhenGetCpuGpuTimeThenReturnsSuccess) {
     auto osTime = OSTime::create(osInterface.get());
     auto success = osTime->getCpuGpuTime(&CPUGPUTime01);
     EXPECT_TRUE(success);
-    EXPECT_NE(0, CPUGPUTime01.CPUTimeinNS);
-    EXPECT_NE(0, CPUGPUTime01.GPUTimeStamp);
+    EXPECT_NE(0u, CPUGPUTime01.CPUTimeinNS);
+    EXPECT_NE(0u, CPUGPUTime01.GPUTimeStamp);
     success = osTime->getCpuGpuTime(&CPUGPUTime02);
     EXPECT_TRUE(success);
-    EXPECT_NE(0, CPUGPUTime02.CPUTimeinNS);
-    EXPECT_NE(0, CPUGPUTime02.GPUTimeStamp);
+    EXPECT_NE(0u, CPUGPUTime02.CPUTimeinNS);
+    EXPECT_NE(0u, CPUGPUTime02.GPUTimeStamp);
     EXPECT_GT(CPUGPUTime02.GPUTimeStamp, CPUGPUTime01.GPUTimeStamp);
     EXPECT_GT(CPUGPUTime02.CPUTimeinNS, CPUGPUTime01.CPUTimeinNS);
 }
