@@ -20,7 +20,7 @@
 
 #include "environment.h"
 #include "gtest/gtest.h"
-#include "hw_cmds.h"
+#include "hw_cmds_default.h"
 
 #include <algorithm>
 #include <array>

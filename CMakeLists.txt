@@ -840,6 +840,7 @@ configure_file(config.h.in ${NEO_BUILD_DIR}/config.h)
 configure_file(driver_version.h.in ${NEO_BUILD_DIR}/driver_version.h) # Put Driver version into define
 configure_file(lib_names.h.in ${NEO_BUILD_DIR}/lib_names.h)
 configure_file(test_files_setup.h.in ${NEO_BUILD_DIR}/test_files_setup.h)
+configure_file(hw_cmds_default.h.in ${NEO_BUILD_DIR}/hw_cmds_default.h)
 
 if(BUILD_WITH_L0)
   add_subdirectory_unique(level_zero)

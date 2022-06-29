@@ -1,0 +1,10 @@
+/*
+ * Copyright (C) 2018-2022 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#pragma once
+
+#include "shared/source/${MAP_${DEFAULT_SUPPORTED_PLATFORM}_CORE_lower}/hw_cmds_${MAP_${DEFAULT_SUPPORTED_PLATFORM}_lower}.h"

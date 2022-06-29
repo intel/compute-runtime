@@ -9,7 +9,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 
-#include "hw_cmds.h"
+#include "hw_cmds_default.h"
 
 namespace NEO {
 

@@ -32,7 +32,7 @@
 #include "opencl/test/unit_test/ult_config_listener.h"
 
 #include "gmock/gmock.h"
-#include "hw_cmds.h"
+#include "hw_cmds_default.h"
 #include "test_files_setup.h"
 
 #include <algorithm>

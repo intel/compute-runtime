@@ -13,7 +13,7 @@
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_device.h"
 
-#include "hw_cmds.h"
+#include "hw_cmds_default.h"
 
 namespace NEO {
 

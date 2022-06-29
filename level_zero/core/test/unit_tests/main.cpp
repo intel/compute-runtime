@@ -28,7 +28,7 @@
 #include "level_zero/core/source/compiler_interface/l0_reg_path.h"
 
 #include "gmock/gmock.h"
-#include "hw_cmds.h"
+#include "hw_cmds_default.h"
 #include "igfxfmid.h"
 
 #include <fstream>
