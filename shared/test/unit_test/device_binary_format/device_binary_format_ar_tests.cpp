@@ -16,6 +16,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/test_base.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 
 TEST(IsDeviceBinaryFormatAr, GivenValidBinaryThenReturnTrue) {

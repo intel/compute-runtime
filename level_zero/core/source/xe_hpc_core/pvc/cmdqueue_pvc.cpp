@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/xe_hpc_core/hw_cmds.h"
+#include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 #include "shared/source/xe_hpc_core/hw_info.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.inl"

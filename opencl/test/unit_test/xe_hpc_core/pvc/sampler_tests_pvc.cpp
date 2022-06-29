@@ -7,8 +7,10 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 

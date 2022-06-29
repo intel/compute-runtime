@@ -7,12 +7,14 @@
 
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -634,62 +636,6 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenProgramGlobalFenceAsMiMemFenceCom
     auto hardwareInfo = *defaultHwInfo;
 
     EXPECT_EQ(sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(hardwareInfo));
-}
-
-HWTEST2_F(HwHelperTestsXeHpcCore, givenMemorySynchronizationCommandsWhenAddingSynchronizationThenCorrectMethodIsUsed, IsPVC) {
-    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
-    struct {
-        unsigned short revisionId;
-        int32_t programGlobalFenceAsMiMemFenceCommandInCommandStream;
-        bool expectMiSemaphoreWait;
-    } testInputs[] = {
-        {0x0, -1, true},
-        {0x3, -1, false},
-        {0x0, 0, true},
-        {0x3, 0, true},
-        {0x0, 1, false},
-        {0x3, 1, false},
-    };
-
-    DebugManagerStateRestore debugRestorer;
-    auto hardwareInfo = *defaultHwInfo;
-
-    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
-    uint8_t buffer[128] = {};
-    uint64_t gpuAddress = 0x12345678;
-
-    for (auto &testInput : testInputs) {
-        hardwareInfo.platform.usRevId = testInput.revisionId;
-        DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(
-            testInput.programGlobalFenceAsMiMemFenceCommandInCommandStream);
-
-        LinearStream commandStream(buffer, 128);
-        auto synchronizationSize = MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(hardwareInfo);
-
-        MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, gpuAddress, false, hardwareInfo);
-
-        HardwareParse hwParser;
-        hwParser.parseCommands<FamilyType>(commandStream);
-        EXPECT_EQ(1u, hwParser.cmdList.size());
-
-        if (testInput.expectMiSemaphoreWait) {
-            EXPECT_EQ(sizeof(MI_SEMAPHORE_WAIT), synchronizationSize);
-
-            auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*hwParser.cmdList.begin());
-            ASSERT_NE(nullptr, semaphoreCmd);
-            EXPECT_EQ(static_cast<uint32_t>(-2), semaphoreCmd->getSemaphoreDataDword());
-            EXPECT_EQ(gpuAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
-            EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semaphoreCmd->getCompareOperation());
-        } else {
-            EXPECT_EQ(sizeof(MI_MEM_FENCE), synchronizationSize);
-
-            auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*hwParser.cmdList.begin());
-            ASSERT_NE(nullptr, fenceCmd);
-            EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
-        }
-    }
 }
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenHwHelperWhenGettingThreadsPerEUConfigsThenCorrectConfigsAreReturned) {

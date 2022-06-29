@@ -7,11 +7,13 @@
 
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
+#include "shared/source/xe_hp_core/hw_cmds.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"

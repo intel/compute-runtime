@@ -5,8 +5,10 @@
  *
  */
 
+#include "shared/source/gen8/hw_cmds.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/test/unit_test/mocks/mock_cl_hw_helper.h"

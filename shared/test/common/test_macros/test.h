@@ -8,11 +8,7 @@
 #pragma once
 
 #include "gtest/gtest.h"
-#include "igfxfmid.h"
 #include "test_mode.h"
-
-extern PRODUCT_FAMILY productFamily;
-extern GFXCORE_FAMILY renderCoreFamily;
 
 template <typename Fixture>
 struct Test
@@ -36,16 +32,6 @@ struct Test
     static_assert((NEO::defaultTestMode != NEO::TestMode::AubTests && NEO::defaultTestMode != NEO::TestMode::AubTestsWithTbx) || (sizeof(#test_fixture) + sizeof(#test_name) <= max_length), "Test and fixture names length exceeds max allowed size: " TO_STR(max_length));
 #define CHECK_TEST_NAME_LENGTH(test_fixture, test_name) \
     CHECK_TEST_NAME_LENGTH_WITH_MAX(test_fixture, test_name, TEST_MAX_LENGTH)
-
-#define HWTEST_EXCLUDE_PRODUCT(test_suite_name, test_name, family)                  \
-    struct test_suite_name##test_name##_PLATFORM_EXCLUDES_EXCLUDE_##family {        \
-        test_suite_name##test_name##_PLATFORM_EXCLUDES_EXCLUDE_##family() {         \
-            NEO::TestExcludes::addTestExclude(#test_suite_name #test_name, family); \
-        }                                                                           \
-    } test_suite_name##test_name##_PLATFORM_EXCLUDES_EXCLUDE_##family##_init;
-
-#define IS_TEST_EXCLUDED(test_suite_name, test_name) \
-    NEO::TestExcludes::isTestExcluded(#test_suite_name #test_name, ::productFamily, ::renderCoreFamily)
 
 #ifdef TEST_F
 #undef TEST_F

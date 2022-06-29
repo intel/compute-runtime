@@ -5,7 +5,9 @@
  *
  */
 
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/device_info_fixture.h"
 

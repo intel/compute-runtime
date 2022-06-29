@@ -14,7 +14,7 @@
 #include "shared/source/os_interface/hw_info_config.inl"
 #include "shared/source/os_interface/hw_info_config_dg2_and_later.inl"
 #include "shared/source/os_interface/hw_info_config_xehp_and_later.inl"
-#include "shared/source/xe_hpg_core/hw_cmds.h"
+#include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
 
 #include "platforms.h"
 

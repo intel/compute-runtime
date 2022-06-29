@@ -5,9 +5,11 @@
  *
  */
 
+#include "shared/source/gen9/hw_cmds.h"
 #include "shared/source/gen9/reg_configs.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
+#include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/helpers/static_size3.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"

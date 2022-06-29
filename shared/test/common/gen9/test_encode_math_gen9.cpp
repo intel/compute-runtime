@@ -6,10 +6,12 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/gen9/hw_cmds.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 

@@ -7,12 +7,14 @@
 
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/program/kernel_info.h"
+#include "shared/source/xe_hp_core/hw_cmds.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/test/unit_test/mocks/mock_cl_hw_helper.h"

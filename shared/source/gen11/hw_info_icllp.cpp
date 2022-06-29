@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/aub_mem_dump/definitions/aub_services.h"
-#include "shared/source/gen11/hw_cmds.h"
+#include "shared/source/gen11/hw_cmds_icllp.h"
 #include "shared/source/helpers/constants.h"
 
 #include "engine_node.h"

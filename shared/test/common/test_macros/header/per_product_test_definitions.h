@@ -7,6 +7,10 @@
 
 #pragma once
 
+#include "shared/test/common/test_macros/hw_test_base.h"
+
+#include "gtest/gtest.h"
+
 #ifdef TESTS_GEN8
 #define GEN8TEST_F(test_fixture, test_name) GENTEST_F(IGFX_GEN8_CORE, test_fixture, test_name)
 #define GEN8TEST_P(test_fixture, test_name) GENTEST_P(IGFX_GEN8_CORE, test_fixture, test_name)

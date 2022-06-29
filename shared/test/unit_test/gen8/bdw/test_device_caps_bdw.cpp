@@ -5,8 +5,10 @@
  *
  */
 
+#include "shared/source/gen8/hw_cmds_bdw.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 using BdwUsDeviceIdTest = ::testing::Test;

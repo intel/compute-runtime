@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/common/test_macros/test_base.h"
+
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"

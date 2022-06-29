@@ -13,7 +13,7 @@
 #include "shared/source/direct_submission/dispatchers/dispatcher.inl"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.inl"
 #include "shared/source/direct_submission/linux/drm_direct_submission.inl"
-#include "shared/source/xe_hpg_core/hw_cmds.h"
+#include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
 namespace NEO {
 using GfxFamily = XE_HPG_COREFamily;

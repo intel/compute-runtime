@@ -8,6 +8,7 @@
 #include "shared/test/common/helpers/state_base_address_tests.h"
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using IsBetweenSklAndTgllp = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
 

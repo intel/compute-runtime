@@ -6,13 +6,15 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/gen11/hw_cmds_icllp.h"
 #include "shared/source/gen11/reg_configs.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 

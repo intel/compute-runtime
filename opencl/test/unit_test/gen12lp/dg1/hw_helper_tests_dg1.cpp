@@ -5,9 +5,11 @@
  *
  */
 
+#include "shared/source/gen12lp/hw_cmds_dg1.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
 

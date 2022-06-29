@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/xe_hpg_core/aub_mapper.h"
-#include "shared/source/xe_hpg_core/hw_cmds.h"
+#include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
 using Family = NEO::XE_HPG_COREFamily;
 

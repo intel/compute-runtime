@@ -5,9 +5,11 @@
  *
  */
 
+#include "shared/source/gen12lp/hw_cmds_adls.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
+#include "shared/test/common/test_macros/test.h"
 using namespace NEO;
 
 using AdlsHwInfo = ::testing::Test;

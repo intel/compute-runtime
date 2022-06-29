@@ -6,7 +6,9 @@
  */
 
 #include "shared/source/helpers/hw_helper.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
+#include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"

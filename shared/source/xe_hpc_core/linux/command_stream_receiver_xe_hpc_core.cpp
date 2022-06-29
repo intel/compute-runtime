@@ -9,7 +9,7 @@
 #include "shared/source/os_interface/linux/device_command_stream.inl"
 #include "shared/source/os_interface/linux/drm_command_stream.inl"
 #include "shared/source/os_interface/linux/drm_command_stream_xehp_and_later.inl"
-#include "shared/source/xe_hpc_core/hw_cmds.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 
 namespace NEO {
 

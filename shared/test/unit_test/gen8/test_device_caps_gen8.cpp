@@ -5,9 +5,11 @@
  *
  */
 
+#include "shared/source/gen8/hw_cmds.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 

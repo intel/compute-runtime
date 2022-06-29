@@ -15,6 +15,7 @@
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/helpers/ult_hw_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/helpers/cl_hw_helper.h"

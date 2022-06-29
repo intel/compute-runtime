@@ -10,6 +10,7 @@
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/test_base.h"
 
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"

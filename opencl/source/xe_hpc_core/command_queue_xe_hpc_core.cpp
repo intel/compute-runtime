@@ -7,7 +7,7 @@
 
 #include "shared/source/helpers/populate_factory.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
-#include "shared/source/xe_hpc_core/hw_cmds.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/enqueue_resource_barrier.h"

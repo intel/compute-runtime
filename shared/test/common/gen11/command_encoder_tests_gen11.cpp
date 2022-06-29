@@ -6,8 +6,10 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/gen11/hw_cmds.h"
 #include "shared/source/helpers/blit_commands_helper.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 

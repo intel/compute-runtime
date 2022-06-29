@@ -5,9 +5,11 @@
  *
  */
 
+#include "shared/source/gen12lp/hw_cmds_tgllp.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"

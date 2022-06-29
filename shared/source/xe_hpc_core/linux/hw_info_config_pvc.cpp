@@ -18,7 +18,7 @@
 #include "shared/source/os_interface/linux/pmt_util.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/utilities/directory.h"
-#include "shared/source/xe_hpc_core/hw_cmds.h"
+#include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 
 #include "platforms.h"
 

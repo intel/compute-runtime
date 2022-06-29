@@ -6,6 +6,9 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/gen8/hw_cmds.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
+#include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/image/image_surface_state_fixture.h"
 
 using namespace NEO;

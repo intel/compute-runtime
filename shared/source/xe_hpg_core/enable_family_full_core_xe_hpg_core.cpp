@@ -11,7 +11,7 @@
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/populate_factory.h"
-#include "shared/source/xe_hpg_core/hw_cmds.h"
+#include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
 namespace NEO {
 

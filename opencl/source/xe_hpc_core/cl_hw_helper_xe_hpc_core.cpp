@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/helpers/populate_factory.h"
-#include "shared/source/xe_hpc_core/hw_cmds.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 
 #include "opencl/source/helpers/cl_hw_helper_base.inl"
 #include "opencl/source/helpers/cl_hw_helper_xehp_and_later.inl"

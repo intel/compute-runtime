@@ -13,10 +13,12 @@
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_aub_command_stream_receiver.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
+#include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
