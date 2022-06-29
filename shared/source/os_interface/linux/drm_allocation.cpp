@@ -272,7 +272,7 @@ bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
     if (flags.non_atomic != enabledMemAdviseFlags.non_atomic) {
         for (auto bo : bufferObjects) {
             if (bo != nullptr) {
-                success &= ioctlHelper->setVmBoAdvise(drm, bo->peekHandle(), ioctlHelper->getAtomicAdvise(flags.non_atomic), nullptr);
+                success &= ioctlHelper->setVmBoAdvise(bo->peekHandle(), ioctlHelper->getAtomicAdvise(flags.non_atomic), nullptr);
             }
         }
     }
@@ -289,7 +289,7 @@ bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
                     region.memoryClass = -1;
                     region.memoryInstance = 0;
                 }
-                success &= ioctlHelper->setVmBoAdvise(drm, bo->peekHandle(), ioctlHelper->getPreferredLocationAdvise(), &region);
+                success &= ioctlHelper->setVmBoAdvise(bo->peekHandle(), ioctlHelper->getPreferredLocationAdvise(), &region);
             }
         }
     }
@@ -309,7 +309,7 @@ bool DrmAllocation::setMemPrefetch(Drm *drm, uint32_t subDeviceId) {
     for (auto bo : bufferObjects) {
         if (bo != nullptr) {
             auto region = static_cast<uint32_t>((memoryClassDevice << 16u) | subDeviceId);
-            success &= ioctlHelper->setVmPrefetch(drm, bo->peekAddress(), bo->peekSize(), region);
+            success &= ioctlHelper->setVmPrefetch(bo->peekAddress(), bo->peekSize(), region);
         }
     }
 

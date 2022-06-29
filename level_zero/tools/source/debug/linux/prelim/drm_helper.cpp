@@ -15,7 +15,7 @@ namespace L0 {
 
 int DrmHelper::ioctl(Device *device, NEO::DrmIoctl request, void *arg) {
     auto drm = device->getOsInterface().getDriverModel()->as<NEO::Drm>();
-    return drm->getIoctlHelper()->ioctl(drm, request, arg);
+    return drm->getIoctlHelper()->ioctl(request, arg);
 }
 
 int DrmHelper::getErrno(Device *device) {

@@ -66,46 +66,46 @@ class IoctlHelper {
     IoctlHelper(Drm &drmArg) : drm(drmArg){};
     virtual ~IoctlHelper() {}
     static std::unique_ptr<IoctlHelper> get(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion, const std::string &drmVersion, Drm &drm);
-    uint32_t ioctl(Drm *drm, DrmIoctl request, void *arg);
+    uint32_t ioctl(DrmIoctl request, void *arg);
 
-    virtual bool isVmBindAvailable(Drm *drm) = 0;
-    virtual uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) = 0;
-    virtual CacheRegion closAlloc(Drm *drm) = 0;
-    virtual uint16_t closAllocWays(Drm *drm, CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) = 0;
-    virtual CacheRegion closFree(Drm *drm, CacheRegion closIndex) = 0;
-    virtual int waitUserFence(Drm *drm, uint32_t ctxId, uint64_t address,
+    virtual bool isVmBindAvailable() = 0;
+    virtual uint32_t createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) = 0;
+    virtual CacheRegion closAlloc() = 0;
+    virtual uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) = 0;
+    virtual CacheRegion closFree(CacheRegion closIndex) = 0;
+    virtual int waitUserFence(uint32_t ctxId, uint64_t address,
                               uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) = 0;
     virtual uint32_t getAtomicAdvise(bool isNonAtomic) = 0;
     virtual uint32_t getPreferredLocationAdvise() = 0;
-    virtual bool setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) = 0;
-    virtual bool setVmPrefetch(Drm *drm, uint64_t start, uint64_t length, uint32_t region) = 0;
+    virtual bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) = 0;
+    virtual bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region) = 0;
     virtual uint32_t getDirectSubmissionFlag() = 0;
     virtual std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) = 0;
     virtual uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) = 0;
-    virtual uint32_t queryDistances(Drm *drm, std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) = 0;
+    virtual uint32_t queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) = 0;
     virtual uint16_t getWaitUserFenceSoftFlag() = 0;
-    virtual int execBuffer(Drm *drm, ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) = 0;
+    virtual int execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) = 0;
     virtual bool completionFenceExtensionSupported(const bool isVmBindAvailable) = 0;
     virtual std::optional<DrmParam> getHasPageFaultParamId() = 0;
     virtual std::unique_ptr<uint8_t[]> createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) = 0;
     virtual uint32_t getFlagsForVmCreate(bool disableScratch, bool enablePageFault, bool useVmBind) = 0;
-    virtual uint32_t createContextWithAccessCounters(Drm *drm, GemContextCreateExt &gcc) = 0;
-    virtual uint32_t createCooperativeContext(Drm *drm, GemContextCreateExt &gcc) = 0;
+    virtual uint32_t createContextWithAccessCounters(GemContextCreateExt &gcc) = 0;
+    virtual uint32_t createCooperativeContext(GemContextCreateExt &gcc) = 0;
     virtual void fillVmBindExtSetPat(VmBindExtSetPatT &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) = 0;
     virtual void fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) = 0;
     virtual std::optional<uint64_t> getCopyClassSaturatePCIECapability() = 0;
     virtual std::optional<uint64_t> getCopyClassSaturateLinkCapability() = 0;
     virtual uint32_t getVmAdviseAtomicAttribute() = 0;
-    virtual int vmBind(Drm *drm, const VmBindParams &vmBindParams) = 0;
-    virtual int vmUnbind(Drm *drm, const VmBindParams &vmBindParams) = 0;
+    virtual int vmBind(const VmBindParams &vmBindParams) = 0;
+    virtual int vmUnbind(const VmBindParams &vmBindParams) = 0;
     virtual bool getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize,
                                       uint64_t samplingRate, uint64_t pollPeriod, uint64_t engineInstance, uint64_t notifyNReports) = 0;
     virtual uint32_t getEuStallFdParameter() = 0;
-    virtual UuidRegisterResult registerUuid(Drm *drm, const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) = 0;
-    virtual UuidRegisterResult registerStringClassUuid(Drm *drm, const std::string &uuid, uint64_t ptr, uint64_t size) = 0;
-    virtual int unregisterUuid(Drm *drm, uint32_t handle) = 0;
-    virtual bool isContextDebugSupported(Drm *drm) = 0;
-    virtual int setContextDebugFlag(Drm *drm, uint32_t drmContextId) = 0;
+    virtual UuidRegisterResult registerUuid(const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) = 0;
+    virtual UuidRegisterResult registerStringClassUuid(const std::string &uuid, uint64_t ptr, uint64_t size) = 0;
+    virtual int unregisterUuid(uint32_t handle) = 0;
+    virtual bool isContextDebugSupported() = 0;
+    virtual int setContextDebugFlag(uint32_t drmContextId) = 0;
     virtual bool isDebugAttachAvailable() = 0;
     virtual unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const = 0;
     virtual int getDrmParamValue(DrmParam drmParam) const = 0;
@@ -131,44 +131,44 @@ class IoctlHelperUpstream : public IoctlHelper {
   public:
     using IoctlHelper::IoctlHelper;
 
-    bool isVmBindAvailable(Drm *drm) override;
-    uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) override;
-    CacheRegion closAlloc(Drm *drm) override;
-    uint16_t closAllocWays(Drm *drm, CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
-    CacheRegion closFree(Drm *drm, CacheRegion closIndex) override;
-    int waitUserFence(Drm *drm, uint32_t ctxId, uint64_t address,
+    bool isVmBindAvailable() override;
+    uint32_t createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) override;
+    CacheRegion closAlloc() override;
+    uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
+    CacheRegion closFree(CacheRegion closIndex) override;
+    int waitUserFence(uint32_t ctxId, uint64_t address,
                       uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) override;
     uint32_t getAtomicAdvise(bool isNonAtomic) override;
     uint32_t getPreferredLocationAdvise() override;
-    bool setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) override;
-    bool setVmPrefetch(Drm *drm, uint64_t start, uint64_t length, uint32_t region) override;
+    bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) override;
+    bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region) override;
     uint32_t getDirectSubmissionFlag() override;
     std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) override;
     uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) override;
-    uint32_t queryDistances(Drm *drm, std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
+    uint32_t queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
     uint16_t getWaitUserFenceSoftFlag() override;
-    int execBuffer(Drm *drm, ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) override;
+    int execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) override;
     bool completionFenceExtensionSupported(const bool isVmBindAvailable) override;
     std::optional<DrmParam> getHasPageFaultParamId() override;
     std::unique_ptr<uint8_t[]> createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) override;
     uint32_t getFlagsForVmCreate(bool disableScratch, bool enablePageFault, bool useVmBind) override;
-    uint32_t createContextWithAccessCounters(Drm *drm, GemContextCreateExt &gcc) override;
-    uint32_t createCooperativeContext(Drm *drm, GemContextCreateExt &gcc) override;
+    uint32_t createContextWithAccessCounters(GemContextCreateExt &gcc) override;
+    uint32_t createCooperativeContext(GemContextCreateExt &gcc) override;
     void fillVmBindExtSetPat(VmBindExtSetPatT &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) override;
     void fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) override;
     std::optional<uint64_t> getCopyClassSaturatePCIECapability() override;
     std::optional<uint64_t> getCopyClassSaturateLinkCapability() override;
     uint32_t getVmAdviseAtomicAttribute() override;
-    int vmBind(Drm *drm, const VmBindParams &vmBindParams) override;
-    int vmUnbind(Drm *drm, const VmBindParams &vmBindParams) override;
+    int vmBind(const VmBindParams &vmBindParams) override;
+    int vmUnbind(const VmBindParams &vmBindParams) override;
     bool getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize, uint64_t samplingRate,
                               uint64_t pollPeriod, uint64_t engineInstance, uint64_t notifyNReports) override;
     uint32_t getEuStallFdParameter() override;
-    UuidRegisterResult registerUuid(Drm *drm, const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) override;
-    UuidRegisterResult registerStringClassUuid(Drm *drm, const std::string &uuid, uint64_t ptr, uint64_t size) override;
-    int unregisterUuid(Drm *drm, uint32_t handle) override;
-    bool isContextDebugSupported(Drm *drm) override;
-    int setContextDebugFlag(Drm *drm, uint32_t drmContextId) override;
+    UuidRegisterResult registerUuid(const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) override;
+    UuidRegisterResult registerStringClassUuid(const std::string &uuid, uint64_t ptr, uint64_t size) override;
+    int unregisterUuid(uint32_t handle) override;
+    bool isContextDebugSupported() override;
+    int setContextDebugFlag(uint32_t drmContextId) override;
     bool isDebugAttachAvailable() override;
     unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override;
     int getDrmParamValue(DrmParam drmParam) const override;
@@ -182,7 +182,7 @@ class IoctlHelperImpl : public IoctlHelperUpstream {
         return std::make_unique<IoctlHelperImpl<gfxProduct>>(drm);
     }
 
-    uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) override;
+    uint32_t createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) override;
     std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) override;
     unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override;
 };
@@ -191,44 +191,44 @@ class IoctlHelperPrelim20 : public IoctlHelper {
   public:
     using IoctlHelper::IoctlHelper;
 
-    bool isVmBindAvailable(Drm *drm) override;
-    uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) override;
-    CacheRegion closAlloc(Drm *drm) override;
-    uint16_t closAllocWays(Drm *drm, CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
-    CacheRegion closFree(Drm *drm, CacheRegion closIndex) override;
-    int waitUserFence(Drm *drm, uint32_t ctxId, uint64_t address,
+    bool isVmBindAvailable() override;
+    uint32_t createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) override;
+    CacheRegion closAlloc() override;
+    uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
+    CacheRegion closFree(CacheRegion closIndex) override;
+    int waitUserFence(uint32_t ctxId, uint64_t address,
                       uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) override;
     uint32_t getAtomicAdvise(bool isNonAtomic) override;
     uint32_t getPreferredLocationAdvise() override;
-    bool setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) override;
-    bool setVmPrefetch(Drm *drm, uint64_t start, uint64_t length, uint32_t region) override;
+    bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) override;
+    bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region) override;
     uint32_t getDirectSubmissionFlag() override;
     std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) override;
     uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) override;
-    uint32_t queryDistances(Drm *drm, std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
+    uint32_t queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
     uint16_t getWaitUserFenceSoftFlag() override;
-    int execBuffer(Drm *drm, ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) override;
+    int execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) override;
     bool completionFenceExtensionSupported(const bool isVmBindAvailable) override;
     std::optional<DrmParam> getHasPageFaultParamId() override;
     std::unique_ptr<uint8_t[]> createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) override;
     uint32_t getFlagsForVmCreate(bool disableScratch, bool enablePageFault, bool useVmBind) override;
-    uint32_t createContextWithAccessCounters(Drm *drm, GemContextCreateExt &gcc) override;
-    uint32_t createCooperativeContext(Drm *drm, GemContextCreateExt &gcc) override;
+    uint32_t createContextWithAccessCounters(GemContextCreateExt &gcc) override;
+    uint32_t createCooperativeContext(GemContextCreateExt &gcc) override;
     void fillVmBindExtSetPat(VmBindExtSetPatT &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) override;
     void fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) override;
     std::optional<uint64_t> getCopyClassSaturatePCIECapability() override;
     std::optional<uint64_t> getCopyClassSaturateLinkCapability() override;
     uint32_t getVmAdviseAtomicAttribute() override;
-    int vmBind(Drm *drm, const VmBindParams &vmBindParams) override;
-    int vmUnbind(Drm *drm, const VmBindParams &vmBindParams) override;
+    int vmBind(const VmBindParams &vmBindParams) override;
+    int vmUnbind(const VmBindParams &vmBindParams) override;
     bool getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize, uint64_t samplingRate,
                               uint64_t pollPeriod, uint64_t engineInstance, uint64_t notifyNReports) override;
     uint32_t getEuStallFdParameter() override;
-    UuidRegisterResult registerUuid(Drm *drm, const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) override;
-    UuidRegisterResult registerStringClassUuid(Drm *drm, const std::string &uuid, uint64_t ptr, uint64_t size) override;
-    int unregisterUuid(Drm *drm, uint32_t handle) override;
-    bool isContextDebugSupported(Drm *drm) override;
-    int setContextDebugFlag(Drm *drm, uint32_t drmContextId) override;
+    UuidRegisterResult registerUuid(const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) override;
+    UuidRegisterResult registerStringClassUuid(const std::string &uuid, uint64_t ptr, uint64_t size) override;
+    int unregisterUuid(uint32_t handle) override;
+    bool isContextDebugSupported() override;
+    int setContextDebugFlag(uint32_t drmContextId) override;
     bool isDebugAttachAvailable() override;
     unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override;
     int getDrmParamValue(DrmParam drmParam) const override;

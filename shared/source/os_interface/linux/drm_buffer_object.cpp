@@ -69,7 +69,7 @@ bool BufferObject::close() {
     PRINT_DEBUG_STRING(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Calling gem close on handle: BO-%d\n", this->handle);
 
     auto ioctlHelper = this->drm->getIoctlHelper();
-    int ret = ioctlHelper->ioctl(drm, DrmIoctl::GemClose, &close);
+    int ret = ioctlHelper->ioctl(DrmIoctl::GemClose, &close);
     if (ret != 0) {
         int err = errno;
         PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(GEM_CLOSE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
@@ -104,7 +104,7 @@ bool BufferObject::setTiling(uint32_t mode, uint32_t stride) {
     setTiling.stride = stride;
     auto ioctlHelper = this->drm->getIoctlHelper();
 
-    if (ioctlHelper->ioctl(drm, DrmIoctl::GemSetTiling, &setTiling) != 0) {
+    if (ioctlHelper->ioctl(DrmIoctl::GemSetTiling, &setTiling) != 0) {
         return false;
     }
 
@@ -144,7 +144,7 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
         printExecutionBuffer(execbuf, residencyCount, execObjectsStorage, residency);
     }
 
-    int ret = ioctlHelper->execBuffer(drm, &execbuf, completionGpuAddress, completionValue);
+    int ret = ioctlHelper->execBuffer(&execbuf, completionGpuAddress, completionValue);
 
     if (ret != 0) {
         int err = this->drm->getErrno();
@@ -154,7 +154,7 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
         }
 
         evictUnusedAllocations(false, true);
-        ret = ioctlHelper->execBuffer(drm, &execbuf, completionGpuAddress, completionValue);
+        ret = ioctlHelper->execBuffer(&execbuf, completionGpuAddress, completionValue);
     }
 
     if (ret != 0) {
@@ -164,7 +164,7 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
             return gpuHangDetected;
         }
 
-        ret = ioctlHelper->execBuffer(drm, &execbuf, completionGpuAddress, completionValue);
+        ret = ioctlHelper->execBuffer(&execbuf, completionGpuAddress, completionValue);
     }
 
     if (ret == 0) {

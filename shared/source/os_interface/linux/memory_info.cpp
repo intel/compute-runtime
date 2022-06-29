@@ -56,7 +56,7 @@ void MemoryInfo::assignRegionsFromDistances(const std::vector<DistanceInfo> &dis
 }
 
 uint32_t MemoryInfo::createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) {
-    return drm->getIoctlHelper()->createGemExt(drm, memClassInstances, allocSize, handle, vmId);
+    return drm->getIoctlHelper()->createGemExt(memClassInstances, allocSize, handle, vmId);
 }
 
 uint32_t MemoryInfo::getTileIndex(uint32_t memoryBank, const HardwareInfo &hwInfo) {

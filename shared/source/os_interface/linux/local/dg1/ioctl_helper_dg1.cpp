@@ -18,8 +18,8 @@ extern bool isQueryDrmTip(const std::vector<uint8_t> &queryInfo);
 extern std::vector<uint8_t> translateToDrmTip(const uint8_t *dataQuery);
 
 template <>
-uint32_t IoctlHelperImpl<gfxProduct>::createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) {
-    auto ret = IoctlHelperUpstream::createGemExt(drm, memClassInstances, allocSize, handle, vmId);
+uint32_t IoctlHelperImpl<gfxProduct>::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) {
+    auto ret = IoctlHelperUpstream::createGemExt(memClassInstances, allocSize, handle, vmId);
     if (ret == 0) {
         return ret;
     }
@@ -45,7 +45,7 @@ uint32_t IoctlHelperImpl<gfxProduct>::createGemExt(Drm *drm, const MemRegionsVec
     createExt.size = allocSize;
     createExt.extensions = reinterpret_cast<uintptr_t>(&setparamRegion);
 
-    ret = IoctlHelper::ioctl(drm, DrmIoctl::DG1GemCreateExt, &createExt);
+    ret = IoctlHelper::ioctl(DrmIoctl::DG1GemCreateExt, &createExt);
 
     handle = createExt.handle;
     printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "GEM_CREATE_EXT with EXT_SETPARAM has returned: %d BO-%u with size: %lu\n", ret, createExt.handle, createExt.size);

@@ -119,7 +119,7 @@ int Drm::getParamIoctl(DrmParam param, int *dstValue) {
     getParam.param = getDrmParamValue(param, ioctlHelper.get());
     getParam.value = dstValue;
 
-    int retVal = ioctlHelper ? ioctlHelper->ioctl(this, DrmIoctl::Getparam, &getParam) : ioctl(DrmIoctl::Getparam, &getParam);
+    int retVal = ioctlHelper ? ioctlHelper->ioctl(DrmIoctl::Getparam, &getParam) : ioctl(DrmIoctl::Getparam, &getParam);
     if (DebugManager.flags.PrintIoctlEntries.get()) {
         printf("DRM_IOCTL_I915_GETPARAM: param: %s, output value: %d, retCode:% d\n",
                getDrmParamString(param).c_str(),
@@ -152,7 +152,7 @@ int Drm::enableTurboBoost() {
 
     contextParam.param = I915_CONTEXT_PRIVATE_PARAM_BOOST;
     contextParam.value = 1;
-    return ioctlHelper->ioctl(this, DrmIoctl::GemContextSetparam, &contextParam);
+    return ioctlHelper->ioctl(DrmIoctl::GemContextSetparam, &contextParam);
 }
 
 int Drm::getEnabledPooledEu(int &enabled) {
@@ -175,7 +175,7 @@ int Drm::queryGttSize(uint64_t &gttSizeOutput) {
     GemContextParam contextParam = {0};
     contextParam.param = I915_CONTEXT_PARAM_GTT_SIZE;
 
-    int ret = ioctlHelper->ioctl(this, DrmIoctl::GemContextGetparam, &contextParam);
+    int ret = ioctlHelper->ioctl(DrmIoctl::GemContextGetparam, &contextParam);
     if (ret == 0) {
         gttSizeOutput = contextParam.value;
     }
@@ -191,7 +191,7 @@ bool Drm::isGpuHangDetected(OsContext &osContext) {
         ResetStats resetStats{};
         resetStats.contextId = drmContextId;
 
-        const auto retVal{ioctlHelper->ioctl(this, DrmIoctl::GetResetStats, &resetStats)};
+        const auto retVal{ioctlHelper->ioctl(DrmIoctl::GetResetStats, &resetStats)};
         UNRECOVERABLE_IF(retVal != 0);
 
         if (resetStats.batchActive > 0 || resetStats.batchPending > 0) {
@@ -219,7 +219,7 @@ void Drm::setLowPriorityContextParam(uint32_t drmContextId) {
     gcp.param = I915_CONTEXT_PARAM_PRIORITY;
     gcp.value = -1023;
 
-    auto retVal = ioctlHelper->ioctl(this, DrmIoctl::GemContextSetparam, &gcp);
+    auto retVal = ioctlHelper->ioctl(DrmIoctl::GemContextSetparam, &gcp);
     UNRECOVERABLE_IF(retVal != 0);
 }
 
@@ -231,7 +231,7 @@ int Drm::getQueueSliceCount(GemContextParamSseu *sseu) {
     contextParam.value = reinterpret_cast<uint64_t>(sseu);
     contextParam.size = sizeof(struct GemContextParamSseu);
 
-    return ioctlHelper->ioctl(this, DrmIoctl::GemContextGetparam, &contextParam);
+    return ioctlHelper->ioctl(DrmIoctl::GemContextGetparam, &contextParam);
 }
 
 uint64_t Drm::getSliceMask(uint64_t sliceCount) {
@@ -246,7 +246,7 @@ bool Drm::setQueueSliceCount(uint64_t sliceCount) {
         contextParam.contextId = 0;
         contextParam.value = reinterpret_cast<uint64_t>(&sseu);
         contextParam.size = sizeof(struct GemContextParamSseu);
-        int retVal = ioctlHelper->ioctl(this, DrmIoctl::GemContextSetparam, &contextParam);
+        int retVal = ioctlHelper->ioctl(DrmIoctl::GemContextSetparam, &contextParam);
         if (retVal == 0) {
             return true;
         }
@@ -258,7 +258,7 @@ void Drm::checkNonPersistentContextsSupport() {
     GemContextParam contextParam = {};
     contextParam.param = I915_CONTEXT_PARAM_PERSISTENCE;
 
-    auto retVal = ioctlHelper->ioctl(this, DrmIoctl::GemContextGetparam, &contextParam);
+    auto retVal = ioctlHelper->ioctl(DrmIoctl::GemContextGetparam, &contextParam);
     if (retVal == 0 && contextParam.value == 1) {
         nonPersistentContextsSupported = true;
     } else {
@@ -271,7 +271,7 @@ void Drm::setNonPersistentContext(uint32_t drmContextId) {
     contextParam.contextId = drmContextId;
     contextParam.param = I915_CONTEXT_PARAM_PERSISTENCE;
 
-    ioctlHelper->ioctl(this, DrmIoctl::GemContextSetparam, &contextParam);
+    ioctlHelper->ioctl(DrmIoctl::GemContextSetparam, &contextParam);
 }
 
 void Drm::setUnrecoverableContext(uint32_t drmContextId) {
@@ -281,7 +281,7 @@ void Drm::setUnrecoverableContext(uint32_t drmContextId) {
     contextParam.value = 0;
     contextParam.size = 0;
 
-    ioctlHelper->ioctl(this, DrmIoctl::GemContextSetparam, &contextParam);
+    ioctlHelper->ioctl(DrmIoctl::GemContextSetparam, &contextParam);
 }
 
 uint32_t Drm::createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequested, bool isCooperativeContextRequested) {
@@ -305,16 +305,16 @@ uint32_t Drm::createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequeste
     }
 
     if (DebugManager.flags.CreateContextWithAccessCounters.get() != -1) {
-        return ioctlHelper->createContextWithAccessCounters(this, gcc);
+        return ioctlHelper->createContextWithAccessCounters(gcc);
     }
 
     if (DebugManager.flags.ForceRunAloneContext.get() != -1) {
         isCooperativeContextRequested = DebugManager.flags.ForceRunAloneContext.get();
     }
     if (isCooperativeContextRequested) {
-        return ioctlHelper->createCooperativeContext(this, gcc);
+        return ioctlHelper->createCooperativeContext(gcc);
     }
-    auto ioctlResult = ioctlHelper->ioctl(this, DrmIoctl::GemContextCreateExt, &gcc);
+    auto ioctlResult = ioctlHelper->ioctl(DrmIoctl::GemContextCreateExt, &gcc);
 
     UNRECOVERABLE_IF(ioctlResult != 0);
     return gcc.contextId;
@@ -323,7 +323,7 @@ uint32_t Drm::createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequeste
 void Drm::destroyDrmContext(uint32_t drmContextId) {
     GemContextDestroy destroy{};
     destroy.contextId = drmContextId;
-    auto retVal = ioctlHelper->ioctl(this, DrmIoctl::GemContextDestroy, &destroy);
+    auto retVal = ioctlHelper->ioctl(DrmIoctl::GemContextDestroy, &destroy);
     UNRECOVERABLE_IF(retVal != 0);
 }
 
@@ -339,7 +339,7 @@ int Drm::queryVmId(uint32_t drmContextId, uint32_t &vmId) {
     param.contextId = drmContextId;
     param.value = 0;
     param.param = I915_CONTEXT_PARAM_VM;
-    auto retVal = ioctlHelper->ioctl(this, DrmIoctl::GemContextGetparam, &param);
+    auto retVal = ioctlHelper->ioctl(DrmIoctl::GemContextGetparam, &param);
 
     vmId = static_cast<uint32_t>(param.value);
 
@@ -538,7 +538,7 @@ std::vector<uint8_t> Drm::query(uint32_t queryId, uint32_t queryItemFlags) {
     query.itemsPtr = reinterpret_cast<uint64_t>(&queryItem);
     query.numItems = 1;
 
-    auto ret = ioctlHelper->ioctl(this, DrmIoctl::Query, &query);
+    auto ret = ioctlHelper->ioctl(DrmIoctl::Query, &query);
     if (ret != 0 || queryItem.length <= 0) {
         return {};
     }
@@ -546,7 +546,7 @@ std::vector<uint8_t> Drm::query(uint32_t queryId, uint32_t queryItemFlags) {
     auto data = std::vector<uint8_t>(queryItem.length, 0);
     queryItem.dataPtr = castToUint64(data.data());
 
-    ret = ioctlHelper->ioctl(this, DrmIoctl::Query, &query);
+    ret = ioctlHelper->ioctl(DrmIoctl::Query, &query);
     if (ret != 0 || queryItem.length <= 0) {
         return {};
     }
@@ -734,7 +734,7 @@ int Drm::waitHandle(uint32_t waitHandle, int64_t timeout) {
     wait.boHandle = waitHandle;
     wait.timeoutNs = timeout;
 
-    int ret = ioctlHelper->ioctl(this, DrmIoctl::GemWait, &wait);
+    int ret = ioctlHelper->ioctl(DrmIoctl::GemWait, &wait);
     if (ret != 0) {
         int err = errno;
         PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_WAIT) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
@@ -867,7 +867,7 @@ void Drm::getPrelimVersion(std::string &prelimVersion) {
 }
 
 int Drm::waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags) {
-    return ioctlHelper->waitUserFence(this, ctxId, address, value, static_cast<uint32_t>(dataWidth), timeout, flags);
+    return ioctlHelper->waitUserFence(ctxId, address, value, static_cast<uint32_t>(dataWidth), timeout, flags);
 }
 
 bool Drm::querySystemInfo() {
@@ -946,7 +946,7 @@ bool Drm::queryEngineInfo(bool isSysmanEnabled) {
     }
 
     std::vector<QueryItem> queryItems{distanceInfos.size()};
-    auto ret = ioctlHelper->queryDistances(this, queryItems, distanceInfos);
+    auto ret = ioctlHelper->queryDistances(queryItems, distanceInfos);
     if (ret != 0) {
         return false;
     }
@@ -1178,7 +1178,7 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
     param.param = I915_CONTEXT_PARAM_ENGINES;
     param.value = castToUint64(&contextEngines);
 
-    auto ioctlValue = ioctlHelper->ioctl(this, DrmIoctl::GemContextSetparam, &param);
+    auto ioctlValue = ioctlHelper->ioctl(DrmIoctl::GemContextSetparam, &param);
     UNRECOVERABLE_IF(ioctlValue != 0);
 
     retVal = static_cast<unsigned int>(ioctlHelper->getDrmParamValue(DrmParam::ExecDefault));
@@ -1211,7 +1211,7 @@ void Drm::waitForBind(uint32_t vmHandleId) {
 
 bool Drm::isVmBindAvailable() {
     std::call_once(checkBindOnce, [this]() {
-        int ret = ioctlHelper->isVmBindAvailable(this);
+        int ret = ioctlHelper->isVmBindAvailable();
 
         auto hwInfo = this->getRootDeviceEnvironment().getHardwareInfo();
         auto hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
@@ -1340,7 +1340,7 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
                 }
             }
 
-            ret = ioctlHelper->vmBind(drm, vmBind);
+            ret = ioctlHelper->vmBind(vmBind);
 
             if (ret) {
                 break;
@@ -1349,7 +1349,7 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
             drm->setNewResourceBoundToVM(vmHandleId);
         } else {
             vmBind.handle = 0u;
-            ret = ioctlHelper->vmUnbind(drm, vmBind);
+            ret = ioctlHelper->vmUnbind(vmBind);
 
             if (ret) {
                 break;
@@ -1400,7 +1400,7 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
 
     ctl.flags = ioctlHelper->getFlagsForVmCreate(disableScratch, enablePageFault, useVmBind);
 
-    auto ret = ioctlHelper->ioctl(this, DrmIoctl::GemVmCreate, &ctl);
+    auto ret = ioctlHelper->ioctl(DrmIoctl::GemVmCreate, &ctl);
 
     if (ret == 0) {
         drmVmId = ctl.vmId;

@@ -59,5 +59,5 @@ TEST(DrmBindTest, whenCheckingVmBindAvailabilityThenIoctlHelperSupportIsUsed) {
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.callBaseIsVmBindAvailable = true;
 
-    EXPECT_EQ(drm.isVmBindAvailable(), drm.getIoctlHelper()->isVmBindAvailable(&drm));
+    EXPECT_EQ(drm.isVmBindAvailable(), drm.getIoctlHelper()->isVmBindAvailable());
 }

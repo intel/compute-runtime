@@ -66,9 +66,9 @@ TEST(IoctlHelperPrelimTest, whenGettingVmBindAvailabilityThenProperValueIsReturn
             drm.context.vmBindQueryCalled = 0u;
 
             if (ioctlValue == 0) {
-                EXPECT_EQ(hasVmBind, ioctlHelper.isVmBindAvailable(&drm));
+                EXPECT_EQ(hasVmBind, ioctlHelper.isVmBindAvailable());
             } else {
-                EXPECT_FALSE(ioctlHelper.isVmBindAvailable(&drm));
+                EXPECT_FALSE(ioctlHelper.isVmBindAvailable());
             }
             EXPECT_EQ(1u, drm.context.vmBindQueryCalled);
         }
@@ -86,7 +86,7 @@ TEST(IoctlHelperPrelimTest, whenVmBindIsCalledThenProperValueIsReturnedBasedOnIo
     for (auto &ioctlValue : {0, EINVAL}) {
         drm.context.vmBindReturn = ioctlValue;
         drm.context.vmBindCalled = 0u;
-        EXPECT_EQ(ioctlValue, ioctlHelper.vmBind(&drm, vmBindParams));
+        EXPECT_EQ(ioctlValue, ioctlHelper.vmBind(vmBindParams));
         EXPECT_EQ(1u, drm.context.vmBindCalled);
     }
 }
@@ -102,7 +102,7 @@ TEST(IoctlHelperPrelimTest, whenVmUnbindIsCalledThenProperValueIsReturnedBasedOn
     for (auto &ioctlValue : {0, EINVAL}) {
         drm.context.vmUnbindReturn = ioctlValue;
         drm.context.vmUnbindCalled = 0u;
-        EXPECT_EQ(ioctlValue, ioctlHelper.vmUnbind(&drm, vmBindParams));
+        EXPECT_EQ(ioctlValue, ioctlHelper.vmUnbind(vmBindParams));
         EXPECT_EQ(1u, drm.context.vmUnbindCalled);
     }
 }
@@ -112,7 +112,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtThenReturnSuccess) 
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
-    auto ret = ioctlHelper->createGemExt(drm.get(), memClassInstance, 1024, handle, {});
+    auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, {});
 
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0u, ret);
@@ -127,7 +127,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithDebugFlagThenPr
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
-    ioctlHelper->createGemExt(drm.get(), memClassInstance, 1024, handle, {});
+    ioctlHelper->createGemExt(memClassInstance, 1024, handle, {});
 
     std::string output = testing::internal::GetCapturedStdout();
     std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 1024, param: 0x1000000010001, memory class: 1, memory instance: 0 }\nGEM_CREATE_EXT has returned: 0 BO-1 with size: 1024\n");
@@ -137,7 +137,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithDebugFlagThenPr
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCallIoctlThenProperIoctlRegistered) {
     GemContextCreateExt arg{};
     drm->ioctlCallsCount = 0;
-    auto ret = drm->ioctlHelper->ioctl(drm.get(), DrmIoctl::GemContextCreateExt, &arg);
+    auto ret = drm->ioctlHelper->ioctl(DrmIoctl::GemContextCreateExt, &arg);
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
@@ -145,7 +145,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCallIoctlThenProperIoctlRegiste
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenClosAllocThenReturnCorrectRegion) {
     drm->ioctlCallsCount = 0;
     auto ioctlHelper = drm->getIoctlHelper();
-    auto cacheRegion = ioctlHelper->closAlloc(drm.get());
+    auto cacheRegion = ioctlHelper->closAlloc();
 
     EXPECT_EQ(CacheRegion::Region1, cacheRegion);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -155,7 +155,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosAll
     drm->ioctlRetVal = -1;
     drm->ioctlCallsCount = 0;
     auto ioctlHelper = drm->getIoctlHelper();
-    auto cacheRegion = ioctlHelper->closAlloc(drm.get());
+    auto cacheRegion = ioctlHelper->closAlloc();
 
     EXPECT_EQ(CacheRegion::None, cacheRegion);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -164,7 +164,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosAll
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenClosFreeThenReturnCorrectRegion) {
     auto ioctlHelper = drm->getIoctlHelper();
     drm->ioctlCallsCount = 0;
-    auto cacheRegion = ioctlHelper->closFree(drm.get(), CacheRegion::Region2);
+    auto cacheRegion = ioctlHelper->closFree(CacheRegion::Region2);
 
     EXPECT_EQ(CacheRegion::Region2, cacheRegion);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -175,7 +175,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosFre
     drm->ioctlCallsCount = 0;
 
     auto ioctlHelper = drm->getIoctlHelper();
-    auto cacheRegion = ioctlHelper->closFree(drm.get(), CacheRegion::Region2);
+    auto cacheRegion = ioctlHelper->closFree(CacheRegion::Region2);
 
     EXPECT_EQ(CacheRegion::None, cacheRegion);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -184,7 +184,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosFre
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenClosAllocWaysThenReturnCorrectRegion) {
     drm->ioctlCallsCount = 0;
     auto ioctlHelper = drm->getIoctlHelper();
-    auto numWays = ioctlHelper->closAllocWays(drm.get(), CacheRegion::Region2, 3, 10);
+    auto numWays = ioctlHelper->closAllocWays(CacheRegion::Region2, 3, 10);
 
     EXPECT_EQ(10u, numWays);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -195,7 +195,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosAll
     drm->ioctlCallsCount = 0;
 
     auto ioctlHelper = drm->getIoctlHelper();
-    auto numWays = ioctlHelper->closAllocWays(drm.get(), CacheRegion::Region2, 3, 10);
+    auto numWays = ioctlHelper->closAllocWays(CacheRegion::Region2, 3, 10);
 
     EXPECT_EQ(0u, numWays);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -206,7 +206,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenWaitUserFenceThenCorrectValueRe
     uint64_t value = 0x98765ull;
     auto ioctlHelper = drm->getIoctlHelper();
     for (uint32_t i = 0u; i < 4; i++) {
-        auto ret = ioctlHelper->waitUserFence(drm.get(), 10u, gpuAddress, value, i, -1, 0u);
+        auto ret = ioctlHelper->waitUserFence(10u, gpuAddress, value, i, -1, 0u);
         EXPECT_EQ(0, ret);
     }
 }
@@ -316,7 +316,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenQueryDistancesThenCorrectDistan
     distances[2].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy)), 4};
     distances[2].region = {I915_MEMORY_CLASS_DEVICE, 2};
     std::vector<QueryItem> queryItems(distances.size());
-    auto ret = ioctlHelper->queryDistances(drm.get(), queryItems, distances);
+    auto ret = ioctlHelper->queryDistances(queryItems, distances);
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(0, distances[0].distance);
     EXPECT_EQ(0, distances[1].distance);
@@ -415,7 +415,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlFailureWhenCreateContextWithAccessCou
 
     auto ioctlHelper = drm->getIoctlHelper();
     GemContextCreateExt gcc{};
-    EXPECT_THROW(ioctlHelper->createContextWithAccessCounters(drm.get(), gcc), std::runtime_error);
+    EXPECT_THROW(ioctlHelper->createContextWithAccessCounters(gcc), std::runtime_error);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
@@ -425,7 +425,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlSuccessWhenCreateContextWithAccessCou
 
     auto ioctlHelper = drm->getIoctlHelper();
     GemContextCreateExt gcc{};
-    EXPECT_EQ(0u, ioctlHelper->createContextWithAccessCounters(drm.get(), gcc));
+    EXPECT_EQ(0u, ioctlHelper->createContextWithAccessCounters(gcc));
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
@@ -435,7 +435,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlFailureWhenCreateCooperativeContexIsC
 
     auto ioctlHelper = drm->getIoctlHelper();
     GemContextCreateExt gcc{};
-    EXPECT_THROW(ioctlHelper->createCooperativeContext(drm.get(), gcc), std::runtime_error);
+    EXPECT_THROW(ioctlHelper->createCooperativeContext(gcc), std::runtime_error);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
@@ -445,7 +445,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlSuccessWhenCreateCooperativeContexIsC
 
     auto ioctlHelper = drm->getIoctlHelper();
     GemContextCreateExt gcc{};
-    EXPECT_EQ(0u, ioctlHelper->createCooperativeContext(drm.get(), gcc));
+    EXPECT_EQ(0u, ioctlHelper->createCooperativeContext(gcc));
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 

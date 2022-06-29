@@ -18,7 +18,7 @@ TEST(IoctlHelperUpstreamTest, whenGettingVmBindAvailabilityThenFalseIsReturned) 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     IoctlHelperUpstream ioctlHelper{*drm};
-    EXPECT_FALSE(ioctlHelper.isVmBindAvailable(drm.get()));
+    EXPECT_FALSE(ioctlHelper.isVmBindAvailable());
 }
 
 TEST(IoctlHelperUpstreamTest, whenGettingIoctlRequestValueThenPropertValueIsReturned) {
@@ -147,7 +147,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenCreateGemExtThenReturnCorrectVal
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
-    auto ret = ioctlHelper->createGemExt(drm.get(), memClassInstance, 1024, handle, {});
+    auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, {});
 
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(1u, handle);
@@ -168,7 +168,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenCreateGemExtWithDebugFlagThenPri
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
-    ioctlHelper->createGemExt(drm.get(), memClassInstance, 1024, handle, {});
+    ioctlHelper->createGemExt(memClassInstance, 1024, handle, {});
 
     std::string output = testing::internal::GetCapturedStdout();
     std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 1024, memory class: 1, memory instance: 0 }\nGEM_CREATE_EXT with EXT_MEMORY_REGIONS has returned: 0 BO-1 with size: 1024\n");
@@ -181,7 +181,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenClosAllocThenReturnNoneRegion) {
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
     auto ioctlHelper = drm->getIoctlHelper();
-    auto cacheRegion = ioctlHelper->closAlloc(drm.get());
+    auto cacheRegion = ioctlHelper->closAlloc();
 
     EXPECT_EQ(CacheRegion::None, cacheRegion);
 }
@@ -192,7 +192,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenClosFreeThenReturnNoneRegion) {
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
     auto ioctlHelper = drm->getIoctlHelper();
-    auto cacheRegion = ioctlHelper->closFree(drm.get(), CacheRegion::Region2);
+    auto cacheRegion = ioctlHelper->closFree(CacheRegion::Region2);
 
     EXPECT_EQ(CacheRegion::None, cacheRegion);
 }
@@ -203,7 +203,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenClosAllocWaysThenReturnZeroWays)
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
     auto ioctlHelper = drm->getIoctlHelper();
-    auto cacheRegion = ioctlHelper->closAllocWays(drm.get(), CacheRegion::Region2, 3, 10);
+    auto cacheRegion = ioctlHelper->closAllocWays(CacheRegion::Region2, 3, 10);
 
     EXPECT_EQ(0, cacheRegion);
 }
@@ -225,7 +225,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenSetVmBoAdviseThenReturnTrue) {
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
     auto ioctlHelper = drm->getIoctlHelper();
-    EXPECT_TRUE(ioctlHelper->setVmBoAdvise(drm.get(), 0, 0, nullptr));
+    EXPECT_TRUE(ioctlHelper->setVmBoAdvise(0, 0, nullptr));
 }
 
 TEST(IoctlHelperTestsUpstream, givenUpstreamWhenSetVmPrefetchThenReturnTrue) {
@@ -234,7 +234,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenSetVmPrefetchThenReturnTrue) {
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
     auto ioctlHelper = drm->getIoctlHelper();
-    EXPECT_TRUE(ioctlHelper->setVmPrefetch(drm.get(), 0, 0, 0));
+    EXPECT_TRUE(ioctlHelper->setVmPrefetch(0, 0, 0));
 }
 
 TEST(IoctlHelperTestsUpstream, givenUpstreamWhenDirectSubmissionEnabledThenNoFlagsAdded) {
@@ -258,7 +258,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenQueryDistancesThenReturnEinval) 
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     std::vector<DistanceInfo> distanceInfos;
     std::vector<QueryItem> queries(4);
-    auto ret = drm->getIoctlHelper()->queryDistances(drm.get(), queries, distanceInfos);
+    auto ret = drm->getIoctlHelper()->queryDistances(queries, distanceInfos);
     EXPECT_EQ(0u, ret);
     const bool queryUnsupported = std::all_of(queries.begin(), queries.end(),
                                               [](const QueryItem &item) { return item.length == -EINVAL; });
@@ -315,7 +315,7 @@ TEST(IoctlHelperTestsUpstream, whenCreateContextWithAccessCountersIsCalledThenEr
     GemContextCreateExt gcc{};
     IoctlHelperUpstream ioctlHelper{*drm};
 
-    EXPECT_EQ(static_cast<uint32_t>(EINVAL), ioctlHelper.createContextWithAccessCounters(drm.get(), gcc));
+    EXPECT_EQ(static_cast<uint32_t>(EINVAL), ioctlHelper.createContextWithAccessCounters(gcc));
 }
 
 TEST(IoctlHelperTestsUpstream, whenCreateCooperativeContexIsCalledThenErrorIsReturned) {
@@ -326,7 +326,7 @@ TEST(IoctlHelperTestsUpstream, whenCreateCooperativeContexIsCalledThenErrorIsRet
     GemContextCreateExt gcc{};
     IoctlHelperUpstream ioctlHelper{*drm};
 
-    EXPECT_EQ(static_cast<uint32_t>(EINVAL), ioctlHelper.createCooperativeContext(drm.get(), gcc));
+    EXPECT_EQ(static_cast<uint32_t>(EINVAL), ioctlHelper.createCooperativeContext(gcc));
 }
 
 TEST(IoctlHelperTestsUpstream, whenFillVmBindSetPatThenNothingThrows) {
@@ -352,7 +352,7 @@ TEST(IoctlHelperTestsUpstream, whenVmBindIsCalledThenZeroIsReturned) {
 
     VmBindParams vmBindParams{};
     IoctlHelperUpstream ioctlHelper{*drm};
-    EXPECT_EQ(0, ioctlHelper.vmBind(drm.get(), vmBindParams));
+    EXPECT_EQ(0, ioctlHelper.vmBind(vmBindParams));
 }
 
 TEST(IoctlHelperTestsUpstream, whenVmUnbindIsCalledThenZeroIsReturned) {
@@ -362,7 +362,7 @@ TEST(IoctlHelperTestsUpstream, whenVmUnbindIsCalledThenZeroIsReturned) {
 
     IoctlHelperUpstream ioctlHelper{*drm};
     VmBindParams vmBindParams{};
-    EXPECT_EQ(0, ioctlHelper.vmUnbind(drm.get(), vmBindParams));
+    EXPECT_EQ(0, ioctlHelper.vmUnbind(vmBindParams));
 }
 
 TEST(IoctlHelperTestsUpstream, givenUpstreamWhenGettingEuStallPropertiesThenFailureIsReturned) {
@@ -387,13 +387,13 @@ TEST(IoctlHelperTestsUpstream, whenRegisterUuidIsCalledThenReturnNullHandle) {
     IoctlHelperUpstream ioctlHelper{*drm};
 
     {
-        const auto [retVal, handle] = ioctlHelper.registerUuid(drm.get(), "", 0, 0, 0);
+        const auto [retVal, handle] = ioctlHelper.registerUuid("", 0, 0, 0);
         EXPECT_EQ(0u, retVal);
         EXPECT_EQ(0u, handle);
     }
 
     {
-        const auto [retVal, handle] = ioctlHelper.registerStringClassUuid(drm.get(), "", 0, 0);
+        const auto [retVal, handle] = ioctlHelper.registerStringClassUuid("", 0, 0);
         EXPECT_EQ(0u, retVal);
         EXPECT_EQ(0u, handle);
     }
@@ -404,7 +404,7 @@ TEST(IoctlHelperTestsUpstream, whenUnregisterUuidIsCalledThenZeroIsReturned) {
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
     IoctlHelperUpstream ioctlHelper{*drm};
-    EXPECT_EQ(0, ioctlHelper.unregisterUuid(drm.get(), 0));
+    EXPECT_EQ(0, ioctlHelper.unregisterUuid(0));
 }
 
 TEST(IoctlHelperTestsUpstream, whenIsContextDebugSupportedIsCalledThenFalseIsReturned) {
@@ -412,7 +412,7 @@ TEST(IoctlHelperTestsUpstream, whenIsContextDebugSupportedIsCalledThenFalseIsRet
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
     IoctlHelperUpstream ioctlHelper{*drm};
-    EXPECT_EQ(false, ioctlHelper.isContextDebugSupported(drm.get()));
+    EXPECT_EQ(false, ioctlHelper.isContextDebugSupported());
 }
 
 TEST(IoctlHelperTestsUpstream, whenSetContextDebugFlagIsCalledThenZeroIsReturned) {
@@ -420,5 +420,5 @@ TEST(IoctlHelperTestsUpstream, whenSetContextDebugFlagIsCalledThenZeroIsReturned
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
     IoctlHelperUpstream ioctlHelper{*drm};
-    EXPECT_EQ(0, ioctlHelper.setContextDebugFlag(drm.get(), 0));
+    EXPECT_EQ(0, ioctlHelper.setContextDebugFlag(0));
 }

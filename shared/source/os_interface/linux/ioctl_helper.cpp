@@ -22,8 +22,8 @@
 
 namespace NEO {
 
-uint32_t IoctlHelper::ioctl(Drm *drm, DrmIoctl request, void *arg) {
-    return drm->ioctl(request, arg);
+uint32_t IoctlHelper::ioctl(DrmIoctl request, void *arg) {
+    return drm.ioctl(request, arg);
 }
 
 void IoctlHelper::fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture) {
