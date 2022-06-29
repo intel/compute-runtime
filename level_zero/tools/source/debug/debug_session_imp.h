@@ -69,6 +69,7 @@ struct DebugSessionImp : DebugSession {
     MOCKABLE_VIRTUAL void generateEventsForPendingInterrupts();
 
     const SIP::StateSaveAreaHeader *getStateSaveAreaHeader();
+    void validateAndSetStateSaveAreaHeader(const std::vector<char> &data);
     virtual void readStateSaveAreaHeader(){};
 
     virtual uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) {

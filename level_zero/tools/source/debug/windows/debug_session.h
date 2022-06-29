@@ -16,6 +16,7 @@
 
 #include "KmEscape.h"
 
+#include <atomic>
 #include <unordered_set>
 
 namespace L0 {
@@ -45,6 +46,7 @@ struct DebugSessionWindows : DebugSessionImp {
     ze_result_t readElfSpace(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer);
 
     ze_result_t readSbaBuffer(EuThread::ThreadId, NEO::SbaTrackedAddresses &sbaBuffer) override;
+    void readStateSaveAreaHeader() override;
 
     MOCKABLE_VIRTUAL ze_result_t readAndHandleEvent(uint64_t timeoutMs);
     ze_result_t handleModuleCreateEvent(DBGUMD_READ_EVENT_MODULE_CREATE_EVENT_PARAMS &moduleCreateParams);
@@ -65,7 +67,6 @@ struct DebugSessionWindows : DebugSessionImp {
     ThreadHelper asyncThread;
     std::mutex asyncThreadMutex;
     MOCKABLE_VIRTUAL void getSbaBufferGpuVa(uint64_t &gpuVa);
-
     MOCKABLE_VIRTUAL NTSTATUS runEscape(KM_ESCAPE_INFO &escapeInfo);
 
     bool moduleDebugAreaCaptured = false;
@@ -78,6 +79,11 @@ struct DebugSessionWindows : DebugSessionImp {
         uint64_t startVA;
         uint64_t endVA;
     };
+
+    uint64_t debugAreaVA;
+    NEO::DebugAreaHeader debugArea;
+    std::atomic<uint64_t> stateSaveAreaVA{0};
+    bool stateSaveAreaCaptured = false;
 
     std::unordered_set<uint64_t> allContexts;
     std::vector<ElfRange> allElfs;

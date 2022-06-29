@@ -9,6 +9,8 @@
 
 #include "shared/source/helpers/register_offsets.h"
 
+#include "common/StateSaveAreaHeader.h"
+
 namespace L0 {
 
 DebugSession *createDebugSessionHelper(const zet_debug_config_t &config, Device *device, int debugFd);
@@ -60,11 +62,13 @@ ze_result_t DebugSessionWindows::initialize() {
     PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_ATTACH_DEBUGGER: SUCCESS - ProcessId: %d DebugHandle: 0x%llx\n", processId, debugHandle);
 
     auto result = ZE_RESULT_SUCCESS;
+
     do {
         result = readAndHandleEvent(100);
     } while (result == ZE_RESULT_SUCCESS && !moduleDebugAreaCaptured);
 
     if (moduleDebugAreaCaptured) {
+        readModuleDebugArea();
         return ZE_RESULT_SUCCESS;
     }
 
@@ -203,7 +207,13 @@ ze_result_t DebugSessionWindows::handleAllocationDataEvent(uint32_t seqNo, DBGUM
         }
 
         if (allocationDebugData->DataType == MODULE_HEAP_DEBUG_AREA) {
+            DEBUG_BREAK_IF(moduleDebugAreaCaptured && (registrationData.gpuVirtualAddress != this->debugAreaVA));
             moduleDebugAreaCaptured = true;
+            this->debugAreaVA = registrationData.gpuVirtualAddress;
+        } else if (allocationDebugData->DataType == SIP_CONTEXT_SAVE_AREA) {
+            DEBUG_BREAK_IF(stateSaveAreaCaptured && (registrationData.gpuVirtualAddress != this->stateSaveAreaVA.load()));
+            stateSaveAreaVA.store(registrationData.gpuVirtualAddress);
+            stateSaveAreaCaptured = true;
         }
         PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_READ_ALLOCATION_DATA - Success - gpuVA=0x%llX Size=0x%X\n", registrationData.gpuVirtualAddress, registrationData.size);
     }
@@ -454,10 +464,6 @@ bool DebugSessionWindows::readSystemRoutineIdent(EuThread *thread, uint64_t vmHa
     return false;
 }
 
-bool DebugSessionWindows::readModuleDebugArea() {
-    return false;
-}
-
 ze_result_t DebugSessionWindows::readSbaBuffer(EuThread::ThreadId threadId, NEO::SbaTrackedAddresses &sbaBuffer) {
     uint64_t gpuVa = 0;
     getSbaBufferGpuVa(gpuVa);
@@ -491,6 +497,60 @@ void DebugSessionWindows::getSbaBufferGpuVa(uint64_t &gpuVa) {
 
     PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_READ_MMIO: SUCCESS - gpuVa: 0x%ullx\n", gpuVa);
     return;
+}
+
+bool DebugSessionWindows::readModuleDebugArea() {
+
+    uint64_t memoryHandle = 0;
+    uint64_t gpuVa = this->debugAreaVA;
+    if (!moduleDebugAreaCaptured || allContexts.empty()) {
+        return false;
+    }
+    memoryHandle = *allContexts.begin();
+
+    memset(this->debugArea.magic, 0, sizeof(this->debugArea.magic));
+    auto retVal = readGpuMemory(memoryHandle, reinterpret_cast<char *>(&this->debugArea), sizeof(this->debugArea), gpuVa);
+
+    if (retVal != ZE_RESULT_SUCCESS) {
+        PRINT_DEBUGGER_ERROR_LOG("Reading Module Debug Area failed, error = %d\n", retVal);
+        return false;
+    }
+
+    if (strncmp(this->debugArea.magic, "dbgarea", sizeof(NEO::DebugAreaHeader::magic)) != 0) {
+        PRINT_DEBUGGER_ERROR_LOG("Module Debug Area failed to match magic numbers\n");
+        return false;
+    }
+    PRINT_DEBUGGER_INFO_LOG("Reading Module Debug Area Passed");
+    return true;
+}
+
+void DebugSessionWindows::readStateSaveAreaHeader() {
+
+    uint64_t memoryHandle = 0;
+    uint64_t gpuVa = 0;
+    if (!stateSaveAreaCaptured) {
+        return;
+    }
+    gpuVa = this->stateSaveAreaVA.load();
+
+    {
+        std::unique_lock<std::mutex> lock(asyncThreadMutex);
+        if (allContexts.empty()) {
+            return;
+        }
+        memoryHandle = *allContexts.begin();
+    }
+
+    auto headerSize = sizeof(SIP::StateSaveAreaHeader);
+    std::vector<char> data(headerSize);
+    auto retVal = readGpuMemory(memoryHandle, data.data(), headerSize, gpuVa);
+
+    if (retVal != ZE_RESULT_SUCCESS) {
+        PRINT_DEBUGGER_ERROR_LOG("Reading Context State Save Area failed, error = %d\n", retVal);
+        return;
+    }
+
+    validateAndSetStateSaveAreaHeader(data);
 }
 
 } // namespace L0

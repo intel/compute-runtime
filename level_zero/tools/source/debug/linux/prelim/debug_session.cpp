@@ -647,14 +647,7 @@ void DebugSessionLinux::readStateSaveAreaHeader() {
         if (retVal != 0) {
             PRINT_DEBUGGER_ERROR_LOG("Reading Context State Save Area failed, error = %d\n", retVal);
         } else {
-            auto pStateSaveArea = reinterpret_cast<const SIP::StateSaveAreaHeader *>(data.data());
-            if (0 == strcmp(pStateSaveArea->versionHeader.magic, "tssarea")) {
-                size_t size = pStateSaveArea->versionHeader.size * 8u;
-                DEBUG_BREAK_IF(size != sizeof(SIP::StateSaveAreaHeader));
-                stateSaveAreaHeader.assign(data.begin(), data.begin() + size);
-
-                PRINT_DEBUGGER_INFO_LOG("Context State Save Area : version == %d.%d.%d\n", (int)pStateSaveArea->versionHeader.version.major, (int)pStateSaveArea->versionHeader.version.minor, (int)pStateSaveArea->versionHeader.version.patch);
-            }
+            validateAndSetStateSaveAreaHeader(data);
         }
     }
 }

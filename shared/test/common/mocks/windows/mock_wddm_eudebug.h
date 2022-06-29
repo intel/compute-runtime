@@ -68,7 +68,11 @@ struct WddmEuDebugInterfaceMock : public WddmMock {
         case DBGUMD_ACTION_READ_GFX_MEMORY: {
             void *dst = reinterpret_cast<void *>(pEscapeInfo->KmEuDbgL0EscapeInfo.ReadGfxMemoryParams.MemoryBufferPtr);
             size_t size = pEscapeInfo->KmEuDbgL0EscapeInfo.ReadGfxMemoryParams.MemoryBufferSize;
-            memset(dst, 0xaa, size);
+            if (srcReadBuffer) {
+                memcpy(dst, srcReadBuffer, size);
+            } else {
+                memset(dst, 0xaa, size);
+            }
             pEscapeInfo->KmEuDbgL0EscapeInfo.EscapeReturnStatus = escapeReturnStatus;
             break;
         }
@@ -122,6 +126,7 @@ struct WddmEuDebugInterfaceMock : public WddmMock {
     static constexpr size_t bufferSize = 16;
     uint8_t testBuffer[bufferSize] = {0};
     uint64_t mockGpuVa = 0x12345678;
+    void *srcReadBuffer = nullptr;
 };
 
 } // namespace NEO

@@ -717,6 +717,18 @@ void DebugSessionImp::generateEventsForStoppedThreads(const std::vector<EuThread
     }
 }
 
+void DebugSessionImp::validateAndSetStateSaveAreaHeader(const std::vector<char> &data) {
+    auto pStateSaveArea = reinterpret_cast<const SIP::StateSaveAreaHeader *>(data.data());
+    if (0 == strcmp(pStateSaveArea->versionHeader.magic, "tssarea")) {
+        size_t size = pStateSaveArea->versionHeader.size * 8u;
+        DEBUG_BREAK_IF(size != sizeof(SIP::StateSaveAreaHeader));
+        stateSaveAreaHeader.assign(data.begin(), data.begin() + size);
+        PRINT_DEBUGGER_INFO_LOG("Context State Save Area : version == %d.%d.%d\n", (int)pStateSaveArea->versionHeader.version.major, (int)pStateSaveArea->versionHeader.version.minor, (int)pStateSaveArea->versionHeader.version.patch);
+    } else {
+        PRINT_DEBUGGER_ERROR_LOG("Setting Context State Save Area: failed to match magic numbers\n", "");
+    }
+}
+
 const SIP::StateSaveAreaHeader *DebugSessionImp::getStateSaveAreaHeader() {
     if (stateSaveAreaHeader.empty()) {
         readStateSaveAreaHeader();

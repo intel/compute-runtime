@@ -5,12 +5,16 @@
  *
  */
 
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
+#include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/windows/mock_wddm_eudebug.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/debug/windows/debug_session.h"
+
+#include "common/StateSaveAreaHeader.h"
 
 namespace L0 {
 namespace ult {
@@ -20,6 +24,8 @@ struct MockDebugSessionWindows : DebugSessionWindows {
     using DebugSessionWindows::allElfs;
     using DebugSessionWindows::asyncThread;
     using DebugSessionWindows::closeAsyncThread;
+    using DebugSessionWindows::debugArea;
+    using DebugSessionWindows::debugAreaVA;
     using DebugSessionWindows::debugHandle;
     using DebugSessionWindows::ElfRange;
     using DebugSessionWindows::getSbaBufferGpuVa;
@@ -30,11 +36,16 @@ struct MockDebugSessionWindows : DebugSessionWindows {
     using DebugSessionWindows::readAllocationDebugData;
     using DebugSessionWindows::readAndHandleEvent;
     using DebugSessionWindows::readGpuMemory;
+    using DebugSessionWindows::readModuleDebugArea;
     using DebugSessionWindows::readSbaBuffer;
+    using DebugSessionWindows::readStateSaveAreaHeader;
     using DebugSessionWindows::runEscape;
     using DebugSessionWindows::startAsyncThread;
+    using DebugSessionWindows::stateSaveAreaCaptured;
+    using DebugSessionWindows::stateSaveAreaVA;
     using DebugSessionWindows::wddm;
     using DebugSessionWindows::writeGpuMemory;
+    using L0::DebugSessionImp::getStateSaveAreaHeader;
     using L0::DebugSessionImp::isValidGpuAddress;
 
     MockDebugSessionWindows(const zet_debug_config_t &config, L0::Device *device) : DebugSessionWindows(config, device) {}
@@ -336,6 +347,7 @@ TEST_F(DebugApiWindowsTest, givenDebugSessionInitializeCalledAndEventQueueIsNotA
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(session->moduleDebugAreaCaptured);
+    EXPECT_EQ(session->debugAreaVA, 0x12345678U);
     EXPECT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_ATTACH_DEBUGGER]);
     EXPECT_EQ(3u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_EVENT]);
     EXPECT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_ALLOCATION_DATA]);
@@ -468,6 +480,27 @@ TEST_F(DebugApiWindowsTest, givenDebugDataEventTypeWhenReadAndHandleEventCalledT
     auto elf = session->allElfs[0];
     EXPECT_EQ(elf.startVA, 0xa000u);
     EXPECT_EQ(elf.endVA, 0xa008u);
+}
+
+TEST_F(DebugApiWindowsTest, givenAllocationEventTypeForStateSaveWhenReadAndHandleEventCalledThenStateSaveIsCaptured) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
+    session->wddm = mockWddm;
+
+    mockWddm->numEvents = 1;
+    mockWddm->eventQueue[0].readEventType = DBGUMD_READ_EVENT_ALLOCATION_DATA_INFO;
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ReadAdditionalAllocDataParams.NumOfDebugData = 1;
+    GFX_ALLOCATION_DEBUG_DATA_INFO *allocDebugDataInfo = reinterpret_cast<GFX_ALLOCATION_DEBUG_DATA_INFO *>(&mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ReadAdditionalAllocDataParams.DebugDataBufferPtr);
+    allocDebugDataInfo->DataType = SIP_CONTEXT_SAVE_AREA;
+
+    WddmAllocation::RegistrationData registrationData = {0x12345678, 0x1000};
+    mockWddm->readAllocationDataOutParams.outData = &registrationData;
+    mockWddm->readAllocationDataOutParams.outDataSize = sizeof(registrationData);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readAndHandleEvent(100));
+    EXPECT_EQ(session->stateSaveAreaVA.load(), 0x12345678u);
+    EXPECT_TRUE(session->stateSaveAreaCaptured);
 }
 
 TEST_F(DebugApiWindowsTest, givenContextCreateEventTypeWhenReadAndHandleEventCalledThenAllContextsIsSetCorrectly) {
@@ -925,6 +958,118 @@ TEST_F(DebugApiWindowsTest, WhenCallingReadMemoryForExpectedFailureCasesThenErro
 
     retVal = session->readMemory(thread, &desc, size, output);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
+}
+
+TEST_F(DebugApiWindowsTest, GivenModuleDebugAreaVaWhenReadingModuleDebugAreaThenGpuMemoryIsRead) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+    session->wddm = mockWddm;
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+    session->allContexts.insert(0x12345);
+    session->moduleDebugAreaCaptured = true;
+    session->debugAreaVA = 0xABCDABCD;
+
+    DebugAreaHeader debugArea;
+    debugArea.reserved1 = 1;
+    debugArea.pgsize = uint8_t(4);
+    debugArea.version = 1;
+    mockWddm->srcReadBuffer = &debugArea;
+
+    auto retVal = session->readModuleDebugArea();
+    EXPECT_TRUE(retVal);
+    ASSERT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
+    EXPECT_EQ(1u, session->debugArea.reserved1);
+    EXPECT_EQ(1u, session->debugArea.version);
+    EXPECT_EQ(4u, session->debugArea.pgsize);
+}
+
+TEST_F(DebugApiWindowsTest, GivenModuleDebugAreaVaWhenReadingModuleDebugAreaReturnsIncorrectDataThenFailIsReturned) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+    session->wddm = mockWddm;
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+    session->allContexts.insert(0x12345);
+    session->moduleDebugAreaCaptured = true;
+    session->debugAreaVA = 0xABCDABCD;
+
+    DebugAreaHeader debugArea;
+    debugArea.magic[0] = 'x';
+    mockWddm->srcReadBuffer = &debugArea;
+
+    auto retVal = session->readModuleDebugArea();
+    EXPECT_FALSE(retVal);
+}
+
+TEST_F(DebugApiWindowsTest, GivenErrorInModuleDebugAreaDataWhenReadingModuleDebugAreaThenGpuMemoryIsNotReadAndFalseReturned) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+    session->wddm = mockWddm;
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+
+    auto retVal = session->readModuleDebugArea();
+    EXPECT_FALSE(retVal);
+    ASSERT_EQ(0, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
+    session->moduleDebugAreaCaptured = true;
+    retVal = session->readModuleDebugArea();
+    EXPECT_FALSE(retVal);
+    ASSERT_EQ(0, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
+    session->allContexts.insert(0x12345);
+    mockWddm->escapeReturnStatus = DBGUMD_RETURN_INVALID_ARGS;
+    retVal = session->readModuleDebugArea();
+    EXPECT_FALSE(retVal);
+    ASSERT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
+}
+
+TEST_F(DebugApiWindowsTest, GivenStateSaveAreaVaWhenReadingStateSaveAreaThenGpuMemoryIsRead) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+    session->wddm = mockWddm;
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+    session->allContexts.insert(0x12345);
+    session->stateSaveAreaCaptured = true;
+    session->stateSaveAreaVA.store(0xABCDABCD);
+    auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+    mockWddm->srcReadBuffer = stateSaveAreaHeader.data();
+
+    session->readStateSaveAreaHeader();
+    ASSERT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
+    auto stateSaveAreaRead = session->getStateSaveAreaHeader();
+    ASSERT_NE(nullptr, stateSaveAreaRead);
+    EXPECT_EQ(0, memcmp(stateSaveAreaRead, stateSaveAreaHeader.data(), sizeof(SIP::StateSaveAreaHeader)));
+}
+
+TEST_F(DebugApiWindowsTest, GivenStateSaveAreaVaWhenReadingStateSaveAreaReturnsIncorrectDataThenStateSaveAreaIsNotUpdated) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+    session->wddm = mockWddm;
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+    session->allContexts.insert(0x12345);
+    session->stateSaveAreaCaptured = true;
+    session->stateSaveAreaVA.store(0xABCDABCD);
+    auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+    stateSaveAreaHeader[3] = 'x';
+    mockWddm->srcReadBuffer = stateSaveAreaHeader.data();
+
+    session->readStateSaveAreaHeader();
+    ASSERT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
+    auto stateSaveAreaRead = session->getStateSaveAreaHeader();
+    ASSERT_EQ(nullptr, stateSaveAreaRead);
+}
+
+TEST_F(DebugApiWindowsTest, GivenErrorCasesWhenReadingStateSaveAreThenMemoryIsNotRead) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+    session->wddm = mockWddm;
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+    session->readStateSaveAreaHeader();
+    ASSERT_EQ(0, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
+    session->stateSaveAreaCaptured = true;
+    session->readStateSaveAreaHeader();
+    ASSERT_EQ(0, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
+    session->allContexts.insert(0x12345);
+    mockWddm->escapeReturnStatus = DBGUMD_RETURN_INVALID_ARGS;
+    session->readStateSaveAreaHeader();
+    ASSERT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
 }
 
 } // namespace ult
