@@ -28,6 +28,4 @@ if(TESTS_XE_HP_SDV)
 
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_xe_hp_core_xehp})
   add_subdirectories()
-  neo_copy_test_files_with_revision(copy_test_files_xe_hp_sdv_4 xe_hp_sdv 4)
-  add_dependencies(copy_test_files_per_product copy_test_files_xe_hp_sdv_4)
 endif()

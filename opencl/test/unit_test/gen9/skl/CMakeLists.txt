@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -18,6 +18,4 @@ if(TESTS_SKL)
 
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_gen9_skl})
   add_subdirectories()
-  neo_copy_test_files_with_revision(copy_test_files_skl_9 skl 9)
-  add_dependencies(copy_test_files_per_product copy_test_files_skl_9)
 endif()

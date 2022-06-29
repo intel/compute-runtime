@@ -16,7 +16,6 @@ add_custom_target(run_${product}_${revision_id}_aub_tests ALL)
 if(NOT NEO_SKIP_OCL_UNIT_TESTS OR NOT NEO_SKIP_L0_UNIT_TESTS)
 
   if(NOT NEO_SKIP_OCL_UNIT_TESTS)
-    add_dependencies(run_${product}_${revision_id}_aub_tests copy_test_files_per_product)
     add_dependencies(run_${product}_${revision_id}_aub_tests prepare_test_kernels_for_ocl)
     add_dependencies(run_${product}_${revision_id}_aub_tests prepare_test_kernels_for_shared)
   endif()

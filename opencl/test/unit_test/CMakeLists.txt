@@ -23,9 +23,7 @@ link_libraries(${ASAN_LIBS} ${TSAN_LIBS})
 
 add_custom_target(prepare_test_kernels_for_ocl)
 add_dependencies(prepare_test_kernels_for_ocl ${BUILTINS_BINARIES_BINDFUL_LIB_NAME})
-add_custom_target(copy_test_files_per_product)
 add_custom_target(run_unit_tests ALL)
-add_dependencies(unit_tests copy_test_files_per_product)
 
 add_custom_target(run_ocl_tests)
 set_target_properties(run_ocl_tests PROPERTIES FOLDER ${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER})
@@ -107,36 +105,6 @@ target_link_libraries(igdrcl_tests gmock-gtest ${NEO_EXTRA_LIBS})
 
 set(BUILT_IN_KERNEL_DIR "${NEO_SOURCE_DIR}/shared/source/built_ins")
 
-function(neo_copy_test_files target product)
-  set(outputdir "${TargetDir}/opencl/${product}")
-  add_custom_target(${target})
-  add_custom_command(
-                     TARGET ${target}
-                     POST_BUILD
-                     COMMAND echo deleting and re-creating ${product} cache directory...
-                     COMMAND ${CMAKE_COMMAND} -E remove_directory ${outputdir}/cl_cache
-                     COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}/cl_cache
-                     COMMAND WORKING_DIRECTORY ${TargetDir}
-  )
-  add_dependencies(${target} copy_compiler_files)
-  set_target_properties(${target} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}")
-endfunction()
-
-function(neo_copy_test_files_with_revision target product revision_id)
-  set(outputdir "${TargetDir}/opencl/${product}/${revision_id}")
-  add_custom_target(${target})
-  add_custom_command(
-                     TARGET ${target}
-                     POST_BUILD
-                     COMMAND echo deleting and re-creating ${product} cache directory...
-                     COMMAND ${CMAKE_COMMAND} -E remove_directory ${outputdir}/cl_cache
-                     COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}/cl_cache
-                     COMMAND WORKING_DIRECTORY ${TargetDir}
-  )
-  add_dependencies(${target} copy_compiler_files)
-  set_target_properties(${target} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}/${revision_id}")
-endfunction()
-
 add_dependencies(unit_tests
                  igdrcl_tests
                  prepare_test_kernels_for_ocl
@@ -150,7 +118,6 @@ if(UNIX)
 endif()
 
 set_target_properties(unit_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
-set_target_properties(copy_test_files_per_product PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
 set_target_properties(prepare_test_kernels_for_ocl PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
 set_target_properties(run_unit_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
 

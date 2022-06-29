@@ -45,7 +45,6 @@ endif()
 add_dependencies(igdrcl_mt_tests
                  prepare_test_kernels_for_shared
                  prepare_test_kernels_for_ocl
-                 copy_test_files_per_product
 )
 create_project_source_tree(igdrcl_mt_tests)
 
