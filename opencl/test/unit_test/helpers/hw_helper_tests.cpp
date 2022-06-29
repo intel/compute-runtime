@@ -949,7 +949,7 @@ HWTEST_F(HwHelperTest, givenDebugFlagWhenCheckingIfBufferIsSuitableForCompressio
     EXPECT_TRUE(helper.isBufferSizeSuitableForCompression(KB + 1, *defaultHwInfo));
 }
 
-HWTEST_F(HwHelperTest, givenHwHelperWhenAskingForTilingSupportThenReturnValidValue) {
+HWTEST_F(HwHelperTest, givenHwHelperWhenIsLinearStoragePreferredThenReturnValidValue) {
     bool tilingSupported = UnitTestHelper<FamilyType>::tiledImagesSupported;
 
     const uint32_t numImageTypes = 6;
@@ -970,21 +970,21 @@ HWTEST_F(HwHelperTest, givenHwHelperWhenAskingForTilingSupportThenReturnValidVal
                            (imgTypes[i] == CL_MEM_OBJECT_IMAGE2D_ARRAY);
 
         // non shared context, dont force linear storage
-        EXPECT_EQ((tilingSupported & allowedType), helper.tilingAllowed(false, Image::isImage1d(imgDesc), false));
+        EXPECT_EQ((tilingSupported & allowedType), !helper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), false));
         {
             DebugManagerStateRestore restore;
             DebugManager.flags.ForceLinearImages.set(true);
             // non shared context, dont force linear storage + debug flag
-            EXPECT_FALSE(helper.tilingAllowed(false, Image::isImage1d(imgDesc), false));
+            EXPECT_TRUE(helper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), false));
         }
         // shared context, dont force linear storage
-        EXPECT_FALSE(helper.tilingAllowed(true, Image::isImage1d(imgDesc), false));
+        EXPECT_TRUE(helper.isLinearStoragePreferred(true, Image::isImage1d(imgDesc), false));
         // non shared context,  force linear storage
-        EXPECT_FALSE(helper.tilingAllowed(false, Image::isImage1d(imgDesc), true));
+        EXPECT_TRUE(helper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), true));
 
         // non shared context, dont force linear storage + create from buffer
         imgDesc.buffer = buffer.get();
-        EXPECT_FALSE(helper.tilingAllowed(false, Image::isImage1d(imgDesc), false));
+        EXPECT_TRUE(helper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), false));
     }
 }
 

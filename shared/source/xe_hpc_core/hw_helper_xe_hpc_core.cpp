@@ -111,8 +111,8 @@ void HwHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
 }
 
 template <>
-bool HwHelperHw<Family>::tilingAllowed(bool isSharedContext, bool isImage1d, bool forceLinearStorage) {
-    return false;
+bool HwHelperHw<Family>::isLinearStoragePreferred(bool isSharedContext, bool isImage1d, bool forceLinearStorage) {
+    return true;
 }
 
 template <>

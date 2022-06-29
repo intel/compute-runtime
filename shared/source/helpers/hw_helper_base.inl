@@ -421,11 +421,11 @@ uint32_t HwHelperHw<GfxFamily>::getMetricsLibraryGenId() const {
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::tilingAllowed(bool isSharedContext, bool isImage1d, bool forceLinearStorage) {
-    if (DebugManager.flags.ForceLinearImages.get() || forceLinearStorage || isSharedContext) {
-        return false;
+bool HwHelperHw<GfxFamily>::isLinearStoragePreferred(bool isSharedContext, bool isImage1d, bool forceLinearStorage) {
+    if (DebugManager.flags.ForceLinearImages.get() || forceLinearStorage || isSharedContext || isImage1d) {
+        return true;
     }
-    return !isImage1d;
+    return false;
 }
 
 template <typename GfxFamily>

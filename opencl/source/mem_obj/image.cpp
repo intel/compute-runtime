@@ -149,8 +149,8 @@ Image *Image::create(Context *context,
     const auto hostPtrSlicePitch = getHostPtrSlicePitch(*imageDesc, hostPtrRowPitch, imageHeight);
 
     auto &defaultHwHelper = HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
-    imgInfo.linearStorage = !defaultHwHelper.tilingAllowed(context->isSharedContext, Image::isImage1d(*imageDesc),
-                                                           memoryProperties.flags.forceLinearStorage);
+    imgInfo.linearStorage = defaultHwHelper.isLinearStoragePreferred(context->isSharedContext, Image::isImage1d(*imageDesc),
+                                                                     memoryProperties.flags.forceLinearStorage);
 
     // if device doesn't support images, it can create only linear images
     if (!context->getDevice(0)->getSharedDeviceInfo().imageSupport && !imgInfo.linearStorage) {
