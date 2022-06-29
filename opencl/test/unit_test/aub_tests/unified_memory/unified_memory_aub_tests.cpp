@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/test/unit_test/aub_tests/fixtures/unified_memory_fixture.h"
 

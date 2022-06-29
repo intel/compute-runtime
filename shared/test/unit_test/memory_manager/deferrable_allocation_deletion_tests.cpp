@@ -14,7 +14,7 @@
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 

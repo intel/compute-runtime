@@ -8,7 +8,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"

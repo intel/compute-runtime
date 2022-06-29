@@ -10,7 +10,7 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"

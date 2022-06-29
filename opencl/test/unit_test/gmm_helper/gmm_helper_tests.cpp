@@ -25,7 +25,7 @@
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/helpers/gmm_types_converter.h"
 #include "opencl/source/mem_obj/image.h"

@@ -19,7 +19,7 @@
 #include "shared/test/common/mocks/windows/mock_wddm_eudebug.h"
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"

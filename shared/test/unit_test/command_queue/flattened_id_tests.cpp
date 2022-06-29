@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include <algorithm>
 #include <cstdint>

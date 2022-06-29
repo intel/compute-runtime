@@ -15,7 +15,7 @@
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/api/driver_experimental/public/zex_api.h"
 #include "level_zero/api/driver_experimental/public/zex_driver.h"

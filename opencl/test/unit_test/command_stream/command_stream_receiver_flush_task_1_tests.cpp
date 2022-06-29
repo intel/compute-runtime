@@ -13,7 +13,7 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_submissions_aggregator.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"

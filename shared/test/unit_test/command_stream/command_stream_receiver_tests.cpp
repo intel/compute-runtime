@@ -27,7 +27,7 @@
 #include "shared/test/common/mocks/mock_internal_allocation_storage.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 #include "shared/test/unit_test/direct_submission/direct_submission_controller_mock.h"
 #include "shared/test/unit_test/helpers/gtest_helpers.h"

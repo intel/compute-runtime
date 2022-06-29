@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 

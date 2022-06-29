@@ -9,7 +9,7 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/helpers/gmm_types_converter.h"

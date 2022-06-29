@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/pipe.h"

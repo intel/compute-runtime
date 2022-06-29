@@ -41,7 +41,7 @@
 #include "shared/test/common/mocks/windows/mock_wddm_direct_submission.h"
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
 
 #include "hw_cmds.h"

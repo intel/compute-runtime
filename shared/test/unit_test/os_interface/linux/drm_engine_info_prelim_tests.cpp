@@ -14,7 +14,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 

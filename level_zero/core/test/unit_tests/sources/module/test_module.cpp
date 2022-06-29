@@ -19,7 +19,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/compiler_interface/linker_mock.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 #include "shared/test/unit_test/device_binary_format/zebin_tests.h"

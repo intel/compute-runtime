@@ -27,7 +27,7 @@
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/mock_submissions_aggregator.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"

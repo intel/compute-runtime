@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "shared/source/gen9/reg_configs.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/gen9/cmdlist_gen9.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"

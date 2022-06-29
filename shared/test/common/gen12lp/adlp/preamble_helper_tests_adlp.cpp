@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include "shared/source/helpers/pipeline_select_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 

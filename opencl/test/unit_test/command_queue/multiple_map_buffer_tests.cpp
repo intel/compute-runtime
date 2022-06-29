@@ -7,7 +7,7 @@
 
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_gmm.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/user_event.h"

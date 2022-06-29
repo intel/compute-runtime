@@ -7,7 +7,7 @@
 
 #include "shared/source/program/kernel_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"

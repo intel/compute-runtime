@@ -16,7 +16,7 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/built_ins/aux_translation_builtin.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"

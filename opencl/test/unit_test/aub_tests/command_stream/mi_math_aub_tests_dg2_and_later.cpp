@@ -7,7 +7,7 @@
 
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"

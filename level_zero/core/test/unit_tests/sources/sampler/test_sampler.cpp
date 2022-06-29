@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/utilities/numeric.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/sampler/sampler_hw.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"

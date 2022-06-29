@@ -11,7 +11,7 @@
 #include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "gtest/gtest.h"

@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, givenSamplerStateWhenAdjustSamplerStateThenNothingIsChanged, IGFX_XE_HPG_CORE);
 HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfBlitterForImagesIsSupportedThenFalseIsReturned, IGFX_XE_HPG_CORE);

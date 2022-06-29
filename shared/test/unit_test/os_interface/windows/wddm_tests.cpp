@@ -7,7 +7,7 @@
 
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 namespace NEO {
 

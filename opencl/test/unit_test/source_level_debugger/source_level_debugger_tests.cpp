@@ -18,7 +18,7 @@
 #include "shared/test/common/libult/source_level_debugger_library.h"
 #include "shared/test/common/mocks/mock_gmm_helper.h"
 #include "shared/test/common/mocks/mock_source_level_debugger.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"

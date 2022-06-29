@@ -7,7 +7,7 @@
 
 #include "shared/source/helpers/constants.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"

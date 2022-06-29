@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/os_interface/hw_info_config.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"

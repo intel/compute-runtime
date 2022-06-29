@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/helpers/simd_helper.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 namespace NEO {
 

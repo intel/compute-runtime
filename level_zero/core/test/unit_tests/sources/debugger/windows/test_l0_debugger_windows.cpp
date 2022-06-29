@@ -13,7 +13,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
 #include "shared/test/common/mocks/windows/mock_wddm_eudebug.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"

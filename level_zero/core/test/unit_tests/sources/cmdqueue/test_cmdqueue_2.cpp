@@ -15,8 +15,8 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
-#include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/aub_csr_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"

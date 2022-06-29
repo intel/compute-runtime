@@ -11,7 +11,7 @@
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"

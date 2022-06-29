@@ -16,7 +16,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/execution_environment_helper.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
 
 #include "gtest/gtest.h"

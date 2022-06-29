@@ -23,7 +23,7 @@
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 #include "shared/test/common/os_interface/linux/drm_buffer_object_fixture.h"
 #include "shared/test/common/os_interface/linux/drm_command_stream_fixture.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 

@@ -10,7 +10,7 @@
 #include "shared/test/common/os_interface/linux/drm_memory_manager_prelim_fixtures.h"
 #include "shared/test/common/os_interface/linux/drm_mock_cache_info.h"
 #include "shared/test/common/os_interface/linux/drm_mock_memory_info.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"

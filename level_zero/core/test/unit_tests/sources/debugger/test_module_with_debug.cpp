@@ -12,7 +12,7 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_elf.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/compiler_interface/linker_mock.h"
 
 #include "level_zero/core/source/module/module_imp.h"

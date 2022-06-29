@@ -10,7 +10,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_csr.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/memory_manager/mem_obj_surface.h"
 #include "opencl/source/platform/platform.h"

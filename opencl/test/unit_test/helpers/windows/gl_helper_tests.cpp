@@ -7,7 +7,7 @@
 
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/helpers/windows/gl_helper.h"
 #include "opencl/test/unit_test/helpers/windows/mock_function.h"

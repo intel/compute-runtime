@@ -15,7 +15,7 @@
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/create_command_stream.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"

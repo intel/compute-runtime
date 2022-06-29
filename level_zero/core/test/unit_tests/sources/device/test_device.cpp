@@ -25,7 +25,7 @@
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cache/cache_reservation.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"

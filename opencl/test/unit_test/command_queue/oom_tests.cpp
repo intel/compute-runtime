@@ -7,7 +7,7 @@
 
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"

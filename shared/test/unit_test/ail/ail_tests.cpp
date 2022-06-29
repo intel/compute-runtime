@@ -8,7 +8,7 @@
 #include "shared/source/ail/ail_configuration.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 namespace NEO {
 using IsSKL = IsProduct<IGFX_SKYLAKE>;

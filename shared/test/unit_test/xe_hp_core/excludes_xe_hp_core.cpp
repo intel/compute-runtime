@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, WhenAllowCompressionIsCalledThenTrueIsReturned, IGFX_XE_HP_CORE);
 HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, givenHardwareInfoWhenCallingIsMaxThreadsForWorkgroupWARequiredThenFalseIsReturned, IGFX_XE_HP_CORE);

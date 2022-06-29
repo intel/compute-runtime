@@ -22,7 +22,7 @@
 #include "shared/test/common/mocks/mock_direct_submission_diagnostic_collector.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using DirectSubmissionTest = Test<DirectSubmissionFixture>;
 

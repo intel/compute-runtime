@@ -14,7 +14,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/os_interface/windows/ult_dxcore_factory.h"
 #include "shared/test/common/os_interface/windows/ult_dxgi_factory.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include <memory>
 

@@ -26,7 +26,7 @@
 #include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_os_context.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
 
 #include "opencl/source/helpers/dispatch_info.h"

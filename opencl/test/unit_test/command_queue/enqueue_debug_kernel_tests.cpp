@@ -10,8 +10,8 @@
 #include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/kernel_filename_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
-#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/program/program.h"

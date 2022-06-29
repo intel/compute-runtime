@@ -9,7 +9,7 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"

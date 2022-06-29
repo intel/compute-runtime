@@ -22,7 +22,7 @@
 #include "shared/test/common/libult/signal_utils.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "opencl/source/command_queue/command_queue.h"

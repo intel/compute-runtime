@@ -16,7 +16,7 @@
 #include "shared/source/memory_manager/surface.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_gmm.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include <memory>
 

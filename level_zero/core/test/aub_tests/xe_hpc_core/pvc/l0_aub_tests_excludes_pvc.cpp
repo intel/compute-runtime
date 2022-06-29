@@ -5,6 +5,6 @@
  *
  */
 
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 HWTEST_EXCLUDE_PRODUCT(L0BindlessAub, GivenBindlessKernelWhenExecutedThenOutputIsCorrect, IGFX_PVC);

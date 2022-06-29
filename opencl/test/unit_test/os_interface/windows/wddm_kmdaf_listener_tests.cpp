@@ -15,7 +15,7 @@
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/test/common/mock_gdi/mock_gdi.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"

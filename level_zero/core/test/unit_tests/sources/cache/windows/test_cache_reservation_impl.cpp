@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cache/windows/cache_reservation_impl.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"

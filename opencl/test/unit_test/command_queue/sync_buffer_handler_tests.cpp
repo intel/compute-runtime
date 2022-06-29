@@ -7,7 +7,7 @@
 
 #include "shared/source/program/sync_buffer_handler.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/test/unit_test/fixtures/enqueue_handler_fixture.h"

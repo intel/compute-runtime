@@ -21,7 +21,7 @@
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/os_interface/linux/drm_command_stream_fixture.h"
 #include "shared/test/common/os_interface/linux/drm_memory_manager_prelim_fixtures.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "gtest/gtest.h"
 

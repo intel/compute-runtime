@@ -7,7 +7,7 @@
 
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/test/common/mocks/windows/mock_wddm_eudebug.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/debug/windows/debug_session.h"

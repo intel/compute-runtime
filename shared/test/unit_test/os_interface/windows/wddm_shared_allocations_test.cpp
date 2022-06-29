@@ -9,7 +9,7 @@
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
 #include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 

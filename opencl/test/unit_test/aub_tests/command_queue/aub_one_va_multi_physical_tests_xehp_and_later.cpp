@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/tests_configuration.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 

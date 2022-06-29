@@ -20,7 +20,7 @@
 #include "shared/test/common/mocks/mock_gmm_page_table_mngr.h"
 #include "shared/test/common/mocks/mock_hw_helper.h"
 #include "shared/test/common/mocks/mock_submissions_aggregator.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/helpers/raii_hw_helper.h"
 
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"

@@ -6,7 +6,7 @@
  */
 
 #include "shared/test/common/mocks/mock_timestamp_packet.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/event/event.h"

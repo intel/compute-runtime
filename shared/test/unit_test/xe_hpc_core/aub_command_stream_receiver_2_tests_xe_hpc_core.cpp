@@ -12,7 +12,7 @@
 #include "shared/test/common/mocks/mock_aub_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_os_context.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 using AubCommandStreamReceiverXeHpcCoreTests = ::testing::Test;
