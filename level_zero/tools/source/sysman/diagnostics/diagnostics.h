@@ -9,6 +9,7 @@
 #include "level_zero/core/source/device/device.h"
 #include <level_zero/zes_api.h>
 
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -47,6 +48,7 @@ struct DiagnosticsHandleContext {
 
   private:
     void createHandle(const std::string &diagTests);
+    std::once_flag initDiagnosticsOnce;
 };
 
 } // namespace L0

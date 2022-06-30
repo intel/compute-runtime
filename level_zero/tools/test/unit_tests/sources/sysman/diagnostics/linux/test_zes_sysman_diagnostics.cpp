@@ -98,7 +98,6 @@ class ZesDiagnosticsFixture : public SysmanDeviceFixture {
         }
         pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.clear();
         productFamily = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getHardwareInfo().platform.eProductFamily;
-        pSysmanDeviceImp->pDiagnosticsHandleContext->init();
     }
 
     void TearDown() override {
