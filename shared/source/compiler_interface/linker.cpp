@@ -525,8 +525,6 @@ void Linker::resolveImplicitArgs(const KernelDescriptorsT &kernelDescriptors, De
                 kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = kernelDescriptor.kernelAttributes.flags.useStackCalls || pDevice->getDebugger() != nullptr;
                 if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
                     *pImplicitArgsReloc = sizeof(ImplicitArgs);
-                } else {
-                    *pImplicitArgsReloc = 0u;
                 }
             }
         }

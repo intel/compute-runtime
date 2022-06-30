@@ -2160,7 +2160,7 @@ TEST(LinkerTests, givenImplicitArgRelocationAndEnabledDebuggerThenPatchRelocatio
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
 }
 
-TEST(LinkerTests, givenImplicitArgRelocationWithoutStackCallsAndDisabledDebuggerThenPatchRelocationWithZeroAndUpdateKernelDescriptor) {
+TEST(LinkerTests, givenImplicitArgRelocationWithoutStackCallsAndDisabledDebuggerThenDontPatchRelocationAndUpdateKernelDescriptor) {
     NEO::LinkerInput linkerInput;
 
     vISA::GenRelocEntry reloc = {};
@@ -2211,7 +2211,7 @@ TEST(LinkerTests, givenImplicitArgRelocationWithoutStackCallsAndDisabledDebugger
     EXPECT_EQ(0U, relocatedSymbols.size());
 
     auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + reloc.r_offset);
-    EXPECT_EQ(0u, *addressToPatch);
+    EXPECT_EQ(initData, *addressToPatch);
     EXPECT_EQ(initData, *(addressToPatch - 1));
     EXPECT_EQ(initData, *(addressToPatch + 1));
     EXPECT_FALSE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
