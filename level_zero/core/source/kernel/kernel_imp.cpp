@@ -1042,6 +1042,12 @@ ze_result_t KernelImp::setCacheConfig(ze_cache_config_flags_t flags) {
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t KernelImp::getProfileInfo(zet_profile_properties_t *pProfileProperties) {
+    pProfileProperties->flags = module->getProfileFlags();
+    pProfileProperties->numTokens = 0;
+    return ZE_RESULT_SUCCESS;
+}
+
 NEO::GraphicsAllocation *KernelImp::getIsaAllocation() const {
     return getImmutableData()->getIsaGraphicsAllocation();
 }

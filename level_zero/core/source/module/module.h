@@ -50,6 +50,7 @@ struct Module : _ze_module_handle_t {
     virtual uint32_t getMaxGroupSize() const = 0;
     virtual bool isDebugEnabled() const = 0;
     virtual bool shouldAllocatePrivateMemoryPerDispatch() const = 0;
+    virtual uint32_t getProfileFlags() const = 0;
     virtual void checkIfPrivateMemoryPerDispatchIsNeeded() = 0;
 
     Module() = default;

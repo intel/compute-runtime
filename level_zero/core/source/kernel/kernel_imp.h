@@ -146,11 +146,7 @@ struct KernelImp : Kernel {
         return kernelImmData->getDescriptor().kernelAttributes.flags.hasRTCalls;
     }
 
-    ze_result_t getProfileInfo(zet_profile_properties_t *pProfileProperties) override {
-        pProfileProperties->flags = 0;
-        pProfileProperties->numTokens = 0;
-        return ZE_RESULT_SUCCESS;
-    }
+    ze_result_t getProfileInfo(zet_profile_properties_t *pProfileProperties) override;
 
     bool hasIndirectAccess() {
         return kernelHasIndirectAccess;
