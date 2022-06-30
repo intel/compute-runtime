@@ -1,25 +1,25 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/helpers/preamble_bdw_plus.inl"
+#include "shared/source/helpers/preamble_bdw_and_later.inl"
 
 namespace NEO {
 
+using Family = BDWFamily;
+
 template <>
-void PreambleHelper<BDWFamily>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, aub_stream::EngineType engineType) {
-    auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
-    PIPE_CONTROL cmd = BDWFamily::cmdInitPipeControl;
-    cmd.setCommandStreamerStallEnable(true);
-    cmd.setDcFlushEnable(true);
-    *pipeControl = cmd;
+void PreambleHelper<Family>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, EngineGroupType engineGroupType) {
+    PipeControlArgs args = {};
+    args.dcFlushEnable = true;
+    MemorySynchronizationCommands<Family>::addPipeControl(*pCommandStream, args);
 }
 
 template <>
-uint32_t PreambleHelper<BDWFamily>::getL3Config(const HardwareInfo &hwInfo, bool useSLM) {
+uint32_t PreambleHelper<Family>::getL3Config(const HardwareInfo &hwInfo, bool useSLM) {
     uint32_t l3Config = 0;
 
     switch (hwInfo.platform.eProductFamily) {
@@ -33,18 +33,18 @@ uint32_t PreambleHelper<BDWFamily>::getL3Config(const HardwareInfo &hwInfo, bool
 }
 
 template <>
-bool PreambleHelper<BDWFamily>::isL3Configurable(const HardwareInfo &hwInfo) {
+bool PreambleHelper<Family>::isL3Configurable(const HardwareInfo &hwInfo) {
     return getL3Config(hwInfo, true) != getL3Config(hwInfo, false);
 }
 
 template <>
-void PreambleHelper<BDWFamily>::programPipelineSelect(LinearStream *pCommandStream,
-                                                      const PipelineSelectArgs &pipelineSelectArgs,
-                                                      const HardwareInfo &hwInfo) {
+void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
+                                                   const PipelineSelectArgs &pipelineSelectArgs,
+                                                   const HardwareInfo &hwInfo) {
 
-    using PIPELINE_SELECT = typename BDWFamily::PIPELINE_SELECT;
+    using PIPELINE_SELECT = typename Family::PIPELINE_SELECT;
     auto pCmd = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
-    PIPELINE_SELECT cmd = BDWFamily::cmdInitPipelineSelect;
+    PIPELINE_SELECT cmd = Family::cmdInitPipelineSelect;
 
     cmd.setMaskBits(pipelineSelectEnablePipelineSelectMaskBits);
     cmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
@@ -53,9 +53,10 @@ void PreambleHelper<BDWFamily>::programPipelineSelect(LinearStream *pCommandStre
 }
 
 template <>
-size_t PreambleHelper<BDWFamily>::getAdditionalCommandsSize(const Device &device) {
-    return getKernelDebuggingCommandsSize(device.isDebuggerActive());
+size_t PreambleHelper<Family>::getAdditionalCommandsSize(const Device &device) {
+    bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();
+    return getKernelDebuggingCommandsSize(debuggingEnabled);
 }
 
-template struct PreambleHelper<BDWFamily>;
+template struct PreambleHelper<Family>;
 } // namespace NEO

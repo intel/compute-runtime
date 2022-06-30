@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,10 @@
 #pragma once
 
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/program/kernel_info.h"
+#include "shared/test/common/mocks/mock_kernel_info.h"
 
 #include "opencl/source/cl_device/cl_device.h"
-#include "opencl/source/program/kernel_info.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
@@ -53,7 +54,8 @@ class KernelDataTest : public testing::Test {
     void SetUp() override {
         kernelBinaryHeader.KernelNameSize = kernelNameSize;
         pContext = new MockContext;
-        program = std::make_unique<MockProgram>(*pContext->getDevice(0)->getExecutionEnvironment(), pContext, false, nullptr);
+        rootDeviceIndex = pContext->getDevice(0)->getRootDeviceIndex();
+        program = std::make_unique<MockProgram>(pContext, false, toClDeviceVector(*pContext->getDevice(0)));
     }
 
     void TearDown() override {
@@ -91,4 +93,5 @@ class KernelDataTest : public testing::Test {
     std::unique_ptr<MockProgram> program;
     MockContext *pContext;
     const KernelInfo *pKernelInfo;
+    uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
 };

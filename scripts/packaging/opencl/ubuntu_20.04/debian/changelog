@@ -1,0 +1,5 @@
+intel-compute-runtime (19.29.13530-1) unstable; urgency=medium
+
+  * Initial release (Closes: #926706)
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 01 Aug 2019 12:26:37 +0300

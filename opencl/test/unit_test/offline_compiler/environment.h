@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,20 +8,20 @@
 #pragma once
 
 #include "shared/offline_compiler/source/offline_compiler.h"
-#include "shared/test/unit_test/helpers/test_files.h"
-
-#include "opencl/source/os_interface/os_inc_base.h"
-#include "opencl/test/unit_test/mocks/mock_compilers.h"
+#include "shared/source/os_interface/os_inc_base.h"
+#include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/mocks/mock_compilers.h"
 
 #include "gtest/gtest.h"
+#include "mock/mock_iga_dll_guard.h"
 
 class Environment : public ::testing::Environment {
   public:
     Environment(const std::string &devicePrefix, const std::string &familyNameWithType)
-        : libraryFrontEnd(nullptr), libraryIGC(nullptr), devicePrefix(devicePrefix), familyNameWithType(familyNameWithType) {
+        : devicePrefix(devicePrefix), familyNameWithType(familyNameWithType) {
     }
 
-    void SetInputFileName(
+    void SetInputFileName( // NOLINT(readability-identifier-naming)
         const std::string filename) {
 
         retrieveBinaryKernelFilename(igcDebugVars.fileName, filename + "_", ".gen");
@@ -32,18 +32,15 @@ class Environment : public ::testing::Environment {
     }
 
     void SetUp() override {
+        mockIgaDllGuard.enable();
         mockCompilerGuard.Enable();
         SetInputFileName("copybuffer");
     }
 
     void TearDown() override {
-        delete libraryFrontEnd;
-        delete libraryIGC;
         mockCompilerGuard.Disable();
+        mockIgaDllGuard.disable();
     }
-
-    NEO::OsLibrary *libraryFrontEnd;
-    NEO::OsLibrary *libraryIGC;
 
     NEO::MockCompilerDebugVars igcDebugVars;
     NEO::MockCompilerDebugVars fclDebugVars;
@@ -52,6 +49,7 @@ class Environment : public ::testing::Environment {
     void (*fclSetDebugVarsFPtr)(NEO::MockCompilerDebugVars &debugVars);
 
     NEO::MockCompilerEnableGuard mockCompilerGuard;
+    NEO::MockIgaDllGuard mockIgaDllGuard;
 
     const std::string devicePrefix;
     const std::string familyNameWithType;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/file_io.h"
-#include "shared/test/unit_test/helpers/test_files.h"
+#include "shared/test/common/helpers/test_files.h"
 
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/platform/platform.h"
@@ -20,7 +20,6 @@
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
 #include "CL/cl.h"
-#include "gtest/gtest.h"
 
 namespace NEO {
 
@@ -43,46 +42,41 @@ struct HelloWorldKernelFixture : public ProgramFixture {
             pTestFilename->append(std::to_string(simd));
         }
 
-        cl_device_id device = pDevice;
-        pContext = Context::create<MockContext>(nullptr, ClDeviceVector(&device, 1), nullptr, nullptr, retVal);
+        auto deviceVector = toClDeviceVector(*pDevice);
+        pContext = Context::create<MockContext>(nullptr, deviceVector, nullptr, nullptr, retVal);
         ASSERT_EQ(CL_SUCCESS, retVal);
         ASSERT_NE(nullptr, pContext);
 
         if (options) {
             std::string optionsToProgram(options);
-            if (optionsToProgram.find("-cl-std=CL2.0") != std::string::npos) {
-                ASSERT_TRUE(pDevice->areOcl21FeaturesEnabled());
-            }
 
             CreateProgramFromBinary(
                 pContext,
-                &device,
+                deviceVector,
                 *pTestFilename,
                 optionsToProgram);
         } else {
             CreateProgramFromBinary(
                 pContext,
-                &device,
+                deviceVector,
                 *pTestFilename);
         }
 
         ASSERT_NE(nullptr, pProgram);
 
         retVal = pProgram->build(
-            1,
-            &device,
-            nullptr,
-            nullptr,
+            pProgram->getDevices(),
             nullptr,
             false);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
         // create a kernel
-        pKernel = Kernel::create<MockKernel>(
+        pMultiDeviceKernel = MultiDeviceKernel::create<MockKernel, Program, MockMultiDeviceKernel>(
             pProgram,
-            *pProgram->getKernelInfo(pKernelName->c_str()),
+            pProgram->getKernelInfosForKernel(pKernelName->c_str()),
             &retVal);
 
+        pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(pDevice->getRootDeviceIndex()));
         EXPECT_NE(nullptr, pKernel);
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
@@ -90,7 +84,7 @@ struct HelloWorldKernelFixture : public ProgramFixture {
     void TearDown() override {
         delete pKernelName;
         delete pTestFilename;
-        pKernel->release();
+        pMultiDeviceKernel->release();
 
         pContext->release();
         ProgramFixture::TearDown();
@@ -100,7 +94,8 @@ struct HelloWorldKernelFixture : public ProgramFixture {
     std::string *pKernelName = nullptr;
     cl_uint simd = 32;
     cl_int retVal = CL_SUCCESS;
-    Kernel *pKernel = nullptr;
+    MockMultiDeviceKernel *pMultiDeviceKernel = nullptr;
+    MockKernel *pKernel = nullptr;
     MockContext *pContext = nullptr;
 };
 } // namespace NEO

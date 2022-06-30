@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,8 @@
 
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/utilities/arrayref.h"
-#include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/event/event_builder.h"
 #include "opencl/source/event/user_event.h"
@@ -15,7 +16,6 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
@@ -24,12 +24,12 @@
 namespace NEO {
 
 struct SmallEventBuilderEventMock : MockEvent<Event> {
-    SmallEventBuilderEventMock(int param1, float param2)
-        : MockEvent<Event>(nullptr, CL_COMMAND_NDRANGE_KERNEL, 0, 0), constructionParam1(param1), constructionParam2(param2) {
+    SmallEventBuilderEventMock(CommandQueue *commandQueue, int param1, float param2)
+        : MockEvent<Event>(commandQueue, CL_COMMAND_NDRANGE_KERNEL, 0, 0), constructionParam1(param1), constructionParam2(param2) {
     }
 
-    SmallEventBuilderEventMock()
-        : SmallEventBuilderEventMock(1, 2.0f) {
+    SmallEventBuilderEventMock(CommandQueue *commandQueue)
+        : SmallEventBuilderEventMock(commandQueue, 1, 2.0f) {
     }
 
     void overrideMagic(cl_long newMagic) {
@@ -53,13 +53,17 @@ struct SmallEventBuilderMock : EventBuilder {
     }
 };
 
-TEST(EventBuilder, whenCreatingNewEventForwardsArgumentsToEventConstructor) {
+TEST(EventBuilder, whenCreatingNewEventThenForwardArgumentsToEventConstructor) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockContext context(device.get());
+    MockCommandQueue cmdQ(&context, device.get(), nullptr, false);
+
     EventBuilder eventBuilder;
     EXPECT_EQ(nullptr, eventBuilder.getEvent());
 
     constexpr int constrParam1 = 7;
     constexpr float constrParam2 = 13.0f;
-    eventBuilder.create<SmallEventBuilderEventMock>(constrParam1, constrParam2);
+    eventBuilder.create<SmallEventBuilderEventMock>(&cmdQ, constrParam1, constrParam2);
     Event *peekedEvent = eventBuilder.getEvent();
     ASSERT_NE(nullptr, peekedEvent);
     auto finalizedEvent = static_cast<SmallEventBuilderEventMock *>(eventBuilder.finalizeAndRelease());
@@ -79,14 +83,15 @@ TEST(EventBuilder, givenVirtualEventWithCommandThenFinalizeAddChild) {
     };
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    MockCommandQueue cmdQ(nullptr, device.get(), nullptr);
+    MockContext context(device.get());
+    MockCommandQueue cmdQ(&context, device.get(), nullptr, false);
     MockKernelWithInternals kernel(*device);
 
     IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
-    cmdQ.allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 1, ih1);
-    cmdQ.allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 1, ih2);
-    cmdQ.allocateHeapMemory(IndirectHeap::SURFACE_STATE, 1, ih3);
-    auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 1, GraphicsAllocation::AllocationType::COMMAND_BUFFER}));
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 1, ih1);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 1, ih2);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 1, ih3);
+    auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 1, AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()}));
 
     std::vector<Surface *> surfaces;
     auto kernelOperation = std::make_unique<KernelOperation>(cmdStream, *device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage());
@@ -94,7 +99,7 @@ TEST(EventBuilder, givenVirtualEventWithCommandThenFinalizeAddChild) {
 
     std::unique_ptr<MockCommandComputeKernel> command = std::make_unique<MockCommandComputeKernel>(cmdQ, kernelOperation, surfaces, kernel);
 
-    VirtualEvent virtualEvent;
+    VirtualEvent virtualEvent(&cmdQ);
     virtualEvent.setCommand(std::move(command));
 
     EventBuilder eventBuilder;
@@ -102,7 +107,7 @@ TEST(EventBuilder, givenVirtualEventWithCommandThenFinalizeAddChild) {
 
     constexpr int constrParam1 = 7;
     constexpr float constrParam2 = 13.0f;
-    eventBuilder.create<SmallEventBuilderEventMock>(constrParam1, constrParam2);
+    eventBuilder.create<SmallEventBuilderEventMock>(&cmdQ, constrParam1, constrParam2);
     Event *peekedEvent = eventBuilder.getEvent();
     ASSERT_NE(nullptr, peekedEvent);
     virtualEvent.taskLevel = CL_SUBMITTED;
@@ -128,14 +133,15 @@ TEST(EventBuilder, givenVirtualEventWithSubmittedCommandAsParentThenFinalizeNotA
     };
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    MockCommandQueue cmdQ(nullptr, device.get(), nullptr);
+    MockContext context(device.get());
+    MockCommandQueue cmdQ(&context, device.get(), nullptr, false);
     MockKernelWithInternals kernel(*device);
 
     IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
-    cmdQ.allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 1, ih1);
-    cmdQ.allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 1, ih2);
-    cmdQ.allocateHeapMemory(IndirectHeap::SURFACE_STATE, 1, ih3);
-    auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER}));
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 1, ih1);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 1, ih2);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 1, ih3);
+    auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()}));
 
     std::vector<Surface *> surfaces;
     auto kernelOperation = std::make_unique<KernelOperation>(cmdStream, *device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage());
@@ -152,7 +158,7 @@ TEST(EventBuilder, givenVirtualEventWithSubmittedCommandAsParentThenFinalizeNotA
 
     constexpr int constrParam1 = 7;
     constexpr float constrParam2 = 13.0f;
-    eventBuilder.create<SmallEventBuilderEventMock>(constrParam1, constrParam2);
+    eventBuilder.create<SmallEventBuilderEventMock>(&cmdQ, constrParam1, constrParam2);
     Event *peekedEvent = eventBuilder.getEvent();
     ASSERT_NE(nullptr, peekedEvent);
     virtualEvent.taskLevel = CL_SUBMITTED;
@@ -163,12 +169,16 @@ TEST(EventBuilder, givenVirtualEventWithSubmittedCommandAsParentThenFinalizeNotA
     peekedEvent->release();
 }
 
-TEST(EventBuilder, whenDestroyingEventBuilderImplicitFinalizeIscalled) {
+TEST(EventBuilder, whenDestroyingEventBuilderThenImplicitFinalizeIsCalled) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockContext context(device.get());
+    MockCommandQueue cmdQ(&context, device.get(), nullptr, false);
+
     SmallEventBuilderEventMock *ev = nullptr;
     auto parentEvent = new UserEvent;
     {
         EventBuilder eventBuilder{};
-        eventBuilder.create<SmallEventBuilderEventMock>();
+        eventBuilder.create<SmallEventBuilderEventMock>(&cmdQ);
         eventBuilder.addParentEvent(*parentEvent);
         ev = static_cast<SmallEventBuilderEventMock *>(eventBuilder.getEvent());
         ASSERT_NE(nullptr, ev);
@@ -181,14 +191,18 @@ TEST(EventBuilder, whenDestroyingEventBuilderImplicitFinalizeIscalled) {
 }
 
 TEST(EventBuilder, whenFinalizeIsCalledTwiceOnEventBuilderThenSecondRequestIsDropped) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockContext context(device.get());
+    MockCommandQueue cmdQ(&context, device.get(), nullptr, false);
+
     SmallEventBuilderEventMock *ev = nullptr;
     EventBuilder eventBuilder{};
-    eventBuilder.create<SmallEventBuilderEventMock>();
+    eventBuilder.create<SmallEventBuilderEventMock>(&cmdQ);
     ev = static_cast<SmallEventBuilderEventMock *>(eventBuilder.getEvent());
     ASSERT_NE(nullptr, ev);
     eventBuilder.finalize();
     auto *falseParentEvent = new UserEvent();
-    auto *falseChildEvent = new SmallEventBuilderEventMock;
+    auto *falseChildEvent = new SmallEventBuilderEventMock(&cmdQ);
     auto numParents = ev->peekNumEventsBlockingThis();
     auto numChildren = (ev->peekChildEvents() != nullptr) ? 1U + ev->peekChildEvents()->countSuccessors() : 0;
     eventBuilder.addParentEvent(*falseParentEvent);
@@ -202,8 +216,12 @@ TEST(EventBuilder, whenFinalizeIsCalledTwiceOnEventBuilderThenSecondRequestIsDro
 }
 
 TEST(EventBuilder, whenFinalizeAndReleaseIsCalledThenEventBuilderReleasesReferenceToEvent) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockContext context(device.get());
+    MockCommandQueue cmdQ(&context, device.get(), nullptr, false);
+
     EventBuilder eventBuilder;
-    eventBuilder.create<SmallEventBuilderEventMock>();
+    eventBuilder.create<SmallEventBuilderEventMock>(&cmdQ);
     auto ev = static_cast<SmallEventBuilderEventMock *>(eventBuilder.finalizeAndRelease());
     ASSERT_NE(nullptr, ev);
     ASSERT_EQ(nullptr, eventBuilder.getEvent());
@@ -224,6 +242,10 @@ TEST(EventBuilder, whenClearIsCalledThenAllEventsAndReferencesAreDropped) {
 }
 
 TEST(EventBuilder, whenCParentEventsGetAddedThenTheirReferenceCountGetsIncreasedUntilFinalizeIsCalled) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockContext context(device.get());
+    MockCommandQueue cmdQ(&context, device.get(), nullptr, false);
+
     UserEvent evParent1;
     UserEvent evParent2;
 
@@ -231,7 +253,7 @@ TEST(EventBuilder, whenCParentEventsGetAddedThenTheirReferenceCountGetsIncreased
     EXPECT_EQ(1, evParent2.getRefInternalCount());
 
     EventBuilder eventBuilder;
-    eventBuilder.create<SmallEventBuilderEventMock>();
+    eventBuilder.create<SmallEventBuilderEventMock>(&cmdQ);
     eventBuilder.addParentEvent(evParent1);
     EXPECT_EQ(2, evParent1.getRefInternalCount());
     eventBuilder.addParentEvent(evParent2);
@@ -305,7 +327,11 @@ TEST(EventBuilder, whenAddingNullptrAsNewParentEventThenItIsIgnored) {
 }
 
 TEST(EventBuilder, whenAddingValidEventAsNewParentEventThenItIsProperlyAddedToParentsList) {
-    auto event = new SmallEventBuilderEventMock;
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockContext context(device.get());
+    MockCommandQueue cmdQ(&context, device.get(), nullptr, false);
+
+    auto event = new SmallEventBuilderEventMock(&cmdQ);
     SmallEventBuilderMock eventBuilder;
     eventBuilder.create<MockEvent<Event>>(nullptr, CL_COMMAND_MARKER, 0, 0);
     EXPECT_EQ(0U, eventBuilder.getParentEvents().size());
@@ -317,8 +343,12 @@ TEST(EventBuilder, whenAddingValidEventAsNewParentEventThenItIsProperlyAddedToPa
 }
 
 TEST(EventBuilder, whenAddingMultipleEventsAsNewParentsThenOnlyValidOnesAreInsertedIntoParentsList) {
-    auto event = new SmallEventBuilderEventMock;
-    auto invalidEvent = new SmallEventBuilderEventMock;
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockContext context(device.get());
+    MockCommandQueue cmdQ(&context, device.get(), nullptr, false);
+
+    auto event = new SmallEventBuilderEventMock(&cmdQ);
+    auto invalidEvent = new SmallEventBuilderEventMock(&cmdQ);
     invalidEvent->overrideMagic(0);
     cl_event eventsList[] = {nullptr, event, invalidEvent};
     SmallEventBuilderMock eventBuilder;
@@ -333,10 +363,10 @@ TEST(EventBuilder, whenAddingMultipleEventsAsNewParentsThenOnlyValidOnesAreInser
     eventBuilder.getEvent()->release();
 }
 
-TEST(EventBuilder, parentListDoesNotHaveDuplicates) {
+TEST(EventBuilder, WhenAddingParentEventThenDuplicatesAreIgnored) {
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext mockContext;
-    MockCommandQueue mockCommandQueue(&mockContext, mockDevice.get(), nullptr);
+    MockCommandQueue mockCommandQueue(&mockContext, mockDevice.get(), nullptr, false);
 
     SmallEventBuilderMock *eventBuilder = new SmallEventBuilderMock;
     eventBuilder->create<MockEvent<Event>>(&mockCommandQueue, CL_COMMAND_MARKER, 0, 0);

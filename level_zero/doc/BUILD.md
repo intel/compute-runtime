@@ -1,35 +1,45 @@
+<!---
+
+Copyright (C) 2020-2021 Intel Corporation
+
+SPDX-License-Identifier: MIT
+
+-->
+
 # Building Level Zero
 
 These instructions have been tested on Ubuntu* and complement those existing for NEO in the top-level BUILD.md file.
 
-1. Install Level Zero loader and Level Zero headers
+1. Install/build Level Zero loader and Level Zero headers
 
-Build Level Zero loader, as indicated in [https://github.com/oneapi-src/level-zero](https://github.com/oneapi-src/level-zero).
+Install Level Zero loader and headers from [https://github.com/oneapi-src/level-zero/releases](https://github.com/oneapi-src/level-zero/releases).
+
+For execution, only the level-zero package is needed; for compilation, level-zero-devel package is also required.
+
+Alternatively, build Level Zero loader from source, as indicated in [https://github.com/oneapi-src/level-zero](https://github.com/oneapi-src/level-zero).
 
 Build will generate ze_loader library and symlinks, as well as those for ze_validation_layer.
 
-Optionally, two packages can be built: binary and devel.
+2. Install/build Level Zero driver
 
-2. Build Level Zero driver
+Install Level Zero package from [https://github.com/intel/compute-runtime/releases](https://github.com/intel/compute-runtime/releases).
 
-Follow instructions in top-level BUILD.md file to build NEO. Level Zero is built by default.
+Alternatively, follow instructions in top-level BUILD.md file to build NEO. Level Zero is built by default.
 
 When built, ze_intel_gpu library and symlinks are generated.
-
-Optionally, you may install Level Zero loader and driver packages.
 
 3. Build your application
 
 Compilation needs to include the Level Zero headers and to link against the loader library:
 
 ```shell
-g++ zello_world.cpp -o zello_world -lze_loader
+g++ zello_world_gpu.cpp -o zello_world_gpu -lze_loader
 ```
 
 If libraries not installed in system paths, include Level Zero headers and path to Level Zero loader:
 
 ```shell
-g++ -I<path_to_Level_Zero_headers> zello_world.cpp -o zello_world -L<path_to_libze_loader.so> -lze_loader
+g++ -I<path_to_Level_Zero_headers> zello_world_gpu.cpp -o zello_world_gpu -L<path_to_libze_loader.so> -lze_loader
 ```
 
 4. Execute your application
@@ -37,13 +47,24 @@ g++ -I<path_to_Level_Zero_headers> zello_world.cpp -o zello_world -L<path_to_lib
 If Level Zero loader packages have been built and installed in the system, then they will be present in system paths:
 
 ```shell
-./zello_world
+./zello_world_gpu
+```
+
+Sample output:
+
+```shell
+Device :
+ * name : Intel(R) Graphics Gen9 [0x5912]
+ * type : GPU
+ * vendorId : 8086
+
+Zello World Results validation PASSED
 ```
 
 If libraries not installed in system paths, add paths to ze_loader and ze_intel_gpu libraries:
 
 ```shell
-LD_LIBRARY_PATH=<path_to_libze_loader.so>:<path_to_libze_intel_gpu.so> ./zello_world
+LD_LIBRARY_PATH=<path_to_libze_loader.so>:<path_to_libze_intel_gpu.so> ./zello_world_gpu
 ```
 
 ___(*) Other names and brands may be claimed as property of others.___

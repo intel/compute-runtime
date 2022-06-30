@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/mocks/mock_gmm.h"
+
 #include "opencl/source/helpers/mipmap.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_image.h"
 
 #include "gtest/gtest.h"
@@ -19,7 +20,7 @@ constexpr size_t testOrigin[]{2, 3, 5, 7};
 
 typedef ::testing::TestWithParam<std::pair<uint32_t, size_t>> MipLevelTest;
 
-TEST_P(MipLevelTest, givenMemObjectTypeReturnProperMipLevel) {
+TEST_P(MipLevelTest, givenMemObjectTypeThenProperMipLevelIsReturned) {
     auto pair = GetParam();
     EXPECT_EQ(static_cast<uint32_t>(pair.second), findMipLevel(pair.first, testOrigin));
 }
@@ -37,7 +38,7 @@ INSTANTIATE_TEST_CASE_P(MipLevel,
 
 typedef ::testing::TestWithParam<std::pair<uint32_t, uint32_t>> MipLevelOriginIdxTest;
 
-TEST_P(MipLevelOriginIdxTest, givenMemObjectTypeReturnProperMipLevelOriginIdx) {
+TEST_P(MipLevelOriginIdxTest, givenMemObjectTypeWhenGettingMipLevelOriginIdxThenCorrectMipLevelIsReturned) {
     auto pair = GetParam();
     EXPECT_EQ(static_cast<uint32_t>(pair.second), getMipLevelOriginIdx(pair.first));
 }

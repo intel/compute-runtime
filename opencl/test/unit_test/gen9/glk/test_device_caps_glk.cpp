@@ -1,18 +1,19 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "test.h"
 
 using namespace NEO;
 
 typedef Test<ClDeviceFixture> Gen9DeviceCaps;
 
-GLKTEST_F(Gen9DeviceCaps, GlkProfilingTimerResolution) {
+GLKTEST_F(Gen9DeviceCaps, WhenCheckingProfilingTimerResolutionThenCorrectResolutionIsReturned) {
     const auto &caps = pDevice->getDeviceInfo();
     EXPECT_EQ(52u, caps.outProfilingTimerResolution);
 }
@@ -21,16 +22,10 @@ GLKTEST_F(Gen9DeviceCaps, givenGlkDeviceWhenAskedForDoubleSupportThenTrueIsRetur
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsFP64);
 }
 
-GLKTEST_F(Gen9DeviceCaps, GlkClVersionSupport) {
-    const auto &caps = pClDevice->getDeviceInfo();
-    EXPECT_STREQ("OpenCL 1.2 NEO ", caps.clVersion);
-    EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
-}
-
 GLKTEST_F(Gen9DeviceCaps, GlkIs32BitOsAllocatorAvailable) {
     const auto &caps = pDevice->getDeviceInfo();
     auto memoryManager = pDevice->getMemoryManager();
-    if (is64bit) {
+    if constexpr (is64bit) {
         EXPECT_TRUE(memoryManager->peekForce32BitAllocations());
         EXPECT_TRUE(caps.force32BitAddressess);
     } else {
@@ -41,10 +36,10 @@ GLKTEST_F(Gen9DeviceCaps, GlkIs32BitOsAllocatorAvailable) {
 
 typedef Test<ClDeviceFixture> GlkUsDeviceIdTest;
 
-GLKTEST_F(GlkUsDeviceIdTest, isSimulationCap) {
+GLKTEST_F(GlkUsDeviceIdTest, WhenCheckingIsSimulationThenTrueReturnedOnlyForSimulationId) {
     unsigned short glkSimulationIds[3] = {
-        IGLK_GT2_ULT_18EU_DEVICE_F0_ID,
-        IGLK_GT2_ULT_12EU_DEVICE_F0_ID,
+        0x3184,
+        0x3185,
         0, // default, non-simulation
     };
     NEO::MockDevice *mockDevice = nullptr;

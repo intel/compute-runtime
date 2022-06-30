@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,9 +33,13 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
-
     const cl_command_type cmdType = CL_COMMAND_WRITE_BUFFER_RECT;
+
+    CsrSelectionArgs csrSelectionArgs{cmdType, buffer, {}, device->getRootDeviceIndex(), region};
+    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
+
     auto isMemTransferNeeded = true;
+
     if (buffer->isMemObjZeroCopy()) {
         size_t bufferOffset;
         size_t hostOffset;
@@ -47,30 +51,38 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
                                                   numEventsInWaitList, eventWaitList, event);
     }
 
+    const size_t hostPtrSize = Buffer::calculateHostPtrSize(hostOrigin, region, hostRowPitch, hostSlicePitch);
+    const uint32_t rootDeviceIndex = getDevice().getRootDeviceIndex();
+    InternalMemoryType memoryType = InternalMemoryType::NOT_SPECIFIED;
+    GraphicsAllocation *mapAllocation = nullptr;
+    bool isCpuCopyAllowed = false;
+    getContext().tryGetExistingHostPtrAllocation(ptr, hostPtrSize, rootDeviceIndex, mapAllocation, memoryType, isCpuCopyAllowed);
+
     auto eBuiltInOps = EBuiltInOps::CopyBufferRect;
     if (forceStateless(buffer->getSize())) {
         eBuiltInOps = EBuiltInOps::CopyBufferRectStateless;
     }
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(eBuiltInOps,
-                                                                            this->getDevice());
-    BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
-    size_t hostPtrSize = Buffer::calculateHostPtrSize(hostOrigin, region, hostRowPitch, hostSlicePitch);
     void *srcPtr = const_cast<void *>(ptr);
 
     MemObjSurface dstBufferSurf(buffer);
     HostPtrSurface hostPtrSurf(srcPtr, hostPtrSize, true);
-    Surface *surfaces[] = {&dstBufferSurf, &hostPtrSurf};
+    GeneralSurface mapSurface;
+    Surface *surfaces[] = {&dstBufferSurf, nullptr};
 
-    if (region[0] != 0 &&
-        region[1] != 0 &&
-        region[2] != 0) {
-        auto &csr = getCommandStreamReceiverByCommandType(cmdType);
-        bool status = csr.createAllocationForHostSurface(hostPtrSurf, false);
-        if (!status) {
-            return CL_OUT_OF_RESOURCES;
+    if (region[0] != 0 && region[1] != 0 && region[2] != 0) {
+        if (mapAllocation) {
+            surfaces[1] = &mapSurface;
+            mapSurface.setGraphicsAllocation(mapAllocation);
+            srcPtr = convertAddressWithOffsetToGpuVa(srcPtr, memoryType, *mapAllocation);
+        } else {
+            surfaces[1] = &hostPtrSurf;
+            bool status = csr.createAllocationForHostSurface(hostPtrSurf, false);
+            if (!status) {
+                return CL_OUT_OF_RESOURCES;
+            }
+            srcPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddress());
         }
-        srcPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddress());
     }
 
     void *alignedSrcPtr = alignDown(srcPtr, 4);
@@ -89,16 +101,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     dc.dstRowPitch = bufferRowPitch;
     dc.dstSlicePitch = bufferSlicePitch;
 
-    MultiDispatchInfo dispatchInfo;
-    builder.buildDispatchInfos(dispatchInfo, dc);
-
-    enqueueHandler<CL_COMMAND_WRITE_BUFFER_RECT>(
-        surfaces,
-        blockingWrite == CL_TRUE,
-        dispatchInfo,
-        numEventsInWaitList,
-        eventWaitList,
-        event);
+    MultiDispatchInfo dispatchInfo(dc);
+    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER_RECT>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingWrite, csr);
+    if (dispatchResult != CL_SUCCESS) {
+        return dispatchResult;
+    }
 
     if (context->isProvidingPerformanceHints()) {
         context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, CL_ENQUEUE_WRITE_BUFFER_RECT_REQUIRES_COPY_DATA, static_cast<cl_mem>(buffer));

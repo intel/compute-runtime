@@ -1,11 +1,9 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
-
-#include "shared/source/helpers/hw_cmds.h"
 
 #include "opencl/source/helpers/array_count.h"
 

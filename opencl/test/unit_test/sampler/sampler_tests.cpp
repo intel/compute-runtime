@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ struct CreateSampler : public ::testing::TestWithParam<
     cl_filter_mode filterMode;
 };
 
-TEST_P(CreateSampler, shouldReturnSuccess) {
+TEST_P(CreateSampler, WhenSamplerIsCreatedThenSuccessIsReturned) {
     auto sampler = Sampler::create(
         context,
         normalizedCoords,
@@ -50,13 +50,13 @@ TEST_P(CreateSampler, shouldReturnSuccess) {
     delete sampler;
 }
 
-TEST_P(CreateSampler, shouldPropagateSamplerState) {
+TEST_P(CreateSampler, GivenModeWhenSamplerIsCreatedThenParamsAreSetCorrectly) {
     auto sampler = new MockSampler(
         context,
         normalizedCoords,
         addressingMode,
         filterMode);
-    ASSERT_NE(nullptr, sampler);
+    ASSERT_NE(nullptr, sampler); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     EXPECT_EQ(context, sampler->getContext());
     EXPECT_EQ(normalizedCoords, sampler->getNormalizedCoordinates());

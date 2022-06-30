@@ -1,0 +1,10 @@
+#
+# Copyright (C) 2020-2021 Intel Corporation
+#
+# SPDX-License-Identifier: MIT
+#
+
+ACTION=="change", \
+SUBSYSTEM=="drm", \
+ENV{RESET}=="1", \
+RUN+="/bin/sh -c 'val=`cat /var/lib/libze_intel_gpu/ras_reset_count` && newval=`expr  $val + 1` && echo $newval > /var/lib/libze_intel_gpu/ras_reset_count'"

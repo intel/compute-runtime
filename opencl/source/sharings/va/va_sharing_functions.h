@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "opencl/source/sharings/va/va_sharing_defines.h"
 
 #include <functional>
+#include <mutex>
 #include <vector>
 
 namespace NEO {
@@ -71,6 +72,7 @@ class VASharingFunctions : public SharingFunctions {
 
     cl_int getSupportedFormats(cl_mem_flags flags,
                                cl_mem_object_type imageType,
+                               cl_uint plane,
                                cl_uint numEntries,
                                VAImageFormat *formats,
                                cl_uint *numImageFormats);
@@ -80,6 +82,8 @@ class VASharingFunctions : public SharingFunctions {
     static std::function<int(void *handle)> fdlclose;
 
     static bool isVaLibraryAvailable();
+
+    std::mutex mutex;
 
   protected:
     void *libHandle = nullptr;
@@ -94,6 +98,7 @@ class VASharingFunctions : public SharingFunctions {
     VAQueryImageFormatsPFN vaQueryImageFormatsPFN;
     VAMaxNumImageFormatsPFN vaMaxNumImageFormatsPFN;
 
-    std::vector<VAImageFormat> supportedFormats;
+    std::vector<VAImageFormat> supported2PlaneFormats;
+    std::vector<VAImageFormat> supported3PlaneFormats;
 };
 } // namespace NEO

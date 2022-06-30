@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/mem_obj/map_operations_handler.h"
-#include "test.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
 
 #include <tuple>
 
@@ -21,6 +22,11 @@ struct MockMapOperationsHandler : public MapOperationsHandler {
 
 struct MapOperationsHandlerTests : public ::testing::Test {
     MockMapOperationsHandler mockHandler;
+    std::unique_ptr<MockGraphicsAllocation> allocations[3] = {
+        std::make_unique<MockGraphicsAllocation>(),
+        std::make_unique<MockGraphicsAllocation>(),
+        std::make_unique<MockGraphicsAllocation>(),
+    };
     MapInfo mappedPtrs[3] = {
         {(void *)0x1000, 1, {{1, 2, 3}}, {{4, 5, 6}}, 0},
         {(void *)0x2000, 1, {{7, 8, 9}}, {{10, 11, 12}}, 0},
@@ -31,7 +37,7 @@ struct MapOperationsHandlerTests : public ::testing::Test {
 
 TEST_F(MapOperationsHandlerTests, givenMapInfoWhenFindingThenReturnCorrectvalues) {
     for (size_t i = 0; i < 3; i++) {
-        EXPECT_TRUE(mockHandler.add(mappedPtrs[i].ptr, mappedPtrs[i].ptrLength, mapFlags, mappedPtrs[i].size, mappedPtrs[i].offset, 0));
+        EXPECT_TRUE(mockHandler.add(mappedPtrs[i].ptr, mappedPtrs[i].ptrLength, mapFlags, mappedPtrs[i].size, mappedPtrs[i].offset, 0, allocations[i].get()));
     }
     EXPECT_EQ(3u, mockHandler.size());
 
@@ -41,12 +47,13 @@ TEST_F(MapOperationsHandlerTests, givenMapInfoWhenFindingThenReturnCorrectvalues
         EXPECT_EQ(receivedMapInfo.ptr, mappedPtrs[i].ptr);
         EXPECT_EQ(receivedMapInfo.size, mappedPtrs[i].size);
         EXPECT_EQ(receivedMapInfo.offset, mappedPtrs[i].offset);
+        EXPECT_EQ(allocations[i].get(), receivedMapInfo.graphicsAllocation);
     }
 }
 
 TEST_F(MapOperationsHandlerTests, givenMapInfoWhenRemovingThenRemoveCorrectPointers) {
     for (size_t i = 0; i < 3; i++) {
-        mockHandler.add(mappedPtrs[i].ptr, mappedPtrs[i].ptrLength, mapFlags, mappedPtrs[i].size, mappedPtrs[i].offset, 0);
+        mockHandler.add(mappedPtrs[i].ptr, mappedPtrs[i].ptrLength, mapFlags, mappedPtrs[i].size, mappedPtrs[i].offset, 0, allocations[i].get());
     }
 
     for (int i = 2; i >= 0; i--) {
@@ -58,8 +65,8 @@ TEST_F(MapOperationsHandlerTests, givenMapInfoWhenRemovingThenRemoveCorrectPoint
 }
 
 TEST_F(MapOperationsHandlerTests, givenMappedPtrsWhenDoubleRemovedThenDoNothing) {
-    mockHandler.add(mappedPtrs[0].ptr, mappedPtrs[0].ptrLength, mapFlags, mappedPtrs[0].size, mappedPtrs[0].offset, 0);
-    mockHandler.add(mappedPtrs[1].ptr, mappedPtrs[1].ptrLength, mapFlags, mappedPtrs[0].size, mappedPtrs[0].offset, 0);
+    mockHandler.add(mappedPtrs[0].ptr, mappedPtrs[0].ptrLength, mapFlags, mappedPtrs[0].size, mappedPtrs[0].offset, 0, allocations[0].get());
+    mockHandler.add(mappedPtrs[1].ptr, mappedPtrs[1].ptrLength, mapFlags, mappedPtrs[0].size, mappedPtrs[0].offset, 0, allocations[1].get());
 
     EXPECT_EQ(2u, mockHandler.size());
     mockHandler.remove(mappedPtrs[1].ptr);
@@ -73,27 +80,27 @@ TEST_F(MapOperationsHandlerTests, givenMappedPtrsWhenDoubleRemovedThenDoNothing)
 
 TEST_F(MapOperationsHandlerTests, givenMapInfoWhenAddedThenSetReadOnlyFlag) {
     mapFlags = CL_MAP_READ;
-    mockHandler.add(mappedPtrs[0].ptr, mappedPtrs[0].ptrLength, mapFlags, mappedPtrs[0].size, mappedPtrs[0].offset, 0);
+    mockHandler.add(mappedPtrs[0].ptr, mappedPtrs[0].ptrLength, mapFlags, mappedPtrs[0].size, mappedPtrs[0].offset, 0, allocations[0].get());
     EXPECT_TRUE(mockHandler.mappedPointers.back().readOnly);
     mockHandler.remove(mappedPtrs[0].ptr);
 
     mapFlags = CL_MAP_WRITE;
-    mockHandler.add(mappedPtrs[0].ptr, mappedPtrs[0].ptrLength, mapFlags, mappedPtrs[0].size, mappedPtrs[0].offset, 0);
+    mockHandler.add(mappedPtrs[0].ptr, mappedPtrs[0].ptrLength, mapFlags, mappedPtrs[0].size, mappedPtrs[0].offset, 0, allocations[0].get());
     EXPECT_FALSE(mockHandler.mappedPointers.back().readOnly);
     mockHandler.remove(mappedPtrs[0].ptr);
 
     mapFlags = CL_MAP_WRITE_INVALIDATE_REGION;
-    mockHandler.add(mappedPtrs[0].ptr, mappedPtrs[0].ptrLength, mapFlags, mappedPtrs[0].size, mappedPtrs[0].offset, 0);
+    mockHandler.add(mappedPtrs[0].ptr, mappedPtrs[0].ptrLength, mapFlags, mappedPtrs[0].size, mappedPtrs[0].offset, 0, allocations[0].get());
     EXPECT_FALSE(mockHandler.mappedPointers.back().readOnly);
     mockHandler.remove(mappedPtrs[0].ptr);
 
     mapFlags = CL_MAP_READ | CL_MAP_WRITE;
-    mockHandler.add(mappedPtrs[0].ptr, mappedPtrs[0].ptrLength, mapFlags, mappedPtrs[0].size, mappedPtrs[0].offset, 0);
+    mockHandler.add(mappedPtrs[0].ptr, mappedPtrs[0].ptrLength, mapFlags, mappedPtrs[0].size, mappedPtrs[0].offset, 0, allocations[0].get());
     EXPECT_FALSE(mockHandler.mappedPointers.back().readOnly);
     mockHandler.remove(mappedPtrs[0].ptr);
 
     mapFlags = CL_MAP_READ | CL_MAP_WRITE_INVALIDATE_REGION;
-    mockHandler.add(mappedPtrs[0].ptr, mappedPtrs[0].ptrLength, mapFlags, mappedPtrs[0].size, mappedPtrs[0].offset, 0);
+    mockHandler.add(mappedPtrs[0].ptr, mappedPtrs[0].ptrLength, mapFlags, mappedPtrs[0].size, mappedPtrs[0].offset, 0, allocations[0].get());
     EXPECT_FALSE(mockHandler.mappedPointers.back().readOnly);
     mockHandler.remove(mappedPtrs[0].ptr);
 }
@@ -101,24 +108,24 @@ TEST_F(MapOperationsHandlerTests, givenMapInfoWhenAddedThenSetReadOnlyFlag) {
 TEST_F(MapOperationsHandlerTests, givenNonReadOnlyOverlappingPtrWhenAddingThenReturnFalseAndDontAdd) {
     mapFlags = CL_MAP_WRITE;
     mappedPtrs->readOnly = false;
-    mockHandler.add(mappedPtrs[0].ptr, mappedPtrs[0].ptrLength, mapFlags, mappedPtrs[0].size, mappedPtrs[0].offset, 0);
+    mockHandler.add(mappedPtrs[0].ptr, mappedPtrs[0].ptrLength, mapFlags, mappedPtrs[0].size, mappedPtrs[0].offset, 0, allocations[0].get());
 
     EXPECT_EQ(1u, mockHandler.size());
     EXPECT_FALSE(mockHandler.mappedPointers.back().readOnly);
     EXPECT_TRUE(mockHandler.isOverlapping(mappedPtrs[0]));
-    EXPECT_FALSE(mockHandler.add(mappedPtrs[0].ptr, mappedPtrs[0].ptrLength, mapFlags, mappedPtrs[0].size, mappedPtrs[0].offset, 0));
+    EXPECT_FALSE(mockHandler.add(mappedPtrs[0].ptr, mappedPtrs[0].ptrLength, mapFlags, mappedPtrs[0].size, mappedPtrs[0].offset, 0, allocations[0].get()));
     EXPECT_EQ(1u, mockHandler.size());
 }
 
 TEST_F(MapOperationsHandlerTests, givenReadOnlyOverlappingPtrWhenAddingThenReturnTrueAndAdd) {
     mapFlags = CL_MAP_READ;
     mappedPtrs->readOnly = true;
-    mockHandler.add(mappedPtrs[0].ptr, mappedPtrs[0].ptrLength, mapFlags, mappedPtrs[0].size, mappedPtrs[0].offset, 0);
+    mockHandler.add(mappedPtrs[0].ptr, mappedPtrs[0].ptrLength, mapFlags, mappedPtrs[0].size, mappedPtrs[0].offset, 0, allocations[0].get());
 
     EXPECT_EQ(1u, mockHandler.size());
     EXPECT_TRUE(mockHandler.mappedPointers.back().readOnly);
     EXPECT_FALSE(mockHandler.isOverlapping(mappedPtrs[0]));
-    EXPECT_TRUE(mockHandler.add(mappedPtrs[0].ptr, mappedPtrs[0].ptrLength, mapFlags, mappedPtrs[0].size, mappedPtrs[0].offset, 0));
+    EXPECT_TRUE(mockHandler.add(mappedPtrs[0].ptr, mappedPtrs[0].ptrLength, mapFlags, mappedPtrs[0].size, mappedPtrs[0].offset, 0, allocations[0].get()));
     EXPECT_EQ(2u, mockHandler.size());
     EXPECT_TRUE(mockHandler.mappedPointers.back().readOnly);
 }
@@ -152,7 +159,7 @@ TEST_P(MapOperationsHandlerOverlapTests, givenAlreadyMappedPtrWhenAskingForOverl
     requestedInfo.readOnly = false;
 
     MockMapOperationsHandler mockHandler;
-    mockHandler.add(mappedInfo.ptr, mappedInfo.ptrLength, mapFlags, mappedInfo.size, mappedInfo.offset, 0);
+    mockHandler.add(mappedInfo.ptr, mappedInfo.ptrLength, mapFlags, mappedInfo.size, mappedInfo.offset, 0, mappedInfo.graphicsAllocation);
 
     EXPECT_EQ(expectOverlap, mockHandler.isOverlapping(requestedInfo));
 }
@@ -160,3 +167,56 @@ TEST_P(MapOperationsHandlerOverlapTests, givenAlreadyMappedPtrWhenAskingForOverl
 INSTANTIATE_TEST_CASE_P(MapOperationsHandlerOverlapTests,
                         MapOperationsHandlerOverlapTests,
                         ::testing::ValuesIn(overlappingCombinations));
+
+struct MapOperationsStorageWhitebox : MapOperationsStorage {
+    using MapOperationsStorage::handlers;
+};
+
+TEST(MapOperationsStorageTest, givenMapOperationsStorageWhenGetHandlerIsUsedThenCreateHandler) {
+    MockBuffer buffer1{};
+    MockBuffer buffer2{};
+
+    MapOperationsStorageWhitebox storage{};
+    EXPECT_EQ(0u, storage.handlers.size());
+
+    storage.getHandler(&buffer1);
+    EXPECT_EQ(1u, storage.handlers.size());
+
+    storage.getHandler(&buffer2);
+    EXPECT_EQ(2u, storage.handlers.size());
+
+    storage.getHandler(&buffer1);
+    EXPECT_EQ(2u, storage.handlers.size());
+}
+
+TEST(MapOperationsStorageTest, givenMapOperationsStorageWhenGetHandlerIfExistsIsUsedThenDoNotCreateHandler) {
+    MockBuffer buffer1{};
+    MockBuffer buffer2{};
+
+    MapOperationsStorageWhitebox storage{};
+    EXPECT_EQ(0u, storage.handlers.size());
+    EXPECT_EQ(nullptr, storage.getHandlerIfExists(&buffer1));
+    EXPECT_EQ(nullptr, storage.getHandlerIfExists(&buffer2));
+
+    storage.getHandler(&buffer1);
+    EXPECT_EQ(1u, storage.handlers.size());
+    EXPECT_NE(nullptr, storage.getHandlerIfExists(&buffer1));
+    EXPECT_EQ(nullptr, storage.getHandlerIfExists(&buffer2));
+
+    storage.getHandler(&buffer2);
+    EXPECT_EQ(2u, storage.handlers.size());
+    EXPECT_NE(nullptr, storage.getHandlerIfExists(&buffer1));
+    EXPECT_NE(nullptr, storage.getHandlerIfExists(&buffer2));
+    EXPECT_NE(storage.getHandlerIfExists(&buffer1), storage.getHandlerIfExists(&buffer2));
+}
+
+TEST(MapOperationsStorageTest, givenMapOperationsStorageWhenRemoveHandlerIsUsedThenRemoveHandler) {
+    MockBuffer buffer{};
+    MapOperationsStorageWhitebox storage{};
+
+    storage.getHandler(&buffer);
+    ASSERT_EQ(1u, storage.handlers.size());
+
+    storage.removeHandler(&buffer);
+    EXPECT_EQ(0u, storage.handlers.size());
+}

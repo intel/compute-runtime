@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,10 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/device.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
-#include "shared/source/os_interface/windows/os_interface.h"
+#include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 #include "opencl/extensions/public/cl_gl_private_intel.h"
@@ -29,7 +30,7 @@ void destroySync(Gdi &gdi, D3DKMT_HANDLE sync) {
     }
     D3DKMT_DESTROYSYNCHRONIZATIONOBJECT destroySyncInfo = {};
     destroySyncInfo.hSyncObject = sync;
-    NTSTATUS status = gdi.destroySynchronizationObject(&destroySyncInfo);
+    [[maybe_unused]] NTSTATUS status = gdi.destroySynchronizationObject(&destroySyncInfo);
     DEBUG_BREAK_IF(STATUS_SUCCESS != status);
 }
 
@@ -38,7 +39,7 @@ void destroyEvent(OSInterface &osInterface, HANDLE event) {
         return;
     }
 
-    auto ret = osInterface.get()->closeHandle(event);
+    [[maybe_unused]] auto ret = SysCalls::closeHandle(event);
     DEBUG_BREAK_IF(TRUE != ret);
 }
 
@@ -47,7 +48,7 @@ void cleanupArbSyncObject(OSInterface &osInterface, CL_GL_SYNC_INFO *glSyncInfo)
         return;
     }
 
-    auto gdi = osInterface.get()->getWddm()->getGdi();
+    auto gdi = osInterface.getDriverModel()->as<Wddm>()->getGdi();
     UNRECOVERABLE_IF(nullptr == gdi);
 
     destroySync(*gdi, glSyncInfo->serverSynchronizationObject);
@@ -65,7 +66,7 @@ bool setupArbSyncObject(GLSharingFunctions &sharing, OSInterface &osInterface, C
 
     glSyncInfo.hContextToBlock = static_cast<D3DKMT_HANDLE>(sharingFunctions.getGLContextHandle());
     auto glDevice = static_cast<D3DKMT_HANDLE>(sharingFunctions.getGLDeviceHandle());
-    auto wddm = osInterface.get()->getWddm();
+    auto wddm = osInterface.getDriverModel()->as<Wddm>();
 
     D3DKMT_CREATESYNCHRONIZATIONOBJECT serverSyncInitInfo = {};
     serverSyncInitInfo.hDevice = glDevice;
@@ -76,7 +77,7 @@ bool setupArbSyncObject(GLSharingFunctions &sharing, OSInterface &osInterface, C
     glSyncInfo.serverSynchronizationObject = serverSyncInitInfo.hSyncObject;
 
     glSyncInfo.eventName = createArbSyncEventName();
-    glSyncInfo.event = osInterface.get()->createEvent(NULL, TRUE, FALSE, glSyncInfo.eventName);
+    glSyncInfo.event = SysCalls::createEvent(nullptr, TRUE, FALSE, glSyncInfo.eventName);
 
     D3DKMT_CREATESYNCHRONIZATIONOBJECT2 clientSyncInitInfo = {};
     clientSyncInitInfo.hDevice = glDevice;
@@ -87,7 +88,7 @@ bool setupArbSyncObject(GLSharingFunctions &sharing, OSInterface &osInterface, C
 
     D3DKMT_CREATESYNCHRONIZATIONOBJECT2 submissionSyncEventInfo = {};
     glSyncInfo.submissionEventName = createArbSyncEventName();
-    glSyncInfo.submissionEvent = osInterface.get()->createEvent(NULL, TRUE, FALSE, glSyncInfo.submissionEventName);
+    glSyncInfo.submissionEvent = SysCalls::createEvent(nullptr, TRUE, FALSE, glSyncInfo.submissionEventName);
 
     submissionSyncEventInfo.hDevice = glDevice;
     submissionSyncEventInfo.Info.Type = D3DDDI_CPU_NOTIFICATION;
@@ -140,7 +141,7 @@ void signalArbSyncObject(OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo) {
 }
 
 void serverWaitForArbSyncObject(OSInterface &osInterface, CL_GL_SYNC_INFO &glSyncInfo) {
-    auto wddm = osInterface.get()->getWddm();
+    auto wddm = osInterface.getDriverModel()->as<Wddm>();
 
     D3DKMT_WAITFORSYNCHRONIZATIONOBJECT waitForSyncInfo = {};
     waitForSyncInfo.hContext = glSyncInfo.hContextToBlock;

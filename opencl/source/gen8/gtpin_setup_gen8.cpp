@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "opencl/source/gtpin/gtpin_hw_helper.h"
 #include "opencl/source/gtpin/gtpin_hw_helper.inl"
+#include "opencl/source/gtpin/gtpin_hw_helper_bdw_and_later.inl"
 
 #include "ocl_igc_shared/gtpin/gtpin_ocl_interface.h"
 

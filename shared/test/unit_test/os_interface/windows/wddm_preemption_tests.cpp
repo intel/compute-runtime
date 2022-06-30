@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,10 +8,10 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
-
-#include "opencl/test/unit_test/os_interface/windows/wddm_fixture.h"
-#include "test.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/os_interface/windows/wddm_fixture.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 
@@ -22,7 +22,7 @@ class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
         const HardwareInfo hwInfo = *defaultHwInfo;
         memcpy(&hwInfoTest, &hwInfo, sizeof(hwInfoTest));
         dbgRestorer = new DebugManagerStateRestore();
-        wddm->featureTable->ftrGpGpuMidThreadLevelPreempt = true;
+        wddm->featureTable->flags.ftrGpGpuMidThreadLevelPreempt = true;
     }
 
     void TearDown() override {
@@ -33,18 +33,17 @@ class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
     void createAndInitWddm(unsigned int forceReturnPreemptionRegKeyValue) {
         wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[0].get()));
         executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-        executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setWddm(wddm);
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
         osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.get();
-        auto regReader = new RegistryReaderMock();
-        wddm->registryReader.reset(regReader);
-        regReader->forceRetValue = forceReturnPreemptionRegKeyValue;
+        wddm->enablePreemptionRegValue = forceReturnPreemptionRegKeyValue;
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfoTest);
         wddm->init();
         hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
         ASSERT_NE(nullptr, hwInfo);
         auto engine = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
-        osContext = std::make_unique<OsContextWin>(*wddm, 0u, 1, engine, preemptionMode, false, false, false);
+        osContext = std::make_unique<OsContextWin>(*wddm, 0u, EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode));
+        osContext->ensureContextInitialized();
     }
 
     DebugManagerStateRestore *dbgRestorer = nullptr;

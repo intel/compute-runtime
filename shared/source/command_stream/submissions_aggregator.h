@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,8 @@ struct BatchBuffer {
                 uint64_t sliceCount,
                 size_t usedSize,
                 LinearStream *stream,
-                void *endCmdPtr);
+                void *endCmdPtr,
+                bool useSingleSubdevice);
     BatchBuffer() {}
     GraphicsAllocation *commandBufferAllocation = nullptr;
     size_t startOffset = 0u;
@@ -45,6 +46,9 @@ struct BatchBuffer {
     //only used in drm csr in gem close worker active mode
     LinearStream *stream = nullptr;
     void *endCmdPtr = nullptr;
+
+    bool useSingleSubdevice = false;
+    bool ringBufferRestartRequest = false;
 };
 
 struct CommandBuffer : public IDNode<CommandBuffer> {

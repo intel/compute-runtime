@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,6 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <unordered_map>
 #include <vector>
 
 namespace NEO {
@@ -26,10 +25,13 @@ bool operator<(const HeapChunk &hc1, const HeapChunk &hc2);
 
 class HeapAllocator {
   public:
-    HeapAllocator(uint64_t address, uint64_t size) : HeapAllocator(address, size, 4 * MemoryConstants::megaByte) {
+    HeapAllocator(uint64_t address, uint64_t size) : HeapAllocator(address, size, MemoryConstants::pageSize) {
     }
 
-    HeapAllocator(uint64_t address, uint64_t size, size_t threshold) : size(size), availableSize(size), sizeThreshold(threshold) {
+    HeapAllocator(uint64_t address, uint64_t size, size_t allocationAlignment) : HeapAllocator(address, size, allocationAlignment, 4 * MemoryConstants::megaByte) {
+    }
+
+    HeapAllocator(uint64_t address, uint64_t size, size_t allocationAlignment, size_t threshold) : size(size), availableSize(size), allocationAlignment(allocationAlignment), sizeThreshold(threshold) {
         pLeftBound = address;
         pRightBound = address + size;
         freedChunksBig.reserve(10);
@@ -37,10 +39,19 @@ class HeapAllocator {
     }
 
     uint64_t allocate(size_t &sizeToAllocate) {
+        return allocateWithCustomAlignment(sizeToAllocate, 0u);
+    }
+
+    uint64_t allocateWithCustomAlignment(size_t &sizeToAllocate, size_t alignment) {
+        if (alignment == 0) {
+            alignment = this->allocationAlignment;
+        }
+
+        UNRECOVERABLE_IF(alignment % allocationAlignment != 0); // custom alignment have to be a multiple of allocator alignment
         sizeToAllocate = alignUp(sizeToAllocate, allocationAlignment);
 
         std::lock_guard<std::mutex> lock(mtx);
-        DBG_LOG(PrintDebugMessages, __FUNCTION__, "Allocator usage == ", this->getUsage());
+        DBG_LOG(LogAllocationMemoryPool, __FUNCTION__, "Allocator usage == ", this->getUsage());
         if (availableSize < sizeToAllocate) {
             return 0llu;
         }
@@ -50,16 +61,27 @@ class HeapAllocator {
 
         for (;;) {
             size_t sizeOfFreedChunk = 0;
-            uint64_t ptrReturn = getFromFreedChunks(sizeToAllocate, freedChunks, sizeOfFreedChunk);
+            uint64_t ptrReturn = getFromFreedChunks(sizeToAllocate, freedChunks, sizeOfFreedChunk, alignment);
 
             if (ptrReturn == 0llu) {
                 if (sizeToAllocate > sizeThreshold) {
-                    if (pLeftBound + sizeToAllocate <= pRightBound) {
+                    const uint64_t misalignment = alignUp(pLeftBound, alignment) - pLeftBound;
+                    if (pLeftBound + misalignment + sizeToAllocate <= pRightBound) {
+                        if (misalignment) {
+                            storeInFreedChunks(pLeftBound, static_cast<size_t>(misalignment), freedChunks);
+                            pLeftBound += misalignment;
+                        }
                         ptrReturn = pLeftBound;
                         pLeftBound += sizeToAllocate;
                     }
                 } else {
-                    if (pRightBound - sizeToAllocate >= pLeftBound) {
+                    const uint64_t pStart = pRightBound - sizeToAllocate;
+                    const uint64_t misalignment = pStart - alignDown(pStart, alignment);
+                    if (pLeftBound + sizeToAllocate + misalignment <= pRightBound) {
+                        if (misalignment) {
+                            pRightBound -= misalignment;
+                            storeInFreedChunks(pRightBound, static_cast<size_t>(misalignment), freedChunks);
+                        }
                         pRightBound -= sizeToAllocate;
                         ptrReturn = pRightBound;
                     }
@@ -73,6 +95,7 @@ class HeapAllocator {
                 } else {
                     availableSize -= sizeToAllocate;
                 }
+                DEBUG_BREAK_IF(!isAligned(ptrReturn, alignment));
                 return ptrReturn;
             }
 
@@ -88,7 +111,7 @@ class HeapAllocator {
             return;
 
         std::lock_guard<std::mutex> lock(mtx);
-        DBG_LOG(PrintDebugMessages, __FUNCTION__, "Allocator usage == ", this->getUsage());
+        DBG_LOG(LogAllocationMemoryPool, __FUNCTION__, "Allocator usage == ", this->getUsage());
 
         if (ptr == pRightBound) {
             pRightBound = ptr + size;
@@ -123,20 +146,25 @@ class HeapAllocator {
     uint64_t availableSize;
     uint64_t pLeftBound;
     uint64_t pRightBound;
+    size_t allocationAlignment;
     const size_t sizeThreshold;
-    size_t allocationAlignment = MemoryConstants::pageSize;
 
     std::vector<HeapChunk> freedChunksSmall;
     std::vector<HeapChunk> freedChunksBig;
     std::mutex mtx;
 
-    uint64_t getFromFreedChunks(size_t size, std::vector<HeapChunk> &freedChunks, size_t &sizeOfFreedChunk) {
+    uint64_t getFromFreedChunks(size_t size, std::vector<HeapChunk> &freedChunks, size_t &sizeOfFreedChunk, size_t requiredAlignment) {
         size_t elements = freedChunks.size();
         size_t bestFitIndex = -1;
         size_t bestFitSize = 0;
         sizeOfFreedChunk = 0;
 
         for (size_t i = 0; i < elements; i++) {
+            const bool chunkAligned = isAligned(freedChunks[i].ptr, requiredAlignment);
+            if (!chunkAligned) {
+                continue;
+            }
+
             if (freedChunks[i].size == size) {
                 auto ptr = freedChunks[i].ptr;
                 freedChunks.erase(freedChunks.begin() + i);
@@ -180,6 +208,13 @@ class HeapAllocator {
             if (freedChunk.ptr + freedChunk.size == ptr) {
                 freedChunk.size += size;
                 return;
+            }
+            if ((freedChunk.ptr + freedChunk.size) == (ptr + size)) {
+                if (ptr < freedChunk.ptr) {
+                    freedChunk.ptr = ptr;
+                    freedChunk.size = size;
+                    return;
+                }
             }
         }
 
@@ -243,7 +278,7 @@ class HeapAllocator {
             }
         }
         mergeLastFreedBig();
-        DBG_LOG(PrintDebugMessages, __FUNCTION__, "Allocator usage == ", this->getUsage());
+        DBG_LOG(LogAllocationMemoryPool, __FUNCTION__, "Allocator usage == ", this->getUsage());
     }
 };
 } // namespace NEO

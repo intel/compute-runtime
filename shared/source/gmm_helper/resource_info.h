@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,9 @@ class GmmResourceInfo {
 
     static GmmResourceInfo *create(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo);
 
-    MOCKABLE_VIRTUAL ~GmmResourceInfo() = default;
+    static GmmResourceInfo *create(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo, bool openingHandle);
+
+    MOCKABLE_VIRTUAL ~GmmResourceInfo();
 
     MOCKABLE_VIRTUAL size_t getSizeAllocation() { return static_cast<size_t>(resourceInfo->GetSize(GMM_TOTAL_SURF)); }
 
@@ -32,6 +34,8 @@ class GmmResourceInfo {
     MOCKABLE_VIRTUAL size_t getArraySize() { return static_cast<size_t>(resourceInfo->GetArraySize()); }
 
     MOCKABLE_VIRTUAL size_t getRenderPitch() { return static_cast<size_t>(resourceInfo->GetRenderPitch()); }
+
+    MOCKABLE_VIRTUAL uint64_t getDriverProtectionBits();
 
     MOCKABLE_VIRTUAL uint32_t getNumSamples() { return resourceInfo->GetNumSamples(); }
 
@@ -73,7 +77,13 @@ class GmmResourceInfo {
 
     MOCKABLE_VIRTUAL bool is64KBPageSuitable() const { return resourceInfo->Is64KBPageSuitable(); }
 
-    MOCKABLE_VIRTUAL GMM_RESOURCE_INFO *peekHandle() const { return resourceInfo.get(); }
+    MOCKABLE_VIRTUAL GMM_RESOURCE_INFO *peekGmmResourceInfo() const { return resourceInfo.get(); }
+
+    MOCKABLE_VIRTUAL void *peekHandle() const { return handle; }
+
+    MOCKABLE_VIRTUAL size_t peekHandleSize() const { return handleSize; }
+
+    MOCKABLE_VIRTUAL void refreshHandle();
 
   protected:
     using UniquePtrType = std::unique_ptr<GMM_RESOURCE_INFO, std::function<void(GMM_RESOURCE_INFO *)>>;
@@ -84,10 +94,16 @@ class GmmResourceInfo {
 
     GmmResourceInfo(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo);
 
+    GmmResourceInfo(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo, bool openingHandle);
+
     void createResourceInfo(GMM_RESOURCE_INFO *resourceInfoPtr);
+    void decodeResourceInfo(GMM_RESOURCE_INFO *resourceInfoPtr, GMM_RESOURCE_INFO *inputGmmResourceInfo);
 
     UniquePtrType resourceInfo;
 
     GmmClientContext *clientContext = nullptr;
+
+    void *handle = nullptr;
+    size_t handleSize = 0;
 };
 } // namespace NEO

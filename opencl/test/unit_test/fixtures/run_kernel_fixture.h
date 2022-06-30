@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,8 @@
 
 #pragma once
 
-#include "shared/test/unit_test/helpers/test_files.h"
-
-#include "opencl/test/unit_test/global_environment.h"
+#include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/libult/global_environment.h"
 
 namespace NEO {
 struct CommandQueueHwFixture;
@@ -17,7 +16,6 @@ struct CommandStreamFixture;
 
 // helper functions to enforce MockCompiler input files
 inline void overwriteBuiltInBinaryName(
-    Device *pDevice,
     const std::string &filename,
     bool appendOptionsToFileName = false) {
     // set mock compiler to return expected kernel...
@@ -34,7 +32,7 @@ inline void overwriteBuiltInBinaryName(
     gEnvironment->igcPushDebugVars(igcDebugVars);
 }
 
-inline void restoreBuiltInBinaryName(Device *pDevice) {
+inline void restoreBuiltInBinaryName() {
     gEnvironment->igcPopDebugVars();
     gEnvironment->fclPopDebugVars();
 }

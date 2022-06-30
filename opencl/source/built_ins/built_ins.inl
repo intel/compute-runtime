@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,9 +11,9 @@
 #include "opencl/source/mem_obj/buffer.h"
 namespace NEO {
 
-BuiltInOp<EBuiltInOps::AuxTranslation>::BuiltInOp(BuiltIns &kernelsLib, Device &device) : BuiltinDispatchInfoBuilder(kernelsLib) {
-    BuiltinDispatchInfoBuilder::populate(device, EBuiltInOps::AuxTranslation, "", "fullCopy", baseKernel);
-
+BuiltInOp<EBuiltInOps::AuxTranslation>::BuiltInOp(BuiltIns &kernelsLib, ClDevice &device) : BuiltinDispatchInfoBuilder(kernelsLib, device) {
+    BuiltinDispatchInfoBuilder::populate(EBuiltInOps::AuxTranslation, "", "fullCopy", multiDeviceBaseKernel);
+    baseKernel = multiDeviceBaseKernel->getKernel(clDevice.getRootDeviceIndex());
     resizeKernelInstances(5);
 }
 
@@ -22,10 +22,10 @@ void BuiltInOp<EBuiltInOps::AuxTranslation>::resizeKernelInstances(size_t size) 
     convertToAuxKernel.reserve(size);
 
     for (size_t i = convertToNonAuxKernel.size(); i < size; i++) {
-        auto clonedNonAuxToAuxKernel = Kernel::create(baseKernel->getProgram(), baseKernel->getKernelInfo(), nullptr);
+        auto clonedNonAuxToAuxKernel = Kernel::create(baseKernel->getProgram(), baseKernel->getKernelInfo(), clDevice, nullptr);
         clonedNonAuxToAuxKernel->setAuxTranslationDirection(AuxTranslationDirection::NonAuxToAux);
 
-        auto clonedAuxToNonAuxKernel = Kernel::create(baseKernel->getProgram(), baseKernel->getKernelInfo(), nullptr);
+        auto clonedAuxToNonAuxKernel = Kernel::create(baseKernel->getProgram(), baseKernel->getKernelInfo(), clDevice, nullptr);
         clonedAuxToNonAuxKernel->setAuxTranslationDirection(AuxTranslationDirection::AuxToNonAux);
 
         clonedNonAuxToAuxKernel->cloneKernel(baseKernel);

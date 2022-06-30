@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,11 +12,8 @@ namespace NEO {
 
 using Family = TGLLPFamily;
 
-template <>
-void setFilterMode<Family>(Family::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo){};
-
 // clang-format off
-#include "shared/source/image/image_tgllp_plus.inl"
-#include "shared/source/image/image_skl_plus.inl"
+#include "shared/source/image/image_bdw_and_later.inl"
+#include "shared/source/image/image_skl_and_later.inl"
 // clang-format on
 } // namespace NEO

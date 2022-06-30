@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/source/kernel/grf_config.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
@@ -17,11 +19,11 @@ using clGetKernelMaxConcurrentWorkGroupCountTests = api_tests;
 namespace ULT {
 
 TEST_F(clGetKernelMaxConcurrentWorkGroupCountTests, GivenInvalidInputWhenCallingGetKernelMaxConcurrentWorkGroupCountThenErrorIsReturned) {
-    size_t globalWorkOffset[3];
-    size_t localWorkSize[3];
+    size_t globalWorkOffset[3] = {};
+    size_t localWorkSize[3] = {};
     size_t suggestedWorkGroupCount;
     cl_uint workDim = 1;
-    retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(nullptr, pKernel, workDim,
+    retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(nullptr, pMultiDeviceKernel, workDim,
                                                          globalWorkOffset, localWorkSize, &suggestedWorkGroupCount);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 
@@ -30,28 +32,24 @@ TEST_F(clGetKernelMaxConcurrentWorkGroupCountTests, GivenInvalidInputWhenCalling
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
 
     pKernel->isPatchedOverride = false;
-    retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(pCommandQueue, pKernel, workDim,
+    retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(pCommandQueue, pMultiDeviceKernel, workDim,
                                                          globalWorkOffset, localWorkSize, &suggestedWorkGroupCount);
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
     pKernel->isPatchedOverride = true;
 
-    retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(pCommandQueue, pKernel, workDim,
+    retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(pCommandQueue, pMultiDeviceKernel, workDim,
                                                          globalWorkOffset, localWorkSize, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
-    retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(pCommandQueue, pKernel, 0,
+    retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(pCommandQueue, pMultiDeviceKernel, 0,
                                                          globalWorkOffset, localWorkSize, &suggestedWorkGroupCount);
     EXPECT_EQ(CL_INVALID_WORK_DIMENSION, retVal);
 
-    retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(pCommandQueue, pKernel, 4,
+    retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(pCommandQueue, pMultiDeviceKernel, 4,
                                                          globalWorkOffset, localWorkSize, &suggestedWorkGroupCount);
     EXPECT_EQ(CL_INVALID_WORK_DIMENSION, retVal);
 
-    retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(pCommandQueue, pKernel, workDim,
-                                                         nullptr, localWorkSize, &suggestedWorkGroupCount);
-    EXPECT_EQ(CL_INVALID_GLOBAL_OFFSET, retVal);
-
-    retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(pCommandQueue, pKernel, workDim,
+    retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(pCommandQueue, pMultiDeviceKernel, workDim,
                                                          globalWorkOffset, nullptr, &suggestedWorkGroupCount);
     EXPECT_EQ(CL_INVALID_WORK_GROUP_SIZE, retVal);
 }
@@ -61,18 +59,27 @@ TEST_F(clGetKernelMaxConcurrentWorkGroupCountTests, GivenVariousInputWhenGetting
     size_t globalWorkOffset[] = {0, 0, 0};
     size_t localWorkSize[] = {8, 8, 8};
     size_t maxConcurrentWorkGroupCount = 0;
-    retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(pCommandQueue, pKernel, workDim, globalWorkOffset, localWorkSize,
+    const_cast<KernelInfo &>(pKernel->getKernelInfo()).kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
+
+    retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(pCommandQueue, pMultiDeviceKernel, workDim, globalWorkOffset, localWorkSize,
                                                          &maxConcurrentWorkGroupCount);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    size_t expectedMaxConcurrentWorkGroupCount = pKernel->getMaxWorkGroupCount(workDim, localWorkSize);
+    size_t expectedMaxConcurrentWorkGroupCount = pKernel->getMaxWorkGroupCount(workDim, localWorkSize, pCommandQueue);
     EXPECT_EQ(expectedMaxConcurrentWorkGroupCount, maxConcurrentWorkGroupCount);
 
-    std::unique_ptr<MockKernel> pKernelWithExecutionEnvironmentPatch(MockKernel::create(pCommandQueue->getDevice(), pProgram));
-    retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(pCommandQueue, pKernelWithExecutionEnvironmentPatch.get(), workDim,
+    retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(pCommandQueue, pMultiDeviceKernel, workDim, nullptr, localWorkSize,
+                                                         &maxConcurrentWorkGroupCount);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(expectedMaxConcurrentWorkGroupCount, maxConcurrentWorkGroupCount);
+
+    auto pKernelWithExecutionEnvironmentPatch = MockKernel::create(pCommandQueue->getDevice(), pProgram);
+    auto kernelInfos = MockKernel::toKernelInfoContainer(pKernelWithExecutionEnvironmentPatch->getKernelInfo(), testedRootDeviceIndex);
+    MultiDeviceKernel multiDeviceKernelWithExecutionEnvironmentPatch(MockMultiDeviceKernel::toKernelVector(pKernelWithExecutionEnvironmentPatch), kernelInfos);
+    retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(pCommandQueue, &multiDeviceKernelWithExecutionEnvironmentPatch, workDim,
                                                          globalWorkOffset, localWorkSize,
                                                          &maxConcurrentWorkGroupCount);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    expectedMaxConcurrentWorkGroupCount = pKernelWithExecutionEnvironmentPatch->getMaxWorkGroupCount(workDim, localWorkSize);
+    expectedMaxConcurrentWorkGroupCount = pKernelWithExecutionEnvironmentPatch->getMaxWorkGroupCount(workDim, localWorkSize, pCommandQueue);
     EXPECT_EQ(expectedMaxConcurrentWorkGroupCount, maxConcurrentWorkGroupCount);
 }
 

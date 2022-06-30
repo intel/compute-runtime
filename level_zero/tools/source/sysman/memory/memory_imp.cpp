@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,39 +7,36 @@
 
 #include "level_zero/tools/source/sysman/memory/memory_imp.h"
 
-#include "level_zero/core/source/device/device.h"
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 
 namespace L0 {
 
-ze_result_t MemoryImp::memoryGetBandwidth(zet_mem_bandwidth_t *pBandwidth) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+ze_result_t MemoryImp::memoryGetBandwidth(zes_mem_bandwidth_t *pBandwidth) {
+    return pOsMemory->getBandwidth(pBandwidth);
 }
 
-ze_result_t MemoryImp::memoryGetState(zet_mem_state_t *pState) {
+ze_result_t MemoryImp::memoryGetState(zes_mem_state_t *pState) {
+    return pOsMemory->getState(pState);
+}
 
-    ze_result_t result;
+ze_result_t MemoryImp::memoryGetProperties(zes_mem_properties_t *pProperties) {
+    *pProperties = memoryProperties;
+    return ZE_RESULT_SUCCESS;
+}
 
-    result = pOsMemory->getAllocSize(pState->allocatedSize);
-    if (ZE_RESULT_SUCCESS != result) {
-        return result;
+void MemoryImp::init() {
+    this->initSuccess = pOsMemory->isMemoryModuleSupported();
+    if (this->initSuccess == true) {
+        pOsMemory->getProperties(&memoryProperties);
     }
-
-    result = pOsMemory->getMaxSize(pState->maxSize);
-    if (ZE_RESULT_SUCCESS != result) {
-        return result;
-    }
-
-    result = pOsMemory->getMemHealth(pState->health);
-
-    return result;
 }
 
-ze_result_t MemoryImp::memoryGetProperties(zet_mem_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-MemoryImp::MemoryImp(OsSysman *pOsSysman, ze_device_handle_t hDevice) {
-    pOsMemory = OsMemory::create(pOsSysman);
-    hCoreDevice = hDevice;
+MemoryImp::MemoryImp(OsSysman *pOsSysman, ze_device_handle_t handle) {
+    uint32_t subdeviceId = 0;
+    ze_bool_t onSubdevice = false;
+    SysmanDeviceImp::getSysmanDeviceInfo(handle, subdeviceId, onSubdevice);
+    pOsMemory = OsMemory::create(pOsSysman, onSubdevice, subdeviceId);
+    init();
 }
 
 MemoryImp::~MemoryImp() {

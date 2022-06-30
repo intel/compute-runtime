@@ -1,15 +1,14 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/os_interface/windows/os_interface.h"
-
-#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
-#include "opencl/test/unit_test/os_interface/windows/wddm_fixture.h"
+#include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/os_interface/windows/wddm_fixture.h"
 
 #include "gtest/gtest.h"
 #include "mock_os_time_win.h"
@@ -75,7 +74,7 @@ TEST(OSTimeWinTests, givenNoOSInterfaceWhenGetCpuTimeThenReturnsSuccess) {
     auto osTime(OSTime::create(nullptr));
     auto error = osTime->getCpuTime(&time);
     EXPECT_TRUE(error);
-    EXPECT_NE(0, time);
+    EXPECT_NE(0u, time);
 }
 
 TEST(OSTimeWinTests, givenNoOSInterfaceWhenGetCpuGpuTimeThenReturnsError) {
@@ -83,27 +82,28 @@ TEST(OSTimeWinTests, givenNoOSInterfaceWhenGetCpuGpuTimeThenReturnsError) {
     auto osTime(OSTime::create(nullptr));
     auto success = osTime->getCpuGpuTime(&CPUGPUTime);
     EXPECT_FALSE(success);
-    EXPECT_EQ(0, CPUGPUTime.CPUTimeinNS);
-    EXPECT_EQ(0, CPUGPUTime.GPUTimeStamp);
+    EXPECT_EQ(0u, CPUGPUTime.CPUTimeinNS);
+    EXPECT_EQ(0u, CPUGPUTime.GPUTimeStamp);
 }
 
 TEST(OSTimeWinTests, givenOSInterfaceWhenGetCpuGpuTimeThenReturnsSuccess) {
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
+    rootDeviceEnvironment.setHwInfo(defaultHwInfo.get());
     auto wddm = new WddmMock(rootDeviceEnvironment);
     TimeStampData CPUGPUTime01 = {0};
     TimeStampData CPUGPUTime02 = {0};
     std::unique_ptr<OSInterface> osInterface(new OSInterface());
-    osInterface->get()->setWddm(wddm);
+    osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
     auto osTime = OSTime::create(osInterface.get());
     auto success = osTime->getCpuGpuTime(&CPUGPUTime01);
     EXPECT_TRUE(success);
-    EXPECT_NE(0, CPUGPUTime01.CPUTimeinNS);
-    EXPECT_NE(0, CPUGPUTime01.GPUTimeStamp);
+    EXPECT_NE(0u, CPUGPUTime01.CPUTimeinNS);
+    EXPECT_NE(0u, CPUGPUTime01.GPUTimeStamp);
     success = osTime->getCpuGpuTime(&CPUGPUTime02);
     EXPECT_TRUE(success);
-    EXPECT_NE(0, CPUGPUTime02.CPUTimeinNS);
-    EXPECT_NE(0, CPUGPUTime02.GPUTimeStamp);
+    EXPECT_NE(0u, CPUGPUTime02.CPUTimeinNS);
+    EXPECT_NE(0u, CPUGPUTime02.GPUTimeStamp);
     EXPECT_GT(CPUGPUTime02.GPUTimeStamp, CPUGPUTime01.GPUTimeStamp);
     EXPECT_GT(CPUGPUTime02.CPUTimeinNS, CPUGPUTime01.CPUTimeinNS);
 }

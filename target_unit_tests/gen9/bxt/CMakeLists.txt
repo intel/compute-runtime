@@ -5,6 +5,6 @@
 #
 
 if(TESTS_BXT)
-  set(unit_test_config "bxt/1/3/6")
+  set(unit_test_config "bxt/1/3/6/0")
   include(${NEO_SOURCE_DIR}/cmake/run_ult_target.cmake)
 endif()

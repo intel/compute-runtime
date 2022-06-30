@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,6 +43,7 @@ D3DSharing<D3D>::~D3DSharing() {
 
 template <typename D3D>
 void D3DSharing<D3D>::synchronizeObject(UpdateData &updateData) {
+    std::unique_lock<std::mutex> lock(this->mtx);
     sharingFunctions->getDeviceContext(d3dQuery);
     if (!sharedResource) {
         sharingFunctions->copySubresourceRegion(resourceStaging, 0, resource, subresource);
@@ -58,6 +59,7 @@ void D3DSharing<D3D>::synchronizeObject(UpdateData &updateData) {
 template <typename D3D>
 void D3DSharing<D3D>::releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) {
     if (!sharedResource) {
+        std::unique_lock<std::mutex> lock(this->mtx);
         sharingFunctions->getDeviceContext(d3dQuery);
         sharingFunctions->copySubresourceRegion(resource, subresource, resourceStaging, 0);
         if (!context->getInteropUserSyncEnabled()) {
@@ -82,13 +84,22 @@ void D3DSharing<D3D>::updateImgInfoAndDesc(Gmm *gmm, ImageInfo &imgInfo, ImagePl
 }
 
 template <typename D3D>
-const ClSurfaceFormatInfo *D3DSharing<D3D>::findSurfaceFormatInfo(GMM_RESOURCE_FORMAT_ENUM gmmFormat, cl_mem_flags flags, bool supportsOcl20Features) {
+const ClSurfaceFormatInfo *D3DSharing<D3D>::findSurfaceFormatInfo(GMM_RESOURCE_FORMAT_ENUM gmmFormat, cl_mem_flags flags, bool supportsOcl20Features, bool packedSupported) {
     ArrayRef<const ClSurfaceFormatInfo> formats = SurfaceFormats::surfaceFormats(flags, supportsOcl20Features);
     for (auto &format : formats) {
         if (gmmFormat == format.surfaceFormat.GMMSurfaceFormat) {
             return &format;
         }
     }
+    if (packedSupported) {
+        formats = SurfaceFormats::packed();
+        for (auto &format : formats) {
+            if (gmmFormat == format.surfaceFormat.GMMSurfaceFormat) {
+                return &format;
+            }
+        }
+    }
+
     return nullptr;
 }
 
@@ -98,6 +109,9 @@ bool D3DSharing<D3D>::isFormatWithPlane1(DXGI_FORMAT format) {
     case DXGI_FORMAT_NV12:
     case DXGI_FORMAT_P010:
     case DXGI_FORMAT_P016:
+    case DXGI_FORMAT_420_OPAQUE:
+    case DXGI_FORMAT_NV11:
+    case DXGI_FORMAT_P208:
         return true;
     }
     return false;

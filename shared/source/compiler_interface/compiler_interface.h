@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -105,7 +105,7 @@ class CompilerInterface {
     virtual ~CompilerInterface();
 
     template <typename CompilerInterfaceT = CompilerInterface>
-    static CompilerInterfaceT *createInstance(std::unique_ptr<CompilerCache> cache, bool requireFcl) {
+    static CompilerInterfaceT *createInstance(std::unique_ptr<CompilerCache> &&cache, bool requireFcl) {
         auto instance = new CompilerInterfaceT();
         if (!instance->initialize(std::move(cache), requireFcl)) {
             delete instance;
@@ -133,10 +133,13 @@ class CompilerInterface {
                                                const TranslationInput &input,
                                                TranslationOutput &output);
 
-    MOCKABLE_VIRTUAL TranslationOutput::ErrorCode getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary);
+    MOCKABLE_VIRTUAL TranslationOutput::ErrorCode getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary,
+                                                                     std::vector<char> &stateSaveAreaHeader);
+
+    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> getIgcFeaturesAndWorkarounds(const NEO::Device &device);
 
   protected:
-    MOCKABLE_VIRTUAL bool initialize(std::unique_ptr<CompilerCache> cache, bool requireFcl);
+    MOCKABLE_VIRTUAL bool initialize(std::unique_ptr<CompilerCache> &&cache, bool requireFcl);
     MOCKABLE_VIRTUAL bool loadFcl();
     MOCKABLE_VIRTUAL bool loadIgc();
 

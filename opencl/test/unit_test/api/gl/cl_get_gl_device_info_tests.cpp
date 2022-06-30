@@ -30,7 +30,7 @@ struct GetDeviceInfoP : public ApiFixture<>, public ::testing::TestWithParam<uin
 
 typedef GetDeviceInfoP GetDeviceGlInfoStr;
 
-TEST_P(GetDeviceGlInfoStr, StringType) {
+TEST_P(GetDeviceGlInfoStr, WhenGettingDeviceExtensionsThenExtensionsAreReportedCorrectly) {
     char *paramValue = nullptr;
     size_t paramRetSize = 0;
 
@@ -84,8 +84,8 @@ TEST_P(GetDeviceGlInfoStr, StringType) {
 
 // Define new command types to run the parameterized tests
 static cl_device_info deviceInfoStrParams[] = {
-    CL_DEVICE_BUILT_IN_KERNELS, CL_DEVICE_EXTENSIONS, CL_DEVICE_NAME, CL_DEVICE_OPENCL_C_VERSION,
-    CL_DEVICE_PROFILE, CL_DEVICE_VENDOR, CL_DEVICE_VERSION, CL_DRIVER_VERSION};
+    CL_DEVICE_BUILT_IN_KERNELS, CL_DEVICE_EXTENSIONS, CL_DEVICE_LATEST_CONFORMANCE_VERSION_PASSED, CL_DEVICE_NAME,
+    CL_DEVICE_OPENCL_C_VERSION, CL_DEVICE_PROFILE, CL_DEVICE_VENDOR, CL_DEVICE_VERSION, CL_DRIVER_VERSION};
 
 INSTANTIATE_TEST_CASE_P(api, GetDeviceGlInfoStr, testing::ValuesIn(deviceInfoStrParams));
 

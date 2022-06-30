@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ namespace NEO {
 class TimeMeasureWrapper {
   public:
     template <class O, class F, class... Args>
-    static decltype(auto) functionExecution(O &&obj, F &&func, Args &&... args) {
+    static decltype(auto) functionExecution(O &&obj, F &&func, Args &&...args) {
         auto start = std::chrono::system_clock::now();
         auto retVal = (obj.*func)(std::forward<Args>(args)...);
         auto end = std::chrono::system_clock::now();

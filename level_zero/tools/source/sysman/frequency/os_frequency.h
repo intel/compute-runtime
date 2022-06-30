@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,25 +8,30 @@
 #pragma once
 
 #include "level_zero/tools/source/sysman/os_sysman.h"
-#include <level_zero/zet_api.h>
 
 namespace L0 {
 
 class OsFrequency {
   public:
-    virtual ze_result_t getMin(double &min) = 0;
-    virtual ze_result_t setMin(double min) = 0;
-    virtual ze_result_t getMax(double &max) = 0;
-    virtual ze_result_t setMax(double max) = 0;
-    virtual ze_result_t getRequest(double &request) = 0;
-    virtual ze_result_t getTdp(double &tdp) = 0;
-    virtual ze_result_t getActual(double &actual) = 0;
-    virtual ze_result_t getEfficient(double &efficient) = 0;
-    virtual ze_result_t getMaxVal(double &maxVal) = 0;
-    virtual ze_result_t getMinVal(double &minVal) = 0;
-    virtual ze_result_t getThrottleReasons(uint32_t &throttleReasons) = 0;
-
-    static OsFrequency *create(OsSysman *pOsSysman);
+    virtual ze_result_t osFrequencyGetProperties(zes_freq_properties_t &properties) = 0;
+    virtual double osFrequencyGetStepSize() = 0;
+    virtual ze_result_t osFrequencyGetRange(zes_freq_range_t *pLimits) = 0;
+    virtual ze_result_t osFrequencySetRange(const zes_freq_range_t *pLimits) = 0;
+    virtual ze_result_t osFrequencyGetState(zes_freq_state_t *pState) = 0;
+    virtual ze_result_t osFrequencyGetThrottleTime(zes_freq_throttle_time_t *pThrottleTime) = 0;
+    virtual ze_result_t getOcCapabilities(zes_oc_capabilities_t *pOcCapabilities) = 0;
+    virtual ze_result_t getOcFrequencyTarget(double *pCurrentOcFrequency) = 0;
+    virtual ze_result_t setOcFrequencyTarget(double currentOcFrequency) = 0;
+    virtual ze_result_t getOcVoltageTarget(double *pCurrentVoltageTarget, double *pCurrentVoltageOffset) = 0;
+    virtual ze_result_t setOcVoltageTarget(double currentVoltageTarget, double currentVoltageOffset) = 0;
+    virtual ze_result_t getOcMode(zes_oc_mode_t *pCurrentOcMode) = 0;
+    virtual ze_result_t setOcMode(zes_oc_mode_t currentOcMode) = 0;
+    virtual ze_result_t getOcIccMax(double *pOcIccMax) = 0;
+    virtual ze_result_t setOcIccMax(double ocIccMax) = 0;
+    virtual ze_result_t getOcTjMax(double *pOcTjMax) = 0;
+    virtual ze_result_t setOcTjMax(double ocTjMax) = 0;
+    static OsFrequency *create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_freq_domain_t type);
+    static uint16_t getNumberOfFreqDoainsSupported(OsSysman *pOsSysman);
     virtual ~OsFrequency() {}
 };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,7 +74,7 @@ TEST_P(KernelSubGroupInfoKhrReturnSizeTest, GivenLwsParameterWhenGettingMaxSubGr
     paramValueSizeRet = 0;
 
     retVal = clGetKernelSubGroupInfoKHR(
-        pKernel,
+        pMultiDeviceKernel,
         pClDevice,
         CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE,
         sizeof(size_t) * 3,
@@ -103,7 +103,7 @@ TEST_P(KernelSubGroupInfoKhrReturnCountTest, GivenLwsParameterWhenGettingSubGrou
     CalculatedWGS = inputValue[0] * inputValue[1] * inputValue[2];
 
     retVal = clGetKernelSubGroupInfoKHR(
-        pKernel,
+        pMultiDeviceKernel,
         pClDevice,
         CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE,
         sizeof(size_t) * 3,
@@ -127,7 +127,7 @@ typedef KernelSubGroupInfoKhrParamFixture<TestParam> KernelSubGroupInfoKhrReturn
 TEST_F(KernelSubGroupInfoKhrReturnCompileSizeTest, GivenKernelWhenGettingRequiredSubGroupSizeThenCorrectValueIsReturned) {
 
     retVal = clGetKernelSubGroupInfoKHR(
-        pKernel,
+        pMultiDeviceKernel,
         pClDevice,
         CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL,
         0,
@@ -141,11 +141,11 @@ TEST_F(KernelSubGroupInfoKhrReturnCompileSizeTest, GivenKernelWhenGettingRequire
     EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
 
     size_t requiredSubGroupSize = 0;
-    auto start = pKernel->getKernelInfo().attributes.find("intel_reqd_sub_group_size(");
+    auto start = pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelLanguageAttributes.find("intel_reqd_sub_group_size(");
     if (start != std::string::npos) {
         start += strlen("intel_reqd_sub_group_size(");
-        auto stop = pKernel->getKernelInfo().attributes.find(")", start);
-        requiredSubGroupSize = stoi(pKernel->getKernelInfo().attributes.substr(start, stop - start));
+        auto stop = pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelLanguageAttributes.find(")", start);
+        requiredSubGroupSize = stoi(pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelLanguageAttributes.substr(start, stop - start));
     }
 
     EXPECT_EQ(paramValue, requiredSubGroupSize);
@@ -165,23 +165,59 @@ TEST_F(KernelSubGroupInfoKhrTest, GivenNullKernelWhenGettingKernelSubGroupInfoTh
     EXPECT_EQ(retVal, CL_INVALID_KERNEL);
 }
 
-TEST_F(KernelSubGroupInfoKhrTest, GivenNullDeviceWhenGettingKernelSubGroupInfoThenInvalidDeviceErrorIsReturned) {
-    retVal = clGetKernelSubGroupInfoKHR(
-        pKernel,
-        nullptr,
-        0,
-        0,
-        nullptr,
-        0,
-        nullptr,
-        nullptr);
+TEST_F(KernelSubGroupInfoKhrTest, GivenInvalidDeviceWhenGettingSubGroupInfoFromSingleDeviceKernelThenInvalidDeviceErrorIsReturned) {
 
-    EXPECT_EQ(retVal, CL_INVALID_DEVICE);
+    retVal = clGetKernelSubGroupInfoKHR(
+        pMultiDeviceKernel,
+        reinterpret_cast<cl_device_id>(pKernel),
+        CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL,
+        0,
+        nullptr,
+        sizeof(size_t),
+        &paramValue,
+        &paramValueSizeRet);
+
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+}
+
+TEST_F(KernelSubGroupInfoKhrTest, GivenNullDeviceWhenGettingSubGroupInfoFromSingleDeviceKernelThenSuccessIsReturned) {
+
+    retVal = clGetKernelSubGroupInfoKHR(
+        pMultiDeviceKernel,
+        nullptr,
+        CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL,
+        0,
+        nullptr,
+        sizeof(size_t),
+        &paramValue,
+        &paramValueSizeRet);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(KernelSubGroupInfoKhrTest, GivenNullDeviceWhenGettingSubGroupInfoFromMultiDeviceKernelThenInvalidDeviceErrorIsReturned) {
+
+    MockUnrestrictiveContext context;
+    auto mockProgram = std::make_unique<MockProgram>(&context, false, context.getDevices());
+    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(
+        MultiDeviceKernel::create<MockKernel>(mockProgram.get(), this->pMultiDeviceKernel->getKernelInfos(), nullptr));
+
+    retVal = clGetKernelSubGroupInfoKHR(
+        pMultiDeviceKernel.get(),
+        nullptr,
+        CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL,
+        0,
+        nullptr,
+        sizeof(size_t),
+        &paramValue,
+        &paramValueSizeRet);
+
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
 TEST_F(KernelSubGroupInfoKhrTest, GivenInvalidParamNameWhenGettingKernelSubGroupInfoThenInvalidValueErrorIsReturned) {
     retVal = clGetKernelSubGroupInfoKHR(
-        pKernel,
+        pMultiDeviceKernel,
         pClDevice,
         0,
         sizeof(size_t),
@@ -206,7 +242,7 @@ INSTANTIATE_TEST_CASE_P(KernelSubGroupInfoKhrInputParams,
 TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidInputWhenGettingKernelSubGroupInfoThenInvalidValueErrorIsReturned) {
     // work dim == 0
     retVal = clGetKernelSubGroupInfoKHR(
-        pKernel,
+        pMultiDeviceKernel,
         pClDevice,
         GetParam(),
         0,
@@ -219,7 +255,7 @@ TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidInputWhenGettingKernelS
 
     // work dim % sizeof(size_t) != 0
     retVal = clGetKernelSubGroupInfoKHR(
-        pKernel,
+        pMultiDeviceKernel,
         pClDevice,
         GetParam(),
         (sizeof(size_t) * MaxWorkDim) - 1,
@@ -232,7 +268,7 @@ TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidInputWhenGettingKernelS
 
     // work dim > MaxWorkDim
     retVal = clGetKernelSubGroupInfoKHR(
-        pKernel,
+        pMultiDeviceKernel,
         pClDevice,
         GetParam(),
         sizeof(size_t) * (MaxWorkDim + 1),
@@ -245,7 +281,7 @@ TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidInputWhenGettingKernelS
 
     // null input_value
     retVal = clGetKernelSubGroupInfoKHR(
-        pKernel,
+        pMultiDeviceKernel,
         pClDevice,
         GetParam(),
         sizeof(size_t) * (MaxWorkDim),
@@ -260,7 +296,7 @@ TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidInputWhenGettingKernelS
 TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidParamSizeWhenGettingKernelSubGroupInfoThenInvalidValueErrorIsReturned) {
     //param_value_size < sizeof(size_t)
     retVal = clGetKernelSubGroupInfoKHR(
-        pKernel,
+        pMultiDeviceKernel,
         pClDevice,
         GetParam(),
         sizeof(size_t),
@@ -274,7 +310,7 @@ TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidParamSizeWhenGettingKer
 
 TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenNoReturnPointerWhenGettingKernelSubGroupInfoThenSuccessIsReturned) {
     retVal = clGetKernelSubGroupInfoKHR(
-        pKernel,
+        pMultiDeviceKernel,
         pClDevice,
         GetParam(),
         sizeof(size_t),

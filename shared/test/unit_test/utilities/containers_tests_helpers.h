@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ size_t countArgs(const Arg1 &arg1) {
 }
 
 template <typename Arg1, typename... Rest>
-size_t countArgs(const Arg1 &arg1, const Rest &... rest) {
+size_t countArgs(const Arg1 &arg1, const Rest &...rest) {
     return 1 + countArgs(rest...);
 }
 
@@ -29,7 +29,7 @@ int verifySequence(const NodeObjectType *base, int nodeNum, const NodeObjectType
 }
 
 template <typename NodeObjectType, typename... Rest>
-int verifySequence(const NodeObjectType *base, int nodeNum, const NodeObjectType *current, const Rest *... rest) {
+int verifySequence(const NodeObjectType *base, int nodeNum, const NodeObjectType *current, const Rest *...rest) {
     if (base == nullptr) {
         return nodeNum - 1;
     } else if (base == current) {
@@ -43,7 +43,7 @@ int verifySequence(const NodeObjectType *base, int nodeNum, const NodeObjectType
 // Negative return values indicates that the sequence is ordered as requested.
 // Non-negative value indicates first node that breaks the order.
 template <typename NodeObjectType, typename... Rest>
-int verifySequence(const NodeObjectType *base, const NodeObjectType *first, const Rest *... rest) {
+int verifySequence(const NodeObjectType *base, const NodeObjectType *first, const Rest *...rest) {
     return verifySequence(base, 0, first, rest...);
 }
 
@@ -52,7 +52,7 @@ int verifySequence(const NodeObjectType *base, const NodeObjectType *first, cons
 // Non-negative value indicates first node that breaks the order.
 // Note : verifies also "last->tail == nulptr"
 template <typename NodeObjectType, typename... Rest>
-int verifyFListOrder(const NodeObjectType *base, const NodeObjectType *first, const Rest *... rest) {
+int verifyFListOrder(const NodeObjectType *base, const NodeObjectType *first, const Rest *...rest) {
     NodeObjectType *sentinel = nullptr;
     int sequenceRet = verifySequence(base, first, rest..., sentinel);
     if (sequenceRet < 0) {
@@ -72,7 +72,7 @@ int verifyFListOrder(const NodeObjectType *base, const NodeObjectType *first, co
 // Non-negative value indicates first node that breaks the order.
 // Note : verifies also "first->prev == nullptr" and "last->tail == nulptr"
 template <typename NodeObjectType, typename... Rest>
-int verifyDListOrder(const NodeObjectType *base, const NodeObjectType *first, const Rest *... rest) {
+int verifyDListOrder(const NodeObjectType *base, const NodeObjectType *first, const Rest *...rest) {
     if (base->prev != nullptr) {
         return 0;
     }

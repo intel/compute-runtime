@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
-#include <Windows.h>
+#include <windows.h>
 
 uint32_t getEnvironmentVariable(const char *name, char *outBuffer, uint32_t outBufferSize) {
     if (NEO::DebugManager.registryReadAvailable() == false) {

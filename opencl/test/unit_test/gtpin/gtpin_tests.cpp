@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,11 +11,18 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hash.h"
 #include "shared/source/memory_manager/surface.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/test/common/fixtures/memory_management_fixture.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/kernel_binary_helper.h"
+#include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
-#include "shared/test/unit_test/helpers/test_files.h"
-#include "shared/test/unit_test/helpers/variable_backup.h"
-#include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/unit_test/page_fault_manager/mock_cpu_page_fault_manager.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/context/context.h"
@@ -24,20 +31,19 @@
 #include "opencl/source/gtpin/gtpin_hw_helper.h"
 #include "opencl/source/gtpin/gtpin_init.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
+#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/program/create.inl"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
-#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
-#include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/program/program_tests.h"
-#include "test.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "gtest/gtest.h"
 
@@ -49,7 +55,8 @@ using namespace gtpin;
 
 namespace NEO {
 extern std::deque<gtpinkexec_t> kernelExecQueue;
-}
+extern GTPinHwHelper *gtpinHwHelperFactory[IGFX_MAX_CORE];
+} // namespace NEO
 
 namespace ULT {
 
@@ -67,7 +74,7 @@ context_handle_t currContext = nullptr;
 std::deque<resource_handle_t> kernelResources;
 platform_info_t platformInfo;
 
-void OnContextCreate(context_handle_t context, platform_info_t *platformInfo, igc_init_t **igcInit) {
+void onContextCreate(context_handle_t context, platform_info_t *platformInfo, igc_init_t **igcInit) {
     ULT::platformInfo.gen_version = platformInfo->gen_version;
     currContext = context;
     kernelResources.clear();
@@ -75,21 +82,21 @@ void OnContextCreate(context_handle_t context, platform_info_t *platformInfo, ig
     *igcInit = reinterpret_cast<igc_init_t *>(0x1234);
 }
 
-void OnContextDestroy(context_handle_t context) {
+void onContextDestroy(context_handle_t context) {
     currContext = nullptr;
     EXPECT_EQ(0u, kernelResources.size());
     kernelResources.clear();
     ContextDestroyCallbackCount++;
 }
 
-void OnKernelCreate(context_handle_t context, const instrument_params_in_t *paramsIn, instrument_params_out_t *paramsOut) {
+void onKernelCreate(context_handle_t context, const instrument_params_in_t *paramsIn, instrument_params_out_t *paramsOut) {
     paramsOut->inst_kernel_binary = const_cast<uint8_t *>(paramsIn->orig_kernel_binary);
     paramsOut->inst_kernel_size = paramsIn->orig_kernel_size;
     paramsOut->kernel_id = paramsIn->igc_hash_id;
     KernelCreateCallbackCount++;
 }
 
-void OnKernelSubmit(command_buffer_handle_t cb, uint64_t kernelId, uint32_t *entryOffset, resource_handle_t *resource) {
+void onKernelSubmit(command_buffer_handle_t cb, uint64_t kernelId, uint32_t *entryOffset, resource_handle_t *resource) {
     resource_handle_t currResource = nullptr;
     ASSERT_NE(nullptr, currContext);
     if (!returnNullResource) {
@@ -109,11 +116,11 @@ void OnKernelSubmit(command_buffer_handle_t cb, uint64_t kernelId, uint32_t *ent
     KernelSubmitCallbackCount++;
 }
 
-void OnCommandBufferCreate(context_handle_t context, command_buffer_handle_t cb) {
+void onCommandBufferCreate(context_handle_t context, command_buffer_handle_t cb) {
     CommandBufferCreateCallbackCount++;
 }
 
-void OnCommandBufferComplete(command_buffer_handle_t cb) {
+void onCommandBufferComplete(command_buffer_handle_t cb) {
     ASSERT_NE(nullptr, currContext);
     resource_handle_t currResource = kernelResources[0];
     EXPECT_NE(nullptr, currResource);
@@ -129,6 +136,7 @@ void OnCommandBufferComplete(command_buffer_handle_t cb) {
 
 class MockMemoryManagerWithFailures : public OsAgnosticMemoryManager {
   public:
+    using OsAgnosticMemoryManager::pageFaultManager;
     MockMemoryManagerWithFailures(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(executionEnvironment){};
 
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override {
@@ -140,24 +148,40 @@ class MockMemoryManagerWithFailures : public OsAgnosticMemoryManager {
     }
     bool failAllAllocationsInDevicePool = false;
 };
+struct MockResidentTestsPageFaultManager : public MockPageFaultManager {
+    void moveAllocationToGpuDomain(void *ptr) override {
+        moveAllocationToGpuDomainCalledTimes++;
+        migratedAddress = ptr;
+    }
+    uint32_t moveAllocationToGpuDomainCalledTimes = 0;
+    void *migratedAddress = nullptr;
+};
 
 class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
     using ContextFixture::SetUp;
 
   public:
     void SetUp() override {
-        platformsImpl.clear();
+        DebugManager.flags.GTPinAllocateBufferInSharedMemory.set(false);
+        setUpImpl();
+    }
+
+    void setUpImpl() {
+        platformsImpl->clear();
         MemoryManagementFixture::SetUp();
         constructPlatform();
         pPlatform = platform();
         auto executionEnvironment = pPlatform->peekExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->initGmm();
         memoryManager = new MockMemoryManagerWithFailures(*executionEnvironment);
+        memoryManager->pageFaultManager.reset(new MockResidentTestsPageFaultManager());
         executionEnvironment->memoryManager.reset(memoryManager);
         initPlatform();
         pDevice = pPlatform->getClDevice(0);
-        cl_device_id device = (cl_device_id)pDevice;
+        rootDeviceIndex = pDevice->getRootDeviceIndex();
+        cl_device_id device = pDevice;
         ContextFixture::SetUp(1, &device);
 
         driverServices.bufferAllocate = nullptr;
@@ -178,7 +202,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
 
     void TearDown() override {
         ContextFixture::TearDown();
-        platformsImpl.clear();
+        platformsImpl->clear();
         MemoryManagementFixture::TearDown();
         NEO::isGTPinInitialized = false;
     }
@@ -190,6 +214,8 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
     driver_services_t driverServices;
     gtpin::ocl::gtpin_events_t gtpinCallbacks;
     MockMemoryManagerWithFailures *memoryManager = nullptr;
+    uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
+    DebugManagerStateRestore restore;
 };
 
 typedef Test<GTPinFixture> GTPinTests;
@@ -221,23 +247,23 @@ TEST_F(GTPinTests, givenIncompleteArgumentsThenGTPinInitFails) {
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, &ver);
     EXPECT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
 
-    gtpinCallbacks.onContextCreate = OnContextCreate;
+    gtpinCallbacks.onContextCreate = onContextCreate;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
 
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
 
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
 
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
 
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
 }
@@ -266,12 +292,12 @@ TEST_F(GTPinTests, givenInvalidArgumentsWhenVersionArgumentIsProvidedThenGTPinIn
 TEST_F(GTPinTests, givenValidAndCompleteArgumentsThenGTPinInitSucceeds) {
     bool isInitialized = false;
 
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
     EXPECT_EQ(&NEO::gtpinCreateBuffer, driverServices.bufferAllocate);
@@ -283,12 +309,12 @@ TEST_F(GTPinTests, givenValidAndCompleteArgumentsThenGTPinInitSucceeds) {
 }
 
 TEST_F(GTPinTests, givenValidAndCompleteArgumentsWhenGTPinIsAlreadyInitializedThenGTPinInitFails) {
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
     EXPECT_EQ(&NEO::gtpinCreateBuffer, driverServices.bufferAllocate);
@@ -304,12 +330,12 @@ TEST_F(GTPinTests, givenInvalidArgumentsThenBufferAllocateFails) {
     resource_handle_t res;
     uint32_t buffSize = 400u;
 
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
     ASSERT_EQ(&NEO::gtpinCreateBuffer, driverServices.bufferAllocate);
@@ -326,12 +352,12 @@ TEST_F(GTPinTests, givenInvalidArgumentsThenBufferAllocateFails) {
 }
 
 TEST_F(GTPinTests, givenInvalidArgumentsThenBufferDeallocateFails) {
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
     EXPECT_EQ(&NEO::gtpinCreateBuffer, driverServices.bufferAllocate);
@@ -351,12 +377,12 @@ TEST_F(GTPinTests, givenInvalidArgumentsThenBufferDeallocateFails) {
 }
 
 TEST_F(GTPinTests, givenInvalidArgumentsThenBufferMapFails) {
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
     EXPECT_EQ(&NEO::gtpinCreateBuffer, driverServices.bufferAllocate);
@@ -377,12 +403,12 @@ TEST_F(GTPinTests, givenInvalidArgumentsThenBufferMapFails) {
 }
 
 TEST_F(GTPinTests, givenInvalidArgumentsThenBufferUnMapFails) {
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
     EXPECT_EQ(&NEO::gtpinCreateBuffer, driverServices.bufferAllocate);
@@ -418,12 +444,12 @@ TEST_F(GTPinTests, givenValidRequestForHugeMemoryAllocationThenBufferAllocateFai
         }
     };
 
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
     ASSERT_EQ(&NEO::gtpinCreateBuffer, driverServices.bufferAllocate);
@@ -438,12 +464,12 @@ TEST_F(GTPinTests, givenValidRequestForMemoryAllocationThenBufferAllocateAndDeal
     resource_handle_t res;
     uint32_t buffSize = 400u;
 
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
     ASSERT_EQ(&NEO::gtpinCreateBuffer, driverServices.bufferAllocate);
@@ -464,12 +490,12 @@ TEST_F(GTPinTests, givenValidArgumentsForBufferMapWhenCallSequenceIsCorrectThenB
     resource_handle_t res;
     uint32_t buffSize = 400u;
 
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
     ASSERT_EQ(&NEO::gtpinCreateBuffer, driverServices.bufferAllocate);
@@ -495,12 +521,12 @@ TEST_F(GTPinTests, givenMissingReturnArgumentForBufferMapWhenCallSequenceIsCorre
     resource_handle_t res;
     uint32_t buffSize = 400u;
 
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
     ASSERT_EQ(&NEO::gtpinCreateBuffer, driverServices.bufferAllocate);
@@ -524,12 +550,12 @@ TEST_F(GTPinTests, givenValidArgumentsForBufferUnMapWhenCallSequenceIsCorrectThe
     resource_handle_t res;
     uint32_t buffSize = 400u;
 
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
     ASSERT_EQ(&NEO::gtpinCreateBuffer, driverServices.bufferAllocate);
@@ -569,12 +595,12 @@ TEST_F(GTPinTests, givenUninitializedGTPinInterfaceThenGTPinContextCallbackIsNot
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenContextCreationArgumentsAreInvalidThenGTPinContextCallbackIsNotCalled) {
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
 
@@ -593,12 +619,12 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenContextCreationArgumentsAre
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceThenGTPinContextCallbackIsCalled) {
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
 
@@ -673,12 +699,12 @@ TEST_F(GTPinTests, givenUninitializedGTPinInterfaceThenGTPinKernelCreateCallback
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenContextIsCreatedThenCorrectVersionIsSet) {
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
 
@@ -697,12 +723,12 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenContextIsCreatedThenCorrect
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCallbacksAreCalled) {
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
 
@@ -756,7 +782,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount11 + 1, KernelCreateCallbackCount);
 
-    Kernel *pKernel1 = (Kernel *)kernel1;
+    MultiDeviceKernel *pMultiDeviceKernel1 = static_cast<MultiDeviceKernel *>(kernel1);
+    Kernel *pKernel1 = pMultiDeviceKernel1->getKernel(rootDeviceIndex);
     const KernelInfo &kInfo1 = pKernel1->getKernelInfo();
     uint64_t gtpinKernelId1 = pKernel1->getKernelId();
     EXPECT_EQ(kInfo1.shaderHashCode, gtpinKernelId1);
@@ -765,9 +792,9 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
     auto buff10 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
     auto buff11 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
 
-    retVal = clSetKernelArg(pKernel1, 0, sizeof(cl_mem), &buff10);
+    retVal = clSetKernelArg(pMultiDeviceKernel1, 0, sizeof(cl_mem), &buff10);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel1, 1, sizeof(cl_mem), &buff11);
+    retVal = clSetKernelArg(pMultiDeviceKernel1, 1, sizeof(cl_mem), &buff11);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     int prevCount12 = KernelSubmitCallbackCount;
@@ -777,7 +804,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {n, 1, 1};
     size_t localWorkSize[3] = {1, 1, 1};
-    retVal = clEnqueueNDRangeKernel(cmdQ, pKernel1, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    retVal = clEnqueueNDRangeKernel(cmdQ, pMultiDeviceKernel1, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount12 + 1, KernelSubmitCallbackCount);
     EXPECT_EQ(prevCount13 + 1, CommandBufferCreateCallbackCount);
@@ -790,7 +817,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
     // Verify that GT-Pin Kernel Create callback is not called multiple times for the same kernel
     EXPECT_EQ(prevCount21, KernelCreateCallbackCount);
 
-    Kernel *pKernel2 = (Kernel *)kernel2;
+    MultiDeviceKernel *pMultiDeviceKernel2 = static_cast<MultiDeviceKernel *>(kernel2);
+    Kernel *pKernel2 = pMultiDeviceKernel2->getKernel(rootDeviceIndex);
     const KernelInfo &kInfo2 = pKernel2->getKernelInfo();
     uint64_t gtpinKernelId2 = pKernel2->getKernelId();
     EXPECT_EQ(kInfo2.shaderHashCode, gtpinKernelId2);
@@ -798,15 +826,15 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
     auto buff20 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
     auto buff21 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
 
-    retVal = clSetKernelArg(pKernel2, 0, sizeof(cl_mem), &buff20);
+    retVal = clSetKernelArg(pMultiDeviceKernel2, 0, sizeof(cl_mem), &buff20);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel2, 1, sizeof(cl_mem), &buff21);
+    retVal = clSetKernelArg(pMultiDeviceKernel2, 1, sizeof(cl_mem), &buff21);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     int prevCount22 = KernelSubmitCallbackCount;
     int prevCount23 = CommandBufferCreateCallbackCount;
     int prevCount24 = CommandBufferCompleteCallbackCount;
-    retVal = clEnqueueNDRangeKernel(cmdQ, pKernel2, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    retVal = clEnqueueNDRangeKernel(cmdQ, pMultiDeviceKernel2, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount22 + 1, KernelSubmitCallbackCount);
     EXPECT_EQ(prevCount23 + 1, CommandBufferCreateCallbackCount);
@@ -845,12 +873,12 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGTPinCallbacksAreCalled) {
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
 
@@ -904,20 +932,23 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount11 + 1, KernelCreateCallbackCount);
 
-    Kernel *pKernel1 = (Kernel *)kernel1;
+    MultiDeviceKernel *pMultiDeviceKernel1 = static_cast<MultiDeviceKernel *>(kernel1);
+    Kernel *pKernel1 = pMultiDeviceKernel1->getKernel(rootDeviceIndex);
     const KernelInfo &kInfo1 = pKernel1->getKernelInfo();
     uint64_t gtpinKernelId1 = pKernel1->getKernelId();
     EXPECT_EQ(kInfo1.shaderHashCode, gtpinKernelId1);
 
     cl_uint workDim = 1;
     size_t localWorkSize[3] = {1, 1, 1};
-    size_t n = pKernel1->getMaxWorkGroupCount(workDim, localWorkSize);
+    CommandQueue *commandQueue = nullptr;
+    withCastToInternal(cmdQ, &commandQueue);
+    size_t n = 100;
     auto buff10 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
     auto buff11 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
 
-    retVal = clSetKernelArg(pKernel1, 0, sizeof(cl_mem), &buff10);
+    retVal = clSetKernelArg(pMultiDeviceKernel1, 0, sizeof(cl_mem), &buff10);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel1, 1, sizeof(cl_mem), &buff11);
+    retVal = clSetKernelArg(pMultiDeviceKernel1, 1, sizeof(cl_mem), &buff11);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     int prevCount12 = KernelSubmitCallbackCount;
@@ -925,7 +956,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
     int prevCount14 = CommandBufferCompleteCallbackCount;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t workgroupCount[3] = {n, 1, 1};
-    retVal = clEnqueueNDCountKernelINTEL(cmdQ, pKernel1, workDim, globalWorkOffset, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    retVal = clEnqueueNDCountKernelINTEL(cmdQ, pMultiDeviceKernel1, workDim, globalWorkOffset, workgroupCount, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount12 + 1, KernelSubmitCallbackCount);
     EXPECT_EQ(prevCount13 + 1, CommandBufferCreateCallbackCount);
@@ -938,7 +969,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
     // Verify that GT-Pin Kernel Create callback is not called multiple times for the same kernel
     EXPECT_EQ(prevCount21, KernelCreateCallbackCount);
 
-    Kernel *pKernel2 = (Kernel *)kernel2;
+    MultiDeviceKernel *pMultiDeviceKernel2 = static_cast<MultiDeviceKernel *>(kernel2);
+    Kernel *pKernel2 = pMultiDeviceKernel2->getKernel(rootDeviceIndex);
     const KernelInfo &kInfo2 = pKernel2->getKernelInfo();
     uint64_t gtpinKernelId2 = pKernel2->getKernelId();
     EXPECT_EQ(kInfo2.shaderHashCode, gtpinKernelId2);
@@ -946,15 +978,15 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
     auto buff20 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
     auto buff21 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
 
-    retVal = clSetKernelArg(pKernel2, 0, sizeof(cl_mem), &buff20);
+    retVal = clSetKernelArg(pMultiDeviceKernel2, 0, sizeof(cl_mem), &buff20);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel2, 1, sizeof(cl_mem), &buff21);
+    retVal = clSetKernelArg(pMultiDeviceKernel2, 1, sizeof(cl_mem), &buff21);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     int prevCount22 = KernelSubmitCallbackCount;
     int prevCount23 = CommandBufferCreateCallbackCount;
     int prevCount24 = CommandBufferCompleteCallbackCount;
-    retVal = clEnqueueNDCountKernelINTEL(cmdQ, pKernel2, workDim, globalWorkOffset, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    retVal = clEnqueueNDCountKernelINTEL(cmdQ, pMultiDeviceKernel2, workDim, globalWorkOffset, workgroupCount, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount22 + 1, KernelSubmitCallbackCount);
     EXPECT_EQ(prevCount23 + 1, CommandBufferCreateCallbackCount);
@@ -993,12 +1025,12 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenKernelCreateCallbacksIsNotCalled) {
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
 
@@ -1007,18 +1039,19 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenK
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, context);
     auto pContext = castToObject<Context>(context);
+    auto rootDeviceIndex = pDevice->getRootDeviceIndex();
 
     char binary[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
     size_t binSize = 10;
-    MockProgram *pProgram = Program::createFromGenBinary<MockProgram>(*pDevice->getExecutionEnvironment(), pContext, &binary[0], binSize, false, &retVal, &pDevice->getDevice());
+    MockProgram *pProgram = Program::createBuiltInFromGenBinary<MockProgram>(pContext, pContext->getDevices(), &binary[0], binSize, &retVal);
     ASSERT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     PatchTokensTestData::ValidProgramWithKernel programTokens;
 
-    pProgram->unpackedDeviceBinary = makeCopy(reinterpret_cast<char *>(programTokens.storage.data()), programTokens.storage.size());
-    pProgram->unpackedDeviceBinarySize = programTokens.storage.size();
-    retVal = pProgram->processGenBinary();
+    pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy(reinterpret_cast<char *>(programTokens.storage.data()), programTokens.storage.size());
+    pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = programTokens.storage.size();
+    retVal = pProgram->processGenBinary(*pContext->getDevice(0));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     int prevCount = KernelCreateCallbackCount;
@@ -1037,140 +1070,13 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenK
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithExecEnvIsUsedThenKernelCreateCallbacksIsNotCalled) {
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
-    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
-    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
-
-    cl_device_id device = (cl_device_id)pDevice;
-    cl_context context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &retVal);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(nullptr, context);
-    auto pContext = castToObject<Context>(context);
-
-    // Prepare a kernel with fake Execution Environment
-    char binary[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
-    size_t binSize = 10;
-    MockProgram *pProgram = Program::createFromGenBinary<MockProgram>(*pDevice->getExecutionEnvironment(), pContext, &binary[0], binSize, false, &retVal, &pDevice->getDevice());
-    ASSERT_NE(nullptr, pProgram);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    char *pBin = &binary[0];
-    SProgramBinaryHeader *pBHdr = (SProgramBinaryHeader *)pBin;
-    pBHdr->Magic = iOpenCL::MAGIC_CL;
-    pBHdr->Version = iOpenCL::CURRENT_ICBE_VERSION;
-    pBHdr->Device = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
-    pBHdr->GPUPointerSizeInBytes = 8;
-    pBHdr->NumberOfKernels = 1;
-    pBHdr->SteppingId = 0;
-    pBHdr->PatchListSize = 0;
-    pBin += sizeof(SProgramBinaryHeader);
-    binSize += sizeof(SProgramBinaryHeader);
-
-    SKernelBinaryHeaderCommon *pKHdr = (SKernelBinaryHeaderCommon *)pBin;
-    pKHdr->CheckSum = 0;
-    pKHdr->ShaderHashCode = 0;
-    pKHdr->KernelNameSize = 4;
-    pKHdr->PatchListSize = sizeof(SPatchExecutionEnvironment) + sizeof(SPatchBindingTableState);
-    pKHdr->KernelHeapSize = 16;
-    pKHdr->GeneralStateHeapSize = 0;
-    pKHdr->DynamicStateHeapSize = 0;
-    pKHdr->SurfaceStateHeapSize = 64;
-    pKHdr->KernelUnpaddedSize = 0;
-    pBin += sizeof(SKernelBinaryHeaderCommon);
-    binSize += sizeof(SKernelBinaryHeaderCommon);
-    char *pKernelBin = pBin;
-
-    strcpy(pBin, "Tst");
-    pBin += pKHdr->KernelNameSize;
-    binSize += pKHdr->KernelNameSize;
-
-    strcpy(pBin, "fake_ISA_code__");
-    pBin += pKHdr->KernelHeapSize;
-    binSize += pKHdr->KernelHeapSize;
-
-    memset(pBin, 0, pKHdr->SurfaceStateHeapSize);
-    pBin += pKHdr->SurfaceStateHeapSize;
-    binSize += pKHdr->SurfaceStateHeapSize;
-
-    SPatchExecutionEnvironment *pPatch1 = (SPatchExecutionEnvironment *)pBin;
-    pPatch1->Token = iOpenCL::PATCH_TOKEN_EXECUTION_ENVIRONMENT;
-    pPatch1->Size = sizeof(iOpenCL::SPatchExecutionEnvironment);
-    pPatch1->RequiredWorkGroupSizeX = 0;
-    pPatch1->RequiredWorkGroupSizeY = 0;
-    pPatch1->RequiredWorkGroupSizeZ = 0;
-    pPatch1->LargestCompiledSIMDSize = 8;
-    pPatch1->CompiledSubGroupsNumber = 0;
-    pPatch1->HasBarriers = 0;
-    pPatch1->DisableMidThreadPreemption = 0;
-    pPatch1->CompiledSIMD8 = 0;
-    pPatch1->CompiledSIMD16 = 0;
-    pPatch1->CompiledSIMD32 = 1;
-    pPatch1->HasDeviceEnqueue = 1;
-    pPatch1->MayAccessUndeclaredResource = 0;
-    pPatch1->UsesFencesForReadWriteImages = 0;
-    pPatch1->UsesStatelessSpillFill = 0;
-    pPatch1->IsCoherent = 0;
-    pPatch1->IsInitializer = 0;
-    pPatch1->IsFinalizer = 0;
-    pPatch1->SubgroupIndependentForwardProgressRequired = 0;
-    pPatch1->CompiledForGreaterThan4GBBuffers = 0;
-    pBin += sizeof(SPatchExecutionEnvironment);
-    binSize += sizeof(SPatchExecutionEnvironment);
-
-    SPatchBindingTableState *pPatch2 = (SPatchBindingTableState *)pBin;
-    pPatch2->Token = iOpenCL::PATCH_TOKEN_BINDING_TABLE_STATE;
-    pPatch2->Size = sizeof(iOpenCL::SPatchBindingTableState);
-    pPatch2->Offset = 0;
-    pPatch2->Count = 1;
-    pPatch2->SurfaceStateOffset = 0;
-    binSize += sizeof(SPatchBindingTableState);
-
-    uint32_t kernelBinSize =
-        pKHdr->DynamicStateHeapSize +
-        pKHdr->GeneralStateHeapSize +
-        pKHdr->KernelHeapSize +
-        pKHdr->KernelNameSize +
-        pKHdr->PatchListSize +
-        pKHdr->SurfaceStateHeapSize;
-    uint64_t hashValue = Hash::hash(reinterpret_cast<const char *>(pKernelBin), kernelBinSize);
-    pKHdr->CheckSum = static_cast<uint32_t>(hashValue & 0xFFFFFFFF);
-
-    pProgram->unpackedDeviceBinary = makeCopy(&binary[0], binSize);
-    pProgram->unpackedDeviceBinarySize = binSize;
-    retVal = pProgram->processGenBinary();
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    // Verify that GT-Pin Kernel Create callback is not called
-    int prevCount = KernelCreateCallbackCount;
-    cl_kernel kernel = clCreateKernel(pProgram, "Tst", &retVal);
-    EXPECT_NE(nullptr, kernel);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(prevCount, KernelCreateCallbackCount);
-
-    // Cleanup
-    retVal = clReleaseKernel(kernel);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    retVal = clReleaseProgram(pProgram);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    retVal = clReleaseContext(context);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-}
-
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenGTPinSubmitKernelCallbackIsNotCalled) {
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
 
@@ -1222,7 +1128,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenG
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount1 + 1, KernelCreateCallbackCount);
 
-    Kernel *pKernel = (Kernel *)kernel;
+    MultiDeviceKernel *pMultiDeviceKernel = static_cast<MultiDeviceKernel *>(kernel);
+    Kernel *pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
     const KernelInfo &kInfo = pKernel->getKernelInfo();
     uint64_t gtpinKernelId = pKernel->getKernelId();
     EXPECT_EQ(kInfo.shaderHashCode, gtpinKernelId);
@@ -1231,9 +1138,9 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenG
     auto buff0 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
     auto buff1 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
 
-    retVal = clSetKernelArg(pKernel, 0, sizeof(cl_mem), &buff0);
+    retVal = clSetKernelArg(pMultiDeviceKernel, 0, sizeof(cl_mem), &buff0);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel, 1, sizeof(cl_mem), &buff1);
+    retVal = clSetKernelArg(pMultiDeviceKernel, 1, sizeof(cl_mem), &buff1);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Verify that when SSH is removed then during kernel execution
@@ -1247,7 +1154,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenG
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {n, 1, 1};
     size_t localWorkSize[3] = {1, 1, 1};
-    retVal = clEnqueueNDRangeKernel(cmdQ, pKernel, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    retVal = clEnqueueNDRangeKernel(cmdQ, pMultiDeviceKernel, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount2, KernelSubmitCallbackCount);
     EXPECT_EQ(prevCount3, CommandBufferCreateCallbackCount);
@@ -1278,12 +1185,12 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenG
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenBlockedKernelWithoutSSHIsUsedThenGTPinSubmitKernelCallbackIsNotCalled) {
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
 
@@ -1335,7 +1242,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenBlockedKernelWithoutSSHIsUs
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount1 + 1, KernelCreateCallbackCount);
 
-    Kernel *pKernel = (Kernel *)kernel;
+    MultiDeviceKernel *pMultiDeviceKernel = static_cast<MultiDeviceKernel *>(kernel);
+    Kernel *pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
     const KernelInfo &kInfo = pKernel->getKernelInfo();
     uint64_t gtpinKernelId = pKernel->getKernelId();
     EXPECT_EQ(kInfo.shaderHashCode, gtpinKernelId);
@@ -1344,9 +1252,9 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenBlockedKernelWithoutSSHIsUs
     auto buff0 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
     auto buff1 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
 
-    retVal = clSetKernelArg(pKernel, 0, sizeof(cl_mem), &buff0);
+    retVal = clSetKernelArg(pMultiDeviceKernel, 0, sizeof(cl_mem), &buff0);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel, 1, sizeof(cl_mem), &buff1);
+    retVal = clSetKernelArg(pMultiDeviceKernel, 1, sizeof(cl_mem), &buff1);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Verify that when SSH is removed then during kernel execution
@@ -1363,7 +1271,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenBlockedKernelWithoutSSHIsUs
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {n, 1, 1};
     size_t localWorkSize[3] = {1, 1, 1};
-    retVal = clEnqueueNDRangeKernel(cmdQ, pKernel, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 1, &userEvent, nullptr);
+    retVal = clEnqueueNDRangeKernel(cmdQ, pMultiDeviceKernel, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 1, &userEvent, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount2, KernelSubmitCallbackCount);
     EXPECT_EQ(prevCount3, CommandBufferCreateCallbackCount);
@@ -1400,12 +1308,12 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenBlockedKernelWithoutSSHIsUs
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwiceThenGTPinCreateKernelCallbackIsCalledOnce) {
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
 
@@ -1459,7 +1367,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount11 + 1, KernelCreateCallbackCount);
 
-    Kernel *pKernel1 = (Kernel *)kernel1;
+    MultiDeviceKernel *pMultiDeviceKernel1 = static_cast<MultiDeviceKernel *>(kernel1);
+    Kernel *pKernel1 = pMultiDeviceKernel1->getKernel(rootDeviceIndex);
     const KernelInfo &kInfo1 = pKernel1->getKernelInfo();
     uint64_t gtpinKernelId1 = pKernel1->getKernelId();
     EXPECT_EQ(kInfo1.shaderHashCode, gtpinKernelId1);
@@ -1468,9 +1377,9 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
     auto buff10 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
     auto buff11 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
 
-    retVal = clSetKernelArg(pKernel1, 0, sizeof(cl_mem), &buff10);
+    retVal = clSetKernelArg(pMultiDeviceKernel1, 0, sizeof(cl_mem), &buff10);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel1, 1, sizeof(cl_mem), &buff11);
+    retVal = clSetKernelArg(pMultiDeviceKernel1, 1, sizeof(cl_mem), &buff11);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     cl_event userEvent = clCreateUserEvent(context, &retVal);
@@ -1483,7 +1392,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {n, 1, 1};
     size_t localWorkSize[3] = {1, 1, 1};
-    retVal = clEnqueueNDRangeKernel(cmdQ, pKernel1, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 1, &userEvent, nullptr);
+    retVal = clEnqueueNDRangeKernel(cmdQ, pMultiDeviceKernel1, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 1, &userEvent, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount12 + 1, KernelSubmitCallbackCount);
     EXPECT_EQ(prevCount13 + 1, CommandBufferCreateCallbackCount);
@@ -1497,7 +1406,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
     // Verify that Kernel Create callback was not called now
     EXPECT_EQ(prevCount21, KernelCreateCallbackCount);
 
-    Kernel *pKernel2 = (Kernel *)kernel2;
+    MultiDeviceKernel *pMultiDeviceKernel2 = static_cast<MultiDeviceKernel *>(kernel2);
+    Kernel *pKernel2 = pMultiDeviceKernel2->getKernel(rootDeviceIndex);
     const KernelInfo &kInfo2 = pKernel2->getKernelInfo();
     uint64_t gtpinKernelId2 = pKernel2->getKernelId();
     EXPECT_EQ(kInfo2.shaderHashCode, gtpinKernelId2);
@@ -1505,16 +1415,16 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
     auto buff20 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
     auto buff21 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
 
-    retVal = clSetKernelArg(pKernel2, 0, sizeof(cl_mem), &buff20);
+    retVal = clSetKernelArg(pMultiDeviceKernel2, 0, sizeof(cl_mem), &buff20);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel2, 1, sizeof(cl_mem), &buff21);
+    retVal = clSetKernelArg(pMultiDeviceKernel2, 1, sizeof(cl_mem), &buff21);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     int prevCount22 = KernelSubmitCallbackCount;
     int prevCount23 = CommandBufferCreateCallbackCount;
     int prevCount24 = CommandBufferCompleteCallbackCount;
     EXPECT_EQ(prevCount14, prevCount24);
-    retVal = clEnqueueNDRangeKernel(cmdQ, pKernel2, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    retVal = clEnqueueNDRangeKernel(cmdQ, pMultiDeviceKernel2, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount22 + 1, KernelSubmitCallbackCount);
     EXPECT_EQ(prevCount23 + 1, CommandBufferCreateCallbackCount);
@@ -1561,12 +1471,12 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
 }
 
 TEST_F(GTPinTests, givenMultipleKernelSubmissionsWhenOneOfGtpinSurfacesIsNullThenOnlyNonNullSurfacesAreMadeResident) {
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
 
@@ -1616,12 +1526,13 @@ TEST_F(GTPinTests, givenMultipleKernelSubmissionsWhenOneOfGtpinSurfacesIsNullThe
     EXPECT_NE(nullptr, kernel1);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    Kernel *pKernel1 = (Kernel *)kernel1;
+    MultiDeviceKernel *pMultiDeviceKernel1 = static_cast<MultiDeviceKernel *>(kernel1);
+    Kernel *pKernel1 = pMultiDeviceKernel1->getKernel(rootDeviceIndex);
     returnNullResource = true;
 
     auto pCmdQueue = castToObject<CommandQueue>(cmdQ);
 
-    gtpinNotifyKernelSubmit(pKernel1, pCmdQueue);
+    gtpinNotifyKernelSubmit(pMultiDeviceKernel1, pCmdQueue);
     EXPECT_EQ(nullptr, kernelExecQueue[0].gtpinResource);
 
     CommandStreamReceiver &csr = pCmdQueue->getGpgpuCommandStreamReceiver();
@@ -1634,13 +1545,13 @@ TEST_F(GTPinTests, givenMultipleKernelSubmissionsWhenOneOfGtpinSurfacesIsNullThe
 
     returnNullResource = false;
 
-    gtpinNotifyKernelSubmit(pKernel1, pCmdQueue);
+    gtpinNotifyKernelSubmit(pMultiDeviceKernel1, pCmdQueue);
     EXPECT_NE(nullptr, kernelExecQueue[1].gtpinResource);
     gtpinNotifyMakeResident(pKernel1, &csr);
     EXPECT_TRUE(kernelExecQueue[1].isResourceResident);
     cl_mem gtpinBuffer1 = kernelExecQueue[1].gtpinResource;
 
-    gtpinNotifyKernelSubmit(pKernel1, pCmdQueue);
+    gtpinNotifyKernelSubmit(pMultiDeviceKernel1, pCmdQueue);
     EXPECT_NE(nullptr, kernelExecQueue[2].gtpinResource);
     gtpinNotifyUpdateResidencyList(pKernel1, &residencyVector);
     EXPECT_EQ(1u, residencyVector.size());
@@ -1681,12 +1592,12 @@ TEST_F(GTPinTests, givenMultipleKernelSubmissionsWhenOneOfGtpinSurfacesIsNullThe
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKernelSubmitRelatedNotificationsAreCalled) {
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
 
@@ -1742,7 +1653,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKerne
     EXPECT_EQ(prevCount1 + 1, KernelCreateCallbackCount);
 
     // Simulate that created kernel was sent for execution
-    auto pKernel = castToObject<Kernel>(kernel);
+    auto pMultiDeviceKernel = castToObject<MultiDeviceKernel>(kernel);
+    auto pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
     auto pCmdQueue = castToObject<CommandQueue>(cmdQ);
     ASSERT_NE(nullptr, pKernel);
     EXPECT_EQ(0u, kernelExecQueue.size());
@@ -1784,7 +1696,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKerne
     ASSERT_NE(nullptr, kernel2);
     EXPECT_EQ(CL_SUCCESS, retVal);
     // ... and simulate that it was sent for execution
-    auto pKernel2 = castToObject<Kernel>(kernel2);
+    auto pMultiDeviceKernel2 = castToObject<MultiDeviceKernel>(kernel2);
+    auto pKernel2 = pMultiDeviceKernel2->getKernel(rootDeviceIndex);
     ASSERT_NE(nullptr, pKernel2);
     EXPECT_EQ(1u, kernelExecQueue.size());
     EXPECT_EQ(1u, kernelResources.size());
@@ -1874,12 +1787,12 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKerne
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOneKernelIsSubmittedSeveralTimesThenCorrectBuffersAreMadeResident) {
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
 
@@ -1935,7 +1848,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOneKernelIsSubmittedSeveral
     EXPECT_EQ(prevCount1 + 1, KernelCreateCallbackCount);
 
     // Simulate that created kernel was sent for execution two times in a row
-    auto pKernel = castToObject<Kernel>(kernel);
+    auto pMultiDeviceKernel = castToObject<MultiDeviceKernel>(kernel);
+    auto pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
     auto pCmdQueue = castToObject<CommandQueue>(cmdQ);
     ASSERT_NE(nullptr, pKernel);
     EXPECT_EQ(0u, kernelExecQueue.size());
@@ -2062,15 +1976,17 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenLowMemoryConditionOccursThe
 
         char binary[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
         size_t binSize = 10;
-        MockProgram *pProgram = Program::createFromGenBinary<MockProgram>(*pDevice->getExecutionEnvironment(), pContext, &binary[0], binSize, false, &retVal, &pDevice->getDevice());
+        MockProgram *pProgram = Program::createBuiltInFromGenBinary<MockProgram>(pContext, pContext->getDevices(), &binary[0], binSize, &retVal);
         ASSERT_NE(nullptr, pProgram);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         PatchTokensTestData::ValidProgramWithKernel programTokens;
 
-        pProgram->unpackedDeviceBinary = makeCopy(programTokens.storage.data(), programTokens.storage.size());
-        pProgram->unpackedDeviceBinarySize = programTokens.storage.size();
-        retVal = pProgram->processGenBinary();
+        auto rootDeviceIndex = pDevice->getRootDeviceIndex();
+
+        pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy(programTokens.storage.data(), programTokens.storage.size());
+        pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = programTokens.storage.size();
+        retVal = pProgram->processGenBinary(*pDevice);
         if (retVal == CL_OUT_OF_HOST_MEMORY) {
             auto nonFailingAlloc = MemoryManagement::nonfailingAllocation;
             EXPECT_NE(nonFailingAlloc, failureIndex);
@@ -2102,12 +2018,12 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenLowMemoryConditionOccursThe
         clReleaseContext(context);
     };
 
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
     ASSERT_EQ(&NEO::gtpinCreateBuffer, driverServices.bufferAllocate);
@@ -2159,11 +2075,12 @@ TEST_F(GTPinTests, givenKernelWithSSHThenVerifyThatSSHResizeWorksWell) {
     kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
     ASSERT_NE(nullptr, kernel);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    Kernel *pKernel = castToObject<Kernel>(kernel);
+    auto pMultiDeviceKernel = castToObject<MultiDeviceKernel>(kernel);
+    auto pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
     ASSERT_NE(nullptr, pKernel);
 
     size_t numBTS1 = pKernel->getNumberOfBindingTableStates();
-    EXPECT_EQ(2u, numBTS1);
+    EXPECT_LE(2u, numBTS1);
     size_t sizeSurfaceStates1 = pKernel->getSurfaceStateHeapSize();
     EXPECT_NE(0u, sizeSurfaceStates1);
     size_t offsetBTS1 = pKernel->getBindingTableOffset();
@@ -2259,7 +2176,8 @@ TEST_F(GTPinTests, givenKernelThenVerifyThatKernelCodeSubstitutionWorksWell) {
     kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
     ASSERT_NE(nullptr, kernel);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    Kernel *pKernel = castToObject<Kernel>(kernel);
+    auto pMultiDeviceKernel = castToObject<MultiDeviceKernel>(kernel);
+    auto pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
     ASSERT_NE(nullptr, pKernel);
 
     bool isKernelCodeSubstituted = pKernel->isKernelHeapSubstituted();
@@ -2291,7 +2209,7 @@ TEST_F(GTPinTests, givenKernelThenVerifyThatKernelCodeSubstitutionWorksWell) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(GTPinTests, checkWhetherGTPinHwHelperGetterWorksWell) {
+TEST_F(GTPinTests, WhenGettingGtPinHwHelperThenValidPointerIsReturned) {
     GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
     GTPinHwHelper *pGTPinHelper = &GTPinHwHelper::get(genFamily);
     EXPECT_NE(nullptr, pGTPinHelper);
@@ -2311,12 +2229,12 @@ TEST(GTPinOfflineTests, givenGtPinInDisabledStateWhenCallbacksFromEnqueuePathAre
     EXPECT_FALSE(gtpinIsGTPinInitialized());
 }
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOnKernelSubitIsCalledThenCorrectOffsetisSetInKernel) {
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     VariableBackup<bool> returnNullResourceBckp(&returnNullResource);
     VariableBackup<uint32_t> kernelOffsetBckp(&kernelOffset);
@@ -2329,20 +2247,20 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOnKernelSubitIsCalledThenCo
     auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
     pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
-    pKernelInfo->usesSsh = true;
 
-    auto pProgramm = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment(), context.get(), false, nullptr);
-    std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(context.get(), pDevice, nullptr));
-    std::unique_ptr<MockKernel> pKernel(new MockKernel(pProgramm.get(), *pKernelInfo, *pDevice));
+    auto pProgramm = std::make_unique<MockProgram>(context.get(), false, toClDeviceVector(*pDevice));
+    std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(context.get(), pDevice, nullptr, false));
+    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MockMultiDeviceKernel::create<MockKernel>(pProgramm.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex)));
+    auto pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(rootDeviceIndex));
 
     pKernel->setSshLocal(nullptr, sizeof(surfaceStateHeap));
 
     kernelOffset = 0x1234;
     EXPECT_NE(pKernel->getStartOffset(), kernelOffset);
     returnNullResource = true;
-    cl_context ctxt = (cl_context)((Context *)context.get());
+    cl_context ctxt = context.get();
     currContext = (gtpin::context_handle_t)ctxt;
-    gtpinNotifyKernelSubmit(pKernel.get(), cmdQ.get());
+    gtpinNotifyKernelSubmit(pMultiDeviceKernel.get(), cmdQ.get());
     EXPECT_EQ(pKernel->getStartOffset(), kernelOffset);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -2350,12 +2268,12 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOnKernelSubitIsCalledThenCo
     kernelResources.clear();
 }
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOnContextCreateIsCalledThenGtpinInitIsSet) {
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     auto context = std::make_unique<MockContext>();
     gtpinNotifyContextCreate(context.get());
@@ -2363,16 +2281,70 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOnContextCreateIsCalledThen
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOnKernelCreateIsCalledWithNullptrThenCallIsIgnored) {
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
-    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     auto prevCreateCount = KernelCreateCallbackCount;
     gtpinNotifyKernelCreate(nullptr);
     EXPECT_EQ(prevCreateCount, KernelCreateCallbackCount);
+}
+
+TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelDoesNotHaveDebugDataThenPassNullPtrToOnKernelCreate) {
+    static void *debugDataPtr = nullptr;
+    static size_t debugDataSize = 0;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = [](context_handle_t context, const instrument_params_in_t *paramsIn, instrument_params_out_t *paramsOut) {
+        paramsOut->inst_kernel_binary = const_cast<uint8_t *>(paramsIn->orig_kernel_binary);
+        paramsOut->inst_kernel_size = paramsIn->orig_kernel_size;
+        paramsOut->kernel_id = paramsIn->igc_hash_id;
+        debugDataPtr = const_cast<void *>(paramsIn->debug_data);
+        debugDataSize = paramsIn->debug_data_size;
+    };
+    gtpinCallbacks.onKernelSubmit = [](command_buffer_handle_t cb, uint64_t kernelId, uint32_t *entryOffset, resource_handle_t *resource) {};
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
+    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    MockKernelWithInternals mockKernel(*pDevice);
+    mockKernel.kernelInfo.kernelDescriptor.external.debugData.reset();
+    mockKernel.kernelInfo.createKernelAllocation(pDevice->getDevice(), false);
+    gtpinNotifyKernelCreate(static_cast<cl_kernel>(mockKernel.mockKernel->getMultiDeviceKernel()));
+    EXPECT_EQ(debugDataPtr, nullptr);
+    EXPECT_EQ(debugDataSize, 0u);
+    pDevice->getMemoryManager()->freeGraphicsMemory(mockKernel.kernelInfo.kernelAllocation);
+}
+
+TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelHasDebugDataThenCorrectDebugDataIsSet) {
+    static void *debugDataPtr = nullptr;
+    static size_t debugDataSize = 0;
+    void *dummyDebugData = reinterpret_cast<void *>(0x123456);
+    size_t dummyDebugDataSize = 0x2245;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = [](context_handle_t context, const instrument_params_in_t *paramsIn, instrument_params_out_t *paramsOut) {
+        paramsOut->inst_kernel_binary = const_cast<uint8_t *>(paramsIn->orig_kernel_binary);
+        paramsOut->inst_kernel_size = paramsIn->orig_kernel_size;
+        paramsOut->kernel_id = paramsIn->igc_hash_id;
+        debugDataPtr = const_cast<void *>(paramsIn->debug_data);
+        debugDataSize = paramsIn->debug_data_size;
+    };
+    gtpinCallbacks.onKernelSubmit = [](command_buffer_handle_t cb, uint64_t kernelId, uint32_t *entryOffset, resource_handle_t *resource) {};
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
+    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    MockKernelWithInternals mockKernel(*pDevice);
+    mockKernel.kernelInfo.kernelDescriptor.external.debugData.reset(new DebugData());
+    mockKernel.kernelInfo.debugData.vIsa = reinterpret_cast<char *>(dummyDebugData);
+    mockKernel.kernelInfo.debugData.vIsaSize = static_cast<uint32_t>(dummyDebugDataSize);
+    mockKernel.kernelInfo.createKernelAllocation(pDevice->getDevice(), false);
+    gtpinNotifyKernelCreate(static_cast<cl_kernel>(mockKernel.mockKernel->getMultiDeviceKernel()));
+    EXPECT_EQ(debugDataPtr, dummyDebugData);
+    EXPECT_EQ(debugDataSize, dummyDebugDataSize);
+    pDevice->getMemoryManager()->freeGraphicsMemory(mockKernel.kernelInfo.kernelAllocation);
 }
 
 HWTEST_F(GTPinTests, givenGtPinInitializedWhenSubmittingKernelCommandThenFlushedTaskCountIsNotified) {
@@ -2380,34 +2352,33 @@ HWTEST_F(GTPinTests, givenGtPinInitializedWhenSubmittingKernelCommandThenFlushed
 
     auto onKernelSubmitFnc = [](command_buffer_handle_t cb, uint64_t kernelId, uint32_t *entryOffset, resource_handle_t *resource) { return; };
 
-    gtpinCallbacks.onContextCreate = OnContextCreate;
-    gtpinCallbacks.onContextDestroy = OnContextDestroy;
-    gtpinCallbacks.onKernelCreate = OnKernelCreate;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
     gtpinCallbacks.onKernelSubmit = onKernelSubmitFnc;
-    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
 
     IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
-    mockCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 128, ih1);
-    mockCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 128, ih2);
-    mockCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, 128, ih3);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 128, ih1);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 128, ih2);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 128, ih3);
 
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
-    auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 128, GraphicsAllocation::AllocationType::COMMAND_BUFFER}));
+    auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 128, AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()}));
 
     std::vector<Surface *> surfaces;
     auto kernelOperation = std::make_unique<KernelOperation>(cmdStream, *mockCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     MockKernelWithInternals kernel(*pDevice);
-    kernel.kernelInfo.usesSsh = true;
     kernelOperation->setHeaps(ih1, ih2, ih3);
 
     bool flushDC = false;
     bool slmUsed = false;
     bool ndRangeKernel = false;
 
-    gtpinNotifyKernelSubmit(kernel, mockCmdQ.get());
+    gtpinNotifyKernelSubmit(kernel.mockMultiDeviceKernel, mockCmdQ.get());
 
     std::unique_ptr<Command> command(new CommandComputeKernel(*mockCmdQ, kernelOperation, surfaces, flushDC, slmUsed, ndRangeKernel, nullptr, preemptionMode, kernel, 1));
     CompletionStamp stamp = command->submit(20, false);
@@ -2416,6 +2387,320 @@ HWTEST_F(GTPinTests, givenGtPinInitializedWhenSubmittingKernelCommandThenFlushed
 
     EXPECT_TRUE(kernelExecQueue[0].isTaskCountValid);
     EXPECT_EQ(kernelExecQueue[0].taskCount, stamp.taskCount);
+}
+
+class GTPinFixtureWithLocalMemory : public GTPinFixture {
+  public:
+    void SetUp() override {
+        DebugManager.flags.EnableLocalMemory.set(true);
+        DebugManager.flags.GTPinAllocateBufferInSharedMemory.set(true);
+        GTPinFixture::setUpImpl();
+    }
+    void TearDown() override {
+        GTPinFixture::TearDown();
+    }
+    DebugManagerStateRestore restore;
+};
+
+using GTPinTestsWithLocalMemory = Test<GTPinFixtureWithLocalMemory>;
+
+TEST_F(GTPinTestsWithLocalMemory, whenPlatformHasNoSvmSupportThenGtPinBufferCantBeAllocatedInSharedMemory) {
+    DebugManager.flags.GTPinAllocateBufferInSharedMemory.set(-1);
+    GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto canUseSharedAllocation = gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo());
+    if (!pDevice->getHardwareInfo().capabilityTable.ftrSvm) {
+        EXPECT_FALSE(canUseSharedAllocation);
+    }
+}
+
+HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinWithSupportForSharedAllocationWhenGtPinHelperFunctionsAreCalledThenCheckIfSharedAllocationCabBeUsed) {
+    GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo())) {
+        GTEST_SKIP();
+    }
+
+    class MockGTPinHwHelperHw : public GTPinHwHelperHw<FamilyType> {
+      public:
+        bool canUseSharedAllocation(const HardwareInfo &hwInfo) const override {
+            canUseSharedAllocationCalled = true;
+            return true;
+        }
+        mutable bool canUseSharedAllocationCalled = false;
+    };
+
+    const auto family = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
+    MockGTPinHwHelperHw mockGTPinHwHelperHw;
+    VariableBackup<GTPinHwHelper *> gtpinHwHelperBackup{&gtpinHwHelperFactory[family], &mockGTPinHwHelperHw};
+
+    resource_handle_t resource = nullptr;
+    cl_context ctxt = (cl_context)((Context *)pContext);
+
+    mockGTPinHwHelperHw.canUseSharedAllocationCalled = false;
+    gtpinCreateBuffer((gtpin::context_handle_t)ctxt, 256, &resource);
+    EXPECT_TRUE(mockGTPinHwHelperHw.canUseSharedAllocationCalled);
+
+    mockGTPinHwHelperHw.canUseSharedAllocationCalled = false;
+    uint8_t *address = nullptr;
+    gtpinMapBuffer((gtpin::context_handle_t)ctxt, resource, &address);
+    EXPECT_TRUE(mockGTPinHwHelperHw.canUseSharedAllocationCalled);
+
+    mockGTPinHwHelperHw.canUseSharedAllocationCalled = false;
+    gtpinUnmapBuffer((gtpin::context_handle_t)ctxt, resource);
+    EXPECT_TRUE(mockGTPinHwHelperHw.canUseSharedAllocationCalled);
+
+    mockGTPinHwHelperHw.canUseSharedAllocationCalled = false;
+    gtpinFreeBuffer((gtpin::context_handle_t)ctxt, resource);
+    EXPECT_TRUE(mockGTPinHwHelperHw.canUseSharedAllocationCalled);
+}
+
+HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBufferIsCreatedThenAllocateBufferInSharedMemory) {
+    GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo())) {
+        GTEST_SKIP();
+    }
+
+    resource_handle_t resource = nullptr;
+    cl_context ctxt = (cl_context)((Context *)pContext);
+    GTPIN_DI_STATUS status = GTPIN_DI_SUCCESS;
+
+    status = gtpinCreateBuffer((gtpin::context_handle_t)ctxt, 256, &resource);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, status);
+    EXPECT_NE(nullptr, resource);
+
+    auto allocData = reinterpret_cast<SvmAllocationData *>(resource);
+
+    auto cpuAllocation = allocData->cpuAllocation;
+    ASSERT_NE(nullptr, cpuAllocation);
+    EXPECT_NE(AllocationType::UNIFIED_SHARED_MEMORY, cpuAllocation->getAllocationType());
+
+    auto gpuAllocation = allocData->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex());
+    ASSERT_NE(nullptr, gpuAllocation);
+    EXPECT_NE(AllocationType::UNIFIED_SHARED_MEMORY, gpuAllocation->getAllocationType());
+
+    uint8_t *address = nullptr;
+    status = gtpinMapBuffer((gtpin::context_handle_t)ctxt, resource, &address);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, status);
+    EXPECT_EQ(allocData->cpuAllocation->getUnderlyingBuffer(), address);
+
+    status = gtpinUnmapBuffer((gtpin::context_handle_t)ctxt, resource);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, status);
+
+    status = gtpinFreeBuffer((gtpin::context_handle_t)ctxt, resource);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, status);
+}
+
+HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBufferIsAllocatedInSharedMemoryThenSetSurfaceStateForTheBufferAndMakeItResident) {
+    GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo())) {
+        GTEST_SKIP();
+    }
+
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
+
+    GTPIN_DI_STATUS status = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, status);
+
+    cl_kernel kernel = nullptr;
+    cl_program pProgram = nullptr;
+    cl_device_id device = (cl_device_id)pDevice;
+    size_t sourceSize = 0;
+    std::string testFile;
+    cl_command_queue cmdQ = nullptr;
+    cl_queue_properties properties = 0;
+    cl_context context = nullptr;
+
+    KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
+    testFile.append(clFiles);
+    testFile.append("CopyBuffer_simd16.cl");
+    auto pSource = loadDataFromFile(testFile.c_str(), sourceSize);
+    EXPECT_NE(0u, sourceSize);
+    EXPECT_NE(nullptr, pSource);
+
+    context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, context);
+
+    cmdQ = clCreateCommandQueue(context, device, properties, &retVal);
+    ASSERT_NE(nullptr, cmdQ);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    const char *sources[1] = {pSource.get()};
+    pProgram = clCreateProgramWithSource(
+        context,
+        1,
+        sources,
+        &sourceSize,
+        &retVal);
+    ASSERT_NE(nullptr, pProgram);
+
+    retVal = clBuildProgram(
+        pProgram,
+        1,
+        &device,
+        nullptr,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    EXPECT_NE(nullptr, kernel);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto pMultiDeviceKernel = static_cast<MultiDeviceKernel *>(kernel);
+    auto pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
+    auto pCmdQueue = castToObject<CommandQueue>(cmdQ);
+    auto &csr = pCmdQueue->getGpgpuCommandStreamReceiver();
+
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    constexpr size_t renderSurfaceSize = sizeof(RENDER_SURFACE_STATE);
+
+    size_t gtpinBTI = pKernel->getNumberOfBindingTableStates() - 1;
+    void *pSurfaceState = gtpinHelper.getSurfaceState(pKernel, gtpinBTI);
+    EXPECT_NE(nullptr, pSurfaceState);
+
+    RENDER_SURFACE_STATE *surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(pSurfaceState);
+    memset(pSurfaceState, 0, renderSurfaceSize);
+    gtpinNotifyKernelSubmit(kernel, pCmdQueue);
+
+    auto allocData = reinterpret_cast<SvmAllocationData *>(kernelExecQueue[0].gtpinResource);
+    EXPECT_NE(nullptr, allocData);
+    auto gpuAllocation = allocData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+    EXPECT_NE(nullptr, gpuAllocation);
+
+    RENDER_SURFACE_STATE expectedSurfaceState;
+    memset(&expectedSurfaceState, 0, renderSurfaceSize);
+    {
+        void *addressToPatch = gpuAllocation->getUnderlyingBuffer();
+        size_t sizeToPatch = gpuAllocation->getUnderlyingBufferSize();
+        Buffer::setSurfaceState(&pDevice->getDevice(), &expectedSurfaceState, false, false,
+                                sizeToPatch, addressToPatch, 0, gpuAllocation, 0, 0,
+                                pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, pContext->getNumDevices());
+    }
+    EXPECT_EQ(0, memcmp(&expectedSurfaceState, surfaceState, renderSurfaceSize));
+
+    EXPECT_FALSE(gpuAllocation->isResident(csr.getOsContext().getContextId()));
+    gtpinNotifyMakeResident(pKernel, &csr);
+    EXPECT_TRUE(gpuAllocation->isResident(csr.getOsContext().getContextId()));
+
+    kernelExecQueue[0].isTaskCountValid = true;
+    gtpinNotifyTaskCompletion(kernelExecQueue[0].taskCount);
+
+    retVal = clReleaseKernel(kernel);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseCommandQueue(cmdQ);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseContext(context);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtpinNotifyKernelSubmitThenMoveToAllocationDomainCalled) {
+    GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo())) {
+        GTEST_SKIP();
+    }
+    class MockGTPinHwHelperHw : public GTPinHwHelperHw<FamilyType> {
+      public:
+        void *getSurfaceState(Kernel *pKernel, size_t bti) override {
+            return data;
+        }
+        uint8_t data[128];
+    };
+
+    struct MockResidentTestsPageFaultManager : public MockPageFaultManager {
+        void moveAllocationToGpuDomain(void *ptr) override {
+            moveAllocationToGpuDomainCalledTimes++;
+            migratedAddress = ptr;
+        }
+        uint32_t moveAllocationToGpuDomainCalledTimes = 0;
+        void *migratedAddress = nullptr;
+    };
+    static std::unique_ptr<SvmAllocationData> allocDataHandle;
+    static std::unique_ptr<MockGraphicsAllocation> mockGAHandle;
+    const auto family = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
+    MockGTPinHwHelperHw mockGTPinHwHelperHw;
+    VariableBackup<GTPinHwHelper *> gtpinHwHelperBackup{&gtpinHwHelperFactory[family], &mockGTPinHwHelperHw};
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = [](command_buffer_handle_t cb, uint64_t kernelId, uint32_t *entryOffset, resource_handle_t *resource) {
+        auto allocData = std::make_unique<SvmAllocationData>(0);
+        auto mockGA = std::make_unique<MockGraphicsAllocation>();
+        allocData->gpuAllocations.addAllocation(mockGA.get());
+        *resource = reinterpret_cast<resource_handle_t>(allocData.get());
+        allocDataHandle = std::move(allocData);
+        mockGAHandle = std::move(mockGA);
+    };
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
+
+    GTPIN_DI_STATUS status = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, status);
+
+    MockKernelWithInternals mockkernel(*pDevice);
+    MockCommandQueue mockCmdQueue;
+    cl_context ctxt = (cl_context)((Context *)pContext);
+    currContext = (gtpin::context_handle_t)(ctxt);
+    mockCmdQueue.device = pDevice;
+
+    gtpinNotifyKernelSubmit(mockkernel.mockMultiDeviceKernel, &mockCmdQueue);
+    EXPECT_EQ(reinterpret_cast<MockResidentTestsPageFaultManager *>(pDevice->getExecutionEnvironment()->memoryManager->getPageFaultManager())->moveAllocationToGpuDomainCalledTimes, 1u);
+
+    mockCmdQueue.device = nullptr;
+    mockGAHandle.reset();
+    allocDataHandle.reset();
+}
+
+TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenGtpinRemoveCommandQueueIsCalledThenAllKernelsFromCmdQueueAreRemoved) {
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = onKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
+    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+
+    kernelExecQueue.clear();
+
+    CommandQueue *cmdQ1 = reinterpret_cast<CommandQueue *>(1);
+    CommandQueue *cmdQ2 = reinterpret_cast<CommandQueue *>(2);
+    Kernel *kernel1 = reinterpret_cast<Kernel *>(1);
+    Kernel *kernel2 = reinterpret_cast<Kernel *>(2);
+    Kernel *kernel3 = reinterpret_cast<Kernel *>(3);
+    Kernel *kernel4 = reinterpret_cast<Kernel *>(4);
+
+    gtpinkexec_t kExec;
+    kExec.pKernel = kernel1;
+    kExec.pCommandQueue = cmdQ1;
+    kernelExecQueue.push_back(kExec);
+
+    kExec.pKernel = kernel2;
+    kExec.pCommandQueue = cmdQ1;
+    kernelExecQueue.push_back(kExec);
+
+    kExec.pKernel = kernel3;
+    kExec.pCommandQueue = cmdQ2;
+    kernelExecQueue.push_back(kExec);
+
+    kExec.pKernel = kernel4;
+    kExec.pCommandQueue = cmdQ2;
+    kernelExecQueue.push_back(kExec);
+    EXPECT_EQ(4u, kernelExecQueue.size());
+
+    gtpinRemoveCommandQueue(cmdQ1);
+    EXPECT_EQ(2u, kernelExecQueue.size());
+
+    gtpinRemoveCommandQueue(cmdQ2);
+    EXPECT_EQ(0u, kernelExecQueue.size());
 }
 
 } // namespace ULT

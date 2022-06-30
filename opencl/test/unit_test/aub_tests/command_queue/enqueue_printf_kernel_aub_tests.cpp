@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_kernel_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
-#include "test.h"
 
 #include "command_enqueue_fixture.h"
 
@@ -36,7 +37,7 @@ class AUBPrintfKernelFixture : public AUBFixture,
     const char *kernelName = "test_printf_number";
 };
 
-HWTEST_F(AUBPrintfKernelFixture, EnqueuePrintfKernel) {
+HWTEST_F(AUBPrintfKernelFixture, GivenPrintfKernelThenEnqueuingSucceeds) {
     ASSERT_NE(nullptr, pKernel);
 
     size_t offset[3] = {0, 0, 0};

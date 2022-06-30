@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "opencl/source/sharings/d3d/d3d_sharing.h"
-
 #include "d3d_sharing_functions.h"
 
 enum GMM_RESOURCE_FORMAT_ENUM;
@@ -36,7 +34,7 @@ class D3DSharing : public SharingHandler {
     unsigned int &getSubresource() { return subresource; }
     typename D3DQuery *getQuery() { return d3dQuery; }
     bool isSharedResource() { return sharedResource; }
-    static const ClSurfaceFormatInfo *findSurfaceFormatInfo(GMM_RESOURCE_FORMAT_ENUM gmmFormat, cl_mem_flags flags, bool supportsOcl20Features);
+    static const ClSurfaceFormatInfo *findSurfaceFormatInfo(GMM_RESOURCE_FORMAT_ENUM gmmFormat, cl_mem_flags flags, bool supportsOcl20Features, bool packedSupported);
     static bool isFormatWithPlane1(DXGI_FORMAT format);
 
   protected:
@@ -49,5 +47,6 @@ class D3DSharing : public SharingHandler {
     D3DQuery *d3dQuery = nullptr;
     bool sharedResource = false;
     unsigned int subresource = 0;
+    std::mutex mtx;
 };
 } // namespace NEO

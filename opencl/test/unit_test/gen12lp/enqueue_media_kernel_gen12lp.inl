@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/test/unit_test/fixtures/media_kernel_fixture.h"
-#include "test.h"
 
 using namespace NEO;
 typedef MediaKernelFixture<HelloWorldFixtureFactory> MediaKernelTest;
@@ -167,7 +168,7 @@ GEN12LPTEST_F(MediaKernelTest, givenGen12LpCsrWhenEnqueueVmeKernelThenVmeSubslic
     EXPECT_FALSE(csr->lastVmeSubslicesConfig);
 }
 
-GEN12LPTEST_F(MediaKernelTest, givenGen12LpCmdSizeForVme) {
+GEN12LPTEST_F(MediaKernelTest, GivenGen12lpWhenGettingCmdSizeForMediaSamplerThenZeroIsReturned) {
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
 
     csr->lastVmeSubslicesConfig = false;

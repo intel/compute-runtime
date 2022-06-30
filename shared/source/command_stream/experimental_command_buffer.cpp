@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/os_context.h"
 
 #include <cstring>
 #include <type_traits>
@@ -20,14 +21,11 @@ namespace NEO {
 
 ExperimentalCommandBuffer::ExperimentalCommandBuffer(CommandStreamReceiver *csr, double profilingTimerResolution) : commandStreamReceiver(csr),
                                                                                                                     currentStream(nullptr),
-                                                                                                                    timestampsOffset(0),
-                                                                                                                    experimentalAllocationOffset(0),
-                                                                                                                    defaultPrint(true),
                                                                                                                     timerResolution(profilingTimerResolution) {
     auto rootDeviceIndex = csr->getRootDeviceIndex();
-    timestamps = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY});
+    timestamps = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize, AllocationType::INTERNAL_HOST_MEMORY, csr->getOsContext().getDeviceBitfield()});
     memset(timestamps->getUnderlyingBuffer(), 0, timestamps->getUnderlyingBufferSize());
-    experimentalAllocation = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY});
+    experimentalAllocation = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize, AllocationType::INTERNAL_HOST_MEMORY, csr->getOsContext().getDeviceBitfield()});
     memset(experimentalAllocation->getUnderlyingBuffer(), 0, experimentalAllocation->getUnderlyingBufferSize());
 }
 
@@ -37,7 +35,7 @@ ExperimentalCommandBuffer::~ExperimentalCommandBuffer() {
         auto stop = static_cast<uint64_t>(*(timestamp + 1) * timerResolution);
         auto start = static_cast<uint64_t>(*timestamp * timerResolution);
         auto delta = stop - start;
-        printDebugString(defaultPrint, stdout, "#%u: delta %llu start %llu stop %llu\n", i, delta, start, stop);
+        PRINT_DEBUG_STRING(defaultPrint, stdout, "#%u: delta %llu start %llu stop %llu\n", i, delta, start, stop);
         timestamp += 2;
     }
     MemoryManager *memoryManager = commandStreamReceiver->getMemoryManager();

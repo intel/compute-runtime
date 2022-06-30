@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "device_fixture.h"
 
-#include "opencl/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
 
 #include "gtest/gtest.h"
 

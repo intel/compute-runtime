@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,7 @@
 
 #pragma once
 
-#include "Windows.h"
-#include <d3dkmthk.h>
+#include "shared/source/os_interface/windows/d3dkmthk_wrapper.h"
 
 #include <cstdint>
 

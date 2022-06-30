@@ -1,3 +1,11 @@
+<!---
+
+Copyright (C) 2018-2022 Intel Corporation
+
+SPDX-License-Identifier: MIT
+
+-->
+
 File to cover guidelines for NEO project.
 
 # C++ usage
@@ -10,6 +18,7 @@ File to cover guidelines for NEO project.
 * avoid includes in headers unless absolutely necessary
 * use of exceptions in driver code needs strong justification
 * prefer static create methods returning std::unique_ptr instead of throwing from constructor
+* inside methods, use an explicit `this->` pointer for refering to non-static class members
 
 # Naming conventions
 

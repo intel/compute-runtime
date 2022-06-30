@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,15 +8,15 @@
 #pragma once
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/test/unit_test/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/test_macros/test.h"
 
-#include "opencl/source/helpers/memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "test.h"
 
 #include "CL/cl.h"
 
@@ -29,6 +29,10 @@ struct Image1dDefaults {
     static const cl_image_desc imageDesc;
     static void *hostPtr;
     static NEO::Context *context;
+};
+
+struct Image1dBufferDefaults : public Image1dDefaults {
+    static const cl_image_desc imageDesc;
 };
 
 struct Image2dDefaults : public Image1dDefaults {
@@ -47,8 +51,9 @@ struct Image1dArrayDefaults : public Image2dDefaults {
     static const cl_image_desc imageDesc;
 };
 
-struct LuminanceImage : public Image2dDefaults {
-    static const cl_image_format imageFormat;
+struct ImageWithoutHostPtr : public Image1dDefaults {
+    enum { flags = 0 };
+    static void *hostPtr;
 };
 
 template <typename BaseClass>
@@ -66,6 +71,10 @@ struct ImageWriteOnly : public BaseClass {
     enum { flags = BaseClass::flags | CL_MEM_WRITE_ONLY };
 };
 
+struct LuminanceImage : public ImageReadOnly<Image2dDefaults> {
+    static const cl_image_format imageFormat;
+};
+
 template <typename Traits>
 struct ImageHelper {
     using Context = NEO::Context;
@@ -78,7 +87,7 @@ struct ImageHelper {
         auto surfaceFormat = Image::getSurfaceFormatFromTable(Traits::flags, imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
         auto image = Image::create(
             context,
-            NEO::MemoryPropertiesHelper::createMemoryProperties(Traits::flags, 0, 0, &context->getDevice(0)->getDevice()),
+            NEO::ClMemoryPropertiesHelper::createMemoryProperties(Traits::flags, 0, 0, &context->getDevice(0)->getDevice()),
             Traits::flags,
             0,
             surfaceFormat,
@@ -86,13 +95,16 @@ struct ImageHelper {
             Traits::hostPtr,
             retVal);
 
-        assert(image != nullptr);
         return image;
     }
 };
 
 template <typename Traits = Image1dDefaults>
 struct Image1dHelper : public ImageHelper<Traits> {
+};
+
+template <typename Traits = Image1dBufferDefaults>
+struct Image1dBufferHelper : public ImageHelper<Traits> {
 };
 
 template <typename Traits = Image2dDefaults>
@@ -119,7 +131,7 @@ struct ImageClearColorFixture : ::testing::Test {
     void setUpImpl() {
         hardwareInfo.capabilityTable.ftrRenderCompressedImages = true;
 
-        NEO::platformsImpl.clear();
+        NEO::platformsImpl->clear();
         NEO::constructPlatform()->peekExecutionEnvironment()->prepareRootDeviceEnvironments(1u);
         NEO::platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
         NEO::platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->initGmm();

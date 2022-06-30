@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
@@ -19,8 +20,6 @@
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-
-#include "gtest/gtest.h"
 
 using namespace NEO;
 
@@ -67,7 +66,7 @@ struct InternalsEventTest
 };
 
 struct MyUserEvent : public VirtualEvent {
-    bool wait(bool blocking, bool quickKmdSleep) override {
+    WaitStatus wait(bool blocking, bool quickKmdSleep) override {
         return VirtualEvent::wait(blocking, quickKmdSleep);
     };
     uint32_t getTaskLevel() override {
@@ -120,11 +119,13 @@ struct MyEvent : public Event {
 class MockEventTests : public HelloWorldTest<HelloWorldFixtureFactory> {
   public:
     void TearDown() override {
-        uEvent->setStatus(-1);
-        uEvent.reset();
+        if (uEvent) {
+            uEvent->setStatus(-1);
+            uEvent.reset();
+        }
         HelloWorldFixture::TearDown();
     }
 
   protected:
-    ReleaseableObjectPtr<UserEvent> uEvent;
+    ReleaseableObjectPtr<UserEvent> uEvent = nullptr;
 };

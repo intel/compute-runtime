@@ -1,19 +1,21 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/aub_mem_dump/aub_mem_dump.h"
+#include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/test/common/test_macros/test.h"
 
-#include "opencl/source/aub_mem_dump/aub_mem_dump.h"
-#include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
-#include "opencl/source/gen_common/aub_mapper.h"
-#include "test.h"
+#include "aub_mapper.h"
 
 namespace Os {
 extern const char *fileSeparator;
@@ -31,7 +33,8 @@ void setupAUB(const NEO::Device *pDevice, aub_stream::EngineType engineType) {
     NEO::AUBCommandStreamReceiver::AubFileStream aubFile;
     std::string filePath(NEO::folderAUB);
     filePath.append(Os::fileSeparator);
-    std::string baseName("simple");
+    std::string baseName(NEO::ApiSpecificConfig::getAubPrefixForSpecificApi());
+    baseName.append("simple");
     baseName.append(csTraits.name);
     baseName.append(".aub");
     filePath.append(getAubFileName(pDevice, baseName));
@@ -39,8 +42,10 @@ void setupAUB(const NEO::Device *pDevice, aub_stream::EngineType engineType) {
     aubFile.fileHandle.open(filePath.c_str(), std::ofstream::binary);
 
     // Header
-    auto deviceId = pDevice->getHardwareInfo().capabilityTable.aubDeviceId;
-    aubFile.init(AubMemDump::SteppingValues::A, deviceId);
+    auto &hwInfo = pDevice->getHardwareInfo();
+    auto deviceId = hwInfo.capabilityTable.aubDeviceId;
+    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    aubFile.init(hwInfoConfig.getAubStreamSteppingFromHwRevId(hwInfo), deviceId);
 
     aubFile.writeMMIO(mmioBase + 0x229c, 0xffff8280);
 

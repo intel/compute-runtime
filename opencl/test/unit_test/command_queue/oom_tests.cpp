@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,12 +7,12 @@
 
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -51,7 +51,7 @@ struct OOMCommandQueueTest : public ClDeviceFixture,
         }
 
         if (oomSetting.oomISH) {
-            auto &ish = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, oomSize);
+            auto &ish = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, oomSize);
 
             // IndirectHeap may be larger than requested so grab what wasnt requested
             ish.getSpace(ish.getAvailableSpace() - oomSize);
@@ -68,9 +68,9 @@ struct OOMCommandQueueTest : public ClDeviceFixture,
     MockContext *context;
 };
 
-HWTEST_P(OOMCommandQueueTest, finish) {
+HWTEST_P(OOMCommandQueueTest, WhenFinishingThenMaxAvailableSpaceIsNotExceeded) {
     auto &commandStream = pCmdQ->getCS(1024);
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
+    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
 
@@ -84,9 +84,9 @@ HWTEST_P(OOMCommandQueueTest, finish) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST_P(OOMCommandQueueTest, enqueueMarker) {
+HWTEST_P(OOMCommandQueueTest, WhenEnqueingMarkerThenMaxAvailableSpaceIsNotExceeded) {
     auto &commandStream = pCmdQ->getCS(1024);
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
+    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
 
@@ -107,9 +107,9 @@ HWTEST_P(OOMCommandQueueTest, enqueueMarker) {
     delete (Event *)eventReturned;
 }
 
-HWTEST_P(OOMCommandQueueTest, enqueueBarrier) {
+HWTEST_P(OOMCommandQueueTest, WhenEnqueingBarrierThenMaxAvailableSpaceIsNotExceeded) {
     auto &commandStream = pCmdQ->getCS(1024);
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
+    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
 

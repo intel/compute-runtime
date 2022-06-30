@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,9 @@
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/cache_policy.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/os_interface/os_context.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/enqueue_common.h"
@@ -33,29 +35,25 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
     const cl_event *eventWaitList,
     cl_event *event) {
 
+    const cl_command_type cmdType = CL_COMMAND_READ_BUFFER;
+
+    CsrSelectionArgs csrSelectionArgs{cmdType, buffer, {}, device->getRootDeviceIndex(), &size};
+    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
+
     if (nullptr == mapAllocation) {
-        notifyEnqueueReadBuffer(buffer, !!blockingRead);
+        notifyEnqueueReadBuffer(buffer, !!blockingRead, EngineHelpers::isBcs(csr.getOsContext().getEngineType()));
     }
 
-    const cl_command_type cmdType = CL_COMMAND_READ_BUFFER;
+    auto rootDeviceIndex = getDevice().getRootDeviceIndex();
     bool isMemTransferNeeded = buffer->isMemObjZeroCopy() ? buffer->checkIfMemoryTransferIsRequired(offset, 0, ptr, cmdType) : true;
     bool isCpuCopyAllowed = bufferCpuCopyAllowed(buffer, cmdType, blockingRead, size, ptr,
                                                  numEventsInWaitList, eventWaitList);
+    InternalMemoryType memoryType = InternalMemoryType::NOT_SPECIFIED;
 
-    //check if we are dealing with SVM pointer here for which we already have an allocation
-    if (!mapAllocation && this->getContext().getSVMAllocsManager()) {
-        auto svmEntry = this->getContext().getSVMAllocsManager()->getSVMAlloc(ptr);
-        if (svmEntry) {
-            if ((svmEntry->gpuAllocation->getGpuAddress() + svmEntry->size) < (castToUint64(ptr) + size)) {
-                return CL_INVALID_OPERATION;
-            }
-
-            mapAllocation = svmEntry->cpuAllocation ? svmEntry->cpuAllocation : svmEntry->gpuAllocation;
-            if (isCpuCopyAllowed) {
-                if (svmEntry->memoryType == DEVICE_UNIFIED_MEMORY) {
-                    isCpuCopyAllowed = false;
-                }
-            }
+    if (!mapAllocation) {
+        cl_int retVal = getContext().tryGetExistingHostPtrAllocation(ptr, size, rootDeviceIndex, mapAllocation, memoryType, isCpuCopyAllowed);
+        if (retVal != CL_SUCCESS) {
+            return retVal;
         }
     }
 
@@ -76,9 +74,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
     if (forceStateless(buffer->getSize())) {
         eBuiltInOps = EBuiltInOps::CopyBufferToBufferStateless;
     }
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(eBuiltInOps,
-                                                                            this->getDevice());
-    BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     void *dstPtr = ptr;
 
@@ -90,13 +85,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
     if (mapAllocation) {
         surfaces[1] = &mapSurface;
         mapSurface.setGraphicsAllocation(mapAllocation);
-        //get offset between base cpu ptr of map allocation and dst ptr
-        size_t dstOffset = ptrDiff(dstPtr, mapAllocation->getUnderlyingBuffer());
-        dstPtr = reinterpret_cast<void *>(mapAllocation->getGpuAddress() + dstOffset);
+        dstPtr = convertAddressWithOffsetToGpuVa(dstPtr, memoryType, *mapAllocation);
     } else {
         surfaces[1] = &hostPtrSurf;
         if (size != 0) {
-            auto &csr = getCommandStreamReceiverByCommandType(cmdType);
             bool status = csr.createAllocationForHostSurface(hostPtrSurf, true);
             if (!status) {
                 return CL_OUT_OF_RESOURCES;
@@ -115,8 +107,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
     dc.size = {size, 0, 0};
     dc.transferAllocation = mapAllocation ? mapAllocation : hostPtrSurf.getAllocation();
 
-    MultiDispatchInfo dispatchInfo;
-    builder.buildDispatchInfos(dispatchInfo, dc);
+    MultiDispatchInfo dispatchInfo(dc);
 
     if (context->isProvidingPerformanceHints()) {
         context->providePerformanceHintForMemoryTransfer(CL_COMMAND_READ_BUFFER, true, static_cast<cl_mem>(buffer), ptr);
@@ -124,14 +115,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
             context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, CL_ENQUEUE_READ_BUFFER_DOESNT_MEET_ALIGNMENT_RESTRICTIONS, ptr, size, MemoryConstants::pageSize, MemoryConstants::pageSize);
         }
     }
-    enqueueHandler<CL_COMMAND_READ_BUFFER>(
-        surfaces,
-        blockingRead == CL_TRUE,
-        dispatchInfo,
-        numEventsInWaitList,
-        eventWaitList,
-        event);
 
-    return CL_SUCCESS;
+    return dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingRead, csr);
 }
+
 } // namespace NEO

@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#pragma once
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/kernel/kernel.h"

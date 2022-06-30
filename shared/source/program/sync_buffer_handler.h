@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,8 +17,8 @@ class CommandStreamReceiver;
 class Context;
 class Device;
 class GraphicsAllocation;
-class MemoryManager;
 class Kernel;
+class MemoryManager;
 
 class SyncBufferHandler {
   public:
@@ -26,7 +26,8 @@ class SyncBufferHandler {
 
     SyncBufferHandler(Device &device);
 
-    void prepareForEnqueue(size_t workGroupsCount, Kernel &kernel);
+    template <typename KernelT>
+    void prepareForEnqueue(size_t workGroupsCount, KernelT &kernel);
     void makeResident(CommandStreamReceiver &csr);
 
   protected:

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,13 +9,14 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/utilities/tag_allocator.h"
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
-#include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_os_context.h"
 
 #include "opencl/test/unit_test/fixtures/device_instrumentation_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
-#include "opencl/test/unit_test/mocks/mock_os_context.h"
 #include "opencl/test/unit_test/os_interface/mock_performance_counters.h"
 
 #include "gtest/gtest.h"
@@ -33,12 +34,12 @@ struct PerformanceCountersDeviceTest : public PerformanceCountersDeviceFixture,
     }
 };
 
-TEST_F(PerformanceCountersDeviceTest, createDeviceWithPerformanceCounters) {
+TEST_F(PerformanceCountersDeviceTest, GivenEnabledInstrumentationWhenGettingPerformanceCountersThenNonNullPtrIsReturned) {
     DeviceInstrumentationFixture::SetUp(true);
     EXPECT_NE(nullptr, device->getPerformanceCounters());
 }
 
-TEST_F(PerformanceCountersDeviceTest, createDeviceWithoutPerformanceCounters) {
+TEST_F(PerformanceCountersDeviceTest, GivenDisabledInstrumentationWhenGettingPerformanceCountersThenNullPtrIsReturned) {
     DeviceInstrumentationFixture::SetUp(false);
     EXPECT_EQ(nullptr, device->getPerformanceCounters());
 }
@@ -55,7 +56,7 @@ struct PerformanceCountersTest : public PerformanceCountersFixture,
     }
 };
 
-TEST_F(PerformanceCountersTest, createPerformanceCounters) {
+TEST_F(PerformanceCountersTest, WhenCreatingPerformanceCountersThenObjectIsNotNull) {
     auto performanceCounters = PerformanceCounters::create(&device->getDevice());
     EXPECT_NE(nullptr, performanceCounters);
     EXPECT_NE(nullptr, performanceCounters.get());
@@ -92,7 +93,14 @@ struct PerformanceCountersProcessEventTest : public PerformanceCountersTest,
 
 TEST_P(PerformanceCountersProcessEventTest, givenNullptrInputParamWhenProcessEventPerfCountersIsCalledThenReturnsFalse) {
     eventComplete = GetParam();
-    auto retVal = performanceCountersBase->getApiReport(inputParamSize, nullptr, &outputParamSize, eventComplete);
+
+    HwPerfCounter counters = {};
+    TagNode<HwPerfCounter> query = {};
+    query.tagForCpuAccess = &counters;
+
+    performanceCountersBase->getQueryHandleRef(counters.query.handle);
+    auto retVal = performanceCountersBase->getApiReport(&query, inputParamSize, nullptr, &outputParamSize, eventComplete);
+    performanceCountersBase->deleteQuery(counters.query.handle);
 
     EXPECT_FALSE(retVal);
 }
@@ -100,7 +108,13 @@ TEST_P(PerformanceCountersProcessEventTest, givenNullptrInputParamWhenProcessEve
 TEST_P(PerformanceCountersProcessEventTest, givenCorrectInputParamWhenProcessEventPerfCountersIsCalledAndEventIsCompletedThenReturnsTrue) {
     eventComplete = GetParam();
     EXPECT_EQ(0ull, outputParamSize);
-    auto retVal = performanceCountersBase->getApiReport(inputParamSize, inputParam.get(), &outputParamSize, eventComplete);
+    HwPerfCounter counters = {};
+    TagNode<HwPerfCounter> query = {};
+    query.tagForCpuAccess = &counters;
+
+    performanceCountersBase->getQueryHandleRef(counters.query.handle);
+    auto retVal = performanceCountersBase->getApiReport(&query, inputParamSize, inputParam.get(), &outputParamSize, eventComplete);
+    performanceCountersBase->deleteQuery(counters.query.handle);
 
     if (eventComplete) {
         EXPECT_TRUE(retVal);
@@ -111,9 +125,27 @@ TEST_P(PerformanceCountersProcessEventTest, givenCorrectInputParamWhenProcessEve
     }
 }
 
+TEST_P(PerformanceCountersProcessEventTest, givenCorrectInputParamWhenProcessEventPerfCountersIsNotCalledThenReturnsFalse) {
+    eventComplete = GetParam();
+    EXPECT_EQ(0ull, outputParamSize);
+    HwPerfCounter tag = {};
+    TagNode<HwPerfCounter> query = {};
+    query.tagForCpuAccess = &tag;
+
+    auto retVal = performanceCountersBase->getApiReport(&query, inputParamSize, inputParam.get(), &outputParamSize, eventComplete);
+    EXPECT_EQ(eventComplete, retVal);
+}
+
 TEST_F(PerformanceCountersProcessEventTest, givenInvalidInputParamSizeWhenProcessEventPerfCountersIsCalledThenReturnsFalse) {
     EXPECT_EQ(0ull, outputParamSize);
-    auto retVal = performanceCountersBase->getApiReport(inputParamSize - 1, inputParam.get(), &outputParamSize, eventComplete);
+
+    HwPerfCounter counters = {};
+    TagNode<HwPerfCounter> query = {};
+    query.tagForCpuAccess = &counters;
+
+    performanceCountersBase->getQueryHandleRef(counters.query.handle);
+    auto retVal = performanceCountersBase->getApiReport(&query, inputParamSize - 1, inputParam.get(), &outputParamSize, eventComplete);
+    performanceCountersBase->deleteQuery(counters.query.handle);
 
     EXPECT_FALSE(retVal);
     EXPECT_EQ(outputParamSize, inputParamSize);
@@ -121,7 +153,14 @@ TEST_F(PerformanceCountersProcessEventTest, givenInvalidInputParamSizeWhenProces
 
 TEST_F(PerformanceCountersProcessEventTest, givenNullptrOutputParamSizeWhenProcessEventPerfCountersIsCalledThenDoesNotReturnsOutputSize) {
     EXPECT_EQ(0ull, outputParamSize);
-    auto retVal = performanceCountersBase->getApiReport(inputParamSize, inputParam.get(), nullptr, eventComplete);
+
+    HwPerfCounter counters = {};
+    TagNode<HwPerfCounter> query = {};
+    query.tagForCpuAccess = &counters;
+
+    performanceCountersBase->getQueryHandleRef(counters.query.handle);
+    auto retVal = performanceCountersBase->getApiReport(&query, inputParamSize, inputParam.get(), nullptr, eventComplete);
+    performanceCountersBase->deleteQuery(counters.query.handle);
 
     EXPECT_TRUE(retVal);
     EXPECT_EQ(0ull, outputParamSize);
@@ -129,7 +168,14 @@ TEST_F(PerformanceCountersProcessEventTest, givenNullptrOutputParamSizeWhenProce
 
 TEST_F(PerformanceCountersProcessEventTest, givenNullptrInputZeroSizeWhenProcessEventPerfCountersIsCalledThenQueryProperSize) {
     EXPECT_EQ(0ull, outputParamSize);
-    auto retVal = performanceCountersBase->getApiReport(0, nullptr, &outputParamSize, eventComplete);
+
+    HwPerfCounter counters = {};
+    TagNode<HwPerfCounter> query = {};
+    query.tagForCpuAccess = &counters;
+
+    performanceCountersBase->getQueryHandleRef(counters.query.handle);
+    auto retVal = performanceCountersBase->getApiReport(&query, 0, nullptr, &outputParamSize, eventComplete);
+    performanceCountersBase->deleteQuery(counters.query.handle);
 
     EXPECT_TRUE(retVal);
     EXPECT_EQ(inputParamSize, outputParamSize);
@@ -137,10 +183,24 @@ TEST_F(PerformanceCountersProcessEventTest, givenNullptrInputZeroSizeWhenProcess
 
 TEST_F(PerformanceCountersProcessEventTest, givenNullptrInputZeroSizeAndNullptrOutputSizeWhenProcessEventPerfCountersIsCalledThenReturnFalse) {
     EXPECT_EQ(0ull, outputParamSize);
-    auto retVal = performanceCountersBase->getApiReport(0, nullptr, nullptr, eventComplete);
+
+    HwPerfCounter counters = {};
+    TagNode<HwPerfCounter> query = {};
+    query.tagForCpuAccess = &counters;
+
+    performanceCountersBase->getQueryHandleRef(counters.query.handle);
+    auto retVal = performanceCountersBase->getApiReport(&query, 0, nullptr, nullptr, eventComplete);
+    performanceCountersBase->deleteQuery(counters.query.handle);
 
     EXPECT_FALSE(retVal);
     EXPECT_EQ(0ull, outputParamSize);
+}
+
+TEST_F(PerformanceCountersProcessEventTest, givenNullptrQueryWhenProcessEventPerfCountersIsCalledThenReturnFalse) {
+    EXPECT_EQ(0ull, outputParamSize);
+
+    auto retVal = performanceCountersBase->getApiReport(nullptr, 0, nullptr, nullptr, eventComplete);
+    EXPECT_FALSE(retVal);
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -155,8 +215,8 @@ struct PerformanceCountersMetricsLibraryTest : public PerformanceCountersMetrics
     void SetUp() override {
         PerformanceCountersMetricsLibraryFixture::SetUp();
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
-        osContext = std::make_unique<MockOsContext>(0, 1, HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
-                                                    PreemptionHelper::getDefaultPreemptionMode(*hwInfo), false, false, false);
+        osContext = std::make_unique<MockOsContext>(0, EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+                                                                                                    PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));
         queue->getGpgpuCommandStreamReceiver().setupContext(*osContext);
     }
 
@@ -202,6 +262,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     EXPECT_TRUE(performanceCountersBase->getGpuCommands(MetricsLibraryApi::GpuCommandBufferType::Render, query, true, sizeof(buffer), buffer));
 
     // Close library.
+    performanceCountersBase->deleteQuery(perfCounter.query.handle);
     performanceCountersBase->shutdown();
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
 }
@@ -392,12 +453,13 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     EXPECT_NE(apiReport, nullptr);
 
     // Obtain api report.
-    EXPECT_TRUE(performanceCountersBase->getApiReport(apiReportSize, apiReport, nullptr, true));
+    EXPECT_TRUE(performanceCountersBase->getApiReport(&query, apiReportSize, apiReport, nullptr, true));
 
     delete[] apiReport;
     apiReport = nullptr;
 
     // Close library.
+    performanceCountersBase->deleteQuery(perfCounter.query.handle);
     performanceCountersBase->shutdown();
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
 }
@@ -422,11 +484,15 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     createPerformanceCounters(true, false);
     EXPECT_NE(nullptr, performanceCountersBase);
 
+    MetricsLibraryApi::QueryHandle_1_0 query = {};
+
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
     EXPECT_TRUE(performanceCountersBase->enable(false));
-    EXPECT_TRUE(performanceCountersBase->getQueryHandle().IsValid());
-    EXPECT_TRUE(performanceCountersBase->getQueryHandle().IsValid());
 
+    performanceCountersBase->getQueryHandleRef(query);
+    EXPECT_TRUE(query.IsValid());
+
+    performanceCountersBase->deleteQuery(query);
     performanceCountersBase->shutdown();
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
 }
@@ -447,7 +513,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenOaConf
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
 }
 
-TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetricsLibraryIsInvalidGpuReportSizeIsInvalid) {
+TEST_F(PerformanceCountersMetricsLibraryTest, GivenInvalidMetricsLibraryWhenGettingGpuCommandSizeThenZeroIsReported) {
     createPerformanceCounters(true, false);
     EXPECT_NE(nullptr, performanceCountersBase);
     EXPECT_TRUE(performanceCountersBase->enable(false));
@@ -512,7 +578,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenCreati
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
 }
 
-TEST_F(PerformanceCountersMetricsLibraryTest, getHwPerfCounterReturnsValidPointer) {
+TEST_F(PerformanceCountersMetricsLibraryTest, WhenGettingHwPerfCounterThenValidPointerIsReturned) {
     createPerformanceCounters(true, false);
     EXPECT_NE(nullptr, performanceCountersBase);
     EXPECT_TRUE(performanceCountersBase->enable(false));
@@ -523,20 +589,19 @@ TEST_F(PerformanceCountersMetricsLibraryTest, getHwPerfCounterReturnsValidPointe
     std::unique_ptr<Event> event(new Event(queue.get(), CL_COMMAND_COPY_BUFFER, 0, 0));
     ASSERT_NE(nullptr, event);
 
-    HwPerfCounter *perfCounter = event->getHwPerfCounterNode()->tagForCpuAccess;
+    auto perfCounter = static_cast<TagNode<HwPerfCounter> *>(event->getHwPerfCounterNode());
     ASSERT_NE(nullptr, perfCounter);
 
-    ASSERT_EQ(0ULL, perfCounter->report[0]);
-    EXPECT_TRUE(perfCounter->isCompleted());
+    ASSERT_EQ(0ULL, perfCounter->tagForCpuAccess->report[0]);
 
-    HwPerfCounter *perfCounter2 = event->getHwPerfCounterNode()->tagForCpuAccess;
+    auto perfCounter2 = event->getHwPerfCounterNode();
     ASSERT_EQ(perfCounter, perfCounter2);
 
     performanceCountersBase->shutdown();
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
 }
 
-TEST_F(PerformanceCountersMetricsLibraryTest, getHwPerfCounterAllocationReturnsValidPointer) {
+TEST_F(PerformanceCountersMetricsLibraryTest, WhenGettingHwPerfCounterAllocationThenValidPointerIsReturned) {
     createPerformanceCounters(true, false);
     EXPECT_NE(nullptr, performanceCountersBase);
     EXPECT_TRUE(performanceCountersBase->enable(false));
@@ -546,7 +611,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, getHwPerfCounterAllocationReturnsV
     std::unique_ptr<Event> event(new Event(queue.get(), CL_COMMAND_COPY_BUFFER, 0, 0));
     ASSERT_NE(nullptr, event);
 
-    GraphicsAllocation *allocation = event->getHwPerfCounterNode()->getBaseGraphicsAllocation();
+    GraphicsAllocation *allocation = event->getHwPerfCounterNode()->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
     ASSERT_NE(nullptr, allocation);
 
     void *memoryStorage = allocation->getUnderlyingBuffer();
@@ -559,7 +624,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, getHwPerfCounterAllocationReturnsV
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
 }
 
-TEST_F(PerformanceCountersMetricsLibraryTest, hwPerfCounterMemoryIsPlacedInGraphicsAllocation) {
+TEST_F(PerformanceCountersMetricsLibraryTest, WhenCreatingEventThenHwPerfCounterMemoryIsPlacedInGraphicsAllocation) {
     createPerformanceCounters(true, false);
     EXPECT_NE(nullptr, performanceCountersBase);
     EXPECT_TRUE(performanceCountersBase->enable(false));
@@ -569,10 +634,10 @@ TEST_F(PerformanceCountersMetricsLibraryTest, hwPerfCounterMemoryIsPlacedInGraph
     std::unique_ptr<Event> event(new Event(queue.get(), CL_COMMAND_COPY_BUFFER, 0, 0));
     ASSERT_NE(nullptr, event);
 
-    HwPerfCounter *perfCounter = event->getHwPerfCounterNode()->tagForCpuAccess;
+    HwPerfCounter *perfCounter = static_cast<TagNode<HwPerfCounter> *>(event->getHwPerfCounterNode())->tagForCpuAccess;
     ASSERT_NE(nullptr, perfCounter);
 
-    GraphicsAllocation *allocation = event->getHwPerfCounterNode()->getBaseGraphicsAllocation();
+    GraphicsAllocation *allocation = event->getHwPerfCounterNode()->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
     ASSERT_NE(nullptr, allocation);
 
     void *memoryStorage = allocation->getUnderlyingBuffer();
@@ -585,7 +650,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, hwPerfCounterMemoryIsPlacedInGraph
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
 }
 
-TEST_F(PerformanceCountersMetricsLibraryTest, hwPerfCounterNodeWhenPerformanceCountersObjectIsNotPresentThenNodeisNull) {
+TEST_F(PerformanceCountersMetricsLibraryTest, GivenPerformanceCountersObjectIsNotPresentWhenCreatingEventThenNodeisNull) {
     std::unique_ptr<Event> event(new Event(queue.get(), CL_COMMAND_COPY_BUFFER, 0, 0));
     ASSERT_NE(nullptr, event);
 
@@ -593,7 +658,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, hwPerfCounterNodeWhenPerformanceCo
     ASSERT_EQ(nullptr, node);
 }
 
-TEST_F(PerformanceCountersTest, givenRenderCoreFamilyThenMetricsLibraryGenIdentifierAreValid) {
+TEST_F(PerformanceCountersTest, givenRenderCoreFamilyWhenGettingGenIdThenMetricsLibraryGenIdentifierAreValid) {
     const auto &hwInfo = device->getHardwareInfo();
     const auto gen = hwInfo.platform.eRenderCoreFamily;
     EXPECT_NE(ClientGen::Unknown, static_cast<ClientGen>(HwHelper::get(gen).getMetricsLibraryGenId()));

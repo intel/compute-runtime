@@ -33,7 +33,7 @@ TEST(clGetPlatformIDsMultiPlatformTest, whenCreateDevicesWithDifferentProductFam
         }
         return device;
     };
-    platformsImpl.clear();
+    platformsImpl->clear();
 
     cl_int retVal = CL_SUCCESS;
     cl_platform_id platformsRet[2];
@@ -59,5 +59,5 @@ TEST(clGetPlatformIDsMultiPlatformTest, whenCreateDevicesWithDifferentProductFam
     EXPECT_EQ(1u, platform1->getNumDevices());
     EXPECT_EQ(IGFX_SKYLAKE, platform1->getClDevice(0)->getHardwareInfo().platform.eProductFamily);
     EXPECT_EQ(0u, platform1->getClDevice(0)->getRootDeviceIndex());
-    platformsImpl.clear();
+    platformsImpl->clear();
 }

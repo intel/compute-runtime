@@ -6,16 +6,16 @@
 
 set(L0_SRCS_TOOLS_SYSMAN_SCHEDULER
     ${CMAKE_CURRENT_SOURCE_DIR}/scheduler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/scheduler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/scheduler_imp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/scheduler_imp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_scheduler.h
 )
 
-
 target_sources(${L0_STATIC_LIB_NAME}
-    PRIVATE
-    ${L0_SRCS_TOOLS_SYSMAN_SCHEDULER}
-    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+               PRIVATE
+               ${L0_SRCS_TOOLS_SYSMAN_SCHEDULER}
+               ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
 )
 
 add_subdirectories()

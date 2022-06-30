@@ -1,24 +1,22 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_stream/csr_definitions.h"
-#include "shared/source/gen12lp/helpers_gen12lp.h"
 #include "shared/source/helpers/engine_node_helper.h"
-#include "shared/source/helpers/preamble_bdw_plus.inl"
-
-#include "opencl/source/helpers/hardware_commands_helper.h"
-
-#include "pipe_control_args.h"
-#include "reg_configs_common.h"
+#include "shared/source/helpers/pipe_control_args.h"
+#include "shared/source/helpers/preamble_bdw_and_later.inl"
+#include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {
 
+using Family = TGLLPFamily;
+
 template <>
-uint32_t PreambleHelper<TGLLPFamily>::getL3Config(const HardwareInfo &hwInfo, bool useSLM) {
+uint32_t PreambleHelper<Family>::getL3Config(const HardwareInfo &hwInfo, bool useSLM) {
     uint32_t l3Config = 0;
 
     switch (hwInfo.platform.eProductFamily) {
@@ -32,20 +30,20 @@ uint32_t PreambleHelper<TGLLPFamily>::getL3Config(const HardwareInfo &hwInfo, bo
 }
 
 template <>
-void PreambleHelper<TGLLPFamily>::programPipelineSelect(LinearStream *pCommandStream,
-                                                        const PipelineSelectArgs &pipelineSelectArgs,
-                                                        const HardwareInfo &hwInfo) {
+void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
+                                                   const PipelineSelectArgs &pipelineSelectArgs,
+                                                   const HardwareInfo &hwInfo) {
 
-    using PIPELINE_SELECT = typename TGLLPFamily::PIPELINE_SELECT;
+    using PIPELINE_SELECT = typename Family::PIPELINE_SELECT;
 
-    if (HardwareCommandsHelper<TGLLPFamily>::isPipeControlPriorToPipelineSelectWArequired(hwInfo)) {
+    if (MemorySynchronizationCommands<Family>::isPipeControlPriorToPipelineSelectWArequired(hwInfo)) {
         PipeControlArgs args;
         args.renderTargetCacheFlushEnable = true;
-        MemorySynchronizationCommands<TGLLPFamily>::addPipeControl(*pCommandStream, args);
+        MemorySynchronizationCommands<Family>::addPipeControl(*pCommandStream, args);
     }
 
     auto pCmd = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
-    PIPELINE_SELECT cmd = TGLLPFamily::cmdInitPipelineSelect;
+    PIPELINE_SELECT cmd = Family::cmdInitPipelineSelect;
 
     auto mask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits;
     auto pipeline = pipelineSelectArgs.is3DPipelineRequired ? PIPELINE_SELECT::PIPELINE_SELECTION_3D : PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU;
@@ -54,44 +52,46 @@ void PreambleHelper<TGLLPFamily>::programPipelineSelect(LinearStream *pCommandSt
     cmd.setPipelineSelection(pipeline);
     cmd.setMediaSamplerDopClockGateEnable(!pipelineSelectArgs.mediaSamplerRequired);
 
-    Gen12LPHelpers::setAdditionalPipelineSelectFields(&cmd, pipelineSelectArgs, hwInfo);
+    HwInfoConfig::get(hwInfo.platform.eProductFamily)->setAdditionalPipelineSelectFields(&cmd, pipelineSelectArgs, hwInfo);
 
     *pCmd = cmd;
 }
 
 template <>
-void PreambleHelper<TGLLPFamily>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, aub_stream::EngineType engineType) {
-    auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
-    PIPE_CONTROL cmd = TGLLPFamily::cmdInitPipeControl;
-    cmd.setCommandStreamerStallEnable(true);
-    if (hwInfo->workaroundTable.waSendMIFLUSHBeforeVFE) {
-        if (!EngineHelpers::isCcs(engineType)) {
-            cmd.setRenderTargetCacheFlushEnable(true);
-            cmd.setDepthCacheFlushEnable(true);
-            cmd.setDepthStallEnable(true);
+void PreambleHelper<Family>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, EngineGroupType engineGroupType) {
+    PipeControlArgs args = {};
+    if (hwInfo->workaroundTable.flags.waSendMIFLUSHBeforeVFE) {
+        if (engineGroupType != EngineGroupType::Compute) {
+            args.renderTargetCacheFlushEnable = true;
+            args.depthCacheFlushEnable = true;
+            args.depthStallEnable = true;
         }
-        cmd.setDcFlushEnable(true);
+        args.dcFlushEnable = true;
     }
-    *pipeControl = cmd;
+
+    MemorySynchronizationCommands<Family>::addPipeControl(*pCommandStream, args);
 }
 
 template <>
-void PreambleHelper<TGLLPFamily>::programL3(LinearStream *pCommandStream, uint32_t l3Config) {
+void PreambleHelper<Family>::programL3(LinearStream *pCommandStream, uint32_t l3Config) {
 }
 
 template <>
-uint32_t PreambleHelper<TGLLPFamily>::getUrbEntryAllocationSize() {
+uint32_t PreambleHelper<Family>::getUrbEntryAllocationSize() {
     return 1024u;
 }
 
 template <>
-void PreambleHelper<TGLLPFamily>::programAdditionalFieldsInVfeState(VFE_STATE_TYPE *mediaVfeState, const HardwareInfo &hwInfo) {
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    if (!hwHelper.isFusedEuDispatchEnabled(hwInfo)) {
+void PreambleHelper<Family>::programAdditionalFieldsInVfeState(VFE_STATE_TYPE *mediaVfeState, const HardwareInfo &hwInfo, bool disableEUFusion) {
+    auto &hwHelper = HwHelperHw<Family>::get();
+    if (!hwHelper.isFusedEuDispatchEnabled(hwInfo, disableEUFusion)) {
         mediaVfeState->setDisableSlice0Subslice2(true);
+    }
+    if (DebugManager.flags.MediaVfeStateMaxSubSlices.get() != -1) {
+        mediaVfeState->setMaximumNumberOfDualSubslices(DebugManager.flags.MediaVfeStateMaxSubSlices.get());
     }
 }
 
 // Explicitly instantiate PreambleHelper for TGLLP device family
-template struct PreambleHelper<TGLLPFamily>;
+template struct PreambleHelper<Family>;
 } // namespace NEO

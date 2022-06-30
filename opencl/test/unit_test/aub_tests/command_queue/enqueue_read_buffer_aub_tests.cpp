@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,13 +7,13 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/test_configuration/aub_tests/aub_tests_configuration.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/mem_obj/buffer.h"
-#include "opencl/test/unit_test/aub_tests/aub_tests_configuration.h"
 #include "opencl/test/unit_test/aub_tests/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
-#include "test.h"
 
 #include <memory>
 
@@ -35,7 +35,7 @@ struct ReadBufferHw
 
 typedef ReadBufferHw AUBReadBuffer;
 
-HWTEST_P(AUBReadBuffer, simple) {
+HWTEST_P(AUBReadBuffer, WhenReadingBufferThenExpectationsAreMet) {
     MockContext context(this->pClDevice);
 
     cl_float srcMemory[] = {1.0f, 2.0f, 3.0f, 4.0f};
@@ -107,8 +107,8 @@ INSTANTIATE_TEST_CASE_P(AUBReadBuffer_simple,
                             2 * sizeof(cl_float),
                             3 * sizeof(cl_float)));
 
-HWTEST_F(AUBReadBuffer, reserveCanonicalGpuAddress) {
-    if (!GetAubTestsConfig<FamilyType>().testCanonicalAddress) {
+HWTEST_F(AUBReadBuffer, GivenReserveCanonicalGpuAddressWhenReadingBufferThenExpectationsAreMet) {
+    if (!getAubTestsConfig<FamilyType>().testCanonicalAddress) {
         return;
     }
 
@@ -116,22 +116,21 @@ HWTEST_F(AUBReadBuffer, reserveCanonicalGpuAddress) {
 
     cl_float srcMemory[] = {1.0f, 2.0f, 3.0f, 4.0f};
     cl_float dstMemory[] = {0.0f, 0.0f, 0.0f, 0.0f};
-    GraphicsAllocation *srcAllocation = new MockGraphicsAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN,
+    GraphicsAllocation *srcAllocation = new MockGraphicsAllocation(0, AllocationType::UNKNOWN,
                                                                    srcMemory,
                                                                    0xFFFF800400001000,
                                                                    0xFFFF800400001000,
                                                                    sizeof(srcMemory),
-                                                                   MemoryPool::MemoryNull);
-
+                                                                   MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
     std::unique_ptr<Buffer> srcBuffer(Buffer::createBufferHw(
         &context,
-        MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice()),
+        ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice()),
         CL_MEM_USE_HOST_PTR,
         0,
         sizeof(srcMemory),
         srcAllocation->getUnderlyingBuffer(),
         srcMemory,
-        srcAllocation,
+        GraphicsAllocationHelper::toMultiGraphicsAllocation(srcAllocation),
         false,
         false,
         false));
@@ -215,7 +214,7 @@ struct AUBReadBufferUnaligned
     }
 };
 
-HWTEST_F(AUBReadBufferUnaligned, all) {
+HWTEST_F(AUBReadBufferUnaligned, GivenOffestAndSizeWhenReadingBufferThenExpectationsAreMet) {
     const std::vector<size_t> offsets = {0, 1, 2, 3};
     const std::vector<size_t> sizes = {4, 3, 2, 1};
     for (auto offset : offsets) {

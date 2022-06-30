@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#pragma once
+
 #include "shared/source/command_stream/linear_stream.h"
-#include "shared/test/unit_test/fixtures/device_fixture.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 
 namespace NEO {
 

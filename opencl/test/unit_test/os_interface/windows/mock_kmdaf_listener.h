@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,20 +30,20 @@ struct KmDafListenerMock : public KmDafListener {
         notifyUnlockParametrization.pfnEscape = pfnEscape;
     }
 
-    inline void notifyMapGpuVA(bool ftrKmdDaf, D3DKMT_HANDLE hAdapter, D3DKMT_HANDLE hDevice, const D3DKMT_HANDLE hAllocation, D3DGPU_VIRTUAL_ADDRESS GpuVirtualAddress, PFND3DKMT_ESCAPE pfnEscape) override {
+    inline void notifyMapGpuVA(bool ftrKmdDaf, D3DKMT_HANDLE hAdapter, D3DKMT_HANDLE hDevice, const D3DKMT_HANDLE hAllocation, D3DGPU_VIRTUAL_ADDRESS gpuVirtualAddress, PFND3DKMT_ESCAPE pfnEscape) override {
         notifyMapGpuVAParametrization.ftrKmdDaf = ftrKmdDaf;
         notifyMapGpuVAParametrization.hAdapter = hAdapter;
         notifyMapGpuVAParametrization.hDevice = hDevice;
         notifyMapGpuVAParametrization.hAllocation = hAllocation;
-        notifyMapGpuVAParametrization.GpuVirtualAddress = GpuVirtualAddress;
+        notifyMapGpuVAParametrization.gpuVirtualAddress = gpuVirtualAddress;
         notifyMapGpuVAParametrization.pfnEscape = pfnEscape;
     }
 
-    inline void notifyUnmapGpuVA(bool ftrKmdDaf, D3DKMT_HANDLE hAdapter, D3DKMT_HANDLE hDevice, D3DGPU_VIRTUAL_ADDRESS GpuVirtualAddress, PFND3DKMT_ESCAPE pfnEscape) override {
+    inline void notifyUnmapGpuVA(bool ftrKmdDaf, D3DKMT_HANDLE hAdapter, D3DKMT_HANDLE hDevice, D3DGPU_VIRTUAL_ADDRESS gpuVirtualAddress, PFND3DKMT_ESCAPE pfnEscape) override {
         notifyUnmapGpuVAParametrization.ftrKmdDaf = ftrKmdDaf;
         notifyUnmapGpuVAParametrization.hAdapter = hAdapter;
         notifyUnmapGpuVAParametrization.hDevice = hDevice;
-        notifyUnmapGpuVAParametrization.GpuVirtualAddress = GpuVirtualAddress;
+        notifyUnmapGpuVAParametrization.gpuVirtualAddress = gpuVirtualAddress;
         notifyUnmapGpuVAParametrization.pfnEscape = pfnEscape;
     }
 
@@ -96,7 +96,7 @@ struct KmDafListenerMock : public KmDafListener {
         D3DKMT_HANDLE hAdapter = 0;
         D3DKMT_HANDLE hDevice = 0;
         D3DKMT_HANDLE hAllocation = 0;
-        D3DGPU_VIRTUAL_ADDRESS GpuVirtualAddress = 0;
+        D3DGPU_VIRTUAL_ADDRESS gpuVirtualAddress = 0;
         PFND3DKMT_ESCAPE pfnEscape = nullptr;
     } notifyMapGpuVAParametrization;
 
@@ -104,7 +104,7 @@ struct KmDafListenerMock : public KmDafListener {
         bool ftrKmdDaf = false;
         D3DKMT_HANDLE hAdapter = 0;
         D3DKMT_HANDLE hDevice = 0;
-        D3DGPU_VIRTUAL_ADDRESS GpuVirtualAddress = 0;
+        D3DGPU_VIRTUAL_ADDRESS gpuVirtualAddress = 0;
         PFND3DKMT_ESCAPE pfnEscape = nullptr;
     } notifyUnmapGpuVAParametrization;
 

@@ -1,16 +1,18 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/hw_cmds.h"
+#include "shared/source/helpers/populate_factory.h"
+#include "shared/source/os_interface/hw_info_config.h"
 
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/mem_obj/image.h"
@@ -29,13 +31,13 @@ union SURFACE_STATE_BUFFER_LENGTH {
 };
 
 template <typename GfxFamily>
-void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, uint32_t mipLevel) {
+void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, uint32_t mipLevel, uint32_t rootDeviceIndex, bool useGlobalAtomics) {
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
 
-    auto graphicsAllocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
+    auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
     auto gmm = graphicsAllocation->getDefaultGmm();
-    auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
+    auto gmmHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper();
 
     auto imageDescriptor = Image::convertDescriptor(getImageDesc());
     ImageInfo imgInfo;
@@ -43,24 +45,23 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     imgInfo.qPitch = qPitch;
     imgInfo.surfaceFormat = &getSurfaceFormatInfo().surfaceFormat;
 
-    setImageSurfaceState<GfxFamily>(surfaceState, imgInfo, graphicsAllocation->getDefaultGmm(), *gmmHelper, cubeFaceIndex, graphicsAllocation->getGpuAddress(), surfaceOffsets, IsNV12Image(&this->getImageFormat()));
+    setImageSurfaceState<GfxFamily>(surfaceState, imgInfo, graphicsAllocation->getDefaultGmm(), *gmmHelper, cubeFaceIndex, graphicsAllocation->getGpuAddress(), surfaceOffsets, isNV12Image(&this->getImageFormat()));
 
     if (getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
         // image1d_buffer is image1d created from buffer. The length of buffer could be larger
         // than the maximal image width. Mock image1d_buffer with SURFACE_TYPE_SURFTYPE_BUFFER.
-        SURFACE_STATE_BUFFER_LENGTH Length = {0};
-        Length.Length = static_cast<uint32_t>(getImageDesc().image_width - 1);
+        SURFACE_STATE_BUFFER_LENGTH length = {0};
+        length.Length = static_cast<uint32_t>(getImageDesc().image_width - 1);
 
-        surfaceState->setWidth(static_cast<uint32_t>(Length.SurfaceState.Width + 1));
-        surfaceState->setHeight(static_cast<uint32_t>(Length.SurfaceState.Height + 1));
-        surfaceState->setDepth(static_cast<uint32_t>(Length.SurfaceState.Depth + 1));
+        surfaceState->setWidth(static_cast<uint32_t>(length.SurfaceState.Width + 1));
+        surfaceState->setHeight(static_cast<uint32_t>(length.SurfaceState.Height + 1));
+        surfaceState->setDepth(static_cast<uint32_t>(length.SurfaceState.Depth + 1));
         surfaceState->setSurfacePitch(static_cast<uint32_t>(getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes));
         surfaceState->setSurfaceType(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER);
     } else {
         setImageSurfaceStateDimensions<GfxFamily>(surfaceState, imgInfo, cubeFaceIndex, surfaceType);
         if (setAsMediaBlockImage) {
-            uint32_t elSize = static_cast<uint32_t>(getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes);
-            surfaceState->setWidth(static_cast<uint32_t>((getImageDesc().image_width * elSize) / sizeof(uint32_t)));
+            setWidthForMediaBlockSurfaceState<GfxFamily>(surfaceState, imgInfo);
         }
     }
 
@@ -86,11 +87,15 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
 
     if (imageDesc.num_samples > 1) {
         setAuxParamsForMultisamples(surfaceState);
-    } else if (gmm && gmm->isRenderCompressed) {
-        setAuxParamsForCCS<GfxFamily>(surfaceState, gmm);
+    } else if (graphicsAllocation->isCompressionEnabled()) {
+        EncodeSurfaceState<GfxFamily>::setImageAuxParamsForCCS(surfaceState, gmm);
+    } else {
+        EncodeSurfaceState<GfxFamily>::disableCompressionFlags(surfaceState);
     }
-    appendSurfaceStateDepthParams(surfaceState);
-    appendSurfaceStateParams(surfaceState);
+    appendSurfaceStateDepthParams(surfaceState, gmm);
+    EncodeSurfaceState<GfxFamily>::appendImageCompressionParams(surfaceState, graphicsAllocation, gmmHelper, isImageFromBuffer(),
+                                                                this->plane);
+    appendSurfaceStateParams(surfaceState, rootDeviceIndex, useGlobalAtomics);
     appendSurfaceStateExt(surfaceState);
 }
 
@@ -102,13 +107,13 @@ void ImageHw<GfxFamily>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfa
         auto mcsGmm = getMcsAllocation()->getDefaultGmm();
 
         if (mcsGmm->unifiedAuxTranslationCapable() && mcsGmm->hasMultisampleControlSurface()) {
-            setAuxParamsForMCSCCS(surfaceState, mcsGmm);
+            EncodeSurfaceState<GfxFamily>::setAuxParamsForMCSCCS(surfaceState);
             surfaceState->setAuxiliarySurfacePitch(mcsGmm->getUnifiedAuxPitchTiles());
             surfaceState->setAuxiliarySurfaceQpitch(mcsGmm->getAuxQPitch());
-            setClearColorParams<GfxFamily>(surfaceState, mcsGmm);
+            EncodeSurfaceState<GfxFamily>::setClearColorParams(surfaceState, mcsGmm);
             setUnifiedAuxBaseAddress<GfxFamily>(surfaceState, mcsGmm);
         } else if (mcsGmm->unifiedAuxTranslationCapable()) {
-            setAuxParamsForCCS<GfxFamily>(surfaceState, mcsGmm);
+            EncodeSurfaceState<GfxFamily>::setImageAuxParamsForCCS(surfaceState, mcsGmm);
         } else {
             surfaceState->setAuxiliarySurfaceMode((typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE)1);
             surfaceState->setAuxiliarySurfacePitch(mcsSurfaceInfo.pitch);
@@ -121,21 +126,21 @@ void ImageHw<GfxFamily>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfa
 }
 
 template <typename GfxFamily>
-void ImageHw<GfxFamily>::appendSurfaceStateParams(RENDER_SURFACE_STATE *surfaceState) {
+void ImageHw<GfxFamily>::appendSurfaceStateParams(RENDER_SURFACE_STATE *surfaceState, uint32_t rootDeviceIndex, bool useGlobalAtomics) {
 }
 
 template <typename GfxFamily>
-inline void ImageHw<GfxFamily>::appendSurfaceStateDepthParams(RENDER_SURFACE_STATE *surfaceState) {
+inline void ImageHw<GfxFamily>::appendSurfaceStateDepthParams(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {
 }
 
 template <typename GfxFamily>
-void ImageHw<GfxFamily>::setMediaImageArg(void *memory) {
+void ImageHw<GfxFamily>::setMediaImageArg(void *memory, uint32_t rootDeviceIndex) {
     using MEDIA_SURFACE_STATE = typename GfxFamily::MEDIA_SURFACE_STATE;
     using SURFACE_FORMAT = typename MEDIA_SURFACE_STATE::SURFACE_FORMAT;
     SURFACE_FORMAT surfaceFormat = MEDIA_SURFACE_STATE::SURFACE_FORMAT_Y8_UNORM_VA;
 
-    auto graphicsAllocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
-    auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
+    auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
+    auto gmmHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper();
     auto surfaceState = reinterpret_cast<MEDIA_SURFACE_STATE *>(memory);
     MEDIA_SURFACE_STATE state = GfxFamily::cmdInitMediaSurfaceState;
 
@@ -162,11 +167,11 @@ void ImageHw<GfxFamily>::setMediaImageArg(void *memory) {
     state.setXOffsetForVCr(0);
     state.setYOffsetForVCr(0);
 
-    setSurfaceMemoryObjectControlStateIndexToMocsTable(
+    setSurfaceMemoryObjectControlState(
         reinterpret_cast<void *>(&state),
         gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE));
 
-    if (IsNV12Image(&this->getImageFormat())) {
+    if (isNV12Image(&this->getImageFormat())) {
         state.setInterleaveChroma(true);
         state.setYOffsetForUCb(this->surfaceOffsets.yOffsetForUVplane);
     }
@@ -197,6 +202,25 @@ void ImageHw<GfxFamily>::transformImage3dTo2dArray(void *memory) {
 }
 
 template <typename GfxFamily>
-void ImageHw<GfxFamily>::setAuxParamsForMCSCCS(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {
+inline void ImageHw<GfxFamily>::setMediaSurfaceRotation(void *memory) {
+    using MEDIA_SURFACE_STATE = typename GfxFamily::MEDIA_SURFACE_STATE;
+    using SURFACE_FORMAT = typename MEDIA_SURFACE_STATE::SURFACE_FORMAT;
+
+    auto surfaceState = reinterpret_cast<MEDIA_SURFACE_STATE *>(memory);
+
+    surfaceState->setRotation(MEDIA_SURFACE_STATE::ROTATION_NO_ROTATION_OR_0_DEGREE);
+    surfaceState->setXOffset(0);
+    surfaceState->setYOffset(0);
 }
+
+template <typename GfxFamily>
+inline void ImageHw<GfxFamily>::setSurfaceMemoryObjectControlState(void *memory, uint32_t value) {
+    using MEDIA_SURFACE_STATE = typename GfxFamily::MEDIA_SURFACE_STATE;
+    using SURFACE_FORMAT = typename MEDIA_SURFACE_STATE::SURFACE_FORMAT;
+
+    auto surfaceState = reinterpret_cast<MEDIA_SURFACE_STATE *>(memory);
+
+    surfaceState->setSurfaceMemoryObjectControlState(value);
+}
+
 } // namespace NEO

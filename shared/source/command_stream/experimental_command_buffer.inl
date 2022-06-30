@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,9 +10,8 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-
-#include "pipe_control_args.h"
 
 namespace NEO {
 
@@ -98,11 +97,12 @@ void ExperimentalCommandBuffer::addExperimentalCommands() {
     *semaphoreData = 1;
     uint64_t gpuAddr = experimentalAllocation->getGpuAddress() + experimentalAllocationOffset;
 
-    auto semaphoreCmd = currentStream->getSpaceForCmd<MI_SEMAPHORE_WAIT>();
-    *semaphoreCmd = GfxFamily::cmdInitMiSemaphoreWait;
-    semaphoreCmd->setCompareOperation(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD);
-    semaphoreCmd->setSemaphoreDataDword(*semaphoreData);
-    semaphoreCmd->setSemaphoreGraphicsAddress(gpuAddr);
+    auto semaphoreCmdSpace = currentStream->getSpaceForCmd<MI_SEMAPHORE_WAIT>();
+    auto semaphoreCmd = GfxFamily::cmdInitMiSemaphoreWait;
+    semaphoreCmd.setCompareOperation(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD);
+    semaphoreCmd.setSemaphoreDataDword(*semaphoreData);
+    semaphoreCmd.setSemaphoreGraphicsAddress(gpuAddr);
+    *semaphoreCmdSpace = semaphoreCmd;
 }
 
 template <typename GfxFamily>

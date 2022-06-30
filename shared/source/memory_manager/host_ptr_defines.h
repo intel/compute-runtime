@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,13 +9,15 @@
 
 #include <cinttypes>
 #include <cstdlib>
+#include <limits>
 
 namespace NEO {
 
-struct OsHandle;
+struct OsHandle {
+  protected:
+    OsHandle() = default;
+};
 struct ResidencyData;
-
-using OsGraphicsHandle = OsHandle;
 
 constexpr int maxFragmentsCount = 3;
 
@@ -34,7 +36,7 @@ enum OverlapStatus {
     FRAGMENT_NOT_CHECKED
 };
 
-enum RequirementsStatus {
+enum class RequirementsStatus {
     SUCCESS = 0,
     FATAL
 };
@@ -49,6 +51,7 @@ struct AllocationRequirements {
     PartialAllocation allocationFragments[maxFragmentsCount];
     uint64_t totalRequiredSize = 0u;
     uint32_t requiredFragmentsCount = 0u;
+    uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
 };
 
 struct FragmentStorage {

@@ -1,56 +1,34 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/array_count.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/hw_helper.h"
-#include "shared/source/helpers/vec.h"
-#include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
-#include "shared/source/os_interface/os_context.h"
-#include "shared/test/unit_test/cmd_parse/hw_parse.h"
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
-#include "shared/test/unit_test/helpers/ult_hw_config.h"
-#include "shared/test/unit_test/helpers/variable_backup.h"
-#include "shared/test/unit_test/mocks/mock_device.h"
-#include "shared/test/unit_test/mocks/ult_device_factory.h"
-#include "shared/test/unit_test/utilities/base_object_utils.h"
+#include "shared/test/common/fixtures/memory_management_fixture.h"
+#include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
-#include "opencl/source/api/api.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/source/command_queue/gpgpu_walker.h"
-#include "opencl/source/event/user_event.h"
-#include "opencl/source/helpers/cl_blit_properties.h"
-#include "opencl/source/helpers/memory_properties_helpers.h"
-#include "opencl/source/mem_obj/buffer.h"
-#include "opencl/source/platform/platform.h"
+#include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
-#include "opencl/test/unit_test/gen_common/matchers.h"
-#include "opencl/test/unit_test/helpers/unit_test_helper.h"
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
-#include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "opencl/test/unit_test/mocks/mock_timestamp_container.h"
-#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
-#include "test.h"
-
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 
 using namespace NEO;
 
@@ -86,6 +64,19 @@ TEST(Buffer, givenBufferWhenAskedForPtrLengthThenReturnCorrectValue) {
     EXPECT_EQ(size[0], retOffset);
 }
 
+TEST(Buffer, whenBufferAllocatedInLocalMemoryThenCpuCopyIsDisallowed) {
+    MockGraphicsAllocation allocation{};
+    MockBuffer buffer(allocation);
+    UltDeviceFactory factory{1, 0};
+    auto &device = *factory.rootDevices[0];
+
+    allocation.memoryPool = MemoryPool::LocalMemory;
+    EXPECT_FALSE(buffer.isReadWriteOnCpuAllowed(device));
+
+    allocation.memoryPool = MemoryPool::System4KBPages;
+    EXPECT_TRUE(buffer.isReadWriteOnCpuAllowed(device));
+}
+
 TEST(Buffer, givenReadOnlySetOfInputFlagsWhenPassedToisReadOnlyMemoryPermittedByFlagsThenTrueIsReturned) {
     class MockBuffer : public Buffer {
       public:
@@ -94,12 +85,103 @@ TEST(Buffer, givenReadOnlySetOfInputFlagsWhenPassedToisReadOnlyMemoryPermittedBy
     UltDeviceFactory deviceFactory{1, 0};
     auto pDevice = deviceFactory.rootDevices[0];
     cl_mem_flags flags = CL_MEM_HOST_NO_ACCESS | CL_MEM_READ_ONLY;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice);
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice);
     EXPECT_TRUE(MockBuffer::isReadOnlyMemoryPermittedByFlags(memoryProperties));
 
     flags = CL_MEM_HOST_READ_ONLY | CL_MEM_READ_ONLY;
-    memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice);
+    memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice);
     EXPECT_TRUE(MockBuffer::isReadOnlyMemoryPermittedByFlags(memoryProperties));
+}
+
+TEST(TestBufferRectCheck, givenSmallerDstBufferWhenCallBufferRectPitchSetThenCorrectValidationIsDone) {
+    auto srcBuffer = std::make_unique<MockBuffer>();
+    ASSERT_NE(nullptr, srcBuffer);
+    srcBuffer->size = 500;
+
+    size_t originBuffer[] = {0, 0, 0};
+    size_t region[] = {10, 20, 1};
+    size_t srcRowPitch = 20u;
+    size_t srcSlicePitch = 0u;
+    size_t dstRowPitch = 10u;
+    size_t dstSlicePitch = 0u;
+
+    auto retVal = srcBuffer->bufferRectPitchSet(originBuffer, region, srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, true);
+    EXPECT_TRUE(retVal);
+
+    auto dstBuffer = std::make_unique<MockBuffer>();
+    ASSERT_NE(nullptr, dstBuffer);
+    dstBuffer->size = 200;
+
+    EXPECT_GT(srcBuffer->size, dstBuffer->size);
+
+    retVal = dstBuffer->bufferRectPitchSet(originBuffer, region, srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, false);
+    EXPECT_TRUE(retVal);
+    retVal = dstBuffer->bufferRectPitchSet(originBuffer, region, srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, true);
+    EXPECT_FALSE(retVal);
+}
+
+TEST(TestBufferRectCheck, givenInvalidSrcPitchWhenCallBufferRectPitchSetThenReturnFalse) {
+    auto buffer = std::make_unique<MockBuffer>();
+    ASSERT_NE(nullptr, buffer);
+    buffer->size = 200;
+
+    size_t originBuffer[] = {0, 0, 0};
+    size_t region[] = {3, 1, 1};
+    size_t srcRowPitch = 10u;
+    size_t srcSlicePitch = 10u;
+    size_t dstRowPitch = 3u;
+    size_t dstSlicePitch = 10u;
+
+    auto retVal = buffer->bufferRectPitchSet(originBuffer, region, srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, true);
+    EXPECT_FALSE(retVal);
+}
+
+TEST(TestBufferRectCheck, givenInvalidDstPitchWhenCallBufferRectPitchSetThenReturnFalse) {
+    auto buffer = std::make_unique<MockBuffer>();
+    ASSERT_NE(nullptr, buffer);
+    buffer->size = 200;
+
+    size_t originBuffer[] = {0, 0, 0};
+    size_t region[] = {3, 1, 1};
+    size_t srcRowPitch = 3u;
+    size_t srcSlicePitch = 10u;
+    size_t dstRowPitch = 10u;
+    size_t dstSlicePitch = 10u;
+
+    auto retVal = buffer->bufferRectPitchSet(originBuffer, region, srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, true);
+    EXPECT_FALSE(retVal);
+}
+
+TEST(TestBufferRectCheck, givenInvalidDstAndSrcPitchWhenCallBufferRectPitchSetThenReturnFalse) {
+    auto buffer = std::make_unique<MockBuffer>();
+    ASSERT_NE(nullptr, buffer);
+    buffer->size = 200;
+
+    size_t originBuffer[] = {0, 0, 0};
+    size_t region[] = {3, 2, 1};
+    size_t srcRowPitch = 10u;
+    size_t srcSlicePitch = 10u;
+    size_t dstRowPitch = 10u;
+    size_t dstSlicePitch = 10u;
+
+    auto retVal = buffer->bufferRectPitchSet(originBuffer, region, srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, true);
+    EXPECT_FALSE(retVal);
+}
+
+TEST(TestBufferRectCheck, givenCorrectDstAndSrcPitchWhenCallBufferRectPitchSetThenReturnTrue) {
+    auto buffer = std::make_unique<MockBuffer>();
+    ASSERT_NE(nullptr, buffer);
+    buffer->size = 200;
+
+    size_t originBuffer[] = {0, 0, 0};
+    size_t region[] = {3, 1, 1};
+    size_t srcRowPitch = 10u;
+    size_t srcSlicePitch = 10u;
+    size_t dstRowPitch = 10u;
+    size_t dstSlicePitch = 10u;
+
+    auto retVal = buffer->bufferRectPitchSet(originBuffer, region, srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, true);
+    EXPECT_TRUE(retVal);
 }
 
 class BufferReadOnlyTest : public testing::TestWithParam<uint64_t> {
@@ -114,7 +196,7 @@ TEST_P(BufferReadOnlyTest, givenNonReadOnlySetOfInputFlagsWhenPassedToisReadOnly
     UltDeviceFactory deviceFactory{1, 0};
     auto pDevice = deviceFactory.rootDevices[0];
     cl_mem_flags flags = GetParam() | CL_MEM_USE_HOST_PTR;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice);
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice);
     EXPECT_FALSE(MockBuffer::isReadOnlyMemoryPermittedByFlags(memoryProperties));
 }
 static cl_mem_flags nonReadOnlyFlags[] = {
@@ -140,25 +222,23 @@ TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithReadOnlyFlagsThenB
     memset(memory, 0xAA, MemoryConstants::pageSize);
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation> *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(*device->getExecutionEnvironment());
-
-    device->injectMemoryManager(memoryManager);
     MockContext ctx(device.get());
 
     // First fail simulates error for read only memory allocation
-    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
-        .WillOnce(::testing::Return(nullptr))
-        .WillRepeatedly(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::baseAllocateGraphicsMemoryInDevicePool));
-
+    auto memoryManager = std::make_unique<MockMemoryManagerFailFirstAllocation>(*device->getExecutionEnvironment());
+    memoryManager->returnNullptr = true;
+    memoryManager->returnBaseAllocateGraphicsMemoryInDevicePool = true;
     cl_int retVal;
     cl_mem_flags flags = CL_MEM_HOST_READ_ONLY | CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR;
 
+    ctx.memoryManager = memoryManager.get();
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, (void *)memory, retVal));
+    ctx.memoryManager = device->getMemoryManager();
 
     EXPECT_FALSE(buffer->isMemObjZeroCopy());
     void *memoryStorage = buffer->getCpuAddressForMemoryTransfer();
     EXPECT_NE((void *)memory, memoryStorage);
-    EXPECT_THAT(buffer->getCpuAddressForMemoryTransfer(), MemCompare(memory, MemoryConstants::pageSize));
+    EXPECT_EQ(0, memcmp(buffer->getCpuAddressForMemoryTransfer(), memory, MemoryConstants::pageSize));
 
     alignedFree(memory);
 }
@@ -170,20 +250,18 @@ TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithReadOnlyFlagsAndSe
     memset(memory, 0xAA, MemoryConstants::pageSize);
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation> *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(*device->getExecutionEnvironment());
-
-    device->injectMemoryManager(memoryManager);
     MockContext ctx(device.get());
 
     // First fail simulates error for read only memory allocation
     // Second fail returns nullptr
-    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
-        .WillRepeatedly(::testing::Return(nullptr));
+    auto memoryManager = std::make_unique<MockMemoryManagerFailFirstAllocation>(*device->getExecutionEnvironment());
 
     cl_int retVal;
     cl_mem_flags flags = CL_MEM_HOST_READ_ONLY | CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR;
 
+    ctx.memoryManager = memoryManager.get();
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, (void *)memory, retVal));
+    ctx.memoryManager = device->getMemoryManager();
 
     EXPECT_EQ(nullptr, buffer.get());
     alignedFree(memory);
@@ -196,19 +274,17 @@ TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithKernelWriteFlagThe
     memset(memory, 0xAA, MemoryConstants::pageSize);
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation> *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(*device->getExecutionEnvironment());
-
-    device->injectMemoryManager(memoryManager);
     MockContext ctx(device.get());
 
     // First fail simulates error for read only memory allocation
-    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
-        .WillOnce(::testing::Return(nullptr));
+    auto memoryManager = std::make_unique<MockMemoryManagerFailFirstAllocation>(*device->getExecutionEnvironment());
 
     cl_int retVal;
     cl_mem_flags flags = CL_MEM_HOST_READ_ONLY | CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR;
 
+    ctx.memoryManager = memoryManager.get();
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, (void *)memory, retVal));
+    ctx.memoryManager = device->getMemoryManager();
 
     EXPECT_EQ(nullptr, buffer.get());
     alignedFree(memory);
@@ -216,37 +292,33 @@ TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithKernelWriteFlagThe
 
 TEST(Buffer, givenNullPtrWhenBufferIsCreatedWithKernelReadOnlyFlagsThenBufferAllocationFailsAndReturnsNullptr) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation> *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(*device->getExecutionEnvironment());
-
-    device->injectMemoryManager(memoryManager);
     MockContext ctx(device.get());
 
     // First fail simulates error for read only memory allocation
-    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
-        .WillOnce(::testing::Return(nullptr));
+    auto memoryManager = std::make_unique<MockMemoryManagerFailFirstAllocation>(*device->getExecutionEnvironment());
 
     cl_int retVal;
     cl_mem_flags flags = CL_MEM_HOST_READ_ONLY | CL_MEM_WRITE_ONLY;
 
+    ctx.memoryManager = memoryManager.get();
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
+    ctx.memoryManager = device->getMemoryManager();
 
     EXPECT_EQ(nullptr, buffer.get());
 }
 
 TEST(Buffer, givenNullptrPassedToBufferCreateWhenAllocationIsNotSystemMemoryPoolThenBufferIsNotZeroCopy) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation> *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(*device->getExecutionEnvironment());
-
-    device->injectMemoryManager(memoryManager);
     MockContext ctx(device.get());
 
-    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
-        .WillOnce(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::allocateNonSystemGraphicsMemoryInDevicePool));
-
+    auto memoryManager = std::make_unique<MockMemoryManagerFailFirstAllocation>(*device->getExecutionEnvironment());
+    memoryManager->returnAllocateNonSystemGraphicsMemoryInDevicePool = true;
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
 
+    ctx.memoryManager = memoryManager.get();
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
+    ctx.memoryManager = device->getMemoryManager();
 
     ASSERT_NE(nullptr, buffer.get());
     EXPECT_FALSE(buffer->isMemObjZeroCopy());
@@ -254,20 +326,18 @@ TEST(Buffer, givenNullptrPassedToBufferCreateWhenAllocationIsNotSystemMemoryPool
 
 TEST(Buffer, givenNullptrPassedToBufferCreateWhenAllocationIsNotSystemMemoryPoolThenAllocationIsNotAddedToHostPtrManager) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation> *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(*device->getExecutionEnvironment());
-
-    device->injectMemoryManager(memoryManager);
     MockContext ctx(device.get());
 
-    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
-        .WillOnce(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::allocateNonSystemGraphicsMemoryInDevicePool));
-
+    auto memoryManager = std::make_unique<MockMemoryManagerFailFirstAllocation>(*device->getExecutionEnvironment());
+    memoryManager->returnAllocateNonSystemGraphicsMemoryInDevicePool = true;
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
 
     auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
     auto hostPtrAllocationCountBefore = hostPtrManager->getFragmentCount();
+    ctx.memoryManager = memoryManager.get();
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
+    ctx.memoryManager = device->getMemoryManager();
 
     ASSERT_NE(nullptr, buffer.get());
     auto hostPtrAllocationCountAfter = hostPtrManager->getFragmentCount();
@@ -275,7 +345,7 @@ TEST(Buffer, givenNullptrPassedToBufferCreateWhenAllocationIsNotSystemMemoryPool
     EXPECT_EQ(hostPtrAllocationCountBefore, hostPtrAllocationCountAfter);
 }
 
-TEST(Buffer, givenNullptrPassedToBufferCreateWhenNoSharedContextOrRenderCompressedBuffersThenBuffersAllocationTypeIsBufferOrBufferHostMemory) {
+TEST(Buffer, givenNullptrPassedToBufferCreateWhenNoSharedContextOrCompressedBuffersThenBuffersAllocationTypeIsBufferOrBufferHostMemory) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext ctx(device.get());
 
@@ -285,10 +355,10 @@ TEST(Buffer, givenNullptrPassedToBufferCreateWhenNoSharedContextOrRenderCompress
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
 
     ASSERT_NE(nullptr, buffer.get());
-    if (MemoryPool::isSystemMemoryPool(buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getMemoryPool())) {
-        EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType());
+    if (MemoryPoolHelper::isSystemMemoryPool(buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getMemoryPool())) {
+        EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType());
     } else {
-        EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType());
+        EXPECT_EQ(AllocationType::BUFFER, buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType());
     }
 }
 
@@ -306,15 +376,15 @@ TEST(Buffer, givenHostPtrPassedToBufferCreateWhenMemUseHostPtrFlagisSetAndBuffer
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, offsetedPtr, retVal));
     ASSERT_NE(nullptr, buffer.get());
 
-    auto mapAllocation = buffer->getMapAllocation();
+    auto mapAllocation = buffer->getMapAllocation(device->getRootDeviceIndex());
     EXPECT_NE(nullptr, mapAllocation);
     EXPECT_EQ(offsetedPtr, mapAllocation->getUnderlyingBuffer());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::MAP_ALLOCATION, mapAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::MAP_ALLOCATION, mapAllocation->getAllocationType());
 
     alignedFree(ptr);
 }
 
-TEST(Buffer, givenAlignedHostPtrPassedToBufferCreateWhenNoSharedContextOrRenderCompressedBuffersThenBuffersAllocationTypeIsBufferHostMemory) {
+TEST(Buffer, givenAlignedHostPtrPassedToBufferCreateWhenNoSharedContextOrCompressedBuffersThenBuffersAllocationTypeIsBufferHostMemory) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext ctx(device.get());
 
@@ -325,10 +395,10 @@ TEST(Buffer, givenAlignedHostPtrPassedToBufferCreateWhenNoSharedContextOrRenderC
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, hostPtr, retVal));
 
     ASSERT_NE(nullptr, buffer.get());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, buffer->getMultiGraphicsAllocation().getAllocationType());
+    EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, buffer->getMultiGraphicsAllocation().getAllocationType());
 }
 
-TEST(Buffer, givenAllocHostPtrFlagPassedToBufferCreateWhenNoSharedContextOrRenderCompressedBuffersThenBuffersAllocationTypeIsBufferHostMemory) {
+TEST(Buffer, givenAllocHostPtrFlagPassedToBufferCreateWhenNoSharedContextOrCompressedBuffersThenBuffersAllocationTypeIsBufferHostMemory) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext ctx(device.get());
 
@@ -338,155 +408,217 @@ TEST(Buffer, givenAllocHostPtrFlagPassedToBufferCreateWhenNoSharedContextOrRende
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
 
     ASSERT_NE(nullptr, buffer.get());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, buffer->getMultiGraphicsAllocation().getAllocationType());
+    EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, buffer->getMultiGraphicsAllocation().getAllocationType());
 }
 
-TEST(Buffer, givenRenderCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferCompressedTypeIsReturnedIn64Bit) {
+TEST(Buffer, givenCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferCompressedTypeIsReturnedIn64Bit) {
     MockContext context;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     context.isSharedContext = false;
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(memoryProperties, context, true, false, true);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, type);
+
+    bool compressionEnabled = MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true);
+    EXPECT_TRUE(compressionEnabled);
+
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, context, compressionEnabled, false);
+    EXPECT_TRUE(compressionEnabled);
+    EXPECT_EQ(AllocationType::BUFFER, type);
 }
 
-TEST(Buffer, givenRenderCompressedBuffersDisabledLocalMemoryEnabledWhenAllocationTypeIsQueriedThenBufferTypeIsReturnedIn64Bit) {
+TEST(Buffer, givenCompressedBuffersDisabledLocalMemoryEnabledWhenAllocationTypeIsQueriedThenBufferTypeIsReturnedIn64Bit) {
     MockContext context;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     context.isSharedContext = false;
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(memoryProperties, context, false, true, true);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, type);
+
+    bool compressionEnabled = MemObjHelper::isSuitableForCompression(false, memoryProperties, context, true);
+    EXPECT_FALSE(compressionEnabled);
+
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, context, compressionEnabled, true);
+    EXPECT_FALSE(compressionEnabled);
+    EXPECT_EQ(AllocationType::BUFFER, type);
 }
 
 TEST(Buffer, givenSharedContextWhenAllocationTypeIsQueriedThenBufferHostMemoryTypeIsReturned) {
     MockContext context;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     context.isSharedContext = true;
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(memoryProperties, context, false, false, true);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, type);
+
+    bool compressionEnabled = MemObjHelper::isSuitableForCompression(false, memoryProperties, context, true);
+    EXPECT_FALSE(compressionEnabled);
+
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, context, compressionEnabled, false);
+    EXPECT_FALSE(compressionEnabled);
+    EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, type);
 }
 
-TEST(Buffer, givenSharedContextAndRenderCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferHostMemoryTypeIsReturned) {
+TEST(Buffer, givenSharedContextAndCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferHostMemoryTypeIsReturned) {
     MockContext context;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     context.isSharedContext = true;
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(memoryProperties, context, true, false, true);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, type);
+
+    bool compressionEnabled = MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true);
+    EXPECT_TRUE(compressionEnabled);
+
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, context, compressionEnabled, false);
+    EXPECT_FALSE(compressionEnabled);
+    EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, type);
 }
 
 TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryDisabledWhenAllocationTypeIsQueriedThenBufferHostMemoryTypeIsReturned) {
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
     MockContext context;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     context.isSharedContext = false;
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(memoryProperties, context, false, false, true);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, type);
+
+    bool compressionEnabled = MemObjHelper::isSuitableForCompression(false, memoryProperties, context, true);
+    EXPECT_FALSE(compressionEnabled);
+
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, context, compressionEnabled, false);
+    EXPECT_FALSE(compressionEnabled);
+    EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, type);
 }
 
 TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryEnabledWhenAllocationTypeIsQueriedThenBufferTypeIsReturned) {
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
     MockContext context;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     context.isSharedContext = false;
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(memoryProperties, context, false, true, true);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, type);
+
+    bool compressionEnabled = MemObjHelper::isSuitableForCompression(false, memoryProperties, context, true);
+    EXPECT_FALSE(compressionEnabled);
+
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, context, compressionEnabled, true);
+    EXPECT_FALSE(compressionEnabled);
+    EXPECT_EQ(AllocationType::BUFFER, type);
 }
 
 TEST(Buffer, givenAllocHostPtrFlagWhenAllocationTypeIsQueriedThenBufferTypeIsReturned) {
     cl_mem_flags flags = CL_MEM_ALLOC_HOST_PTR;
     MockContext context;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     context.isSharedContext = false;
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(memoryProperties, context, false, false, true);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, type);
+
+    bool compressionEnabled = MemObjHelper::isSuitableForCompression(false, memoryProperties, context, true);
+    EXPECT_FALSE(compressionEnabled);
+
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, context, compressionEnabled, false);
+    EXPECT_FALSE(compressionEnabled);
+    EXPECT_EQ(AllocationType::BUFFER, type);
 }
 
-TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryDisabledAndRenderCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferMemoryTypeIsReturned) {
+TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryDisabledAndCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferMemoryTypeIsReturned) {
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
     MockContext context;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     context.isSharedContext = false;
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(memoryProperties, context, true, false, true);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, type);
+
+    bool compressionEnabled = MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true);
+    EXPECT_TRUE(compressionEnabled);
+
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, context, compressionEnabled, false);
+    EXPECT_FALSE(compressionEnabled);
+    EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, type);
 }
 
-TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryEnabledAndRenderCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferMemoryTypeIsReturned) {
+TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryEnabledAndCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferMemoryTypeIsReturned) {
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
     MockContext context;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     context.isSharedContext = false;
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(memoryProperties, context, true, true, true);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, type);
+
+    bool compressionEnabled = MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true);
+    EXPECT_TRUE(compressionEnabled);
+
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, context, compressionEnabled, true);
+    EXPECT_TRUE(compressionEnabled);
+    EXPECT_EQ(AllocationType::BUFFER, type);
 }
 
 TEST(Buffer, givenUseHostPointerFlagAndForceSharedPhysicalStorageWhenLocalMemoryIsEnabledThenBufferHostMemoryTypeIsReturned) {
-    cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL;
+    cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_FORCE_HOST_MEMORY_INTEL;
     MockContext context;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     context.isSharedContext = false;
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(memoryProperties, context, true, true, true);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, type);
+
+    bool compressionEnabled = MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true);
+    EXPECT_TRUE(compressionEnabled);
+
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, context, compressionEnabled, true);
+    EXPECT_FALSE(compressionEnabled);
+    EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, type);
 }
 
-TEST(Buffer, givenAllocHostPtrFlagAndRenderCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferCompressedTypeIsReturned) {
+TEST(Buffer, givenAllocHostPtrFlagAndCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferCompressedTypeIsReturned) {
     cl_mem_flags flags = CL_MEM_ALLOC_HOST_PTR;
     MockContext context;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     context.isSharedContext = false;
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(memoryProperties, context, true, false, true);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, type);
+
+    bool compressionEnabled = MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true);
+    EXPECT_TRUE(compressionEnabled);
+
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, context, compressionEnabled, false);
+    EXPECT_TRUE(compressionEnabled);
+    EXPECT_EQ(AllocationType::BUFFER, type);
 }
 
-TEST(Buffer, givenZeroFlagsNoSharedContextAndRenderCompressedBuffersDisabledWhenAllocationTypeIsQueriedThenBufferTypeIsReturned) {
+TEST(Buffer, givenZeroFlagsNoSharedContextAndCompressedBuffersDisabledWhenAllocationTypeIsQueriedThenBufferTypeIsReturned) {
     MockContext context;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice());
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     context.isSharedContext = false;
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(memoryProperties, context, false, false, true);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, type);
+
+    bool compressionEnabled = MemObjHelper::isSuitableForCompression(false, memoryProperties, context, true);
+    EXPECT_FALSE(compressionEnabled);
+
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, context, compressionEnabled, false);
+    EXPECT_FALSE(compressionEnabled);
+    EXPECT_EQ(AllocationType::BUFFER, type);
 }
 
 TEST(Buffer, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInSystemMemoryPoolThenAllocationIsWrittenByEnqueueWriteBuffer) {
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    ExecutionEnvironment *executionEnvironment = MockClDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
 
-    auto *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(*executionEnvironment);
+    auto *memoryManager = new MockMemoryManagerFailFirstAllocation(*executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
-    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
-        .WillRepeatedly(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::baseAllocateGraphicsMemoryInDevicePool));
-
+    memoryManager->returnBaseAllocateGraphicsMemoryInDevicePool = true;
     auto device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0));
 
     MockContext ctx(device.get());
-    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
-        .WillOnce(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::allocateNonSystemGraphicsMemoryInDevicePool))
-        .WillRepeatedly(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::baseAllocateGraphicsMemoryInDevicePool));
 
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
     char memory[] = {1, 2, 3, 4, 5, 6, 7, 8};
     auto taskCount = device->getGpgpuCommandStreamReceiver().peekLatestFlushedTaskCount();
 
+    memoryManager->returnAllocateNonSystemGraphicsMemoryInDevicePool = true;
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, sizeof(memory), memory, retVal));
     ASSERT_NE(nullptr, buffer.get());
     auto taskCountSent = device->getGpgpuCommandStreamReceiver().peekLatestFlushedTaskCount();
-    if (is64bit) {
+    if constexpr (is64bit) {
         EXPECT_LT(taskCount, taskCountSent);
     }
 }
-struct RenderCompressedBuffersTests : public ::testing::Test {
+
+struct CompressedBuffersTests : public ::testing::Test {
     void SetUp() override {
-        ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
-        executionEnvironment->prepareRootDeviceEnvironments(1u);
+        ExecutionEnvironment *executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
+        for (auto &rootDeviceEnvironment : executionEnvironment->rootDeviceEnvironments) {
+            rootDeviceEnvironment->initGmm();
+        }
+        SetUp(executionEnvironment);
+    }
+    void SetUp(ExecutionEnvironment *executionEnvironment) {
         hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
         device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0u));
         context = std::make_unique<MockContext>(device.get(), true);
@@ -503,16 +635,16 @@ struct RenderCompressedBuffersTests : public ::testing::Test {
     size_t bufferSize = sizeof(hostPtr);
 };
 
-TEST_F(RenderCompressedBuffersTests, givenBufferCompressedAllocationAndZeroCopyHostPtrWhenCheckingMemoryPropertiesThenUseHostPtrAndDontAllocateStorage) {
+TEST_F(CompressedBuffersTests, givenBufferCompressedAllocationAndZeroCopyHostPtrWhenCheckingMemoryPropertiesThenUseHostPtrAndDontAllocateStorage) {
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = false;
 
     void *cacheAlignedHostPtr = alignedMalloc(MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
 
-    buffer.reset(Buffer::create(context.get(), CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL | CL_MEM_USE_HOST_PTR, MemoryConstants::cacheLineSize, cacheAlignedHostPtr, retVal));
+    buffer.reset(Buffer::create(context.get(), CL_MEM_FORCE_HOST_MEMORY_INTEL | CL_MEM_USE_HOST_PTR, MemoryConstants::cacheLineSize, cacheAlignedHostPtr, retVal));
     auto allocation = buffer->getGraphicsAllocation(device->getRootDeviceIndex());
     EXPECT_EQ(cacheAlignedHostPtr, allocation->getUnderlyingBuffer());
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
-    EXPECT_EQ(allocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    EXPECT_EQ(allocation->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
 
     uint32_t pattern[2] = {0, 0};
     pattern[0] = 0xdeadbeef;
@@ -527,127 +659,140 @@ TEST_F(RenderCompressedBuffersTests, givenBufferCompressedAllocationAndZeroCopyH
     }
 
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = true;
-    buffer.reset(Buffer::create(context.get(), CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL | CL_MEM_USE_HOST_PTR, MemoryConstants::cacheLineSize, cacheAlignedHostPtr, retVal));
+    buffer.reset(Buffer::create(context.get(), CL_MEM_FORCE_HOST_MEMORY_INTEL | CL_MEM_USE_HOST_PTR, MemoryConstants::cacheLineSize, cacheAlignedHostPtr, retVal));
     allocation = buffer->getGraphicsAllocation(device->getRootDeviceIndex());
     EXPECT_EQ(cacheAlignedHostPtr, allocation->getUnderlyingBuffer());
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
-    EXPECT_EQ(allocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    EXPECT_EQ(allocation->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
 
-    EXPECT_THAT(allocation->getUnderlyingBuffer(), MemCompare(&pattern[0], sizeof(pattern)));
+    EXPECT_EQ(0, memcmp(allocation->getUnderlyingBuffer(), &pattern[0], sizeof(pattern)));
 
     alignedFree(cacheAlignedHostPtr);
 }
 
-TEST_F(RenderCompressedBuffersTests, givenAllocationCreatedWithForceSharedPhysicalMemoryWhenItIsCreatedItIsZeroCopy) {
-    buffer.reset(Buffer::create(context.get(), CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL, 1u, nullptr, retVal));
-    EXPECT_EQ(buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+TEST_F(CompressedBuffersTests, givenAllocationCreatedWithForceSharedPhysicalMemoryWhenItIsCreatedThenItIsZeroCopy) {
+    buffer.reset(Buffer::create(context.get(), CL_MEM_FORCE_HOST_MEMORY_INTEL, 1u, nullptr, retVal));
+    EXPECT_EQ(buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
     EXPECT_EQ(1u, buffer->getSize());
 }
 
-TEST_F(RenderCompressedBuffersTests, givenRenderCompressedBuffersAndAllocationCreatedWithForceSharedPhysicalMemoryWhenItIsCreatedItIsZeroCopy) {
+TEST_F(CompressedBuffersTests, givenCompressedBuffersAndAllocationCreatedWithForceSharedPhysicalMemoryWhenItIsCreatedThenItIsZeroCopy) {
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = true;
-    buffer.reset(Buffer::create(context.get(), CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL, 1u, nullptr, retVal));
-    EXPECT_EQ(buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    buffer.reset(Buffer::create(context.get(), CL_MEM_FORCE_HOST_MEMORY_INTEL, 1u, nullptr, retVal));
+    EXPECT_EQ(buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
     EXPECT_EQ(1u, buffer->getSize());
 }
 
-TEST_F(RenderCompressedBuffersTests, givenBufferNotCompressedAllocationAndNoHostPtrWhenCheckingMemoryPropertiesThenForceDisableZeroCopy) {
+TEST_F(CompressedBuffersTests, givenBufferNotCompressedAllocationAndNoHostPtrWhenCheckingMemoryPropertiesThenForceDisableZeroCopy) {
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = false;
 
     buffer.reset(Buffer::create(context.get(), 0, bufferSize, nullptr, retVal));
     auto allocation = buffer->getGraphicsAllocation(device->getRootDeviceIndex());
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
-    if (MemoryPool::isSystemMemoryPool(allocation->getMemoryPool())) {
-        EXPECT_EQ(allocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    if (MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool())) {
+        EXPECT_EQ(allocation->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
     } else {
-        EXPECT_EQ(allocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER);
+        EXPECT_EQ(allocation->getAllocationType(), AllocationType::BUFFER);
     }
+
+    auto memoryManager = static_cast<MockMemoryManager *>(device->getExecutionEnvironment()->memoryManager.get());
 
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = true;
     buffer.reset(Buffer::create(context.get(), 0, bufferSize, nullptr, retVal));
     allocation = buffer->getGraphicsAllocation(device->getRootDeviceIndex());
-    if (HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).obtainRenderBufferCompressionPreference(context->getDevice(0)->getHardwareInfo(), bufferSize)) {
+    if (HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(bufferSize, *hwInfo)) {
         EXPECT_FALSE(buffer->isMemObjZeroCopy());
-        EXPECT_EQ(allocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+        EXPECT_EQ(allocation->getAllocationType(), AllocationType::BUFFER);
+        EXPECT_EQ(!memoryManager->allocate32BitGraphicsMemoryImplCalled, allocation->isCompressionEnabled());
     } else {
         EXPECT_TRUE(buffer->isMemObjZeroCopy());
-        EXPECT_EQ(allocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+        EXPECT_EQ(allocation->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
     }
 }
 
-TEST_F(RenderCompressedBuffersTests, givenBufferCompressedAllocationWhenSharedContextIsUsedThenForceDisableCompression) {
+TEST_F(CompressedBuffersTests, givenBufferCompressedAllocationWhenSharedContextIsUsedThenForceDisableCompression) {
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = true;
     context->isSharedContext = false;
 
+    auto memoryManager = static_cast<MockMemoryManager *>(device->getExecutionEnvironment()->memoryManager.get());
+
     buffer.reset(Buffer::create(context.get(), CL_MEM_READ_WRITE, bufferSize, nullptr, retVal));
     auto graphicsAllocation = buffer->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
-    if (HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).obtainRenderBufferCompressionPreference(context->getDevice(0)->getHardwareInfo(), bufferSize)) {
-        EXPECT_EQ(graphicsAllocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    if (HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(bufferSize, *hwInfo)) {
+        EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::BUFFER);
+        EXPECT_EQ(!memoryManager->allocate32BitGraphicsMemoryImplCalled, graphicsAllocation->isCompressionEnabled());
     } else {
-        EXPECT_EQ(graphicsAllocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+        EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
     }
     context->isSharedContext = true;
     buffer.reset(Buffer::create(context.get(), CL_MEM_USE_HOST_PTR, bufferSize, hostPtr, retVal));
     graphicsAllocation = buffer->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
-    EXPECT_EQ(graphicsAllocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
 }
 
-TEST_F(RenderCompressedBuffersTests, givenDebugVariableSetWhenHwFlagIsNotSetThenSelectOptionFromDebugFlag) {
+TEST_F(CompressedBuffersTests, givenDebugVariableSetWhenHwFlagIsNotSetThenSelectOptionFromDebugFlag) {
     DebugManagerStateRestore restore;
+
+    auto memoryManager = static_cast<MockMemoryManager *>(device->getExecutionEnvironment()->memoryManager.get());
 
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = false;
 
     DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
     buffer.reset(Buffer::create(context.get(), 0, bufferSize, nullptr, retVal));
     auto graphicsAllocation = buffer->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
-    if (HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).obtainRenderBufferCompressionPreference(context->getDevice(0)->getHardwareInfo(), bufferSize)) {
-        EXPECT_EQ(graphicsAllocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    if (HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(bufferSize, *hwInfo)) {
+        EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::BUFFER);
+        EXPECT_EQ(!memoryManager->allocate32BitGraphicsMemoryImplCalled, graphicsAllocation->isCompressionEnabled());
     } else {
-        EXPECT_EQ(graphicsAllocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+        EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
     }
 
     DebugManager.flags.RenderCompressedBuffersEnabled.set(0);
     buffer.reset(Buffer::create(context.get(), 0, bufferSize, nullptr, retVal));
     graphicsAllocation = buffer->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
-    EXPECT_NE(graphicsAllocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    EXPECT_FALSE(graphicsAllocation->isCompressionEnabled());
 }
 
-struct RenderCompressedBuffersSvmTests : public RenderCompressedBuffersTests {
+struct CompressedBuffersSvmTests : public CompressedBuffersTests {
     void SetUp() override {
-        ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+        ExecutionEnvironment *executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
+        for (auto &rootDeviceEnvironment : executionEnvironment->rootDeviceEnvironments) {
+            rootDeviceEnvironment->initGmm();
+        }
         executionEnvironment->prepareRootDeviceEnvironments(1u);
         hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
         hwInfo->capabilityTable.gpuAddressSpace = MemoryConstants::max48BitAddress;
-        RenderCompressedBuffersTests::SetUp();
+        CompressedBuffersTests::SetUp(executionEnvironment);
     }
 };
 
-TEST_F(RenderCompressedBuffersSvmTests, givenSvmAllocationWhenCreatingBufferThenForceDisableCompression) {
+TEST_F(CompressedBuffersSvmTests, givenSvmAllocationWhenCreatingBufferThenForceDisableCompression) {
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = true;
 
-    auto svmPtr = context->getSVMAllocsManager()->createSVMAlloc(device->getRootDeviceIndex(), sizeof(uint32_t), {}, device->getDeviceBitfield());
-    auto expectedAllocationType = context->getSVMAllocsManager()->getSVMAlloc(svmPtr)->gpuAllocation->getAllocationType();
+    auto svmPtr = context->getSVMAllocsManager()->createSVMAlloc(sizeof(uint32_t), {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
+    auto expectedAllocationType = context->getSVMAllocsManager()->getSVMAlloc(svmPtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType();
     buffer.reset(Buffer::create(context.get(), CL_MEM_USE_HOST_PTR, sizeof(uint32_t), svmPtr, retVal));
     EXPECT_EQ(expectedAllocationType, buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType());
 
+    buffer.reset(nullptr);
     context->getSVMAllocsManager()->freeSVMAlloc(svmPtr);
 }
 
-struct RenderCompressedBuffersCopyHostMemoryTests : public RenderCompressedBuffersTests {
+struct CompressedBuffersCopyHostMemoryTests : public CompressedBuffersTests {
     void SetUp() override {
-        RenderCompressedBuffersTests::SetUp();
-        device->injectMemoryManager(new MockMemoryManager(true, false, *platform()->peekExecutionEnvironment()));
+        CompressedBuffersTests::SetUp();
+        device->injectMemoryManager(new MockMemoryManager(true, false, *device->getExecutionEnvironment()));
         context->memoryManager = device->getMemoryManager();
         mockCmdQ = new MockCommandQueue();
-        context->setSpecialQueue(mockCmdQ);
+        context->setSpecialQueue(mockCmdQ, device->getRootDeviceIndex());
     }
 
     MockCommandQueue *mockCmdQ = nullptr;
 };
 
-TEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenRenderCompressedBufferWhenCopyFromHostPtrIsRequiredThenCallWriteBuffer) {
+TEST_F(CompressedBuffersCopyHostMemoryTests, givenCompressedBufferWhenCopyFromHostPtrIsRequiredThenCallWriteBuffer) {
     if (is32bit) {
         return;
     }
@@ -655,15 +800,15 @@ TEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenRenderCompressedBufferWh
 
     buffer.reset(Buffer::create(context.get(), CL_MEM_COPY_HOST_PTR, bufferSize, hostPtr, retVal));
     auto graphicsAllocation = buffer->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
-    if (HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).obtainRenderBufferCompressionPreference(context->getDevice(0)->getHardwareInfo(), bufferSize)) {
-        EXPECT_EQ(graphicsAllocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    if (HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(bufferSize, *hwInfo)) {
+        EXPECT_TRUE(graphicsAllocation->isCompressionEnabled());
         EXPECT_EQ(1u, mockCmdQ->writeBufferCounter);
         EXPECT_TRUE(mockCmdQ->writeBufferBlocking);
         EXPECT_EQ(0u, mockCmdQ->writeBufferOffset);
         EXPECT_EQ(bufferSize, mockCmdQ->writeBufferSize);
         EXPECT_EQ(hostPtr, mockCmdQ->writeBufferPtr);
     } else {
-        EXPECT_EQ(graphicsAllocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+        EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
         EXPECT_EQ(0u, mockCmdQ->writeBufferCounter);
         EXPECT_FALSE(mockCmdQ->writeBufferBlocking);
         EXPECT_EQ(0u, mockCmdQ->writeBufferOffset);
@@ -673,1282 +818,29 @@ TEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenRenderCompressedBufferWh
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenBufferCreateWhenMemoryTransferWithEnqueueWriteBufferThenMapAllocationIsReused) {
+TEST_F(CompressedBuffersCopyHostMemoryTests, givenBufferCreateWhenMemoryTransferWithEnqueueWriteBufferThenMapAllocationIsReused) {
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
     auto &capabilityTable = device->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable;
     capabilityTable.blitterOperationsSupported = false;
-    static_cast<MockMemoryManager *>(context->memoryManager)->forceRenderCompressed = true;
+    static_cast<MockMemoryManager *>(context->memoryManager)->forceCompressed = true;
     std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, bufferSize, hostPtr, retVal));
     EXPECT_NE(nullptr, mockCmdQ->writeMapAllocation);
-    EXPECT_EQ(buffer->getMapAllocation(), mockCmdQ->writeMapAllocation);
+    EXPECT_EQ(buffer->getMapAllocation(device->getRootDeviceIndex()), mockCmdQ->writeMapAllocation);
 }
 
-struct BcsBufferTests : public ::testing::Test {
-    class BcsMockContext : public MockContext {
-      public:
-        BcsMockContext(ClDevice *device) : MockContext(device) {
-            bcsOsContext.reset(OsContext::create(nullptr, 0, device->getDeviceBitfield(), aub_stream::ENGINE_BCS, PreemptionMode::Disabled,
-                                                 false, false, false));
-            bcsCsr.reset(createCommandStream(*device->getExecutionEnvironment(), device->getRootDeviceIndex()));
-            bcsCsr->setupContext(*bcsOsContext);
-            bcsCsr->initializeTagAllocation();
-            bcsCsr->createGlobalFenceAllocation();
-        }
-
-        BlitOperationResult blitMemoryToAllocation(MemObj &memObj, GraphicsAllocation *memory, void *hostPtr, Vec3<size_t> size) const override {
-            auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
-                                                                                        *bcsCsr, memory, nullptr,
-                                                                                        hostPtr,
-                                                                                        memory->getGpuAddress(), 0,
-                                                                                        0, 0, size, 0, 0, 0, 0);
-
-            BlitPropertiesContainer container;
-            container.push_back(blitProperties);
-            bcsCsr->blitBuffer(container, true, false);
-
-            return BlitOperationResult::Success;
-        }
-        std::unique_ptr<OsContext> bcsOsContext;
-        std::unique_ptr<CommandStreamReceiver> bcsCsr;
-    };
-
-    template <typename FamilyType>
-    class MyMockCsr : public UltCommandStreamReceiver<FamilyType> {
-      public:
-        using UltCommandStreamReceiver<FamilyType>::UltCommandStreamReceiver;
-
-        void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait,
-                                                   bool useQuickKmdSleep, bool forcePowerSavingMode) override {
-            EXPECT_EQ(this->latestFlushedTaskCount, taskCountToWait);
-            EXPECT_EQ(0u, flushStampToWait);
-            EXPECT_FALSE(useQuickKmdSleep);
-            EXPECT_FALSE(forcePowerSavingMode);
-            waitForTaskCountWithKmdNotifyFallbackCalled++;
-        }
-
-        void waitForTaskCountAndCleanTemporaryAllocationList(uint32_t requiredTaskCount) override {
-            EXPECT_EQ(1u, waitForTaskCountWithKmdNotifyFallbackCalled);
-            EXPECT_EQ(this->latestFlushedTaskCount, requiredTaskCount);
-            waitForTaskCountAndCleanAllocationListCalled++;
-        }
-
-        uint32_t waitForTaskCountAndCleanAllocationListCalled = 0;
-        uint32_t waitForTaskCountWithKmdNotifyFallbackCalled = 0;
-        CommandStreamReceiver *gpgpuCsr = nullptr;
-    };
-
-    template <typename FamilyType>
-    void SetUpT() {
-        if (is32bit) {
-            GTEST_SKIP();
-        }
-        REQUIRE_SVM_OR_SKIP(defaultHwInfo);
-        DebugManager.flags.EnableTimestampPacket.set(1);
-        DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(1);
-        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-        auto &capabilityTable = device->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable;
-        bool createBcsEngine = !capabilityTable.blitterOperationsSupported;
-        capabilityTable.blitterOperationsSupported = true;
-
-        if (createBcsEngine) {
-            auto &engine = device->getEngine(HwHelperHw<FamilyType>::lowPriorityEngineType, true);
-            bcsOsContext.reset(OsContext::create(nullptr, 1, device->getDeviceBitfield(), aub_stream::ENGINE_BCS, PreemptionMode::Disabled,
-                                                 false, false, false));
-            engine.osContext = bcsOsContext.get();
-            engine.commandStreamReceiver->setupContext(*bcsOsContext);
-        }
-
-        bcsMockContext = std::make_unique<BcsMockContext>(device.get());
-        commandQueue.reset(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-    }
-
-    template <typename FamilyType>
-    void TearDownT() {}
-
-    template <typename FamilyType>
-    void waitForCacheFlushFromBcsTest(MockCommandQueueHw<FamilyType> &commandQueue);
-
-    DebugManagerStateRestore restore;
-
-    std::unique_ptr<OsContext> bcsOsContext;
-    std::unique_ptr<MockClDevice> device;
-    std::unique_ptr<BcsMockContext> bcsMockContext;
-    std::unique_ptr<CommandQueue> commandQueue;
-    uint32_t hostPtr = 0;
-    cl_int retVal = CL_SUCCESS;
-};
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenBufferWithInitializationDataAndBcsCsrWhenCreatingThenUseBlitOperation) {
-    auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsMockContext->bcsCsr.get());
-    auto newMemoryManager = new MockMemoryManager(true, true, *device->getExecutionEnvironment());
-    device->getExecutionEnvironment()->memoryManager.reset(newMemoryManager);
-    bcsMockContext->memoryManager = newMemoryManager;
-
-    EXPECT_EQ(0u, bcsCsr->blitBufferCalled);
-    auto bufferForBlt = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_COPY_HOST_PTR, 2000, &hostPtr, retVal));
-    EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIsCalledThenUseBcsCsr) {
-    DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(0);
-    auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getBcsCommandStreamReceiver());
-
-    auto bufferForBlt0 = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    auto bufferForBlt1 = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    bufferForBlt0->forceDisallowCPUCopy = true;
-    bufferForBlt1->forceDisallowCPUCopy = true;
-    auto *hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
-
-    size_t bufferOrigin[] = {0, 0, 0};
-    size_t hostOrigin[] = {0, 0, 0};
-    size_t region[] = {1, 2, 1};
-
-    DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(0);
-    hwInfo->capabilityTable.blitterOperationsSupported = false;
-    commandQueue->enqueueWriteBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    commandQueue->enqueueReadBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    commandQueue->enqueueCopyBuffer(bufferForBlt0.get(), bufferForBlt1.get(), 0, 1, 1, 0, nullptr, nullptr);
-    commandQueue->enqueueReadBufferRect(bufferForBlt0.get(), CL_TRUE, bufferOrigin, hostOrigin, region,
-                                        MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
-                                        MemoryConstants::cacheLineSize, &hostPtr, 0, nullptr, nullptr);
-    commandQueue->enqueueWriteBufferRect(bufferForBlt0.get(), CL_TRUE, bufferOrigin, hostOrigin, region,
-                                         MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
-                                         MemoryConstants::cacheLineSize, &hostPtr, 0, nullptr, nullptr);
-    commandQueue->enqueueCopyBufferRect(bufferForBlt0.get(), bufferForBlt1.get(), bufferOrigin, hostOrigin, region,
-                                        MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
-                                        MemoryConstants::cacheLineSize, 0, nullptr, nullptr);
-
-    DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(1);
-    hwInfo->capabilityTable.blitterOperationsSupported = false;
-    commandQueue->enqueueWriteBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    commandQueue->enqueueReadBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    commandQueue->enqueueCopyBuffer(bufferForBlt0.get(), bufferForBlt1.get(), 0, 1, 1, 0, nullptr, nullptr);
-    commandQueue->enqueueReadBufferRect(bufferForBlt0.get(), CL_TRUE, bufferOrigin, hostOrigin, region,
-                                        MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
-                                        MemoryConstants::cacheLineSize, &hostPtr, 0, nullptr, nullptr);
-    commandQueue->enqueueWriteBufferRect(bufferForBlt0.get(), CL_TRUE, bufferOrigin, hostOrigin, region,
-                                         MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
-                                         MemoryConstants::cacheLineSize, &hostPtr, 0, nullptr, nullptr);
-    commandQueue->enqueueCopyBufferRect(bufferForBlt0.get(), bufferForBlt1.get(), bufferOrigin, hostOrigin, region,
-                                        MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
-                                        MemoryConstants::cacheLineSize, 0, nullptr, nullptr);
-
-    DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(0);
-    hwInfo->capabilityTable.blitterOperationsSupported = true;
-    commandQueue->enqueueWriteBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    commandQueue->enqueueReadBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    commandQueue->enqueueCopyBuffer(bufferForBlt0.get(), bufferForBlt1.get(), 0, 1, 1, 0, nullptr, nullptr);
-    commandQueue->enqueueReadBufferRect(bufferForBlt0.get(), CL_TRUE, bufferOrigin, hostOrigin, region,
-                                        MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
-                                        MemoryConstants::cacheLineSize, &hostPtr, 0, nullptr, nullptr);
-    commandQueue->enqueueWriteBufferRect(bufferForBlt0.get(), CL_TRUE, bufferOrigin, hostOrigin, region,
-                                         MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
-                                         MemoryConstants::cacheLineSize, &hostPtr, 0, nullptr, nullptr);
-    commandQueue->enqueueCopyBufferRect(bufferForBlt0.get(), bufferForBlt1.get(), bufferOrigin, hostOrigin, region,
-                                        MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
-                                        MemoryConstants::cacheLineSize, 0, nullptr, nullptr);
-    commandQueue->enqueueSVMMemcpy(CL_TRUE, bufferForBlt0.get(), bufferForBlt1.get(), 1, 0, nullptr, nullptr);
-
-    DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(-1);
-    hwInfo->capabilityTable.blitterOperationsSupported = true;
-    commandQueue->enqueueWriteBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    commandQueue->enqueueReadBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    commandQueue->enqueueCopyBuffer(bufferForBlt0.get(), bufferForBlt1.get(), 0, 1, 1, 0, nullptr, nullptr);
-    commandQueue->enqueueReadBufferRect(bufferForBlt0.get(), CL_TRUE, bufferOrigin, hostOrigin, region,
-                                        MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
-                                        MemoryConstants::cacheLineSize, &hostPtr, 0, nullptr, nullptr);
-    commandQueue->enqueueWriteBufferRect(bufferForBlt0.get(), CL_TRUE, bufferOrigin, hostOrigin, region,
-                                         MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
-                                         MemoryConstants::cacheLineSize, &hostPtr, 0, nullptr, nullptr);
-    commandQueue->enqueueCopyBufferRect(bufferForBlt0.get(), bufferForBlt1.get(), bufferOrigin, hostOrigin, region,
-                                        MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
-                                        MemoryConstants::cacheLineSize, 0, nullptr, nullptr);
-    commandQueue->enqueueSVMMemcpy(CL_TRUE, bufferForBlt0.get(), bufferForBlt1.get(), 1, 0, nullptr, nullptr);
-
-    EXPECT_EQ(7u, bcsCsr->blitBufferCalled);
-
-    DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(1);
-    hwInfo->capabilityTable.blitterOperationsSupported = true;
-    commandQueue->enqueueWriteBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(8u, bcsCsr->blitBufferCalled);
-    commandQueue->enqueueReadBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(9u, bcsCsr->blitBufferCalled);
-    commandQueue->enqueueCopyBuffer(bufferForBlt0.get(), bufferForBlt1.get(), 0, 1, 1, 0, nullptr, nullptr);
-    EXPECT_EQ(10u, bcsCsr->blitBufferCalled);
-    commandQueue->enqueueReadBufferRect(bufferForBlt0.get(), CL_TRUE, bufferOrigin, hostOrigin, region,
-                                        MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
-                                        MemoryConstants::cacheLineSize, &hostPtr, 0, nullptr, nullptr);
-    EXPECT_EQ(11u, bcsCsr->blitBufferCalled);
-    commandQueue->enqueueWriteBufferRect(bufferForBlt0.get(), CL_TRUE, bufferOrigin, hostOrigin, region,
-                                         MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
-                                         MemoryConstants::cacheLineSize, &hostPtr, 0, nullptr, nullptr);
-    EXPECT_EQ(12u, bcsCsr->blitBufferCalled);
-    commandQueue->enqueueCopyBufferRect(bufferForBlt0.get(), bufferForBlt1.get(), bufferOrigin, hostOrigin, region,
-                                        MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
-                                        MemoryConstants::cacheLineSize, 0, nullptr, nullptr);
-    EXPECT_EQ(13u, bcsCsr->blitBufferCalled);
-    commandQueue->enqueueSVMMemcpy(CL_TRUE, bufferForBlt0.get(), bufferForBlt1.get(), 1, 0, nullptr, nullptr);
-    EXPECT_EQ(14u, bcsCsr->blitBufferCalled);
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenQueueIsBlockedThenDispatchBlitWhenUnblocked) {
-    auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getBcsCommandStreamReceiver());
-
-    auto bufferForBlt0 = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    auto bufferForBlt1 = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    bufferForBlt0->forceDisallowCPUCopy = true;
-    bufferForBlt1->forceDisallowCPUCopy = true;
-    UserEvent userEvent(bcsMockContext.get());
-
-    cl_event waitlist = &userEvent;
-    size_t bufferOrigin[] = {0, 0, 0};
-    size_t hostOrigin[] = {0, 0, 0};
-    size_t region[] = {1, 2, 1};
-
-    commandQueue->enqueueWriteBuffer(bufferForBlt0.get(), CL_FALSE, 0, 1, &hostPtr, nullptr, 1, &waitlist, nullptr);
-    commandQueue->enqueueReadBuffer(bufferForBlt1.get(), CL_FALSE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    commandQueue->enqueueCopyBuffer(bufferForBlt0.get(), bufferForBlt1.get(), 0, 1, 1, 0, nullptr, nullptr);
-    commandQueue->enqueueReadBufferRect(bufferForBlt0.get(), CL_FALSE, bufferOrigin, hostOrigin, region,
-                                        MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
-                                        MemoryConstants::cacheLineSize, &hostPtr, 0, nullptr, nullptr);
-    commandQueue->enqueueWriteBufferRect(bufferForBlt0.get(), CL_FALSE, bufferOrigin, hostOrigin, region,
-                                         MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
-                                         MemoryConstants::cacheLineSize, &hostPtr, 0, nullptr, nullptr);
-    commandQueue->enqueueCopyBufferRect(bufferForBlt0.get(), bufferForBlt1.get(), bufferOrigin, hostOrigin, region,
-                                        MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
-                                        MemoryConstants::cacheLineSize, 0, nullptr, nullptr);
-    commandQueue->enqueueSVMMemcpy(CL_FALSE, bufferForBlt0.get(), bufferForBlt1.get(), 1, 0, nullptr, nullptr);
-
-    EXPECT_EQ(0u, bcsCsr->blitBufferCalled);
-
-    userEvent.setStatus(CL_COMPLETE);
-
-    EXPECT_EQ(7u, bcsCsr->blitBufferCalled);
-
-    commandQueue->enqueueWriteBuffer(bufferForBlt0.get(), CL_FALSE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(8u, bcsCsr->blitBufferCalled);
-    commandQueue->enqueueReadBuffer(bufferForBlt0.get(), CL_FALSE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(9u, bcsCsr->blitBufferCalled);
-    commandQueue->enqueueCopyBuffer(bufferForBlt0.get(), bufferForBlt1.get(), 0, 1, 1, 0, nullptr, nullptr);
-    EXPECT_EQ(10u, bcsCsr->blitBufferCalled);
-    commandQueue->enqueueReadBufferRect(bufferForBlt0.get(), CL_FALSE, bufferOrigin, hostOrigin, region,
-                                        MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
-                                        MemoryConstants::cacheLineSize, &hostPtr, 0, nullptr, nullptr);
-    EXPECT_EQ(11u, bcsCsr->blitBufferCalled);
-    commandQueue->enqueueWriteBufferRect(bufferForBlt0.get(), CL_FALSE, bufferOrigin, hostOrigin, region,
-                                         MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
-                                         MemoryConstants::cacheLineSize, &hostPtr, 0, nullptr, nullptr);
-    EXPECT_EQ(12u, bcsCsr->blitBufferCalled);
-    commandQueue->enqueueCopyBufferRect(bufferForBlt0.get(), bufferForBlt1.get(), bufferOrigin, hostOrigin, region,
-                                        MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
-                                        MemoryConstants::cacheLineSize, 0, nullptr, nullptr);
-    EXPECT_EQ(13u, bcsCsr->blitBufferCalled);
-    commandQueue->enqueueSVMMemcpy(CL_FALSE, bufferForBlt0.get(), bufferForBlt1.get(), 1, 0, nullptr, nullptr);
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenBuffersWhenCopyBufferCalledThenUseBcs) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-
-    auto bufferForBlt0 = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    auto bufferForBlt1 = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    bufferForBlt0->forceDisallowCPUCopy = true;
-    bufferForBlt1->forceDisallowCPUCopy = true;
-
-    cmdQ->enqueueCopyBuffer(bufferForBlt0.get(), bufferForBlt1.get(), 0, 0, 1, 0, nullptr, nullptr);
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(commandQueue->getBcsCommandStreamReceiver()->getCS(0));
-    auto commandItor = find<XY_COPY_BLT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    EXPECT_NE(hwParser.cmdList.end(), commandItor);
-    auto copyBltCmd = genCmdCast<XY_COPY_BLT *>(*commandItor);
-
-    EXPECT_EQ(bufferForBlt0->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress(), copyBltCmd->getSourceBaseAddress());
-    EXPECT_EQ(bufferForBlt1->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress(), copyBltCmd->getDestinationBaseAddress());
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenBuffersWhenCopyBufferRectCalledThenUseBcs) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-
-    auto bufferForBlt0 = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    auto bufferForBlt1 = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    bufferForBlt0->forceDisallowCPUCopy = true;
-    bufferForBlt1->forceDisallowCPUCopy = true;
-
-    size_t bufferOrigin[] = {0, 0, 0};
-    size_t hostOrigin[] = {0, 0, 0};
-    size_t region[] = {1, 2, 1};
-
-    cmdQ->enqueueCopyBufferRect(bufferForBlt0.get(), bufferForBlt1.get(), bufferOrigin, hostOrigin, region,
-                                0, 0, 0, 0, 0, nullptr, nullptr);
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(commandQueue->getBcsCommandStreamReceiver()->getCS(0));
-    auto commandItor = find<XY_COPY_BLT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    EXPECT_NE(hwParser.cmdList.end(), commandItor);
-    auto copyBltCmd = genCmdCast<XY_COPY_BLT *>(*commandItor);
-
-    EXPECT_EQ(bufferForBlt0->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress(), copyBltCmd->getSourceBaseAddress());
-    EXPECT_EQ(bufferForBlt1->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress(), copyBltCmd->getDestinationBaseAddress());
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenDstHostPtrWhenEnqueueSVMMemcpyThenEnqueuReadBufferIsCalledAndBcs) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-
-    auto pDstSVM = std::make_unique<char[]>(1);
-    auto pSrcSVM = bcsMockContext->getSVMAllocsManager()->createSVMAlloc(device->getRootDeviceIndex(), 1, {}, device->getDeviceBitfield());
-
-    cmdQ->enqueueSVMMemcpy(true, pDstSVM.get(), pSrcSVM, 1, 0, nullptr, nullptr);
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(commandQueue->getBcsCommandStreamReceiver()->getCS(0));
-    auto commandItor = find<XY_COPY_BLT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    EXPECT_NE(hwParser.cmdList.end(), commandItor);
-    auto copyBltCmd = genCmdCast<XY_COPY_BLT *>(*commandItor);
-
-    EXPECT_EQ(pSrcSVM, reinterpret_cast<void *>(copyBltCmd->getSourceBaseAddress()));
-    EXPECT_EQ(pDstSVM.get(), reinterpret_cast<void *>(copyBltCmd->getDestinationBaseAddress()));
-
-    bcsMockContext->getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenSrcHostPtrWhenEnqueueSVMMemcpyThenEnqueuWriteBufferIsCalledAndBcs) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-
-    auto pSrcSVM = std::make_unique<char[]>(1);
-    auto pDstSVM = bcsMockContext->getSVMAllocsManager()->createSVMAlloc(device->getRootDeviceIndex(), 1, {}, device->getDeviceBitfield());
-
-    cmdQ->enqueueSVMMemcpy(true, pDstSVM, pSrcSVM.get(), 1, 0, nullptr, nullptr);
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(commandQueue->getBcsCommandStreamReceiver()->getCS(0));
-    auto commandItor = find<XY_COPY_BLT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    EXPECT_NE(hwParser.cmdList.end(), commandItor);
-    auto copyBltCmd = genCmdCast<XY_COPY_BLT *>(*commandItor);
-
-    EXPECT_EQ(pSrcSVM.get(), reinterpret_cast<void *>(copyBltCmd->getSourceBaseAddress()));
-    EXPECT_EQ(pDstSVM, reinterpret_cast<void *>(copyBltCmd->getDestinationBaseAddress()));
-
-    bcsMockContext->getSVMAllocsManager()->freeSVMAlloc(pDstSVM);
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenBlockedBlitEnqueueWhenUnblockingThenMakeResidentAllTimestampPackets) {
-    auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getBcsCommandStreamReceiver());
-    bcsCsr->storeMakeResidentAllocations = true;
-
-    auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
-
-    auto bufferForBlt = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    bufferForBlt->forceDisallowCPUCopy = true;
-
-    TimestampPacketContainer previousTimestampPackets;
-    mockCmdQ->obtainNewTimestampPacketNodes(1, previousTimestampPackets, false);
-    auto dependencyFromPreviousEnqueue = mockCmdQ->timestampPacketContainer->peekNodes()[0];
-
-    auto event = make_releaseable<Event>(mockCmdQ, CL_COMMAND_READ_BUFFER, 0, 0);
-    MockTimestampPacketContainer eventDependencyContainer(*bcsCsr->getTimestampPacketAllocator(), 1);
-    auto eventDependency = eventDependencyContainer.getNode(0);
-    event->addTimestampPacketNodes(eventDependencyContainer);
-
-    auto userEvent = make_releaseable<UserEvent>(bcsMockContext.get());
-    cl_event waitlist[] = {userEvent.get(), event.get()};
-
-    commandQueue->enqueueReadBuffer(bufferForBlt.get(), CL_FALSE, 0, 1, &hostPtr, nullptr, 2, waitlist, nullptr);
-
-    auto outputDependency = mockCmdQ->timestampPacketContainer->peekNodes()[0];
-    EXPECT_NE(outputDependency, dependencyFromPreviousEnqueue);
-
-    EXPECT_FALSE(bcsCsr->isMadeResident(dependencyFromPreviousEnqueue->getBaseGraphicsAllocation()));
-    EXPECT_FALSE(bcsCsr->isMadeResident(outputDependency->getBaseGraphicsAllocation()));
-    EXPECT_FALSE(bcsCsr->isMadeResident(eventDependency->getBaseGraphicsAllocation()));
-
-    userEvent->setStatus(CL_COMPLETE);
-
-    EXPECT_TRUE(bcsCsr->isMadeResident(dependencyFromPreviousEnqueue->getBaseGraphicsAllocation(), bcsCsr->taskCount));
-    EXPECT_TRUE(bcsCsr->isMadeResident(outputDependency->getBaseGraphicsAllocation(), bcsCsr->taskCount));
-    EXPECT_TRUE(bcsCsr->isMadeResident(eventDependency->getBaseGraphicsAllocation(), bcsCsr->taskCount));
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenMapAllocationWhenEnqueueingReadOrWriteBufferThenStoreMapAllocationInDispatchParameters) {
-    DebugManager.flags.DisableZeroCopyForBuffers.set(true);
-    auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
-    uint8_t hostPtr[64] = {};
-
-    auto bufferForBlt = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_USE_HOST_PTR, 1, hostPtr, retVal));
-    bufferForBlt->forceDisallowCPUCopy = true;
-    auto mapAllocation = bufferForBlt->getMapAllocation();
-    EXPECT_NE(nullptr, mapAllocation);
-
-    mockCmdQ->kernelParams.transferAllocation = nullptr;
-    auto mapPtr = clEnqueueMapBuffer(mockCmdQ, bufferForBlt.get(), true, 0, 0, 1, 0, nullptr, nullptr, &retVal);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(mapAllocation, mockCmdQ->kernelParams.transferAllocation);
-
-    mockCmdQ->kernelParams.transferAllocation = nullptr;
-    retVal = clEnqueueUnmapMemObject(mockCmdQ, bufferForBlt.get(), mapPtr, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(mapAllocation, mockCmdQ->kernelParams.transferAllocation);
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenWriteBufferEnqueueWhenProgrammingCommandStreamThenAddSemaphoreWait) {
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
-
-    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-
-    auto queueCsr = cmdQ->gpgpuEngine->commandStreamReceiver;
-    auto initialTaskCount = queueCsr->peekTaskCount();
-
-    cl_int retVal = CL_SUCCESS;
-    auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    buffer->forceDisallowCPUCopy = true;
-    void *hostPtr = reinterpret_cast<void *>(0x12340000);
-
-    cmdQ->enqueueWriteBuffer(buffer.get(), true, 0, 1, hostPtr, nullptr, 0, nullptr, nullptr);
-    auto timestampPacketNode = cmdQ->timestampPacketContainer->peekNodes().at(0);
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(*cmdQ->peekCommandStream());
-
-    uint32_t semaphoresCount = 0;
-    uint32_t miAtomicsCount = 0;
-    for (auto &cmd : hwParser.cmdList) {
-        if (auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(cmd)) {
-            if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWait(*semaphoreCmd)) {
-                continue;
-            }
-            semaphoresCount++;
-            auto dataAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketNode);
-            EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
-            EXPECT_EQ(0u, miAtomicsCount);
-
-        } else if (auto miAtomicCmd = genCmdCast<MI_ATOMIC *>(cmd)) {
-            miAtomicsCount++;
-            auto dataAddress = TimestampPacketHelper::getGpuDependenciesCountGpuAddress(*timestampPacketNode);
-            EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomicCmd->getAtomicOpcode());
-            EXPECT_EQ(dataAddress, UnitTestHelper<FamilyType>::getMemoryAddress(*miAtomicCmd));
-            EXPECT_EQ(1u, semaphoresCount);
-        }
-    }
-    EXPECT_EQ(1u, semaphoresCount);
-    EXPECT_EQ(1u, miAtomicsCount);
-    EXPECT_EQ(initialTaskCount + 1, queueCsr->peekTaskCount());
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenReadBufferEnqueueWhenProgrammingCommandStreamThenAddSemaphoreWait) {
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
-
-    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-
-    auto queueCsr = cmdQ->gpgpuEngine->commandStreamReceiver;
-    auto initialTaskCount = queueCsr->peekTaskCount();
-
-    cl_int retVal = CL_SUCCESS;
-    auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    buffer->forceDisallowCPUCopy = true;
-    void *hostPtr = reinterpret_cast<void *>(0x12340000);
-
-    cmdQ->enqueueWriteBuffer(buffer.get(), true, 0, 1, hostPtr, nullptr, 0, nullptr, nullptr);
-    auto timestampPacketNode = cmdQ->timestampPacketContainer->peekNodes().at(0);
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(*cmdQ->peekCommandStream());
-
-    uint32_t semaphoresCount = 0;
-    uint32_t miAtomicsCount = 0;
-    for (auto &cmd : hwParser.cmdList) {
-        if (auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(cmd)) {
-            if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWait(*semaphoreCmd)) {
-                continue;
-            }
-            semaphoresCount++;
-            auto dataAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketNode);
-            EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
-            EXPECT_EQ(0u, miAtomicsCount);
-
-        } else if (auto miAtomicCmd = genCmdCast<MI_ATOMIC *>(cmd)) {
-            miAtomicsCount++;
-            auto dataAddress = TimestampPacketHelper::getGpuDependenciesCountGpuAddress(*timestampPacketNode);
-            EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomicCmd->getAtomicOpcode());
-            EXPECT_EQ(dataAddress, UnitTestHelper<FamilyType>::getMemoryAddress(*miAtomicCmd));
-            EXPECT_EQ(1u, semaphoresCount);
-        }
-    }
-    EXPECT_EQ(1u, semaphoresCount);
-    EXPECT_EQ(1u, miAtomicsCount);
-    EXPECT_EQ(initialTaskCount + 1, queueCsr->peekTaskCount());
-}
-
-template <typename FamilyType>
-void BcsBufferTests::waitForCacheFlushFromBcsTest(MockCommandQueueHw<FamilyType> &commandQueue) {
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
-    bool isCacheFlushForBcsRequired = commandQueue.isCacheFlushForBcsRequired();
-
-    auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue.getBcsCommandStreamReceiver());
-
-    cl_int retVal = CL_SUCCESS;
-    auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    buffer->forceDisallowCPUCopy = true;
-    void *hostPtr = reinterpret_cast<void *>(0x12340000);
-
-    commandQueue.enqueueWriteBuffer(buffer.get(), true, 0, 1, hostPtr, nullptr, 0, nullptr, nullptr);
-
-    HardwareParse hwParserGpGpu;
-    HardwareParse hwParserBcs;
-    hwParserGpGpu.parseCommands<FamilyType>(*commandQueue.peekCommandStream());
-    hwParserBcs.parseCommands<FamilyType>(bcsCsr->commandStream);
-
-    auto gpgpuPipeControls = findAll<PIPE_CONTROL *>(hwParserGpGpu.cmdList.begin(), hwParserGpGpu.cmdList.end());
-    uint64_t cacheFlushWriteAddress = 0;
-
-    for (auto &pipeControl : gpgpuPipeControls) {
-        auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*pipeControl);
-        uint64_t addressHigh = static_cast<uint64_t>(pipeControlCmd->getAddressHigh()) << 32;
-        uint64_t addressLow = pipeControlCmd->getAddress();
-        cacheFlushWriteAddress = addressHigh | addressLow;
-        if (cacheFlushWriteAddress != 0) {
-            EXPECT_TRUE(pipeControlCmd->getDcFlushEnable());
-            EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
-            EXPECT_EQ(isCacheFlushForBcsRequired, 0u == pipeControlCmd->getImmediateData());
-            break;
-        }
-    }
-
-    auto bcsSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserBcs.cmdList.begin(), hwParserBcs.cmdList.end());
-    size_t additionalSemaphores = UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getHardwareInfo()) ? 2 : 0;
-
-    if (isCacheFlushForBcsRequired) {
-        EXPECT_NE(0u, cacheFlushWriteAddress);
-        EXPECT_EQ(1u + additionalSemaphores, bcsSemaphores.size());
-
-        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*bcsSemaphores[0]);
-        EXPECT_EQ(cacheFlushWriteAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
-    } else {
-        EXPECT_EQ(additionalSemaphores, bcsSemaphores.size());
-    }
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenCommandQueueWithCacheFlushRequirementWhenProgrammingCmdBufferThenWaitForCacheFlushFromBcs) {
-    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-    cmdQ->overrideIsCacheFlushForBcsRequired.enabled = true;
-    cmdQ->overrideIsCacheFlushForBcsRequired.returnValue = true;
-    waitForCacheFlushFromBcsTest<FamilyType>(*cmdQ);
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenCommandQueueWithoutCacheFlushRequirementWhenProgrammingCmdBufferThenWaitForCacheFlushFromBcs) {
-    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-    cmdQ->overrideIsCacheFlushForBcsRequired.enabled = true;
-    cmdQ->overrideIsCacheFlushForBcsRequired.returnValue = false;
-    waitForCacheFlushFromBcsTest<FamilyType>(*cmdQ);
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenPipeControlRequestWhenDispatchingBlitEnqueueThenWaitPipeControlOnBcsEngine) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
-    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-    auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(cmdQ->getBcsCommandStreamReceiver());
-
-    auto queueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(cmdQ->gpgpuEngine->commandStreamReceiver);
-    queueCsr->stallingPipeControlOnNextFlushRequired = true;
-
-    cl_int retVal = CL_SUCCESS;
-    auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    buffer->forceDisallowCPUCopy = true;
-    void *hostPtr = reinterpret_cast<void *>(0x12340000);
-
-    cmdQ->enqueueWriteBuffer(buffer.get(), true, 0, 1, hostPtr, nullptr, 0, nullptr, nullptr);
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(queueCsr->commandStream);
-
-    uint64_t pipeControlWriteAddress = 0;
-    for (auto &cmd : hwParser.cmdList) {
-        if (auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(cmd)) {
-            if (pipeControlCmd->getPostSyncOperation() != PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
-                continue;
-            }
-
-            EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
-            auto addressLow = static_cast<uint64_t>(pipeControlCmd->getAddress());
-            auto addressHigh = static_cast<uint64_t>(pipeControlCmd->getAddressHigh());
-            pipeControlWriteAddress = (addressHigh << 32) | addressLow;
-            break;
-        }
-    }
-
-    EXPECT_NE(0u, pipeControlWriteAddress);
-
-    HardwareParse bcsHwParser;
-    bcsHwParser.parseCommands<FamilyType>(bcsCsr->commandStream);
-    auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(bcsHwParser.cmdList.begin(), bcsHwParser.cmdList.end());
-
-    if (cmdQ->isCacheFlushForBcsRequired()) {
-        EXPECT_EQ(UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getHardwareInfo()) ? 4u : 2u, semaphores.size());
-        EXPECT_EQ(pipeControlWriteAddress, genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[1]))->getSemaphoreGraphicsAddress());
-    } else {
-        EXPECT_EQ(UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getHardwareInfo()) ? 3u : 1u, semaphores.size());
-        EXPECT_EQ(pipeControlWriteAddress, genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]))->getSemaphoreGraphicsAddress());
-    }
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenBarrierWhenReleasingMultipleBlockedEnqueuesThenProgramBarrierOnce) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
-    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-
-    cl_int retVal = CL_SUCCESS;
-    auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    buffer->forceDisallowCPUCopy = true;
-    void *hostPtr = reinterpret_cast<void *>(0x12340000);
-
-    UserEvent userEvent0, userEvent1;
-    cl_event waitlist0[] = {&userEvent0};
-    cl_event waitlist1[] = {&userEvent1};
-
-    cmdQ->enqueueBarrierWithWaitList(0, nullptr, nullptr);
-    cmdQ->enqueueWriteBuffer(buffer.get(), false, 0, 1, hostPtr, nullptr, 1, waitlist0, nullptr);
-    cmdQ->enqueueWriteBuffer(buffer.get(), false, 0, 1, hostPtr, nullptr, 1, waitlist1, nullptr);
-
-    auto pipeControlLookup = [](LinearStream &stream, size_t offset) {
-        HardwareParse hwParser;
-        hwParser.parseCommands<FamilyType>(stream, offset);
-
-        bool stallingPipeControlFound = false;
-        for (auto &cmd : hwParser.cmdList) {
-            if (auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(cmd)) {
-                if (pipeControlCmd->getPostSyncOperation() != PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
-                    continue;
-                }
-
-                stallingPipeControlFound = true;
-                EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
-                EXPECT_TRUE(pipeControlCmd->getDcFlushEnable());
-                break;
-            }
-        }
-
-        return stallingPipeControlFound;
-    };
-
-    auto &csrStream = cmdQ->getGpgpuCommandStreamReceiver().getCS(0);
-    EXPECT_TRUE(cmdQ->getGpgpuCommandStreamReceiver().isStallingPipeControlOnNextFlushRequired());
-    userEvent0.setStatus(CL_COMPLETE);
-    EXPECT_FALSE(cmdQ->getGpgpuCommandStreamReceiver().isStallingPipeControlOnNextFlushRequired());
-    EXPECT_TRUE(pipeControlLookup(csrStream, 0));
-
-    auto csrOffset = csrStream.getUsed();
-    userEvent1.setStatus(CL_COMPLETE);
-    EXPECT_FALSE(pipeControlLookup(csrStream, csrOffset));
-    cmdQ->isQueueBlocked();
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenPipeControlRequestWhenDispatchingBlockedBlitEnqueueThenWaitPipeControlOnBcsEngine) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
-    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-    auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(cmdQ->getBcsCommandStreamReceiver());
-
-    auto queueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(cmdQ->gpgpuEngine->commandStreamReceiver);
-    queueCsr->stallingPipeControlOnNextFlushRequired = true;
-
-    cl_int retVal = CL_SUCCESS;
-    auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    buffer->forceDisallowCPUCopy = true;
-    void *hostPtr = reinterpret_cast<void *>(0x12340000);
-
-    UserEvent userEvent;
-    cl_event waitlist = &userEvent;
-    cmdQ->enqueueWriteBuffer(buffer.get(), false, 0, 1, hostPtr, nullptr, 1, &waitlist, nullptr);
-    userEvent.setStatus(CL_COMPLETE);
-
-    HardwareParse bcsHwParser;
-    bcsHwParser.parseCommands<FamilyType>(bcsCsr->commandStream);
-
-    auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(bcsHwParser.cmdList.begin(), bcsHwParser.cmdList.end());
-
-    if (cmdQ->isCacheFlushForBcsRequired()) {
-        EXPECT_EQ(UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getHardwareInfo()) ? 4u : 2u, semaphores.size());
-    } else {
-        EXPECT_EQ(UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getHardwareInfo()) ? 3u : 1u, semaphores.size());
-    }
-
-    cmdQ->isQueueBlocked();
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenBufferOperationWithoutKernelWhenEstimatingCommandsSizeThenReturnCorrectValue) {
-    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-    CsrDependencies csrDependencies;
-    MultiDispatchInfo multiDispatchInfo;
-
-    auto &hwInfo = cmdQ->getDevice().getHardwareInfo();
-
-    auto readBufferCmdsSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_READ_BUFFER, csrDependencies, false, false,
-                                                                                   true, *cmdQ, multiDispatchInfo);
-    auto writeBufferCmdsSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_WRITE_BUFFER, csrDependencies, false, false,
-                                                                                    true, *cmdQ, multiDispatchInfo);
-    auto copyBufferCmdsSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_COPY_BUFFER, csrDependencies, false, false,
-                                                                                   true, *cmdQ, multiDispatchInfo);
-    auto expectedSize = TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<FamilyType>();
-
-    if (cmdQ->isCacheFlushForBcsRequired()) {
-        expectedSize += MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(hwInfo);
-    }
-
-    EXPECT_EQ(expectedSize, readBufferCmdsSize);
-    EXPECT_EQ(expectedSize, writeBufferCmdsSize);
-    EXPECT_EQ(expectedSize, copyBufferCmdsSize);
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenOutputTimestampPacketWhenBlitCalledThenProgramMiFlushDwWithDataWrite) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-
-    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getBcsCommandStreamReceiver());
-    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-    cl_int retVal = CL_SUCCESS;
-
-    auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    buffer->forceDisallowCPUCopy = true;
-    void *hostPtr = reinterpret_cast<void *>(0x12340000);
-
-    cmdQ->enqueueWriteBuffer(buffer.get(), true, 0, 1, hostPtr, nullptr, 0, nullptr, nullptr);
-    auto outputTimestampPacket = cmdQ->timestampPacketContainer->peekNodes()[0];
-    auto timestampPacketGpuWriteAddress = TimestampPacketHelper::getContextEndGpuAddress(*outputTimestampPacket);
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(csr->commandStream);
-
-    uint32_t miFlushDwCmdsCount = 0;
-    bool blitCmdFound = false;
-    for (auto &cmd : hwParser.cmdList) {
-        if (auto miFlushDwCmd = genCmdCast<MI_FLUSH_DW *>(cmd)) {
-            EXPECT_TRUE(blitCmdFound);
-            if (UnitTestHelper<FamilyType>::additionalMiFlushDwRequired) {
-                miFlushDwCmd++;
-                if (miFlushDwCmdsCount % 2 == 0) {
-                    EXPECT_EQ(miFlushDwCmdsCount == 0,
-                              timestampPacketGpuWriteAddress == miFlushDwCmd->getDestinationAddress());
-                    EXPECT_EQ(miFlushDwCmdsCount == 0,
-                              0u == miFlushDwCmd->getImmediateData());
-                }
-            } else {
-                EXPECT_EQ(miFlushDwCmdsCount == 0,
-                          timestampPacketGpuWriteAddress == miFlushDwCmd->getDestinationAddress());
-                EXPECT_EQ(miFlushDwCmdsCount == 0,
-                          0u == miFlushDwCmd->getImmediateData());
-            }
-            miFlushDwCmdsCount++;
-        } else if (genCmdCast<typename FamilyType::XY_COPY_BLT *>(cmd)) {
-            blitCmdFound = true;
-            EXPECT_EQ(0u, miFlushDwCmdsCount);
-        }
-    }
-    if (UnitTestHelper<FamilyType>::additionalMiFlushDwRequired) {
-        EXPECT_EQ(4u, miFlushDwCmdsCount);
-    } else {
-        EXPECT_EQ(2u, miFlushDwCmdsCount);
-    }
-    EXPECT_TRUE(blitCmdFound);
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenInputAndOutputTimestampPacketWhenBlitCalledThenMakeThemResident) {
-    auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getBcsCommandStreamReceiver());
-
-    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-    cl_int retVal = CL_SUCCESS;
-
-    auto &cmdQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> &>(cmdQ->getGpgpuCommandStreamReceiver());
-    auto memoryManager = cmdQueueCsr.getMemoryManager();
-    cmdQueueCsr.timestampPacketAllocator = std::make_unique<TagAllocator<TimestampPacketStorage>>(device->getRootDeviceIndex(), memoryManager, 1,
-                                                                                                  MemoryConstants::cacheLineSize,
-                                                                                                  sizeof(TimestampPacketStorage),
-                                                                                                  false, device->getDeviceBitfield());
-
-    auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    buffer->forceDisallowCPUCopy = true;
-    void *hostPtr = reinterpret_cast<void *>(0x12340000);
-
-    // first enqueue to create IOQ dependency
-    cmdQ->enqueueWriteBuffer(buffer.get(), true, 0, 1, hostPtr, nullptr, 0, nullptr, nullptr);
-    auto inputTimestampPacketAllocation = cmdQ->timestampPacketContainer->peekNodes().at(0)->getBaseGraphicsAllocation();
-
-    cmdQ->enqueueWriteBuffer(buffer.get(), true, 0, 1, hostPtr, nullptr, 0, nullptr, nullptr);
-    auto outputTimestampPacketAllocation = cmdQ->timestampPacketContainer->peekNodes().at(0)->getBaseGraphicsAllocation();
-
-    EXPECT_NE(outputTimestampPacketAllocation, inputTimestampPacketAllocation);
-
-    EXPECT_EQ(cmdQ->taskCount, inputTimestampPacketAllocation->getTaskCount(bcsCsr->getOsContext().getContextId()));
-    EXPECT_EQ(cmdQ->taskCount, outputTimestampPacketAllocation->getTaskCount(bcsCsr->getOsContext().getContextId()));
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenBlockingWriteBufferWhenUsingBcsThenCallWait) {
-    auto myMockCsr = new MyMockCsr<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
-    myMockCsr->taskCount = 1234;
-    myMockCsr->initializeTagAllocation();
-    myMockCsr->setupContext(*bcsMockContext->bcsOsContext);
-    bcsMockContext->bcsCsr.reset(myMockCsr);
-
-    EngineControl bcsEngineControl = {myMockCsr, bcsMockContext->bcsOsContext.get()};
-
-    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-    cmdQ->bcsEngine = &bcsEngineControl;
-    auto &gpgpuCsr = cmdQ->getGpgpuCommandStreamReceiver();
-    myMockCsr->gpgpuCsr = &gpgpuCsr;
-
-    cl_int retVal = CL_SUCCESS;
-    auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    buffer->forceDisallowCPUCopy = true;
-    void *hostPtr = reinterpret_cast<void *>(0x12340000);
-
-    cmdQ->enqueueWriteBuffer(buffer.get(), false, 0, 1, hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(0u, myMockCsr->waitForTaskCountAndCleanAllocationListCalled);
-    EXPECT_TRUE(gpgpuCsr.getTemporaryAllocations().peekIsEmpty());
-    EXPECT_FALSE(myMockCsr->getTemporaryAllocations().peekIsEmpty());
-
-    bool tempAllocationFound = false;
-    auto tempAllocation = myMockCsr->getTemporaryAllocations().peekHead();
-    while (tempAllocation) {
-        if (tempAllocation->getUnderlyingBuffer() == hostPtr) {
-            tempAllocationFound = true;
-            break;
-        }
-        tempAllocation = tempAllocation->next;
-    }
-    EXPECT_TRUE(tempAllocationFound);
-
-    cmdQ->enqueueWriteBuffer(buffer.get(), true, 0, 1, hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(1u, myMockCsr->waitForTaskCountAndCleanAllocationListCalled);
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenBlockingReadBufferRectWhenUsingBcsThenCallWait) {
-    auto myMockCsr = new MyMockCsr<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
-    myMockCsr->taskCount = 1234;
-    myMockCsr->initializeTagAllocation();
-    myMockCsr->setupContext(*bcsMockContext->bcsOsContext);
-    bcsMockContext->bcsCsr.reset(myMockCsr);
-
-    EngineControl bcsEngineControl = {myMockCsr, bcsMockContext->bcsOsContext.get()};
-
-    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-    cmdQ->bcsEngine = &bcsEngineControl;
-    auto &gpgpuCsr = cmdQ->getGpgpuCommandStreamReceiver();
-    myMockCsr->gpgpuCsr = &gpgpuCsr;
-
-    cl_int retVal = CL_SUCCESS;
-    auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    buffer->forceDisallowCPUCopy = true;
-    void *hostPtr = reinterpret_cast<void *>(0x12340000);
-
-    size_t bufferOrigin[] = {0, 0, 0};
-    size_t hostOrigin[] = {0, 0, 0};
-    size_t region[] = {1, 2, 1};
-
-    cmdQ->enqueueReadBufferRect(buffer.get(), false, bufferOrigin, hostOrigin, region,
-                                MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
-                                MemoryConstants::cacheLineSize, hostPtr, 0, nullptr, nullptr);
-    EXPECT_EQ(0u, myMockCsr->waitForTaskCountAndCleanAllocationListCalled);
-    EXPECT_TRUE(gpgpuCsr.getTemporaryAllocations().peekIsEmpty());
-    EXPECT_FALSE(myMockCsr->getTemporaryAllocations().peekIsEmpty());
-
-    bool tempAllocationFound = false;
-    auto tempAllocation = myMockCsr->getTemporaryAllocations().peekHead();
-    while (tempAllocation) {
-        if (tempAllocation->getUnderlyingBuffer() == hostPtr) {
-            tempAllocationFound = true;
-            break;
-        }
-        tempAllocation = tempAllocation->next;
-    }
-    EXPECT_TRUE(tempAllocationFound);
-
-    cmdQ->enqueueReadBufferRect(buffer.get(), true, bufferOrigin, hostOrigin, region,
-                                MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
-                                MemoryConstants::cacheLineSize, hostPtr, 0, nullptr, nullptr);
-    EXPECT_EQ(1u, myMockCsr->waitForTaskCountAndCleanAllocationListCalled);
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenBlockingWriteBufferRectWhenUsingBcsThenCallWait) {
-    auto myMockCsr = new MyMockCsr<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
-    myMockCsr->taskCount = 1234;
-    myMockCsr->initializeTagAllocation();
-    myMockCsr->setupContext(*bcsMockContext->bcsOsContext);
-    bcsMockContext->bcsCsr.reset(myMockCsr);
-
-    EngineControl bcsEngineControl = {myMockCsr, bcsMockContext->bcsOsContext.get()};
-
-    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-    cmdQ->bcsEngine = &bcsEngineControl;
-    auto &gpgpuCsr = cmdQ->getGpgpuCommandStreamReceiver();
-    myMockCsr->gpgpuCsr = &gpgpuCsr;
-
-    cl_int retVal = CL_SUCCESS;
-    auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    buffer->forceDisallowCPUCopy = true;
-    void *hostPtr = reinterpret_cast<void *>(0x12340000);
-
-    size_t bufferOrigin[] = {0, 0, 0};
-    size_t hostOrigin[] = {0, 0, 0};
-    size_t region[] = {1, 2, 1};
-
-    cmdQ->enqueueWriteBufferRect(buffer.get(), false, bufferOrigin, hostOrigin, region,
-                                 MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
-                                 MemoryConstants::cacheLineSize, hostPtr, 0, nullptr, nullptr);
-    EXPECT_EQ(0u, myMockCsr->waitForTaskCountAndCleanAllocationListCalled);
-    EXPECT_TRUE(gpgpuCsr.getTemporaryAllocations().peekIsEmpty());
-    EXPECT_FALSE(myMockCsr->getTemporaryAllocations().peekIsEmpty());
-
-    bool tempAllocationFound = false;
-    auto tempAllocation = myMockCsr->getTemporaryAllocations().peekHead();
-    while (tempAllocation) {
-        if (tempAllocation->getUnderlyingBuffer() == hostPtr) {
-            tempAllocationFound = true;
-            break;
-        }
-        tempAllocation = tempAllocation->next;
-    }
-    EXPECT_TRUE(tempAllocationFound);
-
-    cmdQ->enqueueWriteBufferRect(buffer.get(), true, bufferOrigin, hostOrigin, region,
-                                 MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
-                                 MemoryConstants::cacheLineSize, hostPtr, 0, nullptr, nullptr);
-    EXPECT_EQ(1u, myMockCsr->waitForTaskCountAndCleanAllocationListCalled);
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenBlockingReadBufferWhenUsingBcsThenCallWait) {
-    auto myMockCsr = new MyMockCsr<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
-    myMockCsr->taskCount = 1234;
-    myMockCsr->initializeTagAllocation();
-    myMockCsr->setupContext(*bcsMockContext->bcsOsContext);
-    bcsMockContext->bcsCsr.reset(myMockCsr);
-
-    EngineControl bcsEngineControl = {myMockCsr, bcsMockContext->bcsOsContext.get()};
-
-    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-    cmdQ->bcsEngine = &bcsEngineControl;
-    auto &gpgpuCsr = cmdQ->getGpgpuCommandStreamReceiver();
-    myMockCsr->gpgpuCsr = &gpgpuCsr;
-
-    cl_int retVal = CL_SUCCESS;
-    auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    buffer->forceDisallowCPUCopy = true;
-    void *hostPtr = reinterpret_cast<void *>(0x12340000);
-
-    cmdQ->enqueueReadBuffer(buffer.get(), false, 0, 1, hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(0u, myMockCsr->waitForTaskCountAndCleanAllocationListCalled);
-    EXPECT_TRUE(gpgpuCsr.getTemporaryAllocations().peekIsEmpty());
-    EXPECT_FALSE(myMockCsr->getTemporaryAllocations().peekIsEmpty());
-
-    bool tempAllocationFound = false;
-    auto tempAllocation = myMockCsr->getTemporaryAllocations().peekHead();
-    while (tempAllocation) {
-        if (tempAllocation->getUnderlyingBuffer() == hostPtr) {
-            tempAllocationFound = true;
-            break;
-        }
-        tempAllocation = tempAllocation->next;
-    }
-    EXPECT_TRUE(tempAllocationFound);
-
-    cmdQ->enqueueReadBuffer(buffer.get(), true, 0, 1, hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(1u, myMockCsr->waitForTaskCountAndCleanAllocationListCalled);
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenBlockingSVMMemcpyAndEnqueuReadBufferIsCalledWhenUsingBcsThenCallWait) {
-    auto myMockCsr = new MyMockCsr<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
-    myMockCsr->taskCount = 1234;
-    myMockCsr->initializeTagAllocation();
-    myMockCsr->setupContext(*bcsMockContext->bcsOsContext);
-    bcsMockContext->bcsCsr.reset(myMockCsr);
-
-    EngineControl bcsEngineControl = {myMockCsr, bcsMockContext->bcsOsContext.get()};
-
-    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-    cmdQ->bcsEngine = &bcsEngineControl;
-    auto &gpgpuCsr = cmdQ->getGpgpuCommandStreamReceiver();
-    myMockCsr->gpgpuCsr = &gpgpuCsr;
-
-    auto pDstSVM = std::make_unique<char[]>(256);
-    auto pSrcSVM = bcsMockContext->getSVMAllocsManager()->createSVMAlloc(device->getRootDeviceIndex(), 256, {}, device->getDeviceBitfield());
-
-    cmdQ->enqueueSVMMemcpy(false, pDstSVM.get(), pSrcSVM, 256, 0, nullptr, nullptr);
-    EXPECT_EQ(0u, myMockCsr->waitForTaskCountAndCleanAllocationListCalled);
-    EXPECT_TRUE(gpgpuCsr.getTemporaryAllocations().peekIsEmpty());
-    EXPECT_FALSE(myMockCsr->getTemporaryAllocations().peekIsEmpty());
-
-    auto tempAlloc = myMockCsr->getTemporaryAllocations().peekHead();
-
-    EXPECT_EQ(0u, tempAlloc->countSuccessors());
-    EXPECT_EQ(pDstSVM.get(), reinterpret_cast<void *>(tempAlloc->getGpuAddress()));
-
-    cmdQ->enqueueSVMMemcpy(true, pDstSVM.get(), pSrcSVM, 256, 0, nullptr, nullptr);
-    EXPECT_EQ(1u, myMockCsr->waitForTaskCountAndCleanAllocationListCalled);
-
-    bcsMockContext->getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenSrcHostPtrBlockingEnqueueSVMMemcpyAndEnqueuWriteBufferIsCalledWhenUsingBcsThenCallWait) {
-    auto myMockCsr = new MyMockCsr<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
-    myMockCsr->taskCount = 1234;
-    myMockCsr->initializeTagAllocation();
-    myMockCsr->setupContext(*bcsMockContext->bcsOsContext);
-    bcsMockContext->bcsCsr.reset(myMockCsr);
-
-    EngineControl bcsEngineControl = {myMockCsr, bcsMockContext->bcsOsContext.get()};
-
-    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-    cmdQ->bcsEngine = &bcsEngineControl;
-    auto &gpgpuCsr = cmdQ->getGpgpuCommandStreamReceiver();
-    myMockCsr->gpgpuCsr = &gpgpuCsr;
-
-    auto pSrcSVM = std::make_unique<char[]>(256);
-    auto pDstSVM = bcsMockContext->getSVMAllocsManager()->createSVMAlloc(device->getRootDeviceIndex(), 256, {}, device->getDeviceBitfield());
-
-    cmdQ->enqueueSVMMemcpy(false, pDstSVM, pSrcSVM.get(), 256, 0, nullptr, nullptr);
-    EXPECT_EQ(0u, myMockCsr->waitForTaskCountAndCleanAllocationListCalled);
-    EXPECT_TRUE(gpgpuCsr.getTemporaryAllocations().peekIsEmpty());
-    EXPECT_FALSE(myMockCsr->getTemporaryAllocations().peekIsEmpty());
-
-    auto tempAlloc = myMockCsr->getTemporaryAllocations().peekHead();
-
-    EXPECT_EQ(0u, tempAlloc->countSuccessors());
-    EXPECT_EQ(pSrcSVM.get(), reinterpret_cast<void *>(tempAlloc->getGpuAddress()));
-
-    cmdQ->enqueueSVMMemcpy(true, pDstSVM, pSrcSVM.get(), 256, 0, nullptr, nullptr);
-    EXPECT_EQ(1u, myMockCsr->waitForTaskCountAndCleanAllocationListCalled);
-
-    bcsMockContext->getSVMAllocsManager()->freeSVMAlloc(pDstSVM);
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenDstHostPtrAndSrcHostPtrBlockingEnqueueSVMMemcpyAndEnqueuWriteBufferIsCalledWhenUsingBcsThenCallWait) {
-    auto myMockCsr = new MyMockCsr<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
-    myMockCsr->taskCount = 1234;
-    myMockCsr->initializeTagAllocation();
-    myMockCsr->setupContext(*bcsMockContext->bcsOsContext);
-    bcsMockContext->bcsCsr.reset(myMockCsr);
-
-    EngineControl bcsEngineControl = {myMockCsr, bcsMockContext->bcsOsContext.get()};
-
-    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-    cmdQ->bcsEngine = &bcsEngineControl;
-    auto &gpgpuCsr = cmdQ->getGpgpuCommandStreamReceiver();
-    myMockCsr->gpgpuCsr = &gpgpuCsr;
-
-    auto pSrcSVM = std::make_unique<char[]>(256);
-    auto pDstSVM = std::make_unique<char[]>(256);
-
-    cmdQ->enqueueSVMMemcpy(false, pDstSVM.get(), pSrcSVM.get(), 256, 0, nullptr, nullptr);
-    EXPECT_EQ(0u, myMockCsr->waitForTaskCountAndCleanAllocationListCalled);
-    EXPECT_TRUE(gpgpuCsr.getTemporaryAllocations().peekIsEmpty());
-    EXPECT_FALSE(myMockCsr->getTemporaryAllocations().peekIsEmpty());
-
-    auto tempAlloc = myMockCsr->getTemporaryAllocations().peekHead();
-
-    EXPECT_EQ(1u, tempAlloc->countSuccessors());
-    EXPECT_EQ(pSrcSVM.get(), reinterpret_cast<void *>(tempAlloc->getGpuAddress()));
-    EXPECT_EQ(pDstSVM.get(), reinterpret_cast<void *>(tempAlloc->next->getGpuAddress()));
-
-    cmdQ->enqueueSVMMemcpy(true, pDstSVM.get(), pSrcSVM.get(), 256, 0, nullptr, nullptr);
-    EXPECT_EQ(1u, myMockCsr->waitForTaskCountAndCleanAllocationListCalled);
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenSvmToSvmCopyWhenEnqueueSVMMemcpyThenSvmMemcpyCommandIsCalledAndBcs) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-
-    auto pDstSVM = bcsMockContext->getSVMAllocsManager()->createSVMAlloc(device->getRootDeviceIndex(), 256, {}, device->getDeviceBitfield());
-    auto pSrcSVM = bcsMockContext->getSVMAllocsManager()->createSVMAlloc(device->getRootDeviceIndex(), 256, {}, device->getDeviceBitfield());
-
-    cmdQ->enqueueSVMMemcpy(false, pDstSVM, pSrcSVM, 256, 0, nullptr, nullptr);
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(commandQueue->getBcsCommandStreamReceiver()->getCS(0));
-    auto commandItor = find<XY_COPY_BLT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    EXPECT_NE(hwParser.cmdList.end(), commandItor);
-    auto copyBltCmd = genCmdCast<XY_COPY_BLT *>(*commandItor);
-
-    EXPECT_EQ(pSrcSVM, reinterpret_cast<void *>(copyBltCmd->getSourceBaseAddress()));
-    EXPECT_EQ(pDstSVM, reinterpret_cast<void *>(copyBltCmd->getDestinationBaseAddress()));
-
-    bcsMockContext->getSVMAllocsManager()->freeSVMAlloc(pDstSVM);
-    bcsMockContext->getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenSvmToSvmCopyTypeWhenEnqueueNonBlockingSVMMemcpyThenSvmMemcpyCommandIsEnqueuedWhenUsingBcsThenCallWait) {
-    auto myMockCsr = new MyMockCsr<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
-    myMockCsr->taskCount = 1234;
-    myMockCsr->initializeTagAllocation();
-    myMockCsr->setupContext(*bcsMockContext->bcsOsContext);
-    bcsMockContext->bcsCsr.reset(myMockCsr);
-
-    EngineControl bcsEngineControl = {myMockCsr, bcsMockContext->bcsOsContext.get()};
-
-    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-    cmdQ->bcsEngine = &bcsEngineControl;
-    auto &gpgpuCsr = cmdQ->getGpgpuCommandStreamReceiver();
-    myMockCsr->gpgpuCsr = &gpgpuCsr;
-
-    auto pDstSVM = bcsMockContext->getSVMAllocsManager()->createSVMAlloc(device->getRootDeviceIndex(), 256, {}, device->getDeviceBitfield());
-    auto pSrcSVM = bcsMockContext->getSVMAllocsManager()->createSVMAlloc(device->getRootDeviceIndex(), 256, {}, device->getDeviceBitfield());
-
-    cmdQ->enqueueSVMMemcpy(false, pDstSVM, pSrcSVM, 256, 0, nullptr, nullptr);
-    EXPECT_EQ(0u, myMockCsr->waitForTaskCountAndCleanAllocationListCalled);
-    EXPECT_TRUE(gpgpuCsr.getTemporaryAllocations().peekIsEmpty());
-    EXPECT_TRUE(myMockCsr->getTemporaryAllocations().peekIsEmpty());
-
-    cmdQ->enqueueSVMMemcpy(true, pDstSVM, pSrcSVM, 256, 0, nullptr, nullptr);
-    EXPECT_EQ(1u, myMockCsr->waitForTaskCountAndCleanAllocationListCalled);
-
-    bcsMockContext->getSVMAllocsManager()->freeSVMAlloc(pDstSVM);
-    bcsMockContext->getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
-}
-
-struct BcsSvmTests : public BcsBufferTests {
-
-    template <typename FamilyType>
-    void SetUpT() {
-        if (is32bit) {
-            GTEST_SKIP();
-        }
-        REQUIRE_SVM_OR_SKIP(defaultHwInfo);
-        BcsBufferTests::SetUpT<FamilyType>();
-
-        deviceMemAlloc = clDeviceMemAllocINTEL(bcsMockContext.get(), device.get(), nullptr, allocSize, 0u, &retVal);
-        ASSERT_NE(nullptr, deviceMemAlloc);
-        ASSERT_EQ(CL_SUCCESS, retVal);
-        allocation.push_back(deviceMemAlloc);
-
-        retVal = CL_SUCCESS;
-        hostMemAlloc = clHostMemAllocINTEL(bcsMockContext.get(), nullptr, allocSize, 0u, &retVal);
-        ASSERT_NE(nullptr, hostMemAlloc);
-        ASSERT_EQ(CL_SUCCESS, retVal);
-        allocation.push_back(hostMemAlloc);
-
-        sharedMemAlloc = clSharedMemAllocINTEL(bcsMockContext.get(), device.get(), nullptr, allocSize, 0u, &retVal);
-        ASSERT_NE(nullptr, sharedMemAlloc);
-        ASSERT_EQ(CL_SUCCESS, retVal);
-        allocation.push_back(sharedMemAlloc);
-    }
-
-    template <typename FamilyType>
-    void TearDownT() {
-        if (IsSkipped()) {
-            return;
-        }
-        BcsBufferTests::TearDownT<FamilyType>();
-
-        clMemFreeINTEL(bcsMockContext.get(), sharedMemAlloc);
-        clMemFreeINTEL(bcsMockContext.get(), hostMemAlloc);
-        clMemFreeINTEL(bcsMockContext.get(), deviceMemAlloc);
-    }
-
-    size_t allocSize = 4096u;
-    std::vector<size_t> offset{0, 1, 2, 4, 8, 16, 32};
-    std::vector<void *> allocation;
-
-    void *hostMemAlloc = nullptr;
-    void *deviceMemAlloc = nullptr;
-    void *sharedMemAlloc = nullptr;
-
-    cl_int retVal = CL_SUCCESS;
-};
-
-HWTEST_TEMPLATED_F(BcsSvmTests, givenSVMMAllocationWithOffsetWhenUsingBcsThenProperValuesAreSet) {
-    DebugManager.flags.EnableBlitterOperationsSupport.set(1);
-
-    for (auto srcPtr : allocation) {
-        for (auto dstPtr : allocation) {
-            for (auto srcOff : offset) {
-                for (auto dstOff : offset) {
-                    auto pSrcPtr = srcPtr;
-                    auto pDstPtr = dstPtr;
-                    auto srcOffset = srcOff;
-                    auto dstOffset = dstOff;
-
-                    pSrcPtr = ptrOffset(pSrcPtr, srcOffset);
-                    pDstPtr = ptrOffset(pDstPtr, dstOffset);
-
-                    auto dstSvmData = bcsMockContext.get()->getSVMAllocsManager()->getSVMAlloc(pDstPtr);
-                    auto srcSvmData = bcsMockContext.get()->getSVMAllocsManager()->getSVMAlloc(pSrcPtr);
-
-                    BuiltinOpParams builtinOpParams = {};
-                    builtinOpParams.size = {allocSize, 0, 0};
-                    builtinOpParams.srcPtr = const_cast<void *>(alignDown(pSrcPtr, 4));
-                    builtinOpParams.srcSvmAlloc = srcSvmData->gpuAllocation;
-                    builtinOpParams.srcOffset = {ptrDiff(pSrcPtr, builtinOpParams.srcPtr), 0, 0};
-                    builtinOpParams.dstPtr = alignDown(pDstPtr, 4);
-                    builtinOpParams.dstSvmAlloc = dstSvmData->gpuAllocation;
-                    builtinOpParams.dstOffset = {ptrDiff(pDstPtr, builtinOpParams.dstPtr), 0, 0};
-
-                    auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getBcsCommandStreamReceiver());
-
-                    auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::BufferToBuffer,
-                                                                                *bcsCsr, builtinOpParams);
-
-                    EXPECT_EQ(srcOffset, blitProperties.srcOffset.x);
-                    EXPECT_EQ(dstOffset, blitProperties.dstOffset.x);
-                    EXPECT_EQ(dstSvmData->gpuAllocation, blitProperties.dstAllocation);
-                    EXPECT_EQ(srcSvmData->gpuAllocation, blitProperties.srcAllocation);
-                    EXPECT_EQ(dstSvmData->gpuAllocation->getGpuAddress(), blitProperties.dstGpuAddress);
-                    EXPECT_EQ(srcSvmData->gpuAllocation->getGpuAddress(), blitProperties.srcGpuAddress);
-                    EXPECT_EQ(pDstPtr, reinterpret_cast<void *>(blitProperties.dstGpuAddress + blitProperties.dstOffset.x));
-                    EXPECT_EQ(pSrcPtr, reinterpret_cast<void *>(blitProperties.srcGpuAddress + blitProperties.srcOffset.x));
-                }
-            }
-        }
-    }
-}
-
-HWTEST_TEMPLATED_F(BcsBufferTests, givenBlockedEnqueueWhenUsingBcsThenWaitForValidTaskCountOnBlockingCall) {
-    auto myMockCsr = new MyMockCsr<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
-    myMockCsr->taskCount = 1234;
-    myMockCsr->initializeTagAllocation();
-    myMockCsr->setupContext(*bcsMockContext->bcsOsContext);
-    bcsMockContext->bcsCsr.reset(myMockCsr);
-
-    EngineControl bcsEngineControl = {myMockCsr, bcsMockContext->bcsOsContext.get()};
-
-    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-    cmdQ->bcsEngine = &bcsEngineControl;
-    auto &gpgpuCsr = cmdQ->getGpgpuCommandStreamReceiver();
-    myMockCsr->gpgpuCsr = &gpgpuCsr;
-
-    cl_int retVal = CL_SUCCESS;
-    auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    buffer->forceDisallowCPUCopy = true;
-    void *hostPtr = reinterpret_cast<void *>(0x12340000);
-
-    UserEvent userEvent;
-    cl_event waitlist = &userEvent;
-
-    cmdQ->enqueueWriteBuffer(buffer.get(), false, 0, 1, hostPtr, nullptr, 1, &waitlist, nullptr);
-
-    userEvent.setStatus(CL_COMPLETE);
-    EXPECT_EQ(0u, myMockCsr->waitForTaskCountAndCleanAllocationListCalled);
-
-    cmdQ->finish();
-    EXPECT_EQ(1u, myMockCsr->waitForTaskCountAndCleanAllocationListCalled);
-}
-
-TEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenNonRenderCompressedBufferWhenCopyFromHostPtrIsRequiredThenDontCallWriteBuffer) {
+TEST_F(CompressedBuffersCopyHostMemoryTests, givenNonCompressedBufferWhenCopyFromHostPtrIsRequiredThenDontCallWriteBuffer) {
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = false;
 
     buffer.reset(Buffer::create(context.get(), CL_MEM_COPY_HOST_PTR, sizeof(uint32_t), &hostPtr, retVal));
-    EXPECT_NE(buffer->getMultiGraphicsAllocation().getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    EXPECT_FALSE(buffer->getGraphicsAllocation(0)->isCompressionEnabled());
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(0u, mockCmdQ->writeBufferCounter);
 }
 
-TEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenRenderCompressedBufferWhenWriteBufferFailsThenReturnErrorCode) {
-    if (is32bit || !HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).obtainRenderBufferCompressionPreference(context->getDevice(0)->getHardwareInfo(), bufferSize)) {
+TEST_F(CompressedBuffersCopyHostMemoryTests, givenCompressedBufferWhenWriteBufferFailsThenReturnErrorCode) {
+    if (is32bit || !HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(bufferSize, *hwInfo)) {
         return;
     }
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = true;
@@ -1986,7 +878,7 @@ class BufferTest : public ClDeviceFixture,
 
 typedef BufferTest NoHostPtr;
 
-TEST_P(NoHostPtr, ValidFlags) {
+TEST_P(NoHostPtr, GivenValidFlagsWhenCreatingBufferThenBufferIsCreated) {
     auto buffer = Buffer::create(
         context.get(),
         flags,
@@ -2004,19 +896,19 @@ TEST_P(NoHostPtr, ValidFlags) {
 }
 
 TEST_P(NoHostPtr, GivenNoHostPtrWhenHwBufferCreationFailsThenReturnNullptr) {
-    BufferFactoryFuncs BufferFuncsBackup[IGFX_MAX_CORE];
+    BufferFactoryFuncs bufferFuncsBackup[IGFX_MAX_CORE];
 
     for (uint32_t i = 0; i < IGFX_MAX_CORE; i++) {
-        BufferFuncsBackup[i] = bufferFactory[i];
+        bufferFuncsBackup[i] = bufferFactory[i];
         bufferFactory[i].createBufferFunction =
             [](Context *,
-               MemoryProperties,
+               const MemoryProperties &,
                cl_mem_flags,
                cl_mem_flags_intel,
                size_t,
                void *,
                void *,
-               GraphicsAllocation *,
+               MultiGraphicsAllocation &&,
                bool,
                bool,
                bool)
@@ -2033,11 +925,11 @@ TEST_P(NoHostPtr, GivenNoHostPtrWhenHwBufferCreationFailsThenReturnNullptr) {
     EXPECT_EQ(nullptr, buffer);
 
     for (uint32_t i = 0; i < IGFX_MAX_CORE; i++) {
-        bufferFactory[i] = BufferFuncsBackup[i];
+        bufferFactory[i] = bufferFuncsBackup[i];
     }
 }
 
-TEST_P(NoHostPtr, WithUseHostPtr_returnsError) {
+TEST_P(NoHostPtr, GivenNoHostPtrWhenCreatingBufferWithMemUseHostPtrThenInvalidHostPtrErrorIsReturned) {
     auto buffer = Buffer::create(
         context.get(),
         flags | CL_MEM_USE_HOST_PTR,
@@ -2050,7 +942,7 @@ TEST_P(NoHostPtr, WithUseHostPtr_returnsError) {
     delete buffer;
 }
 
-TEST_P(NoHostPtr, WithCopyHostPtr_returnsError) {
+TEST_P(NoHostPtr, GivenNoHostPtrWhenCreatingBufferWithMemCopyHostPtrThenInvalidHostPtrErrorIsReturned) {
     auto buffer = Buffer::create(
         context.get(),
         flags | CL_MEM_COPY_HOST_PTR,
@@ -2063,7 +955,7 @@ TEST_P(NoHostPtr, WithCopyHostPtr_returnsError) {
     delete buffer;
 }
 
-TEST_P(NoHostPtr, withBufferGraphicsAllocationReportsBufferType) {
+TEST_P(NoHostPtr, WhenGettingAllocationTypeThenCorrectBufferTypeIsReturned) {
     auto buffer = Buffer::create(
         context.get(),
         flags,
@@ -2074,10 +966,10 @@ TEST_P(NoHostPtr, withBufferGraphicsAllocationReportsBufferType) {
     ASSERT_NE(nullptr, buffer);
 
     auto allocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
-    if (MemoryPool::isSystemMemoryPool(allocation->getMemoryPool())) {
-        EXPECT_EQ(allocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    if (MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool())) {
+        EXPECT_EQ(allocation->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
     } else {
-        EXPECT_EQ(allocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER);
+        EXPECT_EQ(allocation->getAllocationType(), AllocationType::BUFFER);
     }
 
     auto isBufferWritable = !(flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS));
@@ -2122,7 +1014,6 @@ struct ValidHostPtr
     void TearDown() override {
         delete buffer;
         BaseClass::TearDown();
-        platformsImpl.clear();
         MemoryManagementFixture::TearDown();
     }
 
@@ -2139,14 +1030,14 @@ struct ValidHostPtr
     Buffer *buffer = nullptr;
 };
 
-TEST_P(ValidHostPtr, isResident_defaultsToFalseAfterCreate) {
+TEST_P(ValidHostPtr, WhenBufferIsCreatedThenItIsNotResident) {
     buffer = createBuffer();
     ASSERT_NE(nullptr, buffer);
 
     EXPECT_FALSE(buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex())->isResident(pDevice->getDefaultEngine().osContext->getContextId()));
 }
 
-TEST_P(ValidHostPtr, getAddress) {
+TEST_P(ValidHostPtr, WhenBufferIsCreatedThenAddressMatechesOnlyForHostPtr) {
     buffer = createBuffer();
     ASSERT_NE(nullptr, buffer);
 
@@ -2168,7 +1059,7 @@ TEST_P(ValidHostPtr, getAddress) {
     }
 }
 
-TEST_P(ValidHostPtr, getSize) {
+TEST_P(ValidHostPtr, WhenGettingBufferSizeThenSizeIsCorrect) {
     buffer = createBuffer();
     ASSERT_NE(nullptr, buffer);
 
@@ -2198,6 +1089,7 @@ TEST_P(ValidHostPtr, givenValidHostPtrParentFlagsWhenSubBufferIsCreatedWithZeroF
     retVal = clReleaseMemObject(clBuffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
+
 TEST_P(ValidHostPtr, givenValidHostPtrParentFlagsWhenSubBufferIsCreatedWithParentFlagsThenItIsCreatedSuccesfuly) {
     auto retVal = CL_SUCCESS;
     auto clBuffer = clCreateBuffer(context.get(),
@@ -2269,7 +1161,7 @@ TEST_P(ValidHostPtr, givenValidHostPtrParentFlagsWhenSubBufferIsCreatedWithInval
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_P(ValidHostPtr, failedAllocationInjection) {
+TEST_P(ValidHostPtr, GivenFailedAllocationWhenCreatingBufferThenBufferIsNotCreated) {
     InjectedFunction method = [this](size_t failureIndex) {
         delete buffer;
         buffer = nullptr;
@@ -2280,27 +1172,37 @@ TEST_P(ValidHostPtr, failedAllocationInjection) {
         if (MemoryManagement::nonfailingAllocation == failureIndex) {
             EXPECT_EQ(CL_SUCCESS, retVal);
             EXPECT_NE(nullptr, buffer);
-        }
+        } else {
+            EXPECT_EQ(nullptr, buffer);
+        };
     };
     injectFailures(method);
 }
 
-TEST_P(ValidHostPtr, SvmHostPtr) {
+TEST_P(ValidHostPtr, GivenSvmHostPtrWhenCreatingBufferThenBufferIsCreatedCorrectly) {
     const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
-        auto ptr = context->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 64, {}, pDevice->getDeviceBitfield());
+        auto ptr = context->getSVMAllocsManager()->createSVMAlloc(64, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
 
         auto bufferSvm = Buffer::create(context.get(), CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 64, ptr, retVal);
         EXPECT_NE(nullptr, bufferSvm);
         EXPECT_TRUE(bufferSvm->isMemObjWithHostPtrSVM());
         auto svmData = context->getSVMAllocsManager()->getSVMAlloc(ptr);
         ASSERT_NE(nullptr, svmData);
-        EXPECT_EQ(svmData->gpuAllocation, bufferSvm->getGraphicsAllocation(pClDevice->getRootDeviceIndex()));
+        EXPECT_EQ(svmData->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex()), bufferSvm->getGraphicsAllocation(pDevice->getRootDeviceIndex()));
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        context->getSVMAllocsManager()->freeSVMAlloc(ptr);
         delete bufferSvm;
+        context->getSVMAllocsManager()->freeSVMAlloc(ptr);
     }
+}
+
+TEST_P(ValidHostPtr, WhenValidateInputAndCreateBufferThenCorrectBufferIsSet) {
+    auto buffer = BufferFunctions::validateInputAndCreateBuffer(context.get(), nullptr, flags, 0, g_scTestBufferSizeInBytes, pHostPtr, retVal);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_NE(nullptr, buffer);
+
+    clReleaseMemObject(buffer);
 }
 
 // Parameterized test that tests buffer creation with all flags that should be
@@ -2359,7 +1261,7 @@ static std::tuple<size_t, size_t, size_t, size_t, size_t, size_t, size_t, size_t
                                                                                                       std::make_tuple(1, 1, 1, 7, 1, 3, 10, 30, 67 + 41),
                                                                                                       std::make_tuple(2, 0, 2, 7, 2, 3, 10, 30, 77 + 62)};
 
-TEST_P(BufferCalculateHostPtrSize, CheckReturnedSize) {
+TEST_P(BufferCalculateHostPtrSize, WhenCalculatingHostPtrSizeThenItIsCorrect) {
     size_t calculatedSize = Buffer::calculateHostPtrSize(origin, region, rowPitch, slicePitch);
     EXPECT_EQ(hostPtrSize, calculatedSize);
 }
@@ -2458,27 +1360,10 @@ TEST(SharedBuffersTest, whenBuffersIsCreatedWithSharingHandlerThenItIsSharedBuff
     auto memoryManager = context.getDevice(0)->getMemoryManager();
     auto handler = new SharingHandler();
     auto graphicsAlloaction = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), MemoryConstants::pageSize});
-    auto buffer = Buffer::createSharedBuffer(&context, CL_MEM_READ_ONLY, handler, graphicsAlloaction);
+    auto buffer = Buffer::createSharedBuffer(&context, CL_MEM_READ_ONLY, handler, GraphicsAllocationHelper::toMultiGraphicsAllocation(graphicsAlloaction));
     ASSERT_NE(nullptr, buffer);
     EXPECT_EQ(handler, buffer->peekSharingHandler());
     buffer->release();
-}
-
-TEST(ResidencyTests, whenBuffersIsCreatedWithMakeResidentFlagThenItSuccessfulyCreates) {
-    VariableBackup<UltHwConfig> backup(&ultHwConfig);
-    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
-    ultHwConfig.forceOsAgnosticMemoryManager = false;
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.MakeAllBuffersResident.set(true);
-
-    initPlatform();
-    auto device = platform()->getClDevice(0u);
-
-    MockContext context(device, false);
-    auto retValue = CL_SUCCESS;
-    auto clBuffer = clCreateBuffer(&context, 0u, 4096u, nullptr, &retValue);
-    ASSERT_EQ(retValue, CL_SUCCESS);
-    clReleaseMemObject(clBuffer);
 }
 
 class BufferTests : public ::testing::Test {
@@ -2493,7 +1378,7 @@ class BufferTests : public ::testing::Test {
 
 typedef BufferTests BufferSetSurfaceTests;
 
-HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryPtrAndSizeIsAlignedToCachelineThenL3CacheShouldBeOn) {
+HWCMDTEST_F(IGFX_GEN8_CORE, BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryPtrAndSizeIsAlignedToCachelineThenL3CacheShouldBeOn) {
 
     auto size = MemoryConstants::pageSize;
     auto ptr = (void *)alignedMalloc(size * 2, MemoryConstants::pageSize);
@@ -2501,7 +1386,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryPtrAndSizeIsAlign
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState = {};
 
-    Buffer::setSurfaceState(device.get(), &surfaceState, size, ptr, 0, nullptr, 0, 0);
+    Buffer::setSurfaceState(device.get(), &surfaceState, false, false, size, ptr, 0, nullptr, 0, 0, false, false);
 
     auto mocs = surfaceState.getMemoryObjectControlState();
     auto gmmHelper = device->getGmmHelper();
@@ -2520,7 +1405,7 @@ HWTEST_F(BufferSetSurfaceTests, givenDebugVariableToDisableCachingForStatefulBuf
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState = {};
 
-    Buffer::setSurfaceState(device.get(), &surfaceState, size, ptr, 0, nullptr, 0, 0);
+    Buffer::setSurfaceState(device.get(), &surfaceState, false, false, size, ptr, 0, nullptr, 0, 0, false, false);
 
     auto mocs = surfaceState.getMemoryObjectControlState();
     auto gmmHelper = device->getGmmHelper();
@@ -2540,7 +1425,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryPtrIsUnalignedToC
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState = {};
 
-    Buffer::setSurfaceState(device.get(), &surfaceState, size, offsetedPtr, 0, nullptr, 0, 0);
+    Buffer::setSurfaceState(device.get(), &surfaceState, false, false, size, offsetedPtr, 0, nullptr, 0, 0, false, false);
 
     auto mocs = surfaceState.getMemoryObjectControlState();
     auto gmmHelper = device->getGmmHelper();
@@ -2559,7 +1444,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemorySizeIsUnalignedTo
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState = {};
 
-    Buffer::setSurfaceState(device.get(), &surfaceState, offsetedSize, ptr, 0, nullptr, 0, 0);
+    Buffer::setSurfaceState(device.get(), &surfaceState, false, false, offsetedSize, ptr, 0, nullptr, 0, 0, false, false);
 
     auto mocs = surfaceState.getMemoryObjectControlState();
     auto gmmHelper = device->getGmmHelper();
@@ -2578,7 +1463,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryIsUnalignedToCach
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState = {};
 
-    Buffer::setSurfaceState(device.get(), &surfaceState, offsetedSize, ptr, 0, nullptr, CL_MEM_READ_ONLY, 0);
+    Buffer::setSurfaceState(device.get(), &surfaceState, false, false, offsetedSize, ptr, 0, nullptr, CL_MEM_READ_ONLY, 0, false, false);
 
     auto mocs = surfaceState.getMemoryObjectControlState();
     auto gmmHelper = device->getGmmHelper();
@@ -2597,7 +1482,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemorySizeIsUnalignedTh
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState = {};
 
-    Buffer::setSurfaceState(device.get(), &surfaceState, offsetedSize, ptr, 0, nullptr, 0, 0);
+    Buffer::setSurfaceState(device.get(), &surfaceState, false, false, offsetedSize, ptr, 0, nullptr, 0, 0, false, false);
 
     auto width = surfaceState.getWidth();
     EXPECT_EQ(alignUp(width, 4), width);
@@ -2615,7 +1500,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceWhenOffsetIsSpecifiedForSvm
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState = {};
 
-    Buffer::setSurfaceState(device.get(), &surfaceState, size, ptr, offset, &svmAlloc, 0, 0);
+    Buffer::setSurfaceState(device.get(), &surfaceState, false, false, size, ptr, offset, &svmAlloc, 0, 0, false, false);
 
     auto baseAddress = surfaceState.getSurfaceBaseAddress();
     EXPECT_EQ(svmAlloc.getGpuAddress() + offset, baseAddress);
@@ -2631,7 +1516,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryPtrIsNotNullThenB
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState = {};
 
-    Buffer::setSurfaceState(device.get(), &surfaceState, size, ptr, 0, nullptr, 0, 0);
+    Buffer::setSurfaceState(device.get(), &surfaceState, false, false, size, ptr, 0, nullptr, 0, 0, false, false);
 
     auto surfType = surfaceState.getSurfaceType();
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER, surfType);
@@ -2644,7 +1529,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryPtrIsNullThenNull
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState = {};
 
-    Buffer::setSurfaceState(device.get(), &surfaceState, 0, nullptr, 0, nullptr, 0, 0);
+    Buffer::setSurfaceState(device.get(), &surfaceState, false, false, 0, nullptr, 0, nullptr, 0, 0, false, false);
 
     auto surfType = surfaceState.getSurfaceType();
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL, surfType);
@@ -2655,6 +1540,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatAddressIsForcedTo32bitW
     {
         DebugManager.flags.Force32bitAddressing.set(true);
         MockContext context;
+        auto rootDeviceIndex = context.getDevice(0)->getRootDeviceIndex();
         auto size = MemoryConstants::pageSize;
         auto ptr = (void *)alignedMalloc(size * 2, MemoryConstants::pageSize);
         auto retVal = CL_SUCCESS;
@@ -2667,15 +1553,15 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatAddressIsForcedTo32bitW
             retVal);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        EXPECT_TRUE(is64bit ? buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->is32BitAllocation() : true);
+        EXPECT_TRUE(is64bit ? buffer->getGraphicsAllocation(rootDeviceIndex)->is32BitAllocation() : true);
 
         using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
         RENDER_SURFACE_STATE surfaceState = {};
 
-        buffer->setArgStateful(&surfaceState, false, false, false, false);
+        buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false, false);
 
         auto surfBaseAddress = surfaceState.getSurfaceBaseAddress();
-        auto bufferAddress = buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getGpuAddress();
+        auto bufferAddress = buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress();
         EXPECT_EQ(bufferAddress, surfBaseAddress);
 
         delete buffer;
@@ -2686,6 +1572,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatAddressIsForcedTo32bitW
 
 HWTEST_F(BufferSetSurfaceTests, givenBufferWithOffsetWhenSetArgStatefulIsCalledThenSurfaceBaseAddressIsProperlyOffseted) {
     MockContext context;
+    auto rootDeviceIndex = context.getDevice(0)->getRootDeviceIndex();
     auto size = MemoryConstants::pageSize;
     auto ptr = (void *)alignedMalloc(size * 2, MemoryConstants::pageSize);
     auto retVal = CL_SUCCESS;
@@ -2707,10 +1594,10 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferWithOffsetWhenSetArgStatefulIsCalledT
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState = {};
 
-    subBuffer->setArgStateful(&surfaceState, false, false, false, false);
+    subBuffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false, false);
 
     auto surfBaseAddress = surfaceState.getSurfaceBaseAddress();
-    auto bufferAddress = buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getGpuAddress();
+    auto bufferAddress = buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress();
     EXPECT_EQ(bufferAddress + region.origin, surfBaseAddress);
 
     subBuffer->release();
@@ -2736,7 +1623,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferWhenSetArgStatefulWithL3ChacheDisable
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState = {};
 
-    buffer->setArgStateful(&surfaceState, false, true, true, false);
+    buffer->setArgStateful(&surfaceState, false, true, true, false, context.getDevice(0)->getDevice(), false, false);
 
     auto mocs = surfaceState.getMemoryObjectControlState();
     auto gmmHelper = device->getGmmHelper();
@@ -2747,6 +1634,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferWhenSetArgStatefulWithL3ChacheDisable
 
 HWTEST_F(BufferSetSurfaceTests, givenBufferThatIsMisalignedButIsAReadOnlyArgumentWhenSurfaceStateIsSetThenL3IsOn) {
     MockContext context;
+    auto rootDeviceIndex = context.getDevice(0)->getRootDeviceIndex();
     auto size = 128;
     auto retVal = CL_SUCCESS;
 
@@ -2761,9 +1649,9 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferThatIsMisalignedButIsAReadOnlyArgumen
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState = {};
 
-    buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->setSize(127);
+    buffer->getGraphicsAllocation(rootDeviceIndex)->setSize(127);
 
-    buffer->setArgStateful(&surfaceState, false, false, false, true);
+    buffer->setArgStateful(&surfaceState, false, false, false, true, context.getDevice(0)->getDevice(), false, false);
 
     auto mocs = surfaceState.getMemoryObjectControlState();
     auto gmmHelper = device->getGmmHelper();
@@ -2788,7 +1676,7 @@ HWTEST_F(BufferSetSurfaceTests, givenAlignedCacheableReadOnlyBufferThenChoseOclB
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     typename FamilyType::RENDER_SURFACE_STATE surfaceState = {};
-    buffer->setArgStateful(&surfaceState, false, false, false, false);
+    buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false, false);
 
     const auto expectedMocs = device->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     const auto actualMocs = surfaceState.getMemoryObjectControlState();
@@ -2797,7 +1685,7 @@ HWTEST_F(BufferSetSurfaceTests, givenAlignedCacheableReadOnlyBufferThenChoseOclB
     alignedFree(ptr);
 }
 
-HWTEST_F(BufferSetSurfaceTests, givenAlignedCacheableNonReadOnlyBufferThenChooseOclBufferPolicy) {
+HWCMDTEST_F(IGFX_GEN8_CORE, BufferSetSurfaceTests, givenAlignedCacheableNonReadOnlyBufferThenChooseOclBufferPolicy) {
     MockContext context;
     const auto size = MemoryConstants::pageSize;
     const auto ptr = (void *)alignedMalloc(size * 2, MemoryConstants::pageSize);
@@ -2813,7 +1701,7 @@ HWTEST_F(BufferSetSurfaceTests, givenAlignedCacheableNonReadOnlyBufferThenChoose
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     typename FamilyType::RENDER_SURFACE_STATE surfaceState = {};
-    buffer->setArgStateful(&surfaceState, false, false, false, false);
+    buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false, false);
 
     const auto expectedMocs = device->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     const auto actualMocs = surfaceState.getMemoryObjectControlState();
@@ -2822,50 +1710,47 @@ HWTEST_F(BufferSetSurfaceTests, givenAlignedCacheableNonReadOnlyBufferThenChoose
     alignedFree(ptr);
 }
 
-HWTEST_F(BufferSetSurfaceTests, givenRenderCompressedGmmResourceWhenSurfaceStateIsProgrammedThenSetAuxParams) {
+HWTEST_F(BufferSetSurfaceTests, givenCompressedGmmResourceWhenSurfaceStateIsProgrammedThenSetAuxParams) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
     RENDER_SURFACE_STATE surfaceState = {};
     MockContext context;
+    auto rootDeviceIndex = context.getDevice(0)->getRootDeviceIndex();
     auto retVal = CL_SUCCESS;
 
     std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    auto graphicsAllocation = buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
-    graphicsAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
-    auto gmm = new Gmm(context.getDevice(0)->getGmmClientContext(), nullptr, 1, false);
+    auto graphicsAllocation = buffer->getGraphicsAllocation(rootDeviceIndex);
+    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
     graphicsAllocation->setDefaultGmm(gmm);
-    gmm->isRenderCompressed = true;
+    gmm->isCompressionEnabled = true;
 
-    buffer->setArgStateful(&surfaceState, false, false, false, false);
+    buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false, false);
 
     EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
-    EXPECT_TRUE(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E == surfaceState.getAuxiliarySurfaceMode());
+    EXPECT_TRUE(EncodeSurfaceState<FamilyType>::isAuxModeEnabled(&surfaceState, gmm));
     EXPECT_TRUE(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT == surfaceState.getCoherencyType());
-
-    graphicsAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
-    buffer->setArgStateful(&surfaceState, false, false, false, false);
-    EXPECT_TRUE(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE == surfaceState.getAuxiliarySurfaceMode());
 }
 
-HWTEST_F(BufferSetSurfaceTests, givenNonRenderCompressedGmmResourceWhenSurfaceStateIsProgrammedThenDontSetAuxParams) {
+HWTEST_F(BufferSetSurfaceTests, givenNonCompressedGmmResourceWhenSurfaceStateIsProgrammedThenDontSetAuxParams) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
     RENDER_SURFACE_STATE surfaceState = {};
     MockContext context;
+    auto rootDeviceIndex = context.getDevice(0)->getRootDeviceIndex();
     auto retVal = CL_SUCCESS;
 
     std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    auto gmm = new Gmm(context.getDevice(0)->getGmmClientContext(), nullptr, 1, false);
-    buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->setDefaultGmm(gmm);
-    gmm->isRenderCompressed = false;
+    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    buffer->getGraphicsAllocation(rootDeviceIndex)->setDefaultGmm(gmm);
+    gmm->isCompressionEnabled = false;
 
-    buffer->setArgStateful(&surfaceState, false, false, false, false);
+    buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false, false);
 
     EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
     EXPECT_TRUE(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE == surfaceState.getAuxiliarySurfaceMode());
-    EXPECT_TRUE(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT == surfaceState.getCoherencyType());
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::getCoherencyTypeSupported(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT) == surfaceState.getCoherencyType());
 }
 
 HWTEST_F(BufferSetSurfaceTests, givenMisalignedPointerWhenSurfaceStateIsProgrammedThenBaseAddressAndLengthAreAlignedToDword) {
@@ -2877,7 +1762,7 @@ HWTEST_F(BufferSetSurfaceTests, givenMisalignedPointerWhenSurfaceStateIsProgramm
     uintptr_t ptr = 0xfffff000;
     void *svmPtr = reinterpret_cast<void *>(ptr);
 
-    Buffer::setSurfaceState(device.get(), &surfaceState, 5, svmPtr, 0, nullptr, 0, 0);
+    Buffer::setSurfaceState(device.get(), &surfaceState, false, false, 5, svmPtr, 0, nullptr, 0, 0, false, false);
 
     EXPECT_EQ(castToUint64(svmPtr), surfaceState.getSurfaceBaseAddress());
     SURFACE_STATE_BUFFER_LENGTH length = {};
@@ -2894,9 +1779,29 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferThatIsMisalignedWhenSurfaceStateIsBei
     MockContext context;
     void *svmPtr = reinterpret_cast<void *>(0x1005);
 
-    Buffer::setSurfaceState(device.get(), &surfaceState, 5, svmPtr, 0, nullptr, 0, 0);
+    Buffer::setSurfaceState(device.get(), &surfaceState, false, false, 5, svmPtr, 0, nullptr, 0, 0, false, false);
 
     EXPECT_EQ(0u, surfaceState.getMemoryObjectControlState());
+}
+
+using BufferHwFromDeviceTests = BufferTests;
+
+HWTEST_F(BufferHwFromDeviceTests, givenMultiGraphicsAllocationWhenCreateBufferHwFromDeviceThenMultiGraphicsAllocationInBufferIsProperlySet) {
+    auto size = 2 * MemoryConstants::pageSize;
+    auto ptr = alignedMalloc(size, MemoryConstants::pageSize);
+    MockGraphicsAllocation svmAlloc(ptr, size);
+
+    auto multiGraphicsAllocation = MultiGraphicsAllocation(device->getRootDeviceIndex());
+    multiGraphicsAllocation.addAllocation(&svmAlloc);
+
+    auto copyMultiGraphicsAllocation = multiGraphicsAllocation;
+    auto buffer = std::unique_ptr<Buffer>(Buffer::createBufferHwFromDevice(device.get(), 0, 0, size, ptr, ptr, std::move(copyMultiGraphicsAllocation), 0, true, false, false));
+
+    EXPECT_EQ(device->getRootDeviceIndex(), 0u);
+    EXPECT_EQ(buffer->getMultiGraphicsAllocation().getGraphicsAllocations().size(), multiGraphicsAllocation.getGraphicsAllocations().size());
+    EXPECT_EQ(buffer->getMultiGraphicsAllocation().getGraphicsAllocation(device->getRootDeviceIndex()), multiGraphicsAllocation.getGraphicsAllocation(device->getRootDeviceIndex()));
+
+    alignedFree(ptr);
 }
 
 class BufferL3CacheTests : public ::testing::TestWithParam<uint64_t> {
@@ -2912,7 +1817,8 @@ class BufferL3CacheTests : public ::testing::TestWithParam<uint64_t> {
 };
 
 HWTEST_P(BufferL3CacheTests, givenMisalignedAndAlignedBufferWhenClEnqueueWriteImageThenL3CacheIsOn) {
-    if (ctx.getDevice(0)->areSharedSystemAllocationsAllowed()) {
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerHwInfoConfig.isForceToStatelessRequired() || !ctx.getDevice(0)->getHardwareInfo().capabilityTable.supportsImages) {
         GTEST_SKIP();
     }
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
@@ -2948,7 +1854,8 @@ HWTEST_P(BufferL3CacheTests, givenMisalignedAndAlignedBufferWhenClEnqueueWriteIm
 }
 
 HWTEST_P(BufferL3CacheTests, givenMisalignedAndAlignedBufferWhenClEnqueueWriteBufferRectThenL3CacheIsOn) {
-    if (ctx.getDevice(0)->areSharedSystemAllocationsAllowed()) {
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerHwInfoConfig.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
@@ -2996,6 +1903,11 @@ HWTEST_F(BufferUnmapTest, givenBufferWithSharingHandlerWhenUnmappingThenUseNonBl
 
     buffer->setSharingHandler(new SharingHandler());
     EXPECT_NE(nullptr, buffer->peekSharingHandler());
+
+    auto gfxAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
+    for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
+        gfxAllocation->setGmm(new MockGmm(pDevice->getGmmHelper()), handleId);
+    }
 
     auto mappedPtr = clEnqueueMapBuffer(&cmdQ, buffer.get(), CL_TRUE, CL_MAP_WRITE, 0, 1, 0, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -3076,7 +1988,23 @@ TEST_F(BufferTransferTests, givenBufferWhenTransferFromHostPtrCalledThenCopyRequ
 
 using MultiRootDeviceBufferTest = MultiRootDeviceFixture;
 
-TEST_F(MultiRootDeviceBufferTest, bufferGraphicsAllocationHasCorrectRootDeviceIndex) {
+TEST_F(MultiRootDeviceBufferTest, WhenCleanAllGraphicsAllocationsCalledThenGraphicsAllocationsAreProperlyRemovedAccordingToIsParentObjectFlag) {
+    AllocationInfoType allocationInfo;
+    allocationInfo.resize(3u);
+
+    allocationInfo[1u] = {};
+    allocationInfo[1u].memory = mockMemoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{1u, MemoryConstants::pageSize});
+
+    bool isParentObject = true;
+    Buffer::cleanAllGraphicsAllocations(*context, *context->getMemoryManager(), allocationInfo, isParentObject);
+    EXPECT_EQ(mockMemoryManager->freeGraphicsMemoryCalled, 0u);
+
+    isParentObject = false;
+    Buffer::cleanAllGraphicsAllocations(*context, *context->getMemoryManager(), allocationInfo, isParentObject);
+    EXPECT_EQ(mockMemoryManager->freeGraphicsMemoryCalled, 1u);
+}
+
+TEST_F(MultiRootDeviceBufferTest, WhenBufferIsCreatedThenBufferGraphicsAllocationHasCorrectRootDeviceIndex) {
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
 
@@ -3085,4 +2013,83 @@ TEST_F(MultiRootDeviceBufferTest, bufferGraphicsAllocationHasCorrectRootDeviceIn
     auto graphicsAllocation = buffer->getGraphicsAllocation(expectedRootDeviceIndex);
     ASSERT_NE(nullptr, graphicsAllocation);
     EXPECT_EQ(expectedRootDeviceIndex, graphicsAllocation->getRootDeviceIndex());
+}
+
+TEST_F(MultiRootDeviceBufferTest, WhenBufferIsCreatedThenBufferMultiGraphicsAllocationIsCreatedInSystemMemoryPool) {
+    cl_int retVal = 0;
+
+    std::unique_ptr<Buffer> buffer1(Buffer::create(context.get(), 0, MemoryConstants::pageSize, nullptr, retVal));
+
+    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(buffer1->getMultiGraphicsAllocation().getGraphicsAllocation(1u)->getMemoryPool()));
+    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(buffer1->getMultiGraphicsAllocation().getGraphicsAllocation(2u)->getMemoryPool()));
+}
+
+TEST(MultiRootDeviceBufferTest2, WhenBufferIsCreatedThenSecondAndSubsequentAllocationsAreCreatedFromExisitingStorage) {
+    cl_int retVal = 0;
+    MockDefaultContext context;
+    auto memoryManager = static_cast<MockMemoryManager *>(context.getMemoryManager());
+    memoryManager->createGraphicsAllocationFromExistingStorageCalled = 0u;
+    memoryManager->allocationsFromExistingStorage.clear();
+    std::unique_ptr<Buffer> buffer(Buffer::create(&context, 0, MemoryConstants::pageSize, nullptr, retVal));
+
+    EXPECT_EQ(3u, context.getRootDeviceIndices().size());
+    EXPECT_NE(nullptr, buffer->getMultiGraphicsAllocation().getGraphicsAllocation(0u));
+    EXPECT_NE(nullptr, buffer->getMultiGraphicsAllocation().getGraphicsAllocation(1u));
+    EXPECT_NE(nullptr, buffer->getMultiGraphicsAllocation().getGraphicsAllocation(2u));
+
+    EXPECT_EQ(2u, memoryManager->createGraphicsAllocationFromExistingStorageCalled);
+    EXPECT_EQ(memoryManager->allocationsFromExistingStorage[0], buffer->getMultiGraphicsAllocation().getGraphicsAllocation(1u));
+    EXPECT_EQ(memoryManager->allocationsFromExistingStorage[1], buffer->getMultiGraphicsAllocation().getGraphicsAllocation(2u));
+}
+
+TEST_F(MultiRootDeviceBufferTest, givenBufferWhenGetSurfaceSizeCalledWithoutAlignSizeForAuxTranslationThenCorrectValueReturned) {
+    cl_int retVal = 0;
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    uint32_t size = 0x131;
+    std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, size, nullptr, retVal));
+
+    auto surfaceSize = buffer->getSurfaceSize(false, expectedRootDeviceIndex);
+    EXPECT_EQ(surfaceSize, alignUp(size, 4));
+}
+
+TEST_F(MultiRootDeviceBufferTest, givenBufferWhenGetSurfaceSizeCalledWithAlignSizeForAuxTranslationThenCorrectValueReturned) {
+    cl_int retVal = 0;
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    uint32_t size = 0x131;
+    std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, size, nullptr, retVal));
+
+    auto surfaceSize = buffer->getSurfaceSize(true, expectedRootDeviceIndex);
+    EXPECT_EQ(surfaceSize, alignUp(size, 512));
+}
+
+TEST_F(MultiRootDeviceBufferTest, givenNullptrGraphicsAllocationForRootDeviceIndexWhenGettingBufferAddressThenHostPtrReturned) {
+    cl_int retVal = 0;
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+
+    char *hostPtr[MemoryConstants::pageSize]{};
+    std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, MemoryConstants::pageSize, hostPtr, retVal));
+
+    auto address = buffer->getBufferAddress(expectedRootDeviceIndex);
+    auto graphicsAllocation = buffer->getGraphicsAllocation(expectedRootDeviceIndex);
+    EXPECT_EQ(graphicsAllocation->getGpuAddress(), address);
+
+    address = buffer->getBufferAddress(0);
+    EXPECT_EQ(reinterpret_cast<uint64_t>(buffer->getHostPtr()), address);
+}
+
+TEST(ResidencyTests, whenBuffersIsCreatedWithMakeResidentFlagThenItSuccessfulyCreates) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    ultHwConfig.forceOsAgnosticMemoryManager = false;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.MakeAllBuffersResident.set(true);
+
+    initPlatform();
+    auto device = platform()->getClDevice(0u);
+
+    MockContext context(device, false);
+    auto retValue = CL_SUCCESS;
+    auto clBuffer = clCreateBuffer(&context, 0u, 4096u, nullptr, &retValue);
+    ASSERT_EQ(retValue, CL_SUCCESS);
+    clReleaseMemObject(clBuffer);
 }

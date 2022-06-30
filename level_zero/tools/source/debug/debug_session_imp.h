@@ -1,0 +1,123 @@
+/*
+ * Copyright (C) 2021-2022 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#pragma once
+
+#include "level_zero/tools/source/debug/debug_session.h"
+
+#include <atomic>
+#include <mutex>
+#include <queue>
+
+namespace SIP {
+struct StateSaveAreaHeader;
+struct regset_desc;
+struct sr_ident;
+struct sip_command;
+} // namespace SIP
+
+namespace L0 {
+
+struct DebugSessionImp : DebugSession {
+
+    enum class Error {
+        Success,
+        ThreadsRunning,
+        Unknown
+    };
+
+    DebugSessionImp(const zet_debug_config_t &config, Device *device) : DebugSession(config, device) {}
+
+    ze_result_t interrupt(ze_device_thread_t thread) override;
+    ze_result_t resume(ze_device_thread_t thread) override;
+
+    ze_result_t readRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override;
+    ze_result_t writeRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override;
+
+    static const SIP::regset_desc *getSbaRegsetDesc();
+    static uint32_t typeToRegsetFlags(uint32_t type);
+    constexpr static int64_t interruptTimeout = 2000;
+
+  protected:
+    MOCKABLE_VIRTUAL ze_result_t readRegistersImp(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues);
+    MOCKABLE_VIRTUAL ze_result_t writeRegistersImp(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues);
+    Error resumeThreadsWithinDevice(uint32_t deviceIndex, ze_device_thread_t physicalThread);
+    MOCKABLE_VIRTUAL bool writeResumeCommand(const std::vector<EuThread::ThreadId> &threadIds);
+    MOCKABLE_VIRTUAL bool checkThreadIsResumed(const EuThread::ThreadId &threadID);
+
+    virtual ze_result_t resumeImp(std::vector<ze_device_thread_t> threads, uint32_t deviceIndex) = 0;
+    virtual ze_result_t interruptImp(uint32_t deviceIndex) = 0;
+
+    virtual ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) = 0;
+    virtual ze_result_t writeGpuMemory(uint64_t memoryHandle, const char *input, size_t size, uint64_t gpuVa) = 0;
+
+    virtual void enqueueApiEvent(zet_debug_event_t &debugEvent) = 0;
+    virtual bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srMagic) = 0;
+
+    ze_result_t readSbaRegisters(ze_device_thread_t thread, uint32_t start, uint32_t count, void *pRegisterValues);
+    MOCKABLE_VIRTUAL bool isForceExceptionOrForceExternalHaltOnlyExceptionReason(uint32_t *cr0);
+    void sendInterrupts();
+    MOCKABLE_VIRTUAL void markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(EuThread::ThreadId threadId, uint64_t memoryHandle);
+    MOCKABLE_VIRTUAL void fillResumeAndStoppedThreadsFromNewlyStopped(std::vector<EuThread::ThreadId> &resumeThreads, std::vector<EuThread::ThreadId> &stoppedThreadsToReport);
+    MOCKABLE_VIRTUAL void generateEventsAndResumeStoppedThreads();
+    MOCKABLE_VIRTUAL void resumeAccidentallyStoppedThreads(const std::vector<EuThread::ThreadId> &threadIds);
+    MOCKABLE_VIRTUAL void generateEventsForStoppedThreads(const std::vector<EuThread::ThreadId> &threadIds);
+    MOCKABLE_VIRTUAL void generateEventsForPendingInterrupts();
+
+    const SIP::StateSaveAreaHeader *getStateSaveAreaHeader();
+    virtual void readStateSaveAreaHeader(){};
+
+    virtual uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) {
+        return 0;
+    };
+
+    ze_result_t registersAccessHelper(const EuThread *thread, const SIP::regset_desc *regdesc,
+                                      uint32_t start, uint32_t count, void *pRegisterValues, bool write);
+
+    const SIP::regset_desc *typeToRegsetDesc(uint32_t type);
+    uint32_t getRegisterSize(uint32_t type);
+
+    size_t calculateThreadSlotOffset(EuThread::ThreadId threadId);
+    size_t calculateRegisterOffsetInThreadSlot(const SIP::regset_desc *const regdesc, uint32_t start);
+
+    void newAttentionRaised(uint32_t deviceIndex) {
+        if (expectedAttentionEvents > 0) {
+            expectedAttentionEvents--;
+        }
+    }
+
+    void checkTriggerEventsForAttention() {
+        if (pendingInterrupts.size() > 0 || newlyStoppedThreads.size()) {
+            if (expectedAttentionEvents == 0) {
+                triggerEvents = true;
+            }
+        }
+    }
+
+    bool isValidGpuAddress(uint64_t address);
+
+    MOCKABLE_VIRTUAL int64_t getTimeDifferenceMilliseconds(std::chrono::high_resolution_clock::time_point time) {
+        auto now = std::chrono::high_resolution_clock::now();
+        auto timeDifferenceMs = std::chrono::duration_cast<std::chrono::milliseconds>(now - time).count();
+        return timeDifferenceMs;
+    }
+
+    std::chrono::high_resolution_clock::time_point interruptTime;
+    std::atomic<bool> interruptSent = false;
+    std::atomic<bool> triggerEvents = false;
+
+    uint32_t expectedAttentionEvents = 0;
+
+    std::mutex interruptMutex;
+    std::mutex threadStateMutex;
+    std::queue<ze_device_thread_t> interruptRequests;
+    std::vector<std::pair<ze_device_thread_t, bool>> pendingInterrupts;
+    std::vector<EuThread::ThreadId> newlyStoppedThreads;
+    std::vector<char> stateSaveAreaHeader;
+};
+
+} // namespace L0

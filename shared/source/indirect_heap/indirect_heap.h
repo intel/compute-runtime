@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,27 +8,28 @@
 #pragma once
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/indirect_heap/indirect_heap_type.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 namespace NEO {
-class GraphicsAllocation;
 
 constexpr size_t defaultHeapSize = 64 * KB;
 
+inline size_t getDefaultHeapSize() {
+    auto defaultSize = defaultHeapSize;
+    if (DebugManager.flags.ForceDefaultHeapSize.get() != -1) {
+        defaultSize = DebugManager.flags.ForceDefaultHeapSize.get() * MemoryConstants::kiloByte;
+    }
+    return defaultSize;
+}
+
 class IndirectHeap : public LinearStream {
-    typedef LinearStream BaseClass;
+    using BaseClass = LinearStream;
 
   public:
-    enum Type {
-        DYNAMIC_STATE = 0,
-        INDIRECT_OBJECT,
-        SURFACE_STATE,
-        NUM_TYPES
-    };
-
+    using Type = IndirectHeapType;
     IndirectHeap(void *graphicsAllocation, size_t bufferSize) : BaseClass(graphicsAllocation, bufferSize){};
     IndirectHeap(GraphicsAllocation *graphicsAllocation) : BaseClass(graphicsAllocation) {}
     IndirectHeap(GraphicsAllocation *graphicsAllocation, bool canBeUtilizedAs4GbHeap)

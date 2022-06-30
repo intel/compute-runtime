@@ -1,18 +1,19 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "opencl/source/program/kernel_info.h"
+#include "shared/source/program/kernel_info.h"
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/source/sampler/sampler.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_sampler.h"
-#include "test.h"
 
 #include <memory>
 
@@ -21,31 +22,21 @@ using namespace NEO;
 class KernelTransformableTest : public ::testing::Test {
   public:
     void SetUp() override {
-        pKernelInfo = std::make_unique<KernelInfo>();
-        KernelArgPatchInfo kernelArgPatchInfo;
+        context = std::make_unique<MockContext>(deviceFactory.rootDevices[rootDeviceIndex]);
+        pKernelInfo = std::make_unique<MockKernelInfo>();
+        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
         pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
         pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
-        pKernelInfo->usesSsh = true;
 
-        pKernelInfo->kernelArgInfo.resize(4);
-        pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-        pKernelInfo->kernelArgInfo[2].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-        pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
+        pKernelInfo->addArgSampler(0, 0);
+        pKernelInfo->addArgSampler(1, 0);
+        pKernelInfo->addArgImage(2, firstImageOffset);
+        pKernelInfo->addArgImage(3, secondImageOffset);
+        pKernelInfo->kernelDescriptor.kernelAttributes.numArgsToPatch = 4;
 
-        pKernelInfo->kernelArgInfo[0].offsetHeap = 0x0;
-        pKernelInfo->kernelArgInfo[0].isSampler = true;
-        pKernelInfo->kernelArgInfo[1].offsetHeap = 0x0;
-        pKernelInfo->kernelArgInfo[1].isSampler = true;
-        pKernelInfo->kernelArgInfo[2].offsetHeap = firstImageOffset;
-        pKernelInfo->kernelArgInfo[2].isImage = true;
-        pKernelInfo->kernelArgInfo[3].offsetHeap = secondImageOffset;
-        pKernelInfo->kernelArgInfo[3].isImage = true;
-        pKernelInfo->argumentsToPatchNum = 4;
-
-        program = std::make_unique<MockProgram>(*context.getDevice(0)->getExecutionEnvironment());
-        pKernel.reset(new MockKernel(program.get(), *pKernelInfo, *context.getDevice(0)));
+        program = std::make_unique<MockProgram>(context.get(), false, toClDeviceVector(*context->getDevice(0)));
+        pKernel.reset(new MockKernel(program.get(), *pKernelInfo, *deviceFactory.rootDevices[rootDeviceIndex]));
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
         pKernel->setKernelArgHandler(0, &Kernel::setArgSampler);
@@ -65,27 +56,29 @@ class KernelTransformableTest : public ::testing::Test {
     const int secondImageOffset = 0x40;
 
     cl_int retVal = CL_SUCCESS;
-    MockContext context;
+    UltClDeviceFactory deviceFactory{2, 0};
+    std::unique_ptr<MockContext> context;
     std::unique_ptr<MockProgram> program;
     std::unique_ptr<Sampler> sampler;
-    std::unique_ptr<KernelInfo> pKernelInfo;
+    std::unique_ptr<MockKernelInfo> pKernelInfo;
     std::unique_ptr<MockKernel> pKernel;
 
     std::unique_ptr<Image> image;
     SKernelBinaryHeaderCommon kernelHeader;
     char surfaceStateHeap[0x80];
+    const uint32_t rootDeviceIndex = 1;
 };
 
 HWTEST_F(KernelTransformableTest, givenKernelThatCannotTranformImagesWithTwoTransformableImagesAndTwoTransformableSamplersWhenAllArgsAreSetThenImagesAreNotTransformed) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
 
-    image.reset(Image3dHelper<>::create(&context));
+    image.reset(Image3dHelper<>::create(context.get()));
     sampler.reset(createTransformableSampler());
     cl_mem clImage = image.get();
     cl_sampler clSampler = sampler.get();
-    pKernelInfo->kernelArgInfo[2].isTransformable = true;
-    pKernelInfo->kernelArgInfo[3].isTransformable = true;
+    pKernelInfo->argAt(2).getExtendedTypeInfo().isTransformable = true;
+    pKernelInfo->argAt(3).getExtendedTypeInfo().isTransformable = true;
     pKernel->canKernelTransformImages = false;
 
     pKernel->setArg(0, sizeof(clSampler), &clSampler);
@@ -108,12 +101,12 @@ HWTEST_F(KernelTransformableTest, givenKernelWithTwoTransformableImagesAndTwoTra
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
 
-    image.reset(Image3dHelper<>::create(&context));
+    image.reset(Image3dHelper<>::create(context.get()));
     sampler.reset(createTransformableSampler());
     cl_mem clImage = image.get();
     cl_sampler clSampler = sampler.get();
-    pKernelInfo->kernelArgInfo[2].isTransformable = true;
-    pKernelInfo->kernelArgInfo[3].isTransformable = true;
+    pKernelInfo->argAt(2).getExtendedTypeInfo().isTransformable = true;
+    pKernelInfo->argAt(3).getExtendedTypeInfo().isTransformable = true;
 
     pKernel->setArg(0, sizeof(clSampler), &clSampler);
     pKernel->setArg(1, sizeof(clSampler), &clSampler);
@@ -135,12 +128,12 @@ HWTEST_F(KernelTransformableTest, givenKernelWithTwoTransformableImagesAndTwoTra
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
 
-    image.reset(Image3dHelper<>::create(&context));
+    image.reset(Image3dHelper<>::create(context.get()));
     sampler.reset(createTransformableSampler());
     cl_mem clImage = image.get();
     cl_sampler clSampler = sampler.get();
-    pKernelInfo->kernelArgInfo[2].isTransformable = true;
-    pKernelInfo->kernelArgInfo[3].isTransformable = true;
+    pKernelInfo->argAt(2).getExtendedTypeInfo().isTransformable = true;
+    pKernelInfo->argAt(3).getExtendedTypeInfo().isTransformable = true;
 
     pKernel->setArg(0, sizeof(clSampler), &clSampler);
     pKernel->setArg(1, sizeof(clSampler), &clSampler);
@@ -154,7 +147,7 @@ HWTEST_F(KernelTransformableTest, givenKernelWithTwoTransformableImagesAndTwoTra
     firstSurfaceState->setSurfaceType(SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_NULL);
     secondSurfaceState->setSurfaceType(SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_NULL);
 
-    pKernelInfo->kernelArgInfo[3].isTransformable = false;
+    pKernelInfo->argAt(3).getExtendedTypeInfo().isTransformable = false;
     pKernel->setArg(3, sizeof(clImage), &clImage);
 
     EXPECT_EQ(SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D, firstSurfaceState->getSurfaceType());
@@ -167,12 +160,12 @@ HWTEST_F(KernelTransformableTest, givenKernelWithOneTransformableImageAndTwoTran
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
 
-    image.reset(Image3dHelper<>::create(&context));
+    image.reset(Image3dHelper<>::create(context.get()));
     sampler.reset(createTransformableSampler());
     cl_mem clImage = image.get();
     cl_sampler clSampler = sampler.get();
-    pKernelInfo->kernelArgInfo[2].isTransformable = true;
-    pKernelInfo->kernelArgInfo[3].isTransformable = false;
+    pKernelInfo->argAt(2).getExtendedTypeInfo().isTransformable = true;
+    pKernelInfo->argAt(3).getExtendedTypeInfo().isTransformable = false;
 
     pKernel->setArg(0, sizeof(clSampler), &clSampler);
     pKernel->setArg(1, sizeof(clSampler), &clSampler);
@@ -194,12 +187,12 @@ HWTEST_F(KernelTransformableTest, givenKernelWithImages2dAndTwoTransformableSamp
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
 
-    image.reset(Image2dHelper<>::create(&context));
+    image.reset(Image2dHelper<>::create(context.get()));
     sampler.reset(createTransformableSampler());
     cl_mem clImage = image.get();
     cl_sampler clSampler = sampler.get();
-    pKernelInfo->kernelArgInfo[2].isTransformable = true;
-    pKernelInfo->kernelArgInfo[3].isTransformable = true;
+    pKernelInfo->argAt(2).getExtendedTypeInfo().isTransformable = true;
+    pKernelInfo->argAt(3).getExtendedTypeInfo().isTransformable = true;
 
     auto ssh = pKernel->getSurfaceStateHeap();
 
@@ -221,12 +214,12 @@ HWTEST_F(KernelTransformableTest, givenKernelWithTwoTransformableImagesAndTwoTra
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
 
-    image.reset(Image3dHelper<>::create(&context));
+    image.reset(Image3dHelper<>::create(context.get()));
     sampler.reset(createTransformableSampler());
     cl_mem clImage = image.get();
     cl_sampler clSampler = sampler.get();
-    pKernelInfo->kernelArgInfo[2].isTransformable = true;
-    pKernelInfo->kernelArgInfo[3].isTransformable = true;
+    pKernelInfo->argAt(2).getExtendedTypeInfo().isTransformable = true;
+    pKernelInfo->argAt(3).getExtendedTypeInfo().isTransformable = true;
 
     pKernel->setArg(0, sizeof(clSampler), &clSampler);
     pKernel->setArg(1, sizeof(clSampler), &clSampler);
@@ -253,12 +246,12 @@ HWTEST_F(KernelTransformableTest, givenKernelWithNonTransformableSamplersWhenRes
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
 
-    image.reset(Image3dHelper<>::create(&context));
+    image.reset(Image3dHelper<>::create(context.get()));
     sampler.reset(createNonTransformableSampler());
     cl_mem clImage = image.get();
     cl_sampler clSampler = sampler.get();
-    pKernelInfo->kernelArgInfo[2].isTransformable = true;
-    pKernelInfo->kernelArgInfo[3].isTransformable = true;
+    pKernelInfo->argAt(2).getExtendedTypeInfo().isTransformable = true;
+    pKernelInfo->argAt(3).getExtendedTypeInfo().isTransformable = true;
 
     pKernel->setArg(0, sizeof(clSampler), &clSampler);
     pKernel->setArg(1, sizeof(clSampler), &clSampler);
@@ -285,15 +278,16 @@ HWTEST_F(KernelTransformableTest, givenKernelWithoutSamplersAndTransformableImag
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
 
-    image.reset(Image3dHelper<>::create(&context));
+    image.reset(Image3dHelper<>::create(context.get()));
     cl_mem clImage = image.get();
 
-    pKernelInfo->kernelArgInfo[0].isSampler = false;
-    pKernelInfo->kernelArgInfo[0].isImage = true;
-    pKernelInfo->kernelArgInfo[1].isSampler = false;
-    pKernelInfo->kernelArgInfo[1].isImage = true;
-    pKernelInfo->kernelArgInfo[2].isTransformable = true;
-    pKernelInfo->kernelArgInfo[3].isTransformable = true;
+    pKernelInfo->kernelDescriptor.payloadMappings.explicitArgs.clear();
+    pKernelInfo->addArgImage(0, 0);
+    pKernelInfo->addArgImage(1, 0);
+    pKernelInfo->addArgImage(2, firstImageOffset);
+    pKernelInfo->argAt(2).getExtendedTypeInfo().isTransformable = true;
+    pKernelInfo->addArgImage(3, secondImageOffset);
+    pKernelInfo->argAt(3).getExtendedTypeInfo().isTransformable = true;
 
     pKernel->setKernelArgHandler(0, &Kernel::setArgImage);
     pKernel->setKernelArgHandler(1, &Kernel::setArgImage);

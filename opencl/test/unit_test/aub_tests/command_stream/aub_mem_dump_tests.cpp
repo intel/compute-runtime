@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,13 +7,14 @@
 
 #include "aub_mem_dump_tests.h"
 
+#include "shared/source/aub/aub_helper.h"
 #include "shared/source/helpers/hw_helper.h"
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_aub_csr.h"
 
-#include "opencl/source/aub/aub_helper.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_aub_csr.h"
 
+using NEO::ApiSpecificConfig;
 using NEO::AUBCommandStreamReceiver;
 using NEO::AUBCommandStreamReceiverHw;
 using NEO::AUBFamilyMapper;
@@ -54,11 +55,12 @@ HWTEST_F(AubMemDumpTests, givenAubFileStreamWhenOpenAndCloseIsCalledThenFileName
     EXPECT_STREQ("", aubFile.getFileName().c_str());
 }
 
-HWTEST_F(AubMemDumpTests, testHeader) {
+HWTEST_F(AubMemDumpTests, GivenHeaderThenExpectationsAreMet) {
     typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
     std::string filePath(folderAUB);
+    std::string filenameWithPrefix = ApiSpecificConfig::getAubPrefixForSpecificApi();
     filePath.append(Os::fileSeparator);
-    filePath.append(getAubFileName(pDevice, "header.aub"));
+    filePath.append(getAubFileName(pDevice, filenameWithPrefix.append("header.aub")));
     AUBCommandStreamReceiver::AubFileStream aubFile;
     aubFile.fileHandle.open(filePath.c_str(), std::ofstream::binary);
 
@@ -69,11 +71,12 @@ HWTEST_F(AubMemDumpTests, testHeader) {
     aubFile.fileHandle.close();
 }
 
-HWTEST_F(AubMemDumpTests, reserveMaxAddress) {
+HWTEST_F(AubMemDumpTests, GivenReserveMaxAddressThenExpectationsAreMet) {
     typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
     std::string filePath(folderAUB);
+    std::string filenameWithPrefix = ApiSpecificConfig::getAubPrefixForSpecificApi();
     filePath.append(Os::fileSeparator);
-    filePath.append(getAubFileName(pDevice, "reserveMaxAddress.aub"));
+    filePath.append(getAubFileName(pDevice, filenameWithPrefix.append("reserveMaxAddress.aub")));
     AUBCommandStreamReceiver::AubFileStream aubFile;
     aubFile.fileHandle.open(filePath.c_str(), std::ofstream::binary);
 
@@ -92,11 +95,12 @@ HWTEST_F(AubMemDumpTests, reserveMaxAddress) {
     aubFile.fileHandle.close();
 }
 
-HWTEST_F(AubMemDumpTests, DISABLED_writeVerifyOneBytePPGTT) {
+HWTEST_F(AubMemDumpTests, GivenWriteVerifyOneBytePpgttThenExpectationsAreMet) {
     typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
     std::string filePath(folderAUB);
+    std::string filenameWithPrefix = ApiSpecificConfig::getAubPrefixForSpecificApi();
     filePath.append(Os::fileSeparator);
-    filePath.append(getAubFileName(pDevice, "writeVerifyOneBytePPGTT.aub"));
+    filePath.append(getAubFileName(pDevice, filenameWithPrefix.append("writeVerifyOneBytePPGTT.aub")));
     AUBCommandStreamReceiver::AubFileStream aubFile;
     aubFile.fileHandle.open(filePath.c_str(), std::ofstream::binary);
 
@@ -117,11 +121,12 @@ HWTEST_F(AubMemDumpTests, DISABLED_writeVerifyOneBytePPGTT) {
     aubFile.fileHandle.close();
 }
 
-HWTEST_F(AubMemDumpTests, writeVerifyOneByteGGTT) {
+HWTEST_F(AubMemDumpTests, GivenWriteVerifyOneByteGgttThenExpectationsAreMet) {
     typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
     std::string filePath(folderAUB);
+    std::string filenameWithPrefix = ApiSpecificConfig::getAubPrefixForSpecificApi();
     filePath.append(Os::fileSeparator);
-    filePath.append(getAubFileName(pDevice, "writeVerifyOneByteGGTT.aub"));
+    filePath.append(getAubFileName(pDevice, filenameWithPrefix.append("writeVerifyOneByteGGTT.aub")));
     AUBCommandStreamReceiver::AubFileStream aubFile;
     aubFile.fileHandle.open(filePath.c_str(), std::ofstream::binary);
 
@@ -140,11 +145,12 @@ HWTEST_F(AubMemDumpTests, writeVerifyOneByteGGTT) {
     aubFile.fileHandle.close();
 }
 
-HWTEST_F(AubMemDumpTests, writeVerifySevenBytesPPGTT) {
+HWTEST_F(AubMemDumpTests, GivenWriteVerifySevenBytesPpgttThenExpectationsAreMet) {
     typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
     std::string filePath(folderAUB);
+    std::string filenameWithPrefix = ApiSpecificConfig::getAubPrefixForSpecificApi();
     filePath.append(Os::fileSeparator);
-    filePath.append(getAubFileName(pDevice, "writeVerifySevenBytesPPGTT.aub"));
+    filePath.append(getAubFileName(pDevice, filenameWithPrefix.append("writeVerifySevenBytesPPGTT.aub")));
     AUBCommandStreamReceiver::AubFileStream aubFile;
     aubFile.fileHandle.open(filePath.c_str(), std::ofstream::binary);
 
@@ -165,11 +171,12 @@ HWTEST_F(AubMemDumpTests, writeVerifySevenBytesPPGTT) {
     aubFile.fileHandle.close();
 }
 
-HWTEST_F(AubMemDumpTests, writeVerifySevenBytesGGTT) {
+HWTEST_F(AubMemDumpTests, GivenWriteVerifySevenBytesGgttThenExpectationsAreMet) {
     typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
     std::string filePath(folderAUB);
+    std::string filenameWithPrefix = ApiSpecificConfig::getAubPrefixForSpecificApi();
     filePath.append(Os::fileSeparator);
-    filePath.append(getAubFileName(pDevice, "writeVerifySevenBytesGGTT.aub"));
+    filePath.append(getAubFileName(pDevice, filenameWithPrefix.append("writeVerifySevenBytesGGTT.aub")));
     AUBCommandStreamReceiver::AubFileStream aubFile;
     aubFile.fileHandle.open(filePath.c_str(), std::ofstream::binary);
 
@@ -188,19 +195,19 @@ HWTEST_F(AubMemDumpTests, writeVerifySevenBytesGGTT) {
     aubFile.fileHandle.close();
 }
 
-HWTEST_F(AubMemDumpTests, simpleRCS) {
+HWTEST_F(AubMemDumpTests, GivenRcsThenExpectationsAreMet) {
     setupAUB<FamilyType>(pDevice, aub_stream::ENGINE_RCS);
 }
 
-HWTEST_F(AubMemDumpTests, simpleBCS) {
+HWTEST_F(AubMemDumpTests, GivenBcsThenExpectationsAreMet) {
     setupAUB<FamilyType>(pDevice, aub_stream::ENGINE_BCS);
 }
 
-HWTEST_F(AubMemDumpTests, simpleVCS) {
+HWTEST_F(AubMemDumpTests, GivenVcsThenExpectationsAreMet) {
     setupAUB<FamilyType>(pDevice, aub_stream::ENGINE_VCS);
 }
 
-HWTEST_F(AubMemDumpTests, simpleVECS) {
+HWTEST_F(AubMemDumpTests, GivenVecsThenExpectationsAreMet) {
     setupAUB<FamilyType>(pDevice, aub_stream::ENGINE_VECS);
 }
 

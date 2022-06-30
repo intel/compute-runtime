@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,19 +43,29 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchExecutionEnviro
 
     if (execEnv.CompiledForGreaterThan4GBBuffers) {
         dst.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
+    } else if (execEnv.UseBindlessMode) {
+        dst.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindlessAndStateless;
+        dst.kernelAttributes.imageAddressingMode = KernelDescriptor::Bindless;
     } else {
         dst.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindfulAndStateless;
     }
-    dst.kernelAttributes.simdSize = execEnv.LargestCompiledSIMDSize;
-    dst.kernelAttributes.flags.usesDeviceSideEnqueue = (0 != execEnv.HasDeviceEnqueue);
-    dst.kernelAttributes.flags.usesBarriers = (0 != execEnv.HasBarriers);
-    dst.kernelAttributes.flags.requiresDisabledMidThreadPreemption = (0 != execEnv.DisableMidThreadPreemption);
-    dst.kernelMetadata.compiledSubGroupsNumber = execEnv.CompiledSubGroupsNumber;
-    dst.kernelAttributes.flags.usesFencesForReadWriteImages = (0 != execEnv.UsesFencesForReadWriteImages);
-    dst.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress = (0 != execEnv.SubgroupIndependentForwardProgressRequired);
+
     dst.kernelAttributes.numGrfRequired = execEnv.NumGRFRequired;
-    dst.kernelAttributes.flags.useGlobalAtomics = execEnv.HasGlobalAtomics;
-    dst.kernelAttributes.flags.usesStatelessWrites = (execEnv.StatelessWritesCount > 0U);
+    dst.kernelAttributes.simdSize = execEnv.LargestCompiledSIMDSize;
+    dst.kernelAttributes.barrierCount = execEnv.HasBarriers;
+    dst.kernelAttributes.numThreadsRequired = execEnv.NumThreadsRequired;
+
+    dst.kernelAttributes.flags.requiresDisabledEUFusion = (0 != execEnv.RequireDisableEUFusion);
+    dst.kernelAttributes.flags.requiresDisabledMidThreadPreemption = (0 != execEnv.DisableMidThreadPreemption);
+    dst.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress = (0 != execEnv.SubgroupIndependentForwardProgressRequired);
+    dst.kernelAttributes.flags.useGlobalAtomics = (0 != execEnv.HasGlobalAtomics);
+    dst.kernelAttributes.flags.usesFencesForReadWriteImages = (0 != execEnv.UsesFencesForReadWriteImages);
+    dst.kernelAttributes.flags.usesSpecialPipelineSelectMode = (0 != execEnv.HasDPAS);
+    dst.kernelAttributes.flags.usesStatelessWrites = (0 != execEnv.StatelessWritesCount);
+    dst.kernelAttributes.flags.useStackCalls = (0 != execEnv.HasStackCalls);
+    dst.kernelAttributes.flags.hasRTCalls = (0 != execEnv.HasRTCalls);
+
+    dst.kernelMetadata.compiledSubGroupsNumber = execEnv.CompiledSubGroupsNumber;
 }
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchSamplerStateArray &token) {
@@ -78,13 +88,12 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchMediaVFEState &
     dst.kernelAttributes.perThreadScratchSize[slot] = token.PerThreadScratchSpace;
 }
 
-void populateKernelDescriptor(KernelDescriptor &dst, const SPatchInterfaceDescriptorData &token) {
-    dst.kernelMetadata.deviceSideEnqueueBlockInterfaceDescriptorOffset = token.Offset;
-}
-
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchThreadPayload &token) {
     dst.kernelAttributes.flags.perThreadDataHeaderIsPresent = (0U != token.HeaderPresent);
     dst.kernelAttributes.numLocalIdChannels = token.LocalIDXPresent + token.LocalIDYPresent + token.LocalIDZPresent;
+    dst.kernelAttributes.localId[0] = token.LocalIDXPresent;
+    dst.kernelAttributes.localId[1] = token.LocalIDYPresent;
+    dst.kernelAttributes.localId[2] = token.LocalIDZPresent;
     dst.kernelAttributes.flags.usesFlattenedLocalIds = (0U != token.LocalIDFlattenedPresent);
     dst.kernelAttributes.flags.perThreadDataUnusedGrfIsPresent = (0U != token.UnusedPerThreadConstantPresent);
     dst.kernelAttributes.flags.passInlineData = (0 != token.PassInlineData);
@@ -104,7 +113,7 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchKernelAttribute
     if (it != std::string::npos) {
         it += attributeReqdSubGroupSizeBeg.size();
         dst.kernelMetadata.requiredSubGroupSize = 0U;
-        while ((attributes[it] >= '0') & (attributes[it] <= '9')) {
+        while ((attributes[it] >= '0') && (attributes[it] <= '9')) {
             dst.kernelMetadata.requiredSubGroupSize *= 10;
             dst.kernelMetadata.requiredSubGroupSize += attributes[it] - '0';
             ++it;
@@ -129,17 +138,24 @@ void populatePointerKernelArg(ArgDescPointer &dst,
         dst.bindless = undefined<CrossThreadDataOffset>;
         dst.pointerSize = pointerSize;
         break;
+
+    case KernelDescriptor::BindlessAndStateless:
+        dst.bindful = undefined<SurfaceStateHeapOffset>;
+        dst.stateless = stateless;
+        dst.bindless = bindless;
+        dst.pointerSize = pointerSize;
+        break;
     }
 }
 
 template <typename TokenT>
 void populatePointerKernelArg(ArgDescPointer &dst, const TokenT &src, KernelDescriptor::AddressingMode addressingMode) {
-    populatePointerKernelArg(dst, src.DataParamOffset, src.DataParamSize, src.SurfaceStateHeapOffset, undefined<CrossThreadDataOffset>, addressingMode);
+    populatePointerKernelArg(dst, src.DataParamOffset, src.DataParamSize, src.SurfaceStateHeapOffset, src.SurfaceStateHeapOffset, addressingMode);
 }
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessPrivateSurface &token) {
     dst.kernelAttributes.flags.usesPrivateMemory = true;
-    dst.kernelAttributes.perThreadPrivateMemorySize = token.PerThreadPrivateMemorySize;
+    dst.kernelAttributes.perHwThreadPrivateMemorySize = static_cast<uint32_t>(PatchTokenBinary::getPerHwThreadPrivateSurfaceSize(token, dst.kernelAttributes.simdSize));
     populatePointerKernelArg(dst.payloadMappings.implicitArgs.privateMemoryAddress, token, dst.kernelAttributes.bufferAddressingMode);
 }
 
@@ -153,6 +169,7 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatele
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessPrintfSurface &token) {
     dst.kernelAttributes.flags.usesPrintf = true;
+    dst.kernelAttributes.flags.usesStringMapForPrintf = true;
     populatePointerKernelArg(dst.payloadMappings.implicitArgs.printfSurfaceAddress, token, dst.kernelAttributes.bufferAddressingMode);
 }
 
@@ -181,7 +198,7 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchString &token) 
 }
 
 template <typename TokenT, typename... ArgsT>
-inline void populateKernelDescriptorIfNotNull(KernelDescriptor &dst, const TokenT *token, ArgsT &&... args) {
+inline void populateKernelDescriptorIfNotNull(KernelDescriptor &dst, const TokenT *token, ArgsT &&...args) {
     if (token != nullptr) {
         populateKernelDescriptor(dst, *token, std::forward<ArgsT>(args)...);
     }
@@ -199,8 +216,12 @@ void populateKernelArgDescriptor(KernelDescriptor &dst, size_t argNum, const SPa
     markArgAsPatchable(dst, argNum);
 
     auto &argImage = dst.payloadMappings.explicitArgs[argNum].as<ArgDescImage>(true);
-    UNRECOVERABLE_IF(KernelDescriptor::Bindful != dst.kernelAttributes.imageAddressingMode);
-    argImage.bindful = token.Offset;
+    if (KernelDescriptor::Bindful == dst.kernelAttributes.imageAddressingMode) {
+        argImage.bindful = token.Offset;
+    }
+    if (KernelDescriptor::Bindless == dst.kernelAttributes.imageAddressingMode) {
+        argImage.bindless = token.Offset;
+    }
 
     if (token.Type == iOpenCL::IMAGE_MEMORY_OBJECT_2D_MEDIA) {
         dst.payloadMappings.explicitArgs[argNum].getExtendedTypeInfo().isMediaImage = true;
@@ -240,10 +261,15 @@ void populateKernelArgDescriptor(KernelDescriptor &dst, size_t argNum, const SPa
 
     auto &argPointer = dst.payloadMappings.explicitArgs[argNum].as<ArgDescPointer>(true);
     dst.payloadMappings.explicitArgs[argNum].getTraits().addressQualifier = KernelArgMetadata::AddrGlobal;
+    if (dst.kernelAttributes.bufferAddressingMode == KernelDescriptor::BindlessAndStateless) {
+        argPointer.bindless = token.Offset;
+        argPointer.bindful = undefined<SurfaceStateHeapOffset>;
+    } else {
+        argPointer.bindful = token.Offset;
+        argPointer.bindless = undefined<CrossThreadDataOffset>;
+    }
 
-    argPointer.bindful = token.Offset;
     argPointer.stateless = undefined<CrossThreadDataOffset>;
-    argPointer.bindless = undefined<CrossThreadDataOffset>;
     argPointer.pointerSize = dst.kernelAttributes.gpuPointerSize;
 }
 
@@ -315,7 +341,7 @@ void populateArgMetadata(KernelDescriptor &dst, size_t argNum, const SPatchKerne
     if (nullptr == argTypeDelim) {
         argTypeDelim = argTypeFull.data() + argTypeFull.size();
     }
-    metadataExtended->type = std::string(argTypeFull.data(), argTypeDelim).c_str();
+    metadataExtended->type = std::string(static_cast<const char *>(argTypeFull.data()), argTypeDelim).c_str();
     metadataExtended->typeQualifiers = parseLimitedString(inlineData.typeQualifiers.begin(), inlineData.typeQualifiers.size());
 
     ArgTypeTraits metadata = {};
@@ -441,7 +467,6 @@ void populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary::Ker
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateLocalSurface);
     populateKernelDescriptorIfNotNull(dst, src.tokens.mediaVfeState[0], 0);
     populateKernelDescriptorIfNotNull(dst, src.tokens.mediaVfeState[1], 1);
-    populateKernelDescriptorIfNotNull(dst, src.tokens.interfaceDescriptorData);
     populateKernelDescriptorIfNotNull(dst, src.tokens.threadPayload);
     populateKernelDescriptorIfNotNull(dst, src.tokens.dataParameterStream);
     populateKernelDescriptorIfNotNull(dst, src.tokens.kernelAttributesInfo);
@@ -452,6 +477,23 @@ void populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary::Ker
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateStatelessEventPoolSurface);
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateStatelessDefaultDeviceQueueSurface);
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateSyncBuffer);
+
+    {
+        uint32_t heapOffset = 0;
+        uint32_t paramOffset = 0;
+        uint32_t paramSize = 0;
+
+        if (src.tokens.allocateRTGlobalBuffer != nullptr) {
+            auto allocateRTGlobalBuffer = static_cast<const struct iOpenCL::SPatchAllocateRTGlobalBuffer *>(src.tokens.allocateRTGlobalBuffer);
+            heapOffset = allocateRTGlobalBuffer->SurfaceStateHeapOffset;
+            paramOffset = allocateRTGlobalBuffer->DataParamOffset;
+            paramSize = allocateRTGlobalBuffer->DataParamSize;
+        }
+
+        populatePointerKernelArg(dst.payloadMappings.implicitArgs.rtDispatchGlobals,
+                                 paramOffset, paramSize, heapOffset, heapOffset,
+                                 dst.kernelAttributes.bufferAddressingMode);
+    }
 
     dst.payloadMappings.explicitArgs.resize(src.tokens.kernelArgs.size());
     dst.explicitArgsExtendedMetadata.resize(src.tokens.kernelArgs.size());
@@ -486,15 +528,19 @@ void populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary::Ker
     dst.payloadMappings.implicitArgs.privateMemorySize = getOffset(src.tokens.crossThreadPayloadArgs.privateMemoryStatelessSize);
     dst.payloadMappings.implicitArgs.localMemoryStatelessWindowSize = getOffset(src.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowSize);
     dst.payloadMappings.implicitArgs.localMemoryStatelessWindowStartAddres = getOffset(src.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowStartAddress);
-    for (auto &childSimdSize : src.tokens.crossThreadPayloadArgs.childBlockSimdSize) {
-        dst.kernelMetadata.deviceSideEnqueueChildrenKernelsIdOffset.push_back({childSimdSize->ArgumentNumber, childSimdSize->Offset});
-    }
+    dst.payloadMappings.implicitArgs.implicitArgsBuffer = getOffset(src.tokens.crossThreadPayloadArgs.implicitArgsBufferOffset);
 
     if (src.tokens.gtpinInfo) {
         dst.external.igcInfoForGtpin = (src.tokens.gtpinInfo + 1);
     }
 
+    dst.kernelAttributes.binaryFormat = DeviceBinaryFormat::Patchtokens;
     dst.kernelAttributes.gpuPointerSize = gpuPointerSizeInBytes;
+    dst.kernelAttributes.flags.requiresImplicitArgs = src.tokens.crossThreadPayloadArgs.implicitArgsBufferOffset != nullptr;
+
+    if (DebugManager.flags.UpdateCrossThreadDataSize.get()) {
+        dst.updateCrossThreadDataSize();
+    }
 }
 
 } // namespace NEO

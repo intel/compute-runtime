@@ -5,13 +5,16 @@
 #
 
 set(L0_SRCS_TOOLS_SYSMAN_ENGINE_WINDOWS
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/os_engine_imp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_engine_imp.cpp
 )
 
 if(WIN32)
-    target_sources(${L0_STATIC_LIB_NAME}
-    PRIVATE
-    ${L0_SRCS_TOOLS_SYSMAN_ENGINE_WINDOWS})
+  target_sources(${L0_STATIC_LIB_NAME}
+                 PRIVATE
+                 ${L0_SRCS_TOOLS_SYSMAN_ENGINE_WINDOWS}
+  )
 endif()
 
 # Make our source files visible to parent

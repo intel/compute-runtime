@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,6 +59,18 @@ TEST_F(SubBufferTest, WhenCreatingSubBufferThenRefInternalCountIsIncremented) {
     EXPECT_EQ(1, buffer->getRefInternalCount());
 }
 
+TEST_F(SubBufferTest, givenSubBufferWhenGetHighestRootMemObjIsCalledThenProperMemObjIsReturned) {
+    cl_buffer_region region0 = {2, 12};
+
+    auto subBuffer = buffer->createSubBuffer(CL_MEM_READ_ONLY, 0, &region0, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(static_cast<MemObj *>(buffer), buffer->getHighestRootMemObj());
+    EXPECT_EQ(static_cast<MemObj *>(buffer), subBuffer->getHighestRootMemObj());
+
+    subBuffer->release();
+}
+
 TEST_F(SubBufferTest, GivenUnalignedHostPtrBufferWhenSubBufferIsCreatedThenItIsNonZeroCopy) {
     cl_buffer_region region = {2, 2};
     cl_int retVal = 0;
@@ -87,7 +99,8 @@ TEST_F(SubBufferTest, GivenAlignmentThatIsHigherThen4BytesWhenCheckedForValidity
     cl_buffer_region region3 = {8, 4};
     EXPECT_TRUE(buffer->isValidSubBufferOffset(region3.origin));
 
-    buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    MockBuffer::setAllocationType(buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()), context.getDevice(0)->getRootDeviceEnvironment().getGmmHelper(), true);
+
     EXPECT_FALSE(buffer->isValidSubBufferOffset(region.origin));
     EXPECT_FALSE(buffer->isValidSubBufferOffset(region2.origin));
     cl_buffer_region region4 = {1025, 4};
@@ -120,7 +133,7 @@ TEST_F(SubBufferTest, GivenBufferWithAlignedHostPtrAndSameMemoryStorageWhenSubBu
     cl_int retVal = 0;
 
     void *alignedPointer = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::preferredAlignment);
-    Buffer *buffer = Buffer::create(&context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR | CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL,
+    Buffer *buffer = Buffer::create(&context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR | CL_MEM_FORCE_HOST_MEMORY_INTEL,
                                     MemoryConstants::pageSize, alignedPointer, retVal);
 
     ASSERT_NE(nullptr, buffer);
@@ -193,8 +206,8 @@ TEST_F(SubBufferTest, givenBufferWithNoHostPtrWhenSubbufferGetsMapPtrThenExpectB
     void *mapPtr = subBuffer->getBasePtrForMap(0);
     void *bufferMapPtr = buffer->getBasePtrForMap(0);
     EXPECT_EQ(bufferMapPtr, mapPtr);
-    auto mapAllocation = subBuffer->getMapAllocation();
-    auto bufferMapAllocation = buffer->getMapAllocation();
+    auto mapAllocation = subBuffer->getMapAllocation(0);
+    auto bufferMapAllocation = buffer->getMapAllocation(0);
     ASSERT_NE(nullptr, bufferMapAllocation);
     EXPECT_EQ(bufferMapAllocation, mapAllocation);
     EXPECT_EQ(bufferMapPtr, mapAllocation->getUnderlyingBuffer());
@@ -203,6 +216,30 @@ TEST_F(SubBufferTest, givenBufferWithNoHostPtrWhenSubbufferGetsMapPtrThenExpectB
     EXPECT_EQ(bufferMapPtr, mapPtr);
 
     subBuffer->release();
+    buffer->release();
+}
+
+TEST_F(SubBufferTest, givenSubBuffersWithMultipleDevicesWhenReleaseAllSubBuffersThenMainBufferProperlyDereferenced) {
+    MockDefaultContext ctx;
+    Buffer *buffer = Buffer::create(&ctx, CL_MEM_READ_WRITE,
+                                    MemoryConstants::pageSize, nullptr, retVal);
+    ASSERT_NE(nullptr, buffer);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    Buffer *subBuffers[8];
+    for (int i = 0; i < 8; i++) {
+        cl_buffer_region region = {static_cast<size_t>(i * 4), 4};
+        subBuffers[i] = buffer->createSubBuffer(CL_MEM_READ_WRITE, 0, &region, retVal);
+        EXPECT_EQ(3u, subBuffers[i]->getMultiGraphicsAllocation().getGraphicsAllocations().size());
+    }
+
+    EXPECT_EQ(9, buffer->getRefInternalCount());
+
+    for (int i = 0; i < 8; i++) {
+        subBuffers[i]->release();
+    }
+
+    EXPECT_EQ(1, buffer->getRefInternalCount());
     buffer->release();
 }
 

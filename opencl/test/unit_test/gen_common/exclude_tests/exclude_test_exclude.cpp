@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
-HWCMDTEST_EXCLUDE_FAMILY(ExcludeTestBdw, givenHwCmdTestWhenBdwExcludedDontRunOnBdw, IGFX_BROADWELL);
-HWCMDTEST_EXCLUDE_FAMILY(ExcludeTestBdw, givenHwTestWhenBdwExcludedDontRunOnBdw, IGFX_BROADWELL);
-HWCMDTEST_EXCLUDE_FAMILY(ExcludeTestSkl, givenHwCmdTestWhenSklExcludedDontRunOnSkl, IGFX_SKYLAKE);
-HWCMDTEST_EXCLUDE_FAMILY(ExcludeTestSkl, givenHwTestWhenSklExcludedDontRunOnSkl, IGFX_SKYLAKE);
+HWTEST_EXCLUDE_PRODUCT(ExcludeTestBdw, givenHwCmdTestWhenBdwExcludedThenDontRunOnBdw, IGFX_BROADWELL);
+HWTEST_EXCLUDE_PRODUCT(ExcludeTestBdw, givenHwTestWhenBdwExcludedThenDontRunOnBdw, IGFX_BROADWELL);
+HWTEST_EXCLUDE_PRODUCT(ExcludeTestSkl, givenHwCmdTestWhenSklExcludedThenDontRunOnSkl, IGFX_SKYLAKE);
+HWTEST_EXCLUDE_PRODUCT(ExcludeTestSkl, givenHwTestWhenSklExcludedThenDontRunOnSkl, IGFX_SKYLAKE);

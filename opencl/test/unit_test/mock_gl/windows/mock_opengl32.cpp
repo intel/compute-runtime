@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,6 +40,8 @@ CL_GL_RESOURCE_INFO textureInfoInput = {0};
 CL_GL_RESOURCE_INFO textureInfoOutput = {0};
 NEO::GLMockReturnedValues glMockReturnedValues = {0};
 GLboolean GLSetSharedOCLContextStateReturnedValue = 1u;
+bool glGetLuidFuncAvailable = true;
+int glGetLuidCalled = 0;
 
 const unsigned char *WINAPI glGetString(unsigned int name) {
     if (name == GL_VENDOR)
@@ -129,6 +131,20 @@ GLDisplay WINAPI mockGLGetCurrentDisplay() {
     GLGetCurrentDisplayCalled++;
     return glMockReturnedValues.currentDisplay;
 };
+
+LUID WINAPI wglGetLuidMock(GLContext glContext) {
+    glGetLuidCalled++;
+    LUID luid{};
+    if (reinterpret_cast<GLContext>(1) == glContext) {
+        luid.HighPart = 0x1d2e;
+        luid.LowPart = 0x3f4a;
+    } else if (reinterpret_cast<GLContext>(2) == glContext) {
+        luid.HighPart = 0x5d2e;
+        luid.LowPart = 0x3f4a;
+    }
+    return luid;
+};
+
 PROC WINAPI wglGetProcAddress(LPCSTR name) {
     if (strcmp(name, "wglSetSharedOCLContextStateINTEL") == 0) {
         return reinterpret_cast<PROC>(*wglSetSharedOCLContextStateINTELMock);
@@ -162,6 +178,9 @@ PROC WINAPI wglGetProcAddress(LPCSTR name) {
     }
     if (strcmp(name, "glGetStringi") == 0) {
         return reinterpret_cast<PROC>(*glGetStringiMock);
+    }
+    if (strcmp(name, "wglGetLuidINTEL") == 0 && glGetLuidFuncAvailable) {
+        return reinterpret_cast<PROC>(wglGetLuidMock);
     }
     return nullptr;
 }
@@ -268,6 +287,17 @@ void resetParam(const char *name) {
         WGLCreateContextCalled = 0;
         WGLDeleteContextCalled = 0;
         WGLShareListsCalled = 0;
+        glGetLuidCalled = 0;
+        glGetLuidFuncAvailable = true;
+    }
+    if (strcmp(name, "glGetLuidCalled") == 0) {
+        glGetLuidCalled = 0;
+    }
+    if (strcmp(name, "glGetLuidFuncAvailable") == 0) {
+        glGetLuidFuncAvailable = true;
+    }
+    if (strcmp(name, "glGetLuidFuncNotAvailable") == 0) {
+        glGetLuidFuncAvailable = false;
     }
 };
 int getParam(const char *name) {
@@ -318,6 +348,9 @@ int getParam(const char *name) {
     }
     if (strcmp(name, "WGLShareListsCalled") == 0) {
         return WGLShareListsCalled;
+    }
+    if (strcmp(name, "glGetLuidCalled") == 0) {
+        return glGetLuidCalled;
     }
     return 0;
 };

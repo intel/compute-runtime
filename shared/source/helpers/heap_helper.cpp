@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,21 +15,23 @@
 namespace NEO {
 
 GraphicsAllocation *HeapHelper::getHeapAllocation(uint32_t heapType, size_t heapSize, size_t alignment, uint32_t rootDeviceIndex) {
-    auto allocationType = GraphicsAllocation::AllocationType::LINEAR_STREAM;
+    auto allocationType = AllocationType::LINEAR_STREAM;
     if (IndirectHeap::Type::INDIRECT_OBJECT == heapType) {
-        allocationType = GraphicsAllocation::AllocationType::INTERNAL_HEAP;
+        allocationType = AllocationType::INTERNAL_HEAP;
     }
 
     auto allocation = this->storageForReuse->obtainReusableAllocation(heapSize, allocationType);
     if (allocation) {
         return allocation.release();
     }
-    NEO::AllocationProperties properties{rootDeviceIndex, true, heapSize, allocationType, isMultiOsContextCapable, false, {}};
+    NEO::AllocationProperties properties{rootDeviceIndex, true, heapSize, allocationType, isMultiOsContextCapable, false, storageForReuse->getDeviceBitfield()};
     properties.alignment = alignment;
 
     return this->memManager->allocateGraphicsMemoryWithProperties(properties);
 }
 void HeapHelper::storeHeapAllocation(GraphicsAllocation *heapAllocation) {
-    this->storageForReuse->storeAllocation(std::unique_ptr<NEO::GraphicsAllocation>(heapAllocation), NEO::AllocationUsage::REUSABLE_ALLOCATION);
+    if (heapAllocation) {
+        this->storageForReuse->storeAllocation(std::unique_ptr<NEO::GraphicsAllocation>(heapAllocation), NEO::AllocationUsage::REUSABLE_ALLOCATION);
+    }
 }
 } // namespace NEO

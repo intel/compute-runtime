@@ -1,20 +1,21 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "test.h"
 
 using namespace NEO;
 
 typedef Test<ClDeviceFixture> Gen9DeviceCaps;
 
-GEN9TEST_F(Gen9DeviceCaps, skuSpecificCaps) {
+GEN9TEST_F(Gen9DeviceCaps, WhenCheckingExtensionStringThenFp64CorrectlyReported) {
     const auto &caps = pClDevice->getDeviceInfo();
     std::string extensionString = caps.deviceExtensions;
     if (pDevice->getHardwareInfo().capabilityTable.ftrSupportsFP64) {
@@ -29,9 +30,9 @@ GEN9TEST_F(Gen9DeviceCaps, skuSpecificCaps) {
 GEN9TEST_F(Gen9DeviceCaps, givenGen9WhenCheckExtensionsThenDeviceProperlyReportsClKhrSubgroupsExtension) {
     const auto &caps = pClDevice->getDeviceInfo();
     if (pClDevice->areOcl21FeaturesEnabled()) {
-        EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_subgroups")));
+        EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_subgroups")));
     } else {
-        EXPECT_THAT(caps.deviceExtensions, ::testing::Not(testing::HasSubstr(std::string("cl_khr_subgroups"))));
+        EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_subgroups")));
     }
 }
 
@@ -45,16 +46,16 @@ GEN9TEST_F(Gen9DeviceCaps, givenGen9WhenCheckingCapsThenDeviceDoesProperlyReport
     }
 }
 
-GEN9TEST_F(Gen9DeviceCaps, allSkusSupportCorrectlyRoundedDivideSqrt) {
+GEN9TEST_F(Gen9DeviceCaps, WhenGettingDeviceInfoThenCorrectlyRoundedDivideSqrtIsEnabled) {
     const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_NE(0u, caps.singleFpConfig & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
 }
 
-GEN9TEST_F(Gen9DeviceCaps, defaultPreemptionMode) {
+GEN9TEST_F(Gen9DeviceCaps, GivenDefaultWhenCheckingPreemptionModeThenMidThreadIsSupported) {
     EXPECT_EQ(PreemptionMode::MidThread, pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
 }
 
-GEN9TEST_F(Gen9DeviceCaps, compression) {
+GEN9TEST_F(Gen9DeviceCaps, WhenCheckingCompressionThenItIsDisabled) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedBuffers);
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedImages);
 }
@@ -90,4 +91,8 @@ GEN9TEST_F(Gen9DeviceCaps, givenGen9WhenCheckBlitterOperationsSupportThenReturnF
 
 GEN9TEST_F(Gen9DeviceCaps, givenGen9WhenCheckingImageSupportThenReturnTrue) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.supportsImages);
+}
+
+GEN9TEST_F(Gen9DeviceCaps, givenGen9WhenCheckingMediaBlockSupportThenReturnTrue) {
+    EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.supportsMediaBlock);
 }

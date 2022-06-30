@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,17 +9,15 @@
 
 #include "shared/source/helpers/constants.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
-
-#include "opencl/test/unit_test/helpers/unit_test_helper.h"
-
-#include "gtest/gtest.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 
 #include <cstdint>
 
 namespace NEO {
 template <typename FamilyType>
-void validateStateBaseAddress(uint64_t internalHeapBase, IndirectHeap *pDSH,
+void validateStateBaseAddress(uint64_t indirectObjectHeapBase,
+                              uint64_t instructionHeapBaseAddress,
+                              IndirectHeap *pDSH,
                               IndirectHeap *pIOH,
                               IndirectHeap *pSSH,
                               GenCmdList::iterator &startCommand,
@@ -45,7 +43,7 @@ void validateStateBaseAddress(uint64_t internalHeapBase, IndirectHeap *pDSH,
     EXPECT_EQ(expectedGeneralStateHeapBaseAddress, cmd->getGeneralStateBaseAddress());
     EXPECT_EQ(pSSH->getGraphicsAllocation()->getGpuAddress(), cmd->getSurfaceStateBaseAddress());
     EXPECT_EQ(pIOH->getGraphicsAllocation()->getGpuBaseAddress(), cmd->getIndirectObjectBaseAddress());
-    EXPECT_EQ(internalHeapBase, cmd->getInstructionBaseAddress());
+    EXPECT_EQ(instructionHeapBaseAddress, cmd->getInstructionBaseAddress());
 
     // Verify all sizes are getting programmed
     EXPECT_TRUE(cmd->getDynamicStateBufferSizeModifyEnable());
@@ -79,9 +77,9 @@ void validateL3Programming(GenCmdList &cmdList, GenCmdList::iterator &itorWalker
         EXPECT_EQ(registerOffset, cmd->getRegisterOffset());
         auto l3Cntlreg = cmd->getDataDword();
         auto numURBWays = (l3Cntlreg >> 1) & 0x7f;
-        auto L3ClientPool = (l3Cntlreg >> 25) & 0x7f;
+        auto l3ClientPool = (l3Cntlreg >> 25) & 0x7f;
         EXPECT_NE(0u, numURBWays);
-        EXPECT_NE(0u, L3ClientPool);
+        EXPECT_NE(0u, l3ClientPool);
     } else {
         ASSERT_EQ(itorWalker, itorCmd);
     }

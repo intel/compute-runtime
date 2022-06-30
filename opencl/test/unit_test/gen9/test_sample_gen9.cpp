@@ -1,18 +1,18 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "test.h"
 
 using namespace NEO;
 
 typedef Test<ClDeviceFixture> Gen9OnlyTest;
 
-GEN9TEST_F(Gen9OnlyTest, shouldPassOnGen9) {
-    EXPECT_NE(IGFX_GEN8_CORE, pDevice->getRenderCoreFamily());
+GEN9TEST_F(Gen9OnlyTest, WhenGettingRenderCoreFamilyThenGen9CoreIsReturned) {
     EXPECT_EQ(IGFX_GEN9_CORE, pDevice->getRenderCoreFamily());
 }

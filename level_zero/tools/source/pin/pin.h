@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ namespace L0 {
 
 class PinContext {
   public:
-    static void init(ze_init_flag_t flag, ze_result_t &result);
+    static ze_result_t init();
 
   private:
     static const std::string gtPinLibraryFilename;

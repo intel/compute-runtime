@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,4 +27,5 @@ void gtpinNotifyPlatformShutdown();
 inline bool gtpinIsGTPinInitialized() { return isGTPinInitialized; }
 void *gtpinGetIgcInit();
 void gtpinSetIgcInit(void *pIgcInitPtr);
+void gtpinRemoveCommandQueue(void *pCmdQueue);
 } // namespace NEO

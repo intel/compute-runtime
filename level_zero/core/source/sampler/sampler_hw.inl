@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,11 @@
 
 #pragma once
 
+#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/utilities/numeric.h"
 
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/sampler/sampler_hw.h"
 
 namespace L0 {
@@ -17,12 +19,11 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t SamplerCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_sampler_desc_t *desc) {
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
 
-    ze_result_t ret = BaseClass::initialize(device, desc);
-    if (ret != ZE_RESULT_SUCCESS) {
-        return ret;
-    }
+    BaseClass::initialize(device, desc);
 
     samplerState.setNonNormalizedCoordinateEnable(!desc->isNormalized);
+
+    samplerState.setLodPreclampMode(SAMPLER_STATE::LOD_PRECLAMP_MODE::LOD_PRECLAMP_MODE_OGL);
 
     auto addressControlModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER;
     auto addressControlModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER;
@@ -30,9 +31,9 @@ ze_result_t SamplerCoreFamily<gfxCoreFamily>::initialize(Device *device, const z
 
     switch (desc->addressMode) {
     case ZE_SAMPLER_ADDRESS_MODE_NONE:
-    case ZE_SAMPLER_ADDRESS_MODE_CLAMP:
-        break;
     case ZE_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER:
+        break;
+    case ZE_SAMPLER_ADDRESS_MODE_CLAMP:
         addressControlModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP;
         addressControlModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP;
         addressControlModeZ = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP;
@@ -108,7 +109,9 @@ ze_result_t SamplerCoreFamily<gfxCoreFamily>::initialize(Device *device, const z
     samplerState.setMinLod(minLodValue.getRawAccess());
     samplerState.setMaxLod(maxLodValue.getRawAccess());
 
-    appendSamplerStateParams(&samplerState);
+    auto &hwInfo = device->getHwInfo();
+
+    NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily)->adjustSamplerState(&samplerState, hwInfo);
 
     return ZE_RESULT_SUCCESS;
 }

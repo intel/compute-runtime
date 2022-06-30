@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,11 +12,6 @@
 
 #include <atomic>
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winconsistent-missing-override"
-#endif
-
 namespace L0 {
 namespace ult {
 
@@ -27,22 +22,18 @@ struct WhiteBox<::L0::DriverImp> : public ::L0::DriverImp {
 using Driver = WhiteBox<::L0::DriverImp>;
 
 template <>
-struct Mock<Driver> : public DriverImp {
+struct Mock<Driver> : public Driver {
     Mock();
     ~Mock() override;
 
-    MOCK_METHOD1(driverInit, ze_result_t(ze_init_flag_t));
-    MOCK_METHOD1(initialize, void(bool *result));
-
-    ze_result_t mockInit(ze_init_flag_t) { return this->DriverImp::driverInit(ZE_INIT_FLAG_NONE); }
-    void mockInitialize(bool *result) { *result = true; }
+    ze_result_t driverInit(ze_init_flags_t flag) override {
+        initCalledCount++;
+        return ZE_RESULT_SUCCESS;
+    }
 
     Driver *previousDriver = nullptr;
+    uint32_t initCalledCount = 0;
 };
 
 } // namespace ult
 } // namespace L0
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif

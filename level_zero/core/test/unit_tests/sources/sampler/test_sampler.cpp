@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/utilities/numeric.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/sampler/sampler_hw.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -55,7 +54,6 @@ HWTEST2_P(SamplerCreateTest, givenDifferentDescriptorValuesThenSamplerIsCorrectl
     ze_bool_t isNormalized = std::get<2>(GetParam());
 
     ze_sampler_desc_t desc = {};
-    desc.version = ZE_SAMPLER_DESC_VERSION_CURRENT;
     desc.addressMode = addressMode;
     desc.filterMode = filterMode;
     desc.isNormalized = isNormalized;
@@ -64,6 +62,8 @@ HWTEST2_P(SamplerCreateTest, givenDifferentDescriptorValuesThenSamplerIsCorrectl
     EXPECT_NE(nullptr, sampler);
 
     sampler->initialize(device, &desc);
+
+    EXPECT_EQ(SAMPLER_STATE::LOD_PRECLAMP_MODE::LOD_PRECLAMP_MODE_OGL, sampler->samplerState.getLodPreclampMode());
 
     if (isNormalized == static_cast<ze_bool_t>(true)) {
         EXPECT_FALSE(sampler->samplerState.getNonNormalizedCoordinateEnable());
@@ -86,11 +86,11 @@ HWTEST2_P(SamplerCreateTest, givenDifferentDescriptorValuesThenSamplerIsCorrectl
         EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_WRAP,
                   sampler->samplerState.getTczAddressControlMode());
     } else if (addressMode == ZE_SAMPLER_ADDRESS_MODE_CLAMP) {
-        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER,
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP,
                   sampler->samplerState.getTcxAddressControlMode());
-        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER,
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP,
                   sampler->samplerState.getTcyAddressControlMode());
-        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER,
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP,
                   sampler->samplerState.getTczAddressControlMode());
     } else if (addressMode == ZE_SAMPLER_ADDRESS_MODE_MIRROR) {
         EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR,
@@ -100,11 +100,11 @@ HWTEST2_P(SamplerCreateTest, givenDifferentDescriptorValuesThenSamplerIsCorrectl
         EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR,
                   sampler->samplerState.getTczAddressControlMode());
     } else if (addressMode == ZE_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER) {
-        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP,
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER,
                   sampler->samplerState.getTcxAddressControlMode());
-        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP,
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER,
                   sampler->samplerState.getTcyAddressControlMode());
-        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP,
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER,
                   sampler->samplerState.getTczAddressControlMode());
     }
 
@@ -150,6 +150,77 @@ INSTANTIATE_TEST_CASE_P(SamplerDescCombinations, SamplerCreateTest,
                         ::testing::Combine(samplerAddressMode,
                                            samplerFilterMode,
                                            samplerIsNormalized));
+
+using ContextCreateSamplerTest = Test<ContextFixture>;
+
+HWTEST2_F(ContextCreateSamplerTest, givenDifferentDescriptorValuesThenSamplerIsCorrectlyCreated, SamplerCreateSupport) {
+    ze_sampler_address_mode_t addressMode = ZE_SAMPLER_ADDRESS_MODE_NONE;
+    ze_sampler_filter_mode_t filterMode = ZE_SAMPLER_FILTER_MODE_LINEAR;
+    ze_bool_t isNormalized = false;
+
+    ze_sampler_desc_t desc = {};
+    desc.addressMode = addressMode;
+    desc.filterMode = filterMode;
+    desc.isNormalized = isNormalized;
+
+    ze_sampler_handle_t hSampler;
+    ze_result_t res = context->createSampler(device, &desc, &hSampler);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto sampler = reinterpret_cast<L0::SamplerImp *>(L0::Sampler::fromHandle(hSampler));
+    EXPECT_NE(nullptr, sampler);
+
+    sampler->destroy();
+}
+
+HWTEST2_F(ContextCreateSamplerTest, givenInvalidHardwareFamilyThenSamplerIsNotCreated, SamplerCreateSupport) {
+    ze_sampler_address_mode_t addressMode = ZE_SAMPLER_ADDRESS_MODE_NONE;
+    ze_sampler_filter_mode_t filterMode = ZE_SAMPLER_FILTER_MODE_LINEAR;
+    ze_bool_t isNormalized = false;
+
+    ze_sampler_desc_t desc = {};
+    desc.addressMode = addressMode;
+    desc.filterMode = filterMode;
+    desc.isNormalized = isNormalized;
+
+    L0::Sampler *sampler = Sampler::create(IGFX_MAX_PRODUCT, device, &desc);
+
+    EXPECT_EQ(nullptr, sampler);
+}
+
+HWTEST2_F(ContextCreateSamplerTest, givenInvalidAddressModeThenSamplerIsNotCreated, SamplerCreateSupport) {
+    auto addressModeArray = std::make_unique<char[]>(sizeof(ze_sampler_address_mode_t));
+    addressModeArray[0] = 99; // out of range value
+    auto addressMode = *reinterpret_cast<ze_sampler_address_mode_t *>(addressModeArray.get());
+    ze_sampler_filter_mode_t filterMode = ZE_SAMPLER_FILTER_MODE_LINEAR;
+    ze_bool_t isNormalized = false;
+
+    ze_sampler_desc_t desc = {};
+    desc.addressMode = addressMode;
+    desc.filterMode = filterMode;
+    desc.isNormalized = isNormalized;
+
+    L0::Sampler *sampler = Sampler::create(gfxCoreFamily, device, &desc);
+
+    EXPECT_EQ(nullptr, sampler);
+}
+
+HWTEST2_F(ContextCreateSamplerTest, givenInvalidFilterModeThenSamplerIsNotCreated, SamplerCreateSupport) {
+    ze_sampler_address_mode_t addressMode = ZE_SAMPLER_ADDRESS_MODE_NONE;
+    auto filterModeArray = std::make_unique<char[]>(sizeof(ze_sampler_filter_mode_t));
+    filterModeArray[0] = 99; // out of range value
+    ze_sampler_filter_mode_t filterMode = *reinterpret_cast<ze_sampler_filter_mode_t *>(filterModeArray.get());
+    ze_bool_t isNormalized = false;
+
+    ze_sampler_desc_t desc = {};
+    desc.addressMode = addressMode;
+    desc.filterMode = filterMode;
+    desc.isNormalized = isNormalized;
+
+    L0::Sampler *sampler = Sampler::create(gfxCoreFamily, device, &desc);
+
+    EXPECT_EQ(nullptr, sampler);
+}
 
 } // namespace ult
 } // namespace L0

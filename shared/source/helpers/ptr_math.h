@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,26 +54,14 @@ struct PatchStoreOperation {
     }
 };
 
-struct PatchIncrementOperation {
-    template <typename T>
-    void operator()(T *memory, T value) {
-        *memory += value;
-    }
-};
-
-template <typename PatchOperationT = PatchStoreOperation>
 inline void patchWithRequiredSize(void *memoryToBePatched, uint32_t patchSize, uint64_t patchValue) {
     if (patchSize == sizeof(uint64_t)) {
         uint64_t *curbeAddress = reinterpret_cast<uint64_t *>(memoryToBePatched);
-        PatchOperationT{}(curbeAddress, patchValue);
+        PatchStoreOperation{}(curbeAddress, patchValue);
     } else {
         uint32_t *curbeAddress = reinterpret_cast<uint32_t *>(memoryToBePatched);
-        PatchOperationT{}(curbeAddress, static_cast<uint32_t>(patchValue));
+        PatchStoreOperation{}(curbeAddress, static_cast<uint32_t>(patchValue));
     }
-}
-
-inline void patchIncrement(void *memoryToBePatched, uint32_t patchSize, uint64_t patchIncrementValue) {
-    patchWithRequiredSize<PatchIncrementOperation>(memoryToBePatched, patchSize, patchIncrementValue);
 }
 
 inline uint64_t castToUint64(const void *address) {

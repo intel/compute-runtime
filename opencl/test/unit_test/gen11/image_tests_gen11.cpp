@@ -1,16 +1,16 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/image/image_surface_state.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -40,7 +40,7 @@ struct AppendSurfaceStateParamsTest : public ::testing::Test {
             flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
         EXPECT_NE(nullptr, surfaceFormat);
         image.reset(Image::create(
-            &context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
+            &context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
             flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     }
 
@@ -59,7 +59,7 @@ GEN11TEST_F(AppendSurfaceStateParamsTest, givenImageFormatWithoutAlphaChannelWhe
     createImage();
 
     auto imageHw = static_cast<ImageHw<ICLFamily> *>(image.get());
-    imageHw->appendSurfaceStateParams(&surfaceState);
+    imageHw->appendSurfaceStateParams(&surfaceState, context.getDevice(0)->getRootDeviceIndex(), false);
 
     bool tapDiscardConfigChanged = RENDER_SURFACE_STATE::SAMPLE_TAP_DISCARD_DISABLE_DISABLE != surfaceState.getSampleTapDiscardDisable();
     EXPECT_FALSE(tapDiscardConfigChanged);
@@ -71,7 +71,7 @@ GEN11TEST_F(AppendSurfaceStateParamsTest, givenImageFormatWithAlphaChannelWhenAp
     createImage();
 
     auto imageHw = static_cast<ImageHw<ICLFamily> *>(image.get());
-    imageHw->appendSurfaceStateParams(&surfaceState);
+    imageHw->appendSurfaceStateParams(&surfaceState, context.getDevice(0)->getRootDeviceIndex(), false);
 
     bool tapDiscardConfigChanged = RENDER_SURFACE_STATE::SAMPLE_TAP_DISCARD_DISABLE_DISABLE != surfaceState.getSampleTapDiscardDisable();
     EXPECT_TRUE(tapDiscardConfigChanged);
@@ -89,20 +89,7 @@ GEN11TEST_F(gen11ImageTests, givenImageForGen11WhenClearColorParametersAreSetThe
 
     EXPECT_EQ(0, memcmp(&surfaceStateBefore, &surfaceStateAfter, sizeof(RENDER_SURFACE_STATE)));
 
-    setClearColorParams<FamilyType>(&surfaceStateAfter, imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm());
+    EncodeSurfaceState<FamilyType>::setClearColorParams(&surfaceStateAfter, imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm());
 
     EXPECT_EQ(0, memcmp(&surfaceStateBefore, &surfaceStateAfter, sizeof(RENDER_SURFACE_STATE)));
-}
-
-using Gen11RenderSurfaceStateDataTests = ::testing::Test;
-
-GEN11TEST_F(Gen11RenderSurfaceStateDataTests, WhenMemoryObjectControlStateIndexToMocsTablesIsSetThenValueIsShift) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
-
-    uint32_t value = 4;
-    surfaceState.setMemoryObjectControlStateIndexToMocsTables(value);
-
-    EXPECT_EQ(surfaceState.TheStructure.Common.MemoryObjectControlState_IndexToMocsTables, value >> 1);
-    EXPECT_EQ(surfaceState.getMemoryObjectControlStateIndexToMocsTables(), value);
 }

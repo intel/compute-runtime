@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,7 @@
 
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/helpers/hw_info.h"
-
-#include "opencl/source/program/kernel_arg_info.h"
+#include "shared/source/kernel/kernel_arg_descriptor.h"
 
 #include "igfxfmid.h"
 

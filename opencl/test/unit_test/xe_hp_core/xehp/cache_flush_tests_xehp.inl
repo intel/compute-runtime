@@ -1,0 +1,83 @@
+/*
+ * Copyright (C) 2021 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/utilities/base_object_utils.h"
+
+#include "opencl/test/unit_test/kernel/cache_flush_xehp_and_later_tests.inl"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+
+using namespace NEO;
+
+using GivenCacheFlushAfterWalkerEnabledWhenSvmAllocationsSetAsCacheFlushRequiringThenExpectCacheFlushCommandXEHP = GivenCacheFlushAfterWalkerEnabledWhenSvmAllocationsSetAsCacheFlushRequiringThenExpectCacheFlushCommand<XeHpFamily>;
+XEHPTEST_F(GivenCacheFlushAfterWalkerEnabledWhenSvmAllocationsSetAsCacheFlushRequiringThenExpectCacheFlushCommandXEHP, I) {
+    TestBodyImpl();
+}
+
+using GivenCacheFlushAfterWalkerEnabledWhenKernelArgIsSetAsCacheFlushRequiredThenExpectCacheFlushCommandXEHP = GivenCacheFlushAfterWalkerEnabledWhenKernelArgIsSetAsCacheFlushRequiredThenExpectCacheFlushCommand<XeHpFamily>;
+XEHPTEST_F(GivenCacheFlushAfterWalkerEnabledWhenKernelArgIsSetAsCacheFlushRequiredThenExpectCacheFlushCommandXEHP, I) {
+    TestBodyImpl();
+}
+
+using GivenCacheFlushAfterWalkerEnabledWhenProgramGlobalSurfacePresentThenExpectCacheFlushCommandXEHP = GivenCacheFlushAfterWalkerEnabledWhenProgramGlobalSurfacePresentThenExpectCacheFlushCommand<XeHpFamily>;
+XEHPTEST_F(GivenCacheFlushAfterWalkerEnabledWhenProgramGlobalSurfacePresentThenExpectCacheFlushCommandXEHP, I) {
+    TestBodyImpl();
+}
+
+using GivenCacheFlushAfterWalkerEnabledWhenProgramGlobalSurfacePresentAndPostSyncRequiredThenExpectProperCacheFlushCommandXEHP = GivenCacheFlushAfterWalkerEnabledWhenProgramGlobalSurfacePresentAndPostSyncRequiredThenExpectProperCacheFlushCommand<XeHpFamily>;
+XEHPTEST_F(GivenCacheFlushAfterWalkerEnabledWhenProgramGlobalSurfacePresentAndPostSyncRequiredThenExpectProperCacheFlushCommandXEHP, I) {
+    TestBodyImpl();
+}
+
+using GivenCacheFlushAfterWalkerEnabledWhenAllocationRequiresCacheFlushThenFlushCommandPresentAfterWalkerXEHP = GivenCacheFlushAfterWalkerEnabledWhenAllocationRequiresCacheFlushThenFlushCommandPresentAfterWalker<XeHpFamily>;
+XEHPTEST_F(GivenCacheFlushAfterWalkerEnabledWhenAllocationRequiresCacheFlushThenFlushCommandPresentAfterWalkerXEHP, I) {
+    TestBodyImpl();
+}
+
+using GivenCacheFlushAfterWalkerDisabledWhenAllocationRequiresCacheFlushThenFlushCommandNotPresentAfterWalkerXEHP = GivenCacheFlushAfterWalkerDisabledWhenAllocationRequiresCacheFlushThenFlushCommandNotPresentAfterWalker<XeHpFamily>;
+XEHPTEST_F(GivenCacheFlushAfterWalkerDisabledWhenAllocationRequiresCacheFlushThenFlushCommandNotPresentAfterWalkerXEHP, I) {
+    TestBodyImpl();
+}
+
+using GivenCacheFlushAfterWalkerAndTimestampPacketsEnabledWhenAllocationRequiresCacheFlushThenFlushCommandPresentAfterWalkerXEHP = GivenCacheFlushAfterWalkerAndTimestampPacketsEnabledWhenAllocationRequiresCacheFlushThenFlushCommandPresentAfterWalker<XeHpFamily>;
+XEHPTEST_F(GivenCacheFlushAfterWalkerAndTimestampPacketsEnabledWhenAllocationRequiresCacheFlushThenFlushCommandPresentAfterWalkerXEHP, I) {
+    TestBodyImpl();
+}
+
+using GivenCacheFlushAfterWalkerEnabledWhenSvmAllocationsSetAsCacheFlushRequiringThenExpectCorrectCommandSizeXEHP = GivenCacheFlushAfterWalkerEnabledWhenSvmAllocationsSetAsCacheFlushRequiringThenExpectCorrectCommandSize<XeHpFamily>;
+XEHPTEST_F(GivenCacheFlushAfterWalkerEnabledWhenSvmAllocationsSetAsCacheFlushRequiringThenExpectCorrectCommandSizeXEHP, I) {
+    TestBodyImpl();
+}
+using GivenCacheFlushAfterWalkerEnabledWhenMoreThan126AllocationRangesRequiresCacheFlushThenAtLeatsTwoFlushCommandPresentAfterWalkerXEHP = GivenCacheFlushAfterWalkerEnabledWhenMoreThan126AllocationRangesRequiresCacheFlushThenAtLeatsTwoFlushCommandPresentAfterWalker<XeHpFamily>;
+XEHPTEST_F(GivenCacheFlushAfterWalkerEnabledWhenMoreThan126AllocationRangesRequiresCacheFlushThenAtLeatsTwoFlushCommandPresentAfterWalkerXEHP, I) {
+    TestBodyImpl();
+}
+using GivenCacheFlushAfterWalkerEnabledWhen126AllocationRangesRequiresCacheFlushThenExpectOneFlushXEHP = GivenCacheFlushAfterWalkerEnabledWhen126AllocationRangesRequiresCacheFlushThenExpectOneFlush<XeHpFamily>;
+XEHPTEST_F(GivenCacheFlushAfterWalkerEnabledWhen126AllocationRangesRequiresCacheFlushThenExpectOneFlushXEHP, I) {
+    TestBodyImpl();
+}
+using GivenCacheFlushAfterWalkerAndTimestampPacketsEnabledWhenMoreThan126AllocationRangesRequiresCacheFlushThenExpectFlushWithOutPostSyncAndThenWithPostSyncXEHP = GivenCacheFlushAfterWalkerAndTimestampPacketsEnabledWhenMoreThan126AllocationRangesRequiresCacheFlushThenExpectFlushWithOutPostSyncAndThenWithPostSync<XeHpFamily>;
+XEHPTEST_F(GivenCacheFlushAfterWalkerAndTimestampPacketsEnabledWhenMoreThan126AllocationRangesRequiresCacheFlushThenExpectFlushWithOutPostSyncAndThenWithPostSyncXEHP, I) {
+    TestBodyImpl();
+}
+
+using CommandQueueHwCacheFlushTest = ::testing::Test;
+XEHPTEST_F(CommandQueueHwCacheFlushTest, givenHwCommandQueueForSpecificTileThenCacheFlushAfterWalkerIsNeeded) {
+    UltClDeviceFactory clDeviceFactory{1, 2};
+    cl_device_id devices[] = {clDeviceFactory.subDevices[0], clDeviceFactory.subDevices[1]};
+    MockContext context{ClDeviceVector{devices, 2}};
+
+    {
+        MockCommandQueueHw<FamilyType> commandQueue{&context, clDeviceFactory.rootDevices[0], nullptr};
+        EXPECT_FALSE(commandQueue.getRequiresCacheFlushAfterWalker());
+    }
+    {
+        MockCommandQueueHw<FamilyType> commandQueue{&context, clDeviceFactory.subDevices[0], nullptr};
+        EXPECT_TRUE(commandQueue.getRequiresCacheFlushAfterWalker());
+    }
+}

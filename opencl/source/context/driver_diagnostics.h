@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "CL/cl_ext_intel.h"
+#include "CL/cl_ext.h"
 
 namespace NEO {
 
@@ -48,6 +48,7 @@ enum PerformanceHints {
     PRIVATE_MEMORY_USAGE_TOO_HIGH,
     KERNEL_REQUIRES_COHERENCY,
     KERNEL_ARGUMENT_AUX_TRANSLATION,
+    KERNEL_ALLOCATION_AUX_TRANSLATION,
     BUFFER_IS_COMPRESSED,
     BUFFER_IS_NOT_COMPRESSED,
     IMAGE_IS_COMPRESSED,

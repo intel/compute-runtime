@@ -1,27 +1,27 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "test.h"
 
 using namespace NEO;
 
 struct MultipleMapBufferTest : public ClDeviceFixture, public ::testing::Test {
     template <typename T>
     struct MockBuffer : public BufferHw<T> {
-        using Buffer::mapOperationsHandler;
-
         template <class... Params>
-        MockBuffer(Params... params) : BufferHw<T>(params...) {
+        MockBuffer(Params... params) : BufferHw<T>(std::forward<Params>(params)...) {
             this->createFunction = BufferHw<T>::create;
         };
 
@@ -92,10 +92,16 @@ struct MultipleMapBufferTest : public ClDeviceFixture, public ::testing::Test {
     std::unique_ptr<MockBuffer<FamilyType>> createMockBuffer(bool mapOnGpu) {
         MemoryProperties memoryProperties;
         auto mockAlloc = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+        auto multiGraphicsAllocation = GraphicsAllocationHelper::toMultiGraphicsAllocation(mockAlloc);
+
         auto buffer = new MockBuffer<FamilyType>(context, memoryProperties, 0, 0, 1024, mockAlloc->getUnderlyingBuffer(), mockAlloc->getUnderlyingBuffer(),
-                                                 mockAlloc, false, false, false);
+                                                 std::move(multiGraphicsAllocation), false, false, false);
         if (mapOnGpu) {
             buffer->setSharingHandler(new SharingHandler());
+            auto gfxAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
+            for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
+                gfxAllocation->setGmm(new MockGmm(pDevice->getGmmHelper()), handleId);
+            }
         }
         return std::unique_ptr<MockBuffer<FamilyType>>(buffer);
     }
@@ -128,13 +134,13 @@ HWTEST_F(MultipleMapBufferTest, givenValidReadAndWriteBufferWhenMappedOnGpuThenA
     size_t size = 3;
     void *mappedPtr = clEnqueueMapBuffer(cmdQ.get(), buffer.get(), CL_FALSE, CL_MAP_WRITE, offset, size, 0, nullptr, nullptr, nullptr);
     EXPECT_NE(nullptr, mappedPtr);
-    EXPECT_EQ(1u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(1u, buffer->getMapOperationsHandler().size());
     EXPECT_EQ(cmdQ->readBufferCalled, 1u);
     EXPECT_EQ(cmdQ->enqueueSize, size);
     EXPECT_EQ(cmdQ->enqueueOffset, offset);
 
     retVal = clEnqueueUnmapMemObject(cmdQ.get(), buffer.get(), mappedPtr, 0, nullptr, nullptr);
-    EXPECT_EQ(0u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(0u, buffer->getMapOperationsHandler().size());
     EXPECT_EQ(cmdQ->writeBufferCalled, 1u);
     EXPECT_EQ(cmdQ->enqueueSize, size);
     EXPECT_EQ(cmdQ->enqueueOffset, offset);
@@ -150,12 +156,31 @@ HWTEST_F(MultipleMapBufferTest, givenReadOnlyMapWhenUnmappedOnGpuThenEnqueueMark
     size_t size = 3;
     void *mappedPtr = clEnqueueMapBuffer(cmdQ.get(), buffer.get(), CL_FALSE, CL_MAP_READ, offset, size, 0, nullptr, nullptr, nullptr);
     EXPECT_NE(nullptr, mappedPtr);
-    EXPECT_EQ(1u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(1u, buffer->getMapOperationsHandler().size());
     EXPECT_EQ(cmdQ->readBufferCalled, 1u);
 
     retVal = clEnqueueUnmapMemObject(cmdQ.get(), buffer.get(), mappedPtr, 0, nullptr, nullptr);
-    EXPECT_EQ(0u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(0u, buffer->getMapOperationsHandler().size());
     EXPECT_EQ(cmdQ->writeBufferCalled, 0u);
+    EXPECT_EQ(cmdQ->enqueueMarkerCalled, 1u);
+}
+
+HWTEST_F(MultipleMapBufferTest, givenWriteInvalidateMapWhenMappedOnGpuThenCallEnqueueMarker) {
+    auto buffer = createMockBuffer<FamilyType>(true);
+    auto cmdQ = createMockCmdQ<FamilyType>();
+    EXPECT_FALSE(buffer->mappingOnCpuAllowed());
+
+    size_t offset = 1;
+    size_t size = 3;
+    void *mappedPtr = clEnqueueMapBuffer(cmdQ.get(), buffer.get(), CL_FALSE, CL_MAP_WRITE_INVALIDATE_REGION, offset, size, 0, nullptr, nullptr, nullptr);
+    EXPECT_NE(nullptr, mappedPtr);
+    EXPECT_EQ(1u, buffer->getMapOperationsHandler().size());
+    EXPECT_EQ(cmdQ->readBufferCalled, 0u);
+    EXPECT_EQ(cmdQ->enqueueMarkerCalled, 1u);
+
+    retVal = clEnqueueUnmapMemObject(cmdQ.get(), buffer.get(), mappedPtr, 0, nullptr, nullptr);
+    EXPECT_EQ(0u, buffer->getMapOperationsHandler().size());
+    EXPECT_EQ(cmdQ->writeBufferCalled, 1u);
     EXPECT_EQ(cmdQ->enqueueMarkerCalled, 1u);
 }
 
@@ -164,7 +189,7 @@ HWTEST_F(MultipleMapBufferTest, givenNotMappedPtrWhenUnmapedOnGpuThenReturnError
     auto cmdQ = createMockCmdQ<FamilyType>();
     EXPECT_FALSE(buffer->mappingOnCpuAllowed());
 
-    EXPECT_EQ(0u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(0u, buffer->getMapOperationsHandler().size());
     retVal = clEnqueueUnmapMemObject(cmdQ.get(), buffer.get(), buffer->getBasePtrForMap(cmdQ->getDevice().getRootDeviceIndex()), 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
@@ -180,7 +205,7 @@ HWTEST_F(MultipleMapBufferTest, givenErrorFromReadBufferWhenMappedOnGpuThenDontA
     void *mappedPtr = clEnqueueMapBuffer(cmdQ.get(), buffer.get(), CL_FALSE, CL_MAP_READ, offset, size, 0, nullptr, nullptr, &retVal);
     EXPECT_EQ(nullptr, mappedPtr);
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
-    EXPECT_EQ(0u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(0u, buffer->getMapOperationsHandler().size());
 }
 
 HWTEST_F(MultipleMapBufferTest, givenErrorFromWriteBufferWhenUnmappedOnGpuThenDontRemoveMappedPtr) {
@@ -193,12 +218,12 @@ HWTEST_F(MultipleMapBufferTest, givenErrorFromWriteBufferWhenUnmappedOnGpuThenDo
     size_t size = 3;
     void *mappedPtr = clEnqueueMapBuffer(cmdQ.get(), buffer.get(), CL_FALSE, CL_MAP_WRITE, offset, size, 0, nullptr, nullptr, &retVal);
     EXPECT_NE(nullptr, mappedPtr);
-    EXPECT_EQ(1u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(1u, buffer->getMapOperationsHandler().size());
 
     retVal = clEnqueueUnmapMemObject(cmdQ.get(), buffer.get(), mappedPtr, 0, nullptr, nullptr);
     EXPECT_EQ(1u, cmdQ->writeBufferCalled);
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
-    EXPECT_EQ(1u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(1u, buffer->getMapOperationsHandler().size());
 }
 
 HWTEST_F(MultipleMapBufferTest, givenUnblockedQueueWhenMappedOnCpuThenAddMappedPtrAndRemoveOnUnmap) {
@@ -210,13 +235,13 @@ HWTEST_F(MultipleMapBufferTest, givenUnblockedQueueWhenMappedOnCpuThenAddMappedP
     size_t size = 3;
     void *mappedPtr = clEnqueueMapBuffer(cmdQ.get(), buffer.get(), CL_FALSE, CL_MAP_WRITE, offset, size, 0, nullptr, nullptr, &retVal);
     EXPECT_NE(nullptr, mappedPtr);
-    EXPECT_EQ(1u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(1u, buffer->getMapOperationsHandler().size());
     EXPECT_EQ(1u, buffer->transferToHostPtrCalled);
     EXPECT_EQ(buffer->copySize, size);
     EXPECT_EQ(buffer->copyOffset, offset);
 
     retVal = clEnqueueUnmapMemObject(cmdQ.get(), buffer.get(), mappedPtr, 0, nullptr, nullptr);
-    EXPECT_EQ(0u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(0u, buffer->getMapOperationsHandler().size());
     EXPECT_EQ(1u, buffer->transferFromHostPtrCalled);
     EXPECT_EQ(buffer->copySize, size);
     EXPECT_EQ(buffer->copyOffset, offset);
@@ -231,12 +256,29 @@ HWTEST_F(MultipleMapBufferTest, givenUnblockedQueueWhenReadOnlyMappedOnCpuThenDo
     size_t size = 3;
     void *mappedPtr = clEnqueueMapBuffer(cmdQ.get(), buffer.get(), CL_FALSE, CL_MAP_READ, offset, size, 0, nullptr, nullptr, &retVal);
     EXPECT_NE(nullptr, mappedPtr);
-    EXPECT_EQ(1u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(1u, buffer->getMapOperationsHandler().size());
     EXPECT_EQ(1u, buffer->transferToHostPtrCalled);
 
     retVal = clEnqueueUnmapMemObject(cmdQ.get(), buffer.get(), mappedPtr, 0, nullptr, nullptr);
-    EXPECT_EQ(0u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(0u, buffer->getMapOperationsHandler().size());
     EXPECT_EQ(0u, buffer->transferFromHostPtrCalled);
+}
+
+HWTEST_F(MultipleMapBufferTest, givenUnblockedQueueWhenWriteInvalidateMappedOnCpuThenDontMakeCpuCopy) {
+    auto buffer = createMockBuffer<FamilyType>(false);
+    auto cmdQ = createMockCmdQ<FamilyType>();
+    EXPECT_TRUE(buffer->mappingOnCpuAllowed());
+
+    size_t offset = 1;
+    size_t size = 3;
+    void *mappedPtr = clEnqueueMapBuffer(cmdQ.get(), buffer.get(), CL_FALSE, CL_MAP_WRITE_INVALIDATE_REGION, offset, size, 0, nullptr, nullptr, &retVal);
+    EXPECT_NE(nullptr, mappedPtr);
+    EXPECT_EQ(1u, buffer->getMapOperationsHandler().size());
+    EXPECT_EQ(0u, buffer->transferToHostPtrCalled);
+
+    retVal = clEnqueueUnmapMemObject(cmdQ.get(), buffer.get(), mappedPtr, 0, nullptr, nullptr);
+    EXPECT_EQ(0u, buffer->getMapOperationsHandler().size());
+    EXPECT_EQ(1u, buffer->transferFromHostPtrCalled);
 }
 
 HWTEST_F(MultipleMapBufferTest, givenBlockedQueueWhenMappedOnCpuThenAddMappedPtrAndRemoveOnUnmap) {
@@ -253,14 +295,14 @@ HWTEST_F(MultipleMapBufferTest, givenBlockedQueueWhenMappedOnCpuThenAddMappedPtr
     void *mappedPtr = clEnqueueMapBuffer(cmdQ.get(), buffer.get(), CL_FALSE, CL_MAP_WRITE, offset, size, 1, &clMapEvent, nullptr, &retVal);
     mapEvent.setStatus(CL_COMPLETE);
     EXPECT_NE(nullptr, mappedPtr);
-    EXPECT_EQ(1u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(1u, buffer->getMapOperationsHandler().size());
     EXPECT_EQ(buffer->copySize, size);
     EXPECT_EQ(buffer->copyOffset, offset);
     EXPECT_EQ(1u, buffer->transferToHostPtrCalled);
 
     retVal = clEnqueueUnmapMemObject(cmdQ.get(), buffer.get(), mappedPtr, 1, &clUnmapEvent, nullptr);
     unmapEvent.setStatus(CL_COMPLETE);
-    EXPECT_EQ(0u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(0u, buffer->getMapOperationsHandler().size());
     EXPECT_EQ(buffer->copySize, size);
     EXPECT_EQ(buffer->copyOffset, offset);
     EXPECT_EQ(1u, buffer->transferFromHostPtrCalled);
@@ -281,11 +323,11 @@ HWTEST_F(MultipleMapBufferTest, givenBlockedQueueWhenMappedReadOnlyOnCpuThenDont
     mapEvent.setStatus(CL_COMPLETE);
     EXPECT_NE(nullptr, mappedPtr);
     EXPECT_EQ(1u, buffer->transferToHostPtrCalled);
-    EXPECT_EQ(1u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(1u, buffer->getMapOperationsHandler().size());
 
     retVal = clEnqueueUnmapMemObject(cmdQ.get(), buffer.get(), mappedPtr, 1, &clUnmapEvent, nullptr);
     unmapEvent.setStatus(CL_COMPLETE);
-    EXPECT_EQ(0u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(0u, buffer->getMapOperationsHandler().size());
     EXPECT_EQ(0u, buffer->transferFromHostPtrCalled);
 }
 
@@ -312,26 +354,26 @@ HWTEST_F(MultipleMapBufferTest, givenMultimpleMapsWhenUnmappingThenRemoveCorrect
         mappedPtrs[i].ptr = clEnqueueMapBuffer(cmdQ.get(), buffer.get(), CL_FALSE, CL_MAP_WRITE,
                                                mappedPtrs[i].offset[0], mappedPtrs[i].size[0], 0, nullptr, nullptr, &retVal);
         EXPECT_NE(nullptr, mappedPtrs[i].ptr);
-        EXPECT_EQ(i + 1, buffer->mapOperationsHandler.size());
+        EXPECT_EQ(i + 1, buffer->getMapOperationsHandler().size());
         EXPECT_EQ(cmdQ->enqueueSize, mappedPtrs[i].size[0]);
         EXPECT_EQ(cmdQ->enqueueOffset, mappedPtrs[i].offset[0]);
     }
 
     // reordered unmap
     clEnqueueUnmapMemObject(cmdQ.get(), buffer.get(), mappedPtrs[1].ptr, 0, nullptr, nullptr);
-    EXPECT_EQ(2u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(2u, buffer->getMapOperationsHandler().size());
     EXPECT_EQ(cmdQ->unmapPtr, mappedPtrs[1].ptr);
     EXPECT_EQ(cmdQ->enqueueSize, mappedPtrs[1].size[0]);
     EXPECT_EQ(cmdQ->enqueueOffset, mappedPtrs[1].offset[0]);
 
     clEnqueueUnmapMemObject(cmdQ.get(), buffer.get(), mappedPtrs[2].ptr, 0, nullptr, nullptr);
-    EXPECT_EQ(1u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(1u, buffer->getMapOperationsHandler().size());
     EXPECT_EQ(cmdQ->unmapPtr, mappedPtrs[2].ptr);
     EXPECT_EQ(cmdQ->enqueueSize, mappedPtrs[2].size[0]);
     EXPECT_EQ(cmdQ->enqueueOffset, mappedPtrs[2].offset[0]);
 
     clEnqueueUnmapMemObject(cmdQ.get(), buffer.get(), mappedPtrs[0].ptr, 0, nullptr, nullptr);
-    EXPECT_EQ(0u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(0u, buffer->getMapOperationsHandler().size());
     EXPECT_EQ(cmdQ->unmapPtr, mappedPtrs[0].ptr);
     EXPECT_EQ(cmdQ->enqueueSize, mappedPtrs[0].size[0]);
     EXPECT_EQ(cmdQ->enqueueOffset, mappedPtrs[0].offset[0]);
@@ -347,13 +389,13 @@ HWTEST_F(MultipleMapBufferTest, givenOverlapingPtrWhenMappingOnGpuForWriteThenRe
     void *mappedPtr = clEnqueueMapBuffer(cmdQ.get(), buffer.get(), CL_FALSE, CL_MAP_READ, offset, size, 0, nullptr, nullptr, &retVal);
     EXPECT_NE(nullptr, mappedPtr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(1u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(1u, buffer->getMapOperationsHandler().size());
 
     offset++;
     void *mappedPtr2 = clEnqueueMapBuffer(cmdQ.get(), buffer.get(), CL_FALSE, CL_MAP_WRITE, offset, size, 0, nullptr, nullptr, &retVal);
     EXPECT_EQ(nullptr, mappedPtr2);
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
-    EXPECT_EQ(1u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(1u, buffer->getMapOperationsHandler().size());
 }
 
 HWTEST_F(MultipleMapBufferTest, givenOverlapingPtrWhenMappingOnCpuForWriteThenReturnError) {
@@ -366,11 +408,11 @@ HWTEST_F(MultipleMapBufferTest, givenOverlapingPtrWhenMappingOnCpuForWriteThenRe
     void *mappedPtr = clEnqueueMapBuffer(cmdQ.get(), buffer.get(), CL_FALSE, CL_MAP_READ, offset, size, 0, nullptr, nullptr, &retVal);
     EXPECT_NE(nullptr, mappedPtr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(1u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(1u, buffer->getMapOperationsHandler().size());
 
     offset++;
     void *mappedPtr2 = clEnqueueMapBuffer(cmdQ.get(), buffer.get(), CL_FALSE, CL_MAP_WRITE, offset, size, 0, nullptr, nullptr, &retVal);
     EXPECT_EQ(nullptr, mappedPtr2);
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
-    EXPECT_EQ(1u, buffer->mapOperationsHandler.size());
+    EXPECT_EQ(1u, buffer->getMapOperationsHandler().size());
 }

@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/file_io.h"
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/event/event.h"
 #include "opencl/source/event/event_tracker.h"
@@ -87,12 +87,12 @@ TEST(EventsTracker, whenCallLabelFunctionThenGetStringWithProperCmdqId) {
 }
 
 TEST(EventsTracker, givenNullptrCmdqThenNotDumping) {
-    MockCommandQueue *cmdq_ptr = nullptr;
+    MockCommandQueue *cmdqPtr = nullptr;
 
     std::stringstream stream;
     std::set<CommandQueue *> dumped;
 
-    EventsTracker::dumpQueue(cmdq_ptr, stream, dumped);
+    EventsTracker::dumpQueue(cmdqPtr, stream, dumped);
 
     EXPECT_STREQ("", stream.str().c_str());
 }
@@ -158,7 +158,7 @@ TEST(EventsTracker, whenCallDumpEdgeThenGetStringWithProperLabelOfDumpedEdge) {
 TEST(EventsTracker, givenEventWithTaskLevelAndCountNotReadyThenDumpingNodeWithNotReadyLabels) {
     UserEvent uEvent;
     uEvent.taskLevel = CompletionStamp::notReady;
-    uEvent.updateTaskCount(CompletionStamp::notReady);
+    uEvent.updateTaskCount(CompletionStamp::notReady, 0);
 
     std::stringstream stream;
     std::unordered_map<Event *, int64_t> map;
@@ -175,7 +175,7 @@ TEST(EventsTracker, givenEventWithTaskLevelAndCountNotReadyThenDumpingNodeWithNo
 TEST(EventsTracker, whenCallDumpNodeFunctionThenDumpingNodeWithProperTaskLevelAndCountValues) {
     UserEvent uEvent;
     uEvent.taskLevel = 1;
-    uEvent.updateTaskCount(1);
+    uEvent.updateTaskCount(1, 0);
 
     std::stringstream stream;
     std::unordered_map<Event *, int64_t> map;
@@ -232,7 +232,7 @@ TEST(EventsTracker, givenCmdqAndItsVirtualEventThenDumpingWithProperLabels) {
     MockCommandQueue cmdq;
     VirtualEvent vEvent(&cmdq, &ctx);
     vEvent.setCurrentCmdQVirtualEvent(true);
-    vEvent.updateTaskCount(1);
+    vEvent.updateTaskCount(1, 0);
 
     std::stringstream stream;
     std::unordered_map<Event *, int64_t> map;
@@ -395,7 +395,7 @@ TEST(EventsTracker, givenCmdqAndItsVirtualEventThenDumpingProperGraph) {
     MockCommandQueue cmdq;
     VirtualEvent vEvent(&cmdq, &ctx);
     vEvent.setCurrentCmdQVirtualEvent(true);
-    vEvent.updateTaskCount(1);
+    vEvent.updateTaskCount(1, 0);
 
     std::stringstream stream;
     std::unordered_map<Event *, int64_t> map;
@@ -434,14 +434,14 @@ TEST(EventsTracker, givenTwoEventsWithCommonParentEventThenDumpingProperGraph) {
 
     EXPECT_STREQ(expected.str().c_str(), stream.str().c_str());
 
-    uEventChild1.updateCompletionStamp(0, 0, 0);
-    uEventChild2.updateCompletionStamp(0, 0, 0);
-    uEvent.updateCompletionStamp(0, 0, 0);
+    uEventChild1.updateCompletionStamp(0, 0, 0, 0);
+    uEventChild2.updateCompletionStamp(0, 0, 0, 0);
+    uEvent.updateCompletionStamp(0, 0, 0, 0);
     uEvent.setStatus(0);
 }
 
 TEST(EventsTracker, whenCalingCreateDumpStreamThenGettingValidFstreamInstance) {
-    std::string testFileName("test_files\\EventsTracker_testfile.gv");
+    std::string testFileName("EventsTracker_testfile.gv");
     std::shared_ptr<std::ostream> stream = EventsTracker::getEventsTracker().createDumpStream(testFileName);
 
     EXPECT_TRUE(stream->good());
@@ -611,10 +611,10 @@ TEST(EventsTracker, givenEventsWithDependenciesBetweenThemThenDumpingProperGraph
 
     EXPECT_STREQ(expected.str().c_str(), evTrackerMock.streamMock.c_str());
 
-    uEventChild1.updateCompletionStamp(0, 0, 0);
-    uEventChild2.updateCompletionStamp(0, 0, 0);
-    uEvent2.updateCompletionStamp(0, 0, 0);
-    uEvent1.updateCompletionStamp(0, 0, 0);
+    uEventChild1.updateCompletionStamp(0, 0, 0, 0);
+    uEventChild2.updateCompletionStamp(0, 0, 0, 0);
+    uEvent2.updateCompletionStamp(0, 0, 0, 0);
+    uEvent1.updateCompletionStamp(0, 0, 0, 0);
     uEvent2.setStatus(0);
     uEvent1.setStatus(0);
 }
@@ -656,8 +656,8 @@ TEST(EventsTracker, givenEventsFromDifferentThreadsThenDumpingProperly) {
     class EventsTrackerMockMT : public EventsTrackerMock {
       public:
         TrackedEvent *getNodes() override {
-            auto TrackedEventsMock = std::shared_ptr<IFList<TrackedEvent, true, true>>{new IFList<TrackedEvent, true, true>};
-            return TrackedEventsMock->detachNodes();
+            auto trackedEventsMock = std::shared_ptr<IFList<TrackedEvent, true, true>>{new IFList<TrackedEvent, true, true>};
+            return trackedEventsMock->detachNodes();
         }
         std::shared_ptr<IFList<TrackedEvent, true, true>> *TrackedEventsMock;
     };

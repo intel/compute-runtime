@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,6 @@
 #include "shared/source/device_binary_format/patchtokens_validator.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 TEST(PatchtokensValidator, GivenValidProgramThenValidationSucceeds) {

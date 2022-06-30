@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,8 +20,7 @@
 
 namespace NEO {
 
-bool UnifiedSharingContextBuilder::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue,
-                                                     cl_int &errcodeRet) {
+bool UnifiedSharingContextBuilder::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue) {
     switch (propertyType) {
     case static_cast<cl_context_properties>(UnifiedSharingContextType::DeviceHandle):
     case static_cast<cl_context_properties>(UnifiedSharingContextType::DeviceGroup):
@@ -45,6 +44,10 @@ bool UnifiedSharingContextBuilder::finalizeProperties(Context &context, int32_t 
 std::unique_ptr<SharingContextBuilder> UnifiedSharingBuilderFactory::createContextBuilder() {
     return std::make_unique<UnifiedSharingContextBuilder>();
 };
+
+std::string UnifiedSharingBuilderFactory::getExtensions(DriverInfo *driverInfo) {
+    return "";
+}
 
 void *UnifiedSharingBuilderFactory::getExtensionFunctionAddress(const std::string &functionName) {
     return nullptr;

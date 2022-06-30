@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/built_ins/populate_built_ins.inl"
 #include "opencl/source/built_ins/vme_dispatch_builder.h"
+#include "opencl/source/execution_environment/cl_execution_environment.h"
 #include "opencl/source/program/program.h"
 
 namespace NEO {
@@ -31,17 +32,16 @@ static const char *blockAdvancedMotionEstimateBidirectionalCheckIntelSrc = {
 };
 
 static const std::tuple<const char *, const char *> mediaBuiltIns[] = {
-    std::make_tuple("block_motion_estimate_intel", blockMotionEstimateIntelSrc),
-    std::make_tuple("block_advanced_motion_estimate_check_intel", blockAdvancedMotionEstimateCheckIntelSrc),
-    std::make_tuple("block_advanced_motion_estimate_bidirectional_check_intel", blockAdvancedMotionEstimateBidirectionalCheckIntelSrc),
-};
+    {"block_motion_estimate_intel", blockMotionEstimateIntelSrc},
+    {"block_advanced_motion_estimate_check_intel", blockAdvancedMotionEstimateCheckIntelSrc},
+    {"block_advanced_motion_estimate_bidirectional_check_intel", blockAdvancedMotionEstimateBidirectionalCheckIntelSrc}};
 
 // Unlike other built-ins media kernels are not stored in BuiltIns object.
 // Pointer to program with built in kernels is returned to the user through API
 // call and user is responsible for releasing it by calling clReleaseProgram.
 Program *Vme::createBuiltInProgram(
     Context &context,
-    Device &device,
+    const ClDeviceVector &deviceVector,
     const char *kernelNames,
     int &errcodeRet) {
     std::string programSourceStr = "";
@@ -68,7 +68,9 @@ Program *Vme::createBuiltInProgram(
     }
 
     Program *pBuiltInProgram = nullptr;
-    pBuiltInProgram = Program::create(programSourceStr.c_str(), &context, device, true, nullptr);
+    pBuiltInProgram = Program::createBuiltInFromSource(programSourceStr.c_str(), &context, deviceVector, nullptr);
+
+    auto &device = *deviceVector[0];
 
     if (pBuiltInProgram) {
         std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> builtinsBuilders;
@@ -79,7 +81,7 @@ Program *Vme::createBuiltInProgram(
         builtinsBuilders["block_advanced_motion_estimate_bidirectional_check_intel"] =
             &Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, device);
 
-        errcodeRet = pBuiltInProgram->build(&device, mediaKernelsBuildOptions, true, builtinsBuilders);
+        errcodeRet = pBuiltInProgram->build(deviceVector, mediaKernelsBuildOptions, true, builtinsBuilders);
     } else {
         errcodeRet = CL_INVALID_VALUE;
     }
@@ -99,10 +101,11 @@ const char *getAdditionalBuiltinAsString(EBuiltInOps::Type builtin) {
     }
 }
 
-BuiltinDispatchInfoBuilder &Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, Device &device) {
-    auto &builtins = *device.getBuiltIns();
+BuiltinDispatchInfoBuilder &Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, ClDevice &device) {
+    auto &builtins = *device.getDevice().getBuiltIns();
     uint32_t operationId = static_cast<uint32_t>(operation);
-    auto &operationBuilder = builtins.BuiltinOpsBuilders[operationId];
+    auto clExecutionEnvironment = static_cast<ClExecutionEnvironment *>(device.getExecutionEnvironment());
+    auto &operationBuilder = clExecutionEnvironment->peekBuilders(device.getRootDeviceIndex())[operationId];
     switch (operation) {
     default:
         return BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(operation, device);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/utilities/stackvec.h"
 
 #include <cstdint>
+#include <string>
 
 namespace NEO {
 
@@ -25,10 +26,12 @@ struct DeviceInfo {
     size_t imageMaxArraySize;
     size_t imageMaxBufferSize;
     size_t maxNumEUsPerSubSlice;
+    size_t maxNumEUsPerDualSubSlice;
     size_t maxParameterSize;
     size_t maxWorkGroupSize;
     size_t maxWorkItemSizes[3];
     size_t outProfilingTimerResolution;
+    size_t outProfilingTimerClock;
     size_t printfBufferSize;
     uint32_t addressBits;
     uint32_t computeUnitsUsedForScratch;
@@ -41,11 +44,12 @@ struct DeviceInfo {
     uint32_t maxSamplers;
     uint32_t maxWriteImageArgs;
     uint32_t numThreadsPerEU;
+    StackVec<uint32_t, 6> threadsPerEUConfigs;
     uint32_t vendorId;
     uint32_t vmeAvcSupportsPreemption;
     bool debuggerActive;
     bool force32BitAddressess;
-    bool sharedSystemAllocationsSupport;
+    std::string name;
 };
 
 } // namespace NEO

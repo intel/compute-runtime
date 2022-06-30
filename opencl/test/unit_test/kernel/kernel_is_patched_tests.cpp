@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
@@ -18,22 +18,22 @@ using namespace NEO;
 class PatchedKernelTest : public ::testing::Test {
   public:
     void SetUp() override {
-        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), rootDeviceIndex));
         context.reset(new MockContext(device.get()));
-        program.reset(Program::create("FillBufferBytes", context.get(), *device.get(), true, &retVal));
+        program.reset(Program::createBuiltInFromSource<MockProgram>("FillBufferBytes", context.get(), context->getDevices(), &retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
-        cl_device_id clDevice = device.get();
-        program->build(1, &clDevice, nullptr, nullptr, nullptr, false);
-        kernel.reset(Kernel::create(program.get(), *program->getKernelInfo("FillBufferBytes"), &retVal));
+        program->build(program->getDevices(), nullptr, false);
+        kernel.reset(Kernel::create(program.get(), program->getKernelInfoForKernel("FillBufferBytes"), *device, &retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
     void TearDown() override {
         context.reset();
     }
 
+    const uint32_t rootDeviceIndex = 0u;
     std::unique_ptr<MockContext> context;
     std::unique_ptr<MockClDevice> device;
-    std::unique_ptr<Program> program;
+    std::unique_ptr<MockProgram> program;
     std::unique_ptr<Kernel> kernel;
     cl_int retVal = CL_SUCCESS;
 };
@@ -64,39 +64,25 @@ TEST_F(PatchedKernelTest, givenKernelWithoutAllArgsSetWhenIsPatchedIsCalledThenR
     clReleaseMemObject(buffer);
 }
 
-TEST_F(PatchedKernelTest, givenKernelWithAllArgsSetWithSvmAllocWhenIsPatchedIsCalledThenReturnsTrue) {
-    auto argsNum = kernel->getKernelArgsNumber();
-    for (uint32_t i = 0; i < argsNum; i++) {
-        kernel->setArgSvmAlloc(0, nullptr, nullptr);
-    }
-    EXPECT_FALSE(kernel->isPatched());
-    for (uint32_t i = 0; i < argsNum; i++) {
-        kernel->setArgSvmAlloc(i, nullptr, nullptr);
-    }
-    EXPECT_TRUE(kernel->isPatched());
+TEST_F(PatchedKernelTest, givenArgSvmAllocWhenArgIsSetThenArgIsPatched) {
+    EXPECT_FALSE(kernel->getKernelArguments()[0].isPatched);
+    kernel->setArgSvmAlloc(0, nullptr, nullptr, 0u);
+    EXPECT_TRUE(kernel->getKernelArguments()[0].isPatched);
 }
 
-TEST_F(PatchedKernelTest, givenKernelWithAllArgsSetWithSvmWhenIsPatchedIsCalledThenReturnsTrue) {
+TEST_F(PatchedKernelTest, givenArgSvmWhenArgIsSetThenArgIsPatched) {
     uint32_t size = sizeof(int);
-    auto argsNum = kernel->getKernelArgsNumber();
-    for (uint32_t i = 0; i < argsNum; i++) {
-        kernel->setArgSvm(0, size, nullptr, nullptr, 0u);
-    }
-    EXPECT_FALSE(kernel->isPatched());
-    for (uint32_t i = 0; i < argsNum; i++) {
-        kernel->setArgSvm(i, size, nullptr, nullptr, 0u);
-    }
-    EXPECT_TRUE(kernel->isPatched());
+    EXPECT_FALSE(kernel->getKernelArguments()[0].isPatched);
+    kernel->setArgSvm(0, size, nullptr, nullptr, 0);
+    EXPECT_TRUE(kernel->getKernelArguments()[0].isPatched);
 }
 
 TEST_F(PatchedKernelTest, givenKernelWithOneArgumentToPatchWhichIsNonzeroIndexedWhenThatArgumentIsSetThenKernelIsPatched) {
     uint32_t size = sizeof(int);
     MockKernelWithInternals mockKernel(*device.get(), context.get());
-    EXPECT_EQ(0u, mockKernel.kernelInfo.argumentsToPatchNum);
-    mockKernel.kernelInfo.storeKernelArgPatchInfo(1, 0, 0, 0, 0);
-    EXPECT_EQ(1u, mockKernel.kernelInfo.argumentsToPatchNum);
-    mockKernel.kernelInfo.storeKernelArgPatchInfo(1, 0, 0, 0, 0);
-    EXPECT_EQ(1u, mockKernel.kernelInfo.argumentsToPatchNum);
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.numArgsToPatch = 1;
+    mockKernel.kernelInfo.addArgBuffer(1, 0);
+
     kernel.reset(mockKernel.mockKernel);
     kernel->initialize();
     EXPECT_FALSE(kernel->Kernel::isPatched());

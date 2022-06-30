@@ -1,7 +1,9 @@
-REM Copyright (C) 2017-2020 Intel Corporation
-REM
-REM SPDX-License-Identifier: MIT
-REM
+::
+:: Copyright (C) 2020-2021 Intel Corporation
+::
+:: SPDX-License-Identifier: MIT
+::
+
 @where appverif
 @if not "%ERRORLEVEL%"=="0" (
   @echo No appverif command.

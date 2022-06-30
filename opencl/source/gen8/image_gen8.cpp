@@ -1,27 +1,28 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/gen8/hw_cmds.h"
+#include "shared/source/gen8/hw_cmds_base.h"
 
-#include "opencl/source/mem_obj/image.h"
 #include "opencl/source/mem_obj/image.inl"
 
 #include <map>
 
 namespace NEO {
 
-typedef BDWFamily Family;
+using Family = BDWFamily;
 static auto gfxCore = IGFX_GEN8_CORE;
 
 template <>
 void ImageHw<Family>::setMediaSurfaceRotation(void *) {}
 
 template <>
-void ImageHw<Family>::setSurfaceMemoryObjectControlStateIndexToMocsTable(void *, uint32_t) {}
+void ImageHw<Family>::setSurfaceMemoryObjectControlState(void *, uint32_t) {}
 
-#include "opencl/source/mem_obj/image_factory_init.inl"
 } // namespace NEO
+
+// factory initializer
+#include "opencl/source/mem_obj/image_factory_init.inl"

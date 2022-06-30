@@ -1,3 +1,11 @@
+<!---
+
+Copyright (C) 2018-2021 Intel Corporation
+
+SPDX-License-Identifier: MIT
+
+-->
+
 # Intel(R) Graphics Compute Runtime for oneAPI Level Zero and OpenCL(TM) Driver
 
 ## Introduction
@@ -26,11 +34,12 @@ You may obtain a copy of the License at: https://opensource.org/licenses/MIT
 
 |Platform|OpenCL|Level Zero|
 |--------|:----:|:--------:|
-|Intel Core Processors with Gen8 graphics devices (formerly Broadwell)| 2.1 | - |
-|Intel Core Processors with Gen9 graphics devices (formerly Skylake, Kaby Lake, Coffee Lake)| 2.1 | Y |
-|Intel Atom Processors with Gen9 graphics devices (formerly Apollo Lake, Gemini Lake)| 1.2 | - |
-|Intel Core Processors with Gen11 graphics devices (formerly Ice Lake)| 2.1 | Y |
-|Intel Core Processors with Gen12 graphics devices (formerly Tiger Lake)| 3.0 | Y |
+|Intel Core Processors with Gen8 graphics devices (formerly Broadwell)| 3.0 | - |
+|Intel Core Processors with Gen9 graphics devices (formerly Skylake, Kaby Lake, Coffee Lake)| 3.0 | Y |
+|Intel Atom Processors with Gen9 graphics devices (formerly Apollo Lake, Gemini Lake)| 3.0 | - |
+|Intel Core Processors with Gen11 graphics devices (formerly Ice Lake)| 3.0 | Y |
+|Intel Atom Processors with Gen11 graphics devices (formerly Elkhart Lake)| 3.0 | - |
+|Intel Core Processors with Gen12 graphics devices (formerly Tiger Lake, Rocket Lake, Alder Lake)| 3.0 | Y |
 
 ## Release cadence
 
@@ -49,7 +58,7 @@ To allow NEO access to GPU device make sure user has permissions to files /dev/d
 NEO is available for installation on a variety of Linux distributions
 and can be installed via the distro's package manager.
 
-For example on Ubuntu* 19.04, 19.10:
+For example on Ubuntu* 20.04:
 
 ```
 apt-get install intel-opencl-icd

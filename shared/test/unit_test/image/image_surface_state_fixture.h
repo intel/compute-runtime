@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#pragma once
 
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -12,37 +14,31 @@
 #include "shared/source/image/image_surface_state.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/surface.h"
-
-#include "opencl/source/helpers/surface_formats.h"
-#include "opencl/source/kernel/kernel.h"
-#include "opencl/source/mem_obj/image.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/fixtures/image_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
-#include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
-#include "test.h"
+#include "shared/test/common/fixtures/device_fixture.h"
+#include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include <memory>
 
 namespace NEO {
 
-class ImageSurfaceStateTests : public ClDeviceFixture,
+class ImageSurfaceStateTests : public DeviceFixture,
                                public testing::Test {
   public:
     ImageSurfaceStateTests() = default;
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        DeviceFixture::SetUp();
         gmmHelper = pDevice->getGmmHelper();
+        mockGmm = std::make_unique<MockGmm>(gmmHelper);
     }
 
     void TearDown() override {
-        ClDeviceFixture::TearDown();
+        DeviceFixture::TearDown();
     }
 
-    MockGmm mockGmm;
+    std::unique_ptr<MockGmm> mockGmm;
     GmmHelper *gmmHelper = nullptr;
-    NEO::ImageInfo imageInfo;
+    NEO::ImageInfo imageInfo{};
 };
 
 } // namespace NEO

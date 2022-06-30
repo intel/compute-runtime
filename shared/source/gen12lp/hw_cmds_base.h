@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,11 +17,16 @@
 
 template <class T>
 struct CmdParse;
-namespace NEO {
 
+namespace NEO {
+class LogicalStateHelper;
 struct GEN12LP {
 #include "shared/source/generated/gen12lp/hw_cmds_generated_gen12lp.inl"
-    static constexpr uint32_t stateComputeModeForceNonCoherentMask = (((1 << 0) | (1 << 1)) << 3);
+
+    static constexpr bool supportsSampler = true;
+    static constexpr bool isUsingGenericMediaStateClear = true;
+    static constexpr uint32_t stateComputeModeForceNonCoherentMask = (0b11u << 3);
+    static constexpr bool isUsingMiMemFence = false;
 
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {
         union {
@@ -56,6 +61,8 @@ struct TGLLPFamily : public GEN12LP {
     using XY_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
     using XY_COLOR_BLT = typename GfxFamily::XY_FAST_COLOR_BLT;
     using MI_STORE_REGISTER_MEM_CMD = typename GfxFamily::MI_STORE_REGISTER_MEM;
+    using TimestampPacketType = uint32_t;
+    using LogicalStateHelperHw = LogicalStateHelper;
     static const GPGPU_WALKER cmdInitGpgpuWalker;
     static const INTERFACE_DESCRIPTOR_DATA cmdInitInterfaceDescriptorData;
     static const MEDIA_INTERFACE_DESCRIPTOR_LOAD cmdInitMediaInterfaceDescriptorLoad;
@@ -84,6 +91,9 @@ struct TGLLPFamily : public GEN12LP {
     static const STATE_SIP cmdInitStateSip;
     static const BINDING_TABLE_STATE cmdInitBindingTableState;
     static const MI_USER_INTERRUPT cmdInitUserInterrupt;
+    static const L3_CONTROL cmdInitL3ControlWithoutPostSync;
+    static const L3_CONTROL cmdInitL3ControlWithPostSync;
+    static const XY_BLOCK_COPY_BLT cmdInitXyBlockCopyBlt;
     static const XY_COPY_BLT cmdInitXyCopyBlt;
     static const MI_FLUSH_DW cmdInitMiFlushDw;
     static const XY_FAST_COLOR_BLT cmdInitXyColorBlt;

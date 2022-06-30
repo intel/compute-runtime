@@ -1,17 +1,18 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/gen9/reg_configs.h"
-#include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_compilers.h"
+#include "shared/test/common/test_macros/test.h"
 
-#include "opencl/source/helpers/hardware_commands_helper.h"
-#include "test.h"
-
+#include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
@@ -21,18 +22,21 @@ namespace ult {
 
 struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
     void SetUp() override {
+        NEO::MockCompilerEnableGuard mock(true);
+        ze_result_t returnValue = ZE_RESULT_SUCCESS;
         auto executionEnvironment = new NEO::ExecutionEnvironment();
         auto mockBuiltIns = new MockBuiltins();
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
         neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u);
 
         std::vector<std::unique_ptr<NEO::Device>> devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
 
-        auto driverHandleUlt = whitebox_cast(DriverHandle::create(std::move(devices)));
+        auto driverHandleUlt = whiteboxCast(DriverHandle::create(std::move(devices), L0EnvVariables{}, &returnValue));
         driverHandle.reset(driverHandleUlt);
 
         ASSERT_NE(nullptr, driverHandle);
@@ -45,18 +49,21 @@ struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
         ASSERT_NE(nullptr, device);
 
         ze_command_queue_desc_t queueDesc = {};
-        commandQueue = whitebox_cast(CommandQueue::create(productFamily, device,
-                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                          &queueDesc,
-                                                          false));
+        commandQueue = whiteboxCast(CommandQueue::create(productFamily, device,
+                                                         neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                         &queueDesc,
+                                                         false,
+                                                         false,
+                                                         returnValue));
         ASSERT_NE(nullptr, commandQueue->commandStream);
 
-        commandList = CommandList::create(productFamily, device, false);
+        commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue);
         ASSERT_NE(nullptr, commandList);
     }
     void TearDown() override {
         commandList->destroy();
         commandQueue->destroy();
+        L0::GlobalDriver = nullptr;
     }
 
     DebugManagerStateRestore restorer;

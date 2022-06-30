@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 
 namespace L0 {
 namespace ImageFormats {
-constexpr uint32_t ZE_IMAGE_FORMAT_RENDER_LAYOUT_MAX = 30u;
+constexpr uint32_t ZE_IMAGE_FORMAT_RENDER_LAYOUT_MAX = 43u;
 
 using FormatTypes = std::array<NEO::SurfaceFormatInfo, 5u>;
 
@@ -99,11 +99,11 @@ constexpr FormatTypes layoutY8 = {{{GMM_FORMAT_Y8_UNORM, NEO::GFX3DSTATE_SURFACE
                                    {GMM_FORMAT_Y8_UNORM, NEO::GFX3DSTATE_SURFACEFORMAT_Y8_UNORM, 0, 1, 1, 1},
                                    {GMM_FORMAT_Y8_UNORM, NEO::GFX3DSTATE_SURFACEFORMAT_Y8_UNORM, 0, 1, 1, 1},
                                    {GMM_FORMAT_Y8_UNORM, NEO::GFX3DSTATE_SURFACEFORMAT_Y8_UNORM, 0, 1, 1, 1}}};
-constexpr FormatTypes layoutNV12 = {{{GMM_FORMAT_NV12, NEO::GFX3DSTATE_SURFACEFORMAT_NV12, 0, 1, 1, 1},
-                                     {GMM_FORMAT_NV12, NEO::GFX3DSTATE_SURFACEFORMAT_NV12, 0, 1, 1, 1},
-                                     {GMM_FORMAT_NV12, NEO::GFX3DSTATE_SURFACEFORMAT_NV12, 0, 1, 1, 1},
-                                     {GMM_FORMAT_NV12, NEO::GFX3DSTATE_SURFACEFORMAT_NV12, 0, 1, 1, 1},
-                                     {GMM_FORMAT_NV12, NEO::GFX3DSTATE_SURFACEFORMAT_NV12, 0, 1, 1, 1}}};
+constexpr FormatTypes layoutNV12 = {{{GMM_FORMAT_NV12, NEO::GFX3DSTATE_SURFACEFORMAT_PLANAR_420_8, 0, 1, 1, 1},
+                                     {GMM_FORMAT_NV12, NEO::GFX3DSTATE_SURFACEFORMAT_PLANAR_420_8, 0, 1, 1, 1},
+                                     {GMM_FORMAT_NV12, NEO::GFX3DSTATE_SURFACEFORMAT_PLANAR_420_8, 0, 1, 1, 1},
+                                     {GMM_FORMAT_NV12, NEO::GFX3DSTATE_SURFACEFORMAT_PLANAR_420_8, 0, 1, 1, 1},
+                                     {GMM_FORMAT_NV12, NEO::GFX3DSTATE_SURFACEFORMAT_PLANAR_420_8, 0, 1, 1, 1}}};
 constexpr FormatTypes layoutYUYV = {{{GMM_FORMAT_YCRCB_NORMAL, NEO::GFX3DSTATE_SURFACEFORMAT_YCRCB_NORMAL, 0, 2, 1, 2},
                                      {GMM_FORMAT_YCRCB_NORMAL, NEO::GFX3DSTATE_SURFACEFORMAT_YCRCB_NORMAL, 0, 2, 1, 2},
                                      {GMM_FORMAT_YCRCB_NORMAL, NEO::GFX3DSTATE_SURFACEFORMAT_YCRCB_NORMAL, 0, 2, 1, 2},
@@ -129,11 +129,6 @@ constexpr FormatTypes layoutAYUV = {{{GMM_FORMAT_AYUV, NEO::GFX3DSTATE_SURFACEFO
                                      {GMM_FORMAT_AYUV, NEO::GFX3DSTATE_SURFACEFORMAT_R8G8B8A8_UNORM, 0, 4, 1, 4},
                                      {GMM_FORMAT_AYUV, NEO::GFX3DSTATE_SURFACEFORMAT_R8G8B8A8_UNORM, 0, 4, 1, 4},
                                      {GMM_FORMAT_AYUV, NEO::GFX3DSTATE_SURFACEFORMAT_R8G8B8A8_UNORM, 0, 4, 1, 4}}};
-constexpr FormatTypes layoutYUAV = {{{GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
-                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
-                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
-                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
-                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1}}};
 constexpr FormatTypes layoutY410 = {{{GMM_FORMAT_Y410, NEO::GFX3DSTATE_SURFACEFORMAT_R10G10B10A2_UNORM, 0, 4, 1, 4},
                                      {GMM_FORMAT_Y410, NEO::GFX3DSTATE_SURFACEFORMAT_R10G10B10A2_UNORM, 0, 4, 1, 4},
                                      {GMM_FORMAT_Y410, NEO::GFX3DSTATE_SURFACEFORMAT_R10G10B10A2_UNORM, 0, 4, 1, 4},
@@ -159,23 +154,96 @@ constexpr FormatTypes layoutP016 = {{{GMM_FORMAT_P016, NEO::GFX3DSTATE_SURFACEFO
                                      {GMM_FORMAT_P016, NEO::GFX3DSTATE_SURFACEFORMAT_PLANAR_420_16, 0, 2, 1, 1},
                                      {GMM_FORMAT_P016, NEO::GFX3DSTATE_SURFACEFORMAT_PLANAR_420_16, 0, 2, 1, 1},
                                      {GMM_FORMAT_P016, NEO::GFX3DSTATE_SURFACEFORMAT_PLANAR_420_16, 0, 2, 1, 1}}};
-constexpr FormatTypes layoutY216 = {{{GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
-                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
-                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
-                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
-                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1}}};
+constexpr FormatTypes layoutY216 = {{{GMM_FORMAT_Y216, NEO::GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM, 0, 4, 2, 8},
+                                     {GMM_FORMAT_Y216, NEO::GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM, 0, 4, 2, 8},
+                                     {GMM_FORMAT_Y216, NEO::GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM, 0, 4, 2, 8},
+                                     {GMM_FORMAT_Y216, NEO::GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM, 0, 4, 2, 8},
+                                     {GMM_FORMAT_Y216, NEO::GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM, 0, 4, 2, 8}}};
 constexpr FormatTypes layoutP216 = {{{GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
                                      {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
                                      {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
                                      {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
                                      {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1}}};
-constexpr FormatTypes layoutP416 = {{{GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+constexpr FormatTypes layoutP8 = {{{GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                   {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                   {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                   {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                   {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1}}};
+constexpr FormatTypes layoutYUY2 = {{{GMM_FORMAT_YCRCB_NORMAL, NEO::GFX3DSTATE_SURFACEFORMAT_YCRCB_NORMAL, 0, 2, 1, 2},
+                                     {GMM_FORMAT_YCRCB_NORMAL, NEO::GFX3DSTATE_SURFACEFORMAT_YCRCB_NORMAL, 0, 2, 1, 2},
+                                     {GMM_FORMAT_YCRCB_NORMAL, NEO::GFX3DSTATE_SURFACEFORMAT_YCRCB_NORMAL, 0, 2, 1, 2},
+                                     {GMM_FORMAT_YCRCB_NORMAL, NEO::GFX3DSTATE_SURFACEFORMAT_YCRCB_NORMAL, 0, 2, 1, 2},
+                                     {GMM_FORMAT_YCRCB_NORMAL, NEO::GFX3DSTATE_SURFACEFORMAT_YCRCB_NORMAL, 0, 2, 1, 2}}};
+constexpr FormatTypes layoutA8P8 = {{{GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
                                      {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
                                      {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
                                      {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
                                      {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1}}};
+constexpr FormatTypes layoutIA44 = {{{GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1}}};
+constexpr FormatTypes layoutAI44 = {{{GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1}}};
+constexpr FormatTypes layoutY416 = {{{GMM_FORMAT_Y416, NEO::GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM, 0, 4, 2, 8},
+                                     {GMM_FORMAT_Y416, NEO::GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM, 0, 4, 2, 8},
+                                     {GMM_FORMAT_Y416, NEO::GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM, 0, 4, 2, 8},
+                                     {GMM_FORMAT_Y416, NEO::GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM, 0, 4, 2, 8},
+                                     {GMM_FORMAT_Y416, NEO::GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM, 0, 4, 2, 8}}};
+constexpr FormatTypes layoutY210 = {{{GMM_FORMAT_Y210, NEO::GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM, 0, 4, 2, 8},
+                                     {GMM_FORMAT_Y210, NEO::GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM, 0, 4, 2, 8},
+                                     {GMM_FORMAT_Y210, NEO::GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM, 0, 4, 2, 8},
+                                     {GMM_FORMAT_Y210, NEO::GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM, 0, 4, 2, 8},
+                                     {GMM_FORMAT_Y210, NEO::GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM, 0, 4, 2, 8}}};
+constexpr FormatTypes layoutI420 = {{{GMM_FORMAT_I420, NEO::GFX3DSTATE_SURFACEFORMAT_PLANAR_420_8, 0, 1, 1, 1},
+                                     {GMM_FORMAT_I420, NEO::GFX3DSTATE_SURFACEFORMAT_PLANAR_420_8, 0, 1, 1, 1},
+                                     {GMM_FORMAT_I420, NEO::GFX3DSTATE_SURFACEFORMAT_PLANAR_420_8, 0, 1, 1, 1},
+                                     {GMM_FORMAT_I420, NEO::GFX3DSTATE_SURFACEFORMAT_PLANAR_420_8, 0, 1, 1, 1},
+                                     {GMM_FORMAT_I420, NEO::GFX3DSTATE_SURFACEFORMAT_PLANAR_420_8, 0, 1, 1, 1}}};
+constexpr FormatTypes layoutYV12 = {{{GMM_FORMAT_YV12, NEO::GFX3DSTATE_SURFACEFORMAT_PLANAR_420_8, 0, 1, 1, 1},
+                                     {GMM_FORMAT_YV12, NEO::GFX3DSTATE_SURFACEFORMAT_PLANAR_420_8, 0, 1, 1, 1},
+                                     {GMM_FORMAT_YV12, NEO::GFX3DSTATE_SURFACEFORMAT_PLANAR_420_8, 0, 1, 1, 1},
+                                     {GMM_FORMAT_YV12, NEO::GFX3DSTATE_SURFACEFORMAT_PLANAR_420_8, 0, 1, 1, 1},
+                                     {GMM_FORMAT_YV12, NEO::GFX3DSTATE_SURFACEFORMAT_PLANAR_420_8, 0, 1, 1, 1}}};
+constexpr FormatTypes layout400P = {{{GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1}}};
+constexpr FormatTypes layout422H = {{{GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1}}};
+constexpr FormatTypes layout422V = {{{GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1}}};
+constexpr FormatTypes layout444P = {{{GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                     {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1}}};
+constexpr FormatTypes layoutRGBP = {{{GMM_FORMAT_RGBP, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 3, 1, 3},
+                                     {GMM_FORMAT_RGBP, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 3, 1, 3},
+                                     {GMM_FORMAT_RGBP, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 3, 1, 3},
+                                     {GMM_FORMAT_RGBP, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 3, 1, 3},
+                                     {GMM_FORMAT_RGBP, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 3, 1, 3}}};
+constexpr FormatTypes layoutBGRP = {{{GMM_FORMAT_BGRP, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 3, 1, 3},
+                                     {GMM_FORMAT_BGRP, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 3, 1, 3},
+                                     {GMM_FORMAT_BGRP, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 3, 1, 3},
+                                     {GMM_FORMAT_BGRP, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 3, 1, 3},
+                                     {GMM_FORMAT_BGRP, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 3, 1, 3}}};
 
-constexpr std::array<FormatTypes, 30> formats = {layout8, layout16, layout32, layout88, layout8888, layout1616, layout16161616, layout3232, layout32323232, layout1010102, layout111110, layout565, layout5551, layout4444, layoutY8,
-                                                 layoutNV12, layoutYUYV, layoutVYUY, layoutYVYU, layoutUYVY, layoutAYUV, layoutYUAV, layoutP010, layoutY410, layoutP012, layoutY16, layoutP016, layoutY216, layoutP216, layoutP416};
+constexpr std::array<FormatTypes, ZE_IMAGE_FORMAT_RENDER_LAYOUT_MAX> formats = {layout8, layout16, layout32, layout88, layout8888, layout1616, layout16161616, layout3232, layout32323232, layout1010102,
+                                                                                layout111110, layout565, layout5551, layout4444, layoutY8, layoutNV12, layoutYUYV, layoutVYUY, layoutYVYU, layoutUYVY,
+                                                                                layoutAYUV, layoutP010, layoutY410, layoutP012, layoutY16, layoutP016, layoutY216, layoutP216, layoutP8, layoutYUY2,
+                                                                                layoutA8P8, layoutIA44, layoutAI44, layoutY416, layoutY210, layoutI420, layoutYV12, layout400P, layout422H, layout422V,
+                                                                                layout444P, layoutRGBP, layoutBGRP};
 } // namespace ImageFormats
 } // namespace L0

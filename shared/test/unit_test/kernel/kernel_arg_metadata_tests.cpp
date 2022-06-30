@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/kernel/kernel_arg_metadata.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 TEST(KernelArgMetadata, WhenParseAccessQualifierIsCalledThenQualifierIsProperlyParsed) {
     using namespace NEO;

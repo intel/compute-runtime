@@ -1,7 +1,7 @@
 ---
-Checks:          'clang-diagnostic-*,clang-analyzer-*,google-default-arguments,readability-identifier-naming,modernize-use-override,modernize-use-default-member-init,-clang-analyzer-alpha*'
-# WarningsAsErrors: '.*'
-HeaderFilterRegex: '/runtime/|/core/|/offline_compiler/'
+Checks:          'clang-diagnostic-*,clang-analyzer-*,-clang-analyzer-osx.*,-clang-analyzer-optin.osx.*,-clang-analyzer-nullability.*,google-default-arguments,readability-identifier-naming,modernize-use-override,modernize-use-default-member-init,-clang-analyzer-alpha*'
+WarningsAsErrors: '.*'
+HeaderFilterRegex: '(shared|opencl|level_zero).+\.(h|hpp|inl)$'
 AnalyzeTemporaryDtors: false
 CheckOptions:
   - key:             google-readability-braces-around-statements.ShortStatementLines
@@ -12,15 +12,23 @@ CheckOptions:
     value:           '10'
   - key:             google-readability-namespace-comments.SpacesBeforeComments
     value:           '2'
+  - key:             readability-identifier-naming.ClassCase
+    value:           CamelCase
+  - key:             readability-identifier-naming.StructCase
+    value:           CamelCase
+  - key:             readability-identifier-naming.StructIgnoredRegexp
+    value:           '.*'
   - key:             readability-identifier-naming.MethodCase
     value:           camelBack
   - key:             readability-identifier-naming.ParameterCase
     value:           camelBack
-  - key:             readability-identifier-naming.StructMemberCase
-    value:           camelBack
   - key:             readability-identifier-naming.ClassMemberCase
     value:           camelBack
   - key:             readability-identifier-naming.ClassMethodCase
+    value:           camelBack
+  - key:             readability-identifier-naming.LocalVariableCase
+    value:           camelBack
+  - key:             readability-identifier-naming.FunctionCase
     value:           camelBack
   - key:             modernize-loop-convert.MaxCopySize
     value:           '16'

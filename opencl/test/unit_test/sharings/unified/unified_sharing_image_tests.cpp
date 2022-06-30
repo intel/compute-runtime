@@ -1,16 +1,16 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/sharings/unified/unified_image.h"
-#include "opencl/test/unit_test/helpers/raii_hw_helper.h"
-#include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
+#include "opencl/test/unit_test/os_interface/raii_hw_info_config.h"
 #include "opencl/test/unit_test/sharings/unified/unified_sharing_fixtures.h"
 #include "opencl/test/unit_test/sharings/unified/unified_sharing_mocks.h"
 
@@ -96,8 +96,8 @@ TEST_F(UnifiedSharingImageTestsWithMemoryManager, givenPassedFormatWhenCreatingU
     EXPECT_EQ(GFX3DSTATE_SURFACEFORMAT_R16G16_FLOAT, image->getSurfaceFormatInfo().surfaceFormat.GenxSurfaceFormat);
 }
 
-template <typename GfxFamily, bool pageTableManagerSupported>
-class MockHwHelper : public HwHelperHw<GfxFamily> {
+template <bool pageTableManagerSupported>
+class MockHwInfoConfig : public HwInfoConfigHw<IGFX_UNKNOWN> {
   public:
     bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const override {
         return pageTableManagerSupported;
@@ -105,11 +105,11 @@ class MockHwHelper : public HwHelperHw<GfxFamily> {
 };
 
 struct MemoryManagerReturningCompressedAllocations : UnifiedSharingMockMemoryManager<true> {
-    GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex) override {
-        auto allocation = UnifiedSharingMockMemoryManager<true>::createGraphicsAllocationFromNTHandle(handle, rootDeviceIndex);
+    GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override {
+        auto allocation = UnifiedSharingMockMemoryManager<true>::createGraphicsAllocationFromNTHandle(handle, rootDeviceIndex, AllocationType::SHARED_IMAGE);
 
         auto gmm = allocation->getDefaultGmm();
-        auto mockGmmResourceInfo = std::make_unique<MockGmmResourceInfo>(gmm->gmmResourceInfo->peekHandle());
+        auto mockGmmResourceInfo = std::make_unique<MockGmmResourceInfo>(gmm->gmmResourceInfo->peekGmmResourceInfo());
         mockGmmResourceInfo->setUnifiedAuxTranslationCapable();
         gmm->gmmResourceInfo = std::move(mockGmmResourceInfo);
 
@@ -128,8 +128,8 @@ struct MemoryManagerReturningCompressedAllocations : UnifiedSharingMockMemoryMan
 HWTEST_F(UnifiedSharingImageTestsWithMemoryManager, givenCompressedImageAndNoPageTableManagerWhenCreatingUnifiedImageThenSetCorrespondingFieldInGmmAndDoNotUsePageTableManager) {
     MemoryManagerReturningCompressedAllocations memoryManager{};
     VariableBackup<MemoryManager *> memoryManagerBackup{&this->context->memoryManager, &memoryManager};
-    using HwHelperNotSupportingPageTableManager = MockHwHelper<FamilyType, false>;
-    RAIIHwHelperFactory<HwHelperNotSupportingPageTableManager> hwHelperBackup{this->context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily};
+    using HwInfoConfigNotSupportingPageTableManager = MockHwInfoConfig<false>;
+    RAIIHwInfoConfigFactory<HwInfoConfigNotSupportingPageTableManager> hwInfoConfigBackup{this->context->getDevice(0)->getHardwareInfo().platform.eProductFamily};
 
     cl_mem_flags flags{};
     cl_int retVal{};
@@ -138,15 +138,15 @@ HWTEST_F(UnifiedSharingImageTestsWithMemoryManager, givenCompressedImageAndNoPag
     auto image = std::unique_ptr<Image>(UnifiedImage::createSharedUnifiedImage(context.get(), flags, getValidUnifiedSharingDesc(),
                                                                                &format, &imageDesc, &retVal));
     ASSERT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(image->getGraphicsAllocation(device->getRootDeviceIndex())->getDefaultGmm()->isRenderCompressed);
+    EXPECT_TRUE(image->getGraphicsAllocation(device->getRootDeviceIndex())->getDefaultGmm()->isCompressionEnabled);
     EXPECT_EQ(0u, memoryManager.calledMapAuxGpuVA);
 }
 
 HWTEST_F(UnifiedSharingImageTestsWithMemoryManager, givenCompressedImageAndPageTableManagerWhenCreatingUnifiedImageThenSetCorrespondingFieldInGmmBasedOnAuxGpuVaMappingResult) {
     MemoryManagerReturningCompressedAllocations memoryManager{};
     VariableBackup<MemoryManager *> memoryManagerBackup{&this->context->memoryManager, &memoryManager};
-    using HwHelperSupportingPageTableManager = MockHwHelper<FamilyType, true>;
-    RAIIHwHelperFactory<HwHelperSupportingPageTableManager> hwHelperBackup{this->context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily};
+    using HwInfoConfigNotSupportingPageTableManager = MockHwInfoConfig<true>;
+    RAIIHwInfoConfigFactory<HwInfoConfigNotSupportingPageTableManager> hwInfoConfigBackup{this->context->getDevice(0)->getHardwareInfo().platform.eProductFamily};
 
     cl_mem_flags flags{};
     cl_int retVal{};
@@ -157,13 +157,13 @@ HWTEST_F(UnifiedSharingImageTestsWithMemoryManager, givenCompressedImageAndPageT
     auto image = std::unique_ptr<Image>(UnifiedImage::createSharedUnifiedImage(context.get(), flags, getValidUnifiedSharingDesc(),
                                                                                &format, &imageDesc, &retVal));
     ASSERT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(memoryManager.resultOfMapAuxGpuVA, image->getGraphicsAllocation(device->getRootDeviceIndex())->getDefaultGmm()->isRenderCompressed);
+    EXPECT_EQ(memoryManager.resultOfMapAuxGpuVA, image->getGraphicsAllocation(device->getRootDeviceIndex())->getDefaultGmm()->isCompressionEnabled);
     EXPECT_EQ(1u, memoryManager.calledMapAuxGpuVA);
 
     memoryManager.resultOfMapAuxGpuVA = false;
     image = std::unique_ptr<Image>(UnifiedImage::createSharedUnifiedImage(context.get(), flags, getValidUnifiedSharingDesc(),
                                                                           &format, &imageDesc, &retVal));
     ASSERT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(memoryManager.resultOfMapAuxGpuVA, image->getGraphicsAllocation(device->getRootDeviceIndex())->getDefaultGmm()->isRenderCompressed);
+    EXPECT_EQ(memoryManager.resultOfMapAuxGpuVA, image->getGraphicsAllocation(device->getRootDeviceIndex())->getDefaultGmm()->isCompressionEnabled);
     EXPECT_EQ(2u, memoryManager.calledMapAuxGpuVA);
 }

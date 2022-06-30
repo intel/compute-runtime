@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
 
 #include "cl_api_tests.h"
 
@@ -88,6 +89,25 @@ TEST_F(clEnqueueMapBufferTests, GivenValidParametersWhenMappingBufferThenSuccess
     delete[] pHostMem;
 
     clReleaseEvent(eventReturned);
+}
+
+TEST_F(clEnqueueMapBufferTests, GivenQueueIncapableWhenMappingBufferThenInvalidOperationIsReturned) {
+    MockBuffer buffer{};
+
+    disableQueueCapabilities(CL_QUEUE_CAPABILITY_MAP_BUFFER_INTEL);
+    auto ptrResult = clEnqueueMapBuffer(
+        pCommandQueue,
+        &buffer,
+        CL_TRUE,
+        CL_MAP_READ,
+        0,
+        8,
+        0,
+        nullptr,
+        nullptr,
+        &retVal);
+    EXPECT_EQ(nullptr, ptrResult);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 }
 
 TEST_F(clEnqueueMapBufferTests, GivenMappedPointerWhenCreatingBufferFromThisPointerThenInvalidHostPtrErrorIsReturned) {

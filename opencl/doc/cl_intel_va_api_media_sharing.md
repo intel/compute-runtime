@@ -1,3 +1,11 @@
+<!---
+
+Copyright (C) 2018-2021 Intel Corporation
+
+SPDX-License-Identifier: MIT
+
+-->
+
 # Intel(R) Graphics Compute Runtime for OpenCL(TM)
 
 ## Enabling [cl_intel_va_api_media_sharing](https://www.khronos.org/registry/OpenCL/extensions/intel/cl_intel_va_api_media_sharing.txt) extension

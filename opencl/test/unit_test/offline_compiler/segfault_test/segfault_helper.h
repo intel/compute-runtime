@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ class SegfaultHelper {
   public:
     int NO_SANITIZE generateSegfault() {
         int *pointer = reinterpret_cast<int *>(0);
-        *pointer = 0;
+        *pointer = 0; // NOLINT(clang-analyzer-core.NullDereference)
         return 0;
     }
 

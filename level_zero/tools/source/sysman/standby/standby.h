@@ -1,44 +1,52 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include <level_zero/zet_api.h>
+#include "level_zero/core/source/device/device.h"
+#include <level_zero/zes_api.h>
 
 #include <vector>
 
-struct _zet_sysman_standby_handle_t {};
+struct _zes_standby_handle_t {
+    virtual ~_zes_standby_handle_t() = default;
+};
 
 namespace L0 {
 
 struct OsSysman;
 
-class Standby : _zet_sysman_standby_handle_t {
+class Standby : _zes_standby_handle_t {
   public:
-    virtual ~Standby() {}
-    virtual ze_result_t standbyGetProperties(zet_standby_properties_t *pProperties) = 0;
-    virtual ze_result_t standbyGetMode(zet_standby_promo_mode_t *pMode) = 0;
-    virtual ze_result_t standbySetMode(const zet_standby_promo_mode_t mode) = 0;
+    ~Standby() override {}
+    virtual ze_result_t standbyGetProperties(zes_standby_properties_t *pProperties) = 0;
+    virtual ze_result_t standbyGetMode(zes_standby_promo_mode_t *pMode) = 0;
+    virtual ze_result_t standbySetMode(const zes_standby_promo_mode_t mode) = 0;
 
-    static Standby *fromHandle(zet_sysman_standby_handle_t handle) {
+    inline zes_standby_handle_t toStandbyHandle() { return this; }
+
+    static Standby *fromHandle(zes_standby_handle_t handle) {
         return static_cast<Standby *>(handle);
     }
-    inline zet_sysman_standby_handle_t toHandle() { return this; }
+    bool isStandbyEnabled = false;
 };
 
 struct StandbyHandleContext {
     StandbyHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     ~StandbyHandleContext();
 
-    ze_result_t init();
+    ze_result_t init(std::vector<ze_device_handle_t> &deviceHandles);
 
-    ze_result_t standbyGet(uint32_t *pCount, zet_sysman_standby_handle_t *phStandby);
+    ze_result_t standbyGet(uint32_t *pCount, zes_standby_handle_t *phStandby);
 
     OsSysman *pOsSysman;
-    std::vector<Standby *> handle_list;
+    std::vector<Standby *> handleList = {};
+
+  private:
+    void createHandle(ze_device_handle_t deviceHandle);
 };
 
 } // namespace L0

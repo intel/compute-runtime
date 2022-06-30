@@ -1,18 +1,15 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include <condition_variable>
-#include <fstream>
-#include <mutex>
-#include <sstream>
-#include <stdint.h>
+#include <cstdint>
+#include <cstdio>
+#include <memory>
 #include <string>
-#include <thread>
 
 enum class DebugFunctionalityLevel {
     None,   // Debug functionality disabled
@@ -28,22 +25,31 @@ constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctiona
 constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctionalityLevel::None;
 #endif
 
+#define PRINT_DEBUG_STRING(flag, ...) \
+    if (flag)                         \
+        NEO::printDebugString(flag, __VA_ARGS__);
+
 namespace NEO {
+
+template <typename StreamT, typename... Args>
+void flushDebugStream(StreamT stream, Args &&...args) {
+    fflush(stream);
+}
+
 template <typename... Args>
-void printDebugString(bool showDebugLogs, Args &&... args) {
+void printDebugString(bool showDebugLogs, Args &&...args) {
     if (showDebugLogs) {
         fprintf(std::forward<Args>(args)...);
+        flushDebugStream(args...);
     }
 }
+
 #if defined(__clang__)
 #define NO_SANITIZE __attribute__((no_sanitize("undefined")))
 #else
 #define NO_SANITIZE
 #endif
 
-class Kernel;
-class GraphicsAllocation;
-struct MultiDispatchInfo;
 class SettingsReader;
 
 template <typename T>
@@ -63,7 +69,15 @@ struct DebugVarBase {
     T value;
 };
 
-struct DebugVariables {
+struct DebugVariables { // NOLINT(clang-analyzer-optin.performance.Padding)
+    struct DEBUGGER_LOG_BITMASK {
+        constexpr static int32_t LOG_INFO{1};         // NOLINT(readability-identifier-naming)
+        constexpr static int32_t LOG_ERROR{1 << 1};   // NOLINT(readability-identifier-naming)
+        constexpr static int32_t LOG_THREADS{1 << 2}; // NOLINT(readability-identifier-naming)
+        constexpr static int32_t LOG_MEM{1 << 3};     // NOLINT(readability-identifier-naming)
+        constexpr static int32_t DUMP_ELF{1 << 10};   // NOLINT(readability-identifier-naming)
+    };
+
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
     DebugVarBase<dataType> variableName{defaultValue};
 #include "debug_variables.inl"
@@ -102,10 +116,12 @@ class DebugSettingsManager {
         return readerImpl.get();
     }
 
+    static constexpr const char *getNonReleaseKeyName(const char *key) {
+        return (disabled() && PURGE_DEBUG_KEY_NAMES) ? "" : key;
+    }
+
   protected:
     std::unique_ptr<SettingsReader> readerImpl;
-    std::mutex mtx;
-    std::string logFileName;
 
     bool isLoopAtDriverInitEnabled() const {
         auto loopingEnabled = flags.LoopAtDriverInit.get();
@@ -118,6 +134,29 @@ class DebugSettingsManager {
 };
 
 extern DebugSettingsManager<globalDebugFunctionalityLevel> DebugManager;
+
+#define PRINT_DEBUGGER_LOG(OUT, STR, ...) \
+    NEO::printDebugString(true, OUT, STR, __VA_ARGS__);
+
+#define PRINT_DEBUGGER_INFO_LOG(STR, ...)                                                                         \
+    if (NEO::DebugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_INFO) { \
+        PRINT_DEBUGGER_LOG(stdout, "\nINFO: " STR, __VA_ARGS__)                                                   \
+    }
+
+#define PRINT_DEBUGGER_THREAD_LOG(STR, ...)                                                                          \
+    if (NEO::DebugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_THREADS) { \
+        PRINT_DEBUGGER_LOG(stdout, "\nTHREAD INFO: " STR, __VA_ARGS__)                                               \
+    }
+
+#define PRINT_DEBUGGER_ERROR_LOG(STR, ...)                                                                         \
+    if (NEO::DebugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_ERROR) { \
+        PRINT_DEBUGGER_LOG(stderr, "\nERROR: " STR, __VA_ARGS__)                                                   \
+    }
+
+#define PRINT_DEBUGGER_MEM_ACCESS_LOG(STR, ...)                                                                  \
+    if (NEO::DebugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_MEM) { \
+        PRINT_DEBUGGER_LOG(stdout, "\nINFO: " STR, __VA_ARGS__)                                                  \
+    }
 
 template <DebugFunctionalityLevel DebugLevel>
 const char *DebugSettingsManager<DebugLevel>::settingsDumpFileName = "igdrcl_dumped.config";

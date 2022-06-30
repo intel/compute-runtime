@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -33,9 +34,11 @@ inline void setImageSurfaceState(typename GfxFamily::RENDER_SURFACE_STATE *surfa
                         (imageInfo.imgDesc.imageType == ImageType::Image2DArray ||
                          imageInfo.imgDesc.imageType == ImageType::Image1DArray);
 
+    isImageArray |= (imageInfo.imgDesc.imageType == ImageType::Image2D || imageInfo.imgDesc.imageType == ImageType::Image2DArray) && DebugManager.flags.Force2dImageAsArray.get() == 1;
+
     uint32_t renderTargetViewExtent = static_cast<uint32_t>(imageCount);
     uint32_t minimumArrayElement = 0;
-    auto hAlign = RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_4;
+    auto hAlign = RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_DEFAULT;
     auto vAlign = RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4;
 
     if (gmm) {
@@ -105,15 +108,27 @@ inline void setImageSurfaceStateDimensions(typename GfxFamily::RENDER_SURFACE_ST
         imageHeight = 1;
     }
 
+    auto imageWidth = imageInfo.imgDesc.imageWidth;
+    if (imageWidth == 0) {
+        imageWidth = 1;
+    }
+
     if (cubeFaceIndex != __GMM_NO_CUBE_MAP) {
         imageCount = __GMM_MAX_CUBE_FACE - cubeFaceIndex;
     }
 
-    surfaceState->setWidth(static_cast<uint32_t>(imageInfo.imgDesc.imageWidth));
+    surfaceState->setWidth(static_cast<uint32_t>(imageWidth));
     surfaceState->setHeight(static_cast<uint32_t>(imageHeight));
     surfaceState->setDepth(static_cast<uint32_t>(imageCount));
     surfaceState->setSurfacePitch(static_cast<uint32_t>(imageInfo.imgDesc.imageRowPitch));
     surfaceState->setSurfaceType(surfaceType);
+}
+
+template <typename GfxFamily>
+inline void setWidthForMediaBlockSurfaceState(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const ImageInfo &imageInfo) {
+    auto elSize = imageInfo.surfaceFormat->ImageElementSizeInBytes;
+    auto numDwords = static_cast<uint32_t>(Math::divideAndRoundUp(imageInfo.imgDesc.imageWidth * elSize, sizeof(uint32_t)));
+    surfaceState->setWidth(numDwords);
 }
 
 template <typename GfxFamily>
@@ -124,22 +139,6 @@ inline void setUnifiedAuxBaseAddress(typename GfxFamily::RENDER_SURFACE_STATE *s
 }
 
 template <typename GfxFamily>
-void setFlagsForMediaCompression(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, Gmm *gmm);
-
-template <typename GfxFamily>
-void setClearColorParams(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const Gmm *gmm);
-
-template <typename GfxFamily>
 void setMipTailStartLod(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, Gmm *gmm);
 
-template <typename GfxFamily>
-inline void setAuxParamsForCCS(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {
-    using AUXILIARY_SURFACE_MODE = typename GfxFamily::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
-    // Its expected to not program pitch/qpitch/baseAddress for Aux surface in CCS scenarios
-    surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
-    setFlagsForMediaCompression<GfxFamily>(surfaceState, gmm);
-
-    setClearColorParams<GfxFamily>(surfaceState, gmm);
-    setUnifiedAuxBaseAddress<GfxFamily>(surfaceState, gmm);
-}
 } // namespace NEO

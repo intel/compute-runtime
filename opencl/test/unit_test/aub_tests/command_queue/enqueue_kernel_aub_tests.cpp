@@ -1,13 +1,16 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/flat_batch_buffer_helper_hw.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/event.h"
@@ -17,9 +20,8 @@
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/fixtures/simple_arg_fixture.h"
 #include "opencl/test/unit_test/fixtures/two_walker_fixture.h"
-#include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
-#include "test.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 using namespace NEO;
 
@@ -48,21 +50,21 @@ cl_uint TestSimdTable[] = {
 namespace ULT {
 struct AUBHelloWorld
     : public HelloWorldFixture<AUBHelloWorldFixtureFactory>,
-      public HardwareParse,
+      public ClHardwareParse,
       public ::testing::Test {
 
     void SetUp() override {
         HelloWorldFixture<AUBHelloWorldFixtureFactory>::SetUp();
-        HardwareParse::SetUp();
+        ClHardwareParse::SetUp();
     }
 
     void TearDown() override {
-        HardwareParse::TearDown();
+        ClHardwareParse::TearDown();
         HelloWorldFixture<AUBHelloWorldFixtureFactory>::TearDown();
     }
 };
 
-HWCMDTEST_F(IGFX_GEN8_CORE, AUBHelloWorld, simple) {
+HWCMDTEST_F(IGFX_GEN8_CORE, AUBHelloWorld, WhenEnqueuingKernelThenAdressesAreAligned) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
@@ -146,12 +148,12 @@ struct AUBHelloWorldIntegrateTest : public HelloWorldFixture<AUBHelloWorldFixtur
             tbxWithAubCsr->writeMemory(*allocation);
         }
 
-        aubCsr->writeMemory(*allocation);
+        aubCsr->writeMemory(*allocation); // NOLINT(clang-analyzer-core.CallAndMessage)
     }
     TestParam param;
 };
 
-HWTEST_P(AUBHelloWorldIntegrateTest, simple) {
+HWTEST_P(AUBHelloWorldIntegrateTest, WhenEnqueingKernelThenExpectationsAreMet) {
     if (this->simd < UnitTestHelper<FamilyType>::smallestTestableSimdSize) {
         GTEST_SKIP();
     }
@@ -162,6 +164,8 @@ HWTEST_P(AUBHelloWorldIntegrateTest, simple) {
     cl_uint numEventsInWaitList = 0;
     cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;
+
+    getSimulatedCsr<FamilyType>()->initializeEngine();
 
     writeMemory<FamilyType>(destBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex()));
     writeMemory<FamilyType>(srcBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex()));
@@ -205,23 +209,23 @@ INSTANTIATE_TEST_CASE_P(
 
 struct AUBSimpleArg
     : public SimpleArgFixture<AUBSimpleArgFixtureFactory>,
-      public HardwareParse,
+      public ClHardwareParse,
       public ::testing::Test {
 
     using SimpleArgKernelFixture::SetUp;
 
     void SetUp() override {
         SimpleArgFixture<AUBSimpleArgFixtureFactory>::SetUp();
-        HardwareParse::SetUp();
+        ClHardwareParse::SetUp();
     }
 
     void TearDown() override {
-        HardwareParse::TearDown();
+        ClHardwareParse::TearDown();
         SimpleArgFixture<AUBSimpleArgFixtureFactory>::TearDown();
     }
 };
 
-HWCMDTEST_F(IGFX_GEN8_CORE, AUBSimpleArg, simple) {
+HWCMDTEST_F(IGFX_GEN8_CORE, AUBSimpleArg, WhenEnqueingKernelThenAdressesAreAligned) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
@@ -277,7 +281,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, AUBSimpleArg, simple) {
 }
 
 HWTEST_F(AUBSimpleArg, givenAubCommandStreamerReceiverWhenBatchBufferFlateningIsForcedThenDumpedAubIsStillValid) {
-
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {1, 1, 1};
@@ -288,6 +291,9 @@ HWTEST_F(AUBSimpleArg, givenAubCommandStreamerReceiverWhenBatchBufferFlateningIs
 
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.FlattenBatchBufferForAUBDump.set(true);
+
+    pCmdQ->getGpgpuCommandStreamReceiver().overwriteFlatBatchBufferHelper(new FlatBatchBufferHelperHw<FamilyType>(*pCmdQ->getDevice().getExecutionEnvironment()));
+
     pCmdQ->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
 
     auto retVal = pCmdQ->enqueueKernel(
@@ -325,7 +331,7 @@ struct AUBSimpleArgIntegrateTest : public SimpleArgFixture<AUBSimpleArgFixtureFa
     TestParam param;
 };
 
-HWTEST_P(AUBSimpleArgIntegrateTest, simple) {
+HWTEST_P(AUBSimpleArgIntegrateTest, WhenEnqueingKernelThenExpectationsAreMet) {
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {param.globalWorkSizeX, param.globalWorkSizeY, param.globalWorkSizeZ};
@@ -370,9 +376,7 @@ INSTANTIATE_TEST_CASE_P(
 
 struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUniformKernelFixture> {
     void SetUp() override {
-        if (NEO::defaultHwInfo->capabilityTable.supportsOcl21Features == false) {
-            GTEST_SKIP();
-        }
+        REQUIRE_OCL_21_OR_SKIP(NEO::defaultHwInfo);
         KernelAUBFixture<SimpleArgNonUniformKernelFixture>::SetUp();
 
         sizeUserMemory = alignUp(typeItems * typeSize, 64);
@@ -462,7 +466,7 @@ struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUnifo
     void *bufferGpuAddress = nullptr;
     std::unique_ptr<Buffer> outBuffer;
 
-    HardwareParse hwParser;
+    ClHardwareParse hwParser;
 };
 
 using AUBSimpleKernelStatelessTest = Test<KernelAUBFixture<SimpleKernelStatelessFixture>>;
@@ -502,16 +506,9 @@ HWTEST_F(AUBSimpleKernelStatelessTest, givenSimpleKernelWhenStatelessPathIsUsedT
         event);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
-    EXPECT_THAT(this->pProgram->getInternalOptions(),
-                testing::HasSubstr(std::string(NEO::CompilerOptions::greaterThan4gbBuffersRequired)));
 
-    if (this->device->getSharedDeviceInfo().force32BitAddressess) {
-        EXPECT_THAT(this->pProgram->getInternalOptions(),
-                    testing::HasSubstr(std::string(NEO::CompilerOptions::arch32bit)));
-    }
-
-    EXPECT_FALSE(this->kernel->getKernelInfo().kernelArgInfo[0].pureStatefulBufferAccess);
-    EXPECT_TRUE(this->kernel->getKernelInfo().patchInfo.executionEnvironment->CompiledForGreaterThan4GBBuffers);
+    EXPECT_FALSE(this->kernel->getKernelInfo().kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>().isPureStateful());
+    EXPECT_TRUE(this->kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
 
     this->pCmdQ->flush();
     expectMemory<FamilyType>(reinterpret_cast<void *>(pBuffer->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress()),
@@ -520,7 +517,7 @@ HWTEST_F(AUBSimpleKernelStatelessTest, givenSimpleKernelWhenStatelessPathIsUsedT
 
 using AUBSimpleArgNonUniformTest = Test<AUBSimpleArgNonUniformFixture>;
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork1DimNonUniformGroupThenExpectTwoWalkers) {
-    using WALKER_TYPE = WALKER_TYPE<FamilyType>;
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 1, 1};
@@ -552,7 +549,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork1DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNonUniformGroupInXDimensionThenExpectTwoWalkers) {
-    using WALKER_TYPE = WALKER_TYPE<FamilyType>;
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     cl_uint workDim = 2;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 32, 1};
@@ -584,7 +581,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNonUniformGroupInYDimensionThenExpectTwoWalkers) {
-    using WALKER_TYPE = WALKER_TYPE<FamilyType>;
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     cl_uint workDim = 2;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {32, 39, 1};
@@ -616,7 +613,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNonUniformGroupInXandYDimensionThenExpectFourWalkers) {
-    using WALKER_TYPE = WALKER_TYPE<FamilyType>;
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     cl_uint workDim = 2;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 39, 1};
@@ -648,7 +645,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInXDimensionThenExpectTwoWalkers) {
-    using WALKER_TYPE = WALKER_TYPE<FamilyType>;
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 32, 32};
@@ -680,7 +677,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInYDimensionThenExpectTwoWalkers) {
-    using WALKER_TYPE = WALKER_TYPE<FamilyType>;
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {32, 39, 32};
@@ -712,7 +709,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInZDimensionThenExpectTwoWalkers) {
-    using WALKER_TYPE = WALKER_TYPE<FamilyType>;
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {32, 32, 39};
@@ -744,7 +741,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInXandYDimensionThenExpectFourWalkers) {
-    using WALKER_TYPE = WALKER_TYPE<FamilyType>;
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 39, 32};
@@ -776,7 +773,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInXandZDimensionThenExpectFourWalkers) {
-    using WALKER_TYPE = WALKER_TYPE<FamilyType>;
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 32, 39};
@@ -808,7 +805,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInYandZDimensionThenExpectFourWalkers) {
-    using WALKER_TYPE = WALKER_TYPE<FamilyType>;
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {32, 39, 39};
@@ -840,7 +837,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInXandYandZDimensionThenExpectEightWalkers) {
-    using WALKER_TYPE = WALKER_TYPE<FamilyType>;
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 39, 39};
@@ -871,11 +868,25 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
     expectMemory<FamilyType>(remainderBufferGpuAddress, this->expectedRemainderMemory, sizeRemainderMemory);
 }
 
-using AUBBindlessKernel = Test<KernelAUBFixture<BindlessKernelFixture>>;
-using IsSklPlus = IsAtLeastProduct<IGFX_SKYLAKE>;
+struct AUBBindlessKernel : public KernelAUBFixture<BindlessKernelFixture>,
+                           public ::testing::Test {
 
-HWTEST2_F(AUBBindlessKernel, givenBindlessCopyKernelWhenEnqueuedThenResultsValidate, IsSklPlus) {
+    void SetUp() override {
+        DebugManager.flags.UseBindlessMode.set(1);
+        DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+        KernelAUBFixture<BindlessKernelFixture>::SetUp();
+    }
+
+    void TearDown() override {
+        KernelAUBFixture<BindlessKernelFixture>::TearDown();
+    }
+    DebugManagerStateRestore restorer;
+};
+
+HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyKernelWhenEnqueuedThenResultsValidate, IsAtLeastSkl) {
     constexpr size_t bufferSize = MemoryConstants::pageSize;
+    auto simulatedCsr = AUBFixture::getSimulatedCsr<FamilyType>();
+    simulatedCsr->initializeEngine();
 
     createKernel(std::string("bindless_stateful_copy_buffer"), std::string("StatefulCopyBuffer"));
 
@@ -906,8 +917,6 @@ HWTEST2_F(AUBBindlessKernel, givenBindlessCopyKernelWhenEnqueuedThenResultsValid
                                                              nullptr,
                                                              retVal));
     ASSERT_NE(nullptr, pBufferDst);
-
-    auto simulatedCsr = AUBFixture::getSimulatedCsr<FamilyType>();
 
     memcpy(pBufferSrc->getGraphicsAllocation(device->getRootDeviceIndex())->getUnderlyingBuffer(), bufferDataSrc, bufferSize);
     memcpy(pBufferDst->getGraphicsAllocation(device->getRootDeviceIndex())->getUnderlyingBuffer(), bufferDataDst, bufferSize);
@@ -945,17 +954,19 @@ HWTEST2_F(AUBBindlessKernel, givenBindlessCopyKernelWhenEnqueuedThenResultsValid
 
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_TRUE(this->kernel->getKernelInfo().kernelArgInfo[0].pureStatefulBufferAccess);
+    EXPECT_TRUE(this->kernel->getKernelInfo().kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>().isPureStateful());
 
     this->pCmdQ->finish();
     expectMemory<FamilyType>(reinterpret_cast<void *>(pBufferDst->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress()),
                              bufferDataSrc, bufferSize);
 }
 
-HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyImageKernelWhenEnqueuedThenResultsValidate, IsSklPlus) {
+HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyImageKernelWhenEnqueuedThenResultsValidate, IsAtLeastSkl) {
     constexpr unsigned int testWidth = 5;
     constexpr unsigned int testHeight = 1;
     constexpr unsigned int testDepth = 1;
+    auto simulatedCsr = AUBFixture::getSimulatedCsr<FamilyType>();
+    simulatedCsr->initializeEngine();
 
     createKernel(std::string("bindless_copy_buffer_to_image"), std::string("CopyBufferToImage3d"));
 
@@ -995,7 +1006,7 @@ HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyImageKernelWhenEnqueuedTh
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, device->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto image = std::unique_ptr<Image>(Image::create(
         contextCl,
-        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &contextCl->getDevice(0)->getDevice()),
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &contextCl->getDevice(0)->getDevice()),
         flags,
         0,
         surfaceFormat,
@@ -1014,8 +1025,6 @@ HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyImageKernelWhenEnqueuedTh
 
     memcpy(image->getGraphicsAllocation(device->getRootDeviceIndex())->getUnderlyingBuffer(), imageDataDst, imageSize);
     memcpy(bufferSrc->getGraphicsAllocation(device->getRootDeviceIndex())->getUnderlyingBuffer(), imageDataSrc, imageSize);
-
-    auto simulatedCsr = AUBFixture::getSimulatedCsr<FamilyType>();
 
     simulatedCsr->writeMemory(*bufferSrc->getGraphicsAllocation(device->getRootDeviceIndex()));
     simulatedCsr->writeMemory(*image->getGraphicsAllocation(device->getRootDeviceIndex()));

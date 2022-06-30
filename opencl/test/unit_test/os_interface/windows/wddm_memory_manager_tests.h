@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,22 +7,23 @@
 
 #pragma once
 
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
-#include "shared/source/os_interface/windows/os_interface.h"
 #include "shared/source/os_interface/windows/wddm_memory_operations_handler.h"
-#include "shared/test/unit_test/os_interface/windows/mock_gdi_interface.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/execution_environment_helper.h"
+#include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm_page_table_mngr.h"
+#include "shared/test/common/mocks/mock_wddm_residency_allocations_container.h"
+#include "shared/test/common/mocks/windows/mock_gdi_interface.h"
+#include "shared/test/common/mocks/windows/mock_wddm_eudebug.h"
+#include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
+#include "shared/test/common/os_interface/windows/wddm_fixture.h"
+#include "shared/test/common/test_macros/test.h"
 
-#include "opencl/test/unit_test/helpers/execution_environment_helper.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
-#include "opencl/test/unit_test/mocks/mock_gmm_page_table_mngr.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "opencl/test/unit_test/mocks/mock_wddm_residency_allocations_container.h"
-#include "opencl/test/unit_test/os_interface/windows/mock_wddm_memory_manager.h"
-#include "opencl/test/unit_test/os_interface/windows/wddm_fixture.h"
-#include "test.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include <type_traits>
@@ -65,11 +66,11 @@ class MockWddmMemoryManagerFixture {
         executionEnvironment->initializeMemoryManager();
 
         memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
-        csr.reset(createCommandStream(*executionEnvironment, 0u));
+        csr.reset(createCommandStream(*executionEnvironment, 0u, 1));
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
-        osContext = memoryManager->createAndRegisterOsContext(csr.get(),
-                                                              HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
-                                                              1, PreemptionHelper::getDefaultPreemptionMode(*hwInfo), false, false, false);
+        osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+                                                                                                                      PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));
+        osContext->ensureContextInitialized();
 
         osContext->incRefInternal();
         mockTemporaryResources = reinterpret_cast<MockWddmResidentAllocationsContainer *>(wddm->getTemporaryResourcesContainer());
@@ -107,7 +108,7 @@ class WddmMemoryManagerFixtureWithGmockWddm : public ExecutionEnvironmentFixture
     void SetUp() override {
         // wddm is deleted by memory manager
 
-        wddm = new NiceMock<GmockWddm>(*executionEnvironment->rootDeviceEnvironments[0].get());
+        wddm = new WddmMock(*executionEnvironment->rootDeviceEnvironments[0].get());
         ASSERT_NE(nullptr, wddm);
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
         wddm->init();
@@ -117,22 +118,18 @@ class WddmMemoryManagerFixtureWithGmockWddm : public ExecutionEnvironmentFixture
         executionEnvironment->memoryManager.reset(memoryManager);
         //assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
-        csr.reset(createCommandStream(*executionEnvironment, 0u));
+        csr.reset(createCommandStream(*executionEnvironment, 0u, 1));
         auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
-        osContext = memoryManager->createAndRegisterOsContext(csr.get(),
-                                                              HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
-                                                              1, preemptionMode, false, false, false);
-
+        osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+                                                                                                                      preemptionMode));
         osContext->incRefInternal();
-
-        ON_CALL(*wddm, createAllocationsAndMapGpuVa(::testing::_)).WillByDefault(::testing::Invoke(wddm, &GmockWddm::baseCreateAllocationAndMapGpuVa));
     }
 
     void TearDown() override {
         osContext->decRefInternal();
     }
 
-    NiceMock<GmockWddm> *wddm = nullptr;
+    WddmMock *wddm = nullptr;
     std::unique_ptr<CommandStreamReceiver> csr;
     OSInterface *osInterface;
     OsContext *osContext;
@@ -176,13 +173,40 @@ class MockWddmMemoryManagerTest : public ::testing::Test {
   public:
     void SetUp() override {
         executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 2);
+        executionEnvironment->incRefInternal();
         wddm = new WddmMock(*executionEnvironment->rootDeviceEnvironments[1].get());
-        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->setWddm(wddm);
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
+    }
+
+    void TearDown() override {
+        executionEnvironment->decRefInternal();
     }
 
     HardwareInfo *hwInfo = nullptr;
     WddmMock *wddm = nullptr;
+    ExecutionEnvironment *executionEnvironment = nullptr;
+    const uint32_t rootDeviceIndex = 0u;
+};
+
+class MockWddmMemoryManagerWithEuDebugInterfaceTest : public ::testing::Test {
+  public:
+    void SetUp() override {
+        executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 2);
+        executionEnvironment->incRefInternal();
+        wddm = new WddmEuDebugInterfaceMock(*executionEnvironment->rootDeviceEnvironments[1].get());
+        wddm->callBaseDestroyAllocations = false;
+        wddm->callBaseMapGpuVa = false;
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
+    }
+
+    void TearDown() override {
+        executionEnvironment->decRefInternal();
+    }
+
+    HardwareInfo *hwInfo = nullptr;
+    WddmEuDebugInterfaceMock *wddm = nullptr;
     ExecutionEnvironment *executionEnvironment = nullptr;
     const uint32_t rootDeviceIndex = 0u;
 };

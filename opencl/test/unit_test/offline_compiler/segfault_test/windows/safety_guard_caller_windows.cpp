@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,10 +9,10 @@
 
 #include "opencl/test/unit_test/offline_compiler/segfault_test/segfault_helper.h"
 
-void generateSegfaultWithSafetyGuard(SegfaultHelper *segfaultHelper) {
+int generateSegfaultWithSafetyGuard(SegfaultHelper *segfaultHelper) {
     SafetyGuardWindows safetyGuard;
     safetyGuard.onExcept = segfaultHelper->segfaultHandlerCallback;
-    int retVal = 0;
+    int retVal = -60;
 
-    safetyGuard.call<int, SegfaultHelper, decltype(&SegfaultHelper::generateSegfault)>(segfaultHelper, &SegfaultHelper::generateSegfault, retVal);
+    return safetyGuard.call<int, SegfaultHelper, decltype(&SegfaultHelper::generateSegfault)>(segfaultHelper, &SegfaultHelper::generateSegfault, retVal);
 }

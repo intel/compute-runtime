@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -148,6 +148,7 @@ GLboolean GLSharingFunctionsWindows::initGLFunctions() {
         GLReleaseSync = wglLibrary["wglReleaseSyncINTEL"];
         GLGetSynciv = wglLibrary["wglGetSyncivINTEL"];
         glGetStringi = wglLibrary["glGetStringi"];
+        glGetLuid = wglLibrary["wglGetLuidINTEL"];
     }
     this->pfnGlArbSyncObjectCleanup = cleanupArbSyncObject;
     this->pfnGlArbSyncObjectSetup = setupArbSyncObject;
@@ -155,6 +156,13 @@ GLboolean GLSharingFunctionsWindows::initGLFunctions() {
     this->pfnGlArbSyncObjectWaitServer = serverWaitForArbSyncObject;
 
     return 1;
+}
+
+LUID GLSharingFunctionsWindows::getAdapterLuid(GLContext glhglrcHandle) const {
+    if (glGetLuid) {
+        return glGetLuid(glhglrcHandle);
+    }
+    return {};
 }
 
 template GLSharingFunctionsWindows *Context::getSharing<GLSharingFunctionsWindows>();

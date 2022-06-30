@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-void TimestampPacketContainer::add(Node *timestampPacketNode) {
+void TimestampPacketContainer::add(TagNodeBase *timestampPacketNode) {
     timestampPacketNodes.push_back(timestampPacketNode);
 }
 
@@ -25,20 +25,6 @@ TimestampPacketContainer::~TimestampPacketContainer() {
 
 void TimestampPacketContainer::swapNodes(TimestampPacketContainer &timestampPacketContainer) {
     timestampPacketNodes.swap(timestampPacketContainer.timestampPacketNodes);
-}
-
-void TimestampPacketContainer::resolveDependencies(bool clearAllDependencies) {
-    std::vector<Node *> pendingNodes;
-
-    for (auto node : timestampPacketNodes) {
-        if (node->canBeReleased() || clearAllDependencies) {
-            node->returnTag();
-        } else {
-            pendingNodes.push_back(node);
-        }
-    }
-
-    std::swap(timestampPacketNodes, pendingNodes);
 }
 
 void TimestampPacketContainer::assignAndIncrementNodesRefCounts(const TimestampPacketContainer &inputTimestampPacketContainer) {
@@ -54,4 +40,19 @@ void TimestampPacketContainer::makeResident(CommandStreamReceiver &commandStream
     for (auto node : timestampPacketNodes) {
         commandStreamReceiver.makeResident(*node->getBaseGraphicsAllocation());
     }
+}
+
+void TimestampPacketContainer::moveNodesToNewContainer(TimestampPacketContainer &timestampPacketContainer) {
+    TimestampPacketContainer tempContainer;
+    swapNodes(tempContainer);
+
+    timestampPacketContainer.assignAndIncrementNodesRefCounts(tempContainer);
+}
+
+void TimestampPacketDependencies::moveNodesToNewContainer(TimestampPacketContainer &timestampPacketContainer) {
+    cacheFlushNodes.moveNodesToNewContainer(timestampPacketContainer);
+    previousEnqueueNodes.moveNodesToNewContainer(timestampPacketContainer);
+    barrierNodes.moveNodesToNewContainer(timestampPacketContainer);
+    auxToNonAuxNodes.moveNodesToNewContainer(timestampPacketContainer);
+    nonAuxToAuxNodes.moveNodesToNewContainer(timestampPacketContainer);
 }

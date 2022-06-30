@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,11 +16,13 @@ namespace NEO {
 void debugBreak(int line, const char *file) {
     if (DebugManager.flags.EnableDebugBreak.get()) {
         printf("Assert was called at %d line in file:\n%s\n", line, file);
+        fflush(stdout);
         assert(false);
     }
 }
 void abortUnrecoverable(int line, const char *file) {
     printf("Abort was called at %d line in file:\n%s\n", line, file);
+    fflush(stdout);
     abortExecution();
 }
 } // namespace NEO

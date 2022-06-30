@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/validators.h"
 #include "shared/source/os_interface/os_library.h"
-
-#include "opencl/source/helpers/validators.h"
 
 #include "cif/builtins/memory/buffer/buffer.h"
 #include "cif/common/cif.h"
@@ -90,8 +90,10 @@ CIF::CIFMain *createMainNoSanitize(CIF::CreateCIFMainFunc_t createFunc);
 template <template <CIF::Version_t> class EntryPointT>
 inline bool loadCompiler(const char *libName, std::unique_ptr<OsLibrary> &outLib,
                          CIF::RAII::UPtr_t<CIF::CIFMain> &outLibMain) {
-    auto lib = std::unique_ptr<OsLibrary>(OsLibrary::load(libName));
+    std::string loadLibraryError;
+    auto lib = std::unique_ptr<OsLibrary>(OsLibrary::load(libName, &loadLibraryError));
     if (lib == nullptr) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Compiler Library %s could not be loaded with error: %s\n", libName, loadLibraryError.c_str());
         DEBUG_BREAK_IF(true); // could not load library
         return false;
     }
@@ -105,7 +107,12 @@ inline bool loadCompiler(const char *libName, std::unique_ptr<OsLibrary> &outLib
         return false;
     }
 
-    if (false == main->IsCompatible<EntryPointT>()) {
+    std::vector<CIF::InterfaceId_t> interfacesToIgnore;
+    if (DebugManager.flags.ZebinIgnoreIcbeVersion.get()) {
+        interfacesToIgnore.push_back(IGC::OclGenBinaryBase::GetInterfaceId());
+    }
+    if (false == main->IsCompatible<EntryPointT>(&interfacesToIgnore)) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Installed Compiler Library %s is incompatible\n", libName);
         DEBUG_BREAK_IF(true); // given compiler library is not compatible
         return false;
     }

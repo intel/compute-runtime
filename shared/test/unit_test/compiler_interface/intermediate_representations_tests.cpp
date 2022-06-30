@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/compiler_interface/intermediate_representations.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 TEST(HasSameMagic, WhenMagicIsMatchedThenReturnTrue) {
     EXPECT_TRUE(NEO::hasSameMagic("abcd", ArrayRef<const char>("abcdefg").toArrayRef<const uint8_t>()));

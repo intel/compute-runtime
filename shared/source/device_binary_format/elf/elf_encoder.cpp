@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,13 +16,11 @@ namespace NEO {
 namespace Elf {
 
 template <ELF_IDENTIFIER_CLASS NumBits>
-ElfEncoder<NumBits>::ElfEncoder(bool addUndefSectionHeader, bool addHeaderSectionNamesSection, uint64_t defaultDataAlignemnt)
+ElfEncoder<NumBits>::ElfEncoder(bool addUndefSectionHeader, bool addHeaderSectionNamesSection, typename ElfSectionHeaderTypes<NumBits>::AddrAlign defaultDataAlignemnt)
     : addUndefSectionHeader(addUndefSectionHeader), addHeaderSectionNamesSection(addHeaderSectionNamesSection), defaultDataAlignment(defaultDataAlignemnt) {
     // add special strings
     UNRECOVERABLE_IF(defaultDataAlignment == 0);
-    stringTable.push_back('\0');
-    specialStringsOffsets.undef = 0U;
-    specialStringsOffsets.shStrTab = this->appendSectionName(SpecialSectionNames::shStrTab);
+    shStrTabNameOffset = this->appendSectionName(SpecialSectionNames::shStrTab);
 
     if (addUndefSectionHeader) {
         ElfSectionHeader<NumBits> undefSection;
@@ -64,13 +62,33 @@ void ElfEncoder<NumBits>::appendSegment(const ElfProgramHeader<NumBits> &program
 }
 
 template <ELF_IDENTIFIER_CLASS NumBits>
+uint32_t ElfEncoder<NumBits>::getSectionHeaderIndex(const ElfSectionHeader<NumBits> &sectionHeader) {
+    UNRECOVERABLE_IF(&sectionHeader < sectionHeaders.begin());
+    UNRECOVERABLE_IF(&sectionHeader >= sectionHeaders.begin() + sectionHeaders.size());
+    return static_cast<uint32_t>(&sectionHeader - &*sectionHeaders.begin());
+}
+
+template <ELF_IDENTIFIER_CLASS NumBits>
 ElfSectionHeader<NumBits> &ElfEncoder<NumBits>::appendSection(SECTION_HEADER_TYPE sectionType, ConstStringRef sectionLabel, const ArrayRef<const uint8_t> sectionData) {
     ElfSectionHeader<NumBits> section = {};
     section.type = static_cast<decltype(section.type)>(sectionType);
     section.flags = static_cast<decltype(section.flags)>(SHF_NONE);
     section.offset = 0U;
     section.name = appendSectionName(sectionLabel);
-    section.addralign = 8U;
+    section.addralign = defaultDataAlignment;
+    switch (sectionType) {
+    case SHT_REL:
+        section.entsize = sizeof(ElfRel<NumBits>);
+        break;
+    case SHT_RELA:
+        section.entsize = sizeof(ElfRela<NumBits>);
+        break;
+    case SHT_SYMTAB:
+        section.entsize = sizeof(ElfSymbolEntry<NumBits>);
+        break;
+    default:
+        break;
+    }
     appendSection(section, sectionData);
     return *sectionHeaders.rbegin();
 }
@@ -87,16 +105,19 @@ ElfProgramHeader<NumBits> &ElfEncoder<NumBits>::appendSegment(PROGRAM_HEADER_TYP
 }
 
 template <ELF_IDENTIFIER_CLASS NumBits>
+void ElfEncoder<NumBits>::appendProgramHeaderLoad(size_t sectionId, uint64_t vAddr, uint64_t segSize) {
+    programSectionLookupTable.push_back({programHeaders.size(), sectionId});
+    auto &programHeader = appendSegment(PROGRAM_HEADER_TYPE::PT_LOAD, {});
+    programHeader.vAddr = static_cast<decltype(programHeader.vAddr)>(vAddr);
+    programHeader.memSz = static_cast<decltype(programHeader.memSz)>(segSize);
+}
+
+template <ELF_IDENTIFIER_CLASS NumBits>
 uint32_t ElfEncoder<NumBits>::appendSectionName(ConstStringRef str) {
-    if (str.empty() || (false == addHeaderSectionNamesSection)) {
-        return specialStringsOffsets.undef;
+    if (false == addHeaderSectionNamesSection) {
+        return strSecBuilder.undef();
     }
-    uint32_t offset = static_cast<uint32_t>(stringTable.size());
-    stringTable.insert(stringTable.end(), str.begin(), str.end());
-    if (str[str.size() - 1] != '\0') {
-        stringTable.push_back('\0');
-    }
-    return offset;
+    return strSecBuilder.appendString(str);
 }
 
 template <ELF_IDENTIFIER_CLASS NumBits>
@@ -116,13 +137,13 @@ std::vector<uint8_t> ElfEncoder<NumBits>::encode() const {
         auto alignedDataSize = alignUp(data.size(), static_cast<size_t>(defaultDataAlignment));
         dataPaddingBeforeSectionNames = alignedDataSize - data.size();
         sectionHeaderNamesSection.type = SHT_STRTAB;
-        sectionHeaderNamesSection.name = specialStringsOffsets.shStrTab;
+        sectionHeaderNamesSection.name = shStrTabNameOffset;
         sectionHeaderNamesSection.offset = static_cast<decltype(sectionHeaderNamesSection.offset)>(alignedDataSize);
-        sectionHeaderNamesSection.size = static_cast<decltype(sectionHeaderNamesSection.size)>(stringTable.size());
+        sectionHeaderNamesSection.size = static_cast<decltype(sectionHeaderNamesSection.size)>(strSecBuilder.data().size());
         sectionHeaderNamesSection.addralign = static_cast<decltype(sectionHeaderNamesSection.addralign)>(defaultDataAlignment);
         elfFileHeader.shStrNdx = static_cast<decltype(elfFileHeader.shStrNdx)>(sectionHeaders.size());
         sectionHeaders.push_back(sectionHeaderNamesSection);
-        alignedSectionNamesDataSize = alignUp(stringTable.size(), static_cast<size_t>(sectionHeaderNamesSection.addralign));
+        alignedSectionNamesDataSize = alignUp(strSecBuilder.data().size(), static_cast<size_t>(sectionHeaderNamesSection.addralign));
     }
 
     elfFileHeader.phNum = static_cast<decltype(elfFileHeader.phNum)>(programHeaders.size());
@@ -146,6 +167,12 @@ std::vector<uint8_t> ElfEncoder<NumBits>::encode() const {
     ret.insert(ret.end(), reinterpret_cast<uint8_t *>(&elfFileHeader), reinterpret_cast<uint8_t *>(&elfFileHeader + 1));
     ret.resize(programHeadersOffset, 0U);
 
+    for (auto &progSecLookup : programSectionLookupTable) {
+        programHeaders[progSecLookup.programId].offset = sectionHeaders[progSecLookup.sectionId].offset;
+        programHeaders[progSecLookup.programId].fileSz = sectionHeaders[progSecLookup.sectionId].size;
+    }
+
+    std::sort(programHeaders.begin(), programHeaders.end(), [](auto &p1, auto &p2) { return p1.vAddr < p2.vAddr; });
     for (auto &programHeader : programHeaders) {
         if (0 != programHeader.fileSz) {
             programHeader.offset = static_cast<decltype(programHeader.offset)>(programHeader.offset + dataOffset);
@@ -165,7 +192,10 @@ std::vector<uint8_t> ElfEncoder<NumBits>::encode() const {
     ret.resize(dataOffset, 0U);
     ret.insert(ret.end(), data.begin(), data.end());
     ret.resize(ret.size() + dataPaddingBeforeSectionNames, 0U);
-    ret.insert(ret.end(), reinterpret_cast<const uint8_t *>(stringTable.data()), reinterpret_cast<const uint8_t *>(stringTable.data() + static_cast<size_t>(sectionHeaderNamesSection.size)));
+    if (alignedSectionNamesDataSize > 0U) {
+        auto sectionNames = strSecBuilder.data();
+        ret.insert(ret.end(), sectionNames.begin(), sectionNames.end());
+    }
     ret.resize(ret.size() + alignedSectionNamesDataSize - static_cast<size_t>(sectionHeaderNamesSection.size), 0U);
     return ret;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,8 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/file_io.h"
-#include "shared/test/unit_test/helpers/test_files.h"
+#include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/libult/global_environment.h"
 
 #include "opencl/source/program/program.h"
 #include "opencl/test/unit_test/aub_tests/command_queue/command_enqueue_fixture.h"
@@ -18,7 +19,6 @@
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
 #include "opencl/test/unit_test/fixtures/run_kernel_fixture.h"
-#include "opencl/test/unit_test/global_environment.h"
 
 namespace NEO {
 
@@ -50,7 +50,7 @@ class RunKernelFixture : public CommandEnqueueAUBFixture {
     }
 
   protected:
-    Program *CreateProgramFromBinary(
+    Program *CreateProgramFromBinary( // NOLINT(readability-identifier-naming)
         const std::string &binaryFileName) {
         cl_int retVal = CL_SUCCESS;
 
@@ -63,13 +63,11 @@ class RunKernelFixture : public CommandEnqueueAUBFixture {
         EXPECT_NE(nullptr, pSource);
 
         Program *pProgram = nullptr;
-        const cl_device_id device = pClDevice;
 
         const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(pSource.get())};
         pProgram = Program::create(
             context,
-            1,
-            &device,
+            context->getDevices(),
             &sourceSize,
             binaries,
             nullptr,

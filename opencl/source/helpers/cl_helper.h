@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#pragma once
+
 #include "CL/cl.h"
-#include "CL/cl_gl_ext.h"
+#include "CL/cl_gl.h"
 
 #include <string>
 
@@ -73,6 +75,8 @@ inline const std::string cmdTypetoString(cl_command_type cmd) {
         return "CL_COMMAND_SVM_MAP";
     case CL_COMMAND_SVM_UNMAP:
         return "CL_COMMAND_SVM_UNMAP";
+    case CL_COMMAND_SVM_MIGRATE_MEM:
+        return "CL_COMMAND_SVM_MIGRATE_MEM";
     case CL_COMMAND_GL_FENCE_SYNC_OBJECT_KHR:
         return "CL_COMMAND_GL_FENCE_SYNC_OBJECT_KHR";
     default: {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,8 +34,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferRect(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
-
     const cl_command_type cmdType = CL_COMMAND_READ_BUFFER_RECT;
+
+    CsrSelectionArgs csrSelectionArgs{cmdType, buffer, {}, device->getRootDeviceIndex(), region};
+    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
+
     auto isMemTransferNeeded = true;
     if (buffer->isMemObjZeroCopy()) {
         size_t bufferOffset;
@@ -48,30 +51,38 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferRect(
                                                   numEventsInWaitList, eventWaitList, event);
     }
 
+    const size_t hostPtrSize = Buffer::calculateHostPtrSize(hostOrigin, region, hostRowPitch, hostSlicePitch);
+    const uint32_t rootDeviceIndex = getDevice().getRootDeviceIndex();
+    InternalMemoryType memoryType = InternalMemoryType::NOT_SPECIFIED;
+    GraphicsAllocation *mapAllocation = nullptr;
+    bool isCpuCopyAllowed = false;
+    getContext().tryGetExistingHostPtrAllocation(ptr, hostPtrSize, rootDeviceIndex, mapAllocation, memoryType, isCpuCopyAllowed);
+
     auto eBuiltInOps = EBuiltInOps::CopyBufferRect;
     if (forceStateless(buffer->getSize())) {
         eBuiltInOps = EBuiltInOps::CopyBufferRectStateless;
     }
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(eBuiltInOps,
-                                                                            this->getDevice());
-    BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
-    size_t hostPtrSize = Buffer::calculateHostPtrSize(hostOrigin, region, hostRowPitch, hostSlicePitch);
     void *dstPtr = ptr;
 
-    MemObjSurface bufferSurf(buffer);
+    MemObjSurface srcBufferSurf(buffer);
     HostPtrSurface hostPtrSurf(dstPtr, hostPtrSize);
-    Surface *surfaces[] = {&bufferSurf, &hostPtrSurf};
+    GeneralSurface mapSurface;
+    Surface *surfaces[] = {&srcBufferSurf, nullptr};
 
-    if (region[0] != 0 &&
-        region[1] != 0 &&
-        region[2] != 0) {
-        auto &csr = getCommandStreamReceiverByCommandType(cmdType);
-        bool status = csr.createAllocationForHostSurface(hostPtrSurf, true);
-        if (!status) {
-            return CL_OUT_OF_RESOURCES;
+    if (region[0] != 0 && region[1] != 0 && region[2] != 0) {
+        if (mapAllocation) {
+            surfaces[1] = &mapSurface;
+            mapSurface.setGraphicsAllocation(mapAllocation);
+            dstPtr = convertAddressWithOffsetToGpuVa(dstPtr, memoryType, *mapAllocation);
+        } else {
+            surfaces[1] = &hostPtrSurf;
+            bool status = csr.createAllocationForHostSurface(hostPtrSurf, true);
+            if (!status) {
+                return CL_OUT_OF_RESOURCES;
+            }
+            dstPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddress());
         }
-        dstPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddress());
     }
 
     void *alignedDstPtr = alignDown(dstPtr, 4);
@@ -90,16 +101,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferRect(
     dc.dstRowPitch = hostRowPitch;
     dc.dstSlicePitch = hostSlicePitch;
 
-    MultiDispatchInfo dispatchInfo;
-    builder.buildDispatchInfos(dispatchInfo, dc);
-
-    enqueueHandler<CL_COMMAND_READ_BUFFER_RECT>(
-        surfaces,
-        blockingRead == CL_TRUE,
-        dispatchInfo,
-        numEventsInWaitList,
-        eventWaitList,
-        event);
+    MultiDispatchInfo dispatchInfo(dc);
+    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER_RECT>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingRead, csr);
+    if (dispatchResult != CL_SUCCESS) {
+        return dispatchResult;
+    }
 
     if (context->isProvidingPerformanceHints()) {
         context->providePerformanceHintForMemoryTransfer(CL_COMMAND_READ_BUFFER_RECT, true, static_cast<cl_mem>(buffer), ptr);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,21 +7,25 @@
 
 #pragma once
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/command_stream/csr_properties_flags.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/address_patch.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/kernel/implicit_args.h"
+#include "shared/source/kernel/kernel_execution_type.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/api/cl_types.h"
-#include "opencl/source/device_queue/device_queue.h"
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/properties_helper.h"
-#include "opencl/source/kernel/kernel_execution_type.h"
-#include "opencl/source/program/kernel_info.h"
+#include "opencl/source/kernel/kernel_objects_for_aux_translation.h"
 #include "opencl/source/program/program.h"
 
 #include <vector>
@@ -29,21 +33,17 @@
 namespace NEO {
 struct CompletionStamp;
 class Buffer;
+class CommandQueue;
 class CommandStreamReceiver;
 class GraphicsAllocation;
 class ImageTransformer;
 class Surface;
 class PrintfHandler;
+class MultiDeviceKernel;
 
-template <>
-struct OpenCLObjectMapper<_cl_kernel> {
-    typedef class Kernel DerivedType;
-};
-
-class Kernel : public BaseObject<_cl_kernel> {
+class Kernel : public ReferenceTrackedObject<Kernel> {
   public:
-    static const cl_ulong objectMagic = 0x3284ADC8EA0AFE25LL;
-    static const uint32_t kernelBinaryAlignement = 64;
+    static const uint32_t kernelBinaryAlignment = 64;
 
     enum kernelArgType {
         NONE_OBJ,
@@ -67,6 +67,21 @@ class Kernel : public BaseObject<_cl_kernel> {
         cl_mem_flags svmFlags;
         bool isPatched = false;
         bool isStatelessUncacheable = false;
+        uint32_t allocId;
+        uint32_t allocIdMemoryManagerCounter;
+        bool isSetToNullptr = false;
+    };
+
+    enum class TunningStatus {
+        STANDARD_TUNNING_IN_PROGRESS,
+        SUBDEVICE_TUNNING_IN_PROGRESS,
+        TUNNING_DONE
+    };
+
+    enum class TunningType {
+        DISABLED,
+        SIMPLE,
+        FULL
     };
 
     typedef int32_t (Kernel::*KernelArgHandler)(uint32_t argIndex,
@@ -74,13 +89,11 @@ class Kernel : public BaseObject<_cl_kernel> {
                                                 const void *argVal);
 
     template <typename kernel_t = Kernel, typename program_t = Program>
-    static kernel_t *create(program_t *program, const KernelInfo &kernelInfo, cl_int *errcodeRet) {
+    static kernel_t *create(program_t *program, const KernelInfo &kernelInfo, ClDevice &clDevice, cl_int *errcodeRet) {
         cl_int retVal;
         kernel_t *pKernel = nullptr;
 
-        auto clDevice = program->getDevice().template getSpecializedDevice<ClDevice>();
-
-        pKernel = new kernel_t(program, kernelInfo, *clDevice);
+        pKernel = new kernel_t(program, kernelInfo, clDevice);
         retVal = pKernel->initialize();
 
         if (retVal != CL_SUCCESS) {
@@ -92,10 +105,10 @@ class Kernel : public BaseObject<_cl_kernel> {
             *errcodeRet = retVal;
         }
 
-        if (FileLoggerInstance().enabled()) {
+        if (fileLoggerInstance().enabled()) {
             std::string source;
             program->getSource(source);
-            FileLoggerInstance().dumpKernel(kernelInfo.name, source);
+            fileLoggerInstance().dumpKernel(kernelInfo.kernelDescriptor.kernelMetadata.kernelName, source);
         }
 
         return pKernel;
@@ -111,6 +124,12 @@ class Kernel : public BaseObject<_cl_kernel> {
     }
 
     bool isAuxTranslationRequired() const { return auxTranslationRequired; }
+    void setAuxTranslationRequired(bool onOff) { auxTranslationRequired = onOff; }
+    void updateAuxTranslationRequired();
+
+    ArrayRef<uint8_t> getCrossThreadDataRef() {
+        return ArrayRef<uint8_t>(reinterpret_cast<uint8_t *>(crossThreadData), crossThreadDataSize);
+    }
 
     char *getCrossThreadData() const {
         return crossThreadData;
@@ -128,9 +147,9 @@ class Kernel : public BaseObject<_cl_kernel> {
     MOCKABLE_VIRTUAL bool isPatched() const;
 
     // API entry points
-    cl_int setArg(uint32_t argIndex, size_t argSize, const void *argVal);
+    cl_int setArgument(uint32_t argIndex, size_t argSize, const void *argVal) { return setArg(argIndex, argSize, argVal); }
     cl_int setArgSvm(uint32_t argIndex, size_t svmAllocSize, void *svmPtr, GraphicsAllocation *svmAlloc, cl_mem_flags svmFlags);
-    cl_int setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocation *svmAlloc);
+    MOCKABLE_VIRTUAL cl_int setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocation *svmAlloc, uint32_t allocId);
 
     void setSvmKernelExecInfo(GraphicsAllocation *argValue);
     void clearSvmKernelExecInfo();
@@ -138,11 +157,12 @@ class Kernel : public BaseObject<_cl_kernel> {
     cl_int getInfo(cl_kernel_info paramName, size_t paramValueSize,
                    void *paramValue, size_t *paramValueSizeRet) const;
     void getAdditionalInfo(cl_kernel_info paramName, const void *&paramValue, size_t &paramValueSizeRet) const;
+    void getAdditionalWorkGroupInfo(cl_kernel_work_group_info paramName, const void *&paramValue, size_t &paramValueSizeRet) const;
 
     cl_int getArgInfo(cl_uint argIndx, cl_kernel_arg_info paramName,
                       size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) const;
 
-    cl_int getWorkGroupInfo(cl_device_id device, cl_kernel_work_group_info paramName,
+    cl_int getWorkGroupInfo(cl_kernel_work_group_info paramName,
                             size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) const;
 
     cl_int getSubGroupInfo(cl_kernel_sub_group_info paramName,
@@ -176,62 +196,44 @@ class Kernel : public BaseObject<_cl_kernel> {
     }
 
     size_t getKernelArgsNumber() const {
-        return kernelInfo.kernelArgInfo.size();
+        return kernelArguments.size();
     }
 
-    bool requiresSshForBuffers() const {
-        return kernelInfo.requiresSshForBuffers;
+    bool usesBindfulAddressingForBuffers() const {
+        return KernelDescriptor::BindfulAndStateless == kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode;
     }
 
-    const KernelInfo &getKernelInfo() const {
+    inline const KernelDescriptor &getDescriptor() const {
+        return kernelInfo.kernelDescriptor;
+    }
+    inline const KernelInfo &getKernelInfo() const {
         return kernelInfo;
     }
 
-    const ClDevice &getDevice() const {
-        return device;
-    }
-
     Context &getContext() const {
-        return context ? *context : program->getContext();
-    }
-
-    void setContext(Context *context) {
-        this->context = context;
+        return program->getContext();
     }
 
     Program *getProgram() const { return program; }
 
-    static uint32_t getScratchSizeValueToProgramMediaVfeState(int scratchSize);
     uint32_t getScratchSize() {
-        return kernelInfo.patchInfo.mediavfestate ? kernelInfo.patchInfo.mediavfestate->PerThreadScratchSpace : 0;
+        return kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0];
     }
 
     uint32_t getPrivateScratchSize() {
-        return kernelInfo.patchInfo.mediaVfeStateSlot1 ? kernelInfo.patchInfo.mediaVfeStateSlot1->PerThreadScratchSpace : 0;
+        return kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[1];
     }
 
-    void createReflectionSurface();
-    template <bool mockable = false>
-    void patchReflectionSurface(DeviceQueue *devQueue, PrintfHandler *printfHandler);
-
-    void patchDefaultDeviceQueue(DeviceQueue *devQueue);
-    void patchEventPool(DeviceQueue *devQueue);
-    void patchBlocksSimdSize();
-    bool usesSyncBuffer();
-    void patchSyncBuffer(Device &device, GraphicsAllocation *gfxAllocation, size_t bufferOffset);
-    void patchBindlessSurfaceStateOffsets(const size_t sshOffset);
-
-    GraphicsAllocation *getKernelReflectionSurface() const {
-        return kernelReflectionSurface;
-    }
-
-    size_t getInstructionHeapSizeForExecutionModel() const;
+    bool usesSyncBuffer() const;
+    void patchSyncBuffer(GraphicsAllocation *gfxAllocation, size_t bufferOffset);
+    void *patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t bindless);
 
     // Helpers
     cl_int setArg(uint32_t argIndex, uint32_t argValue);
     cl_int setArg(uint32_t argIndex, uint64_t argValue);
     cl_int setArg(uint32_t argIndex, cl_mem argValue);
     cl_int setArg(uint32_t argIndex, cl_mem argValue, uint32_t mipLevel);
+    cl_int setArg(uint32_t argIndex, size_t argSize, const void *argVal);
 
     // Handlers
     void setKernelArgHandler(uint32_t argIndex, KernelArgHandler handler);
@@ -270,10 +272,6 @@ class Kernel : public BaseObject<_cl_kernel> {
                              size_t argSize,
                              const void *argVal);
 
-    cl_int setArgDevQueue(uint32_t argIndex,
-                          size_t argSize,
-                          const void *argVal);
-
     void storeKernelArg(uint32_t argIndex,
                         kernelArgType argType,
                         void *argObject,
@@ -281,12 +279,16 @@ class Kernel : public BaseObject<_cl_kernel> {
                         size_t argSize,
                         GraphicsAllocation *argSvmAlloc = nullptr,
                         cl_mem_flags argSvmFlags = 0);
+    void storeKernelArgAllocIdMemoryManagerCounter(uint32_t argIndex, uint32_t allocIdMemoryManagerCounter);
     const void *getKernelArg(uint32_t argIndex) const;
     const SimpleKernelArgInfo &getKernelArgInfo(uint32_t argIndex) const;
 
     bool getAllowNonUniform() const { return program->getAllowNonUniform(); }
-    bool isVmeKernel() const { return kernelInfo.isVmeWorkload; }
+    bool isVmeKernel() const { return kernelInfo.kernelDescriptor.kernelAttributes.flags.usesVme; }
     bool requiresSpecialPipelineSelectMode() const { return specialPipelineSelectMode; }
+
+    void performKernelTuning(CommandStreamReceiver &commandStreamReceiver, const Vec3<size_t> &lws, const Vec3<size_t> &gws, const Vec3<size_t> &offsets, TimestampPacketContainer *timestampContainer);
+    MOCKABLE_VIRTUAL bool isSingleSubdevicePreferred() const;
 
     //residency for kernel surfaces
     MOCKABLE_VIRTUAL void makeResident(CommandStreamReceiver &commandStreamReceiver);
@@ -298,90 +300,40 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     bool hasPrintfOutput() const;
 
-    void setReflectionSurfaceBlockBtOffset(uint32_t blockID, uint32_t offset);
-
     cl_int checkCorrectImageAccessQualifier(cl_uint argIndex,
                                             size_t argSize,
                                             const void *argValue) const;
 
-    uint32_t *globalWorkOffsetX;
-    uint32_t *globalWorkOffsetY;
-    uint32_t *globalWorkOffsetZ;
-
-    uint32_t *localWorkSizeX;
-    uint32_t *localWorkSizeY;
-    uint32_t *localWorkSizeZ;
-
-    uint32_t *localWorkSizeX2;
-    uint32_t *localWorkSizeY2;
-    uint32_t *localWorkSizeZ2;
-
-    uint32_t *globalWorkSizeX;
-    uint32_t *globalWorkSizeY;
-    uint32_t *globalWorkSizeZ;
-
-    uint32_t *enqueuedLocalWorkSizeX;
-    uint32_t *enqueuedLocalWorkSizeY;
-    uint32_t *enqueuedLocalWorkSizeZ;
-
-    uint32_t *numWorkGroupsX;
-    uint32_t *numWorkGroupsY;
-    uint32_t *numWorkGroupsZ;
-
-    uint32_t *maxWorkGroupSizeForCrossThreadData;
-    uint32_t maxKernelWorkGroupSize = 0;
-    uint32_t *workDim;
-    uint32_t *dataParameterSimdSize;
-    uint32_t *parentEventOffset;
-    uint32_t *preferredWkgMultipleOffset;
-
     static uint32_t dummyPatchLocation;
-
-    std::vector<size_t> slmSizes;
 
     uint32_t allBufferArgsStateful = CL_TRUE;
 
-    uint32_t slmTotalSize;
-    bool isBuiltIn;
-    const bool isParentKernel;
-    const bool isSchedulerKernel;
+    bool isBuiltIn = false;
 
-    uint32_t getThreadArbitrationPolicy() const {
+    int32_t getThreadArbitrationPolicy() const {
         return threadArbitrationPolicy;
     }
     KernelExecutionType getExecutionType() const {
         return executionType;
     }
-    bool isUsingSyncBuffer() const {
-        return (kernelInfo.patchInfo.pAllocateSyncBuffer != nullptr);
-    }
-
-    bool checkIfIsParentKernelAndBlocksUsesPrintf();
 
     bool is32Bit() const {
-        return kernelInfo.gpuPointerSize == 4;
-    }
-
-    int32_t getDebugSurfaceBti() const {
-        if (kernelInfo.patchInfo.pAllocateSystemThreadSurface) {
-            return kernelInfo.patchInfo.pAllocateSystemThreadSurface->BTI;
-        }
-        return -1;
+        return kernelInfo.kernelDescriptor.kernelAttributes.gpuPointerSize == 4;
     }
 
     size_t getPerThreadSystemThreadSurfaceSize() const {
-        if (kernelInfo.patchInfo.pAllocateSystemThreadSurface) {
-            return kernelInfo.patchInfo.pAllocateSystemThreadSurface->PerThreadSystemThreadSurfaceSize;
-        }
-        return 0;
+        return kernelInfo.kernelDescriptor.kernelAttributes.perThreadSystemThreadSurfaceSize;
     }
 
     std::vector<PatchInfoData> &getPatchInfoDataList() { return patchInfoDataList; };
+    bool usesImages() const {
+        return usingImages;
+    }
     bool usesOnlyImages() const {
         return usingImagesOnly;
     }
 
-    void fillWithBuffersForAuxTranslation(MemObjsForAuxTranslation &memObjsForAuxTranslation);
+    std::unique_ptr<KernelObjsForAuxTranslation> fillWithKernelObjsForAuxTranslation();
 
     MOCKABLE_VIRTUAL bool requiresCacheFlushCommand(const CommandQueue &commandQueue) const;
 
@@ -401,113 +353,93 @@ class Kernel : public BaseObject<_cl_kernel> {
     bool areStatelessWritesUsed() { return containsStatelessWrites; }
     int setKernelThreadArbitrationPolicy(uint32_t propertyValue);
     cl_int setKernelExecutionType(cl_execution_info_kernel_type_intel executionType);
-    void setThreadArbitrationPolicy(uint32_t policy) {
+    void setThreadArbitrationPolicy(int32_t policy) {
         this->threadArbitrationPolicy = policy;
     }
     void getSuggestedLocalWorkSize(const cl_uint workDim, const size_t *globalWorkSize, const size_t *globalWorkOffset,
                                    size_t *localWorkSize);
-    uint32_t getMaxWorkGroupCount(const cl_uint workDim, const size_t *localWorkSize) const;
+    uint32_t getMaxWorkGroupCount(const cl_uint workDim, const size_t *localWorkSize, const CommandQueue *commandQueue) const;
 
     uint64_t getKernelStartOffset(
         const bool localIdsGenerationByRuntime,
         const bool kernelUsesLocalIds,
         const bool isCssUsed) const;
 
-    bool requiresPerDssBackedBuffer() const;
-    bool requiresLimitedWorkgroupSize() const;
+    bool isKernelDebugEnabled() const { return debugEnabled; }
+    int32_t setAdditionalKernelExecInfoWithParam(uint32_t paramName, size_t paramValueSize, const void *paramValue);
+    void setAdditionalKernelExecInfo(uint32_t additionalKernelExecInfo);
+    uint32_t getAdditionalKernelExecInfo() const;
+    MOCKABLE_VIRTUAL bool requiresWaDisableRccRhwoOptimization() const;
+
+    //dispatch traits
+    void setGlobalWorkOffsetValues(uint32_t globalWorkOffsetX, uint32_t globalWorkOffsetY, uint32_t globalWorkOffsetZ);
+    void setGlobalWorkSizeValues(uint32_t globalWorkSizeX, uint32_t globalWorkSizeY, uint32_t globalWorkSizeZ);
+    void setLocalWorkSizeValues(uint32_t localWorkSizeX, uint32_t localWorkSizeY, uint32_t localWorkSizeZ);
+    void setLocalWorkSize2Values(uint32_t localWorkSizeX, uint32_t localWorkSizeY, uint32_t localWorkSizeZ);
+    void setEnqueuedLocalWorkSizeValues(uint32_t localWorkSizeX, uint32_t localWorkSizeY, uint32_t localWorkSizeZ);
+    void setNumWorkGroupsValues(uint32_t numWorkGroupsX, uint32_t numWorkGroupsY, uint32_t numWorkGroupsZ);
+    void setWorkDim(uint32_t workDim);
+
+    const uint32_t *getDispatchTrait(const CrossThreadDataOffset offset) const {
+        return isValidOffset(offset) ? reinterpret_cast<uint32_t *>(getCrossThreadData() + offset)
+                                     : &Kernel::dummyPatchLocation;
+    }
+    const uint32_t *getWorkDim() const { return getDispatchTrait(getDescriptor().payloadMappings.dispatchTraits.workDim); }
+    std::array<const uint32_t *, 3> getDispatchTraitArray(const CrossThreadDataOffset dispatchTrait[3]) const { return {getDispatchTrait(dispatchTrait[0]), getDispatchTrait(dispatchTrait[1]), getDispatchTrait(dispatchTrait[2])}; }
+    std::array<const uint32_t *, 3> getGlobalWorkOffsetValues() const { return getDispatchTraitArray(getDescriptor().payloadMappings.dispatchTraits.globalWorkOffset); }
+    std::array<const uint32_t *, 3> getLocalWorkSizeValues() const { return getDispatchTraitArray(getDescriptor().payloadMappings.dispatchTraits.localWorkSize); }
+    std::array<const uint32_t *, 3> getLocalWorkSize2Values() const { return getDispatchTraitArray(getDescriptor().payloadMappings.dispatchTraits.localWorkSize2); }
+    std::array<const uint32_t *, 3> getEnqueuedLocalWorkSizeValues() const { return getDispatchTraitArray(getDescriptor().payloadMappings.dispatchTraits.enqueuedLocalWorkSize); }
+    std::array<const uint32_t *, 3> getNumWorkGroupsValues() const { return getDispatchTraitArray(getDescriptor().payloadMappings.dispatchTraits.numWorkGroups); }
+
+    bool isLocalWorkSize2Patchable();
+
+    uint32_t getMaxKernelWorkGroupSize() const;
+    uint32_t getSlmTotalSize() const;
+    bool getHasIndirectAccess() const {
+        return this->kernelHasIndirectAccess;
+    }
+
+    MultiDeviceKernel *getMultiDeviceKernel() const { return pMultiDeviceKernel; }
+    void setMultiDeviceKernel(MultiDeviceKernel *pMultiDeviceKernelToSet) { pMultiDeviceKernel = pMultiDeviceKernelToSet; }
+
+    bool areMultipleSubDevicesInContext() const;
+    bool requiresMemoryMigration() const { return migratableArgsMap.size() > 0; }
+    const std::map<uint32_t, MemObj *> &getMemObjectsToMigrate() const { return migratableArgsMap; }
+    ImplicitArgs *getImplicitArgs() const { return pImplicitArgs.get(); }
+    const HardwareInfo &getHardwareInfo() const;
 
   protected:
-    struct ObjectCounts {
-        uint32_t imageCount;
-        uint32_t samplerCount;
-    };
-
-    class ReflectionSurfaceHelper {
-      public:
-        static const uint64_t undefinedOffset = (uint64_t)-1;
-
-        static void setKernelDataHeader(void *reflectionSurface, uint32_t numberOfBlocks,
-                                        uint32_t parentImages, uint32_t parentSamplers,
-                                        uint32_t imageOffset, uint32_t samplerOffset) {
-            IGIL_KernelDataHeader *kernelDataHeader = reinterpret_cast<IGIL_KernelDataHeader *>(reflectionSurface);
-            kernelDataHeader->m_numberOfKernels = numberOfBlocks;
-            kernelDataHeader->m_ParentKernelImageCount = parentImages;
-            kernelDataHeader->m_ParentSamplerCount = parentSamplers;
-            kernelDataHeader->m_ParentImageDataOffset = imageOffset;
-            kernelDataHeader->m_ParentSamplerParamsOffset = samplerOffset;
-        }
-
-        static uint32_t setKernelData(void *reflectionSurface, uint32_t offset,
-                                      std::vector<IGIL_KernelCurbeParams> &curbeParamsIn,
-                                      uint64_t tokenMaskIn, size_t maxConstantBufferSize,
-                                      size_t samplerCount, const KernelInfo &kernelInfo,
-                                      const HardwareInfo &hwInfo);
-
-        static void setKernelAddressData(void *reflectionSurface, uint32_t offset,
-                                         uint32_t kernelDataOffset, uint32_t samplerHeapOffset,
-                                         uint32_t constantBufferOffset, uint32_t samplerParamsOffset,
-                                         uint32_t sshTokensOffset, uint32_t btOffset,
-                                         const KernelInfo &kernelInfo, const HardwareInfo &hwInfo);
-
-        static void getCurbeParams(std::vector<IGIL_KernelCurbeParams> &curbeParamsOut,
-                                   uint64_t &tokenMaskOut, uint32_t &firstSSHTokenIndex,
-                                   const KernelInfo &kernelInfo, const HardwareInfo &hwInfo);
-
-        static bool compareFunction(IGIL_KernelCurbeParams argFirst, IGIL_KernelCurbeParams argSecond) {
-            if (argFirst.m_parameterType == argSecond.m_parameterType) {
-                if (argFirst.m_parameterType == iOpenCL::DATA_PARAMETER_LOCAL_WORK_SIZE) {
-                    return argFirst.m_patchOffset < argSecond.m_patchOffset;
-                } else {
-                    return argFirst.m_sourceOffset < argSecond.m_sourceOffset;
-                }
-            } else {
-                return argFirst.m_parameterType < argSecond.m_parameterType;
-            }
-        }
-
-        static void setKernelAddressDataBtOffset(void *reflectionSurface, uint32_t blockID, uint32_t btOffset);
-
-        static void setParentImageParams(void *reflectionSurface, std::vector<Kernel::SimpleKernelArgInfo> &parentArguments, const KernelInfo &parentKernelInfo);
-        static void setParentSamplerParams(void *reflectionSurface, std::vector<Kernel::SimpleKernelArgInfo> &parentArguments, const KernelInfo &parentKernelInfo);
-
-        template <bool mockable = false>
-        static void patchBlocksCurbe(void *reflectionSurface, uint32_t blockID,
-                                     uint64_t defaultDeviceQueueCurbeOffset, uint32_t patchSizeDefaultQueue, uint64_t defaultDeviceQueueGpuAddress,
-                                     uint64_t eventPoolCurbeOffset, uint32_t patchSizeEventPool, uint64_t eventPoolGpuAddress,
-                                     uint64_t deviceQueueCurbeOffset, uint32_t patchSizeDeviceQueue, uint64_t deviceQueueGpuAddress,
-                                     uint64_t printfBufferOffset, uint32_t printfBufferSize, uint64_t printfBufferGpuAddress,
-                                     uint64_t privateSurfaceOffset, uint32_t privateSurfaceSize, uint64_t privateSurfaceGpuAddress);
-
-        static void patchBlocksCurbeWithConstantValues(void *reflectionSurface, uint32_t blockID,
-                                                       uint64_t globalMemoryCurbeOffset, uint32_t globalMemoryPatchSize, uint64_t globalMemoryGpuAddress,
-                                                       uint64_t constantMemoryCurbeOffset, uint32_t constantMemoryPatchSize, uint64_t constantMemoryGpuAddress,
-                                                       uint64_t privateMemoryCurbeOffset, uint32_t privateMemoryPatchSize, uint64_t privateMemoryGpuAddress);
-    };
-
     void
     makeArgsResident(CommandStreamReceiver &commandStreamReceiver);
 
-    void *patchBufferOffset(const KernelArgInfo &argInfo, void *svmPtr, GraphicsAllocation *svmAlloc);
+    void *patchBufferOffset(const ArgDescPointer &argAsPtr, void *svmPtr, GraphicsAllocation *svmAlloc);
 
-    // Sets-up both crossThreadData and ssh for given implicit (private/constant, etc.) allocation
-    template <typename PatchTokenT>
-    void patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const PatchTokenT &patch);
+    void patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const ArgDescPointer &arg);
 
-    void getParentObjectCounts(ObjectCounts &objectCount);
-    Kernel(Program *programArg, const KernelInfo &kernelInfoArg, const ClDevice &deviceArg, bool schedulerKernel = false);
+    Kernel(Program *programArg, const KernelInfo &kernelInfo, ClDevice &clDevice);
     void provideInitializationHints();
 
-    void patchBlocksCurbeWithConstantValues();
-
+    void markArgPatchedAndResolveArgs(uint32_t argIndex);
     void resolveArgs();
 
     void reconfigureKernel();
+    bool hasDirectStatelessAccessToSharedBuffer() const;
+    bool hasDirectStatelessAccessToHostMemory() const;
+    bool hasIndirectStatelessAccessToHostMemory() const;
 
     void addAllocationToCacheFlushVector(uint32_t argIndex, GraphicsAllocation *argAllocation);
     bool allocationForCacheFlush(GraphicsAllocation *argAllocation) const;
+
+    const ClDevice &getDevice() const {
+        return clDevice;
+    }
+    cl_int patchPrivateSurface();
+
+    bool containsStatelessWrites = true;
+    const ExecutionEnvironment &executionEnvironment;
     Program *program;
-    Context *context;
-    const ClDevice &device;
+    ClDevice &clDevice;
     const KernelInfo &kernelInfo;
 
     std::vector<SimpleKernelArgInfo> kernelArguments;
@@ -517,36 +449,92 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::None;
 
-    size_t numberOfBindingTableStates;
-    size_t localBindingTableOffset;
-    std::unique_ptr<char[]> pSshLocal;
-    uint32_t sshLocalSize;
-
-    char *crossThreadData;
-    uint32_t crossThreadDataSize;
-
-    GraphicsAllocation *privateSurface;
-    uint64_t privateSurfaceSize;
-
-    GraphicsAllocation *kernelReflectionSurface;
-
-    bool usingSharedObjArgs;
+    bool usingSharedObjArgs = false;
+    bool usingImages = false;
     bool usingImagesOnly = false;
     bool auxTranslationRequired = false;
-    bool containsStatelessWrites = true;
     uint32_t patchedArgumentsNum = 0;
     uint32_t startOffset = 0;
     uint32_t statelessUncacheableArgsCount = 0;
-    uint32_t threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
+    int32_t threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
     KernelExecutionType executionType = KernelExecutionType::Default;
 
     std::vector<PatchInfoData> patchInfoDataList;
     std::unique_ptr<ImageTransformer> imageTransformer;
+    std::map<uint32_t, MemObj *> migratableArgsMap{};
 
     bool specialPipelineSelectMode = false;
     bool svmAllocationsRequireCacheFlush = false;
     std::vector<GraphicsAllocation *> kernelArgRequiresCacheFlush;
-    UnifiedMemoryControls unifiedMemoryControls;
+    UnifiedMemoryControls unifiedMemoryControls{};
     bool isUnifiedMemorySyncRequired = true;
+    bool debugEnabled = false;
+    uint32_t additionalKernelExecInfo = AdditionalKernelExecInfo::DisableOverdispatch;
+
+    uint32_t *maxWorkGroupSizeForCrossThreadData = &Kernel::dummyPatchLocation;
+    uint32_t maxKernelWorkGroupSize = 0;
+    uint32_t *dataParameterSimdSize = &Kernel::dummyPatchLocation;
+    uint32_t *parentEventOffset = &Kernel::dummyPatchLocation;
+    uint32_t *preferredWkgMultipleOffset = &Kernel::dummyPatchLocation;
+
+    size_t numberOfBindingTableStates = 0u;
+    size_t localBindingTableOffset = 0u;
+
+    std::vector<size_t> slmSizes;
+    uint32_t slmTotalSize = 0u;
+
+    std::unique_ptr<char[]> pSshLocal;
+    uint32_t sshLocalSize = 0u;
+    char *crossThreadData = nullptr;
+    uint32_t crossThreadDataSize = 0u;
+
+    GraphicsAllocation *privateSurface = nullptr;
+    uint64_t privateSurfaceSize = 0u;
+
+    struct KernelConfig {
+        Vec3<size_t> gws;
+        Vec3<size_t> lws;
+        Vec3<size_t> offsets;
+        bool operator==(const KernelConfig &other) const { return this->gws == other.gws && this->lws == other.lws && this->offsets == other.offsets; }
+    };
+    struct KernelConfigHash {
+        size_t operator()(KernelConfig const &config) const {
+            auto hash = std::hash<size_t>{};
+            size_t gwsHashX = hash(config.gws.x);
+            size_t gwsHashY = hash(config.gws.y);
+            size_t gwsHashZ = hash(config.gws.z);
+            size_t gwsHash = hashCombine(gwsHashX, gwsHashY, gwsHashZ);
+            size_t lwsHashX = hash(config.lws.x);
+            size_t lwsHashY = hash(config.lws.y);
+            size_t lwsHashZ = hash(config.lws.z);
+            size_t lwsHash = hashCombine(lwsHashX, lwsHashY, lwsHashZ);
+            size_t offsetsHashX = hash(config.offsets.x);
+            size_t offsetsHashY = hash(config.offsets.y);
+            size_t offsetsHashZ = hash(config.offsets.z);
+            size_t offsetsHash = hashCombine(offsetsHashX, offsetsHashY, offsetsHashZ);
+            return hashCombine(gwsHash, lwsHash, offsetsHash);
+        }
+
+        size_t hashCombine(size_t hash1, size_t hash2, size_t hash3) const {
+            return (hash1 ^ (hash2 << 1u)) ^ (hash3 << 2u);
+        }
+    };
+    struct KernelSubmissionData {
+        std::unique_ptr<TimestampPacketContainer> kernelStandardTimestamps;
+        std::unique_ptr<TimestampPacketContainer> kernelSubdeviceTimestamps;
+        TunningStatus status;
+        bool singleSubdevicePreferred = false;
+    };
+
+    bool hasTunningFinished(KernelSubmissionData &submissionData);
+    bool hasRunFinished(TimestampPacketContainer *timestampContainer);
+
+    std::unordered_map<KernelConfig, KernelSubmissionData, KernelConfigHash> kernelSubmissionMap;
+    bool singleSubdevicePreferredInCurrentEnqueue = false;
+
+    bool kernelHasIndirectAccess = true;
+    MultiDeviceKernel *pMultiDeviceKernel = nullptr;
+    std::unique_ptr<ImplicitArgs> pImplicitArgs = nullptr;
 };
+
 } // namespace NEO

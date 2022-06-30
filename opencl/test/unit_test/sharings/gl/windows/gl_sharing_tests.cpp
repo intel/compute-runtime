@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,13 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
-#include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm_resource_info.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/user_event.h"
@@ -24,7 +29,6 @@
 #include "opencl/source/sharings/gl/gl_texture.h"
 #include "opencl/source/sharings/gl/windows/gl_sharing_windows.h"
 #include "opencl/source/sharings/sharing.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/gl/windows/mock_gl_arb_sync_event_windows.h"
 #include "opencl/test/unit_test/mocks/gl/windows/mock_gl_sharing_windows.h"
 #include "opencl/test/unit_test/mocks/mock_async_event_handler.h"
@@ -32,13 +36,11 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
-#include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
-#include "test.h"
 
 #include "gl_types.h"
 
 using namespace NEO;
+
 bool MockGLSharingFunctions::SharingEnabled = false;
 
 class glSharingTests : public ::testing::Test {
@@ -97,7 +99,7 @@ TEST_F(glSharingTests, givenMockGlWhenGlBufferIsCreatedThenMemObjectHasGlHandler
 
 class FailingMemoryManager : public MockMemoryManager {
   public:
-    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) override {
+    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override {
         return nullptr;
     }
 };
@@ -215,7 +217,7 @@ TEST_F(glSharingTests, givenClGLBufferWhenItIsAcquiredThenAcuqireCountIsIncremen
     auto memObject = castToObject<Buffer>(glBuffer);
     EXPECT_FALSE(memObject->isMemObjZeroCopy());
 
-    EXPECT_FALSE(memObject->isReadWriteOnCpuAllowed());
+    EXPECT_FALSE(memObject->isReadWriteOnCpuAllowed(context.getDevice(0)->getDevice()));
     auto currentGraphicsAllocation = memObject->getGraphicsAllocation(rootDeviceIndex);
 
     memObject->peekSharingHandler()->acquire(memObject, rootDeviceIndex);
@@ -254,9 +256,9 @@ TEST_F(glSharingTests, givenClGLBufferWhenItIsAcquiredTwiceThenAcuqireIsNotCalle
 TEST_F(glSharingTests, givenClGLBufferWhenItIsCreatedAndGmmIsAvailableThenItIsUsedInGraphicsAllocation) {
     void *ptr = (void *)0x1000;
     auto rootDeviceIndex = context.getDevice(0)->getRootDeviceIndex();
-    auto gmm = new Gmm(context.getDevice(0)->getGmmClientContext(), ptr, 4096u, false);
+    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper(), ptr, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
 
-    mockGlSharing->m_bufferInfoOutput.pGmmResInfo = gmm->gmmResourceInfo->peekHandle();
+    mockGlSharing->m_bufferInfoOutput.pGmmResInfo = gmm->gmmResourceInfo->peekGmmResourceInfo();
     mockGlSharing->uploadDataToBufferInfo();
 
     auto retVal = CL_SUCCESS;
@@ -802,7 +804,7 @@ TEST(glSharingBasicTest, givenCorrectFlagsWhenGettingSupportedFormatsThenCorrect
 TEST(glSharingBasicTest, givenSupportedImageTypesWhenGettingSupportedFormatsThenCorrectListIsReturned) {
     MockGLSharingFunctions glSharingFunctions;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_types[] = {CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE3D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE1D_BUFFER};
+    cl_mem_object_type image_types[] = {CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE3D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE1D_BUFFER, CL_MEM_OBJECT_IMAGE2D_ARRAY};
     cl_GLenum glFormats[3] = {};
     cl_uint numImageFormats = 0;
 
@@ -844,7 +846,7 @@ TEST(glSharingBasicTest, givenNullNumImageFormatsWhenGettingSupportedFormatsThen
 TEST(glSharingBasicTest, givenInvalidImageTypeWhenGettingSupportedFormatsThenIvalidValueErrorIsReturned) {
     MockGLSharingFunctions glSharingFunctions;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;
+    cl_mem_object_type image_type = CL_MEM_OBJECT_PIPE;
     cl_GLenum glFormats[3] = {};
     cl_uint numImageFormats = 0;
 
@@ -874,6 +876,9 @@ TEST_F(glSharingTests, givenContextWhenCreateFromSharedBufferThenSharedImageIsRe
     ASSERT_NE(nullptr, glBuffer);
     auto parentbBuffer = castToObject<Buffer>(glBuffer);
 
+    auto hardwareInfo = context.getDevice(0)->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hardwareInfo->capabilityTable.supportsImages = true;
+
     cl_image_format format = {CL_RGBA, CL_FLOAT};
     cl_image_desc image_desc = {CL_MEM_OBJECT_IMAGE1D_BUFFER, 1, 1, 1, 1, 0, 0, 0, 0, {glBuffer}};
     cl_mem image = clCreateImage(&context, CL_MEM_READ_WRITE, &format, &image_desc, 0, &retVal);
@@ -894,8 +899,13 @@ TEST_F(glSharingTests, givenClGLBufferWhenMapAndUnmapBufferIsCalledThenCopyOnGpu
     auto glBuffer = clCreateFromGLBuffer(&context, 0, bufferId, &retVal);
     auto buffer = castToObject<Buffer>(glBuffer);
     EXPECT_EQ(buffer->getCpuAddressForMemoryTransfer(), nullptr); // no cpu ptr
+    auto gfxAllocation = buffer->getGraphicsAllocation(rootDeviceIndex);
+    auto pClDevice = context.getDevice(0);
+    for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
+        gfxAllocation->setGmm(new MockGmm(pClDevice->getGmmHelper()), handleId);
+    }
 
-    auto commandQueue = CommandQueue::create(&context, context.getDevice(0), 0, false, retVal);
+    auto commandQueue = CommandQueue::create(&context, pClDevice, 0, false, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     size_t offset = 1;
@@ -933,8 +943,13 @@ TEST_F(glSharingTests, givenClGLBufferWhenMapAndUnmapBufferIsCalledTwiceThenReus
     auto glBuffer = clCreateFromGLBuffer(&context, 0, bufferId, &retVal);
     auto buffer = castToObject<Buffer>(glBuffer);
     EXPECT_EQ(buffer->getCpuAddressForMemoryTransfer(), nullptr); // no cpu ptr
+    auto gfxAllocation = buffer->getGraphicsAllocation(rootDeviceIndex);
+    auto pClDevice = context.getDevice(0);
+    for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
+        gfxAllocation->setGmm(new MockGmm(pClDevice->getGmmHelper()), handleId);
+    }
 
-    auto commandQueue = CommandQueue::create(&context, context.getDevice(0), 0, false, retVal);
+    auto commandQueue = CommandQueue::create(&context, pClDevice, 0, false, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto mappedPtr = clEnqueueMapBuffer(commandQueue, glBuffer, CL_TRUE, CL_MAP_READ, 0, buffer->getSize(),
@@ -1134,7 +1149,7 @@ HWTEST_F(glSharingTests, givenEventCreatedFromFenceObjectWhenItIsPassedToAcquire
     clReleaseEvent(event);
 }
 
-TEST_F(glSharingTests, glSyncEventReportsAsExternallySynchronized) {
+TEST_F(glSharingTests, GivenGlSyncEventThenReportsAsExternallySynchronized) {
     GLsync glSync = {0};
     auto syncEvent = GlSyncEvent::create(context, glSync, nullptr);
     ASSERT_NE(nullptr, syncEvent);
@@ -1284,7 +1299,7 @@ TEST_F(glSharingTests, whenGetGlContextHandleIsCalledThenProperHandleIsReturned)
 TEST_F(glSharingTests, givenClGLBufferWhenCreatedThenSharedBufferAllocatoinTypeIsSet) {
     std::unique_ptr<Buffer> buffer(GlBuffer::createSharedGlBuffer(&context, CL_MEM_READ_WRITE, bufferId, nullptr));
     ASSERT_NE(nullptr, buffer->getGraphicsAllocation(rootDeviceIndex));
-    EXPECT_EQ(GraphicsAllocation::AllocationType::SHARED_BUFFER, buffer->getGraphicsAllocation(rootDeviceIndex)->getAllocationType());
+    EXPECT_EQ(AllocationType::SHARED_BUFFER, buffer->getGraphicsAllocation(rootDeviceIndex)->getAllocationType());
 }
 
 using clGetSupportedGLTextureFormatsINTELTests = glSharingTests;
@@ -1310,4 +1325,52 @@ TEST_F(clGetSupportedGLTextureFormatsINTELTests, givenValidInputsWhenGettingForm
     for (uint32_t i = 0; i < glFormatsCount; i++) {
         EXPECT_NE(GlSharing::glToCLFormats.end(), GlSharing::glToCLFormats.find(glFormats[i]));
     }
+}
+
+TEST(GlSharingAdapterLuid, whenInitializingGlSharingThenProperAdapterLuidIsObtained) {
+    GlDllHelper dllParam;
+    dllParam.resetParam("glGetLuidCalled");
+    {
+        dllParam.resetParam("glGetLuidFuncAvailable");
+        MockGLSharingFunctions glSharing;
+        LUID expectedLuid{};
+        expectedLuid.HighPart = 0x1d2e;
+        expectedLuid.LowPart = 0x3f4a;
+        EXPECT_EQ(0, dllParam.getParam("glGetLuidCalled"));
+
+        auto luid = glSharing.getAdapterLuid(reinterpret_cast<GLContext>(0x1));
+        EXPECT_EQ(1, dllParam.getParam("glGetLuidCalled"));
+        EXPECT_EQ(expectedLuid.HighPart, luid.HighPart);
+        EXPECT_EQ(expectedLuid.LowPart, luid.LowPart);
+        dllParam.resetParam("glGetLuidCalled");
+    }
+
+    {
+        dllParam.resetParam("glGetLuidFuncAvailable");
+        MockGLSharingFunctions glSharing;
+        LUID expectedLuid{};
+        expectedLuid.HighPart = 0x5d2e;
+        expectedLuid.LowPart = 0x3f4a;
+        EXPECT_EQ(0, dllParam.getParam("glGetLuidCalled"));
+
+        auto luid = glSharing.getAdapterLuid(reinterpret_cast<GLContext>(0x2));
+        EXPECT_EQ(1, dllParam.getParam("glGetLuidCalled"));
+        EXPECT_EQ(expectedLuid.HighPart, luid.HighPart);
+        EXPECT_EQ(expectedLuid.LowPart, luid.LowPart);
+        dllParam.resetParam("glGetLuidCalled");
+    }
+
+    {
+        dllParam.resetParam("glGetLuidFuncNotAvailable");
+        MockGLSharingFunctions glSharing;
+
+        EXPECT_EQ(0, dllParam.getParam("glGetLuidCalled"));
+
+        auto luid = glSharing.getAdapterLuid(reinterpret_cast<GLContext>(0x1));
+        EXPECT_EQ(0, dllParam.getParam("glGetLuidCalled"));
+
+        EXPECT_EQ(0u, luid.HighPart);
+        EXPECT_EQ(0u, luid.LowPart);
+    }
+    dllParam.resetParam("glGetLuidFuncAvailable");
 }

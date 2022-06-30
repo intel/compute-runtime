@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,18 +25,21 @@ class BinaryEncoder {
     int encode();
     int validateInput(const std::vector<std::string> &args);
 
+    bool showHelp = false;
+    void printHelp();
+
   protected:
     OclocArgHelper *argHelper = nullptr;
     bool ignoreIsaPadding = false;
     std::string pathToDump, elfName;
     std::unique_ptr<IgaWrapper> iga;
+
     void calculatePatchListSizes(std::vector<std::string> &ptmFile);
     MOCKABLE_VIRTUAL bool copyBinaryToBinary(const std::string &srcFileName, std::ostream &outBinary, uint32_t *binaryLength);
     bool copyBinaryToBinary(const std::string &srcFileName, std::ostream &outBinary) {
         return copyBinaryToBinary(srcFileName, outBinary, nullptr);
     }
     int createElf(std::stringstream &deviceBinary);
-    void printHelp();
     int processBinary(const std::vector<std::string> &ptmFile, std::ostream &deviceBinary);
     int processKernel(size_t &i, const std::vector<std::string> &ptmFileLines, std::ostream &deviceBinary);
     template <typename T>

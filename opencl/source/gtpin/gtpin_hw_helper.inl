@@ -1,15 +1,16 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/helpers/hw_cmds.h"
 #include "shared/source/helpers/string.h"
 
 #include "opencl/source/gtpin/gtpin_hw_helper.h"
 #include "opencl/source/kernel/kernel.h"
+
+#include "hw_cmds.h"
 
 namespace NEO {
 
@@ -19,7 +20,7 @@ bool GTPinHwHelperHw<GfxFamily>::addSurfaceState(Kernel *pKernel) {
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
 
     size_t sshSize = pKernel->getSurfaceStateHeapSize();
-    if ((sshSize == 0) || pKernel->isParentKernel) {
+    if (sshSize == 0) {
         // Kernels which do not use SSH or use Execution Model are not supported (yet)
         return false;
     }
@@ -54,5 +55,4 @@ void *GTPinHwHelperHw<GfxFamily>::getSurfaceState(Kernel *pKernel, size_t bti) {
     auto pSurfaceState = ptrOffset(pKernel->getSurfaceStateHeap(), pBts->getSurfaceStatePointer());
     return pSurfaceState;
 }
-
 } // namespace NEO

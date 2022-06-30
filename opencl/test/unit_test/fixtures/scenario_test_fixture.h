@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,14 +7,11 @@
 
 #pragma once
 
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "test.h"
-
-#include "gtest/gtest.h"
 
 using namespace NEO;
 
@@ -32,8 +29,8 @@ class ScenarioTest : public ::testing::Test,
 
         cl_device_id clDevice = pDevice;
         context = Context::create<MockContext>(nullptr, ClDeviceVector(&clDevice, 1), nullptr, nullptr, retVal);
-        commandQueue = new MockCommandQueue(context, pDevice, 0);
-        program = new MockProgram(*pDevice->getExecutionEnvironment(), context, false, &pDevice->getDevice());
+        commandQueue = new MockCommandQueue(context, pDevice, 0, false);
+        program = new MockProgram(context, false, toClDeviceVector(*pDevice));
 
         kernelInternals = new MockKernelWithInternals(*pDevice, context);
         kernel = kernelInternals->mockKernel;

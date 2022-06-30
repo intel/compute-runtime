@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,11 @@
 #pragma once
 
 #include <cinttypes>
+#include <cstddef>
+#include <cstring>
 #include <string>
+
+namespace NEO {
 
 constexpr size_t constLength(const char *string) {
     if (nullptr == string) {
@@ -34,25 +38,63 @@ class ConstStringRef {
         return *this;
     }
 
-    template <size_t Length>
-    constexpr ConstStringRef(const char (&array)[Length]) noexcept
-        : ptr(array), len(((Length > 0) && (array[Length - 1] == '\0')) ? (Length - 1) : Length) {
+    constexpr ConstStringRef(const char &c) noexcept
+        : ptr(&c), len(1) {
+    }
+
+    constexpr ConstStringRef(const char *const ptr) noexcept
+        : ptr(ptr), len(constLength(ptr)) {
     }
 
     constexpr ConstStringRef(const char *const ptr, const size_t length) noexcept
         : ptr(ptr), len(length) {
     }
 
+    template <size_t Length>
+    static constexpr ConstStringRef fromArray(const char (&array)[Length]) noexcept {
+        return ConstStringRef(array, Length);
+    }
+
     ConstStringRef(const std::string &str) noexcept
         : ptr(str.data()), len(str.length()) {
+    }
+
+    template <typename SizeT>
+    constexpr ConstStringRef substr(SizeT offset, SizeT len) const noexcept {
+        if (len >= 0) {
+            return ConstStringRef(this->ptr + offset, len);
+        } else {
+            return ConstStringRef(this->ptr + offset, this->len + len - offset);
+        }
+    }
+
+    template <typename SizeT>
+    constexpr ConstStringRef substr(SizeT offset) const noexcept {
+        return ConstStringRef(this->ptr + offset, this->len - offset);
+    }
+
+    constexpr ConstStringRef truncated(int len) const noexcept {
+        if (len >= 0) {
+            return ConstStringRef(this->ptr, len);
+        } else {
+            return ConstStringRef(this->ptr, this->len + len);
+        }
     }
 
     constexpr const char *data() const noexcept {
         return ptr;
     }
 
-    constexpr operator const char *() const noexcept {
-        return ptr;
+    constexpr char operator[](size_t pos) const noexcept {
+        return ptr[pos];
+    }
+
+    constexpr char operator[](int pos) const noexcept {
+        return ptr[pos];
+    }
+
+    explicit operator std::string() const {
+        return str();
     }
 
     std::string str() const {
@@ -97,7 +139,54 @@ class ConstStringRef {
         return false;
     }
 
+    constexpr bool containsCaseInsensitive(const char *subString) const noexcept {
+        const char *findBeg = ptr;
+        const char *findEnd = ptr + len;
+        while (findBeg != findEnd) {
+            const char *lhs = findBeg;
+            const char *rhs = subString;
+            while ((lhs < findEnd) && (std::tolower(*lhs) == std::tolower(*rhs)) && ('\0' != *rhs)) {
+                ++lhs;
+                ++rhs;
+            }
+            if ('\0' == *rhs) {
+                return true;
+            }
+            ++findBeg;
+        }
+        return false;
+    }
+
+    constexpr bool startsWith(const char *subString) const noexcept {
+        const char *findEnd = ptr + len;
+        const char *lhs = ptr;
+        const char *rhs = subString;
+        while ((lhs < findEnd) && (*lhs == *rhs) && ('\0' != *rhs)) {
+            ++lhs;
+            ++rhs;
+        }
+        return ('\0' == *rhs);
+    }
+
+    constexpr bool isEqualWithoutSeparator(const char separator, const char *subString) const noexcept {
+        const char *end = ptr + len;
+        const char *lhs = ptr;
+        const char *rhs = subString;
+
+        for (auto i = lhs; i != end; i++) {
+            if (*i == separator) {
+                continue;
+            }
+            if (*i != *rhs)
+                return false;
+            ++rhs;
+        }
+        return ('\0' == *rhs);
+    }
+
   protected:
+    ConstStringRef(std::nullptr_t) = delete;
+
     const char *ptr = nullptr;
     size_t len = 0U;
 };
@@ -116,26 +205,29 @@ constexpr bool equals(const ConstStringRef &lhs, const ConstStringRef &rhs) {
     return true;
 }
 
-template <typename T = char>
-constexpr bool equals(const ConstStringRef &lhs, const T *rhs) {
-    return equals(lhs, ConstStringRef(rhs, constLength(rhs)));
-}
+constexpr bool equals(const ConstStringRef &lhs, const char *rhs) {
+    size_t i = 0;
+    for (size_t e = lhs.size(); i < e; ++i) {
+        if (lhs[i] != rhs[i]) {
+            return false;
+        }
+        if ((rhs[i] == '\0') && (i + 1 < e)) {
+            return false;
+        }
+    }
 
-inline bool equals(const ConstStringRef &lhs, const std::string &rhs) {
-    return equals(lhs, ConstStringRef(rhs.data(), rhs.length()));
+    return (rhs[i] == '\0');
 }
 
 constexpr bool operator==(const ConstStringRef &lhs, const ConstStringRef &rhs) {
     return equals(lhs, rhs);
 }
 
-template <typename RhsT>
-constexpr bool operator==(const ConstStringRef &lhs, const RhsT &rhs) {
+constexpr bool operator==(const ConstStringRef &lhs, const char *rhs) {
     return equals(lhs, rhs);
 }
 
-template <typename LhsT>
-constexpr bool operator==(const LhsT &lhs, const ConstStringRef &rhs) {
+constexpr bool operator==(const char *lhs, const ConstStringRef &rhs) {
     return equals(rhs, lhs);
 }
 
@@ -143,12 +235,28 @@ constexpr bool operator!=(const ConstStringRef &lhs, const ConstStringRef &rhs) 
     return false == equals(lhs, rhs);
 }
 
-template <typename RhsT>
-constexpr bool operator!=(const ConstStringRef &lhs, const RhsT &rhs) {
-    return false == (lhs == rhs);
+constexpr bool operator!=(const ConstStringRef &lhs, const char *rhs) {
+    return false == equals(lhs, rhs);
 }
 
-template <typename LhsT>
-constexpr bool operator!=(const LhsT &lhs, const ConstStringRef &rhs) {
-    return rhs != lhs;
+constexpr bool operator!=(const char *lhs, const ConstStringRef &rhs) {
+    return false == equals(rhs, lhs);
 }
+
+constexpr bool equalsCaseInsensitive(const ConstStringRef &lhs, const ConstStringRef &rhs) {
+    if (lhs.size() != rhs.size()) {
+        return false;
+    }
+
+    constexpr auto caseDiff = 'a' - 'A';
+    for (size_t i = 0, e = lhs.size(); i < e; ++i) {
+
+        if ((lhs[i] != rhs[i]) && (lhs[i] + caseDiff != rhs[i]) && (lhs[i] != rhs[i] + caseDiff)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+} // namespace NEO

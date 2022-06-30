@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,6 +39,27 @@ __kernel void CopyBufferToBufferMiddle(
     pSrc += srcOffsetInBytes >> 2;
     uint4 loaded = vload4(gid, pSrc);
     vstore4(loaded, gid, pDst);
+}
+
+__kernel void CopyBufferToBufferMiddleMisaligned(
+    __global const uint* pSrc,
+     __global uint* pDst,
+     uint srcOffsetInBytes,
+     uint dstOffsetInBytes,
+     uint misalignmentInBits)
+{
+    const size_t gid = get_global_id(0);
+    pDst += dstOffsetInBytes >> 2;
+    pSrc += srcOffsetInBytes >> 2;
+    const uint4 src0 = vload4(gid, pSrc);
+    const uint4 src1 = vload4(gid + 1, pSrc);
+
+    uint4 result;
+    result.x = (src0.x >> misalignmentInBits) | (src0.y << (32 - misalignmentInBits));
+    result.y = (src0.y >> misalignmentInBits) | (src0.z << (32 - misalignmentInBits));
+    result.z = (src0.z >> misalignmentInBits) | (src0.w << (32 - misalignmentInBits));
+    result.w = (src0.w >> misalignmentInBits) | (src1.x << (32 - misalignmentInBits));
+    vstore4(result, gid, pDst);
 }
 
 __kernel void CopyBufferToBufferRightLeftover(

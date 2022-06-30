@@ -1,15 +1,16 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "test.h"
 
 #include <functional>
 
@@ -20,22 +21,22 @@ using ImageEnqueueCall = std::function<void(MockCommandQueue *, Image *, size_t 
 struct ValidateRegionAndOriginTests : public ::testing::TestWithParam<ImageEnqueueCall> {
     void SetUp() override {
         context.reset(new MockContext());
-        cmdQ.reset(new MockCommandQueue(context.get(), context->getDevice(0), 0));
+        cmdQ.reset(new MockCommandQueue(context.get(), context->getDevice(0), nullptr, false));
     }
 
     static void readImage(MockCommandQueue *cmdQ, Image *image, size_t *origin, size_t *region, int32_t &retVal) {
-        uint32_t tempPtr;
+        uint32_t tempPtr = 0;
         retVal = clEnqueueReadImage(cmdQ, image, CL_TRUE, origin, region, 0, 0, &tempPtr, 0, nullptr, nullptr);
     }
 
     static void writeImage(MockCommandQueue *cmdQ, Image *image, size_t *origin, size_t *region, int32_t &retVal) {
-        uint32_t tempPtr;
+        uint32_t tempPtr = 0;
         retVal = clEnqueueWriteImage(cmdQ, image, CL_TRUE, origin, region, 0, 0, &tempPtr, 0, nullptr, nullptr);
     }
 
     static void fillImage(MockCommandQueue *cmdQ, Image *image, size_t *origin, size_t *region, int32_t &retVal) {
-        uint32_t fill_color[4] = {0xaaaaaaaa, 0xbbbbbbbb, 0xcccccccc, 0xdddddddd};
-        retVal = clEnqueueFillImage(cmdQ, image, fill_color, origin, region, 0, nullptr, nullptr);
+        uint32_t fillColor[4] = {0xaaaaaaaa, 0xbbbbbbbb, 0xcccccccc, 0xdddddddd};
+        retVal = clEnqueueFillImage(cmdQ, image, fillColor, origin, region, 0, nullptr, nullptr);
     }
 
     static void copyImageWithCorrectSrc(MockCommandQueue *cmdQ, Image *dstImage, size_t *dstOrigin, size_t *region, int32_t &retVal) {
@@ -92,6 +93,26 @@ TEST_P(ValidateRegionAndOriginTests, givenAnyZeroRegionParamWhenEnqueueCalledThe
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
+TEST_P(ValidateRegionAndOriginTests, givenMaxImage2DFirstAndSecondRegionCoordinateAndAnyNonZeroFirstOrSecondOriginCoordinateWhenEnqueueCalledThenReturnError) {
+    std::unique_ptr<Image> image(ImageHelper<Image2dDefaults>::create(context.get()));
+    EXPECT_NE(nullptr, image.get());
+
+    const auto &deviceInfo = context->getDevice(0)->getDevice().getDeviceInfo();
+    size_t region[3] = {deviceInfo.image2DMaxWidth, deviceInfo.image2DMaxHeight, 1};
+
+    std::array<size_t, 3> origin = {{0, 1, 0}};
+    GetParam()(cmdQ.get(), image.get(), &origin[0], region, retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    origin = {{1, 0, 0}};
+    GetParam()(cmdQ.get(), image.get(), &origin[0], region, retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    origin = {{1, 1, 0}};
+    GetParam()(cmdQ.get(), image.get(), &origin[0], region, retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
 TEST_P(ValidateRegionAndOriginTests, givenSecondOriginCoordinateAndNotAllowedImgTypeWhenEnqueueCalledThenReturnError) {
     size_t region[3] = {1, 1, 1};
     size_t origin[3] = {0, 1, 0};
@@ -145,7 +166,7 @@ TEST_P(ValidateRegionAndOriginTests, givenSecondRegionCoordinateAndNotAllowedImg
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_P(ValidateRegionAndOriginTests, givenThirdRegionnCoordinateAndNotAllowedImgTypeWhenEnqueueCalledThenReturnError) {
+TEST_P(ValidateRegionAndOriginTests, givenThirdRegionCoordinateAndNotAllowedImgTypeWhenEnqueueCalledThenReturnError) {
     size_t region[3] = {1, 1, 2};
     size_t origin[3] = {0, 0, 0};
 

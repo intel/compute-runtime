@@ -1,30 +1,40 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/device/device.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/libult/create_command_stream.h"
+#include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/sharings/va/cl_va_api.h"
+#include "opencl/source/sharings/va/va_device.h"
 #include "opencl/source/sharings/va/va_sharing.h"
 #include "opencl/source/sharings/va/va_surface.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
-#include "opencl/test/unit_test/libult/create_command_stream.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/sharings/va/mock_va_sharing.h"
 
 #include "gtest/gtest.h"
+
+#include <va/va_backend.h>
 
 using namespace NEO;
 
@@ -205,7 +215,7 @@ TEST_F(VaSharingTests, givenMockVaWithExportSurfaceHandlerWhenVaSurfaceIsCreated
         auto vaHandler = static_cast<VASharing *>(handler);
         EXPECT_EQ(vaHandler->peekFunctionsHandler(), &vaSharing->sharingFunctions);
 
-        auto sharingFunctions = vaSharing->sharingFunctions;
+        auto &sharingFunctions = vaSharing->sharingFunctions;
         EXPECT_FALSE(sharingFunctions.deriveImageCalled);
         EXPECT_FALSE(sharingFunctions.destroyImageCalled);
 
@@ -286,6 +296,28 @@ TEST_F(VaSharingTests, givenInvalidPlaneInputWhenVaSurfaceIsCreatedThenInvalidVa
     sharedClMem = clCreateFromVA_APIMediaSurfaceINTEL(&context, CL_MEM_READ_WRITE, &vaSurfaceId, 2, &errCode);
     EXPECT_EQ(nullptr, sharedClMem);
     EXPECT_EQ(CL_INVALID_VALUE, errCode);
+}
+
+TEST_F(VaSharingTests, givenValidPlaneInputWhenVaSurfaceIsCreatedAndDebugFlagEnabledThenCLSuccessIsReturned) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableExtendedVaFormats.set(true);
+
+    vaSharing->sharingFunctions.mockVaSurfaceDesc.fourcc = VA_FOURCC_RGBP;
+    vaSharing->sharingFunctions.mockVaSurfaceDesc.objects[1] = {8, 98304, I915_FORMAT_MOD_Y_TILED};
+    vaSharing->sharingFunctions.mockVaSurfaceDesc.objects[2] = {8, 98304, I915_FORMAT_MOD_Y_TILED};
+    vaSharing->sharingFunctions.mockVaSurfaceDesc.num_layers = 3;
+    vaSharing->sharingFunctions.mockVaSurfaceDesc.layers[1] = {DRM_FORMAT_R8, 1, {}, {0, 0, 0, 0}, {256, 0, 0, 0}};
+    vaSharing->sharingFunctions.mockVaSurfaceDesc.layers[2] = {DRM_FORMAT_R8, 1, {}, {0, 0, 0, 0}, {256, 0, 0, 0}};
+
+    vaSharing->sharingFunctions.derivedImageFormatBpp = 8;
+    vaSharing->sharingFunctions.derivedImageFormatFourCC = VA_FOURCC_RGBP;
+
+    sharedClMem = clCreateFromVA_APIMediaSurfaceINTEL(&context, CL_MEM_READ_WRITE, &vaSurfaceId, 2, &errCode);
+    EXPECT_NE(nullptr, sharedClMem);
+    EXPECT_EQ(CL_SUCCESS, errCode);
+
+    errCode = clReleaseMemObject(sharedClMem);
+    EXPECT_EQ(CL_SUCCESS, errCode);
 }
 
 TEST_F(VaSharingTests, givenMockVaWhenVaSurfaceIsCreatedWithNotAlignedWidthAndHeightThenSurfaceOffsetsUseAlignedValues) {
@@ -406,16 +438,18 @@ TEST_F(VaSharingTests, givenHwCommandQueueWhenAcquireAndReleaseCallsAreMadeWithE
 }
 
 TEST_F(VaSharingTests, givenVaMediaSurfaceWhenGetMemObjectInfoIsCalledThenSurfaceIdIsReturned) {
+    vaSurfaceId = 1u;
     createMediaSurface();
 
     VASurfaceID *retVaSurfaceId = nullptr;
     size_t retSize = 0;
+    vaSurfaceId = 0;
     errCode = clGetMemObjectInfo(sharedClMem, CL_MEM_VA_API_MEDIA_SURFACE_INTEL,
                                  sizeof(VASurfaceID *), &retVaSurfaceId, &retSize);
 
     EXPECT_EQ(CL_SUCCESS, errCode);
     EXPECT_EQ(sizeof(VASurfaceID *), retSize);
-    EXPECT_EQ(vaSurfaceId, *retVaSurfaceId);
+    EXPECT_EQ(1u, *retVaSurfaceId);
 }
 
 TEST_F(VaSharingTests, givenVaMediaSurfaceWhenGetImageInfoIsCalledThenPlaneIsReturned) {
@@ -475,14 +509,17 @@ TEST_F(VaSharingTests, givenSimpleParamsWhenCreateSurfaceIsCalledThenSetImgObjec
 
 TEST_F(VaSharingTests, givenNonInteropUserSyncContextWhenAcquireIsCalledThenSyncSurface) {
     context.setInteropUserSyncEnabled(false);
-
+    vaSurfaceId = 1u;
     createMediaSurface();
+    vaSurfaceId = 0u;
 
     auto memObj = castToObject<MemObj>(sharedClMem);
 
     EXPECT_FALSE(vaSharing->sharingFunctions.syncSurfaceCalled);
-    memObj->peekSharingHandler()->acquire(sharedImg, context.getDevice(0)->getRootDeviceIndex());
+    auto ret = memObj->peekSharingHandler()->acquire(sharedImg, context.getDevice(0)->getRootDeviceIndex());
     EXPECT_TRUE(vaSharing->sharingFunctions.syncSurfaceCalled);
+    EXPECT_EQ(CL_SUCCESS, ret);
+    EXPECT_EQ(1u, vaSharing->sharingFunctions.syncedSurfaceID);
 }
 
 TEST_F(VaSharingTests, givenInteropUserSyncContextWhenAcquireIsCalledThenDontSyncSurface) {
@@ -493,6 +530,14 @@ TEST_F(VaSharingTests, givenInteropUserSyncContextWhenAcquireIsCalledThenDontSyn
     EXPECT_FALSE(vaSharing->sharingFunctions.syncSurfaceCalled);
     sharedImg->peekSharingHandler()->acquire(sharedImg, context.getDevice(0)->getRootDeviceIndex());
     EXPECT_FALSE(vaSharing->sharingFunctions.syncSurfaceCalled);
+}
+
+TEST_F(VaSharingTests, whenSyncSurfaceFailedThenReturnOutOfResource) {
+    vaSharing->sharingFunctions.syncSurfaceReturnStatus = VA_STATUS_ERROR_INVALID_SURFACE;
+    createMediaSurface();
+
+    auto ret = sharedImg->peekSharingHandler()->acquire(sharedImg, context.getDevice(0)->getRootDeviceIndex());
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, ret);
 }
 
 TEST_F(VaSharingTests, givenYuvPlaneWhenCreateIsCalledThenChangeWidthAndHeight) {
@@ -534,19 +579,6 @@ TEST_F(VaSharingTests, givenContextWhenSharingTableEmptyThenReturnsNullptr) {
     EXPECT_EQ(sharingF, nullptr);
 }
 
-TEST_F(VaSharingTests, givenValidPlatformWhenGetDeviceIdsFromVaApiMediaAdapterCalledThenReturnFirstDevice) {
-    cl_device_id devices = 0;
-    cl_uint numDevices = 0;
-
-    cl_platform_id platformId = this->pPlatform;
-
-    auto errCode = clGetDeviceIDsFromVA_APIMediaAdapterINTEL(platformId, 0u, nullptr, 0u, 1, &devices, &numDevices);
-    EXPECT_EQ(CL_SUCCESS, errCode);
-    EXPECT_EQ(1u, numDevices);
-    EXPECT_NE(nullptr, platform()->getClDevice(0));
-    EXPECT_EQ(platform()->getClDevice(0), devices);
-}
-
 TEST_F(VaSharingTests, givenInValidPlatformWhenGetDeviceIdsFromVaApiMediaAdapterCalledThenReturnFirstDevice) {
     cl_device_id devices = 0;
     cl_uint numDevices = 0;
@@ -557,10 +589,7 @@ TEST_F(VaSharingTests, givenInValidPlatformWhenGetDeviceIdsFromVaApiMediaAdapter
     EXPECT_EQ(0u, devices);
 }
 
-TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndP010FormatWhenCreatingSharedVaSurfaceForPlane0ThenCorrectFormatIsUsedByImageAndGMM) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.EnableExtendedVaFormats.set(true);
-
+TEST_F(VaSharingTests, givenP010FormatWhenCreatingSharedVaSurfaceForPlane0ThenCorrectFormatIsUsedByImageAndGMM) {
     vaSharing->sharingFunctions.derivedImageFormatBpp = 16;
     vaSharing->sharingFunctions.derivedImageFormatFourCC = VA_FOURCC_P010;
 
@@ -574,10 +603,7 @@ TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndP010FormatWhenCreatingSha
     EXPECT_EQ(CL_SUCCESS, errCode);
 }
 
-TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndP010FormatWhenCreatingSharedVaSurfaceForPlane1ThenCorrectFormatIsUsedByImageAndGMM) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.EnableExtendedVaFormats.set(true);
-
+TEST_F(VaSharingTests, givenP010FormatWhenCreatingSharedVaSurfaceForPlane1ThenCorrectFormatIsUsedByImageAndGMM) {
     vaSharing->sharingFunctions.derivedImageFormatBpp = 16;
     vaSharing->sharingFunctions.derivedImageFormatFourCC = VA_FOURCC_P010;
 
@@ -588,6 +614,34 @@ TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndP010FormatWhenCreatingSha
     EXPECT_EQ(static_cast<cl_channel_order>(CL_RG), vaSurface->getImageFormat().image_channel_order);
     EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_R16G16_UNORM, vaSurface->getSurfaceFormatInfo().surfaceFormat.GMMSurfaceFormat);
     EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_P010, graphicsAllocation->getDefaultGmm()->resourceParams.Format);
+    EXPECT_EQ(CL_SUCCESS, errCode);
+}
+
+TEST_F(VaSharingTests, givenP016FormatWhenCreatingSharedVaSurfaceForPlane0ThenCorrectFormatIsUsedByImageAndGMM) {
+    vaSharing->sharingFunctions.derivedImageFormatBpp = 16;
+    vaSharing->sharingFunctions.derivedImageFormatFourCC = VA_FOURCC_P016;
+
+    auto vaSurface = std::unique_ptr<Image>(VASurface::createSharedVaSurface(&context, &vaSharing->sharingFunctions,
+                                                                             CL_MEM_READ_WRITE, 0, &vaSurfaceId, 0, &errCode));
+    auto graphicsAllocation = vaSurface->getGraphicsAllocation(rootDeviceIndex);
+    EXPECT_EQ(static_cast<cl_channel_type>(CL_UNORM_INT16), vaSurface->getImageFormat().image_channel_data_type);
+    EXPECT_EQ(static_cast<cl_channel_order>(CL_R), vaSurface->getImageFormat().image_channel_order);
+    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_R16_UNORM, vaSurface->getSurfaceFormatInfo().surfaceFormat.GMMSurfaceFormat);
+    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_P016, graphicsAllocation->getDefaultGmm()->resourceParams.Format);
+    EXPECT_EQ(CL_SUCCESS, errCode);
+}
+
+TEST_F(VaSharingTests, givenP016FormatWhenCreatingSharedVaSurfaceForPlane1ThenCorrectFormatIsUsedByImageAndGMM) {
+    vaSharing->sharingFunctions.derivedImageFormatBpp = 16;
+    vaSharing->sharingFunctions.derivedImageFormatFourCC = VA_FOURCC_P016;
+
+    auto vaSurface = std::unique_ptr<Image>(VASurface::createSharedVaSurface(&context, &vaSharing->sharingFunctions,
+                                                                             CL_MEM_READ_WRITE, 0, &vaSurfaceId, 1, &errCode));
+    auto graphicsAllocation = vaSurface->getGraphicsAllocation(rootDeviceIndex);
+    EXPECT_EQ(static_cast<cl_channel_type>(CL_UNORM_INT16), vaSurface->getImageFormat().image_channel_data_type);
+    EXPECT_EQ(static_cast<cl_channel_order>(CL_RG), vaSurface->getImageFormat().image_channel_order);
+    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_R16G16_UNORM, vaSurface->getSurfaceFormatInfo().surfaceFormat.GMMSurfaceFormat);
+    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_P016, graphicsAllocation->getDefaultGmm()->resourceParams.Format);
     EXPECT_EQ(CL_SUCCESS, errCode);
 }
 
@@ -690,7 +744,7 @@ TEST_F(VaSharingTests, givenMockVaWithExportSurfaceHandlerAndRGBPWhenVaSurfaceIs
         auto vaHandler = static_cast<VASharing *>(handler);
         EXPECT_EQ(vaHandler->peekFunctionsHandler(), &vaSharing->sharingFunctions);
 
-        auto sharingFunctions = vaSharing->sharingFunctions;
+        auto &sharingFunctions = vaSharing->sharingFunctions;
         EXPECT_FALSE(sharingFunctions.deriveImageCalled);
         EXPECT_FALSE(sharingFunctions.destroyImageCalled);
 
@@ -737,54 +791,68 @@ using ApiVaSharingTests = VaSharingTests;
 
 TEST_F(ApiVaSharingTests, givenSupportedImageTypeWhenGettingSupportedVAApiFormatsThenCorrectListIsReturned) {
     cl_mem_flags flags[] = {CL_MEM_READ_ONLY, CL_MEM_WRITE_ONLY, CL_MEM_READ_WRITE};
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
     VAImageFormat vaApiFormats[10] = {};
     cl_uint numImageFormats = 0;
 
-    VAImageFormat supportedFormat = {VA_FOURCC_NV12, VA_LSB_FIRST, 8, 0, 0, 0, 0, 0};
+    std::vector<std::unique_ptr<VAImageFormat>> supportedFormats;
+    supportedFormats.push_back(std::make_unique<VAImageFormat>(VAImageFormat{VA_FOURCC_NV12, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0}));
+    supportedFormats.push_back(std::make_unique<VAImageFormat>(VAImageFormat{VA_FOURCC_P010, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0}));
+    supportedFormats.push_back(std::make_unique<VAImageFormat>(VAImageFormat{VA_FOURCC_P016, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0}));
 
     for (auto flag : flags) {
 
-        cl_int result = clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
-            &context,
-            flag,
-            image_type,
-            arrayCount(vaApiFormats),
-            vaApiFormats,
-            &numImageFormats);
+        for (auto plane : {0, 1}) {
 
-        EXPECT_EQ(CL_SUCCESS, result);
-        EXPECT_EQ(1u, numImageFormats);
+            cl_int result = clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
+                &context,
+                flag,
+                imageType,
+                plane,
+                arrayCount(vaApiFormats),
+                vaApiFormats,
+                &numImageFormats);
 
-        EXPECT_EQ(supportedFormat.fourcc, vaApiFormats[0].fourcc);
+            EXPECT_EQ(CL_SUCCESS, result);
+            EXPECT_EQ(3u, numImageFormats);
+            int i = 0;
+            for (auto &format : supportedFormats) {
+                EXPECT_EQ(format->fourcc, vaApiFormats[i++].fourcc);
+            }
+        }
     }
 }
 
 TEST_F(ApiVaSharingTests, givenZeroNumEntriesWhenGettingSupportedVAApiFormatsThenNumFormatsIsReturned) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
     cl_uint numImageFormats = 0;
 
-    cl_int result = clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
-        &context,
-        flags,
-        image_type,
-        0,
-        nullptr,
-        &numImageFormats);
+    for (auto plane : {0, 1}) {
 
-    EXPECT_EQ(CL_SUCCESS, result);
-    EXPECT_EQ(1u, numImageFormats);
+        cl_int result = clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
+            &context,
+            flags,
+            imageType,
+            plane,
+            0,
+            nullptr,
+            &numImageFormats);
+
+        EXPECT_EQ(CL_SUCCESS, result);
+        EXPECT_EQ(3u, numImageFormats);
+    }
 }
 
 TEST_F(ApiVaSharingTests, givenNullNumImageFormatsWhenGettingSupportedVAApiFormatsThenNumFormatsIsNotDereferenced) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
 
     cl_int result = clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
         &context,
         flags,
-        image_type,
+        imageType,
+        0,
         0,
         nullptr,
         nullptr);
@@ -792,34 +860,36 @@ TEST_F(ApiVaSharingTests, givenNullNumImageFormatsWhenGettingSupportedVAApiForma
     EXPECT_EQ(CL_SUCCESS, result);
 }
 
-TEST_F(ApiVaSharingTests, givenInvalidImageTypeWhenGettingSupportedVAApiFormatsThenIvalidValueErrorIsReturned) {
-    cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE3D;
+TEST_F(ApiVaSharingTests, givenOtherThanImage2DImageTypeWhenGettingSupportedVAApiFormatsThenSuccessAndZeroFormatsAreReturned) {
+    cl_mem_flags flags = CL_MEM_KERNEL_READ_AND_WRITE;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE3D;
     VAImageFormat vaApiFormats[10] = {};
     cl_uint numImageFormats = 0;
 
     cl_int result = clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
         &context,
         flags,
-        image_type,
+        imageType,
+        0,
         arrayCount(vaApiFormats),
         vaApiFormats,
         &numImageFormats);
 
-    EXPECT_EQ(CL_INVALID_VALUE, result);
+    EXPECT_EQ(CL_SUCCESS, result);
     EXPECT_EQ(0u, numImageFormats);
 }
 
 TEST_F(ApiVaSharingTests, givenInvalidFlagsWhenGettingSupportedVAApiFormatsThenIvalidValueErrorIsReturned) {
     cl_mem_flags flags = CL_MEM_NO_ACCESS_INTEL;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
     VAImageFormat vaApiFormats[10] = {};
     cl_uint numImageFormats = 0;
 
     cl_int result = clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
         &context,
         flags,
-        image_type,
+        imageType,
+        0,
         arrayCount(vaApiFormats),
         vaApiFormats,
         &numImageFormats);
@@ -830,7 +900,7 @@ TEST_F(ApiVaSharingTests, givenInvalidFlagsWhenGettingSupportedVAApiFormatsThenI
 
 TEST_F(ApiVaSharingTests, givenInvalidContextWhenGettingSupportedVAApiFormatsThenIvalidContextErrorIsReturned) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
     VAImageFormat vaApiFormats[10] = {};
     cl_uint numImageFormats = 0;
 
@@ -838,7 +908,8 @@ TEST_F(ApiVaSharingTests, givenInvalidContextWhenGettingSupportedVAApiFormatsThe
     cl_int result = clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
         &contextWihtoutVASharing,
         flags,
-        image_type,
+        imageType,
+        0,
         arrayCount(vaApiFormats),
         vaApiFormats,
         &numImageFormats);
@@ -861,17 +932,12 @@ TEST(VaSurface, givenInValidPlaneOrFlagsWhenValidatingInputsThenTrueIsReturned) 
     EXPECT_FALSE(VASurface::validate(CL_MEM_USE_HOST_PTR, 0));
 }
 
-TEST(VaSurface, givenEnabledExtendedVaFormatsWhenGettingUnsupportedSurfaceFormatInfoThenNullptrIsReturned) {
-    auto formatInfo = VASurface::getExtendedSurfaceFormatInfo(VA_FOURCC_P016);
-    EXPECT_EQ(nullptr, formatInfo);
-}
-
 TEST(VaSurface, givenNotSupportedVaFormatsWhenCheckingIfSupportedThenFalseIsReturned) {
-    EXPECT_FALSE(VASurface::isSupportedFourCC(VA_FOURCC_NV11));
-
+    EXPECT_FALSE(VASurface::isSupportedFourCCTwoPlaneFormat(VA_FOURCC_NV11));
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableExtendedVaFormats.set(true);
-    EXPECT_FALSE(VASurface::isSupportedFourCC(VA_FOURCC_P016));
+    EXPECT_FALSE(VASurface::isSupportedFourCCThreePlaneFormat(VA_FOURCC_NV11));
+    EXPECT_EQ(nullptr, VASurface::getExtendedSurfaceFormatInfo(VA_FOURCC_NV11));
 }
 
 TEST(VaSharingFunctions, givenErrorReturnedFromVaLibWhenQuerySupportedVaImageFormatsThenSupportedFormatsAreNotSet) {
@@ -880,21 +946,23 @@ TEST(VaSharingFunctions, givenErrorReturnedFromVaLibWhenQuerySupportedVaImageFor
 
     sharingFunctions.querySupportedVaImageFormats(VADisplay(1));
 
-    EXPECT_EQ(0u, sharingFunctions.supportedFormats.size());
+    EXPECT_EQ(0u, sharingFunctions.supported2PlaneFormats.size());
+    EXPECT_EQ(0u, sharingFunctions.supported3PlaneFormats.size());
 }
 
 TEST(VaSharingFunctions, givenNoSupportedFormatsWhenQuerySupportedVaImageFormatsThenSupportedFormatsAreNotSet) {
     VASharingFunctionsMock sharingFunctions;
-    EXPECT_EQ(0u, sharingFunctions.supportedFormats.size());
-
+    EXPECT_EQ(0u, sharingFunctions.supported2PlaneFormats.size());
+    EXPECT_EQ(0u, sharingFunctions.supported3PlaneFormats.size());
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
     cl_uint numImageFormats = 0;
     VAImageFormat vaApiFormats[10] = {};
 
     sharingFunctions.getSupportedFormats(
         flags,
-        image_type,
+        imageType,
+        0,
         10,
         vaApiFormats,
         &numImageFormats);
@@ -905,20 +973,21 @@ TEST(VaSharingFunctions, givenNoSupportedFormatsWhenQuerySupportedVaImageFormats
 TEST(VaSharingFunctions, givenNumEntriesLowerThanSupportedFormatsWhenGettingSupportedFormatsThenOnlyNumEntiresAreReturned) {
     VASharingFunctionsMock sharingFunctions;
     VAImageFormat imageFormat = {VA_FOURCC_NV12, 1, 12};
-    sharingFunctions.supportedFormats.emplace_back(imageFormat);
-    imageFormat.fourcc = VA_FOURCC_NV21;
-    sharingFunctions.supportedFormats.emplace_back(imageFormat);
+    sharingFunctions.supported2PlaneFormats.emplace_back(imageFormat);
+    imageFormat.fourcc = VA_FOURCC_P010;
+    sharingFunctions.supported2PlaneFormats.emplace_back(imageFormat);
 
-    EXPECT_EQ(2u, sharingFunctions.supportedFormats.size());
+    EXPECT_EQ(2u, sharingFunctions.supported2PlaneFormats.size());
 
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
     cl_uint numImageFormats = 0;
     VAImageFormat vaApiFormats[3] = {};
 
     sharingFunctions.getSupportedFormats(
         flags,
-        image_type,
+        imageType,
+        0,
         1,
         vaApiFormats,
         &numImageFormats);
@@ -932,7 +1001,7 @@ TEST(VaSharingFunctions, givenNumEntriesLowerThanSupportedFormatsWhenGettingSupp
 TEST_F(VaSharingTests, givenInteropUserSyncIsNotSpecifiedDuringContextCreationWhenEnqueueReleaseVAIsCalledThenAllWorkAlreadySubmittedShouldCompleteExecution) {
     struct MockCommandQueueToTestFinish : MockCommandQueue {
         MockCommandQueueToTestFinish(Context *context, ClDevice *device, const cl_queue_properties *props)
-            : MockCommandQueue(context, device, props) {
+            : MockCommandQueue(context, device, props, false) {
         }
         cl_int finish() override {
             finishCalled = true;
@@ -958,4 +1027,382 @@ TEST_F(VaSharingTests, givenInteropUserSyncIsNotSpecifiedDuringContextCreationWh
 
         EXPECT_EQ(!specifyInteropUseSync, mockCommandQueue.finishCalled);
     }
+}
+
+TEST_F(VaSharingTests, givenPlaneArgumentEquals2WithEmptySupported3PlaneFormatsVectorThentNoFormatIsReturned) {
+    VASharingFunctionsMock sharingFunctions;
+    EXPECT_EQ(sharingFunctions.supported3PlaneFormats.size(), 0u);
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
+    cl_uint numImageFormats = 4;
+    VAImageFormat vaApiFormats[4] = {};
+
+    sharingFunctions.getSupportedFormats(
+        flags,
+        imageType,
+        2,
+        1,
+        vaApiFormats,
+        &numImageFormats);
+
+    EXPECT_EQ(0u, vaApiFormats[0].fourcc);
+}
+
+TEST_F(VaSharingTests, givenPlaneArgumentGreaterThan2ThenNoFormatIsReturned) {
+    VASharingFunctionsMock sharingFunctions;
+    EXPECT_EQ(sharingFunctions.supported2PlaneFormats.size(), 0u);
+    EXPECT_EQ(sharingFunctions.supported3PlaneFormats.size(), 0u);
+    VAImageFormat imageFormat = {VA_FOURCC_RGBP, 1, 12};
+    sharingFunctions.supported3PlaneFormats.emplace_back(imageFormat);
+    imageFormat = {VA_FOURCC_NV12, 1, 12};
+    sharingFunctions.supported2PlaneFormats.emplace_back(imageFormat);
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
+    cl_uint numImageFormats = 2;
+    VAImageFormat vaApiFormats[2] = {};
+
+    sharingFunctions.getSupportedFormats(
+        flags,
+        imageType,
+        3,
+        1,
+        vaApiFormats,
+        &numImageFormats);
+
+    EXPECT_EQ(0u, vaApiFormats[0].fourcc);
+    EXPECT_EQ(0u, vaApiFormats[1].fourcc);
+}
+
+TEST_F(VaSharingTests, givenPlaneArgumentEquals2ThenOnlyRGBPFormatIsReturned) {
+    VASharingFunctionsMock sharingFunctions;
+    EXPECT_EQ(sharingFunctions.supported2PlaneFormats.size(), 0u);
+    EXPECT_EQ(sharingFunctions.supported3PlaneFormats.size(), 0u);
+    VAImageFormat imageFormat = {VA_FOURCC_RGBP, 1, 12};
+    sharingFunctions.supported3PlaneFormats.emplace_back(imageFormat);
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
+    cl_uint numImageFormats = 1;
+    VAImageFormat vaApiFormats[3] = {};
+
+    sharingFunctions.getSupportedFormats(
+        flags,
+        imageType,
+        2,
+        1,
+        vaApiFormats,
+        &numImageFormats);
+
+    EXPECT_EQ(static_cast<uint32_t>(VA_FOURCC_RGBP), vaApiFormats[0].fourcc);
+}
+
+TEST_F(VaSharingTests, givenPlaneArgumentLessThan2WithProperFormatsAndEmptySupportedFormatsVectorsThenNoFormatIsReturned) {
+    VASharingFunctionsMock sharingFunctions;
+    EXPECT_EQ(sharingFunctions.supported2PlaneFormats.size(), 0u);
+    EXPECT_EQ(sharingFunctions.supported3PlaneFormats.size(), 0u);
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
+    cl_uint numImageFormats = 1;
+    VAImageFormat vaApiFormats[3] = {};
+
+    sharingFunctions.getSupportedFormats(
+        flags,
+        imageType,
+        0,
+        1,
+        vaApiFormats,
+        &numImageFormats);
+
+    EXPECT_EQ(0u, vaApiFormats[0].fourcc);
+
+    VAImageFormat imageFormat = {VA_FOURCC_NV12, 1, 12};
+    sharingFunctions.supported2PlaneFormats.emplace_back(imageFormat);
+    sharingFunctions.supported3PlaneFormats.emplace_back(imageFormat);
+
+    sharingFunctions.getSupportedFormats(
+        flags,
+        imageType,
+        0,
+        1,
+        nullptr,
+        &numImageFormats);
+
+    EXPECT_EQ(0u, vaApiFormats[0].fourcc);
+}
+
+TEST_F(VaSharingTests, givenPlaneArgumentLessThan2WithProperFormatsAndSupportedFormatsVectorsThenAll2And3PlaneFormatsAreReturned) {
+    VASharingFunctionsMock sharingFunctions;
+    EXPECT_EQ(sharingFunctions.supported2PlaneFormats.size(), 0u);
+    EXPECT_EQ(sharingFunctions.supported3PlaneFormats.size(), 0u);
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
+    cl_uint numImageFormats = 4;
+    VAImageFormat vaApiFormats[4] = {};
+
+    sharingFunctions.supported2PlaneFormats.push_back(VAImageFormat{VA_FOURCC_NV12, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0});
+    sharingFunctions.supported2PlaneFormats.push_back(VAImageFormat{VA_FOURCC_P010, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0});
+    sharingFunctions.supported2PlaneFormats.push_back(VAImageFormat{VA_FOURCC_P016, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0});
+    sharingFunctions.supported3PlaneFormats.push_back(VAImageFormat{VA_FOURCC_RGBP, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0});
+
+    sharingFunctions.getSupportedFormats(
+        flags,
+        imageType,
+        0,
+        4,
+        vaApiFormats,
+        &numImageFormats);
+
+    EXPECT_EQ(static_cast<uint32_t>(VA_FOURCC_NV12), vaApiFormats[0].fourcc);
+    EXPECT_EQ(static_cast<uint32_t>(VA_FOURCC_P010), vaApiFormats[1].fourcc);
+    EXPECT_EQ(static_cast<uint32_t>(VA_FOURCC_P016), vaApiFormats[2].fourcc);
+    EXPECT_EQ(static_cast<uint32_t>(VA_FOURCC_RGBP), vaApiFormats[3].fourcc);
+}
+
+TEST_F(VaSharingTests, givenPlaneArgumentLessThan2WithProperFormatsAndOnly3PlaneSupportedFormatsVectorThen3PlaneFormatIsReturned) {
+    VASharingFunctionsMock sharingFunctions;
+    EXPECT_EQ(sharingFunctions.supported2PlaneFormats.size(), 0u);
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
+    cl_uint numImageFormats = 4;
+    VAImageFormat vaApiFormats[4] = {};
+
+    sharingFunctions.supported3PlaneFormats.push_back(VAImageFormat{VA_FOURCC_RGBP, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0});
+    EXPECT_EQ(sharingFunctions.supported2PlaneFormats.size(), 0u);
+
+    sharingFunctions.getSupportedFormats(
+        flags,
+        imageType,
+        0,
+        4,
+        vaApiFormats,
+        &numImageFormats);
+
+    EXPECT_EQ(static_cast<uint32_t>(VA_FOURCC_RGBP), vaApiFormats[0].fourcc);
+    EXPECT_EQ(0u, vaApiFormats[1].fourcc);
+    EXPECT_EQ(0u, vaApiFormats[2].fourcc);
+    EXPECT_EQ(0u, vaApiFormats[3].fourcc);
+}
+
+TEST_F(VaSharingTests, givenPlaneArgumentLessThan2WithProperFormatsAndOnly2PlaneSupportedFormatsVectorThen2PlaneFormatsAreReturned) {
+    VASharingFunctionsMock sharingFunctions;
+    EXPECT_EQ(sharingFunctions.supported2PlaneFormats.size(), 0u);
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
+    cl_uint numImageFormats = 4;
+    VAImageFormat vaApiFormats[4] = {};
+
+    sharingFunctions.supported2PlaneFormats.push_back(VAImageFormat{VA_FOURCC_NV12, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0});
+    sharingFunctions.supported2PlaneFormats.push_back(VAImageFormat{VA_FOURCC_P010, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0});
+    sharingFunctions.supported2PlaneFormats.push_back(VAImageFormat{VA_FOURCC_P016, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0});
+    EXPECT_EQ(sharingFunctions.supported3PlaneFormats.size(), 0u);
+
+    sharingFunctions.getSupportedFormats(
+        flags,
+        imageType,
+        0,
+        4,
+        vaApiFormats,
+        &numImageFormats);
+
+    EXPECT_EQ(static_cast<uint32_t>(VA_FOURCC_NV12), vaApiFormats[0].fourcc);
+    EXPECT_EQ(static_cast<uint32_t>(VA_FOURCC_P010), vaApiFormats[1].fourcc);
+    EXPECT_EQ(static_cast<uint32_t>(VA_FOURCC_P016), vaApiFormats[2].fourcc);
+    EXPECT_EQ(0u, vaApiFormats[3].fourcc);
+}
+
+TEST_F(VaSharingTests, givenPlaneArgumentEquals2WithoutNoProperFormatsThenReturn) {
+    VASharingFunctionsMock sharingFunctions;
+    EXPECT_EQ(sharingFunctions.supported2PlaneFormats.size(), 0u);
+    EXPECT_EQ(sharingFunctions.supported3PlaneFormats.size(), 0u);
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
+    cl_uint numImageFormats = 1;
+
+    sharingFunctions.supported3PlaneFormats.push_back(VAImageFormat{VA_FOURCC_RGBP, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0});
+
+    cl_int result = sharingFunctions.getSupportedFormats(
+        flags,
+        imageType,
+        2,
+        4,
+        nullptr,
+        &numImageFormats);
+
+    EXPECT_EQ(result, CL_SUCCESS);
+}
+
+class VaDeviceTests : public Test<PlatformFixture> {
+  public:
+    VaDeviceTests() {
+        ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    }
+    VariableBackup<UltHwConfig> backup{&ultHwConfig};
+};
+
+TEST_F(VaDeviceTests, givenVADeviceWhenGetDeviceFromVAIsCalledThenRootDeviceIsReturned) {
+    auto vaDisplay = std::make_unique<VADisplayContext>();
+    vaDisplay->vadpy_magic = 0x56414430;
+    auto contextPtr = std::make_unique<VADriverContext>();
+    auto drmState = std::make_unique<int>();
+    vaDisplay->pDriverContext = contextPtr.get();
+    contextPtr->drm_state = drmState.get();
+    *static_cast<int *>(contextPtr->drm_state) = 1;
+
+    auto device = pPlatform->getClDevice(0);
+    NEO::Device *neoDevice = &device->getDevice();
+
+    auto mockDrm = static_cast<DrmMock *>(neoDevice->getRootDeviceEnvironment().osInterface->getDriverModel()->as<Drm>());
+    mockDrm->setPciPath("0000:00:02.0");
+
+    VADevice vaDevice{};
+    auto clDevice = vaDevice.getDeviceFromVA(pPlatform, vaDisplay.get());
+    EXPECT_NE(clDevice, nullptr);
+}
+
+TEST_F(VaDeviceTests, givenVADeviceAndInvalidPciPathOfClDeviceWhenGetDeviceFromVAIsCalledThenNullptrIsReturned) {
+    auto vaDisplay = std::make_unique<VADisplayContext>();
+    vaDisplay->vadpy_magic = 0x56414430;
+    auto contextPtr = std::make_unique<VADriverContext>();
+    auto drmState = std::make_unique<int>();
+    vaDisplay->pDriverContext = contextPtr.get();
+    contextPtr->drm_state = drmState.get();
+    *static_cast<int *>(contextPtr->drm_state) = 1;
+
+    auto device = pPlatform->getClDevice(0);
+    NEO::Device *neoDevice = &device->getDevice();
+
+    auto mockDrm = static_cast<DrmMock *>(neoDevice->getRootDeviceEnvironment().osInterface->getDriverModel()->as<Drm>());
+    mockDrm->setPciPath("00:00.0");
+
+    VADevice vaDevice{};
+    auto clDevice = vaDevice.getDeviceFromVA(pPlatform, vaDisplay.get());
+    EXPECT_EQ(clDevice, nullptr);
+}
+
+TEST_F(VaDeviceTests, givenVADeviceAndInvalidFDWhenGetDeviceFromVAIsCalledThenNullptrIsReturned) {
+    auto vaDisplay = std::make_unique<VADisplayContext>();
+    vaDisplay->vadpy_magic = 0x56414430;
+    auto contextPtr = std::make_unique<VADriverContext>();
+    auto drmState = std::make_unique<int>();
+    vaDisplay->pDriverContext = contextPtr.get();
+    contextPtr->drm_state = drmState.get();
+    *static_cast<int *>(contextPtr->drm_state) = 0;
+
+    VADevice vaDevice{};
+    auto clDevice = vaDevice.getDeviceFromVA(pPlatform, vaDisplay.get());
+    EXPECT_EQ(clDevice, nullptr);
+}
+
+TEST_F(VaDeviceTests, givenVADeviceAndInvalidMagicNumberWhenGetDeviceFromVAIsCalledThenUnrecoverableIsCalled) {
+    auto vaDisplay = std::make_unique<VADisplayContext>();
+    vaDisplay->vadpy_magic = 0x0;
+
+    VADevice vaDevice{};
+    EXPECT_ANY_THROW(vaDevice.getDeviceFromVA(pPlatform, vaDisplay.get()));
+}
+
+TEST_F(VaDeviceTests, givenVADeviceAndNegativeFdWhenGetDeviceFromVAIsCalledThenUnrecoverableIsCalled) {
+    auto vaDisplay = std::make_unique<VADisplayContext>();
+    vaDisplay->vadpy_magic = 0x56414430;
+    auto contextPtr = std::make_unique<VADriverContext>();
+    auto drmState = std::make_unique<int>();
+    vaDisplay->pDriverContext = contextPtr.get();
+    contextPtr->drm_state = drmState.get();
+    *static_cast<int *>(contextPtr->drm_state) = -1;
+
+    VADevice vaDevice{};
+    EXPECT_ANY_THROW(vaDevice.getDeviceFromVA(pPlatform, vaDisplay.get()));
+}
+
+namespace NEO {
+namespace SysCalls {
+extern bool makeFakeDevicePath;
+extern bool allowFakeDevicePath;
+} // namespace SysCalls
+} // namespace NEO
+
+TEST_F(VaDeviceTests, givenVADeviceAndFakeDevicePathWhenGetDeviceFromVAIsCalledThenNullptrIsReturned) {
+    VariableBackup<bool> makeFakePathBackup(&SysCalls::makeFakeDevicePath, true);
+    auto vaDisplay = std::make_unique<VADisplayContext>();
+    vaDisplay->vadpy_magic = 0x56414430;
+    auto contextPtr = std::make_unique<VADriverContext>();
+    auto drmState = std::make_unique<int>();
+    vaDisplay->pDriverContext = contextPtr.get();
+    contextPtr->drm_state = drmState.get();
+    *static_cast<int *>(contextPtr->drm_state) = 1;
+
+    VADevice vaDevice{};
+    auto clDevice = vaDevice.getDeviceFromVA(pPlatform, vaDisplay.get());
+    EXPECT_EQ(clDevice, nullptr);
+}
+
+TEST_F(VaDeviceTests, givenVADeviceAndAbsolutePathWhenGetDeviceFromVAIsCalledThenNullptrIsReturned) {
+    VariableBackup<bool> makeFakePathBackup(&SysCalls::makeFakeDevicePath, true);
+    VariableBackup<bool> allowFakeDevicePathBackup(&SysCalls::allowFakeDevicePath, true);
+    auto vaDisplay = std::make_unique<VADisplayContext>();
+    vaDisplay->vadpy_magic = 0x56414430;
+    auto contextPtr = std::make_unique<VADriverContext>();
+    auto drmState = std::make_unique<int>();
+    vaDisplay->pDriverContext = contextPtr.get();
+    contextPtr->drm_state = drmState.get();
+    *static_cast<int *>(contextPtr->drm_state) = 1;
+
+    VADevice vaDevice{};
+    auto clDevice = vaDevice.getDeviceFromVA(pPlatform, vaDisplay.get());
+    EXPECT_EQ(clDevice, nullptr);
+}
+
+TEST_F(VaDeviceTests, givenValidPlatformWithInvalidVaDisplayWhenGetDeviceIdsFromVaApiMediaAdapterCalledThenReturnNullptrAndZeroDevices) {
+    cl_device_id devices = 0;
+    cl_uint numDevices = 0;
+    cl_platform_id platformId = pPlatform;
+    auto vaDisplay = std::make_unique<VADisplayContext>();
+    vaDisplay->vadpy_magic = 0x56414430;
+    auto contextPtr = std::make_unique<VADriverContext>();
+    auto drmState = std::make_unique<int>();
+    vaDisplay->pDriverContext = contextPtr.get();
+    contextPtr->drm_state = drmState.get();
+    *static_cast<int *>(contextPtr->drm_state) = 1;
+
+    auto device = pPlatform->getClDevice(0);
+    NEO::Device *neoDevice = &device->getDevice();
+
+    auto mockDrm = static_cast<DrmMock *>(neoDevice->getRootDeviceEnvironment().osInterface->getDriverModel()->as<Drm>());
+    mockDrm->setPciPath("00:00.0");
+
+    auto errCode = clGetDeviceIDsFromVA_APIMediaAdapterINTEL(platformId, 0u, vaDisplay.get(), 0u, 1, &devices, &numDevices);
+    EXPECT_EQ(CL_DEVICE_NOT_FOUND, errCode);
+    EXPECT_EQ(0u, numDevices);
+    EXPECT_EQ(nullptr, devices);
+}
+
+TEST_F(VaDeviceTests, givenValidPlatformWhenGetDeviceIdsFromVaApiMediaAdapterCalledThenReturnFirstDevice) {
+    cl_device_id devices = 0;
+    cl_uint numDevices = 0;
+    cl_platform_id platformId = pPlatform;
+    auto vaDisplay = std::make_unique<VADisplayContext>();
+    vaDisplay->vadpy_magic = 0x56414430;
+    auto contextPtr = std::make_unique<VADriverContext>();
+    auto drmState = std::make_unique<int>();
+    vaDisplay->pDriverContext = contextPtr.get();
+    contextPtr->drm_state = drmState.get();
+    *static_cast<int *>(contextPtr->drm_state) = 1;
+
+    auto device = pPlatform->getClDevice(0);
+    NEO::Device *neoDevice = &device->getDevice();
+
+    auto mockDrm = static_cast<DrmMock *>(neoDevice->getRootDeviceEnvironment().osInterface->getDriverModel()->as<Drm>());
+    mockDrm->setPciPath("0000:00:02.0");
+
+    auto errCode = clGetDeviceIDsFromVA_APIMediaAdapterINTEL(platformId, 0u, vaDisplay.get(), 0u, 1, &devices, &numDevices);
+    EXPECT_EQ(CL_SUCCESS, errCode);
+    EXPECT_EQ(1u, numDevices);
+    EXPECT_EQ(pPlatform->getClDevice(0), devices);
 }

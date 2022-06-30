@@ -1,48 +1,32 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/command_stream/command_stream_receiver_hw_bdw_plus.inl"
+#include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_stream/command_stream_receiver_hw_bdw_and_later.inl"
 #include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gen11/reg_configs.h"
-#include "shared/source/helpers/blit_commands_helper_bdw_plus.inl"
+#include "shared/source/helpers/blit_commands_helper_bdw_and_later.inl"
+#include "shared/source/helpers/populate_factory.h"
 
 namespace NEO {
 typedef ICLFamily Family;
 static auto gfxCore = IGFX_GEN11_CORE;
 
 template <>
-size_t CommandStreamReceiverHw<Family>::getCmdSizeForComputeMode() {
-    if (csrSizeRequestFlags.coherencyRequestChanged) {
-        return sizeof(typename Family::MI_LOAD_REGISTER_IMM);
-    }
-    return 0;
-}
-
-template <>
-void CommandStreamReceiverHw<Family>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags) {
-    if (csrSizeRequestFlags.coherencyRequestChanged) {
-        LriHelper<Family>::program(&stream,
-                                   gen11HdcModeRegister::address,
-                                   DwordBuilder::build(gen11HdcModeRegister::forceNonCoherentEnableBit, true, !dispatchFlags.requiresCoherency),
-                                   false);
-        this->lastSentCoherencyRequest = static_cast<int8_t>(dispatchFlags.requiresCoherency);
-    }
-}
-
-template <>
 void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, DispatchFlags &dispatchFlags) {
     using PWR_CLK_STATE_REGISTER = Family::PWR_CLK_STATE_REGISTER;
 
-    if (peekHwInfo().platform.eProductFamily == IGFX_ICELAKE_LP) {
+    const auto &hwInfo = peekHwInfo();
+    if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->isAdditionalMediaSamplerProgrammingRequired()) {
         if (dispatchFlags.pipelineSelectArgs.mediaSamplerRequired) {
             if (!lastVmeSubslicesConfig) {
                 PipeControlArgs args;
-                args.dcFlushEnable = true;
+                args.dcFlushEnable = MemorySynchronizationCommands<Family>::getDcFlushEnable(true, hwInfo);
                 args.renderTargetCacheFlushEnable = true;
                 args.instructionCacheInvalidateEnable = true;
                 args.textureCacheInvalidationEnable = true;
@@ -50,15 +34,15 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
                 args.vfCacheInvalidationEnable = true;
                 args.constantCacheInvalidationEnable = true;
                 args.stateCacheInvalidationEnable = true;
-                addPipeControlCmd(stream, args);
+                MemorySynchronizationCommands<Family>::addPipeControl(stream, args);
 
-                uint32_t numSubslices = peekHwInfo().gtSystemInfo.SubSliceCount;
+                uint32_t numSubslices = hwInfo.gtSystemInfo.SubSliceCount;
                 uint32_t numSubslicesWithVme = numSubslices / 2; // 1 VME unit per DSS
                 uint32_t numSlicesForPowerGating = 1;            // power gating supported only if #Slices = 1
 
                 PWR_CLK_STATE_REGISTER reg = Family::cmdInitPwrClkStateRegister;
-                reg.TheStructure.Common.EUmin = peekHwInfo().gtSystemInfo.MaxEuPerSubSlice;
-                reg.TheStructure.Common.EUmax = peekHwInfo().gtSystemInfo.MaxEuPerSubSlice;
+                reg.TheStructure.Common.EUmin = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
+                reg.TheStructure.Common.EUmax = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
                 reg.TheStructure.Common.SSCountEn = 1; // Enable SScount
                 reg.TheStructure.Common.SScount = numSubslicesWithVme;
                 reg.TheStructure.Common.EnableSliceCountRequest = 1; // Enable SliceCountRequest
@@ -69,14 +53,14 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
                                            false);
 
                 args = {};
-                addPipeControlCmd(stream, args);
+                MemorySynchronizationCommands<Family>::addPipeControl(stream, args);
 
                 lastVmeSubslicesConfig = true;
             }
         } else {
             if (lastVmeSubslicesConfig) {
                 PipeControlArgs args;
-                args.dcFlushEnable = true;
+                args.dcFlushEnable = MemorySynchronizationCommands<Family>::getDcFlushEnable(true, hwInfo);
                 args.renderTargetCacheFlushEnable = true;
                 args.instructionCacheInvalidateEnable = true;
                 args.textureCacheInvalidationEnable = true;
@@ -85,21 +69,21 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
                 args.constantCacheInvalidationEnable = true;
                 args.stateCacheInvalidationEnable = true;
                 args.genericMediaStateClear = true;
-                addPipeControlCmd(stream, args);
+                MemorySynchronizationCommands<Family>::addPipeControl(stream, args);
 
                 args = {};
-                addPipeControlCmd(stream, args);
+                MemorySynchronizationCommands<Family>::addPipeControl(stream, args);
 
                 // In Gen11-LP, software programs this register as if GT consists of
                 // 2 slices with 4 subslices in each slice. Hardware maps this to the
                 // LP 1 slice/8-subslice physical layout
-                uint32_t numSubslices = peekHwInfo().gtSystemInfo.SubSliceCount;
+                uint32_t numSubslices = hwInfo.gtSystemInfo.SubSliceCount;
                 uint32_t numSubslicesMapped = numSubslices / 2;
-                uint32_t numSlicesMapped = peekHwInfo().gtSystemInfo.SliceCount * 2;
+                uint32_t numSlicesMapped = hwInfo.gtSystemInfo.SliceCount * 2;
 
                 PWR_CLK_STATE_REGISTER reg = Family::cmdInitPwrClkStateRegister;
-                reg.TheStructure.Common.EUmin = peekHwInfo().gtSystemInfo.MaxEuPerSubSlice;
-                reg.TheStructure.Common.EUmax = peekHwInfo().gtSystemInfo.MaxEuPerSubSlice;
+                reg.TheStructure.Common.EUmin = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
+                reg.TheStructure.Common.EUmax = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
                 reg.TheStructure.Common.SSCountEn = 1; // Enable SScount
                 reg.TheStructure.Common.SScount = numSubslicesMapped;
                 reg.TheStructure.Common.EnableSliceCountRequest = 1; // Enable SliceCountRequest
@@ -110,7 +94,7 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
                                            reg.TheStructure.RawData[0],
                                            false);
 
-                addPipeControlCmd(stream, args);
+                MemorySynchronizationCommands<Family>::addPipeControl(stream, args);
             }
         }
     }
@@ -119,7 +103,7 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
 template <>
 bool CommandStreamReceiverHw<Family>::detectInitProgrammingFlagsRequired(const DispatchFlags &dispatchFlags) const {
     bool flag = DebugManager.flags.ForceCsrReprogramming.get();
-    if (peekHwInfo().platform.eProductFamily == IGFX_ICELAKE_LP) {
+    if (HwInfoConfig::get(peekHwInfo().platform.eProductFamily)->isInitialFlagsProgrammingRequired()) {
         if (!dispatchFlags.pipelineSelectArgs.mediaSamplerRequired) {
             if (lastVmeSubslicesConfig) {
                 flag = true;
@@ -134,7 +118,7 @@ size_t CommandStreamReceiverHw<Family>::getCmdSizeForMediaSampler(bool mediaSamp
     typedef typename Family::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef typename Family::PIPE_CONTROL PIPE_CONTROL;
 
-    if (peekHwInfo().platform.eProductFamily == IGFX_ICELAKE_LP) {
+    if (HwInfoConfig::get(peekHwInfo().platform.eProductFamily)->isReturnedCmdSizeForMediaSamplerAdjustmentRequired()) {
         if (mediaSamplerRequired) {
             if (!lastVmeSubslicesConfig) {
                 return sizeof(MI_LOAD_REGISTER_IMM) + 2 * sizeof(PIPE_CONTROL);
@@ -150,7 +134,7 @@ size_t CommandStreamReceiverHw<Family>::getCmdSizeForMediaSampler(bool mediaSamp
 
 template <>
 void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
-    extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[IGFX_MAX_CORE];
+    extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
     commandStreamReceiverFactory[gfxCore] = DeviceCommandStreamReceiver<Family>::create;
 }
 
@@ -185,6 +169,7 @@ const Family::GPGPU_CSR_BASE_ADDRESS Family::cmdInitGpgpuCsrBaseAddress = Family
 const Family::STATE_SIP Family::cmdInitStateSip = Family::STATE_SIP::sInit();
 const Family::BINDING_TABLE_STATE Family::cmdInitBindingTableState = Family::BINDING_TABLE_STATE::sInit();
 const Family::MI_USER_INTERRUPT Family::cmdInitUserInterrupt = Family::MI_USER_INTERRUPT::sInit();
+const Family::XY_BLOCK_COPY_BLT Family::cmdInitXyBlockCopyBlt = Family::XY_BLOCK_COPY_BLT::sInit();
 const Family::XY_SRC_COPY_BLT Family::cmdInitXyCopyBlt = Family::XY_SRC_COPY_BLT::sInit();
 const Family::MI_FLUSH_DW Family::cmdInitMiFlushDw = Family::MI_FLUSH_DW::sInit();
 const Family::XY_COLOR_BLT Family::cmdInitXyColorBlt = Family::XY_COLOR_BLT::sInit();

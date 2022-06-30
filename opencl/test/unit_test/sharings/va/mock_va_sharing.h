@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,9 @@ namespace NEO {
 
 class VASharingFunctionsMock : public VASharingFunctions {
   public:
-    using VASharingFunctions::supportedFormats;
+    using VASharingFunctions::mutex;
+    using VASharingFunctions::supported2PlaneFormats;
+    using VASharingFunctions::supported3PlaneFormats;
 
     VAImage mockVaImage = {};
     int32_t derivedImageFormatFourCC = VA_FOURCC_NV12;
@@ -25,6 +27,7 @@ class VASharingFunctionsMock : public VASharingFunctions {
     uint16_t derivedImageHeight = 256;
     uint16_t derivedImageWidth = 256;
     VAStatus queryImageFormatsReturnStatus = VA_STATUS_SUCCESS;
+    VAStatus syncSurfaceReturnStatus = VA_STATUS_SUCCESS;
 
     bool isValidDisplayCalled = false;
     bool deriveImageCalled = false;
@@ -32,7 +35,7 @@ class VASharingFunctionsMock : public VASharingFunctions {
     bool syncSurfaceCalled = false;
     bool extGetSurfaceHandleCalled = false;
     bool exportSurfaceHandleCalled = false;
-
+    VASurfaceID syncedSurfaceID = 0;
     osHandle acquiredVaHandle = 0;
 
     bool haveExportSurfaceHandle = false;
@@ -107,7 +110,8 @@ class VASharingFunctionsMock : public VASharingFunctions {
 
     VAStatus syncSurface(VASurfaceID vaSurface) override {
         syncSurfaceCalled = true;
-        return VA_STATUS_SUCCESS;
+        syncedSurfaceID = vaSurface;
+        return syncSurfaceReturnStatus;
     }
 
     VAStatus queryImageFormats(VADisplay vaDisplay, VAImageFormat *formatList, int *numFormats) override {
@@ -115,7 +119,7 @@ class VASharingFunctionsMock : public VASharingFunctions {
             return queryImageFormatsReturnStatus;
         }
         if (numFormats) {
-            *numFormats = 2;
+            *numFormats = 4;
         }
 
         if (formatList) {
@@ -124,14 +128,22 @@ class VASharingFunctionsMock : public VASharingFunctions {
             formatList[0].byte_order = VA_LSB_FIRST;
 
             formatList[1].fourcc = VA_FOURCC_P010;
-            formatList[1].bits_per_pixel = 24;
+            formatList[1].bits_per_pixel = 10;
             formatList[1].byte_order = VA_LSB_FIRST;
+
+            formatList[2].fourcc = VA_FOURCC_P016;
+            formatList[2].bits_per_pixel = 16;
+            formatList[2].byte_order = VA_LSB_FIRST;
+
+            formatList[3].fourcc = VA_FOURCC_RGBP;
+            formatList[3].bits_per_pixel = 8;
+            formatList[3].byte_order = VA_LSB_FIRST;
         }
         return VA_STATUS_SUCCESS;
     }
 
     int maxNumImageFormats(VADisplay vaDisplay) override {
-        return 2;
+        return 4;
     }
 };
 

@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/fixtures/memory_management_fixture.h"
+
 #include "opencl/source/sharings/gl/windows/win_enable_gl.h"
-#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
@@ -70,31 +71,27 @@ TEST_F(GlSharingEnablerTests, givenGlFactoryWhenAskedThenBuilderIsCreated) {
     EXPECT_NE(nullptr, builder);
 }
 
-TEST_F(GlSharingEnablerTests, givenGlBuilderWhenUnknownPropertyThenFalseIsReturnedAndErrcodeUnchanged) {
+TEST_F(GlSharingEnablerTests, givenGlBuilderWhenUnknownPropertyThenFalseIsReturned) {
     auto builder = factory->createContextBuilder();
     ASSERT_NE(nullptr, builder);
 
     cl_context_properties property = CL_CONTEXT_PLATFORM;
     cl_context_properties value;
-    int32_t errcodeRet = CL_SUCCESS;
-    auto res = builder->processProperties(property, value, errcodeRet);
+    auto res = builder->processProperties(property, value);
     EXPECT_FALSE(res);
-    EXPECT_EQ(CL_SUCCESS, errcodeRet);
 }
 
-TEST_F(GlSharingEnablerTests, givenGlBuilderWhenInvalidPropertyThenTrueIsReturnedAndErrcodeSet) {
+TEST_F(GlSharingEnablerTests, givenGlBuilderWhenInvalidPropertyThenFalseIsReturned) {
     auto builder = factory->createContextBuilder();
     ASSERT_NE(nullptr, builder);
 
     cl_context_properties property = CL_CGL_SHAREGROUP_KHR;
     cl_context_properties value;
-    int32_t errcodeRet = CL_SUCCESS;
-    auto res = builder->processProperties(property, value, errcodeRet);
-    EXPECT_TRUE(res);
-    EXPECT_EQ(CL_INVALID_PROPERTY, errcodeRet);
+    auto res = builder->processProperties(property, value);
+    EXPECT_FALSE(res);
 }
 
-TEST_F(GlSharingEnablerTests, givenGlBuilderWhenValidPropertyThenTrueIsReturnedAndErrcodeUnchanged) {
+TEST_F(GlSharingEnablerTests, givenGlBuilderWhenValidPropertyThenTrueIsReturned) {
     cl_context_properties props[] = {CL_GL_CONTEXT_KHR, CL_WGL_HDC_KHR, CL_GLX_DISPLAY_KHR, CL_EGL_DISPLAY_KHR};
     for (auto currProperty : props) {
         auto builder = factory->createContextBuilder();
@@ -102,16 +99,13 @@ TEST_F(GlSharingEnablerTests, givenGlBuilderWhenValidPropertyThenTrueIsReturnedA
 
         cl_context_properties property = currProperty;
         cl_context_properties value = 0x10000;
-        int32_t errcodeRet = CL_SUCCESS;
-        auto res = builder->processProperties(property, value, errcodeRet);
+        auto res = builder->processProperties(property, value);
         EXPECT_TRUE(res);
-        EXPECT_EQ(CL_SUCCESS, errcodeRet);
 
         // repeat to check if we don't allocate twice
         auto prevAllocations = MemoryManagement::numAllocations.load();
-        res = builder->processProperties(property, value, errcodeRet);
+        res = builder->processProperties(property, value);
         EXPECT_TRUE(res);
-        EXPECT_EQ(CL_SUCCESS, errcodeRet);
         auto currAllocations = MemoryManagement::numAllocations.load();
         EXPECT_EQ(prevAllocations, currAllocations);
     }
@@ -134,13 +128,11 @@ TEST_F(GlSharingEnablerTests, givenGlBuilderWhenInvalidPropertiesThenFinalizerRe
 
     cl_context_properties property = CL_CONTEXT_PLATFORM;
     cl_context_properties value;
-    int32_t errcodeRet = CL_SUCCESS;
-    auto res = builder->processProperties(property, value, errcodeRet);
+    auto res = builder->processProperties(property, value);
     EXPECT_FALSE(res);
-    EXPECT_EQ(CL_SUCCESS, errcodeRet);
 
     MockContext context;
-    errcodeRet = CL_SUCCESS;
+    int32_t errcodeRet = CL_SUCCESS;
     res = builder->finalizeProperties(context, errcodeRet);
     EXPECT_TRUE(res);
     EXPECT_EQ(CL_SUCCESS, errcodeRet);
@@ -152,13 +144,11 @@ TEST_F(GlSharingEnablerTests, givenGlBuilderWhenNullHandleThenFinalizerReturnsTr
 
     cl_context_properties property = CL_GL_CONTEXT_KHR;
     cl_context_properties value = 0x0;
-    int32_t errcodeRet = CL_SUCCESS;
-    auto res = builder->processProperties(property, value, errcodeRet);
+    auto res = builder->processProperties(property, value);
     EXPECT_TRUE(res);
-    EXPECT_EQ(CL_SUCCESS, errcodeRet);
 
     MockContext context;
-    errcodeRet = CL_SUCCESS;
+    int32_t errcodeRet = CL_SUCCESS;
     res = builder->finalizeProperties(context, errcodeRet);
     EXPECT_TRUE(res);
     EXPECT_EQ(CL_SUCCESS, errcodeRet);
@@ -173,13 +163,11 @@ TEST_F(GlSharingEnablerTests, givenGlBuilderWhenHandleThenFinalizerReturnsTrueAn
 
     cl_context_properties property = CL_GL_CONTEXT_KHR;
     cl_context_properties value = 0x1000;
-    int32_t errcodeRet = CL_SUCCESS;
-    auto res = builder->processProperties(property, value, errcodeRet);
+    auto res = builder->processProperties(property, value);
     EXPECT_TRUE(res);
-    EXPECT_EQ(CL_SUCCESS, errcodeRet);
 
     MockContext context;
-    errcodeRet = CL_SUCCESS;
+    int32_t errcodeRet = CL_SUCCESS;
     res = builder->finalizeProperties(context, errcodeRet);
     EXPECT_TRUE(res);
     EXPECT_EQ(CL_SUCCESS, errcodeRet);

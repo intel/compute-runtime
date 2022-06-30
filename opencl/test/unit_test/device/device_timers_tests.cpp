@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_ostime.h"
+
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_ostime.h"
 
 #include "gtest/gtest.h"
 
@@ -111,4 +113,94 @@ TEST(MockOSTime, GivenNullWhenSettingOsTimeThenResolutionIsZero) {
 
     delete mDev;
 }
+
+TEST(MockOSTime, givenDeviceTimestampBaseNotEnabledWhenGetDeviceAndHostTimerThenCpuTimestampIsReturned) {
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    mockDevice->setOSTime(new MockOSTimeWithConstTimestamp());
+
+    uint64_t deviceTS = 0u, hostTS = 0u;
+    mockDevice->getDeviceAndHostTimer(&deviceTS, &hostTS);
+
+    EXPECT_EQ(deviceTS, MockDeviceTimeWithConstTimestamp::CPU_TIME_IN_NS);
+    EXPECT_EQ(deviceTS, hostTS);
+}
+
+TEST(MockOSTime, givenDeviceTimestampBaseEnabledWhenGetDeviceAndHostTimerThenGpuTimestampIsReturned) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.EnableDeviceBasedTimestamps.set(true);
+
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    mockDevice->setOSTime(new MockOSTimeWithConstTimestamp());
+
+    uint64_t deviceTS = 0u, hostTS = 0u;
+    mockDevice->getDeviceAndHostTimer(&deviceTS, &hostTS);
+
+    EXPECT_EQ(deviceTS, MockDeviceTimeWithConstTimestamp::GPU_TIMESTAMP);
+    EXPECT_NE(deviceTS, hostTS);
+}
+
+class FailingMockOSTime : public OSTime {
+  public:
+    FailingMockOSTime() {
+        this->deviceTime = std::make_unique<MockDeviceTime>();
+    }
+
+    bool getCpuTime(uint64_t *timeStamp) override {
+        return false;
+    }
+
+    double getHostTimerResolution() const override {
+        return 0;
+    }
+
+    uint64_t getCpuRawTimestamp() override {
+        return 0;
+    }
+};
+
+class FailingMockDeviceTime : public DeviceTime {
+  public:
+    bool getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
+        return false;
+    }
+
+    double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override {
+        return 1.0;
+    }
+
+    uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const override {
+        return static_cast<uint64_t>(1000000000.0 / OSTime::getDeviceTimerResolution(hwInfo));
+    }
+};
+
+class MockOSTimeWithFailingDeviceTime : public OSTime {
+  public:
+    MockOSTimeWithFailingDeviceTime() {
+        this->deviceTime = std::make_unique<FailingMockDeviceTime>();
+    }
+
+    bool getCpuTime(uint64_t *timeStamp) override {
+        return true;
+    }
+
+    double getHostTimerResolution() const override {
+        return 0;
+    }
+
+    uint64_t getCpuRawTimestamp() override {
+        return 0;
+    }
+};
+
+TEST(MockOSTime, givenFailingDeviceTimeWhenGetDeviceAndHostTimerThenFalseIsReturned) {
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    mockDevice->setOSTime(new MockOSTimeWithFailingDeviceTime());
+
+    uint64_t deviceTS = 0u, hostTS = 0u;
+    bool retVal = mockDevice->getDeviceAndHostTimer(&deviceTS, &hostTS);
+
+    EXPECT_FALSE(retVal);
+    EXPECT_EQ(deviceTS, 0u);
+}
+
 } // namespace ULT

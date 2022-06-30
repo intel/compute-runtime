@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,13 +7,13 @@
 
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/test/common/mocks/mock_aub_center.h"
+#include "shared/test/common/mocks/mock_aub_manager.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/api/cl_api_tests.h"
-#include "opencl/test/unit_test/mocks/mock_aub_center.h"
-#include "opencl/test/unit_test/mocks/mock_aub_manager.h"
 
 using namespace NEO;
 

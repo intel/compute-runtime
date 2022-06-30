@@ -1,0 +1,17 @@
+# action.yml
+#
+# Copyright (C) 2021 Intel Corporation
+#
+# SPDX-License-Identifier: MIT
+#
+
+name: 'Neo lint'
+description: 'check coding style'
+inputs:
+  path:
+    description: 'Relative path under $GITHUB_WORKSPACE to place the repository'
+  iregex:
+    description: 'iregex to pass to clang-format'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'

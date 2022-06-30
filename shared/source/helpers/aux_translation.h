@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,14 +11,15 @@
 
 namespace NEO {
 
-enum class AuxTranslationDirection {
+enum class AuxTranslationDirection : uint32_t {
     None,
     AuxToNonAux,
     NonAuxToAux
 };
 
 enum class AuxTranslationMode : int32_t {
-    Builtin = 0,
-    Blit = 1
+    None = 0,
+    Builtin = 1,
+    Blit = 2
 };
 } // namespace NEO

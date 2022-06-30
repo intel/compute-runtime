@@ -1,20 +1,17 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/gmm_helper/gmm_lib.h"
-#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
 
 #include <memory>
 
 namespace NEO {
 class GmmClientContext;
-class OsLibrary;
 class OSInterface;
 struct HardwareInfo;
 
@@ -26,24 +23,26 @@ class GmmHelper {
 
     const HardwareInfo *getHardwareInfo();
     uint32_t getMOCS(uint32_t type) const;
+    void forceAllResourcesUncached() { allResourcesUncached = true; };
 
-    static constexpr uint64_t maxPossiblePitch = 2147483648;
+    static constexpr uint64_t maxPossiblePitch = (1ull << 31);
 
-    static uint64_t canonize(uint64_t address) {
-        return static_cast<int64_t>(address << (64 - GmmHelper::addressWidth)) >> (64 - GmmHelper::addressWidth);
-    }
+    uint64_t canonize(uint64_t address);
+    uint64_t decanonize(uint64_t address);
 
-    static uint64_t decanonize(uint64_t address) {
-        return (address & maxNBitValue(GmmHelper::addressWidth));
-    }
+    uint32_t getAddressWidth() { return addressWidth; };
+    void setAddressWidth(uint32_t width) { addressWidth = width; };
+
+    bool isValidCanonicalGpuAddress(uint64_t address);
 
     GmmClientContext *getClientContext() const;
 
     static std::unique_ptr<GmmClientContext> (*createGmmContextWrapperFunc)(OSInterface *, HardwareInfo *);
 
   protected:
-    static uint32_t addressWidth;
+    uint32_t addressWidth;
     const HardwareInfo *hwInfo = nullptr;
     std::unique_ptr<GmmClientContext> gmmClientContext;
+    bool allResourcesUncached = false;
 };
 } // namespace NEO

@@ -1,22 +1,14 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/hw_info.h"
 
 namespace NEO {
-
-uint32_t HwHelper::getSubDevicesCount(const HardwareInfo *pHwInfo) {
-    return DebugManager.flags.CreateMultipleSubDevices.get() > 0 ? DebugManager.flags.CreateMultipleSubDevices.get() : 1u;
-}
-
-uint32_t HwHelper::getEnginesCount(const HardwareInfo &hwInfo) {
-    return 1u;
-}
 
 uint32_t HwHelper::getCopyEnginesCount(const HardwareInfo &hwInfo) {
     return hwInfo.capabilityTable.blitterOperationsSupported ? 1 : 0;

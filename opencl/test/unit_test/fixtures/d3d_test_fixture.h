@@ -1,18 +1,20 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#pragma once
+
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_d3d_objects.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
-#include "test.h"
 
 namespace NEO {
 template <>
@@ -45,19 +47,30 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
     class MockMM : public OsAgnosticMemoryManager {
       public:
         using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
-        GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) override {
-            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, properties, requireSpecificBitness);
+        bool failAlloc = false;
+        GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override {
+            if (failAlloc) {
+                return nullptr;
+            }
+            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, properties, requireSpecificBitness, isHostIpcAllocation);
             alloc->setDefaultGmm(forceGmm);
             gmmOwnershipPassed = true;
             return alloc;
         }
-        GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex) override {
-            AllocationProperties properties(rootDeviceIndex, true, 0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, false, false, 0);
-            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(toOsHandle(handle), properties, false);
+        GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override {
+            if (failAlloc) {
+                return nullptr;
+            }
+            AllocationProperties properties(rootDeviceIndex, true, 0, AllocationType::INTERNAL_HOST_MEMORY, false, false, 0);
+            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(toOsHandle(handle), properties, false, false);
             alloc->setDefaultGmm(forceGmm);
             gmmOwnershipPassed = true;
             return alloc;
         }
+
+        bool verifyValue = true;
+        bool verifyHandle(osHandle handle, uint32_t rootDeviceIndex, bool) { return verifyValue; }
+
         bool mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) override {
             mapAuxGpuVACalled++;
             return mapAuxGpuVaRetValue;
@@ -69,29 +82,34 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
     };
 
     void setupMockGmm() {
-        cl_image_desc imgDesc = {};
-        imgDesc.image_height = 4;
-        imgDesc.image_width = 4;
-        imgDesc.image_depth = 1;
-        imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+        ImageDescriptor imgDesc = {};
+        imgDesc.imageHeight = 4;
+        imgDesc.imageWidth = 4;
+        imgDesc.imageDepth = 1;
+        imgDesc.imageType = ImageType::Image2D;
         auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-        gmm = MockGmm::queryImgParams(pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getGmmClientContext(), imgInfo).release();
-        mockGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(gmm->gmmResourceInfo.get());
+        gmm = MockGmm::queryImgParams(pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getGmmHelper(), imgInfo, false).release();
+        mockGmmResInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
 
         mockMM->forceGmm = gmm;
     }
 
     void SetUp() override {
+        VariableBackup<UltHwConfig> backup(&ultHwConfig);
+        ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
         PlatformFixture::SetUp();
         rootDeviceIndex = pPlatform->getClDevice(0)->getRootDeviceIndex();
         context = new MockContext(pPlatform->getClDevice(0));
         context->preferD3dSharedResources = true;
         mockMM = std::make_unique<MockMM>(*context->getDevice(0)->getExecutionEnvironment());
 
-        mockSharingFcns = new NiceMock<MockD3DSharingFunctions<T>>();
+        mockSharingFcns = new MockD3DSharingFunctions<T>();
+        mockSharingFcns->checkFormatSupportSetParam1 = true;
+        mockSharingFcns->checkFormatSupportParamsSet.pFormat = D3D11_FORMAT_SUPPORT_BUFFER | D3D11_FORMAT_SUPPORT_TEXTURE2D | D3D11_FORMAT_SUPPORT_TEXTURE3D;
+
         context->setSharingFunctions(mockSharingFcns);
         context->memoryManager = mockMM.get();
-        cmdQ = new MockCommandQueue(context, context->getDevice(0), 0);
+        cmdQ = new MockCommandQueue(context, context->getDevice(0), 0, false);
         DebugManager.injectFcn = &mockSharingFcns->mockGetDxgiDesc;
 
         mockSharingFcns->mockTexture2dDesc.ArraySize = 1;
@@ -177,7 +195,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
         return clGetDeviceIDsFromD3D11KHR(platform, d3dDeviceSource, d3dObject, d3dDeviceSet, numEntries, devices, numDevices);
     }
 
-    NiceMock<MockD3DSharingFunctions<T>> *mockSharingFcns;
+    MockD3DSharingFunctions<T> *mockSharingFcns;
     MockContext *context;
     MockCommandQueue *cmdQ;
     char dummyD3DBuffer;
@@ -185,7 +203,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
     char dummyD3DTexture;
     char dummyD3DTextureStaging;
     Gmm *gmm = nullptr;
-    NiceMock<MockGmmResourceInfo> *mockGmmResInfo = nullptr;
+    MockGmmResourceInfo *mockGmmResInfo = nullptr;
 
     DebugManagerStateRestore dbgRestore;
     std::unique_ptr<MockMM> mockMM;

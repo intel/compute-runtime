@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "opencl/source/sharings/va/cl_va_api.h"
 
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/utilities/api_intercept.h"
@@ -13,8 +15,10 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/source/sharings/va/va_device.h"
 #include "opencl/source/sharings/va/va_sharing.h"
 #include "opencl/source/sharings/va/va_surface.h"
+#include "opencl/source/utilities/cl_logger.h"
 
 #include "CL/cl.h"
 
@@ -36,7 +40,7 @@ clCreateFromVA_APIMediaSurfaceINTEL(cl_context context, cl_mem_flags flags, VASu
     Context *pContext = nullptr;
     cl_mem image = nullptr;
 
-    returnCode = validateObject(WithCastToInternal(context, &pContext));
+    returnCode = validateObject(withCastToInternal(context, &pContext));
     ErrorCodeHelper err(errcodeRet, returnCode);
 
     if (returnCode != CL_SUCCESS) {
@@ -67,13 +71,19 @@ clGetDeviceIDsFromVA_APIMediaAdapterINTEL(cl_platform_id platform, cl_va_api_dev
                    "numEntries", numEntries);
 
     Platform *pPlatform = nullptr;
-    status = validateObjects(WithCastToInternal(platform, &pPlatform));
+    status = validateObjects(withCastToInternal(platform, &pPlatform));
     if (status != CL_SUCCESS) {
         status = CL_INVALID_PLATFORM;
     } else {
-        cl_device_id device = pPlatform->getClDevice(0);
+        VADevice vaDevice{};
+        cl_device_id device = vaDevice.getDeviceFromVA(pPlatform, mediaAdapter);
         GetInfoHelper::set(devices, device);
-        GetInfoHelper::set(numDevices, 1u);
+        if (device == nullptr) {
+            GetInfoHelper::set(numDevices, 0u);
+            status = CL_DEVICE_NOT_FOUND;
+        } else {
+            GetInfoHelper::set(numDevices, 1u);
+        }
     }
     return status;
 }
@@ -89,14 +99,14 @@ clEnqueueAcquireVA_APIMediaSurfacesINTEL(cl_command_queue commandQueue,
     API_ENTER(&status);
     DBG_LOG_INPUTS("commandQueue", commandQueue,
                    "numObjects", numObjects,
-                   "memObjects", FileLoggerInstance().getMemObjects(reinterpret_cast<const uintptr_t *>(memObjects), numObjects),
+                   "memObjects", getClFileLogger().getMemObjects(reinterpret_cast<const uintptr_t *>(memObjects), numObjects),
                    "numEventsInWaitList", numEventsInWaitList,
-                   "eventWaitList", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
-                   "event", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
+                   "eventWaitList", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     CommandQueue *pCommandQueue = nullptr;
 
-    status = validateObjects(WithCastToInternal(commandQueue, &pCommandQueue));
+    status = validateObjects(withCastToInternal(commandQueue, &pCommandQueue));
 
     if (status == CL_SUCCESS) {
         status = pCommandQueue->enqueueAcquireSharedObjects(numObjects, memObjects, numEventsInWaitList,
@@ -116,14 +126,14 @@ clEnqueueReleaseVA_APIMediaSurfacesINTEL(cl_command_queue commandQueue,
     API_ENTER(&status);
     DBG_LOG_INPUTS("commandQueue", commandQueue,
                    "numObjects", numObjects,
-                   "memObjects", FileLoggerInstance().getMemObjects(reinterpret_cast<const uintptr_t *>(memObjects), numObjects),
+                   "memObjects", getClFileLogger().getMemObjects(reinterpret_cast<const uintptr_t *>(memObjects), numObjects),
                    "numEventsInWaitList", numEventsInWaitList,
-                   "eventWaitList", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
-                   "event", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
+                   "eventWaitList", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     CommandQueue *pCommandQueue = nullptr;
 
-    status = validateObjects(WithCastToInternal(commandQueue, &pCommandQueue));
+    status = validateObjects(withCastToInternal(commandQueue, &pCommandQueue));
 
     if (status == CL_SUCCESS) {
         status = pCommandQueue->enqueueReleaseSharedObjects(numObjects, memObjects, numEventsInWaitList,
@@ -139,6 +149,7 @@ cl_int CL_API_CALL clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
     cl_context context,
     cl_mem_flags flags,
     cl_mem_object_type imageType,
+    cl_uint plane,
     cl_uint numEntries,
     VAImageFormat *vaApiFormats,
     cl_uint *numImageFormats) {
@@ -153,5 +164,5 @@ cl_int CL_API_CALL clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
         return CL_INVALID_CONTEXT;
     }
 
-    return pSharing->getSupportedFormats(flags, imageType, numEntries, vaApiFormats, numImageFormats);
+    return pSharing->getSupportedFormats(flags, imageType, plane, numEntries, vaApiFormats, numImageFormats);
 }

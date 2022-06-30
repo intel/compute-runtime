@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,13 +25,17 @@ struct MemoryFlags {
     uint32_t locallyUncachedResource : 1;
     uint32_t locallyUncachedInSurfaceState : 1;
     uint32_t allowUnrestrictedSize : 1;
-    uint32_t forceSharedPhysicalMemory : 1;
+    uint32_t forceHostMemory : 1;
     uint32_t shareable : 1;
     uint32_t resource48Bit : 1;
+    uint32_t compressedHint : 1;
+    uint32_t uncompressedHint : 1;
 };
 
 struct MemoryAllocFlags {
     uint32_t allocWriteCombined : 1;
+    uint32_t usmInitialPlacementCpu : 1;
+    uint32_t usmInitialPlacementGpu : 1;
 };
 
 } // namespace NEO

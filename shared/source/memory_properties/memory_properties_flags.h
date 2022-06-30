@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,14 @@
 
 namespace NEO {
 
+class Device;
+
 struct MemoryProperties {
+    uint64_t handle = 0;
+    uint64_t handleType = 0;
+    uintptr_t hostptr = 0;
+    const Device *pDevice = nullptr;
+    uint32_t memCacheClos = 0;
     union {
         MemoryFlags flags;
         uint32_t allFlags = 0;

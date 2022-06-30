@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,21 @@ bool isGTPinInitialized = false;
 gtpin::ocl::gtpin_events_t GTPinCallbacks = {0};
 } // namespace NEO
 
+// Do not change this code, needed to avoid compiler optimization that breaks GTPin_Init
+// Beginning
+void passCreateBuffer(BufferAllocateFPTR src, BufferAllocateFPTR &dst) {
+    dst = src;
+}
+void passFreeBuffer(BufferDeallocateFPTR src, BufferDeallocateFPTR &dst) {
+    dst = src;
+}
+void passMapBuffer(BufferMapFPTR src, BufferMapFPTR &dst) {
+    dst = src;
+}
+void passUnMapBuffer(BufferUnMapFPTR src, BufferUnMapFPTR &dst) {
+    dst = src;
+}
+// End of WA
 GTPIN_DI_STATUS GTPin_Init(gtpin::ocl::gtpin_events_t *pGtpinEvents, driver_services_t *pDriverServices,
                            interface_version_t *pDriverVersion) {
     if (isGTPinInitialized) {
@@ -48,11 +63,18 @@ GTPIN_DI_STATUS GTPin_Init(gtpin::ocl::gtpin_events_t *pGtpinEvents, driver_serv
         return GTPIN_DI_ERROR_INVALID_ARGUMENT;
     }
 
-    pDriverServices->bufferAllocate = NEO::gtpinCreateBuffer;
-    pDriverServices->bufferDeallocate = NEO::gtpinFreeBuffer;
-    pDriverServices->bufferMap = NEO::gtpinMapBuffer;
-    pDriverServices->bufferUnMap = NEO::gtpinUnmapBuffer;
+    // Do not change this code, needed to avoid compiler optimization that breaks GTPin_Init
+    // Beginning
+    auto createBuffer = NEO::gtpinCreateBuffer;
+    auto freeBuffer = NEO::gtpinFreeBuffer;
+    auto mapBuffer = NEO::gtpinMapBuffer;
+    auto unMapBuffer = NEO::gtpinUnmapBuffer;
 
+    passCreateBuffer(createBuffer, pDriverServices->bufferAllocate);
+    passFreeBuffer(freeBuffer, pDriverServices->bufferDeallocate);
+    passMapBuffer(mapBuffer, pDriverServices->bufferMap);
+    passUnMapBuffer(unMapBuffer, pDriverServices->bufferUnMap);
+    // End of WA
     GTPinCallbacks = *pGtpinEvents;
     isGTPinInitialized = true;
 

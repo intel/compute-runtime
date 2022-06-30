@@ -1,5 +1,0 @@
-[gerrit]
-defaultremote=origin
-defaultbranch=master
-track=true
-defaultrebase=false

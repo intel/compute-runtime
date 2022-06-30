@@ -23,11 +23,14 @@ TEST_F(clSetProgramReleaseCallbackTests, givenPfnNotifyNullptrWhenSettingProgram
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
+void CL_CALLBACK callback(cl_program, void *){};
+
 TEST_F(clSetProgramReleaseCallbackTests, WhenSettingProgramReleaseCallbackThenInvalidOperationErrorIsReturned) {
-    using NotifyFunctionType = void(CL_CALLBACK *)(cl_program, void *);
-    NotifyFunctionType pfnNotify = reinterpret_cast<NotifyFunctionType>(0x1234);
-    void *userData = reinterpret_cast<void *>(0x4321);
-    auto retVal = clSetProgramReleaseCallback(pProgram, pfnNotify, userData);
+    auto retVal = clSetProgramReleaseCallback(pProgram, callback, nullptr);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+
+    auto userData = reinterpret_cast<void *>(0x4321);
+    retVal = clSetProgramReleaseCallback(pProgram, callback, userData);
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 }
 

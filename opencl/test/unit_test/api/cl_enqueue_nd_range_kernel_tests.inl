@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenValidParametersWhenExecutingKernelThenS
 
     retVal = clEnqueueNDRangeKernel(
         pCommandQueue,
-        pKernel,
+        pMultiDeviceKernel,
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -39,12 +39,36 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenValidParametersWhenExecutingKernelThenS
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST_F(clEnqueueNDRangeKernelTests, GivenQueueIncapableWhenExecutingKernelThenInvalidOperationIsReturned) {
+    cl_uint workDim = 1;
+    size_t globalWorkOffset[3] = {0, 0, 0};
+    size_t globalWorkSize[3] = {1, 1, 1};
+    size_t localWorkSize[3] = {1, 1, 1};
+    cl_uint numEventsInWaitList = 0;
+    cl_event *eventWaitList = nullptr;
+    cl_event *event = nullptr;
+
+    this->disableQueueCapabilities(CL_QUEUE_CAPABILITY_KERNEL_INTEL);
+    retVal = clEnqueueNDRangeKernel(
+        pCommandQueue,
+        pMultiDeviceKernel,
+        workDim,
+        globalWorkOffset,
+        globalWorkSize,
+        localWorkSize,
+        numEventsInWaitList,
+        eventWaitList,
+        event);
+
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+}
+
 TEST_F(clEnqueueNDRangeKernelTests, GivenNullCommandQueueWhenExecutingKernelThenInvalidCommandQueueErrorIsReturned) {
     size_t globalWorkSize[3] = {1, 1, 1};
 
     retVal = clEnqueueNDRangeKernel(
         nullptr,
-        pKernel,
+        pMultiDeviceKernel,
         1,
         nullptr,
         globalWorkSize,
@@ -67,7 +91,7 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenNonZeroEventsAndEmptyEventWaitListWhenE
 
     retVal = clEnqueueNDRangeKernel(
         pCommandQueue,
-        pKernel,
+        pMultiDeviceKernel,
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -91,7 +115,7 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenConcurrentKernelWhenExecutingKernelThen
 
     retVal = clEnqueueNDRangeKernel(
         pCommandQueue,
-        pKernel,
+        pMultiDeviceKernel,
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -110,14 +134,18 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenKernelWithAllocateSyncBufferPatchWhenEx
     cl_uint numEventsInWaitList = 0;
     cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;
-    SPatchAllocateSyncBuffer patchAllocateSyncBuffer;
-    pProgram->mockKernelInfo.patchInfo.pAllocateSyncBuffer = &patchAllocateSyncBuffer;
 
-    EXPECT_TRUE(pKernel->isUsingSyncBuffer());
+    pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.flags.usesSyncBuffer = true;
+    auto &syncBufferAddress = pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.implicitArgs.syncBufferAddress;
+    syncBufferAddress.pointerSize = sizeof(uint8_t);
+    syncBufferAddress.stateless = 0;
+    syncBufferAddress.bindful = 0;
+
+    EXPECT_TRUE(pKernel->usesSyncBuffer());
 
     retVal = clEnqueueNDRangeKernel(
         pCommandQueue,
-        pKernel,
+        pMultiDeviceKernel,
         workDim,
         globalWorkOffset,
         globalWorkSize,

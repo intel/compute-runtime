@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,14 +9,7 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
 
-#include "gtest/gtest.h"
-
 #include <vector>
-
-extern std::vector<const char *> BinaryFileNames;
-extern std::vector<const char *> SourceFileNames;
-extern std::vector<const char *> BinaryForSourceFileNames;
-extern std::vector<const char *> KernelNames;
 
 class ProgramTests : public NEO::ClDeviceFixture,
                      public ::testing::Test,

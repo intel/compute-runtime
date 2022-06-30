@@ -6,13 +6,13 @@
 
 if(TESTS_BXT)
   set(IGDRCL_SRCS_tests_gen9_bxt
-    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/device_tests_bxt.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_bxt.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_bxt.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+      ${CMAKE_CURRENT_SOURCE_DIR}/device_tests_bxt.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_bxt.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_bxt.cpp
   )
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_gen9_bxt})
   add_subdirectories()
-  neo_copy_test_files(copy_test_files_bxt bxt)
-  add_dependencies(unit_tests copy_test_files_bxt)
+  neo_copy_test_files_with_revision(copy_test_files_bxt_0 bxt 0)
+  add_dependencies(copy_test_files_per_product copy_test_files_bxt_0)
 endif()

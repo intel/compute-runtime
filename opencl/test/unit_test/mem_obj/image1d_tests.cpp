@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "opencl/source/helpers/memory_properties_helpers.h"
+#include "shared/test/common/test_macros/test.h"
+
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -70,12 +71,12 @@ class CreateImage1DTest : public ClDeviceFixture,
 
 typedef CreateImage1DTest CreateImage1DType;
 
-HWTEST_P(CreateImage1DType, validTypes) {
+HWTEST_P(CreateImage1DType, GivenValidTypeWhenCreatingImageThenImageParamsAreCorrect) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto image = Image::create(
         context,
-        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice),
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice),
         flags,
         0,
         surfaceFormat,
@@ -93,10 +94,10 @@ HWTEST_P(CreateImage1DType, validTypes) {
     EXPECT_NE(0u, imgDesc.image_row_pitch);
     EXPECT_GE(imgDesc.image_slice_pitch, imgDesc.image_row_pitch);
 
-    size_t ImageInfoHeight = 0;
-    retVal = clGetImageInfo(image, CL_IMAGE_HEIGHT, sizeof(size_t), &ImageInfoHeight, NULL);
+    size_t imageInfoHeight = 0;
+    retVal = clGetImageInfo(image, CL_IMAGE_HEIGHT, sizeof(size_t), &imageInfoHeight, NULL);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_EQ(0u, ImageInfoHeight);
+    ASSERT_EQ(0u, imageInfoHeight);
 
     if ((types == CL_MEM_OBJECT_IMAGE1D) || (types == CL_MEM_OBJECT_IMAGE1D_BUFFER)) {
         EXPECT_EQ(0u, imgDesc.image_array_size);
@@ -137,6 +138,6 @@ static cl_mem_object_type Image1DTypes[] = {
     CL_MEM_OBJECT_IMAGE1D_ARRAY};
 
 INSTANTIATE_TEST_CASE_P(
-    CreateImage1DTest_Create,
+    CreateImage1DTestCreate,
     CreateImage1DType,
     testing::ValuesIn(Image1DTypes));

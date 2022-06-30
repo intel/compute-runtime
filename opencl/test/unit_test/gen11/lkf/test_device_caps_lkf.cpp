@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -16,13 +17,7 @@ LKFTEST_F(LkfTest, givenLkfWhenSlmSizeIsRequiredThenReturnCorrectValue) {
     EXPECT_EQ(64u, pDevice->getHardwareInfo().capabilityTable.slmSize);
 }
 
-LKFTEST_F(LkfTest, givenLKFWhenCheckedOCLVersionThen21IsReported) {
-    const auto &caps = pClDevice->getDeviceInfo();
-    EXPECT_STREQ("OpenCL 1.2 NEO ", caps.clVersion);
-    EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
-}
-
-LKFTEST_F(LkfTest, givenLKFWhenCheckedSvmSupportThenNoSvmIsReported) {
+LKFTEST_F(LkfTest, givenLkfWhenCheckedSvmSupportThenNoSvmIsReported) {
     const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_EQ(caps.svmCapabilities, 0u);
 }
@@ -40,7 +35,7 @@ LKFTEST_F(LkfTest, givenLkfWhenExtensionStringIsCheckedThenFP64IsNotReported) {
     EXPECT_EQ(0u, caps.doubleFpConfig);
 }
 
-LKFTEST_F(LkfTest, isSimulationCap) {
+LKFTEST_F(LkfTest, WhenCheckingIsSimulationThenTrueReturnedOnlyForSimulationId) {
     unsigned short lkfSimulationIds[2] = {
         ILKF_1x8x8_DESK_DEVICE_F0_ID,
         0, // default, non-simulation

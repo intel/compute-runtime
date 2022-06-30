@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,40 +11,36 @@
 
 using namespace NEO;
 
-HostPtrFragmentsContainer::iterator HostPtrManager::findElement(const void *ptr) {
-    auto nextElement = partialAllocations.lower_bound(ptr);
+HostPtrFragmentsContainer::iterator HostPtrManager::findElement(HostPtrEntryKey key) {
+    auto nextElement = partialAllocations.lower_bound(key);
     auto element = nextElement;
     if (element != partialAllocations.end()) {
+
         auto &storedFragment = element->second;
-        if (storedFragment.fragmentCpuPointer <= ptr) {
+        if (element->first.rootDeviceIndex == key.rootDeviceIndex && storedFragment.fragmentCpuPointer == key.ptr) {
             return element;
-        } else if (element != partialAllocations.begin()) {
-            element--;
-            auto &storedFragment = element->second;
-            auto storedEndAddress = (uintptr_t)storedFragment.fragmentCpuPointer + storedFragment.fragmentSize;
-            if (storedFragment.fragmentSize == 0) {
-                storedEndAddress++;
-            }
-            if ((uintptr_t)ptr < (uintptr_t)storedEndAddress) {
-                return element;
-            }
         }
-    } else if (element != partialAllocations.begin()) {
+    }
+    if (element != partialAllocations.begin()) {
         element--;
+        if (element->first.rootDeviceIndex != key.rootDeviceIndex) {
+            return partialAllocations.end();
+        }
         auto &storedFragment = element->second;
-        auto storedEndAddress = (uintptr_t)storedFragment.fragmentCpuPointer + storedFragment.fragmentSize;
+        auto storedEndAddress = reinterpret_cast<uintptr_t>(storedFragment.fragmentCpuPointer) + storedFragment.fragmentSize;
         if (storedFragment.fragmentSize == 0) {
             storedEndAddress++;
         }
-        if ((uintptr_t)ptr < (uintptr_t)storedEndAddress) {
+        if (reinterpret_cast<uintptr_t>(key.ptr) < storedEndAddress) {
             return element;
         }
     }
     return partialAllocations.end();
 }
 
-AllocationRequirements HostPtrManager::getAllocationRequirements(const void *inputPtr, size_t size) {
+AllocationRequirements HostPtrManager::getAllocationRequirements(uint32_t rootDeviceIndex, const void *inputPtr, size_t size) {
     AllocationRequirements requiredAllocations;
+    requiredAllocations.rootDeviceIndex = rootDeviceIndex;
 
     auto allocationCount = 0;
     auto wholeAllocationSize = alignSizeWholePage(inputPtr, size);
@@ -93,7 +89,8 @@ OsHandleStorage HostPtrManager::populateAlreadyAllocatedFragments(AllocationRequ
     OsHandleStorage handleStorage;
     for (unsigned int i = 0; i < requirements.requiredFragmentsCount; i++) {
         OverlapStatus overlapStatus = OverlapStatus::FRAGMENT_NOT_CHECKED;
-        FragmentStorage *fragmentStorage = getFragmentAndCheckForOverlaps(const_cast<void *>(requirements.allocationFragments[i].allocationPtr), requirements.allocationFragments[i].allocationSize, overlapStatus);
+        FragmentStorage *fragmentStorage = getFragmentAndCheckForOverlaps(requirements.rootDeviceIndex, const_cast<void *>(requirements.allocationFragments[i].allocationPtr),
+                                                                          requirements.allocationFragments[i].allocationSize, overlapStatus);
         if (overlapStatus == OverlapStatus::FRAGMENT_WITHIN_STORED_FRAGMENT) {
             UNRECOVERABLE_IF(fragmentStorage == nullptr);
             fragmentStorage->refCount++;
@@ -122,43 +119,44 @@ OsHandleStorage HostPtrManager::populateAlreadyAllocatedFragments(AllocationRequ
     return handleStorage;
 }
 
-void HostPtrManager::storeFragment(FragmentStorage &fragment) {
+void HostPtrManager::storeFragment(uint32_t rootDeviceIndex, FragmentStorage &fragment) {
     std::lock_guard<decltype(allocationsMutex)> lock(allocationsMutex);
-    auto element = findElement(fragment.fragmentCpuPointer);
+    HostPtrEntryKey key{fragment.fragmentCpuPointer, rootDeviceIndex};
+    auto element = findElement(key);
     if (element != partialAllocations.end()) {
         element->second.refCount++;
     } else {
         fragment.refCount++;
-        partialAllocations.insert(std::pair<const void *, FragmentStorage>(fragment.fragmentCpuPointer, fragment));
+        partialAllocations.insert(std::pair<HostPtrEntryKey, FragmentStorage>(key, fragment));
     }
 }
 
-void HostPtrManager::storeFragment(AllocationStorageData &storageData) {
+void HostPtrManager::storeFragment(uint32_t rootDeviceIndex, AllocationStorageData &storageData) {
     FragmentStorage fragment;
     fragment.fragmentCpuPointer = const_cast<void *>(storageData.cpuPtr);
     fragment.fragmentSize = storageData.fragmentSize;
     fragment.osInternalStorage = storageData.osHandleStorage;
     fragment.residency = storageData.residency;
-    storeFragment(fragment);
+    storeFragment(rootDeviceIndex, fragment);
 }
 
 std::unique_lock<std::recursive_mutex> HostPtrManager::obtainOwnership() {
     return std::unique_lock<std::recursive_mutex>(allocationsMutex);
 }
 
-void HostPtrManager::releaseHandleStorage(OsHandleStorage &fragments) {
+void HostPtrManager::releaseHandleStorage(uint32_t rootDeviceIndex, OsHandleStorage &fragments) {
     for (int i = 0; i < maxFragmentsCount; i++) {
         if (fragments.fragmentStorageData[i].fragmentSize || fragments.fragmentStorageData[i].cpuPtr) {
-            fragments.fragmentStorageData[i].freeTheFragment = releaseHostPtr(fragments.fragmentStorageData[i].cpuPtr);
+            fragments.fragmentStorageData[i].freeTheFragment = releaseHostPtr(rootDeviceIndex, fragments.fragmentStorageData[i].cpuPtr);
         }
     }
 }
 
-bool HostPtrManager::releaseHostPtr(const void *ptr) {
+bool HostPtrManager::releaseHostPtr(uint32_t rootDeviceIndex, const void *ptr) {
     std::lock_guard<decltype(allocationsMutex)> lock(allocationsMutex);
     bool fragmentReadyToBeReleased = false;
 
-    auto element = findElement(ptr);
+    auto element = findElement({ptr, rootDeviceIndex});
 
     DEBUG_BREAK_IF(element == partialAllocations.end());
 
@@ -171,9 +169,9 @@ bool HostPtrManager::releaseHostPtr(const void *ptr) {
     return fragmentReadyToBeReleased;
 }
 
-FragmentStorage *HostPtrManager::getFragment(const void *inputPtr) {
+FragmentStorage *HostPtrManager::getFragment(HostPtrEntryKey key) {
     std::lock_guard<decltype(allocationsMutex)> lock(allocationsMutex);
-    auto element = findElement(inputPtr);
+    auto element = findElement(key);
     if (element != partialAllocations.end()) {
         return &element->second;
     }
@@ -181,10 +179,10 @@ FragmentStorage *HostPtrManager::getFragment(const void *inputPtr) {
 }
 
 //for given inputs see if any allocation overlaps
-FragmentStorage *HostPtrManager::getFragmentAndCheckForOverlaps(const void *inPtr, size_t size, OverlapStatus &overlappingStatus) {
+FragmentStorage *HostPtrManager::getFragmentAndCheckForOverlaps(uint32_t rootDeviceIndex, const void *inPtr, size_t size, OverlapStatus &overlappingStatus) {
     std::lock_guard<decltype(allocationsMutex)> lock(allocationsMutex);
     void *inputPtr = const_cast<void *>(inPtr);
-    auto nextElement = partialAllocations.lower_bound(inputPtr);
+    auto nextElement = partialAllocations.lower_bound({inputPtr, rootDeviceIndex});
     auto element = nextElement;
     overlappingStatus = OverlapStatus::FRAGMENT_NOT_OVERLAPING_WITH_ANY_OTHER;
 
@@ -193,6 +191,9 @@ FragmentStorage *HostPtrManager::getFragmentAndCheckForOverlaps(const void *inPt
     }
 
     if (element != partialAllocations.end()) {
+        if (element->first.rootDeviceIndex != rootDeviceIndex) {
+            return nullptr;
+        }
         auto &storedFragment = element->second;
         if (storedFragment.fragmentCpuPointer == inputPtr && storedFragment.fragmentSize == size) {
             overlappingStatus = OverlapStatus::FRAGMENT_WITH_EXACT_SIZE_AS_STORED_FRAGMENT;
@@ -213,6 +214,9 @@ FragmentStorage *HostPtrManager::getFragmentAndCheckForOverlaps(const void *inPt
         }
         //next fragment doesn't have to be after the inputPtr
         if (nextElement != partialAllocations.end()) {
+            if (nextElement->first.rootDeviceIndex != rootDeviceIndex) {
+                return nullptr;
+            }
             auto &storedNextElement = nextElement->second;
             auto storedNextEndAddress = (uintptr_t)storedNextElement.fragmentCpuPointer + storedNextElement.fragmentSize;
             auto storedNextStartAddress = (uintptr_t)storedNextElement.fragmentCpuPointer;
@@ -242,7 +246,7 @@ FragmentStorage *HostPtrManager::getFragmentAndCheckForOverlaps(const void *inPt
 
 OsHandleStorage HostPtrManager::prepareOsStorageForAllocation(MemoryManager &memoryManager, size_t size, const void *ptr, uint32_t rootDeviceIndex) {
     std::lock_guard<decltype(allocationsMutex)> lock(allocationsMutex);
-    auto requirements = HostPtrManager::getAllocationRequirements(ptr, size);
+    auto requirements = HostPtrManager::getAllocationRequirements(rootDeviceIndex, ptr, size);
     UNRECOVERABLE_IF(checkAllocationsForOverlapping(memoryManager, &requirements) == RequirementsStatus::FATAL);
     auto osStorage = populateAlreadyAllocatedFragments(requirements);
     if (osStorage.fragmentCount > 0) {
@@ -262,20 +266,23 @@ RequirementsStatus HostPtrManager::checkAllocationsForOverlapping(MemoryManager 
     for (unsigned int i = 0; i < requirements->requiredFragmentsCount; i++) {
         OverlapStatus overlapStatus = OverlapStatus::FRAGMENT_NOT_CHECKED;
 
-        getFragmentAndCheckForOverlaps(requirements->allocationFragments[i].allocationPtr, requirements->allocationFragments[i].allocationSize, overlapStatus);
+        getFragmentAndCheckForOverlaps(requirements->rootDeviceIndex, requirements->allocationFragments[i].allocationPtr,
+                                       requirements->allocationFragments[i].allocationSize, overlapStatus);
         if (overlapStatus == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
             // clean temporary allocations
             memoryManager.cleanTemporaryAllocationListOnAllEngines(false);
 
             // check overlapping again
-            getFragmentAndCheckForOverlaps(requirements->allocationFragments[i].allocationPtr, requirements->allocationFragments[i].allocationSize, overlapStatus);
+            getFragmentAndCheckForOverlaps(requirements->rootDeviceIndex, requirements->allocationFragments[i].allocationPtr,
+                                           requirements->allocationFragments[i].allocationSize, overlapStatus);
             if (overlapStatus == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
 
                 // Wait for completion
                 memoryManager.cleanTemporaryAllocationListOnAllEngines(true);
 
                 // check overlapping last time
-                getFragmentAndCheckForOverlaps(requirements->allocationFragments[i].allocationPtr, requirements->allocationFragments[i].allocationSize, overlapStatus);
+                getFragmentAndCheckForOverlaps(requirements->rootDeviceIndex, requirements->allocationFragments[i].allocationPtr,
+                                               requirements->allocationFragments[i].allocationSize, overlapStatus);
                 if (overlapStatus == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
                     status = RequirementsStatus::FATAL;
                     break;

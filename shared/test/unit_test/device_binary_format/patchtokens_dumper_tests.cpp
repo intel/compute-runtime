@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,13 @@
 
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/device_binary_format/patchtokens_dumper.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
+#include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 
-#include "test.h"
-
 #include <sstream>
+#include <unordered_set>
 
 TEST(ProgramDumper, GivenEmptyProgramThenProperlyCreatesDumpStringWithWarnig) {
     NEO::PatchTokenBinary::ProgramFromPatchtokens emptyProgram = {};
@@ -125,6 +127,9 @@ TEST(ProgramDumper, GivenProgramWithPatchtokensThenProperlyCreatesDump) {
     unknownToken1.Token = NUM_PATCH_TOKENS;
     progWithConst.unhandledTokens.push_back(&unknownToken1);
 
+    NEO::HardwareInfo copyHwInfo = *NEO::defaultHwInfo;
+    NEO::CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily)->adjustHwInfoForIgc(copyHwInfo);
+
     std::string generated = NEO::PatchTokenBinary::asString(progWithConst);
     std::stringstream expected;
     expected << R"===(Program of size : )===" << progWithConst.blobs.programInfo.size() << R"===( decoded successfully
@@ -134,7 +139,7 @@ struct SProgramBinaryHeader {
              << CURRENT_ICBE_VERSION << R"===(
 
     uint32_t   Device; // = )==="
-             << renderCoreFamily << R"===(
+             << copyHwInfo.platform.eRenderCoreFamily << R"===(
     uint32_t   GPUPointerSizeInBytes; // = )==="
              << progWithConst.header->GPUPointerSizeInBytes << R"===(
 
@@ -265,6 +270,10 @@ TEST(ProgramDumper, GivenProgramWithKernelThenProperlyCreatesDump) {
     PatchTokensTestData::ValidProgramWithKernelUsingSlm program;
     std::string generated = NEO::PatchTokenBinary::asString(program);
     std::stringstream expected;
+
+    NEO::HardwareInfo copyHwInfo = *NEO::defaultHwInfo;
+    NEO::CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily)->adjustHwInfoForIgc(copyHwInfo);
+
     expected << R"===(Program of size : )===" << program.blobs.programInfo.size() << R"===( decoded successfully
 struct SProgramBinaryHeader {
     uint32_t   Magic; // = 1229870147
@@ -272,7 +281,7 @@ struct SProgramBinaryHeader {
              << iOpenCL::CURRENT_ICBE_VERSION << R"===(
 
     uint32_t   Device; // = )==="
-             << renderCoreFamily << R"===(
+             << copyHwInfo.platform.eRenderCoreFamily << R"===(
     uint32_t   GPUPointerSizeInBytes; // = )==="
              << program.header->GPUPointerSizeInBytes << R"===(
 
@@ -311,7 +320,6 @@ Kernel-scope tokens section size : )==="
       uint32_t    CompiledSIMD8;// = 0
       uint32_t    CompiledSIMD16;// = 0
       uint32_t    CompiledSIMD32;// = 1
-      uint32_t    HasDeviceEnqueue;// = 0
       uint32_t    MayAccessUndeclaredResource;// = 0
       uint32_t    UsesFencesForReadWriteImages;// = 0
       uint32_t    UsesStatelessSpillFill;// = 0
@@ -324,6 +332,8 @@ Kernel-scope tokens section size : )==="
       uint32_t    NumGRFRequired;// = 0
       uint32_t    WorkgroupWalkOrderDims;// = 0
       uint32_t    HasGlobalAtomics;// = 0
+      uint32_t    HasStackCalls;// = 0
+      uint32_t    RequireDisableEUFusion;// = 0
   }
   struct SPatchAllocateLocalSurface :
          SPatchItemHeader (Token=15(PATCH_TOKEN_ALLOCATE_LOCAL_SURFACE), Size=)==="
@@ -346,6 +356,10 @@ TEST(ProgramDumper, GivenProgramWithMultipleKerneslThenProperlyCreatesDump) {
     program.kernels[2].name = ArrayRef<const char>();
     std::string generated = NEO::PatchTokenBinary::asString(program);
     std::stringstream expected;
+
+    NEO::HardwareInfo copyHwInfo = *NEO::defaultHwInfo;
+    NEO::CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily)->adjustHwInfoForIgc(copyHwInfo);
+
     expected << R"===(Program of size : )===" << program.blobs.programInfo.size() << R"===( decoded successfully
 struct SProgramBinaryHeader {
     uint32_t   Magic; // = 1229870147
@@ -353,7 +367,7 @@ struct SProgramBinaryHeader {
              << iOpenCL::CURRENT_ICBE_VERSION << R"===(
 
     uint32_t   Device; // = )==="
-             << renderCoreFamily << R"===(
+             << copyHwInfo.platform.eRenderCoreFamily << R"===(
     uint32_t   GPUPointerSizeInBytes; // = )==="
              << program.header->GPUPointerSizeInBytes << R"===(
 
@@ -392,7 +406,6 @@ Kernel-scope tokens section size : )==="
       uint32_t    CompiledSIMD8;// = 0
       uint32_t    CompiledSIMD16;// = 0
       uint32_t    CompiledSIMD32;// = 1
-      uint32_t    HasDeviceEnqueue;// = 0
       uint32_t    MayAccessUndeclaredResource;// = 0
       uint32_t    UsesFencesForReadWriteImages;// = 0
       uint32_t    UsesStatelessSpillFill;// = 0
@@ -405,6 +418,8 @@ Kernel-scope tokens section size : )==="
       uint32_t    NumGRFRequired;// = 0
       uint32_t    WorkgroupWalkOrderDims;// = 0
       uint32_t    HasGlobalAtomics;// = 0
+      uint32_t    HasStackCalls;// = 0
+      uint32_t    RequireDisableEUFusion;// = 0
   }
   struct SPatchAllocateLocalSurface :
          SPatchItemHeader (Token=15(PATCH_TOKEN_ALLOCATE_LOCAL_SURFACE), Size=)==="
@@ -440,7 +455,6 @@ Kernel-scope tokens section size : )==="
       uint32_t    CompiledSIMD8;// = 0
       uint32_t    CompiledSIMD16;// = 0
       uint32_t    CompiledSIMD32;// = 1
-      uint32_t    HasDeviceEnqueue;// = 0
       uint32_t    MayAccessUndeclaredResource;// = 0
       uint32_t    UsesFencesForReadWriteImages;// = 0
       uint32_t    UsesStatelessSpillFill;// = 0
@@ -453,6 +467,8 @@ Kernel-scope tokens section size : )==="
       uint32_t    NumGRFRequired;// = 0
       uint32_t    WorkgroupWalkOrderDims;// = 0
       uint32_t    HasGlobalAtomics;// = 0
+      uint32_t    HasStackCalls;// = 0
+      uint32_t    RequireDisableEUFusion;// = 0
   }
 kernel[2] <UNNAMED>:
 Kernel of size : )==="
@@ -481,7 +497,6 @@ Kernel-scope tokens section size : )==="
       uint32_t    CompiledSIMD8;// = 0
       uint32_t    CompiledSIMD16;// = 0
       uint32_t    CompiledSIMD32;// = 1
-      uint32_t    HasDeviceEnqueue;// = 0
       uint32_t    MayAccessUndeclaredResource;// = 0
       uint32_t    UsesFencesForReadWriteImages;// = 0
       uint32_t    UsesStatelessSpillFill;// = 0
@@ -494,6 +509,8 @@ Kernel-scope tokens section size : )==="
       uint32_t    NumGRFRequired;// = 0
       uint32_t    WorkgroupWalkOrderDims;// = 0
       uint32_t    HasGlobalAtomics;// = 0
+      uint32_t    HasStackCalls;// = 0
+      uint32_t    RequireDisableEUFusion;// = 0
   }
 )===";
     EXPECT_STREQ(expected.str().c_str(), generated.c_str());
@@ -509,7 +526,6 @@ TEST(KernelDumper, GivenKernelWithNonCrossthreadDataPatchtokensThenProperlyCreat
     auto allocateLocalSurface = initToken<SPatchAllocateLocalSurface>(PATCH_TOKEN_ALLOCATE_LOCAL_SURFACE);
     SPatchMediaVFEState mediaVfeState[2] = {initToken<SPatchMediaVFEState>(PATCH_TOKEN_MEDIA_VFE_STATE), initToken<SPatchMediaVFEState>(PATCH_TOKEN_MEDIA_VFE_STATE_SLOT1)};
     auto mediaInterfaceDescriptorLoad = initToken<SPatchMediaInterfaceDescriptorLoad>(PATCH_TOKEN_MEDIA_INTERFACE_DESCRIPTOR_LOAD);
-    auto interfaceDescriptorData = initToken<SPatchInterfaceDescriptorData>(PATCH_TOKEN_INTERFACE_DESCRIPTOR_DATA);
     auto threadPayload = initToken<SPatchThreadPayload>(PATCH_TOKEN_THREAD_PAYLOAD);
     auto executionEnvironment = initToken<SPatchExecutionEnvironment>(PATCH_TOKEN_EXECUTION_ENVIRONMENT);
     auto dataParameterStream = initToken<SPatchDataParameterStream>(PATCH_TOKEN_DATA_PARAMETER_STREAM);
@@ -536,7 +552,6 @@ TEST(KernelDumper, GivenKernelWithNonCrossthreadDataPatchtokensThenProperlyCreat
     kernel.tokens.mediaVfeState[0] = &mediaVfeState[0];
     kernel.tokens.mediaVfeState[1] = &mediaVfeState[1];
     kernel.tokens.mediaInterfaceDescriptorLoad = &mediaInterfaceDescriptorLoad;
-    kernel.tokens.interfaceDescriptorData = &interfaceDescriptorData;
     kernel.tokens.threadPayload = &threadPayload;
     kernel.tokens.executionEnvironment = &executionEnvironment;
     kernel.tokens.dataParameterStream = &dataParameterStream;
@@ -597,7 +612,6 @@ Kernel-scope tokens section size : )==="
       uint32_t    CompiledSIMD8;// = 0
       uint32_t    CompiledSIMD16;// = 0
       uint32_t    CompiledSIMD32;// = 0
-      uint32_t    HasDeviceEnqueue;// = 0
       uint32_t    MayAccessUndeclaredResource;// = 0
       uint32_t    UsesFencesForReadWriteImages;// = 0
       uint32_t    UsesStatelessSpillFill;// = 0
@@ -610,6 +624,8 @@ Kernel-scope tokens section size : )==="
       uint32_t    NumGRFRequired;// = 0
       uint32_t    WorkgroupWalkOrderDims;// = 0
       uint32_t    HasGlobalAtomics;// = 0
+      uint32_t    HasStackCalls;// = 0
+      uint32_t    RequireDisableEUFusion;// = 0
   }
   struct SPatchThreadPayload :
          SPatchItemHeader (Token=22(PATCH_TOKEN_THREAD_PAYLOAD), Size=)==="
@@ -677,15 +693,6 @@ Kernel-scope tokens section size : )==="
   {
       uint32_t   InterfaceDescriptorDataOffset;// = 0
   }
-  struct SPatchInterfaceDescriptorData :
-         SPatchItemHeader (Token=21(PATCH_TOKEN_INTERFACE_DESCRIPTOR_DATA), Size=)==="
-             << sizeof(SPatchInterfaceDescriptorData) << R"===()
-  {
-      uint32_t   Offset;// = 0
-      uint32_t   SamplerStateOffset;// = 0
-      uint32_t   KernelOffset;// = 0
-      uint32_t   BindingTableOffset;// = 0
-  }
   struct SPatchKernelAttributesInfo :
          SPatchItemHeader (Token=27(PATCH_TOKEN_KERNEL_ATTRIBUTES_INFO), Size=)==="
              << sizeof(SPatchKernelAttributesInfo) << R"===()
@@ -700,6 +707,7 @@ Kernel-scope tokens section size : )==="
       uint32_t   DataParamOffset;// = 0
       uint32_t   DataParamSize;// = 0
       uint32_t   PerThreadPrivateMemorySize;// = 0
+      uint32_t   IsSimtThread;// = 0
   }
   struct SPatchAllocateStatelessConstantMemorySurfaceWithInitialization :
          SPatchItemHeader (Token=39(PATCH_TOKEN_ALLOCATE_CONSTANT_MEMORY_SURFACE_WITH_INITIALIZATION), Size=)==="
@@ -840,7 +848,6 @@ Kernel-scope tokens section size : )==="
       uint32_t    CompiledSIMD8;// = 0
       uint32_t    CompiledSIMD16;// = 0
       uint32_t    CompiledSIMD32;// = 1
-      uint32_t    HasDeviceEnqueue;// = 0
       uint32_t    MayAccessUndeclaredResource;// = 0
       uint32_t    UsesFencesForReadWriteImages;// = 0
       uint32_t    UsesStatelessSpillFill;// = 0
@@ -853,6 +860,8 @@ Kernel-scope tokens section size : )==="
       uint32_t    NumGRFRequired;// = 0
       uint32_t    WorkgroupWalkOrderDims;// = 0
       uint32_t    HasGlobalAtomics;// = 0
+      uint32_t    HasStackCalls;// = 0
+      uint32_t    RequireDisableEUFusion;// = 0
   }
   String literals [3] :
    + [0]:
@@ -915,8 +924,6 @@ TEST(KernelDumper, GivenKernelWithNonArgCrossThreadDataPatchtokensThenProperlyCr
     auto localMemoryStatelessWindowSize = initDataParameterBufferToken(DATA_PARAMETER_LOCAL_MEMORY_STATELESS_WINDOW_SIZE);
     auto localMemoryStatelessWindowStartAddress = initDataParameterBufferToken(DATA_PARAMETER_LOCAL_MEMORY_STATELESS_WINDOW_START_ADDRESS);
     auto preferredWorkgroupMultiple = initDataParameterBufferToken(DATA_PARAMETER_PREFERRED_WORKGROUP_MULTIPLE);
-    SPatchDataParameterBuffer childBlockSimdSize[2] = {initDataParameterBufferToken(DATA_PARAMETER_CHILD_BLOCK_SIMD_SIZE),
-                                                       initDataParameterBufferToken(DATA_PARAMETER_CHILD_BLOCK_SIMD_SIZE, 2U)};
     auto unknownToken0 = initDataParameterBufferToken(NUM_DATA_PARAMETER_TOKENS);
     auto unknownToken1 = initDataParameterBufferToken(NUM_DATA_PARAMETER_TOKENS);
 
@@ -946,8 +953,6 @@ TEST(KernelDumper, GivenKernelWithNonArgCrossThreadDataPatchtokensThenProperlyCr
     kernel.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowSize = &localMemoryStatelessWindowSize;
     kernel.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowStartAddress = &localMemoryStatelessWindowStartAddress;
     kernel.tokens.crossThreadPayloadArgs.preferredWorkgroupMultiple = &preferredWorkgroupMultiple;
-    kernel.tokens.crossThreadPayloadArgs.childBlockSimdSize.push_back(&childBlockSimdSize[0]);
-    kernel.tokens.crossThreadPayloadArgs.childBlockSimdSize.push_back(&childBlockSimdSize[1]);
     kernel.unhandledTokens.push_back(&unknownToken0);
     kernel.unhandledTokens.push_back(&unknownToken1);
 
@@ -1010,7 +1015,6 @@ Kernel-scope tokens section size : )==="
       uint32_t    CompiledSIMD8;// = 0
       uint32_t    CompiledSIMD16;// = 0
       uint32_t    CompiledSIMD32;// = 1
-      uint32_t    HasDeviceEnqueue;// = 0
       uint32_t    MayAccessUndeclaredResource;// = 0
       uint32_t    UsesFencesForReadWriteImages;// = 0
       uint32_t    UsesStatelessSpillFill;// = 0
@@ -1023,6 +1027,8 @@ Kernel-scope tokens section size : )==="
       uint32_t    NumGRFRequired;// = 0
       uint32_t    WorkgroupWalkOrderDims;// = 0
       uint32_t    HasGlobalAtomics;// = 0
+      uint32_t    HasStackCalls;// = 0
+      uint32_t    RequireDisableEUFusion;// = 0
   }
   localWorkSize [3] :
    + [0]:
@@ -1344,35 +1350,6 @@ Kernel-scope tokens section size : )==="
       uint32_t   LocationIndex2;// = 0
       uint32_t   IsEmulationArgument;// = 0
   }
-  Child block simd size(s) [2] :
-   + [0]:
-   |  struct SPatchDataParameterBuffer :
-   |         SPatchItemHeader (Token=17(PATCH_TOKEN_DATA_PARAMETER_BUFFER), Size=)==="
-             << tokenSize << R"===()
-   |  {
-   |      uint32_t   Type;// = 38(DATA_PARAMETER_CHILD_BLOCK_SIMD_SIZE)
-   |      uint32_t   ArgumentNumber;// = 0
-   |      uint32_t   Offset;// = 0
-   |      uint32_t   DataSize;// = 0
-   |      uint32_t   SourceOffset;// = 0
-   |      uint32_t   LocationIndex;// = 0
-   |      uint32_t   LocationIndex2;// = 0
-   |      uint32_t   IsEmulationArgument;// = 0
-   |  }
-   + [1]:
-   |  struct SPatchDataParameterBuffer :
-   |         SPatchItemHeader (Token=17(PATCH_TOKEN_DATA_PARAMETER_BUFFER), Size=)==="
-             << tokenSize << R"===()
-   |  {
-   |      uint32_t   Type;// = 38(DATA_PARAMETER_CHILD_BLOCK_SIMD_SIZE)
-   |      uint32_t   ArgumentNumber;// = 0
-   |      uint32_t   Offset;// = 0
-   |      uint32_t   DataSize;// = 0
-   |      uint32_t   SourceOffset;// = 8
-   |      uint32_t   LocationIndex;// = 0
-   |      uint32_t   LocationIndex2;// = 0
-   |      uint32_t   IsEmulationArgument;// = 0
-   |  }
 )===";
     EXPECT_STREQ(expected.str().c_str(), generated.c_str());
 }
@@ -1411,7 +1388,6 @@ Kernel-scope tokens section size : )==="
       uint32_t    CompiledSIMD8;// = 0
       uint32_t    CompiledSIMD16;// = 0
       uint32_t    CompiledSIMD32;// = 1
-      uint32_t    HasDeviceEnqueue;// = 0
       uint32_t    MayAccessUndeclaredResource;// = 0
       uint32_t    UsesFencesForReadWriteImages;// = 0
       uint32_t    UsesStatelessSpillFill;// = 0
@@ -1424,6 +1400,8 @@ Kernel-scope tokens section size : )==="
       uint32_t    NumGRFRequired;// = 0
       uint32_t    WorkgroupWalkOrderDims;// = 0
       uint32_t    HasGlobalAtomics;// = 0
+      uint32_t    HasStackCalls;// = 0
+      uint32_t    RequireDisableEUFusion;// = 0
   }
 Kernel arguments [2] :
   + kernelArg[0]:
@@ -2073,9 +2051,9 @@ TEST(PatchTokenDumper, GivenAnyTokenThenDumpingIsHandled) {
 
     NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram;
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
-    std::unordered_set<int> tokensWhitelist{50, 52};
+    std::unordered_set<int> tokensPasslist{50, 52};
     for (int i = 0; i < iOpenCL::NUM_PATCH_TOKENS; ++i) {
-        if (tokensWhitelist.count(i) != 0) {
+        if (tokensPasslist.count(i) != 0) {
             continue;
         }
         kernelToken->Token = i;
@@ -2104,9 +2082,11 @@ TEST(PatchTokenDumper, GivenAnyTokenThenDumpingIsHandled) {
     auto kernelDataParamToken = static_cast<iOpenCL::SPatchDataParameterBuffer *>(kernelToken);
     *kernelDataParamToken = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_BUFFER_OFFSET);
     kernelDataParamToken->Size = maxTokenSize;
-    std::unordered_set<int> dataParamTokensWhitelist{6, 7, 17, 19, 36, 37, 39, 40, 41};
+
+    std::unordered_set<int> dataParamTokensPasslist{6, 7, 17, 19, 36, 37, 38, 39, 40, 41};
+
     for (int i = 0; i < iOpenCL::NUM_DATA_PARAMETER_TOKENS; ++i) {
-        if (dataParamTokensWhitelist.count(i) != 0) {
+        if (dataParamTokensPasslist.count(i) != 0) {
             continue;
         }
         kernelDataParamToken->Type = i;

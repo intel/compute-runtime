@@ -1,13 +1,18 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/gen8/aub_mapper.h"
+#include "shared/source/gen8/hw_cmds_base.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
-#include "shared/source/helpers/hw_helper_bdw_plus.inl"
+#include "shared/source/helpers/hw_helper_base.inl"
+#include "shared/source/helpers/hw_helper_bdw_and_later.inl"
+#include "shared/source/helpers/hw_helper_bdw_to_icllp.inl"
+#include "shared/source/helpers/logical_state_helper.inl"
 
 namespace NEO {
 typedef BDWFamily Family;
@@ -25,7 +30,7 @@ uint32_t HwHelperHw<Family>::alignSlmSize(uint32_t slmSize) {
 }
 
 template <>
-uint32_t HwHelperHw<Family>::computeSlmValues(uint32_t slmSize) {
+uint32_t HwHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) {
     slmSize += (4 * KB - 1);
     slmSize = slmSize >> 12;
     slmSize = std::min(slmSize, 15u);
@@ -39,11 +44,18 @@ size_t HwHelperHw<Family>::getMaxBarrierRegisterPerSlice() const {
 }
 
 template <>
-void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) {
-    caps->image3DMaxHeight = 2048;
-    caps->image3DMaxWidth = 2048;
-    caps->maxMemAllocSize = 2 * MemoryConstants::gigaByte - 8 * MemoryConstants::megaByte;
-    caps->isStatelesToStatefullWithOffsetSupported = false;
+size_t HwHelperHw<Family>::getMax3dImageWidthOrHeight() const {
+    return 2048;
+}
+
+template <>
+uint64_t HwHelperHw<Family>::getMaxMemAllocSize() const {
+    return (2 * MemoryConstants::gigaByte) - (8 * MemoryConstants::kiloByte);
+}
+
+template <>
+bool HwHelperHw<Family>::isStatelesToStatefullWithOffsetSupported() const {
+    return false;
 }
 
 template <>
@@ -55,8 +67,20 @@ void MemorySynchronizationCommands<Family>::addPipeControl(LinearStream &command
     *cmdBuffer = cmd;
 }
 
+template <>
+void MemorySynchronizationCommands<Family>::addPipeControlWithCSStallOnly(LinearStream &commandStream) {
+    using PIPE_CONTROL = typename Family::PIPE_CONTROL;
+    PIPE_CONTROL cmd = Family::cmdInitPipeControl;
+    cmd.setCommandStreamerStallEnable(true);
+    cmd.setDcFlushEnable(true);
+    auto pipeControl = commandStream.getSpaceForCmd<PIPE_CONTROL>();
+    *pipeControl = cmd;
+}
+
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;
 template struct LriHelper<Family>;
+
+template LogicalStateHelper *LogicalStateHelper::create<Family>(bool pipelinedState);
 } // namespace NEO

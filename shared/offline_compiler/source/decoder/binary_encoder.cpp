@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,12 +67,12 @@ bool BinaryEncoder::copyBinaryToBinary(const std::string &srcFileName, std::ostr
 }
 
 int BinaryEncoder::createElf(std::stringstream &deviceBinary) {
-    NEO::Elf::ElfEncoder<NEO::Elf::EI_CLASS_64> ElfEncoder;
-    ElfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_EXECUTABLE;
+    NEO::Elf::ElfEncoder<NEO::Elf::EI_CLASS_64> elfEncoder;
+    elfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_EXECUTABLE;
     //Build Options
     if (argHelper->fileExists(pathToDump + "build.bin")) {
         auto binary = argHelper->readBinaryFile(pathToDump + "build.bin");
-        ElfEncoder.appendSection(NEO::Elf::SHT_OPENCL_OPTIONS, "BuildOptions",
+        elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_OPTIONS, "BuildOptions",
                                  ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(binary.data()), binary.size()));
     } else {
         argHelper->printf("Warning! Missing build section.\n");
@@ -80,11 +80,11 @@ int BinaryEncoder::createElf(std::stringstream &deviceBinary) {
     //LLVM or SPIRV
     if (argHelper->fileExists(pathToDump + "llvm.bin")) {
         auto binary = argHelper->readBinaryFile(pathToDump + "llvm.bin");
-        ElfEncoder.appendSection(NEO::Elf::SHT_OPENCL_LLVM_BINARY, "Intel(R) OpenCL LLVM Object",
+        elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_LLVM_BINARY, "Intel(R) OpenCL LLVM Object",
                                  ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(binary.data()), binary.size()));
     } else if (argHelper->fileExists(pathToDump + "spirv.bin")) {
         auto binary = argHelper->readBinaryFile(pathToDump + "spirv.bin");
-        ElfEncoder.appendSection(NEO::Elf::SHT_OPENCL_SPIRV, "SPIRV Object",
+        elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_SPIRV, "SPIRV Object",
                                  ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(binary.data()), binary.size()));
     } else {
         argHelper->printf("Warning! Missing llvm/spirv section.\n");
@@ -93,11 +93,11 @@ int BinaryEncoder::createElf(std::stringstream &deviceBinary) {
     //Device Binary
     auto deviceBinaryStr = deviceBinary.str();
     std::vector<char> binary(deviceBinaryStr.begin(), deviceBinaryStr.end());
-    ElfEncoder.appendSection(NEO::Elf::SHT_OPENCL_DEV_BINARY, "Intel(R) OpenCL Device Binary",
+    elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_DEV_BINARY, "Intel(R) OpenCL Device Binary",
                              ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(binary.data()), binary.size()));
 
     //Resolve Elf Binary
-    auto elfBinary = ElfEncoder.encode();
+    auto elfBinary = elfEncoder.encode();
     argHelper->saveOutput(elfName, elfBinary.data(), elfBinary.size());
 
     return 0;
@@ -133,7 +133,7 @@ Examples:
   Assemble to Intel Compute GPU device binary
     ocloc asm -out reassembled.bin
 )===",
-                      NEO::getDevicesTypes().c_str());
+                      argHelper->getAllSupportedAcronyms().c_str());
 }
 
 int BinaryEncoder::encode() {
@@ -305,11 +305,6 @@ int BinaryEncoder::processKernel(size_t &line, const std::vector<std::string> &p
 }
 
 int BinaryEncoder::validateInput(const std::vector<std::string> &args) {
-    if ("-help" == args[args.size() - 1]) {
-        printHelp();
-        return -1;
-    }
-
     for (size_t argIndex = 2; argIndex < args.size(); ++argIndex) {
         const auto &currArg = args[argIndex];
         const bool hasMoreArgs = (argIndex + 1 < args.size());
@@ -320,6 +315,9 @@ int BinaryEncoder::validateInput(const std::vector<std::string> &args) {
             iga->setProductFamily(getProductFamilyFromDeviceName(args[++argIndex]));
         } else if ("-out" == currArg && hasMoreArgs) {
             elfName = args[++argIndex];
+        } else if ("--help" == currArg) {
+            showHelp = true;
+            return 0;
         } else if ("-ignore_isa_padding" == currArg) {
             ignoreIsaPadding = true;
         } else if ("-q" == currArg) {
@@ -327,7 +325,6 @@ int BinaryEncoder::validateInput(const std::vector<std::string> &args) {
             iga->setMessagePrinter(argHelper->getPrinterRef());
         } else {
             argHelper->printf("Unknown argument %s\n", currArg.c_str());
-            printHelp();
             return -1;
         }
     }
@@ -340,7 +337,6 @@ int BinaryEncoder::validateInput(const std::vector<std::string> &args) {
     }
     if (elfName.find(".bin") == std::string::npos) {
         argHelper->printf(".bin extension is expected for binary file.\n");
-        printHelp();
         return -1;
     }
 

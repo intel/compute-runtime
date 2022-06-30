@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,10 +27,10 @@ class Kernel;
 class MemObj;
 class Surface;
 class PrintfHandler;
-struct HwTimeStamps;
+class HwTimeStamps;
 class TimestampPacketContainer;
 template <class T>
-struct TagNode;
+class TagNode;
 
 enum MapOperationType {
     MAP,
@@ -76,6 +76,7 @@ struct KernelOperation {
     IndirectHeapUniquePtrT ioh{nullptr, resourceCleaner};
     IndirectHeapUniquePtrT ssh{nullptr, resourceCleaner};
 
+    CommandStreamReceiver *bcsCsr = nullptr;
     BlitPropertiesContainer blitPropertiesContainer;
     bool blitEnqueue = false;
     size_t surfaceStateHeapSizeEM = 0;
@@ -99,10 +100,11 @@ class Command : public IFNode<Command> {
     void setEventsRequest(EventsRequest &eventsRequest);
     void makeTimestampPacketsResident(CommandStreamReceiver &commandStreamReceiver);
 
-    TagNode<HwTimeStamps> *timestamp = nullptr;
+    TagNodeBase *timestamp = nullptr;
     CompletionStamp completionStamp = {};
 
   protected:
+    bool terminated = false;
     CommandQueue &commandQueue;
     std::unique_ptr<KernelOperation> kernelOperation;
     std::unique_ptr<TimestampPacketContainer> currentTimestampPacketNodes;
@@ -128,8 +130,8 @@ class CommandMapUnmap : public Command {
 
 class CommandComputeKernel : public Command {
   public:
-    CommandComputeKernel(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> &kernelOperation, std::vector<Surface *> &surfaces,
-                         bool flushDC, bool usesSLM, bool ndRangeKernel, std::unique_ptr<PrintfHandler> printfHandler,
+    CommandComputeKernel(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> &kernelOperation, std::vector<Surface *> surfaces,
+                         bool flushDC, bool usesSLM, uint32_t commandType, std::unique_ptr<PrintfHandler> &&printfHandler,
                          PreemptionMode preemptionMode, Kernel *kernel, uint32_t kernelCount);
 
     ~CommandComputeKernel() override;
@@ -137,12 +139,14 @@ class CommandComputeKernel : public Command {
     CompletionStamp &submit(uint32_t taskLevel, bool terminated) override;
 
     LinearStream *getCommandStream() override { return kernelOperation->commandStream.get(); }
+    Kernel *peekKernel() const { return kernel; }
+    PrintfHandler *peekPrintfHandler() const { return printfHandler.get(); }
 
   protected:
     std::vector<Surface *> surfaces;
     bool flushDC;
     bool slmUsed;
-    bool NDRangeKernel;
+    uint32_t commandType;
     std::unique_ptr<PrintfHandler> printfHandler;
     Kernel *kernel;
     uint32_t kernelCount;
@@ -153,6 +157,6 @@ class CommandWithoutKernel : public Command {
   public:
     using Command::Command;
     CompletionStamp &submit(uint32_t taskLevel, bool terminated) override;
-    void dispatchBlitOperation();
+    bool dispatchBlitOperation();
 };
 } // namespace NEO

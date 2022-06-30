@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "shared/source/gen11/hw_cmds.h"
 
-#include "opencl/source/mem_obj/buffer_bdw_plus.inl"
+#include "opencl/source/mem_obj/buffer_base.inl"
 
 namespace NEO {
 

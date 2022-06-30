@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,96 +7,106 @@
 
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/kernel/kernel.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
-#include "test.h"
 
 #include "gtest/gtest.h"
 
 using namespace NEO;
 
-class KernelSlmArgTest : public Test<ClDeviceFixture> {
+class KernelSlmArgTest : public MultiRootDeviceWithSubDevicesFixture {
   protected:
     void SetUp() override {
-        ClDeviceFixture::SetUp();
-        pKernelInfo = std::make_unique<KernelInfo>();
-        KernelArgPatchInfo kernelArgPatchInfo;
+        MultiRootDeviceWithSubDevicesFixture::SetUp();
 
-        pKernelInfo->kernelArgInfo.resize(3);
-        pKernelInfo->kernelArgInfo[2].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-        pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
+        program = std::make_unique<MockProgram>(context.get(), false, context->getDevices());
+        pKernelInfo = std::make_unique<MockKernelInfo>();
 
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = 0x10;
-        pKernelInfo->kernelArgInfo[0].slmAlignment = 0x1;
-        pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector[0].crossthreadOffset = 0x20;
-        pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector[0].size = sizeof(void *);
-        pKernelInfo->kernelArgInfo[2].kernelArgPatchInfoVector[0].crossthreadOffset = 0x30;
-        pKernelInfo->kernelArgInfo[2].slmAlignment = 0x400;
-        pKernelInfo->workloadInfo.slmStaticSize = 3 * KB;
+        KernelVectorType kernels;
+        kernels.resize(3);
 
-        program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
-        pKernel = new MockKernel(program.get(), *pKernelInfo, *pClDevice);
-        ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
+        KernelInfoContainer kernelInfos;
+        kernelInfos.resize(3);
+        kernelInfos[0] = kernelInfos[1] = kernelInfos[2] = pKernelInfo.get();
 
-        pKernel->setKernelArgHandler(0, &Kernel::setArgLocal);
-        pKernel->setKernelArgHandler(1, &Kernel::setArgImmediate);
-        pKernel->setKernelArgHandler(2, &Kernel::setArgLocal);
+        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
-        uint32_t crossThreadData[0x40] = {};
-        crossThreadData[0x20 / sizeof(uint32_t)] = 0x12344321;
-        pKernel->setCrossThreadData(crossThreadData, sizeof(crossThreadData));
+        pKernelInfo->addArgLocal(0, 0x10, 0x1);
+
+        pKernelInfo->addArgBuffer(1, 0x20, sizeof(void *));
+
+        pKernelInfo->addArgLocal(2, 0x30, 0x10);
+
+        pKernelInfo->kernelDescriptor.kernelAttributes.slmInlineSize = 3 * KB;
+
+        for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+            pKernel[rootDeviceIndex] = new MockKernel(program.get(), *pKernelInfo, *deviceFactory->rootDevices[rootDeviceIndex]);
+            kernels[rootDeviceIndex] = pKernel[rootDeviceIndex];
+            ASSERT_EQ(CL_SUCCESS, pKernel[rootDeviceIndex]->initialize());
+        }
+
+        pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(kernels, kernelInfos);
+        for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+            crossThreadData[rootDeviceIndex][0x20 / sizeof(uint32_t)] = 0x12344321;
+
+            pKernel[rootDeviceIndex]->setCrossThreadData(&crossThreadData[rootDeviceIndex], sizeof(crossThreadData[rootDeviceIndex]));
+        }
     }
 
     void TearDown() override {
-        delete pKernel;
-
-        ClDeviceFixture::TearDown();
+        MultiRootDeviceWithSubDevicesFixture::TearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<MockProgram> program;
-    MockKernel *pKernel = nullptr;
-    std::unique_ptr<KernelInfo> pKernelInfo;
+    MockKernel *pKernel[3] = {nullptr};
+    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel;
+    std::unique_ptr<MockKernelInfo> pKernelInfo;
 
     static const size_t slmSize0 = 0x200;
     static const size_t slmSize2 = 0x30;
+    uint32_t crossThreadData[3][0x40]{};
 };
 
 TEST_F(KernelSlmArgTest, WhenSettingSizeThenAlignmentOfHigherSlmArgsIsUpdated) {
-    pKernel->setArg(0, slmSize0, nullptr);
-    pKernel->setArg(2, slmSize2, nullptr);
+    pMultiDeviceKernel->setArg(0, slmSize0, nullptr);
+    pMultiDeviceKernel->setArg(2, slmSize2, nullptr);
 
-    auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
-    auto slmOffset = ptrOffset(crossThreadData, 0x10);
-    EXPECT_EQ(0u, *slmOffset);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel[rootDeviceIndex]->getCrossThreadData());
+        auto slmOffset = ptrOffset(crossThreadData, 0x10);
+        EXPECT_EQ(0u, *slmOffset);
 
-    slmOffset = ptrOffset(crossThreadData, 0x20);
-    EXPECT_EQ(0x12344321u, *slmOffset);
+        slmOffset = ptrOffset(crossThreadData, 0x20);
+        EXPECT_EQ(0x12344321u, *slmOffset);
 
-    slmOffset = ptrOffset(crossThreadData, 0x30);
-    EXPECT_EQ(0x400u, *slmOffset);
+        slmOffset = ptrOffset(crossThreadData, 0x30);
+        EXPECT_EQ(0x200u, *slmOffset);
 
-    EXPECT_EQ(5 * KB, pKernel->slmTotalSize);
+        EXPECT_EQ(4 * KB, pKernel[rootDeviceIndex]->slmTotalSize);
+    }
 }
 
 TEST_F(KernelSlmArgTest, GivenReverseOrderWhenSettingSizeThenAlignmentOfHigherSlmArgsIsUpdated) {
-    pKernel->setArg(2, slmSize2, nullptr);
-    pKernel->setArg(0, slmSize0, nullptr);
+    pMultiDeviceKernel->setArg(2, slmSize2, nullptr);
+    pMultiDeviceKernel->setArg(0, slmSize0, nullptr);
 
-    auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
-    auto slmOffset = ptrOffset(crossThreadData, 0x10);
-    EXPECT_EQ(0u, *slmOffset);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel[rootDeviceIndex]->getCrossThreadData());
+        auto slmOffset = ptrOffset(crossThreadData, 0x10);
+        EXPECT_EQ(0u, *slmOffset);
 
-    slmOffset = ptrOffset(crossThreadData, 0x20);
-    EXPECT_EQ(0x12344321u, *slmOffset);
+        slmOffset = ptrOffset(crossThreadData, 0x20);
+        EXPECT_EQ(0x12344321u, *slmOffset);
 
-    slmOffset = ptrOffset(crossThreadData, 0x30);
-    EXPECT_EQ(0x400u, *slmOffset);
+        slmOffset = ptrOffset(crossThreadData, 0x30);
+        EXPECT_EQ(0x200u, *slmOffset);
 
-    EXPECT_EQ(5 * KB, pKernel->slmTotalSize);
+        EXPECT_EQ(4 * KB, pKernel[rootDeviceIndex]->slmTotalSize);
+    }
 }

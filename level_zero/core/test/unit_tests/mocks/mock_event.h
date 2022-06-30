@@ -1,22 +1,17 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "level_zero/core/source/device/device.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
+
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
-
-#include <vector>
-
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winconsistent-missing-override"
-#endif
 
 namespace L0 {
 namespace ult {
@@ -24,7 +19,9 @@ namespace ult {
 template <>
 struct WhiteBox<::L0::Event> : public ::L0::Event {
     using BaseClass = ::L0::Event;
-    using BaseClass::allocation;
+    using BaseClass::csr;
+    using BaseClass::hostAddress;
+    using BaseClass::l3FlushAppliedOnKernel;
 };
 
 using Event = WhiteBox<::L0::Event>;
@@ -41,45 +38,89 @@ struct Mock<Event> : public Event {
     Mock();
     ~Mock() override;
 
-    MOCK_METHOD3(create, L0::Event *(::L0::EventPool *eventPool, const ze_event_desc_t *desc, ::L0::Device *device));
-    MOCK_METHOD0(destroy, ze_result_t());
-    MOCK_METHOD0(hostSignal, ze_result_t());
-    MOCK_METHOD1(hostSynchronize, ze_result_t(uint32_t timeout));
-    MOCK_METHOD0(queryStatus, ze_result_t());
-    MOCK_METHOD0(reset, ze_result_t());
-    MOCK_METHOD2(getTimestamp, ze_result_t(ze_event_timestamp_type_t timestampType, void *dstptr));
+    ADDMETHOD_NOBASE(destroy, ze_result_t, ZE_RESULT_SUCCESS, ());
+    ADDMETHOD_NOBASE(hostSignal, ze_result_t, ZE_RESULT_SUCCESS, ());
+    ADDMETHOD_NOBASE(hostSynchronize, ze_result_t, ZE_RESULT_SUCCESS, (uint64_t timeout));
+    ADDMETHOD_NOBASE(queryStatus, ze_result_t, ZE_RESULT_SUCCESS, ());
+    ADDMETHOD_NOBASE(reset, ze_result_t, ZE_RESULT_SUCCESS, ());
+    ADDMETHOD_NOBASE(queryKernelTimestamp, ze_result_t, ZE_RESULT_SUCCESS, (ze_kernel_timestamp_result_t * dstptr));
+    ADDMETHOD_NOBASE(queryTimestampsExp, ze_result_t, ZE_RESULT_SUCCESS, (::L0::Device * device, uint32_t *pCount, ze_kernel_timestamp_result_t *pTimestamps));
 
     // Fake an allocation for event memory
     alignas(16) uint32_t memory = -1;
     NEO::GraphicsAllocation mockAllocation;
-
-    using Event::allocation;
 };
 
 template <>
 struct Mock<EventPool> : public EventPool {
-    Mock();
-    ~Mock() override;
+    Mock() = default;
 
-    MOCK_METHOD0(destroy, ze_result_t());
-    MOCK_METHOD0(getPoolSize, size_t());
-    MOCK_METHOD0(getPoolUsedCount, uint32_t());
-    MOCK_METHOD1(getIpcHandle, ze_result_t(ze_ipc_event_pool_handle_t *pIpcHandle));
-    MOCK_METHOD0(closeIpcHandle, ze_result_t());
-    MOCK_METHOD2(createEvent, ze_result_t(const ze_event_desc_t *desc, ze_event_handle_t *phEvent));
-    MOCK_METHOD2(reserveEventFromPool, ze_result_t(int index, ::L0::Event *event));
-    MOCK_METHOD1(releaseEventToPool, ze_result_t(::L0::Event *event));
-    MOCK_METHOD0(getDevice, Device *());
-    MOCK_METHOD0(getEventSize, uint32_t());
+    ADDMETHOD_NOBASE(destroy, ze_result_t, ZE_RESULT_SUCCESS, ());
+    ADDMETHOD_NOBASE(getIpcHandle, ze_result_t, ZE_RESULT_SUCCESS, (ze_ipc_event_pool_handle_t * pIpcHandle));
+    ADDMETHOD_NOBASE(closeIpcHandle, ze_result_t, ZE_RESULT_SUCCESS, ());
+    ADDMETHOD_NOBASE(createEvent, ze_result_t, ZE_RESULT_SUCCESS, (const ze_event_desc_t *desc, ze_event_handle_t *phEvent));
+    ADDMETHOD_NOBASE(getDevice, Device *, nullptr, ());
+    ADDMETHOD_NOBASE(getEventSize, uint32_t, 0u, ());
 
-    std::vector<int> pool;
+    using EventPool::eventPoolAllocations;
+};
 
-    using EventPool::eventPoolAllocation;
+class MockEvent : public ::L0::Event {
+  public:
+    using ::L0::Event::l3FlushAppliedOnKernel;
+    MockEvent() {
+        mockAllocation.reset(new NEO::MockGraphicsAllocation(0,
+                                                             NEO::AllocationType::INTERNAL_HOST_MEMORY,
+                                                             reinterpret_cast<void *>(0x1234),
+                                                             0x1000,
+                                                             0,
+                                                             sizeof(uint32_t),
+                                                             NEO::MemoryPool::System4KBPages,
+                                                             NEO::MemoryManager::maxOsContextCount));
+        this->timestampSizeInDw = 1;
+        this->contextStartOffset = 0;
+        this->contextEndOffset = 4;
+        this->globalStartOffset = 8;
+        this->globalEndOffset = 12;
+        this->singlePacketSize = 16;
+    }
+    NEO::GraphicsAllocation &getAllocation(L0::Device *device) override {
+        return *mockAllocation.get();
+    }
+
+    uint64_t getGpuAddress(L0::Device *device) override {
+        return mockAllocation->getGpuAddress();
+    }
+
+    ze_result_t destroy() override {
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t hostSignal() override {
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t hostSynchronize(uint64_t timeout) override {
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t queryStatus() override {
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t reset() override {
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) override {
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t queryTimestampsExp(L0::Device *device, uint32_t *pCount, ze_kernel_timestamp_result_t *pTimestamps) override {
+        return ZE_RESULT_SUCCESS;
+    }
+    uint32_t getPacketsUsedInLastKernel() override { return 1; }
+    uint32_t getPacketsInUse() override { return 1; }
+    void resetPackets() override {}
+    void setPacketsInUse(uint32_t value) override {}
+    uint64_t getPacketAddress(L0::Device *) override { return 0; }
+
+    std::unique_ptr<NEO::GraphicsAllocation> mockAllocation;
 };
 
 } // namespace ult
 } // namespace L0
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif

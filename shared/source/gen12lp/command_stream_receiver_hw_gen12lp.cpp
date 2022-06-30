@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,16 +9,16 @@
 
 using Family = NEO::TGLLPFamily;
 
-#include "shared/source/command_stream/command_stream_receiver_hw_bdw_plus.inl"
-#include "shared/source/command_stream/command_stream_receiver_hw_tgllp_plus.inl"
+#include "shared/source/command_stream/command_stream_receiver_hw_bdw_and_later.inl"
 #include "shared/source/command_stream/device_command_stream.h"
-#include "shared/source/helpers/blit_commands_helper_bdw_plus.inl"
+#include "shared/source/helpers/blit_commands_helper_bdw_and_later.inl"
+#include "shared/source/helpers/populate_factory.h"
 
 namespace NEO {
 static auto gfxCore = IGFX_GEN12LP_CORE;
 
 template <>
-void CommandStreamReceiverHw<Family>::programL3(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t &newL3Config) {
+void CommandStreamReceiverHw<Family>::programL3(LinearStream &csr, uint32_t &newL3Config) {
 }
 
 template <>
@@ -27,162 +27,103 @@ size_t CommandStreamReceiverHw<Family>::getCmdSizeForL3Config() const {
 }
 
 template <>
-size_t CommandStreamReceiverHw<Family>::getCmdSizeForComputeMode() {
-    if (!csrSizeRequestFlags.hasSharedHandles) {
-        for (const auto &allocation : this->getResidencyAllocations()) {
-            if (allocation->peekSharedHandle()) {
-                csrSizeRequestFlags.hasSharedHandles = true;
-                break;
-            }
-        }
-    }
-
-    size_t size = 0;
-    if (csrSizeRequestFlags.coherencyRequestChanged || csrSizeRequestFlags.hasSharedHandles || csrSizeRequestFlags.numGrfRequiredChanged) {
-        size += sizeof(typename Family::STATE_COMPUTE_MODE);
-        if (csrSizeRequestFlags.hasSharedHandles) {
-            size += sizeof(typename Family::PIPE_CONTROL);
-        }
-
-        auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
-        if (hwHelper.is3DPipelineSelectWARequired(peekHwInfo()) && isRcs()) {
-            size += (2 * PreambleHelper<Family>::getCmdSizeForPipelineSelect(peekHwInfo()));
-        }
-    }
-
-    return size;
-}
-
-template <>
 void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
-    extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[IGFX_MAX_CORE];
+    extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
     commandStreamReceiverFactory[gfxCore] = DeviceCommandStreamReceiver<Family>::create;
 }
 
 template <>
-void BlitCommandsHelper<Family>::appendColorDepth(const BlitProperties &blitProperites, typename Family::XY_COPY_BLT &blitCmd) {
-    using XY_COPY_BLT = typename Family::XY_COPY_BLT;
+template <>
+void BlitCommandsHelper<Family>::appendColorDepth(const BlitProperties &blitProperites, typename Family::XY_BLOCK_COPY_BLT &blitCmd) {
+    using XY_BLOCK_COPY_BLT = typename Family::XY_BLOCK_COPY_BLT;
     switch (blitProperites.bytesPerPixel) {
     default:
         UNRECOVERABLE_IF(true);
+        break;
     case 1:
-        blitCmd.setColorDepth(XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_8_BIT_COLOR);
+        blitCmd.setColorDepth(XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_8_BIT_COLOR);
         break;
     case 2:
-        blitCmd.setColorDepth(XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_16_BIT_COLOR);
+        blitCmd.setColorDepth(XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_16_BIT_COLOR);
         break;
     case 4:
-        blitCmd.setColorDepth(XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_32_BIT_COLOR);
+        blitCmd.setColorDepth(XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_32_BIT_COLOR);
         break;
     case 8:
-        blitCmd.setColorDepth(XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR);
+        blitCmd.setColorDepth(XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR);
         break;
     case 16:
-        blitCmd.setColorDepth(XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_128_BIT_COLOR);
+        blitCmd.setColorDepth(XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_128_BIT_COLOR);
         break;
     }
 }
 
 template <>
-void BlitCommandsHelper<Family>::appendTilingType(const GMM_TILE_TYPE srcTilingType, const GMM_TILE_TYPE dstTilingType, typename Family::XY_COPY_BLT &blitCmd) {
-    using XY_COPY_BLT = typename Family::XY_COPY_BLT;
-    if (srcTilingType == GMM_TILED_Y) {
-        blitCmd.setSourceTiling(XY_COPY_BLT::SOURCE_TILING::SOURCE_TILING_YMAJOR);
-    }
-    if (dstTilingType == GMM_TILED_Y) {
-        blitCmd.setDestinationTiling(XY_COPY_BLT::DESTINATION_TILING::DESTINATION_TILING_YMAJOR);
-    }
-}
-
-template <>
-void BlitCommandsHelper<Family>::appendSurfaceType(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd) {
-}
-
-template <>
-void BlitCommandsHelper<Family>::getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch, GMM_TILE_TYPE &tileType, uint32_t &mipTailLod) {
-    constexpr uint32_t TILED_Y_PITCH_ALIGNMENT = 128;
-    constexpr uint32_t NON_TILED_PITCH_ALIGNMENT = 16;
-
+void BlitCommandsHelper<Family>::getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch,
+                                                             GMM_TILE_TYPE &tileType, uint32_t &mipTailLod, uint32_t &compressionDetails,
+                                                             uint32_t &compressionType, const RootDeviceEnvironment &rootDeviceEnvironment,
+                                                             GMM_YUV_PLANE_ENUM plane) {
     if (allocation.getDefaultGmm()) {
-        auto gmmResInfo = allocation.getDefaultGmm()->gmmResourceInfo.get();
-        auto resInfo = gmmResInfo->getResourceFlags()->Info;
-        if (resInfo.TiledY) {
-            tileType = GMM_TILED_Y;
-            pitch = static_cast<uint32_t>(gmmResInfo->getRenderPitch());
-            pitch = alignUp<uint32_t>(pitch, TILED_Y_PITCH_ALIGNMENT);
-            qPitch = static_cast<uint32_t>(gmmResInfo->getQPitch());
-        } else {
-            pitch = alignUp<uint32_t>(pitch, NON_TILED_PITCH_ALIGNMENT);
+        auto gmmResourceInfo = allocation.getDefaultGmm()->gmmResourceInfo.get();
+        if (!gmmResourceInfo->getResourceFlags()->Info.Linear) {
+            qPitch = gmmResourceInfo->getQPitch() ? static_cast<uint32_t>(gmmResourceInfo->getQPitch()) : qPitch;
+            pitch = gmmResourceInfo->getRenderPitch() ? static_cast<uint32_t>(gmmResourceInfo->getRenderPitch()) : pitch;
         }
     }
 }
 
 template <>
-void BlitCommandsHelper<Family>::appendSliceOffsets(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd, uint32_t sliceIndex) {
-    using XY_COPY_BLT = typename Family::XY_COPY_BLT;
-    auto srcAllocation = blitProperties.srcAllocation;
-    auto dstAllocation = blitProperties.dstAllocation;
-    auto srcQPitch = blitProperties.srcSize.y;
-    auto dstQPitch = blitProperties.dstSize.y;
-    auto srcPitch = static_cast<uint32_t>(blitProperties.srcRowPitch);
-    auto dstPitch = static_cast<uint32_t>(blitProperties.dstRowPitch);
+void BlitCommandsHelper<Family>::appendSliceOffsets(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd, uint32_t sliceIndex, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t srcSlicePitch, uint32_t dstSlicePitch) {
+    using XY_BLOCK_COPY_BLT = typename Family::XY_BLOCK_COPY_BLT;
+    auto srcAddress = blitProperties.srcGpuAddress;
+    auto dstAddress = blitProperties.dstGpuAddress;
+
+    blitCmd.setSourceBaseAddress(ptrOffset(srcAddress, srcSlicePitch * (sliceIndex + blitProperties.srcOffset.z)));
+    blitCmd.setDestinationBaseAddress(ptrOffset(dstAddress, dstSlicePitch * (sliceIndex + blitProperties.dstOffset.z)));
+}
+
+template <>
+void BlitCommandsHelper<Family>::appendBlitCommandsForImages(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t &srcSlicePitch, uint32_t &dstSlicePitch) {
     auto tileType = GMM_NOT_TILED;
-    uint32_t mipTailLod = 0;
-
-    getBlitAllocationProperties(*srcAllocation, srcPitch, srcQPitch, tileType, mipTailLod);
-    getBlitAllocationProperties(*dstAllocation, dstPitch, dstQPitch, tileType, mipTailLod);
-
-    auto srcSlicePitch = srcPitch * srcQPitch;
-    auto dstSlicePitch = dstPitch * dstQPitch;
-
-    size_t srcOffset = srcSlicePitch * (sliceIndex + blitProperties.srcOffset.z);
-    size_t dstOffset = dstSlicePitch * (sliceIndex + blitProperties.dstOffset.z);
-
-    blitCmd.setSourceBaseAddress(ptrOffset(srcAllocation->getGpuAddress(), srcOffset));
-    blitCmd.setDestinationBaseAddress(ptrOffset(dstAllocation->getGpuAddress(), dstOffset));
-}
-
-template <>
-void BlitCommandsHelper<Family>::appendBlitCommandsForImages(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd) {
-    auto srcTileType = GMM_NOT_TILED;
-    auto dstTileType = GMM_NOT_TILED;
     auto srcAllocation = blitProperties.srcAllocation;
     auto dstAllocation = blitProperties.dstAllocation;
-    auto srcQPitch = blitProperties.srcSize.y;
-    auto dstQPitch = blitProperties.dstSize.y;
-    auto srcPitch = static_cast<uint32_t>(blitProperties.srcRowPitch);
-    auto dstPitch = static_cast<uint32_t>(blitProperties.dstRowPitch);
+    auto srcQPitch = static_cast<uint32_t>(blitProperties.srcSize.y);
+    auto dstQPitch = static_cast<uint32_t>(blitProperties.dstSize.y);
+    auto srcRowPitch = static_cast<uint32_t>(blitProperties.srcRowPitch);
+    auto dstRowPitch = static_cast<uint32_t>(blitProperties.dstRowPitch);
     uint32_t mipTailLod = 0;
+    auto compressionDetails = 0u;
+    auto compressionType = 0u;
 
-    getBlitAllocationProperties(*srcAllocation, srcPitch, srcQPitch, srcTileType, mipTailLod);
-    getBlitAllocationProperties(*dstAllocation, dstPitch, dstQPitch, dstTileType, mipTailLod);
+    getBlitAllocationProperties(*srcAllocation, srcRowPitch, srcQPitch, tileType, mipTailLod, compressionDetails,
+                                compressionType, rootDeviceEnvironment, blitProperties.srcPlane);
+    getBlitAllocationProperties(*dstAllocation, dstRowPitch, dstQPitch, tileType, mipTailLod, compressionDetails,
+                                compressionType, rootDeviceEnvironment, blitProperties.dstPlane);
 
-    srcPitch = (srcTileType == GMM_NOT_TILED) ? srcPitch : srcPitch / 4;
-    dstPitch = (dstTileType == GMM_NOT_TILED) ? dstPitch : dstPitch / 4;
+    blitCmd.setSourcePitch(srcRowPitch);
+    blitCmd.setDestinationPitch(dstRowPitch);
 
-    blitCmd.setSourcePitch(srcPitch);
-    blitCmd.setDestinationPitch(dstPitch);
-
-    appendTilingType(srcTileType, dstTileType, blitCmd);
+    srcSlicePitch = std::max(srcSlicePitch, srcRowPitch * srcQPitch);
+    dstSlicePitch = std::max(dstSlicePitch, dstRowPitch * dstQPitch);
 }
 
 template <>
-void BlitCommandsHelper<Family>::dispatchBlitMemoryColorFill(NEO::GraphicsAllocation *dstAlloc, uint32_t *pattern, size_t patternSize, LinearStream &linearStream, size_t size, const RootDeviceEnvironment &rootDeviceEnvironment) {
+void BlitCommandsHelper<Family>::dispatchBlitMemoryColorFill(NEO::GraphicsAllocation *dstAlloc, uint64_t offset, uint32_t *pattern, size_t patternSize, LinearStream &linearStream, size_t size, const RootDeviceEnvironment &rootDeviceEnvironment) {
     switch (patternSize) {
     case 1:
-        NEO::BlitCommandsHelper<Family>::dispatchBlitMemoryFill<1>(dstAlloc, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_8_BIT_COLOR);
+        NEO::BlitCommandsHelper<Family>::dispatchBlitMemoryFill<1>(dstAlloc, offset, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_8_BIT_COLOR);
         break;
     case 2:
-        NEO::BlitCommandsHelper<Family>::dispatchBlitMemoryFill<2>(dstAlloc, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_16_BIT_COLOR);
+        NEO::BlitCommandsHelper<Family>::dispatchBlitMemoryFill<2>(dstAlloc, offset, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_16_BIT_COLOR);
         break;
     case 4:
-        NEO::BlitCommandsHelper<Family>::dispatchBlitMemoryFill<4>(dstAlloc, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_32_BIT_COLOR);
+        NEO::BlitCommandsHelper<Family>::dispatchBlitMemoryFill<4>(dstAlloc, offset, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_32_BIT_COLOR);
         break;
     case 8:
-        NEO::BlitCommandsHelper<Family>::dispatchBlitMemoryFill<8>(dstAlloc, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR);
+        NEO::BlitCommandsHelper<Family>::dispatchBlitMemoryFill<8>(dstAlloc, offset, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR);
         break;
     default:
-        NEO::BlitCommandsHelper<Family>::dispatchBlitMemoryFill<16>(dstAlloc, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_128_BIT_COLOR);
+        NEO::BlitCommandsHelper<Family>::dispatchBlitMemoryFill<16>(dstAlloc, offset, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_128_BIT_COLOR);
     }
 }
 
@@ -191,6 +132,11 @@ void BlitCommandsHelper<Family>::appendBlitCommandsForFillBuffer(NEO::GraphicsAl
 }
 template <>
 void BlitCommandsHelper<Family>::appendTilingEnable(typename Family::XY_COLOR_BLT &blitCmd) {}
+
+template <>
+bool BlitCommandsHelper<Family>::preBlitCommandWARequired() {
+    return true;
+}
 
 template class CommandStreamReceiverHw<Family>;
 template struct BlitCommandsHelper<Family>;
@@ -223,6 +169,9 @@ const Family::GPGPU_CSR_BASE_ADDRESS Family::cmdInitGpgpuCsrBaseAddress = Family
 const Family::STATE_SIP Family::cmdInitStateSip = Family::STATE_SIP::sInit();
 const Family::BINDING_TABLE_STATE Family::cmdInitBindingTableState = Family::BINDING_TABLE_STATE::sInit();
 const Family::MI_USER_INTERRUPT Family::cmdInitUserInterrupt = Family::MI_USER_INTERRUPT::sInit();
+const Family::L3_CONTROL Family::cmdInitL3ControlWithoutPostSync = Family::L3_CONTROL::sInit();
+const Family::L3_CONTROL Family::cmdInitL3ControlWithPostSync = Family::L3_CONTROL::sInit();
+const Family::XY_BLOCK_COPY_BLT Family::cmdInitXyBlockCopyBlt = Family::XY_BLOCK_COPY_BLT::sInit();
 const Family::XY_COPY_BLT Family::cmdInitXyCopyBlt = Family::XY_COPY_BLT::sInit();
 const Family::MI_FLUSH_DW Family::cmdInitMiFlushDw = Family::MI_FLUSH_DW::sInit();
 const Family::XY_FAST_COLOR_BLT Family::cmdInitXyColorBlt = Family::XY_FAST_COLOR_BLT::sInit();

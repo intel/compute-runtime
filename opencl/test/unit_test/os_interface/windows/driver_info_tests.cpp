@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,18 +8,18 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/debug_registry_reader.h"
 #include "shared/source/os_interface/windows/driver_info_windows.h"
-#include "shared/source/os_interface/windows/os_interface.h"
-#include "shared/test/unit_test/helpers/ult_hw_config.h"
-#include "shared/test/unit_test/helpers/variable_backup.h"
-#include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_wddm.h"
 
-#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
-#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
-#include "opencl/test/unit_test/mocks/mock_wddm.h"
 #include "opencl/test/unit_test/os_interface/windows/registry_reader_tests.h"
 
 #include "gtest/gtest.h"
@@ -32,9 +32,12 @@ namespace SysCalls {
 extern const wchar_t *currentLibraryPath;
 }
 
-extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[IGFX_MAX_CORE];
+extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
 
-CommandStreamReceiver *createMockCommandStreamReceiver(bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
+CommandStreamReceiver *createMockCommandStreamReceiver(bool withAubDump,
+                                                       ExecutionEnvironment &executionEnvironment,
+                                                       uint32_t rootDeviceIndex,
+                                                       const DeviceBitfield deviceBitfield);
 
 class DriverInfoDeviceTest : public ::testing::Test {
   public:
@@ -52,8 +55,11 @@ class DriverInfoDeviceTest : public ::testing::Test {
     const HardwareInfo *hwInfo;
 };
 
-CommandStreamReceiver *createMockCommandStreamReceiver(bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) {
-    auto csr = new MockCommandStreamReceiver(executionEnvironment, rootDeviceIndex);
+CommandStreamReceiver *createMockCommandStreamReceiver(bool withAubDump,
+                                                       ExecutionEnvironment &executionEnvironment,
+                                                       uint32_t rootDeviceIndex,
+                                                       const DeviceBitfield deviceBitfield) {
+    auto csr = new MockCommandStreamReceiver(executionEnvironment, rootDeviceIndex, deviceBitfield);
     if (!executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface) {
         auto wddm = new WddmMock(*executionEnvironment.rootDeviceEnvironments[0]);
         wddm->init();
@@ -77,7 +83,7 @@ class MockDriverInfoWindows : public DriverInfoWindows {
 
     static MockDriverInfoWindows *create(std::string path) {
 
-        auto result = new MockDriverInfoWindows("");
+        auto result = new MockDriverInfoWindows("", PhysicalDevicePciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue));
         result->reader = new TestedRegistryReader(path);
         result->registryReader.reset(result->reader);
 
@@ -118,9 +124,10 @@ class MockRegistryReader : public SettingsReader {
         } else if (key == "UserModeDriverNameWOW") {
             properMediaSharingExtensions = true;
             return returnString;
-        }
-        if (key == "DriverStorePathForComputeRuntime") {
+        } else if (key == "DriverStorePathForComputeRuntime") {
             return driverStorePath;
+        } else if (key == "OpenCLDriverName") {
+            return openCLDriverName;
         }
         return value;
     }
@@ -133,6 +140,7 @@ class MockRegistryReader : public SettingsReader {
     bool properNameKey = false;
     bool properVersionKey = false;
     std::string driverStorePath = "driverStore\\0x8086";
+    std::string openCLDriverName = "igdrcl.dll";
     bool properMediaSharingExtensions = false;
     bool using64bit = false;
     std::string returnString = "";
@@ -144,7 +152,7 @@ struct DriverInfoWindowsTest : public ::testing::Test {
         DriverInfoWindows::createRegistryReaderFunc = [](const std::string &) -> std::unique_ptr<SettingsReader> {
             return std::make_unique<MockRegistryReader>();
         };
-        driverInfo = std::make_unique<MockDriverInfoWindows>("");
+        driverInfo = std::make_unique<MockDriverInfoWindows>("", PhysicalDevicePciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue));
     }
 
     VariableBackup<decltype(DriverInfoWindows::createRegistryReaderFunc)> createFuncBackup{&DriverInfoWindows::createRegistryReaderFunc};
@@ -170,7 +178,7 @@ TEST_F(DriverInfoWindowsTest, GivenDriverInfoWhenThenReturnNonNullptr) {
 };
 
 TEST(DriverInfo, givenDriverInfoWhenGetStringReturnNotMeaningEmptyStringThenEnableSharingSupport) {
-    MockDriverInfoWindows driverInfo("");
+    MockDriverInfoWindows driverInfo("", PhysicalDevicePciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue));
     MockRegistryReader *registryReaderMock = new MockRegistryReader();
 
     driverInfo.registryReader.reset(registryReaderMock);
@@ -182,7 +190,7 @@ TEST(DriverInfo, givenDriverInfoWhenGetStringReturnNotMeaningEmptyStringThenEnab
 };
 
 TEST(DriverInfo, givenDriverInfoWhenGetStringReturnMeaningEmptyStringThenDisableSharingSupport) {
-    MockDriverInfoWindows driverInfo("");
+    MockDriverInfoWindows driverInfo("", PhysicalDevicePciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue));
     MockRegistryReader *registryReaderMock = new MockRegistryReader();
     registryReaderMock->returnString = "<>";
     driverInfo.registryReader.reset(registryReaderMock);
@@ -198,7 +206,7 @@ TEST(DriverInfo, givenFullPathToRegistryWhenCreatingDriverInfoWindowsThenTheRegi
     std::string registryPath = "Path\\In\\Registry";
     std::string fullRegistryPath = "\\REGISTRY\\MACHINE\\" + registryPath;
     std::string expectedTrimmedRegistryPath = registryPath;
-    MockDriverInfoWindows driverInfo(std::move(fullRegistryPath));
+    MockDriverInfoWindows driverInfo(std::move(fullRegistryPath), PhysicalDevicePciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue));
 
     EXPECT_STREQ(expectedTrimmedRegistryPath.c_str(), driverInfo.path.c_str());
 };
@@ -208,8 +216,8 @@ TEST(DriverInfo, givenInitializedOsInterfaceWhenCreateDriverInfoThenReturnDriver
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
     std::unique_ptr<OSInterface> osInterface(new OSInterface());
-    osInterface->get()->setWddm(Wddm::createWddm(nullptr, rootDeviceEnvironment));
-    EXPECT_NE(nullptr, osInterface->get()->getWddm());
+    osInterface->setDriverModel(std::unique_ptr<DriverModel>(Wddm::createWddm(nullptr, rootDeviceEnvironment)));
+    EXPECT_NE(nullptr, osInterface->getDriverModel()->as<Wddm>());
 
     std::unique_ptr<DriverInfo> driverInfo(DriverInfo::create(nullptr, osInterface.get()));
 
@@ -231,6 +239,15 @@ TEST(DriverInfo, givenInitializedOsInterfaceWhenCreateDriverInfoWindowsThenSetRe
     EXPECT_STREQ(driverInfo->getRegistryReaderRegKey(), driverInfo->reader->getRegKey());
 };
 
+TEST_F(DriverInfoWindowsTest, whenThereIsNoOpenCLDriverNamePointedByDriverInfoThenItIsNotCompatible) {
+    VariableBackup<const wchar_t *> currentLibraryPathBackup(&SysCalls::currentLibraryPath);
+    currentLibraryPathBackup = L"driverStore\\0x8086\\myLib.dll";
+
+    static_cast<MockRegistryReader *>(driverInfo->registryReader.get())->openCLDriverName = "";
+
+    EXPECT_FALSE(driverInfo->isCompatibleDriverStore());
+}
+
 TEST_F(DriverInfoWindowsTest, whenCurrentLibraryIsLoadedFromDriverStorePointedByDriverInfoThenItIsCompatible) {
     VariableBackup<const wchar_t *> currentLibraryPathBackup(&SysCalls::currentLibraryPath);
     currentLibraryPathBackup = L"driverStore\\0x8086\\myLib.dll";
@@ -249,8 +266,8 @@ TEST_F(DriverInfoWindowsTest, givenDriverInfoWindowsWhenGetImageSupportIsCalledT
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
     std::unique_ptr<OSInterface> osInterface(new OSInterface());
-    osInterface->get()->setWddm(Wddm::createWddm(nullptr, rootDeviceEnvironment));
-    EXPECT_NE(nullptr, osInterface->get()->getWddm());
+    osInterface->setDriverModel(std::unique_ptr<DriverModel>(Wddm::createWddm(nullptr, rootDeviceEnvironment)));
+    EXPECT_NE(nullptr, osInterface->getDriverModel()->as<Wddm>());
 
     std::unique_ptr<DriverInfo> driverInfo(DriverInfo::create(nullptr, osInterface.get()));
 

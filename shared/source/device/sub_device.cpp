@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,12 +7,23 @@
 
 #include "shared/source/device/sub_device.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/root_device.h"
+#include "shared/source/helpers/hw_helper.h"
 
 namespace NEO {
 
-SubDevice::SubDevice(ExecutionEnvironment *executionEnvironment, uint32_t subDeviceIndex, RootDevice &rootDevice)
-    : Device(executionEnvironment), subDeviceIndex(subDeviceIndex), rootDevice(rootDevice) {
+SubDevice::SubDevice(ExecutionEnvironment *executionEnvironment, uint32_t subDeviceIndex, Device &rootDevice)
+    : Device(executionEnvironment, rootDevice.getRootDeviceIndex()), rootDevice(static_cast<RootDevice &>(rootDevice)), subDeviceIndex(subDeviceIndex) {
+    UNRECOVERABLE_IF(rootDevice.isSubDevice());
+    deviceBitfield = 0;
+    deviceBitfield.set(subDeviceIndex);
+}
+
+SubDevice::SubDevice(ExecutionEnvironment *executionEnvironment, uint32_t subDeviceIndex, Device &rootDevice, aub_stream::EngineType engineType)
+    : SubDevice(executionEnvironment, subDeviceIndex, rootDevice) {
+    this->engineInstancedType = engineType;
+    engineInstanced = true;
 }
 
 void SubDevice::incRefInternal() {
@@ -22,30 +33,12 @@ unique_ptr_if_unused<Device> SubDevice::decRefInternal() {
     return rootDevice.decRefInternal();
 }
 
-DeviceBitfield SubDevice::getDeviceBitfield() const {
-    DeviceBitfield deviceBitfield;
-    deviceBitfield.set(subDeviceIndex);
-    return deviceBitfield;
-}
-uint32_t SubDevice::getNumAvailableDevices() const {
-    return 1u;
-}
-uint32_t SubDevice::getRootDeviceIndex() const {
-    return this->rootDevice.getRootDeviceIndex();
-}
-
 uint32_t SubDevice::getSubDeviceIndex() const {
     return subDeviceIndex;
 }
 
-Device *SubDevice::getDeviceById(uint32_t deviceId) const {
-    UNRECOVERABLE_IF(deviceId >= getNumAvailableDevices());
-    return const_cast<SubDevice *>(this);
-}
-
-uint64_t SubDevice::getGlobalMemorySize() const {
-    auto globalMemorySize = Device::getGlobalMemorySize();
-    return globalMemorySize / rootDevice.getNumAvailableDevices();
+Device *SubDevice::getRootDevice() const {
+    return &rootDevice;
 }
 
 } // namespace NEO

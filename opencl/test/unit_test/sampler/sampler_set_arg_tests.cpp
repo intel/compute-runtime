@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/utilities/numeric.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/helpers/sampler_helpers.h"
 #include "opencl/source/kernel/kernel.h"
@@ -16,7 +17,6 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -35,29 +35,24 @@ class SamplerSetArgFixture : public ClDeviceFixture {
   protected:
     void SetUp() {
         ClDeviceFixture::SetUp();
-        pKernelInfo = std::make_unique<KernelInfo>();
+        pKernelInfo = std::make_unique<MockKernelInfo>();
+        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
-        // define kernel info
         pKernelInfo->heapInfo.pDsh = samplerStateHeap;
         pKernelInfo->heapInfo.DynamicStateHeapSize = sizeof(samplerStateHeap);
 
         // setup kernel arg offsets
-        pKernelInfo->kernelArgInfo.resize(2);
-        pKernelInfo->kernelArgInfo[0].offsetHeap = 0x40;
-        pKernelInfo->kernelArgInfo[0].isSampler = true;
+        pKernelInfo->addArgSampler(0, 0x40, 0x8, 0x10, 0x4);
+        pKernelInfo->addExtendedDeviceSideEnqueueDescriptor(0, 0x0);
 
-        pKernelInfo->kernelArgInfo[0].offsetObjectId = 0x0;
-        pKernelInfo->kernelArgInfo[0].offsetSamplerSnapWa = 0x4;
-        pKernelInfo->kernelArgInfo[0].offsetSamplerAddressingMode = 0x8;
-        pKernelInfo->kernelArgInfo[0].offsetSamplerNormalizedCoords = 0x10;
+        pKernelInfo->addArgSampler(1, 0x40);
 
-        pKernelInfo->kernelArgInfo[1].offsetHeap = 0x40;
-        pKernelInfo->kernelArgInfo[1].isSampler = true;
-
-        program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
-        pKernel = new MockKernel(program.get(), *pKernelInfo, *pClDevice);
+        program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
+        retVal = CL_INVALID_VALUE;
+        pMultiDeviceKernel = MultiDeviceKernel::create<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), &retVal);
+        pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(rootDeviceIndex));
         ASSERT_NE(nullptr, pKernel);
-        ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
+        ASSERT_EQ(CL_SUCCESS, retVal);
 
         pKernel->setKernelArgHandler(0, &Kernel::setArgSampler);
         pKernel->setKernelArgHandler(1, &Kernel::setArgSampler);
@@ -69,7 +64,7 @@ class SamplerSetArgFixture : public ClDeviceFixture {
     }
 
     void TearDown() {
-        delete pKernel;
+        delete pMultiDeviceKernel;
 
         delete sampler;
         delete context;
@@ -100,22 +95,23 @@ class SamplerSetArgFixture : public ClDeviceFixture {
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<MockProgram> program;
     MockKernel *pKernel = nullptr;
+    MultiDeviceKernel *pMultiDeviceKernel = nullptr;
     SKernelBinaryHeaderCommon kernelHeader;
-    std::unique_ptr<KernelInfo> pKernelInfo;
+    std::unique_ptr<MockKernelInfo> pKernelInfo;
     char samplerStateHeap[0x80];
     MockContext *context;
     Sampler *sampler = nullptr;
 };
 
 typedef Test<SamplerSetArgFixture> SamplerSetArgTest;
-HWTEST_F(SamplerSetArgTest, clSetKernelArgSampler) {
+HWTEST_F(SamplerSetArgTest, WhenSettingKernelArgSamplerThenSamplerStatesAreCorrect) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
     createSampler();
 
     cl_sampler samplerObj = sampler;
 
     retVal = clSetKernelArg(
-        pKernel,
+        pMultiDeviceKernel,
         0,
         sizeof(samplerObj),
         &samplerObj);
@@ -123,7 +119,7 @@ HWTEST_F(SamplerSetArgTest, clSetKernelArgSampler) {
 
     auto samplerState = reinterpret_cast<const SAMPLER_STATE *>(
         ptrOffset(pKernel->getDynamicStateHeap(),
-                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+                  pKernelInfo->argAsSmp(0).bindful));
     EXPECT_EQ(static_cast<cl_bool>(CL_TRUE), static_cast<cl_bool>(!samplerState->getNonNormalizedCoordinateEnable()));
     EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR, samplerState->getTcxAddressControlMode());
     EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR, samplerState->getTcyAddressControlMode());
@@ -131,13 +127,14 @@ HWTEST_F(SamplerSetArgTest, clSetKernelArgSampler) {
     EXPECT_EQ(SAMPLER_STATE::MIN_MODE_FILTER_NEAREST, samplerState->getMinModeFilter());
     EXPECT_EQ(SAMPLER_STATE::MAG_MODE_FILTER_NEAREST, samplerState->getMagModeFilter());
     EXPECT_EQ(SAMPLER_STATE::MIP_MODE_FILTER_NEAREST, samplerState->getMipModeFilter());
+    EXPECT_EQ(SAMPLER_STATE::LOD_PRECLAMP_MODE::LOD_PRECLAMP_MODE_OGL, samplerState->getLodPreclampMode());
 
     std::vector<Surface *> surfaces;
     pKernel->getResidency(surfaces);
     EXPECT_EQ(0u, surfaces.size());
 }
 
-HWTEST_F(SamplerSetArgTest, getKernelArgShouldReturnSampler) {
+HWTEST_F(SamplerSetArgTest, WhenGettingKernelArgThenSamplerIsReturned) {
     createSampler();
     cl_sampler samplerObj = sampler;
 
@@ -291,7 +288,7 @@ HWTEST_F(SamplerSetArgTest, GivenIncorrentSamplerObjectWhenSetKernelArgSamplerIs
     EXPECT_EQ(refCountBefore, refCountAfter);
 }
 
-HWTEST_F(SamplerSetArgTest, WithFilteringNearestAndAddressingClClampSetAsKernelArgumentSetsConstantBuffer) {
+HWTEST_F(SamplerSetArgTest, GivenFilteringNearestAndAddressingClampWhenSettingKernelArgumentThenConstantBufferIsSet) {
 
     sampler = Sampler::create(
         context,
@@ -314,13 +311,13 @@ HWTEST_F(SamplerSetArgTest, WithFilteringNearestAndAddressingClClampSetAsKernelA
     auto snapWaCrossThreadData = ptrOffset(crossThreadData, 0x4);
 
     unsigned int snapWaValue = 0xffffffff;
-    unsigned int objectId = SAMPLER_OBJECT_ID_SHIFT + pKernelInfo->kernelArgInfo[0].offsetHeap;
+    unsigned int objectId = SAMPLER_OBJECT_ID_SHIFT + pKernelInfo->argAsSmp(0).bindful;
 
     EXPECT_EQ(snapWaValue, *snapWaCrossThreadData);
     EXPECT_EQ(objectId, *crossThreadData);
 }
 
-HWTEST_F(SamplerSetArgTest, GIVENkernelWithoutObjIdOffsetWHENsetArgTHENdoesntPatchObjId) {
+HWTEST_F(SamplerSetArgTest, GivenKernelWithoutObjIdOffsetWhenSettingArgThenObjIdNotPatched) {
 
     sampler = Sampler::create(
         context,
@@ -341,7 +338,7 @@ HWTEST_F(SamplerSetArgTest, GIVENkernelWithoutObjIdOffsetWHENsetArgTHENdoesntPat
     EXPECT_TRUE(crossThreadDataUnchanged());
 }
 
-HWTEST_F(SamplerSetArgTest, setKernelArgWithNullptrSampler) {
+HWTEST_F(SamplerSetArgTest, GivenNullWhenSettingKernelArgThenInvalidSamplerErrorIsReturned) {
     createSampler();
     cl_sampler samplerObj = sampler;
 
@@ -352,7 +349,7 @@ HWTEST_F(SamplerSetArgTest, setKernelArgWithNullptrSampler) {
     ASSERT_EQ(CL_INVALID_SAMPLER, retVal);
 }
 
-HWTEST_F(SamplerSetArgTest, setKernelArgWithInvalidSampler) {
+HWTEST_F(SamplerSetArgTest, GivenInvalidSamplerWhenSettingKernelArgThenInvalidSamplerErrorIsReturned) {
     createSampler();
     cl_sampler samplerObj = sampler;
 
@@ -366,13 +363,9 @@ HWTEST_F(SamplerSetArgTest, setKernelArgWithInvalidSampler) {
 }
 
 TEST_F(SamplerSetArgTest, givenSamplerTypeStrAndIsSamplerTrueWhenInitializeKernelThenKernelArgumentsTypeIsSamplerObj) {
-    pKernelInfo->kernelArgInfo.resize(2);
-    pKernelInfo->kernelArgInfo[0].metadataExtended = std::make_unique<ArgTypeMetadataExtended>();
-    pKernelInfo->kernelArgInfo[0].metadataExtended->type = "sampler*";
-    pKernelInfo->kernelArgInfo[0].isSampler = true;
-    pKernelInfo->kernelArgInfo[1].metadataExtended = std::make_unique<ArgTypeMetadataExtended>();
-    pKernelInfo->kernelArgInfo[1].metadataExtended->type = "sampler";
-    pKernelInfo->kernelArgInfo[1].isSampler = true;
+
+    pKernelInfo->addExtendedMetadata(0, "", "sampler*");
+    pKernelInfo->addExtendedMetadata(1, "", "sampler");
 
     auto pMockKernell = std::make_unique<MockKernel>(program.get(), *pKernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, pMockKernell->initialize());
@@ -381,13 +374,13 @@ TEST_F(SamplerSetArgTest, givenSamplerTypeStrAndIsSamplerTrueWhenInitializeKerne
 }
 
 TEST_F(SamplerSetArgTest, givenSamplerTypeStrAndAndIsSamplerFalseWhenInitializeKernelThenKernelArgumentsTypeIsNotSamplerObj) {
-    pKernelInfo->kernelArgInfo.resize(2);
-    pKernelInfo->kernelArgInfo[0].metadataExtended = std::make_unique<ArgTypeMetadataExtended>();
-    pKernelInfo->kernelArgInfo[0].metadataExtended->type = "sampler*";
-    pKernelInfo->kernelArgInfo[0].isSampler = false;
-    pKernelInfo->kernelArgInfo[1].metadataExtended = std::make_unique<ArgTypeMetadataExtended>();
-    pKernelInfo->kernelArgInfo[1].metadataExtended->type = "sampler";
-    pKernelInfo->kernelArgInfo[1].isSampler = false;
+    pKernelInfo->kernelDescriptor.payloadMappings.explicitArgs.clear();
+
+    pKernelInfo->addArgBuffer(0);
+    pKernelInfo->addArgBuffer(1);
+
+    pKernelInfo->addExtendedMetadata(0, "", "sampler*");
+    pKernelInfo->addExtendedMetadata(1, "", "sampler");
 
     auto pMockKernell = std::make_unique<MockKernel>(program.get(), *pKernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, pMockKernell->initialize());
@@ -407,7 +400,7 @@ struct NormalizedTest
     }
 };
 
-HWTEST_P(NormalizedTest, setKernelArgSampler) {
+HWTEST_P(NormalizedTest, WhenSettingKernelArgSamplerThenCoordsAreCorrect) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
     auto normalizedCoordinates = GetParam();
     sampler = Sampler::create(
@@ -427,13 +420,13 @@ HWTEST_P(NormalizedTest, setKernelArgSampler) {
 
     auto samplerState = reinterpret_cast<const SAMPLER_STATE *>(
         ptrOffset(pKernel->getDynamicStateHeap(),
-                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+                  pKernelInfo->argAsSmp(0).bindful));
 
     EXPECT_EQ(normalizedCoordinates, static_cast<cl_bool>(!samplerState->getNonNormalizedCoordinateEnable()));
 
     auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
     auto normalizedCoordsAddress = ptrOffset(crossThreadData, 0x10);
-    unsigned int normalizedCoordsValue = GetNormCoordsEnum(normalizedCoordinates);
+    unsigned int normalizedCoordsValue = getNormCoordsEnum(normalizedCoordinates);
 
     EXPECT_EQ(normalizedCoordsValue, *normalizedCoordsAddress);
 }
@@ -458,7 +451,7 @@ struct AddressingModeTest
     }
 };
 
-HWTEST_P(AddressingModeTest, setKernelArgSampler) {
+HWTEST_P(AddressingModeTest, WhenSettingKernelArgSamplerThenModesAreCorrect) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
     auto addressingMode = GetParam();
     sampler = Sampler::create(
@@ -478,7 +471,7 @@ HWTEST_P(AddressingModeTest, setKernelArgSampler) {
 
     auto samplerState = reinterpret_cast<const SAMPLER_STATE *>(
         ptrOffset(pKernel->getDynamicStateHeap(),
-                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+                  pKernelInfo->argAsSmp(0).bindful));
 
     auto expectedModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR;
     auto expectedModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR;
@@ -517,7 +510,7 @@ HWTEST_P(AddressingModeTest, setKernelArgSampler) {
     auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
     auto addressingModeAddress = ptrOffset(crossThreadData, 0x8);
 
-    unsigned int addresingValue = GetAddrModeEnum(addressingMode);
+    unsigned int addresingValue = getAddrModeEnum(addressingMode);
 
     EXPECT_EQ(addresingValue, *addressingModeAddress);
 }
@@ -533,7 +526,7 @@ INSTANTIATE_TEST_CASE_P(SamplerSetArg,
                         AddressingModeTest,
                         ::testing::ValuesIn(addressingModeCases));
 
-HWTEST_F(SamplerSetArgTest, setKernelArgSamplerWithMipMaps) {
+HWTEST_F(SamplerSetArgTest, GivenMipmapsWhenSettingKernelArgSamplerThenLodAreCorrect) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
 
     FixedU4D8 minLod = 2.0f;
@@ -558,7 +551,7 @@ HWTEST_F(SamplerSetArgTest, setKernelArgSamplerWithMipMaps) {
 
     auto samplerState = reinterpret_cast<const SAMPLER_STATE *>(
         ptrOffset(pKernel->getDynamicStateHeap(),
-                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+                  pKernelInfo->argAsSmp(0).bindful));
 
     EXPECT_EQ(FamilyType::SAMPLER_STATE::MIP_MODE_FILTER_LINEAR, samplerState->getMipModeFilter());
     EXPECT_EQ(minLod.getRawAccess(), samplerState->getMinLod());
@@ -577,21 +570,21 @@ struct FilterModeTest
     }
 };
 
-HWTEST_P(FilterModeTest, setKernelArgSampler) {
+HWTEST_P(FilterModeTest, WhenSettingKernelArgSamplerThenFiltersAreCorrect) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
     auto filterMode = GetParam();
     sampler = Sampler::create(
         context,
         CL_TRUE,
-        CL_ADDRESS_MIRRORED_REPEAT,
+        CL_ADDRESS_NONE,
         filterMode,
         retVal);
 
     auto samplerState = reinterpret_cast<const SAMPLER_STATE *>(
         ptrOffset(pKernel->getDynamicStateHeap(),
-                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+                  pKernelInfo->argAsSmp(0).bindful));
 
-    sampler->setArg(const_cast<SAMPLER_STATE *>(samplerState));
+    sampler->setArg(const_cast<SAMPLER_STATE *>(samplerState), *defaultHwInfo);
 
     if (CL_FILTER_NEAREST == filterMode) {
         EXPECT_EQ(SAMPLER_STATE::MIN_MODE_FILTER_NEAREST, samplerState->getMinModeFilter());

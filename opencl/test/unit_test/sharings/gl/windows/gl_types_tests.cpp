@@ -86,7 +86,7 @@ struct GlClImageFormatTests
 
 INSTANTIATE_TEST_CASE_P(GlClImageFormatTests, GlClImageFormatTests, testing::ValuesIn(glTypes::allImageFormats));
 
-TEST_P(GlClImageFormatTests, validFormat) {
+TEST_P(GlClImageFormatTests, WhenSettingClImageFormatThenValidFormatIsSet) {
     cl_image_format imgFormat = {};
     auto glFormat = std::get<0>(GetParam());
     auto expectedClChannelType = static_cast<cl_channel_type>(std::get<1>(GetParam()));
@@ -104,7 +104,7 @@ struct GlClObjTypesTests
 
 INSTANTIATE_TEST_CASE_P(GlClObjTypesTests, GlClObjTypesTests, testing::ValuesIn(glTypes::allObjTypes));
 
-TEST_P(GlClObjTypesTests, typeConversion) {
+TEST_P(GlClObjTypesTests, WhenConvertingTypeThenTypeIsSetCorrectly) {
     auto glType = static_cast<cl_GLenum>(std::get<0>(GetParam()));
     auto expectedClGlObjType = static_cast<cl_gl_object_type>(std::get<1>(GetParam()));
     auto expectedClMemObjType = static_cast<cl_mem_object_type>(std::get<2>(GetParam()));

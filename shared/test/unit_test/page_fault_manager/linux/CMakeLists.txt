@@ -5,8 +5,8 @@
 #
 
 set(NEO_CORE_PAGE_FAULT_MANAGER_LINUX_TESTS
-  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpu_page_fault_manager_linux_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/cpu_page_fault_manager_linux_tests.cpp
 )
 
 if(UNIX)

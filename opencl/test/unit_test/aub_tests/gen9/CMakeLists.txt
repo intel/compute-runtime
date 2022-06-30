@@ -1,13 +1,12 @@
 #
-# Copyright (C) 2018-2020 Intel Corporation
+# Copyright (C) 2018-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 if(TESTS_GEN9)
   target_sources(igdrcl_aub_tests PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/aub_tests_configuration_gen9.cpp
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/gen9/unit_test_helper_gen9.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   )
   add_subdirectories()
 endif()

@@ -1,26 +1,18 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/command_stream/command_stream_receiver_hw.h"
-
-#include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
-#include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"
-#include "opencl/source/mem_obj/buffer.h"
+#include "shared/source/gen8/hw_cmds.h"
 
 namespace NEO {
 
-typedef BDWFamily Family;
+using Family = BDWFamily;
 
 struct EnableL0Gen8 {
     EnableL0Gen8() {
-        populateFactoryTable<AUBCommandStreamReceiverHw<Family>>();
-        populateFactoryTable<TbxCommandStreamReceiverHw<Family>>();
-        populateFactoryTable<CommandStreamReceiverHw<Family>>();
-        populateFactoryTable<BufferHw<Family>>();
     }
 };
 

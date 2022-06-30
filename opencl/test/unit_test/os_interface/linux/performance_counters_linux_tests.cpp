@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/os_interface/linux/drm_neo.h"
-#include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/linux/performance_counters_linux.h"
+#include "shared/source/os_interface/os_interface.h"
 
-#include "opencl/source/os_interface/linux/performance_counters_linux.h"
 #include "opencl/test/unit_test/os_interface/mock_performance_counters.h"
 
 #include "gtest/gtest.h"
@@ -27,7 +27,7 @@ struct PerformanceCountersLinuxTest : public PerformanceCountersFixture,
     }
 };
 
-TEST_F(PerformanceCountersLinuxTest, createPerformanceCountersWithPassingDrmFileDescriptor) {
+TEST_F(PerformanceCountersLinuxTest, WhenCreatingPerformanceCountersThenDrmFileDescriptorIsPassed) {
     auto performanceCounters = PerformanceCounters::create(&device->getDevice());
 
     EXPECT_NE(nullptr, performanceCounters);
@@ -36,5 +36,5 @@ TEST_F(PerformanceCountersLinuxTest, createPerformanceCountersWithPassingDrmFile
     auto performanceCountersLinux = static_cast<PerformanceCountersLinux *>(performanceCounters.get());
 
     EXPECT_EQ(LinuxAdapterType::DrmFileDescriptor, performanceCountersLinux->adapter.Type);
-    EXPECT_EQ(osInterface->get()->getDrm()->getFileDescriptor(), performanceCountersLinux->adapter.DrmFileDescriptor);
+    EXPECT_EQ(osInterface->getDriverModel()->as<NEO::Drm>()->getFileDescriptor(), performanceCountersLinux->adapter.DrmFileDescriptor);
 }

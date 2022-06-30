@@ -1,14 +1,16 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/program/kernel_info.h"
+#include "shared/test/common/mocks/mock_kernel_info.h"
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/source/kernel/image_transformer.h"
-#include "opencl/source/program/kernel_info.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -16,12 +18,11 @@ class ImageTransformerTest : public ::testing::Test {
   public:
     void SetUp() override {
         using SimpleKernelArgInfo = Kernel::SimpleKernelArgInfo;
-        pKernelInfo = std::make_unique<KernelInfo>();
-        pKernelInfo->kernelArgInfo.resize(2);
-        pKernelInfo->kernelArgInfo[0].isTransformable = true;
-        pKernelInfo->kernelArgInfo[0].offsetHeap = firstImageOffset;
-        pKernelInfo->kernelArgInfo[1].isTransformable = true;
-        pKernelInfo->kernelArgInfo[1].offsetHeap = secondImageOffset;
+        pKernelInfo = std::make_unique<MockKernelInfo>();
+
+        pKernelInfo->addArgImage(0, firstImageOffset, iOpenCL::IMAGE_MEMORY_OBJECT_2D, true);
+        pKernelInfo->addArgImage(1, secondImageOffset, iOpenCL::IMAGE_MEMORY_OBJECT_2D, true);
+
         image1.reset(Image3dHelper<>::create(&context));
         image2.reset(Image3dHelper<>::create(&context));
         SimpleKernelArgInfo imageArg1;
@@ -37,7 +38,7 @@ class ImageTransformerTest : public ::testing::Test {
     }
     const int firstImageOffset = 0x20;
     const int secondImageOffset = 0x40;
-    std::unique_ptr<KernelInfo> pKernelInfo;
+    std::unique_ptr<MockKernelInfo> pKernelInfo;
     ImageTransformer imageTransformer;
     MockContext context;
     std::unique_ptr<Image> image1;
@@ -100,7 +101,7 @@ HWTEST_F(ImageTransformerTest, givenImageTransformerWhenTransformToImage2dArrayT
 HWTEST_F(ImageTransformerTest, givenImageTransformerWhenTransformToImage2dArrayThenTransformOnlyTransformableImages) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
-    pKernelInfo->kernelArgInfo[1].isTransformable = false;
+    pKernelInfo->argAt(1).getExtendedTypeInfo().isTransformable = false;
 
     auto firstSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssh, firstImageOffset));
     auto secondSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssh, secondImageOffset));
@@ -121,10 +122,10 @@ HWTEST_F(ImageTransformerTest, givenImageTransformerWhenTransformToImage2dArrayT
     EXPECT_FALSE(secondSurfaceState->getSurfaceArray());
 }
 
-HWTEST_F(ImageTransformerTest, givenImageTransformerWhenTransformToImage3dhenTransformAllRegisteredImages) {
+HWTEST_F(ImageTransformerTest, givenImageTransformerWhenTransformToImage3dThenTransformAllRegisteredImages) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
-    pKernelInfo->kernelArgInfo[1].isTransformable = false;
+    pKernelInfo->argAt(1).getExtendedTypeInfo().isTransformable = false;
 
     auto firstSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssh, firstImageOffset));
     auto secondSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssh, secondImageOffset));
@@ -145,10 +146,10 @@ HWTEST_F(ImageTransformerTest, givenImageTransformerWhenTransformToImage3dhenTra
     EXPECT_FALSE(secondSurfaceState->getSurfaceArray());
 }
 
-HWTEST_F(ImageTransformerTest, givenImageTransformerWhenTransformToImage3dhenTransformOnlyRegisteredImages) {
+HWTEST_F(ImageTransformerTest, givenImageTransformerWhenTransformToImage3dThenTransformOnlyRegisteredImages) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
-    pKernelInfo->kernelArgInfo[1].isTransformable = false;
+    pKernelInfo->argAt(1).getExtendedTypeInfo().isTransformable = false;
 
     auto firstSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssh, firstImageOffset));
     auto secondSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssh, secondImageOffset));

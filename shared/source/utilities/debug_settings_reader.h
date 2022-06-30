@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include <fstream>
 #include <stdint.h>
 #include <string>
 
@@ -14,7 +13,7 @@ namespace NEO {
 
 class SettingsReader {
   public:
-    virtual ~SettingsReader() {}
+    virtual ~SettingsReader() = default;
     static SettingsReader *create(const std::string &regKey) {
         SettingsReader *readerImpl = createFileReader();
         if (readerImpl != nullptr)
@@ -30,6 +29,6 @@ class SettingsReader {
     virtual std::string getSetting(const char *settingName, const std::string &value) = 0;
     virtual const char *appSpecificLocation(const std::string &name) = 0;
     static const char *settingsFileName;
-    MOCKABLE_VIRTUAL char *getenv(const char *settingName) { return ::getenv(settingName); };
+    MOCKABLE_VIRTUAL char *getenv(const char *settingName);
 };
 }; // namespace NEO

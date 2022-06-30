@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,15 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
     auto memoryManager = getDevice().getMemoryManager();
     DEBUG_BREAK_IF(nullptr == memoryManager);
 
-    auto patternAllocation = memoryManager->allocateGraphicsMemoryWithProperties({getDevice().getRootDeviceIndex(), alignUp(patternSize, MemoryConstants::cacheLineSize), GraphicsAllocation::AllocationType::FILL_PATTERN});
+    auto commandStreamReceieverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
+    auto storageWithAllocations = getGpgpuCommandStreamReceiver().getInternalAllocationStorage();
+    auto allocationType = AllocationType::FILL_PATTERN;
+    auto patternAllocation = storageWithAllocations->obtainReusableAllocation(patternSize, allocationType).release();
+    commandStreamReceieverOwnership.unlock();
+
+    if (!patternAllocation) {
+        patternAllocation = memoryManager->allocateGraphicsMemoryWithProperties({getDevice().getRootDeviceIndex(), alignUp(patternSize, MemoryConstants::cacheLineSize), AllocationType::FILL_PATTERN, getDevice().getDeviceBitfield()});
+    }
 
     if (patternSize == 1) {
         int patternInt = (uint32_t)((*(uint8_t *)pattern << 24) | (*(uint8_t *)pattern << 16) | (*(uint8_t *)pattern << 8) | *(uint8_t *)pattern);
@@ -51,26 +59,29 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
     }
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(eBuiltInOps,
-                                                                            this->getDevice());
+                                                                            this->getClDevice());
 
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     BuiltinOpParams dc;
+    auto multiGraphicsAllocation = MultiGraphicsAllocation(getDevice().getRootDeviceIndex());
+    multiGraphicsAllocation.addAllocation(patternAllocation);
+
     MemObj patternMemObj(this->context, 0, {}, 0, 0, alignUp(patternSize, 4), patternAllocation->getUnderlyingBuffer(),
-                         patternAllocation->getUnderlyingBuffer(), patternAllocation, false, false, true);
+                         patternAllocation->getUnderlyingBuffer(), std::move(multiGraphicsAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
     dc.dstMemObj = buffer;
     dc.dstOffset = {offset, 0, 0};
     dc.size = {size, 0, 0};
 
-    MultiDispatchInfo dispatchInfo;
-    builder.buildDispatchInfos(dispatchInfo, dc);
+    MultiDispatchInfo dispatchInfo(dc);
+    builder.buildDispatchInfos(dispatchInfo);
 
     MemObjSurface s1(buffer);
     GeneralSurface s2(patternAllocation);
     Surface *surfaces[] = {&s1, &s2};
 
-    enqueueHandler<CL_COMMAND_FILL_BUFFER>(
+    const auto enqueueResult = enqueueHandler<CL_COMMAND_FILL_BUFFER>(
         surfaces,
         false,
         dispatchInfo,
@@ -79,8 +90,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
         event);
 
     auto storageForAllocation = getGpgpuCommandStreamReceiver().getInternalAllocationStorage();
-    storageForAllocation->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(patternAllocation), TEMPORARY_ALLOCATION, taskCount);
+    storageForAllocation->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(patternAllocation), REUSABLE_ALLOCATION, taskCount);
 
-    return CL_SUCCESS;
+    return enqueueResult;
 }
 } // namespace NEO

@@ -1,16 +1,14 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-
-#include "gtest/gtest.h"
 
 namespace NEO {
 
@@ -23,7 +21,7 @@ struct GetDeviceInfoMemCapabilitiesTest : ::testing::Test {
     void check(std::vector<TestParams> &params) {
         auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-        for (auto param : params) {
+        for (auto &param : params) {
             cl_unified_shared_memory_capabilities_intel unifiedSharedMemoryCapabilities{};
             size_t paramRetSize;
 
@@ -36,4 +34,19 @@ struct GetDeviceInfoMemCapabilitiesTest : ::testing::Test {
         }
     }
 };
+
+struct QueueFamilyNameTest : ::testing::Test {
+    void SetUp() override {
+        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    }
+
+    void verify(EngineGroupType type, const char *expectedName) {
+        char name[CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL];
+        device->getQueueFamilyName(name, type);
+        EXPECT_EQ(0, std::strcmp(name, expectedName));
+    }
+
+    std::unique_ptr<MockClDevice> device = {};
+};
+
 } // namespace NEO

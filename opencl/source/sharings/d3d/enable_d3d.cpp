@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,11 +23,10 @@
 
 namespace NEO {
 
-bool D3DSharingContextBuilder<D3DTypesHelper::D3D9>::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue, cl_int &errcodeRet) {
+bool D3DSharingContextBuilder<D3DTypesHelper::D3D9>::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue) {
     if (contextData.get() == nullptr) {
         contextData = std::make_unique<D3DCreateContextProperties<D3DTypesHelper::D3D9>>();
     }
-    bool res = false;
 
     switch (propertyType) {
     case CL_CONTEXT_ADAPTER_D3D9_KHR:
@@ -38,41 +37,37 @@ bool D3DSharingContextBuilder<D3DTypesHelper::D3D9>::processProperties(cl_contex
     case CL_CONTEXT_DXVA_DEVICE_INTEL:
         contextData->pDevice = (D3DTypesHelper::D3D9::D3DDevice *)propertyValue;
         contextData->argumentsDefined = true;
-        res = true;
-        break;
+        return true;
     }
-    return res;
+    return false;
 }
 
-bool D3DSharingContextBuilder<D3DTypesHelper::D3D10>::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue, cl_int &errcodeRet) {
+bool D3DSharingContextBuilder<D3DTypesHelper::D3D10>::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue) {
     if (contextData.get() == nullptr) {
         contextData = std::make_unique<D3DCreateContextProperties<D3DTypesHelper::D3D10>>();
     }
-    bool res = false;
 
     switch (propertyType) {
     case CL_CONTEXT_D3D10_DEVICE_KHR:
         contextData->pDevice = (D3DTypesHelper::D3D10::D3DDevice *)propertyValue;
         contextData->argumentsDefined = true;
-        res = true;
-        break;
+        return true;
     }
-    return res;
+    return false;
 }
 
-bool D3DSharingContextBuilder<D3DTypesHelper::D3D11>::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue, cl_int &errcodeRet) {
+bool D3DSharingContextBuilder<D3DTypesHelper::D3D11>::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue) {
     if (contextData.get() == nullptr) {
         contextData = std::make_unique<D3DCreateContextProperties<D3DTypesHelper::D3D11>>();
     }
-    bool res = false;
+
     switch (propertyType) {
     case CL_CONTEXT_D3D11_DEVICE_KHR:
         contextData->pDevice = (D3DTypesHelper::D3D11::D3DDevice *)propertyValue;
         contextData->argumentsDefined = true;
-        res = true;
-        break;
+        return true;
     }
-    return res;
+    return false;
 }
 
 template <>

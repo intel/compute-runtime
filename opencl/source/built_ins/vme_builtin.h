@@ -10,7 +10,8 @@
 
 namespace NEO {
 class Program;
-class Device;
+class ClDevice;
+class ClDeviceVector;
 class Context;
 class BuiltIns;
 class BuiltinDispatchInfoBuilder;
@@ -18,11 +19,11 @@ namespace Vme {
 
 Program *createBuiltInProgram(
     Context &context,
-    Device &device,
+    const ClDeviceVector &deviceVector,
     const char *kernelNames,
     int &errcodeRet);
 
-BuiltinDispatchInfoBuilder &getBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, Device &device);
+BuiltinDispatchInfoBuilder &getBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, ClDevice &device);
 
 } // namespace Vme
 } // namespace NEO

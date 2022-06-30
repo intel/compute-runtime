@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/utilities/perf_profiler.h"
+#pragma once
 
-#include "opencl/source/utilities/logger.h"
+#include "shared/source/utilities/logger.h"
+#include "shared/source/utilities/perf_profiler.h"
 
 #define API_ENTER(retValPointer) \
     LoggerApiEnterWrapper<NEO::FileLogger<globalDebugFunctionalityLevel>::enabled()> ApiWrapperForSingleCall(__FUNCTION__, retValPointer)

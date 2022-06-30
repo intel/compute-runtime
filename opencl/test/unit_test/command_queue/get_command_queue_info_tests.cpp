@@ -1,15 +1,18 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
-
-#include "gtest/gtest.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 using namespace NEO;
 
@@ -42,7 +45,7 @@ struct GetCommandQueueInfoTest : public ClDeviceFixture,
     cl_command_queue_properties properties;
 };
 
-TEST_P(GetCommandQueueInfoTest, CONTEXT) {
+TEST_P(GetCommandQueueInfoTest, GivenClQueueContextWhenGettingCommandQueueInfoThenSuccessIsReturned) {
     cl_context contextReturned = nullptr;
 
     auto retVal = pCmdQ->getCommandQueueInfo(
@@ -54,32 +57,32 @@ TEST_P(GetCommandQueueInfoTest, CONTEXT) {
     EXPECT_EQ((cl_context)pContext, contextReturned);
 }
 
-TEST_P(GetCommandQueueInfoTest, DEVICE) {
-    cl_device_id device_expected = pClDevice;
-    cl_device_id device_id_returned = nullptr;
+TEST_P(GetCommandQueueInfoTest, GivenClQueueDeviceWhenGettingCommandQueueInfoThenSuccessIsReturned) {
+    cl_device_id deviceExpected = pClDevice;
+    cl_device_id deviceReturned = nullptr;
 
     auto retVal = pCmdQ->getCommandQueueInfo(
         CL_QUEUE_DEVICE,
-        sizeof(device_id_returned),
-        &device_id_returned,
+        sizeof(deviceReturned),
+        &deviceReturned,
         nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(device_expected, device_id_returned);
+    EXPECT_EQ(deviceExpected, deviceReturned);
 }
 
-TEST_P(GetCommandQueueInfoTest, QUEUE_PROPERTIES) {
-    cl_command_queue_properties command_queue_properties_returned = 0;
+TEST_P(GetCommandQueueInfoTest, GivenClQueuePropertiesWhenGettingCommandQueueInfoThenSuccessIsReturned) {
+    cl_command_queue_properties cmdqPropertiesReturned = 0;
 
     auto retVal = pCmdQ->getCommandQueueInfo(
         CL_QUEUE_PROPERTIES,
-        sizeof(command_queue_properties_returned),
-        &command_queue_properties_returned,
+        sizeof(cmdqPropertiesReturned),
+        &cmdqPropertiesReturned,
         nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(properties, command_queue_properties_returned);
+    EXPECT_EQ(properties, cmdqPropertiesReturned);
 }
 
-TEST_P(GetCommandQueueInfoTest, QUEUE_SIZE) {
+TEST_P(GetCommandQueueInfoTest, givenNonDeviceQueueWhenQueryingQueueSizeThenInvalidCommandQueueErrorIsReturned) {
     cl_uint queueSize = 0;
 
     auto retVal = pCmdQ->getCommandQueueInfo(
@@ -87,21 +90,20 @@ TEST_P(GetCommandQueueInfoTest, QUEUE_SIZE) {
         sizeof(queueSize),
         &queueSize,
         nullptr);
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_P(GetCommandQueueInfoTest, QUEUE_DEVICE_DEFAULT) {
-    cl_command_queue commandQueueReturned = nullptr;
-
+TEST_P(GetCommandQueueInfoTest, GivenClQueueDeviceDefaultWhenGettingCommandQueueInfoThenSuccessIsReturned) {
+    cl_command_queue commandQueueReturned = reinterpret_cast<cl_command_queue>(static_cast<uintptr_t>(0x1234));
+    size_t sizeReturned = 0u;
     auto retVal = pCmdQ->getCommandQueueInfo(
         CL_QUEUE_DEVICE_DEFAULT,
         sizeof(commandQueueReturned),
         &commandQueueReturned,
-        nullptr);
+        &sizeReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    // host queue can't be default device queue
-    EXPECT_NE(pCmdQ, commandQueueReturned);
+    EXPECT_EQ(nullptr, commandQueueReturned);
+    EXPECT_EQ(sizeof(cl_command_queue), sizeReturned);
 }
 
 TEST_P(GetCommandQueueInfoTest, GivenInvalidParameterWhenGettingCommandQueueInfoThenInvalidValueIsReturned) {
@@ -120,3 +122,147 @@ INSTANTIATE_TEST_CASE_P(
     GetCommandQueueInfoTest,
     GetCommandQueueInfoTest,
     ::testing::ValuesIn(DefaultCommandQueueProperties));
+
+using GetCommandQueueFamilyInfoTests = ::testing::Test;
+
+TEST_F(GetCommandQueueFamilyInfoTests, givenQueueFamilyNotSelectedWhenGettingFamilyAndQueueIndexThenValuesAreReturned) {
+    MockContext context{};
+    MockCommandQueue queue{context};
+    queue.queueFamilySelected = false;
+    queue.queueFamilyIndex = 12u;
+    cl_int retVal{};
+
+    const auto &hwInfo = context.getDevice(0)->getHardwareInfo();
+    const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const auto engineGroupType = hwHelper.getEngineGroupType(context.getDevice(0)->getDefaultEngine().getEngineType(),
+                                                             context.getDevice(0)->getDefaultEngine().getEngineUsage(), hwInfo);
+    const auto expectedFamilyIndex = context.getDevice(0)->getDevice().getEngineGroupIndexFromEngineGroupType(engineGroupType);
+
+    cl_uint familyIndex{};
+    retVal = queue.getCommandQueueInfo(
+        CL_QUEUE_FAMILY_INTEL,
+        sizeof(cl_uint),
+        &familyIndex,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(expectedFamilyIndex, familyIndex);
+
+    cl_uint queueIndex{};
+    retVal = queue.getCommandQueueInfo(
+        CL_QUEUE_INDEX_INTEL,
+        sizeof(cl_uint),
+        &queueIndex,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0u, queueIndex);
+}
+
+TEST_F(GetCommandQueueFamilyInfoTests, givenQueueFamilySelectedWhenGettingFamilyAndQueueIndexThenValuesAreReturned) {
+    MockCommandQueue queue;
+    queue.queueFamilySelected = true;
+    queue.queueFamilyIndex = 12u;
+    queue.queueIndexWithinFamily = 1432u;
+    cl_int retVal{};
+
+    cl_uint familyIndex{};
+    retVal = queue.getCommandQueueInfo(
+        CL_QUEUE_FAMILY_INTEL,
+        sizeof(cl_uint),
+        &familyIndex,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(queue.queueFamilyIndex, familyIndex);
+
+    cl_uint queueIndex{};
+    retVal = queue.getCommandQueueInfo(
+        CL_QUEUE_INDEX_INTEL,
+        sizeof(cl_uint),
+        &queueIndex,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(queue.queueIndexWithinFamily, queueIndex);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, GetCommandQueueFamilyInfoTests, givenFamilyIdWhenGettingCommandQueueInfoThenCorrectValueIsReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo.get();
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    MockClDevice mockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0)};
+
+    const cl_device_id deviceId = &mockClDevice;
+    auto context = clCreateContext(nullptr, 1, &deviceId, nullptr, nullptr, nullptr);
+    auto ccsFamily = mockClDevice.getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::Compute);
+    cl_command_queue_properties properties[] = {CL_QUEUE_FAMILY_INTEL, ccsFamily, CL_QUEUE_INDEX_INTEL, 0, 0};
+    EXPECT_EQ(0u, mockClDevice.getNumGenericSubDevices());
+    auto commandQueue = clCreateCommandQueueWithProperties(context, deviceId, properties, nullptr);
+    auto neoQueue = castToObject<CommandQueue>(commandQueue);
+
+    cl_uint familyParameter;
+    auto retVal = neoQueue->getCommandQueueInfo(
+        CL_QUEUE_FAMILY_INTEL,
+        sizeof(familyParameter),
+        &familyParameter,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(ccsFamily, familyParameter);
+
+    cl_uint indexParameter;
+    retVal = neoQueue->getCommandQueueInfo(
+        CL_QUEUE_INDEX_INTEL,
+        sizeof(indexParameter),
+        &indexParameter,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0u, indexParameter);
+
+    clReleaseCommandQueue(commandQueue);
+    clReleaseContext(context);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, GetCommandQueueFamilyInfoTests, givenNonZeroFamilyIdWhenCreatingCommandQueueForRootDeviceWithMultipleSubDevicesThenInvalidValueIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    initPlatform();
+
+    auto rootDevice = platform()->getClDevice(0);
+    const cl_device_id deviceId = rootDevice;
+    auto context = clCreateContext(nullptr, 1, &deviceId, nullptr, nullptr, nullptr);
+
+    cl_command_queue_properties properties[] = {CL_QUEUE_FAMILY_INTEL, 1u, CL_QUEUE_INDEX_INTEL, 0, 0};
+    EXPECT_EQ(2u, rootDevice->getNumGenericSubDevices());
+    cl_int retVal;
+    auto commandQueue = clCreateCommandQueueWithProperties(context, rootDevice, properties, &retVal);
+
+    EXPECT_EQ(CL_INVALID_QUEUE_PROPERTIES, retVal);
+    EXPECT_EQ(nullptr, commandQueue);
+
+    clReleaseContext(context);
+}
+
+using MultiEngineQueueHwTests = ::testing::Test;
+HWCMDTEST_F(IGFX_XE_HP_CORE, MultiEngineQueueHwTests, givenLimitedNumberOfCcsWhenCreatingCmdQueueThenFailOnNotSupportedCcs) {
+    HardwareInfo localHwInfo = *defaultHwInfo;
+    localHwInfo.gtSystemInfo.CCSInfo.IsValid = true;
+    localHwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
+    localHwInfo.gtSystemInfo.CCSInfo.Instances.CCSEnableMask = 0b1111;
+    localHwInfo.featureTable.flags.ftrCCSNode = true;
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
+    MockContext context(device.get());
+    context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
+
+    const uint32_t ccsCount = 4;
+
+    auto ccsEngine = device->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::Compute);
+    cl_queue_properties properties[5] = {CL_QUEUE_FAMILY_INTEL, ccsEngine, CL_QUEUE_INDEX_INTEL, 0, 0};
+
+    auto mutableHwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
+
+    for (uint32_t i = 0; i < ccsCount; i++) {
+        properties[3] = i;
+        mutableHwInfo->gtSystemInfo.CCSInfo.Instances.CCSEnableMask = (1 << i);
+
+        cl_int retVal = CL_SUCCESS;
+        cl_command_queue clCommandQueue = clCreateCommandQueueWithProperties(&context, device.get(), properties, &retVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        clReleaseCommandQueue(clCommandQueue);
+    }
+}

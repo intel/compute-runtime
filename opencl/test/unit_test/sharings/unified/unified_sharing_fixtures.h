@@ -1,19 +1,21 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/unit_test/helpers/variable_backup.h"
-#include "shared/test/unit_test/mocks/mock_device.h"
+#pragma once
+
+#include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/sharings/unified/unified_sharing_types.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
-#include "test.h"
 
 namespace NEO {
 
@@ -57,17 +59,18 @@ struct UnifiedSharingContextFixture : ::testing::Test {
 
 template <bool validMemoryManager>
 struct UnifiedSharingMockMemoryManager : MockMemoryManager {
-    GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex) override {
+    using MockMemoryManager::MockMemoryManager;
+    GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override {
         if (!validMemoryManager) {
             return nullptr;
         }
 
-        auto graphicsAllocation = createMemoryAllocation(GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, nullptr, reinterpret_cast<void *>(1), 1,
+        auto graphicsAllocation = createMemoryAllocation(AllocationType::INTERNAL_HOST_MEMORY, nullptr, reinterpret_cast<void *>(1), 1,
                                                          4096u, reinterpret_cast<uint64_t>(handle), MemoryPool::SystemCpuInaccessible,
                                                          rootDeviceIndex, false, false, false);
         graphicsAllocation->setSharedHandle(static_cast<osHandle>(reinterpret_cast<uint64_t>(handle)));
         graphicsAllocation->set32BitAllocation(false);
-        graphicsAllocation->setDefaultGmm(new MockGmm());
+        graphicsAllocation->setDefaultGmm(new MockGmm(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper()));
         return graphicsAllocation;
     }
 };
@@ -76,7 +79,7 @@ template <bool validContext, bool validMemoryManager>
 struct UnifiedSharingFixture : UnifiedSharingContextFixture<validContext> {
     void SetUp() override {
         UnifiedSharingContextFixture<validContext>::SetUp();
-        this->memoryManager = std::make_unique<UnifiedSharingMockMemoryManager<validMemoryManager>>();
+        this->memoryManager = std::make_unique<UnifiedSharingMockMemoryManager<validMemoryManager>>(*this->device->getExecutionEnvironment());
         this->memoryManagerBackup = std::make_unique<VariableBackup<MemoryManager *>>(&this->context->memoryManager, this->memoryManager.get());
     }
 

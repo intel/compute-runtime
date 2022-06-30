@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/utilities/wait_util.h"
 
 #include "opencl/source/built_ins/aux_translation_builtin.h"
 #include "opencl/source/command_queue/enqueue_barrier.h"
@@ -32,16 +33,23 @@
 
 namespace NEO {
 template <typename Family>
-void CommandQueueHw<Family>::notifyEnqueueReadBuffer(Buffer *buffer, bool blockingRead) {
+void CommandQueueHw<Family>::notifyEnqueueReadBuffer(Buffer *buffer, bool blockingRead, bool notifyBcsCsr) {
     if (DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.get()) {
-        buffer->getGraphicsAllocation(getDevice().getRootDeviceIndex())->setAllocDumpable(blockingRead);
+        buffer->getGraphicsAllocation(getDevice().getRootDeviceIndex())->setAllocDumpable(blockingRead, notifyBcsCsr);
         buffer->forceDisallowCPUCopy = blockingRead;
     }
 }
 template <typename Family>
-void CommandQueueHw<Family>::notifyEnqueueReadImage(Image *image, bool blockingRead) {
+void CommandQueueHw<Family>::notifyEnqueueReadImage(Image *image, bool blockingRead, bool notifyBcsCsr) {
     if (DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.get()) {
-        image->getGraphicsAllocation(getDevice().getRootDeviceIndex())->setAllocDumpable(blockingRead);
+        image->getGraphicsAllocation(getDevice().getRootDeviceIndex())->setAllocDumpable(blockingRead, notifyBcsCsr);
+    }
+}
+
+template <typename Family>
+void CommandQueueHw<Family>::notifyEnqueueSVMMemcpy(GraphicsAllocation *gfxAllocation, bool blockingCopy, bool notifyBcsCsr) {
+    if (DebugManager.flags.AUBDumpAllocsOnEnqueueSVMMemcpyOnly.get()) {
+        gfxAllocation->setAllocDumpable(blockingCopy, notifyBcsCsr);
     }
 }
 
@@ -83,13 +91,18 @@ cl_int CommandQueueHw<Family>::enqueueMarkerForReadWriteOperation(MemObj *memObj
     MultiDispatchInfo multiDispatchInfo;
     NullSurface s;
     Surface *surfaces[] = {&s};
-    enqueueHandler<CL_COMMAND_MARKER>(
+    const auto enqueueResult = enqueueHandler<CL_COMMAND_MARKER>(
         surfaces,
         blocking == CL_TRUE,
         multiDispatchInfo,
         numEventsInWaitList,
         eventWaitList,
         event);
+
+    if (enqueueResult != CL_SUCCESS) {
+        return enqueueResult;
+    }
+
     if (event) {
         auto pEvent = castToObjectOrAbort<Event>(*event);
         pEvent->setCmdType(commandType);
@@ -105,11 +118,7 @@ cl_int CommandQueueHw<Family>::enqueueMarkerForReadWriteOperation(MemObj *memObj
 template <typename Family>
 void CommandQueueHw<Family>::dispatchAuxTranslationBuiltin(MultiDispatchInfo &multiDispatchInfo,
                                                            AuxTranslationDirection auxTranslationDirection) {
-    if (HwHelperHw<Family>::getAuxTranslationMode() != AuxTranslationMode::Builtin) {
-        return;
-    }
-
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getDevice());
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getClDevice());
     auto &auxTranslationBuilder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(builder);
     BuiltinOpParams dispatchParams;
 
@@ -125,19 +134,64 @@ bool CommandQueueHw<Family>::forceStateless(size_t size) {
 
 template <typename Family>
 bool CommandQueueHw<Family>::isCacheFlushForBcsRequired() const {
+    if (DebugManager.flags.ForceCacheFlushForBcs.get() != -1) {
+        return !!DebugManager.flags.ForceCacheFlushForBcs.get();
+    }
     return true;
+}
+
+template <typename TSPacketType>
+inline bool waitForTimestampsWithinContainer(TimestampPacketContainer *container, CommandStreamReceiver &csr) {
+    bool waited = false;
+
+    if (container) {
+        for (const auto &timestamp : container->peekNodes()) {
+            for (uint32_t i = 0; i < timestamp->getPacketsUsed(); i++) {
+                while (timestamp->getContextEndValue(i) == 1) {
+                    csr.downloadAllocation(*timestamp->getBaseGraphicsAllocation()->getGraphicsAllocation(csr.getRootDeviceIndex()));
+                    WaitUtils::waitFunctionWithPredicate<const TSPacketType>(static_cast<TSPacketType const *>(timestamp->getContextEndAddress(i)), 1u, std::not_equal_to<TSPacketType>());
+                }
+                waited = true;
+            }
+        }
+    }
+
+    return waited;
+}
+
+template <typename Family>
+bool CommandQueueHw<Family>::waitForTimestamps(Range<CopyEngineState> copyEnginesToWait, uint32_t taskCount) {
+    using TSPacketType = typename Family::TimestampPacketType;
+    bool waited = false;
+
+    if (isWaitForTimestampsEnabled()) {
+        waited = waitForTimestampsWithinContainer<TSPacketType>(timestampPacketContainer.get(), getGpgpuCommandStreamReceiver());
+        if (isOOQEnabled()) {
+            waitForTimestampsWithinContainer<TSPacketType>(deferredTimestampPackets.get(), getGpgpuCommandStreamReceiver());
+        }
+
+        if (waited) {
+            getGpgpuCommandStreamReceiver().downloadAllocations();
+            for (const auto &copyEngine : copyEnginesToWait) {
+                auto bcsCsr = getBcsCommandStreamReceiver(copyEngine.engineType);
+                bcsCsr->downloadAllocations();
+            }
+        }
+    }
+
+    return waited;
 }
 
 template <typename Family>
 void CommandQueueHw<Family>::setupBlitAuxTranslation(MultiDispatchInfo &multiDispatchInfo) {
     multiDispatchInfo.begin()->dispatchInitCommands.registerMethod(
-        TimestampPacketHelper::programSemaphoreWithImplicitDependencyForAuxTranslation<Family, AuxTranslationDirection::AuxToNonAux>);
+        TimestampPacketHelper::programSemaphoreForAuxTranslation<Family, AuxTranslationDirection::AuxToNonAux>);
 
     multiDispatchInfo.begin()->dispatchInitCommands.registerCommandsSizeEstimationMethod(
         TimestampPacketHelper::getRequiredCmdStreamSizeForAuxTranslationNodeDependency<Family, AuxTranslationDirection::AuxToNonAux>);
 
     multiDispatchInfo.rbegin()->dispatchEpilogueCommands.registerMethod(
-        TimestampPacketHelper::programSemaphoreWithImplicitDependencyForAuxTranslation<Family, AuxTranslationDirection::NonAuxToAux>);
+        TimestampPacketHelper::programSemaphoreForAuxTranslation<Family, AuxTranslationDirection::NonAuxToAux>);
 
     multiDispatchInfo.rbegin()->dispatchEpilogueCommands.registerCommandsSizeEstimationMethod(
         TimestampPacketHelper::getRequiredCmdStreamSizeForAuxTranslationNodeDependency<Family, AuxTranslationDirection::NonAuxToAux>);
@@ -148,4 +202,42 @@ bool CommandQueueHw<Family>::obtainTimestampPacketForCacheFlush(bool isCacheFlus
     return isCacheFlushRequired;
 }
 
+template <typename Family>
+bool CommandQueueHw<Family>::isGpgpuSubmissionForBcsRequired(bool queueBlocked, TimestampPacketDependencies &timestampPacketDependencies) const {
+    if (queueBlocked || timestampPacketDependencies.barrierNodes.peekNodes().size() > 0u) {
+        return true;
+    }
+
+    bool required = (latestSentEnqueueType != EnqueueProperties::Operation::Blit) &&
+                    (latestSentEnqueueType != EnqueueProperties::Operation::None) &&
+                    (isCacheFlushForBcsRequired() || !(getGpgpuCommandStreamReceiver().getDispatchMode() == DispatchMode::ImmediateDispatch || getGpgpuCommandStreamReceiver().isLatestTaskCountFlushed()));
+
+    if (DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.get() == 1) {
+        required = true;
+    }
+
+    return required;
+}
+
+template <typename Family>
+void CommandQueueHw<Family>::setupEvent(EventBuilder &eventBuilder, cl_event *outEvent, uint32_t cmdType) {
+    if (outEvent) {
+        eventBuilder.create<Event>(this, cmdType, CompletionStamp::notReady, 0);
+        auto eventObj = eventBuilder.getEvent();
+        *outEvent = eventObj;
+
+        if (eventObj->isProfilingEnabled()) {
+            TimeStampData queueTimeStamp;
+
+            getDevice().getOSTime()->getCpuGpuTime(&queueTimeStamp);
+            eventObj->setQueueTimeStamp(&queueTimeStamp);
+
+            if (isCommandWithoutKernel(cmdType) && cmdType != CL_COMMAND_MARKER) {
+                eventObj->setCPUProfilingPath(true);
+                eventObj->setQueueTimeStamp();
+            }
+        }
+        DBG_LOG(EventsDebugEnable, "enqueueHandler commandType", cmdType, "output Event", eventObj);
+    }
+}
 } // namespace NEO

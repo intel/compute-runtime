@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
@@ -20,16 +20,22 @@ template <typename GfxFamily>
 class UltCommandStreamReceiver;
 struct HardwareInfo;
 
-extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
+extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment,
+                                                  uint32_t rootDeviceIndex,
+                                                  const DeviceBitfield deviceBitfield);
 
 class MockClDevice : public ClDevice {
   public:
     using ClDevice::ClDevice;
-    using ClDevice::compilerFeatures;
+    using ClDevice::compilerExtensions;
+    using ClDevice::compilerExtensionsWithFeatures;
     using ClDevice::deviceExtensions;
     using ClDevice::deviceInfo;
     using ClDevice::driverInfo;
     using ClDevice::enabledClVersion;
+    using ClDevice::getClDeviceName;
+    using ClDevice::getQueueFamilyCapabilities;
+    using ClDevice::getQueueFamilyCapabilitiesAll;
     using ClDevice::initializeCaps;
     using ClDevice::name;
     using ClDevice::ocl21FeaturesEnabled;
@@ -59,14 +65,20 @@ class MockClDevice : public ClDevice {
     }
     template <typename T>
     static T *createWithNewExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex = 0) {
+        auto executionEnvironment = prepareExecutionEnvironment(pHwInfo, rootDeviceIndex);
+        return MockDevice::createWithExecutionEnvironment<T>(pHwInfo, executionEnvironment, rootDeviceIndex);
+    }
+    static ExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex) {
         auto executionEnvironment = new MockClExecutionEnvironment();
-        auto numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get() ? DebugManager.flags.CreateMultipleRootDevices.get() : 1u;
+        auto numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get() ? DebugManager.flags.CreateMultipleRootDevices.get() : rootDeviceIndex + 1;
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         pHwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(pHwInfo);
+            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
-        return MockDevice::createWithExecutionEnvironment<T>(pHwInfo, executionEnvironment, rootDeviceIndex);
+        executionEnvironment->calculateMaxOsContextCount();
+        return executionEnvironment;
     }
     SubDevice *createSubDevice(uint32_t subDeviceIndex) { return device.createSubDevice(subDeviceIndex); }
     std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const { return device.createCommandStreamReceiver(); }
@@ -83,8 +95,16 @@ class MockClDevice : public ClDevice {
     ExecutionEnvironment *&executionEnvironment;
     static bool &createSingleDevice;
     static decltype(&createCommandStream) &createCommandStreamReceiverFunc;
-    std::unique_ptr<MemoryManager> &mockMemoryManager;
-    std::vector<EngineControl> &engines;
+    std::vector<EngineControl> &allEngines;
+};
+
+class MockDeviceWithDebuggerActive : public MockDevice {
+  public:
+    MockDeviceWithDebuggerActive(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex) : MockDevice(executionEnvironment, deviceIndex) {}
+    void initializeCaps() override {
+        MockDevice::initializeCaps();
+        this->setDebuggerActive(true);
+    }
 };
 
 } // namespace NEO

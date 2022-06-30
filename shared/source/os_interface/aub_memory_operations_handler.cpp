@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,12 @@
 
 #include "shared/source/os_interface/aub_memory_operations_handler.h"
 
+#include "shared/source/aub_mem_dump/aub_mem_dump.h"
+#include "shared/source/gmm_helper/cache_settings_helper.h"
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
-#include "opencl/source/aub_mem_dump/aub_mem_dump.h"
+#include "third_party/aub_stream/headers/allocation_params.h"
 
 #include <algorithm>
 
@@ -19,25 +22,34 @@ AubMemoryOperationsHandler::AubMemoryOperationsHandler(aub_stream::AubManager *a
     this->aubManager = aubManager;
 }
 
-MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(ArrayRef<GraphicsAllocation *> gfxAllocations) {
+MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
     if (!aubManager) {
         return MemoryOperationsStatus::DEVICE_UNINITIALIZED;
     }
     auto lock = acquireLock(resourcesLock);
     int hint = AubMemDump::DataTypeHintValues::TraceNotype;
     for (const auto &allocation : gfxAllocations) {
-        aubManager->writeMemory(allocation->getGpuAddress(),
-                                allocation->getUnderlyingBuffer(),
-                                allocation->getUnderlyingBufferSize(),
-                                allocation->storageInfo.getMemoryBanks(),
-                                hint,
-                                allocation->getUsedPageSize());
+        aub_stream::AllocationParams params(allocation->getGpuAddress(),
+                                            allocation->getUnderlyingBuffer(),
+                                            allocation->getUnderlyingBufferSize(),
+                                            allocation->storageInfo.getMemoryBanks(),
+                                            hint,
+                                            allocation->getUsedPageSize());
+
+        auto gmm = allocation->getDefaultGmm();
+
+        if (gmm) {
+            params.additionalParams.compressionEnabled = gmm->isCompressionEnabled;
+            params.additionalParams.uncached = CacheSettingsHelper::isUncachedType(gmm->resourceParams.Usage);
+        }
+
+        aubManager->writeMemory2(params);
         residentAllocations.push_back(allocation);
     }
     return MemoryOperationsStatus::SUCCESS;
 }
 
-MemoryOperationsStatus AubMemoryOperationsHandler::evict(GraphicsAllocation &gfxAllocation) {
+MemoryOperationsStatus AubMemoryOperationsHandler::evict(Device *device, GraphicsAllocation &gfxAllocation) {
     auto lock = acquireLock(resourcesLock);
     auto itor = std::find(residentAllocations.begin(), residentAllocations.end(), &gfxAllocation);
     if (itor == residentAllocations.end()) {
@@ -48,7 +60,15 @@ MemoryOperationsStatus AubMemoryOperationsHandler::evict(GraphicsAllocation &gfx
     }
 }
 
-MemoryOperationsStatus AubMemoryOperationsHandler::isResident(GraphicsAllocation &gfxAllocation) {
+MemoryOperationsStatus AubMemoryOperationsHandler::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) {
+    return makeResident(nullptr, gfxAllocations);
+}
+
+MemoryOperationsStatus AubMemoryOperationsHandler::evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) {
+    return evict(nullptr, gfxAllocation);
+}
+
+MemoryOperationsStatus AubMemoryOperationsHandler::isResident(Device *device, GraphicsAllocation &gfxAllocation) {
     auto lock = acquireLock(resourcesLock);
     auto itor = std::find(residentAllocations.begin(), residentAllocations.end(), &gfxAllocation);
     if (itor == residentAllocations.end()) {

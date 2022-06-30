@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/utilities/timer_util.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
 
@@ -15,29 +14,7 @@
 
 using namespace NEO;
 
-TEST(TimerTest, Get) {
-    Timer::setFreq();
-    Timer timer;
-
-    auto loopCount = 100u;
-
-    unsigned long long maxDelta = 0;
-    unsigned long long minDelta = -1;
-
-    while (loopCount--) {
-        timer.start();
-        timer.end();
-        unsigned long long currentDelta = timer.get();
-        maxDelta = std::max(currentDelta, maxDelta);
-        minDelta = std::min(currentDelta, minDelta);
-    }
-
-    EXPECT_LE(minDelta, 10000u);
-    //thread switch may cost up to 2s
-    EXPECT_LE(maxDelta, 2000000000u);
-}
-
-TEST(TimerTest, GetStartEnd) {
+TEST(TimerTest, WhenGettingStartEndThenEndIsAfterStart) {
 
     Timer::setFreq();
     Timer timer;
@@ -52,7 +29,7 @@ TEST(TimerTest, GetStartEnd) {
     EXPECT_GE(end, start);
 }
 
-TEST(TimerTest, Assignement) {
+TEST(TimerTest, WhenAssigningTimerThenStartTimeIsCopied) {
 
     Timer::setFreq();
     Timer timer1, timer2;

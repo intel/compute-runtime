@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/os_interface/linux/os_thread_linux.h"
+
+#include <sched.h>
 
 namespace NEO {
 ThreadLinux::ThreadLinux(pthread_t threadId) : threadId(threadId){};
@@ -19,4 +21,9 @@ std::unique_ptr<Thread> Thread::create(void *(*func)(void *), void *arg) {
 void ThreadLinux::join() {
     pthread_join(threadId, nullptr);
 }
+
+void ThreadLinux::yield() {
+    sched_yield();
+}
+
 } // namespace NEO

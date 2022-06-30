@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,31 +8,30 @@
 #pragma once
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/common_types.h"
-#include "shared/source/helpers/vec.h"
+#include "shared/source/helpers/string.h"
+#include "shared/source/unified_memory/unified_memory.h"
 
 #include "opencl/source/cl_device/cl_device_vector.h"
 #include "opencl/source/context/context_type.h"
 #include "opencl/source/context/driver_diagnostics.h"
+#include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/base_object.h"
+#include "opencl/source/helpers/destructor_callbacks.h"
+#include "opencl/source/mem_obj/map_operations_handler.h"
+
+#include <map>
 
 namespace NEO {
 
 class AsyncEventsHandler;
-struct BuiltInKernel;
 class CommandQueue;
 class Device;
-class DeviceQueue;
-class MemObj;
+class Kernel;
 class MemoryManager;
 class SharingFunctions;
 class SVMAllocsManager;
-class SchedulerKernel;
-
-enum class BlitOperationResult {
-    Unsupported,
-    Fail,
-    Success
-};
+class Program;
+class Platform;
 
 template <>
 struct OpenCLObjectMapper<_cl_context> {
@@ -60,7 +59,7 @@ class Context : public BaseObject<_cl_context> {
             delete pContext;
             pContext = nullptr;
         }
-
+        gtpinNotifyContextCreate(pContext);
         return pContext;
     }
 
@@ -68,6 +67,9 @@ class Context : public BaseObject<_cl_context> {
     Context(const Context &) = delete;
 
     ~Context() override;
+
+    cl_int setDestructorCallback(void(CL_CALLBACK *funcNotify)(cl_context, void *),
+                                 void *userData);
 
     cl_int getInfo(cl_context_info paramName, size_t paramValueSize,
                    void *paramValue, size_t *paramValueSizeRet);
@@ -77,7 +79,7 @@ class Context : public BaseObject<_cl_context> {
                                     cl_image_format *imageFormats, cl_uint *numImageFormats);
 
     size_t getNumDevices() const;
-    size_t getTotalNumDevices() const;
+    bool containsMultipleSubDevices(uint32_t rootDeviceIndex) const;
     ClDevice *getDevice(size_t deviceOrdinal) const;
 
     MemoryManager *getMemoryManager() const {
@@ -88,12 +90,31 @@ class Context : public BaseObject<_cl_context> {
         return svmAllocsManager;
     }
 
-    DeviceQueue *getDefaultDeviceQueue();
-    void setDefaultDeviceQueue(DeviceQueue *queue);
+    auto &getMapOperationsStorage() { return mapOperationsStorage; }
 
-    CommandQueue *getSpecialQueue();
-    void setSpecialQueue(CommandQueue *commandQueue);
-    void overrideSpecialQueueAndDecrementRefCount(CommandQueue *commandQueue);
+    cl_int tryGetExistingHostPtrAllocation(const void *ptr,
+                                           size_t size,
+                                           uint32_t rootDeviceIndex,
+                                           GraphicsAllocation *&allocation,
+                                           InternalMemoryType &memoryType,
+                                           bool &isCpuCopyAllowed);
+    cl_int tryGetExistingSvmAllocation(const void *ptr,
+                                       size_t size,
+                                       uint32_t rootDeviceIndex,
+                                       GraphicsAllocation *&allocation,
+                                       InternalMemoryType &memoryType,
+                                       bool &isCpuCopyAllowed);
+    cl_int tryGetExistingMapAllocation(const void *ptr,
+                                       size_t size,
+                                       GraphicsAllocation *&allocation);
+
+    const RootDeviceIndicesContainer &getRootDeviceIndices() const;
+
+    uint32_t getMaxRootDeviceIndex() const;
+
+    CommandQueue *getSpecialQueue(uint32_t rootDeviceIndex);
+    void setSpecialQueue(CommandQueue *commandQueue, uint32_t rootDeviceIndex);
+    void overrideSpecialQueueAndDecrementRefCount(CommandQueue *commandQueue, uint32_t rootDeviceIndex);
 
     template <typename Sharing>
     Sharing *getSharing();
@@ -102,11 +123,11 @@ class Context : public BaseObject<_cl_context> {
     void registerSharing(Sharing *sharing);
 
     template <typename... Args>
-    void providePerformanceHint(cl_diagnostics_verbose_level flags, PerformanceHints performanceHint, Args &&... args) {
+    void providePerformanceHint(cl_diagnostics_verbose_level flags, PerformanceHints performanceHint, Args &&...args) {
         DEBUG_BREAK_IF(contextCallback == nullptr);
         DEBUG_BREAK_IF(driverDiagnostics == nullptr);
         char hint[DriverDiagnostics::maxHintStringSize];
-        snprintf(hint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[performanceHint], std::forward<Args>(args)..., 0);
+        snprintf_s(hint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[performanceHint], std::forward<Args>(args)..., 0);
         if (driverDiagnostics->validFlags(flags)) {
             if (contextCallback) {
                 contextCallback(hint, &flags, sizeof(flags), userData);
@@ -118,7 +139,7 @@ class Context : public BaseObject<_cl_context> {
     }
 
     template <typename... Args>
-    void providePerformanceHintForMemoryTransfer(cl_command_type commandType, bool transferRequired, Args &&... args) {
+    void providePerformanceHintForMemoryTransfer(cl_command_type commandType, bool transferRequired, Args &&...args) {
         cl_diagnostics_verbose_level verboseLevel = transferRequired ? CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL
                                                                      : CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL;
         PerformanceHints hint = driverDiagnostics->obtainHintForTransferOperation(commandType, transferRequired);
@@ -133,44 +154,69 @@ class Context : public BaseObject<_cl_context> {
     bool getInteropUserSyncEnabled() { return interopUserSync; }
     void setInteropUserSyncEnabled(bool enabled) { interopUserSync = enabled; }
     bool areMultiStorageAllocationsPreferred();
+    bool isSingleDeviceContext();
 
     ContextType peekContextType() const { return contextType; }
-
-    MOCKABLE_VIRTUAL BlitOperationResult blitMemoryToAllocation(MemObj &memObj, GraphicsAllocation *memory, void *hostPtr, Vec3<size_t> size) const;
-
-    SchedulerKernel &getSchedulerKernel();
 
     bool isDeviceAssociated(const ClDevice &clDevice) const;
     ClDevice *getSubDeviceByIndex(uint32_t subDeviceIndex) const;
 
     AsyncEventsHandler &getAsyncEventsHandler() const;
 
-    DeviceBitfield getDeviceBitfieldForAllocation() const;
+    DeviceBitfield getDeviceBitfieldForAllocation(uint32_t rootDeviceIndex) const;
+    bool getResolvesRequiredInKernels() const {
+        return resolvesRequiredInKernels;
+    }
+    void setResolvesRequiredInKernels(bool resolves) {
+        resolvesRequiredInKernels = resolves;
+    }
+    const ClDeviceVector &getDevices() const {
+        return devices;
+    }
+    const std::map<uint32_t, DeviceBitfield> &getDeviceBitfields() const { return deviceBitfields; };
+
+    static Platform *getPlatformFromProperties(const cl_context_properties *properties, cl_int &errcode);
 
   protected:
+    struct BuiltInKernel {
+        const char *pSource = nullptr;
+        Program *pProgram = nullptr;
+        std::once_flag programIsInitialized; // guard for creating+building the program
+        Kernel *pKernel = nullptr;
+
+        BuiltInKernel() {
+        }
+    };
+
     Context(void(CL_CALLBACK *pfnNotify)(const char *, const void *, size_t, void *) = nullptr,
             void *userData = nullptr);
 
     // OS specific implementation
     void *getOsContextInfo(cl_context_info &paramName, size_t *srcParamSize);
 
-    cl_int processExtraProperties(cl_context_properties propertyType, cl_context_properties propertyValue);
     void setupContextType();
+
+    RootDeviceIndicesContainer rootDeviceIndices;
+    std::map<uint32_t, DeviceBitfield> deviceBitfields;
+    std::vector<std::unique_ptr<SharingFunctions>> sharingFunctions;
+    ClDeviceVector devices;
+    ContextDestructorCallbacks destructorCallbacks;
 
     const cl_context_properties *properties = nullptr;
     size_t numProperties = 0u;
     void(CL_CALLBACK *contextCallback)(const char *, const void *, size_t, void *) = nullptr;
     void *userData = nullptr;
-    std::unique_ptr<BuiltInKernel> schedulerBuiltIn;
-    ClDeviceVector devices;
     MemoryManager *memoryManager = nullptr;
     SVMAllocsManager *svmAllocsManager = nullptr;
-    CommandQueue *specialQueue = nullptr;
-    DeviceQueue *defaultDeviceQueue = nullptr;
-    std::vector<std::unique_ptr<SharingFunctions>> sharingFunctions;
+    MapOperationsStorage mapOperationsStorage = {};
+    StackVec<CommandQueue *, 1> specialQueues;
     DriverDiagnostics *driverDiagnostics = nullptr;
-    bool interopUserSync = false;
+
+    uint32_t maxRootDeviceIndex = std::numeric_limits<uint32_t>::max();
     cl_bool preferD3dSharedResources = 0u;
     ContextType contextType = ContextType::CONTEXT_TYPE_DEFAULT;
+
+    bool interopUserSync = false;
+    bool resolvesRequiredInKernels = false;
 };
 } // namespace NEO

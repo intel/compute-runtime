@@ -1,46 +1,69 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include <level_zero/zet_api.h>
+#include "level_zero/core/source/device/device.h"
+#include <level_zero/zes_api.h>
 
 #include <vector>
 
-struct _zet_sysman_freq_handle_t {};
+struct _zes_freq_handle_t {
+    virtual ~_zes_freq_handle_t() = default;
+};
 
 namespace L0 {
 
+constexpr double unsupportedProperty = -1.0;
+
 struct OsSysman;
 
-class Frequency : _zet_sysman_freq_handle_t {
+class Frequency : _zes_freq_handle_t {
   public:
-    virtual ~Frequency() {}
-    virtual ze_result_t frequencyGetProperties(zet_freq_properties_t *pProperties) = 0;
-    virtual ze_result_t frequencyGetAvailableClocks(uint32_t *pCount, double *phFrequency) = 0;
-    virtual ze_result_t frequencyGetRange(zet_freq_range_t *pLimits) = 0;
-    virtual ze_result_t frequencySetRange(const zet_freq_range_t *pLimits) = 0;
-    virtual ze_result_t frequencyGetState(zet_freq_state_t *pState) = 0;
+    ~Frequency() override {}
 
-    static Frequency *fromHandle(zet_sysman_freq_handle_t handle) {
+    virtual ze_result_t frequencyGetProperties(zes_freq_properties_t *pProperties) = 0;
+    virtual ze_result_t frequencyGetAvailableClocks(uint32_t *pCount, double *phFrequency) = 0;
+    virtual ze_result_t frequencyGetRange(zes_freq_range_t *pLimits) = 0;
+    virtual ze_result_t frequencySetRange(const zes_freq_range_t *pLimits) = 0;
+    virtual ze_result_t frequencyGetState(zes_freq_state_t *pState) = 0;
+    virtual ze_result_t frequencyGetThrottleTime(zes_freq_throttle_time_t *pThrottleTime) = 0;
+
+    // Overclocking
+    virtual ze_result_t frequencyOcGetCapabilities(zes_oc_capabilities_t *pOcCapabilities) = 0;
+    virtual ze_result_t frequencyOcGetFrequencyTarget(double *pCurrentOcfrequency) = 0;
+    virtual ze_result_t frequencyOcSetFrequencyTarget(double currentOcfrequency) = 0;
+    virtual ze_result_t frequencyOcGetVoltageTarget(double *pCurrentVoltageTarget, double *pCurrentVoltageOffset) = 0;
+    virtual ze_result_t frequencyOcSetVoltageTarget(double currentVoltageTarget, double currentVoltageOffset) = 0;
+    virtual ze_result_t frequencyOcGetMode(zes_oc_mode_t *pCurrentOcMode) = 0;
+    virtual ze_result_t frequencyOcSetMode(zes_oc_mode_t currentOcMode) = 0;
+    virtual ze_result_t frequencyOcGetIccMax(double *pOcIccMax) = 0;
+    virtual ze_result_t frequencyOcSetIccMax(double ocIccMax) = 0;
+    virtual ze_result_t frequencyOcGeTjMax(double *pOcTjMax) = 0;
+    virtual ze_result_t frequencyOcSetTjMax(double ocTjMax) = 0;
+
+    static Frequency *fromHandle(zes_freq_handle_t handle) {
         return static_cast<Frequency *>(handle);
     }
-    inline zet_sysman_freq_handle_t toHandle() { return this; }
+    inline zes_freq_handle_t toZesFreqHandle() { return this; }
 };
 
 struct FrequencyHandleContext {
     FrequencyHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     ~FrequencyHandleContext();
 
-    ze_result_t init();
+    ze_result_t init(std::vector<ze_device_handle_t> &deviceHandles);
 
-    ze_result_t frequencyGet(uint32_t *pCount, zet_sysman_freq_handle_t *phFrequency);
+    ze_result_t frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency);
 
-    OsSysman *pOsSysman;
-    std::vector<Frequency *> handle_list;
+    OsSysman *pOsSysman = nullptr;
+    std::vector<Frequency *> handleList = {};
+
+  private:
+    void createHandle(ze_device_handle_t deviceHandle, zes_freq_domain_t frequencyDomain);
 };
 
 } // namespace L0

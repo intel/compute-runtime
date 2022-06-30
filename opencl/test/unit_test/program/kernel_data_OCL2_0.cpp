@@ -1,12 +1,15 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
+
 #include "opencl/test/unit_test/fixtures/kernel_data_fixture.h"
-#include "opencl/test/unit_test/helpers/gtest_helpers.h"
+
+#include "patch_g7.h"
 
 TEST_F(KernelDataTest, GIVENpatchTokenAllocateStatelessEventPoolSurfaceWHENdecodeTokensTHENtokenLocatedInPatchInfo) {
     iOpenCL::SPatchAllocateStatelessEventPoolSurface allocateStatelessEventPoolSurface;
@@ -22,14 +25,10 @@ TEST_F(KernelDataTest, GIVENpatchTokenAllocateStatelessEventPoolSurfaceWHENdecod
 
     buildAndDecode();
 
-    EXPECT_EQ_VAL(allocateStatelessEventPoolSurface.Token,
-                  pKernelInfo->patchInfo.pAllocateStatelessEventPoolSurface->Token);
-    EXPECT_EQ_VAL(allocateStatelessEventPoolSurface.DataParamOffset,
-                  pKernelInfo->patchInfo.pAllocateStatelessEventPoolSurface->DataParamOffset);
-    EXPECT_EQ_VAL(allocateStatelessEventPoolSurface.DataParamSize,
-                  pKernelInfo->patchInfo.pAllocateStatelessEventPoolSurface->DataParamSize);
-    EXPECT_EQ_VAL(allocateStatelessEventPoolSurface.SurfaceStateHeapOffset,
-                  pKernelInfo->patchInfo.pAllocateStatelessEventPoolSurface->SurfaceStateHeapOffset);
+    const auto &eventPoolArg = pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress;
+    EXPECT_EQ_VAL(allocateStatelessEventPoolSurface.DataParamOffset, eventPoolArg.stateless);
+    EXPECT_EQ_VAL(allocateStatelessEventPoolSurface.DataParamSize, eventPoolArg.pointerSize);
+    EXPECT_EQ_VAL(allocateStatelessEventPoolSurface.SurfaceStateHeapOffset, eventPoolArg.bindful);
 }
 
 TEST_F(KernelDataTest, GIVENpatchTokenAllocateStatelessDefaultDeviceQueueSurfaceWHENdecodeTokensTHENtokenLocatedInPatchInfo) {
@@ -46,14 +45,10 @@ TEST_F(KernelDataTest, GIVENpatchTokenAllocateStatelessDefaultDeviceQueueSurface
 
     buildAndDecode();
 
-    EXPECT_EQ(allocateStatelessDefaultDeviceQueueSurface.Token,
-              pKernelInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->Token);
-    EXPECT_EQ(allocateStatelessDefaultDeviceQueueSurface.DataParamOffset,
-              pKernelInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->DataParamOffset);
-    EXPECT_EQ(allocateStatelessDefaultDeviceQueueSurface.DataParamSize,
-              pKernelInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->DataParamSize);
-    EXPECT_EQ(allocateStatelessDefaultDeviceQueueSurface.SurfaceStateHeapOffset,
-              pKernelInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->SurfaceStateHeapOffset);
+    const auto &defaultQueueSurfaceAddress = pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress;
+    EXPECT_EQ(allocateStatelessDefaultDeviceQueueSurface.DataParamOffset, defaultQueueSurfaceAddress.stateless);
+    EXPECT_EQ(allocateStatelessDefaultDeviceQueueSurface.DataParamSize, defaultQueueSurfaceAddress.pointerSize);
+    EXPECT_EQ(allocateStatelessDefaultDeviceQueueSurface.SurfaceStateHeapOffset, defaultQueueSurfaceAddress.bindful);
 }
 
 TEST_F(KernelDataTest, GIVENpatchTokenStatelessDeviceQueueKernelArgumentWHENdecodeTokensTHENapropriateKernelArgInfoFilled) {
@@ -71,14 +66,12 @@ TEST_F(KernelDataTest, GIVENpatchTokenStatelessDeviceQueueKernelArgumentWHENdeco
 
     buildAndDecode();
 
-    ASSERT_GE(pKernelInfo->kernelArgInfo.size(), size_t(4u));
-    EXPECT_EQ(pKernelInfo->kernelArgInfo[3].isDeviceQueue, true);
-    EXPECT_EQ(pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[0].crossthreadOffset,
-              deviceQueueKernelArgument.DataParamOffset);
-    EXPECT_EQ(pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[0].size,
-              deviceQueueKernelArgument.DataParamSize);
-    EXPECT_EQ(pKernelInfo->kernelArgInfo[3].offsetHeap,
-              deviceQueueKernelArgument.SurfaceStateHeapOffset);
+    ASSERT_GE(pKernelInfo->getExplicitArgs().size(), size_t(4u));
+    EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(3).getExtendedTypeInfo().isDeviceQueue);
+    const auto &argAsPtr = pKernelInfo->getArgDescriptorAt(3).as<ArgDescPointer>();
+    EXPECT_EQ(deviceQueueKernelArgument.DataParamOffset, argAsPtr.stateless);
+    EXPECT_EQ(deviceQueueKernelArgument.DataParamSize, argAsPtr.pointerSize);
+    EXPECT_EQ(deviceQueueKernelArgument.SurfaceStateHeapOffset, argAsPtr.bindful);
 }
 
 TEST_F(KernelDataTest, GIVENdataParameterParentEventWHENdecodeTokensTHENoffsetLocatedInWorkloadInfo) {
@@ -98,7 +91,7 @@ TEST_F(KernelDataTest, GIVENdataParameterParentEventWHENdecodeTokensTHENoffsetLo
 
     buildAndDecode();
 
-    EXPECT_EQ(pKernelInfo->workloadInfo.parentEventOffset, offsetSimdSize);
+    EXPECT_EQ(pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueParentEvent, offsetSimdSize);
 }
 
 TEST_F(KernelDataTest, GIVENdataParameterPreferredWorkgroupMultipleTokenWHENbinaryIsdecodedTHENcorrectOffsetIsAssigned) {
@@ -118,7 +111,7 @@ TEST_F(KernelDataTest, GIVENdataParameterPreferredWorkgroupMultipleTokenWHENbina
 
     buildAndDecode();
 
-    EXPECT_EQ(pKernelInfo->workloadInfo.preferredWkgMultipleOffset, offset);
+    EXPECT_EQ(pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.preferredWkgMultiple, offset);
 }
 
 TEST_F(KernelDataTest, GIVENdataParameterObjectIdWHENdecodeTokensTHENoffsetLocatedInKernelArgInfo) {
@@ -139,33 +132,8 @@ TEST_F(KernelDataTest, GIVENdataParameterObjectIdWHENdecodeTokensTHENoffsetLocat
 
     buildAndDecode();
 
-    ASSERT_GE(pKernelInfo->kernelArgInfo.size(), size_t(argNum + 1));
-    EXPECT_EQ(pKernelInfo->kernelArgInfo[argNum].offsetObjectId, offsetObjectId);
-}
-
-TEST_F(KernelDataTest, GIVENdataParameterChildSimdSizeWHENdecodeTokensTHENchildsIdsStoredInKernelInfoWithOffset) {
-    SPatchDataParameterBuffer patchList[3];
-    uint32_t childrenKernelIds[3] = {7, 14, 21};
-    uint32_t childrenSimdSizeOffsets[3] = {0x77, 0xAB, 0xCD};
-
-    for (int i = 0; i < 3; i++) {
-        patchList[i].Token = PATCH_TOKEN_DATA_PARAMETER_BUFFER;
-        patchList[i].Size = sizeof(SPatchDataParameterBuffer);
-        patchList[i].Type = DATA_PARAMETER_CHILD_BLOCK_SIMD_SIZE;
-        patchList[i].ArgumentNumber = childrenKernelIds[i];
-        patchList[i].Offset = childrenSimdSizeOffsets[i];
-        patchList[i].DataSize = sizeof(uint32_t);
-        patchList[i].SourceOffset = 0;
-    }
-
-    pPatchList = patchList;
-    patchListSize = sizeof(patchList);
-
-    buildAndDecode();
-
-    ASSERT_GE(pKernelInfo->childrenKernelsIdOffset.size(), size_t(3u));
-    for (int i = 0; i < 3; i++) {
-        EXPECT_EQ(pKernelInfo->childrenKernelsIdOffset[i].first, childrenKernelIds[i]);
-        EXPECT_EQ(pKernelInfo->childrenKernelsIdOffset[i].second, childrenSimdSizeOffsets[i]);
-    }
+    ASSERT_GE(pKernelInfo->getExplicitArgs().size(), size_t(argNum + 1));
+    EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(argNum).getExtendedTypeInfo().hasDeviceSideEnqueueExtendedDescriptor);
+    auto deviceSideEnqueueDesc = reinterpret_cast<NEO::ArgDescriptorDeviceSideEnqueue *>(pKernelInfo->kernelDescriptor.payloadMappings.explicitArgsExtendedDescriptors[argNum].get());
+    EXPECT_EQ(offsetObjectId, deviceSideEnqueueDesc->objectId);
 }

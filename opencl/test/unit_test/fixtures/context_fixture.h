@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,8 @@ class MockContext;
 
 class ContextFixture {
   protected:
-    virtual void SetUp(cl_uint numDevices, cl_device_id *pDeviceList);
-    virtual void TearDown();
+    void SetUp(cl_uint numDevices, cl_device_id *pDeviceList); // NOLINT(readability-identifier-naming)
+    void TearDown();                                           // NOLINT(readability-identifier-naming)
 
     MockContext *pContext = nullptr;
 };

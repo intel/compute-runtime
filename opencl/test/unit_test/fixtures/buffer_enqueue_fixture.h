@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,26 +8,25 @@
 #pragma once
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
-#include "shared/test/unit_test/cmd_parse/hw_parse.h"
-#include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
-#include "opencl/test/unit_test/helpers/execution_environment_helper.h"
+#include "opencl/test/unit_test/helpers/cl_execution_environment_helper.h"
+#include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
-#include "test.h"
 
 using namespace NEO;
 
-struct BufferEnqueueFixture : public HardwareParse,
+struct BufferEnqueueFixture : public ClHardwareParse,
                               public ::testing::Test {
     BufferEnqueueFixture(void)
         : buffer(nullptr) {
     }
 
     void SetUp() override {
-        executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
+        executionEnvironment = getClExecutionEnvironmentImpl(hwInfo, 1);
     }
 
     void TearDown() override {

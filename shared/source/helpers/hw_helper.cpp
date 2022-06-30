@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,9 @@
 #include "shared/source/helpers/hw_helper.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/hw_info.h"
+
+#include <algorithm>
 
 namespace NEO {
 HwHelper *hwHelperFactory[IGFX_MAX_CORE] = {};
@@ -16,14 +19,14 @@ HwHelper &HwHelper::get(GFXCORE_FAMILY gfxCore) {
     return *hwHelperFactory[gfxCore];
 }
 
-bool HwHelper::renderCompressedBuffersSupported(const HardwareInfo &hwInfo) {
+bool HwHelper::compressedBuffersSupported(const HardwareInfo &hwInfo) {
     if (DebugManager.flags.RenderCompressedBuffersEnabled.get() != -1) {
         return !!DebugManager.flags.RenderCompressedBuffersEnabled.get();
     }
     return hwInfo.capabilityTable.ftrRenderCompressedBuffers;
 }
 
-bool HwHelper::renderCompressedImagesSupported(const HardwareInfo &hwInfo) {
+bool HwHelper::compressedImagesSupported(const HardwareInfo &hwInfo) {
     if (DebugManager.flags.RenderCompressedImagesEnabled.get() != -1) {
         return !!DebugManager.flags.RenderCompressedImagesEnabled.get();
     }
@@ -53,8 +56,14 @@ uint32_t HwHelper::getMaxThreadsForVfe(const HardwareInfo &hwInfo) {
     return maxHwThreadsReturned;
 }
 
-uint32_t HwHelper::getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const {
-    uint32_t numThreadsPerEU = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
-    return maxNumEUsPerSubSlice * numThreadsPerEU;
+uint32_t HwHelper::getSubDevicesCount(const HardwareInfo *pHwInfo) {
+    if (DebugManager.flags.CreateMultipleSubDevices.get() > 0) {
+        return DebugManager.flags.CreateMultipleSubDevices.get();
+    } else if (pHwInfo->gtSystemInfo.MultiTileArchInfo.IsValid && pHwInfo->gtSystemInfo.MultiTileArchInfo.TileCount > 0u) {
+        return pHwInfo->gtSystemInfo.MultiTileArchInfo.TileCount;
+    } else {
+        return 1u;
+    }
 }
+
 } // namespace NEO

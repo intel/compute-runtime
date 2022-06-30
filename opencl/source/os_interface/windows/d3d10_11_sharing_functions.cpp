@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -124,17 +124,14 @@ static const DXGI_FORMAT DXGIFormats[] = {
     DXGI_FORMAT_NV12,
     DXGI_FORMAT_P010,
     DXGI_FORMAT_P016,
-    DXGI_FORMAT_420_OPAQUE,
     DXGI_FORMAT_YUY2,
     DXGI_FORMAT_Y210,
     DXGI_FORMAT_Y216,
-    DXGI_FORMAT_NV11,
     DXGI_FORMAT_AI44,
     DXGI_FORMAT_IA44,
     DXGI_FORMAT_P8,
     DXGI_FORMAT_A8P8,
     DXGI_FORMAT_B4G4R4A4_UNORM,
-    DXGI_FORMAT_P208,
     DXGI_FORMAT_V208,
     DXGI_FORMAT_V408,
     DXGI_FORMAT_FORCE_UINT};
@@ -211,8 +208,21 @@ void D3DSharingFunctions<D3D>::createTexture3d(D3DTexture3d **texture, D3DTextur
 }
 
 template <typename D3D>
-void D3DSharingFunctions<D3D>::checkFormatSupport(DXGI_FORMAT format, UINT *pFormat) {
-    d3dDevice->CheckFormatSupport(format, pFormat);
+bool D3DSharingFunctions<D3D>::checkFormatSupport(DXGI_FORMAT format, UINT *pFormat) {
+    auto errorCode = d3dDevice->CheckFormatSupport(format, pFormat);
+    return errorCode == S_OK;
+}
+
+template <typename D3D>
+cl_int D3DSharingFunctions<D3D>::validateFormatSupport(DXGI_FORMAT format, cl_mem_object_type type) {
+    auto &formats = retrieveTextureFormats(type, 0);
+    auto iter = std::find(formats.begin(), formats.end(), format);
+
+    if (iter != formats.end()) {
+        return CL_SUCCESS;
+    }
+
+    return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
 }
 
 template <typename D3D>
@@ -230,11 +240,12 @@ std::vector<DXGI_FORMAT> &D3DSharingFunctions<D3D>::retrieveTextureFormats(cl_me
         cached_formats.reserve(arrayCount(DXGIFormats));
         for (auto DXGIFormat : DXGIFormats) {
             UINT format = 0;
-            checkFormatSupport(DXGIFormat, &format);
-            if (memObjectFormatSupport(imageType, format)) {
-                cached_formats.push_back(DXGIFormat);
-                if (D3DSharing<D3D>::isFormatWithPlane1(DXGIFormat)) {
-                    planarFormats.push_back(DXGIFormat);
+            if (checkFormatSupport(DXGIFormat, &format)) {
+                if (memObjectFormatSupport(imageType, format)) {
+                    cached_formats.push_back(DXGIFormat);
+                    if (D3DSharing<D3D>::isFormatWithPlane1(DXGIFormat)) {
+                        planarFormats.push_back(DXGIFormat);
+                    }
                 }
             }
         }

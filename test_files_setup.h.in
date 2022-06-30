@@ -1,0 +1,15 @@
+/*
+ * Copyright (C) 2022 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#ifndef TEST_FILES_SETUP_H
+#define TEST_FILES_SETUP_H
+
+#cmakedefine NEO_SHARED_BUILTINS_DIR "${NEO_SHARED_BUILTINS_DIR}"
+#cmakedefine NEO_SHARED_TEST_FILES_DIR "${NEO_SHARED_TEST_FILES_DIR}"
+#cmakedefine NEO_OPENCL_TEST_FILES_DIR "${NEO_OPENCL_TEST_FILES_DIR}"
+
+#endif /* TEST_FILES_SETUP_H */

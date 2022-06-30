@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/file_io.h"
-#include "shared/test/unit_test/helpers/test_files.h"
+#include "shared/test/common/helpers/test_files.h"
 
 #include "opencl/source/context/context.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
@@ -66,8 +66,116 @@ TEST_F(clCreateProgramWithBinaryTests, GivenCorrectParametersWhenCreatingProgram
     EXPECT_EQ(nullptr, pProgram);
 }
 
+TEST_F(clCreateProgramWithBinaryTests, GivenInvalidInputWhenCreatingProgramWithBinaryThenInvalidValueErrorIsReturned) {
+    cl_program pProgram = nullptr;
+    cl_int binaryStatus = CL_INVALID_VALUE;
+    size_t binarySize = 0;
+    std::string testFile;
+    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
+
+    ASSERT_EQ(true, fileExists(testFile));
+
+    auto pBinary = loadDataFromFile(
+        testFile.c_str(),
+        binarySize);
+
+    ASSERT_NE(0u, binarySize);
+    ASSERT_NE(nullptr, pBinary);
+
+    const unsigned char *validBinaries[] = {reinterpret_cast<const unsigned char *>(pBinary.get()), reinterpret_cast<const unsigned char *>(pBinary.get())};
+    const unsigned char *invalidBinaries[] = {reinterpret_cast<const unsigned char *>(pBinary.get()), nullptr};
+    size_t validSizeBinaries[] = {binarySize, binarySize};
+    size_t invalidSizeBinaries[] = {binarySize, 0};
+
+    cl_device_id devicesForProgram[] = {testedClDevice, testedClDevice};
+
+    pProgram = clCreateProgramWithBinary(
+        pContext,
+        2,
+        devicesForProgram,
+        validSizeBinaries,
+        invalidBinaries,
+        &binaryStatus,
+        &retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(nullptr, pProgram);
+
+    retVal = CL_INVALID_PROGRAM;
+
+    pProgram = clCreateProgramWithBinary(
+        pContext,
+        2,
+        devicesForProgram,
+        invalidSizeBinaries,
+        validBinaries,
+        &binaryStatus,
+        &retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(nullptr, pProgram);
+
+    pProgram = clCreateProgramWithBinary(
+        pContext,
+        2,
+        devicesForProgram,
+        validSizeBinaries,
+        validBinaries,
+        &binaryStatus,
+        &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, pProgram);
+
+    clReleaseProgram(pProgram);
+}
+
+TEST_F(clCreateProgramWithBinaryTests, GivenDeviceNotAssociatedWithContextWhenCreatingProgramWithBinaryThenInvalidDeviceErrorIsReturned) {
+    cl_program pProgram = nullptr;
+    cl_int binaryStatus = CL_INVALID_VALUE;
+    size_t binarySize = 0;
+    std::string testFile;
+    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
+
+    ASSERT_EQ(true, fileExists(testFile));
+
+    auto pBinary = loadDataFromFile(
+        testFile.c_str(),
+        binarySize);
+
+    ASSERT_NE(0u, binarySize);
+    ASSERT_NE(nullptr, pBinary);
+
+    const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(pBinary.get())};
+
+    MockClDevice invalidDevice(new MockDevice());
+
+    cl_device_id devicesForProgram[] = {&invalidDevice};
+
+    pProgram = clCreateProgramWithBinary(
+        pContext,
+        1,
+        devicesForProgram,
+        &binarySize,
+        binaries,
+        &binaryStatus,
+        &retVal);
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+    EXPECT_EQ(nullptr, pProgram);
+
+    retVal = CL_INVALID_PROGRAM;
+    devicesForProgram[0] = nullptr;
+
+    pProgram = clCreateProgramWithBinary(
+        pContext,
+        1,
+        devicesForProgram,
+        &binarySize,
+        binaries,
+        &binaryStatus,
+        &retVal);
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+    EXPECT_EQ(nullptr, pProgram);
+}
+
 TEST_F(clCreateProgramWithILTests, GivenInvalidContextWhenCreatingProgramWithIlThenInvalidContextErrorIsReturned) {
-    REQUIRE_OCL_21_OR_SKIP(pContext);
     const uint32_t spirv[16] = {0x03022307};
 
     cl_int err = CL_SUCCESS;
@@ -77,29 +185,13 @@ TEST_F(clCreateProgramWithILTests, GivenInvalidContextWhenCreatingProgramWithIlT
 }
 
 TEST_F(clCreateProgramWithILTests, GivenNullIlWhenCreatingProgramWithIlThenInvalidValueErrorIsReturned) {
-    REQUIRE_OCL_21_OR_SKIP(pContext);
     cl_int err = CL_SUCCESS;
     cl_program prog = clCreateProgramWithIL(pContext, nullptr, 0, &err);
     EXPECT_EQ(CL_INVALID_VALUE, err);
     EXPECT_EQ(nullptr, prog);
 }
 
-TEST_F(clCreateProgramWithILTests, GivenContextWithDevicesThatDontSupportILWhenCreatingProgramWithILThenErrorIsReturned) {
-    cl_int err = CL_SUCCESS;
-    const uint32_t spirv[16] = {0x03022307};
-    cl_program prog = clCreateProgramWithIL(pContext, spirv, sizeof(spirv), &err);
-    if (pContext->getDevice(0)->areOcl21FeaturesEnabled()) {
-        EXPECT_EQ(CL_SUCCESS, err);
-        EXPECT_NE(nullptr, prog);
-        clReleaseProgram(prog);
-    } else {
-        EXPECT_EQ(CL_INVALID_VALUE, err);
-        EXPECT_EQ(nullptr, prog);
-    }
-}
-
 TEST_F(clCreateProgramWithILTests, GivenIncorrectIlSizeWhenCreatingProgramWithIlThenInvalidBinaryErrorIsReturned) {
-    REQUIRE_OCL_21_OR_SKIP(pContext);
     const uint32_t spirv[16] = {0x03022307};
 
     cl_int err = CL_SUCCESS;
@@ -109,7 +201,6 @@ TEST_F(clCreateProgramWithILTests, GivenIncorrectIlSizeWhenCreatingProgramWithIl
 }
 
 TEST_F(clCreateProgramWithILTests, GivenIncorrectIlWhenCreatingProgramWithIlThenInvalidBinaryErrorIsReturned) {
-    REQUIRE_OCL_21_OR_SKIP(pContext);
     const uint32_t notSpirv[16] = {0xDEADBEEF};
 
     cl_int err = CL_SUCCESS;
@@ -119,7 +210,6 @@ TEST_F(clCreateProgramWithILTests, GivenIncorrectIlWhenCreatingProgramWithIlThen
 }
 
 TEST_F(clCreateProgramWithILTests, GivenIncorrectIlAndNoErrorPointerWhenCreatingProgramWithIlThenInvalidBinaryErrorIsReturned) {
-    REQUIRE_OCL_21_OR_SKIP(pContext);
     const uint32_t notSpirv[16] = {0xDEADBEEF};
 
     cl_program prog = clCreateProgramWithIL(pContext, notSpirv, sizeof(notSpirv), nullptr);
@@ -127,7 +217,6 @@ TEST_F(clCreateProgramWithILTests, GivenIncorrectIlAndNoErrorPointerWhenCreating
 }
 
 TEST_F(clCreateProgramWithILKHRTests, GivenCorrectParametersWhenCreatingProgramWithIlkhrThenProgramIsCreatedAndSuccessIsReturned) {
-    REQUIRE_OCL_21_OR_SKIP(pContext);
     const uint32_t spirv[16] = {0x03022307};
 
     cl_int err = CL_INVALID_VALUE;
@@ -140,7 +229,6 @@ TEST_F(clCreateProgramWithILKHRTests, GivenCorrectParametersWhenCreatingProgramW
 }
 
 TEST_F(clCreateProgramWithILKHRTests, GivenProgramCreatedWithILWhenBuildAfterBuildIsCalledThenReturnSuccess) {
-    REQUIRE_OCL_21_OR_SKIP(pContext);
     const uint32_t spirv[16] = {0x03022307};
     cl_int err = CL_INVALID_VALUE;
     cl_program program = clCreateProgramWithIL(pContext, spirv, sizeof(spirv), &err);
@@ -155,8 +243,49 @@ TEST_F(clCreateProgramWithILKHRTests, GivenProgramCreatedWithILWhenBuildAfterBui
 }
 
 TEST_F(clCreateProgramWithILKHRTests, GivenNullIlWhenCreatingProgramWithIlkhrThenNullProgramIsReturned) {
-    REQUIRE_OCL_21_OR_SKIP(pContext);
     cl_program program = clCreateProgramWithILKHR(pContext, nullptr, 0, nullptr);
     EXPECT_EQ(nullptr, program);
 }
+
+TEST_F(clCreateProgramWithILKHRTests, GivenBothFunctionVariantsWhenCreatingProgramWithIlThenCommonLogicIsUsed) {
+    VariableBackup<ProgramFunctions::CreateFromILFunc> createFromIlBackup{&ProgramFunctions::createFromIL};
+
+    bool createFromIlCalled;
+    Context *receivedContext;
+    const void *receivedIl;
+    size_t receivedLength;
+    auto mockFunction = [&](Context *ctx,
+                            const void *il,
+                            size_t length,
+                            cl_int &errcodeRet) -> Program * {
+        createFromIlCalled = true;
+        receivedContext = ctx;
+        receivedIl = il;
+        receivedLength = length;
+        return nullptr;
+    };
+    createFromIlBackup = mockFunction;
+    const uint32_t spirv[16] = {0x03022307};
+
+    createFromIlCalled = false;
+    receivedContext = nullptr;
+    receivedIl = nullptr;
+    receivedLength = 0;
+    clCreateProgramWithIL(pContext, spirv, sizeof(spirv), nullptr);
+    EXPECT_TRUE(createFromIlCalled);
+    EXPECT_EQ(pContext, receivedContext);
+    EXPECT_EQ(&spirv, receivedIl);
+    EXPECT_EQ(sizeof(spirv), receivedLength);
+
+    createFromIlCalled = false;
+    receivedContext = nullptr;
+    receivedIl = nullptr;
+    receivedLength = 0;
+    clCreateProgramWithILKHR(pContext, spirv, sizeof(spirv), nullptr);
+    EXPECT_TRUE(createFromIlCalled);
+    EXPECT_EQ(pContext, receivedContext);
+    EXPECT_EQ(&spirv, receivedIl);
+    EXPECT_EQ(sizeof(spirv), receivedLength);
+}
+
 } // namespace ULT

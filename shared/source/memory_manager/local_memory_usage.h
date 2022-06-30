@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
@@ -18,7 +19,7 @@ class LocalMemoryUsageBankSelector : public NonCopyableOrMovableClass {
   public:
     LocalMemoryUsageBankSelector() = delete;
     LocalMemoryUsageBankSelector(uint32_t banksCount);
-    uint32_t getLeastOccupiedBank();
+    uint32_t getLeastOccupiedBank(DeviceBitfield deviceBitfield);
     void reserveOnBanks(uint32_t memoryBanks, uint64_t allocationSize) {
         updateUsageInfo(memoryBanks, allocationSize, true);
     }

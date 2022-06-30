@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/source/context/context.h"
 #include "opencl/source/event/event.h"
-#include "test.h"
 
 #include "cl_api_tests.h"
 
@@ -33,7 +34,7 @@ TEST_F(clEventTests, GivenNullEventWhenReleasingEventThenClInvalidEventErrorIsRe
     EXPECT_EQ(CL_INVALID_EVENT, retVal);
 }
 
-TEST_F(clEventTests, GivenValidEventWhenReleasingEventTheSuccessIsReturned) {
+TEST_F(clEventTests, GivenValidEventWhenReleasingEventThenSuccessIsReturned) {
     auto *pEvent = new Event(nullptr, 0, 0, 0);
     ASSERT_NE(nullptr, pEvent);
 

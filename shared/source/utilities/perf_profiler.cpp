@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,6 @@
 #include <cstring>
 #include <sstream>
 #include <thread>
-
 
 namespace NEO {
 
@@ -54,7 +53,7 @@ void PerfProfiler::destroyAll() {
     gPerfProfiler = nullptr;
 }
 
-PerfProfiler::PerfProfiler(int id, std::unique_ptr<std::ostream> logOut, std::unique_ptr<std::ostream> sysLogOut) : totalSystemTime(0) {
+PerfProfiler::PerfProfiler(int id, std::unique_ptr<std::ostream> &&logOut, std::unique_ptr<std::ostream> &&sysLogOut) {
     ApiTimer.setFreq();
 
     systemLogs.reserve(20);

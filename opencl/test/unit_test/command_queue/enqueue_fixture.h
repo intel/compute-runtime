@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -176,9 +176,9 @@ struct EnqueueCopyImageHelper {
     static cl_int enqueueCopyImage(CommandQueue *pCmdQ,
                                    Image *srcImage = nullptr,
                                    Image *dstImage = nullptr,
-                                   const size_t srcOrigin[3] = Traits::srcOrigin,
-                                   const size_t dstOrigin[3] = Traits::dstOrigin,
-                                   const size_t region[3] = Traits::region,
+                                   const size_t *srcOrigin = Traits::srcOrigin,
+                                   const size_t *dstOrigin = Traits::dstOrigin,
+                                   const size_t *region = Traits::region,
                                    cl_uint numEventsInWaitList = Traits::numEventsInWaitList,
                                    const cl_event *eventWaitList = Traits::eventWaitList,
                                    cl_event *event = Traits::event) {
@@ -412,7 +412,7 @@ struct EnqueueReadBufferHelper {
                                     const cl_event *eventWaitList = Traits::eventWaitList,
                                     cl_event *event = Traits::event) {
 
-        size = size == static_cast<size_t>(-1) ? buffer->getSize() : size;
+        size = size == static_cast<size_t>(-1) ? buffer->getSize() : size; // NOLINT(clang-analyzer-core.CallAndMessage)
 
         cl_int retVal = pCmdQ->enqueueReadBuffer(buffer,
                                                  blockingRead,
@@ -518,7 +518,7 @@ struct EnqueueWriteBufferHelper {
                                      const cl_event *eventWaitList = Traits::eventWaitList,
                                      cl_event *event = Traits::event) {
 
-        size = size == static_cast<size_t>(-1) ? buffer->getSize() : size;
+        size = size == static_cast<size_t>(-1) ? buffer->getSize() : size; // NOLINT(clang-analyzer-core.CallAndMessage)
 
         cl_int retVal = pCmdQ->enqueueWriteBuffer(buffer,
                                                   blockingWrite,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,12 +7,13 @@
 
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/compiler_interface.inl"
+#include "shared/test/common/mocks/mock_cif.h"
+#include "shared/test/common/mocks/mock_compilers.h"
 
-#include "opencl/test/unit_test/mocks/mock_cif.h"
-#include "opencl/test/unit_test/mocks/mock_compilers.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 #include <memory>
 
@@ -20,7 +21,7 @@ using namespace NEO;
 
 struct UpdateSpecConstantsTest : public ::testing::Test {
     void SetUp() override {
-        mockProgram.reset(new MockProgram(executionEnvironment));
+        mockProgram.reset(new MockProgram(toClDeviceVector(device)));
 
         mockProgram->specConstantsIds.reset(new MockCIFBuffer());
         mockProgram->specConstantsSizes.reset(new MockCIFBuffer());
@@ -44,7 +45,7 @@ struct UpdateSpecConstantsTest : public ::testing::Test {
         EXPECT_EQ(val2, static_cast<uint16_t>(values->at(id2)));
         EXPECT_EQ(val3, static_cast<int>(values->at(id3)));
     }
-    ExecutionEnvironment executionEnvironment;
+    MockClDevice device{new MockDevice()};
     std::unique_ptr<MockProgram> mockProgram;
 
     uint32_t id1 = 1u;

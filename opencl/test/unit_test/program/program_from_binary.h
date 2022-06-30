@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,17 +21,19 @@ namespace NEO {
 // ProgramFromBinaryTest Test Fixture
 //      Used to test the Program class
 ////////////////////////////////////////////////////////////////////////////////
-class ProgramFromBinaryTest : public ClDeviceFixture,
-                              public ContextFixture,
-                              public ProgramFixture,
-                              public testing::TestWithParam<std::tuple<const char *, const char *>> {
+struct ProgramFromBinaryFixture : public ClDeviceFixture,
+                                  public ContextFixture,
+                                  public ProgramFixture,
+                                  public testing::Test {
 
     using ContextFixture::SetUp;
 
-  protected:
     void SetUp() override {
-        std::tie(BinaryFileName, KernelName) = GetParam();
-
+        ProgramFromBinaryFixture::SetUp("CopyBuffer_simd32", "CopyBuffer");
+    }
+    void SetUp(const char *binaryFileName, const char *kernelName) {
+        this->binaryFileName = binaryFileName;
+        this->kernelName = kernelName;
         ClDeviceFixture::SetUp();
 
         cl_device_id device = pClDevice;
@@ -39,9 +41,9 @@ class ProgramFromBinaryTest : public ClDeviceFixture,
         ProgramFixture::SetUp();
 
         if (options.size())
-            CreateProgramFromBinary(pContext, &device, BinaryFileName, options);
+            CreateProgramFromBinary(pContext, pContext->getDevices(), binaryFileName, options);
         else
-            CreateProgramFromBinary(pContext, &device, BinaryFileName);
+            CreateProgramFromBinary(pContext, pContext->getDevices(), binaryFileName);
     }
 
     void TearDown() override {
@@ -55,8 +57,8 @@ class ProgramFromBinaryTest : public ClDeviceFixture,
         options = optionsIn;
     }
 
-    const char *BinaryFileName = nullptr;
-    const char *KernelName = nullptr;
+    const char *binaryFileName = nullptr;
+    const char *kernelName = nullptr;
     cl_int retVal = CL_SUCCESS;
     std::string options;
 };

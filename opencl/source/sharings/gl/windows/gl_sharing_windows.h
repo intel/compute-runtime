@@ -44,6 +44,8 @@ typedef void (*PFNglArbSyncObjectCleanup)(OSInterface &osInterface, CL_GL_SYNC_I
 typedef void (*PFNglArbSyncObjectSignal)(OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo);
 typedef void (*PFNglArbSyncObjectWaitServer)(OSInterface &osInterface, CL_GL_SYNC_INFO &glSyncInfo);
 
+typedef LUID(OSAPI *PFNGLGETLUIDINTEL)(HGLRC hglrcHandle);
+
 class GLSharingFunctionsWindows : public GLSharingFunctions {
   public:
     GLSharingFunctionsWindows() = default;
@@ -122,6 +124,8 @@ class GLSharingFunctionsWindows : public GLSharingFunctions {
         pfnGlArbSyncObjectWaitServer(osInterface, glSyncInfo);
     }
 
+    LUID getAdapterLuid(GLContext glhglrcHandle) const;
+
     // Buffer reuse
     std::mutex mutex;
     std::vector<std::pair<unsigned int, GraphicsAllocation *>> graphicsAllocationsForGlBufferReuse;
@@ -169,6 +173,7 @@ class GLSharingFunctionsWindows : public GLSharingFunctions {
     PFNglArbSyncObjectCleanup pfnGlArbSyncObjectCleanup = nullptr;
     PFNglArbSyncObjectSignal pfnGlArbSyncObjectSignal = nullptr;
     PFNglArbSyncObjectWaitServer pfnGlArbSyncObjectWaitServer = nullptr;
+    PFNGLGETLUIDINTEL glGetLuid = nullptr;
 
     // support for GL_ARB_cl_event
     std::mutex glArbEventMutex;

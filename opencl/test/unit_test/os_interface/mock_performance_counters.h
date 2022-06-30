@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,9 @@
 
 #pragma once
 #include "shared/source/device/device.h"
-#include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/test/common/mocks/mock_device.h"
 
-#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
@@ -82,7 +82,7 @@ class MockMetricsLibrary : public MetricsLibrary {
     bool open() override;
 
     // Context create / destroy functions.
-    bool contextCreate              (const ClientType_1_0 &client, ClientData_1_0& clientData, ContextCreateData_1_0 &createData, ContextHandle_1_0 &handle) override;
+    bool contextCreate              (const ClientType_1_0 &client, ClientOptionsSubDeviceData_1_0 &subDevice, ClientOptionsSubDeviceIndexData_1_0 &subDeviceIndex, ClientOptionsSubDeviceCountData_1_0 &subDeviceCount, ClientData_1_0& clientData, ContextCreateData_1_0 &createData, ContextHandle_1_0 &handle) override;
     bool contextDelete              (const ContextHandle_1_0 &handle) override;
 
     // HwCounters functions.
@@ -118,18 +118,18 @@ class MockMetricsLibraryValidInterface: public MetricsLibraryInterface {
     bool     validActivateConfigurationOa = true;
     bool     validGpuReportSize           = true;
 
-    static StatusCode ML_STDCALL ContextCreate             ( ClientType_1_0 clientType, ContextCreateData_1_0* createData, ContextHandle_1_0* handle );
-    static StatusCode ML_STDCALL ContextDelete             (const ContextHandle_1_0 handle);
-    static StatusCode ML_STDCALL GetParameter              (const ParameterType parameter, ValueType *type, TypedValue_1_0 *value);
-    static StatusCode ML_STDCALL CommandBufferGet          (const CommandBufferData_1_0 *data);
-    static StatusCode ML_STDCALL CommandBufferGetSize      (const CommandBufferData_1_0 *data, CommandBufferSize_1_0 *size);
-    static StatusCode ML_STDCALL QueryCreate               (const QueryCreateData_1_0 *createData, QueryHandle_1_0 *handle);
-    static StatusCode ML_STDCALL QueryDelete               (const QueryHandle_1_0 handle);
-    static StatusCode ML_STDCALL ConfigurationCreate       (const ConfigurationCreateData_1_0 *createData, ConfigurationHandle_1_0 *handle);
-    static StatusCode ML_STDCALL ConfigurationActivate     (const ConfigurationHandle_1_0 handle, const ConfigurationActivateData_1_0 *activateData);
-    static StatusCode ML_STDCALL ConfigurationDeactivate   (const ConfigurationHandle_1_0 handle) { return StatusCode::Success; }
-    static StatusCode ML_STDCALL ConfigurationDelete       (const ConfigurationHandle_1_0 handle);
-    static StatusCode ML_STDCALL GetData                   (GetReportData_1_0 *data);
+    static StatusCode ML_STDCALL ContextCreate             ( ClientType_1_0 clientType, ContextCreateData_1_0* createData, ContextHandle_1_0* handle ); // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL ContextDelete             (const ContextHandle_1_0 handle); // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL GetParameter              (const ParameterType parameter, ValueType *type, TypedValue_1_0 *value); // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL CommandBufferGet          (const CommandBufferData_1_0 *data); // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL CommandBufferGetSize      (const CommandBufferData_1_0 *data, CommandBufferSize_1_0 *size); // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL QueryCreate               (const QueryCreateData_1_0 *createData, QueryHandle_1_0 *handle); // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL QueryDelete               (const QueryHandle_1_0 handle); // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL ConfigurationCreate       (const ConfigurationCreateData_1_0 *createData, ConfigurationHandle_1_0 *handle); // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL ConfigurationActivate     (const ConfigurationHandle_1_0 handle, const ConfigurationActivateData_1_0 *activateData); // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL ConfigurationDeactivate   (const ConfigurationHandle_1_0 handle) { return StatusCode::Success; } // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL ConfigurationDelete       (const ConfigurationHandle_1_0 handle); // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL GetData                   (GetReportData_1_0 *data); // NOLINT(readability-identifier-naming)
 
     MockMetricsLibraryValidInterface()
     {
@@ -153,18 +153,18 @@ class MockMetricsLibraryValidInterface: public MetricsLibraryInterface {
 //////////////////////////////////////////////////////
 class MockMetricsLibraryInvalidInterface: public MetricsLibraryInterface {
   public:
-    static StatusCode ML_STDCALL ContextCreate             ( ClientType_1_0 clientType, ContextCreateData_1_0* createData, ContextHandle_1_0* handle ){ return StatusCode::Failed;}
-    static StatusCode ML_STDCALL ContextDelete             (const ContextHandle_1_0 handle){ return StatusCode::Failed;}
-    static StatusCode ML_STDCALL GetParameter              (const ParameterType parameter, ValueType *type, TypedValue_1_0 *value){ return StatusCode::Failed;}
-    static StatusCode ML_STDCALL CommandBufferGet          (const CommandBufferData_1_0 *data){ return StatusCode::Failed;}
-    static StatusCode ML_STDCALL CommandBufferGetSize      (const CommandBufferData_1_0 *data, CommandBufferSize_1_0 *size){ return StatusCode::Failed;}
-    static StatusCode ML_STDCALL QueryCreate               (const QueryCreateData_1_0 *createData, QueryHandle_1_0 *handle){ return StatusCode::Failed;}
-    static StatusCode ML_STDCALL QueryDelete               (const QueryHandle_1_0 handle){ return StatusCode::Failed;}
-    static StatusCode ML_STDCALL ConfigurationCreate       (const ConfigurationCreateData_1_0 *createData, ConfigurationHandle_1_0 *handle){ return StatusCode::Failed;}
-    static StatusCode ML_STDCALL ConfigurationActivate     (const ConfigurationHandle_1_0 handle, const ConfigurationActivateData_1_0 *activateData){ return StatusCode::Failed;}
-    static StatusCode ML_STDCALL ConfigurationDeactivate   (const ConfigurationHandle_1_0 handle){ return StatusCode::Failed;}
-    static StatusCode ML_STDCALL ConfigurationDelete       (const ConfigurationHandle_1_0 handle){ return StatusCode::Failed;}
-    static StatusCode ML_STDCALL GetData                   (GetReportData_1_0 *data){ return StatusCode::Failed;}
+    static StatusCode ML_STDCALL ContextCreate             ( ClientType_1_0 clientType, ContextCreateData_1_0* createData, ContextHandle_1_0* handle ){ return StatusCode::Failed;} // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL ContextDelete             (const ContextHandle_1_0 handle){ return StatusCode::Failed;} // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL GetParameter              (const ParameterType parameter, ValueType *type, TypedValue_1_0 *value){ return StatusCode::Failed;} // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL CommandBufferGet          (const CommandBufferData_1_0 *data){ return StatusCode::Failed;} // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL CommandBufferGetSize      (const CommandBufferData_1_0 *data, CommandBufferSize_1_0 *size){ return StatusCode::Failed;} // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL QueryCreate               (const QueryCreateData_1_0 *createData, QueryHandle_1_0 *handle){ return StatusCode::Failed;} // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL QueryDelete               (const QueryHandle_1_0 handle){ return StatusCode::Failed;} // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL ConfigurationCreate       (const ConfigurationCreateData_1_0 *createData, ConfigurationHandle_1_0 *handle){ return StatusCode::Failed;} // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL ConfigurationActivate     (const ConfigurationHandle_1_0 handle, const ConfigurationActivateData_1_0 *activateData){ return StatusCode::Failed;} // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL ConfigurationDeactivate   (const ConfigurationHandle_1_0 handle){ return StatusCode::Failed;} // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL ConfigurationDelete       (const ConfigurationHandle_1_0 handle){ return StatusCode::Failed;} // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL GetData                   (GetReportData_1_0 *data){ return StatusCode::Failed;} // NOLINT(readability-identifier-naming)
 
     MockMetricsLibraryInvalidInterface()
     {
@@ -209,8 +209,8 @@ class MockPerformanceCounters {
 // PerformanceCountersDeviceFixture
 //////////////////////////////////////////////////////
 struct PerformanceCountersDeviceFixture {
-    virtual void SetUp();
-    virtual void TearDown();
+    virtual void SetUp();    // NOLINT(readability-identifier-naming)
+    virtual void TearDown(); // NOLINT(readability-identifier-naming)
     decltype(&PerformanceCounters::create) createFunc;
 };
 
@@ -222,8 +222,8 @@ struct RootDeviceEnvironment;
 struct PerformanceCountersFixture {
     PerformanceCountersFixture();
     ~PerformanceCountersFixture();
-    virtual void SetUp();
-    virtual void TearDown();
+    virtual void SetUp();    // NOLINT(readability-identifier-naming)
+    virtual void TearDown(); // NOLINT(readability-identifier-naming)
     virtual void createPerfCounters();
     cl_queue_properties queueProperties = {};
     std::unique_ptr<MockClDevice> device;

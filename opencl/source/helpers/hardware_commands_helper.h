@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,8 @@
 
 #pragma once
 #include "shared/source/built_ins/built_ins.h"
-#include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/helpers/per_thread_data.h"
 
-#include "opencl/source/helpers/per_thread_data.h"
 #include "opencl/source/kernel/kernel.h"
 
 #include <algorithm>
@@ -24,10 +23,8 @@ struct CrossThreadInfo;
 struct MultiDispatchInfo;
 
 template <typename GfxFamily>
-using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
-
-template <typename GfxFamily>
 struct HardwareCommandsHelper : public PerThreadDataHelper {
+    using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
@@ -39,17 +36,6 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         uint64_t offsetInterfaceDescriptor,
         INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor);
 
-    static void setGrfInfo(
-        INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor,
-        const Kernel &kernel,
-        const size_t &sizeCrossThreadData,
-        const size_t &sizePerThreadData);
-
-    static void setAdditionalInfo(
-        INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor,
-        const Kernel &kernel,
-        const uint32_t numThreadsPerThreadGroup);
-
     inline static uint32_t additionalSizeRequiredDsh();
 
     static size_t sendInterfaceDescriptorData(
@@ -59,13 +45,14 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         size_t sizeCrossThreadData,
         size_t sizePerThreadData,
         size_t bindingTablePointer,
-        size_t offsetSamplerState,
+        [[maybe_unused]] size_t offsetSamplerState,
         uint32_t numSamplers,
         uint32_t numThreadsPerThreadGroup,
         const Kernel &kernel,
         uint32_t bindingTablePrefetchSize,
         PreemptionMode preemptionMode,
-        INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor);
+        INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
+        const Device &device);
 
     static void sendMediaStateFlush(
         LinearStream &commandStream,
@@ -80,12 +67,8 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         IndirectHeap &indirectHeap,
         Kernel &kernel,
         bool inlineDataProgrammingRequired,
-        WALKER_TYPE<GfxFamily> *walkerCmd,
+        WALKER_TYPE *walkerCmd,
         uint32_t &sizeCrossThreadData);
-
-    static size_t pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap, size_t bindingTableCount,
-                                                   const void *srcKernelSsh, size_t srcKernelSshSize,
-                                                   size_t numberOfBindingTableStates, size_t offsetOfBindingTable);
 
     static size_t sendIndirectState(
         LinearStream &commandStream,
@@ -99,9 +82,10 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         const uint64_t offsetInterfaceDescriptorTable,
         uint32_t &interfaceDescriptorIndex,
         PreemptionMode preemptionMode,
-        WALKER_TYPE<GfxFamily> *walkerCmd,
+        WALKER_TYPE *walkerCmd,
         INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
-        bool localIdsGenerationByRuntime);
+        bool localIdsGenerationByRuntime,
+        const Device &device);
 
     static void programPerThreadData(
         size_t &sizePerThreadData,
@@ -112,7 +96,8 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         const size_t localWorkSize[3],
         Kernel &kernel,
         size_t &sizePerThreadDataTotal,
-        size_t &localWorkItems);
+        size_t &localWorkItems,
+        uint32_t rootDeviceIndex);
 
     static void updatePerThreadDataTotal(
         size_t &sizePerThreadData,
@@ -121,12 +106,11 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         size_t &sizePerThreadDataTotal,
         size_t &localWorkItems);
 
-    inline static bool resetBindingTablePrefetch(Kernel &kernel);
+    inline static bool resetBindingTablePrefetch();
 
-    static size_t getSizeRequiredCS(const Kernel *kernel);
+    static size_t getSizeRequiredCS();
     static size_t getSizeRequiredForCacheFlush(const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress);
-    static bool isPipeControlWArequired(const HardwareInfo &hwInfo);
-    static bool isPipeControlPriorToPipelineSelectWArequired(const HardwareInfo &hwInfo);
+
     static size_t getSizeRequiredDSH(
         const Kernel &kernel);
     static size_t getSizeRequiredIOH(
@@ -142,26 +126,11 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
     static size_t getTotalSizeRequiredSSH(
         const MultiDispatchInfo &multiDispatchInfo);
 
-    static size_t getSshSizeForExecutionModel(const Kernel &kernel);
     static void setInterfaceDescriptorOffset(
-        WALKER_TYPE<GfxFamily> *walkerCmd,
+        WALKER_TYPE *walkerCmd,
         uint32_t &interfaceDescriptorIndex);
 
-    static void programMiSemaphoreWait(LinearStream &commandStream,
-                                       uint64_t compareAddress,
-                                       uint32_t compareData,
-                                       COMPARE_OPERATION compareMode);
-
-    static void programMiAtomic(LinearStream &commandStream, uint64_t writeAddress, typename MI_ATOMIC::ATOMIC_OPCODES opcode, typename MI_ATOMIC::DATA_SIZE dataSize);
-    static void programMiAtomic(MI_ATOMIC &atomic, uint64_t writeAddress, typename MI_ATOMIC::ATOMIC_OPCODES opcode, typename MI_ATOMIC::DATA_SIZE dataSize);
     static void programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress);
-    static void programBarrierEnable(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, uint32_t value, const HardwareInfo &hwInfo);
-    static void adjustInterfaceDescriptorData(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const HardwareInfo &hwInfo);
-
-    static const size_t alignInterfaceDescriptorData = 64 * sizeof(uint8_t);
-    static const uint32_t alignIndirectStatePointer = 64 * sizeof(uint8_t);
-
-    static bool doBindingTablePrefetch();
 
     static bool inlineDataProgrammingRequired(const Kernel &kernel);
     static bool kernelUsesLocalIds(const Kernel &kernel);

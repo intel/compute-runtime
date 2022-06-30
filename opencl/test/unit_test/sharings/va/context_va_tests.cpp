@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/sharings/va/va_sharing.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
@@ -48,7 +48,7 @@ struct VAContextTest : public PlatformFixture,
     cl_context_properties *properties = nullptr;
 };
 
-TEST_F(VAContextTest, sharingAreNotPresentByDefault) {
+TEST_F(VAContextTest, GivenDefaultThenSharingNotPresent) {
     ASSERT_EQ(context->getSharing<VASharingFunctions>(), nullptr);
 }
 

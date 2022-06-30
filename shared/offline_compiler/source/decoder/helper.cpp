@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,14 +8,19 @@
 #include "helper.h"
 
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/os_library.h"
-
-#include "opencl/source/os_interface/os_inc_base.h"
 
 #include "igfxfmid.h"
 
 #include <algorithm>
 #include <fstream>
+
+void (*abortOclocExecution)(int) = abortOclocExecutionDefaultHandler;
+
+void abortOclocExecutionDefaultHandler(int errorCode) {
+    exit(errorCode);
+}
 
 void addSlash(std::string &path) {
     if (!path.empty()) {
@@ -38,7 +43,9 @@ std::vector<char> readBinaryFile(const std::string &fileName) {
         return binary;
     } else {
         printf("Error! Couldn't open %s\n", fileName.c_str());
-        exit(1);
+        abortOclocExecution(1);
+
+        return {};
     }
 }
 

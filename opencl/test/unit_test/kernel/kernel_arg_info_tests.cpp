@@ -1,19 +1,20 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/fixtures/memory_management_fixture.h"
+#include "shared/test/common/helpers/kernel_binary_helper.h"
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
-#include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/program/program_tests.h"
 #include "opencl/test/unit_test/program/program_with_source.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -31,12 +32,8 @@ class KernelArgInfoTest : public ProgramFromSourceTest {
         ASSERT_NE(nullptr, pProgram);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
-        cl_device_id device = pPlatform->getClDevice(0);
         retVal = pProgram->build(
-            1,
-            &device,
-            nullptr,
-            nullptr,
+            pProgram->getDevices(),
             nullptr,
             false);
         ASSERT_EQ(CL_SUCCESS, retVal);
@@ -44,7 +41,8 @@ class KernelArgInfoTest : public ProgramFromSourceTest {
         // create a kernel
         pKernel = Kernel::create(
             pProgram,
-            *pProgram->getKernelInfo(KernelName),
+            pProgram->getKernelInfoForKernel(kernelName),
+            *pPlatform->getClDevice(0),
             &retVal);
 
         ASSERT_EQ(CL_SUCCESS, retVal);
@@ -61,7 +59,7 @@ class KernelArgInfoTest : public ProgramFromSourceTest {
     template <typename T>
     void queryArgInfo(cl_kernel_arg_info paramName, T &paramValue) {
         size_t paramValueSize = 0;
-        size_t param_value_size_ret = 0;
+        size_t paramValueSizeRet = 0;
 
         // get size
         retVal = pKernel->getArgInfo(
@@ -69,12 +67,12 @@ class KernelArgInfoTest : public ProgramFromSourceTest {
             paramName,
             paramValueSize,
             nullptr,
-            &param_value_size_ret);
-        EXPECT_NE(0u, param_value_size_ret);
+            &paramValueSizeRet);
+        EXPECT_NE(0u, paramValueSizeRet);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
         // get the name
-        paramValueSize = param_value_size_ret;
+        paramValueSize = paramValueSizeRet;
 
         retVal = pKernel->getArgInfo(
             0,
@@ -90,16 +88,12 @@ class KernelArgInfoTest : public ProgramFromSourceTest {
     KernelBinaryHelper *kbHelper = nullptr;
 };
 
-TEST_P(KernelArgInfoTest, Create_Simple) {
-    // included in the setup of fixture
-}
-
-TEST_P(KernelArgInfoTest, WhenQueryingWithNullptrKernelNameTheniReturnNullptr) {
-    auto kernelInfo = this->pProgram->getKernelInfo(nullptr);
+TEST_F(KernelArgInfoTest, GivenNullWhenGettingKernelInfoThenNullIsReturned) {
+    auto kernelInfo = this->pProgram->getKernelInfo(nullptr, 0);
     EXPECT_EQ(nullptr, kernelInfo);
 }
 
-TEST_P(KernelArgInfoTest, GivenInvalidParametersWhenGettingKernelArgInfoThenValueSizeRetIsNotUpdated) {
+TEST_F(KernelArgInfoTest, GivenInvalidParametersWhenGettingKernelArgInfoThenValueSizeRetIsNotUpdated) {
     size_t paramValueSizeRet = 0x1234;
 
     retVal = pKernel->getArgInfo(
@@ -112,95 +106,105 @@ TEST_P(KernelArgInfoTest, GivenInvalidParametersWhenGettingKernelArgInfoThenValu
     EXPECT_EQ(0x1234u, paramValueSizeRet);
 }
 
-TEST_P(KernelArgInfoTest, getKernelArgAcessQualifier) {
-    cl_kernel_arg_access_qualifier param_value = 0;
-    queryArgInfo<cl_kernel_arg_access_qualifier>(CL_KERNEL_ARG_ACCESS_QUALIFIER, param_value);
-    EXPECT_EQ(static_cast<cl_kernel_arg_access_qualifier>(CL_KERNEL_ARG_ACCESS_NONE), param_value);
+TEST_F(KernelArgInfoTest, GivenKernelArgAccessQualifierWhenQueryingArgInfoThenKernelArgAcessNoneIsReturned) {
+    auto &kernelDescriptor = const_cast<KernelDescriptor &>(pKernel->getDescriptor());
+    auto &argTraits = kernelDescriptor.payloadMappings.explicitArgs[0].getTraits();
+    argTraits.accessQualifier = KernelArgMetadata::AccessNone;
+
+    cl_kernel_arg_access_qualifier paramValue = 0;
+    queryArgInfo<cl_kernel_arg_access_qualifier>(CL_KERNEL_ARG_ACCESS_QUALIFIER, paramValue);
+    EXPECT_EQ(static_cast<cl_kernel_arg_access_qualifier>(CL_KERNEL_ARG_ACCESS_NONE), paramValue);
 }
 
-TEST_P(KernelArgInfoTest, getKernelAddressQulifier) {
-    cl_kernel_arg_address_qualifier param_value = 0;
-    queryArgInfo<cl_kernel_arg_address_qualifier>(CL_KERNEL_ARG_ADDRESS_QUALIFIER, param_value);
-    EXPECT_EQ(static_cast<cl_kernel_arg_address_qualifier>(CL_KERNEL_ARG_ADDRESS_GLOBAL), param_value);
+TEST_F(KernelArgInfoTest, GivenKernelArgAddressQualifierWhenQueryingArgInfoThenKernelArgAddressGlobalIsReturned) {
+    auto &kernelDescriptor = const_cast<KernelDescriptor &>(pKernel->getDescriptor());
+    auto &argTraits = kernelDescriptor.payloadMappings.explicitArgs[0].getTraits();
+    argTraits.addressQualifier = KernelArgMetadata::AddrGlobal;
+
+    cl_kernel_arg_address_qualifier paramValue = 0;
+    queryArgInfo<cl_kernel_arg_address_qualifier>(CL_KERNEL_ARG_ADDRESS_QUALIFIER, paramValue);
+    EXPECT_EQ(static_cast<cl_kernel_arg_address_qualifier>(CL_KERNEL_ARG_ADDRESS_GLOBAL), paramValue);
 }
 
-TEST_P(KernelArgInfoTest, getKernelTypeQualifer) {
-    cl_kernel_arg_type_qualifier param_value = 0;
-    queryArgInfo<cl_kernel_arg_type_qualifier>(CL_KERNEL_ARG_TYPE_QUALIFIER, param_value);
-    EXPECT_EQ(static_cast<cl_kernel_arg_type_qualifier>(CL_KERNEL_ARG_TYPE_NONE), param_value);
+TEST_F(KernelArgInfoTest, GivenKernelArgTypeQualifierWhenQueryingArgInfoThenKernelArgTypeNoneIsReturned) {
+    cl_kernel_arg_type_qualifier paramValue = 0;
+    queryArgInfo<cl_kernel_arg_type_qualifier>(CL_KERNEL_ARG_TYPE_QUALIFIER, paramValue);
+    EXPECT_EQ(static_cast<cl_kernel_arg_type_qualifier>(CL_KERNEL_ARG_TYPE_NONE), paramValue);
 }
 
-TEST_P(KernelArgInfoTest, getKernelTypeName) {
-    cl_kernel_arg_info param_name = CL_KERNEL_ARG_TYPE_NAME;
-    char *param_value = nullptr;
+TEST_F(KernelArgInfoTest, GivenParamWhenGettingKernelTypeNameThenCorrectValueIsReturned) {
+    cl_uint argInd = 0;
+    const char expectedArgType[] = "uint*";
+    auto &kernelDescriptor = const_cast<KernelDescriptor &>(pKernel->getDescriptor());
+    kernelDescriptor.explicitArgsExtendedMetadata.at(argInd).type = expectedArgType;
+
+    cl_kernel_arg_info paramName = CL_KERNEL_ARG_TYPE_NAME;
+    char *paramValue = nullptr;
     size_t paramValueSize = 0;
-    size_t param_value_size_ret = 0;
+    size_t paramValueSizeRet = 0;
 
     // get size
     retVal = pKernel->getArgInfo(
-        0,
-        param_name,
+        argInd,
+        paramName,
         paramValueSize,
         nullptr,
-        &param_value_size_ret);
-    EXPECT_NE(0u, param_value_size_ret);
+        &paramValueSizeRet);
+    EXPECT_NE(0u, paramValueSizeRet);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     // allocate space for name
-    param_value = new char[param_value_size_ret];
+    paramValue = new char[paramValueSizeRet];
 
     // get the name
-    paramValueSize = param_value_size_ret;
+    paramValueSize = paramValueSizeRet;
 
     retVal = pKernel->getArgInfo(
         0,
-        param_name,
+        paramName,
         paramValueSize,
-        param_value,
+        paramValue,
         nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    const char expectedString[] = "uint*";
-    auto result = strncmp(param_value, expectedString, sizeof(expectedString));
+    auto result = strncmp(paramValue, expectedArgType, sizeof(expectedArgType));
     EXPECT_EQ(0, result);
-    delete[] param_value;
+    delete[] paramValue;
 }
 
-TEST_P(KernelArgInfoTest, getKernelArgName) {
-    cl_kernel_arg_info param_name = CL_KERNEL_ARG_NAME;
-    char *param_value = nullptr;
+TEST_F(KernelArgInfoTest, GivenParamWhenGettingKernelArgNameThenCorrectValueIsReturned) {
+    cl_uint argInd = 0;
+    const char expectedArgName[] = "src";
+    auto &kernelDescriptor = const_cast<KernelDescriptor &>(pKernel->getDescriptor());
+    kernelDescriptor.explicitArgsExtendedMetadata.at(argInd).argName = expectedArgName;
+
+    cl_kernel_arg_info paramName = CL_KERNEL_ARG_NAME;
+    char *paramValue = nullptr;
     size_t paramValueSize = 0;
-    size_t param_value_size_ret = 0;
+    size_t paramValueSizeRet = 0;
 
     // get size
     retVal = pKernel->getArgInfo(
-        0,
-        param_name,
+        argInd,
+        paramName,
         paramValueSize,
         nullptr,
-        &param_value_size_ret);
-    EXPECT_NE(0u, param_value_size_ret);
+        &paramValueSizeRet);
+    EXPECT_NE(0u, paramValueSizeRet);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     // allocate space for name
-    param_value = new char[param_value_size_ret];
+    paramValue = new char[paramValueSizeRet];
 
     // get the name
-    paramValueSize = param_value_size_ret;
+    paramValueSize = paramValueSizeRet;
 
     retVal = pKernel->getArgInfo(
         0,
-        param_name,
+        paramName,
         paramValueSize,
-        param_value,
+        paramValue,
         nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0, strcmp(param_value, "src"));
-    delete[] param_value;
+    EXPECT_EQ(0, strcmp(paramValue, expectedArgName));
+    delete[] paramValue;
 }
-
-INSTANTIATE_TEST_CASE_P(KernelArgInfoTests,
-                        KernelArgInfoTest,
-                        ::testing::Combine(
-                            ::testing::ValuesIn(SourceFileNames),
-                            ::testing::ValuesIn(BinaryForSourceFileNames),
-                            ::testing::ValuesIn(KernelNames)));

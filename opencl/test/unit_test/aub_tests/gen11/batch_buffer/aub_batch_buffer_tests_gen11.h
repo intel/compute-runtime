@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "opencl/source/aub/aub_helper.h"
+#include "shared/source/aub/aub_helper.h"
+
 #include "opencl/test/unit_test/aub_tests/command_stream/aub_mem_dump_tests.h"
 
 template <typename FamilyType>
@@ -28,7 +29,9 @@ void setupAUBWithBatchBuffer(const NEO::Device *pDevice, aub_stream::EngineType 
     aubFile.fileHandle.open(filePath.c_str(), std::ofstream::binary);
 
     // Header
-    aubFile.init(AubMemDump::SteppingValues::A, AUB::Traits::device);
+    auto &hwInfo = pDevice->getHardwareInfo();
+    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    aubFile.init(hwInfoConfig.getAubStreamSteppingFromHwRevId(hwInfo), AUB::Traits::device);
 
     aubFile.writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x229c), 0xffff8280);
 
@@ -93,7 +96,7 @@ void setupAUBWithBatchBuffer(const NEO::Device *pDevice, aub_stream::EngineType 
 
     auto cur = (uint32_t *)pRing;
     auto bbs = FamilyType::cmdInitBatchBufferStart;
-    bbs.setBatchBufferStartAddressGraphicsaddress472(gpuBatchBuffer);
+    bbs.setBatchBufferStartAddress(gpuBatchBuffer);
     bbs.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
     *(MI_BATCH_BUFFER_START *)cur = bbs;
     cur = ptrOffset(cur, sizeof(MI_BATCH_BUFFER_START));

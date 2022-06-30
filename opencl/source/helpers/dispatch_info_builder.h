@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/local_work_size.h"
 
-#include "opencl/source/command_queue/gpgpu_walker.h"
+#include "opencl/source/command_queue/cl_local_work_size.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/kernel/kernel.h"
 
@@ -62,7 +63,11 @@ static constexpr uint32_t powConst(uint32_t base, uint32_t currExp) {
 template <SplitDispatch::Dim Dim, SplitDispatch::SplitMode Mode>
 class DispatchInfoBuilder {
   public:
-    DispatchInfoBuilder() = default;
+    DispatchInfoBuilder(ClDevice &clDevice) {
+        for (auto i = 0u; i < numDispatches; i++) {
+            dispatchInfos[i].setClDevice(&clDevice);
+        }
+    };
 
     void setKernel(Kernel *kernel) {
         for (auto &dispatchInfo : dispatchInfos) {
@@ -73,14 +78,14 @@ class DispatchInfoBuilder {
     cl_int setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocation *svmAlloc) {
         for (auto &dispatchInfo : dispatchInfos) {
             if (dispatchInfo.getKernel()) {
-                dispatchInfo.getKernel()->setArgSvmAlloc(argIndex, svmPtr, svmAlloc);
+                dispatchInfo.getKernel()->setArgSvmAlloc(argIndex, svmPtr, svmAlloc, 0u);
             }
         }
         return CL_SUCCESS;
     }
 
     template <typename... ArgsT>
-    cl_int setArgSvm(ArgsT &&... args) {
+    cl_int setArgSvm(ArgsT &&...args) {
         for (auto &dispatchInfo : dispatchInfos) {
             if (dispatchInfo.getKernel()) {
                 dispatchInfo.getKernel()->setArgSvm(std::forward<ArgsT>(args)...);
@@ -97,23 +102,23 @@ class DispatchInfoBuilder {
 
     template <SplitDispatch::Dim D = Dim, typename... ArgsT>
     typename std::enable_if<(D == SplitDispatch::Dim::d1D) && (Mode != SplitDispatch::SplitMode::NoSplit), void>::type
-    setArgSvm(SplitDispatch::RegionCoordX x, ArgsT &&... args) {
+    setArgSvm(SplitDispatch::RegionCoordX x, ArgsT &&...args) {
         dispatchInfos[getDispatchId(x)].getKernel()->setArgSvm(std::forward<ArgsT>(args)...);
     }
 
     template <SplitDispatch::Dim D = Dim, typename... ArgsT>
     typename std::enable_if<(D == SplitDispatch::Dim::d2D) && (Mode != SplitDispatch::SplitMode::NoSplit), void>::type
-    setArgSvm(SplitDispatch::RegionCoordX x, SplitDispatch::RegionCoordY y, ArgsT &&... args) {
+    setArgSvm(SplitDispatch::RegionCoordX x, SplitDispatch::RegionCoordY y, ArgsT &&...args) {
         dispatchInfos[getDispatchId(x, y)].getKernel()->setArgSvm(std::forward<ArgsT>(args)...);
     }
     template <SplitDispatch::Dim D = Dim, typename... ArgsT>
     typename std::enable_if<(D == SplitDispatch::Dim::d3D) && (Mode != SplitDispatch::SplitMode::NoSplit), void>::type
-    setArgSvm(SplitDispatch::RegionCoordX x, SplitDispatch::RegionCoordY y, SplitDispatch::RegionCoordZ z, ArgsT &&... args) {
+    setArgSvm(SplitDispatch::RegionCoordX x, SplitDispatch::RegionCoordY y, SplitDispatch::RegionCoordZ z, ArgsT &&...args) {
         dispatchInfos[getDispatchId(x, y, z)].getKernel()->setArgSvm(std::forward<ArgsT>(args)...);
     }
 
     template <typename... ArgsT>
-    cl_int setArg(ArgsT &&... args) {
+    cl_int setArg(ArgsT &&...args) {
         cl_int result = CL_SUCCESS;
         for (auto &dispatchInfo : dispatchInfos) {
             if (dispatchInfo.getKernel()) {
@@ -128,18 +133,18 @@ class DispatchInfoBuilder {
 
     template <SplitDispatch::Dim D = Dim, typename... ArgsT>
     typename std::enable_if<(D == SplitDispatch::Dim::d1D) && (Mode != SplitDispatch::SplitMode::NoSplit), void>::type
-    setArg(SplitDispatch::RegionCoordX x, ArgsT &&... args) {
+    setArg(SplitDispatch::RegionCoordX x, ArgsT &&...args) {
         dispatchInfos[getDispatchId(x)].getKernel()->setArg(std::forward<ArgsT>(args)...);
     }
 
     template <SplitDispatch::Dim D = Dim, typename... ArgsT>
     typename std::enable_if<(D == SplitDispatch::Dim::d2D) && (Mode != SplitDispatch::SplitMode::NoSplit), void>::type
-    setArg(SplitDispatch::RegionCoordX x, SplitDispatch::RegionCoordY y, ArgsT &&... args) {
+    setArg(SplitDispatch::RegionCoordX x, SplitDispatch::RegionCoordY y, ArgsT &&...args) {
         dispatchInfos[getDispatchId(x, y)].getKernel()->setArg(std::forward<ArgsT>(args)...);
     }
     template <SplitDispatch::Dim D = Dim, typename... ArgsT>
     typename std::enable_if<(D == SplitDispatch::Dim::d3D) && (Mode != SplitDispatch::SplitMode::NoSplit), void>::type
-    setArg(SplitDispatch::RegionCoordX x, SplitDispatch::RegionCoordY y, SplitDispatch::RegionCoordZ z, ArgsT &&... args) {
+    setArg(SplitDispatch::RegionCoordX x, SplitDispatch::RegionCoordY y, SplitDispatch::RegionCoordZ z, ArgsT &&...args) {
         dispatchInfos[getDispatchId(x, y, z)].getKernel()->setArg(std::forward<ArgsT>(args)...);
     }
     template <SplitDispatch::Dim D = Dim>
@@ -241,46 +246,49 @@ class DispatchInfoBuilder {
 
     void bake(MultiDispatchInfo &target) {
         for (auto &dispatchInfo : dispatchInfos) {
-            if (((dispatchInfo.getDim() == 1) && (dispatchInfo.getGWS().x > 0)) ||
-                ((dispatchInfo.getDim() == 2) && (dispatchInfo.getGWS().x > 0) && (dispatchInfo.getGWS().y > 0)) ||
-                ((dispatchInfo.getDim() == 3) && (dispatchInfo.getGWS().x > 0) && (dispatchInfo.getGWS().y > 0) && (dispatchInfo.getGWS().z > 0))) {
-                dispatchInfo.setDim(calculateDispatchDim(dispatchInfo.getGWS(), dispatchInfo.getOffset()));
-                dispatchInfo.setGWS(canonizeWorkgroup(dispatchInfo.getGWS()));
-                if (dispatchInfo.getActualWorkgroupSize() == Vec3<size_t>({0, 0, 0})) {
-                    dispatchInfo.setActualGlobalWorkgroupSize(dispatchInfo.getGWS());
-                }
-                if (((dispatchInfo.getDim() == 1) && (dispatchInfo.getActualWorkgroupSize().x > 0)) ||
-                    ((dispatchInfo.getDim() == 2) && (dispatchInfo.getActualWorkgroupSize().x > 0) && (dispatchInfo.getActualWorkgroupSize().y > 0)) ||
-                    ((dispatchInfo.getDim() == 3) && (dispatchInfo.getActualWorkgroupSize().x > 0) && (dispatchInfo.getActualWorkgroupSize().y > 0) && (dispatchInfo.getActualWorkgroupSize().z > 0))) {
-                    dispatchInfo.setEnqueuedWorkgroupSize(canonizeWorkgroup(dispatchInfo.getEnqueuedWorkgroupSize()));
-                    if (dispatchInfo.getLocalWorkgroupSize().x == 0) {
-                        dispatchInfo.setLWS(generateWorkgroupSize(dispatchInfo));
-                    }
-                    dispatchInfo.setLWS(canonizeWorkgroup(dispatchInfo.getLocalWorkgroupSize()));
-                    if (dispatchInfo.getTotalNumberOfWorkgroups().x == 0) {
-                        dispatchInfo.setTotalNumberOfWorkgroups(generateWorkgroupsNumber(dispatchInfo));
-                    }
-                    dispatchInfo.setTotalNumberOfWorkgroups(canonizeWorkgroup(dispatchInfo.getTotalNumberOfWorkgroups()));
-                    if (dispatchInfo.getNumberOfWorkgroups().x == 0) {
-                        dispatchInfo.setNumberOfWorkgroups(dispatchInfo.getTotalNumberOfWorkgroups());
-                    }
-                    if (supportsSplit() && needsSplit(dispatchInfo)) {
-                        pushSplit(dispatchInfo, target);
-                    } else {
-                        target.push(dispatchInfo);
-                        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stdout,
-                                         "DIM:%u\tGWS:(%zu, %zu, %zu)\tELWS:(%zu, %zu, %zu)\tOffset:(%zu, %zu, %zu)\tAGWS:(%zu, %zu, %zu)\tLWS:(%zu, %zu, %zu)\tTWGS:(%zu, %zu, %zu)\tNWGS:(%zu, %zu, %zu)\tSWGS:(%zu, %zu, %zu)\n",
-                                         dispatchInfo.getDim(),
-                                         dispatchInfo.getGWS().x, dispatchInfo.getGWS().y, dispatchInfo.getGWS().z,
-                                         dispatchInfo.getEnqueuedWorkgroupSize().x, dispatchInfo.getEnqueuedWorkgroupSize().y, dispatchInfo.getEnqueuedWorkgroupSize().z,
-                                         dispatchInfo.getOffset().x, dispatchInfo.getOffset().y, dispatchInfo.getOffset().z,
-                                         dispatchInfo.getActualWorkgroupSize().x, dispatchInfo.getActualWorkgroupSize().y, dispatchInfo.getActualWorkgroupSize().z,
-                                         dispatchInfo.getLocalWorkgroupSize().x, dispatchInfo.getLocalWorkgroupSize().y, dispatchInfo.getLocalWorkgroupSize().z,
-                                         dispatchInfo.getTotalNumberOfWorkgroups().x, dispatchInfo.getTotalNumberOfWorkgroups().y, dispatchInfo.getTotalNumberOfWorkgroups().z,
-                                         dispatchInfo.getNumberOfWorkgroups().x, dispatchInfo.getNumberOfWorkgroups().y, dispatchInfo.getNumberOfWorkgroups().z,
-                                         dispatchInfo.getStartOfWorkgroups().x, dispatchInfo.getStartOfWorkgroups().y, dispatchInfo.getStartOfWorkgroups().z);
-                    }
-                }
+            if (!isWorkSizeValid(dispatchInfo.getDim(), dispatchInfo.getGWS())) {
+                continue;
+            }
+
+            dispatchInfo.setDim(dispatchInfo.getDim() == 0 ? calculateDispatchDim(dispatchInfo.getGWS(), dispatchInfo.getOffset()) : dispatchInfo.getDim());
+            dispatchInfo.setGWS(canonizeWorkgroup(dispatchInfo.getGWS()));
+            if (dispatchInfo.getActualWorkgroupSize() == Vec3<size_t>({0, 0, 0})) {
+                dispatchInfo.setActualGlobalWorkgroupSize(dispatchInfo.getGWS());
+            }
+
+            if (!isWorkSizeValid(dispatchInfo.getDim(), dispatchInfo.getActualWorkgroupSize())) {
+                continue;
+            }
+
+            dispatchInfo.setEnqueuedWorkgroupSize(canonizeWorkgroup(dispatchInfo.getEnqueuedWorkgroupSize()));
+            if (dispatchInfo.getLocalWorkgroupSize().x == 0) {
+                dispatchInfo.setLWS(generateWorkgroupSize(dispatchInfo));
+            }
+            dispatchInfo.setLWS(canonizeWorkgroup(dispatchInfo.getLocalWorkgroupSize()));
+            if (dispatchInfo.getTotalNumberOfWorkgroups().x == 0) {
+                dispatchInfo.setTotalNumberOfWorkgroups(generateWorkgroupsNumber(dispatchInfo));
+            }
+
+            dispatchInfo.setTotalNumberOfWorkgroups(canonizeWorkgroup(dispatchInfo.getTotalNumberOfWorkgroups()));
+            if (dispatchInfo.getNumberOfWorkgroups().x == 0) {
+                dispatchInfo.setNumberOfWorkgroups(dispatchInfo.getTotalNumberOfWorkgroups());
+            }
+
+            if (supportsSplit() && needsSplit(dispatchInfo)) {
+                pushSplit(dispatchInfo, target);
+            } else {
+                target.push(dispatchInfo);
+                PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stdout,
+                                   "DIM:%u\tGWS:(%zu, %zu, %zu)\tELWS:(%zu, %zu, %zu)\tOffset:(%zu, %zu, %zu)\tAGWS:(%zu, %zu, %zu)\tLWS:(%zu, %zu, %zu)\tTWGS:(%zu, %zu, %zu)\tNWGS:(%zu, %zu, %zu)\tSWGS:(%zu, %zu, %zu)\n",
+                                   dispatchInfo.getDim(),
+                                   dispatchInfo.getGWS().x, dispatchInfo.getGWS().y, dispatchInfo.getGWS().z,
+                                   dispatchInfo.getEnqueuedWorkgroupSize().x, dispatchInfo.getEnqueuedWorkgroupSize().y, dispatchInfo.getEnqueuedWorkgroupSize().z,
+                                   dispatchInfo.getOffset().x, dispatchInfo.getOffset().y, dispatchInfo.getOffset().z,
+                                   dispatchInfo.getActualWorkgroupSize().x, dispatchInfo.getActualWorkgroupSize().y, dispatchInfo.getActualWorkgroupSize().z,
+                                   dispatchInfo.getLocalWorkgroupSize().x, dispatchInfo.getLocalWorkgroupSize().y, dispatchInfo.getLocalWorkgroupSize().z,
+                                   dispatchInfo.getTotalNumberOfWorkgroups().x, dispatchInfo.getTotalNumberOfWorkgroups().y, dispatchInfo.getTotalNumberOfWorkgroups().z,
+                                   dispatchInfo.getNumberOfWorkgroups().x, dispatchInfo.getNumberOfWorkgroups().y, dispatchInfo.getNumberOfWorkgroups().z,
+                                   dispatchInfo.getStartOfWorkgroups().x, dispatchInfo.getStartOfWorkgroups().y, dispatchInfo.getStartOfWorkgroups().z);
             }
         }
     }
@@ -321,7 +329,7 @@ class DispatchInfoBuilder {
             Vec3<size_t> mainSWGS = {0, 0, 0};
             Vec3<size_t> rightSWGS = {mainNWGS.x, 0, 0};
 
-            DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::KernelSplit> builder1D;
+            DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::KernelSplit> builder1D(dispatchInfo.getClDevice());
 
             builder1D.setKernel(dispatchInfo.getKernel());
 
@@ -351,7 +359,7 @@ class DispatchInfoBuilder {
             Vec3<size_t> bottomSWGS = {0, mainNWGS.y, 0};
             Vec3<size_t> rightbottomSWGS = {mainNWGS.x, mainNWGS.y, 0};
 
-            DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::KernelSplit> builder2D;
+            DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::KernelSplit> builder2D(dispatchInfo.getClDevice());
 
             builder2D.setKernel(dispatchInfo.getKernel());
 
@@ -399,7 +407,7 @@ class DispatchInfoBuilder {
             Vec3<size_t> bottombackSWGS = {0, mainNWGS.y, mainNWGS.z};
             Vec3<size_t> rightbottombackSWGS = {mainNWGS.x, mainNWGS.y, mainNWGS.z};
 
-            DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::KernelSplit> builder3D;
+            DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::KernelSplit> builder3D(dispatchInfo.getClDevice());
 
             builder3D.setKernel(dispatchInfo.getKernel());
 
@@ -442,5 +450,19 @@ class DispatchInfoBuilder {
     static size_t isIndivisible(size_t x, size_t y) {
         return x % y ? 1 : 0;
     }
+
+    static bool isWorkSizeValid(uint32_t dim, const Vec3<size_t> &workSize) {
+        switch (dim) {
+        case 1:
+            return workSize.x > 0;
+        case 2:
+            return workSize.x > 0 && workSize.y > 0;
+        case 3:
+            return workSize.x > 0 && workSize.y > 0 && workSize.z > 0;
+        default:
+            return true;
+        }
+    }
 };
+
 } // namespace NEO

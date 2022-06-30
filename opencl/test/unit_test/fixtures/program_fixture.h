@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/file_io.h"
-#include "shared/test/unit_test/helpers/test_files.h"
+#include "shared/test/common/helpers/test_files.h"
 
 #include "opencl/source/program/program.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
@@ -18,30 +18,29 @@ namespace NEO {
 
 class ProgramFixture {
   public:
-    void CreateProgramFromBinary(cl_context context,
-                                 cl_device_id *pDeviceList,
+    void CreateProgramFromBinary(Context *pContext, // NOLINT(readability-identifier-naming)
+                                 const ClDeviceVector &deviceVector,
                                  const std::string &binaryFileName,
                                  cl_int &retVal,
                                  const std::string &options = "");
 
-    void CreateProgramFromBinary(cl_context pContext,
-                                 cl_device_id *pDeviceList,
+    void CreateProgramFromBinary(Context *pContext, // NOLINT(readability-identifier-naming)
+                                 const ClDeviceVector &deviceVector,
                                  const std::string &binaryFileName,
                                  const std::string &options = "");
 
-    void CreateProgramWithSource(cl_context pContext,
-                                 cl_device_id *pDeviceList,
+    void CreateProgramWithSource(Context *pContext, // NOLINT(readability-identifier-naming)
                                  const std::string &sourceFileName);
 
   protected:
-    virtual void SetUp() {
+    virtual void SetUp() { // NOLINT(readability-identifier-naming)
     }
 
-    virtual void TearDown() {
+    virtual void TearDown() { // NOLINT(readability-identifier-naming)
         Cleanup();
     }
 
-    void Cleanup() {
+    void Cleanup() { // NOLINT(readability-identifier-naming)
         if (pProgram != nullptr) {
             pProgram->release();
         }

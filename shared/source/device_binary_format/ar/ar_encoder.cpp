@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,6 +55,7 @@ ArFileEntryHeader *ArEncoder::appendFileEntry(const ConstStringRef fileName, con
 
 std::vector<uint8_t> ArEncoder::encode() const {
     std::vector<uint8_t> ret;
+    ret.reserve(arMagic.size() + 1);
     ret.insert(ret.end(), reinterpret_cast<const uint8_t *>(arMagic.begin()), reinterpret_cast<const uint8_t *>(arMagic.end()));
     ret.insert(ret.end(), this->fileEntries.begin(), this->fileEntries.end());
     return ret;

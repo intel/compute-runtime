@@ -6,18 +6,21 @@
  */
 
 #pragma once
+#include "shared/source/os_interface/linux/drm_neo.h"
+
 #include "sysman/scheduler/scheduler_imp.h"
 
 #include <string>
 
 namespace L0 {
 class SysfsAccess;
+struct Device;
 
 // Following below mappings of scheduler properties with sysfs nodes
-// zet_sched_timeslice_properties_t.interval = timeslice_duration_ms
-// zet_sched_timeslice_properties_t.yieldTimeout = preempt_timeout_ms
-// zet_sched_timeout_properties_t. watchdogTimeout =  heartbeat_interval_ms
-class LinuxSchedulerImp : public NEO::NonCopyableClass, public OsScheduler {
+// zes_sched_timeslice_properties_t.interval = timeslice_duration_ms
+// zes_sched_timeslice_properties_t.yieldTimeout = preempt_timeout_ms
+// zes_sched_timeout_properties_t. watchdogTimeout =  heartbeat_interval_ms
+class LinuxSchedulerImp : public OsScheduler, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getPreemptTimeout(uint64_t &timeout, ze_bool_t getDefault) override;
     ze_result_t getTimesliceDuration(uint64_t &timeslice, ze_bool_t getDefault) override;
@@ -25,12 +28,20 @@ class LinuxSchedulerImp : public NEO::NonCopyableClass, public OsScheduler {
     ze_result_t setPreemptTimeout(uint64_t timeout) override;
     ze_result_t setTimesliceDuration(uint64_t timeslice) override;
     ze_result_t setHeartbeatInterval(uint64_t heartbeat) override;
+    ze_bool_t canControlScheduler() override;
+    ze_result_t getProperties(zes_sched_properties_t &properties) override;
     LinuxSchedulerImp() = default;
-    LinuxSchedulerImp(OsSysman *pOsSysman);
+    LinuxSchedulerImp(OsSysman *pOsSysman, zes_engine_type_flag_t type,
+                      std::vector<std::string> &listOfEngines, ze_bool_t isSubdevice, uint32_t subdeviceId);
     ~LinuxSchedulerImp() override = default;
+    static const std::string engineDir;
 
   protected:
     SysfsAccess *pSysfsAccess = nullptr;
+    Device *pDevice = nullptr;
+    zes_engine_type_flag_t engineType = ZES_ENGINE_TYPE_FLAG_OTHER;
+    ze_bool_t onSubdevice = 0;
+    uint32_t subdeviceId = 0;
 
   private:
     static const std::string preemptTimeoutMilliSecs;
@@ -39,6 +50,7 @@ class LinuxSchedulerImp : public NEO::NonCopyableClass, public OsScheduler {
     static const std::string defaultTimesliceDurationMilliSecs;
     static const std::string heartbeatIntervalMilliSecs;
     static const std::string defaultHeartbeatIntervalMilliSecs;
+    std::vector<std::string> listOfEngines = {};
 };
 
 } // namespace L0

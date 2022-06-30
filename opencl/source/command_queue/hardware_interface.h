@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,29 +19,27 @@ class DispatchInfo;
 class IndirectHeap;
 class Kernel;
 class LinearStream;
-struct HwPerfCounter;
-struct HwTimeStamps;
+class HwPerfCounter;
+class HwTimeStamps;
 struct KernelOperation;
 struct MultiDispatchInfo;
 
 template <class T>
-struct TagNode;
-
-template <typename GfxFamily>
-using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
+class TagNode;
 
 template <typename GfxFamily>
 class HardwareInterface {
   public:
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
+    using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
 
     static void dispatchWalker(
         CommandQueue &commandQueue,
         const MultiDispatchInfo &multiDispatchInfo,
         const CsrDependencies &csrDependencies,
         KernelOperation *blockedCommandsData,
-        TagNode<HwTimeStamps> *hwTimeStamps,
-        TagNode<HwPerfCounter> *hwPerfCounter,
+        TagNodeBase *hwTimeStamps,
+        TagNodeBase *hwPerfCounter,
         TimestampPacketDependencies *timestampPacketDependencies,
         TimestampPacketContainer *currentTimestampPacketNodes,
         uint32_t commandType);
@@ -51,7 +49,6 @@ class HardwareInterface {
         CommandQueue &commandQueue,
         const MultiDispatchInfo &multiDispatchInfo,
         size_t &totalInterfaceDescriptorTableSize,
-        Kernel *parentKernel,
         IndirectHeap *dsh,
         LinearStream *commandStream);
 
@@ -62,14 +59,14 @@ class HardwareInterface {
         const bool &enable);
 
     static void dispatchProfilingPerfStartCommands(
-        TagNode<HwTimeStamps> *hwTimeStamps,
-        TagNode<HwPerfCounter> *hwPerfCounter,
+        TagNodeBase *hwTimeStamps,
+        TagNodeBase *hwPerfCounter,
         LinearStream *commandStream,
         CommandQueue &commandQueue);
 
     static void dispatchProfilingPerfEndCommands(
-        TagNode<HwTimeStamps> *hwTimeStamps,
-        TagNode<HwPerfCounter> *hwPerfCounter,
+        TagNodeBase *hwTimeStamps,
+        TagNodeBase *hwPerfCounter,
         LinearStream *commandStream,
         CommandQueue &commandQueue);
 
@@ -77,7 +74,8 @@ class HardwareInterface {
         LinearStream *commandStream,
         CommandQueue &commandQueue,
         DebugPauseState confirmationTrigger,
-        DebugPauseState waitCondition);
+        DebugPauseState waitCondition,
+        const HardwareInfo &hwInfo);
 
     static void programWalker(
         LinearStream &commandStream,
@@ -94,11 +92,11 @@ class HardwareInterface {
         uint32_t &interfaceDescriptorIndex,
         const DispatchInfo &dispatchInfo,
         size_t offsetInterfaceDescriptorTable,
-        Vec3<size_t> &numberOfWorkgroups,
-        Vec3<size_t> &startOfWorkgroups);
+        const Vec3<size_t> &numberOfWorkgroups,
+        const Vec3<size_t> &startOfWorkgroups);
 
-    static WALKER_TYPE<GfxFamily> *allocateWalkerSpace(LinearStream &commandStream,
-                                                       const Kernel &kernel);
+    static WALKER_TYPE *allocateWalkerSpace(LinearStream &commandStream,
+                                            const Kernel &kernel);
 
     static void obtainIndirectHeaps(CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo,
                                     bool blockedQueue, IndirectHeap *&dsh, IndirectHeap *&ioh, IndirectHeap *&ssh);

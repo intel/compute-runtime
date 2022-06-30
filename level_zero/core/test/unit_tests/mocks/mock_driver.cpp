@@ -1,23 +1,20 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "mock_driver.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_driver.h"
 
 namespace L0 {
 namespace ult {
 
 using MockDriver = Mock<L0::ult::Driver>;
-using ::testing::Invoke;
 
 Mock<Driver>::Mock() {
     previousDriver = driver;
     driver = this;
-    EXPECT_CALL(*this, initialize)
-        .WillRepeatedly(Invoke(this, &MockDriver::mockInitialize));
 }
 
 Mock<Driver>::~Mock() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,4 +29,14 @@ TEST_F(clEnqueueBarrierWithWaitListTests, GivenValidCommandQueueWhenEnqueuingBar
         nullptr,
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(clEnqueueBarrierWithWaitListTests, GivenQueueIncapableWhenEnqueuingBarrierWithWaitListThenInvalidOperationIsReturned) {
+    this->disableQueueCapabilities(CL_QUEUE_CAPABILITY_BARRIER_INTEL);
+    auto retVal = clEnqueueBarrierWithWaitList(
+        pCommandQueue,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 }

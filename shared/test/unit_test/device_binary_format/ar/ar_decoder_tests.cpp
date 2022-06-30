@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/device_binary_format/ar/ar_decoder.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO::Ar;
 
@@ -47,20 +46,20 @@ TEST(ArDecoderIsStringPadding, GivenCharacterThenReturnsTrueOnlyIfArStringPaddin
     EXPECT_FALSE(isStringPadding('a'));
 }
 
-TEST(ArDecoderReadUnpaddedString, GivenPaddedStringTheReturnsUnpaddedStringPart) {
+TEST(ArDecoderReadUnpaddedString, GivenPaddedStringThenReturnUnpaddedStringPart) {
     const char paddedString[] = "abcd/   \0";
     auto unpadded = readUnpaddedString<sizeof(paddedString)>(paddedString);
     EXPECT_EQ(paddedString, unpadded.begin());
     EXPECT_EQ(4U, unpadded.size());
 }
 
-TEST(ArDecoderReadUnpaddedString, GivenEmptyPaddedStringTheReturnsEmptyString) {
+TEST(ArDecoderReadUnpaddedString, GivenEmptyPaddedStringThenReturnEmptyString) {
     const char paddedString[] = "//   \0";
     auto unpadded = readUnpaddedString<sizeof(paddedString)>(paddedString);
     EXPECT_TRUE(unpadded.empty());
 }
 
-TEST(ArDecoderReadUnpaddedString, GivenUnpaddedStringTheReturnsDataInBounds) {
+TEST(ArDecoderReadUnpaddedString, GivenUnpaddedStringThenReturnDataInBounds) {
     const char paddedString[] = "abcdefgh";
     auto unpadded = readUnpaddedString<3>(paddedString);
     EXPECT_EQ(paddedString, unpadded.begin());
@@ -119,7 +118,7 @@ TEST(ArDecoderDecodeAr, GivenValidArThenDecodingSucceeds) {
     EXPECT_TRUE(ar.longFileNamesEntry.fileName.empty());
     ASSERT_EQ(1U, ar.files.size());
     EXPECT_EQ(reinterpret_cast<ArFileEntryHeader *>(arStorage.data() + arMagic.size()), ar.files[0].fullHeader);
-    EXPECT_EQ("a", ar.files[0].fileName);
+    EXPECT_EQ(NEO::ConstStringRef("a"), ar.files[0].fileName);
     EXPECT_EQ(arStorage.data() + arMagic.size() + sizeof(ArFileEntryHeader), ar.files[0].fileData.begin());
     EXPECT_EQ(8U, ar.files[0].fileData.size());
 }
@@ -139,8 +138,8 @@ TEST(ArDecoderDecodeAr, GivenArWhenFileEntryHeaderHasEmptyIdentifierThenDecoding
     EXPECT_EQ(nullptr, ar.magic);
     EXPECT_EQ(0U, ar.files.size());
     EXPECT_EQ(nullptr, ar.longFileNamesEntry.fullHeader);
-    EXPECT_TRUE(decodeWarnings.empty());
-    EXPECT_FALSE(decodeErrors.empty());
+    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+    EXPECT_FALSE(decodeErrors.empty()) << decodeErrors;
     EXPECT_STREQ("Corrupt AR archive - file entry does not have identifier : '/               '", decodeErrors.c_str());
 }
 

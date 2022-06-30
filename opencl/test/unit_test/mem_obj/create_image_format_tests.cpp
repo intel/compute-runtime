@@ -1,15 +1,16 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "opencl/source/helpers/memory_properties_helpers.h"
+#include "shared/test/common/fixtures/memory_management_fixture.h"
+
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
@@ -61,10 +62,10 @@ class CreateImageFormatTest : public testing::TestWithParam<size_t> {
 
 typedef CreateImageFormatTest<CL_MEM_READ_WRITE> ReadWriteFormatTest;
 
-TEST_P(ReadWriteFormatTest, returnsSuccess) {
+TEST_P(ReadWriteFormatTest, GivenValidFormatWhenCreatingImageThenImageIsCreated) {
     auto image = Image::create(
         &context,
-        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
         flags,
         0,
         surfaceFormat,
@@ -86,10 +87,10 @@ INSTANTIATE_TEST_CASE_P(
 
 typedef CreateImageFormatTest<CL_MEM_READ_ONLY> ReadOnlyFormatTest;
 
-TEST_P(ReadOnlyFormatTest, returnsSuccess) {
+TEST_P(ReadOnlyFormatTest, GivenValidReadOnlyFormatWhenCreatingImageThenImageIsCreated) {
     auto image = Image::create(
         &context,
-        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
         flags,
         0,
         surfaceFormat,
@@ -109,10 +110,10 @@ INSTANTIATE_TEST_CASE_P(
 
 typedef CreateImageFormatTest<CL_MEM_WRITE_ONLY> WriteOnlyFormatTest;
 
-TEST_P(WriteOnlyFormatTest, returnsSuccess) {
+TEST_P(WriteOnlyFormatTest, GivenValidWriteOnlyFormatWhenCreatingImageThenImageIsCreated) {
     auto image = Image::create(
         &context,
-        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
         flags,
         0,
         surfaceFormat,

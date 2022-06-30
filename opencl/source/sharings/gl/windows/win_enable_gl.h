@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ class GlSharingContextBuilder : public SharingContextBuilder {
     std::unique_ptr<GlCreateContextProperties> contextData;
 
   public:
-    bool processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue, cl_int &errcodeRet) override;
+    bool processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue) override;
     bool finalizeProperties(Context &context, int32_t &errcodeRet) override;
 };
 

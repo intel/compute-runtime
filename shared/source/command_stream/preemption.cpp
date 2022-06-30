@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,12 +7,10 @@
 
 #include "shared/source/command_stream/preemption.h"
 
-#include "shared/source/built_ins/built_ins.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/string.h"
-
-#include "opencl/source/helpers/dispatch_info.h"
-#include "opencl/source/kernel/kernel.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 
 namespace NEO {
 
@@ -25,7 +23,7 @@ bool PreemptionHelper::allowThreadGroupPreemption(const PreemptionFlags &flags) 
         flags.flags.disableLSQCROPERFforOCL) {
         return false;
     }
-    if (flags.flags.schedulerKernel || flags.flags.vmeKernel) {
+    if (flags.flags.vmeKernel) {
         return false;
     }
 
@@ -58,41 +56,6 @@ PreemptionMode PreemptionHelper::taskPreemptionMode(PreemptionMode devicePreempt
     return PreemptionMode::MidBatch;
 };
 
-void PreemptionHelper::setPreemptionLevelFlags(PreemptionFlags &flags, Device &device, Kernel *kernel) {
-    if (kernel) {
-        flags.flags.disabledMidThreadPreemptionKernel =
-            kernel->getKernelInfo().patchInfo.executionEnvironment &&
-            kernel->getKernelInfo().patchInfo.executionEnvironment->DisableMidThreadPreemption;
-        flags.flags.vmeKernel = kernel->isVmeKernel();
-        flags.flags.usesFencesForReadWriteImages =
-            kernel->getKernelInfo().patchInfo.executionEnvironment &&
-            kernel->getKernelInfo().patchInfo.executionEnvironment->UsesFencesForReadWriteImages;
-        flags.flags.schedulerKernel = kernel->isSchedulerKernel;
-    }
-    flags.flags.deviceSupportsVmePreemption = device.getDeviceInfo().vmeAvcSupportsPreemption;
-    flags.flags.disablePerCtxtPreemptionGranularityControl = device.getHardwareInfo().workaroundTable.waDisablePerCtxtPreemptionGranularityControl;
-    flags.flags.disableLSQCROPERFforOCL = device.getHardwareInfo().workaroundTable.waDisableLSQCROPERFforOCL;
-}
-
-PreemptionMode PreemptionHelper::taskPreemptionMode(Device &device, const MultiDispatchInfo &multiDispatchInfo) {
-    PreemptionMode devMode = device.getPreemptionMode();
-
-    for (const auto &di : multiDispatchInfo) {
-        auto kernel = di.getKernel();
-
-        PreemptionFlags flags = {};
-        setPreemptionLevelFlags(flags, device, kernel);
-
-        PreemptionMode taskMode = taskPreemptionMode(devMode, flags);
-        if (devMode > taskMode) {
-            devMode = taskMode;
-        }
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stdout, "devMode = %d, taskMode = %d.\n",
-                         static_cast<int>(device.getPreemptionMode()), static_cast<int>(taskMode));
-    }
-    return devMode;
-}
-
 void PreemptionHelper::adjustDefaultPreemptionMode(RuntimeCapabilityTable &deviceCapabilities, bool allowMidThread, bool allowThreadGroup, bool allowMidBatch) {
     if (deviceCapabilities.defaultPreemptionMode >= PreemptionMode::MidThread &&
         allowMidThread) {
@@ -112,6 +75,19 @@ PreemptionMode PreemptionHelper::getDefaultPreemptionMode(const HardwareInfo &hw
     return DebugManager.flags.ForcePreemptionMode.get() == -1
                ? hwInfo.capabilityTable.defaultPreemptionMode
                : static_cast<PreemptionMode>(DebugManager.flags.ForcePreemptionMode.get());
+}
+
+PreemptionFlags PreemptionHelper::createPreemptionLevelFlags(Device &device, const KernelDescriptor *kernelDescriptor) {
+    PreemptionFlags flags = {};
+    if (kernelDescriptor) {
+        flags.flags.disabledMidThreadPreemptionKernel = kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption;
+        flags.flags.vmeKernel = kernelDescriptor->kernelAttributes.flags.usesVme;
+        flags.flags.usesFencesForReadWriteImages = kernelDescriptor->kernelAttributes.flags.usesFencesForReadWriteImages;
+    }
+    flags.flags.deviceSupportsVmePreemption = device.getDeviceInfo().vmeAvcSupportsPreemption;
+    flags.flags.disablePerCtxtPreemptionGranularityControl = device.getHardwareInfo().workaroundTable.flags.waDisablePerCtxtPreemptionGranularityControl;
+    flags.flags.disableLSQCROPERFforOCL = device.getHardwareInfo().workaroundTable.flags.waDisableLSQCROPERFforOCL;
+    return flags;
 }
 
 } // namespace NEO

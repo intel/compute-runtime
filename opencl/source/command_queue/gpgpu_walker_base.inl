@@ -1,33 +1,33 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/local_id_gen.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
-#include "opencl/source/command_queue/local_id_gen.h"
-#include "opencl/source/event/perf_counter.h"
 #include "opencl/source/event/user_event.h"
+#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/queue_helpers.h"
-#include "opencl/source/helpers/validators.h"
 #include "opencl/source/mem_obj/mem_obj.h"
-
-#include "pipe_control_args.h"
 
 #include <algorithm>
 #include <cmath>
@@ -53,12 +53,10 @@ void GpgpuWalkerHelper<GfxFamily>::addAluReadModifyWriteRegister(
     *pCmd = cmdReg;
 
     // Load "Mask" into CS_GPR_R1
-    typedef typename GfxFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-    auto pCmd2 = pCommandStream->getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
-    MI_LOAD_REGISTER_IMM cmdImm = GfxFamily::cmdInitLoadRegisterImm;
-    cmdImm.setRegisterOffset(CS_GPR_R1);
-    cmdImm.setDataDword(mask);
-    *pCmd2 = cmdImm;
+    LriHelper<GfxFamily>::program(pCommandStream,
+                                  CS_GPR_R1,
+                                  mask,
+                                  false);
 
     // Add instruction MI_MATH with 4 MI_MATH_ALU_INST_INLINE operands
     auto pCmd3 = reinterpret_cast<uint32_t *>(pCommandStream->getSpace(sizeof(MI_MATH) + NUM_ALU_INST_FOR_READ_MODIFY_WRITE * sizeof(MI_MATH_ALU_INST_INLINE)));
@@ -133,65 +131,9 @@ void GpgpuWalkerHelper<GfxFamily>::addAluReadModifyWriteRegister(
 }
 
 template <typename GfxFamily>
-void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
-    TagNode<HwTimeStamps> &hwTimeStamps,
-    LinearStream *commandStream,
-    const HardwareInfo &hwInfo) {
-
-    using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
-
-    // PIPE_CONTROL for global timestamp
-    uint64_t timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, GlobalStartTS);
-    PipeControlArgs args;
-    MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
-        *commandStream,
-        PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP,
-        timeStampAddress,
-        0llu,
-        hwInfo,
-        args);
-
-    //MI_STORE_REGISTER_MEM for context local timestamp
-    timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, ContextStartTS);
-
-    //low part
-    auto pMICmdLow = commandStream->getSpaceForCmd<MI_STORE_REGISTER_MEM>();
-    MI_STORE_REGISTER_MEM cmd = GfxFamily::cmdInitStoreRegisterMem;
-    adjustMiStoreRegMemMode(&cmd);
-    cmd.setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
-    cmd.setMemoryAddress(timeStampAddress);
-    *pMICmdLow = cmd;
-}
-
-template <typename GfxFamily>
-void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
-    TagNode<HwTimeStamps> &hwTimeStamps,
-    LinearStream *commandStream) {
-
-    using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
-
-    // PIPE_CONTROL for global timestamp
-    auto pPipeControlCmd = commandStream->getSpaceForCmd<PIPE_CONTROL>();
-    PIPE_CONTROL cmdPipeControl = GfxFamily::cmdInitPipeControl;
-    cmdPipeControl.setCommandStreamerStallEnable(true);
-    *pPipeControlCmd = cmdPipeControl;
-
-    //MI_STORE_REGISTER_MEM for context local timestamp
-    uint64_t timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, ContextEndTS);
-
-    //low part
-    auto pMICmdLow = commandStream->getSpaceForCmd<MI_STORE_REGISTER_MEM>();
-    MI_STORE_REGISTER_MEM cmd = GfxFamily::cmdInitStoreRegisterMem;
-    adjustMiStoreRegMemMode(&cmd);
-    cmd.setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
-    cmd.setMemoryAddress(timeStampAddress);
-    *pMICmdLow = cmd;
-}
-
-template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(
     CommandQueue &commandQueue,
-    TagNode<HwPerfCounter> &hwPerfCounter,
+    TagNodeBase &hwPerfCounter,
     LinearStream *commandStream) {
 
     const auto pPerformanceCounters = commandQueue.getPerfCounters();
@@ -207,7 +149,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(
     CommandQueue &commandQueue,
-    TagNode<HwPerfCounter> &hwPerfCounter,
+    TagNodeBase &hwPerfCounter,
     LinearStream *commandStream) {
 
     const auto pPerformanceCounters = commandQueue.getPerfCounters();
@@ -230,11 +172,12 @@ size_t GpgpuWalkerHelper<GfxFamily>::getSizeForWADisableLSQCROPERFforOCL(const K
 }
 
 template <typename GfxFamily>
-void GpgpuWalkerHelper<GfxFamily>::adjustMiStoreRegMemMode(MI_STORE_REG_MEM<GfxFamily> *storeCmd) {
+size_t GpgpuWalkerHelper<GfxFamily>::getSizeForWaDisableRccRhwoOptimization(const Kernel *pKernel) {
+    return 0u;
 }
 
 template <typename GfxFamily>
-size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, const CsrDependencies &csrDeps, bool reserveProfilingCmdsSpace, bool reservePerfCounters, bool blitEnqueue, CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo) {
+size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, const CsrDependencies &csrDeps, bool reserveProfilingCmdsSpace, bool reservePerfCounters, bool blitEnqueue, CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo, bool isMarkerWithProfiling, bool eventsInWaitlist) {
     size_t expectedSizeCS = 0;
     auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
     auto &commandQueueHw = static_cast<CommandQueueHw<GfxFamily> &>(commandQueue);
@@ -248,20 +191,29 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
         return expectedSizeCS;
     }
 
-    Kernel *parentKernel = multiDispatchInfo.peekParentKernel();
     for (auto &dispatchInfo : multiDispatchInfo) {
-        expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredCS(eventType, reserveProfilingCmdsSpace, reservePerfCounters, commandQueue, dispatchInfo.getKernel());
-        size_t memObjAuxCount = multiDispatchInfo.getMemObjsForAuxTranslation() != nullptr ? multiDispatchInfo.getMemObjsForAuxTranslation()->size() : 0;
-        expectedSizeCS += dispatchInfo.dispatchInitCommands.estimateCommandsSize(memObjAuxCount, hwInfo, commandQueueHw.isCacheFlushForBcsRequired());
-        expectedSizeCS += dispatchInfo.dispatchEpilogueCommands.estimateCommandsSize(memObjAuxCount, hwInfo, commandQueueHw.isCacheFlushForBcsRequired());
-    }
-    if (parentKernel) {
-        SchedulerKernel &scheduler = commandQueue.getContext().getSchedulerKernel();
-        expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredCS(eventType, reserveProfilingCmdsSpace, reservePerfCounters, commandQueue, &scheduler);
+        expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredCS(eventType, reserveProfilingCmdsSpace, reservePerfCounters, commandQueue, dispatchInfo.getKernel(), dispatchInfo);
+        size_t kernelObjAuxCount = multiDispatchInfo.getKernelObjsForAuxTranslation() != nullptr ? multiDispatchInfo.getKernelObjsForAuxTranslation()->size() : 0;
+        expectedSizeCS += dispatchInfo.dispatchInitCommands.estimateCommandsSize(kernelObjAuxCount, hwInfo, commandQueueHw.isCacheFlushForBcsRequired());
+        expectedSizeCS += dispatchInfo.dispatchEpilogueCommands.estimateCommandsSize(kernelObjAuxCount, hwInfo, commandQueueHw.isCacheFlushForBcsRequired());
     }
     if (commandQueue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         expectedSizeCS += TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDeps);
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite();
+        if (isMarkerWithProfiling) {
+            if (!eventsInWaitlist) {
+                expectedSizeCS += commandQueue.getGpgpuCommandStreamReceiver().getCmdsSizeForComputeBarrierCommand();
+            }
+            expectedSizeCS += 4 * EncodeStoreMMIO<GfxFamily>::size;
+        }
+    } else if (isMarkerWithProfiling) {
+        expectedSizeCS += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl();
+        if (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
+            expectedSizeCS += 2 * EncodeStoreMMIO<GfxFamily>::size;
+        }
+    }
+    if (multiDispatchInfo.peekMainKernel()) {
+        expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeForCacheFlushAfterWalkerCommands(*multiDispatchInfo.peekMainKernel(), commandQueue);
     }
 
     if (DebugManager.flags.PauseOnEnqueue.get() != -1) {
@@ -269,15 +221,21 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
         expectedSizeCS += sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT) * 2;
     }
 
+    if (DebugManager.flags.GpuScratchRegWriteAfterWalker.get() != -1) {
+        expectedSizeCS += sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
+    }
+
+    expectedSizeCS += TimestampPacketHelper::getRequiredCmdStreamSizeForTaskCountContainer<GfxFamily>(csrDeps);
+
     return expectedSizeCS;
 }
 
 template <typename GfxFamily>
-size_t EnqueueOperation<GfxFamily>::getSizeRequiredCS(uint32_t cmdType, bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel) {
+size_t EnqueueOperation<GfxFamily>::getSizeRequiredCS(uint32_t cmdType, bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel, const DispatchInfo &dispatchInfo) {
     if (isCommandWithoutKernel(cmdType)) {
         return EnqueueOperation<GfxFamily>::getSizeRequiredCSNonKernel(reserveProfilingCmdsSpace, reservePerfCounters, commandQueue);
     } else {
-        return EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(reserveProfilingCmdsSpace, reservePerfCounters, commandQueue, pKernel);
+        return EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(reserveProfilingCmdsSpace, reservePerfCounters, commandQueue, pKernel, dispatchInfo);
     }
 }
 

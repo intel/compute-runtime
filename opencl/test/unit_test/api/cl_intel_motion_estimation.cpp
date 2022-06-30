@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,7 @@ struct IntelMotionEstimationTest : public api_tests {
 
 typedef IntelMotionEstimationTest IntelMotionEstimationNegativeTest;
 
-TEST_F(IntelMotionEstimationNegativeTest, GivenNullDescriptorWhenCreatinAcceleratorThenClInvalidAcceleratorDescriptorIntelErrorIsReturned) {
+TEST_F(IntelMotionEstimationNegativeTest, GivenNullDescriptorWhenCreatingAcceleratorThenClInvalidAcceleratorDescriptorIntelErrorIsReturned) {
     accelerator = clCreateAcceleratorINTEL(
         pContext,
         CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL,
@@ -52,7 +52,7 @@ TEST_F(IntelMotionEstimationNegativeTest, GivenNullDescriptorWhenCreatinAccelera
     ASSERT_EQ(static_cast<cl_accelerator_intel>(nullptr), accelerator);
 }
 
-TEST_F(IntelMotionEstimationNegativeTest, GivenDescriptorSizeLongerThanActualWhenCreatinAcceleratorThenClInvalidAcceleratorDescriptorIntelErrorIsReturned) {
+TEST_F(IntelMotionEstimationNegativeTest, GivenDescriptorSizeLongerThanActualWhenCreatingAcceleratorThenClInvalidAcceleratorDescriptorIntelErrorIsReturned) {
     accelerator = clCreateAcceleratorINTEL(
         pContext,
         CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL,
@@ -64,7 +64,7 @@ TEST_F(IntelMotionEstimationNegativeTest, GivenDescriptorSizeLongerThanActualWhe
     ASSERT_EQ(static_cast<cl_accelerator_intel>(nullptr), accelerator);
 }
 
-TEST_F(IntelMotionEstimationNegativeTest, GivenDescriptorSizeShorterThanActualWhenCreatinAcceleratorThenClInvalidAcceleratorDescriptorIntelErrorIsReturned) {
+TEST_F(IntelMotionEstimationNegativeTest, GivenDescriptorSizeShorterThanActualWhenCreatingAcceleratorThenClInvalidAcceleratorDescriptorIntelErrorIsReturned) {
     accelerator = clCreateAcceleratorINTEL(
         pContext,
         CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL,
@@ -76,7 +76,7 @@ TEST_F(IntelMotionEstimationNegativeTest, GivenDescriptorSizeShorterThanActualWh
     ASSERT_EQ(static_cast<cl_accelerator_intel>(nullptr), accelerator);
 }
 
-TEST_F(IntelMotionEstimationNegativeTest, GivenInvalidMacroBlockTypeWhenCreatinAcceleratorThenClInvalidAcceleratorDescriptorIntelErrorIsReturned) {
+TEST_F(IntelMotionEstimationNegativeTest, GivenInvalidMacroBlockTypeWhenCreatingAcceleratorThenClInvalidAcceleratorDescriptorIntelErrorIsReturned) {
     desc.mb_block_type = 0xEEEEEEEE;
 
     accelerator = clCreateAcceleratorINTEL(
@@ -90,7 +90,7 @@ TEST_F(IntelMotionEstimationNegativeTest, GivenInvalidMacroBlockTypeWhenCreatinA
     ASSERT_EQ(static_cast<cl_accelerator_intel>(nullptr), accelerator);
 }
 
-TEST_F(IntelMotionEstimationNegativeTest, GivenInvalidSubPixelModeWhenCreatinAcceleratorThenClInvalidAcceleratorDescriptorIntelErrorIsReturned) {
+TEST_F(IntelMotionEstimationNegativeTest, GivenInvalidSubPixelModeWhenCreatingAcceleratorThenClInvalidAcceleratorDescriptorIntelErrorIsReturned) {
     desc.subpixel_mode = 0xEEEEEEEE;
 
     accelerator = clCreateAcceleratorINTEL(
@@ -104,7 +104,7 @@ TEST_F(IntelMotionEstimationNegativeTest, GivenInvalidSubPixelModeWhenCreatinAcc
     ASSERT_EQ(static_cast<cl_accelerator_intel>(nullptr), accelerator);
 }
 
-TEST_F(IntelMotionEstimationNegativeTest, GivenInvalidSadAdjustModeWhenCreatinAcceleratorThenClInvalidAcceleratorDescriptorIntelErrorIsReturned) {
+TEST_F(IntelMotionEstimationNegativeTest, GivenInvalidSadAdjustModeWhenCreatingAcceleratorThenClInvalidAcceleratorDescriptorIntelErrorIsReturned) {
     desc.sad_adjust_mode = 0xEEEEEEEE;
 
     accelerator = clCreateAcceleratorINTEL(
@@ -118,7 +118,7 @@ TEST_F(IntelMotionEstimationNegativeTest, GivenInvalidSadAdjustModeWhenCreatinAc
     ASSERT_EQ(static_cast<cl_accelerator_intel>(nullptr), accelerator);
 }
 
-TEST_F(IntelMotionEstimationNegativeTest, GivenInvalidSearchPathTypeWhenCreatinAcceleratorThenClInvalidAcceleratorDescriptorIntelErrorIsReturned) {
+TEST_F(IntelMotionEstimationNegativeTest, GivenInvalidSearchPathTypeWhenCreatingAcceleratorThenClInvalidAcceleratorDescriptorIntelErrorIsReturned) {
     desc.search_path_type = 0xEEEEEEEE;
 
     accelerator = clCreateAcceleratorINTEL(
@@ -132,7 +132,7 @@ TEST_F(IntelMotionEstimationNegativeTest, GivenInvalidSearchPathTypeWhenCreatinA
     ASSERT_EQ(static_cast<cl_accelerator_intel>(nullptr), accelerator);
 }
 
-TEST_F(IntelMotionEstimationTest, GivenValidArgumentsWhenCreatinAcceleratorThenAcceleratorIsCreated) {
+TEST_F(IntelMotionEstimationTest, GivenValidArgumentsWhenCreatingAcceleratorThenAcceleratorIsCreated) {
     accelerator = clCreateAcceleratorINTEL(
         pContext,
         CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL,
@@ -148,7 +148,7 @@ TEST_F(IntelMotionEstimationTest, GivenValidArgumentsWhenCreatinAcceleratorThenA
     delete acc;
 }
 
-TEST_F(IntelMotionEstimationTest, GivenNullReturnWhenCreatinAcceleratorThenAcceleratorIsCreated) {
+TEST_F(IntelMotionEstimationTest, GivenNullReturnWhenCreatingAcceleratorThenAcceleratorIsCreated) {
     accelerator = clCreateAcceleratorINTEL(
         pContext,
         CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL,
@@ -178,7 +178,7 @@ TEST_F(IntelMotionEstimationTest, GivenValidAcceleratorWhenReleasingAcceleratorT
     EXPECT_EQ(CL_SUCCESS, result);
 }
 
-TEST_F(IntelMotionEstimationTest, GivenValidAcceleratorWhenRetainingAndReleasingAcceleratorThanReferenceCountIsAdjustedCorrectly) {
+TEST_F(IntelMotionEstimationTest, GivenValidAcceleratorWhenRetainingAndReleasingAcceleratorThenReferenceCountIsAdjustedCorrectly) {
     accelerator = clCreateAcceleratorINTEL(
         pContext,
         CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL,
@@ -242,7 +242,7 @@ struct IntelMotionEstimationGetInfoTest : public IntelMotionEstimationTest {
     size_t param_value_size_ret;
 };
 
-TEST_F(IntelMotionEstimationGetInfoTest, GivenValidParamsWhenGettingAcceleratorInfoThanDescriptorContainsCorrectInformation) {
+TEST_F(IntelMotionEstimationGetInfoTest, GivenValidParamsWhenGettingAcceleratorInfoThenDescriptorContainsCorrectInformation) {
     result = clGetAcceleratorInfoINTEL(
         accelerator,
         CL_ACCELERATOR_DESCRIPTOR_INTEL,
@@ -259,7 +259,7 @@ TEST_F(IntelMotionEstimationGetInfoTest, GivenValidParamsWhenGettingAcceleratorI
     EXPECT_EQ(static_cast<cl_uint>(CL_ME_SEARCH_PATH_RADIUS_2_2_INTEL), descReturn.search_path_type);
 }
 
-TEST_F(IntelMotionEstimationGetInfoTest, GivenTooShortDescriptorLengthWhenGettingAcceleratorInfoThanClInvalidValueErrorIsReturned) {
+TEST_F(IntelMotionEstimationGetInfoTest, GivenTooShortDescriptorLengthWhenGettingAcceleratorInfoThenClInvalidValueErrorIsReturned) {
     result = clGetAcceleratorInfoINTEL(
         accelerator,
         CL_ACCELERATOR_DESCRIPTOR_INTEL,
@@ -270,7 +270,7 @@ TEST_F(IntelMotionEstimationGetInfoTest, GivenTooShortDescriptorLengthWhenGettin
     EXPECT_EQ(CL_INVALID_VALUE, result);
 }
 
-TEST_F(IntelMotionEstimationGetInfoTest, GivenDescriptorLengthZeroWhenGettingAcceleratorInfoThanClInvalidValueErrorIsReturned) {
+TEST_F(IntelMotionEstimationGetInfoTest, GivenDescriptorLengthZeroWhenGettingAcceleratorInfoThenClInvalidValueErrorIsReturned) {
     result = clGetAcceleratorInfoINTEL(
         accelerator,
         CL_ACCELERATOR_DESCRIPTOR_INTEL,
@@ -295,7 +295,7 @@ TEST_F(IntelMotionEstimationGetInfoTest, GivenInvalidParametersWhenGettingAccele
     EXPECT_EQ(0x1234u, param_value_size_ret);
 }
 
-TEST_F(IntelMotionEstimationGetInfoTest, GivenLongerDescriptorLengthWhenGettingAcceleratorInfoThanCorrectDescriptorLengthIsReturned) {
+TEST_F(IntelMotionEstimationGetInfoTest, GivenLongerDescriptorLengthWhenGettingAcceleratorInfoThenCorrectDescriptorLengthIsReturned) {
     result = clGetAcceleratorInfoINTEL(
         accelerator,
         CL_ACCELERATOR_DESCRIPTOR_INTEL,
@@ -307,7 +307,7 @@ TEST_F(IntelMotionEstimationGetInfoTest, GivenLongerDescriptorLengthWhenGettingA
     EXPECT_EQ(sizeof(cl_motion_estimation_desc_intel), param_value_size_ret);
 }
 
-TEST_F(IntelMotionEstimationGetInfoTest, GivenDescriptorLengthZeroAndDescriptorNullWhenGettingAcceleratorInfoThanCorrectDescriptorLengthIsReturned) {
+TEST_F(IntelMotionEstimationGetInfoTest, GivenDescriptorLengthZeroAndDescriptorNullWhenGettingAcceleratorInfoThenCorrectDescriptorLengthIsReturned) {
     result = clGetAcceleratorInfoINTEL(
         accelerator,
         CL_ACCELERATOR_DESCRIPTOR_INTEL,
@@ -319,7 +319,7 @@ TEST_F(IntelMotionEstimationGetInfoTest, GivenDescriptorLengthZeroAndDescriptorN
     EXPECT_EQ(sizeof(cl_motion_estimation_desc_intel), param_value_size_ret);
 }
 
-TEST_F(IntelMotionEstimationGetInfoTest, getInfoTypeExpectPass) {
+TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeWhenGettingAcceleratorInfoThenAcceleratorTypeMotionEstimationIntelIsReturned) {
     ASSERT_EQ(sizeof(cl_accelerator_type_intel), sizeof(cl_uint));
 
     result = clGetAcceleratorInfoINTEL(
@@ -335,7 +335,7 @@ TEST_F(IntelMotionEstimationGetInfoTest, getInfoTypeExpectPass) {
     EXPECT_EQ(static_cast<cl_accelerator_type_intel>(CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL), type_returned);
 }
 
-TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelWhenGettingAcceleratorInfoThanClAcceleratorTypeMotionEstimationIntelIsReturned) {
+TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelWhenGettingAcceleratorInfoThenClAcceleratorTypeMotionEstimationIntelIsReturned) {
     result = clGetAcceleratorInfoINTEL(
         accelerator,
         CL_ACCELERATOR_TYPE_INTEL,
@@ -349,7 +349,7 @@ TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelWhenGettingAcc
     EXPECT_EQ(static_cast<cl_accelerator_type_intel>(CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL), type_returned);
 }
 
-TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelAndTooShortTypeLengthWhenGettingAcceleratorInfoThanClInvalidValueIsReturned) {
+TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelAndTooShortTypeLengthWhenGettingAcceleratorInfoThenClInvalidValueIsReturned) {
     result = clGetAcceleratorInfoINTEL(
         accelerator,
         CL_ACCELERATOR_TYPE_INTEL,
@@ -360,7 +360,7 @@ TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelAndTooShortTyp
     EXPECT_EQ(CL_INVALID_VALUE, result);
 }
 
-TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelAndTypeLengthZeroWhenGettingAcceleratorInfoThanClInvalidValueIsReturned) {
+TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelAndTypeLengthZeroWhenGettingAcceleratorInfoThenClInvalidValueIsReturned) {
     result = clGetAcceleratorInfoINTEL(
         accelerator,
         CL_ACCELERATOR_TYPE_INTEL,
@@ -371,7 +371,7 @@ TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelAndTypeLengthZ
     EXPECT_EQ(CL_INVALID_VALUE, result);
 }
 
-TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelAndTooLongTypeLengthWhenGettingAcceleratorInfoThanCorrectLengthIsReturned) {
+TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelAndTooLongTypeLengthWhenGettingAcceleratorInfoThenCorrectLengthIsReturned) {
     result = clGetAcceleratorInfoINTEL(
         accelerator,
         CL_ACCELERATOR_TYPE_INTEL,
@@ -383,7 +383,7 @@ TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelAndTooLongType
     EXPECT_EQ(sizeof(cl_accelerator_type_intel), param_value_size_ret);
 }
 
-TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelAndNullTypeWhenGettingAcceleratorInfoThanCorrectLengthIsReturned) {
+TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelAndNullTypeWhenGettingAcceleratorInfoThenCorrectLengthIsReturned) {
     result = clGetAcceleratorInfoINTEL(
         accelerator,
         CL_ACCELERATOR_TYPE_INTEL,

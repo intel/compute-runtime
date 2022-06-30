@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/helpers/convert_color.h"
@@ -13,7 +14,6 @@
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "gtest/gtest.h"
@@ -679,13 +679,15 @@ TEST(validateAndCreateImage, givenInvalidImageFormatWhenValidateAndCreateImageIs
 
 TEST(validateAndCreateImage, givenNotSupportedImageFormatWhenValidateAndCreateImageIsCalledThenReturnsNotSupportedFormatError) {
     MockContext context;
-    cl_image_format imageFormat = {CL_INTENSITY, CL_UNORM_INT8};
-    cl_int retVal = CL_SUCCESS;
-    cl_mem image;
-    cl_mem_flags flags = CL_MEM_READ_WRITE;
-    image = Image::validateAndCreateImage(&context, nullptr, flags, 0, &imageFormat, &Image1dDefaults::imageDesc, nullptr, retVal);
-    EXPECT_EQ(nullptr, image);
-    EXPECT_EQ(CL_IMAGE_FORMAT_NOT_SUPPORTED, retVal);
+    for (cl_channel_order channelOrder : {CL_INTENSITY, CL_LUMINANCE}) {
+        cl_image_format imageFormat = {channelOrder, CL_UNORM_INT8};
+        cl_int retVal = CL_SUCCESS;
+        cl_mem image;
+        cl_mem_flags flags = CL_MEM_READ_WRITE;
+        image = Image::validateAndCreateImage(&context, nullptr, flags, 0, &imageFormat, &Image1dDefaults::imageDesc, nullptr, retVal);
+        EXPECT_EQ(nullptr, image);
+        EXPECT_EQ(CL_IMAGE_FORMAT_NOT_SUPPORTED, retVal);
+    }
 }
 
 TEST(validateAndCreateImage, givenValidImageParamsWhenValidateAndCreateImageIsCalledThenReturnsSuccess) {
@@ -763,17 +765,17 @@ struct NullImage : public Image {
     using Image::imageDesc;
     using Image::imageFormat;
 
-    NullImage() : Image(nullptr, MemoryProperties(), cl_mem_flags{}, 0, 0, nullptr, cl_image_format{},
-                        cl_image_desc{}, false, new MockGraphicsAllocation(nullptr, 0), false,
+    NullImage() : Image(nullptr, MemoryProperties(), cl_mem_flags{}, 0, 0, nullptr, nullptr, cl_image_format{},
+                        cl_image_desc{}, false, GraphicsAllocationHelper::toMultiGraphicsAllocation(new MockGraphicsAllocation(nullptr, 0)), false,
                         0, 0, ClSurfaceFormatInfo{}, nullptr) {
     }
     ~NullImage() override {
-        delete this->graphicsAllocation;
+        delete this->multiGraphicsAllocation.getGraphicsAllocation(0);
     }
-    void setImageArg(void *memory, bool isMediaBlockImage, uint32_t mipLevel) override {}
-    void setMediaImageArg(void *memory) override {}
+    void setImageArg(void *memory, bool isMediaBlockImage, uint32_t mipLevel, uint32_t rootDeviceIndex, bool useGlobalAtomics) override {}
+    void setMediaImageArg(void *memory, uint32_t rootDeviceIndex) override {}
     void setMediaSurfaceRotation(void *memory) override {}
-    void setSurfaceMemoryObjectControlStateIndexToMocsTable(void *memory, uint32_t value) override {}
+    void setSurfaceMemoryObjectControlState(void *memory, uint32_t value) override {}
     void transformImage2dArrayTo3d(void *memory) override {}
     void transformImage3dTo2dArray(void *memory) override {}
 };

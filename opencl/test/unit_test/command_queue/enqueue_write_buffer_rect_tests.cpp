@@ -1,11 +1,15 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/event/event.h"
@@ -15,7 +19,6 @@
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
-#include "test.h"
 
 #include "reg_configs_common.h"
 
@@ -71,6 +74,37 @@ HWTEST_F(EnqueueWriteBufferRectTest, GivenValidParamsWhenWritingBufferThenSucces
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+HWTEST_F(EnqueueWriteBufferRectTest, GivenGpuHangAndBlockingCallAndValidParamsWhenWritingBufferThenOutOfResourcesIsReturned) {
+    size_t srcOrigin[] = {0, 0, 0};
+    size_t dstOrigin[] = {0, 0, 0};
+    size_t region[] = {1, 1, 1};
+
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    cl_queue_properties props = {};
+
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    const auto enqueueResult = clEnqueueWriteBufferRect(
+        &mockCommandQueueHw,
+        buffer.get(),
+        CL_TRUE,
+        srcOrigin,
+        dstOrigin,
+        region,
+        10,
+        0,
+        10,
+        0,
+        hostPtr,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
+    EXPECT_EQ(1, mockCommandQueueHw.waitForAllEnginesCalledCount);
+}
+
 HWTEST_F(EnqueueWriteBufferRectTest, GivenBlockingEnqueueWhenWritingBufferThenTaskLevelIsNotIncremented) {
     //this test case assumes IOQ
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -113,7 +147,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteBufferRectTest, Given2dRegionWhenWriting
 
     // Compute the SIMD lane mask
     size_t simd =
-        cmd->getSimdSize() == GPGPU_WALKER::SIMD_SIZE_SIMD32 ? 32 : cmd->getSimdSize() == GPGPU_WALKER::SIMD_SIZE_SIMD16 ? 16 : 8;
+        cmd->getSimdSize() == GPGPU_WALKER::SIMD_SIZE_SIMD32 ? 32 : cmd->getSimdSize() == GPGPU_WALKER::SIMD_SIZE_SIMD16 ? 16
+                                                                                                                         : 8;
     uint64_t simdMask = maxNBitValue(simd);
 
     // Mask off lanes based on the execution masks
@@ -146,9 +181,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteBufferRectTest, WhenWritingBufferThenInd
 
     enqueueWriteBufferRect2D<FamilyType>();
 
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferRect,
-                                                                            pCmdQ->getDevice());
+                                                                            pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
@@ -161,7 +195,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteBufferRectTest, WhenWritingBufferThenInd
     dc.srcSlicePitch = slicePitch;
     dc.dstRowPitch = rowPitch;
     dc.dstSlicePitch = slicePitch;
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto kernel = multiDispatchInfo.begin()->getKernel();
@@ -169,7 +205,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteBufferRectTest, WhenWritingBufferThenInd
 
     EXPECT_NE(dshBefore, pDSH->getUsed());
     EXPECT_NE(iohBefore, pIOH->getUsed());
-    if (kernel->requiresSshForBuffers()) {
+    if (kernel->usesBindfulAddressingForBuffers()) {
         EXPECT_NE(sshBefore, pSSH->getUsed());
     }
 }
@@ -182,7 +218,11 @@ HWTEST_F(EnqueueWriteBufferRectTest, WhenWritingBufferThenL3ProgrammingIsCorrect
 HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteBufferRectTest, When2DEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
     enqueueWriteBufferRect2D<FamilyType>();
     auto &ultCsr = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
-    validateStateBaseAddress<FamilyType>(ultCsr.getMemoryManager()->getInternalHeapBaseAddress(ultCsr.rootDeviceIndex),
+
+    auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+
+    validateStateBaseAddress<FamilyType>(ultCsr.getMemoryManager()->getInternalHeapBaseAddress(ultCsr.rootDeviceIndex, pIOH->getGraphicsAllocation()->isAllocatedInLocalMemoryPool()),
+                                         ultCsr.getMemoryManager()->getInternalHeapBaseAddress(ultCsr.rootDeviceIndex, !hwHelper.useSystemMemoryPlacementForISA(pDevice->getHardwareInfo())),
                                          pDSH, pIOH, pSSH, itorPipelineSelect, itorWalker, cmdList, 0llu);
 }
 
@@ -232,26 +272,26 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteBufferRectTest, WhenWritingBufferThenInt
     auto *cmdSBA = (STATE_BASE_ADDRESS *)*itorCmd;
 
     // Extrach the DSH
-    auto DSH = cmdSBA->getDynamicStateBaseAddress();
-    ASSERT_NE(0u, DSH);
+    auto dsh = cmdSBA->getDynamicStateBaseAddress();
+    ASSERT_NE(0u, dsh);
 
     // IDD should be located within DSH
     auto iddStart = cmdMIDL->getInterfaceDescriptorDataStartAddress();
-    auto IDDEnd = iddStart + cmdMIDL->getInterfaceDescriptorTotalLength();
-    ASSERT_LE(IDDEnd, cmdSBA->getDynamicStateBufferSize() * MemoryConstants::pageSize);
+    auto iddEnd = iddStart + cmdMIDL->getInterfaceDescriptorTotalLength();
+    ASSERT_LE(iddEnd, cmdSBA->getDynamicStateBufferSize() * MemoryConstants::pageSize);
 
-    auto &IDD = *(INTERFACE_DESCRIPTOR_DATA *)cmdInterfaceDescriptorData;
+    auto &idd = *(INTERFACE_DESCRIPTOR_DATA *)cmdInterfaceDescriptorData;
 
     // Validate the kernel start pointer.  Technically, a kernel can start at address 0 but let's force a value.
-    auto kernelStartPointer = ((uint64_t)IDD.getKernelStartPointerHigh() << 32) + IDD.getKernelStartPointer();
+    auto kernelStartPointer = ((uint64_t)idd.getKernelStartPointerHigh() << 32) + idd.getKernelStartPointer();
     EXPECT_LE(kernelStartPointer, cmdSBA->getInstructionBufferSize() * MemoryConstants::pageSize);
 
-    EXPECT_NE(0u, IDD.getNumberOfThreadsInGpgpuThreadGroup());
-    EXPECT_NE(0u, IDD.getCrossThreadConstantDataReadLength());
-    EXPECT_NE(0u, IDD.getConstantIndirectUrbEntryReadLength());
+    EXPECT_NE(0u, idd.getNumberOfThreadsInGpgpuThreadGroup());
+    EXPECT_NE(0u, idd.getCrossThreadConstantDataReadLength());
+    EXPECT_NE(0u, idd.getConstantIndirectUrbEntryReadLength());
 }
 
-HWTEST_F(EnqueueWriteBufferRectTest, WhenWritingBufferThenOnePipelineSelectIsProgrammed) {
+HWTEST2_F(EnqueueWriteBufferRectTest, WhenWritingBufferThenOnePipelineSelectIsProgrammed, IsAtMostXeHpcCore) {
     enqueueWriteBufferRect2D<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
@@ -360,6 +400,11 @@ HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndDstPtrEqualSrcPtrWithEv
 HWTEST_F(EnqueueWriteBufferRectTest, givenOutOfOrderQueueAndDstPtrEqualSrcPtrWithEventsWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pClDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
+    UltCommandStreamReceiver<FamilyType> &mockCsr =
+        reinterpret_cast<UltCommandStreamReceiver<FamilyType> &>(pCmdOOQ->getGpgpuCommandStreamReceiver());
+    mockCsr.useNewResourceImplicitFlush = false;
+    mockCsr.useGpuIdleImplicitFlush = false;
+
     uint32_t taskLevelCmdQ = 17;
     pCmdOOQ->taskLevel = taskLevelCmdQ;
 
@@ -536,10 +581,10 @@ HWTEST_F(EnqueueReadWriteBufferRectDispatch, givenOffsetResultingInMisalignedPtr
     hwInfo->capabilityTable.blitterOperationsSupported = false;
     initializeFixture<FamilyType>();
 
-    if (device->areSharedSystemAllocationsAllowed()) {
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerHwInfoConfig.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }
-
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), &properties);
 
     buffer->forceDisallowCPUCopy = true;
@@ -557,27 +602,28 @@ HWTEST_F(EnqueueReadWriteBufferRectDispatch, givenOffsetResultingInMisalignedPtr
     cmdQ->finish();
 
     parseCommands<FamilyType>(*cmdQ);
+    auto &kernelInfo = kernel->getKernelInfo();
 
     if (hwInfo->capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress) {
-        const auto &surfaceState = getSurfaceState<FamilyType>(&cmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), 0);
+        const auto surfaceState = getSurfaceState<FamilyType>(&cmdQ->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0), 0);
 
-        if (kernel->getKernelInfo().kernelArgInfo[0].kernelArgPatchInfoVector[0].size == sizeof(uint64_t)) {
+        if (kernelInfo.getArgDescriptorAt(0).as<ArgDescPointer>().pointerSize == sizeof(uint64_t)) {
             auto pKernelArg = (uint64_t *)(kernel->getCrossThreadData() +
-                                           kernel->getKernelInfo().kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
+                                           kernelInfo.getArgDescriptorAt(0).as<ArgDescPointer>().stateless);
             EXPECT_EQ(reinterpret_cast<uint64_t>(alignDown(misalignedHostPtr, 4)), *pKernelArg);
-            EXPECT_EQ(*pKernelArg, surfaceState.getSurfaceBaseAddress());
+            EXPECT_EQ(*pKernelArg, surfaceState->getSurfaceBaseAddress());
 
-        } else if (kernel->getKernelInfo().kernelArgInfo[0].kernelArgPatchInfoVector[0].size == sizeof(uint32_t)) {
+        } else if (kernelInfo.getArgDescriptorAt(0).as<ArgDescPointer>().pointerSize == sizeof(uint32_t)) {
             auto pKernelArg = (uint32_t *)(kernel->getCrossThreadData() +
-                                           kernel->getKernelInfo().kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
+                                           kernelInfo.getArgDescriptorAt(0).as<ArgDescPointer>().stateless);
             EXPECT_EQ(reinterpret_cast<uint64_t>(alignDown(misalignedHostPtr, 4)), static_cast<uint64_t>(*pKernelArg));
-            EXPECT_EQ(static_cast<uint64_t>(*pKernelArg), surfaceState.getSurfaceBaseAddress());
+            EXPECT_EQ(static_cast<uint64_t>(*pKernelArg), surfaceState->getSurfaceBaseAddress());
         }
     }
 
-    if (kernel->getKernelInfo().kernelArgInfo[2].kernelArgPatchInfoVector[0].size == 4 * sizeof(uint32_t)) { // size of  uint4 SrcOrigin
+    if (kernelInfo.getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size == 4 * sizeof(uint32_t)) { // size of  uint4 SrcOrigin
         auto dstOffset = (uint32_t *)(kernel->getCrossThreadData() +
-                                      kernel->getKernelInfo().kernelArgInfo[2].kernelArgPatchInfoVector[0].crossthreadOffset);
+                                      kernelInfo.getArgDescriptorAt(2).as<ArgDescValue>().elements[0].offset);
         EXPECT_EQ(hostOffset.x + ptrDiff(misalignedHostPtr, alignDown(misalignedHostPtr, 4)), *dstOffset);
     } else {
         // SrcOrigin arg should be 16 bytes in size, if that changes, above if path should be modified
@@ -619,7 +665,7 @@ struct EnqueueWriteBufferRectHw : public ::testing::Test {
         if (is32bit) {
             GTEST_SKIP();
         }
-        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+        device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         context.reset(new MockContext(device.get()));
     }
 
@@ -638,9 +684,9 @@ struct EnqueueWriteBufferRectHw : public ::testing::Test {
     uint64_t smallSize = 4ull * MemoryConstants::gigaByte - 1;
 };
 
-using EnqeueWriteBufferRectStatelessTest = EnqueueWriteBufferRectHw;
+using EnqueueWriteBufferRectStatelessTest = EnqueueWriteBufferRectHw;
 
-HWTEST_F(EnqeueWriteBufferRectStatelessTest, WhenWritingBufferRectStatelessThenSuccessIsReturned) {
+HWTEST_F(EnqueueWriteBufferRectStatelessTest, WhenWritingBufferRectStatelessThenSuccessIsReturned) {
 
     auto pCmdQ = std::make_unique<CommandQueueStateless<FamilyType>>(context.get(), device.get());
     void *missAlignedPtr = reinterpret_cast<void *>(0x1041);
@@ -662,9 +708,9 @@ HWTEST_F(EnqeueWriteBufferRectStatelessTest, WhenWritingBufferRectStatelessThenS
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-using EnqeueWriteBufferRectStatefulTest = EnqueueWriteBufferRectHw;
+using EnqueueWriteBufferRectStatefulTest = EnqueueWriteBufferRectHw;
 
-HWTEST_F(EnqeueWriteBufferRectStatefulTest, WhenWritingBufferRectStatefulThenSuccessIsReturned) {
+HWTEST_F(EnqueueWriteBufferRectStatefulTest, WhenWritingBufferRectStatefulThenSuccessIsReturned) {
 
     auto pCmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
     void *missAlignedPtr = reinterpret_cast<void *>(0x1041);
@@ -684,4 +730,49 @@ HWTEST_F(EnqeueWriteBufferRectStatefulTest, WhenWritingBufferRectStatefulThenSuc
                                                 nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+HWTEST_F(EnqueueWriteBufferRectHw, givenHostPtrIsFromMappedBufferWhenWriteBufferRectIsCalledThenReuseGraphicsAllocation) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.DisableZeroCopyForBuffers.set(1);
+
+    MockCommandQueueHw<FamilyType> queue(context.get(), device.get(), nullptr);
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+
+    BufferDefaults::context = context.get();
+    auto bufferForMap = clUniquePtr(BufferHelper<>::create());
+    auto bufferForWrite = clUniquePtr(BufferHelper<>::create());
+
+    cl_int retVal{};
+    void *mappedPtr = queue.enqueueMapBuffer(bufferForMap.get(), CL_TRUE, CL_MAP_READ, 0, bufferForMap->getSize(), 0, nullptr, nullptr, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, mappedPtr);
+    EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
+
+    MapOperationsHandler *mapOperationsHandler = context->getMapOperationsStorage().getHandlerIfExists(bufferForMap.get());
+    EXPECT_NE(nullptr, mapOperationsHandler);
+    MapInfo mapInfo{};
+    EXPECT_TRUE(mapOperationsHandler->find(mappedPtr, mapInfo));
+    EXPECT_NE(nullptr, mapInfo.graphicsAllocation);
+
+    auto unmappedPtr = std::make_unique<char[]>(bufferForWrite->getSize());
+    retVal = queue.enqueueWriteBufferRect(bufferForWrite.get(), CL_TRUE,
+                                          bufferOrigin, hostOrigin,
+                                          region,
+                                          bufferRowPitch, bufferSlicePitch,
+                                          hostRowPitch, hostSlicePitch,
+                                          unmappedPtr.get(),
+                                          0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, csr.createAllocationForHostSurfaceCalled);
+
+    retVal = queue.enqueueWriteBufferRect(bufferForWrite.get(), CL_TRUE,
+                                          bufferOrigin, hostOrigin,
+                                          region,
+                                          bufferRowPitch, bufferSlicePitch,
+                                          hostRowPitch, hostSlicePitch,
+                                          mappedPtr,
+                                          0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, csr.createAllocationForHostSurfaceCalled);
 }

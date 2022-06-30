@@ -1,3 +1,10 @@
+<!---
+
+Copyright (C) 2018-2021 Intel Corporation
+
+SPDX-License-Identifier: MIT
+
+-->
 
 # Frequently asked questions
 
@@ -13,7 +20,7 @@ with default / stock configuration (no kernel patches), assuming the underlying
 kernel's drm subsystem is 4.7 or higher. Newer platforms will require a kernel version
 that provides support for that platform (e.g. Coffee Lake requires kernel 4.14 or higher).
 
-Our default (most frequent) validation config is currently Ubuntu 18.04 LTS (as of Q1'20).
+Our default (most frequent) validation config is currently Ubuntu 20.04 LTS (as of Q1'21).
 
 ### Does NEO support Microsoft Windows?
 
@@ -21,12 +28,26 @@ Our closed-source driver for Windows is using the same codebase. At this time,
 we do not support compilation of the stack for Windows. It is our long-term
 intention to offer that option.
 
+### Does NEO support Windows Subsystem for Linux (WSL)?
+
+See [WSL.md](https://github.com/intel/compute-runtime/blob/master/WSL.md).
+
 ### Why is the feature set different in latest Windows driver vs. latest NEO on github?
 
 Our Windows release process takes up to several weeks before drivers are available through intel.com
 and/or Windows update. Features available in github will be available on Windows later.
 
 Note: Older platforms (e.g. Broadwell) are considered to be in maintenance mode for Windows.
+
+### How can I enable reading debug environment variables on Linux release builds?
+
+Reading of debug environment variables on Linux release builds can be enabled by specifying
+`NEOReadDebugKeys` environment variable with a value of 1.
+
+E.g. to rebuild precompiled kernels you need to set both `RebuildPrecompiledKernels`
+and `NEOReadDebugKeys` to a value of 1.
+
+List of all debug keys can be found [here](https://github.com/intel/compute-runtime/blob/master/shared/source/debug_settings/debug_variables_base.inl).
 
 ## Platform support
 
@@ -38,9 +59,12 @@ See [README.md](https://github.com/intel/compute-runtime/blob/master/README.md).
 
 To check support for any device, you can follow these steps:
 1. Go to [Ark]( https://ark.intel.com) and find your Device ID
-1. Find the corresponding device ID label in [GMM]( https://github.com/intel/gmmlib/blob/master/Source/inc/common/igfxfmid.h)
-1. Check if this device ID label is enumerated in the
-[supported device list](https://github.com/intel/compute-runtime/blob/master/opencl/source/dll/linux/devices/devices_base.inl)
+1. Check if this Device ID is enumerated in the
+[supported device list](https://github.com/intel/compute-runtime/blob/master/shared/source/dll/devices/devices_base.inl)
+
+### Do you provide binary packages with support for DG1?
+
+Yes. Please refer to official [installation guide](https://dgpu-docs.intel.com/installation-guides/index.html). 
 
 ### When will support for platform X be added?
 
@@ -49,6 +73,6 @@ It is our intention to offer full support ahead of platform's market availabilit
 
 ## Who are we?
 
-The Compute Runtime team is part of VTT (Visual Technologies Team).
+The Compute Runtime team is part of GSE (Graphics Software Engineering).
 
-Most of our engineers are located in Poland and the United States.
+Most of our engineers are located in Poland, United States, and India.

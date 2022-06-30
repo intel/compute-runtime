@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,5 +56,6 @@ using MMIOList = std::vector<MMIOPair>;
 extern "C" void injectMMIOList(MMIOList mmioList);
 extern "C" void setTbxServerPort(uint16_t port);
 extern "C" void setTbxServerIp(std::string server);
+extern "C" void setTbxFrontdoorMode(bool frontdoor);
 
 } // namespace aub_stream

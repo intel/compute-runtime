@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
-#include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/user_event.h"
@@ -85,7 +85,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, GivenSvmPointerIsHostPtrWhenMigratingSvmThen
         GTEST_SKIP();
     }
     char *ptrHost = new char[10];
-    ASSERT_NE(nullptr, ptrHost);
+    ASSERT_NE(nullptr, ptrHost); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     const void *svmPtrs[] = {ptrHost};
     auto retVal = clEnqueueSVMMigrateMem(
@@ -111,7 +111,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, GivenNonZeroSizeIsNotContainedWithinAllocati
 
         auto svmData = pContext->getSVMAllocsManager()->getSVMAlloc(ptrSvm);
         ASSERT_NE(nullptr, svmData);
-        auto svmAlloc = svmData->gpuAllocation;
+        auto svmAlloc = svmData->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex());
         EXPECT_NE(nullptr, svmAlloc);
         size_t allocSize = svmAlloc->getUnderlyingBufferSize();
 
@@ -315,7 +315,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, GivenDeviceNotSupportingSvmWhenEnqueuingSVMM
     auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
     cl_device_id deviceId = pDevice.get();
     auto pContext = std::unique_ptr<MockContext>(Context::create<MockContext>(nullptr, ClDeviceVector(&deviceId, 1), nullptr, nullptr, retVal));
-    auto pCommandQueue = std::make_unique<MockCommandQueue>(pContext.get(), pDevice.get(), nullptr);
+    auto pCommandQueue = std::make_unique<MockCommandQueue>(pContext.get(), pDevice.get(), nullptr, false);
 
     auto retVal = clEnqueueSVMMigrateMem(
         pCommandQueue.get(), // cl_command_queue command_queue

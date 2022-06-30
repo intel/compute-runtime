@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/source/helpers/local_memory_access_modes.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
@@ -14,7 +16,6 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "test.h"
 
 #include <algorithm>
 
@@ -216,9 +217,10 @@ HWTEST_F(EnqueueUnmapMemObjTest, givenEnqueueUnmapMemObjectWhenNonAubWritableBuf
     EXPECT_TRUE(graphicsAllocation->isTbxWritable(GraphicsAllocation::defaultBank));
 }
 
-HWTEST_F(EnqueueUnmapMemObjTest, givenWriteBufferIsServicedOnCPUWhenBufferIsNonAubTbxWriteableThanFlagsChange) {
+HWTEST_F(EnqueueUnmapMemObjTest, givenWriteBufferIsServicedOnCPUWhenBufferIsNonAubTbxWriteableThenFlagsChange) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.DoCpuCopyOnWriteBuffer.set(1);
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
     ASSERT_NE(nullptr, buffer);
     auto graphicsAllocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
@@ -250,27 +252,27 @@ HWTEST_F(EnqueueUnmapMemObjTest, givenMemObjWhenUnmappingThenSetAubWritableBefor
         using MockCommandQueue::MockCommandQueue;
         cl_int enqueueWriteBuffer(Buffer *buffer, cl_bool blockingWrite, size_t offset, size_t cb, const void *ptr, GraphicsAllocation *mapAllocation,
                                   cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override {
-            EXPECT_TRUE(buffer->getMapAllocation()->isAubWritable(GraphicsAllocation::defaultBank));
-            EXPECT_TRUE(buffer->getMapAllocation()->isTbxWritable(GraphicsAllocation::defaultBank));
+            EXPECT_TRUE(buffer->getMapAllocation(device->getRootDeviceIndex())->isAubWritable(GraphicsAllocation::defaultBank));
+            EXPECT_TRUE(buffer->getMapAllocation(device->getRootDeviceIndex())->isTbxWritable(GraphicsAllocation::defaultBank));
             return CL_SUCCESS;
         }
 
         cl_int enqueueWriteImage(Image *dstImage, cl_bool blockingWrite, const size_t *origin, const size_t *region,
                                  size_t inputRowPitch, size_t inputSlicePitch, const void *ptr, GraphicsAllocation *mapAllocation,
                                  cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override {
-            EXPECT_TRUE(dstImage->getMapAllocation()->isAubWritable(GraphicsAllocation::defaultBank));
-            EXPECT_TRUE(dstImage->getMapAllocation()->isTbxWritable(GraphicsAllocation::defaultBank));
+            EXPECT_TRUE(dstImage->getMapAllocation(device->getRootDeviceIndex())->isAubWritable(GraphicsAllocation::defaultBank));
+            EXPECT_TRUE(dstImage->getMapAllocation(device->getRootDeviceIndex())->isTbxWritable(GraphicsAllocation::defaultBank));
             return CL_SUCCESS;
         }
     };
 
-    MyMockCommandQueue myMockCmdQ(BufferDefaults::context, pClDevice, nullptr);
+    MyMockCommandQueue myMockCmdQ(BufferDefaults::context, pClDevice, nullptr, false);
 
     {
         auto mapPtr = myMockCmdQ.enqueueMapBuffer(buffer.get(), CL_TRUE, CL_MAP_WRITE, 0, 8, 0, nullptr, nullptr, retVal);
 
-        buffer->getMapAllocation()->setAubWritable(false, GraphicsAllocation::defaultBank);
-        buffer->getMapAllocation()->setTbxWritable(false, GraphicsAllocation::defaultBank);
+        buffer->getMapAllocation(pClDevice->getRootDeviceIndex())->setAubWritable(false, GraphicsAllocation::defaultBank);
+        buffer->getMapAllocation(pClDevice->getRootDeviceIndex())->setTbxWritable(false, GraphicsAllocation::defaultBank);
 
         myMockCmdQ.enqueueUnmapMemObject(buffer.get(), mapPtr, 0, nullptr, nullptr);
     }
@@ -281,8 +283,8 @@ HWTEST_F(EnqueueUnmapMemObjTest, givenMemObjWhenUnmappingThenSetAubWritableBefor
         auto mapPtr = myMockCmdQ.enqueueMapImage(image.get(), CL_TRUE, CL_MAP_WRITE, origin, region, nullptr, nullptr, 0,
                                                  nullptr, nullptr, retVal);
 
-        image->getMapAllocation()->setAubWritable(false, GraphicsAllocation::defaultBank);
-        image->getMapAllocation()->setTbxWritable(false, GraphicsAllocation::defaultBank);
+        image->getMapAllocation(pClDevice->getRootDeviceIndex())->setAubWritable(false, GraphicsAllocation::defaultBank);
+        image->getMapAllocation(pClDevice->getRootDeviceIndex())->setTbxWritable(false, GraphicsAllocation::defaultBank);
 
         myMockCmdQ.enqueueUnmapMemObject(image.get(), mapPtr, 0, nullptr, nullptr);
     }

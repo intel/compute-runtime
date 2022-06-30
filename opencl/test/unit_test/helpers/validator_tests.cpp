@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/validators.h"
 
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/helpers/base_object.h"
+#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/helpers/error_mappers.h"
-#include "opencl/source/helpers/validators.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
@@ -53,7 +54,6 @@ REGISTER_TYPED_TEST_CASE_P(
 // Define new command types to run the parameterized tests
 typedef ::testing::Types<
     cl_command_queue,
-    device_queue, // internal type
     cl_context,
     cl_device_id,
     cl_event,
@@ -69,9 +69,9 @@ INSTANTIATE_TYPED_TEST_CASE_P(Validator, ValidatorFixture, ValidatorParams);
 
 TEST(GenericValidator, GivenNullCtxAndNullCqWhenValidatingThenInvalidContextIsReturned) {
     cl_context context = nullptr;
-    cl_command_queue command_queue = nullptr;
+    cl_command_queue commandQueue = nullptr;
 
-    EXPECT_EQ(CL_INVALID_CONTEXT, validateObjects(context, command_queue));
+    EXPECT_EQ(CL_INVALID_CONTEXT, validateObjects(context, commandQueue));
 }
 
 TEST(UserPointer, GivenNullPtrWhenValidatingThenInvalidValueIsReturned) {
@@ -167,6 +167,12 @@ TEST(Platform, GivenValidPlatformWhenValidatingThenSuccessIsReturned) {
     EXPECT_EQ(CL_SUCCESS, validateObjects(clPlatformId));
 }
 
+TEST(ValidatorBool, GivenBoolFlagWhenValidatingObjectThenCorrectValueIsReturned) {
+    EXPECT_EQ(CL_INVALID_VALUE, validateObject(false));
+    EXPECT_EQ(CL_INVALID_VALUE, validateObjects(false, true));
+    EXPECT_EQ(CL_SUCCESS, validateObject(true));
+}
+
 typedef ::testing::TestWithParam<size_t> PatternSizeValid;
 
 TEST_P(PatternSizeValid, GivenValidPatternSizeWhenValidatingThenSuccessIsReturned) {
@@ -189,21 +195,21 @@ INSTANTIATE_TEST_CASE_P(PatternSize,
                         PatternSizeInvalid,
                         ::testing::Values(0, 3, 5, 256, 512, 1024));
 
-TEST(WithCastToInternal, GivenNullPtrWhenCastingThenNullPtrIsReturned) {
+TEST(withCastToInternal, GivenNullPtrWhenCastingThenNullPtrIsReturned) {
     Context *pContext = nullptr;
     cl_context context = nullptr;
 
-    auto ret = WithCastToInternal(context, &pContext);
+    auto ret = withCastToInternal(context, &pContext);
 
     EXPECT_EQ(ret, nullptr);
 }
 
-TEST(WithCastToInternal, GivenNonNullPtrWhenCastingThenNonNullPtrIsReturned) {
+TEST(withCastToInternal, GivenNonNullPtrWhenCastingThenNonNullPtrIsReturned) {
     Context *pContext = nullptr;
     auto temp = std::unique_ptr<Context>(new MockContext());
     cl_context context = temp.get();
 
-    auto ret = WithCastToInternal(context, &pContext);
+    auto ret = withCastToInternal(context, &pContext);
 
     EXPECT_NE(ret, nullptr);
 }
@@ -248,7 +254,7 @@ TEST(validateYuvOperation, GivenValidateYuvOperationWhenNullRegionThenReturnFail
     EXPECT_EQ(CL_INVALID_VALUE, ret);
 }
 
-TEST(areNotNullptr, WhenGivenAllNonNullParamsTheReturnsTrue) {
+TEST(areNotNullptr, WhenGivenAllNonNullParamsThenReturnsTrue) {
     int a = 0;
     int b = 0;
     int c = 0;
@@ -257,7 +263,7 @@ TEST(areNotNullptr, WhenGivenAllNonNullParamsTheReturnsTrue) {
     EXPECT_TRUE(areNotNullptr(&a, &b, &c));
 }
 
-TEST(areNotNullptr, WhenGivenAllNullParamsTheReturnsFalse) {
+TEST(areNotNullptr, WhenGivenAllNullParamsThenReturnsFalse) {
     int *a = nullptr;
     int *b = nullptr;
     int *c = nullptr;
@@ -266,7 +272,7 @@ TEST(areNotNullptr, WhenGivenAllNullParamsTheReturnsFalse) {
     EXPECT_FALSE(areNotNullptr(a, b, c));
 }
 
-TEST(areNotNullptr, WhenGivenNullParameterAmongNonNullParamsTheReturnsFalse) {
+TEST(areNotNullptr, WhenGivenNullParameterAmongNonNullParamsThenReturnsFalse) {
     int *a = nullptr;
     int b = 0;
     int c = 0;

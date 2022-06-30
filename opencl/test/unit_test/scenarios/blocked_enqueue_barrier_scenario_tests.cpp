@@ -1,17 +1,17 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/fixtures/scenario_test_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "test.h"
 
 #include "gtest/gtest.h"
 
@@ -25,7 +25,7 @@ HWTEST_F(BarrierScenarioTest, givenBlockedEnqueueBarrierOnOOQWhenUserEventIsUnbl
     auto mockCmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, pPlatform->getClDevice(0), properties));
     clCommandQ = mockCmdQ.get();
 
-    cl_kernel clKernel = kernel;
+    cl_kernel clKernel = kernelInternals->mockMultiDeviceKernel;
     size_t offset[] = {0, 0, 0};
     size_t gws[] = {1, 1, 1};
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,9 @@
 
 #
 #include "shared/source/gmm_helper/gmm.h"
-#include "shared/source/helpers/surface_format_info.h"
 
 using namespace NEO;
 
-void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo) {}
-void Gmm::applyAuxFlagsForBuffer(bool preferRenderCompression) {}
-
-void Gmm::applyMemoryFlags(bool systemMemoryPool, StorageInfo &storageInfo) { this->useSystemMemoryPool = systemMemoryPool; }
+void Gmm::applyExtraMemoryFlags(const StorageInfo &storageInfo) {}
+bool Gmm::extraMemoryFlagsRequired() { return false; }
+void Gmm::applyAppResource(StorageInfo &storageInfo) {}

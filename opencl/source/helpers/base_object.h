@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,13 +78,13 @@ class ConditionVariableWithCounter {
         waitersCount = 0;
     }
     template <typename... Args>
-    void wait(Args &&... args) {
+    void wait(Args &&...args) {
         ++waitersCount;
         cond.wait(std::forward<Args>(args)...);
         --waitersCount;
     }
 
-    void notify_one() { // NOLINT
+    void notify_one() { // NOLINT(readability-identifier-naming)
         cond.notify_one();
     }
 
@@ -244,9 +244,5 @@ class BaseObject : public B, public ReferenceTrackedObject<DerivedType_t<B>> {
         return this->cond;
     }
 };
-
-// Method called by global factory enabler
-template <typename Type>
-void populateFactoryTable();
 
 } // namespace NEO

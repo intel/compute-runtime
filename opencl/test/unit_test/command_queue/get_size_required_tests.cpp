@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/enqueue_barrier.h"
@@ -13,7 +14,6 @@
 #include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -22,9 +22,9 @@ struct GetSizeRequiredTest : public CommandEnqueueFixture,
 
     void SetUp() override {
         CommandEnqueueFixture::SetUp();
-        dsh = &pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
-        ioh = &pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u);
-        ssh = &pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u);
+        dsh = &pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u);
+        ioh = &pCmdQ->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 0u);
+        ssh = &pCmdQ->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0u);
 
         usedBeforeDSH = dsh->getUsed();
         usedBeforeIOH = ioh->getUsed();

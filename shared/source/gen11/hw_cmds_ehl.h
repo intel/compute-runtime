@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,36 +23,10 @@ struct EHL : public ICLFamily {
     static const RuntimeCapabilityTable capabilityTable;
     static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig);
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
+    static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
 };
 
-class EHL_1x2x4 : public EHL {
-  public:
-    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
-    static const HardwareInfo hwInfo;
-
-  private:
-    static GT_SYSTEM_INFO gtSystemInfo;
-};
-
-class EHL_1x4x4 : public EHL {
-  public:
-    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
-    static const HardwareInfo hwInfo;
-
-  private:
-    static GT_SYSTEM_INFO gtSystemInfo;
-};
-
-class EHL_1x4x6 : public EHL {
-  public:
-    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
-    static const HardwareInfo hwInfo;
-
-  private:
-    static GT_SYSTEM_INFO gtSystemInfo;
-};
-
-class EHL_1x4x8 : public EHL {
+class EhlHwConfig : public EHL {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;

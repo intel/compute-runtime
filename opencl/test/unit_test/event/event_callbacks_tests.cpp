@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/event/async_events_handler.h"
 #include "opencl/source/event/user_event.h"
@@ -11,7 +13,6 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
-#include "test.h"
 
 #include <memory>
 
@@ -41,7 +42,7 @@ TEST(EventCallbackTest, GivenUserEventWhenAddingCallbackThenNestedCallbacksCanBe
 TEST(EventCallbackTest, GivenEventWhenAddingCallbackThenNestedCallbacksCanBeCreated) {
     auto device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext context(device.get());
-    MockCommandQueue queue(&context, context.getDevice(0), nullptr);
+    MockCommandQueue queue(&context, context.getDevice(0), nullptr, false);
     MockEvent<Event> event(&queue, CL_COMMAND_MARKER, 0, 0);
     uint32_t nestLevel = 0;
 

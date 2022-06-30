@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,21 +15,23 @@
 #include "level_zero/core/source/image/image_imp.h"
 
 namespace L0 {
+struct StructuresLookupTable;
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct ImageCoreFamily : public ImageImp {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
 
-    bool initialize(Device *device, const ze_image_desc_t *desc) override;
-
-    void copySurfaceStateToSSH(void *surfaceStateHeap, const uint32_t surfaceStateOffset) override;
+    ze_result_t initialize(Device *device, const ze_image_desc_t *desc) override;
+    void copySurfaceStateToSSH(void *surfaceStateHeap, const uint32_t surfaceStateOffset, bool isMediaBlockArg) override;
     void copyRedescribedSurfaceStateToSSH(void *surfaceStateHeap, const uint32_t surfaceStateOffset) override;
     bool isMediaFormat(const ze_image_format_layout_t layout) {
         if (layout == ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_NV12 ||
             layout == ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_P010 ||
             layout == ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_P012 ||
-            layout == ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_P016) {
+            layout == ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_P016 ||
+            layout == ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_RGBP ||
+            layout == ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_BRGP) {
             return true;
         }
         return false;
@@ -47,6 +49,8 @@ struct ImageCoreFamily : public ImageImp {
         RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO};
 
   protected:
+    bool isSuitableForCompression(const StructuresLookupTable &structuresLookupTable, const NEO::ImageInfo &imgInfo);
+
     RENDER_SURFACE_STATE surfaceState;
     RENDER_SURFACE_STATE redescribedSurfaceState;
 };

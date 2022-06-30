@@ -1,20 +1,20 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
-#include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "gtest/gtest.h"
 
@@ -67,13 +67,13 @@ class CreateTiledImageTest : public ClDeviceFixture,
     cl_mem_object_type type = 0;
 };
 
-HWTEST_P(CreateTiledImageTest, isTiledImageIsSetForTiledImages) {
+HWTEST_P(CreateTiledImageTest, GivenImageTypeWhenCheckingIsTiledThenTrueReturnedForTiledImage) {
     MockContext context;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto image = Image::create(
         &context,
-        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice),
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice),
         flags,
         0,
         surfaceFormat,
@@ -87,7 +87,7 @@ HWTEST_P(CreateTiledImageTest, isTiledImageIsSetForTiledImages) {
     delete image;
 }
 
-TEST_P(CreateTiledImageTest, isTiledImageIsSetForSharedImages) {
+TEST_P(CreateTiledImageTest, GivenSharedTiledImageWhenCheckingIsTiledThenTrueReturned) {
     MockContext context;
     MockGraphicsAllocation *alloc = new MockGraphicsAllocation(0, 0x1000);
     ImageInfo info = {};
@@ -99,7 +99,7 @@ TEST_P(CreateTiledImageTest, isTiledImageIsSetForSharedImages) {
     info.imgDesc = Image::convertDescriptor(imageDesc);
     info.plane = GMM_NO_PLANE;
 
-    auto gmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmClientContext(), info);
+    auto gmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmHelper(), info, false);
 
     alloc->setDefaultGmm(gmm.release());
 
@@ -107,7 +107,7 @@ TEST_P(CreateTiledImageTest, isTiledImageIsSetForSharedImages) {
         &context,
         nullptr,
         msi,
-        alloc,
+        GraphicsAllocationHelper::toMultiGraphicsAllocation(alloc),
         nullptr,
         CL_MEM_READ_WRITE,
         0,
@@ -124,7 +124,7 @@ TEST_P(CreateTiledImageTest, isTiledImageIsSetForSharedImages) {
 
 typedef CreateTiledImageTest CreateNonTiledImageTest;
 
-TEST_P(CreateNonTiledImageTest, isTiledImageIsNotSetForNonTiledSharedImage) {
+TEST_P(CreateNonTiledImageTest, GivenSharedNonTiledImageWhenCheckingIsTiledThenFalseReturned) {
     MockContext context;
     MockGraphicsAllocation *alloc = new MockGraphicsAllocation(0, 0x1000);
     ImageInfo info = {};
@@ -139,7 +139,7 @@ TEST_P(CreateNonTiledImageTest, isTiledImageIsNotSetForNonTiledSharedImage) {
     info.imgDesc = Image::convertDescriptor(imageDesc);
     info.plane = GMM_NO_PLANE;
 
-    auto gmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmClientContext(), info);
+    auto gmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmHelper(), info, false);
 
     alloc->setDefaultGmm(gmm.release());
 
@@ -147,7 +147,7 @@ TEST_P(CreateNonTiledImageTest, isTiledImageIsNotSetForNonTiledSharedImage) {
         &context,
         nullptr,
         msi,
-        alloc,
+        GraphicsAllocationHelper::toMultiGraphicsAllocation(alloc),
         nullptr,
         CL_MEM_READ_WRITE,
         0,

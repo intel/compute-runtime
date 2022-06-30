@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/test/unit_test/fixtures/media_kernel_fixture.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
-#include "test.h"
 
 using namespace NEO;
 

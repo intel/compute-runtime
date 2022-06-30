@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 
+#include <algorithm>
 #include <cinttypes>
 #include <cstddef>
 #include <iterator>
@@ -30,8 +31,9 @@ struct StackVecSize {
 
 template <typename DataType, size_t OnStackCapacity,
           typename StackSizeT = typename StackVecSize<OnStackCapacity>::SizeT>
-class StackVec {
+class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
   public:
+    using value_type = DataType;
     using SizeT = StackSizeT;
     using iterator = DataType *;
     using const_iterator = const DataType *;
@@ -89,6 +91,9 @@ class StackVec {
     }
 
     StackVec &operator=(const StackVec &rhs) {
+        if (this == &rhs) {
+            return *this;
+        }
         clear();
 
         if (usesDynamicMem()) {
@@ -125,6 +130,10 @@ class StackVec {
     }
 
     StackVec &operator=(StackVec &&rhs) {
+        if (this == &rhs) {
+            return *this;
+        }
+
         clear();
 
         if (rhs.usesDynamicMem()) {
@@ -148,6 +157,32 @@ class StackVec {
         rhs.clear();
 
         return *this;
+    }
+
+    template <typename RhsT>
+    void swap(RhsT &rhs) {
+        if (this->usesDynamicMem() && rhs.usesDynamicMem()) {
+            this->dynamicMem->swap(*rhs.dynamicMem);
+            return;
+        }
+        size_t smallerSize = this->size() < rhs.size() ? this->size() : rhs.size();
+        size_t i = 0;
+        for (; i < smallerSize; ++i) {
+            std::swap((*this)[i], rhs[i]);
+        }
+        if (this->size() == smallerSize) {
+            auto biggerSize = rhs.size();
+            for (; i < biggerSize; ++i) {
+                this->push_back(std::move(rhs[i]));
+            }
+            rhs.resize(smallerSize);
+        } else {
+            auto biggerSize = this->size();
+            for (; i < biggerSize; ++i) {
+                rhs.push_back(std::move((*this)[i]));
+            }
+            this->resize(smallerSize);
+        }
     }
 
     ~StackVec() {
@@ -191,7 +226,7 @@ class StackVec {
         clearStackObjects();
     }
 
-    void push_back(const DataType &v) { // NOLINT
+    void push_back(const DataType &v) { // NOLINT(readability-identifier-naming)
         if (onStackSize == onStackCaps) {
             ensureDynamicMem();
         }
@@ -205,12 +240,44 @@ class StackVec {
         ++onStackSize;
     }
 
+    void sort() {
+        std::sort(this->begin(), this->end());
+    }
+
+    void remove_duplicates() { // NOLINT(readability-identifier-naming)
+        if (1 >= this->size()) {
+            return;
+        }
+        this->sort();
+        const auto last = std::unique(this->begin(), this->end());
+        auto currentEnd = this->end();
+        while (last != currentEnd--) {
+            this->pop_back();
+        }
+    }
+
+    void pop_back() { // NOLINT(readability-identifier-naming)
+        if (usesDynamicMem()) {
+            dynamicMem->pop_back();
+            return;
+        }
+
+        UNRECOVERABLE_IF(0 == onStackSize);
+
+        clearStackObjects(onStackSize - 1, 1U);
+        --onStackSize;
+    }
+
     DataType &operator[](std::size_t idx) {
         if (usesDynamicMem()) {
             return (*dynamicMem)[idx];
         }
         return *(reinterpret_cast<DataType *>(onStackMemRawBytes) + idx);
     }
+
+    DataType &at(std::size_t idx) { return this->operator[](idx); }
+
+    const DataType &at(std::size_t idx) const { return this->operator[](idx); }
 
     const DataType &operator[](std::size_t idx) const {
         if (usesDynamicMem()) {
@@ -279,14 +346,16 @@ class StackVec {
         return std::numeric_limits<decltype(onStackSize)>::max() == this->onStackSize;
     }
 
-    void *data() {
+    auto data() {
         if (usesDynamicMem()) {
             return dynamicMem->data();
         }
-        return onStackMemRawBytes;
+        return reinterpret_cast<DataType *>(onStackMemRawBytes);
     }
 
   private:
+    template <typename RhsDataType, size_t RhsOnStackCapacity, typename RhsStackSizeT>
+    friend class StackVec;
     void setUsesDynamicMem() {
         this->onStackSize = std::numeric_limits<decltype(onStackSize)>::max();
     }
@@ -397,3 +466,5 @@ bool operator!=(const StackVec<T, LhsStackCaps> &lhs,
                 const StackVec<T, RhsStackCaps> &rhs) {
     return false == (lhs == rhs);
 }
+
+using RootDeviceIndicesContainer = StackVec<uint32_t, 16>;

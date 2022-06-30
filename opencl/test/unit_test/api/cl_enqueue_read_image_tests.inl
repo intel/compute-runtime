@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/surface_formats.h"
+#include "opencl/source/mem_obj/image.h"
 
 #include "cl_api_tests.h"
 
@@ -83,13 +84,7 @@ TEST_F(clEnqueueReadImageTests, GivenNullImageWhenReadingImageThenInvalidMemObje
 
 TEST_F(clEnqueueReadImageTests, GivenValidParametersWhenReadinImagesThenSuccessIsReturned) {
     imageFormat.image_channel_order = CL_RGBA;
-    auto image = clCreateImage(
-        pContext,
-        CL_MEM_READ_WRITE,
-        &imageFormat,
-        &imageDesc,
-        nullptr,
-        &retVal);
+    auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);
     const size_t origin[] = {2, 2, 0};
@@ -112,16 +107,35 @@ TEST_F(clEnqueueReadImageTests, GivenValidParametersWhenReadinImagesThenSuccessI
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST_F(clEnqueueReadImageTests, GivenQueueIncapableParametersWhenReadingImageThenInvalidOperationIsReturned) {
+    imageFormat.image_channel_order = CL_RGBA;
+    auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
+    const size_t origin[] = {2, 2, 0};
+    const size_t region[] = {2, 2, 1};
+    this->disableQueueCapabilities(CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_INTEL);
+    auto mockAddress = reinterpret_cast<void *>(0x1234);
+    auto retVal = clEnqueueReadImage(
+        pCommandQueue,
+        image,
+        false,
+        origin,
+        region,
+        0,
+        0,
+        mockAddress,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+    retVal = clReleaseMemObject(image);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 typedef clEnqueueReadImageTests clEnqueueReadImageYuv;
 
 TEST_F(clEnqueueReadImageYuv, GivenValidYuvImageWhenReadingImageThenSuccessIsReturned) {
-    auto image = clCreateImage(
-        pContext,
-        CL_MEM_READ_ONLY,
-        &imageFormat,
-        &imageDesc,
-        nullptr,
-        &retVal);
+    auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);
     const size_t origin[] = {2, 2, 0};
@@ -145,13 +159,7 @@ TEST_F(clEnqueueReadImageYuv, GivenValidYuvImageWhenReadingImageThenSuccessIsRet
 }
 
 TEST_F(clEnqueueReadImageYuv, GivenInvalidOriginWhenReadingYuvImageThenInvalidValueErrorIsReturned) {
-    auto image = clCreateImage(
-        pContext,
-        CL_MEM_READ_ONLY,
-        &imageFormat,
-        &imageDesc,
-        nullptr,
-        &retVal);
+    auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);
     const size_t origin[] = {1, 2, 0};
@@ -175,13 +183,7 @@ TEST_F(clEnqueueReadImageYuv, GivenInvalidOriginWhenReadingYuvImageThenInvalidVa
 }
 
 TEST_F(clEnqueueReadImageYuv, GivenInvalidRegionWhenReadingYuvImageThenInvalidValueErrorIsReturned) {
-    auto image = clCreateImage(
-        pContext,
-        CL_MEM_READ_ONLY,
-        &imageFormat,
-        &imageDesc,
-        nullptr,
-        &retVal);
+    auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);
     const size_t origin[] = {2, 2, 0};

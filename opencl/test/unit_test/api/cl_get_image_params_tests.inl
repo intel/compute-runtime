@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/hw_info.h"
-#include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/context/context.h"
 
@@ -59,6 +59,28 @@ TEST_F(clGetImageParamsTest, GivenValidParamsWhenGettingImageParamsThenSuccessIs
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(imageRowPitch, 0u);
     EXPECT_NE(imageSlicePitch, 0u);
+}
+
+TEST_F(clGetImageParamsTest, GivenDefaultAndSpecializedContextsWhenGettingImageParamsThenTheSameValuesAreReturned) {
+    cl_int retVal = CL_INVALID_VALUE;
+    MockDefaultContext defaultContext;
+    size_t defaultContextImageRowPitch = 0;
+    size_t defaultContextImageSlicePitch = 0;
+
+    retVal = clGetImageParamsINTEL(&defaultContext, &imageFormat, &imageDesc,
+                                   &defaultContextImageRowPitch, &defaultContextImageSlicePitch);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(defaultContextImageRowPitch, 0u);
+    EXPECT_NE(defaultContextImageSlicePitch, 0u);
+
+    MockSpecializedContext specializedContext;
+    size_t specializedContextImageRowPitch = 0;
+    size_t specializedContextImageSlicePitch = 0;
+    retVal = clGetImageParamsINTEL(&specializedContext, &imageFormat, &imageDesc,
+                                   &specializedContextImageRowPitch, &specializedContextImageSlicePitch);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(defaultContextImageRowPitch, specializedContextImageRowPitch);
+    EXPECT_EQ(defaultContextImageSlicePitch, specializedContextImageSlicePitch);
 }
 
 TEST_F(clGetImageParamsTest, GivenNullContextWhenGettingImageParamsThenInvalidContextErrorIsReturned) {

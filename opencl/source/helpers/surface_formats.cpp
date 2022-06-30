@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,9 +11,8 @@
 #include "shared/source/helpers/array_count.h"
 
 #include "opencl/source/api/cl_types.h"
+#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/mem_obj/image.h"
-
-#include "validators.h"
 
 namespace NEO {
 
@@ -51,10 +50,6 @@ namespace NEO {
     {{CL_RG,              CL_UNSIGNED_INT32}, {GMM_FORMAT_R32G32_UINT_TYPE,         GFX3DSTATE_SURFACEFORMAT_R32G32_UINT             , 0, 2, 4, 8}}, \
     {{CL_RG,              CL_HALF_FLOAT},     {GMM_FORMAT_R16G16_FLOAT_TYPE,        GFX3DSTATE_SURFACEFORMAT_R16G16_FLOAT            , 0, 2, 2, 4}}, \
     {{CL_RG,              CL_FLOAT},          {GMM_FORMAT_R32G32_FLOAT_TYPE,        GFX3DSTATE_SURFACEFORMAT_R32G32_FLOAT            , 0, 2, 4, 8}}, \
-    {{CL_LUMINANCE,       CL_UNORM_INT8},     {GMM_FORMAT_GENERIC_8BIT,             GFX3DSTATE_SURFACEFORMAT_R8_UNORM                , 0, 1, 1, 1}}, \
-    {{CL_LUMINANCE,       CL_UNORM_INT16},    {GMM_FORMAT_GENERIC_16BIT,            GFX3DSTATE_SURFACEFORMAT_R16_UNORM               , 0, 1, 2, 2}}, \
-    {{CL_LUMINANCE,       CL_HALF_FLOAT},     {GMM_FORMAT_GENERIC_16BIT,            GFX3DSTATE_SURFACEFORMAT_R16_FLOAT               , 0, 1, 2, 2}}, \
-    {{CL_LUMINANCE,       CL_FLOAT},          {GMM_FORMAT_GENERIC_32BIT,            GFX3DSTATE_SURFACEFORMAT_R32_FLOAT               , 0, 1, 4, 4}}, \
     {{CL_R,               CL_SNORM_INT8},     {GMM_FORMAT_R8_SNORM_TYPE,            GFX3DSTATE_SURFACEFORMAT_R8_SNORM                , 0, 1, 1, 1}}, \
     {{CL_R,               CL_SNORM_INT16},    {GMM_FORMAT_R16_SNORM_TYPE,           GFX3DSTATE_SURFACEFORMAT_R16_SNORM               , 0, 1, 2, 2}}, \
     {{CL_RG,              CL_SNORM_INT8},     {GMM_FORMAT_R8G8_SNORM_TYPE,          GFX3DSTATE_SURFACEFORMAT_R8G8_SNORM              , 0, 2, 1, 2}}, \
@@ -67,6 +62,10 @@ namespace NEO {
     {{CL_INTENSITY,       CL_UNORM_INT16},    {GMM_FORMAT_GENERIC_16BIT,            GFX3DSTATE_SURFACEFORMAT_I16_UNORM               , 0, 1, 2, 2}}, \
     {{CL_INTENSITY,       CL_HALF_FLOAT},     {GMM_FORMAT_GENERIC_16BIT,            GFX3DSTATE_SURFACEFORMAT_I16_FLOAT               , 0, 1, 2, 2}}, \
     {{CL_INTENSITY,       CL_FLOAT},          {GMM_FORMAT_GENERIC_32BIT,            GFX3DSTATE_SURFACEFORMAT_I32_FLOAT               , 0, 1, 4, 4}}, \
+    {{CL_LUMINANCE,       CL_UNORM_INT8},     {GMM_FORMAT_GENERIC_8BIT,             GFX3DSTATE_SURFACEFORMAT_L8_UNORM                , 0, 1, 1, 1}}, \
+    {{CL_LUMINANCE,       CL_UNORM_INT16},    {GMM_FORMAT_GENERIC_16BIT,            GFX3DSTATE_SURFACEFORMAT_L16_UNORM               , 0, 1, 2, 2}}, \
+    {{CL_LUMINANCE,       CL_HALF_FLOAT},     {GMM_FORMAT_GENERIC_16BIT,            GFX3DSTATE_SURFACEFORMAT_L16_FLOAT               , 0, 1, 2, 2}}, \
+    {{CL_LUMINANCE,       CL_FLOAT},          {GMM_FORMAT_GENERIC_32BIT,            GFX3DSTATE_SURFACEFORMAT_L32_FLOAT               , 0, 1, 4, 4}}, \
     {{CL_A,               CL_UNORM_INT16},    {GMM_FORMAT_GENERIC_16BIT,            GFX3DSTATE_SURFACEFORMAT_A16_UNORM               , 0, 1, 2, 2}}, \
     {{CL_A,               CL_HALF_FLOAT},     {GMM_FORMAT_GENERIC_16BIT,            GFX3DSTATE_SURFACEFORMAT_A16_FLOAT               , 0, 1, 2, 2}}, \
     {{CL_A,               CL_FLOAT},          {GMM_FORMAT_GENERIC_32BIT,            GFX3DSTATE_SURFACEFORMAT_A32_FLOAT               , 0, 1, 4, 4}}
@@ -76,16 +75,17 @@ namespace NEO {
     {{CL_sBGRA,           CL_UNORM_INT8},     {GMM_FORMAT_B8G8R8A8_UNORM_SRGB_TYPE, GFX3DSTATE_SURFACEFORMAT_B8G8R8A8_UNORM_SRGB     , 0, 4, 1, 4}}
 
 #define DEPTHFORMATS \
-    {{ CL_DEPTH,          CL_FLOAT},         {GMM_FORMAT_R32_FLOAT_TYPE,           GFX3DSTATE_SURFACEFORMAT_R32_FLOAT               , 0, 1, 4, 4}}, \
-    {{ CL_DEPTH,          CL_UNORM_INT16},   {GMM_FORMAT_R16_UNORM_TYPE,           GFX3DSTATE_SURFACEFORMAT_R16_UNORM               , 0, 1, 2, 2}}
+    {{ CL_DEPTH,          CL_FLOAT},          {GMM_FORMAT_R32_FLOAT_TYPE,           GFX3DSTATE_SURFACEFORMAT_R32_FLOAT               , 0, 1, 4, 4}}, \
+    {{ CL_DEPTH,          CL_UNORM_INT16},    {GMM_FORMAT_R16_UNORM_TYPE,           GFX3DSTATE_SURFACEFORMAT_R16_UNORM               , 0, 1, 2, 2}}
 
 #define DEPTHSTENCILFORMATS \
-    {{ CL_DEPTH_STENCIL,  CL_UNORM_INT24},   {GMM_FORMAT_GENERIC_32BIT,            GFX3DSTATE_SURFACEFORMAT_R24_UNORM_X8_TYPELESS   , 0, 1, 4, 4}}, \
-    {{ CL_DEPTH_STENCIL,  CL_FLOAT},         {GMM_FORMAT_R32G32_FLOAT_TYPE,        GFX3DSTATE_SURFACEFORMAT_R32_FLOAT_X8X24_TYPELESS, 0, 2, 4, 8}}
+    {{ CL_DEPTH_STENCIL,  CL_UNORM_INT24},    {GMM_FORMAT_GENERIC_32BIT,            GFX3DSTATE_SURFACEFORMAT_R24_UNORM_X8_TYPELESS   , 0, 1, 4, 4}}, \
+    {{ CL_DEPTH_STENCIL,  CL_FLOAT},          {GMM_FORMAT_R32G32_FLOAT_TYPE,        GFX3DSTATE_SURFACEFORMAT_R32_FLOAT_X8X24_TYPELESS, 0, 2, 4, 8}}
 
 //Initialize this with the required formats first.
 //Append the optional one later
 const ClSurfaceFormatInfo SurfaceFormats::readOnlySurfaceFormats12[] = { COMMONFORMATS, READONLYFORMATS };
+
 const ClSurfaceFormatInfo SurfaceFormats::readOnlySurfaceFormats20[] = { COMMONFORMATS, READONLYFORMATS, SRGBFORMATS };
 
 const ClSurfaceFormatInfo SurfaceFormats::writeOnlySurfaceFormats[] = { COMMONFORMATS };
@@ -100,8 +100,13 @@ const ClSurfaceFormatInfo SurfaceFormats::packedYuvSurfaceFormats[] = {
 };
 
 const ClSurfaceFormatInfo SurfaceFormats::planarYuvSurfaceFormats[] = {
-    {{CL_NV12_INTEL,      CL_UNORM_INT8},     {GMM_FORMAT_NV12,                     GFX3DSTATE_SURFACEFORMAT_NV12                    , 0, 1, 1, 1}}
+    {{CL_NV12_INTEL,      CL_UNORM_INT8},     {GMM_FORMAT_NV12,                     GFX3DSTATE_SURFACEFORMAT_PLANAR_420_8            , 0, 1, 1, 1}}
 };
+
+const ClSurfaceFormatInfo SurfaceFormats::packedSurfaceFormats[] = {
+    {{CL_RGBA,            CL_UNORM_INT16},    {GMM_FORMAT_Y210,                     GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM      , 0, 4, 2, 8}},
+    {{CL_RG,              CL_UNORM_INT16},    {GMM_FORMAT_YUY2_2x1,                 GFX3DSTATE_SURFACEFORMAT_R10G10B10A2_UNORM       , 0, 2, 2, 4}}
+ };
 
 const ClSurfaceFormatInfo SurfaceFormats::readOnlyDepthSurfaceFormats[] = { DEPTHFORMATS, DEPTHSTENCILFORMATS };
 
@@ -131,6 +136,11 @@ ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::planarYuv() noexcept {
     return ArrayRef<const ClSurfaceFormatInfo>(planarYuvSurfaceFormats);
 }
 
+ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::packed() noexcept
+{
+    return ArrayRef<const ClSurfaceFormatInfo>(packedSurfaceFormats);
+}
+
 ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::readOnlyDepth() noexcept {
     return ArrayRef<const ClSurfaceFormatInfo>(readOnlyDepthSurfaceFormats);
 }
@@ -157,10 +167,10 @@ ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::surfaceFormats(cl_mem_flags 
 }
 
 ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::surfaceFormats(cl_mem_flags flags, const cl_image_format *imageFormat, bool supportsOcl20Features) noexcept {
-    if (NEO::IsNV12Image(imageFormat)) {
+    if (NEO::isNV12Image(imageFormat)) {
         return planarYuv();
     }
-    else if (IsPackedYuvImage(imageFormat)) {
+    else if (isPackedYuvImage(imageFormat)) {
         return packedYuv();
     }
     else if (Image::isDepthFormat(*imageFormat)) {

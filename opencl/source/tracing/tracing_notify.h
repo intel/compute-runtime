@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,7 +56,7 @@ constexpr uint32_t TRACING_STATE_ENABLED_BIT = 0x80000000u;
 constexpr uint32_t TRACING_STATE_LOCKED_BIT = 0x40000000u;
 
 extern std::atomic<uint32_t> tracingState;
-extern std::vector<TracingHandle *> tracingHandle;
+extern TracingHandle *tracingHandle[TRACING_MAX_HANDLE_COUNT];
 extern std::atomic<uint32_t> tracingCorrelationId;
 
 bool addTracingClient();
@@ -82,9 +82,9 @@ class AtomicBackoff {
     uint32_t count = 1;
 };
 
-class clBuildProgramTracer {
+class ClBuildProgramTracer {
   public:
-    clBuildProgramTracer() {}
+    ClBuildProgramTracer() {}
 
     void enter(cl_program *program,
                cl_uint *numDevices,
@@ -107,15 +107,16 @@ class clBuildProgramTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clBuildProgram)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clBuildProgram, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -126,21 +127,22 @@ class clBuildProgramTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clBuildProgram)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clBuildProgram, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clBuildProgramTracer() {
+    ~ClBuildProgramTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -151,9 +153,9 @@ class clBuildProgramTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCloneKernelTracer {
+class ClCloneKernelTracer {
   public:
-    clCloneKernelTracer() {}
+    ClCloneKernelTracer() {}
 
     void enter(cl_kernel *sourceKernel,
                cl_int **errcodeRet) {
@@ -168,15 +170,16 @@ class clCloneKernelTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCloneKernel)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCloneKernel, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -187,21 +190,22 @@ class clCloneKernelTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCloneKernel)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCloneKernel, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCloneKernelTracer() {
+    ~ClCloneKernelTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -212,9 +216,9 @@ class clCloneKernelTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCompileProgramTracer {
+class ClCompileProgramTracer {
   public:
-    clCompileProgramTracer() {}
+    ClCompileProgramTracer() {}
 
     void enter(cl_program *program,
                cl_uint *numDevices,
@@ -243,15 +247,16 @@ class clCompileProgramTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCompileProgram)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCompileProgram, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -262,21 +267,22 @@ class clCompileProgramTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCompileProgram)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCompileProgram, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCompileProgramTracer() {
+    ~ClCompileProgramTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -287,9 +293,9 @@ class clCompileProgramTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateBufferTracer {
+class ClCreateBufferTracer {
   public:
-    clCreateBufferTracer() {}
+    ClCreateBufferTracer() {}
 
     void enter(cl_context *context,
                cl_mem_flags *flags,
@@ -310,15 +316,16 @@ class clCreateBufferTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateBuffer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateBuffer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -329,21 +336,22 @@ class clCreateBufferTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateBuffer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateBuffer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateBufferTracer() {
+    ~ClCreateBufferTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -354,9 +362,9 @@ class clCreateBufferTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateCommandQueueTracer {
+class ClCreateCommandQueueTracer {
   public:
-    clCreateCommandQueueTracer() {}
+    ClCreateCommandQueueTracer() {}
 
     void enter(cl_context *context,
                cl_device_id *device,
@@ -375,15 +383,16 @@ class clCreateCommandQueueTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateCommandQueue)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateCommandQueue, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -394,21 +403,22 @@ class clCreateCommandQueueTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateCommandQueue)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateCommandQueue, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateCommandQueueTracer() {
+    ~ClCreateCommandQueueTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -419,9 +429,9 @@ class clCreateCommandQueueTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateCommandQueueWithPropertiesTracer {
+class ClCreateCommandQueueWithPropertiesTracer {
   public:
-    clCreateCommandQueueWithPropertiesTracer() {}
+    ClCreateCommandQueueWithPropertiesTracer() {}
 
     void enter(cl_context *context,
                cl_device_id *device,
@@ -440,15 +450,16 @@ class clCreateCommandQueueWithPropertiesTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateCommandQueueWithProperties)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateCommandQueueWithProperties, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -459,21 +470,22 @@ class clCreateCommandQueueWithPropertiesTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateCommandQueueWithProperties)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateCommandQueueWithProperties, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateCommandQueueWithPropertiesTracer() {
+    ~ClCreateCommandQueueWithPropertiesTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -484,9 +496,9 @@ class clCreateCommandQueueWithPropertiesTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateContextTracer {
+class ClCreateContextTracer {
   public:
-    clCreateContextTracer() {}
+    ClCreateContextTracer() {}
 
     void enter(const cl_context_properties **properties,
                cl_uint *numDevices,
@@ -509,15 +521,16 @@ class clCreateContextTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateContext)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateContext, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -528,21 +541,22 @@ class clCreateContextTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateContext)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateContext, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateContextTracer() {
+    ~ClCreateContextTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -553,9 +567,9 @@ class clCreateContextTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateContextFromTypeTracer {
+class ClCreateContextFromTypeTracer {
   public:
-    clCreateContextFromTypeTracer() {}
+    ClCreateContextFromTypeTracer() {}
 
     void enter(const cl_context_properties **properties,
                cl_device_type *deviceType,
@@ -576,15 +590,16 @@ class clCreateContextFromTypeTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateContextFromType)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateContextFromType, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -595,21 +610,22 @@ class clCreateContextFromTypeTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateContextFromType)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateContextFromType, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateContextFromTypeTracer() {
+    ~ClCreateContextFromTypeTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -620,9 +636,9 @@ class clCreateContextFromTypeTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateImageTracer {
+class ClCreateImageTracer {
   public:
-    clCreateImageTracer() {}
+    ClCreateImageTracer() {}
 
     void enter(cl_context *context,
                cl_mem_flags *flags,
@@ -645,15 +661,16 @@ class clCreateImageTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateImage)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateImage, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -664,21 +681,22 @@ class clCreateImageTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateImage)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateImage, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateImageTracer() {
+    ~ClCreateImageTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -689,9 +707,9 @@ class clCreateImageTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateImage2DTracer {
+class ClCreateImage2DTracer {
   public:
-    clCreateImage2DTracer() {}
+    ClCreateImage2DTracer() {}
 
     void enter(cl_context *context,
                cl_mem_flags *flags,
@@ -718,15 +736,16 @@ class clCreateImage2DTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateImage2D)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateImage2D, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -737,21 +756,22 @@ class clCreateImage2DTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateImage2D)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateImage2D, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateImage2DTracer() {
+    ~ClCreateImage2DTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -762,9 +782,9 @@ class clCreateImage2DTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateImage3DTracer {
+class ClCreateImage3DTracer {
   public:
-    clCreateImage3DTracer() {}
+    ClCreateImage3DTracer() {}
 
     void enter(cl_context *context,
                cl_mem_flags *flags,
@@ -795,15 +815,16 @@ class clCreateImage3DTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateImage3D)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateImage3D, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -814,21 +835,22 @@ class clCreateImage3DTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateImage3D)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateImage3D, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateImage3DTracer() {
+    ~ClCreateImage3DTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -839,9 +861,9 @@ class clCreateImage3DTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateKernelTracer {
+class ClCreateKernelTracer {
   public:
-    clCreateKernelTracer() {}
+    ClCreateKernelTracer() {}
 
     void enter(cl_program *program,
                const char **kernelName,
@@ -858,15 +880,16 @@ class clCreateKernelTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateKernel)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateKernel, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -877,21 +900,22 @@ class clCreateKernelTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateKernel)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateKernel, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateKernelTracer() {
+    ~ClCreateKernelTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -902,9 +926,9 @@ class clCreateKernelTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateKernelsInProgramTracer {
+class ClCreateKernelsInProgramTracer {
   public:
-    clCreateKernelsInProgramTracer() {}
+    ClCreateKernelsInProgramTracer() {}
 
     void enter(cl_program *program,
                cl_uint *numKernels,
@@ -923,15 +947,16 @@ class clCreateKernelsInProgramTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateKernelsInProgram)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateKernelsInProgram, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -942,21 +967,22 @@ class clCreateKernelsInProgramTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateKernelsInProgram)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateKernelsInProgram, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateKernelsInProgramTracer() {
+    ~ClCreateKernelsInProgramTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -967,9 +993,9 @@ class clCreateKernelsInProgramTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreatePipeTracer {
+class ClCreatePipeTracer {
   public:
-    clCreatePipeTracer() {}
+    ClCreatePipeTracer() {}
 
     void enter(cl_context *context,
                cl_mem_flags *flags,
@@ -992,15 +1018,16 @@ class clCreatePipeTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreatePipe)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreatePipe, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -1011,21 +1038,22 @@ class clCreatePipeTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreatePipe)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreatePipe, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreatePipeTracer() {
+    ~ClCreatePipeTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1036,9 +1064,9 @@ class clCreatePipeTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateProgramWithBinaryTracer {
+class ClCreateProgramWithBinaryTracer {
   public:
-    clCreateProgramWithBinaryTracer() {}
+    ClCreateProgramWithBinaryTracer() {}
 
     void enter(cl_context *context,
                cl_uint *numDevices,
@@ -1063,15 +1091,16 @@ class clCreateProgramWithBinaryTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateProgramWithBinary)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateProgramWithBinary, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -1082,21 +1111,22 @@ class clCreateProgramWithBinaryTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateProgramWithBinary)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateProgramWithBinary, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateProgramWithBinaryTracer() {
+    ~ClCreateProgramWithBinaryTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1107,9 +1137,9 @@ class clCreateProgramWithBinaryTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateProgramWithBuiltInKernelsTracer {
+class ClCreateProgramWithBuiltInKernelsTracer {
   public:
-    clCreateProgramWithBuiltInKernelsTracer() {}
+    ClCreateProgramWithBuiltInKernelsTracer() {}
 
     void enter(cl_context *context,
                cl_uint *numDevices,
@@ -1130,15 +1160,16 @@ class clCreateProgramWithBuiltInKernelsTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateProgramWithBuiltInKernels)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateProgramWithBuiltInKernels, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -1149,21 +1180,22 @@ class clCreateProgramWithBuiltInKernelsTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateProgramWithBuiltInKernels)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateProgramWithBuiltInKernels, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateProgramWithBuiltInKernelsTracer() {
+    ~ClCreateProgramWithBuiltInKernelsTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1174,9 +1206,9 @@ class clCreateProgramWithBuiltInKernelsTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateProgramWithILTracer {
+class ClCreateProgramWithIlTracer {
   public:
-    clCreateProgramWithILTracer() {}
+    ClCreateProgramWithIlTracer() {}
 
     void enter(cl_context *context,
                const void **il,
@@ -1195,15 +1227,16 @@ class clCreateProgramWithILTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateProgramWithIL)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateProgramWithIL, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -1214,21 +1247,22 @@ class clCreateProgramWithILTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateProgramWithIL)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateProgramWithIL, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateProgramWithILTracer() {
+    ~ClCreateProgramWithIlTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1239,9 +1273,9 @@ class clCreateProgramWithILTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateProgramWithSourceTracer {
+class ClCreateProgramWithSourceTracer {
   public:
-    clCreateProgramWithSourceTracer() {}
+    ClCreateProgramWithSourceTracer() {}
 
     void enter(cl_context *context,
                cl_uint *count,
@@ -1262,15 +1296,16 @@ class clCreateProgramWithSourceTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateProgramWithSource)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateProgramWithSource, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -1281,21 +1316,22 @@ class clCreateProgramWithSourceTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateProgramWithSource)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateProgramWithSource, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateProgramWithSourceTracer() {
+    ~ClCreateProgramWithSourceTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1306,9 +1342,9 @@ class clCreateProgramWithSourceTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateSamplerTracer {
+class ClCreateSamplerTracer {
   public:
-    clCreateSamplerTracer() {}
+    ClCreateSamplerTracer() {}
 
     void enter(cl_context *context,
                cl_bool *normalizedCoords,
@@ -1329,15 +1365,16 @@ class clCreateSamplerTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateSampler)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateSampler, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -1348,21 +1385,22 @@ class clCreateSamplerTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateSampler)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateSampler, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateSamplerTracer() {
+    ~ClCreateSamplerTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1373,9 +1411,9 @@ class clCreateSamplerTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateSamplerWithPropertiesTracer {
+class ClCreateSamplerWithPropertiesTracer {
   public:
-    clCreateSamplerWithPropertiesTracer() {}
+    ClCreateSamplerWithPropertiesTracer() {}
 
     void enter(cl_context *context,
                const cl_sampler_properties **samplerProperties,
@@ -1392,15 +1430,16 @@ class clCreateSamplerWithPropertiesTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateSamplerWithProperties)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateSamplerWithProperties, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -1411,21 +1450,22 @@ class clCreateSamplerWithPropertiesTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateSamplerWithProperties)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateSamplerWithProperties, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateSamplerWithPropertiesTracer() {
+    ~ClCreateSamplerWithPropertiesTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1436,9 +1476,9 @@ class clCreateSamplerWithPropertiesTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateSubBufferTracer {
+class ClCreateSubBufferTracer {
   public:
-    clCreateSubBufferTracer() {}
+    ClCreateSubBufferTracer() {}
 
     void enter(cl_mem *buffer,
                cl_mem_flags *flags,
@@ -1459,15 +1499,16 @@ class clCreateSubBufferTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateSubBuffer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateSubBuffer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -1478,21 +1519,22 @@ class clCreateSubBufferTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateSubBuffer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateSubBuffer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateSubBufferTracer() {
+    ~ClCreateSubBufferTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1503,9 +1545,9 @@ class clCreateSubBufferTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateUserEventTracer {
+class ClCreateUserEventTracer {
   public:
-    clCreateUserEventTracer() {}
+    ClCreateUserEventTracer() {}
 
     void enter(cl_context *context,
                cl_int **errcodeRet) {
@@ -1520,15 +1562,16 @@ class clCreateUserEventTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateUserEvent)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateUserEvent, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -1539,21 +1582,22 @@ class clCreateUserEventTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateUserEvent)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateUserEvent, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateUserEventTracer() {
+    ~ClCreateUserEventTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1564,9 +1608,9 @@ class clCreateUserEventTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueBarrierTracer {
+class ClEnqueueBarrierTracer {
   public:
-    clEnqueueBarrierTracer() {}
+    ClEnqueueBarrierTracer() {}
 
     void enter(cl_command_queue *commandQueue) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -1579,15 +1623,16 @@ class clEnqueueBarrierTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueBarrier)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueBarrier, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -1598,21 +1643,22 @@ class clEnqueueBarrierTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueBarrier)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueBarrier, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueBarrierTracer() {
+    ~ClEnqueueBarrierTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1623,9 +1669,9 @@ class clEnqueueBarrierTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueBarrierWithWaitListTracer {
+class ClEnqueueBarrierWithWaitListTracer {
   public:
-    clEnqueueBarrierWithWaitListTracer() {}
+    ClEnqueueBarrierWithWaitListTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_uint *numEventsInWaitList,
@@ -1644,15 +1690,16 @@ class clEnqueueBarrierWithWaitListTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueBarrierWithWaitList)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueBarrierWithWaitList, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -1663,21 +1710,22 @@ class clEnqueueBarrierWithWaitListTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueBarrierWithWaitList)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueBarrierWithWaitList, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueBarrierWithWaitListTracer() {
+    ~ClEnqueueBarrierWithWaitListTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1688,9 +1736,9 @@ class clEnqueueBarrierWithWaitListTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueCopyBufferTracer {
+class ClEnqueueCopyBufferTracer {
   public:
-    clEnqueueCopyBufferTracer() {}
+    ClEnqueueCopyBufferTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *srcBuffer,
@@ -1719,15 +1767,16 @@ class clEnqueueCopyBufferTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueCopyBuffer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueCopyBuffer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -1738,21 +1787,22 @@ class clEnqueueCopyBufferTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueCopyBuffer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueCopyBuffer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueCopyBufferTracer() {
+    ~ClEnqueueCopyBufferTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1763,9 +1813,9 @@ class clEnqueueCopyBufferTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueCopyBufferRectTracer {
+class ClEnqueueCopyBufferRectTracer {
   public:
-    clEnqueueCopyBufferRectTracer() {}
+    ClEnqueueCopyBufferRectTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *srcBuffer,
@@ -1802,15 +1852,16 @@ class clEnqueueCopyBufferRectTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueCopyBufferRect)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueCopyBufferRect, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -1821,21 +1872,22 @@ class clEnqueueCopyBufferRectTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueCopyBufferRect)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueCopyBufferRect, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueCopyBufferRectTracer() {
+    ~ClEnqueueCopyBufferRectTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1846,9 +1898,9 @@ class clEnqueueCopyBufferRectTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueCopyBufferToImageTracer {
+class ClEnqueueCopyBufferToImageTracer {
   public:
-    clEnqueueCopyBufferToImageTracer() {}
+    ClEnqueueCopyBufferToImageTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *srcBuffer,
@@ -1877,15 +1929,16 @@ class clEnqueueCopyBufferToImageTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueCopyBufferToImage)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueCopyBufferToImage, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -1896,21 +1949,22 @@ class clEnqueueCopyBufferToImageTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueCopyBufferToImage)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueCopyBufferToImage, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueCopyBufferToImageTracer() {
+    ~ClEnqueueCopyBufferToImageTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1921,9 +1975,9 @@ class clEnqueueCopyBufferToImageTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueCopyImageTracer {
+class ClEnqueueCopyImageTracer {
   public:
-    clEnqueueCopyImageTracer() {}
+    ClEnqueueCopyImageTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *srcImage,
@@ -1952,15 +2006,16 @@ class clEnqueueCopyImageTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueCopyImage)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueCopyImage, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -1971,21 +2026,22 @@ class clEnqueueCopyImageTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueCopyImage)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueCopyImage, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueCopyImageTracer() {
+    ~ClEnqueueCopyImageTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1996,9 +2052,9 @@ class clEnqueueCopyImageTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueCopyImageToBufferTracer {
+class ClEnqueueCopyImageToBufferTracer {
   public:
-    clEnqueueCopyImageToBufferTracer() {}
+    ClEnqueueCopyImageToBufferTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *srcImage,
@@ -2027,15 +2083,16 @@ class clEnqueueCopyImageToBufferTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueCopyImageToBuffer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueCopyImageToBuffer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -2046,21 +2103,22 @@ class clEnqueueCopyImageToBufferTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueCopyImageToBuffer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueCopyImageToBuffer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueCopyImageToBufferTracer() {
+    ~ClEnqueueCopyImageToBufferTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2071,9 +2129,9 @@ class clEnqueueCopyImageToBufferTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueFillBufferTracer {
+class ClEnqueueFillBufferTracer {
   public:
-    clEnqueueFillBufferTracer() {}
+    ClEnqueueFillBufferTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *buffer,
@@ -2102,15 +2160,16 @@ class clEnqueueFillBufferTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueFillBuffer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueFillBuffer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -2121,21 +2180,22 @@ class clEnqueueFillBufferTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueFillBuffer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueFillBuffer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueFillBufferTracer() {
+    ~ClEnqueueFillBufferTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2146,9 +2206,9 @@ class clEnqueueFillBufferTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueFillImageTracer {
+class ClEnqueueFillImageTracer {
   public:
-    clEnqueueFillImageTracer() {}
+    ClEnqueueFillImageTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *image,
@@ -2175,15 +2235,16 @@ class clEnqueueFillImageTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueFillImage)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueFillImage, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -2194,21 +2255,22 @@ class clEnqueueFillImageTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueFillImage)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueFillImage, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueFillImageTracer() {
+    ~ClEnqueueFillImageTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2219,9 +2281,9 @@ class clEnqueueFillImageTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueMapBufferTracer {
+class ClEnqueueMapBufferTracer {
   public:
-    clEnqueueMapBufferTracer() {}
+    ClEnqueueMapBufferTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *buffer,
@@ -2252,15 +2314,16 @@ class clEnqueueMapBufferTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMapBuffer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueMapBuffer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -2271,21 +2334,22 @@ class clEnqueueMapBufferTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMapBuffer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueMapBuffer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueMapBufferTracer() {
+    ~ClEnqueueMapBufferTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2296,9 +2360,9 @@ class clEnqueueMapBufferTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueMapImageTracer {
+class ClEnqueueMapImageTracer {
   public:
-    clEnqueueMapImageTracer() {}
+    ClEnqueueMapImageTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *image,
@@ -2333,15 +2397,16 @@ class clEnqueueMapImageTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMapImage)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueMapImage, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -2352,21 +2417,22 @@ class clEnqueueMapImageTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMapImage)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueMapImage, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueMapImageTracer() {
+    ~ClEnqueueMapImageTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2377,9 +2443,9 @@ class clEnqueueMapImageTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueMarkerTracer {
+class ClEnqueueMarkerTracer {
   public:
-    clEnqueueMarkerTracer() {}
+    ClEnqueueMarkerTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_event **event) {
@@ -2394,15 +2460,16 @@ class clEnqueueMarkerTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMarker)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueMarker, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -2413,21 +2480,22 @@ class clEnqueueMarkerTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMarker)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueMarker, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueMarkerTracer() {
+    ~ClEnqueueMarkerTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2438,9 +2506,9 @@ class clEnqueueMarkerTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueMarkerWithWaitListTracer {
+class ClEnqueueMarkerWithWaitListTracer {
   public:
-    clEnqueueMarkerWithWaitListTracer() {}
+    ClEnqueueMarkerWithWaitListTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_uint *numEventsInWaitList,
@@ -2459,15 +2527,16 @@ class clEnqueueMarkerWithWaitListTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMarkerWithWaitList)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueMarkerWithWaitList, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -2478,21 +2547,22 @@ class clEnqueueMarkerWithWaitListTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMarkerWithWaitList)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueMarkerWithWaitList, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueMarkerWithWaitListTracer() {
+    ~ClEnqueueMarkerWithWaitListTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2503,9 +2573,9 @@ class clEnqueueMarkerWithWaitListTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueMigrateMemObjectsTracer {
+class ClEnqueueMigrateMemObjectsTracer {
   public:
-    clEnqueueMigrateMemObjectsTracer() {}
+    ClEnqueueMigrateMemObjectsTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_uint *numMemObjects,
@@ -2530,15 +2600,16 @@ class clEnqueueMigrateMemObjectsTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMigrateMemObjects)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueMigrateMemObjects, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -2549,21 +2620,22 @@ class clEnqueueMigrateMemObjectsTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMigrateMemObjects)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueMigrateMemObjects, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueMigrateMemObjectsTracer() {
+    ~ClEnqueueMigrateMemObjectsTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2574,9 +2646,9 @@ class clEnqueueMigrateMemObjectsTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueNDRangeKernelTracer {
+class ClEnqueueNdRangeKernelTracer {
   public:
-    clEnqueueNDRangeKernelTracer() {}
+    ClEnqueueNdRangeKernelTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_kernel *kernel,
@@ -2605,15 +2677,16 @@ class clEnqueueNDRangeKernelTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueNDRangeKernel)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueNDRangeKernel, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -2624,21 +2697,22 @@ class clEnqueueNDRangeKernelTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueNDRangeKernel)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueNDRangeKernel, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueNDRangeKernelTracer() {
+    ~ClEnqueueNdRangeKernelTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2649,9 +2723,9 @@ class clEnqueueNDRangeKernelTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueNativeKernelTracer {
+class ClEnqueueNativeKernelTracer {
   public:
-    clEnqueueNativeKernelTracer() {}
+    ClEnqueueNativeKernelTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                void(CL_CALLBACK **userFunc)(void *),
@@ -2682,15 +2756,16 @@ class clEnqueueNativeKernelTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueNativeKernel)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueNativeKernel, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -2701,21 +2776,22 @@ class clEnqueueNativeKernelTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueNativeKernel)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueNativeKernel, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueNativeKernelTracer() {
+    ~ClEnqueueNativeKernelTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2726,9 +2802,9 @@ class clEnqueueNativeKernelTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueReadBufferTracer {
+class ClEnqueueReadBufferTracer {
   public:
-    clEnqueueReadBufferTracer() {}
+    ClEnqueueReadBufferTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *buffer,
@@ -2757,15 +2833,16 @@ class clEnqueueReadBufferTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueReadBuffer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueReadBuffer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -2776,21 +2853,22 @@ class clEnqueueReadBufferTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueReadBuffer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueReadBuffer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueReadBufferTracer() {
+    ~ClEnqueueReadBufferTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2801,9 +2879,9 @@ class clEnqueueReadBufferTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueReadBufferRectTracer {
+class ClEnqueueReadBufferRectTracer {
   public:
-    clEnqueueReadBufferRectTracer() {}
+    ClEnqueueReadBufferRectTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *buffer,
@@ -2842,15 +2920,16 @@ class clEnqueueReadBufferRectTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueReadBufferRect)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueReadBufferRect, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -2861,21 +2940,22 @@ class clEnqueueReadBufferRectTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueReadBufferRect)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueReadBufferRect, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueReadBufferRectTracer() {
+    ~ClEnqueueReadBufferRectTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2886,9 +2966,9 @@ class clEnqueueReadBufferRectTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueReadImageTracer {
+class ClEnqueueReadImageTracer {
   public:
-    clEnqueueReadImageTracer() {}
+    ClEnqueueReadImageTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *image,
@@ -2921,15 +3001,16 @@ class clEnqueueReadImageTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueReadImage)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueReadImage, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -2940,21 +3021,22 @@ class clEnqueueReadImageTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueReadImage)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueReadImage, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueReadImageTracer() {
+    ~ClEnqueueReadImageTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2965,9 +3047,9 @@ class clEnqueueReadImageTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueSVMFreeTracer {
+class ClEnqueueSvmFreeTracer {
   public:
-    clEnqueueSVMFreeTracer() {}
+    ClEnqueueSvmFreeTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_uint *numSvmPointers,
@@ -2994,15 +3076,16 @@ class clEnqueueSVMFreeTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueSVMFree)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueSVMFree, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -3013,21 +3096,22 @@ class clEnqueueSVMFreeTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueSVMFree)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueSVMFree, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueSVMFreeTracer() {
+    ~ClEnqueueSvmFreeTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3038,9 +3122,9 @@ class clEnqueueSVMFreeTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueSVMMapTracer {
+class ClEnqueueSvmMapTracer {
   public:
-    clEnqueueSVMMapTracer() {}
+    ClEnqueueSvmMapTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_bool *blockingMap,
@@ -3067,15 +3151,16 @@ class clEnqueueSVMMapTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueSVMMap)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueSVMMap, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -3086,21 +3171,22 @@ class clEnqueueSVMMapTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueSVMMap)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueSVMMap, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueSVMMapTracer() {
+    ~ClEnqueueSvmMapTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3111,9 +3197,9 @@ class clEnqueueSVMMapTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueSVMMemFillTracer {
+class ClEnqueueSvmMemFillTracer {
   public:
-    clEnqueueSVMMemFillTracer() {}
+    ClEnqueueSvmMemFillTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                void **svmPtr,
@@ -3140,15 +3226,16 @@ class clEnqueueSVMMemFillTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueSVMMemFill)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueSVMMemFill, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -3159,21 +3246,22 @@ class clEnqueueSVMMemFillTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueSVMMemFill)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueSVMMemFill, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueSVMMemFillTracer() {
+    ~ClEnqueueSvmMemFillTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3184,9 +3272,9 @@ class clEnqueueSVMMemFillTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueSVMMemcpyTracer {
+class ClEnqueueSvmMemcpyTracer {
   public:
-    clEnqueueSVMMemcpyTracer() {}
+    ClEnqueueSvmMemcpyTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_bool *blockingCopy,
@@ -3213,15 +3301,16 @@ class clEnqueueSVMMemcpyTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueSVMMemcpy)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueSVMMemcpy, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -3232,21 +3321,22 @@ class clEnqueueSVMMemcpyTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueSVMMemcpy)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueSVMMemcpy, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueSVMMemcpyTracer() {
+    ~ClEnqueueSvmMemcpyTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3257,9 +3347,9 @@ class clEnqueueSVMMemcpyTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueSVMMigrateMemTracer {
+class ClEnqueueSvmMigrateMemTracer {
   public:
-    clEnqueueSVMMigrateMemTracer() {}
+    ClEnqueueSvmMigrateMemTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_uint *numSvmPointers,
@@ -3286,15 +3376,16 @@ class clEnqueueSVMMigrateMemTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueSVMMigrateMem)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueSVMMigrateMem, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -3305,21 +3396,22 @@ class clEnqueueSVMMigrateMemTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueSVMMigrateMem)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueSVMMigrateMem, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueSVMMigrateMemTracer() {
+    ~ClEnqueueSvmMigrateMemTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3330,9 +3422,9 @@ class clEnqueueSVMMigrateMemTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueSVMUnmapTracer {
+class ClEnqueueSvmUnmapTracer {
   public:
-    clEnqueueSVMUnmapTracer() {}
+    ClEnqueueSvmUnmapTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                void **svmPtr,
@@ -3353,15 +3445,16 @@ class clEnqueueSVMUnmapTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueSVMUnmap)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueSVMUnmap, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -3372,21 +3465,22 @@ class clEnqueueSVMUnmapTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueSVMUnmap)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueSVMUnmap, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueSVMUnmapTracer() {
+    ~ClEnqueueSvmUnmapTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3397,9 +3491,9 @@ class clEnqueueSVMUnmapTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueTaskTracer {
+class ClEnqueueTaskTracer {
   public:
-    clEnqueueTaskTracer() {}
+    ClEnqueueTaskTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_kernel *kernel,
@@ -3420,15 +3514,16 @@ class clEnqueueTaskTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueTask)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueTask, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -3439,21 +3534,22 @@ class clEnqueueTaskTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueTask)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueTask, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueTaskTracer() {
+    ~ClEnqueueTaskTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3464,9 +3560,9 @@ class clEnqueueTaskTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueUnmapMemObjectTracer {
+class ClEnqueueUnmapMemObjectTracer {
   public:
-    clEnqueueUnmapMemObjectTracer() {}
+    ClEnqueueUnmapMemObjectTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *memobj,
@@ -3489,15 +3585,16 @@ class clEnqueueUnmapMemObjectTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueUnmapMemObject)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueUnmapMemObject, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -3508,21 +3605,22 @@ class clEnqueueUnmapMemObjectTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueUnmapMemObject)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueUnmapMemObject, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueUnmapMemObjectTracer() {
+    ~ClEnqueueUnmapMemObjectTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3533,9 +3631,9 @@ class clEnqueueUnmapMemObjectTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueWaitForEventsTracer {
+class ClEnqueueWaitForEventsTracer {
   public:
-    clEnqueueWaitForEventsTracer() {}
+    ClEnqueueWaitForEventsTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_uint *numEvents,
@@ -3552,15 +3650,16 @@ class clEnqueueWaitForEventsTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueWaitForEvents)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueWaitForEvents, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -3571,21 +3670,22 @@ class clEnqueueWaitForEventsTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueWaitForEvents)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueWaitForEvents, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueWaitForEventsTracer() {
+    ~ClEnqueueWaitForEventsTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3596,9 +3696,9 @@ class clEnqueueWaitForEventsTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueWriteBufferTracer {
+class ClEnqueueWriteBufferTracer {
   public:
-    clEnqueueWriteBufferTracer() {}
+    ClEnqueueWriteBufferTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *buffer,
@@ -3627,15 +3727,16 @@ class clEnqueueWriteBufferTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueWriteBuffer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueWriteBuffer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -3646,21 +3747,22 @@ class clEnqueueWriteBufferTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueWriteBuffer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueWriteBuffer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueWriteBufferTracer() {
+    ~ClEnqueueWriteBufferTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3671,9 +3773,9 @@ class clEnqueueWriteBufferTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueWriteBufferRectTracer {
+class ClEnqueueWriteBufferRectTracer {
   public:
-    clEnqueueWriteBufferRectTracer() {}
+    ClEnqueueWriteBufferRectTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *buffer,
@@ -3712,15 +3814,16 @@ class clEnqueueWriteBufferRectTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueWriteBufferRect)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueWriteBufferRect, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -3731,21 +3834,22 @@ class clEnqueueWriteBufferRectTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueWriteBufferRect)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueWriteBufferRect, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueWriteBufferRectTracer() {
+    ~ClEnqueueWriteBufferRectTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3756,9 +3860,9 @@ class clEnqueueWriteBufferRectTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueWriteImageTracer {
+class ClEnqueueWriteImageTracer {
   public:
-    clEnqueueWriteImageTracer() {}
+    ClEnqueueWriteImageTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *image,
@@ -3791,15 +3895,16 @@ class clEnqueueWriteImageTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueWriteImage)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueWriteImage, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -3810,21 +3915,22 @@ class clEnqueueWriteImageTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueWriteImage)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueWriteImage, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueWriteImageTracer() {
+    ~ClEnqueueWriteImageTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3835,9 +3941,9 @@ class clEnqueueWriteImageTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clFinishTracer {
+class ClFinishTracer {
   public:
-    clFinishTracer() {}
+    ClFinishTracer() {}
 
     void enter(cl_command_queue *commandQueue) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -3850,15 +3956,16 @@ class clFinishTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clFinish)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clFinish, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -3869,21 +3976,22 @@ class clFinishTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clFinish)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clFinish, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clFinishTracer() {
+    ~ClFinishTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3894,9 +4002,9 @@ class clFinishTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clFlushTracer {
+class ClFlushTracer {
   public:
-    clFlushTracer() {}
+    ClFlushTracer() {}
 
     void enter(cl_command_queue *commandQueue) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -3909,15 +4017,16 @@ class clFlushTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clFlush)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clFlush, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -3928,21 +4037,22 @@ class clFlushTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clFlush)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clFlush, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clFlushTracer() {
+    ~ClFlushTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3953,9 +4063,9 @@ class clFlushTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetCommandQueueInfoTracer {
+class ClGetCommandQueueInfoTracer {
   public:
-    clGetCommandQueueInfoTracer() {}
+    ClGetCommandQueueInfoTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_command_queue_info *paramName,
@@ -3976,15 +4086,16 @@ class clGetCommandQueueInfoTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetCommandQueueInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetCommandQueueInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -3995,21 +4106,22 @@ class clGetCommandQueueInfoTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetCommandQueueInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetCommandQueueInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetCommandQueueInfoTracer() {
+    ~ClGetCommandQueueInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4020,9 +4132,9 @@ class clGetCommandQueueInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetContextInfoTracer {
+class ClGetContextInfoTracer {
   public:
-    clGetContextInfoTracer() {}
+    ClGetContextInfoTracer() {}
 
     void enter(cl_context *context,
                cl_context_info *paramName,
@@ -4043,15 +4155,16 @@ class clGetContextInfoTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetContextInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetContextInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -4062,21 +4175,22 @@ class clGetContextInfoTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetContextInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetContextInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetContextInfoTracer() {
+    ~ClGetContextInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4087,9 +4201,9 @@ class clGetContextInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetDeviceAndHostTimerTracer {
+class ClGetDeviceAndHostTimerTracer {
   public:
-    clGetDeviceAndHostTimerTracer() {}
+    ClGetDeviceAndHostTimerTracer() {}
 
     void enter(cl_device_id *device,
                cl_ulong **deviceTimestamp,
@@ -4106,15 +4220,16 @@ class clGetDeviceAndHostTimerTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetDeviceAndHostTimer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetDeviceAndHostTimer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -4125,21 +4240,22 @@ class clGetDeviceAndHostTimerTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetDeviceAndHostTimer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetDeviceAndHostTimer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetDeviceAndHostTimerTracer() {
+    ~ClGetDeviceAndHostTimerTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4150,9 +4266,9 @@ class clGetDeviceAndHostTimerTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetDeviceIDsTracer {
+class ClGetDeviceIDsTracer {
   public:
-    clGetDeviceIDsTracer() {}
+    ClGetDeviceIDsTracer() {}
 
     void enter(cl_platform_id *platform,
                cl_device_type *deviceType,
@@ -4173,15 +4289,16 @@ class clGetDeviceIDsTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetDeviceIDs)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetDeviceIDs, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -4192,21 +4309,22 @@ class clGetDeviceIDsTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetDeviceIDs)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetDeviceIDs, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetDeviceIDsTracer() {
+    ~ClGetDeviceIDsTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4217,9 +4335,9 @@ class clGetDeviceIDsTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetDeviceInfoTracer {
+class ClGetDeviceInfoTracer {
   public:
-    clGetDeviceInfoTracer() {}
+    ClGetDeviceInfoTracer() {}
 
     void enter(cl_device_id *device,
                cl_device_info *paramName,
@@ -4240,15 +4358,16 @@ class clGetDeviceInfoTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetDeviceInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetDeviceInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -4259,21 +4378,22 @@ class clGetDeviceInfoTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetDeviceInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetDeviceInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetDeviceInfoTracer() {
+    ~ClGetDeviceInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4284,9 +4404,9 @@ class clGetDeviceInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetEventInfoTracer {
+class ClGetEventInfoTracer {
   public:
-    clGetEventInfoTracer() {}
+    ClGetEventInfoTracer() {}
 
     void enter(cl_event *event,
                cl_event_info *paramName,
@@ -4307,15 +4427,16 @@ class clGetEventInfoTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetEventInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetEventInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -4326,21 +4447,22 @@ class clGetEventInfoTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetEventInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetEventInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetEventInfoTracer() {
+    ~ClGetEventInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4351,9 +4473,9 @@ class clGetEventInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetEventProfilingInfoTracer {
+class ClGetEventProfilingInfoTracer {
   public:
-    clGetEventProfilingInfoTracer() {}
+    ClGetEventProfilingInfoTracer() {}
 
     void enter(cl_event *event,
                cl_profiling_info *paramName,
@@ -4374,15 +4496,16 @@ class clGetEventProfilingInfoTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetEventProfilingInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetEventProfilingInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -4393,21 +4516,22 @@ class clGetEventProfilingInfoTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetEventProfilingInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetEventProfilingInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetEventProfilingInfoTracer() {
+    ~ClGetEventProfilingInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4418,9 +4542,9 @@ class clGetEventProfilingInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetExtensionFunctionAddressTracer {
+class ClGetExtensionFunctionAddressTracer {
   public:
-    clGetExtensionFunctionAddressTracer() {}
+    ClGetExtensionFunctionAddressTracer() {}
 
     void enter(const char **funcName) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -4433,15 +4557,16 @@ class clGetExtensionFunctionAddressTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetExtensionFunctionAddress)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetExtensionFunctionAddress, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -4452,21 +4577,22 @@ class clGetExtensionFunctionAddressTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetExtensionFunctionAddress)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetExtensionFunctionAddress, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetExtensionFunctionAddressTracer() {
+    ~ClGetExtensionFunctionAddressTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4477,9 +4603,9 @@ class clGetExtensionFunctionAddressTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetExtensionFunctionAddressForPlatformTracer {
+class ClGetExtensionFunctionAddressForPlatformTracer {
   public:
-    clGetExtensionFunctionAddressForPlatformTracer() {}
+    ClGetExtensionFunctionAddressForPlatformTracer() {}
 
     void enter(cl_platform_id *platform,
                const char **funcName) {
@@ -4494,15 +4620,16 @@ class clGetExtensionFunctionAddressForPlatformTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetExtensionFunctionAddressForPlatform)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetExtensionFunctionAddressForPlatform, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -4513,21 +4640,22 @@ class clGetExtensionFunctionAddressForPlatformTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetExtensionFunctionAddressForPlatform)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetExtensionFunctionAddressForPlatform, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetExtensionFunctionAddressForPlatformTracer() {
+    ~ClGetExtensionFunctionAddressForPlatformTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4538,9 +4666,9 @@ class clGetExtensionFunctionAddressForPlatformTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetHostTimerTracer {
+class ClGetHostTimerTracer {
   public:
-    clGetHostTimerTracer() {}
+    ClGetHostTimerTracer() {}
 
     void enter(cl_device_id *device,
                cl_ulong **hostTimestamp) {
@@ -4555,15 +4683,16 @@ class clGetHostTimerTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetHostTimer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetHostTimer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -4574,21 +4703,22 @@ class clGetHostTimerTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetHostTimer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetHostTimer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetHostTimerTracer() {
+    ~ClGetHostTimerTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4599,9 +4729,9 @@ class clGetHostTimerTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetImageInfoTracer {
+class ClGetImageInfoTracer {
   public:
-    clGetImageInfoTracer() {}
+    ClGetImageInfoTracer() {}
 
     void enter(cl_mem *image,
                cl_image_info *paramName,
@@ -4622,15 +4752,16 @@ class clGetImageInfoTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetImageInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetImageInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -4641,21 +4772,22 @@ class clGetImageInfoTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetImageInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetImageInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetImageInfoTracer() {
+    ~ClGetImageInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4666,9 +4798,9 @@ class clGetImageInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetKernelArgInfoTracer {
+class ClGetKernelArgInfoTracer {
   public:
-    clGetKernelArgInfoTracer() {}
+    ClGetKernelArgInfoTracer() {}
 
     void enter(cl_kernel *kernel,
                cl_uint *argIndx,
@@ -4691,15 +4823,16 @@ class clGetKernelArgInfoTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetKernelArgInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetKernelArgInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -4710,21 +4843,22 @@ class clGetKernelArgInfoTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetKernelArgInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetKernelArgInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetKernelArgInfoTracer() {
+    ~ClGetKernelArgInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4735,9 +4869,9 @@ class clGetKernelArgInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetKernelInfoTracer {
+class ClGetKernelInfoTracer {
   public:
-    clGetKernelInfoTracer() {}
+    ClGetKernelInfoTracer() {}
 
     void enter(cl_kernel *kernel,
                cl_kernel_info *paramName,
@@ -4758,15 +4892,16 @@ class clGetKernelInfoTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetKernelInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetKernelInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -4777,21 +4912,22 @@ class clGetKernelInfoTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetKernelInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetKernelInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetKernelInfoTracer() {
+    ~ClGetKernelInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4802,9 +4938,9 @@ class clGetKernelInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetKernelSubGroupInfoTracer {
+class ClGetKernelSubGroupInfoTracer {
   public:
-    clGetKernelSubGroupInfoTracer() {}
+    ClGetKernelSubGroupInfoTracer() {}
 
     void enter(cl_kernel *kernel,
                cl_device_id *device,
@@ -4831,15 +4967,16 @@ class clGetKernelSubGroupInfoTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetKernelSubGroupInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetKernelSubGroupInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -4850,21 +4987,22 @@ class clGetKernelSubGroupInfoTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetKernelSubGroupInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetKernelSubGroupInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetKernelSubGroupInfoTracer() {
+    ~ClGetKernelSubGroupInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4875,9 +5013,9 @@ class clGetKernelSubGroupInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetKernelWorkGroupInfoTracer {
+class ClGetKernelWorkGroupInfoTracer {
   public:
-    clGetKernelWorkGroupInfoTracer() {}
+    ClGetKernelWorkGroupInfoTracer() {}
 
     void enter(cl_kernel *kernel,
                cl_device_id *device,
@@ -4900,15 +5038,16 @@ class clGetKernelWorkGroupInfoTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetKernelWorkGroupInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetKernelWorkGroupInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -4919,21 +5058,22 @@ class clGetKernelWorkGroupInfoTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetKernelWorkGroupInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetKernelWorkGroupInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetKernelWorkGroupInfoTracer() {
+    ~ClGetKernelWorkGroupInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4944,9 +5084,9 @@ class clGetKernelWorkGroupInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetMemObjectInfoTracer {
+class ClGetMemObjectInfoTracer {
   public:
-    clGetMemObjectInfoTracer() {}
+    ClGetMemObjectInfoTracer() {}
 
     void enter(cl_mem *memobj,
                cl_mem_info *paramName,
@@ -4967,15 +5107,16 @@ class clGetMemObjectInfoTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetMemObjectInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetMemObjectInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -4986,21 +5127,22 @@ class clGetMemObjectInfoTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetMemObjectInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetMemObjectInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetMemObjectInfoTracer() {
+    ~ClGetMemObjectInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5011,9 +5153,9 @@ class clGetMemObjectInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetPipeInfoTracer {
+class ClGetPipeInfoTracer {
   public:
-    clGetPipeInfoTracer() {}
+    ClGetPipeInfoTracer() {}
 
     void enter(cl_mem *pipe,
                cl_pipe_info *paramName,
@@ -5034,15 +5176,16 @@ class clGetPipeInfoTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetPipeInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetPipeInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -5053,21 +5196,22 @@ class clGetPipeInfoTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetPipeInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetPipeInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetPipeInfoTracer() {
+    ~ClGetPipeInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5078,9 +5222,9 @@ class clGetPipeInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetPlatformIDsTracer {
+class ClGetPlatformIDsTracer {
   public:
-    clGetPlatformIDsTracer() {}
+    ClGetPlatformIDsTracer() {}
 
     void enter(cl_uint *numEntries,
                cl_platform_id **platforms,
@@ -5097,15 +5241,16 @@ class clGetPlatformIDsTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetPlatformIDs)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetPlatformIDs, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -5116,21 +5261,22 @@ class clGetPlatformIDsTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetPlatformIDs)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetPlatformIDs, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetPlatformIDsTracer() {
+    ~ClGetPlatformIDsTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5141,9 +5287,9 @@ class clGetPlatformIDsTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetPlatformInfoTracer {
+class ClGetPlatformInfoTracer {
   public:
-    clGetPlatformInfoTracer() {}
+    ClGetPlatformInfoTracer() {}
 
     void enter(cl_platform_id *platform,
                cl_platform_info *paramName,
@@ -5164,15 +5310,16 @@ class clGetPlatformInfoTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetPlatformInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetPlatformInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -5183,21 +5330,22 @@ class clGetPlatformInfoTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetPlatformInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetPlatformInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetPlatformInfoTracer() {
+    ~ClGetPlatformInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5208,9 +5356,9 @@ class clGetPlatformInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetProgramBuildInfoTracer {
+class ClGetProgramBuildInfoTracer {
   public:
-    clGetProgramBuildInfoTracer() {}
+    ClGetProgramBuildInfoTracer() {}
 
     void enter(cl_program *program,
                cl_device_id *device,
@@ -5233,15 +5381,16 @@ class clGetProgramBuildInfoTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetProgramBuildInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetProgramBuildInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -5252,21 +5401,22 @@ class clGetProgramBuildInfoTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetProgramBuildInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetProgramBuildInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetProgramBuildInfoTracer() {
+    ~ClGetProgramBuildInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5277,9 +5427,9 @@ class clGetProgramBuildInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetProgramInfoTracer {
+class ClGetProgramInfoTracer {
   public:
-    clGetProgramInfoTracer() {}
+    ClGetProgramInfoTracer() {}
 
     void enter(cl_program *program,
                cl_program_info *paramName,
@@ -5300,15 +5450,16 @@ class clGetProgramInfoTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetProgramInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetProgramInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -5319,21 +5470,22 @@ class clGetProgramInfoTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetProgramInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetProgramInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetProgramInfoTracer() {
+    ~ClGetProgramInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5344,9 +5496,9 @@ class clGetProgramInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetSamplerInfoTracer {
+class ClGetSamplerInfoTracer {
   public:
-    clGetSamplerInfoTracer() {}
+    ClGetSamplerInfoTracer() {}
 
     void enter(cl_sampler *sampler,
                cl_sampler_info *paramName,
@@ -5367,15 +5519,16 @@ class clGetSamplerInfoTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetSamplerInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetSamplerInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -5386,21 +5539,22 @@ class clGetSamplerInfoTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetSamplerInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetSamplerInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetSamplerInfoTracer() {
+    ~ClGetSamplerInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5411,9 +5565,9 @@ class clGetSamplerInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetSupportedImageFormatsTracer {
+class ClGetSupportedImageFormatsTracer {
   public:
-    clGetSupportedImageFormatsTracer() {}
+    ClGetSupportedImageFormatsTracer() {}
 
     void enter(cl_context *context,
                cl_mem_flags *flags,
@@ -5436,15 +5590,16 @@ class clGetSupportedImageFormatsTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetSupportedImageFormats)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetSupportedImageFormats, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -5455,21 +5610,22 @@ class clGetSupportedImageFormatsTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetSupportedImageFormats)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetSupportedImageFormats, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetSupportedImageFormatsTracer() {
+    ~ClGetSupportedImageFormatsTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5480,9 +5636,9 @@ class clGetSupportedImageFormatsTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clLinkProgramTracer {
+class ClLinkProgramTracer {
   public:
-    clLinkProgramTracer() {}
+    ClLinkProgramTracer() {}
 
     void enter(cl_context *context,
                cl_uint *numDevices,
@@ -5511,15 +5667,16 @@ class clLinkProgramTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clLinkProgram)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clLinkProgram, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -5530,21 +5687,22 @@ class clLinkProgramTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clLinkProgram)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clLinkProgram, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clLinkProgramTracer() {
+    ~ClLinkProgramTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5555,9 +5713,9 @@ class clLinkProgramTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clReleaseCommandQueueTracer {
+class ClReleaseCommandQueueTracer {
   public:
-    clReleaseCommandQueueTracer() {}
+    ClReleaseCommandQueueTracer() {}
 
     void enter(cl_command_queue *commandQueue) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -5570,15 +5728,16 @@ class clReleaseCommandQueueTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseCommandQueue)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clReleaseCommandQueue, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -5589,21 +5748,22 @@ class clReleaseCommandQueueTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseCommandQueue)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clReleaseCommandQueue, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clReleaseCommandQueueTracer() {
+    ~ClReleaseCommandQueueTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5614,9 +5774,9 @@ class clReleaseCommandQueueTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clReleaseContextTracer {
+class ClReleaseContextTracer {
   public:
-    clReleaseContextTracer() {}
+    ClReleaseContextTracer() {}
 
     void enter(cl_context *context) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -5629,15 +5789,16 @@ class clReleaseContextTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseContext)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clReleaseContext, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -5648,21 +5809,22 @@ class clReleaseContextTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseContext)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clReleaseContext, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clReleaseContextTracer() {
+    ~ClReleaseContextTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5673,9 +5835,9 @@ class clReleaseContextTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clReleaseDeviceTracer {
+class ClReleaseDeviceTracer {
   public:
-    clReleaseDeviceTracer() {}
+    ClReleaseDeviceTracer() {}
 
     void enter(cl_device_id *device) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -5688,15 +5850,16 @@ class clReleaseDeviceTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseDevice)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clReleaseDevice, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -5707,21 +5870,22 @@ class clReleaseDeviceTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseDevice)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clReleaseDevice, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clReleaseDeviceTracer() {
+    ~ClReleaseDeviceTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5732,9 +5896,9 @@ class clReleaseDeviceTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clReleaseEventTracer {
+class ClReleaseEventTracer {
   public:
-    clReleaseEventTracer() {}
+    ClReleaseEventTracer() {}
 
     void enter(cl_event *event) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -5747,15 +5911,16 @@ class clReleaseEventTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseEvent)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clReleaseEvent, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -5766,21 +5931,22 @@ class clReleaseEventTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseEvent)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clReleaseEvent, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clReleaseEventTracer() {
+    ~ClReleaseEventTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5791,9 +5957,9 @@ class clReleaseEventTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clReleaseKernelTracer {
+class ClReleaseKernelTracer {
   public:
-    clReleaseKernelTracer() {}
+    ClReleaseKernelTracer() {}
 
     void enter(cl_kernel *kernel) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -5806,15 +5972,16 @@ class clReleaseKernelTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseKernel)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clReleaseKernel, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -5825,21 +5992,22 @@ class clReleaseKernelTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseKernel)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clReleaseKernel, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clReleaseKernelTracer() {
+    ~ClReleaseKernelTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5850,9 +6018,9 @@ class clReleaseKernelTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clReleaseMemObjectTracer {
+class ClReleaseMemObjectTracer {
   public:
-    clReleaseMemObjectTracer() {}
+    ClReleaseMemObjectTracer() {}
 
     void enter(cl_mem *memobj) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -5865,15 +6033,16 @@ class clReleaseMemObjectTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseMemObject)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clReleaseMemObject, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -5884,21 +6053,22 @@ class clReleaseMemObjectTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseMemObject)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clReleaseMemObject, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clReleaseMemObjectTracer() {
+    ~ClReleaseMemObjectTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5909,9 +6079,9 @@ class clReleaseMemObjectTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clReleaseProgramTracer {
+class ClReleaseProgramTracer {
   public:
-    clReleaseProgramTracer() {}
+    ClReleaseProgramTracer() {}
 
     void enter(cl_program *program) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -5924,15 +6094,16 @@ class clReleaseProgramTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseProgram)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clReleaseProgram, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -5943,21 +6114,22 @@ class clReleaseProgramTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseProgram)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clReleaseProgram, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clReleaseProgramTracer() {
+    ~ClReleaseProgramTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5968,9 +6140,9 @@ class clReleaseProgramTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clReleaseSamplerTracer {
+class ClReleaseSamplerTracer {
   public:
-    clReleaseSamplerTracer() {}
+    ClReleaseSamplerTracer() {}
 
     void enter(cl_sampler *sampler) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -5983,15 +6155,16 @@ class clReleaseSamplerTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseSampler)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clReleaseSampler, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -6002,21 +6175,22 @@ class clReleaseSamplerTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseSampler)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clReleaseSampler, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clReleaseSamplerTracer() {
+    ~ClReleaseSamplerTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6027,9 +6201,9 @@ class clReleaseSamplerTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clRetainCommandQueueTracer {
+class ClRetainCommandQueueTracer {
   public:
-    clRetainCommandQueueTracer() {}
+    ClRetainCommandQueueTracer() {}
 
     void enter(cl_command_queue *commandQueue) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -6042,15 +6216,16 @@ class clRetainCommandQueueTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainCommandQueue)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clRetainCommandQueue, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -6061,21 +6236,22 @@ class clRetainCommandQueueTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainCommandQueue)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clRetainCommandQueue, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clRetainCommandQueueTracer() {
+    ~ClRetainCommandQueueTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6086,9 +6262,9 @@ class clRetainCommandQueueTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clRetainContextTracer {
+class ClRetainContextTracer {
   public:
-    clRetainContextTracer() {}
+    ClRetainContextTracer() {}
 
     void enter(cl_context *context) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -6101,15 +6277,16 @@ class clRetainContextTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainContext)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clRetainContext, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -6120,21 +6297,22 @@ class clRetainContextTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainContext)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clRetainContext, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clRetainContextTracer() {
+    ~ClRetainContextTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6145,9 +6323,9 @@ class clRetainContextTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clRetainDeviceTracer {
+class ClRetainDeviceTracer {
   public:
-    clRetainDeviceTracer() {}
+    ClRetainDeviceTracer() {}
 
     void enter(cl_device_id *device) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -6160,15 +6338,16 @@ class clRetainDeviceTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainDevice)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clRetainDevice, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -6179,21 +6358,22 @@ class clRetainDeviceTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainDevice)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clRetainDevice, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clRetainDeviceTracer() {
+    ~ClRetainDeviceTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6204,9 +6384,9 @@ class clRetainDeviceTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clRetainEventTracer {
+class ClRetainEventTracer {
   public:
-    clRetainEventTracer() {}
+    ClRetainEventTracer() {}
 
     void enter(cl_event *event) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -6219,15 +6399,16 @@ class clRetainEventTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainEvent)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clRetainEvent, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -6238,21 +6419,22 @@ class clRetainEventTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainEvent)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clRetainEvent, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clRetainEventTracer() {
+    ~ClRetainEventTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6263,9 +6445,9 @@ class clRetainEventTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clRetainKernelTracer {
+class ClRetainKernelTracer {
   public:
-    clRetainKernelTracer() {}
+    ClRetainKernelTracer() {}
 
     void enter(cl_kernel *kernel) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -6278,15 +6460,16 @@ class clRetainKernelTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainKernel)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clRetainKernel, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -6297,21 +6480,22 @@ class clRetainKernelTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainKernel)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clRetainKernel, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clRetainKernelTracer() {
+    ~ClRetainKernelTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6322,9 +6506,9 @@ class clRetainKernelTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clRetainMemObjectTracer {
+class ClRetainMemObjectTracer {
   public:
-    clRetainMemObjectTracer() {}
+    ClRetainMemObjectTracer() {}
 
     void enter(cl_mem *memobj) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -6337,15 +6521,16 @@ class clRetainMemObjectTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainMemObject)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clRetainMemObject, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -6356,21 +6541,22 @@ class clRetainMemObjectTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainMemObject)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clRetainMemObject, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clRetainMemObjectTracer() {
+    ~ClRetainMemObjectTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6381,9 +6567,9 @@ class clRetainMemObjectTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clRetainProgramTracer {
+class ClRetainProgramTracer {
   public:
-    clRetainProgramTracer() {}
+    ClRetainProgramTracer() {}
 
     void enter(cl_program *program) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -6396,15 +6582,16 @@ class clRetainProgramTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainProgram)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clRetainProgram, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -6415,21 +6602,22 @@ class clRetainProgramTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainProgram)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clRetainProgram, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clRetainProgramTracer() {
+    ~ClRetainProgramTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6440,9 +6628,9 @@ class clRetainProgramTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clRetainSamplerTracer {
+class ClRetainSamplerTracer {
   public:
-    clRetainSamplerTracer() {}
+    ClRetainSamplerTracer() {}
 
     void enter(cl_sampler *sampler) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -6455,15 +6643,16 @@ class clRetainSamplerTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainSampler)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clRetainSampler, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -6474,21 +6663,22 @@ class clRetainSamplerTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainSampler)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clRetainSampler, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clRetainSamplerTracer() {
+    ~ClRetainSamplerTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6499,9 +6689,9 @@ class clRetainSamplerTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clSVMAllocTracer {
+class ClSvmAllocTracer {
   public:
-    clSVMAllocTracer() {}
+    ClSvmAllocTracer() {}
 
     void enter(cl_context *context,
                cl_svm_mem_flags *flags,
@@ -6520,15 +6710,16 @@ class clSVMAllocTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSVMAlloc)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clSVMAlloc, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -6539,21 +6730,22 @@ class clSVMAllocTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSVMAlloc)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clSVMAlloc, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clSVMAllocTracer() {
+    ~ClSvmAllocTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6564,9 +6756,9 @@ class clSVMAllocTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clSVMFreeTracer {
+class ClSvmFreeTracer {
   public:
-    clSVMFreeTracer() {}
+    ClSvmFreeTracer() {}
 
     void enter(cl_context *context,
                void **svmPointer) {
@@ -6581,15 +6773,16 @@ class clSVMFreeTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSVMFree)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clSVMFree, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -6600,21 +6793,22 @@ class clSVMFreeTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSVMFree)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clSVMFree, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clSVMFreeTracer() {
+    ~ClSvmFreeTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6625,9 +6819,9 @@ class clSVMFreeTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clSetCommandQueuePropertyTracer {
+class ClSetCommandQueuePropertyTracer {
   public:
-    clSetCommandQueuePropertyTracer() {}
+    ClSetCommandQueuePropertyTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_command_queue_properties *properties,
@@ -6646,15 +6840,16 @@ class clSetCommandQueuePropertyTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetCommandQueueProperty)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clSetCommandQueueProperty, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -6665,21 +6860,22 @@ class clSetCommandQueuePropertyTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetCommandQueueProperty)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clSetCommandQueueProperty, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clSetCommandQueuePropertyTracer() {
+    ~ClSetCommandQueuePropertyTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6690,9 +6886,9 @@ class clSetCommandQueuePropertyTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clSetDefaultDeviceCommandQueueTracer {
+class ClSetDefaultDeviceCommandQueueTracer {
   public:
-    clSetDefaultDeviceCommandQueueTracer() {}
+    ClSetDefaultDeviceCommandQueueTracer() {}
 
     void enter(cl_context *context,
                cl_device_id *device,
@@ -6709,15 +6905,16 @@ class clSetDefaultDeviceCommandQueueTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetDefaultDeviceCommandQueue)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clSetDefaultDeviceCommandQueue, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -6728,21 +6925,22 @@ class clSetDefaultDeviceCommandQueueTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetDefaultDeviceCommandQueue)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clSetDefaultDeviceCommandQueue, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clSetDefaultDeviceCommandQueueTracer() {
+    ~ClSetDefaultDeviceCommandQueueTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6753,9 +6951,9 @@ class clSetDefaultDeviceCommandQueueTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clSetEventCallbackTracer {
+class ClSetEventCallbackTracer {
   public:
-    clSetEventCallbackTracer() {}
+    ClSetEventCallbackTracer() {}
 
     void enter(cl_event *event,
                cl_int *commandExecCallbackType,
@@ -6774,15 +6972,16 @@ class clSetEventCallbackTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetEventCallback)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clSetEventCallback, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -6793,21 +6992,22 @@ class clSetEventCallbackTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetEventCallback)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clSetEventCallback, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clSetEventCallbackTracer() {
+    ~ClSetEventCallbackTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6818,9 +7018,9 @@ class clSetEventCallbackTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clSetKernelArgTracer {
+class ClSetKernelArgTracer {
   public:
-    clSetKernelArgTracer() {}
+    ClSetKernelArgTracer() {}
 
     void enter(cl_kernel *kernel,
                cl_uint *argIndex,
@@ -6839,15 +7039,16 @@ class clSetKernelArgTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetKernelArg)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clSetKernelArg, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -6858,21 +7059,22 @@ class clSetKernelArgTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetKernelArg)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clSetKernelArg, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clSetKernelArgTracer() {
+    ~ClSetKernelArgTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6883,9 +7085,9 @@ class clSetKernelArgTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clSetKernelArgSVMPointerTracer {
+class ClSetKernelArgSvmPointerTracer {
   public:
-    clSetKernelArgSVMPointerTracer() {}
+    ClSetKernelArgSvmPointerTracer() {}
 
     void enter(cl_kernel *kernel,
                cl_uint *argIndex,
@@ -6902,15 +7104,16 @@ class clSetKernelArgSVMPointerTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetKernelArgSVMPointer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clSetKernelArgSVMPointer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -6921,21 +7124,22 @@ class clSetKernelArgSVMPointerTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetKernelArgSVMPointer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clSetKernelArgSVMPointer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clSetKernelArgSVMPointerTracer() {
+    ~ClSetKernelArgSvmPointerTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6946,9 +7150,9 @@ class clSetKernelArgSVMPointerTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clSetKernelExecInfoTracer {
+class ClSetKernelExecInfoTracer {
   public:
-    clSetKernelExecInfoTracer() {}
+    ClSetKernelExecInfoTracer() {}
 
     void enter(cl_kernel *kernel,
                cl_kernel_exec_info *paramName,
@@ -6967,15 +7171,16 @@ class clSetKernelExecInfoTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetKernelExecInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clSetKernelExecInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -6986,21 +7191,22 @@ class clSetKernelExecInfoTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetKernelExecInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clSetKernelExecInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clSetKernelExecInfoTracer() {
+    ~ClSetKernelExecInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7011,9 +7217,9 @@ class clSetKernelExecInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clSetMemObjectDestructorCallbackTracer {
+class ClSetMemObjectDestructorCallbackTracer {
   public:
-    clSetMemObjectDestructorCallbackTracer() {}
+    ClSetMemObjectDestructorCallbackTracer() {}
 
     void enter(cl_mem *memobj,
                void(CL_CALLBACK **funcNotify)(cl_mem, void *),
@@ -7030,15 +7236,16 @@ class clSetMemObjectDestructorCallbackTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetMemObjectDestructorCallback)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clSetMemObjectDestructorCallback, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -7049,21 +7256,22 @@ class clSetMemObjectDestructorCallbackTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetMemObjectDestructorCallback)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clSetMemObjectDestructorCallback, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clSetMemObjectDestructorCallbackTracer() {
+    ~ClSetMemObjectDestructorCallbackTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7074,9 +7282,9 @@ class clSetMemObjectDestructorCallbackTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clSetUserEventStatusTracer {
+class ClSetUserEventStatusTracer {
   public:
-    clSetUserEventStatusTracer() {}
+    ClSetUserEventStatusTracer() {}
 
     void enter(cl_event *event,
                cl_int *executionStatus) {
@@ -7091,15 +7299,16 @@ class clSetUserEventStatusTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetUserEventStatus)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clSetUserEventStatus, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -7110,21 +7319,22 @@ class clSetUserEventStatusTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetUserEventStatus)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clSetUserEventStatus, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clSetUserEventStatusTracer() {
+    ~ClSetUserEventStatusTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7135,9 +7345,9 @@ class clSetUserEventStatusTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clUnloadCompilerTracer {
+class ClUnloadCompilerTracer {
   public:
-    clUnloadCompilerTracer() {}
+    ClUnloadCompilerTracer() {}
 
     void enter() {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -7148,15 +7358,16 @@ class clUnloadCompilerTracer {
         data.functionParams = nullptr;
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clUnloadCompiler)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clUnloadCompiler, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -7167,21 +7378,22 @@ class clUnloadCompilerTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clUnloadCompiler)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clUnloadCompiler, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clUnloadCompilerTracer() {
+    ~ClUnloadCompilerTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7191,9 +7403,9 @@ class clUnloadCompilerTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clUnloadPlatformCompilerTracer {
+class ClUnloadPlatformCompilerTracer {
   public:
-    clUnloadPlatformCompilerTracer() {}
+    ClUnloadPlatformCompilerTracer() {}
 
     void enter(cl_platform_id *platform) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -7206,15 +7418,16 @@ class clUnloadPlatformCompilerTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clUnloadPlatformCompiler)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clUnloadPlatformCompiler, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -7225,21 +7438,22 @@ class clUnloadPlatformCompilerTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clUnloadPlatformCompiler)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clUnloadPlatformCompiler, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clUnloadPlatformCompilerTracer() {
+    ~ClUnloadPlatformCompilerTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7250,9 +7464,9 @@ class clUnloadPlatformCompilerTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clWaitForEventsTracer {
+class ClWaitForEventsTracer {
   public:
-    clWaitForEventsTracer() {}
+    ClWaitForEventsTracer() {}
 
     void enter(cl_uint *numEvents,
                const cl_event **eventList) {
@@ -7267,15 +7481,16 @@ class clWaitForEventsTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clWaitForEvents)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clWaitForEvents, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -7286,21 +7501,22 @@ class clWaitForEventsTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clWaitForEvents)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clWaitForEvents, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clWaitForEventsTracer() {
+    ~ClWaitForEventsTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7313,9 +7529,9 @@ class clWaitForEventsTracer {
 
 #ifdef _WIN32
 
-class clCreateFromGLBufferTracer {
+class ClCreateFromGlBufferTracer {
   public:
-    clCreateFromGLBufferTracer() {}
+    ClCreateFromGlBufferTracer() {}
 
     void enter(cl_context *context,
                cl_mem_flags *flags,
@@ -7334,15 +7550,16 @@ class clCreateFromGLBufferTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateFromGLBuffer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateFromGLBuffer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -7353,21 +7570,22 @@ class clCreateFromGLBufferTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateFromGLBuffer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateFromGLBuffer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateFromGLBufferTracer() {
+    ~ClCreateFromGlBufferTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7378,9 +7596,9 @@ class clCreateFromGLBufferTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateFromGLRenderbufferTracer {
+class ClCreateFromGlRenderbufferTracer {
   public:
-    clCreateFromGLRenderbufferTracer() {}
+    ClCreateFromGlRenderbufferTracer() {}
 
     void enter(cl_context *context,
                cl_mem_flags *flags,
@@ -7399,15 +7617,16 @@ class clCreateFromGLRenderbufferTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateFromGLRenderbuffer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateFromGLRenderbuffer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -7418,21 +7637,22 @@ class clCreateFromGLRenderbufferTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateFromGLRenderbuffer)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateFromGLRenderbuffer, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateFromGLRenderbufferTracer() {
+    ~ClCreateFromGlRenderbufferTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7443,9 +7663,9 @@ class clCreateFromGLRenderbufferTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateFromGLTextureTracer {
+class ClCreateFromGlTextureTracer {
   public:
-    clCreateFromGLTextureTracer() {}
+    ClCreateFromGlTextureTracer() {}
 
     void enter(cl_context *context,
                cl_mem_flags *flags,
@@ -7468,15 +7688,16 @@ class clCreateFromGLTextureTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateFromGLTexture)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateFromGLTexture, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -7487,21 +7708,22 @@ class clCreateFromGLTextureTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateFromGLTexture)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateFromGLTexture, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateFromGLTextureTracer() {
+    ~ClCreateFromGlTextureTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7512,9 +7734,9 @@ class clCreateFromGLTextureTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateFromGLTexture2DTracer {
+class ClCreateFromGlTexture2DTracer {
   public:
-    clCreateFromGLTexture2DTracer() {}
+    ClCreateFromGlTexture2DTracer() {}
 
     void enter(cl_context *context,
                cl_mem_flags *flags,
@@ -7537,15 +7759,16 @@ class clCreateFromGLTexture2DTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateFromGLTexture2D)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateFromGLTexture2D, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -7556,21 +7779,22 @@ class clCreateFromGLTexture2DTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateFromGLTexture2D)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateFromGLTexture2D, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateFromGLTexture2DTracer() {
+    ~ClCreateFromGlTexture2DTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7581,9 +7805,9 @@ class clCreateFromGLTexture2DTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateFromGLTexture3DTracer {
+class ClCreateFromGlTexture3DTracer {
   public:
-    clCreateFromGLTexture3DTracer() {}
+    ClCreateFromGlTexture3DTracer() {}
 
     void enter(cl_context *context,
                cl_mem_flags *flags,
@@ -7606,15 +7830,16 @@ class clCreateFromGLTexture3DTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateFromGLTexture3D)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateFromGLTexture3D, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -7625,21 +7850,22 @@ class clCreateFromGLTexture3DTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateFromGLTexture3D)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clCreateFromGLTexture3D, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateFromGLTexture3DTracer() {
+    ~ClCreateFromGlTexture3DTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7650,9 +7876,9 @@ class clCreateFromGLTexture3DTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueAcquireGLObjectsTracer {
+class ClEnqueueAcquireGlObjectsTracer {
   public:
-    clEnqueueAcquireGLObjectsTracer() {}
+    ClEnqueueAcquireGlObjectsTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_uint *numObjects,
@@ -7675,15 +7901,16 @@ class clEnqueueAcquireGLObjectsTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueAcquireGLObjects)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueAcquireGLObjects, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -7694,21 +7921,22 @@ class clEnqueueAcquireGLObjectsTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueAcquireGLObjects)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueAcquireGLObjects, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueAcquireGLObjectsTracer() {
+    ~ClEnqueueAcquireGlObjectsTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7719,9 +7947,9 @@ class clEnqueueAcquireGLObjectsTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueReleaseGLObjectsTracer {
+class ClEnqueueReleaseGlObjectsTracer {
   public:
-    clEnqueueReleaseGLObjectsTracer() {}
+    ClEnqueueReleaseGlObjectsTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_uint *numObjects,
@@ -7744,15 +7972,16 @@ class clEnqueueReleaseGLObjectsTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueReleaseGLObjects)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueReleaseGLObjects, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -7763,21 +7992,22 @@ class clEnqueueReleaseGLObjectsTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueReleaseGLObjects)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clEnqueueReleaseGLObjects, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueReleaseGLObjectsTracer() {
+    ~ClEnqueueReleaseGlObjectsTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7788,9 +8018,9 @@ class clEnqueueReleaseGLObjectsTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetGLObjectInfoTracer {
+class ClGetGlObjectInfoTracer {
   public:
-    clGetGLObjectInfoTracer() {}
+    ClGetGlObjectInfoTracer() {}
 
     void enter(cl_mem *memobj,
                cl_gl_object_type **glObjectType,
@@ -7807,15 +8037,16 @@ class clGetGLObjectInfoTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetGLObjectInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetGLObjectInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -7826,21 +8057,22 @@ class clGetGLObjectInfoTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetGLObjectInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetGLObjectInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetGLObjectInfoTracer() {
+    ~ClGetGlObjectInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7851,9 +8083,9 @@ class clGetGLObjectInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetGLTextureInfoTracer {
+class ClGetGlTextureInfoTracer {
   public:
-    clGetGLTextureInfoTracer() {}
+    ClGetGlTextureInfoTracer() {}
 
     void enter(cl_mem *memobj,
                cl_gl_texture_info *paramName,
@@ -7874,15 +8106,16 @@ class clGetGLTextureInfoTracer {
         data.functionParams = static_cast<const void *>(&params);
         data.functionReturnValue = nullptr;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetGLTextureInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetGLTextureInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_ENTER_CALLED;
@@ -7893,21 +8126,22 @@ class clGetGLTextureInfoTracer {
         data.site = CL_CALLBACK_SITE_EXIT;
         data.functionReturnValue = retVal;
 
-        DEBUG_BREAK_IF(tracingHandle.size() == 0);
-        DEBUG_BREAK_IF(tracingHandle.size() >= TRACING_MAX_HANDLE_COUNT);
-        for (size_t i = 0; i < tracingHandle.size(); ++i) {
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetGLTextureInfo)) {
                 data.correlationData = correlationData + i;
                 handle->call(CL_FUNCTION_clGetGLTextureInfo, &data);
             }
+            ++i;
         }
 
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetGLTextureInfoTracer() {
+    ~ClGetGlTextureInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 

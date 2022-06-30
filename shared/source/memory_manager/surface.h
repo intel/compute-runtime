@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,8 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/os_context.h"
 
 namespace NEO {
 
@@ -33,29 +35,30 @@ class NullSurface : public Surface {
 
 class HostPtrSurface : public Surface {
   public:
-    HostPtrSurface(void *ptr, size_t size) : memoryPointer(ptr), surfaceSize(size) {
+    HostPtrSurface(const void *ptr, size_t size) : memoryPointer(ptr), surfaceSize(size) {
         UNRECOVERABLE_IF(!ptr);
         gfxAllocation = nullptr;
     }
 
-    HostPtrSurface(void *ptr, size_t size, bool copyAllowed) : HostPtrSurface(ptr, size) {
+    HostPtrSurface(const void *ptr, size_t size, bool copyAllowed) : HostPtrSurface(ptr, size) {
         isPtrCopyAllowed = copyAllowed;
     }
 
-    HostPtrSurface(void *ptr, size_t size, GraphicsAllocation *allocation) : memoryPointer(ptr), surfaceSize(size), gfxAllocation(allocation) {
+    HostPtrSurface(const void *ptr, size_t size, GraphicsAllocation *allocation) : memoryPointer(ptr), surfaceSize(size), gfxAllocation(allocation) {
         DEBUG_BREAK_IF(!ptr);
     }
     ~HostPtrSurface() override = default;
 
     void makeResident(CommandStreamReceiver &csr) override {
         DEBUG_BREAK_IF(!gfxAllocation);
+        gfxAllocation->prepareHostPtrForResidency(&csr);
         csr.makeResidentHostPtrAllocation(gfxAllocation);
     }
     Surface *duplicate() override {
         return new HostPtrSurface(this->memoryPointer, this->surfaceSize, this->gfxAllocation);
     };
 
-    void *getMemoryPointer() const {
+    const void *getMemoryPointer() const {
         return memoryPointer;
     }
     size_t getSurfaceSize() const {
@@ -78,8 +81,12 @@ class HostPtrSurface : public Surface {
         return isL3Capable(*gfxAllocation);
     }
 
+    void setIsPtrCopyAllowed(bool allowed) {
+        this->isPtrCopyAllowed = allowed;
+    }
+
   protected:
-    void *memoryPointer;
+    const void *memoryPointer;
     size_t surfaceSize;
     GraphicsAllocation *gfxAllocation;
     bool isPtrCopyAllowed = false;
@@ -93,9 +100,15 @@ class GeneralSurface : public Surface {
     GeneralSurface(GraphicsAllocation *gfxAlloc) : Surface(gfxAlloc->isCoherent()) {
         gfxAllocation = gfxAlloc;
     };
+    GeneralSurface(GraphicsAllocation *gfxAlloc, bool needsMigration) : GeneralSurface(gfxAlloc) {
+        this->needsMigration = needsMigration;
+    }
     ~GeneralSurface() override = default;
 
     void makeResident(CommandStreamReceiver &csr) override {
+        if (needsMigration) {
+            csr.getMemoryManager()->getPageFaultManager()->moveAllocationToGpuDomain(reinterpret_cast<void *>(gfxAllocation->getGpuAddress()));
+        }
         csr.makeResident(*gfxAllocation);
     };
     Surface *duplicate() override { return new GeneralSurface(gfxAllocation); };
@@ -105,6 +118,7 @@ class GeneralSurface : public Surface {
     }
 
   protected:
+    bool needsMigration = false;
     GraphicsAllocation *gfxAllocation;
 };
 } // namespace NEO

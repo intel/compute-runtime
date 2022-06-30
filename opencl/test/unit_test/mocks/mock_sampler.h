@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ struct MockSampler : public Sampler {
         return filterMode;
     }
 
-    void setArg(void *memory) override {
+    void setArg(void *memory, const HardwareInfo &hwInfo) override {
     }
 };
 } // namespace NEO

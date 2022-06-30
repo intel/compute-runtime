@@ -10,7 +10,7 @@
 #include "shared/test/unit_test/page_fault_manager/mock_cpu_page_fault_manager.h"
 
 #include "gtest/gtest.h"
-#include <Windows.h>
+#include <windows.h>
 
 using namespace NEO;
 

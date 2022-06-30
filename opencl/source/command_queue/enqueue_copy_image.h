@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,18 +25,16 @@ template <typename GfxFamily>
 cl_int CommandQueueHw<GfxFamily>::enqueueCopyImage(
     Image *srcImage,
     Image *dstImage,
-    const size_t srcOrigin[3],
-    const size_t dstOrigin[3],
-    const size_t region[3],
+    const size_t *srcOrigin,
+    const size_t *dstOrigin,
+    const size_t *region,
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
+    constexpr cl_command_type cmdType = CL_COMMAND_COPY_IMAGE;
 
-    MultiDispatchInfo di;
-
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
-                                                                            this->getDevice());
-    BuiltInOwnershipWrapper builtInLock(builder, this->context);
+    CsrSelectionArgs csrSelectionArgs{cmdType, srcImage, dstImage, device->getRootDeviceIndex(), region, srcOrigin, dstOrigin};
+    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
 
     MemObjSurface srcImgSurf(srcImage);
     MemObjSurface dstImgSurf(dstImage);
@@ -48,22 +46,16 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyImage(
     dc.srcOffset = srcOrigin;
     dc.dstOffset = dstOrigin;
     dc.size = region;
-    if (srcImage->getImageDesc().num_mip_levels > 0) {
+    if (isMipMapped(srcImage->getImageDesc())) {
         dc.srcMipLevel = findMipLevel(srcImage->getImageDesc().image_type, srcOrigin);
     }
-    if (dstImage->getImageDesc().num_mip_levels > 0) {
+    if (isMipMapped(dstImage->getImageDesc())) {
         dc.dstMipLevel = findMipLevel(dstImage->getImageDesc().image_type, dstOrigin);
     }
-    builder.buildDispatchInfos(di, dc);
 
-    enqueueHandler<CL_COMMAND_COPY_IMAGE>(
-        surfaces,
-        false,
-        di,
-        numEventsInWaitList,
-        eventWaitList,
-        event);
+    MultiDispatchInfo dispatchInfo(dc);
 
-    return CL_SUCCESS;
+    return dispatchBcsOrGpgpuEnqueue<CL_COMMAND_COPY_IMAGE>(dispatchInfo, surfaces, EBuiltInOps::CopyImageToImage3d, numEventsInWaitList, eventWaitList, event, false, csr);
 }
+
 } // namespace NEO

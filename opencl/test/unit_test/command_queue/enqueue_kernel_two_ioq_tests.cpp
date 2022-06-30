@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/unit_test/cmd_parse/hw_parse.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
-#include "test.h"
+#include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 
 using namespace NEO;
 
 struct TwoIOQsTwoDependentWalkers : public HelloWorldTest<HelloWorldFixtureFactory>,
-                                    public HardwareParse {
+                                    public ClHardwareParse {
     typedef HelloWorldTest<HelloWorldFixtureFactory> Parent;
     using Parent::createCommandQueue;
     using Parent::pCmdQ;
@@ -27,12 +27,12 @@ struct TwoIOQsTwoDependentWalkers : public HelloWorldTest<HelloWorldFixtureFacto
 
     void SetUp() override {
         Parent::SetUp();
-        HardwareParse::SetUp();
+        ClHardwareParse::SetUp();
     }
 
     void TearDown() override {
         delete pCmdQ2;
-        HardwareParse::TearDown();
+        ClHardwareParse::TearDown();
         Parent::TearDown();
     }
 
@@ -56,7 +56,7 @@ struct TwoIOQsTwoDependentWalkers : public HelloWorldTest<HelloWorldFixtureFacto
             &event1);
 
         ASSERT_EQ(CL_SUCCESS, retVal);
-        HardwareParse::parseCommands<FamilyType>(*pCmdQ);
+        ClHardwareParse::parseCommands<FamilyType>(*pCmdQ);
 
         // Create a second command queue (beyond the default one)
         pCmdQ2 = createCommandQueue(pClDevice);
@@ -73,14 +73,14 @@ struct TwoIOQsTwoDependentWalkers : public HelloWorldTest<HelloWorldFixtureFacto
             &event2);
 
         ASSERT_EQ(CL_SUCCESS, retVal);
-        HardwareParse::parseCommands<FamilyType>(*pCmdQ2);
+        ClHardwareParse::parseCommands<FamilyType>(*pCmdQ2);
 
-        Event *E1 = castToObject<Event>(event1);
-        ASSERT_NE(nullptr, E1);
-        Event *E2 = castToObject<Event>(event2);
-        ASSERT_NE(nullptr, E2);
-        delete E1;
-        delete E2;
+        Event *e1 = castToObject<Event>(event1);
+        ASSERT_NE(nullptr, e1);
+        Event *e2 = castToObject<Event>(event2);
+        ASSERT_NE(nullptr, e2);
+        delete e1;
+        delete e2;
 
         typedef typename FamilyType::WALKER_TYPE GPGPU_WALKER;
         itorWalker1 = find<GPGPU_WALKER *>(cmdList.begin(), cmdList.end());
@@ -102,7 +102,7 @@ HWTEST_F(TwoIOQsTwoDependentWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThe
     EXPECT_NE(itorWalker1, itorWalker2);
 }
 
-HWTEST_F(TwoIOQsTwoDependentWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenOnePipelineSelectExists) {
+HWTEST2_F(TwoIOQsTwoDependentWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenOnePipelineSelectExists, IsAtMostXeHpcCore) {
     parseWalkers<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);

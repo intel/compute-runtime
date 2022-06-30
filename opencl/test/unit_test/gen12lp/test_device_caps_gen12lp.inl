@@ -1,26 +1,21 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "test.h"
 
 using namespace NEO;
 
 typedef Test<ClDeviceFixture> Gen12LpDeviceCaps;
 
-GEN12LPTEST_F(Gen12LpDeviceCaps, givenGen12LpDeviceWhenQueryingDeviceInfoThenOcl30IsReported) {
-    const auto &caps = pClDevice->getDeviceInfo();
-    EXPECT_STREQ("OpenCL 3.0 NEO ", caps.clVersion);
-    EXPECT_STREQ("OpenCL C 3.0 ", caps.clCVersion);
-}
-
-TGLLPTEST_F(Gen12LpDeviceCaps, lpSkusDontSupportFP64) {
+HWTEST2_F(Gen12LpDeviceCaps, WhenCheckingExtensionStringThenFp64IsNotSupported, IsTGLLP) {
     const auto &caps = pClDevice->getDeviceInfo();
     std::string extensionString = caps.deviceExtensions;
 
@@ -28,48 +23,50 @@ TGLLPTEST_F(Gen12LpDeviceCaps, lpSkusDontSupportFP64) {
     EXPECT_EQ(0u, caps.doubleFpConfig);
 }
 
-TGLLPTEST_F(Gen12LpDeviceCaps, givenGen12lpWhenCheckExtensionsThenSubgroupLocalBlockIOIsSupported) {
+HWTEST2_F(Gen12LpDeviceCaps, givenGen12lpWhenCheckExtensionsThenSubgroupLocalBlockIOIsSupported, IsTGLLP) {
     const auto &caps = pClDevice->getDeviceInfo();
 
-    EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_subgroup_local_block_io")));
+    EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_subgroup_local_block_io")));
 }
 
-TGLLPTEST_F(Gen12LpDeviceCaps, givenGen12lpWhenCheckExtensionsThenDeviceDoesNotReportClKhrSubgroupsExtension) {
+HWTEST2_F(Gen12LpDeviceCaps, givenGen12lpWhenCheckExtensionsThenDeviceDoesNotReportClKhrSubgroupsExtension, IsTGLLP) {
     const auto &caps = pClDevice->getDeviceInfo();
 
-    EXPECT_THAT(caps.deviceExtensions, ::testing::Not(testing::HasSubstr(std::string("cl_khr_subgroups"))));
+    EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_subgroups")));
 }
 
-TGLLPTEST_F(Gen12LpDeviceCaps, givenGen12lpWhenCheckingCapsThenDeviceDoesNotSupportIndependentForwardProgress) {
+HWTEST2_F(Gen12LpDeviceCaps, givenGen12lpWhenCheckingCapsThenDeviceDoesNotSupportIndependentForwardProgress, IsTGLLP) {
     const auto &caps = pClDevice->getDeviceInfo();
 
     EXPECT_FALSE(caps.independentForwardProgress);
 }
 
-TGLLPTEST_F(Gen12LpDeviceCaps, allSkusSupportCorrectlyRoundedDivideSqrt) {
+HWTEST2_F(Gen12LpDeviceCaps, WhenCheckingCapsThenCorrectlyRoundedDivideSqrtIsNotSupported, IsTGLLP) {
     const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_EQ(0u, caps.singleFpConfig & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
 }
 
-GEN12LPTEST_F(Gen12LpDeviceCaps, defaultPreemptionMode) {
-    EXPECT_EQ(PreemptionMode::ThreadGroup, pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
+GEN12LPTEST_F(Gen12LpDeviceCaps, GivenDefaultWhenCheckingPreemptionModeThenMidThreadIsReported) {
+    EXPECT_EQ(PreemptionMode::MidThread, pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
 }
 
-GEN12LPTEST_F(Gen12LpDeviceCaps, profilingTimerResolution) {
+GEN12LPTEST_F(Gen12LpDeviceCaps, WhenCheckingCapsThenProfilingTimerResolutionIs83) {
     const auto &caps = pClDevice->getSharedDeviceInfo();
     EXPECT_EQ(83u, caps.outProfilingTimerResolution);
 }
 
-GEN12LPTEST_F(Gen12LpDeviceCaps, kmdNotifyMechanism) {
+GEN12LPTEST_F(Gen12LpDeviceCaps, WhenCheckingCapsThenKmdNotifyMechanismIsCorrectlyReported) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableKmdNotify);
     EXPECT_EQ(0, pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableQuickKmdSleep);
     EXPECT_EQ(0, pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds);
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits);
     EXPECT_EQ(0, pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds);
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission);
+    EXPECT_EQ(0, pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds);
 }
 
-GEN12LPTEST_F(Gen12LpDeviceCaps, compression) {
+GEN12LPTEST_F(Gen12LpDeviceCaps, WhenCheckingCapsThenCompressionIsDisabled) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedBuffers);
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedImages);
 }
@@ -96,11 +93,15 @@ GEN12LPTEST_F(Gen12LpDeviceCaps, givenGen12LpWhenCheckingImageSupportThenReturnT
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.supportsImages);
 }
 
+GEN12LPTEST_F(Gen12LpDeviceCaps, givenGen12LpWhenCheckingMediaBlockSupportThenReturnTrue) {
+    EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.supportsMediaBlock);
+}
+
 GEN12LPTEST_F(Gen12LpDeviceCaps, givenGen12LpWhenCheckingCoherencySupportThenReturnFalse) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsCoherency);
 }
 
-TGLLPTEST_F(Gen12LpDeviceCaps, givenTglLpWhenCheckSupportCacheFlushAfterWalkerThenFalse) {
+HWTEST2_F(Gen12LpDeviceCaps, givenTglLpWhenCheckSupportCacheFlushAfterWalkerThenFalse, IsTGLLP) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.supportCacheFlushAfterWalker);
 }
 
@@ -114,9 +115,9 @@ GEN12LPTEST_F(Gen12LpDeviceCaps, givenGen12LpDeviceWhenCheckingPipesSupportThenF
 
 using TglLpUsDeviceIdTest = Test<ClDeviceFixture>;
 
-TGLLPTEST_F(TglLpUsDeviceIdTest, isSimulationCap) {
+HWTEST2_F(TglLpUsDeviceIdTest, WhenCheckingSimulationCapThenResultIsCorrect, IsTGLLP) {
     unsigned short tglLpSimulationIds[2] = {
-        IGEN12LP_GT1_MOB_DEVICE_F0_ID,
+        0xFF20,
         0, // default, non-simulation
     };
     NEO::MockDevice *mockDevice = nullptr;
@@ -133,10 +134,10 @@ TGLLPTEST_F(TglLpUsDeviceIdTest, isSimulationCap) {
     }
 }
 
-TGLLPTEST_F(TglLpUsDeviceIdTest, GivenTGLLPWhenCheckftr64KBpagesThenTrue) {
+HWTEST2_F(TglLpUsDeviceIdTest, GivenTGLLPWhenCheckftr64KBpagesThenTrue, IsTGLLP) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftr64KBpages);
 }
 
-TGLLPTEST_F(TglLpUsDeviceIdTest, givenGen12lpWhenCheckFtrSupportsInteger64BitAtomicsThenReturnTrue) {
+HWTEST2_F(TglLpUsDeviceIdTest, givenGen12lpWhenCheckFtrSupportsInteger64BitAtomicsThenReturnTrue, IsTGLLP) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
 }

@@ -39,24 +39,24 @@ struct IntelTracingTest : public api_tests {
     cl_int status = CL_SUCCESS;
 };
 
-TEST_F(IntelTracingTest, GivenInvalidDeviceExpectFail) {
+TEST_F(IntelTracingTest, GivenInvalidDeviceWhenCreatingTracingHandleThenInvalidValueErrorIsReturned) {
     status = clCreateTracingHandleINTEL(nullptr, callback, nullptr, &handle);
     EXPECT_EQ(static_cast<cl_tracing_handle>(nullptr), handle);
     EXPECT_EQ(CL_INVALID_VALUE, status);
 }
 
-TEST_F(IntelTracingTest, GivenInvalidCallbackExpectFail) {
+TEST_F(IntelTracingTest, GivenInvalidCallbackExpectFailWhenCreatingTracingHandleThenInvalidValueErrorIsReturned) {
     status = clCreateTracingHandleINTEL(testedClDevice, nullptr, nullptr, &handle);
     EXPECT_EQ(static_cast<cl_tracing_handle>(nullptr), handle);
     EXPECT_EQ(CL_INVALID_VALUE, status);
 }
 
-TEST_F(IntelTracingTest, GivenInvalidHandlePointerExpectFail) {
+TEST_F(IntelTracingTest, GivenInvalidHandlePointerWhenCreatingTracingHandleThenInvalidValueErrorIsReturned) {
     status = clCreateTracingHandleINTEL(testedClDevice, callback, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, status);
 }
 
-TEST_F(IntelTracingTest, GivenInvalidHandleExpectFail) {
+TEST_F(IntelTracingTest, GivenNullHandleWhenCallingTracingFunctionThenInvalidValueErrorIsReturned) {
     status = clSetTracingPointINTEL(nullptr, CL_FUNCTION_clBuildProgram, CL_TRUE);
     EXPECT_EQ(CL_INVALID_VALUE, status);
 
@@ -77,7 +77,7 @@ TEST_F(IntelTracingTest, GivenInvalidHandleExpectFail) {
     EXPECT_EQ(CL_INVALID_VALUE, status);
 }
 
-TEST_F(IntelTracingTest, GivenInactiveHandleExpectFail) {
+TEST_F(IntelTracingTest, GivenInactiveHandleWhenCallingTracingFunctionThenInvalidValueErrorIsReturned) {
     status = clCreateTracingHandleINTEL(testedClDevice, callback, nullptr, &handle);
     EXPECT_EQ(CL_SUCCESS, status);
 
@@ -88,7 +88,7 @@ TEST_F(IntelTracingTest, GivenInactiveHandleExpectFail) {
     EXPECT_EQ(CL_SUCCESS, status);
 }
 
-TEST_F(IntelTracingTest, GivenTooManyHandlesExpectFail) {
+TEST_F(IntelTracingTest, GivenTooManyHandlesWhenEnablingTracingFunctionThenOutOfResourcesErrorIsReturned) {
     cl_tracing_handle handle[HostSideTracing::TRACING_MAX_HANDLE_COUNT + 1] = {nullptr};
 
     for (uint32_t i = 0; i < HostSideTracing::TRACING_MAX_HANDLE_COUNT + 1; ++i) {
@@ -115,7 +115,39 @@ TEST_F(IntelTracingTest, GivenTooManyHandlesExpectFail) {
     }
 }
 
-TEST_F(IntelTracingTest, EnableTracingExpectPass) {
+TEST_F(IntelTracingTest, GivenInactiveHandleWhenDisablingTracingThenInvalidValueIsReturned) {
+    cl_tracing_handle handle[HostSideTracing::TRACING_MAX_HANDLE_COUNT + 1] = {nullptr};
+
+    for (uint32_t i = 0; i < HostSideTracing::TRACING_MAX_HANDLE_COUNT + 1; ++i) {
+        status = clCreateTracingHandleINTEL(testedClDevice, callback, nullptr, &(handle[i]));
+        EXPECT_EQ(CL_SUCCESS, status);
+    }
+
+    for (uint32_t i = 0; i < HostSideTracing::TRACING_MAX_HANDLE_COUNT; ++i) {
+        status = clEnableTracingINTEL(handle[i]);
+        EXPECT_EQ(CL_SUCCESS, status);
+    }
+
+    status = clDisableTracingINTEL(handle[HostSideTracing::TRACING_MAX_HANDLE_COUNT]);
+    EXPECT_EQ(CL_INVALID_VALUE, status);
+
+    cl_bool enable = CL_TRUE;
+    status = clGetTracingStateINTEL(handle[HostSideTracing::TRACING_MAX_HANDLE_COUNT], &enable);
+    EXPECT_EQ(CL_SUCCESS, status);
+    EXPECT_EQ(static_cast<cl_bool>(CL_FALSE), enable);
+
+    for (uint32_t i = 0; i < HostSideTracing::TRACING_MAX_HANDLE_COUNT; ++i) {
+        status = clDisableTracingINTEL(handle[i]);
+        EXPECT_EQ(CL_SUCCESS, status);
+    }
+
+    for (uint32_t i = 0; i < HostSideTracing::TRACING_MAX_HANDLE_COUNT + 1; ++i) {
+        status = clDestroyTracingHandleINTEL(handle[i]);
+        EXPECT_EQ(CL_SUCCESS, status);
+    }
+}
+
+TEST_F(IntelTracingTest, GivenValidParamsWhenCallingTracingFunctionsThenSuccessIsReturned) {
     status = clCreateTracingHandleINTEL(testedClDevice, callback, this, &handle);
     EXPECT_EQ(CL_SUCCESS, status);
 
@@ -148,7 +180,7 @@ TEST_F(IntelTracingTest, EnableTracingExpectPass) {
     EXPECT_EQ(CL_SUCCESS, status);
 }
 
-TEST_F(IntelTracingTest, EnableTwoHandlesExpectPass) {
+TEST_F(IntelTracingTest, GivenTwoHandlesWhenCallingTracingFunctionsThenSuccessIsReturned) {
     cl_tracing_handle handle1 = nullptr;
     status = clCreateTracingHandleINTEL(testedClDevice, callback, this, &handle1);
     EXPECT_EQ(CL_SUCCESS, status);
@@ -673,13 +705,13 @@ struct IntelAllTracingTest : public IntelTracingTest {
     cl_function_id functionId = CL_FUNCTION_COUNT;
 };
 
-TEST_F(IntelAllTracingTest, GivenAllFunctionsToTraceExpectPass) {
+TEST_F(IntelAllTracingTest, GivenValidFunctionWhenTracingThenTracingIsPerformed) {
     uint16_t count = callFunctions();
     EXPECT_EQ(count, enterCount);
     EXPECT_EQ(count, exitCount);
 }
 
-TEST_F(IntelAllTracingTest, GivenNoFunctionsToTraceExpectPass) {
+TEST_F(IntelAllTracingTest, GivenNoFunctionsWhenTracingThenTracingIsNotPerformed) {
     for (uint32_t i = 0; i < CL_FUNCTION_COUNT; ++i) {
         status = clSetTracingPointINTEL(handle, static_cast<cl_function_id>(i), CL_FALSE);
         EXPECT_EQ(CL_SUCCESS, status);
@@ -689,6 +721,54 @@ TEST_F(IntelAllTracingTest, GivenNoFunctionsToTraceExpectPass) {
 
     EXPECT_EQ(0, enterCount);
     EXPECT_EQ(0, exitCount);
+}
+
+struct IntelAllTracingWithMaxHandlesTest : public IntelAllTracingTest {
+  public:
+    IntelAllTracingWithMaxHandlesTest() {}
+
+    void SetUp() override {
+        IntelTracingTest::SetUp();
+
+        for (size_t i = 0; i < HostSideTracing::TRACING_MAX_HANDLE_COUNT; ++i) {
+            status = clCreateTracingHandleINTEL(testedClDevice, callback, this, handleList + i);
+            ASSERT_NE(nullptr, handleList[i]);
+            ASSERT_EQ(CL_SUCCESS, status);
+        }
+
+        for (size_t i = 0; i < HostSideTracing::TRACING_MAX_HANDLE_COUNT; ++i) {
+            for (uint32_t j = 0; j < CL_FUNCTION_COUNT; ++j) {
+                status = clSetTracingPointINTEL(handleList[i], static_cast<cl_function_id>(j), CL_TRUE);
+                ASSERT_EQ(CL_SUCCESS, status);
+            }
+        }
+
+        for (size_t i = 0; i < HostSideTracing::TRACING_MAX_HANDLE_COUNT; ++i) {
+            status = clEnableTracingINTEL(handleList[i]);
+            ASSERT_EQ(CL_SUCCESS, status);
+        }
+    }
+
+    void TearDown() override {
+        for (size_t i = 0; i < HostSideTracing::TRACING_MAX_HANDLE_COUNT; ++i) {
+            status = clDisableTracingINTEL(handleList[i]);
+            ASSERT_EQ(CL_SUCCESS, status);
+
+            status = clDestroyTracingHandleINTEL(handleList[i]);
+            ASSERT_EQ(CL_SUCCESS, status);
+        }
+
+        IntelTracingTest::TearDown();
+    }
+
+  protected:
+    cl_tracing_handle handleList[HostSideTracing::TRACING_MAX_HANDLE_COUNT] = {nullptr};
+};
+
+TEST_F(IntelAllTracingWithMaxHandlesTest, GivenAllFunctionsWithMaxHandlesWhenTracingThenTracingIsPerformed) {
+    uint16_t count = callFunctions();
+    EXPECT_EQ(count * HostSideTracing::TRACING_MAX_HANDLE_COUNT, enterCount);
+    EXPECT_EQ(count * HostSideTracing::TRACING_MAX_HANDLE_COUNT, exitCount);
 }
 
 struct IntelClGetDeviceInfoTracingCollectTest : public IntelAllTracingTest {
@@ -749,7 +829,7 @@ struct IntelClGetDeviceInfoTracingCollectTest : public IntelAllTracingTest {
     uint64_t correlationId = 0;
 };
 
-TEST_F(IntelClGetDeviceInfoTracingCollectTest, GeneralTracingCollectionExpectPass) {
+TEST_F(IntelClGetDeviceInfoTracingCollectTest, GivenGeneralCollectionWhenTracingThenTracingIsPerformed) {
     call(testedClDevice);
     EXPECT_EQ(CL_SUCCESS, status);
     EXPECT_LT(0u, paramValueSizeRet);
@@ -780,10 +860,10 @@ struct IntelClGetDeviceInfoTracingChangeParamsTest : public IntelAllTracingTest 
     cl_device_id device = nullptr;
     size_t paramValueSizeRet = 0;
     static const size_t paramValueSize = 256;
-    char paramValue[paramValueSize];
+    char paramValue[paramValueSize] = {'\0'};
 };
 
-TEST_F(IntelClGetDeviceInfoTracingChangeParamsTest, GeneralTracingWithParamsChangeExpectPass) {
+TEST_F(IntelClGetDeviceInfoTracingChangeParamsTest, GivenTracingCallbackWithParamsChangeWhenApiFunctionIsCalledThenParamsAreChanged) {
     paramValue[0] = '\0';
     call(testedClDevice);
     EXPECT_EQ(CL_SUCCESS, status);
@@ -813,7 +893,7 @@ struct IntelClGetDeviceInfoTracingChangeRetValTest : public IntelAllTracingTest 
     size_t paramValueSizeRet = 0;
 };
 
-TEST_F(IntelClGetDeviceInfoTracingChangeRetValTest, GeneralTracingWithRetValChangeExpectPass) {
+TEST_F(IntelClGetDeviceInfoTracingChangeRetValTest, GivenTracingCallbackWithRetValChangeToInvalidValueWhenApiFunctionIsCalledThenInvalidValueErrorIsReturned) {
     call(testedClDevice);
     EXPECT_EQ(CL_INVALID_VALUE, status);
     EXPECT_LT(0u, paramValueSizeRet);
@@ -851,7 +931,7 @@ struct IntelClGetDeviceInfoTwoHandlesTracingCollectTest : public IntelClGetDevic
     cl_tracing_handle secondHandle = nullptr;
 };
 
-TEST_F(IntelClGetDeviceInfoTwoHandlesTracingCollectTest, GeneralTracingCollectionWithTwoHandlesExpectPass) {
+TEST_F(IntelClGetDeviceInfoTwoHandlesTracingCollectTest, GivenTwoHandlesWhenTracingThenTracingIsPerformed) {
     call(testedClDevice);
     EXPECT_EQ(CL_SUCCESS, status);
     EXPECT_LT(0u, paramValueSizeRet);

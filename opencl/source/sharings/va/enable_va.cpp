@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,19 +23,17 @@
 
 namespace NEO {
 
-bool VaSharingContextBuilder::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue, cl_int &errcodeRet) {
+bool VaSharingContextBuilder::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue) {
     if (contextData.get() == nullptr) {
         contextData = std::make_unique<VaCreateContextProperties>();
     }
-    bool res = false;
 
     switch (propertyType) {
     case CL_CONTEXT_VA_API_DISPLAY_INTEL:
         contextData->vaDisplay = (VADisplay)propertyValue;
-        res = true;
-        break;
+        return true;
     }
-    return res;
+    return false;
 }
 
 bool VaSharingContextBuilder::finalizeProperties(Context &context, int32_t &errcodeRet) {

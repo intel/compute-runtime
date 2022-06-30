@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,8 +36,8 @@ class PerfProfiler {
 
     static void readAndVerify(std::istream &stream, const std::string &token);
 
-    PerfProfiler(int id, std::unique_ptr<std::ostream> logOut = {nullptr},
-                 std::unique_ptr<std::ostream> sysLogOut = {nullptr});
+    PerfProfiler(int id, std::unique_ptr<std::ostream> &&logOut = {nullptr},
+                 std::unique_ptr<std::ostream> &&sysLogOut = {nullptr});
     ~PerfProfiler();
 
     void apiEnter() {
@@ -91,7 +91,7 @@ class PerfProfiler {
     static PerfProfiler *objects[PerfProfiler::objectsNumber];
     Timer ApiTimer;
     Timer SystemTimer;
-    unsigned long long totalSystemTime;
+    unsigned long long totalSystemTime = 0;
     std::unique_ptr<std::ostream> logFile;
     std::unique_ptr<std::ostream> sysLogFile;
     std::vector<SystemLog> systemLogs;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,9 +11,9 @@
 #include "shared/source/compiler_interface/compiler_interface.inl"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/hw_info.h"
-
-#include "opencl/source/os_interface/os_inc_base.h"
+#include "shared/source/os_interface/os_inc_base.h"
 
 #include "cif/common/cif_main.h"
 #include "cif/helpers/error.h"
@@ -21,8 +21,6 @@
 #include "ocl_igc_interface/code_type.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
-
-#undef IGC_CLEANUP
 #include "ocl_igc_interface/platform_helper.h"
 
 #include <fstream>
@@ -68,10 +66,10 @@ TranslationOutput::ErrorCode CompilerInterface::build(
 
     std::string kernelFileHash;
     if (cachingMode == CachingMode::Direct) {
-        kernelFileHash = CompilerCache::getCachedFileName(device.getHardwareInfo(),
-                                                          input.src,
-                                                          input.apiOptions,
-                                                          input.internalOptions);
+        kernelFileHash = cache->getCachedFileName(device.getHardwareInfo(),
+                                                  input.src,
+                                                  input.apiOptions,
+                                                  input.internalOptions);
         output.deviceBinary.mem = cache->loadCachedBinary(kernelFileHash, output.deviceBinary.size);
         if (output.deviceBinary.mem) {
             return TranslationOutput::ErrorCode::Success;
@@ -122,9 +120,9 @@ TranslationOutput::ErrorCode CompilerInterface::build(
     }
 
     if (cachingMode == CachingMode::PreProcess) {
-        kernelFileHash = CompilerCache::getCachedFileName(device.getHardwareInfo(), ArrayRef<const char>(intermediateRepresentation->GetMemory<char>(), intermediateRepresentation->GetSize<char>()),
-                                                          input.apiOptions,
-                                                          input.internalOptions);
+        kernelFileHash = cache->getCachedFileName(device.getHardwareInfo(), ArrayRef<const char>(intermediateRepresentation->GetMemory<char>(), intermediateRepresentation->GetSize<char>()),
+                                                  input.apiOptions,
+                                                  input.internalOptions);
         output.deviceBinary.mem = cache->loadCachedBinary(kernelFileHash, output.deviceBinary.size);
         if (output.deviceBinary.mem) {
             return TranslationOutput::ErrorCode::Success;
@@ -219,7 +217,7 @@ TranslationOutput::ErrorCode CompilerInterface::link(
     CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> currOut;
     inSrc->Retain(); // shared with currSrc
     CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> currSrc(inSrc.get());
-    IGC::CodeType::CodeType_t translationChain[] = {IGC::CodeType::elf, IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin};
+    IGC::CodeType::CodeType_t translationChain[] = {IGC::CodeType::elf, IGC::CodeType::oclGenBin};
     constexpr size_t numTranslations = sizeof(translationChain) / sizeof(translationChain[0]);
     for (size_t ti = 1; ti < numTranslations; ti++) {
         IGC::CodeType::CodeType_t inType = translationChain[ti - 1];
@@ -303,41 +301,69 @@ TranslationOutput::ErrorCode CompilerInterface::createLibrary(
     return TranslationOutput::ErrorCode::Success;
 }
 
-TranslationOutput::ErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary) {
+TranslationOutput::ErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary,
+                                                                   std::vector<char> &stateSaveAreaHeader) {
     if (false == isIgcAvailable()) {
         return TranslationOutput::ErrorCode::CompilerNotAvailable;
     }
 
-    const char *sipSrc = getSipLlSrc(device);
-    std::string sipInternalOptions = getSipKernelCompilerInternalOptions(type);
+    bool bindlessSip = false;
+    IGC::SystemRoutineType::SystemRoutineType_t typeOfSystemRoutine = IGC::SystemRoutineType::undefined;
+    switch (type) {
+    case SipKernelType::Csr:
+        typeOfSystemRoutine = IGC::SystemRoutineType::contextSaveRestore;
+        break;
+    case SipKernelType::DbgCsr:
+        typeOfSystemRoutine = IGC::SystemRoutineType::debug;
+        break;
+    case SipKernelType::DbgCsrLocal:
+        typeOfSystemRoutine = IGC::SystemRoutineType::debugSlm;
+        break;
+    case SipKernelType::DbgBindless:
+        typeOfSystemRoutine = IGC::SystemRoutineType::debug;
+        bindlessSip = true;
+        break;
+    default:
+        break;
+    }
 
-    auto igcSrc = CIF::Builtins::CreateConstBuffer(igcMain.get(), sipSrc, strlen(sipSrc) + 1);
-    auto igcOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), nullptr, 0);
-    auto igcInternalOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), sipInternalOptions.c_str(), sipInternalOptions.size() + 1);
+    auto deviceCtx = getIgcDeviceCtx(device);
 
-    auto igcTranslationCtx = createIgcTranslationCtx(device, IGC::CodeType::llvmLl, IGC::CodeType::oclGenBin);
-
-    auto igcOutput = translate(igcTranslationCtx.get(), igcSrc.get(),
-                               igcOptions.get(), igcInternalOptions.get());
-
-    if ((igcOutput == nullptr) || (igcOutput->Successful() == false)) {
+    if (deviceCtx == nullptr) {
         return TranslationOutput::ErrorCode::UnknownError;
     }
 
-    retBinary.assign(igcOutput->GetOutput()->GetMemory<char>(), igcOutput->GetOutput()->GetMemory<char>() + igcOutput->GetOutput()->GetSizeRaw());
+    auto systemRoutineBuffer = igcMain->CreateBuiltin<CIF::Builtins::BufferLatest>();
+    auto stateSaveAreaBuffer = igcMain->CreateBuiltin<CIF::Builtins::BufferLatest>();
+
+    auto result = deviceCtx->GetSystemRoutine(typeOfSystemRoutine,
+                                              bindlessSip,
+                                              systemRoutineBuffer.get(),
+                                              stateSaveAreaBuffer.get());
+
+    if (!result) {
+        return TranslationOutput::ErrorCode::UnknownError;
+    }
+
+    retBinary.assign(systemRoutineBuffer->GetMemory<char>(), systemRoutineBuffer->GetMemory<char>() + systemRoutineBuffer->GetSizeRaw());
+    stateSaveAreaHeader.assign(stateSaveAreaBuffer->GetMemory<char>(), stateSaveAreaBuffer->GetMemory<char>() + stateSaveAreaBuffer->GetSizeRaw());
+
     return TranslationOutput::ErrorCode::Success;
+}
+
+CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> CompilerInterface::getIgcFeaturesAndWorkarounds(NEO::Device const &device) {
+    return getIgcDeviceCtx(device)->GetIgcFeaturesAndWorkaroundsHandle();
 }
 
 bool CompilerInterface::loadFcl() {
     return NEO::loadCompiler<IGC::FclOclDeviceCtx>(Os::frontEndDllName, fclLib, fclMain);
-    ;
 }
 
 bool CompilerInterface::loadIgc() {
     return NEO::loadCompiler<IGC::IgcOclDeviceCtx>(Os::igcDllName, igcLib, igcMain);
 }
 
-bool CompilerInterface::initialize(std::unique_ptr<CompilerCache> cache, bool requireFcl) {
+bool CompilerInterface::initialize(std::unique_ptr<CompilerCache> &&cache, bool requireFcl) {
     bool fclAvailable = requireFcl ? this->loadFcl() : false;
     bool igcAvailable = this->loadIgc();
 
@@ -364,6 +390,15 @@ IGC::FclOclDeviceCtxTagOCL *CompilerInterface::getFclDeviceCtx(const Device &dev
         return nullptr;
     }
     newDeviceCtx->SetOclApiVersion(device.getHardwareInfo().capabilityTable.clVersionSupport * 10);
+    if (newDeviceCtx->GetUnderlyingVersion() > 4U) {
+        auto igcPlatform = newDeviceCtx->GetPlatformHandle();
+        if (nullptr == igcPlatform.get()) {
+            DEBUG_BREAK_IF(true); // could not acquire handles to platform descriptor
+            return nullptr;
+        }
+        const HardwareInfo *hwInfo = &device.getHardwareInfo();
+        IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform, hwInfo->platform);
+    }
     fclDeviceContexts[&device] = std::move(newDeviceCtx);
 
     return fclDeviceContexts[&device].get();
@@ -390,8 +425,8 @@ IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getIgcDeviceCtx(const Device &dev
     newDeviceCtx->SetProfilingTimerResolution(static_cast<float>(device.getDeviceInfo().outProfilingTimerResolution));
     auto igcPlatform = newDeviceCtx->GetPlatformHandle();
     auto igcGtSystemInfo = newDeviceCtx->GetGTSystemInfoHandle();
-    auto igcFeWa = newDeviceCtx->GetIgcFeaturesAndWorkaroundsHandle();
-    if (false == NEO::areNotNullptr(igcPlatform.get(), igcGtSystemInfo.get(), igcFeWa.get())) {
+    auto igcFtrWa = newDeviceCtx->GetIgcFeaturesAndWorkaroundsHandle();
+    if (false == NEO::areNotNullptr(igcPlatform.get(), igcGtSystemInfo.get(), igcFtrWa.get())) {
         DEBUG_BREAK_IF(true); // could not acquire handles to device descriptors
         return nullptr;
     }
@@ -400,39 +435,24 @@ IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getIgcDeviceCtx(const Device &dev
     if (productFamily != "unk") {
         getHwInfoForPlatformString(productFamily, hwInfo);
     }
-    IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform, hwInfo->platform);
-    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo, hwInfo->gtSystemInfo);
 
-    igcFeWa.get()->SetFtrDesktop(device.getHardwareInfo().featureTable.ftrDesktop);
-    igcFeWa.get()->SetFtrChannelSwizzlingXOREnabled(device.getHardwareInfo().featureTable.ftrChannelSwizzlingXOREnabled);
+    auto copyHwInfo = *hwInfo;
+    CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily)->adjustHwInfoForIgc(copyHwInfo);
 
-    igcFeWa.get()->SetFtrGtBigDie(device.getHardwareInfo().featureTable.ftrGtBigDie);
-    igcFeWa.get()->SetFtrGtMediumDie(device.getHardwareInfo().featureTable.ftrGtMediumDie);
-    igcFeWa.get()->SetFtrGtSmallDie(device.getHardwareInfo().featureTable.ftrGtSmallDie);
+    IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform, copyHwInfo.platform);
+    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo, copyHwInfo.gtSystemInfo);
 
-    igcFeWa.get()->SetFtrGT1(device.getHardwareInfo().featureTable.ftrGT1);
-    igcFeWa.get()->SetFtrGT1_5(device.getHardwareInfo().featureTable.ftrGT1_5);
-    igcFeWa.get()->SetFtrGT2(device.getHardwareInfo().featureTable.ftrGT2);
-    igcFeWa.get()->SetFtrGT3(device.getHardwareInfo().featureTable.ftrGT3);
-    igcFeWa.get()->SetFtrGT4(device.getHardwareInfo().featureTable.ftrGT4);
+    igcFtrWa->SetFtrDesktop(device.getHardwareInfo().featureTable.flags.ftrDesktop);
+    igcFtrWa->SetFtrChannelSwizzlingXOREnabled(device.getHardwareInfo().featureTable.flags.ftrChannelSwizzlingXOREnabled);
+    igcFtrWa->SetFtrIVBM0M1Platform(device.getHardwareInfo().featureTable.flags.ftrIVBM0M1Platform);
+    igcFtrWa->SetFtrSGTPVSKUStrapPresent(device.getHardwareInfo().featureTable.flags.ftrSGTPVSKUStrapPresent);
+    igcFtrWa->SetFtr5Slice(device.getHardwareInfo().featureTable.flags.ftr5Slice);
+    igcFtrWa->SetFtrGpGpuMidThreadLevelPreempt(CompilerHwInfoConfig::get(hwInfo->platform.eProductFamily)->isMidThreadPreemptionSupported(*hwInfo));
+    igcFtrWa->SetFtrIoMmuPageFaulting(device.getHardwareInfo().featureTable.flags.ftrIoMmuPageFaulting);
+    igcFtrWa->SetFtrWddm2Svm(device.getHardwareInfo().featureTable.flags.ftrWddm2Svm);
+    igcFtrWa->SetFtrPooledEuEnabled(device.getHardwareInfo().featureTable.flags.ftrPooledEuEnabled);
 
-    igcFeWa.get()->SetFtrIVBM0M1Platform(device.getHardwareInfo().featureTable.ftrIVBM0M1Platform);
-    igcFeWa.get()->SetFtrGTL(device.getHardwareInfo().featureTable.ftrGT1);
-    igcFeWa.get()->SetFtrGTM(device.getHardwareInfo().featureTable.ftrGT2);
-    igcFeWa.get()->SetFtrGTH(device.getHardwareInfo().featureTable.ftrGT3);
-
-    igcFeWa.get()->SetFtrSGTPVSKUStrapPresent(device.getHardwareInfo().featureTable.ftrSGTPVSKUStrapPresent);
-    igcFeWa.get()->SetFtrGTA(device.getHardwareInfo().featureTable.ftrGTA);
-    igcFeWa.get()->SetFtrGTC(device.getHardwareInfo().featureTable.ftrGTC);
-    igcFeWa.get()->SetFtrGTX(device.getHardwareInfo().featureTable.ftrGTX);
-    igcFeWa.get()->SetFtr5Slice(device.getHardwareInfo().featureTable.ftr5Slice);
-
-    igcFeWa.get()->SetFtrGpGpuMidThreadLevelPreempt(device.getHardwareInfo().featureTable.ftrGpGpuMidThreadLevelPreempt);
-    igcFeWa.get()->SetFtrIoMmuPageFaulting(device.getHardwareInfo().featureTable.ftrIoMmuPageFaulting);
-    igcFeWa.get()->SetFtrWddm2Svm(device.getHardwareInfo().featureTable.ftrWddm2Svm);
-    igcFeWa.get()->SetFtrPooledEuEnabled(device.getHardwareInfo().featureTable.ftrPooledEuEnabled);
-
-    igcFeWa.get()->SetFtrResourceStreamer(device.getHardwareInfo().featureTable.ftrResourceStreamer);
+    igcFtrWa->SetFtrResourceStreamer(device.getHardwareInfo().featureTable.flags.ftrResourceStreamer);
 
     igcDeviceContexts[&device] = std::move(newDeviceCtx);
     return igcDeviceContexts[&device].get();

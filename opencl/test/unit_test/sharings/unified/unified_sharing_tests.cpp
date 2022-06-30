@@ -1,21 +1,22 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/unit_test/helpers/variable_backup.h"
-#include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/test_macros/test.h"
 
+#include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/sharings/unified/enable_unified.h"
 #include "opencl/source/sharings/unified/unified_buffer.h"
 #include "opencl/source/sharings/unified/unified_sharing.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/sharings/unified/unified_sharing_fixtures.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -25,12 +26,12 @@ TEST(UnifiedSharingTests, givenContextCreatedWithExternalDeviceHandlePropertyWhe
     ClDeviceVector allDevs(&deviceId, 1);
     cl_int retVal{};
 
-    const cl_context_properties context_props[] = {
+    const cl_context_properties contextProps[] = {
         static_cast<cl_context_properties>(UnifiedSharingContextType::DeviceHandle), 0,
         CL_CONTEXT_INTEROP_USER_SYNC, 1,
         0};
 
-    auto context = std::unique_ptr<MockContext>(Context::create<MockContext>(context_props, allDevs,
+    auto context = std::unique_ptr<MockContext>(Context::create<MockContext>(contextProps, allDevs,
                                                                              nullptr, nullptr, retVal));
     auto sharingFunctions = context->getSharing<UnifiedSharingFunctions>();
     EXPECT_NE(nullptr, sharingFunctions);
@@ -44,10 +45,8 @@ TEST(UnifiedSharingTests, givenExternalDeviceHandleWhenProcessingBySharingContex
     MockUnifiedSharingContextBuilder builder{};
     cl_context_properties propertyType = static_cast<cl_context_properties>(UnifiedSharingContextType::DeviceHandle);
     cl_context_properties propertyValue = 0x1234;
-    cl_int retVal{};
-    bool result = builder.processProperties(propertyType, propertyValue, retVal);
+    bool result = builder.processProperties(propertyType, propertyValue);
     EXPECT_TRUE(result);
-    EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, builder.contextData);
 }
 
@@ -55,10 +54,8 @@ TEST(UnifiedSharingTests, givenExternalDeviceGroupHandleWhenProcessingBySharingC
     MockUnifiedSharingContextBuilder builder{};
     cl_context_properties propertyType = static_cast<cl_context_properties>(UnifiedSharingContextType::DeviceGroup);
     cl_context_properties propertyValue = 0x1234;
-    cl_int retVal{};
-    bool result = builder.processProperties(propertyType, propertyValue, retVal);
+    bool result = builder.processProperties(propertyType, propertyValue);
     EXPECT_TRUE(result);
-    EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, builder.contextData);
 }
 
@@ -66,10 +63,8 @@ TEST(UnifiedSharingTests, givenExternalDeviceGroupHandleWhenProcessingBySharingC
     MockUnifiedSharingContextBuilder builder{};
     cl_context_properties propertyType = CL_CONTEXT_PLATFORM;
     cl_context_properties propertyValue = 0x1234;
-    cl_int retVal{};
-    bool result = builder.processProperties(propertyType, propertyValue, retVal);
+    bool result = builder.processProperties(propertyType, propertyValue);
     EXPECT_FALSE(result);
-    EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(nullptr, builder.contextData);
 }
 
@@ -169,12 +164,12 @@ struct UnifiedSharingCreateAllocationTests : UnifiedSharingTestsWithMemoryManage
     struct MemoryManagerCheckingAllocationMethod : MockMemoryManager {
         using MockMemoryManager::MockMemoryManager;
 
-        GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex) override {
+        GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override {
             this->createFromNTHandleCalled = true;
             this->handle = toOsHandle(handle);
             return nullptr;
         }
-        GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) override {
+        GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override {
             this->createFromSharedHandleCalled = true;
             this->handle = handle;
             this->properties = std::make_unique<AllocationProperties>(properties);
@@ -205,7 +200,7 @@ TEST_F(UnifiedSharingCreateAllocationTests, givenWindowsNtHandleWhenCreateGraphi
     UnifiedSharingMemoryDescription desc{};
     desc.handle = reinterpret_cast<void *>(0x1234);
     desc.type = UnifiedSharingHandleType::Win32Nt;
-    GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::SHARED_IMAGE;
+    AllocationType allocationType = AllocationType::SHARED_IMAGE;
     MockSharingHandler::createGraphicsAllocation(this->context.get(), desc, allocationType);
 
     EXPECT_TRUE(memoryManager->createFromNTHandleCalled);
@@ -217,7 +212,7 @@ TEST_F(UnifiedSharingCreateAllocationTests, givenWindowsSharedHandleWhenCreateGr
     UnifiedSharingMemoryDescription desc{};
     desc.handle = reinterpret_cast<void *>(0x1234);
     desc.type = UnifiedSharingHandleType::Win32Shared;
-    GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::SHARED_IMAGE;
+    AllocationType allocationType = AllocationType::SHARED_IMAGE;
     MockSharingHandler::createGraphicsAllocation(this->context.get(), desc, allocationType);
 
     EXPECT_FALSE(memoryManager->createFromNTHandleCalled);
@@ -231,7 +226,7 @@ TEST_F(UnifiedSharingCreateAllocationTests, givenLinuxSharedHandleWhenCreateGrap
     UnifiedSharingMemoryDescription desc{};
     desc.handle = reinterpret_cast<void *>(0x1234);
     desc.type = UnifiedSharingHandleType::LinuxFd;
-    GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::SHARED_IMAGE;
+    AllocationType allocationType = AllocationType::SHARED_IMAGE;
     MockSharingHandler::createGraphicsAllocation(this->context.get(), desc, allocationType);
 
     EXPECT_FALSE(memoryManager->createFromNTHandleCalled);

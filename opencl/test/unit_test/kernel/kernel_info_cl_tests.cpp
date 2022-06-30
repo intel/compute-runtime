@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #include "opencl/source/kernel/kernel_info_cl.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 TEST(AsClConvertersTest, whenConvertingAccessQualifiersThenProperEnumValuesAreReturned) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,11 +9,11 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -31,29 +31,30 @@ struct WriteBufferRectHw
     }
 };
 
-typedef WriteBufferRectHw AUBWriteBufferRect;
-static const size_t width = 10;
+using AUBWriteBufferRect = WriteBufferRectHw;
 
-HWTEST_P(AUBWriteBufferRect, simple3D) {
+HWTEST_P(AUBWriteBufferRect, Given3dWhenWritingBufferThenExpectationsAreMet) {
+
     MockContext context(this->pClDevice);
+    const size_t width = 10;
     size_t rowPitch = width;
     size_t slicePitch = rowPitch * rowPitch;
 
     size_t bufferSizeBuff = rowPitch * rowPitch * rowPitch;
     size_t bufferSize = alignUp(bufferSizeBuff, 4096);
 
-    size_t zHostOffs;
-    size_t zBuffOffs;
-    std::tie(zBuffOffs, zHostOffs) = GetParam();
+    auto [zBuffOffs, zHostOffs] = GetParam();
 
     ASSERT_LT(zBuffOffs, width);
     ASSERT_LT(zHostOffs, width);
 
-    uint8_t *srcMemory = (uint8_t *)::alignedMalloc(bufferSize, 4096);
-    uint8_t *destMemory = (uint8_t *)::alignedMalloc(bufferSize, 4096);
+    auto srcMemory = static_cast<uint8_t *>(::alignedMalloc(bufferSize, 4096));
+    auto destMemory = static_cast<uint8_t *>(::alignedMalloc(bufferSize, 4096));
 
-    for (unsigned int i = 0; i < bufferSize; i++)
-        srcMemory[i] = i;
+    for (unsigned int i = 0; i < bufferSize; i++) {
+        auto oneBytePattern = static_cast<uint8_t>(i & 0xff);
+        srcMemory[i] = oneBytePattern;
+    }
 
     memset(destMemory, 0x00, bufferSize);
 
@@ -91,17 +92,15 @@ HWTEST_P(AUBWriteBufferRect, simple3D) {
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    char *ptr = new char[slicePitch];
-    memset(ptr, 0, slicePitch);
+    std::vector<uint8_t> ptr(slicePitch, 0);
     for (unsigned int i = 0; i < rowPitch; i++) {
-        //one slice will be copied from src. all others should be zeros
+        // one slice will be copied from src. all others should be zeros
         if (i == zBuffOffs) {
             AUBCommandStreamFixture::expectMemory<FamilyType>(pDestMemory + slicePitch * i, srcMemory + slicePitch * zHostOffs, slicePitch);
         } else {
-            AUBCommandStreamFixture::expectMemory<FamilyType>(pDestMemory + slicePitch * i, ptr, slicePitch);
+            AUBCommandStreamFixture::expectMemory<FamilyType>(pDestMemory + slicePitch * i, ptr.data(), slicePitch);
         }
     }
-    delete[] ptr;
 
     ::alignedFree(srcMemory);
     ::alignedFree(destMemory);
@@ -109,8 +108,8 @@ HWTEST_P(AUBWriteBufferRect, simple3D) {
 INSTANTIATE_TEST_CASE_P(AUBWriteBufferRect_simple,
                         AUBWriteBufferRect,
                         ::testing::Combine(
-                            ::testing::Values(0, 1, 2, 3, 4),
-                            ::testing::Values(0, 1, 2, 3, 4)));
+                            ::testing::Values(0u, 1u, 2u, 3u, 4u),
+                            ::testing::Values(0u, 1u, 2u, 3u, 4u)));
 
 struct AUBWriteBufferRectUnaligned
     : public CommandEnqueueAUBFixture,
@@ -179,7 +178,7 @@ struct AUBWriteBufferRectUnaligned
     }
 };
 
-HWTEST_F(AUBWriteBufferRectUnaligned, misalignedHostPtr) {
+HWTEST_F(AUBWriteBufferRectUnaligned, GivenMisalignedHostPtrWhenWritingBufferThenExpectationsAreMet) {
     const std::vector<size_t> offsets = {0, 1, 2, 3};
     const std::vector<size_t> sizes = {4, 3, 2, 1};
     for (auto offset : offsets) {

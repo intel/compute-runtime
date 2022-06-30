@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,17 +10,18 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
-#include "shared/source/os_interface/windows/os_interface.h"
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/mocks/mock_wddm.h"
+#include "shared/test/common/mocks/mock_wddm_interface23.h"
+#include "shared/test/common/os_interface/windows/gdi_dll_fixture.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "opencl/test/unit_test/mocks/mock_wddm.h"
-#include "opencl/test/unit_test/mocks/mock_wddm_interface23.h"
-#include "opencl/test/unit_test/os_interface/windows/gdi_dll_fixture.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -32,12 +33,11 @@ struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture {
         wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[0].get()));
         auto &osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface;
         osInterface = std::make_unique<OSInterface>();
-        osInterface->get()->setWddm(wddm);
+        osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
 
-        wddm->featureTable->ftrWddmHwQueues = true;
+        wddm->featureTable->flags.ftrWddmHwQueues = true;
         wddmMockInterface = new WddmMockInterface23(*wddm);
         wddm->wddmInterface.reset(wddmMockInterface);
-        wddm->registryReader.reset(new RegistryReaderMock());
     }
 
     void init() {
@@ -45,9 +45,9 @@ struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture {
         wddmMockInterface = static_cast<WddmMockInterface23 *>(wddm->wddmInterface.release());
         wddm->init();
         wddm->wddmInterface.reset(wddmMockInterface);
-        osContext = std::make_unique<OsContextWin>(*wddm, 0u, 1,
-                                                   HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
-                                                   preemptionMode, false, false, false);
+        osContext = std::make_unique<OsContextWin>(*wddm, 0u,
+                                                   EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0], preemptionMode));
+        osContext->ensureContextInitialized();
     }
 
     void TearDown() override {
@@ -79,10 +79,9 @@ TEST_F(Wddm23Tests, whenCreateContextIsCalledThenEnableHwQueues) {
 
 TEST_F(Wddm23Tests, givenPreemptionModeWhenCreateHwQueueCalledThenSetGpuTimeoutIfEnabled) {
     auto defaultEngine = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0];
-    OsContextWin osContextWithoutPreemption(*wddm, 0u, 1, defaultEngine, PreemptionMode::Disabled,
-                                            false, false, false);
-    OsContextWin osContextWithPreemption(*wddm, 0u, 1, defaultEngine, PreemptionMode::MidBatch,
-                                         false, false, false);
+    OsContextWin osContextWithoutPreemption(*wddm, 0u,
+                                            EngineDescriptorHelper::getDefaultDescriptor(defaultEngine, PreemptionMode::Disabled));
+    OsContextWin osContextWithPreemption(*wddm, 0, EngineDescriptorHelper::getDefaultDescriptor(defaultEngine, PreemptionMode::MidBatch));
 
     wddm->wddmInterface->createHwQueue(osContextWithoutPreemption);
     EXPECT_EQ(0u, getCreateHwQueueDataFcn()->Flags.DisableGpuTimeout);
@@ -217,8 +216,7 @@ TEST_F(Wddm23TestsWithoutWddmInit, whenInitCalledThenInitializeNewGdiDDIsAndCall
 
 TEST_F(Wddm23TestsWithoutWddmInit, whenCreateHwQueueFailedThenReturnFalseFromInit) {
     wddmMockInterface->forceCreateHwQueueFail = true;
-    init();
-    EXPECT_FALSE(osContext->isInitialized());
+    EXPECT_ANY_THROW(init());
 }
 
 TEST_F(Wddm23TestsWithoutWddmInit, givenFailureOnGdiInitializationWhenCreatingHwQueueThenReturnFailure) {
@@ -229,8 +227,7 @@ TEST_F(Wddm23TestsWithoutWddmInit, givenFailureOnGdiInitializationWhenCreatingHw
     };
     auto myMockGdi = new MyMockGdi();
     wddm->resetGdi(myMockGdi);
-    init();
-    EXPECT_FALSE(osContext->isInitialized());
+    EXPECT_ANY_THROW(init());
     EXPECT_EQ(1u, wddmMockInterface->createHwQueueCalled);
     EXPECT_FALSE(wddmMockInterface->createHwQueueResult);
 }

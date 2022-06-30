@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,11 +11,11 @@
 
 namespace NEO {
 bool DispatchInfo::usesSlm() const {
-    return (kernel == nullptr) ? false : kernel->slmTotalSize > 0;
+    return (kernel == nullptr) ? false : kernel->getSlmTotalSize() > 0;
 }
 
 bool DispatchInfo::usesStatelessPrintfSurface() const {
-    return (kernel == nullptr) ? false : (kernel->getKernelInfo().patchInfo.pAllocateStatelessPrintfSurface != nullptr);
+    return (kernel == nullptr) ? false : kernel->hasPrintfOutput();
 }
 
 uint32_t DispatchInfo::getRequiredScratchSize() const {
@@ -33,7 +33,9 @@ Kernel *MultiDispatchInfo::peekMainKernel() const {
     return mainKernel ? mainKernel : dispatchInfos.begin()->getKernel();
 }
 
-Kernel *MultiDispatchInfo::peekParentKernel() const {
-    return (mainKernel && mainKernel->isParentKernel) ? mainKernel : nullptr;
+void MultiDispatchInfo::backupUnifiedMemorySyncRequirement() {
+    for (const auto &dispatchInfo : dispatchInfos) {
+        dispatchInfo.getKernel()->setUnifiedMemorySyncRequirement(true);
+    }
 }
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,17 +7,17 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/linear_stream.h"
-#include "shared/test/unit_test/cmd_parse/hw_parse.h"
-#include "shared/test/unit_test/helpers/dispatch_flags_helper.h"
+#include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/helpers/dispatch_flags_helper.h"
+#include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "test.h"
 
 #include "gtest/gtest.h"
 #include "reg_configs_common.h"
@@ -37,7 +37,7 @@ GEN8TEST_F(CommandStreamReceiverHwTestGen8, GivenBlockedKernelWithSlmWhenPreviou
 }
 
 GEN8TEST_F(CommandStreamReceiverHwTestGen8, GivenChangedL3ConfigWhenL3IsProgrammedThenClearSLMWorkAroundIsAdded) {
-    MockCsrHw2<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    MockCsrHw2<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr.csrSizeRequestFlags.l3ConfigChanged = true;
     csr.isPreambleSent = true;
 
@@ -45,11 +45,10 @@ GEN8TEST_F(CommandStreamReceiverHwTestGen8, GivenChangedL3ConfigWhenL3IsProgramm
     void *buffer = alignedMalloc(bufferSize, 64);
 
     LinearStream stream(buffer, bufferSize);
-    DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
     uint32_t l3Config = 0x12345678;
 
-    csr.programL3(stream, flags, l3Config);
+    csr.programL3(stream, l3Config);
 
     this->parseCommands<FamilyType>(stream);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,12 +11,14 @@
 namespace NEO {
 namespace Linux {
 
+void adjustLibraryFlags(int &dlopenFlag);
+
 class OsLibrary : public NEO::OsLibrary {
   private:
     void *handle;
 
   public:
-    OsLibrary(const std::string &name);
+    OsLibrary(const std::string &name, std::string *errorValue);
     ~OsLibrary() override;
 
     bool isLoaded() override;

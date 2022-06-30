@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,5 +14,6 @@ class Thread {
     static std::unique_ptr<Thread> create(void *(*func)(void *), void *arg);
     virtual void join() = 0;
     virtual ~Thread() = default;
+    virtual void yield() = 0;
 };
 } // namespace NEO

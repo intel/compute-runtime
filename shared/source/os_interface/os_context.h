@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,54 +8,71 @@
 #pragma once
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 
 #include "engine_node.h"
 
 #include <memory>
+#include <mutex>
 
 namespace NEO {
 class OSInterface;
 
+struct DirectSubmissionProperties;
+struct HardwareInfo;
+
 class OsContext : public ReferenceTrackedObject<OsContext> {
   public:
-    OsContext() = delete;
+    OsContext(uint32_t contextId, const EngineDescriptor &engineDescriptor);
+    static OsContext *create(OSInterface *osInterface, uint32_t contextId, const EngineDescriptor &engineDescriptor);
 
-    static OsContext *create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield,
-                             aub_stream::EngineType engineType, PreemptionMode preemptionMode,
-                             bool lowPriority, bool internalEngine, bool rootDevice);
+    bool isImmediateContextInitializationEnabled(bool isDefaultEngine) const;
+    bool isInitialized() const { return contextInitialized; }
+    void ensureContextInitialized();
+
     uint32_t getContextId() const { return contextId; }
     uint32_t getNumSupportedDevices() const { return numSupportedDevices; }
     DeviceBitfield getDeviceBitfield() const { return deviceBitfield; }
     PreemptionMode getPreemptionMode() const { return preemptionMode; }
-    aub_stream::EngineType &getEngineType() { return engineType; }
-    bool isLowPriority() const { return lowPriority; }
-    bool isInternalEngine() const { return internalEngine; }
+    const aub_stream::EngineType &getEngineType() const { return engineType; }
+    EngineUsage getEngineUsage() { return engineUsage; }
+    bool isRegular() const { return engineUsage == EngineUsage::Regular; }
+    bool isLowPriority() const { return engineUsage == EngineUsage::LowPriority; }
+    bool isInternalEngine() const { return engineUsage == EngineUsage::Internal; }
+    bool isCooperativeEngine() const { return engineUsage == EngineUsage::Cooperative; }
     bool isRootDevice() const { return rootDevice; }
-    virtual bool isInitialized() const { return true; }
+    bool isEngineInstanced() const { return engineInstancedDevice; }
+    virtual bool isDirectSubmissionSupported(const HardwareInfo &hwInfo) const { return false; }
     bool isDefaultContext() const { return defaultContext; }
     void setDefaultContext(bool value) { defaultContext = value; }
+    bool isDirectSubmissionActive() { return directSubmissionActive; }
+    void setDirectSubmissionActive() { directSubmissionActive = true; }
+
+    bool isDirectSubmissionAvailable(const HardwareInfo &hwInfo, bool &submitOnInit);
+    bool checkDirectSubmissionSupportsEngine(const DirectSubmissionProperties &directSubmissionProperty,
+                                             aub_stream::EngineType contextEngineType,
+                                             bool &startOnInit,
+                                             bool &startInContext);
+    virtual void reInitializeContext() {}
+    uint8_t getUmdPowerHintValue() { return powerHintValue; }
+    void setUmdPowerHintValue(uint8_t powerHintValue) { this->powerHintValue = powerHintValue; }
 
   protected:
-    OsContext(uint32_t contextId, DeviceBitfield deviceBitfield, aub_stream::EngineType engineType, PreemptionMode preemptionMode,
-              bool lowPriority, bool internalEngine, bool rootDevice)
-        : contextId(contextId),
-          deviceBitfield(deviceBitfield),
-          preemptionMode(preemptionMode),
-          numSupportedDevices(static_cast<uint32_t>(deviceBitfield.count())),
-          engineType(engineType),
-          lowPriority(lowPriority),
-          internalEngine(internalEngine),
-          rootDevice(rootDevice) {}
+    virtual void initializeContext() {}
 
     const uint32_t contextId;
     const DeviceBitfield deviceBitfield;
     const PreemptionMode preemptionMode;
     const uint32_t numSupportedDevices;
     aub_stream::EngineType engineType = aub_stream::ENGINE_RCS;
-    const bool lowPriority = false;
-    const bool internalEngine = false;
+    const EngineUsage engineUsage;
     const bool rootDevice = false;
     bool defaultContext = false;
+    bool directSubmissionActive = false;
+    std::once_flag contextInitializedFlag = {};
+    bool contextInitialized = false;
+    bool engineInstancedDevice = false;
+    uint8_t powerHintValue = 0;
 };
 } // namespace NEO

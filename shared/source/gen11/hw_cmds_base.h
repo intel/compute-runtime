@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,10 +15,15 @@
 #include <cstddef>
 template <class T>
 struct CmdParse;
-namespace NEO {
 
+namespace NEO {
+class LogicalStateHelper;
 struct GEN11 {
 #include "shared/source/generated/gen11/hw_cmds_generated_gen11.inl"
+
+    static constexpr bool supportsSampler = true;
+    static constexpr bool isUsingGenericMediaStateClear = true;
+    static constexpr bool isUsingMiMemFence = false;
 
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {
         union {
@@ -50,8 +55,11 @@ struct ICLFamily : public GEN11 {
     using GfxFamily = ICLFamily;
     using WALKER_TYPE = GPGPU_WALKER;
     using VFE_STATE_TYPE = MEDIA_VFE_STATE;
+    using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_SRC_COPY_BLT;
     using XY_COPY_BLT = typename GfxFamily::XY_SRC_COPY_BLT;
     using MI_STORE_REGISTER_MEM_CMD = typename GfxFamily::MI_STORE_REGISTER_MEM;
+    using TimestampPacketType = uint32_t;
+    using LogicalStateHelperHw = LogicalStateHelper;
     static const GPGPU_WALKER cmdInitGpgpuWalker;
     static const INTERFACE_DESCRIPTOR_DATA cmdInitInterfaceDescriptorData;
     static const MEDIA_INTERFACE_DESCRIPTOR_LOAD cmdInitMediaInterfaceDescriptorLoad;
@@ -80,6 +88,7 @@ struct ICLFamily : public GEN11 {
     static const STATE_SIP cmdInitStateSip;
     static const BINDING_TABLE_STATE cmdInitBindingTableState;
     static const MI_USER_INTERRUPT cmdInitUserInterrupt;
+    static const XY_BLOCK_COPY_BLT cmdInitXyBlockCopyBlt;
     static const XY_SRC_COPY_BLT cmdInitXyCopyBlt;
     static const MI_FLUSH_DW cmdInitMiFlushDw;
     static const XY_COLOR_BLT cmdInitXyColorBlt;

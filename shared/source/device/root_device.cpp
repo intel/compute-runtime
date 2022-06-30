@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,101 +11,67 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/sub_device.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/utilities/software_tags_manager.h"
 
 namespace NEO {
-extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
+extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment,
+                                                  uint32_t rootDeviceIndex,
+                                                  const DeviceBitfield deviceBitfield);
 
-RootDevice::RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex) : Device(executionEnvironment), rootDeviceIndex(rootDeviceIndex) {}
+RootDevice::RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex) : Device(executionEnvironment, rootDeviceIndex) {}
 
 RootDevice::~RootDevice() {
-    for (auto subdevice : subdevices) {
-        if (subdevice) {
-            delete subdevice;
-        }
+    if (getRootDeviceEnvironment().tagsManager) {
+        getRootDeviceEnvironment().tagsManager->shutdown();
     }
 }
 
-uint32_t RootDevice::getNumSubDevices() const {
-    return static_cast<uint32_t>(subdevices.size());
+Device *RootDevice::getRootDevice() const {
+    return const_cast<RootDevice *>(this);
 }
 
-uint32_t RootDevice::getRootDeviceIndex() const {
-    return rootDeviceIndex;
-}
-
-uint32_t RootDevice::getNumAvailableDevices() const {
-    if (subdevices.empty()) {
-        return 1u;
+void RootDevice::createBindlessHeapsHelper() {
+    if (ApiSpecificConfig::getBindlessConfiguration()) {
+        this->executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->createBindlessHeapsHelper(getMemoryManager(), getNumGenericSubDevices() > 1, rootDeviceIndex, getDeviceBitfield());
     }
-    return getNumSubDevices();
-}
-
-Device *RootDevice::getDeviceById(uint32_t deviceId) const {
-    UNRECOVERABLE_IF(deviceId >= getNumAvailableDevices());
-    if (subdevices.empty()) {
-        return const_cast<RootDevice *>(this);
-    }
-    return subdevices[deviceId];
-};
-
-SubDevice *RootDevice::createSubDevice(uint32_t subDeviceIndex) {
-    return Device::create<SubDevice>(executionEnvironment, subDeviceIndex, *this);
-}
-
-bool RootDevice::createDeviceImpl() {
-    auto numSubDevices = HwHelper::getSubDevicesCount(&getHardwareInfo());
-    if (numSubDevices == 1) {
-        numSubDevices = 0;
-    }
-    UNRECOVERABLE_IF(!subdevices.empty());
-    subdevices.resize(numSubDevices, nullptr);
-    for (auto i = 0u; i < numSubDevices; i++) {
-
-        auto subDevice = createSubDevice(i);
-        if (!subDevice) {
-            return false;
-        }
-        subdevices[i] = subDevice;
-    }
-    auto status = Device::createDeviceImpl();
-    if (!status) {
-        return status;
-    }
-    return true;
-}
-DeviceBitfield RootDevice::getDeviceBitfield() const {
-    DeviceBitfield deviceBitfield{static_cast<uint32_t>(maxNBitValue(getNumAvailableDevices()))};
-    return deviceBitfield;
 }
 
 bool RootDevice::createEngines() {
-    if (getNumSubDevices() < 2) {
-        return Device::createEngines();
-    } else {
+    if (hasGenericSubDevices) {
         initializeRootCommandStreamReceiver();
+    } else {
+        return Device::createEngines();
     }
+
     return true;
 }
 
 void RootDevice::initializeRootCommandStreamReceiver() {
-    std::unique_ptr<CommandStreamReceiver> rootCommandStreamReceiver(createCommandStream(*executionEnvironment, rootDeviceIndex));
+    rootCsrCreated = true;
+
+    std::unique_ptr<CommandStreamReceiver> rootCommandStreamReceiver(createCommandStream(*executionEnvironment, rootDeviceIndex, getDeviceBitfield()));
 
     auto &hwInfo = getHardwareInfo();
     auto defaultEngineType = getChosenEngineType(hwInfo);
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
 
-    auto osContext = getMemoryManager()->createAndRegisterOsContext(rootCommandStreamReceiver.get(), defaultEngineType,
-                                                                    getDeviceBitfield(), preemptionMode, false, false, true);
+    EngineDescriptor engineDescriptor(EngineTypeUsage{defaultEngineType, EngineUsage::Regular}, getDeviceBitfield(), preemptionMode, true, false);
 
+    auto osContext = getMemoryManager()->createAndRegisterOsContext(rootCommandStreamReceiver.get(), engineDescriptor);
+
+    osContext->ensureContextInitialized();
     rootCommandStreamReceiver->setupContext(*osContext);
     rootCommandStreamReceiver->initializeTagAllocation();
     rootCommandStreamReceiver->createGlobalFenceAllocation();
-    bool ret = rootCommandStreamReceiver->initDirectSubmission(*this, *osContext);
-    UNRECOVERABLE_IF(!ret);
+    rootCommandStreamReceiver->createWorkPartitionAllocation(*this);
     commandStreamReceivers.push_back(std::move(rootCommandStreamReceiver));
-    engines.emplace_back(commandStreamReceivers.back().get(), osContext);
+
+    EngineControl engine{commandStreamReceivers.back().get(), osContext};
+    allEngines.push_back(engine);
+    addEngineToEngineGroup(engine);
 }
 
 } // namespace NEO

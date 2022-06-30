@@ -1,18 +1,33 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/offline_compiler/source/decoder/translate_platform_base.h"
 #include "shared/source/helpers/array_count.h"
+#include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/helpers/variable_backup.h"
 
+#include "opencl/test/unit_test/offline_compiler/mock/mock_argument_helper.h"
+#include "opencl/test/unit_test/offline_compiler/stdout_capturer.h"
 #include "opencl/test/unit_test/test_files/patch_list.h"
 
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include "igad.h"
+#include "igfxfmid.h"
 #include "mock/mock_decoder.h"
 
+#include <array>
 #include <fstream>
+#include <sstream>
+#include <string>
+#include <utility>
+
+static void abortOclocExecutionMock(int code) {
+    throw std::runtime_error{"Exit called with code = " + std::to_string(code)};
+}
 
 SProgramBinaryHeader createProgramBinaryHeader(const uint32_t numberOfKernels, const uint32_t patchListSize) {
     return SProgramBinaryHeader{MAGIC_CL, 0, 0, 0, numberOfKernels, 0, patchListSize};
@@ -28,10 +43,205 @@ SKernelBinaryHeaderCommon createKernelBinaryHeaderCommon(const uint32_t kernelNa
 }
 
 namespace NEO {
+
+TEST(DecoderTests, GivenArgHelperWithHeadersWhenLoadingPatchListThenHeadersAreReturned) {
+    const char input[] = "First\nSecond\nThird";
+    const auto inputLength{sizeof(input)};
+    const auto filename{"some_file.txt"};
+
+    Source source{reinterpret_cast<const uint8_t *>(input), inputLength, filename};
+
+    MockDecoder decoder;
+    decoder.mockArgHelper->headers.push_back(source);
+
+    const auto lines = decoder.loadPatchList();
+    ASSERT_EQ(3u, lines.size());
+
+    EXPECT_EQ("First", lines[0]);
+    EXPECT_EQ("Second", lines[1]);
+    EXPECT_EQ("Third", lines[2]);
+}
+
+TEST(DecoderTests, GivenHeadersWithoutProgramBinaryHeaderWhenParsingTokensThenErrorIsRaised) {
+    VariableBackup oclocAbortBackup{&abortOclocExecution, &abortOclocExecutionMock};
+
+    const char input[] = "First\nSecond\nThird";
+    const auto inputLength{sizeof(input)};
+    const auto filename{"some_file.txt"};
+
+    Source source{reinterpret_cast<const uint8_t *>(input), inputLength, filename};
+
+    MockDecoder decoder{false};
+    decoder.mockArgHelper->headers.push_back(source);
+
+    StdoutCapturer capturer{};
+    EXPECT_ANY_THROW(decoder.parseTokens());
+    const auto output{capturer.acquireOutput()};
+
+    EXPECT_EQ("While parsing patchtoken definitions: couldn't find SProgramBinaryHeader.", output);
+}
+
+TEST(DecoderTests, GivenHeadersWithoutPatchTokenEnumWhenParsingTokensThenErrorIsRaised) {
+    VariableBackup oclocAbortBackup{&abortOclocExecution, &abortOclocExecutionMock};
+
+    const char input[] = "struct SProgramBinaryHeader\n{};";
+    const auto inputLength{sizeof(input)};
+    const auto filename{"some_file.txt"};
+
+    Source source{reinterpret_cast<const uint8_t *>(input), inputLength, filename};
+
+    MockDecoder decoder{false};
+    decoder.mockArgHelper->headers.push_back(source);
+
+    StdoutCapturer capturer{};
+    EXPECT_ANY_THROW(decoder.parseTokens());
+    const auto output{capturer.acquireOutput()};
+
+    EXPECT_EQ("While parsing patchtoken definitions: couldn't find enum PATCH_TOKEN.", output);
+}
+
+TEST(DecoderTests, GivenHeadersWithoutKernelBinaryHeaderWhenParsingTokensThenErrorIsRaised) {
+    VariableBackup oclocAbortBackup{&abortOclocExecution, &abortOclocExecutionMock};
+
+    const char input[] = "struct SProgramBinaryHeader\n{};\nenum PATCH_TOKEN\n{};";
+    const auto inputLength{sizeof(input)};
+    const auto filename{"some_file.txt"};
+
+    Source source{reinterpret_cast<const uint8_t *>(input), inputLength, filename};
+
+    MockDecoder decoder{false};
+    decoder.mockArgHelper->headers.push_back(source);
+
+    StdoutCapturer capturer{};
+    EXPECT_ANY_THROW(decoder.parseTokens());
+    const auto output{capturer.acquireOutput()};
+
+    EXPECT_EQ("While parsing patchtoken definitions: couldn't find SKernelBinaryHeader.", output);
+}
+
+TEST(DecoderTests, GivenHeadersWithoutKernelBinaryHeaderCommonWhenParsingTokensThenErrorIsRaised) {
+    VariableBackup oclocAbortBackup{&abortOclocExecution, &abortOclocExecutionMock};
+
+    const char input[] = "struct SProgramBinaryHeader\n{};\nenum PATCH_TOKEN\n{};struct SKernelBinaryHeader\n{};";
+    const auto inputLength{sizeof(input)};
+    const auto filename{"some_file.txt"};
+
+    Source source{reinterpret_cast<const uint8_t *>(input), inputLength, filename};
+
+    MockDecoder decoder{false};
+    decoder.mockArgHelper->headers.push_back(source);
+
+    StdoutCapturer capturer{};
+    EXPECT_ANY_THROW(decoder.parseTokens());
+    const auto output{capturer.acquireOutput()};
+
+    EXPECT_EQ("While parsing patchtoken definitions: couldn't find SKernelBinaryHeaderCommon.", output);
+}
+
+TEST(DecoderTests, GivenFieldsWithSizeWhenDumpingThemThenTheyAreWrittenToPtmFileStream) {
+    VariableBackup oclocAbortBackup{&abortOclocExecution, &abortOclocExecutionMock};
+
+    // Raw data contains 4 variables:
+    // 1. UINT8_T = 0x01.
+    // 2. UINT16_T = 0x0202
+    // 3. UINT32_T = 0x03030303
+    // 4. UINT64_T = 0x0404040404040404
+    uint8_t rawData[] = {
+        0x1,
+        0x2, 0x2,
+        0x3, 0x3, 0x3, 0x3,
+        0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4};
+
+    MockDecoder decoder;
+    std::stringstream ptFileOutputStream;
+    ptFileOutputStream << std::hex;
+
+    const void *memoryPtr = rawData;
+    for (uint8_t varSize = 1; varSize <= 8; varSize *= 2) {
+        PTField field{varSize, "SomeUINT_" + std::to_string(varSize)};
+        decoder.dumpField(memoryPtr, field, ptFileOutputStream);
+    }
+
+    const std::string expectedPtFileContent{
+        "\t1 SomeUINT_1 1\n"
+        "\t2 SomeUINT_2 202\n"
+        "\t4 SomeUINT_4 3030303\n"
+        "\t8 SomeUINT_8 404040404040404\n"};
+    EXPECT_EQ(expectedPtFileContent, ptFileOutputStream.str());
+}
+
+TEST(DecoderTests, GivenInvalidFieldSizeWhenDumpingItThenErrorIsRaised) {
+    VariableBackup oclocAbortBackup{&abortOclocExecution, &abortOclocExecutionMock};
+
+    uint8_t rawData[] = {
+        0x1,
+        0x2, 0x2,
+        0x3, 0x3, 0x3, 0x3};
+
+    MockDecoder decoder{false};
+    std::stringstream ptFileOutputStream;
+
+    const void *memoryPtr = rawData;
+    PTField badField{7, "SomeUINT_7"};
+
+    StdoutCapturer capturer{};
+    EXPECT_ANY_THROW(decoder.dumpField(memoryPtr, badField, ptFileOutputStream));
+    const auto output{capturer.acquireOutput()};
+
+    EXPECT_EQ("Error! Unknown size.\n", output);
+}
+
+TEST(DecoderTests, GivenPassingParsingAndNullptrDevBinaryWhenDecodingThenErrorIsRaised) {
+    VariableBackup oclocAbortBackup{&abortOclocExecution, &abortOclocExecutionMock};
+
+    MockDecoder decoder{false};
+    decoder.callBaseParseTokens = false;
+    decoder.callBaseGetDevBinary = false;
+    decoder.devBinaryToReturn = nullptr;
+
+    StdoutCapturer capturer{};
+    EXPECT_ANY_THROW(decoder.decode());
+    const auto output{capturer.acquireOutput()};
+
+    EXPECT_EQ("Error! Device Binary section was not found.\n", output);
+}
+
+TEST(DecoderTests, GivenPassingParsingAndEmptyDevBinaryWhenDecodingThenWarningAboutZeroKernelIsPrinted) {
+    VariableBackup oclocAbortBackup{&abortOclocExecution, &abortOclocExecutionMock};
+
+    MockDecoder decoder{false};
+    decoder.callBaseParseTokens = false;
+    decoder.callBaseGetDevBinary = false;
+    decoder.devBinaryToReturn = "";
+
+    int decodeReturnValue{-1};
+
+    StdoutCapturer capturer{};
+    ASSERT_NO_THROW(decodeReturnValue = decoder.decode());
+    const auto output{capturer.acquireOutput()};
+
+    EXPECT_EQ(0, decodeReturnValue);
+    EXPECT_EQ("Warning! Number of Kernels is 0.\n", output);
+}
+
+TEST(DecoderTests, GivenEmptyKernelHeaderWhenProcessingKernelThenErrorIsRaised) {
+    VariableBackup oclocAbortBackup{&abortOclocExecution, &abortOclocExecutionMock};
+
+    MockDecoder decoder{false};
+    const void *memory = "abcdef";
+    std::stringstream ptFile;
+
+    StdoutCapturer capturer{};
+    EXPECT_ANY_THROW(decoder.processKernel(memory, ptFile));
+    const auto output{capturer.acquireOutput()};
+
+    EXPECT_EQ("Error! KernelNameSize was 0.\n", output);
+}
+
 TEST(DecoderTests, WhenParsingValidListOfParametersThenReturnValueIsZero) {
-    std::vector<std::string> args = {
+    const std::vector<std::string> args = {
         "ocloc",
-        "decoder",
+        "disasm",
         "-file",
         "test_files/binary.bin",
         "-patch",
@@ -43,30 +253,115 @@ TEST(DecoderTests, WhenParsingValidListOfParametersThenReturnValueIsZero) {
     EXPECT_EQ(0, decoder.validateInput(args));
 }
 
-TEST(DecoderTests, WhenMissingParametersThenValidateInputReturnsErrorCode) {
-    std::vector<std::string> args = {
-        "ocloc",
-        "decoder",
-        "-patch",
-        "test_files"};
+TEST(DecoderTests, GivenFlagsWhichRequireMoreArgsWithoutThemWhenParsingThenErrorIsReported) {
+    const std::array<std::string, 4> flagsToTest = {
+        "-file", "-device", "-patch", "-dump"};
 
-    MockDecoder decoder;
-    EXPECT_NE(0, decoder.validateInput(args));
+    for (const auto &flag : flagsToTest) {
+        const std::vector<std::string> args = {
+            "ocloc",
+            "disasm",
+            flag};
+
+        constexpr auto suppressMessages{false};
+        MockDecoder decoder{suppressMessages};
+
+        ::testing::internal::CaptureStdout();
+        const auto result = decoder.validateInput(args);
+        const auto output{::testing::internal::GetCapturedStdout()};
+
+        EXPECT_EQ(-1, result);
+
+        const std::string expectedErrorMessage{"Unknown argument " + flag + "\n"};
+        EXPECT_EQ(expectedErrorMessage, output);
+    }
 }
 
-TEST(DecoderTests, GivenWrongParametersWhenParsingParametersThenValidateInputReturnsErrorCode) {
-    std::vector<std::string> args = {
-        "cloc",
-        "decoder",
+TEST(DecoderTests, GivenIgnoreIsaPaddingFlagWhenParsingValidListOfParametersThenReturnValueIsZeroAndInternalFlagIsSet) {
+    const std::vector<std::string> args = {
+        "ocloc",
+        "disasm",
         "-file",
-        "test_files/no_extension",
+        "test_files/binary.bin",
         "-patch",
-        "test_files",
+        "test_files/patch",
         "-dump",
-        "test_files/created"};
+        "test_files/created",
+        "-ignore_isa_padding"};
 
     MockDecoder decoder;
-    EXPECT_NE(0, decoder.validateInput(args));
+    EXPECT_EQ(0, decoder.validateInput(args));
+    EXPECT_TRUE(decoder.ignoreIsaPadding);
+}
+
+TEST(DecoderTests, GivenQuietModeFlagWhenParsingValidListOfParametersThenReturnValueIsZeroAndMessagesAreSuppressed) {
+    const std::vector<std::string> args = {
+        "ocloc",
+        "disasm",
+        "-file",
+        "test_files/binary.bin",
+        "-patch",
+        "test_files/patch",
+        "-dump",
+        "test_files/created",
+        "-q"};
+
+    constexpr auto suppressMessages{false};
+    MockDecoder decoder{suppressMessages};
+
+    EXPECT_EQ(0, decoder.validateInput(args));
+    EXPECT_TRUE(decoder.argHelper->getPrinterRef().isSuppressed());
+}
+
+TEST(DecoderTests, GivenMissingDumpFlagWhenParsingValidListOfParametersThenReturnValueIsZeroAndWarningAboutCreationOfDefaultDirectoryIsPrinted) {
+    const std::vector<std::string> args = {
+        "ocloc",
+        "disasm",
+        "-file",
+        "test_files/binary.bin",
+        "-device",
+        "pvc",
+        "-patch",
+        "test_files/patch"};
+
+    constexpr auto suppressMessages{false};
+    MockDecoder decoder{suppressMessages};
+    decoder.getMockIga()->isKnownPlatformReturnValue = true;
+
+    ::testing::internal::CaptureStdout();
+    const auto result = decoder.validateInput(args);
+    const auto output{::testing::internal::GetCapturedStdout()};
+
+    EXPECT_EQ(0, result);
+
+    const std::string expectedErrorMessage{"Warning : Path to dump folder not specificed - using ./dump as default.\n"};
+    EXPECT_EQ(expectedErrorMessage, output);
+}
+
+TEST(DecoderTests, GivenMissingDumpFlagAndArgHelperOutputEnabledWhenParsingValidListOfParametersThenReturnValueIsZeroAndDefaultDirectoryWarningIsNotEmitted) {
+    const std::vector<std::string> args = {
+        "ocloc",
+        "disasm",
+        "-file",
+        "test_files/binary.bin",
+        "-device",
+        "pvc",
+        "-patch",
+        "test_files/patch"};
+
+    constexpr auto suppressMessages{false};
+    MockDecoder decoder{suppressMessages};
+    decoder.mockArgHelper->hasOutput = true;
+    decoder.getMockIga()->isKnownPlatformReturnValue = true;
+
+    ::testing::internal::CaptureStdout();
+    const auto result = decoder.validateInput(args);
+    const auto output{::testing::internal::GetCapturedStdout()};
+
+    EXPECT_EQ(0, result);
+    EXPECT_TRUE(output.empty()) << output;
+
+    decoder.mockArgHelper->hasOutput = false;
 }
 
 TEST(DecoderTests, GivenValidSizeStringWhenGettingSizeThenProperOutcomeIsExpectedAndExceptionIsNotThrown) {
@@ -93,8 +388,8 @@ TEST(DecoderTests, GivenProperStructWhenReadingStructFieldsThenFieldsVectorGetsP
     std::vector<PTField> fields;
     MockDecoder decoder;
     size_t pos = 4;
-    uint32_t full_size = decoder.readStructFields(lines, pos, fields);
-    EXPECT_EQ(static_cast<uint32_t>(15), full_size);
+    uint32_t fullSize = decoder.readStructFields(lines, pos, fields);
+    EXPECT_EQ(static_cast<uint32_t>(15), fullSize);
 
     EXPECT_EQ(static_cast<uint8_t>(8), fields[0].size);
     EXPECT_EQ("SomeField", fields[0].name);
@@ -111,7 +406,7 @@ TEST(DecoderTests, GivenProperStructWhenReadingStructFieldsThenFieldsVectorGetsP
 
 TEST(DecoderTests, GivenProperPatchListFileWhenParsingTokensThenFileIsParsedCorrectly) {
     MockDecoder decoder;
-    decoder.pathToPatch = "test_files/";
+    decoder.pathToPatch = clFiles;
     decoder.parseTokens();
 
     EXPECT_EQ(static_cast<uint32_t>(28), (decoder.programHeader.size));
@@ -212,12 +507,12 @@ TEST(DecoderTests, GivenValidBinaryWhenReadingPatchTokensFromBinaryThenBinaryIsR
     std::vector<char> binary(binaryString.begin(), binaryString.end());
     MockDecoder decoder;
     std::stringstream out;
-    auto PTptr = std::make_unique<PatchToken>();
-    PTptr->size = 20;
-    PTptr->name = "Example patchtoken";
-    PTptr->fields.push_back(PTField{4, "First"});
-    PTptr->fields.push_back(PTField{4, "Second"});
-    decoder.patchTokens.insert(std::pair<uint8_t, std::unique_ptr<PatchToken>>(4, std::move(PTptr)));
+    auto patchToken = std::make_unique<PatchToken>();
+    patchToken->size = 20;
+    patchToken->name = "Example patchtoken";
+    patchToken->fields.push_back(PTField{4, "First"});
+    patchToken->fields.push_back(PTField{4, "Second"});
+    decoder.patchTokens.insert(std::pair<uint8_t, std::unique_ptr<PatchToken>>(4, std::move(patchToken)));
     const void *ptr = reinterpret_cast<void *>(binary.data());
     decoder.readPatchTokens(ptr, 28, out);
     std::string s = "Example patchtoken:\n\t4 Token 4\n\t4 Size 16\n\t4 First 1234\n\t4 Second 5678\nUnidentified PatchToken:\n\t4 Token 2\n\t4 Size 12\n\tHex ff ff ff ff\n";
@@ -237,7 +532,7 @@ TEST(DecoderTests, GivenValidBinaryWithoutPatchTokensWhenProcessingBinaryThenBin
 
     std::stringstream ptmFile;
     MockDecoder decoder;
-    decoder.pathToPatch = "test_files/";
+    decoder.pathToPatch = clFiles;
     decoder.pathToDump = "non_existing_folder/";
     decoder.parseTokens();
 
@@ -288,7 +583,7 @@ TEST(DecoderTests, GivenValidBinaryWhenProcessingBinaryThenProgramAndKernelAndPa
     std::vector<char> binary(binaryString.begin(), binaryString.end());
     std::stringstream ptmFile;
     MockDecoder decoder;
-    decoder.pathToPatch = "test_files/";
+    decoder.pathToPatch = clFiles;
     decoder.pathToDump = "non_existing_folder/";
     decoder.parseTokens();
 
@@ -301,4 +596,101 @@ TEST(DecoderTests, GivenValidBinaryWhenProcessingBinaryThenProgramAndKernelAndPa
     EXPECT_TRUE(decoder.getMockIga()->disasmWasCalled);
     EXPECT_FALSE(decoder.getMockIga()->asmWasCalled);
 }
+
+TEST(DecoderTests, givenNonPatchtokensBinaryFormatWhenTryingToGetDevBinaryFormatThenDoNotReturnRawData) {
+    MockDecoder decoder;
+    std::map<std::string, std::string> files;
+    auto mockArgHelper = std::make_unique<MockOclocArgHelper>(files);
+    decoder.argHelper = mockArgHelper.get();
+    files["mockgen.gen"] = "NOTMAGIC\n\n\n\n\n\n\n";
+    decoder.binaryFile = "mockgen.gen";
+    auto data = decoder.getDevBinary();
+    EXPECT_EQ(nullptr, data);
+}
+
+TEST(DecoderTests, givenPatchtokensBinaryFormatWhenTryingToGetDevBinaryThenRawDataIsReturned) {
+    MockDecoder decoder;
+    std::map<std::string, std::string> files;
+    auto mockArgHelper = std::make_unique<MockOclocArgHelper>(files);
+    decoder.argHelper = mockArgHelper.get();
+    size_t dataSize = 11u;
+    files["mockgen.gen"] = "CTNI\n\n\n\n\n\n\n";
+    decoder.binaryFile = "mockgen.gen";
+    auto data = decoder.getDevBinary();
+    std::string dataString(static_cast<const char *>(data), dataSize);
+    EXPECT_STREQ("CTNI\n\n\n\n\n\n\n", dataString.c_str());
+}
+
+TEST(DecoderHelperTest, GivenTextSeparatedByTabsWhenSearchingForExistingTextThenItsIndexIsReturned) {
+    const std::vector<std::string> lines = {"Some\tNice\tText"};
+    const auto position = findPos(lines, "Nice");
+
+    EXPECT_EQ(0u, position);
+}
+
+TEST(DecoderHelperTest, GivenTextSeparatedByNewLinesWhenSearchingForExistingTextThenItsIndexIsReturned) {
+    const std::vector<std::string> lines = {"Some\nNice\nText"};
+    const auto position = findPos(lines, "Nice");
+
+    EXPECT_EQ(0u, position);
+}
+
+TEST(DecoderHelperTest, GivenTextSeparatedByCarriageReturnWhenSearchingForExistingTextThenItsIndexIsReturned) {
+    const std::vector<std::string> lines = {"Some\rNice\rText"};
+    const auto position = findPos(lines, "Nice");
+
+    EXPECT_EQ(0u, position);
+}
+
+TEST(DecoderHelperTest, GivenOnlyMatchingSubstringWhenSearchingForExistingTextThenInvalidIndexIsReturned) {
+    const std::vector<std::string> lines = {"Carpet"};
+    const auto position = findPos(lines, "Car");
+
+    EXPECT_EQ(lines.size(), position);
+}
+
+TEST(DecoderHelperTest, GivenPathEndedBySlashWhenCallingAddSlashThenNothingIsDone) {
+    std::string path{"./some/path/"};
+    addSlash(path);
+
+    EXPECT_EQ("./some/path/", path);
+}
+
+TEST(DecoderHelperTest, GivenPathEndedByBackSlashWhenCallingAddSlashThenNothingIsDone) {
+    std::string path{".\\some\\path\\"};
+    addSlash(path);
+
+    EXPECT_EQ(".\\some\\path\\", path);
+}
+
+TEST(DecoderHelperTest, GivenGfxCoreFamilyWhenTranslatingToIgaGenBaseThenExpectedIgaGenBaseIsReturned) {
+    constexpr static std::array translations = {
+        std::pair{IGFX_GEN8_CORE, IGA_GEN8},
+        std::pair{IGFX_GEN9_CORE, IGA_GEN9},
+        std::pair{IGFX_GEN11_CORE, IGA_GEN11},
+        std::pair{IGFX_GEN11LP_CORE, IGA_GEN11},
+        std::pair{IGFX_UNKNOWN_CORE, IGA_GEN_INVALID}};
+
+    for (const auto &[input, expectedOutput] : translations) {
+        EXPECT_EQ(expectedOutput, translateToIgaGen(input));
+    }
+}
+
+TEST(DecoderHelperTest, GivenProductFamilyWhenTranslatingToIgaGenBaseThenExpectedIgaGenBaseIsReturned) {
+    constexpr static std::array translations = {
+        std::pair{IGFX_BROADWELL, IGA_GEN8},
+        std::pair{IGFX_CHERRYVIEW, IGA_GEN8lp},
+        std::pair{IGFX_SKYLAKE, IGA_GEN9},
+        std::pair{IGFX_BROXTON, IGA_GEN9lp},
+        std::pair{IGFX_KABYLAKE, IGA_GEN9p5},
+        std::pair{IGFX_COFFEELAKE, IGA_GEN9p5},
+        std::pair{IGFX_ICELAKE, IGA_GEN11},
+        std::pair{IGFX_ICELAKE_LP, IGA_GEN11},
+        std::pair{IGFX_UNKNOWN, IGA_GEN_INVALID}};
+
+    for (const auto &[input, expectedOutput] : translations) {
+        EXPECT_EQ(expectedOutput, translateToIgaGen(input));
+    }
+}
+
 } // namespace NEO

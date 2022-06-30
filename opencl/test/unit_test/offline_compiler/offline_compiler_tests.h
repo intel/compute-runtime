@@ -1,15 +1,17 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
 #include "shared/offline_compiler/source/multi_command.h"
+#include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/offline_compiler/source/offline_compiler.h"
 
-#include "gtest/gtest.h"
+#include "opencl/test/unit_test/offline_compiler/mock/mock_argument_helper.h"
 
 #include <cstdint>
 #include <memory>
@@ -19,8 +21,14 @@ namespace NEO {
 class OfflineCompilerTests : public ::testing::Test {
   public:
     OfflineCompiler *pOfflineCompiler = nullptr;
-    int retVal = SUCCESS;
-    std::unique_ptr<OclocArgHelper> oclocArgHelperWithoutInput = std::make_unique<OclocArgHelper>();
+    int retVal = OclocErrorCode::SUCCESS;
+    std::map<std::string, std::string> filesMap;
+    std::unique_ptr<MockOclocArgHelper> oclocArgHelperWithoutInput = std::make_unique<MockOclocArgHelper>(filesMap);
+
+  protected:
+    void SetUp() override {
+        oclocArgHelperWithoutInput->setAllCallBase(true);
+    }
 };
 
 class MultiCommandTests : public ::testing::Test {
@@ -31,31 +39,13 @@ class MultiCommandTests : public ::testing::Test {
     MultiCommand *pMultiCommand = nullptr;
     std::string nameOfFileWithArgs;
     std::string outFileList;
-    int retVal = SUCCESS;
-    std::unique_ptr<OclocArgHelper> oclocArgHelperWithoutInput = std::make_unique<OclocArgHelper>();
+    int retVal = OclocErrorCode::SUCCESS;
+    std::map<std::string, std::string> filesMap;
+    std::unique_ptr<MockOclocArgHelper> oclocArgHelperWithoutInput = std::make_unique<MockOclocArgHelper>(filesMap);
+
+  protected:
+    void SetUp() override {
+        oclocArgHelperWithoutInput->setAllCallBase(true);
+    }
 };
-
-void MultiCommandTests::createFileWithArgs(const std::vector<std::string> &singleArgs, int numOfBuild) {
-    std::ofstream myfile(nameOfFileWithArgs);
-    if (myfile.is_open()) {
-        for (int i = 0; i < numOfBuild; i++) {
-            for (auto singleArg : singleArgs)
-                myfile << singleArg + " ";
-            myfile << std::endl;
-        }
-        myfile.close();
-    } else
-        printf("Unable to open file\n");
-}
-
-void MultiCommandTests::deleteFileWithArgs() {
-    if (remove(nameOfFileWithArgs.c_str()) != 0)
-        perror("Error deleting file");
-}
-
-void MultiCommandTests::deleteOutFileList() {
-    if (remove(outFileList.c_str()) != 0)
-        perror("Error deleting file");
-}
-
 } // namespace NEO

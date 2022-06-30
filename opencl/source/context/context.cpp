@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,14 +20,12 @@
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
-#include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/execution_environment/cl_execution_environment.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/platform/platform.h"
-#include "opencl/source/scheduler/scheduler_kernel.h"
 #include "opencl/source/sharings/sharing.h"
 #include "opencl/source/sharings/sharing_factory.h"
 
@@ -44,13 +42,17 @@ Context::Context(
     contextCallback = funcNotify;
     userData = data;
     sharingFunctions.resize(SharingType::MAX_SHARING_VALUE);
-    schedulerBuiltIn = std::make_unique<BuiltInKernel>();
 }
 
 Context::~Context() {
+    gtpinNotifyContextDestroy((cl_context)this);
+
     delete[] properties;
-    if (specialQueue) {
-        delete specialQueue;
+
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex < specialQueues.size(); rootDeviceIndex++) {
+        if (specialQueues[rootDeviceIndex]) {
+            delete specialQueues[rootDeviceIndex];
+        }
     }
     if (svmAllocsManager) {
         delete svmAllocsManager;
@@ -61,33 +63,86 @@ Context::~Context() {
     if (memoryManager && memoryManager->isAsyncDeleterEnabled()) {
         memoryManager->getDeferredDeleter()->removeClient();
     }
-    gtpinNotifyContextDestroy((cl_context)this);
+    destructorCallbacks.invoke(this);
     for (auto &device : devices) {
         device->decRefInternal();
     }
-    delete static_cast<SchedulerKernel *>(schedulerBuiltIn->pKernel);
-    delete schedulerBuiltIn->pProgram;
-    schedulerBuiltIn->pKernel = nullptr;
-    schedulerBuiltIn->pProgram = nullptr;
 }
 
-DeviceQueue *Context::getDefaultDeviceQueue() {
-    return defaultDeviceQueue;
+cl_int Context::setDestructorCallback(void(CL_CALLBACK *funcNotify)(cl_context, void *),
+                                      void *userData) {
+    std::unique_lock<std::mutex> theLock(mtx);
+    destructorCallbacks.add(funcNotify, userData);
+    return CL_SUCCESS;
 }
 
-void Context::setDefaultDeviceQueue(DeviceQueue *queue) {
-    defaultDeviceQueue = queue;
+cl_int Context::tryGetExistingHostPtrAllocation(const void *ptr,
+                                                size_t size,
+                                                uint32_t rootDeviceIndex,
+                                                GraphicsAllocation *&allocation,
+                                                InternalMemoryType &memoryType,
+                                                bool &isCpuCopyAllowed) {
+    cl_int retVal = tryGetExistingSvmAllocation(ptr, size, rootDeviceIndex, allocation, memoryType, isCpuCopyAllowed);
+    if (retVal != CL_SUCCESS || allocation != nullptr) {
+        return retVal;
+    }
+
+    retVal = tryGetExistingMapAllocation(ptr, size, allocation);
+    return retVal;
 }
 
-CommandQueue *Context::getSpecialQueue() {
-    return specialQueue;
+cl_int Context::tryGetExistingSvmAllocation(const void *ptr,
+                                            size_t size,
+                                            uint32_t rootDeviceIndex,
+                                            GraphicsAllocation *&allocation,
+                                            InternalMemoryType &memoryType,
+                                            bool &isCpuCopyAllowed) {
+    if (getSVMAllocsManager()) {
+        SvmAllocationData *svmEntry = getSVMAllocsManager()->getSVMAlloc(ptr);
+        if (svmEntry) {
+            memoryType = svmEntry->memoryType;
+            if ((svmEntry->gpuAllocations.getGraphicsAllocation(rootDeviceIndex)->getGpuAddress() + svmEntry->size) < (castToUint64(ptr) + size)) {
+                return CL_INVALID_OPERATION;
+            }
+            allocation = svmEntry->cpuAllocation ? svmEntry->cpuAllocation : svmEntry->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+            if (isCpuCopyAllowed) {
+                if (svmEntry->memoryType == DEVICE_UNIFIED_MEMORY) {
+                    isCpuCopyAllowed = false;
+                }
+            }
+        }
+    }
+    return CL_SUCCESS;
 }
 
-void Context::setSpecialQueue(CommandQueue *commandQueue) {
-    specialQueue = commandQueue;
+cl_int Context::tryGetExistingMapAllocation(const void *ptr,
+                                            size_t size,
+                                            GraphicsAllocation *&allocation) {
+    if (MapInfo mapInfo = {}; mapOperationsStorage.getInfoForHostPtr(ptr, size, mapInfo)) {
+        if (mapInfo.graphicsAllocation) {
+            allocation = mapInfo.graphicsAllocation;
+        }
+    }
+    return CL_SUCCESS;
 }
-void Context::overrideSpecialQueueAndDecrementRefCount(CommandQueue *commandQueue) {
-    setSpecialQueue(commandQueue);
+
+const RootDeviceIndicesContainer &Context::getRootDeviceIndices() const {
+    return rootDeviceIndices;
+}
+
+uint32_t Context::getMaxRootDeviceIndex() const {
+    return maxRootDeviceIndex;
+}
+
+CommandQueue *Context::getSpecialQueue(uint32_t rootDeviceIndex) {
+    return specialQueues[rootDeviceIndex];
+}
+
+void Context::setSpecialQueue(CommandQueue *commandQueue, uint32_t rootDeviceIndex) {
+    specialQueues[rootDeviceIndex] = commandQueue;
+}
+void Context::overrideSpecialQueueAndDecrementRefCount(CommandQueue *commandQueue, uint32_t rootDeviceIndex) {
+    setSpecialQueue(commandQueue, rootDeviceIndex);
     commandQueue->setIsSpecialCommandQueue(true);
     //decrement ref count that special queue added
     this->decRefInternal();
@@ -116,12 +171,8 @@ bool Context::createImpl(const cl_context_properties *properties,
         propertiesCurrent += 2;
 
         switch (propertyType) {
-        case CL_CONTEXT_PLATFORM: {
-            if (castToObject<Platform>(reinterpret_cast<cl_platform_id>(propertyValue)) == nullptr) {
-                errcodeRet = CL_INVALID_PLATFORM;
-                return false;
-            }
-        } break;
+        case CL_CONTEXT_PLATFORM:
+            break;
         case CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL:
             driverDiagnosticsUsed = static_cast<int32_t>(propertyValue);
             break;
@@ -129,10 +180,8 @@ bool Context::createImpl(const cl_context_properties *properties,
             interopUserSync = propertyValue > 0;
             break;
         default:
-            if (!sharingBuilder->processProperties(propertyType, propertyValue, errcodeRet)) {
-                errcodeRet = processExtraProperties(propertyType, propertyValue);
-            }
-            if (errcodeRet != CL_SUCCESS) {
+            if (!sharingBuilder->processProperties(propertyType, propertyValue)) {
+                errcodeRet = CL_INVALID_PROPERTY;
                 return false;
             }
             break;
@@ -165,22 +214,34 @@ bool Context::createImpl(const cl_context_properties *properties,
         return false;
     }
 
+    bool containsDeviceWithSubdevices = false;
+    for (const auto &device : inputDevices) {
+        rootDeviceIndices.push_back(device->getRootDeviceIndex());
+        containsDeviceWithSubdevices |= device->getNumGenericSubDevices() > 1;
+    }
+    rootDeviceIndices.remove_duplicates();
+
     this->driverDiagnostics = driverDiagnostics.release();
-    if (inputDevices.size() > 1) {
-        if (!DebugManager.flags.EnableMultiRootDeviceContexts.get()) {
-            auto rootDeviceIndex = inputDevices[0]->getRootDeviceIndex();
-            for (const auto &device : inputDevices) {
-                if (device->getRootDeviceIndex() != rootDeviceIndex) {
-                    DEBUG_BREAK_IF("No support for context with multiple root devices");
-                    errcodeRet = CL_OUT_OF_HOST_MEMORY;
-                    return false;
-                }
+    if (rootDeviceIndices.size() > 1 && containsDeviceWithSubdevices && !DebugManager.flags.EnableMultiRootDeviceContexts.get()) {
+        DEBUG_BREAK_IF("No support for context with multiple devices with subdevices");
+        errcodeRet = CL_OUT_OF_HOST_MEMORY;
+        return false;
+    }
+
+    devices = inputDevices;
+    for (auto &rootDeviceIndex : rootDeviceIndices) {
+        DeviceBitfield deviceBitfield{};
+        for (const auto &pDevice : devices) {
+            if (pDevice->getRootDeviceIndex() == rootDeviceIndex) {
+                deviceBitfield |= pDevice->getDeviceBitfield();
             }
         }
+        deviceBitfields.insert({rootDeviceIndex, deviceBitfield});
     }
-    this->devices = inputDevices;
 
     if (devices.size() > 0) {
+        maxRootDeviceIndex = *std::max_element(rootDeviceIndices.begin(), rootDeviceIndices.end(), std::less<uint32_t const>());
+        specialQueues.resize(maxRootDeviceIndex + 1u);
         auto device = this->getDevice(0);
         this->memoryManager = device->getMemoryManager();
         if (memoryManager->isAsyncDeleterEnabled()) {
@@ -193,15 +254,20 @@ bool Context::createImpl(const cl_context_properties *properties,
             anySvmSupport |= device->getHardwareInfo().capabilityTable.ftrSvm;
         }
 
-        if (anySvmSupport) {
-            this->svmAllocsManager = new SVMAllocsManager(this->memoryManager);
-        }
         setupContextType();
+        if (anySvmSupport) {
+            this->svmAllocsManager = new SVMAllocsManager(this->memoryManager,
+                                                          this->areMultiStorageAllocationsPreferred());
+        }
     }
 
-    auto commandQueue = CommandQueue::create(this, devices[0], nullptr, true, errcodeRet);
-    DEBUG_BREAK_IF(commandQueue == nullptr);
-    overrideSpecialQueueAndDecrementRefCount(commandQueue);
+    for (auto &device : devices) {
+        if (!specialQueues[device->getRootDeviceIndex()]) {
+            auto commandQueue = CommandQueue::create(this, device, nullptr, true, errcodeRet); // NOLINT(clang-analyzer-cplusplus.NewDelete)
+            DEBUG_BREAK_IF(commandQueue == nullptr);
+            overrideSpecialQueueAndDecrementRefCount(commandQueue, device->getRootDeviceIndex());
+        }
+    }
 
     return true;
 }
@@ -264,12 +330,8 @@ size_t Context::getNumDevices() const {
     return devices.size();
 }
 
-size_t Context::getTotalNumDevices() const {
-    size_t numAvailableDevices = 0u;
-    for (auto &device : devices) {
-        numAvailableDevices += device->getNumAvailableDevices();
-    }
-    return numAvailableDevices;
+bool Context::containsMultipleSubDevices(uint32_t rootDeviceIndex) const {
+    return deviceBitfields.at(rootDeviceIndex).count() > 1;
 }
 
 ClDevice *Context::getDevice(size_t deviceOrdinal) const {
@@ -284,13 +346,6 @@ cl_int Context::getSupportedImageFormats(
     cl_image_format *imageFormats,
     cl_uint *numImageFormatsReturned) {
     size_t numImageFormats = 0;
-
-    if (isValueSet(CL_MEM_KERNEL_READ_AND_WRITE, flags) && device->getSpecializedDevice<ClDevice>()->areOcl21FeaturesEnabled() == false) {
-        if (numImageFormatsReturned) {
-            *numImageFormatsReturned = static_cast<cl_uint>(numImageFormats);
-        }
-        return CL_SUCCESS;
-    }
 
     const bool nv12ExtensionEnabled = device->getSpecializedDevice<ClDevice>()->getDeviceInfo().nv12Extension;
     const bool packedYuvExtensionEnabled = device->getSpecializedDevice<ClDevice>()->getDeviceInfo().packedYuvExtension;
@@ -346,49 +401,6 @@ cl_int Context::getSupportedImageFormats(
     return CL_SUCCESS;
 }
 
-SchedulerKernel &Context::getSchedulerKernel() {
-    if (schedulerBuiltIn->pKernel) {
-        return *static_cast<SchedulerKernel *>(schedulerBuiltIn->pKernel);
-    }
-
-    auto initializeSchedulerProgramAndKernel = [&] {
-        cl_int retVal = CL_SUCCESS;
-
-        auto src = SchedulerKernel::loadSchedulerKernel(&getDevice(0)->getDevice());
-
-        auto program = Program::createFromGenBinary(*getDevice(0)->getExecutionEnvironment(),
-                                                    this,
-                                                    src.resource.data(),
-                                                    src.resource.size(),
-                                                    true,
-                                                    &retVal,
-                                                    &getDevice(0)->getDevice());
-        DEBUG_BREAK_IF(retVal != CL_SUCCESS);
-        DEBUG_BREAK_IF(!program);
-
-        retVal = program->processGenBinary();
-        DEBUG_BREAK_IF(retVal != CL_SUCCESS);
-
-        schedulerBuiltIn->pProgram = program;
-
-        auto kernelInfo = schedulerBuiltIn->pProgram->getKernelInfo(SchedulerKernel::schedulerName);
-        DEBUG_BREAK_IF(!kernelInfo);
-
-        schedulerBuiltIn->pKernel = Kernel::create<SchedulerKernel>(
-            schedulerBuiltIn->pProgram,
-            *kernelInfo,
-            &retVal);
-
-        UNRECOVERABLE_IF(schedulerBuiltIn->pKernel->getScratchSize() != 0);
-
-        DEBUG_BREAK_IF(retVal != CL_SUCCESS);
-    };
-    std::call_once(schedulerBuiltIn->programIsInitialized, initializeSchedulerProgramAndKernel);
-
-    UNRECOVERABLE_IF(schedulerBuiltIn->pKernel == nullptr);
-    return *static_cast<SchedulerKernel *>(schedulerBuiltIn->pKernel);
-}
-
 bool Context::isDeviceAssociated(const ClDevice &clDevice) const {
     for (const auto &pDevice : devices) {
         if (pDevice == &clDevice) {
@@ -418,13 +430,8 @@ AsyncEventsHandler &Context::getAsyncEventsHandler() const {
     return *static_cast<ClExecutionEnvironment *>(devices[0]->getExecutionEnvironment())->getAsyncEventsHandler();
 }
 
-DeviceBitfield Context::getDeviceBitfieldForAllocation() const {
-    DeviceBitfield deviceBitfield{};
-    for (const auto &pDevice : devices) {
-        deviceBitfield |= pDevice->getDeviceBitfield();
-    }
-
-    return deviceBitfield;
+DeviceBitfield Context::getDeviceBitfieldForAllocation(uint32_t rootDeviceIndex) const {
+    return deviceBitfields.at(rootDeviceIndex);
 }
 
 void Context::setupContextType() {
@@ -443,4 +450,23 @@ void Context::setupContextType() {
     }
 }
 
+Platform *Context::getPlatformFromProperties(const cl_context_properties *properties, cl_int &errcode) {
+    errcode = CL_SUCCESS;
+    auto propertiesCurrent = properties;
+    while (propertiesCurrent && *propertiesCurrent) {
+        auto propertyType = propertiesCurrent[0];
+        auto propertyValue = propertiesCurrent[1];
+        propertiesCurrent += 2;
+        if (CL_CONTEXT_PLATFORM == propertyType) {
+            Platform *pPlatform = nullptr;
+            errcode = validateObject(withCastToInternal(reinterpret_cast<cl_platform_id>(propertyValue), &pPlatform));
+            return pPlatform;
+        }
+    }
+    return nullptr;
+}
+
+bool Context::isSingleDeviceContext() {
+    return devices[0]->getNumGenericSubDevices() == 0 && getNumDevices() == 1;
+}
 } // namespace NEO

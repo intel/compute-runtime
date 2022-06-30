@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/helpers/base_object.h"
+#include "opencl/source/helpers/destructor_callbacks.h"
 #include "opencl/source/helpers/mipmap.h"
 #include "opencl/source/mem_obj/map_operations_handler.h"
 #include "opencl/source/sharings/sharing.h"
@@ -20,11 +21,11 @@
 
 #include <atomic>
 #include <cstdint>
+#include <list>
 #include <vector>
 
 namespace NEO {
 class ExecutionEnvironment;
-struct RootDeviceEnvironment;
 class GraphicsAllocation;
 struct KernelInfo;
 class MemoryManager;
@@ -34,6 +35,25 @@ template <>
 struct OpenCLObjectMapper<_cl_mem> {
     typedef class MemObj DerivedType;
 };
+
+namespace CreateMemObj {
+struct AllocationInfo {
+    GraphicsAllocation *mapAllocation = nullptr;
+    GraphicsAllocation *memory = nullptr;
+    AllocationType allocationType = AllocationType::UNKNOWN;
+
+    bool zeroCopyAllowed = true;
+    bool isHostPtrSVM = false;
+
+    bool alignementSatisfied = true;
+    bool allocateMemory = true;
+    bool copyMemoryFromHostPtr = false;
+
+    bool transferNeeded = false;
+};
+} // namespace CreateMemObj
+
+using AllocationInfoType = StackVec<CreateMemObj::AllocationInfo, 1>;
 
 class MemObj : public BaseObject<_cl_mem> {
   public:
@@ -48,7 +68,7 @@ class MemObj : public BaseObject<_cl_mem> {
            size_t size,
            void *memoryStorage,
            void *hostPtr,
-           GraphicsAllocation *gfxAllocation,
+           MultiGraphicsAllocation &&multiGraphicsAllocation,
            bool zeroCopy,
            bool isHostPtrSVM,
            bool isObjectRedescrbied);
@@ -66,9 +86,11 @@ class MemObj : public BaseObject<_cl_mem> {
     bool getIsObjectRedescribed() const { return isObjectRedescribed; };
     size_t getSize() const;
 
-    bool addMappedPtr(void *ptr, size_t ptrLength, cl_map_flags &mapFlags, MemObjSizeArray &size, MemObjOffsetArray &offset, uint32_t mipLevel);
-    bool findMappedPtr(void *mappedPtr, MapInfo &outMapInfo) { return mapOperationsHandler.find(mappedPtr, outMapInfo); }
-    void removeMappedPtr(void *mappedPtr) { mapOperationsHandler.remove(mappedPtr); }
+    MapOperationsHandler &getMapOperationsHandler();
+    MapOperationsHandler *getMapOperationsHandlerIfExists();
+    bool addMappedPtr(void *ptr, size_t ptrLength, cl_map_flags &mapFlags, MemObjSizeArray &size, MemObjOffsetArray &offset, uint32_t mipLevel, GraphicsAllocation *graphicsAllocation);
+    bool findMappedPtr(void *mappedPtr, MapInfo &outMapInfo);
+    void removeMappedPtr(void *mappedPtr);
     void *getBasePtrForMap(uint32_t rootDeviceIndex);
 
     MOCKABLE_VIRTUAL void setAllocatedMapPtr(void *allocatedMapPtr);
@@ -76,7 +98,7 @@ class MemObj : public BaseObject<_cl_mem> {
 
     void setHostPtrMinSize(size_t size);
     void releaseAllocatedMapPtr();
-    void releaseMapAllocation();
+    void releaseMapAllocation(uint32_t rootDeviceIndex, bool asyncDestroy);
 
     bool isMemObjZeroCopy() const;
     bool isMemObjWithHostPtrSVM() const;
@@ -118,18 +140,25 @@ class MemObj : public BaseObject<_cl_mem> {
         return memoryManager;
     }
     void setMapAllocation(GraphicsAllocation *allocation) {
-        mapAllocation = allocation;
+        mapAllocations.addAllocation(allocation);
     }
-    GraphicsAllocation *getMapAllocation() const {
+    GraphicsAllocation *getMapAllocation(uint32_t rootDeviceIndex) const {
         if (associatedMemObject) {
-            return associatedMemObject->getMapAllocation();
+            return associatedMemObject->getMapAllocation(rootDeviceIndex);
         }
-        return mapAllocation;
+        return mapAllocations.getGraphicsAllocation(rootDeviceIndex);
     }
 
     const cl_mem_flags &getFlags() const { return flags; }
     const cl_mem_flags &getFlagsIntel() const { return flagsIntel; }
     const MultiGraphicsAllocation &getMultiGraphicsAllocation() const { return multiGraphicsAllocation; }
+    static void cleanAllGraphicsAllocations(Context &context, MemoryManager &memoryManager, AllocationInfoType &allocationInfo, bool isParentObject);
+    MemObj *getHighestRootMemObj() {
+        if (!associatedMemObject) {
+            return this;
+        }
+        return associatedMemObject->getHighestRootMemObj();
+    }
 
   protected:
     void getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);
@@ -146,36 +175,20 @@ class MemObj : public BaseObject<_cl_mem> {
     void *memoryStorage;
     void *hostPtr;
     void *allocatedMapPtr = nullptr;
-    MapOperationsHandler mapOperationsHandler;
     size_t offset = 0;
     MemObj *associatedMemObject = nullptr;
     cl_uint refCount = 0;
     ExecutionEnvironment *executionEnvironment = nullptr;
-    RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
     bool isZeroCopy;
     bool isHostPtrSVM;
     bool isObjectRedescribed;
     MemoryManager *memoryManager = nullptr;
-    GraphicsAllocation *graphicsAllocation;
     MultiGraphicsAllocation multiGraphicsAllocation;
     GraphicsAllocation *mcsAllocation = nullptr;
-    GraphicsAllocation *mapAllocation = nullptr;
+    MultiGraphicsAllocation mapAllocations;
     std::shared_ptr<SharingHandler> sharingHandler;
     std::vector<uint64_t> propertiesVector;
 
-    class DestructorCallback {
-      public:
-        DestructorCallback(void(CL_CALLBACK *funcNotify)(cl_mem, void *),
-                           void *userData)
-            : funcNotify(funcNotify), userData(userData){};
-
-        void invoke(cl_mem memObj);
-
-      private:
-        void(CL_CALLBACK *funcNotify)(cl_mem, void *);
-        void *userData;
-    };
-
-    std::vector<DestructorCallback *> destructorCallbacks;
+    MemObjDestructorCallbacks destructorCallbacks;
 };
 } // namespace NEO

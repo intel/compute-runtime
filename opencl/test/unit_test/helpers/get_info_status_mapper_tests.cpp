@@ -9,7 +9,7 @@
 
 #include "gtest/gtest.h"
 
-TEST(getInfoStatusMapper, GivenValidGetInfoStatusReturnExpectedCLCode) {
+TEST(getInfoStatusMapper, GivenValidGetInfoStatusWhenTranslatingThenExpectedClCodeIsReturned) {
     auto getInfoStatus = changeGetInfoStatusToCLResultType(GetInfoStatus::SUCCESS);
     EXPECT_EQ(CL_SUCCESS, getInfoStatus);
 
@@ -20,7 +20,7 @@ TEST(getInfoStatusMapper, GivenValidGetInfoStatusReturnExpectedCLCode) {
     EXPECT_EQ(CL_INVALID_VALUE, getInfoStatus);
 }
 
-TEST(getInfoStatusMapper, GivenInvalidGetStatusReturnCLInvalidValue) {
+TEST(getInfoStatusMapper, GivenInvalidGetInfoStatusWhenTranslatingThenClInvalidValueIsReturned) {
     auto getInfoStatus = changeGetInfoStatusToCLResultType(static_cast<GetInfoStatus>(1));
     EXPECT_EQ(CL_INVALID_VALUE, getInfoStatus);
 }

@@ -1,18 +1,18 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/test/common/test_macros/test.h"
 
-#include "opencl/source/helpers/memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "test.h"
 
 #include <memory>
 using namespace NEO;
@@ -63,7 +63,7 @@ class ImageFromSubBufferTest : public ClDeviceFixture, public ::testing::Test {
         cl_mem_flags flags = CL_MEM_READ_ONLY;
         auto surfaceFormat = Image::getSurfaceFormatFromTable(
             flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-        return Image::create(&context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
+        return Image::create(&context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
                              flags, 0, surfaceFormat, &imageDesc, NULL, retVal);
     }
     cl_image_format imageFormat;
@@ -96,7 +96,7 @@ TEST_F(ImageFromSubBufferTest, GivenSubBufferWithOffsetGreaterThan4gbWhenCreatin
     uint64_t offsetExpected = 0;
     cl_buffer_region region = {0, size / 2};
 
-    if (is64bit) {
+    if constexpr (is64bit) {
         offsetExpected = 8 * GB;
         region = {static_cast<size_t>(offsetExpected), size / 2};
     }

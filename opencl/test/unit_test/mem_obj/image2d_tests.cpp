@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "opencl/source/helpers/memory_properties_helpers.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/test_macros/test.h"
+
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -56,7 +57,7 @@ class CreateImage2DTest : public ClDeviceFixture,
     Image *createImageWithFlags(cl_mem_flags flags) {
         auto surfaceFormat = Image::getSurfaceFormatFromTable(
             flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-        return Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        return Image::create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                              flags, 0, surfaceFormat, &imageDesc, nullptr, retVal);
     }
     cl_image_format imageFormat;
@@ -68,7 +69,7 @@ class CreateImage2DTest : public ClDeviceFixture,
 
 typedef CreateImage2DTest CreateImage2DType;
 
-HWTEST_P(CreateImage2DType, validTypes) {
+HWTEST_P(CreateImage2DType, GivenValidTypeWhenCreatingImageThenImageCreatedWithCorrectParams) {
     auto image = createImageWithFlags(CL_MEM_READ_WRITE);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -113,6 +114,6 @@ static cl_mem_object_type Image2DTypes[] = {
     CL_MEM_OBJECT_IMAGE2D_ARRAY};
 
 INSTANTIATE_TEST_CASE_P(
-    CreateImage2DTest_Create,
+    CreateImage2DTestCreate,
     CreateImage2DType,
     testing::ValuesIn(Image2DTypes));

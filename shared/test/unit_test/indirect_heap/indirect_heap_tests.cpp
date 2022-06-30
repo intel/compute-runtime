@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,7 @@
 
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 
@@ -16,7 +15,7 @@ struct IndirectHeapTest : public ::testing::Test {
     class MyMockGraphicsAllocation : public GraphicsAllocation {
       public:
         MyMockGraphicsAllocation(void *ptr, size_t size)
-            : GraphicsAllocation(0, AllocationType::UNKNOWN, ptr, castToUint64(ptr), 0, size, MemoryPool::System4KBPages) {}
+            : GraphicsAllocation(0, AllocationType::UNKNOWN, ptr, castToUint64(ptr), 0, size, MemoryPool::System4KBPages, 1) {}
     };
 
     uint8_t buffer[256];

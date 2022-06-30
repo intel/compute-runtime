@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/string.h"
@@ -14,20 +15,33 @@
 #include "shared/source/image/image_surface_state.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/utilities/compiler_support.h"
 
+#include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/helpers/properties_parser.h"
+#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/source/image/image_formats.h"
 #include "level_zero/core/source/image/image_hw.h"
 
 namespace L0 {
+
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_desc_t *desc) {
+ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_desc_t *desc) {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
+
+    StructuresLookupTable lookupTable = {};
+
+    lookupTable.areImageProperties = true;
+    lookupTable.imageProperties.imageDescriptor = convertDescriptor(*desc);
+
+    auto parseResult = prepareL0StructuresLookupTable(lookupTable, desc->pNext);
+
+    if (parseResult != ZE_RESULT_SUCCESS) {
+        return parseResult;
+    }
 
     bool isMediaFormatLayout = isMediaFormat(desc->format.layout);
 
-    auto imageDescriptor = convertDescriptor(*desc);
-    imgInfo.imgDesc = imageDescriptor;
+    imgInfo.imgDesc = lookupTable.imageProperties.imageDescriptor;
 
     imgInfo.surfaceFormat = &ImageFormats::formats[desc->format.layout][desc->format.type];
     imageFormatDesc = *const_cast<ze_image_desc_t *>(desc);
@@ -36,7 +50,7 @@ bool ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_d
     this->device = device;
 
     if (imgInfo.surfaceFormat->GMMSurfaceFormat == GMM_FORMAT_INVALID) {
-        return false;
+        return ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT;
     }
 
     typename RENDER_SURFACE_STATE::SURFACE_TYPE surfaceType;
@@ -53,17 +67,40 @@ bool ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_d
         surfaceType = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_3D;
         break;
     default:
-        return false;
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     imgInfo.linearStorage = surfaceType == RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_1D;
-    imgInfo.plane = GMM_NO_PLANE;
+    imgInfo.plane = lookupTable.imageProperties.isPlanarExtension ? static_cast<GMM_YUV_PLANE>(lookupTable.imageProperties.planeIndex + 1u) : GMM_NO_PLANE;
     imgInfo.useLocalMemory = false;
-    imgInfo.preferRenderCompression = false;
 
-    NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, imgInfo, NEO::GraphicsAllocation::AllocationType::IMAGE, device->getNEODevice()->getDeviceBitfield());
-    allocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
-    UNRECOVERABLE_IF(allocation == nullptr);
+    if (!isImageView) {
+        if (lookupTable.isSharedHandle) {
+            if (!lookupTable.sharedHandleType.isSupportedHandle) {
+                return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
+            }
+            if (lookupTable.sharedHandleType.isDMABUFHandle) {
+                NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, imgInfo, NEO::AllocationType::SHARED_IMAGE, device->getNEODevice()->getDeviceBitfield());
+                allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromSharedHandle(lookupTable.sharedHandleType.fd, properties, false, false);
+                device->getNEODevice()->getMemoryManager()->closeSharedHandle(allocation);
+            } else if (lookupTable.sharedHandleType.isNTHandle) {
+                auto verifyResult = device->getNEODevice()->getMemoryManager()->verifyHandle(NEO::toOsHandle(lookupTable.sharedHandleType.ntHnadle), device->getNEODevice()->getRootDeviceIndex(), true);
+                if (!verifyResult) {
+                    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+                }
+                allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromNTHandle(lookupTable.sharedHandleType.ntHnadle, device->getNEODevice()->getRootDeviceIndex(), NEO::AllocationType::SHARED_IMAGE);
+            }
+        } else {
+            NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, imgInfo, NEO::AllocationType::IMAGE, device->getNEODevice()->getDeviceBitfield());
+
+            properties.flags.preferCompressed = isSuitableForCompression(lookupTable, imgInfo);
+
+            allocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+        }
+        if (allocation == nullptr) {
+            return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+        }
+    }
 
     auto gmm = this->allocation->getDefaultGmm();
     auto gmmHelper = static_cast<const NEO::RootDeviceEnvironment &>(device->getNEODevice()->getRootDeviceEnvironment()).getGmmHelper();
@@ -98,12 +135,17 @@ bool ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_d
             surfaceState.setShaderChannelSelectAlpha(
                 static_cast<const typename RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT>(
                     shaderChannelSelect[desc->format.w]));
+        } else {
+            surfaceState.setShaderChannelSelectRed(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED);
+            surfaceState.setShaderChannelSelectGreen(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN);
+            surfaceState.setShaderChannelSelectBlue(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE);
+            surfaceState.setShaderChannelSelectAlpha(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
         }
 
         surfaceState.setNumberOfMultisamples(RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES::NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1);
 
-        if (gmm && gmm->isRenderCompressed) {
-            NEO::setAuxParamsForCCS<GfxFamily>(&surfaceState, gmm);
+        if (allocation->isCompressionEnabled()) {
+            NEO::EncodeSurfaceState<GfxFamily>::setImageAuxParamsForCCS(&surfaceState, gmm);
         }
     }
     {
@@ -143,17 +185,18 @@ bool ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_d
 
         redescribedSurfaceState.setNumberOfMultisamples(RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES::NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1);
 
-        if (gmm && gmm->isRenderCompressed) {
-            NEO::setAuxParamsForCCS<GfxFamily>(&redescribedSurfaceState, gmm);
+        if (allocation->isCompressionEnabled()) {
+            NEO::EncodeSurfaceState<GfxFamily>::setImageAuxParamsForCCS(&redescribedSurfaceState, gmm);
         }
     }
 
-    return true;
+    return ZE_RESULT_SUCCESS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void ImageCoreFamily<gfxCoreFamily>::copySurfaceStateToSSH(void *surfaceStateHeap,
-                                                           const uint32_t surfaceStateOffset) {
+                                                           const uint32_t surfaceStateOffset,
+                                                           bool isMediaBlockArg) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
 
@@ -161,6 +204,10 @@ void ImageCoreFamily<gfxCoreFamily>::copySurfaceStateToSSH(void *surfaceStateHea
     auto destSurfaceState = ptrOffset(surfaceStateHeap, surfaceStateOffset);
     memcpy_s(destSurfaceState, sizeof(RENDER_SURFACE_STATE),
              &surfaceState, sizeof(RENDER_SURFACE_STATE));
+    if (isMediaBlockArg) {
+        RENDER_SURFACE_STATE *dstRss = static_cast<RENDER_SURFACE_STATE *>(destSurfaceState);
+        NEO::setWidthForMediaBlockSurfaceState<GfxFamily>(dstRss, imgInfo);
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -173,6 +220,18 @@ void ImageCoreFamily<gfxCoreFamily>::copyRedescribedSurfaceStateToSSH(void *surf
     auto destSurfaceState = ptrOffset(surfaceStateHeap, surfaceStateOffset);
     memcpy_s(destSurfaceState, sizeof(RENDER_SURFACE_STATE),
              &redescribedSurfaceState, sizeof(RENDER_SURFACE_STATE));
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool ImageCoreFamily<gfxCoreFamily>::isSuitableForCompression(const StructuresLookupTable &structuresLookupTable, const NEO::ImageInfo &imgInfo) {
+    auto &hwInfo = device->getHwInfo();
+    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    if (structuresLookupTable.uncompressedHint) {
+        return false;
+    }
+
+    return (l0HwHelper.imageCompressionSupported(hwInfo) && !imgInfo.linearStorage);
 }
 
 } // namespace L0

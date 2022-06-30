@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/device/device.h"
-#include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "cl_api_tests.h"
 
@@ -125,6 +126,29 @@ TEST_F(clEnqueueSVMMapTests, GivenValidParametersWhenMappingSVMThenSuccessIsRetu
     }
 }
 
+TEST_F(clEnqueueSVMMapTests, GivenQueueIncapableWhenMappingSvmBufferThenInvalidOperationIsReturned) {
+    REQUIRE_SVM_OR_SKIP(pDevice);
+
+    disableQueueCapabilities(CL_QUEUE_CAPABILITY_MAP_BUFFER_INTEL);
+
+    void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
+    EXPECT_NE(nullptr, ptrSvm);
+
+    auto retVal = clEnqueueSVMMap(
+        pCommandQueue, // cl_command_queue command_queue
+        CL_FALSE,      // cl_bool blocking_map
+        CL_MAP_READ,   // cl_map_flags map_flags
+        ptrSvm,        // void *svm_ptr
+        256,           // size_t size
+        0,             // cl_uint num_events_in_wait_list
+        nullptr,       // const cL_event *event_wait_list
+        nullptr        // cl_event *event
+    );
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+
+    clSVMFree(pContext, ptrSvm);
+}
+
 TEST_F(clEnqueueSVMMapTests, GivenDeviceNotSupportingSvmWhenEnqueuingSVMMapThenInvalidOperationErrorIsReturned) {
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.ftrSvm = false;
@@ -132,7 +156,7 @@ TEST_F(clEnqueueSVMMapTests, GivenDeviceNotSupportingSvmWhenEnqueuingSVMMapThenI
     auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
     cl_device_id deviceId = pDevice.get();
     auto pContext = std::unique_ptr<MockContext>(Context::create<MockContext>(nullptr, ClDeviceVector(&deviceId, 1), nullptr, nullptr, retVal));
-    auto pCommandQueue = std::make_unique<MockCommandQueue>(pContext.get(), pDevice.get(), nullptr);
+    auto pCommandQueue = std::make_unique<MockCommandQueue>(pContext.get(), pDevice.get(), nullptr, false);
 
     auto retVal = clEnqueueSVMMap(
         pCommandQueue.get(), // cl_command_queue command_queue

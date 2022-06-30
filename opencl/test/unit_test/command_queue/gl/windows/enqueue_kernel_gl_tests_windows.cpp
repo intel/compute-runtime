@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,16 +9,17 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/test/unit_test/cmd_parse/hw_parse.h"
+#include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/fixtures/memory_management_fixture.h"
+#include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_submissions_aggregator.h"
 
 #include "opencl/source/sharings/gl/gl_buffer.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
-#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/mocks/gl/windows/mock_gl_sharing_windows.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
-#include "opencl/test/unit_test/mocks/mock_submissions_aggregator.h"
 
 using namespace NEO;
 
@@ -26,9 +27,11 @@ typedef HelloWorldFixture<HelloWorldFixtureFactory> EnqueueKernelFixture;
 typedef Test<EnqueueKernelFixture> EnqueueKernelTest;
 
 TEST_F(EnqueueKernelTest, givenKernelWithSharedObjArgsWhenEnqueueIsCalledThenResetPatchAddress) {
+
     auto nonSharedBuffer = new MockBuffer;
     MockGlSharing glSharing;
-    glSharing.uploadDataToBufferInfo(1, 0);
+    MockGmm mockGmm(pDevice->getGmmHelper());
+    glSharing.uploadDataToBufferInfo(1, 0, mockGmm.gmmResourceInfo->peekGmmResourceInfo());
     pContext->setSharingFunctions(glSharing.sharingFunctions.release());
     auto retVal = CL_SUCCESS;
     auto sharedBuffer = GlBuffer::createSharedGlBuffer(pContext, CL_MEM_READ_WRITE, 1, &retVal);
@@ -42,7 +45,7 @@ TEST_F(EnqueueKernelTest, givenKernelWithSharedObjArgsWhenEnqueueIsCalledThenRes
     auto &kernelInfo = pKernel->getKernelInfo();
 
     auto pKernelArg =
-        (uint32_t *)(pKernel->getCrossThreadData() + kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
+        (uint32_t *)(pKernel->getCrossThreadData() + kernelInfo.getArgDescriptorAt(0).as<ArgDescPointer>().stateless);
 
     auto address1 = static_cast<uint64_t>(*pKernelArg);
     auto sharedBufferGpuAddress =
@@ -51,7 +54,7 @@ TEST_F(EnqueueKernelTest, givenKernelWithSharedObjArgsWhenEnqueueIsCalledThenRes
     EXPECT_EQ(sharedBufferGpuAddress, address1);
 
     // update address
-    glSharing.uploadDataToBufferInfo(1, 1);
+    glSharing.uploadDataToBufferInfo(1, 1, mockGmm.gmmResourceInfo->peekGmmResourceInfo());
     pCmdQ->enqueueAcquireSharedObjects(1, &sharedMem, 0, nullptr, nullptr, CL_COMMAND_ACQUIRE_GL_OBJECTS);
 
     callOneWorkItemNDRKernel();

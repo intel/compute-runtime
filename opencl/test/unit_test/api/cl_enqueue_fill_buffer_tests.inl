@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,4 +51,40 @@ TEST_F(clEnqueueFillBufferTests, GivenNullBufferWhenFillingBufferThenInvalidMemO
 
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
+
+TEST_F(clEnqueueFillBufferTests, GivenValidArgumentsWhenFillingBufferThenSuccessIsReturned) {
+    MockBuffer buffer{};
+    cl_float pattern = 1.0f;
+
+    retVal = clEnqueueFillBuffer(
+        pCommandQueue,
+        &buffer,
+        &pattern,
+        sizeof(pattern),
+        0,
+        sizeof(pattern),
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(clEnqueueFillBufferTests, GivenQueueIncapableWhenFillingBufferThenInvalidOperationIsReturned) {
+    MockBuffer buffer{};
+    cl_float pattern = 1.0f;
+
+    this->disableQueueCapabilities(CL_QUEUE_CAPABILITY_FILL_BUFFER_INTEL);
+    retVal = clEnqueueFillBuffer(
+        pCommandQueue,
+        &buffer,
+        &pattern,
+        sizeof(pattern),
+        0,
+        sizeof(pattern),
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+}
+
 } // namespace ULT

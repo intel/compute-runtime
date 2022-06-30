@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/windows/debug_registry_reader.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 
@@ -17,6 +18,10 @@ namespace NEO {
 
 SettingsReader *SettingsReader::createOsReader(bool userScope, const std::string &regKey) {
     return new RegistryReader(userScope, regKey);
+}
+
+char *SettingsReader::getenv(const char *settingName) {
+    return SysCalls::getenv(settingName);
 }
 
 RegistryReader::RegistryReader(bool userScope, const std::string &regKey) : registryReadRootKey(regKey) {
@@ -52,22 +57,22 @@ int64_t RegistryReader::getSetting(const char *settingName, int64_t defaultValue
     DWORD success = ERROR_SUCCESS;
     bool readSettingFromEnv = true;
 
-    success = RegOpenKeyExA(hkeyType,
-                            registryReadRootKey.c_str(),
-                            0,
-                            KEY_READ,
-                            &Key);
+    success = SysCalls::regOpenKeyExA(hkeyType,
+                                      registryReadRootKey.c_str(),
+                                      0,
+                                      KEY_READ,
+                                      &Key);
 
     if (ERROR_SUCCESS == success) {
         DWORD size = sizeof(int64_t);
         int64_t regData;
 
-        success = RegQueryValueExA(Key,
-                                   settingName,
-                                   NULL,
-                                   NULL,
-                                   reinterpret_cast<LPBYTE>(&regData),
-                                   &size);
+        success = SysCalls::regQueryValueExA(Key,
+                                             settingName,
+                                             NULL,
+                                             NULL,
+                                             reinterpret_cast<LPBYTE>(&regData),
+                                             &size);
         if (ERROR_SUCCESS == success) {
             value = regData;
             readSettingFromEnv = false;
@@ -90,30 +95,30 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
     std::string keyValue = value;
     bool readSettingFromEnv = true;
 
-    success = RegOpenKeyExA(hkeyType,
-                            registryReadRootKey.c_str(),
-                            0,
-                            KEY_READ,
-                            &Key);
+    success = SysCalls::regOpenKeyExA(hkeyType,
+                                      registryReadRootKey.c_str(),
+                                      0,
+                                      KEY_READ,
+                                      &Key);
     if (ERROR_SUCCESS == success) {
         DWORD regType = REG_NONE;
         DWORD regSize = 0;
 
-        success = RegQueryValueExA(Key,
-                                   settingName,
-                                   NULL,
-                                   &regType,
-                                   NULL,
-                                   &regSize);
+        success = SysCalls::regQueryValueExA(Key,
+                                             settingName,
+                                             NULL,
+                                             &regType,
+                                             NULL,
+                                             &regSize);
         if (ERROR_SUCCESS == success) {
             if (regType == REG_SZ || regType == REG_MULTI_SZ) {
                 auto regData = std::make_unique<char[]>(regSize);
-                success = RegQueryValueExA(Key,
-                                           settingName,
-                                           NULL,
-                                           &regType,
-                                           reinterpret_cast<LPBYTE>(regData.get()),
-                                           &regSize);
+                success = SysCalls::regQueryValueExA(Key,
+                                                     settingName,
+                                                     NULL,
+                                                     &regType,
+                                                     reinterpret_cast<LPBYTE>(regData.get()),
+                                                     &regSize);
                 if (success == ERROR_SUCCESS) {
                     keyValue.assign(regData.get());
                     readSettingFromEnv = false;
@@ -121,12 +126,12 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
             } else if (regType == REG_BINARY) {
                 size_t charCount = regSize / sizeof(wchar_t);
                 auto regData = std::make_unique<wchar_t[]>(charCount);
-                success = RegQueryValueExA(Key,
-                                           settingName,
-                                           NULL,
-                                           &regType,
-                                           reinterpret_cast<LPBYTE>(regData.get()),
-                                           &regSize);
+                success = SysCalls::regQueryValueExA(Key,
+                                                     settingName,
+                                                     NULL,
+                                                     &regType,
+                                                     reinterpret_cast<LPBYTE>(regData.get()),
+                                                     &regSize);
 
                 if (ERROR_SUCCESS == success) {
 
@@ -143,7 +148,7 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
     }
 
     if (readSettingFromEnv) {
-        const char *envValue = getenv(settingName);
+        const char *envValue = strcmp(processName.c_str(), settingName) ? getenv(settingName) : getenv("cl_cache_dir");
         if (envValue) {
             keyValue.assign(envValue);
         }

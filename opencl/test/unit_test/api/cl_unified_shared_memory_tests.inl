@@ -1,18 +1,19 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/memory_manager/unified_memory_manager.h"
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 using namespace NEO;
@@ -26,6 +27,9 @@ TEST(clUnifiedSharedMemoryTests, whenClHostMemAllocINTELisCalledWithoutContextTh
 
 TEST(clUnifiedSharedMemoryTests, whenClHostMemAllocIntelIsCalledThenItAllocatesHostUnifiedMemoryAllocation) {
     MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
     cl_int retVal = CL_SUCCESS;
     auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(&mockContext, nullptr, 4, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -36,9 +40,68 @@ TEST(clUnifiedSharedMemoryTests, whenClHostMemAllocIntelIsCalledThenItAllocatesH
     auto graphicsAllocation = allocationsManager->getSVMAlloc(unifiedMemoryHostAllocation);
     EXPECT_EQ(graphicsAllocation->size, 4u);
     EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::HOST_UNIFIED_MEMORY);
-    EXPECT_EQ(graphicsAllocation->gpuAllocation->getGpuAddress(), castToUint64(unifiedMemoryHostAllocation));
+    EXPECT_EQ(graphicsAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex())->getGpuAddress(),
+              castToUint64(unifiedMemoryHostAllocation));
 
     retVal = clMemFreeINTEL(&mockContext, unifiedMemoryHostAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST(clUnifiedSharedMemoryTests, GivenForceExtendedUSMBufferSizeDebugFlagWhenUSMAllocationIsCreatedThenSizeIsProperlyExtended) {
+    DebugManagerStateRestore restorer;
+
+    MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
+    constexpr auto bufferSize = 16;
+    auto pageSizeNumber = 2;
+    DebugManager.flags.ForceExtendedUSMBufferSize.set(pageSizeNumber);
+    auto extendedBufferSize = bufferSize + MemoryConstants::pageSize * pageSizeNumber;
+
+    cl_int retVal = CL_SUCCESS;
+    auto usmAllocation = clHostMemAllocINTEL(&mockContext, nullptr, bufferSize, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, usmAllocation);
+
+    auto allocationsManager = mockContext.getSVMAllocsManager();
+    EXPECT_EQ(1u, allocationsManager->getNumAllocs());
+    auto graphicsAllocation = allocationsManager->getSVMAlloc(usmAllocation);
+    EXPECT_EQ(graphicsAllocation->size, extendedBufferSize);
+
+    retVal = clMemFreeINTEL(&mockContext, usmAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    pageSizeNumber = 4;
+    DebugManager.flags.ForceExtendedUSMBufferSize.set(pageSizeNumber);
+    extendedBufferSize = bufferSize + MemoryConstants::pageSize * pageSizeNumber;
+
+    usmAllocation = clDeviceMemAllocINTEL(&mockContext, mockContext.getDevice(0u), nullptr, bufferSize, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, usmAllocation);
+
+    allocationsManager = mockContext.getSVMAllocsManager();
+    EXPECT_EQ(1u, allocationsManager->getNumAllocs());
+    graphicsAllocation = allocationsManager->getSVMAlloc(usmAllocation);
+    EXPECT_EQ(graphicsAllocation->size, extendedBufferSize);
+
+    retVal = clMemFreeINTEL(&mockContext, usmAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    pageSizeNumber = 8;
+    DebugManager.flags.ForceExtendedUSMBufferSize.set(pageSizeNumber);
+    extendedBufferSize = bufferSize + MemoryConstants::pageSize * pageSizeNumber;
+
+    usmAllocation = clSharedMemAllocINTEL(&mockContext, nullptr, nullptr, bufferSize, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, usmAllocation);
+
+    allocationsManager = mockContext.getSVMAllocsManager();
+    EXPECT_EQ(1u, allocationsManager->getNumAllocs());
+    graphicsAllocation = allocationsManager->getSVMAlloc(usmAllocation);
+    EXPECT_EQ(graphicsAllocation->size, extendedBufferSize);
+
+    retVal = clMemFreeINTEL(&mockContext, usmAllocation);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -68,36 +131,37 @@ TEST(clUnifiedSharedMemoryTests, whenClDeviceMemAllocINTELisCalledWithWrongConte
 TEST(clUnifiedSharedMemoryTests, whenClDeviceMemAllocIntelIsCalledThenItAllocatesDeviceUnifiedMemoryAllocation) {
     MockContext mockContext;
     cl_int retVal = CL_SUCCESS;
-    auto unfiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(&mockContext, mockContext.getDevice(0u), nullptr, 4, 0, &retVal);
+    auto unifiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(&mockContext, mockContext.getDevice(0u), nullptr, 4, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, unfiedMemoryDeviceAllocation);
+    ASSERT_NE(nullptr, unifiedMemoryDeviceAllocation);
 
     auto allocationsManager = mockContext.getSVMAllocsManager();
     EXPECT_EQ(1u, allocationsManager->getNumAllocs());
-    auto graphicsAllocation = allocationsManager->getSVMAlloc(unfiedMemoryDeviceAllocation);
+    auto graphicsAllocation = allocationsManager->getSVMAlloc(unifiedMemoryDeviceAllocation);
     EXPECT_EQ(graphicsAllocation->size, 4u);
     EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::DEVICE_UNIFIED_MEMORY);
-    EXPECT_EQ(graphicsAllocation->gpuAllocation->getGpuAddress(), castToUint64(unfiedMemoryDeviceAllocation));
+    EXPECT_EQ(graphicsAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex())->getGpuAddress(),
+              castToUint64(unifiedMemoryDeviceAllocation));
 
-    retVal = clMemFreeINTEL(&mockContext, unfiedMemoryDeviceAllocation);
+    retVal = clMemFreeINTEL(&mockContext, unifiedMemoryDeviceAllocation);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
 TEST(clUnifiedSharedMemoryTests, whenUnifiedSharedMemoryAllocationCallsAreCalledWithSizeGreaterThenMaxMemAllocSizeThenErrorIsReturned) {
     MockContext mockContext;
     cl_int retVal = CL_SUCCESS;
-    auto maxMemAllocSize = mockContext.getDevice(0u)->getHardwareCapabilities().maxMemAllocSize;
+    auto maxMemAllocSize = mockContext.getDevice(0u)->getDevice().getDeviceInfo().maxMemAllocSize;
     size_t requestedSize = static_cast<size_t>(maxMemAllocSize) + 1u;
 
-    auto unfiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(&mockContext, mockContext.getDevice(0u), nullptr, requestedSize, 0, &retVal);
+    auto unifiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(&mockContext, mockContext.getDevice(0u), nullptr, requestedSize, 0, &retVal);
     EXPECT_EQ(CL_INVALID_BUFFER_SIZE, retVal);
-    EXPECT_EQ(nullptr, unfiedMemoryDeviceAllocation);
-    unfiedMemoryDeviceAllocation = clSharedMemAllocINTEL(&mockContext, mockContext.getDevice(0u), nullptr, requestedSize, 0, &retVal);
+    EXPECT_EQ(nullptr, unifiedMemoryDeviceAllocation);
+    unifiedMemoryDeviceAllocation = clSharedMemAllocINTEL(&mockContext, mockContext.getDevice(0u), nullptr, requestedSize, 0, &retVal);
     EXPECT_EQ(CL_INVALID_BUFFER_SIZE, retVal);
-    EXPECT_EQ(nullptr, unfiedMemoryDeviceAllocation);
-    unfiedMemoryDeviceAllocation = clHostMemAllocINTEL(&mockContext, nullptr, requestedSize, 0, &retVal);
+    EXPECT_EQ(nullptr, unifiedMemoryDeviceAllocation);
+    unifiedMemoryDeviceAllocation = clHostMemAllocINTEL(&mockContext, nullptr, requestedSize, 0, &retVal);
     EXPECT_EQ(CL_INVALID_BUFFER_SIZE, retVal);
-    EXPECT_EQ(nullptr, unfiedMemoryDeviceAllocation);
+    EXPECT_EQ(nullptr, unifiedMemoryDeviceAllocation);
 }
 
 TEST(clUnifiedSharedMemoryTests, givenSharedMemAllocCallWhenAllocatingGraphicsMemoryFailsThenOutOfResourcesErrorIsReturned) {
@@ -134,18 +198,19 @@ TEST(clUnifiedSharedMemoryTests, whenClSharedMemAllocINTELisCalledWithWrongDevic
 TEST(clUnifiedSharedMemoryTests, whenClSharedMemAllocIntelIsCalledThenItAllocatesSharedUnifiedMemoryAllocation) {
     MockContext mockContext;
     cl_int retVal = CL_SUCCESS;
-    auto unfiedMemorySharedAllocation = clSharedMemAllocINTEL(&mockContext, mockContext.getDevice(0u), nullptr, 4, 0, &retVal);
+    auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(&mockContext, mockContext.getDevice(0u), nullptr, 4, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, unfiedMemorySharedAllocation);
+    ASSERT_NE(nullptr, unifiedMemorySharedAllocation);
 
     auto allocationsManager = mockContext.getSVMAllocsManager();
     EXPECT_EQ(1u, allocationsManager->getNumAllocs());
-    auto graphicsAllocation = allocationsManager->getSVMAlloc(unfiedMemorySharedAllocation);
+    auto graphicsAllocation = allocationsManager->getSVMAlloc(unifiedMemorySharedAllocation);
     EXPECT_EQ(graphicsAllocation->size, 4u);
     EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::SHARED_UNIFIED_MEMORY);
-    EXPECT_EQ(graphicsAllocation->gpuAllocation->getGpuAddress(), castToUint64(unfiedMemorySharedAllocation));
+    EXPECT_EQ(graphicsAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex())->getGpuAddress(),
+              castToUint64(unifiedMemorySharedAllocation));
 
-    retVal = clMemFreeINTEL(&mockContext, unfiedMemorySharedAllocation);
+    retVal = clMemFreeINTEL(&mockContext, unifiedMemorySharedAllocation);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -168,6 +233,9 @@ TEST(clUnifiedSharedMemoryTests, whenClMemBlockingFreeINTELisCalledWithNullPoint
 
 TEST(clUnifiedSharedMemoryTests, whenClMemFreeINTELisCalledWithValidUmPointerThenMemoryIsFreed) {
     MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
     cl_int retVal = CL_SUCCESS;
     auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(&mockContext, nullptr, 4, 0, &retVal);
 
@@ -182,6 +250,9 @@ TEST(clUnifiedSharedMemoryTests, whenClMemFreeINTELisCalledWithValidUmPointerThe
 
 TEST(clUnifiedSharedMemoryTests, whenClMemFreeINTELisCalledWithInvalidUmPointerThenMemoryIsNotFreed) {
     MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
     cl_int retVal = CL_SUCCESS;
     auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(&mockContext, nullptr, 4, 0, &retVal);
 
@@ -272,6 +343,9 @@ TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithAllocatio
 
 TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithValidUnifiedMemoryHostAllocationThenProperFieldsAreSet) {
     MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSize = sizeof(cl_int);
     cl_int paramValue = 0;
@@ -304,6 +378,9 @@ TEST(clUnifiedSharedMemoryTests, whenHostMemAllocWithInvalidPropertiesTokenThenE
 
 TEST(clUnifiedSharedMemoryTests, whenHostMemAllocWithInvalidWriteCombinedTokenThenSuccessIsReturned) {
     MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
     cl_int retVal = CL_SUCCESS;
     cl_mem_properties_intel properties[] = {CL_MEM_ALLOC_FLAGS_INTEL, CL_MEM_ALLOC_WRITE_COMBINED_INTEL, 0};
 
@@ -356,6 +433,9 @@ TEST(clUnifiedSharedMemoryTests, whenSharedMemAllocWithInvalidWriteCombinedToken
 TEST(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocWithoutPropertiesWhenGetMemAllocFlagsThenDefaultValueIsReturned) {
     uint64_t defaultValue = CL_MEM_ALLOC_DEFAULT_INTEL;
     MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSize = sizeof(cl_mem_properties_intel);
     cl_mem_properties_intel paramValue = 0;
@@ -373,6 +453,9 @@ TEST(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocWithoutPropertiesWhenGet
 
 TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocTypeIsCalledWithValidUnifiedMemoryHostAllocationThenProperTypeIsReturned) {
     MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSize = sizeof(cl_mem_properties_intel);
     cl_mem_properties_intel paramValue = 0;
@@ -529,6 +612,9 @@ TEST(clUnifiedSharedMemoryTests, givenSharedAllocationWithoutDeviceWhenItIsQueri
 
 TEST(clUnifiedSharedMemoryTests, givenHostAllocationWhenItIsQueriedForDeviceThenProperDeviceIsReturned) {
     MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSizeRet = 0;
     auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(&mockContext, nullptr, 4, 0, &retVal);
@@ -559,7 +645,7 @@ TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithAllocatio
     retVal = clGetMemAllocInfoINTEL(&mockContext, unifiedMemorySharedAllocation, CL_MEM_ALLOC_BASE_PTR_INTEL, paramValueSize, &paramValue, &paramValueSizeRet);
 
     EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::SHARED_UNIFIED_MEMORY);
-    EXPECT_EQ(graphicsAllocation->gpuAllocation->getGpuAddress(), paramValue);
+    EXPECT_EQ(graphicsAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex())->getGpuAddress(), paramValue);
     EXPECT_EQ(sizeof(uint64_t), paramValueSizeRet);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -569,6 +655,9 @@ TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithAllocatio
 
 TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithAllocationSizeParamNameThenProperFieldsAreSet) {
     MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSize = sizeof(size_t);
     size_t paramValue = 0;
@@ -609,22 +698,23 @@ TEST(clUnifiedSharedMemoryTests, whenClSetKernelArgMemPointerINTELisCalledWithIn
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
 }
 
-TEST(clUnifiedSharedMemoryTests, whenDeviceSupportSharedMemoryAllocationsAndSystemPointerIsPassedItIsProperlySetInKernel) {
+TEST(clUnifiedSharedMemoryTests, whenDeviceSupportSharedMemoryAllocationsAndSystemPointerIsPassedThenItIsProperlySetInKernel) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableSharedSystemUsmSupport.set(1u);
 
     auto mockContext = std::make_unique<MockContext>();
-    REQUIRE_SVM_OR_SKIP(mockContext->getDevice(0u));
+    auto device = mockContext->getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
 
     MockKernelWithInternals mockKernel(*mockContext->getDevice(0u), mockContext.get(), true);
 
     auto systemPointer = reinterpret_cast<void *>(0xfeedbac);
 
-    auto retVal = clSetKernelArgMemPointerINTEL(mockKernel.mockKernel, 0, systemPointer);
+    auto retVal = clSetKernelArgMemPointerINTEL(mockKernel.mockMultiDeviceKernel, 0, systemPointer);
     EXPECT_EQ(retVal, CL_SUCCESS);
 
     //check if cross thread is updated
-    auto crossThreadLocation = reinterpret_cast<uintptr_t *>(ptrOffset(mockKernel.mockKernel->getCrossThreadData(), mockKernel.kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset));
+    auto crossThreadLocation = reinterpret_cast<uintptr_t *>(ptrOffset(mockKernel.mockKernel->getCrossThreadData(), mockKernel.kernelInfo.argAsPtr(0).stateless));
     auto systemAddress = reinterpret_cast<uintptr_t>(systemPointer);
 
     EXPECT_EQ(*crossThreadLocation, systemAddress);
@@ -635,17 +725,18 @@ TEST(clUnifiedSharedMemoryTests, whenClSetKernelArgMemPointerINTELisCalledWithVa
     REQUIRE_SVM_OR_SKIP(mockContext->getDevice(0u));
 
     cl_int retVal = CL_SUCCESS;
-    auto unfiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 4, 0, &retVal);
+    auto unifiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 4, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     MockKernelWithInternals mockKernel(*mockContext->getDevice(0u), mockContext.get(), true);
 
-    retVal = clSetKernelArgMemPointerINTEL(mockKernel.mockKernel, 0, unfiedMemoryDeviceAllocation);
+    retVal = clSetKernelArgMemPointerINTEL(mockKernel.mockMultiDeviceKernel, 0, unifiedMemoryDeviceAllocation);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    auto svmAlloc = mockContext->getSVMAllocsManager()->getSVMAlloc(unfiedMemoryDeviceAllocation);
-    EXPECT_EQ(mockKernel.mockKernel->kernelArguments[0].object, svmAlloc->gpuAllocation);
+    auto svmAlloc = mockContext->getSVMAllocsManager()->getSVMAlloc(unifiedMemoryDeviceAllocation);
+    EXPECT_EQ(mockKernel.mockKernel->kernelArguments[0].object,
+              svmAlloc->gpuAllocations.getGraphicsAllocation(mockContext->getDevice(0)->getRootDeviceIndex()));
 
-    retVal = clMemFreeINTEL(mockContext.get(), unfiedMemoryDeviceAllocation);
+    retVal = clMemFreeINTEL(mockContext.get(), unifiedMemoryDeviceAllocation);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -662,7 +753,7 @@ TEST(clUnifiedSharedMemoryTests, whenclEnqueueMemsetINTELisCalledWithProperParam
     }
     cl_int retVal = CL_SUCCESS;
 
-    auto unfiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 400, 0, &retVal);
+    auto unifiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 400, 0, &retVal);
 
     struct MockedCommandQueue : public MockCommandQueue {
         using MockCommandQueue::MockCommandQueue;
@@ -687,12 +778,12 @@ TEST(clUnifiedSharedMemoryTests, whenclEnqueueMemsetINTELisCalledWithProperParam
     };
 
     MockedCommandQueue queue{*mockContext};
-    queue.expectedDstPtr = unfiedMemoryDeviceAllocation;
+    queue.expectedDstPtr = unifiedMemoryDeviceAllocation;
     cl_int setValue = 12u;
 
-    retVal = clEnqueueMemsetINTEL(&queue, unfiedMemoryDeviceAllocation, setValue, 400u, 0, nullptr, nullptr);
+    retVal = clEnqueueMemsetINTEL(&queue, unifiedMemoryDeviceAllocation, setValue, 400u, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    clMemFreeINTEL(mockContext.get(), unfiedMemoryDeviceAllocation);
+    clMemFreeINTEL(mockContext.get(), unifiedMemoryDeviceAllocation);
 }
 
 TEST(clUnifiedSharedMemoryTests, whenclEnqueueMemFillINTELisCalledWithoutIncorrectCommandQueueThenInvaliQueueErrorIsReturned) {
@@ -709,7 +800,7 @@ TEST(clUnifiedSharedMemoryTests, whenclEnqueueMemFillINTELisCalledWithProperPara
     }
     cl_int retVal = CL_SUCCESS;
 
-    auto unfiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 400, 0, &retVal);
+    auto unifiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 400, 0, &retVal);
 
     struct MockedCommandQueue : public MockCommandQueue {
         using MockCommandQueue::MockCommandQueue;
@@ -734,12 +825,12 @@ TEST(clUnifiedSharedMemoryTests, whenclEnqueueMemFillINTELisCalledWithProperPara
     };
 
     MockedCommandQueue queue{*mockContext};
-    queue.expectedDstPtr = unfiedMemoryDeviceAllocation;
+    queue.expectedDstPtr = unifiedMemoryDeviceAllocation;
     cl_int setValue = 12u;
 
-    retVal = clEnqueueMemFillINTEL(&queue, unfiedMemoryDeviceAllocation, &setValue, sizeof(setValue), 400u, 0, nullptr, nullptr);
+    retVal = clEnqueueMemFillINTEL(&queue, unifiedMemoryDeviceAllocation, &setValue, sizeof(setValue), 400u, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    clMemFreeINTEL(mockContext.get(), unfiedMemoryDeviceAllocation);
+    clMemFreeINTEL(mockContext.get(), unifiedMemoryDeviceAllocation);
 }
 
 TEST(clUnifiedSharedMemoryTests, whenClEnqueueMemcpyINTELisCalledWithWrongQueueThenInvalidQueueErrorIsReturned) {
@@ -755,8 +846,8 @@ TEST(clUnifiedSharedMemoryTests, givenTwoUnifiedMemoryAllocationsWhenTheyAreCopi
     }
     cl_int retVal = CL_SUCCESS;
 
-    auto unfiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 400, 0, &retVal);
-    auto unfiedMemorySharedAllocation = clSharedMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 400, 0, &retVal);
+    auto unifiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 400, 0, &retVal);
+    auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 400, 0, &retVal);
 
     struct MockedCommandQueue : public MockCommandQueue {
         using MockCommandQueue::MockCommandQueue;
@@ -780,13 +871,13 @@ TEST(clUnifiedSharedMemoryTests, givenTwoUnifiedMemoryAllocationsWhenTheyAreCopi
         const void *expectedSrcPtr = nullptr;
     };
     MockedCommandQueue queue{*mockContext};
-    queue.expectedDstPtr = unfiedMemoryDeviceAllocation;
-    queue.expectedSrcPtr = unfiedMemorySharedAllocation;
+    queue.expectedDstPtr = unifiedMemoryDeviceAllocation;
+    queue.expectedSrcPtr = unifiedMemorySharedAllocation;
 
-    retVal = clEnqueueMemcpyINTEL(&queue, 0, unfiedMemoryDeviceAllocation, unfiedMemorySharedAllocation, 400u, 0, nullptr, nullptr);
+    retVal = clEnqueueMemcpyINTEL(&queue, 0, unifiedMemoryDeviceAllocation, unifiedMemorySharedAllocation, 400u, 0, nullptr, nullptr);
     EXPECT_EQ(retVal, CL_SUCCESS);
-    clMemFreeINTEL(mockContext.get(), unfiedMemoryDeviceAllocation);
-    clMemFreeINTEL(mockContext.get(), unfiedMemorySharedAllocation);
+    clMemFreeINTEL(mockContext.get(), unifiedMemoryDeviceAllocation);
+    clMemFreeINTEL(mockContext.get(), unifiedMemorySharedAllocation);
 }
 
 TEST(clUnifiedSharedMemoryTests, whenClEnqueueMigrateMemINTELisCalledWithWrongQueueThenInvalidQueueErrorIsReturned) {
@@ -815,7 +906,7 @@ TEST(clUnifiedSharedMemoryTests, whenClEnqueueMemAdviseINTELisCalledWithProperPa
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-class clUnifiedSharedMemoryEventTests : public CommandQueueHwFixture,
+class ClUnifiedSharedMemoryEventTests : public CommandQueueHwFixture,
                                         public ::testing::Test {
   public:
     void SetUp() override {
@@ -829,7 +920,7 @@ class clUnifiedSharedMemoryEventTests : public CommandQueueHwFixture,
     cl_event event = nullptr;
 };
 
-TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMigrateMemINTELIsCalledWithEventThenProperCmdTypeIsSet) {
+TEST_F(ClUnifiedSharedMemoryEventTests, whenClEnqueueMigrateMemINTELIsCalledWithEventThenProperCmdTypeIsSet) {
     void *unifiedMemoryAlloc = reinterpret_cast<void *>(0x1234);
 
     auto retVal = clEnqueueMigrateMemINTEL(this->pCmdQ, unifiedMemoryAlloc, 10, 0, 0, nullptr, &event);
@@ -840,7 +931,7 @@ TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMigrateMemINTELIsCalledWith
     EXPECT_EQ(expectedCmd, actualCmd);
 }
 
-TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMemAdviseINTELIsCalledWithEventThenProperCmdTypeIsSet) {
+TEST_F(ClUnifiedSharedMemoryEventTests, whenClEnqueueMemAdviseINTELIsCalledWithEventThenProperCmdTypeIsSet) {
     void *unifiedMemoryAlloc = reinterpret_cast<void *>(0x1234);
 
     auto retVal = clEnqueueMemAdviseINTEL(this->pCmdQ, unifiedMemoryAlloc, 10, 0, 0, nullptr, &event);
@@ -851,63 +942,63 @@ TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMemAdviseINTELIsCalledWithE
     EXPECT_EQ(expectedCmd, actualCmd);
 }
 
-TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMemcpyINTELIsCalledWithEventThenProperCmdTypeIsSet) {
+TEST_F(ClUnifiedSharedMemoryEventTests, whenClEnqueueMemcpyINTELIsCalledWithEventThenProperCmdTypeIsSet) {
     const ClDeviceInfo &devInfo = this->context->getDevice(0u)->getDeviceInfo();
     if (devInfo.svmCapabilities == 0) {
         GTEST_SKIP();
     }
     cl_int retVal = CL_SUCCESS;
 
-    auto unfiedMemoryDst = clSharedMemAllocINTEL(this->context, this->context->getDevice(0u), nullptr, 400, 0, &retVal);
-    auto unfiedMemorySrc = clSharedMemAllocINTEL(this->context, this->context->getDevice(0u), nullptr, 400, 0, &retVal);
+    auto unifiedMemoryDst = clSharedMemAllocINTEL(this->context, this->context->getDevice(0u), nullptr, 400, 0, &retVal);
+    auto unifiedMemorySrc = clSharedMemAllocINTEL(this->context, this->context->getDevice(0u), nullptr, 400, 0, &retVal);
 
-    retVal = clEnqueueMemcpyINTEL(this->pCmdQ, 0, unfiedMemoryDst, unfiedMemorySrc, 400u, 0, nullptr, &event);
+    retVal = clEnqueueMemcpyINTEL(this->pCmdQ, 0, unifiedMemoryDst, unifiedMemorySrc, 400u, 0, nullptr, &event);
     EXPECT_EQ(retVal, CL_SUCCESS);
 
     constexpr cl_command_type expectedCmd = CL_COMMAND_MEMCPY_INTEL;
     cl_command_type actualCmd = castToObjectOrAbort<Event>(event)->getCommandType();
     EXPECT_EQ(expectedCmd, actualCmd);
 
-    clMemFreeINTEL(this->context, unfiedMemoryDst);
-    clMemFreeINTEL(this->context, unfiedMemorySrc);
+    clMemFreeINTEL(this->context, unifiedMemoryDst);
+    clMemFreeINTEL(this->context, unifiedMemorySrc);
 }
 
-TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMemsetINTELIsCalledWithEventThenProperCmdTypeIsSet) {
+TEST_F(ClUnifiedSharedMemoryEventTests, whenClEnqueueMemsetINTELIsCalledWithEventThenProperCmdTypeIsSet) {
     const ClDeviceInfo &devInfo = this->context->getDevice(0u)->getDeviceInfo();
     if (devInfo.svmCapabilities == 0) {
         GTEST_SKIP();
     }
     cl_int retVal = CL_SUCCESS;
 
-    auto unfiedMemorySharedAllocation = clSharedMemAllocINTEL(this->context, this->context->getDevice(0u), nullptr, 400, 0, &retVal);
+    auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(this->context, this->context->getDevice(0u), nullptr, 400, 0, &retVal);
     cl_int setValue = 12u;
 
-    retVal = clEnqueueMemsetINTEL(this->pCmdQ, unfiedMemorySharedAllocation, setValue, 400u, 0, nullptr, &event);
+    retVal = clEnqueueMemsetINTEL(this->pCmdQ, unifiedMemorySharedAllocation, setValue, 400u, 0, nullptr, &event);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     constexpr cl_command_type expectedCmd = CL_COMMAND_MEMSET_INTEL;
     cl_command_type actualCmd = castToObjectOrAbort<Event>(event)->getCommandType();
     EXPECT_EQ(expectedCmd, actualCmd);
-    clMemFreeINTEL(this->context, unfiedMemorySharedAllocation);
+    clMemFreeINTEL(this->context, unifiedMemorySharedAllocation);
 }
 
-TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMemFillINTELIsCalledWithEventThenProperCmdTypeIsSet) {
+TEST_F(ClUnifiedSharedMemoryEventTests, whenClEnqueueMemFillINTELIsCalledWithEventThenProperCmdTypeIsSet) {
     const ClDeviceInfo &devInfo = this->context->getDevice(0u)->getDeviceInfo();
     if (devInfo.svmCapabilities == 0) {
         GTEST_SKIP();
     }
     cl_int retVal = CL_SUCCESS;
 
-    auto unfiedMemorySharedAllocation = clSharedMemAllocINTEL(this->context, this->context->getDevice(0u), nullptr, 400, 0, &retVal);
+    auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(this->context, this->context->getDevice(0u), nullptr, 400, 0, &retVal);
     cl_int setValue = 12u;
 
-    retVal = clEnqueueMemFillINTEL(this->pCmdQ, unfiedMemorySharedAllocation, &setValue, sizeof(setValue), 400u, 0, nullptr, &event);
+    retVal = clEnqueueMemFillINTEL(this->pCmdQ, unifiedMemorySharedAllocation, &setValue, sizeof(setValue), 400u, 0, nullptr, &event);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     constexpr cl_command_type expectedCmd = CL_COMMAND_MEMFILL_INTEL;
     cl_command_type actualCmd = castToObjectOrAbort<Event>(event)->getCommandType();
     EXPECT_EQ(expectedCmd, actualCmd);
-    clMemFreeINTEL(this->context, unfiedMemorySharedAllocation);
+    clMemFreeINTEL(this->context, unifiedMemorySharedAllocation);
 }
 
 TEST(clUnifiedSharedMemoryTests, givenDefaulMemPropertiesWhenClDeviceMemAllocIntelIsCalledThenItAllocatesDeviceUnifiedMemoryAllocationWithProperAllocationTypeAndSize) {
@@ -915,20 +1006,21 @@ TEST(clUnifiedSharedMemoryTests, givenDefaulMemPropertiesWhenClDeviceMemAllocInt
     cl_int retVal = CL_SUCCESS;
     cl_mem_properties_intel properties[] = {CL_MEM_ALLOC_FLAGS_INTEL, CL_MEM_ALLOC_DEFAULT_INTEL, 0};
     auto allocationSize = 4000u;
-    auto unfiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(&mockContext, mockContext.getDevice(0u), properties, allocationSize, 0, &retVal);
+    auto unifiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(&mockContext, mockContext.getDevice(0u), properties, allocationSize, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, unfiedMemoryDeviceAllocation);
+    ASSERT_NE(nullptr, unifiedMemoryDeviceAllocation);
 
     auto allocationsManager = mockContext.getSVMAllocsManager();
     EXPECT_EQ(1u, allocationsManager->getNumAllocs());
-    auto graphicsAllocation = allocationsManager->getSVMAlloc(unfiedMemoryDeviceAllocation);
+    auto graphicsAllocation = allocationsManager->getSVMAlloc(unifiedMemoryDeviceAllocation);
+    auto gpuAllocation = graphicsAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(graphicsAllocation->size, allocationSize);
     EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::DEVICE_UNIFIED_MEMORY);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, graphicsAllocation->gpuAllocation->getAllocationType());
-    EXPECT_EQ(graphicsAllocation->gpuAllocation->getGpuAddress(), castToUint64(unfiedMemoryDeviceAllocation));
-    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), graphicsAllocation->gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(AllocationType::BUFFER, gpuAllocation->getAllocationType());
+    EXPECT_EQ(gpuAllocation->getGpuAddress(), castToUint64(unifiedMemoryDeviceAllocation));
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
 
-    retVal = clMemFreeINTEL(&mockContext, unfiedMemoryDeviceAllocation);
+    retVal = clMemFreeINTEL(&mockContext, unifiedMemoryDeviceAllocation);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -937,20 +1029,21 @@ TEST(clUnifiedSharedMemoryTests, givenValidMemPropertiesWhenClDeviceMemAllocInte
     cl_int retVal = CL_SUCCESS;
     auto allocationSize = 4000u;
     cl_mem_properties_intel properties[] = {CL_MEM_ALLOC_FLAGS_INTEL, CL_MEM_ALLOC_WRITE_COMBINED_INTEL, 0};
-    auto unfiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(&mockContext, mockContext.getDevice(0u), properties, allocationSize, 0, &retVal);
+    auto unifiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(&mockContext, mockContext.getDevice(0u), properties, allocationSize, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, unfiedMemoryDeviceAllocation);
+    ASSERT_NE(nullptr, unifiedMemoryDeviceAllocation);
 
     auto allocationsManager = mockContext.getSVMAllocsManager();
     EXPECT_EQ(1u, allocationsManager->getNumAllocs());
-    auto graphicsAllocation = allocationsManager->getSVMAlloc(unfiedMemoryDeviceAllocation);
+    auto graphicsAllocation = allocationsManager->getSVMAlloc(unifiedMemoryDeviceAllocation);
+    auto gpuAllocation = graphicsAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(graphicsAllocation->size, allocationSize);
     EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::DEVICE_UNIFIED_MEMORY);
-    EXPECT_EQ(graphicsAllocation->gpuAllocation->getAllocationType(), GraphicsAllocation::AllocationType::WRITE_COMBINED);
-    EXPECT_EQ(graphicsAllocation->gpuAllocation->getGpuAddress(), castToUint64(unfiedMemoryDeviceAllocation));
-    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), graphicsAllocation->gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(gpuAllocation->getAllocationType(), AllocationType::WRITE_COMBINED);
+    EXPECT_EQ(gpuAllocation->getGpuAddress(), castToUint64(unifiedMemoryDeviceAllocation));
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
 
-    retVal = clMemFreeINTEL(&mockContext, unfiedMemoryDeviceAllocation);
+    retVal = clMemFreeINTEL(&mockContext, unifiedMemoryDeviceAllocation);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -958,9 +1051,9 @@ TEST(clUnifiedSharedMemoryTests, givenInvalidMemPropertiesWhenClSharedMemAllocIn
     MockContext mockContext;
     cl_int retVal = CL_SUCCESS;
     cl_mem_properties_intel properties[] = {CL_MEM_ALLOC_WRITE_COMBINED_INTEL, 0};
-    auto unfiedMemorySharedAllocation = clSharedMemAllocINTEL(&mockContext, mockContext.getDevice(0u), properties, 4, 0, &retVal);
+    auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(&mockContext, mockContext.getDevice(0u), properties, 4, 0, &retVal);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
-    EXPECT_EQ(nullptr, unfiedMemorySharedAllocation);
+    EXPECT_EQ(nullptr, unifiedMemorySharedAllocation);
 }
 
 TEST(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxMemAllocSizeAndClMemAllowUnrestrictedSizeFlagWhenCreateAllocationThenSuccesIsReturned) {
@@ -976,32 +1069,75 @@ TEST(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxM
     }
 
     {
-        auto unfiedMemoryAllocation = clDeviceMemAllocINTEL(&mockContext, mockContext.getDevice(0u), properties, allocationSize, 0, &retVal);
+        auto unifiedMemoryAllocation = clDeviceMemAllocINTEL(&mockContext, mockContext.getDevice(0u), properties, allocationSize, 0, &retVal);
 
         EXPECT_EQ(CL_SUCCESS, retVal);
-        ASSERT_NE(nullptr, unfiedMemoryAllocation);
+        ASSERT_NE(nullptr, unifiedMemoryAllocation);
 
-        retVal = clMemFreeINTEL(&mockContext, unfiedMemoryAllocation);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-    }
-
-    {
-        auto unfiedMemoryAllocation = clSharedMemAllocINTEL(&mockContext, mockContext.getDevice(0u), properties, allocationSize, 0, &retVal);
-
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        ASSERT_NE(nullptr, unfiedMemoryAllocation);
-
-        retVal = clMemFreeINTEL(&mockContext, unfiedMemoryAllocation);
+        retVal = clMemFreeINTEL(&mockContext, unifiedMemoryAllocation);
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
 
     {
-        auto unfiedMemoryAllocation = clHostMemAllocINTEL(&mockContext, properties, allocationSize, 0, &retVal);
+        auto unifiedMemoryAllocation = clSharedMemAllocINTEL(&mockContext, mockContext.getDevice(0u), properties, allocationSize, 0, &retVal);
 
         EXPECT_EQ(CL_SUCCESS, retVal);
-        ASSERT_NE(nullptr, unfiedMemoryAllocation);
+        ASSERT_NE(nullptr, unifiedMemoryAllocation);
 
-        retVal = clMemFreeINTEL(&mockContext, unfiedMemoryAllocation);
+        retVal = clMemFreeINTEL(&mockContext, unifiedMemoryAllocation);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+    }
+
+    {
+        auto unifiedMemoryAllocation = clHostMemAllocINTEL(&mockContext, properties, allocationSize, 0, &retVal);
+
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        ASSERT_NE(nullptr, unifiedMemoryAllocation);
+
+        retVal = clMemFreeINTEL(&mockContext, unifiedMemoryAllocation);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+    }
+}
+
+TEST(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxMemAllocSizeAndDebugFlagSetWhenCreateAllocationThenSuccesIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.AllowUnrestrictedSize.set(1);
+    MockContext mockContext;
+    cl_int retVal = CL_SUCCESS;
+    auto allocationSize = static_cast<size_t>(mockContext.getDevice(0u)->getSharedDeviceInfo().maxMemAllocSize) + 1;
+    auto memoryManager = static_cast<OsAgnosticMemoryManager *>(mockContext.getDevice(0u)->getMemoryManager());
+    memoryManager->turnOnFakingBigAllocations();
+    if (memoryManager->peekForce32BitAllocations() || is32bit) {
+        GTEST_SKIP();
+    }
+
+    {
+        auto unifiedMemoryAllocation = clDeviceMemAllocINTEL(&mockContext, mockContext.getDevice(0u), 0, allocationSize, 0, &retVal);
+
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        ASSERT_NE(nullptr, unifiedMemoryAllocation);
+
+        retVal = clMemFreeINTEL(&mockContext, unifiedMemoryAllocation);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+    }
+
+    {
+        auto unifiedMemoryAllocation = clSharedMemAllocINTEL(&mockContext, mockContext.getDevice(0u), 0, allocationSize, 0, &retVal);
+
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        ASSERT_NE(nullptr, unifiedMemoryAllocation);
+
+        retVal = clMemFreeINTEL(&mockContext, unifiedMemoryAllocation);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+    }
+
+    {
+        auto unifiedMemoryAllocation = clHostMemAllocINTEL(&mockContext, 0, allocationSize, 0, &retVal);
+
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        ASSERT_NE(nullptr, unifiedMemoryAllocation);
+
+        retVal = clMemFreeINTEL(&mockContext, unifiedMemoryAllocation);
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
 }
@@ -1010,7 +1146,7 @@ TEST(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxM
     MockContext mockContext;
     cl_int retVal = CL_SUCCESS;
     cl_mem_properties_intel properties[] = {0};
-    auto bigSize = MemoryConstants::gigaByte * 10;
+    auto bigSize = MemoryConstants::gigaByte * 20;
     auto allocationSize = static_cast<size_t>(bigSize);
     auto memoryManager = static_cast<OsAgnosticMemoryManager *>(mockContext.getDevice(0u)->getMemoryManager());
     memoryManager->turnOnFakingBigAllocations();
@@ -1019,23 +1155,136 @@ TEST(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxM
     }
 
     {
-        auto unfiedMemoryAllocation = clDeviceMemAllocINTEL(&mockContext, mockContext.getDevice(0u), properties, allocationSize, 0, &retVal);
+        auto unifiedMemoryAllocation = clDeviceMemAllocINTEL(&mockContext, mockContext.getDevice(0u), properties, allocationSize, 0, &retVal);
 
         EXPECT_NE(CL_SUCCESS, retVal);
-        EXPECT_EQ(nullptr, unfiedMemoryAllocation);
+        EXPECT_EQ(nullptr, unifiedMemoryAllocation);
     }
 
     {
-        auto unfiedMemoryAllocation = clSharedMemAllocINTEL(&mockContext, mockContext.getDevice(0u), properties, allocationSize, 0, &retVal);
+        auto unifiedMemoryAllocation = clSharedMemAllocINTEL(&mockContext, mockContext.getDevice(0u), properties, allocationSize, 0, &retVal);
 
         EXPECT_NE(CL_SUCCESS, retVal);
-        EXPECT_EQ(nullptr, unfiedMemoryAllocation);
+        EXPECT_EQ(nullptr, unifiedMemoryAllocation);
     }
 
     {
-        auto unfiedMemoryAllocation = clHostMemAllocINTEL(&mockContext, properties, allocationSize, 0, &retVal);
+        auto unifiedMemoryAllocation = clHostMemAllocINTEL(&mockContext, properties, allocationSize, 0, &retVal);
 
         EXPECT_NE(CL_SUCCESS, retVal);
-        EXPECT_EQ(nullptr, unfiedMemoryAllocation);
+        EXPECT_EQ(nullptr, unifiedMemoryAllocation);
     }
+}
+
+using MultiRootDeviceClUnifiedSharedMemoryTests = MultiRootDeviceFixture;
+
+TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClHostMemAllocIntelIsCalledInMultiRootDeviceEnvironmentThenItAllocatesHostUnifiedMemoryAllocations) {
+    REQUIRE_SVM_OR_SKIP(device1);
+    REQUIRE_SVM_OR_SKIP(device2);
+
+    cl_int retVal = CL_SUCCESS;
+    auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(context.get(), nullptr, 4, 0, &retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, unifiedMemoryHostAllocation);
+
+    auto allocationsManager = context->getSVMAllocsManager();
+
+    EXPECT_EQ(allocationsManager->getNumAllocs(), 1u);
+
+    auto svmAllocation = allocationsManager->getSVMAlloc(unifiedMemoryHostAllocation);
+    auto graphicsAllocation1 = svmAllocation->gpuAllocations.getGraphicsAllocation(1u);
+    auto graphicsAllocation2 = svmAllocation->gpuAllocations.getGraphicsAllocation(2u);
+
+    EXPECT_EQ(svmAllocation->size, 4u);
+    EXPECT_EQ(svmAllocation->memoryType, InternalMemoryType::HOST_UNIFIED_MEMORY);
+
+    EXPECT_NE(graphicsAllocation1, nullptr);
+    EXPECT_NE(graphicsAllocation2, nullptr);
+
+    EXPECT_EQ(graphicsAllocation1->getRootDeviceIndex(), 1u);
+    EXPECT_EQ(graphicsAllocation2->getRootDeviceIndex(), 2u);
+
+    EXPECT_EQ(graphicsAllocation1->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
+    EXPECT_EQ(graphicsAllocation2->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
+
+    EXPECT_EQ(graphicsAllocation1->getGpuAddress(), castToUint64(unifiedMemoryHostAllocation));
+    EXPECT_EQ(graphicsAllocation2->getGpuAddress(), castToUint64(unifiedMemoryHostAllocation));
+
+    retVal = clMemFreeINTEL(context.get(), unifiedMemoryHostAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClSharedMemAllocIntelIsCalledWithoutDeviceInMultiRootDeviceEnvironmentThenItAllocatesHostUnifiedMemoryAllocations) {
+    REQUIRE_SVM_OR_SKIP(device1);
+    REQUIRE_SVM_OR_SKIP(device2);
+
+    cl_int retVal = CL_SUCCESS;
+    auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(context.get(), nullptr, nullptr, 4, 0, &retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, unifiedMemorySharedAllocation);
+
+    auto allocationsManager = context->getSVMAllocsManager();
+
+    EXPECT_EQ(allocationsManager->getNumAllocs(), 1u);
+
+    auto svmAllocation = allocationsManager->getSVMAlloc(unifiedMemorySharedAllocation);
+    auto graphicsAllocation1 = svmAllocation->gpuAllocations.getGraphicsAllocation(1u);
+    auto graphicsAllocation2 = svmAllocation->gpuAllocations.getGraphicsAllocation(2u);
+
+    EXPECT_EQ(svmAllocation->size, 4u);
+    EXPECT_EQ(svmAllocation->memoryType, InternalMemoryType::SHARED_UNIFIED_MEMORY);
+
+    EXPECT_NE(graphicsAllocation1, nullptr);
+    EXPECT_NE(graphicsAllocation2, nullptr);
+
+    EXPECT_EQ(graphicsAllocation1->getRootDeviceIndex(), 1u);
+    EXPECT_EQ(graphicsAllocation2->getRootDeviceIndex(), 2u);
+
+    EXPECT_EQ(graphicsAllocation1->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
+    EXPECT_EQ(graphicsAllocation2->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
+
+    EXPECT_EQ(graphicsAllocation1->getGpuAddress(), castToUint64(unifiedMemorySharedAllocation));
+    EXPECT_EQ(graphicsAllocation2->getGpuAddress(), castToUint64(unifiedMemorySharedAllocation));
+
+    retVal = clMemFreeINTEL(context.get(), unifiedMemorySharedAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClSharedMemAllocIntelIsCalledWithoutDeviceInMultiRootDeviceEnvironmentThenItWaitsForAllGpuAllocations) {
+    REQUIRE_SVM_OR_SKIP(device1);
+    REQUIRE_SVM_OR_SKIP(device2);
+
+    mockMemoryManager->waitAllocations.reset(new MultiGraphicsAllocation(2u));
+
+    cl_int retVal = CL_SUCCESS;
+    auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(context.get(), nullptr, nullptr, 4, 0, &retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, unifiedMemorySharedAllocation);
+
+    auto allocationsManager = context->getSVMAllocsManager();
+
+    EXPECT_EQ(allocationsManager->getNumAllocs(), 1u);
+
+    auto svmAllocation = allocationsManager->getSVMAlloc(unifiedMemorySharedAllocation);
+    auto graphicsAllocation1 = svmAllocation->gpuAllocations.getGraphicsAllocation(1u);
+    auto graphicsAllocation2 = svmAllocation->gpuAllocations.getGraphicsAllocation(2u);
+
+    EXPECT_EQ(svmAllocation->size, 4u);
+
+    EXPECT_NE(graphicsAllocation1, nullptr);
+    EXPECT_NE(graphicsAllocation2, nullptr);
+
+    retVal = clMemBlockingFreeINTEL(context.get(), unifiedMemorySharedAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(mockMemoryManager->waitForEnginesCompletionCalled, 2u);
+    EXPECT_EQ(mockMemoryManager->waitAllocations->getGraphicsAllocation(1u), graphicsAllocation1);
+    EXPECT_EQ(mockMemoryManager->waitAllocations->getGraphicsAllocation(2u), graphicsAllocation2);
+
+    EXPECT_EQ(allocationsManager->getNumAllocs(), 0u);
+
+    svmAllocation = allocationsManager->getSVMAlloc(unifiedMemorySharedAllocation);
+    EXPECT_EQ(nullptr, svmAllocation);
 }

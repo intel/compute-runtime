@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,9 +30,12 @@ struct L3CNTLREGConfig<IGFX_BROXTON> {
 
 namespace DebugControlReg2 {
 constexpr uint32_t address = 0xE404;
-constexpr uint32_t getRegData(const uint32_t &policy) {
+constexpr uint32_t getRegData(const int32_t &policy) {
     return policy == ThreadArbitrationPolicy::RoundRobin ? 0x100 : 0x0;
 };
+static const int32_t supportedArbitrationPolicy[] = {
+    ThreadArbitrationPolicy::AgeBased,
+    ThreadArbitrationPolicy::RoundRobin};
 } // namespace DebugControlReg2
 
 } // namespace NEO

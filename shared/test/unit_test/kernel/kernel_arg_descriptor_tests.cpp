@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/kernel/kernel_arg_descriptor.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include <gtest/gtest.h>
 
@@ -438,14 +437,14 @@ TEST(SetOffsetsVec, GivenArrayOfCrossThreadDataThenCopiesProperAmountOfElements)
 TEST(PatchNonPointer, GivenUndefinedOffsetThenReturnsFalse) {
     uint8_t buffer[64];
     uint32_t value = 7;
-    EXPECT_FALSE(NEO::patchNonPointer(buffer, NEO::undefined<NEO::CrossThreadDataOffset>, value));
+    EXPECT_FALSE((NEO::patchNonPointer<uint32_t, uint32_t>(buffer, NEO::undefined<NEO::CrossThreadDataOffset>, value)));
 }
 
 TEST(PatchNonPointer, GivenOutOfBoundsOffsetThenAbort) {
     uint8_t buffer[64];
     uint32_t value = 7;
-    EXPECT_THROW(NEO::patchNonPointer(buffer, sizeof(buffer), value), std::exception);
-    EXPECT_THROW(NEO::patchNonPointer(buffer, sizeof(buffer) - sizeof(value) + 1, value), std::exception);
+    EXPECT_THROW((NEO::patchNonPointer<uint32_t, uint32_t>(buffer, sizeof(buffer), value)), std::exception);
+    EXPECT_THROW((NEO::patchNonPointer<uint32_t, uint32_t>(buffer, sizeof(buffer) - sizeof(value) + 1, value)), std::exception);
 }
 
 TEST(PatchNonPointer, GivenValidOffsetThenPatchProperly) {
@@ -453,9 +452,9 @@ TEST(PatchNonPointer, GivenValidOffsetThenPatchProperly) {
     memset(buffer, 3, sizeof(buffer));
     uint32_t value32 = 7;
     uint64_t value64 = 13;
-    EXPECT_TRUE(NEO::patchNonPointer(buffer, 0, value32));
-    EXPECT_TRUE(NEO::patchNonPointer(buffer, 8, value64));
-    EXPECT_TRUE(NEO::patchNonPointer(buffer, sizeof(buffer) - sizeof(value64), value64));
+    EXPECT_TRUE((NEO::patchNonPointer<uint32_t, uint32_t>(buffer, 0, value32)));
+    EXPECT_TRUE((NEO::patchNonPointer<uint64_t, uint64_t>(buffer, 8, value64)));
+    EXPECT_TRUE((NEO::patchNonPointer<uint64_t, uint64_t>(buffer, sizeof(buffer) - sizeof(value64), value64)));
 
     alignas(8) uint8_t expected[64];
     memset(expected, 3, sizeof(expected));
@@ -486,7 +485,18 @@ TEST(PatchPointer, GivenUnhandledPointerSizeThenAborts) {
     NEO::ArgDescPointer ptrArg;
     uintptr_t ptrValue = reinterpret_cast<uintptr_t>(&ptrArg);
     ptrArg.pointerSize = 5;
+    ptrArg.stateless = 0U;
     EXPECT_THROW(patchPointer(buffer, ptrArg, ptrValue), std::exception);
+}
+
+TEST(PatchPointer, GivenUnhandledPointerSizeWhenStatelessOffsetIsUndefinedThenIgnoresPointerSize) {
+    alignas(8) uint8_t buffer[64];
+    memset(buffer, 3, sizeof(buffer));
+    NEO::ArgDescPointer ptrArg;
+    uintptr_t ptrValue = reinterpret_cast<uintptr_t>(&ptrArg);
+    ptrArg.pointerSize = 5;
+    ptrArg.stateless = NEO::undefined<NEO::CrossThreadDataOffset>;
+    EXPECT_NO_THROW(patchPointer(buffer, ptrArg, ptrValue));
 }
 
 TEST(PatchPointer, Given32bitPointerSizeThenPatchesOnly32bits) {

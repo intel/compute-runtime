@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "opencl/test/unit_test/mocks/mock_deferrable_deletion.h"
-#include "opencl/test/unit_test/mocks/mock_deferred_deleter.h"
+#include "shared/test/common/mocks/mock_deferrable_deletion.h"
+#include "shared/test/common/mocks/mock_deferred_deleter.h"
 
 #include "gtest/gtest.h"
 
@@ -43,7 +43,7 @@ struct ClearQueueTest : public ::testing::Test,
 std::atomic<bool> ClearQueueTest::startClear;
 std::atomic<int> ClearQueueTest::threadStopped;
 
-TEST_P(ClearQueueTest, clearQueueAfterFeed) {
+TEST_P(ClearQueueTest, WhenQueueIsClearedThenAllElementsAreReleased) {
     auto elementsInQueue = GetParam();
     EXPECT_EQ(0, deleter->clearCalled);
     for (int i = 0; i < elementsInQueue; i++) {
@@ -111,7 +111,7 @@ struct DeferredDeleterMtTest : public ::testing::Test {
     std::unique_ptr<MyDeferredDeleter> deleter;
 };
 
-TEST_F(DeferredDeleterMtTest, asyncThreadsStopDeferredDeleter) {
+TEST_F(DeferredDeleterMtTest, WhenForcingSafeStopThenDeferredDeleterIsStopped) {
     deleter->addClient();
 
     waitForAsyncThread();

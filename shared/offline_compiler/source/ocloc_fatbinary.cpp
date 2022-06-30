@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,14 +7,15 @@
 
 #include "shared/offline_compiler/source/ocloc_fatbinary.h"
 
-#include "shared/offline_compiler/source/ocloc_arg_helper.h"
-#include "shared/offline_compiler/source/offline_compiler.h"
+#include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/offline_compiler/source/utilities/safety_caller.h"
-#include "shared/source/device_binary_format/ar/ar_encoder.h"
+#include "shared/source/compiler_interface/intermediate_representations.h"
+#include "shared/source/device_binary_format/elf/elf_encoder.h"
+#include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/product_config_helper.h"
 
-#include "compiler_options.h"
 #include "igfxfmid.h"
 
 #include <cstddef>
@@ -22,184 +23,228 @@
 #include <cstdio>
 
 namespace NEO {
-
-bool requestedFatBinary(const std::vector<std::string> &args) {
+bool requestedFatBinary(const std::vector<std::string> &args, OclocArgHelper *helper) {
     for (size_t argIndex = 1; argIndex < args.size(); argIndex++) {
         const auto &currArg = args[argIndex];
         const bool hasMoreArgs = (argIndex + 1 < args.size());
         if ((ConstStringRef("-device") == currArg) && hasMoreArgs) {
             ConstStringRef deviceArg(args[argIndex + 1]);
-            return deviceArg.contains("*") || deviceArg.contains("-") || deviceArg.contains(",") || deviceArg.contains("gen");
+            auto deviceName = deviceArg.str();
+            ProductConfigHelper::adjustDeviceName(deviceName);
+
+            auto retVal = deviceArg.contains("*");
+            retVal |= deviceArg.contains(":");
+            retVal |= deviceArg.contains(",");
+            retVal |= helper->isFamily(deviceName);
+            retVal |= helper->isRelease(deviceName);
+
+            return retVal;
         }
     }
     return false;
 }
 
-std::vector<PRODUCT_FAMILY> getAllSupportedTargetPlatforms() {
-    return std::vector<PRODUCT_FAMILY>{ALL_SUPPORTED_PRODUCT_FAMILIES};
-}
-
-std::vector<ConstStringRef> toProductNames(const std::vector<PRODUCT_FAMILY> &productIds) {
-    std::vector<ConstStringRef> ret;
-    for (auto prodId : productIds) {
-        ret.push_back(ConstStringRef(hardwarePrefix[prodId], strlen(hardwarePrefix[prodId])));
-    }
-    return ret;
-}
-
-PRODUCT_FAMILY asProductId(ConstStringRef product, const std::vector<PRODUCT_FAMILY> &allSupportedPlatforms) {
-    for (auto family : allSupportedPlatforms) {
-        if (product == hardwarePrefix[family]) {
-            return family;
-        }
-    }
-    return IGFX_UNKNOWN;
-}
-
-GFXCORE_FAMILY asGfxCoreId(ConstStringRef core) {
-    ConstStringRef coreIgnoreG(core.begin() + 1, core.size() - 1);
-    for (unsigned int coreId = 0; coreId < IGFX_MAX_CORE; ++coreId) {
-        if (nullptr == familyName[coreId]) {
-            continue;
-        }
-        if (ConstStringRef(familyName[coreId] + 1, strlen(familyName[coreId]) - 1) == coreIgnoreG) {
-            return static_cast<GFXCORE_FAMILY>(coreId);
-        }
-    }
-
-    return IGFX_UNKNOWN_CORE;
-}
-
-void appendPlatformsForGfxCore(GFXCORE_FAMILY core, const std::vector<PRODUCT_FAMILY> &allSupportedPlatforms, std::vector<PRODUCT_FAMILY> &out) {
-    for (auto family : allSupportedPlatforms) {
-        if (core == hardwareInfoTable[family]->platform.eRenderCoreFamily) {
-            out.push_back(family);
+template <>
+void getProductsAcronymsForTarget<AOT::FAMILY>(std::vector<NEO::ConstStringRef> &out, AOT::FAMILY target, OclocArgHelper *argHelper) {
+    auto allSuppportedProducts = argHelper->getAllSupportedDeviceConfigs();
+    for (const auto &device : allSuppportedProducts) {
+        if (device.family == target && !device.acronyms.empty()) {
+            if (std::find(out.begin(), out.end(), device.acronyms.front()) == out.end()) {
+                out.push_back(device.acronyms.front());
+            }
         }
     }
 }
 
-std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef deviceArg, OclocArgHelper *argHelper) {
-    std::vector<PRODUCT_FAMILY> allSupportedPlatforms = getAllSupportedTargetPlatforms();
+template <>
+void getProductsAcronymsForTarget<AOT::RELEASE>(std::vector<NEO::ConstStringRef> &out, AOT::RELEASE target, OclocArgHelper *argHelper) {
+    auto allSuppportedProducts = argHelper->getAllSupportedDeviceConfigs();
+    for (const auto &device : allSuppportedProducts) {
+        if (device.release == target && !device.acronyms.empty()) {
+            if (std::find(out.begin(), out.end(), device.acronyms.front()) == out.end()) {
+                out.push_back(device.acronyms.front());
+            }
+        }
+    }
+}
+
+template <typename T>
+void getProductsForTargetRange(T targetFrom, T targetTo, std::vector<ConstStringRef> &out,
+                               OclocArgHelper *argHelper) {
+    if (targetFrom > targetTo) {
+        std::swap(targetFrom, targetTo);
+    }
+    while (targetFrom <= targetTo) {
+        getProductsAcronymsForTarget<T>(out, targetFrom, argHelper);
+        targetFrom = static_cast<T>(static_cast<unsigned int>(targetFrom) + 1);
+    }
+}
+
+void getProductsForRange(unsigned int productFrom, unsigned int productTo, std::vector<ConstStringRef> &out,
+                         OclocArgHelper *argHelper) {
+    auto allSuppportedProducts = argHelper->getAllSupportedDeviceConfigs();
+
+    for (const auto &device : allSuppportedProducts) {
+        auto validAcronym = device.aotConfig.ProductConfig >= productFrom;
+        validAcronym &= device.aotConfig.ProductConfig <= productTo;
+        validAcronym &= !device.acronyms.empty();
+        if (validAcronym) {
+            out.push_back(device.acronyms.front());
+        }
+    }
+}
+
+std::vector<ConstStringRef> getProductForClosedRange(ConstStringRef rangeFrom, ConstStringRef rangeTo, OclocArgHelper *argHelper) {
+    std::vector<ConstStringRef> requestedProducts = {};
+    auto rangeToStr = rangeTo.str();
+    auto rangeFromStr = rangeFrom.str();
+
+    ProductConfigHelper::adjustDeviceName(rangeToStr);
+    ProductConfigHelper::adjustDeviceName(rangeFromStr);
+
+    if (argHelper->isFamily(rangeFromStr) && argHelper->isFamily(rangeToStr)) {
+        auto familyFrom = ProductConfigHelper::returnFamilyForAcronym(rangeFromStr);
+        auto familyTo = ProductConfigHelper::returnFamilyForAcronym(rangeToStr);
+        getProductsForTargetRange(familyFrom, familyTo, requestedProducts, argHelper);
+
+    } else if (argHelper->isRelease(rangeFromStr) && argHelper->isRelease(rangeToStr)) {
+        auto releaseFrom = ProductConfigHelper::returnReleaseForAcronym(rangeFromStr);
+        auto releaseTo = ProductConfigHelper::returnReleaseForAcronym(rangeToStr);
+        getProductsForTargetRange(releaseFrom, releaseTo, requestedProducts, argHelper);
+
+    } else if (argHelper->isProductConfig(rangeFromStr) && argHelper->isProductConfig(rangeToStr)) {
+        unsigned int productConfigFrom = ProductConfigHelper::returnProductConfigForAcronym(rangeFromStr);
+        unsigned int productConfigTo = ProductConfigHelper::returnProductConfigForAcronym(rangeToStr);
+        if (productConfigFrom > productConfigTo) {
+            std::swap(productConfigFrom, productConfigTo);
+        }
+        getProductsForRange(productConfigFrom, productConfigTo, requestedProducts, argHelper);
+    } else {
+        auto target = rangeFromStr + ":" + rangeToStr;
+        argHelper->printf("Failed to parse target : %s.\n", target.c_str());
+        return {};
+    }
+
+    return requestedProducts;
+}
+
+std::vector<ConstStringRef> getProductForOpenRange(ConstStringRef openRange, OclocArgHelper *argHelper, bool rangeTo) {
+    std::vector<ConstStringRef> requestedProducts = {};
+    auto openRangeStr = openRange.str();
+    ProductConfigHelper::adjustDeviceName(openRangeStr);
+
+    if (argHelper->isFamily(openRangeStr)) {
+        auto family = ProductConfigHelper::returnFamilyForAcronym(openRangeStr);
+        if (rangeTo) {
+            unsigned int familyFrom = AOT::UNKNOWN_FAMILY;
+            ++familyFrom;
+            getProductsForTargetRange(static_cast<AOT::FAMILY>(familyFrom), family, requestedProducts, argHelper);
+        } else {
+            unsigned int familyTo = AOT::FAMILY_MAX;
+            --familyTo;
+            getProductsForTargetRange(family, static_cast<AOT::FAMILY>(familyTo), requestedProducts, argHelper);
+        }
+    } else if (argHelper->isRelease(openRangeStr)) {
+        auto release = ProductConfigHelper::returnReleaseForAcronym(openRangeStr);
+        if (rangeTo) {
+            unsigned int releaseFrom = AOT::UNKNOWN_FAMILY;
+            ++releaseFrom;
+            getProductsForTargetRange(static_cast<AOT::RELEASE>(releaseFrom), release, requestedProducts, argHelper);
+        } else {
+            unsigned int releaseTo = AOT::RELEASE_MAX;
+            --releaseTo;
+            getProductsForTargetRange(release, static_cast<AOT::RELEASE>(releaseTo), requestedProducts, argHelper);
+        }
+    } else if (argHelper->isProductConfig(openRangeStr)) {
+        auto product = ProductConfigHelper::returnProductConfigForAcronym(openRangeStr);
+        if (rangeTo) {
+            unsigned int productFrom = AOT::UNKNOWN_ISA;
+            ++productFrom;
+            getProductsForRange(productFrom, static_cast<unsigned int>(product), requestedProducts, argHelper);
+        } else {
+            unsigned int productTo = AOT::CONFIG_MAX_PLATFORM;
+            --productTo;
+            getProductsForRange(product, static_cast<AOT::PRODUCT_CONFIG>(productTo), requestedProducts, argHelper);
+        }
+    }
+    return requestedProducts;
+}
+
+std::vector<ConstStringRef> getProductForSpecificTarget(CompilerOptions::TokenizedString targets, OclocArgHelper *argHelper) {
+    std::vector<ConstStringRef> requestedConfigs;
+    for (const auto &target : targets) {
+        auto targetStr = target.str();
+        ProductConfigHelper::adjustDeviceName(targetStr);
+
+        if (argHelper->isFamily(targetStr)) {
+            auto family = ProductConfigHelper::returnFamilyForAcronym(targetStr);
+            getProductsAcronymsForTarget(requestedConfigs, family, argHelper);
+        } else if (argHelper->isRelease(targetStr)) {
+            auto release = ProductConfigHelper::returnReleaseForAcronym(targetStr);
+            getProductsAcronymsForTarget(requestedConfigs, release, argHelper);
+        } else if (argHelper->isProductConfig(targetStr)) {
+            requestedConfigs.push_back(target);
+        } else {
+            argHelper->printf("Failed to parse target : %s - invalid device:\n", target.str().c_str());
+            return {};
+        }
+    }
+    return requestedConfigs;
+}
+
+std::vector<ConstStringRef> getTargetProductsForFatbinary(ConstStringRef deviceArg, OclocArgHelper *argHelper) {
+    std::vector<ConstStringRef> retVal;
     if (deviceArg == "*") {
-        return toProductNames(allSupportedPlatforms);
-    }
-
-    auto genArg = ConstStringRef("gen");
-
-    std::vector<PRODUCT_FAMILY> requestedPlatforms;
-    auto sets = CompilerOptions::tokenize(deviceArg, ',');
-    for (auto set : sets) {
-        if (set.contains("-")) {
-            auto range = CompilerOptions::tokenize(deviceArg, '-');
+        return argHelper->getEnabledProductAcronyms();
+    } else {
+        auto sets = CompilerOptions::tokenize(deviceArg, ',');
+        if (sets[0].contains(":")) {
+            auto range = CompilerOptions::tokenize(deviceArg, ':');
             if (range.size() > 2) {
-                argHelper->printf("Invalid range : %s - should be from-to or -to or from-\n", set.str().c_str());
+                argHelper->printf("Invalid range : %s - should be from:to or :to or from:\n", sets[0].str().c_str());
                 return {};
             }
-
             if (range.size() == 1) {
-                // open range , from-max or min-to
-                if (range[0].contains("gen")) {
-                    auto coreId = asGfxCoreId(range[0]);
-                    if (IGFX_UNKNOWN_CORE == coreId) {
-                        argHelper->printf("Unknown device : %s\n", set.str().c_str());
-                        return {};
-                    }
-                    if ('-' == set[0]) {
-                        // to
-                        unsigned int coreIt = IGFX_UNKNOWN_CORE;
-                        ++coreIt;
-                        while (coreIt <= static_cast<unsigned int>(coreId)) {
-                            appendPlatformsForGfxCore(static_cast<GFXCORE_FAMILY>(coreIt), allSupportedPlatforms, requestedPlatforms);
-                            ++coreIt;
-                        }
-                    } else {
-                        // from
-                        unsigned int coreIt = coreId;
-                        while (coreIt < static_cast<unsigned int>(IGFX_MAX_CORE)) {
-                            appendPlatformsForGfxCore(static_cast<GFXCORE_FAMILY>(coreIt), allSupportedPlatforms, requestedPlatforms);
-                            ++coreIt;
-                        }
-                    }
-                } else {
-                    auto prodId = asProductId(range[0], allSupportedPlatforms);
-                    if (IGFX_UNKNOWN == prodId) {
-                        argHelper->printf("Unknown device : %s\n", range[0].str().c_str());
-                        return {};
-                    }
-                    auto prodIt = std::find(allSupportedPlatforms.begin(), allSupportedPlatforms.end(), prodId);
-                    assert(prodIt != allSupportedPlatforms.end());
-                    if ('-' == set[0]) {
-                        // to
-                        requestedPlatforms.insert(requestedPlatforms.end(), allSupportedPlatforms.begin(), prodIt + 1);
-                    } else {
-                        // from
-                        requestedPlatforms.insert(requestedPlatforms.end(), prodIt, allSupportedPlatforms.end());
-                    }
-                }
-            } else {
-                if (range[0].contains("gen")) {
-                    if (false == range[1].contains("gen")) {
-                        argHelper->printf("Ranges mixing platforms and gfxCores is not supported : %s - should be genFrom-genTo or platformFrom-platformTo\n", set.str().c_str());
-                        return {};
-                    }
-                    auto coreFrom = asGfxCoreId(range[0]);
-                    auto coreTo = asGfxCoreId(range[1]);
-                    if (IGFX_UNKNOWN_CORE == coreFrom) {
-                        argHelper->printf("Unknown device : %s\n", set.str().c_str());
-                        return {};
-                    }
-                    if (IGFX_UNKNOWN_CORE == coreTo) {
-                        argHelper->printf("Unknown device : %s\n", set.str().c_str());
-                        return {};
-                    }
-                    if (coreFrom > coreTo) {
-                        std::swap(coreFrom, coreTo);
-                    }
-                    while (coreFrom <= coreTo) {
-                        appendPlatformsForGfxCore(static_cast<GFXCORE_FAMILY>(coreFrom), allSupportedPlatforms, requestedPlatforms);
-                        coreFrom = static_cast<GFXCORE_FAMILY>(static_cast<unsigned int>(coreFrom) + 1);
-                    }
-                } else {
-                    auto platformFrom = asProductId(range[0], allSupportedPlatforms);
-                    auto platformTo = asProductId(range[1], allSupportedPlatforms);
-                    if (IGFX_UNKNOWN == platformFrom) {
-                        argHelper->printf("Unknown device : %s\n", set.str().c_str());
-                        return {};
-                    }
-                    if (IGFX_UNKNOWN == platformTo) {
-                        argHelper->printf("Unknown device : %s\n", set.str().c_str());
-                        return {};
-                    }
-                    if (platformFrom > platformTo) {
-                        std::swap(platformFrom, platformTo);
-                    }
+                bool rangeTo = (':' == sets[0][0]);
 
-                    auto from = std::find(allSupportedPlatforms.begin(), allSupportedPlatforms.end(), platformFrom);
-                    auto to = std::find(allSupportedPlatforms.begin(), allSupportedPlatforms.end(), platformTo) + 1;
-                    requestedPlatforms.insert(requestedPlatforms.end(), from, to);
-                }
-            }
-        } else if (set.contains("gen")) {
-            if (set.size() == genArg.size()) {
-                argHelper->printf("Invalid gen-based device : %s - gen should be followed by a number\n", set.str().c_str());
+                retVal = getProductForOpenRange(range[0], argHelper, rangeTo);
+
             } else {
-                auto coreId = asGfxCoreId(set);
-                if (IGFX_UNKNOWN_CORE == coreId) {
-                    argHelper->printf("Unknown device : %s\n", set.str().c_str());
-                    return {};
-                }
-                appendPlatformsForGfxCore(coreId, allSupportedPlatforms, requestedPlatforms);
+                retVal = getProductForClosedRange(range[0], range[1], argHelper);
             }
         } else {
-            auto prodId = asProductId(set, allSupportedPlatforms);
-            if (IGFX_UNKNOWN == prodId) {
-                argHelper->printf("Unknown device : %s\n", set.str().c_str());
-                return {};
-            }
-            requestedPlatforms.push_back(prodId);
+            retVal = getProductForSpecificTarget(sets, argHelper);
         }
     }
-    return toProductNames(requestedPlatforms);
+    return retVal;
+}
+
+int buildFatBinaryForTarget(int retVal, const std::vector<std::string> &argsCopy, std::string pointerSize, Ar::ArEncoder &fatbinary,
+                            OfflineCompiler *pCompiler, OclocArgHelper *argHelper, const std::string &product) {
+
+    if (retVal == 0) {
+        retVal = buildWithSafetyGuard(pCompiler);
+        std::string buildLog = pCompiler->getBuildLog();
+        if (buildLog.empty() == false) {
+            argHelper->printf("%s\n", buildLog.c_str());
+        }
+        if (retVal == 0) {
+            if (!pCompiler->isQuiet())
+                argHelper->printf("Build succeeded for : %s.\n", product.c_str());
+        } else {
+            argHelper->printf("Build failed for : %s with error code: %d\n", product.c_str(), retVal);
+            argHelper->printf("Command was:");
+            for (const auto &arg : argsCopy)
+                argHelper->printf(" %s", arg.c_str());
+            argHelper->printf("\n");
+        }
+    }
+    if (retVal) {
+        return retVal;
+    }
+    auto productConfig = ProductConfigHelper::parseMajorMinorRevisionValue(ProductConfigHelper::returnProductConfigForAcronym(product));
+    fatbinary.appendFileEntry(pointerSize + "." + productConfig, pCompiler->getPackedDeviceBinaryOutput());
+    return retVal;
 }
 
 int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelper) {
@@ -208,6 +253,8 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
     std::string inputFileName = "";
     std::string outputFileName = "";
     std::string outputDirectory = "";
+    bool spirvInput = false;
+    bool excludeIr = false;
 
     std::vector<std::string> argsCopy(args);
     for (size_t argIndex = 1; argIndex < args.size(); argIndex++) {
@@ -229,54 +276,52 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
         } else if ((ConstStringRef("-out_dir") == currArg) && hasMoreArgs) {
             outputDirectory = args[argIndex + 1];
             ++argIndex;
+        } else if (ConstStringRef("-exclude_ir") == currArg) {
+            excludeIr = true;
+        } else if (ConstStringRef("-spirv_input") == currArg) {
+            spirvInput = true;
         }
     }
 
-    std::vector<ConstStringRef> targetPlatforms;
-    targetPlatforms = getTargetPlatformsForFatbinary(ConstStringRef(args[deviceArgIndex]), argHelper);
-    if (targetPlatforms.empty()) {
+    const bool shouldPreserveGenericIr = spirvInput && !excludeIr;
+    if (shouldPreserveGenericIr) {
+        argsCopy.push_back("-exclude_ir");
+    }
+
+    if (deviceArgIndex == static_cast<size_t>(-1)) {
+        argHelper->printf("Error! Command does not contain device argument!\n");
+        return OclocErrorCode::INVALID_COMMAND_LINE;
+    }
+
+    Ar::ArEncoder fatbinary(true);
+    std::vector<ConstStringRef> targetProducts;
+    targetProducts = getTargetProductsForFatbinary(ConstStringRef(args[deviceArgIndex]), argHelper);
+    if (targetProducts.empty()) {
         argHelper->printf("Failed to parse target devices from : %s\n", args[deviceArgIndex].c_str());
         return 1;
     }
-
-    NEO::Ar::ArEncoder fatbinary(true);
-
-    for (auto targetPlatform : targetPlatforms) {
+    for (const auto &product : targetProducts) {
         int retVal = 0;
-        argsCopy[deviceArgIndex] = targetPlatform.str();
+        argsCopy[deviceArgIndex] = product.str();
 
         std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(argsCopy.size(), argsCopy, false, retVal, argHelper)};
-        if (ErrorCode::SUCCESS != retVal) {
+        if (OclocErrorCode::SUCCESS != retVal) {
             argHelper->printf("Error! Couldn't create OfflineCompiler. Exiting.\n");
             return retVal;
         }
 
-        auto stepping = pCompiler->getHardwareInfo().platform.usRevId;
-        if (retVal == 0) {
-            retVal = buildWithSafetyGuard(pCompiler.get());
-
-            std::string buildLog = pCompiler->getBuildLog();
-            if (buildLog.empty() == false) {
-                argHelper->printf("%s\n", buildLog.c_str());
-            }
-
-            if (retVal == 0) {
-                if (!pCompiler->isQuiet())
-                    argHelper->printf("Build succeeded for : %s.\n", (targetPlatform.str() + "." + std::to_string(stepping)).c_str());
-            } else {
-                argHelper->printf("Build failed for : %s with error code: %d\n", (targetPlatform.str() + "." + std::to_string(stepping)).c_str(), retVal);
-                argHelper->printf("Command was:");
-                for (const auto &arg : argsCopy)
-                    argHelper->printf(" %s", arg.c_str());
-                argHelper->printf("\n");
-            }
-        }
-
-        if (0 != retVal) {
+        retVal = buildFatBinaryForTarget(retVal, argsCopy, pointerSizeInBits, fatbinary, pCompiler.get(), argHelper, product.str());
+        if (retVal) {
             return retVal;
         }
+    }
 
-        fatbinary.appendFileEntry(pointerSizeInBits + "." + targetPlatform.str() + "." + std::to_string(stepping), pCompiler->getPackedDeviceBinaryOutput());
+    if (shouldPreserveGenericIr) {
+        const auto errorCode = appendGenericIr(fatbinary, inputFileName, argHelper);
+        if (errorCode != OclocErrorCode::SUCCESS) {
+            argHelper->printf("Error! Couldn't append generic IR file!\n");
+            return errorCode;
+        }
     }
 
     auto fatbinaryData = fatbinary.encode();
@@ -290,6 +335,37 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
     argHelper->saveOutput(fatbinaryFileName, fatbinaryData.data(), fatbinaryData.size());
 
     return 0;
+}
+
+int appendGenericIr(Ar::ArEncoder &fatbinary, const std::string &inputFile, OclocArgHelper *argHelper) {
+    std::size_t fileSize = 0;
+    std::unique_ptr<char[]> fileContents = argHelper->loadDataFromFile(inputFile, fileSize);
+    if (fileSize == 0) {
+        argHelper->printf("Error! Couldn't read input file!\n");
+        return OclocErrorCode::INVALID_FILE;
+    }
+
+    const auto ir = ArrayRef<const uint8_t>::fromAny(fileContents.get(), fileSize);
+    if (!isSpirVBitcode(ir)) {
+        argHelper->printf("Error! Input file is not in supported generic IR format! "
+                          "Currently supported format is SPIR-V.\n");
+        return OclocErrorCode::INVALID_FILE;
+    }
+
+    const auto encodedElf = createEncodedElfWithSpirv(ir);
+    ArrayRef<const uint8_t> genericIrFile{encodedElf.data(), encodedElf.size()};
+
+    fatbinary.appendFileEntry("generic_ir", genericIrFile);
+    return OclocErrorCode::SUCCESS;
+}
+
+std::vector<uint8_t> createEncodedElfWithSpirv(const ArrayRef<const uint8_t> &spirv) {
+    using namespace NEO::Elf;
+    ElfEncoder<EI_CLASS_64> elfEncoder;
+    elfEncoder.getElfFileHeader().type = ET_OPENCL_OBJECTS;
+    elfEncoder.appendSection(SHT_OPENCL_SPIRV, SectionNamesOpenCl::spirvObject, spirv);
+
+    return elfEncoder.encode();
 }
 
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,9 @@
 
 #include "mock_performance_counters_linux.h"
 
-#include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
-#include "opencl/test/unit_test/os_interface/linux/mock_os_time_linux.h"
+#include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/mocks/linux/mock_os_time_linux.h"
+
 #include "opencl/test/unit_test/os_interface/mock_performance_counters.h"
 
 namespace NEO {
@@ -47,9 +48,9 @@ void PerformanceCountersFixture::createPerfCounters() {
 void PerformanceCountersFixture::SetUp() {
     device = std::make_unique<MockClDevice>(new MockDevice());
     context = std::make_unique<MockContext>(device.get());
-    queue = std::make_unique<MockCommandQueue>(context.get(), device.get(), &queueProperties);
+    queue = std::make_unique<MockCommandQueue>(context.get(), device.get(), &queueProperties, false);
     osInterface = std::unique_ptr<OSInterface>(new OSInterface());
-    osInterface->get()->setDrm(new DrmMock());
+    osInterface->setDriverModel(std::unique_ptr<DriverModel>(new DrmMock(*device->getExecutionEnvironment()->rootDeviceEnvironments[0])));
     device->setOSTime(new MockOSTimeLinux(osInterface.get()));
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,18 +7,18 @@
 
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/device/device.h"
+#include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/execution_environment/execution_environment.h"
-#include "shared/source/source_level_debugger/source_level_debugger.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
-#include "opencl/source/helpers/validators.h"
+#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/platform/platform.h"
-#include "opencl/source/program/kernel_info.h"
 #include "opencl/source/program/program.h"
 
 #include "compiler_options.h"
@@ -28,48 +28,41 @@
 namespace NEO {
 
 cl_int Program::link(
-    cl_uint numDevices,
-    const cl_device_id *deviceList,
+    const ClDeviceVector &deviceVector,
     const char *buildOptions,
     cl_uint numInputPrograms,
-    const cl_program *inputPrograms,
-    void(CL_CALLBACK *funcNotify)(cl_program program, void *userData),
-    void *userData) {
+    const cl_program *inputPrograms) {
     cl_int retVal = CL_SUCCESS;
     bool isCreateLibrary;
 
+    auto defaultClDevice = deviceVector[0];
+    UNRECOVERABLE_IF(defaultClDevice == nullptr);
+    auto &defaultDevice = defaultClDevice->getDevice();
+    std::unordered_map<uint32_t, bool> kernelDebugDataNotified;
+    std::unordered_map<uint32_t, bool> debugOptionsAppended;
+    auto internalOptions = getInternalOptions();
+    cl_program_binary_type binaryType = CL_PROGRAM_BINARY_TYPE_NONE;
     do {
-        if (((deviceList == nullptr) && (numDevices != 0)) ||
-            ((deviceList != nullptr) && (numDevices == 0))) {
-            retVal = CL_INVALID_VALUE;
-            break;
-        }
-
         if ((numInputPrograms == 0) || (inputPrograms == nullptr)) {
             retVal = CL_INVALID_VALUE;
             break;
         }
 
-        if ((funcNotify == nullptr) &&
-            (userData != nullptr)) {
-            retVal = CL_INVALID_VALUE;
-            break;
-        }
-
-        if ((deviceList != nullptr) && validateObject(*deviceList) != CL_SUCCESS) {
-            retVal = CL_INVALID_DEVICE;
-            break;
-        }
-
-        if (buildStatus == CL_BUILD_IN_PROGRESS) {
+        if (std::any_of(deviceVector.begin(), deviceVector.end(), [&](auto device) { return CL_BUILD_IN_PROGRESS == deviceBuildInfos[device].buildStatus; })) {
             retVal = CL_INVALID_OPERATION;
             break;
+        }
+
+        for (const auto &device : deviceVector) {
+            kernelDebugDataNotified[device->getRootDeviceIndex()] = false;
+            debugOptionsAppended[device->getRootDeviceIndex()] = false;
+            deviceBuildInfos[device].buildStatus = CL_BUILD_IN_PROGRESS;
         }
 
         options = (buildOptions != nullptr) ? buildOptions : "";
 
         for (const auto &optionString : {CompilerOptions::gtpinRera, CompilerOptions::greaterThan4gbBuffersRequired}) {
-            size_t pos = options.find(optionString);
+            size_t pos = options.find(optionString.data());
             if (pos != std::string::npos) {
                 options.erase(pos, optionString.length());
                 CompilerOptions::concatenateAppend(internalOptions, optionString);
@@ -77,12 +70,17 @@ cl_int Program::link(
         }
 
         if (isKernelDebugEnabled()) {
-            appendKernelDebugOptions();
+            for (auto &device : deviceVector) {
+                if (debugOptionsAppended[device->getRootDeviceIndex()]) {
+                    continue;
+                }
+                appendKernelDebugOptions(*device, internalOptions);
+
+                debugOptionsAppended[device->getRootDeviceIndex()] = true;
+            }
         }
 
         isCreateLibrary = CompilerOptions::contains(options, CompilerOptions::createLibrary);
-
-        buildStatus = CL_BUILD_IN_PROGRESS;
 
         NEO::Elf::ElfEncoder<> elfEncoder(true, false, 1U);
         elfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_OBJECTS;
@@ -132,7 +130,7 @@ cl_int Program::link(
 
         auto clLinkInput = elfEncoder.encode();
 
-        CompilerInterface *pCompilerInterface = pDevice->getCompilerInterface();
+        CompilerInterface *pCompilerInterface = defaultDevice.getCompilerInterface();
         if (!pCompilerInterface) {
             retVal = CL_OUT_OF_HOST_MEMORY;
             break;
@@ -146,43 +144,45 @@ cl_int Program::link(
         inputArgs.GTPinInput = gtpinGetIgcInit();
 
         if (!isCreateLibrary) {
-            inputArgs.outType = IGC::CodeType::oclGenBin;
-            NEO::TranslationOutput compilerOuput = {};
-            auto compilerErr = pCompilerInterface->link(this->getDevice(), inputArgs, compilerOuput);
-            this->updateBuildLog(this->pDevice, compilerOuput.frontendCompilerLog.c_str(), compilerOuput.frontendCompilerLog.size());
-            this->updateBuildLog(this->pDevice, compilerOuput.backendCompilerLog.c_str(), compilerOuput.backendCompilerLog.size());
-            retVal = asClError(compilerErr);
-            if (retVal != CL_SUCCESS) {
-                break;
-            }
+            for (const auto &device : deviceVector) {
+                auto rootDeviceIndex = device->getRootDeviceIndex();
+                inputArgs.outType = IGC::CodeType::oclGenBin;
+                NEO::TranslationOutput compilerOuput = {};
+                auto compilerErr = pCompilerInterface->link(device->getDevice(), inputArgs, compilerOuput);
+                this->updateBuildLog(device->getRootDeviceIndex(), compilerOuput.frontendCompilerLog.c_str(), compilerOuput.frontendCompilerLog.size());
+                this->updateBuildLog(device->getRootDeviceIndex(), compilerOuput.backendCompilerLog.c_str(), compilerOuput.backendCompilerLog.size());
+                retVal = asClError(compilerErr);
+                if (retVal != CL_SUCCESS) {
+                    break;
+                }
 
-            this->replaceDeviceBinary(std::move(compilerOuput.deviceBinary.mem), compilerOuput.deviceBinary.size);
-            this->debugData = std::move(compilerOuput.debugData.mem);
-            this->debugDataSize = compilerOuput.debugData.size;
+                this->replaceDeviceBinary(std::move(compilerOuput.deviceBinary.mem), compilerOuput.deviceBinary.size, rootDeviceIndex);
+                this->buildInfos[device->getRootDeviceIndex()].debugData = std::move(compilerOuput.debugData.mem);
+                this->buildInfos[device->getRootDeviceIndex()].debugDataSize = compilerOuput.debugData.size;
 
-            retVal = processGenBinary();
-            if (retVal != CL_SUCCESS) {
-                break;
-            }
-            programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
+                retVal = processGenBinary(*device);
+                if (retVal != CL_SUCCESS) {
+                    break;
+                }
+                binaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
 
-            if (isKernelDebugEnabled()) {
-                processDebugData();
-                auto clDevice = this->getDevice().getSpecializedDevice<ClDevice>();
-                UNRECOVERABLE_IF(clDevice == nullptr);
-                for (auto kernelInfo : kernelInfoArray) {
-                    clDevice->getSourceLevelDebugger()->notifyKernelDebugData(&kernelInfo->debugData,
-                                                                              kernelInfo->name,
-                                                                              kernelInfo->heapInfo.pKernelHeap,
-                                                                              kernelInfo->heapInfo.KernelHeapSize);
+                if (isKernelDebugEnabled()) {
+                    if (kernelDebugDataNotified[rootDeviceIndex]) {
+                        continue;
+                    }
+                    notifyDebuggerWithDebugData(device);
+                    kernelDebugDataNotified[device->getRootDeviceIndex()] = true;
                 }
             }
+
         } else {
             inputArgs.outType = IGC::CodeType::llvmBc;
             NEO::TranslationOutput compilerOuput = {};
-            auto compilerErr = pCompilerInterface->createLibrary(*this->pDevice, inputArgs, compilerOuput);
-            this->updateBuildLog(this->pDevice, compilerOuput.frontendCompilerLog.c_str(), compilerOuput.frontendCompilerLog.size());
-            this->updateBuildLog(this->pDevice, compilerOuput.backendCompilerLog.c_str(), compilerOuput.backendCompilerLog.size());
+            auto compilerErr = pCompilerInterface->createLibrary(defaultDevice, inputArgs, compilerOuput);
+            for (const auto &device : deviceVector) {
+                this->updateBuildLog(device->getRootDeviceIndex(), compilerOuput.frontendCompilerLog.c_str(), compilerOuput.frontendCompilerLog.size());
+                this->updateBuildLog(device->getRootDeviceIndex(), compilerOuput.backendCompilerLog.c_str(), compilerOuput.backendCompilerLog.size());
+            }
             retVal = asClError(compilerErr);
             if (retVal != CL_SUCCESS) {
                 break;
@@ -190,25 +190,25 @@ cl_int Program::link(
             this->irBinary = std::move(compilerOuput.intermediateRepresentation.mem);
             this->irBinarySize = compilerOuput.intermediateRepresentation.size;
             this->isSpirV = (compilerOuput.intermediateCodeType == IGC::CodeType::spirV);
-            this->debugData = std::move(compilerOuput.debugData.mem);
-            this->debugDataSize = compilerOuput.debugData.size;
-            programBinaryType = CL_PROGRAM_BINARY_TYPE_LIBRARY;
+            for (const auto &device : deviceVector) {
+                this->buildInfos[device->getRootDeviceIndex()].debugData = std::move(compilerOuput.debugData.mem);
+                this->buildInfos[device->getRootDeviceIndex()].debugDataSize = compilerOuput.debugData.size;
+            }
+            binaryType = CL_PROGRAM_BINARY_TYPE_LIBRARY;
+        }
+        if (retVal != CL_SUCCESS) {
+            break;
         }
         updateNonUniformFlag(&*inputProgramsInternal.begin(), inputProgramsInternal.size());
-        separateBlockKernels();
     } while (false);
 
     if (retVal != CL_SUCCESS) {
-        buildStatus = CL_BUILD_ERROR;
-        programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
+        for (const auto &device : deviceVector) {
+            deviceBuildInfos[device].buildStatus = CL_BUILD_ERROR;
+            deviceBuildInfos[device].programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
+        }
     } else {
-        buildStatus = CL_BUILD_SUCCESS;
-    }
-
-    internalOptions.clear();
-
-    if (funcNotify != nullptr) {
-        (*funcNotify)(this, userData);
+        setBuildStatusSuccess(deviceVector, binaryType);
     }
 
     return retVal;

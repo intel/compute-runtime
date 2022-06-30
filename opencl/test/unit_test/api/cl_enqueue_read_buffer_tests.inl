@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "opencl/source/cl_device/cl_device_info.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
 
 #include "cl_api_tests.h"
 
@@ -18,6 +19,42 @@ using namespace NEO;
 typedef api_tests clEnqueueReadBufferTests;
 
 namespace ULT {
+
+TEST_F(clEnqueueReadBufferTests, GivenCorrectArgumentsWhenReadingBufferThenSuccessIsReturned) {
+    MockBuffer buffer{};
+    auto data = 1;
+    auto retVal = clEnqueueReadBuffer(
+        pCommandQueue,
+        &buffer,
+        false,
+        0,
+        sizeof(data),
+        &data,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(clEnqueueReadBufferTests, GivenQueueIncapableArgumentsWhenReadingBufferThenInvalidOperationIsReturned) {
+    MockBuffer buffer{};
+    auto data = 1;
+
+    this->disableQueueCapabilities(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL);
+    auto retVal = clEnqueueReadBuffer(
+        pCommandQueue,
+        &buffer,
+        false,
+        0,
+        sizeof(data),
+        &data,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+}
 
 TEST_F(clEnqueueReadBufferTests, GivenNullCommandQueueWhenReadingBufferThenInvalidCommandQueueErrorIsReturned) {
     auto data = 1;

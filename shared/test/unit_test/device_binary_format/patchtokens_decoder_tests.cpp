@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/helpers/hash.h"
-
-#include "test.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "patchtokens_tests.h"
 
@@ -27,7 +27,6 @@ bool hasEmptyTokensInfo(const NEO::PatchTokenBinary::KernelFromPatchtokens &kern
     empty &= nullptr == toks.mediaVfeState[0];
     empty &= nullptr == toks.mediaVfeState[1];
     empty &= nullptr == toks.mediaInterfaceDescriptorLoad;
-    empty &= nullptr == toks.interfaceDescriptorData;
     empty &= nullptr == toks.threadPayload;
     empty &= nullptr == toks.executionEnvironment;
     empty &= nullptr == toks.dataParameterStream;
@@ -64,7 +63,6 @@ bool hasEmptyTokensInfo(const NEO::PatchTokenBinary::KernelFromPatchtokens &kern
     empty &= nullptr == toks.crossThreadPayloadArgs.localMemoryStatelessWindowSize;
     empty &= nullptr == toks.crossThreadPayloadArgs.localMemoryStatelessWindowStartAddress;
     empty &= nullptr == toks.crossThreadPayloadArgs.preferredWorkgroupMultiple;
-    empty &= toks.crossThreadPayloadArgs.childBlockSimdSize.empty();
     return empty;
 }
 
@@ -107,17 +105,17 @@ bool tokenOffsetMatched(const uint8_t *base, size_t tokenOffset, const iOpenCL::
 }
 
 TEST(GetInlineData, GivenConstantMemorySurfaceTokenThenReturnProperOffsetToInlineData) {
-    iOpenCL::SPatchAllocateConstantMemorySurfaceProgramBinaryInfo surfTok[2];
+    iOpenCL::SPatchAllocateConstantMemorySurfaceProgramBinaryInfo surfTok[2] = {};
     EXPECT_EQ(reinterpret_cast<uint8_t *>(&surfTok[1]), NEO::PatchTokenBinary::getInlineData(&surfTok[0]));
 }
 
 TEST(GetInlineData, GivenGlobalMemorySurfaceTokenThenReturnProperOffsetToInlineData) {
-    iOpenCL::SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo surfTok[2];
+    iOpenCL::SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo surfTok[2] = {};
     EXPECT_EQ(reinterpret_cast<uint8_t *>(&surfTok[1]), NEO::PatchTokenBinary::getInlineData(&surfTok[0]));
 }
 
 TEST(GetInlineData, GivenStringTokenThenReturnProperOffsetToInlineData) {
-    iOpenCL::SPatchString surfTok[2];
+    iOpenCL::SPatchString surfTok[2] = {};
     EXPECT_EQ(reinterpret_cast<uint8_t *>(&surfTok[1]), NEO::PatchTokenBinary::getInlineData(&surfTok[0]));
 }
 
@@ -323,7 +321,6 @@ TEST(KernelDecoder, GivenKernelWithValidKernelPatchtokensThenDecodingSucceedsAnd
     auto mediaVfeState0Off = pushBackToken<SPatchMediaVFEState>(PATCH_TOKEN_MEDIA_VFE_STATE, storage);
     auto mediaVfeState1Off = pushBackToken<SPatchMediaVFEState>(PATCH_TOKEN_MEDIA_VFE_STATE_SLOT1, storage);
     auto mediaInterfaceDescriptorLoadOff = pushBackToken<SPatchMediaInterfaceDescriptorLoad>(PATCH_TOKEN_MEDIA_INTERFACE_DESCRIPTOR_LOAD, storage);
-    auto interfaceDescriptorDataOff = pushBackToken<SPatchInterfaceDescriptorData>(PATCH_TOKEN_INTERFACE_DESCRIPTOR_DATA, storage);
     auto threadPayloadOff = pushBackToken<SPatchThreadPayload>(PATCH_TOKEN_THREAD_PAYLOAD, storage);
     auto executionEnvironmentOff = pushBackToken<SPatchExecutionEnvironment>(PATCH_TOKEN_EXECUTION_ENVIRONMENT, storage);
     auto kernelAttributesInfoOff = pushBackToken<SPatchKernelAttributesInfo>(PATCH_TOKEN_KERNEL_ATTRIBUTES_INFO, storage);
@@ -360,7 +357,6 @@ TEST(KernelDecoder, GivenKernelWithValidKernelPatchtokensThenDecodingSucceedsAnd
     EXPECT_TRUE(tokenOffsetMatched(base, mediaVfeState0Off, decodedKernel.tokens.mediaVfeState[0]));
     EXPECT_TRUE(tokenOffsetMatched(base, mediaVfeState1Off, decodedKernel.tokens.mediaVfeState[1]));
     EXPECT_TRUE(tokenOffsetMatched(base, mediaInterfaceDescriptorLoadOff, decodedKernel.tokens.mediaInterfaceDescriptorLoad));
-    EXPECT_TRUE(tokenOffsetMatched(base, interfaceDescriptorDataOff, decodedKernel.tokens.interfaceDescriptorData));
     EXPECT_TRUE(tokenOffsetMatched(base, threadPayloadOff, decodedKernel.tokens.threadPayload));
     EXPECT_TRUE(tokenOffsetMatched(base, executionEnvironmentOff, decodedKernel.tokens.executionEnvironment));
     EXPECT_TRUE(tokenOffsetMatched(base, kernelAttributesInfoOff, decodedKernel.tokens.kernelAttributesInfo));
@@ -579,9 +575,7 @@ TEST(KernelDecoder, GivenKernelWithValidNonArgCrossThreadDataPatchtokensThenDeco
     auto localMemoryStatelessWindowStartAddrOff = pushBackDataParameterToken(DATA_PARAMETER_LOCAL_MEMORY_STATELESS_WINDOW_START_ADDRESS, storage);
     auto parentEventOff = pushBackDataParameterToken(DATA_PARAMETER_PARENT_EVENT, storage);
     auto preferredWorkgroupMultipleOff = pushBackDataParameterToken(DATA_PARAMETER_PREFERRED_WORKGROUP_MULTIPLE, storage);
-    auto childBlockSimdSize0Off = pushBackDataParameterToken(DATA_PARAMETER_CHILD_BLOCK_SIMD_SIZE, storage);
-    auto childBlockSimdSize1Off = pushBackDataParameterToken(DATA_PARAMETER_CHILD_BLOCK_SIMD_SIZE, storage);
-    auto childBlockSimdSize2Off = pushBackDataParameterToken(DATA_PARAMETER_CHILD_BLOCK_SIMD_SIZE, storage);
+    auto implictArgBufferOffset = pushBackDataParameterToken(DATA_PARAMETER_IMPL_ARG_BUFFER, storage);
 
     ASSERT_EQ(storage.data(), kernelToEncode.blobs.kernelInfo.begin());
     auto kernelHeader = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(storage.data());
@@ -620,10 +614,7 @@ TEST(KernelDecoder, GivenKernelWithValidNonArgCrossThreadDataPatchtokensThenDeco
     EXPECT_TRUE(tokenOffsetMatched(base, localMemoryStatelessWindowStartAddrOff, decodedKernel.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowStartAddress));
     EXPECT_TRUE(tokenOffsetMatched(base, parentEventOff, decodedKernel.tokens.crossThreadPayloadArgs.parentEvent));
     EXPECT_TRUE(tokenOffsetMatched(base, preferredWorkgroupMultipleOff, decodedKernel.tokens.crossThreadPayloadArgs.preferredWorkgroupMultiple));
-    ASSERT_EQ(3U, decodedKernel.tokens.crossThreadPayloadArgs.childBlockSimdSize.size());
-    EXPECT_TRUE(tokenOffsetMatched(base, childBlockSimdSize0Off, decodedKernel.tokens.crossThreadPayloadArgs.childBlockSimdSize[0]));
-    EXPECT_TRUE(tokenOffsetMatched(base, childBlockSimdSize1Off, decodedKernel.tokens.crossThreadPayloadArgs.childBlockSimdSize[1]));
-    EXPECT_TRUE(tokenOffsetMatched(base, childBlockSimdSize2Off, decodedKernel.tokens.crossThreadPayloadArgs.childBlockSimdSize[2]));
+    EXPECT_TRUE(tokenOffsetMatched(base, implictArgBufferOffset, decodedKernel.tokens.crossThreadPayloadArgs.implicitArgsBufferOffset));
 }
 
 TEST(KernelDecoder, GivenKernelWithArgCrossThreadDataPatchtokensWhenSourceIndexIsGreaterThan2ThenThenDecodingSucceedsButTokenIsMarkedAsUnhandled) {
@@ -1211,4 +1202,28 @@ TEST(ProgramDecoder, GivenProgramWithMultipleKernelsWhenFailsToDecodeKernelThenD
     EXPECT_TRUE(decodedProgram.unhandledTokens.empty());
     EXPECT_EQ(2U, decodedProgram.header->NumberOfKernels);
     EXPECT_EQ(1U, decodedProgram.kernels.size());
+}
+
+TEST(ProgramDecoder, givenPatchTokenInterfaceDescriptorDataWhenFlagPrintDebugMessagesAndDecodeTokenThenRightMessagePrinted) {
+    using namespace iOpenCL;
+    DebugManagerStateRestore debugManagerStateRestore;
+    DebugManager.flags.PrintDebugMessages.set(true);
+
+    std::vector<uint8_t> storage;
+    storage.reserve(512);
+    auto kernelToEncode = PatchTokensTestData::ValidEmptyKernel::create(storage);
+
+    auto patchListOffset = ptrDiff(kernelToEncode.blobs.patchList.begin(), storage.data());
+    pushBackToken<SPatchInterfaceDescriptorData>(PATCH_TOKEN_INTERFACE_DESCRIPTOR_DATA, storage);
+
+    auto kernelHeader = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(storage.data());
+    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size() - patchListOffset);
+    NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
+    testing::internal::CaptureStderr();
+    bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
+
+    std::string output = testing::internal::GetCapturedStderr();
+    EXPECT_TRUE(decodeSuccess);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedKernel.decodeStatus);
+    EXPECT_EQ("Ignored kernel-scope Patch Token: 21\n", output);
 }

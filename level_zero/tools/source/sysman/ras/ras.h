@@ -1,46 +1,53 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include <level_zero/zet_api.h>
+#include "level_zero/core/source/device/device.h"
+#include <level_zero/zes_api.h>
 
 #include <vector>
 
-struct _zet_sysman_ras_handle_t {
-    virtual ~_zet_sysman_ras_handle_t() = default;
+struct _zes_ras_handle_t {
+    virtual ~_zes_ras_handle_t() = default;
 };
 
 namespace L0 {
 
 struct OsSysman;
 
-class Ras : _zet_sysman_ras_handle_t {
+class Ras : _zes_ras_handle_t {
   public:
-    virtual ze_result_t rasGetProperties(zet_ras_properties_t *pProperties) = 0;
-    virtual ze_result_t rasGetConfig(zet_ras_config_t *pConfig) = 0;
-    virtual ze_result_t rasSetConfig(const zet_ras_config_t *pConfig) = 0;
-    virtual ze_result_t rasGetState(ze_bool_t clear, uint64_t *pTotalErrors, zet_ras_details_t *pDetails) = 0;
+    virtual ze_result_t rasGetProperties(zes_ras_properties_t *pProperties) = 0;
+    virtual ze_result_t rasGetConfig(zes_ras_config_t *pConfig) = 0;
+    virtual ze_result_t rasSetConfig(const zes_ras_config_t *pConfig) = 0;
+    virtual ze_result_t rasGetState(zes_ras_state_t *pState, ze_bool_t clear) = 0;
 
-    static Ras *fromHandle(zet_sysman_ras_handle_t handle) {
+    static Ras *fromHandle(zes_ras_handle_t handle) {
         return static_cast<Ras *>(handle);
     }
-    inline zet_sysman_ras_handle_t toHandle() { return this; }
+    inline zes_ras_handle_t toHandle() { return this; }
+    bool isRasErrorSupported = false;
+    zes_ras_error_type_t rasErrorType{};
 };
 
 struct RasHandleContext {
     RasHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
-    ~RasHandleContext();
+    MOCKABLE_VIRTUAL ~RasHandleContext();
 
-    void init();
+    MOCKABLE_VIRTUAL void init(std::vector<ze_device_handle_t> &deviceHandles);
+    void releaseRasHandles();
 
-    ze_result_t rasGet(uint32_t *pCount, zet_sysman_ras_handle_t *phRas);
+    ze_result_t rasGet(uint32_t *pCount, zes_ras_handle_t *phRas);
 
     OsSysman *pOsSysman = nullptr;
-    std::vector<Ras *> handleList;
+    std::vector<Ras *> handleList = {};
+
+  private:
+    void createHandle(zes_ras_error_type_t type, ze_device_handle_t deviceHandle);
 };
 
 } // namespace L0

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,26 +11,25 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/cache_policy.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/test/unit_test/cmd_parse/hw_parse.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/helpers/unit_test_helper.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
+#include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 
 namespace NEO {
 
 struct UltCommandStreamReceiverTest
     : public ClDeviceFixture,
-      public HardwareParse,
+      public ClHardwareParse,
       ::testing::Test {
     void SetUp() override {
         ClDeviceFixture::SetUp();
-        HardwareParse::SetUp();
+        ClHardwareParse::SetUp();
 
-        size_t sizeStream = 512;
-        size_t alignmentStream = 0x1000;
         cmdBuffer = alignedMalloc(sizeStream, alignmentStream);
         dshBuffer = alignedMalloc(sizeStream, alignmentStream);
         iohBuffer = alignedMalloc(sizeStream, alignmentStream);
@@ -41,6 +40,14 @@ struct UltCommandStreamReceiverTest
         ASSERT_NE(nullptr, iohBuffer);
         ASSERT_NE(nullptr, sshBuffer);
 
+        initHeaps();
+
+        flushTaskFlags.threadArbitrationPolicy = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily).getDefaultThreadArbitrationPolicy();
+
+        pDevice->getGpgpuCommandStreamReceiver().setupContext(*pDevice->getDefaultEngine().osContext);
+    }
+
+    void initHeaps() {
         commandStream.replaceBuffer(cmdBuffer, sizeStream);
         auto graphicsAllocation = new MockGraphicsAllocation(cmdBuffer, sizeStream);
         commandStream.replaceGraphicsAllocation(graphicsAllocation);
@@ -57,22 +64,24 @@ struct UltCommandStreamReceiverTest
         ssh.replaceBuffer(sshBuffer, sizeStream);
         graphicsAllocation = new MockGraphicsAllocation(sshBuffer, sizeStream);
         ssh.replaceGraphicsAllocation(graphicsAllocation);
-
-        pDevice->getGpgpuCommandStreamReceiver().setupContext(*pDevice->getDefaultEngine().osContext);
     }
 
-    void TearDown() override {
-        pDevice->getGpgpuCommandStreamReceiver().flushBatchedSubmissions();
+    void cleanupHeaps() {
         delete dsh.getGraphicsAllocation();
         delete ioh.getGraphicsAllocation();
         delete ssh.getGraphicsAllocation();
         delete commandStream.getGraphicsAllocation();
+    }
+
+    void TearDown() override {
+        pDevice->getGpgpuCommandStreamReceiver().flushBatchedSubmissions();
+        cleanupHeaps();
 
         alignedFree(sshBuffer);
         alignedFree(iohBuffer);
         alignedFree(dshBuffer);
         alignedFree(cmdBuffer);
-        HardwareParse::TearDown();
+        ClHardwareParse::TearDown();
         ClDeviceFixture::TearDown();
     }
 
@@ -91,12 +100,20 @@ struct UltCommandStreamReceiverTest
         return commandStreamReceiver.flushTask(
             commandStream,
             startOffset,
-            dsh,
-            ioh,
-            ssh,
+            &dsh,
+            &ioh,
+            &ssh,
             taskLevel,
             flushTaskFlags,
             *pDevice);
+    }
+
+    template <typename CommandStreamReceiverType>
+    void flushSmallTask(CommandStreamReceiverType &commandStreamReceiver,
+                        size_t startOffset = 0) {
+        return commandStreamReceiver.flushSmallTask(
+            commandStream,
+            startOffset);
     }
 
     template <typename GfxFamily>
@@ -108,30 +125,33 @@ struct UltCommandStreamReceiverTest
     }
 
     template <typename GfxFamily>
-    void configureCSRtoNonDirtyState() {
+    void configureCSRtoNonDirtyState(bool isL1CacheEnabled) {
         bool slmUsed = false;
         if (DebugManager.flags.ForceSLML3Config.get()) {
             slmUsed = true;
         }
 
-        uint32_t L3Config = PreambleHelper<GfxFamily>::getL3Config(*defaultHwInfo, slmUsed);
+        uint32_t l3Config = PreambleHelper<GfxFamily>::getL3Config(*defaultHwInfo, slmUsed);
 
         auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<GfxFamily>();
         commandStreamReceiver.isPreambleSent = true;
         commandStreamReceiver.isEnginePrologueSent = true;
+        commandStreamReceiver.isStateSipSent = true;
         commandStreamReceiver.lastPreemptionMode = pDevice->getPreemptionMode();
         commandStreamReceiver.setMediaVFEStateDirty(false);
         auto gmmHelper = pDevice->getGmmHelper();
-        auto mocsIndex = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+        auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eDisplayCoreFamily);
+        auto mocsIndex = hwHelper.getMocsIndex(*gmmHelper, true, isL1CacheEnabled);
 
-        commandStreamReceiver.latestSentStatelessMocsConfig = mocsIndex >> 1;
-        commandStreamReceiver.lastSentL3Config = L3Config;
+        commandStreamReceiver.latestSentStatelessMocsConfig = mocsIndex;
+        commandStreamReceiver.lastSentL3Config = l3Config;
         configureCSRHeapStatesToNonDirty<GfxFamily>();
         commandStreamReceiver.taskLevel = taskLevel;
 
-        commandStreamReceiver.lastSentThreadArbitrationPolicy = commandStreamReceiver.requiredThreadArbitrationPolicy;
-        commandStreamReceiver.lastSentCoherencyRequest = 0;
         commandStreamReceiver.lastMediaSamplerConfig = 0;
+        commandStreamReceiver.lastSentUseGlobalAtomics = false;
+        commandStreamReceiver.streamProperties.stateComputeMode.setProperties(0, GrfConfig::DefaultGrfNumber,
+                                                                              hwHelper.getDefaultThreadArbitrationPolicy(), pDevice->getPreemptionMode(), *defaultHwInfo);
     }
 
     template <typename GfxFamily>
@@ -154,5 +174,8 @@ struct UltCommandStreamReceiverTest
     uint32_t latestSentDcFlushTaskCount;
     uint32_t latestSentNonDcFlushTaskCount;
     uint32_t dcFlushRequiredTaskCount;
+
+    const size_t sizeStream = 512;
+    const size_t alignmentStream = 0x1000;
 };
 } // namespace NEO

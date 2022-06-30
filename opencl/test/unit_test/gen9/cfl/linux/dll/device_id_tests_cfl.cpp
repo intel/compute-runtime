@@ -1,85 +1,62 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/os_interface/linux/drm_neo.h"
-
-#include "test.h"
-
-#include <array>
+#include "shared/test/common/fixtures/linux/device_id_fixture.h"
 
 using namespace NEO;
 
-TEST(CflDeviceIdTest, supportedDeviceId) {
-    std::array<DeviceDescriptor, 43> expectedDescriptors = {{
-        {ICFL_GT1_DT_DEVICE_F0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
-        {ICFL_GT1_S41_DT_DEVICE_F0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
-        {ICFL_GT1_S61_DT_DEVICE_F0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
-        {ICFL_GT1_41F_2F1F_ULT_DEVICE_F0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
-        {ICFL_GT1_S6_S4_S2_F1F_DT_DEVICE_F0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
-        {ICFL_GT1_U41F_U2F1F_ULT_DEVICE_F0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
+TEST_F(DeviceIdTests, GivenCflSupportedDeviceIdThenHardwareInfoIsCorrect) {
+    std::array<DeviceDescriptor, 42> expectedDescriptors = {{
+        {0x3E90, &CflHw1x2x6::hwInfo, &CflHw1x2x6::setupHardwareInfo},
+        {0x3E93, &CflHw1x2x6::hwInfo, &CflHw1x2x6::setupHardwareInfo},
+        {0x3EA4, &CflHw1x2x6::hwInfo, &CflHw1x2x6::setupHardwareInfo},
+        {0x3E99, &CflHw1x2x6::hwInfo, &CflHw1x2x6::setupHardwareInfo},
+        {0x3EA1, &CflHw1x2x6::hwInfo, &CflHw1x2x6::setupHardwareInfo},
 
-        {ICFL_GT2_DT_DEVICE_F0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {ICFL_GT2_HALO_DEVICE_F0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {ICFL_GT2_HALO_WS_DEVICE_F0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {ICFL_GT2_S42_DT_DEVICE_F0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {ICFL_GT2_S62_DT_DEVICE_F0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {ICFL_GT2_SERV_DEVICE_F0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {ICFL_GT2_S82_S6F2_DT_DEVICE_F0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {ICFL_GT2_U42F_U2F1F_ULT_DEVICE_F0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {ICFL_GT2_U42F_U2F2F_ULT_DEVICE_F0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {ICFL_GT2_U42F_U2F2_ULT_DEVICE_F0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {ICFL_GT2_S8_S2_DT_DEVICE_F0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
+        {0x3E92, &CflHw1x3x8::hwInfo, &CflHw1x3x8::setupHardwareInfo},
+        {0x3E9B, &CflHw1x3x8::hwInfo, &CflHw1x3x8::setupHardwareInfo},
+        {0x3E94, &CflHw1x3x8::hwInfo, &CflHw1x3x8::setupHardwareInfo},
+        {0x3E91, &CflHw1x3x8::hwInfo, &CflHw1x3x8::setupHardwareInfo},
+        {0x3E96, &CflHw1x3x8::hwInfo, &CflHw1x3x8::setupHardwareInfo},
+        {0x3E9A, &CflHw1x3x8::hwInfo, &CflHw1x3x8::setupHardwareInfo},
+        {0x3EA3, &CflHw1x3x8::hwInfo, &CflHw1x3x8::setupHardwareInfo},
+        {0x3EA9, &CflHw1x3x8::hwInfo, &CflHw1x3x8::setupHardwareInfo},
+        {0x3EA0, &CflHw1x3x8::hwInfo, &CflHw1x3x8::setupHardwareInfo},
+        {0x3E98, &CflHw1x3x8::hwInfo, &CflHw1x3x8::setupHardwareInfo},
 
-        {ICFL_HALO_DEVICE_F0_ID, &CFL_2x3x8::hwInfo, &CFL_2x3x8::setupHardwareInfo, GTTYPE_GT3},
-        {ICFL_GT3_ULT_15W_DEVICE_F0_ID, &CFL_2x3x8::hwInfo, &CFL_2x3x8::setupHardwareInfo, GTTYPE_GT3},
-        {ICFL_GT3_ULT_15W_42EU_DEVICE_F0_ID, &CFL_2x3x8::hwInfo, &CFL_2x3x8::setupHardwareInfo, GTTYPE_GT3},
-        {ICFL_GT3_ULT_28W_DEVICE_F0_ID, &CFL_2x3x8::hwInfo, &CFL_2x3x8::setupHardwareInfo, GTTYPE_GT3},
-        {ICFL_GT3_ULT_DEVICE_F0_ID, &CFL_2x3x8::hwInfo, &CFL_2x3x8::setupHardwareInfo, GTTYPE_GT3},
-        {ICFL_GT3_U43_ULT_DEVICE_F0_ID, &CFL_2x3x8::hwInfo, &CFL_2x3x8::setupHardwareInfo, GTTYPE_GT3},
+        {0x3E95, &CflHw2x3x8::hwInfo, &CflHw2x3x8::setupHardwareInfo},
+        {0x3EA6, &CflHw2x3x8::hwInfo, &CflHw2x3x8::setupHardwareInfo},
+        {0x3EA7, &CflHw2x3x8::hwInfo, &CflHw2x3x8::setupHardwareInfo},
+        {0x3EA8, &CflHw2x3x8::hwInfo, &CflHw2x3x8::setupHardwareInfo},
+        {0x3EA5, &CflHw2x3x8::hwInfo, &CflHw2x3x8::setupHardwareInfo},
+        {0x3EA2, &CflHw2x3x8::hwInfo, &CflHw2x3x8::setupHardwareInfo},
 
-        // CML GT1
-        {ICFL_GT1_ULT_DEVICE_V0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
-        {ICFL_GT1_ULT_DEVICE_A0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
-        {ICFL_GT1_ULT_DEVICE_S0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
-        {ICFL_GT1_ULT_DEVICE_K0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
-        {ICFL_GT1_ULX_DEVICE_S0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
-        {ICFL_GT1_DT_DEVICE_P0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
-        {ICFL_GT1_DT_DEVICE_G0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
-        {ICFL_GT1_HALO_DEVICE_16_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
-        {ICFL_GT1_HALO_DEVICE_18_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
-        // CML GT2
-        {ICFL_GT2_ULT_DEVICE_V0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {ICFL_GT2_ULT_DEVICE_A0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {ICFL_GT2_ULT_DEVICE_S0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {ICFL_GT2_ULT_DEVICE_K0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {ICFL_GT2_ULX_DEVICE_S0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {ICFL_GT2_DT_DEVICE_P0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {ICFL_GT2_DT_DEVICE_G0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {ICFL_GT2_HALO_DEVICE_15_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {ICFL_GT2_HALO_DEVICE_17_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        // CML WORKSTATION
-        {ICFL_GT2_WKS_DEVICE_P0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {ICFL_GT2_WKS_DEVICE_G0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
+        {0x9B21, &CflHw1x2x6::hwInfo, &CflHw1x2x6::setupHardwareInfo},
+        {0x9BAA, &CflHw1x2x6::hwInfo, &CflHw1x2x6::setupHardwareInfo},
+        {0x9BAB, &CflHw1x2x6::hwInfo, &CflHw1x2x6::setupHardwareInfo},
+        {0x9BAC, &CflHw1x2x6::hwInfo, &CflHw1x2x6::setupHardwareInfo},
+        {0x9BA0, &CflHw1x2x6::hwInfo, &CflHw1x2x6::setupHardwareInfo},
+        {0x9BA5, &CflHw1x2x6::hwInfo, &CflHw1x2x6::setupHardwareInfo},
+        {0x9BA8, &CflHw1x2x6::hwInfo, &CflHw1x2x6::setupHardwareInfo},
+        {0x9BA4, &CflHw1x2x6::hwInfo, &CflHw1x2x6::setupHardwareInfo},
+        {0x9BA2, &CflHw1x2x6::hwInfo, &CflHw1x2x6::setupHardwareInfo},
+        {0x9B41, &CflHw1x3x8::hwInfo, &CflHw1x3x8::setupHardwareInfo},
+        {0x9BCA, &CflHw1x3x8::hwInfo, &CflHw1x3x8::setupHardwareInfo},
+        {0x9BCB, &CflHw1x3x8::hwInfo, &CflHw1x3x8::setupHardwareInfo},
+        {0x9BCC, &CflHw1x3x8::hwInfo, &CflHw1x3x8::setupHardwareInfo},
+        {0x9BC0, &CflHw1x3x8::hwInfo, &CflHw1x3x8::setupHardwareInfo},
+        {0x9BC5, &CflHw1x3x8::hwInfo, &CflHw1x3x8::setupHardwareInfo},
+        {0x9BC8, &CflHw1x3x8::hwInfo, &CflHw1x3x8::setupHardwareInfo},
+        {0x9BC4, &CflHw1x3x8::hwInfo, &CflHw1x3x8::setupHardwareInfo},
+        {0x9BC2, &CflHw1x3x8::hwInfo, &CflHw1x3x8::setupHardwareInfo},
+        {0x9BC6, &CflHw1x3x8::hwInfo, &CflHw1x3x8::setupHardwareInfo},
+        {0x9BE6, &CflHw1x3x8::hwInfo, &CflHw1x3x8::setupHardwareInfo},
+        {0x9BF6, &CflHw1x3x8::hwInfo, &CflHw1x3x8::setupHardwareInfo},
     }};
 
-    auto compareStructs = [](const DeviceDescriptor *first, const DeviceDescriptor *second) {
-        return first->deviceId == second->deviceId && first->pHwInfo == second->pHwInfo &&
-               first->setupHardwareInfo == second->setupHardwareInfo && first->eGtType == second->eGtType;
-    };
-
-    size_t startIndex = 0;
-    while (!compareStructs(&expectedDescriptors[0], &deviceDescriptorTable[startIndex]) &&
-           deviceDescriptorTable[startIndex].deviceId != 0) {
-        startIndex++;
-    };
-    EXPECT_NE(0u, deviceDescriptorTable[startIndex].deviceId);
-
-    for (auto &expected : expectedDescriptors) {
-        EXPECT_TRUE(compareStructs(&expected, &deviceDescriptorTable[startIndex]));
-        startIndex++;
-    }
+    testImpl(expectedDescriptors);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,8 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_info.h"
+
+#include "opencl/source/helpers/cl_hw_helper.h"
 
 #include "cl_api_tests.h"
 
@@ -17,6 +19,8 @@ using namespace NEO;
 using clGetDeviceInfoTests = api_tests;
 
 namespace ULT {
+
+static_assert(CL_DEVICE_IL_VERSION == CL_DEVICE_IL_VERSION_KHR, "Param values are different");
 
 TEST_F(clGetDeviceInfoTests, givenNeoDeviceWhenAskedForSliceCountThenNumberOfSlicesIsReturned) {
     cl_device_info paramName = 0;
@@ -83,7 +87,7 @@ TEST_F(clGetDeviceInfoTests, GivenNullDeviceWhenGettingDeviceInfoThenInvalidDevi
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
-TEST_F(clGetDeviceInfoTests, givenOpenCLDeviceWhenAskedForSupportedSvmTypeCorrectValueIsReturned) {
+TEST_F(clGetDeviceInfoTests, givenOpenCLDeviceWhenAskedForSupportedSvmTypeThenCorrectValueIsReturned) {
 
     cl_device_svm_capabilities svmCaps;
 
@@ -106,6 +110,43 @@ TEST_F(clGetDeviceInfoTests, givenOpenCLDeviceWhenAskedForSupportedSvmTypeCorrec
         }
     }
     EXPECT_EQ(svmCaps, expectedCaps);
+}
+
+TEST(clGetDeviceGlobalMemSizeTests, givenDebugFlagForGlobalMemSizePercentWhenAskedForGlobalMemSizeThenAdjustedGlobalMemSizeIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ClDeviceGlobalMemSizeAvailablePercent.set(100u);
+    uint64_t globalMemSize100percent = 0u;
+
+    auto hwInfo = *defaultHwInfo;
+
+    auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+
+    auto retVal = clGetDeviceInfo(
+        pDevice.get(),
+        CL_DEVICE_GLOBAL_MEM_SIZE,
+        sizeof(uint64_t),
+        &globalMemSize100percent,
+        nullptr);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_NE(globalMemSize100percent, 0u);
+
+    DebugManager.flags.ClDeviceGlobalMemSizeAvailablePercent.set(50u);
+    uint64_t globalMemSize50percent = 0u;
+
+    hwInfo = *defaultHwInfo;
+
+    pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+
+    retVal = clGetDeviceInfo(
+        pDevice.get(),
+        CL_DEVICE_GLOBAL_MEM_SIZE,
+        sizeof(uint64_t),
+        &globalMemSize50percent,
+        nullptr);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_NE(globalMemSize50percent, 0u);
+
+    EXPECT_EQ(globalMemSize100percent / 2u, globalMemSize50percent);
 }
 
 TEST(clGetDeviceFineGrainedTests, givenDebugFlagForFineGrainedOverrideWhenItIsUsedWithZeroThenNoFineGrainSupport) {
@@ -212,7 +253,7 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     std::string extensionString(paramValue.get());
-    std::string supportedExtensions[] = {
+    static const char *const supportedExtensions[] = {
         "cl_khr_byte_addressable_store ",
         "cl_khr_fp16 ",
         "cl_khr_global_int32_base_atomics ",
@@ -220,6 +261,7 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
         "cl_khr_icd ",
         "cl_khr_local_int32_base_atomics ",
         "cl_khr_local_int32_extended_atomics ",
+        "cl_intel_command_queue_families",
         "cl_intel_subgroups ",
         "cl_intel_required_subgroup_size ",
         "cl_intel_subgroups_short ",
@@ -230,21 +272,27 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
         "cl_khr_throttle_hints ",
         "cl_khr_create_command_queue ",
         "cl_intel_subgroups_char ",
-        "cl_intel_subgroups_long "};
+        "cl_intel_subgroups_long ",
+        "cl_khr_il_program ",
+        "cl_khr_subgroup_extended_types ",
+        "cl_khr_subgroup_non_uniform_vote ",
+        "cl_khr_subgroup_ballot ",
+        "cl_khr_subgroup_non_uniform_arithmetic ",
+        "cl_khr_subgroup_shuffle ",
+        "cl_khr_subgroup_shuffle_relative ",
+        "cl_khr_subgroup_clustered_reduce ",
+        "cl_intel_device_attribute_query ",
+        "cl_khr_suggested_local_work_size ",
+        "cl_intel_split_work_group_barrier "};
 
-    for (auto element = 0u; element < sizeof(supportedExtensions) / sizeof(supportedExtensions[0]); element++) {
-        auto foundOffset = extensionString.find(supportedExtensions[element]);
+    for (auto extension : supportedExtensions) {
+        auto foundOffset = extensionString.find(extension);
         EXPECT_TRUE(foundOffset != std::string::npos);
     }
 }
 
-TEST_F(clGetDeviceInfoTests, GivenClDeviceIlVersionParamAndOcl21WhenGettingDeviceInfoThenSpirv12IsReturned) {
+TEST_F(clGetDeviceInfoTests, GivenClDeviceIlVersionParamWhenGettingDeviceInfoThenSpirv12IsReturned) {
     size_t paramRetSize = 0;
-
-    ClDevice *pDevice = castToObject<ClDevice>(testedClDevice);
-
-    if (pDevice->areOcl21FeaturesEnabled() == false)
-        return;
 
     cl_int retVal = clGetDeviceInfo(
         testedClDevice,
@@ -266,6 +314,49 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceIlVersionParamAndOcl21WhenGettingDevic
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_STREQ("SPIR-V_1.2 ", paramValue.get());
+}
+using matcherAtMostGen12lp = IsAtMostGfxCore<IGFX_GEN12LP_CORE>;
+HWTEST2_F(clGetDeviceInfoTests, givenClDeviceSupportedThreadArbitrationPolicyIntelWhenCallClGetDeviceInfoThenProperArrayIsReturned, matcherAtMostGen12lp) {
+    cl_device_info paramName = 0;
+    cl_uint paramValue[3];
+    size_t paramSize = sizeof(paramValue);
+    size_t paramRetSize = 0;
+
+    paramName = CL_DEVICE_SUPPORTED_THREAD_ARBITRATION_POLICY_INTEL;
+    cl_uint expectedRetValue[] = {CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_OLDEST_FIRST_INTEL, CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL, CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_AFTER_DEPENDENCY_ROUND_ROBIN_INTEL};
+
+    retVal = clGetDeviceInfo(
+        testedClDevice,
+        paramName,
+        paramSize,
+        paramValue,
+        &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(expectedRetValue), paramRetSize);
+    EXPECT_TRUE(memcmp(expectedRetValue, paramValue, sizeof(expectedRetValue)) == 0);
+}
+
+HWTEST_F(clGetDeviceInfoTests, givenClDeviceSupportedThreadArbitrationPolicyIntelWhenThreadArbitrationPolicyChangeNotSupportedAndCallClGetDeviceInfoThenParamRetSizeIsZero) {
+    auto &hwHelper = NEO::ClHwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    if (hwHelper.isSupportedKernelThreadArbitrationPolicy()) {
+        GTEST_SKIP();
+    }
+    cl_device_info paramName = 0;
+    cl_uint paramValue[3];
+    size_t paramSize = sizeof(paramValue);
+    size_t paramRetSize = 0;
+
+    paramName = CL_DEVICE_SUPPORTED_THREAD_ARBITRATION_POLICY_INTEL;
+
+    retVal = clGetDeviceInfo(
+        testedClDevice,
+        paramName,
+        paramSize,
+        paramValue,
+        &paramRetSize);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0u, paramRetSize);
 }
 
 //------------------------------------------------------------------------------
@@ -312,6 +403,7 @@ TEST_P(GetDeviceInfoStr, GivenStringTypeParamWhenGettingDeviceInfoThenSuccessIsR
 static cl_device_info deviceInfoStrParams[] =
     {
         CL_DEVICE_BUILT_IN_KERNELS,
+        CL_DEVICE_LATEST_CONFORMANCE_VERSION_PASSED,
         CL_DEVICE_NAME,
         CL_DEVICE_OPENCL_C_VERSION,
         CL_DEVICE_PROFILE,

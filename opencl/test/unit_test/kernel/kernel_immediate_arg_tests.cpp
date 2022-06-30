@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/source/kernel/kernel.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
-#include "test.h"
 
 #include "CL/cl.h"
 #include "gtest/gtest.h"
@@ -18,66 +19,57 @@
 using namespace NEO;
 
 template <typename T>
-class KernelArgImmediateTest : public Test<ClDeviceFixture> {
+class KernelArgImmediateTest : public MultiRootDeviceWithSubDevicesFixture {
   public:
-    KernelArgImmediateTest() {
-    }
-
   protected:
     void SetUp() override {
-        ClDeviceFixture::SetUp();
-        memset(pCrossThreadData, 0xfe, sizeof(pCrossThreadData));
-        program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
+        MultiRootDeviceWithSubDevicesFixture::SetUp();
+        program = std::make_unique<MockProgram>(context.get(), false, context->getDevices());
 
-        // define kernel info
-        pKernelInfo = std::make_unique<KernelInfo>();
+        KernelInfoContainer kernelInfos;
+        kernelInfos.resize(3);
+        KernelVectorType kernels;
+        kernels.resize(3);
+        for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+            memset(&pCrossThreadData[rootDeviceIndex], 0xfe, sizeof(pCrossThreadData[rootDeviceIndex]));
 
-        // setup kernel arg offsets
-        KernelArgPatchInfo kernelArgPatchInfo;
+            // define kernel info
+            this->pKernelInfo = std::make_unique<MockKernelInfo>();
+            this->pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
-        pKernelInfo->kernelArgInfo.resize(4);
-        pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-        pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-        pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-        pKernelInfo->kernelArgInfo[2].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-        pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
+            this->pKernelInfo->addArgImmediate(0, sizeof(T), 0x50);
+            this->pKernelInfo->addArgImmediate(1, sizeof(T), 0x40);
+            this->pKernelInfo->addArgImmediate(2, sizeof(T), 0x30);
+            this->pKernelInfo->addArgImmediate(3, sizeof(T), 0x20);
+            this->pKernelInfo->argAsVal(3).elements.push_back(ArgDescValue::Element{0x28, sizeof(T), 0});
+            this->pKernelInfo->argAsVal(3).elements.push_back(ArgDescValue::Element{0x38, sizeof(T), 0});
 
-        pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[2].crossthreadOffset = 0x38;
-        pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[1].crossthreadOffset = 0x28;
-        pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[0].crossthreadOffset = 0x20;
-        pKernelInfo->kernelArgInfo[2].kernelArgPatchInfoVector[0].crossthreadOffset = 0x30;
-        pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector[0].crossthreadOffset = 0x40;
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = 0x50;
-        pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[2].size = sizeof(T);
-        pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[1].size = sizeof(T);
-        pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[0].size = sizeof(T);
-        pKernelInfo->kernelArgInfo[2].kernelArgPatchInfoVector[0].size = sizeof(T);
-        pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector[0].size = sizeof(T);
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = sizeof(T);
+            kernelInfos[rootDeviceIndex] = this->pKernelInfo.get();
+        }
 
-        program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
-        pKernel = new MockKernel(program.get(), *pKernelInfo, *pClDevice);
-        ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
-        pKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
+        for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+            pKernel[rootDeviceIndex] = new MockKernel(program.get(), *pKernelInfo, *deviceFactory->rootDevices[rootDeviceIndex]);
+            kernels[rootDeviceIndex] = pKernel[rootDeviceIndex];
+            ASSERT_EQ(CL_SUCCESS, pKernel[rootDeviceIndex]->initialize());
+        }
 
-        pKernel->setKernelArgHandler(0, &Kernel::setArgImmediate);
-        pKernel->setKernelArgHandler(1, &Kernel::setArgImmediate);
-        pKernel->setKernelArgHandler(2, &Kernel::setArgImmediate);
-        pKernel->setKernelArgHandler(3, &Kernel::setArgImmediate);
+        pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(kernels, kernelInfos);
+
+        for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+            pKernel[rootDeviceIndex]->setCrossThreadData(&pCrossThreadData[rootDeviceIndex], sizeof(pCrossThreadData[rootDeviceIndex]));
+        }
     }
 
     void TearDown() override {
-        delete pKernel;
-
-        ClDeviceFixture::TearDown();
+        MultiRootDeviceWithSubDevicesFixture::TearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<MockProgram> program;
-    MockKernel *pKernel = nullptr;
-    std::unique_ptr<KernelInfo> pKernelInfo;
-    char pCrossThreadData[0x60];
+    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel;
+    MockKernel *pKernel[3] = {nullptr};
+    std::unique_ptr<MockKernelInfo> pKernelInfo;
+    char pCrossThreadData[3][0x60];
 };
 
 typedef ::testing::Types<
@@ -97,18 +89,21 @@ TYPED_TEST_CASE(KernelArgImmediateTest, KernelArgImmediateTypes);
 TYPED_TEST(KernelArgImmediateTest, WhenSettingKernelArgThenArgIsSetCorrectly) {
     auto val = (TypeParam)0xaaaaaaaaULL;
     auto pVal = &val;
-    this->pKernel->setArg(0, sizeof(TypeParam), pVal);
+    this->pMultiDeviceKernel->setArg(0, sizeof(TypeParam), pVal);
 
-    auto pKernelArg = (TypeParam *)(this->pKernel->getCrossThreadData() +
-                                    this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
+        auto pKernelArg = (TypeParam *)(pKernel->getCrossThreadData() +
+                                        this->pKernelInfo->argAsVal(0).elements[0].offset);
 
-    EXPECT_EQ(val, *pKernelArg);
+        EXPECT_EQ(val, *pKernelArg);
+    }
 }
 
 TYPED_TEST(KernelArgImmediateTest, GivenInvalidIndexWhenSettingKernelArgThenInvalidArgIndexErrorIsReturned) {
     auto val = (TypeParam)0U;
     auto pVal = &val;
-    auto ret = this->pKernel->setArg((uint32_t)-1, sizeof(TypeParam), pVal);
+    auto ret = this->pMultiDeviceKernel->setArg((uint32_t)-1, sizeof(TypeParam), pVal);
 
     EXPECT_EQ(ret, CL_INVALID_ARG_INDEX);
 }
@@ -116,55 +111,71 @@ TYPED_TEST(KernelArgImmediateTest, GivenInvalidIndexWhenSettingKernelArgThenInva
 TYPED_TEST(KernelArgImmediateTest, GivenMultipleArgumentsWhenSettingKernelArgThenEachArgIsSetCorrectly) {
     auto val = (TypeParam)0xaaaaaaaaULL;
     auto pVal = &val;
-    this->pKernel->setArg(0, sizeof(TypeParam), pVal);
 
-    auto pKernelArg = (TypeParam *)(this->pKernel->getCrossThreadData() +
-                                    this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
+    this->pMultiDeviceKernel->setArg(0, sizeof(TypeParam), pVal);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
 
-    EXPECT_EQ(val, *pKernelArg);
+        auto pKernelArg = (TypeParam *)(pKernel->getCrossThreadData() +
+                                        this->pKernelInfo->argAsVal(0).elements[0].offset);
 
+        EXPECT_EQ(val, *pKernelArg);
+    }
     val = (TypeParam)0xbbbbbbbbULL;
-    this->pKernel->setArg(1, sizeof(TypeParam), &val);
+    this->pMultiDeviceKernel->setArg(1, sizeof(TypeParam), &val);
 
-    pKernelArg = (TypeParam *)(this->pKernel->getCrossThreadData() +
-                               this->pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector[0].crossthreadOffset);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
+        auto pKernelArg = (TypeParam *)(pKernel->getCrossThreadData() +
+                                        this->pKernelInfo->argAsVal(1).elements[0].offset);
 
-    EXPECT_EQ(val, *pKernelArg);
-
+        EXPECT_EQ(val, *pKernelArg);
+    }
     val = (TypeParam)0xccccccccULL;
-    this->pKernel->setArg(2, sizeof(TypeParam), &val);
+    this->pMultiDeviceKernel->setArg(2, sizeof(TypeParam), &val);
 
-    pKernelArg = (TypeParam *)(this->pKernel->getCrossThreadData() +
-                               this->pKernelInfo->kernelArgInfo[2].kernelArgPatchInfoVector[0].crossthreadOffset);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
+        auto pKernelArg = (TypeParam *)(pKernel->getCrossThreadData() +
+                                        this->pKernelInfo->argAsVal(2).elements[0].offset);
 
-    EXPECT_EQ(val, *pKernelArg);
+        EXPECT_EQ(val, *pKernelArg);
+    }
 }
 
 TYPED_TEST(KernelArgImmediateTest, GivenCrossThreadDataOverwritesWhenSettingKernelArgThenArgsAreSetCorrectly) {
     TypeParam val = (TypeParam)0xaaaaaaaaULL;
     TypeParam *pVal = &val;
-    this->pKernel->setArg(0, sizeof(TypeParam), pVal);
+    this->pMultiDeviceKernel->setArg(0, sizeof(TypeParam), pVal);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
 
-    TypeParam *pKernelArg = (TypeParam *)(this->pKernel->getCrossThreadData() +
-                                          this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
+        TypeParam *pKernelArg = (TypeParam *)(pKernel->getCrossThreadData() +
+                                              this->pKernelInfo->argAsVal(0).elements[0].offset);
 
-    EXPECT_EQ(val, *pKernelArg);
+        EXPECT_EQ(val, *pKernelArg);
+    }
 
     val = (TypeParam)0xbbbbbbbbULL;
-    this->pKernel->setArg(1, sizeof(TypeParam), &val);
+    this->pMultiDeviceKernel->setArg(1, sizeof(TypeParam), &val);
 
-    pKernelArg = (TypeParam *)(this->pKernel->getCrossThreadData() +
-                               this->pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector[0].crossthreadOffset);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
+        auto pKernelArg = (TypeParam *)(pKernel->getCrossThreadData() +
+                                        this->pKernelInfo->argAsVal(1).elements[0].offset);
 
-    EXPECT_EQ(val, *pKernelArg);
-
+        EXPECT_EQ(val, *pKernelArg);
+    }
     val = (TypeParam)0xccccccccULL;
-    this->pKernel->setArg(0, sizeof(TypeParam), &val);
+    this->pMultiDeviceKernel->setArg(0, sizeof(TypeParam), &val);
 
-    pKernelArg = (TypeParam *)(this->pKernel->getCrossThreadData() +
-                               this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
+        auto pKernelArg = (TypeParam *)(pKernel->getCrossThreadData() +
+                                        this->pKernelInfo->argAsVal(0).elements[0].offset);
 
-    EXPECT_EQ(val, *pKernelArg);
+        EXPECT_EQ(val, *pKernelArg);
+    }
 }
 
 TYPED_TEST(KernelArgImmediateTest, GivenMultipleStructElementsWhenSettingKernelArgThenArgsAreSetCorrectly) {
@@ -180,155 +191,177 @@ TYPED_TEST(KernelArgImmediateTest, GivenMultipleStructElementsWhenSettingKernelA
     immediateStruct.unused[1] = 0xfe;
     immediateStruct.unused[2] = 0xfe;
 
-    this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[0].sourceOffset = offsetof(struct ImmediateStruct, a);
-    this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[1].sourceOffset = offsetof(struct ImmediateStruct, b);
+    auto &elements = this->pKernelInfo->argAsVal(3).elements;
+    elements[0].sourceOffset = offsetof(struct ImmediateStruct, a);
+    elements[1].sourceOffset = offsetof(struct ImmediateStruct, b);
 
-    this->pKernel->setArg(3, sizeof(immediateStruct), &immediateStruct);
+    this->pMultiDeviceKernel->setArg(3, sizeof(immediateStruct), &immediateStruct);
 
-    auto pCrossthreadA = (TypeParam *)(this->pKernel->getCrossThreadData() +
-                                       this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[0].crossthreadOffset);
-    EXPECT_EQ(immediateStruct.a, *pCrossthreadA);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
+        auto pCrossthreadA = (TypeParam *)(pKernel->getCrossThreadData() + elements[0].offset);
+        EXPECT_EQ(immediateStruct.a, *pCrossthreadA);
 
-    auto pCrossthreadB = (TypeParam *)(this->pKernel->getCrossThreadData() +
-                                       this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[1].crossthreadOffset);
-    EXPECT_EQ(immediateStruct.b, *pCrossthreadB);
+        auto pCrossthreadB = (TypeParam *)(pKernel->getCrossThreadData() + elements[1].offset);
+        EXPECT_EQ(immediateStruct.b, *pCrossthreadB);
+    }
 }
 
 TYPED_TEST(KernelArgImmediateTest, givenTooLargePatchSizeWhenSettingArgThenDontReadMemoryBeyondLimit) {
-    TypeParam memory[2];
-    std::memset(&memory[0], 0xaa, sizeof(TypeParam));
-    std::memset(&memory[1], 0xbb, sizeof(TypeParam));
 
-    const auto destinationMemoryAddress = this->pKernel->getCrossThreadData() +
-                                          this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset;
-    const auto memoryBeyondLimitAddress = destinationMemoryAddress + sizeof(TypeParam);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
+        TypeParam memory[2];
+        std::memset(&memory[0], 0xaa, sizeof(TypeParam));
+        std::memset(&memory[1], 0xbb, sizeof(TypeParam));
 
-    const auto memoryBeyondLimitBefore = *reinterpret_cast<TypeParam *>(memoryBeyondLimitAddress);
+        const auto destinationMemoryAddress = pKernel->getCrossThreadData() +
+                                              this->pKernelInfo->argAsVal(0).elements[0].offset;
+        const auto memoryBeyondLimitAddress = destinationMemoryAddress + sizeof(TypeParam);
 
-    this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = sizeof(TypeParam) + 1;
-    auto retVal = this->pKernel->setArg(0, sizeof(TypeParam), &memory[0]);
+        const auto memoryBeyondLimitBefore = *reinterpret_cast<TypeParam *>(memoryBeyondLimitAddress);
 
-    const auto memoryBeyondLimitAfter = *reinterpret_cast<TypeParam *>(memoryBeyondLimitAddress);
-    EXPECT_EQ(memoryBeyondLimitBefore, memoryBeyondLimitAfter);
-    EXPECT_EQ(memory[0], *reinterpret_cast<TypeParam *>(destinationMemoryAddress));
+        this->pKernelInfo->argAsVal(0).elements[0].size = sizeof(TypeParam) + 1;
+        auto retVal = pKernel->setArg(0, sizeof(TypeParam), &memory[0]);
 
-    EXPECT_EQ(CL_SUCCESS, retVal);
+        const auto memoryBeyondLimitAfter = *reinterpret_cast<TypeParam *>(memoryBeyondLimitAddress);
+        EXPECT_EQ(memoryBeyondLimitBefore, memoryBeyondLimitAfter);
+        EXPECT_EQ(memory[0], *reinterpret_cast<TypeParam *>(destinationMemoryAddress));
+
+        EXPECT_EQ(CL_SUCCESS, retVal);
+    }
 }
 
 TYPED_TEST(KernelArgImmediateTest, givenNotTooLargePatchSizeWhenSettingArgThenDontReadMemoryBeyondLimit) {
-    TypeParam memory[2];
-    std::memset(&memory[0], 0xaa, sizeof(TypeParam));
-    std::memset(&memory[1], 0xbb, sizeof(TypeParam));
 
-    const auto destinationMemoryAddress = this->pKernel->getCrossThreadData() +
-                                          this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset;
-    const auto memoryBeyondLimitAddress = destinationMemoryAddress + sizeof(TypeParam);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
+        TypeParam memory[2];
+        std::memset(&memory[0], 0xaa, sizeof(TypeParam));
+        std::memset(&memory[1], 0xbb, sizeof(TypeParam));
 
-    const auto memoryBeyondLimitBefore = *reinterpret_cast<TypeParam *>(memoryBeyondLimitAddress);
+        const auto destinationMemoryAddress = pKernel->getCrossThreadData() +
+                                              this->pKernelInfo->argAsVal(0).elements[0].offset;
+        const auto memoryBeyondLimitAddress = destinationMemoryAddress + sizeof(TypeParam);
 
-    this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = sizeof(TypeParam);
-    auto retVal = this->pKernel->setArg(0, sizeof(TypeParam), &memory[0]);
+        const auto memoryBeyondLimitBefore = *reinterpret_cast<TypeParam *>(memoryBeyondLimitAddress);
 
-    const auto memoryBeyondLimitAfter = *reinterpret_cast<TypeParam *>(memoryBeyondLimitAddress);
-    EXPECT_EQ(memoryBeyondLimitBefore, memoryBeyondLimitAfter);
-    EXPECT_EQ(memory[0], *reinterpret_cast<TypeParam *>(destinationMemoryAddress));
+        this->pKernelInfo->argAsVal(0).elements[0].size = sizeof(TypeParam);
+        auto retVal = pKernel->setArg(0, sizeof(TypeParam), &memory[0]);
 
-    EXPECT_EQ(CL_SUCCESS, retVal);
+        const auto memoryBeyondLimitAfter = *reinterpret_cast<TypeParam *>(memoryBeyondLimitAddress);
+        EXPECT_EQ(memoryBeyondLimitBefore, memoryBeyondLimitAfter);
+        EXPECT_EQ(memory[0], *reinterpret_cast<TypeParam *>(destinationMemoryAddress));
+
+        EXPECT_EQ(CL_SUCCESS, retVal);
+    }
 }
 
 TYPED_TEST(KernelArgImmediateTest, givenMulitplePatchesAndFirstPatchSizeTooLargeWhenSettingArgThenDontReadMemoryBeyondLimit) {
     if (sizeof(TypeParam) == 1)
         return; // multiple patch chars don't make sense
 
-    TypeParam memory[2];
-    std::memset(&memory[0], 0xaa, sizeof(TypeParam));
-    std::memset(&memory[1], 0xbb, sizeof(TypeParam));
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
+        TypeParam memory[2];
+        std::memset(&memory[0], 0xaa, sizeof(TypeParam));
+        std::memset(&memory[1], 0xbb, sizeof(TypeParam));
 
-    const auto destinationMemoryAddress1 = this->pKernel->getCrossThreadData() +
-                                           this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[2].crossthreadOffset;
-    const auto destinationMemoryAddress2 = this->pKernel->getCrossThreadData() +
-                                           this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[1].crossthreadOffset;
-    const auto memoryBeyondLimitAddress1 = destinationMemoryAddress1 + sizeof(TypeParam);
-    const auto memoryBeyondLimitAddress2 = destinationMemoryAddress2 + sizeof(TypeParam) / 2;
+        auto &elements = this->pKernelInfo->argAsVal(3).elements;
+        const auto destinationMemoryAddress1 = pKernel->getCrossThreadData() +
+                                               elements[2].offset;
+        const auto destinationMemoryAddress2 = pKernel->getCrossThreadData() +
+                                               elements[1].offset;
+        const auto memoryBeyondLimitAddress1 = destinationMemoryAddress1 + sizeof(TypeParam);
+        const auto memoryBeyondLimitAddress2 = destinationMemoryAddress2 + sizeof(TypeParam) / 2;
 
-    const std::vector<unsigned char> memoryBeyondLimitBefore1(memoryBeyondLimitAddress1, memoryBeyondLimitAddress1 + sizeof(TypeParam));
-    const std::vector<unsigned char> memoryBeyondLimitBefore2(memoryBeyondLimitAddress2, memoryBeyondLimitAddress2 + sizeof(TypeParam) / 2);
+        const std::vector<unsigned char> memoryBeyondLimitBefore1(memoryBeyondLimitAddress1, memoryBeyondLimitAddress1 + sizeof(TypeParam));
+        const std::vector<unsigned char> memoryBeyondLimitBefore2(memoryBeyondLimitAddress2, memoryBeyondLimitAddress2 + sizeof(TypeParam) / 2);
 
-    this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[2].sourceOffset = 0;
-    this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[1].sourceOffset = sizeof(TypeParam) / 2;
-    this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[2].size = sizeof(TypeParam);
-    this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[1].size = sizeof(TypeParam) / 2;
-    auto retVal = this->pKernel->setArg(3, sizeof(TypeParam), &memory[0]);
+        elements[2].sourceOffset = 0;
+        elements[1].sourceOffset = sizeof(TypeParam) / 2;
+        elements[2].size = sizeof(TypeParam);
+        elements[1].size = sizeof(TypeParam) / 2;
+        auto retVal = pKernel->setArg(3, sizeof(TypeParam), &memory[0]);
 
-    EXPECT_EQ(0, std::memcmp(memoryBeyondLimitBefore1.data(), memoryBeyondLimitAddress1, sizeof(TypeParam)));
-    EXPECT_EQ(0, std::memcmp(memoryBeyondLimitBefore2.data(), memoryBeyondLimitAddress2, sizeof(TypeParam) / 2));
+        EXPECT_EQ(0, std::memcmp(memoryBeyondLimitBefore1.data(), memoryBeyondLimitAddress1, sizeof(TypeParam)));
+        EXPECT_EQ(0, std::memcmp(memoryBeyondLimitBefore2.data(), memoryBeyondLimitAddress2, sizeof(TypeParam) / 2));
 
-    EXPECT_EQ(0, std::memcmp(&memory[0], destinationMemoryAddress1, sizeof(TypeParam)));
-    EXPECT_EQ(0, std::memcmp(&memory[0], destinationMemoryAddress2, sizeof(TypeParam) / 2));
+        EXPECT_EQ(0, std::memcmp(&memory[0], destinationMemoryAddress1, sizeof(TypeParam)));
+        EXPECT_EQ(0, std::memcmp(&memory[0], destinationMemoryAddress2, sizeof(TypeParam) / 2));
 
-    EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+    }
 }
 
 TYPED_TEST(KernelArgImmediateTest, givenMulitplePatchesAndSecondPatchSizeTooLargeWhenSettingArgThenDontReadMemoryBeyondLimit) {
     if (sizeof(TypeParam) == 1)
         return; // multiple patch chars don't make sense
 
-    TypeParam memory[2];
-    std::memset(&memory[0], 0xaa, sizeof(TypeParam));
-    std::memset(&memory[1], 0xbb, sizeof(TypeParam));
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
+        TypeParam memory[2];
+        std::memset(&memory[0], 0xaa, sizeof(TypeParam));
+        std::memset(&memory[1], 0xbb, sizeof(TypeParam));
 
-    const auto destinationMemoryAddress1 = this->pKernel->getCrossThreadData() +
-                                           this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[2].crossthreadOffset;
-    const auto destinationMemoryAddress2 = this->pKernel->getCrossThreadData() +
-                                           this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[1].crossthreadOffset;
-    const auto memoryBeyondLimitAddress1 = destinationMemoryAddress1 + sizeof(TypeParam) / 2;
-    const auto memoryBeyondLimitAddress2 = destinationMemoryAddress2 + sizeof(TypeParam) / 2;
+        auto &elements = this->pKernelInfo->argAsVal(3).elements;
+        const auto destinationMemoryAddress1 = pKernel->getCrossThreadData() +
+                                               elements[2].offset;
+        const auto destinationMemoryAddress2 = pKernel->getCrossThreadData() +
+                                               elements[1].offset;
+        const auto memoryBeyondLimitAddress1 = destinationMemoryAddress1 + sizeof(TypeParam) / 2;
+        const auto memoryBeyondLimitAddress2 = destinationMemoryAddress2 + sizeof(TypeParam) / 2;
 
-    const std::vector<unsigned char> memoryBeyondLimitBefore1(memoryBeyondLimitAddress1, memoryBeyondLimitAddress1 + sizeof(TypeParam) / 2);
-    const std::vector<unsigned char> memoryBeyondLimitBefore2(memoryBeyondLimitAddress2, memoryBeyondLimitAddress2 + sizeof(TypeParam) / 2);
+        const std::vector<unsigned char> memoryBeyondLimitBefore1(memoryBeyondLimitAddress1, memoryBeyondLimitAddress1 + sizeof(TypeParam) / 2);
+        const std::vector<unsigned char> memoryBeyondLimitBefore2(memoryBeyondLimitAddress2, memoryBeyondLimitAddress2 + sizeof(TypeParam) / 2);
 
-    this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[0].size = 0;
-    this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[2].sourceOffset = 0;
-    this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[1].sourceOffset = sizeof(TypeParam) / 2;
-    this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[2].size = sizeof(TypeParam) / 2;
-    this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[1].size = sizeof(TypeParam);
-    auto retVal = this->pKernel->setArg(3, sizeof(TypeParam), &memory[0]);
+        elements[0].size = 0;
+        elements[2].sourceOffset = 0;
+        elements[1].sourceOffset = sizeof(TypeParam) / 2;
+        elements[2].size = sizeof(TypeParam) / 2;
+        elements[1].size = sizeof(TypeParam);
+        auto retVal = pKernel->setArg(3, sizeof(TypeParam), &memory[0]);
 
-    EXPECT_EQ(0, std::memcmp(memoryBeyondLimitBefore1.data(), memoryBeyondLimitAddress1, sizeof(TypeParam) / 2));
-    EXPECT_EQ(0, std::memcmp(memoryBeyondLimitBefore2.data(), memoryBeyondLimitAddress2, sizeof(TypeParam) / 2));
+        EXPECT_EQ(0, std::memcmp(memoryBeyondLimitBefore1.data(), memoryBeyondLimitAddress1, sizeof(TypeParam) / 2));
+        EXPECT_EQ(0, std::memcmp(memoryBeyondLimitBefore2.data(), memoryBeyondLimitAddress2, sizeof(TypeParam) / 2));
 
-    EXPECT_EQ(0, std::memcmp(&memory[0], destinationMemoryAddress1, sizeof(TypeParam) / 2));
-    EXPECT_EQ(0, std::memcmp(&memory[0], destinationMemoryAddress2, sizeof(TypeParam) / 2));
+        EXPECT_EQ(0, std::memcmp(&memory[0], destinationMemoryAddress1, sizeof(TypeParam) / 2));
+        EXPECT_EQ(0, std::memcmp(&memory[0], destinationMemoryAddress2, sizeof(TypeParam) / 2));
 
-    EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+    }
 }
 
 TYPED_TEST(KernelArgImmediateTest, givenMultiplePatchesAndOneSourceOffsetBeyondArgumentWhenSettingArgThenDontCopyThisPatch) {
-    TypeParam memory[2];
-    std::memset(&memory[0], 0xaa, sizeof(TypeParam));
-    std::memset(&memory[1], 0xbb, sizeof(TypeParam));
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
+        TypeParam memory[2];
+        std::memset(&memory[0], 0xaa, sizeof(TypeParam));
+        std::memset(&memory[1], 0xbb, sizeof(TypeParam));
 
-    const auto destinationMemoryAddress1 = this->pKernel->getCrossThreadData() +
-                                           this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[1].crossthreadOffset;
-    const auto destinationMemoryAddress2 = this->pKernel->getCrossThreadData() +
-                                           this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[2].crossthreadOffset;
-    const auto memoryBeyondLimitAddress1 = destinationMemoryAddress1 + sizeof(TypeParam);
-    const auto memoryBeyondLimitAddress2 = destinationMemoryAddress2;
+        auto &elements = this->pKernelInfo->argAsVal(3).elements;
+        const auto destinationMemoryAddress1 = pKernel->getCrossThreadData() +
+                                               elements[1].offset;
+        const auto destinationMemoryAddress2 = pKernel->getCrossThreadData() +
+                                               elements[2].offset;
+        const auto memoryBeyondLimitAddress1 = destinationMemoryAddress1 + sizeof(TypeParam);
+        const auto memoryBeyondLimitAddress2 = destinationMemoryAddress2;
 
-    const std::vector<unsigned char> memoryBeyondLimitBefore1(memoryBeyondLimitAddress1, memoryBeyondLimitAddress1 + sizeof(TypeParam));
-    const std::vector<unsigned char> memoryBeyondLimitBefore2(memoryBeyondLimitAddress2, memoryBeyondLimitAddress2 + sizeof(TypeParam));
+        const std::vector<unsigned char> memoryBeyondLimitBefore1(memoryBeyondLimitAddress1, memoryBeyondLimitAddress1 + sizeof(TypeParam));
+        const std::vector<unsigned char> memoryBeyondLimitBefore2(memoryBeyondLimitAddress2, memoryBeyondLimitAddress2 + sizeof(TypeParam));
 
-    this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[0].size = 0;
-    this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[1].sourceOffset = 0;
-    this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[1].size = sizeof(TypeParam);
-    this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[2].sourceOffset = sizeof(TypeParam);
-    this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[2].size = 1;
-    auto retVal = this->pKernel->setArg(3, sizeof(TypeParam), &memory[0]);
+        elements[0].size = 0;
+        elements[1].sourceOffset = 0;
+        elements[1].size = sizeof(TypeParam);
+        elements[2].sourceOffset = sizeof(TypeParam);
+        elements[2].size = 1;
+        auto retVal = pKernel->setArg(3, sizeof(TypeParam), &memory[0]);
 
-    EXPECT_EQ(0, std::memcmp(memoryBeyondLimitBefore1.data(), memoryBeyondLimitAddress1, memoryBeyondLimitBefore1.size()));
-    EXPECT_EQ(0, std::memcmp(memoryBeyondLimitBefore2.data(), memoryBeyondLimitAddress2, memoryBeyondLimitBefore2.size()));
+        EXPECT_EQ(0, std::memcmp(memoryBeyondLimitBefore1.data(), memoryBeyondLimitAddress1, memoryBeyondLimitBefore1.size()));
+        EXPECT_EQ(0, std::memcmp(memoryBeyondLimitBefore2.data(), memoryBeyondLimitAddress2, memoryBeyondLimitBefore2.size()));
 
-    EXPECT_EQ(0, std::memcmp(&memory[0], destinationMemoryAddress1, sizeof(TypeParam)));
+        EXPECT_EQ(0, std::memcmp(&memory[0], destinationMemoryAddress1, sizeof(TypeParam)));
 
-    EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+    }
 }

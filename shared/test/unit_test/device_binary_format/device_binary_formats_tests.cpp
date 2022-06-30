@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,9 +10,9 @@
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/program/program_info.h"
+#include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
-
-#include "test.h"
+#include "shared/test/unit_test/device_binary_format/zebin_tests.h"
 
 TEST(DecodeError, WhenStringRepresentationIsNeededThenAsStringEncodesProperly) {
     EXPECT_STREQ("decoded successfully", NEO::asString(NEO::DecodeError::Success));
@@ -41,9 +41,14 @@ TEST(IsAnyDeviceBinaryFormat, GivenArFormatThenReturnsTrue) {
     EXPECT_TRUE(NEO::isAnyDeviceBinaryFormat(ArrayRef<const uint8_t>::fromAny(NEO::Ar::arMagic.begin(), NEO::Ar::arMagic.size())));
 }
 
+TEST(IsAnyDeviceBinaryFormat, GivenZebinFormatThenReturnsTrue) {
+    ZebinTestData::ValidEmptyProgram zebinProgram;
+    EXPECT_TRUE(NEO::isAnyDeviceBinaryFormat(zebinProgram.storage));
+}
+
 TEST(UnpackSingleDeviceBinary, GivenUnknownBinaryThenReturnError) {
     const uint8_t data[] = "none of known formats";
-    ConstStringRef requestedProductAbbreviation = "unk";
+    auto requestedProductAbbreviation = "unk";
     NEO::TargetDevice requestedTargetDevice;
     std::string outErrors;
     std::string outWarnings;
@@ -62,7 +67,7 @@ TEST(UnpackSingleDeviceBinary, GivenUnknownBinaryThenReturnError) {
 
 TEST(UnpackSingleDeviceBinary, GivenPatchtoknsBinaryThenReturnSelf) {
     PatchTokensTestData::ValidEmptyProgram patchtokensProgram;
-    ConstStringRef requestedProductAbbreviation = "unk";
+    auto requestedProductAbbreviation = "unk";
     NEO::TargetDevice requestedTargetDevice;
     requestedTargetDevice.coreFamily = static_cast<GFXCORE_FAMILY>(patchtokensProgram.header->Device);
     requestedTargetDevice.stepping = patchtokensProgram.header->SteppingId;
@@ -91,7 +96,7 @@ TEST(UnpackSingleDeviceBinary, GivenOclElfBinaryThenReturnPatchtokensBinary) {
     elfEnc.getElfFileHeader().type = NEO::Elf::ET_OPENCL_EXECUTABLE;
     elfEnc.appendSection(NEO::Elf::SHT_OPENCL_DEV_BINARY, NEO::Elf::SectionNamesOpenCl::deviceBinary, patchtokensProgram.storage);
 
-    ConstStringRef requestedProductAbbreviation = "unk";
+    auto requestedProductAbbreviation = "unk";
     NEO::TargetDevice requestedTargetDevice;
     requestedTargetDevice.coreFamily = static_cast<GFXCORE_FAMILY>(patchtokensProgram.header->Device);
     requestedTargetDevice.stepping = patchtokensProgram.header->SteppingId;
@@ -130,7 +135,7 @@ TEST(UnpackSingleDeviceBinary, GivenArBinaryWithOclElfThenReturnPatchtokensBinar
     std::string outWarnings;
     auto elfData = elfEnc.encode();
 
-    std::string requiredProduct = NEO::hardwarePrefix[productFamily];
+    auto requiredProduct = NEO::hardwarePrefix[productFamily];
     std::string requiredStepping = std::to_string(patchtokensProgram.header->SteppingId);
     std::string requiredPointerSize = (patchtokensProgram.header->GPUPointerSizeInBytes == 4) ? "32" : "64";
     NEO::Ar::ArEncoder arEnc(true);
@@ -153,6 +158,30 @@ TEST(UnpackSingleDeviceBinary, GivenArBinaryWithOclElfThenReturnPatchtokensBinar
     EXPECT_EQ(0, memcmp(patchtokensProgram.storage.data(), unpacked.deviceBinary.begin(), unpacked.deviceBinary.size()));
 }
 
+TEST(UnpackSingleDeviceBinary, GivenZebinThenReturnSelf) {
+    ZebinTestData::ValidEmptyProgram zebinProgram;
+    auto requestedProductAbbreviation = "unk";
+    NEO::TargetDevice requestedTargetDevice;
+    requestedTargetDevice.productFamily = static_cast<PRODUCT_FAMILY>(zebinProgram.elfHeader->machine);
+    requestedTargetDevice.stepping = 0U;
+    requestedTargetDevice.maxPointerSizeInBytes = 8U;
+    std::string outErrors;
+    std::string outWarnings;
+    auto unpacked = NEO::unpackSingleDeviceBinary(zebinProgram.storage, requestedProductAbbreviation, requestedTargetDevice, outErrors, outWarnings);
+    EXPECT_TRUE(unpacked.buildOptions.empty());
+    EXPECT_TRUE(unpacked.debugData.empty());
+    EXPECT_FALSE(unpacked.deviceBinary.empty());
+    EXPECT_EQ(zebinProgram.storage.data(), unpacked.deviceBinary.begin());
+    EXPECT_EQ(zebinProgram.storage.size(), unpacked.deviceBinary.size());
+    EXPECT_TRUE(unpacked.intermediateRepresentation.empty());
+    EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, unpacked.format);
+    EXPECT_EQ(requestedTargetDevice.coreFamily, unpacked.targetDevice.coreFamily);
+    EXPECT_EQ(requestedTargetDevice.stepping, unpacked.targetDevice.stepping);
+    EXPECT_EQ(8U, unpacked.targetDevice.maxPointerSizeInBytes);
+    EXPECT_TRUE(outWarnings.empty());
+    EXPECT_TRUE(outErrors.empty());
+}
+
 TEST(IsAnyPackedDeviceBinaryFormat, GivenUnknownFormatThenReturnFalse) {
     const uint8_t data[] = "none of known formats";
     EXPECT_FALSE(NEO::isAnyPackedDeviceBinaryFormat(data));
@@ -173,6 +202,11 @@ TEST(IsAnyPackedDeviceBinaryFormat, GivenArFormatThenReturnsTrue) {
     EXPECT_TRUE(NEO::isAnyPackedDeviceBinaryFormat(ArrayRef<const uint8_t>::fromAny(NEO::Ar::arMagic.begin(), NEO::Ar::arMagic.size())));
 }
 
+TEST(IsAnyPackedDeviceBinaryFormat, GivenZebinFormatThenReturnsTrue) {
+    ZebinTestData::ValidEmptyProgram zebinProgram;
+    EXPECT_TRUE(NEO::isAnyPackedDeviceBinaryFormat(zebinProgram.storage));
+}
+
 TEST(IsAnySingleDeviceBinaryFormat, GivenUnknownFormatThenReturnFalse) {
     const uint8_t data[] = "none of known formats";
     EXPECT_FALSE(NEO::isAnySingleDeviceBinaryFormat(data));
@@ -191,6 +225,11 @@ TEST(IsAnySingleDeviceBinaryFormat, GivenOclElfFormatThenReturnsFalse) {
 
 TEST(IsAnySingleDeviceBinaryFormat, GivenArFormatThenReturnsFalse) {
     EXPECT_FALSE(NEO::isAnySingleDeviceBinaryFormat(ArrayRef<const uint8_t>::fromAny(NEO::Ar::arMagic.begin(), NEO::Ar::arMagic.size())));
+}
+
+TEST(IsAnySingleDeviceBinaryFormat, GivenZebinFormatThenReturnsTrue) {
+    ZebinTestData::ValidEmptyProgram zebinProgram;
+    EXPECT_TRUE(NEO::isAnySingleDeviceBinaryFormat(zebinProgram.storage));
 }
 
 TEST(DecodeSingleDeviceBinary, GivenUnknownFormatThenReturnFalse) {
@@ -216,6 +255,7 @@ TEST(DecodeSingleDeviceBinary, GivenPatchTokensFormatThenDecodingSucceeds) {
     std::string decodeWarnings;
     NEO::SingleDeviceBinary bin;
     bin.deviceBinary = patchtokensProgram.storage;
+    bin.targetDevice.coreFamily = static_cast<GFXCORE_FAMILY>(patchtokensProgram.header->Device);
     NEO::DecodeError status;
     NEO::DeviceBinaryFormat format;
     std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings);
@@ -223,6 +263,22 @@ TEST(DecodeSingleDeviceBinary, GivenPatchTokensFormatThenDecodingSucceeds) {
     EXPECT_EQ(NEO::DeviceBinaryFormat::Patchtokens, format);
     EXPECT_TRUE(decodeWarnings.empty());
     EXPECT_TRUE(decodeErrors.empty());
+}
+
+TEST(DecodeSingleDeviceBinary, GivenZebinFormatThenDecodingSucceeds) {
+    ZebinTestData::ValidEmptyProgram zebinElf;
+    NEO::ProgramInfo programInfo;
+    std::string decodeErrors;
+    std::string decodeWarnings;
+    NEO::SingleDeviceBinary bin;
+    bin.deviceBinary = zebinElf.storage;
+    NEO::DecodeError status;
+    NEO::DeviceBinaryFormat format;
+    std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings);
+    EXPECT_EQ(NEO::DecodeError::Success, status);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, format);
+    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+    EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
 }
 
 TEST(DecodeSingleDeviceBinary, GivenOclElfFormatThenDecodingFails) {
@@ -273,4 +329,21 @@ TEST(PackDeviceBinary, GivenRequestToPackThenUsesOclElfFormat) {
     EXPECT_TRUE(packErrors.empty());
     EXPECT_TRUE(packWarnings.empty());
     EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::OclElf>(packed));
+}
+
+TEST(PackDeviceBinary, GivenRequestToPackWhenFormatIsAlreadyPackedThenReturnsInput) {
+    NEO::SingleDeviceBinary deviceBinary;
+
+    std::string packErrors;
+    std::string packWarnings;
+    auto packed = NEO::packDeviceBinary(deviceBinary, packErrors, packWarnings);
+    EXPECT_TRUE(packErrors.empty());
+    EXPECT_TRUE(packWarnings.empty());
+    EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::OclElf>(packed));
+    deviceBinary.deviceBinary = packed;
+    auto packed2 = NEO::packDeviceBinary(deviceBinary, packErrors, packWarnings);
+    EXPECT_TRUE(packErrors.empty());
+    EXPECT_TRUE(packWarnings.empty());
+    EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::OclElf>(packed));
+    EXPECT_EQ(packed, packed2);
 }

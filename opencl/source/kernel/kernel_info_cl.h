@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "opencl/source/program/kernel_arg_info.h"
+#include "shared/source/kernel/kernel_arg_descriptor.h"
 
 #include "CL/cl.h"
 

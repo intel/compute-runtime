@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,14 +7,14 @@
 
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/sharings/gl/gl_buffer.h"
 #include "opencl/test/unit_test/mocks/gl/windows/mock_gl_sharing_windows.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -40,7 +40,7 @@ struct GlReusedBufferTests : public ::testing::Test {
 
 class FailingMemoryManager : public MockMemoryManager {
   public:
-    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) override {
+    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override {
         return nullptr;
     }
 };
@@ -87,7 +87,7 @@ TEST_F(GlReusedBufferTests, givenMultipleBuffersWithReusedAllocationWhenReleasin
 
 TEST_F(GlReusedBufferTests, givenMultipleBuffersWithReusedAllocationWhenCreatingThenReuseGmmResourceToo) {
     std::unique_ptr<Buffer> glBuffer1(GlBuffer::createSharedGlBuffer(&context, CL_MEM_READ_WRITE, bufferId1, &retVal));
-    glBuffer1->getGraphicsAllocation(rootDeviceIndex)->setDefaultGmm(new Gmm(context.getDevice(0)->getGmmClientContext(), (void *)0x100, 1, false));
+    glBuffer1->getGraphicsAllocation(rootDeviceIndex)->setDefaultGmm(new Gmm(context.getDevice(0)->getGmmHelper(), (void *)0x100, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
 
     std::unique_ptr<Buffer> glBuffer2(GlBuffer::createSharedGlBuffer(&context, CL_MEM_READ_WRITE, bufferId1, &retVal));
 
@@ -168,7 +168,7 @@ TEST_F(GlReusedBufferTests, givenGlobalShareHandleChangedWhenAcquiringSharedBuff
     glBuffer->release(clBuffer.get(), rootDeviceIndex);
 }
 
-TEST_F(GlReusedBufferTests, givenMultipleBuffersAndGlobalShareHandleChangedWhenAcquiringSharedBufferDeleteOldGfxAllocationFromReuseVector) {
+TEST_F(GlReusedBufferTests, givenMultipleBuffersAndGlobalShareHandleChangedWhenAcquiringSharedBufferThenDeleteOldGfxAllocationFromReuseVector) {
     GlDllHelper dllParam;
     CL_GL_BUFFER_INFO bufferInfoOutput = dllParam.getBufferInfo();
     bufferInfoOutput.globalShareHandle = 40;
@@ -178,19 +178,19 @@ TEST_F(GlReusedBufferTests, givenMultipleBuffersAndGlobalShareHandleChangedWhenA
     auto graphicsAllocation1 = clBuffer1->getGraphicsAllocation(rootDeviceIndex);
     auto graphicsAllocation2 = clBuffer2->getGraphicsAllocation(rootDeviceIndex);
     ASSERT_EQ(graphicsAllocation1, graphicsAllocation2);
-    ASSERT_EQ(2, graphicsAllocation1->peekReuseCount());
-    ASSERT_EQ(1, graphicsAllocationsForGlBufferReuse->size());
+    ASSERT_EQ(2u, graphicsAllocation1->peekReuseCount());
+    ASSERT_EQ(1u, graphicsAllocationsForGlBufferReuse->size());
 
     bufferInfoOutput.globalShareHandle = 41;
     dllParam.loadBuffer(bufferInfoOutput);
     clBuffer1->peekSharingHandler()->acquire(clBuffer1.get(), rootDeviceIndex);
     auto newGraphicsAllocation = clBuffer1->getGraphicsAllocation(rootDeviceIndex);
-    EXPECT_EQ(1, graphicsAllocationsForGlBufferReuse->size());
+    EXPECT_EQ(1u, graphicsAllocationsForGlBufferReuse->size());
     EXPECT_EQ(newGraphicsAllocation, graphicsAllocationsForGlBufferReuse->at(0).second);
 
     clBuffer2->peekSharingHandler()->acquire(clBuffer2.get(), rootDeviceIndex);
     EXPECT_EQ(clBuffer2->getGraphicsAllocation(rootDeviceIndex), newGraphicsAllocation);
-    EXPECT_EQ(1, graphicsAllocationsForGlBufferReuse->size());
+    EXPECT_EQ(1u, graphicsAllocationsForGlBufferReuse->size());
     EXPECT_EQ(newGraphicsAllocation, graphicsAllocationsForGlBufferReuse->at(0).second);
 
     clBuffer1->peekSharingHandler()->release(clBuffer1.get(), rootDeviceIndex);

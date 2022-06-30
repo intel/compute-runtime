@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,11 +8,13 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
@@ -76,80 +78,80 @@ TEST_F(GetMemObjectInfo, GivenMemTypeWhenGettingMemObjectInfoThenCorrectValueIsR
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(cl_mem_object_type), sizeReturned);
 
-    cl_mem_object_type object_type = 0;
+    cl_mem_object_type objectType = 0;
     retVal = buffer->getMemObjectInfo(
         CL_MEM_TYPE,
         sizeof(cl_mem_object_type),
-        &object_type,
+        &objectType,
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(static_cast<cl_mem_object_type>(CL_MEM_OBJECT_BUFFER), object_type);
+    EXPECT_EQ(static_cast<cl_mem_object_type>(CL_MEM_OBJECT_BUFFER), objectType);
 }
 
 TEST_F(GetMemObjectInfo, GivenMemFlagsWhenGettingMemObjectInfoThenCorrectValueIsReturned) {
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
     size_t sizeReturned = 0;
-    cl_mem_flags mem_flags = 0;
+    cl_mem_flags memFlags = 0;
     auto retVal = buffer->getMemObjectInfo(
         CL_MEM_FLAGS,
         0,
         nullptr,
         &sizeReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(sizeof(mem_flags), sizeReturned);
+    EXPECT_EQ(sizeof(memFlags), sizeReturned);
 
     retVal = buffer->getMemObjectInfo(
         CL_MEM_FLAGS,
-        sizeof(mem_flags),
-        &mem_flags,
+        sizeof(memFlags),
+        &memFlags,
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(static_cast<cl_mem_flags>(CL_MEM_READ_WRITE), mem_flags);
+    EXPECT_EQ(static_cast<cl_mem_flags>(CL_MEM_READ_WRITE), memFlags);
 }
 
 TEST_F(GetMemObjectInfo, GivenMemSizeWhenGettingMemObjectInfoThenCorrectValueIsReturned) {
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
     size_t sizeReturned = 0;
-    size_t mem_size = 0;
+    size_t memSize = 0;
     auto retVal = buffer->getMemObjectInfo(
         CL_MEM_SIZE,
         0,
         nullptr,
         &sizeReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(sizeof(mem_size), sizeReturned);
+    EXPECT_EQ(sizeof(memSize), sizeReturned);
 
     retVal = buffer->getMemObjectInfo(
         CL_MEM_SIZE,
-        sizeof(mem_size),
-        &mem_size,
+        sizeof(memSize),
+        &memSize,
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(buffer->getSize(), mem_size);
+    EXPECT_EQ(buffer->getSize(), memSize);
 }
 
 TEST_F(GetMemObjectInfo, GivenMemHostPtrWhenGettingMemObjectInfoThenCorrectValueIsReturned) {
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
     size_t sizeReturned = 0;
-    void *host_ptr = nullptr;
+    void *hostPtr = nullptr;
     auto retVal = buffer->getMemObjectInfo(
         CL_MEM_HOST_PTR,
         0,
         nullptr,
         &sizeReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(sizeof(host_ptr), sizeReturned);
+    EXPECT_EQ(sizeof(hostPtr), sizeReturned);
 
     retVal = buffer->getMemObjectInfo(
         CL_MEM_HOST_PTR,
-        sizeof(host_ptr),
-        &host_ptr,
+        sizeof(hostPtr),
+        &hostPtr,
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(buffer->getHostPtr(), host_ptr);
+    EXPECT_EQ(buffer->getHostPtr(), hostPtr);
 }
 
 TEST_F(GetMemObjectInfo, GivenMemContextWhenGettingMemObjectInfoThenCorrectValueIsReturned) {
@@ -322,6 +324,42 @@ TEST_F(GetMemObjectInfo, GivenMemReferenceCountWhenGettingMemObjectInfoThenCorre
         &sizeReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(refCount), sizeReturned);
+}
+
+TEST_F(GetMemObjectInfo, GivenValidBufferWhenGettingCompressionOfMemObjectThenCorrectValueIsReturned) {
+    auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
+    auto graphicsAllocation = buffer->getMultiGraphicsAllocation().getDefaultGraphicsAllocation();
+
+    size_t sizeReturned = 0;
+    cl_bool usesCompression{};
+    cl_int retVal{};
+    retVal = buffer->getMemObjectInfo(
+        CL_MEM_USES_COMPRESSION_INTEL,
+        0,
+        nullptr,
+        &sizeReturned);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_EQ(sizeof(cl_bool), sizeReturned);
+
+    MockBuffer::setAllocationType(graphicsAllocation, pDevice->getRootDeviceEnvironment().getGmmHelper(), true);
+
+    retVal = buffer->getMemObjectInfo(
+        CL_MEM_USES_COMPRESSION_INTEL,
+        sizeReturned,
+        &usesCompression,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(cl_bool{CL_TRUE}, usesCompression);
+
+    MockBuffer::setAllocationType(graphicsAllocation, pDevice->getRootDeviceEnvironment().getGmmHelper(), false);
+
+    retVal = buffer->getMemObjectInfo(
+        CL_MEM_USES_COMPRESSION_INTEL,
+        sizeReturned,
+        &usesCompression,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(cl_bool{CL_FALSE}, usesCompression);
 }
 
 class GetMemObjectInfoLocalMemory : public GetMemObjectInfo {

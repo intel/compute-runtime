@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,10 +8,10 @@
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/helpers/file_io.h"
-#include "shared/test/unit_test/helpers/test_files.h"
+#include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/libult/global_environment.h"
 
 #include "opencl/source/context/context.h"
-#include "opencl/test/unit_test/global_environment.h"
 
 #include "cl_api_tests.h"
 #include "compiler_options.h"
@@ -126,7 +126,7 @@ TEST_F(clLinkProgramTests, GivenCreateLibraryOptionWhenLinkingProgramThenSuccess
         pContext,
         1,
         &testedClDevice,
-        CompilerOptions::createLibrary,
+        CompilerOptions::createLibrary.data(),
         1,
         &program,
         nullptr,
@@ -175,8 +175,7 @@ TEST_F(clLinkProgramTests, GivenProgramsWithSpecConstantsThenSpecConstantsAreEmb
     uint32_t prog2Keys[1] = {11};
     uint64_t prog2Values[1] = {13};
 
-    auto progSrc1 = clUniquePtr(new MockProgram(*pProgram->getDevice().getExecutionEnvironment()));
-    progSrc1->pDevice = pProgram->pDevice;
+    auto progSrc1 = clUniquePtr(new MockProgram(pContext, false, toClDeviceVector(*pDevice)));
     progSrc1->specConstantsValues[prog1Keys[0]] = prog1Values[0];
     progSrc1->specConstantsValues[prog1Keys[1]] = prog1Values[1];
     progSrc1->areSpecializationConstantsInitialized = true;
@@ -184,29 +183,26 @@ TEST_F(clLinkProgramTests, GivenProgramsWithSpecConstantsThenSpecConstantsAreEmb
     progSrc1->irBinarySize = sizeof(ir1);
     progSrc1->isSpirV = true;
 
-    auto progSrc2 = clUniquePtr(new MockProgram(*pProgram->getDevice().getExecutionEnvironment()));
-    progSrc2->pDevice = pProgram->pDevice;
+    auto progSrc2 = clUniquePtr(new MockProgram(pContext, false, toClDeviceVector(*pDevice)));
     progSrc2->specConstantsValues[prog2Keys[0]] = prog2Values[0];
     progSrc2->areSpecializationConstantsInitialized = true;
     progSrc2->irBinary = makeCopy(ir2, sizeof(ir2));
     progSrc2->irBinarySize = sizeof(ir2);
     progSrc2->isSpirV = true;
 
-    auto progSrc3 = clUniquePtr(new MockProgram(*pProgram->getDevice().getExecutionEnvironment()));
-    progSrc3->pDevice = pProgram->pDevice;
+    auto progSrc3 = clUniquePtr(new MockProgram(pContext, false, toClDeviceVector(*pDevice)));
     progSrc3->irBinary = makeCopy(ir3, sizeof(ir3));
     progSrc3->irBinarySize = sizeof(ir3);
     progSrc3->isSpirV = true;
 
-    auto progDst = clUniquePtr(new MockProgram(*pProgram->getDevice().getExecutionEnvironment()));
-    progDst->pDevice = pProgram->pDevice;
+    auto progDst = clUniquePtr(new MockProgram(pContext, false, toClDeviceVector(*pDevice)));
     cl_program inputPrograms[3] = {progSrc1.get(), progSrc2.get(), progSrc3.get()};
 
     std::string receivedInput;
     MockCompilerDebugVars igcDebugVars;
     igcDebugVars.receivedInput = &receivedInput;
     gEnvironment->igcPushDebugVars(igcDebugVars);
-    progDst->link(0U, nullptr, "", 3, inputPrograms, nullptr, nullptr);
+    progDst->link(progDst->getDevices(), "", 3, inputPrograms);
     gEnvironment->igcPopDebugVars();
 
     std::string elfDecodeError;
@@ -251,6 +247,233 @@ TEST_F(clLinkProgramTests, GivenProgramsWithSpecConstantsThenSpecConstantsAreEmb
     EXPECT_EQ(0, memcmp(ir2, elf.sectionHeaders[6].data.begin(), sizeof(ir2)));
 
     EXPECT_EQ(0, memcmp(ir3, elf.sectionHeaders[7].data.begin(), sizeof(ir3)));
+}
+
+TEST_F(clLinkProgramTests, GivenInvalidCallbackInputWhenLinkProgramThenInvalidValueErrorIsReturned) {
+    cl_program pProgram = nullptr;
+    size_t sourceSize = 0;
+    std::string testFile;
+
+    testFile.append(clFiles);
+    testFile.append("copybuffer.cl");
+    auto pSource = loadDataFromFile(
+        testFile.c_str(),
+        sourceSize);
+
+    ASSERT_NE(0u, sourceSize);
+    ASSERT_NE(nullptr, pSource);
+
+    const char *sources[1] = {pSource.get()};
+    pProgram = clCreateProgramWithSource(
+        pContext,
+        1,
+        sources,
+        &sourceSize,
+        &retVal);
+
+    EXPECT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clCompileProgram(
+        pProgram,
+        1,
+        &testedClDevice,
+        nullptr,
+        0,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    cl_program program = pProgram;
+    cl_program oprog;
+    oprog = clLinkProgram(
+        pContext,
+        1,
+        &testedClDevice,
+        CompilerOptions::createLibrary.data(),
+        1,
+        &program,
+        nullptr,
+        &retVal,
+        &retVal);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(nullptr, oprog);
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(clLinkProgramTests, GivenValidCallbackInputWhenLinkProgramThenCallbackIsInvoked) {
+    cl_program pProgram = nullptr;
+    size_t sourceSize = 0;
+    std::string testFile;
+
+    testFile.append(clFiles);
+    testFile.append("copybuffer.cl");
+    auto pSource = loadDataFromFile(
+        testFile.c_str(),
+        sourceSize);
+
+    ASSERT_NE(0u, sourceSize);
+    ASSERT_NE(nullptr, pSource);
+
+    const char *sources[1] = {pSource.get()};
+    pProgram = clCreateProgramWithSource(
+        pContext,
+        1,
+        sources,
+        &sourceSize,
+        &retVal);
+
+    EXPECT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clCompileProgram(
+        pProgram,
+        1,
+        &testedClDevice,
+        nullptr,
+        0,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    cl_program program = pProgram;
+    cl_program oprog;
+    char userData = 0;
+    oprog = clLinkProgram(
+        pContext,
+        1,
+        &testedClDevice,
+        CompilerOptions::createLibrary.data(),
+        1,
+        &program,
+        notifyFuncProgram,
+        &userData,
+        &retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ('a', userData);
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseProgram(oprog);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(clLinkProgramTests, givenMultiDeviceProgramWhenLinkingForInvalidDevicesInputThenInvalidDeviceErrorIsReturned) {
+    cl_program pProgram = nullptr;
+    size_t sourceSize = 0;
+    std::string testFile;
+
+    testFile.append(clFiles);
+    testFile.append("copybuffer.cl");
+    auto pSource = loadDataFromFile(
+        testFile.c_str(),
+        sourceSize);
+
+    ASSERT_NE(0u, sourceSize);
+    ASSERT_NE(nullptr, pSource);
+
+    const char *sources[1] = {pSource.get()};
+    pProgram = clCreateProgramWithSource(
+        pContext,
+        1,
+        sources,
+        &sourceSize,
+        &retVal);
+
+    EXPECT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clCompileProgram(
+        pProgram,
+        1,
+        &testedClDevice,
+        nullptr,
+        0,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    cl_program program = pProgram;
+    cl_program outProgram;
+
+    MockContext mockContext;
+    cl_device_id nullDeviceInput[] = {pContext->getDevice(0), nullptr};
+    cl_device_id notAssociatedDeviceInput[] = {mockContext.getDevice(0)};
+    cl_device_id validDeviceInput[] = {pContext->getDevice(0)};
+
+    outProgram = clLinkProgram(
+        pContext,
+        0,
+        validDeviceInput,
+        nullptr,
+        1,
+        &program,
+        nullptr,
+        nullptr,
+        &retVal);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(nullptr, outProgram);
+
+    outProgram = clLinkProgram(
+        pContext,
+        1,
+        nullptr,
+        nullptr,
+        1,
+        &program,
+        nullptr,
+        nullptr,
+        &retVal);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(nullptr, outProgram);
+
+    outProgram = clLinkProgram(
+        pContext,
+        2,
+        nullDeviceInput,
+        nullptr,
+        1,
+        &program,
+        nullptr,
+        nullptr,
+        &retVal);
+
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+    EXPECT_EQ(nullptr, outProgram);
+
+    outProgram = clLinkProgram(
+        pContext,
+        1,
+        notAssociatedDeviceInput,
+        nullptr,
+        1,
+        &program,
+        nullptr,
+        nullptr,
+        &retVal);
+
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+    EXPECT_EQ(nullptr, outProgram);
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
 } // namespace ULT

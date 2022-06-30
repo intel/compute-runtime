@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,13 +11,16 @@
 
 namespace NEO {
 std::unique_ptr<PageFaultManager> PageFaultManager::create() {
-    return std::make_unique<PageFaultManagerWindows>();
+    auto pageFaultManager = std::make_unique<PageFaultManagerWindows>();
+
+    pageFaultManager->selectGpuDomainHandler();
+    return pageFaultManager;
 }
 
 std::function<LONG(struct _EXCEPTION_POINTERS *exceptionInfo)> PageFaultManagerWindows::pageFaultHandler;
 
 PageFaultManagerWindows::PageFaultManagerWindows() {
-    pageFaultHandler = [&](struct _EXCEPTION_POINTERS *exceptionInfo) {
+    pageFaultHandler = [this](struct _EXCEPTION_POINTERS *exceptionInfo) {
         if (exceptionInfo->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION) {
             if (this->verifyPageFault(reinterpret_cast<void *>(exceptionInfo->ExceptionRecord->ExceptionInformation[1]))) {
                 //this is our fault that we serviced, continue app execution
@@ -50,4 +53,7 @@ void PageFaultManagerWindows::protectCPUMemoryAccess(void *ptr, size_t size) {
     auto retVal = VirtualProtect(ptr, size, PAGE_NOACCESS, &previousState);
     UNRECOVERABLE_IF(!retVal);
 }
+
+void PageFaultManagerWindows::evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) {}
+
 } // namespace NEO

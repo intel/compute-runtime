@@ -1,66 +1,47 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/os_interface/linux/drm_neo.h"
-
-#include "test.h"
-
-#include <array>
+#include "shared/test/common/fixtures/linux/device_id_fixture.h"
 
 using namespace NEO;
 
-TEST(KblDeviceIdTest, supportedDeviceId) {
+TEST_F(DeviceIdTests, GivenKblSupportedDeviceIdThenHardwareInfoIsCorrect) {
     std::array<DeviceDescriptor, 26> expectedDescriptors = {{
-        {IKBL_GT1_DT_DEVICE_F0_ID, &KBL_1x2x6::hwInfo, &KBL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
-        {IKBL_GT1_HALO_DEVICE_F0_ID, &KBL_1x2x6::hwInfo, &KBL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
-        {IKBL_GT1_SERV_DEVICE_F0_ID, &KBL_1x2x6::hwInfo, &KBL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
-        {IKBL_GT1_ULT_DEVICE_F0_ID, &KBL_1x2x6::hwInfo, &KBL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
-        {IKBL_GT1_ULX_DEVICE_F0_ID, &KBL_1x3x6::hwInfo, &KBL_1x3x6::setupHardwareInfo, GTTYPE_GT1},
-        {IKBL_GT1F_HALO_DEVICE_F0_ID, &KBL_1x2x6::hwInfo, &KBL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
+        {0x5902, &KblHw1x2x6::hwInfo, &KblHw1x2x6::setupHardwareInfo},
+        {0x590B, &KblHw1x2x6::hwInfo, &KblHw1x2x6::setupHardwareInfo},
+        {0x590A, &KblHw1x2x6::hwInfo, &KblHw1x2x6::setupHardwareInfo},
+        {0x5906, &KblHw1x2x6::hwInfo, &KblHw1x2x6::setupHardwareInfo},
+        {0x590E, &KblHw1x3x6::hwInfo, &KblHw1x3x6::setupHardwareInfo},
+        {0x5908, &KblHw1x2x6::hwInfo, &KblHw1x2x6::setupHardwareInfo},
 
-        {IKBL_GT1_5_ULT_DEVICE_F0_ID, &KBL_1x3x6::hwInfo, &KBL_1x3x6::setupHardwareInfo, GTTYPE_GT1_5},
-        {IKBL_GT1_5_ULX_DEVICE_F0_ID, &KBL_1x2x6::hwInfo, &KBL_1x2x6::setupHardwareInfo, GTTYPE_GT1_5},
+        {0x5913, &KblHw1x3x6::hwInfo, &KblHw1x3x6::setupHardwareInfo},
+        {0x5915, &KblHw1x2x6::hwInfo, &KblHw1x2x6::setupHardwareInfo},
 
-        {IKBL_GT2_DT_DEVICE_F0_ID, &KBL_1x3x8::hwInfo, &KBL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {IKBL_GT2_HALO_DEVICE_F0_ID, &KBL_1x3x8::hwInfo, &KBL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {IKBL_GT2_R_ULT_DEVICE_F0_ID, &KBL_1x3x8::hwInfo, &KBL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {IKBL_GT2_SERV_DEVICE_F0_ID, &KBL_1x3x8::hwInfo, &KBL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {IKBL_GT2_ULT_DEVICE_F0_ID, &KBL_1x3x8::hwInfo, &KBL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {IKBL_GT2_ULX_DEVICE_F0_ID, &KBL_1x3x8::hwInfo, &KBL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {IKBL_GT2_WRK_DEVICE_F0_ID, &KBL_1x3x8::hwInfo, &KBL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {IKBL_GT2_R_ULX_DEVICE_F0_ID, &KBL_1x3x8::hwInfo, &KBL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {IKBL_GT2F_ULT_DEVICE_F0_ID, &KBL_1x3x8::hwInfo, &KBL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
+        {0x5912, &KblHw1x3x8::hwInfo, &KblHw1x3x8::setupHardwareInfo},
+        {0x591B, &KblHw1x3x8::hwInfo, &KblHw1x3x8::setupHardwareInfo},
+        {0x5917, &KblHw1x3x8::hwInfo, &KblHw1x3x8::setupHardwareInfo},
+        {0x591A, &KblHw1x3x8::hwInfo, &KblHw1x3x8::setupHardwareInfo},
+        {0x5916, &KblHw1x3x8::hwInfo, &KblHw1x3x8::setupHardwareInfo},
+        {0x591E, &KblHw1x3x8::hwInfo, &KblHw1x3x8::setupHardwareInfo},
+        {0x591D, &KblHw1x3x8::hwInfo, &KblHw1x3x8::setupHardwareInfo},
+        {0x591C, &KblHw1x3x8::hwInfo, &KblHw1x3x8::setupHardwareInfo},
+        {0x5921, &KblHw1x3x8::hwInfo, &KblHw1x3x8::setupHardwareInfo},
 
-        {IKBL_GT3_15W_ULT_DEVICE_F0_ID, &KBL_2x3x8::hwInfo, &KBL_2x3x8::setupHardwareInfo, GTTYPE_GT3},
-        {IKBL_GT3_28W_ULT_DEVICE_F0_ID, &KBL_2x3x8::hwInfo, &KBL_2x3x8::setupHardwareInfo, GTTYPE_GT3},
-        {IKBL_GT3_HALO_DEVICE_F0_ID, &KBL_2x3x8::hwInfo, &KBL_2x3x8::setupHardwareInfo, GTTYPE_GT3},
-        {IKBL_GT3_SERV_DEVICE_F0_ID, &KBL_2x3x8::hwInfo, &KBL_2x3x8::setupHardwareInfo, GTTYPE_GT3},
-        {IKBL_GT3_ULT_DEVICE_F0_ID, &KBL_2x3x8::hwInfo, &KBL_2x3x8::setupHardwareInfo, GTTYPE_GT3},
+        {0x5926, &KblHw2x3x8::hwInfo, &KblHw2x3x8::setupHardwareInfo},
+        {0x5927, &KblHw2x3x8::hwInfo, &KblHw2x3x8::setupHardwareInfo},
+        {0x592B, &KblHw2x3x8::hwInfo, &KblHw2x3x8::setupHardwareInfo},
+        {0x592A, &KblHw2x3x8::hwInfo, &KblHw2x3x8::setupHardwareInfo},
+        {0x5923, &KblHw2x3x8::hwInfo, &KblHw2x3x8::setupHardwareInfo},
 
-        {IKBL_GT4_DT_DEVICE_F0_ID, &KBL_3x3x8::hwInfo, &KBL_3x3x8::setupHardwareInfo, GTTYPE_GT4},
-        {IKBL_GT4_HALO_DEVICE_F0_ID, &KBL_3x3x8::hwInfo, &KBL_3x3x8::setupHardwareInfo, GTTYPE_GT4},
-        {IKBL_GT4_SERV_DEVICE_F0_ID, &KBL_3x3x8::hwInfo, &KBL_3x3x8::setupHardwareInfo, GTTYPE_GT4},
-        {IKBL_GT4_WRK_DEVICE_F0_ID, &KBL_3x3x8::hwInfo, &KBL_3x3x8::setupHardwareInfo, GTTYPE_GT4},
+        {0x5932, &KblHw3x3x8::hwInfo, &KblHw3x3x8::setupHardwareInfo},
+        {0x593B, &KblHw3x3x8::hwInfo, &KblHw3x3x8::setupHardwareInfo},
+        {0x593A, &KblHw3x3x8::hwInfo, &KblHw3x3x8::setupHardwareInfo},
+        {0x593D, &KblHw3x3x8::hwInfo, &KblHw3x3x8::setupHardwareInfo},
     }};
 
-    auto compareStructs = [](const DeviceDescriptor *first, const DeviceDescriptor *second) {
-        return first->deviceId == second->deviceId && first->pHwInfo == second->pHwInfo &&
-               first->setupHardwareInfo == second->setupHardwareInfo && first->eGtType == second->eGtType;
-    };
-
-    size_t startIndex = 0;
-    while (!compareStructs(&expectedDescriptors[0], &deviceDescriptorTable[startIndex]) &&
-           deviceDescriptorTable[startIndex].deviceId != 0) {
-        startIndex++;
-    };
-    EXPECT_NE(0u, deviceDescriptorTable[startIndex].deviceId);
-
-    for (auto &expected : expectedDescriptors) {
-        EXPECT_TRUE(compareStructs(&expected, &deviceDescriptorTable[startIndex]));
-        startIndex++;
-    }
+    testImpl(expectedDescriptors);
 }

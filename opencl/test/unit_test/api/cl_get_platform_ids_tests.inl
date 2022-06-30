@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/os_interface/device_factory.h"
-#include "shared/test/unit_test/helpers/ult_hw_config.h"
-#include "shared/test/unit_test/helpers/variable_backup.h"
+#include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/helpers/variable_backup.h"
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/platform/platform.h"
@@ -49,7 +49,7 @@ TEST_F(clGetPlatformIDsTests, GivenNumEntriesZeroAndPlatformNotNullWhenGettingPl
 }
 
 TEST(clGetPlatformIDsNegativeTests, GivenFailedInitializationWhenGettingPlatformIdsThenClOutOfHostMemoryErrorIsReturned) {
-    platformsImpl.clear();
+    platformsImpl->clear();
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
     ultHwConfig.mockedPrepareDeviceEnvironmentsFuncResult = false;
 
@@ -63,14 +63,15 @@ TEST(clGetPlatformIDsNegativeTests, GivenFailedInitializationWhenGettingPlatform
     EXPECT_EQ(0u, numPlatforms);
     EXPECT_EQ(nullptr, platformRet);
 
-    platformsImpl.clear();
+    platformsImpl->clear();
 }
+
 TEST(clGetPlatformIDsNegativeTests, whenFailToCreateDeviceThenClGetPlatfomsIdsReturnsOutOfHostMemoryError) {
     VariableBackup<decltype(DeviceFactory::createRootDeviceFunc)> createFuncBackup{&DeviceFactory::createRootDeviceFunc};
     DeviceFactory::createRootDeviceFunc = [](ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) -> std::unique_ptr<Device> {
         return nullptr;
     };
-    platformsImpl.clear();
+    platformsImpl->clear();
 
     cl_int retVal = CL_SUCCESS;
     cl_platform_id platformRet = nullptr;
@@ -82,7 +83,7 @@ TEST(clGetPlatformIDsNegativeTests, whenFailToCreateDeviceThenClGetPlatfomsIdsRe
     EXPECT_EQ(0u, numPlatforms);
     EXPECT_EQ(nullptr, platformRet);
 
-    platformsImpl.clear();
+    platformsImpl->clear();
 }
 
 TEST(clGetPlatformIDsNegativeTests, whenFailToCreatePlatformThenClGetPlatfomsIdsReturnsOutOfHostMemoryError) {
@@ -90,7 +91,7 @@ TEST(clGetPlatformIDsNegativeTests, whenFailToCreatePlatformThenClGetPlatfomsIds
     Platform::createFunc = [](ExecutionEnvironment &executionEnvironment) -> std::unique_ptr<Platform> {
         return nullptr;
     };
-    platformsImpl.clear();
+    platformsImpl->clear();
 
     cl_int retVal = CL_SUCCESS;
     cl_platform_id platformRet = nullptr;
@@ -102,7 +103,7 @@ TEST(clGetPlatformIDsNegativeTests, whenFailToCreatePlatformThenClGetPlatfomsIds
     EXPECT_EQ(0u, numPlatforms);
     EXPECT_EQ(nullptr, platformRet);
 
-    platformsImpl.clear();
+    platformsImpl->clear();
 }
 
 TEST(clGetPlatformIDsNegativeTests, whenFailToInitializePlatformThenClGetPlatfomsIdsReturnsOutOfHostMemoryError) {
@@ -116,7 +117,7 @@ TEST(clGetPlatformIDsNegativeTests, whenFailToInitializePlatformThenClGetPlatfom
     Platform::createFunc = [](ExecutionEnvironment &executionEnvironment) -> std::unique_ptr<Platform> {
         return std::make_unique<FailingPlatform>(executionEnvironment);
     };
-    platformsImpl.clear();
+    platformsImpl->clear();
 
     cl_int retVal = CL_SUCCESS;
     cl_platform_id platformRet = nullptr;
@@ -128,6 +129,6 @@ TEST(clGetPlatformIDsNegativeTests, whenFailToInitializePlatformThenClGetPlatfom
     EXPECT_EQ(0u, numPlatforms);
     EXPECT_EQ(nullptr, platformRet);
 
-    platformsImpl.clear();
+    platformsImpl->clear();
 }
 } // namespace ULT

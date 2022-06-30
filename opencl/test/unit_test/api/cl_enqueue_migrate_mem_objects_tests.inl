@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/event/event.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
 
 #include "cl_api_tests.h"
 
@@ -31,7 +32,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, GivenNullCommandQueueWhenMigratingMemObj
     EXPECT_NE(nullptr, buffer);
 
     cl_event eventReturned = nullptr;
-    auto Result = clEnqueueMigrateMemObjects(
+    auto result = clEnqueueMigrateMemObjects(
         nullptr,
         1,
         &buffer,
@@ -39,7 +40,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, GivenNullCommandQueueWhenMigratingMemObj
         0,
         nullptr,
         &eventReturned);
-    EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, Result);
+    EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, result);
 
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -65,7 +66,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, GivenValidInputsWhenMigratingMemObjThenS
     EXPECT_NE(nullptr, buffer);
 
     cl_event eventReturned = nullptr;
-    auto Result = clEnqueueMigrateMemObjects(
+    auto result = clEnqueueMigrateMemObjects(
         pCommandQueue,
         1,
         &buffer,
@@ -73,7 +74,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, GivenValidInputsWhenMigratingMemObjThenS
         0,
         nullptr,
         &eventReturned);
-    EXPECT_EQ(CL_SUCCESS, Result);
+    EXPECT_EQ(CL_SUCCESS, result);
 
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -86,7 +87,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, GivenValidInputsWhenMigratingMemObjThenS
 TEST_F(clEnqueueMigrateMemObjectsTests, GivenNullMemObjsWhenMigratingMemObjThenInvalidValueErrorIsReturned) {
 
     cl_event eventReturned = nullptr;
-    auto Result = clEnqueueMigrateMemObjects(
+    auto result = clEnqueueMigrateMemObjects(
         pCommandQueue,
         1,
         nullptr,
@@ -94,13 +95,13 @@ TEST_F(clEnqueueMigrateMemObjectsTests, GivenNullMemObjsWhenMigratingMemObjThenI
         0,
         nullptr,
         &eventReturned);
-    EXPECT_EQ(CL_INVALID_VALUE, Result);
+    EXPECT_EQ(CL_INVALID_VALUE, result);
 }
 
 TEST_F(clEnqueueMigrateMemObjectsTests, GivenZeroMemObjectsWhenMigratingMemObjsThenInvalidValueErrorIsReturned) {
 
     cl_event eventReturned = nullptr;
-    auto Result = clEnqueueMigrateMemObjects(
+    auto result = clEnqueueMigrateMemObjects(
         pCommandQueue,
         0,
         nullptr,
@@ -108,13 +109,13 @@ TEST_F(clEnqueueMigrateMemObjectsTests, GivenZeroMemObjectsWhenMigratingMemObjsT
         0,
         nullptr,
         &eventReturned);
-    EXPECT_EQ(CL_INVALID_VALUE, Result);
+    EXPECT_EQ(CL_INVALID_VALUE, result);
 }
 
 TEST_F(clEnqueueMigrateMemObjectsTests, GivenNonZeroEventsAndNullWaitlistWhenMigratingMemObjThenInvalidWaitListErrorIsReturned) {
 
     cl_event eventReturned = nullptr;
-    auto Result = clEnqueueMigrateMemObjects(
+    auto result = clEnqueueMigrateMemObjects(
         pCommandQueue,
         0,
         nullptr,
@@ -122,7 +123,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, GivenNonZeroEventsAndNullWaitlistWhenMig
         2,
         nullptr,
         &eventReturned);
-    EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, Result);
+    EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, result);
 }
 
 TEST_F(clEnqueueMigrateMemObjectsTests, GivenZeroEventsAndNonNullWaitlistWhenMigratingMemObjsThenInvalidWaitListErrorIsReturned) {
@@ -130,7 +131,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, GivenZeroEventsAndNonNullWaitlistWhenMig
     cl_event eventReturned = nullptr;
     Event event(pCommandQueue, CL_COMMAND_MIGRATE_MEM_OBJECTS, 0, 0);
 
-    auto Result = clEnqueueMigrateMemObjects(
+    auto result = clEnqueueMigrateMemObjects(
         pCommandQueue,
         0,
         nullptr,
@@ -138,7 +139,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, GivenZeroEventsAndNonNullWaitlistWhenMig
         0,
         (cl_event *)&event,
         &eventReturned);
-    EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, Result);
+    EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, result);
 }
 
 TEST_F(clEnqueueMigrateMemObjectsTests, GivenValidFlagsWhenMigratingMemObjsThenSuccessIsReturned) {
@@ -160,7 +161,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, GivenValidFlagsWhenMigratingMemObjsThenS
 
     for (auto validFlag : validFlags) {
         cl_event eventReturned = nullptr;
-        auto Result = clEnqueueMigrateMemObjects(
+        auto result = clEnqueueMigrateMemObjects(
             pCommandQueue,
             1,
             &buffer,
@@ -168,7 +169,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, GivenValidFlagsWhenMigratingMemObjsThenS
             0,
             nullptr,
             &eventReturned);
-        EXPECT_EQ(CL_SUCCESS, Result);
+        EXPECT_EQ(CL_SUCCESS, result);
         clReleaseEvent(eventReturned);
     }
 
@@ -197,7 +198,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, GivenInvalidFlagsWhenMigratingMemObjsThe
 
     for (auto invalidFlag : invalidFlags) {
         cl_event eventReturned = nullptr;
-        auto Result = clEnqueueMigrateMemObjects(
+        auto result = clEnqueueMigrateMemObjects(
             pCommandQueue,
             1,
             &buffer,
@@ -205,7 +206,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, GivenInvalidFlagsWhenMigratingMemObjsThe
             0,
             nullptr,
             &eventReturned);
-        EXPECT_EQ(CL_INVALID_VALUE, Result);
+        EXPECT_EQ(CL_INVALID_VALUE, result);
         clReleaseEvent(eventReturned);
     }
 
@@ -213,4 +214,19 @@ TEST_F(clEnqueueMigrateMemObjectsTests, GivenInvalidFlagsWhenMigratingMemObjsThe
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     delete[] pHostMem;
+}
+
+TEST_F(clEnqueueMigrateMemObjectsTests, GivenInvalidMemObjectWhenMigratingMemObjsThenInvalidMemObjectErrorIsReturned) {
+    cl_event eventReturned = nullptr;
+
+    auto result = clEnqueueMigrateMemObjects(
+        pCommandQueue,
+        1,
+        reinterpret_cast<cl_mem *>(pCommandQueue),
+        CL_MIGRATE_MEM_OBJECT_HOST,
+        0,
+        nullptr,
+        &eventReturned);
+
+    EXPECT_EQ(CL_INVALID_MEM_OBJECT, result);
 }

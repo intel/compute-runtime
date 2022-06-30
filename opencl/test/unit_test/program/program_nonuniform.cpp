@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,20 +9,20 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/fixtures/program_fixture.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/program/program_from_binary.h"
 #include "opencl/test/unit_test/program/program_with_source.h"
-#include "test.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "program_tests.h"
 
@@ -34,13 +34,13 @@ using namespace NEO;
 
 class MyMockProgram : public MockProgram {
   public:
-    MyMockProgram() : MockProgram(*new ExecutionEnvironment()), executionEnvironment(&this->peekExecutionEnvironment()) {}
+    MyMockProgram() : MockProgram(toClDeviceVector(*(new MockClDevice(new MockDevice())))), device(this->clDevices[0]) {}
 
   private:
-    std::unique_ptr<ExecutionEnvironment> executionEnvironment;
+    std::unique_ptr<ClDevice> device;
 };
 
-TEST(ProgramNonUniform, UpdateAllowNonUniform) {
+TEST(ProgramNonUniform, GivenNoBuildOptionsWhenUpdatingAllowNonUniformThenNonUniformNotAllowed) {
     MyMockProgram pm;
     EXPECT_FALSE(pm.getAllowNonUniform());
     EXPECT_EQ(12u, pm.getProgramOptionVersion());
@@ -50,7 +50,7 @@ TEST(ProgramNonUniform, UpdateAllowNonUniform) {
     EXPECT_EQ(12u, pm.getProgramOptionVersion());
 }
 
-TEST(ProgramNonUniform, UpdateAllowNonUniform12) {
+TEST(ProgramNonUniform, GivenBuildOptionsCl12WhenUpdatingAllowNonUniformThenNonUniformNotAllowed) {
     MyMockProgram pm;
     EXPECT_FALSE(pm.getAllowNonUniform());
     EXPECT_EQ(12u, pm.getProgramOptionVersion());
@@ -60,7 +60,7 @@ TEST(ProgramNonUniform, UpdateAllowNonUniform12) {
     EXPECT_EQ(12u, pm.getProgramOptionVersion());
 }
 
-TEST(ProgramNonUniform, UpdateAllowNonUniform20) {
+TEST(ProgramNonUniform, GivenBuildOptionsCl20WhenUpdatingAllowNonUniformThenNonUniformAllowed) {
     MyMockProgram pm;
     EXPECT_FALSE(pm.getAllowNonUniform());
     EXPECT_EQ(12u, pm.getProgramOptionVersion());
@@ -70,7 +70,7 @@ TEST(ProgramNonUniform, UpdateAllowNonUniform20) {
     EXPECT_EQ(20u, pm.getProgramOptionVersion());
 }
 
-TEST(ProgramNonUniform, UpdateAllowNonUniform21) {
+TEST(ProgramNonUniform, GivenBuildOptionsCl21WhenUpdatingAllowNonUniformThenNonUniformAllowed) {
     MyMockProgram pm;
     EXPECT_FALSE(pm.getAllowNonUniform());
     EXPECT_EQ(12u, pm.getProgramOptionVersion());
@@ -80,7 +80,7 @@ TEST(ProgramNonUniform, UpdateAllowNonUniform21) {
     EXPECT_EQ(21u, pm.getProgramOptionVersion());
 }
 
-TEST(ProgramNonUniform, UpdateAllowNonUniform20UniformFlag) {
+TEST(ProgramNonUniform, GivenBuildOptionsCl20AndUniformFlagWhenUpdatingAllowNonUniformThenNonUniformNotAllowed) {
     MyMockProgram pm;
     EXPECT_FALSE(pm.getAllowNonUniform());
     EXPECT_EQ(12u, pm.getProgramOptionVersion());
@@ -90,7 +90,7 @@ TEST(ProgramNonUniform, UpdateAllowNonUniform20UniformFlag) {
     EXPECT_EQ(20u, pm.getProgramOptionVersion());
 }
 
-TEST(ProgramNonUniform, UpdateAllowNonUniform21UniformFlag) {
+TEST(ProgramNonUniform, GivenBuildOptionsCl21AndUniformFlagWhenUpdatingAllowNonUniformThenNonUniformNotAllowed) {
     MyMockProgram pm;
     EXPECT_FALSE(pm.getAllowNonUniform());
     EXPECT_EQ(12u, pm.getProgramOptionVersion());
@@ -100,52 +100,52 @@ TEST(ProgramNonUniform, UpdateAllowNonUniform21UniformFlag) {
     EXPECT_EQ(21u, pm.getProgramOptionVersion());
 }
 
-TEST(KernelNonUniform, GetAllowNonUniformFlag) {
-    KernelInfo ki;
-    MockClDevice d{new MockDevice};
-    MockProgram pm(*d.getExecutionEnvironment());
+TEST(KernelNonUniform, WhenSettingAllowNonUniformThenGettingAllowNonUniformReturnsCorrectValue) {
+    KernelInfo kernelInfo;
+    MockClDevice device{new MockDevice()};
+    MockProgram program(toClDeviceVector(device));
     struct KernelMock : Kernel {
-        KernelMock(Program *p, KernelInfo &ki, ClDevice &d)
-            : Kernel(p, ki, d) {
+        KernelMock(Program *program, KernelInfo &kernelInfos, ClDevice &clDeviceArg)
+            : Kernel(program, kernelInfos, clDeviceArg) {
         }
     };
-
-    KernelMock k{&pm, ki, d};
-    pm.setAllowNonUniform(false);
+    KernelMock k{&program, kernelInfo, device};
+    program.setAllowNonUniform(false);
     EXPECT_FALSE(k.getAllowNonUniform());
-    pm.setAllowNonUniform(true);
+    program.setAllowNonUniform(true);
     EXPECT_TRUE(k.getAllowNonUniform());
-    pm.setAllowNonUniform(false);
+    program.setAllowNonUniform(false);
     EXPECT_FALSE(k.getAllowNonUniform());
 }
 
-TEST(ProgramNonUniform, UpdateAllowNonUniformOutcomeUniformFlag) {
-    ExecutionEnvironment executionEnvironment;
-    MockProgram pm(executionEnvironment);
-    MockProgram pm1(executionEnvironment);
-    MockProgram pm2(executionEnvironment);
-    const MockProgram *inputPrograms[] = {&pm1, &pm2};
+TEST(ProgramNonUniform, WhenSettingAllowNonUniformThenGettingAllowNonUniformReturnsCorrectValue) {
+    MockClDevice device{new MockDevice()};
+    auto deviceVector = toClDeviceVector(device);
+    MockProgram program(deviceVector);
+    MockProgram program1(deviceVector);
+    MockProgram program2(deviceVector);
+    const MockProgram *inputPrograms[] = {&program1, &program2};
     cl_uint numInputPrograms = 2;
 
-    pm1.setAllowNonUniform(false);
-    pm2.setAllowNonUniform(false);
-    pm.updateNonUniformFlag((const Program **)inputPrograms, numInputPrograms);
-    EXPECT_FALSE(pm.getAllowNonUniform());
+    program1.setAllowNonUniform(false);
+    program2.setAllowNonUniform(false);
+    program.updateNonUniformFlag((const Program **)inputPrograms, numInputPrograms);
+    EXPECT_FALSE(program.getAllowNonUniform());
 
-    pm1.setAllowNonUniform(false);
-    pm2.setAllowNonUniform(true);
-    pm.updateNonUniformFlag((const Program **)inputPrograms, numInputPrograms);
-    EXPECT_FALSE(pm.getAllowNonUniform());
+    program1.setAllowNonUniform(false);
+    program2.setAllowNonUniform(true);
+    program.updateNonUniformFlag((const Program **)inputPrograms, numInputPrograms);
+    EXPECT_FALSE(program.getAllowNonUniform());
 
-    pm1.setAllowNonUniform(true);
-    pm2.setAllowNonUniform(false);
-    pm.updateNonUniformFlag((const Program **)inputPrograms, numInputPrograms);
-    EXPECT_FALSE(pm.getAllowNonUniform());
+    program1.setAllowNonUniform(true);
+    program2.setAllowNonUniform(false);
+    program.updateNonUniformFlag((const Program **)inputPrograms, numInputPrograms);
+    EXPECT_FALSE(program.getAllowNonUniform());
 
-    pm1.setAllowNonUniform(true);
-    pm2.setAllowNonUniform(true);
-    pm.updateNonUniformFlag((const Program **)inputPrograms, numInputPrograms);
-    EXPECT_TRUE(pm.getAllowNonUniform());
+    program1.setAllowNonUniform(true);
+    program2.setAllowNonUniform(true);
+    program.updateNonUniformFlag((const Program **)inputPrograms, numInputPrograms);
+    EXPECT_TRUE(program.getAllowNonUniform());
 }
 
 class ProgramNonUniformTest : public ContextFixture,
@@ -164,6 +164,7 @@ class ProgramNonUniformTest : public ContextFixture,
     void SetUp() override {
         PlatformFixture::SetUp();
         device = pPlatform->getClDevice(0);
+        rootDeviceIndex = pPlatform->getClDevice(0)->getRootDeviceIndex();
         ContextFixture::SetUp(1, &device);
         ProgramFixture::SetUp();
         CommandQueueHwFixture::SetUp(pPlatform->getClDevice(0), 0);
@@ -176,113 +177,114 @@ class ProgramNonUniformTest : public ContextFixture,
         PlatformFixture::TearDown();
     }
     cl_device_id device;
+    uint32_t rootDeviceIndex;
     cl_int retVal = CL_SUCCESS;
 };
 
-TEST_F(ProgramNonUniformTest, ExecuteKernelNonUniform21) {
-    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
-        CreateProgramFromBinary(pContext, &device, "kernel_data_param");
-        auto mockProgram = (MockProgram *)pProgram;
-        ASSERT_NE(nullptr, mockProgram);
+TEST_F(ProgramNonUniformTest, GivenCl21WhenExecutingKernelWithNonUniformThenEnqueueSucceeds) {
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-        mockProgram->setBuildOptions("-cl-std=CL2.1");
-        retVal = mockProgram->build(
-            1,
-            &device,
-            nullptr,
-            nullptr,
-            nullptr,
-            false);
-        EXPECT_EQ(CL_SUCCESS, retVal);
+    CreateProgramFromBinary(pContext, pContext->getDevices(), "kernel_data_param");
+    auto mockProgram = pProgram;
+    ASSERT_NE(nullptr, mockProgram);
 
-        auto pKernelInfo = mockProgram->Program::getKernelInfo("test_get_local_size");
-        EXPECT_NE(nullptr, pKernelInfo);
+    mockProgram->setBuildOptions("-cl-std=CL2.1");
+    retVal = mockProgram->build(
+        mockProgram->getDevices(),
+        nullptr,
+        false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 
-        // create a kernel
-        auto pKernel = Kernel::create<MockKernel>(mockProgram, *pKernelInfo, &retVal);
-        ASSERT_EQ(CL_SUCCESS, retVal);
-        ASSERT_NE(nullptr, pKernel);
+    auto pKernelInfo = mockProgram->Program::getKernelInfo("test_get_local_size", rootDeviceIndex);
+    EXPECT_NE(nullptr, pKernelInfo);
 
-        size_t globalWorkSize[3] = {12, 12, 12};
-        size_t localWorkSize[3] = {11, 12, 1};
+    // create a kernel
+    auto pKernel = Kernel::create<MockKernel>(mockProgram,
+                                              *pKernelInfo,
+                                              *pPlatform->getClDevice(0),
+                                              &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, pKernel);
 
-        retVal = pCmdQ->enqueueKernel(
-            pKernel,
-            3,
-            nullptr,
-            globalWorkSize,
-            localWorkSize,
-            0,
-            nullptr,
-            nullptr);
-        EXPECT_EQ(CL_SUCCESS, retVal);
+    size_t globalWorkSize[3] = {12, 12, 12};
+    size_t localWorkSize[3] = {11, 12, 1};
 
-        delete pKernel;
-    }
+    retVal = pCmdQ->enqueueKernel(
+        pKernel,
+        3,
+        nullptr,
+        globalWorkSize,
+        localWorkSize,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    delete pKernel;
 }
 
-TEST_F(ProgramNonUniformTest, ExecuteKernelNonUniform20) {
-    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.0") != std::string::npos) {
-        CreateProgramFromBinary(pContext, &device, "kernel_data_param");
-        auto mockProgram = pProgram;
-        ASSERT_NE(nullptr, mockProgram);
+TEST_F(ProgramNonUniformTest, GivenCl20WhenExecutingKernelWithNonUniformThenEnqueueSucceeds) {
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-        mockProgram->setBuildOptions("-cl-std=CL2.0");
-        retVal = mockProgram->build(
-            1,
-            &device,
-            nullptr,
-            nullptr,
-            nullptr,
-            false);
-        EXPECT_EQ(CL_SUCCESS, retVal);
+    CreateProgramFromBinary(pContext, pContext->getDevices(), "kernel_data_param");
+    auto mockProgram = pProgram;
+    ASSERT_NE(nullptr, mockProgram);
 
-        auto pKernelInfo = mockProgram->Program::getKernelInfo("test_get_local_size");
-        EXPECT_NE(nullptr, pKernelInfo);
+    mockProgram->setBuildOptions("-cl-std=CL2.0");
+    retVal = mockProgram->build(
+        mockProgram->getDevices(),
+        nullptr,
+        false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 
-        // create a kernel
-        auto pKernel = Kernel::create<MockKernel>(mockProgram, *pKernelInfo, &retVal);
-        ASSERT_EQ(CL_SUCCESS, retVal);
-        ASSERT_NE(nullptr, pKernel);
+    auto pKernelInfo = mockProgram->Program::getKernelInfo("test_get_local_size", rootDeviceIndex);
+    EXPECT_NE(nullptr, pKernelInfo);
 
-        size_t globalWorkSize[3] = {12, 12, 12};
-        size_t localWorkSize[3] = {11, 12, 12};
+    // create a kernel
+    auto pKernel = Kernel::create<MockKernel>(mockProgram,
+                                              *pKernelInfo,
+                                              *pPlatform->getClDevice(0),
+                                              &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, pKernel);
 
-        retVal = pCmdQ->enqueueKernel(
-            pKernel,
-            3,
-            nullptr,
-            globalWorkSize,
-            localWorkSize,
-            0,
-            nullptr,
-            nullptr);
-        EXPECT_EQ(CL_SUCCESS, retVal);
+    size_t globalWorkSize[3] = {12, 12, 12};
+    size_t localWorkSize[3] = {11, 12, 1};
 
-        delete pKernel;
-    }
+    retVal = pCmdQ->enqueueKernel(
+        pKernel,
+        3,
+        nullptr,
+        globalWorkSize,
+        localWorkSize,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    delete pKernel;
 }
 
-TEST_F(ProgramNonUniformTest, ExecuteKernelNonUniform12) {
-    CreateProgramFromBinary(pContext, &device, "kernel_data_param");
+TEST_F(ProgramNonUniformTest, GivenCl12WhenExecutingKernelWithNonUniformThenInvalidWorkGroupSizeIsReturned) {
+    CreateProgramFromBinary(pContext, pContext->getDevices(), "kernel_data_param");
     auto mockProgram = pProgram;
     ASSERT_NE(nullptr, mockProgram);
 
     mockProgram->setBuildOptions("-cl-std=CL1.2");
     retVal = mockProgram->build(
-        1,
-        &device,
-        nullptr,
-        nullptr,
+        mockProgram->getDevices(),
         nullptr,
         false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto pKernelInfo = mockProgram->Program::getKernelInfo("test_get_local_size");
+    auto pKernelInfo = mockProgram->Program::getKernelInfo("test_get_local_size", rootDeviceIndex);
     EXPECT_NE(nullptr, pKernelInfo);
 
     // create a kernel
-    auto pKernel = Kernel::create<MockKernel>(mockProgram, *pKernelInfo, &retVal);
+    auto pKernel = Kernel::create<MockKernel>(mockProgram,
+                                              *pKernelInfo,
+                                              *pPlatform->getClDevice(0),
+                                              &retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, pKernel);
 

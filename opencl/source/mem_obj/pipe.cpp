@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,8 +12,8 @@
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
-#include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 
 namespace NEO {
@@ -24,16 +24,16 @@ Pipe::Pipe(Context *context,
            cl_uint maxPackets,
            const cl_pipe_properties *properties,
            void *memoryStorage,
-           GraphicsAllocation *gfxAllocation)
+           MultiGraphicsAllocation multiGraphicsAllocation)
     : MemObj(context,
              CL_MEM_OBJECT_PIPE,
-             MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+             ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
              flags,
              0,
              static_cast<size_t>(packetSize * (maxPackets + 1) + intelPipeHeaderReservedSpace),
              memoryStorage,
              nullptr,
-             gfxAllocation,
+             std::move(multiGraphicsAllocation),
              false,
              false,
              false),
@@ -55,23 +55,27 @@ Pipe *Pipe::create(Context *context,
     DEBUG_BREAK_IF(!memoryManager);
 
     MemoryProperties memoryProperties =
-        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice());
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice());
     while (true) {
         auto size = static_cast<size_t>(packetSize * (maxPackets + 1) + intelPipeHeaderReservedSpace);
         auto rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
         AllocationProperties allocProperties =
             MemoryPropertiesHelper::getAllocationProperties(rootDeviceIndex, memoryProperties,
                                                             true, // allocateMemory
-                                                            size, GraphicsAllocation::AllocationType::PIPE,
+                                                            size, AllocationType::PIPE,
                                                             false, // isMultiStorageAllocation
-                                                            context->getDevice(0)->getHardwareInfo(), context->getDeviceBitfieldForAllocation());
+                                                            context->getDevice(0)->getHardwareInfo(), context->getDeviceBitfieldForAllocation(rootDeviceIndex),
+                                                            context->isSingleDeviceContext());
         GraphicsAllocation *memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties);
         if (!memory) {
             errcodeRet = CL_OUT_OF_HOST_MEMORY;
             break;
         }
 
-        pPipe = new (std::nothrow) Pipe(context, flags, packetSize, maxPackets, properties, memory->getUnderlyingBuffer(), memory);
+        auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
+        multiGraphicsAllocation.addAllocation(memory);
+
+        pPipe = new (std::nothrow) Pipe(context, flags, packetSize, maxPackets, properties, memory->getUnderlyingBuffer(), std::move(multiGraphicsAllocation));
         if (!pPipe) {
             memoryManager->freeGraphicsMemory(memory);
             memory = nullptr;
@@ -119,8 +123,8 @@ cl_int Pipe::getPipeInfo(cl_image_info paramName,
     return retVal;
 }
 
-void Pipe::setPipeArg(void *memory, uint32_t patchSize) {
-    patchWithRequiredSize(memory, patchSize, static_cast<uintptr_t>(multiGraphicsAllocation.getDefaultGraphicsAllocation()->getGpuAddressToPatch()));
+void Pipe::setPipeArg(void *memory, uint32_t patchSize, uint32_t rootDeviceIndex) {
+    patchWithRequiredSize(memory, patchSize, static_cast<uintptr_t>(multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex)->getGpuAddressToPatch()));
 }
 
 Pipe::~Pipe() = default;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
 
 #include "cl_api_tests.h"
 
@@ -74,7 +75,7 @@ TEST_F(clEnqueueReadBufferRectTest, GivenNullHostPtrWhenReadingRectangularRegion
     auto buffer = clCreateBuffer(
         pContext,
         CL_MEM_READ_WRITE,
-        20,
+        100,
         nullptr,
         &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -109,7 +110,7 @@ TEST_F(clEnqueueReadBufferRectTest, GivenValidParametersWhenReadingRectangularRe
     auto buffer = clCreateBuffer(
         pContext,
         CL_MEM_READ_WRITE,
-        20,
+        100,
         nullptr,
         &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -119,7 +120,7 @@ TEST_F(clEnqueueReadBufferRectTest, GivenValidParametersWhenReadingRectangularRe
 
     size_t buffOrigin[] = {0, 0, 0};
     size_t hostOrigin[] = {0, 0, 0};
-    size_t region[] = {10, 10, 0};
+    size_t region[] = {10, 10, 1};
 
     auto retVal = clEnqueueReadBufferRect(
         pCommandQueue,
@@ -141,11 +142,40 @@ TEST_F(clEnqueueReadBufferRectTest, GivenValidParametersWhenReadingRectangularRe
     clReleaseMemObject(buffer);
 }
 
+TEST_F(clEnqueueReadBufferRectTest, GivenQueueIncapableWhenReadingRectangularRegionThenInvalidOperationIsReturned) {
+    MockBuffer buffer{};
+    buffer.size = 100;
+    char ptr[10];
+
+    size_t buffOrigin[] = {0, 0, 0};
+    size_t hostOrigin[] = {0, 0, 0};
+    size_t region[] = {10, 10, 1};
+
+    this->disableQueueCapabilities(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL);
+    auto retVal = clEnqueueReadBufferRect(
+        pCommandQueue,
+        &buffer,
+        CL_FALSE,
+        buffOrigin,
+        hostOrigin,
+        region,
+        10,  //bufferRowPitch
+        0,   //bufferSlicePitch
+        10,  //hostRowPitch
+        0,   //hostSlicePitch
+        ptr, //hostPtr
+        0,   //numEventsInWaitList
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+}
+
 TEST_F(clEnqueueReadBufferRectTest, GivenInvalidPitchWhenReadingRectangularRegionThenInvalidValueErrorIsReturned) {
     auto buffer = clCreateBuffer(
         pContext,
         CL_MEM_READ_WRITE,
-        20,
+        100,
         nullptr,
         &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -155,7 +185,7 @@ TEST_F(clEnqueueReadBufferRectTest, GivenInvalidPitchWhenReadingRectangularRegio
 
     size_t buffOrigin[] = {0, 0, 0};
     size_t hostOrigin[] = {0, 0, 0};
-    size_t region[] = {10, 10, 0};
+    size_t region[] = {10, 10, 1};
     size_t bufferRowPitch = 9;
 
     auto retVal = clEnqueueReadBufferRect(

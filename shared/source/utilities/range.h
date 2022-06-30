@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,11 @@ struct Range {
     using reverse_iterator = std::reverse_iterator<iterator>;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-    Range(DataType *base, size_t count)
+    Range()
+        : begIt(nullptr), endIt(nullptr) {
+    }
+
+    explicit Range(DataType *base, size_t count = 1)
         : begIt(base), endIt(base + count) {
     }
 
@@ -77,7 +81,7 @@ struct Range {
 };
 
 template <typename T>
-inline Range<T> CreateRange(T *base, size_t count) {
+inline Range<T> createRange(T *base, size_t count) {
     return Range<T>(base, count);
 }
 } // namespace NEO

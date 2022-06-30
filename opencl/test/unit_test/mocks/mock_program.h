@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,63 +9,54 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/program/kernel_info.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "opencl/source/cl_device/cl_device.h"
-#include "opencl/source/program/kernel_info.h"
+#include "opencl/source/kernel/multi_device_kernel.h"
 #include "opencl/source/program/program.h"
-
-#include "gmock/gmock.h"
 
 #include <string>
 
 namespace NEO {
 
 class GraphicsAllocation;
-
+ClDeviceVector toClDeviceVector(ClDevice &clDevice);
 ////////////////////////////////////////////////////////////////////////////////
 // Program - Core implementation
 ////////////////////////////////////////////////////////////////////////////////
 class MockProgram : public Program {
   public:
-    using Program::createProgramFromBinary;
-    using Program::internalOptionsToExtract;
-    using Program::isKernelDebugEnabled;
-    using Program::linkBinary;
-    using Program::separateBlockKernels;
-    using Program::updateNonUniformFlag;
-
+    using Program::allowNonUniform;
     using Program::applyAdditionalOptions;
     using Program::areSpecializationConstantsInitialized;
-    using Program::blockKernelManager;
-    using Program::constantSurface;
+    using Program::buildInfos;
     using Program::context;
     using Program::createdFrom;
-    using Program::debugData;
-    using Program::debugDataSize;
-    using Program::exportedFunctionsSurface;
+    using Program::createProgramFromBinary;
+    using Program::deviceBuildInfos;
     using Program::extractInternalOptions;
     using Program::getKernelInfo;
-    using Program::globalSurface;
+    using Program::internalOptionsToExtract;
     using Program::irBinary;
     using Program::irBinarySize;
+    using Program::isBuiltIn;
+    using Program::isCreatedFromBinary;
     using Program::isSpirV;
-    using Program::linkerInput;
+    using Program::kernelDebugEnabled;
+    using Program::linkBinary;
     using Program::options;
     using Program::packDeviceBinary;
-    using Program::packedDeviceBinary;
-    using Program::packedDeviceBinarySize;
-    using Program::pDevice;
-    using Program::programBinaryType;
+    using Program::Program;
+    using Program::requiresRebuild;
+    using Program::setBuildStatus;
     using Program::sourceCode;
     using Program::specConstantsIds;
     using Program::specConstantsSizes;
     using Program::specConstantsValues;
-    using Program::symbols;
-    using Program::unpackedDeviceBinary;
-    using Program::unpackedDeviceBinarySize;
+    using Program::updateNonUniformFlag;
 
-    template <typename... T>
-    MockProgram(T &&... args) : Program(std::forward<T>(args)...) {
+    MockProgram(const ClDeviceVector &deviceVector) : Program(nullptr, false, deviceVector) {
     }
 
     ~MockProgram() override {
@@ -76,45 +67,44 @@ class MockProgram : public Program {
     void setBuildOptions(const char *buildOptions) {
         options = buildOptions != nullptr ? buildOptions : "";
     }
-    std::string &getInternalOptions() { return internalOptions; };
     void setConstantSurface(GraphicsAllocation *gfxAllocation) {
-        constantSurface = gfxAllocation;
+        if (gfxAllocation) {
+            buildInfos[gfxAllocation->getRootDeviceIndex()].constantSurface = gfxAllocation;
+        } else {
+            for (auto &buildInfo : buildInfos) {
+                buildInfo.constantSurface = nullptr;
+            }
+        }
     }
     void setGlobalSurface(GraphicsAllocation *gfxAllocation) {
-        globalSurface = gfxAllocation;
+        if (gfxAllocation) {
+            buildInfos[gfxAllocation->getRootDeviceIndex()].globalSurface = gfxAllocation;
+        } else {
+            for (auto &buildInfo : buildInfos) {
+                buildInfo.globalSurface = nullptr;
+            }
+        }
     }
-    void setDevice(Device *device) {
-        this->pDevice = device;
-    };
-    std::vector<KernelInfo *> &getKernelInfoArray() {
-        return kernelInfoArray;
+    std::vector<KernelInfo *> &getKernelInfoArray(uint32_t rootDeviceIndex) {
+        return buildInfos[rootDeviceIndex].kernelInfoArray;
     }
-    void addKernelInfo(KernelInfo *inInfo) {
-        kernelInfoArray.push_back(inInfo);
-    }
-    std::vector<KernelInfo *> &getParentKernelInfoArray() {
-        return parentKernelInfoArray;
-    }
-    std::vector<KernelInfo *> &getSubgroupKernelInfoArray() {
-        return subgroupKernelInfoArray;
+    void addKernelInfo(KernelInfo *inInfo, uint32_t rootDeviceIndex) {
+        buildInfos[rootDeviceIndex].kernelInfoArray.push_back(inInfo);
     }
     void setContext(Context *context) {
         this->context = context;
         contextSet = true;
     }
+    void setSourceCode(const char *ptr) { sourceCode = ptr; }
+    void clearOptions() { options = ""; }
+    void setCreatedFromBinary(bool createdFromBin) { isCreatedFromBinary = createdFromBin; }
+    void clearLog(uint32_t rootDeviceIndex) { buildInfos[rootDeviceIndex].buildLog.clear(); }
 
-    void SetBuildStatus(cl_build_status st) { buildStatus = st; }
-    void SetSourceCode(const char *ptr) { sourceCode = ptr; }
-    void ClearOptions() { options = ""; }
-    void SetCreatedFromBinary(bool createdFromBin) { isCreatedFromBinary = createdFromBin; }
-    void ClearLog() { buildLog.clear(); }
-    void SetDevice(Device *pDev) { pDevice = pDev; }
-
-    void SetIrBinary(char *ptr, bool isSpirv) {
+    void setIrBinary(char *ptr, bool isSpirv) {
         irBinary.reset(ptr);
         this->isSpirV = isSpirV;
     }
-    void SetIrBinarySize(size_t bsz, bool isSpirv) {
+    void setIrBinarySize(size_t bsz, bool isSpirv) {
         irBinarySize = bsz;
         this->isSpirV = isSpirV;
     }
@@ -123,8 +113,6 @@ class MockProgram : public Program {
     void setAllowNonUniform(bool allow) {
         allowNonUniform = allow;
     }
-
-    Device *getDevicePtr();
 
     bool isFlagOption(ConstStringRef option) override {
         if (isFlagOptionOverride != -1) {
@@ -142,42 +130,86 @@ class MockProgram : public Program {
 
     cl_int rebuildProgramFromIr() {
         this->isCreatedFromBinary = false;
-        this->buildStatus = CL_BUILD_NONE;
+        this->requiresRebuild = true;
+        setBuildStatus(CL_BUILD_NONE);
         std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> builtins;
-        auto &device = this->getDevice();
-        return this->build(&device, this->options.c_str(), false, builtins);
+        return this->build(getDevices(), this->options.c_str(), false, builtins);
     }
 
+    cl_int recompile() {
+        this->isCreatedFromBinary = false;
+        this->requiresRebuild = true;
+        setBuildStatus(CL_BUILD_NONE);
+        return this->compile(getDevices(), this->options.c_str(), 0, nullptr, nullptr);
+    }
+
+    void replaceDeviceBinary(std::unique_ptr<char[]> &&newBinary, size_t newBinarySize, uint32_t rootDeviceIndex) override {
+        if (replaceDeviceBinaryCalledPerRootDevice.find(rootDeviceIndex) == replaceDeviceBinaryCalledPerRootDevice.end()) {
+            replaceDeviceBinaryCalledPerRootDevice.insert({rootDeviceIndex, 1});
+        } else {
+            replaceDeviceBinaryCalledPerRootDevice[rootDeviceIndex]++;
+        }
+        Program::replaceDeviceBinary(std::move(newBinary), newBinarySize, rootDeviceIndex);
+    }
+    cl_int processGenBinary(const ClDevice &clDevice) override {
+        auto rootDeviceIndex = clDevice.getRootDeviceIndex();
+        if (processGenBinaryCalledPerRootDevice.find(rootDeviceIndex) == processGenBinaryCalledPerRootDevice.end()) {
+            processGenBinaryCalledPerRootDevice.insert({rootDeviceIndex, 1});
+        } else {
+            processGenBinaryCalledPerRootDevice[rootDeviceIndex]++;
+        }
+        return Program::processGenBinary(clDevice);
+    }
+
+    std::string getInternalOptions() const override {
+        getInternalOptionsCalled++;
+        return Program::getInternalOptions();
+    };
+
+    const KernelInfo &getKernelInfoForKernel(const char *kernelName) const {
+        return *getKernelInfo(kernelName, getDevices()[0]->getRootDeviceIndex());
+    }
+
+    const KernelInfoContainer getKernelInfosForKernel(const char *kernelName) const {
+        KernelInfoContainer kernelInfos;
+        kernelInfos.resize(getMaxRootDeviceIndex() + 1);
+        for (auto i = 0u; i < kernelInfos.size(); i++) {
+            kernelInfos[i] = getKernelInfo(kernelName, i);
+        }
+        return kernelInfos;
+    }
+
+    void processDebugData(uint32_t rootDeviceIndex) override {
+        Program::processDebugData(rootDeviceIndex);
+        wasProcessDebugDataCalled = true;
+    }
+
+    void createDebugZebin(uint32_t rootDeviceIndex) override {
+        Program::createDebugZebin(rootDeviceIndex);
+        wasCreateDebugZebinCalled = true;
+    }
+
+    void debugNotify(const ClDeviceVector &deviceVector, std::unordered_map<uint32_t, BuildPhase> &phasesReached) override {
+        Program::debugNotify(deviceVector, phasesReached);
+        wasDebuggerNotified = true;
+    }
+
+    std::vector<NEO::ExternalFunctionInfo> externalFunctions;
+    std::map<uint32_t, int> processGenBinaryCalledPerRootDevice;
+    std::map<uint32_t, int> replaceDeviceBinaryCalledPerRootDevice;
+    static int getInternalOptionsCalled;
     bool contextSet = false;
     int isFlagOptionOverride = -1;
     int isOptionValueValidOverride = -1;
+    bool wasProcessDebugDataCalled = false;
+    bool wasCreateDebugZebinCalled = false;
+    bool wasDebuggerNotified = false;
 };
 
-class GlobalMockSipProgram : public Program {
+class MockProgramAppendKernelDebugOptions : public Program {
   public:
     using Program::Program;
-    GlobalMockSipProgram(ExecutionEnvironment &executionEnvironment) : Program(executionEnvironment) {
-    }
-    cl_int processGenBinary() override;
-    cl_int processGenBinaryOnce();
-    void resetAllocationState();
-    void resetAllocation(GraphicsAllocation *allocation);
-    void deleteAllocation();
-    GraphicsAllocation *getAllocation();
-    static void initSipProgram();
-    static void shutDownSipProgram();
-    static GlobalMockSipProgram *sipProgram;
-    static Program *getSipProgramWithCustomBinary();
-
-  protected:
-    void *sipAllocationStorage;
-    static ExecutionEnvironment executionEnvironment;
-};
-
-class GMockProgram : public Program {
-  public:
-    using Program::Program;
-    MOCK_METHOD0(appendKernelDebugOptions, bool(void));
+    ADDMETHOD_NOBASE(appendKernelDebugOptions, bool, true, (ClDevice & clDevice, std::string &internalOptions));
 };
 
 } // namespace NEO

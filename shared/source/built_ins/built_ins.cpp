@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,12 +9,10 @@
 
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
+#include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
-
-#include "opencl/source/helpers/built_ins_helper.h"
-#include "opencl/source/helpers/convert_color.h"
-#include "opencl/source/helpers/dispatch_info_builder.h"
+#include "shared/source/memory_manager/memory_manager.h"
 
 #include "compiler_options.h"
 
@@ -35,35 +33,44 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
     auto &sipBuiltIn = this->sipKernels[kernelId];
 
     auto initializer = [&] {
-        int retVal = 0;
-
         std::vector<char> sipBinary;
+        std::vector<char> stateSaveAreaHeader;
         auto compilerInteface = device.getCompilerInterface();
         UNRECOVERABLE_IF(compilerInteface == nullptr);
 
-        auto ret = compilerInteface->getSipKernelBinary(device, type, sipBinary);
+        auto ret = compilerInteface->getSipKernelBinary(device, type, sipBinary, stateSaveAreaHeader);
 
         UNRECOVERABLE_IF(ret != TranslationOutput::ErrorCode::Success);
         UNRECOVERABLE_IF(sipBinary.size() == 0);
-        auto program = createProgramForSip(*device.getExecutionEnvironment(),
-                                           nullptr,
-                                           sipBinary,
-                                           sipBinary.size(),
-                                           &retVal,
-                                           &device);
-        DEBUG_BREAK_IF(retVal != 0);
-        UNRECOVERABLE_IF(program == nullptr);
 
-        program->setDevice(&device);
+        const auto allocType = AllocationType::KERNEL_ISA_INTERNAL;
 
-        retVal = program->processGenBinary();
-        DEBUG_BREAK_IF(retVal != 0);
+        AllocationProperties properties = {device.getRootDeviceIndex(), sipBinary.size(), allocType, device.getDeviceBitfield()};
+        properties.flags.use32BitFrontWindow = false;
 
-        sipBuiltIn.first.reset(new SipKernel(type, program));
+        auto sipAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+
+        auto &hwInfo = device.getHardwareInfo();
+        auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+
+        if (sipAllocation) {
+            MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *sipAllocation),
+                                                             device, sipAllocation, 0, sipBinary.data(),
+                                                             sipBinary.size());
+        }
+        sipBuiltIn.first.reset(new SipKernel(type, sipAllocation, std::move(stateSaveAreaHeader)));
     };
     std::call_once(sipBuiltIn.second, initializer);
     UNRECOVERABLE_IF(sipBuiltIn.first == nullptr);
     return *sipBuiltIn.first;
+}
+
+void BuiltIns::freeSipKernels(MemoryManager *memoryManager) {
+    for (auto &sipKernel : sipKernels) {
+        if (sipKernel.first.get()) {
+            memoryManager->freeGraphicsMemory(sipKernel.first->getSipAllocation());
+        }
+    }
 }
 
 } // namespace NEO

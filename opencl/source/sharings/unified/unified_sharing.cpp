@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,11 +32,11 @@ void UnifiedSharing::synchronizeObject(UpdateData &updateData) {
 void UnifiedSharing::releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) {
 }
 
-GraphicsAllocation *UnifiedSharing::createGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description, GraphicsAllocation::AllocationType allocationType) {
+GraphicsAllocation *UnifiedSharing::createGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description, AllocationType allocationType) {
     auto memoryManager = context->getMemoryManager();
     switch (description.type) {
     case UnifiedSharingHandleType::Win32Nt: {
-        return memoryManager->createGraphicsAllocationFromNTHandle(description.handle, context->getDevice(0)->getRootDeviceIndex());
+        return memoryManager->createGraphicsAllocationFromNTHandle(description.handle, context->getDevice(0)->getRootDeviceIndex(), allocationType);
     }
     case UnifiedSharingHandleType::LinuxFd:
     case UnifiedSharingHandleType::Win32Shared: {
@@ -45,8 +45,8 @@ GraphicsAllocation *UnifiedSharing::createGraphicsAllocation(Context *context, U
                                               0u,    // size
                                               allocationType,
                                               false, // isMultiStorageAllocation
-                                              context->getDeviceBitfieldForAllocation()};
-        return memoryManager->createGraphicsAllocationFromSharedHandle(toOsHandle(description.handle), properties, false);
+                                              context->getDeviceBitfieldForAllocation(context->getDevice(0)->getRootDeviceIndex())};
+        return memoryManager->createGraphicsAllocationFromSharedHandle(toOsHandle(description.handle), properties, false, false);
     }
     default:
         return nullptr;

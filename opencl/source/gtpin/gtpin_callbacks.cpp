@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/memory_manager/surface.h"
-#include "shared/source/utilities/spinlock.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
@@ -16,6 +16,7 @@
 #include "opencl/source/gtpin/gtpin_hw_helper.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/kernel/kernel.h"
+#include "opencl/source/kernel/multi_device_kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/program/program.h"
 
@@ -29,13 +30,15 @@ using namespace gtpin;
 
 namespace NEO {
 
+using GTPinLockType = std::recursive_mutex;
+
 extern gtpin::ocl::gtpin_events_t GTPinCallbacks;
 
 igc_init_t *pIgcInit = nullptr;
 std::atomic<int> sequenceCount(1);
 CommandQueue *pCmdQueueForFlushTask = nullptr;
 std::deque<gtpinkexec_t> kernelExecQueue;
-SpinLock kernelExecQueueLock;
+GTPinLockType kernelExecQueueLock;
 
 void gtpinNotifyContextCreate(cl_context context) {
     if (isGTPinInitialized) {
@@ -62,10 +65,11 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
         return;
     }
     if (isGTPinInitialized) {
-        auto pKernel = castToObjectOrAbort<Kernel>(kernel);
+        auto pMultiDeviceKernel = castToObjectOrAbort<MultiDeviceKernel>(kernel);
+        auto pKernel = pMultiDeviceKernel->getDefaultKernel();
+        auto &device = pMultiDeviceKernel->getDevices()[0]->getDevice();
         size_t gtpinBTI = pKernel->getNumberOfBindingTableStates();
         // Enlarge local copy of SSH by 1 SS
-        auto &device = pKernel->getDevice();
         GFXCORE_FAMILY genFamily = device.getHardwareInfo().platform.eRenderCoreFamily;
         GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
         if (!gtpinHelper.addSurfaceState(pKernel)) {
@@ -78,7 +82,7 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
         }
         // Notify GT-Pin that new kernel was created
         Context *pContext = &(pKernel->getContext());
-        cl_context context = (cl_context)pContext;
+        cl_context context = pContext;
         auto &kernelInfo = pKernel->getKernelInfo();
         instrument_params_in_t paramsIn = {};
 
@@ -89,10 +93,15 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
         paramsIn.buffer_type = GTPIN_BUFFER_BINDFULL;
         paramsIn.buffer_desc.BTI = static_cast<uint32_t>(gtpinBTI);
         paramsIn.igc_hash_id = kernelInfo.shaderHashCode;
-        paramsIn.kernel_name = (char *)kernelInfo.name.c_str();
+        paramsIn.kernel_name = (char *)kernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str();
         paramsIn.igc_info = kernelInfo.igcInfoForGtpin;
-        paramsIn.debug_data = pKernel->getProgram()->getDebugData();
-        paramsIn.debug_data_size = static_cast<uint32_t>(pKernel->getProgram()->getDebugDataSize());
+        if (kernelInfo.debugData.vIsa != nullptr) {
+            paramsIn.debug_data = kernelInfo.debugData.vIsa;
+            paramsIn.debug_data_size = static_cast<uint32_t>(kernelInfo.debugData.vIsaSize);
+        } else {
+            paramsIn.debug_data = nullptr;
+            paramsIn.debug_data_size = 0;
+        }
         instrument_params_out_t paramsOut = {0};
         (*GTPinCallbacks.onKernelCreate)((context_handle_t)(cl_context)context, &paramsIn, &paramsOut);
         // Substitute ISA of created kernel with instrumented code
@@ -103,7 +112,11 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
 
 void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
     if (isGTPinInitialized) {
-        auto pKernel = castToObjectOrAbort<Kernel>(kernel);
+        auto pCmdQ = reinterpret_cast<CommandQueue *>(pCmdQueue);
+        auto &device = pCmdQ->getDevice();
+        auto rootDeviceIndex = device.getRootDeviceIndex();
+        auto pMultiDeviceKernel = castToObjectOrAbort<MultiDeviceKernel>(kernel);
+        auto pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
         if (pKernel->getSurfaceStateHeapSize() == 0) {
             // Kernel with no SSH, not supported
             return;
@@ -125,21 +138,29 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
         kExec.gtpinResource = (cl_mem)resource;
         kExec.commandBuffer = commandBuffer;
         kExec.pCommandQueue = (CommandQueue *)pCmdQueue;
-        std::unique_lock<SpinLock> lock{kernelExecQueueLock};
+        std::unique_lock<GTPinLockType> lock{kernelExecQueueLock};
         kernelExecQueue.push_back(kExec);
         lock.unlock();
         // Patch SSH[gtpinBTI] with GT-Pin resource
         if (!resource) {
             return;
         }
-        auto &device = pKernel->getDevice();
-        GFXCORE_FAMILY genFamily = device.getHardwareInfo().platform.eRenderCoreFamily;
-        GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
+        GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
         size_t gtpinBTI = pKernel->getNumberOfBindingTableStates() - 1;
         void *pSurfaceState = gtpinHelper.getSurfaceState(pKernel, gtpinBTI);
-        cl_mem buffer = (cl_mem)resource;
-        auto pBuffer = castToObjectOrAbort<Buffer>(buffer);
-        pBuffer->setArgStateful(pSurfaceState, false, false, false, false);
+        if (gtpinHelper.canUseSharedAllocation(device.getHardwareInfo())) {
+            auto allocData = reinterpret_cast<SvmAllocationData *>(resource);
+            auto gpuAllocation = allocData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+            size_t size = gpuAllocation->getUnderlyingBufferSize();
+            Buffer::setSurfaceState(&device, pSurfaceState, false, false, size, gpuAllocation->getUnderlyingBuffer(), 0, gpuAllocation, 0, 0,
+                                    pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, pContext->getNumDevices());
+            device.getMemoryManager()->getPageFaultManager()->moveAllocationToGpuDomain(reinterpret_cast<void *>(gpuAllocation->getGpuAddress()));
+        } else {
+            cl_mem buffer = (cl_mem)resource;
+            auto pBuffer = castToObjectOrAbort<Buffer>(buffer);
+            pBuffer->setArgStateful(pSurfaceState, false, false, false, false, device,
+                                    pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, pContext->getNumDevices());
+        }
     }
 }
 
@@ -151,7 +172,7 @@ void gtpinNotifyPreFlushTask(void *pCmdQueue) {
 
 void gtpinNotifyFlushTask(uint32_t flushedTaskCount) {
     if (isGTPinInitialized) {
-        std::unique_lock<SpinLock> lock{kernelExecQueueLock};
+        std::unique_lock<GTPinLockType> lock{kernelExecQueueLock};
         size_t numElems = kernelExecQueue.size();
         for (size_t n = 0; n < numElems; n++) {
             if ((kernelExecQueue[n].pCommandQueue == pCmdQueueForFlushTask) && !kernelExecQueue[n].isTaskCountValid) {
@@ -166,34 +187,40 @@ void gtpinNotifyFlushTask(uint32_t flushedTaskCount) {
 }
 
 void gtpinNotifyTaskCompletion(uint32_t completedTaskCount) {
-    if (isGTPinInitialized) {
-        std::unique_lock<SpinLock> lock{kernelExecQueueLock};
-        size_t numElems = kernelExecQueue.size();
-        for (size_t n = 0; n < numElems;) {
-            if (kernelExecQueue[n].isTaskCountValid && (kernelExecQueue[n].taskCount <= completedTaskCount)) {
-                // Notify GT-Pin that execution of "command buffer" was completed
-                (*GTPinCallbacks.onCommandBufferComplete)(kernelExecQueue[n].commandBuffer);
-                // Remove kernel's record from Kernel Execution Queue
-                kernelExecQueue.erase(kernelExecQueue.begin() + n);
-                numElems--;
-            } else {
-                n++;
-            }
+    std::unique_lock<GTPinLockType> lock{kernelExecQueueLock};
+    size_t numElems = kernelExecQueue.size();
+    for (size_t n = 0; n < numElems;) {
+        if (kernelExecQueue[n].isTaskCountValid && (kernelExecQueue[n].taskCount <= completedTaskCount)) {
+            // Notify GT-Pin that execution of "command buffer" was completed
+            (*GTPinCallbacks.onCommandBufferComplete)(kernelExecQueue[n].commandBuffer);
+            // Remove kernel's record from Kernel Execution Queue
+            kernelExecQueue.erase(kernelExecQueue.begin() + n);
+            numElems--;
+        } else {
+            n++;
         }
     }
 }
 
 void gtpinNotifyMakeResident(void *pKernel, void *pCSR) {
     if (isGTPinInitialized) {
-        std::unique_lock<SpinLock> lock{kernelExecQueueLock};
+        std::unique_lock<GTPinLockType> lock{kernelExecQueueLock};
         size_t numElems = kernelExecQueue.size();
         for (size_t n = 0; n < numElems; n++) {
             if ((kernelExecQueue[n].pKernel == pKernel) && !kernelExecQueue[n].isResourceResident && kernelExecQueue[n].gtpinResource) {
                 // It's time for kernel to make resident its GT-Pin resource
                 CommandStreamReceiver *pCommandStreamReceiver = reinterpret_cast<CommandStreamReceiver *>(pCSR);
-                cl_mem gtpinBuffer = kernelExecQueue[n].gtpinResource;
-                auto pBuffer = castToObjectOrAbort<Buffer>(gtpinBuffer);
-                GraphicsAllocation *pGfxAlloc = pBuffer->getGraphicsAllocation(pCommandStreamReceiver->getRootDeviceIndex());
+                GraphicsAllocation *pGfxAlloc = nullptr;
+                Context &context = static_cast<Kernel *>(pKernel)->getContext();
+                GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(context.getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
+                if (gtpinHelper.canUseSharedAllocation(context.getDevice(0)->getHardwareInfo())) {
+                    auto allocData = reinterpret_cast<SvmAllocationData *>(kernelExecQueue[n].gtpinResource);
+                    pGfxAlloc = allocData->gpuAllocations.getGraphicsAllocation(pCommandStreamReceiver->getRootDeviceIndex());
+                } else {
+                    cl_mem gtpinBuffer = kernelExecQueue[n].gtpinResource;
+                    auto pBuffer = castToObjectOrAbort<Buffer>(gtpinBuffer);
+                    pGfxAlloc = pBuffer->getGraphicsAllocation(pCommandStreamReceiver->getRootDeviceIndex());
+                }
                 pCommandStreamReceiver->makeResident(*pGfxAlloc);
                 kernelExecQueue[n].isResourceResident = true;
                 break;
@@ -204,7 +231,7 @@ void gtpinNotifyMakeResident(void *pKernel, void *pCSR) {
 
 void gtpinNotifyUpdateResidencyList(void *pKernel, void *pResVec) {
     if (isGTPinInitialized) {
-        std::unique_lock<SpinLock> lock{kernelExecQueueLock};
+        std::unique_lock<GTPinLockType> lock{kernelExecQueueLock};
         size_t numElems = kernelExecQueue.size();
         for (size_t n = 0; n < numElems; n++) {
             if ((kernelExecQueue[n].pKernel == pKernel) && !kernelExecQueue[n].isResourceResident && kernelExecQueue[n].gtpinResource) {
@@ -234,6 +261,20 @@ void *gtpinGetIgcInit() {
 }
 void gtpinSetIgcInit(void *pIgcInitPtr) {
     pIgcInit = static_cast<igc_init_t *>(pIgcInitPtr);
+}
+
+void gtpinRemoveCommandQueue(void *pCmdQueue) {
+    if (isGTPinInitialized) {
+        std::unique_lock<GTPinLockType> lock{kernelExecQueueLock};
+        size_t n = 0;
+        while (n < kernelExecQueue.size()) {
+            if (kernelExecQueue[n].pCommandQueue == pCmdQueue) {
+                kernelExecQueue.erase(kernelExecQueue.begin() + n);
+            } else {
+                n++;
+            }
+        }
+    }
 }
 
 } // namespace NEO

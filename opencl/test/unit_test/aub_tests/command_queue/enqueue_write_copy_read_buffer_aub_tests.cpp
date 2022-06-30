@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,14 +8,14 @@
 #include "opencl/test/unit_test/aub_tests/command_queue/enqueue_write_copy_read_buffer_aub_tests.h"
 
 #include "shared/source/memory_manager/allocations_list.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 
 template <typename FamilyType>
 void AubWriteCopyReadBuffer::runTest() {
     auto simulatedCsr = AUBFixture::getSimulatedCsr<FamilyType>();
+    simulatedCsr->initializeEngine();
 
     char srcMemoryInitial[] = {1, 2, 3, 4, 5, 6, 7, 8};
     char dstMemoryInitial[] = {11, 12, 13, 14, 15, 16, 17, 18};

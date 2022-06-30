@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,8 @@
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/preemption.inl"
+#include "shared/source/gen9/hw_cmds_base.h"
+#include "shared/source/helpers/register_offsets.h"
 
 #include <cstring>
 
@@ -23,7 +25,7 @@ size_t PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(const Device &device) 
     PreemptionMode preemptionMode = device.getPreemptionMode();
     if (preemptionMode == PreemptionMode::ThreadGroup ||
         preemptionMode == PreemptionMode::MidThread) {
-        if (device.getHardwareInfo().workaroundTable.waModifyVFEStateAfterGPGPUPreemption) {
+        if (device.getHardwareInfo().workaroundTable.flags.waModifyVFEStateAfterGPGPUPreemption) {
             size += 2 * sizeof(MI_LOAD_REGISTER_IMM);
         }
     }
@@ -36,12 +38,11 @@ void PreemptionHelper::applyPreemptionWaCmdsBegin<GfxFamily>(LinearStream *pComm
     PreemptionMode preemptionMode = device.getPreemptionMode();
     if (preemptionMode == PreemptionMode::ThreadGroup ||
         preemptionMode == PreemptionMode::MidThread) {
-        if (device.getHardwareInfo().workaroundTable.waModifyVFEStateAfterGPGPUPreemption) {
-            auto pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(pCommandStream->getSpace(sizeof(MI_LOAD_REGISTER_IMM)));
-            MI_LOAD_REGISTER_IMM cmd = GfxFamily::cmdInitLoadRegisterImm;
-            cmd.setRegisterOffset(CS_GPR_R0);
-            cmd.setDataDword(GPGPU_WALKER_COOKIE_VALUE_BEFORE_WALKER);
-            *pCmd = cmd;
+        if (device.getHardwareInfo().workaroundTable.flags.waModifyVFEStateAfterGPGPUPreemption) {
+            LriHelper<GfxFamily>::program(pCommandStream,
+                                          CS_GPR_R0,
+                                          GPGPU_WALKER_COOKIE_VALUE_BEFORE_WALKER,
+                                          false);
         }
     }
 }
@@ -52,12 +53,11 @@ void PreemptionHelper::applyPreemptionWaCmdsEnd<GfxFamily>(LinearStream *pComman
     PreemptionMode preemptionMode = device.getPreemptionMode();
     if (preemptionMode == PreemptionMode::ThreadGroup ||
         preemptionMode == PreemptionMode::MidThread) {
-        if (device.getHardwareInfo().workaroundTable.waModifyVFEStateAfterGPGPUPreemption) {
-            auto pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(pCommandStream->getSpace(sizeof(MI_LOAD_REGISTER_IMM)));
-            MI_LOAD_REGISTER_IMM cmd = GfxFamily::cmdInitLoadRegisterImm;
-            cmd.setRegisterOffset(CS_GPR_R0);
-            cmd.setDataDword(GPGPU_WALKER_COOKIE_VALUE_AFTER_WALKER);
-            *pCmd = cmd;
+        if (device.getHardwareInfo().workaroundTable.flags.waModifyVFEStateAfterGPGPUPreemption) {
+            LriHelper<GfxFamily>::program(pCommandStream,
+                                          CS_GPR_R0,
+                                          GPGPU_WALKER_COOKIE_VALUE_AFTER_WALKER,
+                                          false);
         }
     }
 }
@@ -70,9 +70,12 @@ template void PreemptionHelper::programCmdStream<GfxFamily>(LinearStream &cmdStr
                                                             PreemptionMode oldPreemptionMode, GraphicsAllocation *preemptionCsr);
 
 template size_t PreemptionHelper::getRequiredPreambleSize<GfxFamily>(const Device &device);
-template void PreemptionHelper::programCsrBaseAddress<GfxFamily>(LinearStream &preambleCmdStream, Device &device, const GraphicsAllocation *preemptionCsr);
-template void PreemptionHelper::programStateSip<GfxFamily>(LinearStream &preambleCmdStream, Device &device);
-template size_t PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(const Device &device);
+template void PreemptionHelper::programCsrBaseAddress<GfxFamily>(LinearStream &preambleCmdStream, Device &device, const GraphicsAllocation *preemptionCsr, LogicalStateHelper *logicalStateHelper);
+template void PreemptionHelper::programCsrBaseAddressCmd<GfxFamily>(LinearStream &preambleCmdStream, const GraphicsAllocation *preemptionCsr, LogicalStateHelper *logicalStateHelper);
+template void PreemptionHelper::programStateSip<GfxFamily>(LinearStream &preambleCmdStream, Device &device, LogicalStateHelper *logicalStateHelper);
+template void PreemptionHelper::programStateSipCmd<GfxFamily>(LinearStream &preambleCmdStream, GraphicsAllocation *sipAllocation, LogicalStateHelper *logicalStateHelper);
+template size_t PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(Device &device, bool isRcs);
 template size_t PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode);
+template void PreemptionHelper::programStateSipEndWa<GfxFamily>(LinearStream &cmdStream, Device &device);
 
 } // namespace NEO

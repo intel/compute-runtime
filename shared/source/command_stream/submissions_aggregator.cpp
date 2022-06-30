@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -102,12 +102,12 @@ NEO::BatchBuffer::BatchBuffer(GraphicsAllocation *commandBufferAllocation, size_
                               size_t chainedBatchBufferStartOffset, GraphicsAllocation *chainedBatchBuffer,
                               bool requiresCoherency, bool lowPriority,
                               QueueThrottle throttle, uint64_t sliceCount,
-                              size_t usedSize, LinearStream *stream, void *endCmdPtr)
+                              size_t usedSize, LinearStream *stream, void *endCmdPtr, bool useSingleSubdevice)
     : commandBufferAllocation(commandBufferAllocation), startOffset(startOffset),
       chainedBatchBufferStartOffset(chainedBatchBufferStartOffset), chainedBatchBuffer(chainedBatchBuffer),
       requiresCoherency(requiresCoherency), low_priority(lowPriority),
       throttle(throttle), sliceCount(sliceCount),
-      usedSize(usedSize), stream(stream), endCmdPtr(endCmdPtr) {}
+      usedSize(usedSize), stream(stream), endCmdPtr(endCmdPtr), useSingleSubdevice(useSingleSubdevice) {}
 
 NEO::CommandBuffer::CommandBuffer(Device &device) : device(device) {
     flushStamp.reset(new FlushStampTracker(false));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 
@@ -27,14 +28,14 @@ class RegisteredMethodDispatcher {
     }
 
     template <typename... Args>
-    void operator()(Args &&... args) const {
+    void operator()(Args &&...args) const {
         if (method) {
             method(std::forward<Args>(args)...);
         }
     }
 
     template <typename... Args>
-    size_t estimateCommandsSize(Args &&... args) const {
+    size_t estimateCommandsSize(Args &&...args) const {
         if (commandsEstimationMethod) {
             return commandsEstimationMethod(std::forward<Args>(args)...);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,18 @@
 #pragma once
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/device/device.h"
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/bindless_heaps_helper.h"
+#include "shared/source/helpers/cache_policy.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/kernel/implicit_args.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 
+#include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/module/module.h"
 
@@ -25,99 +35,86 @@ struct KernelHw : public KernelImp {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
     void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) override {
-        uintptr_t baseAddress = static_cast<uintptr_t>(alloc->getGpuAddress());
+        uint64_t baseAddress = alloc->getGpuAddressToPatch();
         auto sshAlignmentMask = NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignmentMask();
 
         // Remove misalligned bytes, accounted for in in bufferOffset patch token
         baseAddress &= sshAlignmentMask;
-
+        auto misalignedSize = ptrDiff(alloc->getGpuAddressToPatch(), baseAddress);
         auto offset = ptrDiff(address, reinterpret_cast<void *>(baseAddress));
-        size_t sizeTillEndOfSurface = alloc->getUnderlyingBufferSize() - offset;
+        size_t bufferSizeForSsh = alloc->getUnderlyingBufferSize();
         auto argInfo = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
-        bool offsetWasPatched = NEO::patchNonPointer(ArrayRef<uint8_t>(this->crossThreadData.get(), this->crossThreadDataSize),
-                                                     argInfo.bufferOffset, static_cast<uint32_t>(offset));
+        bool offsetWasPatched = NEO::patchNonPointer<uint32_t, uint32_t>(ArrayRef<uint8_t>(this->crossThreadData.get(), this->crossThreadDataSize),
+                                                                         argInfo.bufferOffset, static_cast<uint32_t>(offset));
         if (false == offsetWasPatched) {
             // fallback to handling offset in surface state
             baseAddress = reinterpret_cast<uintptr_t>(address);
+            bufferSizeForSsh -= offset;
             DEBUG_BREAK_IF(baseAddress != (baseAddress & sshAlignmentMask));
             offset = 0;
         }
-
-        auto surfaceStateAddress = ptrOffset(surfaceStateHeapData.get(), argInfo.bindful);
-        void *bufferAddressForSsh = reinterpret_cast<void *>(baseAddress);
+        void *surfaceStateAddress = nullptr;
+        auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
+        if (NEO::isValidOffset(argInfo.bindless)) {
+            surfaceStateAddress = patchBindlessSurfaceState(alloc, argInfo.bindless);
+        } else {
+            surfaceStateAddress = ptrOffset(surfaceStateHeapData.get(), argInfo.bindful);
+            surfaceState = *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress);
+        }
+        uint64_t bufferAddressForSsh = baseAddress;
         auto alignment = NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignment();
-        size_t bufferSizeForSsh = ptrDiff(reinterpret_cast<void *>(alloc->getGpuAddress()), bufferAddressForSsh);
-        bufferSizeForSsh += sizeTillEndOfSurface; // take address alignment offset into account
+        bufferSizeForSsh += misalignedSize;
         bufferSizeForSsh = alignUp(bufferSizeForSsh, alignment);
 
-        auto mocs = this->module->getDevice()->getMOCS(true, false);
-        bool requiresCoherency;
-        NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(surfaceStateAddress,
-                                                         bufferAddressForSsh, bufferSizeForSsh, mocs,
-                                                         requiresCoherency = false);
+        bool l3Enabled = true;
+        // Allocation MUST be cacheline (64 byte) aligned in order to enable L3 caching otherwise Heap corruption will occur coming from the KMD.
+        // Most commonly this issue will occur with Host Point Allocations from customers.
+        l3Enabled = isL3Capable(*alloc);
+
+        Device *device = module->getDevice();
+        NEO::Device *neoDevice = device->getNEODevice();
+
+        auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(reinterpret_cast<void *>(alloc->getGpuAddress()));
+        if (allocData && allocData->allocationFlagsProperty.flags.locallyUncachedResource) {
+            l3Enabled = false;
+        }
+
+        if (l3Enabled == false) {
+            this->kernelRequiresQueueUncachedMocsCount++;
+        }
+
+        NEO::EncodeSurfaceStateArgs args;
+        args.outMemory = &surfaceState;
+        args.graphicsAddress = bufferAddressForSsh;
+        args.size = bufferSizeForSsh;
+        args.mocs = device->getMOCS(l3Enabled, false);
+        args.numAvailableDevices = neoDevice->getNumGenericSubDevices();
+        args.allocation = alloc;
+        args.gmmHelper = neoDevice->getGmmHelper();
+        args.useGlobalAtomics = kernelImmData->getDescriptor().kernelAttributes.flags.useGlobalAtomics;
+        args.areMultipleSubDevicesInContext = args.numAvailableDevices > 1;
+        args.implicitScaling = device->isImplicitScalingCapable();
+
+        NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
+        *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress) = surfaceState;
     }
 
-    std::unique_ptr<Kernel> clone() const override {
-        std::unique_ptr<Kernel> ret{new KernelHw<gfxCoreFamily>};
-        auto cloned = static_cast<KernelHw<gfxCoreFamily> *>(ret.get());
+    void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {
+        size_t localWorkSizes[3];
+        localWorkSizes[0] = this->groupSize[0];
+        localWorkSizes[1] = this->groupSize[1];
+        localWorkSizes[2] = this->groupSize[2];
 
-        cloned->kernelImmData = kernelImmData;
-        cloned->module = module;
-        cloned->kernelArgHandlers.assign(this->kernelArgHandlers.begin(), this->kernelArgHandlers.end());
-        cloned->residencyContainer.assign(this->residencyContainer.begin(), this->residencyContainer.end());
-
-        if (printfBuffer != nullptr) {
-            const auto &it = std::find(cloned->residencyContainer.rbegin(), cloned->residencyContainer.rend(), this->printfBuffer);
-            if (it == cloned->residencyContainer.rbegin()) {
-                cloned->residencyContainer.resize(cloned->residencyContainer.size() - 1);
-            } else {
-                std::iter_swap(it, cloned->residencyContainer.rbegin());
-            }
-            cloned->createPrintfBuffer();
-        }
-
-        std::copy(this->groupSize, this->groupSize + 3, cloned->groupSize);
-        cloned->numThreadsPerThreadGroup = this->numThreadsPerThreadGroup;
-        cloned->threadExecutionMask = this->threadExecutionMask;
-
-        if (this->surfaceStateHeapDataSize > 0) {
-            cloned->surfaceStateHeapData.reset(new uint8_t[this->surfaceStateHeapDataSize]);
-            memcpy_s(cloned->surfaceStateHeapData.get(),
-                     this->surfaceStateHeapDataSize,
-                     this->surfaceStateHeapData.get(), this->surfaceStateHeapDataSize);
-            cloned->surfaceStateHeapDataSize = this->surfaceStateHeapDataSize;
-        }
-
-        if (this->crossThreadDataSize != 0) {
-            cloned->crossThreadData.reset(new uint8_t[this->crossThreadDataSize]);
-            memcpy_s(cloned->crossThreadData.get(),
-                     this->crossThreadDataSize,
-                     this->crossThreadData.get(),
-                     this->crossThreadDataSize);
-            cloned->crossThreadDataSize = this->crossThreadDataSize;
-        }
-
-        if (this->dynamicStateHeapDataSize != 0) {
-            cloned->dynamicStateHeapData.reset(new uint8_t[this->dynamicStateHeapDataSize]);
-            memcpy_s(cloned->dynamicStateHeapData.get(),
-                     this->dynamicStateHeapDataSize,
-                     this->dynamicStateHeapData.get(), this->dynamicStateHeapDataSize);
-            cloned->dynamicStateHeapDataSize = this->dynamicStateHeapDataSize;
-        }
-
-        if (this->perThreadDataForWholeThreadGroup != nullptr) {
-            alignedFree(cloned->perThreadDataForWholeThreadGroup);
-            cloned->perThreadDataForWholeThreadGroup = reinterpret_cast<uint8_t *>(alignedMalloc(perThreadDataSizeForWholeThreadGroupAllocated, 32));
-            memcpy_s(cloned->perThreadDataForWholeThreadGroup,
-                     this->perThreadDataSizeForWholeThreadGroupAllocated,
-                     this->perThreadDataForWholeThreadGroup,
-                     this->perThreadDataSizeForWholeThreadGroupAllocated);
-            cloned->perThreadDataSizeForWholeThreadGroupAllocated = this->perThreadDataSizeForWholeThreadGroupAllocated;
-            cloned->perThreadDataSizeForWholeThreadGroup = this->perThreadDataSizeForWholeThreadGroup;
-            cloned->perThreadDataSize = this->perThreadDataSize;
-        }
-
-        return ret;
+        kernelRequiresGenerationOfLocalIdsByRuntime = NEO::EncodeDispatchKernel<GfxFamily>::isRuntimeLocalIdsGenerationRequired(
+            kernelDescriptor.kernelAttributes.numLocalIdChannels,
+            localWorkSizes,
+            std::array<uint8_t, 3>{
+                {kernelDescriptor.kernelAttributes.workgroupWalkOrder[0],
+                 kernelDescriptor.kernelAttributes.workgroupWalkOrder[1],
+                 kernelDescriptor.kernelAttributes.workgroupWalkOrder[2]}},
+            kernelDescriptor.kernelAttributes.flags.requiresWorkgroupWalkOrder,
+            requiredWorkgroupOrder,
+            kernelDescriptor.kernelAttributes.simdSize);
     }
 };
 

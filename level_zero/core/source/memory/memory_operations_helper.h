@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include "shared/source/memory_manager/memory_operations_status.h"
 
-#include <level_zero/ze_common.h>
+#include <level_zero/ze_api.h>
 
 static ze_result_t changeMemoryOperationStatusToL0ResultType(NEO::MemoryOperationsStatus status) {
     switch (status) {
@@ -20,6 +20,8 @@ static ze_result_t changeMemoryOperationStatusToL0ResultType(NEO::MemoryOperatio
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 
     case NEO::MemoryOperationsStatus::OUT_OF_MEMORY:
+        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+
     case NEO::MemoryOperationsStatus::FAILED:
         return ZE_RESULT_ERROR_DEVICE_LOST;
 

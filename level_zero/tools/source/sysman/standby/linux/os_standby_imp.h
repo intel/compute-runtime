@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,21 +14,28 @@
 
 namespace L0 {
 
-class LinuxStandbyImp : public OsStandby, public NEO::NonCopyableClass {
+class LinuxStandbyImp : public OsStandby, NEO::NonCopyableOrMovableClass {
   public:
-    ze_result_t getMode(zet_standby_promo_mode_t &mode) override;
-    ze_result_t setMode(zet_standby_promo_mode_t mode) override;
+    ze_result_t getMode(zes_standby_promo_mode_t &mode) override;
+    ze_result_t setMode(zes_standby_promo_mode_t mode) override;
+    ze_result_t osStandbyGetProperties(zes_standby_properties_t &properties) override;
+
+    bool isStandbySupported(void) override;
+
     LinuxStandbyImp() = default;
-    LinuxStandbyImp(OsSysman *pOsSysman);
+    LinuxStandbyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
     ~LinuxStandbyImp() override = default;
 
   protected:
     SysfsAccess *pSysfsAccess = nullptr;
 
   private:
-    static const std::string standbyModeFile;
+    std::string standbyModeFile;
     static const int standbyModeDefault = 1;
     static const int standbyModeNever = 0;
+    bool isSubdevice = false;
+    uint32_t subdeviceId = 0;
+    void init();
 };
 
 } // namespace L0

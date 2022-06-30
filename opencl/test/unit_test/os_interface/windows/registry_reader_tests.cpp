@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,17 +7,19 @@
 
 #include "opencl/test/unit_test/os_interface/windows/registry_reader_tests.h"
 
-#include "shared/test/unit_test/helpers/variable_backup.h"
+#include "shared/source/os_interface/windows/sys_calls.h"
+#include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/test_macros/test.h"
 
-#include "test.h"
-
-using namespace NEO;
+namespace NEO {
 
 using RegistryReaderTest = ::testing::Test;
 
+namespace SysCalls {
 extern uint32_t regOpenKeySuccessCount;
 extern uint32_t regQueryValueSuccessCount;
 extern uint64_t regQueryValueExpectedData;
+} // namespace SysCalls
 
 TEST_F(RegistryReaderTest, givenRegistryReaderWhenItIsCreatedWithUserScopeSetToFalseThenItsHkeyTypeIsInitializedToHkeyLocalMachine) {
     bool userScope = false;
@@ -69,89 +71,89 @@ TEST_F(RegistryReaderTest, givenRegistryReaderWhenEnvironmentIntVariableExistsTh
 }
 
 struct DebugReaderWithRegistryAndEnvTest : ::testing::Test {
-    VariableBackup<uint32_t> openRegCountBackup{&regOpenKeySuccessCount};
-    VariableBackup<uint32_t> queryRegCountBackup{&regQueryValueSuccessCount};
+    VariableBackup<uint32_t> openRegCountBackup{&SysCalls::regOpenKeySuccessCount};
+    VariableBackup<uint32_t> queryRegCountBackup{&SysCalls::regQueryValueSuccessCount};
     TestedRegistryReader registryReader{""};
 };
 
 TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenReadFromRegistrySucceedsThenReturnObtainedValue) {
-    regOpenKeySuccessCount = 1u;
-    regQueryValueSuccessCount = 1u;
+    SysCalls::regOpenKeySuccessCount = 1u;
+    SysCalls::regQueryValueSuccessCount = 1u;
 
-    EXPECT_EQ(1, registryReader.getSetting("settingSourceInt", 0));
+    EXPECT_EQ(1u, registryReader.getSetting("settingSourceInt", 0));
 }
 
 TEST_F(DebugReaderWithRegistryAndEnvTest, givenInt64DebugKeyWhenReadFromRegistrySucceedsThenReturnObtainedValue) {
-    regOpenKeySuccessCount = 1u;
-    regQueryValueSuccessCount = 1u;
+    SysCalls::regOpenKeySuccessCount = 1u;
+    SysCalls::regQueryValueSuccessCount = 1u;
 
-    EXPECT_EQ(0xffffffffeeeeeeee, registryReader.getSetting("settingSourceInt64", 0));
+    EXPECT_EQ(0xeeeeeeee, registryReader.getSetting("settingSourceInt64", 0));
 }
 
 TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenQueryValueFailsThenObtainValueFromEnv) {
-    regOpenKeySuccessCount = 1u;
-    regQueryValueSuccessCount = 0u;
+    SysCalls::regOpenKeySuccessCount = 1u;
+    SysCalls::regQueryValueSuccessCount = 0u;
 
-    EXPECT_EQ(2, registryReader.getSetting("settingSourceInt", 0));
+    EXPECT_EQ(2u, registryReader.getSetting("settingSourceInt", 0));
 }
 
 TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenOpenKeyFailsThenObtainValueFromEnv) {
-    regOpenKeySuccessCount = 0u;
-    regQueryValueSuccessCount = 0u;
+    SysCalls::regOpenKeySuccessCount = 0u;
+    SysCalls::regQueryValueSuccessCount = 0u;
 
-    EXPECT_EQ(2, registryReader.getSetting("settingSourceInt", 0));
+    EXPECT_EQ(2u, registryReader.getSetting("settingSourceInt", 0));
 }
 
 TEST_F(DebugReaderWithRegistryAndEnvTest, givenStringDebugKeyWhenReadFromRegistrySucceedsThenReturnObtainedValue) {
     std::string defaultValue("default");
-    regOpenKeySuccessCount = 1u;
-    regQueryValueSuccessCount = 2u;
+    SysCalls::regOpenKeySuccessCount = 1u;
+    SysCalls::regQueryValueSuccessCount = 2u;
 
     EXPECT_STREQ("registry", registryReader.getSetting("settingSourceString", defaultValue).c_str());
 }
 
 TEST_F(DebugReaderWithRegistryAndEnvTest, givenStringDebugKeyWhenQueryValueFailsThenObtainValueFromEnv) {
     std::string defaultValue("default");
-    regOpenKeySuccessCount = 1u;
-    regQueryValueSuccessCount = 0u;
+    SysCalls::regOpenKeySuccessCount = 1u;
+    SysCalls::regQueryValueSuccessCount = 0u;
 
     EXPECT_STREQ("environment", registryReader.getSetting("settingSourceString", defaultValue).c_str());
 
-    regOpenKeySuccessCount = 1u;
-    regQueryValueSuccessCount = 1u;
+    SysCalls::regOpenKeySuccessCount = 1u;
+    SysCalls::regQueryValueSuccessCount = 1u;
 
     EXPECT_STREQ("environment", registryReader.getSetting("settingSourceString", defaultValue).c_str());
 }
 
 TEST_F(DebugReaderWithRegistryAndEnvTest, givenStringDebugKeyWhenOpenKeyFailsThenObtainValueFromEnv) {
     std::string defaultValue("default");
-    regOpenKeySuccessCount = 0u;
-    regQueryValueSuccessCount = 0u;
+    SysCalls::regOpenKeySuccessCount = 0u;
+    SysCalls::regQueryValueSuccessCount = 0u;
 
     EXPECT_STREQ("environment", registryReader.getSetting("settingSourceString", defaultValue).c_str());
 }
 
 TEST_F(DebugReaderWithRegistryAndEnvTest, givenBinaryDebugKeyWhenReadFromRegistrySucceedsThenReturnObtainedValue) {
     std::string defaultValue("default");
-    regOpenKeySuccessCount = 1u;
-    regQueryValueSuccessCount = 2u;
+    SysCalls::regOpenKeySuccessCount = 1u;
+    SysCalls::regQueryValueSuccessCount = 2u;
 
     EXPECT_STREQ("registry", registryReader.getSetting("settingSourceBinary", defaultValue).c_str());
 }
 TEST_F(DebugReaderWithRegistryAndEnvTest, givenBinaryDebugKeyOnlyInRegistryWhenReadFromRegistryFailsThenReturnDefaultValue) {
     std::string defaultValue("default");
-    regOpenKeySuccessCount = 1u;
-    regQueryValueSuccessCount = 1u;
+    SysCalls::regOpenKeySuccessCount = 1u;
+    SysCalls::regQueryValueSuccessCount = 1u;
 
     EXPECT_STREQ("default", registryReader.getSetting("settingSourceBinary", defaultValue).c_str());
 
-    regOpenKeySuccessCount = 1u;
-    regQueryValueSuccessCount = 0u;
+    SysCalls::regOpenKeySuccessCount = 1u;
+    SysCalls::regQueryValueSuccessCount = 0u;
 
     EXPECT_STREQ("default", registryReader.getSetting("settingSourceBinary", defaultValue).c_str());
 
-    regOpenKeySuccessCount = 0u;
-    regQueryValueSuccessCount = 0u;
+    SysCalls::regOpenKeySuccessCount = 0u;
+    SysCalls::regQueryValueSuccessCount = 0u;
 
     EXPECT_STREQ("default", registryReader.getSetting("settingSourceBinary", defaultValue).c_str());
 }
@@ -161,9 +163,9 @@ TEST_F(RegistryReaderTest, givenRegistryKeyPresentWhenValueIsZeroThenExpectBoole
     std::string keyName = "boolRegistryKey";
 
     bool defaultValue = false;
-    regOpenKeySuccessCount = 1;
-    regQueryValueSuccessCount = 1;
-    regQueryValueExpectedData = 0ull;
+    SysCalls::regOpenKeySuccessCount = 1;
+    SysCalls::regQueryValueSuccessCount = 1;
+    SysCalls::regQueryValueExpectedData = 0ull;
 
     TestedRegistryReader registryReader(regKey);
     bool value = registryReader.getSetting(keyName.c_str(), defaultValue);
@@ -175,18 +177,18 @@ TEST_F(RegistryReaderTest, givenRegistryKeyNotPresentWhenDefaulValueIsFalseOrTru
     std::string keyName = "boolRegistryKey";
 
     bool defaultValue = false;
-    regOpenKeySuccessCount = 1;
-    regQueryValueSuccessCount = 0;
-    regQueryValueExpectedData = 1ull;
+    SysCalls::regOpenKeySuccessCount = 1;
+    SysCalls::regQueryValueSuccessCount = 0;
+    SysCalls::regQueryValueExpectedData = 1ull;
 
     TestedRegistryReader registryReader(regKey);
     bool value = registryReader.getSetting(keyName.c_str(), defaultValue);
     EXPECT_FALSE(value);
 
     defaultValue = true;
-    regOpenKeySuccessCount = 1;
-    regQueryValueSuccessCount = 0;
-    regQueryValueExpectedData = 0ull;
+    SysCalls::regOpenKeySuccessCount = 1;
+    SysCalls::regQueryValueSuccessCount = 0;
+    SysCalls::regQueryValueExpectedData = 0ull;
 
     value = registryReader.getSetting(keyName.c_str(), defaultValue);
     EXPECT_TRUE(value);
@@ -197,9 +199,9 @@ TEST_F(RegistryReaderTest, givenRegistryKeyPresentWhenValueIsNonZeroInHigherDwor
     std::string keyName = "boolRegistryKey";
 
     bool defaultValue = true;
-    regOpenKeySuccessCount = 1;
-    regQueryValueSuccessCount = 1;
-    regQueryValueExpectedData = 1ull << 32;
+    SysCalls::regOpenKeySuccessCount = 1;
+    SysCalls::regQueryValueSuccessCount = 1;
+    SysCalls::regQueryValueExpectedData = 1ull << 32;
 
     TestedRegistryReader registryReader(regKey);
     bool value = registryReader.getSetting(keyName.c_str(), defaultValue);
@@ -211,9 +213,9 @@ TEST_F(RegistryReaderTest, givenRegistryKeyPresentWhenValueIsNonZeroInLowerDword
     std::string keyName = "boolRegistryKey";
 
     bool defaultValue = false;
-    regOpenKeySuccessCount = 1;
-    regQueryValueSuccessCount = 1;
-    regQueryValueExpectedData = 1ull;
+    SysCalls::regOpenKeySuccessCount = 1;
+    SysCalls::regQueryValueSuccessCount = 1;
+    SysCalls::regQueryValueExpectedData = 1ull;
 
     TestedRegistryReader registryReader(regKey);
     bool value = registryReader.getSetting(keyName.c_str(), defaultValue);
@@ -225,11 +227,21 @@ TEST_F(RegistryReaderTest, givenRegistryKeyPresentWhenValueIsNonZeroInBothDwords
     std::string keyName = "boolRegistryKey";
 
     bool defaultValue = false;
-    regOpenKeySuccessCount = 1;
-    regQueryValueSuccessCount = 1;
-    regQueryValueExpectedData = 1ull | (1ull << 32);
+    SysCalls::regOpenKeySuccessCount = 1;
+    SysCalls::regQueryValueSuccessCount = 1;
+    SysCalls::regQueryValueExpectedData = 1ull | (1ull << 32);
 
     TestedRegistryReader registryReader(regKey);
     bool value = registryReader.getSetting(keyName.c_str(), defaultValue);
     EXPECT_TRUE(value);
 }
+
+TEST_F(DebugReaderWithRegistryAndEnvTest, givenSetProcessNameWhenReadFromEnvironmentVariableThenReturnClCacheDir) {
+    SysCalls::regOpenKeySuccessCount = 0u;
+    SysCalls::regQueryValueSuccessCount = 0u;
+    registryReader.processName = "processName";
+    std::string defaultCacheDir = "";
+    std::string cacheDir = registryReader.getSetting("processName", defaultCacheDir);
+    EXPECT_STREQ("./tested_cl_cache_dir", cacheDir.c_str());
+}
+} // namespace NEO

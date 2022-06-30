@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,16 @@
 
 #pragma once
 
+#include "shared/source/helpers/debug_helpers.h"
+
+#include <cstddef>
+#include <cstdint>
+#include <type_traits>
+
 template <typename T>
 struct Vec3 {
+    static_assert(std::is_pod<T>::value);
+
     Vec3(T x, T y, T z) : x(x), y(y), z(z) {}
     Vec3(const Vec3 &v) : x(v.x), y(v.y), z(v.z) {}
     Vec3(const T *arr) {
@@ -43,6 +51,16 @@ struct Vec3 {
         return !operator==(vec);
     }
 
+    T &operator[](uint32_t i) {
+        UNRECOVERABLE_IF(i > 2);
+        return values[i];
+    }
+
+    T operator[](uint32_t i) const {
+        UNRECOVERABLE_IF(i > 2);
+        return values[i];
+    }
+
     unsigned int getSimplifiedDim() const {
         if (z > 1) {
             return 3;
@@ -56,7 +74,14 @@ struct Vec3 {
         return 0;
     }
 
-    T x;
-    T y;
-    T z;
+    union {
+        struct {
+            T x, y, z;
+        };
+        T values[3];
+    };
 };
+
+static_assert(offsetof(Vec3<size_t>, x) == offsetof(Vec3<size_t>, values[0]));
+static_assert(offsetof(Vec3<size_t>, y) == offsetof(Vec3<size_t>, values[1]));
+static_assert(offsetof(Vec3<size_t>, z) == offsetof(Vec3<size_t>, values[2]));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -92,41 +92,41 @@ inline std::vector<char> CreateBinary(bool addUnhandledProgramScopePatchToken, b
 
 constexpr int32_t unhandledTokenId = iOpenCL::NUM_PATCH_TOKENS;
 
-TEST(EvaluateUnhandledToken, ByDefaultSkippingOfUnhandledTokensInUnitTestsIsSafe) {
+TEST(EvaluateUnhandledToken, GivenDefaultWhenSkippingUnhandledTokenThenUltAreNotAffected) {
     ExecutionEnvironment executionEnvironment;
     MockProgramRecordUnhandledTokens program(executionEnvironment);
     EXPECT_TRUE(program.getDefaultIsSafeToSkipUnhandledToken());
 }
 
-TEST(EvaluateUnhandledToken, WhenDecodingProgramBinaryIfAllTokensAreSupportedThenDecodingSucceeds) {
+TEST(EvaluateUnhandledToken, GivenAllTokensAreSupportedWhenDecodingProgramBinaryThenDecodingSucceeds) {
     int lastUnhandledTokenFound = -1;
     auto retVal = GetDecodeErrorCode(CreateBinary(false, false), false, -7, lastUnhandledTokenFound);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(-7, lastUnhandledTokenFound);
 }
 
-TEST(EvaluateUnhandledToken, WhenDecodingProgramBinaryIfUnhandledTokenIsFoundAndIsSafeToSkipThenDecodingSucceeds) {
+TEST(EvaluateUnhandledToken, GivenUnhandledTokenIsFoundAndIsSafeToSkipWhenDecodingProgramBinaryThenDecodingSucceeds) {
     int lastUnhandledTokenFound = -1;
     auto retVal = GetDecodeErrorCode(CreateBinary(true, false, unhandledTokenId), true, -7, lastUnhandledTokenFound);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(unhandledTokenId, lastUnhandledTokenFound);
 }
 
-TEST(EvaluateUnhandledToken, WhenDecodingProgramBinaryIfUnhandledTokenIsFoundAndIsUnsafeToSkipThenDecodingFails) {
+TEST(EvaluateUnhandledToken, GivenUnhandledTokenIsFoundAndIsUnsafeToSkipWhenDecodingProgramBinaryThenDecodingFails) {
     int lastUnhandledTokenFound = -1;
     auto retVal = GetDecodeErrorCode(CreateBinary(true, false, unhandledTokenId), false, -7, lastUnhandledTokenFound);
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
     EXPECT_EQ(unhandledTokenId, lastUnhandledTokenFound);
 }
 
-TEST(EvaluateUnhandledToken, WhenDecodingKernelBinaryIfUnhandledTokenIsFoundAndIsSafeToSkipThenDecodingSucceeds) {
+TEST(EvaluateUnhandledToken, GivenUnhandledTokenIsFoundAndIsSafeToSkipWhenDecodingKernelBinaryThenDecodingSucceeds) {
     int lastUnhandledTokenFound = -1;
     auto retVal = GetDecodeErrorCode(CreateBinary(false, true, unhandledTokenId), true, -7, lastUnhandledTokenFound);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(unhandledTokenId, lastUnhandledTokenFound);
 }
 
-TEST(EvaluateUnhandledToken, WhenDecodingKernelBinaryIfUnhandledTokenIsFoundAndIsUnsafeToSkipThenDecodingFails) {
+TEST(EvaluateUnhandledToken, GivenUnhandledTokenIsFoundAndIsUnsafeToSkipWhenDecodingKernelBinaryThenDecodingFails) {
     int lastUnhandledTokenFound = -1;
     auto retVal = GetDecodeErrorCode(CreateBinary(false, true, unhandledTokenId), false, -7, lastUnhandledTokenFound);
     EXPECT_EQ(CL_INVALID_BINARY, retVal);

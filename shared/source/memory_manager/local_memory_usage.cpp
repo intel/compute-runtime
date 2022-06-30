@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,10 +8,12 @@
 #include "shared/source/memory_manager/local_memory_usage.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/common_types.h"
 
 #include <algorithm>
 #include <bitset>
 #include <iterator>
+#include <limits>
 
 namespace NEO {
 
@@ -24,13 +26,24 @@ LocalMemoryUsageBankSelector::LocalMemoryUsageBankSelector(uint32_t banksCount) 
     }
 }
 
-uint32_t LocalMemoryUsageBankSelector::getLeastOccupiedBank() {
+uint32_t LocalMemoryUsageBankSelector::getLeastOccupiedBank(DeviceBitfield deviceBitfield) {
     if (DebugManager.flags.OverrideLeastOccupiedBank.get() != -1) {
         return static_cast<uint32_t>(DebugManager.flags.OverrideLeastOccupiedBank.get());
     }
+    uint32_t leastOccupiedBank = 0u;
+    uint64_t smallestViableMemorySize = std::numeric_limits<uint64_t>::max();
 
-    auto leastOccupiedBankIterator = std::min_element(memorySizes.get(), memorySizes.get() + banksCount);
-    return static_cast<uint32_t>(std::distance(memorySizes.get(), leastOccupiedBankIterator));
+    UNRECOVERABLE_IF(deviceBitfield.count() == 0);
+    for (uint32_t i = 0u; i < banksCount; i++) {
+        if (deviceBitfield.test(i)) {
+            if (memorySizes[i] < smallestViableMemorySize) {
+                leastOccupiedBank = i;
+                smallestViableMemorySize = memorySizes[i];
+            }
+        }
+    }
+
+    return leastOccupiedBank;
 }
 
 void LocalMemoryUsageBankSelector::freeOnBank(uint32_t bankIndex, uint64_t allocationSize) {

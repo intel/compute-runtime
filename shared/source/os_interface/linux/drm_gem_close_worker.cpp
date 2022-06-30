@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,15 +9,13 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
+#include "shared/source/os_interface/linux/drm_command_stream.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/os_thread.h"
-
-#include "opencl/source/os_interface/linux/drm_command_stream.h"
 
 #include <atomic>
 #include <iostream>
 #include <queue>
-#include <stdio.h>
 
 namespace NEO {
 
@@ -67,16 +65,23 @@ inline void DrmGemCloseWorker::close(BufferObject *bo) {
     workCount--;
 }
 
+inline void DrmGemCloseWorker::processQueue(std::queue<BufferObject *> &inputQueue) {
+    BufferObject *workItem = nullptr;
+    while (!inputQueue.empty()) {
+        workItem = inputQueue.front();
+        inputQueue.pop();
+        close(workItem);
+    }
+}
+
 void *DrmGemCloseWorker::worker(void *arg) {
     DrmGemCloseWorker *self = reinterpret_cast<DrmGemCloseWorker *>(arg);
-    BufferObject *workItem = nullptr;
     std::queue<BufferObject *> localQueue;
     std::unique_lock<std::mutex> lock(self->closeWorkerMutex);
     lock.unlock();
 
     while (self->active) {
         lock.lock();
-        workItem = nullptr;
 
         while (self->queue.empty() && self->active) {
             self->condition.wait(lock);
@@ -87,19 +92,11 @@ void *DrmGemCloseWorker::worker(void *arg) {
         }
 
         lock.unlock();
-        while (!localQueue.empty()) {
-            workItem = localQueue.front();
-            localQueue.pop();
-            self->close(workItem);
-        }
+        self->processQueue(localQueue);
     }
 
     lock.lock();
-    while (!self->queue.empty()) {
-        workItem = self->queue.front();
-        self->queue.pop();
-        self->close(workItem);
-    }
+    self->processQueue(self->queue);
 
     lock.unlock();
     self->workerDone.store(true);

@@ -1,18 +1,20 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -45,7 +47,7 @@ HWTEST_F(MarkerTest, GivenCsrAndCmdqWithSameTaskLevelWhenEnqueingMarkerThenPipeC
     parseCommands<FamilyType>(*pCmdQ);
 
     // If CSR == CQ then a PC is required.
-    auto itorCmd = reverse_find<PIPE_CONTROL *>(cmdList.rbegin(), cmdList.rend());
+    auto itorCmd = reverseFind<PIPE_CONTROL *>(cmdList.rbegin(), cmdList.rend());
     EXPECT_EQ(cmdList.rend(), itorCmd);
 }
 
@@ -99,6 +101,28 @@ TEST_F(MarkerTest, WhenEnqueingMarkerThenEventIsReturned) {
         EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), cmdType);
         EXPECT_EQ(sizeof(cl_command_type), sizeReturned);
     }
+}
+
+HWTEST_F(MarkerTest, GivenGpuHangAndBlockingCallWhenEnqueingMarkerThenOutOfResourcesIsReturned) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    cl_queue_properties props = {};
+
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    cl_uint numEventsInWaitList = 0;
+    const cl_event *eventWaitList = nullptr;
+
+    const auto enqueueResult = mockCommandQueueHw.enqueueMarkerWithWaitList(
+        numEventsInWaitList,
+        eventWaitList,
+        nullptr);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
+    EXPECT_EQ(1, mockCommandQueueHw.waitForAllEnginesCalledCount);
 }
 
 HWTEST_F(MarkerTest, WhenEnqueingMarkerThenReturnedEventShouldHaveEqualDepthToLastCommandPacketInCommandQueue) {
@@ -251,4 +275,32 @@ HWTEST_F(MarkerTest, givenMarkerCallFollowingNdrangeCallInBatchedModeWhenWaitFor
 
     clReleaseEvent(eventFromMarker);
     clReleaseEvent(eventFromNdr);
+}
+
+struct MarkerWithProfilingTest : public MarkerTest {
+    void SetUp() override {
+        dbgRestore = std::make_unique<DebugManagerStateRestore>();
+        DebugManager.flags.EnableTimestampPacket.set(0);
+        MarkerTest::SetUp();
+    }
+
+    void TearDown() override {
+        MarkerTest::TearDown();
+        dbgRestore.reset(nullptr);
+    }
+
+    std::unique_ptr<DebugManagerStateRestore> dbgRestore;
+};
+
+struct WhiteBoxCommandQueue : public CommandQueue {
+    using CommandQueue::isBlockedCommandStreamRequired;
+};
+
+HWTEST_F(MarkerWithProfilingTest, givenMarkerWithProfilingAndBlockedEnqueueThenBlockedCommandStreamIsRequired) {
+    auto cmdQueueWB = static_cast<WhiteBoxCommandQueue *>(pCmdQ);
+    EventsRequest eventsRequest(0, nullptr, nullptr);
+
+    bool ret = cmdQueueWB->isBlockedCommandStreamRequired(CL_COMMAND_MARKER, eventsRequest, true, true);
+
+    EXPECT_TRUE(ret);
 }

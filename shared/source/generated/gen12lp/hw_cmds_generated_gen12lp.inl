@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,10 +18,10 @@ typedef struct tagBINDING_TABLE_STATE {
         SURFACESTATEPOINTER_BYTEOFFSET = 0x0,
         SURFACESTATEPOINTER_INDEX = 0x0,
     } PATCH_CONSTANTS;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
     }
-    static tagBINDING_TABLE_STATE sInit(void) {
+    static tagBINDING_TABLE_STATE sInit() {
         BINDING_TABLE_STATE state;
         state.init();
         return state;
@@ -42,7 +42,7 @@ typedef struct tagBINDING_TABLE_STATE {
         DEBUG_BREAK_IF(value >= 0x100000000);
         TheStructure.Common.SurfaceStatePointer = (uint32_t)value >> SURFACESTATEPOINTER_BIT_SHIFT;
     }
-    inline uint32_t getSurfaceStatePointer(void) const {
+    inline uint32_t getSurfaceStatePointer() const {
         return (TheStructure.Common.SurfaceStatePointer << SURFACESTATEPOINTER_BIT_SHIFT);
     }
 } BINDING_TABLE_STATE;
@@ -121,7 +121,7 @@ typedef struct tagGPGPU_WALKER {
         SIMD_SIZE_SIMD16 = 0x1,
         SIMD_SIZE_SIMD32 = 0x2,
     } SIMD_SIZE;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
         TheStructure.Common.Subopcode = SUBOPCODE_GPGPU_WALKER_SUBOP;
@@ -130,7 +130,7 @@ typedef struct tagGPGPU_WALKER {
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
         TheStructure.Common.SimdSize = SIMD_SIZE_SIMD8;
     }
-    static tagGPGPU_WALKER sInit(void) {
+    static tagGPGPU_WALKER sInit() {
         GPGPU_WALKER state;
         state.init();
         return state;
@@ -141,25 +141,25 @@ typedef struct tagGPGPU_WALKER {
     inline void setPredicateEnable(const bool value) {
         TheStructure.Common.PredicateEnable = value;
     }
-    inline bool getPredicateEnable(void) const {
+    inline bool getPredicateEnable() const {
         return TheStructure.Common.PredicateEnable;
     }
     inline void setIndirectParameterEnable(const bool value) {
         TheStructure.Common.IndirectParameterEnable = value;
     }
-    inline bool getIndirectParameterEnable(void) const {
+    inline bool getIndirectParameterEnable() const {
         return TheStructure.Common.IndirectParameterEnable;
     }
     inline void setInterfaceDescriptorOffset(const uint32_t value) {
         TheStructure.Common.InterfaceDescriptorOffset = value;
     }
-    inline uint32_t getInterfaceDescriptorOffset(void) const {
+    inline uint32_t getInterfaceDescriptorOffset() const {
         return TheStructure.Common.InterfaceDescriptorOffset;
     }
     inline void setIndirectDataLength(const uint32_t value) {
         TheStructure.Common.IndirectDataLength = value;
     }
-    inline uint32_t getIndirectDataLength(void) const {
+    inline uint32_t getIndirectDataLength() const {
         return TheStructure.Common.IndirectDataLength;
     }
     typedef enum tagINDIRECTDATASTARTADDRESS {
@@ -169,79 +169,79 @@ typedef struct tagGPGPU_WALKER {
     inline void setIndirectDataStartAddress(const uint32_t value) {
         TheStructure.Common.IndirectDataStartAddress = value >> INDIRECTDATASTARTADDRESS_BIT_SHIFT;
     }
-    inline uint32_t getIndirectDataStartAddress(void) const {
+    inline uint32_t getIndirectDataStartAddress() const {
         return TheStructure.Common.IndirectDataStartAddress << INDIRECTDATASTARTADDRESS_BIT_SHIFT;
     }
     inline void setThreadWidthCounterMaximum(const uint32_t value) {
         TheStructure.Common.ThreadWidthCounterMaximum = value - 1;
     }
-    inline uint32_t getThreadWidthCounterMaximum(void) const {
+    inline uint32_t getThreadWidthCounterMaximum() const {
         return TheStructure.Common.ThreadWidthCounterMaximum + 1;
     }
     inline void setThreadHeightCounterMaximum(const uint32_t value) {
         TheStructure.Common.ThreadHeightCounterMaximum = value - 1;
     }
-    inline uint32_t getThreadHeightCounterMaximum(void) const {
+    inline uint32_t getThreadHeightCounterMaximum() const {
         return TheStructure.Common.ThreadHeightCounterMaximum + 1;
     }
     inline void setThreadDepthCounterMaximum(const uint32_t value) {
         TheStructure.Common.ThreadDepthCounterMaximum = value;
     }
-    inline uint32_t getThreadDepthCounterMaximum(void) const {
+    inline uint32_t getThreadDepthCounterMaximum() const {
         return TheStructure.Common.ThreadDepthCounterMaximum;
     }
     inline void setSimdSize(const SIMD_SIZE value) {
         TheStructure.Common.SimdSize = value;
     }
-    inline SIMD_SIZE getSimdSize(void) const {
+    inline SIMD_SIZE getSimdSize() const {
         return static_cast<SIMD_SIZE>(TheStructure.Common.SimdSize);
     }
     inline void setThreadGroupIdStartingX(const uint32_t value) {
         TheStructure.Common.ThreadGroupIdStartingX = value;
     }
-    inline uint32_t getThreadGroupIdStartingX(void) const {
+    inline uint32_t getThreadGroupIdStartingX() const {
         return TheStructure.Common.ThreadGroupIdStartingX;
     }
     inline void setThreadGroupIdXDimension(const uint32_t value) {
         TheStructure.Common.ThreadGroupIdXDimension = value;
     }
-    inline uint32_t getThreadGroupIdXDimension(void) const {
+    inline uint32_t getThreadGroupIdXDimension() const {
         return TheStructure.Common.ThreadGroupIdXDimension;
     }
     inline void setThreadGroupIdStartingY(const uint32_t value) {
         TheStructure.Common.ThreadGroupIdStartingY = value;
     }
-    inline uint32_t getThreadGroupIdStartingY(void) const {
+    inline uint32_t getThreadGroupIdStartingY() const {
         return TheStructure.Common.ThreadGroupIdStartingY;
     }
     inline void setThreadGroupIdYDimension(const uint32_t value) {
         TheStructure.Common.ThreadGroupIdYDimension = value;
     }
-    inline uint32_t getThreadGroupIdYDimension(void) const {
+    inline uint32_t getThreadGroupIdYDimension() const {
         return TheStructure.Common.ThreadGroupIdYDimension;
     }
     inline void setThreadGroupIdStartingResumeZ(const uint32_t value) {
         TheStructure.Common.ThreadGroupIdStartingResumeZ = value;
     }
-    inline uint32_t getThreadGroupIdStartingResumeZ(void) const {
+    inline uint32_t getThreadGroupIdStartingResumeZ() const {
         return TheStructure.Common.ThreadGroupIdStartingResumeZ;
     }
     inline void setThreadGroupIdZDimension(const uint32_t value) {
         TheStructure.Common.ThreadGroupIdZDimension = value;
     }
-    inline uint32_t getThreadGroupIdZDimension(void) const {
+    inline uint32_t getThreadGroupIdZDimension() const {
         return TheStructure.Common.ThreadGroupIdZDimension;
     }
     inline void setRightExecutionMask(const uint32_t value) {
         TheStructure.Common.RightExecutionMask = value;
     }
-    inline uint32_t getRightExecutionMask(void) const {
+    inline uint32_t getRightExecutionMask() const {
         return TheStructure.Common.RightExecutionMask;
     }
     inline void setBottomExecutionMask(const uint32_t value) {
         TheStructure.Common.BottomExecutionMask = value;
     }
-    inline uint32_t getBottomExecutionMask(void) const {
+    inline uint32_t getBottomExecutionMask() const {
         return TheStructure.Common.BottomExecutionMask;
     }
 } GPGPU_WALKER;
@@ -345,7 +345,7 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         ROUNDING_MODE_RD = 0x2,
         ROUNDING_MODE_RTZ = 0x3,
     } ROUNDING_MODE;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.FloatingPointMode = FLOATING_POINT_MODE_IEEE_754;
         TheStructure.Common.ThreadPriority = THREAD_PRIORITY_NORMAL_PRIORITY;
@@ -357,7 +357,7 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         TheStructure.Common.SharedLocalMemorySize = SHARED_LOCAL_MEMORY_SIZE_ENCODES_0K;
         TheStructure.Common.RoundingMode = ROUNDING_MODE_RTNE;
     }
-    static tagINTERFACE_DESCRIPTOR_DATA sInit(void) {
+    static tagINTERFACE_DESCRIPTOR_DATA sInit() {
         INTERFACE_DESCRIPTOR_DATA state;
         state.init();
         return state;
@@ -373,67 +373,67 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         DEBUG_BREAK_IF(value >= 0x100000000);
         TheStructure.Common.KernelStartPointer = static_cast<uint32_t>(value) >> KERNELSTARTPOINTER_BIT_SHIFT;
     }
-    inline uint32_t getKernelStartPointer(void) const {
+    inline uint32_t getKernelStartPointer() const {
         return TheStructure.Common.KernelStartPointer << KERNELSTARTPOINTER_BIT_SHIFT;
     }
     inline void setKernelStartPointerHigh(const uint32_t value) {
         TheStructure.Common.KernelStartPointerHigh = static_cast<uint32_t>(value);
     }
-    inline uint32_t getKernelStartPointerHigh(void) const {
+    inline uint32_t getKernelStartPointerHigh() const {
         return TheStructure.Common.KernelStartPointerHigh;
     }
     inline void setSoftwareExceptionEnable(const bool value) {
         TheStructure.Common.SoftwareExceptionEnable = value;
     }
-    inline bool getSoftwareExceptionEnable(void) const {
+    inline bool getSoftwareExceptionEnable() const {
         return TheStructure.Common.SoftwareExceptionEnable;
     }
     inline void setMaskStackExceptionEnable(const bool value) {
         TheStructure.Common.MaskStackExceptionEnable = value;
     }
-    inline bool getMaskStackExceptionEnable(void) const {
+    inline bool getMaskStackExceptionEnable() const {
         return TheStructure.Common.MaskStackExceptionEnable;
     }
     inline void setIllegalOpcodeExceptionEnable(const bool value) {
         TheStructure.Common.IllegalOpcodeExceptionEnable = value;
     }
-    inline bool getIllegalOpcodeExceptionEnable(void) const {
+    inline bool getIllegalOpcodeExceptionEnable() const {
         return TheStructure.Common.IllegalOpcodeExceptionEnable;
     }
     inline void setFloatingPointMode(const FLOATING_POINT_MODE value) {
         TheStructure.Common.FloatingPointMode = value;
     }
-    inline FLOATING_POINT_MODE getFloatingPointMode(void) const {
+    inline FLOATING_POINT_MODE getFloatingPointMode() const {
         return static_cast<FLOATING_POINT_MODE>(TheStructure.Common.FloatingPointMode);
     }
     inline void setThreadPriority(const THREAD_PRIORITY value) {
         TheStructure.Common.ThreadPriority = value;
     }
-    inline THREAD_PRIORITY getThreadPriority(void) const {
+    inline THREAD_PRIORITY getThreadPriority() const {
         return static_cast<THREAD_PRIORITY>(TheStructure.Common.ThreadPriority);
     }
     inline void setSingleProgramFlow(const SINGLE_PROGRAM_FLOW value) {
         TheStructure.Common.SingleProgramFlow = value;
     }
-    inline SINGLE_PROGRAM_FLOW getSingleProgramFlow(void) const {
+    inline SINGLE_PROGRAM_FLOW getSingleProgramFlow() const {
         return static_cast<SINGLE_PROGRAM_FLOW>(TheStructure.Common.SingleProgramFlow);
     }
     inline void setDenormMode(const DENORM_MODE value) {
         TheStructure.Common.DenormMode = value;
     }
-    inline DENORM_MODE getDenormMode(void) const {
+    inline DENORM_MODE getDenormMode() const {
         return static_cast<DENORM_MODE>(TheStructure.Common.DenormMode);
     }
     inline void setThreadPreemptionDisable(const THREAD_PREEMPTION_DISABLE value) {
         TheStructure.Common.ThreadPreemptionDisable = value;
     }
-    inline THREAD_PREEMPTION_DISABLE getThreadPreemptionDisable(void) const {
+    inline THREAD_PREEMPTION_DISABLE getThreadPreemptionDisable() const {
         return static_cast<THREAD_PREEMPTION_DISABLE>(TheStructure.Common.ThreadPreemptionDisable);
     }
     inline void setSamplerCount(const SAMPLER_COUNT value) {
         TheStructure.Common.SamplerCount = value;
     }
-    inline SAMPLER_COUNT getSamplerCount(void) const {
+    inline SAMPLER_COUNT getSamplerCount() const {
         return static_cast<SAMPLER_COUNT>(TheStructure.Common.SamplerCount);
     }
     typedef enum tagSAMPLERSTATEPOINTER {
@@ -443,13 +443,13 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
     inline void setSamplerStatePointer(const uint32_t value) {
         TheStructure.Common.SamplerStatePointer = static_cast<uint32_t>(value) >> SAMPLERSTATEPOINTER_BIT_SHIFT;
     }
-    inline uint32_t getSamplerStatePointer(void) const {
+    inline uint32_t getSamplerStatePointer() const {
         return TheStructure.Common.SamplerStatePointer << SAMPLERSTATEPOINTER_BIT_SHIFT;
     }
     inline void setBindingTableEntryCount(const uint32_t value) {
         TheStructure.Common.BindingTableEntryCount = value;
     }
-    inline uint32_t getBindingTableEntryCount(void) const {
+    inline uint32_t getBindingTableEntryCount() const {
         return TheStructure.Common.BindingTableEntryCount;
     }
     typedef enum tagBINDINGTABLEPOINTER {
@@ -459,55 +459,55 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
     inline void setBindingTablePointer(const uint32_t value) {
         TheStructure.Common.BindingTablePointer = static_cast<uint32_t>(value) >> BINDINGTABLEPOINTER_BIT_SHIFT;
     }
-    inline uint32_t getBindingTablePointer(void) const {
+    inline uint32_t getBindingTablePointer() const {
         return TheStructure.Common.BindingTablePointer << BINDINGTABLEPOINTER_BIT_SHIFT;
     }
     inline void setConstantUrbEntryReadOffset(const uint32_t value) {
         TheStructure.Common.ConstantUrbEntryReadOffset = value;
     }
-    inline uint32_t getConstantUrbEntryReadOffset(void) const {
+    inline uint32_t getConstantUrbEntryReadOffset() const {
         return TheStructure.Common.ConstantUrbEntryReadOffset;
     }
     inline void setConstantIndirectUrbEntryReadLength(const uint32_t value) {
         TheStructure.Common.ConstantIndirectUrbEntryReadLength = value;
     }
-    inline uint32_t getConstantIndirectUrbEntryReadLength(void) const {
+    inline uint32_t getConstantIndirectUrbEntryReadLength() const {
         return TheStructure.Common.ConstantIndirectUrbEntryReadLength;
     }
     inline void setNumberOfThreadsInGpgpuThreadGroup(const uint32_t value) {
         TheStructure.Common.NumberOfThreadsInGpgpuThreadGroup = value;
     }
-    inline uint32_t getNumberOfThreadsInGpgpuThreadGroup(void) const {
+    inline uint32_t getNumberOfThreadsInGpgpuThreadGroup() const {
         return TheStructure.Common.NumberOfThreadsInGpgpuThreadGroup;
     }
     inline void setOverDispatchControl(const OVER_DISPATCH_CONTROL value) {
         TheStructure.Common.OverDispatchControl = value;
     }
-    inline OVER_DISPATCH_CONTROL getOverDispatchControl(void) const {
+    inline OVER_DISPATCH_CONTROL getOverDispatchControl() const {
         return static_cast<OVER_DISPATCH_CONTROL>(TheStructure.Common.OverDispatchControl);
     }
     inline void setSharedLocalMemorySize(const SHARED_LOCAL_MEMORY_SIZE value) {
         TheStructure.Common.SharedLocalMemorySize = value;
     }
-    inline SHARED_LOCAL_MEMORY_SIZE getSharedLocalMemorySize(void) const {
+    inline SHARED_LOCAL_MEMORY_SIZE getSharedLocalMemorySize() const {
         return static_cast<SHARED_LOCAL_MEMORY_SIZE>(TheStructure.Common.SharedLocalMemorySize);
     }
     inline void setBarrierEnable(const uint32_t value) {
         TheStructure.Common.BarrierEnable = (value > 0u) ? 1u : 0u;
     }
-    inline bool getBarrierEnable(void) const {
+    inline bool getBarrierEnable() const {
         return TheStructure.Common.BarrierEnable;
     }
     inline void setRoundingMode(const ROUNDING_MODE value) {
         TheStructure.Common.RoundingMode = value;
     }
-    inline ROUNDING_MODE getRoundingMode(void) const {
+    inline ROUNDING_MODE getRoundingMode() const {
         return static_cast<ROUNDING_MODE>(TheStructure.Common.RoundingMode);
     }
     inline void setCrossThreadConstantDataReadLength(const uint32_t value) {
         TheStructure.Common.CrossThreadConstantDataReadLength = value;
     }
-    inline uint32_t getCrossThreadConstantDataReadLength(void) const {
+    inline uint32_t getCrossThreadConstantDataReadLength() const {
         return TheStructure.Common.CrossThreadConstantDataReadLength;
     }
 } INTERFACE_DESCRIPTOR_DATA;
@@ -551,7 +551,7 @@ typedef struct tagMEDIA_INTERFACE_DESCRIPTOR_LOAD {
         INTERFACE_DESCRIPTOR_TOTAL_LENGTH_1_64_INTERFACE_DESCRIPTOR_ENTRIES_MIN = 0x20,
         INTERFACE_DESCRIPTOR_TOTAL_LENGTH_1_64_INTERFACE_DESCRIPTOR_ENTRIES_MAX = 0x800,
     } INTERFACE_DESCRIPTOR_TOTAL_LENGTH;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
         TheStructure.Common.Subopcode = SUBOPCODE_MEDIA_INTERFACE_DESCRIPTOR_LOAD_SUBOP;
@@ -559,7 +559,7 @@ typedef struct tagMEDIA_INTERFACE_DESCRIPTOR_LOAD {
         TheStructure.Common.Pipeline = PIPELINE_MEDIA;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
     }
-    static tagMEDIA_INTERFACE_DESCRIPTOR_LOAD sInit(void) {
+    static tagMEDIA_INTERFACE_DESCRIPTOR_LOAD sInit() {
         MEDIA_INTERFACE_DESCRIPTOR_LOAD state;
         state.init();
         return state;
@@ -570,13 +570,13 @@ typedef struct tagMEDIA_INTERFACE_DESCRIPTOR_LOAD {
     inline void setInterfaceDescriptorTotalLength(const uint32_t value) {
         TheStructure.Common.InterfaceDescriptorTotalLength = value;
     }
-    inline uint32_t getInterfaceDescriptorTotalLength(void) const {
+    inline uint32_t getInterfaceDescriptorTotalLength() const {
         return TheStructure.Common.InterfaceDescriptorTotalLength;
     }
     inline void setInterfaceDescriptorDataStartAddress(const uint32_t value) {
         TheStructure.Common.InterfaceDescriptorDataStartAddress = value;
     }
-    inline uint32_t getInterfaceDescriptorDataStartAddress(void) const {
+    inline uint32_t getInterfaceDescriptorDataStartAddress() const {
         return TheStructure.Common.InterfaceDescriptorDataStartAddress;
     }
 } MEDIA_INTERFACE_DESCRIPTOR_LOAD;
@@ -614,7 +614,7 @@ typedef struct tagMEDIA_STATE_FLUSH {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_GFXPIPE = 0x3,
     } COMMAND_TYPE;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
         TheStructure.Common.Subopcode = SUBOPCODE_MEDIA_STATE_FLUSH_SUBOP;
@@ -622,7 +622,7 @@ typedef struct tagMEDIA_STATE_FLUSH {
         TheStructure.Common.Pipeline = PIPELINE_MEDIA;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
     }
-    static tagMEDIA_STATE_FLUSH sInit(void) {
+    static tagMEDIA_STATE_FLUSH sInit() {
         MEDIA_STATE_FLUSH state;
         state.init();
         return state;
@@ -633,13 +633,13 @@ typedef struct tagMEDIA_STATE_FLUSH {
     inline void setInterfaceDescriptorOffset(const uint32_t value) {
         TheStructure.Common.InterfaceDescriptorOffset = value;
     }
-    inline uint32_t getInterfaceDescriptorOffset(void) const {
+    inline uint32_t getInterfaceDescriptorOffset() const {
         return TheStructure.Common.InterfaceDescriptorOffset;
     }
     inline void setFlushToGo(const bool value) {
         TheStructure.Common.FlushToGo = value;
     }
-    inline bool getFlushToGo(void) const {
+    inline bool getFlushToGo() const {
         return TheStructure.Common.FlushToGo;
     }
 } MEDIA_STATE_FLUSH;
@@ -701,7 +701,7 @@ typedef struct tagMEDIA_VFE_STATE {
         SCRATCHSPACEBASEPOINTERHIGH_BYTEOFFSET = 0x8,
         SCRATCHSPACEBASEPOINTERHIGH_INDEX = 0x2,
     } PATCH_CONSTANTS;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
         TheStructure.Common.Subopcode = SUBOPCODE_MEDIA_VFE_STATE_SUBOP;
@@ -710,7 +710,7 @@ typedef struct tagMEDIA_VFE_STATE {
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
         TheStructure.Common.DispatchLoadBalance = DISPATCH_LOAD_BALANCE_LEAST_LOADED;
     }
-    static tagMEDIA_VFE_STATE sInit(void) {
+    static tagMEDIA_VFE_STATE sInit() {
         MEDIA_VFE_STATE state;
         state.init();
         return state;
@@ -722,13 +722,13 @@ typedef struct tagMEDIA_VFE_STATE {
     inline void setPerThreadScratchSpace(const uint32_t value) {
         TheStructure.Common.PerThreadScratchSpace = value;
     }
-    inline uint32_t getPerThreadScratchSpace(void) const {
+    inline uint32_t getPerThreadScratchSpace() const {
         return (TheStructure.Common.PerThreadScratchSpace);
     }
     inline void setStackSize(const uint32_t value) {
         TheStructure.Common.StackSize = value;
     }
-    inline uint32_t getStackSize(void) const {
+    inline uint32_t getStackSize() const {
         return (TheStructure.Common.StackSize);
     }
     typedef enum tagSCRATCHSPACEBASEPOINTER {
@@ -738,55 +738,55 @@ typedef struct tagMEDIA_VFE_STATE {
     inline void setScratchSpaceBasePointer(const uint32_t value) {
         TheStructure.Common.ScratchSpaceBasePointer = value >> SCRATCHSPACEBASEPOINTER_BIT_SHIFT;
     }
-    inline uint32_t getScratchSpaceBasePointer(void) const {
+    inline uint32_t getScratchSpaceBasePointer() const {
         return (TheStructure.Common.ScratchSpaceBasePointer << SCRATCHSPACEBASEPOINTER_BIT_SHIFT);
     }
     inline void setScratchSpaceBasePointerHigh(const uint32_t value) {
         TheStructure.Common.ScratchSpaceBasePointerHigh = value;
     }
-    inline uint32_t getScratchSpaceBasePointerHigh(void) const {
+    inline uint32_t getScratchSpaceBasePointerHigh() const {
         return (TheStructure.Common.ScratchSpaceBasePointerHigh);
     }
     inline void setDispatchLoadBalance(const DISPATCH_LOAD_BALANCE value) {
         TheStructure.Common.DispatchLoadBalance = value;
     }
-    inline DISPATCH_LOAD_BALANCE getDispatchLoadBalance(void) const {
+    inline DISPATCH_LOAD_BALANCE getDispatchLoadBalance() const {
         return static_cast<DISPATCH_LOAD_BALANCE>(TheStructure.Common.DispatchLoadBalance);
     }
     inline void setDisableSlice0Subslice2(const bool value) {
         TheStructure.Common.DisableSlice0Subslice2 = value;
     }
-    inline bool getDisableSlice0Subslice2(void) const {
+    inline bool getDisableSlice0Subslice2() const {
         return (TheStructure.Common.DisableSlice0Subslice2);
     }
     inline void setNumberOfUrbEntries(const uint32_t value) {
         TheStructure.Common.NumberOfUrbEntries = value;
     }
-    inline uint32_t getNumberOfUrbEntries(void) const {
+    inline uint32_t getNumberOfUrbEntries() const {
         return (TheStructure.Common.NumberOfUrbEntries);
     }
     inline void setMaximumNumberOfThreads(const uint32_t value) {
         TheStructure.Common.MaximumNumberOfThreads = value - 1;
     }
-    inline uint32_t getMaximumNumberOfThreads(void) const {
+    inline uint32_t getMaximumNumberOfThreads() const {
         return (TheStructure.Common.MaximumNumberOfThreads + 1);
     }
     inline void setMaximumNumberOfDualSubslices(const uint32_t value) {
         TheStructure.Common.MaximumNumberOfDual_Subslices = value;
     }
-    inline uint32_t getMaximumNumberOfDualSubslices(void) const {
+    inline uint32_t getMaximumNumberOfDualSubslices() const {
         return (TheStructure.Common.MaximumNumberOfDual_Subslices);
     }
     inline void setCurbeAllocationSize(const uint32_t value) {
         TheStructure.Common.CurbeAllocationSize = value;
     }
-    inline uint32_t getCurbeAllocationSize(void) const {
+    inline uint32_t getCurbeAllocationSize() const {
         return (TheStructure.Common.CurbeAllocationSize);
     }
     inline void setUrbEntryAllocationSize(const uint32_t value) {
         TheStructure.Common.UrbEntryAllocationSize = value;
     }
-    inline uint32_t getUrbEntryAllocationSize(void) const {
+    inline uint32_t getUrbEntryAllocationSize() const {
         return (TheStructure.Common.UrbEntryAllocationSize);
     }
 } MEDIA_VFE_STATE;
@@ -811,12 +811,12 @@ typedef struct tagMI_ARB_CHECK {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_ARB_CHECK;
         TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
-    static tagMI_ARB_CHECK sInit(void) {
+    static tagMI_ARB_CHECK sInit() {
         MI_ARB_CHECK state;
         state.init();
         return state;
@@ -828,14 +828,14 @@ typedef struct tagMI_ARB_CHECK {
     inline void setPreParserDisable(const bool value) {
         TheStructure.Common.PreParserDisable = value;
     }
-    inline bool getPreParserDisable(void) const {
+    inline bool getPreParserDisable() const {
         return TheStructure.Common.PreParserDisable;
     }
     inline void setMaskBits(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xff);
         TheStructure.Common.MaskBits = value;
     }
-    inline uint32_t getMaskBits(void) const {
+    inline uint32_t getMaskBits() const {
         return TheStructure.Common.MaskBits;
     }
 } MI_ARB_CHECK;
@@ -904,12 +904,14 @@ typedef struct tagMI_ATOMIC {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
     typedef enum tagATOMIC_OPCODES {
+        ATOMIC_4B_MOVE = 0x4,
         ATOMIC_4B_INCREMENT = 0x5,
         ATOMIC_4B_DECREMENT = 0x6,
+        ATOMIC_8B_MOVE = 0x24,
         ATOMIC_8B_INCREMENT = 0x25,
         ATOMIC_8B_DECREMENT = 0x26,
     } ATOMIC_OPCODES;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_INLINE_DATA_0;
         TheStructure.Common.DataSize = DATA_SIZE_DWORD;
@@ -918,7 +920,7 @@ typedef struct tagMI_ATOMIC {
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_ATOMIC;
         TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
-    static tagMI_ATOMIC sInit(void) {
+    static tagMI_ATOMIC sInit() {
         MI_ATOMIC state;
         state.init();
         return state;
@@ -930,50 +932,50 @@ typedef struct tagMI_ATOMIC {
     inline void setDwordLength(const DWORD_LENGTH value) {
         TheStructure.Common.DwordLength = value;
     }
-    inline DWORD_LENGTH getDwordLength(void) const {
+    inline DWORD_LENGTH getDwordLength() const {
         return static_cast<DWORD_LENGTH>(TheStructure.Common.DwordLength);
     }
     inline void setAtomicOpcode(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xff);
         TheStructure.Common.AtomicOpcode = value;
     }
-    inline uint32_t getAtomicOpcode(void) const {
+    inline uint32_t getAtomicOpcode() const {
         return TheStructure.Common.AtomicOpcode;
     }
     inline void setReturnDataControl(const bool value) {
         TheStructure.Common.ReturnDataControl = value;
     }
-    inline bool getReturnDataControl(void) const {
+    inline bool getReturnDataControl() const {
         return TheStructure.Common.ReturnDataControl;
     }
     inline void setCsStall(const bool value) {
         TheStructure.Common.CsStall = value;
     }
-    inline bool getCsStall(void) const {
+    inline bool getCsStall() const {
         return TheStructure.Common.CsStall;
     }
     inline void setInlineData(const bool value) {
         TheStructure.Common.InlineData = value;
     }
-    inline bool getInlineData(void) const {
+    inline bool getInlineData() const {
         return TheStructure.Common.InlineData;
     }
     inline void setDataSize(const DATA_SIZE value) {
         TheStructure.Common.DataSize = value;
     }
-    inline DATA_SIZE getDataSize(void) const {
+    inline DATA_SIZE getDataSize() const {
         return static_cast<DATA_SIZE>(TheStructure.Common.DataSize);
     }
     inline void setPostSyncOperation(const POST_SYNC_OPERATION value) {
         TheStructure.Common.PostSyncOperation = value;
     }
-    inline POST_SYNC_OPERATION getPostSyncOperation(void) const {
+    inline POST_SYNC_OPERATION getPostSyncOperation() const {
         return static_cast<POST_SYNC_OPERATION>(TheStructure.Common.PostSyncOperation);
     }
     inline void setMemoryType(const MEMORY_TYPE value) {
         TheStructure.Common.MemoryType = value;
     }
-    inline MEMORY_TYPE getMemoryType(void) const {
+    inline MEMORY_TYPE getMemoryType() const {
         return static_cast<MEMORY_TYPE>(TheStructure.Common.MemoryType);
     }
     typedef enum tagMEMORYADDRESS {
@@ -984,62 +986,62 @@ typedef struct tagMI_ATOMIC {
         UNRECOVERABLE_IF(value > 0xffffffff);
         TheStructure.Common.MemoryAddress = value >> MEMORYADDRESS_BIT_SHIFT;
     }
-    inline uint32_t getMemoryAddress(void) const {
+    inline uint32_t getMemoryAddress() const {
         return TheStructure.Common.MemoryAddress << MEMORYADDRESS_BIT_SHIFT;
     }
     inline void setMemoryAddressHigh(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.MemoryAddressHigh = value;
     }
-    inline uint32_t getMemoryAddressHigh(void) const {
+    inline uint32_t getMemoryAddressHigh() const {
         return TheStructure.Common.MemoryAddressHigh;
     }
     inline void setOperand1DataDword0(const uint32_t value) {
         TheStructure.Common.Operand1DataDword0 = value;
     }
-    inline uint32_t getOperand1DataDword0(void) const {
+    inline uint32_t getOperand1DataDword0() const {
         return TheStructure.Common.Operand1DataDword0;
     }
     inline void setOperand2DataDword0(const uint32_t value) {
         TheStructure.Common.Operand2DataDword0 = value;
     }
-    inline uint32_t getOperand2DataDword0(void) const {
+    inline uint32_t getOperand2DataDword0() const {
         return TheStructure.Common.Operand2DataDword0;
     }
     inline void setOperand1DataDword1(const uint32_t value) {
         TheStructure.Common.Operand1DataDword1 = value;
     }
-    inline uint32_t getOperand1DataDword1(void) const {
+    inline uint32_t getOperand1DataDword1() const {
         return TheStructure.Common.Operand1DataDword1;
     }
     inline void setOperand2DataDword1(const uint32_t value) {
         TheStructure.Common.Operand2DataDword1 = value;
     }
-    inline uint32_t getOperand2DataDword1(void) const {
+    inline uint32_t getOperand2DataDword1() const {
         return TheStructure.Common.Operand2DataDword1;
     }
     inline void setOperand1DataDword2(const uint32_t value) {
         TheStructure.Common.Operand1DataDword2 = value;
     }
-    inline uint32_t getOperand1DataDword2(void) const {
+    inline uint32_t getOperand1DataDword2() const {
         return TheStructure.Common.Operand1DataDword2;
     }
     inline void setOperand2DataDword2(const uint32_t value) {
         TheStructure.Common.Operand2DataDword2 = value;
     }
-    inline uint32_t getOperand2DataDword2(void) const {
+    inline uint32_t getOperand2DataDword2() const {
         return TheStructure.Common.Operand2DataDword2;
     }
     inline void setOperand1DataDword3(const uint32_t value) {
         TheStructure.Common.Operand1DataDword3 = value;
     }
-    inline uint32_t getOperand1DataDword3(void) const {
+    inline uint32_t getOperand1DataDword3() const {
         return TheStructure.Common.Operand1DataDword3;
     }
     inline void setOperand2DataDword3(const uint32_t value) {
         TheStructure.Common.Operand2DataDword3 = value;
     }
-    inline uint32_t getOperand2DataDword3(void) const {
+    inline uint32_t getOperand2DataDword3() const {
         return TheStructure.Common.Operand2DataDword3;
     }
 } MI_ATOMIC;
@@ -1062,12 +1064,12 @@ typedef struct tagMI_BATCH_BUFFER_END {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_BATCH_BUFFER_END;
         TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
-    static tagMI_BATCH_BUFFER_END sInit(void) {
+    static tagMI_BATCH_BUFFER_END sInit() {
         MI_BATCH_BUFFER_END state;
         state.init();
         return state;
@@ -1079,7 +1081,7 @@ typedef struct tagMI_BATCH_BUFFER_END {
     inline void setEndContext(const bool value) {
         TheStructure.Common.EndContext = value;
     }
-    inline bool getEndContext(void) const {
+    inline bool getEndContext() const {
         return TheStructure.Common.EndContext;
     }
 } MI_BATCH_BUFFER_END;
@@ -1143,7 +1145,7 @@ typedef struct tagMI_BATCH_BUFFER_START {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
         TheStructure.Common.AddressSpaceIndicator = ADDRESS_SPACE_INDICATOR_GGTT;
@@ -1152,7 +1154,7 @@ typedef struct tagMI_BATCH_BUFFER_START {
         TheStructure.Mi_Mode_Nestedbatchbufferenableis0.SecondLevelBatchBuffer = SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH;
         TheStructure.Mi_Mode_Nestedbatchbufferenableis1.NestedLevelBatchBuffer = NESTED_LEVEL_BATCH_BUFFER_CHAIN;
     }
-    static tagMI_BATCH_BUFFER_START sInit(void) {
+    static tagMI_BATCH_BUFFER_START sInit() {
         MI_BATCH_BUFFER_START state;
         state.init();
         return state;
@@ -1164,31 +1166,31 @@ typedef struct tagMI_BATCH_BUFFER_START {
     inline void setAddressSpaceIndicator(const ADDRESS_SPACE_INDICATOR value) {
         TheStructure.Common.AddressSpaceIndicator = value;
     }
-    inline ADDRESS_SPACE_INDICATOR getAddressSpaceIndicator(void) const {
+    inline ADDRESS_SPACE_INDICATOR getAddressSpaceIndicator() const {
         return static_cast<ADDRESS_SPACE_INDICATOR>(TheStructure.Common.AddressSpaceIndicator);
     }
     inline void setPredicationEnable(const bool value) {
         TheStructure.Common.PredicationEnable = value;
     }
-    inline bool getPredicationEnable(void) const {
+    inline bool getPredicationEnable() const {
         return TheStructure.Common.PredicationEnable;
     }
     inline void setEnableCommandCache(const bool value) {
         TheStructure.Common.EnableCommandCache = value;
     }
-    inline bool getEnableCommandCache(void) const {
+    inline bool getEnableCommandCache() const {
         return TheStructure.Common.EnableCommandCache;
     }
     inline void setPoshEnable(const bool value) {
         TheStructure.Common.PoshEnable = value;
     }
-    inline bool getPoshEnable(void) const {
+    inline bool getPoshEnable() const {
         return TheStructure.Common.PoshEnable;
     }
     inline void setPoshStart(const bool value) {
         TheStructure.Common.PoshStart = value;
     }
-    inline bool getPoshStart(void) const {
+    inline bool getPoshStart() const {
         return TheStructure.Common.PoshStart;
     }
     typedef enum tagBATCHBUFFERSTARTADDRESS {
@@ -1198,25 +1200,19 @@ typedef struct tagMI_BATCH_BUFFER_START {
     inline void setBatchBufferStartAddress(const uint64_t value) {
         TheStructure.Common.BatchBufferStartAddress = value >> BATCHBUFFERSTARTADDRESS_BIT_SHIFT;
     }
-    inline uint64_t getBatchBufferStartAddress(void) const {
-        return TheStructure.Common.BatchBufferStartAddress << BATCHBUFFERSTARTADDRESS_BIT_SHIFT;
-    }
-    inline void setBatchBufferStartAddressGraphicsaddress472(const uint64_t value) {
-        TheStructure.Common.BatchBufferStartAddress = value >> BATCHBUFFERSTARTADDRESS_BIT_SHIFT;
-    }
-    inline uint64_t getBatchBufferStartAddressGraphicsaddress472(void) const {
+    inline uint64_t getBatchBufferStartAddress() const {
         return TheStructure.Common.BatchBufferStartAddress << BATCHBUFFERSTARTADDRESS_BIT_SHIFT;
     }
     inline void setSecondLevelBatchBuffer(const SECOND_LEVEL_BATCH_BUFFER value) {
         TheStructure.Mi_Mode_Nestedbatchbufferenableis0.SecondLevelBatchBuffer = value;
     }
-    inline SECOND_LEVEL_BATCH_BUFFER getSecondLevelBatchBuffer(void) const {
+    inline SECOND_LEVEL_BATCH_BUFFER getSecondLevelBatchBuffer() const {
         return static_cast<SECOND_LEVEL_BATCH_BUFFER>(TheStructure.Mi_Mode_Nestedbatchbufferenableis0.SecondLevelBatchBuffer);
     }
     inline void setNestedLevelBatchBuffer(const NESTED_LEVEL_BATCH_BUFFER value) {
         TheStructure.Mi_Mode_Nestedbatchbufferenableis1.NestedLevelBatchBuffer = value;
     }
-    inline NESTED_LEVEL_BATCH_BUFFER getNestedLevelBatchBuffer(void) const {
+    inline NESTED_LEVEL_BATCH_BUFFER getNestedLevelBatchBuffer() const {
         return static_cast<NESTED_LEVEL_BATCH_BUFFER>(TheStructure.Mi_Mode_Nestedbatchbufferenableis1.NestedLevelBatchBuffer);
     }
 } MI_BATCH_BUFFER_START;
@@ -1253,14 +1249,14 @@ typedef struct tagMI_LOAD_REGISTER_IMM {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_LOAD_REGISTER_IMM;
         TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
         TheStructure.Common.MmioRemapEnable = true; // this field is manually set
     }
-    static tagMI_LOAD_REGISTER_IMM sInit(void) {
+    static tagMI_LOAD_REGISTER_IMM sInit() {
         MI_LOAD_REGISTER_IMM state;
         state.init();
         return state;
@@ -1273,19 +1269,19 @@ typedef struct tagMI_LOAD_REGISTER_IMM {
         UNRECOVERABLE_IF(value > 0xf);
         TheStructure.Common.ByteWriteDisables = value;
     }
-    inline uint32_t getByteWriteDisables(void) const {
+    inline uint32_t getByteWriteDisables() const {
         return TheStructure.Common.ByteWriteDisables;
     }
     inline void setMmioRemapEnable(const bool value) {
         TheStructure.Common.MmioRemapEnable = value;
     }
-    inline bool getMmioRemapEnable(void) const {
+    inline bool getMmioRemapEnable() const {
         return TheStructure.Common.MmioRemapEnable;
     }
     inline void setAddCsMmioStartOffset(const bool value) {
         TheStructure.Common.AddCsMmioStartOffset = value;
     }
-    inline bool getAddCsMmioStartOffset(void) const {
+    inline bool getAddCsMmioStartOffset() const {
         return TheStructure.Common.AddCsMmioStartOffset;
     }
     typedef enum tagREGISTEROFFSET {
@@ -1296,13 +1292,13 @@ typedef struct tagMI_LOAD_REGISTER_IMM {
         UNRECOVERABLE_IF(value > 0x7fffffL);
         TheStructure.Common.RegisterOffset = value >> REGISTEROFFSET_BIT_SHIFT;
     }
-    inline uint64_t getRegisterOffset(void) const {
+    inline uint64_t getRegisterOffset() const {
         return TheStructure.Common.RegisterOffset << REGISTEROFFSET_BIT_SHIFT;
     }
     inline void setDataDword(const uint64_t value) {
         TheStructure.Common.DataDword = value;
     }
-    inline uint64_t getDataDword(void) const {
+    inline uint64_t getDataDword() const {
         return TheStructure.Common.DataDword;
     }
 } MI_LOAD_REGISTER_IMM;
@@ -1341,13 +1337,13 @@ typedef struct tagMI_LOAD_REGISTER_MEM {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_LOAD_REGISTER_MEM;
         TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
-    static tagMI_LOAD_REGISTER_MEM sInit(void) {
+    static tagMI_LOAD_REGISTER_MEM sInit() {
         MI_LOAD_REGISTER_MEM state;
         state.init();
         return state;
@@ -1359,25 +1355,25 @@ typedef struct tagMI_LOAD_REGISTER_MEM {
     inline void setMmioRemapEnable(const bool value) {
         TheStructure.Common.MmioRemapEnable = value;
     }
-    inline bool getMmioRemapEnable(void) const {
+    inline bool getMmioRemapEnable() const {
         return TheStructure.Common.MmioRemapEnable;
     }
     inline void setAddCsMmioStartOffset(const bool value) {
         TheStructure.Common.AddCsMmioStartOffset = value;
     }
-    inline bool getAddCsMmioStartOffset(void) const {
+    inline bool getAddCsMmioStartOffset() const {
         return TheStructure.Common.AddCsMmioStartOffset;
     }
     inline void setAsyncModeEnable(const bool value) {
         TheStructure.Common.AsyncModeEnable = value;
     }
-    inline bool getAsyncModeEnable(void) const {
+    inline bool getAsyncModeEnable() const {
         return TheStructure.Common.AsyncModeEnable;
     }
     inline void setUseGlobalGtt(const bool value) {
         TheStructure.Common.UseGlobalGtt = value;
     }
-    inline bool getUseGlobalGtt(void) const {
+    inline bool getUseGlobalGtt() const {
         return TheStructure.Common.UseGlobalGtt;
     }
     typedef enum tagREGISTERADDRESS {
@@ -1388,7 +1384,7 @@ typedef struct tagMI_LOAD_REGISTER_MEM {
         UNRECOVERABLE_IF(value > 0x7fffff);
         TheStructure.Common.RegisterAddress = value >> REGISTERADDRESS_BIT_SHIFT;
     }
-    inline uint32_t getRegisterAddress(void) const {
+    inline uint32_t getRegisterAddress() const {
         return TheStructure.Common.RegisterAddress << REGISTERADDRESS_BIT_SHIFT;
     }
     typedef enum tagMEMORYADDRESS {
@@ -1399,7 +1395,7 @@ typedef struct tagMI_LOAD_REGISTER_MEM {
         UNRECOVERABLE_IF(value > 0xffffffffffffffffL);
         TheStructure.Common.MemoryAddress = value >> MEMORYADDRESS_BIT_SHIFT;
     }
-    inline uint64_t getMemoryAddress(void) const {
+    inline uint64_t getMemoryAddress() const {
         return TheStructure.Common.MemoryAddress << MEMORYADDRESS_BIT_SHIFT;
     }
 } MI_LOAD_REGISTER_MEM;
@@ -1438,13 +1434,13 @@ typedef struct tagMI_LOAD_REGISTER_REG {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_LOAD_REGISTER_REG;
         TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
-    static tagMI_LOAD_REGISTER_REG sInit(void) {
+    static tagMI_LOAD_REGISTER_REG sInit() {
         MI_LOAD_REGISTER_REG state;
         state.init();
         return state;
@@ -1456,25 +1452,25 @@ typedef struct tagMI_LOAD_REGISTER_REG {
     inline void setMmioRemapEnableSource(const bool value) {
         TheStructure.Common.MmioRemapEnableSource = value;
     }
-    inline bool getMmioRemapEnableSource(void) const {
+    inline bool getMmioRemapEnableSource() const {
         return TheStructure.Common.MmioRemapEnableSource;
     }
     inline void setMmioRemapEnableDestination(const bool value) {
         TheStructure.Common.MmioRemapEnableDestination = value;
     }
-    inline bool getMmioRemapEnableDestination(void) const {
+    inline bool getMmioRemapEnableDestination() const {
         return TheStructure.Common.MmioRemapEnableDestination;
     }
     inline void setAddCsMmioStartOffsetSource(const bool value) {
         TheStructure.Common.AddCsMmioStartOffsetSource = value;
     }
-    inline bool getAddCsMmioStartOffsetSource(void) const {
+    inline bool getAddCsMmioStartOffsetSource() const {
         return TheStructure.Common.AddCsMmioStartOffsetSource;
     }
     inline void setAddCsMmioStartOffsetDestination(const bool value) {
         TheStructure.Common.AddCsMmioStartOffsetDestination = value;
     }
-    inline bool getAddCsMmioStartOffsetDestination(void) const {
+    inline bool getAddCsMmioStartOffsetDestination() const {
         return TheStructure.Common.AddCsMmioStartOffsetDestination;
     }
     typedef enum tagSOURCEREGISTERADDRESS {
@@ -1485,7 +1481,7 @@ typedef struct tagMI_LOAD_REGISTER_REG {
         UNRECOVERABLE_IF(value > 0x7fffff);
         TheStructure.Common.SourceRegisterAddress = value >> SOURCEREGISTERADDRESS_BIT_SHIFT;
     }
-    inline uint32_t getSourceRegisterAddress(void) const {
+    inline uint32_t getSourceRegisterAddress() const {
         return TheStructure.Common.SourceRegisterAddress << SOURCEREGISTERADDRESS_BIT_SHIFT;
     }
     typedef enum tagDESTINATIONREGISTERADDRESS {
@@ -1496,7 +1492,7 @@ typedef struct tagMI_LOAD_REGISTER_REG {
         UNRECOVERABLE_IF(value > 0x7fffff);
         TheStructure.Common.DestinationRegisterAddress = value >> DESTINATIONREGISTERADDRESS_BIT_SHIFT;
     }
-    inline uint32_t getDestinationRegisterAddress(void) const {
+    inline uint32_t getDestinationRegisterAddress() const {
         return TheStructure.Common.DestinationRegisterAddress << DESTINATIONREGISTERADDRESS_BIT_SHIFT;
     }
 } MI_LOAD_REGISTER_REG;
@@ -1519,12 +1515,12 @@ typedef struct tagMI_NOOP {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_NOOP;
         TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
-    static tagMI_NOOP sInit(void) {
+    static tagMI_NOOP sInit() {
         MI_NOOP state;
         state.init();
         return state;
@@ -1537,13 +1533,13 @@ typedef struct tagMI_NOOP {
         UNRECOVERABLE_IF(value > 0x3fffff);
         TheStructure.Common.IdentificationNumber = value;
     }
-    inline uint32_t getIdentificationNumber(void) const {
+    inline uint32_t getIdentificationNumber() const {
         return TheStructure.Common.IdentificationNumber;
     }
     inline void setIdentificationNumberRegisterWriteEnable(const bool value) {
         TheStructure.Common.IdentificationNumberRegisterWriteEnable = value;
     }
-    inline bool getIdentificationNumberRegisterWriteEnable(void) const {
+    inline bool getIdentificationNumberRegisterWriteEnable() const {
         return TheStructure.Common.IdentificationNumberRegisterWriteEnable;
     }
 } MI_NOOP;
@@ -1582,13 +1578,13 @@ typedef struct tagMI_STORE_REGISTER_MEM {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_STORE_REGISTER_MEM;
         TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
-    static tagMI_STORE_REGISTER_MEM sInit(void) {
+    static tagMI_STORE_REGISTER_MEM sInit() {
         MI_STORE_REGISTER_MEM state;
         state.init();
         return state;
@@ -1600,25 +1596,25 @@ typedef struct tagMI_STORE_REGISTER_MEM {
     inline void setMmioRemapEnable(const bool value) {
         TheStructure.Common.MmioRemapEnable = value;
     }
-    inline bool getMmioRemapEnable(void) const {
+    inline bool getMmioRemapEnable() const {
         return TheStructure.Common.MmioRemapEnable;
     }
     inline void setAddCsMmioStartOffset(const bool value) {
         TheStructure.Common.AddCsMmioStartOffset = value;
     }
-    inline bool getAddCsMmioStartOffset(void) const {
+    inline bool getAddCsMmioStartOffset() const {
         return TheStructure.Common.AddCsMmioStartOffset;
     }
     inline void setPredicateEnable(const bool value) {
         TheStructure.Common.PredicateEnable = value;
     }
-    inline bool getPredicateEnable(void) const {
+    inline bool getPredicateEnable() const {
         return TheStructure.Common.PredicateEnable;
     }
     inline void setUseGlobalGtt(const bool value) {
         TheStructure.Common.UseGlobalGtt = value;
     }
-    inline bool getUseGlobalGtt(void) const {
+    inline bool getUseGlobalGtt() const {
         return TheStructure.Common.UseGlobalGtt;
     }
     typedef enum tagREGISTERADDRESS {
@@ -1629,7 +1625,7 @@ typedef struct tagMI_STORE_REGISTER_MEM {
         UNRECOVERABLE_IF(value > 0x7fffff);
         TheStructure.Common.RegisterAddress = value >> REGISTERADDRESS_BIT_SHIFT;
     }
-    inline uint32_t getRegisterAddress(void) const {
+    inline uint32_t getRegisterAddress() const {
         return TheStructure.Common.RegisterAddress << REGISTERADDRESS_BIT_SHIFT;
     }
     typedef enum tagMEMORYADDRESS {
@@ -1640,7 +1636,7 @@ typedef struct tagMI_STORE_REGISTER_MEM {
         UNRECOVERABLE_IF(value > 0xffffffffffffffffL);
         TheStructure.Common.MemoryAddress = value >> MEMORYADDRESS_BIT_SHIFT;
     }
-    inline uint64_t getMemoryAddress(void) const {
+    inline uint64_t getMemoryAddress() const {
         return TheStructure.Common.MemoryAddress << MEMORYADDRESS_BIT_SHIFT;
     }
 } MI_STORE_REGISTER_MEM;
@@ -1656,7 +1652,7 @@ typedef struct tagPIPELINE_SELECT {
             uint32_t MediaSamplerDopClockGateEnable : BITFIELD_RANGE(4, 4);
             uint32_t Reserved_5 : BITFIELD_RANGE(5, 5);
             uint32_t MediaSamplerPowerClockGateDisable : BITFIELD_RANGE(6, 6);
-            uint32_t Reserved_7 : BITFIELD_RANGE(7, 7);
+            uint32_t SpecialModeEnable : BITFIELD_RANGE(7, 7); // ADL-only, patched
             uint32_t MaskBits : BITFIELD_RANGE(8, 15);
             uint32_t _3DCommandSubOpcode : BITFIELD_RANGE(16, 23);
             uint32_t _3DCommandOpcode : BITFIELD_RANGE(24, 26);
@@ -1682,7 +1678,7 @@ typedef struct tagPIPELINE_SELECT {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_GFXPIPE = 0x3,
     } COMMAND_TYPE;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.PipelineSelection = PIPELINE_SELECTION_3D;
         TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_PIPELINE_SELECT;
@@ -1690,7 +1686,7 @@ typedef struct tagPIPELINE_SELECT {
         TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_SINGLE_DW;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
     }
-    static tagPIPELINE_SELECT sInit(void) {
+    static tagPIPELINE_SELECT sInit() {
         PIPELINE_SELECT state;
         state.init();
         return state;
@@ -1702,38 +1698,44 @@ typedef struct tagPIPELINE_SELECT {
     inline void setPipelineSelection(const PIPELINE_SELECTION value) {
         TheStructure.Common.PipelineSelection = value;
     }
-    inline PIPELINE_SELECTION getPipelineSelection(void) const {
+    inline PIPELINE_SELECTION getPipelineSelection() const {
         return static_cast<PIPELINE_SELECTION>(TheStructure.Common.PipelineSelection);
     }
     inline void setRenderSliceCommonPowerGateEnable(const bool value) {
         TheStructure.Common.RenderSliceCommonPowerGateEnable = value;
     }
-    inline bool getRenderSliceCommonPowerGateEnable(void) const {
+    inline bool getRenderSliceCommonPowerGateEnable() const {
         return TheStructure.Common.RenderSliceCommonPowerGateEnable;
     }
     inline void setRenderSamplerPowerGateEnable(const bool value) {
         TheStructure.Common.RenderSamplerPowerGateEnable = value;
     }
-    inline bool getRenderSamplerPowerGateEnable(void) const {
+    inline bool getRenderSamplerPowerGateEnable() const {
         return TheStructure.Common.RenderSamplerPowerGateEnable;
     }
     inline void setMediaSamplerDopClockGateEnable(const bool value) {
         TheStructure.Common.MediaSamplerDopClockGateEnable = value;
     }
-    inline bool getMediaSamplerDopClockGateEnable(void) const {
+    inline bool getMediaSamplerDopClockGateEnable() const {
         return TheStructure.Common.MediaSamplerDopClockGateEnable;
     }
     inline void setMediaSamplerPowerClockGateDisable(const bool value) {
         TheStructure.Common.MediaSamplerPowerClockGateDisable = value;
     }
-    inline bool getMediaSamplerPowerClockGateDisable(void) const {
+    inline bool getMediaSamplerPowerClockGateDisable() const {
         return TheStructure.Common.MediaSamplerPowerClockGateDisable;
+    }
+    inline void setSpecialModeEnable(const bool value) {
+        TheStructure.Common.SpecialModeEnable = value;
+    }
+    inline bool getSpecialModeEnable() const {
+        return TheStructure.Common.SpecialModeEnable;
     }
     inline void setMaskBits(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xff);
         TheStructure.Common.MaskBits = value;
     }
-    inline uint32_t getMaskBits(void) const {
+    inline uint32_t getMaskBits() const {
         return TheStructure.Common.MaskBits;
     }
 } PIPELINE_SELECT;
@@ -1962,6 +1964,7 @@ typedef struct tagRENDER_SURFACE_STATE {
         SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_4 = 0x1,
         SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_8 = 0x2,
         SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_16 = 0x3,
+        SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_DEFAULT = SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_4,
     } SURFACE_HORIZONTAL_ALIGNMENT;
     typedef enum tagSURFACE_VERTICAL_ALIGNMENT {
         SURFACE_VERTICAL_ALIGNMENT_VALIGN_4 = 0x1,
@@ -2266,7 +2269,7 @@ typedef struct tagRENDER_SURFACE_STATE {
     typedef enum tagMEMORY_COMPRESSION_MODE {
         MEMORY_COMPRESSION_MODE_HORIZONTAL = 0x0,
     } MEMORY_COMPRESSION_MODE;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.MediaBoundaryPixelMode = MEDIA_BOUNDARY_PIXEL_MODE_NORMAL_MODE;
         TheStructure.Common.RenderCacheReadWriteMode = RENDER_CACHE_READ_WRITE_MODE_WRITE_ONLY_CACHE;
@@ -2292,7 +2295,7 @@ typedef struct tagRENDER_SURFACE_STATE {
         TheStructure._SurfaceFormatIsPlanar.HalfPitchForChroma = HALF_PITCH_FOR_CHROMA_DISABLE;
         TheStructure._SurfaceFormatIsnotPlanar.AuxiliarySurfaceMode = AUXILIARY_SURFACE_MODE_AUX_NONE;
     }
-    static tagRENDER_SURFACE_STATE sInit(void) {
+    static tagRENDER_SURFACE_STATE sInit() {
         RENDER_SURFACE_STATE state;
         state.init();
         return state;
@@ -2304,109 +2307,109 @@ typedef struct tagRENDER_SURFACE_STATE {
     inline void setCubeFaceEnablePositiveZ(const bool value) {
         TheStructure.Common.CubeFaceEnablePositiveZ = value;
     }
-    inline bool getCubeFaceEnablePositiveZ(void) const {
+    inline bool getCubeFaceEnablePositiveZ() const {
         return TheStructure.Common.CubeFaceEnablePositiveZ;
     }
     inline void setCubeFaceEnableNegativeZ(const bool value) {
         TheStructure.Common.CubeFaceEnableNegativeZ = value;
     }
-    inline bool getCubeFaceEnableNegativeZ(void) const {
+    inline bool getCubeFaceEnableNegativeZ() const {
         return TheStructure.Common.CubeFaceEnableNegativeZ;
     }
     inline void setCubeFaceEnablePositiveY(const bool value) {
         TheStructure.Common.CubeFaceEnablePositiveY = value;
     }
-    inline bool getCubeFaceEnablePositiveY(void) const {
+    inline bool getCubeFaceEnablePositiveY() const {
         return TheStructure.Common.CubeFaceEnablePositiveY;
     }
     inline void setCubeFaceEnableNegativeY(const bool value) {
         TheStructure.Common.CubeFaceEnableNegativeY = value;
     }
-    inline bool getCubeFaceEnableNegativeY(void) const {
+    inline bool getCubeFaceEnableNegativeY() const {
         return TheStructure.Common.CubeFaceEnableNegativeY;
     }
     inline void setCubeFaceEnablePositiveX(const bool value) {
         TheStructure.Common.CubeFaceEnablePositiveX = value;
     }
-    inline bool getCubeFaceEnablePositiveX(void) const {
+    inline bool getCubeFaceEnablePositiveX() const {
         return TheStructure.Common.CubeFaceEnablePositiveX;
     }
     inline void setCubeFaceEnableNegativeX(const bool value) {
         TheStructure.Common.CubeFaceEnableNegativeX = value;
     }
-    inline bool getCubeFaceEnableNegativeX(void) const {
+    inline bool getCubeFaceEnableNegativeX() const {
         return TheStructure.Common.CubeFaceEnableNegativeX;
     }
     inline void setMediaBoundaryPixelMode(const MEDIA_BOUNDARY_PIXEL_MODE value) {
         TheStructure.Common.MediaBoundaryPixelMode = value;
     }
-    inline MEDIA_BOUNDARY_PIXEL_MODE getMediaBoundaryPixelMode(void) const {
+    inline MEDIA_BOUNDARY_PIXEL_MODE getMediaBoundaryPixelMode() const {
         return static_cast<MEDIA_BOUNDARY_PIXEL_MODE>(TheStructure.Common.MediaBoundaryPixelMode);
     }
     inline void setRenderCacheReadWriteMode(const RENDER_CACHE_READ_WRITE_MODE value) {
         TheStructure.Common.RenderCacheReadWriteMode = value;
     }
-    inline RENDER_CACHE_READ_WRITE_MODE getRenderCacheReadWriteMode(void) const {
+    inline RENDER_CACHE_READ_WRITE_MODE getRenderCacheReadWriteMode() const {
         return static_cast<RENDER_CACHE_READ_WRITE_MODE>(TheStructure.Common.RenderCacheReadWriteMode);
     }
     inline void setSamplerL2OutOfOrderModeDisable(const bool value) {
         TheStructure.Common.SamplerL2OutOfOrderModeDisable = value;
     }
-    inline bool getSamplerL2OutOfOrderModeDisable(void) const {
+    inline bool getSamplerL2OutOfOrderModeDisable() const {
         return TheStructure.Common.SamplerL2OutOfOrderModeDisable;
     }
     inline void setVerticalLineStrideOffset(const bool value) {
         TheStructure.Common.VerticalLineStrideOffset = value;
     }
-    inline bool getVerticalLineStrideOffset(void) const {
+    inline bool getVerticalLineStrideOffset() const {
         return TheStructure.Common.VerticalLineStrideOffset;
     }
     inline void setVerticalLineStride(const bool value) {
         TheStructure.Common.VerticalLineStride = value;
     }
-    inline bool getVerticalLineStride(void) const {
+    inline bool getVerticalLineStride() const {
         return TheStructure.Common.VerticalLineStride;
     }
     inline void setTileMode(const TILE_MODE value) {
         TheStructure.Common.TileMode = value;
     }
-    inline TILE_MODE getTileMode(void) const {
+    inline TILE_MODE getTileMode() const {
         return static_cast<TILE_MODE>(TheStructure.Common.TileMode);
     }
     inline void setSurfaceHorizontalAlignment(const SURFACE_HORIZONTAL_ALIGNMENT value) {
         TheStructure.Common.SurfaceHorizontalAlignment = value;
     }
-    inline SURFACE_HORIZONTAL_ALIGNMENT getSurfaceHorizontalAlignment(void) const {
+    inline SURFACE_HORIZONTAL_ALIGNMENT getSurfaceHorizontalAlignment() const {
         return static_cast<SURFACE_HORIZONTAL_ALIGNMENT>(TheStructure.Common.SurfaceHorizontalAlignment);
     }
     inline void setSurfaceVerticalAlignment(const SURFACE_VERTICAL_ALIGNMENT value) {
         TheStructure.Common.SurfaceVerticalAlignment = value;
     }
-    inline SURFACE_VERTICAL_ALIGNMENT getSurfaceVerticalAlignment(void) const {
+    inline SURFACE_VERTICAL_ALIGNMENT getSurfaceVerticalAlignment() const {
         return static_cast<SURFACE_VERTICAL_ALIGNMENT>(TheStructure.Common.SurfaceVerticalAlignment);
     }
     inline void setSurfaceFormat(const SURFACE_FORMAT value) {
         TheStructure.Common.SurfaceFormat = value;
     }
-    inline SURFACE_FORMAT getSurfaceFormat(void) const {
+    inline SURFACE_FORMAT getSurfaceFormat() const {
         return static_cast<SURFACE_FORMAT>(TheStructure.Common.SurfaceFormat);
     }
     inline void setAstcEnable(const bool value) {
         TheStructure.Common.AstcEnable = value;
     }
-    inline bool getAstcEnable(void) const {
+    inline bool getAstcEnable() const {
         return TheStructure.Common.AstcEnable;
     }
     inline void setSurfaceArray(const bool value) {
         TheStructure.Common.SurfaceArray = value;
     }
-    inline bool getSurfaceArray(void) const {
+    inline bool getSurfaceArray() const {
         return TheStructure.Common.SurfaceArray;
     }
     inline void setSurfaceType(const SURFACE_TYPE value) {
         TheStructure.Common.SurfaceType = value;
     }
-    inline SURFACE_TYPE getSurfaceType(void) const {
+    inline SURFACE_TYPE getSurfaceType() const {
         return static_cast<SURFACE_TYPE>(TheStructure.Common.SurfaceType);
     }
     typedef enum tagSURFACEQPITCH {
@@ -2417,52 +2420,45 @@ typedef struct tagRENDER_SURFACE_STATE {
         DEBUG_BREAK_IF(value > 0x7fff);
         TheStructure.Common.SurfaceQpitch = value >> SURFACEQPITCH_BIT_SHIFT;
     }
-    inline uint32_t getSurfaceQpitch(void) const {
+    inline uint32_t getSurfaceQpitch() const {
         return TheStructure.Common.SurfaceQpitch << SURFACEQPITCH_BIT_SHIFT;
     }
     inline void setSampleTapDiscardDisable(const SAMPLE_TAP_DISCARD_DISABLE value) {
         TheStructure.Common.SampleTapDiscardDisable = value;
     }
-    inline SAMPLE_TAP_DISCARD_DISABLE getSampleTapDiscardDisable(void) const {
+    inline SAMPLE_TAP_DISCARD_DISABLE getSampleTapDiscardDisable() const {
         return static_cast<SAMPLE_TAP_DISCARD_DISABLE>(TheStructure.Common.SampleTapDiscardDisable);
     }
     inline void setDoubleFetchDisable(const bool value) {
         TheStructure.Common.DoubleFetchDisable = value;
     }
-    inline bool getDoubleFetchDisable(void) const {
+    inline bool getDoubleFetchDisable() const {
         return TheStructure.Common.DoubleFetchDisable;
     }
     inline void setCornerTexelMode(const bool value) {
         TheStructure.Common.CornerTexelMode = value;
     }
-    inline bool getCornerTexelMode(void) const {
+    inline bool getCornerTexelMode() const {
         return TheStructure.Common.CornerTexelMode;
     }
     inline void setBaseMipLevel(const uint32_t value) {
         DEBUG_BREAK_IF(value > 0xf80000);
         TheStructure.Common.BaseMipLevel = value;
     }
-    inline uint32_t getBaseMipLevel(void) const {
+    inline uint32_t getBaseMipLevel() const {
         return TheStructure.Common.BaseMipLevel;
     }
     inline void setMemoryObjectControlStateReserved(const uint32_t value) {
         TheStructure.Common.MemoryObjectControlStateReserved_56 = value;
     }
-    inline uint32_t getMemoryObjectControlStateReserved(void) const {
+    inline uint32_t getMemoryObjectControlStateReserved() const {
         return (TheStructure.Common.MemoryObjectControlStateReserved_56);
-    }
-    inline void setMemoryObjectControlStateIndexToMocsTables(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0x7e000000L);
-        TheStructure.Common.MemoryObjectControlStateIndexToMocsTables = value >> 1;
-    }
-    inline uint32_t getMemoryObjectControlStateIndexToMocsTables(void) const {
-        return (TheStructure.Common.MemoryObjectControlStateIndexToMocsTables << 1);
     }
     inline void setMemoryObjectControlState(const uint32_t value) {
         TheStructure.Common.MemoryObjectControlStateReserved_56 = value;
         TheStructure.Common.MemoryObjectControlStateIndexToMocsTables = (value >> 1);
     }
-    inline uint32_t getMemoryObjectControlState(void) const {
+    inline uint32_t getMemoryObjectControlState() const {
         uint32_t mocs = TheStructure.Common.MemoryObjectControlStateReserved_56;
         mocs |= (TheStructure.Common.MemoryObjectControlStateIndexToMocsTables << 1);
         return (mocs);
@@ -2470,137 +2466,137 @@ typedef struct tagRENDER_SURFACE_STATE {
     inline void setEnableUnormPathInColorPipe(const bool value) {
         TheStructure.Common.EnableUnormPathInColorPipe = value;
     }
-    inline bool getEnableUnormPathInColorPipe(void) const {
+    inline bool getEnableUnormPathInColorPipe() const {
         return TheStructure.Common.EnableUnormPathInColorPipe;
     }
     inline void setWidth(const uint32_t value) {
         DEBUG_BREAK_IF(value > 0x4000);
         TheStructure.Common.Width = value - 1;
     }
-    inline uint32_t getWidth(void) const {
+    inline uint32_t getWidth() const {
         return TheStructure.Common.Width + 1;
     }
     inline void setHeight(const uint32_t value) {
         DEBUG_BREAK_IF(value > 0x3fff0000);
         TheStructure.Common.Height = value - 1;
     }
-    inline uint32_t getHeight(void) const {
+    inline uint32_t getHeight() const {
         return TheStructure.Common.Height + 1;
     }
     inline void setDepthStencilResource(const bool value) {
         TheStructure.Common.DepthStencilResource = value;
     }
-    inline bool getDepthStencilResource(void) const {
+    inline bool getDepthStencilResource() const {
         return TheStructure.Common.DepthStencilResource;
     }
     inline void setSurfacePitch(const uint32_t value) {
         DEBUG_BREAK_IF(value > 0x3ffff);
         TheStructure.Common.SurfacePitch = value - 1;
     }
-    inline uint32_t getSurfacePitch(void) const {
+    inline uint32_t getSurfacePitch() const {
         return TheStructure.Common.SurfacePitch + 1;
     }
     inline void setNullProbingEnable(const NULL_PROBING_ENABLE value) {
         TheStructure.Common.NullProbingEnable = value;
     }
-    inline NULL_PROBING_ENABLE getNullProbingEnable(void) const {
+    inline NULL_PROBING_ENABLE getNullProbingEnable() const {
         return static_cast<NULL_PROBING_ENABLE>(TheStructure.Common.NullProbingEnable);
     }
     inline void setStandardTilingModeExtensions(const STANDARD_TILING_MODE_EXTENSIONS value) {
         TheStructure.Common.StandardTilingModeExtensions = value;
     }
-    inline STANDARD_TILING_MODE_EXTENSIONS getStandardTilingModeExtensions(void) const {
+    inline STANDARD_TILING_MODE_EXTENSIONS getStandardTilingModeExtensions() const {
         return static_cast<STANDARD_TILING_MODE_EXTENSIONS>(TheStructure.Common.StandardTilingModeExtensions);
     }
     inline void setTileAddressMappingMode(const TILE_ADDRESS_MAPPING_MODE value) {
         TheStructure.Common.TileAddressMappingMode = value;
     }
-    inline TILE_ADDRESS_MAPPING_MODE getTileAddressMappingMode(void) const {
+    inline TILE_ADDRESS_MAPPING_MODE getTileAddressMappingMode() const {
         return static_cast<TILE_ADDRESS_MAPPING_MODE>(TheStructure.Common.TileAddressMappingMode);
     }
     inline void setDepth(const uint32_t value) {
         DEBUG_BREAK_IF(value > 0xffe00000L);
         TheStructure.Common.Depth = value - 1;
     }
-    inline uint32_t getDepth(void) const {
+    inline uint32_t getDepth() const {
         return TheStructure.Common.Depth + 1;
     }
     inline void setMultisamplePositionPaletteIndex(const uint32_t value) {
         DEBUG_BREAK_IF(value > 0x7);
         TheStructure.Common.MultisamplePositionPaletteIndex = value;
     }
-    inline uint32_t getMultisamplePositionPaletteIndex(void) const {
+    inline uint32_t getMultisamplePositionPaletteIndex() const {
         return TheStructure.Common.MultisamplePositionPaletteIndex;
     }
     inline void setNumberOfMultisamples(const NUMBER_OF_MULTISAMPLES value) {
         TheStructure.Common.NumberOfMultisamples = value;
     }
-    inline NUMBER_OF_MULTISAMPLES getNumberOfMultisamples(void) const {
+    inline NUMBER_OF_MULTISAMPLES getNumberOfMultisamples() const {
         return static_cast<NUMBER_OF_MULTISAMPLES>(TheStructure.Common.NumberOfMultisamples);
     }
     inline void setMultisampledSurfaceStorageFormat(const MULTISAMPLED_SURFACE_STORAGE_FORMAT value) {
         TheStructure.Common.MultisampledSurfaceStorageFormat = value;
     }
-    inline MULTISAMPLED_SURFACE_STORAGE_FORMAT getMultisampledSurfaceStorageFormat(void) const {
+    inline MULTISAMPLED_SURFACE_STORAGE_FORMAT getMultisampledSurfaceStorageFormat() const {
         return static_cast<MULTISAMPLED_SURFACE_STORAGE_FORMAT>(TheStructure.Common.MultisampledSurfaceStorageFormat);
     }
     inline void setRenderTargetViewExtent(const uint32_t value) {
         DEBUG_BREAK_IF(value > 0x7ff);
         TheStructure.Common.RenderTargetViewExtent = value - 1;
     }
-    inline uint32_t getRenderTargetViewExtent(void) const {
+    inline uint32_t getRenderTargetViewExtent() const {
         return TheStructure.Common.RenderTargetViewExtent + 1;
     }
     inline void setMinimumArrayElement(const uint32_t value) {
         DEBUG_BREAK_IF(value > 0x7ff);
         TheStructure.Common.MinimumArrayElement = value;
     }
-    inline uint32_t getMinimumArrayElement(void) const {
+    inline uint32_t getMinimumArrayElement() const {
         return TheStructure.Common.MinimumArrayElement;
     }
     inline void setRenderTargetAndSampleUnormRotation(const RENDER_TARGET_AND_SAMPLE_UNORM_ROTATION value) {
         TheStructure.Common.RenderTargetAndSampleUnormRotation = value;
     }
-    inline RENDER_TARGET_AND_SAMPLE_UNORM_ROTATION getRenderTargetAndSampleUnormRotation(void) const {
+    inline RENDER_TARGET_AND_SAMPLE_UNORM_ROTATION getRenderTargetAndSampleUnormRotation() const {
         return static_cast<RENDER_TARGET_AND_SAMPLE_UNORM_ROTATION>(TheStructure.Common.RenderTargetAndSampleUnormRotation);
     }
     inline void setMipCountLod(const uint32_t value) {
         DEBUG_BREAK_IF(value > 0xf);
         TheStructure.Common.MipCountLod = value;
     }
-    inline uint32_t getMipCountLod(void) const {
+    inline uint32_t getMipCountLod() const {
         return TheStructure.Common.MipCountLod;
     }
     inline void setSurfaceMinLod(const uint32_t value) {
         DEBUG_BREAK_IF(value > 0xf0);
         TheStructure.Common.SurfaceMinLod = value;
     }
-    inline uint32_t getSurfaceMinLod(void) const {
+    inline uint32_t getSurfaceMinLod() const {
         return TheStructure.Common.SurfaceMinLod;
     }
     inline void setMipTailStartLod(const uint32_t value) {
         DEBUG_BREAK_IF(value > 0xf00);
         TheStructure.Common.MipTailStartLod = value;
     }
-    inline uint32_t getMipTailStartLod(void) const {
+    inline uint32_t getMipTailStartLod() const {
         return TheStructure.Common.MipTailStartLod;
     }
     inline void setCoherencyType(const COHERENCY_TYPE value) {
         TheStructure.Common.CoherencyType = value;
     }
-    inline COHERENCY_TYPE getCoherencyType(void) const {
+    inline COHERENCY_TYPE getCoherencyType() const {
         return static_cast<COHERENCY_TYPE>(TheStructure.Common.CoherencyType);
     }
     inline void setTiledResourceMode(const TILED_RESOURCE_MODE value) {
         TheStructure.Common.TiledResourceMode = value;
     }
-    inline TILED_RESOURCE_MODE getTiledResourceMode(void) const {
+    inline TILED_RESOURCE_MODE getTiledResourceMode() const {
         return static_cast<TILED_RESOURCE_MODE>(TheStructure.Common.TiledResourceMode);
     }
     inline void setEwaDisableForCube(const bool value) {
         TheStructure.Common.EwaDisableForCube = value;
     }
-    inline bool getEwaDisableForCube(void) const {
+    inline bool getEwaDisableForCube() const {
         return TheStructure.Common.EwaDisableForCube;
     }
     typedef enum tagYOFFSET {
@@ -2611,7 +2607,7 @@ typedef struct tagRENDER_SURFACE_STATE {
         DEBUG_BREAK_IF(value > 0xe00000);
         TheStructure.Common.YOffset = value >> YOFFSET_BIT_SHIFT;
     }
-    inline uint32_t getYOffset(void) const {
+    inline uint32_t getYOffset() const {
         return TheStructure.Common.YOffset << YOFFSET_BIT_SHIFT;
     }
     typedef enum tagXOFFSET {
@@ -2622,88 +2618,88 @@ typedef struct tagRENDER_SURFACE_STATE {
         DEBUG_BREAK_IF(value > 0xfe000000L);
         TheStructure.Common.XOffset = value >> XOFFSET_BIT_SHIFT;
     }
-    inline uint32_t getXOffset(void) const {
+    inline uint32_t getXOffset() const {
         return TheStructure.Common.XOffset << XOFFSET_BIT_SHIFT;
     }
     inline void setYuvInterpolationEnable(const bool value) {
         TheStructure.Common.YuvInterpolationEnable = value;
     }
-    inline bool getYuvInterpolationEnable(void) const {
+    inline bool getYuvInterpolationEnable() const {
         return TheStructure.Common.YuvInterpolationEnable;
     }
     inline void setResourceMinLod(const uint32_t value) {
         DEBUG_BREAK_IF(value > 0xfff);
         TheStructure.Common.ResourceMinLod = value;
     }
-    inline uint32_t getResourceMinLod(void) const {
+    inline uint32_t getResourceMinLod() const {
         return TheStructure.Common.ResourceMinLod;
     }
     inline void setShaderChannelSelectAlpha(const SHADER_CHANNEL_SELECT value) {
         TheStructure.Common.ShaderChannelSelectAlpha = value;
     }
-    inline SHADER_CHANNEL_SELECT getShaderChannelSelectAlpha(void) const {
+    inline SHADER_CHANNEL_SELECT getShaderChannelSelectAlpha() const {
         return static_cast<SHADER_CHANNEL_SELECT>(TheStructure.Common.ShaderChannelSelectAlpha);
     }
     inline void setShaderChannelSelectBlue(const SHADER_CHANNEL_SELECT value) {
         TheStructure.Common.ShaderChannelSelectBlue = value;
     }
-    inline SHADER_CHANNEL_SELECT getShaderChannelSelectBlue(void) const {
+    inline SHADER_CHANNEL_SELECT getShaderChannelSelectBlue() const {
         return static_cast<SHADER_CHANNEL_SELECT>(TheStructure.Common.ShaderChannelSelectBlue);
     }
     inline void setShaderChannelSelectGreen(const SHADER_CHANNEL_SELECT value) {
         TheStructure.Common.ShaderChannelSelectGreen = value;
     }
-    inline SHADER_CHANNEL_SELECT getShaderChannelSelectGreen(void) const {
+    inline SHADER_CHANNEL_SELECT getShaderChannelSelectGreen() const {
         return static_cast<SHADER_CHANNEL_SELECT>(TheStructure.Common.ShaderChannelSelectGreen);
     }
     inline void setShaderChannelSelectRed(const SHADER_CHANNEL_SELECT value) {
         TheStructure.Common.ShaderChannelSelectRed = value;
     }
-    inline SHADER_CHANNEL_SELECT getShaderChannelSelectRed(void) const {
+    inline SHADER_CHANNEL_SELECT getShaderChannelSelectRed() const {
         return static_cast<SHADER_CHANNEL_SELECT>(TheStructure.Common.ShaderChannelSelectRed);
     }
     inline void setMemoryCompressionEnable(const bool value) {
         TheStructure.Common.MemoryCompressionEnable = value;
     }
-    inline bool getMemoryCompressionEnable(void) const {
+    inline bool getMemoryCompressionEnable() const {
         return TheStructure.Common.MemoryCompressionEnable;
     }
     inline void setMemoryCompressionMode(const MEMORY_COMPRESSION_MODE value) {
         TheStructure.Common.MemoryCompressionMode = value;
     }
-    inline MEMORY_COMPRESSION_MODE getMemoryCompressionMode(void) const {
+    inline MEMORY_COMPRESSION_MODE getMemoryCompressionMode() const {
         return static_cast<MEMORY_COMPRESSION_MODE>(TheStructure.Common.MemoryCompressionMode);
     }
     inline void setSurfaceBaseAddress(const uint64_t value) {
         TheStructure.Common.SurfaceBaseAddress = value;
     }
-    inline uint64_t getSurfaceBaseAddress(void) const {
+    inline uint64_t getSurfaceBaseAddress() const {
         return TheStructure.Common.SurfaceBaseAddress;
     }
     inline void setQuiltWidth(const uint64_t value) {
         DEBUG_BREAK_IF(value > 0x1f);
         TheStructure.Common.QuiltWidth = value;
     }
-    inline uint64_t getQuiltWidth(void) const {
+    inline uint64_t getQuiltWidth() const {
         return TheStructure.Common.QuiltWidth;
     }
     inline void setQuiltHeight(const uint64_t value) {
         DEBUG_BREAK_IF(value > 0x3e0);
         TheStructure.Common.QuiltHeight = value;
     }
-    inline uint64_t getQuiltHeight(void) const {
+    inline uint64_t getQuiltHeight() const {
         return TheStructure.Common.QuiltHeight;
     }
     inline void setClearValueAddressEnable(const bool value) {
         TheStructure.Common.ClearValueAddressEnable = value;
     }
-    inline bool getClearValueAddressEnable(void) const {
+    inline bool getClearValueAddressEnable() const {
         return TheStructure.Common.ClearValueAddressEnable;
     }
     inline void setProceduralTexture(const bool value) {
         TheStructure.Common.ProceduralTexture = value;
     }
-    inline bool getProceduralTexture(void) const {
+    inline bool getProceduralTexture() const {
         return TheStructure.Common.ProceduralTexture;
     }
     typedef enum tagCLEARADDRESSLOW {
@@ -2714,67 +2710,67 @@ typedef struct tagRENDER_SURFACE_STATE {
         DEBUG_BREAK_IF(value > 0xffffffc0L);
         TheStructure.Common.ClearAddressLow = value >> CLEARADDRESSLOW_BIT_SHIFT;
     }
-    inline uint32_t getClearColorAddress(void) const {
+    inline uint32_t getClearColorAddress() const {
         return TheStructure.Common.ClearAddressLow << CLEARADDRESSLOW_BIT_SHIFT;
     }
     inline void setClearColorAddressHigh(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.ClearAddressHigh = value;
     }
-    inline uint32_t getClearColorAddressHigh(void) const {
+    inline uint32_t getClearColorAddressHigh() const {
         return TheStructure.Common.ClearAddressHigh;
     }
     inline void setYOffsetForUOrUvPlane(const uint32_t value) {
         DEBUG_BREAK_IF(value > 0x3fff);
         TheStructure._SurfaceFormatIsPlanar.YOffsetForUOrUvPlane = value;
     }
-    inline uint32_t getYOffsetForUOrUvPlane(void) const {
+    inline uint32_t getYOffsetForUOrUvPlane() const {
         return TheStructure._SurfaceFormatIsPlanar.YOffsetForUOrUvPlane;
     }
     inline void setXOffsetForUOrUvPlane(const uint32_t value) {
         DEBUG_BREAK_IF(value > 0x3fff0000);
         TheStructure._SurfaceFormatIsPlanar.XOffsetForUOrUvPlane = value;
     }
-    inline uint32_t getXOffsetForUOrUvPlane(void) const {
+    inline uint32_t getXOffsetForUOrUvPlane() const {
         return TheStructure._SurfaceFormatIsPlanar.XOffsetForUOrUvPlane;
     }
     inline void setHalfPitchForChroma(const HALF_PITCH_FOR_CHROMA value) {
         TheStructure._SurfaceFormatIsPlanar.HalfPitchForChroma = value;
     }
-    inline HALF_PITCH_FOR_CHROMA getHalfPitchForChroma(void) const {
+    inline HALF_PITCH_FOR_CHROMA getHalfPitchForChroma() const {
         return static_cast<HALF_PITCH_FOR_CHROMA>(TheStructure._SurfaceFormatIsPlanar.HalfPitchForChroma);
     }
     inline void setSeparateUvPlaneEnable(const bool value) {
         TheStructure._SurfaceFormatIsPlanar.SeparateUvPlaneEnable = value;
     }
-    inline bool getSeparateUvPlaneEnable(void) const {
+    inline bool getSeparateUvPlaneEnable() const {
         return TheStructure._SurfaceFormatIsPlanar.SeparateUvPlaneEnable;
     }
     inline void setYOffsetForVPlane(const uint64_t value) {
         DEBUG_BREAK_IF(value > 0x3fff00000000L);
         TheStructure._SurfaceFormatIsPlanar.YOffsetForVPlane = value;
     }
-    inline uint64_t getYOffsetForVPlane(void) const {
+    inline uint64_t getYOffsetForVPlane() const {
         return TheStructure._SurfaceFormatIsPlanar.YOffsetForVPlane;
     }
     inline void setXOffsetForVPlane(const uint64_t value) {
         DEBUG_BREAK_IF(value > 0x3fff000000000000L);
         TheStructure._SurfaceFormatIsPlanar.XOffsetForVPlane = value;
     }
-    inline uint64_t getXOffsetForVPlane(void) const {
+    inline uint64_t getXOffsetForVPlane() const {
         return TheStructure._SurfaceFormatIsPlanar.XOffsetForVPlane;
     }
     inline void setAuxiliarySurfaceMode(const AUXILIARY_SURFACE_MODE value) {
         TheStructure._SurfaceFormatIsnotPlanar.AuxiliarySurfaceMode = value;
     }
-    inline AUXILIARY_SURFACE_MODE getAuxiliarySurfaceMode(void) const {
+    inline AUXILIARY_SURFACE_MODE getAuxiliarySurfaceMode() const {
         return static_cast<AUXILIARY_SURFACE_MODE>(TheStructure._SurfaceFormatIsnotPlanar.AuxiliarySurfaceMode);
     }
     inline void setAuxiliarySurfacePitch(const uint32_t value) {
         DEBUG_BREAK_IF(value > 0xff8);
         TheStructure._SurfaceFormatIsnotPlanar.AuxiliarySurfacePitch = value - 1;
     }
-    inline uint32_t getAuxiliarySurfacePitch(void) const {
+    inline uint32_t getAuxiliarySurfacePitch() const {
         return TheStructure._SurfaceFormatIsnotPlanar.AuxiliarySurfacePitch + 1;
     }
     typedef enum tagAUXILIARYSURFACEQPITCH {
@@ -2785,7 +2781,7 @@ typedef struct tagRENDER_SURFACE_STATE {
         DEBUG_BREAK_IF(value > 0x7fff0000L);
         TheStructure._SurfaceFormatIsnotPlanar.AuxiliarySurfaceQpitch = value >> AUXILIARYSURFACEQPITCH_BIT_SHIFT;
     }
-    inline uint32_t getAuxiliarySurfaceQpitch(void) const {
+    inline uint32_t getAuxiliarySurfaceQpitch() const {
         return TheStructure._SurfaceFormatIsnotPlanar.AuxiliarySurfaceQpitch << AUXILIARYSURFACEQPITCH_BIT_SHIFT;
     }
     typedef enum tagAUXILIARYSURFACEBASEADDRESS {
@@ -2796,7 +2792,7 @@ typedef struct tagRENDER_SURFACE_STATE {
         DEBUG_BREAK_IF(value > 0xfffffffffffff000L);
         TheStructure._SurfaceFormatIsnotPlanarAndMemoryCompressionEnableIs0.AuxiliarySurfaceBaseAddress = value >> AUXILIARYSURFACEBASEADDRESS_BIT_SHIFT;
     }
-    inline uint64_t getAuxiliarySurfaceBaseAddress(void) const {
+    inline uint64_t getAuxiliarySurfaceBaseAddress() const {
         return TheStructure._SurfaceFormatIsnotPlanarAndMemoryCompressionEnableIs0.AuxiliarySurfaceBaseAddress << AUXILIARYSURFACEBASEADDRESS_BIT_SHIFT;
     }
 } RENDER_SURFACE_STATE;
@@ -2959,7 +2955,7 @@ typedef struct tagSAMPLER_STATE {
         LOW_QUALITY_FILTER_DISABLE = 0x0,
         LOW_QUALITY_FILTER_ENABLE = 0x1,
     } LOW_QUALITY_FILTER;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.LodAlgorithm = LOD_ALGORITHM_LEGACY;
         TheStructure.Common.MinModeFilter = MIN_MODE_FILTER_NEAREST;
@@ -2980,7 +2976,7 @@ typedef struct tagSAMPLER_STATE {
         TheStructure.Common.ReductionType = REDUCTION_TYPE_STD_FILTER;
         TheStructure.Common.LowQualityFilter = LOW_QUALITY_FILTER_DISABLE;
     }
-    static tagSAMPLER_STATE sInit(void) {
+    static tagSAMPLER_STATE sInit() {
         SAMPLER_STATE state;
         state.init();
         return state;
@@ -2992,137 +2988,137 @@ typedef struct tagSAMPLER_STATE {
     inline void setLodAlgorithm(const LOD_ALGORITHM value) {
         TheStructure.Common.LodAlgorithm = value;
     }
-    inline LOD_ALGORITHM getLodAlgorithm(void) const {
+    inline LOD_ALGORITHM getLodAlgorithm() const {
         return static_cast<LOD_ALGORITHM>(TheStructure.Common.LodAlgorithm);
     }
     inline void setTextureLodBias(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x1fff);
         TheStructure.Common.TextureLodBias = value;
     }
-    inline uint32_t getTextureLodBias(void) const {
+    inline uint32_t getTextureLodBias() const {
         return TheStructure.Common.TextureLodBias;
     }
     inline void setMinModeFilter(const MIN_MODE_FILTER value) {
         TheStructure.Common.MinModeFilter = value;
     }
-    inline MIN_MODE_FILTER getMinModeFilter(void) const {
+    inline MIN_MODE_FILTER getMinModeFilter() const {
         return static_cast<MIN_MODE_FILTER>(TheStructure.Common.MinModeFilter);
     }
     inline void setMagModeFilter(const MAG_MODE_FILTER value) {
         TheStructure.Common.MagModeFilter = value;
     }
-    inline MAG_MODE_FILTER getMagModeFilter(void) const {
+    inline MAG_MODE_FILTER getMagModeFilter() const {
         return static_cast<MAG_MODE_FILTER>(TheStructure.Common.MagModeFilter);
     }
     inline void setMipModeFilter(const MIP_MODE_FILTER value) {
         TheStructure.Common.MipModeFilter = value;
     }
-    inline MIP_MODE_FILTER getMipModeFilter(void) const {
+    inline MIP_MODE_FILTER getMipModeFilter() const {
         return static_cast<MIP_MODE_FILTER>(TheStructure.Common.MipModeFilter);
     }
     inline void setLowQualityCubeCornerMode(const LOW_QUALITY_CUBE_CORNER_MODE value) {
         TheStructure.Common.LowQualityCubeCornerMode = value;
     }
-    inline LOW_QUALITY_CUBE_CORNER_MODE getLowQualityCubeCornerMode(void) const {
+    inline LOW_QUALITY_CUBE_CORNER_MODE getLowQualityCubeCornerMode() const {
         return static_cast<LOW_QUALITY_CUBE_CORNER_MODE>(TheStructure.Common.LowQualityCubeCornerMode);
     }
     inline void setLodPreclampMode(const LOD_PRECLAMP_MODE value) {
         TheStructure.Common.LodPreclampMode = value;
     }
-    inline LOD_PRECLAMP_MODE getLodPreclampMode(void) const {
+    inline LOD_PRECLAMP_MODE getLodPreclampMode() const {
         return static_cast<LOD_PRECLAMP_MODE>(TheStructure.Common.LodPreclampMode);
     }
     inline void setTextureBorderColorMode(const TEXTURE_BORDER_COLOR_MODE value) {
         TheStructure.Common.TextureBorderColorMode = value;
     }
-    inline TEXTURE_BORDER_COLOR_MODE getTextureBorderColorMode(void) const {
+    inline TEXTURE_BORDER_COLOR_MODE getTextureBorderColorMode() const {
         return static_cast<TEXTURE_BORDER_COLOR_MODE>(TheStructure.Common.TextureBorderColorMode);
     }
     inline void setCpsLodCompensationEnable(const bool value) {
         TheStructure.Common.CpsLodCompensationEnable = value;
     }
-    inline bool getCpsLodCompensationEnable(void) const {
+    inline bool getCpsLodCompensationEnable() const {
         return TheStructure.Common.CpsLodCompensationEnable;
     }
     inline void setSamplerDisable(const bool value) {
         TheStructure.Common.SamplerDisable = value;
     }
-    inline bool getSamplerDisable(void) const {
+    inline bool getSamplerDisable() const {
         return TheStructure.Common.SamplerDisable;
     }
     inline void setCubeSurfaceControlMode(const CUBE_SURFACE_CONTROL_MODE value) {
         TheStructure.Common.CubeSurfaceControlMode = value;
     }
-    inline CUBE_SURFACE_CONTROL_MODE getCubeSurfaceControlMode(void) const {
+    inline CUBE_SURFACE_CONTROL_MODE getCubeSurfaceControlMode() const {
         return static_cast<CUBE_SURFACE_CONTROL_MODE>(TheStructure.Common.CubeSurfaceControlMode);
     }
     inline void setShadowFunction(const SHADOW_FUNCTION value) {
         TheStructure.Common.ShadowFunction = value;
     }
-    inline SHADOW_FUNCTION getShadowFunction(void) const {
+    inline SHADOW_FUNCTION getShadowFunction() const {
         return static_cast<SHADOW_FUNCTION>(TheStructure.Common.ShadowFunction);
     }
     inline void setChromakeyMode(const CHROMAKEY_MODE value) {
         TheStructure.Common.ChromakeyMode = value;
     }
-    inline CHROMAKEY_MODE getChromakeyMode(void) const {
+    inline CHROMAKEY_MODE getChromakeyMode() const {
         return static_cast<CHROMAKEY_MODE>(TheStructure.Common.ChromakeyMode);
     }
     inline void setChromakeyIndex(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x3);
         TheStructure.Common.ChromakeyIndex = value;
     }
-    inline uint32_t getChromakeyIndex(void) const {
+    inline uint32_t getChromakeyIndex() const {
         return TheStructure.Common.ChromakeyIndex;
     }
     inline void setChromakeyEnable(const bool value) {
         TheStructure.Common.ChromakeyEnable = value;
     }
-    inline bool getChromakeyEnable(void) const {
+    inline bool getChromakeyEnable() const {
         return TheStructure.Common.ChromakeyEnable;
     }
     inline void setMaxLod(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xfff);
         TheStructure.Common.MaxLod = value;
     }
-    inline uint32_t getMaxLod(void) const {
+    inline uint32_t getMaxLod() const {
         return TheStructure.Common.MaxLod;
     }
     inline void setMinLod(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xfff);
         TheStructure.Common.MinLod = value;
     }
-    inline uint32_t getMinLod(void) const {
+    inline uint32_t getMinLod() const {
         return TheStructure.Common.MinLod;
     }
     inline void setLodClampMagnificationMode(const LOD_CLAMP_MAGNIFICATION_MODE value) {
         TheStructure.Common.LodClampMagnificationMode = value;
     }
-    inline LOD_CLAMP_MAGNIFICATION_MODE getLodClampMagnificationMode(void) const {
+    inline LOD_CLAMP_MAGNIFICATION_MODE getLodClampMagnificationMode() const {
         return static_cast<LOD_CLAMP_MAGNIFICATION_MODE>(TheStructure.Common.LodClampMagnificationMode);
     }
     inline void setSrgbDecode(const SRGB_DECODE value) {
         TheStructure.Common.SrgbDecode = value;
     }
-    inline SRGB_DECODE getSrgbDecode(void) const {
+    inline SRGB_DECODE getSrgbDecode() const {
         return static_cast<SRGB_DECODE>(TheStructure.Common.SrgbDecode);
     }
     inline void setReturnFilterWeightForNullTexels(const RETURN_FILTER_WEIGHT_FOR_NULL_TEXELS value) {
         TheStructure.Common.ReturnFilterWeightForNullTexels = value;
     }
-    inline RETURN_FILTER_WEIGHT_FOR_NULL_TEXELS getReturnFilterWeightForNullTexels(void) const {
+    inline RETURN_FILTER_WEIGHT_FOR_NULL_TEXELS getReturnFilterWeightForNullTexels() const {
         return static_cast<RETURN_FILTER_WEIGHT_FOR_NULL_TEXELS>(TheStructure.Common.ReturnFilterWeightForNullTexels);
     }
     inline void setReturnFilterWeightForBorderTexels(const RETURN_FILTER_WEIGHT_FOR_BORDER_TEXELS value) {
         TheStructure.Common.ReturnFilterWeightForBorderTexels = value;
     }
-    inline RETURN_FILTER_WEIGHT_FOR_BORDER_TEXELS getReturnFilterWeightForBorderTexels(void) const {
+    inline RETURN_FILTER_WEIGHT_FOR_BORDER_TEXELS getReturnFilterWeightForBorderTexels() const {
         return static_cast<RETURN_FILTER_WEIGHT_FOR_BORDER_TEXELS>(TheStructure.Common.ReturnFilterWeightForBorderTexels);
     }
     inline void setForceGather4Behavior(const bool value) {
         TheStructure.Common.ForceGather4Behavior = value;
     }
-    inline bool getForceGather4Behavior(void) const {
+    inline bool getForceGather4Behavior() const {
         return TheStructure.Common.ForceGather4Behavior;
     }
     typedef enum tagINDIRECTSTATEPOINTER {
@@ -3133,110 +3129,110 @@ typedef struct tagSAMPLER_STATE {
         UNRECOVERABLE_IF(value > 0xffffff);
         TheStructure.Common.IndirectStatePointer = static_cast<uint32_t>(value) >> INDIRECTSTATEPOINTER_BIT_SHIFT;
     }
-    inline uint32_t getIndirectStatePointer(void) const {
+    inline uint32_t getIndirectStatePointer() const {
         return TheStructure.Common.IndirectStatePointer << INDIRECTSTATEPOINTER_BIT_SHIFT;
     }
     inline void setExtendedIndirectStatePointer(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xff);
         TheStructure.Common.ExtendedIndirectStatePointer = value;
     }
-    inline uint32_t getExtendedIndirectStatePointer(void) const {
+    inline uint32_t getExtendedIndirectStatePointer() const {
         return TheStructure.Common.ExtendedIndirectStatePointer;
     }
     inline void setTczAddressControlMode(const TEXTURE_COORDINATE_MODE value) {
         TheStructure.Common.TczAddressControlMode = value;
     }
-    inline TEXTURE_COORDINATE_MODE getTczAddressControlMode(void) const {
+    inline TEXTURE_COORDINATE_MODE getTczAddressControlMode() const {
         return static_cast<TEXTURE_COORDINATE_MODE>(TheStructure.Common.TczAddressControlMode);
     }
     inline void setTcyAddressControlMode(const TEXTURE_COORDINATE_MODE value) {
         TheStructure.Common.TcyAddressControlMode = value;
     }
-    inline TEXTURE_COORDINATE_MODE getTcyAddressControlMode(void) const {
+    inline TEXTURE_COORDINATE_MODE getTcyAddressControlMode() const {
         return static_cast<TEXTURE_COORDINATE_MODE>(TheStructure.Common.TcyAddressControlMode);
     }
     inline void setTcxAddressControlMode(const TEXTURE_COORDINATE_MODE value) {
         TheStructure.Common.TcxAddressControlMode = value;
     }
-    inline TEXTURE_COORDINATE_MODE getTcxAddressControlMode(void) const {
+    inline TEXTURE_COORDINATE_MODE getTcxAddressControlMode() const {
         return static_cast<TEXTURE_COORDINATE_MODE>(TheStructure.Common.TcxAddressControlMode);
     }
     inline void setReductionTypeEnable(const bool value) {
         TheStructure.Common.ReductionTypeEnable = value;
     }
-    inline bool getReductionTypeEnable(void) const {
+    inline bool getReductionTypeEnable() const {
         return TheStructure.Common.ReductionTypeEnable;
     }
     inline void setNonNormalizedCoordinateEnable(const bool value) {
         TheStructure.Common.NonNormalizedCoordinateEnable = value;
     }
-    inline bool getNonNormalizedCoordinateEnable(void) const {
+    inline bool getNonNormalizedCoordinateEnable() const {
         return TheStructure.Common.NonNormalizedCoordinateEnable;
     }
     inline void setMipLinearFilterQuality(const MIP_LINEAR_FILTER_QUALITY value) {
         TheStructure.Common.MipLinearFilterQuality = value;
     }
-    inline MIP_LINEAR_FILTER_QUALITY getMipLinearFilterQuality(void) const {
+    inline MIP_LINEAR_FILTER_QUALITY getMipLinearFilterQuality() const {
         return static_cast<MIP_LINEAR_FILTER_QUALITY>(TheStructure.Common.MipLinearFilterQuality);
     }
     inline void setRAddressMinFilterRoundingEnable(const bool value) {
         TheStructure.Common.RAddressMinFilterRoundingEnable = value;
     }
-    inline bool getRAddressMinFilterRoundingEnable(void) const {
+    inline bool getRAddressMinFilterRoundingEnable() const {
         return TheStructure.Common.RAddressMinFilterRoundingEnable;
     }
     inline void setRAddressMagFilterRoundingEnable(const bool value) {
         TheStructure.Common.RAddressMagFilterRoundingEnable = value;
     }
-    inline bool getRAddressMagFilterRoundingEnable(void) const {
+    inline bool getRAddressMagFilterRoundingEnable() const {
         return TheStructure.Common.RAddressMagFilterRoundingEnable;
     }
     inline void setVAddressMinFilterRoundingEnable(const bool value) {
         TheStructure.Common.VAddressMinFilterRoundingEnable = value;
     }
-    inline bool getVAddressMinFilterRoundingEnable(void) const {
+    inline bool getVAddressMinFilterRoundingEnable() const {
         return TheStructure.Common.VAddressMinFilterRoundingEnable;
     }
     inline void setVAddressMagFilterRoundingEnable(const bool value) {
         TheStructure.Common.VAddressMagFilterRoundingEnable = value;
     }
-    inline bool getVAddressMagFilterRoundingEnable(void) const {
+    inline bool getVAddressMagFilterRoundingEnable() const {
         return TheStructure.Common.VAddressMagFilterRoundingEnable;
     }
     inline void setUAddressMinFilterRoundingEnable(const bool value) {
         TheStructure.Common.UAddressMinFilterRoundingEnable = value;
     }
-    inline bool getUAddressMinFilterRoundingEnable(void) const {
+    inline bool getUAddressMinFilterRoundingEnable() const {
         return TheStructure.Common.UAddressMinFilterRoundingEnable;
     }
     inline void setUAddressMagFilterRoundingEnable(const bool value) {
         TheStructure.Common.UAddressMagFilterRoundingEnable = value;
     }
-    inline bool getUAddressMagFilterRoundingEnable(void) const {
+    inline bool getUAddressMagFilterRoundingEnable() const {
         return TheStructure.Common.UAddressMagFilterRoundingEnable;
     }
     inline void setMaximumAnisotropy(const MAXIMUM_ANISOTROPY value) {
         TheStructure.Common.MaximumAnisotropy = value;
     }
-    inline MAXIMUM_ANISOTROPY getMaximumAnisotropy(void) const {
+    inline MAXIMUM_ANISOTROPY getMaximumAnisotropy() const {
         return static_cast<MAXIMUM_ANISOTROPY>(TheStructure.Common.MaximumAnisotropy);
     }
     inline void setReductionType(const REDUCTION_TYPE value) {
         TheStructure.Common.ReductionType = value;
     }
-    inline REDUCTION_TYPE getReductionType(void) const {
+    inline REDUCTION_TYPE getReductionType() const {
         return static_cast<REDUCTION_TYPE>(TheStructure.Common.ReductionType);
     }
     inline void setLowQualityFilter(const LOW_QUALITY_FILTER value) {
         TheStructure.Common.LowQualityFilter = value;
     }
-    inline LOW_QUALITY_FILTER getLowQualityFilter(void) const {
+    inline LOW_QUALITY_FILTER getLowQualityFilter() const {
         return static_cast<LOW_QUALITY_FILTER>(TheStructure.Common.LowQualityFilter);
     }
     inline void setAllowLowQualityLodCalculation(const bool value) {
         TheStructure.Common.AllowLowQualityLodCalculation = value;
     }
-    inline bool getAllowLowQualityLodCalculation(void) const {
+    inline bool getAllowLowQualityLodCalculation() const {
         return TheStructure.Common.AllowLowQualityLodCalculation;
     }
 } SAMPLER_STATE;
@@ -3347,7 +3343,7 @@ typedef struct tagSTATE_BASE_ADDRESS {
         BINDLESSSAMPLERSTATEBASEADDRESS_BYTEOFFSET = 0x4c,
         BINDLESSSAMPLERSTATEBASEADDRESS_INDEX = 0x13,
     } PATCH_CONSTANTS;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
         TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_STATE_BASE_ADDRESS;
@@ -3355,7 +3351,7 @@ typedef struct tagSTATE_BASE_ADDRESS {
         TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_COMMON;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
     }
-    static tagSTATE_BASE_ADDRESS sInit(void) {
+    static tagSTATE_BASE_ADDRESS sInit() {
         STATE_BASE_ADDRESS state;
         state.init();
         return state;
@@ -3367,19 +3363,19 @@ typedef struct tagSTATE_BASE_ADDRESS {
     inline void setGeneralStateBaseAddressModifyEnable(const bool value) {
         TheStructure.Common.GeneralStateBaseAddressModifyEnable = value;
     }
-    inline bool getGeneralStateBaseAddressModifyEnable(void) const {
+    inline bool getGeneralStateBaseAddressModifyEnable() const {
         return (TheStructure.Common.GeneralStateBaseAddressModifyEnable);
     }
     inline void setGeneralStateMemoryObjectControlStateReserved(const uint64_t value) {
         TheStructure.Common.GeneralStateMemoryObjectControlState_Reserved = value;
     }
-    inline uint64_t getGeneralStateMemoryObjectControlStateReserved(void) const {
+    inline uint64_t getGeneralStateMemoryObjectControlStateReserved() const {
         return (TheStructure.Common.GeneralStateMemoryObjectControlState_Reserved);
     }
-    inline void setGeneralStateMemoryObjectControlStateIndexToMocsTables(const uint64_t value) {
+    inline void setGeneralStateMemoryObjectControlState(const uint64_t value) {
         TheStructure.Common.GeneralStateMemoryObjectControlState_IndexToMocsTables = value >> 1;
     }
-    inline uint64_t getGeneralStateMemoryObjectControlStateIndexToMocsTables(void) const {
+    inline uint64_t getGeneralStateMemoryObjectControlState() const {
         return (TheStructure.Common.GeneralStateMemoryObjectControlState_IndexToMocsTables << 1);
     }
     typedef enum tagGENERALSTATEBASEADDRESS {
@@ -3389,26 +3385,20 @@ typedef struct tagSTATE_BASE_ADDRESS {
     inline void setGeneralStateBaseAddress(const uint64_t value) {
         TheStructure.Common.GeneralStateBaseAddress = value >> GENERALSTATEBASEADDRESS_BIT_SHIFT;
     }
-    inline uint64_t getGeneralStateBaseAddress(void) const {
+    inline uint64_t getGeneralStateBaseAddress() const {
         return (TheStructure.Common.GeneralStateBaseAddress << GENERALSTATEBASEADDRESS_BIT_SHIFT);
     }
     inline void setStatelessDataPortAccessMemoryObjectControlStateReserved(const uint32_t value) {
         TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_Reserved = value;
     }
-    inline uint32_t getStatelessDataPortAccessMemoryObjectControlStateReserved(void) const {
+    inline uint32_t getStatelessDataPortAccessMemoryObjectControlStateReserved() const {
         return (TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_Reserved);
-    }
-    inline void setStatelessDataPortAccessMemoryObjectControlStateIndexToMocsTables(const uint32_t value) {
-        TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_IndexToMocsTables = value >> 1;
-    }
-    inline uint32_t getStatelessDataPortAccessMemoryObjectControlStateIndexToMocsTables(void) const {
-        return (TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_IndexToMocsTables << 1);
     }
     inline void setStatelessDataPortAccessMemoryObjectControlState(const uint32_t value) {
         TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_Reserved = value;
         TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_IndexToMocsTables = (value >> 1);
     }
-    inline uint32_t getStatelessDataPortAccessMemoryObjectControlState(void) const {
+    inline uint32_t getStatelessDataPortAccessMemoryObjectControlState() const {
         uint32_t mocs = TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_Reserved;
         mocs |= (TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_IndexToMocsTables << 1);
         return (mocs);
@@ -3416,19 +3406,19 @@ typedef struct tagSTATE_BASE_ADDRESS {
     inline void setSurfaceStateBaseAddressModifyEnable(const bool value) {
         TheStructure.Common.SurfaceStateBaseAddressModifyEnable = value;
     }
-    inline bool getSurfaceStateBaseAddressModifyEnable(void) const {
+    inline bool getSurfaceStateBaseAddressModifyEnable() const {
         return (TheStructure.Common.SurfaceStateBaseAddressModifyEnable);
     }
     inline void setSurfaceStateMemoryObjectControlStateReserved(const uint64_t value) {
         TheStructure.Common.SurfaceStateMemoryObjectControlState_Reserved = value;
     }
-    inline uint64_t getSurfaceStateMemoryObjectControlStateReserved(void) const {
+    inline uint64_t getSurfaceStateMemoryObjectControlStateReserved() const {
         return (TheStructure.Common.SurfaceStateMemoryObjectControlState_Reserved);
     }
-    inline void setSurfaceStateMemoryObjectControlStateIndexToMocsTables(const uint64_t value) {
+    inline void setSurfaceStateMemoryObjectControlState(const uint64_t value) {
         TheStructure.Common.SurfaceStateMemoryObjectControlState_IndexToMocsTables = value >> 1;
     }
-    inline uint64_t getSurfaceStateMemoryObjectControlStateIndexToMocsTables(void) const {
+    inline uint64_t getSurfaceStateMemoryObjectControlState() const {
         return (TheStructure.Common.SurfaceStateMemoryObjectControlState_IndexToMocsTables << 1);
     }
     typedef enum tagSURFACESTATEBASEADDRESS {
@@ -3438,25 +3428,25 @@ typedef struct tagSTATE_BASE_ADDRESS {
     inline void setSurfaceStateBaseAddress(const uint64_t value) {
         TheStructure.Common.SurfaceStateBaseAddress = value >> SURFACESTATEBASEADDRESS_BIT_SHIFT;
     }
-    inline uint64_t getSurfaceStateBaseAddress(void) const {
+    inline uint64_t getSurfaceStateBaseAddress() const {
         return (TheStructure.Common.SurfaceStateBaseAddress << SURFACESTATEBASEADDRESS_BIT_SHIFT);
     }
     inline void setDynamicStateBaseAddressModifyEnable(const bool value) {
         TheStructure.Common.DynamicStateBaseAddressModifyEnable = value;
     }
-    inline bool getDynamicStateBaseAddressModifyEnable(void) const {
+    inline bool getDynamicStateBaseAddressModifyEnable() const {
         return (TheStructure.Common.DynamicStateBaseAddressModifyEnable);
     }
     inline void setDynamicStateMemoryObjectControlStateReserved(const uint64_t value) {
         TheStructure.Common.DynamicStateMemoryObjectControlState_Reserved = value;
     }
-    inline uint64_t getDynamicStateMemoryObjectControlStateReserved(void) const {
+    inline uint64_t getDynamicStateMemoryObjectControlStateReserved() const {
         return (TheStructure.Common.DynamicStateMemoryObjectControlState_Reserved);
     }
-    inline void setDynamicStateMemoryObjectControlStateIndexToMocsTables(const uint64_t value) {
+    inline void setDynamicStateMemoryObjectControlState(const uint64_t value) {
         TheStructure.Common.DynamicStateMemoryObjectControlState_IndexToMocsTables = value >> 1;
     }
-    inline uint64_t getDynamicStateMemoryObjectControlStateIndexToMocsTables(void) const {
+    inline uint64_t getDynamicStateMemoryObjectControlState() const {
         return (TheStructure.Common.DynamicStateMemoryObjectControlState_IndexToMocsTables << 1);
     }
     typedef enum tagDYNAMICSTATEBASEADDRESS {
@@ -3466,25 +3456,25 @@ typedef struct tagSTATE_BASE_ADDRESS {
     inline void setDynamicStateBaseAddress(const uint64_t value) {
         TheStructure.Common.DynamicStateBaseAddress = value >> DYNAMICSTATEBASEADDRESS_BIT_SHIFT;
     }
-    inline uint64_t getDynamicStateBaseAddress(void) const {
+    inline uint64_t getDynamicStateBaseAddress() const {
         return (TheStructure.Common.DynamicStateBaseAddress << DYNAMICSTATEBASEADDRESS_BIT_SHIFT);
     }
     inline void setIndirectObjectBaseAddressModifyEnable(const bool value) {
         TheStructure.Common.IndirectObjectBaseAddressModifyEnable = value;
     }
-    inline bool getIndirectObjectBaseAddressModifyEnable(void) const {
+    inline bool getIndirectObjectBaseAddressModifyEnable() const {
         return (TheStructure.Common.IndirectObjectBaseAddressModifyEnable);
     }
     inline void setIndirectObjectMemoryObjectControlStateReserved(const uint64_t value) {
         TheStructure.Common.IndirectObjectMemoryObjectControlState_Reserved = value;
     }
-    inline uint64_t getIndirectObjectMemoryObjectControlStateReserved(void) const {
+    inline uint64_t getIndirectObjectMemoryObjectControlStateReserved() const {
         return (TheStructure.Common.IndirectObjectMemoryObjectControlState_Reserved);
     }
-    inline void setIndirectObjectMemoryObjectControlStateIndexToMocsTables(const uint64_t value) {
+    inline void setIndirectObjectMemoryObjectControlState(const uint64_t value) {
         TheStructure.Common.IndirectObjectMemoryObjectControlState_IndexToMocsTables = value >> 1;
     }
-    inline uint64_t getIndirectObjectMemoryObjectControlStateIndexToMocsTables(void) const {
+    inline uint64_t getIndirectObjectMemoryObjectControlState() const {
         return (TheStructure.Common.IndirectObjectMemoryObjectControlState_IndexToMocsTables << 1);
     }
     typedef enum tagINDIRECTOBJECTBASEADDRESS {
@@ -3494,33 +3484,27 @@ typedef struct tagSTATE_BASE_ADDRESS {
     inline void setIndirectObjectBaseAddress(const uint64_t value) {
         TheStructure.Common.IndirectObjectBaseAddress = value >> INDIRECTOBJECTBASEADDRESS_BIT_SHIFT;
     }
-    inline uint64_t getIndirectObjectBaseAddress(void) const {
+    inline uint64_t getIndirectObjectBaseAddress() const {
         return (TheStructure.Common.IndirectObjectBaseAddress << INDIRECTOBJECTBASEADDRESS_BIT_SHIFT);
     }
     inline void setInstructionBaseAddressModifyEnable(const bool value) {
         TheStructure.Common.InstructionBaseAddressModifyEnable = value;
     }
-    inline bool getInstructionBaseAddressModifyEnable(void) const {
+    inline bool getInstructionBaseAddressModifyEnable() const {
         return (TheStructure.Common.InstructionBaseAddressModifyEnable);
     }
     inline void setInstructionMemoryObjectControlStateReserved(const uint64_t value) {
         TheStructure.Common.InstructionMemoryObjectControlState_Reserved = value;
     }
-    inline uint64_t getInstructionMemoryObjectControlStateReserved(void) const {
+    inline uint64_t getInstructionMemoryObjectControlStateReserved() const {
         return (TheStructure.Common.InstructionMemoryObjectControlState_Reserved);
-    }
-    inline void setInstructionMemoryObjectControlStateIndexToMocsTables(const uint64_t value) {
-        TheStructure.Common.InstructionMemoryObjectControlState_IndexToMocsTables = value >> 1;
-    }
-    inline uint64_t getInstructionMemoryObjectControlStateIndexToMocsTables(void) const {
-        return (TheStructure.Common.InstructionMemoryObjectControlState_IndexToMocsTables << 1);
     }
     inline void setInstructionMemoryObjectControlState(const uint32_t value) {
         uint64_t val = static_cast<uint64_t>(value);
         TheStructure.Common.InstructionMemoryObjectControlState_Reserved = val;
         TheStructure.Common.InstructionMemoryObjectControlState_IndexToMocsTables = (val >> 1);
     }
-    inline uint32_t getInstructionMemoryObjectControlState(void) const {
+    inline uint32_t getInstructionMemoryObjectControlState() const {
         uint64_t mocs = TheStructure.Common.InstructionMemoryObjectControlState_Reserved;
         mocs |= (TheStructure.Common.InstructionMemoryObjectControlState_IndexToMocsTables << 1);
         return static_cast<uint32_t>(mocs);
@@ -3532,73 +3516,73 @@ typedef struct tagSTATE_BASE_ADDRESS {
     inline void setInstructionBaseAddress(const uint64_t value) {
         TheStructure.Common.InstructionBaseAddress = value >> INSTRUCTIONBASEADDRESS_BIT_SHIFT;
     }
-    inline uint64_t getInstructionBaseAddress(void) const {
+    inline uint64_t getInstructionBaseAddress() const {
         return (TheStructure.Common.InstructionBaseAddress << INSTRUCTIONBASEADDRESS_BIT_SHIFT);
     }
     inline void setGeneralStateBufferSizeModifyEnable(const bool value) {
         TheStructure.Common.GeneralStateBufferSizeModifyEnable = value;
     }
-    inline bool getGeneralStateBufferSizeModifyEnable(void) const {
+    inline bool getGeneralStateBufferSizeModifyEnable() const {
         return (TheStructure.Common.GeneralStateBufferSizeModifyEnable);
     }
     inline void setGeneralStateBufferSize(const uint32_t value) {
         TheStructure.Common.GeneralStateBufferSize = value;
     }
-    inline uint32_t getGeneralStateBufferSize(void) const {
+    inline uint32_t getGeneralStateBufferSize() const {
         return (TheStructure.Common.GeneralStateBufferSize);
     }
     inline void setDynamicStateBufferSizeModifyEnable(const bool value) {
         TheStructure.Common.DynamicStateBufferSizeModifyEnable = value;
     }
-    inline bool getDynamicStateBufferSizeModifyEnable(void) const {
+    inline bool getDynamicStateBufferSizeModifyEnable() const {
         return (TheStructure.Common.DynamicStateBufferSizeModifyEnable);
     }
     inline void setDynamicStateBufferSize(const uint32_t value) {
         TheStructure.Common.DynamicStateBufferSize = value;
     }
-    inline uint32_t getDynamicStateBufferSize(void) const {
+    inline uint32_t getDynamicStateBufferSize() const {
         return (TheStructure.Common.DynamicStateBufferSize);
     }
     inline void setIndirectObjectBufferSizeModifyEnable(const bool value) {
         TheStructure.Common.IndirectObjectBufferSizeModifyEnable = value;
     }
-    inline bool getIndirectObjectBufferSizeModifyEnable(void) const {
+    inline bool getIndirectObjectBufferSizeModifyEnable() const {
         return (TheStructure.Common.IndirectObjectBufferSizeModifyEnable);
     }
     inline void setIndirectObjectBufferSize(const uint32_t value) {
         TheStructure.Common.IndirectObjectBufferSize = value;
     }
-    inline uint32_t getIndirectObjectBufferSize(void) const {
+    inline uint32_t getIndirectObjectBufferSize() const {
         return (TheStructure.Common.IndirectObjectBufferSize);
     }
     inline void setInstructionBufferSizeModifyEnable(const bool value) {
         TheStructure.Common.InstructionBufferSizeModifyEnable = value;
     }
-    inline bool getInstructionBufferSizeModifyEnable(void) const {
+    inline bool getInstructionBufferSizeModifyEnable() const {
         return (TheStructure.Common.InstructionBufferSizeModifyEnable);
     }
     inline void setInstructionBufferSize(const uint32_t value) {
         TheStructure.Common.InstructionBufferSize = value;
     }
-    inline uint32_t getInstructionBufferSize(void) const {
+    inline uint32_t getInstructionBufferSize() const {
         return (TheStructure.Common.InstructionBufferSize);
     }
     inline void setBindlessSurfaceStateBaseAddressModifyEnable(const bool value) {
         TheStructure.Common.BindlessSurfaceStateBaseAddressModifyEnable = value;
     }
-    inline bool getBindlessSurfaceStateBaseAddressModifyEnable(void) const {
+    inline bool getBindlessSurfaceStateBaseAddressModifyEnable() const {
         return (TheStructure.Common.BindlessSurfaceStateBaseAddressModifyEnable);
     }
     inline void setBindlessSurfaceStateMemoryObjectControlStateReserved(const uint64_t value) {
         TheStructure.Common.BindlessSurfaceStateMemoryObjectControlState_Reserved = value;
     }
-    inline uint64_t getBindlessSurfaceStateMemoryObjectControlStateReserved(void) const {
+    inline uint64_t getBindlessSurfaceStateMemoryObjectControlStateReserved() const {
         return (TheStructure.Common.BindlessSurfaceStateMemoryObjectControlState_Reserved);
     }
-    inline void setBindlessSurfaceStateMemoryObjectControlStateIndexToMocsTables(const uint64_t value) {
+    inline void setBindlessSurfaceStateMemoryObjectControlState(const uint64_t value) {
         TheStructure.Common.BindlessSurfaceStateMemoryObjectControlState_IndexToMocsTables = value >> 1;
     }
-    inline uint64_t getBindlessSurfaceStateMemoryObjectControlStateIndexToMocsTables(void) const {
+    inline uint64_t getBindlessSurfaceStateMemoryObjectControlState() const {
         return (TheStructure.Common.BindlessSurfaceStateMemoryObjectControlState_IndexToMocsTables << 1);
     }
     typedef enum tagBINDLESSSURFACESTATEBASEADDRESS {
@@ -3608,31 +3592,31 @@ typedef struct tagSTATE_BASE_ADDRESS {
     inline void setBindlessSurfaceStateBaseAddress(const uint64_t value) {
         TheStructure.Common.BindlessSurfaceStateBaseAddress = value >> BINDLESSSURFACESTATEBASEADDRESS_BIT_SHIFT;
     }
-    inline uint64_t getBindlessSurfaceStateBaseAddress(void) const {
+    inline uint64_t getBindlessSurfaceStateBaseAddress() const {
         return (TheStructure.Common.BindlessSurfaceStateBaseAddress << BINDLESSSURFACESTATEBASEADDRESS_BIT_SHIFT);
     }
     inline void setBindlessSurfaceStateSize(const uint32_t value) {
         TheStructure.Common.BindlessSurfaceStateSize = value;
     }
-    inline uint32_t getBindlessSurfaceStateSize(void) const {
+    inline uint32_t getBindlessSurfaceStateSize() const {
         return (TheStructure.Common.BindlessSurfaceStateSize);
     }
     inline void setBindlessSamplerStateBaseAddressModifyEnable(const bool value) {
         TheStructure.Common.BindlessSamplerStateBaseAddressModifyEnable = value;
     }
-    inline bool getBindlessSamplerStateBaseAddressModifyEnable(void) const {
+    inline bool getBindlessSamplerStateBaseAddressModifyEnable() const {
         return (TheStructure.Common.BindlessSamplerStateBaseAddressModifyEnable);
     }
     inline void setBindlessSamplerStateMemoryObjectControlStateReserved(const uint64_t value) {
         TheStructure.Common.BindlessSamplerStateMemoryObjectControlState_Reserved = value;
     }
-    inline uint64_t getBindlessSamplerStateMemoryObjectControlStateReserved(void) const {
+    inline uint64_t getBindlessSamplerStateMemoryObjectControlStateReserved() const {
         return (TheStructure.Common.BindlessSamplerStateMemoryObjectControlState_Reserved);
     }
-    inline void setBindlessSamplerStateMemoryObjectControlStateIndexToMocsTables(const uint64_t value) {
+    inline void setBindlessSamplerStateMemoryObjectControlState(const uint64_t value) {
         TheStructure.Common.BindlessSamplerStateMemoryObjectControlState_IndexToMocsTables = value >> 1;
     }
-    inline uint64_t getBindlessSamplerStateMemoryObjectControlStateIndexToMocsTables(void) const {
+    inline uint64_t getBindlessSamplerStateMemoryObjectControlState() const {
         return (TheStructure.Common.BindlessSamplerStateMemoryObjectControlState_IndexToMocsTables << 1);
     }
     typedef enum tagBINDLESSSAMPLERSTATEBASEADDRESS {
@@ -3642,13 +3626,13 @@ typedef struct tagSTATE_BASE_ADDRESS {
     inline void setBindlessSamplerStateBaseAddress(const uint64_t value) {
         TheStructure.Common.BindlessSamplerStateBaseAddress = value >> BINDLESSSAMPLERSTATEBASEADDRESS_BIT_SHIFT;
     }
-    inline uint64_t getBindlessSamplerStateBaseAddress(void) const {
+    inline uint64_t getBindlessSamplerStateBaseAddress() const {
         return (TheStructure.Common.BindlessSamplerStateBaseAddress << BINDLESSSAMPLERSTATEBASEADDRESS_BIT_SHIFT);
     }
     inline void setBindlessSamplerStateBufferSize(const uint32_t value) {
         TheStructure.Common.BindlessSamplerStateBufferSize = value;
     }
-    inline uint32_t getBindlessSamplerStateBufferSize(void) const {
+    inline uint32_t getBindlessSamplerStateBufferSize() const {
         return (TheStructure.Common.BindlessSamplerStateBufferSize);
     }
 } STATE_BASE_ADDRESS;
@@ -3682,13 +3666,13 @@ typedef struct tagMI_REPORT_PERF_COUNT {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_REPORT_PERF_COUNT;
         TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
-    static tagMI_REPORT_PERF_COUNT sInit(void) {
+    static tagMI_REPORT_PERF_COUNT sInit() {
         MI_REPORT_PERF_COUNT state;
         state.init();
         return state;
@@ -3700,13 +3684,13 @@ typedef struct tagMI_REPORT_PERF_COUNT {
     inline void setUseGlobalGtt(const bool value) {
         TheStructure.Common.UseGlobalGtt = value;
     }
-    inline bool getUseGlobalGtt(void) const {
+    inline bool getUseGlobalGtt() const {
         return TheStructure.Common.UseGlobalGtt;
     }
     inline void setCoreModeEnable(const bool value) {
         TheStructure.Common.CoreModeEnable = value;
     }
-    inline bool getCoreModeEnable(void) const {
+    inline bool getCoreModeEnable() const {
         return TheStructure.Common.CoreModeEnable;
     }
     typedef enum tagMEMORYADDRESS {
@@ -3717,13 +3701,13 @@ typedef struct tagMI_REPORT_PERF_COUNT {
         UNRECOVERABLE_IF(value > 0xffffffffffffffffL);
         TheStructure.Common.MemoryAddress = value >> MEMORYADDRESS_BIT_SHIFT;
     }
-    inline uint64_t getMemoryAddress(void) const {
+    inline uint64_t getMemoryAddress() const {
         return TheStructure.Common.MemoryAddress << MEMORYADDRESS_BIT_SHIFT;
     }
     inline void setReportId(const uint32_t value) {
         TheStructure.Common.ReportId = value;
     }
-    inline uint32_t getReportId(void) const {
+    inline uint32_t getReportId() const {
         return TheStructure.Common.ReportId;
     }
 } MI_REPORT_PERF_COUNT;
@@ -3774,7 +3758,7 @@ typedef struct tagSTATE_COMPUTE_MODE {
     typedef enum tagBINDING_TABLE_ALIGNMENT {
         BINDING_TABLE_ALIGNMENT_LEGACY = 0x0,
     } BINDING_TABLE_ALIGNMENT;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
         TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_STATE_COMPUTE_MODE;
@@ -3784,7 +3768,7 @@ typedef struct tagSTATE_COMPUTE_MODE {
         TheStructure.Common.ForceNonCoherent = FORCE_NON_COHERENT_FORCE_DISABLED;
         TheStructure.Common.BindingTableAlignment = BINDING_TABLE_ALIGNMENT_LEGACY;
     }
-    static tagSTATE_COMPUTE_MODE sInit(void) {
+    static tagSTATE_COMPUTE_MODE sInit() {
         STATE_COMPUTE_MODE state;
         state.init();
         return state;
@@ -3796,32 +3780,32 @@ typedef struct tagSTATE_COMPUTE_MODE {
     inline void setForceNonCoherent(const FORCE_NON_COHERENT value) {
         TheStructure.Common.ForceNonCoherent = value;
     }
-    inline FORCE_NON_COHERENT getForceNonCoherent(void) const {
+    inline FORCE_NON_COHERENT getForceNonCoherent() const {
         return static_cast<FORCE_NON_COHERENT>(TheStructure.Common.ForceNonCoherent);
     }
     inline void setBindingTableAlignment(const BINDING_TABLE_ALIGNMENT value) {
         TheStructure.Common.BindingTableAlignment = value;
     }
-    inline BINDING_TABLE_ALIGNMENT getBindingTableAlignment(void) const {
+    inline BINDING_TABLE_ALIGNMENT getBindingTableAlignment() const {
         return static_cast<BINDING_TABLE_ALIGNMENT>(TheStructure.Common.BindingTableAlignment);
     }
     inline void setCoherentAccessL1CacheDisable(const bool value) {
         TheStructure.Common.CoherentAccessL1CacheDisable = value;
     }
-    inline bool getCoherentAccessL1CacheDisable(void) const {
+    inline bool getCoherentAccessL1CacheDisable() const {
         return TheStructure.Common.CoherentAccessL1CacheDisable;
     }
     inline void setDisableL1InvalidateForNonL1CacheableWrites(const bool value) {
         TheStructure.Common.DisableL1InvalidateForNonL1CacheableWrites = value;
     }
-    inline bool getDisableL1InvalidateForNonL1CacheableWrites(void) const {
+    inline bool getDisableL1InvalidateForNonL1CacheableWrites() const {
         return TheStructure.Common.DisableL1InvalidateForNonL1CacheableWrites;
     }
     inline void setMaskBits(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.Mask = value;
     }
-    inline uint32_t getMaskBits(void) const {
+    inline uint32_t getMaskBits() const {
         return TheStructure.Common.Mask;
     }
 } STATE_COMPUTE_MODE;
@@ -3843,12 +3827,12 @@ typedef struct tagMI_USER_INTERRUPT {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_USER_INTERRUPT;
         TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
-    static tagMI_USER_INTERRUPT sInit(void) {
+    static tagMI_USER_INTERRUPT sInit() {
         MI_USER_INTERRUPT state;
         state.init();
         return state;
@@ -3930,7 +3914,7 @@ typedef struct tagXY_SRC_COPY_BLT {
     typedef enum tagDWORD_LENGTH {
         DWORD_LENGTH_EXCLUDES_DWORD_0_1 = 0x8,
     } DWORD_LENGTH;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DestTilingEnable = DEST_TILING_ENABLE_TILING_DISABLED_LINEAR_BLIT;
         TheStructure.Common.SrcTilingEnable = SRC_TILING_ENABLE_TILING_DISABLED_LINEAR;
@@ -3941,7 +3925,7 @@ typedef struct tagXY_SRC_COPY_BLT {
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
         TheStructure.Common.RasterOperation = 0xCC;
     }
-    static tagXY_SRC_COPY_BLT sInit(void) {
+    static tagXY_SRC_COPY_BLT sInit() {
         XY_SRC_COPY_BLT state;
         state.init();
         return state;
@@ -3953,119 +3937,119 @@ typedef struct tagXY_SRC_COPY_BLT {
     inline void setDestTilingEnable(const DEST_TILING_ENABLE value) {
         TheStructure.Common.DestTilingEnable = value;
     }
-    inline DEST_TILING_ENABLE getDestTilingEnable(void) const {
+    inline DEST_TILING_ENABLE getDestTilingEnable() const {
         return static_cast<DEST_TILING_ENABLE>(TheStructure.Common.DestTilingEnable);
     }
     inline void setSrcTilingEnable(const SRC_TILING_ENABLE value) {
         TheStructure.Common.SrcTilingEnable = value;
     }
-    inline SRC_TILING_ENABLE getSrcTilingEnable(void) const {
+    inline SRC_TILING_ENABLE getSrcTilingEnable() const {
         return static_cast<SRC_TILING_ENABLE>(TheStructure.Common.SrcTilingEnable);
     }
     inline void set32BppByteMask(const _32BPP_BYTE_MASK value) {
         TheStructure.Common._32BppByteMask = value;
     }
-    inline _32BPP_BYTE_MASK get32BppByteMask(void) const {
+    inline _32BPP_BYTE_MASK get32BppByteMask() const {
         return static_cast<_32BPP_BYTE_MASK>(TheStructure.Common._32BppByteMask);
     }
     inline void setInstructionTargetOpcode(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x7f);
         TheStructure.Common.InstructionTarget_Opcode = value;
     }
-    inline uint32_t getInstructionTargetOpcode(void) const {
+    inline uint32_t getInstructionTargetOpcode() const {
         return TheStructure.Common.InstructionTarget_Opcode;
     }
     inline void setClient(const CLIENT value) {
         TheStructure.Common.Client = value;
     }
-    inline CLIENT getClient(void) const {
+    inline CLIENT getClient() const {
         return static_cast<CLIENT>(TheStructure.Common.Client);
     }
     inline void setDestinationPitch(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.DestinationPitch = value;
     }
-    inline uint32_t getDestinationPitch(void) const {
+    inline uint32_t getDestinationPitch() const {
         return TheStructure.Common.DestinationPitch;
     }
     inline void setRasterOperation(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xff);
         TheStructure.Common.RasterOperation = value;
     }
-    inline uint32_t getRasterOperation(void) const {
+    inline uint32_t getRasterOperation() const {
         return TheStructure.Common.RasterOperation;
     }
     inline void setColorDepth(const COLOR_DEPTH value) {
         TheStructure.Common.ColorDepth = value;
     }
-    inline COLOR_DEPTH getColorDepth(void) const {
+    inline COLOR_DEPTH getColorDepth() const {
         return static_cast<COLOR_DEPTH>(TheStructure.Common.ColorDepth);
     }
     inline void setClippingEnabled(const CLIPPING_ENABLED value) {
         TheStructure.Common.ClippingEnabled = value;
     }
-    inline CLIPPING_ENABLED getClippingEnabled(void) const {
+    inline CLIPPING_ENABLED getClippingEnabled() const {
         return static_cast<CLIPPING_ENABLED>(TheStructure.Common.ClippingEnabled);
     }
     inline void setDestinationX1CoordinateLeft(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.DestinationX1Coordinate_Left = value;
     }
-    inline uint32_t getDestinationX1CoordinateLeft(void) const {
+    inline uint32_t getDestinationX1CoordinateLeft() const {
         return TheStructure.Common.DestinationX1Coordinate_Left;
     }
     inline void setDestinationY1CoordinateTop(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.DestinationY1Coordinate_Top = value;
     }
-    inline uint32_t getDestinationY1CoordinateTop(void) const {
+    inline uint32_t getDestinationY1CoordinateTop() const {
         return TheStructure.Common.DestinationY1Coordinate_Top;
     }
-    inline void setTransferWidth(const uint32_t value) {
+    inline void setDestinationX2CoordinateRight(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.DestinationX2Coordinate_Right = value;
     }
-    inline uint32_t getTransferWidth(void) const {
+    inline uint32_t getDestinationX2CoordinateRight() const {
         return TheStructure.Common.DestinationX2Coordinate_Right;
     }
-    inline void setTransferHeight(const uint32_t value) {
+    inline void setDestinationY2CoordinateBottom(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.DestinationY2Coordinate_Bottom = value;
     }
-    inline uint32_t getTransferHeight(void) const {
+    inline uint32_t getDestinationY2CoordinateBottom() const {
         return TheStructure.Common.DestinationY2Coordinate_Bottom;
     }
     inline void setDestinationBaseAddress(const uint64_t value) {
         TheStructure.Common.DestinationBaseAddress = value;
     }
-    inline uint64_t getDestinationBaseAddress(void) const {
+    inline uint64_t getDestinationBaseAddress() const {
         return TheStructure.Common.DestinationBaseAddress;
     }
     inline void setSourceX1CoordinateLeft(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.SourceX1Coordinate_Left = value;
     }
-    inline uint32_t getSourceX1CoordinateLeft(void) const {
+    inline uint32_t getSourceX1CoordinateLeft() const {
         return TheStructure.Common.SourceX1Coordinate_Left;
     }
     inline void setSourceY1CoordinateTop(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.SourceY1Coordinate_Top = value;
     }
-    inline uint32_t getSourceY1CoordinateTop(void) const {
+    inline uint32_t getSourceY1CoordinateTop() const {
         return TheStructure.Common.SourceY1Coordinate_Top;
     }
     inline void setSourcePitch(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.SourcePitch = value;
     }
-    inline uint32_t getSourcePitch(void) const {
+    inline uint32_t getSourcePitch() const {
         return TheStructure.Common.SourcePitch;
     }
     inline void setSourceBaseAddress(const uint64_t value) {
         TheStructure.Common.SourceBaseAddress = value;
     }
-    inline uint64_t getSourceBaseAddress(void) const {
+    inline uint64_t getSourceBaseAddress() const {
         return TheStructure.Common.SourceBaseAddress;
     }
 } XY_SRC_COPY_BLT;
@@ -4116,7 +4100,7 @@ typedef struct tagMI_FLUSH_DW {
         DESTINATION_ADDRESS_TYPE_PPGTT = 0x0,
         DESTINATION_ADDRESS_TYPE_GGTT = 0x1,
     } DESTINATION_ADDRESS_TYPE;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH::DWORD_LENGTH_EXCLUDES_DWORD_0_1;
         TheStructure.Common.PostSyncOperation = POST_SYNC_OPERATION_NO_WRITE;
@@ -4124,7 +4108,7 @@ typedef struct tagMI_FLUSH_DW {
         TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
         TheStructure.Common.DestinationAddressType = DESTINATION_ADDRESS_TYPE_PPGTT;
     }
-    static tagMI_FLUSH_DW sInit(void) {
+    static tagMI_FLUSH_DW sInit() {
         MI_FLUSH_DW state;
         state.init();
         return state;
@@ -4136,37 +4120,37 @@ typedef struct tagMI_FLUSH_DW {
     inline void setNotifyEnable(const bool value) {
         TheStructure.Common.NotifyEnable = value;
     }
-    inline bool getNotifyEnable(void) const {
+    inline bool getNotifyEnable() const {
         return TheStructure.Common.NotifyEnable;
     }
     inline void setFlushLlc(const bool value) {
         TheStructure.Common.FlushLlc = value;
     }
-    inline bool getFlushLlc(void) const {
+    inline bool getFlushLlc() const {
         return TheStructure.Common.FlushLlc;
     }
     inline void setPostSyncOperation(const POST_SYNC_OPERATION value) {
         TheStructure.Common.PostSyncOperation = value;
     }
-    inline POST_SYNC_OPERATION getPostSyncOperation(void) const {
+    inline POST_SYNC_OPERATION getPostSyncOperation() const {
         return static_cast<POST_SYNC_OPERATION>(TheStructure.Common.PostSyncOperation);
     }
     inline void setTlbInvalidate(const bool value) {
         TheStructure.Common.TlbInvalidate = value;
     }
-    inline bool getTlbInvalidate(void) const {
+    inline bool getTlbInvalidate() const {
         return TheStructure.Common.TlbInvalidate;
     }
     inline void setStoreDataIndex(const bool value) {
         TheStructure.Common.StoreDataIndex = value;
     }
-    inline bool getStoreDataIndex(void) const {
+    inline bool getStoreDataIndex() const {
         return TheStructure.Common.StoreDataIndex;
     }
     inline void setDestinationAddressType(const DESTINATION_ADDRESS_TYPE value) {
         TheStructure.Common.DestinationAddressType = value;
     }
-    inline DESTINATION_ADDRESS_TYPE getDestinationAddressType(void) const {
+    inline DESTINATION_ADDRESS_TYPE getDestinationAddressType() const {
         return static_cast<DESTINATION_ADDRESS_TYPE>(TheStructure.Common.DestinationAddressType);
     }
     typedef enum tagDESTINATIONADDRESS {
@@ -4177,13 +4161,13 @@ typedef struct tagMI_FLUSH_DW {
         UNRECOVERABLE_IF(value > 0xffffffffffffL);
         TheStructure.Common.DestinationAddress = value >> DESTINATIONADDRESS_BIT_SHIFT;
     }
-    inline uint64_t getDestinationAddress(void) const {
+    inline uint64_t getDestinationAddress() const {
         return TheStructure.Common.DestinationAddress << DESTINATIONADDRESS_BIT_SHIFT;
     }
     inline void setImmediateData(const uint64_t value) {
         TheStructure.Common.ImmediateData = value;
     }
-    inline uint64_t getImmediateData(void) const {
+    inline uint64_t getImmediateData() const {
         return TheStructure.Common.ImmediateData;
     }
 } MI_FLUSH_DW;
@@ -4338,7 +4322,7 @@ typedef struct tagMEDIA_SURFACE_STATE {
         TILED_RESOURCE_MODE_TRMODE_TILEYF = 0x1,
         TILED_RESOURCE_MODE_TRMODE_TILEYS = 0x2,
     } TILED_RESOURCE_MODE;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.Rotation = ROTATION_NO_ROTATION_OR_0_DEGREE;
         TheStructure.Common.PictureStructure = PICTURE_STRUCTURE_FRAME_PICTURE;
@@ -4348,7 +4332,7 @@ typedef struct tagMEDIA_SURFACE_STATE {
         TheStructure.Common.SurfaceFormat = SURFACE_FORMAT_YCRCB_NORMAL;
         TheStructure.Common.TiledResourceMode = TILED_RESOURCE_MODE_TRMODE_NONE;
     }
-    static tagMEDIA_SURFACE_STATE sInit(void) {
+    static tagMEDIA_SURFACE_STATE sInit() {
         MEDIA_SURFACE_STATE state;
         state.init();
         return state;
@@ -4360,141 +4344,141 @@ typedef struct tagMEDIA_SURFACE_STATE {
     inline void setRotation(const ROTATION value) {
         TheStructure.Common.Rotation = value;
     }
-    inline ROTATION getRotation(void) const {
+    inline ROTATION getRotation() const {
         return static_cast<ROTATION>(TheStructure.Common.Rotation);
     }
     inline void setCrVCbUPixelOffsetVDirection(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x3);
         TheStructure.Common.Cr_VCb_UPixelOffsetVDirection = value;
     }
-    inline uint32_t getCrVCbUPixelOffsetVDirection(void) const {
+    inline uint32_t getCrVCbUPixelOffsetVDirection() const {
         return TheStructure.Common.Cr_VCb_UPixelOffsetVDirection;
     }
     inline void setPictureStructure(const PICTURE_STRUCTURE value) {
         TheStructure.Common.PictureStructure = value;
     }
-    inline PICTURE_STRUCTURE getPictureStructure(void) const {
+    inline PICTURE_STRUCTURE getPictureStructure() const {
         return static_cast<PICTURE_STRUCTURE>(TheStructure.Common.PictureStructure);
     }
     inline void setWidth(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x3fff);
         TheStructure.Common.Width = value - 1;
     }
-    inline uint32_t getWidth(void) const {
+    inline uint32_t getWidth() const {
         return TheStructure.Common.Width + 1;
     }
     inline void setHeight(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x3fff);
         TheStructure.Common.Height = value - 1;
     }
-    inline uint32_t getHeight(void) const {
+    inline uint32_t getHeight() const {
         return TheStructure.Common.Height + 1;
     }
     inline void setTileMode(const TILE_MODE value) {
         TheStructure.Common.TileMode = value;
     }
-    inline TILE_MODE getTileMode(void) const {
+    inline TILE_MODE getTileMode() const {
         return static_cast<TILE_MODE>(TheStructure.Common.TileMode);
     }
     inline void setHalfPitchForChroma(const bool value) {
         TheStructure.Common.HalfPitchForChroma = value;
     }
-    inline bool getHalfPitchForChroma(void) const {
+    inline bool getHalfPitchForChroma() const {
         return TheStructure.Common.HalfPitchForChroma;
     }
     inline void setSurfacePitch(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x3ffff);
         TheStructure.Common.SurfacePitch = value - 1;
     }
-    inline uint32_t getSurfacePitch(void) const {
+    inline uint32_t getSurfacePitch() const {
         return TheStructure.Common.SurfacePitch + 1;
     }
     inline void setAddressControl(const ADDRESS_CONTROL value) {
         TheStructure.Common.AddressControl = value;
     }
-    inline ADDRESS_CONTROL getAddressControl(void) const {
+    inline ADDRESS_CONTROL getAddressControl() const {
         return static_cast<ADDRESS_CONTROL>(TheStructure.Common.AddressControl);
     }
     inline void setMemoryCompressionEnable(const bool value) {
         TheStructure.Common.MemoryCompressionEnable = value;
     }
-    inline bool getMemoryCompressionEnable(void) const {
+    inline bool getMemoryCompressionEnable() const {
         return TheStructure.Common.MemoryCompressionEnable;
     }
     inline void setMemoryCompressionType(const MEMORY_COMPRESSION_TYPE value) {
         TheStructure.Common.MemoryCompressionType = value;
     }
-    inline MEMORY_COMPRESSION_TYPE getMemoryCompressionType(void) const {
+    inline MEMORY_COMPRESSION_TYPE getMemoryCompressionType() const {
         return static_cast<MEMORY_COMPRESSION_TYPE>(TheStructure.Common.MemoryCompressionType);
     }
     inline void setCrVCbUPixelOffsetVDirectionMsb(const bool value) {
         TheStructure.Common.Cr_VCb_UPixelOffsetVDirectionMsb = value;
     }
-    inline bool getCrVCbUPixelOffsetVDirectionMsb(void) const {
+    inline bool getCrVCbUPixelOffsetVDirectionMsb() const {
         return TheStructure.Common.Cr_VCb_UPixelOffsetVDirectionMsb;
     }
     inline void setCrVCbUPixelOffsetUDirection(const bool value) {
         TheStructure.Common.Cr_VCb_UPixelOffsetUDirection = value;
     }
-    inline bool getCrVCbUPixelOffsetUDirection(void) const {
+    inline bool getCrVCbUPixelOffsetUDirection() const {
         return TheStructure.Common.Cr_VCb_UPixelOffsetUDirection;
     }
     inline void setInterleaveChroma(const bool value) {
         TheStructure.Common.InterleaveChroma = value;
     }
-    inline bool getInterleaveChroma(void) const {
+    inline bool getInterleaveChroma() const {
         return TheStructure.Common.InterleaveChroma;
     }
     inline void setSurfaceFormat(const SURFACE_FORMAT value) {
         TheStructure.Common.SurfaceFormat = value;
     }
-    inline SURFACE_FORMAT getSurfaceFormat(void) const {
+    inline SURFACE_FORMAT getSurfaceFormat() const {
         return static_cast<SURFACE_FORMAT>(TheStructure.Common.SurfaceFormat);
     }
     inline void setYOffsetForUCb(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x3fff);
         TheStructure.Common.YOffsetForU_Cb = value;
     }
-    inline uint32_t getYOffsetForUCb(void) const {
+    inline uint32_t getYOffsetForUCb() const {
         return TheStructure.Common.YOffsetForU_Cb;
     }
     inline void setXOffsetForUCb(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x3fff);
         TheStructure.Common.XOffsetForU_Cb = value;
     }
-    inline uint32_t getXOffsetForUCb(void) const {
+    inline uint32_t getXOffsetForUCb() const {
         return TheStructure.Common.XOffsetForU_Cb;
     }
-    inline void setSurfaceMemoryObjectControlStateIndexToMocsTables(const uint32_t value) {
+    inline void setSurfaceMemoryObjectControlState(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x3f);
-        TheStructure.Common.SurfaceMemoryObjectControlStateIndexToMocsTables = value;
+        TheStructure.Common.SurfaceMemoryObjectControlStateIndexToMocsTables = value >> 1;
     }
-    inline uint32_t getSurfaceMemoryObjectControlStateIndexToMocsTables(void) const {
-        return TheStructure.Common.SurfaceMemoryObjectControlStateIndexToMocsTables;
+    inline uint32_t getSurfaceMemoryObjectControlState() const {
+        return TheStructure.Common.SurfaceMemoryObjectControlStateIndexToMocsTables << 1;
     }
     inline void setTiledResourceMode(const TILED_RESOURCE_MODE value) {
         TheStructure.Common.TiledResourceMode = value;
     }
-    inline TILED_RESOURCE_MODE getTiledResourceMode(void) const {
+    inline TILED_RESOURCE_MODE getTiledResourceMode() const {
         return static_cast<TILED_RESOURCE_MODE>(TheStructure.Common.TiledResourceMode);
     }
     inline void setVerticalLineStrideOffset(const bool value) {
         TheStructure.Common.VerticalLineStrideOffset = value;
     }
-    inline bool getVerticalLineStrideOffset(void) const {
+    inline bool getVerticalLineStrideOffset() const {
         return TheStructure.Common.VerticalLineStrideOffset;
     }
     inline void setVerticalLineStride(const bool value) {
         TheStructure.Common.VerticalLineStride = value;
     }
-    inline bool getVerticalLineStride(void) const {
+    inline bool getVerticalLineStride() const {
         return TheStructure.Common.VerticalLineStride;
     }
     inline void setSurfaceBaseAddress(const uint64_t value) {
         TheStructure.Common.SurfaceBaseAddressLow = static_cast<uint32_t>(value & 0xffffffff);
         TheStructure.Common.SurfaceBaseAddressHigh = (value >> 32) & 0xffffffff;
     }
-    inline uint64_t getSurfaceBaseAddress(void) const {
+    inline uint64_t getSurfaceBaseAddress() const {
         return (TheStructure.Common.SurfaceBaseAddressLow |
                 static_cast<uint64_t>(TheStructure.Common.SurfaceBaseAddressHigh) << 32);
     }
@@ -4502,35 +4486,35 @@ typedef struct tagMEDIA_SURFACE_STATE {
         UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.SurfaceBaseAddressHigh = value;
     }
-    inline uint32_t getSurfaceBaseAddressHigh(void) const {
+    inline uint32_t getSurfaceBaseAddressHigh() const {
         return TheStructure.Common.SurfaceBaseAddressHigh;
     }
     inline void setYOffset(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xf);
         TheStructure.SurfaceFormatIsOneOfPlanarFormats.YOffset = value;
     }
-    inline uint32_t getYOffset(void) const {
+    inline uint32_t getYOffset() const {
         return TheStructure.SurfaceFormatIsOneOfPlanarFormats.YOffset;
     }
     inline void setXOffset(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x7f);
         TheStructure.SurfaceFormatIsOneOfPlanarFormats.XOffset = value;
     }
-    inline uint32_t getXOffset(void) const {
+    inline uint32_t getXOffset() const {
         return TheStructure.SurfaceFormatIsOneOfPlanarFormats.XOffset;
     }
     inline void setYOffsetForVCr(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x7fff);
         TheStructure._SurfaceFormatIsOneOfPlanarAnd_InterleaveChromaIs0.YOffsetForV_Cr = value;
     }
-    inline uint32_t getYOffsetForVCr(void) const {
+    inline uint32_t getYOffsetForVCr() const {
         return TheStructure._SurfaceFormatIsOneOfPlanarAnd_InterleaveChromaIs0.YOffsetForV_Cr;
     }
     inline void setXOffsetForVCr(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x3fff);
         TheStructure._SurfaceFormatIsOneOfPlanarAnd_InterleaveChromaIs0.XOffsetForV_Cr = value;
     }
-    inline uint32_t getXOffsetForVCr(void) const {
+    inline uint32_t getXOffsetForVCr() const {
         return TheStructure._SurfaceFormatIsOneOfPlanarAnd_InterleaveChromaIs0.XOffsetForV_Cr;
     }
 } MEDIA_SURFACE_STATE;
@@ -4652,7 +4636,7 @@ typedef struct tagPIPE_CONTROL {
         DESTINATION_ADDRESS_TYPE_PPGTT = 0x0,
         DESTINATION_ADDRESS_TYPE_GGTT = 0x1,
     } DESTINATION_ADDRESS_TYPE;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
         TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_PIPE_CONTROL;
@@ -4665,7 +4649,7 @@ typedef struct tagPIPE_CONTROL {
         TheStructure.Common.DestinationAddressType = DESTINATION_ADDRESS_TYPE_PPGTT;
         TheStructure.Common.CommandStreamerStallEnable = 1u;
     }
-    static tagPIPE_CONTROL sInit(void) {
+    static tagPIPE_CONTROL sInit() {
         PIPE_CONTROL state;
         state.init();
         return state;
@@ -4677,181 +4661,181 @@ typedef struct tagPIPE_CONTROL {
     inline void setHdcPipelineFlush(const bool value) {
         TheStructure.Common.HdcPipelineFlush = value;
     }
-    inline bool getHdcPipelineFlush(void) const {
+    inline bool getHdcPipelineFlush() const {
         return TheStructure.Common.HdcPipelineFlush;
     }
     inline void setDepthCacheFlushEnable(const bool value) {
         TheStructure.Common.DepthCacheFlushEnable = value;
     }
-    inline bool getDepthCacheFlushEnable(void) const {
+    inline bool getDepthCacheFlushEnable() const {
         return TheStructure.Common.DepthCacheFlushEnable;
     }
     inline void setStallAtPixelScoreboard(const bool value) {
         TheStructure.Common.StallAtPixelScoreboard = value;
     }
-    inline bool getStallAtPixelScoreboard(void) const {
+    inline bool getStallAtPixelScoreboard() const {
         return TheStructure.Common.StallAtPixelScoreboard;
     }
     inline void setStateCacheInvalidationEnable(const bool value) {
         TheStructure.Common.StateCacheInvalidationEnable = value;
     }
-    inline bool getStateCacheInvalidationEnable(void) const {
+    inline bool getStateCacheInvalidationEnable() const {
         return TheStructure.Common.StateCacheInvalidationEnable;
     }
     inline void setConstantCacheInvalidationEnable(const bool value) {
         TheStructure.Common.ConstantCacheInvalidationEnable = value;
     }
-    inline bool getConstantCacheInvalidationEnable(void) const {
+    inline bool getConstantCacheInvalidationEnable() const {
         return TheStructure.Common.ConstantCacheInvalidationEnable;
     }
     inline void setVfCacheInvalidationEnable(const bool value) {
         TheStructure.Common.VfCacheInvalidationEnable = value;
     }
-    inline bool getVfCacheInvalidationEnable(void) const {
+    inline bool getVfCacheInvalidationEnable() const {
         return TheStructure.Common.VfCacheInvalidationEnable;
     }
     inline void setDcFlushEnable(const bool value) {
         TheStructure.Common.DcFlushEnable = value;
     }
-    inline bool getDcFlushEnable(void) const {
+    inline bool getDcFlushEnable() const {
         return TheStructure.Common.DcFlushEnable;
     }
     inline void setProtectedMemoryApplicationId(const uint32_t value) {
         TheStructure.Common.ProtectedMemoryApplicationId = value;
     }
-    inline uint32_t getProtectedMemoryApplicationId(void) const {
+    inline uint32_t getProtectedMemoryApplicationId() const {
         return (TheStructure.Common.ProtectedMemoryApplicationId);
     }
     inline void setPipeControlFlushEnable(const bool value) {
         TheStructure.Common.PipeControlFlushEnable = value;
     }
-    inline bool getPipeControlFlushEnable(void) const {
+    inline bool getPipeControlFlushEnable() const {
         return TheStructure.Common.PipeControlFlushEnable;
     }
     inline void setNotifyEnable(const bool value) {
         TheStructure.Common.NotifyEnable = value;
     }
-    inline bool getNotifyEnable(void) const {
+    inline bool getNotifyEnable() const {
         return TheStructure.Common.NotifyEnable;
     }
     inline void setIndirectStatePointersDisable(const bool value) {
         TheStructure.Common.IndirectStatePointersDisable = value;
     }
-    inline bool getIndirectStatePointersDisable(void) const {
+    inline bool getIndirectStatePointersDisable() const {
         return TheStructure.Common.IndirectStatePointersDisable;
     }
     inline void setTextureCacheInvalidationEnable(const bool value) {
         TheStructure.Common.TextureCacheInvalidationEnable = value;
     }
-    inline bool getTextureCacheInvalidationEnable(void) const {
+    inline bool getTextureCacheInvalidationEnable() const {
         return TheStructure.Common.TextureCacheInvalidationEnable;
     }
     inline void setInstructionCacheInvalidateEnable(const bool value) {
         TheStructure.Common.InstructionCacheInvalidateEnable = value;
     }
-    inline bool getInstructionCacheInvalidateEnable(void) const {
+    inline bool getInstructionCacheInvalidateEnable() const {
         return TheStructure.Common.InstructionCacheInvalidateEnable;
     }
     inline void setRenderTargetCacheFlushEnable(const bool value) {
         TheStructure.Common.RenderTargetCacheFlushEnable = value;
     }
-    inline bool getRenderTargetCacheFlushEnable(void) const {
+    inline bool getRenderTargetCacheFlushEnable() const {
         return TheStructure.Common.RenderTargetCacheFlushEnable;
     }
     inline void setDepthStallEnable(const bool value) {
         TheStructure.Common.DepthStallEnable = value;
     }
-    inline bool getDepthStallEnable(void) const {
+    inline bool getDepthStallEnable() const {
         return TheStructure.Common.DepthStallEnable;
     }
     inline void setPostSyncOperation(const POST_SYNC_OPERATION value) {
         TheStructure.Common.PostSyncOperation = value;
     }
-    inline POST_SYNC_OPERATION getPostSyncOperation(void) const {
+    inline POST_SYNC_OPERATION getPostSyncOperation() const {
         return static_cast<POST_SYNC_OPERATION>(TheStructure.Common.PostSyncOperation);
     }
     inline void setGenericMediaStateClear(const bool value) {
         TheStructure.Common.GenericMediaStateClear = value;
     }
-    inline bool getGenericMediaStateClear(void) const {
+    inline bool getGenericMediaStateClear() const {
         return TheStructure.Common.GenericMediaStateClear;
     }
     inline void setPsdSyncEnable(const bool value) {
         TheStructure.Common.PsdSyncEnable = value;
     }
-    inline bool getPsdSyncEnable(void) const {
+    inline bool getPsdSyncEnable() const {
         return TheStructure.Common.PsdSyncEnable;
     }
     inline void setTlbInvalidate(const bool value) {
         TheStructure.Common.TlbInvalidate = value;
     }
-    inline bool getTlbInvalidate(void) const {
+    inline bool getTlbInvalidate() const {
         return TheStructure.Common.TlbInvalidate;
     }
     inline void setGlobalSnapshotCountReset(const GLOBAL_SNAPSHOT_COUNT_RESET value) {
         TheStructure.Common.GlobalSnapshotCountReset = value;
     }
-    inline GLOBAL_SNAPSHOT_COUNT_RESET getGlobalSnapshotCountReset(void) const {
+    inline GLOBAL_SNAPSHOT_COUNT_RESET getGlobalSnapshotCountReset() const {
         return static_cast<GLOBAL_SNAPSHOT_COUNT_RESET>(TheStructure.Common.GlobalSnapshotCountReset);
     }
     inline void setCommandStreamerStallEnable(const bool value) {
         TheStructure.Common.CommandStreamerStallEnable = value;
     }
-    inline bool getCommandStreamerStallEnable(void) const {
+    inline bool getCommandStreamerStallEnable() const {
         return TheStructure.Common.CommandStreamerStallEnable;
     }
     inline void setStoreDataIndex(const bool value) {
         TheStructure.Common.StoreDataIndex = value;
     }
-    inline bool getStoreDataIndex(void) const {
+    inline bool getStoreDataIndex() const {
         return TheStructure.Common.StoreDataIndex;
     }
     inline void setLriPostSyncOperation(const LRI_POST_SYNC_OPERATION value) {
         TheStructure.Common.LriPostSyncOperation = value;
     }
-    inline LRI_POST_SYNC_OPERATION getLriPostSyncOperation(void) const {
+    inline LRI_POST_SYNC_OPERATION getLriPostSyncOperation() const {
         return static_cast<LRI_POST_SYNC_OPERATION>(TheStructure.Common.LriPostSyncOperation);
     }
     inline void setDestinationAddressType(const DESTINATION_ADDRESS_TYPE value) {
         TheStructure.Common.DestinationAddressType = value;
     }
-    inline DESTINATION_ADDRESS_TYPE getDestinationAddressType(void) const {
+    inline DESTINATION_ADDRESS_TYPE getDestinationAddressType() const {
         return static_cast<DESTINATION_ADDRESS_TYPE>(TheStructure.Common.DestinationAddressType);
     }
     inline void setAmfsFlushEnable(const bool value) {
         TheStructure.Common.AmfsFlushEnable = value;
     }
-    inline bool getAmfsFlushEnable(void) const {
+    inline bool getAmfsFlushEnable() const {
         return TheStructure.Common.AmfsFlushEnable;
     }
     inline void setFlushLlc(const bool value) {
         TheStructure.Common.FlushLlc = value;
     }
-    inline bool getFlushLlc(void) const {
+    inline bool getFlushLlc() const {
         return TheStructure.Common.FlushLlc;
     }
     inline void setProtectedMemoryDisable(const uint32_t value) {
         TheStructure.Common.ProtectedMemoryDisable = value;
     }
-    inline uint32_t getProtectedMemoryDisable(void) const {
+    inline uint32_t getProtectedMemoryDisable() const {
         return (TheStructure.Common.ProtectedMemoryDisable);
     }
     inline void setTileCacheFlushEnable(const bool value) {
         TheStructure.Common.TileCacheFlushEnable = value;
     }
-    inline bool getTileCacheFlushEnable(void) const {
+    inline bool getTileCacheFlushEnable() const {
         return TheStructure.Common.TileCacheFlushEnable;
     }
     inline void setCommandCacheInvalidateEnable(const bool value) {
         TheStructure.Common.CommandCacheInvalidateEnable = value;
     }
-    inline bool getCommandCacheInvalidateEnable(void) const {
+    inline bool getCommandCacheInvalidateEnable() const {
         return TheStructure.Common.CommandCacheInvalidateEnable;
     }
     inline void setL3FabricFlush(const bool value) {
         TheStructure.Common.L3FabricFlush = value;
     }
-    inline bool getL3FabricFlush(void) const {
+    inline bool getL3FabricFlush() const {
         return TheStructure.Common.L3FabricFlush;
     }
     typedef enum tagADDRESS {
@@ -4862,19 +4846,19 @@ typedef struct tagPIPE_CONTROL {
         UNRECOVERABLE_IF(value > 0xffffffff);
         TheStructure.Common.Address = value >> ADDRESS_BIT_SHIFT;
     }
-    inline uint32_t getAddress(void) const {
+    inline uint32_t getAddress() const {
         return TheStructure.Common.Address << ADDRESS_BIT_SHIFT;
     }
     inline void setAddressHigh(const uint32_t value) {
         TheStructure.Common.AddressHigh = value;
     }
-    inline uint32_t getAddressHigh(void) const {
+    inline uint32_t getAddressHigh() const {
         return TheStructure.Common.AddressHigh;
     }
     inline void setImmediateData(const uint64_t value) {
         TheStructure.Common.ImmediateData = value;
     }
-    inline uint64_t getImmediateData(void) const {
+    inline uint64_t getImmediateData() const {
         return TheStructure.Common.ImmediateData;
     }
 } PIPE_CONTROL;
@@ -4934,7 +4918,7 @@ typedef struct tagMI_SEMAPHORE_WAIT {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
         TheStructure.Common.CompareOperation = COMPARE_OPERATION_SAD_GREATER_THAN_SDD;
@@ -4944,7 +4928,7 @@ typedef struct tagMI_SEMAPHORE_WAIT {
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_SEMAPHORE_WAIT;
         TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
-    static tagMI_SEMAPHORE_WAIT sInit(void) {
+    static tagMI_SEMAPHORE_WAIT sInit() {
         MI_SEMAPHORE_WAIT state;
         state.init();
         return state;
@@ -4956,31 +4940,31 @@ typedef struct tagMI_SEMAPHORE_WAIT {
     inline void setCompareOperation(const COMPARE_OPERATION value) {
         TheStructure.Common.CompareOperation = value;
     }
-    inline COMPARE_OPERATION getCompareOperation(void) const {
+    inline COMPARE_OPERATION getCompareOperation() const {
         return static_cast<COMPARE_OPERATION>(TheStructure.Common.CompareOperation);
     }
     inline void setWaitMode(const WAIT_MODE value) {
         TheStructure.Common.WaitMode = value;
     }
-    inline WAIT_MODE getWaitMode(void) const {
+    inline WAIT_MODE getWaitMode() const {
         return static_cast<WAIT_MODE>(TheStructure.Common.WaitMode);
     }
     inline void setRegisterPollMode(const REGISTER_POLL_MODE value) {
         TheStructure.Common.RegisterPollMode = value;
     }
-    inline REGISTER_POLL_MODE getRegisterPollMode(void) const {
+    inline REGISTER_POLL_MODE getRegisterPollMode() const {
         return static_cast<REGISTER_POLL_MODE>(TheStructure.Common.RegisterPollMode);
     }
     inline void setMemoryType(const MEMORY_TYPE value) {
         TheStructure.Common.MemoryType = value;
     }
-    inline MEMORY_TYPE getMemoryType(void) const {
+    inline MEMORY_TYPE getMemoryType() const {
         return static_cast<MEMORY_TYPE>(TheStructure.Common.MemoryType);
     }
     inline void setSemaphoreDataDword(const uint32_t value) {
         TheStructure.Common.SemaphoreDataDword = value;
     }
-    inline uint32_t getSemaphoreDataDword(void) const {
+    inline uint32_t getSemaphoreDataDword() const {
         return TheStructure.Common.SemaphoreDataDword;
     }
     typedef enum tagSEMAPHOREADDRESS {
@@ -4990,14 +4974,14 @@ typedef struct tagMI_SEMAPHORE_WAIT {
     inline void setSemaphoreGraphicsAddress(const uint64_t value) {
         TheStructure.Common.SemaphoreAddress = value >> SEMAPHOREADDRESS_BIT_SHIFT;
     }
-    inline uint64_t getSemaphoreGraphicsAddress(void) const {
+    inline uint64_t getSemaphoreGraphicsAddress() const {
         return TheStructure.Common.SemaphoreAddress << SEMAPHOREADDRESS_BIT_SHIFT;
     }
     inline void setWaitTokenNumber(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x1f);
         TheStructure.Common.WaitTokenNumber = value;
     }
-    inline uint32_t getWaitTokenNumber(void) const {
+    inline uint32_t getWaitTokenNumber() const {
         return TheStructure.Common.WaitTokenNumber;
     }
 } MI_SEMAPHORE_WAIT;
@@ -5034,13 +5018,13 @@ typedef struct tagMI_STORE_DATA_IMM {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_STORE_DWORD;
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_STORE_DATA_IMM;
         TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
-    static tagMI_STORE_DATA_IMM sInit(void) {
+    static tagMI_STORE_DATA_IMM sInit() {
         MI_STORE_DATA_IMM state;
         state.init();
         return state;
@@ -5052,25 +5036,25 @@ typedef struct tagMI_STORE_DATA_IMM {
     inline void setDwordLength(const DWORD_LENGTH value) {
         TheStructure.Common.DwordLength = value;
     }
-    inline DWORD_LENGTH getDwordLength(void) const {
+    inline DWORD_LENGTH getDwordLength() const {
         return static_cast<DWORD_LENGTH>(TheStructure.Common.DwordLength);
     }
     inline void setStoreQword(const bool value) {
         TheStructure.Common.StoreQword = value;
     }
-    inline bool getStoreQword(void) const {
+    inline bool getStoreQword() const {
         return TheStructure.Common.StoreQword;
     }
     inline void setUseGlobalGtt(const bool value) {
         TheStructure.Common.UseGlobalGtt = value;
     }
-    inline bool getUseGlobalGtt(void) const {
+    inline bool getUseGlobalGtt() const {
         return TheStructure.Common.UseGlobalGtt;
     }
     inline void setCoreModeEnable(const bool value) {
         TheStructure.Common.CoreModeEnable = value;
     }
-    inline bool getCoreModeEnable(void) const {
+    inline bool getCoreModeEnable() const {
         return TheStructure.Common.CoreModeEnable;
     }
     typedef enum tagADDRESS {
@@ -5081,19 +5065,19 @@ typedef struct tagMI_STORE_DATA_IMM {
         UNRECOVERABLE_IF(value > 0x3fffffffffffffffL);
         TheStructure.Common.Address = value >> ADDRESS_BIT_SHIFT;
     }
-    inline uint64_t getAddress(void) const {
+    inline uint64_t getAddress() const {
         return TheStructure.Common.Address << ADDRESS_BIT_SHIFT;
     }
     inline void setDataDword0(const uint32_t value) {
         TheStructure.Common.DataDword0 = value;
     }
-    inline uint32_t getDataDword0(void) const {
+    inline uint32_t getDataDword0() const {
         return TheStructure.Common.DataDword0;
     }
     inline void setDataDword1(const uint32_t value) {
         TheStructure.Common.DataDword1 = value;
     }
-    inline uint32_t getDataDword1(void) const {
+    inline uint32_t getDataDword1() const {
         return TheStructure.Common.DataDword1;
     }
 } MI_STORE_DATA_IMM;
@@ -5130,7 +5114,7 @@ typedef struct tagSTATE_SIP {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_GFXPIPE = 0x3,
     } COMMAND_TYPE;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
         TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_STATE_SIP;
@@ -5138,7 +5122,7 @@ typedef struct tagSTATE_SIP {
         TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_COMMON;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
     }
-    static tagSTATE_SIP sInit(void) {
+    static tagSTATE_SIP sInit() {
         STATE_SIP state;
         state.init();
         return state;
@@ -5155,7 +5139,7 @@ typedef struct tagSTATE_SIP {
         UNRECOVERABLE_IF(value > 0xffffffffffffffffL);
         TheStructure.Common.SystemInstructionPointer = value >> SYSTEMINSTRUCTIONPOINTER_BIT_SHIFT;
     }
-    inline uint64_t getSystemInstructionPointer(void) const {
+    inline uint64_t getSystemInstructionPointer() const {
         return (uint64_t)TheStructure.Common.SystemInstructionPointer << SYSTEMINSTRUCTIONPOINTER_BIT_SHIFT;
     }
 } STATE_SIP;
@@ -5192,7 +5176,7 @@ typedef struct tagGPGPU_CSR_BASE_ADDRESS {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_GFXPIPE = 0x3,
     } COMMAND_TYPE;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_LENGTH_1;
         TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_GPGPU_CSR_BASE_ADDRESS;
@@ -5200,7 +5184,7 @@ typedef struct tagGPGPU_CSR_BASE_ADDRESS {
         TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_COMMON;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
     }
-    static tagGPGPU_CSR_BASE_ADDRESS sInit(void) {
+    static tagGPGPU_CSR_BASE_ADDRESS sInit() {
         GPGPU_CSR_BASE_ADDRESS state;
         state.init();
         return state;
@@ -5217,11 +5201,362 @@ typedef struct tagGPGPU_CSR_BASE_ADDRESS {
         UNRECOVERABLE_IF(value > 0xffffffffffffffffL);
         TheStructure.Common.GpgpuCsrBaseAddress = value >> GPGPUCSRBASEADDRESS_BIT_SHIFT;
     }
-    inline uint64_t getGpgpuCsrBaseAddress(void) const {
+    inline uint64_t getGpgpuCsrBaseAddress() const {
         return (uint64_t)TheStructure.Common.GpgpuCsrBaseAddress << GPGPUCSRBASEADDRESS_BIT_SHIFT;
     }
 } GPGPU_CSR_BASE_ADDRESS;
 STATIC_ASSERT(12 == sizeof(GPGPU_CSR_BASE_ADDRESS));
+
+typedef struct tagL3_FLUSH_ADDRESS_RANGE {
+    union tagTheStructure {
+        struct tagCommon {
+            uint64_t Reserved_0 : BITFIELD_RANGE(0, 2);
+            uint64_t AddressMask : BITFIELD_RANGE(3, 8);
+            uint64_t Reserved_9 : BITFIELD_RANGE(9, 11);
+            uint64_t AddressLow : BITFIELD_RANGE(12, 31);
+            uint64_t AddressHigh : BITFIELD_RANGE(32, 47);
+            uint64_t Reserved_48 : BITFIELD_RANGE(48, 59);
+            uint64_t L3FlushEvictionPolicy : BITFIELD_RANGE(60, 61);
+            uint64_t Reserved_62 : BITFIELD_RANGE(62, 63);
+        } Common;
+        struct tagCommonA0Stepping {
+            uint64_t AddressHigh : BITFIELD_RANGE(0, 15);
+            uint64_t Reserved_0 : BITFIELD_RANGE(16, 27);
+            uint64_t L3FlushEvictionPolicy : BITFIELD_RANGE(28, 29);
+            uint64_t Reserved_9 : BITFIELD_RANGE(30, 34);
+            uint64_t AddressMask : BITFIELD_RANGE(35, 40);
+            uint64_t Reserved_48 : BITFIELD_RANGE(41, 43);
+            uint64_t AddressLow : BITFIELD_RANGE(44, 63);
+        } CommonA0Stepping;
+        uint32_t RawData[2];
+    } TheStructure;
+
+    typedef enum tagL3_FLUSH_EVICTION_POLICY {
+        L3_FLUSH_EVICTION_POLICY_FLUSH_L3_WITH_EVICTION = 0x0,
+    } L3_FLUSH_EVICTION_POLICY;
+    inline void init() {
+        memset(&TheStructure, 0, sizeof(TheStructure));
+    }
+    static tagL3_FLUSH_ADDRESS_RANGE sInit() {
+        L3_FLUSH_ADDRESS_RANGE state;
+        state.init();
+        return state;
+    }
+    inline uint32_t &getRawData(const uint32_t index) {
+        UNRECOVERABLE_IF(index >= 2);
+        return TheStructure.RawData[index];
+    }
+
+    typedef enum tagADDRESSLOW {
+        ADDRESSLOW_BIT_SHIFT = 0xC,
+        ADDRESSLOW_ALIGN_SIZE = 0x1000,
+    } ADDRESSLOW;
+
+    inline void setAddressLow(const uint64_t value, bool isA0Stepping) {
+        if (isA0Stepping) {
+            TheStructure.CommonA0Stepping.AddressLow = value >> ADDRESSLOW_BIT_SHIFT;
+        } else {
+            TheStructure.Common.AddressLow = value >> ADDRESSLOW_BIT_SHIFT;
+        }
+    }
+
+    inline uint64_t getAddressLow(bool isA0Stepping) const {
+        if (isA0Stepping) {
+            return (static_cast<uint64_t>(TheStructure.CommonA0Stepping.AddressLow) << ADDRESSLOW_BIT_SHIFT) & uint64_t(0xffffffff);
+        } else {
+            return (static_cast<uint64_t>(TheStructure.Common.AddressLow) << ADDRESSLOW_BIT_SHIFT);
+        }
+    }
+
+    inline void setAddressHigh(const uint64_t value, bool isA0Stepping) {
+        if (isA0Stepping) {
+            TheStructure.CommonA0Stepping.AddressHigh = value;
+        } else {
+            TheStructure.Common.AddressHigh = value;
+        }
+    }
+
+    inline uint64_t getAddressHigh(bool isA0Stepping) const {
+        if (isA0Stepping) {
+            return (TheStructure.CommonA0Stepping.AddressHigh);
+        } else {
+            return (TheStructure.Common.AddressHigh);
+        }
+    }
+
+    inline void setAddress(const uint64_t value, bool isA0Stepping) {
+        setAddressLow(static_cast<uint32_t>(value), isA0Stepping);
+        setAddressHigh(static_cast<uint32_t>(value >> 32), isA0Stepping);
+    }
+
+    inline uint64_t getAddress(bool isA0Stepping) const {
+        return static_cast<uint64_t>(getAddressLow(isA0Stepping)) | (static_cast<uint64_t>(getAddressHigh(isA0Stepping)) << 32);
+    }
+
+    inline void setL3FlushEvictionPolicy(const L3_FLUSH_EVICTION_POLICY value, bool isA0Stepping) {
+        if (isA0Stepping) {
+            TheStructure.CommonA0Stepping.L3FlushEvictionPolicy = value;
+        } else {
+            TheStructure.Common.L3FlushEvictionPolicy = value;
+        }
+    }
+    inline L3_FLUSH_EVICTION_POLICY getL3FlushEvictionPolicy(bool isA0Stepping) const {
+        if (isA0Stepping) {
+            return static_cast<L3_FLUSH_EVICTION_POLICY>(TheStructure.CommonA0Stepping.L3FlushEvictionPolicy);
+        } else {
+            return static_cast<L3_FLUSH_EVICTION_POLICY>(TheStructure.Common.L3FlushEvictionPolicy);
+        }
+    }
+    inline void setAddressMask(const uint64_t value, bool isA0Stepping) {
+        if (isA0Stepping) {
+            TheStructure.CommonA0Stepping.AddressMask = value;
+        } else {
+            UNRECOVERABLE_IF(value > 0x1f8);
+            TheStructure.Common.AddressMask = value;
+        }
+    }
+    inline uint32_t getAddressMask(bool isA0Stepping) const {
+        if (isA0Stepping) {
+            return TheStructure.CommonA0Stepping.AddressMask;
+        } else {
+            return TheStructure.Common.AddressMask;
+        }
+    }
+} L3_FLUSH_ADDRESS_RANGE;
+STATIC_ASSERT(8 == sizeof(L3_FLUSH_ADDRESS_RANGE));
+
+struct L3_CONTROL_BASE {
+    union tagTheStructure {
+        struct tagCommon {
+            uint32_t Length : BITFIELD_RANGE(0, 7);
+            uint32_t DepthCacheFlush : BITFIELD_RANGE(8, 8);
+            uint32_t RenderTargetCacheFlushEnable : BITFIELD_RANGE(9, 9);
+            uint32_t HdcPipelineFlush : BITFIELD_RANGE(10, 10);
+            uint32_t Reserved_11 : BITFIELD_RANGE(11, 13);
+            uint32_t PostSyncOperation : BITFIELD_RANGE(14, 14);
+            uint32_t PostSyncOperationL3CacheabilityControl : BITFIELD_RANGE(15, 15); // removed on DG1
+            uint32_t Reserved_16 : BITFIELD_RANGE(16, 19);
+            uint32_t CommandStreamerStallEnable : BITFIELD_RANGE(20, 20);
+            uint32_t DestinationAddressType : BITFIELD_RANGE(21, 21);
+            uint32_t Reserved_22 : BITFIELD_RANGE(22, 22);
+            uint32_t _3DCommandSubOpcode : BITFIELD_RANGE(23, 23);
+            uint32_t _3DCommandOpcode : BITFIELD_RANGE(24, 26);
+            uint32_t CommandSubtype : BITFIELD_RANGE(27, 28);
+            uint32_t Type : BITFIELD_RANGE(29, 31);
+        } Common;
+        uint32_t RawData[1];
+    } TheStructure;
+
+    typedef enum tagLENGTH {
+        LENGTH_POST_SYNC_OPERATION_DISABLED = 1,
+        LENGTH_POST_SYNC_OPERATION_ENABLED = 5,
+    } LENGTH;
+    typedef enum tagPOST_SYNC_OPERATION {
+        POST_SYNC_OPERATION_NO_WRITE = 0x0,
+        POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA = 0x1,
+    } POST_SYNC_OPERATION;
+    typedef enum tagPOST_SYNC_OPERATION_L3_CACHEABILITY_CONTROL {
+        POST_SYNC_OPERATION_L3_CACHEABILITY_CONTROL_DEFAULT_MOCS = 0x0,
+        POST_SYNC_OPERATION_L3_CACHEABILITY_CONTROL_CACHEABLE_MOCS = 0x1,
+    } POST_SYNC_OPERATION_L3_CACHEABILITY_CONTROL;
+    typedef enum tagDESTINATION_ADDRESS_TYPE {
+        DESTINATION_ADDRESS_TYPE_PPGTT = 0x0,
+        DESTINATION_ADDRESS_TYPE_GGTT = 0x1,
+    } DESTINATION_ADDRESS_TYPE;
+    typedef enum tag_3D_COMMAND_SUB_OPCODE {
+        _3D_COMMAND_SUB_OPCODE_L3_CONTROL = 0x1,
+    } _3D_COMMAND_SUB_OPCODE;
+    typedef enum tag_3D_COMMAND_OPCODE {
+        _3D_COMMAND_OPCODE_L3_CONTROL = 0x5,
+    } _3D_COMMAND_OPCODE;
+    typedef enum tagCOMMAND_SUBTYPE {
+        COMMAND_SUBTYPE_GFXPIPE_3D = 0x3,
+    } COMMAND_SUBTYPE;
+    typedef enum tagTYPE {
+        TYPE_GFXPIPE = 0x3,
+    } TYPE;
+    inline void init() {
+        memset(&TheStructure, 0, sizeof(TheStructure));
+        TheStructure.Common.PostSyncOperation = POST_SYNC_OPERATION_NO_WRITE;
+        TheStructure.Common.PostSyncOperationL3CacheabilityControl = POST_SYNC_OPERATION_L3_CACHEABILITY_CONTROL_DEFAULT_MOCS;
+        TheStructure.Common.DestinationAddressType = DESTINATION_ADDRESS_TYPE_PPGTT;
+        TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_L3_CONTROL;
+        TheStructure.Common._3DCommandOpcode = _3D_COMMAND_OPCODE_L3_CONTROL;
+        TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_3D;
+        TheStructure.Common.Type = TYPE_GFXPIPE;
+    }
+    static L3_CONTROL_BASE sInit() {
+        L3_CONTROL_BASE state;
+        state.init();
+        return state;
+    }
+    inline uint32_t &getRawData(const uint32_t index) {
+        UNRECOVERABLE_IF(index >= 7);
+        return TheStructure.RawData[index];
+    }
+    inline void setLength(const LENGTH value) {
+        TheStructure.Common.Length = value;
+    }
+    inline LENGTH getLength() const {
+        return (LENGTH)TheStructure.Common.Length;
+    }
+    inline void setDepthCacheFlush(const bool value) {
+        TheStructure.Common.DepthCacheFlush = value;
+    }
+    inline bool getDepthCacheFlush() const {
+        return TheStructure.Common.DepthCacheFlush;
+    }
+    inline void setRenderTargetCacheFlushEnable(const bool value) {
+        TheStructure.Common.RenderTargetCacheFlushEnable = value;
+    }
+    inline bool getRenderTargetCacheFlushEnable() const {
+        return TheStructure.Common.RenderTargetCacheFlushEnable;
+    }
+    inline void setHdcPipelineFlush(const bool value) {
+        TheStructure.Common.HdcPipelineFlush = value;
+    }
+    inline bool getHdcPipelineFlush() const {
+        return TheStructure.Common.HdcPipelineFlush;
+    }
+    inline void setPostSyncOperation(const POST_SYNC_OPERATION value) {
+        TheStructure.Common.PostSyncOperation = value;
+    }
+    inline POST_SYNC_OPERATION getPostSyncOperation() const {
+        return static_cast<POST_SYNC_OPERATION>(TheStructure.Common.PostSyncOperation);
+    }
+    inline void setPostSyncOperationL3CacheabilityControl(const POST_SYNC_OPERATION_L3_CACHEABILITY_CONTROL value) {
+        TheStructure.Common.PostSyncOperationL3CacheabilityControl = value;
+    }
+    inline POST_SYNC_OPERATION_L3_CACHEABILITY_CONTROL getPostSyncOperationL3CacheabilityControl() const {
+        return static_cast<POST_SYNC_OPERATION_L3_CACHEABILITY_CONTROL>(TheStructure.Common.PostSyncOperationL3CacheabilityControl);
+    }
+    inline void setCommandStreamerStallEnable(const bool value) {
+        TheStructure.Common.CommandStreamerStallEnable = value;
+    }
+    inline bool getCommandStreamerStallEnable() const {
+        return TheStructure.Common.CommandStreamerStallEnable;
+    }
+    inline void setDestinationAddressType(const DESTINATION_ADDRESS_TYPE value) {
+        TheStructure.Common.DestinationAddressType = value;
+    }
+    inline DESTINATION_ADDRESS_TYPE getDestinationAddressType() const {
+        return static_cast<DESTINATION_ADDRESS_TYPE>(TheStructure.Common.DestinationAddressType);
+    }
+    inline void setType(const TYPE value) {
+        TheStructure.Common.Type = value;
+    }
+    inline TYPE getType() const {
+        return static_cast<TYPE>(TheStructure.Common.Type);
+    }
+};
+
+struct L3_CONTROL_POST_SYNC_DATA {
+    union tagTheStructure {
+        struct tagCommon {
+            uint64_t Reserved_96 : BITFIELD_RANGE(0, 2);
+            uint64_t Address : BITFIELD_RANGE(3, 47);
+            uint64_t Reserved_144 : BITFIELD_RANGE(48, 63);
+            uint64_t ImmediateData;
+        } Common;
+        uint32_t RawData[4];
+    } TheStructure;
+
+    inline void init() {
+        memset(&TheStructure, 0, sizeof(TheStructure));
+    }
+
+    typedef enum tagADDRESS {
+        ADDRESS_BIT_SHIFT = 0x3,
+        ADDRESS_ALIGN_SIZE = 0x8,
+    } ADDRESS;
+    inline void setAddress(const uint64_t value) {
+        UNRECOVERABLE_IF(value > 0xfffffffffff8L);
+        TheStructure.Common.Address = value >> ADDRESS_BIT_SHIFT;
+    }
+    inline uint64_t getAddress() const {
+        return TheStructure.Common.Address << ADDRESS_BIT_SHIFT;
+    }
+    inline void setImmediateData(const uint64_t value) {
+        TheStructure.Common.ImmediateData = value;
+    }
+    inline uint64_t getImmediateData() const {
+        return TheStructure.Common.ImmediateData;
+    }
+};
+
+struct L3_CONTROL {
+    union tagTheStructure {
+        struct tagCommon {
+            L3_CONTROL_BASE Base;
+            L3_CONTROL_POST_SYNC_DATA PostSyncData;
+            L3_FLUSH_ADDRESS_RANGE L3FlushAddressRange;
+        } Common;
+        uint32_t RawData[7];
+    } TheStructure;
+
+    inline void init() {
+        memset(&TheStructure, 0, sizeof(TheStructure));
+        getBase().init();
+        getPostSyncData().init();
+        getBase().setLength(L3_CONTROL_BASE::LENGTH_POST_SYNC_OPERATION_ENABLED);
+        TheStructure.Common.L3FlushAddressRange.init();
+    }
+
+    inline void setL3FlushAddressRange(const L3_FLUSH_ADDRESS_RANGE &value) {
+        TheStructure.Common.L3FlushAddressRange = value;
+    }
+    inline L3_FLUSH_ADDRESS_RANGE &getL3FlushAddressRange() {
+        return TheStructure.Common.L3FlushAddressRange;
+    }
+    inline const L3_FLUSH_ADDRESS_RANGE &getL3FlushAddressRange() const {
+        return TheStructure.Common.L3FlushAddressRange;
+    }
+
+    static L3_CONTROL sInit() {
+        L3_CONTROL state;
+        state.init();
+        return state;
+    }
+    inline uint32_t &getRawData(const uint32_t index) {
+        UNRECOVERABLE_IF(index >= 7);
+        return TheStructure.RawData[index];
+    }
+
+    L3_CONTROL_BASE &getBase() {
+        return TheStructure.Common.Base;
+    }
+
+    const L3_CONTROL_BASE &getBase() const {
+        return TheStructure.Common.Base;
+    }
+
+    L3_CONTROL_POST_SYNC_DATA &getPostSyncData() {
+        return TheStructure.Common.PostSyncData;
+    }
+
+    const L3_CONTROL_POST_SYNC_DATA &getPostSyncData() const {
+        return TheStructure.Common.PostSyncData;
+    }
+
+    inline void setPostSyncAddress(const uint64_t value) {
+        getPostSyncData().setAddress(value);
+    }
+
+    inline uint64_t getPostSyncAddress() const {
+        return getPostSyncData().getAddress();
+    }
+
+    inline void setPostSyncImmediateData(const uint64_t value) {
+        getPostSyncData().setImmediateData(value);
+    }
+
+    inline uint64_t getPostSyncImmediateData() const {
+        return getPostSyncData().getImmediateData();
+    }
+};
+
+STATIC_ASSERT(28 == sizeof(L3_CONTROL));
+STATIC_ASSERT(std::is_pod<L3_CONTROL>::value);
 
 typedef struct tagXY_BLOCK_COPY_BLT {
     union tagTheStructure {
@@ -5235,7 +5570,7 @@ typedef struct tagXY_BLOCK_COPY_BLT {
             // DWORD 1
             uint32_t DestinationPitch : BITFIELD_RANGE(0, 17);
             uint32_t Reserved_50 : BITFIELD_RANGE(18, 20);
-            uint32_t DestinationMocsValue : BITFIELD_RANGE(21, 27);
+            uint32_t DestinationMOCS : BITFIELD_RANGE(21, 27);
             uint32_t Reserved_60 : BITFIELD_RANGE(28, 29);
             uint32_t DestinationTiling : BITFIELD_RANGE(30, 31);
             // DWORD 2
@@ -5295,7 +5630,7 @@ typedef struct tagXY_BLOCK_COPY_BLT {
     enum INSTRUCTIONTARGET_OPCODE {
         INSTRUCTIONTARGET_OPCODE_OPCODE = 0x41,
     };
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
         TheStructure.Common.ColorDepth = COLOR_DEPTH_8_BIT_COLOR;
@@ -5304,7 +5639,7 @@ typedef struct tagXY_BLOCK_COPY_BLT {
         TheStructure.Common.DestinationTiling = DESTINATION_TILING_LINEAR;
         TheStructure.Common.SourceTiling = SOURCE_TILING_LINEAR;
     }
-    static tagXY_BLOCK_COPY_BLT sInit(void) {
+    static tagXY_BLOCK_COPY_BLT sInit() {
         XY_BLOCK_COPY_BLT state;
         state.init();
         return state;
@@ -5313,160 +5648,146 @@ typedef struct tagXY_BLOCK_COPY_BLT {
         UNRECOVERABLE_IF(index >= 13);
         return TheStructure.RawData[index];
     }
-    inline void setTransferWidth(const uint32_t value) {
-        TheStructure.Common.DestinationX2Coordinate_Right = value;
-    }
 
-    inline uint32_t getTransferWidth(void) const {
-        return (TheStructure.Common.DestinationX2Coordinate_Right);
-    }
-
-    inline void setTransferHeight(const uint32_t value) {
-        TheStructure.Common.DestinationY2Coordinate_Bottom = value;
-    }
-
-    inline uint32_t getTransferHeight(void) const {
-        return (TheStructure.Common.DestinationY2Coordinate_Bottom);
-    }
     inline void setColorDepth(const COLOR_DEPTH value) {
         TheStructure.Common.ColorDepth = value;
     }
-    inline COLOR_DEPTH getColorDepth(void) const {
+    inline COLOR_DEPTH getColorDepth() const {
         return static_cast<COLOR_DEPTH>(TheStructure.Common.ColorDepth);
     }
     inline void setInstructionTargetOpcode(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x7f);
         TheStructure.Common.InstructionTarget_Opcode = value;
     }
-    inline uint32_t getInstructionTargetOpcode(void) const {
+    inline uint32_t getInstructionTargetOpcode() const {
         return TheStructure.Common.InstructionTarget_Opcode;
     }
     inline void setClient(const CLIENT value) {
         TheStructure.Common.Client = value;
     }
-    inline CLIENT getClient(void) const {
+    inline CLIENT getClient() const {
         return static_cast<CLIENT>(TheStructure.Common.Client);
     }
     inline void setDestinationPitch(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x3ffff);
         TheStructure.Common.DestinationPitch = value - 1;
     }
-    inline uint32_t getDestinationPitch(void) const {
+    inline uint32_t getDestinationPitch() const {
         return TheStructure.Common.DestinationPitch + 1;
     }
-    inline void setDestinationMocsValue(const uint32_t value) {
+    inline void setDestinationMOCS(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x7f);
-        TheStructure.Common.DestinationMocsValue = value;
+        TheStructure.Common.DestinationMOCS = value;
     }
-    inline uint32_t getDestinationMocsValue(void) const {
-        return TheStructure.Common.DestinationMocsValue;
+    inline uint32_t getDestinationMOCS() const {
+        return TheStructure.Common.DestinationMOCS;
     }
     inline void setDestinationTiling(const DESTINATION_TILING value) {
         TheStructure.Common.DestinationTiling = value;
     }
-    inline DESTINATION_TILING getDestinationTiling(void) const {
+    inline DESTINATION_TILING getDestinationTiling() const {
         return static_cast<DESTINATION_TILING>(TheStructure.Common.DestinationTiling);
     }
     inline void setDestinationX1CoordinateLeft(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.DestinationX1Coordinate_Left = value;
     }
-    inline uint32_t getDestinationX1CoordinateLeft(void) const {
+    inline uint32_t getDestinationX1CoordinateLeft() const {
         return TheStructure.Common.DestinationX1Coordinate_Left;
     }
     inline void setDestinationY1CoordinateTop(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.DestinationY1Coordinate_Top = value;
     }
-    inline uint32_t getDestinationY1CoordinateTop(void) const {
+    inline uint32_t getDestinationY1CoordinateTop() const {
         return TheStructure.Common.DestinationY1Coordinate_Top;
     }
     inline void setDestinationX2CoordinateRight(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.DestinationX2Coordinate_Right = value;
     }
-    inline uint32_t getDestinationX2CoordinateRight(void) const {
+    inline uint32_t getDestinationX2CoordinateRight() const {
         return TheStructure.Common.DestinationX2Coordinate_Right;
     }
     inline void setDestinationY2CoordinateBottom(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.DestinationY2Coordinate_Bottom = value;
     }
-    inline uint32_t getDestinationY2CoordinateBottom(void) const {
+    inline uint32_t getDestinationY2CoordinateBottom() const {
         return TheStructure.Common.DestinationY2Coordinate_Bottom;
     }
     inline void setDestinationBaseAddress(const uint64_t value) {
         TheStructure.Common.DestinationBaseAddress = value;
     }
-    inline uint64_t getDestinationBaseAddress(void) const {
+    inline uint64_t getDestinationBaseAddress() const {
         return TheStructure.Common.DestinationBaseAddress;
     }
     inline void setDestinationXOffset(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x3fff);
         TheStructure.Common.DestinationXOffset = value;
     }
-    inline uint32_t getDestinationXOffset(void) const {
+    inline uint32_t getDestinationXOffset() const {
         return TheStructure.Common.DestinationXOffset;
     }
     inline void setDestinationYOffset(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x3fff);
         TheStructure.Common.DestinationYOffset = value;
     }
-    inline uint32_t getDestinationYOffset(void) const {
+    inline uint32_t getDestinationYOffset() const {
         return TheStructure.Common.DestinationYOffset;
     }
     inline void setSourceX1CoordinateLeft(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.SourceX1Coordinate_Left = value;
     }
-    inline uint32_t getSourceX1CoordinateLeft(void) const {
+    inline uint32_t getSourceX1CoordinateLeft() const {
         return TheStructure.Common.SourceX1Coordinate_Left;
     }
     inline void setSourceY1CoordinateTop(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.SourceY1Coordinate_Top = value;
     }
-    inline uint32_t getSourceY1CoordinateTop(void) const {
+    inline uint32_t getSourceY1CoordinateTop() const {
         return TheStructure.Common.SourceY1Coordinate_Top;
     }
     inline void setSourcePitch(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x3ffff);
         TheStructure.Common.SourcePitch = value - 1;
     }
-    inline uint32_t getSourcePitch(void) const {
+    inline uint32_t getSourcePitch() const {
         return TheStructure.Common.SourcePitch + 1;
     }
     inline void setSourceMocs(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x7f);
         TheStructure.Common.SourceMocs = value;
     }
-    inline uint32_t getSourceMocs(void) const {
+    inline uint32_t getSourceMocs() const {
         return TheStructure.Common.SourceMocs;
     }
     inline void setSourceTiling(const SOURCE_TILING value) {
         TheStructure.Common.SourceTiling = value;
     }
-    inline SOURCE_TILING getSourceTiling(void) const {
+    inline SOURCE_TILING getSourceTiling() const {
         return static_cast<SOURCE_TILING>(TheStructure.Common.SourceTiling);
     }
     inline void setSourceBaseAddress(const uint64_t value) {
         TheStructure.Common.SourceBaseAddress = value;
     }
-    inline uint64_t getSourceBaseAddress(void) const {
+    inline uint64_t getSourceBaseAddress() const {
         return TheStructure.Common.SourceBaseAddress;
     }
     inline void setSourceXOffset(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x3fff);
         TheStructure.Common.SourceXOffset = value;
     }
-    inline uint32_t getSourceXOffset(void) const {
+    inline uint32_t getSourceXOffset() const {
         return TheStructure.Common.SourceXOffset;
     }
     inline void setSourceYOffset(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x3fff);
         TheStructure.Common.SourceYOffset = value;
     }
-    inline uint32_t getSourceYOffset(void) const {
+    inline uint32_t getSourceYOffset() const {
         return TheStructure.Common.SourceYOffset;
     }
 } XY_BLOCK_COPY_BLT;
@@ -5484,7 +5805,7 @@ typedef struct tagXY_FAST_COLOR_BLT {
             // DWORD 1
             uint32_t DestinationPitch : BITFIELD_RANGE(0, 17);
             uint32_t Reserved_50 : BITFIELD_RANGE(18, 20);
-            uint32_t DestinationMocsValue : BITFIELD_RANGE(21, 27);
+            uint32_t DestinationMOCS : BITFIELD_RANGE(21, 27);
             uint32_t Reserved_60 : BITFIELD_RANGE(28, 29);
             uint32_t DestinationTiling : BITFIELD_RANGE(30, 31);
             // DWORD 2
@@ -5528,14 +5849,14 @@ typedef struct tagXY_FAST_COLOR_BLT {
     typedef enum tagINSTRUCTIONTARGET_OPCODE {
         INSTRUCTIONTARGET_OPCODE_OPCODE = 0x44,
     } INSTRUCTIONTARGET_OPCODE;
-    inline void init(void) {
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
         TheStructure.Common.ColorDepth = COLOR_DEPTH_8_BIT_COLOR;
         TheStructure.Common.Client = CLIENT_2D_PROCESSOR;
         TheStructure.Common.InstructionTarget_Opcode = INSTRUCTIONTARGET_OPCODE::INSTRUCTIONTARGET_OPCODE_OPCODE;
     }
-    static tagXY_FAST_COLOR_BLT sInit(void) {
+    static tagXY_FAST_COLOR_BLT sInit() {
         XY_FAST_COLOR_BLT state;
         state.init();
         return state;
@@ -5547,87 +5868,87 @@ typedef struct tagXY_FAST_COLOR_BLT {
     inline void setColorDepth(const COLOR_DEPTH value) {
         TheStructure.Common.ColorDepth = value;
     }
-    inline COLOR_DEPTH getColorDepth(void) const {
+    inline COLOR_DEPTH getColorDepth() const {
         return static_cast<COLOR_DEPTH>(TheStructure.Common.ColorDepth);
     }
     inline void setInstructionTargetOpcode(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x7f);
         TheStructure.Common.InstructionTarget_Opcode = value;
     }
-    inline uint32_t getInstructionTargetOpcode(void) const {
+    inline uint32_t getInstructionTargetOpcode() const {
         return TheStructure.Common.InstructionTarget_Opcode;
     }
     inline void setClient(const CLIENT value) {
         TheStructure.Common.Client = value;
     }
-    inline CLIENT getClient(void) const {
+    inline CLIENT getClient() const {
         return static_cast<CLIENT>(TheStructure.Common.Client);
     }
     inline void setDestinationPitch(const uint32_t value) {
         TheStructure.Common.DestinationPitch = value - 1;
     }
-    inline uint32_t getDestinationPitch(void) const {
+    inline uint32_t getDestinationPitch() const {
         return TheStructure.Common.DestinationPitch + 1;
     }
-    inline void setDestinationMocsValue(const uint32_t value) {
+    inline void setDestinationMOCS(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x7f);
-        TheStructure.Common.DestinationMocsValue = value;
+        TheStructure.Common.DestinationMOCS = value;
     }
-    inline uint32_t getDestinationMocsValue(void) const {
-        return TheStructure.Common.DestinationMocsValue;
+    inline uint32_t getDestinationMOCS() const {
+        return TheStructure.Common.DestinationMOCS;
     }
     inline void setDestinationTiling(const DESTINATION_TILING value) {
         TheStructure.Common.DestinationTiling = value;
     }
-    inline DESTINATION_TILING getDestinationTiling(void) const {
+    inline DESTINATION_TILING getDestinationTiling() const {
         return static_cast<DESTINATION_TILING>(TheStructure.Common.DestinationTiling);
     }
     inline void setDestinationX1CoordinateLeft(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.DestinationX1Coordinate_Left = value;
     }
-    inline uint32_t getDestinationX1CoordinateLeft(void) const {
+    inline uint32_t getDestinationX1CoordinateLeft() const {
         return TheStructure.Common.DestinationX1Coordinate_Left;
     }
     inline void setDestinationY1CoordinateTop(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.DestinationY1Coordinate_Top = value;
     }
-    inline uint32_t getDestinationY1CoordinateTop(void) const {
+    inline uint32_t getDestinationY1CoordinateTop() const {
         return TheStructure.Common.DestinationY1Coordinate_Top;
     }
-    inline void setTransferWidth(const uint32_t value) {
+    inline void setDestinationX2CoordinateRight(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.DestinationX2Coordinate_Right = value;
     }
-    inline uint32_t getTransferWidth(void) const {
+    inline uint32_t getDestinationX2CoordinateRight() const {
         return TheStructure.Common.DestinationX2Coordinate_Right;
     }
-    inline void setTransferHeight(const uint32_t value) {
+    inline void setDestinationY2CoordinateBottom(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.DestinationY2Coordinate_Bottom = value;
     }
-    inline uint32_t getTransferHeight(void) const {
+    inline uint32_t getDestinationY2CoordinateBottom() const {
         return TheStructure.Common.DestinationY2Coordinate_Bottom;
     }
     inline void setDestinationBaseAddress(const uint64_t value) {
         TheStructure.Common.DestinationBaseAddress = value;
     }
-    inline uint64_t getDestinationBaseAddress(void) const {
+    inline uint64_t getDestinationBaseAddress() const {
         return TheStructure.Common.DestinationBaseAddress;
     }
     inline void setDestinationXOffset(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x3fff);
         TheStructure.Common.DestinationXOffset = value;
     }
-    inline uint32_t getDestinationXOffset(void) const {
+    inline uint32_t getDestinationXOffset() const {
         return TheStructure.Common.DestinationXOffset;
     }
     inline void setDestinationYOffset(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x3fff);
         TheStructure.Common.DestinationYOffset = value;
     }
-    inline uint32_t getDestinationYOffset(void) const {
+    inline uint32_t getDestinationYOffset() const {
         return TheStructure.Common.DestinationYOffset;
     }
     inline void setFillColor(const uint32_t *value) {
@@ -5640,10 +5961,67 @@ typedef struct tagXY_FAST_COLOR_BLT {
         UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.DestinationClearAddressHigh = value;
     }
-    inline uint32_t getDestinationClearAddressHigh(void) const {
+    inline uint32_t getDestinationClearAddressHigh() const {
         return TheStructure.Common.DestinationClearAddressHigh;
     }
 } XY_FAST_COLOR_BLT;
 STATIC_ASSERT(48 == sizeof(XY_FAST_COLOR_BLT));
+
+typedef struct tagSAMPLER_BORDER_COLOR_STATE {
+    union tagTheStructure {
+        struct tagCommon {
+            // DWORD 0
+            float BorderColorRed;
+            // DWORD 1
+            float BorderColorGreen;
+            // DWORD 2
+            float BorderColorBlue;
+            // DWORD 3
+            float BorderColorAlpha;
+        } Common;
+        uint32_t RawData[4];
+    } TheStructure;
+    inline void init() {
+        memset(&TheStructure, 0, sizeof(TheStructure));
+        TheStructure.Common.BorderColorRed = 0.0;
+        TheStructure.Common.BorderColorGreen = 0.0;
+        TheStructure.Common.BorderColorBlue = 0.0;
+        TheStructure.Common.BorderColorAlpha = 0.0;
+    }
+    static tagSAMPLER_BORDER_COLOR_STATE sInit() {
+        SAMPLER_BORDER_COLOR_STATE state;
+        state.init();
+        return state;
+    }
+    inline uint32_t &getRawData(const uint32_t index) {
+        UNRECOVERABLE_IF(index >= 4);
+        return TheStructure.RawData[index];
+    }
+    inline void setBorderColorRed(const float value) {
+        TheStructure.Common.BorderColorRed = value;
+    }
+    inline float getBorderColorRed() const {
+        return TheStructure.Common.BorderColorRed;
+    }
+    inline void setBorderColorGreen(const float value) {
+        TheStructure.Common.BorderColorGreen = value;
+    }
+    inline float getBorderColorGreen() const {
+        return TheStructure.Common.BorderColorGreen;
+    }
+    inline void setBorderColorBlue(const float value) {
+        TheStructure.Common.BorderColorBlue = value;
+    }
+    inline float getBorderColorBlue() const {
+        return TheStructure.Common.BorderColorBlue;
+    }
+    inline void setBorderColorAlpha(const float value) {
+        TheStructure.Common.BorderColorAlpha = value;
+    }
+    inline float getBorderColorAlpha() const {
+        return TheStructure.Common.BorderColorAlpha;
+    }
+} SAMPLER_BORDER_COLOR_STATE;
+STATIC_ASSERT(16 == sizeof(SAMPLER_BORDER_COLOR_STATE));
 
 #pragma pack()

@@ -1,27 +1,19 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/command_stream/command_stream_receiver_hw_bdw_plus.inl"
+#include "shared/source/command_stream/command_stream_receiver_hw_bdw_and_later.inl"
 #include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/gen8/hw_cmds.h"
-#include "shared/source/helpers/blit_commands_helper_bdw_plus.inl"
+#include "shared/source/helpers/blit_commands_helper_bdw_and_later.inl"
+#include "shared/source/helpers/populate_factory.h"
 
 namespace NEO {
 typedef BDWFamily Family;
 static auto gfxCore = IGFX_GEN8_CORE;
-
-template <>
-size_t CommandStreamReceiverHw<Family>::getCmdSizeForComputeMode() {
-    return 0;
-}
-
-template <>
-void CommandStreamReceiverHw<Family>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags) {
-}
 
 template <>
 void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
@@ -30,8 +22,8 @@ void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
 }
 
 template <>
-void CommandStreamReceiverHw<Family>::addClearSLMWorkAround(Family::PIPE_CONTROL *pCmd) {
-    pCmd->setProtectedMemoryDisable(1);
+void CommandStreamReceiverHw<Family>::setClearSlmWorkAroundParameter(PipeControlArgs &args) {
+    args.protectedMemoryDisable = true;
 }
 
 template class CommandStreamReceiverHw<Family>;
@@ -64,6 +56,7 @@ const Family::GPGPU_CSR_BASE_ADDRESS Family::cmdInitGpgpuCsrBaseAddress = Family
 const Family::STATE_SIP Family::cmdInitStateSip = Family::STATE_SIP::sInit();
 const Family::BINDING_TABLE_STATE Family::cmdInitBindingTableState = Family::BINDING_TABLE_STATE::sInit();
 const Family::MI_USER_INTERRUPT Family::cmdInitUserInterrupt = Family::MI_USER_INTERRUPT::sInit();
+const Family::XY_BLOCK_COPY_BLT Family::cmdInitXyBlockCopyBlt = Family::XY_BLOCK_COPY_BLT::sInit();
 const Family::XY_SRC_COPY_BLT Family::cmdInitXyCopyBlt = Family::XY_SRC_COPY_BLT::sInit();
 const Family::MI_FLUSH_DW Family::cmdInitMiFlushDw = Family::MI_FLUSH_DW::sInit();
 const Family::XY_COLOR_BLT Family::cmdInitXyColorBlt = Family::XY_COLOR_BLT::sInit();

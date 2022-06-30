@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,36 +7,47 @@
 
 #include "shared/source/helpers/blit_commands_helper.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/surface.h"
 
 namespace NEO {
-BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection blitDirection,
-                                                                     CommandStreamReceiver &commandStreamReceiver,
-                                                                     GraphicsAllocation *memObjAllocation,
-                                                                     GraphicsAllocation *preallocatedHostAllocation,
-                                                                     void *hostPtr, uint64_t memObjGpuVa,
-                                                                     uint64_t hostAllocGpuVa, Vec3<size_t> hostPtrOffset,
-                                                                     Vec3<size_t> copyOffset, Vec3<size_t> copySize,
-                                                                     size_t hostRowPitch, size_t hostSlicePitch,
-                                                                     size_t gpuRowPitch, size_t gpuSlicePitch) {
+
+namespace BlitHelperFunctions {
+BlitMemoryToAllocationFunc blitMemoryToAllocation = BlitHelper::blitMemoryToAllocation;
+} // namespace BlitHelperFunctions
+
+BlitProperties BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection blitDirection,
+                                                               CommandStreamReceiver &commandStreamReceiver,
+                                                               GraphicsAllocation *memObjAllocation,
+                                                               GraphicsAllocation *preallocatedHostAllocation,
+                                                               const void *hostPtr, uint64_t memObjGpuVa,
+                                                               uint64_t hostAllocGpuVa, const Vec3<size_t> &hostPtrOffset,
+                                                               const Vec3<size_t> &copyOffset, Vec3<size_t> copySize,
+                                                               size_t hostRowPitch, size_t hostSlicePitch,
+                                                               size_t gpuRowPitch, size_t gpuSlicePitch) {
     GraphicsAllocation *hostAllocation = nullptr;
+    auto clearColorAllocation = commandStreamReceiver.getClearColorAllocation();
+
+    copySize.y = copySize.y ? copySize.y : 1;
+    copySize.z = copySize.z ? copySize.z : 1;
 
     if (preallocatedHostAllocation) {
         hostAllocation = preallocatedHostAllocation;
         UNRECOVERABLE_IF(hostAllocGpuVa == 0);
     } else {
-        HostPtrSurface hostPtrSurface(hostPtr, static_cast<size_t>(copySize.x), true);
+        HostPtrSurface hostPtrSurface(hostPtr, static_cast<size_t>(copySize.x * copySize.y * copySize.z), true);
         bool success = commandStreamReceiver.createAllocationForHostSurface(hostPtrSurface, false);
         UNRECOVERABLE_IF(!success);
         hostAllocation = hostPtrSurface.getAllocation();
         hostAllocGpuVa = hostAllocation->getGpuAddress();
     }
 
-    copySize.y = copySize.y ? copySize.y : 1;
-    copySize.z = copySize.z ? copySize.z : 1;
-
-    if (BlitterConstants::BlitDirection::HostPtrToBuffer == blitDirection) {
+    if (BlitterConstants::BlitDirection::HostPtrToBuffer == blitDirection ||
+        BlitterConstants::BlitDirection::HostPtrToImage == blitDirection) {
         return {
             nullptr,                       // outputTimestampPacket
             blitDirection,                 // blitDirection
@@ -44,15 +55,19 @@ BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterCons
             AuxTranslationDirection::None, // auxTranslationDirection
             memObjAllocation,              // dstAllocation
             hostAllocation,                // srcAllocation
+            clearColorAllocation,          // clearColorAllocation
             memObjGpuVa,                   // dstGpuAddress
             hostAllocGpuVa,                // srcGpuAddress
             copySize,                      // copySize
             copyOffset,                    // dstOffset
             hostPtrOffset,                 // srcOffset
-            gpuRowPitch,                   //dstRowPitch
-            gpuSlicePitch,                 //dstSlicePitch
-            hostRowPitch,                  //srcRowPitch
-            hostSlicePitch};               //srcSlicePitch
+            gpuRowPitch,                   // dstRowPitch
+            gpuSlicePitch,                 // dstSlicePitch
+            hostRowPitch,                  // srcRowPitch
+            hostSlicePitch,                // srcSlicePitch
+            copySize,                      // dstSize
+            copySize                       // srcSize
+        };
 
     } else {
         return {
@@ -62,6 +77,7 @@ BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterCons
             AuxTranslationDirection::None, // auxTranslationDirection
             hostAllocation,                // dstAllocation
             memObjAllocation,              // srcAllocation
+            clearColorAllocation,          // clearColorAllocation
             hostAllocGpuVa,                // dstGpuAddress
             memObjGpuVa,                   // srcGpuAddress
             copySize,                      // copySize
@@ -70,14 +86,17 @@ BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterCons
             hostRowPitch,                  // dstRowPitch
             hostSlicePitch,                // dstSlicePitch
             gpuRowPitch,                   // srcRowPitch
-            gpuSlicePitch};                // srcSlicePitch
+            gpuSlicePitch,                 // srcSlicePitch
+            copySize,                      // dstSize
+            copySize                       // srcSize
+        };
     };
 }
 
-BlitProperties BlitProperties::constructPropertiesForCopyBuffer(GraphicsAllocation *dstAllocation, GraphicsAllocation *srcAllocation,
-                                                                Vec3<size_t> dstOffset, Vec3<size_t> srcOffset, Vec3<size_t> copySize,
-                                                                size_t srcRowPitch, size_t srcSlicePitch,
-                                                                size_t dstRowPitch, size_t dstSlicePitch) {
+BlitProperties BlitProperties::constructPropertiesForCopy(GraphicsAllocation *dstAllocation, GraphicsAllocation *srcAllocation,
+                                                          const Vec3<size_t> &dstOffset, const Vec3<size_t> &srcOffset, Vec3<size_t> copySize,
+                                                          size_t srcRowPitch, size_t srcSlicePitch,
+                                                          size_t dstRowPitch, size_t dstSlicePitch, GraphicsAllocation *clearColorAllocation) {
     copySize.y = copySize.y ? copySize.y : 1;
     copySize.z = copySize.z ? copySize.z : 1;
 
@@ -88,6 +107,7 @@ BlitProperties BlitProperties::constructPropertiesForCopyBuffer(GraphicsAllocati
         AuxTranslationDirection::None,                   // auxTranslationDirection
         dstAllocation,                                   // dstAllocation
         srcAllocation,                                   // srcAllocation
+        clearColorAllocation,                            // clearColorAllocation
         dstAllocation->getGpuAddress(),                  // dstGpuAddress
         srcAllocation->getGpuAddress(),                  // srcGpuAddress
         copySize,                                        // copySize
@@ -100,7 +120,7 @@ BlitProperties BlitProperties::constructPropertiesForCopyBuffer(GraphicsAllocati
 }
 
 BlitProperties BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection auxTranslationDirection,
-                                                                    GraphicsAllocation *allocation) {
+                                                                    GraphicsAllocation *allocation, GraphicsAllocation *clearColorAllocation) {
 
     auto allocationSize = allocation->getUnderlyingBufferSize();
     return {
@@ -110,6 +130,7 @@ BlitProperties BlitProperties::constructPropertiesForAuxTranslation(AuxTranslati
         auxTranslationDirection,                         // auxTranslationDirection
         allocation,                                      // dstAllocation
         allocation,                                      // srcAllocation
+        clearColorAllocation,                            // clearColorAllocation
         allocation->getGpuAddress(),                     // dstGpuAddress
         allocation->getGpuAddress(),                     // srcGpuAddress
         {allocationSize, 1, 1},                          // copySize
@@ -128,20 +149,74 @@ void BlitProperties::setupDependenciesForAuxTranslation(BlitPropertiesContainer 
         blitPropertiesContainer[i + numObjects].outputTimestampPacket = timestampPacketDependencies.nonAuxToAuxNodes.peekNodes()[i];
     }
 
-    gpguCsr.requestStallingPipeControlOnNextFlush();
+    gpguCsr.requestStallingCommandsOnNextFlush();
     auto nodesAllocator = gpguCsr.getTimestampPacketAllocator();
     timestampPacketDependencies.barrierNodes.add(nodesAllocator->getTag());
 
     // wait for barrier and events before AuxToNonAux
-    blitPropertiesContainer[0].csrDependencies.push_back(&timestampPacketDependencies.barrierNodes);
+    blitPropertiesContainer[0].csrDependencies.timestampPacketContainer.push_back(&timestampPacketDependencies.barrierNodes);
 
-    for (auto dep : depsFromEvents) {
-        blitPropertiesContainer[0].csrDependencies.push_back(dep);
+    for (auto dep : depsFromEvents.timestampPacketContainer) {
+        blitPropertiesContainer[0].csrDependencies.timestampPacketContainer.push_back(dep);
     }
 
     // wait for NDR before NonAuxToAux
-    blitPropertiesContainer[numObjects].csrDependencies.push_back(&timestampPacketDependencies.cacheFlushNodes);
-    blitPropertiesContainer[numObjects].csrDependencies.push_back(&kernelTimestamps);
+    blitPropertiesContainer[numObjects].csrDependencies.timestampPacketContainer.push_back(&timestampPacketDependencies.cacheFlushNodes);
+    blitPropertiesContainer[numObjects].csrDependencies.timestampPacketContainer.push_back(&kernelTimestamps);
+}
+
+BlitOperationResult BlitHelper::blitMemoryToAllocation(const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
+                                                       const Vec3<size_t> &size) {
+    auto memoryBanks = memory->storageInfo.getMemoryBanks();
+    return blitMemoryToAllocationBanks(device, memory, offset, hostPtr, size, memoryBanks);
+}
+
+BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
+                                                            const Vec3<size_t> &size, DeviceBitfield memoryBanks) {
+    const auto &hwInfo = device.getHardwareInfo();
+    if (!hwInfo.capabilityTable.blitterOperationsSupported) {
+        return BlitOperationResult::Unsupported;
+    }
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    UNRECOVERABLE_IF(memoryBanks.none());
+
+    auto pRootDevice = device.getRootDevice();
+
+    for (uint8_t tileId = 0u; tileId < 4u; tileId++) {
+        if (!memoryBanks.test(tileId)) {
+            continue;
+        }
+
+        UNRECOVERABLE_IF(!pRootDevice->getDeviceBitfield().test(tileId));
+        auto pDeviceForBlit = pRootDevice->getNearestGenericSubDevice(tileId);
+        auto &selectorCopyEngine = pDeviceForBlit->getSelectorCopyEngine();
+        auto deviceBitfield = pDeviceForBlit->getDeviceBitfield();
+        auto internalUsage = true;
+        auto bcsEngineType = EngineHelpers::getBcsEngineType(hwInfo, deviceBitfield, selectorCopyEngine, internalUsage);
+        auto bcsEngineUsage = hwHelper.preferInternalBcsEngine() ? EngineUsage::Internal : EngineUsage::Regular;
+        auto bcsEngine = pDeviceForBlit->tryGetEngine(bcsEngineType, bcsEngineUsage);
+        if (!bcsEngine) {
+            return BlitOperationResult::Unsupported;
+        }
+
+        bcsEngine->osContext->ensureContextInitialized();
+        bcsEngine->commandStreamReceiver->initDirectSubmission();
+        BlitPropertiesContainer blitPropertiesContainer;
+        blitPropertiesContainer.push_back(
+            BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
+                                                            *bcsEngine->commandStreamReceiver, memory, nullptr,
+                                                            hostPtr,
+                                                            (memory->getGpuAddress() + offset),
+                                                            0, 0, 0, size, 0, 0, 0, 0));
+
+        const auto newTaskCount = bcsEngine->commandStreamReceiver->flushBcsTask(blitPropertiesContainer, true, false, *pDeviceForBlit);
+        if (!newTaskCount) {
+            return BlitOperationResult::GpuHang;
+        }
+    }
+
+    return BlitOperationResult::Success;
 }
 
 } // namespace NEO

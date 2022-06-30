@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/test/unit_test/aub_tests/fixtures/unified_memory_fixture.h"
-#include "test.h"
 
 namespace NEO {
 
@@ -36,6 +37,8 @@ HWTEST_F(UnifiedMemoryAubTest, givenDeviceMemoryAllocWhenWriteIntoItThenValuesMa
 HWTEST_F(UnifiedMemoryAubTest, givenSharedMemoryAllocWhenWriteIntoCPUPartThenValuesMatchAfterUsingAllocAsKernelParam) {
     auto unifiedMemoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
     auto unifiedMemoryPtr = allocateUSM(unifiedMemoryType);
+    retVal = clEnqueueMemsetINTEL(this->pCmdQ, unifiedMemoryPtr, 0, dataSize, 0, nullptr, nullptr);
+    EXPECT_EQ(retVal, CL_SUCCESS);
 
     writeToUsmMemory(values, unifiedMemoryPtr, unifiedMemoryType);
 
@@ -61,9 +64,6 @@ HWTEST_F(UnifiedMemoryAubTest, givenSharedMemoryAllocWhenWriteIntoGPUPartThenVal
 
     expectNotEqualMemory<FamilyType>(unifiedMemoryPtr, unifiedMemoryPtr, dataSize);
     expectMemory<FamilyType>(unifiedMemoryPtr, input.data(), dataSize);
-
-    auto mockRead = reinterpret_cast<char *>(unifiedMemoryPtr)[0];
-    mockRead = 0;
 
     expectMemory<FamilyType>(unifiedMemoryPtr, unifiedMemoryPtr, dataSize);
 

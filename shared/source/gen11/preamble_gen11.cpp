@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,14 +7,16 @@
 
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/helpers/pipeline_select_helper.h"
-#include "shared/source/helpers/preamble_bdw_plus.inl"
+#include "shared/source/helpers/preamble_bdw_and_later.inl"
 
 #include "reg_configs_common.h"
 
 namespace NEO {
 
+using Family = ICLFamily;
+
 template <>
-uint32_t PreambleHelper<ICLFamily>::getL3Config(const HardwareInfo &hwInfo, bool useSLM) {
+uint32_t PreambleHelper<Family>::getL3Config(const HardwareInfo &hwInfo, bool useSLM) {
     uint32_t l3Config = 0;
 
     switch (hwInfo.platform.eProductFamily) {
@@ -28,14 +30,14 @@ uint32_t PreambleHelper<ICLFamily>::getL3Config(const HardwareInfo &hwInfo, bool
 }
 
 template <>
-void PreambleHelper<ICLFamily>::programPipelineSelect(LinearStream *pCommandStream,
-                                                      const PipelineSelectArgs &pipelineSelectArgs,
-                                                      const HardwareInfo &hwInfo) {
+void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
+                                                   const PipelineSelectArgs &pipelineSelectArgs,
+                                                   const HardwareInfo &hwInfo) {
 
-    using PIPELINE_SELECT = typename ICLFamily::PIPELINE_SELECT;
+    using PIPELINE_SELECT = typename Family::PIPELINE_SELECT;
 
     auto pCmd = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
-    PIPELINE_SELECT cmd = ICLFamily::cmdInitPipelineSelect;
+    PIPELINE_SELECT cmd = Family::cmdInitPipelineSelect;
 
     auto mask = pipelineSelectEnablePipelineSelectMaskBits |
                 pipelineSelectMediaSamplerDopClockGateMaskBits |
@@ -50,53 +52,33 @@ void PreambleHelper<ICLFamily>::programPipelineSelect(LinearStream *pCommandStre
 }
 
 template <>
-void PreambleHelper<ICLFamily>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, aub_stream::EngineType engineType) {
-    auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
-    PIPE_CONTROL cmd = ICLFamily::cmdInitPipeControl;
-    cmd.setCommandStreamerStallEnable(true);
-
-    if (hwInfo->workaroundTable.waSendMIFLUSHBeforeVFE) {
-        cmd.setRenderTargetCacheFlushEnable(true);
-        cmd.setDepthCacheFlushEnable(true);
-        cmd.setDcFlushEnable(true);
+void PreambleHelper<Family>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, EngineGroupType engineGroupType) {
+    PipeControlArgs args = {};
+    if (hwInfo->workaroundTable.flags.waSendMIFLUSHBeforeVFE) {
+        args.renderTargetCacheFlushEnable = true;
+        args.depthCacheFlushEnable = true;
+        args.dcFlushEnable = true;
     }
-    *pipeControl = cmd;
+    MemorySynchronizationCommands<Family>::addPipeControl(*pCommandStream, args);
 }
 
 template <>
-uint32_t PreambleHelper<ICLFamily>::getDefaultThreadArbitrationPolicy() {
-    return ThreadArbitrationPolicy::RoundRobinAfterDependency;
+std::vector<int32_t> PreambleHelper<Family>::getSupportedThreadArbitrationPolicies() {
+    std::vector<int32_t> retVal;
+    int32_t policySize = sizeof(RowChickenReg4::regDataForArbitrationPolicy) /
+                         sizeof(RowChickenReg4::regDataForArbitrationPolicy[0]);
+    for (int32_t i = 0; i < policySize; i++) {
+        retVal.push_back(i);
+    }
+    return retVal;
 }
-
 template <>
-void PreambleHelper<ICLFamily>::programThreadArbitration(LinearStream *pCommandStream, uint32_t requiredThreadArbitrationPolicy) {
-    UNRECOVERABLE_IF(requiredThreadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent);
-
-    auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
-    PIPE_CONTROL cmd = ICLFamily::cmdInitPipeControl;
-    cmd.setCommandStreamerStallEnable(true);
-    *pipeControl = cmd;
-
-    auto pCmd = pCommandStream->getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
-    MI_LOAD_REGISTER_IMM lriCmd = ICLFamily::cmdInitLoadRegisterImm;
-
-    lriCmd.setRegisterOffset(RowChickenReg4::address);
-    lriCmd.setDataDword(RowChickenReg4::regDataForArbitrationPolicy[requiredThreadArbitrationPolicy]);
-
-    *pCmd = lriCmd;
-}
-
-template <>
-size_t PreambleHelper<ICLFamily>::getThreadArbitrationCommandsSize() {
-    return sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL);
-}
-
-template <>
-size_t PreambleHelper<ICLFamily>::getAdditionalCommandsSize(const Device &device) {
-    size_t totalSize = PreemptionHelper::getRequiredPreambleSize<ICLFamily>(device);
-    totalSize += getKernelDebuggingCommandsSize(device.isDebuggerActive());
+size_t PreambleHelper<Family>::getAdditionalCommandsSize(const Device &device) {
+    size_t totalSize = PreemptionHelper::getRequiredPreambleSize<Family>(device);
+    bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();
+    totalSize += getKernelDebuggingCommandsSize(debuggingEnabled);
     return totalSize;
 }
 
-template struct PreambleHelper<ICLFamily>;
+template struct PreambleHelper<Family>;
 } // namespace NEO

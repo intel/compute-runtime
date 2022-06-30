@@ -6,11 +6,11 @@
 
 if(TESTS_SKL)
   set(IGDRCL_SRCS_tests_gen9_skl
-    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/device_tests_skl.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_skl.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_skl.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_sample_skl.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+      ${CMAKE_CURRENT_SOURCE_DIR}/device_tests_skl.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_skl.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_skl.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/test_sample_skl.cpp
   )
 
   get_property(NEO_CORE_TESTS_GEN9_SKL GLOBAL PROPERTY NEO_CORE_TESTS_GEN9_SKL)
@@ -18,6 +18,6 @@ if(TESTS_SKL)
 
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_gen9_skl})
   add_subdirectories()
-  neo_copy_test_files(copy_test_files_skl skl)
-  add_dependencies(unit_tests copy_test_files_skl)
+  neo_copy_test_files_with_revision(copy_test_files_skl_9 skl 9)
+  add_dependencies(copy_test_files_per_product copy_test_files_skl_9)
 endif()

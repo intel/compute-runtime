@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,9 +15,10 @@ using clGetDeviceGlobalVariablePointer = api_tests;
 using clGetDeviceFunctionPointer = api_tests;
 
 TEST_F(clGetDeviceGlobalVariablePointer, GivenNullMandatoryArgumentsThenReturnInvalidArgError) {
-    this->pProgram->symbols["A"].gpuAddress = 7U;
-    this->pProgram->symbols["A"].symbol.size = 64U;
-    this->pProgram->symbols["A"].symbol.segment = NEO::SegmentType::GlobalVariables;
+    auto &symbols = pProgram->buildInfos[testedRootDeviceIndex].symbols;
+    symbols["A"].gpuAddress = 7U;
+    symbols["A"].symbol.size = 64U;
+    symbols["A"].symbol.segment = NEO::SegmentType::GlobalVariables;
 
     void *globalRet = 0;
     auto ret = clGetDeviceGlobalVariablePointerINTEL(this->pContext->getDevice(0), this->pProgram, "A", nullptr, &globalRet);
@@ -35,9 +36,10 @@ TEST_F(clGetDeviceGlobalVariablePointer, GivenNullMandatoryArgumentsThenReturnIn
 }
 
 TEST_F(clGetDeviceGlobalVariablePointer, GivenValidSymbolNameThenReturnProperAddressAndSize) {
-    this->pProgram->symbols["A"].gpuAddress = 7U;
-    this->pProgram->symbols["A"].symbol.size = 64U;
-    this->pProgram->symbols["A"].symbol.segment = NEO::SegmentType::GlobalVariables;
+    auto &symbols = pProgram->buildInfos[testedRootDeviceIndex].symbols;
+    symbols["A"].gpuAddress = 7U;
+    symbols["A"].symbol.size = 64U;
+    symbols["A"].symbol.segment = NEO::SegmentType::GlobalVariables;
 
     void *globalRet = 0;
     size_t sizeRet = 0;
@@ -48,9 +50,10 @@ TEST_F(clGetDeviceGlobalVariablePointer, GivenValidSymbolNameThenReturnProperAdd
 }
 
 TEST_F(clGetDeviceGlobalVariablePointer, GivenFunctionSymbolNameThenReturnInvalidArgError) {
-    this->pProgram->symbols["A"].gpuAddress = 7U;
-    this->pProgram->symbols["A"].symbol.size = 64U;
-    this->pProgram->symbols["A"].symbol.segment = NEO::SegmentType::Instructions;
+    auto &symbols = pProgram->buildInfos[testedRootDeviceIndex].symbols;
+    symbols["A"].gpuAddress = 7U;
+    symbols["A"].symbol.size = 64U;
+    symbols["A"].symbol.segment = NEO::SegmentType::Instructions;
 
     void *globalRet = 0;
     auto ret = clGetDeviceGlobalVariablePointerINTEL(this->pContext->getDevice(0), this->pProgram, "A", nullptr, &globalRet);
@@ -64,9 +67,10 @@ TEST_F(clGetDeviceGlobalVariablePointer, GivenUnknownSymbolNameThenReturnInvalid
 }
 
 TEST_F(clGetDeviceFunctionPointer, GivenNullMandatoryArgumentsThenReturnInvalidArgError) {
-    this->pProgram->symbols["A"].gpuAddress = 7U;
-    this->pProgram->symbols["A"].symbol.size = 64U;
-    this->pProgram->symbols["A"].symbol.segment = NEO::SegmentType::Instructions;
+    auto &symbols = pProgram->buildInfos[testedRootDeviceIndex].symbols;
+    symbols["A"].gpuAddress = 7U;
+    symbols["A"].symbol.size = 64U;
+    symbols["A"].symbol.segment = NEO::SegmentType::Instructions;
 
     cl_ulong fptrRet = 0;
     auto ret = clGetDeviceFunctionPointerINTEL(this->pContext->getDevice(0), this->pProgram, "A", &fptrRet);
@@ -84,9 +88,10 @@ TEST_F(clGetDeviceFunctionPointer, GivenNullMandatoryArgumentsThenReturnInvalidA
 }
 
 TEST_F(clGetDeviceFunctionPointer, GivenValidSymbolNameThenReturnProperAddress) {
-    this->pProgram->symbols["A"].gpuAddress = 7U;
-    this->pProgram->symbols["A"].symbol.size = 64U;
-    this->pProgram->symbols["A"].symbol.segment = NEO::SegmentType::Instructions;
+    auto &symbols = pProgram->buildInfos[testedRootDeviceIndex].symbols;
+    symbols["A"].gpuAddress = 7U;
+    symbols["A"].symbol.size = 64U;
+    symbols["A"].symbol.segment = NEO::SegmentType::Instructions;
 
     cl_ulong fptrRet = 0;
     auto ret = clGetDeviceFunctionPointerINTEL(this->pContext->getDevice(0), this->pProgram, "A", &fptrRet);
@@ -95,12 +100,13 @@ TEST_F(clGetDeviceFunctionPointer, GivenValidSymbolNameThenReturnProperAddress) 
 }
 
 TEST_F(clGetDeviceFunctionPointer, GivenGlobalSymbolNameThenReturnInvalidArgError) {
-    this->pProgram->symbols["A"].gpuAddress = 7U;
-    this->pProgram->symbols["A"].symbol.size = 64U;
-    this->pProgram->symbols["A"].symbol.segment = NEO::SegmentType::GlobalVariables;
-    this->pProgram->symbols["B"].gpuAddress = 7U;
-    this->pProgram->symbols["B"].symbol.size = 64U;
-    this->pProgram->symbols["B"].symbol.segment = NEO::SegmentType::GlobalConstants;
+    auto &symbols = pProgram->buildInfos[testedRootDeviceIndex].symbols;
+    symbols["A"].gpuAddress = 7U;
+    symbols["A"].symbol.size = 64U;
+    symbols["A"].symbol.segment = NEO::SegmentType::GlobalVariables;
+    symbols["B"].gpuAddress = 7U;
+    symbols["B"].symbol.size = 64U;
+    symbols["B"].symbol.segment = NEO::SegmentType::GlobalConstants;
 
     cl_ulong fptrRet = 0;
     auto ret = clGetDeviceFunctionPointerINTEL(this->pContext->getDevice(0), this->pProgram, "A", &fptrRet);

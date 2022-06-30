@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,9 @@ DebugSettingsManager<DebugLevel>::DebugSettingsManager(const char *registryPath)
 }
 
 template <DebugFunctionalityLevel DebugLevel>
-DebugSettingsManager<DebugLevel>::~DebugSettingsManager() = default;
+DebugSettingsManager<DebugLevel>::~DebugSettingsManager() {
+    readerImpl.reset();
+};
 
 // Global Debug Settings Manager
 DebugSettingsManager<globalDebugFunctionalityLevel> DebugManager("");

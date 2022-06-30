@@ -30,8 +30,9 @@ constexpr Type CopyImageToImage3d{13};
 constexpr Type FillImage1d{14};
 constexpr Type FillImage2d{15};
 constexpr Type FillImage3d{16};
+constexpr Type QueryKernelTimestamps{17};
 
-constexpr Type MaxBaseValue{16};
+constexpr Type MaxBaseValue{17};
 constexpr Type COUNT{64};
 } // namespace EBuiltInOps
 } // namespace NEO

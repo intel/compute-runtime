@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,15 +7,15 @@
 
 #include "shared/source/helpers/pipeline_select_helper.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/media_kernel_fixture.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
-#include "test.h"
 
 using namespace NEO;
 typedef MediaKernelFixture<HelloWorldFixtureFactory> MediaKernelTest;
 
-ICLLPTEST_F(MediaKernelTest, givenIcllpDefaultLastVmeSubsliceConfigIsFalse) {
+ICLLPTEST_F(MediaKernelTest, givenIcllpDefaultThenLastVmeSubsliceConfigIsFalse) {
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     EXPECT_FALSE(csr->lastVmeSubslicesConfig);
 }
@@ -53,7 +53,7 @@ ICLLPTEST_F(MediaKernelTest, givenIcllpCSRWhenEnqueueVmeKernelAfterRegularKernel
     EXPECT_TRUE(csr->lastVmeSubslicesConfig);
 }
 
-ICLLPTEST_F(MediaKernelTest, icllpCmdSizeForVme) {
+ICLLPTEST_F(MediaKernelTest, WhenProgrammingVmeThenCmdSizeIsCorrect) {
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,34 +7,46 @@
 
 #include "level_zero/tools/source/sysman/frequency/frequency.h"
 
+#include "shared/source/helpers/basic_math.h"
+
 #include "level_zero/tools/source/sysman/frequency/frequency_imp.h"
+#include "level_zero/tools/source/sysman/frequency/os_frequency.h"
 
 namespace L0 {
 
 FrequencyHandleContext::~FrequencyHandleContext() {
-    for (Frequency *pFrequency : handle_list) {
+    for (Frequency *pFrequency : handleList) {
         delete pFrequency;
     }
 }
 
-ze_result_t FrequencyHandleContext::init() {
-    Frequency *pFrequency = new FrequencyImp(pOsSysman);
-    handle_list.push_back(pFrequency);
+void FrequencyHandleContext::createHandle(ze_device_handle_t deviceHandle, zes_freq_domain_t frequencyDomain) {
+    Frequency *pFrequency = new FrequencyImp(pOsSysman, deviceHandle, frequencyDomain);
+    handleList.push_back(pFrequency);
+}
+
+ze_result_t FrequencyHandleContext::init(std::vector<ze_device_handle_t> &deviceHandles) {
+    for (const auto &deviceHandle : deviceHandles) {
+        auto totalDomains = OsFrequency::getNumberOfFreqDoainsSupported(pOsSysman);
+        UNRECOVERABLE_IF(totalDomains > 2);
+        for (uint32_t frequencyDomain = 0; frequencyDomain < totalDomains; frequencyDomain++) {
+            createHandle(deviceHandle, static_cast<zes_freq_domain_t>(frequencyDomain));
+        }
+    }
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t FrequencyHandleContext::frequencyGet(uint32_t *pCount, zet_sysman_freq_handle_t *phFrequency) {
-    if (nullptr == phFrequency) {
-        *pCount = static_cast<uint32_t>(handle_list.size());
-        return ZE_RESULT_SUCCESS;
+ze_result_t FrequencyHandleContext::frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency) {
+    uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
+    uint32_t numToCopy = std::min(*pCount, handleListSize);
+    if (0 == *pCount || *pCount > handleListSize) {
+        *pCount = handleListSize;
     }
-    uint32_t i = 0;
-    for (Frequency *freq : handle_list) {
-        if (i >= *pCount)
-            break;
-        phFrequency[i++] = freq->toHandle();
+    if (nullptr != phFrequency) {
+        for (uint32_t i = 0; i < numToCopy; i++) {
+            phFrequency[i] = handleList[i]->toZesFreqHandle();
+        }
     }
-    *pCount = i;
     return ZE_RESULT_SUCCESS;
 }
 

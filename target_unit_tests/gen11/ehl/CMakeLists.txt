@@ -5,6 +5,6 @@
 #
 
 if(TESTS_EHL)
-  set(unit_test_config "ehl/1/4/8")
+  set(unit_test_config "ehl/1/4/8/0")
   include(${NEO_SOURCE_DIR}/cmake/run_ult_target.cmake)
 endif()

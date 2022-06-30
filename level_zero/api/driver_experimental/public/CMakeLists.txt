@@ -1,0 +1,18 @@
+#
+# Copyright (C) 2020-2022 Intel Corporation
+#
+# SPDX-License-Identifier: MIT
+#
+
+set(L0_PUBLIC_DRIVER_EXPERIMENTAL_EXTENSIONS_API
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/zex_api.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/zex_driver.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/zex_driver.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/zex_memory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/zex_memory.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/zex_module.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/zex_module.h
+)
+
+set_property(GLOBAL PROPERTY L0_PUBLIC_DRIVER_EXPERIMENTAL_EXTENSIONS_API ${L0_PUBLIC_DRIVER_EXPERIMENTAL_EXTENSIONS_API})

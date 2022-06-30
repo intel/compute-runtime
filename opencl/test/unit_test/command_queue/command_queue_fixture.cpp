@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,8 @@
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 
 #include "shared/source/device/device.h"
-#include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/context/context.h"
@@ -33,21 +34,37 @@ CommandQueue *CommandQueueHwFixture::createCommandQueue(
 CommandQueue *CommandQueueHwFixture::createCommandQueue(
     ClDevice *pDevice,
     const cl_command_queue_properties *properties) {
-
     if (pDevice == nullptr) {
         if (this->device == nullptr) {
-            this->device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
+            this->device = new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
+            createdDevice = true;
         }
         pDevice = this->device;
     }
 
-    if (!context)
+    if (!context) {
         context = new MockContext(pDevice);
+    }
+    return createCommandQueue(pDevice, properties, context);
+}
 
+CommandQueue *CommandQueueHwFixture::createCommandQueue(
+    ClDevice *pDevice,
+    const cl_command_queue_properties *properties,
+    Context *pContext) {
     auto funcCreate = commandQueueFactory[pDevice->getRenderCoreFamily()];
     assert(nullptr != funcCreate);
 
-    return funcCreate(context, pDevice, properties, false);
+    return funcCreate(pContext, pDevice, properties, false);
+}
+
+void CommandQueueHwFixture::forceMapBufferOnGpu(Buffer &buffer) {
+    ClDevice *clDevice = buffer.getContext()->getDevice(0);
+    buffer.setSharingHandler(new SharingHandler());
+    auto gfxAllocation = buffer.getGraphicsAllocation(clDevice->getRootDeviceIndex());
+    for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
+        gfxAllocation->setGmm(new MockGmm(clDevice->getGmmHelper()), handleId);
+    }
 }
 
 void CommandQueueHwFixture::SetUp() {
@@ -74,7 +91,7 @@ void CommandQueueHwFixture::TearDown() {
     if (context) {
         context->release();
     }
-    if (device) {
+    if (createdDevice) {
         delete device;
     }
 }
@@ -82,12 +99,14 @@ void CommandQueueHwFixture::TearDown() {
 CommandQueue *CommandQueueFixture::createCommandQueue(
     Context *context,
     ClDevice *device,
-    cl_command_queue_properties properties) {
+    cl_command_queue_properties properties,
+    bool internalUsage) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, properties, 0};
     return new MockCommandQueue(
         context,
         device,
-        props);
+        props,
+        internalUsage);
 }
 
 void CommandQueueFixture::SetUp(
@@ -97,11 +116,45 @@ void CommandQueueFixture::SetUp(
     pCmdQ = createCommandQueue(
         context,
         device,
-        properties);
+        properties,
+        false);
 }
 
 void CommandQueueFixture::TearDown() {
     delete pCmdQ;
     pCmdQ = nullptr;
 }
+
+void OOQueueFixture ::SetUp(ClDevice *pDevice, cl_command_queue_properties properties) {
+    ASSERT_NE(nullptr, pDevice);
+    BaseClass::pCmdQ = BaseClass::createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
+    ASSERT_NE(nullptr, BaseClass::pCmdQ);
+}
+
+void CommandQueueHwTest::SetUp() {
+    ClDeviceFixture::SetUp();
+    cl_device_id device = pClDevice;
+    ContextFixture::SetUp(1, &device);
+    CommandQueueHwFixture::SetUp(pClDevice, 0);
+}
+
+void CommandQueueHwTest::TearDown() {
+    CommandQueueHwFixture::TearDown();
+    ContextFixture::TearDown();
+    ClDeviceFixture::TearDown();
+}
+
+void OOQueueHwTest::SetUp() {
+    ClDeviceFixture::SetUp();
+    cl_device_id device = pClDevice;
+    ContextFixture::SetUp(1, &device);
+    OOQueueFixture::SetUp(pClDevice, 0);
+}
+
+void OOQueueHwTest::TearDown() {
+    OOQueueFixture::TearDown();
+    ContextFixture::TearDown();
+    ClDeviceFixture::TearDown();
+}
+
 } // namespace NEO

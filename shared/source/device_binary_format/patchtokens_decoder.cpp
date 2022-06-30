@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/utilities/logger.h"
 
 #include <algorithm>
 
@@ -33,12 +34,12 @@ struct PatchTokensStreamReader {
     }
 
     template <typename... ArgsT>
-    bool enoughDataLeft(ArgsT &&... args) {
+    bool enoughDataLeft(ArgsT &&...args) {
         return false == notEnoughDataLeft(std::forward<ArgsT>(args)...);
     }
 
     template <typename T, typename... ArgsT>
-    bool enoughDataLeft(ArgsT &&... args) {
+    bool enoughDataLeft(ArgsT &&...args) {
         return false == notEnoughDataLeft<T>(std::forward<ArgsT>(args)...);
     }
 
@@ -284,30 +285,23 @@ inline void decodeKernelDataParameterToken(const SPatchDataParameterBuffer *toke
     case DATA_PARAMETER_PARENT_EVENT:
         crossthread.parentEvent = token;
         break;
-    case DATA_PARAMETER_CHILD_BLOCK_SIMD_SIZE:
-        crossthread.childBlockSimdSize.push_back(token);
-        break;
     case DATA_PARAMETER_PREFERRED_WORKGROUP_MULTIPLE:
         crossthread.preferredWorkgroupMultiple = token;
         break;
+    case DATA_PARAMETER_IMPL_ARG_BUFFER:
+        out.tokens.crossThreadPayloadArgs.implicitArgsBufferOffset = token;
+        break;
 
     case DATA_PARAMETER_NUM_HARDWARE_THREADS:
-        CPP_ATTRIBUTE_FALLTHROUGH;
     case DATA_PARAMETER_PRINTF_SURFACE_SIZE:
-        CPP_ATTRIBUTE_FALLTHROUGH;
     case DATA_PARAMETER_IMAGE_SRGB_CHANNEL_ORDER:
-        CPP_ATTRIBUTE_FALLTHROUGH;
     case DATA_PARAMETER_STAGE_IN_GRID_ORIGIN:
-        CPP_ATTRIBUTE_FALLTHROUGH;
     case DATA_PARAMETER_STAGE_IN_GRID_SIZE:
-        CPP_ATTRIBUTE_FALLTHROUGH;
     case DATA_PARAMETER_LOCAL_ID:
-        CPP_ATTRIBUTE_FALLTHROUGH;
     case DATA_PARAMETER_EXECUTION_MASK:
-        CPP_ATTRIBUTE_FALLTHROUGH;
     case DATA_PARAMETER_VME_IMAGE_TYPE:
-        CPP_ATTRIBUTE_FALLTHROUGH;
     case DATA_PARAMETER_VME_MB_SKIP_BLOCK_TYPE:
+    case DATA_PARAMETER_CHILD_BLOCK_SIMD_SIZE:
         // ignored intentionally
         break;
     }
@@ -316,11 +310,14 @@ inline void decodeKernelDataParameterToken(const SPatchDataParameterBuffer *toke
 inline bool decodeToken(const SPatchItemHeader *token, KernelFromPatchtokens &out) {
     switch (token->Token) {
     default: {
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "Unknown kernel-scope Patch Token: %d\n", token->Token);
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "Unknown kernel-scope Patch Token: %d\n", token->Token);
         DEBUG_BREAK_IF(true);
         out.unhandledTokens.push_back(token);
         break;
     }
+    case PATCH_TOKEN_INTERFACE_DESCRIPTOR_DATA:
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "Ignored kernel-scope Patch Token: %d\n", token->Token);
+        break;
     case PATCH_TOKEN_SAMPLER_STATE_ARRAY:
         assignToken(out.tokens.samplerStateArray, token);
         break;
@@ -338,9 +335,6 @@ inline bool decodeToken(const SPatchItemHeader *token, KernelFromPatchtokens &ou
         break;
     case PATCH_TOKEN_MEDIA_INTERFACE_DESCRIPTOR_LOAD:
         assignToken(out.tokens.mediaInterfaceDescriptorLoad, token);
-        break;
-    case PATCH_TOKEN_INTERFACE_DESCRIPTOR_DATA:
-        assignToken(out.tokens.interfaceDescriptorData, token);
         break;
     case PATCH_TOKEN_THREAD_PAYLOAD:
         assignToken(out.tokens.threadPayload, token);
@@ -397,17 +391,15 @@ inline bool decodeToken(const SPatchItemHeader *token, KernelFromPatchtokens &ou
     case PATCH_TOKEN_KERNEL_ARGUMENT_INFO:
         assignArgInfo(out, token);
         break;
+    case PATCH_TOKEN_GLOBAL_HOST_ACCESS_TABLE:
+        assignToken(out.tokens.hostAccessTable, token);
+        break;
 
     case PATCH_TOKEN_SAMPLER_KERNEL_ARGUMENT:
-        CPP_ATTRIBUTE_FALLTHROUGH;
     case PATCH_TOKEN_IMAGE_MEMORY_OBJECT_KERNEL_ARGUMENT:
-        CPP_ATTRIBUTE_FALLTHROUGH;
     case PATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT:
-        CPP_ATTRIBUTE_FALLTHROUGH;
     case PATCH_TOKEN_STATELESS_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT:
-        CPP_ATTRIBUTE_FALLTHROUGH;
     case PATCH_TOKEN_STATELESS_CONSTANT_MEMORY_OBJECT_KERNEL_ARGUMENT:
-        CPP_ATTRIBUTE_FALLTHROUGH;
     case PATCH_TOKEN_STATELESS_DEVICE_QUEUE_KERNEL_ARGUMENT:
         assignArg(out, token);
         break;
@@ -432,7 +424,7 @@ inline bool decodeToken(const SPatchItemHeader *token, ProgramFromPatchtokens &o
     auto &progTok = out.programScopeTokens;
     switch (token->Token) {
     default: {
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "Unknown program-scope Patch Token: %d\n", token->Token);
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "Unknown program-scope Patch Token: %d\n", token->Token);
         DEBUG_BREAK_IF(true);
         out.unhandledTokens.push_back(token);
         break;

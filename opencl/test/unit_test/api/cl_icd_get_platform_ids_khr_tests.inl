@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -15,12 +16,12 @@ using clIcdGetPlatformIDsKHRTests = Test<PlatformFixture>;
 
 namespace ULT {
 
-TEST_F(clIcdGetPlatformIDsKHRTests, checkDispatchLocation) {
+TEST_F(clIcdGetPlatformIDsKHRTests, WhenPlatformIsCreatedThenDispatchLocationIsCorrect) {
     cl_platform_id platform = pPlatform;
     EXPECT_EQ((void *)platform, (void *)(&platform->dispatch));
 }
 
-TEST_F(clIcdGetPlatformIDsKHRTests, getCount) {
+TEST_F(clIcdGetPlatformIDsKHRTests, WhenGettingNumberOfPlatformsThenGreaterThanZeroIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_uint numPlatforms = 0;
 
@@ -30,14 +31,14 @@ TEST_F(clIcdGetPlatformIDsKHRTests, getCount) {
     EXPECT_GT(numPlatforms, (cl_uint)0);
 }
 
-TEST_F(clIcdGetPlatformIDsKHRTests, checkExtensionFunctionAvailability) {
+TEST_F(clIcdGetPlatformIDsKHRTests, WhenGettingExtensionFunctionAddressThenCorrectPointerIsReturned) {
     void *funPtr = clGetExtensionFunctionAddress("clIcdGetPlatformIDsKHR");
     decltype(&clIcdGetPlatformIDsKHR) expected = clIcdGetPlatformIDsKHR;
     EXPECT_NE(nullptr, funPtr);
     EXPECT_EQ(expected, reinterpret_cast<decltype(&clIcdGetPlatformIDsKHR)>(funPtr));
 }
 
-TEST_F(clIcdGetPlatformIDsKHRTests, checkDeviceId) {
+TEST_F(clIcdGetPlatformIDsKHRTests, WhenGettingPlatformIdThenCorrectIdIsReturned) {
     cl_uint numPlatforms = 0;
     cl_uint numPlatformsIcd = 0;
 
@@ -62,7 +63,7 @@ TEST_F(clIcdGetPlatformIDsKHRTests, checkDeviceId) {
     }
 }
 
-TEST_F(clIcdGetPlatformIDsKHRTests, checkExtensionString) {
+TEST_F(clIcdGetPlatformIDsKHRTests, WhenCheckingExtensionStringThenClKhrIcdIsIncluded) {
     const ClDeviceInfo &caps = pPlatform->getClDevice(0)->getDeviceInfo();
     EXPECT_NE(std::string::npos, std::string(caps.deviceExtensions).find("cl_khr_icd"));
 }

@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#pragma once
 
 #include "shared/source/os_interface/windows/debug_registry_reader.h"
 
@@ -18,6 +20,7 @@ class TestedRegistryReader : public RegistryReader {
         return hkeyType;
     }
     using RegistryReader::getSetting;
+    using RegistryReader::processName;
 
     char *getenv(const char *envVar) override {
         if (strcmp(envVar, "TestedEnvironmentVariable") == 0) {
@@ -28,6 +31,10 @@ class TestedRegistryReader : public RegistryReader {
             return "environment";
         } else if (strcmp(envVar, "settingSourceInt") == 0) {
             return "2";
+        } else if (strcmp(envVar, "processName") == 0) {
+            return "processName";
+        } else if (strcmp(envVar, "cl_cache_dir") == 0) {
+            return "./tested_cl_cache_dir";
         } else {
             return nullptr;
         }

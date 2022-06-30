@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/command_stream/queue_throttle.h"
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/completion_stamp.h"
 
 #include <atomic>
@@ -17,12 +19,15 @@ struct KmdNotifyProperties {
     int64_t delayKmdNotifyMicroseconds;
     int64_t delayQuickKmdSleepMicroseconds;
     int64_t delayQuickKmdSleepForSporadicWaitsMicroseconds;
+    int64_t delayQuickKmdSleepForDirectSubmissionMicroseconds;
     // Main switch for KMD Notify optimization - if its disabled, all below are disabled too
     bool enableKmdNotify;
     // Use smaller delay in specific situations (ie. from AsyncEventsHandler)
     bool enableQuickKmdSleep;
     // If waits are called sporadically  use QuickKmdSleep mode, otherwise use standard delay
     bool enableQuickKmdSleepForSporadicWaits;
+    // If direct submission is enabled, use direct submission delay, otherwise use standard delay
+    bool enableQuickKmdSleepForDirectSubmission;
 };
 
 namespace KmdNotifyConstants {
@@ -36,12 +41,13 @@ class KmdNotifyHelper {
     KmdNotifyHelper(const KmdNotifyProperties *properties) : properties(properties){};
     MOCKABLE_VIRTUAL ~KmdNotifyHelper() = default;
 
-    bool obtainTimeoutParams(int64_t &timeoutValueOutput,
-                             bool quickKmdSleepRequest,
-                             uint32_t currentHwTag,
-                             uint32_t taskCountToWait,
-                             FlushStamp flushStampToWait,
-                             bool forcePowerSavingMode);
+    WaitParams obtainTimeoutParams(bool quickKmdSleepRequest,
+                                   uint32_t currentHwTag,
+                                   uint32_t taskCountToWait,
+                                   FlushStamp flushStampToWait,
+                                   QueueThrottle throttle,
+                                   bool kmdWaitModeActive,
+                                   bool directSubmissionEnabled);
 
     bool quickKmdSleepForSporadicWaitsEnabled() const { return properties->enableQuickKmdSleepForSporadicWaits; }
     MOCKABLE_VIRTUAL void updateLastWaitForCompletionTimestamp();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -120,7 +120,6 @@ struct KernelFromPatchtokens {
         const SPatchAllocateLocalSurface *allocateLocalSurface = nullptr;
         const SPatchMediaVFEState *mediaVfeState[2] = {nullptr, nullptr};
         const SPatchMediaInterfaceDescriptorLoad *mediaInterfaceDescriptorLoad = nullptr;
-        const SPatchInterfaceDescriptorData *interfaceDescriptorData = nullptr;
         const SPatchThreadPayload *threadPayload = nullptr;
         const SPatchExecutionEnvironment *executionEnvironment = nullptr;
         const SPatchDataParameterStream *dataParameterStream = nullptr;
@@ -132,6 +131,7 @@ struct KernelFromPatchtokens {
         const SPatchAllocateStatelessEventPoolSurface *allocateStatelessEventPoolSurface = nullptr;
         const SPatchAllocateStatelessDefaultDeviceQueueSurface *allocateStatelessDefaultDeviceQueueSurface = nullptr;
         const SPatchAllocateSyncBuffer *allocateSyncBuffer = nullptr;
+        const void *allocateRTGlobalBuffer = nullptr;
         const SPatchItemHeader *inlineVmeSamplerInfo = nullptr;
         const SPatchGtpinFreeGRFInfo *gtpinFreeGrfInfo = nullptr;
         const SPatchStateSIP *stateSip = nullptr;
@@ -139,6 +139,7 @@ struct KernelFromPatchtokens {
         const SPatchItemHeader *gtpinInfo = nullptr;
         const SPatchFunctionTableInfo *programSymbolTable = nullptr;
         const SPatchFunctionTableInfo *programRelocationTable = nullptr;
+        const SPatchFunctionTableInfo *hostAccessTable = nullptr;
         StackVecKernelArgs kernelArgs;
         StackVecStrings strings;
         struct {
@@ -156,7 +157,7 @@ struct KernelFromPatchtokens {
             const SPatchDataParameterBuffer *localMemoryStatelessWindowSize = nullptr;
             const SPatchDataParameterBuffer *localMemoryStatelessWindowStartAddress = nullptr;
             const SPatchDataParameterBuffer *preferredWorkgroupMultiple = nullptr;
-            StackVec<const SPatchDataParameterBuffer *, 4> childBlockSimdSize;
+            const SPatchDataParameterBuffer *implicitArgsBufferOffset = nullptr;
         } crossThreadPayloadArgs;
     } tokens;
 
@@ -207,6 +208,11 @@ inline const uint8_t *getInlineData(const SPatchAllocateGlobalMemorySurfaceProgr
 
 inline const uint8_t *getInlineData(const SPatchString *ptr) {
     return ptrOffset(reinterpret_cast<const uint8_t *>(ptr), sizeof(SPatchString));
+}
+
+inline uint64_t getPerHwThreadPrivateSurfaceSize(const SPatchAllocateStatelessPrivateSurface &ptr, uint32_t simdSize) {
+    uint32_t multiplier = ptr.IsSimtThread ? simdSize : 1U;
+    return static_cast<uint64_t>(ptr.PerThreadPrivateMemorySize) * multiplier;
 }
 
 const KernelArgAttributesFromPatchtokens getInlineData(const SPatchKernelArgumentInfo *ptr);

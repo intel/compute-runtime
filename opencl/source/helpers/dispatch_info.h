@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "shared/source/utilities/stackvec.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
+#include "opencl/source/kernel/kernel_objects_for_aux_translation.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 
 #include <algorithm>
@@ -21,19 +22,23 @@
 namespace NEO {
 
 class Kernel;
+class ClDevice;
 struct TimestampPacketDependencies;
 
 class DispatchInfo {
 
   public:
-    using DispatchCommandMethodT = void(LinearStream &commandStream, TimestampPacketDependencies *timestampPacketDependencies, const HardwareInfo &, uint32_t);
+    using DispatchCommandMethodT = void(LinearStream &commandStream, TimestampPacketDependencies *timestampPacketDependencies, const HardwareInfo &);
     using EstimateCommandsMethodT = size_t(size_t, const HardwareInfo &, bool);
 
     DispatchInfo() = default;
-    DispatchInfo(Kernel *kernel, uint32_t dim, Vec3<size_t> gws, Vec3<size_t> elws, Vec3<size_t> offset)
-        : kernel(kernel), dim(dim), gws(gws), elws(elws), offset(offset) {}
-    DispatchInfo(Kernel *kernel, uint32_t dim, Vec3<size_t> gws, Vec3<size_t> elws, Vec3<size_t> offset, Vec3<size_t> agws, Vec3<size_t> lws, Vec3<size_t> twgs, Vec3<size_t> nwgs, Vec3<size_t> swgs)
-        : kernel(kernel), dim(dim), gws(gws), elws(elws), offset(offset), agws(agws), lws(lws), twgs(twgs), nwgs(nwgs), swgs(swgs) {}
+    DispatchInfo(ClDevice *device, Kernel *kernel, uint32_t dim, const Vec3<size_t> &gws, const Vec3<size_t> &elws, const Vec3<size_t> &offset)
+        : pClDevice(device), kernel(kernel), dim(dim), gws(gws), elws(elws), offset(offset) {}
+    DispatchInfo(ClDevice *device, Kernel *kernel, uint32_t dim, const Vec3<size_t> &gws, const Vec3<size_t> &elws, const Vec3<size_t> &offset, const Vec3<size_t> &agws, const Vec3<size_t> &lws, const Vec3<size_t> &twgs, const Vec3<size_t> &nwgs, const Vec3<size_t> &swgs)
+        : pClDevice(device), kernel(kernel), dim(dim), gws(gws), elws(elws), offset(offset), agws(agws), lws(lws), twgs(twgs), nwgs(nwgs), swgs(swgs) {}
+
+    ClDevice &getClDevice() const { return *pClDevice; }
+    void setClDevice(ClDevice *device) { pClDevice = device; }
     bool usesSlm() const;
     bool usesStatelessPrintfSurface() const;
     uint32_t getRequiredScratchSize() const;
@@ -65,6 +70,7 @@ class DispatchInfo {
     RegisteredMethodDispatcher<DispatchCommandMethodT, EstimateCommandsMethodT> dispatchEpilogueCommands;
 
   protected:
+    ClDevice *pClDevice = nullptr;
     bool canBePartitioned = false;
     Kernel *kernel = nullptr;
     uint32_t dim = 0;
@@ -87,6 +93,7 @@ struct MultiDispatchInfo {
     }
 
     explicit MultiDispatchInfo(Kernel *mainKernel) : mainKernel(mainKernel) {}
+    explicit MultiDispatchInfo(const BuiltinOpParams &operationParams) : builtinOpParams(operationParams) {}
     MultiDispatchInfo() = default;
 
     MultiDispatchInfo &operator=(const MultiDispatchInfo &) = delete;
@@ -130,11 +137,7 @@ struct MultiDispatchInfo {
         return ret;
     }
 
-    void backupUnifiedMemorySyncRequirement() {
-        for (const auto &dispatchInfo : dispatchInfos) {
-            dispatchInfo.getKernel()->setUnifiedMemorySyncRequirement(true);
-        }
-    }
+    void backupUnifiedMemorySyncRequirement();
 
     DispatchInfo *begin() {
         return dispatchInfos.begin();
@@ -184,7 +187,6 @@ struct MultiDispatchInfo {
         redescribedSurfaces.push_back(memObj.release());
     }
 
-    Kernel *peekParentKernel() const;
     Kernel *peekMainKernel() const;
 
     void setBuiltinOpParams(const BuiltinOpParams &builtinOpParams) {
@@ -195,19 +197,19 @@ struct MultiDispatchInfo {
         return builtinOpParams;
     }
 
-    void setMemObjsForAuxTranslation(const MemObjsForAuxTranslation &memObjsForAuxTranslation) {
-        this->memObjsForAuxTranslation = &memObjsForAuxTranslation;
+    void setKernelObjsForAuxTranslation(std::unique_ptr<KernelObjsForAuxTranslation> &&kernelObjsForAuxTranslation) {
+        this->kernelObjsForAuxTranslation = std::move(kernelObjsForAuxTranslation);
     }
 
-    const MemObjsForAuxTranslation *getMemObjsForAuxTranslation() const {
-        return memObjsForAuxTranslation;
+    const KernelObjsForAuxTranslation *getKernelObjsForAuxTranslation() const {
+        return kernelObjsForAuxTranslation.get();
     }
 
   protected:
     BuiltinOpParams builtinOpParams = {};
     StackVec<DispatchInfo, 9> dispatchInfos;
     StackVec<MemObj *, 2> redescribedSurfaces;
-    const MemObjsForAuxTranslation *memObjsForAuxTranslation = nullptr;
+    std::unique_ptr<const KernelObjsForAuxTranslation> kernelObjsForAuxTranslation;
     Kernel *mainKernel = nullptr;
 };
 } // namespace NEO

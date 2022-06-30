@@ -1,19 +1,20 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
-#include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -48,7 +49,7 @@ class MyMockCommandQueue : public CommandQueueHw<Family> {
 class ImageUnmapTest : public ::testing::Test {
   public:
     void SetUp() override {
-        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+        device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         context = std::make_unique<MockContext>(device.get());
         image.reset(ImageHelper<ImageReadOnly<Image3dDefaults>>::create(context.get()));
     }
@@ -64,9 +65,9 @@ HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledThenEnqueueNonBlocking
     MemObjSizeArray region = {{1, 1, 1}};
     image->setAllocatedMapPtr(ptr);
     cl_map_flags mapFlags = CL_MAP_WRITE;
-    image->addMappedPtr(ptr, 1, mapFlags, region, origin, 0);
+    image->addMappedPtr(ptr, 1, mapFlags, region, origin, 0, nullptr);
 
-    AllocationProperties properties{0, false, MemoryConstants::cacheLineSize, GraphicsAllocation::AllocationType::MAP_ALLOCATION, false, device->getDeviceBitfield()};
+    AllocationProperties properties{0, false, MemoryConstants::cacheLineSize, AllocationType::MAP_ALLOCATION, false, device->getDeviceBitfield()};
     auto allocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties, ptr);
     image->setMapAllocation(allocation);
 
@@ -88,7 +89,6 @@ HWTEST_F(ImageUnmapTest, givenImageWhenEnqueueMapImageIsCalledTwiceThenAllocated
     cl_int retVal;
     size_t origin[] = {0, 0, 0};
     size_t region[] = {1, 1, 1};
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<CommandQueue> commandQueue(CommandQueue::create(context.get(), device.get(), nullptr, false, retVal));
     commandQueue->enqueueMapImage(image.get(), CL_FALSE, 0, origin, region, nullptr, nullptr, 0, nullptr, nullptr, retVal);
     EXPECT_NE(nullptr, image->getAllocatedMapPtr());

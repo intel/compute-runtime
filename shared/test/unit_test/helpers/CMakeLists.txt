@@ -1,34 +1,49 @@
 #
-# Copyright (C) 2019-2020 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
-set(NEO_CORE_HELPERS_TESTS
-  ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_tests.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_tests_gen12lp.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/debug_manager_state_restore.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/default_hw_info.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/default_hw_info.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_flags_helper.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/file_io_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/hw_helper_extended_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/hash_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernel_helpers_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/memory_leak_listener.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/memory_management.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/simd_helper_tests.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_tests.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/string_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/string_to_hash_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/ult_hw_config.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/ult_hw_config.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/ult_hw_helper.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/variable_backup.h
+set(SHARED_SRCS_tests_helpers
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/app_resource_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/array_count_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/basic_math_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/bit_helpers_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmd_buffer_validator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmd_buffer_validator_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_hw_info_config_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/debug_helpers_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter_helpers_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/extendable_enum_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/flush_stamp_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/get_gpgpu_engines_tests.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/get_info_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gtest_helpers.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/l3_range_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/memory_management_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ptr_math_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/raii_hw_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/static_size3.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_debug_variables.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ult_limits.h
 )
 
-set_property(GLOBAL PROPERTY NEO_CORE_HELPERS_TESTS ${NEO_CORE_HELPERS_TESTS})
+if(MSVC OR COMPILER_SUPPORTS_SSE42)
+  list(APPEND SHARED_SRCS_tests_helpers
+       ${CMAKE_CURRENT_SOURCE_DIR}/uint16_sse4_tests.cpp
+  )
+endif()
+
+if(COMPILER_SUPPORTS_NEON)
+  list(APPEND SHARED_SRCS_tests_helpers
+       ${CMAKE_CURRENT_SOURCE_DIR}/uint16_neon_tests.cpp
+  )
+endif()
+
+target_sources(${TARGET_NAME} PRIVATE ${SHARED_SRCS_tests_helpers})
 add_subdirectories()

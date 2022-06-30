@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,10 +24,24 @@ struct WhiteBox<NEO::LinkerInput> : NEO::LinkerInput {
 
     using BaseClass::dataRelocations;
     using BaseClass::exportedFunctionsSegmentId;
-    using BaseClass::relocations;
+    using BaseClass::extFuncSymbols;
+    using BaseClass::extFunDependencies;
+    using BaseClass::kernelDependencies;
+    using BaseClass::parseRelocationForExtFuncUsage;
     using BaseClass::symbols;
+    using BaseClass::textRelocations;
     using BaseClass::traits;
     using BaseClass::valid;
+};
+
+template <>
+struct WhiteBox<NEO::Linker> : NEO::Linker {
+    using BaseClass = NEO::Linker;
+    using BaseClass::BaseClass;
+    using BaseClass::patchDataSegments;
+    using BaseClass::patchInstructionsSegments;
+    using BaseClass::relocatedSymbols;
+    using BaseClass::resolveExternalFunctions;
 };
 
 template <typename MockT, typename ReturnT, typename... ArgsT>
@@ -40,7 +54,7 @@ struct LightMockConfig {
 };
 
 template <typename ConfigT, typename ObjT, typename... ArgsT>
-typename ConfigT::MockReturnT invokeMocked(ConfigT &config, ObjT obj, ArgsT &&... args) {
+typename ConfigT::MockReturnT invokeMocked(ConfigT &config, ObjT obj, ArgsT &&...args) {
     config.timesCalled += 1;
     if (config.overrideFunc) {
         return config.overrideFunc(obj, std::forward<ArgsT>(args)...);

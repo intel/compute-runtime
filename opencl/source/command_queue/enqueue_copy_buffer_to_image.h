@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,14 +30,14 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferToImage(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
-
     auto eBuiltInOpsType = EBuiltInOps::CopyBufferToImage3d;
+
     if (forceStateless(srcBuffer->getSize())) {
         eBuiltInOpsType = EBuiltInOps::CopyBufferToImage3dStateless;
     }
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(eBuiltInOpsType,
-                                                                            this->getDevice());
+                                                                            this->getClDevice());
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     MemObjSurface srcBufferSurf(srcBuffer);
@@ -50,21 +50,20 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferToImage(
     dc.srcOffset = {srcOffset, 0, 0};
     dc.dstOffset = dstOrigin;
     dc.size = region;
-    if (dstImage->getImageDesc().num_mip_levels > 0) {
+    if (isMipMapped(dstImage->getImageDesc())) {
         dc.dstMipLevel = findMipLevel(dstImage->getImageDesc().image_type, dstOrigin);
     }
 
-    MultiDispatchInfo dispatchInfo;
-    builder.buildDispatchInfos(dispatchInfo, dc);
+    MultiDispatchInfo dispatchInfo(dc);
+    builder.buildDispatchInfos(dispatchInfo);
 
-    enqueueHandler<CL_COMMAND_COPY_BUFFER_TO_IMAGE>(
+    return enqueueHandler<CL_COMMAND_COPY_BUFFER_TO_IMAGE>(
         surfaces,
         false,
         dispatchInfo,
         numEventsInWaitList,
         eventWaitList,
         event);
-
-    return CL_SUCCESS;
 }
+
 } // namespace NEO

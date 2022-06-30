@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,22 +9,22 @@
 #include "shared/source/device_binary_format/ar/ar_encoder.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include <cstring>
 
 using namespace NEO::Ar;
+using namespace NEO;
 
 TEST(ArFileEntryHeader, GivenDefaultArFileEntryHeaderThenSectionAreProperlyPopulated) {
     ArFileEntryHeader header = {};
-    EXPECT_EQ(ConstStringRef("/               ", 16), ConstStringRef(header.identifier));
-    EXPECT_EQ(ConstStringRef("0           ", 12), ConstStringRef(header.fileModificationTimestamp));
-    EXPECT_EQ(ConstStringRef("0     ", 6), ConstStringRef(header.ownerId));
-    EXPECT_EQ(ConstStringRef("0     ", 6), ConstStringRef(header.groupId));
-    EXPECT_EQ(ConstStringRef("644     ", 8), ConstStringRef(header.fileMode));
-    EXPECT_EQ(ConstStringRef("0         ", 10), ConstStringRef(header.fileSizeInBytes));
-    EXPECT_EQ(ConstStringRef("\x60\x0A", 2), ConstStringRef(header.trailingMagic));
+    EXPECT_EQ(ConstStringRef("/               ", 16), ConstStringRef::fromArray(header.identifier));
+    EXPECT_EQ(ConstStringRef("0           ", 12), ConstStringRef::fromArray(header.fileModificationTimestamp));
+    EXPECT_EQ(ConstStringRef("0     ", 6), ConstStringRef::fromArray(header.ownerId));
+    EXPECT_EQ(ConstStringRef("0     ", 6), ConstStringRef::fromArray(header.groupId));
+    EXPECT_EQ(ConstStringRef("644     ", 8), ConstStringRef::fromArray(header.fileMode));
+    EXPECT_EQ(ConstStringRef("0         ", 10), ConstStringRef::fromArray(header.fileSizeInBytes));
+    EXPECT_EQ(ConstStringRef("\x60\x0A", 2), ConstStringRef::fromArray(header.trailingMagic));
 }
 
 TEST(ArEncoder, GivenTooLongIdentifierThenAppendingFileFails) {
@@ -47,13 +47,13 @@ TEST(ArEncoder, GivenEmptyArThenEncodedFileConsistsOfOnlyArMagic) {
 }
 
 TEST(ArEncoder, GivenValidFileEntriesThenAppendingFileSucceeds) {
-    std::string fileName = "file1.txt";
+    ConstStringRef fileName = "file1.txt";
     const uint8_t fileData[18] = "23571113171923293";
     ArEncoder encoder;
     auto returnedSection = encoder.appendFileEntry(fileName, fileData);
     ASSERT_NE(nullptr, returnedSection);
     ArFileEntryHeader expectedSection;
-    memcpy_s(expectedSection.identifier, sizeof(expectedSection.identifier), fileName.c_str(), fileName.size());
+    memcpy_s(expectedSection.identifier, sizeof(expectedSection.identifier), fileName.data(), fileName.size());
     expectedSection.identifier[fileName.size()] = '/';
     expectedSection.fileSizeInBytes[0] = '1';
     expectedSection.fileSizeInBytes[1] = '8';
@@ -69,8 +69,8 @@ TEST(ArEncoder, GivenValidFileEntriesThenAppendingFileSucceeds) {
 }
 
 TEST(ArEncoder, GivenValidTwoFileEntriesWith2byteUnalignedDataThenPaddingIsImplicitlyAdded) {
-    std::string fileName0 = "a";
-    std::string fileName1 = "b";
+    ConstStringRef fileName0 = "a";
+    ConstStringRef fileName1 = "b";
     const uint8_t data0[7] = "123456";
     const uint8_t data1[16] = "9ABCDEFGHIJKLMN";
     ArEncoder encoder;
@@ -106,9 +106,9 @@ TEST(ArEncoder, GivenValidTwoFileEntriesWith2byteUnalignedDataThenPaddingIsImpli
 }
 
 TEST(ArEncoder, GivenValidTwoFileEntriesWhen8BytePaddingIsRequestedThenPaddingFileEntriesAreAddedWhenNeeded) {
-    std::string fileName0 = "a";
-    std::string fileName1 = "b";
-    std::string fileName2 = "c";
+    ConstStringRef fileName0 = "a";
+    ConstStringRef fileName1 = "b";
+    ConstStringRef fileName2 = "c";
     const uint8_t data0[4] = "123";      // will require padding before
     const uint8_t data1[8] = "9ABCDEF";  // won't require padding before
     const uint8_t data2[16] = "9ABCDEF"; // will require padding before

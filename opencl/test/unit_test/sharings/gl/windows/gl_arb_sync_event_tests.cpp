@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,9 @@
 
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/event/user_event.h"
@@ -19,10 +21,8 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -68,12 +68,12 @@ struct GlArbSyncEventTest : public ::testing::Test {
 
     void SetUp() override {
         executionEnvironment = platform()->peekExecutionEnvironment();
-        auto mockCsr = new MockCommandStreamReceiver(*executionEnvironment, 0);
         executionEnvironment->memoryManager = std::make_unique<OsAgnosticMemoryManager>(*executionEnvironment);
         device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0u));
+        auto mockCsr = new MockCommandStreamReceiver(*executionEnvironment, 0, device->getDeviceBitfield());
         device->resetCommandStreamReceiver(mockCsr);
         ctx.reset(new MockContext);
-        cmdQ.reset(new MockCommandQueue(ctx.get(), device.get(), nullptr));
+        cmdQ.reset(new MockCommandQueue(ctx.get(), device.get(), nullptr, false));
         sharing = new GlSharingFunctionsMock();
         ctx->setSharingFunctions(sharing);
         sharing->pfnGlArbSyncObjectCleanup = glArbSyncObjectCleanupMockDoNothing;
@@ -243,7 +243,7 @@ TEST_F(GlArbSyncEventTest, whenGlArbSyncEventIsCreatedAndSetEventFailsThenCreati
     EXPECT_EQ(nullptr, arbEvent);
 }
 
-TEST_F(GlArbSyncEventTest, whenGlArbSyncEventIsCreatedTheBaseEventIsProperlySet) {
+TEST_F(GlArbSyncEventTest, whenGlArbSyncEventIsCreatedThenBaseEventIsProperlySet) {
     auto *arbEvent = GlArbSyncEvent::create(*this->getBaseEvent());
     EXPECT_NE(nullptr, arbEvent);
     EXPECT_TRUE(this->baseEvent->peekHasChildEvents());

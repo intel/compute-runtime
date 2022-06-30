@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,13 +11,15 @@
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/utilities/io_functions.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/libult/global_environment.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
+#include "shared/test/common/test_macros/test.h"
 
-#include "opencl/source/compiler_interface/default_cl_cache_config.h"
-#include "opencl/test/unit_test/global_environment.h"
-#include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_program.h"
-#include "test.h"
+#include "os_inc.h"
 
 #include <array>
 #include <list>
@@ -142,7 +144,7 @@ TEST(CompilerCacheHashTests, WhenHashingThenResultIsDeterministic) {
 
 TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCacheIsReturned) {
     static const size_t bufSize = 64;
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
 
     std::set<std::string> hashes;
 
@@ -151,13 +153,13 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
     const PLATFORM *platforms[] = {&p1, &p2};
     FeatureTable s1;
     FeatureTable s2;
-    s1.ftrSVM = true;
-    s2.ftrSVM = false;
+    s1.flags.ftrSVM = true;
+    s2.flags.ftrSVM = false;
     const FeatureTable *skus[] = {&s1, &s2};
     WorkaroundTable w1;
     WorkaroundTable w2;
-    w1.waDoNotUseMIReportPerfCount = true;
-    w2.waDoNotUseMIReportPerfCount = false;
+    w1.flags.waDoNotUseMIReportPerfCount = true;
+    w2.flags.waDoNotUseMIReportPerfCount = false;
     const WorkaroundTable *was[] = {&w1, &w2};
 
     std::array<std::string, 4> inputArray = {{std::string(""),
@@ -182,6 +184,8 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
     ArrayRef<char> apiOptions;
     ArrayRef<char> internalOptions;
 
+    CompilerCache cache(CompilerCacheConfig{});
+
     for (auto platform : platforms) {
         hwInfo.platform = *platform;
 
@@ -201,7 +205,7 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
                             strcpy_s(buf3.get(), bufSize, internalOptionsArray[i3].c_str());
                             internalOptions = ArrayRef<char>(buf3.get(), strlen(buf3.get()));
 
-                            std::string hash = CompilerCache::getCachedFileName(hwInfo, src, apiOptions, internalOptions);
+                            std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions);
 
                             if (hashes.find(hash) != hashes.end()) {
                                 FAIL() << "failed: " << i1 << ":" << i2 << ":" << i3;
@@ -214,9 +218,93 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
         }
     }
 
-    std::string hash = CompilerCache::getCachedFileName(hwInfo, src, apiOptions, internalOptions);
-    std::string hash2 = CompilerCache::getCachedFileName(hwInfo, src, apiOptions, internalOptions);
+    std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions);
+    std::string hash2 = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions);
     EXPECT_STREQ(hash.c_str(), hash2.c_str());
+}
+
+TEST(CompilerCacheTests, GivenBinaryCacheWhenDebugFlagIsSetThenTraceFilesAreCreated) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.BinaryCacheTrace.set(true);
+
+    static struct VerifyData {
+        bool matched;
+        const char *pattern;
+    } verifyData[] = {
+        {false, "---- input ----"},
+        {false, "---- options ----"},
+        {false, "---- internal options ----"},
+        {false, "---- platform ----"},
+        {false, "---- feature table ----"},
+        {false, "---- workaround table ----"}};
+
+    static std::list<std::string> *openListPtr;
+    auto openList = std::make_unique<std::list<std::string>>(2);
+
+    VariableBackup<std::list<std::string> *> openListBkp(&openListPtr, openList.get());
+
+    // reset global state
+    for (size_t idx = 0; idx < sizeof(verifyData) / sizeof(verifyData[0]); idx++) {
+        verifyData[idx].matched = false;
+    }
+    openList->clear();
+
+    VariableBackup<NEO::IoFunctions::fopenFuncPtr> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
+        openListPtr->push_back(filename);
+        return IoFunctions::mockFopenReturned;
+    });
+
+    VariableBackup<NEO::IoFunctions::vfprintfFuncPtr> mockVFprintf(&NEO::IoFunctions::vfprintfPtr, [](FILE *fp, const char *formatStr, va_list) -> int {
+        for (size_t idx = 0; idx < sizeof(verifyData) / sizeof(verifyData[0]); idx++) {
+            if (strncmp(formatStr, verifyData[idx].pattern, strlen(verifyData[idx].pattern))) {
+                verifyData[idx].matched = true;
+            }
+        }
+        return 0;
+    });
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    ArrayRef<char> src;
+    ArrayRef<char> apiOptions;
+    ArrayRef<char> internalOptions;
+    CompilerCache cache(CompilerCacheConfig{});
+    std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions);
+
+    for (size_t idx = 0; idx < sizeof(verifyData) / sizeof(verifyData[0]); idx++) {
+        EXPECT_TRUE(verifyData[idx].matched);
+    }
+    EXPECT_EQ(openList->size(), static_cast<size_t>(2));
+    std::string traceFile = PATH_SEPARATOR + hash + ".trace";
+    std::string inputFile = PATH_SEPARATOR + hash + ".input";
+    EXPECT_NE(std::find(openList->begin(), openList->end(), traceFile), openList->end());
+    EXPECT_NE(std::find(openList->begin(), openList->end(), inputFile), openList->end());
+
+    openList->clear();
+}
+
+TEST(CompilerCacheTests, GivenBinaryCacheWhenDebugFlagIsSetAndOpenFailesThenNoCloseOccurs) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.BinaryCacheTrace.set(true);
+
+    VariableBackup<decltype(IoFunctions::mockFopenReturned)> retValBkp(&IoFunctions::mockFopenReturned, reinterpret_cast<FILE *>(0x0));
+
+    // reset global state
+    IoFunctions::mockFopenCalled = 0;
+    IoFunctions::mockFcloseCalled = 0;
+    IoFunctions::mockVfptrinfCalled = 0;
+    IoFunctions::mockFwriteCalled = 0;
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    ArrayRef<char> src;
+    ArrayRef<char> apiOptions;
+    ArrayRef<char> internalOptions;
+    CompilerCache cache(CompilerCacheConfig{});
+    std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions);
+
+    EXPECT_EQ(IoFunctions::mockFopenCalled, 2u);
+    EXPECT_EQ(IoFunctions::mockFcloseCalled, 0u);
+    EXPECT_EQ(IoFunctions::mockVfptrinfCalled, 0u);
+    EXPECT_EQ(IoFunctions::mockFwriteCalled, 0u);
 }
 
 TEST(CompilerCacheTests, GivenEmptyBinaryWhenCachingThenBinaryIsNotCached) {
@@ -235,22 +323,6 @@ TEST(CompilerCacheTests, GivenNonExistantConfigWhenLoadingFromCacheThenNullIsRet
     auto ret = cache.loadCachedBinary("----do-not-exists----", size);
     EXPECT_EQ(nullptr, ret);
     EXPECT_EQ(0U, size);
-}
-
-TEST(CompilerCacheTests, GivenExistingConfigWhenLoadingFromCacheThenBinaryIsLoaded) {
-    CompilerCache cache(getDefaultClCompilerCacheConfig());
-    static const char *hash = "SOME_HASH";
-    std::unique_ptr<char> data(new char[32]);
-    for (size_t i = 0; i < 32; i++)
-        data.get()[i] = static_cast<char>(i);
-
-    bool ret = cache.cacheBinary(hash, static_cast<const char *>(data.get()), 32);
-    EXPECT_TRUE(ret);
-
-    size_t size;
-    auto loadedBin = cache.loadCachedBinary(hash, size);
-    EXPECT_NE(nullptr, loadedBin);
-    EXPECT_NE(0U, size);
 }
 
 TEST(CompilerInterfaceCachedTests, GivenNoCachedBinaryWhenBuildingThenErrorIsReturned) {
@@ -312,9 +384,7 @@ TEST(CompilerInterfaceCachedTests, GivenCachedBinaryWhenBuildingThenSuccessIsRet
 }
 
 TEST(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheWhenCompilationRequestedThenFCLIsNotCalled) {
-    MockClDevice device{new MockDevice};
-    MockContext context(&device, true);
-    MockProgram program(*device.getExecutionEnvironment(), &context, false, nullptr);
+    MockDevice device{};
     TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
 
     auto src = "__kernel k() {}";
@@ -337,7 +407,7 @@ TEST(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheWhe
     auto compilerInterface = std::unique_ptr<CompilerInterface>(CompilerInterface::createInstance(std::move(cache), true));
     TranslationOutput translationOutput;
     inputArgs.allowCaching = true;
-    auto retVal = compilerInterface->build(device.getDevice(), inputArgs, translationOutput);
+    auto retVal = compilerInterface->build(device, inputArgs, translationOutput);
     EXPECT_EQ(TranslationOutput::ErrorCode::Success, retVal);
 
     gEnvironment->fclPopDebugVars();
@@ -345,9 +415,7 @@ TEST(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheWhe
 }
 
 TEST(CompilerInterfaceCachedTests, givenKernelWithIncludesAndBinaryInCacheWhenCompilationRequestedThenFCLIsCalled) {
-    MockClDevice device{new MockDevice};
-    MockContext context(&device, true);
-    MockProgram program(*device.getExecutionEnvironment(), &context, false, nullptr);
+    MockDevice device{};
     TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
 
     auto src = "#include \"file.h\"\n__kernel k() {}";
@@ -363,7 +431,7 @@ TEST(CompilerInterfaceCachedTests, givenKernelWithIncludesAndBinaryInCacheWhenCo
     auto compilerInterface = std::unique_ptr<CompilerInterface>(CompilerInterface::createInstance(std::move(cache), true));
     TranslationOutput translationOutput;
     inputArgs.allowCaching = true;
-    auto retVal = compilerInterface->build(device.getDevice(), inputArgs, translationOutput);
+    auto retVal = compilerInterface->build(device, inputArgs, translationOutput);
     EXPECT_EQ(TranslationOutput::ErrorCode::BuildFailure, retVal);
 
     gEnvironment->fclPopDebugVars();

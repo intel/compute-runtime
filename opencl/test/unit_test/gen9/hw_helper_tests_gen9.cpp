@@ -1,47 +1,39 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/hw_helper_tests.h"
+#include "shared/test/unit_test/helpers/get_gpgpu_engines_tests.inl"
 
-#include "opencl/test/unit_test/helpers/get_gpgpu_engines_tests.inl"
-#include "opencl/test/unit_test/helpers/hw_helper_tests.h"
+#include "opencl/source/helpers/cl_hw_helper.h"
+#include "opencl/test/unit_test/mocks/mock_cl_hw_helper.h"
 
 using HwHelperTestGen9 = HwHelperTest;
 
-GEN9TEST_F(HwHelperTestGen9, getMaxBarriersPerSliceReturnsCorrectSize) {
+GEN9TEST_F(HwHelperTestGen9, WhenGettingMaxBarriersPerSliceThenCorrectSizeIsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_EQ(32u, helper.getMaxBarrierRegisterPerSlice());
 }
 
-GEN9TEST_F(HwHelperTestGen9, setCapabilityCoherencyFlag) {
+GEN9TEST_F(HwHelperTestGen9, givenGen9WhenCallIsPackedSupportedThenReturnFalse) {
     auto &helper = HwHelper::get(renderCoreFamily);
-
-    bool coherency = false;
-    helper.setCapabilityCoherencyFlag(&hardwareInfo, coherency);
-    EXPECT_TRUE(coherency);
+    EXPECT_FALSE(helper.packedFormatsSupported());
 }
 
-GEN9TEST_F(HwHelperTestGen9, getPitchAlignmentForImage) {
+GEN9TEST_F(HwHelperTestGen9, WhenGettingPitchAlignmentForImageThenCorrectValueIsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_EQ(4u, helper.getPitchAlignmentForImage(&hardwareInfo));
 }
 
-GEN9TEST_F(HwHelperTestGen9, adjustDefaultEngineType) {
+GEN9TEST_F(HwHelperTestGen9, WhenAdjustingDefaultEngineTypeThenEngineTypeIsSet) {
     auto engineType = hardwareInfo.capabilityTable.defaultEngineType;
     auto &helper = HwHelper::get(renderCoreFamily);
     helper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(engineType, hardwareInfo.capabilityTable.defaultEngineType);
-}
-
-GEN9TEST_F(HwHelperTestGen9, givenGen9PlatformWhenSetupHardwareCapabilitiesIsCalledThenDefaultImplementationIsUsed) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-
-    // Test default method implementation
-    testDefaultImplementationOfSetupHardwareCapabilities(helper, hardwareInfo);
 }
 
 GEN9TEST_F(HwHelperTestGen9, givenDebuggingActiveWhenSipKernelTypeIsQueriedThenDbgCsrLocalTypeIsReturned) {
@@ -53,7 +45,15 @@ GEN9TEST_F(HwHelperTestGen9, givenDebuggingActiveWhenSipKernelTypeIsQueriedThenD
 
 GEN9TEST_F(HwHelperTestGen9, whenGetGpgpuEnginesThenReturnThreeRcsEngines) {
     whenGetGpgpuEnginesThenReturnTwoRcsEngines<FamilyType>(pDevice->getHardwareInfo());
-    EXPECT_EQ(3u, pDevice->engines.size());
+    EXPECT_EQ(3u, pDevice->allEngines.size());
+}
+
+GEN9TEST_F(HwHelperTestGen9, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
+    EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(9, 0, 0), ClHwHelper::get(renderCoreFamily).getDeviceIpVersion(*defaultHwInfo));
+}
+
+GEN9TEST_F(HwHelperTestGen9, WhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue) {
+    EXPECT_EQ(0u, ClHwHelper::get(renderCoreFamily).getSupportedDeviceFeatureCapabilities(*defaultHwInfo));
 }
 
 using MemorySynchronizatiopCommandsTestsGen9 = ::testing::Test;
@@ -62,7 +62,7 @@ GEN9TEST_F(MemorySynchronizatiopCommandsTestsGen9, WhenProgrammingCacheFlushThen
     std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
 
     LinearStream stream(buffer.get(), 128);
-    MemorySynchronizationCommands<FamilyType>::addFullCacheFlush(stream);
+    MemorySynchronizationCommands<FamilyType>::addFullCacheFlush(stream, *defaultHwInfo);
     PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(buffer.get());
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_TRUE(pipeControl->getConstantCacheInvalidationEnable());

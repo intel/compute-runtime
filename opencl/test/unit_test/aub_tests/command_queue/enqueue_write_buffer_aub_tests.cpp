@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,11 +8,11 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -32,7 +32,7 @@ struct WriteBufferHw
 
 typedef WriteBufferHw AUBWriteBuffer;
 
-HWTEST_P(AUBWriteBuffer, simple) {
+HWTEST_P(AUBWriteBuffer, WhenWritingBufferThenExpectationsAreMet) {
     MockContext context(this->pCmdQ->getDevice().getSpecializedDevice<ClDevice>());
 
     cl_float *srcMemory = new float[1024];
@@ -161,7 +161,7 @@ struct AUBWriteBufferUnaligned
     }
 };
 
-HWTEST_F(AUBWriteBufferUnaligned, all) {
+HWTEST_F(AUBWriteBufferUnaligned, GivenOffsetAndSizeWhenWritingBufferThenExpectationsAreMet) {
     const std::vector<size_t> offsets = {0, 1, 2, 3};
     const std::vector<size_t> sizes = {4, 3, 2, 1};
     for (auto offset : offsets) {

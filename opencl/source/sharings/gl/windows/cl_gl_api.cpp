@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/utilities/api_intercept.h"
 
 #include "opencl/source/api/api.h"
@@ -14,7 +16,7 @@
 #include "opencl/source/context/context.h"
 #include "opencl/source/event/async_events_handler.h"
 #include "opencl/source/helpers/base_object.h"
-#include "opencl/source/helpers/validators.h"
+#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/mem_obj/mem_obj.h"
@@ -24,6 +26,7 @@
 #include "opencl/source/sharings/gl/gl_texture.h"
 #include "opencl/source/sharings/gl/windows/gl_sharing_windows.h"
 #include "opencl/source/tracing/tracing_notify.h"
+#include "opencl/source/utilities/cl_logger.h"
 
 #include "CL/cl.h"
 #include "CL/cl_gl.h"
@@ -32,154 +35,154 @@
 using namespace NEO;
 
 cl_mem CL_API_CALL clCreateFromGLBuffer(cl_context context, cl_mem_flags flags, cl_GLuint bufobj, cl_int *errcodeRet) {
-    TRACING_ENTER(clCreateFromGLBuffer, &context, &flags, &bufobj, &errcodeRet);
+    TRACING_ENTER(ClCreateFromGlBuffer, &context, &flags, &bufobj, &errcodeRet);
 
     API_ENTER(errcodeRet);
     DBG_LOG_INPUTS("context", context, "flags", flags, "bufobj", bufobj);
 
     Context *pContext = nullptr;
 
-    auto returnCode = validateObjects(WithCastToInternal(context, &pContext));
+    auto returnCode = validateObjects(withCastToInternal(context, &pContext));
 
     ErrorCodeHelper err(errcodeRet, returnCode);
 
     if (returnCode != CL_SUCCESS) {
         cl_mem buffer = nullptr;
-        TRACING_EXIT(clCreateFromGLBuffer, &buffer);
+        TRACING_EXIT(ClCreateFromGlBuffer, &buffer);
         return buffer;
     }
 
     if (pContext->getSharing<GLSharingFunctions>() == nullptr) {
         err.set(CL_INVALID_CONTEXT);
         cl_mem buffer = nullptr;
-        TRACING_EXIT(clCreateFromGLBuffer, &buffer);
+        TRACING_EXIT(ClCreateFromGlBuffer, &buffer);
         return buffer;
     }
 
     cl_mem buffer = GlBuffer::createSharedGlBuffer(pContext, flags, bufobj, errcodeRet);
-    TRACING_EXIT(clCreateFromGLBuffer, &buffer);
+    TRACING_EXIT(ClCreateFromGlBuffer, &buffer);
     return buffer;
 }
 
 cl_mem CL_API_CALL clCreateFromGLTexture(cl_context context, cl_mem_flags flags, cl_GLenum target, cl_GLint miplevel,
                                          cl_GLuint texture, cl_int *errcodeRet) {
-    TRACING_ENTER(clCreateFromGLTexture, &context, &flags, &target, &miplevel, &texture, &errcodeRet);
+    TRACING_ENTER(ClCreateFromGlTexture, &context, &flags, &target, &miplevel, &texture, &errcodeRet);
 
     API_ENTER(errcodeRet);
     DBG_LOG_INPUTS("context", context, "flags", flags, "target", target, "miplevel", miplevel, "texture", texture);
     Context *pContext = nullptr;
 
-    auto returnCode = validateObjects(WithCastToInternal(context, &pContext));
+    auto returnCode = validateObjects(withCastToInternal(context, &pContext));
 
     ErrorCodeHelper err(errcodeRet, returnCode);
     cl_mem image = nullptr;
 
     if (returnCode != CL_SUCCESS) {
-        TRACING_EXIT(clCreateFromGLTexture, &image);
+        TRACING_EXIT(ClCreateFromGlTexture, &image);
         return image;
     }
 
     if (pContext->getSharing<GLSharingFunctions>() == nullptr) {
         err.set(CL_INVALID_CONTEXT);
-        TRACING_EXIT(clCreateFromGLTexture, &image);
+        TRACING_EXIT(ClCreateFromGlTexture, &image);
         return image;
     }
     image = GlTexture::createSharedGlTexture(pContext, flags, target, miplevel, texture, errcodeRet);
     DBG_LOG_INPUTS("image", image);
-    TRACING_EXIT(clCreateFromGLTexture, &image);
+    TRACING_EXIT(ClCreateFromGlTexture, &image);
     return image;
 }
 
 // deprecated OpenCL 1.1
 cl_mem CL_API_CALL clCreateFromGLTexture2D(cl_context context, cl_mem_flags flags, cl_GLenum target, cl_GLint miplevel,
                                            cl_GLuint texture, cl_int *errcodeRet) {
-    TRACING_ENTER(clCreateFromGLTexture2D, &context, &flags, &target, &miplevel, &texture, &errcodeRet);
+    TRACING_ENTER(ClCreateFromGlTexture2D, &context, &flags, &target, &miplevel, &texture, &errcodeRet);
 
     API_ENTER(errcodeRet);
     DBG_LOG_INPUTS("context", context, "flags", flags, "target", target, "miplevel", miplevel, "texture", texture);
     Context *pContext = nullptr;
-    auto returnCode = validateObjects(WithCastToInternal(context, &pContext));
+    auto returnCode = validateObjects(withCastToInternal(context, &pContext));
 
     ErrorCodeHelper err(errcodeRet, returnCode);
     cl_mem image = nullptr;
 
     if (returnCode != CL_SUCCESS) {
-        TRACING_EXIT(clCreateFromGLTexture2D, &image);
+        TRACING_EXIT(ClCreateFromGlTexture2D, &image);
         return image;
     }
 
     if (pContext->getSharing<GLSharingFunctions>() == nullptr) {
         err.set(CL_INVALID_CONTEXT);
-        TRACING_EXIT(clCreateFromGLTexture2D, &image);
+        TRACING_EXIT(ClCreateFromGlTexture2D, &image);
         return image;
     }
 
     image = GlTexture::createSharedGlTexture(pContext, flags, target, miplevel, texture, errcodeRet);
     DBG_LOG_INPUTS("image", image);
-    TRACING_EXIT(clCreateFromGLTexture2D, &image);
+    TRACING_EXIT(ClCreateFromGlTexture2D, &image);
     return image;
 }
 
 // deprecated OpenCL 1.1
 cl_mem CL_API_CALL clCreateFromGLTexture3D(cl_context context, cl_mem_flags flags, cl_GLenum target, cl_GLint miplevel,
                                            cl_GLuint texture, cl_int *errcodeRet) {
-    TRACING_ENTER(clCreateFromGLTexture3D, &context, &flags, &target, &miplevel, &texture, &errcodeRet);
+    TRACING_ENTER(ClCreateFromGlTexture3D, &context, &flags, &target, &miplevel, &texture, &errcodeRet);
 
     API_ENTER(errcodeRet);
     DBG_LOG_INPUTS("context", context, "flags", flags, "target", target, "miplevel", miplevel, "texture", texture);
     Context *pContext = nullptr;
-    auto returnCode = validateObjects(WithCastToInternal(context, &pContext));
+    auto returnCode = validateObjects(withCastToInternal(context, &pContext));
 
     ErrorCodeHelper err(errcodeRet, returnCode);
     cl_mem image = nullptr;
 
     if (returnCode != CL_SUCCESS) {
-        TRACING_EXIT(clCreateFromGLTexture3D, &image);
+        TRACING_EXIT(ClCreateFromGlTexture3D, &image);
         return image;
     }
 
     if (pContext->getSharing<GLSharingFunctions>() == nullptr) {
         err.set(CL_INVALID_CONTEXT);
-        TRACING_EXIT(clCreateFromGLTexture3D, &image);
+        TRACING_EXIT(ClCreateFromGlTexture3D, &image);
         return image;
     }
 
     image = GlTexture::createSharedGlTexture(pContext, flags, target, miplevel, texture, errcodeRet);
     DBG_LOG_INPUTS("image", image);
-    TRACING_EXIT(clCreateFromGLTexture3D, &image);
+    TRACING_EXIT(ClCreateFromGlTexture3D, &image);
     return image;
 }
 
 cl_mem CL_API_CALL clCreateFromGLRenderbuffer(cl_context context, cl_mem_flags flags, cl_GLuint renderbuffer, cl_int *errcodeRet) {
-    TRACING_ENTER(clCreateFromGLRenderbuffer, &context, &flags, &renderbuffer, &errcodeRet);
+    TRACING_ENTER(ClCreateFromGlRenderbuffer, &context, &flags, &renderbuffer, &errcodeRet);
 
     API_ENTER(errcodeRet);
     DBG_LOG_INPUTS("context", context, "flags", flags, "renderbuffer", renderbuffer);
     Context *pContext = nullptr;
-    auto returnCode = validateObjects(WithCastToInternal(context, &pContext));
+    auto returnCode = validateObjects(withCastToInternal(context, &pContext));
 
     ErrorCodeHelper err(errcodeRet, returnCode);
 
     if (returnCode != CL_SUCCESS) {
         cl_mem buffer = nullptr;
-        TRACING_EXIT(clCreateFromGLRenderbuffer, &buffer);
+        TRACING_EXIT(ClCreateFromGlRenderbuffer, &buffer);
         return buffer;
     }
 
     if (pContext->getSharing<GLSharingFunctions>() == nullptr) {
         err.set(CL_INVALID_CONTEXT);
         cl_mem buffer = nullptr;
-        TRACING_EXIT(clCreateFromGLRenderbuffer, &buffer);
+        TRACING_EXIT(ClCreateFromGlRenderbuffer, &buffer);
         return buffer;
     }
 
     cl_mem buffer = GlTexture::createSharedGlTexture(pContext, flags, GL_RENDERBUFFER_EXT, 0, renderbuffer, errcodeRet);
-    TRACING_EXIT(clCreateFromGLRenderbuffer, &buffer);
+    TRACING_EXIT(ClCreateFromGlRenderbuffer, &buffer);
     return buffer;
 }
 
 cl_int CL_API_CALL clGetGLObjectInfo(cl_mem memobj, cl_gl_object_type *glObjectType, cl_GLuint *glObjectName) {
-    TRACING_ENTER(clGetGLObjectInfo, &memobj, &glObjectType, &glObjectName);
+    TRACING_ENTER(ClGetGlObjectInfo, &memobj, &glObjectType, &glObjectName);
     cl_int retValue = CL_SUCCESS;
     API_ENTER(&retValue);
     DBG_LOG_INPUTS("memobj", memobj, "glObjectType", glObjectType, "glObjectName", glObjectName);
@@ -191,49 +194,49 @@ cl_int CL_API_CALL clGetGLObjectInfo(cl_mem memobj, cl_gl_object_type *glObjectT
             handler->getGlObjectInfo(glObjectType, glObjectName);
         } else {
             retValue = CL_INVALID_GL_OBJECT;
-            TRACING_EXIT(clGetGLObjectInfo, &retValue);
+            TRACING_EXIT(ClGetGlObjectInfo, &retValue);
             return retValue;
         }
     }
-    TRACING_EXIT(clGetGLObjectInfo, &retValue);
+    TRACING_EXIT(ClGetGlObjectInfo, &retValue);
     return retValue;
 }
 
 cl_int CL_API_CALL clGetGLTextureInfo(cl_mem memobj, cl_gl_texture_info paramName, size_t paramValueSize, void *paramValue,
                                       size_t *paramValueSizeRet) {
-    TRACING_ENTER(clGetGLTextureInfo, &memobj, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
+    TRACING_ENTER(ClGetGlTextureInfo, &memobj, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     cl_int retValue = CL_SUCCESS;
     API_ENTER(&retValue);
     DBG_LOG_INPUTS("memobj", memobj, "paramName", paramName, "paramValueSize", paramValueSize, "paramValueSize",
-                   FileLoggerInstance().infoPointerToString(paramValue, paramValueSize), "paramValueSizeRet",
-                   FileLoggerInstance().getInput(paramValueSizeRet, 0));
+                   fileLoggerInstance().infoPointerToString(paramValue, paramValueSize), "paramValueSizeRet",
+                   fileLoggerInstance().getInput(paramValueSizeRet, 0));
     retValue = validateObjects(memobj);
     if (retValue == CL_SUCCESS) {
         auto pMemObj = castToObject<MemObj>(memobj);
         auto glTexture = (GlTexture *)pMemObj->peekSharingHandler();
         retValue = glTexture->getGlTextureInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
     }
-    TRACING_EXIT(clGetGLTextureInfo, &retValue);
+    TRACING_EXIT(ClGetGlTextureInfo, &retValue);
     return retValue;
 }
 
 cl_int CL_API_CALL clEnqueueAcquireGLObjects(cl_command_queue commandQueue, cl_uint numObjects, const cl_mem *memObjects,
                                              cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {
-    TRACING_ENTER(clEnqueueAcquireGLObjects, &commandQueue, &numObjects, &memObjects, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueAcquireGlObjects, &commandQueue, &numObjects, &memObjects, &numEventsInWaitList, &eventWaitList, &event);
 
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue, "numObjects", numObjects, "memObjects", memObjects, "numEventsInWaitList",
                    numEventsInWaitList, "eventWaitList",
-                   FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList), "event",
-                   FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
+                   getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList), "event",
+                   getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
     CommandQueue *pCommandQueue = nullptr;
-    retVal = validateObjects(WithCastToInternal(commandQueue, &pCommandQueue), EventWaitList(numEventsInWaitList, eventWaitList));
+    retVal = validateObjects(withCastToInternal(commandQueue, &pCommandQueue), EventWaitList(numEventsInWaitList, eventWaitList));
 
     if (retVal == CL_SUCCESS) {
         if (pCommandQueue->getContext().getSharing<GLSharingFunctions>() == nullptr) {
             retVal = CL_INVALID_CONTEXT;
-            TRACING_EXIT(clEnqueueAcquireGLObjects, &retVal);
+            TRACING_EXIT(ClEnqueueAcquireGlObjects, &retVal);
             return retVal;
         }
 
@@ -250,27 +253,27 @@ cl_int CL_API_CALL clEnqueueAcquireGLObjects(cl_command_queue commandQueue, cl_u
                                                             CL_COMMAND_ACQUIRE_GL_OBJECTS);
     }
 
-    TRACING_EXIT(clEnqueueAcquireGLObjects, &retVal);
+    TRACING_EXIT(ClEnqueueAcquireGlObjects, &retVal);
     return retVal;
 }
 
 cl_int CL_API_CALL clEnqueueReleaseGLObjects(cl_command_queue commandQueue, cl_uint numObjects, const cl_mem *memObjects,
                                              cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {
-    TRACING_ENTER(clEnqueueReleaseGLObjects, &commandQueue, &numObjects, &memObjects, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueReleaseGlObjects, &commandQueue, &numObjects, &memObjects, &numEventsInWaitList, &eventWaitList, &event);
 
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue, "numObjects", numObjects, "memObjects", memObjects, "numEventsInWaitList",
                    numEventsInWaitList, "eventWaitList",
-                   FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList), "event",
-                   FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
+                   getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList), "event",
+                   getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
     CommandQueue *pCommandQueue = nullptr;
-    retVal = validateObjects(WithCastToInternal(commandQueue, &pCommandQueue), EventWaitList(numEventsInWaitList, eventWaitList));
+    retVal = validateObjects(withCastToInternal(commandQueue, &pCommandQueue), EventWaitList(numEventsInWaitList, eventWaitList));
 
     if (retVal == CL_SUCCESS) {
         if (pCommandQueue->getContext().getSharing<GLSharingFunctions>() == nullptr) {
             retVal = CL_INVALID_CONTEXT;
-            TRACING_EXIT(clEnqueueReleaseGLObjects, &retVal);
+            TRACING_EXIT(ClEnqueueReleaseGlObjects, &retVal);
             return retVal;
         }
 
@@ -279,7 +282,7 @@ cl_int CL_API_CALL clEnqueueReleaseGLObjects(cl_command_queue commandQueue, cl_u
                                                             CL_COMMAND_RELEASE_GL_OBJECTS);
     }
 
-    TRACING_EXIT(clEnqueueReleaseGLObjects, &retVal);
+    TRACING_EXIT(ClEnqueueReleaseGlObjects, &retVal);
     return retVal;
 }
 
@@ -287,7 +290,7 @@ cl_event CL_API_CALL clCreateEventFromGLsyncKHR(cl_context context, cl_GLsync sy
     API_ENTER(errcodeRet);
     DBG_LOG_INPUTS("context", context, "sync", sync);
     Context *pContext = nullptr;
-    auto returnCode = validateObjects(WithCastToInternal(context, &pContext));
+    auto returnCode = validateObjects(withCastToInternal(context, &pContext));
 
     ErrorCodeHelper err(errcodeRet, returnCode);
 
@@ -308,8 +311,8 @@ cl_int CL_API_CALL clGetGLContextInfoKHR(const cl_context_properties *properties
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("properties", properties, "paramName", paramName, "paramValueSize", paramValueSize, "paramValue",
-                   FileLoggerInstance().infoPointerToString(paramValue, paramValueSize), "paramValueSizeRet",
-                   FileLoggerInstance().getInput(paramValueSizeRet, 0));
+                   fileLoggerInstance().infoPointerToString(paramValue, paramValueSize), "paramValueSizeRet",
+                   fileLoggerInstance().getInput(paramValueSizeRet, 0));
     GetInfoHelper info(paramValue, paramValueSize, paramValueSizeRet);
 
     uint32_t GLHGLRCHandle = 0;
@@ -350,11 +353,23 @@ cl_int CL_API_CALL clGetGLContextInfoKHR(const cl_context_properties *properties
     }
 
     if (paramName == CL_DEVICES_FOR_GL_CONTEXT_KHR || paramName == CL_CURRENT_DEVICE_FOR_GL_CONTEXT_KHR) {
-        if (platform) {
-            info.set<cl_device_id>(platform->getClDevice(0));
-        } else {
-            info.set<cl_device_id>(platformsImpl[0]->getClDevice(0));
+        if (!platform) {
+            platform = (*platformsImpl)[0].get();
         }
+
+        ClDevice *deviceToReturn = nullptr;
+        for (auto i = 0u; i < platform->getNumDevices(); i++) {
+            auto device = platform->getClDevice(i);
+            if (device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<Wddm>()->verifyAdapterLuid(glSharing->getAdapterLuid(reinterpret_cast<GLContext>(static_cast<uintptr_t>(GLHGLRCHandle))))) {
+                deviceToReturn = device;
+                break;
+            }
+        }
+        if (!deviceToReturn) {
+            retVal = CL_INVALID_GL_SHAREGROUP_REFERENCE_KHR;
+            return retVal;
+        }
+        info.set<cl_device_id>(deviceToReturn);
         return retVal;
     }
 

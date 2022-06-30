@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/gmm_helper/gmm_lib.h"
-#include "shared/source/sku_info/operations/sku_info_transfer.h"
 
 #include "sku_info.h"
 
@@ -19,7 +18,7 @@ class SkuInfoTransfer {
 
   protected:
     static void transferFtrTableForGmmBase(_SKU_FEATURE_TABLE *dstFtrTable, const NEO::FeatureTable *srcFtrTable) {
-#define TRANSFER_FTR_TO_GMM(VAL_NAME) dstFtrTable->Ftr##VAL_NAME = srcFtrTable->ftr##VAL_NAME
+#define TRANSFER_FTR_TO_GMM(VAL_NAME) dstFtrTable->Ftr##VAL_NAME = srcFtrTable->flags.ftr##VAL_NAME
         TRANSFER_FTR_TO_GMM(StandardMipTailFormat);
         TRANSFER_FTR_TO_GMM(ULT);
         TRANSFER_FTR_TO_GMM(EDram);
@@ -29,8 +28,6 @@ class SkuInfoTransfer {
         TRANSFER_FTR_TO_GMM(TileY);
         TRANSFER_FTR_TO_GMM(DisplayYTiling);
         TRANSFER_FTR_TO_GMM(Fbc);
-        TRANSFER_FTR_TO_GMM(VERing);
-        TRANSFER_FTR_TO_GMM(Vcs2);
         TRANSFER_FTR_TO_GMM(LCIA);
         TRANSFER_FTR_TO_GMM(IA32eGfxPTEs);
         TRANSFER_FTR_TO_GMM(Wddm2GpuMmu);
@@ -45,12 +42,20 @@ class SkuInfoTransfer {
         TRANSFER_FTR_TO_GMM(CCSNode);
         TRANSFER_FTR_TO_GMM(MemTypeMocsDeferPAT);
         TRANSFER_FTR_TO_GMM(LocalMemory);
+        TRANSFER_FTR_TO_GMM(LocalMemoryAllows4KB);
+        TRANSFER_FTR_TO_GMM(SVM);
+        TRANSFER_FTR_TO_GMM(FlatPhysCCS);
+        TRANSFER_FTR_TO_GMM(MultiTileArch);
+        TRANSFER_FTR_TO_GMM(CCSMultiInstance);
+        TRANSFER_FTR_TO_GMM(Ppgtt64KBWalkOptimization);
+        TRANSFER_FTR_TO_GMM(Unified3DMediaCompressionFormats);
+        TRANSFER_FTR_TO_GMM(57bGPUAddressing);
 
 #undef TRANSFER_FTR_TO_GMM
     }
 
     static void transferWaTableForGmmBase(_WA_TABLE *dstWaTable, const NEO::WorkaroundTable *srcWaTable) {
-#define TRANSFER_WA_TO_GMM(VAL_NAME) dstWaTable->Wa##VAL_NAME = srcWaTable->wa##VAL_NAME
+#define TRANSFER_WA_TO_GMM(VAL_NAME) dstWaTable->Wa##VAL_NAME = srcWaTable->flags.wa##VAL_NAME
         TRANSFER_WA_TO_GMM(FbcLinearSurfaceStride);
         TRANSFER_WA_TO_GMM(DisableEdramForDisplayRT);
         TRANSFER_WA_TO_GMM(EncryptedEdramOnlyPartials);
@@ -59,6 +64,8 @@ class SkuInfoTransfer {
         TRANSFER_WA_TO_GMM(AuxTable16KGranular);
         TRANSFER_WA_TO_GMM(Limit128BMediaCompr);
         TRANSFER_WA_TO_GMM(UntypedBufferCompression);
+        TRANSFER_WA_TO_GMM(AuxTable64KGranular);
+
 #undef TRANSFER_WA_TO_GMM
     }
 };

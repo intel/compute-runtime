@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -19,7 +20,14 @@ GEN11TEST_F(Gen11KernelTest, givenKernelWhenCanTransformImagesIsCalledThenReturn
     EXPECT_TRUE(retVal);
 }
 
-using Gen11HardwareCommandsTest = testing::Test;
-GEN11TEST_F(Gen11HardwareCommandsTest, givenGen11PlatformWhenDoBindingTablePrefetchIsCalledThenReturnsFalse) {
-    EXPECT_FALSE(HardwareCommandsHelper<FamilyType>::doBindingTablePrefetch());
+GEN11TEST_F(Gen11KernelTest, givenBuiltinKernelWhenCanTransformImagesIsCalledThenReturnsFalse) {
+    MockKernelWithInternals mockKernel(*pClDevice);
+    mockKernel.mockKernel->isBuiltIn = true;
+    auto retVal = mockKernel.mockKernel->Kernel::canTransformImages();
+    EXPECT_FALSE(retVal);
+}
+
+GEN11TEST_F(Gen11KernelTest, GivenKernelWhenNotRunningOnGen12lpThenWaDisableRccRhwoOptimizationIsNotRequired) {
+    MockKernelWithInternals kernel(*pClDevice);
+    EXPECT_FALSE(kernel.mockKernel->requiresWaDisableRccRhwoOptimization());
 }

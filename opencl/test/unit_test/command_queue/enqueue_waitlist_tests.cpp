@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,23 +9,23 @@
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 
-class clEventWrapper {
+class ClEventWrapper {
   public:
-    clEventWrapper() { mMem = NULL; }
-    clEventWrapper(cl_event mem) { mMem = mem; }
-    clEventWrapper(const clEventWrapper &rhs) : mMem(rhs.mMem) {
+    ClEventWrapper() { mMem = NULL; }
+    ClEventWrapper(cl_event mem) { mMem = mem; }
+    ClEventWrapper(const ClEventWrapper &rhs) : mMem(rhs.mMem) {
         if (mMem != NULL)
             clRetainEvent(mMem);
     }
-    ~clEventWrapper() {
+    ~ClEventWrapper() {
         if (mMem != NULL)
             clReleaseEvent(mMem);
     }
-    clEventWrapper &operator=(const cl_event &rhs) {
+    ClEventWrapper &operator=(const cl_event &rhs) {
         mMem = rhs;
         return *this;
     }
-    clEventWrapper &operator=(clEventWrapper rhs) {
+    ClEventWrapper &operator=(ClEventWrapper rhs) {
         std::swap(mMem, rhs.mMem);
         return *this;
     }
@@ -59,7 +59,7 @@ struct EnqueueWaitlistTest : public EnqueueWaitlistFixture,
     void SetUp() override {
         EnqueueWaitlistFixture::SetUp();
         buffer = BufferHelper<>::create();
-        bufferNonZeroCopy = new UnalignedBuffer;
+        bufferNonZeroCopy = new UnalignedBuffer(BufferDefaults::context, &bufferNonZeroCopyAlloc);
         image = Image1dHelper<>::create(BufferDefaults::context);
         imageNonZeroCopy = ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(BufferDefaults::context);
     }
@@ -75,71 +75,72 @@ struct EnqueueWaitlistTest : public EnqueueWaitlistFixture,
     cl_int retVal = CL_SUCCESS;
     cl_int error = CL_SUCCESS;
 
+    MockGraphicsAllocation bufferNonZeroCopyAlloc{nullptr, MemoryConstants::pageSize};
     Buffer *buffer;
     Buffer *bufferNonZeroCopy;
     Image *image;
     Image *imageNonZeroCopy;
 
-    void test_error(cl_int error, std::string str) {
+    void testError(cl_int error, std::string str) {
         EXPECT_EQ(CL_SUCCESS, error) << str << std::endl;
     }
 
-    static void EnqueueNDRange(EnqueueWaitlistTest *test, cl_uint numWaits, cl_event *waits, cl_event *outEvent, bool blocking = false) {
+    static void enqueueNDRange(EnqueueWaitlistTest *test, cl_uint numWaits, cl_event *waits, cl_event *outEvent, bool blocking = false) {
         size_t threadNum = 10;
         size_t threads[1] = {threadNum};
-        cl_int error = clEnqueueNDRangeKernel(test->pCmdQ, test->pKernel, 1, NULL, threads, threads, numWaits, waits, outEvent);
-        test->test_error(error, "Unable to execute kernel");
+        cl_int error = clEnqueueNDRangeKernel(test->pCmdQ, test->pMultiDeviceKernel, 1, NULL, threads, threads, numWaits, waits, outEvent);
+        test->testError(error, "Unable to execute kernel");
         return;
     }
 
-    static void EnqueueMapBuffer(EnqueueWaitlistTest *test, cl_uint numWaits, cl_event *waits, cl_event *outEvent, bool blocking = false) {
+    static void enqueueMapBuffer(EnqueueWaitlistTest *test, cl_uint numWaits, cl_event *waits, cl_event *outEvent, bool blocking = false) {
         cl_int error;
         void *mappedPtr = clEnqueueMapBuffer(test->pCmdQ, test->buffer, blocking ? CL_TRUE : CL_FALSE, CL_MAP_READ, 0, test->buffer->getSize(), numWaits, waits, outEvent, &error);
         EXPECT_NE(nullptr, mappedPtr);
-        test->test_error(error, "Unable to enqueue buffer map");
+        test->testError(error, "Unable to enqueue buffer map");
         error = clEnqueueUnmapMemObject(test->pCmdQ, test->buffer, mappedPtr, 0, nullptr, nullptr);
         return;
     }
 
-    static void TwoEnqueueMapBuffer(EnqueueWaitlistTest *test, cl_uint numWaits, cl_event *waits, cl_event *outEvent, bool blocking = false) {
+    static void twoEnqueueMapBuffer(EnqueueWaitlistTest *test, cl_uint numWaits, cl_event *waits, cl_event *outEvent, bool blocking = false) {
         cl_int error;
         void *mappedPtr = clEnqueueMapBuffer(test->pCmdQ, test->buffer, blocking ? CL_TRUE : CL_FALSE, CL_MAP_READ, 0, test->buffer->getSize(), numWaits, waits, outEvent, &error);
         EXPECT_NE(nullptr, mappedPtr);
-        test->test_error(error, "Unable to enqueue buffer map");
+        test->testError(error, "Unable to enqueue buffer map");
 
         void *mappedPtr2 = clEnqueueMapBuffer(test->pCmdQ, test->bufferNonZeroCopy, blocking ? CL_TRUE : CL_FALSE, CL_MAP_READ, 0, test->bufferNonZeroCopy->getSize(), 0, nullptr, nullptr, &error);
         EXPECT_NE(nullptr, mappedPtr2);
-        test->test_error(error, "Unable to enqueue buffer map");
+        test->testError(error, "Unable to enqueue buffer map");
 
         error = clEnqueueUnmapMemObject(test->pCmdQ, test->buffer, mappedPtr, 0, nullptr, nullptr);
         error = clEnqueueUnmapMemObject(test->pCmdQ, test->bufferNonZeroCopy, mappedPtr2, 0, nullptr, nullptr);
 
         return;
     }
-    static void EnqueueUnMapBuffer(EnqueueWaitlistTest *test, cl_uint numWaits, cl_event *waits, cl_event *outEvent, bool blocking = false) {
+    static void enqueueUnMapBuffer(EnqueueWaitlistTest *test, cl_uint numWaits, cl_event *waits, cl_event *outEvent, bool blocking = false) {
         cl_int error;
         void *mappedPtr = clEnqueueMapBuffer(test->pCmdQ, test->buffer, CL_TRUE, CL_MAP_READ, 0, test->buffer->getSize(), 0, nullptr, nullptr, &error);
         EXPECT_NE(nullptr, mappedPtr);
         ASSERT_NE(test->buffer, nullptr);
         error = clEnqueueUnmapMemObject(test->pCmdQ, test->buffer, mappedPtr, numWaits, waits, outEvent);
-        test->test_error(error, "Unable to unmap buffer");
+        test->testError(error, "Unable to unmap buffer");
         return;
     }
-    static void EnqueueMapImage(EnqueueWaitlistTest *test, cl_uint numWaits, cl_event *waits, cl_event *outEvent, bool blocking = false) {
+    static void enqueueMapImage(EnqueueWaitlistTest *test, cl_uint numWaits, cl_event *waits, cl_event *outEvent, bool blocking = false) {
         cl_int error;
         cl_image_desc desc = test->image->getImageDesc();
         size_t origin[3] = {0, 0, 0}, region[3] = {desc.image_width, desc.image_height, 1};
         size_t outPitch;
 
         void *mappedPtr = clEnqueueMapImage(test->pCmdQ, test->image, blocking ? CL_TRUE : CL_FALSE, CL_MAP_READ, origin, region, &outPitch, NULL, numWaits, waits, outEvent, &error);
-        test->test_error(error, "Unable to enqueue image map");
+        test->testError(error, "Unable to enqueue image map");
         EXPECT_NE(nullptr, mappedPtr);
-        test->test_error(error, "Unable to enqueue buffer map");
+        test->testError(error, "Unable to enqueue buffer map");
         error = clEnqueueUnmapMemObject(test->pCmdQ, test->image, mappedPtr, 0, nullptr, nullptr);
         return;
     }
 
-    static void TwoEnqueueMapImage(EnqueueWaitlistTest *test, cl_uint numWaits, cl_event *waits, cl_event *outEvent, bool blocking = false) {
+    static void twoEnqueueMapImage(EnqueueWaitlistTest *test, cl_uint numWaits, cl_event *waits, cl_event *outEvent, bool blocking = false) {
         cl_int error;
         cl_image_desc desc = test->image->getImageDesc();
         size_t origin[3] = {0, 0, 0}, region[3] = {desc.image_width, desc.image_height, 1};
@@ -149,14 +150,14 @@ struct EnqueueWaitlistTest : public EnqueueWaitlistFixture,
         size_t outPitch2;
 
         void *mappedPtr = clEnqueueMapImage(test->pCmdQ, test->image, blocking ? CL_TRUE : CL_FALSE, CL_MAP_READ, origin, region, &outPitch, NULL, numWaits, waits, outEvent, &error);
-        test->test_error(error, "Unable to enqueue image map");
+        test->testError(error, "Unable to enqueue image map");
         EXPECT_NE(nullptr, mappedPtr);
-        test->test_error(error, "Unable to enqueue buffer map");
+        test->testError(error, "Unable to enqueue buffer map");
 
         void *mappedPtr2 = clEnqueueMapImage(test->pCmdQ, test->imageNonZeroCopy, blocking ? CL_TRUE : CL_FALSE, CL_MAP_READ, origin2, region2, &outPitch2, NULL, 0, nullptr, nullptr, &error);
-        test->test_error(error, "Unable to enqueue image map");
+        test->testError(error, "Unable to enqueue image map");
         EXPECT_NE(nullptr, mappedPtr2);
-        test->test_error(error, "Unable to enqueue buffer map");
+        test->testError(error, "Unable to enqueue buffer map");
 
         error = clEnqueueUnmapMemObject(test->pCmdQ, test->image, mappedPtr, 0, nullptr, nullptr);
         error = clEnqueueUnmapMemObject(test->pCmdQ, test->imageNonZeroCopy, mappedPtr2, 0, nullptr, nullptr);
@@ -164,36 +165,36 @@ struct EnqueueWaitlistTest : public EnqueueWaitlistFixture,
     }
 };
 
-TEST_P(EnqueueWaitlistTest, BlockingWaitlist) {
+TEST_P(EnqueueWaitlistTest, GivenCompletedUserEventOnWaitlistWhenWaitingForOutputEventThenOutputEventIsCompleted) {
 
     // Set up a user event, which we use as a gate for the second event
-    clEventWrapper gateEvent = clCreateUserEvent(context, &error);
-    test_error(error, "Unable to set up user gate event");
+    ClEventWrapper gateEvent = clCreateUserEvent(context, &error);
+    testError(error, "Unable to set up user gate event");
 
     // Set up the execution of the action with its actual event
-    clEventWrapper actualEvent;
+    ClEventWrapper actualEvent;
 
     // call the function to execute
     GetParam()(this, 1, &gateEvent, &actualEvent, false);
 
     // Now release the user event, which will allow our actual action to run
     error = clSetUserEventStatus(gateEvent, CL_COMPLETE);
-    test_error(error, "Unable to trigger gate event");
+    testError(error, "Unable to trigger gate event");
 
     // Now we wait for completion. Note that we can actually wait on the event itself, at least at first
     error = clWaitForEvents(1, &actualEvent);
-    test_error(error, "Unable to wait for actual test event");
+    testError(error, "Unable to wait for actual test event");
 }
 
 typedef EnqueueWaitlistTest EnqueueWaitlistTestTwoMapEnqueues;
-TEST_P(EnqueueWaitlistTestTwoMapEnqueues, TestPreviousVirtualEvent) {
+TEST_P(EnqueueWaitlistTestTwoMapEnqueues, GivenCompletedUserEventOnWaitlistWhenWaitingForOutputEventThenOutputEventIsCompleted) {
 
     // Set up a user event, which we use as a gate for the second event
-    clEventWrapper gateEvent = clCreateUserEvent(context, &error);
-    test_error(error, "Unable to set up user gate event");
+    ClEventWrapper gateEvent = clCreateUserEvent(context, &error);
+    testError(error, "Unable to set up user gate event");
 
     // Set up the execution of the action with its actual event
-    clEventWrapper actualEvent;
+    ClEventWrapper actualEvent;
 
     // call the function to execute
     GetParam()(this, 1, &gateEvent, &actualEvent, false);
@@ -203,38 +204,38 @@ TEST_P(EnqueueWaitlistTestTwoMapEnqueues, TestPreviousVirtualEvent) {
 
     // Now we wait for completion. Note that we can actually wait on the event itself, at least at first
     error = clWaitForEvents(1, &actualEvent);
-    test_error(error, "Unable to wait for actual test event");
+    testError(error, "Unable to wait for actual test event");
 }
 
-TEST_P(EnqueueWaitlistTest, BlockingWaitlistNoOutEvent) {
+TEST_P(EnqueueWaitlistTest, GivenCompletedUserEventOnWaitlistWhenFinishingCommandQueueThenSuccessIsReturned) {
 
     // Set up a user event, which we use as a gate for the second event
-    clEventWrapper gateEvent = clCreateUserEvent(context, &error);
-    test_error(error, "Unable to set up user gate event");
+    ClEventWrapper gateEvent = clCreateUserEvent(context, &error);
+    testError(error, "Unable to set up user gate event");
 
     // call the function to execute
     GetParam()(this, 1, &gateEvent, nullptr, false);
 
     // Now release the user event, which will allow our actual action to run
     error = clSetUserEventStatus(gateEvent, CL_COMPLETE);
-    test_error(error, "Unable to trigger gate event");
+    testError(error, "Unable to trigger gate event");
 
     // Now we wait for completion. Note that we can actually wait on the event itself, at least at first
     error = clFinish(pCmdQ);
-    test_error(error, "Finish FAILED");
+    testError(error, "Finish FAILED");
 }
 
 ExecuteEnqueue Enqueues[] =
     {
-        &EnqueueWaitlistTest::EnqueueNDRange,
-        &EnqueueWaitlistTest::EnqueueMapBuffer,
-        &EnqueueWaitlistTest::EnqueueUnMapBuffer,
-        &EnqueueWaitlistTest::EnqueueMapImage};
+        &EnqueueWaitlistTest::enqueueNDRange,
+        &EnqueueWaitlistTest::enqueueMapBuffer,
+        &EnqueueWaitlistTest::enqueueUnMapBuffer,
+        &EnqueueWaitlistTest::enqueueMapImage};
 
 ExecuteEnqueue TwoEnqueueMap[] =
     {
-        &EnqueueWaitlistTest::TwoEnqueueMapBuffer,
-        &EnqueueWaitlistTest::TwoEnqueueMapImage};
+        &EnqueueWaitlistTest::twoEnqueueMapBuffer,
+        &EnqueueWaitlistTest::twoEnqueueMapImage};
 
 INSTANTIATE_TEST_CASE_P(
     UnblockedEvent,

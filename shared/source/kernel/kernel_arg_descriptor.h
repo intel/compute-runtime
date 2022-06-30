@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -214,7 +214,7 @@ inline const ArgDescValue &ArgDescriptor::as<ArgDescValue>() const {
 
 template <>
 inline ArgDescPointer &ArgDescriptor::as<ArgDescPointer>(bool initIfUnknown) {
-    if ((ArgTUnknown == type) & initIfUnknown) {
+    if ((ArgTUnknown == type) && initIfUnknown) {
         this->type = ArgTPointer;
         this->asPointer = {};
     }
@@ -224,7 +224,7 @@ inline ArgDescPointer &ArgDescriptor::as<ArgDescPointer>(bool initIfUnknown) {
 
 template <>
 inline ArgDescImage &ArgDescriptor::as<ArgDescImage>(bool initIfUnknown) {
-    if ((ArgTUnknown == type) & initIfUnknown) {
+    if ((ArgTUnknown == type) && initIfUnknown) {
         this->type = ArgTImage;
         this->asImage = {};
     }
@@ -234,7 +234,7 @@ inline ArgDescImage &ArgDescriptor::as<ArgDescImage>(bool initIfUnknown) {
 
 template <>
 inline ArgDescSampler &ArgDescriptor::as<ArgDescSampler>(bool initIfUnknown) {
-    if ((ArgTUnknown == type) & initIfUnknown) {
+    if ((ArgTUnknown == type) && initIfUnknown) {
         this->type = ArgTSampler;
         this->asSampler = {};
     }
@@ -244,7 +244,7 @@ inline ArgDescSampler &ArgDescriptor::as<ArgDescSampler>(bool initIfUnknown) {
 
 template <>
 inline ArgDescValue &ArgDescriptor::as<ArgDescValue>(bool initIfUnknown) {
-    if ((ArgTUnknown == type) & initIfUnknown) {
+    if ((ArgTUnknown == type) && initIfUnknown) {
         this->type = ArgTValue;
         this->asByValue = {};
     }
@@ -259,13 +259,13 @@ inline void setOffsetsVec(CrossThreadDataOffset (&dst)[VecSize], const T (&src)[
     }
 }
 
-template <typename T>
-inline bool patchNonPointer(ArrayRef<uint8_t> buffer, CrossThreadDataOffset location, const T &value) {
+template <typename DstT, typename SrcT>
+inline bool patchNonPointer(ArrayRef<uint8_t> buffer, CrossThreadDataOffset location, const SrcT &value) {
     if (undefined<CrossThreadDataOffset> == location) {
         return false;
     }
-    UNRECOVERABLE_IF(location + sizeof(T) > buffer.size());
-    *reinterpret_cast<T *>(buffer.begin() + location) = value;
+    UNRECOVERABLE_IF(location + sizeof(DstT) > buffer.size());
+    *reinterpret_cast<DstT *>(buffer.begin() + location) = static_cast<DstT>(value);
     return true;
 }
 
@@ -273,17 +273,17 @@ template <uint32_t VecSize, typename T>
 inline uint32_t patchVecNonPointer(ArrayRef<uint8_t> buffer, const CrossThreadDataOffset (&location)[VecSize], const T (&value)[VecSize]) {
     uint32_t numPatched = 0;
     for (uint32_t i = 0; i < VecSize; ++i) {
-        numPatched += patchNonPointer(buffer, location[i], value[i]) ? 1 : 0;
+        numPatched += patchNonPointer<T, T>(buffer, location[i], value[i]) ? 1 : 0;
     }
     return numPatched;
 }
 
 inline bool patchPointer(ArrayRef<uint8_t> buffer, const ArgDescPointer &arg, uintptr_t value) {
     if (arg.pointerSize == 8) {
-        return patchNonPointer(buffer, arg.stateless, static_cast<uint64_t>(value));
+        return patchNonPointer<uint64_t, uint64_t>(buffer, arg.stateless, static_cast<uint64_t>(value));
     } else {
-        UNRECOVERABLE_IF(arg.pointerSize != 4);
-        return patchNonPointer(buffer, arg.stateless, static_cast<uint32_t>(value));
+        UNRECOVERABLE_IF((arg.pointerSize != 4) && isValidOffset(arg.stateless));
+        return patchNonPointer<uint32_t, uint32_t>(buffer, arg.stateless, static_cast<uint32_t>(value));
     }
 }
 

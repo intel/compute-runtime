@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
@@ -14,7 +16,6 @@
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -119,6 +120,28 @@ HWTEST_F(BarrierTest, GivenEventWhenEnqueingBarrierWithWaitListThenEventIsSetupC
 
         delete pEvent;
     }
+}
+
+HWTEST_F(BarrierTest, GivenGpuHangAndBlockingCallWhenEnqueingBarrierWithWaitListThenOutOfResourcesIsReturned) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    cl_queue_properties props = {};
+
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    cl_uint numEventsInWaitList = 0;
+    const cl_event *eventWaitList = nullptr;
+
+    const auto enqueueResult = mockCommandQueueHw.enqueueBarrierWithWaitList(
+        numEventsInWaitList,
+        eventWaitList,
+        nullptr);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
+    EXPECT_EQ(1, mockCommandQueueHw.waitForAllEnginesCalledCount);
 }
 
 HWTEST_F(BarrierTest, WhenEnqueingBarrierWithWaitListThenReturnedEventShouldHaveEqualDepth) {
@@ -268,7 +291,7 @@ HWTEST_F(BarrierTest, givenEmptyCommandStreamAndBlockedBarrierCommandWhenUserEve
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Consume all memory except what is needed for this enqueue
-    size_t barrierCmdStreamSize = NEO::EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_BARRIER, false, false, *pCmdQ, nullptr);
+    size_t barrierCmdStreamSize = NEO::EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_BARRIER, false, false, *pCmdQ, nullptr, {});
     commandStream.getSpace(commandStream.getMaxAvailableSpace() - barrierCmdStreamSize);
 
     //now trigger event

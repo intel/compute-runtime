@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,7 @@
 
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/utilities/range.h"
-
-#include "test.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO::Elf;
 
@@ -401,10 +400,10 @@ TEST(ElfEncoder, WhenDefaultAlignmentIsRaisedThenSegmentDataAbideByIt) {
     auto &header64 = *reinterpret_cast<ElfFileHeader<EI_CLASS_64> *>(elfData64.data());
     auto sectionHeaders = reinterpret_cast<NEO::Elf::ElfSectionHeader<EI_CLASS_64> *>(elfData64.data() + static_cast<size_t>(header64.shOff));
     auto programHeaders = reinterpret_cast<NEO::Elf::ElfProgramHeader<EI_CLASS_64> *>(elfData64.data() + static_cast<size_t>(header64.phOff));
-    for (const auto &section : NEO::CreateRange(sectionHeaders, header64.shNum)) {
+    for (const auto &section : NEO::createRange(sectionHeaders, header64.shNum)) {
         EXPECT_EQ(0U, section.offset % 8U);
     }
-    for (const auto &segment : NEO::CreateRange(programHeaders, header64.phNum)) {
+    for (const auto &segment : NEO::createRange(programHeaders, header64.phNum)) {
         EXPECT_EQ(0U, segment.offset % alignment);
         EXPECT_LE(alignment, segment.align);
     }
@@ -442,9 +441,9 @@ TEST(ElfEncoder, WhenAppendingEmptySectionNameThenAlwaysReturn0AsOffset) {
 
 TEST(ElfEncoder, WhenAppendingSectionNameThenEmplacedStringIsAlwaysNullterminated) {
     ElfEncoder<EI_CLASS_64> elfEncoder64(true, true);
-    auto strOffset = elfEncoder64.appendSectionName(ConstStringRef("abc", 2));
-    auto strOffset2 = elfEncoder64.appendSectionName(ConstStringRef("de", 3));
-    auto strOffset3 = elfEncoder64.appendSectionName(ConstStringRef("g"));
+    auto strOffset = elfEncoder64.appendSectionName(NEO::ConstStringRef("abc", 2));
+    auto strOffset2 = elfEncoder64.appendSectionName(NEO::ConstStringRef("de", 3));
+    auto strOffset3 = elfEncoder64.appendSectionName(NEO::ConstStringRef("g"));
     elfEncoder64.appendSection(SHT_NOBITS, "my_name_is_important", {});
     EXPECT_EQ(strOffset + 3, strOffset2);
     EXPECT_EQ(strOffset2 + 3, strOffset3);
@@ -455,4 +454,48 @@ TEST(ElfEncoder, WhenAppendingSectionNameThenEmplacedStringIsAlwaysNullterminate
     EXPECT_STREQ("ab", reinterpret_cast<const char *>(elfData.data() + sectionNamesSection->offset + strOffset));
     EXPECT_STREQ("de", reinterpret_cast<const char *>(elfData.data() + sectionNamesSection->offset + strOffset2));
     EXPECT_STREQ("g", reinterpret_cast<const char *>(elfData.data() + sectionNamesSection->offset + strOffset3));
+}
+
+TEST(ElfEncoder, WhenProgramHeadersArePresentThenTheyAreSortedByVirtualAddresses) {
+    ElfEncoder<EI_CLASS_64> elfEncoder64(false, false);
+
+    const uint8_t data[] = "123412";
+    elfEncoder64.appendSection(SHT_PROGBITS, "", data);
+    elfEncoder64.appendSection(SHT_PROGBITS, "", data);
+    elfEncoder64.appendSection(SHT_PROGBITS, "", data);
+    elfEncoder64.appendSection(SHT_PROGBITS, "", data);
+
+    std::vector<std::pair<size_t, uint64_t>> sectionIdAndAddr = {{0, 0x1000},
+                                                                 {1, 0x2000},
+                                                                 {2, 0x500},
+                                                                 {3, 0x700}};
+    for (auto [secId, virtAddr] : sectionIdAndAddr) {
+        elfEncoder64.appendProgramHeaderLoad(secId, virtAddr, sizeof(data));
+    }
+    std::sort(sectionIdAndAddr.begin(), sectionIdAndAddr.end(), [](auto a, auto b) { return a.second < b.second; });
+
+    auto elfData = elfEncoder64.encode();
+    auto header = reinterpret_cast<ElfFileHeader<EI_CLASS_64> *>(elfData.data());
+    ArrayRef<ElfSectionHeader<EI_CLASS_64>> sectionHeaders = {reinterpret_cast<ElfSectionHeader<EI_CLASS_64> *>(elfData.data() + header->shOff),
+                                                              static_cast<size_t>(header->shNum)};
+
+    ArrayRef<ElfProgramHeader<EI_CLASS_64>> programHeaders = {reinterpret_cast<ElfProgramHeader<EI_CLASS_64> *>(elfData.data() + header->phOff),
+                                                              static_cast<size_t>(header->phNum)};
+
+    EXPECT_EQ(4U, programHeaders.size());
+    for (size_t i = 0; i < 4U; i++) {
+        auto [secId, virtAddr] = sectionIdAndAddr[i];
+
+        EXPECT_EQ(virtAddr, programHeaders[i].vAddr);
+        EXPECT_EQ(sectionHeaders[secId].offset, programHeaders[i].offset);
+    }
+}
+
+TEST(ElfEncoder, WhenGetSectionHeaderIndexIsCalledThenCorrectSectionIdxIsReturned) {
+    ElfEncoder<EI_CLASS_64> elfEncoder64(false, false);
+    auto &sec0 = elfEncoder64.appendSection(SHT_PROGBITS, "", {});
+    EXPECT_EQ(0U, elfEncoder64.getSectionHeaderIndex(sec0));
+
+    auto &sec1 = elfEncoder64.appendSection(SHT_PROGBITS, "", {});
+    EXPECT_EQ(1U, elfEncoder64.getSectionHeaderIndex(sec1));
 }

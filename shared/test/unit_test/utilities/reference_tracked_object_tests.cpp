@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,10 +12,9 @@
 #include <thread>
 
 namespace NEO {
-TEST(RefCounter, referenceCount) {
+TEST(RefCounter, WhenIncrementingAndDecrementingThenCounterIsCorrect) {
     RefCounter<> rc;
     ASSERT_EQ(0, rc.peek());
-    ASSERT_TRUE(rc.peekIsZero());
     int max = 7;
     for (int i = 0; i < max; ++i) {
         rc.inc();
@@ -25,10 +24,8 @@ TEST(RefCounter, referenceCount) {
         rc.dec();
     }
     ASSERT_EQ(1, rc.peek());
-    ASSERT_FALSE(rc.peekIsZero());
     rc.dec();
     ASSERT_EQ(0, rc.peek());
-    ASSERT_TRUE(rc.peekIsZero());
 }
 
 TEST(RefCounter, givenReferenceTrackedObjectWhenDecAndReturnCurrentIsCalledThenMinusOneIsReturned) {
@@ -36,13 +33,13 @@ TEST(RefCounter, givenReferenceTrackedObjectWhenDecAndReturnCurrentIsCalledThenM
     EXPECT_EQ(-1, rc.decAndReturnCurrent());
 }
 
-TEST(unique_ptr_if_unused, InitializedWithDefaultConstructorAtQueryReturnsNullptr) {
+TEST(UniquePtrIfUnused, GivenDefaultWhenCreatedThenReturnNullptr) {
     unique_ptr_if_unused<int> uptr;
     ASSERT_EQ(nullptr, uptr.get());
     ASSERT_FALSE(uptr.isUnused());
 }
 
-TEST(unique_ptr_if_unused, deferredDeletion) {
+TEST(UniquePtrIfUnused, WhenDeletingThenDeletionIsDeferred) {
     struct PrimitivObject {
         PrimitivObject(int v, bool *wasDeletedFlag)
             : memb(v), wasDeletedFlag(wasDeletedFlag) {
@@ -90,8 +87,8 @@ TEST(unique_ptr_if_unused, deferredDeletion) {
     }
 }
 
-TEST(unique_ptr_if_unused, IntializedWithoutCustomDeleterAtDestructionUsesDefaultDeleter) {
-    bool deleterWasCalled = false;
+TEST(UniquePtrIfUnused, GivenNoCustomDeleterAtCreationWhenDeletingThenUseDefaultDeleter) {
+    bool deleterWasCalled{false};
     struct DefaultDeleterTestStruct {
         DefaultDeleterTestStruct(bool *deleterWasCalledFlag)
             : deleterWasCalledFlag(deleterWasCalledFlag) {}
@@ -108,33 +105,30 @@ TEST(unique_ptr_if_unused, IntializedWithoutCustomDeleterAtDestructionUsesDefaul
     ASSERT_TRUE(deleterWasCalled);
 }
 
-TEST(unique_ptr_if_unused, IntializedWithCustomDeleterAtDestructionUsesCustomDeleter) {
+TEST(UniquePtrIfUnused, GivenCustomDeleterAtCreationWhenDeletingThenUseProvidedDeleter) {
     struct CustomDeleterTestStruct {
-        bool customDeleterWasCalled;
-        static void Delete(CustomDeleterTestStruct *ptr) { // NOLINT(readability-identifier-naming)
+        bool customDeleterWasCalled{false};
+        static void deleter(CustomDeleterTestStruct *ptr) {
             ptr->customDeleterWasCalled = true;
         }
     } customDeleterObj;
-    customDeleterObj.customDeleterWasCalled = false;
     {
-        unique_ptr_if_unused<CustomDeleterTestStruct> uptr(&customDeleterObj, true, &CustomDeleterTestStruct::Delete);
+        unique_ptr_if_unused<CustomDeleterTestStruct> uptr(&customDeleterObj, true, &CustomDeleterTestStruct::deleter);
     }
     ASSERT_TRUE(customDeleterObj.customDeleterWasCalled);
 }
 
-TEST(unique_ptr_if_unused, IntializedWithDerivativeOfReferenceCounterAtDestructionUsesObtainedDeleter) {
+TEST(UniquePtrIfUnused, GivenIntializedWithDerivativeOfReferenceCounterWhenDestroyingThenUseObtainedDeleter) {
     struct ObtainedDeleterTestStruct : public ReferenceTrackedObject<ObtainedDeleterTestStruct> {
-        using DeleterFuncType = void (*)(ObtainedDeleterTestStruct *);
         DeleterFuncType getCustomDeleter() const {
-            return &ObtainedDeleterTestStruct::Delete;
+            return &ObtainedDeleterTestStruct::deleter;
         }
 
-        bool obtainedDeleterWasCalled;
-        static void Delete(ObtainedDeleterTestStruct *ptr) { // NOLINT(readability-identifier-naming)
+        bool obtainedDeleterWasCalled{false};
+        static void deleter(ObtainedDeleterTestStruct *ptr) {
             ptr->obtainedDeleterWasCalled = true;
         }
     } obtainedDeleterObj;
-    obtainedDeleterObj.obtainedDeleterWasCalled = false;
     {
         unique_ptr_if_unused<ObtainedDeleterTestStruct> uptr(&obtainedDeleterObj, true);
     }
@@ -147,7 +141,7 @@ TEST(unique_ptr_if_unused, IntializedWithDerivativeOfReferenceCounterAtDestructi
     }
 }
 
-TEST(ReferenceTrackedObject, internalAndApiReferenceCount) {
+TEST(ReferenceTrackedObject, GivenInternalAndApiReferenceCountWhenDecrementingThenDeletionBehavesCorrectly) {
     struct PrimitiveReferenceTrackedObject : ReferenceTrackedObject<PrimitiveReferenceTrackedObject> {
         PrimitiveReferenceTrackedObject(int v, bool *wasDeletedFlag)
             : memb(v), wasDeletedFlag(wasDeletedFlag) {
@@ -170,9 +164,9 @@ TEST(ReferenceTrackedObject, internalAndApiReferenceCount) {
     {
         bool wasDeleted = false;
         a = new PrimitiveReferenceTrackedObject(5, &wasDeleted);
-        ASSERT_TRUE(a->peekHasZeroRefcounts());
+        ASSERT_EQ(0, a->getRefInternalCount());
         a->incRefApi();
-        ASSERT_FALSE(a->peekHasZeroRefcounts());
+        ASSERT_EQ(1, a->getRefInternalCount());
         {
             ASSERT_FALSE(wasDeleted);
             auto autoDeleter = a->decRefApi();
@@ -189,9 +183,9 @@ TEST(ReferenceTrackedObject, internalAndApiReferenceCount) {
     {
         bool wasDeleted = false;
         a = new PrimitiveReferenceTrackedObject(5, &wasDeleted);
-        ASSERT_TRUE(a->peekHasZeroRefcounts());
+        ASSERT_EQ(0, a->getRefInternalCount());
         a->incRefInternal();
-        ASSERT_FALSE(a->peekHasZeroRefcounts());
+        ASSERT_EQ(1, a->getRefInternalCount());
         a->incRefApi();
         {
             {
@@ -205,7 +199,7 @@ TEST(ReferenceTrackedObject, internalAndApiReferenceCount) {
             }
             // 3. Test api ref count 0 and dec internal ref count to 0
             ASSERT_FALSE(wasDeleted);
-            auto autoDeleter = a->decRefInternal();
+            auto autoDeleter = a->decRefInternal(); // NOLINT(clang-analyzer-cplusplus.NewDelete)
             EXPECT_TRUE(autoDeleter.isUnused());
             EXPECT_EQ(a, autoDeleter.get());
             EXPECT_EQ(a, &*autoDeleter);
@@ -244,12 +238,11 @@ TEST(ReferenceTrackedObject, internalAndApiReferenceCount) {
     ASSERT_TRUE(wasDeleted);
 }
 
-TEST(ReferenceTrackedObject, whenNewReferenceTrackedObjectIsCreatedRefcountsAreZero) {
+TEST(ReferenceTrackedObject, whenNewReferenceTrackedObjectIsCreatedThenRefcountsAreZero) {
     struct PrimitiveReferenceTrackedObject : ReferenceTrackedObject<PrimitiveReferenceTrackedObject> {
     };
 
     PrimitiveReferenceTrackedObject obj;
-    EXPECT_TRUE(obj.peekHasZeroRefcounts());
     EXPECT_EQ(0, obj.getRefApiCount());
     EXPECT_EQ(0, obj.getRefInternalCount());
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ enum SharingType {
 class SharingContextBuilder {
   public:
     virtual ~SharingContextBuilder() = default;
-    virtual bool processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue, cl_int &errcodeRet) = 0;
+    virtual bool processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue) = 0;
     virtual bool finalizeProperties(Context &context, int32_t &errcodeRet) = 0;
 };
 
@@ -56,7 +56,7 @@ class SharingFactory {
     };
 
     static std::unique_ptr<SharingFactory> build();
-    bool processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue, cl_int &errcodeRet);
+    bool processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue);
     bool finalizeProperties(Context &context, int32_t &errcodeRet);
     std::string getExtensions(DriverInfo *driverInfo);
     void fillGlobalDispatchTable();

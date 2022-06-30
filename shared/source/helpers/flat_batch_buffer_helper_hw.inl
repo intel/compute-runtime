@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -16,7 +17,7 @@ namespace NEO {
 
 template <typename GfxFamily>
 GraphicsAllocation *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(uint32_t rootDeviceIndex, BatchBuffer &batchBuffer, size_t &sizeBatchBuffer,
-                                                                           DispatchMode dispatchMode) {
+                                                                           DispatchMode dispatchMode, DeviceBitfield deviceBitfield) {
     typedef typename GfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
     typedef typename GfxFamily::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
     typedef typename GfxFamily::MI_USER_INTERRUPT MI_USER_INTERRUPT;
@@ -32,7 +33,7 @@ GraphicsAllocation *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(uint3
             batchBuffer.chainedBatchBuffer->setAubWritable(false, GraphicsAllocation::defaultBank);
             auto sizeMainBatchBuffer = batchBuffer.chainedBatchBufferStartOffset - batchBuffer.startOffset;
             auto alignedMainBatchBufferSize = alignUp(sizeMainBatchBuffer + indirectPatchCommandsSize + batchBuffer.chainedBatchBuffer->getUnderlyingBufferSize(), MemoryConstants::pageSize);
-            AllocationProperties flatBatchBufferProperties(rootDeviceIndex, alignedMainBatchBufferSize, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY);
+            AllocationProperties flatBatchBufferProperties(rootDeviceIndex, alignedMainBatchBufferSize, AllocationType::INTERNAL_HOST_MEMORY, deviceBitfield);
             flatBatchBufferProperties.alignment = MemoryConstants::pageSize;
             flatBatchBuffer =
                 getMemoryManager()->allocateGraphicsMemoryWithProperties(flatBatchBufferProperties);
@@ -110,7 +111,7 @@ GraphicsAllocation *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(uint3
 
         flatBatchBufferSize = alignUp(flatBatchBufferSize, MemoryConstants::pageSize);
         flatBatchBufferSize += CSRequirements::csOverfetchSize;
-        AllocationProperties flatBatchBufferProperties(rootDeviceIndex, static_cast<size_t>(flatBatchBufferSize), GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY);
+        AllocationProperties flatBatchBufferProperties(rootDeviceIndex, static_cast<size_t>(flatBatchBufferSize), AllocationType::INTERNAL_HOST_MEMORY, deviceBitfield);
         flatBatchBufferProperties.alignment = MemoryConstants::pageSize;
         flatBatchBuffer = getMemoryManager()->allocateGraphicsMemoryWithProperties(flatBatchBufferProperties);
         UNRECOVERABLE_IF(flatBatchBuffer == nullptr);
@@ -145,12 +146,10 @@ GraphicsAllocation *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(uint3
 
 template <typename GfxFamily>
 char *FlatBatchBufferHelperHw<GfxFamily>::getIndirectPatchCommands(size_t &indirectPatchCommandsSize, std::vector<PatchInfoData> &indirectPatchInfo) {
-    typedef typename GfxFamily::MI_STORE_DATA_IMM MI_STORE_DATA_IMM;
-
     indirectPatchCommandsSize = 0;
     for (auto &patchInfoData : patchInfoCollection) {
         if (patchInfoData.requiresIndirectPatching()) {
-            indirectPatchCommandsSize += sizeof(MI_STORE_DATA_IMM);
+            indirectPatchCommandsSize += EncodeStoreMemory<GfxFamily>::getStoreDataImmSize();
         }
     }
 
@@ -162,18 +161,29 @@ char *FlatBatchBufferHelperHw<GfxFamily>::getIndirectPatchCommands(size_t &indir
 
     for (auto &patchInfoData : patchInfoCopy) {
         if (patchInfoData.requiresIndirectPatching()) {
-            auto storeDataImmediate = indirectPatchCommandStream.getSpaceForCmd<MI_STORE_DATA_IMM>();
-            *storeDataImmediate = GfxFamily::cmdInitStoreDataImm;
-            storeDataImmediate->setAddress(patchInfoData.targetAllocation + patchInfoData.targetAllocationOffset);
-            storeDataImmediate->setStoreQword(patchInfoData.patchAddressSize != sizeof(uint32_t));
-            storeDataImmediate->setDataDword0(static_cast<uint32_t>((patchInfoData.sourceAllocation + patchInfoData.sourceAllocationOffset) & 0x0000FFFFFFFFULL));
-            storeDataImmediate->setDataDword1(static_cast<uint32_t>((patchInfoData.sourceAllocation + patchInfoData.sourceAllocationOffset) >> 32));
+            bool is32BitAddress = patchInfoData.patchAddressSize == sizeof(uint32_t);
+            EncodeStoreMemory<GfxFamily>::programStoreDataImm(indirectPatchCommandStream,
+                                                              patchInfoData.targetAllocation + patchInfoData.targetAllocationOffset,
+                                                              static_cast<uint32_t>((patchInfoData.sourceAllocation + patchInfoData.sourceAllocationOffset) & 0x0000FFFFFFFFULL),
+                                                              static_cast<uint32_t>((patchInfoData.sourceAllocation + patchInfoData.sourceAllocationOffset) >> 32),
+                                                              !is32BitAddress,
+                                                              false);
 
-            PatchInfoData patchInfoForAddress(patchInfoData.targetAllocation, patchInfoData.targetAllocationOffset, patchInfoData.targetType, 0u, stiCommandOffset + sizeof(MI_STORE_DATA_IMM) - 2 * sizeof(uint64_t), PatchInfoAllocationType::Default);
-            PatchInfoData patchInfoForValue(patchInfoData.sourceAllocation, patchInfoData.sourceAllocationOffset, patchInfoData.sourceType, 0u, stiCommandOffset + sizeof(MI_STORE_DATA_IMM) - sizeof(uint64_t), PatchInfoAllocationType::Default);
+            PatchInfoData patchInfoForAddress(patchInfoData.targetAllocation,
+                                              patchInfoData.targetAllocationOffset,
+                                              patchInfoData.targetType,
+                                              0u,
+                                              stiCommandOffset + EncodeStoreMemory<GfxFamily>::getStoreDataImmSize() - 2 * sizeof(uint64_t),
+                                              PatchInfoAllocationType::Default);
+            PatchInfoData patchInfoForValue(patchInfoData.sourceAllocation,
+                                            patchInfoData.sourceAllocationOffset,
+                                            patchInfoData.sourceType,
+                                            0u,
+                                            stiCommandOffset + EncodeStoreMemory<GfxFamily>::getStoreDataImmSize() - sizeof(uint64_t),
+                                            PatchInfoAllocationType::Default);
             indirectPatchInfo.push_back(patchInfoForAddress);
             indirectPatchInfo.push_back(patchInfoForValue);
-            stiCommandOffset += sizeof(MI_STORE_DATA_IMM);
+            stiCommandOffset += EncodeStoreMemory<GfxFamily>::getStoreDataImmSize();
         } else {
             patchInfoCollection.push_back(patchInfoData);
         }

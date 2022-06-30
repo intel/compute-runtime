@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,17 +7,18 @@
 
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/source/helpers/memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
-#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -32,12 +33,12 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
 
   public:
     size_t expectedToFreeCount = (size_t)-1;
-    CommandStreamReceiverMock(Device *pDevice) : UltCommandStreamReceiver<FamilyType>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex()) {
+    CommandStreamReceiverMock(Device *pDevice) : UltCommandStreamReceiver<FamilyType>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()) {
         this->pDevice = pDevice;
         this->pClDevice = pDevice->getSpecializedDevice<ClDevice>();
     }
 
-    bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+    SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
         EXPECT_NE(nullptr, batchBuffer.commandBufferAllocation->getUnderlyingBuffer());
 
         toFree.push_back(batchBuffer.commandBufferAllocation);
@@ -46,7 +47,7 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
 
         EXPECT_TRUE(this->ownershipMutex.try_lock());
         this->ownershipMutex.unlock();
-        return true;
+        return SubmissionStatus::SUCCESS;
     }
 
     ~CommandStreamReceiverMock() override {
@@ -82,7 +83,7 @@ struct EnqueueThreadingFixture : public ClDeviceFixture {
       public:
         MyCommandQueue(Context *context,
                        ClDevice *device,
-                       const cl_queue_properties *props) : CommandQueueHw<FamilyType>(context, device, props, false), kernel(nullptr) {
+                       const cl_queue_properties *props) : CommandQueueHw<FamilyType>(context, device, props, false) {
         }
 
         static CommandQueue *create(Context *context,
@@ -95,17 +96,17 @@ struct EnqueueThreadingFixture : public ClDeviceFixture {
       protected:
         ~MyCommandQueue() override {
             if (kernel) {
-                EXPECT_FALSE(kernel->hasOwnership());
+                EXPECT_FALSE(kernel->getMultiDeviceKernel()->hasOwnership());
             }
         }
         void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &multiDispatchInfo) override {
             for (auto &dispatchInfo : multiDispatchInfo) {
                 auto &kernel = *dispatchInfo.getKernel();
-                EXPECT_TRUE(kernel.hasOwnership());
+                EXPECT_TRUE(kernel.getMultiDeviceKernel()->hasOwnership());
             }
         }
 
-        Kernel *kernel;
+        Kernel *kernel = nullptr;
     };
 
     CommandQueue *pCmdQ;
@@ -123,7 +124,19 @@ struct EnqueueThreadingFixture : public ClDeviceFixture {
 
 typedef Test<EnqueueThreadingFixture> EnqueueThreading;
 
-HWTEST_F(EnqueueThreading, enqueueReadBuffer) {
+struct EnqueueThreadingImage : EnqueueThreading {
+    void SetUp() override {
+        REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+        EnqueueThreading::SetUp();
+    }
+    void TearDown() override {
+        if (!IsSkipped()) {
+            EnqueueThreading::TearDown();
+        }
+    }
+};
+
+HWTEST_F(EnqueueThreading, WhenEnqueuingReadBufferThenKernelHasOwnership) {
     createCQ<FamilyType>();
 
     cl_int retVal;
@@ -147,7 +160,7 @@ HWTEST_F(EnqueueThreading, enqueueReadBuffer) {
     alignedFree(ptr);
 }
 
-HWTEST_F(EnqueueThreading, enqueueWriteBuffer) {
+HWTEST_F(EnqueueThreading, WhenEnqueuingWriteBufferThenKernelHasOwnership) {
     createCQ<FamilyType>();
 
     cl_int retVal;
@@ -171,7 +184,7 @@ HWTEST_F(EnqueueThreading, enqueueWriteBuffer) {
     alignedFree(ptr);
 }
 
-HWTEST_F(EnqueueThreading, enqueueCopyBuffer) {
+HWTEST_F(EnqueueThreading, WhenEnqueuingCopyBufferThenKernelHasOwnership) {
     createCQ<FamilyType>();
 
     cl_int retVal;
@@ -183,7 +196,7 @@ HWTEST_F(EnqueueThreading, enqueueCopyBuffer) {
     pCmdQ->enqueueCopyBuffer(srcBuffer.get(), dstBuffer.get(), 0, 0, 1024u, 0, nullptr, nullptr);
 }
 
-HWTEST_F(EnqueueThreading, enqueueCopyBufferRect) {
+HWTEST_F(EnqueueThreading, WhenEnqueuingCopyBufferRectThenKernelHasOwnership) {
     createCQ<FamilyType>();
 
     cl_int retVal;
@@ -199,7 +212,7 @@ HWTEST_F(EnqueueThreading, enqueueCopyBufferRect) {
     pCmdQ->enqueueCopyBufferRect(srcBuffer.get(), dstBuffer.get(), srcOrigin, dstOrigin, region, 0, 0, 0, 0, 0, nullptr, nullptr);
 }
 
-HWTEST_F(EnqueueThreading, enqueueCopyBufferToImage) {
+HWTEST_F(EnqueueThreadingImage, WhenEnqueuingCopyBufferToImageThenKernelHasOwnership) {
     createCQ<FamilyType>();
     cl_int retVal;
 
@@ -219,7 +232,7 @@ HWTEST_F(EnqueueThreading, enqueueCopyBufferToImage) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> dstImage(
-        Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        Image::create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, dstImage.get());
 
@@ -229,7 +242,7 @@ HWTEST_F(EnqueueThreading, enqueueCopyBufferToImage) {
     pCmdQ->enqueueCopyBufferToImage(srcBuffer.get(), dstImage.get(), 0, dstOrigin, region, 0, nullptr, nullptr);
 }
 
-HWTEST_F(EnqueueThreading, enqueueCopyImage) {
+HWTEST_F(EnqueueThreadingImage, WhenEnqueuingCopyImageThenKernelHasOwnership) {
     createCQ<FamilyType>();
     cl_int retVal;
 
@@ -246,11 +259,11 @@ HWTEST_F(EnqueueThreading, enqueueCopyImage) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> srcImage(
-        Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        Image::create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, srcImage.get());
     std::unique_ptr<Image> dstImage(
-        Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        Image::create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, srcImage.get());
 
@@ -261,7 +274,7 @@ HWTEST_F(EnqueueThreading, enqueueCopyImage) {
     pCmdQ->enqueueCopyImage(srcImage.get(), dstImage.get(), srcOrigin, dstOrigin, region, 0, nullptr, nullptr);
 }
 
-HWTEST_F(EnqueueThreading, enqueueCopyImageToBuffer) {
+HWTEST_F(EnqueueThreadingImage, WhenEnqueuingCopyImageToBufferThenKernelHasOwnership) {
     createCQ<FamilyType>();
     cl_int retVal;
 
@@ -279,7 +292,7 @@ HWTEST_F(EnqueueThreading, enqueueCopyImageToBuffer) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> srcImage(
-        Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        Image::create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, srcImage.get());
 
@@ -292,7 +305,7 @@ HWTEST_F(EnqueueThreading, enqueueCopyImageToBuffer) {
     pCmdQ->enqueueCopyImageToBuffer(srcImage.get(), dstBuffer.get(), srcOrigin, region, 0, 0, nullptr, nullptr);
 }
 
-HWTEST_F(EnqueueThreading, enqueueFillBuffer) {
+HWTEST_F(EnqueueThreading, WhenEnqueuingFillBufferThenKernelHasOwnership) {
     createCQ<FamilyType>();
     cl_int retVal;
 
@@ -303,7 +316,7 @@ HWTEST_F(EnqueueThreading, enqueueFillBuffer) {
     pCmdQ->enqueueFillBuffer(buffer.get(), &pattern, sizeof(pattern), 0, 1024u, 0, nullptr, nullptr);
 }
 
-HWTEST_F(EnqueueThreading, enqueueFillImage) {
+HWTEST_F(EnqueueThreadingImage, WhenEnqueuingFillImageThenKernelHasOwnership) {
     createCQ<FamilyType>();
     cl_int retVal;
 
@@ -321,7 +334,7 @@ HWTEST_F(EnqueueThreading, enqueueFillImage) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> image(
-        Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        Image::create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, image.get());
 
@@ -333,7 +346,7 @@ HWTEST_F(EnqueueThreading, enqueueFillImage) {
     pCmdQ->enqueueFillImage(image.get(), &fillColor, origin, region, 0, nullptr, nullptr);
 }
 
-HWTEST_F(EnqueueThreading, enqueueReadBufferRect) {
+HWTEST_F(EnqueueThreading, WhenEnqueuingReadBufferRectThenKernelHasOwnership) {
     createCQ<FamilyType>();
     cl_int retVal;
 
@@ -352,7 +365,7 @@ HWTEST_F(EnqueueThreading, enqueueReadBufferRect) {
     ::alignedFree(ptr);
 }
 
-HWTEST_F(EnqueueThreading, enqueueReadImage) {
+HWTEST_F(EnqueueThreadingImage, WhenEnqueuingReadImageThenKernelHasOwnership) {
     createCQ<FamilyType>();
     cl_int retVal;
 
@@ -370,7 +383,7 @@ HWTEST_F(EnqueueThreading, enqueueReadImage) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> image(Image::create(
-        context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, image.get());
 
@@ -385,7 +398,7 @@ HWTEST_F(EnqueueThreading, enqueueReadImage) {
     ::alignedFree(ptr);
 }
 
-HWTEST_F(EnqueueThreading, enqueueWriteBufferRect) {
+HWTEST_F(EnqueueThreading, WhenEnqueuingWriteBufferRectThenKernelHasOwnership) {
     createCQ<FamilyType>();
     cl_int retVal;
 
@@ -405,7 +418,7 @@ HWTEST_F(EnqueueThreading, enqueueWriteBufferRect) {
     ::alignedFree(ptr);
 }
 
-HWTEST_F(EnqueueThreading, enqueueWriteImage) {
+HWTEST_F(EnqueueThreadingImage, WhenEnqueuingWriteImageThenKernelHasOwnership) {
     createCQ<FamilyType>();
     cl_int retVal;
 
@@ -423,7 +436,7 @@ HWTEST_F(EnqueueThreading, enqueueWriteImage) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> image(
-        Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        Image::create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, image.get());
 
@@ -438,7 +451,7 @@ HWTEST_F(EnqueueThreading, enqueueWriteImage) {
     ::alignedFree(ptr);
 }
 
-HWTEST_F(EnqueueThreading, finish) {
+HWTEST_F(EnqueueThreading, WhenFinishingThenKernelHasOwnership) {
     createCQ<FamilyType>();
 
     // set something to finish
@@ -446,6 +459,8 @@ HWTEST_F(EnqueueThreading, finish) {
     pCmdQ->taskLevel = 1;
     auto csr = (CommandStreamReceiverMock<FamilyType> *)&this->pCmdQ->getGpgpuCommandStreamReceiver();
     csr->expectedToFreeCount = 0u;
+    csr->latestSentTaskCount = 1;
+    csr->latestFlushedTaskCount = 1;
 
     pCmdQ->finish();
 }

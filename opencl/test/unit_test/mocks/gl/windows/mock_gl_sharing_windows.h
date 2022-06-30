@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -140,9 +140,10 @@ class MockGlSharing {
     void uploadDataToBufferInfo() {
         dllParam->loadBuffer(m_bufferInfoOutput);
     }
-    void uploadDataToBufferInfo(unsigned int sharedHandle, int bufferOffset) {
+    void uploadDataToBufferInfo(unsigned int sharedHandle, int bufferOffset, GMM_RESOURCE_INFO *gmmResInfo) {
         m_bufferInfoOutput.globalShareHandle = sharedHandle;
         m_bufferInfoOutput.bufferOffset = bufferOffset;
+        m_bufferInfoOutput.pGmmResInfo = gmmResInfo;
         dllParam->loadBuffer(m_bufferInfoOutput);
     }
     void uploadDataToTextureInfo() {

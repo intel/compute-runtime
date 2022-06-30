@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,11 +29,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillImage(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
-
-    MultiDispatchInfo di;
-
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::FillImage3d,
-                                                                            this->getDevice());
+                                                                            this->getClDevice());
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     MemObjSurface dstImgSurf(image);
@@ -45,16 +42,17 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillImage(
     dc.srcOffset = {0, 0, 0};
     dc.dstOffset = origin;
     dc.size = region;
-    builder.buildDispatchInfos(di, dc);
 
-    enqueueHandler<CL_COMMAND_FILL_IMAGE>(
+    MultiDispatchInfo di(dc);
+
+    builder.buildDispatchInfos(di);
+
+    return enqueueHandler<CL_COMMAND_FILL_IMAGE>(
         surfaces,
         false,
         di,
         numEventsInWaitList,
         eventWaitList,
         event);
-
-    return CL_SUCCESS;
 }
 } // namespace NEO

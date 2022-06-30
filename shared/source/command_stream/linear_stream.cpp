@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 namespace NEO {
 
 LinearStream::LinearStream(GraphicsAllocation *gfxAllocation, void *buffer, size_t bufferSize)
-    : sizeUsed(0), maxAvailableSpace(bufferSize), buffer(buffer), graphicsAllocation(gfxAllocation) {
+    : maxAvailableSpace(bufferSize), buffer(buffer), graphicsAllocation(gfxAllocation) {
 }
 
 LinearStream::LinearStream(void *buffer, size_t bufferSize)
@@ -20,17 +20,24 @@ LinearStream::LinearStream(void *buffer, size_t bufferSize)
 }
 
 LinearStream::LinearStream(GraphicsAllocation *gfxAllocation)
-    : sizeUsed(0), graphicsAllocation(gfxAllocation) {
+    : graphicsAllocation(gfxAllocation) {
     if (gfxAllocation) {
         maxAvailableSpace = gfxAllocation->getUnderlyingBufferSize();
         buffer = gfxAllocation->getUnderlyingBuffer();
-    } else {
-        maxAvailableSpace = 0;
-        buffer = nullptr;
     }
 }
 
-LinearStream::LinearStream()
-    : LinearStream(nullptr) {
+LinearStream::LinearStream(void *buffer, size_t bufferSize, CommandContainer *cmdContainer, size_t batchBufferEndSize)
+    : LinearStream(buffer, bufferSize) {
+    this->cmdContainer = cmdContainer;
+    this->batchBufferEndSize = batchBufferEndSize;
 }
+
+uint64_t LinearStream::getGpuBase() const {
+    if (graphicsAllocation) {
+        return graphicsAllocation->getGpuAddress();
+    }
+    return gpuBase;
+}
+
 } // namespace NEO

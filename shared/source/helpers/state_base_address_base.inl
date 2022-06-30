@@ -1,68 +1,94 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/command_stream/memory_compression_state.h"
+#include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/constants.h"
-#include "shared/source/helpers/hw_cmds.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/os_interface/hw_info_config.h"
+
+#include "hw_cmds.h"
 
 namespace NEO {
 template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
-    LinearStream &commandStream,
+    STATE_BASE_ADDRESS *stateBaseAddress,
     const IndirectHeap *dsh,
     const IndirectHeap *ioh,
     const IndirectHeap *ssh,
     uint64_t generalStateBase,
     bool setGeneralStateBaseAddress,
     uint32_t statelessMocsIndex,
-    uint64_t internalHeapBase,
+    uint64_t indirectObjectHeapBaseAddress,
+    uint64_t instructionHeapBaseAddress,
+    uint64_t globalHeapsBaseAddress,
     bool setInstructionStateBaseAddress,
+    bool useGlobalHeapsBaseAddress,
     GmmHelper *gmmHelper,
-    bool isMultiOsContextCapable) {
+    bool isMultiOsContextCapable,
+    MemoryCompressionState memoryCompressionState,
+    bool useGlobalAtomics,
+    bool areMultipleSubDevicesInContext) {
 
-    auto pCmd = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));
-    STATE_BASE_ADDRESS cmd = GfxFamily::cmdInitStateBaseAddress;
+    *stateBaseAddress = GfxFamily::cmdInitStateBaseAddress;
+    bool overrideBindlessSurfaceStateBase = true;
 
-    if (dsh) {
-        cmd.setDynamicStateBaseAddressModifyEnable(true);
-        cmd.setDynamicStateBufferSizeModifyEnable(true);
-        cmd.setDynamicStateBaseAddress(dsh->getHeapGpuBase());
-        cmd.setDynamicStateBufferSize(dsh->getHeapSizeInPages());
+    const auto surfaceStateCount = getMaxBindlessSurfaceStates();
+    stateBaseAddress->setBindlessSurfaceStateSize(surfaceStateCount);
+
+    if (useGlobalHeapsBaseAddress) {
+        stateBaseAddress->setDynamicStateBaseAddressModifyEnable(true);
+        stateBaseAddress->setDynamicStateBufferSizeModifyEnable(true);
+        stateBaseAddress->setDynamicStateBaseAddress(globalHeapsBaseAddress);
+        stateBaseAddress->setDynamicStateBufferSize(MemoryConstants::pageSize64k);
+
+        stateBaseAddress->setSurfaceStateBaseAddressModifyEnable(true);
+        stateBaseAddress->setSurfaceStateBaseAddress(globalHeapsBaseAddress);
+
+        stateBaseAddress->setBindlessSurfaceStateBaseAddressModifyEnable(true);
+        stateBaseAddress->setBindlessSurfaceStateBaseAddress(globalHeapsBaseAddress);
+
+        overrideBindlessSurfaceStateBase = false;
+    } else {
+        if (dsh) {
+            stateBaseAddress->setDynamicStateBaseAddressModifyEnable(true);
+            stateBaseAddress->setDynamicStateBufferSizeModifyEnable(true);
+            stateBaseAddress->setDynamicStateBaseAddress(dsh->getHeapGpuBase());
+            stateBaseAddress->setDynamicStateBufferSize(dsh->getHeapSizeInPages());
+        }
+
+        if (ssh) {
+            stateBaseAddress->setSurfaceStateBaseAddressModifyEnable(true);
+            stateBaseAddress->setSurfaceStateBaseAddress(ssh->getHeapGpuBase());
+        }
     }
 
-    if (ioh) {
-        cmd.setIndirectObjectBaseAddressModifyEnable(true);
-        cmd.setIndirectObjectBufferSizeModifyEnable(true);
-        cmd.setIndirectObjectBaseAddress(ioh->getHeapGpuBase());
-        cmd.setIndirectObjectBufferSize(ioh->getHeapSizeInPages());
-    }
-
-    if (ssh) {
-        cmd.setSurfaceStateBaseAddressModifyEnable(true);
-        cmd.setSurfaceStateBaseAddress(ssh->getHeapGpuBase());
-    }
+    appendIohParameters(stateBaseAddress, ioh, useGlobalHeapsBaseAddress, indirectObjectHeapBaseAddress);
 
     if (setInstructionStateBaseAddress) {
-        cmd.setInstructionBaseAddressModifyEnable(true);
-        cmd.setInstructionBaseAddress(internalHeapBase);
-        cmd.setInstructionBufferSizeModifyEnable(true);
-        cmd.setInstructionBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
-        cmd.setInstructionMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
+        stateBaseAddress->setInstructionBaseAddressModifyEnable(true);
+        stateBaseAddress->setInstructionBaseAddress(instructionHeapBaseAddress);
+        stateBaseAddress->setInstructionBufferSizeModifyEnable(true);
+        stateBaseAddress->setInstructionBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
+
+        auto resourceUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::INTERNAL_HEAP, DebugManager.flags.DisableCachingForHeaps.get(), *gmmHelper->getHardwareInfo());
+
+        stateBaseAddress->setInstructionMemoryObjectControlState(gmmHelper->getMOCS(resourceUsage));
     }
 
     if (setGeneralStateBaseAddress) {
-        cmd.setGeneralStateBaseAddressModifyEnable(true);
-        cmd.setGeneralStateBufferSizeModifyEnable(true);
+        stateBaseAddress->setGeneralStateBaseAddressModifyEnable(true);
+        stateBaseAddress->setGeneralStateBufferSizeModifyEnable(true);
         // GSH must be set to 0 for stateless
-        cmd.setGeneralStateBaseAddress(GmmHelper::decanonize(generalStateBase));
-        cmd.setGeneralStateBufferSize(0xfffff);
+        stateBaseAddress->setGeneralStateBaseAddress(gmmHelper->decanonize(generalStateBase));
+        stateBaseAddress->setGeneralStateBufferSize(0xfffff);
     }
 
     if (DebugManager.flags.OverrideStatelessMocsIndex.get() != -1) {
@@ -71,11 +97,15 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
 
     statelessMocsIndex = statelessMocsIndex << 1;
 
-    cmd.setStatelessDataPortAccessMemoryObjectControlState(statelessMocsIndex);
+    stateBaseAddress->setStatelessDataPortAccessMemoryObjectControlState(statelessMocsIndex);
 
-    appendStateBaseAddressParameters(&cmd, ssh, setGeneralStateBaseAddress, internalHeapBase, gmmHelper, isMultiOsContextCapable);
+    appendStateBaseAddressParameters(stateBaseAddress, ssh, setGeneralStateBaseAddress, indirectObjectHeapBaseAddress, gmmHelper,
+                                     isMultiOsContextCapable, memoryCompressionState, overrideBindlessSurfaceStateBase, useGlobalAtomics, areMultipleSubDevicesInContext);
+}
 
-    *pCmd = cmd;
+template <typename GfxFamily>
+void *StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(LinearStream &cmdStream) {
+    return cmdStream.getSpace(sizeof(STATE_BASE_ADDRESS));
 }
 
 } // namespace NEO

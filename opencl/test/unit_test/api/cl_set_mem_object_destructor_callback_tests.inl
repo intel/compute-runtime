@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "opencl/source/context/context.h"
+#include "opencl/source/mem_obj/image.h"
 
 #include "cl_api_tests.h"
 
@@ -60,8 +61,7 @@ TEST_F(clSetMemObjectDestructorCallbackTests, GivenNullMemObjWhenSettingMemObjCa
 }
 
 TEST_F(clSetMemObjectDestructorCallbackTests, GivenImageAndDestructorCallbackWhenSettingMemObjCallbackThenSuccessIsReturned) {
-    auto image = clCreateImage(pContext, CL_MEM_READ_WRITE, &imageFormat,
-                               &imageDesc, nullptr, &retVal);
+    auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
 
     retVal = clSetMemObjectDestructorCallback(image, destructorCallback, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -72,8 +72,7 @@ TEST_F(clSetMemObjectDestructorCallbackTests, GivenImageAndDestructorCallbackWhe
 }
 
 TEST_F(clSetMemObjectDestructorCallbackTests, GivenImageAndNullCallbackFunctionWhenSettingMemObjCallbackThenInvalidValueErrorIsReturned) {
-    auto image = clCreateImage(pContext, CL_MEM_READ_WRITE, &imageFormat,
-                               &imageDesc, nullptr, &retVal);
+    auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
 
     retVal = clSetMemObjectDestructorCallback(image, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);

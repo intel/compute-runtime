@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"
+#include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -17,7 +18,7 @@ GEN11TEST_F(Gen11TbxCommandStreamReceiverTests, whenAskedForPollForCompletionPar
     class MyMockTbxHw : public TbxCommandStreamReceiverHw<FamilyType> {
       public:
         MyMockTbxHw(ExecutionEnvironment &executionEnvironment)
-            : TbxCommandStreamReceiverHw<FamilyType>(executionEnvironment, 0) {}
+            : TbxCommandStreamReceiverHw<FamilyType>(executionEnvironment, 0, 1) {}
         using TbxCommandStreamReceiverHw<FamilyType>::getpollNotEqualValueForPollForCompletion;
         using TbxCommandStreamReceiverHw<FamilyType>::getMaskAndValueForPollForCompletion;
     };

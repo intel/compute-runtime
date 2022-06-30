@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/test/common/test_macros/test.h"
 
-#include "opencl/source/helpers/memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/helpers/surface_formats.h"
-#include "opencl/source/helpers/validators.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "test.h"
 
 #include "gtest/gtest.h"
 
@@ -57,7 +57,7 @@ class PackedYuvImageTest : public testing::Test,
         auto surfaceFormat = Image::getSurfaceFormatFromTable(
             flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
         retVal = Image::validate(
-            &context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
+            &context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
             surfaceFormat, &imageDesc, nullptr);
     }
 
@@ -70,14 +70,14 @@ class PackedYuvImageTest : public testing::Test,
 
 cl_channel_order packedYuvChannels[] = {CL_YUYV_INTEL, CL_UYVY_INTEL, CL_YVYU_INTEL, CL_VYUY_INTEL};
 
-TEST_P(PackedYuvImageTest, isPackedYuvImageReturnsTrue) {
+TEST_P(PackedYuvImageTest, GivenValidPackedYuvImageFormatAndDescriptorWhenCreatingImageThenIsPackYuvImageReturnsTrue) {
 
     flags = CL_MEM_READ_ONLY;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto image = Image::create(
         &context,
-        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
+        ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
         flags,
         0,
         surfaceFormat,
@@ -85,24 +85,24 @@ TEST_P(PackedYuvImageTest, isPackedYuvImageReturnsTrue) {
         nullptr,
         retVal);
     ASSERT_NE(nullptr, image);
-    EXPECT_TRUE(IsPackedYuvImage(&image->getImageFormat()));
+    EXPECT_TRUE(isPackedYuvImage(&image->getImageFormat()));
     delete image;
 }
 
-TEST_P(PackedYuvImageTest, validPackedYuvImageFormatAndDescriptor) {
+TEST_P(PackedYuvImageTest, GivenValidPackedYuvImageFormatAndDescriptorWhenValidatingImageFormatThenValidImageIsReturned) {
     flags = CL_MEM_READ_ONLY;
     validateFormat();
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_P(PackedYuvImageTest, invalidPackedYuvImageFormat) {
+TEST_P(PackedYuvImageTest, GivenInvalidFormatWhenValidatingImageFormatThenInvalidFormatDescriptorErrorIsReturned) {
     imageFormat.image_channel_data_type = CL_SNORM_INT16;
     flags = CL_MEM_READ_ONLY;
     validateFormat();
     EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
 }
 
-TEST_P(PackedYuvImageTest, invalidPackedYuvImageWidth) {
+TEST_P(PackedYuvImageTest, GivenInvalidWidthWhenValidatingImageFormatThenInvalidImageDescriptorErrorIsReturned) {
     imageDesc.image_width = 17;
     flags = CL_MEM_READ_ONLY;
     validateFormat();

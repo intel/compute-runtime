@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,16 +7,16 @@
 
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/helpers/flush_stamp.h"
-#include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -593,8 +593,10 @@ HWTEST_F(SubmissionsAggregatorTests, givenMultipleQueuesWhenCmdBuffersAreRecorde
     MockKernelWithInternals kernel(*device.get());
     CommandQueueHw<FamilyType> cmdQ1(context.get(), device.get(), 0, false);
     CommandQueueHw<FamilyType> cmdQ2(context.get(), device.get(), 0, false);
-    auto mockCsr = new MockCsrHw2<FamilyType>(*device->executionEnvironment, device->getRootDeviceIndex());
-    size_t GWS = 1;
+    auto mockCsr = new MockCsrHw2<FamilyType>(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
+    mockCsr->useNewResourceImplicitFlush = false;
+    mockCsr->useGpuIdleImplicitFlush = false;
+    size_t gws = 1;
 
     overrideCsr(mockCsr);
 
@@ -604,9 +606,9 @@ HWTEST_F(SubmissionsAggregatorTests, givenMultipleQueuesWhenCmdBuffersAreRecorde
     };
 
     expectRefCounts(1, 1);
-    cmdQ1.enqueueKernel(kernel, 1, nullptr, &GWS, nullptr, 0, nullptr, nullptr);
+    cmdQ1.enqueueKernel(kernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr);
     expectRefCounts(2, 1);
-    cmdQ2.enqueueKernel(kernel, 1, nullptr, &GWS, nullptr, 0, nullptr, nullptr);
+    cmdQ2.enqueueKernel(kernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr);
     expectRefCounts(2, 2);
 
     {
@@ -625,14 +627,16 @@ HWTEST_F(SubmissionsAggregatorTests, givenMultipleQueuesWhenCmdBuffersAreRecorde
 HWTEST_F(SubmissionsAggregatorTests, givenCmdQueueWhenCmdBufferWithEventIsRecordedThenAssignFlushStampObjForEveryone) {
     MockKernelWithInternals kernel(*device.get());
     CommandQueueHw<FamilyType> cmdQ1(context.get(), device.get(), 0, false);
-    auto mockCsr = new MockCsrHw2<FamilyType>(*device->executionEnvironment, device->getRootDeviceIndex());
-    size_t GWS = 1;
+    auto mockCsr = new MockCsrHw2<FamilyType>(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
+    mockCsr->useNewResourceImplicitFlush = false;
+    mockCsr->useGpuIdleImplicitFlush = false;
+    size_t gws = 1;
 
     overrideCsr(mockCsr);
 
     cl_event event1;
     EXPECT_EQ(1, cmdQ1.flushStamp->getStampReference()->getRefInternalCount());
-    cmdQ1.enqueueKernel(kernel, 1, nullptr, &GWS, nullptr, 0, nullptr, &event1);
+    cmdQ1.enqueueKernel(kernel, 1, nullptr, &gws, nullptr, 0, nullptr, &event1);
     EXPECT_EQ(3, cmdQ1.flushStamp->getStampReference()->getRefInternalCount());
 
     EXPECT_EQ(castToObject<Event>(event1)->flushStamp->getStampReference(), cmdQ1.flushStamp->getStampReference());
@@ -651,16 +655,18 @@ HWTEST_F(SubmissionsAggregatorTests, givenMultipleCmdBuffersWhenFlushThenUpdateA
     MockKernelWithInternals kernel(*device.get());
     CommandQueueHw<FamilyType> cmdQ1(context.get(), device.get(), 0, false);
     CommandQueueHw<FamilyType> cmdQ2(context.get(), device.get(), 0, false);
-    auto mockCsr = new MockCsrHw2<FamilyType>(*device->executionEnvironment, device->getRootDeviceIndex());
-    size_t GWS = 1;
+    auto mockCsr = new MockCsrHw2<FamilyType>(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
+    mockCsr->useNewResourceImplicitFlush = false;
+    mockCsr->useGpuIdleImplicitFlush = false;
+    size_t gws = 1;
 
     overrideCsr(mockCsr);
     mockCsr->taskCount = 5;
     mockCsr->flushStamp->setStamp(5);
 
     cl_event event1, event2;
-    cmdQ1.enqueueKernel(kernel, 1, nullptr, &GWS, nullptr, 0, nullptr, &event1);
-    cmdQ2.enqueueKernel(kernel, 1, nullptr, &GWS, nullptr, 0, nullptr, &event2);
+    cmdQ1.enqueueKernel(kernel, 1, nullptr, &gws, nullptr, 0, nullptr, &event1);
+    cmdQ2.enqueueKernel(kernel, 1, nullptr, &gws, nullptr, 0, nullptr, &event2);
 
     mockCsr->flushBatchedSubmissions();
 
@@ -678,16 +684,16 @@ HWTEST_F(SubmissionsAggregatorTests, givenMultipleCmdBuffersWhenNotAggregatedDur
     MockKernelWithInternals kernel(*device.get());
     CommandQueueHw<FamilyType> cmdQ1(context.get(), device.get(), 0, false);
     CommandQueueHw<FamilyType> cmdQ2(context.get(), device.get(), 0, false);
-    auto mockCsr = new MockCsrHw2<FamilyType>(*device->executionEnvironment, device->getRootDeviceIndex());
-    size_t GWS = 1;
+    auto mockCsr = new MockCsrHw2<FamilyType>(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
+    size_t gws = 1;
 
     overrideCsr(mockCsr);
     mockCsr->taskCount = 5;
     mockCsr->flushStamp->setStamp(5);
 
     cl_event event1, event2;
-    cmdQ1.enqueueKernel(kernel, 1, nullptr, &GWS, nullptr, 0, nullptr, &event1);
-    cmdQ2.enqueueKernel(kernel, 1, nullptr, &GWS, nullptr, 0, nullptr, &event2);
+    cmdQ1.enqueueKernel(kernel, 1, nullptr, &gws, nullptr, 0, nullptr, &event1);
+    cmdQ2.enqueueKernel(kernel, 1, nullptr, &gws, nullptr, 0, nullptr, &event2);
 
     // dont aggregate
     mockCsr->peekSubmissionAggregator()->peekCmdBufferList().peekHead()->batchBuffer.low_priority = true;

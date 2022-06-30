@@ -1,3 +1,10 @@
+<!---
+
+Copyright (C) 2020-2021 Intel Corporation
+
+SPDX-License-Identifier: MIT
+
+-->
 
 # Frequently asked questions (OpenCL)
 
@@ -9,10 +16,6 @@ see the [main FAQ](https://github.com/intel/compute-runtime/blob/master/FAQ.md).
 ### Which version of OpenCL is supported?
 
 See [README.md](https://github.com/intel/compute-runtime/blob/master/README.md).
-
-### How can I enable OpenCL 2.1 on the Apollo Lake / Broxton platform?
-
-You can enable a higher version of OpenCL using the ForceOCLVersion debug flag.
 
 ## Known Issues and Limitations
 

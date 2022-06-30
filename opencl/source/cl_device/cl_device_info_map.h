@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/cl_device/cl_device_info.h"
 
-#include "CL/cl_ext_intel.h"
+#include "CL/cl_ext.h"
 #include <CL/cl.h>
 #include <CL/cl_ext.h>
 
@@ -87,7 +87,7 @@ template<> struct Map<CL_DEVICE_AVC_ME_VERSION_INTEL                        > : 
 template<> struct Map<CL_DEVICE_BUILT_IN_KERNELS                            > : public ClMapBase<CL_DEVICE_BUILT_IN_KERNELS,                            const char *,                    &ClDeviceInfo::builtInKernels> {};
 template<> struct Map<CL_DEVICE_COMPILER_AVAILABLE                          > : public ClMapBase<CL_DEVICE_COMPILER_AVAILABLE,                          uint32_t,                        &ClDeviceInfo::compilerAvailable> {};
 template<> struct Map<CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL  > : public ClMapBase<CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL,  uint64_t,                        &ClDeviceInfo::crossDeviceSharedMemCapabilities> {};
-template<> struct Map<CL_DEVICE_DEVICE_ENQUEUE_SUPPORT                      > : public ClMapBase<CL_DEVICE_DEVICE_ENQUEUE_SUPPORT,                      uint32_t,                        &ClDeviceInfo::deviceEnqueueSupport> {};
+template<> struct Map<CL_DEVICE_DEVICE_ENQUEUE_CAPABILITIES                 > : public ClMapBase<CL_DEVICE_DEVICE_ENQUEUE_CAPABILITIES,                 uint64_t,                        &ClDeviceInfo::deviceEnqueueSupport> {};
 template<> struct Map<CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL               > : public ClMapBase<CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL,               uint64_t,                        &ClDeviceInfo::deviceMemCapabilities> {};
 template<> struct Map<CL_DEVICE_DOUBLE_FP_CONFIG                            > : public ClMapBase<CL_DEVICE_DOUBLE_FP_CONFIG,                            uint64_t,                        &ClDeviceInfo::doubleFpConfig> {};
 template<> struct Map<CL_DEVICE_DRIVER_VERSION_INTEL                        > : public ClMapBase<CL_DEVICE_DRIVER_VERSION_INTEL,                        uint32_t,                        &ClDeviceInfo::internalDriverVersion> {};
@@ -106,6 +106,7 @@ template<> struct Map<CL_DEVICE_IMAGE3D_MAX_HEIGHT                          > : 
 template<> struct Map<CL_DEVICE_IMAGE3D_MAX_WIDTH                           > : public ClMapBase<CL_DEVICE_IMAGE3D_MAX_WIDTH,                           size_t,                          &ClDeviceInfo::image3DMaxWidth> {};
 template<> struct Map<CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT                > : public ClMapBase<CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT,                uint32_t,                        &ClDeviceInfo::imageBaseAddressAlignment> {};
 template<> struct Map<CL_DEVICE_IMAGE_PITCH_ALIGNMENT                       > : public ClMapBase<CL_DEVICE_IMAGE_PITCH_ALIGNMENT,                       uint32_t,                        &ClDeviceInfo::imagePitchAlignment> {};
+template<> struct Map<CL_DEVICE_LATEST_CONFORMANCE_VERSION_PASSED           > : public ClMapBase<CL_DEVICE_LATEST_CONFORMANCE_VERSION_PASSED,           const char *,                    &ClDeviceInfo::latestConformanceVersionPassed> {};
 template<> struct Map<CL_DEVICE_LINKER_AVAILABLE                            > : public ClMapBase<CL_DEVICE_LINKER_AVAILABLE,                            uint32_t,                        &ClDeviceInfo::linkerAvailable> {};
 template<> struct Map<CL_DEVICE_LOCAL_MEM_TYPE                              > : public ClMapBase<CL_DEVICE_LOCAL_MEM_TYPE,                              uint32_t,                        &ClDeviceInfo::localMemType> {};
 template<> struct Map<CL_DEVICE_MAX_COMPUTE_UNITS                           > : public ClMapBase<CL_DEVICE_MAX_COMPUTE_UNITS,                           uint32_t,                        &ClDeviceInfo::maxComputUnits> {};

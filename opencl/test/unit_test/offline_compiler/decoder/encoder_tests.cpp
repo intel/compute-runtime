@@ -1,22 +1,26 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/offline_compiler/source/decoder/binary_decoder.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/array_count.h"
-#include "shared/test/unit_test/helpers/test_files.h"
+#include "shared/test/common/helpers/test_files.h"
 
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "mock/mock_encoder.h"
 
+#include <cstdint>
 #include <fstream>
+#include <sstream>
 
 namespace NEO {
+
 TEST(EncoderTests, WhenParsingValidListOfParametersThenReturnValueIsZero) {
-    std::vector<std::string> args = {
+    const std::vector<std::string> args = {
         "ocloc",
         "asm",
         "-dump",
@@ -26,6 +30,130 @@ TEST(EncoderTests, WhenParsingValidListOfParametersThenReturnValueIsZero) {
 
     MockEncoder encoder;
     EXPECT_EQ(0, encoder.validateInput(args));
+}
+
+TEST(EncoderTests, GivenFlagsWhichRequireMoreArgsWithoutThemWhenParsingThenErrorIsReported) {
+    const std::array<std::string, 3> flagsToTest = {
+        "-dump", "-device", "-out"};
+
+    for (const auto &flag : flagsToTest) {
+        const std::vector<std::string> args = {
+            "ocloc",
+            "asm",
+            flag};
+
+        constexpr auto suppressMessages{false};
+        MockEncoder encoder{suppressMessages};
+
+        ::testing::internal::CaptureStdout();
+        const auto result = encoder.validateInput(args);
+        const auto output{::testing::internal::GetCapturedStdout()};
+
+        EXPECT_EQ(-1, result);
+
+        const std::string expectedErrorMessage{"Unknown argument " + flag + "\n"};
+        EXPECT_EQ(expectedErrorMessage, output);
+    }
+}
+
+TEST(EncoderTests, GivenIgnoreIsaPaddingFlagWhenParsingValidListOfParametersThenReturnValueIsZeroAndInternalFlagIsSet) {
+    const std::vector<std::string> args = {
+        "ocloc",
+        "asm",
+        "-dump",
+        "test_files/dump",
+        "-out",
+        "test_files/binary_gen.bin",
+        "-ignore_isa_padding"};
+
+    MockEncoder encoder;
+    EXPECT_EQ(0, encoder.validateInput(args));
+    EXPECT_TRUE(encoder.ignoreIsaPadding);
+}
+
+TEST(EncoderTests, GivenQuietModeFlagWhenParsingValidListOfParametersThenReturnValueIsZeroAndMessagesAreSuppressed) {
+    const std::vector<std::string> args = {
+        "ocloc",
+        "asm",
+        "-dump",
+        "test_files/dump",
+        "-out",
+        "test_files/binary_gen.bin",
+        "-q"};
+
+    constexpr auto suppressMessages{false};
+    MockEncoder encoder{suppressMessages};
+
+    EXPECT_EQ(0, encoder.validateInput(args));
+    EXPECT_TRUE(encoder.argHelper->getPrinterRef().isSuppressed());
+}
+
+TEST(EncoderTests, GivenMissingDumpFlagAndArgHelperOutputEnabledWhenParsingValidListOfParametersThenReturnValueIsZeroAndDefaultDirectoryIsNotUsedAsDumpPath) {
+    const std::vector<std::string> args = {
+        "ocloc",
+        "asm",
+        "-out",
+        "test_files/binary_gen.bin",
+        "-device",
+        "pvc"};
+
+    constexpr auto suppressMessages{false};
+    MockEncoder encoder{suppressMessages};
+    encoder.mockArgHelper->hasOutput = true;
+    encoder.getMockIga()->isKnownPlatformReturnValue = true;
+
+    ::testing::internal::CaptureStdout();
+    const auto result = encoder.validateInput(args);
+    const auto output{::testing::internal::GetCapturedStdout()};
+
+    EXPECT_EQ(0, result);
+    EXPECT_TRUE(output.empty()) << output;
+    EXPECT_TRUE(encoder.pathToDump.empty()) << encoder.pathToDump;
+
+    encoder.mockArgHelper->hasOutput = false;
+}
+
+TEST(EncoderTests, GivenMissingPTMFileWhenEncodingThenErrorIsReturnedAndLogIsPrinted) {
+    constexpr auto suppressMessages{false};
+    MockEncoder encoder{suppressMessages};
+
+    ::testing::internal::CaptureStdout();
+    const auto result = encoder.encode();
+    const auto output{::testing::internal::GetCapturedStdout()};
+
+    EXPECT_EQ(-1, result);
+    EXPECT_EQ("Error! Couldn't find PTM.txt", output);
+}
+
+TEST(EncoderTests, GivenMissingSourceFileWhenTryingToCopyBinaryThenErrorIsReturned) {
+    MockEncoder encoder;
+    encoder.callBaseCopyBinaryToBinary = true;
+
+    std::stringstream outputStream;
+    EXPECT_FALSE(encoder.copyBinaryToBinary("bad_source.bin", outputStream, nullptr));
+}
+
+TEST(EncoderTests, GivenValidSourceFileWhenTryingToCopyBinaryThenItIsCopied) {
+    MockEncoder encoder;
+    encoder.callBaseCopyBinaryToBinary = true;
+    encoder.filesMap["good_source.bin"] = "TEXT!";
+
+    std::stringstream outputStream;
+    ASSERT_TRUE(encoder.copyBinaryToBinary("good_source.bin", outputStream, nullptr));
+    EXPECT_EQ("TEXT!", outputStream.str());
+}
+
+TEST(EncoderTests, GivenValidSourceFileAndOutputLengthArgumentWhenTryingToCopyBinaryThenItIsCopiedAndLengthIsSet) {
+    MockEncoder encoder;
+    encoder.callBaseCopyBinaryToBinary = true;
+    encoder.filesMap["good_source.bin"] = "TEXT!";
+
+    std::stringstream outputStream;
+    uint32_t outputLength{};
+    ASSERT_TRUE(encoder.copyBinaryToBinary("good_source.bin", outputStream, &outputLength));
+
+    EXPECT_EQ("TEXT!", outputStream.str());
+    EXPECT_EQ(5u, outputLength);
 }
 
 TEST(EncoderTests, WhenMissingParametersThenErrorCodeIsReturned) {

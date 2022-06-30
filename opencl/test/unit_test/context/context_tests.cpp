@@ -1,29 +1,33 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/device/device.h"
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
-#include "shared/test/unit_test/helpers/variable_backup.h"
-#include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/helpers/local_memory_access_modes.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_deferred_deleter.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.inl"
-#include "opencl/source/device_queue/device_queue.h"
+#include "opencl/source/gtpin/gtpin_defs.h"
+#include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/sharings/sharing.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_deferred_deleter.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
-
-#include "gtest/gtest.h"
 
 using namespace NEO;
 
@@ -52,25 +56,26 @@ struct ContextTest : public PlatformFixture,
     void SetUp() override {
         PlatformFixture::SetUp();
 
-        cl_platform_id platform = pPlatform;
-        properties = new cl_context_properties[3];
-        properties[0] = CL_CONTEXT_PLATFORM;
-        properties[1] = (cl_context_properties)platform;
-        properties[2] = 0;
+        properties.push_back(CL_CONTEXT_PLATFORM);
+        properties.push_back(reinterpret_cast<cl_context_properties>(pPlatform));
+        properties.push_back(0);
 
-        context = Context::create<WhiteBoxContext>(properties, ClDeviceVector(devices, num_devices), nullptr, nullptr, retVal);
+        context = Context::create<WhiteBoxContext>(properties.data(), ClDeviceVector(devices, num_devices), nullptr, nullptr, retVal);
         ASSERT_NE(nullptr, context);
     }
 
     void TearDown() override {
-        delete[] properties;
         delete context;
         PlatformFixture::TearDown();
     }
 
+    uint32_t getRootDeviceIndex() {
+        return context->getDevice(0)->getRootDeviceIndex();
+    }
+
     cl_int retVal = CL_SUCCESS;
     WhiteBoxContext *context = nullptr;
-    cl_context_properties *properties = nullptr;
+    std::vector<cl_context_properties> properties;
 };
 
 TEST_F(ContextTest, WhenCreatingContextThenDevicesAllDevicesExist) {
@@ -85,7 +90,7 @@ TEST_F(ContextTest, WhenCreatingContextThenMemoryManagerForContextIsSet) {
 
 TEST_F(ContextTest, WhenCreatingContextThenPropertiesAreCopied) {
     auto contextProperties = context->getProperties();
-    EXPECT_NE(properties, contextProperties);
+    EXPECT_NE(properties.data(), contextProperties);
 }
 
 TEST_F(ContextTest, WhenCreatingContextThenPropertiesAreValid) {
@@ -107,29 +112,20 @@ TEST_F(ContextTest, WhenCreatingContextThenPropertiesAreValid) {
 }
 
 TEST_F(ContextTest, WhenCreatingContextThenSpecialQueueIsAvailable) {
-    auto specialQ = context->getSpecialQueue();
+    auto specialQ = context->getSpecialQueue(0u);
     EXPECT_NE(specialQ, nullptr);
 }
 
 TEST_F(ContextTest, WhenSettingSpecialQueueThenQueueIsAvailable) {
     MockContext context((ClDevice *)devices[0], true);
 
-    auto specialQ = context.getSpecialQueue();
+    auto specialQ = context.getSpecialQueue(0u);
     EXPECT_EQ(specialQ, nullptr);
 
-    auto cmdQ = new MockCommandQueue(&context, (ClDevice *)devices[0], 0);
-    context.setSpecialQueue(cmdQ);
-    specialQ = context.getSpecialQueue();
+    auto cmdQ = new MockCommandQueue(&context, (ClDevice *)devices[0], 0, false);
+    context.setSpecialQueue(cmdQ, 0u);
+    specialQ = context.getSpecialQueue(0u);
     EXPECT_NE(specialQ, nullptr);
-}
-
-TEST_F(ContextTest, WhenSettingDefaultQueueThenQueueIsAvailable) {
-    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(context);
-    EXPECT_EQ(nullptr, context->getDefaultDeviceQueue());
-    auto dq = new DeviceQueue();
-    context->setDefaultDeviceQueue(dq);
-    EXPECT_EQ(dq, context->getDefaultDeviceQueue());
-    delete dq;
 }
 
 TEST_F(ContextTest, givenCmdQueueWithoutContextWhenBeingCreatedNextDeletedThenContextRefCountShouldNeitherBeIncrementedNorNextDecremented) {
@@ -142,26 +138,7 @@ TEST_F(ContextTest, givenCmdQueueWithoutContextWhenBeingCreatedNextDeletedThenCo
     delete cmdQ1;
     EXPECT_EQ(1, context.getRefInternalCount());
 
-    auto cmdQ2 = new MockCommandQueue(nullptr, (ClDevice *)devices[0], 0);
-    EXPECT_EQ(1, context.getRefInternalCount());
-
-    delete cmdQ2;
-    EXPECT_EQ(1, context.getRefInternalCount());
-}
-
-TEST_F(ContextTest, givenDeviceQueueWithoutContextWhenBeingCreatedNextDeletedThenContextRefCountShouldNeitherBeIncrementedNorNextDecremented) {
-    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(context);
-    MockContext context((ClDevice *)devices[0]);
-    EXPECT_EQ(1, context.getRefInternalCount());
-
-    auto cmdQ1 = new DeviceQueue();
-    EXPECT_EQ(1, context.getRefInternalCount());
-
-    delete cmdQ1;
-    EXPECT_EQ(1, context.getRefInternalCount());
-
-    cl_queue_properties properties = 0;
-    auto cmdQ2 = new DeviceQueue(nullptr, (ClDevice *)devices[0], properties);
+    auto cmdQ2 = new MockCommandQueue(nullptr, (ClDevice *)devices[0], 0, false);
     EXPECT_EQ(1, context.getRefInternalCount());
 
     delete cmdQ2;
@@ -172,34 +149,7 @@ TEST_F(ContextTest, givenCmdQueueWithContextWhenBeingCreatedNextDeletedThenConte
     MockContext context((ClDevice *)devices[0]);
     EXPECT_EQ(1, context.getRefInternalCount());
 
-    auto cmdQ = new MockCommandQueue(&context, (ClDevice *)devices[0], 0);
-    EXPECT_EQ(2, context.getRefInternalCount());
-
-    delete cmdQ;
-    EXPECT_EQ(1, context.getRefInternalCount());
-}
-
-TEST_F(ContextTest, givenDeviceCmdQueueWithContextWhenBeingCreatedNextDeletedThenContextRefCountShouldBeIncrementedNextDecremented) {
-    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(context);
-    MockContext context((ClDevice *)devices[0]);
-    EXPECT_EQ(1, context.getRefInternalCount());
-
-    cl_queue_properties properties = 0;
-    auto cmdQ = new DeviceQueue(&context, (ClDevice *)devices[0], properties);
-    EXPECT_EQ(2, context.getRefInternalCount());
-
-    delete cmdQ;
-    EXPECT_EQ(1, context.getRefInternalCount());
-}
-
-TEST_F(ContextTest, givenDefaultDeviceCmdQueueWithContextWhenBeingCreatedNextDeletedThenContextRefCountShouldBeIncrementedNextDecremented) {
-    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(context);
-    MockContext context((ClDevice *)devices[0]);
-    EXPECT_EQ(1, context.getRefInternalCount());
-
-    cl_queue_properties properties = 0;
-    auto cmdQ = new DeviceQueue(&context, (ClDevice *)devices[0], properties);
-    context.setDefaultDeviceQueue(cmdQ);
+    auto cmdQ = new MockCommandQueue(&context, (ClDevice *)devices[0], 0, false);
     EXPECT_EQ(2, context.getRefInternalCount());
 
     delete cmdQ;
@@ -234,8 +184,8 @@ TEST_F(ContextTest, givenSpecialCmdQueueWithContextWhenBeingCreatedNextAutoDelet
     MockContext context((ClDevice *)devices[0], true);
     EXPECT_EQ(1, context.getRefInternalCount());
 
-    auto cmdQ = new MockCommandQueue(&context, (ClDevice *)devices[0], 0);
-    context.overrideSpecialQueueAndDecrementRefCount(cmdQ);
+    auto cmdQ = new MockCommandQueue(&context, (ClDevice *)devices[0], 0, false);
+    context.overrideSpecialQueueAndDecrementRefCount(cmdQ, 0u);
     EXPECT_EQ(1, context.getRefInternalCount());
 
     //special queue is to be deleted implicitly by context
@@ -245,14 +195,14 @@ TEST_F(ContextTest, givenSpecialCmdQueueWithContextWhenBeingCreatedNextDeletedTh
     MockContext context((ClDevice *)devices[0], true);
     EXPECT_EQ(1, context.getRefInternalCount());
 
-    auto cmdQ = new MockCommandQueue(&context, (ClDevice *)devices[0], 0);
-    context.overrideSpecialQueueAndDecrementRefCount(cmdQ);
+    auto cmdQ = new MockCommandQueue(&context, (ClDevice *)devices[0], 0, false);
+    context.overrideSpecialQueueAndDecrementRefCount(cmdQ, 0u);
     EXPECT_EQ(1, context.getRefInternalCount());
 
     delete cmdQ;
     EXPECT_EQ(1, context.getRefInternalCount());
 
-    context.setSpecialQueue(nullptr);
+    context.setSpecialQueue(nullptr, 0u);
 }
 
 TEST_F(ContextTest, GivenInteropSyncParamWhenCreateContextThenSetContextParam) {
@@ -332,27 +282,26 @@ TEST(Context, whenCreateContextThenSpecialQueueUsesInternalEngine) {
     ASSERT_NE(nullptr, context);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto specialQueueEngine = context->getSpecialQueue()->getGpgpuEngine();
+    auto specialQueueEngine = context->getSpecialQueue(device->getRootDeviceIndex())->getGpgpuEngine();
     auto internalEngine = device->getInternalEngine();
     EXPECT_EQ(internalEngine.commandStreamReceiver, specialQueueEngine.commandStreamReceiver);
 }
 
-TEST(MultiDeviceContextTest, givenContextWithMultipleDevicesWhenGettingTotalNumberOfDevicesThenNumberOfAllAvailableDevicesIsReturned) {
-    DebugManagerStateRestore restorer;
-    const uint32_t numRootDevices = 1u;
-    const uint32_t numSubDevices = 3u;
-    DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
-    initPlatform();
-    auto device = platform()->getClDevice(0);
+TEST(MultiDeviceContextTest, givenContextWithMultipleDevicesWhenGettingInfoAboutSubDevicesThenCorrectValueIsReturned) {
+    MockSpecializedContext context1;
+    MockUnrestrictiveContext context2;
+    MockDefaultContext context3;
 
-    cl_device_id clDevice = device;
-    ClDeviceVector deviceVector(&clDevice, numRootDevices);
-    cl_int retVal = CL_OUT_OF_HOST_MEMORY;
-    auto context = std::unique_ptr<Context>(Context::create<Context>(nullptr, deviceVector, nullptr, nullptr, retVal));
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(numSubDevices, device->getNumAvailableDevices());
-    EXPECT_EQ(numRootDevices, context->getNumDevices());
-    EXPECT_EQ(numRootDevices * numSubDevices, context->getTotalNumDevices());
+    EXPECT_EQ(2u, context1.getNumDevices());
+    EXPECT_TRUE(context1.containsMultipleSubDevices(0));
+
+    EXPECT_EQ(3u, context2.getNumDevices());
+    EXPECT_TRUE(context2.containsMultipleSubDevices(0));
+
+    EXPECT_EQ(3u, context3.getNumDevices());
+    EXPECT_FALSE(context3.containsMultipleSubDevices(0));
+    EXPECT_FALSE(context3.containsMultipleSubDevices(1));
+    EXPECT_FALSE(context3.containsMultipleSubDevices(2));
 }
 
 class ContextWithAsyncDeleterTest : public ::testing::WithParamInterface<bool>,
@@ -362,7 +311,10 @@ class ContextWithAsyncDeleterTest : public ::testing::WithParamInterface<bool>,
         memoryManager = new MockMemoryManager();
         device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())};
         deleter = new MockDeferredDeleter();
+
+        device->allEngines.clear();
         device->injectMemoryManager(memoryManager);
+        device->createEngines();
         memoryManager->setDeferredDeleter(deleter);
     }
     void TearDown() override {
@@ -430,7 +382,7 @@ TEST(Context, givenContextWithSingleDevicesWhenGettingDeviceBitfieldForAllocatio
     auto device = deviceFactory.subDevices[1];
     auto expectedDeviceBitfield = device->getDeviceBitfield();
     MockContext context(device);
-    EXPECT_EQ(expectedDeviceBitfield.to_ulong(), context.getDeviceBitfieldForAllocation().to_ulong());
+    EXPECT_EQ(expectedDeviceBitfield.to_ulong(), context.getDeviceBitfieldForAllocation(device->getRootDeviceIndex()).to_ulong());
 }
 TEST(Context, givenContextWithMultipleSubDevicesWhenGettingDeviceBitfieldForAllocationThenMergedDeviceBitfieldIsReturned) {
     UltClDeviceFactory deviceFactory{1, 3};
@@ -441,6 +393,366 @@ TEST(Context, givenContextWithMultipleSubDevicesWhenGettingDeviceBitfieldForAllo
     auto context = Context::create<Context>(0, deviceVector, nullptr, nullptr, retVal);
     EXPECT_NE(nullptr, context);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(expectedDeviceBitfield.to_ulong(), context->getDeviceBitfieldForAllocation().to_ulong());
+    EXPECT_EQ(expectedDeviceBitfield.to_ulong(), context->getDeviceBitfieldForAllocation(deviceFactory.rootDevices[0]->getRootDeviceIndex()).to_ulong());
     context->release();
 }
+
+TEST(MultiDeviceContextTest, givenContextWithTwoDifferentSubDevicesFromDifferentRootDevicesWhenGettingDeviceBitfieldForAllocationThenSeparatedDeviceBitfieldsAreReturned) {
+    DebugManagerStateRestore restorer;
+
+    DebugManager.flags.EnableMultiRootDeviceContexts.set(true);
+    UltClDeviceFactory deviceFactory{2, 2};
+    cl_int retVal;
+    cl_device_id devices[]{deviceFactory.subDevices[1], deviceFactory.subDevices[2]};
+    ClDeviceVector deviceVector(devices, 2);
+
+    auto expectedDeviceBitfieldForRootDevice0 = deviceFactory.subDevices[1]->getDeviceBitfield();
+    auto expectedDeviceBitfieldForRootDevice1 = deviceFactory.subDevices[2]->getDeviceBitfield();
+
+    auto context = Context::create<Context>(0, deviceVector, nullptr, nullptr, retVal);
+    EXPECT_NE(nullptr, context);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(expectedDeviceBitfieldForRootDevice0.to_ulong(), context->getDeviceBitfieldForAllocation(deviceFactory.rootDevices[0]->getRootDeviceIndex()).to_ulong());
+    EXPECT_EQ(expectedDeviceBitfieldForRootDevice1.to_ulong(), context->getDeviceBitfieldForAllocation(deviceFactory.rootDevices[1]->getRootDeviceIndex()).to_ulong());
+
+    context->release();
+}
+
+TEST(Context, WhenSettingContextDestructorCallbackThenCallOrderIsPreserved) {
+    struct UserDataType {
+        cl_context expectedContext;
+        std::vector<size_t> &vectorToModify;
+        size_t valueToAdd;
+    };
+    auto callback = [](cl_context context, void *userData) -> void {
+        auto pUserData = reinterpret_cast<UserDataType *>(userData);
+        EXPECT_EQ(pUserData->expectedContext, context);
+        pUserData->vectorToModify.push_back(pUserData->valueToAdd);
+    };
+
+    auto pContext = new MockContext{};
+    std::vector<size_t> callbacksReturnValues;
+    UserDataType userDataArray[]{
+        {pContext, callbacksReturnValues, 1},
+        {pContext, callbacksReturnValues, 2},
+        {pContext, callbacksReturnValues, 3}};
+
+    for (auto &userData : userDataArray) {
+        cl_int retVal = clSetContextDestructorCallback(pContext, callback, &userData);
+        ASSERT_EQ(CL_SUCCESS, retVal);
+    }
+    delete pContext;
+
+    ASSERT_EQ(3u, callbacksReturnValues.size());
+    EXPECT_EQ(3u, callbacksReturnValues[0]);
+    EXPECT_EQ(2u, callbacksReturnValues[1]);
+    EXPECT_EQ(1u, callbacksReturnValues[2]);
+}
+
+TEST(Context, givenContextAndDevicesWhenIsTileOnlyThenProperValueReturned) {
+    UltClDeviceFactory deviceFactoryWithSubDevices{1, 2};
+    UltClDeviceFactory deviceFactoryWithMultipleDevices{2, 0};
+    cl_device_id devices[] = {deviceFactoryWithMultipleDevices.rootDevices[0], deviceFactoryWithMultipleDevices.rootDevices[1]};
+
+    MockContext tileOnlyContext(deviceFactoryWithMultipleDevices.rootDevices[0]);
+    MockContext subDevicesContext(deviceFactoryWithSubDevices.rootDevices[0]);
+    MockContext multipleDevicesContext(ClDeviceVector(devices, 2));
+
+    EXPECT_TRUE(tileOnlyContext.isSingleDeviceContext());
+    EXPECT_FALSE(subDevicesContext.isSingleDeviceContext());
+    EXPECT_FALSE(multipleDevicesContext.isSingleDeviceContext());
+}
+
+TEST(InvalidExtraPropertiesTests, givenInvalidExtraPropertiesWhenCreatingContextThenContextIsNotCreated) {
+    constexpr cl_context_properties invalidPropertyType = (1 << 31);
+    constexpr cl_context_properties invalidContextFlag = (1 << 31);
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    cl_device_id deviceID = device.get();
+    cl_int retVal = 0;
+    std::unique_ptr<Context> context;
+
+    {
+        cl_context_properties properties[] = {invalidPropertyType, invalidContextFlag, 0};
+        context.reset(Context::create<Context>(properties, ClDeviceVector(&deviceID, 1), nullptr, nullptr, retVal));
+        EXPECT_EQ(CL_INVALID_PROPERTY, retVal);
+        EXPECT_EQ(nullptr, context.get());
+    }
+}
+
+using ContextCreateTests = ::testing::Test;
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ContextCreateTests, givenLocalMemoryAllocationWhenBlitMemoryToAllocationIsCalledThenSuccessIsReturned) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableLocalMemory.set(true);
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));
+
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+    UltClDeviceFactory deviceFactory{1, 2};
+
+    ClDevice *devicesToTest[] = {deviceFactory.rootDevices[0], deviceFactory.subDevices[0], deviceFactory.subDevices[1]};
+
+    for (const auto &testedDevice : devicesToTest) {
+
+        MockContext context(testedDevice);
+        cl_int retVal;
+        auto buffer = std::unique_ptr<Buffer>(Buffer::create(&context, {}, 1, nullptr, retVal));
+        auto memory = buffer->getGraphicsAllocation(testedDevice->getRootDeviceIndex());
+        uint8_t hostMemory[1];
+        auto executionEnv = testedDevice->getExecutionEnvironment();
+        executionEnv->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = false;
+
+        EXPECT_EQ(BlitOperationResult::Unsupported, BlitHelper::blitMemoryToAllocation(buffer->getContext()->getDevice(0)->getDevice(), memory, buffer->getOffset(), hostMemory, {1, 1, 1}));
+
+        executionEnv->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
+        EXPECT_EQ(BlitOperationResult::Success, BlitHelper::blitMemoryToAllocation(buffer->getContext()->getDevice(0)->getDevice(), memory, buffer->getOffset(), hostMemory, {1, 1, 1}));
+    }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ContextCreateTests, givenGpuHangOnFlushBcsTaskAndLocalMemoryAllocationWhenBlitMemoryToAllocationIsCalledThenGpuHangIsReturned) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableLocalMemory.set(true);
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));
+
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+    UltClDeviceFactory deviceFactory{1, 2};
+
+    auto testedDevice = deviceFactory.rootDevices[0];
+
+    MockContext context(testedDevice);
+    cl_int retVal;
+    auto buffer = std::unique_ptr<Buffer>(Buffer::create(&context, {}, 1, nullptr, retVal));
+    auto memory = buffer->getGraphicsAllocation(testedDevice->getRootDeviceIndex());
+
+    uint8_t hostMemory[1];
+    auto executionEnv = testedDevice->getExecutionEnvironment();
+    executionEnv->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = false;
+
+    EXPECT_EQ(BlitOperationResult::Unsupported, BlitHelper::blitMemoryToAllocation(buffer->getContext()->getDevice(0)->getDevice(), memory, buffer->getOffset(), hostMemory, {1, 1, 1}));
+
+    executionEnv->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
+
+    const auto rootDevice = testedDevice->getDevice().getRootDevice();
+    const auto blitDevice = rootDevice->getNearestGenericSubDevice(0);
+    auto &selectorCopyEngine = blitDevice->getSelectorCopyEngine();
+    auto deviceBitfield = blitDevice->getDeviceBitfield();
+
+    const auto &hwInfo = testedDevice->getDevice().getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    auto internalUsage = true;
+    auto bcsEngineType = EngineHelpers::getBcsEngineType(hwInfo, deviceBitfield, selectorCopyEngine, internalUsage);
+    auto bcsEngineUsage = hwHelper.preferInternalBcsEngine() ? EngineUsage::Internal : EngineUsage::Regular;
+    auto bcsEngine = blitDevice->tryGetEngine(bcsEngineType, bcsEngineUsage);
+    ASSERT_NE(nullptr, bcsEngine);
+
+    auto ultBcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine->commandStreamReceiver);
+    ultBcsCsr->callBaseFlushBcsTask = false;
+    ultBcsCsr->flushBcsTaskReturnValue = std::nullopt;
+
+    EXPECT_EQ(BlitOperationResult::GpuHang, BlitHelper::blitMemoryToAllocation(buffer->getContext()->getDevice(0)->getDevice(), memory, buffer->getOffset(), hostMemory, {1, 1, 1}));
+}
+
+struct AllocationReuseContextTest : ContextTest {
+    void addMappedPtr(Buffer &buffer, void *ptr, size_t ptrLength) {
+        auto &handler = context->getMapOperationsStorage().getHandler(&buffer);
+        MemObjSizeArray size{};
+        MemObjSizeArray offset{};
+        cl_map_flags mapFlag = CL_MAP_READ;
+        EXPECT_TRUE(handler.add(ptr, ptrLength, mapFlag, size, offset, 0, buffer.getMultiGraphicsAllocation().getDefaultGraphicsAllocation()));
+    }
+
+    void addSvmPtr(InternalMemoryType type, GraphicsAllocation &allocation) {
+        SvmAllocationData svmEntry{getRootDeviceIndex()};
+        svmEntry.memoryType = type;
+        svmEntry.size = allocation.getUnderlyingBufferSize();
+        svmEntry.gpuAllocations.addAllocation(&allocation);
+        if (type != InternalMemoryType::DEVICE_UNIFIED_MEMORY) {
+            svmEntry.cpuAllocation = &allocation;
+        }
+        context->getSVMAllocsManager()->insertSVMAlloc(svmEntry);
+    }
+};
+
+TEST_F(AllocationReuseContextTest, givenSharedSvmAllocPresentWhenGettingExistingHostPtrAllocThenRetrieveTheAllocation) {
+    REQUIRE_SVM_OR_SKIP(context->getDevice(0));
+
+    uint64_t svmPtrGpu = 0x1234;
+    void *svmPtr = reinterpret_cast<void *>(svmPtrGpu);
+    MockGraphicsAllocation allocation{svmPtr, svmPtrGpu, 400};
+    addSvmPtr(InternalMemoryType::SHARED_UNIFIED_MEMORY, allocation);
+
+    GraphicsAllocation *retrievedAllocation{};
+    InternalMemoryType retrievedMemoryType{};
+    bool retrievedCpuCopyStatus = true;
+    retVal = context->tryGetExistingHostPtrAllocation(svmPtr, allocation.getUnderlyingBufferSize(), getRootDeviceIndex(),
+                                                      retrievedAllocation, retrievedMemoryType, retrievedCpuCopyStatus);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(&allocation, retrievedAllocation);
+    EXPECT_EQ(InternalMemoryType::SHARED_UNIFIED_MEMORY, retrievedMemoryType);
+    EXPECT_TRUE(retrievedCpuCopyStatus);
+}
+
+TEST_F(AllocationReuseContextTest, givenHostSvmAllocPresentWhenGettingExistingHostPtrAllocThenRetrieveTheAllocation) {
+    REQUIRE_SVM_OR_SKIP(context->getDevice(0));
+
+    uint64_t svmPtrGpu = 0x1234;
+    void *svmPtr = reinterpret_cast<void *>(svmPtrGpu);
+    MockGraphicsAllocation allocation{svmPtr, svmPtrGpu, 400};
+    addSvmPtr(InternalMemoryType::HOST_UNIFIED_MEMORY, allocation);
+
+    GraphicsAllocation *retrievedAllocation{};
+    InternalMemoryType retrievedMemoryType{};
+    bool retrievedCpuCopyStatus = true;
+    retVal = context->tryGetExistingHostPtrAllocation(svmPtr, allocation.getUnderlyingBufferSize(), getRootDeviceIndex(),
+                                                      retrievedAllocation, retrievedMemoryType, retrievedCpuCopyStatus);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(&allocation, retrievedAllocation);
+    EXPECT_EQ(InternalMemoryType::HOST_UNIFIED_MEMORY, retrievedMemoryType);
+    EXPECT_TRUE(retrievedCpuCopyStatus);
+}
+
+TEST_F(AllocationReuseContextTest, givenDeviceSvmAllocPresentWhenGettingExistingHostPtrAllocThenRetrieveTheAllocationAndDisallowCpuCopy) {
+    REQUIRE_SVM_OR_SKIP(context->getDevice(0));
+
+    uint64_t svmPtrGpu = 0x1234;
+    void *svmPtr = reinterpret_cast<void *>(svmPtrGpu);
+    MockGraphicsAllocation allocation{svmPtr, svmPtrGpu, 400};
+    addSvmPtr(InternalMemoryType::DEVICE_UNIFIED_MEMORY, allocation);
+
+    GraphicsAllocation *retrievedAllocation{};
+    InternalMemoryType retrievedMemoryType{};
+    bool retrievedCpuCopyStatus = true;
+    retVal = context->tryGetExistingHostPtrAllocation(svmPtr, allocation.getUnderlyingBufferSize(), getRootDeviceIndex(),
+                                                      retrievedAllocation, retrievedMemoryType, retrievedCpuCopyStatus);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(&allocation, retrievedAllocation);
+    EXPECT_EQ(InternalMemoryType::DEVICE_UNIFIED_MEMORY, retrievedMemoryType);
+    EXPECT_FALSE(retrievedCpuCopyStatus);
+}
+
+TEST_F(AllocationReuseContextTest, givenHostSvmAllocPresentButRequestingTooBigSizeWhenGettingExistingHostPtrAllocThenReturnError) {
+    REQUIRE_SVM_OR_SKIP(context->getDevice(0));
+
+    uint64_t svmPtrGpu = 0x1234;
+    void *svmPtr = reinterpret_cast<void *>(svmPtrGpu);
+    MockGraphicsAllocation allocation{svmPtr, svmPtrGpu, 400};
+    addSvmPtr(InternalMemoryType::HOST_UNIFIED_MEMORY, allocation);
+
+    size_t ptrSizeToRetrieve = allocation.getUnderlyingBufferSize() + 1;
+    GraphicsAllocation *retrievedAllocation{};
+    InternalMemoryType retrievedMemoryType{};
+    bool retrievedCpuCopyStatus = true;
+    retVal = context->tryGetExistingHostPtrAllocation(svmPtr, ptrSizeToRetrieve, getRootDeviceIndex(),
+                                                      retrievedAllocation, retrievedMemoryType, retrievedCpuCopyStatus);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+}
+
+TEST_F(AllocationReuseContextTest, givenHostPtrStoredInMapOperationsStorageWhenGettingExistingHostPtrAllocThenRetrieveTheAllocation) {
+    MockGraphicsAllocation allocation{};
+    MockBuffer buffer{context, allocation};
+    void *mappedPtr = reinterpret_cast<void *>(0x1234);
+    size_t mappedPtrSize = 10u;
+    addMappedPtr(buffer, mappedPtr, mappedPtrSize);
+
+    GraphicsAllocation *retrievedAllocation{};
+    InternalMemoryType retrievedMemoryType{};
+    bool retrievedCpuCopyStatus = true;
+    retVal = context->tryGetExistingHostPtrAllocation(mappedPtr, mappedPtrSize, getRootDeviceIndex(),
+                                                      retrievedAllocation, retrievedMemoryType, retrievedCpuCopyStatus);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(&allocation, retrievedAllocation);
+    EXPECT_EQ(InternalMemoryType::NOT_SPECIFIED, retrievedMemoryType);
+    EXPECT_TRUE(retrievedCpuCopyStatus);
+}
+
+TEST_F(AllocationReuseContextTest, givenHostPtrNotStoredInMapOperationsStorageWhenGettingExistingHostPtrAllocThenFailToRetrieveTheAllocation) {
+    MockGraphicsAllocation allocation{};
+    MockBuffer buffer{context, allocation};
+    void *mappedPtr = reinterpret_cast<void *>(0x1234);
+    size_t mappedPtrSize = 10u;
+    addMappedPtr(buffer, mappedPtr, mappedPtrSize);
+
+    void *differentPtr = reinterpret_cast<void *>(0x12345);
+    GraphicsAllocation *retrievedAllocation{};
+    InternalMemoryType retrievedMemoryType{};
+    bool retrievedCpuCopyStatus = true;
+    retVal = context->tryGetExistingHostPtrAllocation(differentPtr, mappedPtrSize, getRootDeviceIndex(),
+                                                      retrievedAllocation, retrievedMemoryType, retrievedCpuCopyStatus);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(nullptr, retrievedAllocation);
+    EXPECT_EQ(InternalMemoryType::NOT_SPECIFIED, retrievedMemoryType);
+    EXPECT_TRUE(retrievedCpuCopyStatus);
+}
+
+TEST_F(AllocationReuseContextTest, givenHostPtrStoredInMapOperationsStorageAndRequestedPtrToBigWhenGettingExistingHostPtrAllocThenFailRetrieveTheAllocation) {
+    MockGraphicsAllocation allocation{};
+    MockBuffer buffer{context, allocation};
+    void *mappedPtr = reinterpret_cast<void *>(0x1234);
+    size_t mappedPtrSize = 10u;
+    addMappedPtr(buffer, mappedPtr, mappedPtrSize);
+
+    size_t ptrSizeToRetrieve = mappedPtrSize + 1;
+    GraphicsAllocation *retrievedAllocation{};
+    InternalMemoryType retrievedMemoryType{};
+    bool retrievedCpuCopyStatus = true;
+    retVal = context->tryGetExistingHostPtrAllocation(mappedPtr, ptrSizeToRetrieve, getRootDeviceIndex(),
+                                                      retrievedAllocation, retrievedMemoryType, retrievedCpuCopyStatus);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(nullptr, retrievedAllocation);
+    EXPECT_EQ(InternalMemoryType::NOT_SPECIFIED, retrievedMemoryType);
+    EXPECT_TRUE(retrievedCpuCopyStatus);
+}
+
+struct MockGTPinTestContext : Context {
+    using Context::svmAllocsManager;
+};
+
+struct MockSVMAllocManager : SVMAllocsManager {
+    MockSVMAllocManager() : SVMAllocsManager(nullptr, false) {}
+    ~MockSVMAllocManager() override {
+        svmAllocManagerDeleted = true;
+    }
+
+    inline static bool svmAllocManagerDeleted = false;
+};
+
+struct GTPinContextDestroyTest : ContextTest {
+    void SetUp() override {
+        ContextTest::SetUp();
+    }
+
+    void TearDown() override {
+        PlatformFixture::TearDown();
+    }
+};
+
+void onContextDestroy(gtpin::context_handle_t context) {
+    EXPECT_FALSE(MockSVMAllocManager::svmAllocManagerDeleted);
+}
+
+namespace NEO {
+extern gtpin::ocl::gtpin_events_t GTPinCallbacks;
+TEST_F(GTPinContextDestroyTest, whenCallingConxtextDestructorThenGTPinIsNotifiedBeforeSVMAllocManagerGetsDestroyed) {
+    auto mockContext = reinterpret_cast<MockGTPinTestContext *>(context);
+    if (mockContext->svmAllocsManager) {
+        delete mockContext->svmAllocsManager;
+    }
+    mockContext->svmAllocsManager = new MockSVMAllocManager();
+
+    GTPinCallbacks.onContextDestroy = onContextDestroy;
+    delete context;
+    EXPECT_TRUE(MockSVMAllocManager::svmAllocManagerDeleted);
+}
+} // namespace NEO

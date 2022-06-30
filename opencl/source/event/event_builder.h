@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ class Event;
 class EventBuilder {
   public:
     template <typename EventType, typename... ArgsT>
-    void create(ArgsT &&... args) {
+    void create(ArgsT &&...args) {
         event = new EventType(std::forward<ArgsT>(args)...);
     }
 

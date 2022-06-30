@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -117,8 +117,10 @@ class D3DSharingFunctions : public SharingFunctions {
     MOCKABLE_VIRTUAL void getRenderTargetData(D3DTexture2d *renderTarget, D3DTexture2d *dstSurface);
     MOCKABLE_VIRTUAL void updateSurface(D3DTexture2d *src, D3DTexture2d *dst);
     MOCKABLE_VIRTUAL void updateDevice(D3DResource *resource);
-    MOCKABLE_VIRTUAL void checkFormatSupport(DXGI_FORMAT format, UINT *pFormat);
+    MOCKABLE_VIRTUAL bool checkFormatSupport(DXGI_FORMAT format, UINT *pFormat);
     MOCKABLE_VIRTUAL bool memObjectFormatSupport(cl_mem_object_type object, UINT format);
+
+    MOCKABLE_VIRTUAL cl_int validateFormatSupport(DXGI_FORMAT format, cl_mem_object_type type);
 
     GetDxgiDescFcn getDxgiDescFcn = nullptr;
 
@@ -169,14 +171,18 @@ static inline cl_int getSupportedDXTextureFormats(cl_context context, cl_mem_obj
         return CL_INVALID_CONTEXT;
     }
 
-    auto supported_formats = pSharing->retrieveTextureFormats(imageType, plane);
+    size_t numberOfFormats = 0;
+    if (plane <= 1) {
+        auto supported_formats = pSharing->retrieveTextureFormats(imageType, plane);
+        numberOfFormats = supported_formats.size();
 
-    if (formats != nullptr) {
-        memcpy_s(formats, sizeof(DXGI_FORMAT) * numEntries, supported_formats.data(), sizeof(DXGI_FORMAT) * std::min(static_cast<size_t>(numEntries), supported_formats.size()));
+        if (formats != nullptr) {
+            memcpy_s(formats, sizeof(DXGI_FORMAT) * numEntries, supported_formats.data(), sizeof(DXGI_FORMAT) * std::min(static_cast<size_t>(numEntries), numberOfFormats));
+        }
     }
 
     if (numImageFormats) {
-        *numImageFormats = static_cast<cl_uint>(supported_formats.size());
+        *numImageFormats = static_cast<cl_uint>(numberOfFormats);
     }
     return CL_SUCCESS;
 }

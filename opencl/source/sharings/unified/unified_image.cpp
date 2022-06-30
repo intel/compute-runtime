@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/hw_info_config.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
@@ -31,7 +32,7 @@ Image *UnifiedImage::createSharedUnifiedImage(Context *context, cl_mem_flags fla
     imgInfo.imgDesc = Image::convertDescriptor(*imageDesc);
     imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
 
-    GraphicsAllocation *graphicsAllocation = createGraphicsAllocation(context, description, GraphicsAllocation::AllocationType::SHARED_IMAGE);
+    GraphicsAllocation *graphicsAllocation = createGraphicsAllocation(context, description, AllocationType::SHARED_IMAGE);
     if (!graphicsAllocation) {
         errorCode.set(CL_INVALID_MEM_OBJECT);
         return nullptr;
@@ -42,14 +43,17 @@ Image *UnifiedImage::createSharedUnifiedImage(Context *context, cl_mem_flags fla
     auto &memoryManager = *context->getMemoryManager();
     if (graphicsAllocation->getDefaultGmm()->unifiedAuxTranslationCapable()) {
         const auto &hwInfo = context->getDevice(0)->getHardwareInfo();
-        const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        graphicsAllocation->getDefaultGmm()->isRenderCompressed = hwHelper.isPageTableManagerSupported(hwInfo) ? memoryManager.mapAuxGpuVA(graphicsAllocation) : true;
+        const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+        graphicsAllocation->getDefaultGmm()->isCompressionEnabled = hwInfoConfig.isPageTableManagerSupported(hwInfo) ? memoryManager.mapAuxGpuVA(graphicsAllocation) : true;
     }
 
     const uint32_t baseMipmapIndex = 0u;
     const uint32_t sharedMipmapsCount = imageDesc->num_mip_levels;
     auto sharingHandler = new UnifiedImage(sharingFunctions, description.type);
-    return Image::createSharedImage(context, sharingHandler, McsSurfaceInfo{}, graphicsAllocation, nullptr,
+    auto multiGraphicsAllocation = MultiGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
+    multiGraphicsAllocation.addAllocation(graphicsAllocation);
+
+    return Image::createSharedImage(context, sharingHandler, McsSurfaceInfo{}, std::move(multiGraphicsAllocation), nullptr,
                                     flags, 0, clSurfaceFormat, imgInfo, __GMM_NO_CUBE_MAP, baseMipmapIndex, sharedMipmapsCount);
 }
 

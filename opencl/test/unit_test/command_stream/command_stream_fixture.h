@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,12 +13,12 @@
 namespace NEO {
 
 struct CommandStreamFixture {
-    void SetUp(CommandQueue *pCmdQ) {
+    void SetUp(CommandQueue *pCmdQ) { // NOLINT(readability-identifier-naming)
         pCS = &pCmdQ->getCS(1024);
         pCmdBuffer = pCS->getCpuBase();
     }
 
-    virtual void TearDown() {
+    virtual void TearDown() { // NOLINT(readability-identifier-naming)
     }
 
     LinearStream *pCS = nullptr;

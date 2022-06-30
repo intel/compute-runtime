@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,9 @@
 
 #include "shared/source/utilities/const_stringref.h"
 #include "shared/source/utilities/stackvec.h"
+
+#include <algorithm>
+#include <functional>
 
 namespace NEO {
 namespace CompilerOptions {
@@ -26,11 +29,15 @@ static constexpr ConstStringRef fastRelaxedMath = "-cl-fast-relaxed-math";
 static constexpr ConstStringRef preserveVec3Type = "-fpreserve-vec3-type";
 static constexpr ConstStringRef createLibrary = "-create-library";
 static constexpr ConstStringRef generateDebugInfo = "-g";
-static constexpr ConstStringRef bindlessBuffers = "-cl-intel-use-bindless-buffers";
-static constexpr ConstStringRef bindlessImages = "-cl-intel-use-bindless-images";
+static constexpr ConstStringRef bindlessMode = "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode";
 static constexpr ConstStringRef uniformWorkgroupSize = "-cl-uniform-work-group-size";
 static constexpr ConstStringRef forceEmuInt32DivRem = "-cl-intel-force-emu-int32divrem";
 static constexpr ConstStringRef forceEmuInt32DivRemSP = "-cl-intel-force-emu-sp-int32divrem";
+static constexpr ConstStringRef allowZebin = "-cl-intel-allow-zebin";
+static constexpr ConstStringRef enableImageSupport = "-D__IMAGE_SUPPORT__=1";
+static constexpr ConstStringRef optLevel = "-ze-opt-level=O";
+static constexpr ConstStringRef excludeIrFromZebin = "-exclude-ir-from-zebin";
+static constexpr ConstStringRef noRecompiledFromIr = "-Wno-recompiled-from-ir";
 
 constexpr size_t nullterminateSize = 1U;
 constexpr size_t spaceSeparatorSize = 1U;
@@ -70,7 +77,7 @@ constexpr size_t concatenationLength(const T &t) {
 }
 
 template <typename T, typename... RestT>
-constexpr size_t concatenationLength(const T &arg, const RestT &... rest) {
+constexpr size_t concatenationLength(const T &arg, const RestT &...rest) {
     return length(arg) + spaceSeparatorSize + concatenationLength(rest...);
 }
 
@@ -83,13 +90,13 @@ inline void concatenateAppend(ContainerT &out, T &&arg) {
 }
 
 template <typename ContainerT, typename T, typename... RestT>
-inline void concatenateAppend(ContainerT &out, T &&arg, RestT &&... rest) {
+inline void concatenateAppend(ContainerT &out, T &&arg, RestT &&...rest) {
     concatenateAppend(out, std::forward<T>(arg));
     concatenateAppend(out, std::forward<RestT>(rest)...);
 }
 
 template <typename T, typename... RestT>
-inline std::string concatenate(T &&arg, RestT &&... rest) {
+inline std::string concatenate(T &&arg, RestT &&...rest) {
     std::string ret;
     ret.reserve(nullterminateSize + concatenationLength(arg, rest...));
     concatenateAppend(ret, std::forward<T>(arg), std::forward<RestT>(rest)...);
@@ -103,6 +110,21 @@ constexpr size_t concatenationLength(const ConstStringRef (&options)[NumOptions]
         ret += spaceSeparatorSize + opt.length();
     }
     return (ret != 0U) ? ret - nullterminateSize : 0U;
+}
+
+template <typename ContainerT>
+inline bool extract(const ConstStringRef &toBeExtracted, ContainerT &options) {
+    const auto first{std::search(options.begin(), options.end(),
+                                 std::default_searcher{toBeExtracted.begin(), toBeExtracted.end()})};
+
+    if (first == options.end()) {
+        return false;
+    }
+
+    const auto last{std::next(first, toBeExtracted.length())};
+    options.erase(first, last);
+
+    return true;
 }
 
 template <size_t MaxLength = 256>
@@ -136,6 +158,16 @@ class ConstConcatenation {
     char storage[MaxLength + nullterminateSize] = {};
     size_t length = 0U;
 };
+
+template <size_t MaxLength>
+bool operator==(const ConstStringRef &lhs, const ConstConcatenation<MaxLength> &rhs) {
+    return lhs == rhs.operator ConstStringRef();
+}
+
+template <size_t MaxLength>
+bool operator==(const ConstConcatenation<MaxLength> &lhs, const ConstStringRef &rhs) {
+    return rhs == lhs;
+}
 
 bool contains(const char *options, ConstStringRef optionToFind);
 

@@ -1,18 +1,20 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 
 #include "event_fixture.h"
@@ -130,7 +132,7 @@ TEST(UserEvent, GivenInitialUserEventStateWhenCheckingReadyForSubmissionThenFals
 TEST(UserEvent, GivenUserEventWhenGettingTaskLevelThenZeroIsReturned) {
     MyUserEvent uEvent;
     EXPECT_EQ(0U, uEvent.getTaskLevel());
-    EXPECT_FALSE(uEvent.wait(false, false));
+    EXPECT_EQ(WaitStatus::NotReady, uEvent.wait(false, false));
 }
 
 TEST(UserEvent, WhenSettingStatusThenReadyForSubmissionisTrue) {
@@ -158,7 +160,7 @@ TEST(UserEvent, givenUserEventWhenStatusIsCompletedThenReturnZeroTaskLevel) {
 typedef HelloWorldTest<HelloWorldFixtureFactory> EventTests;
 
 TEST_F(MockEventTests, GivenBlockedUserEventWhenEnqueueingNdRangeWithoutReturnEventThenDoNotSubmitToCsr) {
-    uEvent = make_releaseable<UserEvent>();
+    uEvent = makeReleaseable<UserEvent>();
 
     cl_event userEvent = uEvent.get();
     cl_event *eventWaitList = &userEvent;
@@ -190,7 +192,7 @@ TEST_F(MockEventTests, GivenBlockedUserEventWhenEnqueueingNdRangeWithoutReturnEv
 }
 
 TEST_F(MockEventTests, GivenBlockedUserEventWhenEnqueueingNdRangeWithReturnEventThenDoNotSubmitToCsr) {
-    uEvent = make_releaseable<UserEvent>();
+    uEvent = makeReleaseable<UserEvent>();
 
     cl_event userEvent = uEvent.get();
     cl_event retEvent = nullptr;
@@ -233,7 +235,7 @@ TEST_F(MockEventTests, GivenBlockedUserEventWhenEnqueueingNdRangeWithReturnEvent
 }
 
 TEST_F(MockEventTests, WhenAddingChildEventThenConnectionIsCreatedAndCountOnReturnEventIsInjected) {
-    uEvent = make_releaseable<UserEvent>();
+    uEvent = makeReleaseable<UserEvent>();
 
     cl_event userEvent = uEvent.get();
     cl_event retEvent = nullptr;
@@ -272,8 +274,8 @@ TEST_F(EventTests, givenNormalEventThatHasParentUserEventWhenUserEventIsUnblocke
 }
 
 TEST_F(MockEventTests, WhenAddingTwoChildEventsThenConnectionIsCreatedAndCountOnReturnEventIsInjected) {
-    uEvent = make_releaseable<UserEvent>();
-    auto uEvent2 = make_releaseable<UserEvent>();
+    uEvent = makeReleaseable<UserEvent>();
+    auto uEvent2 = makeReleaseable<UserEvent>();
     cl_event retEvent = nullptr;
 
     cl_event eventWaitList[] = {uEvent.get(), uEvent2.get()};
@@ -315,8 +317,8 @@ TEST_F(MockEventTests, WhenAddingTwoChildEventsThenConnectionIsCreatedAndCountOn
 }
 
 TEST_F(MockEventTests, GivenTwoUserEvenstWhenCountOnNdr1IsInjectedThenItIsPropagatedToNdr2viaVirtualEvent) {
-    uEvent = make_releaseable<UserEvent>(context);
-    auto uEvent2 = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
+    auto uEvent2 = makeReleaseable<UserEvent>(context);
 
     cl_event eventWaitList[] = {uEvent.get(), uEvent2.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
@@ -385,8 +387,8 @@ TEST_F(EventTests, givenQueueThatIsBlockedByUserEventWhenIsQueueBlockedIsCalledT
 }
 
 TEST_F(MockEventTests, GivenUserEventSignalingWhenFinishThenExecutionIsNotBlocked) {
-    uEvent = make_releaseable<UserEvent>(context);
-    auto uEvent2 = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
+    auto uEvent2 = makeReleaseable<UserEvent>(context);
 
     cl_event eventWaitList[] = {uEvent.get(), uEvent2.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
@@ -403,7 +405,7 @@ TEST_F(MockEventTests, GivenUserEventSignalingWhenFinishThenExecutionIsNotBlocke
 }
 
 TEST_F(MockEventTests, WhenCompletingUserEventThenStatusPropagatedToNormalEvent) {
-    uEvent = make_releaseable<UserEvent>();
+    uEvent = makeReleaseable<UserEvent>();
     cl_event retEvent = nullptr;
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
@@ -440,7 +442,7 @@ HWTEST_F(EventTests, WhenSignalingThenUserEventObtainsProperTaskLevel) {
 }
 
 TEST_F(MockEventTests, GivenUserEventWhenSettingStatusCompleteThenTaskLevelIsUpdatedCorrectly) {
-    uEvent = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto taskLevel = csr.peekTaskLevel();
 
@@ -469,7 +471,7 @@ TEST_F(MockEventTests, GivenUserEventWhenSettingStatusCompleteThenTaskLevelIsUpd
 }
 
 TEST_F(MockEventTests, GivenCompleteParentWhenWaitingForEventsThenChildrenAreComplete) {
-    uEvent = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
 
     cl_event retEvent = nullptr;
     cl_event eventWaitList[] = {uEvent.get()};
@@ -506,7 +508,7 @@ TEST_F(EventTests, WhenStatusIsAbortedWhenWaitingForEventsThenErrorIsReturned) {
 }
 
 TEST_F(MockEventTests, GivenAbortedUserEventWhenEnqueingNdrThenDoNotFlushToCsr) {
-    uEvent = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
 
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
@@ -538,8 +540,34 @@ TEST_F(MockEventTests, GivenAbortedUserEventWhenEnqueingNdrThenDoNotFlushToCsr) 
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST_F(MockEventTests, givenDebugVariableWhenStatusIsQueriedThenNoFlushHappens) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SkipFlushingEventsOnGetStatusCalls.set(1);
+    DebugManager.flags.PerformImplicitFlushForNewResource.set(0);
+    DebugManager.flags.PerformImplicitFlushForIdleGpu.set(0);
+
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
+    csr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    csr.postInitFlagsSetup();
+
+    cl_event retEvent = nullptr;
+
+    auto latestFlushed = csr.peekLatestFlushedTaskCount();
+    retVal = callOneWorkItemNDRKernel(nullptr, 0u, &retEvent);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    cl_int eventStatus = 0;
+    retVal = clGetEventInfo(retEvent, CL_EVENT_COMMAND_EXECUTION_STATUS, sizeof(cl_int), &eventStatus, NULL);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(csr.peekLatestFlushedTaskCount(), latestFlushed);
+
+    retVal = clReleaseEvent(retEvent);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 TEST_F(MockEventTests, GivenAbortedParentWhenDestroyingChildEventThenDoNotProcessBlockedCommands) {
-    uEvent = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
 
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
@@ -579,7 +607,7 @@ TEST_F(MockEventTests, GivenAbortedParentWhenDestroyingChildEventThenDoNotProces
 }
 
 TEST_F(MockEventTests, GivenAbortedUserEventWhenWaitingForEventThenErrorIsReturned) {
-    uEvent = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
 
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
@@ -602,8 +630,8 @@ TEST_F(MockEventTests, GivenAbortedUserEventWhenWaitingForEventThenErrorIsReturn
 }
 
 TEST_F(MockEventTests, GivenAbortedUserEventAndTwoInputsWhenWaitingForEventThenErrorIsReturned) {
-    uEvent = make_releaseable<UserEvent>(context);
-    auto uEvent2 = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
+    auto uEvent2 = makeReleaseable<UserEvent>(context);
     cl_event eventWaitList[] = {uEvent.get(), uEvent2.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
     cl_event retEvent = nullptr;
@@ -626,7 +654,7 @@ TEST_F(MockEventTests, GivenAbortedUserEventAndTwoInputsWhenWaitingForEventThenE
 }
 
 TEST_F(MockEventTests, GivenAbortedQueueWhenFinishingThenSuccessIsReturned) {
-    uEvent = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto taskLevel = csr.peekTaskLevel();
@@ -649,7 +677,7 @@ TEST_F(MockEventTests, GivenAbortedQueueWhenFinishingThenSuccessIsReturned) {
 }
 
 TEST_F(MockEventTests, GivenUserEventWhenEnqueingThenDependantPacketIsRegistered) {
-    uEvent = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
 
@@ -663,7 +691,7 @@ TEST_F(MockEventTests, GivenUserEventWhenEnqueingThenDependantPacketIsRegistered
 }
 
 TEST_F(MockEventTests, GivenUserEventWhenEnqueingThenCommandPacketContainsValidCommandStream) {
-    uEvent = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
 
@@ -677,7 +705,7 @@ TEST_F(MockEventTests, GivenUserEventWhenEnqueingThenCommandPacketContainsValidC
 }
 
 TEST_F(MockEventTests, WhenStatusIsSetThenBlockedPacketsAreSent) {
-    uEvent = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
     cl_event eventWaitList[] = {uEvent.get()};
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
@@ -706,7 +734,7 @@ TEST_F(MockEventTests, WhenStatusIsSetThenBlockedPacketsAreSent) {
 }
 
 TEST_F(MockEventTests, WhenFinishingThenVirtualEventIsNullAndReleaseEventReturnsSuccess) {
-    uEvent = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
     cl_event retEvent;
@@ -730,7 +758,7 @@ TEST_F(MockEventTests, WhenFinishingThenVirtualEventIsNullAndReleaseEventReturns
 }
 
 TEST_F(MockEventTests, givenBlockedQueueThenCommandStreamDoesNotChangeWhileEnqueueAndAfterSignaling) {
-    uEvent = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
     cl_event retEvent;
@@ -776,7 +804,7 @@ TEST_F(EventTests, givenUserEventThatHasCallbackAndBlockQueueWhenQueueIsQueriedF
     auto event1 = MockEventBuilder::createAndFinalize<EV>(&pCmdQ->getContext());
 
     struct E2Clb {
-        static void CL_CALLBACK SignalEv2(cl_event e, cl_int status, void *data) {
+        static void CL_CALLBACK signalEv2(cl_event e, cl_int status, void *data) {
             bool *called = (bool *)data;
             *called = true;
         }
@@ -791,7 +819,7 @@ TEST_F(EventTests, givenUserEventThatHasCallbackAndBlockQueueWhenQueueIsQueriedF
     ASSERT_EQ(retVal, CL_SUCCESS);
 
     bool callbackCalled = false;
-    retVal = clSetEventCallback(event1, CL_COMPLETE, E2Clb::SignalEv2, &callbackCalled);
+    retVal = clSetEventCallback(event1, CL_COMPLETE, E2Clb::signalEv2, &callbackCalled);
     ASSERT_EQ(retVal, CL_SUCCESS);
 
     EXPECT_EQ(1, event1->updated);
@@ -813,7 +841,7 @@ TEST_F(EventTests, GivenEventCallbackWithWaitWhenWaitingForEventsThenSuccessIsRe
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     UserEvent event1;
     struct E2Clb {
-        static void CL_CALLBACK SignalEv2(cl_event e, cl_int status, void *data)
+        static void CL_CALLBACK signalEv2(cl_event e, cl_int status, void *data)
 
         {
             UserEvent *event2 = static_cast<UserEvent *>(data);
@@ -829,7 +857,7 @@ TEST_F(EventTests, GivenEventCallbackWithWaitWhenWaitingForEventsThenSuccessIsRe
     retVal = clWaitForEvents(1, &retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    clSetEventCallback(retEvent, CL_COMPLETE, E2Clb::SignalEv2, &event1);
+    clSetEventCallback(retEvent, CL_COMPLETE, E2Clb::signalEv2, &event1);
 
     cl_event events[] = {&event1};
     auto result = UserEvent::waitForEvents(sizeof(events) / sizeof(events[0]), events);
@@ -844,7 +872,7 @@ TEST_F(EventTests, GivenEventCallbackWithoutWaitWhenWaitingForEventsThenSuccessI
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     UserEvent event1(context);
     struct E2Clb {
-        static void CL_CALLBACK SignalEv2(cl_event e, cl_int status, void *data)
+        static void CL_CALLBACK signalEv2(cl_event e, cl_int status, void *data)
 
         {
             UserEvent *event2 = static_cast<UserEvent *>(data);
@@ -857,7 +885,7 @@ TEST_F(EventTests, GivenEventCallbackWithoutWaitWhenWaitingForEventsThenSuccessI
     retVal = callOneWorkItemNDRKernel(nullptr, 0, &retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    clSetEventCallback(retEvent, CL_COMPLETE, E2Clb::SignalEv2, &event1);
+    clSetEventCallback(retEvent, CL_COMPLETE, E2Clb::signalEv2, &event1);
 
     cl_event events[] = {&event1};
     auto result = UserEvent::waitForEvents(sizeof(events) / sizeof(events[0]), events);
@@ -868,8 +896,9 @@ TEST_F(EventTests, GivenEventCallbackWithoutWaitWhenWaitingForEventsThenSuccessI
 }
 
 TEST_F(MockEventTests, GivenEnqueueReadImageWhenWaitingforEventThenSuccessIsReturned) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
     cl_event retEvent;
-    uEvent = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
     cl_event eventWaitList[] = {uEvent.get()};
 
     auto image = clUniquePtr(Image2dHelper<>::create(this->context));
@@ -924,7 +953,7 @@ TEST_F(EventTests, WhenWaitingForEventsThenTemporaryAllocationsAreDestroyed) {
 TEST_F(EventTest, WhenUserEventIsCreatedThenWaitIsNonBlocking) {
     UserEvent event;
     auto result = event.wait(false, false);
-    EXPECT_FALSE(result);
+    EXPECT_EQ(WaitStatus::NotReady, result);
 }
 
 TEST_F(EventTest, GivenSingleUserEventWhenWaitingForEventsThenSuccessIsReturned) {
@@ -941,7 +970,7 @@ TEST_F(EventTest, GivenMultipleOutOfOrderCallbacksWhenWaitingForEventsThenSucces
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     UserEvent event1;
     struct E2Clb {
-        static void CL_CALLBACK SignalEv2(cl_event e, cl_int status, void *data)
+        static void CL_CALLBACK signalEv2(cl_event e, cl_int status, void *data)
 
         {
             UserEvent *event2 = static_cast<UserEvent *>(data);
@@ -950,7 +979,7 @@ TEST_F(EventTest, GivenMultipleOutOfOrderCallbacksWhenWaitingForEventsThenSucces
     };
 
     UserEvent event2;
-    event2.addCallback(E2Clb::SignalEv2, CL_COMPLETE, &event1);
+    event2.addCallback(E2Clb::signalEv2, CL_COMPLETE, &event1);
     event2.setStatus(CL_COMPLETE);
     cl_event events[] = {&event1, &event2};
     auto result = UserEvent::waitForEvents(sizeof(events) / sizeof(events[0]), events);
@@ -961,7 +990,7 @@ TEST_F(EventTests, WhenCalbackWasRegisteredOnCallbackThenExecutionPassesCorrectE
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     struct HelperClb {
-        static void CL_CALLBACK SetClbStatus(cl_event e, cl_int status, void *data)
+        static void CL_CALLBACK setClbStatus(cl_event e, cl_int status, void *data)
 
         {
             cl_int *ret = static_cast<cl_int *>(data);
@@ -976,11 +1005,11 @@ TEST_F(EventTests, WhenCalbackWasRegisteredOnCallbackThenExecutionPassesCorrectE
     cl_int submittedClbExecStatus = -1;
     cl_int runningClbExecStatus = -1;
     cl_int completeClbExecStatus = -1;
-    retVal = clSetEventCallback(retEvent, CL_SUBMITTED, HelperClb::SetClbStatus, &submittedClbExecStatus);
+    retVal = clSetEventCallback(retEvent, CL_SUBMITTED, HelperClb::setClbStatus, &submittedClbExecStatus);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetEventCallback(retEvent, CL_RUNNING, HelperClb::SetClbStatus, &runningClbExecStatus);
+    retVal = clSetEventCallback(retEvent, CL_RUNNING, HelperClb::setClbStatus, &runningClbExecStatus);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetEventCallback(retEvent, CL_COMPLETE, HelperClb::SetClbStatus, &completeClbExecStatus);
+    retVal = clSetEventCallback(retEvent, CL_COMPLETE, HelperClb::setClbStatus, &completeClbExecStatus);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto result = UserEvent::waitForEvents(1, &retEvent);

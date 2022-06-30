@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,7 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/os_interface.h"
-
-#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 using namespace MetricsLibraryApi;
 
 namespace NEO {
@@ -29,7 +28,7 @@ bool MockMetricsLibrary::open() {
 //////////////////////////////////////////////////////
 // MockMetricsLibrary::contextCreate
 //////////////////////////////////////////////////////
-bool MockMetricsLibrary::contextCreate(const ClientType_1_0 &client, ClientData_1_0 &clientData, ContextCreateData_1_0 &createData, ContextHandle_1_0 &handle) {
+bool MockMetricsLibrary::contextCreate(const ClientType_1_0 &client, ClientOptionsSubDeviceData_1_0 &subDevice, ClientOptionsSubDeviceIndexData_1_0 &subDeviceIndex, ClientOptionsSubDeviceCountData_1_0 &subDeviceCount, ClientData_1_0 &clientData, ContextCreateData_1_0 &createData, ContextHandle_1_0 &handle) {
     if (client.Api != MetricsLibraryApi::ClientApi::OpenCL) {
         return false;
     }
@@ -193,8 +192,11 @@ StatusCode MockMetricsLibraryValidInterface::QueryCreate(const QueryCreateData_1
 // MockMetricsLibraryValidInterface::QueryDelete
 //////////////////////////////////////////////////////
 StatusCode MockMetricsLibraryValidInterface::QueryDelete(const QueryHandle_1_0 handle) {
-    EXPECT_TRUE(handle.IsValid());
-    delete (uint32_t *)handle.data;
+
+    if (handle.IsValid()) {
+        delete (uint32_t *)handle.data;
+    }
+
     return StatusCode::Success;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ const double ratioThreshold = 0.005;
 // clCreateContext
 //------------------------------------------------------------------------------
 
-TEST_F(ContextTest, clCreateContext) {
+TEST_F(ContextTest, WhenCreatingContextThenTimeIsLowerThanReference) {
 
     double previousRatio = -1.0;
     uint64_t hash = getHash(__FUNCTION__, strlen(__FUNCTION__));
@@ -56,7 +56,7 @@ TEST_F(ContextTest, clCreateContext) {
     updateTestRatio(hash, ratio);
 }
 
-TEST_F(ContextTest, clReleaseContext) {
+TEST_F(ContextTest, WhenReleasingContextThenTimeIsLowerThanReference) {
 
     double previousRatio = -1.0;
     uint64_t hash = getHash(__FUNCTION__, strlen(__FUNCTION__));
@@ -88,7 +88,7 @@ TEST_F(ContextTest, clReleaseContext) {
     updateTestRatio(hash, ratio);
 }
 
-TEST_F(ContextTest, clRetainContext) {
+TEST_F(ContextTest, WhenRetainingContextThenTimeIsLowerThanReference) {
     double previousRatio = -1.0;
     uint64_t hash = getHash(__FUNCTION__, strlen(__FUNCTION__));
 

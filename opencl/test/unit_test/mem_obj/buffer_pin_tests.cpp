@@ -1,19 +1,20 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/test/common/fixtures/memory_management_fixture.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/test_macros/test.h"
+
 #include "opencl/source/mem_obj/buffer.h"
-#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
-#include "test.h"
 
 #include "gtest/gtest.h"
 
@@ -41,6 +42,14 @@ class TestedMemoryManager : public OsAgnosticMemoryManager {
         }
         return OsAgnosticMemoryManager::allocateGraphicsMemoryWithHostPtr(properties);
     }
+    GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &properties) override {
+        EXPECT_NE(0u, HPExpectedSize);
+        if (HPExpectedSize == properties.size) {
+            EXPECT_TRUE(properties.flags.forcePin);
+            HPAllocCount++;
+        }
+        return OsAgnosticMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(properties);
+    }
 
     size_t expectedSize = 0;
     uint32_t allocCount = 0;
@@ -51,6 +60,9 @@ class TestedMemoryManager : public OsAgnosticMemoryManager {
 TEST(BufferTests, WhenBufferIsCreatedThenPinIsSet) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     std::unique_ptr<TestedMemoryManager> mm(new MemoryManagerCreate<TestedMemoryManager>(false, false, executionEnvironment));
+    if (mm->isLimitedGPU(0)) {
+        GTEST_SKIP();
+    }
     {
         MockContext context;
         auto size = MemoryConstants::pageSize * 32;
@@ -74,6 +86,10 @@ TEST(BufferTests, WhenBufferIsCreatedThenPinIsSet) {
 TEST(BufferTests, GivenHostPtrWhenBufferIsCreatedThenPinIsSet) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     std::unique_ptr<TestedMemoryManager> mm(new TestedMemoryManager(executionEnvironment));
+    if (mm->isLimitedGPU(0)) {
+        GTEST_SKIP();
+    }
+
     {
         MockContext context;
         auto retVal = CL_INVALID_OPERATION;
@@ -87,7 +103,7 @@ TEST(BufferTests, GivenHostPtrWhenBufferIsCreatedThenPinIsSet) {
 
         auto buffer = Buffer::create(
             &context,
-            CL_MEM_USE_HOST_PTR | CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL,
+            CL_MEM_USE_HOST_PTR | CL_MEM_FORCE_HOST_MEMORY_INTEL,
             size,
             bff,
             retVal);

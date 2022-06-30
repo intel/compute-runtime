@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "level_zero/core/source/device/device.h"
-#include <level_zero/ze_common.h>
-#include <level_zero/ze_fence.h>
+#include "shared/source/command_stream/preemption_mode.h"
+
+#include <level_zero/ze_api.h>
 
 #include <atomic>
 
@@ -20,6 +20,7 @@ class CommandStreamReceiver;
 }
 
 namespace L0 {
+struct Device;
 
 struct CommandQueue : _ze_command_queue_handle_t {
     template <typename Type>
@@ -39,10 +40,10 @@ struct CommandQueue : _ze_command_queue_handle_t {
     virtual ze_result_t executeCommands(uint32_t numCommands,
                                         void *phCommands,
                                         ze_fence_handle_t hFence) = 0;
-    virtual ze_result_t synchronize(uint32_t timeout) = 0;
+    virtual ze_result_t synchronize(uint64_t timeout) = 0;
 
     static CommandQueue *create(uint32_t productFamily, Device *device, NEO::CommandStreamReceiver *csr,
-                                const ze_command_queue_desc_t *desc, bool isCopyOnly);
+                                const ze_command_queue_desc_t *desc, bool isCopyOnly, bool isInternal, ze_result_t &resultValue);
 
     static CommandQueue *fromHandle(ze_command_queue_handle_t handle) {
         return static_cast<CommandQueue *>(handle);
@@ -54,11 +55,16 @@ struct CommandQueue : _ze_command_queue_handle_t {
         commandQueuePreemptionMode = newPreemptionMode;
     }
 
+    bool peekIsCopyOnlyCommandQueue() const { return this->isCopyOnlyCommandQueue; }
+
   protected:
-    std::atomic<uint32_t> commandQueuePerThreadScratchSize;
     NEO::PreemptionMode commandQueuePreemptionMode = NEO::PreemptionMode::Initial;
+    uint32_t partitionCount = 1;
+    uint32_t activeSubDevices = 1;
+    bool preemptionCmdSyncProgramming = true;
     bool commandQueueDebugCmdsProgrammed = false;
     bool isCopyOnlyCommandQueue = false;
+    bool internalUsage = false;
 };
 
 using CommandQueueAllocatorFn = CommandQueue *(*)(Device *device, NEO::CommandStreamReceiver *csr,

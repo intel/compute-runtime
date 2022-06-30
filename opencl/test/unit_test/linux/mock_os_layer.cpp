@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,21 +7,27 @@
 
 #include "mock_os_layer.h"
 
+#include "shared/source/helpers/string.h"
+#include "shared/source/os_interface/linux/drm_wrappers.h"
+
 #include <cassert>
 #include <dirent.h>
 #include <iostream>
+#include <sys/stat.h>
+#include <sys/sysmacros.h>
 
 int (*c_open)(const char *pathname, int flags, ...) = nullptr;
 int (*openFull)(const char *pathname, int flags, ...) = nullptr;
-int (*c_ioctl)(int fd, unsigned long int request, ...) = nullptr;
 
 int fakeFd = 1023;
 int haveDri = 0;                                       // index of dri to serve, -1 - none
 int deviceId = NEO::deviceDescriptorTable[0].deviceId; // default supported DeviceID
+int revisionId = 17;
 int haveSoftPin = 1;
 int havePreemption = I915_SCHEDULER_CAP_ENABLED |
                      I915_SCHEDULER_CAP_PRIORITY |
                      I915_SCHEDULER_CAP_PREEMPTION;
+int vmId = 0;
 int failOnDeviceId = 0;
 int failOnEuTotal = 0;
 int failOnSubsliceTotal = 0;
@@ -31,13 +37,43 @@ int failOnParamBoost = 0;
 int failOnSetParamSseu = 0;
 int failOnGetParamSseu = 0;
 int failOnContextCreate = 0;
+int failOnVirtualMemoryCreate = 0;
 int failOnSetPriority = 0;
 int failOnPreemption = 0;
 int failOnDrmVersion = 0;
+int accessCalledTimes = 0;
+int readLinkCalledTimes = 0;
+int fstatCalledTimes = 0;
+bool forceExtraIoctlDuration = 0;
 char providedDrmVersion[5] = {'i', '9', '1', '5', '\0'};
 uint64_t gpuTimestamp = 0;
 int ioctlSeq[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 size_t ioctlCnt = 0;
+
+int fstat(int fd, struct stat *buf) {
+    ++fstatCalledTimes;
+    buf->st_rdev = 0x0;
+    return 0;
+}
+
+int access(const char *pathname, int mode) {
+    ++accessCalledTimes;
+    return 0;
+}
+
+ssize_t readlink(const char *path, char *buf, size_t bufsiz) {
+    ++readLinkCalledTimes;
+
+    if (readLinkCalledTimes % 2 == 1) {
+        return -1;
+    }
+
+    constexpr size_t sizeofPath = sizeof("../../devices/pci0000:4a/0000:4a:02.0/0000:4b:00.0/0000:4c:01.0/0000:00:03.0/drm/renderD128");
+
+    strcpy_s(buf, sizeofPath, "../../devices/pci0000:4a/0000:4a:02.0/0000:4b:00.0/0000:4c:01.0/0000:00:03.0/drm/renderD128");
+
+    return sizeofPath;
+}
 
 int open(const char *pathname, int flags, ...) {
     if (openFull != nullptr) {
@@ -68,16 +104,26 @@ DIR *opendir(const char *name) {
 int closedir(DIR *dirp) {
     return 0u;
 }
-uint32_t entryIndex = 0u;
-const uint32_t numEntries = 4u;
 
 struct dirent entries[] = {
     {0, 0, 0, 0, "."},
+    {0, 0, 0, 0, "pci-0000:00:03.1-render"},
+    {0, 0, 0, 0, "platform-4010000000.pcie-pci-0000:00:02.0-render"},
     {0, 0, 0, 0, "pci-0000:test1-render"},
     {0, 0, 0, 0, "pci-0000:test2-render"},
     {0, 0, 0, 0, "pci-0000:1234-render"},
-
+    {0, 0, 0, 0, "pci-0000:3:0.0-render"},
+    {0, 0, 0, 0, "pci-0a00:00:03.1-render"},
+    {0, 0, 0, 0, "pci-0000:b3:03.1-render"},
+    {0, 0, 0, 0, "pci-0000:00:b3.1-render"},
+    {0, 0, 0, 0, "pci-0000:00:03.a-render"},
+    {0, 0, 0, 0, "pci-0000:00:03.a-render-12"},
+    {0, 0, 0, 0, "pcii0000:00:03.a-render"},
+    {0, 0, 0, 0, "pcii-render"},
 };
+
+uint32_t entryIndex = 0u;
+const uint32_t numEntries = sizeof(entries) / sizeof(entries[0]);
 
 struct dirent *readdir(DIR *dir) {
     if (entryIndex >= numEntries) {
@@ -87,7 +133,7 @@ struct dirent *readdir(DIR *dir) {
     return &entries[entryIndex++];
 }
 
-int drmGetParam(drm_i915_getparam_t *param) {
+int drmGetParam(NEO::GetParam *param) {
     assert(param);
     int ret = 0;
 
@@ -105,7 +151,7 @@ int drmGetParam(drm_i915_getparam_t *param) {
         ret = failOnSubsliceTotal;
         break;
     case I915_PARAM_REVISION:
-        *param->value = 0x0;
+        *param->value = revisionId;
         ret = failOnRevisionId;
         break;
     case I915_PARAM_HAS_EXEC_SOFTPIN:
@@ -120,13 +166,12 @@ int drmGetParam(drm_i915_getparam_t *param) {
 #endif
     default:
         ret = -1;
-        std::cerr << "drm.getParam: " << std::dec << param->param << std::endl;
         break;
     }
     return ret;
 }
 
-int drmSetContextParam(drm_i915_gem_context_param *param) {
+int drmSetContextParam(NEO::GemContextParam *param) {
     assert(param);
     int ret = 0;
 
@@ -134,13 +179,15 @@ int drmSetContextParam(drm_i915_gem_context_param *param) {
     case I915_CONTEXT_PRIVATE_PARAM_BOOST:
         ret = failOnParamBoost;
         break;
+    case I915_CONTEXT_PARAM_VM:
+        break;
 #if defined(I915_PARAM_HAS_SCHEDULER)
     case I915_CONTEXT_PARAM_PRIORITY:
         ret = failOnSetPriority;
         break;
 #endif
     case I915_CONTEXT_PARAM_SSEU:
-        if (param->size == sizeof(struct drm_i915_gem_context_param_sseu) && param->value != 0 && param->ctx_id == 0) {
+        if (param->size == sizeof(NEO::GemContextParamSseu) && param->value != 0 && param->contextId == 0) {
             ret = failOnSetParamSseu;
         } else {
             ret = -1;
@@ -148,17 +195,16 @@ int drmSetContextParam(drm_i915_gem_context_param *param) {
         break;
     default:
         ret = -1;
-        std::cerr << "drm.setContextParam: " << std::dec << param->param << std::endl;
         break;
     }
     return ret;
 }
-int drmGetContextParam(drm_i915_gem_context_param *param) {
+int drmGetContextParam(NEO::GemContextParam *param) {
     int ret = 0;
 
     switch (param->param) {
     case I915_CONTEXT_PARAM_SSEU:
-        if (param->size == sizeof(struct drm_i915_gem_context_param_sseu) && param->value != 0 && param->ctx_id == 0) {
+        if (param->size == sizeof(NEO::GemContextParamSseu) && param->value != 0 && param->contextId == 0) {
             ret = failOnGetParamSseu;
         } else {
             ret = -1;
@@ -166,47 +212,59 @@ int drmGetContextParam(drm_i915_gem_context_param *param) {
         break;
     default:
         ret = -1;
-        std::cerr << "drm.getContextParam: " << std::dec << param->param << std::endl;
         break;
     }
     return ret;
 }
 
-int drmContextCreate(drm_i915_gem_context_create *create) {
+int drmContextCreate(NEO::GemContextCreateExt *create) {
     assert(create);
 
-    create->ctx_id = 1;
+    create->contextId = 1;
     return failOnContextCreate;
 }
 
-int drmContextDestroy(drm_i915_gem_context_destroy *destroy) {
+int drmContextDestroy(NEO::GemContextDestroy *destroy) {
     assert(destroy);
 
-    if (destroy->ctx_id == 1)
+    if (destroy->contextId == 1)
         return 0;
     else
         return -1;
 }
 
-int drmVersion(drm_version_t *version) {
-    strcpy(version->name, providedDrmVersion);
+int drmVirtualMemoryCreate(NEO::GemVmControl *control) {
+    assert(control);
+    control->vmId = ++vmId;
+    return failOnVirtualMemoryCreate;
+}
+
+int drmVirtualMemoryDestroy(NEO::GemVmControl *control) {
+    assert(control);
+
+    vmId--;
+    return (control->vmId > 0) ? 0 : -1;
+}
+
+int drmVersion(NEO::DrmVersion *version) {
+    memcpy_s(version->name, version->nameLen, providedDrmVersion, strlen(providedDrmVersion) + 1);
 
     return failOnDrmVersion;
 }
 
-int drmQueryItem(drm_i915_query *query) {
-    auto queryItemArg = reinterpret_cast<drm_i915_query_item *>(query->items_ptr);
+int drmQueryItem(NEO::Query *query) {
+    auto queryItemArg = reinterpret_cast<NEO::QueryItem *>(query->itemsPtr);
     if (queryItemArg->length == 0) {
-        if (queryItemArg->query_id == DRM_I915_QUERY_TOPOLOGY_INFO) {
-            queryItemArg->length = sizeof(drm_i915_query_topology_info) + 1;
+        if (queryItemArg->queryId == DRM_I915_QUERY_TOPOLOGY_INFO) {
+            queryItemArg->length = sizeof(NEO::QueryTopologyInfo) + 1;
             return 0;
         }
     } else {
-        if (queryItemArg->query_id == DRM_I915_QUERY_TOPOLOGY_INFO) {
-            auto topologyArg = reinterpret_cast<drm_i915_query_topology_info *>(queryItemArg->data_ptr);
-            topologyArg->max_slices = 1;
-            topologyArg->max_subslices = 1;
-            topologyArg->max_eus_per_subslice = 3;
+        if (queryItemArg->queryId == DRM_I915_QUERY_TOPOLOGY_INFO) {
+            auto topologyArg = reinterpret_cast<NEO::QueryTopologyInfo *>(queryItemArg->dataPtr);
+            topologyArg->maxSlices = 1;
+            topologyArg->maxSubslices = 1;
+            topologyArg->maxEusPerSubslice = 3;
             topologyArg->data[0] = 0xFF;
             return failOnEuTotal || failOnSubsliceTotal;
         }
@@ -215,8 +273,17 @@ int drmQueryItem(drm_i915_query *query) {
 }
 
 int ioctl(int fd, unsigned long int request, ...) throw() {
-    if (c_ioctl == nullptr)
-        c_ioctl = (int (*)(int, unsigned long int, ...))dlsym(RTLD_NEXT, "ioctl");
+    using namespace std::chrono_literals;
+
+    if (forceExtraIoctlDuration) {
+        auto start = std::chrono::steady_clock::now();
+        std::chrono::steady_clock::time_point end;
+
+        do {
+            end = std::chrono::steady_clock::now();
+        } while ((end - start) == 0ns);
+    }
+
     int res;
     va_list vl;
     va_start(vl, request);
@@ -227,25 +294,31 @@ int ioctl(int fd, unsigned long int request, ...) throw() {
         if (res == 0) {
             switch (request) {
             case DRM_IOCTL_I915_GETPARAM:
-                res = drmGetParam(va_arg(vl, drm_i915_getparam_t *));
+                res = drmGetParam(va_arg(vl, NEO::GetParam *));
                 break;
             case DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM:
-                res = drmSetContextParam(va_arg(vl, drm_i915_gem_context_param *));
+                res = drmSetContextParam(va_arg(vl, NEO::GemContextParam *));
                 break;
             case DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM:
-                res = drmGetContextParam(va_arg(vl, drm_i915_gem_context_param *));
+                res = drmGetContextParam(va_arg(vl, NEO::GemContextParam *));
                 break;
-            case DRM_IOCTL_I915_GEM_CONTEXT_CREATE:
-                res = drmContextCreate(va_arg(vl, drm_i915_gem_context_create *));
+            case DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT:
+                res = drmContextCreate(va_arg(vl, NEO::GemContextCreateExt *));
                 break;
             case DRM_IOCTL_I915_GEM_CONTEXT_DESTROY:
-                res = drmContextDestroy(va_arg(vl, drm_i915_gem_context_destroy *));
+                res = drmContextDestroy(va_arg(vl, NEO::GemContextDestroy *));
+                break;
+            case DRM_IOCTL_I915_GEM_VM_CREATE:
+                res = drmVirtualMemoryCreate(va_arg(vl, NEO::GemVmControl *));
+                break;
+            case DRM_IOCTL_I915_GEM_VM_DESTROY:
+                res = drmVirtualMemoryDestroy(va_arg(vl, NEO::GemVmControl *));
                 break;
             case DRM_IOCTL_VERSION:
-                res = drmVersion(va_arg(vl, drm_version_t *));
+                res = drmVersion(va_arg(vl, NEO::DrmVersion *));
                 break;
             case DRM_IOCTL_I915_QUERY:
-                res = drmQueryItem(va_arg(vl, drm_i915_query *));
+                res = drmQueryItem(va_arg(vl, NEO::Query *));
                 break;
             default:
                 res = drmOtherRequests(request, vl);
@@ -256,7 +329,6 @@ int ioctl(int fd, unsigned long int request, ...) throw() {
         return res;
     }
 
-    res = c_ioctl(fd, request, vl);
     va_end(vl);
-    return res;
+    return -1;
 }

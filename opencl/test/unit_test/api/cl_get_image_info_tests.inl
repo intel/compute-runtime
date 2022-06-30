@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/hw_info.h"
-#include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/mem_obj/image.h"
@@ -37,8 +37,8 @@ struct clGetImageInfoTests : public ApiFixture<>,
         imageDesc.num_samples = 0;
         imageDesc.mem_object = nullptr;
 
-        image = clCreateImage(pContext, CL_MEM_READ_WRITE, &imageFormat, &imageDesc,
-                              nullptr, &retVal);
+        image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
+
         ASSERT_EQ(CL_SUCCESS, retVal);
         EXPECT_NE(nullptr, image);
     }
@@ -218,8 +218,7 @@ TEST_F(clGetImageInfoTests, Given3dImageWithMipMapsWhenGettingImageInfoThenWidth
     imageDesc2.num_samples = 0;
     imageDesc2.mem_object = nullptr;
 
-    image2 = clCreateImage(pContext, CL_MEM_READ_WRITE, &imageFormat2, &imageDesc2,
-                           nullptr, &retVal);
+    image2 = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat2, &imageDesc2, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image2);
 
@@ -273,8 +272,7 @@ TEST_F(clGetImageInfoTests, Given1dImageWithMipMapsWhenGettingImageInfoThenWidth
     imageDesc2.num_samples = 0;
     imageDesc2.mem_object = nullptr;
 
-    image2 = clCreateImage(pContext, CL_MEM_READ_WRITE, &imageFormat2, &imageDesc2,
-                           nullptr, &retVal);
+    image2 = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat2, &imageDesc2, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image2);
 
@@ -372,7 +370,7 @@ TEST_F(clGetImageInfoTests, givenMultisampleCountForMcsWhenAskingForRowPitchThen
     size_t receivedRowPitch = 0;
 
     clReleaseMemObject(image);
-    image = clCreateImage(pContext, CL_MEM_READ_WRITE, &imageFormat, &imageDesc, nullptr, &retVal);
+    image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
 
     auto imageObj = castToObject<Image>(image);
     auto formatInfo = imageObj->getSurfaceFormatInfo();

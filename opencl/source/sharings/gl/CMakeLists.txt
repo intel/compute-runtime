@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2020 Intel Corporation
+# Copyright (C) 2018-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -21,13 +21,15 @@ if(WIN32)
 
   add_subdirectories()
 
-  set(ADDITIONAL_EXPORTS "clEnqueueMarkerWithSyncObjectINTEL"
-                         "clGetCLObjectInfoINTEL"
-                         "clGetCLEventInfoINTEL"
-                         "clReleaseGlSharedEventINTEL")
+  set(ADDITIONAL_EXPORTS
+      "clEnqueueMarkerWithSyncObjectINTEL"
+      "clGetCLObjectInfoINTEL"
+      "clGetCLEventInfoINTEL"
+      "clReleaseGlSharedEventINTEL"
+  )
   foreach(EXPORT_NAME ${ADDITIONAL_EXPORTS})
     set(MSVC_DEF_ADDITIONAL_EXPORTS "${MSVC_DEF_ADDITIONAL_EXPORTS}\n${EXPORT_NAME}")
-  endforeach(EXPORT_NAME)
+  endforeach()
   set(MSVC_DEF_ADDITIONAL_EXPORTS "${MSVC_DEF_ADDITIONAL_EXPORTS}" PARENT_SCOPE)
 endif()
 set_property(GLOBAL PROPERTY RUNTIME_SRCS_SHARINGS_GL ${RUNTIME_SRCS_SHARINGS_GL})

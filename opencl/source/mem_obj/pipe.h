@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ class Pipe : public MemObj {
                        void *paramValue,
                        size_t *paramValueSizeRet);
 
-    void setPipeArg(void *memory, uint32_t patchSize);
+    void setPipeArg(void *memory, uint32_t patchSize, uint32_t rootDeviceIndex);
 
   protected:
     Pipe(Context *context,
@@ -38,7 +38,7 @@ class Pipe : public MemObj {
          cl_uint maxPackets,
          const cl_pipe_properties *properties,
          void *memoryStorage,
-         GraphicsAllocation *gfxAllocation);
+         MultiGraphicsAllocation multiGraphicsAllocation);
 
     cl_uint pipePacketSize;
     cl_uint pipeMaxPackets;

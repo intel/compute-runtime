@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,13 +14,13 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDebu
 
     mockDevice->setDebuggerActive(true);
     mockDevice->setPreemptionMode(PreemptionMode::MidThread);
-    auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*mockDevice);
+    auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*mockDevice, false);
 
     StackVec<char, 4096> preambleBuffer;
     preambleBuffer.resize(cmdSizePreemptionMidThread);
     LinearStream preambleStream(&*preambleBuffer.begin(), preambleBuffer.size());
 
-    PreemptionHelper::programStateSip<GfxFamily>(preambleStream, *mockDevice);
+    PreemptionHelper::programStateSip<GfxFamily>(preambleStream, *mockDevice, nullptr);
 
     HardwareParse hwParser;
     hwParser.parseCommands<GfxFamily>(preambleStream);
@@ -29,8 +29,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDebu
     STATE_SIP *stateSipCmd = (STATE_SIP *)*itorStateSip;
     auto sipAddress = stateSipCmd->getSystemInstructionPointer();
 
-    auto sipType = SipKernel::getSipKernelType(mockDevice->getHardwareInfo().platform.eRenderCoreFamily, mockDevice->isDebuggerActive());
-    EXPECT_EQ(mockDevice->getBuiltIns()->getSipKernel(sipType, *mockDevice).getSipAllocation()->getGpuAddressToPatch(), sipAddress);
+    EXPECT_EQ(SipKernel::getSipKernel(*mockDevice).getSipAllocation()->getGpuAddressToPatch(), sipAddress);
 }
 
 template <typename GfxFamily>
@@ -40,13 +39,13 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDisa
 
     mockDevice->setDebuggerActive(false);
     mockDevice->setPreemptionMode(PreemptionMode::MidThread);
-    auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*mockDevice);
+    auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*mockDevice, false);
 
     StackVec<char, 4096> preambleBuffer;
     preambleBuffer.resize(cmdSizePreemptionMidThread);
     LinearStream preambleStream(&*preambleBuffer.begin(), preambleBuffer.size());
 
-    PreemptionHelper::programStateSip<GfxFamily>(preambleStream, *mockDevice);
+    PreemptionHelper::programStateSip<GfxFamily>(preambleStream, *mockDevice, nullptr);
 
     HardwareParse hwParser;
     hwParser.parseCommands<GfxFamily>(preambleStream);
@@ -55,8 +54,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDisa
     STATE_SIP *stateSipCmd = (STATE_SIP *)*itorStateSip;
     auto sipAddress = stateSipCmd->getSystemInstructionPointer();
 
-    auto sipType = SipKernel::getSipKernelType(mockDevice->getHardwareInfo().platform.eRenderCoreFamily, mockDevice->isDebuggerActive());
-    EXPECT_EQ(mockDevice->getBuiltIns()->getSipKernel(sipType, *mockDevice).getSipAllocation()->getGpuAddressToPatch(), sipAddress);
+    EXPECT_EQ(SipKernel::getSipKernel(*mockDevice).getSipAllocation()->getGpuAddressToPatch(), sipAddress);
 }
 
 template <typename GfxFamily>
@@ -66,13 +64,13 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenPreemptionDisabledAndDebug
 
     mockDevice->setDebuggerActive(true);
     mockDevice->setPreemptionMode(PreemptionMode::Disabled);
-    auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*mockDevice);
+    auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*mockDevice, false);
 
     StackVec<char, 4096> preambleBuffer;
     preambleBuffer.resize(cmdSizePreemptionMidThread);
     LinearStream preambleStream(&*preambleBuffer.begin(), preambleBuffer.size());
 
-    PreemptionHelper::programStateSip<GfxFamily>(preambleStream, *mockDevice);
+    PreemptionHelper::programStateSip<GfxFamily>(preambleStream, *mockDevice, nullptr);
 
     HardwareParse hwParser;
     hwParser.parseCommands<GfxFamily>(preambleStream);
@@ -81,8 +79,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenPreemptionDisabledAndDebug
     STATE_SIP *stateSipCmd = (STATE_SIP *)*itorStateSip;
     auto sipAddress = stateSipCmd->getSystemInstructionPointer();
 
-    auto sipType = SipKernel::getSipKernelType(mockDevice->getHardwareInfo().platform.eRenderCoreFamily, mockDevice->isDebuggerActive());
-    EXPECT_EQ(mockDevice->getBuiltIns()->getSipKernel(sipType, *mockDevice).getSipAllocation()->getGpuAddressToPatch(), sipAddress);
+    EXPECT_EQ(SipKernel::getSipKernel(*mockDevice).getSipAllocation()->getGpuAddressToPatch(), sipAddress);
 }
 
 template <typename GfxFamily>
@@ -90,7 +87,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDebu
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     mockDevice->setDebuggerActive(true);
     mockDevice->setPreemptionMode(PreemptionMode::MidThread);
-    size_t requiredPreambleSize = PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*mockDevice);
+    size_t requiredPreambleSize = PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*mockDevice, false);
     auto sizeExpected = sizeof(typename GfxFamily::STATE_SIP);
     EXPECT_EQ(sizeExpected, requiredPreambleSize);
 }
@@ -100,7 +97,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenPreemptionDisabledAndDebug
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     mockDevice->setDebuggerActive(true);
     mockDevice->setPreemptionMode(PreemptionMode::Disabled);
-    size_t requiredPreambleSize = PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*mockDevice);
+    size_t requiredPreambleSize = PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*mockDevice, false);
     auto sizeExpected = sizeof(typename GfxFamily::STATE_SIP);
     EXPECT_EQ(sizeExpected, requiredPreambleSize);
 }

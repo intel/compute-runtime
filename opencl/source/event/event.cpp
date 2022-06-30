@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 
-#define OCLRT_NUM_TIMESTAMP_BITS (32)
+#include <algorithm>
 
 namespace NEO {
 
@@ -65,7 +65,7 @@ Event::Event(
 
     if ((this->ctx == nullptr) && (cmdQueue != nullptr)) {
         this->ctx = &cmdQueue->getContext();
-        if (cmdQueue->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        if (cmdQueue->getTimestampPacketContainer()) {
             timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
         }
     }
@@ -101,7 +101,7 @@ Event::~Event() {
     }
 
     DBG_LOG(EventsDebugEnable, "~Event()", this);
-    //no commands should be registred
+    // no commands should be registred
     DEBUG_BREAK_IF(this->cmdToSubmit.load());
 
     submitCommand(true);
@@ -129,6 +129,8 @@ Event::~Event() {
             timeStampNode->returnTag();
         }
         if (perfCounterNode != nullptr) {
+            cmdQueue->getPerfCounters()->deleteQuery(perfCounterNode->getQueryHandleRef());
+            perfCounterNode->getQueryHandleRef() = {};
             perfCounterNode->returnTag();
         }
         cmdQueue->decRefInternal();
@@ -152,27 +154,26 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
 
     // CL_PROFILING_INFO_NOT_AVAILABLE if event refers to the clEnqueueSVMFree command
     if (isUserEvent() != CL_FALSE ||         // or is a user event object.
-        !updateStatusAndCheckCompletion() || //if the execution status of the command identified by event is not CL_COMPLETE
+        !updateStatusAndCheckCompletion() || // if the execution status of the command identified by event is not CL_COMPLETE
         !profilingEnabled)                   // the CL_QUEUE_PROFILING_ENABLE flag is not set for the command-queue,
     {
         return CL_PROFILING_INFO_NOT_AVAILABLE;
     }
 
+    uint64_t timestamp = 0u;
+
     // if paramValue is NULL, it is ignored
     switch (paramName) {
     case CL_PROFILING_COMMAND_QUEUED:
-        src = &queueTimeStamp.CPUTimeinNS;
-        if (DebugManager.flags.ReturnRawGpuTimestamps.get()) {
-            src = &queueTimeStamp.GPUTimeStamp;
-        }
+        timestamp = getTimeInNSFromTimestampData(queueTimeStamp);
+        src = &timestamp;
         srcSize = sizeof(cl_ulong);
         break;
 
     case CL_PROFILING_COMMAND_SUBMIT:
-        src = &submitTimeStamp.CPUTimeinNS;
-        if (DebugManager.flags.ReturnRawGpuTimestamps.get()) {
-            src = &submitTimeStamp.GPUTimeStamp;
-        }
+        calculateSubmitTimestampData();
+        timestamp = getTimeInNSFromTimestampData(submitTimeStamp);
+        src = &timestamp;
         srcSize = sizeof(cl_ulong);
         break;
 
@@ -198,7 +199,9 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
         if (!perfCountersEnabled) {
             return CL_INVALID_VALUE;
         }
-        if (!cmdQueue->getPerfCounters()->getApiReport(paramValueSize,
+
+        if (!cmdQueue->getPerfCounters()->getApiReport(perfCounterNode,
+                                                       paramValueSize,
                                                        paramValue,
                                                        paramValueSizeRet,
                                                        updateStatusAndCheckCompletion())) {
@@ -216,117 +219,153 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
     return retVal;
 } // namespace NEO
 
+void Event::setupBcs(aub_stream::EngineType bcsEngineType) {
+    DEBUG_BREAK_IF(!EngineHelpers::isBcs(bcsEngineType));
+    this->bcsState.engineType = bcsEngineType;
+}
+
+uint32_t Event::peekBcsTaskCountFromCommandQueue() {
+    if (bcsState.isValid()) {
+        return this->cmdQueue->peekBcsTaskCount(bcsState.engineType);
+    } else {
+        return 0u;
+    }
+}
+
 uint32_t Event::getCompletionStamp() const {
     return this->taskCount;
 }
 
-void Event::updateCompletionStamp(uint32_t taskCount, uint32_t tasklevel, FlushStamp flushStamp) {
-    this->taskCount = taskCount;
+void Event::updateCompletionStamp(uint32_t gpgpuTaskCount, uint32_t bcsTaskCount, uint32_t tasklevel, FlushStamp flushStamp) {
+    this->taskCount = gpgpuTaskCount;
+    this->bcsState.taskCount = bcsTaskCount;
     this->taskLevel = tasklevel;
     this->flushStamp->setStamp(flushStamp);
 }
 
 cl_ulong Event::getDelta(cl_ulong startTime,
                          cl_ulong endTime) {
-    cl_ulong Max = maxNBitValue(OCLRT_NUM_TIMESTAMP_BITS);
-    cl_ulong Delta = 0;
 
-    startTime &= Max;
-    endTime &= Max;
+    auto &hwInfo = cmdQueue->getDevice().getHardwareInfo();
+
+    cl_ulong max = maxNBitValue(hwInfo.capabilityTable.kernelTimestampValidBits);
+    cl_ulong delta = 0;
+
+    startTime &= max;
+    endTime &= max;
 
     if (startTime > endTime) {
-        Delta = Max - startTime;
-        Delta += endTime;
+        delta = max - startTime;
+        delta += endTime;
     } else {
-        Delta = endTime - startTime;
+        delta = endTime - startTime;
     }
 
-    return Delta;
+    return delta;
+}
+
+void Event::calculateSubmitTimestampData() {
+    if (DebugManager.flags.EnableDeviceBasedTimestamps.get()) {
+        auto &device = cmdQueue->getDevice();
+        auto &hwHelper = HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
+        double resolution = device.getDeviceInfo().profilingTimerResolution;
+
+        int64_t timerDiff = queueTimeStamp.CPUTimeinNS - hwHelper.getGpuTimeStampInNS(queueTimeStamp.GPUTimeStamp, resolution);
+        submitTimeStamp.GPUTimeStamp = static_cast<uint64_t>((submitTimeStamp.CPUTimeinNS - timerDiff) / resolution);
+    }
+}
+
+uint64_t Event::getTimeInNSFromTimestampData(const TimeStampData &timestamp) const {
+    if (isCPUProfilingPath()) {
+        return timestamp.CPUTimeinNS;
+    }
+
+    if (DebugManager.flags.ReturnRawGpuTimestamps.get()) {
+        return timestamp.GPUTimeStamp;
+    }
+
+    if (cmdQueue && DebugManager.flags.EnableDeviceBasedTimestamps.get()) {
+        auto &device = cmdQueue->getDevice();
+        auto &hwHelper = HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
+        double resolution = device.getDeviceInfo().profilingTimerResolution;
+
+        return hwHelper.getGpuTimeStampInNS(timestamp.GPUTimeStamp, resolution);
+    }
+
+    return timestamp.CPUTimeinNS;
 }
 
 bool Event::calcProfilingData() {
     if (!dataCalculated && !profilingCpuPath) {
         if (timestampPacketContainer && timestampPacketContainer->peekNodes().size() > 0) {
             const auto timestamps = timestampPacketContainer->peekNodes();
-            auto isMultiOsContextCapable = this->getCommandQueue()->getGpgpuCommandStreamReceiver().isMultiOsContextCapable();
 
             if (DebugManager.flags.PrintTimestampPacketContents.get()) {
+
                 for (auto i = 0u; i < timestamps.size(); i++) {
-                    for (auto j = 0u; j < timestamps[i]->tagForCpuAccess->packetsUsed; j++) {
-                        const auto &packet = timestamps[i]->tagForCpuAccess->packets[j];
-                        std::cout << "Timestamp " << i << ", packet " << j << ": "
-                                  << "global start: " << packet.globalStart << ", "
-                                  << "global end: " << packet.globalEnd << ", "
-                                  << "context start: " << packet.contextStart << ", "
-                                  << "context end: " << packet.contextEnd << std::endl;
+                    std::cout << "Timestamp " << i << ", "
+                              << "cmd type: " << this->cmdType << ", ";
+                    for (auto j = 0u; j < timestamps[i]->getPacketsUsed(); j++) {
+                        std::cout << "packet " << j << ": "
+                                  << "global start: " << timestamps[i]->getGlobalStartValue(j) << ", "
+                                  << "global end: " << timestamps[i]->getGlobalEndValue(j) << ", "
+                                  << "context start: " << timestamps[i]->getContextStartValue(j) << ", "
+                                  << "context end: " << timestamps[i]->getContextEndValue(j) << ", "
+                                  << "global delta: " << timestamps[i]->getGlobalEndValue(j) - timestamps[i]->getGlobalStartValue(j) << ", "
+                                  << "context delta: " << timestamps[i]->getContextEndValue(j) - timestamps[i]->getContextStartValue(j) << std::endl;
                     }
                 }
             }
 
-            if (isMultiOsContextCapable) {
-                auto globalStartTS = timestamps[0]->tagForCpuAccess->packets[0].globalStart;
-                uint64_t globalEndTS = timestamps[0]->tagForCpuAccess->packets[0].globalEnd;
+            uint64_t globalStartTS = 0u;
+            uint64_t globalEndTS = 0u;
+            Event::getBoundaryTimestampValues(timestampPacketContainer.get(), globalStartTS, globalEndTS);
 
-                for (const auto &timestamp : timestamps) {
-                    for (auto i = 0u; i < timestamp->tagForCpuAccess->packetsUsed; ++i) {
-                        const auto &packet = timestamp->tagForCpuAccess->packets[i];
-                        if (globalStartTS > packet.globalStart) {
-                            globalStartTS = packet.globalStart;
-                        }
-                        if (globalEndTS < packet.globalEnd) {
-                            globalEndTS = packet.globalEnd;
-                        }
-                    }
-                }
-                calculateProfilingDataInternal(globalStartTS, globalEndTS, &globalEndTS, globalStartTS);
-            } else {
-                auto contextStartTS = timestamps[0]->tagForCpuAccess->packets[0].contextStart;
-                uint64_t contextEndTS = timestamps[0]->tagForCpuAccess->packets[0].contextEnd;
-                auto globalStartTS = timestamps[0]->tagForCpuAccess->packets[0].globalStart;
+            calculateProfilingDataInternal(globalStartTS, globalEndTS, &globalEndTS, globalStartTS);
 
-                for (const auto &timestamp : timestamps) {
-                    const auto &packet = timestamp->tagForCpuAccess->packets[0];
-                    if (contextStartTS > packet.contextStart) {
-                        contextStartTS = packet.contextStart;
-                    }
-                    if (contextEndTS < packet.contextEnd) {
-                        contextEndTS = packet.contextEnd;
-                    }
-                    if (globalStartTS > packet.globalStart) {
-                        globalStartTS = packet.globalStart;
-                    }
-                }
-                calculateProfilingDataInternal(contextStartTS, contextEndTS, &contextEndTS, globalStartTS);
-            }
         } else if (timeStampNode) {
-            calculateProfilingDataInternal(
-                timeStampNode->tagForCpuAccess->ContextStartTS,
-                timeStampNode->tagForCpuAccess->ContextEndTS,
-                &timeStampNode->tagForCpuAccess->ContextCompleteTS,
-                timeStampNode->tagForCpuAccess->GlobalStartTS);
+            if (HwHelper::get(this->cmdQueue->getDevice().getHardwareInfo().platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
+                calculateProfilingDataInternal(
+                    timeStampNode->getGlobalStartValue(0),
+                    timeStampNode->getGlobalEndValue(0),
+                    &timeStampNode->getGlobalEndRef(),
+                    timeStampNode->getGlobalStartValue(0));
+            } else {
+                calculateProfilingDataInternal(
+                    timeStampNode->getContextStartValue(0),
+                    timeStampNode->getContextEndValue(0),
+                    &timeStampNode->getContextCompleteRef(),
+                    timeStampNode->getGlobalStartValue(0));
+            }
         }
     }
     return dataCalculated;
 }
 
 void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t contextEndTS, uint64_t *contextCompleteTS, uint64_t globalStartTS) {
-
     uint64_t gpuDuration = 0;
     uint64_t cpuDuration = 0;
 
     uint64_t gpuCompleteDuration = 0;
     uint64_t cpuCompleteDuration = 0;
 
-    auto &hwHelper = HwHelper::get(this->cmdQueue->getDevice().getHardwareInfo().platform.eRenderCoreFamily);
-    auto frequency = cmdQueue->getDevice().getDeviceInfo().profilingTimerResolution;
-    auto gpuTimeStamp = queueTimeStamp.GPUTimeStamp;
+    auto &device = this->cmdQueue->getDevice();
+    auto &hwHelper = HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
+    auto frequency = device.getDeviceInfo().profilingTimerResolution;
+    auto gpuQueueTimeStamp = hwHelper.getGpuTimeStampInNS(queueTimeStamp.GPUTimeStamp, frequency);
 
-    int64_t c0 = queueTimeStamp.CPUTimeinNS - hwHelper.getGpuTimeStampInNS(gpuTimeStamp, frequency);
-
-    startTimeStamp = static_cast<uint64_t>(globalStartTS * frequency) + c0;
-    if (startTimeStamp < queueTimeStamp.CPUTimeinNS) {
-        c0 += static_cast<uint64_t>((1ULL << (hwHelper.getGlobalTimeStampBits())) * frequency);
+    if (DebugManager.flags.EnableDeviceBasedTimestamps.get()) {
+        startTimeStamp = static_cast<uint64_t>(globalStartTS * frequency);
+        if (startTimeStamp < gpuQueueTimeStamp) {
+            startTimeStamp += static_cast<uint64_t>((1ULL << hwHelper.getGlobalTimeStampBits()) * frequency);
+        }
+    } else {
+        int64_t c0 = queueTimeStamp.CPUTimeinNS - gpuQueueTimeStamp;
         startTimeStamp = static_cast<uint64_t>(globalStartTS * frequency) + c0;
+        if (startTimeStamp < queueTimeStamp.CPUTimeinNS) {
+            c0 += static_cast<uint64_t>((1ULL << (hwHelper.getGlobalTimeStampBits())) * frequency);
+            startTimeStamp = static_cast<uint64_t>(globalStartTS * frequency) + c0;
+        }
     }
 
     /* calculation based on equation
@@ -336,7 +375,7 @@ void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t con
        const = CpuTimeQueue - GpuTimeQueue * scalar
     */
 
-    //If device enqueue has not updated complete timestamp, assign end timestamp
+    // If device enqueue has not updated complete timestamp, assign end timestamp
     gpuDuration = getDelta(contextStartTS, contextEndTS);
     if (*contextCompleteTS == 0) {
         *contextCompleteTS = contextEndTS;
@@ -359,14 +398,39 @@ void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t con
     dataCalculated = true;
 }
 
-inline bool Event::wait(bool blocking, bool useQuickKmdSleep) {
+void Event::getBoundaryTimestampValues(TimestampPacketContainer *timestampContainer, uint64_t &globalStartTS, uint64_t &globalEndTS) {
+    const auto timestamps = timestampContainer->peekNodes();
+
+    globalStartTS = timestamps[0]->getGlobalStartValue(0);
+    globalEndTS = timestamps[0]->getGlobalEndValue(0);
+
+    for (const auto &timestamp : timestamps) {
+        if (!timestamp->isProfilingCapable()) {
+            continue;
+        }
+        for (auto i = 0u; i < timestamp->getPacketsUsed(); ++i) {
+            if (globalStartTS > timestamp->getGlobalStartValue(i)) {
+                globalStartTS = timestamp->getGlobalStartValue(i);
+            }
+            if (globalEndTS < timestamp->getGlobalEndValue(i)) {
+                globalEndTS = timestamp->getGlobalEndValue(i);
+            }
+        }
+    }
+}
+
+inline WaitStatus Event::wait(bool blocking, bool useQuickKmdSleep) {
     while (this->taskCount == CompletionStamp::notReady) {
         if (blocking == false) {
-            return false;
+            return WaitStatus::NotReady;
         }
     }
 
-    cmdQueue->waitUntilComplete(taskCount.load(), flushStamp->peekStamp(), useQuickKmdSleep);
+    Range<CopyEngineState> states{&bcsState, bcsState.isValid() ? 1u : 0u};
+    const auto waitStatus = cmdQueue->waitUntilComplete(taskCount.load(), states, flushStamp->peekStamp(), useQuickKmdSleep);
+    if (waitStatus == WaitStatus::GpuHang) {
+        return WaitStatus::GpuHang;
+    }
     updateExecutionStatus();
 
     DEBUG_BREAK_IF(this->taskLevel == CompletionStamp::notReady && this->executionStatus >= 0);
@@ -374,7 +438,7 @@ inline bool Event::wait(bool blocking, bool useQuickKmdSleep) {
     auto *allocationStorage = cmdQueue->getGpgpuCommandStreamReceiver().getInternalAllocationStorage();
     allocationStorage->cleanAllocationList(this->taskCount, TEMPORARY_ALLOCATION);
 
-    return true;
+    return WaitStatus::Ready;
 }
 
 void Event::updateExecutionStatus() {
@@ -403,7 +467,7 @@ void Event::updateExecutionStatus() {
         // Note : Intentional fallthrough (no return) to check for CL_COMPLETE
     }
 
-    if ((cmdQueue != nullptr) && (cmdQueue->isCompleted(getCompletionStamp()))) {
+    if ((cmdQueue != nullptr) && this->isCompleted()) {
         transitionExecutionStatus(CL_COMPLETE);
         executeCallbacks(CL_COMPLETE);
         unblockEventsBlockedByThis(CL_COMPLETE);
@@ -437,7 +501,7 @@ void Event::unblockEventsBlockedByThis(int32_t transitionStatus) {
     uint32_t taskLevelToPropagate = CompletionStamp::notReady;
 
     if (isStatusCompletedByTermination(transitionStatus) == false) {
-        //if we are event on top of the tree , obtain taskLevel from CSR
+        // if we are event on top of the tree , obtain taskLevel from CSR
         if (taskLevel == CompletionStamp::notReady) {
             this->taskLevel = getTaskLevel(); // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)
             taskLevelToPropagate = this->taskLevel;
@@ -506,11 +570,10 @@ void Event::transitionExecutionStatus(int32_t newExecutionStatus) const {
 void Event::submitCommand(bool abortTasks) {
     std::unique_ptr<Command> cmdToProcess(cmdToSubmit.exchange(nullptr));
     if (cmdToProcess.get() != nullptr) {
-        std::unique_lock<CommandStreamReceiver::MutexType> lockCSR;
-        if (this->cmdQueue) {
-            lockCSR = this->getCommandQueue()->getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
-        }
-        if ((this->isProfilingEnabled()) && (this->cmdQueue != nullptr)) {
+        getCommandQueue()->initializeBcsEngine(getCommandQueue()->isSpecial());
+        auto lockCSR = getCommandQueue()->getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
+
+        if (this->isProfilingEnabled()) {
             if (timeStampNode) {
                 this->cmdQueue->getGpgpuCommandStreamReceiver().makeResident(*timeStampNode->getBaseGraphicsAllocation());
                 cmdToProcess->timestamp = timeStampNode;
@@ -525,11 +588,18 @@ void Event::submitCommand(bool abortTasks) {
                 this->cmdQueue->getGpgpuCommandStreamReceiver().makeResident(*perfCounterNode->getBaseGraphicsAllocation());
             }
         }
+
         auto &complStamp = cmdToProcess->submit(taskLevel, abortTasks);
-        if (profilingCpuPath && this->isProfilingEnabled() && (this->cmdQueue != nullptr)) {
+        if (profilingCpuPath && this->isProfilingEnabled()) {
             setEndTimeStamp();
         }
-        updateTaskCount(complStamp.taskCount);
+
+        if (complStamp.taskCount == CompletionStamp::gpuHang) {
+            abortExecutionDueToGpuHang();
+            return;
+        }
+
+        updateTaskCount(complStamp.taskCount, peekBcsTaskCountFromCommandQueue());
         flushStamp->setStamp(complStamp.flushStamp);
         submittedCmd.exchange(cmdToProcess.release());
     } else if (profilingCpuPath && endTimeStamp == 0) {
@@ -539,10 +609,10 @@ void Event::submitCommand(bool abortTasks) {
         if (!this->isUserEvent() && this->eventWithoutCommand) {
             if (this->cmdQueue) {
                 auto lockCSR = this->getCommandQueue()->getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
-                updateTaskCount(this->cmdQueue->getGpgpuCommandStreamReceiver().peekTaskCount());
+                updateTaskCount(this->cmdQueue->getGpgpuCommandStreamReceiver().peekTaskCount(), peekBcsTaskCountFromCommandQueue());
             }
         }
-        //make sure that task count is synchronized for events with kernels
+        // make sure that task count is synchronized for events with kernels
         if (!this->eventWithoutCommand && !abortTasks) {
             this->synchronizeTaskCount();
         }
@@ -555,7 +625,7 @@ cl_int Event::waitForEvents(cl_uint numEvents,
         return CL_SUCCESS;
     }
 
-    //flush all command queues
+    // flush all command queues
     for (const cl_event *it = eventList, *end = eventList + numEvents; it != end; ++it) {
         Event *event = castToObjectOrAbort<Event>(*it);
         if (event->cmdQueue) {
@@ -573,16 +643,23 @@ cl_int Event::waitForEvents(cl_uint numEvents,
     // pointers to workerLists - for fast swap operations
     WorkerListT *currentlyPendingEvents = &workerList1;
     WorkerListT *pendingEventsLeft = &workerList2;
+    WaitStatus eventWaitStatus = WaitStatus::NotReady;
 
     while (currentlyPendingEvents->size() > 0) {
-        for (auto &e : *currentlyPendingEvents) {
-            Event *event = castToObjectOrAbort<Event>(e);
+        for (auto current = currentlyPendingEvents->begin(), end = currentlyPendingEvents->end(); current != end; ++current) {
+            Event *event = castToObjectOrAbort<Event>(*current);
             if (event->peekExecutionStatus() < CL_COMPLETE) {
                 return CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
             }
 
-            if (event->wait(false, false) == false) {
+            eventWaitStatus = event->wait(false, false);
+            if (eventWaitStatus == WaitStatus::NotReady) {
                 pendingEventsLeft->push_back(event);
+            } else if (eventWaitStatus == WaitStatus::GpuHang) {
+                setExecutionStatusToAbortedDueToGpuHang(pendingEventsLeft->begin(), pendingEventsLeft->end());
+                setExecutionStatusToAbortedDueToGpuHang(current, end);
+
+                return CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
             }
         }
 
@@ -591,6 +668,61 @@ cl_int Event::waitForEvents(cl_uint numEvents,
     }
 
     return CL_SUCCESS;
+}
+
+inline void Event::setExecutionStatusToAbortedDueToGpuHang(cl_event *first, cl_event *last) {
+    std::for_each(first, last, [](cl_event &e) {
+        Event *event = castToObjectOrAbort<Event>(e);
+        event->abortExecutionDueToGpuHang();
+    });
+}
+
+bool Event::isCompleted() {
+    return cmdQueue->isCompleted(getCompletionStamp(), this->bcsState) || this->areTimestampsCompleted();
+}
+
+bool Event::isWaitForTimestampsEnabled() const {
+    const auto &hwInfo = cmdQueue->getDevice().getHardwareInfo();
+    const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto enabled = cmdQueue->isTimestampWaitEnabled();
+    enabled &= hwHelper.isTimestampWaitSupportedForEvents(hwInfo);
+
+    switch (DebugManager.flags.EnableTimestampWaitForEvents.get()) {
+    case 0:
+        enabled = false;
+        break;
+    case 1:
+        enabled = cmdQueue->getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled();
+        break;
+    case 2:
+        enabled = cmdQueue->getGpgpuCommandStreamReceiver().isDirectSubmissionEnabled();
+        break;
+    case 3:
+        enabled = cmdQueue->getGpgpuCommandStreamReceiver().isAnyDirectSubmissionEnabled();
+        break;
+    case 4:
+        enabled = true;
+        break;
+    }
+
+    return enabled;
+}
+
+bool Event::areTimestampsCompleted() {
+    if (this->timestampPacketContainer.get()) {
+        if (this->isWaitForTimestampsEnabled()) {
+            for (const auto &timestamp : this->timestampPacketContainer->peekNodes()) {
+                for (uint32_t i = 0; i < timestamp->getPacketsUsed(); i++) {
+                    this->cmdQueue->getGpgpuCommandStreamReceiver().downloadAllocation(*timestamp->getBaseGraphicsAllocation()->getGraphicsAllocation(this->cmdQueue->getGpgpuCommandStreamReceiver().getRootDeviceIndex()));
+                    if (timestamp->getContextEndValue(i) == 1) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+    }
+    return false;
 }
 
 uint32_t Event::getTaskLevel() {
@@ -621,7 +753,7 @@ inline void Event::unblockEventBy(Event &event, uint32_t taskLevel, int32_t tran
     }
     setStatus(statusToPropagate);
 
-    //event may be completed after this operation, transtition the state to not block others.
+    // event may be completed after this operation, transtition the state to not block others.
     this->updateExecutionStatus();
 }
 
@@ -697,9 +829,9 @@ void Event::executeCallbacks(int32_t executionStatusIn) {
 }
 
 void Event::tryFlushEvent() {
-    //only if event is not completed, completed event has already been flushed
+    // only if event is not completed, completed event has already been flushed
     if (cmdQueue && updateStatusAndCheckCompletion() == false) {
-        //flush the command queue only if it is not blocked event
+        // flush the command queue only if it is not blocked event
         if (taskLevel != CompletionStamp::notReady) {
             cmdQueue->getGpgpuCommandStreamReceiver().flushBatchedSubmissions();
         }
@@ -731,17 +863,17 @@ void Event::setEndTimeStamp() {
     }
 }
 
-TagNode<HwTimeStamps> *Event::getHwTimeStampNode() {
-    if (!timeStampNode) {
+TagNodeBase *Event::getHwTimeStampNode() {
+    if (!cmdQueue->getTimestampPacketContainer() && !timeStampNode) {
         timeStampNode = cmdQueue->getGpgpuCommandStreamReceiver().getEventTsAllocator()->getTag();
     }
     return timeStampNode;
 }
 
-TagNode<HwPerfCounter> *Event::getHwPerfCounterNode() {
+TagNodeBase *Event::getHwPerfCounterNode() {
 
     if (!perfCounterNode && cmdQueue->getPerfCounters()) {
-        const uint32_t gpuReportSize = cmdQueue->getPerfCounters()->getGpuReportSize();
+        const uint32_t gpuReportSize = HwPerfCounter::getSize(*(cmdQueue->getPerfCounters()));
         perfCounterNode = cmdQueue->getGpgpuCommandStreamReceiver().getEventPerfCountAllocator(gpuReportSize)->getTag();
     }
     return perfCounterNode;
@@ -764,6 +896,10 @@ bool Event::checkUserEventDependencies(cl_uint numEventsInWaitList, const cl_eve
         }
     }
     return userEventsDependencies;
+}
+
+uint32_t Event::peekTaskLevel() const {
+    return taskLevel;
 }
 
 } // namespace NEO

@@ -1,18 +1,20 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/unit_test/mocks/mock_device.h"
+#pragma once
+
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -23,20 +25,23 @@ class ImageCompressionTests : public ::testing::Test {
         using MockMemoryManager::MockMemoryManager;
         GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData) override {
             mockMethodCalled = true;
-            capturedImgInfo = *allocationData.imgInfo;
+            capturedPreferCompressed = allocationData.flags.preferCompressed;
             return OsAgnosticMemoryManager::allocateGraphicsMemoryForImage(allocationData);
         }
-        ImageInfo capturedImgInfo = {};
         bool mockMethodCalled = false;
+        bool capturedPreferCompressed = false;
     };
 
     void SetUp() override {
-        mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-        myMemoryManager = new MyMemoryManager(*mockDevice->getExecutionEnvironment());
-        mockDevice->injectMemoryManager(myMemoryManager);
-        mockContext = make_releaseable<MockContext>(mockDevice.get());
+        mockExecutionEnvironment = new MockExecutionEnvironment();
+        myMemoryManager = new MyMemoryManager(*mockExecutionEnvironment);
+        mockExecutionEnvironment->memoryManager.reset(myMemoryManager);
+
+        mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(nullptr, mockExecutionEnvironment, 0u));
+        mockContext = makeReleaseable<MockContext>(mockDevice.get());
     }
 
+    MockExecutionEnvironment *mockExecutionEnvironment;
     std::unique_ptr<MockClDevice> mockDevice;
     ReleaseableObjectPtr<MockContext> mockContext;
     MyMemoryManager *myMemoryManager = nullptr;

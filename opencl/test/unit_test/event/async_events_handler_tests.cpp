@@ -1,21 +1,23 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/timestamp_packet.h"
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
+#include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/event/async_events_handler.h"
 #include "opencl/source/event/event.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/mocks/mock_async_event_handler.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "test.h"
-
-#include "gmock/gmock.h"
 
 using namespace NEO;
 using namespace ::testing;
@@ -25,17 +27,27 @@ class AsyncEventsHandlerTests : public ::testing::Test {
     class MyEvent : public Event {
       public:
         MyEvent(Context *ctx, CommandQueue *cmdQueue, cl_command_type cmdType, uint32_t taskLevel, uint32_t taskCount)
-            : Event(ctx, cmdQueue, cmdType, taskLevel, taskCount) {}
+            : Event(ctx, cmdQueue, cmdType, taskLevel, taskCount) {
+            handler.reset(new MockHandler());
+        }
         int getExecutionStatus() {
             //return execution status without updating
             return executionStatus.load();
         }
         void setTaskStamp(uint32_t taskLevel, uint32_t taskCount) {
             this->taskLevel.store(taskLevel);
-            this->updateTaskCount(taskCount);
+            this->updateTaskCount(taskCount, 0);
         }
 
-        MOCK_METHOD2(wait, bool(bool blocking, bool quickKmdSleep));
+        WaitStatus wait(bool blocking, bool quickKmdSleep) override {
+            waitCalled++;
+            handler->allowAsyncProcess.store(false);
+            return waitResult;
+        }
+
+        uint32_t waitCalled = 0u;
+        WaitStatus waitResult = WaitStatus::Ready;
+        std::unique_ptr<MockHandler> handler;
     };
 
     static void CL_CALLBACK callbackFcn(cl_event e, cl_int status, void *data) {
@@ -46,36 +58,34 @@ class AsyncEventsHandlerTests : public ::testing::Test {
         dbgRestore.reset(new DebugManagerStateRestore());
         DebugManager.flags.EnableAsyncEventsHandler.set(false);
         handler.reset(new MockHandler());
-        context = new NiceMock<MockContext>();
+        context = makeReleaseable<MockContext>();
 
-        event1 = new NiceMock<MyEvent>(context, nullptr, CL_COMMAND_BARRIER, CompletionStamp::notReady, CompletionStamp::notReady);
-        event2 = new NiceMock<MyEvent>(context, nullptr, CL_COMMAND_BARRIER, CompletionStamp::notReady, CompletionStamp::notReady);
-        event3 = new NiceMock<MyEvent>(context, nullptr, CL_COMMAND_BARRIER, CompletionStamp::notReady, CompletionStamp::notReady);
-    }
+        commandQueue = makeReleaseable<MockCommandQueue>(context.get(), context->getDevice(0), nullptr, false);
 
-    void TearDown() override {
-        context->release();
-        event1->release();
-        event2->release();
-        event3->release();
+        *(commandQueue->getGpgpuCommandStreamReceiver().getTagAddress()) = 0;
+
+        event1 = makeReleaseable<MyEvent>(context.get(), commandQueue.get(), CL_COMMAND_BARRIER, CompletionStamp::notReady, CompletionStamp::notReady);
+        event2 = makeReleaseable<MyEvent>(context.get(), commandQueue.get(), CL_COMMAND_BARRIER, CompletionStamp::notReady, CompletionStamp::notReady);
+        event3 = makeReleaseable<MyEvent>(context.get(), commandQueue.get(), CL_COMMAND_BARRIER, CompletionStamp::notReady, CompletionStamp::notReady);
     }
 
     std::unique_ptr<DebugManagerStateRestore> dbgRestore;
     std::unique_ptr<MockHandler> handler;
     int counter = 0;
 
-    NiceMock<MyEvent> *event1 = nullptr;
-    NiceMock<MyEvent> *event2 = nullptr;
-    NiceMock<MyEvent> *event3 = nullptr;
-    NiceMock<MockContext> *context = nullptr;
+    ReleaseableObjectPtr<MockContext> context;
+    ReleaseableObjectPtr<MockCommandQueue> commandQueue;
+    ReleaseableObjectPtr<MyEvent> event1;
+    ReleaseableObjectPtr<MyEvent> event2;
+    ReleaseableObjectPtr<MyEvent> event3;
 };
 
 TEST_F(AsyncEventsHandlerTests, givenEventsWhenListIsProcessedThenUpdateExecutionStatus) {
     event1->setTaskStamp(0, 0);
     event2->setTaskStamp(0, 0);
 
-    handler->registerEvent(event1);
-    handler->registerEvent(event2);
+    handler->registerEvent(event1.get());
+    handler->registerEvent(event2.get());
 
     EXPECT_EQ(CL_QUEUED, event1->getExecutionStatus());
     EXPECT_EQ(CL_QUEUED, event2->getExecutionStatus());
@@ -91,7 +101,7 @@ TEST_F(AsyncEventsHandlerTests, givenEventsWhenListIsProcessedThenUpdateExecutio
 TEST_F(AsyncEventsHandlerTests, WhenProcessIsCompletedThenRefInternalCountIsDecremented) {
     event1->setTaskStamp(CompletionStamp::notReady, 0);
 
-    handler->registerEvent(event1);
+    handler->registerEvent(event1.get());
     EXPECT_EQ(2, event1->getRefInternalCount());
     handler->process();
     EXPECT_TRUE(handler->peekIsListEmpty());
@@ -103,7 +113,7 @@ TEST_F(AsyncEventsHandlerTests, givenNotCalledCallbacksWhenListIsProcessedThenDo
     event1->setTaskStamp(CompletionStamp::notReady, 0);
     event1->addCallback(&this->callbackFcn, CL_SUBMITTED, &submittedCounter);
     event1->addCallback(&this->callbackFcn, CL_COMPLETE, &completeCounter);
-    handler->registerEvent(event1);
+    handler->registerEvent(event1.get());
 
     auto expect = [&](int status, int sCounter, int cCounter, bool empty) {
         EXPECT_EQ(status, event1->getExecutionStatus());
@@ -160,10 +170,10 @@ TEST_F(AsyncEventsHandlerTests, givenExternallSynchronizedEventWhenListIsProcess
 }
 
 TEST_F(AsyncEventsHandlerTests, givenDoubleRegisteredEventWhenListIsProcessedAndNoCallbacksToProcessThenUnregister) {
-    event1->setTaskStamp(CompletionStamp::notReady - 1, 0);
+    event1->setTaskStamp(CompletionStamp::notReady - 1, CompletionStamp::notReady + 1);
     event1->addCallback(&this->callbackFcn, CL_SUBMITTED, &counter);
-    handler->registerEvent(event1);
-    handler->registerEvent(event1);
+    handler->registerEvent(event1.get());
+    handler->registerEvent(event1.get());
 
     handler->process();
     EXPECT_EQ(CL_SUBMITTED, event1->getExecutionStatus());
@@ -178,9 +188,9 @@ TEST_F(AsyncEventsHandlerTests, givenEventsNotHandledByHandlderWhenDestructingTh
     event1->addCallback(&this->callbackFcn, CL_SUBMITTED, &counter);
     event2->addCallback(&this->callbackFcn, CL_SUBMITTED, &counter);
 
-    myHandler->registerEvent(event1);
+    myHandler->registerEvent(event1.get());
     myHandler->process();
-    myHandler->registerEvent(event2);
+    myHandler->registerEvent(event2.get());
 
     EXPECT_FALSE(myHandler->peekIsListEmpty());
     EXPECT_FALSE(myHandler->peekIsRegisterListEmpty());
@@ -202,9 +212,9 @@ TEST_F(AsyncEventsHandlerTests, givenEventsNotHandledByHandlderWhenAsyncExecutio
     event1->addCallback(&this->callbackFcn, CL_SUBMITTED, &counter);
     event2->addCallback(&this->callbackFcn, CL_SUBMITTED, &counter);
 
-    handler->registerEvent(event1);
+    handler->registerEvent(event1.get());
     handler->process();
-    handler->registerEvent(event2);
+    handler->registerEvent(event2.get());
 
     EXPECT_FALSE(handler->peekIsListEmpty());
     EXPECT_FALSE(handler->peekIsRegisterListEmpty());
@@ -231,15 +241,15 @@ TEST_F(AsyncEventsHandlerTests, WhenHandlerIsRegisteredThenThreadIsCreated) {
     event1->setTaskStamp(CompletionStamp::notReady, 0);
 
     EXPECT_FALSE(handler->openThreadCalled);
-    handler->registerEvent(event1);
+    handler->registerEvent(event1.get());
     EXPECT_TRUE(handler->openThreadCalled);
 }
 
 TEST_F(AsyncEventsHandlerTests, WhenProcessingAsynchronouslyThenBothThreadsCompelete) {
     DebugManager.flags.EnableAsyncEventsHandler.set(true);
 
-    event1->setTaskStamp(CompletionStamp::notReady, 0);
-    event2->setTaskStamp(CompletionStamp::notReady, 0);
+    event1->setTaskStamp(CompletionStamp::notReady, CompletionStamp::notReady + 1);
+    event2->setTaskStamp(CompletionStamp::notReady, CompletionStamp::notReady + 1);
 
     event1->addCallback(&this->callbackFcn, CL_SUBMITTED, &counter);
     event2->addCallback(&this->callbackFcn, CL_SUBMITTED, &counter);
@@ -309,14 +319,14 @@ TEST_F(AsyncEventsHandlerTests, givenRegistredEventsWhenProcessIsCalledThenRetur
     event3->setTaskStamp(0, 3);
 
     event2->addCallback(&this->callbackFcn, CL_COMPLETE, &event2Counter);
-    handler->registerEvent(event2);
+    handler->registerEvent(event2.get());
     event1->addCallback(&this->callbackFcn, CL_COMPLETE, &event1Counter);
-    handler->registerEvent(event1);
+    handler->registerEvent(event1.get());
     event3->addCallback(&this->callbackFcn, CL_COMPLETE, &event3Counter);
-    handler->registerEvent(event3);
+    handler->registerEvent(event3.get());
 
     auto sleepCandidate = handler->process();
-    EXPECT_EQ(event1, sleepCandidate);
+    EXPECT_EQ(event1.get(), sleepCandidate);
 
     event1->setStatus(CL_COMPLETE);
     event2->setStatus(CL_COMPLETE);
@@ -327,31 +337,41 @@ TEST_F(AsyncEventsHandlerTests, givenEventWithoutCallbacksWhenProcessedThenDontR
     event1->setTaskStamp(0, 1);
     event2->setTaskStamp(0, 2);
 
-    handler->registerEvent(event1);
+    handler->registerEvent(event1.get());
     event2->addCallback(&this->callbackFcn, CL_COMPLETE, &counter);
-    handler->registerEvent(event2);
+    handler->registerEvent(event2.get());
 
     auto sleepCandidate = handler->process();
-    EXPECT_EQ(event2, sleepCandidate);
+    EXPECT_EQ(event2.get(), sleepCandidate);
 
     event2->setStatus(CL_COMPLETE);
 }
 
-TEST_F(AsyncEventsHandlerTests, givenSleepCandidateWhenProcessedThenCallWaitWithQuickKmdSleepRequest) {
+TEST_F(AsyncEventsHandlerTests, givenNoGpuHangAndSleepCandidateWhenProcessedThenCallWaitWithQuickKmdSleepRequest) {
     event1->setTaskStamp(0, 1);
     event1->addCallback(&this->callbackFcn, CL_COMPLETE, &counter);
-    handler->registerEvent(event1);
-    handler->allowAsyncProcess.store(true);
+    event1->handler->registerEvent(event1.get());
+    event1->handler->allowAsyncProcess.store(true);
 
-    // break infinite loop after first iteartion
-    auto unsetAsyncFlag = [&](bool blocking, bool quickKmdSleep) {
-        handler->allowAsyncProcess.store(false);
-        return true;
-    };
+    MockHandler::asyncProcess(event1->handler.get());
 
-    EXPECT_CALL(*event1, wait(true, true)).Times(1).WillOnce(Invoke(unsetAsyncFlag));
+    EXPECT_EQ(1u, event1->waitCalled);
+    EXPECT_NE(Event::executionAbortedDueToGpuHang, event1->peekExecutionStatus());
 
-    MockHandler::asyncProcess(handler.get());
+    event1->setStatus(CL_COMPLETE);
+}
+
+TEST_F(AsyncEventsHandlerTests, givenSleepCandidateAndGpuHangWhenProcessedThenCallWaitAndSetExecutionStatusToAbortedDueToGpuHang) {
+    event1->setTaskStamp(0, 1);
+    event1->addCallback(&this->callbackFcn, CL_COMPLETE, &counter);
+    event1->handler->registerEvent(event1.get());
+    event1->handler->allowAsyncProcess.store(true);
+    event1->waitResult = WaitStatus::GpuHang;
+
+    MockHandler::asyncProcess(event1->handler.get());
+
+    EXPECT_EQ(1u, event1->waitCalled);
+    EXPECT_EQ(Event::executionAbortedDueToGpuHang, event1->peekExecutionStatus());
 
     event1->setStatus(CL_COMPLETE);
 }

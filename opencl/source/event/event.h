@@ -1,22 +1,24 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/os_interface/os_time.h"
+#include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/utilities/arrayref.h"
+#include "shared/source/utilities/hw_timestamps.h"
 #include "shared/source/utilities/idlist.h"
 #include "shared/source/utilities/iflist.h"
 
 #include "opencl/source/api/cl_types.h"
-#include "opencl/source/event/hw_timestamps.h"
+#include "opencl/source/command_queue/copy_engine_state.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/task_information.h"
-#include "opencl/source/os_interface/performance_counters.h"
 
 #include <atomic>
 #include <cstdint>
@@ -24,7 +26,7 @@
 
 namespace NEO {
 template <typename TagType>
-struct TagNode;
+class TagNode;
 class CommandQueue;
 class Context;
 class Device;
@@ -79,6 +81,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     };
 
     static const cl_ulong objectMagic = 0x80134213A43C981ALL;
+    static constexpr cl_int executionAbortedDueToGpuHang = -777;
 
     Event(CommandQueue *cmdQueue, cl_command_type cmdType,
           uint32_t taskLevel, uint32_t taskCount);
@@ -88,8 +91,11 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
 
     ~Event() override;
 
-    uint32_t getCompletionStamp(void) const;
-    void updateCompletionStamp(uint32_t taskCount, uint32_t tasklevel, FlushStamp flushStamp);
+    void setupBcs(aub_stream::EngineType bcsEngineType);
+    uint32_t peekBcsTaskCountFromCommandQueue();
+
+    uint32_t getCompletionStamp() const;
+    void updateCompletionStamp(uint32_t taskCount, uint32_t bcsTaskCount, uint32_t tasklevel, FlushStamp flushStamp);
     cl_ulong getDelta(cl_ulong startTime,
                       cl_ulong endTime);
     void setCPUProfilingPath(bool isCPUPath) { this->profilingCpuPath = isCPUPath; }
@@ -106,7 +112,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
 
     void setProfilingEnabled(bool profilingEnabled) { this->profilingEnabled = profilingEnabled; }
 
-    TagNode<HwTimeStamps> *getHwTimeStampNode();
+    TagNodeBase *getHwTimeStampNode();
 
     void addTimestampPacketNodes(const TimestampPacketContainer &inputTimestampPacketContainer);
     TimestampPacketContainer *getTimestampPacketNodes() const;
@@ -119,11 +125,16 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         this->perfCountersEnabled = perfCountersEnabled;
     }
 
-    TagNode<HwPerfCounter> *getHwPerfCounterNode();
+    void abortExecutionDueToGpuHang() {
+        this->transitionExecutionStatus(executionAbortedDueToGpuHang);
+    }
+
+    TagNodeBase *getHwPerfCounterNode();
 
     std::unique_ptr<FlushStampTracker> flushStamp;
     std::atomic<uint32_t> taskLevel;
 
+    uint32_t peekTaskLevel() const;
     void addChild(Event &e);
 
     virtual bool setStatus(cl_int status);
@@ -180,6 +191,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     }
 
     bool updateStatusAndCheckCompletion();
+    bool isCompleted();
 
     // Note from OCL spec :
     //      "A negative integer value causes all enqueued commands that wait on this user event
@@ -202,9 +214,8 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     // adds a callback (execution state change listener) to this event's list of callbacks
     void addCallback(Callback::ClbFuncT fn, cl_int type, void *data);
 
-    //returns true on success
-    //if(blocking==false), will return with false instead of blocking while waiting for completion
-    virtual bool wait(bool blocking, bool useQuickKmdSleep);
+    //if(blocking==false), will return with WaitStatus::NotReady instead of blocking while waiting for completion
+    virtual WaitStatus wait(bool blocking, bool useQuickKmdSleep);
 
     bool isUserEvent() const {
         return (CL_COMMAND_USER == cmdType);
@@ -219,6 +230,10 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     }
 
     CommandQueue *getCommandQueue() {
+        return cmdQueue;
+    }
+
+    const CommandQueue *getCommandQueue() const {
         return cmdQueue;
     }
 
@@ -243,14 +258,15 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
 
     virtual void unblockEventBy(Event &event, uint32_t taskLevel, int32_t transitionStatus);
 
-    void updateTaskCount(uint32_t taskCount) {
-        if (taskCount == CompletionStamp::notReady) {
+    void updateTaskCount(uint32_t gpgpuTaskCount, uint32_t bcsTaskCount) {
+        if (gpgpuTaskCount == CompletionStamp::notReady) {
             DEBUG_BREAK_IF(true);
             return;
         }
 
-        uint32_t prevTaskCount = this->taskCount.exchange(taskCount);
-        if ((prevTaskCount != CompletionStamp::notReady) && (prevTaskCount > taskCount)) {
+        this->bcsState.taskCount = bcsTaskCount;
+        uint32_t prevTaskCount = this->taskCount.exchange(gpgpuTaskCount);
+        if ((prevTaskCount != CompletionStamp::notReady) && (prevTaskCount > gpgpuTaskCount)) {
             this->taskCount = prevTaskCount;
             DEBUG_BREAK_IF(true);
         }
@@ -275,10 +291,6 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         this->queueTimeStamp = *queueTimeStamp;
     };
 
-    void setSubmitTimeStamp(TimeStampData *submitTimeStamp) {
-        this->submitTimeStamp = *submitTimeStamp;
-    };
-
     void setQueueTimeStamp();
     void setSubmitTimeStamp();
 
@@ -296,6 +308,8 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     }
 
     static bool checkUserEventDependencies(cl_uint numEventsInWaitList, const cl_event *eventWaitList);
+
+    static void getBoundaryTimestampValues(TimestampPacketContainer *timestampContainer, uint64_t &globalStartTS, uint64_t &globalEndTS);
 
   protected:
     Event(Context *ctx, CommandQueue *cmdQueue, cl_command_type cmdType,
@@ -319,6 +333,8 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         }
     }
 
+    void calculateSubmitTimestampData();
+    uint64_t getTimeInNSFromTimestampData(const TimeStampData &timestamp) const;
     bool calcProfilingData();
     MOCKABLE_VIRTUAL void calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t contextEndTS, uint64_t *contextCompleteTS, uint64_t globalStartTS);
     MOCKABLE_VIRTUAL void synchronizeTaskCount() {
@@ -337,6 +353,11 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     IFRefList<Event, true, true> childEventsToNotify;
     void unblockEventsBlockedByThis(int32_t transitionStatus);
     void submitCommand(bool abortBlockedTasks);
+
+    static void setExecutionStatusToAbortedDueToGpuHang(cl_event *first, cl_event *last);
+
+    bool isWaitForTimestampsEnabled() const;
+    bool areTimestampsCompleted();
 
     bool currentCmdQVirtualEvent;
     std::atomic<Command *> cmdToSubmit;
@@ -363,9 +384,10 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     uint64_t startTimeStamp;
     uint64_t endTimeStamp;
     uint64_t completeTimeStamp;
+    CopyEngineState bcsState{};
     bool perfCountersEnabled;
-    TagNode<HwTimeStamps> *timeStampNode = nullptr;
-    TagNode<HwPerfCounter> *perfCounterNode = nullptr;
+    TagNodeBase *timeStampNode = nullptr;
+    TagNodeBase *perfCounterNode = nullptr;
     std::unique_ptr<TimestampPacketContainer> timestampPacketContainer;
     //number of events this event depends on
     std::atomic<int> parentCount;

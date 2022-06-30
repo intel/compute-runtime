@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2020 Intel Corporation
+# Copyright (C) 2018-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -18,5 +18,4 @@ set(IGDRCL_SRCS_performance_tests
     "${CMAKE_CURRENT_SOURCE_DIR}/perf_test_utils.h"
     PARENT_SCOPE
 )
-
 

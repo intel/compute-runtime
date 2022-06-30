@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,19 +7,23 @@
 
 #pragma once
 
+#include "shared/source/command_stream/wait_status.h"
+
 #include "opencl/source/event/event_builder.h"
 #include "opencl/source/event/user_event.h"
 
+#include <optional>
+
 namespace NEO {
 
-#define FORWARD_CONSTRUCTOR(THIS_CLASS, BASE_CLASS)                           \
-    template <typename... ArgsT>                                              \
-    THIS_CLASS(ArgsT &&... args) : BASE_CLASS(std::forward<ArgsT>(args)...) { \
+#define FORWARD_CONSTRUCTOR(THIS_CLASS, BASE_CLASS)                          \
+    template <typename... ArgsT>                                             \
+    THIS_CLASS(ArgsT &&...args) : BASE_CLASS(std::forward<ArgsT>(args)...) { \
     }
 
 #define FORWARD_FUNC(FUNC_NAME, BASE_CLASS)                  \
     template <typename... ArgsT>                             \
-    void FUNC_NAME(ArgsT &&... args) {                       \
+    void FUNC_NAME(ArgsT &&...args) {                        \
         BASE_CLASS::FUNC_NAME(std::forward<ArgsT>(args)...); \
     }
 
@@ -32,10 +36,22 @@ struct MockEvent : public BaseEventType {
 
     using BaseEventType::timeStampNode;
     using Event::calcProfilingData;
+    using Event::calculateSubmitTimestampData;
+    using Event::isWaitForTimestampsEnabled;
     using Event::magic;
     using Event::queueTimeStamp;
     using Event::submitTimeStamp;
     using Event::timestampPacketContainer;
+
+    WaitStatus wait(bool blocking, bool useQuickKmdSleep) override {
+        if (waitReturnValue.has_value()) {
+            return *waitReturnValue;
+        }
+
+        return BaseEventType::wait(blocking, useQuickKmdSleep);
+    }
+
+    std::optional<WaitStatus> waitReturnValue{};
 };
 
 #undef FORWARD_CONSTRUCTOR
@@ -52,7 +68,7 @@ struct MockEventBuilder : EventBuilder {
     }
 
     template <typename EventType, typename... ArgsT>
-    static EventType *createAndFinalize(ArgsT &&... args) {
+    static EventType *createAndFinalize(ArgsT &&...args) {
         MockEventBuilder mb;
         mb.create<EventType>(std::forward<ArgsT>(args)...);
         return static_cast<EventType *>(mb.finalizeAndRelease());

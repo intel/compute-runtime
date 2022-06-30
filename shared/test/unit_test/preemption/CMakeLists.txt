@@ -1,13 +1,18 @@
 #
-# Copyright (C) 2018-2020 Intel Corporation
+# Copyright (C) 2019-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
-set(NEO_CORE_SRCS_tests_preemption
-  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/preemption_tests.cpp
+target_sources(${TARGET_NAME} PRIVATE
+               ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+               ${CMAKE_CURRENT_SOURCE_DIR}/preemption_tests.cpp
 )
 
-set_property(GLOBAL PROPERTY NEO_CORE_SRCS_tests_preemption ${NEO_CORE_SRCS_tests_preemption})
+if(TESTS_XEHP_AND_LATER)
+  target_sources(${TARGET_NAME} PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption_xehp_and_later.cpp
+  )
+endif()
+
 add_subdirectories()

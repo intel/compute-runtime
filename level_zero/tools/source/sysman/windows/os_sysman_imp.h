@@ -1,28 +1,45 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/windows/wddm/wddm.h"
+
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
+#include "level_zero/tools/source/sysman/windows/kmd_sys.h"
+#include "level_zero/tools/source/sysman/windows/kmd_sys_manager.h"
 
 namespace L0 {
+class FirmwareUtil;
 
-class WddmSysmanImp : public OsSysman {
+class WddmSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
   public:
-    WddmSysmanImp(SysmanImp *pParentSysmanImp) : pParentSysmanImp(pParentSysmanImp){};
-    ~WddmSysmanImp() override = default;
-
-    // Don't allow copies of the WddmSysmanImp object
-    WddmSysmanImp(const WddmSysmanImp &obj) = delete;
-    WddmSysmanImp &operator=(const WddmSysmanImp &obj) = delete;
+    WddmSysmanImp(SysmanDeviceImp *pParentSysmanDeviceImp);
+    ~WddmSysmanImp() override;
 
     ze_result_t init() override;
 
+    KmdSysManager &getKmdSysManager();
+    FirmwareUtil *getFwUtilInterface();
+    NEO::Wddm &getWddm();
+    Device *getDeviceHandle();
+    void releaseFwUtilInterface();
+
+  protected:
+    FirmwareUtil *pFwUtilInterface = nullptr;
+    KmdSysManager *pKmdSysManager = nullptr;
+    Device *pDevice = nullptr;
+
   private:
-    WddmSysmanImp() = delete;
-    SysmanImp *pParentSysmanImp;
+    SysmanDeviceImp *pParentSysmanDeviceImp = nullptr;
+    NEO::Wddm *pWddm = nullptr;
+    void createFwUtilInterface();
 };
 
 } // namespace L0

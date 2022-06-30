@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,17 +7,19 @@
 
 #pragma once
 #include "shared/source/os_interface/windows/wddm_allocation.h"
-
-#include "opencl/test/unit_test/mock_gdi/mock_gdi.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
+#include "shared/test/common/mock_gdi/mock_gdi.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 
 namespace NEO {
 
 class MockWddmAllocation : public WddmAllocation {
   public:
-    MockWddmAllocation() : WddmAllocation(0, EngineLimits::maxHandleCount, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, nullptr, MemoryPool::MemoryNull), gpuPtr(gpuAddress), handle(handles[0]) {
-        for (uint32_t i = 0; i < EngineLimits::maxHandleCount; i++) {
-            setGmm(new MockGmm, i);
+    MockWddmAllocation(GmmHelper *gmmHelper) : MockWddmAllocation(gmmHelper, EngineLimits::maxHandleCount) {}
+    MockWddmAllocation(GmmHelper *gmmHelper, uint32_t numGmms) : WddmAllocation(0, numGmms, AllocationType::UNKNOWN,
+                                                                                nullptr, 0, 0, nullptr, MemoryPool::MemoryNull, 0u, 3u),
+                                                                 gpuPtr(gpuAddress), handle(handles[0]) {
+        for (uint32_t i = 0; i < numGmms; i++) {
+            setGmm(new MockGmm(gmmHelper), i);
             setHandle(ALLOCATION_HANDLE, i);
         }
     }

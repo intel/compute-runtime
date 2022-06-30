@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,22 +14,23 @@
 
 namespace L0 {
 
-class RasImp : public NEO::NonCopyableClass, public Ras {
+class RasImp : public Ras, NEO::NonCopyableOrMovableClass {
   public:
-    ze_result_t rasGetProperties(zet_ras_properties_t *pProperties) override;
-    ze_result_t rasGetConfig(zet_ras_config_t *pConfig) override;
-    ze_result_t rasSetConfig(const zet_ras_config_t *pConfig) override;
-    ze_result_t rasGetState(ze_bool_t clear, uint64_t *pTotalErrors, zet_ras_details_t *pDetails) override;
+    ze_result_t rasGetProperties(zes_ras_properties_t *pProperties) override;
+    ze_result_t rasGetConfig(zes_ras_config_t *pConfig) override;
+    ze_result_t rasSetConfig(const zes_ras_config_t *pConfig) override;
+    ze_result_t rasGetState(zes_ras_state_t *pConfig, ze_bool_t clear) override;
 
     RasImp() = default;
-    RasImp(OsSysman *pOsSysman);
+    RasImp(OsSysman *pOsSysman, zes_ras_error_type_t type, ze_device_handle_t deviceHandle);
     ~RasImp() override;
 
     OsRas *pOsRas = nullptr;
     void init();
 
   private:
-    zet_ras_properties_t rasProperties = {};
+    zes_ras_properties_t rasProperties = {};
+    ze_device_handle_t deviceHandle = {};
 };
 
 } // namespace L0

@@ -40,6 +40,7 @@ constexpr uint32_t CS_GPR_R15 = 0x2678;
 
 constexpr uint32_t CS_PREDICATE_RESULT = 0x2418;
 
+constexpr uint32_t SEMA_WAIT_POLL = 0x0224c;
 //Alu opcodes
 constexpr uint32_t NUM_ALU_INST_FOR_READ_MODIFY_WRITE = 4;
 

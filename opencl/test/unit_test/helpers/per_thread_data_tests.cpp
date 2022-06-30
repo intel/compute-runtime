@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,13 +7,14 @@
 
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/local_id_gen.h"
+#include "shared/source/helpers/per_thread_data.h"
+#include "shared/source/program/kernel_info.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/test_macros/test.h"
 
-#include "opencl/source/command_queue/local_id_gen.h"
-#include "opencl/source/helpers/per_thread_data.h"
-#include "opencl/source/program/kernel_info.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
-#include "test.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 #include "patch_shared.h"
 
@@ -26,29 +27,18 @@ struct PerThreadDataTests : public ClDeviceFixture,
     void SetUp() override {
         ClDeviceFixture::SetUp();
 
-        threadPayload = {};
-        threadPayload.LocalIDXPresent = localIdX ? 1 : 0;
-        threadPayload.LocalIDYPresent = localIdY ? 1 : 0;
-        threadPayload.LocalIDZPresent = localIdZ ? 1 : 0;
-        threadPayload.LocalIDFlattenedPresent = flattenedId;
-        threadPayload.UnusedPerThreadConstantPresent =
-            !(localIdX || localIdY || localIdZ || flattenedId);
+        kernelInfo.setLocalIds({localIdX, localIdY, localIdZ});
+        kernelInfo.kernelDescriptor.kernelAttributes.flags.usesFlattenedLocalIds = flattenedId;
+        kernelInfo.kernelDescriptor.kernelAttributes.flags.perThreadDataUnusedGrfIsPresent = !(localIdX || localIdY || localIdZ || flattenedId);
 
-        executionEnvironment = {};
-        executionEnvironment.CompiledSIMD32 = 1;
-        executionEnvironment.LargestCompiledSIMDSize = 32;
+        numChannels = kernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels;
+        simd = 32;
+        kernelInfo.kernelDescriptor.kernelAttributes.simdSize = simd;
 
         kernelInfo.heapInfo.pKernelHeap = kernelIsa;
         kernelInfo.heapInfo.KernelHeapSize = sizeof(kernelIsa);
-        kernelInfo.patchInfo.executionEnvironment = &executionEnvironment;
-        kernelInfo.patchInfo.threadPayload = &threadPayload;
 
-        simd = executionEnvironment.LargestCompiledSIMDSize;
-        numChannels = threadPayload.LocalIDXPresent +
-                      threadPayload.LocalIDYPresent +
-                      threadPayload.LocalIDZPresent;
         grfSize = 32;
-
         indirectHeapMemorySize = 4096;
         indirectHeapMemory = reinterpret_cast<uint8_t *>(alignedMalloc(indirectHeapMemorySize, 32));
         ASSERT_TRUE(isAligned<32>(indirectHeapMemory));
@@ -68,9 +58,7 @@ struct PerThreadDataTests : public ClDeviceFixture,
     size_t indirectHeapMemorySize;
 
     SKernelBinaryHeaderCommon kernelHeader;
-    SPatchThreadPayload threadPayload;
-    SPatchExecutionEnvironment executionEnvironment;
-    KernelInfo kernelInfo;
+    MockKernelInfo kernelInfo;
 };
 
 typedef PerThreadDataTests<> PerThreadDataXYZTests;
@@ -88,8 +76,8 @@ HWTEST_F(PerThreadDataXYZTests, Given256x1x1WhenSendingPerThreadDataThenCorrectA
     MockGraphicsAllocation gfxAllocation(indirectHeapMemory, indirectHeapMemorySize);
     LinearStream indirectHeap(&gfxAllocation);
 
-    size_t localWorkSizes[3] = {256, 1, 1};
-    auto localWorkSize = localWorkSizes[0] * localWorkSizes[1] * localWorkSizes[2];
+    const std::array<uint16_t, 3> localWorkSizes = {{256, 1, 1}};
+    size_t localWorkSize = localWorkSizes[0] * localWorkSizes[1] * localWorkSizes[2];
 
     auto offsetPerThreadData = PerThreadDataHelper::sendPerThreadData(
         indirectHeap,
@@ -109,7 +97,7 @@ HWTEST_F(PerThreadDataXYZTests, Given2x4x8WhenSendingPerThreadDataThenCorrectAmo
     MockGraphicsAllocation gfxAllocation(indirectHeapMemory, indirectHeapMemorySize);
     LinearStream indirectHeap(&gfxAllocation);
 
-    const size_t localWorkSizes[3]{2, 4, 8};
+    const std::array<uint16_t, 3> localWorkSizes = {{2, 4, 8}};
     auto offsetPerThreadData = PerThreadDataHelper::sendPerThreadData(
         indirectHeap,
         simd,
@@ -124,22 +112,20 @@ HWTEST_F(PerThreadDataXYZTests, Given2x4x8WhenSendingPerThreadDataThenCorrectAmo
 }
 
 HWTEST_F(PerThreadDataXYZTests, GivenDifferentSimdWhenGettingThreadPayloadSizeThenCorrectSizeIsReturned) {
-    simd = 32;
-    uint32_t size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
+    uint32_t size = PerThreadDataHelper::getThreadPayloadSize(kernelInfo.kernelDescriptor, grfSize);
     EXPECT_EQ(grfSize * 2u * 3u, size);
 
-    simd = 16;
-    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 16;
+    size = PerThreadDataHelper::getThreadPayloadSize(kernelInfo.kernelDescriptor, grfSize);
     EXPECT_EQ(grfSize * 3u, size);
 
-    simd = 16;
-    threadPayload.HeaderPresent = 1;
-    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    kernelInfo.kernelDescriptor.kernelAttributes.flags.perThreadDataHeaderIsPresent = true;
+    size = PerThreadDataHelper::getThreadPayloadSize(kernelInfo.kernelDescriptor, grfSize);
     EXPECT_EQ(grfSize * 4u, size);
 
-    simd = 16;
-    threadPayload.UnusedPerThreadConstantPresent = 1;
-    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    kernelInfo.kernelDescriptor.kernelAttributes.flags.perThreadDataUnusedGrfIsPresent = true;
+    size = PerThreadDataHelper::getThreadPayloadSize(kernelInfo.kernelDescriptor, grfSize);
     EXPECT_EQ(grfSize * 5u, size);
 }
 
@@ -163,7 +149,7 @@ HWTEST_F(PerThreadDataNoIdsTests, GivenThreadPaylodDataWithoutLocalIdsWhenSendin
     MockGraphicsAllocation gfxAllocation(indirectHeapMemory, indirectHeapMemorySize);
     LinearStream indirectHeap(&gfxAllocation);
 
-    size_t localWorkSizes[3] = {256, 1, 1};
+    const std::array<uint16_t, 3> localWorkSizes = {{256, 1, 1}};
     auto offsetPerThreadData = PerThreadDataHelper::sendPerThreadData(
         indirectHeap,
         simd,
@@ -184,39 +170,36 @@ HWTEST_F(PerThreadDataNoIdsTests, GivenThreadPaylodDataWithoutLocalIdsWhenSendin
 }
 
 HWTEST_F(PerThreadDataNoIdsTests, GivenSimdWhenGettingThreadPayloadSizeThenCorrectValueIsReturned) {
-    simd = 32;
-    uint32_t size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
+    uint32_t size = PerThreadDataHelper::getThreadPayloadSize(kernelInfo.kernelDescriptor, grfSize);
     EXPECT_EQ(grfSize, size);
 
-    simd = 16;
-    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 16;
+    size = PerThreadDataHelper::getThreadPayloadSize(kernelInfo.kernelDescriptor, grfSize);
     EXPECT_EQ(grfSize, size);
 
-    simd = 16;
-    threadPayload.HeaderPresent = 1;
-    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    kernelInfo.kernelDescriptor.kernelAttributes.flags.perThreadDataHeaderIsPresent = true;
+    size = PerThreadDataHelper::getThreadPayloadSize(kernelInfo.kernelDescriptor, grfSize);
     EXPECT_EQ(grfSize * 2u, size);
 }
 
 typedef PerThreadDataTests<false, false, false, true> PerThreadDataFlattenedIdsTests;
 
 HWTEST_F(PerThreadDataFlattenedIdsTests, GivenSimdWhenGettingThreadPayloadSizeThenCorrectValueIsReturned) {
-    simd = 32;
-    uint32_t size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
+    uint32_t size = PerThreadDataHelper::getThreadPayloadSize(kernelInfo.kernelDescriptor, grfSize);
     EXPECT_EQ(grfSize * 2u, size);
 
-    simd = 16;
-    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 16;
+    size = PerThreadDataHelper::getThreadPayloadSize(kernelInfo.kernelDescriptor, grfSize);
     EXPECT_EQ(grfSize, size);
 
-    simd = 16;
-    threadPayload.HeaderPresent = 1;
-    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    kernelInfo.kernelDescriptor.kernelAttributes.flags.perThreadDataHeaderIsPresent = true;
+    size = PerThreadDataHelper::getThreadPayloadSize(kernelInfo.kernelDescriptor, grfSize);
     EXPECT_EQ(grfSize * 2u, size);
 
-    simd = 32;
-    threadPayload.HeaderPresent = 1;
-    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
+    size = PerThreadDataHelper::getThreadPayloadSize(kernelInfo.kernelDescriptor, grfSize);
     EXPECT_EQ(grfSize * 3u, size);
 }
 
@@ -226,45 +209,8 @@ TEST(PerThreadDataTest, WhenSettingLocalIdsInPerThreadDataThenIdsAreSetInCorrect
     uint32_t numChannels = 3;
     uint32_t localWorkSize = 24;
 
-    size_t localWorkSizes[3] = {24, 1, 1};
-
-    auto sizePerThreadDataTotal = PerThreadDataHelper::getPerThreadDataSizeTotal(simd, numChannels, localWorkSize, grfSize);
-
-    auto sizeOverSizedBuffer = sizePerThreadDataTotal * 4;
-    auto buffer = static_cast<char *>(alignedMalloc(sizeOverSizedBuffer, 16));
-    memset(buffer, 0, sizeOverSizedBuffer);
-
-    // Setup reference filled with zeros
-    auto reference = static_cast<char *>(alignedMalloc(sizePerThreadDataTotal, 16));
-    memset(reference, 0, sizePerThreadDataTotal);
-
-    LinearStream stream(buffer, sizeOverSizedBuffer / 2);
-    PerThreadDataHelper::sendPerThreadData(
-        stream,
-        simd,
-        grfSize,
-        numChannels,
-        localWorkSizes,
-        {{0, 1, 2}},
-        false);
-
-    // Check if buffer overrun happend, only first sizePerThreadDataTotal bytes can be overwriten, following should be same as reference.
-    for (auto i = sizePerThreadDataTotal; i < sizeOverSizedBuffer; i += sizePerThreadDataTotal) {
-        int result = memcmp(buffer + i, reference, sizePerThreadDataTotal);
-        EXPECT_EQ(0, result);
-    }
-
-    alignedFree(buffer);
-    alignedFree(reference);
-}
-
-TEST(PerThreadDataTest, givenSimdEqualOneWhenSettingLocalIdsInPerThreadDataThenIdsAreSetInCorrectOrder) {
-    uint32_t simd = 1;
-    uint32_t grfSize = 32;
-    uint32_t numChannels = 3;
-    uint32_t localWorkSize = 24;
-
-    size_t localWorkSizes[3] = {3, 4, 2};
+    const std::array<uint16_t, 3> localWorkSizes = {{24, 1, 1}};
+    const std::array<uint8_t, 3> workgroupWalkOrder = {{0, 1, 2}};
 
     auto sizePerThreadDataTotal = PerThreadDataHelper::getPerThreadDataSizeTotal(simd, grfSize, numChannels, localWorkSize);
 
@@ -283,7 +229,46 @@ TEST(PerThreadDataTest, givenSimdEqualOneWhenSettingLocalIdsInPerThreadDataThenI
         grfSize,
         numChannels,
         localWorkSizes,
-        {{0, 1, 2}},
+        workgroupWalkOrder,
+        false);
+
+    // Check if buffer overrun happend, only first sizePerThreadDataTotal bytes can be overwriten, following should be same as reference.
+    for (auto i = sizePerThreadDataTotal; i < sizeOverSizedBuffer; i += sizePerThreadDataTotal) {
+        int result = memcmp(buffer + i, reference, sizePerThreadDataTotal);
+        EXPECT_EQ(0, result);
+    }
+
+    alignedFree(buffer);
+    alignedFree(reference);
+}
+
+TEST(PerThreadDataTest, givenSimdEqualOneWhenSettingLocalIdsInPerThreadDataThenIdsAreSetInCorrectOrder) {
+    uint32_t simd = 1;
+    uint32_t grfSize = 32;
+    uint32_t numChannels = 3;
+    uint32_t localWorkSize = 24;
+
+    const std::array<uint16_t, 3> localWorkSizes = {{3, 4, 2}};
+    const std::array<uint8_t, 3> workgroupWalkOrder = {{0, 1, 2}};
+
+    auto sizePerThreadDataTotal = PerThreadDataHelper::getPerThreadDataSizeTotal(simd, grfSize, numChannels, localWorkSize);
+
+    auto sizeOverSizedBuffer = sizePerThreadDataTotal * 4;
+    auto buffer = static_cast<char *>(alignedMalloc(sizeOverSizedBuffer, 16));
+    memset(buffer, 0, sizeOverSizedBuffer);
+
+    // Setup reference filled with zeros
+    auto reference = static_cast<char *>(alignedMalloc(sizePerThreadDataTotal, 16));
+    memset(reference, 0, sizePerThreadDataTotal);
+
+    LinearStream stream(buffer, sizeOverSizedBuffer / 2);
+    PerThreadDataHelper::sendPerThreadData(
+        stream,
+        simd,
+        grfSize,
+        numChannels,
+        localWorkSizes,
+        workgroupWalkOrder,
         false);
 
     auto bufferPtr = buffer;

@@ -1,3 +1,11 @@
+<!---
+
+Copyright (C) 2018-2021 Intel Corporation
+
+SPDX-License-Identifier: MIT
+
+-->
+
 # Using NEO runtime with VTune Amplifier
 
 You can use the Intel VTune Amplifier to identify GPU "hotspots". It will show GPGPU queue, GPU usage, memory throughputs, etc.

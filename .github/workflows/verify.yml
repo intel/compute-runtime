@@ -1,0 +1,21 @@
+#
+# Copyright (C) 2021 Intel Corporation
+#
+# SPDX-License-Identifier: MIT
+#
+
+name: verify
+on:
+  - pull_request
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        path: neo
+    - name: lint
+      uses: ./neo/.github/actions/neo-lint
+      with:
+        path: neo

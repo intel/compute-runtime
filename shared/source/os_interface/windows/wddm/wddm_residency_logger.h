@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ class WddmResidencyLogger {
         IoFunctions::fprintf(pagingLog, "%s\n", id.str().c_str());
     }
 
-    ~WddmResidencyLogger() {
+    MOCKABLE_VIRTUAL ~WddmResidencyLogger() {
         IoFunctions::fclosePtr(pagingLog);
     }
 
@@ -63,7 +63,7 @@ class WddmResidencyLogger {
         endTime = std::chrono::high_resolution_clock::now();
 
         int64_t timeDiff = 0;
-        IoFunctions::fprintf(pagingLog, "makeResidentPagingFence: %x startWaitPagingFence: %x stopWaitPagingFence: %lld\n",
+        IoFunctions::fprintf(pagingLog, "makeResidentPagingFence: %lld startWaitPagingFence: %lld stopWaitPagingFence: %lld\n",
                              makeResidentPagingFence,
                              startWaitPagingFence,
                              stopWaitPagingFence);

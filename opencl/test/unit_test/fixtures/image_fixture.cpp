@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,18 @@ const cl_image_format LuminanceImage::imageFormat = {
 
 const cl_image_desc Image1dDefaults::imageDesc = {
     CL_MEM_OBJECT_IMAGE1D,
+    imageWidth,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    {nullptr}};
+
+const cl_image_desc Image1dBufferDefaults::imageDesc = {
+    CL_MEM_OBJECT_IMAGE1D_BUFFER,
     imageWidth,
     1,
     1,
@@ -87,5 +99,6 @@ const cl_image_desc Image1dArrayDefaults::imageDesc = {
 static float imageMemory[imageWidth * imageHeight * imageDepth] = {};
 
 void *Image1dDefaults::hostPtr = imageMemory;
+void *ImageWithoutHostPtr::hostPtr = nullptr;
 
 NEO::Context *Image1dDefaults::context = nullptr;

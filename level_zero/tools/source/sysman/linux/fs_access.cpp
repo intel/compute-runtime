@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 
 #include <array>
 #include <cerrno>
+#include <csignal>
 #include <cstdio>
 #include <cstdlib>
 #include <dirent.h>
@@ -23,6 +24,8 @@ static ze_result_t getResult(int err) {
         return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
     } else if (ENOENT == err) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    } else if (EBUSY == err) {
+        return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
     } else {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
@@ -53,6 +56,56 @@ ze_result_t FsAccess::read(const std::string file, uint64_t &val) {
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t FsAccess::read(const std::string file, double &val) {
+    // Read a single line from text file without trailing newline
+    std::ifstream fs;
+
+    fs.open(file.c_str());
+    if (fs.fail()) {
+        return getResult(errno);
+    }
+    fs >> val;
+    if (fs.fail()) {
+        fs.close();
+        return getResult(errno);
+    }
+    fs.close();
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t FsAccess::read(const std::string file, int32_t &val) {
+    // Read a single line from text file without trailing newline
+    std::ifstream fs;
+
+    fs.open(file.c_str());
+    if (fs.fail()) {
+        return getResult(errno);
+    }
+    fs >> val;
+    if (fs.fail()) {
+        fs.close();
+        return getResult(errno);
+    }
+    fs.close();
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t FsAccess::read(const std::string file, uint32_t &val) {
+    // Read a single line from text file without trailing newline
+    std::ifstream fs;
+
+    fs.open(file.c_str());
+    if (fs.fail()) {
+        return getResult(errno);
+    }
+    fs >> val;
+    if (fs.fail()) {
+        fs.close();
+        return getResult(errno);
+    }
+    fs.close();
+    return ZE_RESULT_SUCCESS;
+}
 ze_result_t FsAccess::read(const std::string file, std::string &val) {
     // Read a single line from text file without trailing newline
     std::ifstream fs;
@@ -117,23 +170,32 @@ ze_result_t FsAccess::write(const std::string file, const std::string val) {
 }
 
 ze_result_t FsAccess::canRead(const std::string file) {
-    if (access(file.c_str(), F_OK)) {
+    struct stat sb;
+    if (statSyscall(file.c_str(), &sb) != 0) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
-    if (access(file.c_str(), R_OK)) {
-        return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+    if (sb.st_mode & S_IRUSR) {
+        return ZE_RESULT_SUCCESS;
     }
-    return ZE_RESULT_SUCCESS;
+    return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
 }
 
 ze_result_t FsAccess::canWrite(const std::string file) {
-    if (access(file.c_str(), F_OK)) {
+    struct stat sb;
+    if (statSyscall(file.c_str(), &sb) != 0) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
-    if (access(file.c_str(), W_OK)) {
-        return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+    if (sb.st_mode & S_IWUSR) {
+        return ZE_RESULT_SUCCESS;
     }
-    return ZE_RESULT_SUCCESS;
+    return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+}
+
+bool FsAccess::fileExists(const std::string file) {
+    if (access(file.c_str(), F_OK)) {
+        return false;
+    }
+    return true;
 }
 
 ze_result_t FsAccess::getFileMode(const std::string file, ::mode_t &mode) {
@@ -175,19 +237,25 @@ ze_result_t FsAccess::listDirectory(const std::string path, std::vector<std::str
         return getResult(errno);
     }
     struct ::dirent *ent;
+    int err = 0;
+    // readdir doesn't clear errno, so make sure it is clear
+    errno = 0;
     while (NULL != (ent = ::readdir(procDir))) {
         // Ignore . and ..
         std::string name = std::string(ent->d_name);
         if (!name.compare(".") || !name.compare("..")) {
+            errno = 0;
             continue;
         }
         list.push_back(std::string(ent->d_name));
+        errno = 0;
     }
+    err = errno;
     ::closedir(procDir);
     // Check if in above while loop, readdir encountered any error.
-    if (errno != 0) {
+    if ((err != 0) && (err != ENOENT)) {
         list.clear();
-        return getResult(errno);
+        return getResult(err);
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -209,12 +277,15 @@ std::string FsAccess::getDirName(const std::string path) {
     return path.substr(0, pos);
 }
 
-ze_bool_t FsAccess::fileExists(const std::string file) {
-    struct stat sb;
-    if (stat(file.c_str(), &sb) == 0) {
-        return true;
+bool FsAccess::isRootUser() {
+    return (geteuid() == 0);
+}
+
+bool FsAccess::directoryExists(const std::string path) {
+    if (accessSyscall(path.c_str(), F_OK)) {
+        return false;
     }
-    return false;
+    return true;
 }
 
 // Procfs Access
@@ -291,6 +362,14 @@ ze_result_t ProcfsAccess::getFileName(const ::pid_t pid, const int fd, std::stri
     return FsAccess::readSymLink(fullFdPath(pid, fd), val);
 }
 
+bool ProcfsAccess::isAlive(const ::pid_t pid) {
+    return FsAccess::fileExists(fullPath(pid));
+}
+
+void ProcfsAccess::kill(const ::pid_t pid) {
+    ::kill(pid, SIGKILL);
+}
+
 ::pid_t ProcfsAccess::myProcessId() {
     return ::getpid();
 }
@@ -346,7 +425,25 @@ ze_result_t SysfsAccess::read(const std::string file, std::string &val) {
     return FsAccess::read(fullPath(file).c_str(), val);
 }
 
-ze_result_t SysfsAccess::read(const std::string file, int &val) {
+ze_result_t SysfsAccess::read(const std::string file, int32_t &val) {
+    std::string str;
+    ze_result_t result;
+
+    result = FsAccess::read(fullPath(file), str);
+    if (ZE_RESULT_SUCCESS != result) {
+        return result;
+    }
+
+    std::istringstream stream(str);
+    stream >> val;
+
+    if (stream.fail()) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t SysfsAccess::read(const std::string file, uint32_t &val) {
     std::string str;
     ze_result_t result;
 
@@ -463,12 +560,16 @@ ze_result_t SysfsAccess::unbindDevice(std::string device) {
     return FsAccess::write(intelGpuUnbindEntry, device);
 }
 
-ze_bool_t SysfsAccess::fileExists(const std::string file) {
+bool SysfsAccess::fileExists(const std::string file) {
     // Prepend sysfs directory path and call the base fileExists
     return FsAccess::fileExists(fullPath(file).c_str());
 }
 
-ze_bool_t SysfsAccess::isMyDeviceFile(const std::string dev) {
+bool SysfsAccess::directoryExists(const std::string path) {
+    return FsAccess::directoryExists(fullPath(path).c_str());
+}
+
+bool SysfsAccess::isMyDeviceFile(const std::string dev) {
     // dev is a full pathname.
     if (getDirName(dev).compare(drmDriverDevNodeDir)) {
         for (auto &&next : deviceNames) {
@@ -478,6 +579,10 @@ ze_bool_t SysfsAccess::isMyDeviceFile(const std::string dev) {
         }
     }
     return false;
+}
+
+bool SysfsAccess::isRootUser() {
+    return FsAccess::isRootUser();
 }
 
 } // namespace L0

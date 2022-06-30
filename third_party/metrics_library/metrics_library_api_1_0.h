@@ -1,33 +1,19 @@
-/******************************************************************************\
+/*========================== begin_copyright_notice ============================
 
-    Copyright © 2020, Intel Corporation
+Copyright (C) 2020-2021 Intel Corporation
 
-    Permission is hereby granted, free of charge, to any person obtaining a
-    copy of this software and associated documentation files (the "Software"),
-    to deal in the Software without restriction, including without limitation
-    the rights to use, copy, modify, merge, publish, distribute, sublicense,
-    and/or sell copies of the Software, and to permit persons to whom the
-    Software is furnished to do so, subject to the following conditions:
+SPDX-License-Identifier: MIT
 
-    The above copyright notice and this permission notice shall be included
-    in all copies or substantial portions of the Software.
+============================= end_copyright_notice ===========================*/
 
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-    THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-    IN THE SOFTWARE.
+/*
+@file metrics_library_api_1_0.h
 
-    File Name:  metrics_library_api_1_0.h
+@brief Interface for Metrics Library umd dll.
+*/
 
-    Abstract:   Interface for Metrics Library umd dll.
-
-    Notes:
-
-\******************************************************************************/
 #pragma once
+
 #include <stdint.h>
 
 #ifdef _MSC_VER
@@ -78,12 +64,14 @@ enum class ClientApi : uint32_t
 enum class ClientGen : uint32_t
 {
     Unknown = 0,
-    Gen9,
-    Gen9LP,
-    Gen10,
-    Gen11,
-    Gen11LP,
-    Gen12,
+    Gen9    = 1,
+    Gen9LP  = 2,
+    Gen11   = 4,
+    Gen11LP = 5,
+    Gen12   = 6,
+    XeHP    = 9,
+    XeHPG   = 10,
+    XeHPC   = 11,
     // ...
     Last
 };
@@ -131,6 +119,10 @@ enum class ClientOptionsType : uint32_t
     Ptbr,
     Compute,
     Tbs,
+    SubDevice,
+    SubDeviceIndex,
+    SubDeviceCount,
+    WorkloadPartition,
     // ...
     Last
 };
@@ -159,6 +151,8 @@ enum class StatusCode : uint32_t
     ReportLost,
     ReportInconsistent,
     CannotOpenFile,
+    ReportContextSwitchLost,
+    ReportWithoutWorkload,
     // ...
     Last
 };
@@ -649,6 +643,38 @@ struct ClientOptionsTbsData_1_0
 };
 
 //////////////////////////////////////////////////////////////////////////
+/// @brief Client options sub device data.
+//////////////////////////////////////////////////////////////////////////
+struct ClientOptionsSubDeviceData_1_0
+{
+    bool    Enabled;
+};
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Client options sub device index data.
+//////////////////////////////////////////////////////////////////////////
+struct ClientOptionsSubDeviceIndexData_1_0
+{
+    uint8_t    Index;
+};
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Client options sub device count data.
+//////////////////////////////////////////////////////////////////////////
+struct ClientOptionsSubDeviceCountData_1_0
+{
+    uint8_t    Count;
+};
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Client options workload partition data.
+//////////////////////////////////////////////////////////////////////////
+struct ClientOptionsWorkloadPartition_1_0
+{
+    bool    Enabled;
+};
+
+//////////////////////////////////////////////////////////////////////////
 /// @brief Client options data.
 //////////////////////////////////////////////////////////////////////////
 struct ClientOptionsData_1_0
@@ -657,10 +683,14 @@ struct ClientOptionsData_1_0
 
     union
     {
-        ClientOptionsPoshData_1_0       Posh;
-        ClientOptionsPtbrData_1_0       Ptbr;
-        ClientOptionsComputeData_1_0    Compute;
-        ClientOptionsTbsData_1_0        Tbs;
+        ClientOptionsPoshData_1_0              Posh;
+        ClientOptionsPtbrData_1_0              Ptbr;
+        ClientOptionsComputeData_1_0           Compute;
+        ClientOptionsTbsData_1_0               Tbs;
+        ClientOptionsSubDeviceData_1_0         SubDevice;
+        ClientOptionsSubDeviceIndexData_1_0    SubDeviceIndex;
+        ClientOptionsSubDeviceCountData_1_0    SubDeviceCount;
+        ClientOptionsWorkloadPartition_1_0     WorkloadPartition;
     };
 };
 
@@ -705,6 +735,6 @@ using ContextDeleteFunction_1_0 = StatusCode ( ML_STDCALL* ) ( const ContextHand
 //////////////////////////////////////////////////////////////////////////
 #define METRICS_LIBRARY_MAJOR_NUMBER 1
 #define METRICS_LIBRARY_MINOR_NUMBER 0
-#define METRICS_LIBRARY_BUILD_NUMBER 6
+#define METRICS_LIBRARY_BUILD_NUMBER 66
 
 } // namespace MetricsLibraryApi

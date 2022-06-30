@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,214 +9,260 @@
 
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/tools/source/sysman/ecc/ecc_imp.h"
+#include "level_zero/tools/source/sysman/events/events_imp.h"
+#include "level_zero/tools/source/sysman/global_operations/global_operations_imp.h"
 #include "level_zero/tools/source/sysman/pci/pci_imp.h"
-#include "level_zero/tools/source/sysman/scheduler/scheduler_imp.h"
 #include "level_zero/tools/source/sysman/sysman.h"
-#include "level_zero/tools/source/sysman/sysman_device/sysman_device_imp.h"
 
 #include <vector>
 
 namespace L0 {
 
-SysmanImp::SysmanImp(ze_device_handle_t hDevice) {
+SysmanDeviceImp::SysmanDeviceImp(ze_device_handle_t hDevice) {
     hCoreDevice = hDevice;
     pOsSysman = OsSysman::create(this);
     UNRECOVERABLE_IF(nullptr == pOsSysman);
     pPci = new PciImp(pOsSysman);
-    pSched = new SchedulerImp(pOsSysman);
-    pSysmanDevice = new SysmanDeviceImp(pOsSysman, hCoreDevice);
-    pFrequencyHandleContext = new FrequencyHandleContext(pOsSysman);
-    pStandbyHandleContext = new StandbyHandleContext(pOsSysman);
-    pMemoryHandleContext = new MemoryHandleContext(pOsSysman, hCoreDevice);
-    pEngineHandleContext = new EngineHandleContext(pOsSysman);
-    pRasHandleContext = new RasHandleContext(pOsSysman);
-    pTempHandleContext = new TemperatureHandleContext(pOsSysman);
     pPowerHandleContext = new PowerHandleContext(pOsSysman);
+    pFrequencyHandleContext = new FrequencyHandleContext(pOsSysman);
+    pFabricPortHandleContext = new FabricPortHandleContext(pOsSysman);
+    pTempHandleContext = new TemperatureHandleContext(pOsSysman);
+    pStandbyHandleContext = new StandbyHandleContext(pOsSysman);
+    pEngineHandleContext = new EngineHandleContext(pOsSysman);
+    pSchedulerHandleContext = new SchedulerHandleContext(pOsSysman);
+    pRasHandleContext = new RasHandleContext(pOsSysman);
+    pMemoryHandleContext = new MemoryHandleContext(pOsSysman);
+    pGlobalOperations = new GlobalOperationsImp(pOsSysman);
+    pEvents = new EventsImp(pOsSysman);
+    pFanHandleContext = new FanHandleContext(pOsSysman);
+    pFirmwareHandleContext = new FirmwareHandleContext(pOsSysman);
+    pDiagnosticsHandleContext = new DiagnosticsHandleContext(pOsSysman);
+    pPerformanceHandleContext = new PerformanceHandleContext(pOsSysman);
+    pEcc = new EccImp(pOsSysman);
 }
 
-SysmanImp::~SysmanImp() {
-    freeResource(pPowerHandleContext);
-    freeResource(pTempHandleContext);
-    freeResource(pRasHandleContext);
-    freeResource(pEngineHandleContext);
+SysmanDeviceImp::~SysmanDeviceImp() {
+    freeResource(pPerformanceHandleContext);
+    freeResource(pDiagnosticsHandleContext);
+    freeResource(pFirmwareHandleContext);
+    freeResource(pFanHandleContext);
+    freeResource(pEvents);
+    freeResource(pGlobalOperations);
     freeResource(pMemoryHandleContext);
+    freeResource(pRasHandleContext);
+    freeResource(pSchedulerHandleContext);
+    freeResource(pEngineHandleContext);
     freeResource(pStandbyHandleContext);
-    freeResource(pFrequencyHandleContext);
-    freeResource(pSysmanDevice);
+    freeResource(pTempHandleContext);
+    freeResource(pFabricPortHandleContext);
     freeResource(pPci);
-    freeResource(pSched);
+    freeResource(pFrequencyHandleContext);
+    freeResource(pPowerHandleContext);
+    freeResource(pEcc);
     freeResource(pOsSysman);
 }
 
-void SysmanImp::init() {
-    pOsSysman->init();
-    if (pFrequencyHandleContext) {
-        pFrequencyHandleContext->init();
+void SysmanDeviceImp::updateSubDeviceHandlesLocally() {
+    uint32_t subDeviceCount = 0;
+    deviceHandles.clear();
+    Device::fromHandle(hCoreDevice)->getSubDevices(&subDeviceCount, nullptr);
+    if (subDeviceCount == 0) {
+        deviceHandles.resize(1, hCoreDevice);
+    } else {
+        deviceHandles.resize(subDeviceCount, nullptr);
+        Device::fromHandle(hCoreDevice)->getSubDevices(&subDeviceCount, deviceHandles.data());
     }
-    if (pStandbyHandleContext) {
-        pStandbyHandleContext->init();
+}
+
+void SysmanDeviceImp::getSysmanDeviceInfo(zes_device_handle_t hDevice, uint32_t &subdeviceId, ze_bool_t &onSubdevice) {
+    NEO::Device *neoDevice = Device::fromHandle(hDevice)->getNEODevice();
+    onSubdevice = static_cast<ze_bool_t>(false);
+    if (NEO::HwHelper::getSubDevicesCount(&neoDevice->getHardwareInfo()) > 1) {
+        onSubdevice = static_cast<ze_bool_t>(true);
     }
-    if (pMemoryHandleContext) {
-        pMemoryHandleContext->init();
+    if (!neoDevice->isSubDevice()) {                                  // To get physical device or subdeviceIndex Index in case when the device does not support tile architecture is single tile device
+        UNRECOVERABLE_IF(neoDevice->getDeviceBitfield().count() != 1) // or the device is single tile device or AFFINITY_MASK only exposes single tile
+        subdeviceId = Math::log2(static_cast<uint32_t>(neoDevice->getDeviceBitfield().to_ulong()));
+    } else {
+        subdeviceId = static_cast<NEO::SubDevice *>(neoDevice)->getSubDeviceIndex();
     }
-    if (pEngineHandleContext) {
-        pEngineHandleContext->init();
-    }
-    if (pRasHandleContext) {
-        pRasHandleContext->init();
-    }
-    if (pTempHandleContext) {
-        pTempHandleContext->init();
+}
+
+ze_result_t SysmanDeviceImp::init() {
+    // We received a device handle. Check for subdevices in this device
+    updateSubDeviceHandlesLocally();
+
+    auto result = pOsSysman->init();
+    if (ZE_RESULT_SUCCESS != result) {
+        return result;
     }
     if (pPowerHandleContext) {
-        pPowerHandleContext->init();
+        pPowerHandleContext->init(deviceHandles, hCoreDevice);
+    }
+    if (pFrequencyHandleContext) {
+        pFrequencyHandleContext->init(deviceHandles);
+    }
+    if (pFabricPortHandleContext) {
+        pFabricPortHandleContext->init();
+    }
+    if (pTempHandleContext) {
+        pTempHandleContext->init(deviceHandles);
     }
     if (pPci) {
         pPci->init();
     }
-    if (pSched) {
-        pSched->init();
+    if (pStandbyHandleContext) {
+        pStandbyHandleContext->init(deviceHandles);
     }
-    if (pSysmanDevice) {
-        pSysmanDevice->init();
+    if (pEngineHandleContext) {
+        pEngineHandleContext->init();
     }
-}
-
-ze_result_t SysmanImp::deviceGetProperties(zet_sysman_properties_t *pProperties) {
-    return pSysmanDevice->deviceGetProperties(pProperties);
-}
-
-ze_result_t SysmanImp::schedulerGetCurrentMode(zet_sched_mode_t *pMode) {
-    if (pSched) {
-        return pSched->getCurrentMode(pMode);
+    if (pSchedulerHandleContext) {
+        pSchedulerHandleContext->init(deviceHandles);
     }
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t SysmanImp::schedulerGetTimeoutModeProperties(ze_bool_t getDefaults, zet_sched_timeout_properties_t *pConfig) {
-    if (pSched) {
-        return pSched->getTimeoutModeProperties(getDefaults, pConfig);
+    if (pRasHandleContext) {
+        pRasHandleContext->init(deviceHandles);
     }
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t SysmanImp::schedulerGetTimesliceModeProperties(ze_bool_t getDefaults, zet_sched_timeslice_properties_t *pConfig) {
-    if (pSched) {
-        return pSched->getTimesliceModeProperties(getDefaults, pConfig);
+    if (pMemoryHandleContext) {
+        pMemoryHandleContext->init(deviceHandles);
     }
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t SysmanImp::schedulerSetTimeoutMode(zet_sched_timeout_properties_t *pProperties, ze_bool_t *pNeedReboot) {
-    if (pSched) {
-        return pSched->setTimeoutMode(pProperties, pNeedReboot);
+    if (pGlobalOperations) {
+        pGlobalOperations->init();
     }
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t SysmanImp::schedulerSetTimesliceMode(zet_sched_timeslice_properties_t *pProperties, ze_bool_t *pNeedReboot) {
-    if (pSched) {
-        return pSched->setTimesliceMode(pProperties, pNeedReboot);
+    if (pEvents) {
+        pEvents->init();
     }
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t SysmanImp::schedulerSetExclusiveMode(ze_bool_t *pNeedReboot) {
-    if (pSched) {
-        return pSched->setExclusiveMode(pNeedReboot);
+    if (pFanHandleContext) {
+        pFanHandleContext->init();
     }
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t SysmanImp::schedulerSetComputeUnitDebugMode(ze_bool_t *pNeedReboot) {
-    if (pSched) {
-        return pSched->setComputeUnitDebugMode(pNeedReboot);
+    if (pFirmwareHandleContext) {
+        pFirmwareHandleContext->init();
     }
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    if (pDiagnosticsHandleContext) {
+        pDiagnosticsHandleContext->init();
+    }
+    if (pPerformanceHandleContext) {
+        pPerformanceHandleContext->init(deviceHandles, hCoreDevice);
+    }
+    if (pEcc) {
+        pEcc->init();
+    }
+    return result;
 }
 
-ze_result_t SysmanImp::processesGetState(uint32_t *pCount, zet_process_state_t *pProcesses) {
-    return pSysmanDevice->processesGetState(pCount, pProcesses);
-}
-
-ze_result_t SysmanImp::deviceReset() {
-    return pSysmanDevice->reset();
-}
-
-ze_result_t SysmanImp::deviceGetRepairStatus(zet_repair_status_t *pRepairStatus) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t SysmanImp::pciGetProperties(zet_pci_properties_t *pProperties) {
-    return pPci->pciStaticProperties(pProperties);
-}
-
-ze_result_t SysmanImp::pciGetState(zet_pci_state_t *pState) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t SysmanImp::pciGetBars(uint32_t *pCount, zet_pci_bar_properties_t *pProperties) {
-    return pPci->pciGetInitializedBars(pCount, pProperties);
-}
-
-ze_result_t SysmanImp::pciGetStats(zet_pci_stats_t *pStats) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t SysmanImp::powerGet(uint32_t *pCount, zet_sysman_pwr_handle_t *phPower) {
-    return pPowerHandleContext->powerGet(pCount, phPower);
-}
-
-ze_result_t SysmanImp::frequencyGet(uint32_t *pCount, zet_sysman_freq_handle_t *phFrequency) {
+ze_result_t SysmanDeviceImp::frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency) {
     return pFrequencyHandleContext->frequencyGet(pCount, phFrequency);
 }
 
-ze_result_t SysmanImp::engineGet(uint32_t *pCount, zet_sysman_engine_handle_t *phEngine) {
+ze_result_t SysmanDeviceImp::deviceGetProperties(zes_device_properties_t *pProperties) {
+    return pGlobalOperations->deviceGetProperties(pProperties);
+}
+
+ze_result_t SysmanDeviceImp::processesGetState(uint32_t *pCount, zes_process_state_t *pProcesses) {
+    return pGlobalOperations->processesGetState(pCount, pProcesses);
+}
+
+ze_result_t SysmanDeviceImp::deviceReset(ze_bool_t force) {
+    return pGlobalOperations->reset(force);
+}
+
+ze_result_t SysmanDeviceImp::deviceEventRegister(zes_event_type_flags_t events) {
+    return pEvents->eventRegister(events);
+}
+
+bool SysmanDeviceImp::deviceEventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) {
+    return pEvents->eventListen(pEvent, timeout);
+}
+
+ze_result_t SysmanDeviceImp::deviceGetState(zes_device_state_t *pState) {
+    return pGlobalOperations->deviceGetState(pState);
+}
+
+ze_result_t SysmanDeviceImp::pciGetProperties(zes_pci_properties_t *pProperties) {
+    return pPci->pciStaticProperties(pProperties);
+}
+
+ze_result_t SysmanDeviceImp::pciGetState(zes_pci_state_t *pState) {
+    return pPci->pciGetState(pState);
+}
+
+ze_result_t SysmanDeviceImp::pciGetBars(uint32_t *pCount, zes_pci_bar_properties_t *pProperties) {
+    return pPci->pciGetInitializedBars(pCount, pProperties);
+}
+
+ze_result_t SysmanDeviceImp::pciGetStats(zes_pci_stats_t *pStats) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t SysmanDeviceImp::powerGetCardDomain(zes_pwr_handle_t *phPower) {
+    return pPowerHandleContext->powerGetCardDomain(phPower);
+}
+
+ze_result_t SysmanDeviceImp::powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) {
+    return pPowerHandleContext->powerGet(pCount, phPower);
+}
+
+ze_result_t SysmanDeviceImp::engineGet(uint32_t *pCount, zes_engine_handle_t *phEngine) {
     return pEngineHandleContext->engineGet(pCount, phEngine);
 }
 
-ze_result_t SysmanImp::standbyGet(uint32_t *pCount, zet_sysman_standby_handle_t *phStandby) {
+ze_result_t SysmanDeviceImp::standbyGet(uint32_t *pCount, zes_standby_handle_t *phStandby) {
     return pStandbyHandleContext->standbyGet(pCount, phStandby);
 }
 
-ze_result_t SysmanImp::firmwareGet(uint32_t *pCount, zet_sysman_firmware_handle_t *phFirmware) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+ze_result_t SysmanDeviceImp::fabricPortGet(uint32_t *pCount, zes_fabric_port_handle_t *phPort) {
+    return pFabricPortHandleContext->fabricPortGet(pCount, phPort);
 }
 
-ze_result_t SysmanImp::memoryGet(uint32_t *pCount, zet_sysman_mem_handle_t *phMemory) {
-    return pMemoryHandleContext->memoryGet(pCount, phMemory);
-}
-
-ze_result_t SysmanImp::fabricPortGet(uint32_t *pCount, zet_sysman_fabric_port_handle_t *phPort) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t SysmanImp::temperatureGet(uint32_t *pCount, zet_sysman_temp_handle_t *phTemperature) {
+ze_result_t SysmanDeviceImp::temperatureGet(uint32_t *pCount, zes_temp_handle_t *phTemperature) {
     return pTempHandleContext->temperatureGet(pCount, phTemperature);
 }
 
-ze_result_t SysmanImp::psuGet(uint32_t *pCount, zet_sysman_psu_handle_t *phPsu) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+ze_result_t SysmanDeviceImp::schedulerGet(uint32_t *pCount, zes_sched_handle_t *phScheduler) {
+    return pSchedulerHandleContext->schedulerGet(pCount, phScheduler);
 }
 
-ze_result_t SysmanImp::fanGet(uint32_t *pCount, zet_sysman_fan_handle_t *phFan) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t SysmanImp::ledGet(uint32_t *pCount, zet_sysman_led_handle_t *phLed) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t SysmanImp::rasGet(uint32_t *pCount, zet_sysman_ras_handle_t *phRas) {
+ze_result_t SysmanDeviceImp::rasGet(uint32_t *pCount, zes_ras_handle_t *phRas) {
     return pRasHandleContext->rasGet(pCount, phRas);
 }
 
-ze_result_t SysmanImp::eventGet(zet_sysman_event_handle_t *phEvent) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+ze_result_t SysmanDeviceImp::firmwareGet(uint32_t *pCount, zes_firmware_handle_t *phFirmware) {
+    return pFirmwareHandleContext->firmwareGet(pCount, phFirmware);
 }
 
-ze_result_t SysmanImp::diagnosticsGet(uint32_t *pCount, zet_sysman_diag_handle_t *phDiagnostics) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+ze_result_t SysmanDeviceImp::diagnosticsGet(uint32_t *pCount, zes_diag_handle_t *phDiagnostics) {
+    return pDiagnosticsHandleContext->diagnosticsGet(pCount, phDiagnostics);
 }
 
+ze_result_t SysmanDeviceImp::memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory) {
+    return pMemoryHandleContext->memoryGet(pCount, phMemory);
+}
+
+ze_result_t SysmanDeviceImp::fanGet(uint32_t *pCount, zes_fan_handle_t *phFan) {
+    return pFanHandleContext->fanGet(pCount, phFan);
+}
+
+ze_result_t SysmanDeviceImp::performanceGet(uint32_t *pCount, zes_perf_handle_t *phPerformance) {
+    return pPerformanceHandleContext->performanceGet(pCount, phPerformance);
+}
+
+ze_result_t SysmanDeviceImp::deviceEccAvailable(ze_bool_t *pAvailable) {
+    return pEcc->deviceEccAvailable(pAvailable);
+}
+ze_result_t SysmanDeviceImp::deviceEccConfigurable(ze_bool_t *pConfigurable) {
+    return pEcc->deviceEccConfigurable(pConfigurable);
+}
+ze_result_t SysmanDeviceImp::deviceGetEccState(zes_device_ecc_properties_t *pState) {
+    return pEcc->getEccState(pState);
+}
+ze_result_t SysmanDeviceImp::deviceSetEccState(const zes_device_ecc_desc_t *newState, zes_device_ecc_properties_t *pState) {
+    return pEcc->setEccState(newState, pState);
+}
+
+namespace SysmanUtils {
+void sleep(int64_t seconds) {
+    std::this_thread::sleep_for(std::chrono::seconds(seconds));
+}
+} // namespace SysmanUtils
 } // namespace L0

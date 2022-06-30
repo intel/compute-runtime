@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include "level_zero/core/source/device/device.h"
@@ -18,31 +19,33 @@ MemoryHandleContext::~MemoryHandleContext() {
     }
 }
 
-ze_result_t MemoryHandleContext::init() {
-    Device *device = L0::Device::fromHandle(hCoreDevice);
-
-    isLmemSupported = device->getDriverHandle()->getMemoryManager()->isLocalMemorySupported(device->getRootDeviceIndex());
-
-    if (isLmemSupported) {
-        Memory *pMemory = new MemoryImp(pOsSysman, hCoreDevice);
+void MemoryHandleContext::createHandle(ze_device_handle_t deviceHandle) {
+    Memory *pMemory = new MemoryImp(pOsSysman, deviceHandle);
+    if (pMemory->initSuccess == true) {
         handleList.push_back(pMemory);
+    } else {
+        delete pMemory;
+    }
+}
+
+ze_result_t MemoryHandleContext::init(std::vector<ze_device_handle_t> &deviceHandles) {
+    for (const auto &deviceHandle : deviceHandles) {
+        createHandle(deviceHandle);
     }
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t MemoryHandleContext::memoryGet(uint32_t *pCount, zet_sysman_mem_handle_t *phMemory) {
-    if (nullptr == phMemory) {
-        *pCount = static_cast<uint32_t>(handleList.size());
-        return ZE_RESULT_SUCCESS;
+ze_result_t MemoryHandleContext::memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory) {
+    uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
+    uint32_t numToCopy = std::min(*pCount, handleListSize);
+    if (0 == *pCount || *pCount > handleListSize) {
+        *pCount = handleListSize;
     }
-    uint32_t i = 0;
-    for (Memory *mem : handleList) {
-        if (i >= *pCount) {
-            break;
+    if (nullptr != phMemory) {
+        for (uint32_t i = 0; i < numToCopy; i++) {
+            phMemory[i] = handleList[i]->toHandle();
         }
-        phMemory[i++] = mem->toHandle();
     }
-    *pCount = i;
     return ZE_RESULT_SUCCESS;
 }
 

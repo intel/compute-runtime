@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,25 +9,25 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/residency_container.h"
 
+#include <memory>
 #include <mutex>
-#include <unordered_set>
 
 namespace NEO {
+class Drm;
+class OsContext;
 class DrmMemoryOperationsHandler : public MemoryOperationsHandler {
   public:
-    DrmMemoryOperationsHandler();
-    ~DrmMemoryOperationsHandler() override;
+    DrmMemoryOperationsHandler() = default;
+    ~DrmMemoryOperationsHandler() override = default;
 
-    MemoryOperationsStatus makeResident(ArrayRef<GraphicsAllocation *> gfxAllocations) override;
-    MemoryOperationsStatus evict(GraphicsAllocation &gfxAllocation) override;
-    MemoryOperationsStatus isResident(GraphicsAllocation &gfxAllocation) override;
+    virtual MemoryOperationsStatus mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) = 0;
+    virtual std::unique_lock<std::mutex> lockHandlerIfUsed() = 0;
 
-    void mergeWithResidencyContainer(ResidencyContainer &residencyContainer);
+    virtual MemoryOperationsStatus evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded) = 0;
 
-    std::unique_lock<std::mutex> acquireLock();
+    static std::unique_ptr<DrmMemoryOperationsHandler> create(Drm &drm, uint32_t rootDeviceIndex);
 
   protected:
-    std::unordered_set<GraphicsAllocation *> residency;
     std::mutex mutex;
 };
 } // namespace NEO

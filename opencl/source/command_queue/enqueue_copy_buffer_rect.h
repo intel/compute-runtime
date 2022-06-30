@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,15 +32,15 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferRect(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
-
     auto eBuiltInOps = EBuiltInOps::CopyBufferRect;
+    constexpr cl_command_type cmdType = CL_COMMAND_COPY_BUFFER_RECT;
+
+    CsrSelectionArgs csrSelectionArgs{cmdType, srcBuffer, dstBuffer, device->getRootDeviceIndex(), region};
+    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
+
     if (forceStateless(std::max(srcBuffer->getSize(), dstBuffer->getSize()))) {
         eBuiltInOps = EBuiltInOps::CopyBufferRectStateless;
     }
-
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(eBuiltInOps,
-                                                                            this->getDevice());
-    BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     MemObjSurface srcBufferSurf(srcBuffer);
     MemObjSurface dstBufferSurf(dstBuffer);
@@ -57,17 +57,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferRect(
     dc.dstRowPitch = dstRowPitch;
     dc.dstSlicePitch = dstSlicePitch;
 
-    MultiDispatchInfo dispatchInfo;
-    builder.buildDispatchInfos(dispatchInfo, dc);
-
-    enqueueHandler<CL_COMMAND_COPY_BUFFER_RECT>(
-        surfaces,
-        false,
-        dispatchInfo,
-        numEventsInWaitList,
-        eventWaitList,
-        event);
-
-    return CL_SUCCESS;
+    MultiDispatchInfo dispatchInfo(dc);
+    return dispatchBcsOrGpgpuEnqueue<CL_COMMAND_COPY_BUFFER_RECT>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, false, csr);
 }
+
 } // namespace NEO

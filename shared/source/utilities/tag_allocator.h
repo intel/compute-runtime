@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,10 +10,12 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/idlist.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include <atomic>
 #include <cstdint>
 #include <mutex>
+#include <type_traits>
 #include <vector>
 
 namespace NEO {
@@ -23,180 +25,180 @@ template <typename TagType>
 class TagAllocator;
 
 template <typename TagType>
-struct TagNode : public IDNode<TagNode<TagType>>, NonCopyableOrMovableClass {
-  public:
-    TagType *tagForCpuAccess;
+class TagNode;
 
-    GraphicsAllocation *getBaseGraphicsAllocation() const { return gfxAllocation; }
+class TagAllocatorBase;
+
+class TagNodeBase : public NonCopyableOrMovableClass {
+  public:
+    virtual ~TagNodeBase() = default;
+
+    MultiGraphicsAllocation *getBaseGraphicsAllocation() const;
+
     uint64_t getGpuAddress() const { return gpuAddress; }
 
     void incRefCount() { refCount++; }
 
-    MOCKABLE_VIRTUAL void returnTag() {
-        allocator->returnTag(this);
-    }
+    uint32_t refCountFetchSub(uint32_t value) { return refCount.fetch_sub(value); }
 
-    bool canBeReleased() const {
-        return (!doNotReleaseNodes) &&
-               (tagForCpuAccess->isCompleted()) &&
-               (tagForCpuAccess->getImplicitGpuDependenciesCount() == getImplicitCpuDependenciesCount());
-    }
+    MOCKABLE_VIRTUAL void returnTag();
 
-    void setDoNotReleaseNodes(bool doNotRelease) {
-        doNotReleaseNodes = doNotRelease;
-    }
+    virtual void initialize() = 0;
 
-    void incImplicitCpuDependenciesCount() { implicitCpuDependenciesCount++; }
+    bool canBeReleased() const;
 
-    void initialize() {
-        tagForCpuAccess->initialize();
-        implicitCpuDependenciesCount.store(0);
-    }
+    virtual void *getCpuBase() const = 0;
 
-    uint32_t getImplicitCpuDependenciesCount() const { return implicitCpuDependenciesCount.load(); }
+    void setDoNotReleaseNodes(bool doNotRelease) { doNotReleaseNodes = doNotRelease; }
+
+    void setProfilingCapable(bool capable) { profilingCapable = capable; }
+
+    bool isProfilingCapable() const { return profilingCapable; }
+
+    // TagType specific calls
+    virtual void assignDataToAllTimestamps(uint32_t packetIndex, void *source) = 0;
+
+    virtual size_t getGlobalStartOffset() const = 0;
+    virtual size_t getContextStartOffset() const = 0;
+    virtual size_t getContextEndOffset() const = 0;
+    virtual size_t getGlobalEndOffset() const = 0;
+
+    virtual uint64_t getContextStartValue(uint32_t packetIndex) const = 0;
+    virtual uint64_t getGlobalStartValue(uint32_t packetIndex) const = 0;
+    virtual uint64_t getContextEndValue(uint32_t packetIndex) const = 0;
+    virtual uint64_t getGlobalEndValue(uint32_t packetIndex) const = 0;
+
+    virtual void const *getContextEndAddress(uint32_t packetIndex) const = 0;
+
+    virtual uint64_t &getGlobalEndRef() const = 0;
+    virtual uint64_t &getContextCompleteRef() const = 0;
+
+    void setPacketsUsed(uint32_t used) { packetsUsed = used; };
+    uint32_t getPacketsUsed() const { return packetsUsed; };
+
+    virtual size_t getSinglePacketSize() const = 0;
+
+    virtual MetricsLibraryApi::QueryHandle_1_0 &getQueryHandleRef() const = 0;
 
   protected:
-    TagAllocator<TagType> *allocator = nullptr;
-    GraphicsAllocation *gfxAllocation = nullptr;
+    TagNodeBase() = default;
+
+    TagAllocatorBase *allocator = nullptr;
+
+    MultiGraphicsAllocation *gfxAllocation = nullptr;
     uint64_t gpuAddress = 0;
     std::atomic<uint32_t> refCount{0};
-    std::atomic<uint32_t> implicitCpuDependenciesCount{0};
+    uint32_t packetsUsed = 1;
     bool doNotReleaseNodes = false;
+    bool profilingCapable = true;
 
-    template <typename TagType2>
+    template <typename TagType>
     friend class TagAllocator;
 };
 
 template <typename TagType>
-class TagAllocator {
+class TagNode : public TagNodeBase, public IDNode<TagNode<TagType>> {
+    static_assert(!std::is_polymorphic<TagType>::value,
+                  "This structure is consumed by GPU and has to follow specific restrictions for padding and size");
+
   public:
-    using NodeType = TagNode<TagType>;
+    TagType *tagForCpuAccess;
 
-    TagAllocator(uint32_t rootDeviceIndex, MemoryManager *memMngr, size_t tagCount,
-                 size_t tagAlignment, size_t tagSize, bool doNotReleaseNodes,
-                 DeviceBitfield deviceBitfield) : deviceBitfield(deviceBitfield),
-                                                  rootDeviceIndex(rootDeviceIndex),
-                                                  memoryManager(memMngr),
-                                                  tagCount(tagCount),
-                                                  doNotReleaseNodes(doNotReleaseNodes) {
-
-        this->tagSize = alignUp(tagSize, tagAlignment);
-        populateFreeTags();
+    void initialize() override {
+        tagForCpuAccess->initialize();
+        packetsUsed = 1;
+        setProfilingCapable(true);
     }
 
-    MOCKABLE_VIRTUAL ~TagAllocator() {
-        cleanUpResources();
-    }
+    void *getCpuBase() const override { return tagForCpuAccess; }
 
-    void cleanUpResources() {
-        for (auto gfxAllocation : gfxAllocations) {
-            memoryManager->freeGraphicsMemory(gfxAllocation);
-        }
-        gfxAllocations.clear();
-    }
+    void assignDataToAllTimestamps(uint32_t packetIndex, void *source) override;
 
-    NodeType *getTag() {
-        if (freeTags.peekIsEmpty()) {
-            releaseDeferredTags();
-        }
-        NodeType *node = freeTags.removeFrontOne().release();
-        if (!node) {
-            std::unique_lock<std::mutex> lock(allocatorMutex);
-            populateFreeTags();
-            node = freeTags.removeFrontOne().release();
-        }
-        usedTags.pushFrontOne(*node);
-        node->incRefCount();
-        node->initialize();
-        return node;
-    }
+    size_t getGlobalStartOffset() const override;
+    size_t getContextStartOffset() const override;
+    size_t getContextEndOffset() const override;
+    size_t getGlobalEndOffset() const override;
 
-    MOCKABLE_VIRTUAL void returnTag(NodeType *node) {
-        if (node->refCount.fetch_sub(1) == 1) {
-            if (node->canBeReleased()) {
-                returnTagToFreePool(node);
-            } else {
-                returnTagToDeferredPool(node);
-            }
-        }
-    }
+    uint64_t getContextStartValue(uint32_t packetIndex) const override;
+    uint64_t getGlobalStartValue(uint32_t packetIndex) const override;
+    uint64_t getContextEndValue(uint32_t packetIndex) const override;
+    uint64_t getGlobalEndValue(uint32_t packetIndex) const override;
+
+    void const *getContextEndAddress(uint32_t packetIndex) const override;
+
+    uint64_t &getGlobalEndRef() const override;
+    uint64_t &getContextCompleteRef() const override;
+
+    size_t getSinglePacketSize() const override;
+
+    MetricsLibraryApi::QueryHandle_1_0 &getQueryHandleRef() const override;
+};
+
+class TagAllocatorBase {
+  public:
+    virtual ~TagAllocatorBase() { cleanUpResources(); };
+
+    virtual void returnTag(TagNodeBase *node) = 0;
+
+    virtual TagNodeBase *getTag() = 0;
 
   protected:
-    IDList<NodeType> freeTags;
-    IDList<NodeType> usedTags;
-    IDList<NodeType> deferredTags;
-    std::vector<GraphicsAllocation *> gfxAllocations;
-    std::vector<std::unique_ptr<NodeType[]>> tagPoolMemory;
+    TagAllocatorBase() = delete;
 
+    TagAllocatorBase(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memMngr, size_t tagCount,
+                     size_t tagAlignment, size_t tagSize, bool doNotReleaseNodes,
+                     DeviceBitfield deviceBitfield);
+
+    virtual void returnTagToFreePool(TagNodeBase *node) = 0;
+
+    virtual void returnTagToDeferredPool(TagNodeBase *node) = 0;
+
+    virtual void releaseDeferredTags() = 0;
+
+    void cleanUpResources();
+
+    std::vector<std::unique_ptr<MultiGraphicsAllocation>> gfxAllocations;
     const DeviceBitfield deviceBitfield;
-    const uint32_t rootDeviceIndex;
+    RootDeviceIndicesContainer rootDeviceIndices;
+    uint32_t maxRootDeviceIndex = 0;
     MemoryManager *memoryManager;
     size_t tagCount;
     size_t tagSize;
     bool doNotReleaseNodes = false;
 
     std::mutex allocatorMutex;
+};
 
-    MOCKABLE_VIRTUAL void returnTagToFreePool(NodeType *node) {
-        NodeType *usedNode = usedTags.removeOne(*node).release();
-        DEBUG_BREAK_IF(usedNode == nullptr);
-        UNUSED_VARIABLE(usedNode);
-        freeTags.pushFrontOne(*node);
-    }
+template <typename TagType>
+class TagAllocator : public TagAllocatorBase {
+  public:
+    using NodeType = TagNode<TagType>;
 
-    void returnTagToDeferredPool(NodeType *node) {
-        NodeType *usedNode = usedTags.removeOne(*node).release();
-        DEBUG_BREAK_IF(!usedNode);
-        deferredTags.pushFrontOne(*usedNode);
-    }
+    TagAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memMngr, size_t tagCount,
+                 size_t tagAlignment, size_t tagSize, bool doNotReleaseNodes,
+                 DeviceBitfield deviceBitfield);
 
-    void populateFreeTags() {
-        size_t allocationSizeRequired = tagCount * tagSize;
+    TagNodeBase *getTag() override;
 
-        auto allocationType = TagType::getAllocationType();
-        AllocationProperties allocationProperties{rootDeviceIndex, allocationSizeRequired, allocationType};
-        allocationProperties.subDevicesBitfield = deviceBitfield;
-        GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties);
-        gfxAllocations.push_back(graphicsAllocation);
+    void returnTag(TagNodeBase *node) override;
 
-        auto nodesMemory = std::make_unique<NodeType[]>(tagCount);
+  protected:
+    TagAllocator() = delete;
 
-        for (size_t i = 0; i < tagCount; ++i) {
-            auto tagOffset = i * tagSize;
+    void returnTagToFreePool(TagNodeBase *node) override;
 
-            nodesMemory[i].allocator = this;
-            nodesMemory[i].gfxAllocation = graphicsAllocation;
-            nodesMemory[i].tagForCpuAccess = reinterpret_cast<TagType *>(ptrOffset(graphicsAllocation->getUnderlyingBuffer(), tagOffset));
-            nodesMemory[i].gpuAddress = graphicsAllocation->getGpuAddress() + tagOffset;
-            nodesMemory[i].setDoNotReleaseNodes(doNotReleaseNodes);
+    void returnTagToDeferredPool(TagNodeBase *node) override;
 
-            freeTags.pushTailOne(nodesMemory[i]);
-        }
+    void releaseDeferredTags() override;
 
-        tagPoolMemory.push_back(std::move(nodesMemory));
-    }
+    void populateFreeTags();
 
-    void releaseDeferredTags() {
-        IDList<NodeType, false> pendingFreeTags;
-        IDList<NodeType, false> pendingDeferredTags;
-        auto currentNode = deferredTags.detachNodes();
+    IDList<NodeType> freeTags;
+    IDList<NodeType> usedTags;
+    IDList<NodeType> deferredTags;
 
-        while (currentNode != nullptr) {
-            auto nextNode = currentNode->next;
-            if (currentNode->canBeReleased()) {
-                pendingFreeTags.pushFrontOne(*currentNode);
-            } else {
-                pendingDeferredTags.pushFrontOne(*currentNode);
-            }
-            currentNode = nextNode;
-        }
-
-        if (!pendingFreeTags.peekIsEmpty()) {
-            freeTags.splice(*pendingFreeTags.detachNodes());
-        }
-        if (!pendingDeferredTags.peekIsEmpty()) {
-            deferredTags.splice(*pendingDeferredTags.detachNodes());
-        }
-    }
+    std::vector<std::unique_ptr<NodeType[]>> tagPoolMemory;
 };
 } // namespace NEO
+
+#include "shared/source/utilities/tag_allocator.inl"

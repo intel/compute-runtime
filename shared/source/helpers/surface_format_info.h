@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -175,8 +175,9 @@ enum GFX3DSTATE_SURFACEFORMAT : unsigned short {
     GFX3DSTATE_SURFACEFORMAT_BC7_UNORM = 0x1A2,
     GFX3DSTATE_SURFACEFORMAT_BC7_UNORM_SRGB = 0x1A3,
     GFX3DSTATE_SURFACEFORMAT_BC6H_UF16 = 0x1A4,
-    GFX3DSTATE_SURFACEFORMAT_NV12 = 0x1A5,
+    GFX3DSTATE_SURFACEFORMAT_PLANAR_420_8 = 0x1A5,
     GFX3DSTATE_SURFACEFORMAT_PLANAR_420_16 = 0x1a6,
+    GFX3DSTATE_SURFACEFORMAT_PACKED_422_16 = 0x1a7,
     GFX3DSTATE_SURFACEFORMAT_R10G10B10A2_SINT = 0x1b6,
     GFX3DSTATE_SURFACEFORMAT_R10G10B10A2_SNORM = 0x1b3,
     GFX3DSTATE_SURFACEFORMAT_RAW = 0x1FF,
@@ -238,7 +239,6 @@ struct ImageInfo {
     uint32_t baseMipLevel;
     uint32_t mipCount;
     bool linearStorage;
-    bool preferRenderCompression;
     bool useLocalMemory;
 };
 

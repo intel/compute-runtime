@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,10 @@
 #include <sstream>
 #include <string>
 #include <vector>
+
+extern void (*abortOclocExecution)(int);
+
+void abortOclocExecutionDefaultHandler(int errorCode);
 
 void addSlash(std::string &path);
 
@@ -46,9 +50,11 @@ class MessagePrinter {
         ss << stringFormat(format, std::forward<Args>(args)...);
     }
 
-    const std::ostream &getLog() {
+    const std::stringstream &getLog() {
         return ss;
     }
+
+    bool isSuppressed() const { return suppressMessages; }
 
   private:
     template <typename... Args>
@@ -60,7 +66,7 @@ class MessagePrinter {
         }
         outputString.resize(size);
         snprintf(&*outputString.begin(), size, format.c_str(), args...);
-        return outputString;
+        return outputString.c_str();
     }
 
     std::stringstream ss;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/definitions/engine_group_types.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -15,12 +16,16 @@
 constexpr bool is32bit = (sizeof(void *) == 4);
 constexpr bool is64bit = (sizeof(void *) == 8);
 
+constexpr NEO::DeviceBitfield systemMemoryBitfield(0b0);
+
 constexpr uint64_t maxNBitValue(uint64_t n) {
-    return ((1ULL << n) - 1);
+    return ((n == 64) ? std::numeric_limits<uint64_t>::max()
+                      : ((1ULL << n) - 1));
 }
 static_assert(maxNBitValue(8) == std::numeric_limits<uint8_t>::max(), "");
 static_assert(maxNBitValue(16) == std::numeric_limits<uint16_t>::max(), "");
 static_assert(maxNBitValue(32) == std::numeric_limits<uint32_t>::max(), "");
+static_assert(maxNBitValue(64) == std::numeric_limits<uint64_t>::max(), "");
 
 namespace MemoryConstants {
 constexpr uint64_t zoneHigh = ~(uint64_t)0xFFFFFFFF;
@@ -32,6 +37,7 @@ constexpr size_t minBufferAlignment = 4;
 constexpr size_t cacheLineSize = 64;
 constexpr size_t pageSize = 4 * kiloByte;
 constexpr size_t pageSize64k = 64 * kiloByte;
+constexpr size_t pageSize2Mb = 2 * megaByte;
 constexpr size_t preferredAlignment = pageSize;  // alignment preferred for performance reasons, i.e. internal allocations
 constexpr size_t allocationAlignment = pageSize; // alignment required to gratify incoming pointer, i.e. passed host_ptr
 constexpr size_t slmWindowAlignment = 128 * kiloByte;
@@ -56,19 +62,35 @@ constexpr uint64_t MB = MemoryConstants::megaByte;
 constexpr uint64_t GB = MemoryConstants::gigaByte;
 
 namespace BlitterConstants {
-constexpr uint64_t maxBlitWidth = 0x7FC0;      // 0x7FFF aligned to cacheline size
-constexpr uint64_t maxBlitHeight = 0x3FC0;     // 0x4000 aligned to cacheline size
-constexpr uint64_t maxBlitSetWidth = 0x1FFC0;  // 0x20000 aligned to cacheline size
+constexpr uint64_t maxBlitWidth = 0x4000;
+constexpr uint64_t maxBlitHeight = 0x4000;
+constexpr uint64_t maxBlitSetWidth = 0x1FF80;  // 0x20000 aligned to 128
 constexpr uint64_t maxBlitSetHeight = 0x1FFC0; // 0x20000 aligned to cacheline size
+
+constexpr uint64_t maxBytesPerPixel = 0x10;
 enum class BlitDirection : uint32_t {
     BufferToHostPtr,
     HostPtrToBuffer,
-    BufferToBuffer
+    BufferToBuffer,
+    HostPtrToImage,
+    ImageToHostPtr,
+    ImageToImage
+};
+
+enum PostBlitMode : int32_t {
+    Default = -1,
+    MiArbCheck = 0,
+    MiFlush = 1,
+    None = 2
 };
 } // namespace BlitterConstants
 
 namespace CommonConstants {
+constexpr uint64_t unsupportedPatIndex = std::numeric_limits<uint64_t>::max();
 constexpr uint32_t unspecifiedDeviceIndex = std::numeric_limits<uint32_t>::max();
-constexpr NEO::DeviceBitfield allDevicesBitfield = maxNBitValue(32);
+constexpr uint32_t invalidStepping = std::numeric_limits<uint32_t>::max();
+constexpr uint32_t invalidRevisionID = std::numeric_limits<uint16_t>::max();
 constexpr uint32_t maximalSimdSize = 32;
+constexpr uint32_t maximalSizeOfAtomicType = 8;
+constexpr uint32_t engineGroupCount = static_cast<uint32_t>(NEO::EngineGroupType::MaxEngineGroups);
 } // namespace CommonConstants

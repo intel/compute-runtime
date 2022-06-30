@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,5 @@ template struct SamplerHw<Family>;
 template <>
 void populateFactoryTable<SamplerHw<Family>>() {
     extern SamplerCreateFunc samplerFactory[IGFX_MAX_CORE];
-    extern getSamplerStateSizeHwFunc getSamplerStateSizeHw[IGFX_MAX_CORE];
     samplerFactory[gfxCore] = SamplerHw<Family>::create;
-    getSamplerStateSizeHw[gfxCore] = SamplerHw<Family>::getSamplerStateSize;
 }

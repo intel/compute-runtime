@@ -1,28 +1,28 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/accelerators/intel_accelerator.h"
 #include "opencl/source/accelerators/intel_motion_estimation.h"
 #include "opencl/source/helpers/sampler_helpers.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/pipe.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
-#include "opencl/test/unit_test/mocks/mock_device_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_pipe.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/mocks/mock_sampler.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
-#include "test.h"
 
 #include "CL/cl.h"
 #include "gtest/gtest.h"
@@ -31,253 +31,300 @@
 
 using namespace NEO;
 
-class CloneKernelFixture : public ContextFixture, public ClDeviceFixture {
-    using ContextFixture::SetUp;
-
+class CloneKernelTest : public MultiRootDeviceWithSubDevicesFixture {
   public:
-    CloneKernelFixture() {
+    CloneKernelTest() {
     }
 
   protected:
-    void SetUp() {
-        ClDeviceFixture::SetUp();
-        cl_device_id device = pClDevice;
-        ContextFixture::SetUp(1, &device);
+    void SetUp() override {
+        MultiRootDeviceWithSubDevicesFixture::SetUp();
+        pProgram = std::make_unique<MockProgram>(context.get(), false, context->getDevices());
 
         // define kernel info
-        pKernelInfo = std::make_unique<KernelInfo>();
+        pKernelInfo = std::make_unique<MockKernelInfo>();
 
-        // setup kernel arg offsets
-        KernelArgPatchInfo kernelArgPatchInfo;
+        pKernelInfo->kernelDescriptor.payloadMappings.explicitArgs.resize(1);
+        pKernelInfo->kernelDescriptor.payloadMappings.explicitArgsExtendedDescriptors.resize(1);
 
+        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+        pKernelInfo->kernelDescriptor.kernelAttributes.crossThreadDataSize = 72;
+        pKernelInfo->setPrivateMemory(0x10, false, 8, 64, 64);
         pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
         pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-        pKernelInfo->usesSsh = true;
-        pKernelInfo->requiresSshForBuffers = true;
 
-        pKernelInfo->kernelArgInfo.resize(1);
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
+        KernelInfoContainer kernelInfos;
+        kernelInfos.resize(3);
+        kernelInfos[0] = kernelInfos[1] = kernelInfos[2] = pKernelInfo.get();
 
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = 0x20;
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = (uint32_t)sizeof(void *);
+        KernelVectorType sourceKernels;
+        sourceKernels.resize(3);
 
-        pKernelInfo->kernelArgInfo[0].offsetHeap = 0x20;
-        pKernelInfo->kernelArgInfo[0].offsetObjectId = 0x0;
+        KernelVectorType clonedKernels;
+        clonedKernels.resize(3);
 
-        // image
-        pKernelInfo->kernelArgInfo[0].offsetImgWidth = 0x4;
-        pKernelInfo->kernelArgInfo[0].offsetImgHeight = 0x8;
-        pKernelInfo->kernelArgInfo[0].offsetImgDepth = 0xc;
+        for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
 
-        // sampler
-        pKernelInfo->kernelArgInfo[0].offsetSamplerSnapWa = 0x4;
-        pKernelInfo->kernelArgInfo[0].offsetSamplerAddressingMode = 0x8;
-        pKernelInfo->kernelArgInfo[0].offsetSamplerNormalizedCoords = 0x10;
+            pSourceKernel[rootDeviceIndex] = new MockKernel(pProgram.get(), *pKernelInfo, *deviceFactory->rootDevices[rootDeviceIndex]);
+            ASSERT_EQ(CL_SUCCESS, pSourceKernel[rootDeviceIndex]->initialize());
+            sourceKernels[rootDeviceIndex] = pSourceKernel[rootDeviceIndex];
 
-        // accelerator
-        pKernelInfo->kernelArgInfo[0].samplerArgumentType = iOpenCL::SAMPLER_OBJECT_VME;
-        pKernelInfo->kernelArgInfo[0].offsetVmeMbBlockType = 0x4;
-        pKernelInfo->kernelArgInfo[0].offsetVmeSubpixelMode = 0xc;
-        pKernelInfo->kernelArgInfo[0].offsetVmeSadAdjustMode = 0x14;
-        pKernelInfo->kernelArgInfo[0].offsetVmeSearchPathType = 0x1c;
+            pClonedKernel[rootDeviceIndex] = new MockKernel(pProgram.get(), *pKernelInfo, *deviceFactory->rootDevices[rootDeviceIndex]);
+            ASSERT_EQ(CL_SUCCESS, pClonedKernel[rootDeviceIndex]->initialize());
+            clonedKernels[rootDeviceIndex] = pClonedKernel[rootDeviceIndex];
+        }
 
-        pProgram = new MockProgram(*pDevice->getExecutionEnvironment(), pContext, false, pDevice);
-
-        pSourceKernel = new MockKernel(pProgram, *pKernelInfo, *pClDevice);
-        ASSERT_EQ(CL_SUCCESS, pSourceKernel->initialize());
-        char pSourceCrossThreadData[64] = {};
-        pSourceKernel->setCrossThreadData(pSourceCrossThreadData, sizeof(pSourceCrossThreadData));
-
-        pClonedKernel = new MockKernel(pProgram, *pKernelInfo, *pClDevice);
-        ASSERT_EQ(CL_SUCCESS, pClonedKernel->initialize());
-        char pClonedCrossThreadData[64] = {};
-        pClonedKernel->setCrossThreadData(pClonedCrossThreadData, sizeof(pClonedCrossThreadData));
+        pSourceMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(sourceKernels, kernelInfos);
+        pClonedMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(clonedKernels, kernelInfos);
     }
 
     void TearDown() override {
-        delete pSourceKernel;
-        delete pClonedKernel;
-
-        delete pProgram;
-        ContextFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        MultiRootDeviceWithSubDevicesFixture::TearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
-    MockProgram *pProgram = nullptr;
-    MockKernel *pSourceKernel = nullptr;
-    MockKernel *pClonedKernel = nullptr;
-    std::unique_ptr<KernelInfo> pKernelInfo;
-    SKernelBinaryHeaderCommon kernelHeader;
+    std::unique_ptr<MockProgram> pProgram;
+    std::unique_ptr<MultiDeviceKernel> pSourceMultiDeviceKernel;
+    std::unique_ptr<MultiDeviceKernel> pClonedMultiDeviceKernel;
+    MockKernel *pSourceKernel[3] = {nullptr};
+    MockKernel *pClonedKernel[3] = {nullptr};
+    std::unique_ptr<MockKernelInfo> pKernelInfo;
     char surfaceStateHeap[128];
 };
 
-typedef Test<CloneKernelFixture> CloneKernelTest;
+TEST_F(CloneKernelTest, GivenKernelWithPrivateSurfaceWhenCloningKernelThenClonedKernelProgramItsOwnPrivateSurfaceAddress) {
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        auto pSourcePrivateSurface = pSourceKernel[rootDeviceIndex]->privateSurface;
+        auto pClonedPrivateSurface = pClonedKernel[rootDeviceIndex]->privateSurface;
+        EXPECT_NE(nullptr, pSourcePrivateSurface);
+        EXPECT_NE(nullptr, pClonedPrivateSurface);
+        EXPECT_NE(pClonedPrivateSurface, pSourcePrivateSurface);
+        {
+            auto pSourcePrivateSurfPatchedAddress = reinterpret_cast<uint64_t *>(ptrOffset(pSourceKernel[rootDeviceIndex]->getCrossThreadData(), 64));
+            auto pClonedPrivateSurfPatchedAddress = reinterpret_cast<uint64_t *>(ptrOffset(pClonedKernel[rootDeviceIndex]->getCrossThreadData(), 64));
+
+            EXPECT_EQ(pSourcePrivateSurface->getGpuAddressToPatch(), *pSourcePrivateSurfPatchedAddress);
+            EXPECT_EQ(pClonedPrivateSurface->getGpuAddressToPatch(), *pClonedPrivateSurfPatchedAddress);
+        }
+
+        retVal = pClonedKernel[rootDeviceIndex]->cloneKernel(pSourceKernel[rootDeviceIndex]);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        auto pClonedPrivateSurface2 = pClonedKernel[rootDeviceIndex]->privateSurface;
+        EXPECT_EQ(pClonedPrivateSurface, pClonedPrivateSurface2);
+        {
+            auto pClonedPrivateSurfPatchedAddress = reinterpret_cast<uint64_t *>(ptrOffset(pClonedKernel[rootDeviceIndex]->getCrossThreadData(), 64));
+            EXPECT_EQ(pClonedPrivateSurface->getGpuAddressToPatch(), *pClonedPrivateSurfPatchedAddress);
+        }
+    }
+}
 
 TEST_F(CloneKernelTest, GivenUnsetArgWhenCloningKernelThenKernelInfoIsCorrect) {
-    EXPECT_EQ(1u, pSourceKernel->getKernelArguments().size());
-    EXPECT_EQ(Kernel::NONE_OBJ, pSourceKernel->getKernelArgInfo(0).type);
-    EXPECT_EQ(nullptr, pSourceKernel->getKernelArgInfo(0).object);
-    EXPECT_EQ(nullptr, pSourceKernel->getKernelArgInfo(0).value);
-    EXPECT_EQ(0u, pSourceKernel->getKernelArgInfo(0).size);
-    EXPECT_EQ(0u, pSourceKernel->getPatchedArgumentsNum());
-    EXPECT_FALSE(pSourceKernel->getKernelArgInfo(0).isPatched);
+    pKernelInfo->addArgBuffer(0);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        EXPECT_EQ(1u, pSourceKernel[rootDeviceIndex]->getKernelArguments().size());
+        EXPECT_EQ(Kernel::NONE_OBJ, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).type);
+        EXPECT_EQ(nullptr, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).object);
+        EXPECT_EQ(nullptr, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).value);
+        EXPECT_EQ(0u, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).size);
+        EXPECT_EQ(0u, pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum());
+        EXPECT_FALSE(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
+        EXPECT_EQ(0u, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId);
+    }
 
-    retVal = pClonedKernel->cloneKernel(pSourceKernel);
+    retVal = pClonedMultiDeviceKernel->cloneKernel(pSourceMultiDeviceKernel.get());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(pSourceKernel->getKernelArguments().size(), pClonedKernel->getKernelArguments().size());
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).type, pClonedKernel->getKernelArgInfo(0).type);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).object, pClonedKernel->getKernelArgInfo(0).object);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).value, pClonedKernel->getKernelArgInfo(0).value);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).size, pClonedKernel->getKernelArgInfo(0).size);
-    EXPECT_EQ(pSourceKernel->getPatchedArgumentsNum(), pClonedKernel->getPatchedArgumentsNum());
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).isPatched, pClonedKernel->getKernelArgInfo(0).isPatched);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArguments().size(), pClonedKernel[rootDeviceIndex]->getKernelArguments().size());
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).type, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).type);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).object, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).object);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).value, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).value);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).size, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).size);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum(), pClonedKernel[rootDeviceIndex]->getPatchedArgumentsNum());
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId);
+    }
 }
 
 TEST_F(CloneKernelTest, GivenArgLocalWhenCloningKernelThenKernelInfoIsCorrect) {
     const size_t slmSize = 0x800;
+    pKernelInfo->addArgLocal(0, 0, 1);
 
-    pSourceKernel->setKernelArgHandler(0, &Kernel::setArgLocal);
-    pClonedKernel->setKernelArgHandler(0, &Kernel::setArgLocal);
-
-    retVal = pSourceKernel->setArg(0, slmSize, nullptr);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        pSourceKernel[rootDeviceIndex]->setKernelArgHandler(0, &Kernel::setArgLocal);
+        pClonedKernel[rootDeviceIndex]->setKernelArgHandler(0, &Kernel::setArgLocal);
+    }
+    retVal = pSourceMultiDeviceKernel->setArg(0, slmSize, nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(1u, pSourceKernel->getKernelArguments().size());
-    EXPECT_EQ(Kernel::SLM_OBJ, pSourceKernel->getKernelArgInfo(0).type);
-    EXPECT_NE(0u, pSourceKernel->getKernelArgInfo(0).size);
-    EXPECT_EQ(1u, pSourceKernel->getPatchedArgumentsNum());
-    EXPECT_TRUE(pSourceKernel->getKernelArgInfo(0).isPatched);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        EXPECT_EQ(1u, pSourceKernel[rootDeviceIndex]->getKernelArguments().size());
+        EXPECT_EQ(Kernel::SLM_OBJ, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).type);
+        EXPECT_NE(0u, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).size);
+        EXPECT_EQ(1u, pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum());
+        EXPECT_TRUE(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
+        EXPECT_EQ(0u, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId);
+    }
 
-    retVal = pClonedKernel->cloneKernel(pSourceKernel);
+    retVal = pClonedMultiDeviceKernel->cloneKernel(pSourceMultiDeviceKernel.get());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(pSourceKernel->getKernelArguments().size(), pClonedKernel->getKernelArguments().size());
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).type, pClonedKernel->getKernelArgInfo(0).type);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).object, pClonedKernel->getKernelArgInfo(0).object);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).value, pClonedKernel->getKernelArgInfo(0).value);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).size, pClonedKernel->getKernelArgInfo(0).size);
-    EXPECT_EQ(pSourceKernel->getPatchedArgumentsNum(), pClonedKernel->getPatchedArgumentsNum());
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).isPatched, pClonedKernel->getKernelArgInfo(0).isPatched);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArguments().size(), pClonedKernel[rootDeviceIndex]->getKernelArguments().size());
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).type, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).type);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).object, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).object);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).value, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).value);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).size, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).size);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum(), pClonedKernel[rootDeviceIndex]->getPatchedArgumentsNum());
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId);
 
-    EXPECT_EQ(alignUp(slmSize, 1024), pClonedKernel->slmTotalSize);
+        EXPECT_EQ(alignUp(slmSize, 1024), pClonedKernel[rootDeviceIndex]->slmTotalSize);
+    }
 }
 
 TEST_F(CloneKernelTest, GivenArgBufferWhenCloningKernelThenKernelInfoIsCorrect) {
-    MockBuffer buffer;
-    cl_mem memObj = &buffer;
+    pKernelInfo->addArgBuffer(0, 0x20, sizeof(void *));
 
-    pSourceKernel->setKernelArgHandler(0, &Kernel::setArgBuffer);
-    pClonedKernel->setKernelArgHandler(0, &Kernel::setArgBuffer);
+    auto buffer = clUniquePtr(Buffer::create(context.get(), 0, MemoryConstants::pageSize, nullptr, retVal));
+    cl_mem memObj = buffer.get();
 
-    retVal = pSourceKernel->setArg(0, sizeof(cl_mem), &memObj);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        pSourceKernel[rootDeviceIndex]->setKernelArgHandler(0, &Kernel::setArgBuffer);
+        pClonedKernel[rootDeviceIndex]->setKernelArgHandler(0, &Kernel::setArgBuffer);
+    }
+
+    retVal = pSourceMultiDeviceKernel->setArg(0, sizeof(cl_mem), &memObj);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(1u, pSourceKernel->getKernelArguments().size());
-    EXPECT_EQ(Kernel::BUFFER_OBJ, pSourceKernel->getKernelArgInfo(0).type);
-    EXPECT_NE(0u, pSourceKernel->getKernelArgInfo(0).size);
-    EXPECT_EQ(1u, pSourceKernel->getPatchedArgumentsNum());
-    EXPECT_TRUE(pSourceKernel->getKernelArgInfo(0).isPatched);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        EXPECT_EQ(1u, pSourceKernel[rootDeviceIndex]->getKernelArguments().size());
+        EXPECT_EQ(Kernel::BUFFER_OBJ, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).type);
+        EXPECT_NE(0u, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).size);
+        EXPECT_EQ(1u, pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum());
+        EXPECT_TRUE(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
+        EXPECT_EQ(0u, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId);
+    }
 
-    retVal = pClonedKernel->cloneKernel(pSourceKernel);
+    retVal = pClonedMultiDeviceKernel->cloneKernel(pSourceMultiDeviceKernel.get());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(pSourceKernel->getKernelArguments().size(), pClonedKernel->getKernelArguments().size());
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).type, pClonedKernel->getKernelArgInfo(0).type);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).object, pClonedKernel->getKernelArgInfo(0).object);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).value, pClonedKernel->getKernelArgInfo(0).value);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).size, pClonedKernel->getKernelArgInfo(0).size);
-    EXPECT_EQ(pSourceKernel->getPatchedArgumentsNum(), pClonedKernel->getPatchedArgumentsNum());
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).isPatched, pClonedKernel->getKernelArgInfo(0).isPatched);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArguments().size(), pClonedKernel[rootDeviceIndex]->getKernelArguments().size());
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).type, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).type);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).object, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).object);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).value, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).value);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).size, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).size);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum(), pClonedKernel[rootDeviceIndex]->getPatchedArgumentsNum());
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId);
 
-    auto pKernelArg = (cl_mem *)(pClonedKernel->getCrossThreadData() +
-                                 pClonedKernel->getKernelInfo().kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
-    EXPECT_EQ(buffer.getCpuAddress(), *pKernelArg);
+        auto pKernelArg = (cl_mem *)(pClonedKernel[rootDeviceIndex]->getCrossThreadData() +
+                                     pClonedKernel[rootDeviceIndex]->getKernelInfo().getArgDescriptorAt(0).as<ArgDescPointer>().stateless);
+        EXPECT_EQ(buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddressToPatch(), reinterpret_cast<uint64_t>(*pKernelArg));
+    }
 }
 
 TEST_F(CloneKernelTest, GivenArgPipeWhenCloningKernelThenKernelInfoIsCorrect) {
-    MockPipe pipe(pContext);
-    cl_mem memObj = &pipe;
-
-    pSourceKernel->setKernelArgHandler(0, &Kernel::setArgPipe);
-    pClonedKernel->setKernelArgHandler(0, &Kernel::setArgPipe);
-
-    retVal = pSourceKernel->setArg(0, sizeof(cl_mem), &memObj);
-    ASSERT_EQ(CL_SUCCESS, retVal);
-
-    EXPECT_EQ(1u, pSourceKernel->getKernelArguments().size());
-    EXPECT_EQ(Kernel::PIPE_OBJ, pSourceKernel->getKernelArgInfo(0).type);
-    EXPECT_NE(0u, pSourceKernel->getKernelArgInfo(0).size);
-    EXPECT_EQ(1u, pSourceKernel->getPatchedArgumentsNum());
-    EXPECT_TRUE(pSourceKernel->getKernelArgInfo(0).isPatched);
-
-    retVal = pClonedKernel->cloneKernel(pSourceKernel);
+    pKernelInfo->addArgPipe(0, 0x20, sizeof(void *));
+    auto pipe = clUniquePtr(Pipe::create(context.get(), 0, 1, 20, nullptr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(pSourceKernel->getKernelArguments().size(), pClonedKernel->getKernelArguments().size());
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).type, pClonedKernel->getKernelArgInfo(0).type);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).object, pClonedKernel->getKernelArgInfo(0).object);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).value, pClonedKernel->getKernelArgInfo(0).value);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).size, pClonedKernel->getKernelArgInfo(0).size);
-    EXPECT_EQ(pSourceKernel->getPatchedArgumentsNum(), pClonedKernel->getPatchedArgumentsNum());
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).isPatched, pClonedKernel->getKernelArgInfo(0).isPatched);
+    cl_mem memObj = pipe.get();
 
-    auto pKernelArg = (cl_mem *)(pClonedKernel->getCrossThreadData() +
-                                 pClonedKernel->getKernelInfo().kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
-    EXPECT_EQ(pipe.getCpuAddress(), *pKernelArg);
+    auto rootDeviceIndex = *context->getRootDeviceIndices().begin();
+
+    pSourceKernel[rootDeviceIndex]->setKernelArgHandler(0, &Kernel::setArgPipe);
+    pClonedKernel[rootDeviceIndex]->setKernelArgHandler(0, &Kernel::setArgPipe);
+
+    retVal = pSourceKernel[rootDeviceIndex]->setArg(0, sizeof(cl_mem), &memObj);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(1u, pSourceKernel[rootDeviceIndex]->getKernelArguments().size());
+    EXPECT_EQ(Kernel::PIPE_OBJ, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).type);
+    EXPECT_NE(0u, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).size);
+    EXPECT_EQ(1u, pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum());
+    EXPECT_TRUE(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
+    EXPECT_EQ(0u, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId);
+
+    retVal = pClonedMultiDeviceKernel->cloneKernel(pSourceMultiDeviceKernel.get());
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArguments().size(), pClonedKernel[rootDeviceIndex]->getKernelArguments().size());
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).type, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).type);
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).object, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).object);
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).value, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).value);
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).size, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).size);
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum(), pClonedKernel[rootDeviceIndex]->getPatchedArgumentsNum());
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId);
+
+    auto pKernelArg = (cl_mem *)(pClonedKernel[rootDeviceIndex]->getCrossThreadData() +
+                                 pClonedKernel[rootDeviceIndex]->getKernelInfo().getArgDescriptorAt(0).as<ArgDescPointer>().stateless);
+    EXPECT_EQ(pipe->getGraphicsAllocation(rootDeviceIndex)->getGpuAddressToPatch(), reinterpret_cast<uint64_t>(*pKernelArg));
 }
 
 TEST_F(CloneKernelTest, GivenArgImageWhenCloningKernelThenKernelInfoIsCorrect) {
-    auto image = std::unique_ptr<Image>(Image2dHelper<>::create(pContext));
+    pKernelInfo->addArgImage(0, 0x20);
+    auto &metaPayload = pKernelInfo->argAsImg(0).metadataPayload;
+    metaPayload.imgWidth = 0x4;
+    metaPayload.imgHeight = 0x8;
+    metaPayload.imgDepth = 0xc;
+    pKernelInfo->addExtendedDeviceSideEnqueueDescriptor(0, 0);
+
+    auto image = std::unique_ptr<Image>(Image2dHelper<>::create(context.get()));
     ASSERT_NE(nullptr, image);
 
-    uint32_t objectId = pKernelInfo->kernelArgInfo[0].offsetHeap;
+    auto rootDeviceIndex = *context->getRootDeviceIndices().begin();
     size_t imageWidth = image->getImageDesc().image_width;
     size_t imageHeight = image->getImageDesc().image_height;
     size_t imageDepth = image->getImageDesc().image_depth;
 
     cl_mem memObj = image.get();
 
-    pSourceKernel->setKernelArgHandler(0, &Kernel::setArgImage);
-    pClonedKernel->setKernelArgHandler(0, &Kernel::setArgImage);
+    pSourceKernel[rootDeviceIndex]->setKernelArgHandler(0, &Kernel::setArgImage);
+    pClonedKernel[rootDeviceIndex]->setKernelArgHandler(0, &Kernel::setArgImage);
 
-    retVal = pSourceKernel->setArg(0, sizeof(cl_mem), &memObj);
+    retVal = pSourceKernel[rootDeviceIndex]->setArg(0, sizeof(cl_mem), &memObj);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(1u, pSourceKernel->getKernelArguments().size());
-    EXPECT_EQ(Kernel::IMAGE_OBJ, pSourceKernel->getKernelArgInfo(0).type);
-    EXPECT_NE(0u, pSourceKernel->getKernelArgInfo(0).size);
-    EXPECT_EQ(1u, pSourceKernel->getPatchedArgumentsNum());
-    EXPECT_TRUE(pSourceKernel->getKernelArgInfo(0).isPatched);
+    EXPECT_EQ(1u, pSourceKernel[rootDeviceIndex]->getKernelArguments().size());
+    EXPECT_EQ(Kernel::IMAGE_OBJ, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).type);
+    EXPECT_NE(0u, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).size);
+    EXPECT_EQ(1u, pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum());
+    EXPECT_TRUE(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
+    EXPECT_EQ(0u, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId);
 
-    retVal = pClonedKernel->cloneKernel(pSourceKernel);
+    retVal = pClonedMultiDeviceKernel->cloneKernel(pSourceMultiDeviceKernel.get());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(pSourceKernel->getKernelArguments().size(), pClonedKernel->getKernelArguments().size());
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).type, pClonedKernel->getKernelArgInfo(0).type);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).object, pClonedKernel->getKernelArgInfo(0).object);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).value, pClonedKernel->getKernelArgInfo(0).value);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).size, pClonedKernel->getKernelArgInfo(0).size);
-    EXPECT_EQ(pSourceKernel->getPatchedArgumentsNum(), pClonedKernel->getPatchedArgumentsNum());
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).isPatched, pClonedKernel->getKernelArgInfo(0).isPatched);
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArguments().size(), pClonedKernel[rootDeviceIndex]->getKernelArguments().size());
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).type, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).type);
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).object, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).object);
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).value, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).value);
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).size, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).size);
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum(), pClonedKernel[rootDeviceIndex]->getPatchedArgumentsNum());
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId);
 
-    auto crossThreadData = reinterpret_cast<uint32_t *>(pClonedKernel->getCrossThreadData());
-    EXPECT_EQ(objectId, *crossThreadData);
+    auto crossThreadData = reinterpret_cast<uint32_t *>(pClonedKernel[rootDeviceIndex]->getCrossThreadData());
+    auto &clonedArg = pClonedKernel[rootDeviceIndex]->getKernelInfo().getArgDescriptorAt(0).as<ArgDescImage>();
+    EXPECT_EQ(clonedArg.bindful, *crossThreadData);
 
-    const auto &argInfo = pClonedKernel->getKernelInfo().kernelArgInfo[0];
-
-    auto pImgWidth = ptrOffset(crossThreadData, argInfo.offsetImgWidth);
+    auto pImgWidth = ptrOffset(crossThreadData, clonedArg.metadataPayload.imgWidth);
     EXPECT_EQ(imageWidth, *pImgWidth);
 
-    auto pImgHeight = ptrOffset(crossThreadData, argInfo.offsetImgHeight);
+    auto pImgHeight = ptrOffset(crossThreadData, clonedArg.metadataPayload.imgHeight);
     EXPECT_EQ(imageHeight, *pImgHeight);
 
-    auto pImgDepth = ptrOffset(crossThreadData, argInfo.offsetImgDepth);
+    auto pImgDepth = ptrOffset(crossThreadData, clonedArg.metadataPayload.imgDepth);
     EXPECT_EQ(imageDepth, *pImgDepth);
 }
 
 TEST_F(CloneKernelTest, GivenArgAcceleratorWhenCloningKernelThenKernelInfoIsCorrect) {
+    pKernelInfo->addArgAccelerator(0, undefined<SurfaceStateHeapOffset>, 0x4, 0x14, 0x1c, 0xc);
+
     cl_motion_estimation_desc_intel desc = {
         CL_ME_MB_TYPE_4x4_INTEL,
         CL_ME_SUBPIXEL_MODE_QPEL_INTEL,
@@ -285,49 +332,52 @@ TEST_F(CloneKernelTest, GivenArgAcceleratorWhenCloningKernelThenKernelInfoIsCorr
         CL_ME_SEARCH_PATH_RADIUS_16_12_INTEL};
 
     cl_accelerator_intel accelerator = VmeAccelerator::create(
-        pContext,
+        context.get(),
         CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL, sizeof(desc), &desc,
         retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, accelerator);
 
-    pSourceKernel->setKernelArgHandler(0, &Kernel::setArgAccelerator);
-    pClonedKernel->setKernelArgHandler(0, &Kernel::setArgAccelerator);
+    auto rootDeviceIndex = *context->getRootDeviceIndices().begin();
+    pSourceKernel[rootDeviceIndex]->setKernelArgHandler(0, &Kernel::setArgAccelerator);
+    pClonedKernel[rootDeviceIndex]->setKernelArgHandler(0, &Kernel::setArgAccelerator);
 
-    retVal = pSourceKernel->setArg(0, sizeof(cl_accelerator_intel), &accelerator);
+    retVal = pSourceKernel[rootDeviceIndex]->setArg(0, sizeof(cl_accelerator_intel), &accelerator);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(1u, pSourceKernel->getKernelArguments().size());
-    EXPECT_EQ(Kernel::ACCELERATOR_OBJ, pSourceKernel->getKernelArgInfo(0).type);
-    EXPECT_NE(0u, pSourceKernel->getKernelArgInfo(0).size);
-    EXPECT_EQ(1u, pSourceKernel->getPatchedArgumentsNum());
-    EXPECT_TRUE(pSourceKernel->getKernelArgInfo(0).isPatched);
+    EXPECT_EQ(1u, pSourceKernel[rootDeviceIndex]->getKernelArguments().size());
+    EXPECT_EQ(Kernel::ACCELERATOR_OBJ, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).type);
+    EXPECT_NE(0u, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).size);
+    EXPECT_EQ(1u, pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum());
+    EXPECT_TRUE(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
+    EXPECT_EQ(0u, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId);
 
-    retVal = pClonedKernel->cloneKernel(pSourceKernel);
+    retVal = pClonedMultiDeviceKernel->cloneKernel(pSourceMultiDeviceKernel.get());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(pSourceKernel->getKernelArguments().size(), pClonedKernel->getKernelArguments().size());
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).type, pClonedKernel->getKernelArgInfo(0).type);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).object, pClonedKernel->getKernelArgInfo(0).object);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).value, pClonedKernel->getKernelArgInfo(0).value);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).size, pClonedKernel->getKernelArgInfo(0).size);
-    EXPECT_EQ(pSourceKernel->getPatchedArgumentsNum(), pClonedKernel->getPatchedArgumentsNum());
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).isPatched, pClonedKernel->getKernelArgInfo(0).isPatched);
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArguments().size(), pClonedKernel[rootDeviceIndex]->getKernelArguments().size());
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).type, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).type);
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).object, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).object);
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).value, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).value);
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).size, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).size);
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum(), pClonedKernel[rootDeviceIndex]->getPatchedArgumentsNum());
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId);
 
-    auto crossThreadData = reinterpret_cast<uint32_t *>(pClonedKernel->getCrossThreadData());
+    auto crossThreadData = reinterpret_cast<uint32_t *>(pClonedKernel[rootDeviceIndex]->getCrossThreadData());
+    ASSERT_TRUE(pClonedKernel[rootDeviceIndex]->getKernelInfo().getArgDescriptorAt(0).getExtendedTypeInfo().hasVmeExtendedDescriptor);
+    const auto clonedArgDescVme = reinterpret_cast<ArgDescVme *>(pClonedKernel[rootDeviceIndex]->getKernelInfo().kernelDescriptor.payloadMappings.explicitArgsExtendedDescriptors[0].get());
 
-    const auto &argInfo = pClonedKernel->getKernelInfo().kernelArgInfo[0];
-
-    uint32_t *pMbBlockType = ptrOffset(crossThreadData, argInfo.offsetVmeMbBlockType);
+    uint32_t *pMbBlockType = ptrOffset(crossThreadData, clonedArgDescVme->mbBlockType);
     EXPECT_EQ(desc.mb_block_type, *pMbBlockType);
 
-    uint32_t *pSubpixelMode = ptrOffset(crossThreadData, argInfo.offsetVmeSubpixelMode);
+    uint32_t *pSubpixelMode = ptrOffset(crossThreadData, clonedArgDescVme->subpixelMode);
     EXPECT_EQ(desc.subpixel_mode, *pSubpixelMode);
 
-    uint32_t *pSadAdjustMode = ptrOffset(crossThreadData, argInfo.offsetVmeSadAdjustMode);
+    uint32_t *pSadAdjustMode = ptrOffset(crossThreadData, clonedArgDescVme->sadAdjustMode);
     EXPECT_EQ(desc.sad_adjust_mode, *pSadAdjustMode);
 
-    uint32_t *pSearchPathType = ptrOffset(crossThreadData, argInfo.offsetVmeSearchPathType);
+    uint32_t *pSearchPathType = ptrOffset(crossThreadData, clonedArgDescVme->searchPathType);
     EXPECT_EQ(desc.search_path_type, *pSearchPathType);
 
     retVal = clReleaseAcceleratorINTEL(accelerator);
@@ -335,207 +385,237 @@ TEST_F(CloneKernelTest, GivenArgAcceleratorWhenCloningKernelThenKernelInfoIsCorr
 }
 
 TEST_F(CloneKernelTest, GivenArgSamplerWhenCloningKernelThenKernelInfoIsCorrect) {
-    std::unique_ptr<Sampler> sampler(new MockSampler(pContext,
-                                                     true,
-                                                     (cl_addressing_mode)CL_ADDRESS_MIRRORED_REPEAT,
-                                                     (cl_filter_mode)CL_FILTER_NEAREST));
+    auto sampler = clUniquePtr<Sampler>(new MockSampler(context.get(),
+                                                        true,
+                                                        (cl_addressing_mode)CL_ADDRESS_MIRRORED_REPEAT,
+                                                        (cl_filter_mode)CL_FILTER_NEAREST));
 
-    uint32_t objectId = SAMPLER_OBJECT_ID_SHIFT + pKernelInfo->kernelArgInfo[0].offsetHeap;
+    pKernelInfo->addArgSampler(0, 0x20, 0x8, 0x10, 0x4);
+    pKernelInfo->addExtendedDeviceSideEnqueueDescriptor(0, 0);
 
     cl_sampler samplerObj = sampler.get();
+    auto rootDeviceIndex = *context->getRootDeviceIndices().begin();
 
-    pSourceKernel->setKernelArgHandler(0, &Kernel::setArgSampler);
-    pClonedKernel->setKernelArgHandler(0, &Kernel::setArgSampler);
+    pSourceKernel[rootDeviceIndex]->setKernelArgHandler(0, &Kernel::setArgSampler);
+    pClonedKernel[rootDeviceIndex]->setKernelArgHandler(0, &Kernel::setArgSampler);
 
-    retVal = pSourceKernel->setArg(0, sizeof(cl_sampler), &samplerObj);
+    retVal = pSourceKernel[rootDeviceIndex]->setArg(0, sizeof(cl_sampler), &samplerObj);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(1u, pSourceKernel->getKernelArguments().size());
-    EXPECT_EQ(Kernel::SAMPLER_OBJ, pSourceKernel->getKernelArgInfo(0).type);
-    EXPECT_NE(0u, pSourceKernel->getKernelArgInfo(0).size);
-    EXPECT_EQ(1u, pSourceKernel->getPatchedArgumentsNum());
-    EXPECT_TRUE(pSourceKernel->getKernelArgInfo(0).isPatched);
+    EXPECT_EQ(1u, pSourceKernel[rootDeviceIndex]->getKernelArguments().size());
+    EXPECT_EQ(Kernel::SAMPLER_OBJ, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).type);
+    EXPECT_NE(0u, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).size);
+    EXPECT_EQ(1u, pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum());
+    EXPECT_TRUE(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
+    EXPECT_EQ(0u, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId);
 
-    retVal = pClonedKernel->cloneKernel(pSourceKernel);
+    retVal = pClonedMultiDeviceKernel->cloneKernel(pSourceMultiDeviceKernel.get());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(pSourceKernel->getKernelArguments().size(), pClonedKernel->getKernelArguments().size());
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).type, pClonedKernel->getKernelArgInfo(0).type);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).object, pClonedKernel->getKernelArgInfo(0).object);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).value, pClonedKernel->getKernelArgInfo(0).value);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).size, pClonedKernel->getKernelArgInfo(0).size);
-    EXPECT_EQ(pSourceKernel->getPatchedArgumentsNum(), pClonedKernel->getPatchedArgumentsNum());
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).isPatched, pClonedKernel->getKernelArgInfo(0).isPatched);
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArguments().size(), pClonedKernel[rootDeviceIndex]->getKernelArguments().size());
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).type, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).type);
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).object, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).object);
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).value, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).value);
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).size, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).size);
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum(), pClonedKernel[rootDeviceIndex]->getPatchedArgumentsNum());
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
+    EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId);
 
-    auto crossThreadData = reinterpret_cast<uint32_t *>(pClonedKernel->getCrossThreadData());
-    EXPECT_EQ(objectId, *crossThreadData);
+    auto crossThreadData = reinterpret_cast<uint32_t *>(pClonedKernel[rootDeviceIndex]->getCrossThreadData());
+    const auto &clonedArg = pClonedKernel[rootDeviceIndex]->getKernelInfo().getArgDescriptorAt(0).as<ArgDescSampler>();
+    EXPECT_EQ(SAMPLER_OBJECT_ID_SHIFT + clonedArg.bindful, *crossThreadData);
 
-    const auto &argInfo = pClonedKernel->getKernelInfo().kernelArgInfo[0];
-
-    auto pSnapWa = ptrOffset(crossThreadData, argInfo.offsetSamplerSnapWa);
+    auto pSnapWa = ptrOffset(crossThreadData, clonedArg.metadataPayload.samplerSnapWa);
     EXPECT_EQ(sampler->getSnapWaValue(), *pSnapWa);
 
-    auto pAddressingMode = ptrOffset(crossThreadData, argInfo.offsetSamplerAddressingMode);
-    EXPECT_EQ(GetAddrModeEnum(sampler->addressingMode), *pAddressingMode);
+    auto pAddressingMode = ptrOffset(crossThreadData, clonedArg.metadataPayload.samplerAddressingMode);
+    EXPECT_EQ(getAddrModeEnum(sampler->addressingMode), *pAddressingMode);
 
-    auto pNormalizedCoords = ptrOffset(crossThreadData, argInfo.offsetSamplerNormalizedCoords);
-    EXPECT_EQ(GetNormCoordsEnum(sampler->normalizedCoordinates), *pNormalizedCoords);
-}
-
-HWCMDTEST_F(IGFX_GEN8_CORE, CloneKernelTest, GivenArgDeviceQueueWhenCloningKernelThenKernelInfoIsCorrect) {
-    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pClDevice);
-
-    cl_queue_properties queueProps[5] = {
-        CL_QUEUE_PROPERTIES,
-        CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE,
-        0, 0, 0};
-
-    MockDeviceQueueHw<FamilyType> mockDevQueue(pContext, pClDevice, queueProps[0]);
-    auto clDeviceQueue = static_cast<cl_command_queue>(&mockDevQueue);
-
-    pSourceKernel->setKernelArgHandler(0, &Kernel::setArgDevQueue);
-    pClonedKernel->setKernelArgHandler(0, &Kernel::setArgDevQueue);
-
-    retVal = pSourceKernel->setArg(0, sizeof(cl_command_queue), &clDeviceQueue);
-    ASSERT_EQ(CL_SUCCESS, retVal);
-
-    EXPECT_EQ(1u, pSourceKernel->getKernelArguments().size());
-    EXPECT_EQ(Kernel::DEVICE_QUEUE_OBJ, pSourceKernel->getKernelArgInfo(0).type);
-    EXPECT_NE(0u, pSourceKernel->getKernelArgInfo(0).size);
-    EXPECT_EQ(1u, pSourceKernel->getPatchedArgumentsNum());
-    EXPECT_TRUE(pSourceKernel->getKernelArgInfo(0).isPatched);
-
-    retVal = pClonedKernel->cloneKernel(pSourceKernel);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    EXPECT_EQ(pSourceKernel->getKernelArguments().size(), pClonedKernel->getKernelArguments().size());
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).type, pClonedKernel->getKernelArgInfo(0).type);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).object, pClonedKernel->getKernelArgInfo(0).object);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).value, pClonedKernel->getKernelArgInfo(0).value);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).size, pClonedKernel->getKernelArgInfo(0).size);
-    EXPECT_EQ(pSourceKernel->getPatchedArgumentsNum(), pClonedKernel->getPatchedArgumentsNum());
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).isPatched, pClonedKernel->getKernelArgInfo(0).isPatched);
-
-    auto pKernelArg = (uintptr_t *)(pClonedKernel->getCrossThreadData() +
-                                    pClonedKernel->getKernelInfo().kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
-    EXPECT_EQ(static_cast<uintptr_t>(mockDevQueue.getQueueBuffer()->getGpuAddressToPatch()), *pKernelArg);
+    auto pNormalizedCoords = ptrOffset(crossThreadData, clonedArg.metadataPayload.samplerNormalizedCoords);
+    EXPECT_EQ(getNormCoordsEnum(sampler->normalizedCoordinates), *pNormalizedCoords);
+    EXPECT_EQ(3, sampler->getRefInternalCount());
 }
 
 TEST_F(CloneKernelTest, GivenArgSvmWhenCloningKernelThenKernelInfoIsCorrect) {
     char *svmPtr = new char[256];
 
-    retVal = pSourceKernel->setArgSvm(0, 256, svmPtr, nullptr, 0u);
-    ASSERT_EQ(CL_SUCCESS, retVal);
+    pKernelInfo->addArgBuffer(0, 0x20, sizeof(void *));
 
-    EXPECT_EQ(1u, pSourceKernel->getKernelArguments().size());
-    EXPECT_EQ(Kernel::SVM_OBJ, pSourceKernel->getKernelArgInfo(0).type);
-    EXPECT_NE(0u, pSourceKernel->getKernelArgInfo(0).size);
-    EXPECT_EQ(1u, pSourceKernel->getPatchedArgumentsNum());
-    EXPECT_TRUE(pSourceKernel->getKernelArgInfo(0).isPatched);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        retVal = pSourceKernel[rootDeviceIndex]->setArgSvm(0, 256, svmPtr, nullptr, 0u);
+        ASSERT_EQ(CL_SUCCESS, retVal);
 
-    retVal = pClonedKernel->cloneKernel(pSourceKernel);
+        EXPECT_EQ(1u, pSourceKernel[rootDeviceIndex]->getKernelArguments().size());
+        EXPECT_EQ(Kernel::SVM_OBJ, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).type);
+        EXPECT_NE(0u, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).size);
+        EXPECT_EQ(1u, pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum());
+        EXPECT_TRUE(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
+        EXPECT_EQ(0u, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId);
+    }
+
+    retVal = pClonedMultiDeviceKernel->cloneKernel(pSourceMultiDeviceKernel.get());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(pSourceKernel->getKernelArguments().size(), pClonedKernel->getKernelArguments().size());
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).type, pClonedKernel->getKernelArgInfo(0).type);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).object, pClonedKernel->getKernelArgInfo(0).object);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).value, pClonedKernel->getKernelArgInfo(0).value);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).size, pClonedKernel->getKernelArgInfo(0).size);
-    EXPECT_EQ(pSourceKernel->getPatchedArgumentsNum(), pClonedKernel->getPatchedArgumentsNum());
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).isPatched, pClonedKernel->getKernelArgInfo(0).isPatched);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArguments().size(), pClonedKernel[rootDeviceIndex]->getKernelArguments().size());
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).type, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).type);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).object, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).object);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).value, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).value);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).size, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).size);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum(), pClonedKernel[rootDeviceIndex]->getPatchedArgumentsNum());
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId);
 
-    auto pKernelArg = (void **)(pClonedKernel->getCrossThreadData() +
-                                pClonedKernel->getKernelInfo().kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
-    EXPECT_EQ(svmPtr, *pKernelArg);
+        auto pKernelArg = (void **)(pClonedKernel[rootDeviceIndex]->getCrossThreadData() +
+                                    pClonedKernel[rootDeviceIndex]->getKernelInfo().getArgDescriptorAt(0).as<ArgDescPointer>().stateless);
+        EXPECT_EQ(svmPtr, *pKernelArg);
+    }
 
     delete[] svmPtr;
 }
 
 TEST_F(CloneKernelTest, GivenArgSvmAllocWhenCloningKernelThenKernelInfoIsCorrect) {
-    char *svmPtr = new char[256];
-    MockGraphicsAllocation svmAlloc(svmPtr, 256);
+    pKernelInfo->addArgBuffer(0, 0x20, sizeof(void *));
 
-    retVal = pSourceKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc);
+    char memory[100] = {};
+    MultiGraphicsAllocation multiGraphicsAllocation(3);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        auto svmAlloc = new MockGraphicsAllocation(rootDeviceIndex, memory, 100);
+        multiGraphicsAllocation.addAllocation(svmAlloc);
+    }
+
+    retVal = pSourceMultiDeviceKernel->setArgSvmAlloc(0, memory, &multiGraphicsAllocation, 1u);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(1u, pSourceKernel->getKernelArguments().size());
-    EXPECT_EQ(Kernel::SVM_ALLOC_OBJ, pSourceKernel->getKernelArgInfo(0).type);
-    EXPECT_NE(0u, pSourceKernel->getKernelArgInfo(0).size);
-    EXPECT_EQ(1u, pSourceKernel->getPatchedArgumentsNum());
-    EXPECT_TRUE(pSourceKernel->getKernelArgInfo(0).isPatched);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        EXPECT_EQ(1u, pSourceKernel[rootDeviceIndex]->getKernelArguments().size());
+        EXPECT_EQ(multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex), pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).object);
+        EXPECT_EQ(Kernel::SVM_ALLOC_OBJ, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).type);
+        EXPECT_NE(0u, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).size);
+        EXPECT_EQ(1u, pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum());
+        EXPECT_TRUE(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
+        EXPECT_EQ(1u, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId);
+    }
 
-    retVal = pClonedKernel->cloneKernel(pSourceKernel);
+    retVal = pClonedMultiDeviceKernel->cloneKernel(pSourceMultiDeviceKernel.get());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(pSourceKernel->getKernelArguments().size(), pClonedKernel->getKernelArguments().size());
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).type, pClonedKernel->getKernelArgInfo(0).type);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).object, pClonedKernel->getKernelArgInfo(0).object);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).value, pClonedKernel->getKernelArgInfo(0).value);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).size, pClonedKernel->getKernelArgInfo(0).size);
-    EXPECT_EQ(pSourceKernel->getPatchedArgumentsNum(), pClonedKernel->getPatchedArgumentsNum());
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).isPatched, pClonedKernel->getKernelArgInfo(0).isPatched);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArguments().size(), pClonedKernel[rootDeviceIndex]->getKernelArguments().size());
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).type, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).type);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).object, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).object);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).value, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).value);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).size, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).size);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum(), pClonedKernel[rootDeviceIndex]->getPatchedArgumentsNum());
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId);
 
-    auto pKernelArg = (void **)(pClonedKernel->getCrossThreadData() +
-                                pClonedKernel->getKernelInfo().kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
-    EXPECT_EQ(svmPtr, *pKernelArg);
-
-    delete[] svmPtr;
+        auto pKernelArg = (void **)(pClonedKernel[rootDeviceIndex]->getCrossThreadData() +
+                                    pClonedKernel[rootDeviceIndex]->getKernelInfo().getArgDescriptorAt(0).as<ArgDescPointer>().stateless);
+        EXPECT_EQ(memory, *pKernelArg);
+        delete multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
+    }
 }
 
 TEST_F(CloneKernelTest, GivenArgImmediateWhenCloningKernelThenKernelInfoIsCorrect) {
+    pKernelInfo->addArgImmediate(0, sizeof(void *), 0x20);
+
     using TypeParam = unsigned long;
     auto value = (TypeParam)0xAA55AA55UL;
 
-    retVal = pSourceKernel->setArg(0, sizeof(TypeParam), &value);
+    retVal = pSourceMultiDeviceKernel->setArg(0, sizeof(TypeParam), &value);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(1u, pSourceKernel->getKernelArguments().size());
-    EXPECT_EQ(Kernel::NONE_OBJ, pSourceKernel->getKernelArgInfo(0).type);
-    EXPECT_NE(0u, pSourceKernel->getKernelArgInfo(0).size);
-    EXPECT_EQ(1u, pSourceKernel->getPatchedArgumentsNum());
-    EXPECT_TRUE(pSourceKernel->getKernelArgInfo(0).isPatched);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        EXPECT_EQ(1u, pSourceKernel[rootDeviceIndex]->getKernelArguments().size());
+        EXPECT_EQ(Kernel::NONE_OBJ, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).type);
+        EXPECT_NE(0u, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).size);
+        EXPECT_EQ(1u, pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum());
+        EXPECT_TRUE(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
+        EXPECT_EQ(0u, pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId);
+    }
 
-    retVal = pClonedKernel->cloneKernel(pSourceKernel);
+    retVal = pClonedMultiDeviceKernel->cloneKernel(pSourceMultiDeviceKernel.get());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(pSourceKernel->getKernelArguments().size(), pClonedKernel->getKernelArguments().size());
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).type, pClonedKernel->getKernelArgInfo(0).type);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).object, pClonedKernel->getKernelArgInfo(0).object);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).value, pClonedKernel->getKernelArgInfo(0).value);
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).size, pClonedKernel->getKernelArgInfo(0).size);
-    EXPECT_EQ(pSourceKernel->getPatchedArgumentsNum(), pClonedKernel->getPatchedArgumentsNum());
-    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).isPatched, pClonedKernel->getKernelArgInfo(0).isPatched);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArguments().size(), pClonedKernel[rootDeviceIndex]->getKernelArguments().size());
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).type, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).type);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).object, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).object);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).value, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).value);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).size, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).size);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum(), pClonedKernel[rootDeviceIndex]->getPatchedArgumentsNum());
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId);
 
-    auto pKernelArg = (TypeParam *)(pClonedKernel->getCrossThreadData() +
-                                    pClonedKernel->getKernelInfo().kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
-    EXPECT_EQ(value, *pKernelArg);
+        auto pKernelArg = (TypeParam *)(pClonedKernel[rootDeviceIndex]->getCrossThreadData() +
+                                        pClonedKernel[rootDeviceIndex]->getKernelInfo().getArgDescriptorAt(0).as<ArgDescValue>().elements[0].offset);
+        EXPECT_EQ(value, *pKernelArg);
+    }
 }
 
 TEST_F(CloneKernelTest, GivenExecInfoWhenCloningKernelThenSvmAllocationIsCorrect) {
-    REQUIRE_SVM_OR_SKIP(pDevice);
-    void *ptrSVM = pContext->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {}, pDevice->getDeviceBitfield());
+    REQUIRE_SVM_OR_SKIP(device1);
+    void *ptrSVM = context->getSVMAllocsManager()->createSVMAlloc(256, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
     ASSERT_NE(nullptr, ptrSVM);
 
-    auto svmData = pContext->getSVMAllocsManager()->getSVMAlloc(ptrSVM);
+    auto svmData = context->getSVMAllocsManager()->getSVMAlloc(ptrSVM);
     ASSERT_NE(nullptr, svmData);
-    GraphicsAllocation *pSvmAlloc = svmData->gpuAllocation;
-    ASSERT_NE(nullptr, pSvmAlloc);
+    auto &pSvmAllocs = svmData->gpuAllocations;
 
-    pSourceKernel->setSvmKernelExecInfo(pSvmAlloc);
+    pSourceMultiDeviceKernel->setSvmKernelExecInfo(pSvmAllocs);
 
-    EXPECT_EQ(1u, pSourceKernel->kernelSvmGfxAllocations.size());
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        EXPECT_EQ(1u, pSourceKernel[rootDeviceIndex]->kernelSvmGfxAllocations.size());
+        EXPECT_NE(nullptr, pSourceKernel[rootDeviceIndex]->kernelSvmGfxAllocations.at(0));
+        EXPECT_EQ(pSvmAllocs.getGraphicsAllocation(rootDeviceIndex), pSourceKernel[rootDeviceIndex]->kernelSvmGfxAllocations.at(0));
+    }
 
-    retVal = pClonedKernel->cloneKernel(pSourceKernel);
+    retVal = pClonedMultiDeviceKernel->cloneKernel(pSourceMultiDeviceKernel.get());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(pSourceKernel->kernelSvmGfxAllocations.size(), pClonedKernel->kernelSvmGfxAllocations.size());
-    EXPECT_EQ(pSourceKernel->kernelSvmGfxAllocations.at(0), pClonedKernel->kernelSvmGfxAllocations.at(0));
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->kernelSvmGfxAllocations.size(), pClonedKernel[rootDeviceIndex]->kernelSvmGfxAllocations.size());
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->kernelSvmGfxAllocations.at(0), pClonedKernel[rootDeviceIndex]->kernelSvmGfxAllocations.at(0));
+    }
 
-    pContext->getSVMAllocsManager()->freeSVMAlloc(ptrSVM);
+    context->getSVMAllocsManager()->freeSVMAlloc(ptrSVM);
+}
+
+TEST_F(CloneKernelTest, GivenUnifiedMemoryExecInfoWhenCloningKernelThenUnifiedMemoryAllocationIsCorrect) {
+    REQUIRE_SVM_OR_SKIP(device1);
+    void *ptrSVM = context->getSVMAllocsManager()->createSVMAlloc(256, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
+    ASSERT_NE(nullptr, ptrSVM);
+
+    auto svmData = context->getSVMAllocsManager()->getSVMAlloc(ptrSVM);
+    ASSERT_NE(nullptr, svmData);
+    auto &pSvmAllocs = svmData->gpuAllocations;
+
+    pSourceMultiDeviceKernel->setUnifiedMemoryExecInfo(pSvmAllocs);
+
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        EXPECT_EQ(1u, pSourceKernel[rootDeviceIndex]->kernelUnifiedMemoryGfxAllocations.size());
+        EXPECT_NE(nullptr, pSourceKernel[rootDeviceIndex]->kernelUnifiedMemoryGfxAllocations.at(0));
+        EXPECT_EQ(pSvmAllocs.getGraphicsAllocation(rootDeviceIndex), pSourceKernel[rootDeviceIndex]->kernelUnifiedMemoryGfxAllocations.at(0));
+    }
+
+    retVal = pClonedMultiDeviceKernel->cloneKernel(pSourceMultiDeviceKernel.get());
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->kernelUnifiedMemoryGfxAllocations.size(), pClonedKernel[rootDeviceIndex]->kernelUnifiedMemoryGfxAllocations.size());
+        EXPECT_EQ(pSourceKernel[rootDeviceIndex]->kernelUnifiedMemoryGfxAllocations.at(0), pClonedKernel[rootDeviceIndex]->kernelUnifiedMemoryGfxAllocations.at(0));
+    }
+
+    context->getSVMAllocsManager()->freeSVMAlloc(ptrSVM);
 }
 
 TEST_F(CloneKernelTest, givenBuiltinSourceKernelWhenCloningThenSetBuiltinFlagToClonedKernel) {
-    pSourceKernel->isBuiltIn = true;
-    pClonedKernel->cloneKernel(pSourceKernel);
-    EXPECT_TRUE(pClonedKernel->isBuiltIn);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        pSourceKernel[rootDeviceIndex]->isBuiltIn = true;
+    }
+    pClonedMultiDeviceKernel->cloneKernel(pSourceMultiDeviceKernel.get());
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        EXPECT_TRUE(pClonedKernel[rootDeviceIndex]->isBuiltIn);
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,23 +28,17 @@ class RefCounter {
     }
 
     void inc() {
-        CT curr = ++val;
+        [[maybe_unused]] CT curr = ++val;
         DEBUG_BREAK_IF(curr < 1);
-        UNUSED_VARIABLE(curr);
     }
 
-    bool dec() {
-        CT curr = --val;
+    void dec() {
+        [[maybe_unused]] CT curr = --val;
         DEBUG_BREAK_IF(curr < 0);
-        return (curr == 0);
     }
 
     CT decAndReturnCurrent() {
         return --val;
-    }
-
-    bool peekIsZero() const {
-        return (val == 0);
     }
 
   protected:
@@ -55,7 +49,8 @@ template <typename DerivedClass>
 class ReferenceTrackedObject;
 
 template <typename DataType>
-class unique_ptr_if_unused : public std::unique_ptr<DataType, void (*)(DataType *)> {
+class unique_ptr_if_unused : // NOLINT(readability-identifier-naming)
+                             public std::unique_ptr<DataType, void (*)(DataType *)> {
     using DeleterFuncType = void (*)(DataType *);
 
   public:
@@ -86,7 +81,7 @@ class unique_ptr_if_unused : public std::unique_ptr<DataType, void (*)(DataType 
     }
 
     template <typename DT = DataType>
-    static typename std::enable_if<std::is_base_of<ReferenceTrackedObject<DataType>, DT>::value, DeleterFuncType>::type getObjDeleter(DataType *inPtr) {
+    static typename std::enable_if_t<std::is_base_of_v<ReferenceTrackedObject<DataType>, DT>, DeleterFuncType> getObjDeleter(DataType *inPtr) {
         if (inPtr != nullptr) {
             return inPtr->getCustomDeleter();
         }
@@ -94,12 +89,12 @@ class unique_ptr_if_unused : public std::unique_ptr<DataType, void (*)(DataType 
     }
 
     template <typename DT = DataType>
-    static typename std::enable_if<!std::is_base_of<ReferenceTrackedObject<DataType>, DT>::value, DeleterFuncType>::type getObjDeleter(DataType *inPtr) {
+    static typename std::enable_if_t<!std::is_base_of_v<ReferenceTrackedObject<DataType>, DT>, DeleterFuncType> getObjDeleter(DataType *inPtr) {
         return nullptr;
     }
 
     static void doDelete(DataType *ptr) {
-        delete ptr;
+        delete ptr; // NOLINT(clang-analyzer-cplusplus.NewDelete)
     }
 
     static void dontDelete(DataType *ptr) {
@@ -121,6 +116,8 @@ class unique_ptr_if_unused : public std::unique_ptr<DataType, void (*)(DataType 
 template <typename DerivedClass>
 class ReferenceTrackedObject {
   public:
+    using DeleterFuncType = void (*)(DerivedClass *);
+
     virtual ~ReferenceTrackedObject();
 
     int32_t getRefInternalCount() const {
@@ -153,13 +150,8 @@ class ReferenceTrackedObject {
         return decRefInternal();
     }
 
-    using DeleterFuncType = void (*)(DerivedClass *);
     DeleterFuncType getCustomDeleter() const {
         return nullptr;
-    }
-
-    bool peekHasZeroRefcounts() const {
-        return refInternal.peekIsZero();
     }
 
   private:
@@ -171,8 +163,29 @@ class ReferenceTrackedObject {
     RefCounter<> refInternal;
     RefCounter<> refApi;
 };
+
 template <typename DerivedClass>
 inline ReferenceTrackedObject<DerivedClass>::~ReferenceTrackedObject() {
     DEBUG_BREAK_IF(refInternal.peek() > 1);
 }
+
+template <typename RefTrackedObj>
+class DecRefInternalAtScopeEnd final {
+  public:
+    DecRefInternalAtScopeEnd(RefTrackedObj &obj) : object{obj} {
+    }
+
+    ~DecRefInternalAtScopeEnd() {
+        object.decRefInternal();
+    }
+
+    DecRefInternalAtScopeEnd(const DecRefInternalAtScopeEnd &) = delete;
+    DecRefInternalAtScopeEnd(DecRefInternalAtScopeEnd &&) = delete;
+    DecRefInternalAtScopeEnd &operator=(const DecRefInternalAtScopeEnd &) = delete;
+    DecRefInternalAtScopeEnd &operator=(DecRefInternalAtScopeEnd &&) = delete;
+
+  private:
+    RefTrackedObj &object;
+};
+
 } // namespace NEO

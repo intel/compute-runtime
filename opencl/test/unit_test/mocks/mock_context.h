@@ -1,11 +1,14 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/test/common/helpers/variable_backup.h"
+
 #include "opencl/source/context/context.h"
 #include "opencl/source/sharings/sharing_factory.h"
 #include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
@@ -15,18 +18,26 @@
 namespace NEO {
 
 class AsyncEventsHandler;
+class OsContext;
 
 class MockContext : public Context {
   public:
     using Context::contextType;
+    using Context::deviceBitfields;
+    using Context::devices;
     using Context::driverDiagnostics;
+    using Context::maxRootDeviceIndex;
     using Context::memoryManager;
     using Context::preferD3dSharedResources;
+    using Context::resolvesRequiredInKernels;
+    using Context::rootDeviceIndices;
     using Context::setupContextType;
     using Context::sharingFunctions;
+    using Context::specialQueues;
     using Context::svmAllocsManager;
+
     MockContext(ClDevice *pDevice, bool noSpecialQueue = false);
-    MockContext(const ClDeviceVector &clDeviceVector);
+    MockContext(const ClDeviceVector &clDeviceVector, bool noSpecialQueue = true);
     MockContext(
         void(CL_CALLBACK *funcNotify)(const char *, const void *, size_t, void *),
         void *data);
@@ -47,10 +58,12 @@ class MockContext : public Context {
 
 struct MockDefaultContext : MockContext {
     MockDefaultContext();
+    MockDefaultContext(bool initSpecialQueues);
 
-    UltClDeviceFactory ultClDeviceFactory{2, 0};
+    UltClDeviceFactory ultClDeviceFactory{3, 0};
     MockClDevice *pRootDevice0;
     MockClDevice *pRootDevice1;
+    MockClDevice *pRootDevice2;
 };
 
 struct MockSpecializedContext : MockContext {
@@ -71,4 +84,26 @@ struct MockUnrestrictiveContext : MockContext {
     ClDevice *pSubDevice1 = nullptr;
 };
 
+struct MockUnrestrictiveContextMultiGPU : MockContext {
+    MockUnrestrictiveContextMultiGPU();
+
+    UltClDeviceFactory ultClDeviceFactory{2, 2};
+    MockClDevice *pRootDevice0;
+    ClDevice *pSubDevice00 = nullptr;
+    ClDevice *pSubDevice01 = nullptr;
+    MockClDevice *pRootDevice1;
+    ClDevice *pSubDevice10 = nullptr;
+    ClDevice *pSubDevice11 = nullptr;
+};
+
+class BcsMockContext : public MockContext {
+  public:
+    BcsMockContext(ClDevice *device);
+    ~BcsMockContext() override;
+
+    std::unique_ptr<OsContext> bcsOsContext;
+    std::unique_ptr<CommandStreamReceiver> bcsCsr;
+    VariableBackup<BlitHelperFunctions::BlitMemoryToAllocationFunc> blitMemoryToAllocationFuncBackup{
+        &BlitHelperFunctions::blitMemoryToAllocation};
+};
 } // namespace NEO

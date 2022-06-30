@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ namespace NEO {
 
 template <typename GfxFamily>
 cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
-    cl_kernel clKernel,
+    Kernel *pKernel,
     cl_uint workDim,
     const size_t *globalWorkOffsetIn,
     const size_t *globalWorkSizeIn,
@@ -31,17 +31,17 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
     const cl_event *eventWaitList,
     cl_event *event) {
 
+    if (workDim > device->getDeviceInfo().maxWorkItemDimensions) {
+        return CL_INVALID_WORK_DIMENSION;
+    }
+
     size_t region[3] = {1, 1, 1};
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t workGroupSize[3] = {1, 1, 1};
     size_t enqueuedLocalWorkSize[3] = {0, 0, 0};
 
-    auto &kernel = *castToObjectOrAbort<Kernel>(clKernel);
+    auto &kernel = *pKernel;
     const auto &kernelInfo = kernel.getKernelInfo();
-
-    if (kernel.isParentKernel && !this->context->getDefaultDeviceQueue()) {
-        return CL_INVALID_OPERATION;
-    }
 
     if (!kernel.isPatched()) {
         if (event) {
@@ -57,26 +57,24 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
 
     bool haveRequiredWorkGroupSize = false;
 
-    if (kernelInfo.reqdWorkGroupSize[0] != WorkloadInfo::undefinedOffset) {
+    if (kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0] != 0) {
         haveRequiredWorkGroupSize = true;
     }
 
     size_t remainder = 0;
     size_t totalWorkItems = 1u;
     const size_t *localWkgSizeToPass = localWorkSizeIn ? workGroupSize : nullptr;
+    size_t reqdWorkgroupSize[3] = {};
 
     for (auto i = 0u; i < workDim; i++) {
         region[i] = globalWorkSizeIn ? globalWorkSizeIn[i] : 0;
-        if (region[i] == 0 && (kernel.getDevice().areOcl21FeaturesEnabled() == false)) {
-            return CL_INVALID_GLOBAL_WORK_SIZE;
-        }
         globalWorkOffset[i] = globalWorkOffsetIn
                                   ? globalWorkOffsetIn[i]
                                   : 0;
 
         if (localWorkSizeIn) {
             if (haveRequiredWorkGroupSize) {
-                if (kernelInfo.reqdWorkGroupSize[i] != localWorkSizeIn[i]) {
+                if (kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[i] != localWorkSizeIn[i]) {
                     return CL_INVALID_WORK_GROUP_SIZE;
                 }
             }
@@ -100,7 +98,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
     }
 
     if (haveRequiredWorkGroupSize) {
-        localWkgSizeToPass = kernelInfo.reqdWorkGroupSize;
+        reqdWorkgroupSize[0] = kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0];
+        reqdWorkgroupSize[1] = kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1];
+        reqdWorkgroupSize[2] = kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2];
+        localWkgSizeToPass = reqdWorkgroupSize;
     }
 
     NullSurface s;
@@ -108,33 +109,33 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
 
     if (context->isProvidingPerformanceHints()) {
         if (kernel.hasPrintfOutput()) {
-            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, PRINTF_DETECTED_IN_KERNEL, kernel.getKernelInfo().name.c_str());
+            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, PRINTF_DETECTED_IN_KERNEL, kernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str());
         }
         if (kernel.requiresCoherency()) {
-            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, KERNEL_REQUIRES_COHERENCY, kernel.getKernelInfo().name.c_str());
+            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, KERNEL_REQUIRES_COHERENCY, kernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str());
         }
     }
 
-    if (kernel.getKernelInfo().builtinDispatchBuilder != nullptr) {
-        cl_int err = kernel.getKernelInfo().builtinDispatchBuilder->validateDispatch(&kernel, workDim, Vec3<size_t>(region), Vec3<size_t>(workGroupSize), Vec3<size_t>(globalWorkOffset));
+    if (kernelInfo.builtinDispatchBuilder != nullptr) {
+        cl_int err = kernelInfo.builtinDispatchBuilder->validateDispatch(&kernel, workDim, Vec3<size_t>(region), Vec3<size_t>(workGroupSize), Vec3<size_t>(globalWorkOffset));
         if (err != CL_SUCCESS)
             return err;
     }
 
-    DBG_LOG(PrintDispatchParameters, "Kernel: ", kernel.getKernelInfo().name,
+    DBG_LOG(PrintDispatchParameters, "Kernel: ", kernelInfo.kernelDescriptor.kernelMetadata.kernelName,
             ",LWS:, ", localWorkSizeIn ? localWorkSizeIn[0] : 0,
             ",", localWorkSizeIn ? localWorkSizeIn[1] : 0,
             ",", localWorkSizeIn ? localWorkSizeIn[2] : 0,
             ",GWS:,", globalWorkSizeIn[0],
             ",", globalWorkSizeIn[1],
             ",", globalWorkSizeIn[2],
-            ",SIMD:, ", kernel.getKernelInfo().getMaxSimdSize());
+            ",SIMD:, ", kernelInfo.getMaxSimdSize());
 
-    if (totalWorkItems > kernel.maxKernelWorkGroupSize) {
+    if (totalWorkItems > kernel.getMaxKernelWorkGroupSize()) {
         return CL_INVALID_WORK_GROUP_SIZE;
     }
 
-    enqueueHandler<CL_COMMAND_NDRANGE_KERNEL>(
+    return enqueueHandler<CL_COMMAND_NDRANGE_KERNEL>(
         surfaces,
         false,
         &kernel,
@@ -146,7 +147,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
         numEventsInWaitList,
         eventWaitList,
         event);
-
-    return CL_SUCCESS;
 }
+
 } // namespace NEO

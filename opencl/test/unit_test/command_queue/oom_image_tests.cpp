@@ -1,18 +1,19 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -36,6 +37,7 @@ struct OOMCommandQueueImageTest : public ClDeviceFixture,
     }
 
     void SetUp() override {
+        REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
         ClDeviceFixture::SetUp();
         context = new MockContext(pClDevice);
         CommandQueueFixture::SetUp(context, pClDevice, 0);
@@ -54,7 +56,7 @@ struct OOMCommandQueueImageTest : public ClDeviceFixture,
         }
 
         if (oomSetting.oomISH) {
-            auto &ish = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, oomSize);
+            auto &ish = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, oomSize);
 
             // IndirectHeap may be larger than requested so grab what wasnt requested
             ish.getSpace(ish.getAvailableSpace() - oomSize);
@@ -63,6 +65,9 @@ struct OOMCommandQueueImageTest : public ClDeviceFixture,
     }
 
     void TearDown() override {
+        if (IsSkipped()) {
+            return;
+        }
         delete dstImage;
         delete srcImage;
         context->release();
@@ -76,11 +81,11 @@ struct OOMCommandQueueImageTest : public ClDeviceFixture,
     Image *dstImage = nullptr;
 };
 
-HWTEST_P(OOMCommandQueueImageTest, enqueueCopyImage) {
+HWTEST_P(OOMCommandQueueImageTest, WhenCopyingImageThenMaxAvailableSpaceIsNotExceeded) {
     CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
+    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
 
@@ -100,11 +105,11 @@ HWTEST_P(OOMCommandQueueImageTest, enqueueCopyImage) {
     EXPECT_EQ(CL_SUCCESS, retVal2);
 }
 
-HWTEST_P(OOMCommandQueueImageTest, enqueueFillImage) {
+HWTEST_P(OOMCommandQueueImageTest, WhenFillingImageThenMaxAvailableSpaceIsNotExceeded) {
     CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
+    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
 
@@ -124,11 +129,11 @@ HWTEST_P(OOMCommandQueueImageTest, enqueueFillImage) {
     EXPECT_EQ(CL_SUCCESS, retVal2);
 }
 
-HWTEST_P(OOMCommandQueueImageTest, enqueueReadImage) {
+HWTEST_P(OOMCommandQueueImageTest, WhenReadingImageThenMaxAvailableSpaceIsNotExceeded) {
     CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
+    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
 
@@ -148,11 +153,11 @@ HWTEST_P(OOMCommandQueueImageTest, enqueueReadImage) {
     EXPECT_EQ(CL_SUCCESS, retVal2);
 }
 
-HWTEST_P(OOMCommandQueueImageTest, enqueueWriteImage) {
+HWTEST_P(OOMCommandQueueImageTest, WhenWritingImageThenMaxAvailableSpaceIsNotExceeded) {
     CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
+    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
 

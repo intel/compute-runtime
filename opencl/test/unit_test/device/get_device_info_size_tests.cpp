@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/helpers/string.h"
 
 #include "opencl/source/cl_device/cl_device_info_map.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -15,6 +16,10 @@
 #include "gtest/gtest.h"
 
 #include <memory>
+
+namespace NEO {
+extern const char *latestConformanceVersionPassed;
+} // namespace NEO
 
 using namespace NEO;
 
@@ -26,7 +31,7 @@ struct GetDeviceInfoSize : public ::testing::TestWithParam<std::pair<uint32_t /*
     std::pair<uint32_t, size_t> param;
 };
 
-TEST_P(GetDeviceInfoSize, sizeIsValid) {
+TEST_P(GetDeviceInfoSize, GivenParamWhenGettingDeviceInfoThenSizeIsValid) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     size_t sizeReturned = GetInfo::invalidSourceSize;
@@ -58,8 +63,10 @@ std::pair<uint32_t, size_t> deviceInfoParams2[] = {
     {CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE, sizeof(cl_uint)},
     {CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong)},
     {CL_DEVICE_GLOBAL_VARIABLE_PREFERRED_TOTAL_SIZE, sizeof(size_t)},
-    //    {CL_DEVICE_IL_VERSION, sizeof(char[])},
+    {CL_DEVICE_ILS_WITH_VERSION, sizeof(cl_name_version[1])},
+    {CL_DEVICE_IL_VERSION, sizeof(char[12])},
     {CL_DEVICE_IMAGE_SUPPORT, sizeof(cl_bool)},
+    {CL_DEVICE_LATEST_CONFORMANCE_VERSION_PASSED, strlen(latestConformanceVersionPassed) + 1},
     {CL_DEVICE_LINKER_AVAILABLE, sizeof(cl_bool)},
     {CL_DEVICE_LOCAL_MEM_SIZE, sizeof(cl_ulong)},
     {CL_DEVICE_LOCAL_MEM_TYPE, sizeof(cl_device_local_mem_type)},
@@ -136,7 +143,7 @@ INSTANTIATE_TEST_CASE_P(
 
 struct GetDeviceInfoForImage : public GetDeviceInfoSize {};
 
-TEST_P(GetDeviceInfoForImage, imageInfoSizeIsValid) {
+TEST_P(GetDeviceInfoForImage, GivenParamWhenGettingDeviceInfoThenSizeIsValid) {
     auto device = std::make_unique<ClDevice>(*MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr), platform());
     if (!device->getSharedDeviceInfo().imageSupport) {
         GTEST_SKIP();
@@ -202,6 +209,7 @@ TEST(GetDeviceInfoForImage, givenNotImageParamWhenCallGetDeviceInfoForImageThenS
     EXPECT_NE(paramSize, srcSize);
     EXPECT_NE(paramSize, retSize);
 }
+
 std::pair<uint32_t, size_t> deviceInfoImageParams[] = {
     {CL_DEVICE_IMAGE2D_MAX_HEIGHT, sizeof(size_t)},
     {CL_DEVICE_IMAGE2D_MAX_WIDTH, sizeof(size_t)},

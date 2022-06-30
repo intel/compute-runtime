@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ struct SamplerWithPropertiesTest : public ApiFixture<>,
 };
 
 typedef api_tests clCreateSamplerWithPropertiesTests;
-typedef SamplerWithPropertiesTest clCreateSamplerWithProperties_;
+typedef SamplerWithPropertiesTest clCreateSamplerWithPropertiesTests2;
 
 TEST_F(clCreateSamplerWithPropertiesTests, GivenSamplerPropertiesAndNoReturnPointerWhenCreatingSamplerWithPropertiesThenSamplerIsCreated) {
     cl_sampler sampler = nullptr;
@@ -114,7 +114,7 @@ TEST_F(clCreateSamplerWithPropertiesTests, WhenCreatingSamplerWithPropertiesThen
     }
 }
 
-TEST_P(clCreateSamplerWithProperties_, GivenCorrectParametersWhenCreatingSamplerWithPropertiesThenSamplerIsCreatedAndSuccessIsReturned) {
+TEST_P(clCreateSamplerWithPropertiesTests2, GivenCorrectParametersWhenCreatingSamplerWithPropertiesThenSamplerIsCreatedAndSuccessIsReturned) {
     cl_sampler sampler = nullptr;
     cl_queue_properties properties[] =
         {
@@ -152,7 +152,7 @@ TEST_P(clCreateSamplerWithProperties_, GivenCorrectParametersWhenCreatingSampler
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_P(clCreateSamplerWithProperties_, GivenInvalidPropertiesWhenCreatingSamplerWithPropertiesThenInvalidValueErrorIsReturned) {
+TEST_P(clCreateSamplerWithPropertiesTests2, GivenInvalidPropertiesWhenCreatingSamplerWithPropertiesThenInvalidValueErrorIsReturned) {
     cl_sampler sampler = nullptr;
     cl_queue_properties properties[] =
         {
@@ -234,7 +234,7 @@ static cl_sampler_properties FilterProperties[] =
 };
 
 INSTANTIATE_TEST_CASE_P(api,
-                        clCreateSamplerWithProperties_,
+                        clCreateSamplerWithPropertiesTests2,
                         ::testing::Combine(
                             ::testing::ValuesIn(NormalizdProperties),
                             ::testing::ValuesIn(AddressingProperties),

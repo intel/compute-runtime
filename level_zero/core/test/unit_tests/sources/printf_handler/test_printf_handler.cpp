@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/unit_test/mocks/mock_device.h"
-
-#include "test.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/printf_handler/printf_handler.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
@@ -20,7 +19,7 @@ TEST(PrintfHandler, whenPrintfBufferIscreatedThenCorrectAllocationTypeIsUsed) {
     Mock<L0::DeviceImp> l0Device(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto allocation = PrintfHandler::createPrintfBuffer(&l0Device);
-    EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::PRINTF_SURFACE, allocation->getAllocationType());
+    EXPECT_EQ(NEO::AllocationType::PRINTF_SURFACE, allocation->getAllocationType());
     neoDevice->getMemoryManager()->freeGraphicsMemory(allocation);
 }
 

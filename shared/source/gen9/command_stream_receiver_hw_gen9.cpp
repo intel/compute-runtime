@@ -1,31 +1,23 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/command_stream/command_stream_receiver_hw_bdw_plus.inl"
+#include "shared/source/command_stream/command_stream_receiver_hw_bdw_and_later.inl"
 #include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/gen9/hw_cmds.h"
-#include "shared/source/helpers/blit_commands_helper_bdw_plus.inl"
+#include "shared/source/helpers/blit_commands_helper_bdw_and_later.inl"
+#include "shared/source/helpers/populate_factory.h"
 
 namespace NEO {
 typedef SKLFamily Family;
 static auto gfxCore = IGFX_GEN9_CORE;
 
 template <>
-size_t CommandStreamReceiverHw<Family>::getCmdSizeForComputeMode() {
-    return 0;
-}
-
-template <>
-void CommandStreamReceiverHw<Family>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags) {
-}
-
-template <>
 void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
-    extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[IGFX_MAX_CORE];
+    extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
     commandStreamReceiverFactory[gfxCore] = DeviceCommandStreamReceiver<Family>::create;
 }
 
@@ -59,6 +51,7 @@ const Family::GPGPU_CSR_BASE_ADDRESS Family::cmdInitGpgpuCsrBaseAddress = Family
 const Family::STATE_SIP Family::cmdInitStateSip = Family::STATE_SIP::sInit();
 const Family::BINDING_TABLE_STATE Family::cmdInitBindingTableState = Family::BINDING_TABLE_STATE::sInit();
 const Family::MI_USER_INTERRUPT Family::cmdInitUserInterrupt = Family::MI_USER_INTERRUPT::sInit();
+const Family::XY_BLOCK_COPY_BLT Family::cmdInitXyBlockCopyBlt = Family::XY_BLOCK_COPY_BLT::sInit();
 const Family::XY_SRC_COPY_BLT Family::cmdInitXyCopyBlt = Family::XY_SRC_COPY_BLT::sInit();
 const Family::MI_FLUSH_DW Family::cmdInitMiFlushDw = Family::MI_FLUSH_DW::sInit();
 const Family::XY_COLOR_BLT Family::cmdInitXyColorBlt = Family::XY_COLOR_BLT::sInit();

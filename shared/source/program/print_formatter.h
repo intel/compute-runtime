@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,16 +8,17 @@
 #pragma once
 
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/print.h"
 
-#include <algorithm>
 #include <cctype>
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <string>
 #include <unordered_map>
 
-extern int memcpy_s(void *dst, size_t destSize, const void *src, size_t count);
+extern int memcpy_s(void *dst, size_t destSize, const void *src, size_t count); // NOLINT(readability-identifier-naming)
 
 namespace NEO {
 
@@ -40,14 +41,15 @@ enum class PRINTF_DATA_TYPE : int {
     VECTOR_FLOAT,
     VECTOR_DOUBLE
 };
+static_assert(sizeof(PRINTF_DATA_TYPE) == sizeof(int));
 
 class PrintFormatter {
   public:
     PrintFormatter(const uint8_t *printfOutputBuffer, uint32_t printfOutputBufferMaxSize,
-                   bool using32BitPointers, const StringMap &stringLiteralMap);
+                   bool using32BitPointers, const StringMap *stringLiteralMap = nullptr);
     void printKernelOutput(const std::function<void(char *)> &print = [](char *str) { printToSTDOUT(str); });
 
-    static const size_t maxPrintfOutputLength = 1024;
+    constexpr static size_t maxSinglePrintStringLength = 16 * MemoryConstants::kiloByte;
 
   protected:
     const char *queryPrintfString(uint32_t index) const;
@@ -82,7 +84,7 @@ class PrintFormatter {
     size_t typedPrintToken(char *output, size_t size, const char *formatString) {
         T value = {0};
         read(&value);
-        return simple_sprintf(output, size, formatString, value);
+        return simpleSprintf(output, size, formatString, value);
     }
 
     template <class T>
@@ -99,9 +101,9 @@ class PrintFormatter {
 
         for (int i = 0; i < valueCount; i++) {
             read(&value);
-            charactersPrinted += simple_sprintf(output + charactersPrinted, size - charactersPrinted, strippedFormat, value);
+            charactersPrinted += simpleSprintf(output + charactersPrinted, size - charactersPrinted, strippedFormat, value);
             if (i < valueCount - 1) {
-                charactersPrinted += simple_sprintf(output + charactersPrinted, size - charactersPrinted, "%c", ',');
+                charactersPrinted += simpleSprintf(output + charactersPrinted, size - charactersPrinted, "%c", ',');
             }
         }
 
@@ -112,11 +114,14 @@ class PrintFormatter {
         return charactersPrinted;
     }
 
+    std::unique_ptr<char[]> output;
+
     const uint8_t *printfOutputBuffer = nullptr; // buffer extracted from the kernel, contains values to be printed
     uint32_t printfOutputBufferSize = 0;         // size of the data contained in the buffer
 
-    const StringMap &stringLiteralMap;
     bool using32BitPointers = false;
+    const bool usesStringMap;
+    const StringMap *stringLiteralMap;
 
     uint32_t currentOffset = 0; // current position in currently parsed buffer
 };

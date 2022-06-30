@@ -1,19 +1,19 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/test_macros/test.h"
 
-#include "opencl/source/helpers/memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_gmm.h"
-#include "test.h"
 
 using namespace NEO;
 
@@ -62,7 +62,7 @@ HWTEST_F(CreateImage3DTest, WhenCreatingImageThenPropertiesAreSetCorrectly) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-    auto image = Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+    auto image = Image::create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                                flags, 0, surfaceFormat, &imageDesc, nullptr, retVal);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -91,12 +91,14 @@ HWTEST_F(CreateImage3DTest, GivenTiledOrForcedLinearWhenCreatingImageThenPropert
     bool defaultTiling = DebugManager.flags.ForceLinearImages.get();
     imageDesc.image_height = 1;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-    auto imgInfo = MockGmm::initImgInfo(imageDesc, 0, surfaceFormat);
-    MockGmm::queryImgParams(context->getDevice(0)->getGmmClientContext(), imgInfo);
+    auto imageDescriptor = Image::convertDescriptor(imageDesc);
+    auto imgInfo = MockGmm::initImgInfo(imageDescriptor, 0, &surfaceFormat->surfaceFormat);
+    MockGmm::queryImgParams(context->getDevice(0)->getGmmHelper(), imgInfo, false);
+    auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context->getDevice(0)->getDevice());
 
     auto image = Image::create(
         context,
-        {},
+        memoryProperties,
         0,
         0,
         surfaceFormat,
@@ -116,11 +118,11 @@ HWTEST_F(CreateImage3DTest, GivenTiledOrForcedLinearWhenCreatingImageThenPropert
 
     // query again
     surfaceFormat = Image::getSurfaceFormatFromTable(0, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-    MockGmm::queryImgParams(context->getDevice(0)->getGmmClientContext(), imgInfo);
+    MockGmm::queryImgParams(context->getDevice(0)->getGmmHelper(), imgInfo, false);
 
     image = Image::create(
         context,
-        {},
+        memoryProperties,
         0,
         0,
         surfaceFormat,

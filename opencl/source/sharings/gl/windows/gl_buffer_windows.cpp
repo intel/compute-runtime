@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,11 @@ Buffer *GlBuffer::createSharedGlBuffer(Context *context, cl_mem_flags flags, uns
     }
 
     auto glHandler = new GlBuffer(sharingFunctions, bufferId);
-    return Buffer::createSharedBuffer(context, flags, glHandler, graphicsAllocation);
+    auto rootDeviceIndex = graphicsAllocation->getRootDeviceIndex();
+    auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
+    multiGraphicsAllocation.addAllocation(graphicsAllocation);
+
+    return Buffer::createSharedBuffer(context, flags, glHandler, std::move(multiGraphicsAllocation));
 }
 
 void GlBuffer::synchronizeObject(UpdateData &updateData) {
@@ -142,12 +146,12 @@ GraphicsAllocation *GlBuffer::createGraphicsAllocation(Context *context, unsigne
         AllocationProperties properties = {context->getDevice(0)->getRootDeviceIndex(),
                                            false, // allocateMemory
                                            0u,    // size
-                                           GraphicsAllocation::AllocationType::SHARED_BUFFER,
+                                           AllocationType::SHARED_BUFFER,
                                            false, // isMultiStorageAllocation
-                                           context->getDeviceBitfieldForAllocation()};
+                                           context->getDeviceBitfieldForAllocation(context->getDevice(0)->getRootDeviceIndex())};
         // couldn't find allocation for reuse - create new
         graphicsAllocation =
-            context->getMemoryManager()->createGraphicsAllocationFromSharedHandle(bufferInfo.globalShareHandle, properties, true);
+            context->getMemoryManager()->createGraphicsAllocationFromSharedHandle(bufferInfo.globalShareHandle, properties, true, false);
     }
 
     if (!graphicsAllocation) {
@@ -159,8 +163,8 @@ GraphicsAllocation *GlBuffer::createGraphicsAllocation(Context *context, unsigne
         sharingFunctions->graphicsAllocationsForGlBufferReuse.push_back(std::make_pair(bufferId, graphicsAllocation));
         if (bufferInfo.pGmmResInfo) {
             DEBUG_BREAK_IF(graphicsAllocation->getDefaultGmm() != nullptr);
-            auto clientContext = context->getDevice(0)->getRootDeviceEnvironment().getGmmClientContext();
-            graphicsAllocation->setDefaultGmm(new Gmm(clientContext, bufferInfo.pGmmResInfo));
+            auto gmmHelper = context->getDevice(0)->getRootDeviceEnvironment().getGmmHelper();
+            graphicsAllocation->setDefaultGmm(new Gmm(gmmHelper, bufferInfo.pGmmResInfo));
         }
     }
 

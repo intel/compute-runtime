@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,10 +8,10 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/program/print_formatter.h"
-#include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
@@ -26,6 +26,8 @@ using namespace iOpenCL;
 class PrintFormatterTest : public testing::Test {
   public:
     std::unique_ptr<PrintFormatter> printFormatter;
+    static const size_t maxPrintfOutputLength = 4096;
+    static const size_t printfBufferSize = 1024;
 
     std::string format;
     uint8_t buffer;
@@ -33,10 +35,10 @@ class PrintFormatterTest : public testing::Test {
     MockGraphicsAllocation *data;
     MockKernel *kernel;
     std::unique_ptr<MockProgram> program;
-    std::unique_ptr<KernelInfo> kernelInfo;
+    std::unique_ptr<MockKernelInfo> kernelInfo;
     ClDevice *device;
 
-    uint8_t underlyingBuffer[PrintFormatter::maxPrintfOutputLength];
+    uint8_t underlyingBuffer[maxPrintfOutputLength];
     uint32_t offset;
 
     int maxStringIndex;
@@ -45,14 +47,14 @@ class PrintFormatterTest : public testing::Test {
     void SetUp() override {
         offset = 4;
         maxStringIndex = 0;
-        data = new MockGraphicsAllocation(underlyingBuffer, PrintFormatter::maxPrintfOutputLength);
+        data = new MockGraphicsAllocation(underlyingBuffer, maxPrintfOutputLength);
 
-        kernelInfo = std::make_unique<KernelInfo>();
+        kernelInfo = std::make_unique<MockKernelInfo>();
         device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
-        program = std::make_unique<MockProgram>(*device->getExecutionEnvironment());
+        program = std::make_unique<MockProgram>(toClDeviceVector(*device));
         kernel = new MockKernel(program.get(), *kernelInfo, *device);
 
-        printFormatter = std::unique_ptr<PrintFormatter>(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), PrintFormatter::maxPrintfOutputLength, is32bit, kernelInfo->patchInfo.stringDataMap));
+        printFormatter = std::unique_ptr<PrintFormatter>(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), printfBufferSize, is32bit, &kernelInfo->kernelDescriptor.kernelMetadata.printfStringsMap));
 
         underlyingBuffer[0] = 0;
         underlyingBuffer[1] = 0;
@@ -125,23 +127,9 @@ class PrintFormatterTest : public testing::Test {
     }
 
     int injectFormatString(std::string str) {
-        size_t strSize = str.length() + 1;
-
-        SPatchString printfString;
-        printfString.Token = PATCH_TOKEN_STRING;
-        printfString.Size = static_cast<uint32_t>(sizeof(SPatchString) + strSize);
-
-        printfString.Index = maxStringIndex++;
-        printfString.StringSize = static_cast<uint32_t>(strSize);
-
-        cl_char *pPrintfString = new cl_char[printfString.Size];
-        memcpy_s(pPrintfString, sizeof(SPatchString), &printfString, sizeof(SPatchString));
-        memcpy_s((cl_char *)pPrintfString + sizeof(printfString), strSize, str.c_str(), strSize);
-
-        kernelInfo->storePatchToken(reinterpret_cast<SPatchString *>(pPrintfString));
-
-        delete[] pPrintfString;
-        return printfString.Index;
+        auto index = maxStringIndex++;
+        kernelInfo->addToPrintfStringsMap(index, str);
+        return index;
     }
 };
 
@@ -171,17 +159,17 @@ Int8Params byteValues[] = {
 class PrintfInt8Test : public PrintFormatterTest,
                        public ::testing::WithParamInterface<Int8Params> {};
 
-TEST_P(PrintfInt8Test, GivenPrintfFormatWhenConatinsIntThenInstertValueIntoString) {
+TEST_P(PrintfInt8Test, GivenFormatContainingIntWhenPrintingThenValueIsInserted) {
     auto input = GetParam();
 
     auto stringIndex = injectFormatString(input.format);
     storeData(stringIndex);
     injectValue(input.value);
 
-    char referenceOutput[PrintFormatter::maxPrintfOutputLength];
-    char actualOutput[PrintFormatter::maxPrintfOutputLength];
+    char referenceOutput[maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
 
     snprintf(referenceOutput, sizeof(referenceOutput), input.format.c_str(), input.value);
 
@@ -211,17 +199,17 @@ Int32Params intValues[] = {
 class PrintfInt32Test : public PrintFormatterTest,
                         public ::testing::WithParamInterface<Int32Params> {};
 
-TEST_P(PrintfInt32Test, GivenPrintfFormatWhenConatinsIntThenInstertValueIntoString) {
+TEST_P(PrintfInt32Test, GivenFormatContainingIntWhenPrintingThenValueIsInserted) {
     auto input = GetParam();
 
     auto stringIndex = injectFormatString(input.format);
     storeData(stringIndex);
     injectValue(input.value);
 
-    char referenceOutput[PrintFormatter::maxPrintfOutputLength];
-    char actualOutput[PrintFormatter::maxPrintfOutputLength];
+    char referenceOutput[maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
 
     snprintf(referenceOutput, sizeof(referenceOutput), input.format.c_str(), input.value);
 
@@ -252,34 +240,34 @@ Uint32Params uintValues[] = {
 class PrintfUint32Test : public PrintFormatterTest,
                          public ::testing::WithParamInterface<Uint32Params> {};
 
-TEST_P(PrintfUint32Test, GivenPrintfFormatWhenConatinsUintThenInstertValueIntoString) {
+TEST_P(PrintfUint32Test, GivenFormatContainingUintWhenPrintingThenValueIsInserted) {
     auto input = GetParam();
 
     auto stringIndex = injectFormatString(input.format);
     storeData(stringIndex);
     injectValue(input.value);
 
-    char referenceOutput[PrintFormatter::maxPrintfOutputLength];
-    char actualOutput[PrintFormatter::maxPrintfOutputLength];
+    char referenceOutput[maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
 
     snprintf(referenceOutput, sizeof(referenceOutput), input.format.c_str(), input.value);
 
     EXPECT_STREQ(referenceOutput, actualOutput);
 }
 
-TEST_P(PrintfUint32Test, GivenPrintfFormatWhenBufferSizeExceedsPrintfBufferCapacityThenUseSmallerValue) {
+TEST_P(PrintfUint32Test, GivenBufferSizeGreaterThanPrintBufferWhenPrintingThenBufferIsTrimmed) {
     auto input = GetParam();
-    printFormatter = std::unique_ptr<PrintFormatter>(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), 0, is32bit, kernelInfo->patchInfo.stringDataMap));
+    printFormatter = std::unique_ptr<PrintFormatter>(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), 0, is32bit, &kernelInfo->kernelDescriptor.kernelMetadata.printfStringsMap));
 
     auto stringIndex = injectFormatString(input.format);
     storeData(stringIndex);
     injectValue(input.value);
 
-    char referenceOutput[PrintFormatter::maxPrintfOutputLength] = "";
-    char actualOutput[PrintFormatter::maxPrintfOutputLength] = "";
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    char referenceOutput[maxPrintfOutputLength] = "";
+    char actualOutput[maxPrintfOutputLength] = "";
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
 
     EXPECT_STREQ(referenceOutput, actualOutput);
 }
@@ -304,17 +292,17 @@ FloatParams floatValues[] = {
 class PrintfFloatTest : public PrintFormatterTest,
                         public ::testing::WithParamInterface<FloatParams> {};
 
-TEST_P(PrintfFloatTest, GivenPrintfFormatWhenConatinsFloatThenInstertValueIntoString) {
+TEST_P(PrintfFloatTest, GivenFormatContainingFloatWhenPrintingThenValueIsInserted) {
     auto input = GetParam();
 
     auto stringIndex = injectFormatString(input.format);
     storeData(stringIndex);
     injectValue(input.value);
 
-    char referenceOutput[PrintFormatter::maxPrintfOutputLength];
-    char actualOutput[PrintFormatter::maxPrintfOutputLength];
+    char referenceOutput[maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
 
     snprintf(referenceOutput, sizeof(referenceOutput), input.format.c_str(), input.value);
 
@@ -347,17 +335,17 @@ DoubleParams doubleToFloatValues[] = {
     {"%.6a", 0.1},
     {"%10.2a", 9990.235}};
 
-TEST_P(PrintfDoubleToFloatTest, GivenPrintfFormatWhenConatinsFloatFormatAndDoubleValueThenInstertValueIntoString) {
+TEST_P(PrintfDoubleToFloatTest, GivenFormatContainingFloatAndDoubleWhenPrintingThenValueIsInserted) {
     auto input = GetParam();
 
     auto stringIndex = injectFormatString(input.format);
     storeData(stringIndex);
     injectValue(input.value);
 
-    char referenceOutput[PrintFormatter::maxPrintfOutputLength];
-    char actualOutput[PrintFormatter::maxPrintfOutputLength];
+    char referenceOutput[maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
 
     snprintf(referenceOutput, sizeof(referenceOutput), input.format.c_str(), input.value);
 
@@ -392,17 +380,17 @@ DoubleParams doubleValues[] = {
 class PrintfDoubleTest : public PrintFormatterTest,
                          public ::testing::WithParamInterface<DoubleParams> {};
 
-TEST_P(PrintfDoubleTest, GivenPrintfFormatWhenConatinsDoubleThenInstertValueIntoString) {
+TEST_P(PrintfDoubleTest, GivenFormatContainingDoubleWhenPrintingThenValueIsInserted) {
     auto input = GetParam();
 
     auto stringIndex = injectFormatString(input.format);
     storeData(stringIndex);
     injectValue(input.value);
 
-    char referenceOutput[PrintFormatter::maxPrintfOutputLength];
-    char actualOutput[PrintFormatter::maxPrintfOutputLength];
+    char referenceOutput[maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
 
     if (input.format[input.format.length() - 1] == 'F')
         input.format[input.format.length() - 1] = 'f';
@@ -424,15 +412,15 @@ std::pair<std::string, std::string> specialValues[] = {
 class PrintfSpecialTest : public PrintFormatterTest,
                           public ::testing::WithParamInterface<std::pair<std::string, std::string>> {};
 
-TEST_P(PrintfSpecialTest, DoublePercentageIntoOne) {
+TEST_P(PrintfSpecialTest, GivenFormatContainingDoublePercentageWhenPrintingThenValueIsInsertedCorrectly) {
     auto input = GetParam();
 
     auto stringIndex = injectFormatString(input.first);
     storeData(stringIndex);
 
-    char actualOutput[PrintFormatter::maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
 
     EXPECT_STREQ(input.second.c_str(), actualOutput);
 }
@@ -454,15 +442,15 @@ std::pair<std::string, std::string> stringValues[] = {
     {R"(test\n)", "test\n"},
 };
 
-TEST_P(PrintfNoArgumentsTest, GivenPrintfFormatWhenNoArgumentsThenEscapeChars) {
+TEST_P(PrintfNoArgumentsTest, GivenNoArgumentsWhenPrintingThenCharsAreEscaped) {
     auto input = GetParam();
 
     auto stringIndex = injectFormatString(input.first);
     storeData(stringIndex);
 
-    char actualOutput[PrintFormatter::maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
 
     EXPECT_STREQ(input.second.c_str(), actualOutput);
 }
@@ -478,7 +466,7 @@ StringParams stringValues2[] = {
 class PrintfStringTest : public PrintFormatterTest,
                          public ::testing::WithParamInterface<StringParams> {};
 
-TEST_P(PrintfStringTest, GivenPrintfFormatWhenStringArgumentThenInsertValue) {
+TEST_P(PrintfStringTest, GivenFormatContainingStringWhenPrintingThenValueIsInserted) {
     auto input = GetParam();
 
     auto stringIndex = injectFormatString(input.format);
@@ -487,10 +475,10 @@ TEST_P(PrintfStringTest, GivenPrintfFormatWhenStringArgumentThenInsertValue) {
     auto inputIndex = injectFormatString(input.value);
     injectStringValue(inputIndex);
 
-    char referenceOutput[PrintFormatter::maxPrintfOutputLength];
-    char actualOutput[PrintFormatter::maxPrintfOutputLength];
+    char referenceOutput[maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
 
     snprintf(referenceOutput, sizeof(referenceOutput), input.format.c_str(), input.value.c_str());
 
@@ -501,22 +489,74 @@ INSTANTIATE_TEST_CASE_P(PrintfStringTest,
                         PrintfStringTest,
                         ::testing::ValuesIn(stringValues2));
 
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenStringArgumentButNullTokenThenPrintNull) {
+TEST_F(PrintFormatterTest, GivenLongStringValueWhenPrintedThenFullStringIsPrinted) {
+    char testedLongString[maxPrintfOutputLength];
+    memset(testedLongString, 'a', maxPrintfOutputLength - 1);
+    testedLongString[maxPrintfOutputLength - 1] = '\0';
+
+    auto stringIndex = injectFormatString(testedLongString);
+    storeData(stringIndex);
+
+    char actualOutput[maxPrintfOutputLength];
+
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+
+    EXPECT_STREQ(testedLongString, actualOutput);
+}
+
+TEST_F(PrintFormatterTest, GivenStringSpecifierWhenLongStringIsPassedAsValueThenFullStringIsPrinted) {
+    char testedLongString[maxPrintfOutputLength];
+    memset(testedLongString, 'a', maxPrintfOutputLength - 5);
+    testedLongString[maxPrintfOutputLength - 5] = '\0';
+
+    auto stringIndex = injectFormatString("%s");
+    storeData(stringIndex);
+
+    auto inputIndex = injectFormatString(testedLongString);
+    injectStringValue(inputIndex);
+
+    char actualOutput[maxPrintfOutputLength];
+
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+
+    EXPECT_STREQ(testedLongString, actualOutput);
+}
+
+TEST_F(PrintFormatterTest, GivenTooLongStringWhenPrintedThenOutputIsTruncated) {
+    std::unique_ptr<char[]> testedLongString(new char[PrintFormatter::maxSinglePrintStringLength + 1024]);
+    memset(testedLongString.get(), 'a', PrintFormatter::maxSinglePrintStringLength + 1024 - 1);
+    testedLongString[PrintFormatter::maxSinglePrintStringLength + 1024 - 1] = '\0';
+
+    auto stringIndex = injectFormatString(testedLongString.get());
+    storeData(stringIndex);
+
+    std::unique_ptr<char[]> actualOutput(new char[PrintFormatter::maxSinglePrintStringLength + 1024]);
+
+    printFormatter->printKernelOutput([&actualOutput](char *str) { 
+        size_t length = strnlen_s(str, PrintFormatter::maxSinglePrintStringLength + 1024);
+        strncpy_s(actualOutput.get(), PrintFormatter::maxSinglePrintStringLength + 1024, str, length); });
+
+    auto testedLength = strnlen_s(testedLongString.get(), PrintFormatter::maxSinglePrintStringLength + 1024);
+    auto actualLength = strnlen_s(actualOutput.get(), PrintFormatter::maxSinglePrintStringLength + 1024);
+    EXPECT_GT(testedLength, actualLength);
+}
+
+TEST_F(PrintFormatterTest, GivenNullTokenWhenPrintingThenNullIsInserted) {
     auto stringIndex = injectFormatString("%s");
     storeData(stringIndex);
 
     storeData(PRINTF_DATA_TYPE::VECTOR_INT);
     storeData(0);
 
-    char actualOutput[PrintFormatter::maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
 
     EXPECT_STREQ("(null)", actualOutput);
 }
 
 // ----------------------- Vector channel count ---------------------------------
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVector2ThenInsertAllValues) {
+TEST_F(PrintFormatterTest, GivenVector2WhenPrintingThenAllValuesAreInserted) {
     int channelCount = 2;
 
     auto stringIndex = injectFormatString("%v2d");
@@ -530,14 +570,14 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVector2ThenInsertAllValues) {
     for (int i = 0; i < channelCount; i++)
         storeData(i + 1);
 
-    char actualOutput[PrintFormatter::maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
 
     EXPECT_STREQ("1,2", actualOutput);
 }
 
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVector4ThenInsertAllValues) {
+TEST_F(PrintFormatterTest, GivenVector4WhenPrintingThenAllValuesAreInserted) {
     int channelCount = 4;
 
     auto stringIndex = injectFormatString("%v4d");
@@ -551,14 +591,14 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVector4ThenInsertAllValues) {
     for (int i = 0; i < channelCount; i++)
         storeData(i + 1);
 
-    char actualOutput[PrintFormatter::maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
 
     EXPECT_STREQ("1,2,3,4", actualOutput);
 }
 
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVector8ThenInsertAllValues) {
+TEST_F(PrintFormatterTest, GivenVector8WhenPrintingThenAllValuesAreInserted) {
     int channelCount = 8;
 
     auto stringIndex = injectFormatString("%v8d");
@@ -572,14 +612,14 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVector8ThenInsertAllValues) {
     for (int i = 0; i < channelCount; i++)
         storeData(i + 1);
 
-    char actualOutput[PrintFormatter::maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
 
     EXPECT_STREQ("1,2,3,4,5,6,7,8", actualOutput);
 }
 
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVector16ThenInsertAllValues) {
+TEST_F(PrintFormatterTest, GivenVector16WhenPrintingThenAllValuesAreInserted) {
     int channelCount = 16;
 
     auto stringIndex = injectFormatString("%v16d");
@@ -593,15 +633,15 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVector16ThenInsertAllValues) {
     for (int i = 0; i < channelCount; i++)
         storeData(i + 1);
 
-    char actualOutput[PrintFormatter::maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
 
     EXPECT_STREQ("1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16", actualOutput);
 }
 
 // ------------------- vector types ----------------------------
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVectorOfBytesThenInsertAllValues) {
+TEST_F(PrintFormatterTest, GivenVectorOfBytesWhenPrintingThenAllValuesAreInserted) {
     int channelCount = 2;
 
     auto stringIndex = injectFormatString("%v2hhd");
@@ -614,14 +654,14 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVectorOfBytesThenInsertAllValues
     storeData<int8_t>(1);
     storeData<int8_t>(2);
 
-    char actualOutput[PrintFormatter::maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
 
     EXPECT_STREQ("1,2", actualOutput);
 }
 
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVectorOfShortsThenInsertAllValues) {
+TEST_F(PrintFormatterTest, GivenVectorOfShortsWhenPrintingThenAllValuesAreInserted) {
     int channelCount = 2;
 
     auto stringIndex = injectFormatString("%v2hd");
@@ -634,14 +674,14 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVectorOfShortsThenInsertAllValue
     storeData<int16_t>(1);
     storeData<int16_t>(2);
 
-    char actualOutput[PrintFormatter::maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
 
     EXPECT_STREQ("1,2", actualOutput);
 }
 
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVectorOfIntsThenInsertAllValues) {
+TEST_F(PrintFormatterTest, GivenVectorOfIntsWhenPrintingThenAllValuesAreInserted) {
     int channelCount = 2;
 
     auto stringIndex = injectFormatString("%v2d");
@@ -654,14 +694,14 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVectorOfIntsThenInsertAllValues)
     storeData<int32_t>(1);
     storeData<int32_t>(2);
 
-    char actualOutput[PrintFormatter::maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
 
     EXPECT_STREQ("1,2", actualOutput);
 }
 
-TEST_F(PrintFormatterTest, GivenPrintfSpecialVectorFormatWhenVectorOfIntsThenInsertAllValues) {
+TEST_F(PrintFormatterTest, GivenSpecialVectorWhenPrintingThenAllValuesAreInserted) {
     int channelCount = 2;
 
     auto stringIndex = injectFormatString("%v2hld");
@@ -674,13 +714,13 @@ TEST_F(PrintFormatterTest, GivenPrintfSpecialVectorFormatWhenVectorOfIntsThenIns
     storeData<int32_t>(1);
     storeData<int32_t>(2);
 
-    char actualOutput[PrintFormatter::maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
 
     EXPECT_STREQ("1,2", actualOutput);
 }
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVectorOfLongsThenInsertAllValues) {
+TEST_F(PrintFormatterTest, GivenVectorOfLongsWhenPrintingThenAllValuesAreInserted) {
     int channelCount = 2;
 
     auto stringIndex = injectFormatString("%v2lld");
@@ -693,14 +733,14 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVectorOfLongsThenInsertAllValues
     storeData<int64_t>(1);
     storeData<int64_t>(2);
 
-    char actualOutput[PrintFormatter::maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
 
     EXPECT_STREQ("1,2", actualOutput);
 }
 
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVectorOfFloatsThenInsertAllValues) {
+TEST_F(PrintFormatterTest, GivenVectorOfFloatsWhenPrintingThenAllValuesAreInserted) {
     int channelCount = 2;
 
     auto stringIndex = injectFormatString("%v2f");
@@ -713,14 +753,14 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVectorOfFloatsThenInsertAllValue
     storeData<float>(1.0);
     storeData<float>(2.0);
 
-    char actualOutput[PrintFormatter::maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
 
     EXPECT_STREQ("1.000000,2.000000", actualOutput);
 }
 
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVectorOfDoublesThenInsertAllValues) {
+TEST_F(PrintFormatterTest, GivenVectorOfDoublesWhenPrintingThenAllValuesAreInserted) {
     int channelCount = 2;
 
     auto stringIndex = injectFormatString("%v2f");
@@ -733,14 +773,14 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVectorOfDoublesThenInsertAllValu
     storeData<double>(1.0);
     storeData<double>(2.0);
 
-    char actualOutput[PrintFormatter::maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
 
     EXPECT_STREQ("1.000000,2.000000", actualOutput);
 }
 
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenPointerThenInsertAddress) {
+TEST_F(PrintFormatterTest, GivenPointerWhenPrintingThenValueIsInserted) {
     auto stringIndex = injectFormatString("%p");
     storeData(stringIndex);
 
@@ -756,21 +796,21 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenPointerThenInsertAddress) {
         storeData(padding);
     }
 
-    char actualOutput[PrintFormatter::maxPrintfOutputLength];
-    char referenceOutput[PrintFormatter::maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
+    char referenceOutput[maxPrintfOutputLength];
 
     snprintf(referenceOutput, sizeof(referenceOutput), "%p", reinterpret_cast<void *>(&temp));
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
 
     EXPECT_STREQ(referenceOutput, actualOutput);
 }
 
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenPointerWith32BitKernelThenPrint32BitPointer) {
-    printFormatter.reset(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), PrintFormatter::maxPrintfOutputLength, true, kernelInfo->patchInfo.stringDataMap));
+TEST_F(PrintFormatterTest, GivenPointerWith32BitKernelWhenPrintingThen32BitPointerIsPrinted) {
+    printFormatter.reset(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), printfBufferSize, true, &kernelInfo->kernelDescriptor.kernelMetadata.printfStringsMap));
     auto stringIndex = injectFormatString("%p");
     storeData(stringIndex);
-    kernelInfo->gpuPointerSize = 4;
+    kernelInfo->kernelDescriptor.kernelAttributes.gpuPointerSize = 4;
 
     storeData(PRINTF_DATA_TYPE::POINTER);
 
@@ -784,17 +824,17 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenPointerWith32BitKernelThenPrint3
     uint32_t padding = 0xdeadbeef;
     storeData(padding);
 
-    char actualOutput[PrintFormatter::maxPrintfOutputLength];
-    char referenceOutput[PrintFormatter::maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
+    char referenceOutput[maxPrintfOutputLength];
 
     snprintf(referenceOutput, sizeof(referenceOutput), "%p", pointer);
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
 
     EXPECT_STREQ(referenceOutput, actualOutput);
 }
 
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhen2ByteVectorsThenParseDataBufferProperly) {
+TEST_F(PrintFormatterTest, Given2ByteVectorsWhenPrintingThenDataBufferParsedProperly) {
     int channelCount = 4;
 
     auto stringIndex = injectFormatString("%v4hhd %v4hhd");
@@ -824,21 +864,49 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhen2ByteVectorsThenParseDataBufferP
     for (int i = 0; i < 12; i++)
         storeData(static_cast<int8_t>(0));
 
-    char actualOutput[PrintFormatter::maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
 
     EXPECT_STREQ("1,2,3,4 1,2,3,4", actualOutput);
 }
 
 TEST_F(PrintFormatterTest, GivenEmptyBufferWhenPrintingThenFailSafely) {
-    char actualOutput[PrintFormatter::maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
     actualOutput[0] = 0;
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
     EXPECT_STREQ("", actualOutput);
 }
 
-TEST(printToSTDOUTTest, GivenStringWhenPrintingToSTDOUTThenExpectOutput) {
+TEST_F(PrintFormatterTest, GivenNoStringMapAndBufferWithFormatStringThenItIsPrintedProperly) {
+    printFormatter.reset(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), printfBufferSize, true));
+    const char *formatString = "test string";
+    storeData(formatString);
+
+    char output[maxPrintfOutputLength];
+    printFormatter->printKernelOutput([&output](char *str) { strncpy_s(output, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    EXPECT_STREQ(formatString, output);
+}
+
+TEST_F(PrintFormatterTest, GivenNoStringMapAndBufferWithFormatStringAnd2StringsThenDataIsParsedAndPrintedProperly) {
+    printFormatter.reset(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), printfBufferSize, true));
+    const char *formatString = "%s %s";
+    storeData(formatString);
+
+    const char *string1 = "str1";
+    storeData(PRINTF_DATA_TYPE::POINTER);
+    storeData(string1);
+    const char *string2 = "str2";
+    storeData(PRINTF_DATA_TYPE::POINTER);
+    storeData(string2);
+
+    const char *expectedOutput = "str1 str2";
+    char output[maxPrintfOutputLength];
+    printFormatter->printKernelOutput([&output](char *str) { strncpy_s(output, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    EXPECT_STREQ(expectedOutput, output);
+}
+
+TEST(printToSTDOUTTest, GivenStringWhenPrintingToStdoutThenOutputOccurs) {
     testing::internal::CaptureStdout();
     printToSTDOUT("test");
     std::string output = testing::internal::GetCapturedStdout();
@@ -847,7 +915,7 @@ TEST(printToSTDOUTTest, GivenStringWhenPrintingToSTDOUTThenExpectOutput) {
 
 TEST(simpleSprintf, GivenEmptyFormatStringWhenSimpleSprintfIsCalledThenBailOutWith0) {
     char out[1024] = {7, 0};
-    auto ret = simple_sprintf<float>(out, sizeof(out), "", 3.0f);
+    auto ret = simpleSprintf<float>(out, sizeof(out), "", 3.0f);
     EXPECT_EQ(0U, ret);
     EXPECT_EQ(0, out[0]);
     EXPECT_EQ(0, out[1]);

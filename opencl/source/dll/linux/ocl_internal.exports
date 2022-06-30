@@ -17,6 +17,7 @@
       clRetainContext;
       clReleaseContext;
       clGetContextInfo;
+      clSetContextDestructorCallback;
       clCreateCommandQueue;
       clRetainCommandQueue;
       clReleaseCommandQueue;
@@ -121,7 +122,6 @@
       clSetProgramSpecializationConstant;
       clCreateBufferWithProperties;
       clCreateImageWithProperties;
-      clGetKernelArgInfo;
       clGetImageParamsINTEL;
       clCreatePerfCountersCommandQueueINTEL;
       clCreateAcceleratorINTEL;

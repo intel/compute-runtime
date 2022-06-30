@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/common_types.h"
+
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/cl_device/cl_device_vector.h"
 #include "opencl/source/helpers/base_object.h"
@@ -30,7 +32,6 @@ struct OpenCLObjectMapper<_cl_platform_id> {
     typedef class Platform DerivedType;
 };
 
-using DeviceVector = std::vector<std::unique_ptr<Device>>;
 class Platform : public BaseObject<_cl_platform_id> {
   public:
     static const cl_ulong objectMagic = 0x8873ACDEF2342133LL;
@@ -73,5 +74,5 @@ class Platform : public BaseObject<_cl_platform_id> {
     std::once_flag initializeExtensionsWithVersionOnce;
 };
 
-extern std::vector<std::unique_ptr<Platform>> platformsImpl;
+extern std::vector<std::unique_ptr<Platform>> *platformsImpl;
 } // namespace NEO

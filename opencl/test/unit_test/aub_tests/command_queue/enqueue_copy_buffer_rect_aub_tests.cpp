@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,11 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "test.h"
 
 #include <algorithm>
 
@@ -41,7 +41,7 @@ struct CopyBufferRectHw
 
 typedef CopyBufferRectHw AUBCopyBufferRect;
 
-HWTEST_P(AUBCopyBufferRect, simple) {
+HWTEST_P(AUBCopyBufferRect, WhenCopyingThenExpectationsMet) {
     //3D UINT8 buffer 20x20x20
     static const size_t rowPitch = 20;
     static const size_t slicePitch = rowPitch * rowPitch;
@@ -107,23 +107,19 @@ HWTEST_P(AUBCopyBufferRect, simple) {
     uint8_t src[rowPitch * slicePitch];
     memset(src, 0, sizeof(src));
 
-    auto tDst = pDestMemory;
     auto tSrc = ptrOffset(pSrcMemory, srcOrigin[0] + srcOrigin[1] * rowPitch + srcOrigin[2] * slicePitch);
     auto tRef = ptrOffset(src, dstOrigin[0] + dstOrigin[1] * rowPitch + dstOrigin[2] * slicePitch);
 
     for (unsigned int z = 0; z < regionZ; z++) {
-        auto pDst = tDst;
         auto pSrc = tSrc;
         auto pRef = tRef;
 
         for (unsigned int y = 0; y < regionY; y++) {
             memcpy(pRef, pSrc, region[0]);
 
-            pDst += rowPitch;
             pSrc += rowPitch;
             pRef += rowPitch;
         }
-        tDst += slicePitch;
         tSrc += slicePitch;
         tRef += slicePitch;
     }

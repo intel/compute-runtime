@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,7 @@ ScratchSpaceControllerBase::ScratchSpaceControllerBase(uint32_t rootDeviceIndex,
 }
 
 void ScratchSpaceControllerBase::setRequiredScratchSpace(void *sshBaseAddress,
+                                                         uint32_t scratchSlot,
                                                          uint32_t requiredPerThreadScratchSize,
                                                          uint32_t requiredPerThreadPrivateScratchSize,
                                                          uint32_t currentTaskCount,
@@ -30,7 +31,7 @@ void ScratchSpaceControllerBase::setRequiredScratchSpace(void *sshBaseAddress,
                                                          bool &stateBaseAddressDirty,
                                                          bool &vfeStateDirty) {
     size_t requiredScratchSizeInBytes = requiredPerThreadScratchSize * computeUnitsUsedForScratch;
-    if (requiredScratchSizeInBytes && (!scratchAllocation || scratchSizeBytes < requiredScratchSizeInBytes)) {
+    if (requiredScratchSizeInBytes && (scratchSizeBytes < requiredScratchSizeInBytes)) {
         if (scratchAllocation) {
             scratchAllocation->updateTaskCount(currentTaskCount, osContext.getContextId());
             csrAllocationStorage.storeAllocation(std::unique_ptr<GraphicsAllocation>(scratchAllocation), TEMPORARY_ALLOCATION);
@@ -46,7 +47,7 @@ void ScratchSpaceControllerBase::setRequiredScratchSpace(void *sshBaseAddress,
 }
 
 void ScratchSpaceControllerBase::createScratchSpaceAllocation() {
-    scratchAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, scratchSizeBytes, GraphicsAllocation::AllocationType::SCRATCH_SURFACE});
+    scratchAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, scratchSizeBytes, AllocationType::SCRATCH_SURFACE, this->csrAllocationStorage.getDeviceBitfield()});
     UNRECOVERABLE_IF(scratchAllocation == nullptr);
 }
 
@@ -73,6 +74,30 @@ uint64_t ScratchSpaceControllerBase::getScratchPatchAddress() {
 }
 
 void ScratchSpaceControllerBase::reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) {
+    if (heapType == IndirectHeap::Type::SURFACE_STATE) {
+        auto &hwHelper = HwHelper::get(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->platform.eRenderCoreFamily);
+        auto surfaceStateSize = hwHelper.getRenderSurfaceStateSize();
+        indirectHeap->getSpace(surfaceStateSize);
+    }
 }
 
+void ScratchSpaceControllerBase::programHeaps(HeapContainer &heapContainer,
+                                              uint32_t offset,
+                                              uint32_t requiredPerThreadScratchSize,
+                                              uint32_t requiredPerThreadPrivateScratchSize,
+                                              uint32_t currentTaskCount,
+                                              OsContext &osContext,
+                                              bool &stateBaseAddressDirty,
+                                              bool &vfeStateDirty) {
+}
+
+void ScratchSpaceControllerBase::programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
+                                                                       uint32_t requiredPerThreadScratchSize,
+                                                                       uint32_t requiredPerThreadPrivateScratchSize,
+                                                                       uint32_t currentTaskCount,
+                                                                       OsContext &osContext,
+                                                                       bool &stateBaseAddressDirty,
+                                                                       bool &vfeStateDirty,
+                                                                       NEO::CommandStreamReceiver *csr) {
+}
 } // namespace NEO

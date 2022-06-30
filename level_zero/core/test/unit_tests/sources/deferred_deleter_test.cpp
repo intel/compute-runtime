@@ -11,6 +11,6 @@
 
 using namespace NEO;
 
-TEST(DeferredDeleterHelper, GivenDefferedDeleterHelperWhenCheckIFDeferrDeleterIsEnabledThenFalseIsReturned) {
+TEST(DeferredDeleterHelper, GivenDeferredDeleterHelperWhenCheckIFDeferrDeleterIsEnabledThenFalseIsReturned) {
     EXPECT_FALSE(isDeferredDeleterEnabled());
 }
