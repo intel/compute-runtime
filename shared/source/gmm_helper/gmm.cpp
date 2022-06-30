@@ -37,7 +37,7 @@ Gmm::Gmm(GmmHelper *gmmHelper, const void *alignedPtr, size_t alignedSize, size_
 
     resourceParams.Usage = gmmResourceUsage;
     resourceParams.Flags.Info.Linear = 1;
-    resourceParams.Flags.Info.Cacheable = 1;
+    resourceParams.Flags.Info.Cacheable = !CacheSettingsHelper::isUncachedType(gmmResourceUsage);
     resourceParams.Flags.Gpu.Texture = 1;
 
     if (alignedPtr) {
