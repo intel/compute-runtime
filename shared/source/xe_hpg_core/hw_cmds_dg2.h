@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "shared/source/xe_hpg_core/hw_cmds_base.h"
+#include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
 #include "device_ids_configs_dg2.h"
 

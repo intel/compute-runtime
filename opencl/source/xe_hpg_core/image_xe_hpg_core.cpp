@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/xe_hpg_core/hw_cmds_base.h"
+#include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
 #include "opencl/source/mem_obj/image.inl"
 

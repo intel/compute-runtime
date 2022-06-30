@@ -13,7 +13,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/utilities/lookup_array.h"
-#include "shared/source/xe_hpc_core/hw_cmds_base.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 
 using Family = NEO::XE_HPC_COREFamily;
 

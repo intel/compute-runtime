@@ -12,7 +12,7 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/utilities/lookup_array.h"
-#include "shared/source/xe_hpg_core/hw_cmds_base.h"
+#include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
 using Family = NEO::XE_HPG_COREFamily;
 

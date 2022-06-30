@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/xe_hpg_core/hw_cmds_base.h"
+#include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 using Family = NEO::XE_HPG_COREFamily;
 constexpr static auto gfxCore = IGFX_XE_HPG_CORE;
 

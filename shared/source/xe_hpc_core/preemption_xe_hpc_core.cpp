@@ -7,7 +7,7 @@
 
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/preemption.inl"
-#include "shared/source/xe_hpc_core/hw_cmds_base.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 
 namespace NEO {
 

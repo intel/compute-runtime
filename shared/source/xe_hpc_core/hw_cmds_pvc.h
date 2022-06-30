@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "shared/source/xe_hpc_core/hw_cmds_base.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 
 #include "device_ids_configs_pvc.h"
 

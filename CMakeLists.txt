@@ -293,6 +293,8 @@ else()
   add_definitions(-DPURGE_DEBUG_KEY_NAMES=0)
 endif()
 
+set_property(GLOBAL PROPERTY NEO_INCLUDE_DIRECTORIES "")
+
 if(NOT NEO_SKIP_UNIT_TESTS)
   if(NOT DEFINED GTEST_REPEAT)
     set(GTEST_REPEAT 1)
@@ -817,6 +819,9 @@ else()
 endif()
 
 add_subdirectory_unique(shared)
+
+get_property(NEO_INCLUDE_DIRECTORIES GLOBAL PROPERTY NEO_INCLUDE_DIRECTORIES)
+include_directories(${NEO_INCLUDE_DIRECTORIES})
 
 if(NEO_BUILD_WITH_OCL)
   add_subdirectory_unique(opencl)

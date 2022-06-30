@@ -156,7 +156,7 @@ macro(SET_FLAGS_FOR CORE_TYPE)
     endif()
     string(TOLOWER ${CORE_TYPE} MAP_${SKU_NAME}_CORE_lower)
     string(TOLOWER ${SKU_NAME} MAP_${SKU_NAME}_lower)
-    set(MAP_${SKU_NAME}_CORE_lower "${CORE_PREFIX}${MAP_${SKU_NAME}_CORE_lower}" CACHE STRING "Core name for SKU" FORCE)
+    set(MAP_${SKU_NAME}_CORE_lower "${CORE_PREFIX}${MAP_${SKU_NAME}_CORE_lower}${CORE_SUFFIX}" CACHE STRING "Core name for SKU" FORCE)
     set(MAP_${SKU_NAME}_lower ${MAP_${SKU_NAME}_lower} CACHE STRING "SKU in lower case" FORCE)
   endforeach()
 

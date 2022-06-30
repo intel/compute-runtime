@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/image/image_surface_state.h"
-#include "shared/source/xe_hpg_core/hw_cmds_base.h"
+#include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
 namespace NEO {
 

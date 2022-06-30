@@ -8,7 +8,7 @@
 #include "shared/source/command_stream/command_stream_receiver_with_aub_dump.inl"
 #include "shared/source/os_interface/windows/device_command_stream.inl"
 #include "shared/source/os_interface/windows/wddm_device_command_stream.inl"
-#include "shared/source/xe_hpc_core/hw_cmds_base.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 
 namespace NEO {
 

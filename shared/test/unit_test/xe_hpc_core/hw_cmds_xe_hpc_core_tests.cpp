@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/xe_hpc_core/hw_cmds_base.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 #include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
