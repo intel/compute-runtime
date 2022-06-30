@@ -249,7 +249,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     uint64_t offsetInterfaceDescriptor = offsetInterfaceDescriptorTable + interfaceDescriptorIndex * sizeof(INTERFACE_DESCRIPTOR_DATA);
 
     auto bindingTablePrefetchSize = std::min(31u, static_cast<uint32_t>(kernel.getNumberOfBindingTableStates()));
-    if (resetBindingTablePrefetch()) {
+
+    if (!EncodeSurfaceState<GfxFamily>::doBindingTablePrefetch()) {
         bindingTablePrefetchSize = 0;
     }
 

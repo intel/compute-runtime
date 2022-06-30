@@ -155,11 +155,6 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
 }
 
 template <typename GfxFamily>
-bool HardwareCommandsHelper<GfxFamily>::resetBindingTablePrefetch() {
-    return false;
-}
-
-template <typename GfxFamily>
 void HardwareCommandsHelper<GfxFamily>::setInterfaceDescriptorOffset(
     WALKER_TYPE *walkerCmd,
     uint32_t &interfaceDescriptorIndex) {
