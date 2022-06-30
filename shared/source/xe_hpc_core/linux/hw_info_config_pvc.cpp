@@ -55,5 +55,44 @@ int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OS
     return 0;
 }
 
+template <>
+uint64_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) {
+
+    if (osIface == nullptr) {
+        return 0;
+    }
+    auto pDrm = osIface->getDriverModel()->as<Drm>();
+    uint64_t memoryPhysicalSize = 0;
+    if (pDrm->getDeviceMemoryPhysicalSizeInBytes(subDeviceIndex, memoryPhysicalSize) == false) {
+        return 0;
+    }
+
+    return memoryPhysicalSize;
+}
+
+template <>
+uint32_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) {
+
+    if (osIface == nullptr) {
+        return 0;
+    }
+
+    auto pDrm = osIface->getDriverModel()->as<Drm>();
+    uint32_t memoryMaxClkRateInMhz = 0;
+    if (pDrm->getDeviceMemoryMaxClockRateInMhz(subDeviceIndex, memoryMaxClkRateInMhz) == false) {
+        return 0;
+    }
+
+    return memoryMaxClkRateInMhz;
+}
+
+template <>
+uint64_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryMaxBandWidthInBytesPerSecond(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) {
+    uint64_t memoryMaxClkRateInMhz = getDeviceMemoryMaxClkRate(hwInfo, osIface, subDeviceIndex);
+    const uint64_t numberOfHbmStacksPerTile = 4u;
+    const uint64_t memoryBusWidth = 128u;
+    return memoryMaxClkRateInMhz * 1000 * 1000 * numberOfHbmStacksPerTile * memoryBusWidth / 8;
+}
+
 template class HwInfoConfigHw<gfxProduct>;
 } // namespace NEO

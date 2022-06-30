@@ -18,6 +18,8 @@ struct MockHwInfoConfigHw : NEO::HwInfoConfigHw<productFamily> {
     bool getUuid(Device *device, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) const override;
     uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const override;
     int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) override;
+    uint64_t getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) override;
+    uint32_t getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) override;
 
     bool use128MbEdram = false;
     bool enableMidThreadPreemption = false;

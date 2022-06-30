@@ -51,22 +51,6 @@ PVCTEST_F(DeviceTestPvc, givenPvcAStepWhenCreatingMultiTileDeviceThenExpectImpli
     delete device;
 }
 
-PVCTEST_F(DeviceTestPvc, whenCallingGetMemoryPropertiesWithNonNullPtrThenPropertiesAreReturned) {
-    uint32_t count = 0;
-    ze_result_t res = device->getMemoryProperties(&count, nullptr);
-    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(1u, count);
-
-    ze_device_memory_properties_t memProperties = {};
-    res = device->getMemoryProperties(&count, &memProperties);
-    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(1u, count);
-
-    EXPECT_EQ(memProperties.maxClockRate, 3200u);
-    EXPECT_EQ(memProperties.maxBusWidth, this->neoDevice->getDeviceInfo().addressBits);
-    EXPECT_EQ(memProperties.totalSize, this->neoDevice->getDeviceInfo().globalMemSize);
-}
-
 PVCTEST_F(DeviceTestPvc, GivenPvcWhenGettingPhysicalEuSimdWidthThenReturn16) {
     ze_device_properties_t properties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     device->getProperties(&properties);

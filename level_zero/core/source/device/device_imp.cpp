@@ -481,8 +481,10 @@ ze_result_t DeviceImp::getMemoryProperties(uint32_t *pCount, ze_device_memory_pr
     auto &hwInfo = this->getHwInfo();
     auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
     strcpy_s(pMemProperties->name, ZE_MAX_DEVICE_NAME, hwInfoConfig.getDeviceMemoryName().c_str());
-    pMemProperties->maxClockRate = hwInfoConfig.getDeviceMemoryMaxClkRate(hwInfo);
+    auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
+    pMemProperties->maxClockRate = hwInfoConfig.getDeviceMemoryMaxClkRate(hwInfo, osInterface, 0);
     pMemProperties->maxBusWidth = deviceInfo.addressBits;
+
     if (this->isImplicitScalingCapable() ||
         this->getNEODevice()->getNumGenericSubDevices() == 0) {
         pMemProperties->totalSize = deviceInfo.globalMemSize;
@@ -491,6 +493,38 @@ ze_result_t DeviceImp::getMemoryProperties(uint32_t *pCount, ze_device_memory_pr
     }
 
     pMemProperties->flags = 0;
+
+    void *pNext = pMemProperties->pNext;
+    while (pNext) {
+        auto extendedProperties = reinterpret_cast<ze_device_memory_ext_properties_t *>(pMemProperties->pNext);
+        if (extendedProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_MEMORY_EXT_PROPERTIES) {
+
+            // GT_MEMORY_TYPES map to ze_device_memory_ext_type_t
+            const std::array<ze_device_memory_ext_type_t, 5> sysInfoMemType = {
+                ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR4,
+                ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR5,
+                ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
+                ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
+                ZE_DEVICE_MEMORY_EXT_TYPE_GDDR6,
+            };
+
+            extendedProperties->type = sysInfoMemType[hwInfo.gtSystemInfo.MemoryType];
+
+            uint32_t enabledSubDeviceCount = 1;
+            if (this->isImplicitScalingCapable()) {
+                enabledSubDeviceCount = static_cast<uint32_t>(neoDevice->getDeviceBitfield().count());
+            }
+            extendedProperties->physicalSize = hwInfoConfig.getDeviceMemoryPhysicalSizeInBytes(osInterface, 0) * enabledSubDeviceCount;
+            const uint64_t bandwidthInBytesPerSecond = hwInfoConfig.getDeviceMemoryMaxBandWidthInBytesPerSecond(hwInfo, osInterface, 0) * enabledSubDeviceCount;
+
+            // Convert to nano-seconds range
+            extendedProperties->readBandwidth = static_cast<uint32_t>(bandwidthInBytesPerSecond * 1e-9);
+            extendedProperties->writeBandwidth = extendedProperties->readBandwidth;
+            extendedProperties->bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
+        }
+        pNext = const_cast<void *>(extendedProperties->pNext);
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 

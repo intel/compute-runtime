@@ -117,16 +117,6 @@ bool isBaseDieA0(const HardwareInfo &hwInfo) {
 }
 
 template <>
-uint32_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo) {
-    bool isDieA0 = isBaseDieA0(hwInfo);
-    if (isDieA0) {
-        // For IGFX_PVC REV A0 HBM frequency would be 3.2 GT/s = 3.2 * 1000 MT/s = 3200 MT/s
-        return 3200u;
-    }
-    return 0u;
-}
-
-template <>
 bool HwInfoConfigHw<gfxProduct>::isTilePlacementResourceWaRequired(const HardwareInfo &hwInfo) const {
     bool baseDieA0 = isBaseDieA0(hwInfo);
     bool applyWa = ((DebugManager.flags.ForceTile0PlacementForTile1ResourcesWaActive.get() == 1) || baseDieA0);

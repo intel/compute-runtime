@@ -10,6 +10,7 @@
 #include "shared/source/device/root_device.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_inc_base.h"
@@ -1546,13 +1547,61 @@ TEST_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWithNonNullPtrThenPro
     res = device->getMemoryProperties(&count, &memProperties);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
     EXPECT_EQ(1u, count);
-
     auto hwInfo = *NEO::defaultHwInfo;
     auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    EXPECT_EQ(memProperties.maxClockRate, hwInfoConfig.getDeviceMemoryMaxClkRate(hwInfo));
+    EXPECT_EQ(memProperties.maxClockRate, hwInfoConfig.getDeviceMemoryMaxClkRate(hwInfo, nullptr, 0));
     EXPECT_EQ(memProperties.maxBusWidth, this->neoDevice->getDeviceInfo().addressBits);
     EXPECT_EQ(memProperties.totalSize, this->neoDevice->getDeviceInfo().globalMemSize);
     EXPECT_EQ(0u, memProperties.flags);
+}
+
+HWTEST2_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesForMemoryExtPropertiesThenPropertiesAreReturned, MatchAny) {
+    uint32_t count = 0;
+    ze_result_t res = device->getMemoryProperties(&count, nullptr);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(1u, count);
+
+    auto hwInfo = *NEO::defaultHwInfo;
+    MockHwInfoConfigHw<productFamily> hwInfoConfig;
+    VariableBackup<HwInfoConfig *> hwInfoConfigFactoryBackup{&NEO::hwInfoConfigFactory[static_cast<size_t>(hwInfo.platform.eProductFamily)]};
+    hwInfoConfigFactoryBackup = &hwInfoConfig;
+
+    ze_device_memory_properties_t memProperties = {};
+    ze_device_memory_ext_properties_t memExtProperties = {};
+    memExtProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MEMORY_EXT_PROPERTIES;
+    memProperties.pNext = &memExtProperties;
+    res = device->getMemoryProperties(&count, &memProperties);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(1u, count);
+    const std::array<ze_device_memory_ext_type_t, 5> sysInfoMemType = {
+        ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR4,
+        ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR5,
+        ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
+        ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
+        ZE_DEVICE_MEMORY_EXT_TYPE_GDDR6,
+    };
+
+    auto bandwidthPerNanoSecond = hwInfoConfig.getDeviceMemoryMaxBandWidthInBytesPerSecond(hwInfo, nullptr, 0) / 1000000000;
+
+    EXPECT_EQ(memExtProperties.type, sysInfoMemType[hwInfo.gtSystemInfo.MemoryType]);
+    EXPECT_EQ(memExtProperties.physicalSize, hwInfoConfig.getDeviceMemoryPhysicalSizeInBytes(nullptr, 0));
+    EXPECT_EQ(memExtProperties.readBandwidth, bandwidthPerNanoSecond);
+    EXPECT_EQ(memExtProperties.writeBandwidth, memExtProperties.readBandwidth);
+    EXPECT_EQ(memExtProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
+}
+
+TEST_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWhenPnextIsNonNullAndStypeIsUnSupportedThenNoErrorIsReturned) {
+    uint32_t count = 0;
+    ze_result_t res = device->getMemoryProperties(&count, nullptr);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(1u, count);
+
+    ze_device_memory_properties_t memProperties = {};
+    ze_device_memory_ext_properties_t memExtProperties = {};
+    memExtProperties.stype = ZE_STRUCTURE_TYPE_FORCE_UINT32;
+    memProperties.pNext = &memExtProperties;
+    res = device->getMemoryProperties(&count, &memProperties);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 }
 
 struct DeviceHasNoDoubleFp64Test : public ::testing::Test {
@@ -1883,6 +1932,42 @@ TEST_F(MultipleDevicesEnabledImplicitScalingTest, GivenImplicitScalingEnabledWhe
     device->getProperties(&deviceProperties);
     EXPECT_EQ((gtSysInfo.SubSliceCount / gtSysInfo.SliceCount), deviceProperties.numSubslicesPerSlice);
     EXPECT_EQ((gtSysInfo.SliceCount * numSubDevices), deviceProperties.numSlices);
+}
+
+HWTEST2_F(MultipleDevicesEnabledImplicitScalingTest, GivenImplicitScalingEnabledDeviceWhenCallingGetMemoryPropertiesForMemoryExtPropertiesThenPropertiesAreReturned, MatchAny) {
+    uint32_t count = 0;
+    L0::Device *device = driverHandle->devices[0];
+    auto hwInfo = *NEO::defaultHwInfo;
+    ze_result_t res = device->getMemoryProperties(&count, nullptr);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(1u, count);
+
+    MockHwInfoConfigHw<productFamily> hwInfoConfig;
+    VariableBackup<HwInfoConfig *> hwInfoConfigFactoryBackup{&NEO::hwInfoConfigFactory[static_cast<size_t>(hwInfo.platform.eProductFamily)]};
+    hwInfoConfigFactoryBackup = &hwInfoConfig;
+
+    ze_device_memory_properties_t memProperties = {};
+    ze_device_memory_ext_properties_t memExtProperties = {};
+    memExtProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MEMORY_EXT_PROPERTIES;
+    memProperties.pNext = &memExtProperties;
+    res = device->getMemoryProperties(&count, &memProperties);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(1u, count);
+    const std::array<ze_device_memory_ext_type_t, 5> sysInfoMemType = {
+        ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR4,
+        ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR5,
+        ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
+        ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
+        ZE_DEVICE_MEMORY_EXT_TYPE_GDDR6,
+    };
+
+    auto bandwidthPerNanoSecond = hwInfoConfig.getDeviceMemoryMaxBandWidthInBytesPerSecond(hwInfo, nullptr, 0) / 1000000000;
+
+    EXPECT_EQ(memExtProperties.type, sysInfoMemType[hwInfo.gtSystemInfo.MemoryType]);
+    EXPECT_EQ(memExtProperties.physicalSize, hwInfoConfig.getDeviceMemoryPhysicalSizeInBytes(nullptr, 0) * numSubDevices);
+    EXPECT_EQ(memExtProperties.readBandwidth, bandwidthPerNanoSecond * numSubDevices);
+    EXPECT_EQ(memExtProperties.writeBandwidth, memExtProperties.readBandwidth);
+    EXPECT_EQ(memExtProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
 }
 
 TEST_F(MultipleDevicesTest, whenRetrievingNumberOfSubdevicesThenCorrectNumberIsReturned) {
@@ -3300,7 +3385,7 @@ TEST_F(DeviceSimpleTests, WhenGettingKernelPropertiesThenSuccessIsReturned) {
 }
 
 TEST_F(DeviceSimpleTests, WhenGettingMemoryPropertiesThenSuccessIsReturned) {
-    ze_device_memory_properties_t properties;
+    ze_device_memory_properties_t properties = {};
     uint32_t count = 1;
     auto result = device->getMemoryProperties(&count, &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

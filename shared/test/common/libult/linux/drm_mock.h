@@ -262,6 +262,33 @@ class DrmMock : public Drm {
         uint16_t flags;
     };
     StackVec<WaitUserFenceParams, 1> waitUserFenceParams;
+
+    bool storedGetDeviceMemoryMaxClockRateInMhzStatus = true;
+    bool useBaseGetDeviceMemoryMaxClockRateInMhz = true;
+    bool getDeviceMemoryMaxClockRateInMhz(uint32_t tileId, uint32_t &clkRate) override {
+
+        if (useBaseGetDeviceMemoryMaxClockRateInMhz == true) {
+            return Drm::getDeviceMemoryMaxClockRateInMhz(tileId, clkRate);
+        }
+
+        if (storedGetDeviceMemoryMaxClockRateInMhzStatus == true) {
+            clkRate = 800;
+        }
+        return storedGetDeviceMemoryMaxClockRateInMhzStatus;
+    }
+
+    bool storedGetDeviceMemoryPhysicalSizeInBytesStatus = true;
+    bool useBaseGetDeviceMemoryPhysicalSizeInBytes = true;
+    bool getDeviceMemoryPhysicalSizeInBytes(uint32_t tileId, uint64_t &physicalSize) override {
+        if (useBaseGetDeviceMemoryPhysicalSizeInBytes == true) {
+            return Drm::getDeviceMemoryPhysicalSizeInBytes(tileId, physicalSize);
+        }
+
+        if (storedGetDeviceMemoryPhysicalSizeInBytesStatus == true) {
+            physicalSize = 1024;
+        }
+        return storedGetDeviceMemoryPhysicalSizeInBytesStatus;
+    }
 };
 
 class DrmMockNonFailing : public DrmMock {

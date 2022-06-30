@@ -53,10 +53,5 @@ void HwInfoConfigHw<gfxProduct>::getKernelExtendedProperties(uint32_t *fp16, uin
     *fp64 = 0u;
 }
 
-template <>
-uint32_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo) {
-    return 2800u;
-}
-
 template class HwInfoConfigHw<gfxProduct>;
 } // namespace NEO

@@ -171,6 +171,29 @@ std::string Drm::getSysFsPciPath() {
     return {};
 }
 
+bool Drm::readSysFsAsString(const std::string &relativeFilePath, std::string &readString) {
+
+    auto devicePath = getSysFsPciPath();
+    if (devicePath.empty()) {
+        return false;
+    }
+
+    const std::string fileName = devicePath + relativeFilePath;
+    int fd = SysCalls::open(fileName.c_str(), O_RDONLY);
+    if (fd < 0) {
+        return false;
+    }
+
+    ssize_t bytesRead = SysCalls::pread(fd, readString.data(), readString.size() - 1, 0);
+    NEO::SysCalls::close(fd);
+    if (bytesRead <= 0) {
+        return false;
+    }
+
+    std::replace(readString.begin(), readString.end(), '\n', '\0');
+    return true;
+}
+
 int Drm::queryGttSize(uint64_t &gttSizeOutput) {
     GemContextParam contextParam = {0};
     contextParam.param = I915_CONTEXT_PARAM_GTT_SIZE;
@@ -804,6 +827,40 @@ int Drm::getMaxGpuFrequency(HardwareInfo &hwInfo, int &maxGpuFrequency) {
         }
     }
     return getMaxGpuFrequencyOfDevice(*this, sysFsPciPath, maxGpuFrequency);
+}
+
+bool Drm::getDeviceMemoryMaxClockRateInMhz(uint32_t tileId, uint32_t &clkRate) {
+    const std::string relativefilePath = "/gt/gt" + std::to_string(tileId) + "/mem_RP0_freq_mhz";
+    std::string readString(64, '\0');
+    errno = 0;
+    if (readSysFsAsString(relativefilePath, readString) == false) {
+        return false;
+    }
+
+    char *endPtr = nullptr;
+    uint32_t retClkRate = static_cast<uint32_t>(std::strtoul(readString.data(), &endPtr, 10));
+    if ((endPtr == readString.data()) || (errno != 0)) {
+        return false;
+    }
+    clkRate = retClkRate;
+    return true;
+}
+
+bool Drm::getDeviceMemoryPhysicalSizeInBytes(uint32_t tileId, uint64_t &physicalSize) {
+    const std::string relativefilePath = "/gt/gt" + std::to_string(tileId) + "/addr_range";
+    std::string readString(64, '\0');
+    errno = 0;
+    if (readSysFsAsString(relativefilePath, readString) == false) {
+        return false;
+    }
+
+    char *endPtr = nullptr;
+    uint64_t retSize = static_cast<uint64_t>(std::strtoull(readString.data(), &endPtr, 16));
+    if ((endPtr == readString.data()) || (errno != 0)) {
+        return false;
+    }
+    physicalSize = retSize;
+    return true;
 }
 
 bool Drm::useVMBindImmediate() const {

@@ -16,9 +16,11 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
 #include "gtest/gtest.h"
 
@@ -100,6 +102,180 @@ TEST(DrmTest, GivenInvalidPciPathWhenFrequencyIsQueriedThenReturnError) {
     EXPECT_NE(0, ret);
 
     EXPECT_EQ(0, maxFrequency);
+}
+
+TEST(DrmTest, GivenValidSysfsNodeWhenGetDeviceMemoryMaxClockRateInMhzIsCalledThenReturnSuccess) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.setPciPath("device");
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(SysCalls::sysCallsPread)> mockPread(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        const std::string testData("800");
+        memcpy(buf, testData.data(), testData.length() + 1);
+        return 4;
+    });
+    uint32_t clkRate = 0;
+    EXPECT_TRUE(drm.getDeviceMemoryMaxClockRateInMhz(0, clkRate));
+    EXPECT_EQ(clkRate, 800u);
+}
+
+TEST(DrmTest, GivenValidSysfsNodeWhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenReturnSuccess) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.setPciPath("device");
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(SysCalls::sysCallsPread)> mockPread(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        const std::string testData("800");
+        memcpy(buf, testData.data(), testData.length() + 1);
+        return 4;
+    });
+    uint64_t size = 0;
+    EXPECT_TRUE(drm.getDeviceMemoryPhysicalSizeInBytes(0, size));
+    EXPECT_EQ(2048u, size);
+}
+
+TEST(DrmTest, GivenInValidSysfsNodeWhenGetDeviceMemoryMaxClockRateInMhzIsCalledThenReturnSuccess) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.setPciPath("device");
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return -1;
+    });
+
+    uint32_t clkRate = 0;
+    EXPECT_FALSE(drm.getDeviceMemoryMaxClockRateInMhz(0, clkRate));
+}
+
+TEST(DrmTest, GivenPciPathCouldNotBeRetrievedWhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenReturnZero) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.setPciPath("InvaliDdevice");
+    uint64_t size = 0;
+    EXPECT_FALSE(drm.getDeviceMemoryPhysicalSizeInBytes(0, size));
+}
+
+TEST(DrmTest, GivenInValidSysfsNodeWhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenReturnSuccess) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.setPciPath("device");
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return -1;
+    });
+    uint64_t size = 0;
+    EXPECT_FALSE(drm.getDeviceMemoryPhysicalSizeInBytes(0, size));
+}
+
+TEST(DrmTest, GivenSysfsNodeReadFailsWhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenReturnError) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.setPciPath("device");
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(SysCalls::sysCallsPread)> mockPread(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        const std::string testData("800");
+        memcpy(buf, testData.data(), testData.length() + 1);
+        return 0;
+    });
+    uint64_t size = 0;
+    EXPECT_FALSE(drm.getDeviceMemoryPhysicalSizeInBytes(0, size));
+}
+
+TEST(DrmTest, givenSysfsNodeReadFailsWithErrnoWhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenReturnError) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.setPciPath("device");
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(SysCalls::sysCallsPread)> mockPread(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        const std::string testData("800");
+        memcpy(buf, testData.data(), testData.length() + 1);
+        errno = 1;
+        return 4;
+    });
+    uint64_t size = 0;
+    EXPECT_FALSE(drm.getDeviceMemoryPhysicalSizeInBytes(0, size));
+}
+
+TEST(DrmTest, givenSysfsNodeReadFailsWithImproperDataWhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenReturnError) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.setPciPath("device");
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(SysCalls::sysCallsPread)> mockPread(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        const std::string testData("pqr");
+        memcpy(buf, testData.data(), testData.length() + 1);
+        return 4;
+    });
+    uint64_t size = 0;
+    EXPECT_FALSE(drm.getDeviceMemoryPhysicalSizeInBytes(0, size));
+}
+
+TEST(DrmTest, givenSysfsNodeReadFailsWithErrnoWhenGetDeviceMemoryMaxClockRateInMhzIsCalledThenReturnError) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.setPciPath("device");
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(SysCalls::sysCallsPread)> mockPread(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        const std::string testData("800");
+        memcpy(buf, testData.data(), testData.length() + 1);
+        errno = 1;
+        return 4;
+    });
+    uint32_t clkRate = 0;
+    EXPECT_FALSE(drm.getDeviceMemoryMaxClockRateInMhz(0, clkRate));
+}
+
+TEST(DrmTest, givenSysfsNodeReadFailsWithImproperDataWhenGetDeviceMemoryMaxClockRateInMhzIsCalledThenReturnError) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.setPciPath("device");
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(SysCalls::sysCallsPread)> mockPread(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        const std::string testData("abc");
+        memcpy(buf, testData.data(), testData.length() + 1);
+        return 4;
+    });
+    uint32_t clkRate = 0;
+    EXPECT_FALSE(drm.getDeviceMemoryMaxClockRateInMhz(0, clkRate));
 }
 
 TEST(DrmTest, WhenGettingRevisionIdThenCorrectIdIsReturned) {

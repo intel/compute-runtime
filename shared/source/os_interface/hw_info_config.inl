@@ -95,8 +95,18 @@ uint64_t HwInfoConfigHw<gfxProduct>::getSharedSystemMemCapabilities(const Hardwa
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo) {
+uint32_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) {
     return 0u;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+uint64_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) {
+    return 0;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+uint64_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryMaxBandWidthInBytesPerSecond(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) {
+    return 0;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

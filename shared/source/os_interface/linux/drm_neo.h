@@ -249,6 +249,8 @@ class Drm : public DriverModel {
 
     uint64_t getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion cacheRegion, CachePolicy cachePolicy, bool closEnabled) const;
     bool isVmBindPatIndexProgrammingSupported() const { return vmBindPatIndexProgrammingSupported; }
+    MOCKABLE_VIRTUAL bool getDeviceMemoryMaxClockRateInMhz(uint32_t tileId, uint32_t &clkRate);
+    MOCKABLE_VIRTUAL bool getDeviceMemoryPhysicalSizeInBytes(uint32_t tileId, uint64_t &physicalSize);
 
   protected:
     Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
@@ -265,6 +267,7 @@ class Drm : public DriverModel {
     static std::string getDrmVersion(int fileDescriptor);
     bool queryDeviceIdAndRevision();
     bool queryI915DeviceIdAndRevision();
+    bool readSysFsAsString(const std::string &filePath, std::string &readString);
 
 #pragma pack(1)
     struct PCIConfig {
