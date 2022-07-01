@@ -98,6 +98,7 @@ if [ "${BUILD_RPM}" == "1" ]; then
   if [ "${LOG_CCACHE_STATS}" == "1" ]; then
     ccache -z
   fi
+  export CCACHE_BASEDIR=$(readlink -m $BUILD_DIR/BUILD/compute-runtime-${VERSION}/)
   rpmbuild --rebuild ${REPO_DIR}/../output/SRPMS/intel-opencl-${VERSION}*.src.rpm "${build_args[@]}"
   if [ "${LOG_CCACHE_STATS}" == "1" ]; then
     ccache -s
