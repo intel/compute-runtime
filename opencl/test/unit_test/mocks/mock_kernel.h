@@ -97,12 +97,14 @@ class MockKernel : public Kernel {
   public:
     using Kernel::addAllocationToCacheFlushVector;
     using Kernel::allBufferArgsStateful;
+    using Kernel::anyKernelArgumentUsingSystemMemory;
     using Kernel::auxTranslationRequired;
     using Kernel::containsStatelessWrites;
     using Kernel::dataParameterSimdSize;
     using Kernel::executionType;
     using Kernel::getDevice;
     using Kernel::getHardwareInfo;
+    using Kernel::graphicsAllocationTypeUseSystemMemory;
     using Kernel::hasDirectStatelessAccessToHostMemory;
     using Kernel::hasDirectStatelessAccessToSharedBuffer;
     using Kernel::hasIndirectStatelessAccessToHostMemory;

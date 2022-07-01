@@ -59,16 +59,16 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     };
 
     struct SimpleKernelArgInfo {
-        kernelArgType type;
+        cl_mem_flags svmFlags;
         void *object;
         const void *value;
         size_t size;
-        GraphicsAllocation *pSvmAlloc;
-        cl_mem_flags svmFlags;
-        bool isPatched = false;
-        bool isStatelessUncacheable = false;
+        GraphicsAllocation *svmAllocation;
+        kernelArgType type;
         uint32_t allocId;
         uint32_t allocIdMemoryManagerCounter;
+        bool isPatched = false;
+        bool isStatelessUncacheable = false;
         bool isSetToNullptr = false;
     };
 
@@ -405,89 +405,11 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     const std::map<uint32_t, MemObj *> &getMemObjectsToMigrate() const { return migratableArgsMap; }
     ImplicitArgs *getImplicitArgs() const { return pImplicitArgs.get(); }
     const HardwareInfo &getHardwareInfo() const;
+    bool isAnyKernelArgumentUsingSystemMemory() const {
+        return anyKernelArgumentUsingSystemMemory;
+    }
 
   protected:
-    void
-    makeArgsResident(CommandStreamReceiver &commandStreamReceiver);
-
-    void *patchBufferOffset(const ArgDescPointer &argAsPtr, void *svmPtr, GraphicsAllocation *svmAlloc);
-
-    void patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const ArgDescPointer &arg);
-
-    Kernel(Program *programArg, const KernelInfo &kernelInfo, ClDevice &clDevice);
-    void provideInitializationHints();
-
-    void markArgPatchedAndResolveArgs(uint32_t argIndex);
-    void resolveArgs();
-
-    void reconfigureKernel();
-    bool hasDirectStatelessAccessToSharedBuffer() const;
-    bool hasDirectStatelessAccessToHostMemory() const;
-    bool hasIndirectStatelessAccessToHostMemory() const;
-
-    void addAllocationToCacheFlushVector(uint32_t argIndex, GraphicsAllocation *argAllocation);
-    bool allocationForCacheFlush(GraphicsAllocation *argAllocation) const;
-
-    const ClDevice &getDevice() const {
-        return clDevice;
-    }
-    cl_int patchPrivateSurface();
-
-    bool containsStatelessWrites = true;
-    const ExecutionEnvironment &executionEnvironment;
-    Program *program;
-    ClDevice &clDevice;
-    const KernelInfo &kernelInfo;
-
-    std::vector<SimpleKernelArgInfo> kernelArguments;
-    std::vector<KernelArgHandler> kernelArgHandlers;
-    std::vector<GraphicsAllocation *> kernelSvmGfxAllocations;
-    std::vector<GraphicsAllocation *> kernelUnifiedMemoryGfxAllocations;
-
-    AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::None;
-
-    bool usingSharedObjArgs = false;
-    bool usingImages = false;
-    bool usingImagesOnly = false;
-    bool auxTranslationRequired = false;
-    uint32_t patchedArgumentsNum = 0;
-    uint32_t startOffset = 0;
-    uint32_t statelessUncacheableArgsCount = 0;
-    int32_t threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
-    KernelExecutionType executionType = KernelExecutionType::Default;
-
-    std::vector<PatchInfoData> patchInfoDataList;
-    std::unique_ptr<ImageTransformer> imageTransformer;
-    std::map<uint32_t, MemObj *> migratableArgsMap{};
-
-    bool specialPipelineSelectMode = false;
-    bool svmAllocationsRequireCacheFlush = false;
-    std::vector<GraphicsAllocation *> kernelArgRequiresCacheFlush;
-    UnifiedMemoryControls unifiedMemoryControls{};
-    bool isUnifiedMemorySyncRequired = true;
-    bool debugEnabled = false;
-    uint32_t additionalKernelExecInfo = AdditionalKernelExecInfo::DisableOverdispatch;
-
-    uint32_t *maxWorkGroupSizeForCrossThreadData = &Kernel::dummyPatchLocation;
-    uint32_t maxKernelWorkGroupSize = 0;
-    uint32_t *dataParameterSimdSize = &Kernel::dummyPatchLocation;
-    uint32_t *parentEventOffset = &Kernel::dummyPatchLocation;
-    uint32_t *preferredWkgMultipleOffset = &Kernel::dummyPatchLocation;
-
-    size_t numberOfBindingTableStates = 0u;
-    size_t localBindingTableOffset = 0u;
-
-    std::vector<size_t> slmSizes;
-    uint32_t slmTotalSize = 0u;
-
-    std::unique_ptr<char[]> pSshLocal;
-    uint32_t sshLocalSize = 0u;
-    char *crossThreadData = nullptr;
-    uint32_t crossThreadDataSize = 0u;
-
-    GraphicsAllocation *privateSurface = nullptr;
-    uint64_t privateSurfaceSize = 0u;
-
     struct KernelConfig {
         Vec3<size_t> gws;
         Vec3<size_t> lws;
@@ -523,15 +445,98 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
         bool singleSubdevicePreferred = false;
     };
 
+    Kernel(Program *programArg, const KernelInfo &kernelInfo, ClDevice &clDevice);
+
+    void makeArgsResident(CommandStreamReceiver &commandStreamReceiver);
+
+    void *patchBufferOffset(const ArgDescPointer &argAsPtr, void *svmPtr, GraphicsAllocation *svmAlloc);
+
+    void patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const ArgDescPointer &arg);
+
+    void provideInitializationHints();
+
+    void markArgPatchedAndResolveArgs(uint32_t argIndex);
+    void resolveArgs();
+
+    void reconfigureKernel();
+    bool hasDirectStatelessAccessToSharedBuffer() const;
+    bool hasDirectStatelessAccessToHostMemory() const;
+    bool hasIndirectStatelessAccessToHostMemory() const;
+
+    void addAllocationToCacheFlushVector(uint32_t argIndex, GraphicsAllocation *argAllocation);
+    bool allocationForCacheFlush(GraphicsAllocation *argAllocation) const;
+
+    const ClDevice &getDevice() const {
+        return clDevice;
+    }
+    cl_int patchPrivateSurface();
+
     bool hasTunningFinished(KernelSubmissionData &submissionData);
     bool hasRunFinished(TimestampPacketContainer *timestampContainer);
+    bool graphicsAllocationTypeUseSystemMemory(AllocationType type);
+
+    UnifiedMemoryControls unifiedMemoryControls{};
+
+    std::map<uint32_t, MemObj *> migratableArgsMap{};
 
     std::unordered_map<KernelConfig, KernelSubmissionData, KernelConfigHash> kernelSubmissionMap;
-    bool singleSubdevicePreferredInCurrentEnqueue = false;
 
-    bool kernelHasIndirectAccess = true;
-    MultiDeviceKernel *pMultiDeviceKernel = nullptr;
+    std::vector<SimpleKernelArgInfo> kernelArguments;
+    std::vector<KernelArgHandler> kernelArgHandlers;
+    std::vector<GraphicsAllocation *> kernelSvmGfxAllocations;
+    std::vector<GraphicsAllocation *> kernelUnifiedMemoryGfxAllocations;
+    std::vector<PatchInfoData> patchInfoDataList;
+    std::vector<GraphicsAllocation *> kernelArgRequiresCacheFlush;
+    std::vector<size_t> slmSizes;
+
+    std::unique_ptr<ImageTransformer> imageTransformer;
+    std::unique_ptr<char[]> pSshLocal;
     std::unique_ptr<ImplicitArgs> pImplicitArgs = nullptr;
+
+    uint64_t privateSurfaceSize = 0u;
+
+    size_t numberOfBindingTableStates = 0u;
+    size_t localBindingTableOffset = 0u;
+
+    const ExecutionEnvironment &executionEnvironment;
+    Program *program;
+    ClDevice &clDevice;
+    const KernelInfo &kernelInfo;
+    GraphicsAllocation *privateSurface = nullptr;
+    MultiDeviceKernel *pMultiDeviceKernel = nullptr;
+
+    uint32_t *maxWorkGroupSizeForCrossThreadData = &Kernel::dummyPatchLocation;
+    uint32_t *dataParameterSimdSize = &Kernel::dummyPatchLocation;
+    uint32_t *parentEventOffset = &Kernel::dummyPatchLocation;
+    uint32_t *preferredWkgMultipleOffset = &Kernel::dummyPatchLocation;
+    char *crossThreadData = nullptr;
+
+    AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::None;
+    KernelExecutionType executionType = KernelExecutionType::Default;
+
+    int32_t threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
+
+    uint32_t patchedArgumentsNum = 0;
+    uint32_t startOffset = 0;
+    uint32_t statelessUncacheableArgsCount = 0;
+    uint32_t additionalKernelExecInfo = AdditionalKernelExecInfo::DisableOverdispatch;
+    uint32_t maxKernelWorkGroupSize = 0;
+    uint32_t slmTotalSize = 0u;
+    uint32_t sshLocalSize = 0u;
+    uint32_t crossThreadDataSize = 0u;
+
+    bool containsStatelessWrites = true;
+    bool usingSharedObjArgs = false;
+    bool usingImages = false;
+    bool usingImagesOnly = false;
+    bool auxTranslationRequired = false;
+    bool specialPipelineSelectMode = false;
+    bool svmAllocationsRequireCacheFlush = false;
+    bool isUnifiedMemorySyncRequired = true;
+    bool debugEnabled = false;
+    bool singleSubdevicePreferredInCurrentEnqueue = false;
+    bool kernelHasIndirectAccess = true;
+    bool anyKernelArgumentUsingSystemMemory = false;
 };
 
 } // namespace NEO

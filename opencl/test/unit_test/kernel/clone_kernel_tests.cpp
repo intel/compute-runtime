@@ -471,6 +471,11 @@ TEST_F(CloneKernelTest, givenArgSvmWhenCloningKernelThenKernelInfoIsCorrect) {
 }
 
 TEST_F(CloneKernelTest, givenArgSvmAllocWhenCloningKernelThenKernelInfoIsCorrect) {
+    const ClDeviceInfo &devInfo = device1->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
+
     pKernelInfo->addArgBuffer(0, 0x20, sizeof(void *));
 
     char memory[100] = {};

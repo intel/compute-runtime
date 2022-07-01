@@ -16,6 +16,7 @@ namespace NEO {
 
 class CommandQueue;
 class DispatchInfo;
+class Event;
 class IndirectHeap;
 class Kernel;
 class LinearStream;
@@ -37,6 +38,7 @@ struct HardwareInterfaceWalkerArgs {
     const Vec3<size_t> *numberOfWorkgroups = nullptr;
     const Vec3<size_t> *startOfWorkgroups = nullptr;
     KernelOperation *blockedCommandsData = nullptr;
+    Event *event = nullptr;
     size_t currentDispatchIndex = 0;
     size_t offsetInterfaceDescriptorTable = 0;
     PreemptionMode preemptionMode = PreemptionMode::Initial;

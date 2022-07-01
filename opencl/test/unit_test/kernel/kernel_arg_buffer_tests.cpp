@@ -372,6 +372,11 @@ TEST_F(KernelArgBufferTest, givenBufferInHostMemoryWhenHasDirectStatelessAccessT
 }
 
 TEST_F(KernelArgBufferTest, givenGfxAllocationWhenHasDirectStatelessAccessToHostMemoryIsCalledThenReturnFalse) {
+    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
+
     char data[128];
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
@@ -388,6 +393,11 @@ TEST_F(KernelArgBufferTest, givenGfxAllocationWhenHasDirectStatelessAccessToHost
 }
 
 TEST_F(KernelArgBufferTest, givenGfxAllocationInHostMemoryWhenHasDirectStatelessAccessToHostMemoryIsCalledThenReturnCorrectValue) {
+    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
+
     char data[128];
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
@@ -548,6 +558,11 @@ TEST_F(KernelArgBufferTest, givenSetArgBufferOnKernelWithNoDirectStatelessAccess
 }
 
 TEST_F(KernelArgBufferTest, givenSetArgSvmAllocOnKernelWithDirectStatelessAccessToHostMemoryWhenUpdateAuxTranslationRequiredIsCalledThenIsAuxTranslationRequiredShouldReturnTrue) {
+    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
+
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
@@ -569,6 +584,11 @@ TEST_F(KernelArgBufferTest, givenSetArgSvmAllocOnKernelWithDirectStatelessAccess
 }
 
 TEST_F(KernelArgBufferTest, givenSetArgSvmAllocOnKernelWithNoDirectStatelessAccessToHostMemoryWhenUpdateAuxTranslationRequiredIsCalledThenIsAuxTranslationRequiredShouldReturnFalse) {
+    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
+
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
@@ -761,4 +781,50 @@ HWTEST_F(KernelArgBufferTestBindless, givenUsedBindlessBuffersWhenPatchingSurfac
     retVal = pKernel->setArg(0, sizeof(memObj), &memObj);
 
     EXPECT_NE(0xdeadu, *patchLocation);
+}
+
+TEST_F(KernelArgBufferTest, givenBufferAsHostMemoryWhenSettingKernelArgThenKernelUsesSystemMemory) {
+    MockBuffer buffer;
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
+
+    auto memVal = (cl_mem)&buffer;
+    auto val = &memVal;
+
+    EXPECT_FALSE(pKernel->isAnyKernelArgumentUsingSystemMemory());
+
+    auto retVal = pKernel->setArg(0, sizeof(cl_mem *), val);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(pKernel->isAnyKernelArgumentUsingSystemMemory());
+}
+
+TEST_F(KernelArgBufferTest, givenBufferAsDeviceMemoryWhenSettingKernelArgThenKernelNotUsesSystemMemory) {
+    MockBuffer buffer;
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::BUFFER);
+
+    auto memVal = (cl_mem)&buffer;
+    auto val = &memVal;
+
+    EXPECT_FALSE(pKernel->isAnyKernelArgumentUsingSystemMemory());
+
+    auto retVal = pKernel->setArg(0, sizeof(cl_mem *), val);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_FALSE(pKernel->isAnyKernelArgumentUsingSystemMemory());
+}
+
+TEST_F(KernelArgBufferTest, givenBufferAsDeviceMemoryAndKernelIsAlreadySetToUseSystemWhenSettingKernelArgThenKernelUsesSystemMemory) {
+    MockBuffer buffer;
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::BUFFER);
+
+    auto memVal = (cl_mem)&buffer;
+    auto val = &memVal;
+
+    EXPECT_FALSE(pKernel->isAnyKernelArgumentUsingSystemMemory());
+    pKernel->anyKernelArgumentUsingSystemMemory = true;
+
+    auto retVal = pKernel->setArg(0, sizeof(cl_mem *), val);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(pKernel->isAnyKernelArgumentUsingSystemMemory());
 }

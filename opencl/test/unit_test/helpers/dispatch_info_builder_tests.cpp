@@ -832,6 +832,10 @@ TEST_F(DispatchInfoBuilderTest, GivenSplit3dWhenSettingDispatchGeometryThenMdiSi
 }
 
 TEST_F(DispatchInfoBuilderTest, WhenSettingKernelArgThenAddressesAreCorrect) {
+    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
 
     Buffer *buffer = new MockBuffer();
     auto val = (cl_mem)buffer;
@@ -957,6 +961,11 @@ TEST_F(DispatchInfoBuilderTest, GivenInvalidInputWhenSettingKernelArgThenInvalid
 }
 
 TEST_F(DispatchInfoBuilderTest, GivenNullKernelWhenSettingKernelArgThenSuccessIsReturned) {
+    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
+
     Buffer *buffer = new MockBuffer();
     auto val = (cl_mem)buffer;
     auto pVal = &val;

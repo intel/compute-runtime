@@ -362,7 +362,7 @@ cl_int Kernel::cloneKernel(Kernel *pSourceKernel) {
             break;
         case SVM_OBJ:
             setArgSvm(i, pSourceKernel->getKernelArgInfo(i).size, const_cast<void *>(pSourceKernel->getKernelArgInfo(i).value),
-                      pSourceKernel->getKernelArgInfo(i).pSvmAlloc, pSourceKernel->getKernelArgInfo(i).svmFlags);
+                      pSourceKernel->getKernelArgInfo(i).svmAllocation, pSourceKernel->getKernelArgInfo(i).svmFlags);
             break;
         case SVM_ALLOC_OBJ:
             setArgSvmAlloc(i, const_cast<void *>(pSourceKernel->getKernelArgInfo(i).value),
@@ -881,8 +881,10 @@ cl_int Kernel::setArgSvm(uint32_t argIndex, size_t svmAllocSize, void *svmPtr, G
         patchedArgumentsNum++;
         kernelArguments[argIndex].isPatched = true;
     }
+    if (svmPtr != nullptr) {
+        this->anyKernelArgumentUsingSystemMemory |= true;
+    }
     addAllocationToCacheFlushVector(argIndex, svmAlloc);
-
     return CL_SUCCESS;
 }
 
@@ -893,6 +895,8 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
 
     auto patchLocation = ptrOffset(getCrossThreadData(), argAsPtr.stateless);
     patchWithRequiredSize(patchLocation, argAsPtr.pointerSize, reinterpret_cast<uintptr_t>(svmPtr));
+
+    auto &kernelArgInfo = kernelArguments[argIndex];
 
     bool disableL3 = false;
     bool forceNonAuxMode = false;
@@ -910,7 +914,7 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
         forceNonAuxMode = true;
     }
 
-    bool argWasUncacheable = kernelArguments[argIndex].isStatelessUncacheable;
+    bool argWasUncacheable = kernelArgInfo.isStatelessUncacheable;
     bool argIsUncacheable = svmAlloc ? svmAlloc->isUncacheable() : false;
     statelessUncacheableArgsCount += (argIsUncacheable ? 1 : 0) - (argWasUncacheable ? 1 : 0);
 
@@ -929,15 +933,21 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
     }
 
     storeKernelArg(argIndex, SVM_ALLOC_OBJ, svmAlloc, svmPtr, sizeof(uintptr_t));
-    kernelArguments[argIndex].allocId = allocId;
-    kernelArguments[argIndex].allocIdMemoryManagerCounter = allocId ? this->getContext().getSVMAllocsManager()->allocationsCounter.load() : 0u;
-    kernelArguments[argIndex].isSetToNullptr = nullptr == svmPtr;
-    if (!kernelArguments[argIndex].isPatched) {
+    kernelArgInfo.allocId = allocId;
+    kernelArgInfo.allocIdMemoryManagerCounter = allocId ? this->getContext().getSVMAllocsManager()->allocationsCounter.load() : 0u;
+    kernelArgInfo.isSetToNullptr = nullptr == svmPtr;
+    if (!kernelArgInfo.isPatched) {
         patchedArgumentsNum++;
-        kernelArguments[argIndex].isPatched = true;
+        kernelArgInfo.isPatched = true;
+    }
+    if (!kernelArgInfo.isSetToNullptr) {
+        if (svmAlloc != nullptr) {
+            this->anyKernelArgumentUsingSystemMemory |= graphicsAllocationTypeUseSystemMemory(svmAlloc->getAllocationType());
+        } else {
+            this->anyKernelArgumentUsingSystemMemory |= true;
+        }
     }
     addAllocationToCacheFlushVector(argIndex, svmAlloc);
-
     return CL_SUCCESS;
 }
 
@@ -948,7 +958,7 @@ void Kernel::storeKernelArg(uint32_t argIndex, kernelArgType argType, void *argO
     kernelArguments[argIndex].object = argObject;
     kernelArguments[argIndex].value = argValue;
     kernelArguments[argIndex].size = argSize;
-    kernelArguments[argIndex].pSvmAlloc = argSvmAlloc;
+    kernelArguments[argIndex].svmAllocation = argSvmAlloc;
     kernelArguments[argIndex].svmFlags = argSvmFlags;
 }
 
@@ -1391,8 +1401,12 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
         storeKernelArg(argIndex, BUFFER_OBJ, clMemObj, argVal, argSize);
 
         auto buffer = castToObject<Buffer>(clMemObj);
-        if (!buffer)
+        if (!buffer) {
             return CL_INVALID_MEM_OBJECT;
+        }
+
+        auto gfxAllocationType = buffer->getGraphicsAllocation(rootDeviceIndex)->getAllocationType();
+        this->anyKernelArgumentUsingSystemMemory |= graphicsAllocationTypeUseSystemMemory(gfxAllocationType);
 
         if (buffer->peekSharingHandler()) {
             usingSharedObjArgs = true;
@@ -1449,7 +1463,6 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
         }
 
         addAllocationToCacheFlushVector(argIndex, allocationForCacheFlush);
-
         return CL_SUCCESS;
     } else {
         storeKernelArg(argIndex, BUFFER_OBJ, nullptr, argVal, argSize);
@@ -2235,6 +2248,13 @@ int Kernel::setKernelThreadArbitrationPolicy(uint32_t policy) {
         return CL_INVALID_VALUE;
     }
     return CL_SUCCESS;
+}
+
+bool Kernel::graphicsAllocationTypeUseSystemMemory(AllocationType type) {
+    return (type == AllocationType::BUFFER_HOST_MEMORY) ||
+           (type == AllocationType::EXTERNAL_HOST_PTR) ||
+           (type == AllocationType::SVM_CPU) ||
+           (type == AllocationType::SVM_ZERO_COPY);
 }
 
 } // namespace NEO

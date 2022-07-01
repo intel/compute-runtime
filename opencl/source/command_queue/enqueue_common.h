@@ -447,6 +447,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
     dispatchWalkerArgs.timestampPacketDependencies = &timestampPacketDependencies;
     dispatchWalkerArgs.currentTimestampPacketNodes = timestampPacketContainer.get();
     dispatchWalkerArgs.commandType = commandType;
+    dispatchWalkerArgs.event = event;
 
     HardwareInterface<GfxFamily>::dispatchWalker(
         *this,

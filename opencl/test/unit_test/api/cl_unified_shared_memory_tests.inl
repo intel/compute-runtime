@@ -706,12 +706,16 @@ TEST(clUnifiedSharedMemoryTests, whenDeviceSupportSharedMemoryAllocationsAndSyst
     auto device = mockContext->getDevice(0u);
     REQUIRE_SVM_OR_SKIP(device);
 
-    MockKernelWithInternals mockKernel(*mockContext->getDevice(0u), mockContext.get(), true);
+    MockKernelWithInternals mockKernel(*device, mockContext.get(), true);
 
     auto systemPointer = reinterpret_cast<void *>(0xfeedbac);
 
+    auto kernel = mockKernel.mockMultiDeviceKernel->getKernel(device->getRootDeviceIndex());
+    EXPECT_FALSE(kernel->isAnyKernelArgumentUsingSystemMemory());
+
     auto retVal = clSetKernelArgMemPointerINTEL(mockKernel.mockMultiDeviceKernel, 0, systemPointer);
     EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_TRUE(kernel->isAnyKernelArgumentUsingSystemMemory());
 
     //check if cross thread is updated
     auto crossThreadLocation = reinterpret_cast<uintptr_t *>(ptrOffset(mockKernel.mockKernel->getCrossThreadData(), mockKernel.kernelInfo.argAsPtr(0).stateless));
