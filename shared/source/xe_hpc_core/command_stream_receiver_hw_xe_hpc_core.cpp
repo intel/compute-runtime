@@ -205,6 +205,56 @@ template <>
 template <>
 void BlitCommandsHelper<Family>::appendColorDepth(const BlitProperties &blitProperites, typename Family::XY_COPY_BLT &blitCmd) {}
 
+template <>
+void BlitCommandsHelper<Family>::encodeWa(LinearStream &cmdStream, const BlitProperties &blitProperties, uint32_t &latestSentBcsWaValue) {
+    using MI_LOAD_REGISTER_IMM = typename Family::MI_LOAD_REGISTER_IMM;
+
+    if (DebugManager.flags.EnableBcsSwControlWa.get() <= 0) {
+        return;
+    }
+
+    constexpr int32_t srcInSystemMemOnly = 1;
+    constexpr int32_t dstInSystemMemOnly = 2;
+    constexpr int32_t enableAlways = 4;
+    constexpr uint32_t waEnabledMMioValue = 0x40004;
+    constexpr uint32_t waDisabledMMioValue = 0x40000;
+
+    const bool applyForSrc = (DebugManager.flags.EnableBcsSwControlWa.get() & srcInSystemMemOnly);
+    const bool applyForDst = (DebugManager.flags.EnableBcsSwControlWa.get() & dstInSystemMemOnly);
+    const bool applyAlways = (DebugManager.flags.EnableBcsSwControlWa.get() == enableAlways);
+
+    const bool enableWa = (!blitProperties.srcAllocation->isAllocatedInLocalMemoryPool() && applyForSrc) ||
+                          (!blitProperties.dstAllocation->isAllocatedInLocalMemoryPool() && applyForDst) ||
+                          applyAlways;
+
+    uint32_t newValue = enableWa ? waEnabledMMioValue : waDisabledMMioValue;
+
+    if (newValue == latestSentBcsWaValue) {
+        return;
+    }
+
+    latestSentBcsWaValue = newValue;
+
+    MI_LOAD_REGISTER_IMM cmd = Family::cmdInitLoadRegisterImm;
+    cmd.setRegisterOffset(0x22200);
+    cmd.setDataDword(newValue);
+    cmd.setMmioRemapEnable(true);
+
+    auto lri = cmdStream.getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
+    *lri = cmd;
+}
+
+template <>
+size_t BlitCommandsHelper<Family>::getWaCmdsSize(const BlitPropertiesContainer &blitPropertiesContainer) {
+    using MI_LOAD_REGISTER_IMM = typename Family::MI_LOAD_REGISTER_IMM;
+
+    if (DebugManager.flags.EnableBcsSwControlWa.get() <= 0) {
+        return 0;
+    }
+
+    return (blitPropertiesContainer.size() * sizeof(MI_LOAD_REGISTER_IMM));
+}
+
 template class CommandStreamReceiverHw<Family>;
 template struct BlitCommandsHelper<Family>;
 template void BlitCommandsHelper<Family>::appendBlitCommandsForBuffer<typename Family::XY_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment);

@@ -1075,6 +1075,8 @@ std::optional<uint32_t> CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const B
         TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStream, blitProperties.csrDependencies);
         TimestampPacketHelper::programCsrDependenciesForForTaskCountContainer<GfxFamily>(commandStream, blitProperties.csrDependencies);
 
+        BlitCommandsHelper<GfxFamily>::encodeWa(commandStream, blitProperties, latestSentBcsWaValue);
+
         if (blitProperties.outputTimestampPacket && profilingEnabled) {
             BlitCommandsHelper<GfxFamily>::encodeProfilingStartMmios(commandStream, *blitProperties.outputTimestampPacket);
         }

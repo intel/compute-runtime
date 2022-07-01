@@ -189,6 +189,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     std::unique_ptr<DirectSubmissionHw<GfxFamily, BlitterDispatcher<GfxFamily>>> blitterDirectSubmission;
 
     size_t cmdStreamStart = 0;
+    uint32_t latestSentBcsWaValue = std::numeric_limits<uint32_t>::max();
 };
 
 } // namespace NEO

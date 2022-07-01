@@ -178,5 +178,8 @@ struct BlitCommandsHelper {
     static void encodeProfilingStartMmios(LinearStream &cmdStream, const TagNodeBase &timestampPacketNode);
     static void encodeProfilingEndMmios(LinearStream &cmdStream, const TagNodeBase &timestampPacketNode);
     static size_t getProfilingMmioCmdsSize();
+
+    static void encodeWa(LinearStream &cmdStream, const BlitProperties &blitProperties, uint32_t &latestSentBcsWaValue);
+    static size_t getWaCmdsSize(const BlitPropertiesContainer &blitPropertiesContainer);
 };
 } // namespace NEO

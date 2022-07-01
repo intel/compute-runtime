@@ -142,6 +142,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropert
         size += BlitCommandsHelper<GfxFamily>::estimateBlitCommandSize(blitProperties.copySize, blitProperties.csrDependencies, updateTimestampPacket,
                                                                        profilingEnabled, isImage, rootDeviceEnvironment);
     }
+    size += BlitCommandsHelper<GfxFamily>::getWaCmdsSize(blitPropertiesContainer);
     size += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForAdditonalSynchronization(*rootDeviceEnvironment.getHardwareInfo());
     size += EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite();
     size += blitterDirectSubmission ? sizeof(typename GfxFamily::MI_BATCH_BUFFER_START) : sizeof(typename GfxFamily::MI_BATCH_BUFFER_END);
@@ -509,4 +510,13 @@ size_t BlitCommandsHelper<GfxFamily>::getProfilingMmioCmdsSize() {
 
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::appendBaseAddressOffset(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd, const uint32_t originalSliceIndex, const bool isSource) {}
+
+template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::encodeWa(LinearStream &cmdStream, const BlitProperties &blitProperties, uint32_t &latestSentBcsWaValue) {
+}
+
+template <typename GfxFamily>
+size_t BlitCommandsHelper<GfxFamily>::getWaCmdsSize(const BlitPropertiesContainer &blitPropertiesContainer) {
+    return 0;
+}
 } // namespace NEO
