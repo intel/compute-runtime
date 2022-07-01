@@ -31,6 +31,14 @@ enum class DriverModelType;
 
 extern HwInfoConfig *hwInfoConfigFactory[IGFX_MAX_PRODUCT];
 
+enum class UsmAccessCapabilities {
+    Host = 0,
+    Device,
+    SharedSingleDevice,
+    SharedCrossDevice,
+    SharedSystemCrossDevice
+};
+
 class HwInfoConfig {
   public:
     static HwInfoConfig *get(PRODUCT_FAMILY product) {
@@ -230,6 +238,7 @@ class HwInfoConfigHw : public HwInfoConfig {
 
     void enableCompression(HardwareInfo *hwInfo);
     void enableBlitterOperationsSupport(HardwareInfo *hwInfo);
+    bool getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities capability);
     uint64_t getHostMemCapabilitiesValue();
     bool getHostMemCapabilitiesSupported(const HardwareInfo *hwInfo);
     LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;

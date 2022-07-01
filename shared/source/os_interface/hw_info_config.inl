@@ -16,6 +16,8 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
+#include <bitset>
+
 namespace NEO {
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -59,12 +61,24 @@ void HwInfoConfigHw<gfxProduct>::enableBlitterOperationsSupport(HardwareInfo *hw
 
 template <PRODUCT_FAMILY gfxProduct>
 uint64_t HwInfoConfigHw<gfxProduct>::getDeviceMemCapabilities() {
-    return (UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS);
+    uint64_t capabilities = UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS;
+
+    if (getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities::Device)) {
+        capabilities |= UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS | UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS;
+    }
+
+    return capabilities;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
 uint64_t HwInfoConfigHw<gfxProduct>::getSingleDeviceSharedMemCapabilities() {
-    return (UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS);
+    uint64_t capabilities = UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS;
+
+    if (getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities::SharedSingleDevice)) {
+        capabilities |= UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS | UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS;
+    }
+
+    return capabilities;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -80,7 +94,13 @@ uint64_t HwInfoConfigHw<gfxProduct>::getHostMemCapabilities(const HardwareInfo *
         supported = !!DebugManager.flags.EnableHostUsmSupport.get();
     }
 
-    return (supported ? getHostMemCapabilitiesValue() : 0);
+    uint64_t capabilities = getHostMemCapabilitiesValue();
+
+    if (getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities::Host)) {
+        capabilities |= UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS | UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS;
+    }
+
+    return (supported ? capabilities : 0);
 }
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -92,6 +112,18 @@ uint64_t HwInfoConfigHw<gfxProduct>::getSharedSystemMemCapabilities(const Hardwa
     }
 
     return (supported ? (UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS | UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS | UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS) : 0);
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities capability) {
+    auto supported = false;
+
+    if (DebugManager.flags.EnableUsmConcurrentAccessSupport.get() > 0) {
+        auto capabilityBitset = std::bitset<32>(DebugManager.flags.EnableUsmConcurrentAccessSupport.get());
+        supported = capabilityBitset.test(static_cast<uint32_t>(capability));
+    }
+
+    return supported;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

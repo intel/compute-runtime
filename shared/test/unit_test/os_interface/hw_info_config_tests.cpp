@@ -52,6 +52,57 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenGettingSharedSystemMemCapabiliti
     }
 }
 
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenGettingMemoryCapabilitiesThenCorrectValueIsReturned) {
+    DebugManagerStateRestore restore;
+
+    auto hwInfoConfig = HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+
+    for (auto capabilityBitmask : {0, 0b0001, 0b0010, 0b0100, 0b1000, 0b1111, 0b10000}) {
+        DebugManager.flags.EnableUsmConcurrentAccessSupport.set(capabilityBitmask);
+        std::bitset<32> capabilityBitset(capabilityBitmask);
+
+        auto hostMemCapabilities = hwInfoConfig->getHostMemCapabilities(&pInHwInfo);
+        if (hostMemCapabilities > 0) {
+            if (capabilityBitset.test(static_cast<uint32_t>(UsmAccessCapabilities::Host))) {
+                EXPECT_TRUE(UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS & hostMemCapabilities);
+                EXPECT_TRUE(UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS & hostMemCapabilities);
+            }
+        }
+
+        auto deviceMemCapabilities = hwInfoConfig->getDeviceMemCapabilities();
+        if (deviceMemCapabilities > 0) {
+            if (capabilityBitset.test(static_cast<uint32_t>(UsmAccessCapabilities::Device))) {
+                EXPECT_TRUE(UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS & deviceMemCapabilities);
+                EXPECT_TRUE(UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS & deviceMemCapabilities);
+            }
+        }
+
+        auto singleDeviceSharedMemCapabilities = hwInfoConfig->getSingleDeviceSharedMemCapabilities();
+        if (singleDeviceSharedMemCapabilities > 0) {
+            if (capabilityBitset.test(static_cast<uint32_t>(UsmAccessCapabilities::SharedSingleDevice))) {
+                EXPECT_TRUE(UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS & singleDeviceSharedMemCapabilities);
+                EXPECT_TRUE(UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS & singleDeviceSharedMemCapabilities);
+            }
+        }
+
+        auto crossDeviceSharedMemCapabilities = hwInfoConfig->getCrossDeviceSharedMemCapabilities();
+        if (crossDeviceSharedMemCapabilities > 0) {
+            if (capabilityBitset.test(static_cast<uint32_t>(UsmAccessCapabilities::SharedCrossDevice))) {
+                EXPECT_TRUE(UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS & crossDeviceSharedMemCapabilities);
+                EXPECT_TRUE(UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS & crossDeviceSharedMemCapabilities);
+            }
+        }
+
+        auto sharedSystemMemCapabilities = hwInfoConfig->getSharedSystemMemCapabilities(&pInHwInfo);
+        if (sharedSystemMemCapabilities > 0) {
+            if (capabilityBitset.test(static_cast<uint32_t>(UsmAccessCapabilities::SharedSystemCrossDevice))) {
+                EXPECT_TRUE(UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS & sharedSystemMemCapabilities);
+                EXPECT_TRUE(UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS & sharedSystemMemCapabilities);
+            }
+        }
+    }
+}
+
 TEST_F(HwInfoConfigTest, WhenParsingHwInfoConfigThenCorrectValuesAreReturned) {
     uint64_t hwInfoConfig = 0x0;
 
