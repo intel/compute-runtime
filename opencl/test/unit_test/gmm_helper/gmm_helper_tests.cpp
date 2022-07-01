@@ -981,7 +981,6 @@ TEST_F(GmmTests, whenResourceIsCreatedThenHandleItsOwnership) {
 
         MyMockResourecInfo(GmmClientContext *clientContext, GMM_RESCREATE_PARAMS *inputParams) : GmmResourceInfo(clientContext, inputParams){};
         MyMockResourecInfo(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo) : GmmResourceInfo(clientContext, inputGmmResourceInfo){};
-        MyMockResourecInfo(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo, bool openingHandle) : GmmResourceInfo(clientContext, inputGmmResourceInfo, openingHandle){};
     };
 
     GMM_RESCREATE_PARAMS gmmParams = {};
@@ -1001,11 +1000,7 @@ TEST_F(GmmTests, whenResourceIsCreatedThenHandleItsOwnership) {
     MyMockResourecInfo myMockResourceInfo2(getGmmClientContext(), myMockResourceInfo1.resourceInfo.get());
     EXPECT_NE(nullptr, myMockResourceInfo2.resourceInfo.get());
 
-    MyMockResourecInfo myMockResourceInfo3(getGmmClientContext(), myMockResourceInfo2.resourceInfo.get(), true);
-    EXPECT_NE(nullptr, myMockResourceInfo3.resourceInfo.get());
-
     EXPECT_NE(myMockResourceInfo1.resourceInfo.get(), myMockResourceInfo2.resourceInfo.get());
-    EXPECT_NE(myMockResourceInfo2.resourceInfo.get(), myMockResourceInfo3.resourceInfo.get());
 }
 
 using GmmEnvironmentTest = MockExecutionEnvironmentGmmFixtureTest;

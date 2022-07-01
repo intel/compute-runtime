@@ -97,7 +97,7 @@ class GmmResourceInfo {
     GmmResourceInfo(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo, bool openingHandle);
 
     void createResourceInfo(GMM_RESOURCE_INFO *resourceInfoPtr);
-    void decodeResourceInfo(GMM_RESOURCE_INFO *resourceInfoPtr, GMM_RESOURCE_INFO *inputGmmResourceInfo);
+    void decodeResourceInfo(GMM_RESOURCE_INFO *inputGmmResourceInfo);
 
     UniquePtrType resourceInfo;
 
