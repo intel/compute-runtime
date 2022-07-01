@@ -51,7 +51,8 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
                                                                         multiOsContextCapable,
                                                                         NEO::MemoryCompressionState::NotApplicable,
                                                                         false,
-                                                                        1u);
+                                                                        1u,
+                                                                        nullptr);
         *sbaCmdBuf = sbaCmd;
 
         auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);

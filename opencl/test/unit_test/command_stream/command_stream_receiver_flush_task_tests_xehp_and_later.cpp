@@ -341,7 +341,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
                                                                 false,
                                                                 MemoryCompressionState::NotApplicable,
                                                                 false,
-                                                                1u);
+                                                                1u,
+                                                                nullptr);
 
     EXPECT_FALSE(sbaCmd.getDynamicStateBaseAddressModifyEnable());
     EXPECT_FALSE(sbaCmd.getDynamicStateBufferSizeModifyEnable());

@@ -29,7 +29,8 @@ void StateBaseAddressHelper<BDWFamily>::programStateBaseAddress(
     bool isMultiOsContextCapable,
     MemoryCompressionState memoryCompressionState,
     bool useGlobalAtomics,
-    bool areMultipleSubDevicesInContext) {
+    bool areMultipleSubDevicesInContext,
+    LogicalStateHelper *logicalStateHelper) {
 
     *stateBaseAddress = BDWFamily::cmdInitStateBaseAddress;
 

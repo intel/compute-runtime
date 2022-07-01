@@ -490,7 +490,8 @@ void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_B
         multiOsContextCapable,
         MemoryCompressionState::NotApplicable,
         useGlobalAtomics,
-        1u);
+        1u,
+        nullptr);
 
     auto pCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(container.getCommandStream()->getSpace(sizeof(STATE_BASE_ADDRESS)));
     *pCmd = sbaCmd;

@@ -35,7 +35,8 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     bool isMultiOsContextCapable,
     MemoryCompressionState memoryCompressionState,
     bool useGlobalAtomics,
-    bool areMultipleSubDevicesInContext) {
+    bool areMultipleSubDevicesInContext,
+    LogicalStateHelper *logicalStateHelper) {
 
     *stateBaseAddress = GfxFamily::cmdInitStateBaseAddress;
     bool overrideBindlessSurfaceStateBase = true;

@@ -421,7 +421,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             isMultiOsContextCapable(),
             memoryCompressionState,
             dispatchFlags.useGlobalAtomics,
-            dispatchFlags.areMultipleSubDevicesInContext);
+            dispatchFlags.areMultipleSubDevicesInContext,
+            logicalStateHelper.get());
 
         if (pCmd) {
             *pCmd = cmd;
