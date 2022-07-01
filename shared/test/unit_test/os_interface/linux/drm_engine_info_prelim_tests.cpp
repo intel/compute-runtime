@@ -193,7 +193,7 @@ static void givenBcsEngineTypeWhenBindingDrmContextThenContextParamEngineIsSet(s
     EXPECT_EQ(numBcsSiblings, drm->receivedContextEnginesLoadBalance.num_siblings);
     for (auto balancedEngine = 0u; balancedEngine < numBcsSiblings; balancedEngine++) {
         EXPECT_EQ(I915_ENGINE_CLASS_COPY, drm->receivedContextEnginesLoadBalance.engines[balancedEngine].engine_class);
-        auto engineInstance = EngineHelpers::getBcsIndex(drm->getBcsTypeToBind(balancedEngine, engineIndex == 0));
+        auto engineInstance = engineIndex ? balancedEngine + 1 : balancedEngine;
         EXPECT_EQ(engineInstance, DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextEnginesLoadBalance.engines[balancedEngine].engine_instance));
         EXPECT_EQ(I915_ENGINE_CLASS_COPY, drm->receivedContextParamEngines.engines[1 + balancedEngine].engine_class);
         EXPECT_EQ(engineInstance, DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextParamEngines.engines[1 + balancedEngine].engine_instance));

@@ -102,36 +102,6 @@ TEST(DrmTest, GivenInvalidPciPathWhenFrequencyIsQueriedThenReturnError) {
     EXPECT_EQ(0, maxFrequency);
 }
 
-TEST(DrmTest, whenGetBcsTypeToBindThenReturnOptimalSequence) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-
-    {
-        auto includeMain = false;
-        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS2, drm.getBcsTypeToBind(0, includeMain));
-        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS3, drm.getBcsTypeToBind(1, includeMain));
-        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS4, drm.getBcsTypeToBind(2, includeMain));
-        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS7, drm.getBcsTypeToBind(3, includeMain));
-        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, drm.getBcsTypeToBind(4, includeMain));
-        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS5, drm.getBcsTypeToBind(5, includeMain));
-        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS6, drm.getBcsTypeToBind(6, includeMain));
-        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS8, drm.getBcsTypeToBind(7, includeMain));
-    }
-    {
-        auto includeMain = true;
-        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, drm.getBcsTypeToBind(0, includeMain));
-        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS2, drm.getBcsTypeToBind(1, includeMain));
-        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS3, drm.getBcsTypeToBind(2, includeMain));
-        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS4, drm.getBcsTypeToBind(3, includeMain));
-        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS7, drm.getBcsTypeToBind(4, includeMain));
-        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, drm.getBcsTypeToBind(5, includeMain));
-        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS5, drm.getBcsTypeToBind(6, includeMain));
-        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS6, drm.getBcsTypeToBind(7, includeMain));
-        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS8, drm.getBcsTypeToBind(8, includeMain));
-    }
-}
-
 TEST(DrmTest, WhenGettingRevisionIdThenCorrectIdIsReturned) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
