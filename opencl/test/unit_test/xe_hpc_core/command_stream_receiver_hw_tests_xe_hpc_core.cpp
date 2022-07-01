@@ -13,6 +13,7 @@
 
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/command_queue/hardware_interface.h"
+#include "opencl/test/unit_test/command_queue/hardware_interface_helper.h"
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
@@ -190,16 +191,13 @@ XE_HPC_CORETEST_F(SystemMemoryFenceViaComputeWalkerTest, givenSystemMemoryFenceG
     auto &cmdStream = commandQueue.getCS(0);
     MockTimestampPacketContainer timestampPacket(*pClDevice->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
 
+    HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);
+    walkerArgs.currentTimestampPacketNodes = &timestampPacket;
     HardwareInterface<FamilyType>::dispatchWalker(
         commandQueue,
         multiDispatchInfo,
         CsrDependencies(),
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        &timestampPacket,
-        CL_COMMAND_NDRANGE_KERNEL);
+        walkerArgs);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream);

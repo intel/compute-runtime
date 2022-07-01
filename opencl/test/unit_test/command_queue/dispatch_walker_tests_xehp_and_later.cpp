@@ -28,6 +28,7 @@
 #include "opencl/source/command_queue/hardware_interface.h"
 #include "opencl/source/helpers/dispatch_info_builder.h"
 #include "opencl/source/kernel/kernel.h"
+#include "opencl/test/unit_test/command_queue/hardware_interface_helper.h"
 #include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
@@ -459,16 +460,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTimestamp
     MockCommandQueue cmdQ(context.get(), device.get(), nullptr, false);
     auto &cmdStream = cmdQ.getCS(0);
 
+    HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);
+    walkerArgs.currentTimestampPacketNodes = &timestampPacketContainer;
     HardwareInterface<FamilyType>::dispatchWalker(
         cmdQ,
         multiDispatchInfo,
         CsrDependencies(),
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        &timestampPacketContainer,
-        false);
+        walkerArgs);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);

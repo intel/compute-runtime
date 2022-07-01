@@ -21,6 +21,7 @@
 #include "opencl/source/command_queue/hardware_interface.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/command_queue/hardware_interface_helper.h"
 #include "opencl/test/unit_test/helpers/timestamp_packet_tests.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
@@ -256,16 +257,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWhenDispat
     auto &cmdStream = mockCmdQ->getCS(0);
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);
+    walkerArgs.currentTimestampPacketNodes = &timestampPacket;
     HardwareInterface<FamilyType>::dispatchWalker(
         *mockCmdQ,
         multiDispatchInfo,
         CsrDependencies(),
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        &timestampPacket,
-        CL_COMMAND_NDRANGE_KERNEL);
+        walkerArgs);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
@@ -298,17 +296,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketDisabledWh
     auto &cmdStream = mockCmdQ->getCS(0);
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
-
+    HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);
+    walkerArgs.currentTimestampPacketNodes = &timestampPacket;
     HardwareInterface<FamilyType>::dispatchWalker(
         *mockCmdQ,
         multiDispatchInfo,
         CsrDependencies(),
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        &timestampPacket,
-        CL_COMMAND_NDRANGE_KERNEL);
+        walkerArgs);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
@@ -1115,16 +1109,13 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingTh
     CsrDependencies csrDeps;
     eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, mockCmdQ->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
 
+    HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);
+    walkerArgs.currentTimestampPacketNodes = &timestamp7;
     HardwareInterface<FamilyType>::dispatchWalker(
         *mockCmdQ,
         multiDispatchInfo,
         csrDeps,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        &timestamp7,
-        CL_COMMAND_NDRANGE_KERNEL);
+        walkerArgs);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
@@ -1192,16 +1183,13 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFr
     CsrDependencies csrDeps;
     eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, mockCmdQ->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
 
+    HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);
+    walkerArgs.currentTimestampPacketNodes = &timestamp7;
     HardwareInterface<FamilyType>::dispatchWalker(
         *mockCmdQ,
         multiDispatchInfo,
         csrDeps,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        &timestamp7,
-        CL_COMMAND_NDRANGE_KERNEL);
+        walkerArgs);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
@@ -1255,16 +1243,12 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndDependenciesRe
     CsrDependencies csrDeps;
     eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, mockCmdQ->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
 
+    HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);
     HardwareInterface<FamilyType>::dispatchWalker(
         *mockCmdQ,
         multiDispatchInfo,
         csrDeps,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        CL_COMMAND_NDRANGE_KERNEL);
+        walkerArgs);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
@@ -1304,17 +1288,12 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndDependenciesRe
     EventsRequest eventsRequest(eventsOnWaitlist, waitlist, nullptr);
     CsrDependencies csrDeps;
     eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, mockCmdQ->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
-
+    HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);
     HardwareInterface<FamilyType>::dispatchWalker(
         *mockCmdQ,
         multiDispatchInfo,
         csrDeps,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        CL_COMMAND_NDRANGE_KERNEL);
+        walkerArgs);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);

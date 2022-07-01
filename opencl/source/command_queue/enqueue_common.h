@@ -440,16 +440,19 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
         hwPerfCounter = event->getHwPerfCounterNode();
     }
 
+    HardwareInterfaceWalkerArgs dispatchWalkerArgs = {};
+    dispatchWalkerArgs.blockedCommandsData = blockedCommandsData;
+    dispatchWalkerArgs.hwTimeStamps = hwTimeStamps;
+    dispatchWalkerArgs.hwPerfCounter = hwPerfCounter;
+    dispatchWalkerArgs.timestampPacketDependencies = &timestampPacketDependencies;
+    dispatchWalkerArgs.currentTimestampPacketNodes = timestampPacketContainer.get();
+    dispatchWalkerArgs.commandType = commandType;
+
     HardwareInterface<GfxFamily>::dispatchWalker(
         *this,
         multiDispatchInfo,
         csrDeps,
-        blockedCommandsData,
-        hwTimeStamps,
-        hwPerfCounter,
-        &timestampPacketDependencies,
-        timestampPacketContainer.get(),
-        commandType);
+        dispatchWalkerArgs);
 
     if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
         for (auto &dispatchInfo : multiDispatchInfo) {

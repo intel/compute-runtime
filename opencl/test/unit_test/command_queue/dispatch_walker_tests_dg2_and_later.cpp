@@ -18,11 +18,11 @@
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/command_queue/hardware_interface.h"
+#include "opencl/test/unit_test/command_queue/hardware_interface_helper.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
-
 using namespace NEO;
 
 struct Dg2AndLaterDispatchWalkerBasicFixture : public LinearStreamFixture {
@@ -131,16 +131,13 @@ HWTEST2_F(Dg2AndLaterDispatchWalkerBasicTest, givenTimestampPacketWhenDispatchin
     MockCommandQueue cmdQ(context.get(), device.get(), nullptr, false);
     auto &cmdStream = cmdQ.getCS(0);
 
+    HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);
+    walkerArgs.currentTimestampPacketNodes = &timestampPacketContainer;
     HardwareInterface<FamilyType>::dispatchWalker(
         cmdQ,
         multiDispatchInfo,
         CsrDependencies(),
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        &timestampPacketContainer,
-        false);
+        walkerArgs);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
