@@ -187,6 +187,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     bool implicitFlush = dispatchFlags.implicitFlush || dispatchFlags.blocking || DebugManager.flags.ForceImplicitFlush.get();
     void *currentPipeControlForNooping = nullptr;
     void *epiloguePipeControlLocation = nullptr;
+    PipeControlArgs args;
 
     bool csrFlush = this->wasSubmittedToSingleSubdevice != dispatchFlags.useSingleSubdevice;
 
@@ -226,7 +227,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
         auto address = getTagAllocation()->getGpuAddress();
 
-        PipeControlArgs args;
         args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(dispatchFlags.dcFlush, hwInfo);
         args.notifyEnable = isUsedNotifyEnableForPostSync();
         args.tlbInvalidation |= dispatchFlags.memoryMigrationRequired;
@@ -613,6 +613,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             commandBuffer->flushStamp->replaceStampObject(dispatchFlags.flushStampReference);
             commandBuffer->pipeControlThatMayBeErasedLocation = currentPipeControlForNooping;
             commandBuffer->epiloguePipeControlLocation = epiloguePipeControlLocation;
+            commandBuffer->epiloguePipeControlArgs = args;
             this->submissionAggregator->recordCommandBuffer(commandBuffer);
         }
     } else {
@@ -716,6 +717,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
             auto nextCommandBuffer = commandBufferList.peekHead();
             auto currentBBendLocation = primaryCmdBuffer->batchBufferEndLocation;
             auto lastTaskCount = primaryCmdBuffer->taskCount;
+            auto lastPipeControlArgs = primaryCmdBuffer->epiloguePipeControlArgs;
 
             FlushStampUpdateHelper flushStampUpdateHelper;
             flushStampUpdateHelper.insert(primaryCmdBuffer->flushStamp->getStampReference());
@@ -760,6 +762,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 
                 currentBBendLocation = nextCommandBuffer->batchBufferEndLocation;
                 lastTaskCount = nextCommandBuffer->taskCount;
+                lastPipeControlArgs = nextCommandBuffer->epiloguePipeControlArgs;
                 nextCommandBuffer = nextCommandBuffer->next;
 
                 commandBufferList.removeFrontOne();
@@ -771,13 +774,19 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 
             // make sure we flush DC if needed
             if (epiloguePipeControlLocation && MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo)) {
+                lastPipeControlArgs.dcFlushEnable = true;
 
-                auto emitDcFlush = true;
                 if (DebugManager.flags.DisableDcFlushInEpilogue.get()) {
-                    emitDcFlush = false;
+                    lastPipeControlArgs.dcFlushEnable = false;
                 }
 
-                ((PIPE_CONTROL *)epiloguePipeControlLocation)->setDcFlushEnable(emitDcFlush);
+                MemorySynchronizationCommands<GfxFamily>::setPipeControlAndProgramPostSyncOperation(
+                    epiloguePipeControlLocation,
+                    PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+                    getTagAllocation()->getGpuAddress(),
+                    lastTaskCount,
+                    hwInfo,
+                    lastPipeControlArgs);
             }
 
             primaryCmdBuffer->batchBuffer.endCmdPtr = currentBBendLocation;
