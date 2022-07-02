@@ -30,6 +30,7 @@ class WddmSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     NEO::Wddm &getWddm();
     Device *getDeviceHandle();
     void releaseFwUtilInterface();
+    std::vector<ze_device_handle_t> &getDeviceHandles() override;
 
   protected:
     FirmwareUtil *pFwUtilInterface = nullptr;

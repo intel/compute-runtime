@@ -121,9 +121,6 @@ ze_result_t SysmanDeviceImp::init() {
     if (pSchedulerHandleContext) {
         pSchedulerHandleContext->init(deviceHandles);
     }
-    if (pRasHandleContext) {
-        pRasHandleContext->init(deviceHandles);
-    }
     if (pMemoryHandleContext) {
         pMemoryHandleContext->init(deviceHandles);
     }

@@ -43,7 +43,6 @@ struct SysmanRasFixture : public SysmanDeviceFixture {
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
-        pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {
@@ -59,6 +58,15 @@ struct SysmanRasFixture : public SysmanDeviceFixture {
         return handles;
     }
 };
+
+TEST_F(SysmanRasFixture, GivenValidRasContextWhenRetrievingRasHandlesThenSuccessIsReturned) {
+    uint32_t count = 0;
+    RasHandleContext *pRasHandleContext = new RasHandleContext(pSysmanDeviceImp->pOsSysman);
+    ze_result_t result = pRasHandleContext->rasGet(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, mockHandleCount);
+    delete pRasHandleContext;
+}
 
 TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRasErrorSetsThenCorrectCountIsReported) {
     uint32_t count = 0;

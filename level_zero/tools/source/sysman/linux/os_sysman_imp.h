@@ -52,6 +52,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     NEO::Drm &getDrm();
     PlatformMonitoringTech *getPlatformMonitoringTechAccess(uint32_t subDeviceId);
     Device *getDeviceHandle();
+    std::vector<ze_device_handle_t> &getDeviceHandles() override;
     SysmanDeviceImp *getSysmanDeviceImp();
     std::string getPciCardBusDirectoryPath(std::string realPciPath);
     void releasePmtObject();
