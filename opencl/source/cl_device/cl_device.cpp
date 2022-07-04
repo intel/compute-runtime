@@ -287,5 +287,11 @@ const ProductHelper &ClDevice::getProductHelper() const {
 const GTPinGfxCoreHelper &ClDevice::getGTPinGfxCoreHelper() const {
     return *gtpinGfxCoreHelper;
 }
+cl_version ClDevice::getExtensionVersion(std::string name) {
+    if (name.compare("cl_khr_integer_dot_product") == 0)
+        return CL_MAKE_VERSION(2u, 0, 0);
+    else
+        return CL_MAKE_VERSION(1u, 0, 0);
+}
 
 } // namespace NEO

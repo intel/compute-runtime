@@ -66,7 +66,8 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
                              "cl_khr_subgroup_clustered_reduce "
                              "cl_intel_device_attribute_query "
                              "cl_khr_suggested_local_work_size "
-                             "cl_intel_split_work_group_barrier ";
+                             "cl_intel_split_work_group_barrier "
+                             "cl_khr_integer_dot_product ";
 
     auto supportsFp64 = hwInfo.capabilityTable.ftrSupportsFP64;
     if (DebugManager.flags.OverrideDefaultFP64Settings.get() != -1) {

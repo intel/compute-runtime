@@ -136,6 +136,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     const GTPinGfxCoreHelper &getGTPinGfxCoreHelper() const;
 
     std::unique_ptr<GTPinGfxCoreHelper> gtpinGfxCoreHelper;
+    cl_version getExtensionVersion(std::string name);
 
   protected:
     void initializeCaps();
