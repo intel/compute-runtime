@@ -9,6 +9,10 @@
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "engine_node.h"
+
+#include <array>
+
 using namespace NEO;
 
 TEST(DrmMapperTests, GivenEngineWhenMappingNodeThenCorrectEngineReturned) {
