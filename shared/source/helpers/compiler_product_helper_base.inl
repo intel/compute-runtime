@@ -180,6 +180,9 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
     if (isSubgroupExtendedBlockReadSupported()) {
         extensions += "cl_intel_subgroup_extended_block_read ";
     }
+    if (isDotIntegerProductExtensionSupported()) {
+        extensions += "cl_khr_integer_dot_product ";
+    }
     return extensions;
 }
 

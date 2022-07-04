@@ -17,12 +17,13 @@ using OpenClCFeaturesContainer = StackVec<cl_name_version, 27>;
 
 namespace NEO {
 struct HardwareInfo;
+class CompilerProductHelper;
 
 namespace Extensions {
 inline constexpr const char *const sharingFormatQuery = "cl_intel_sharing_format_query ";
 }
 
-void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer &openclCFeatures);
+void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer &openclCFeatures, const CompilerProductHelper &compilerProductHelper);
 std::string convertEnabledExtensionsToCompilerInternalOptions(const char *deviceExtensions,
                                                               OpenClCFeaturesContainer &openclCFeatures);
 std::string getOclVersionCompilerInternalOption(unsigned int oclVersion);

@@ -10,6 +10,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bit_helpers.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -117,6 +118,10 @@ struct DeviceGetCapsTest : public ::testing::Test {
                 EXPECT_STREQ("__opencl_c_ext_fp64_global_atomic_min_max", (++openclCFeatureIterator)->name);
                 EXPECT_STREQ("__opencl_c_ext_fp64_local_atomic_min_max", (++openclCFeatureIterator)->name);
             }
+        }
+        if (clDevice.getDevice().getCompilerProductHelper().isDotIntegerProductExtensionSupported()) {
+            EXPECT_STREQ("__opencl_c_integer_dot_product_input_4x8bit", (++openclCFeatureIterator)->name);
+            EXPECT_STREQ("__opencl_c_integer_dot_product_input_4x8bit_packed", (++openclCFeatureIterator)->name);
         }
 
         EXPECT_EQ(clDevice.getDeviceInfo().openclCFeatures.end(), ++openclCFeatureIterator);
@@ -965,12 +970,84 @@ TEST_F(DeviceGetCapsTest, givenDefaultDeviceWhenQueriedForExtensionsWithVersionT
     EXPECT_FALSE(pClDevice->getDeviceInfo().extensionsWithVersion.empty());
 
     for (auto extensionWithVersion : pClDevice->getDeviceInfo().extensionsWithVersion) {
-        EXPECT_EQ(CL_MAKE_VERSION(1u, 0u, 0u), extensionWithVersion.version);
+        if (strcmp(extensionWithVersion.name, "cl_khr_integer_dot_product") == 0) {
+            EXPECT_EQ(CL_MAKE_VERSION(2u, 0, 0), extensionWithVersion.version);
+        } else {
+            EXPECT_EQ(CL_MAKE_VERSION(1u, 0, 0), extensionWithVersion.version);
+        }
         allExtensions += extensionWithVersion.name;
         allExtensions += " ";
     }
 
     EXPECT_STREQ(pClDevice->deviceExtensions.c_str(), allExtensions.c_str());
+}
+
+TEST_F(DeviceGetCapsTest, givenClDeviceWhenGetExtensionsVersionCalledThenCorrectVersionIsSet) {
+    UltClDeviceFactory deviceFactory{1, 0};
+    auto pClDevice = deviceFactory.rootDevices[0];
+    pClDevice->getDeviceInfo(CL_DEVICE_EXTENSIONS_WITH_VERSION, 0, nullptr, nullptr);
+    for (auto extensionWithVersion : pClDevice->getDeviceInfo().extensionsWithVersion) {
+        if (strcmp(extensionWithVersion.name, "cl_khr_integer_dot_product") == 0) {
+            EXPECT_EQ(CL_MAKE_VERSION(2u, 0, 0), pClDevice->getExtensionVersion(std::string(extensionWithVersion.name)));
+        } else {
+            EXPECT_EQ(CL_MAKE_VERSION(1u, 0, 0), pClDevice->getExtensionVersion(std::string(extensionWithVersion.name)));
+        }
+    }
+}
+
+TEST_F(DeviceGetCapsTest, givenClDeviceWhenCapsInitializedThenIntegerDotInput4xBitCapIsSet) {
+    UltClDeviceFactory deviceFactory{1, 0};
+    auto pClDevice = deviceFactory.rootDevices[0];
+    pClDevice->initializeCaps();
+    auto &compilerHelper = pClDevice->getDevice().getCompilerProductHelper();
+    EXPECT_EQ((pClDevice->deviceInfo.integerDotCapabilities & CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_KHR) != 0, compilerHelper.isDotIntegerProductExtensionSupported());
+}
+
+TEST_F(DeviceGetCapsTest, givenClDeviceWhenCapsInitializedThenIntegerDotInput4xBitPackedCapIsSet) {
+    UltClDeviceFactory deviceFactory{1, 0};
+    auto pClDevice = deviceFactory.rootDevices[0];
+    pClDevice->initializeCaps();
+    auto &compilerHelper = pClDevice->getDevice().getCompilerProductHelper();
+    EXPECT_EQ((pClDevice->deviceInfo.integerDotCapabilities & CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_PACKED_KHR) != 0, compilerHelper.isDotIntegerProductExtensionSupported());
+}
+
+TEST_F(DeviceGetCapsTest, givenClDeviceWhenCapsInitializedThenAllFieldsInIntegerDotAccPropertiesAreTrue) {
+    UltClDeviceFactory deviceFactory{1, 0};
+    auto pClDevice = deviceFactory.rootDevices[0];
+    pClDevice->initializeCaps();
+    auto &compilerHelper = pClDevice->getDevice().getCompilerProductHelper();
+    EXPECT_EQ(pClDevice->deviceInfo.integerDotAccelerationProperties8Bit.accumulating_saturating_mixed_signedness_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_EQ(pClDevice->deviceInfo.integerDotAccelerationProperties8Bit.accumulating_saturating_signed_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_EQ(pClDevice->deviceInfo.integerDotAccelerationProperties8Bit.accumulating_saturating_unsigned_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_EQ(pClDevice->deviceInfo.integerDotAccelerationProperties8Bit.mixed_signedness_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_EQ(pClDevice->deviceInfo.integerDotAccelerationProperties8Bit.signed_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_EQ(pClDevice->deviceInfo.integerDotAccelerationProperties8Bit.unsigned_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+}
+
+TEST_F(DeviceGetCapsTest, givenClDeviceWhenCapsInitializedThenAllFieldsInIntegerDotAccPackedPropertiesAreTrue) {
+    UltClDeviceFactory deviceFactory{1, 0};
+    auto pClDevice = deviceFactory.rootDevices[0];
+    pClDevice->initializeCaps();
+    auto &compilerHelper = pClDevice->getDevice().getCompilerProductHelper();
+    EXPECT_EQ(pClDevice->deviceInfo.integerDotAccelerationProperties4x8BitPacked.accumulating_saturating_mixed_signedness_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_EQ(pClDevice->deviceInfo.integerDotAccelerationProperties4x8BitPacked.accumulating_saturating_signed_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_EQ(pClDevice->deviceInfo.integerDotAccelerationProperties4x8BitPacked.accumulating_saturating_unsigned_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_EQ(pClDevice->deviceInfo.integerDotAccelerationProperties4x8BitPacked.mixed_signedness_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_EQ(pClDevice->deviceInfo.integerDotAccelerationProperties4x8BitPacked.signed_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_EQ(pClDevice->deviceInfo.integerDotAccelerationProperties4x8BitPacked.unsigned_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+}
+
+TEST_F(DeviceGetCapsTest, givenClDeviceWhenEnableIntegerDotExtensionEnalbedThenDotIntegerExtensionIsInExtensionString) {
+    UltClDeviceFactory deviceFactory{1, 0};
+    auto pClDevice = deviceFactory.rootDevices[0];
+    pClDevice->initializeCaps();
+    auto &compilerHelper = pClDevice->getDevice().getCompilerProductHelper();
+    static const char *const supportedExtensions[] = {
+        "cl_khr_integer_dot_product "};
+    for (auto extension : supportedExtensions) {
+        auto foundOffset = pClDevice->deviceExtensions.find(extension);
+        EXPECT_EQ(foundOffset != std::string::npos, compilerHelper.isDotIntegerProductExtensionSupported());
+    }
 }
 
 TEST_F(DeviceGetCapsTest, givenFp64SupportForcedWhenCheckingFp64SupportThenFp64IsCorrectlyReported) {

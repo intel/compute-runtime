@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
 
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
@@ -454,4 +455,55 @@ INSTANTIATE_TEST_CASE_P(
     GetDeviceInfoVectorWidth,
     testing::ValuesIn(devicePreferredVector));
 
+TEST_F(clGetDeviceInfoTests, givenClDeviceWhenGetInfoForIntegerDotCapsThenCorrectValuesAreSet) {
+    size_t paramRetSize = 0;
+    cl_device_integer_dot_product_capabilities_khr integerDotCapabilities{};
+
+    clGetDeviceInfo(
+        testedClDevice,
+        CL_DEVICE_INTEGER_DOT_PRODUCT_CAPABILITIES_KHR,
+        sizeof(integerDotCapabilities),
+        &integerDotCapabilities,
+        &paramRetSize);
+    auto &compilerHelper = pDevice->getDevice().getCompilerProductHelper();
+    EXPECT_EQ(((integerDotCapabilities & CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_KHR) && (integerDotCapabilities & CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_PACKED_KHR)), compilerHelper.isDotIntegerProductExtensionSupported());
+}
+
+TEST_F(clGetDeviceInfoTests, givenClDeviceWhenGetInfoForIntegerDot8BitPropertiesThenCorrectValuesAreSet) {
+    size_t paramRetSize = 0;
+    cl_device_integer_dot_product_acceleration_properties_khr integerDotAccelerationProperties8Bit{};
+
+    clGetDeviceInfo(
+        testedClDevice,
+        CL_DEVICE_INTEGER_DOT_PRODUCT_ACCELERATION_PROPERTIES_8BIT_KHR,
+        sizeof(integerDotAccelerationProperties8Bit),
+        &integerDotAccelerationProperties8Bit,
+        &paramRetSize);
+    auto &compilerHelper = pDevice->getDevice().getCompilerProductHelper();
+    EXPECT_EQ(integerDotAccelerationProperties8Bit.accumulating_saturating_mixed_signedness_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_EQ(integerDotAccelerationProperties8Bit.accumulating_saturating_signed_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_EQ(integerDotAccelerationProperties8Bit.accumulating_saturating_unsigned_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_EQ(integerDotAccelerationProperties8Bit.mixed_signedness_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_EQ(integerDotAccelerationProperties8Bit.signed_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_EQ(integerDotAccelerationProperties8Bit.unsigned_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+}
+
+TEST_F(clGetDeviceInfoTests, givenClDeviceWhenGetInfoForIntegerDot8BitPackedPropertiesThenCorrectValuesAreSet) {
+    size_t paramRetSize = 0;
+    cl_device_integer_dot_product_acceleration_properties_khr integerDotAccelerationProperties8BitPacked{};
+
+    clGetDeviceInfo(
+        testedClDevice,
+        CL_DEVICE_INTEGER_DOT_PRODUCT_ACCELERATION_PROPERTIES_4x8BIT_PACKED_KHR,
+        sizeof(integerDotAccelerationProperties8BitPacked),
+        &integerDotAccelerationProperties8BitPacked,
+        &paramRetSize);
+    auto &compilerHelper = pDevice->getDevice().getCompilerProductHelper();
+    EXPECT_EQ(integerDotAccelerationProperties8BitPacked.accumulating_saturating_mixed_signedness_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_EQ(integerDotAccelerationProperties8BitPacked.accumulating_saturating_signed_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_EQ(integerDotAccelerationProperties8BitPacked.accumulating_saturating_unsigned_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_EQ(integerDotAccelerationProperties8BitPacked.mixed_signedness_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_EQ(integerDotAccelerationProperties8BitPacked.signed_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_EQ(integerDotAccelerationProperties8BitPacked.unsigned_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+}
 } // namespace ULT

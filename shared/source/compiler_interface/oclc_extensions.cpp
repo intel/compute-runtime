@@ -8,6 +8,7 @@
 #include "shared/source/compiler_interface/oclc_extensions.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 
@@ -16,7 +17,7 @@
 
 namespace NEO {
 
-void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer &openclCFeatures) {
+void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer &openclCFeatures, const CompilerProductHelper &compilerProductHelper) {
     cl_name_version openClCFeature;
     openClCFeature.version = CL_MAKE_VERSION(3, 0, 0);
 
@@ -112,6 +113,13 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer
             strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp64_local_atomic_min_max");
             openclCFeatures.push_back(openClCFeature);
         }
+    }
+    if (compilerProductHelper.isDotIntegerProductExtensionSupported()) {
+        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_integer_dot_product_input_4x8bit");
+        openclCFeatures.push_back(openClCFeature);
+
+        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_integer_dot_product_input_4x8bit_packed");
+        openclCFeatures.push_back(openClCFeature);
     }
 }
 

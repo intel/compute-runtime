@@ -235,3 +235,15 @@ TEST_F(CompilerProductHelperFixture, givenHwInfoWithCLVersionAtLeast20ThenReport
     extensions = compilerProductHelper.getDeviceExtensions(hwInfo);
     EXPECT_FALSE(hasSubstr(extensions, std::string("cl_ext_float_atomics")));
 }
+
+HWTEST2_F(CompilerProductHelperFixture, GivenAtMostGen11DeviceWhenCheckingIfIntegerDotExtensionIsSupportedThenFalseReturned, IsAtMostGen11) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+
+    EXPECT_FALSE(compilerProductHelper.isDotIntegerProductExtensionSupported());
+}
+
+HWTEST2_F(CompilerProductHelperFixture, GivenAtLeastGen12lpDeviceWhenCheckingIfIntegerDotExtensionIsSupportedThenTrueReturned, IsAtLeastGen12lp) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+
+    EXPECT_TRUE(compilerProductHelper.isDotIntegerProductExtensionSupported());
+}

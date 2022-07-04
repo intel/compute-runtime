@@ -9,6 +9,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/compiler_product_helper_base.inl"
 #include "shared/source/helpers/compiler_product_helper_bdw_and_later.inl"
+#include "shared/source/helpers/compiler_product_helper_bdw_to_icllp.inl"
 #include "shared/source/helpers/compiler_product_helper_before_xe_hp.inl"
 #include "shared/source/helpers/compiler_product_helper_before_xe_hpc.inl"
 #include "shared/source/helpers/compiler_product_helper_disable_split_matrix_multiply_accumulate.inl"
