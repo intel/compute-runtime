@@ -13,15 +13,14 @@ class LinearStream;
 class LogicalStateHelper {
   public:
     template <typename Family>
-    static LogicalStateHelper *create(bool pipelinedState);
+    static LogicalStateHelper *create();
 
     virtual ~LogicalStateHelper() = default;
 
-    virtual void writeStreamInline(LinearStream &linearStream) = 0;
+    virtual void writeStreamInline(LinearStream &linearStream, bool pipelinedState) = 0;
 
   protected:
-    LogicalStateHelper(bool pipelinedState){};
-    LogicalStateHelper() = delete;
+    LogicalStateHelper() = default;
 };
 
 } // namespace NEO

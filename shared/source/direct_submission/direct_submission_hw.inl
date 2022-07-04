@@ -646,7 +646,7 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSystemMemoryFenceAddress
     EncodeMemoryFence<GfxFamily>::encodeSystemMemoryFence(ringCommandStream, this->globalFenceAllocation, this->logicalStateHelper);
 
     if (logicalStateHelper) {
-        logicalStateHelper->writeStreamInline(ringCommandStream);
+        logicalStateHelper->writeStreamInline(ringCommandStream, false);
     }
 }
 

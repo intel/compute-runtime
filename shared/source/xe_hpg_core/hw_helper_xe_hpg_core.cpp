@@ -153,5 +153,5 @@ template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;
 template struct LriHelper<Family>;
 
-template LogicalStateHelper *LogicalStateHelper::create<Family>(bool pipelinedState);
+template LogicalStateHelper *LogicalStateHelper::create<Family>();
 } // namespace NEO

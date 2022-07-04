@@ -10,7 +10,6 @@
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/engine_node_helper.h"
-#include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -413,15 +412,6 @@ HWTEST_F(CommandQueueCommandStreamTest, givenCommandQueueThatWaitsOnAbortedUserE
 
     EXPECT_FALSE(cmdQ.isQueueBlocked());
     EXPECT_EQ(100u, cmdQ.taskLevel);
-}
-
-HWTEST_F(CommandQueueCommandStreamTest, whenCreatingThenDontCreateLogicalStateHelper) {
-    MockContext context;
-    auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-
-    MockCommandQueueHw<FamilyType> cmdQ(&context, mockDevice.get(), nullptr);
-
-    EXPECT_EQ(nullptr, cmdQ.logicalStateHelper.get());
 }
 
 HWTEST_F(CommandQueueCommandStreamTest, WhenCheckIsTextureCacheFlushNeededThenReturnProperValue) {

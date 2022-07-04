@@ -1479,6 +1479,5 @@ HWTEST_F(HwHelperTest, givenHwHelperWhenPassingComputeEngineTypeThenItsNotCopyOn
 using LogicalStateHelperTest = ::testing::Test;
 
 HWTEST_F(LogicalStateHelperTest, whenCreatingLogicalStateHelperThenReturnNullptr) {
-    EXPECT_EQ(nullptr, LogicalStateHelper::create<FamilyType>(true));
-    EXPECT_EQ(nullptr, LogicalStateHelper::create<FamilyType>(false));
+    EXPECT_EQ(nullptr, LogicalStateHelper::create<FamilyType>());
 }

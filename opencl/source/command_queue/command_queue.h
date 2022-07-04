@@ -35,7 +35,6 @@ class IndirectHeap;
 class Kernel;
 class MemObj;
 class PerformanceCounters;
-class LogicalStateHelper;
 struct CompletionStamp;
 struct MultiDispatchInfo;
 
@@ -359,8 +358,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     bool isTextureCacheFlushNeeded(uint32_t commandType) const;
 
-    LogicalStateHelper *getLogicalStateHelper() const;
-
   protected:
     void *enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);
     cl_int enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr, EventsRequest &eventsRequest);
@@ -428,7 +425,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     std::unique_ptr<TimestampPacketContainer> deferredTimestampPackets;
     std::unique_ptr<TimestampPacketContainer> timestampPacketContainer;
-    std::unique_ptr<LogicalStateHelper> logicalStateHelper;
 
     struct BcsTimestampPacketContainers {
         TimestampPacketContainer lastBarrierToWaitFor;

@@ -144,7 +144,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
         }
     }
 
-    this->logicalStateHelper.reset(NEO::LogicalStateHelper::create<GfxFamily>(true));
+    this->logicalStateHelper.reset(NEO::LogicalStateHelper::create<GfxFamily>());
 
     return returnType;
 }

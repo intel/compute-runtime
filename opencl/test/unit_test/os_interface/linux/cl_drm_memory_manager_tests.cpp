@@ -12,6 +12,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/os_interface/linux/allocator_helper.h"
@@ -30,6 +31,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/helpers/gtest_helpers.h"
 
+#include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
@@ -482,6 +484,9 @@ HWTEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreat
     }
 
     MockContext context(pClDevice);
+
+    auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(context.getSpecialQueue(rootDeviceIndex)->getGpgpuEngine().commandStreamReceiver);
+    testedCsr->logicalStateHelper.reset(LogicalStateHelper::create<FamilyType>());
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;

@@ -10,7 +10,7 @@
 namespace NEO {
 
 template <typename GfxFamily>
-LogicalStateHelper *LogicalStateHelper::create(bool pipelinedState) {
+LogicalStateHelper *LogicalStateHelper::create() {
     return nullptr;
 }
 

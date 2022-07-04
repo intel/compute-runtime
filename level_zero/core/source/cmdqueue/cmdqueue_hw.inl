@@ -377,7 +377,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             frontEndStateDirty = false;
         }
 
-        csr->getLogicalStateHelper()->writeStreamInline(child);
+        csr->getLogicalStateHelper()->writeStreamInline(child, false);
     }
 
     for (auto i = 0u; i < numCommandLists; ++i) {

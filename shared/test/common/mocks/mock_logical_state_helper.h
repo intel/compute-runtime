@@ -15,10 +15,10 @@ namespace NEO {
 template <typename GfxFamily>
 class LogicalStateHelperMock : public GfxFamily::LogicalStateHelperHw {
   public:
-    LogicalStateHelperMock(bool pipelinedState) : GfxFamily::LogicalStateHelperHw(pipelinedState) {
+    LogicalStateHelperMock() : GfxFamily::LogicalStateHelperHw() {
     }
 
-    void writeStreamInline(LinearStream &linearStream) override {
+    void writeStreamInline(LinearStream &linearStream, bool pipelinedState) override {
         writeStreamInlineCalledCounter++;
 
         auto cmd = linearStream.getSpaceForCmd<typename GfxFamily::MI_NOOP>();

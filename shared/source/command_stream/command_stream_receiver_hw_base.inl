@@ -75,7 +75,7 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment
         timestampPacketWriteEnabled = !!DebugManager.flags.EnableTimestampPacket.get();
     }
 
-    logicalStateHelper.reset(LogicalStateHelper::create<GfxFamily>(false));
+    logicalStateHelper.reset(LogicalStateHelper::create<GfxFamily>());
 
     createScratchSpaceController();
     configurePostSyncWriteOffset();
@@ -540,7 +540,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     }
 
     if (logicalStateHelper) {
-        logicalStateHelper->writeStreamInline(commandStreamCSR);
+        logicalStateHelper->writeStreamInline(commandStreamCSR, false);
     }
 
     // If the CSR has work in its CS, flush it before the task
@@ -1069,7 +1069,7 @@ std::optional<uint32_t> CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const B
     }
 
     if (logicalStateHelper) {
-        logicalStateHelper->writeStreamInline(commandStream);
+        logicalStateHelper->writeStreamInline(commandStream, false);
     }
 
     for (auto &blitProperties : blitPropertiesContainer) {
