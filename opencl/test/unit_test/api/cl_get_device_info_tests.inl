@@ -283,7 +283,8 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
         "cl_khr_subgroup_clustered_reduce ",
         "cl_intel_device_attribute_query ",
         "cl_khr_suggested_local_work_size ",
-        "cl_intel_split_work_group_barrier "};
+        "cl_intel_split_work_group_barrier ",
+        "cl_khr_integer_dot_product "};
 
     for (auto extension : supportedExtensions) {
         auto foundOffset = extensionString.find(extension);
@@ -454,4 +455,52 @@ INSTANTIATE_TEST_CASE_P(
     GetDeviceInfoVectorWidth,
     testing::ValuesIn(devicePreferredVector));
 
+TEST_F(clGetDeviceInfoTests, givenClDeviceWhenGetInfoForIntegerDotCapsThenCorrectValuesAreSet) {
+    size_t paramRetSize = 0;
+    cl_device_integer_dot_product_capabilities_khr integerDotCapabilities{};
+
+    clGetDeviceInfo(
+        testedClDevice,
+        CL_DEVICE_INTEGER_DOT_PRODUCT_CAPABILITIES_KHR,
+        sizeof(integerDotCapabilities),
+        &integerDotCapabilities,
+        &paramRetSize);
+    EXPECT_TRUE((integerDotCapabilities & CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_KHR) && (integerDotCapabilities & CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_PACKED_KHR));
+}
+
+TEST_F(clGetDeviceInfoTests, givenClDeviceWhenGetInfoForIntegerDot8BitPropertiesThenCorrectValuesAreSet) {
+    size_t paramRetSize = 0;
+    cl_device_integer_dot_product_acceleration_properties_khr integerDotAccelerationProperties8Bit{};
+
+    clGetDeviceInfo(
+        testedClDevice,
+        CL_DEVICE_INTEGER_DOT_PRODUCT_ACCELERATION_PROPERTIES_8BIT_KHR,
+        sizeof(integerDotAccelerationProperties8Bit),
+        &integerDotAccelerationProperties8Bit,
+        &paramRetSize);
+    EXPECT_TRUE(integerDotAccelerationProperties8Bit.accumulating_saturating_mixed_signedness_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8Bit.accumulating_saturating_signed_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8Bit.accumulating_saturating_unsigned_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8Bit.mixed_signedness_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8Bit.signed_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8Bit.unsigned_accelerated);
+}
+
+TEST_F(clGetDeviceInfoTests, givenClDeviceWhenGetInfoForIntegerDot8BitPackedPropertiesThenCorrectValuesAreSet) {
+    size_t paramRetSize = 0;
+    cl_device_integer_dot_product_acceleration_properties_khr integerDotAccelerationProperties8BitPacked{};
+
+    clGetDeviceInfo(
+        testedClDevice,
+        CL_DEVICE_INTEGER_DOT_PRODUCT_ACCELERATION_PROPERTIES_4x8BIT_PACKED_KHR,
+        sizeof(integerDotAccelerationProperties8BitPacked),
+        &integerDotAccelerationProperties8BitPacked,
+        &paramRetSize);
+    EXPECT_TRUE(integerDotAccelerationProperties8BitPacked.accumulating_saturating_mixed_signedness_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8BitPacked.accumulating_saturating_signed_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8BitPacked.accumulating_saturating_unsigned_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8BitPacked.mixed_signedness_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8BitPacked.signed_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8BitPacked.unsigned_accelerated);
+}
 } // namespace ULT
