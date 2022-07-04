@@ -569,23 +569,67 @@ TEST_F(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenBaseHa
 
 TEST_F(MockOfflineCompilerTests, givenDeprecatedAcronymsWithRevisionWhenInitHwInfoThenValuesAreSetAndSuccessIsReturned) {
     MockOfflineCompiler mockOfflineCompiler;
-    auto deprecatedAcronyms = mockOfflineCompiler.getDeprecatedDevicesTypes();
+    auto deprecatedAcronyms = mockOfflineCompiler.argHelper->getDeprecatedAcronyms();
     if (deprecatedAcronyms.empty()) {
         GTEST_SKIP();
     }
-    auto acronyms = CompilerOptions::tokenize(deprecatedAcronyms, ',');
 
-    for (const auto &deprecatedAcronym : acronyms) {
-        if (deprecatedAcronym.contains(" ")) {
-            auto name = deprecatedAcronym.str();
-            auto space = name.find(" ");
-            mockOfflineCompiler.deviceName = name.substr(++space, name.size());
-        } else {
-            mockOfflineCompiler.deviceName = deprecatedAcronym.str();
-        }
+    for (const auto &acronym : deprecatedAcronyms) {
+        mockOfflineCompiler.deviceName = acronym.str();
         mockOfflineCompiler.revisionId = 0x3;
         EXPECT_EQ(mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName), OclocErrorCode::SUCCESS);
         EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.usRevId, mockOfflineCompiler.revisionId);
+    }
+}
+
+TEST_F(MockOfflineCompilerTests, givenHwInfoConfigWhenSetHwInfoForProductConfigThenCorrectValuesAreSet) {
+    MockOfflineCompiler mockOfflineCompiler;
+    auto enabledProductAcronyms = mockOfflineCompiler.argHelper->getEnabledProductAcronyms();
+    if (enabledProductAcronyms.empty()) {
+        GTEST_SKIP();
+    }
+
+    for (const auto &acronym : enabledProductAcronyms) {
+        mockOfflineCompiler.deviceName = acronym.str();
+        mockOfflineCompiler.hwInfoConfig = 0x100020003;
+        EXPECT_EQ(mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName), OclocErrorCode::SUCCESS);
+
+        uint32_t sliceCount = static_cast<uint16_t>(mockOfflineCompiler.hwInfoConfig >> 32);
+        uint32_t subSlicePerSliceCount = static_cast<uint16_t>(mockOfflineCompiler.hwInfoConfig >> 16);
+        uint32_t euPerSubSliceCount = static_cast<uint16_t>(mockOfflineCompiler.hwInfoConfig);
+        uint32_t subSliceCount = subSlicePerSliceCount * sliceCount;
+        auto &gtSysInfo = mockOfflineCompiler.hwInfo.gtSystemInfo;
+
+        EXPECT_EQ(gtSysInfo.SliceCount, sliceCount);
+        EXPECT_EQ(gtSysInfo.SubSliceCount, subSliceCount);
+        EXPECT_EQ(gtSysInfo.EUCount, euPerSubSliceCount * subSliceCount);
+        EXPECT_EQ(gtSysInfo.DualSubSliceCount, subSlicePerSliceCount * sliceCount);
+        EXPECT_NE(gtSysInfo.ThreadCount, 0u);
+    }
+}
+
+TEST_F(MockOfflineCompilerTests, givenHwInfoConfigWhenSetHwInfoForDeprecatedAcronymsThenCorrectValuesAreSet) {
+    MockOfflineCompiler mockOfflineCompiler;
+    auto deprecatedAcronyms = mockOfflineCompiler.argHelper->getDeprecatedAcronyms();
+    if (deprecatedAcronyms.empty()) {
+        GTEST_SKIP();
+    }
+    for (const auto &acronym : deprecatedAcronyms) {
+        mockOfflineCompiler.deviceName = acronym.str();
+        mockOfflineCompiler.hwInfoConfig = 0x100020003;
+
+        EXPECT_EQ(mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName), OclocErrorCode::SUCCESS);
+
+        uint32_t sliceCount = static_cast<uint16_t>(mockOfflineCompiler.hwInfoConfig >> 32);
+        uint32_t subSlicePerSliceCount = static_cast<uint16_t>(mockOfflineCompiler.hwInfoConfig >> 16);
+        uint32_t euPerSubSliceCount = static_cast<uint16_t>(mockOfflineCompiler.hwInfoConfig);
+        uint32_t subSliceCount = subSlicePerSliceCount * sliceCount;
+
+        auto &gtSysInfo = mockOfflineCompiler.hwInfo.gtSystemInfo;
+        EXPECT_EQ(gtSysInfo.SliceCount, sliceCount);
+        EXPECT_EQ(gtSysInfo.SubSliceCount, subSliceCount);
+        EXPECT_EQ(gtSysInfo.EUCount, euPerSubSliceCount * subSliceCount);
+        EXPECT_NE(gtSysInfo.ThreadCount, 0u);
     }
 }
 
@@ -614,21 +658,13 @@ TEST_F(MockOfflineCompilerTests, givenAcronymWithUppercaseWhenInitHwInfoThenSucc
 
 TEST_F(MockOfflineCompilerTests, givenDeprecatedAcronymsWithUppercaseWhenInitHwInfoThenSuccessIsReturned) {
     MockOfflineCompiler mockOfflineCompiler;
-    auto deprecatedAcronyms = mockOfflineCompiler.getDeprecatedDevicesTypes();
+    auto deprecatedAcronyms = mockOfflineCompiler.argHelper->getDeprecatedAcronyms();
     if (deprecatedAcronyms.empty()) {
         GTEST_SKIP();
     }
-    auto acronyms = CompilerOptions::tokenize(deprecatedAcronyms, ',');
 
-    for (const auto &deprecatedAcronym : acronyms) {
-        if (deprecatedAcronym.contains(" ")) {
-            auto name = deprecatedAcronym.str();
-            auto space = name.find(" ");
-            mockOfflineCompiler.deviceName = name.substr(++space, name.size());
-        } else {
-            mockOfflineCompiler.deviceName = deprecatedAcronym.str();
-        }
-
+    for (const auto &acronym : deprecatedAcronyms) {
+        mockOfflineCompiler.deviceName = acronym.str();
         std::transform(mockOfflineCompiler.deviceName.begin(), mockOfflineCompiler.deviceName.end(), mockOfflineCompiler.deviceName.begin(), ::toupper);
         EXPECT_EQ(mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName), OclocErrorCode::SUCCESS);
     }
@@ -667,8 +703,8 @@ TEST_F(OfflineCompilerTests, GivenHelpOptionOnQueryThenSuccessIsReturned) {
 }
 
 TEST_F(OfflineCompilerTests, GivenFlagsWhichRequireMoreArgsWithoutThemWhenParsingThenErrorIsReported) {
-    const std::array<std::string, 7> flagsToTest = {
-        "-file", "-output", "-device", "-options", "-internal_options", "-out_dir", "-revision_id"};
+    const std::array<std::string, 8> flagsToTest = {
+        "-file", "-output", "-device", "-options", "-internal_options", "-out_dir", "-revision_id", "-config"};
 
     for (const auto &flag : flagsToTest) {
         const std::vector<std::string> argv = {
@@ -711,6 +747,52 @@ TEST_F(OfflineCompilerTests, Given32BitModeFlagWhenParsingThenInternalOptionsCon
         const auto is32BitModeSet{mockOfflineCompiler.internalOptions.find(CompilerOptions::arch32bit.data()) != std::string::npos};
         EXPECT_TRUE(is32BitModeSet);
     }
+}
+
+TEST_F(OfflineCompilerTests, givenConfigFlagWhenParsingCommandLineThenCorrectValueIsSet) {
+    std::string configStr = "1x2x3";
+    const std::vector<std::string> argv = {
+        "ocloc",
+        "compile",
+        "-file",
+        clFiles + "copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-config",
+        configStr};
+
+    MockOfflineCompiler mockOfflineCompiler{};
+    uint64_t config = 0u;
+    parseHwInfoConfigString(configStr, config);
+
+    const auto result = mockOfflineCompiler.parseCommandLine(argv.size(), argv);
+    EXPECT_EQ(OclocErrorCode::SUCCESS, result);
+    EXPECT_EQ(mockOfflineCompiler.hwInfoConfig, config);
+}
+
+TEST_F(OfflineCompilerTests, givenIncorrectConfigFlagWhenParsingCommandLineThenErrorLogIsPrintedAndFailureIsReturned) {
+    std::string configStr = "1xabcf";
+    const std::vector<std::string> argv = {
+        "ocloc",
+        "compile",
+        "-file",
+        clFiles + "copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-config",
+        configStr};
+
+    MockOfflineCompiler mockOfflineCompiler{};
+
+    ::testing::internal::CaptureStdout();
+    const auto result = mockOfflineCompiler.parseCommandLine(argv.size(), argv);
+    const auto output{::testing::internal::GetCapturedStdout()};
+
+    EXPECT_EQ(OclocErrorCode::INVALID_COMMAND_LINE, result);
+    EXPECT_EQ(mockOfflineCompiler.hwInfoConfig, 0u);
+
+    const std::string expectedErrorMessage{"Error: Invalid config.\n"};
+    EXPECT_EQ(expectedErrorMessage, output);
 }
 
 TEST_F(OfflineCompilerTests, Given64BitModeFlagWhenParsingThenInternalOptionsContain64BitModeFlag) {

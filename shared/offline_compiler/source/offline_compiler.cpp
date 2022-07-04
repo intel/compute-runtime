@@ -340,9 +340,10 @@ int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(std::string deviceNam
             if (deviceId != -1) {
                 hwInfo.platform.usDeviceID = deviceId;
             }
-            auto hwInfoConfig = defaultHardwareInfoConfigTable[hwInfo.platform.eProductFamily];
-            setHwInfoValuesFromConfig(hwInfoConfig, hwInfo);
+            uint64_t config = hwInfoConfig ? hwInfoConfig : defaultHardwareInfoConfigTable[hwInfo.platform.eProductFamily];
+            setHwInfoValuesFromConfig(config, hwInfo);
             hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
+
             setFamilyType();
             return SUCCESS;
         }
@@ -364,7 +365,7 @@ int OfflineCompiler::initHardwareInfoForProductConfig(std::string deviceName) {
     }
 
     if (config != AOT::UNKNOWN_ISA) {
-        if (argHelper->getHwInfoForProductConfig(config, hwInfo)) {
+        if (argHelper->getHwInfoForProductConfig(config, hwInfo, hwInfoConfig)) {
             if (revisionId != -1) {
                 hwInfo.platform.usRevId = revisionId;
             }
@@ -626,6 +627,14 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         } else if ("--format" == currArg) {
             formatToEnforce = argv[argIndex + 1];
             argIndex++;
+        } else if (("-config" == currArg) && hasMoreArgs) {
+            parseHwInfoConfigString(argv[argIndex + 1], hwInfoConfig);
+            if (!hwInfoConfig) {
+                argHelper->printf("Error: Invalid config.\n");
+                retVal = INVALID_COMMAND_LINE;
+                break;
+            }
+            argIndex++;
         } else {
             argHelper->printf("Invalid option (arg %d): %s\n", argIndex, argv[argIndex].c_str());
             retVal = INVALID_COMMAND_LINE;
@@ -767,26 +776,13 @@ auto findDuplicate(const EqComparableT &lhs) {
 }
 
 std::string OfflineCompiler::getDeprecatedDevicesTypes() {
-    std::vector<std::string> prefixes;
-    for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {
-        if (hardwarePrefix[j] == nullptr)
-            continue;
-        prefixes.push_back(hardwarePrefix[j]);
-    }
-
-    std::vector<NEO::ConstStringRef> enabledAcronyms{};
-    auto enabledConfigs = argHelper->getAllSupportedDeviceConfigs();
-    for (const auto &device : enabledConfigs) {
-        enabledAcronyms.insert(enabledAcronyms.end(), device.acronyms.begin(), device.acronyms.end());
-    }
+    auto acronyms = argHelper->getDeprecatedAcronyms();
 
     std::ostringstream os;
-    for (const auto &prefix : prefixes) {
-        if (std::any_of(enabledAcronyms.begin(), enabledAcronyms.end(), ProductConfigHelper::findAcronymWithoutDash(prefix)))
-            continue;
+    for (const auto &acronym : acronyms) {
         if (os.tellp())
             os << ", ";
-        os << prefix;
+        os << acronym.str();
     }
 
     return os.str();
@@ -948,6 +944,9 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
   --format                      Enforce given binary format. The possible values are:
                                 --format zebin - Enforce generating zebin binary
                                 --format patchtokens - Enforce generating patchtokens (legacy) binary.
+
+  -config                       Target hardware info config for a single device,
+                                e.g 1x4x8.
 
 Examples :
   Compile file to Intel Compute GPU device binary (out = source_file_Gen9core.bin)

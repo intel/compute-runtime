@@ -115,13 +115,15 @@ class OclocArgHelper {
     };
     MOCKABLE_VIRTUAL bool fileExists(const std::string &filename) const;
     int parseProductConfigFromString(const std::string &device, size_t begin, size_t end);
-    bool getHwInfoForProductConfig(uint32_t config, NEO::HardwareInfo &hwInfo);
+    bool getHwInfoForProductConfig(uint32_t config, NEO::HardwareInfo &hwInfo, uint64_t hwInfoConfig);
     std::vector<DeviceMapping> &getAllSupportedDeviceConfigs();
     std::vector<NEO::ConstStringRef> getEnabledProductAcronyms();
     std::vector<NEO::ConstStringRef> getEnabledReleasesAcronyms();
     std::vector<NEO::ConstStringRef> getEnabledFamiliesAcronyms();
     std::string getAllSupportedAcronyms();
     AOT::PRODUCT_CONFIG getProductConfigForVersionValue(const std::string &device);
+    std::vector<NEO::ConstStringRef> getDeprecatedAcronyms();
+
     bool setAcronymForDeviceId(std::string &device);
     std::vector<std::string> headersToVectorOfStrings();
     MOCKABLE_VIRTUAL void readFileToVectorOfStrings(const std::string &filename, std::vector<std::string> &lines);

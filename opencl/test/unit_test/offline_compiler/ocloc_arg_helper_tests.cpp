@@ -135,7 +135,7 @@ TEST_F(OclocArgHelperTests, givenFamilyAcronymWhenCheckAllEnabledThenCorrectValu
 
 TEST_F(OclocArgHelperTests, givenHwInfoForProductConfigWhenUnknownIsaIsPassedThenFalseIsReturned) {
     NEO::HardwareInfo hwInfo;
-    EXPECT_FALSE(argHelper->getHwInfoForProductConfig(AOT::UNKNOWN_ISA, hwInfo));
+    EXPECT_FALSE(argHelper->getHwInfoForProductConfig(AOT::UNKNOWN_ISA, hwInfo, 0u));
 }
 
 TEST_F(OclocArgHelperTests, givenEnabledFamilyAcronymsWhenCheckIfIsFamilyThenTrueIsReturned) {

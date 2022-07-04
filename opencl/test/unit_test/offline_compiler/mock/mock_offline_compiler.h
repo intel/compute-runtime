@@ -35,6 +35,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::generateOptsSuffix;
     using OfflineCompiler::getStringWithinDelimiters;
     using OfflineCompiler::hwInfo;
+    using OfflineCompiler::hwInfoConfig;
     using OfflineCompiler::igcFacade;
     using OfflineCompiler::initHardwareInfo;
     using OfflineCompiler::initHardwareInfoForProductConfig;

@@ -168,7 +168,7 @@ std::unique_ptr<char[]> OclocArgHelper::loadDataFromFile(const std::string &file
     }
 }
 
-bool OclocArgHelper::getHwInfoForProductConfig(uint32_t config, NEO::HardwareInfo &hwInfo) {
+bool OclocArgHelper::getHwInfoForProductConfig(uint32_t config, NEO::HardwareInfo &hwInfo, uint64_t hwInfoConfig) {
     bool retVal = false;
     if (config == AOT::UNKNOWN_ISA) {
         return retVal;
@@ -179,6 +179,9 @@ bool OclocArgHelper::getHwInfoForProductConfig(uint32_t config, NEO::HardwareInf
             hwInfo = *deviceConfig.hwInfo;
             const auto &compilerHwInfoConfig = *NEO::CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);
             compilerHwInfoConfig.setProductConfigForHwInfo(hwInfo, deviceConfig.aotConfig);
+            if (hwInfoConfig) {
+                setHwInfoValuesFromConfig(hwInfoConfig, hwInfo);
+            }
             NEO::hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
 
             if (deviceConfig.deviceIds) {
@@ -189,6 +192,26 @@ bool OclocArgHelper::getHwInfoForProductConfig(uint32_t config, NEO::HardwareInf
         }
     }
     return retVal;
+}
+
+std::vector<NEO::ConstStringRef> OclocArgHelper::getDeprecatedAcronyms() {
+    std::vector<NEO::ConstStringRef> prefixes{}, deprecatedAcronyms{}, enabledAcronyms{};
+    for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {
+        if (NEO::hardwarePrefix[j] == nullptr)
+            continue;
+        prefixes.push_back(NEO::hardwarePrefix[j]);
+    }
+
+    for (const auto &device : deviceMap) {
+        enabledAcronyms.insert(enabledAcronyms.end(), device.acronyms.begin(), device.acronyms.end());
+    }
+
+    for (const auto &prefix : prefixes) {
+        if (std::any_of(enabledAcronyms.begin(), enabledAcronyms.end(), ProductConfigHelper::findAcronymWithoutDash(prefix.str())))
+            continue;
+        deprecatedAcronyms.push_back(prefix);
+    }
+    return deprecatedAcronyms;
 }
 
 void OclocArgHelper::saveOutput(const std::string &filename, const void *pData, const size_t &dataSize) {

@@ -163,6 +163,7 @@ class OfflineCompiler {
     struct buildInfo;
     std::unique_ptr<buildInfo> pBuildInfo;
     int revisionId = -1;
+    uint64_t hwInfoConfig = 0u;
 
     std::unique_ptr<OclocIgcFacade> igcFacade{nullptr};
     std::unique_ptr<OclocFclFacade> fclFacade{nullptr};
