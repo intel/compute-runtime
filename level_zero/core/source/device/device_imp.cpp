@@ -918,17 +918,14 @@ ze_result_t DeviceImp::systemBarrier() { return ZE_RESULT_ERROR_UNSUPPORTED_FEAT
 
 ze_result_t DeviceImp::activateMetricGroupsDeferred(uint32_t count,
                                                     zet_metric_group_handle_t *phMetricGroups) {
-    ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
     if (!this->isSubdevice && this->isImplicitScalingCapable()) {
         for (auto subDevice : this->subDevices) {
-            result = subDevice->getMetricDeviceContext().activateMetricGroupsDeferred(count, phMetricGroups);
-            if (result != ZE_RESULT_SUCCESS)
-                break;
+            subDevice->getMetricDeviceContext().activateMetricGroupsDeferred(count, phMetricGroups);
         }
     } else {
-        result = metricContext->activateMetricGroupsDeferred(count, phMetricGroups);
+        metricContext->activateMetricGroupsDeferred(count, phMetricGroups);
     }
-    return result;
+    return ZE_RESULT_SUCCESS;
 }
 
 void *DeviceImp::getExecEnvironment() { return execEnvironment; }

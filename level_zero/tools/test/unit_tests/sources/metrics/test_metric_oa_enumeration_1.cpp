@@ -969,7 +969,7 @@ TEST_F(MultiDeviceMetricEnumerationTest, givenMultipleDevicesAndValidEventBasedM
     EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), devices[0]->toHandle(), 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
 }
 
-TEST_F(MultiDeviceMetricEnumerationTest, givenMultipleDevicesAndTwoMetricGroupsWithTheSameDomainsWhenzetContextActivateMetricGroupsIsCalledThenReturnsFail) {
+TEST_F(MultiDeviceMetricEnumerationTest, givenMultipleDevicesAndTwoMetricGroupsWithTheSameDomainsWhenzetContextActivateMetricGroupsIsCalledThenReturnsSuccess) {
 
     auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
     const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
@@ -1084,7 +1084,7 @@ TEST_F(MultiDeviceMetricEnumerationTest, givenMultipleDevicesAndTwoMetricGroupsW
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGroupGetProperties(metricGroupHandles[1], &properties1));
 
     // Activate metric groups.
-    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), devices[0]->toHandle(), 4, metricGroupHandles.data()), ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), devices[0]->toHandle(), 2, metricGroupHandles.data()), ZE_RESULT_SUCCESS);
 }
 
 TEST_F(MetricEnumerationTest, givenValidTimeBasedMetricGroupWhenzetContextActivateMetricGroupsIsCalledThenReturnsSuccess) {
@@ -1381,7 +1381,7 @@ TEST_F(MetricEnumerationTest, givenActivateTwoMetricGroupsWithDifferentDomainsAt
     EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 2, metricGroupHandle), ZE_RESULT_SUCCESS);
 }
 
-TEST_F(MetricEnumerationTest, givenActivateTwoMetricGroupsWithTheSameDomainsWhenzetContextActivateMetricGroupsIsCalledThenReturnsFail) {
+TEST_F(MetricEnumerationTest, givenActivateTwoMetricGroupsWithTheSameDomainsWhenzetContextActivateMetricGroupsIsCalledThenReturnsSuccess) {
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -1447,8 +1447,8 @@ TEST_F(MetricEnumerationTest, givenActivateTwoMetricGroupsWithTheSameDomainsWhen
 
     // Activate two metric groups with a different domains.
     EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroupHandle[0]), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroupHandle[1]), ZE_RESULT_ERROR_UNKNOWN);
-    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 2, metricGroupHandle), ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroupHandle[1]), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 2, metricGroupHandle), ZE_RESULT_SUCCESS);
 }
 
 TEST_F(MetricEnumerationTest, givenValidMetricGroupWhenDeactivateIsDoneThenDomainsAreCleared) {
@@ -1503,7 +1503,7 @@ TEST_F(MetricEnumerationTest, givenValidMetricGroupWhenDeactivateIsDoneThenDomai
     EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 0, nullptr), ZE_RESULT_SUCCESS);
 }
 
-TEST_F(MetricEnumerationTest, givenDeactivateTestsWhenzetContextActivateMetricGroupsIsCalledThenReturnsApropriateResults) {
+TEST_F(MetricEnumerationTest, GivenAlreadyActivatedMetricGroupWhenzetContextActivateMetricGroupsIsCalledThenReturnSuccess) {
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -1569,14 +1569,16 @@ TEST_F(MetricEnumerationTest, givenDeactivateTestsWhenzetContextActivateMetricGr
 
     // Activate two metric groups with a different domains.
     EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroupHandle[0]), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroupHandle[1]), ZE_RESULT_ERROR_UNKNOWN);
-    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 2, metricGroupHandle), ZE_RESULT_ERROR_UNKNOWN);
+    device->activateMetricGroups();
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroupHandle[1]), ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 2, metricGroupHandle), ZE_RESULT_SUCCESS);
 
     // Deactivate all.
     EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 0, nullptr), ZE_RESULT_SUCCESS);
 
     // Activate two metric groups at once.
-    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 2, metricGroupHandle), ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 2, metricGroupHandle), ZE_RESULT_SUCCESS);
 
     // Deactivate all.
     EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 0, nullptr), ZE_RESULT_SUCCESS);
