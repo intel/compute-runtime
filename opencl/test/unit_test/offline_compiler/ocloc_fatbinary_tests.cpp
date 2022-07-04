@@ -186,12 +186,12 @@ TEST(OclocFatBinaryRequestedFatBinary, givenDeviceArgToFatBinaryWhenConfigIsNotF
     std::stringstream majorString;
     majorString << aotConfig.ProductConfigID.Major;
     auto major = majorString.str();
-    auto aotValue0 = argHelper->getMajorMinorRevision(major);
-    EXPECT_EQ(aotValue0.ProductConfig, AOT::UNKNOWN_ISA);
+    auto aotValue0 = argHelper->getProductConfigForVersionValue(major);
+    EXPECT_EQ(aotValue0, AOT::UNKNOWN_ISA);
 
     auto majorMinor = ProductConfigHelper::parseMajorMinorValue(aotConfig);
-    auto aotValue1 = argHelper->getMajorMinorRevision(majorMinor);
-    EXPECT_EQ(aotValue1.ProductConfig, AOT::UNKNOWN_ISA);
+    auto aotValue1 = argHelper->getProductConfigForVersionValue(majorMinor);
+    EXPECT_EQ(aotValue1, AOT::UNKNOWN_ISA);
 
     const char *cutRevision[] = {"ocloc", "-device", majorMinor.c_str()};
     const char *cutMinorAndRevision[] = {"ocloc", "-device", major.c_str()};
@@ -342,6 +342,43 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoTargetsOfProductsWhenFatBinar
         std::vector<ConstStringRef> expected{acronym0, acronym1};
 
         std::string acronymsTarget = acronym0.str() + "," + acronym1.str();
+        auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
+        EXPECT_EQ(got, expected);
+
+        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        std::stringstream resString;
+        std::vector<std::string> argv = {
+            "ocloc",
+            "-file",
+            clFiles + "copybuffer.cl",
+            "-device",
+            acronymsTarget};
+
+        testing::internal::CaptureStdout();
+        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+        auto output = testing::internal::GetCapturedStdout();
+        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+
+        for (const auto &product : expected) {
+            resString << "Build succeeded for : " << product.str() + ".\n";
+        }
+
+        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    }
+}
+
+TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoVersionsOfProductConfigsWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
+    if (enabledProducts.size() < 2) {
+        GTEST_SKIP();
+    }
+    for (unsigned int product = 0; product < enabledProducts.size() - 1; product++) {
+        auto config0 = enabledProducts.at(product).aotConfig;
+        auto config1 = enabledProducts.at(product + 1).aotConfig;
+        auto configStr0 = ProductConfigHelper::parseMajorMinorRevisionValue(config0);
+        auto configStr1 = ProductConfigHelper::parseMajorMinorRevisionValue(config1);
+        std::vector<ConstStringRef> expected{configStr0, configStr1};
+
+        std::string acronymsTarget = configStr0 + "," + configStr1;
         auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
         EXPECT_EQ(got, expected);
 

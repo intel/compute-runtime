@@ -295,29 +295,26 @@ int OclocArgHelper::parseProductConfigFromString(const std::string &device, size
     }
 }
 
-AheadOfTimeConfig OclocArgHelper::getMajorMinorRevision(const std::string &device) {
-    AheadOfTimeConfig product = {AOT::UNKNOWN_ISA};
+AOT::PRODUCT_CONFIG OclocArgHelper::getProductConfigForVersionValue(const std::string &device) {
     auto majorPos = device.find(".");
     auto major = parseProductConfigFromString(device, 0, majorPos);
     if (major == CONFIG_STATUS::MISMATCHED_VALUE || majorPos == std::string::npos) {
-        return product;
+        return AOT::UNKNOWN_ISA;
     }
-
     auto minorPos = device.find(".", ++majorPos);
     auto minor = parseProductConfigFromString(device, majorPos, minorPos);
-
     if (minor == CONFIG_STATUS::MISMATCHED_VALUE || minorPos == std::string::npos) {
-        return product;
+        return AOT::UNKNOWN_ISA;
     }
-
     auto revision = parseProductConfigFromString(device, minorPos + 1, device.size());
     if (revision == CONFIG_STATUS::MISMATCHED_VALUE) {
-        return product;
+        return AOT::UNKNOWN_ISA;
     }
+    AheadOfTimeConfig product = {0};
     product.ProductConfigID.Major = major;
     product.ProductConfigID.Minor = minor;
     product.ProductConfigID.Revision = revision;
-    return product;
+    return static_cast<AOT::PRODUCT_CONFIG>(product.ProductConfig);
 }
 
 bool OclocArgHelper::isRelease(const std::string &device) {
@@ -337,7 +334,12 @@ bool OclocArgHelper::isFamily(const std::string &device) {
 }
 
 bool OclocArgHelper::isProductConfig(const std::string &device) {
-    auto config = ProductConfigHelper::returnProductConfigForAcronym(device);
+    auto config = AOT::UNKNOWN_ISA;
+    if (device.find(".") != std::string::npos) {
+        config = getProductConfigForVersionValue(device);
+    } else {
+        config = ProductConfigHelper::returnProductConfigForAcronym(device);
+    }
     if (config == AOT::UNKNOWN_ISA) {
         return false;
     }

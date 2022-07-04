@@ -121,7 +121,7 @@ class OclocArgHelper {
     std::vector<NEO::ConstStringRef> getEnabledReleasesAcronyms();
     std::vector<NEO::ConstStringRef> getEnabledFamiliesAcronyms();
     std::string getAllSupportedAcronyms();
-    AheadOfTimeConfig getMajorMinorRevision(const std::string &device);
+    AOT::PRODUCT_CONFIG getProductConfigForVersionValue(const std::string &device);
     bool setAcronymForDeviceId(std::string &device);
     std::vector<std::string> headersToVectorOfStrings();
     MOCKABLE_VIRTUAL void readFileToVectorOfStrings(const std::string &filename, std::vector<std::string> &lines);

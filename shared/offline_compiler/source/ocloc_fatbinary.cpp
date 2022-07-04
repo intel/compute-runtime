@@ -242,7 +242,13 @@ int buildFatBinaryForTarget(int retVal, const std::vector<std::string> &argsCopy
     if (retVal) {
         return retVal;
     }
-    auto productConfig = ProductConfigHelper::parseMajorMinorRevisionValue(ProductConfigHelper::returnProductConfigForAcronym(product));
+
+    std::string productConfig("");
+    if (product.find(".") != std::string::npos) {
+        productConfig = product;
+    } else {
+        productConfig = ProductConfigHelper::parseMajorMinorRevisionValue(ProductConfigHelper::returnProductConfigForAcronym(product));
+    }
     fatbinary.appendFileEntry(pointerSize + "." + productConfig, pCompiler->getPackedDeviceBinaryOutput());
     return retVal;
 }

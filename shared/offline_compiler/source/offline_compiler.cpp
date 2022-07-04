@@ -351,24 +351,24 @@ int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(std::string deviceNam
 }
 
 int OfflineCompiler::initHardwareInfoForProductConfig(std::string deviceName) {
-    AheadOfTimeConfig aotConfig{AOT::UNKNOWN_ISA};
+    AOT::PRODUCT_CONFIG config = AOT::UNKNOWN_ISA;
     ProductConfigHelper::adjustDeviceName(deviceName);
 
     if (deviceName.find(".") != std::string::npos) {
-        aotConfig = argHelper->getMajorMinorRevision(deviceName);
-        if (aotConfig.ProductConfig == AOT::UNKNOWN_ISA) {
+        config = argHelper->getProductConfigForVersionValue(deviceName);
+        if (config == AOT::UNKNOWN_ISA) {
             argHelper->printf("Could not determine device target: %s\n", deviceName.c_str());
         }
     } else if (argHelper->isProductConfig(deviceName)) {
-        aotConfig.ProductConfig = ProductConfigHelper::returnProductConfigForAcronym(deviceName);
+        config = ProductConfigHelper::returnProductConfigForAcronym(deviceName);
     }
 
-    if (aotConfig.ProductConfig != AOT::UNKNOWN_ISA) {
-        if (argHelper->getHwInfoForProductConfig(aotConfig.ProductConfig, hwInfo)) {
+    if (config != AOT::UNKNOWN_ISA) {
+        if (argHelper->getHwInfoForProductConfig(config, hwInfo)) {
             if (revisionId != -1) {
                 hwInfo.platform.usRevId = revisionId;
             }
-            deviceConfig = static_cast<AOT::PRODUCT_CONFIG>(aotConfig.ProductConfig);
+            deviceConfig = config;
             setFamilyType();
             return SUCCESS;
         }

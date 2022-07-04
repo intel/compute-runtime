@@ -34,9 +34,9 @@ TEST_F(OclocArgHelperTests, givenProductOrAotConfigWhenParseMajorMinorRevisionVa
         auto configStr1 = ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig);
         EXPECT_STREQ(configStr0.c_str(), configStr1.c_str());
 
-        auto gotCofig = argHelper->getMajorMinorRevision(configStr0);
+        auto gotCofig = argHelper->getProductConfigForVersionValue(configStr0);
 
-        EXPECT_EQ(gotCofig.ProductConfig, productConfig);
+        EXPECT_EQ(gotCofig, productConfig);
     }
 }
 
@@ -150,6 +150,24 @@ TEST_F(OclocArgHelperTests, givenEnabledReleaseAcronymsWhenCheckIfIsReleaseThenT
     for (const auto &acronym : enabledReleasesAcronyms) {
         EXPECT_TRUE(argHelper->isRelease(acronym.str()));
     }
+}
+
+TEST_F(OclocArgHelperTests, givenEnabledProductsAcronymsAndVersionsWhenCheckIfProductConfigThenTrueIsReturned) {
+    auto enabledProducts = argHelper->getAllSupportedDeviceConfigs();
+    for (const auto &product : enabledProducts) {
+        auto configStr = ProductConfigHelper::parseMajorMinorRevisionValue(product.aotConfig);
+        EXPECT_FALSE(configStr.empty());
+        EXPECT_TRUE(argHelper->isProductConfig(configStr));
+
+        for (const auto &acronym : product.acronyms) {
+            EXPECT_TRUE(argHelper->isProductConfig(acronym.str()));
+        }
+    }
+}
+
+TEST_F(OclocArgHelperTests, givenUnknownIsaVersionWhenCheckIfProductConfigThenFalseIsReturned) {
+    auto configStr = ProductConfigHelper::parseMajorMinorRevisionValue(AOT::UNKNOWN_ISA);
+    EXPECT_FALSE(argHelper->isProductConfig(configStr));
 }
 
 TEST_F(OclocArgHelperTests, givenDisabledFamilyOrReleaseNameThenReturnsEmptyList) {
