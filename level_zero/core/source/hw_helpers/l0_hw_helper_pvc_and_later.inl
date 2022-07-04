@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,15 +16,24 @@
 namespace L0 {
 
 template <typename Family>
-void L0HwHelperHw<Family>::setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupType groupType) const {
-    if (groupType == NEO::EngineGroupType::LinkedCopy) {
+void L0HwHelperHw<Family>::setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::Device::EngineGroupT &group) const {
+    if (group.engineGroupType == NEO::EngineGroupType::LinkedCopy) {
         groupProperty.flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY;
         groupProperty.maxMemoryFillPatternSize = sizeof(uint8_t);
     }
 
-    if (groupType == NEO::EngineGroupType::Copy && NEO::EngineHelpers::isBcsVirtualEngineEnabled()) {
+    if (group.engineGroupType == NEO::EngineGroupType::Copy) {
         groupProperty.flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY;
-        groupProperty.maxMemoryFillPatternSize = sizeof(uint8_t);
+
+        bool virtualEnginesEnabled = true;
+        for (const auto &engine : group.engines) {
+            if (engine.osContext) {
+                virtualEnginesEnabled &= NEO::EngineHelpers::isBcsVirtualEngineEnabled(engine.getEngineType());
+            }
+        }
+        if (virtualEnginesEnabled) {
+            groupProperty.maxMemoryFillPatternSize = sizeof(uint8_t);
+        }
     }
 }
 

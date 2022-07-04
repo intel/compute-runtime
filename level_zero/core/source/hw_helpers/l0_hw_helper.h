@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/device/device.h"
 
 #include <level_zero/ze_api.h>
 
@@ -28,7 +29,7 @@ struct EventPool;
 class L0HwHelper {
   public:
     static L0HwHelper &get(GFXCORE_FAMILY gfxCore);
-    virtual void setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupType groupType) const = 0;
+    virtual void setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::Device::EngineGroupT &group) const = 0;
     virtual L0::Event *createEvent(L0::EventPool *eventPool, const ze_event_desc_t *desc, L0::Device *device) const = 0;
 
     virtual bool isResumeWARequired() = 0;
@@ -51,7 +52,7 @@ class L0HwHelperHw : public L0HwHelper {
         static L0HwHelperHw<GfxFamily> l0HwHelper;
         return l0HwHelper;
     }
-    void setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupType groupType) const override;
+    void setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::Device::EngineGroupT &group) const override;
     L0::Event *createEvent(L0::EventPool *eventPool, const ze_event_desc_t *desc, L0::Device *device) const override;
     L0HwHelperHw() = default;
 

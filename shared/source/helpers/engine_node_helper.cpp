@@ -77,8 +77,10 @@ bool isBcs(aub_stream::EngineType engineType) {
     return engineType == aub_stream::ENGINE_BCS || (engineType >= aub_stream::ENGINE_BCS1 && engineType <= aub_stream::ENGINE_BCS8);
 }
 
-bool isBcsVirtualEngineEnabled() {
-    bool useVirtualEnginesForBcs = true;
+bool isBcsVirtualEngineEnabled(aub_stream::EngineType engineType) {
+    bool useVirtualEnginesForBcs = engineType == aub_stream::EngineType::ENGINE_BCS ||
+                                   engineType == aub_stream::EngineType::ENGINE_BCS1;
+
     if (DebugManager.flags.UseDrmVirtualEnginesForBcs.get() != -1) {
         useVirtualEnginesForBcs = !!DebugManager.flags.UseDrmVirtualEnginesForBcs.get();
     }

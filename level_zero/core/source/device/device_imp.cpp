@@ -309,7 +309,7 @@ uint32_t DeviceImp::getCopyQueueGroupsFromSubDevice(uint32_t numberOfSubDeviceCo
         pCommandQueueGroupProperties[subDeviceQueueGroupsIter].flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY;
         pCommandQueueGroupProperties[subDeviceQueueGroupsIter].maxMemoryFillPatternSize = hwHelper.getMaxFillPaternSizeForCopyEngine();
 
-        l0HwHelper.setAdditionalGroupProperty(pCommandQueueGroupProperties[subDeviceQueueGroupsIter], subDeviceCopyEngineGroups[subDeviceQueueGroupsIter].engineGroupType);
+        l0HwHelper.setAdditionalGroupProperty(pCommandQueueGroupProperties[subDeviceQueueGroupsIter], subDeviceCopyEngineGroups[subDeviceQueueGroupsIter]);
         pCommandQueueGroupProperties[subDeviceQueueGroupsIter].numQueues = static_cast<uint32_t>(subDeviceCopyEngineGroups[subDeviceQueueGroupsIter].engines.size());
     }
 
@@ -354,7 +354,7 @@ ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
             pCommandQueueGroupProperties[i].flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY;
             pCommandQueueGroupProperties[i].maxMemoryFillPatternSize = hwHelper.getMaxFillPaternSizeForCopyEngine();
         }
-        l0HwHelper.setAdditionalGroupProperty(pCommandQueueGroupProperties[i], engineGroups[i].engineGroupType);
+        l0HwHelper.setAdditionalGroupProperty(pCommandQueueGroupProperties[i], engineGroups[i]);
         pCommandQueueGroupProperties[i].numQueues = static_cast<uint32_t>(engineGroups[i].engines.size());
     }
 

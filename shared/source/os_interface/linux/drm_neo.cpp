@@ -1103,7 +1103,7 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
     auto numberOfCCS = rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
     constexpr uint32_t maxEngines = 9u;
 
-    bool useVirtualEnginesForBcs = EngineHelpers::isBcsVirtualEngineEnabled();
+    bool useVirtualEnginesForBcs = EngineHelpers::isBcsVirtualEngineEnabled(engineType);
     auto numberOfBCS = rootDeviceEnvironment.getHardwareInfo()->featureTable.ftrBcsInfo.count();
 
     if (DebugManager.flags.LimitEngineCountForVirtualBcs.get() != -1) {

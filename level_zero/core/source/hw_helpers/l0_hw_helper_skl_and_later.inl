@@ -10,7 +10,7 @@
 namespace L0 {
 
 template <typename GfxFamily>
-void L0HwHelperHw<GfxFamily>::setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupType groupType) const {
+void L0HwHelperHw<GfxFamily>::setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::Device::EngineGroupT &group) const {
 }
 
 template <typename Family>

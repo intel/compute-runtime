@@ -185,20 +185,25 @@ static void givenBcsEngineTypeWhenBindingDrmContextThenContextParamEngineIsSet(s
     EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.contextId);
     EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_ENGINES), drm->receivedContextParamRequest.param);
     auto extensions = drm->receivedContextParamEngines.extensions;
-    EXPECT_NE(0ull, extensions);
-    EXPECT_EQ(ptrDiff(drm->receivedContextParamEngines.engines + 1 + numBcsSiblings, &drm->receivedContextParamEngines), drm->receivedContextParamRequest.size);
-    EXPECT_EQ(static_cast<__u16>(I915_ENGINE_CLASS_INVALID), drm->receivedContextParamEngines.engines[0].engine_class);
-    EXPECT_EQ(static_cast<__u16>(I915_ENGINE_CLASS_INVALID_NONE), drm->receivedContextParamEngines.engines[0].engine_instance);
-    EXPECT_EQ(static_cast<__u32>(I915_CONTEXT_ENGINES_EXT_LOAD_BALANCE), drm->receivedContextEnginesLoadBalance.base.name);
-    EXPECT_EQ(numBcsSiblings, drm->receivedContextEnginesLoadBalance.num_siblings);
-    for (auto balancedEngine = 0u; balancedEngine < numBcsSiblings; balancedEngine++) {
-        EXPECT_EQ(I915_ENGINE_CLASS_COPY, drm->receivedContextEnginesLoadBalance.engines[balancedEngine].engine_class);
-        auto engineInstance = engineIndex ? balancedEngine + 1 : balancedEngine;
-        EXPECT_EQ(engineInstance, DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextEnginesLoadBalance.engines[balancedEngine].engine_instance));
-        EXPECT_EQ(I915_ENGINE_CLASS_COPY, drm->receivedContextParamEngines.engines[1 + balancedEngine].engine_class);
-        EXPECT_EQ(engineInstance, DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextParamEngines.engines[1 + balancedEngine].engine_instance));
-        auto engineTile = DrmMockHelper::getTileFromEngineOrMemoryInstance(drm->receivedContextEnginesLoadBalance.engines[balancedEngine].engine_instance);
-        EXPECT_EQ(engineTile, tileId);
+
+    if (EngineHelpers::isBcsVirtualEngineEnabled(engineType)) {
+        EXPECT_NE(0ull, extensions);
+        EXPECT_EQ(ptrDiff(drm->receivedContextParamEngines.engines + 1 + numBcsSiblings, &drm->receivedContextParamEngines), drm->receivedContextParamRequest.size);
+        EXPECT_EQ(static_cast<__u16>(I915_ENGINE_CLASS_INVALID), drm->receivedContextParamEngines.engines[0].engine_class);
+        EXPECT_EQ(static_cast<__u16>(I915_ENGINE_CLASS_INVALID_NONE), drm->receivedContextParamEngines.engines[0].engine_instance);
+        EXPECT_EQ(static_cast<__u32>(I915_CONTEXT_ENGINES_EXT_LOAD_BALANCE), drm->receivedContextEnginesLoadBalance.base.name);
+        EXPECT_EQ(numBcsSiblings, drm->receivedContextEnginesLoadBalance.num_siblings);
+        for (auto balancedEngine = 0u; balancedEngine < numBcsSiblings; balancedEngine++) {
+            EXPECT_EQ(I915_ENGINE_CLASS_COPY, drm->receivedContextEnginesLoadBalance.engines[balancedEngine].engine_class);
+            auto engineInstance = engineIndex ? balancedEngine + 1 : balancedEngine;
+            EXPECT_EQ(engineInstance, DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextEnginesLoadBalance.engines[balancedEngine].engine_instance));
+            EXPECT_EQ(I915_ENGINE_CLASS_COPY, drm->receivedContextParamEngines.engines[1 + balancedEngine].engine_class);
+            EXPECT_EQ(engineInstance, DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextParamEngines.engines[1 + balancedEngine].engine_instance));
+            auto engineTile = DrmMockHelper::getTileFromEngineOrMemoryInstance(drm->receivedContextEnginesLoadBalance.engines[balancedEngine].engine_instance);
+            EXPECT_EQ(engineTile, tileId);
+        }
+    } else {
+        EXPECT_EQ(0ull, extensions);
     }
 }
 
@@ -242,6 +247,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, givenLinkBcsEngineWhenBindingS
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, givenLinkBcsEngineWithoutMainCopyEngineWhenBindingSingleTileDrmContextThenContextParamEngineIsSet) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.UseDrmVirtualEnginesForBcs.set(1);
     HardwareInfo localHwInfo = *defaultHwInfo;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = false;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
@@ -289,6 +296,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, givenLinkBcsEngineWithoutMainC
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, giveNotAllLinkBcsEnginesWhenBindingSingleTileDrmContextThenContextParamEngineIsSet) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.UseDrmVirtualEnginesForBcs.set(1);
     HardwareInfo localHwInfo = *defaultHwInfo;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = false;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
