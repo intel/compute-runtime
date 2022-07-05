@@ -702,6 +702,133 @@ TEST_F(OfflineCompilerTests, GivenHelpOptionOnQueryThenSuccessIsReturned) {
     EXPECT_EQ(OclocErrorCode::SUCCESS, retVal);
 }
 
+TEST_F(OfflineCompilerTests, GivenHelpOptionOnIdsThenSuccessIsReturned) {
+    std::vector<ConstStringRef> helpFlags = {"-h", "--help"};
+    for (const auto &helpFlag : helpFlags) {
+        std::vector<std::string> argv = {
+            "ocloc",
+            "ids",
+            helpFlag.str()};
+
+        testing::internal::CaptureStdout();
+        int retVal = OfflineCompiler::queryAcronymIds(argv.size(), argv, oclocArgHelperWithoutInput.get());
+        std::string output = testing::internal::GetCapturedStdout();
+
+        std::stringstream expectedOutput;
+        expectedOutput << R"===(
+Depending on <acronym> will return all
+matched versions (<major>.<minor>.<revision>)
+that correspond to the given name.
+All supported acronyms: )===";
+        expectedOutput << getSupportedDevices(oclocArgHelperWithoutInput.get()) << ".\n";
+
+        EXPECT_STREQ(output.c_str(), expectedOutput.str().c_str());
+        EXPECT_EQ(OclocErrorCode::SUCCESS, retVal);
+    }
+}
+
+TEST_F(OfflineCompilerTests, givenFamilyAcronymWhenIdsCommandIsInvokeThenSuccessAndCorrectIdsAreReturned) {
+    auto enabledFamilies = oclocArgHelperWithoutInput->getEnabledFamiliesAcronyms();
+    if (enabledFamilies.empty()) {
+        GTEST_SKIP();
+    }
+    auto supportedDevicesConfigs = oclocArgHelperWithoutInput->getAllSupportedDeviceConfigs();
+    for (const auto &familyAcronym : enabledFamilies) {
+        std::vector<std::string> expected{};
+        auto family = ProductConfigHelper::returnFamilyForAcronym(familyAcronym.str());
+        for (const auto &device : supportedDevicesConfigs) {
+            if (device.family == family) {
+                auto config = ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig);
+                expected.push_back(config);
+            }
+        }
+        std::vector<std::string> argv = {
+            "ocloc",
+            "ids",
+            familyAcronym.str()};
+
+        std::stringstream expectedOutput;
+        testing::internal::CaptureStdout();
+        int retVal = OfflineCompiler::queryAcronymIds(argv.size(), argv, oclocArgHelperWithoutInput.get());
+        std::string output = testing::internal::GetCapturedStdout();
+        expectedOutput << "Matched ids:";
+
+        for (const auto &prefix : expected) {
+            expectedOutput << "\n" + prefix;
+        }
+        EXPECT_STREQ(expectedOutput.str().c_str(), output.c_str());
+        EXPECT_EQ(OclocErrorCode::SUCCESS, retVal);
+    }
+}
+
+TEST_F(OfflineCompilerTests, givenReleaseAcronymWhenIdsCommandIsInvokeThenSuccessAndCorrectIdsAreReturned) {
+    auto enabledReleases = oclocArgHelperWithoutInput->getEnabledReleasesAcronyms();
+    if (enabledReleases.empty()) {
+        GTEST_SKIP();
+    }
+    auto supportedDevicesConfigs = oclocArgHelperWithoutInput->getAllSupportedDeviceConfigs();
+    for (const auto &releaseAcronym : enabledReleases) {
+        std::vector<std::string> expected{};
+        auto release = ProductConfigHelper::returnReleaseForAcronym(releaseAcronym.str());
+        for (const auto &device : supportedDevicesConfigs) {
+            if (device.release == release) {
+                auto config = ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig);
+                expected.push_back(config);
+            }
+        }
+        std::vector<std::string> argv = {
+            "ocloc",
+            "ids",
+            releaseAcronym.str()};
+
+        std::stringstream expectedOutput;
+        testing::internal::CaptureStdout();
+        int retVal = OfflineCompiler::queryAcronymIds(argv.size(), argv, oclocArgHelperWithoutInput.get());
+        std::string output = testing::internal::GetCapturedStdout();
+        expectedOutput << "Matched ids:";
+
+        for (const auto &prefix : expected) {
+            expectedOutput << "\n" + prefix;
+        }
+        EXPECT_STREQ(expectedOutput.str().c_str(), output.c_str());
+        EXPECT_EQ(OclocErrorCode::SUCCESS, retVal);
+    }
+}
+
+TEST_F(OfflineCompilerTests, givenProductAcronymWhenIdsCommandIsInvokeThenSuccessAndCorrectIdsAreReturned) {
+    auto enabledProducts = oclocArgHelperWithoutInput->getEnabledProductAcronyms();
+    if (enabledProducts.empty()) {
+        GTEST_SKIP();
+    }
+    auto supportedDevicesConfigs = oclocArgHelperWithoutInput->getAllSupportedDeviceConfigs();
+    for (const auto &productAcronym : enabledProducts) {
+        std::vector<std::string> expected{};
+        auto product = ProductConfigHelper::returnProductConfigForAcronym(productAcronym.str());
+        for (const auto &device : supportedDevicesConfigs) {
+            if (device.aotConfig.ProductConfig == product) {
+                auto config = ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig);
+                expected.push_back(config);
+            }
+        }
+        std::vector<std::string> argv = {
+            "ocloc",
+            "ids",
+            productAcronym.str()};
+
+        std::stringstream expectedOutput;
+        testing::internal::CaptureStdout();
+        int retVal = OfflineCompiler::queryAcronymIds(argv.size(), argv, oclocArgHelperWithoutInput.get());
+        std::string output = testing::internal::GetCapturedStdout();
+        expectedOutput << "Matched ids:";
+
+        for (const auto &prefix : expected) {
+            expectedOutput << "\n" + prefix;
+        }
+        EXPECT_STREQ(expectedOutput.str().c_str(), output.c_str());
+        EXPECT_EQ(OclocErrorCode::SUCCESS, retVal);
+    }
+}
+
 TEST_F(OfflineCompilerTests, GivenFlagsWhichRequireMoreArgsWithoutThemWhenParsingThenErrorIsReported) {
     const std::array<std::string, 8> flagsToTest = {
         "-file", "-output", "-device", "-options", "-internal_options", "-out_dir", "-revision_id", "-config"};

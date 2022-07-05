@@ -15,6 +15,7 @@
 #include "device_ids_configs.h"
 #include "platforms.h"
 
+#include <algorithm>
 #include <cctype>
 #include <fstream>
 #include <map>
@@ -120,10 +121,10 @@ class OclocArgHelper {
     std::vector<NEO::ConstStringRef> getEnabledProductAcronyms();
     std::vector<NEO::ConstStringRef> getEnabledReleasesAcronyms();
     std::vector<NEO::ConstStringRef> getEnabledFamiliesAcronyms();
+    std::vector<NEO::ConstStringRef> getDeprecatedAcronyms();
+    std::vector<NEO::ConstStringRef> getAllSupportedProductAcronyms();
     std::string getAllSupportedAcronyms();
     AOT::PRODUCT_CONFIG getProductConfigForVersionValue(const std::string &device);
-    std::vector<NEO::ConstStringRef> getDeprecatedAcronyms();
-
     bool setAcronymForDeviceId(std::string &device);
     std::vector<std::string> headersToVectorOfStrings();
     MOCKABLE_VIRTUAL void readFileToVectorOfStrings(const std::string &filename, std::vector<std::string> &lines);
@@ -150,6 +151,36 @@ class OclocArgHelper {
     template <typename... Args>
     void printf(const char *format, Args... args) {
         messagePrinter.printf(format, std::forward<Args>(args)...);
+    }
+    template <typename EqComparableT>
+    static auto findDuplicate(const EqComparableT &lhs) {
+        return [&lhs](const auto &rhs) { return lhs == rhs; };
+    }
+
+    template <typename... Args>
+    static auto getArgsWithoutDuplicate(Args... args) {
+        std::vector<NEO::ConstStringRef> out{};
+        for (const auto &acronyms : {args...}) {
+            for (const auto &acronym : acronyms) {
+                if (!std::any_of(out.begin(), out.end(), findDuplicate(acronym))) {
+                    out.push_back(acronym);
+                }
+            }
+        }
+        return out;
+    }
+
+    template <typename... Args>
+    static auto createStringForArgs(Args... args) {
+        std::ostringstream os;
+        for (const auto &acronyms : {args...}) {
+            for (const auto &acronym : acronyms) {
+                if (os.tellp())
+                    os << ", ";
+                os << acronym.str();
+            }
+        }
+        return os.str();
     }
 
     bool isRelease(const std::string &device);

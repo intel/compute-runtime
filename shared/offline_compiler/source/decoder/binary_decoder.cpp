@@ -99,7 +99,7 @@ const void *BinaryDecoder::getDevBinary() {
     std::string decoderWarnings;
     auto input = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(binary.data()), binary.size());
     auto elf = NEO::Elf::decodeElf<NEO::Elf::EI_CLASS_64>(input, decoderErrors, decoderWarnings);
-    for (const auto &sectionHeader : elf.sectionHeaders) { //Finding right section
+    for (const auto &sectionHeader : elf.sectionHeaders) { // Finding right section
         auto sectionData = ArrayRef<const char>(reinterpret_cast<const char *>(sectionHeader.data.begin()), sectionHeader.data.size());
         switch (sectionHeader.header->type) {
         case NEO::Elf::SHT_OPENCL_LLVM_BINARY: {
@@ -210,7 +210,7 @@ std::vector<std::string> BinaryDecoder::loadPatchList() {
 }
 
 void BinaryDecoder::parseTokens() {
-    //Creating patchlist definitions
+    // Creating patchlist definitions
     auto patchList = loadPatchList();
 
     size_t pos = findPos(patchList, "struct SProgramBinaryHeader");
@@ -274,11 +274,11 @@ void BinaryDecoder::parseTokens() {
         patchTokens[static_cast<uint8_t>(patchNo)] = std::move(patchTokenPtr);
     }
 
-    //Finding and reading Program Binary Header
+    // Finding and reading Program Binary Header
     size_t structPos = findPos(patchList, "struct SProgramBinaryHeader") + 1;
     programHeader.size = readStructFields(patchList, structPos, programHeader.fields);
 
-    //Finding and reading Kernel Binary Header
+    // Finding and reading Kernel Binary Header
     structPos = findPos(patchList, "struct SKernelBinaryHeader") + 1;
     kernelHeader.size = readStructFields(patchList, structPos, kernelHeader.fields);
 
@@ -336,7 +336,7 @@ Examples:
   Disassemble Intel Compute GPU device binary
     ocloc disasm -file source_file_Gen9core.bin
 )===",
-                      argHelper->getAllSupportedAcronyms().c_str());
+                      argHelper->createStringForArgs(argHelper->getAllSupportedProductAcronyms()).c_str());
 }
 
 int BinaryDecoder::processBinary(const void *&ptr, std::ostream &ptmFile) {
@@ -359,7 +359,7 @@ int BinaryDecoder::processBinary(const void *&ptr, std::ostream &ptmFile) {
     readPatchTokens(ptr, patchListSize, ptmFile);
     iga->setGfxCore(static_cast<GFXCORE_FAMILY>(device));
 
-    //Reading Kernels
+    // Reading Kernels
     for (uint32_t i = 0; i < numberOfKernels; ++i) {
         ptmFile << "Kernel #" << i << '\n';
         processKernel(ptr, ptmFile);

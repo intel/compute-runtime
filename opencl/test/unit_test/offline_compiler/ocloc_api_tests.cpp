@@ -179,6 +179,39 @@ TEST(OclocApiTests, GivenInvalidQueryWhenQueryingThenErrorIsReturned) {
     EXPECT_STREQ("Error: Invalid command line. Uknown argument unknown_query.", output.c_str());
 }
 
+TEST(OclocApiTests, givenNoAcronymWhenIdsCommandIsInvokeThenErrorIsReported) {
+    const char *argv[] = {
+        "ocloc",
+        "ids"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+    testing::internal::CaptureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(retVal, NEO::OclocErrorCode::INVALID_COMMAND_LINE);
+    EXPECT_STREQ("Error: Invalid command line. Expected ocloc ids <acronym>.\n", output.c_str());
+}
+
+TEST(OclocApiTests, givenUnknownAcronymWhenIdsCommandIsInvokeThenErrorIsReported) {
+    const char *argv[] = {
+        "ocloc",
+        "ids",
+        "unk"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+    testing::internal::CaptureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(retVal, NEO::OclocErrorCode::INVALID_COMMAND_LINE);
+    EXPECT_STREQ("Error: Invalid command line. Uknown acronym unk.\n", output.c_str());
+}
+
 TEST(OclocApiTests, WhenGoodFamilyNameIsProvidedThenSuccessIsReturned) {
     std::string clFileName(clFiles + "copybuffer.cl");
     std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
