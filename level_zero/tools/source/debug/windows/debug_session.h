@@ -44,6 +44,7 @@ struct DebugSessionWindows : DebugSessionImp {
     }
 
     ze_result_t interruptImp(uint32_t deviceIndex) override;
+    ze_result_t acknowledgeEventImp(uint32_t seqNo, uint32_t eventType);
 
     ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override;
     ze_result_t writeGpuMemory(uint64_t memoryHandle, const char *input, size_t size, uint64_t gpuVa) override;
@@ -54,7 +55,7 @@ struct DebugSessionWindows : DebugSessionImp {
     void readStateSaveAreaHeader() override;
 
     MOCKABLE_VIRTUAL ze_result_t readAndHandleEvent(uint64_t timeoutMs);
-    ze_result_t handleModuleCreateEvent(DBGUMD_READ_EVENT_MODULE_CREATE_EVENT_PARAMS &moduleCreateParams);
+    ze_result_t handleModuleCreateEvent(uint32_t seqNo, DBGUMD_READ_EVENT_MODULE_CREATE_EVENT_PARAMS &moduleCreateParams);
     ze_result_t handleEuAttentionBitsEvent(DBGUMD_READ_EVENT_EU_ATTN_BIT_SET_PARAMS &euAttentionBitsParams);
     ze_result_t handleAllocationDataEvent(uint32_t seqNo, DBGUMD_READ_EVENT_READ_ALLOCATION_DATA_PARAMS &allocationDataParams);
     ze_result_t handleContextCreateDestroyEvent(DBGUMD_READ_EVENT_CONTEXT_CREATE_DESTROY_EVENT_PARAMS &contextCreateDestroyParams);
@@ -83,6 +84,12 @@ struct DebugSessionWindows : DebugSessionImp {
         uint64_t endVA;
     };
 
+    struct Module {
+        uint64_t cpuAddress;
+        uint64_t gpuAddress;
+        uint32_t size;
+    };
+
     uint64_t debugAreaVA;
     NEO::DebugAreaHeader debugArea;
     std::atomic<uint64_t> stateSaveAreaVA{0};
@@ -90,6 +97,7 @@ struct DebugSessionWindows : DebugSessionImp {
 
     std::unordered_set<uint64_t> allContexts;
     std::vector<ElfRange> allElfs;
+    std::vector<Module> allModules;
 };
 
 } // namespace L0

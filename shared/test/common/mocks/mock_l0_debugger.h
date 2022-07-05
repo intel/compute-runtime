@@ -90,12 +90,24 @@ class MockDebuggerL0Hw : public NEO::DebuggerL0Hw<GfxFamily> {
         NEO::DebuggerL0Hw<GfxFamily>::notifyCommandQueueDestroyed();
     }
 
+    void registerAllocationType(NEO::GraphicsAllocation *allocation) override {
+        registerAllocationTypeCount++;
+        NEO::DebuggerL0Hw<GfxFamily>::registerAllocationType(allocation);
+    }
+
+    void notifyModuleCreate(void *module, uint32_t moduleSize, uint64_t moduleLoadAddress) override {
+        notifyModuleCreateCount++;
+        NEO::DebuggerL0Hw<GfxFamily>::notifyModuleCreate(module, moduleSize, moduleLoadAddress);
+    }
+
     uint32_t captureStateBaseAddressCount = 0;
     uint32_t programSbaTrackingCommandsCount = 0;
     uint32_t getSbaTrackingCommandsSizeCount = 0;
     uint32_t registerElfCount = 0;
     uint32_t commandQueueCreatedCount = 0;
     uint32_t commandQueueDestroyedCount = 0;
+    uint32_t registerAllocationTypeCount = 0;
+    uint32_t notifyModuleCreateCount = 0;
     const char *lastReceivedElf = nullptr;
 
     uint32_t segmentCountWithAttachedModuleHandle = 0;

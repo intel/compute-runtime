@@ -22,8 +22,10 @@ namespace L0 {
 namespace ult {
 
 struct MockDebugSessionWindows : DebugSessionWindows {
+    using DebugSessionWindows::acknowledgeEventImp;
     using DebugSessionWindows::allContexts;
     using DebugSessionWindows::allElfs;
+    using DebugSessionWindows::allModules;
     using DebugSessionWindows::asyncThread;
     using DebugSessionWindows::closeAsyncThread;
     using DebugSessionWindows::debugArea;
@@ -425,7 +427,7 @@ TEST_F(DebugApiWindowsTest, givenUnsupportedEventTypeWhenReadAndHandleEventCalle
     session->wddm = mockWddm;
 
     mockWddm->numEvents = 1;
-    for (auto unsupportedEventType : {DBGUMD_READ_EVENT_MODULE_CREATE_NOTIFICATION, DBGUMD_READ_EVENT_EU_ATTN_BIT_SET}) {
+    for (auto unsupportedEventType : {DBGUMD_READ_EVENT_EU_ATTN_BIT_SET}) {
         mockWddm->curEvent = 0;
         mockWddm->eventQueue[0].readEventType = unsupportedEventType;
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, session->readAndHandleEvent(100));
@@ -606,6 +608,100 @@ TEST_F(DebugApiWindowsTest, givenContextCreateEventTypeWhenReadAndHandleEventCal
     EXPECT_EQ(0u, session->allContexts.size());
 }
 
+TEST_F(DebugApiWindowsTest, givenModuleCreateNotificationeEventTypeWhenReadAndHandleEventCalledThenModuleIsRegisteredAndEventIsAcknowledged) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
+    session->wddm = mockWddm;
+
+    mockWddm->numEvents = 1;
+    mockWddm->eventQueue[0].readEventType = DBGUMD_READ_EVENT_MODULE_CREATE_NOTIFICATION;
+    mockWddm->eventQueue[0].seqNo = 123u;
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ModuleCreateEventParams.IsModuleCreate = true;
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ModuleCreateEventParams.hElfAddressPtr = 0x12345678;
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ModuleCreateEventParams.ElfModulesize = 0x1000;
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ModuleCreateEventParams.LoadAddress = 0x80000000;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readAndHandleEvent(100));
+
+    EXPECT_EQ(1u, session->allModules.size());
+    EXPECT_EQ(0x12345678u, session->allModules[0].cpuAddress);
+    EXPECT_EQ(0x80000000u, session->allModules[0].gpuAddress);
+    EXPECT_EQ(0x1000u, session->allModules[0].size);
+
+    EXPECT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_ACKNOWLEDGE_EVENT]);
+    EXPECT_EQ(123u, mockWddm->acknowledgeEventPassedParam.EventSeqNo);
+    EXPECT_EQ(DBGUMD_READ_EVENT_MODULE_CREATE_NOTIFICATION, mockWddm->acknowledgeEventPassedParam.ReadEventType);
+}
+
+TEST_F(DebugApiWindowsTest, givenModuleDestroyNotificationeEventTypeWhenReadAndHandleEventCalledThenModuleIsUnregisteredAndEventIsNotAcknowledged) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
+    session->wddm = mockWddm;
+
+    session->allModules.push_back({0x12345678u, 0x80000000u, 0x1000u});
+
+    mockWddm->numEvents = 1;
+    mockWddm->eventQueue[0].readEventType = DBGUMD_READ_EVENT_MODULE_CREATE_NOTIFICATION;
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ModuleCreateEventParams.IsModuleCreate = false;
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ModuleCreateEventParams.hElfAddressPtr = 0x12345678;
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ModuleCreateEventParams.ElfModulesize = 0x1000;
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ModuleCreateEventParams.LoadAddress = 0x80000000;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readAndHandleEvent(100));
+
+    EXPECT_EQ(0u, session->allModules.size());
+    EXPECT_EQ(0u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_ACKNOWLEDGE_EVENT]);
+}
+
+TEST_F(DebugApiWindowsTest, givenModuleDestroyNotificationeEventTypeWhenReadAndHandleEventCalledWithUnknownLoadAddressThenModuleIsNotUnregistered) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
+    session->wddm = mockWddm;
+
+    session->allModules.push_back({0x12345678u, 0x80000000u, 0x1000u});
+
+    mockWddm->numEvents = 1;
+    mockWddm->eventQueue[0].readEventType = DBGUMD_READ_EVENT_MODULE_CREATE_NOTIFICATION;
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ModuleCreateEventParams.IsModuleCreate = false;
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ModuleCreateEventParams.hElfAddressPtr = 0x12345678;
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ModuleCreateEventParams.ElfModulesize = 0x1000;
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ModuleCreateEventParams.LoadAddress = 0x10000000;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readAndHandleEvent(100));
+    EXPECT_EQ(1u, session->allModules.size());
+    EXPECT_EQ(0u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_ACKNOWLEDGE_EVENT]);
+}
+
+TEST_F(DebugApiWindowsTest, givenAcknowledgeEventEscapeFailedWhenAcknolegeEventImpIsCalledThenResultUnknownIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
+    session->wddm = mockWddm;
+    mockWddm->ntStatus = STATUS_UNSUCCESSFUL;
+
+    DBGUMD_ACTION_ACKNOWLEDGE_EVENT_PARAMS ackEventParams = {100u, DBGUMD_READ_EVENT_MODULE_CREATE_NOTIFICATION};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->acknowledgeEventImp(100, DBGUMD_READ_EVENT_MODULE_CREATE_NOTIFICATION));
+}
+
+TEST_F(DebugApiWindowsTest, givenInvalidSeqNoEscapeReturnStatusWhenAcknolegeEventImpIsCalledThenResultInvalidArgIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
+    session->wddm = mockWddm;
+    mockWddm->escapeReturnStatus = DBGUMD_RETURN_INVALID_EVENT_SEQ_NO;
+
+    DBGUMD_ACTION_ACKNOWLEDGE_EVENT_PARAMS ackEventParams = {100u, DBGUMD_READ_EVENT_MODULE_CREATE_NOTIFICATION};
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, session->acknowledgeEventImp(100, DBGUMD_READ_EVENT_MODULE_CREATE_NOTIFICATION));
+}
+
 TEST(DebugSessionWindowsTest, whenTranslateNtStatusCalledThenCorrectZeResultReturned) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, DebugSessionWindows::translateNtStatusToZeResult(STATUS_SUCCESS));
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, DebugSessionWindows::translateNtStatusToZeResult(STATUS_INVALID_PARAMETER));
@@ -618,6 +714,7 @@ TEST(DebugSessionWindowsTest, whenTranslateEscapeErrorStatusCalledThenCorrectZeR
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, DebugSessionWindows::translateEscapeReturnStatusToZeResult(DBGUMD_RETURN_DEBUGGER_ATTACH_DEVICE_BUSY));
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, DebugSessionWindows::translateEscapeReturnStatusToZeResult(DBGUMD_RETURN_READ_EVENT_TIMEOUT_EXPIRED));
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, DebugSessionWindows::translateEscapeReturnStatusToZeResult(DBGUMD_RETURN_INVALID_ARGS));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, DebugSessionWindows::translateEscapeReturnStatusToZeResult(DBGUMD_RETURN_INVALID_EVENT_SEQ_NO));
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, DebugSessionWindows::translateEscapeReturnStatusToZeResult(DBGUMD_RETURN_NOT_VALID_PROCESS));
     EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, DebugSessionWindows::translateEscapeReturnStatusToZeResult(DBGUMD_RETURN_PERMISSION_DENIED));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, DebugSessionWindows::translateEscapeReturnStatusToZeResult(DBGUMD_RETURN_EU_DEBUG_NOT_SUPPORTED));

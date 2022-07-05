@@ -28,6 +28,8 @@ void DebuggerL0::initSbaTrackingMode() {
     singleAddressSpaceSbaTracking = false;
 }
 
+void DebuggerL0::registerAllocationType(GraphicsAllocation *allocation) {}
+
 void DebuggerL0::registerElf(NEO::DebugData *debugData, NEO::GraphicsAllocation *isaAllocation) {
     if (device->getRootDeviceEnvironment().osInterface.get() != nullptr) {
         auto drm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
@@ -79,5 +81,7 @@ void DebuggerL0::notifyCommandQueueDestroyed() {
         }
     }
 }
+
+void DebuggerL0::notifyModuleCreate(void *module, uint32_t moduleSize, uint64_t moduleLoadAddress) {}
 
 } // namespace NEO

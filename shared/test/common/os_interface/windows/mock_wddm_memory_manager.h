@@ -82,7 +82,13 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
         return BaseClass::allocateHugeGraphicsMemory(allocationData, sharedVirtualAddress);
     }
 
+    void registerAllocationInOs(GraphicsAllocation *gfxAllocation) override {
+        registerAllocationInOsCalled++;
+        BaseClass::registerAllocationInOs(gfxAllocation);
+    }
+
     uint32_t freeGraphicsMemoryImplCalled = 0u;
+    uint32_t registerAllocationInOsCalled = 0;
     bool allocationGraphicsMemory64kbCreated = false;
     bool allocateGraphicsMemoryInNonDevicePool = false;
     bool allocateHugeGraphicsMemoryCalled = false;

@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
 
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
@@ -1151,6 +1152,15 @@ uint64_t WddmMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex, uint32_
     auto singleRegionSize = getWddm(rootDeviceIndex).getDedicatedVideoMemory() / subDevicesCount;
 
     return singleRegionSize * DeviceBitfield(deviceBitfield).count();
+}
+
+void WddmMemoryManager::registerAllocationInOs(GraphicsAllocation *allocation) {
+    auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[allocation->getRootDeviceIndex()].get();
+    auto debuggerL0 = static_cast<DebuggerL0 *>(rootDeviceEnvironment->debugger.get());
+
+    if (debuggerL0) {
+        debuggerL0->registerAllocationType(allocation);
+    }
 }
 
 } // namespace NEO

@@ -141,6 +141,7 @@ struct ModuleImp : public Module {
     void passDebugData();
     void createDebugZebin();
     void registerElfInDebuggerL0();
+    void notifyModuleCreate();
     bool populateHostGlobalSymbolsMap(std::unordered_map<std::string, std::string> &devToHostNameMapping);
     StackVec<NEO::GraphicsAllocation *, 32> getModuleAllocations();
 

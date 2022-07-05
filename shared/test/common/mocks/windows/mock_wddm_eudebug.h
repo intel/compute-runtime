@@ -30,6 +30,27 @@ struct WddmEuDebugInterfaceMock : public WddmMock {
             return ntStatus;
         }
 
+        if (pEscapeInfo->EscapeOperation == KM_ESCAPE_EUDBG_UMD_CREATE_DEBUG_DATA) {
+            ++createDebugDataCalled;
+            if (STATUS_SUCCESS == createDebugDataPassedParam.ntStatus) {
+                createDebugDataPassedParam.param = pEscapeInfo->KmEuDbgUmdCreateDebugData;
+            } else {
+                createDebugDataPassedParam.param.hElfAddressPtr = 0xDEADDEAD;
+            }
+            return createDebugDataPassedParam.ntStatus;
+        }
+
+        if (pEscapeInfo->EscapeOperation == KM_ESCAPE_EUDBG_UMD_MODULE_CREATE_NOTIFY) {
+            ++moduleCreateNotifyCalled;
+            if (STATUS_SUCCESS == moduleCreateNotificationPassedParam.ntStatus) {
+                moduleCreateNotificationPassedParam.param = pEscapeInfo->KmEuDbgUmdCreateModuleNotification;
+            } else {
+                moduleCreateNotificationPassedParam.param.hElfAddressPtr = 0xDEADDEAD;
+            }
+
+            return moduleCreateNotificationPassedParam.ntStatus;
+        }
+
         if (pEscapeInfo->EscapeOperation != KM_ESCAPE_EUDBG_L0_DBGUMD_HANDLER) {
             return ntStatus;
         }
@@ -53,6 +74,7 @@ struct WddmEuDebugInterfaceMock : public WddmMock {
 
             pEscapeInfo->KmEuDbgL0EscapeInfo.EscapeReturnStatus = eventQueue[curEvent].escapeReturnStatus;
             pEscapeInfo->KmEuDbgL0EscapeInfo.ReadEventParams.ReadEventType = eventQueue[curEvent].readEventType;
+            pEscapeInfo->KmEuDbgL0EscapeInfo.ReadEventParams.EventSeqNo = eventQueue[curEvent].seqNo;
             auto paramBuffer = reinterpret_cast<uint8_t *>(pEscapeInfo->KmEuDbgL0EscapeInfo.ReadEventParams.EventParamBufferPtr);
             memcpy_s(paramBuffer, pEscapeInfo->KmEuDbgL0EscapeInfo.ReadEventParams.EventParamsBufferSize, &eventQueue[curEvent].eventParamsBuffer, sizeof(READ_EVENT_PARAMS_BUFFER));
             return eventQueue[curEvent++].ntStatus;
@@ -83,11 +105,16 @@ struct WddmEuDebugInterfaceMock : public WddmMock {
             pEscapeInfo->KmEuDbgL0EscapeInfo.EscapeReturnStatus = escapeReturnStatus;
             break;
         }
-        case DBGUMD_ACTION_READ_MMIO:
+        case DBGUMD_ACTION_READ_MMIO: {
             uint64_t *ptr = reinterpret_cast<uint64_t *>(pEscapeInfo->KmEuDbgL0EscapeInfo.MmioReadParams.RegisterOutBufferPtr);
             *ptr = mockGpuVa;
             pEscapeInfo->KmEuDbgL0EscapeInfo.EscapeReturnStatus = DBGUMD_RETURN_ESCAPE_SUCCESS;
             break;
+        }
+        case DBGUMD_ACTION_ACKNOWLEDGE_EVENT: {
+            acknowledgeEventPassedParam = pEscapeInfo->KmEuDbgL0EscapeInfo.AckEventParams;
+            break;
+        }
         }
 
         return ntStatus;
@@ -99,6 +126,7 @@ struct WddmEuDebugInterfaceMock : public WddmMock {
         NTSTATUS ntStatus = STATUS_SUCCESS;
         EUDBG_L0DBGUMD_ESCAPE_RETURN_TYPE escapeReturnStatus = DBGUMD_RETURN_ESCAPE_SUCCESS;
         EUDBG_DBGUMD_READ_EVENT_TYPE readEventType = DBGUMD_READ_EVENT_MAX;
+        uint32_t seqNo = 0;
         union {
             READ_EVENT_PARAMS_BUFFER eventParamsBuffer;
             uint8_t rawBytes[READ_EVENT_PARAMS_BUFFER_MIN_SIZE_BYTES] = {0};
@@ -116,6 +144,18 @@ struct WddmEuDebugInterfaceMock : public WddmMock {
         uint32_t allocData[100] = {0};
     } registerAllocationTypePassedParams;
 
+    struct {
+        EUDBG_UMD_CREATE_DEBUG_DATA param;
+        NTSTATUS ntStatus = STATUS_SUCCESS;
+    } createDebugDataPassedParam;
+
+    struct {
+        EUDBG_UMD_MODULE_NOTIFICATION param;
+        NTSTATUS ntStatus = STATUS_SUCCESS;
+    } moduleCreateNotificationPassedParam;
+
+    DBGUMD_ACTION_ACKNOWLEDGE_EVENT_PARAMS acknowledgeEventPassedParam = {0};
+
     bool debugAttachAvailable = true;
     NTSTATUS ntStatus = STATUS_SUCCESS;
     EUDBG_L0DBGUMD_ESCAPE_RETURN_TYPE escapeReturnStatus = DBGUMD_RETURN_ESCAPE_SUCCESS;
@@ -123,6 +163,8 @@ struct WddmEuDebugInterfaceMock : public WddmMock {
     uint64_t debugHandle = 0x0DEB0DEB;
     uint32_t dbgUmdEscapeActionCalled[DBGUMD_ACTION_MAX] = {0};
     uint32_t registerAllocationTypeCalled = 0;
+    uint32_t createDebugDataCalled = 0;
+    uint32_t moduleCreateNotifyCalled = 0;
     static constexpr size_t bufferSize = 16;
     uint8_t testBuffer[bufferSize] = {0};
     uint64_t mockGpuVa = 0x12345678;

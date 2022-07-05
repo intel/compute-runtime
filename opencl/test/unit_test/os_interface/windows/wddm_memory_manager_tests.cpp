@@ -25,10 +25,10 @@
 #include "shared/test/common/mocks/mock_deferred_deleter.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
+#include "shared/test/common/mocks/mock_l0_debugger.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-#include "shared/test/common/mocks/windows/mock_wddm_eudebug.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
@@ -2242,33 +2242,6 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedFlagSetWhenInternalIsSetThenUpd
     EXPECT_TRUE(result);
     memoryManager.freeGraphicsMemory(wddmAlloc);
     EXPECT_EQ(expectedCallCount, mockMngr->updateAuxTableCalled);
-}
-
-TEST_F(MockWddmMemoryManagerWithEuDebugInterfaceTest, givenAllocateGraphicsMemoryWhenAllocationRegistrationIsRequiredThenAllocationIsRegistered) {
-    WddmMemoryManager memoryManager(*executionEnvironment);
-
-    uint32_t registerAllocationTypeCalled = 0;
-    for (auto allocationType : {AllocationType::DEBUG_CONTEXT_SAVE_AREA,
-                                AllocationType::DEBUG_SBA_TRACKING_BUFFER,
-                                AllocationType::DEBUG_MODULE_AREA}) {
-        auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize, allocationType}));
-        EXPECT_EQ(++registerAllocationTypeCalled, wddm->registerAllocationTypeCalled);
-
-        WddmAllocation::RegistrationData registrationData = {0};
-        registrationData.gpuVirtualAddress = wddmAlloc->getGpuAddress();
-        registrationData.size = wddmAlloc->getUnderlyingBufferSize();
-
-        EXPECT_EQ(0, memcmp(wddm->registerAllocationTypePassedParams.allocData, &registrationData, sizeof(registrationData)));
-        memoryManager.freeGraphicsMemory(wddmAlloc);
-    }
-}
-
-TEST_F(MockWddmMemoryManagerWithEuDebugInterfaceTest, givenAllocateGraphicsMemoryWhenAllocationRegistrationIsNotRequiredThenAllocationIsNotRegistered) {
-    WddmMemoryManager memoryManager(*executionEnvironment);
-
-    auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize, AllocationType::BUFFER}));
-    EXPECT_EQ(0, wddm->registerAllocationTypeCalled);
-    memoryManager.freeGraphicsMemory(wddmAlloc);
 }
 
 TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryWhenCreateAllocationFailsThenPopulateOsHandlesReturnsInvalidPointer) {

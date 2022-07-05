@@ -14,6 +14,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
 #include "shared/test/common/mocks/windows/mock_wddm_eudebug.h"
+#include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/device/device.h"
@@ -31,7 +32,7 @@ namespace ult {
 
 struct L0DebuggerWindowsFixture {
     void SetUp() {
-        auto executionEnvironment = new NEO::ExecutionEnvironment();
+        executionEnvironment = new NEO::ExecutionEnvironment;
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->setDebuggingEnabled();
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
@@ -40,9 +41,14 @@ struct L0DebuggerWindowsFixture {
         osEnvironment->gdi.reset(gdi);
         executionEnvironment->osEnvironment.reset(osEnvironment);
         wddm = new WddmEuDebugInterfaceMock(*rootDeviceEnvironment);
+        wddm->callBaseDestroyAllocations = false;
+        wddm->callBaseMapGpuVa = false;
+        wddm->callBaseWaitFromCpu = false;
         rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
         rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
         wddm->init();
+
+        executionEnvironment->memoryManager.reset(new MockWddmMemoryManager(*executionEnvironment));
 
         neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u);
 
@@ -62,6 +68,7 @@ struct L0DebuggerWindowsFixture {
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
     WddmEuDebugInterfaceMock *wddm = nullptr;
+    NEO::ExecutionEnvironment *executionEnvironment = nullptr;
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
     MockGdi *gdi = nullptr;
 };
@@ -96,6 +103,71 @@ HWTEST_F(L0DebuggerWindowsTest, givenDebuggingEnabledAndCommandQueuesAreCreatedA
 
     commandQueue2->destroy();
     EXPECT_EQ(2u, debuggerL0Hw->commandQueueDestroyedCount);
+}
+
+TEST_F(L0DebuggerWindowsTest, givenAllocateGraphicsMemoryWhenAllocationRegistrationIsRequiredThenAllocationIsRegistered) {
+    auto memoryManager = executionEnvironment->memoryManager.get();
+
+    EXPECT_GE(wddm->registerAllocationTypeCalled, 3u); // At least 1xSBA + 1xMODULE_DEBUG + 1xSTATE_SAVE_AREA during DebuggerL0 init
+    uint32_t registerAllocationTypeCalled = wddm->registerAllocationTypeCalled;
+    for (auto allocationType : {AllocationType::DEBUG_CONTEXT_SAVE_AREA,
+                                AllocationType::DEBUG_SBA_TRACKING_BUFFER,
+                                AllocationType::DEBUG_MODULE_AREA,
+                                AllocationType::KERNEL_ISA}) {
+        auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0u, MemoryConstants::pageSize, allocationType}));
+        EXPECT_EQ(++registerAllocationTypeCalled, wddm->registerAllocationTypeCalled);
+
+        WddmAllocation::RegistrationData registrationData = {0};
+        registrationData.gpuVirtualAddress = wddmAlloc->getGpuAddress();
+        registrationData.size = wddmAlloc->getUnderlyingBufferSize();
+
+        EXPECT_EQ(0, memcmp(wddm->registerAllocationTypePassedParams.allocData, &registrationData, sizeof(registrationData)));
+        memoryManager->freeGraphicsMemory(wddmAlloc);
+    }
+}
+
+TEST_F(L0DebuggerWindowsTest, givenAllocateGraphicsMemoryWhenAllocationRegistrationIsNotRequiredThenAllocationIsNotRegistered) {
+    auto memoryManager = executionEnvironment->memoryManager.get();
+
+    EXPECT_GE(wddm->registerAllocationTypeCalled, 3u); // At least 1xSBA + 1xMODULE_DEBUG + 1xSTATE_SAVE_AREA during DebuggerL0 init
+    uint32_t registerAllocationTypeCalled = wddm->registerAllocationTypeCalled;
+    auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0u, MemoryConstants::pageSize, AllocationType::BUFFER}));
+    EXPECT_EQ(registerAllocationTypeCalled, wddm->registerAllocationTypeCalled);
+    memoryManager->freeGraphicsMemory(wddmAlloc);
+}
+
+TEST_F(L0DebuggerWindowsTest, givenDebuggerL0NotifyModuleCreateCalledAndCreateDebugDataEscapeFailedThenModuleCreateNotifyEscapeIsNotCalled) {
+    wddm->createDebugDataPassedParam.ntStatus = STATUS_UNSUCCESSFUL;
+    auto debugger = static_cast<DebuggerL0 *>(neoDevice->getDebugger());
+    debugger->notifyModuleCreate((void *)0x12345678, 0x1000, 0x80000000);
+    EXPECT_EQ(wddm->createDebugDataCalled, 1u);
+    EXPECT_EQ(wddm->createDebugDataPassedParam.param.hElfAddressPtr, 0xDEADDEADu);
+    EXPECT_EQ(wddm->moduleCreateNotifyCalled, 0);
+}
+
+TEST_F(L0DebuggerWindowsTest, givenDebuggerL0NotifyModuleCreateCalledAndModuleCreateNotifyEscapeIsFailedThenModuleIsNotRegistered) {
+    wddm->moduleCreateNotificationPassedParam.ntStatus = STATUS_UNSUCCESSFUL;
+    auto debugger = static_cast<DebuggerL0 *>(neoDevice->getDebugger());
+    debugger->notifyModuleCreate((void *)0x12345678, 0x1000, 0x80000000);
+    EXPECT_EQ(wddm->createDebugDataCalled, 1u);
+    EXPECT_EQ(wddm->createDebugDataPassedParam.param.hElfAddressPtr, 0x12345678u);
+    EXPECT_EQ(wddm->moduleCreateNotifyCalled, 1u);
+    EXPECT_EQ(wddm->moduleCreateNotificationPassedParam.param.hElfAddressPtr, 0xDEADDEADu);
+}
+
+TEST_F(L0DebuggerWindowsTest, givenDebuggerL0NotifyModuleCreateCalledThenCreateDebugDataAndModuleCreateNotifyEscapesAreCalled) {
+    auto debugger = static_cast<DebuggerL0 *>(neoDevice->getDebugger());
+    debugger->notifyModuleCreate((void *)0x12345678, 0x1000, 0x80000000);
+    EXPECT_EQ(wddm->createDebugDataCalled, 1u);
+    EXPECT_EQ(wddm->createDebugDataPassedParam.param.DebugDataType, ELF_BINARY);
+    EXPECT_EQ(wddm->createDebugDataPassedParam.param.DataSize, 0x1000);
+    EXPECT_EQ(wddm->createDebugDataPassedParam.param.hElfAddressPtr, 0x12345678u);
+
+    EXPECT_EQ(wddm->moduleCreateNotifyCalled, 1u);
+    EXPECT_TRUE(wddm->moduleCreateNotificationPassedParam.param.IsCreate);
+    EXPECT_EQ(wddm->moduleCreateNotificationPassedParam.param.Modulesize, 0x1000);
+    EXPECT_EQ(wddm->moduleCreateNotificationPassedParam.param.hElfAddressPtr, 0x12345678u);
+    EXPECT_EQ(wddm->moduleCreateNotificationPassedParam.param.LoadAddress, 0x80000000);
 }
 
 } // namespace ult

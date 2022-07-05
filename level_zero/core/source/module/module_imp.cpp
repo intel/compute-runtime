@@ -601,6 +601,7 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
         if (device->getL0Debugger()) {
             auto allocs = getModuleAllocations();
             device->getL0Debugger()->notifyModuleLoadAllocations(allocs);
+            notifyModuleCreate();
         }
     }
     return success;
@@ -1181,7 +1182,9 @@ ze_result_t ModuleImp::destroy() {
     return ZE_RESULT_SUCCESS;
 }
 void ModuleImp::registerElfInDebuggerL0() {
-    if (device->getL0Debugger() == nullptr) {
+    auto debuggerL0 = device->getL0Debugger();
+
+    if (!debuggerL0) {
         return;
     }
 
@@ -1196,7 +1199,7 @@ void ModuleImp::registerElfInDebuggerL0() {
 
         StackVec<NEO::GraphicsAllocation *, 32> segmentAllocs;
         for (auto &kernImmData : kernelImmDatas) {
-            device->getL0Debugger()->registerElf(&debugData, kernImmData->getIsaGraphicsAllocation());
+            debuggerL0->registerElf(&debugData, kernImmData->getIsaGraphicsAllocation());
             segmentAllocs.push_back(kernImmData->getIsaGraphicsAllocation());
         }
 
@@ -1207,7 +1210,7 @@ void ModuleImp::registerElfInDebuggerL0() {
             segmentAllocs.push_back(translationUnit->globalConstBuffer);
         }
 
-        device->getL0Debugger()->attachZebinModuleToSegmentAllocations(segmentAllocs, debugModuleHandle);
+        debuggerL0->attachZebinModuleToSegmentAllocations(segmentAllocs, debugModuleHandle);
     } else {
         for (auto &kernImmData : kernelImmDatas) {
             if (kernImmData->getKernelInfo()->kernelDescriptor.external.debugData.get()) {
@@ -1221,7 +1224,48 @@ void ModuleImp::registerElfInDebuggerL0() {
                     relocatedDebugData.vIsaSize = kernImmData->getKernelInfo()->kernelDescriptor.external.debugData->vIsaSize;
                     notifyDebugData = &relocatedDebugData;
                 }
-                device->getL0Debugger()->registerElf(notifyDebugData, kernImmData->getIsaGraphicsAllocation());
+
+                debuggerL0->registerElf(notifyDebugData, kernImmData->getIsaGraphicsAllocation());
+            }
+        }
+    }
+}
+
+void ModuleImp::notifyModuleCreate() {
+    auto debuggerL0 = device->getL0Debugger();
+
+    if (!debuggerL0) {
+        return;
+    }
+
+    auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(translationUnit->unpackedDeviceBinary.get()), translationUnit->unpackedDeviceBinarySize);
+    if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(refBin)) {
+        size_t debugDataSize = 0;
+        getDebugInfo(&debugDataSize, nullptr);
+
+        NEO::DebugData debugData; // pass debug zebin in vIsa field
+        debugData.vIsa = reinterpret_cast<const char *>(translationUnit->debugData.get());
+        debugData.vIsaSize = static_cast<uint32_t>(translationUnit->debugDataSize);
+
+        StackVec<NEO::GraphicsAllocation *, 32> segmentAllocs = getModuleAllocations();
+
+        auto minAddressGpuAlloc = std::min_element(segmentAllocs.begin(), segmentAllocs.end(), [](const auto alloc1, const auto alloc2) { return alloc1->getGpuAddress() < alloc2->getGpuAddress(); });
+        debuggerL0->notifyModuleCreate(const_cast<char *>(debugData.vIsa), debugData.vIsaSize, (*minAddressGpuAlloc)->getGpuAddress());
+    } else {
+        for (auto &kernImmData : kernelImmDatas) {
+            if (kernImmData->getKernelInfo()->kernelDescriptor.external.debugData.get()) {
+                NEO::DebugData *notifyDebugData = kernImmData->getKernelInfo()->kernelDescriptor.external.debugData.get();
+                NEO::DebugData relocatedDebugData;
+
+                if (kernImmData->getKernelInfo()->kernelDescriptor.external.relocatedDebugData.get()) {
+                    relocatedDebugData.genIsa = kernImmData->getKernelInfo()->kernelDescriptor.external.debugData->genIsa;
+                    relocatedDebugData.genIsaSize = kernImmData->getKernelInfo()->kernelDescriptor.external.debugData->genIsaSize;
+                    relocatedDebugData.vIsa = reinterpret_cast<char *>(kernImmData->getKernelInfo()->kernelDescriptor.external.relocatedDebugData.get());
+                    relocatedDebugData.vIsaSize = kernImmData->getKernelInfo()->kernelDescriptor.external.debugData->vIsaSize;
+                    notifyDebugData = &relocatedDebugData;
+                }
+
+                debuggerL0->notifyModuleCreate(const_cast<char *>(notifyDebugData->vIsa), notifyDebugData->vIsaSize, kernImmData->getIsaGraphicsAllocation()->getGpuAddress());
             }
         }
     }

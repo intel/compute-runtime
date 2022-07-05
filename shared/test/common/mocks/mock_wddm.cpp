@@ -249,7 +249,10 @@ bool WddmMock::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monito
     waitFromCpuResult.called++;
     waitFromCpuResult.uint64ParamPassed = lastFenceValue;
     waitFromCpuResult.monitoredFence = &monitoredFence;
-    return waitFromCpuResult.success = Wddm::waitFromCpu(lastFenceValue, monitoredFence);
+    if (callBaseWaitFromCpu) {
+        return waitFromCpuResult.success = Wddm::waitFromCpu(lastFenceValue, monitoredFence);
+    }
+    return waitFromCpuResult.success = true;
 }
 
 void *WddmMock::virtualAlloc(void *inPtr, size_t size, bool topDownHint) {

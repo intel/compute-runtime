@@ -177,5 +177,6 @@ class WddmMock : public Wddm {
     bool callBaseCreatePagingLogger = true;
     bool shutdownStatus = false;
     bool callBaseSetAllocationPriority = true;
+    bool callBaseWaitFromCpu = true;
 };
 } // namespace NEO

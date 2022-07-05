@@ -60,7 +60,7 @@ ze_result_t DebugSessionWindows::initialize() {
     }
 
     debugHandle = escapeInfo.KmEuDbgL0EscapeInfo.AttachDebuggerParams.hDebugHandle;
-    PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_ATTACH_DEBUGGER: SUCCESS - ProcessId: %d DebugHandle: 0x%llx\n", processId, debugHandle);
+    PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_ATTACH_DEBUGGER: SUCCESS - ProcessId: %d DebugHandle: 0x%llX\n", processId, debugHandle);
 
     auto result = ZE_RESULT_SUCCESS;
 
@@ -166,7 +166,7 @@ ze_result_t DebugSessionWindows::readAndHandleEvent(uint64_t timeoutMs) {
     auto seqNo = escapeInfo.KmEuDbgL0EscapeInfo.ReadEventParams.EventSeqNo;
     switch (escapeInfo.KmEuDbgL0EscapeInfo.ReadEventParams.ReadEventType) {
     case DBGUMD_READ_EVENT_MODULE_CREATE_NOTIFICATION:
-        return handleModuleCreateEvent(eventParamsBuffer.eventParamsBuffer.ModuleCreateEventParams);
+        return handleModuleCreateEvent(seqNo, eventParamsBuffer.eventParamsBuffer.ModuleCreateEventParams);
     case DBGUMD_READ_EVENT_EU_ATTN_BIT_SET:
         return handleEuAttentionBitsEvent(eventParamsBuffer.eventParamsBuffer.EuBitSetEventParams);
     case DBGUMD_READ_EVENT_ALLOCATION_DATA_INFO:
@@ -185,8 +185,27 @@ ze_result_t DebugSessionWindows::readAndHandleEvent(uint64_t timeoutMs) {
     return ZE_RESULT_ERROR_UNKNOWN;
 }
 
-ze_result_t DebugSessionWindows::handleModuleCreateEvent(DBGUMD_READ_EVENT_MODULE_CREATE_EVENT_PARAMS &moduleCreateParams) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+ze_result_t DebugSessionWindows::handleModuleCreateEvent(uint32_t seqNo, DBGUMD_READ_EVENT_MODULE_CREATE_EVENT_PARAMS &moduleCreateParams) {
+    PRINT_DEBUGGER_INFO_LOG("DBGUMD_READ_EVENT_MODULE_CREATE_EVENT_PARAMS: hElfAddressPtr=0x%llX IsModuleCreate=%d LoadAddress=0x%llX ElfModuleSize=%d\n",
+                            moduleCreateParams.hElfAddressPtr, moduleCreateParams.IsModuleCreate, moduleCreateParams.LoadAddress, moduleCreateParams.ElfModulesize);
+
+    if (moduleCreateParams.IsModuleCreate) {
+        Module module = {0};
+        module.cpuAddress = moduleCreateParams.hElfAddressPtr;
+        module.gpuAddress = moduleCreateParams.LoadAddress;
+        module.size = moduleCreateParams.ElfModulesize;
+        allModules.push_back(module);
+
+        PRINT_DEBUGGER_INFO_LOG("DBGUMD_READ_EVENT_MODULE_CREATE_EVENT_PARAMS: Immediately acknowledge...\n");
+        return acknowledgeEventImp(seqNo, DBGUMD_READ_EVENT_MODULE_CREATE_NOTIFICATION);
+    } else {
+        auto it = std::find_if(allModules.begin(), allModules.end(), [&](auto &m) { return m.gpuAddress == moduleCreateParams.LoadAddress; });
+        if (it != allModules.end()) {
+            allModules.erase(it);
+        }
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t DebugSessionWindows::handleEuAttentionBitsEvent(DBGUMD_READ_EVENT_EU_ATTN_BIT_SET_PARAMS &euAttentionBitsParams) {
@@ -216,13 +235,15 @@ ze_result_t DebugSessionWindows::handleAllocationDataEvent(uint32_t seqNo, DBGUM
             stateSaveAreaVA.store(registrationData.gpuVirtualAddress);
             stateSaveAreaCaptured = true;
         }
+
         PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_READ_ALLOCATION_DATA - Success - gpuVA=0x%llX Size=0x%X\n", registrationData.gpuVirtualAddress, registrationData.size);
     }
+
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t DebugSessionWindows::handleContextCreateDestroyEvent(DBGUMD_READ_EVENT_CONTEXT_CREATE_DESTROY_EVENT_PARAMS &contextCreateDestroyParams) {
-    PRINT_DEBUGGER_INFO_LOG("DBGUMD_READ_EVENT_CONTEXT_CREATE_DESTROY_EVENT_PARAMS: hContextHandle: 0x%ullx IsCreated: %d SIPInstalled: %d\n", contextCreateDestroyParams.hContextHandle, contextCreateDestroyParams.IsCreated, contextCreateDestroyParams.IsSIPInstalled);
+    PRINT_DEBUGGER_INFO_LOG("DBGUMD_READ_EVENT_CONTEXT_CREATE_DESTROY_EVENT_PARAMS: hContextHandle: 0x%llX IsCreated: %d SIPInstalled: %d\n", contextCreateDestroyParams.hContextHandle, contextCreateDestroyParams.IsCreated, contextCreateDestroyParams.IsSIPInstalled);
     if (!contextCreateDestroyParams.IsSIPInstalled) {
         return ZE_RESULT_SUCCESS;
     }
@@ -238,7 +259,7 @@ ze_result_t DebugSessionWindows::handleContextCreateDestroyEvent(DBGUMD_READ_EVE
 }
 
 ze_result_t DebugSessionWindows::handleDeviceCreateDestroyEvent(DBGUMD_READ_EVENT_DEVICE_CREATE_DESTROY_EVENT_PARAMS &deviceCreateDestroyParams) {
-    PRINT_DEBUGGER_INFO_LOG("DEVICE_CREATE_DESTROY_EVENT: hDeviceContext=0x%llx IsCreated=%d ProcessId=%d\n",
+    PRINT_DEBUGGER_INFO_LOG("DEVICE_CREATE_DESTROY_EVENT: hDeviceContext=0x%llX IsCreated=%d ProcessId=%d\n",
                             deviceCreateDestroyParams.hDeviceContext, deviceCreateDestroyParams.IsCreated, deviceCreateDestroyParams.ProcessID);
 
     return ZE_RESULT_SUCCESS;
@@ -268,7 +289,7 @@ ze_result_t DebugSessionWindows::readAllocationDebugData(uint32_t seqNo, uint64_
 }
 
 ze_result_t DebugSessionWindows::handleCreateDebugDataEvent(DBGUMD_READ_EVENT_CREATE_DEBUG_DATA_PARAMS &createDebugDataParams) {
-    PRINT_DEBUGGER_INFO_LOG("DBGUMD_READ_EVENT_CREATE_DEBUG_DATA_PARAMS:. Type: %d BufferPtr: 0x%ullx DataSize: 0x%ullx\n", createDebugDataParams.DebugDataType, createDebugDataParams.DataBufferPtr, createDebugDataParams.DataSize);
+    PRINT_DEBUGGER_INFO_LOG("DBGUMD_READ_EVENT_CREATE_DEBUG_DATA_PARAMS: Type: %d BufferPtr: 0x%llX DataSize: 0x%lX\n", createDebugDataParams.DebugDataType, createDebugDataParams.DataBufferPtr, createDebugDataParams.DataSize);
     if (createDebugDataParams.DebugDataType == ELF_BINARY) {
         std::unique_lock<std::mutex> lock(asyncThreadMutex);
         ElfRange elf;
@@ -285,6 +306,28 @@ ze_result_t DebugSessionWindows::handleCreateDebugDataEvent(DBGUMD_READ_EVENT_CR
         pushApiEvent(debugEvent);
     }
 
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t DebugSessionWindows::acknowledgeEventImp(uint32_t seqNo, uint32_t eventType) {
+    PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_ACKNOWLEDGE_EVENT: seqNo: %d eventType: %d\n", seqNo, eventType);
+    KM_ESCAPE_INFO escapeInfo = {0};
+    escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_ACKNOWLEDGE_EVENT;
+    escapeInfo.KmEuDbgL0EscapeInfo.AckEventParams.EventSeqNo = seqNo;
+    escapeInfo.KmEuDbgL0EscapeInfo.AckEventParams.ReadEventType = eventType;
+
+    auto status = runEscape(escapeInfo);
+    if (STATUS_SUCCESS != status) {
+        PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_ACKNOWLEDGE_EVENT: Failed - Status: 0x%llX EscapeReturnStatus: %d\n", status, escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+        return DebugSessionWindows::translateNtStatusToZeResult(status);
+    }
+
+    if (DBGUMD_RETURN_ESCAPE_SUCCESS != escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus) {
+        PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_ACKNOWLEDGE_EVENT: Failed - Status: 0x%llX EscapeReturnStatus: %d\n", status, escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+        return DebugSessionWindows::translateEscapeReturnStatusToZeResult(escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+    }
+
+    PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_ACKNOWLEDGE_EVENT - Success\n", status, escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
     return ZE_RESULT_SUCCESS;
 }
 
@@ -309,6 +352,7 @@ ze_result_t DebugSessionWindows::translateEscapeReturnStatusToZeResult(uint32_t 
     case DBGUMD_RETURN_READ_EVENT_TIMEOUT_EXPIRED:
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     case DBGUMD_RETURN_INVALID_ARGS:
+    case DBGUMD_RETURN_INVALID_EVENT_SEQ_NO:
     case DBGUMD_RETURN_NOT_VALID_PROCESS:
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     case DBGUMD_RETURN_PERMISSION_DENIED:
@@ -490,7 +534,7 @@ void DebugSessionWindows::getSbaBufferGpuVa(uint64_t &gpuVa) {
         return;
     }
 
-    PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_READ_MMIO: SUCCESS - gpuVa: 0x%ullx\n", gpuVa);
+    PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_READ_MMIO: SUCCESS - gpuVa: 0x%llX\n", gpuVa);
     return;
 }
 
@@ -515,7 +559,8 @@ bool DebugSessionWindows::readModuleDebugArea() {
         PRINT_DEBUGGER_ERROR_LOG("Module Debug Area failed to match magic numbers\n");
         return false;
     }
-    PRINT_DEBUGGER_INFO_LOG("Reading Module Debug Area Passed");
+
+    PRINT_DEBUGGER_INFO_LOG("Reading Module Debug Area Passed\n");
     return true;
 }
 
