@@ -7,11 +7,13 @@
 
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
+#include "shared/source/os_interface/windows/wddm_debug.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/windows/mock_wddm_eudebug.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/tools/source/debug/debug_handlers.h"
 #include "level_zero/tools/source/debug/windows/debug_session.h"
 
 #include "common/StateSaveAreaHeader.h"
@@ -45,6 +47,7 @@ struct MockDebugSessionWindows : DebugSessionWindows {
     using DebugSessionWindows::stateSaveAreaVA;
     using DebugSessionWindows::wddm;
     using DebugSessionWindows::writeGpuMemory;
+    using L0::DebugSessionImp::apiEvents;
     using L0::DebugSessionImp::getStateSaveAreaHeader;
     using L0::DebugSessionImp::isValidGpuAddress;
 
@@ -480,6 +483,79 @@ TEST_F(DebugApiWindowsTest, givenDebugDataEventTypeWhenReadAndHandleEventCalledT
     auto elf = session->allElfs[0];
     EXPECT_EQ(elf.startVA, 0xa000u);
     EXPECT_EQ(elf.endVA, 0xa008u);
+}
+
+TEST(DebugSessionTest, GivenNullptrEventWhenReadingEventThenErrorNullptrReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionWindows>(config, nullptr);
+    ASSERT_NE(nullptr, session);
+
+    auto result = session->readEvent(10, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, result);
+}
+
+TEST_F(DebugApiWindowsTest, GivenMatchingDebugDataEventsForCommandQueueCreateWhenReadingEventsThenProcessEntryIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
+    session->wddm = mockWddm;
+    ASSERT_NE(nullptr, session);
+
+    EXPECT_TRUE(session->apiEvents.empty());
+    mockWddm->numEvents = 1;
+    mockWddm->eventQueue[0].readEventType = DBGUMD_READ_EVENT_CREATE_DEBUG_DATA;
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ReadCreateDebugDataParams.DebugDataType = static_cast<uint32_t>(NEO::DebugDataType::CMD_QUEUE_CREATED);
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ReadCreateDebugDataParams.DataBufferPtr = 0xa000;
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ReadCreateDebugDataParams.DataSize = 8;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readAndHandleEvent(100));
+    EXPECT_EQ(session->apiEvents.size(), 1u);
+
+    zet_debug_event_t event = {};
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+    ze_result_t result = zetDebugReadEvent(session->toHandle(), 0, &event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY, event.type);
+}
+
+TEST_F(DebugApiWindowsTest, GivenMatchingDebugDataEventsForCommandQueueDestroyWhenReadingEventsThenProcessExitIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
+    session->wddm = mockWddm;
+    ASSERT_NE(nullptr, session);
+
+    EXPECT_TRUE(session->apiEvents.empty());
+    mockWddm->numEvents = 1;
+    mockWddm->eventQueue[0].readEventType = DBGUMD_READ_EVENT_CREATE_DEBUG_DATA;
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ReadCreateDebugDataParams.DebugDataType = static_cast<uint32_t>(NEO::DebugDataType::CMD_QUEUE_DESTROYED);
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ReadCreateDebugDataParams.DataBufferPtr = 0xa000;
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ReadCreateDebugDataParams.DataSize = 8;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readAndHandleEvent(100));
+    EXPECT_EQ(session->apiEvents.size(), 1u);
+
+    zet_debug_event_t event = {};
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+    ze_result_t result = zetDebugReadEvent(session->toHandle(), 0, &event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_PROCESS_EXIT, event.type);
+}
+
+TEST_F(DebugApiWindowsTest, GivenNoEventsAvailableWhenReadingEventThenResultNotReadyIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
+    session->wddm = mockWddm;
+    ASSERT_NE(nullptr, session);
+
+    zet_debug_event_t event = {};
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+    ze_result_t result = zetDebugReadEvent(session->toHandle(), 0, &event);
+    EXPECT_EQ(result, ZE_RESULT_NOT_READY);
 }
 
 TEST_F(DebugApiWindowsTest, givenAllocationEventTypeForStateSaveWhenReadAndHandleEventCalledThenStateSaveIsCaptured) {

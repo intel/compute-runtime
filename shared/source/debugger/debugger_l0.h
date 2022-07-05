@@ -126,6 +126,7 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
     std::atomic<uint32_t> commandQueueCount = 0u;
     uint32_t uuidL0CommandQueueHandle = 0;
     bool singleAddressSpaceSbaTracking = false;
+    std::mutex debuggerL0Mutex;
 };
 
 using DebugerL0CreateFn = DebuggerL0 *(*)(NEO::Device *device);

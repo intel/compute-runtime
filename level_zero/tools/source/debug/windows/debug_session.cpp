@@ -8,6 +8,7 @@
 #include "level_zero/tools/source/debug/windows/debug_session.h"
 
 #include "shared/source/helpers/register_offsets.h"
+#include "shared/source/os_interface/windows/wddm_debug.h"
 
 #include "common/StateSaveAreaHeader.h"
 
@@ -268,12 +269,20 @@ ze_result_t DebugSessionWindows::readAllocationDebugData(uint32_t seqNo, uint64_
 
 ze_result_t DebugSessionWindows::handleCreateDebugDataEvent(DBGUMD_READ_EVENT_CREATE_DEBUG_DATA_PARAMS &createDebugDataParams) {
     PRINT_DEBUGGER_INFO_LOG("DBGUMD_READ_EVENT_CREATE_DEBUG_DATA_PARAMS:. Type: %d BufferPtr: 0x%ullx DataSize: 0x%ullx\n", createDebugDataParams.DebugDataType, createDebugDataParams.DataBufferPtr, createDebugDataParams.DataSize);
-    std::unique_lock<std::mutex> lock(asyncThreadMutex);
     if (createDebugDataParams.DebugDataType == ELF_BINARY) {
+        std::unique_lock<std::mutex> lock(asyncThreadMutex);
         ElfRange elf;
         elf.startVA = createDebugDataParams.DataBufferPtr;
         elf.endVA = elf.startVA + createDebugDataParams.DataSize;
         allElfs.push_back(elf);
+    } else if (createDebugDataParams.DebugDataType == static_cast<uint32_t>(NEO::DebugDataType::CMD_QUEUE_CREATED)) {
+        zet_debug_event_t debugEvent = {};
+        debugEvent.type = ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY;
+        pushApiEvent(debugEvent);
+    } else if (createDebugDataParams.DebugDataType == static_cast<uint32_t>(NEO::DebugDataType::CMD_QUEUE_DESTROYED)) {
+        zet_debug_event_t debugEvent = {};
+        debugEvent.type = ZET_DEBUG_EVENT_TYPE_PROCESS_EXIT;
+        pushApiEvent(debugEvent);
     }
 
     return ZE_RESULT_SUCCESS;
@@ -309,10 +318,6 @@ ze_result_t DebugSessionWindows::translateEscapeReturnStatusToZeResult(uint32_t 
     default:
         return ZE_RESULT_ERROR_UNKNOWN;
     }
-}
-
-ze_result_t DebugSessionWindows::readEvent(uint64_t timeout, zet_debug_event_t *event) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t DebugSessionWindows::readElfSpace(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {

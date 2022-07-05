@@ -17,7 +17,9 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
+#include "level_zero/core/test/unit_tests/sources/debugger/l0_debugger_fixture.h"
 
 #include <algorithm>
 #include <memory>
@@ -74,6 +76,26 @@ TEST_F(L0DebuggerWindowsTest, givenProgramDebuggingEnabledWhenDriverHandleIsCrea
 
 TEST_F(L0DebuggerWindowsTest, givenWindowsOSWhenL0DebuggerIsCreatedAddressModeIsSingleSpace) {
     EXPECT_TRUE(device->getL0Debugger()->getSingleAddressSpaceSbaTracking());
+}
+
+HWTEST_F(L0DebuggerWindowsTest, givenDebuggingEnabledAndCommandQueuesAreCreatedAndDestroyedThanDebuggerL0IsNotified) {
+    auto debuggerL0Hw = static_cast<MockDebuggerL0Hw<FamilyType> *>(device->getL0Debugger());
+
+    neoDevice->getDefaultEngine().commandStreamReceiver->getOsContext().ensureContextInitialized();
+
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue;
+    auto commandQueue1 = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue);
+    EXPECT_EQ(1u, debuggerL0Hw->commandQueueCreatedCount);
+
+    auto commandQueue2 = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue);
+    EXPECT_EQ(2u, debuggerL0Hw->commandQueueCreatedCount);
+
+    commandQueue1->destroy();
+    EXPECT_EQ(1u, debuggerL0Hw->commandQueueDestroyedCount);
+
+    commandQueue2->destroy();
+    EXPECT_EQ(2u, debuggerL0Hw->commandQueueDestroyedCount);
 }
 
 } // namespace ult

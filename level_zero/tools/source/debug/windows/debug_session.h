@@ -28,7 +28,6 @@ struct DebugSessionWindows : DebugSessionImp {
     ze_result_t initialize() override;
     bool closeConnection() override;
 
-    ze_result_t readEvent(uint64_t timeout, zet_debug_event_t *event) override;
     ze_result_t readMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) override;
     ze_result_t writeMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) override;
     ze_result_t acknowledgeEvent(const zet_debug_event_t *event) override;
@@ -38,6 +37,12 @@ struct DebugSessionWindows : DebugSessionImp {
 
   protected:
     ze_result_t resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) override;
+    void pushApiEvent(zet_debug_event_t &debugEvent) {
+        std::unique_lock<std::mutex> lock(asyncThreadMutex);
+        apiEvents.push(debugEvent);
+        apiEventCondition.notify_all();
+    }
+
     ze_result_t interruptImp(uint32_t deviceIndex) override;
 
     ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override;
