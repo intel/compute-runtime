@@ -32,15 +32,15 @@ struct SelectorCopyEngine : NonCopyableOrMovableClass {
     std::atomic<uint32_t> selector = 0;
 };
 
+using EnginesT = std::vector<EngineControl>;
+struct EngineGroupT {
+    EngineGroupType engineGroupType;
+    EnginesT engines;
+};
+using EngineGroupsT = std::vector<EngineGroupT>;
+
 class Device : public ReferenceTrackedObject<Device> {
   public:
-    using EnginesT = std::vector<EngineControl>;
-    struct EngineGroupT {
-        EngineGroupType engineGroupType;
-        EnginesT engines;
-    };
-    using EngineGroupsT = std::vector<EngineGroupT>;
-
     Device &operator=(const Device &) = delete;
     Device(const Device &) = delete;
     ~Device() override;

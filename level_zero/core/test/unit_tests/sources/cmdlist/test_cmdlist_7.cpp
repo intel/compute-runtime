@@ -153,7 +153,7 @@ TEST_F(CommandListCreate, givenRootDeviceAndImplicitScalingDisabledWhenCreatingC
     auto &rootDevice = *deviceFactory.rootDevices[0];
     auto &subDevice0 = *deviceFactory.subDevices[0];
     rootDevice.regularEngineGroups.resize(1);
-    subDevice0.getRegularEngineGroups().push_back(NEO::Device::EngineGroupT{});
+    subDevice0.getRegularEngineGroups().push_back(NEO::EngineGroupT{});
     subDevice0.getRegularEngineGroups().back().engineGroupType = EngineGroupType::Compute;
     subDevice0.getRegularEngineGroups().back().engines.resize(1);
     subDevice0.getRegularEngineGroups().back().engines[0].commandStreamReceiver = &rootDevice.getGpgpuCommandStreamReceiver();

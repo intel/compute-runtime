@@ -287,7 +287,7 @@ void DeviceImp::populateSubDeviceCopyEngineGroups() {
     }
 }
 
-NEO::Device::EngineGroupsT &DeviceImp::getSubDeviceCopyEngineGroups() {
+NEO::EngineGroupsT &DeviceImp::getSubDeviceCopyEngineGroups() {
     return this->subDeviceCopyEngineGroups;
 }
 

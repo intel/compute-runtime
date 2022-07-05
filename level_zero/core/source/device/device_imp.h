@@ -122,7 +122,7 @@ struct DeviceImp : public Device {
     std::unique_ptr<NEO::AllocationsList> allocationsForReuse;
     std::unique_ptr<NEO::DriverInfo> driverInfo;
     void createSysmanHandle(bool isSubDevice);
-    NEO::Device::EngineGroupsT &getSubDeviceCopyEngineGroups();
+    NEO::EngineGroupsT &getSubDeviceCopyEngineGroups();
     void populateSubDeviceCopyEngineGroups();
     bool isQueueGroupOrdinalValid(uint32_t ordinal);
 
@@ -131,7 +131,7 @@ struct DeviceImp : public Device {
 
   protected:
     void adjustCommandQueueDesc(ze_command_queue_desc_t &desc);
-    NEO::Device::EngineGroupsT subDeviceCopyEngineGroups{};
+    NEO::EngineGroupsT subDeviceCopyEngineGroups{};
 
     NEO::GraphicsAllocation *debugSurface = nullptr;
     SysmanDevice *pSysmanDevice = nullptr;

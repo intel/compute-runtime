@@ -1117,9 +1117,9 @@ TEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescOrd
 
     auto &engineGroups = deviceImp->getActiveDevice()->getRegularEngineGroups();
     engineGroups.clear();
-    NEO::Device::EngineGroupT engineGroupCompute{};
+    NEO::EngineGroupT engineGroupCompute{};
     engineGroupCompute.engineGroupType = NEO::EngineGroupType::Compute;
-    NEO::Device::EngineGroupT engineGroupRender{};
+    NEO::EngineGroupT engineGroupRender{};
     engineGroupRender.engineGroupType = NEO::EngineGroupType::RenderCompute;
     engineGroups.push_back(engineGroupCompute);
     engineGroups.push_back(engineGroupRender);
@@ -1151,7 +1151,7 @@ HWTEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescO
 
     auto &engineGroups = deviceImp->getActiveDevice()->getRegularEngineGroups();
     engineGroups.clear();
-    NEO::Device::EngineGroupT engineGroupCompute{};
+    NEO::EngineGroupT engineGroupCompute{};
     engineGroupCompute.engineGroupType = NEO::EngineGroupType::Compute;
     engineGroupCompute.engines.resize(3);
     auto osContext1 = std::make_unique<MockOsContext>(0u, EngineDescriptorHelper::getDefaultDescriptor());
@@ -1163,7 +1163,7 @@ HWTEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescO
     auto osContext3 = std::make_unique<MockOsContext>(0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext3->engineType = aub_stream::EngineType::ENGINE_CCS2;
     engineGroupCompute.engines[2].osContext = osContext3.get();
-    NEO::Device::EngineGroupT engineGroupRender{};
+    NEO::EngineGroupT engineGroupRender{};
     engineGroupRender.engineGroupType = NEO::EngineGroupType::RenderCompute;
     engineGroups.push_back(engineGroupRender);
     engineGroups.push_back(engineGroupCompute);

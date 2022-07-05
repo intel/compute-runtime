@@ -603,14 +603,14 @@ TEST_F(DeviceCreateCommandQueueTest, givenCopyOrdinalWhenCreateCommandQueueWithL
     auto &allEngines = const_cast<std::vector<NEO::EngineControl> &>(neoDevice->getAllEngines());
     allEngines.clear();
 
-    engineGroups.push_back(NEO::Device::EngineGroupT{});
+    engineGroups.push_back(NEO::EngineGroupT{});
     engineGroups.back().engineGroupType = EngineGroupType::Copy;
     engineGroups.back().engines.resize(1);
     engineGroups.back().engines[0].commandStreamReceiver = copyCsr.get();
     EngineControl copyEngine{copyCsr.get(), copyOsContext};
     allEngines.push_back(copyEngine);
 
-    engineGroups.push_back(NEO::Device::EngineGroupT{});
+    engineGroups.push_back(NEO::EngineGroupT{});
     engineGroups.back().engineGroupType = EngineGroupType::Compute;
     engineGroups.back().engines.resize(1);
     engineGroups.back().engines[0].commandStreamReceiver = computeCsr.get();
