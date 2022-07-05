@@ -20,12 +20,7 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
 
     ~DrmDirectSubmission() override;
 
-    uint32_t *getCompletionValuePointer() override {
-        if (this->completionFenceAllocation) {
-            return &this->completionFenceValue;
-        }
-        return DirectSubmissionHw<GfxFamily, Dispatcher>::getCompletionValuePointer();
-    }
+    uint32_t *getCompletionValuePointer() override;
 
   protected:
     bool allocateOsResources() override;
@@ -40,6 +35,7 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     uint64_t updateTagValue() override;
     void getTagAddressValue(TagData &tagData) override;
     bool isCompleted(uint32_t ringBufferIndex) override;
+    bool isCompletionFenceSupported();
 
     MOCKABLE_VIRTUAL void wait(uint32_t taskCountToWait);
 

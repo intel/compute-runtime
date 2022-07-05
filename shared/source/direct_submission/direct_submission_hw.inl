@@ -52,7 +52,7 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
         disableCacheFlush = !!DebugManager.flags.DirectSubmissionDisableCacheFlush.get();
     }
 
-    miMemFenceRequired = hwInfoConfig->isGlobalFenceInCommandStreamRequired(*hwInfo);
+    miMemFenceRequired = hwInfoConfig->isGlobalFenceInDirectSubmissionRequired(*hwInfo);
     if (DebugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get() == 0) {
         miMemFenceRequired = false;
     }
@@ -287,7 +287,7 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSemaphoreSection(
                                                           COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
 
     if (miMemFenceRequired) {
-        MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(ringCommandStream, 0, true, *hwInfo);
+        MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronizationForDirectSubmission(ringCommandStream, this->gpuVaForAdditionalSynchronizationWA, true, *hwInfo);
     }
 
     dispatchPrefetchMitigation();
@@ -301,7 +301,7 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeSemaphoreSection
     semaphoreSize += 2 * getSizeDisablePrefetcher();
 
     if (miMemFenceRequired) {
-        semaphoreSize += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(*hwInfo);
+        semaphoreSize += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronizationForDirectSubmission(*hwInfo);
     }
 
     return semaphoreSize;
@@ -643,7 +643,6 @@ size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getDiagnosticModeSection() {
 
 template <typename GfxFamily, typename Dispatcher>
 void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSystemMemoryFenceAddress() {
-    UNRECOVERABLE_IF(!this->globalFenceAllocation);
     EncodeMemoryFence<GfxFamily>::encodeSystemMemoryFence(ringCommandStream, this->globalFenceAllocation, this->logicalStateHelper);
 
     if (logicalStateHelper) {

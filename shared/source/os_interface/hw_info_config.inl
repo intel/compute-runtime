@@ -344,6 +344,11 @@ bool HwInfoConfigHw<gfxProduct>::isGlobalFenceInCommandStreamRequired(const Hard
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const {
+    return HwInfoConfigHw<gfxProduct>::isGlobalFenceInCommandStreamRequired(hwInfo);
+};
+
+template <PRODUCT_FAMILY gfxProduct>
 bool HwInfoConfigHw<gfxProduct>::isAdjustProgrammableIdPreferredSlmSizeRequired(const HardwareInfo &hwInfo) const {
     return false;
 }

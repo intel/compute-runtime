@@ -72,6 +72,7 @@ struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, Dispatche
     using BaseClass::handleResidency;
     using BaseClass::isCompleted;
     using BaseClass::isNewResourceHandleNeeded;
+    using BaseClass::miMemFenceRequired;
     using BaseClass::partitionConfigSet;
     using BaseClass::partitionedMode;
     using BaseClass::postSyncOffset;
@@ -191,11 +192,11 @@ HWTEST_F(DrmDirectSubmissionTest, givenNoCompletionFenceSupportWhenCreateDrmDire
     ASSERT_FALSE(drm->completionFenceSupport());
     {
         MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(commandStreamReceiver);
-        EXPECT_EQ(nullptr, directSubmission.completionFenceAllocation);
+        EXPECT_EQ(directSubmission.miMemFenceRequired, directSubmission.completionFenceAllocation != nullptr);
     }
     {
         MockDrmDirectSubmission<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(commandStreamReceiver);
-        EXPECT_EQ(nullptr, directSubmission.completionFenceAllocation);
+        EXPECT_EQ(directSubmission.miMemFenceRequired, directSubmission.completionFenceAllocation != nullptr);
     }
 }
 
@@ -309,6 +310,8 @@ HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportAndFenceIsNotComple
 HWTEST_F(DrmDirectSubmissionTest, givenNoCompletionFenceSupportWhenSubmittingThenNoCompletionAddressIsPassedToExec) {
     uint64_t gpuAddress = 0x1000;
     size_t size = 0x1000;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableDrmCompletionFence.set(0);
 
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
     drmDirectSubmission.completionFenceAllocation = nullptr;
@@ -334,6 +337,8 @@ HWTEST_F(DrmDirectSubmissionTest, givenNoCompletionFenceSupportWhenSubmittingThe
 HWTEST_F(DrmDirectSubmissionTest, givenTile0AndCompletionFenceSupportWhenSubmittingThenCompletionAddressAndValueArePassedToExec) {
     uint64_t gpuAddress = 0x1000;
     size_t size = 0x1000;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableDrmCompletionFence.set(1);
 
     auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
     auto drm = executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>();
@@ -371,6 +376,8 @@ HWTEST_F(DrmDirectSubmissionTest, givenTile0AndCompletionFenceSupportWhenSubmitt
 HWTEST_F(DrmDirectSubmissionTest, givenTile1AndCompletionFenceSupportWhenSubmittingThenCompletionAddressAndValueArePassedToExec) {
     uint64_t gpuAddress = 0x1000;
     size_t size = 0x1000;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableDrmCompletionFence.set(1);
 
     auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
     auto drm = executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>();
@@ -408,6 +415,8 @@ HWTEST_F(DrmDirectSubmissionTest, givenTile1AndCompletionFenceSupportWhenSubmitt
 HWTEST_F(DrmDirectSubmissionTest, givenTwoTilesAndCompletionFenceSupportWhenSubmittingThenCompletionAddressAndValueArePassedToExec) {
     uint64_t gpuAddress = 0x1000;
     size_t size = 0x1000;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableDrmCompletionFence.set(1);
 
     auto &commandStreamReceiver = device->getUltCommandStreamReceiver<FamilyType>();
     auto drm = executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>();

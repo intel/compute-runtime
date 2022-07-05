@@ -79,6 +79,18 @@ bool HwHelperHw<Family>::isBankOverrideRequired(const HardwareInfo &hwInfo) cons
 }
 
 template <>
+size_t MemorySynchronizationCommands<Family>::getSizeForSingleAdditionalSynchronizationForDirectSubmission(const HardwareInfo &hwInfo) {
+    return EncodeSempahore<Family>::getSizeMiSemaphoreWait();
+}
+
+template <>
+void MemorySynchronizationCommands<Family>::addAdditionalSynchronizationForDirectSubmission(LinearStream &commandStream, uint64_t gpuAddress, bool acquire, const HardwareInfo &hwInfo) {
+    using MI_SEMAPHORE_WAIT = typename Family::MI_SEMAPHORE_WAIT;
+
+    EncodeSempahore<Family>::addMiSemaphoreWaitCommand(commandStream, gpuAddress, EncodeSempahore<Family>::invalidHardwareTag, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+}
+
+template <>
 const StackVec<uint32_t, 6> HwHelperHw<Family>::getThreadsPerEUConfigs() const {
     return {4, 8};
 }

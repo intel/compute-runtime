@@ -48,8 +48,14 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(const DirectSubm
         UNRECOVERABLE_IF(this->workPartitionAllocation == nullptr);
     }
 
-    if (drm.completionFenceSupport()) {
+    if (this->miMemFenceRequired || drm.completionFenceSupport()) {
         this->completionFenceAllocation = inputParams.completionFenceAllocation;
+        if (this->completionFenceAllocation) {
+            this->gpuVaForAdditionalSynchronizationWA = this->completionFenceAllocation->getGpuAddress() + 8u;
+            if (drm.completionFenceSupport()) {
+                this->completionFenceSupported = true;
+            }
+        }
     }
 }
 
@@ -59,13 +65,21 @@ inline DrmDirectSubmission<GfxFamily, Dispatcher>::~DrmDirectSubmission() {
         this->stopRingBuffer();
         this->wait(static_cast<uint32_t>(this->currentTagData.tagValue));
     }
-    if (this->completionFenceAllocation) {
+    if (this->isCompletionFenceSupported()) {
         auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
         auto &drm = osContextLinux->getDrm();
         auto completionFenceCpuAddress = reinterpret_cast<uint64_t>(this->completionFenceAllocation->getUnderlyingBuffer()) + Drm::completionFenceOffset;
         drm.waitOnUserFences(*osContextLinux, completionFenceCpuAddress, this->completionFenceValue, this->activeTiles, this->postSyncOffset);
     }
     this->deallocateResources();
+}
+
+template <typename GfxFamily, typename Dispatcher>
+uint32_t *DrmDirectSubmission<GfxFamily, Dispatcher>::getCompletionValuePointer() {
+    if (this->isCompletionFenceSupported()) {
+        return &this->completionFenceValue;
+    }
+    return DirectSubmissionHw<GfxFamily, Dispatcher>::getCompletionValuePointer();
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -97,7 +111,7 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
 
     uint32_t completionValue = 0u;
     uint64_t completionFenceGpuAddress = 0u;
-    if (this->completionFenceAllocation) {
+    if (this->isCompletionFenceSupported()) {
         completionValue = ++completionFenceValue;
         completionFenceGpuAddress = this->completionFenceAllocation->getGpuAddress() + Drm::completionFenceOffset;
     }
@@ -221,6 +235,11 @@ inline bool DrmDirectSubmission<GfxFamily, Dispatcher>::isCompleted(uint32_t rin
         pollAddress = ptrOffset(pollAddress, this->postSyncOffset);
     }
     return true;
+}
+
+template <typename GfxFamily, typename Dispatcher>
+bool DrmDirectSubmission<GfxFamily, Dispatcher>::isCompletionFenceSupported() {
+    return this->completionFenceSupported;
 }
 
 template <typename GfxFamily, typename Dispatcher>

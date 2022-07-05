@@ -462,6 +462,7 @@ struct MemorySynchronizationCommands {
     static void addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo);
     static void setPipeControlWA(void *&commandsBuffer, uint64_t gpuAddress, const HardwareInfo &hwInfo);
 
+    static void addAdditionalSynchronizationForDirectSubmission(LinearStream &commandStream, uint64_t gpuAddress, bool acquire, const HardwareInfo &hwInfo);
     static void addAdditionalSynchronization(LinearStream &commandStream, uint64_t gpuAddress, bool acquire, const HardwareInfo &hwInfo);
     static void setAdditionalSynchronization(void *&commandsBuffer, uint64_t gpuAddress, bool acquire, const HardwareInfo &hwInfo);
 
@@ -478,6 +479,7 @@ struct MemorySynchronizationCommands {
     static size_t getSizeForPipeControlWithPostSyncOperation(const HardwareInfo &hwInfo);
     static size_t getSizeForPipeControlWA(const HardwareInfo &hwInfo);
     static size_t getSizeForSinglePipeControl();
+    static size_t getSizeForSingleAdditionalSynchronizationForDirectSubmission(const HardwareInfo &hwInfo);
     static size_t getSizeForSingleAdditionalSynchronization(const HardwareInfo &hwInfo);
     static size_t getSizeForAdditonalSynchronization(const HardwareInfo &hwInfo);
     static size_t getSizeForFullCacheFlush();

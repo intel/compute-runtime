@@ -307,6 +307,11 @@ void MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(Line
 }
 
 template <typename GfxFamily>
+void MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronizationForDirectSubmission(LinearStream &commandStream, uint64_t gpuAddress, bool acquire, const HardwareInfo &hwInfo) {
+    MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, gpuAddress, acquire, hwInfo);
+}
+
+template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::setPipeControl(typename GfxFamily::PIPE_CONTROL &pipeControl, PipeControlArgs &args) {
     pipeControl.setCommandStreamerStallEnable(true);
     pipeControl.setConstantCacheInvalidationEnable(args.constantCacheInvalidationEnable);
@@ -408,6 +413,11 @@ void MemorySynchronizationCommands<GfxFamily>::setAdditionalSynchronization(void
 template <typename GfxFamily>
 inline size_t MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(const HardwareInfo &hwInfo) {
     return 0u;
+}
+
+template <typename GfxFamily>
+inline size_t MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronizationForDirectSubmission(const HardwareInfo &hwInfo) {
+    return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(hwInfo);
 }
 
 template <typename GfxFamily>

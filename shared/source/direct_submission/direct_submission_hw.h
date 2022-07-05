@@ -168,6 +168,7 @@ class DirectSubmissionHw {
 
     uint64_t semaphoreGpuVa = 0u;
     uint64_t gpuVaForMiFlush = 0u;
+    uint64_t gpuVaForAdditionalSynchronizationWA = 0u;
 
     OsContext &osContext;
     const uint32_t rootDeviceIndex;
@@ -200,5 +201,6 @@ class DirectSubmissionHw {
     bool useNotifyForPostSync = false;
     bool miMemFenceRequired = false;
     bool systemMemoryFenceAddressSet = false;
+    bool completionFenceSupported = false;
 };
 } // namespace NEO

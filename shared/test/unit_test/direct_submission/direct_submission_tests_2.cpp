@@ -38,24 +38,23 @@ struct DirectSubmissionDispatchMiMemFenceTest : public DirectSubmissionDispatchB
         DirectSubmissionDispatchBufferTest::SetUp();
 
         auto hwInfoConfig = HwInfoConfig::get(pDevice->getHardwareInfo().platform.eProductFamily);
-        miMemFenceSupported = hwInfoConfig->isGlobalFenceInCommandStreamRequired(pDevice->getHardwareInfo());
+        miMemFenceSupported = hwInfoConfig->isGlobalFenceInDirectSubmissionRequired(pDevice->getHardwareInfo());
     }
 
     template <typename FamilyType>
     void validateFenceProgramming(MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> &directSubmission, uint32_t expectedFenceCount, uint32_t expectedSysMemFenceCount) {
+        int32_t id = 0;
         int32_t systemMemoryFenceId = -1;
         uint32_t fenceCount = 0;
         uint32_t sysMemFenceCount = 0;
 
+        HardwareParse hwParse;
+        hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
+        hwParse.findHardwareCommands<FamilyType>();
+
         if constexpr (FamilyType::isUsingMiMemFence) {
             using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
             using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
-
-            HardwareParse hwParse;
-            hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
-            hwParse.findHardwareCommands<FamilyType>();
-
-            int32_t id = 0;
 
             for (auto &it : hwParse.cmdList) {
                 if (auto sysFenceAddress = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(it)) {
@@ -74,6 +73,17 @@ struct DirectSubmissionDispatchMiMemFenceTest : public DirectSubmissionDispatchB
 
                 id++;
             }
+        } else if (miMemFenceSupported) {
+            using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+            expectedSysMemFenceCount = 0u;
+            for (auto &it : hwParse.cmdList) {
+                if (auto sysFenceAddress = genCmdCast<MI_SEMAPHORE_WAIT *>(it)) {
+                    fenceCount++;
+                }
+
+                id++;
+            }
+            fenceCount /= 2;
         }
 
         if (miMemFenceSupported) {
