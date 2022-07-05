@@ -4,6 +4,11 @@
 # SPDX-License-Identifier: MIT
 #
 
+if(WIN32)
+  set(SUPPORT_GEN8 FALSE CACHE BOOL "Support Gen8 devices" FORCE)
+  set(SUPPORT_GEN9 FALSE CACHE BOOL "Support Gen9 devices" FORCE)
+  set(SUPPORT_GEN11 FALSE CACHE BOOL "Support Gen11 devices" FORCE)
+endif()
 SET_FLAGS_FOR("GEN8" "BDW")
 SET_FLAGS_FOR("GEN9" "SKL" "KBL" "BXT" "GLK" "CFL")
 SET_FLAGS_FOR("GEN11" "ICLLP" "LKF" "EHL")
