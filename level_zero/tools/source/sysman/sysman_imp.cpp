@@ -103,9 +103,6 @@ ze_result_t SysmanDeviceImp::init() {
     if (pFabricPortHandleContext) {
         pFabricPortHandleContext->init();
     }
-    if (pTempHandleContext) {
-        pTempHandleContext->init(deviceHandles);
-    }
     if (pPci) {
         pPci->init();
     }

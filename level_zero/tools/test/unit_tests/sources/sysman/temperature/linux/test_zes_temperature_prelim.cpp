@@ -5,6 +5,7 @@
  *
  */
 
+#include "level_zero/tools/source/sysman/linux/pmt/pmt_xml_offsets.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/temperature/linux/mock_sysfs_temperature.h"
 
@@ -12,18 +13,14 @@ extern bool sysmanUltsEnable;
 
 namespace L0 {
 namespace ult {
+
 const static int fakeFileDescriptor = 123;
-std::string gpuUpstreamPortPath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
 constexpr uint32_t handleComponentCountForSubDevices = 6u;
 constexpr uint32_t handleComponentCountForNoSubDevices = 2u;
 constexpr uint32_t invalidMaxTemperature = 125;
 constexpr uint32_t invalidMinTemperature = 10;
-
-const std::map<std::string, uint64_t> deviceKeyOffsetMapTemperature = {
-    {"PACKAGE_ENERGY", 0x420},
-    {"COMPUTE_TEMPERATURES", 0x68},
-    {"SOC_TEMPERATURES", 0x60},
-    {"CORE_TEMPERATURES", 0x6c}};
+const std::string sampleGuid1 = "0xb15a0edc";
+const std::string sampleGuid2 = "0x490e01";
 
 inline static int openMockTemp(const char *pathname, int flags) {
     if (strcmp(pathname, "/sys/class/intel_pmt/telem2/telem") == 0) {
@@ -86,11 +83,18 @@ class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
     std::unique_ptr<Mock<TemperatureFsAccess>> pFsAccess;
     FsAccess *pFsAccessOriginal = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
+    PRODUCT_FAMILY productFamily;
+    std::map<uint32_t, L0::PlatformMonitoringTech *> mapOriginal;
     void SetUp() override {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
         SysmanMultiDeviceFixture::SetUp();
+        for (auto &handle : pSysmanDeviceImp->pTempHandleContext->handleList) {
+            delete handle;
+            handle = nullptr;
+        }
+        pSysmanDeviceImp->pTempHandleContext->handleList.clear();
         pFsAccess = std::make_unique<NiceMock<Mock<TemperatureFsAccess>>>();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
@@ -103,6 +107,8 @@ class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
+        mapOriginal = pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject;
+        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.clear();
 
         for (auto &deviceHandle : deviceHandles) {
             ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
@@ -110,17 +116,24 @@ class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
             auto pPmt = new NiceMock<Mock<TemperaturePmt>>(pFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
                                                            deviceProperties.subdeviceId);
             pPmt->mockedInit(pFsAccess.get());
-            pPmt->keyOffsetMap = deviceKeyOffsetMapTemperature;
+            // Get keyOffsetMap
+            auto keyOffsetMapEntry = guidToKeyOffsetMap.find(sampleGuid1);
+            pPmt->keyOffsetMap = keyOffsetMapEntry->second;
             pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(deviceProperties.subdeviceId, pPmt);
         }
 
+        productFamily = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getHardwareInfo().platform.eProductFamily;
         getTempHandles(0);
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
+        for (const auto &pmtMapElement : pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject) {
+            delete pmtMapElement.second;
+        }
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
+        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject = mapOriginal;
         SysmanMultiDeviceFixture::TearDown();
     }
 
@@ -163,7 +176,24 @@ TEST_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTempe
         zes_temp_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetProperties(handle, &properties));
         double temperature;
-        ASSERT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesTemperatureGetState(handle, &temperature));
+        if (properties.type == ZES_TEMP_SENSORS_GLOBAL) {
+            ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
+            EXPECT_EQ(temperature, static_cast<double>(tempArrForSubDevices[subDeviceMaxTempIndex]));
+        }
+        if (properties.type == ZES_TEMP_SENSORS_GPU) {
+            ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
+            EXPECT_EQ(temperature, static_cast<double>(tempArrForSubDevices[gtMaxTempIndex]));
+        }
+        if (properties.type == ZES_TEMP_SENSORS_MEMORY) {
+            if (productFamily == IGFX_XE_HP_SDV) {
+                ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
+                EXPECT_EQ(temperature, static_cast<double>(std::max({tempArrForSubDevices[memory0MaxTempIndex], tempArrForSubDevices[memory1MaxTempIndex]})));
+            }
+            if (productFamily == IGFX_PVC) {
+                ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
+                EXPECT_EQ(temperature, static_cast<double>(std::max({memory0MaxTemperature, memory1MaxTemperature, memory2MaxTemperature, memory3MaxTemperature})));
+            }
+        }
     }
 }
 
@@ -185,7 +215,7 @@ TEST_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleWhenSettingTempe
 
 TEST_F(SysmanMultiDeviceTemperatureFixture, GivenCreatePmtObjectsWhenRootTileIndexEnumeratesSuccessfulThenValidatePmtObjectsReceivedAndBranches) {
     std::map<uint32_t, L0::PlatformMonitoringTech *> mapOfSubDeviceIdToPmtObject;
-    PlatformMonitoringTech::create(deviceHandles, pFsAccess.get(), gpuUpstreamPortPath, mapOfSubDeviceIdToPmtObject);
+    PlatformMonitoringTech::create(deviceHandles, pFsAccess.get(), gpuUpstreamPortPathInTemperature, mapOfSubDeviceIdToPmtObject);
     uint32_t deviceHandlesIndex = 0;
     for (auto &subDeviceIdToPmtEntry : mapOfSubDeviceIdToPmtObject) {
         ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
@@ -196,12 +226,44 @@ TEST_F(SysmanMultiDeviceTemperatureFixture, GivenCreatePmtObjectsWhenRootTileInd
     }
 }
 
+TEST_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleAndPmtReadValueFailsWhenGettingTemperatureThenFailureReturned) {
+    // delete previously allocated pPmt objects
+    for (auto &subDeviceIdToPmtEntry : pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject) {
+        delete subDeviceIdToPmtEntry.second;
+    }
+    pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.clear();
+    // delete previously created temp handles
+    for (auto &handle : pSysmanDeviceImp->pTempHandleContext->handleList) {
+        delete handle;
+        handle = nullptr;
+        pSysmanDeviceImp->pTempHandleContext->handleList.pop_back();
+    }
+    for (auto &deviceHandle : deviceHandles) {
+        ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+        Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
+        auto pPmt = new NiceMock<Mock<TemperaturePmt>>(pFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
+                                                       deviceProperties.subdeviceId);
+        pPmt->mockedInit(pFsAccess.get());
+        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(deviceProperties.subdeviceId, pPmt);
+    }
+
+    pSysmanDeviceImp->pTempHandleContext->init(deviceHandles);
+    auto handles = getTempHandles(handleComponentCountForSubDevices);
+    for (auto &handle : handles) {
+        zes_temp_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetProperties(handle, &properties));
+        double temperature;
+        ASSERT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesTemperatureGetState(handle, &temperature));
+    }
+}
+
 class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<PublicLinuxTemperatureImp> pPublicLinuxTemperatureImp;
     std::unique_ptr<Mock<TemperatureFsAccess>> pFsAccess;
     FsAccess *pFsAccessOriginal = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
+    PRODUCT_FAMILY productFamily;
     void SetUp() override {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
@@ -226,10 +288,13 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
             auto pPmt = new NiceMock<Mock<TemperaturePmt>>(pFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
                                                            deviceProperties.subdeviceId);
             pPmt->mockedInit(pFsAccess.get());
-            pPmt->keyOffsetMap = deviceKeyOffsetMapTemperature;
+            // Get keyOffsetMap
+            auto keyOffsetMapEntry = guidToKeyOffsetMap.find(sampleGuid2);
+            pPmt->keyOffsetMap = keyOffsetMapEntry->second;
             pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(deviceProperties.subdeviceId, pPmt);
         }
 
+        productFamily = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getHardwareInfo().platform.eProductFamily;
         getTempHandles(0);
     }
     void TearDown() override {
@@ -257,7 +322,6 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingGPUAndGlob
         pPmt->closeFunction = closeMockTemp;
         pPmt->preadFunction = preadMockTempNoSubDevices;
     }
-
     for (auto &handle : handles) {
         zes_temp_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetProperties(handle, &properties));
@@ -272,10 +336,14 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingGPUAndGlob
                 }
                 maxTemp = tempArrForNoSubDevices[i];
             }
-            EXPECT_EQ(temperature, static_cast<double>(maxTemp));
+            if (productFamily == IGFX_DG1) {
+                EXPECT_EQ(temperature, static_cast<double>(maxTemp));
+            }
         }
         if (properties.type == ZES_TEMP_SENSORS_GPU) {
-            EXPECT_EQ(temperature, static_cast<double>(tempArrForNoSubDevices[computeIndexForNoSubDevices]));
+            if (productFamily == IGFX_DG1) {
+                EXPECT_EQ(temperature, static_cast<double>(tempArrForNoSubDevices[computeIndexForNoSubDevices]));
+            }
         }
     }
 }
@@ -320,29 +388,28 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingUnsupporte
 }
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenValidateEnumerateRootTelemIndexWhengetRealPathFailsThenFailureReturned) {
-    pFsAccess->mockErrorGetRealPath = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
-    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE,
-              PlatformMonitoringTech::enumerateRootTelemIndex(pFsAccess.get(), gpuUpstreamPortPath));
     pFsAccess->mockErrorListDirectory = ZE_RESULT_ERROR_NOT_AVAILABLE;
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE,
-              PlatformMonitoringTech::enumerateRootTelemIndex(pFsAccess.get(), gpuUpstreamPortPath));
+              PlatformMonitoringTech::enumerateRootTelemIndex(pFsAccess.get(), gpuUpstreamPortPathInTemperature));
 
     std::map<uint32_t, L0::PlatformMonitoringTech *> mapOfSubDeviceIdToPmtObject;
-    PlatformMonitoringTech::create(deviceHandles, pFsAccess.get(), gpuUpstreamPortPath, mapOfSubDeviceIdToPmtObject);
+    PlatformMonitoringTech::create(deviceHandles, pFsAccess.get(), gpuUpstreamPortPathInTemperature, mapOfSubDeviceIdToPmtObject);
     EXPECT_TRUE(mapOfSubDeviceIdToPmtObject.empty());
 }
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenValidatePmtReadValueWhenkeyOffsetMapIsNotThereThenFailureReturned) {
     auto pPmt = std::make_unique<NiceMock<Mock<TemperaturePmt>>>(pFsAccess.get(), 0, 0);
     pPmt->mockedInit(pFsAccess.get());
-    pPmt->keyOffsetMap = deviceKeyOffsetMapTemperature;
+    // Get keyOffsetMap
+    auto keyOffsetMapEntry = guidToKeyOffsetMap.find(sampleGuid2);
+    pPmt->keyOffsetMap = keyOffsetMapEntry->second;
     uint32_t val = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pPmt->readValue("SOMETHING", val));
 }
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenCreatePmtObjectsWhenRootTileIndexEnumeratesSuccessfulThenValidatePmtObjectsReceivedAndBranches) {
     std::map<uint32_t, L0::PlatformMonitoringTech *> mapOfSubDeviceIdToPmtObject1;
-    PlatformMonitoringTech::create(deviceHandles, pFsAccess.get(), gpuUpstreamPortPath, mapOfSubDeviceIdToPmtObject1);
+    PlatformMonitoringTech::create(deviceHandles, pFsAccess.get(), gpuUpstreamPortPathInTemperature, mapOfSubDeviceIdToPmtObject1);
     for (auto &subDeviceIdToPmtEntry : mapOfSubDeviceIdToPmtObject1) {
         EXPECT_NE(subDeviceIdToPmtEntry.second, nullptr);
         EXPECT_EQ(subDeviceIdToPmtEntry.first, 0u); // We know that subdeviceID is zero as core device didnt have any subdevices
@@ -352,7 +419,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenCreatePmtObjectsWhenRootTileIndexEnu
     std::map<uint32_t, L0::PlatformMonitoringTech *> mapOfSubDeviceIdToPmtObject2;
     std::vector<ze_device_handle_t> testHandleVector;
     // If empty device handle vector is provided then empty map is retrieved
-    PlatformMonitoringTech::create(testHandleVector, pFsAccess.get(), gpuUpstreamPortPath, mapOfSubDeviceIdToPmtObject2);
+    PlatformMonitoringTech::create(testHandleVector, pFsAccess.get(), gpuUpstreamPortPathInTemperature, mapOfSubDeviceIdToPmtObject2);
     EXPECT_TRUE(mapOfSubDeviceIdToPmtObject2.empty());
 }
 

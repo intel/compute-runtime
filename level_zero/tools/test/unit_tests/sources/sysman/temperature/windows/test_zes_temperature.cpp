@@ -49,7 +49,7 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
-        pSysmanDeviceImp->pTempHandleContext->init(deviceHandles);
+        getTempHandles(0);
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {
