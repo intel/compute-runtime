@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,8 @@ class OsPower {
     virtual ze_result_t setLimits(const zes_power_sustained_limit_t *pSustained, const zes_power_burst_limit_t *pBurst, const zes_power_peak_limit_t *pPeak) = 0;
     virtual ze_result_t getEnergyThreshold(zes_energy_threshold_t *pThreshold) = 0;
     virtual ze_result_t setEnergyThreshold(double threshold) = 0;
+    virtual ze_result_t getLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) = 0;
+    virtual ze_result_t setLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) = 0;
 
     virtual bool isPowerModuleSupported() = 0;
     static OsPower *create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);

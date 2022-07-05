@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,8 @@ class PowerImp : public Power, NEO::NonCopyableOrMovableClass {
     ze_result_t powerSetLimits(const zes_power_sustained_limit_t *pSustained, const zes_power_burst_limit_t *pBurst, const zes_power_peak_limit_t *pPeak) override;
     ze_result_t powerGetEnergyThreshold(zes_energy_threshold_t *pThreshold) override;
     ze_result_t powerSetEnergyThreshold(double threshold) override;
+    ze_result_t powerGetLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) override;
+    ze_result_t powerSetLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) override;
 
     PowerImp() = default;
     PowerImp(OsSysman *pOsSysman, ze_device_handle_t device);

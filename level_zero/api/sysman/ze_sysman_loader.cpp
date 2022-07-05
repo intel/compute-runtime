@@ -373,6 +373,8 @@ zesGetPowerProcAddrTable(
     pDdiTable->pfnGetEnergyCounter = L0::zesPowerGetEnergyCounter;
     pDdiTable->pfnGetLimits = L0::zesPowerGetLimits;
     pDdiTable->pfnSetLimits = L0::zesPowerSetLimits;
+    pDdiTable->pfnGetLimitsExt = L0::zesPowerGetLimitsExt;
+    pDdiTable->pfnSetLimitsExt = L0::zesPowerSetLimitsExt;
     pDdiTable->pfnGetEnergyThreshold = L0::zesPowerGetEnergyThreshold;
     pDdiTable->pfnSetEnergyThreshold = L0::zesPowerSetEnergyThreshold;
 

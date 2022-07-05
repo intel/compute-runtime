@@ -297,5 +297,18 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenSettingPowerLimitsAllo
     }
 }
 
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandlesWhenCallingSetAndGetPowerLimitExtWhenHwmonInterfaceExistThenUnsupportedFeatureIsReturned) {
+    // Setting allow set calls or not
+    init(true);
+
+    auto handles = get_power_handles(powerHandleComponentCount);
+    for (auto handle : handles) {
+        uint32_t limitCount = 0;
+
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetLimitsExt(handle, &limitCount, nullptr));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerSetLimitsExt(handle, &limitCount, nullptr));
+    }
+}
+
 } // namespace ult
 } // namespace L0

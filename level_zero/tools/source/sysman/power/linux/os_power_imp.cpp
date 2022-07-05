@@ -188,6 +188,14 @@ ze_result_t LinuxPowerImp::setEnergyThreshold(double threshold) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+ze_result_t LinuxPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t LinuxPowerImp::setLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 bool LinuxPowerImp::isHwmonDir(std::string name) {
     if (isSubdevice == false && (name == i915)) {
         return true;

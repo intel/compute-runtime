@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -325,6 +325,14 @@ bool WddmPowerImp::isPowerModuleSupported() {
     memcpy_s(&enabled, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
 
     return ((status == ZE_RESULT_SUCCESS) && (enabled));
+}
+
+ze_result_t WddmPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t WddmPowerImp::setLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 WddmPowerImp::WddmPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) {

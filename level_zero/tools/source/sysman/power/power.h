@@ -30,6 +30,8 @@ class Power : _zet_sysman_pwr_handle_t, _zes_pwr_handle_t {
     virtual ze_result_t powerSetLimits(const zes_power_sustained_limit_t *pSustained, const zes_power_burst_limit_t *pBurst, const zes_power_peak_limit_t *pPeak) = 0;
     virtual ze_result_t powerGetEnergyThreshold(zes_energy_threshold_t *pThreshold) = 0;
     virtual ze_result_t powerSetEnergyThreshold(double threshold) = 0;
+    virtual ze_result_t powerGetLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) = 0;
+    virtual ze_result_t powerSetLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) = 0;
 
     static Power *fromHandle(zes_pwr_handle_t handle) {
         return static_cast<Power *>(handle);

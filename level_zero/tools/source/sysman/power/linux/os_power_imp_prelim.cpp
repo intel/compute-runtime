@@ -123,6 +123,14 @@ ze_result_t LinuxPowerImp::setLimits(const zes_power_sustained_limit_t *pSustain
     return result;
 }
 
+ze_result_t LinuxPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t LinuxPowerImp::setLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t LinuxPowerImp::getEnergyThreshold(zes_energy_threshold_t *pThreshold) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }

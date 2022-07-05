@@ -27,6 +27,15 @@ ze_result_t PowerImp::powerGetLimits(zes_power_sustained_limit_t *pSustained, ze
 ze_result_t PowerImp::powerSetLimits(const zes_power_sustained_limit_t *pSustained, const zes_power_burst_limit_t *pBurst, const zes_power_peak_limit_t *pPeak) {
     return pOsPower->setLimits(pSustained, pBurst, pPeak);
 }
+
+ze_result_t PowerImp::powerGetLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) {
+    return pOsPower->getLimitsExt(pCount, pSustained);
+}
+
+ze_result_t PowerImp::powerSetLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) {
+    return pOsPower->setLimitsExt(pCount, pSustained);
+}
+
 ze_result_t PowerImp::powerGetEnergyThreshold(zes_energy_threshold_t *pThreshold) {
     return pOsPower->getEnergyThreshold(pThreshold);
 }

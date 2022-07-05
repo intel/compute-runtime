@@ -161,6 +161,20 @@ ze_result_t zesPowerSetLimits(
     return L0::Power::fromHandle(hPower)->powerSetLimits(pSustained, pBurst, pPeak);
 }
 
+ze_result_t zesPowerGetLimitsExt(
+    zes_pwr_handle_t hPower,
+    uint32_t *pCount,
+    zes_power_limit_ext_desc_t *pSustained) {
+    return L0::Power::fromHandle(hPower)->powerGetLimitsExt(pCount, pSustained);
+}
+
+ze_result_t zesPowerSetLimitsExt(
+    zes_pwr_handle_t hPower,
+    uint32_t *pCount,
+    zes_power_limit_ext_desc_t *pSustained) {
+    return L0::Power::fromHandle(hPower)->powerSetLimitsExt(pCount, pSustained);
+}
+
 ze_result_t zesPowerGetEnergyThreshold(
     zes_pwr_handle_t hPower,
     zes_energy_threshold_t *pThreshold) {
@@ -1350,6 +1364,26 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zesPowerSetLimits(
         pSustained,
         pBurst,
         pPeak);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesPowerGetLimitsExt(
+    zes_pwr_handle_t hPower,
+    uint32_t *pCount,
+    zes_power_limit_ext_desc_t *pSustained) {
+    return L0::zesPowerGetLimitsExt(
+        hPower,
+        pCount,
+        pSustained);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesPowerSetLimitsExt(
+    zes_pwr_handle_t hPower,
+    uint32_t *pCount,
+    zes_power_limit_ext_desc_t *pSustained) {
+    return L0::zesPowerSetLimitsExt(
+        hPower,
+        pCount,
+        pSustained);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zesPowerGetEnergyThreshold(
