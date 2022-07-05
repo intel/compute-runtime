@@ -8,14 +8,11 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_l0_debugger.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "level_zero/core/source/cmdlist/cmdlist.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
-#include "level_zero/core/test/unit_tests/sources/debugger/l0_debugger_fixture.h"
-
-namespace L0 {
-namespace ult {
+namespace NEO {
 
 struct SingleAddressSpaceFixture : public Test<NEO::DeviceFixture> {
     void SetUp() override {
@@ -25,19 +22,6 @@ struct SingleAddressSpaceFixture : public Test<NEO::DeviceFixture> {
 
     void TearDown() override {
         Test<NEO::DeviceFixture>::TearDown();
-    }
-
-    DebugManagerStateRestore restorer;
-};
-
-struct L0DebuggerSingleAddressSpace : public Test<L0DebuggerHwFixture> {
-    void SetUp() override {
-        NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(1);
-        Test<L0DebuggerHwFixture>::SetUp();
-    }
-
-    void TearDown() override {
-        Test<L0DebuggerHwFixture>::TearDown();
     }
 
     DebugManagerStateRestore restorer;
@@ -336,72 +320,4 @@ HWTEST2_F(SingleAddressSpaceFixture, GivenAllZeroSbaAddressesWhenProgrammingSbaT
     pDevice->getMemoryManager()->freeGraphicsMemory(streamAllocation);
 }
 
-HWTEST2_F(L0DebuggerSingleAddressSpace, givenDebuggingEnabledWhenCommandListIsExecutedThenValidKernelDebugCommandsAreAdded, IsAtLeastGen12lp) {
-    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
-    using STATE_SIP = typename FamilyType::STATE_SIP;
-
-    ze_command_queue_desc_t queueDesc = {};
-    ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
-    ASSERT_NE(nullptr, commandQueue->commandStream);
-
-    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
-
-    ze_command_list_handle_t commandLists[] = {
-        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
-    uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
-
-    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
-    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
-
-    auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
-
-    size_t gpr15RegisterCount = 0;
-
-    size_t gprMiLoadindex = std::numeric_limits<size_t>::max();
-
-    for (size_t i = 0; i < miLoadImm.size(); i++) {
-        MI_LOAD_REGISTER_IMM *miLoad = genCmdCast<MI_LOAD_REGISTER_IMM *>(*miLoadImm[i]);
-        ASSERT_NE(nullptr, miLoad);
-
-        if (miLoad->getRegisterOffset() == CS_GPR_R15) {
-            gpr15RegisterCount++;
-            gprMiLoadindex = i;
-        }
-        if (miLoad->getRegisterOffset() == CS_GPR_R15 + 4) {
-            gpr15RegisterCount++;
-        }
-    }
-
-    // 2 LRI commands to store SBA buffer address
-    EXPECT_EQ(2u, gpr15RegisterCount);
-
-    auto sbaGpuVa = getMockDebuggerL0Hw<FamilyType>()->getSbaTrackingBuffer(commandQueue->getCsr()->getOsContext().getContextId())->getGpuAddress();
-    uint32_t low = sbaGpuVa & 0xffffffff;
-    uint32_t high = (sbaGpuVa >> 32) & 0xffffffff;
-
-    MI_LOAD_REGISTER_IMM *miLoad = genCmdCast<MI_LOAD_REGISTER_IMM *>(*miLoadImm[gprMiLoadindex]);
-    EXPECT_EQ(CS_GPR_R15, miLoad->getRegisterOffset());
-    EXPECT_EQ(low, miLoad->getDataDword());
-
-    miLoad = genCmdCast<MI_LOAD_REGISTER_IMM *>(*miLoadImm[gprMiLoadindex + 1]);
-    EXPECT_EQ(CS_GPR_R15 + 4, miLoad->getRegisterOffset());
-    EXPECT_EQ(high, miLoad->getDataDword());
-
-    for (auto i = 0u; i < numCommandLists; i++) {
-        auto commandList = CommandList::fromHandle(commandLists[i]);
-        commandList->destroy();
-    }
-
-    commandQueue->destroy();
-}
-
-} // namespace ult
-} // namespace L0
+} // namespace NEO

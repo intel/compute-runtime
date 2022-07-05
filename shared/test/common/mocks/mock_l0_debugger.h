@@ -11,9 +11,7 @@
 
 extern NEO::DebugerL0CreateFn mockDebuggerL0HwFactory[];
 
-namespace L0 {
-namespace ult {
-
+namespace NEO {
 template <class BaseClass>
 struct WhiteBox;
 
@@ -98,8 +96,7 @@ struct WhiteBox<NEO::DebuggerL0> : public NEO::DebuggerL0 {
 template <uint32_t productFamily, typename GfxFamily>
 struct MockDebuggerL0HwPopulateFactory {
     MockDebuggerL0HwPopulateFactory() {
-        mockDebuggerL0HwFactory[productFamily] = L0::ult::MockDebuggerL0Hw<GfxFamily>::allocate;
+        mockDebuggerL0HwFactory[productFamily] = MockDebuggerL0Hw<GfxFamily>::allocate;
     }
 };
-} // namespace ult
-} // namespace L0
+} // namespace NEO

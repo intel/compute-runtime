@@ -15,6 +15,7 @@ set_property(GLOBAL PROPERTY NEO_CORE_tests_compiler_mocks ${NEO_CORE_tests_comp
 
 set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/debugger_l0_create.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_allocation_properties.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_center.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_csr.h
@@ -66,6 +67,7 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_io_functions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel_info.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_l0_debugger.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_logical_state_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_lrca_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_manager.h

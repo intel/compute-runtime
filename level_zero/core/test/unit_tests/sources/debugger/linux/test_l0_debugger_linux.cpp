@@ -95,7 +95,7 @@ TEST(L0DebuggerLinux, givenVmBindAndPerContextVmEnabledInDrmWhenInitializingDebu
     executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drmMock));
 
-    auto result = WhiteBox<NEO::DebuggerL0>::initDebuggingInOs(osInterface);
+    auto result = NEO::WhiteBox<NEO::DebuggerL0>::initDebuggingInOs(osInterface);
     EXPECT_TRUE(result);
     EXPECT_TRUE(drmMock->registerClassesCalled);
 }
@@ -117,7 +117,7 @@ TEST(L0DebuggerLinux, givenVmBindNotAvailableInDrmWhenInitializingDebuggingInOsT
     executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drmMock));
 
-    auto result = WhiteBox<NEO::DebuggerL0>::initDebuggingInOs(osInterface);
+    auto result = NEO::WhiteBox<NEO::DebuggerL0>::initDebuggingInOs(osInterface);
     EXPECT_FALSE(result);
     EXPECT_FALSE(drmMock->registerClassesCalled);
 }
@@ -139,7 +139,7 @@ TEST(L0DebuggerLinux, givenPerContextVmNotEnabledWhenInitializingDebuggingInOsTh
     executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drmMock));
 
-    auto result = WhiteBox<NEO::DebuggerL0>::initDebuggingInOs(osInterface);
+    auto result = NEO::WhiteBox<NEO::DebuggerL0>::initDebuggingInOs(osInterface);
     EXPECT_FALSE(result);
     EXPECT_FALSE(drmMock->registerClassesCalled);
 }

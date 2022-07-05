@@ -44,25 +44,3 @@ apply_macro_for_each_core_type("TESTED")
 add_custom_target(l0_common_test_kernels DEPENDS ${l0_test_kernel_outputs} ${l0_bindless_test_kernel_outputs} copy_compiler_files)
 set_target_properties(l0_common_test_kernels PROPERTIES FOLDER ${TARGET_NAME_L0})
 add_dependencies(prepare_test_kernels_for_l0 l0_common_test_kernels)
-
-macro(macro_for_each_core_type)
-  foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
-    set(ENABLE_L0_MOCKS_CPP ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests${BRANCH_DIR}${CORE_TYPE_LOWER}/enable_l0_mocks_${CORE_TYPE_LOWER}.cpp)
-    if(EXISTS ${ENABLE_L0_MOCKS_CPP})
-      list(APPEND LIBULT_L0_SOURCES ${ENABLE_L0_MOCKS_CPP})
-    endif()
-  endforeach()
-endmacro()
-
-apply_macro_for_each_core_type("TESTED")
-
-add_library(l0_libult OBJECT EXCLUDE_FROM_ALL
-            ${LIBULT_L0_SOURCES}
-)
-
-set_target_properties(l0_libult PROPERTIES POSITION_INDEPENDENT_CODE ON)
-set_target_properties(l0_libult PROPERTIES FOLDER ${TARGET_NAME_L0})
-set_property(TARGET l0_libult APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
-target_include_directories(l0_libult PRIVATE $<TARGET_PROPERTY:${L0_MOCKABLE_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>)
-target_compile_definitions(l0_libult PRIVATE $<TARGET_PROPERTY:${L0_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
-create_project_source_tree(l0_libult)

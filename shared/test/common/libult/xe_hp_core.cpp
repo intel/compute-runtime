@@ -8,12 +8,13 @@
 #include "shared/source/helpers/populate_factory.h"
 #include "shared/source/xe_hp_core/hw_cmds.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_l0_debugger.h"
 
 namespace NEO {
 
 typedef XeHpFamily Family;
 
-static auto gfxCore = IGFX_XE_HP_CORE;
+constexpr auto gfxCore = IGFX_XE_HP_CORE;
 
 extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
 
@@ -29,6 +30,7 @@ struct enableXeHpCore {
 };
 
 static enableXeHpCore enable;
+static MockDebuggerL0HwPopulateFactory<gfxCore, Family> mockDebuggerXE_HP_CORE;
 
 template class UltCommandStreamReceiver<XeHpFamily>;
 } // namespace NEO

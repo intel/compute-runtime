@@ -39,7 +39,6 @@ target_sources(${TARGET_NAME} PRIVATE
                $<TARGET_OBJECTS:neo_libult>
                $<TARGET_OBJECTS:neo_shared_mocks>
                $<TARGET_OBJECTS:neo_unit_tests_config>
-               $<TARGET_OBJECTS:l0_libult>
 )
 
 set_property(TARGET ${TARGET_NAME} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
