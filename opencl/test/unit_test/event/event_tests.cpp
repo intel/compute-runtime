@@ -1049,12 +1049,10 @@ struct InternalsEventWithPerfCountersTest
     void SetUp() override {
         PerformanceCountersFixture::SetUp();
         InternalsEventTest::SetUp();
-        createPerfCounters();
-        pDevice->setPerfCounters(performanceCountersBase.get());
+        pDevice->setPerfCounters(MockPerformanceCounters::create());
     }
 
     void TearDown() override {
-        performanceCountersBase.release();
         InternalsEventTest::TearDown();
         PerformanceCountersFixture::TearDown();
     }

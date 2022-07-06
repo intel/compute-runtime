@@ -673,7 +673,6 @@ struct ProfilingWithPerfCountersTests : public PerformanceCountersFixture, ::tes
 
     void SetUp(const NEO::HardwareInfo *hardwareInfo) {
         PerformanceCountersFixture::SetUp();
-        createPerfCounters();
 
         HardwareInfo hwInfo = *hardwareInfo;
         if (hwInfo.capabilityTable.defaultEngineType == aub_stream::EngineType::ENGINE_CCS) {
@@ -683,7 +682,7 @@ struct ProfilingWithPerfCountersTests : public PerformanceCountersFixture, ::tes
         pDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
         pClDevice = std::make_unique<ClDevice>(*pDevice, nullptr);
 
-        pDevice->setPerfCounters(performanceCountersBase.release());
+        pDevice->setPerfCounters(MockPerformanceCounters::create());
 
         context = std::make_unique<MockContext>(pClDevice.get());
 

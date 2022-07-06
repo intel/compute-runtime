@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,15 +17,15 @@ namespace NEO {
 ///////////////////////////////////////////////////////
 // MockPerformanceCountersWin::MockPerformanceCountersWin
 ///////////////////////////////////////////////////////
-MockPerformanceCountersWin::MockPerformanceCountersWin(Device *device)
+MockPerformanceCountersWin::MockPerformanceCountersWin()
     : PerformanceCountersWin() {
 }
 
 ///////////////////////////////////////////////////////
 // MockPerformanceCounters::create
 ///////////////////////////////////////////////////////
-std::unique_ptr<PerformanceCounters> MockPerformanceCounters::create(Device *device) {
-    auto performanceCounters = std::unique_ptr<PerformanceCounters>(new MockPerformanceCountersWin(device));
+std::unique_ptr<PerformanceCounters> MockPerformanceCounters::create() {
+    auto performanceCounters = std::unique_ptr<PerformanceCounters>(new MockPerformanceCountersWin());
     auto metricsLibrary = std::make_unique<MockMetricsLibrary>();
     auto metricsLibraryDll = std::make_unique<MockMetricsLibraryDll>();
 
@@ -34,13 +34,6 @@ std::unique_ptr<PerformanceCounters> MockPerformanceCounters::create(Device *dev
     performanceCounters->setMetricsLibraryInterface(std::move(metricsLibrary));
 
     return performanceCounters;
-}
-
-//////////////////////////////////////////////////////
-// PerformanceCountersFixture::createPerfCounters
-//////////////////////////////////////////////////////
-void PerformanceCountersFixture::createPerfCounters() {
-    performanceCountersBase = MockPerformanceCounters::create(&device->getDevice());
 }
 
 //////////////////////////////////////////////////////
