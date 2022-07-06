@@ -78,7 +78,7 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
-        pSysmanDeviceImp->pFrequencyHandleContext->init(deviceHandles);
+        getFreqHandles(0);
     }
 
     void TearDown() override {

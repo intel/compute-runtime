@@ -100,9 +100,6 @@ ze_result_t SysmanDeviceImp::init() {
     if (pPowerHandleContext) {
         pPowerHandleContext->init(deviceHandles, hCoreDevice);
     }
-    if (pFrequencyHandleContext) {
-        pFrequencyHandleContext->init(deviceHandles);
-    }
     if (pFabricPortHandleContext) {
         pFabricPortHandleContext->init();
     }

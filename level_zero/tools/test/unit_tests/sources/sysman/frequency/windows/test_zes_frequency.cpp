@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,7 +57,7 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
-        pSysmanDeviceImp->pFrequencyHandleContext->init(deviceHandles);
+        get_frequency_handles(0);
     }
 
     void TearDown() override {

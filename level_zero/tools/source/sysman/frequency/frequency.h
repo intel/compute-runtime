@@ -9,6 +9,7 @@
 #include "level_zero/core/source/device/device.h"
 #include <level_zero/zes_api.h>
 
+#include <mutex>
 #include <vector>
 
 struct _zes_freq_handle_t {
@@ -64,6 +65,7 @@ struct FrequencyHandleContext {
 
   private:
     void createHandle(ze_device_handle_t deviceHandle, zes_freq_domain_t frequencyDomain);
+    std::once_flag initFrequencyOnce;
 };
 
 } // namespace L0

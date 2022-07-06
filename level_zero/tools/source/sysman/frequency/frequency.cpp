@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 
 #include "level_zero/tools/source/sysman/frequency/frequency_imp.h"
 #include "level_zero/tools/source/sysman/frequency/os_frequency.h"
+#include "level_zero/tools/source/sysman/os_sysman.h"
 
 namespace L0 {
 
@@ -37,6 +38,9 @@ ze_result_t FrequencyHandleContext::init(std::vector<ze_device_handle_t> &device
 }
 
 ze_result_t FrequencyHandleContext::frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency) {
+    std::call_once(initFrequencyOnce, [this]() {
+        this->init(pOsSysman->getDeviceHandles());
+    });
     uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
     uint32_t numToCopy = std::min(*pCount, handleListSize);
     if (0 == *pCount || *pCount > handleListSize) {
