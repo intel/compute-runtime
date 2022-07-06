@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/file_io.h"

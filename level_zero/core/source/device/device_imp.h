@@ -8,7 +8,9 @@
 #pragma once
 
 #include "shared/source/helpers/topology_map.h"
+#include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
 #include "level_zero/core/source/device/device.h"
 
@@ -17,7 +19,8 @@
 
 namespace NEO {
 class AllocationsList;
-}
+class DriverInfo;
+} // namespace NEO
 
 namespace L0 {
 struct SysmanDevice;

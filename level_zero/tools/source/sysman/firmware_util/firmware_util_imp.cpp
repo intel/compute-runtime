@@ -7,6 +7,7 @@
 
 #include "level_zero/tools/source/sysman/firmware_util/firmware_util_imp.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/utilities/directory.h"
 
 namespace L0 {

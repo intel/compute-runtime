@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 
 #include "level_zero/core/source/driver/driver_handle_imp.h"

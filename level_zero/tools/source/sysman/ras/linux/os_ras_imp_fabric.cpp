@@ -5,11 +5,14 @@
  *
  */
 
+#include "shared/source/device/sub_device.h"
+
 #include "level_zero/tools/source/sysman/ras/linux/os_ras_imp_prelim.h"
 
 #include "sysman/linux/fs_access.h"
 #include "sysman/linux/os_sysman_imp.h"
 
+#include <cstring>
 #include <regex>
 namespace L0 {
 

@@ -12,6 +12,7 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
+#include <cstring>
 #include <vector>
 
 namespace L0 {

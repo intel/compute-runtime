@@ -7,7 +7,9 @@
 
 #pragma once
 
-#include "shared/source/debugger/debugger_l0.h"
+#include "shared/source/device/device.h"
+#include "shared/source/memory_manager/allocation_type.h"
+#include "shared/source/os_interface/hw_info_config.h"
 
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
@@ -16,7 +18,10 @@ static_assert(NEO::HwInfoConfig::uuidSize == ZE_MAX_DEVICE_UUID_SIZE);
 
 struct _ze_device_handle_t {};
 namespace NEO {
+class CommandStreamReceiver;
+class DebuggerL0;
 class Device;
+class HwHelper;
 class MemoryManager;
 class SourceLevelDebugger;
 struct DeviceInfo;
@@ -116,13 +121,7 @@ struct Device : _ze_device_handle_t {
     virtual NEO::PreemptionMode getDevicePreemptionMode() const = 0;
     virtual const NEO::DeviceInfo &getDeviceInfo() const = 0;
     NEO::SourceLevelDebugger *getSourceLevelDebugger() { return getNEODevice()->getSourceLevelDebugger(); }
-    NEO::DebuggerL0 *getL0Debugger() {
-        auto debugger = getNEODevice()->getDebugger();
-        if (debugger) {
-            return !debugger->isLegacy() ? static_cast<NEO::DebuggerL0 *>(debugger) : nullptr;
-        }
-        return nullptr;
-    }
+    NEO::DebuggerL0 *getL0Debugger() { return getNEODevice()->getL0Debugger(); }
 
     virtual NEO::GraphicsAllocation *getDebugSurface() const = 0;
 

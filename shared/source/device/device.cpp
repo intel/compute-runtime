@@ -11,6 +11,7 @@
 #include "shared/source/command_stream/experimental_command_buffer.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -550,6 +551,14 @@ NEO::SourceLevelDebugger *Device::getSourceLevelDebugger() {
     auto debugger = getDebugger();
     if (debugger) {
         return debugger->isLegacy() ? static_cast<NEO::SourceLevelDebugger *>(debugger) : nullptr;
+    }
+    return nullptr;
+}
+
+NEO::DebuggerL0 *Device::getL0Debugger() {
+    auto debugger = getDebugger();
+    if (debugger) {
+        return !debugger->isLegacy() ? static_cast<NEO::DebuggerL0 *>(debugger) : nullptr;
     }
     return nullptr;
 }

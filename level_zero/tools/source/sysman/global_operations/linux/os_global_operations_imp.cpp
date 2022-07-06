@@ -16,6 +16,7 @@
 #include <level_zero/zet_api.h>
 
 #include <chrono>
+#include <cstring>
 #include <time.h>
 
 namespace L0 {

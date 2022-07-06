@@ -10,6 +10,7 @@
 #include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/compiler_interface/linker.h"
+#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/debug_zebin.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"

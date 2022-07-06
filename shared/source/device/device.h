@@ -22,6 +22,7 @@
 #include "shared/source/program/sync_buffer_handler.h"
 
 namespace NEO {
+class DebuggerL0;
 class OSTime;
 class SourceLevelDebugger;
 class SubDevice;
@@ -88,6 +89,7 @@ class Device : public ReferenceTrackedObject<Device> {
     MOCKABLE_VIRTUAL bool isDebuggerActive() const;
     Debugger *getDebugger() const { return getRootDeviceEnvironment().debugger.get(); }
     NEO::SourceLevelDebugger *getSourceLevelDebugger();
+    DebuggerL0 *getL0Debugger();
     const EnginesT &getAllEngines() const;
     const std::string getDeviceName(const HardwareInfo &hwInfo) const;
 

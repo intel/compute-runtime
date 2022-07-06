@@ -18,6 +18,7 @@
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"

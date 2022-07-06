@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/os_interface.h"

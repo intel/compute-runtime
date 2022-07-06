@@ -15,6 +15,22 @@ namespace NEO {
 template <class BaseClass>
 struct WhiteBox;
 
+class MockDebuggerL0 : public NEO::DebuggerL0 {
+  public:
+    MockDebuggerL0(NEO::Device *device) : DebuggerL0(device) {
+        isLegacyMode = false;
+    }
+
+    void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba) override{};
+    size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override {
+        return 0;
+    }
+
+    void programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) override{};
+    size_t getSbaAddressLoadCommandsSize() override { return 0; };
+    void programSbaAddressLoad(NEO::LinearStream &cmdStream, uint64_t sbaGpuVa) override{};
+};
+
 template <typename GfxFamily>
 class MockDebuggerL0Hw : public NEO::DebuggerL0Hw<GfxFamily> {
   public:

@@ -7,6 +7,7 @@
 
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/device_factory.h"
 
 #include "level_zero/core/source/device/device_imp.h"

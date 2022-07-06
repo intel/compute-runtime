@@ -19,9 +19,47 @@
 #include "shared/test/common/mocks/mock_gmm_helper.h"
 #include "shared/test/common/mocks/mock_l0_debugger.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
+#include "shared/test/common/mocks/mock_source_level_debugger.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
+
+TEST(Debugger, givenL0DebuggerWhenGettingL0DebuggerThenCorrectObjectIsReturned) {
+    auto executionEnvironment = new NEO::ExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->setDebuggingEnabled();
+
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->initializeMemoryManager();
+
+    std::unique_ptr<NEO::MockDevice> neoDevice(NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u));
+
+    auto mockDebugger = new MockDebuggerL0(neoDevice.get());
+    executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(mockDebugger);
+    auto debugger = neoDevice->getL0Debugger();
+    ASSERT_NE(nullptr, debugger);
+    EXPECT_EQ(mockDebugger, debugger);
+}
+
+TEST(Debugger, givenSourceLevelDebuggerWhenGettingL0DebuggerThenNullptrIsReturned) {
+    auto executionEnvironment = new NEO::ExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->setDebuggingEnabled();
+
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->initializeMemoryManager();
+
+    std::unique_ptr<NEO::MockDevice> neoDevice(NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u));
+
+    auto mockDebugger = new MockSourceLevelDebugger();
+    executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(mockDebugger);
+    auto debugger = neoDevice->getL0Debugger();
+    EXPECT_EQ(nullptr, debugger);
+}
 
 TEST(Debugger, givenL0DebuggerOFFWhenGettingStateSaveAreaHeaderThenValidSipTypeIsReturned) {
     auto executionEnvironment = new NEO::ExecutionEnvironment();

@@ -7,6 +7,7 @@
 
 #include "level_zero/tools/source/sysman/memory/linux/os_memory_imp_prelim.h"
 
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/linux/system_info.h"
 
 #include "level_zero/core/source/driver/driver_handle.h"

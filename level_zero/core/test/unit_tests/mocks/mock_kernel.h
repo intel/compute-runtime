@@ -9,6 +9,7 @@
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/kernel/kernel_descriptor_from_patchtokens.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/core/source/kernel/kernel_hw.h"

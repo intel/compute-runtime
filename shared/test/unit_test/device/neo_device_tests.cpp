@@ -38,6 +38,14 @@ TEST(DeviceBlitterTest, givenBlitterOperationsDisabledWhenCreatingBlitterEngineT
     EXPECT_THROW(factory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_BCS, EngineUsage::LowPriority}), std::runtime_error);
 }
 
+TEST(Device, givenNoDebuggerWhenGettingDebuggerThenNullptrIsReturned) {
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+
+    EXPECT_EQ(nullptr, device->getDebugger());
+    EXPECT_EQ(nullptr, device->getL0Debugger());
+    EXPECT_EQ(nullptr, device->getSourceLevelDebugger());
+}
+
 using DeviceTest = Test<DeviceFixture>;
 
 TEST_F(DeviceTest, whenInitializeRayTracingIsCalledAndRtBackedBufferIsNullptrThenMemoryBackedBufferIsCreated) {
