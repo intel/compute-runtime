@@ -155,7 +155,6 @@ static const std::map<std::string, AOT::PRODUCT_CONFIG> productConfigAcronyms = 
     {"rkl", RKL},
 #endif
 #ifdef SUPPORT_ADLS
-    {"rpl-s", RPL_S},
     {"adl-s", ADL_S},
 #endif
 #ifdef SUPPORT_ADLP
