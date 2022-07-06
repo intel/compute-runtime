@@ -98,8 +98,9 @@ void usage() {
                  "\n  -F,   --fabricport                                              selectively run fabricport black box test"
                  "\n  -d,   --diagnostics                                             selectively run diagnostics black box test"
                  "\n  -P,   --performance                                             selectively run performance black box test"
-                 "\n        [--setconfig <deviceNo subdevId engineFlags pFactor>]     optionally sets the performance factor for the particular handle"
-                 "\n  -h,   --help                                        display help message"
+                 "\n        [--setconfig <deviceNo subdevId engineFlags pFactor>]     optionally set the performance factor for the particular handle"
+                 "\n  -C,   --ecc                                                     selectively run ecc black box test"
+                 "\n  -h,   --help                                                    display help message"
                  "\n"
                  "\n  All L0 Syman APIs that set values require root privileged execution"
                  "\n"
@@ -315,6 +316,65 @@ void testSysmanTemperature(ze_device_handle_t &device) {
             std::cout << "For subDevice " << properties.subdeviceId << " temperature current state for "
                       << getTemperatureSensorType(properties.type) << " is: " << temperature << std::endl;
         }
+    }
+}
+
+void testSysmanEcc(ze_device_handle_t &device) {
+    std::cout << std::endl
+              << " ----  Ecc tests ---- " << std::endl;
+
+    ze_bool_t eccAvailable = false;
+    VALIDATECALL(zesDeviceEccAvailable(device, &eccAvailable));
+    if (eccAvailable == false) {
+        std::cout << "Ecc not availabe" << std::endl;
+        return;
+    }
+
+    ze_bool_t eccConfigurable = false;
+    VALIDATECALL(zesDeviceEccConfigurable(device, &eccConfigurable));
+    if (eccConfigurable == false) {
+        std::cout << "Ecc not configurable" << std::endl;
+        return;
+    }
+
+    zes_device_ecc_properties_t getProps = {};
+    VALIDATECALL(zesDeviceGetEccState(device, &getProps));
+    if (verbose) {
+        std::cout << "getStateProps.pendingState " << getProps.pendingState << std::endl;
+        std::cout << "getStateProps.currentState " << getProps.currentState << std::endl;
+        std::cout << "getStateProps.pendingAction " << getProps.pendingAction << std::endl;
+    }
+
+    if (verbose) {
+        std::cout << "Setting Ecc state to " << ZES_DEVICE_ECC_STATE_ENABLED << std::endl;
+    }
+    zes_device_ecc_desc_t newState = {ZES_STRUCTURE_TYPE_DEVICE_ECC_DESC, nullptr, ZES_DEVICE_ECC_STATE_ENABLED};
+    zes_device_ecc_properties_t setProps = {};
+    VALIDATECALL(zesDeviceSetEccState(device, &newState, &setProps));
+    if (verbose) {
+        std::cout << "setStateProps.pendingState " << setProps.pendingState << std::endl;
+        std::cout << "setStateProps.currentState " << setProps.currentState << std::endl;
+        std::cout << "setStateProps.pendingAction " << setProps.pendingAction << std::endl;
+    }
+
+    if (verbose) {
+        std::cout << "Setting Ecc state to " << ZES_DEVICE_ECC_STATE_DISABLED << std::endl;
+    }
+    newState.state = ZES_DEVICE_ECC_STATE_DISABLED;
+    VALIDATECALL(zesDeviceSetEccState(device, &newState, &setProps));
+    if (verbose) {
+        std::cout << "setStateProps.pendingState " << setProps.pendingState << std::endl;
+        std::cout << "setStateProps.currentState " << setProps.currentState << std::endl;
+        std::cout << "setStateProps.pendingAction " << setProps.pendingAction << std::endl;
+    }
+
+    // Restore to original state
+    if (setProps.pendingState != getProps.pendingState) {
+        if (verbose) {
+            std::cout << "Restoring Ecc configuration to original state " << std::endl;
+            newState.state = getProps.pendingState;
+        }
+        VALIDATECALL(zesDeviceSetEccState(device, &newState, &setProps));
     }
 }
 
@@ -1131,6 +1191,7 @@ bool checkpFactorArguments(std::vector<ze_device_handle_t> &devices, std::vector
     }
     return true;
 }
+
 bool validateGetenv(const char *name) {
     const char *env = getenv(name);
     if ((nullptr == env) || (0 == strcmp("0", env)))
@@ -1166,13 +1227,14 @@ int main(int argc, char *argv[]) {
         {"firmware", optional_argument, nullptr, 'i'},
         {"diagnostics", no_argument, nullptr, 'd'},
         {"performance", optional_argument, nullptr, 'P'},
+        {"ecc", no_argument, nullptr, 'C'},
         {0, 0, 0, 0},
     };
     bool force = false;
     bool pFactorIsSet = true;
     std::vector<std::string> buf;
     uint32_t deviceIndex = 0;
-    while ((opt = getopt_long(argc, argv, "hdpPfsectogmrFEiS:", longOpts, nullptr)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hdpPfsectogmrFEi:C", longOpts, nullptr)) != -1) {
         switch (opt) {
         case 'h':
             usage();
@@ -1232,6 +1294,11 @@ int main(int argc, char *argv[]) {
         case 't':
             std::for_each(devices.begin(), devices.end(), [&](auto device) {
                 testSysmanTemperature(device);
+            });
+            break;
+        case 'C':
+            std::for_each(devices.begin(), devices.end(), [&](auto device) {
+                testSysmanEcc(device);
             });
             break;
         case 'o':
