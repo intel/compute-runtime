@@ -28,7 +28,6 @@ TEST_F(KernelImageArgTest, GivenKernelWithImageArgsWhenCheckingDifferentScenario
     size_t imageWidth = image->getImageDesc().image_width;
     size_t imageHeight = image->getImageDesc().image_height;
     size_t imageDepth = image->getImageDesc().image_depth;
-    uint32_t objectId = pKernelInfo->argAsImg(4).bindful;
 
     cl_mem memObj = image.get();
 
@@ -49,8 +48,6 @@ TEST_F(KernelImageArgTest, GivenKernelWithImageArgsWhenCheckingDifferentScenario
 
     auto imgDepthOffset = ptrOffset(crossThreadData, 0x30);
     EXPECT_EQ(imageDepth, *imgDepthOffset);
-
-    EXPECT_EQ(objectId, *crossThreadData);
 }
 
 TEST_F(KernelImageArgTest, givenKernelWithFlatImageTokensWhenArgIsSetThenPatchAllParams) {

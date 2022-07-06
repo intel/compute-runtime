@@ -49,7 +49,6 @@ using StackVecStrings = StackVec<const SPatchString *, 4>;
 struct KernelArgFromPatchtokens {
     const SPatchKernelArgumentInfo *argInfo = nullptr;
     const SPatchItemHeader *objectArg = nullptr;
-    const SPatchDataParameterBuffer *objectId = nullptr;
     ArgObjectType objectType = ArgObjectType::None;
     ArgObjectTypeSpecialized objectTypeSpecialized = ArgObjectTypeSpecialized::None;
     StackVecByValMap byValMap;

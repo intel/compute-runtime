@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/kernel/kernel_arg_descriptor_extended_device_side_enqueue.h"
 #include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/program/kernel_info.h"
 
@@ -51,8 +50,6 @@ class MockKernelInfo : public KernelInfo {
     inline void setCrossThreadDataSize(uint16_t crossThreadDataSize) { kernelDescriptor.kernelAttributes.crossThreadDataSize = crossThreadDataSize; }
 
     void addExtendedMetadata(uint32_t index, const std::string &argName = "", const std::string &type = "", const std::string &accessQualifier = "", const std::string &addressQualifier = "", const std::string &typeQualifiers = "");
-
-    void addExtendedDeviceSideEnqueueDescriptor(uint32_t index, uint32_t objectId);
 
     inline void addToPrintfStringsMap(uint32_t index, const std::string &string) {
         kernelDescriptor.kernelAttributes.flags.usesStringMapForPrintf = true;

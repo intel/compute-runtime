@@ -814,7 +814,6 @@ std::string asString(const KernelArgFromPatchtokens &arg, const std::string &ind
     std::string indentLevel2 = indentLevel1 + "  ";
     dumpOrNull(arg.argInfo, "", stream, indentLevel1);
     dumpOrNullObjArg(arg.objectArg, stream, indentLevel1);
-    dumpOrNull(arg.objectId, "", stream, indentLevel1);
     switch (arg.objectType) {
     default:
         break;

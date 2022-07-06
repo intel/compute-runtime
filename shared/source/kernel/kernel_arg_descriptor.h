@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -113,7 +113,6 @@ struct ArgDescriptor final {
                 bool isTransformable : 1;
                 bool needsPatch : 1;
                 bool hasVmeExtendedDescriptor : 1;
-                bool hasDeviceSideEnqueueExtendedDescriptor : 1;
             };
             uint32_t packed;
         };
