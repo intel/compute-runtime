@@ -18,6 +18,7 @@ enum class CachePolicy : uint32_t;
 enum class CacheRegion : uint16_t;
 
 struct OsHandleLinux : OsHandle {
+    ~OsHandleLinux() = default;
     BufferObject *bo = nullptr;
 };
 

@@ -14,6 +14,7 @@
 namespace NEO {
 
 struct OsHandle {
+    virtual ~OsHandle() = default;
   protected:
     OsHandle() = default;
 };
