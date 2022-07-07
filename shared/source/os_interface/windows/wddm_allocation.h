@@ -15,6 +15,7 @@
 namespace NEO {
 
 struct OsHandleWin : OsHandle {
+    ~OsHandleWin() override = default;
     D3DKMT_HANDLE handle = 0;
     D3DGPU_VIRTUAL_ADDRESS gpuPtr = 0;
     Gmm *gmm = nullptr;

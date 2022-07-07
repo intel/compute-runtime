@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,8 @@
 namespace NEO {
 
 struct OsHandle {
+    virtual ~OsHandle() = default;
+
   protected:
     OsHandle() = default;
 };
