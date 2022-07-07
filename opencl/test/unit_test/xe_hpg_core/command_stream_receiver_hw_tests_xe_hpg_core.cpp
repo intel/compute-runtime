@@ -5,12 +5,13 @@
  *
  */
 
-#include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
+
+#include "hw_cmds_xe_hpg_core_base.h"
 
 using namespace NEO;
 

@@ -157,6 +157,8 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
             return NEO::Ocloc::validate(allArgs, helper.get());
         } else if (numArgs > 1 && ConstStringRef("query") == allArgs[1]) {
             return OfflineCompiler::query(numArgs, allArgs, helper.get());
+        } else if (numArgs > 1 && ConstStringRef("ids") == allArgs[1]) {
+            return OfflineCompiler::queryAcronymIds(numArgs, allArgs, helper.get());
         } else if (numArgs > 1 && ConstStringRef("link") == allArgs[1]) {
             int createResult{OclocErrorCode::SUCCESS};
             const auto linker{OfflineLinker::create(numArgs, allArgs, createResult, helper.get())};

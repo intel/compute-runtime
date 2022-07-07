@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -321,7 +321,7 @@ StatusCode MockMetricsLibraryValidInterface::GetData(GetReportData_1_0 *data) {
 //////////////////////////////////////////////////////
 void PerformanceCountersDeviceFixture::SetUp() {
     createFunc = Device::createPerformanceCountersFunc;
-    Device::createPerformanceCountersFunc = MockPerformanceCounters::create;
+    Device::createPerformanceCountersFunc = [](Device *) { return MockPerformanceCounters::create(); };
 }
 
 //////////////////////////////////////////////////////
@@ -342,7 +342,6 @@ void PerformanceCountersMetricsLibraryFixture::SetUp() {
 // PerformanceCountersMetricsLibraryFixture::TearDown
 //////////////////////////////////////////////////////
 void PerformanceCountersMetricsLibraryFixture::TearDown() {
-    device->setPerfCounters(nullptr);
     PerformanceCountersFixture::TearDown();
 }
 
@@ -362,24 +361,23 @@ PerformanceCountersFixture::~PerformanceCountersFixture() {
 }
 
 //////////////////////////////////////////////////////
-// PerformanceCountersMetricsLibraryFixture::createPerformanceCounters
+// PerformanceCountersMetricsLibraryFixture::initDeviceWithPerformanceCounters
 //////////////////////////////////////////////////////
-void PerformanceCountersMetricsLibraryFixture::createPerformanceCounters(const bool validMetricsLibraryApi, const bool mockMetricsLibrary) {
-    performanceCountersBase = MockPerformanceCounters::create(&device->getDevice());
-    auto metricsLibraryInterface = performanceCountersBase->getMetricsLibraryInterface();
-    auto metricsLibraryDll = std::make_unique<MockMetricsLibraryDll>();
-    EXPECT_NE(performanceCountersBase, nullptr);
-    EXPECT_NE(metricsLibraryInterface, nullptr);
+PerformanceCounters *PerformanceCountersMetricsLibraryFixture::initDeviceWithPerformanceCounters(const bool validMetricsLibraryApi, const bool mockMetricsLibrary) {
+    auto performanceCounters = MockPerformanceCounters::create();
+    EXPECT_NE(performanceCounters, nullptr);
 
-    device->setPerfCounters(performanceCountersBase.get());
+    auto metricsLibraryInterface = performanceCounters->getMetricsLibraryInterface();
+    auto metricsLibraryDll = std::make_unique<MockMetricsLibraryDll>();
+    EXPECT_NE(metricsLibraryInterface, nullptr);
 
     // Attached mock version of metrics library interface.
     if (mockMetricsLibrary) {
-        performanceCountersBase->setMetricsLibraryInterface(std::make_unique<MockMetricsLibrary>());
-        metricsLibraryInterface = performanceCountersBase->getMetricsLibraryInterface();
+        performanceCounters->setMetricsLibraryInterface(std::make_unique<MockMetricsLibrary>());
+        metricsLibraryInterface = performanceCounters->getMetricsLibraryInterface();
     } else {
-        performanceCountersBase->setMetricsLibraryInterface(std::make_unique<MetricsLibrary>());
-        metricsLibraryInterface = performanceCountersBase->getMetricsLibraryInterface();
+        performanceCounters->setMetricsLibraryInterface(std::make_unique<MetricsLibrary>());
+        metricsLibraryInterface = performanceCounters->getMetricsLibraryInterface();
     }
 
     if (validMetricsLibraryApi) {
@@ -394,5 +392,9 @@ void PerformanceCountersMetricsLibraryFixture::createPerformanceCounters(const b
     }
 
     EXPECT_NE(metricsLibraryInterface->api, nullptr);
+
+    auto rawPerformanceCounters = performanceCounters.get();
+    device->setPerfCounters(std::move(performanceCounters));
+    return rawPerformanceCounters;
 }
 } // namespace NEO

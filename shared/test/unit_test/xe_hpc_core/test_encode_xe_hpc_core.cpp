@@ -11,13 +11,14 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/hw_info_config.h"
-#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/command_container_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_dispatch_kernel_encoder_interface.h"
 #include "shared/test/common/test_macros/test.h"
+
+#include "hw_cmds_xe_hpc_core_base.h"
 
 using namespace NEO;
 

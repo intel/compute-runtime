@@ -50,6 +50,7 @@ NEO::ConstStringRef optLevel = "-ze-opt-level";
 NEO::ConstStringRef greaterThan4GbRequired = "-ze-opt-greater-than-4GB-buffer-required";
 NEO::ConstStringRef hasBufferOffsetArg = "-ze-intel-has-buffer-offset-arg";
 NEO::ConstStringRef debugKernelEnable = "-ze-kernel-debug-enable";
+NEO::ConstStringRef profileFlags = "-zet-profile-flags";
 } // namespace BuildOptions
 
 ModuleTranslationUnit::ModuleTranslationUnit(L0::Device *device)
@@ -664,15 +665,60 @@ void ModuleImp::createBuildOptions(const char *pBuildFlags, std::string &apiOpti
 
         apiOptions = pBuildFlags;
         moveBuildOption(apiOptions, apiOptions, NEO::CompilerOptions::optDisable, BuildOptions::optDisable);
-        moveBuildOption(apiOptions, apiOptions, NEO::CompilerOptions::optLevel, BuildOptions::optLevel);
         moveBuildOption(internalBuildOptions, apiOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired, BuildOptions::greaterThan4GbRequired);
         moveBuildOption(internalBuildOptions, apiOptions, NEO::CompilerOptions::allowZebin, NEO::CompilerOptions::allowZebin);
 
+        moveOptLevelOption(apiOptions, apiOptions);
+        moveProfileFlagsOption(apiOptions, apiOptions);
         createBuildExtraOptions(apiOptions, internalBuildOptions);
     }
     if (NEO::ApiSpecificConfig::getBindlessConfiguration()) {
         NEO::CompilerOptions::concatenateAppend(internalBuildOptions, NEO::CompilerOptions::bindlessMode.str());
     }
+}
+
+bool ModuleImp::moveOptLevelOption(std::string &dstOptionsSet, std::string &srcOptionSet) {
+    const char optDelim = ' ';
+    const char valDelim = '=';
+
+    auto optInSrcPos = srcOptionSet.find(BuildOptions::optLevel.begin());
+    if (std::string::npos == optInSrcPos) {
+        return false;
+    }
+
+    std::string dstOptionStr(NEO::CompilerOptions::optLevel);
+    auto valInSrcPos = srcOptionSet.find(valDelim, optInSrcPos);
+    auto optInSrcEndPos = srcOptionSet.find(optDelim, optInSrcPos);
+    if (std::string::npos == valInSrcPos) {
+        return false;
+    }
+    dstOptionStr += srcOptionSet.substr(valInSrcPos + 1, (optInSrcEndPos - (valInSrcPos + 1)));
+    srcOptionSet.erase(optInSrcPos, (optInSrcEndPos + 1 - optInSrcPos));
+    NEO::CompilerOptions::concatenateAppend(dstOptionsSet, dstOptionStr);
+    return true;
+}
+
+bool ModuleImp::moveProfileFlagsOption(std::string &dstOptionsSet, std::string &srcOptionSet) {
+    const char optDelim = ' ';
+
+    auto optInSrcPos = srcOptionSet.find(BuildOptions::profileFlags.begin());
+    if (std::string::npos == optInSrcPos) {
+        return false;
+    }
+
+    std::string dstOptionStr(BuildOptions::profileFlags);
+    auto valInSrcPos = srcOptionSet.find(optDelim, optInSrcPos);
+    auto optInSrcEndPos = srcOptionSet.find(optDelim, valInSrcPos + 1);
+    if (std::string::npos == valInSrcPos) {
+        return false;
+    }
+    std::string valStr = srcOptionSet.substr(valInSrcPos, (optInSrcEndPos - valInSrcPos));
+    profileFlags = static_cast<uint32_t>(strtoul(valStr.c_str(), nullptr, 16));
+    dstOptionStr += valStr;
+
+    srcOptionSet.erase(optInSrcPos, (optInSrcEndPos + 1 - optInSrcPos));
+    NEO::CompilerOptions::concatenateAppend(dstOptionsSet, dstOptionStr);
+    return true;
 }
 
 void ModuleImp::updateBuildLog(NEO::Device *neoDevice) {
@@ -1199,25 +1245,13 @@ StackVec<NEO::GraphicsAllocation *, 32> ModuleImp::getModuleAllocations() {
 }
 
 bool moveBuildOption(std::string &dstOptionsSet, std::string &srcOptionSet, NEO::ConstStringRef dstOptionName, NEO::ConstStringRef srcOptionName) {
-    const char optDelim = ' ';
-    const char valDelim = '=';
-
     auto optInSrcPos = srcOptionSet.find(srcOptionName.begin());
     if (std::string::npos == optInSrcPos) {
         return false;
     }
 
-    std::string dstOptionStr(dstOptionName);
-    auto optInSrcEndPos = srcOptionSet.find(optDelim, optInSrcPos);
-    if (srcOptionName == BuildOptions::optLevel) {
-        auto valInSrcPos = srcOptionSet.find(valDelim, optInSrcPos);
-        if (std::string::npos == valInSrcPos) {
-            return false;
-        }
-        dstOptionStr += srcOptionSet.substr(valInSrcPos + 1, optInSrcEndPos);
-    }
-    srcOptionSet.erase(optInSrcPos, (optInSrcEndPos - optInSrcPos));
-    NEO::CompilerOptions::concatenateAppend(dstOptionsSet, dstOptionStr);
+    srcOptionSet.erase(optInSrcPos, srcOptionName.length());
+    NEO::CompilerOptions::concatenateAppend(dstOptionsSet, dstOptionName);
     return true;
 }
 

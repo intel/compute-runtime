@@ -202,7 +202,7 @@ class MockMetricsLibraryDll : public OsLibrary {
 //////////////////////////////////////////////////////
 class MockPerformanceCounters {
   public:
-    static std::unique_ptr<PerformanceCounters> create(Device *device);
+    static std::unique_ptr<PerformanceCounters> create();
 };
 
 //////////////////////////////////////////////////////
@@ -224,12 +224,10 @@ struct PerformanceCountersFixture {
     ~PerformanceCountersFixture();
     virtual void SetUp();    // NOLINT(readability-identifier-naming)
     virtual void TearDown(); // NOLINT(readability-identifier-naming)
-    virtual void createPerfCounters();
     cl_queue_properties queueProperties = {};
     std::unique_ptr<MockClDevice> device;
     std::unique_ptr<MockContext> context;
     std::unique_ptr<MockCommandQueue> queue;
-    std::unique_ptr<PerformanceCounters> performanceCountersBase;
     std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
     std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironment;
     std::unique_ptr<OSInterface> osInterface;
@@ -243,9 +241,7 @@ struct PerformanceCountersMetricsLibraryFixture : PerformanceCountersFixture {
     void SetUp() override;
     void TearDown() override;
 
-    void createPerformanceCounters(const bool validMetricsLibraryApi, const bool mockMatricsLibrary);
-
-    std::unique_ptr<PerformanceCounters> performanceCountersBase;
+    PerformanceCounters *initDeviceWithPerformanceCounters(const bool validMetricsLibraryApi, const bool mockMatricsLibrary);
 };
 
 } // namespace NEO

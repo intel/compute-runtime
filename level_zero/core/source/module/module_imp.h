@@ -30,6 +30,7 @@ extern NEO::ConstStringRef optLevel;
 extern NEO::ConstStringRef greaterThan4GbRequired;
 extern NEO::ConstStringRef hasBufferOffsetArg;
 extern NEO::ConstStringRef debugKernelEnable;
+extern NEO::ConstStringRef profileFlags;
 } // namespace BuildOptions
 
 struct ModuleTranslationUnit {
@@ -110,6 +111,8 @@ struct ModuleImp : public Module {
 
     void createBuildOptions(const char *pBuildFlags, std::string &buildOptions, std::string &internalBuildOptions);
     void createBuildExtraOptions(std::string &buildOptions, std::string &internalBuildOptions);
+    bool moveOptLevelOption(std::string &dstOptionsSet, std::string &srcOptionSet);
+    bool moveProfileFlagsOption(std::string &dstOptionsSet, std::string &srcOptionSet);
     void updateBuildLog(NEO::Device *neoDevice);
 
     Device *getDevice() const override { return device; }
@@ -123,6 +126,8 @@ struct ModuleImp : public Module {
     bool shouldAllocatePrivateMemoryPerDispatch() const override {
         return allocatePrivateMemoryPerDispatch;
     }
+
+    uint32_t getProfileFlags() const override { return profileFlags; }
 
     ModuleTranslationUnit *getTranslationUnit() {
         return this->translationUnit.get();
@@ -162,6 +167,7 @@ struct ModuleImp : public Module {
     NEO::Linker::UnresolvedExternals unresolvedExternalsInfo{};
     std::set<NEO::GraphicsAllocation *> importedSymbolAllocations{};
     uint32_t debugModuleHandle = 0;
+    uint32_t profileFlags = 0;
 
     NEO::Linker::PatchableSegments isaSegmentsForPatching;
     std::vector<std::vector<char>> patchedIsaTempStorage;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,6 +67,9 @@ void RootDevice::initializeRootCommandStreamReceiver() {
     rootCommandStreamReceiver->initializeTagAllocation();
     rootCommandStreamReceiver->createGlobalFenceAllocation();
     rootCommandStreamReceiver->createWorkPartitionAllocation(*this);
+    if (kernelEotWaAllocation) {
+        rootCommandStreamReceiver->addAdditionalAllocationForResidency(kernelEotWaAllocation);
+    }
     commandStreamReceivers.push_back(std::move(rootCommandStreamReceiver));
 
     EngineControl engine{commandStreamReceivers.back().get(), osContext};

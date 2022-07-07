@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -295,7 +295,6 @@ TEST(ArgDescriptorAs, GivenMismatchedArgTypeThenAborts) {
 TEST(ArgDescriptorCopyAssign, WhenCopyAssignedThenCopiesExtendedTypeInfo) {
     NEO::ArgDescriptor arg0;
     arg0.getExtendedTypeInfo().isAccelerator = true;
-    arg0.getExtendedTypeInfo().hasDeviceSideEnqueueExtendedDescriptor = true;
 
     NEO::ArgDescriptor arg1{arg0};
     NEO::ArgDescriptor arg2;

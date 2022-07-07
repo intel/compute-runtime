@@ -22,7 +22,6 @@
 #include "shared/source/helpers/per_thread_data.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/surface_format_info.h"
-#include "shared/source/kernel/kernel_arg_descriptor_extended_device_side_enqueue.h"
 #include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
@@ -1581,12 +1580,6 @@ cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
         patch<uint32_t, uint64_t>(imageDesc.image_array_size, crossThreadData, argAsImg.metadataPayload.arraySize);
         patch<uint32_t, cl_channel_type>(imageFormat.image_channel_data_type, crossThreadData, argAsImg.metadataPayload.channelDataType);
         patch<uint32_t, cl_channel_order>(imageFormat.image_channel_order, crossThreadData, argAsImg.metadataPayload.channelOrder);
-        if (arg.getExtendedTypeInfo().hasDeviceSideEnqueueExtendedDescriptor) {
-            const auto &explicitArgsExtendedDescriptors = kernelInfo.kernelDescriptor.payloadMappings.explicitArgsExtendedDescriptors;
-            UNRECOVERABLE_IF(argIndex >= explicitArgsExtendedDescriptors.size());
-            auto deviceSideEnqueueDescriptor = static_cast<ArgDescriptorDeviceSideEnqueue *>(explicitArgsExtendedDescriptors[argIndex].get());
-            patch<uint32_t, uint32_t>(argAsImg.bindful, crossThreadData, deviceSideEnqueueDescriptor->objectId);
-        }
 
         auto pixelSize = pImage->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
         patch<uint64_t, uint64_t>(graphicsAllocation->getGpuAddress(), crossThreadData, argAsImg.metadataPayload.flatBaseOffset);
@@ -1670,12 +1663,6 @@ cl_int Kernel::setArgSampler(uint32_t argIndex,
         patch<uint32_t, uint32_t>(pSampler->getSnapWaValue(), crossThreadData, argAsSmp.metadataPayload.samplerSnapWa);
         patch<uint32_t, uint32_t>(getAddrModeEnum(pSampler->addressingMode), crossThreadData, argAsSmp.metadataPayload.samplerAddressingMode);
         patch<uint32_t, uint32_t>(getNormCoordsEnum(pSampler->normalizedCoordinates), crossThreadData, argAsSmp.metadataPayload.samplerNormalizedCoords);
-        if (arg.getExtendedTypeInfo().hasDeviceSideEnqueueExtendedDescriptor) {
-            const auto &explicitArgsExtendedDescriptors = kernelInfo.kernelDescriptor.payloadMappings.explicitArgsExtendedDescriptors;
-            UNRECOVERABLE_IF(argIndex >= explicitArgsExtendedDescriptors.size());
-            auto deviceSideEnqueueDescriptor = static_cast<ArgDescriptorDeviceSideEnqueue *>(explicitArgsExtendedDescriptors[argIndex].get());
-            patch<uint32_t, uint32_t>(SAMPLER_OBJECT_ID_SHIFT + argAsSmp.bindful, crossThreadData, deviceSideEnqueueDescriptor->objectId);
-        }
 
         retVal = CL_SUCCESS;
     }

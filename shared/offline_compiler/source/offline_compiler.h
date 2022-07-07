@@ -29,17 +29,18 @@ class OsLibrary;
 std::string convertToPascalCase(const std::string &inString);
 
 std::string generateFilePath(const std::string &directory, const std::string &fileNameBase, const char *extension);
+std::string getSupportedDevices(OclocArgHelper *helper);
 
 class OfflineCompiler {
   public:
     static int query(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper);
+    static int queryAcronymIds(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper);
 
     static OfflineCompiler *create(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles, int &retVal, OclocArgHelper *helper);
+
     MOCKABLE_VIRTUAL int build();
     std::string &getBuildLog();
     void printUsage();
-    std::string getDevicesReleasesAndFamilies();
-    std::string getDeprecatedDevicesTypes();
 
     static constexpr ConstStringRef queryHelp =
         "Depending on <query_option> will generate file\n"
@@ -52,6 +53,13 @@ class OfflineCompiler {
         "Examples:\n"
         "  Extract driver version\n"
         "    ocloc query OCL_DRIVER_VERSION\n";
+
+    static constexpr ConstStringRef idsHelp = R"===(
+Depending on <acronym> will return all
+matched versions (<major>.<minor>.<revision>)
+that correspond to the given name.
+All supported acronyms: %s.
+)===";
 
     OfflineCompiler &operator=(const OfflineCompiler &) = delete;
     OfflineCompiler(const OfflineCompiler &) = delete;

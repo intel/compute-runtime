@@ -72,6 +72,20 @@ std::string convertToPascalCase(const std::string &inString) {
     return outString;
 }
 
+std::string getDeprecatedDevices(OclocArgHelper *helper) {
+    auto acronyms = helper->getDeprecatedAcronyms();
+    return helper->createStringForArgs(acronyms);
+}
+
+std::string getSupportedDevices(OclocArgHelper *helper) {
+    auto devices = helper->getAllSupportedProductAcronyms();
+    auto families = helper->getEnabledFamiliesAcronyms();
+    auto releases = helper->getEnabledReleasesAcronyms();
+    auto familiesAndReleases = helper->getArgsWithoutDuplicate(families, releases);
+
+    return helper->createStringForArgs(devices, familiesAndReleases);
+}
+
 OfflineCompiler::OfflineCompiler() = default;
 OfflineCompiler::~OfflineCompiler() {
     pBuildInfo.reset();
@@ -124,6 +138,67 @@ int OfflineCompiler::query(size_t numArgs, const std::vector<std::string> &allAr
         helper->printf("Error: Invalid command line. Uknown argument %s.", arg.c_str());
         retVal = INVALID_COMMAND_LINE;
     }
+
+    return retVal;
+}
+
+void printAcronymIdsHelp(OclocArgHelper *helper) {
+    helper->printf(OfflineCompiler::idsHelp.data(), getSupportedDevices(helper).c_str());
+}
+
+int OfflineCompiler::queryAcronymIds(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper) {
+    const size_t numArgRequested = 3u;
+    auto retVal = SUCCESS;
+
+    if (numArgs != numArgRequested) {
+        helper->printf("Error: Invalid command line. Expected ocloc ids <acronym>.\n");
+        retVal = INVALID_COMMAND_LINE;
+        return retVal;
+    } else if ((ConstStringRef("-h") == allArgs[2] || ConstStringRef("--help") == allArgs[2])) {
+        printAcronymIdsHelp(helper);
+        return retVal;
+    }
+
+    std::string queryAcronym = allArgs[2];
+    ProductConfigHelper::adjustDeviceName(queryAcronym);
+
+    auto enabledDevices = helper->getAllSupportedDeviceConfigs();
+    std::vector<std::string> matchedVersions{};
+
+    if (helper->isFamily(queryAcronym)) {
+        auto family = ProductConfigHelper::returnFamilyForAcronym(queryAcronym);
+        for (const auto &device : enabledDevices) {
+            if (device.family == family) {
+                matchedVersions.push_back(ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig));
+            }
+        }
+    } else if (helper->isRelease(queryAcronym)) {
+        auto release = ProductConfigHelper::returnReleaseForAcronym(queryAcronym);
+        for (const auto &device : enabledDevices) {
+            if (device.release == release) {
+                matchedVersions.push_back(ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig));
+            }
+        }
+    } else if (helper->isProductConfig(queryAcronym)) {
+        auto product = ProductConfigHelper::returnProductConfigForAcronym(queryAcronym);
+        for (const auto &device : enabledDevices) {
+            if (device.aotConfig.ProductConfig == product) {
+                matchedVersions.push_back(ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig));
+            }
+        }
+    } else {
+        helper->printf("Error: Invalid command line. Uknown acronym %s.\n", allArgs[2].c_str());
+        retVal = INVALID_COMMAND_LINE;
+        return retVal;
+    }
+
+    std::ostringstream os;
+    for (const auto &prefix : matchedVersions) {
+        if (os.tellp())
+            os << "\n";
+        os << prefix;
+    }
+    helper->printf("Matched ids:\n%s", os.str().c_str());
 
     return retVal;
 }
@@ -770,44 +845,6 @@ std::string OfflineCompiler::getFileNameTrunk(std::string &filePath) {
     return fileTrunk;
 }
 
-template <typename EqComparableT>
-auto findDuplicate(const EqComparableT &lhs) {
-    return [&lhs](const auto &rhs) { return lhs == rhs; };
-}
-
-std::string OfflineCompiler::getDeprecatedDevicesTypes() {
-    auto acronyms = argHelper->getDeprecatedAcronyms();
-
-    std::ostringstream os;
-    for (const auto &acronym : acronyms) {
-        if (os.tellp())
-            os << ", ";
-        os << acronym.str();
-    }
-
-    return os.str();
-}
-
-std::string OfflineCompiler::getDevicesReleasesAndFamilies() {
-    auto acronyms = argHelper->getEnabledReleasesAcronyms();
-    auto familiesAcronyms = argHelper->getEnabledFamiliesAcronyms();
-
-    for (const auto &family : familiesAcronyms) {
-        if (!std::any_of(acronyms.begin(), acronyms.end(), findDuplicate(family))) {
-            acronyms.push_back(family);
-        }
-    }
-
-    std::ostringstream os;
-    for (const auto &acronym : acronyms) {
-        if (os.tellp())
-            os << ", ";
-        os << acronym.str();
-    }
-
-    return os.str();
-}
-
 void OfflineCompiler::printUsage() {
     argHelper->printf(R"===(Compiles input file to Intel Compute GPU device binary (*.bin).
 Additionally, outputs intermediate representation (e.g. spirV).
@@ -820,7 +857,8 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
                                 OpenCL C kernel language).
 
   -device <device_type>         Target device.
-                                <device_type> can be: %s, %s, version  or hexadecimal value with 0x prefix - can be single or multiple target devices.
+                                <device_type> can be: %s, version  or hexadecimal value with 0x prefix
+                                - can be single or multiple target devices.
                                 The version is a representation of the
                                 <major>.<minor>.<revision> value.
                                 The hexadecimal value represents device ID.
@@ -952,9 +990,8 @@ Examples :
   Compile file to Intel Compute GPU device binary (out = source_file_Gen9core.bin)
     ocloc -file source_file.cl -device skl
 )===",
-                      argHelper->getAllSupportedAcronyms().c_str(),
-                      getDevicesReleasesAndFamilies().c_str(),
-                      getDeprecatedDevicesTypes().c_str());
+                      getSupportedDevices(argHelper).c_str(),
+                      getDeprecatedDevices(argHelper).c_str());
 }
 
 void OfflineCompiler::storeBinary(

@@ -233,16 +233,12 @@ void OclocArgHelper::saveOutput(const std::string &filename, const std::ostream 
     }
 }
 
-std::string OclocArgHelper::getAllSupportedAcronyms() {
-    std::ostringstream os;
+std::vector<NEO::ConstStringRef> OclocArgHelper::getAllSupportedProductAcronyms() {
+    std::vector<NEO::ConstStringRef> allEnabledAcronyms{};
     for (const auto &device : deviceMap) {
-        for (const auto &acronym : device.acronyms) {
-            if (os.tellp())
-                os << ", ";
-            os << acronym.str();
-        }
+        allEnabledAcronyms.insert(allEnabledAcronyms.end(), device.acronyms.begin(), device.acronyms.end());
     }
-    return os.str();
+    return allEnabledAcronyms;
 }
 
 std::vector<NEO::ConstStringRef> OclocArgHelper::getEnabledProductAcronyms() {

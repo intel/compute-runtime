@@ -16,15 +16,15 @@ namespace NEO {
 //////////////////////////////////////////////////////
 // MockPerformanceCountersLinux::MockPerformanceCountersLinux
 //////////////////////////////////////////////////////
-MockPerformanceCountersLinux::MockPerformanceCountersLinux(Device *device)
+MockPerformanceCountersLinux::MockPerformanceCountersLinux()
     : PerformanceCountersLinux() {
 }
 
 //////////////////////////////////////////////////////
 // MockPerformanceCounters::create
 //////////////////////////////////////////////////////
-std::unique_ptr<PerformanceCounters> MockPerformanceCounters::create(Device *device) {
-    auto performanceCounters = std::unique_ptr<PerformanceCounters>(new MockPerformanceCountersLinux(device));
+std::unique_ptr<PerformanceCounters> MockPerformanceCounters::create() {
+    auto performanceCounters = std::unique_ptr<PerformanceCounters>(new MockPerformanceCountersLinux());
     auto metricsLibrary = std::make_unique<MockMetricsLibrary>();
     auto metricsLibraryDll = std::make_unique<MockMetricsLibraryDll>();
 
@@ -33,13 +33,6 @@ std::unique_ptr<PerformanceCounters> MockPerformanceCounters::create(Device *dev
     performanceCounters->setMetricsLibraryInterface(std::move(metricsLibrary));
 
     return performanceCounters;
-}
-
-//////////////////////////////////////////////////////
-// PerformanceCountersFixture::createPerfCounters
-//////////////////////////////////////////////////////
-void PerformanceCountersFixture::createPerfCounters() {
-    performanceCountersBase = MockPerformanceCounters::create(&device->getDevice());
 }
 
 //////////////////////////////////////////////////////

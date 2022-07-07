@@ -49,7 +49,7 @@ class MockClDevice : public ClDevice {
     bool getCpuTime(uint64_t *timeStamp) { return device.getCpuTime(timeStamp); }
     void setPreemptionMode(PreemptionMode mode) { device.setPreemptionMode(mode); }
     void injectMemoryManager(MemoryManager *pMemoryManager) { device.injectMemoryManager(pMemoryManager); }
-    void setPerfCounters(PerformanceCounters *perfCounters) { device.setPerfCounters(perfCounters); }
+    void setPerfCounters(std::unique_ptr<PerformanceCounters> perfCounters) { device.setPerfCounters(std::move(perfCounters)); }
     const char *getProductAbbrev() const { return device.getProductAbbrev(); }
     template <typename T>
     UltCommandStreamReceiver<T> &getUltCommandStreamReceiver() { return device.getUltCommandStreamReceiver<T>(); }

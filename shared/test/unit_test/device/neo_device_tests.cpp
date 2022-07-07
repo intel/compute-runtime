@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/device/device.h"
+#include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -13,8 +14,10 @@
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_compilers.h"
+#include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
@@ -44,6 +47,84 @@ TEST(Device, givenNoDebuggerWhenGettingDebuggerThenNullptrIsReturned) {
     EXPECT_EQ(nullptr, device->getDebugger());
     EXPECT_EQ(nullptr, device->getL0Debugger());
     EXPECT_EQ(nullptr, device->getSourceLevelDebugger());
+}
+
+using DeviceKernelWaTest = ::testing::Test;
+
+HWTEST_F(DeviceKernelWaTest, givenEnabledEotWaWhenCreatingDeviceThenKernelWaIsCreatedAndAddedToGpgpuCommandStreamReceiver) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableEotWa.set(true);
+
+    {
+        UltDeviceFactory factory{1, 0};
+
+        auto device = factory.rootDevices[0];
+
+        EXPECT_NE(nullptr, device->kernelEotWaAllocation);
+
+        for (auto &engine : device->allEngines) {
+            auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver);
+            if (EngineHelpers::isBcs(engine.getEngineType())) {
+                EXPECT_TRUE(csr->additionalAllocationsForResidency.empty());
+            } else {
+                EXPECT_EQ(1u, csr->additionalAllocationsForResidency.size());
+                EXPECT_EQ(device->kernelEotWaAllocation, csr->additionalAllocationsForResidency[0]);
+            }
+        }
+    }
+    {
+        UltDeviceFactory factory{1, 2};
+
+        auto device = factory.rootDevices[0];
+
+        EXPECT_NE(nullptr, device->kernelEotWaAllocation);
+
+        for (auto &engine : device->allEngines) {
+            auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver);
+            if (EngineHelpers::isBcs(engine.getEngineType())) {
+                EXPECT_TRUE(csr->additionalAllocationsForResidency.empty());
+            } else {
+                EXPECT_EQ(1u, csr->additionalAllocationsForResidency.size());
+                EXPECT_EQ(device->kernelEotWaAllocation, csr->additionalAllocationsForResidency[0]);
+            }
+        }
+    }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceKernelWaTest, givenEnabledEotWaWhenCreatingDeviceThenKernelWaIsCreatedWithProperContentAndGpuAddress) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableEotWa.set(true);
+    DebugManager.flags.EnableLocalMemory.set(false);
+
+    VariableBackup<decltype(DeviceFactory::createRootDeviceFunc)> createRootDeviceFuncBackup{&DeviceFactory::createRootDeviceFunc};
+    createRootDeviceFuncBackup = [](ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) -> std::unique_ptr<Device> {
+        return std::unique_ptr<Device>(MockDevice::create<MockDevice>(&executionEnvironment, rootDeviceIndex));
+    };
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    ultHwConfig.forceOsAgnosticMemoryManager = false;
+
+    auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), true, 1);
+    auto devices = DeviceFactory::createDevices(*executionEnvironment);
+    auto memoryManager = executionEnvironment->memoryManager.get();
+
+    auto device = static_cast<MockDevice *>(devices[0].get());
+
+    EXPECT_NE(nullptr, device->kernelEotWaAllocation);
+
+    auto heapBase = memoryManager->getGfxPartition(device->getRootDeviceIndex())->getHeapBase(HeapIndex::HEAP_INTERNAL);
+    auto expectedGpuAddress = device->getGmmHelper()->canonize(heapBase + MemoryConstants::gigaByte * 4 - MemoryConstants::pageSize64k);
+
+    EXPECT_EQ(device->kernelEotWaAllocation->getGpuAddress(), expectedGpuAddress);
+    EXPECT_EQ(device->kernelEotWaAllocation->getUnderlyingBufferSize(), MemoryConstants::pageSize64k);
+
+    auto cpuPtr = device->kernelEotWaAllocation->getUnderlyingBuffer();
+    uint8_t eotMemoryPattern[]{0x09, 0x0C, 0x80, 0x04, 0x00, 0x00, 0x00, 0x0C, 0x7F, 0x20, 0x30, 0x00, 0x00, 0x00, 0x00};
+
+    EXPECT_EQ(0, memcmp(ptrOffset(cpuPtr, MemoryConstants::pageSize64k - MemoryConstants::pageSize - sizeof(eotMemoryPattern)), eotMemoryPattern, sizeof(eotMemoryPattern)));
 }
 
 using DeviceTest = Test<DeviceFixture>;

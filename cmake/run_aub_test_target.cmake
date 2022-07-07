@@ -11,14 +11,15 @@ list(GET aub_test_config 2 subslices)
 list(GET aub_test_config 3 eu_per_ss)
 list(GET aub_test_config 4 revision_id)
 
+if(NOT TARGET aub_tests)
+  add_custom_target(aub_tests)
+endif()
+
 add_custom_target(run_${product}_${revision_id}_aub_tests ALL)
+add_dependencies(run_${product}_${revision_id}_aub_tests aub_tests)
 
 if(NOT NEO_SKIP_OCL_UNIT_TESTS OR NOT NEO_SKIP_L0_UNIT_TESTS)
-
-  if(NOT NEO_SKIP_OCL_UNIT_TESTS)
-    add_dependencies(run_${product}_${revision_id}_aub_tests prepare_test_kernels_for_ocl)
-    add_dependencies(run_${product}_${revision_id}_aub_tests prepare_test_kernels_for_shared)
-  endif()
+  add_dependencies(run_${product}_${revision_id}_aub_tests prepare_test_kernels_for_shared)
 
   add_dependencies(run_aub_tests run_${product}_${revision_id}_aub_tests)
   set_target_properties(run_${product}_${revision_id}_aub_tests PROPERTIES FOLDER "${AUB_TESTS_TARGETS_FOLDER}/${product}/${revision_id}")
@@ -51,6 +52,9 @@ if(NOT NEO_SKIP_OCL_UNIT_TESTS OR NOT NEO_SKIP_L0_UNIT_TESTS)
 endif()
 
 if(NOT NEO_SKIP_OCL_UNIT_TESTS)
+  add_dependencies(aub_tests igdrcl_aub_tests)
+  add_dependencies(run_${product}_${revision_id}_aub_tests prepare_test_kernels_for_ocl)
+
   if(WIN32 OR NOT DEFINED NEO__GMM_LIBRARY_PATH)
     set(aub_test_cmd_prefix $<TARGET_FILE:igdrcl_aub_tests>)
   else()
@@ -72,6 +76,7 @@ if(NOT NEO_SKIP_OCL_UNIT_TESTS)
 endif()
 
 if(NOT NEO_SKIP_L0_UNIT_TESTS AND BUILD_WITH_L0)
+  add_dependencies(aub_tests ze_intel_gpu_aub_tests)
   add_dependencies(run_${product}_${revision_id}_aub_tests prepare_test_kernels_for_l0)
 
   if(WIN32 OR NOT DEFINED NEO__GMM_LIBRARY_PATH)

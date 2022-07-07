@@ -65,6 +65,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::wasSubmittedToSingleSubdevice;
     using BaseClass::CommandStreamReceiver::activePartitions;
     using BaseClass::CommandStreamReceiver::activePartitionsConfig;
+    using BaseClass::CommandStreamReceiver::additionalAllocationsForResidency;
     using BaseClass::CommandStreamReceiver::baseWaitFunction;
     using BaseClass::CommandStreamReceiver::bindingTableBaseAddressRequired;
     using BaseClass::CommandStreamReceiver::canUse4GbHeaps;

@@ -61,6 +61,7 @@ class MockDevice : public RootDevice {
     using Device::getGlobalMemorySize;
     using Device::initializeCaps;
     using Device::isDebuggerActive;
+    using Device::kernelEotWaAllocation;
     using Device::regularEngineGroups;
     using Device::rootCsrCreated;
     using Device::rtMemoryBackedBuffer;
@@ -87,12 +88,8 @@ class MockDevice : public RootDevice {
 
     void injectMemoryManager(MemoryManager *);
 
-    void setPerfCounters(PerformanceCounters *perfCounters) {
-        if (perfCounters) {
-            performanceCounters = std::unique_ptr<PerformanceCounters>(perfCounters);
-        } else {
-            performanceCounters.release();
-        }
+    void setPerfCounters(std::unique_ptr<PerformanceCounters> perfCounters) {
+        performanceCounters = std::move(perfCounters);
     }
 
     size_t getMaxParameterSizeFromIGC() const override {

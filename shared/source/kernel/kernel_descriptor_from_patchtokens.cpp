@@ -8,7 +8,6 @@
 #include "shared/source/kernel/kernel_descriptor_from_patchtokens.h"
 
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
-#include "shared/source/kernel/kernel_arg_descriptor_extended_device_side_enqueue.h"
 #include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 
@@ -445,15 +444,6 @@ void populateArgDescriptor(KernelDescriptor &dst, size_t argNum, const PatchToke
         if (PatchTokenBinary::ArgObjectType::Slm != src.objectType) {
             populateKernelArgDescriptor(dst, argNum, *byValArg);
         }
-    }
-
-    if (src.objectId) {
-        dst.payloadMappings.explicitArgs[argNum].getExtendedTypeInfo().hasDeviceSideEnqueueExtendedDescriptor = true;
-        dst.payloadMappings.explicitArgsExtendedDescriptors.resize(dst.payloadMappings.explicitArgs.size());
-
-        auto deviceSideEnqueueDescriptor = std::make_unique<ArgDescriptorDeviceSideEnqueue>();
-        deviceSideEnqueueDescriptor->objectId = getOffset(src.objectId);
-        dst.payloadMappings.explicitArgsExtendedDescriptors[argNum] = std::move(deviceSideEnqueueDescriptor);
     }
     populateArgMetadata(dst, argNum, src.argInfo);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,10 +14,8 @@
 namespace NEO {
 
 class CommandStreamReceiver;
-class Context;
 class Device;
 class GraphicsAllocation;
-class Kernel;
 class MemoryManager;
 
 class SyncBufferHandler {

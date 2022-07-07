@@ -434,8 +434,9 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     }
 
     allocationData.hostPtr = hostPtr;
-    if (properties.allocationType == AllocationType::KERNEL_ISA ||
-        properties.allocationType == AllocationType::KERNEL_ISA_INTERNAL) {
+    if ((properties.allocationType == AllocationType::KERNEL_ISA ||
+         properties.allocationType == AllocationType::KERNEL_ISA_INTERNAL) &&
+        properties.gpuAddress == 0) {
         allocationData.size = properties.size + hwHelper.getPaddingForISAAllocation();
     } else {
         allocationData.size = properties.size;

@@ -7,10 +7,11 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/os_interface/hw_info_config.h"
-#include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/hw_test.h"
+
+#include "hw_cmds_xe_hpg_core_base.h"
 
 using namespace NEO;
 

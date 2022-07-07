@@ -7,7 +7,6 @@
 
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
-#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
@@ -21,6 +20,8 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_cl_hw_helper.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+
+#include "hw_cmds_xe_hpc_core_base.h"
 
 using HwHelperTestsXeHpcCore = Test<ClDeviceFixture>;
 

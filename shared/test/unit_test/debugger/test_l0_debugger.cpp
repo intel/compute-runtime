@@ -120,6 +120,59 @@ TEST(Debugger, givenDebuggingEnabledInExecEnvWhenAllocatingIsaThenSingleBankIsUs
     neoDevice->getMemoryManager()->freeGraphicsMemory(allocation);
 }
 
+TEST(Debugger, WhenInitializingDebuggerL0ThenCapabilitiesAreAdjustedAndDebuggerIsCreated) {
+    auto executionEnvironment = new NEO::ExecutionEnvironment();
+    executionEnvironment->incRefInternal();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->initializeMemoryManager();
+
+    executionEnvironment->setDebuggingEnabled();
+
+    auto neoDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0u));
+
+    executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(neoDevice.get());
+
+    EXPECT_FALSE(executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.fusedEuEnabled);
+    EXPECT_FALSE(executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedBuffers);
+    EXPECT_FALSE(executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedImages);
+
+    EXPECT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[0]->debugger);
+    executionEnvironment->decRefInternal();
+}
+
+TEST(Debugger, GivenLegacyDebuggerWhenInitializingDebuggerL0ThenAbortIsCalledAfterPrintingError) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+
+    ::testing::internal::CaptureStderr();
+    auto executionEnvironment = new NEO::ExecutionEnvironment();
+    executionEnvironment->incRefInternal();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    auto mockDebugger = new MockSourceLevelDebugger();
+    executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(mockDebugger);
+
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->initializeMemoryManager();
+
+    executionEnvironment->setDebuggingEnabled();
+
+    auto neoDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0u));
+
+    EXPECT_THROW(executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(neoDevice.get()), std::exception);
+    std::string output = testing::internal::GetCapturedStderr();
+
+    EXPECT_EQ(std::string("Source Level Debugger cannot be used with Environment Variable enabling program debugging.\n"), output);
+
+    executionEnvironment->decRefInternal();
+}
+
 using L0DebuggerTest = Test<DeviceFixture>;
 
 HWTEST_F(L0DebuggerTest, GivenDeviceWhenAllocateCalledThenDebuggerIsCreated) {
