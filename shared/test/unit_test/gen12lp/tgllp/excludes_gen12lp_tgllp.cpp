@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/hw_test_base.h"
 
 HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfPipeControlWAIsRequiredThenFalseIsReturned, IGFX_TIGERLAKE_LP);
 HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfImagePitchAlignmentWAIsRequiredThenFalseIsReturned, IGFX_TIGERLAKE_LP);

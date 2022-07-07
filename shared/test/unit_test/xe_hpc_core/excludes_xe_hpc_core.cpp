@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/hw_test_base.h"
 
 HWTEST_EXCLUDE_PRODUCT(CommandEncodeStatesTest, givenSlmTotalSizeEqualZeroWhenDispatchingKernelThenSharedMemorySizeIsSetCorrectly, IGFX_XE_HPC_CORE);
 HWTEST_EXCLUDE_PRODUCT(CommandEncodeStatesTest, givenOverrideSlmTotalSizeDebugVariableWhenDispatchingKernelThenSharedMemorySizeIsSetCorrectly, IGFX_XE_HPC_CORE);

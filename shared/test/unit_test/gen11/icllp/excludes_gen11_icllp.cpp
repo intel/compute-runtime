@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/hw_test_base.h"
 
 HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfAdditionalMediaSamplerProgrammingIsRequiredThenFalseIsReturned, IGFX_ICELAKE_LP)
 HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfInitialFlagsProgrammingIsRequiredThenFalseIsReturned, IGFX_ICELAKE_LP)

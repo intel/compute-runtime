@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/hw_test_base.h"
 
 HWTEST_EXCLUDE_PRODUCT(ExcludeTestBdw, givenHwCmdTestWhenBdwExcludedThenDontRunOnBdw, IGFX_BROADWELL);
 HWTEST_EXCLUDE_PRODUCT(ExcludeTestBdw, givenHwTestWhenBdwExcludedThenDontRunOnBdw, IGFX_BROADWELL);
