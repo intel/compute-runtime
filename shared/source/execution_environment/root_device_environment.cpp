@@ -13,6 +13,7 @@
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/default_cache_config.h"
 #include "shared/source/debugger/debugger.h"
+#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
@@ -44,6 +45,20 @@ void RootDeviceEnvironment::initAubCenter(bool localMemoryEnabled, const std::st
 
 void RootDeviceEnvironment::initDebugger() {
     debugger = Debugger::create(hwInfo.get());
+}
+
+void RootDeviceEnvironment::initDebuggerL0(Device *neoDevice) {
+    if (this->debugger.get() != nullptr) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                              "%s", "Source Level Debugger cannot be used with Environment Variable enabling program debugging.\n");
+        UNRECOVERABLE_IF(this->debugger.get() != nullptr);
+    }
+
+    this->getMutableHardwareInfo()->capabilityTable.fusedEuEnabled = false;
+    this->getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedBuffers = false;
+    this->getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedImages = false;
+
+    this->debugger = DebuggerL0::create(neoDevice);
 }
 
 const HardwareInfo *RootDeviceEnvironment::getHardwareInfo() const {

@@ -22,6 +22,7 @@ class BindlessHeapsHelper;
 class BuiltIns;
 class CompilerInterface;
 class Debugger;
+class Device;
 class ExecutionEnvironment;
 class GmmClientContext;
 class GmmHelper;
@@ -54,6 +55,7 @@ struct RootDeviceEnvironment {
     void initOsTime();
     void initGmm();
     void initDebugger();
+    void initDebuggerL0(Device *neoDevice);
     MOCKABLE_VIRTUAL void prepareForCleanup() const;
     MOCKABLE_VIRTUAL bool initAilConfiguration();
     GmmHelper *getGmmHelper() const;

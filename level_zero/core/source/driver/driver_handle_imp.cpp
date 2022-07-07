@@ -168,20 +168,10 @@ void DriverHandleImp::updateRootDeviceBitFields(std::unique_ptr<NEO::Device> &ne
 }
 
 void DriverHandleImp::enableRootDeviceDebugger(std::unique_ptr<NEO::Device> &neoDevice) {
-    const auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
-    auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex].get();
-
     if (enableProgramDebugging) {
-        if (neoDevice->getDebugger() != nullptr) {
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
-                                  "%s", "Source Level Debugger cannot be used with Environment Variable enabling program debugging.\n");
-            UNRECOVERABLE_IF(neoDevice->getDebugger() != nullptr && enableProgramDebugging);
-        }
-        rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.fusedEuEnabled = false;
-        rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedBuffers = false;
-        rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedImages = false;
-
-        rootDeviceEnvironment->debugger = NEO::DebuggerL0::create(neoDevice.get());
+        const auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
+        auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex].get();
+        rootDeviceEnvironment->initDebuggerL0(neoDevice.get());
     }
 }
 
