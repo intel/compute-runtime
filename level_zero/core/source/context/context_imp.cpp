@@ -436,12 +436,17 @@ ze_result_t ContextImp::getIpcMemHandles(const void *ptr,
     if (allocData) {
         auto alloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
         uint32_t numHandles = alloc->getNumHandles();
-        if (pIpcHandles == nullptr) {
+        UNRECOVERABLE_IF(numIpcHandles == nullptr);
+
+        if (*numIpcHandles == 0 || *numIpcHandles > numHandles) {
             *numIpcHandles = numHandles;
+        }
+
+        if (pIpcHandles == nullptr) {
             return ZE_RESULT_SUCCESS;
         }
 
-        for (uint32_t i = 0; i < numHandles; i++) {
+        for (uint32_t i = 0; i < *numIpcHandles; i++) {
             int handle = static_cast<int>(allocData->gpuAllocations.getDefaultGraphicsAllocation()->peekInternalHandle(this->driverHandle->getMemoryManager(), i));
             memcpy_s(reinterpret_cast<void *>(pIpcHandles[i].data),
                      sizeof(ze_ipc_mem_handle_t),
