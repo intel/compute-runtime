@@ -9,6 +9,7 @@
 #include "opencl/source/gtpin/gtpin_hw_helper.inl"
 #include "opencl/source/gtpin/gtpin_hw_helper_xehp_and_later.inl"
 
+#include "hw_cmds_xe_hpc_core_base.h"
 #include "ocl_igc_shared/gtpin/gtpin_ocl_interface.h"
 
 namespace NEO {

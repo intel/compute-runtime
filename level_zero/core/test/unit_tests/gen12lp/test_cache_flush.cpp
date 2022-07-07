@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/gen12lp/hw_cmds_base.h"
 #include "shared/source/helpers/cache_flush.inl"
 #include "shared/source/helpers/l3_range.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"

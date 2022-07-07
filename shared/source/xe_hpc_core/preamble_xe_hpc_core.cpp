@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
+
 namespace NEO {
 struct XE_HPC_COREFamily;
 using Family = XE_HPC_COREFamily;

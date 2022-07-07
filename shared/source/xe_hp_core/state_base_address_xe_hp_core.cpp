@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/state_base_address_xehp_and_later.inl"
+#include "shared/source/xe_hp_core/hw_cmds_base.h"
 
 namespace NEO {
 

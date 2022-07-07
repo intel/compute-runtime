@@ -13,7 +13,6 @@
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/register_offsets.h"
 
-#include "hw_cmds.h"
 #include "reg_configs_common.h"
 
 #include <cstddef>

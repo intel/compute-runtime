@@ -10,8 +10,6 @@
 #include "opencl/source/gtpin/gtpin_hw_helper.h"
 #include "opencl/source/kernel/kernel.h"
 
-#include "hw_cmds.h"
-
 namespace NEO {
 
 template <typename GfxFamily>

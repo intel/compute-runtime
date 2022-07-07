@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/csr_definitions.h"
+#include "shared/source/gen9/hw_cmds_base.h"
 #include "shared/source/helpers/preamble_bdw_and_later.inl"
 
 namespace NEO {

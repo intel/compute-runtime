@@ -8,6 +8,7 @@
 #include "shared/source/debugger/debugger_l0.inl"
 #include "shared/source/debugger/debugger_l0_tgllp_and_later.inl"
 #include "shared/source/helpers/populate_factory.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 
 namespace NEO {
 

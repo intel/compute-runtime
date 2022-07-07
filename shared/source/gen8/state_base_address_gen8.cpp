@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/gen8/hw_cmds_base.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/helpers/state_base_address_bdw.inl"
 #include "shared/source/helpers/state_base_address_bdw_and_later.inl"

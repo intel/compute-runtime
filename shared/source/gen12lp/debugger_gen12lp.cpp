@@ -7,6 +7,7 @@
 
 #include "shared/source/debugger/debugger_l0.inl"
 #include "shared/source/debugger/debugger_l0_tgllp_and_later.inl"
+#include "shared/source/gen12lp/hw_cmds_base.h"
 #include "shared/source/helpers/populate_factory.h"
 
 namespace NEO {

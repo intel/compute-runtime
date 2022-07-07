@@ -22,7 +22,6 @@
 #include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
 #include "shared/source/os_interface/windows/wddm_device_command_stream.h"
 
-#include "hw_cmds.h"
 #pragma warning(pop)
 
 #include "shared/source/os_interface/windows/gdi_interface.h"
