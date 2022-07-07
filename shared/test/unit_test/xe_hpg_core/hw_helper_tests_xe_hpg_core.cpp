@@ -7,13 +7,14 @@
 
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/os_interface/hw_info_config.h"
-#include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
+
+#include "hw_cmds_xe_hpg_core_base.h"
 
 using HwHelperTestXeHpgCore = HwHelperTest;
 

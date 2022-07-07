@@ -293,8 +293,6 @@ else()
   add_definitions(-DPURGE_DEBUG_KEY_NAMES=0)
 endif()
 
-set_property(GLOBAL PROPERTY NEO_INCLUDE_DIRECTORIES "")
-
 if(NOT NEO_SKIP_UNIT_TESTS)
   if(NOT DEFINED GTEST_REPEAT)
     set(GTEST_REPEAT 1)
@@ -755,6 +753,8 @@ endif()
 include_directories(${NEO_SHARED_DIRECTORY}/helpers/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SHARED_DIRECTORY}/memory_properties${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SHARED_DIRECTORY}/sku_info/definitions${BRANCH_DIR_SUFFIX})
+include_directories(${NEO_SHARED_DIRECTORY}/xe_hpc_core${BRANCH_DIR_SUFFIX})
+include_directories(${NEO_SHARED_DIRECTORY}/xe_hpg_core${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SOURCE_DIR}/opencl/source/command_queue/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SOURCE_DIR}/opencl/source/mem_obj/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SOURCE_DIR}/opencl/source/memory_manager/definitions${BRANCH_DIR_SUFFIX})
@@ -819,9 +819,6 @@ else()
 endif()
 
 add_subdirectory_unique(shared)
-
-get_property(NEO_INCLUDE_DIRECTORIES GLOBAL PROPERTY NEO_INCLUDE_DIRECTORIES)
-include_directories(${NEO_INCLUDE_DIRECTORIES})
 
 if(NEO_BUILD_WITH_OCL)
   add_subdirectory_unique(opencl)

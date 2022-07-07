@@ -5,11 +5,12 @@
  *
  */
 
-#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+
+#include "hw_cmds_xe_hpc_core_base.h"
 
 using namespace NEO;
 
