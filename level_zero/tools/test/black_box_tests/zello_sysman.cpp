@@ -82,25 +82,26 @@ void usage() {
                  "\n zello_sysman [OPTIONS]"
                  "\n"
                  "\n OPTIONS:"
-                 "\n  -p,   --pci                                                     selectively run pci black box test"
-                 "\n  -f,   --frequency                                               selectively run frequency black box test"
-                 "\n  -s,   --standby                                                 selectively run standby black box test"
-                 "\n  -e,   --engine                                                  selectively run engine black box test"
-                 "\n  -c,   --scheduler                                               selectively run scheduler black box test"
-                 "\n  -t,   --temperature                                             selectively run temperature black box test"
-                 "\n  -o,   --power                                                   selectively run power black box test"
-                 "\n  -m,   --memory                                                  selectively run memory black box test"
-                 "\n  -g,   --global                                                  selectively run device/global operations black box test"
-                 "\n  -R,   --ras                                                     selectively run ras black box test"
-                 "\n  -E,   --event                                                   set and listen to events black box test"
-                 "\n  -r,   --reset force|noforce                                     selectively run device reset test"
-                 "\n  -i,   --firmware <image>                                        selectively run device firmware test <image> is the firmware binary needed to flash"
-                 "\n  -F,   --fabricport                                              selectively run fabricport black box test"
-                 "\n  -d,   --diagnostics                                             selectively run diagnostics black box test"
-                 "\n  -P,   --performance                                             selectively run performance black box test"
-                 "\n        [--setconfig <deviceNo subdevId engineFlags pFactor>]     optionally set the performance factor for the particular handle"
-                 "\n  -C,   --ecc                                                     selectively run ecc black box test"
-                 "\n  -h,   --help                                                    display help message"
+                 "\n  -p,   --pci                                                                       selectively run pci black box test"
+                 "\n  -f,   --frequency                                                                 selectively run frequency black box test"
+                 "\n  -s,   --standby                                                                   selectively run standby black box test"
+                 "\n  -e,   --engine                                                                    selectively run engine black box test"
+                 "\n  -c,   --scheduler                                                                 selectively run scheduler black box test"
+                 "\n  -t,   --temperature                                                               selectively run temperature black box test"
+                 "\n  -o,   --power                                                                     selectively run power black box test"
+                 "\n        [--setlimit --sustained/--peak/--instantaneous/--burst <deviceNo limit>]    optionally set required power limit for particular device"
+                 "\n  -m,   --memory                                                                    selectively run memory black box test"
+                 "\n  -g,   --global                                                                    selectively run device/global operations black box test"
+                 "\n  -R,   --ras                                                                       selectively run ras black box test"
+                 "\n  -E,   --event                                                                     set and listen to events black box test"
+                 "\n  -r,   --reset force|noforce                                                       selectively run device reset test"
+                 "\n  -i,   --firmware <image>                                                          selectively run device firmware test <image> is the firmware binary needed to flash"
+                 "\n  -F,   --fabricport                                                                selectively run fabricport black box test"
+                 "\n  -d,   --diagnostics                                                               selectively run diagnostics black box test"
+                 "\n  -P,   --performance                                                               selectively run performance black box test"
+                 "\n        [--setconfig <deviceNo subdevId engineFlags pFactor>]                       optionally set the performance factor for the particular handle"
+                 "\n  -C,   --ecc                                                                       selectively run ecc black box test"
+                 "\n  -h,   --help                                                                      display help message"
                  "\n"
                  "\n  All L0 Syman APIs that set values require root privileged execution"
                  "\n"
@@ -138,7 +139,84 @@ void getDeviceHandles(ze_driver_handle_t &driverHandle, std::vector<ze_device_ha
     }
 }
 
-void testSysmanPower(ze_device_handle_t &device) {
+void getPowerLimits(const zes_pwr_handle_t &handle) {
+    uint32_t limitCount = 0;
+    VALIDATECALL(zesPowerGetLimitsExt(handle, &limitCount, nullptr));
+    if (limitCount == 0) {
+        std::cout << "powerLimitDesc.count = " << limitCount << std::endl;
+    } else {
+        std::vector<zes_power_limit_ext_desc_t> allLimits(limitCount);
+        VALIDATECALL(zesPowerGetLimitsExt(handle, &limitCount, allLimits.data()));
+        if (verbose) {
+            for (uint32_t i = 0; i < limitCount; i++) {
+                switch (allLimits[i].level) {
+                case ZES_POWER_LEVEL_SUSTAINED:
+                    std::cout << " --- Sustained Power Limit --- " << std::endl;
+                    break;
+                case ZES_POWER_LEVEL_PEAK:
+                    std::cout << " --- Peak Power Limit --- " << std::endl;
+                    break;
+                case ZES_POWER_LEVEL_BURST:
+                    std::cout << " --- Burst Power Limit --- " << std::endl;
+                    break;
+                case ZES_POWER_LEVEL_INSTANTANEOUS:
+                    std::cout << " --- Instantaneous Power Limit --- " << std::endl;
+                    break;
+                default:
+                    std::cout << " --- Invalid Power Limit --- " << std::endl;
+                    return;
+                }
+
+                std::cout << "powerLimit.intervalValueLocked = " << +allLimits[i].intervalValueLocked << std::endl;
+                std::cout << "powerLimit.enabledStateLocked = " << +allLimits[i].enabledStateLocked << std::endl;
+                std::cout << "powerLimit.limitValueLocked = " << +allLimits[i].limitValueLocked << std::endl;
+                std::cout << "powerLimit.source = " << allLimits[i].source << std::endl;
+                std::cout << "powerLimit.limitUnit = " << allLimits[i].limitUnit << std::endl;
+                std::cout << "powerLimit.limit = " << allLimits[i].limit << std::endl;
+                std::cout << "powerLimit.interval = " << allLimits[i].interval << std::endl;
+            }
+        }
+    }
+}
+
+void setPowerLimit(const zes_pwr_handle_t &handle, std::vector<std::string> &buf) {
+    zes_power_level_t level;
+    uint32_t limitCount = 0;
+    ze_bool_t isPowerLevelAvailable = false;
+
+    if (buf[1] == "--sustained") {
+        level = ZES_POWER_LEVEL_SUSTAINED;
+    } else if (buf[1] == "--peak") {
+        level = ZES_POWER_LEVEL_PEAK;
+    } else if (buf[1] == "--instantaneous") {
+        level = ZES_POWER_LEVEL_INSTANTANEOUS;
+    } else {
+        level = ZES_POWER_LEVEL_BURST;
+    }
+
+    VALIDATECALL(zesPowerGetLimitsExt(handle, &limitCount, nullptr));
+    if (limitCount != 0) {
+        std::vector<zes_power_limit_ext_desc_t> allLimits(limitCount);
+        VALIDATECALL(zesPowerGetLimitsExt(handle, &limitCount, allLimits.data()));
+        for (uint32_t i = 0; i < limitCount; i++) {
+            if (allLimits[i].level == level) {
+                allLimits[i].limit = static_cast<int32_t>(std::stoi(buf[3]));
+                isPowerLevelAvailable = true;
+                break;
+            }
+        }
+
+        if (isPowerLevelAvailable) {
+            VALIDATECALL(zesPowerSetLimitsExt(handle, &limitCount, allLimits.data()));
+        } else {
+            std::cout << "Unsupported Power Level to set limit" << std::endl;
+        }
+    } else {
+        std::cout << "Unsupported Power Level to set limit" << std::endl;
+    }
+}
+
+void testSysmanPower(ze_device_handle_t &device, std::vector<std::string> &buf, uint32_t &curDeviceIndex) {
     std::cout << std::endl
               << " ----  Power tests ---- " << std::endl;
     bool iamroot = (geteuid() == 0);
@@ -152,7 +230,7 @@ void testSysmanPower(ze_device_handle_t &device) {
     VALIDATECALL(zesDeviceEnumPowerDomains(device, &count, handles.data()));
 
     for (const auto &handle : handles) {
-        zes_power_properties_t properties;
+        zes_power_properties_t properties = {};
         VALIDATECALL(zesPowerGetProperties(handle, &properties));
         if (verbose) {
             std::cout << "properties.canControl = " << static_cast<uint32_t>(properties.canControl) << std::endl;
@@ -167,36 +245,28 @@ void testSysmanPower(ze_device_handle_t &device) {
             std::cout << "energyCounter.energy = " << energyCounter.energy << std::endl;
             std::cout << "energyCounter.timestamp = " << energyCounter.timestamp << std::endl;
         }
-        zes_power_sustained_limit_t sustainedGetDefault = {};
-        zes_power_burst_limit_t burstGetDefault = {};
-        VALIDATECALL(zesPowerGetLimits(handle, &sustainedGetDefault, &burstGetDefault, nullptr));
-        if (verbose) {
-            std::cout << "sustainedGetDefault.enabled = " << static_cast<uint32_t>(sustainedGetDefault.enabled) << std::endl;
-            if (sustainedGetDefault.enabled) {
-                std::cout << "sustainedGetDefault.power = " << sustainedGetDefault.power << std::endl;
-                std::cout << "sustainedGetDefault.interval = " << sustainedGetDefault.interval << std::endl;
+
+        if (!properties.onSubdevice) {
+            zes_power_sustained_limit_t sustainedGetDefault = {};
+            zes_power_peak_limit_t peakGetDefault = {};
+            VALIDATECALL(zesPowerGetLimits(handle, &sustainedGetDefault, nullptr, &peakGetDefault));
+            if (iamroot) {
+                VALIDATECALL(zesPowerSetLimits(handle, &sustainedGetDefault, nullptr, &peakGetDefault));
             }
-            std::cout << "burstGetDefault.enabled = " << static_cast<uint32_t>(burstGetDefault.enabled) << std::endl;
-            if (burstGetDefault.enabled) {
-                std::cout << "burstGetDefault.power = " << burstGetDefault.power << std::endl;
+            if (buf.size() != 0) {
+                uint32_t deviceIndex = static_cast<uint32_t>(std::stoi(buf[2]));
+                if (deviceIndex == curDeviceIndex) {
+                    if (iamroot) {
+                        setPowerLimit(handle, buf);
+                    } else {
+                        std::cout << "In sufficient permissions to set power limit" << std::endl;
+                    }
+                }
             }
-        }
-        if (iamroot) {
-            zes_power_sustained_limit_t sustainedSet = {};
-            sustainedSet.power = sustainedGetDefault.power - sustainedGetDefault.power / 10; //Randomly try to reduce power
-            sustainedSet.interval = sustainedGetDefault.interval - sustainedGetDefault.interval / 10;
-            zes_power_burst_limit_t burstSet = {};
-            if (burstGetDefault.enabled) {
-                burstSet.enabled = 0;
-            }
-            VALIDATECALL(zesPowerSetLimits(handle, &sustainedSet, &burstSet, nullptr));
-            if (verbose) {
-                std::cout << "zesPowerSetLimits success" << std::endl;
-                std::cout << "Now restore the power values to default ones" << std::endl;
-            }
-            VALIDATECALL(zesPowerSetLimits(handle, &sustainedGetDefault, &burstGetDefault, nullptr));
+            getPowerLimits(handle);
         }
     }
+    curDeviceIndex++;
 }
 
 std::string getEngineFlagType(zes_engine_type_flags_t engineFlag) {
@@ -1192,6 +1262,19 @@ bool checkpFactorArguments(std::vector<ze_device_handle_t> &devices, std::vector
     return true;
 }
 
+bool validatePowerLimitArguments(const size_t devCount, std::vector<std::string> &buf) {
+    if ((buf.size() != 4 || buf[0] != "--setlimit" || (!(buf[1] == "--sustained" || buf[1] == "--peak" || buf[1] == "--instantaneous" || buf[1] == "--burst")))) {
+        return false;
+    }
+
+    uint32_t devIndex = static_cast<uint32_t>(std::stoi(buf[2]));
+    if (devIndex >= devCount) {
+        return false;
+    }
+
+    return true;
+}
+
 bool validateGetenv(const char *name) {
     const char *env = getenv(name);
     if ((nullptr == env) || (0 == strcmp("0", env)))
@@ -1217,7 +1300,7 @@ int main(int argc, char *argv[]) {
         {"engine", no_argument, nullptr, 'e'},
         {"scheduler", no_argument, nullptr, 'c'},
         {"temperature", no_argument, nullptr, 't'},
-        {"power", no_argument, nullptr, 'o'},
+        {"power", optional_argument, nullptr, 'o'},
         {"global", no_argument, nullptr, 'g'},
         {"ras", no_argument, nullptr, 'R'},
         {"memory", no_argument, nullptr, 'm'},
@@ -1302,8 +1385,21 @@ int main(int argc, char *argv[]) {
             });
             break;
         case 'o':
+            deviceIndex = 0;
+            while (optind < argc) {
+                buf.push_back(argv[optind]);
+                optind++;
+            }
+
+            if (buf.size() != 0) {
+                if (validatePowerLimitArguments(devices.size(), buf) == false) {
+                    std::cout << "Invalid Arguments passed to set power limit" << std::endl;
+                    usage();
+                    exit(0);
+                }
+            }
             std::for_each(devices.begin(), devices.end(), [&](auto device) {
-                testSysmanPower(device);
+                testSysmanPower(device, buf, deviceIndex);
             });
             break;
         case 'g':
