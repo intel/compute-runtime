@@ -75,7 +75,7 @@ TEST(UnpackSingleDeviceBinaryPatchtokens, WhenValidBinaryForDifferentCoreFamilyD
     EXPECT_TRUE(unpackResult.debugData.empty());
     EXPECT_TRUE(unpackResult.intermediateRepresentation.empty());
     EXPECT_TRUE(unpackResult.buildOptions.empty());
-    EXPECT_TRUE(unpackWarnings.empty());
+    EXPECT_EQ("Binary kernel recompilation due to incompatible device", unpackWarnings);
     EXPECT_FALSE(unpackErrors.empty());
     EXPECT_STREQ("Unhandled target device", unpackErrors.c_str());
 }
@@ -99,7 +99,7 @@ TEST(UnpackSingleDeviceBinaryPatchtokens, WhenValidBinaryWithUnsupportedPatchTok
     EXPECT_TRUE(unpackResult.debugData.empty());
     EXPECT_TRUE(unpackResult.intermediateRepresentation.empty());
     EXPECT_TRUE(unpackResult.buildOptions.empty());
-    EXPECT_TRUE(unpackWarnings.empty());
+    EXPECT_EQ("Binary kernel recompilation due to incompatible device", unpackWarnings);
     EXPECT_FALSE(unpackErrors.empty());
     EXPECT_STREQ("Unhandled target device", unpackErrors.c_str());
 }
@@ -123,7 +123,7 @@ TEST(UnpackSingleDeviceBinaryPatchtokens, WhenValidBinaryWithUnsupportedPointerS
     EXPECT_TRUE(unpackResult.debugData.empty());
     EXPECT_TRUE(unpackResult.intermediateRepresentation.empty());
     EXPECT_TRUE(unpackResult.buildOptions.empty());
-    EXPECT_TRUE(unpackWarnings.empty());
+    EXPECT_EQ("Binary kernel recompilation due to incompatible device", unpackWarnings);
     EXPECT_FALSE(unpackErrors.empty());
     EXPECT_STREQ("Unhandled target device", unpackErrors.c_str());
 }

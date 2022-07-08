@@ -50,6 +50,7 @@ DECLARE_DEBUG_VARIABLE(bool, MakeEachEnqueueBlocking, false, "equivalent of fini
 DECLARE_DEBUG_VARIABLE(bool, DisableResourceRecycling, false, "when set to true disables resource recycling optimization")
 DECLARE_DEBUG_VARIABLE(bool, TrackParentEvents, false, "events track their parents")
 DECLARE_DEBUG_VARIABLE(bool, RebuildPrecompiledKernels, false, "forces driver to recompile precompiled kernels from sources")
+DECLARE_DEBUG_VARIABLE(bool, DisableKernelRecompilation, false, "Disable kernel recompilation")
 DECLARE_DEBUG_VARIABLE(bool, LoopAtDriverInit, false, "Adds endless loop in DebugSettingsManager constructor, useful for debugging.")
 DECLARE_DEBUG_VARIABLE(bool, DoNotRegisterTrimCallback, false, "When set to true driver does not register trim callback.")
 DECLARE_DEBUG_VARIABLE(bool, OverrideInvalidEngineWithDefault, false, "When set to true driver chooses engine 0 if no engine is found.")

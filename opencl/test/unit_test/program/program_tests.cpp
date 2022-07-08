@@ -1619,6 +1619,32 @@ TEST(ProgramFromBinaryTests, givenBinaryWithInvalidICBEThenErrorIsReturned) {
     }
 }
 
+TEST(ProgramFromBinaryTests, givenBinaryWithInvalidICBEAndDisableKernelRecompilationThenErrorIsReturned) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.DisableKernelRecompilation.set(true);
+    cl_int retVal = CL_INVALID_BINARY;
+
+    SProgramBinaryHeader binHeader;
+    memset(&binHeader, 0, sizeof(binHeader));
+    binHeader.Magic = iOpenCL::MAGIC_CL;
+    binHeader.Version = iOpenCL::CURRENT_ICBE_VERSION - 3;
+    binHeader.Device = defaultHwInfo->platform.eRenderCoreFamily;
+    binHeader.GPUPointerSizeInBytes = 8;
+    binHeader.NumberOfKernels = 0;
+    binHeader.SteppingId = 0;
+    binHeader.PatchListSize = 0;
+    size_t binSize = sizeof(SProgramBinaryHeader);
+
+    {
+        const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(&binHeader)};
+        MockContext context;
+
+        std::unique_ptr<Program> pProgram(Program::create<Program>(&context, context.getDevices(), &binSize, binaries, nullptr, retVal));
+        EXPECT_EQ(nullptr, pProgram.get());
+        EXPECT_EQ(CL_INVALID_BINARY, retVal);
+    }
+}
+
 TEST(ProgramFromBinaryTests, givenEmptyProgramThenErrorIsReturned) {
     cl_int retVal = CL_INVALID_BINARY;
 

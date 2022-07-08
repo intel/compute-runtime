@@ -36,6 +36,7 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens
     validForTarget &= (iOpenCL::CURRENT_ICBE_VERSION == programHeader->Version);
     if (false == validForTarget) {
         outErrReason = "Unhandled target device";
+        outWarning = "Binary kernel recompilation due to incompatible device";
         return {};
     }
     SingleDeviceBinary ret = {};

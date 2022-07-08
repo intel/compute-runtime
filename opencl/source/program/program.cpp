@@ -178,7 +178,8 @@ cl_int Program::createProgramFromBinary(
             PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
         }
 
-        if (singleDeviceBinary.intermediateRepresentation.empty() && singleDeviceBinary.deviceBinary.empty()) {
+        bool singleDeviceBinaryEmpty = singleDeviceBinary.intermediateRepresentation.empty() && singleDeviceBinary.deviceBinary.empty();
+        if (singleDeviceBinaryEmpty || (singleDeviceBinary.deviceBinary.empty() && DebugManager.flags.DisableKernelRecompilation.get())) {
             retVal = CL_INVALID_BINARY;
             PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeErrors.c_str());
         } else {
