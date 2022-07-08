@@ -500,25 +500,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, WhenFlushingThenScratchAllocationI
     EXPECT_TRUE(commandStreamReceiver->isMadeNonResident(scratchAllocation));
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, givenAdditionalAllocationForResidencyWhenFlushingThenHandleResidency) {
-    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(commandStreamReceiver);
-
-    MockGraphicsAllocation allocation{};
-    commandStreamReceiver->addAdditionalAllocationForResidency(&allocation);
-
-    flushTask(*commandStreamReceiver);
-
-    auto tagAllocation = commandStreamReceiver->getTagAllocation();
-    ASSERT_NE(tagAllocation, nullptr);
-
-    EXPECT_TRUE(commandStreamReceiver->isMadeResident(tagAllocation));
-    EXPECT_TRUE(commandStreamReceiver->isMadeResident(&allocation));
-
-    EXPECT_TRUE(commandStreamReceiver->isMadeNonResident(tagAllocation));
-    EXPECT_TRUE(commandStreamReceiver->isMadeNonResident(&allocation));
-}
-
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFenceAllocationIsRequiredAndFlushTaskIsCalledThenFenceAllocationIsMadeResident) {
     RAIIHwHelperFactory<MockHwHelperWithFenceAllocation<FamilyType>> hwHelperBackup{pDevice->getHardwareInfo().platform.eRenderCoreFamily};
 

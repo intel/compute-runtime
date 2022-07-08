@@ -59,9 +59,6 @@ Device::~Device() {
 
     syncBufferHandler.reset();
     commandStreamReceivers.clear();
-    if (kernelEotWaAllocation) {
-        executionEnvironment->memoryManager->freeGraphicsMemory(kernelEotWaAllocation);
-    }
     executionEnvironment->memoryManager->waitForDeletions();
 
     executionEnvironment->decRefInternal();
@@ -218,21 +215,9 @@ bool Device::createDeviceImpl() {
     if (getDebugger() && hwHelper.disableL3CacheForDebug(hwInfo)) {
         getGmmHelper()->forceAllResourcesUncached();
     }
-    if (DebugManager.flags.EnableEotWa.get()) {
-        AllocationProperties allocationProperties{rootDeviceIndex, MemoryConstants::pageSize64k, AllocationType::KERNEL_ISA, deviceBitfield};
-        auto memoryManager = executionEnvironment->memoryManager.get();
-        auto heapBase = memoryManager->getInternalHeapBaseAddress(rootDeviceIndex, memoryManager->isLocalMemoryUsedForIsa(rootDeviceIndex));
-        allocationProperties.gpuAddress = heapBase + 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize64k;
-        kernelEotWaAllocation = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties);
-    }
 
     if (!createEngines()) {
         return false;
-    }
-    if (kernelEotWaAllocation) {
-        auto memoryManager = executionEnvironment->memoryManager.get();
-        uint8_t eotMemoryPattern[]{0x31, 0x09, 0x0C, 0x80, 0x04, 0x00, 0x00, 0x00, 0x0C, 0x7F, 0x20, 0x30, 0x00, 0x00, 0x00, 0x00};
-        memoryManager->copyMemoryToAllocation(kernelEotWaAllocation, MemoryConstants::pageSize64k - sizeof(eotMemoryPattern) - MemoryConstants::pageSize, eotMemoryPattern, sizeof(eotMemoryPattern));
     }
 
     getDefaultEngine().osContext->setDefaultContext(true);
@@ -388,11 +373,6 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
         addEngineToEngineGroup(engine);
     }
 
-    if (kernelEotWaAllocation) {
-        if (!EngineHelpers::isBcs(engineType)) {
-            commandStreamReceiver->addAdditionalAllocationForResidency(kernelEotWaAllocation);
-        }
-    }
     commandStreamReceivers.push_back(std::move(commandStreamReceiver));
 
     return true;

@@ -237,11 +237,7 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
             heapInitExternalWithFrontWindow(HeapAssigner::mapExternalWindowIndex(heap), heapAllocate(heap, externalFrontWindowSize),
                                             externalFrontWindowSize);
         } else if (HeapAssigner::isInternalHeap(heap)) {
-            auto heapSize = gfxHeap32Size;
-            if (DebugManager.flags.EnableEotWa.get()) {
-                heapSize = 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize64k;
-            }
-            heapInitWithFrontWindow(heap, gfxBase, heapSize, GfxPartition::internalFrontWindowPoolSize);
+            heapInitWithFrontWindow(heap, gfxBase, gfxHeap32Size, GfxPartition::internalFrontWindowPoolSize);
             heapInitFrontWindow(HeapAssigner::mapInternalWindowIndex(heap), gfxBase, GfxPartition::internalFrontWindowPoolSize);
         } else {
             heapInit(heap, gfxBase, gfxHeap32Size);

@@ -67,9 +67,6 @@ void RootDevice::initializeRootCommandStreamReceiver() {
     rootCommandStreamReceiver->initializeTagAllocation();
     rootCommandStreamReceiver->createGlobalFenceAllocation();
     rootCommandStreamReceiver->createWorkPartitionAllocation(*this);
-    if (kernelEotWaAllocation) {
-        rootCommandStreamReceiver->addAdditionalAllocationForResidency(kernelEotWaAllocation);
-    }
     commandStreamReceivers.push_back(std::move(rootCommandStreamReceiver));
 
     EngineControl engine{commandStreamReceivers.back().get(), osContext};

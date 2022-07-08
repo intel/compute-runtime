@@ -1512,20 +1512,6 @@ TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWithLocalMemory
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
-TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, whenAllocatingKernelIsaWithSpecificGpuAddressThenThisAddressIsUsed) {
-    uint64_t expectedGpuAddress = 0xDEADBEEFu;
-    size_t size = 4096u;
-    AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::KERNEL_ISA, false, device->getDeviceBitfield());
-    properties.gpuAddress = expectedGpuAddress;
-    DebugManager.flags.EnableLocalMemory.set(true);
-    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
-    ASSERT_NE(nullptr, graphicsAllocation);
-
-    EXPECT_EQ(expectedGpuAddress, graphicsAllocation->getGpuAddress());
-    EXPECT_EQ(MemoryPool::LocalMemory, graphicsAllocation->getMemoryPool());
-    memoryManager->freeGraphicsMemory(graphicsAllocation);
-}
-
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndOsHandleWhenCreateIsCalledAndRootDeviceIndexIsSpecifiedThenGraphicsAllocationIsReturnedWithCorrectRootDeviceIndex) {
     mock->ioctl_expected.primeFdToHandle = 1;
     mock->ioctl_expected.gemWait = 1;

@@ -617,13 +617,8 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const Allocatio
     size_t alignedAllocationSize = alignUp(allocationData.size, MemoryConstants::pageSize);
     auto allocationSize = alignedAllocationSize;
     auto gfxPartition = getGfxPartition(allocationData.rootDeviceIndex);
-    uint64_t gpuVA;
+    auto gpuVA = gfxPartition->heapAllocate(allocatorToUse, allocationSize);
 
-    if (GraphicsAllocation::isIsaAllocationType(allocationData.type) && allocationData.gpuAddress != 0) {
-        gpuVA = allocationData.gpuAddress;
-    } else {
-        gpuVA = gfxPartition->heapAllocate(allocatorToUse, allocationSize);
-    }
     if (!gpuVA) {
         return nullptr;
     }
@@ -1408,15 +1403,9 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
 
     auto sizeAllocated = sizeAligned;
     auto gfxPartition = getGfxPartition(allocationData.rootDeviceIndex);
-    uint64_t gpuAddress;
-
-    if (GraphicsAllocation::isIsaAllocationType(allocationData.type) && allocationData.gpuAddress != 0) {
-        gpuAddress = allocationData.gpuAddress;
-    } else {
-        gpuAddress = getGpuAddress(this->alignmentSelector, this->heapAssigner, *hwInfo,
-                                   allocationData.type, gfxPartition, sizeAllocated,
-                                   allocationData.hostPtr, allocationData.flags.resource48Bit, allocationData.flags.use32BitFrontWindow, *gmmHelper);
-    }
+    auto gpuAddress = getGpuAddress(this->alignmentSelector, this->heapAssigner, *hwInfo,
+                                    allocationData.type, gfxPartition, sizeAllocated,
+                                    allocationData.hostPtr, allocationData.flags.resource48Bit, allocationData.flags.use32BitFrontWindow, *gmmHelper);
     auto canonizedGpuAddress = gmmHelper->canonize(gpuAddress);
     auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, numHandles, allocationData.type, nullptr, nullptr, canonizedGpuAddress, sizeAligned, MemoryPool::LocalMemory);
     DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(allocation.get());

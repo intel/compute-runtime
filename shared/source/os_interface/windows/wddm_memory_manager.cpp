@@ -403,12 +403,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
                   CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!allocationData.flags.uncacheable, *hwInfo), false, {}, true);
     wddmAllocation->setDefaultGmm(gmm);
 
-    void *requiredGpuAddress = nullptr;
-    if (GraphicsAllocation::isIsaAllocationType(allocationData.type) && allocationData.gpuAddress != 0) {
-        requiredGpuAddress = reinterpret_cast<void *>(allocationData.gpuAddress);
-    }
-
-    if (!createWddmAllocation(wddmAllocation.get(), requiredGpuAddress)) {
+    if (!createWddmAllocation(wddmAllocation.get(), nullptr)) {
         delete gmm;
         freeSystemMemory(pSysMem);
         return nullptr;
@@ -1098,10 +1093,6 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
             wddmAllocation->setReservedAddressRange(requiredGpuVa, reserveSizeAligned);
             requiredGpuVa = alignUp(requiredGpuVa, 2 * MemoryConstants::megaByte);
         }
-    }
-
-    if (GraphicsAllocation::isIsaAllocationType(allocationData.type) && allocationData.gpuAddress != 0) {
-        requiredGpuVa = reinterpret_cast<void *>(allocationData.gpuAddress);
     }
 
     if (!createWddmAllocation(wddmAllocation.get(), requiredGpuVa)) {

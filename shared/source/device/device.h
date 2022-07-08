@@ -202,7 +202,6 @@ class Device : public ReferenceTrackedObject<Device> {
 
     uintptr_t specializedDevice = reinterpret_cast<uintptr_t>(nullptr);
 
-    GraphicsAllocation *kernelEotWaAllocation = nullptr;
     GraphicsAllocation *rtMemoryBackedBuffer = nullptr;
     std::vector<GraphicsAllocation *> rtDispatchGlobals;
     struct {
