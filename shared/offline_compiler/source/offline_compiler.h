@@ -100,7 +100,7 @@ All supported acronyms: %s.
     void setFamilyType();
     int initHardwareInfo(std::string deviceName);
     int initHardwareInfoForProductConfig(std::string deviceName);
-    int initHardwareInfoForDeprecatedAcronyms(std::string deviceName, int deviceId);
+    int initHardwareInfoForDeprecatedAcronyms(std::string deviceName);
 
     std::string getStringWithinDelimiters(const std::string &src);
     int initialize(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles);
@@ -131,7 +131,7 @@ All supported acronyms: %s.
     void enforceFormat(std::string &format);
     HardwareInfo hwInfo;
 
-    AOT::PRODUCT_CONFIG deviceConfig = AOT::UNKNOWN_ISA;
+    AOT::PRODUCT_CONFIG deviceConfig = {};
     std::string deviceName;
     std::string familyNameWithType;
     std::string inputFile;

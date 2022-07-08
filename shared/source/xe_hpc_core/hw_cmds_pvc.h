@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 
-#include "device_ids_configs_pvc.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
+#include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
 
 #include <algorithm>
 
@@ -37,13 +37,13 @@ struct PVC : public XE_HPC_COREFamily {
     static constexpr uint8_t pvcBaseDieA0Masked = 0;       // [3:5] == 0
 
     static bool isXl(const HardwareInfo &hwInfo) {
-        auto it = std::find(PVC_XL_IDS.begin(), PVC_XL_IDS.end(), hwInfo.platform.usDeviceID);
-        return it != PVC_XL_IDS.end();
+        auto it = std::find(pvcXlDeviceIds.begin(), pvcXlDeviceIds.end(), hwInfo.platform.usDeviceID);
+        return it != pvcXlDeviceIds.end();
     }
 
     static bool isXt(const HardwareInfo &hwInfo) {
-        auto it = std::find(PVC_XT_IDS.begin(), PVC_XT_IDS.end(), hwInfo.platform.usDeviceID);
-        return it != PVC_XT_IDS.end();
+        auto it = std::find(pvcXtDeviceIds.begin(), pvcXtDeviceIds.end(), hwInfo.platform.usDeviceID);
+        return it != pvcXtDeviceIds.end();
     }
 
     static bool isXlA0(const HardwareInfo &hwInfo) {

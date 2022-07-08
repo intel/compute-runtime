@@ -11,13 +11,10 @@
 #include "shared/source/os_interface/hw_info_config.inl"
 #include "shared/source/os_interface/hw_info_config_bdw_and_later.inl"
 
-#include "platforms.h"
-
-namespace NEO {
 constexpr static auto gfxProduct = IGFX_COFFEELAKE;
-
 #include "shared/source/gen9/cfl/os_agnostic_hw_info_config_cfl.inl"
 
+namespace NEO {
 template <>
 int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
     if (nullptr == osIface) {

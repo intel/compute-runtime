@@ -22,7 +22,7 @@ using CommandListStatePrefetchPvcXt = Test<CommandListStatePrefetchXeHpcCore>;
 PVCTEST_F(CommandListStatePrefetchPvcXt, givenCommandBufferIsExhaustedWhenPrefetchApiCalledAndIsPvcXtNotBaseDieA0ThenProgramStatePrefetch) {
     auto hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
-    hwInfo->platform.usDeviceID = PVC_XT_IDS.front();
+    hwInfo->platform.usDeviceID = pvcXtDeviceIds.front();
     hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, *hwInfo); // not BD A0
     checkIfCommandBufferIsExhaustedWhenPrefetchApiCalledThenStatePrefetchProgrammed(hwInfo);
 }
@@ -31,7 +31,7 @@ PVCTEST_F(CommandListStatePrefetchPvcXt, givenDebugFlagSetWhenPrefetchApiCalledA
     auto hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
     hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->platform.usDeviceID = PVC_XT_IDS.front();
+    hwInfo->platform.usDeviceID = pvcXtDeviceIds.front();
     hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, *hwInfo); // not BD A0
     checkIfDebugFlagSetWhenPrefetchApiCalledAThenStatePrefetchProgrammed(hwInfo);
 }

@@ -49,7 +49,7 @@ HWTEST2_F(MetricIpSamplingLinuxTestUpstream, GivenSupportedProductFamilyAndSuppo
     auto hwInfo = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->platform.eProductFamily = productFamily;
 
-    for (auto deviceId : NEO::PVC_XT_IDS) {
+    for (const auto &deviceId : NEO::pvcXtDeviceIds) {
         hwInfo->platform.usDeviceID = deviceId;
         EXPECT_FALSE(metricIpSamplingOsInterface->isDependencyAvailable());
     }

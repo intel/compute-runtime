@@ -10,6 +10,7 @@
 #include <vector>
 
 namespace NEO {
-static const std::vector<unsigned short> PVC_XT_IDS{0x0BD5, 0x0BD6, 0x0BD8};
-static const std::vector<unsigned short> PVC_XL_IDS{0x0BD0};
+static const std::vector<unsigned short> glkDeviceIds{
+    0x3184,
+    0x3185};
 } // namespace NEO

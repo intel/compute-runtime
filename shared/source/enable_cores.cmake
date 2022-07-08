@@ -121,6 +121,16 @@ macro(macro_for_each_platform)
         list(APPEND CORE_SRCS_${CORE_TYPE}_H_BASE ${SRC_FILE})
       endif()
 
+      set(SRC_FILE ${PATH_TO_CORE}${PLATFORM_IT_LOWER}/device_ids_configs_${PLATFORM_IT_LOWER}.h)
+      if(EXISTS ${SRC_FILE})
+        list(APPEND CORE_SRCS_${CORE_TYPE}_H_BASE ${SRC_FILE})
+      endif()
+
+      set(SRC_FILE ${PATH_TO_CORE}${PLATFORM_IT_LOWER}/definitions/device_ids_configs_${PLATFORM_IT_LOWER}_base.h)
+      if(EXISTS ${SRC_FILE})
+        list(APPEND CORE_SRCS_${CORE_TYPE}_H_BASE ${SRC_FILE})
+      endif()
+
       set(SRC_FILE ${PATH_TO_CORE}${PLATFORM_IT_LOWER}/definitions${BRANCH_DIR_SUFFIX}device_ids_configs_${PLATFORM_IT_LOWER}.h)
       if(EXISTS ${SRC_FILE})
         list(APPEND CORE_SRCS_${CORE_TYPE}_H_BASE ${SRC_FILE})

@@ -215,7 +215,7 @@ TEST(OclocApiTests, givenUnknownAcronymWhenIdsCommandIsInvokeThenErrorIsReported
 TEST(OclocApiTests, WhenGoodFamilyNameIsProvidedThenSuccessIsReturned) {
     std::string clFileName(clFiles + "copybuffer.cl");
     std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
-    auto allSupportedDeviceConfigs = argHelper->getAllSupportedDeviceConfigs();
+    auto allSupportedDeviceConfigs = argHelper->productConfigHelper->getDeviceAotInfo();
     if (allSupportedDeviceConfigs.empty()) {
         GTEST_SKIP();
     }

@@ -13,6 +13,8 @@
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "platforms.h"
+
 using namespace NEO;
 
 using TgllpHwInfoConfig = ::testing::Test;
@@ -196,4 +198,10 @@ TGLLPTEST_F(TgllpHwInfo, givenTgllpWhenObtainingBlitterPreferenceThenReturnFalse
     const auto &hardwareInfo = *defaultHwInfo;
 
     EXPECT_FALSE(hwInfoConfig.obtainBlitterPreference(hardwareInfo));
+}
+
+TGLLPTEST_F(TgllpHwInfo, givenHwInfoConfigWhenGetProductConfigThenCorrectMatchIsFound) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    EXPECT_EQ(hwInfoConfig.getProductConfigFromHwInfo(hwInfo), AOT::TGL);
 }

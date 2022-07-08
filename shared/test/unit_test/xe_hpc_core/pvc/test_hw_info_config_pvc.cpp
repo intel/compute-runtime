@@ -11,6 +11,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/xe_hpc_core/pvc/product_configs_pvc.h"
 
 using namespace NEO;
 
@@ -52,12 +53,12 @@ PVCTEST_F(PVCHwInfoConfig, givenPvcHwInfoWhenIsIpSamplingSupportedThenCorrectRes
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     auto hwInfo = *defaultHwInfo;
 
-    for (auto &deviceId : PVC_XL_IDS) {
+    for (const auto &deviceId : pvcXlDeviceIds) {
         hwInfo.platform.usDeviceID = deviceId;
         EXPECT_FALSE(hwInfoConfig.isIpSamplingSupported(hwInfo));
     }
 
-    for (auto &deviceId : PVC_XT_IDS) {
+    for (const auto &deviceId : pvcXtDeviceIds) {
         hwInfo.platform.usDeviceID = deviceId;
         EXPECT_TRUE(hwInfoConfig.isIpSamplingSupported(hwInfo));
     }

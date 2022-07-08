@@ -7,9 +7,12 @@
 
 #include "shared/source/gen12lp/hw_cmds_adlp.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+
+#include "platforms.h"
 
 using namespace NEO;
 
@@ -66,4 +69,10 @@ ADLPTEST_F(AdlpHwInfo, whenPlatformIsAdlpThenExpectSvmIsSet) {
 ADLPTEST_F(AdlpHwInfo, givenAdlpWhenCheckL0ThenReturnTrue) {
     const HardwareInfo &hardwareInfo = ADLP::hwInfo;
     EXPECT_TRUE(hardwareInfo.capabilityTable.levelZeroSupported);
+}
+
+ADLPTEST_F(AdlpHwInfo, givenHwInfoConfigWhenGetProductConfigThenCorrectMatchIsFound) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    EXPECT_EQ(hwInfoConfig.getProductConfigFromHwInfo(hwInfo), AOT::ADL_P);
 }

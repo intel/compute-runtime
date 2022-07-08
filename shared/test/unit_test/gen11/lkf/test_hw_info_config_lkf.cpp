@@ -6,9 +6,13 @@
  */
 
 #include "shared/source/gen11/hw_cmds_lkf.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+
+#include "platforms.h"
+
 using namespace NEO;
 
 TEST(LkfHwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
@@ -82,4 +86,10 @@ LKFTEST_F(LkfHwInfo, givenBoolWhenCallLkfHardwareInfoSetupThenFeatureTableAndWor
         EXPECT_EQ(setParamBool, workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
         EXPECT_EQ(setParamBool, workaroundTable.flags.waReportPerfCountUseGlobalContextID);
     }
+}
+
+LKFTEST_F(LkfHwInfo, givenHwInfoConfigWhenGetProductConfigThenCorrectMatchIsFound) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    EXPECT_EQ(hwInfoConfig.getProductConfigFromHwInfo(hwInfo), AOT::LKF);
 }

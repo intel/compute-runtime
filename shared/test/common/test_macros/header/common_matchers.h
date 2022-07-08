@@ -67,4 +67,6 @@ using IsPVC = IsProduct<IGFX_PVC>;
 
 using IsAtLeastSkl = IsAtLeastProduct<IGFX_SKYLAKE>;
 
+using IsAtMostDg2 = IsAtMostProduct<IGFX_DG2>;
+
 using IsNotPVC = IsNotWithinProducts<IGFX_PVC, IGFX_PVC>;

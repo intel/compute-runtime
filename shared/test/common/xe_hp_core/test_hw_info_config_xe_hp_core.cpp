@@ -13,6 +13,8 @@
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "platforms.h"
+
 using namespace NEO;
 
 using XeHPMaxThreadsTest = Test<DeviceFixture>;
@@ -142,4 +144,10 @@ XEHPTEST_F(TestXeHPHwInfoConfig, givenXeHpCoreWhenIsBlitterForImagesSupportedIsC
 XEHPTEST_F(TestXeHPHwInfoConfig, givenHwInfoConfigWhenIsImplicitScalingSupportedThenExpectTrue) {
     const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     EXPECT_TRUE(hwInfoConfig.isImplicitScalingSupported(*defaultHwInfo));
+}
+
+XEHPTEST_F(TestXeHPHwInfoConfig, givenHwInfoConfigWhenGetProductConfigThenCorrectMatchIsFound) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    EXPECT_EQ(hwInfoConfig.getProductConfigFromHwInfo(hwInfo), AOT::XEHP_SDV);
 }

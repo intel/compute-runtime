@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/command_stream/stream_properties.h"
-#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
@@ -392,20 +391,32 @@ DG2TEST_F(HwInfoConfigTestDg2, givenDG2WhenCheckingIsTimestampWaitSupportedForEv
 }
 
 DG2TEST_F(ProductConfigTests, givenDg2G10DeviceIdsWhenConfigIsCheckedThenCorrectValueIsReturned) {
-    for (const auto &deviceId : DG2_G10_IDS) {
+    for (const auto &deviceId : dg2G10DeviceIds) {
         hwInfo.platform.usDeviceID = deviceId;
 
         EXPECT_TRUE(DG2::isG10(hwInfo));
         EXPECT_FALSE(DG2::isG11(hwInfo));
+        EXPECT_FALSE(DG2::isG12(hwInfo));
     }
 }
 
 DG2TEST_F(ProductConfigTests, givenDg2G11DeviceIdsWhenConfigIsCheckedThenCorrectValueIsReturned) {
-    for (const auto &deviceId : DG2_G11_IDS) {
+    for (const auto &deviceId : dg2G11DeviceIds) {
         hwInfo.platform.usDeviceID = deviceId;
 
         EXPECT_FALSE(DG2::isG10(hwInfo));
         EXPECT_TRUE(DG2::isG11(hwInfo));
+        EXPECT_FALSE(DG2::isG12(hwInfo));
+    }
+}
+
+DG2TEST_F(ProductConfigTests, givenDg2G12DeviceIdsWhenConfigIsCheckedThenCorrectValueIsReturned) {
+    for (const auto &deviceId : dg2G12DeviceIds) {
+        hwInfo.platform.usDeviceID = deviceId;
+
+        EXPECT_FALSE(DG2::isG10(hwInfo));
+        EXPECT_FALSE(DG2::isG11(hwInfo));
+        EXPECT_TRUE(DG2::isG12(hwInfo));
     }
 }
 
@@ -418,7 +429,7 @@ DG2TEST_F(ProductConfigTests, givenInvalidRevisionIdWhenDeviceIdIsDefaultThenUnk
 }
 
 DG2TEST_F(ProductConfigTests, givenDg2G10DeviceIdWhenDifferentRevisionIsPassedThenCorrectProductConfigIsReturned) {
-    for (const auto &deviceId : DG2_G10_IDS) {
+    for (const auto &deviceId : dg2G10DeviceIds) {
         hwInfo.platform.usDeviceID = deviceId;
 
         hwInfo.platform.usRevId = 0x0;
@@ -440,7 +451,7 @@ DG2TEST_F(ProductConfigTests, givenDg2G10DeviceIdWhenDifferentRevisionIsPassedTh
 }
 
 DG2TEST_F(ProductConfigTests, givenDg2DeviceIdWhenIncorrectRevisionIsPassedThenCorrectProductConfigIsReturned) {
-    for (const auto &dg2 : {DG2_G10_IDS, DG2_G11_IDS}) {
+    for (const auto &dg2 : {dg2G10DeviceIds, dg2G11DeviceIds}) {
         for (const auto &deviceId : dg2) {
             hwInfo.platform.usDeviceID = deviceId;
             hwInfo.platform.usRevId = CommonConstants::invalidRevisionID;
@@ -451,7 +462,7 @@ DG2TEST_F(ProductConfigTests, givenDg2DeviceIdWhenIncorrectRevisionIsPassedThenC
 }
 
 DG2TEST_F(ProductConfigTests, givenDg2G11DeviceIdWhenDifferentRevisionIsPassedThenCorrectProductConfigIsReturned) {
-    for (const auto &deviceId : DG2_G11_IDS) {
+    for (const auto &deviceId : dg2G11DeviceIds) {
         hwInfo.platform.usDeviceID = deviceId;
 
         hwInfo.platform.usRevId = 0x0;
@@ -468,13 +479,20 @@ DG2TEST_F(ProductConfigTests, givenDg2G11DeviceIdWhenDifferentRevisionIsPassedTh
     }
 }
 
-DG2TEST_F(ProductConfigTests, givenAotConfigWhenSetHwInfoRevisionIdForDg2ThenCorrectValueIsSet) {
-    for (const auto &config : AOT_DG2::productConfigs) {
-        AheadOfTimeConfig aotConfig = {0};
-        aotConfig.ProductConfig = config;
-        CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily)->setProductConfigForHwInfo(hwInfo, aotConfig);
-        EXPECT_EQ(hwInfo.platform.usRevId, aotConfig.ProductConfigID.Revision);
+DG2TEST_F(ProductConfigTests, givenDg2G12DeviceIdWhenGetProductConfigThenCorrectConfigIsReturned) {
+    for (const auto &deviceId : dg2G12DeviceIds) {
+        hwInfo.platform.usDeviceID = deviceId;
+        productConfig = hwInfoConfig->getProductConfigFromHwInfo(hwInfo);
+        EXPECT_EQ(productConfig, AOT::DG2_G12_A0);
     }
+}
+
+DG2TEST_F(ProductConfigTests, givenNotSetDeviceAndRevisionIdWhenGetProductConfigThenUnknownIsaIsReturned) {
+    hwInfo.platform.usRevId = 0x0;
+    hwInfo.platform.usDeviceID = 0x0;
+
+    productConfig = hwInfoConfig->getProductConfigFromHwInfo(hwInfo);
+    EXPECT_EQ(productConfig, AOT::UNKNOWN_ISA);
 }
 
 DG2TEST_F(HwInfoConfigTestDg2, givenHwInfoConfigWhenAskedIfStorageInfoAdjustmentIsRequiredThenTrueIsReturned) {

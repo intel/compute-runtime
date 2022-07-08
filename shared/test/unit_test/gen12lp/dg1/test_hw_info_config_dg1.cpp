@@ -12,6 +12,8 @@
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "platforms.h"
+
 using namespace NEO;
 
 using Dg1HwInfoConfig = ::testing::Test;
@@ -134,4 +136,9 @@ DG1TEST_F(Dg1HwInfo, givenDg1WhenObtainingFullBlitterSupportThenReturnFalse) {
 DG1TEST_F(Dg1HwInfo, whenOverrideGfxPartitionLayoutForWslThenReturnTrue) {
     auto hwInfoConfig = HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     EXPECT_TRUE(hwInfoConfig->overrideGfxPartitionLayoutForWsl());
+}
+
+DG1TEST_F(Dg1HwInfo, givenHwInfoConfigWhenGetProductConfigThenCorrectMatchIsFound) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    EXPECT_EQ(hwInfoConfig.getProductConfigFromHwInfo(*defaultHwInfo), AOT::DG1);
 }

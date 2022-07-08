@@ -5,19 +5,23 @@
  *
  */
 
-#include "shared/source/gen9/hw_cmds_glk.h"
+#include "shared/source/gen9/cfl/device_ids_configs_cfl.h"
+#include "shared/source/gen9/hw_cmds_cfl.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+
+#include "platforms.h"
+
 using namespace NEO;
 
-TEST(GlkHwInfoConfig, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
-    if (IGFX_GEMINILAKE != productFamily) {
+TEST(CflHwInfoConfig, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
+    if (IGFX_COFFEELAKE != productFamily) {
         return;
     }
     HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    gtSystemInfo = {0};
 
     uint64_t config = 0xdeadbeef;
     gtSystemInfo = {0};
@@ -28,10 +32,13 @@ TEST(GlkHwInfoConfig, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned
     EXPECT_EQ(0u, gtSystemInfo.EUCount);
 }
 
-using GlkHwInfo = ::testing::Test;
+using CflHwInfo = ::testing::Test;
 
-GLKTEST_F(GlkHwInfo, givenBoolWhenCallGlkHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
+CFLTEST_F(CflHwInfo, givenBoolWhenCallCflHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
     uint64_t configs[] = {
+        0x100030008,
+        0x200030008,
+        0x300030008,
         0x100020006,
         0x100030006};
     bool boolValue[]{
@@ -56,27 +63,47 @@ GLKTEST_F(GlkHwInfo, givenBoolWhenCallGlkHardwareInfoSetupThenFeatureTableAndWor
             EXPECT_EQ(setParamBool, featureTable.flags.ftr3dMidBatchPreempt);
             EXPECT_EQ(setParamBool, featureTable.flags.ftr3dObjectLevelPreempt);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrPerCtxtPreemptionGranularityControl);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrLCIA);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrPPGTT);
+            EXPECT_EQ(setParamBool, featureTable.flags.ftrSVM);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrIA32eGfxPTEs);
+            EXPECT_EQ(setParamBool, featureTable.flags.ftrDisplayYTiling);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrTranslationTable);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrUserModeTranslationTable);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrEnableGuC);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrTileMappedResource);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrULT);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcHdr2D);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcLdr2D);
+            EXPECT_EQ(setParamBool, featureTable.flags.ftrFbc);
+            EXPECT_EQ(setParamBool, featureTable.flags.ftrFbc2AddressTranslation);
+            EXPECT_EQ(setParamBool, featureTable.flags.ftrFbcBlitterTracking);
+            EXPECT_EQ(setParamBool, featureTable.flags.ftrFbcCpuTracking);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrTileY);
 
-            EXPECT_EQ(setParamBool, workaroundTable.flags.waLLCCachingUnsupported);
-            EXPECT_EQ(setParamBool, workaroundTable.flags.waMsaa8xTileYDepthPitchAlignment);
-            EXPECT_EQ(setParamBool, workaroundTable.flags.waFbcLinearSurfaceStride);
-            EXPECT_EQ(setParamBool, workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
             EXPECT_EQ(setParamBool, workaroundTable.flags.waEnablePreemptionGranularityControlByUMD);
             EXPECT_EQ(setParamBool, workaroundTable.flags.waSendMIFLUSHBeforeVFE);
-            EXPECT_EQ(setParamBool, workaroundTable.flags.waForcePcBbFullCfgRestore);
             EXPECT_EQ(setParamBool, workaroundTable.flags.waReportPerfCountUseGlobalContextID);
+            EXPECT_EQ(setParamBool, workaroundTable.flags.waMsaa8xTileYDepthPitchAlignment);
+            EXPECT_EQ(setParamBool, workaroundTable.flags.waLosslessCompressionSurfaceStride);
+            EXPECT_EQ(setParamBool, workaroundTable.flags.waFbcLinearSurfaceStride);
+            EXPECT_EQ(setParamBool, workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
             EXPECT_EQ(setParamBool, workaroundTable.flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads);
         }
     }
+}
+
+CFLTEST_F(CflHwInfo, givenHwInfoConfigWhenGetProductConfigThenCorrectMatchIsFound) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    for (const auto &deviceId : cflDeviceIds) {
+        hwInfo.platform.usDeviceID = deviceId;
+        EXPECT_EQ(hwInfoConfig.getProductConfigFromHwInfo(hwInfo), AOT::CFL);
+    }
+    for (const auto &deviceId : cmlDeviceIds) {
+        hwInfo.platform.usDeviceID = deviceId;
+        EXPECT_EQ(hwInfoConfig.getProductConfigFromHwInfo(hwInfo), AOT::CML);
+    }
+    for (const auto &deviceId : whlDeviceIds) {
+        hwInfo.platform.usDeviceID = deviceId;
+        EXPECT_EQ(hwInfoConfig.getProductConfigFromHwInfo(hwInfo), AOT::WHL);
+    }
+
+    hwInfo.platform.usDeviceID = 0u;
+    EXPECT_EQ(hwInfoConfig.getProductConfigFromHwInfo(hwInfo), AOT::UNKNOWN_ISA);
 }

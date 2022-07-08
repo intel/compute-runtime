@@ -20,7 +20,7 @@ using PvcConfigHwInfoTests = ::testing::Test;
 PVCTEST_F(PvcConfigHwInfoTests, givenPvcDeviceIdsAndRevisionsWhenCheckingConfigsThenReturnCorrectValues) {
     HardwareInfo hwInfo = *defaultHwInfo;
 
-    for (auto &deviceId : PVC_XL_IDS) {
+    for (auto &deviceId : pvcXlDeviceIds) {
         hwInfo.platform.usDeviceID = deviceId;
         EXPECT_TRUE(PVC::isXl(hwInfo));
         EXPECT_FALSE(PVC::isXt(hwInfo));
@@ -38,7 +38,7 @@ PVCTEST_F(PvcConfigHwInfoTests, givenPvcDeviceIdsAndRevisionsWhenCheckingConfigs
         EXPECT_FALSE(PVC::isAtMostXtA0(hwInfo));
     }
 
-    for (auto &deviceId : PVC_XT_IDS) {
+    for (auto &deviceId : pvcXtDeviceIds) {
         hwInfo.platform.usDeviceID = deviceId;
         EXPECT_FALSE(PVC::isXl(hwInfo));
         EXPECT_TRUE(PVC::isXt(hwInfo));

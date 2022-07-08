@@ -6,17 +6,17 @@
  */
 
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
 #include "shared/test/common/fixtures/product_config_fixture.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "device_ids_configs_pvc.h"
 #include "hw_cmds_xe_hpc_core_base.h"
 
 using namespace NEO;
 
 PVCTEST_F(ProductConfigTests, givenPvcXlDeviceIdWhenDifferentRevisionIsPassedThenCorrectProductConfigIsReturned) {
-    for (const auto &deviceId : PVC_XL_IDS) {
+    for (const auto &deviceId : pvcXlDeviceIds) {
         hwInfo.platform.usDeviceID = deviceId;
 
         hwInfo.platform.usRevId = 0x0;
@@ -34,7 +34,7 @@ PVCTEST_F(ProductConfigTests, givenPvcXlDeviceIdWhenDifferentRevisionIsPassedThe
 }
 
 PVCTEST_F(ProductConfigTests, givenPvcXtDeviceIdWhenDifferentRevisionIsPassedThenCorrectProductConfigIsReturned) {
-    for (const auto &deviceId : PVC_XT_IDS) {
+    for (const auto &deviceId : pvcXtDeviceIds) {
         hwInfo.platform.usDeviceID = deviceId;
 
         hwInfo.platform.usRevId = 0x3;

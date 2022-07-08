@@ -18,7 +18,7 @@ AOT::PRODUCT_CONFIG HwInfoConfigHw<gfxProduct>::getProductConfigFromHwInfo(const
         case 0x8:
             return AOT::DG2_G10_C0;
         }
-    } else {
+    } else if (DG2::isG11(hwInfo)) {
         switch (hwInfo.platform.usRevId) {
         case 0x0:
             return AOT::DG2_G11_A0;
@@ -27,6 +27,8 @@ AOT::PRODUCT_CONFIG HwInfoConfigHw<gfxProduct>::getProductConfigFromHwInfo(const
         case 0x5:
             return AOT::DG2_G11_B1;
         }
+    } else if (DG2::isG12(hwInfo)) {
+        return AOT::DG2_G12_A0;
     }
     return AOT::UNKNOWN_ISA;
 }

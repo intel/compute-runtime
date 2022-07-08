@@ -5,14 +5,17 @@
  *
  */
 
-#include "shared/source/gen9/hw_cmds_cfl.h"
+#include "shared/source/gen9/kbl/device_ids_configs_kbl.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
+
+#include "platforms.h"
+
 using namespace NEO;
 
-TEST(CflHwInfoConfig, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
-    if (IGFX_COFFEELAKE != productFamily) {
+TEST(KblHwInfoConfig, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
+    if (IGFX_KABYLAKE != productFamily) {
         return;
     }
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -27,9 +30,9 @@ TEST(CflHwInfoConfig, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned
     EXPECT_EQ(0u, gtSystemInfo.EUCount);
 }
 
-using CflHwInfo = ::testing::Test;
+using KblHwInfo = ::testing::Test;
 
-CFLTEST_F(CflHwInfo, givenBoolWhenCallCflHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
+KBLTEST_F(KblHwInfo, givenBoolWhenCallKblHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
     uint64_t configs[] = {
         0x100030008,
         0x200030008,
@@ -42,6 +45,7 @@ CFLTEST_F(CflHwInfo, givenBoolWhenCallCflHardwareInfoSetupThenFeatureTableAndWor
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
+    PLATFORM &platform = hwInfo.platform;
 
     for (auto &config : configs) {
         for (auto setParamBool : boolValue) {
@@ -49,6 +53,7 @@ CFLTEST_F(CflHwInfo, givenBoolWhenCallCflHardwareInfoSetupThenFeatureTableAndWor
             gtSystemInfo = {0};
             featureTable = {};
             workaroundTable = {};
+            platform.usRevId = 9;
             hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config);
 
             EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuMidBatchPreempt);
@@ -79,6 +84,33 @@ CFLTEST_F(CflHwInfo, givenBoolWhenCallCflHardwareInfoSetupThenFeatureTableAndWor
             EXPECT_EQ(setParamBool, workaroundTable.flags.waFbcLinearSurfaceStride);
             EXPECT_EQ(setParamBool, workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
             EXPECT_EQ(setParamBool, workaroundTable.flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads);
+            EXPECT_EQ(false, workaroundTable.flags.waDisableLSQCROPERFforOCL);
+            EXPECT_EQ(false, workaroundTable.flags.waEncryptedEdramOnlyPartials);
+            EXPECT_EQ(false, workaroundTable.flags.waForcePcBbFullCfgRestore);
+
+            platform.usRevId = 1;
+            workaroundTable = {};
+            hardwareInfoSetup[productFamily](&hwInfo, true, config);
+
+            EXPECT_EQ(true, workaroundTable.flags.waDisableLSQCROPERFforOCL);
+            EXPECT_EQ(true, workaroundTable.flags.waEncryptedEdramOnlyPartials);
+            EXPECT_EQ(true, workaroundTable.flags.waForcePcBbFullCfgRestore);
         }
     }
+}
+
+KBLTEST_F(KblHwInfo, givenHwInfoConfigWhenGetProductConfigThenCorrectMatchIsFound) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    for (const auto &deviceId : amlDeviceIds) {
+        hwInfo.platform.usDeviceID = deviceId;
+        EXPECT_EQ(hwInfoConfig.getProductConfigFromHwInfo(hwInfo), AOT::AML);
+    }
+    for (const auto &deviceId : kblDeviceIds) {
+        hwInfo.platform.usDeviceID = deviceId;
+        EXPECT_EQ(hwInfoConfig.getProductConfigFromHwInfo(hwInfo), AOT::KBL);
+    }
+
+    hwInfo.platform.usDeviceID = 0u;
+    EXPECT_EQ(hwInfoConfig.getProductConfigFromHwInfo(hwInfo), AOT::UNKNOWN_ISA);
 }

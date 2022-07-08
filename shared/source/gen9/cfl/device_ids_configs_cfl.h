@@ -1,0 +1,60 @@
+/*
+ * Copyright (C) 2022 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#pragma once
+
+#include <vector>
+
+namespace NEO {
+static const std::vector<unsigned short> cflDeviceIds{
+    0x3E90,
+    0x3E93,
+    0x3E99,
+    0x3E92,
+    0x3E9B,
+    0x3E94,
+    0x3E91,
+    0x3E96,
+    0x3E9A,
+    0x3EA9,
+    0x3E98,
+    0x3E95,
+    0x3EA6,
+    0x3EA7,
+    0x3EA8,
+    0x3EA5,
+    0x9BAB,
+    0x9BA0,
+    0x9BC0};
+
+static const std::vector<unsigned short> whlDeviceIds{
+    0x3EA1,
+    0x3EA3,
+    0x3EA4,
+    0x3EA0,
+    0x3EA2};
+
+static const std::vector<unsigned short> cmlDeviceIds{
+    0x9B21,
+    0x9B41,
+    0x9BA2,
+    0x9BA4,
+    0x9BA5,
+    0x9BA8,
+    0x9BAA,
+    0x9BAC,
+    0x9BC2,
+    0x9BC4,
+    0x9BC5,
+    0x9BC6,
+    0x9BC8,
+    0x9BCA,
+    0x9BCB,
+    0x9BCC,
+    0x9BE6,
+    0x9BF6};
+} // namespace NEO

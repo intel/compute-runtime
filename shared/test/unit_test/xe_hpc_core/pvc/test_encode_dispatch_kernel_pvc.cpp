@@ -37,8 +37,8 @@ PVCTEST_F(CommandEncodeStatesPvcTest, GivenSmallSlmTotalSizesWhenSetAdditionalIn
         {0x9d, false},
     };
 
-    for (auto &revisionToTest : revisionsToTest) {
-        for (auto &deviceId : PVC_XL_IDS) {
+    for (const auto &revisionToTest : revisionsToTest) {
+        for (const auto &deviceId : pvcXlDeviceIds) {
             hwInfo.platform.usDeviceID = deviceId;
             hwInfo.platform.usRevId = revisionToTest.revisionId;
             INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
@@ -73,8 +73,8 @@ PVCTEST_F(EncodeKernelPvcTest, givenRevisionBAndAboveWhenSpecialModeRequiredThen
         {0x6, false},
         {0x7, false},
     };
-    for (auto &testInput : testInputs) {
-        for (auto &deviceId : PVC_XL_IDS) {
+    for (const auto &testInput : testInputs) {
+        for (const auto &deviceId : pvcXlDeviceIds) {
             hwInfo->platform.usDeviceID = deviceId;
             hwInfo->platform.usRevId = testInput.revId;
             cmdContainer->lastPipelineSelectModeRequired = false;
@@ -106,8 +106,8 @@ PVCTEST_F(EncodeKernelPvcTest, givenRevisionBAndAboveWhenSpecialModeRequiredAndA
         {0x6, false},
         {0x7, false},
     };
-    for (auto &testInput : testInputs) {
-        for (auto &deviceId : PVC_XL_IDS) {
+    for (const auto &testInput : testInputs) {
+        for (const auto &deviceId : pvcXlDeviceIds) {
             hwInfo->platform.usDeviceID = deviceId;
             hwInfo->platform.usRevId = testInput.revId;
             EncodeComputeMode<FamilyType>::adjustPipelineSelect(*cmdContainer.get(), dispatchInterface->kernelDescriptor);

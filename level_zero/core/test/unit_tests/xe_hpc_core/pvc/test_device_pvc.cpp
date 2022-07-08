@@ -25,7 +25,7 @@ PVCTEST_F(DeviceTestPvcXt, whenCallingGetMemoryPropertiesWithNonNullPtrAndRevisi
     auto &device = driverHandle->devices[0];
     auto hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
-    hwInfo->platform.usDeviceID = PVC_XT_IDS.front();
+    hwInfo->platform.usDeviceID = pvcXtDeviceIds.front();
     hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, *hwInfo); // not BD A0
 
     checkIfCallingGetMemoryPropertiesWithNonNullPtrThenMaxClockRateReturnZero(hwInfo);

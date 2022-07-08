@@ -7,9 +7,4 @@
 
 #pragma once
 
-#include <vector>
-
-namespace NEO {
-static const std::vector<unsigned short> DG2_G10_IDS{0x4F80, 0x4F81, 0x4F82, 0x4F83, 0x4F84, 0x5690, 0x5691, 0x5692, 0x56A0, 0x56A1, 0x56A2, 0x56C0};
-static const std::vector<unsigned short> DG2_G11_IDS{0x4F87, 0x4F88, 0x5693, 0x5694, 0x5695, 0x56A5, 0x56A6, 0x56B0, 0x56B1, 0x56C1};
-} // namespace NEO
+#include "shared/source/xe_hpg_core/dg2/definitions/device_ids_configs_dg2_base.h"

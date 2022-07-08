@@ -19,7 +19,7 @@ DG2TEST_F(ProductConfigHelperDg2Tests, givenVariousVariantsOfXeHpgAcronymsWhenGe
     std::vector<std::string> acronymsVariants = {"xe_hpg_core", "xe_hpg", "xehpg", "XeHpg"};
     for (auto &acronym : acronymsVariants) {
         ProductConfigHelper::adjustDeviceName(acronym);
-        auto ret = ProductConfigHelper::returnReleaseForAcronym(acronym);
+        auto ret = ProductConfigHelper::getReleaseForAcronym(acronym);
         EXPECT_EQ(ret, AOT::XE_HPG_RELEASE);
     }
 }

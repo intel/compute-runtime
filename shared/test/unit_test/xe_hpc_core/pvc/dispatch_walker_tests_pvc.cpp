@@ -39,7 +39,7 @@ PVCTEST_F(WalkerDispatchTestsPvc, givenPvcWhenEncodeAdditionalWalkerFieldsThenPo
 
     EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true};
     for (auto &testInput : testInputs) {
-        for (auto &deviceId : PVC_XL_IDS) {
+        for (auto &deviceId : pvcXlDeviceIds) {
             hwInfo.platform.usDeviceID = deviceId;
             hwInfo.platform.usRevId = testInput.revisionId;
             DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(
@@ -59,7 +59,7 @@ PVCTEST_F(WalkerDispatchTestsPvc, givenPvcSupportsSystemMemoryFenceWhenNoSystemF
     hwInfo.platform.usRevId = 0x3;
 
     EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, false};
-    for (auto &deviceId : PVC_XL_IDS) {
+    for (auto &deviceId : pvcXlDeviceIds) {
         hwInfo.platform.usDeviceID = deviceId;
 
         postSyncData.setSystemMemoryFenceRequest(true);

@@ -17,7 +17,7 @@ XE_HP_CORE_TEST_F(ProductConfigHelperXeHpCoreTests, givenVariousVariantsOfXeHpAc
     std::vector<std::string> acronymsVariants = {"xe_hp_core", "xe_hp", "xehp", "XeHp"};
     for (auto &acronym : acronymsVariants) {
         ProductConfigHelper::adjustDeviceName(acronym);
-        auto ret = ProductConfigHelper::returnReleaseForAcronym(acronym);
+        auto ret = ProductConfigHelper::getReleaseForAcronym(acronym);
         EXPECT_EQ(ret, AOT::XE_HP_RELEASE);
     }
 }

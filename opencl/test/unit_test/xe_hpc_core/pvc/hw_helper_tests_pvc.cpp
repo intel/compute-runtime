@@ -21,7 +21,7 @@ using HwHelperTestsPvcXt = Test<HwHelperTestsXeHpcCore>;
 PVCTEST_F(HwHelperTestsPvcXt, givenSingleTileCsrOnPvcXtWhenAllocatingCsrSpecificAllocationsAndIsNotBaseDieA0ThenStoredInProperMemoryPool) {
     auto hwInfo = *defaultHwInfo;
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    hwInfo.platform.usDeviceID = PVC_XT_IDS.front();
+    hwInfo.platform.usDeviceID = pvcXtDeviceIds.front();
     hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo); // not BD A0
     checkIfSingleTileCsrWhenAllocatingCsrSpecificAllocationsThenStoredInProperMemoryPool(&hwInfo);
 }
@@ -29,7 +29,7 @@ PVCTEST_F(HwHelperTestsPvcXt, givenSingleTileCsrOnPvcXtWhenAllocatingCsrSpecific
 PVCTEST_F(HwHelperTestsPvcXt, givenMultiTileCsrOnPvcWhenAllocatingCsrSpecificAllocationsAndIsNotBaseDieA0ThenStoredInLocalMemoryPool) {
     auto hwInfo = *defaultHwInfo;
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    hwInfo.platform.usDeviceID = PVC_XT_IDS.front();
+    hwInfo.platform.usDeviceID = pvcXtDeviceIds.front();
     hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo); // not BD A0
     checkIfMultiTileCsrWhenAllocatingCsrSpecificAllocationsThenStoredInLocalMemoryPool(&hwInfo);
 }

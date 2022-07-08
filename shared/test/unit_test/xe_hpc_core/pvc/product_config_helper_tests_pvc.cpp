@@ -19,7 +19,7 @@ PVCTEST_F(ProductConfigHelperPvcTests, givenVariousVariantsOfXeHpcAcronymsWhenGe
     std::vector<std::string> acronymsVariants = {"xe_hpc_core", "xe_hpc", "xehpc", "XeHpc"};
     for (auto &acronym : acronymsVariants) {
         ProductConfigHelper::adjustDeviceName(acronym);
-        auto ret = ProductConfigHelper::returnReleaseForAcronym(acronym);
+        auto ret = ProductConfigHelper::getReleaseForAcronym(acronym);
         EXPECT_EQ(ret, AOT::XE_HPC_RELEASE);
     }
 }

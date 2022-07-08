@@ -87,18 +87,14 @@ HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenIsImplicitScalingSupportedThenE
     EXPECT_FALSE(hwInfoConfig.isImplicitScalingSupported(*defaultHwInfo));
 }
 
-HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenGetProductConfigThenCorrectMatchIsFound, IsAtMostXeHpCore) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    EXPECT_NE(hwInfoConfig.getProductConfigFromHwInfo(*defaultHwInfo), AOT::UNKNOWN_ISA);
-}
-
-HWTEST2_F(HwInfoConfigTest, givenAotConfigWhenSetHwInfoRevisionIdThenCorrectValueIsSet, IsAtMostXeHpCore) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+HWTEST2_F(HwInfoConfigTest, givenAotConfigWhenSetHwInfoRevisionIdThenCorrectValueIsSet, IsAtMostDg2) {
+    auto hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     auto productConfig = hwInfoConfig.getProductConfigFromHwInfo(*defaultHwInfo);
     AheadOfTimeConfig aotConfig = {0};
     aotConfig.ProductConfig = productConfig;
-    CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->setProductConfigForHwInfo(*defaultHwInfo, aotConfig);
-    EXPECT_EQ(defaultHwInfo->platform.usRevId, aotConfig.ProductConfigID.Revision);
+    CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily)->setProductConfigForHwInfo(hwInfo, aotConfig);
+    EXPECT_EQ(hwInfo.platform.usRevId, aotConfig.ProductConfigID.Revision);
 }
 
 HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenIsAdjustWalkOrderAvailableCallThenFalseReturn) {

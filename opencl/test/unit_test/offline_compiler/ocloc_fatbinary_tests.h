@@ -17,7 +17,7 @@
 namespace NEO {
 class OclocEnabledAcronyms : public ::testing::Test {
   public:
-    std::vector<DeviceMapping> enabledProducts{};
+    std::vector<DeviceAotInfo> enabledProducts{};
     std::vector<ConstStringRef> enabledProductsAcronyms{};
     std::vector<ConstStringRef> enabledFamiliesAcronyms{};
     std::vector<ConstStringRef> enabledReleasesAcronyms{};
@@ -29,10 +29,10 @@ class OclocFatBinaryProductAcronymsTests : public OclocEnabledAcronyms {
         oclocArgHelperWithoutInput = std::make_unique<OclocArgHelper>();
         oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{true};
 
-        enabledProducts = oclocArgHelperWithoutInput->getAllSupportedDeviceConfigs();
-        enabledProductsAcronyms = oclocArgHelperWithoutInput->getEnabledProductAcronyms();
-        enabledFamiliesAcronyms = oclocArgHelperWithoutInput->getEnabledFamiliesAcronyms();
-        enabledReleasesAcronyms = oclocArgHelperWithoutInput->getEnabledReleasesAcronyms();
+        enabledProducts = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
+        enabledProductsAcronyms = oclocArgHelperWithoutInput->productConfigHelper->getRepresentativeProductAcronyms();
+        enabledFamiliesAcronyms = oclocArgHelperWithoutInput->productConfigHelper->getFamiliesAcronyms();
+        enabledReleasesAcronyms = oclocArgHelperWithoutInput->productConfigHelper->getReleasesAcronyms();
     }
 
     std::unique_ptr<OclocArgHelper> oclocArgHelperWithoutInput;
@@ -44,10 +44,10 @@ class OclocFatBinaryTest : public OclocEnabledAcronyms {
         mockArgHelperFilesMap[spirvFilename] = spirvFileContent;
         mockArgHelper.interceptOutput = true;
 
-        enabledProducts = mockArgHelper.getAllSupportedDeviceConfigs();
-        enabledProductsAcronyms = mockArgHelper.getEnabledProductAcronyms();
-        enabledFamiliesAcronyms = mockArgHelper.getEnabledFamiliesAcronyms();
-        enabledReleasesAcronyms = mockArgHelper.getEnabledReleasesAcronyms();
+        enabledProducts = mockArgHelper.productConfigHelper->getDeviceAotInfo();
+        enabledProductsAcronyms = mockArgHelper.productConfigHelper->getRepresentativeProductAcronyms();
+        enabledFamiliesAcronyms = mockArgHelper.productConfigHelper->getFamiliesAcronyms();
+        enabledReleasesAcronyms = mockArgHelper.productConfigHelper->getReleasesAcronyms();
     }
 
   protected:
