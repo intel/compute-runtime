@@ -100,6 +100,18 @@ if(SUPPORT_XEHP_AND_LATER)
   )
 endif()
 
+if(SUPPORT_GEN12LP OR SUPPORT_XE_HP_CORE OR SUPPORT_XE_HPG_CORE)
+  list(APPEND L0_RUNTIME_SOURCES
+       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_hw_helper_tgllp_plus.inl
+  )
+endif()
+
+if(SUPPORT_PVC_AND_LATER)
+  list(APPEND L0_RUNTIME_SOURCES
+       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_hw_helper_pvc_and_later.inl
+  )
+endif()
+
 target_include_directories(${L0_STATIC_LIB_NAME}
                            PUBLIC
                            ${CMAKE_CURRENT_SOURCE_DIR}/
