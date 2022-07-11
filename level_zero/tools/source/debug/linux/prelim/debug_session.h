@@ -106,6 +106,7 @@ struct DebugSessionLinux : DebugSessionImp {
         BindInfo bindInfo;
         uint64_t elfUuidHandle;
         uint64_t vmHandle;
+        bool tileInstanced = false;
 
         uint64_t moduleBegin;
         uint64_t moduleEnd;
@@ -138,6 +139,7 @@ struct DebugSessionLinux : DebugSessionImp {
         std::unordered_map<uint64_t, BindInfo> vmToModuleDebugAreaBindInfo;
         std::unordered_map<uint64_t, BindInfo> vmToContextStateSaveAreaBindInfo;
         std::unordered_map<uint64_t, BindInfo> vmToStateBaseAreaBindInfo;
+        std::unordered_map<uint64_t, uint32_t> vmToTile;
 
         std::unordered_map<uint64_t, std::unique_ptr<IsaAllocation>> isaMap;
         std::unordered_map<uint64_t, uint64_t> elfMap;

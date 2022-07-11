@@ -3488,7 +3488,30 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenAllocationIsRegis
     EXPECT_TRUE(bo.isImmediateBindingRequired());
 }
 
-TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenIsaIsRegisteredThenCookieIsAddedToBoHandle) {
+TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledAndTileInstancedIsaWhenIsaIsRegisteredThenCookieIsAddedToBoHandle) {
+    DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::MaxSize); i++) {
+        drm.classHandles.push_back(i);
+    }
+
+    drm.registeredClass = DrmResourceClass::MaxSize;
+
+    MockBufferObject bo(&drm, 3, 0, 0, 1);
+    MockDrmAllocation allocation(AllocationType::KERNEL_ISA, MemoryPool::LocalMemory);
+    allocation.storageInfo.tileInstanced = true;
+    allocation.bufferObjects[0] = &bo;
+    allocation.registerBOBindExtHandle(&drm);
+    EXPECT_EQ(2u, bo.bindExtHandles.size());
+
+    EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
+    EXPECT_EQ(drm.currentCookie - 1, bo.bindExtHandles[1]);
+
+    allocation.freeRegisteredBOBindExtHandles(&drm);
+    EXPECT_EQ(2u, drm.unregisterCalledCount);
+}
+
+TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledAndSingleInstanceIsaWhenIsaIsRegisteredThenCookieIsNotAddedToBoHandle) {
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::MaxSize); i++) {
@@ -3501,13 +3524,12 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenIsaIsRegisteredTh
     MockDrmAllocation allocation(AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
     allocation.bufferObjects[0] = &bo;
     allocation.registerBOBindExtHandle(&drm);
-    EXPECT_EQ(2u, bo.bindExtHandles.size());
+    EXPECT_EQ(1u, bo.bindExtHandles.size());
 
     EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
-    EXPECT_EQ(drm.currentCookie - 1, bo.bindExtHandles[1]);
 
     allocation.freeRegisteredBOBindExtHandles(&drm);
-    EXPECT_EQ(2u, drm.unregisterCalledCount);
+    EXPECT_EQ(1u, drm.unregisterCalledCount);
 }
 
 TEST_F(DrmAllocationTests, givenDrmAllocationWhenSetCacheRegionIsCalledForDefaultRegionThenReturnTrue) {

@@ -714,7 +714,7 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
         auto vmHandle = vmBind->vm_handle;
         uint32_t index = 0;
         auto connection = clientHandleToConnection[vmBind->client_handle].get();
-        auto uuid = vmBind->uuids[index];
+        const auto uuid = vmBind->uuids[index];
 
         if (connection->uuidMap.find(uuid) == connection->uuidMap.end()) {
             PRINT_DEBUGGER_ERROR_LOG("Unknown UUID handle = %llu\n", (uint64_t)uuid);
@@ -747,18 +747,24 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
         if (connection->uuidMap[uuid].classIndex == NEO::DrmResourceClass::Isa) {
             PRINT_DEBUGGER_INFO_LOG("ISA vm_handle = %llu", (uint64_t)vmHandle);
 
+            const auto isaUuidHandle = connection->uuidMap[uuid].handle;
             bool perKernelModules = true;
             int moduleUUIDindex = -1;
+            bool tileInstanced = false;
 
             for (uint32_t uuidIter = 1; uuidIter < vmBind->num_uuids; uuidIter++) {
                 if (connection->uuidMap[vmBind->uuids[uuidIter]].classIndex == NEO::DrmResourceClass::L0ZebinModule) {
                     perKernelModules = false;
                     moduleUUIDindex = static_cast<int>(uuidIter);
                 }
+
+                if (connection->uuidMap[vmBind->uuids[uuidIter]].classHandle == isaUuidHandle) {
+                    tileInstanced = true;
+                }
             }
 
             if (connection->isaMap.find(vmBind->va_start) == connection->isaMap.end() && createEvent) {
-                auto isaUuidHandle = connection->uuidMap[vmBind->uuids[index]].handle;
+
                 auto &isaMap = connection->isaMap;
                 auto &elfMap = connection->elfMap;
 
@@ -768,6 +774,7 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                 isa->elfUuidHandle = invalidHandle;
                 isa->moduleBegin = 0;
                 isa->moduleEnd = 0;
+                isa->tileInstanced = tileInstanced;
 
                 for (index = 1; index < vmBind->num_uuids; index++) {
                     if (connection->uuidMap[vmBind->uuids[index]].classIndex == NEO::DrmResourceClass::Elf) {
@@ -779,10 +786,6 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
 
                             module.elfUuidHandle = vmBind->uuids[index];
                         }
-                    }
-
-                    if (connection->uuidMap[vmBind->uuids[index]].classHandle == isaUuidHandle) {
-                        isa->cookies.emplace(static_cast<uint64_t>(vmBind->uuids[index]));
                     }
                 }
 
@@ -938,7 +941,7 @@ void DebugSessionLinux::handleContextParamEvent(prelim_drm_i915_debug_event_cont
         clientHandleToConnection[contextParam->client_handle]->contextsCreated[contextParam->ctx_handle].vm = contextParam->param.value;
         break;
     case I915_CONTEXT_PARAM_ENGINES: {
-        PRINT_DEBUGGER_INFO_LOG("I915_CONTEXT_PARAM_ENGINES ctx_id = %lu param = %llu value = %llu size = %lu \n",
+        PRINT_DEBUGGER_INFO_LOG("I915_CONTEXT_PARAM_ENGINES ctx_id = %lu param = %llu value = %llu size = %lu",
                                 (uint32_t)contextParam->param.ctx_id,
                                 (uint64_t)contextParam->param.param,
                                 (uint64_t)contextParam->param.value, (uint32_t)contextParam->param.size);
@@ -951,6 +954,16 @@ void DebugSessionLinux::handleContextParamEvent(prelim_drm_i915_debug_event_cont
         for (uint32_t i = 0; i < numEngines; i++) {
             clientHandleToConnection[contextParam->client_handle]->contextsCreated[contextParam->ctx_handle].engines.push_back(engines->engines[i]);
         }
+
+        auto vm = clientHandleToConnection[contextParam->client_handle]->contextsCreated[contextParam->ctx_handle].vm;
+        if (numEngines && vm != invalidHandle) {
+            NEO::EngineClassInstance engineClassInstance = {engines->engines[0].engine_class, engines->engines[0].engine_instance};
+            auto tileIndex = DrmHelper::getEngineTileIndex(connectedDevice, engineClassInstance);
+            clientHandleToConnection[contextParam->client_handle]->vmToTile[vm] = tileIndex;
+
+            PRINT_DEBUGGER_INFO_LOG("VM = %llu mapped to TILE = %lu\n", vm, tileIndex);
+        }
+
         break;
     }
     default:

@@ -3992,14 +3992,89 @@ TEST_F(DebugApiLinuxVmBindTest, GivenVmBindEventWithAckNeededForIsaWhenHandlingE
     EXPECT_EQ(isaSize, isaAllocation->bindInfo.size);
     EXPECT_EQ(elfUUID, isaAllocation->elfUuidHandle);
     EXPECT_EQ(3u, isaAllocation->vmHandle);
-    EXPECT_EQ(1u, isaAllocation->cookies.size());
-    EXPECT_EQ(cookieUUID, *isaAllocation->cookies.begin());
+    EXPECT_TRUE(isaAllocation->tileInstanced);
 
     ASSERT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->eventsToAck.size());
     auto eventToAck = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->eventsToAck[0].second;
     EXPECT_EQ(vmBindIsa->base.type, eventToAck.type);
     EXPECT_EQ(vmBindIsa->base.seqno, eventToAck.seqno);
     EXPECT_EQ(0u, handler->debugEventAcked.seqno);
+}
+
+TEST_F(DebugApiLinuxVmBindTest, GivenCookieWhenHandlingVmBindForIsaThenIsaAllocationIsTileInstanced) {
+    uint64_t isaGpuVa = 0x345000;
+    uint64_t isaSize = 0x2000;
+    uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
+    prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
+
+    vmBindIsa->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
+    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE | PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK;
+    vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 3 * sizeof(typeOfUUID);
+    vmBindIsa->base.seqno = 3;
+    vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
+    vmBindIsa->va_start = isaGpuVa;
+    vmBindIsa->va_length = isaSize;
+    vmBindIsa->vm_handle = vmHandleForVmBind;
+    vmBindIsa->num_uuids = 3;
+
+    auto *uuids = reinterpret_cast<typeOfUUID *>(ptrOffset(vmBindIsaData, sizeof(prelim_drm_i915_debug_event_vm_bind)));
+    typeOfUUID uuidsTemp[3];
+    uuidsTemp[0] = static_cast<typeOfUUID>(isaUUID);
+    uuidsTemp[1] = static_cast<typeOfUUID>(cookieUUID);
+    uuidsTemp[2] = static_cast<typeOfUUID>(elfUUID);
+    memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
+
+    session->handleEvent(&vmBindIsa->base);
+
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap;
+
+    EXPECT_EQ(1u, isaMap.size());
+    EXPECT_NE(isaMap.end(), isaMap.find(isaGpuVa));
+
+    auto isaAllocation = isaMap[isaGpuVa].get();
+    EXPECT_EQ(isaGpuVa, isaAllocation->bindInfo.gpuVa);
+    EXPECT_EQ(isaSize, isaAllocation->bindInfo.size);
+    EXPECT_EQ(elfUUID, isaAllocation->elfUuidHandle);
+    EXPECT_EQ(3u, isaAllocation->vmHandle);
+    EXPECT_TRUE(isaAllocation->tileInstanced);
+}
+
+TEST_F(DebugApiLinuxVmBindTest, GivenNoCookieWhenHandlingVmBindForIsaThenIsaAllocationIsNotTileInstanced) {
+    uint64_t isaGpuVa = 0x345000;
+    uint64_t isaSize = 0x2000;
+    uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
+    prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
+
+    vmBindIsa->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
+    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE | PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK;
+    vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 3 * sizeof(typeOfUUID);
+    vmBindIsa->base.seqno = 3;
+    vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
+    vmBindIsa->va_start = isaGpuVa;
+    vmBindIsa->va_length = isaSize;
+    vmBindIsa->vm_handle = vmHandleForVmBind;
+    vmBindIsa->num_uuids = 2;
+
+    auto *uuids = reinterpret_cast<typeOfUUID *>(ptrOffset(vmBindIsaData, sizeof(prelim_drm_i915_debug_event_vm_bind)));
+
+    typeOfUUID uuidsTemp[2];
+    uuidsTemp[0] = static_cast<typeOfUUID>(isaUUID);
+    uuidsTemp[1] = static_cast<typeOfUUID>(elfUUID);
+    memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
+
+    session->handleEvent(&vmBindIsa->base);
+
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap;
+
+    EXPECT_EQ(1u, isaMap.size());
+    EXPECT_NE(isaMap.end(), isaMap.find(isaGpuVa));
+
+    auto isaAllocation = isaMap[isaGpuVa].get();
+    EXPECT_EQ(isaGpuVa, isaAllocation->bindInfo.gpuVa);
+    EXPECT_EQ(isaSize, isaAllocation->bindInfo.size);
+    EXPECT_EQ(elfUUID, isaAllocation->elfUuidHandle);
+    EXPECT_EQ(3u, isaAllocation->vmHandle);
+    EXPECT_FALSE(isaAllocation->tileInstanced);
 }
 
 TEST_F(DebugApiLinuxVmBindTest, GivenTwoVmBindEventForTheSameIsaInDifferentVMWhenHandlingEventThenIsaVmHandleIsNotOverriden) {
@@ -4781,6 +4856,7 @@ TEST_F(DebugApiLinuxTest, GivenContextParamEventWhenTypeIsParamEngineThenEventIs
     uint32_t contextHandle = 20;
 
     session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].handle = contextHandle;
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].vm = vmId;
     session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmIds.insert(vmId);
 
     constexpr auto size = sizeof(prelim_drm_i915_debug_event_context_param) + sizeof(i915_context_param_engines) + sizeof(i915_engine_class_instance);
@@ -4824,8 +4900,81 @@ TEST_F(DebugApiLinuxTest, GivenContextParamEventWhenTypeIsParamEngineThenEventIs
     EXPECT_EQ(static_cast<uint32_t>(I915_ENGINE_CLASS_RENDER), session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].engines[0].engine_class);
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].engines[0].engine_instance);
 
+    EXPECT_NE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile.end(),
+              session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile.find(vmId));
+    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile[vmId]);
+
     auto infoMessage = ::testing::internal::GetCapturedStdout();
     EXPECT_TRUE(hasSubstr(infoMessage, std::string("I915_CONTEXT_PARAM_ENGINES ctx_id = 20 param = 10 value = 0")));
+}
+
+TEST_F(DebugApiLinuxTest, GivenNoVmIdWhenOrZeroEnginesContextParamEventIsHandledThenVmToTileIsNotSet) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+    session->clientHandle = DebugSessionLinux::invalidClientHandle;
+
+    uint64_t vmId = 10;
+    uint32_t contextHandle = 20;
+
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].handle = contextHandle;
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].vm = MockDebugSessionLinux::invalidHandle;
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmIds.insert(vmId);
+
+    constexpr auto size = sizeof(prelim_drm_i915_debug_event_context_param) + sizeof(i915_context_param_engines) + sizeof(i915_engine_class_instance);
+
+    auto memory = alignedMalloc(size, sizeof(prelim_drm_i915_debug_event_context_param));
+    auto *contextParamEvent = static_cast<prelim_drm_i915_debug_event_context_param *>(memory);
+
+    {
+        contextParamEvent->base.type = PRELIM_DRM_I915_DEBUG_EVENT_CONTEXT_PARAM;
+        contextParamEvent->base.flags = 0;
+        contextParamEvent->base.size = size;
+        contextParamEvent->client_handle = MockDebugSessionLinux::mockClientHandle;
+        contextParamEvent->ctx_handle = contextHandle;
+    }
+
+    auto offset = offsetof(prelim_drm_i915_debug_event_context_param, param);
+
+    GemContextParam paramToCopy = {};
+    paramToCopy.contextId = contextHandle;
+    paramToCopy.size = sizeof(i915_context_param_engines) + sizeof(i915_engine_class_instance);
+    paramToCopy.param = I915_CONTEXT_PARAM_ENGINES;
+    paramToCopy.value = 0;
+    memcpy(ptrOffset(memory, offset), &paramToCopy, sizeof(GemContextParam));
+
+    auto valueOffset = offsetof(GemContextParam, value);
+    auto *engines = ptrOffset(memory, offset + valueOffset);
+    i915_context_param_engines enginesParam;
+    enginesParam.extensions = 0;
+    memcpy(engines, &enginesParam, sizeof(i915_context_param_engines));
+
+    auto enginesOffset = offsetof(i915_context_param_engines, engines);
+    auto *classInstance = ptrOffset(memory, offset + valueOffset + enginesOffset);
+    i915_engine_class_instance ci = {I915_ENGINE_CLASS_RENDER, 1};
+    memcpy(classInstance, &ci, sizeof(i915_engine_class_instance));
+
+    session->handleEvent(&contextParamEvent->base);
+
+    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].engines.size());
+    EXPECT_EQ(static_cast<uint32_t>(I915_ENGINE_CLASS_RENDER), session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].engines[0].engine_class);
+    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].engines[0].engine_instance);
+
+    EXPECT_EQ(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile.end(),
+              session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile.find(MockDebugSessionLinux::invalidHandle));
+
+    paramToCopy.size = sizeof(i915_context_param_engines);
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].vm = vmId;
+    memcpy(ptrOffset(memory, offset), &paramToCopy, sizeof(GemContextParam));
+
+    session->handleEvent(&contextParamEvent->base);
+
+    EXPECT_EQ(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile.end(),
+              session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile.find(vmId));
+
+    alignedFree(memory);
 }
 
 TEST_F(DebugApiLinuxTest, GivenDebuggerErrorLogsWhenContextParamWithInvalidContextIsHandledThenErrorIsPrinted) {

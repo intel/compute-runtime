@@ -205,7 +205,7 @@ void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
             if (bo) {
                 bo->addBindExtHandle(handle);
                 bo->markForCapture();
-                if (resourceClass == DrmResourceClass::Isa) {
+                if (resourceClass == DrmResourceClass::Isa && storageInfo.tileInstanced == true) {
                     auto cookieHandle = drm->registerIsaCookie(handle);
                     bo->addBindExtHandle(cookieHandle);
                     registeredBoBindHandles.push_back(cookieHandle);
