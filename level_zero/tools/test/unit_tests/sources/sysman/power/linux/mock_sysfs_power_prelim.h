@@ -25,6 +25,7 @@ namespace L0 {
 namespace ult {
 constexpr uint64_t setEnergyCounter = (83456u * 1048576u);
 constexpr uint64_t offset = 0x400;
+constexpr uint32_t mockLimitCount = 2u;
 const std::string deviceName("device");
 const std::string baseTelemSysFS("/sys/class/intel_pmt");
 const std::string hwmonDir("device/hwmon");
@@ -34,9 +35,11 @@ const std::string i915HwmonDirTile0("device/hwmon/hwmon3");
 const std::string i915HwmonDirTile1("device/hwmon/hwmon4");
 const std::vector<std::string> listOfMockedHwmonDirs = {"hwmon0", "hwmon1", "hwmon2", "hwmon3", "hwmon4"};
 const std::string sustainedPowerLimit("power1_max");
-const std::string criticalPowerLimit("power1_crit");
+const std::string sustainedPowerLimitInterval("power1_max_interval");
+const std::string criticalPowerLimit1("curr1_crit");
+const std::string criticalPowerLimit2("power1_crit");
 const std::string energyCounterNode("energy1_input");
-const std::string defaultPowerLimit("power1_max_default");
+const std::string defaultPowerLimit("power1_rated_max");
 constexpr uint64_t expectedEnergyCounter = 123456785u;
 constexpr uint64_t expectedEnergyCounterTile0 = 123456785u;
 constexpr uint64_t expectedEnergyCounterTile1 = 128955785u;
@@ -53,7 +56,11 @@ template <>
 struct Mock<PowerSysfsAccess> : public PowerSysfsAccess {
     ze_result_t mockReadResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadValUnsignedLongResult = ZE_RESULT_SUCCESS;
+    ze_result_t mockReadPeakResult = ZE_RESULT_SUCCESS;
     ze_result_t mockWriteResult = ZE_RESULT_SUCCESS;
+    ze_result_t mockWriteUnsignedResult = ZE_RESULT_SUCCESS;
+    ze_result_t mockReadIntResult = ZE_RESULT_SUCCESS;
+    ze_result_t mockWritePeakLimitResult = ZE_RESULT_SUCCESS;
     ze_result_t mockscanDirEntriesResult = ZE_RESULT_SUCCESS;
 
     ze_result_t getValString(const std::string file, std::string &val) {
@@ -78,13 +85,17 @@ struct Mock<PowerSysfsAccess> : public PowerSysfsAccess {
 
     uint64_t sustainedPowerLimitVal = 0;
     uint64_t criticalPowerLimitVal = 0;
+    int32_t sustainedPowerLimitIntervalVal = 0;
 
     ze_result_t getValUnsignedLongHelper(const std::string file, uint64_t &val);
     ze_result_t getValUnsignedLong(const std::string file, uint64_t &val) {
         ze_result_t result = ZE_RESULT_SUCCESS;
         if (file.compare(i915HwmonDir + "/" + sustainedPowerLimit) == 0) {
             val = sustainedPowerLimitVal;
-        } else if (file.compare(i915HwmonDir + "/" + criticalPowerLimit) == 0) {
+        } else if ((file.compare(i915HwmonDir + "/" + criticalPowerLimit1) == 0) || (file.compare(i915HwmonDir + "/" + criticalPowerLimit2) == 0)) {
+            if (mockReadPeakResult != ZE_RESULT_SUCCESS) {
+                return mockReadPeakResult;
+            }
             val = criticalPowerLimitVal;
         } else if (file.compare(i915HwmonDirTile0 + "/" + energyCounterNode) == 0) {
             val = expectedEnergyCounterTile0;
@@ -113,7 +124,12 @@ struct Mock<PowerSysfsAccess> : public PowerSysfsAccess {
         ze_result_t result = ZE_RESULT_SUCCESS;
         if (file.compare(i915HwmonDir + "/" + sustainedPowerLimit) == 0) {
             sustainedPowerLimitVal = static_cast<uint64_t>(val);
-        } else if (file.compare(i915HwmonDir + "/" + criticalPowerLimit) == 0) {
+        } else if ((file.compare(i915HwmonDir + "/" + sustainedPowerLimitInterval) == 0)) {
+            sustainedPowerLimitIntervalVal = val;
+        } else if ((file.compare(i915HwmonDir + "/" + criticalPowerLimit1) == 0) || (file.compare(i915HwmonDir + "/" + criticalPowerLimit2) == 0)) {
+            if (mockWritePeakLimitResult != ZE_RESULT_SUCCESS) {
+                return mockWritePeakLimitResult;
+            }
             criticalPowerLimitVal = static_cast<uint64_t>(val);
         } else {
             result = ZE_RESULT_ERROR_NOT_AVAILABLE;
@@ -138,6 +154,19 @@ struct Mock<PowerSysfsAccess> : public PowerSysfsAccess {
         return getValUnsignedLong(file, val);
     }
 
+    ze_result_t read(const std::string file, int32_t &val) override {
+        if (mockReadIntResult != ZE_RESULT_SUCCESS) {
+            return mockReadIntResult;
+        }
+
+        if (file.compare(i915HwmonDir + "/" + sustainedPowerLimitInterval) == 0) {
+            val = sustainedPowerLimitIntervalVal;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
     ze_result_t read(const std::string file, std::string &val) override {
         if (mockReadResult != ZE_RESULT_SUCCESS) {
             return mockReadResult;
@@ -159,6 +188,26 @@ struct Mock<PowerSysfsAccess> : public PowerSysfsAccess {
         }
 
         return setVal(file, val);
+    }
+
+    ze_result_t write(const std::string file, const uint64_t val) override {
+        ze_result_t result = ZE_RESULT_SUCCESS;
+        if (mockWriteUnsignedResult != ZE_RESULT_SUCCESS) {
+            return mockWriteUnsignedResult;
+        }
+
+        if (file.compare(i915HwmonDir + "/" + sustainedPowerLimit) == 0) {
+            sustainedPowerLimitVal = val;
+        } else if ((file.compare(i915HwmonDir + "/" + criticalPowerLimit1) == 0) || (file.compare(i915HwmonDir + "/" + criticalPowerLimit2) == 0)) {
+            if (mockWritePeakLimitResult != ZE_RESULT_SUCCESS) {
+                return mockWritePeakLimitResult;
+            }
+            criticalPowerLimitVal = val;
+        } else {
+            result = ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+
+        return result;
     }
 
     ze_result_t scanDirEntries(const std::string file, std::vector<std::string> &listOfEntries) override {
