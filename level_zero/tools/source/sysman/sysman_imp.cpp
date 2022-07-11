@@ -106,9 +106,6 @@ ze_result_t SysmanDeviceImp::init() {
     if (pPci) {
         pPci->init();
     }
-    if (pStandbyHandleContext) {
-        pStandbyHandleContext->init(deviceHandles);
-    }
     if (pEngineHandleContext) {
         pEngineHandleContext->init();
     }

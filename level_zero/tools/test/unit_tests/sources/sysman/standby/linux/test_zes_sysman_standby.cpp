@@ -51,7 +51,6 @@ class ZesStandbyFixture : public SysmanDeviceFixture {
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
-        pSysmanDeviceImp->pStandbyHandleContext->init(deviceHandles);
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {
@@ -68,6 +67,13 @@ class ZesStandbyFixture : public SysmanDeviceFixture {
     }
 };
 
+TEST_F(ZesStandbyFixture, GivenStandbyModeFilesNotAvailableWhenCallingEnumerateThenSuccessResultAndZeroCountIsReturned) {
+    uint32_t count = 0;
+    ptestSysfsAccess->isStandbyModeFileAvailable = false;
+    ze_result_t result = zesDeviceEnumStandbyDomains(device, &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, 0u);
+}
 TEST_F(ZesStandbyFixture, GivenComponentCountZeroWhenCallingzesStandbyGetThenNonZeroCountIsReturnedAndVerifyzesStandbyGetCallSucceeds) {
     std::vector<zes_standby_handle_t> standbyHandle = {};
     uint32_t count = 0;
@@ -326,7 +332,6 @@ class ZesStandbyMultiDeviceFixture : public SysmanMultiDeviceFixture {
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
-        pSysmanDeviceImp->pStandbyHandleContext->init(deviceHandles);
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {
