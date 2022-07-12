@@ -3033,6 +3033,54 @@ TEST_F(MemoryTest, givenNoDeviceWhenAllocatingSharedMemoryThenDeviceInAllocation
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
+TEST_F(MemoryTest, givenCallToMakeMemoryResidentWithInvalidPointerThenInvalidArgumentIsReturned) {
+    void *ptr = nullptr;
+    ze_result_t res = driverHandle->makeMemoryResident(device, ptr, 1);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+}
+
+TEST_F(MemoryTest,
+       givenCallToMakeMemoryResidentWithDeviceMemoryThenAllocationIsNotAddedToVectorOfResidentAllocations) {
+    const size_t size = 4096;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t res = context->allocDeviceMem(device->toHandle(),
+                                              &deviceDesc,
+                                              size,
+                                              0,
+                                              &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(context->getDriverHandle());
+    size_t previousSize = driverHandleImp->sharedMakeResidentAllocations.size();
+
+    res = driverHandle->makeMemoryResident(device, ptr, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    size_t currentSize = driverHandleImp->sharedMakeResidentAllocations.size();
+    EXPECT_EQ(previousSize, currentSize);
+
+    context->freeMem(ptr);
+}
+
+TEST_F(MemoryTest,
+       givenCallToMakeMemoryResidentWithHeapPointerThenSuccessIsReturned) {
+    size_t size = 4 * MemoryConstants::pageSize;
+    void *ptr = driverHandle->getMemoryManager()->allocateSystemMemory(size, MemoryConstants::pageSize);
+    ASSERT_NE(nullptr, ptr);
+
+    ze_result_t res = driverHandle->importExternalPointer(ptr, MemoryConstants::pageSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = driverHandle->makeMemoryResident(device, ptr, MemoryConstants::pageSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = driverHandle->releaseImportedPointer(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    driverHandle->getMemoryManager()->freeSystemMemory(ptr);
+}
+
 TEST_F(MemoryTest, givenCallToCheckMemoryAccessFromDeviceWithInvalidPointerThenInvalidArgumentIsReturned) {
     void *ptr = nullptr;
     ze_result_t res = driverHandle->checkMemoryAccessFromDevice(device, ptr);

@@ -1496,6 +1496,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     NEO::SvmAllocationData *allocData = nullptr;
     bool dstAllocFound = device->getDriverHandle()->findAllocationDataForRange(ptr, size, &allocData);
     if (dstAllocFound) {
+        if (allocData->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {
+            DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(device->getDriverHandle());
+            driverHandleImp->makeMemoryResident(device->toHandle(), ptr, size);
+        }
         if (allocData->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY ||
             allocData->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {
             hostPointerNeedsFlush = true;
@@ -1841,6 +1845,11 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
             alignedPtr += offset;
         } else {
             alignedPtr = sourcePtr;
+        }
+
+        if (allocData->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {
+            DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(device->getDriverHandle());
+            driverHandleImp->makeMemoryResident(device->toHandle(), ptr, bufferSize);
         }
 
         if (allocData->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY ||

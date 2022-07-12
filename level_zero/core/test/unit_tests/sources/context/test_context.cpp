@@ -459,14 +459,14 @@ struct ContextMakeMemoryResidentAndMigrationTests : public ContextMakeMemoryResi
     struct MockResidentTestsPageFaultManager : public MockPageFaultManager {
         void moveAllocationToGpuDomain(void *ptr) override {
             moveAllocationToGpuDomainCalledTimes++;
-            migratedAddress = ptr;
+            migratedAddress.push_back(ptr);
         }
         void moveAllocationsWithinUMAllocsManagerToGpuDomain(SVMAllocsManager *unifiedMemoryManager) override {
             moveAllocationsWithinUMAllocsManagerToGpuDomainCalled++;
         }
         uint32_t moveAllocationToGpuDomainCalledTimes = 0;
         uint32_t moveAllocationsWithinUMAllocsManagerToGpuDomainCalled = 0;
-        void *migratedAddress = nullptr;
+        std::vector<void *> migratedAddress;
     };
 
     void SetUp() override {
@@ -544,7 +544,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalledTimes, 1u);
-    EXPECT_EQ(mockPageFaultManager->migratedAddress, ptr);
+    EXPECT_EQ(mockPageFaultManager->migratedAddress[0], ptr);
 
     mockMemoryInterface->evictResult = NEO::MemoryOperationsStatus::SUCCESS;
     res = context->evictMemory(device, ptr, size);
@@ -642,7 +642,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalledTimes, 0u);
-    EXPECT_EQ(mockPageFaultManager->migratedAddress, nullptr);
+    EXPECT_EQ(mockPageFaultManager->migratedAddress.empty(), true);
 
     mockMemoryInterface->evictResult = NEO::MemoryOperationsStatus::SUCCESS;
     res = context->evictMemory(device, ptr, size);
@@ -694,8 +694,11 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
                                             nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalledTimes, 1u);
-    EXPECT_EQ(mockPageFaultManager->migratedAddress, ptr);
+    EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalledTimes, 2u);
+
+    if (mockPageFaultManager->migratedAddress[0] != ptr) {
+        EXPECT_EQ(mockPageFaultManager->migratedAddress[1], ptr);
+    }
 
     mockMemoryInterface->evictResult = NEO::MemoryOperationsStatus::SUCCESS;
     res = context->evictMemory(device, ptr, size);
