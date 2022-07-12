@@ -266,7 +266,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
 
     EncodeWalkerArgs walkerArgs{
         args.isCooperative ? KernelExecutionType::Concurrent : KernelExecutionType::Default,
-        args.isHostScopeSignalEvent || args.isKernelUsingSystemAllocation};
+        args.isHostScopeSignalEvent && args.isKernelUsingSystemAllocation};
     EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, walkerArgs);
 
     PreemptionHelper::applyPreemptionWaCmdsBegin<Family>(listCmdBufferStream, *args.device);

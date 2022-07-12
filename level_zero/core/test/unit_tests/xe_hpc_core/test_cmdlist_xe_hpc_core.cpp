@@ -321,7 +321,8 @@ HWTEST2_F(CommandListAppendRangesBarrierXeHpcCore, givenCallToAppendRangesBarrie
     EXPECT_TRUE(pipeControlCmd->getUnTypedDataPortCacheFlush());
 }
 
-HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenHwSupportsSystemFenceWhenKernelNotUsingSystemMemoryAllocationsAndEventNotHostSignalScopeThenExpectsNoSystemFenceUsed, IsXeHpcCore) {
+HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
+          givenHwSupportsSystemFenceWhenKernelNotUsingSystemMemoryAllocationsAndEventNotHostSignalScopeThenExpectsNoSystemFenceUsed, IsXeHpcCore) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -390,7 +391,8 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenHwSupportsSystemFenceWhen
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenHwSupportsSystemFenceWhenKernelUsingUsmHostMemoryAllocationsAndEventNotHostSignalScopeThenExpectsSystemFenceUsed, IsXeHpcCore) {
+HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
+          givenHwSupportsSystemFenceWhenKernelUsingUsmHostMemoryAllocationsAndEventNotHostSignalScopeThenExpectsNoSystemFenceUsed, IsXeHpcCore) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -451,13 +453,14 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenHwSupportsSystemFenceWhen
 
     auto walkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
     auto &postSyncData = walkerCmd->getPostSync();
-    EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
+    EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenHwSupportsSystemFenceWhenMigrationOnComputeKernelUsingUsmSharedCpuMemoryAllocationsAndEventNotHostSignalScopeThenExpectsSystemFenceUsed, IsXeHpcCore) {
+HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
+          givenHwSupportsSystemFenceWhenMigrationOnComputeKernelUsingUsmSharedCpuMemoryAllocationsAndEventNotHostSignalScopeThenExpectsNoSystemFenceUsed, IsXeHpcCore) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -506,13 +509,14 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenHwSupportsSystemFenceWhen
 
     auto walkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
     auto &postSyncData = walkerCmd->getPostSync();
-    EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
+    EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenHwSupportsSystemFenceWhenKernelUsingIndirectSystemMemoryAllocationsAndEventNotHostSignalScopeThenExpectsSystemFenceUsed, IsXeHpcCore) {
+HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
+          givenHwSupportsSystemFenceWhenKernelUsingIndirectSystemMemoryAllocationsAndEventNotHostSignalScopeThenExpectsNoSystemFenceUsed, IsXeHpcCore) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -577,13 +581,14 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenHwSupportsSystemFenceWhen
 
     auto walkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
     auto &postSyncData = walkerCmd->getPostSync();
-    EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
+    EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenHwSupportsSystemFenceWhenKernelUsingDeviceMemoryAllocationsAndEventHostSignalScopeThenExpectsSystemFenceUsed, IsXeHpcCore) {
+HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
+          givenHwSupportsSystemFenceWhenKernelUsingDeviceMemoryAllocationsAndEventHostSignalScopeThenExpectsSystemFenceUsed, IsXeHpcCore) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -602,6 +607,74 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenHwSupportsSystemFenceWhen
     result = context->allocDeviceMem(device->toHandle(),
                                      &deviceDesc,
                                      size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    Mock<::L0::Kernel> kernel;
+    auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = mockModule.get();
+
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, allocData);
+    auto kernelAllocation = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    ASSERT_NE(nullptr, kernelAllocation);
+    kernel.residencyContainer.push_back(kernelAllocation);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.wait = 0;
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+
+    kernel.setGroupSize(1, 1, 1);
+    ze_group_count_t groupCount{8, 1, 1};
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    result = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    CmdListKernelLaunchParams launchParams = {};
+    result = commandList->appendLaunchKernelWithParams(&kernel, &groupCount, event.get(), launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList commands;
+    ASSERT_TRUE(CmdParse<FamilyType>::parseCommandBuffer(
+        commands,
+        commandList->commandContainer.getCommandStream()->getCpuBase(),
+        commandList->commandContainer.getCommandStream()->getUsed()));
+
+    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    ASSERT_NE(itor, commands.end());
+
+    auto walkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto &postSyncData = walkerCmd->getPostSync();
+    EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
+          givenHwSupportsSystemFenceWhenKernelUsingUsmHostMemoryAllocationsAndEventHostSignalScopeThenExpectsSystemFenceUsed, IsXeHpcCore) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto &hwConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+
+    VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
+    hwRevId = hwConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+
+    constexpr size_t size = 4096u;
+    constexpr size_t alignment = 4096u;
+    void *ptr = nullptr;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    result = context->allocHostMem(&hostDesc, size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 

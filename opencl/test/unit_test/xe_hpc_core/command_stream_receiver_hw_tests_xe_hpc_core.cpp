@@ -254,51 +254,218 @@ struct SystemMemoryFenceInDefaultConfigurationTest : public UltCommandStreamRece
     DebugManagerStateRestore restore;
 };
 
-HWTEST2_F(SystemMemoryFenceInDefaultConfigurationTest, whenEnqueueKernelIsCalledThenFenceCommandsCanBeGenerated, IsPVC) {
+HWTEST2_F(SystemMemoryFenceInDefaultConfigurationTest, givenSpecificDeviceSteppingWhenEnqueueKernelIsCalledThenFenceCommandsNotGenerated, IsPVC) {
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
     VariableBackup<unsigned short> revisionId(&defaultHwInfo->platform.usRevId);
 
-    unsigned short revisions[] = {0x0, 0x3};
-    for (auto revision : revisions) {
-        revisionId = revision;
-        UltClDeviceFactory ultClDeviceFactory{1, 0};
-        auto isPvcXlA0Stepping = (revision == 0x0);
-        auto &clDevice = *ultClDeviceFactory.rootDevices[0];
+    constexpr unsigned short revision = 0x0;
+    revisionId = revision;
+    UltClDeviceFactory ultClDeviceFactory{1, 0};
+    auto &clDevice = *ultClDeviceFactory.rootDevices[0];
 
-        MockKernelWithInternals kernel(clDevice);
-        MockContext context(&clDevice);
-        MockCommandQueueHw<FamilyType> commandQueue(&context, &clDevice, nullptr);
-        auto &commandStreamReceiver = clDevice.getUltCommandStreamReceiver<FamilyType>();
+    MockKernelWithInternals kernel(clDevice);
+    MockContext context(&clDevice);
+    MockCommandQueueHw<FamilyType> commandQueue(&context, &clDevice, nullptr);
+    auto &commandStreamReceiver = clDevice.getUltCommandStreamReceiver<FamilyType>();
 
-        size_t globalWorkSize[3] = {1, 1, 1};
-        commandQueue.enqueueKernel(kernel, 1, nullptr, globalWorkSize, nullptr, 0, nullptr, nullptr);
+    size_t globalWorkSize[3] = {1, 1, 1};
+    commandQueue.enqueueKernel(kernel, 1, nullptr, globalWorkSize, nullptr, 0, nullptr, nullptr);
 
-        ClHardwareParse hwParser;
-        hwParser.parseCommands<FamilyType>(commandQueue);
+    ClHardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandQueue);
 
-        auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-        ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
-        auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
-        EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
+    auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
+    auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
+    EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
 
-        auto itorComputeWalker = find<COMPUTE_WALKER *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-        ASSERT_NE(hwParser.cmdList.end(), itorComputeWalker);
-        auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*itorComputeWalker);
-        auto &postSyncData = walkerCmd->getPostSync();
+    auto itorComputeWalker = find<COMPUTE_WALKER *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), itorComputeWalker);
+    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*itorComputeWalker);
+    auto &postSyncData = walkerCmd->getPostSync();
 
-        auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-        if (isPvcXlA0Stepping) {
-            EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
-            EXPECT_EQ(hwParser.cmdList.end(), itorMiMemFence);
-        } else {
-            EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
-            ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
-            auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
-            ASSERT_NE(nullptr, fenceCmd);
-            EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
-        }
-    }
+    auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
+    EXPECT_EQ(hwParser.cmdList.end(), itorMiMemFence);
+}
+
+XE_HPC_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTest,
+                  givenNoEventProvidedWhenEnqueueKernelNotUsingSystemMemoryThenNoPostSyncFenceRequestDispatched) {
+    using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
+
+    VariableBackup<unsigned short> revisionId(&defaultHwInfo->platform.usRevId);
+
+    constexpr unsigned short revision = 0x3;
+    revisionId = revision;
+    UltClDeviceFactory ultClDeviceFactory{1, 0};
+    auto &clDevice = *ultClDeviceFactory.rootDevices[0];
+
+    MockKernelWithInternals kernel(clDevice);
+    MockContext context(&clDevice);
+    MockCommandQueueHw<FamilyType> commandQueue(&context, &clDevice, nullptr);
+    auto &commandStreamReceiver = clDevice.getUltCommandStreamReceiver<FamilyType>();
+
+    size_t globalWorkSize[3] = {1, 1, 1};
+    commandQueue.enqueueKernel(kernel, 1, nullptr, globalWorkSize, nullptr, 0, nullptr, nullptr);
+
+    ClHardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandQueue);
+
+    auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
+    auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
+    EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
+
+    auto itorComputeWalker = find<COMPUTE_WALKER *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), itorComputeWalker);
+    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*itorComputeWalker);
+    auto &postSyncData = walkerCmd->getPostSync();
+
+    auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
+    ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
+    auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
+    ASSERT_NE(nullptr, fenceCmd);
+    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+}
+
+XE_HPC_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTest,
+                  givenNoEventProvidedWhenEnqueueKernelUsingSystemMemoryThenPostSyncFenceRequestNotDispatched) {
+    using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
+
+    VariableBackup<unsigned short> revisionId(&defaultHwInfo->platform.usRevId);
+
+    constexpr unsigned short revision = 0x3;
+    revisionId = revision;
+    UltClDeviceFactory ultClDeviceFactory{1, 0};
+    auto &clDevice = *ultClDeviceFactory.rootDevices[0];
+
+    MockKernelWithInternals kernel(clDevice);
+    MockContext context(&clDevice);
+    MockCommandQueueHw<FamilyType> commandQueue(&context, &clDevice, nullptr);
+    auto &commandStreamReceiver = clDevice.getUltCommandStreamReceiver<FamilyType>();
+
+    size_t globalWorkSize[3] = {1, 1, 1};
+    kernel.mockKernel->anyKernelArgumentUsingSystemMemory = true;
+    commandQueue.enqueueKernel(kernel, 1, nullptr, globalWorkSize, nullptr, 0, nullptr, nullptr);
+
+    ClHardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandQueue);
+
+    auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
+    auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
+    EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
+
+    auto itorComputeWalker = find<COMPUTE_WALKER *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), itorComputeWalker);
+    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*itorComputeWalker);
+    auto &postSyncData = walkerCmd->getPostSync();
+
+    auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
+    ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
+    auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
+    ASSERT_NE(nullptr, fenceCmd);
+    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+}
+
+XE_HPC_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTest,
+                  givenEventProvidedWhenEnqueueKernelNotUsingSystemMemoryThenPostSyncFenceRequestNotDispatched) {
+    using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
+
+    VariableBackup<unsigned short> revisionId(&defaultHwInfo->platform.usRevId);
+
+    constexpr unsigned short revision = 0x3;
+    revisionId = revision;
+    UltClDeviceFactory ultClDeviceFactory{1, 0};
+    auto &clDevice = *ultClDeviceFactory.rootDevices[0];
+
+    MockKernelWithInternals kernel(clDevice);
+    MockContext context(&clDevice);
+    MockCommandQueueHw<FamilyType> commandQueue(&context, &clDevice, nullptr);
+    auto &commandStreamReceiver = clDevice.getUltCommandStreamReceiver<FamilyType>();
+
+    size_t globalWorkSize[3] = {1, 1, 1};
+    cl_event kernelEvent{};
+    commandQueue.enqueueKernel(kernel, 1, nullptr, globalWorkSize, nullptr, 0, nullptr, &kernelEvent);
+
+    ClHardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandQueue);
+
+    auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
+    auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
+    EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
+
+    auto itorComputeWalker = find<COMPUTE_WALKER *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), itorComputeWalker);
+    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*itorComputeWalker);
+    auto &postSyncData = walkerCmd->getPostSync();
+
+    auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
+    ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
+    auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
+    ASSERT_NE(nullptr, fenceCmd);
+    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+
+    auto event = castToObject<Event>(kernelEvent);
+    event->release();
+}
+
+XE_HPC_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTest,
+                  givenEventProvidedWhenEnqueueKernelUsingSystemMemoryThenPostSyncFenceRequestDispatched) {
+    using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
+
+    VariableBackup<unsigned short> revisionId(&defaultHwInfo->platform.usRevId);
+
+    constexpr unsigned short revision = 0x3;
+    revisionId = revision;
+    UltClDeviceFactory ultClDeviceFactory{1, 0};
+    auto &clDevice = *ultClDeviceFactory.rootDevices[0];
+
+    MockKernelWithInternals kernel(clDevice);
+    MockContext context(&clDevice);
+    MockCommandQueueHw<FamilyType> commandQueue(&context, &clDevice, nullptr);
+    auto &commandStreamReceiver = clDevice.getUltCommandStreamReceiver<FamilyType>();
+
+    size_t globalWorkSize[3] = {1, 1, 1};
+    cl_event kernelEvent{};
+    kernel.mockKernel->anyKernelArgumentUsingSystemMemory = true;
+    commandQueue.enqueueKernel(kernel, 1, nullptr, globalWorkSize, nullptr, 0, nullptr, &kernelEvent);
+
+    ClHardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandQueue);
+
+    auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
+    auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
+    EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
+
+    auto itorComputeWalker = find<COMPUTE_WALKER *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), itorComputeWalker);
+    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*itorComputeWalker);
+    auto &postSyncData = walkerCmd->getPostSync();
+
+    auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
+    ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
+    auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
+    ASSERT_NE(nullptr, fenceCmd);
+    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+
+    auto event = castToObject<Event>(kernelEvent);
+    event->release();
 }

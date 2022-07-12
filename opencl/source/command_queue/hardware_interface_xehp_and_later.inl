@@ -110,7 +110,8 @@ inline void HardwareInterface<GfxFamily>::programWalker(
                                                            numWorkGroups, walkerArgs.localWorkSizes, simd, dim,
                                                            localIdsGenerationByRuntime, inlineDataProgrammingRequired, requiredWalkOrder);
 
-    EncodeWalkerArgs encodeWalkerArgs{kernel.getExecutionType(), true};
+    bool requiredSystemFence = kernel.isAnyKernelArgumentUsingSystemMemory() && walkerArgs.event != nullptr;
+    EncodeWalkerArgs encodeWalkerArgs{kernel.getExecutionType(), requiredSystemFence};
     EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, encodeWalkerArgs);
 
     auto devices = queueCsr.getOsContext().getDeviceBitfield();

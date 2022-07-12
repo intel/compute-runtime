@@ -347,8 +347,15 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenFenceAsPostSyncOperationInComp
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceAsPostSyncOperationInComputeWalkerWhenEnqueueKernelIsCalledThenDoNotGenerateFenceCommands) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
+
     DebugManagerStateRestore restore;
     DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
+
+    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto &hwConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+
+    VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
+    hwRevId = hwConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
 
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -372,14 +379,14 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceAsPostSy
     EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 }
 
-XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenHwSupportsSystemFenceWhenKernelUsesSystemFlagTrueThenExpectSystemFenceUsed) {
+XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenKernelUsesSystemMemoryFlagTrueAndNoHostSignalEventThenNotUseSystemFence) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
     DebugManagerStateRestore restore;
     DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
 
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &hwConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &hwConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
     unsigned short pvcRevB = hwConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
     VariableBackup<unsigned short> hwRevId(&hwInfo.platform.usRevId, pvcRevB);
@@ -405,17 +412,17 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenHwSu
 
     auto walkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
     auto &postSyncData = walkerCmd->getPostSync();
-    EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
+    EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 }
 
-XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenHwSupportsSystemFenceWhenEventHostScopeSignalFlagTrueThenExpectSystemFenceUsed) {
+XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenEventHostSignalScopeFlagTrueAndNoSystemMemoryThenNotUseSystemFence) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
     DebugManagerStateRestore restore;
     DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
 
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &hwConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &hwConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
     unsigned short pvcRevB = hwConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
     VariableBackup<unsigned short> hwRevId(&hwInfo.platform.usRevId, pvcRevB);
@@ -435,6 +442,39 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenHwSu
         commands,
         cmdContainer->getCommandStream()->getCpuBase(),
         cmdContainer->getCommandStream()->getUsed());
+
+    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    ASSERT_NE(itor, commands.end());
+
+    auto walkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto &postSyncData = walkerCmd->getPostSync();
+    EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
+}
+
+XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenKernelUsesSystemMemoryAndHostSignalEventFlagTrueThenUseSystemFence) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
+
+    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto &hwConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+
+    unsigned short pvcRevB = hwConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    VariableBackup<unsigned short> hwRevId(&hwInfo.platform.usRevId, pvcRevB);
+
+    uint32_t dims[] = {1, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+    dispatchInterface->getCrossThreadDataSizeResult = 0;
+
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
+    dispatchArgs.isKernelUsingSystemAllocation = true;
+    dispatchArgs.isHostScopeSignalEvent = true;
+
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
+
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
     auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
