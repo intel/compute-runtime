@@ -19,8 +19,9 @@ INPUT_IREGEX="${INPUT_IREGEX:-.*\.(cpp|h|inl)}"
 (
     cd ${INPUT_PATH}
     git fetch origin ${GITHUB_BASE_REF}
+    git log --oneline origin/${GITHUB_BASE_REF}..HEAD
     set -x
-    git diff -U0 --no-color origin/master..HEAD | clang-format-diff-11 -p1 -i -v -iregex ${INPUT_IREGEX}
+    git diff -U0 --no-color origin/${GITHUB_BASE_REF}..HEAD | clang-format-diff-11 -p1 -i -v -iregex ${INPUT_IREGEX}
     set +x
 )
 
