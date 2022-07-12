@@ -18,6 +18,7 @@ set(TEST_TARGETS
     zello_dyn_local_arg
     zello_events
     zello_fence
+    zello_function_pointers_cl
     zello_host_pointer
     zello_image
     zello_image_view
@@ -77,6 +78,7 @@ target_link_libraries(zello_debug_info PUBLIC ocloc_lib)
 target_link_libraries(zello_dynamic_link PUBLIC ocloc_lib)
 target_link_libraries(zello_dyn_local_arg PUBLIC ocloc_lib)
 target_link_libraries(zello_fence PUBLIC ocloc_lib)
+target_link_libraries(zello_function_pointers_cl PUBLIC ocloc_lib)
 target_link_libraries(zello_multidev PUBLIC ocloc_lib)
 target_link_libraries(zello_image_view PUBLIC ocloc_lib)
 target_link_libraries(zello_printf PUBLIC ocloc_lib)
