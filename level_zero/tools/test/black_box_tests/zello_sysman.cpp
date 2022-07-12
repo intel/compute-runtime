@@ -154,8 +154,8 @@ void testSysmanPower(ze_device_handle_t &device) {
         zes_power_properties_t properties;
         VALIDATECALL(zesPowerGetProperties(handle, &properties));
         if (verbose) {
-            std::cout << "properties.canControl = " << properties.canControl << std::endl;
-            std::cout << "properties.isEnergyThresholdSupported= " << properties.isEnergyThresholdSupported << std::endl;
+            std::cout << "properties.canControl = " << static_cast<uint32_t>(properties.canControl) << std::endl;
+            std::cout << "properties.isEnergyThresholdSupported= " << static_cast<uint32_t>(properties.isEnergyThresholdSupported) << std::endl;
             std::cout << "properties.defaultLimit= " << properties.defaultLimit << std::endl;
             std::cout << "properties.maxLimit =" << properties.maxLimit << std::endl;
             std::cout << "properties.minLimit =" << properties.minLimit << std::endl;
@@ -170,12 +170,12 @@ void testSysmanPower(ze_device_handle_t &device) {
         zes_power_burst_limit_t burstGetDefault = {};
         VALIDATECALL(zesPowerGetLimits(handle, &sustainedGetDefault, &burstGetDefault, nullptr));
         if (verbose) {
-            std::cout << "sustainedGetDefault.enabled = " << sustainedGetDefault.enabled << std::endl;
+            std::cout << "sustainedGetDefault.enabled = " << static_cast<uint32_t>(sustainedGetDefault.enabled) << std::endl;
             if (sustainedGetDefault.enabled) {
                 std::cout << "sustainedGetDefault.power = " << sustainedGetDefault.power << std::endl;
                 std::cout << "sustainedGetDefault.interval = " << sustainedGetDefault.interval << std::endl;
             }
-            std::cout << "burstGetDefault.enabled = " << burstGetDefault.enabled << std::endl;
+            std::cout << "burstGetDefault.enabled = " << static_cast<uint32_t>(burstGetDefault.enabled) << std::endl;
             if (burstGetDefault.enabled) {
                 std::cout << "burstGetDefault.power = " << burstGetDefault.power << std::endl;
             }
@@ -258,7 +258,7 @@ void testSysmanPerformance(ze_device_handle_t &device, std::vector<std::string> 
         zes_perf_properties_t properties;
         VALIDATECALL(zesPerformanceFactorGetProperties(handle, &properties));
         if (verbose) {
-            std::cout << "properties.onSubdevice = " << properties.onSubdevice << std::endl;
+            std::cout << "properties.onSubdevice = " << static_cast<uint32_t>(properties.onSubdevice) << std::endl;
             std::cout << "properties.subdeviceId = " << properties.subdeviceId << std::endl;
             std::cout << "properties.engines = " << getEngineFlagType(properties.engines) << std::endl;
         }
@@ -384,8 +384,8 @@ void testSysmanFrequency(ze_device_handle_t &device) {
         VALIDATECALL(zesFrequencyGetProperties(handle, &freqProperties));
         if (verbose) {
             std::cout << "freqProperties.type = " << freqProperties.type << std::endl;
-            std::cout << "freqProperties.canControl = " << freqProperties.canControl << std::endl;
-            std::cout << "freqProperties.isThrottleEventSupported = " << freqProperties.isThrottleEventSupported << std::endl;
+            std::cout << "freqProperties.canControl = " << static_cast<uint32_t>(freqProperties.canControl) << std::endl;
+            std::cout << "freqProperties.isThrottleEventSupported = " << static_cast<uint32_t>(freqProperties.isThrottleEventSupported) << std::endl;
             std::cout << "freqProperties.min = " << freqProperties.min << std::endl;
             std::cout << "freqProperties.max = " << freqProperties.max << std::endl;
             if (freqProperties.onSubdevice) {
@@ -663,9 +663,9 @@ void testSysmanScheduler(ze_device_handle_t &device) {
         zes_sched_properties_t pProperties = {};
         VALIDATECALL(zesSchedulerGetProperties(handle, &pProperties));
         if (verbose) {
-            std::cout << "On subdevice = " << static_cast<bool>(pProperties.onSubdevice) << std::endl;
+            std::cout << "On subdevice = " << static_cast<uint32_t>(pProperties.onSubdevice) << std::endl;
             std::cout << "SubdeviceId = " << static_cast<uint32_t>(pProperties.subdeviceId) << std::endl;
-            std::cout << "Can control = " << static_cast<bool>(pProperties.canControl) << std::endl;
+            std::cout << "Can control = " << static_cast<uint32_t>(pProperties.canControl) << std::endl;
             std::cout << "Engines = " << static_cast<uint32_t>(pProperties.engines) << std::endl;
             std::cout << "Supported Mode = " << static_cast<uint32_t>(pProperties.supportedModes) << std::endl;
         }
@@ -770,7 +770,7 @@ void testSysmanMemory(ze_device_handle_t &device) {
         VALIDATECALL(zesMemoryGetProperties(handle, &memoryProperties));
         if (verbose) {
             std::cout << "Memory Type = " << getMemoryType(memoryProperties.type) << std::endl;
-            std::cout << "On Subdevice = " << memoryProperties.onSubdevice << std::endl;
+            std::cout << "On Subdevice = " << static_cast<uint32_t>(memoryProperties.onSubdevice) << std::endl;
             std::cout << "Subdevice Id = " << memoryProperties.subdeviceId << std::endl;
             std::cout << "Memory Size = " << memoryProperties.physicalSize << std::endl;
             std::cout << "Number of channels = " << memoryProperties.numChannels << std::endl;
@@ -820,7 +820,7 @@ void testSysmanFirmware(ze_device_handle_t &device, std::string imagePath) {
         VALIDATECALL(zesFirmwareGetProperties(handle, &fwProperties));
         if (verbose) {
             std::cout << "firmware name = " << fwProperties.name << std::endl;
-            std::cout << "On Subdevice = " << fwProperties.onSubdevice << std::endl;
+            std::cout << "On Subdevice = " << static_cast<uint32_t>(fwProperties.onSubdevice) << std::endl;
             std::cout << "Subdevice Id = " << fwProperties.subdeviceId << std::endl;
             std::cout << "firmware version = " << fwProperties.version << std::endl;
         }
@@ -832,7 +832,7 @@ void testSysmanFirmware(ze_device_handle_t &device, std::string imagePath) {
             VALIDATECALL(zesFirmwareGetProperties(handle, &fwProperties));
             if (verbose) {
                 std::cout << "firmware name = " << fwProperties.name << std::endl;
-                std::cout << "On Subdevice = " << fwProperties.onSubdevice << std::endl;
+                std::cout << "On Subdevice = " << static_cast<uint32_t>(fwProperties.onSubdevice) << std::endl;
                 std::cout << "Subdevice Id = " << fwProperties.subdeviceId << std::endl;
                 std::cout << "firmware version = " << fwProperties.version << std::endl;
             }
