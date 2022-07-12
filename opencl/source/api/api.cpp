@@ -17,6 +17,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/api_intercept.h"
@@ -88,6 +89,14 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
         if (platformsImpl->empty()) {
             auto executionEnvironment = new ClExecutionEnvironment();
             executionEnvironment->incRefInternal();
+
+            if (NEO::DebugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.get()) {
+                NEO::EnvironmentVariableReader envReader;
+                auto programDebugging = envReader.getSetting("ZET_ENABLE_PROGRAM_DEBUGGING", false);
+                if (programDebugging) {
+                    executionEnvironment->setDebuggingEnabled();
+                }
+            }
             auto allDevices = DeviceFactory::createDevices(*executionEnvironment);
             executionEnvironment->decRefInternal();
             if (allDevices.empty()) {
