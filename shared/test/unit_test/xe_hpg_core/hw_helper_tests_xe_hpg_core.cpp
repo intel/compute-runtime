@@ -104,7 +104,9 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenAllocDataWhenSetExtraAllocationDat
         hwHelper.setExtraAllocationData(allocData, allocProperties, *defaultHwInfo);
 
         if (defaultHwInfo->featureTable.flags.ftrLocalMemory &&
-            allocProperties.allocationType == AllocationType::COMMAND_BUFFER) {
+            (allocProperties.allocationType == AllocationType::COMMAND_BUFFER ||
+             allocProperties.allocationType == AllocationType::RING_BUFFER ||
+             allocProperties.allocationType == AllocationType::SEMAPHORE_BUFFER)) {
             EXPECT_FALSE(allocData.flags.useSystemMemory);
             EXPECT_TRUE(allocData.flags.requiresCpuAccess);
         } else {

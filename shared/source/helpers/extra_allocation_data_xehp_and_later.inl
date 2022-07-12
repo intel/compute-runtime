@@ -29,7 +29,9 @@ void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, 
             allocationData.storageInfo.isLockable = false;
         }
     } else if (hwInfo.featureTable.flags.ftrLocalMemory &&
-               properties.allocationType == AllocationType::COMMAND_BUFFER) {
+               (properties.allocationType == AllocationType::COMMAND_BUFFER ||
+                properties.allocationType == AllocationType::RING_BUFFER ||
+                properties.allocationType == AllocationType::SEMAPHORE_BUFFER)) {
         allocationData.flags.useSystemMemory = false;
         allocationData.flags.requiresCpuAccess = true;
     }
