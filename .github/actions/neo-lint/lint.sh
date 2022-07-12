@@ -8,6 +8,8 @@
 
 set -e
 
+git config --global --add safe.directory ${GITHUB_WORKSPACE}
+
 clang-format-11 --version
 
 INPUT_PATH="${INPUT_PATH:-.}"
