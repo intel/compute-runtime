@@ -9,9 +9,7 @@
 set -e
 set -x
 
-echo ${GITHUB_WORKSPACE}
-git config --global --add safe.directory ${GITHUB_WORKSPACE}
-git config --global --add safe.directory /github/workspace/neo
+git config --global --add safe.directory ${GITHUB_WORKSPACE}/neo
 
 clang-format-11 --version
 
