@@ -37,7 +37,7 @@ components:
     dest_dir: kernels_bin
     type: git
     branch: kernels_bin
-    revision: 1918-201
+    revision: 1922-206
   kmdaf:
     branch: kmdaf
     dest_dir: kmdaf
@@ -59,11 +59,11 @@ components:
     dest_dir: wdk
     type: git
     branch: wdk
-    revision: 4f190cb73994e6967c913fc0e08624fa31c0c14c-1902
+    revision: 3f2087424ac84c6b7b2c77bc5bb0d029a27adbf3-1922
   wsl:
     branch: wsl
     dest_dir: wsl
     revision: 56430997dac34ca0e9e18c177636234cac26ad54
     type: git
-converter: M-1918
+converter: M-1922
 version: '1'
