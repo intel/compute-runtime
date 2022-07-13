@@ -91,6 +91,20 @@ HWTEST2_F(SingleAddressSpaceFixture, WhenProgrammingSbaTrackingCommandsForSingle
     EXPECT_THROW(debugger->getSbaTrackingCommandsSize(6), std::exception);
 }
 
+HWTEST2_F(SingleAddressSpaceFixture, GivenDebuggerDisableSingleAddressSbaTrackingThenNoCommandsProgrammed, IsAtLeastGen12lp) {
+    NEO::DebugManager.flags.DebuggerDisableSingleAddressSbaTracking.set(true);
+    auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
+
+    NEO::LinearStream cmdStream;
+    NEO::Debugger::SbaAddresses sbaAddresses = {};
+
+    size_t sizeExpected = 0;
+    EXPECT_EQ(sizeExpected, cmdStream.getUsed());
+    debugger->programSbaTrackingCommandsSingleAddressSpace(cmdStream, sbaAddresses);
+    EXPECT_EQ(sizeExpected, cmdStream.getUsed());
+    EXPECT_EQ(sizeExpected, debugger->getSbaTrackingCommandsSize(6));
+}
+
 HWTEST2_F(SingleAddressSpaceFixture, GivenNonZeroSbaAddressesWhenProgrammingSbaTrackingCommandsForSingleAddressSpaceThenCorrectSequenceOfCommandsAreAddedToStream, IsAtLeastGen12lp) {
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;

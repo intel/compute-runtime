@@ -9,12 +9,16 @@ namespace NEO {
 template <typename GfxFamily>
 size_t DebuggerL0Hw<GfxFamily>::getSbaTrackingCommandsSize(size_t trackedAddressCount) {
     if (singleAddressSpaceSbaTracking) {
-        constexpr uint32_t aluCmdSize = sizeof(typename GfxFamily::MI_MATH) + sizeof(typename GfxFamily::MI_MATH_ALU_INST_INLINE) * NUM_ALU_INST_FOR_READ_MODIFY_WRITE;
-        return 2 * (sizeof(typename GfxFamily::MI_ARB_CHECK) + sizeof(typename GfxFamily::MI_BATCH_BUFFER_START)) +
-               trackedAddressCount * (sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM) + aluCmdSize + 2 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM) +
-                                      3 * sizeof(typename GfxFamily::MI_STORE_DATA_IMM) +
-                                      sizeof(typename GfxFamily::MI_ARB_CHECK) +
-                                      sizeof(typename GfxFamily::MI_BATCH_BUFFER_START));
+        if (NEO::DebugManager.flags.DebuggerDisableSingleAddressSbaTracking.get()) {
+            return 0;
+        } else {
+            constexpr uint32_t aluCmdSize = sizeof(typename GfxFamily::MI_MATH) + sizeof(typename GfxFamily::MI_MATH_ALU_INST_INLINE) * NUM_ALU_INST_FOR_READ_MODIFY_WRITE;
+            return 2 * (sizeof(typename GfxFamily::MI_ARB_CHECK) + sizeof(typename GfxFamily::MI_BATCH_BUFFER_START)) +
+                   trackedAddressCount * (sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM) + aluCmdSize + 2 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM) +
+                                          3 * sizeof(typename GfxFamily::MI_STORE_DATA_IMM) +
+                                          sizeof(typename GfxFamily::MI_ARB_CHECK) +
+                                          sizeof(typename GfxFamily::MI_BATCH_BUFFER_START));
+        }
     }
     return trackedAddressCount * NEO::EncodeStoreMemory<GfxFamily>::getStoreDataImmSize();
 }
@@ -32,6 +36,10 @@ void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommandsSingleAddressSpace(NEO::
     const auto offsetToData = offsetof(MI_STORE_DATA_IMM, TheStructure.Common.DataDword0);
 
     UNRECOVERABLE_IF(!singleAddressSpaceSbaTracking);
+
+    if (NEO::DebugManager.flags.DebuggerDisableSingleAddressSbaTracking.get()) {
+        return;
+    }
 
     std::vector<std::pair<size_t, uint64_t>> fieldOffsetAndValue;
 
