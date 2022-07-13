@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -127,12 +127,14 @@ TEST_F(KernelSubstituteTest, givenKernelWithUsedKernelAllocationWhenSubstituteKe
     char newHeap[newHeapSize];
 
     EXPECT_TRUE(commandStreamReceiver.getTemporaryAllocations().peekIsEmpty());
+    EXPECT_TRUE(commandStreamReceiver.getDeferredAllocations().peekIsEmpty());
 
     kernel.mockKernel->substituteKernelHeap(newHeap, newHeapSize);
     auto secondAllocation = kernel.kernelInfo.kernelAllocation;
 
-    EXPECT_FALSE(commandStreamReceiver.getTemporaryAllocations().peekIsEmpty());
-    EXPECT_EQ(commandStreamReceiver.getTemporaryAllocations().peekHead(), firstAllocation);
+    EXPECT_TRUE(commandStreamReceiver.getTemporaryAllocations().peekIsEmpty());
+    EXPECT_FALSE(commandStreamReceiver.getDeferredAllocations().peekIsEmpty());
+    EXPECT_EQ(commandStreamReceiver.getDeferredAllocations().peekHead(), firstAllocation);
     memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(secondAllocation);
     commandStreamReceiver.getInternalAllocationStorage()->cleanAllocationList(notReadyTaskCount, TEMPORARY_ALLOCATION);
 }

@@ -40,7 +40,8 @@ class OsContext;
 
 enum AllocationUsage {
     TEMPORARY_ALLOCATION,
-    REUSABLE_ALLOCATION
+    REUSABLE_ALLOCATION,
+    DEFERRED_DEALLOCATION
 };
 
 struct AlignedMallocRestrictions {

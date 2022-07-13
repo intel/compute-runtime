@@ -1965,8 +1965,9 @@ TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsNotCompletedWhen
     usedAllocationAndNotGpuCompleted->updateTaskCount(*tagAddress + 1, csr->getOsContext().getContextId());
 
     memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(usedAllocationAndNotGpuCompleted);
-    EXPECT_FALSE(csr->getTemporaryAllocations().peekIsEmpty());
-    EXPECT_EQ(csr->getTemporaryAllocations().peekHead(), usedAllocationAndNotGpuCompleted);
+    EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
+    EXPECT_FALSE(csr->getDeferredAllocations().peekIsEmpty());
+    EXPECT_EQ(csr->getDeferredAllocations().peekHead(), usedAllocationAndNotGpuCompleted);
 
     // change task count so cleanup will not clear alloc in use
     usedAllocationAndNotGpuCompleted->updateTaskCount(csr->peekLatestFlushedTaskCount(), csr->getOsContext().getContextId());
@@ -2136,7 +2137,7 @@ HWTEST_F(GraphicsAllocationTests, givenAllocationUsedOnlyByNonDefaultCsrWhenChec
     graphicsAllocation->updateTaskCount(*nonDefaultCsr->getTagAddress() + 1, nonDefaultOsContext->getContextId());
 
     memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(graphicsAllocation);
-    EXPECT_NE(nullptr, nonDefaultCsr->getInternalAllocationStorage()->getTemporaryAllocations().peekHead());
+    EXPECT_NE(nullptr, nonDefaultCsr->getInternalAllocationStorage()->getDeferredAllocations().peekHead());
     (*nonDefaultCsr->getTagAddress())++;
     // no need to call freeGraphicsAllocation
 }
@@ -2156,9 +2157,11 @@ HWTEST_F(GraphicsAllocationTests, givenAllocationUsedOnlyByNonDefaultDeviceWhenC
     nonDefaultCommandStreamReceiver.latestFlushedTaskCount = notReadyTaskCount;
     graphicsAllocation->updateTaskCount(notReadyTaskCount, nonDefaultCommandStreamReceiver.getOsContext().getContextId());
 
+    EXPECT_TRUE(nonDefaultCommandStreamReceiver.getInternalAllocationStorage()->getDeferredAllocations().peekIsEmpty());
     EXPECT_TRUE(nonDefaultCommandStreamReceiver.getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
     memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(graphicsAllocation);
-    EXPECT_FALSE(nonDefaultCommandStreamReceiver.getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
+    EXPECT_FALSE(nonDefaultCommandStreamReceiver.getInternalAllocationStorage()->getDeferredAllocations().peekIsEmpty());
+    EXPECT_TRUE(nonDefaultCommandStreamReceiver.getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
     (*nonDefaultCommandStreamReceiver.getTagAddress())++;
     // no need to call freeGraphicsAllocation
 }

@@ -206,6 +206,7 @@ class CommandStreamReceiver {
 
     AllocationsList &getTemporaryAllocations();
     AllocationsList &getAllocationsForReuse();
+    AllocationsList &getDeferredAllocations();
     InternalAllocationStorage *getInternalAllocationStorage() const { return internalAllocationStorage.get(); }
     MOCKABLE_VIRTUAL bool createAllocationForHostSurface(HostPtrSurface &surface, bool requiresL3Flush);
     virtual size_t getPreferredTagPoolSize() const;

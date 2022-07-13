@@ -165,7 +165,7 @@ TEST(MemObj, givenNotReadyGraphicsAllocationWhenMemObjDestroysAllocationAsyncThe
     auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_COPY_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_COPY_HOST_PTR, 0,
                   MemoryConstants::pageSize, nullptr, nullptr, 0, true, false, false);
-    auto &allocationList = defaultEngine.commandStreamReceiver->getTemporaryAllocations();
+    auto &allocationList = defaultEngine.commandStreamReceiver->getDeferredAllocations();
     EXPECT_TRUE(allocationList.peekIsEmpty());
     memObj.destroyGraphicsAllocation(allocation, true);
 

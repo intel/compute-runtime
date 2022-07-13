@@ -334,10 +334,12 @@ TEST_F(ProgramDataTest, givenConstantAllocationThatIsInUseByGpuWhenProgramIsBein
     constantSurface->updateTaskCount(*tagAddress + 1, csr.getOsContext().getContextId());
 
     EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
+    EXPECT_TRUE(csr.getDeferredAllocations().peekIsEmpty());
     delete pProgram;
     pProgram = nullptr;
-    EXPECT_FALSE(csr.getTemporaryAllocations().peekIsEmpty());
-    EXPECT_EQ(constantSurface, csr.getTemporaryAllocations().peekHead());
+    EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
+    EXPECT_FALSE(csr.getDeferredAllocations().peekIsEmpty());
+    EXPECT_EQ(constantSurface, csr.getDeferredAllocations().peekHead());
 }
 
 TEST_F(ProgramDataTest, givenGlobalAllocationThatIsInUseByGpuWhenProgramIsBeingDestroyedThenItIsAddedToTemporaryAllocationList) {
@@ -351,10 +353,12 @@ TEST_F(ProgramDataTest, givenGlobalAllocationThatIsInUseByGpuWhenProgramIsBeingD
     globalSurface->updateTaskCount(*tagAddress + 1, csr.getOsContext().getContextId());
 
     EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
+    EXPECT_TRUE(csr.getDeferredAllocations().peekIsEmpty());
     delete pProgram;
     pProgram = nullptr;
-    EXPECT_FALSE(csr.getTemporaryAllocations().peekIsEmpty());
-    EXPECT_EQ(globalSurface, csr.getTemporaryAllocations().peekHead());
+    EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
+    EXPECT_FALSE(csr.getDeferredAllocations().peekIsEmpty());
+    EXPECT_EQ(globalSurface, csr.getDeferredAllocations().peekHead());
 }
 
 TEST_F(ProgramDataTest, GivenDeviceForcing32BitMessagesWhenConstAllocationIsPresentInProgramBinariesThen32BitStorageIsAllocated) {

@@ -667,8 +667,9 @@ HWTEST_F(ProgramFromBinaryTest, givenProgramWhenCleanCurrentKernelInfoIsCalledBu
     kernelAllocation->updateTaskCount(100, csr.getOsContext().getContextId());
     *csr.getTagAddress() = 0;
     pProgram->cleanCurrentKernelInfo(rootDeviceIndex);
-    EXPECT_FALSE(csr.getTemporaryAllocations().peekIsEmpty());
-    EXPECT_EQ(csr.getTemporaryAllocations().peekHead(), kernelAllocation);
+    EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
+    EXPECT_FALSE(csr.getDeferredAllocations().peekIsEmpty());
+    EXPECT_EQ(csr.getDeferredAllocations().peekHead(), kernelAllocation);
     EXPECT_TRUE(this->pDevice->getUltCommandStreamReceiver<FamilyType>().requiresInstructionCacheFlush);
 }
 

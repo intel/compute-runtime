@@ -635,10 +635,12 @@ TEST_F(KernelPrivateSurfaceTest, givenKernelWithPrivateSurfaceThatIsInUseByGpuWh
     privateSurface->updateTaskCount(*tagAddress + 1, csr.getOsContext().getContextId());
 
     EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
+    EXPECT_TRUE(csr.getDeferredAllocations().peekIsEmpty());
     kernel.reset(nullptr);
 
-    EXPECT_FALSE(csr.getTemporaryAllocations().peekIsEmpty());
-    EXPECT_EQ(csr.getTemporaryAllocations().peekHead(), privateSurface);
+    EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
+    EXPECT_FALSE(csr.getDeferredAllocations().peekIsEmpty());
+    EXPECT_EQ(csr.getDeferredAllocations().peekHead(), privateSurface);
 }
 
 TEST_F(KernelPrivateSurfaceTest, WhenPrivateSurfaceAllocationFailsThenOutOfResourcesErrorIsReturned) {

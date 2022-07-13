@@ -227,7 +227,7 @@ void MemoryManager::checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocatio
             if (gfxAllocation->isUsedByOsContext(osContextId) &&
                 allocationTaskCount > *engine.commandStreamReceiver->getTagAddress()) {
                 engine.commandStreamReceiver->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(gfxAllocation),
-                                                                                              TEMPORARY_ALLOCATION);
+                                                                                              DEFERRED_DEALLOCATION);
                 return;
             }
         }

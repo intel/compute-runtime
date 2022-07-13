@@ -159,7 +159,7 @@ TEST_P(MemObjAsyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsyn
     } else {
         makeMemObjNotReady();
     }
-    auto &allocationList = csr->getTemporaryAllocations();
+    auto &allocationList = csr->getDeferredAllocations();
     EXPECT_TRUE(allocationList.peekIsEmpty());
 
     delete memObj;
@@ -467,7 +467,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenMemObjWithMapAllocationWithoutMemUseHo
 
     makeMemObjUsed();
 
-    auto &allocationList = mockCsr->getTemporaryAllocations();
+    auto &allocationList = mockCsr->getDeferredAllocations();
     EXPECT_TRUE(allocationList.peekIsEmpty());
 
     delete memObj;
@@ -507,7 +507,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenMemObjWithMapAllocationWithMemUseHostP
 
     makeMemObjUsed();
 
-    auto &allocationList = mockCsr->getTemporaryAllocations();
+    auto &allocationList = mockCsr->getDeferredAllocations();
     EXPECT_TRUE(allocationList.peekIsEmpty());
 
     delete memObj;

@@ -87,6 +87,10 @@ TEST_F(InternalAllocationStorageTest, whenAllocationIsStoredAsReusableButIsStill
     storage->cleanAllocationList(2u, REUSABLE_ALLOCATION);
 }
 
+TEST_F(InternalAllocationStorageTest, whenGetDeferredAllocationsThenReturnDeferredAllocationsListFromInternalStorage) {
+    EXPECT_EQ(&csr->getDeferredAllocations(), &csr->getInternalAllocationStorage()->getDeferredAllocations());
+}
+
 TEST_F(InternalAllocationStorageTest, whenAllocationIsStoredAsTemporaryAndIsStillUsedThenCanBeObtained) {
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{0, MemoryConstants::pageSize, AllocationType::BUFFER, mockDeviceBitfield});
 
