@@ -642,6 +642,18 @@ HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitWhenCheckIfEnabl
     }
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitInMultiRootDeviceEnvironmentWhenCheckIfEnabledThenIsDisabled) {
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleRootDevices.set(2);
+    TearDown();
+    SetUp();
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    csr.directSubmissionAvailable = true;
+    EXPECT_FALSE(csr.isUpdateTagFromWaitEnabled());
+}
+
 struct InitDirectSubmissionFixture {
     void SetUp() { // NOLINT(readability-identifier-naming)
         DebugManager.flags.EnableDirectSubmission.set(1);
