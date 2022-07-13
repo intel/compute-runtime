@@ -43,8 +43,8 @@ struct DebugSessionImp : DebugSession {
     constexpr static int64_t interruptTimeout = 2000;
 
   protected:
-    MOCKABLE_VIRTUAL ze_result_t readRegistersImp(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues);
-    MOCKABLE_VIRTUAL ze_result_t writeRegistersImp(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues);
+    MOCKABLE_VIRTUAL ze_result_t readRegistersImp(EuThread::ThreadId thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues);
+    MOCKABLE_VIRTUAL ze_result_t writeRegistersImp(EuThread::ThreadId thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues);
     Error resumeThreadsWithinDevice(uint32_t deviceIndex, ze_device_thread_t physicalThread);
     MOCKABLE_VIRTUAL bool writeResumeCommand(const std::vector<EuThread::ThreadId> &threadIds);
     MOCKABLE_VIRTUAL bool checkThreadIsResumed(const EuThread::ThreadId &threadID);
@@ -59,7 +59,7 @@ struct DebugSessionImp : DebugSession {
     virtual void enqueueApiEvent(zet_debug_event_t &debugEvent) = 0;
     virtual bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srMagic) = 0;
 
-    ze_result_t readSbaRegisters(ze_device_thread_t thread, uint32_t start, uint32_t count, void *pRegisterValues);
+    ze_result_t readSbaRegisters(EuThread::ThreadId thread, uint32_t start, uint32_t count, void *pRegisterValues);
     MOCKABLE_VIRTUAL bool isForceExceptionOrForceExternalHaltOnlyExceptionReason(uint32_t *cr0);
     void sendInterrupts();
     MOCKABLE_VIRTUAL void markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(EuThread::ThreadId threadId, uint64_t memoryHandle);

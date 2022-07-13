@@ -347,14 +347,13 @@ bool DebugSessionImp::writeResumeCommand(const std::vector<EuThread::ThreadId> &
             auto reg = std::make_unique<uint32_t[]>(regSize / sizeof(uint32_t));
 
             for (auto &threadID : threadIds) {
-                auto apiThread = convertToApi(threadID);
                 memset(reg.get(), 0, regSize);
 
-                if (readRegistersImp(apiThread, registerType, 0, 1, reg.get()) != ZE_RESULT_SUCCESS) {
+                if (readRegistersImp(threadID, registerType, 0, 1, reg.get()) != ZE_RESULT_SUCCESS) {
                     success = false;
                 } else {
                     reg[dword] |= sipResumeValue;
-                    if (writeRegistersImp(apiThread, registerType, 0, 1, reg.get()) != ZE_RESULT_SUCCESS) {
+                    if (writeRegistersImp(threadID, registerType, 0, 1, reg.get()) != ZE_RESULT_SUCCESS) {
                         success = false;
                     }
                 }
@@ -636,8 +635,7 @@ void DebugSessionImp::fillResumeAndStoppedThreadsFromNewlyStopped(std::vector<Eu
     for (auto &newlyStopped : newlyStoppedThreads) {
         if (allThreads[newlyStopped]->isStopped()) {
             memset(reg.get(), 0, regSize);
-            ze_device_thread_t apiThread = convertToApi(newlyStopped);
-            readRegistersImp(apiThread, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, 0, 1, reg.get());
+            readRegistersImp(newlyStopped, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, 0, 1, reg.get());
 
             if (isForceExceptionOrForceExternalHaltOnlyExceptionReason(reg.get())) {
                 PRINT_DEBUGGER_THREAD_LOG("RESUME accidentally stopped thread = %s\n", allThreads[newlyStopped]->toString().c_str());
@@ -822,7 +820,7 @@ size_t DebugSessionImp::calculateRegisterOffsetInThreadSlot(const SIP::regset_de
     return regdesc->offset + regdesc->bytes * start;
 }
 
-ze_result_t DebugSessionImp::readSbaRegisters(ze_device_thread_t thread, uint32_t start, uint32_t count, void *pRegisterValues) {
+ze_result_t DebugSessionImp::readSbaRegisters(EuThread::ThreadId threadId, uint32_t start, uint32_t count, void *pRegisterValues) {
     auto sbaRegDesc = DebugSessionImp::getSbaRegsetDesc();
 
     if (start >= sbaRegDesc->num) {
@@ -836,7 +834,7 @@ ze_result_t DebugSessionImp::readSbaRegisters(ze_device_thread_t thread, uint32_
     ze_result_t ret = ZE_RESULT_SUCCESS;
 
     NEO::SbaTrackedAddresses sbaBuffer;
-    ret = readSbaBuffer(convertToThreadId(thread), sbaBuffer);
+    ret = readSbaBuffer(threadId, sbaBuffer);
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
@@ -845,7 +843,7 @@ ze_result_t DebugSessionImp::readSbaRegisters(ze_device_thread_t thread, uint32_
     const auto regSize = std::max(getRegisterSize(ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU), hwInfo.capabilityTable.grfSize);
     auto r0 = std::make_unique<uint32_t[]>(regSize / sizeof(uint32_t));
 
-    ret = readRegistersImp(thread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, r0.get());
+    ret = readRegistersImp(threadId, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, r0.get());
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
@@ -862,14 +860,14 @@ ze_result_t DebugSessionImp::readSbaRegisters(ze_device_thread_t thread, uint32_
             constexpr size_t renderSurfaceStateSize = 64;
             std::vector<char> renderSurfaceState(renderSurfaceStateSize, 0);
 
-            ret = readGpuMemory(allThreads[convertToThreadId(thread)]->getMemoryHandle(), renderSurfaceState.data(), renderSurfaceStateSize, renderSurfaceStateGpuVa);
+            ret = readGpuMemory(allThreads[threadId]->getMemoryHandle(), renderSurfaceState.data(), renderSurfaceStateSize, renderSurfaceStateGpuVa);
 
             if (ret != ZE_RESULT_SUCCESS) {
                 return ret;
             }
 
             auto scratchSpacePTSize = hwHelper.getRenderSurfaceStatePitch(renderSurfaceState.data());
-            auto threadOffset = getPerThreadScratchOffset(scratchSpacePTSize, convertToThreadId(thread));
+            auto threadOffset = getPerThreadScratchOffset(scratchSpacePTSize, threadId);
             auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
             auto scratchAllocationBase = gmmHelper->decanonize(hwHelper.getRenderSurfaceStateBaseAddress(renderSurfaceState.data()));
             if (scratchAllocationBase != 0) {
@@ -1017,19 +1015,19 @@ ze_result_t DebugSessionImp::readRegisters(ze_device_thread_t thread, uint32_t t
     }
 
     if (type == ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU) {
-        return readSbaRegisters(thread, start, count, pRegisterValues);
+        return readSbaRegisters(convertToThreadId(thread), start, count, pRegisterValues);
     }
 
-    return readRegistersImp(thread, type, start, count, pRegisterValues);
+    return readRegistersImp(convertToThreadId(thread), type, start, count, pRegisterValues);
 }
 
-ze_result_t DebugSessionImp::readRegistersImp(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {
+ze_result_t DebugSessionImp::readRegistersImp(EuThread::ThreadId threadId, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {
     auto regdesc = typeToRegsetDesc(type);
     if (nullptr == regdesc) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    return registersAccessHelper(allThreads[convertToThreadId(thread)].get(), regdesc, start, count, pRegisterValues, false);
+    return registersAccessHelper(allThreads[threadId].get(), regdesc, start, count, pRegisterValues, false);
 }
 
 ze_result_t DebugSessionImp::writeRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {
@@ -1042,10 +1040,10 @@ ze_result_t DebugSessionImp::writeRegisters(ze_device_thread_t thread, uint32_t 
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    return writeRegistersImp(thread, type, start, count, pRegisterValues);
+    return writeRegistersImp(convertToThreadId(thread), type, start, count, pRegisterValues);
 }
 
-ze_result_t DebugSessionImp::writeRegistersImp(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {
+ze_result_t DebugSessionImp::writeRegistersImp(EuThread::ThreadId threadId, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {
     auto regdesc = typeToRegsetDesc(type);
     if (nullptr == regdesc) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -1055,7 +1053,7 @@ ze_result_t DebugSessionImp::writeRegistersImp(ze_device_thread_t thread, uint32
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    return registersAccessHelper(allThreads[convertToThreadId(thread)].get(), regdesc, start, count, pRegisterValues, true);
+    return registersAccessHelper(allThreads[threadId].get(), regdesc, start, count, pRegisterValues, true);
 }
 
 bool DebugSessionImp::isValidGpuAddress(uint64_t address) const {

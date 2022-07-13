@@ -79,7 +79,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     ze_result_t acknowledgeEvent(const zet_debug_event_t *event) override {
         return ZE_RESULT_SUCCESS;
     }
-    ze_result_t readRegistersImp(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
+    ze_result_t readRegistersImp(EuThread::ThreadId thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
         readRegistersCallCount++;
         readRegistersReg = type;
 
@@ -92,7 +92,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
         return DebugSessionImp::readRegistersImp(thread, type, start, count, pRegisterValues);
     }
 
-    ze_result_t writeRegistersImp(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
+    ze_result_t writeRegistersImp(EuThread::ThreadId thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
         writeRegistersCallCount++;
         writeRegistersReg = type;
 
@@ -798,7 +798,7 @@ TEST(DebugSessionTest, givenErrorFromReadSbaBufferWhenReadSbaRegistersCalledThen
 
     ze_device_thread_t thread = {0, 0, 0, 0};
     uint64_t sba[9];
-    auto result = sessionMock->readSbaRegisters(thread, 0, 9, sba);
+    auto result = sessionMock->readSbaRegisters(EuThread::ThreadId(0, thread), 0, 9, sba);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 }
 
@@ -815,7 +815,7 @@ TEST(DebugSessionTest, givenErrorFromReadRegistersWhenReadSbaRegistersCalledThen
 
     ze_device_thread_t thread = {0, 0, 0, 0};
     uint64_t sba[9];
-    auto result = sessionMock->readSbaRegisters(thread, 0, 9, sba);
+    auto result = sessionMock->readSbaRegisters(EuThread::ThreadId(0, thread), 0, 9, sba);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 }
 
@@ -838,7 +838,7 @@ HWTEST2_F(DebugSessionTest, givenErrorFromReadMemoryWhenReadSbaRegistersCalledTh
     ze_device_thread_t thread = {0, 0, 0, 0};
     uint64_t sba[9];
 
-    auto result = sessionMock->readSbaRegisters(thread, 0, 9, sba);
+    auto result = sessionMock->readSbaRegisters(EuThread::ThreadId(0, thread), 0, 9, sba);
 
     auto &hwHelper = HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
     EXPECT_TRUE(hwHelper.isScratchSpaceSurfaceStateAccessible());
@@ -2029,7 +2029,7 @@ TEST_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddres
         r0Thread0[5] = 0;
     }
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readSbaRegisters(thread, 0, ZET_DEBUG_SBA_COUNT_INTEL_GPU, sba));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readSbaRegisters(threadId, 0, ZET_DEBUG_SBA_COUNT_INTEL_GPU, sba));
     EXPECT_EQ(0ULL, sba[ZET_DEBUG_SBA_SCRATCH_SPACE_INTEL_GPU]);
 
     scratchAllocationBase = sbaExpected[ZET_DEBUG_SBA_SCRATCH_SPACE_INTEL_GPU];
@@ -2054,7 +2054,7 @@ TEST_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddres
 
     sbaExpected[ZET_DEBUG_SBA_BINDING_TABLE_INTEL_GPU] = ((r0Thread0[4] >> 5) << 5) + sbaExpected[ZET_DEBUG_SBA_SURFACE_STATE_INTEL_GPU];
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readSbaRegisters(thread, 0, ZET_DEBUG_SBA_COUNT_INTEL_GPU, sba));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readSbaRegisters(threadId, 0, ZET_DEBUG_SBA_COUNT_INTEL_GPU, sba));
 
     EXPECT_EQ(sbaExpected[ZET_DEBUG_SBA_GENERAL_STATE_INTEL_GPU], sba[ZET_DEBUG_SBA_GENERAL_STATE_INTEL_GPU]);
     EXPECT_EQ(sbaExpected[ZET_DEBUG_SBA_SURFACE_STATE_INTEL_GPU], sba[ZET_DEBUG_SBA_SURFACE_STATE_INTEL_GPU]);
@@ -2083,7 +2083,7 @@ TEST_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddres
 
     sbaExpected[ZET_DEBUG_SBA_BINDING_TABLE_INTEL_GPU] = ((r0Thread1[4] >> 5) << 5) + sbaExpected[ZET_DEBUG_SBA_SURFACE_STATE_INTEL_GPU];
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readSbaRegisters(thread1, 0, ZET_DEBUG_SBA_COUNT_INTEL_GPU, sba));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readSbaRegisters(threadId1, 0, ZET_DEBUG_SBA_COUNT_INTEL_GPU, sba));
 
     EXPECT_EQ(sbaExpected[ZET_DEBUG_SBA_GENERAL_STATE_INTEL_GPU], sba[ZET_DEBUG_SBA_GENERAL_STATE_INTEL_GPU]);
     EXPECT_EQ(sbaExpected[ZET_DEBUG_SBA_SURFACE_STATE_INTEL_GPU], sba[ZET_DEBUG_SBA_SURFACE_STATE_INTEL_GPU]);
@@ -2108,7 +2108,7 @@ TEST_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddres
     }
     sbaExpected[ZET_DEBUG_SBA_SCRATCH_SPACE_INTEL_GPU] = 0;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readSbaRegisters(thread1, 0, ZET_DEBUG_SBA_COUNT_INTEL_GPU, sba));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readSbaRegisters(threadId1, 0, ZET_DEBUG_SBA_COUNT_INTEL_GPU, sba));
     EXPECT_EQ(sbaExpected[ZET_DEBUG_SBA_SCRATCH_SPACE_INTEL_GPU], sba[ZET_DEBUG_SBA_SCRATCH_SPACE_INTEL_GPU]);
 }
 
