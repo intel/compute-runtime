@@ -1058,7 +1058,7 @@ ze_result_t DebugSessionImp::writeRegistersImp(ze_device_thread_t thread, uint32
     return registersAccessHelper(allThreads[convertToThreadId(thread)].get(), regdesc, start, count, pRegisterValues, true);
 }
 
-bool DebugSessionImp::isValidGpuAddress(uint64_t address) {
+bool DebugSessionImp::isValidGpuAddress(uint64_t address) const {
     auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
     auto decanonizedAddress = gmmHelper->decanonize(address);
     bool validAddress = gmmHelper->isValidCanonicalGpuAddress(address);
@@ -1067,6 +1067,18 @@ bool DebugSessionImp::isValidGpuAddress(uint64_t address) {
         return true;
     }
     return false;
+}
+
+ze_result_t DebugSessionImp::validateThreadAndDescForMemoryAccess(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc) {
+    if (!isValidGpuAddress(desc->address)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    ze_result_t status = sanityMemAccessThreadCheck(thread, desc);
+    if (status != ZE_RESULT_SUCCESS) {
+        return status;
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 } // namespace L0

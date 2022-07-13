@@ -338,12 +338,7 @@ ze_result_t DebugSessionWindows::readMemory(ze_device_thread_t thread, const zet
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 
-    if (!isValidGpuAddress(desc->address)) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    ze_result_t status = ZE_RESULT_ERROR_UNINITIALIZED;
-    status = sanityMemAccessThreadCheck(thread, desc);
+    ze_result_t status = validateThreadAndDescForMemoryAccess(thread, desc);
     if (status != ZE_RESULT_SUCCESS) {
         return status;
     }
@@ -376,12 +371,7 @@ ze_result_t DebugSessionWindows::writeMemory(ze_device_thread_t thread, const ze
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 
-    if (!isValidGpuAddress(desc->address)) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    ze_result_t status = ZE_RESULT_ERROR_UNINITIALIZED;
-    status = sanityMemAccessThreadCheck(thread, desc);
+    ze_result_t status = validateThreadAndDescForMemoryAccess(thread, desc);
     if (status != ZE_RESULT_SUCCESS) {
         return status;
     }

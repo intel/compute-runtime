@@ -54,6 +54,7 @@ struct DebugSessionImp : DebugSession {
 
     virtual ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) = 0;
     virtual ze_result_t writeGpuMemory(uint64_t memoryHandle, const char *input, size_t size, uint64_t gpuVa) = 0;
+    ze_result_t validateThreadAndDescForMemoryAccess(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc);
 
     virtual void enqueueApiEvent(zet_debug_event_t &debugEvent) = 0;
     virtual bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srMagic) = 0;
@@ -99,7 +100,7 @@ struct DebugSessionImp : DebugSession {
         }
     }
 
-    bool isValidGpuAddress(uint64_t address);
+    bool isValidGpuAddress(uint64_t address) const;
 
     MOCKABLE_VIRTUAL int64_t getTimeDifferenceMilliseconds(std::chrono::high_resolution_clock::time_point time) {
         auto now = std::chrono::high_resolution_clock::now();
