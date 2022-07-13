@@ -79,6 +79,7 @@ MemObj::~MemObj() {
             peekSharingHandler()->releaseReusedGraphicsAllocation();
         }
 
+        needWait |= multiGraphicsAllocation.getGraphicsAllocations().size() > 1u;
         for (auto graphicsAllocation : multiGraphicsAllocation.getGraphicsAllocations()) {
             auto rootDeviceIndex = graphicsAllocation ? graphicsAllocation->getRootDeviceIndex() : 0;
             bool doAsyncDestructions = DebugManager.flags.EnableAsyncDestroyAllocations.get();
