@@ -183,6 +183,7 @@ class SVMAllocsManager {
     std::atomic<uint32_t> allocationsCounter = 0;
     void makeIndirectAllocationsResident(CommandStreamReceiver &commandStreamReceiver, uint32_t taskCount);
     void prepareIndirectAllocationForDestruction(SvmAllocationData *);
+    void prefetchMemory(Device &device, SvmAllocationData &svmData);
 
     std::map<CommandStreamReceiver *, InternalAllocationsTracker> indirectAllocationsResidency;
 

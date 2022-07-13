@@ -662,4 +662,24 @@ AllocationType SVMAllocsManager::getGraphicsAllocationTypeAndCompressionPreferen
     return allocationType;
 }
 
+void SVMAllocsManager::prefetchMemory(Device &device, SvmAllocationData &svmData) {
+    auto getSubDeviceId = [](Device &device) {
+        if (!device.isSubDevice()) {
+            uint32_t deviceBitField = static_cast<uint32_t>(device.getDeviceBitfield().to_ulong());
+            if (device.getDeviceBitfield().count() > 1) {
+                deviceBitField &= ~deviceBitField + 1;
+            }
+            return Math::log2(deviceBitField);
+        }
+        return static_cast<NEO::SubDevice *>(&device)->getSubDeviceIndex();
+    };
+
+    if (memoryManager->isKmdMigrationAvailable(device.getRootDeviceIndex()) &&
+        (svmData.memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY)) {
+        auto gfxAllocation = svmData.gpuAllocations.getGraphicsAllocation(device.getRootDeviceIndex());
+        auto subDeviceId = getSubDeviceId(device);
+        memoryManager->setMemPrefetch(gfxAllocation, subDeviceId, device.getRootDeviceIndex());
+    }
+}
+
 } // namespace NEO

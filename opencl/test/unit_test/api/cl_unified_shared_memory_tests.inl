@@ -897,6 +897,90 @@ TEST(clUnifiedSharedMemoryTests, whenClEnqueueMigrateMemINTELisCalledWithProperP
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST(clUnifiedSharedMemoryTests, givenUseKmdMigrationAndAppendMemoryPrefetchForKmdMigratedSharedAllocationsWhenClEnqueueMigrateMemINTELisCalledThenExplicitlyMigrateMemoryToTheDeviceAssociatedWithCommandQueue) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseKmdMigration.set(1);
+    DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.set(1);
+
+    MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
+    MockCommandQueue mockCmdQueue{mockContext};
+    cl_int retVal = CL_SUCCESS;
+
+    auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(&mockContext, device, nullptr, 4, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, unifiedMemorySharedAllocation);
+
+    retVal = clEnqueueMigrateMemINTEL(&mockCmdQueue, unifiedMemorySharedAllocation, 10, 0, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
+    EXPECT_TRUE(mockMemoryManager->setMemPrefetchCalled);
+    EXPECT_EQ(0u, mockMemoryManager->memPrefetchSubDeviceId);
+
+    clMemFreeINTEL(&mockContext, unifiedMemorySharedAllocation);
+}
+
+TEST(clUnifiedSharedMemoryTests, givenContextWithMultipleSubdevicesWhenClEnqueueMigrateMemINTELisCalledThenExplicitlyMigrateMemoryToTheSubDeviceAssociatedWithCommandQueue) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseKmdMigration.set(1);
+    DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.set(1);
+
+    UltClDeviceFactory deviceFactory{1, 4};
+    cl_device_id allDevices[] = {deviceFactory.rootDevices[0], deviceFactory.subDevices[0], deviceFactory.subDevices[1],
+                                 deviceFactory.subDevices[2], deviceFactory.subDevices[3]};
+    MockContext multiTileContext(ClDeviceVector{allDevices, 5});
+    auto subDevice = deviceFactory.subDevices[1];
+    REQUIRE_SVM_OR_SKIP(subDevice);
+
+    MockCommandQueue mockCmdQueue(&multiTileContext, subDevice, 0, false);
+    cl_int retVal = CL_SUCCESS;
+
+    auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(&multiTileContext, subDevice, nullptr, 4, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, unifiedMemorySharedAllocation);
+
+    retVal = clEnqueueMigrateMemINTEL(&mockCmdQueue, unifiedMemorySharedAllocation, 10, 0, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(subDevice->getMemoryManager());
+    EXPECT_TRUE(mockMemoryManager->setMemPrefetchCalled);
+    EXPECT_EQ(1u, mockMemoryManager->memPrefetchSubDeviceId);
+
+    clMemFreeINTEL(&multiTileContext, unifiedMemorySharedAllocation);
+}
+
+TEST(clUnifiedSharedMemoryTests, givenContextWithMultipleSubdevicesWhenClEnqueueMigrateMemINTELisCalledThenExplicitlyMigrateMemoryToTheRootDeviceAssociatedWithCommandQueue) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseKmdMigration.set(1);
+    DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.set(1);
+
+    UltClDeviceFactory deviceFactory{1, 4};
+    cl_device_id allDevices[] = {deviceFactory.rootDevices[0], deviceFactory.subDevices[0], deviceFactory.subDevices[1],
+                                 deviceFactory.subDevices[2], deviceFactory.subDevices[3]};
+    MockContext multiTileContext(ClDeviceVector{allDevices, 5});
+    auto device = deviceFactory.rootDevices[0];
+    REQUIRE_SVM_OR_SKIP(device);
+
+    MockCommandQueue mockCmdQueue(&multiTileContext, device, 0, false);
+    cl_int retVal = CL_SUCCESS;
+
+    auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(&multiTileContext, device, nullptr, 4, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, unifiedMemorySharedAllocation);
+
+    retVal = clEnqueueMigrateMemINTEL(&mockCmdQueue, unifiedMemorySharedAllocation, 10, 0, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
+    EXPECT_TRUE(mockMemoryManager->setMemPrefetchCalled);
+    EXPECT_EQ(0u, mockMemoryManager->memPrefetchSubDeviceId);
+
+    clMemFreeINTEL(&multiTileContext, unifiedMemorySharedAllocation);
+}
+
 TEST(clUnifiedSharedMemoryTests, whenClEnqueueMemAdviseINTELisCalledWithWrongQueueThenInvalidQueueErrorIsReturned) {
     auto retVal = clEnqueueMemAdviseINTEL(0, nullptr, 0, 0, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);

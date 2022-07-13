@@ -4184,6 +4184,16 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMigrateMemINTEL(
             auto pEvent = castToObjectOrAbort<Event>(*event);
             pEvent->setCmdType(CL_COMMAND_MIGRATEMEM_INTEL);
         }
+
+        if (NEO::DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.get() > 0) {
+            auto pSvmAllocMgr = pCommandQueue->getContext().getSVMAllocsManager();
+            UNRECOVERABLE_IF(pSvmAllocMgr == nullptr);
+
+            auto allocData = pSvmAllocMgr->getSVMAlloc(ptr);
+            if (allocData) {
+                pSvmAllocMgr->prefetchMemory(pCommandQueue->getDevice(), *allocData);
+            }
+        }
     }
 
     return retVal;
