@@ -154,7 +154,7 @@ void LinuxMemoryImp::getHbmFrequency(PRODUCT_FAMILY productFamily, unsigned shor
         if (stepping == REVISION_B) {
             const std::string baseDir = "gt/gt" + std::to_string(subdeviceId) + "/";
             // Calculating bandwidth based on HBM max frequency
-            const std::string hbmRP0FreqFile = baseDir + "hbm_RP0_freq_mhz";
+            const std::string hbmRP0FreqFile = baseDir + "mem_RP0_freq_mhz";
             uint64_t hbmFreqValue = 0;
             ze_result_t result = pSysfsAccess->read(hbmRP0FreqFile, hbmFreqValue);
             if (ZE_RESULT_SUCCESS == result) {
