@@ -64,7 +64,9 @@ bool getTestMachineConfiguration(TestMachineConfiguration &machineConfig) {
         machineConfig.devices[deviceId].subDeviceCount = subDevicesCount;
     }
 
-    ze_device_properties_t deviceProperties;
+    ze_device_properties_t deviceProperties = {};
+    deviceProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
+    deviceProperties.pNext = nullptr;
     VALIDATECALL(zeDeviceGetProperties(devices[0], &deviceProperties));
     machineConfig.deviceId = deviceProperties.deviceId;
     return true;
