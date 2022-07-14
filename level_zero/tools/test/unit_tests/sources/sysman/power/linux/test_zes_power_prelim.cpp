@@ -109,69 +109,76 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
     auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto handle : handles) {
-        zes_power_properties_t properties;
+        zes_power_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
         EXPECT_FALSE(properties.onSubdevice);
         EXPECT_EQ(properties.subdeviceId, 0u);
         EXPECT_EQ(properties.canControl, true);
         EXPECT_EQ(properties.isEnergyThresholdSupported, false);
-        EXPECT_EQ(properties.defaultLimit, (int32_t)(mockDefaultPowerLimitVal / milliFactor));
-        EXPECT_EQ(properties.maxLimit, -1);
-        EXPECT_EQ(properties.minLimit, -1);
-    }
-}
-
-TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesWhenHwmonInterfaceExistThenLimitsReturnsUnkown) {
-
-    pSysfsAccess->mockReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
-    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
-        delete handle;
-    }
-    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
-    auto handles = getPowerHandles(powerHandleComponentCount);
-    for (auto handle : handles) {
-        zes_power_properties_t properties;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
-        EXPECT_FALSE(properties.onSubdevice);
-        EXPECT_EQ(properties.subdeviceId, 0u);
         EXPECT_EQ(properties.defaultLimit, -1);
         EXPECT_EQ(properties.maxLimit, -1);
         EXPECT_EQ(properties.minLimit, -1);
     }
 }
 
-TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesWhenHwmonInterfaceExistThenMaxLimitIsUnsupported) {
-    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
-        delete handle;
-    }
-    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesAndExtPropertiesThenCallSucceeds) {
     auto handles = getPowerHandles(powerHandleComponentCount);
+
     for (auto handle : handles) {
-        zes_power_properties_t properties;
+        zes_power_properties_t properties = {};
+        zes_power_ext_properties_t extProperties = {};
+        zes_power_limit_ext_desc_t defaultLimit = {};
+
+        extProperties.defaultLimit = &defaultLimit;
+        extProperties.stype = ZES_STRUCTURE_TYPE_POWER_EXT_PROPERTIES;
+        properties.pNext = &extProperties;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
         EXPECT_FALSE(properties.onSubdevice);
         EXPECT_EQ(properties.subdeviceId, 0u);
-        EXPECT_EQ(properties.defaultLimit, (int32_t)(mockDefaultPowerLimitVal / milliFactor));
+        EXPECT_EQ(properties.canControl, true);
+        EXPECT_EQ(properties.isEnergyThresholdSupported, false);
+        EXPECT_EQ(properties.defaultLimit, -1);
+        EXPECT_EQ(properties.maxLimit, -1);
+        EXPECT_EQ(properties.minLimit, -1);
+        EXPECT_EQ(extProperties.domain, ZES_POWER_DOMAIN_CARD);
+        EXPECT_TRUE(defaultLimit.limitValueLocked);
+        EXPECT_TRUE(defaultLimit.enabledStateLocked);
+        EXPECT_TRUE(defaultLimit.intervalValueLocked);
+        EXPECT_EQ(ZES_POWER_SOURCE_ANY, defaultLimit.source);
+        EXPECT_EQ(ZES_LIMIT_UNIT_POWER, defaultLimit.limitUnit);
+        EXPECT_EQ(defaultLimit.limit, (int32_t)(mockDefaultPowerLimitVal / milliFactor));
+    }
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWithNoStypeForExtPropertiesWhenGettingPowerPropertiesAndExtPropertiesThenCallSucceeds) {
+    auto handles = getPowerHandles(powerHandleComponentCount);
+
+    for (auto handle : handles) {
+        zes_power_properties_t properties = {};
+        zes_power_ext_properties_t extProperties = {};
+        zes_power_limit_ext_desc_t defaultLimit = {};
+
+        extProperties.defaultLimit = &defaultLimit;
+        properties.pNext = &extProperties;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
+        EXPECT_FALSE(properties.onSubdevice);
+        EXPECT_EQ(properties.subdeviceId, 0u);
+        EXPECT_EQ(properties.canControl, true);
+        EXPECT_EQ(properties.isEnergyThresholdSupported, false);
+        EXPECT_EQ(properties.defaultLimit, -1);
         EXPECT_EQ(properties.maxLimit, -1);
         EXPECT_EQ(properties.minLimit, -1);
     }
 }
 
-TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesThenHwmonInterfaceExistAndMinLimitIsUnknown) {
-    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
-        delete handle;
-    }
-    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesThenUnknownLimitsAreReturned) {
     auto handles = getPowerHandles(powerHandleComponentCount);
     for (auto handle : handles) {
-        zes_power_properties_t properties;
+        zes_power_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
         EXPECT_FALSE(properties.onSubdevice);
         EXPECT_EQ(properties.subdeviceId, 0u);
-        EXPECT_EQ(properties.defaultLimit, (int32_t)(mockDefaultPowerLimitVal / milliFactor));
+        EXPECT_EQ(properties.defaultLimit, -1);
         EXPECT_EQ(properties.maxLimit, -1);
         EXPECT_EQ(properties.minLimit, -1);
     }
@@ -223,6 +230,21 @@ TEST_F(SysmanDevicePowerFixture, GivenSetPowerLimitsWhenGettingPowerLimitsWhenHw
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimits(handle, nullptr, nullptr, &peakGet));
         EXPECT_EQ(peakGet.powerAC, peakSet.powerAC);
         EXPECT_EQ(peakGet.powerDC, -1);
+    }
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenDefaultLimitSysfsNodesNotAvailableWhenGettingPowerPropertiesAndExtPropertiesThenApiCallReturnsFailure) {
+    auto handles = getPowerHandles(powerHandleComponentCount);
+    for (auto handle : handles) {
+        zes_power_properties_t properties = {};
+        zes_power_ext_properties_t extProperties = {};
+        zes_power_limit_ext_desc_t defaultLimit = {};
+
+        extProperties.defaultLimit = &defaultLimit;
+        extProperties.stype = ZES_STRUCTURE_TYPE_POWER_EXT_PROPERTIES;
+        properties.pNext = &extProperties;
+        pSysfsAccess->mockReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetProperties(handle, &properties));
     }
 }
 
@@ -671,7 +693,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
     auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto handle : handles) {
-        zes_power_properties_t properties;
+        zes_power_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
         EXPECT_FALSE(properties.onSubdevice);
         EXPECT_EQ(properties.subdeviceId, 0u);

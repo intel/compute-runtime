@@ -12,8 +12,21 @@
 namespace L0 {
 
 ze_result_t PowerImp::powerGetProperties(zes_power_properties_t *pProperties) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    void *pNext = pProperties->pNext;
     *pProperties = powerProperties;
-    return ZE_RESULT_SUCCESS;
+    pProperties->pNext = pNext;
+    while (pNext) {
+        zes_power_ext_properties_t *pExtProps = reinterpret_cast<zes_power_ext_properties_t *>(pNext);
+        if (pExtProps->stype == ZES_STRUCTURE_TYPE_POWER_EXT_PROPERTIES) {
+            result = pOsPower->getPropertiesExt(pExtProps);
+            if (result != ZE_RESULT_SUCCESS) {
+                return result;
+            }
+        }
+        pNext = pExtProps->pNext;
+    }
+    return result;
 }
 
 ze_result_t PowerImp::powerGetEnergyCounter(zes_power_energy_counter_t *pEnergy) {

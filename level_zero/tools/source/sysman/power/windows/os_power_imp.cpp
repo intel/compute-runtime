@@ -60,6 +60,10 @@ ze_result_t WddmPowerImp::getProperties(zes_power_properties_t *pProperties) {
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t WddmPowerImp::getPropertiesExt(zes_power_ext_properties_t *pExtPoperties) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t WddmPowerImp::getEnergyCounter(zes_power_energy_counter_t *pEnergy) {
     uint32_t energyUnits = 0;
     uint32_t timestampFrequency = 0;

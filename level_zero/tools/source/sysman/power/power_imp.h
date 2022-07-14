@@ -33,5 +33,6 @@ class PowerImp : public Power, NEO::NonCopyableOrMovableClass {
 
   private:
     ze_device_handle_t deviceHandle = {};
+    zes_power_properties_t powerProperties = {};
 };
 } // namespace L0

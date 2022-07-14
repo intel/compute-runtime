@@ -23,6 +23,7 @@ class WddmPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
     ze_result_t setEnergyThreshold(double threshold) override;
     ze_result_t getLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) override;
     ze_result_t setLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) override;
+    ze_result_t getPropertiesExt(zes_power_ext_properties_t *pExtPoperties) override;
 
     bool isPowerModuleSupported() override;
     WddmPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);

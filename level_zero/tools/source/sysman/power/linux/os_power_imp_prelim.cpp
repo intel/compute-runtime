@@ -34,12 +34,29 @@ ze_result_t LinuxPowerImp::getProperties(zes_power_properties_t *pProperties) {
     pProperties->defaultLimit = -1;
     pProperties->minLimit = -1;
     pProperties->maxLimit = -1;
-    if (!isSubdevice) {
-        uint32_t val = 0;
-        auto result = pSysfsAccess->read(i915HwmonDir + "/" + defaultPowerLimit, val);
-        if (ZE_RESULT_SUCCESS == result) {
-            pProperties->defaultLimit = static_cast<int32_t>(val / milliFactor); // need to convert from microwatt to milliwatt
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t LinuxPowerImp::getPropertiesExt(zes_power_ext_properties_t *pExtPoperties) {
+    pExtPoperties->domain = isSubdevice ? ZES_POWER_DOMAIN_PACKAGE : ZES_POWER_DOMAIN_CARD;
+    if (pExtPoperties->defaultLimit) {
+        if (!isSubdevice) {
+            uint32_t val = 0;
+            ze_result_t result = pSysfsAccess->read(i915HwmonDir + "/" + defaultPowerLimit, val);
+            if (result == ZE_RESULT_SUCCESS) {
+                pExtPoperties->defaultLimit->limit = static_cast<int32_t>(val / milliFactor); // need to convert from microwatt to milliwatt
+            } else {
+                return getErrorCode(result);
+            }
+        } else {
+            pExtPoperties->defaultLimit->limit = -1;
         }
+        pExtPoperties->defaultLimit->limitUnit = ZES_LIMIT_UNIT_POWER;
+        pExtPoperties->defaultLimit->enabledStateLocked = true;
+        pExtPoperties->defaultLimit->intervalValueLocked = true;
+        pExtPoperties->defaultLimit->limitValueLocked = true;
+        pExtPoperties->defaultLimit->source = ZES_POWER_SOURCE_ANY;
+        pExtPoperties->defaultLimit->level = ZES_POWER_LEVEL_UNKNOWN;
     }
     return ZE_RESULT_SUCCESS;
 }

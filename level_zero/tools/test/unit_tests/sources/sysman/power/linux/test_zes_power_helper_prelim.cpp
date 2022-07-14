@@ -60,7 +60,7 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerPointerWhenGett
 TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenGettingPowerPropertiesThenCallSucceeds) {
     auto handles = getPowerHandles(powerHandleComponentCountMultiDevice);
     for (auto handle : handles) {
-        zes_power_properties_t properties;
+        zes_power_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
         if (properties.onSubdevice) {
             EXPECT_FALSE(properties.canControl);
@@ -68,7 +68,63 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenGetti
 
         } else {
             EXPECT_EQ(properties.canControl, true);
-            EXPECT_EQ(properties.defaultLimit, (int32_t)(mockDefaultPowerLimitVal / milliFactor));
+            EXPECT_EQ(properties.defaultLimit, -1);
+        }
+        EXPECT_EQ(properties.isEnergyThresholdSupported, false);
+        EXPECT_EQ(properties.maxLimit, -1);
+        EXPECT_EQ(properties.minLimit, -1);
+    }
+}
+
+TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenGettingPowerPropertiesAndExtPropertiesThenCallSucceeds) {
+    auto handles = getPowerHandles(powerHandleComponentCountMultiDevice);
+    for (auto handle : handles) {
+        zes_power_properties_t properties = {};
+        zes_power_ext_properties_t extProperties = {};
+        zes_power_limit_ext_desc_t defaultLimit = {};
+
+        extProperties.defaultLimit = &defaultLimit;
+        extProperties.stype = ZES_STRUCTURE_TYPE_POWER_EXT_PROPERTIES;
+        properties.pNext = &extProperties;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
+        EXPECT_EQ(properties.defaultLimit, -1);
+        EXPECT_TRUE(defaultLimit.limitValueLocked);
+        EXPECT_TRUE(defaultLimit.enabledStateLocked);
+        EXPECT_TRUE(defaultLimit.intervalValueLocked);
+        EXPECT_EQ(defaultLimit.level, ZES_POWER_LEVEL_UNKNOWN);
+        EXPECT_EQ(defaultLimit.source, ZES_POWER_SOURCE_ANY);
+        EXPECT_EQ(defaultLimit.limitUnit, ZES_LIMIT_UNIT_POWER);
+        if (properties.onSubdevice) {
+            EXPECT_FALSE(properties.canControl);
+            EXPECT_EQ(extProperties.domain, ZES_POWER_DOMAIN_PACKAGE);
+            EXPECT_EQ(defaultLimit.limit, -1);
+        } else {
+            EXPECT_TRUE(properties.canControl);
+            EXPECT_EQ(extProperties.domain, ZES_POWER_DOMAIN_CARD);
+            EXPECT_EQ(defaultLimit.limit, static_cast<int32_t>(mockDefaultPowerLimitVal / milliFactor));
+        }
+        EXPECT_EQ(properties.isEnergyThresholdSupported, false);
+        EXPECT_EQ(properties.maxLimit, -1);
+        EXPECT_EQ(properties.minLimit, -1);
+    }
+}
+
+TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleAndExtPropertiesWithNullDescWhenGettingPowerPropertiesThenCallSucceeds) {
+    auto handles = getPowerHandles(powerHandleComponentCountMultiDevice);
+    for (auto handle : handles) {
+        zes_power_properties_t properties = {};
+        zes_power_ext_properties_t extProperties = {};
+
+        properties.pNext = &extProperties;
+        extProperties.stype = ZES_STRUCTURE_TYPE_POWER_EXT_PROPERTIES;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
+        EXPECT_EQ(properties.defaultLimit, -1);
+        if (properties.onSubdevice) {
+            EXPECT_FALSE(properties.canControl);
+            EXPECT_EQ(extProperties.domain, ZES_POWER_DOMAIN_PACKAGE);
+        } else {
+            EXPECT_TRUE(properties.canControl);
+            EXPECT_EQ(extProperties.domain, ZES_POWER_DOMAIN_CARD);
         }
         EXPECT_EQ(properties.isEnergyThresholdSupported, false);
         EXPECT_EQ(properties.maxLimit, -1);
@@ -121,7 +177,7 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenGetti
     auto handles = getPowerHandles(powerHandleComponentCountMultiDevice);
 
     for (auto handle : handles) {
-        zes_power_properties_t properties;
+        zes_power_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
         zes_power_energy_counter_t energyCounter = {};
         ASSERT_EQ(ZE_RESULT_SUCCESS, zesPowerGetEnergyCounter(handle, &energyCounter));
@@ -136,7 +192,7 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenGetti
 TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenSetPowerLimitsWhenGettingPowerLimitsThenLimitsSetEarlierAreRetrieved) {
     auto handles = getPowerHandles(powerHandleComponentCountMultiDevice);
     for (auto handle : handles) {
-        zes_power_properties_t properties;
+        zes_power_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
 
         zes_power_sustained_limit_t sustainedSet = {};

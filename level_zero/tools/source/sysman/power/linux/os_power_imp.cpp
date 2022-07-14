@@ -58,6 +58,10 @@ ze_result_t LinuxPowerImp::getProperties(zes_power_properties_t *pProperties) {
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t LinuxPowerImp::getPropertiesExt(zes_power_ext_properties_t *pExtPoperties) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t LinuxPowerImp::getPmtEnergyCounter(zes_power_energy_counter_t *pEnergy) {
     const std::string key("PACKAGE_ENERGY");
     uint64_t energy = 0;

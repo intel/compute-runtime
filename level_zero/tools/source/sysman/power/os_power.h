@@ -22,6 +22,7 @@ class OsPower {
     virtual ze_result_t setEnergyThreshold(double threshold) = 0;
     virtual ze_result_t getLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) = 0;
     virtual ze_result_t setLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) = 0;
+    virtual ze_result_t getPropertiesExt(zes_power_ext_properties_t *pExtPoperties) = 0;
 
     virtual bool isPowerModuleSupported() = 0;
     static OsPower *create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);

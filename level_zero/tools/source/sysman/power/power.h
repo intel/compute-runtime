@@ -40,7 +40,6 @@ class Power : _zet_sysman_pwr_handle_t, _zes_pwr_handle_t {
     inline zes_pwr_handle_t toHandle() { return this; }
     bool initSuccess = false;
     bool isCardPower = false;
-    zes_power_properties_t powerProperties = {};
 };
 struct PowerHandleContext {
     PowerHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
