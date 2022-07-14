@@ -65,9 +65,6 @@ struct DriverHandle : _ze_driver_handle_t {
                                                                      size_t size,
                                                                      uint32_t rootDeviceIndex,
                                                                      uintptr_t *gpuAddress) = 0;
-    virtual ze_result_t makeMemoryResident(ze_device_handle_t hDevice,
-                                           void *ptr,
-                                           size_t size) = 0;
 
     static DriverHandle *fromHandle(ze_driver_handle_t handle) { return static_cast<DriverHandle *>(handle); }
     inline ze_driver_handle_t toHandle() { return this; }

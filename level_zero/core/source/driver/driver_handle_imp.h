@@ -83,10 +83,6 @@ struct DriverHandleImp : public DriverHandle {
     std::mutex sharedMakeResidentAllocationsLock;
     std::map<void *, NEO::GraphicsAllocation *> sharedMakeResidentAllocations;
 
-    ze_result_t makeMemoryResident(ze_device_handle_t hDevice,
-                                   void *ptr,
-                                   size_t size) override;
-
     std::vector<Device *> devices;
     // Spec extensions
     const std::vector<std::pair<std::string, uint32_t>> extensionsSupported = {
