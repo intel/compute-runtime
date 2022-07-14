@@ -1136,7 +1136,7 @@ int DebugSessionLinux::threadControl(std::vector<ze_device_thread_t> threads, ui
     }
 
     if (command == PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME) {
-        applyResumeWa(threads, bitmask.get(), bitmaskSize);
+        applyResumeWa(bitmask.get(), bitmaskSize);
     }
 
     printBitmask(bitmask.get(), bitmaskSize);
@@ -1475,7 +1475,7 @@ uint64_t DebugSessionLinux::getContextStateSaveAreaGpuVa(uint64_t memoryHandle) 
     return bindInfo->second.gpuVa;
 }
 
-void DebugSessionLinux::applyResumeWa(std::vector<ze_device_thread_t> threads, uint8_t *bitmask, size_t bitmaskSize) {
+void DebugSessionLinux::applyResumeWa(uint8_t *bitmask, size_t bitmaskSize) {
 
     UNRECOVERABLE_IF(bitmaskSize % 8 != 0);
 

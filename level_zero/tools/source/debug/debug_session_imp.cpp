@@ -1005,7 +1005,9 @@ ze_result_t DebugSessionImp::registersAccessHelper(const EuThread *thread, const
 }
 
 ze_result_t DebugSessionImp::readRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {
-    if (!areRequestedThreadsStopped(thread)) {
+    auto threadId = convertToThreadId(thread);
+
+    if (!allThreads[threadId]->isStopped()) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
@@ -1015,10 +1017,10 @@ ze_result_t DebugSessionImp::readRegisters(ze_device_thread_t thread, uint32_t t
     }
 
     if (type == ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU) {
-        return readSbaRegisters(convertToThreadId(thread), start, count, pRegisterValues);
+        return readSbaRegisters(threadId, start, count, pRegisterValues);
     }
 
-    return readRegistersImp(convertToThreadId(thread), type, start, count, pRegisterValues);
+    return readRegistersImp(threadId, type, start, count, pRegisterValues);
 }
 
 ze_result_t DebugSessionImp::readRegistersImp(EuThread::ThreadId threadId, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {
@@ -1031,7 +1033,9 @@ ze_result_t DebugSessionImp::readRegistersImp(EuThread::ThreadId threadId, uint3
 }
 
 ze_result_t DebugSessionImp::writeRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {
-    if (!areRequestedThreadsStopped(thread)) {
+    auto threadId = convertToThreadId(thread);
+
+    if (!allThreads[threadId]->isStopped()) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
@@ -1040,7 +1044,7 @@ ze_result_t DebugSessionImp::writeRegisters(ze_device_thread_t thread, uint32_t 
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    return writeRegistersImp(convertToThreadId(thread), type, start, count, pRegisterValues);
+    return writeRegistersImp(threadId, type, start, count, pRegisterValues);
 }
 
 ze_result_t DebugSessionImp::writeRegistersImp(EuThread::ThreadId threadId, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {
