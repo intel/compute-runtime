@@ -456,7 +456,9 @@ macro(macro_for_each_core_type)
 
         foreach(file ${TEST_KERNEL_BINDLESS} ${BINDLESS_KERNELS_IMAGES})
           foreach(REVISION_ID ${${PLATFORM_TYPE}_${CORE_TYPE}_REVISIONS})
-            neo_gen_kernels_with_internal_options(${family_name_with_type} ${PLATFORM_LOWER} ${REVISION_ID} ${family_name_with_type} ${file} "bindless" ${TEST_KERNEL_BINDLESS_internal_options})
+            if(NOT ("${CORE_TYPE_LOWER}" STREQUAL "gen8"))
+              neo_gen_kernels_with_internal_options(${family_name_with_type} ${PLATFORM_LOWER} ${REVISION_ID} ${family_name_with_type} ${file} "bindless" ${TEST_KERNEL_BINDLESS_internal_options})
+            endif()
           endforeach()
         endforeach()
 
