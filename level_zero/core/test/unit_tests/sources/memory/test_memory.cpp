@@ -17,6 +17,7 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/api/driver_experimental/public/zex_memory.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device_imp.h"
@@ -669,6 +670,49 @@ TEST_F(MemoryTest, whenAllocatingSharedMemoryWithUncachedFlagThenLocallyUncached
     auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(nullptr, allocData);
     EXPECT_EQ(allocData->allocationFlagsProperty.flags.locallyUncachedResource, 1u);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, whenAllocatingSharedMemoryWithUseHostPtrFlagThenExternalHostPtrIsSet) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.flags = ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR;
+    ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 &hostDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_NE(nullptr, allocData);
+    EXPECT_EQ(allocData->allocationFlagsProperty.hostptr, 0x1234u);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, whenAllocatingHostMemoryWithUseHostPtrFlagThenExternalHostPtrIsSet) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.flags = ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR;
+    ze_result_t result = context->allocHostMem(&hostDesc,
+                                               size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_NE(nullptr, allocData);
+    EXPECT_EQ(allocData->allocationFlagsProperty.hostptr, 0x1234u);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);

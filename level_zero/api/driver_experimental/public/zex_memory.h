@@ -13,6 +13,8 @@
 
 #include "level_zero/api/driver_experimental/public/zex_api.h"
 
+constexpr uint32_t ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR = ZE_BIT(30);
+
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef ZEX_MEM_IPC_HANDLES_NAME
 /// @brief Multiple IPC handles driver extension name

@@ -11,6 +11,7 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
+#include "level_zero/api/driver_experimental/public/zex_memory.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/event/event.h"
@@ -81,6 +82,10 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
 
     if (hostDesc->flags & ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED) {
         unifiedMemoryProperties.allocationFlags.flags.locallyUncachedResource = 1;
+    }
+
+    if (hostDesc->flags & ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR) {
+        unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(*ptr);
     }
 
     auto usmPtr = this->driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size,
@@ -257,6 +262,10 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
 
     if (hostDesc->flags & ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT) {
         unifiedMemoryProperties.allocationFlags.allocFlags.usmInitialPlacementCpu = 1;
+    }
+
+    if (hostDesc->flags & ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR) {
+        unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(*ptr);
     }
 
     auto usmPtr =
