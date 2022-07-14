@@ -22,6 +22,7 @@ uint32_t L1CachePolicyHelper<IGFX_DG2>::getDefaultL1CachePolicy() {
     return GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP;
 }
 
+template struct L1CachePolicyHelper<IGFX_DG2>;
 static EnableGfxProductHw<IGFX_DG2> enableGfxProductHwDG2;
 static EnableCompilerHwInfoConfig<IGFX_DG2> enableCompilerHwInfoConfigDG2;
 #endif

@@ -24,7 +24,7 @@ struct L1CachePolicyHelper {
     static const char *getCachingPolicyOptions();
 
     static uint32_t getDefaultL1CachePolicy() {
-        return 0;
+        return 0u;
     }
 
     static uint32_t getL1CachePolicy() {

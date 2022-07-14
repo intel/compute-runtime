@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/aub_mem_dump/aub_mem_dump.h"
+#include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
@@ -389,8 +390,20 @@ template <>
 uint64_t HwInfoConfigHw<IGFX_UNKNOWN>::getHostMemCapabilitiesValue() {
     return 0;
 }
+
+template <>
+const char *L1CachePolicyHelper<IGFX_UNKNOWN>::getCachingPolicyOptions() {
+    return nullptr;
+}
+
+template <>
+uint32_t L1CachePolicyHelper<IGFX_UNKNOWN>::getDefaultL1CachePolicy() {
+    return 0u;
+}
+
 } // namespace NEO
 
 #include "shared/source/os_interface/hw_info_config.inl"
 
 template class NEO::HwInfoConfigHw<IGFX_UNKNOWN>;
+template struct NEO::L1CachePolicyHelper<IGFX_UNKNOWN>;

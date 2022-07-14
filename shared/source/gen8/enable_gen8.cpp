@@ -16,6 +16,7 @@
 namespace NEO {
 
 #ifdef SUPPORT_BDW
+template struct L1CachePolicyHelper<IGFX_BROADWELL>;
 static EnableGfxProductHw<IGFX_BROADWELL> enableGfxProductHwBDW;
 
 #include "shared/source/gen8/compiler_hw_info_config_bdw.inl"

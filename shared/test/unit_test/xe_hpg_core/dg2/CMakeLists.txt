@@ -14,6 +14,7 @@ if(TESTS_DG2)
                  ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_dg2.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_tests_dg2.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper_tests_dg2.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy_tests_dg2
   )
   add_subdirectories()
 endif()

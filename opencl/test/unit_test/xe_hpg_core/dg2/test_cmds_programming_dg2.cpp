@@ -39,7 +39,7 @@ DG2TEST_F(CmdsProgrammingTestsDg2, givenL3ToL1DebugFlagWhenStatelessMocsIsProgra
 
     auto actualL1CachePolocy = static_cast<uint8_t>(stateBaseAddress->getL1CachePolicyL1CacheControl());
 
-    const uint8_t expectedL1CachePolicy = 0;
+    const uint8_t expectedL1CachePolicy = FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP;
     EXPECT_EQ(expectedL1CachePolicy, actualL1CachePolocy);
 }
 
@@ -89,7 +89,7 @@ DG2TEST_F(CmdsProgrammingTestsDg2, givenL1CachingOverrideWhenStateBaseAddressIsP
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-DG2TEST_F(CmdsProgrammingTestsDg2, whenAppendingRssThenProgramWtL1CachePolicy) {
+DG2TEST_F(CmdsProgrammingTestsDg2, whenAppendingRssThenProgramWBPL1CachePolicy) {
     auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
     size_t allocationSize = MemoryConstants::pageSize;
     AllocationProperties properties(pDevice->getRootDeviceIndex(), allocationSize, AllocationType::BUFFER, pDevice->getDeviceBitfield());
@@ -143,7 +143,7 @@ DG2TEST_F(CmdsProgrammingTestsDg2, givenAlignedCacheableReadOnlyBufferThenChoseO
 
     auto actualL1CachePolocy = static_cast<uint8_t>(surfaceState.getL1CachePolicyL1CacheControl());
 
-    const uint8_t expectedL1CachePolicy = 0;
+    const uint8_t expectedL1CachePolicy = FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP;
     EXPECT_EQ(expectedL1CachePolicy, actualL1CachePolocy);
 
     alignedFree(ptr);
