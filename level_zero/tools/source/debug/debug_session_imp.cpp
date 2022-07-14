@@ -1005,6 +1005,9 @@ ze_result_t DebugSessionImp::registersAccessHelper(const EuThread *thread, const
 }
 
 ze_result_t DebugSessionImp::readRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {
+    if (!isSingleThread(thread)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
     auto threadId = convertToThreadId(thread);
 
     if (!allThreads[threadId]->isStopped()) {
@@ -1033,6 +1036,9 @@ ze_result_t DebugSessionImp::readRegistersImp(EuThread::ThreadId threadId, uint3
 }
 
 ze_result_t DebugSessionImp::writeRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {
+    if (!isSingleThread(thread)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
     auto threadId = convertToThreadId(thread);
 
     if (!allThreads[threadId]->isStopped()) {
