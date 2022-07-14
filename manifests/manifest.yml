@@ -26,7 +26,8 @@ components:
   infra:
     branch: master
     dest_dir: infra
-    revision: cf3a0ea8461bfb78e5a607c3c69ea84d51c16925
+    revision: v4066
+    fetch_tags: true
     type: git
   internal:
     branch: master
