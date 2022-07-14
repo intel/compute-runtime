@@ -71,5 +71,15 @@ unsigned int IoctlHelperImpl<gfxProduct>::getIoctlRequestValue(DrmIoctl ioctlReq
     }
 }
 
+template <>
+std::string IoctlHelperImpl<gfxProduct>::getIoctlString(DrmIoctl ioctlRequest) const {
+    switch (ioctlRequest) {
+    case DrmIoctl::DG1GemCreateExt:
+        return "DRM_IOCTL_I915_GEM_CREATE_EXT";
+    default:
+        return getIoctlStringBase(ioctlRequest);
+    }
+}
+
 template class IoctlHelperImpl<gfxProduct>;
 } // namespace NEO

@@ -217,4 +217,15 @@ int IoctlHelperUpstream::getDrmParamValue(DrmParam drmParam) const {
         return getDrmParamValueBase(drmParam);
     }
 }
+std::string IoctlHelperUpstream::getDrmParamString(DrmParam param) const {
+    return getDrmParamStringBase(param);
+}
+std::string IoctlHelperUpstream::getIoctlString(DrmIoctl ioctlRequest) const {
+    switch (ioctlRequest) {
+    case DrmIoctl::GemCreateExt:
+        return "DRM_IOCTL_I915_GEM_CREATE_EXT";
+    default:
+        return getIoctlStringBase(ioctlRequest);
+    }
+}
 } // namespace NEO

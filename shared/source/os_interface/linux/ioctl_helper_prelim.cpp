@@ -562,6 +562,47 @@ int IoctlHelperPrelim20::getDrmParamValue(DrmParam drmParam) const {
         return getDrmParamValueBase(drmParam);
     }
 }
+std::string IoctlHelperPrelim20::getDrmParamString(DrmParam drmParam) const {
+    switch (drmParam) {
+    case DrmParam::ParamHasVmBind:
+        return "PRELIM_I915_PARAM_HAS_VM_BIND";
+    case DrmParam::ParamHasPageFault:
+        return "PRELIM_I915_PARAM_HAS_PAGE_FAULT";
+    default:
+        return getDrmParamStringBase(drmParam);
+    }
+}
+
+std::string IoctlHelperPrelim20::getIoctlString(DrmIoctl ioctlRequest) const {
+    switch (ioctlRequest) {
+    case DrmIoctl::GemVmBind:
+        return "PRELIM_DRM_IOCTL_I915_GEM_VM_BIND";
+    case DrmIoctl::GemVmUnbind:
+        return "PRELIM_DRM_IOCTL_I915_GEM_VM_UNBIND";
+    case DrmIoctl::GemWaitUserFence:
+        return "PRELIM_DRM_IOCTL_I915_GEM_WAIT_USER_FENCE";
+    case DrmIoctl::GemCreateExt:
+        return "PRELIM_DRM_IOCTL_I915_GEM_CREATE_EXT";
+    case DrmIoctl::GemVmAdvise:
+        return "PRELIM_DRM_IOCTL_I915_GEM_VM_ADVISE";
+    case DrmIoctl::GemVmPrefetch:
+        return "PRELIM_DRM_IOCTL_I915_GEM_VM_PREFETCH";
+    case DrmIoctl::UuidRegister:
+        return "PRELIM_DRM_IOCTL_I915_UUID_REGISTER";
+    case DrmIoctl::UuidUnregister:
+        return "PRELIM_DRM_IOCTL_I915_UUID_UNREGISTER";
+    case DrmIoctl::DebuggerOpen:
+        return "PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN";
+    case DrmIoctl::GemClosReserve:
+        return "PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE";
+    case DrmIoctl::GemClosFree:
+        return "PRELIM_DRM_IOCTL_I915_GEM_CLOS_FREE";
+    case DrmIoctl::GemCacheReserve:
+        return "PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE";
+    default:
+        return getIoctlStringBase(ioctlRequest);
+    }
+}
 
 static_assert(sizeof(MemoryClassInstance) == sizeof(prelim_drm_i915_gem_memory_class_instance));
 static_assert(offsetof(MemoryClassInstance, memoryClass) == offsetof(prelim_drm_i915_gem_memory_class_instance, memory_class));

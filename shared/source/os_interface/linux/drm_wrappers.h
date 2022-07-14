@@ -261,7 +261,7 @@ enum class DrmParam {
 
 unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest, IoctlHelper *ioctlHelper);
 int getDrmParamValue(DrmParam drmParam, IoctlHelper *ioctlHelper);
+std::string getDrmParamString(DrmParam param, IoctlHelper *ioctlHelper);
+std::string getIoctlString(DrmIoctl ioctlRequest, IoctlHelper *ioctlHelper);
 
-std::string getDrmParamString(DrmParam param);
-std::string getIoctlString(DrmIoctl ioctlRequest);
 } // namespace NEO

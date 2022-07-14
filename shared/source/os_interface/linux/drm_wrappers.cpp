@@ -189,4 +189,32 @@ int getDrmParamValue(DrmParam drmParam, IoctlHelper *ioctlHelper) {
         return 0;
     }
 }
+
+std::string getDrmParamString(DrmParam drmParam, IoctlHelper *ioctlHelper) {
+    if (ioctlHelper) {
+        return ioctlHelper->getDrmParamString(drmParam);
+    }
+    switch (drmParam) {
+    case DrmParam::ParamChipsetId:
+        return "I915_PARAM_CHIPSET_ID";
+    case DrmParam::ParamRevision:
+        return "I915_PARAM_REVISION";
+    default:
+        UNRECOVERABLE_IF(true);
+        return "";
+    }
+}
+
+std::string getIoctlString(DrmIoctl ioctlRequest, IoctlHelper *ioctlHelper) {
+    if (ioctlHelper) {
+        return ioctlHelper->getIoctlString(ioctlRequest);
+    }
+    switch (ioctlRequest) {
+    case DrmIoctl::Getparam:
+        return "DRM_IOCTL_I915_GETPARAM";
+    default:
+        UNRECOVERABLE_IF(true);
+        return "";
+    }
+}
 } // namespace NEO

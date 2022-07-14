@@ -1404,63 +1404,39 @@ TEST(DrmWrapperTest, whenGettingDrmParamOrIoctlRequestValueThenUseIoctlHelperWhe
 }
 
 TEST(DrmWrapperTest, WhenGettingIoctlStringValueThenProperStringIsReturned) {
-    std::map<DrmIoctl, const char *> ioctlCodeStringMap = {
-        {DrmIoctl::GemClose, "DRM_IOCTL_GEM_CLOSE"},
-        {DrmIoctl::Getparam, "DRM_IOCTL_I915_GETPARAM"},
-        {DrmIoctl::GemExecbuffer2, "DRM_IOCTL_I915_GEM_EXECBUFFER2"},
-        {DrmIoctl::GemCreate, "DRM_IOCTL_I915_GEM_CREATE"},
-        {DrmIoctl::GemSetDomain, "DRM_IOCTL_I915_GEM_SET_DOMAIN"},
-        {DrmIoctl::GemSetTiling, "DRM_IOCTL_I915_GEM_SET_TILING"},
-        {DrmIoctl::GemGetTiling, "DRM_IOCTL_I915_GEM_GET_TILING"},
-        {DrmIoctl::GemWait, "DRM_IOCTL_I915_GEM_WAIT"},
-        {DrmIoctl::GemContextCreateExt, "DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT"},
-        {DrmIoctl::GemContextDestroy, "DRM_IOCTL_I915_GEM_CONTEXT_DESTROY"},
-        {DrmIoctl::RegRead, "DRM_IOCTL_I915_REG_READ"},
-        {DrmIoctl::GetResetStats, "DRM_IOCTL_I915_GET_RESET_STATS"},
-        {DrmIoctl::GemUserptr, "DRM_IOCTL_I915_GEM_USERPTR"},
-        {DrmIoctl::GemContextGetparam, "DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM"},
-        {DrmIoctl::GemContextSetparam, "DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM"},
-        {DrmIoctl::Query, "DRM_IOCTL_I915_QUERY"},
-        {DrmIoctl::PrimeFdToHandle, "DRM_IOCTL_PRIME_FD_TO_HANDLE"},
-        {DrmIoctl::GemVmBind, "PRELIM_DRM_IOCTL_I915_GEM_VM_BIND"},
-        {DrmIoctl::GemVmUnbind, "PRELIM_DRM_IOCTL_I915_GEM_VM_UNBIND"},
-        {DrmIoctl::GemWaitUserFence, "PRELIM_DRM_IOCTL_I915_GEM_WAIT_USER_FENCE"},
-        {DrmIoctl::GemCreateExt, "DRM_IOCTL_I915_GEM_CREATE_EXT"},
-        {DrmIoctl::DG1GemCreateExt, "DG1_DRM_IOCTL_I915_GEM_CREATE_EXT"},
-        {DrmIoctl::GemVmAdvise, "PRELIM_DRM_IOCTL_I915_GEM_VM_ADVISE"},
-        {DrmIoctl::GemVmPrefetch, "PRELIM_DRM_IOCTL_I915_GEM_VM_PREFETCH"},
-        {DrmIoctl::UuidRegister, "PRELIM_DRM_IOCTL_I915_UUID_REGISTER"},
-        {DrmIoctl::UuidUnregister, "PRELIM_DRM_IOCTL_I915_UUID_UNREGISTER"},
-        {DrmIoctl::DebuggerOpen, "PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN"},
-        {DrmIoctl::GemClosReserve, "PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE"},
-        {DrmIoctl::GemClosFree, "PRELIM_DRM_IOCTL_I915_GEM_CLOS_FREE"},
-        {DrmIoctl::GemCacheReserve, "PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE"},
-        {DrmIoctl::GemMmapOffset, "DRM_IOCTL_I915_GEM_MMAP_OFFSET"},
-        {DrmIoctl::GemVmCreate, "DRM_IOCTL_I915_GEM_VM_CREATE"},
-        {DrmIoctl::GemVmDestroy, "DRM_IOCTL_I915_GEM_VM_DESTROY"},
-        {DrmIoctl::PrimeHandleToFd, "DRM_IOCTL_PRIME_HANDLE_TO_FD"}};
-    for (auto &ioctlCodeString : ioctlCodeStringMap) {
-        EXPECT_STREQ(getIoctlString(ioctlCodeString.first).c_str(), ioctlCodeString.second);
-    }
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    MockIoctlHelper ioctlHelper{drm};
+    EXPECT_STREQ(getIoctlString(DrmIoctl::Getparam, &ioctlHelper).c_str(), "DRM_IOCTL_I915_GETPARAM");
+    EXPECT_STREQ(getIoctlString(DrmIoctl::Getparam, nullptr).c_str(), "DRM_IOCTL_I915_GETPARAM");
 }
 TEST(DrmWrapperTest, WhenGettingDrmParamValueStringThenProperStringIsReturned) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    MockIoctlHelper ioctlHelper{drm};
     std::map<DrmParam, const char *> ioctlCodeStringMap = {
-        {DrmParam::ParamChipsetId, "I915_PARAM_CHIPSET_ID"},
-        {DrmParam::ParamRevision, "I915_PARAM_REVISION"},
         {DrmParam::ParamHasExecSoftpin, "I915_PARAM_HAS_EXEC_SOFTPIN"},
         {DrmParam::ParamHasPooledEu, "I915_PARAM_HAS_POOLED_EU"},
         {DrmParam::ParamHasScheduler, "I915_PARAM_HAS_SCHEDULER"},
         {DrmParam::ParamEuTotal, "I915_PARAM_EU_TOTAL"},
         {DrmParam::ParamSubsliceTotal, "I915_PARAM_SUBSLICE_TOTAL"},
         {DrmParam::ParamMinEuInPool, "I915_PARAM_MIN_EU_IN_POOL"},
-        {DrmParam::ParamCsTimestampFrequency, "I915_PARAM_CS_TIMESTAMP_FREQUENCY"},
-        {DrmParam::ParamHasVmBind, "PRELIM_I915_PARAM_HAS_VM_BIND"},
-        {DrmParam::ParamHasPageFault, "PRELIM_I915_PARAM_HAS_PAGE_FAULT"}};
+        {DrmParam::ParamCsTimestampFrequency, "I915_PARAM_CS_TIMESTAMP_FREQUENCY"}};
     for (auto &ioctlCodeString : ioctlCodeStringMap) {
-        EXPECT_STREQ(getDrmParamString(ioctlCodeString.first).c_str(), ioctlCodeString.second);
+        EXPECT_STREQ(getDrmParamString(ioctlCodeString.first, &ioctlHelper).c_str(), ioctlCodeString.second);
+        EXPECT_THROW(getDrmParamString(ioctlCodeString.first, nullptr).c_str(), std::runtime_error);
     }
 
-    EXPECT_THROW(getDrmParamString(DrmParam::EngineClassRender), std::runtime_error);
+    EXPECT_STREQ(getDrmParamString(DrmParam::ParamChipsetId, &ioctlHelper).c_str(), "I915_PARAM_CHIPSET_ID");
+    EXPECT_STREQ(getDrmParamString(DrmParam::ParamChipsetId, nullptr).c_str(), "I915_PARAM_CHIPSET_ID");
+    EXPECT_STREQ(getDrmParamString(DrmParam::ParamRevision, &ioctlHelper).c_str(), "I915_PARAM_REVISION");
+    EXPECT_STREQ(getDrmParamString(DrmParam::ParamRevision, nullptr).c_str(), "I915_PARAM_REVISION");
+
+    EXPECT_THROW(getDrmParamString(DrmParam::EngineClassRender, &ioctlHelper), std::runtime_error);
 }
 
 TEST(IoctlHelperTest, whenGettingDrmParamValueThenProperValueIsReturned) {

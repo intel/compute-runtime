@@ -71,7 +71,7 @@ int Drm::ioctl(DrmIoctl request, void *arg) {
         auto printIoctl = DebugManager.flags.PrintIoctlEntries.get();
 
         if (printIoctl) {
-            printf("IOCTL %s called\n", getIoctlString(request).c_str());
+            printf("IOCTL %s called\n", getIoctlString(request, ioctlHelper.get()).c_str());
         }
 
         if (measureTime) {
@@ -102,10 +102,10 @@ int Drm::ioctl(DrmIoctl request, void *arg) {
         if (printIoctl) {
             if (ret == 0) {
                 printf("IOCTL %s returns %d\n",
-                       getIoctlString(request).c_str(), ret);
+                       getIoctlString(request, ioctlHelper.get()).c_str(), ret);
             } else {
                 printf("IOCTL %s returns %d, errno %d(%s)\n",
-                       getIoctlString(request).c_str(), ret, returnedErrno, strerror(returnedErrno));
+                       getIoctlString(request, ioctlHelper.get()).c_str(), ret, returnedErrno, strerror(returnedErrno));
             }
         }
 
@@ -122,7 +122,7 @@ int Drm::getParamIoctl(DrmParam param, int *dstValue) {
     int retVal = ioctlHelper ? ioctlHelper->ioctl(DrmIoctl::Getparam, &getParam) : ioctl(DrmIoctl::Getparam, &getParam);
     if (DebugManager.flags.PrintIoctlEntries.get()) {
         printf("DRM_IOCTL_I915_GETPARAM: param: %s, output value: %d, retCode:% d\n",
-               getDrmParamString(param).c_str(),
+               getDrmParamString(param, ioctlHelper.get()).c_str(),
                *getParam.value,
                retVal);
     }
@@ -585,7 +585,7 @@ void Drm::printIoctlStatistics() {
     printf("%41s %15s %10s %20s %20s %20s", "Request", "Total time(ns)", "Count", "Avg time per ioctl", "Min", "Max\n");
     for (const auto &ioctlData : this->ioctlStatistics) {
         printf("%41s %15llu %10lu %20f %20lld %20lld\n",
-               getIoctlString(ioctlData.first).c_str(),
+               getIoctlString(ioctlData.first, ioctlHelper.get()).c_str(),
                ioctlData.second.totalTime,
                static_cast<unsigned long>(ioctlData.second.count),
                ioctlData.second.totalTime / static_cast<double>(ioctlData.second.count),

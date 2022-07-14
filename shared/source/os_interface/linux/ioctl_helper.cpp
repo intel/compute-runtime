@@ -242,7 +242,7 @@ int IoctlHelper::getDrmParamValueBase(DrmParam drmParam) const {
     }
 }
 
-std::string getDrmParamString(DrmParam drmParam) {
+std::string IoctlHelper::getDrmParamStringBase(DrmParam drmParam) const {
     switch (drmParam) {
     case DrmParam::ParamChipsetId:
         return "I915_PARAM_CHIPSET_ID";
@@ -262,17 +262,13 @@ std::string getDrmParamString(DrmParam drmParam) {
         return "I915_PARAM_MIN_EU_IN_POOL";
     case DrmParam::ParamCsTimestampFrequency:
         return "I915_PARAM_CS_TIMESTAMP_FREQUENCY";
-    case DrmParam::ParamHasVmBind:
-        return "PRELIM_I915_PARAM_HAS_VM_BIND";
-    case DrmParam::ParamHasPageFault:
-        return "PRELIM_I915_PARAM_HAS_PAGE_FAULT";
     default:
         UNRECOVERABLE_IF(true);
         return "";
     }
 }
 
-std::string getIoctlString(DrmIoctl ioctlRequest) {
+std::string IoctlHelper::getIoctlStringBase(DrmIoctl ioctlRequest) const {
     switch (ioctlRequest) {
     case DrmIoctl::GemExecbuffer2:
         return "DRM_IOCTL_I915_GEM_EXECBUFFER2";
@@ -310,41 +306,16 @@ std::string getIoctlString(DrmIoctl ioctlRequest) {
         return "DRM_IOCTL_PRIME_FD_TO_HANDLE";
     case DrmIoctl::PrimeHandleToFd:
         return "DRM_IOCTL_PRIME_HANDLE_TO_FD";
-    case DrmIoctl::GemVmBind:
-        return "PRELIM_DRM_IOCTL_I915_GEM_VM_BIND";
-    case DrmIoctl::GemVmUnbind:
-        return "PRELIM_DRM_IOCTL_I915_GEM_VM_UNBIND";
-    case DrmIoctl::GemWaitUserFence:
-        return "PRELIM_DRM_IOCTL_I915_GEM_WAIT_USER_FENCE";
-    case DrmIoctl::GemCreateExt:
-        return "DRM_IOCTL_I915_GEM_CREATE_EXT";
-    case DrmIoctl::DG1GemCreateExt:
-        return "DG1_DRM_IOCTL_I915_GEM_CREATE_EXT";
-    case DrmIoctl::GemVmAdvise:
-        return "PRELIM_DRM_IOCTL_I915_GEM_VM_ADVISE";
-    case DrmIoctl::GemVmPrefetch:
-        return "PRELIM_DRM_IOCTL_I915_GEM_VM_PREFETCH";
-    case DrmIoctl::UuidRegister:
-        return "PRELIM_DRM_IOCTL_I915_UUID_REGISTER";
-    case DrmIoctl::UuidUnregister:
-        return "PRELIM_DRM_IOCTL_I915_UUID_UNREGISTER";
-    case DrmIoctl::DebuggerOpen:
-        return "PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN";
-    case DrmIoctl::GemClosReserve:
-        return "PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE";
-    case DrmIoctl::GemClosFree:
-        return "PRELIM_DRM_IOCTL_I915_GEM_CLOS_FREE";
-    case DrmIoctl::GemCacheReserve:
-        return "PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE";
     case DrmIoctl::GemMmapOffset:
         return "DRM_IOCTL_I915_GEM_MMAP_OFFSET";
     case DrmIoctl::GemVmCreate:
         return "DRM_IOCTL_I915_GEM_VM_CREATE";
     case DrmIoctl::GemVmDestroy:
         return "DRM_IOCTL_I915_GEM_VM_DESTROY";
+    default:
+        UNRECOVERABLE_IF(true);
+        return "";
     }
-    UNRECOVERABLE_IF(true);
-    return "";
 }
 
 } // namespace NEO

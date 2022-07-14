@@ -109,6 +109,8 @@ class IoctlHelper {
     virtual bool isDebugAttachAvailable() = 0;
     virtual unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const = 0;
     virtual int getDrmParamValue(DrmParam drmParam) const = 0;
+    virtual std::string getDrmParamString(DrmParam param) const = 0;
+    virtual std::string getIoctlString(DrmIoctl ioctlRequest) const = 0;
 
     virtual std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo);
 
@@ -122,6 +124,9 @@ class IoctlHelper {
     void logExecBuffer(const ExecBuffer &execBuffer, std::stringstream &logger);
     int getDrmParamValueBase(DrmParam drmParam) const;
     unsigned int getIoctlRequestValueBase(DrmIoctl ioctlRequest) const;
+
+    std::string getDrmParamStringBase(DrmParam param) const;
+    std::string getIoctlStringBase(DrmIoctl ioctlRequest) const;
 
   protected:
     Drm &drm;
@@ -172,6 +177,8 @@ class IoctlHelperUpstream : public IoctlHelper {
     bool isDebugAttachAvailable() override;
     unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override;
     int getDrmParamValue(DrmParam drmParam) const override;
+    std::string getDrmParamString(DrmParam param) const override;
+    std::string getIoctlString(DrmIoctl ioctlRequest) const override;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -185,6 +192,7 @@ class IoctlHelperImpl : public IoctlHelperUpstream {
     uint32_t createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) override;
     std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) override;
     unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override;
+    std::string getIoctlString(DrmIoctl ioctlRequest) const override;
 };
 
 class IoctlHelperPrelim20 : public IoctlHelper {
@@ -232,6 +240,8 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     bool isDebugAttachAvailable() override;
     unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override;
     int getDrmParamValue(DrmParam drmParam) const override;
+    std::string getDrmParamString(DrmParam param) const override;
+    std::string getIoctlString(DrmIoctl ioctlRequest) const override;
 };
 
 } // namespace NEO
