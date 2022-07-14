@@ -74,6 +74,8 @@ DEVICE( 0xA789, AdlsHwConfig )
 
 #ifdef SUPPORT_ADLN
 DEVICE(0x46D0, AdlnHwConfig)
+DEVICE(0x46D1, AdlnHwConfig)
+DEVICE(0x46D2, AdlnHwConfig)
 #endif
 
 #endif
