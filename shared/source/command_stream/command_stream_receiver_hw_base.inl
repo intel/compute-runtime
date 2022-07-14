@@ -1270,7 +1270,6 @@ inline bool CommandStreamReceiverHw<GfxFamily>::isUpdateTagFromWaitEnabled() {
     auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
     auto enabled = hwHelper.isUpdateTaskCountFromWaitSupported();
     enabled &= this->isAnyDirectSubmissionEnabled();
-    enabled &= this->peekExecutionEnvironment().rootDeviceEnvironments.size() == 1;
 
     switch (DebugManager.flags.UpdateTaskCountFromWait.get()) {
     case 0:

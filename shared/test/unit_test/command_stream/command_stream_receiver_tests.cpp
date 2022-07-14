@@ -642,7 +642,7 @@ HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitWhenCheckIfEnabl
     }
 }
 
-HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitInMultiRootDeviceEnvironmentWhenCheckIfEnabledThenIsDisabled) {
+HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitInMultiRootDeviceEnvironmentWhenCheckIfEnabledThenCanBeEnabledOnlyWithDirectSubmission) {
 
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleRootDevices.set(2);
@@ -650,8 +650,17 @@ HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitInMultiRootDevic
     SetUp();
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    csr.directSubmissionAvailable = true;
-    EXPECT_FALSE(csr.isUpdateTagFromWaitEnabled());
+    auto &hwHelper = HwHelper::get(csr.peekHwInfo().platform.eRenderCoreFamily);
+
+    {
+        csr.directSubmissionAvailable = true;
+        EXPECT_EQ(csr.isUpdateTagFromWaitEnabled(), hwHelper.isUpdateTaskCountFromWaitSupported());
+    }
+
+    {
+        csr.directSubmissionAvailable = false;
+        EXPECT_FALSE(csr.isUpdateTagFromWaitEnabled());
+    }
 }
 
 struct InitDirectSubmissionFixture {
