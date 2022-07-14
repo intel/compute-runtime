@@ -1006,14 +1006,13 @@ void DebugSessionLinux::handleAttentionEvent(prelim_drm_i915_debug_event_eu_atte
     auto hwInfo = connectedDevice->getHwInfo();
     auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    auto threadsWithAttention = l0HwHelper.getThreadsFromAttentionBitmask(hwInfo, attention->bitmask, attention->bitmask_size);
+    auto threadsWithAttention = l0HwHelper.getThreadsFromAttentionBitmask(hwInfo, tileIndex, attention->bitmask, attention->bitmask_size);
 
     printBitmask(attention->bitmask, attention->bitmask_size);
 
     PRINT_DEBUGGER_THREAD_LOG("ATTENTION for tile = %d thread count = %d\n", tileIndex, (int)threadsWithAttention.size());
 
-    for (auto &thread : threadsWithAttention) {
-        EuThread::ThreadId threadId = {tileIndex, thread.slice, thread.subslice, thread.eu, thread.thread};
+    for (auto &threadId : threadsWithAttention) {
         PRINT_DEBUGGER_THREAD_LOG("ATTENTION event for thread: %s\n", EuThread::toString(threadId).c_str());
 
         markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(threadId, vmHandle);
@@ -1090,7 +1089,7 @@ uint64_t DebugSessionLinux::extractVaFromUuidString(std::string &uuid) {
     return parts[0];
 }
 
-int DebugSessionLinux::threadControl(std::vector<ze_device_thread_t> threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmaskOut, size_t &bitmaskSizeOut) {
+int DebugSessionLinux::threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmaskOut, size_t &bitmaskSizeOut) {
 
     auto hwInfo = connectedDevice->getHwInfo();
     auto classInstance = DrmHelper::getEngineInstance(connectedDevice, tile, hwInfo.capabilityTable.defaultEngineType);
@@ -1164,7 +1163,7 @@ int DebugSessionLinux::threadControl(std::vector<ze_device_thread_t> threads, ui
     return res;
 }
 
-ze_result_t DebugSessionLinux::resumeImp(std::vector<ze_device_thread_t> threads, uint32_t deviceIndex) {
+ze_result_t DebugSessionLinux::resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) {
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize;
 

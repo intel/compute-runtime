@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "level_zero/tools/source/debug/eu_thread.h"
 #include <level_zero/ze_api.h>
 
 #include "igfxfmid.h"
@@ -37,8 +38,8 @@ class L0HwHelper {
     virtual bool usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const = 0;
     virtual bool forceDefaultUsmCompressionSupport() const = 0;
 
-    virtual void getAttentionBitmaskForSingleThreads(std::vector<ze_device_thread_t> &threads, const NEO::HardwareInfo &hwInfo, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) const = 0;
-    virtual std::vector<ze_device_thread_t> getThreadsFromAttentionBitmask(const NEO::HardwareInfo &hwInfo, const uint8_t *bitmask, const size_t bitmaskSize) const = 0;
+    virtual void getAttentionBitmaskForSingleThreads(const std::vector<EuThread::ThreadId> &threads, const NEO::HardwareInfo &hwInfo, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) const = 0;
+    virtual std::vector<EuThread::ThreadId> getThreadsFromAttentionBitmask(const NEO::HardwareInfo &hwInfo, uint32_t tile, const uint8_t *bitmask, const size_t bitmaskSize) const = 0;
     virtual bool multiTileCapablePlatform() const = 0;
 
   protected:
@@ -60,8 +61,8 @@ class L0HwHelperHw : public L0HwHelper {
     bool imageCompressionSupported(const NEO::HardwareInfo &hwInfo) const override;
     bool usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const override;
     bool forceDefaultUsmCompressionSupport() const override;
-    void getAttentionBitmaskForSingleThreads(std::vector<ze_device_thread_t> &threads, const NEO::HardwareInfo &hwInfo, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) const override;
-    std::vector<ze_device_thread_t> getThreadsFromAttentionBitmask(const NEO::HardwareInfo &hwInfo, const uint8_t *bitmask, const size_t bitmaskSize) const override;
+    void getAttentionBitmaskForSingleThreads(const std::vector<EuThread::ThreadId> &threads, const NEO::HardwareInfo &hwInfo, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) const override;
+    std::vector<EuThread::ThreadId> getThreadsFromAttentionBitmask(const NEO::HardwareInfo &hwInfo, uint32_t tile, const uint8_t *bitmask, const size_t bitmaskSize) const override;
     bool multiTileCapablePlatform() const override;
 };
 

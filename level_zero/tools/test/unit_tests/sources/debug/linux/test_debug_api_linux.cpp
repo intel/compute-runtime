@@ -317,7 +317,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
         return L0::DebugSessionLinux::getTimeDifferenceMilliseconds(time);
     }
 
-    int threadControl(std::vector<ze_device_thread_t> threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) override {
+    int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) override {
         numThreadsPassedToThreadControl = threads.size();
         return L0::DebugSessionLinux::threadControl(threads, tile, threadCmd, bitmask, bitmaskSize);
     }
@@ -333,7 +333,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
         return L0::DebugSessionLinux::writeRegisters(thread, type, start, count, pRegisterValues);
     }
 
-    ze_result_t resumeImp(std::vector<ze_device_thread_t> threads, uint32_t deviceIndex) override {
+    ze_result_t resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) override {
         resumedThreads.push_back(threads);
         resumedDevices.push_back(deviceIndex);
         return L0::DebugSessionLinux::resumeImp(threads, deviceIndex);
@@ -410,7 +410,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     uint32_t checkThreadIsResumedCalled = 0;
 
     std::vector<uint32_t> resumedDevices;
-    std::vector<std::vector<ze_device_thread_t>> resumedThreads;
+    std::vector<std::vector<EuThread::ThreadId>> resumedThreads;
 
     std::unordered_map<uint64_t, uint8_t> stoppedThreads;
 
@@ -5056,7 +5056,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingThreadControlForInterruptThenProperIoctlsIs
 
     auto handler = new MockIoctlHandler;
     sessionMock->ioctlHandler.reset(handler);
-    std::vector<ze_device_thread_t> threads({});
+    std::vector<EuThread::ThreadId> threads({});
 
     std::unique_ptr<uint8_t[]> bitmaskOut;
     size_t bitmaskSizeOut = 0;
@@ -5097,7 +5097,7 @@ TEST_F(DebugApiLinuxTest, GivenErrorFromIoctlWhenCallingThreadControlForInterrup
 
     auto handler = new MockIoctlHandler;
     sessionMock->ioctlHandler.reset(handler);
-    std::vector<ze_device_thread_t> threads({});
+    std::vector<EuThread::ThreadId> threads({});
 
     std::unique_ptr<uint8_t[]> bitmaskOut;
     size_t bitmaskSizeOut = 0;
@@ -5121,7 +5121,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingThreadControlForResumeThenProperIoctlsIsCal
 
     auto handler = new MockIoctlHandler;
     sessionMock->ioctlHandler.reset(handler);
-    std::vector<ze_device_thread_t> threads({});
+    std::vector<EuThread::ThreadId> threads({});
 
     std::unique_ptr<uint8_t[]> bitmaskOut;
     size_t bitmaskSizeOut = 0;
@@ -5255,7 +5255,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingThreadControlForThreadStoppedThenProperIoct
     auto handler = new MockIoctlHandler;
     sessionMock->ioctlHandler.reset(handler);
 
-    std::vector<ze_device_thread_t> threads({});
+    std::vector<EuThread::ThreadId> threads({});
 
     std::unique_ptr<uint8_t[]> bitmaskOut;
     size_t bitmaskSizeOut = 0;
@@ -5361,17 +5361,17 @@ TEST_F(DebugApiLinuxAttentionTest, GivenEuAttentionEventForThreadsWhenHandlingEv
     auto &hwInfo = neoDevice->getHardwareInfo();
     auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    std::vector<ze_device_thread_t> threads{
-        {0, 0, 0, 0},
-        {0, 0, 0, 1},
-        {0, 0, 0, 2},
-        {0, 0, 0, 3},
-        {0, 0, 0, 4},
-        {0, 0, 0, 5},
-        {0, 0, 0, 6}};
+    std::vector<EuThread::ThreadId> threads{
+        {0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 1},
+        {0, 0, 0, 0, 2},
+        {0, 0, 0, 0, 3},
+        {0, 0, 0, 0, 4},
+        {0, 0, 0, 0, 5},
+        {0, 0, 0, 0, 6}};
 
     for (auto thread : threads) {
-        sessionMock->stoppedThreads[EuThread::ThreadId(0, thread).packed] = 1;
+        sessionMock->stoppedThreads[thread.packed] = 1;
     }
 
     l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
@@ -5409,14 +5409,14 @@ TEST_F(DebugApiLinuxAttentionTest, GivenEuAttentionEventWithInvalidClientWhenHan
     auto &hwInfo = neoDevice->getHardwareInfo();
     auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    std::vector<ze_device_thread_t> threads{
-        {0, 0, 0, 0},
-        {0, 0, 0, 1},
-        {0, 0, 0, 2},
-        {0, 0, 0, 3},
-        {0, 0, 0, 4},
-        {0, 0, 0, 5},
-        {0, 0, 0, 6}};
+    std::vector<EuThread::ThreadId> threads{
+        {0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 1},
+        {0, 0, 0, 0, 2},
+        {0, 0, 0, 0, 3},
+        {0, 0, 0, 0, 4},
+        {0, 0, 0, 0, 5},
+        {0, 0, 0, 0, 6}};
 
     l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
 
@@ -5501,10 +5501,10 @@ TEST_F(DebugApiLinuxAttentionTest, GivenInterruptedThreadsWhenOnlySomeThreadsRai
     auto &hwInfo = neoDevice->getHardwareInfo();
     auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    std::vector<ze_device_thread_t> threads{
-        {0, 0, 0, 0}};
+    std::vector<EuThread::ThreadId> threads{
+        {0, 0, 0, 0, 0}};
 
-    sessionMock->stoppedThreads[EuThread::ThreadId(0, threads[0]).packed] = 1;
+    sessionMock->stoppedThreads[threads[0].packed] = 1;
 
     if (hwInfo.gtSystemInfo.MaxEuPerSubSlice > 8) {
         sessionMock->allThreads[EuThread::ThreadId(0, 0, 0, 4, 0)]->stopThread(1u);
@@ -5606,14 +5606,14 @@ TEST_F(DebugApiLinuxAttentionTest, GivenEventSeqnoLowerEqualThanSentInterruptWhe
     auto &hwInfo = neoDevice->getHardwareInfo();
     auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    std::vector<ze_device_thread_t> threads{
-        {0, 0, 0, 0},
-        {0, 0, 0, 1},
-        {0, 0, 0, 2},
-        {0, 0, 0, 3},
-        {0, 0, 0, 4},
-        {0, 0, 0, 5},
-        {0, 0, 0, 6}};
+    std::vector<EuThread::ThreadId> threads{
+        {0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 1},
+        {0, 0, 0, 0, 2},
+        {0, 0, 0, 0, 3},
+        {0, 0, 0, 0, 4},
+        {0, 0, 0, 0, 5},
+        {0, 0, 0, 0, 6}};
 
     l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
 

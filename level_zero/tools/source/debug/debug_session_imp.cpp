@@ -307,7 +307,7 @@ DebugSessionImp::Error DebugSessionImp::resumeThreadsWithinDevice(uint32_t devic
     [[maybe_unused]] auto sipCommandResult = writeResumeCommand(resumeThreadIds);
     DEBUG_BREAK_IF(sipCommandResult != true);
 
-    auto result = resumeImp(resumeThreads, deviceIndex);
+    auto result = resumeImp(resumeThreadIds, deviceIndex);
 
     for (auto &threadID : resumeThreadIds) {
         while (checkThreadIsResumed(threadID) == false)
@@ -689,10 +689,10 @@ void DebugSessionImp::resumeAccidentallyStoppedThreads(const std::vector<EuThrea
     for (uint32_t i = 0; i < 4; i++) {
         std::unique_lock<std::mutex> lock(threadStateMutex);
 
-        if (threads[i].size() > 0) {
+        if (threadIdsPerDevice[i].size() > 0) {
             [[maybe_unused]] auto writeSipCommandResult = writeResumeCommand(threadIdsPerDevice[i]);
             DEBUG_BREAK_IF(writeSipCommandResult != true);
-            resumeImp(threads[i], i);
+            resumeImp(threadIdsPerDevice[i], i);
         }
 
         for (auto &threadID : threadIdsPerDevice[i]) {

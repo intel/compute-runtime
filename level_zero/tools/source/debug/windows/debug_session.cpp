@@ -399,7 +399,7 @@ ze_result_t DebugSessionWindows::acknowledgeEvent(const zet_debug_event_t *event
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t DebugSessionWindows::resumeImp(std::vector<ze_device_thread_t> threads, uint32_t deviceIndex) {
+ze_result_t DebugSessionWindows::resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

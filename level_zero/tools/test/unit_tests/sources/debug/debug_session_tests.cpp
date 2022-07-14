@@ -112,7 +112,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
         readStateSaveAreaHeaderCalled++;
         DebugSessionImp::readStateSaveAreaHeader();
     }
-    ze_result_t resumeImp(std::vector<ze_device_thread_t> threads, uint32_t deviceIndex) override {
+    ze_result_t resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) override {
         resumeImpCalled++;
         resumeThreadCount = threads.size();
         resumedThreads.push_back(std::move(threads));
@@ -244,7 +244,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     std::vector<zet_debug_event_t> events;
     std::vector<uint32_t> interruptedDevices;
     std::vector<uint32_t> resumedDevices;
-    std::vector<std::vector<ze_device_thread_t>> resumedThreads;
+    std::vector<std::vector<EuThread::ThreadId>> resumedThreads;
 
     NEO::SbaTrackedAddresses sba;
     uint64_t readMemoryBuffer[64];

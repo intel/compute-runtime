@@ -37,7 +37,7 @@ struct DebugSessionWindows : DebugSessionImp {
     static ze_result_t translateEscapeReturnStatusToZeResult(uint32_t escapeErrorStatus);
 
   protected:
-    ze_result_t resumeImp(std::vector<ze_device_thread_t> threads, uint32_t deviceIndex) override;
+    ze_result_t resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) override;
     ze_result_t interruptImp(uint32_t deviceIndex) override;
 
     ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override;

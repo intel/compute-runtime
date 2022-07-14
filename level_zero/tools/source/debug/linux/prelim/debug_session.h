@@ -170,7 +170,7 @@ struct DebugSessionLinux : DebugSessionImp {
     MOCKABLE_VIRTUAL void handleEvent(prelim_drm_i915_debug_event *event);
     bool checkAllEventsCollected();
     ze_result_t readEventImp(prelim_drm_i915_debug_event *drmDebugEvent);
-    ze_result_t resumeImp(std::vector<ze_device_thread_t> threads, uint32_t deviceIndex) override;
+    ze_result_t resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) override;
     ze_result_t interruptImp(uint32_t deviceIndex) override;
 
     void enqueueApiEvent(zet_debug_event_t &debugEvent) override {
@@ -235,7 +235,7 @@ struct DebugSessionLinux : DebugSessionImp {
 
     bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srIdent) override;
 
-    MOCKABLE_VIRTUAL int threadControl(std::vector<ze_device_thread_t> threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize);
+    MOCKABLE_VIRTUAL int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize);
 
     uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override;
     uint64_t getSbaBufferGpuVa(uint64_t memoryHandle);

@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 template <>
-void L0HwHelperHw<Family>::getAttentionBitmaskForSingleThreads(std::vector<ze_device_thread_t> &threads, const NEO::HardwareInfo &hwInfo, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) const {
+void L0HwHelperHw<Family>::getAttentionBitmaskForSingleThreads(const std::vector<EuThread::ThreadId> &threads, const NEO::HardwareInfo &hwInfo, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) const {
     const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
     const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
     const uint32_t bytesPerEu = alignUp(numThreadsPerEu, 8) / 8;
@@ -34,7 +34,7 @@ void L0HwHelperHw<Family>::getAttentionBitmaskForSingleThreads(std::vector<ze_de
 }
 
 template <>
-std::vector<ze_device_thread_t> L0HwHelperHw<Family>::getThreadsFromAttentionBitmask(const NEO::HardwareInfo &hwInfo, const uint8_t *bitmask, const size_t bitmaskSize) const {
+std::vector<EuThread::ThreadId> L0HwHelperHw<Family>::getThreadsFromAttentionBitmask(const NEO::HardwareInfo &hwInfo, uint32_t tile, const uint8_t *bitmask, const size_t bitmaskSize) const {
     const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
     const uint32_t numEuPerSubslice = std::min(hwInfo.gtSystemInfo.MaxEuPerSubSlice, 8u);
     const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
@@ -45,7 +45,7 @@ std::vector<ze_device_thread_t> L0HwHelperHw<Family>::getThreadsFromAttentionBit
     const uint32_t numberOfRows = 2;
 
     UNRECOVERABLE_IF(bytesPerEu != 1);
-    std::vector<ze_device_thread_t> threads;
+    std::vector<EuThread::ThreadId> threads;
 
     for (uint32_t slice = 0; slice < hwInfo.gtSystemInfo.MaxSlicesSupported; slice++) {
         for (uint32_t subslice = 0; subslice < numSubslicesPerSlice; subslice++) {
@@ -64,8 +64,8 @@ std::vector<ze_device_thread_t> L0HwHelperHw<Family>::getThreadsFromAttentionBit
                     std::bitset<8> bits(bitmask[offset]);
                     for (uint32_t i = 0; i < 8; i++) {
                         if (bits.test(i)) {
-                            threads.emplace_back(ze_device_thread_t{slice, subslice, euIndex + numEuPerSubslice * dualEu, i});
-                            threads.emplace_back(ze_device_thread_t{slice, subslice, euIndex + eusPerRow + numEuPerSubslice * dualEu, i});
+                            threads.emplace_back(tile, slice, subslice, euIndex + numEuPerSubslice * dualEu, i);
+                            threads.emplace_back(tile, slice, subslice, euIndex + eusPerRow + numEuPerSubslice * dualEu, i);
                         }
                     }
                 }

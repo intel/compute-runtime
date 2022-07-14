@@ -10,6 +10,7 @@
 #include "level_zero/core/source/helpers/l0_populate_factory.h"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper_base.inl"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper_skl_and_later.inl"
+#include "level_zero/tools/source/debug/eu_thread.h"
 
 namespace L0 {
 
