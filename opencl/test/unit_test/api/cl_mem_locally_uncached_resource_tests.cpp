@@ -207,7 +207,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, givenBuffersTha
     EXPECT_EQ(mocsCacheable, cmdQueueMocs<FamilyType>(pCmdQ));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, givenBuffersThatAreUncachedButKernelDoesntHaveAnyStatelessAccessessThenSurfacesAreNotRecordedAsUncacheable) {
+HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, givenBuffersThatAreUncachedButKernelDoesntHaveAnyStatelessAccessesThenSurfacesAreNotRecordedAsUncacheable) {
     cl_int retVal = CL_SUCCESS;
 
     MockKernelWithInternals mockKernel(*this->pClDevice, context, true);

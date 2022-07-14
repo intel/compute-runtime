@@ -44,13 +44,13 @@ size_t HwHelperHw<Family>::getMax3dImageWidthOrHeight() const {
 
 template <typename Family>
 uint64_t HwHelperHw<Family>::getMaxMemAllocSize() const {
-    //With statefull messages we have an allocation cap of 4GB
-    //Reason to subtract 8KB is that driver may pad the buffer with addition pages for over fetching..
+    // With stateful messages we have an allocation cap of 4GB
+    // Reason to subtract 8KB is that driver may pad the buffer with addition pages for over fetching
     return (4ULL * MemoryConstants::gigaByte) - (8ULL * MemoryConstants::kiloByte);
 }
 
 template <typename Family>
-bool HwHelperHw<Family>::isStatelesToStatefullWithOffsetSupported() const {
+bool HwHelperHw<Family>::isStatelessToStatefulWithOffsetSupported() const {
     return true;
 }
 

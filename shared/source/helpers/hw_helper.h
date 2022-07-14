@@ -149,7 +149,7 @@ class HwHelper {
     virtual size_t getMax3dImageWidthOrHeight() const = 0;
     virtual uint64_t getMaxMemAllocSize() const = 0;
     virtual uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const = 0;
-    virtual bool isStatelesToStatefullWithOffsetSupported() const = 0;
+    virtual bool isStatelessToStatefulWithOffsetSupported() const = 0;
     virtual void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) = 0;
     virtual bool disableL3CacheForDebug(const HardwareInfo &hwInfo) const = 0;
     virtual bool isRevisionSpecificBinaryBuiltinRequired() const = 0;
@@ -390,7 +390,7 @@ class HwHelperHw : public HwHelper {
     size_t getMax3dImageWidthOrHeight() const override;
     uint64_t getMaxMemAllocSize() const override;
     uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const override;
-    bool isStatelesToStatefullWithOffsetSupported() const override;
+    bool isStatelessToStatefulWithOffsetSupported() const override;
     void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) override;
     bool disableL3CacheForDebug(const HardwareInfo &hwInfo) const override;
     bool isRevisionSpecificBinaryBuiltinRequired() const override;

@@ -1951,7 +1951,7 @@ TEST_F(ProgramTests, GivenStatelessToStatefulBufferOffsetOptimizationWhenProgram
     EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::hasBufferOffsetArg)) << internalOptions;
 }
 
-TEST_F(ProgramTests, givenStatelessToStatefullOptimizationOffWHenProgramIsCreatedThenOptimizationStringIsNotPresent) {
+TEST_F(ProgramTests, givenStatelessToStatefulOptimizationOffWHenProgramIsCreatedThenOptimizationStringIsNotPresent) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(0);
     cl_int errorCode = CL_SUCCESS;
@@ -2318,7 +2318,7 @@ HWTEST_F(ProgramTests, givenNewProgramThenStatelessToStatefulBufferOffsetOptimiz
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     auto internalOptions = program.getInternalOptions();
 
-    if (HwHelperHw<FamilyType>::get().isStatelesToStatefullWithOffsetSupported()) {
+    if (HwHelperHw<FamilyType>::get().isStatelessToStatefulWithOffsetSupported()) {
         EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::hasBufferOffsetArg));
     } else {
         EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::hasBufferOffsetArg));

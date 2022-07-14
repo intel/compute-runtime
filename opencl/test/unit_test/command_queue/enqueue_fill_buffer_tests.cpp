@@ -562,9 +562,9 @@ HWTEST_F(EnqueueFillBufferStatelessTest, givenBuffersWhenFillingBufferStatelessT
     ASSERT_EQ(CL_SUCCESS, retVal);
 }
 
-using EnqueueFillBufferStatefullTest = EnqueueFillBufferHw;
+using EnqueueFillBufferStatefulTest = EnqueueFillBufferHw;
 
-HWTEST_F(EnqueueFillBufferStatefullTest, givenBuffersWhenFillingBufferStatefullThenSuccessIsReturned) {
+HWTEST_F(EnqueueFillBufferStatefulTest, givenBuffersWhenFillingBufferStatefulThenSuccessIsReturned) {
     auto pCmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
     dstBuffer.size = static_cast<size_t>(smallSize);
     auto retVal = pCmdQ->enqueueFillBuffer(

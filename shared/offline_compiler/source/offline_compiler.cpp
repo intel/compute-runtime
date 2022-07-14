@@ -756,7 +756,7 @@ void OfflineCompiler::unifyExcludeIrFlags() {
     }
 }
 
-void OfflineCompiler::setStatelessToStatefullBufferOffsetFlag() {
+void OfflineCompiler::setStatelessToStatefulBufferOffsetFlag() {
     bool isStatelessToStatefulBufferOffsetSupported = true;
     if (!deviceName.empty()) {
         const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);
@@ -782,7 +782,7 @@ void OfflineCompiler::appendExtraInternalOptions(std::string &internalOptions) {
 }
 
 void OfflineCompiler::parseDebugSettings() {
-    setStatelessToStatefullBufferOffsetFlag();
+    setStatelessToStatefulBufferOffsetFlag();
 }
 
 std::string OfflineCompiler::parseBinAsCharArray(uint8_t *binary, size_t size, std::string &fileName) {

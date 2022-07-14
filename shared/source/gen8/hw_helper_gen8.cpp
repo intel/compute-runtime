@@ -54,7 +54,7 @@ uint64_t HwHelperHw<Family>::getMaxMemAllocSize() const {
 }
 
 template <>
-bool HwHelperHw<Family>::isStatelesToStatefullWithOffsetSupported() const {
+bool HwHelperHw<Family>::isStatelessToStatefulWithOffsetSupported() const {
     return false;
 }
 

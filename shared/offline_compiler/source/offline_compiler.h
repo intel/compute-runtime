@@ -105,7 +105,7 @@ All supported acronyms: %s.
     std::string getStringWithinDelimiters(const std::string &src);
     int initialize(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles);
     int parseCommandLine(size_t numArgs, const std::vector<std::string> &allArgs);
-    void setStatelessToStatefullBufferOffsetFlag();
+    void setStatelessToStatefulBufferOffsetFlag();
     void appendExtraInternalOptions(std::string &internalOptions);
     void parseDebugSettings();
     void storeBinary(char *&pDst, size_t &dstSize, const void *pSrc, const size_t srcSize);

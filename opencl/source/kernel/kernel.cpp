@@ -1457,7 +1457,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
 
         auto allocationForCacheFlush = graphicsAllocation;
 
-        //if we make object uncacheable for surface state and there are not stateless accessess , then ther is no need to flush caches
+        // if we make object uncacheable for surface state and there are only stateful accesses, then don't flush caches
         if (buffer->isMemObjUncacheableForSurfaceState() && argAsPtr.isPureStateful()) {
             allocationForCacheFlush = nullptr;
         }

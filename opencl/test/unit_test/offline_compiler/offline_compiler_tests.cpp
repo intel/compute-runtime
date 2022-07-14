@@ -1966,7 +1966,7 @@ TEST(OfflineCompilerTest, GivenUnsupportedDeviceConfigWhenInitHardwareInfoThenIn
     EXPECT_STREQ(output.c_str(), resString.str().c_str());
 }
 
-TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationEnabledWhenDebugSettingsAreParsedThenOptimizationStringIsPresent) {
+TEST(OfflineCompilerTest, givenStatelessToStatefulOptimizationEnabledWhenDebugSettingsAreParsedThenOptimizationStringIsPresent) {
     DebugManagerStateRestore stateRestore;
     MockOfflineCompiler mockOfflineCompiler;
     DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(1);
@@ -3161,13 +3161,13 @@ TEST(OclocCompile, givenFormatFlagWithUnknownFormatPassedThenPrintWarning) {
     EXPECT_EQ(expectedOutput, output);
 }
 
-TEST(OfflineCompilerTest, GivenDebugFlagWhenSetStatelessToStatefullBufferOffsetFlagThenStatelessToStatefullOptimizationIsSetCorrectly) {
+TEST(OfflineCompilerTest, GivenDebugFlagWhenSetStatelessToStatefulBufferOffsetFlagThenStatelessToStatefullOptimizationIsSetCorrectly) {
     DebugManagerStateRestore stateRestore;
     MockOfflineCompiler mockOfflineCompiler;
     {
         DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(0);
         mockOfflineCompiler.initHardwareInfo(gEnvironment->devicePrefix.c_str());
-        mockOfflineCompiler.setStatelessToStatefullBufferOffsetFlag();
+        mockOfflineCompiler.setStatelessToStatefulBufferOffsetFlag();
         std::string internalOptions = mockOfflineCompiler.internalOptions;
         size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg.data());
         EXPECT_EQ(std::string::npos, found);
@@ -3175,7 +3175,7 @@ TEST(OfflineCompilerTest, GivenDebugFlagWhenSetStatelessToStatefullBufferOffsetF
     {
         DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(1);
         mockOfflineCompiler.initHardwareInfo(gEnvironment->devicePrefix.c_str());
-        mockOfflineCompiler.setStatelessToStatefullBufferOffsetFlag();
+        mockOfflineCompiler.setStatelessToStatefulBufferOffsetFlag();
         std::string internalOptions = mockOfflineCompiler.internalOptions;
         size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg.data());
         EXPECT_NE(std::string::npos, found);

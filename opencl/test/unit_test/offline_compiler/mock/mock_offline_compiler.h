@@ -53,7 +53,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::parseCommandLine;
     using OfflineCompiler::parseDebugSettings;
     using OfflineCompiler::revisionId;
-    using OfflineCompiler::setStatelessToStatefullBufferOffsetFlag;
+    using OfflineCompiler::setStatelessToStatefulBufferOffsetFlag;
     using OfflineCompiler::sourceCode;
     using OfflineCompiler::storeBinary;
     using OfflineCompiler::updateBuildLog;
