@@ -29,6 +29,7 @@ using CommandListAppendLaunchKernel = Test<ModuleFixture>;
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithIndirectAllocationsAllowedThenCommandListReturnsExpectedIndirectAllocationsAllowed) {
     createKernel();
+    kernel->kernelHasIndirectAccess = true;
     kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
     kernel->unifiedMemoryControls.indirectSharedAllocationsAllowed = true;
     kernel->unifiedMemoryControls.indirectHostAllocationsAllowed = true;

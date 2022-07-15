@@ -5,7 +5,10 @@
  *
  */
 
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/unit_test/page_fault_manager/mock_cpu_page_fault_manager.h"
 
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
@@ -13,6 +16,7 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
@@ -244,7 +248,7 @@ HWTEST_F(KernelArgSvmTest, givenDeviceSupportingSharedSystemAllocationsWhenSetAr
     EXPECT_EQ(16384u, surfaceState->getHeight());
 }
 
-TEST_F(KernelArgSvmTest, WhenSettingKernelArgImmediateThenInvalidArgValueErrorIsReturned) {
+TEST_F(KernelArgSvmTest, givenNullArgValWhenSettingKernelArgImmediateThenInvalidArgValueErrorIsReturned) {
     const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
     if (devInfo.svmCapabilities == 0) {
         GTEST_SKIP();
@@ -252,6 +256,125 @@ TEST_F(KernelArgSvmTest, WhenSettingKernelArgImmediateThenInvalidArgValueErrorIs
 
     auto retVal = pKernel->setArgImmediate(0, 256, nullptr);
     EXPECT_EQ(CL_INVALID_ARG_VALUE, retVal);
+}
+
+HWTEST_F(KernelArgSvmTest, givenSvmAllocationWhenPassingSvmPointerByValueThenItIsAddedToKernelUnifiedMemoryGfxAllocations) {
+    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
+
+    auto mockKernelInfo = std::make_unique<MockKernelInfo>();
+    mockKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+
+    mockKernelInfo->heapInfo.pSsh = pSshLocal;
+    mockKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(pSshLocal);
+
+    mockKernelInfo->addArgImmediate(0, sizeof(void *) * 2, 0x40, sizeof(void *) * 2);
+    mockKernelInfo->setAddressQualifier(0, KernelArgMetadata::AddressSpaceQualifier::AddrPrivate);
+
+    mockKernelInfo->addArgImmediate(1, sizeof(void *), 0x30, sizeof(void *));
+    mockKernelInfo->setAddressQualifier(1, KernelArgMetadata::AddressSpaceQualifier::AddrGlobal);
+
+    mockKernelInfo->addArgImmediate(2, sizeof(void *), 0x20, sizeof(void *));
+    mockKernelInfo->setAddressQualifier(2, KernelArgMetadata::AddressSpaceQualifier::AddrPrivate);
+
+    mockKernelInfo->addArgImmediate(3, sizeof(void *), 0x10, sizeof(void *));
+    mockKernelInfo->setAddressQualifier(3, KernelArgMetadata::AddressSpaceQualifier::AddrPrivate);
+
+    auto mockProgram = std::make_unique<MockProgram>(pContext, false, toClDeviceVector(*pClDevice));
+    auto mockKernel = std::make_unique<MockKernel>(mockProgram.get(), *mockKernelInfo, *pClDevice);
+    ASSERT_EQ(mockKernel->initialize(), CL_SUCCESS);
+
+    auto memoryManager = static_cast<MockMemoryManager *>(pClDevice->getExecutionEnvironment()->memoryManager.get());
+    memoryManager->pageFaultManager.reset(new MockPageFaultManager());
+    auto pageFaultManager = static_cast<MockPageFaultManager *>(memoryManager->pageFaultManager.get());
+    auto svmManager = pContext->getSVMAllocsManager();
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.device = pDevice;
+    auto allocation = svmManager->createUnifiedMemoryAllocation(1, unifiedMemoryProperties);
+    pageFaultManager->insertAllocation(allocation, 1, pContext->getSVMAllocsManager(), pContext->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
+    auto allocation2 = svmManager->createUnifiedMemoryAllocation(1, unifiedMemoryProperties);
+    pageFaultManager->insertAllocation(allocation2, 1, pContext->getSVMAllocsManager(), pContext->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
+    auto allocation3 = svmManager->createUnifiedMemoryAllocation(1, unifiedMemoryProperties);
+    pageFaultManager->insertAllocation(allocation3, 1, pContext->getSVMAllocsManager(), pContext->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
+    void *unalignedPtr = reinterpret_cast<void *>(0x1u);
+    EXPECT_EQ(mockKernel->setArgImmediate(0, sizeof(void *) * 2, &allocation), CL_SUCCESS);
+    EXPECT_EQ(mockKernel->setArgImmediate(1, sizeof(void *), &allocation), CL_SUCCESS);
+    EXPECT_EQ(mockKernel->setArgImmediate(2, sizeof(void *), unalignedPtr), CL_SUCCESS);
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+    auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType>>(pContext, pClDevice, nullptr);
+    const size_t offset = 0;
+    const size_t size = 1;
+
+    EXPECT_EQ(commandQueue->enqueueKernel(mockKernel.get(), 1, &offset, &size, &size, 0, nullptr, nullptr), CL_SUCCESS);
+    EXPECT_FALSE(commandStreamReceiver.isMadeResident(svmManager->getSVMAlloc(allocation)->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex)));
+    EXPECT_EQ(pageFaultManager->memoryData.at(allocation).domain, PageFaultManager::AllocationDomain::Cpu);
+    EXPECT_FALSE(commandStreamReceiver.isMadeResident(svmManager->getSVMAlloc(allocation2)->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex)));
+    EXPECT_EQ(pageFaultManager->memoryData.at(allocation2).domain, PageFaultManager::AllocationDomain::Cpu);
+    EXPECT_FALSE(commandStreamReceiver.isMadeResident(svmManager->getSVMAlloc(allocation3)->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex)));
+    EXPECT_EQ(pageFaultManager->memoryData.at(allocation3).domain, PageFaultManager::AllocationDomain::Cpu);
+
+    commandStreamReceiver.makeResidentAllocations.clear();
+    pageFaultManager->removeAllocation(allocation);
+    pageFaultManager->insertAllocation(allocation, 1, pContext->getSVMAllocsManager(), pContext->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
+    pageFaultManager->removeAllocation(allocation2);
+    pageFaultManager->insertAllocation(allocation2, 1, pContext->getSVMAllocsManager(), pContext->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
+    pageFaultManager->removeAllocation(allocation3);
+    pageFaultManager->insertAllocation(allocation3, 1, pContext->getSVMAllocsManager(), pContext->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
+
+    EXPECT_EQ(mockKernel->setArgImmediate(3, sizeof(void *), &allocation2), CL_SUCCESS);
+    EXPECT_EQ(commandQueue->enqueueKernel(mockKernel.get(), 1, &offset, &size, &size, 0, nullptr, nullptr), CL_SUCCESS);
+    EXPECT_FALSE(commandStreamReceiver.isMadeResident(svmManager->getSVMAlloc(allocation)->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex)));
+    EXPECT_EQ(pageFaultManager->memoryData.at(allocation).domain, PageFaultManager::AllocationDomain::Cpu);
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(svmManager->getSVMAlloc(allocation2)->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex)));
+    EXPECT_EQ(pageFaultManager->memoryData.at(allocation2).domain, PageFaultManager::AllocationDomain::Gpu);
+    EXPECT_FALSE(commandStreamReceiver.isMadeResident(svmManager->getSVMAlloc(allocation3)->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex)));
+    EXPECT_EQ(pageFaultManager->memoryData.at(allocation3).domain, PageFaultManager::AllocationDomain::Cpu);
+
+    commandStreamReceiver.makeResidentAllocations.clear();
+    pageFaultManager->removeAllocation(allocation);
+    pageFaultManager->insertAllocation(allocation, 1, pContext->getSVMAllocsManager(), pContext->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
+    pageFaultManager->removeAllocation(allocation2);
+    pageFaultManager->insertAllocation(allocation2, 1, pContext->getSVMAllocsManager(), pContext->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
+    pageFaultManager->removeAllocation(allocation3);
+    pageFaultManager->insertAllocation(allocation3, 1, pContext->getSVMAllocsManager(), pContext->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
+
+    mockKernel->isUnifiedMemorySyncRequired = false;
+    EXPECT_EQ(mockKernel->setArgImmediate(3, sizeof(void *), &allocation3), CL_SUCCESS);
+    EXPECT_EQ(commandQueue->enqueueKernel(mockKernel.get(), 1, &offset, &size, &size, 0, nullptr, nullptr), CL_SUCCESS);
+    EXPECT_FALSE(commandStreamReceiver.isMadeResident(svmManager->getSVMAlloc(allocation)->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex)));
+    EXPECT_EQ(pageFaultManager->memoryData.at(allocation).domain, PageFaultManager::AllocationDomain::Cpu);
+    EXPECT_FALSE(commandStreamReceiver.isMadeResident(svmManager->getSVMAlloc(allocation2)->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex)));
+    EXPECT_EQ(pageFaultManager->memoryData.at(allocation2).domain, PageFaultManager::AllocationDomain::Cpu);
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(svmManager->getSVMAlloc(allocation3)->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex)));
+    EXPECT_EQ(pageFaultManager->memoryData.at(allocation3).domain, PageFaultManager::AllocationDomain::Cpu);
+
+    commandStreamReceiver.makeResidentAllocations.clear();
+    pageFaultManager->removeAllocation(allocation);
+    pageFaultManager->insertAllocation(allocation, 1, pContext->getSVMAllocsManager(), pContext->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
+    pageFaultManager->removeAllocation(allocation2);
+    pageFaultManager->insertAllocation(allocation2, 1, pContext->getSVMAllocsManager(), pContext->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
+    pageFaultManager->removeAllocation(allocation3);
+    pageFaultManager->insertAllocation(allocation3, 1, pContext->getSVMAllocsManager(), pContext->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
+
+    mockKernel->isUnifiedMemorySyncRequired = true;
+    EXPECT_EQ(mockKernel->setArgImmediate(3, sizeof(void *), &allocation3), CL_SUCCESS);
+    EXPECT_EQ(commandQueue->enqueueKernel(mockKernel.get(), 1, &offset, &size, &size, 0, nullptr, nullptr), CL_SUCCESS);
+    EXPECT_FALSE(commandStreamReceiver.isMadeResident(svmManager->getSVMAlloc(allocation)->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex)));
+    EXPECT_EQ(pageFaultManager->memoryData.at(allocation).domain, PageFaultManager::AllocationDomain::Cpu);
+    EXPECT_FALSE(commandStreamReceiver.isMadeResident(svmManager->getSVMAlloc(allocation2)->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex)));
+    EXPECT_EQ(pageFaultManager->memoryData.at(allocation2).domain, PageFaultManager::AllocationDomain::Cpu);
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(svmManager->getSVMAlloc(allocation3)->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex)));
+    EXPECT_EQ(pageFaultManager->memoryData.at(allocation3).domain, PageFaultManager::AllocationDomain::Gpu);
+
+    svmManager->freeSVMAlloc(allocation);
+    svmManager->freeSVMAlloc(allocation2);
+    svmManager->freeSVMAlloc(allocation3);
 }
 
 HWTEST_F(KernelArgSvmTest, WhenPatchingWithImplicitSurfaceThenPatchIsApplied) {

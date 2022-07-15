@@ -46,6 +46,7 @@ struct WhiteBox<::L0::Kernel> : public ::L0::KernelImp {
     using ::L0::KernelImp::crossThreadData;
     using ::L0::KernelImp::crossThreadDataSize;
     using ::L0::KernelImp::groupSize;
+    using ::L0::KernelImp::kernelHasIndirectAccess;
     using ::L0::KernelImp::kernelImmData;
     using ::L0::KernelImp::kernelRequiresGenerationOfLocalIdsByRuntime;
     using ::L0::KernelImp::module;
