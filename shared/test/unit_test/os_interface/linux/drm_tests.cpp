@@ -1428,7 +1428,7 @@ TEST(DrmWrapperTest, WhenGettingDrmParamValueStringThenProperStringIsReturned) {
         {DrmParam::ParamCsTimestampFrequency, "I915_PARAM_CS_TIMESTAMP_FREQUENCY"}};
     for (auto &ioctlCodeString : ioctlCodeStringMap) {
         EXPECT_STREQ(getDrmParamString(ioctlCodeString.first, &ioctlHelper).c_str(), ioctlCodeString.second);
-        EXPECT_THROW(getDrmParamString(ioctlCodeString.first, nullptr).c_str(), std::runtime_error);
+        EXPECT_THROW(getDrmParamString(ioctlCodeString.first, nullptr), std::runtime_error);
     }
 
     EXPECT_STREQ(getDrmParamString(DrmParam::ParamChipsetId, &ioctlHelper).c_str(), "I915_PARAM_CHIPSET_ID");
