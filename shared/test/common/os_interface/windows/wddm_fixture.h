@@ -61,6 +61,38 @@ struct WddmFixture : public Test<MockExecutionEnvironmentGmmFixture> {
     MockWddmResidentAllocationsContainer *mockTemporaryResources;
 };
 
+struct WddmFixtureLuid : public Test<MockExecutionEnvironmentGmmFixture> {
+    void SetUp() override {
+        MockExecutionEnvironmentGmmFixture::setUp();
+        rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
+        osEnvironment = new OsEnvironmentWin();
+        gdi = new MockGdi();
+        osEnvironment->gdi.reset(gdi);
+        executionEnvironment->osEnvironment.reset(osEnvironment);
+        wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
+        rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
+        rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
+        rootDeviceEnvironment->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
+        osInterface = rootDeviceEnvironment->osInterface.get();
+        auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
+        wddm->init();
+        auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
+        auto engine = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
+        osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0u, EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode));
+        osContext->ensureContextInitialized();
+        mockTemporaryResources = static_cast<MockWddmResidentAllocationsContainer *>(wddm->temporaryResources.get());
+    }
+
+    WddmMock *wddm = nullptr;
+    OSInterface *osInterface;
+    RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
+    OsEnvironmentWin *osEnvironment = nullptr;
+    std::unique_ptr<OsContextWin> osContext;
+
+    MockGdi *gdi = nullptr;
+    MockWddmResidentAllocationsContainer *mockTemporaryResources;
+};
+
 struct WddmFixtureWithMockGdiDll : public GdiDllFixture, public MockExecutionEnvironmentGmmFixture {
     void setUp() {
         MockExecutionEnvironmentGmmFixture::setUp();

@@ -138,6 +138,9 @@ struct DeviceImp : public Device {
     CmdListCreateFunPtrT getCmdListCreateFunc(const ze_command_list_desc_t *desc);
     FabricVertex *fabricVertex = nullptr;
 
+    ze_result_t queryDeviceLuid(ze_device_luid_ext_properties_t *deviceLuidProperties);
+    ze_result_t setDeviceLuid(ze_device_luid_ext_properties_t *deviceLuidProperties);
+
   protected:
     void adjustCommandQueueDesc(uint32_t &ordinal, uint32_t &index);
     NEO::EngineGroupType getEngineGroupTypeForOrdinal(uint32_t ordinal) const;

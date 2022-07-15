@@ -37,6 +37,7 @@ set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/device/bcs_split.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device/bcs_split.h
     ${CMAKE_CURRENT_SOURCE_DIR}/device/device.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/device/device_imp_${DRIVER_MODEL}/device_imp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device/device_imp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device/device_imp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/driver_handle.h
