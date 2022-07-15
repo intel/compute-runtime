@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/os_interface/linux/drm_mock_device_blob.h"
 

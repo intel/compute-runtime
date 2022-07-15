@@ -8,7 +8,9 @@
 #include "mock_os_layer.h"
 
 #include "shared/source/helpers/string.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
+#include "shared/source/os_interface/linux/i915.h"
 
 #include <cassert>
 #include <dirent.h>

@@ -49,6 +49,9 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/linux_inc.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/i915.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/i915_prelim.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/i915_upstream.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_prelim.cpp

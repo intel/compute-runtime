@@ -8,6 +8,7 @@
 #include "shared/test/common/os_interface/linux/drm_memory_manager_fixture.h"
 
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/test/common/mocks/linux/mock_drm_command_stream_receiver.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/mock_builtins.h"

@@ -8,13 +8,12 @@
 #pragma once
 #include "shared/source/helpers/topology_map.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
+#include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/debug/debug_session.h"
 #include "level_zero/tools/source/debug/debug_session_imp.h"
-
-#include "third_party/uapi/prelim/drm/i915_drm.h"
 
 #include <atomic>
 #include <mutex>

@@ -17,6 +17,23 @@
 const int DrmMock::mockFd;
 const uint32_t DrmMockResources::registerResourceReturnHandle = 3;
 
+DrmMock::DrmMock(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(fd, ""), rootDeviceEnvironment) {
+    sliceCountChangeSupported = true;
+
+    if (rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled()) {
+        setPerContextVMRequired(true);
+    }
+
+    setupIoctlHelper(rootDeviceEnvironment.getHardwareInfo()->platform.eProductFamily);
+    if (!isPerContextVMRequired()) {
+        createVirtualMemoryAddressSpace(HwHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
+    }
+    storedPreemptionSupport =
+        I915_SCHEDULER_CAP_ENABLED |
+        I915_SCHEDULER_CAP_PRIORITY |
+        I915_SCHEDULER_CAP_PREEMPTION;
+}
+
 int DrmMock::ioctl(DrmIoctl request, void *arg) {
     ioctlCallsCount++;
     ioctlCount.total++;
@@ -288,4 +305,9 @@ int DrmMockEngine::handleRemainingRequests(DrmIoctl request, void *arg) {
         return 0;
     }
     return -1;
+}
+DrmMock::~DrmMock() {
+    if (expectIoctlCallsOnDestruction) {
+        EXPECT_EQ(expectedIoctlCallsOnDestruction, ioctlCallsCount);
+    }
 }

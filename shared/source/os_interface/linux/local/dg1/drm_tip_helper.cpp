@@ -5,7 +5,7 @@
  *
  */
 
-#include "third_party/uapi/drm/i915_drm.h"
+#include "shared/source/os_interface/linux/i915_upstream.h"
 
 #include <memory>
 #include <vector>

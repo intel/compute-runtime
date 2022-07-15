@@ -7,8 +7,7 @@
 
 #pragma once
 
-#include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/libult/linux/drm_mock_prelim_context.h"
@@ -20,17 +19,7 @@ class DrmQueryMock : public DrmMock {
     using Drm::rootDeviceEnvironment;
 
     DrmQueryMock(RootDeviceEnvironment &rootDeviceEnvironment) : DrmQueryMock(rootDeviceEnvironment, defaultHwInfo.get()) {}
-    DrmQueryMock(RootDeviceEnvironment &rootDeviceEnvironment, const HardwareInfo *inputHwInfo) : DrmMock(rootDeviceEnvironment) {
-        rootDeviceEnvironment.setHwInfo(inputHwInfo);
-        context.hwInfo = rootDeviceEnvironment.getHardwareInfo();
-        callBaseIsVmBindAvailable = true;
-
-        this->ioctlHelper = std::make_unique<IoctlHelperPrelim20>(*this);
-
-        EXPECT_TRUE(queryMemoryInfo());
-        EXPECT_EQ(2u + virtualMemoryIds.size(), ioctlCallsCount);
-        ioctlCallsCount = 0;
-    }
+    DrmQueryMock(RootDeviceEnvironment &rootDeviceEnvironment, const HardwareInfo *inputHwInfo);
 
     DrmMockPrelimContext context{
         nullptr,

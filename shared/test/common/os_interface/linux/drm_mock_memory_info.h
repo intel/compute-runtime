@@ -8,9 +8,8 @@
 #pragma once
 
 #include "shared/source/helpers/constants.h"
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/memory_info.h"
-
-#include "drm/i915_drm.h"
 
 #include <vector>
 

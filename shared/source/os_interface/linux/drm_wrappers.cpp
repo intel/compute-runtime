@@ -7,9 +7,8 @@
 
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
-
-#include "drm/i915_drm.h"
 
 #include <cstddef>
 

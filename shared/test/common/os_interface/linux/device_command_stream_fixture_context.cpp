@@ -7,9 +7,8 @@
 
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture_context.h"
 
+#include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/test/common/mocks/linux/mock_drm_wrappers.h"
-
-#include "third_party/uapi/prelim/drm/i915_drm.h"
 
 int DrmMockCustomPrelimContext::ioctlExtra(DrmIoctl request, void *arg) {
     switch (request) {

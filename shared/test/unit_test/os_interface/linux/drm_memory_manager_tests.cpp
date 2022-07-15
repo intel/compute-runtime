@@ -8,6 +8,7 @@
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/test/common/fixtures/memory_allocator_multi_device_fixture.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"

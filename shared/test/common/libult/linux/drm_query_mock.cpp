@@ -11,6 +11,18 @@
 
 #include "gtest/gtest.h"
 
+DrmQueryMock::DrmQueryMock(RootDeviceEnvironment &rootDeviceEnvironment, const HardwareInfo *inputHwInfo) : DrmMock(rootDeviceEnvironment) {
+    rootDeviceEnvironment.setHwInfo(inputHwInfo);
+    context.hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    callBaseIsVmBindAvailable = true;
+
+    this->ioctlHelper = std::make_unique<IoctlHelperPrelim20>(*this);
+
+    EXPECT_TRUE(queryMemoryInfo());
+    EXPECT_EQ(2u + virtualMemoryIds.size(), ioctlCallsCount);
+    ioctlCallsCount = 0;
+}
+
 int DrmQueryMock::handleRemainingRequests(DrmIoctl request, void *arg) {
     if (request == DrmIoctl::Query && arg) {
         if (i915QuerySuccessCount == 0) {

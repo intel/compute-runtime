@@ -6,10 +6,9 @@
  */
 
 #include "shared/source/os_interface/linux/drm_wrappers.h"
+#include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/test/common/test_macros/test.h"
-
-#include "third_party/uapi/prelim/drm/i915_drm.h"
 
 #include <memory>
 #include <sys/ioctl.h>

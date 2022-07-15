@@ -14,8 +14,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
-
-#include "drm/i915_drm.h"
+#include "shared/source/os_interface/linux/i915.h"
 
 #include <iostream>
 

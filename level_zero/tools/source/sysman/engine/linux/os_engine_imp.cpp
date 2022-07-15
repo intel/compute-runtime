@@ -8,8 +8,8 @@
 #include "level_zero/tools/source/sysman/engine/linux/os_engine_imp.h"
 
 #include "shared/source/os_interface/linux/engine_info.h"
+#include "shared/source/os_interface/linux/i915.h"
 
-#include "drm/i915_drm.h"
 #include "sysman/linux/os_sysman_imp.h"
 
 namespace L0 {

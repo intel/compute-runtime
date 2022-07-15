@@ -8,8 +8,7 @@
 #include "shared/test/common/mocks/linux/mock_drm_wrappers.h"
 
 #include "shared/source/helpers/bit_helpers.h"
-
-#include "drm/i915_drm.h"
+#include "shared/source/os_interface/linux/i915.h"
 
 namespace NEO {
 

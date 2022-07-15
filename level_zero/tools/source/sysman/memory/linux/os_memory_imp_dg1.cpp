@@ -6,12 +6,12 @@
  */
 
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/tools/source/sysman/memory/linux/os_memory_imp.h"
 
-#include "drm/i915_drm.h"
 #include "sysman/linux/os_sysman_imp.h"
 
 namespace L0 {

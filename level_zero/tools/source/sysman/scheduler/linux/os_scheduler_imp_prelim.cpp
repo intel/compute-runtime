@@ -6,10 +6,10 @@
  */
 
 #include "shared/source/os_interface/linux/engine_info.h"
+#include "shared/source/os_interface/linux/i915.h"
 
 #include "level_zero/tools/source/sysman/scheduler/linux/os_scheduler_imp.h"
 
-#include "drm/i915_drm.h"
 #include "sysman/linux/os_sysman_imp.h"
 
 namespace L0 {

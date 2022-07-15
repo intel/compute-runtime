@@ -13,9 +13,8 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
+#include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
-
-#include "third_party/uapi/prelim/drm/i915_drm.h"
 
 #include <algorithm>
 #include <cerrno>

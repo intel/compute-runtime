@@ -7,6 +7,10 @@
 
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 
+#include "shared/source/os_interface/linux/i915.h"
+
+#include "gtest/gtest.h"
+
 const int mockFd = 33;
 const char *mockPciPath = "";
 
