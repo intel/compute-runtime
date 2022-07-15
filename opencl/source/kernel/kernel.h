@@ -409,6 +409,14 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
         return anyKernelArgumentUsingSystemMemory;
     }
 
+    static bool graphicsAllocationTypeUseSystemMemory(AllocationType type);
+    void setDestinationAllocationInSystemMemory(bool value) {
+        isDestinationAllocationInSystemMemory = value;
+    }
+    bool getDestinationAllocationInSystemMemory() const {
+        return isDestinationAllocationInSystemMemory;
+    }
+
   protected:
     struct KernelConfig {
         Vec3<size_t> gws;
@@ -473,7 +481,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
 
     bool hasTunningFinished(KernelSubmissionData &submissionData);
     bool hasRunFinished(TimestampPacketContainer *timestampContainer);
-    bool graphicsAllocationTypeUseSystemMemory(AllocationType type);
 
     UnifiedMemoryControls unifiedMemoryControls{};
 
@@ -537,6 +544,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     bool singleSubdevicePreferredInCurrentEnqueue = false;
     bool kernelHasIndirectAccess = true;
     bool anyKernelArgumentUsingSystemMemory = false;
+    bool isDestinationAllocationInSystemMemory = false;
 };
 
 } // namespace NEO

@@ -106,7 +106,18 @@ struct CommandQueueStateless : public CommandQueueHw<FamilyType> {
         if (kernel->getKernelInfo().getArgDescriptorAt(0).is<ArgDescriptor::ArgTPointer>()) {
             EXPECT_FALSE(kernel->getKernelInfo().getArgDescriptorAt(0).as<ArgDescPointer>().isPureStateful());
         }
+
+        if (validateKernelSystemMemory) {
+            if (expectedKernelSystemMemory) {
+                EXPECT_TRUE(kernel->getDestinationAllocationInSystemMemory());
+            } else {
+                EXPECT_FALSE(kernel->getDestinationAllocationInSystemMemory());
+            }
+        }
     }
+
+    bool validateKernelSystemMemory = false;
+    bool expectedKernelSystemMemory = false;
 };
 
 template <typename FamilyType>
@@ -120,7 +131,18 @@ struct CommandQueueStateful : public CommandQueueHw<FamilyType> {
         if (HwHelperHw<FamilyType>::get().isStatelessToStatefulWithOffsetSupported()) {
             EXPECT_TRUE(kernel->allBufferArgsStateful);
         }
+
+        if (validateKernelSystemMemory) {
+            if (expectedKernelSystemMemory) {
+                EXPECT_TRUE(kernel->getDestinationAllocationInSystemMemory());
+            } else {
+                EXPECT_FALSE(kernel->getDestinationAllocationInSystemMemory());
+            }
+        }
     }
+
+    bool validateKernelSystemMemory = false;
+    bool expectedKernelSystemMemory = false;
 };
 
 } // namespace NEO

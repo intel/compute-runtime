@@ -542,7 +542,7 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSvmMemcpyWhenSvmZeroCopyThenBuiltinK
     EXPECT_EQ(Vec3<size_t>(256 / middleElSize, 1, 1), di->getGWS());
 
     auto kernel = mdi->begin()->getKernel();
-    EXPECT_TRUE(kernel->isAnyKernelArgumentUsingSystemMemory());
+    EXPECT_TRUE(kernel->getDestinationAllocationInSystemMemory());
 }
 
 HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSvmMemcpyWhenSvmGpuThenBuiltinKernelNotUsesSystemMemory) {
@@ -616,5 +616,5 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSvmMemcpyWhenSvmGpuThenBuiltinKernel
     EXPECT_EQ(Vec3<size_t>(256 / middleElSize, 1, 1), di->getGWS());
 
     auto kernel = mdi->begin()->getKernel();
-    EXPECT_FALSE(kernel->isAnyKernelArgumentUsingSystemMemory());
+    EXPECT_FALSE(kernel->getDestinationAllocationInSystemMemory());
 }

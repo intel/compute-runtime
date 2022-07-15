@@ -3269,7 +3269,7 @@ TEST_F(KernelTests, GivenCorrectAllocationTypeThenFunctionCheckingSystemMemoryRe
          allocationTypeIndex < static_cast<uint32_t>(NEO::AllocationType::COUNT);
          allocationTypeIndex++) {
         auto currentAllocationType = static_cast<NEO::AllocationType>(allocationTypeIndex);
-        bool ret = kernel->graphicsAllocationTypeUseSystemMemory(currentAllocationType);
+        bool ret = Kernel::graphicsAllocationTypeUseSystemMemory(currentAllocationType);
         if (std::find(systemMemoryAllocationType.begin(),
                       systemMemoryAllocationType.end(),
                       currentAllocationType) != systemMemoryAllocationType.end()) {

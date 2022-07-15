@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -179,10 +179,14 @@ struct EnqueueSvmMemFillHw : public ::testing::Test {
 
 using EnqueueSvmMemFillHwTest = EnqueueSvmMemFillHw;
 
-HWTEST_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToBufferStatelessBuilderThenSuccessIsReturned) {
+HWTEST_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToSystemBufferStatelessBuilderThenSuccessIsReturned) {
     auto cmdQ = std::make_unique<CommandQueueStateless<FamilyType>>(context.get(), device.get());
     auto svmData = context->getSVMAllocsManager()->getSVMAlloc(svmPtr);
     svmData->size = static_cast<size_t>(bigSize);
+    svmData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex())->setAllocationType(AllocationType::SVM_ZERO_COPY);
+
+    cmdQ->validateKernelSystemMemory = true;
+    cmdQ->expectedKernelSystemMemory = true;
 
     auto retVal = cmdQ->enqueueSVMMemFill(
         svmPtr,                       // void *svm_ptr
@@ -196,8 +200,14 @@ HWTEST_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToBuf
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToBufferStatefulBuilderThenSuccessIsReturned) {
+HWTEST_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToLocalBufferStatefulBuilderThenSuccessIsReturned) {
     auto cmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
+    auto svmData = context->getSVMAllocsManager()->getSVMAlloc(svmPtr);
+    svmData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex())->setAllocationType(AllocationType::SVM_GPU);
+
+    cmdQ->validateKernelSystemMemory = true;
+    cmdQ->expectedKernelSystemMemory = false;
+
     auto retVal = cmdQ->enqueueSVMMemFill(
         svmPtr,                         // void *svm_ptr
         pattern,                        // const void *pattern

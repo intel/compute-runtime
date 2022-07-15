@@ -881,7 +881,7 @@ cl_int Kernel::setArgSvm(uint32_t argIndex, size_t svmAllocSize, void *svmPtr, G
         patchedArgumentsNum++;
         kernelArguments[argIndex].isPatched = true;
     }
-    if (svmPtr != nullptr) {
+    if (svmPtr != nullptr && isBuiltIn == false) {
         this->anyKernelArgumentUsingSystemMemory |= true;
     }
     addAllocationToCacheFlushVector(argIndex, svmAlloc);
@@ -940,9 +940,9 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
         patchedArgumentsNum++;
         kernelArgInfo.isPatched = true;
     }
-    if (!kernelArgInfo.isSetToNullptr) {
+    if (!kernelArgInfo.isSetToNullptr && isBuiltIn == false) {
         if (svmAlloc != nullptr) {
-            this->anyKernelArgumentUsingSystemMemory |= graphicsAllocationTypeUseSystemMemory(svmAlloc->getAllocationType());
+            this->anyKernelArgumentUsingSystemMemory |= Kernel::graphicsAllocationTypeUseSystemMemory(svmAlloc->getAllocationType());
         } else {
             this->anyKernelArgumentUsingSystemMemory |= true;
         }
@@ -1406,7 +1406,9 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
         }
 
         auto gfxAllocationType = buffer->getGraphicsAllocation(rootDeviceIndex)->getAllocationType();
-        this->anyKernelArgumentUsingSystemMemory |= graphicsAllocationTypeUseSystemMemory(gfxAllocationType);
+        if (!isBuiltIn) {
+            this->anyKernelArgumentUsingSystemMemory |= Kernel::graphicsAllocationTypeUseSystemMemory(gfxAllocationType);
+        }
 
         if (buffer->peekSharingHandler()) {
             usingSharedObjArgs = true;

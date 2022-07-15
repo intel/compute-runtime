@@ -109,8 +109,13 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(&walkerCmd, kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups,
                                                            numWorkGroups, walkerArgs.localWorkSizes, simd, dim,
                                                            localIdsGenerationByRuntime, inlineDataProgrammingRequired, requiredWalkOrder);
-
-    bool requiredSystemFence = kernel.isAnyKernelArgumentUsingSystemMemory() && walkerArgs.event != nullptr;
+    bool kernelSystemAllocation = false;
+    if (kernel.isBuiltIn) {
+        kernelSystemAllocation = kernel.getDestinationAllocationInSystemMemory();
+    } else {
+        kernelSystemAllocation = kernel.isAnyKernelArgumentUsingSystemMemory();
+    }
+    bool requiredSystemFence = kernelSystemAllocation && walkerArgs.event != nullptr;
     EncodeWalkerArgs encodeWalkerArgs{kernel.getExecutionType(), requiredSystemFence};
     EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, encodeWalkerArgs);
 

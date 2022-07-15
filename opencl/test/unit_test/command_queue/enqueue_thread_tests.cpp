@@ -93,6 +93,9 @@ struct EnqueueThreadingFixture : public ClDeviceFixture {
             return new MyCommandQueue<FamilyType>(context, device, properties);
         }
 
+        bool validateKernelSystemMemory = false;
+        bool expectedKernelSystemMemory = false;
+
       protected:
         ~MyCommandQueue() override {
             if (kernel) {
@@ -103,6 +106,14 @@ struct EnqueueThreadingFixture : public ClDeviceFixture {
             for (auto &dispatchInfo : multiDispatchInfo) {
                 auto &kernel = *dispatchInfo.getKernel();
                 EXPECT_TRUE(kernel.getMultiDeviceKernel()->hasOwnership());
+
+                if (validateKernelSystemMemory) {
+                    if (expectedKernelSystemMemory) {
+                        EXPECT_TRUE(kernel.getDestinationAllocationInSystemMemory());
+                    } else {
+                        EXPECT_FALSE(kernel.getDestinationAllocationInSystemMemory());
+                    }
+                }
             }
         }
 
@@ -349,6 +360,8 @@ HWTEST_F(EnqueueThreadingImage, WhenEnqueuingFillImageThenKernelHasOwnership) {
 HWTEST_F(EnqueueThreading, WhenEnqueuingReadBufferRectThenKernelHasOwnership) {
     createCQ<FamilyType>();
     cl_int retVal;
+    static_cast<MyCommandQueue<FamilyType> *>(pCmdQ)->validateKernelSystemMemory = true;
+    static_cast<MyCommandQueue<FamilyType> *>(pCmdQ)->expectedKernelSystemMemory = true;
 
     std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_READ_WRITE, 1024u, nullptr, retVal));
     ASSERT_NE(nullptr, buffer.get());
@@ -368,6 +381,8 @@ HWTEST_F(EnqueueThreading, WhenEnqueuingReadBufferRectThenKernelHasOwnership) {
 HWTEST_F(EnqueueThreadingImage, WhenEnqueuingReadImageThenKernelHasOwnership) {
     createCQ<FamilyType>();
     cl_int retVal;
+    static_cast<MyCommandQueue<FamilyType> *>(pCmdQ)->validateKernelSystemMemory = true;
+    static_cast<MyCommandQueue<FamilyType> *>(pCmdQ)->expectedKernelSystemMemory = true;
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;

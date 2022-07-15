@@ -271,7 +271,7 @@ TEST_F(BuiltInTests, WhenBuildingListOfBuiltinsThenBuiltinsHaveBeenGenerated) {
     }
 }
 
-TEST_F(BuiltInTests, GivenCopyBufferToBufferWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
+TEST_F(BuiltInTests, GivenCopyBufferToSystemMemoryBufferWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
     BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer, *pClDevice);
 
     MockBuffer *srcPtr = new MockBuffer();
@@ -279,6 +279,9 @@ TEST_F(BuiltInTests, GivenCopyBufferToBufferWhenDispatchInfoIsCreatedThenParamsA
 
     MockBuffer &src = *srcPtr;
     MockBuffer &dst = *dstPtr;
+
+    srcPtr->mockGfxAllocation.setAllocationType(AllocationType::BUFFER);
+    dstPtr->mockGfxAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
 
     BuiltinOpParams builtinOpsParams;
 
@@ -328,8 +331,40 @@ TEST_F(BuiltInTests, GivenCopyBufferToBufferWhenDispatchInfoIsCreatedThenParamsA
             EXPECT_EQ(Vec3<size_t>(rightSize, 1, 1), dispatchInfo.getGWS());
         }
         i++;
+        EXPECT_TRUE(dispatchInfo.getKernel()->getDestinationAllocationInSystemMemory());
     }
     EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
+    delete srcPtr;
+    delete dstPtr;
+}
+
+TEST_F(BuiltInTests, GivenCopyBufferToLocalMemoryBufferWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
+    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer, *pClDevice);
+
+    MockBuffer *srcPtr = new MockBuffer();
+    MockBuffer *dstPtr = new MockBuffer();
+
+    MockBuffer &src = *srcPtr;
+    MockBuffer &dst = *dstPtr;
+
+    srcPtr->mockGfxAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
+    dstPtr->mockGfxAllocation.setAllocationType(AllocationType::BUFFER);
+
+    BuiltinOpParams builtinOpsParams;
+
+    builtinOpsParams.srcMemObj = &src;
+    builtinOpsParams.dstMemObj = &dst;
+    builtinOpsParams.srcPtr = src.getCpuAddress();
+    builtinOpsParams.dstPtr = dst.getCpuAddress();
+    builtinOpsParams.size = {dst.getSize(), 0, 0};
+
+    MultiDispatchInfo multiDispatchInfo(builtinOpsParams);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+
+    for (auto &dispatchInfo : multiDispatchInfo) {
+        EXPECT_FALSE(dispatchInfo.getKernel()->getDestinationAllocationInSystemMemory());
+    }
+
     delete srcPtr;
     delete dstPtr;
 }
@@ -857,8 +892,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToBufferStateless
     EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
 }
 
-TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToBufferRectStatelessIsUsedThenParamsAreCorrect) {
-
+TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToSystemBufferRectStatelessIsUsedThenParamsAreCorrect) {
     if (is32bit) {
         GTEST_SKIP();
     }
@@ -873,6 +907,9 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToBufferRectState
     srcBuffer.size = static_cast<size_t>(bigSize);
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
+
+    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::BUFFER);
+    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
 
     BuiltinOpParams dc;
     dc.srcMemObj = &srcBuffer;
@@ -889,10 +926,53 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToBufferRectState
     ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
     EXPECT_EQ(1u, multiDispatchInfo.size());
     EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
+
+    for (auto &dispatchInfo : multiDispatchInfo) {
+        EXPECT_TRUE(dispatchInfo.getKernel()->getDestinationAllocationInSystemMemory());
+    }
 }
 
-TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillBufferStatelessIsUsedThenParamsAreCorrect) {
+TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToLocalBufferRectStatelessIsUsedThenParamsAreCorrect) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
 
+    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferRectStateless, *pClDevice);
+
+    uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
+    uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
+    uint64_t size = 4ull * MemoryConstants::gigaByte;
+
+    MockBuffer srcBuffer;
+    srcBuffer.size = static_cast<size_t>(bigSize);
+    MockBuffer dstBuffer;
+    dstBuffer.size = static_cast<size_t>(bigSize);
+
+    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
+    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::BUFFER);
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = &srcBuffer;
+    dc.dstMemObj = &dstBuffer;
+    dc.srcOffset = {static_cast<size_t>(bigOffset), 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {static_cast<size_t>(size), 1, 1};
+    dc.srcRowPitch = static_cast<size_t>(size);
+    dc.srcSlicePitch = 0;
+    dc.dstRowPitch = static_cast<size_t>(size);
+    dc.dstSlicePitch = 0;
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
+
+    for (auto &dispatchInfo : multiDispatchInfo) {
+        EXPECT_FALSE(dispatchInfo.getKernel()->getDestinationAllocationInSystemMemory());
+    }
+}
+
+TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillSystemBufferStatelessIsUsedThenParamsAreCorrect) {
     if (is32bit) {
         GTEST_SKIP();
     }
@@ -908,6 +988,9 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillBufferStatelessIsUsedTh
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
 
+    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::BUFFER);
+    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
+
     BuiltinOpParams dc;
     dc.srcMemObj = &srcBuffer;
     dc.dstMemObj = &dstBuffer;
@@ -918,6 +1001,45 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillBufferStatelessIsUsedTh
     ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
     EXPECT_EQ(1u, multiDispatchInfo.size());
     EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
+
+    for (auto &dispatchInfo : multiDispatchInfo) {
+        EXPECT_TRUE(dispatchInfo.getKernel()->getDestinationAllocationInSystemMemory());
+    }
+}
+
+TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillLocalBufferStatelessIsUsedThenParamsAreCorrect) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBufferStateless, *pClDevice);
+
+    uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
+    uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
+    uint64_t size = 4ull * MemoryConstants::gigaByte;
+
+    MockBuffer srcBuffer;
+    srcBuffer.size = static_cast<size_t>(bigSize);
+    MockBuffer dstBuffer;
+    dstBuffer.size = static_cast<size_t>(bigSize);
+
+    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
+    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::BUFFER);
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = &srcBuffer;
+    dc.dstMemObj = &dstBuffer;
+    dc.dstOffset = {static_cast<size_t>(bigOffset), 0, 0};
+    dc.size = {static_cast<size_t>(size), 0, 0};
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
+
+    for (auto &dispatchInfo : multiDispatchInfo) {
+        EXPECT_FALSE(dispatchInfo.getKernel()->getDestinationAllocationInSystemMemory());
+    }
 }
 
 HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToImageStatelessIsUsedThenParamsAreCorrect) {
@@ -954,8 +1076,7 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToImageStateles
     EXPECT_FALSE(kernel->getKernelInfo().getArgDescriptorAt(0).as<ArgDescPointer>().isPureStateful());
 }
 
-HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToBufferStatelessIsUsedThenParamsAreCorrect) {
-
+HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToSystemBufferStatelessIsUsedThenParamsAreCorrect) {
     if (is32bit) {
         GTEST_SKIP();
     }
@@ -965,6 +1086,7 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToBufferStateles
 
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
+    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
     std ::unique_ptr<Image> pSrcImage(Image2dHelper<>::create(pContext));
     ASSERT_NE(nullptr, pSrcImage.get());
 
@@ -985,6 +1107,48 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToBufferStateles
     auto kernel = multiDispatchInfo.begin()->getKernel();
     ASSERT_NE(nullptr, kernel);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
+
+    for (auto &dispatchInfo : multiDispatchInfo) {
+        EXPECT_TRUE(dispatchInfo.getKernel()->getDestinationAllocationInSystemMemory());
+    }
+}
+
+HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToLocalBufferStatelessIsUsedThenParamsAreCorrect) {
+
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
+    uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
+
+    MockBuffer dstBuffer;
+    dstBuffer.size = static_cast<size_t>(bigSize);
+    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::BUFFER);
+    std ::unique_ptr<Image> pSrcImage(Image2dHelper<>::create(pContext));
+    ASSERT_NE(nullptr, pSrcImage.get());
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImage3dToBufferStateless, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = pSrcImage.get();
+    dc.dstMemObj = &dstBuffer;
+    dc.srcOffset = {0, 0, 0};
+    dc.dstOffset = {static_cast<size_t>(bigOffset), 0, 0};
+    dc.size = {1, 1, 1};
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
+
+    for (auto &dispatchInfo : multiDispatchInfo) {
+        EXPECT_FALSE(dispatchInfo.getKernel()->getDestinationAllocationInSystemMemory());
+    }
 }
 
 TEST_F(BuiltInTests, GivenUnalignedCopyBufferToBufferWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
@@ -1048,6 +1212,10 @@ TEST_F(BuiltInTests, GivenReadBufferAlignedWhenDispatchInfoIsCreatedThenParamsAr
     size_t middleSize = size / middleElSize;
     EXPECT_EQ(Vec3<size_t>(middleSize, 1, 1), dispatchInfo->getGWS());
     EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
+
+    for (auto &dispatchInfo : multiDispatchInfo) {
+        EXPECT_TRUE(dispatchInfo.getKernel()->getDestinationAllocationInSystemMemory());
+    }
     alignedFree(dstPtr);
 }
 
