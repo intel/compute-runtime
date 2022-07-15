@@ -378,6 +378,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenCommandQueueWhenExecutingCommandL
     ASSERT_NE(nullptr, gpuAlloc);
 
     createKernel();
+    kernel->kernelHasIndirectAccess = true;
     kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
     EXPECT_TRUE(kernel->getUnifiedMemoryControls().indirectDeviceAllocationsAllowed);
 
@@ -442,6 +443,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDebugModeToTreatIndirectAllocatio
     ASSERT_NE(nullptr, gpuAlloc);
 
     createKernel();
+    kernel->kernelHasIndirectAccess = true;
     kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
     EXPECT_TRUE(kernel->getUnifiedMemoryControls().indirectDeviceAllocationsAllowed);
 
@@ -505,6 +507,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
     ASSERT_NE(nullptr, gpuAlloc);
 
     createKernel();
+    kernel->kernelHasIndirectAccess = true;
     kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
     EXPECT_TRUE(kernel->getUnifiedMemoryControls().indirectDeviceAllocationsAllowed);
 
@@ -569,6 +572,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
     ASSERT_NE(nullptr, gpuAlloc);
 
     createKernel();
+    kernel->kernelHasIndirectAccess = true;
     kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
     EXPECT_TRUE(kernel->getUnifiedMemoryControls().indirectDeviceAllocationsAllowed);
 

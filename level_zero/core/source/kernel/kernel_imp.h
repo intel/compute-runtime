@@ -148,7 +148,7 @@ struct KernelImp : Kernel {
 
     ze_result_t getProfileInfo(zet_profile_properties_t *pProfileProperties) override;
 
-    bool hasIndirectAccess() {
+    bool hasIndirectAccess() const {
         return kernelHasIndirectAccess;
     }
 

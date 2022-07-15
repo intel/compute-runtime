@@ -326,6 +326,9 @@ DecodeError readZeInfoExperimentalProperties(const NEO::Yaml::YamlParser &parser
                                              ConstStringRef context,
                                              std::string &outErrReason, std::string &outWarning) {
     bool validExperimentalProperty = true;
+    outExperimentalProperties.hasNonKernelArgLoad = true;
+    outExperimentalProperties.hasNonKernelArgStore = true;
+    outExperimentalProperties.hasNonKernelArgAtomic = true;
     for (const auto &experimentalPropertyNd : parser.createChildrenRange(node)) {
         for (const auto &experimentalPropertyMemberNd : parser.createChildrenRange(experimentalPropertyNd)) {
             auto key = parser.readKey(experimentalPropertyMemberNd);

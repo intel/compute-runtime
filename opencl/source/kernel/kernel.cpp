@@ -258,7 +258,8 @@ cl_int Kernel::initialize() {
 
     this->kernelHasIndirectAccess |= kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgLoad ||
                                      kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgStore ||
-                                     kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic;
+                                     kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic ||
+                                     kernelInfo.hasIndirectStatelessAccess;
 
     provideInitializationHints();
     // resolve the new kernel info to account for kernel handlers
@@ -1251,9 +1252,9 @@ void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
 
     gtpinNotifyMakeResident(this, &commandStreamReceiver);
 
-    if (unifiedMemoryControls.indirectDeviceAllocationsAllowed ||
-        unifiedMemoryControls.indirectHostAllocationsAllowed ||
-        unifiedMemoryControls.indirectSharedAllocationsAllowed) {
+    if (this->kernelHasIndirectAccess && (unifiedMemoryControls.indirectDeviceAllocationsAllowed ||
+                                          unifiedMemoryControls.indirectHostAllocationsAllowed ||
+                                          unifiedMemoryControls.indirectSharedAllocationsAllowed)) {
         this->getContext().getSVMAllocsManager()->makeInternalAllocationsResident(commandStreamReceiver, unifiedMemoryControls.generateMask());
     }
 }

@@ -151,9 +151,9 @@ struct KernelDescriptor {
         uint16_t numArgsToPatch = 0U;
         uint16_t numGrfRequired = 0U;
         uint8_t barrierCount = 0u;
-        bool hasNonKernelArgLoad = true;
-        bool hasNonKernelArgStore = true;
-        bool hasNonKernelArgAtomic = true;
+        bool hasNonKernelArgLoad = false;
+        bool hasNonKernelArgStore = false;
+        bool hasNonKernelArgAtomic = false;
 
         AddressingMode bufferAddressingMode = BindfulAndStateless;
         AddressingMode imageAddressingMode = Bindful;
