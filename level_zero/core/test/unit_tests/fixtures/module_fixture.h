@@ -12,12 +12,12 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/program/kernel_info.h"
-#include "shared/test/common/device_binary_format/zebin_tests.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_modules_zebin.h"
 
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/source/module/module_imp.h"
@@ -156,22 +156,15 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
         DeviceFixture::setupWithExecutionEnvironment(*executionEnvironment);
     }
 
-    void createModuleFromBinary(uint32_t perHwThreadPrivateMemorySize, bool isInternal, MockImmutableData *mockKernelImmData) {
-        std::string testFile;
-        retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".bin");
-
-        size_t size = 0;
-        auto src = loadDataFromFile(
-            testFile.c_str(),
-            size);
-
-        ASSERT_NE(0u, size);
-        ASSERT_NE(nullptr, src);
+    void createModuleFromMockBinary(uint32_t perHwThreadPrivateMemorySize, bool isInternal, MockImmutableData *mockKernelImmData,
+                                    std::initializer_list<ZebinTestData::appendElfAdditionalSection> additionalSections = {}) {
+        zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), additionalSections);
+        const auto &src = zebinData->storage;
 
         ze_module_desc_t moduleDesc = {};
         moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
-        moduleDesc.inputSize = size;
+        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+        moduleDesc.inputSize = src.size();
 
         ModuleBuildLog *moduleBuildLog = nullptr;
 
@@ -201,6 +194,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
     const std::string kernelName = "test";
     const uint32_t numKernelArguments = 6;
     std::unique_ptr<MockModule> module;
+    std::unique_ptr<ZebinTestData::ZebinWithL0TestCommonModule> zebinData;
     MockImmutableMemoryManager *memoryManager;
 };
 
@@ -208,25 +202,17 @@ struct ModuleFixture : public DeviceFixture {
     void setUp() {
         NEO::MockCompilerEnableGuard mock(true);
         DeviceFixture::setUp();
-        createModuleFromBinary();
+        createModuleFromMockBinary();
     }
 
-    void createModuleFromBinary(ModuleType type = ModuleType::User) {
-        std::string testFile;
-        retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".bin");
-
-        size_t size = 0;
-        auto src = loadDataFromFile(
-            testFile.c_str(),
-            size);
-
-        ASSERT_NE(0u, size);
-        ASSERT_NE(nullptr, src);
+    void createModuleFromMockBinary(ModuleType type = ModuleType::User) {
+        zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
+        const auto &src = zebinData->storage;
 
         ze_module_desc_t moduleDesc = {};
         moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
-        moduleDesc.inputSize = size;
+        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+        moduleDesc.inputSize = src.size();
 
         ModuleBuildLog *moduleBuildLog = nullptr;
 
@@ -248,11 +234,11 @@ struct ModuleFixture : public DeviceFixture {
         DeviceFixture::tearDown();
     }
 
-    const std::string binaryFilename = "test_kernel";
     const std::string kernelName = "test";
     const uint32_t numKernelArguments = 6;
     std::unique_ptr<L0::Module> module;
     std::unique_ptr<WhiteBox<::L0::Kernel>> kernel;
+    std::unique_ptr<ZebinTestData::ZebinWithL0TestCommonModule> zebinData;
 };
 
 struct MultiDeviceModuleFixture : public MultiDeviceFixture {
@@ -261,24 +247,18 @@ struct MultiDeviceModuleFixture : public MultiDeviceFixture {
         modules.resize(numRootDevices);
     }
 
-    void createModuleFromBinary(uint32_t rootDeviceIndex) {
-        std::string testFile;
-        retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".bin");
-
-        size_t size = 0;
-        auto src = loadDataFromFile(testFile.c_str(), size);
-
-        ASSERT_NE(0u, size);
-        ASSERT_NE(nullptr, src);
+    void createModuleFromMockBinary(uint32_t rootDeviceIndex) {
+        auto device = driverHandle->devices[rootDeviceIndex];
+        zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
+        const auto &src = zebinData->storage;
 
         ze_module_desc_t moduleDesc = {};
         moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
-        moduleDesc.inputSize = size;
+        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+        moduleDesc.inputSize = src.size();
 
         ModuleBuildLog *moduleBuildLog = nullptr;
 
-        auto device = driverHandle->devices[rootDeviceIndex];
         modules[rootDeviceIndex].reset(Module::create(device,
                                                       &moduleDesc,
                                                       moduleBuildLog, ModuleType::User));
@@ -301,11 +281,11 @@ struct MultiDeviceModuleFixture : public MultiDeviceFixture {
         MultiDeviceFixture::tearDown();
     }
 
-    const std::string binaryFilename = "test_kernel";
     const std::string kernelName = "test";
     const uint32_t numKernelArguments = 6;
     std::vector<std::unique_ptr<L0::Module>> modules;
     std::unique_ptr<WhiteBox<::L0::Kernel>> kernel;
+    std::unique_ptr<ZebinTestData::ZebinWithL0TestCommonModule> zebinData;
 };
 
 struct ModuleWithZebinFixture : public DeviceFixture {
@@ -428,7 +408,7 @@ struct MultiTileModuleFixture : public MultiDeviceModuleFixture {
         MultiDeviceFixture::numSubDevices = 2u;
 
         MultiDeviceModuleFixture::setUp();
-        createModuleFromBinary(0);
+        createModuleFromMockBinary(0);
 
         device = driverHandle->devices[0];
     }

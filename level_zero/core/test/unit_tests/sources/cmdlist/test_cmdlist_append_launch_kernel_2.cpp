@@ -958,7 +958,7 @@ struct CmdlistAppendLaunchKernelWithImplicitArgsTests : CmdlistAppendLaunchKerne
         kernelDescriptor->kernelAttributes.workgroupDimensionsOrder[0] = workgroupDimOrder[0];
         kernelDescriptor->kernelAttributes.workgroupDimensionsOrder[1] = workgroupDimOrder[1];
         kernelDescriptor->kernelAttributes.workgroupDimensionsOrder[2] = workgroupDimOrder[2];
-        createModuleFromBinary(0u, false, mockKernelImmData.get());
+        createModuleFromMockBinary(0u, false, mockKernelImmData.get());
 
         auto kernel = std::make_unique<MockKernel>(module.get());
 
@@ -1108,7 +1108,7 @@ HWTEST_F(CmdlistAppendLaunchKernelTests, givenKernelWithoutImplicitArgsWhenAppen
     std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
     auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
     kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = false;
-    createModuleFromBinary(0u, false, mockKernelImmData.get());
+    createModuleFromMockBinary(0u, false, mockKernelImmData.get());
 
     auto kernel = std::make_unique<MockKernel>(module.get());
 
@@ -1146,7 +1146,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests, givenKernelWitchScratchAndPrivateWhenA
     kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = false;
     kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x200;
     kernelDescriptor->kernelAttributes.perThreadScratchSize[1] = 0x100;
-    createModuleFromBinary(0u, false, mockKernelImmData.get());
+    createModuleFromMockBinary(0u, false, mockKernelImmData.get());
 
     auto kernel = std::make_unique<MockKernel>(module.get());
 

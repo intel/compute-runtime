@@ -11,7 +11,7 @@
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/program/program_info.h"
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
-#include "shared/test/common/device_binary_format/zebin_tests.h"
+#include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
 
 TEST(DecodeError, WhenStringRepresentationIsNeededThenAsStringEncodesProperly) {

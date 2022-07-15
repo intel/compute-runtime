@@ -475,7 +475,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
     kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = false;
     kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = scratchPerThreadSize;
-    createModuleFromBinary(0u, false, mockKernelImmData.get());
+    createModuleFromMockBinary(0u, false, mockKernelImmData.get());
 
     auto kernel = std::make_unique<MockKernel>(module.get());
 
@@ -518,7 +518,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = false;
     kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = scratchPerThreadSize;
     kernelDescriptor->kernelAttributes.perThreadScratchSize[1] = privateScratchPerThreadSize;
-    createModuleFromBinary(0u, false, mockKernelImmData.get());
+    createModuleFromMockBinary(0u, false, mockKernelImmData.get());
 
     auto kernel = std::make_unique<MockKernel>(module.get());
 

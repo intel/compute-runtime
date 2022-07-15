@@ -68,6 +68,8 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_operations_handler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_migration_sync_data.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_modules_zebin.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_modules_zebin.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_multi_graphics_allocation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_context.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_library.h

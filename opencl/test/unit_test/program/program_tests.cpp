@@ -27,7 +27,6 @@
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
-#include "shared/test/common/device_binary_format/zebin_tests.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
@@ -36,6 +35,7 @@
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
@@ -2092,7 +2092,7 @@ TEST_F(ProgramTests, GivenNullContextWhenCreatingProgramFromGenBinaryThenSuccess
 
 TEST_F(ProgramTests, givenValidZebinPrepareLinkerInput) {
     ZebinTestData::ValidEmptyProgram zebin;
-    const std::string validZeInfo = std::string("version :\'") + toString(zeInfoDecoderVersion) + R"===('
+    const std::string validZeInfo = std::string("version :\'") + versionToString(zeInfoDecoderVersion) + R"===('
 kernels:
     - name : some_kernel
       execution_env :

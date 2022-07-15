@@ -18,10 +18,10 @@
 #include "shared/source/program/kernel_info.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
-#include "shared/test/common/device_binary_format/zebin_tests.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/context/context.h"
@@ -100,7 +100,7 @@ HWTEST_F(ModuleTest, givenUserModuleWhenCreatedThenCorrectAllocationTypeIsUsedFo
 }
 
 HWTEST_F(ModuleTest, givenBuiltinModuleWhenCreatedThenCorrectAllocationTypeIsUsedForIsa) {
-    createModuleFromBinary(ModuleType::Builtin);
+    createModuleFromMockBinary(ModuleType::Builtin);
     createKernel();
     EXPECT_EQ(NEO::AllocationType::KERNEL_ISA_INTERNAL, kernel->getIsaAllocation()->getAllocationType());
 }
@@ -126,19 +126,13 @@ HWTEST_F(ModuleTest, givenBlitterAvailableWhenCopyingPatchedSegmentsThenIsaIsTra
     Mock<L0::DeviceImp> device(neoMockDevice, neoMockDevice->getExecutionEnvironment());
     device.driverHandle = driverHandle.get();
 
-    std::string testFile;
-    retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".bin");
-
-    size_t size = 0;
-    auto src = loadDataFromFile(testFile.c_str(), size);
-
-    ASSERT_NE(0u, size);
-    ASSERT_NE(nullptr, src);
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device.getHwInfo());
+    const auto &src = zebinData->storage;
 
     ze_module_desc_t moduleDesc = {};
     moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
-    moduleDesc.inputSize = size;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
 
     ModuleBuildLog *moduleBuildLog = nullptr;
 
@@ -157,7 +151,7 @@ HWTEST_F(ModuleTest, givenBlitterAvailableWhenCopyingPatchedSegmentsThenIsaIsTra
 
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     if (hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *module->getKernelImmutableDataVector()[0]->getIsaGraphicsAllocation())) {
-        EXPECT_EQ(8u, blitterCalled);
+        EXPECT_EQ(zebinData->numOfKernels, blitterCalled);
     } else {
         EXPECT_EQ(0u, blitterCalled);
     }
@@ -1663,23 +1657,17 @@ TEST_F(ModuleDynamicLinkTest, givenUnresolvedSymbolsWhenModuleIsCreatedThenIsaAl
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
 
-    std::string testFile;
-    retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".bin");
-
-    size_t size = 0;
-    auto src = loadDataFromFile(testFile.c_str(), size);
-
-    ASSERT_NE(0u, size);
-    ASSERT_NE(nullptr, src);
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
+    const auto &src = zebinData->storage;
 
     ze_module_desc_t moduleDesc = {};
     moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
-    moduleDesc.inputSize = size;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
 
     ModuleBuildLog *moduleBuildLog = nullptr;
 
-    auto module = std::unique_ptr<Module>(new Module(device, moduleBuildLog, ModuleType::User));
+    auto module = std::make_unique<Module>(device, moduleBuildLog, ModuleType::User);
     ASSERT_NE(nullptr, module.get());
 
     NEO::Linker::RelocationInfo unresolvedRelocation;
@@ -1861,7 +1849,7 @@ class DeviceModuleSetArgBufferTest : public ModuleFixture, public ::testing::Tes
 HWTEST_F(DeviceModuleSetArgBufferTest,
          givenValidMemoryUsedinFirstCallToSetArgBufferThenNullptrSetOnTheSecondCallThenArgBufferisUpdatedInEachCallAndSuccessIsReturned) {
     uint32_t rootDeviceIndex = 0;
-    createModuleFromBinary();
+    createModuleFromMockBinary();
 
     ze_kernel_handle_t kernelHandle;
     void *validBufferPtr = nullptr;
@@ -1924,7 +1912,7 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
          givenCallsToSetArgBufferThenAllocationIsSetForCorrectDevice) {
 
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
-        createModuleFromBinary(rootDeviceIndex);
+        createModuleFromMockBinary(rootDeviceIndex);
 
         ze_kernel_handle_t kernelHandle;
         void *ptr = nullptr;
@@ -1947,19 +1935,13 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
 using ContextModuleCreateTest = Test<DeviceFixture>;
 
 HWTEST_F(ContextModuleCreateTest, givenCallToCreateModuleThenModuleIsReturned) {
-    std::string testFile;
-    retrieveBinaryKernelFilenameApiSpecific(testFile, "test_kernel_", ".bin");
-
-    size_t size = 0;
-    auto src = loadDataFromFile(testFile.c_str(), size);
-
-    ASSERT_NE(0u, size);
-    ASSERT_NE(nullptr, src);
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
+    const auto &src = zebinData->storage;
 
     ze_module_desc_t moduleDesc = {};
     moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
-    moduleDesc.inputSize = size;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
 
     ze_module_handle_t hModule;
     ze_device_handle_t hDevice = device->toHandle();
@@ -1995,19 +1977,13 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWit
     DebugManagerStateRestore dgbRestorer;
     NEO::DebugManager.flags.RebuildPrecompiledKernels.set(true);
 
-    std::string testFile;
-    retrieveBinaryKernelFilenameApiSpecific(testFile, "test_kernel_", ".gen");
-
-    size_t size = 0;
-    auto src = loadDataFromFile(testFile.c_str(), size);
-
-    ASSERT_NE(0u, size);
-    ASSERT_NE(nullptr, src);
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
+    const auto &src = zebinData->storage;
 
     ze_module_desc_t moduleDesc = {};
     moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
-    moduleDesc.inputSize = size;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
 
     Module module(device, nullptr, ModuleType::User);
     MockModuleTU *tu = new MockModuleTU(device);
@@ -2023,19 +1999,13 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWit
     DebugManagerStateRestore dgbRestorer;
     NEO::DebugManager.flags.RebuildPrecompiledKernels.set(true);
 
-    std::string testFile;
-    retrieveBinaryKernelFilenameApiSpecific(testFile, "test_kernel_", ".bin");
-
-    size_t size = 0;
-    auto src = loadDataFromFile(testFile.c_str(), size);
-
-    ASSERT_NE(0u, size);
-    ASSERT_NE(nullptr, src);
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
+    const auto &src = zebinData->storage;
 
     ze_module_desc_t moduleDesc = {};
     moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
-    moduleDesc.inputSize = size;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
 
     Module module(device, nullptr, ModuleType::User);
     MockModuleTU *tu = new MockModuleTU(device);
@@ -2051,19 +2021,15 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildFlagWhenCreatingModuleFromNative
     DebugManagerStateRestore dgbRestorer;
     NEO::DebugManager.flags.RebuildPrecompiledKernels.set(true);
 
-    std::string testFile;
-    retrieveBinaryKernelFilenameApiSpecific(testFile, "test_kernel_", ".bin");
-
-    size_t size = 0;
-    auto src = loadDataFromFile(testFile.c_str(), size);
-
-    ASSERT_NE(0u, size);
-    ASSERT_NE(nullptr, src);
+    auto additionalSections = {ZebinTestData::appendElfAdditionalSection::SPIRV};
+    bool forceRecompilation = true;
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), additionalSections, forceRecompilation);
+    const auto &src = zebinData->storage;
 
     ze_module_desc_t moduleDesc = {};
     moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
-    moduleDesc.inputSize = size;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
 
     std::unique_ptr<ModuleBuildLog> moduleBuildLog{ModuleBuildLog::create()};
     Module module(device, moduleBuildLog.get(), ModuleType::User);
@@ -2089,19 +2055,15 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildFlagWhenCreatingModuleFromNative
     DebugManagerStateRestore dgbRestorer;
     NEO::DebugManager.flags.RebuildPrecompiledKernels.set(true);
 
-    std::string testFile;
-    retrieveBinaryKernelFilenameApiSpecific(testFile, "test_kernel_", ".bin");
-
-    size_t size = 0;
-    auto src = loadDataFromFile(testFile.c_str(), size);
-
-    ASSERT_NE(0u, size);
-    ASSERT_NE(nullptr, src);
+    auto additionalSections = {ZebinTestData::appendElfAdditionalSection::SPIRV};
+    bool forceRecompilation = true;
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), additionalSections, forceRecompilation);
+    const auto &src = zebinData->storage;
 
     ze_module_desc_t moduleDesc = {};
     moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
-    moduleDesc.inputSize = size;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
     moduleDesc.pBuildFlags = CompilerOptions::noRecompiledFromIr.data();
 
     std::unique_ptr<ModuleBuildLog> moduleBuildLog{ModuleBuildLog::create()};
@@ -2189,7 +2151,7 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromZebinThenAppendAllowZebinFla
 }
 
 HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromZeBinaryThenLinkerInputIsCreated) {
-    std::string validZeInfo = std::string("version :\'") + toString(zeInfoDecoderVersion) + R"===('
+    std::string validZeInfo = std::string("version :\'") + versionToString(zeInfoDecoderVersion) + R"===('
 kernels:
     - name : some_kernel
       execution_env :
@@ -2217,7 +2179,7 @@ kernels:
 }
 
 TEST_F(ModuleTranslationUnitTest, WhenCreatingFromZeBinaryAndGlobalsAreExportedThenTheirAllocationTypeIsSVM) {
-    std::string zeInfo = std::string("version :\'") + toString(zeInfoDecoderVersion) + R"===('
+    std::string zeInfo = std::string("version :\'") + versionToString(zeInfoDecoderVersion) + R"===('
 kernels:
     - name : kernel
       execution_env :
@@ -2389,19 +2351,13 @@ TEST(ModuleBuildLog, WhenTooSmallBufferIsPassedToGetStringThenErrorIsReturned) {
 using PrintfModuleTest = Test<DeviceFixture>;
 
 HWTEST_F(PrintfModuleTest, GivenModuleWithPrintfWhenKernelIsCreatedThenPrintfAllocationIsPlacedInResidencyContainer) {
-    std::string testFile;
-    retrieveBinaryKernelFilenameApiSpecific(testFile, "test_kernel_", ".gen");
-
-    size_t size = 0;
-    auto src = loadDataFromFile(testFile.c_str(), size);
-
-    ASSERT_NE(0u, size);
-    ASSERT_NE(nullptr, src);
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
+    const auto &src = zebinData->storage;
 
     ze_module_desc_t moduleDesc = {};
     moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
-    moduleDesc.inputSize = size;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
 
     auto module = std::unique_ptr<L0::Module>(Module::create(device, &moduleDesc, nullptr, ModuleType::User));
 
@@ -2663,16 +2619,12 @@ TEST_F(ModuleInitializeTest, whenModuleInitializeIsCalledThenCorrectResultIsRetu
     }
 
     DebugManagerStateRestore restorer;
-    std::string testFile;
-    retrieveBinaryKernelFilenameApiSpecific(testFile, "test_kernel_", ".bin");
-    size_t size = 0;
-    auto src = loadDataFromFile(testFile.c_str(), size);
-    ASSERT_NE(0u, size);
-    ASSERT_NE(nullptr, src);
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
+    const auto &src = zebinData->storage;
     ze_module_desc_t moduleDesc = {};
     moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
-    moduleDesc.inputSize = size;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
 
     std::array<std::tuple<bool, bool, ModuleType, int32_t>, 5> testParams = {{
         {true, false, ModuleType::Builtin, -1},
@@ -3048,7 +3000,8 @@ TEST_F(ModuleIsaCopyTest, whenModuleIsInitializedThenIsaIsCopied) {
 
     uint32_t previouscopyMemoryToAllocationCalledTimes = mockMemoryManager->copyMemoryToAllocationCalledTimes;
 
-    createModuleFromBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get());
+    auto additionalSections = {ZebinTestData::appendElfAdditionalSection::GLOBAL};
+    createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get(), additionalSections);
 
     uint32_t numOfKernels = static_cast<uint32_t>(module->getKernelImmutableDataVector().size());
     const uint32_t numOfGlobalBuffers = 1;

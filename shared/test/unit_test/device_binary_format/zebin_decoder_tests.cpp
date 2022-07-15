@@ -14,8 +14,8 @@
 #include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
-#include "shared/test/common/device_binary_format/zebin_tests.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include <numeric>
@@ -2251,7 +2251,7 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenEmptyInZeInfoThenEmitsWarning) {
 TEST(DecodeSingleDeviceBinaryZebin, GivenUnknownEntryInZeInfoGlobalScopeThenEmitsWarning) {
     ZebinTestData::ValidEmptyProgram zebin;
     zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
-    auto brokenZeInfo = std::string("some_entry : a\nkernels : \n  - name : valid_empty_kernel\n    execution_env : \n      simd_size  : 32\n      grf_count : 128\nversion:\'") + toString(zeInfoDecoderVersion) + "\'\n";
+    auto brokenZeInfo = std::string("some_entry : a\nkernels : \n  - name : valid_empty_kernel\n    execution_env : \n      simd_size  : 32\n      grf_count : 128\nversion:\'") + versionToString(zeInfoDecoderVersion) + "\'\n";
     zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(brokenZeInfo.data(), brokenZeInfo.size()));
 
     NEO::ProgramInfo programInfo;
@@ -2268,7 +2268,7 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenUnknownEntryInZeInfoGlobalScopeThenEmit
 TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoDoesNotContainKernelsSectionThenEmitsWarning) {
     ZebinTestData::ValidEmptyProgram zebin;
     zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
-    auto brokenZeInfo = std::string("version:\'") + toString(zeInfoDecoderVersion) + "\'\na:b\n";
+    auto brokenZeInfo = std::string("version:\'") + versionToString(zeInfoDecoderVersion) + "\'\na:b\n";
     zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(brokenZeInfo.data(), brokenZeInfo.size()));
 
     NEO::ProgramInfo programInfo;
@@ -2285,7 +2285,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoDoesNotContainKernelsSectionThenEm
 TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoContainsMultipleKernelSectionsThenFails) {
     ZebinTestData::ValidEmptyProgram zebin;
     zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
-    auto brokenZeInfo = std::string("version:\'") + toString(zeInfoDecoderVersion) + "\'\nkernels : \n  - name : valid_empty_kernel\n    execution_env : \n      simd_size  : 32\n      grf_count : 128\n" + "\nkernels : \n  - name : valid_empty_kernel\n    execution_env : \n      simd_size  : 32\n      grf_count : 128\n...\n";
+    auto brokenZeInfo = std::string("version:\'") + versionToString(zeInfoDecoderVersion) + "\'\nkernels : \n  - name : valid_empty_kernel\n    execution_env : \n      simd_size  : 32\n      grf_count : 128\n" + "\nkernels : \n  - name : valid_empty_kernel\n    execution_env : \n      simd_size  : 32\n      grf_count : 128\n...\n";
     zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(brokenZeInfo.data(), brokenZeInfo.size()));
 
     NEO::ProgramInfo programInfo;
@@ -2302,7 +2302,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoContainsMultipleKernelSectionsThen
 TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoContainsMultipleVersionSectionsThenFails) {
     ZebinTestData::ValidEmptyProgram zebin;
     zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
-    auto brokenZeInfo = std::string("version:\'") + toString(zeInfoDecoderVersion) + "\'\nversion:\'5.4\'\nkernels:\n";
+    auto brokenZeInfo = std::string("version:\'") + versionToString(zeInfoDecoderVersion) + "\'\nversion:\'5.4\'\nkernels:\n";
     zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(brokenZeInfo.data(), brokenZeInfo.size()));
 
     NEO::ProgramInfo programInfo;
@@ -2360,7 +2360,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoMinorVersionIsNewerThenEmitsWarnin
     auto version = NEO::zeInfoDecoderVersion;
     std::string expectedWarning = "DeviceBinaryFormat::Zebin::.ze_info : Minor version : " + std::to_string(version.minor + 1) + " is newer than available in decoder : " + std::to_string(version.minor) + " - some features may be skipped\n";
     version.minor += 1;
-    auto zeInfo = std::string("version:\'") + toString(version) + "\'\nkernels:\n";
+    auto zeInfo = std::string("version:\'") + versionToString(version) + "\'\nkernels:\n";
     zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(zeInfo.data(), zeInfo.size()));
 
     NEO::ProgramInfo programInfo;
@@ -2380,7 +2380,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoMajorVersionIsMismatchedThenFails)
         zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
         auto version = NEO::zeInfoDecoderVersion;
         version.major += 1;
-        auto zeInfo = std::string("version:\'") + toString(version) + "\'\nkernels:\n";
+        auto zeInfo = std::string("version:\'") + versionToString(version) + "\'\nkernels:\n";
         zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(zeInfo.data(), zeInfo.size()));
 
         NEO::ProgramInfo programInfo;
@@ -2399,7 +2399,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoMajorVersionIsMismatchedThenFails)
         zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
         auto version = NEO::zeInfoDecoderVersion;
         version.major -= 1;
-        auto zeInfo = std::string("version:\'") + toString(version) + "\'\nkernels:\n";
+        auto zeInfo = std::string("version:\'") + versionToString(version) + "\'\nkernels:\n";
         zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(zeInfo.data(), zeInfo.size()));
 
         NEO::ProgramInfo programInfo;
@@ -2415,7 +2415,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoMajorVersionIsMismatchedThenFails)
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, WhenDecodeZeInfoFailsThenDecodingFails) {
-    std::string brokenZeInfo = "version : \'" + toString(zeInfoDecoderVersion) + R"===('
+    std::string brokenZeInfo = "version : \'" + versionToString(zeInfoDecoderVersion) + R"===('
 kernels:
     - 
 )===";
@@ -2436,7 +2436,7 @@ kernels:
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, GivenValidZeInfoThenPopulatesKernelDescriptorProperly) {
-    std::string validZeInfo = std::string("version :\'") + toString(zeInfoDecoderVersion) + R"===('
+    std::string validZeInfo = std::string("version :\'") + versionToString(zeInfoDecoderVersion) + R"===('
 kernels:
     - name : some_kernel
       execution_env :
@@ -2471,7 +2471,7 @@ kernels:
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, GivenValidZeInfoAndExternalFunctionsMetadataThenPopulatesExternalFunctionMetadataProperly) {
-    std::string validZeInfo = std::string("version :\'") + toString(zeInfoDecoderVersion) + R"===('
+    std::string validZeInfo = std::string("version :\'") + versionToString(zeInfoDecoderVersion) + R"===('
 kernels:
     - name : some_kernel
       execution_env :
@@ -2508,7 +2508,7 @@ functions:
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, GivenValidZeInfoAndInvalidExternalFunctionsMetadataThenFail) {
-    std::string validZeInfo = std::string("version :\'") + toString(zeInfoDecoderVersion) + R"===('
+    std::string validZeInfo = std::string("version :\'") + versionToString(zeInfoDecoderVersion) + R"===('
 kernels:
     - name : some_kernel
       execution_env :
@@ -2538,7 +2538,7 @@ functions:
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, GivenZeInfoWithTwoExternalFunctionsEntriesThenFail) {
-    std::string validZeInfo = std::string("version :\'") + toString(zeInfoDecoderVersion) + R"===('
+    std::string validZeInfo = std::string("version :\'") + versionToString(zeInfoDecoderVersion) + R"===('
 kernels:
     - name : some_kernel
       execution_env :

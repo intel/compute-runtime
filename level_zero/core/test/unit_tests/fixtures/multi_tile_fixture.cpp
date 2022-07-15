@@ -19,7 +19,7 @@ void MultiTileCommandListAppendLaunchFunctionFixture::setUp() {
     MultiDeviceFixture::numSubDevices = 4u;
 
     MultiDeviceModuleFixture::setUp();
-    createModuleFromBinary(0u);
+    createModuleFromMockBinary(0u);
     createKernel(0u);
 
     device = driverHandle->devices[0];
@@ -49,7 +49,7 @@ void MultiTileImmediateCommandListAppendLaunchFunctionFixture::setUp() {
     MultiDeviceFixture::numSubDevices = 2u;
 
     MultiDeviceModuleFixture::setUp();
-    createModuleFromBinary(0u);
+    createModuleFromMockBinary(0u);
     createKernel(0u);
 
     device = driverHandle->devices[0];

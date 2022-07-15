@@ -14,6 +14,7 @@
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -2131,22 +2132,13 @@ TEST_F(MultipleDevicePeerAllocationFailTest,
 }
 
 struct MultipleDevicePeerAllocationTest : public ::testing::Test {
-    void createModuleFromBinary(L0::Device *device, ModuleType type = ModuleType::User) {
-        std::string testFile;
-        retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".bin");
-
-        size_t size = 0;
-        auto src = loadDataFromFile(
-            testFile.c_str(),
-            size);
-
-        ASSERT_NE(0u, size);
-        ASSERT_NE(nullptr, src);
-
+    void createModuleFromMockBinary(L0::Device *device, ModuleType type = ModuleType::User) {
+        auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
+        const auto &src = zebinData->storage;
         ze_module_desc_t moduleDesc = {};
         moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
-        moduleDesc.inputSize = size;
+        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+        moduleDesc.inputSize = src.size();
 
         ModuleBuildLog *moduleBuildLog = nullptr;
 
@@ -2669,7 +2661,7 @@ HWTEST_F(MultipleDevicePeerAllocationTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr1);
 
-    createModuleFromBinary(device1);
+    MultipleDevicePeerAllocationTest::createModuleFromMockBinary(device1);
     createKernel();
 
     // set argument in device 1's list with ptr from device 0: peer allocation is created
@@ -2712,7 +2704,7 @@ HWTEST_F(MultipleDevicePeerAllocationTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
-    createModuleFromBinary(device1);
+    MultipleDevicePeerAllocationTest::createModuleFromMockBinary(device1);
     createKernel();
 
     result = kernel->setArgBuffer(0, sizeof(ptr), &ptr);

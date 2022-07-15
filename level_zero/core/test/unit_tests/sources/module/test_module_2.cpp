@@ -8,6 +8,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/image/image.h"
@@ -23,18 +24,13 @@ class ModuleOnlineCompiled : public DeviceFixture, public testing::Test {
     void SetUp() override {
         DeviceFixture::setUp();
 
-        std::string kernelFilename;
-        size_t spvModuleSize = 0;
-        retrieveBinaryKernelFilenameApiSpecific(kernelFilename, "test_kernel_", ".bin");
-
-        auto spvModule = loadDataFromFile(kernelFilename.c_str(), spvModuleSize);
-
-        ASSERT_NE(0U, spvModuleSize);
+        auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
+        const auto &src = zebinData->storage;
 
         ze_module_desc_t modDesc = {};
         modDesc.format = ZE_MODULE_FORMAT_NATIVE;
-        modDesc.inputSize = static_cast<uint32_t>(spvModuleSize);
-        modDesc.pInputModule = reinterpret_cast<const uint8_t *>(spvModule.get());
+        modDesc.inputSize = static_cast<uint32_t>(src.size());
+        modDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
 
         module.reset(whiteboxCast(Module::create(device, &modDesc, nullptr, ModuleType::User)));
         ASSERT_NE(nullptr, module);
@@ -244,6 +240,21 @@ TEST_F(ModuleOnlineCompiled, GivenKernelThenCorrectPropertiesAreReturned) {
 }
 
 TEST_F(ModuleOnlineCompiled, GivenKernelThenCorrectAttributesAreReturned) {
+    std::string testFile;
+    retrieveBinaryKernelFilenameApiSpecific(testFile, "test_kernel_", ".bin");
+
+    size_t size = 0;
+    auto src = loadDataFromFile(testFile.c_str(), size);
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
+    moduleDesc.inputSize = size;
+    ASSERT_NE(0u, size);
+    ASSERT_NE(nullptr, src);
+
+    auto module = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(device, nullptr, ModuleType::User));
+    module->initialize(&moduleDesc, device->getNEODevice());
+
     ze_kernel_desc_t kernelDesc = {};
     kernelDesc.pKernelName = "memcpy_bytes_attr";
 

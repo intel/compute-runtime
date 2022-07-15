@@ -793,36 +793,32 @@ HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleIsCreatedAndFullyL
     auto debugger = MockDebuggerL0Hw<FamilyType>::allocate(neoDevice);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(debugger);
 
-    std::string testFile;
-    retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".bin");
-
-    size_t size = 0;
-    auto src = loadDataFromFile(testFile.c_str(), size);
-
-    ASSERT_NE(0u, size);
-    ASSERT_NE(nullptr, src);
+    auto elfAdditionalSections = {ZebinTestData::appendElfAdditionalSection::CONSTANT}; //for const surface allocation copy
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), elfAdditionalSections);
+    const auto &src = zebinData->storage;
 
     ze_module_desc_t moduleDesc = {};
     moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
-    moduleDesc.inputSize = size;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
 
     ModuleBuildLog *moduleBuildLog = nullptr;
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(nullptr);
 
-    auto module = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(device, moduleBuildLog, ModuleType::User));
+    auto module = std::make_unique<WhiteBox<::L0::Module>>(device, moduleBuildLog, ModuleType::User);
     ASSERT_NE(nullptr, module.get());
 
     memoryOperationsHandler->makeResidentCalledCount = 0;
 
+    auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
+    linkerInput->traits.requiresPatchingOfInstructionSegments = true;
+    module->translationUnit->programInfo.linkerInput = std::move(linkerInput);
     module->initialize(&moduleDesc, neoDevice);
 
     auto numIsaAllocations = static_cast<int>(module->getKernelImmutableDataVector().size());
 
-    auto expectedMakeResidentCallsCount = numIsaAllocations + 1; // const surface
-    if (module->getTranslationUnit()->programInfo.linkerInput) {
-        expectedMakeResidentCallsCount += numIsaAllocations;
-    }
+    auto expectedMakeResidentCallsCount = numIsaAllocations + 1; //const surface
+    expectedMakeResidentCallsCount += numIsaAllocations;
 
     EXPECT_EQ(expectedMakeResidentCallsCount, memoryOperationsHandler->makeResidentCalledCount);
 
@@ -855,19 +851,13 @@ HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleWithUnresolvedSymb
     auto debugger = MockDebuggerL0Hw<FamilyType>::allocate(neoDevice);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(debugger);
 
-    std::string testFile;
-    retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".bin");
-
-    size_t size = 0;
-    auto src = loadDataFromFile(testFile.c_str(), size);
-
-    ASSERT_NE(0u, size);
-    ASSERT_NE(nullptr, src);
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
+    const auto &src = zebinData->storage;
 
     ze_module_desc_t moduleDesc = {};
     moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
-    moduleDesc.inputSize = size;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
 
     ModuleBuildLog *moduleBuildLog = nullptr;
 
@@ -909,19 +899,13 @@ HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleWithUnresolvedSymb
     auto debugger = MockDebuggerL0Hw<FamilyType>::allocate(neoDevice);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(debugger);
 
-    std::string testFile;
-    retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".bin");
-
-    size_t size = 0;
-    auto src = loadDataFromFile(testFile.c_str(), size);
-
-    ASSERT_NE(0u, size);
-    ASSERT_NE(nullptr, src);
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
+    const auto &src = zebinData->storage;
 
     ze_module_desc_t moduleDesc = {};
     moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
-    moduleDesc.inputSize = size;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
 
     ModuleBuildLog *moduleBuildLog = nullptr;
 

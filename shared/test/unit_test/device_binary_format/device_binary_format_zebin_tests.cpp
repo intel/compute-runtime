@@ -12,7 +12,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/program/program_info.h"
-#include "shared/test/common/device_binary_format/zebin_tests.h"
+#include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include <numeric>

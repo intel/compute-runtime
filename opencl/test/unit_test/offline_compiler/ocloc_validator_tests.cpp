@@ -7,7 +7,7 @@
 
 #include "shared/offline_compiler/source/ocloc_validator.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
-#include "shared/test/common/device_binary_format/zebin_tests.h"
+#include "shared/test/common/mocks/mock_modules_zebin.h"
 
 #include "opencl/test/unit_test/offline_compiler/mock/mock_argument_helper.h"
 
@@ -80,7 +80,7 @@ TEST(OclocValidate, WhenWarningsEmitedThenRedirectsThemToStdout) {
 TEST(OclocValidate, WhenErrorsEmitedThenRedirectsThemToStdout) {
     ZebinTestData::ValidEmptyProgram zebin;
     zebin.removeSection(NEO::Elf::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
-    std::string zeInfo = "version:" + toString(NEO::zeInfoDecoderVersion) + "\nkernels : \nkernels :\n";
+    std::string zeInfo = "version:" + versionToString(NEO::zeInfoDecoderVersion) + "\nkernels : \nkernels :\n";
     zebin.appendSection(NEO::Elf::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const char>(zeInfo).toArrayRef<const uint8_t>());
     MockOclocArgHelper::FilesMap files{{"src.gen", MockOclocArgHelper::FileData(reinterpret_cast<const char *>(zebin.storage.data()),
                                                                                 reinterpret_cast<const char *>(zebin.storage.data()) + zebin.storage.size())}};
