@@ -652,36 +652,6 @@ void DebugSessionLinux::readStateSaveAreaHeader() {
     }
 }
 
-ze_result_t DebugSessionLinux::readEvent(uint64_t timeout, zet_debug_event_t *outputEvent) {
-
-    if (outputEvent) {
-        outputEvent->type = ZET_DEBUG_EVENT_TYPE_INVALID;
-        outputEvent->flags = 0;
-    } else {
-        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
-    }
-
-    if (clientHandle == invalidClientHandle) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
-
-    do {
-        std::unique_lock<std::mutex> lock(asyncThreadMutex);
-
-        if (timeout > 0 && clientHandleToConnection[clientHandle]->apiEvents.size() == 0) {
-            apiEventCondition.wait_for(lock, std::chrono::milliseconds(timeout));
-        }
-
-        if (clientHandleToConnection[clientHandle]->apiEvents.size() > 0) {
-            *outputEvent = clientHandleToConnection[clientHandle]->apiEvents.front();
-            clientHandleToConnection[clientHandle]->apiEvents.pop();
-            return ZE_RESULT_SUCCESS;
-        }
-    } while (timeout == UINT64_MAX && asyncThread.threadActive);
-
-    return ZE_RESULT_NOT_READY;
-}
-
 ze_result_t DebugSessionLinux::readEventImp(prelim_drm_i915_debug_event *drmDebugEvent) {
     auto res = ioctl(PRELIM_I915_DEBUG_IOCTL_READ_EVENT, drmDebugEvent);
 

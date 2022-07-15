@@ -715,6 +715,32 @@ void DebugSessionImp::generateEventsForStoppedThreads(const std::vector<EuThread
     }
 }
 
+ze_result_t DebugSessionImp::readEvent(uint64_t timeout, zet_debug_event_t *outputEvent) {
+
+    if (outputEvent) {
+        outputEvent->type = ZET_DEBUG_EVENT_TYPE_INVALID;
+        outputEvent->flags = 0;
+    } else {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+
+    do {
+        std::unique_lock<std::mutex> lock(asyncThreadMutex);
+
+        if (timeout > 0 && apiEvents.size() == 0) {
+            apiEventCondition.wait_for(lock, std::chrono::milliseconds(timeout));
+        }
+
+        if (apiEvents.size() > 0) {
+            *outputEvent = apiEvents.front();
+            apiEvents.pop();
+            return ZE_RESULT_SUCCESS;
+        }
+    } while (timeout == UINT64_MAX && asyncThread.threadActive);
+
+    return ZE_RESULT_NOT_READY;
+}
+
 void DebugSessionImp::validateAndSetStateSaveAreaHeader(const std::vector<char> &data) {
     auto pStateSaveArea = reinterpret_cast<const SIP::StateSaveAreaHeader *>(data.data());
     if (0 == strcmp(pStateSaveArea->versionHeader.magic, "tssarea")) {

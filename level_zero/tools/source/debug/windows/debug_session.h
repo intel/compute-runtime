@@ -64,8 +64,6 @@ struct DebugSessionWindows : DebugSessionImp {
     void closeAsyncThread();
     static void *asyncThreadFunction(void *arg);
 
-    ThreadHelper asyncThread;
-    std::mutex asyncThreadMutex;
     MOCKABLE_VIRTUAL void getSbaBufferGpuVa(uint64_t &gpuVa);
     MOCKABLE_VIRTUAL NTSTATUS runEscape(KM_ESCAPE_INFO &escapeInfo);
 

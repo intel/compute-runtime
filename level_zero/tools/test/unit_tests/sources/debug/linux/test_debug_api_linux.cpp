@@ -258,6 +258,7 @@ struct MockIoctlHandler : public L0::DebugSessionLinux::IoctlHandler {
 
 struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     using L0::DebugSessionImp::allThreads;
+    using L0::DebugSessionImp::apiEvents;
     using L0::DebugSessionImp::enqueueApiEvent;
     using L0::DebugSessionImp::expectedAttentionEvents;
     using L0::DebugSessionImp::interruptSent;
@@ -799,7 +800,7 @@ TEST(DebugSessionTest, WhenEnqueueApiEventCalledThenEventPushed) {
 
     sessionMock->enqueueApiEvent(debugEvent);
 
-    EXPECT_EQ(1u, sessionMock->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(1u, sessionMock->apiEvents.size());
 }
 
 TEST(DebugSessionTest, GivenLogsEnabledWhenPrintContextVmsCalledThenMapIsPrinted) {
@@ -1130,14 +1131,14 @@ TEST_F(DebugApiLinuxTest, GivenUuidCommandQueueCreatedHandledThenProcessEntryEve
     session->handleEvent(&uuid.base);
     EXPECT_EQ(DebugSessionLinux::invalidClientHandle, session->clientHandle);
     EXPECT_EQ(0, handler->ioctlCalled);
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 
     uuid.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
     handler->returnUuid = &readUuid;
     session->clientHandle = 2;
     session->handleEvent(&uuid.base);
     EXPECT_EQ(1, handler->ioctlCalled);
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 
     uuidHash = NEO::uuidL0CommandQueueHash;
     memcpy(readUuid.uuid, uuidHash, strlen(uuidHash));
@@ -1145,26 +1146,26 @@ TEST_F(DebugApiLinuxTest, GivenUuidCommandQueueCreatedHandledThenProcessEntryEve
     session->handleEvent(&uuid.base);
     EXPECT_EQ(2u, session->clientHandle);
     EXPECT_EQ(2, handler->ioctlCalled);
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 
     session->clientHandle = DebugSessionLinux::invalidClientHandle;
     uuid.client_handle = MockDebugSessionLinux::mockClientHandle;
     handler->returnUuid = &readUuid;
     session->handleEvent(&uuid.base);
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(1u, session->apiEvents.size());
     EXPECT_EQ(MockDebugSessionLinux::mockClientHandle, session->clientHandle);
     EXPECT_EQ(3, handler->ioctlCalled);
-    auto event = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.front();
+    auto event = session->apiEvents.front();
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY, event.type);
 
     session->clientHandle = MockDebugSessionLinux::mockClientHandle;
     uuid.client_handle = MockDebugSessionLinux::mockClientHandle;
     handler->returnUuid = &readUuid;
     session->handleEvent(&uuid.base);
-    EXPECT_EQ(2u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(2u, session->apiEvents.size());
     EXPECT_EQ(MockDebugSessionLinux::mockClientHandle, session->clientHandle);
     EXPECT_EQ(4, handler->ioctlCalled);
-    event = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.front();
+    event = session->apiEvents.front();
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY, event.type);
 }
 
@@ -1189,20 +1190,20 @@ TEST_F(DebugApiLinuxTest, GivenCommandQueueDestroyedWhenHandlingEventThenExitEve
     session->clientHandleToConnection[10u].reset(new L0::DebugSessionLinux::ClientConnection);
 
     session->handleEvent(&uuid.base);
-    EXPECT_EQ(0u, session->clientHandleToConnection[10]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 
     uuid.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_DESTROY;
     session->handleEvent(&uuid.base);
-    EXPECT_EQ(0u, session->clientHandleToConnection[10]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 
     uuid.handle = session->uuidL0CommandQueueHandle;
     session->handleEvent(&uuid.base);
-    EXPECT_EQ(0u, session->clientHandleToConnection[10]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 
     session->clientHandle = uuid.client_handle;
     session->handleEvent(&uuid.base);
-    EXPECT_EQ(1u, session->clientHandleToConnection[10]->apiEvents.size());
-    auto event = session->clientHandleToConnection[10]->apiEvents.front();
+    EXPECT_EQ(1u, session->apiEvents.size());
+    auto event = session->apiEvents.front();
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_PROCESS_EXIT, event.type);
 }
 
@@ -1226,7 +1227,7 @@ TEST_F(DebugApiLinuxTest, GivenDestroyClientForClientNotSavedWhenHandlingEventTh
     session->clientHandleToConnection[10u].reset(new L0::DebugSessionLinux::ClientConnection);
 
     session->handleEvent(&clientDestroy.base);
-    EXPECT_EQ(0u, session->clientHandleToConnection[10]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 }
 
 TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenReadingEventThenResultNotReadyIsReturned) {
@@ -1243,23 +1244,6 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenReadingEventThenResultNotReadyIsR
     zet_debug_event_t event = {};
     auto result = L0::DebugApiHandlers::debugReadEvent(session, 0, &event);
     EXPECT_EQ(result, ZE_RESULT_NOT_READY);
-}
-
-TEST_F(DebugApiLinuxTest, GivenDebugSessionWithoutValidClientHandleWhenReadingEventThenErrorNotInitializedIsReturned) {
-    zet_debug_config_t config = {};
-    config.pid = 0x1234;
-
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
-    auto sessionMock = new MockDebugSessionLinux(config, &deviceImp, 10);
-    deviceImp.debugSession.reset(sessionMock);
-
-    sessionMock->clientHandle = MockDebugSessionLinux::invalidClientHandle;
-
-    zet_debug_session_handle_t session = deviceImp.debugSession->toHandle();
-
-    zet_debug_event_t event = {};
-    auto result = L0::DebugApiHandlers::debugReadEvent(session, 0, &event);
-    EXPECT_EQ(result, ZE_RESULT_ERROR_UNINITIALIZED);
 }
 
 TEST_F(DebugApiLinuxTest, GivenDebuggerLogsWhenOpenDebuggerFailsThenCorrectMessageIsPrintedAndResultSet) {
@@ -3783,11 +3767,11 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventWithAckFlagWhenHandlingEventForISAThen
 
     session->handleEvent(&vmBindIsa->base);
 
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(1u, session->apiEvents.size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->eventsToAck.size());
 
-    auto event = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.front();
-    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.pop();
+    auto event = session->apiEvents.front();
+    session->apiEvents.pop();
 
     EXPECT_EQ(ZET_DEBUG_EVENT_FLAG_NEED_ACK, event.flags);
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_LOAD, event.type);
@@ -3834,8 +3818,8 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventForISAWhenModuleLoadEventAlreadyAckedT
     ASSERT_NE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap.end(), isaIter);
     EXPECT_EQ(1u, isaIter->second->ackEvents.size());
 
-    auto event = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.front();
-    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.pop();
+    auto event = session->apiEvents.front();
+    session->apiEvents.pop();
 
     session->acknowledgeEvent(&event);
     EXPECT_EQ(0u, isaIter->second->ackEvents.size());
@@ -3880,8 +3864,8 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventForIsaWithoutAckTriggeredBeforeAttachW
     // Auto-acked event
     EXPECT_TRUE(isaIter->second->moduleLoadEventAck);
 
-    auto event = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.front();
-    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.pop();
+    auto event = session->apiEvents.front();
+    session->apiEvents.pop();
     EXPECT_EQ(0u, event.flags & ZET_DEBUG_EVENT_FLAG_NEED_ACK);
 
     // VM BIND after attach needs ACK
@@ -4286,7 +4270,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenIsaBoundMultipleTimesWhenHandlingVmBindDest
     session->handleEvent(&vmBindIsa->base);
 
     EXPECT_EQ(1u, isaMap.size());
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 }
 
 TEST_F(DebugApiLinuxVmBindTest, GivenVmBindEventForIsaWithInvalidElfWhenReadingEventThenModuleLoadEventReturnZeroElf) {
@@ -4365,7 +4349,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventWithL0ZebinModuleWhenHandlingEventThen
     memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
     session->handleEvent(&vmBindIsa->base);
 
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule.size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses.size());
 
@@ -4381,7 +4365,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventWithL0ZebinModuleWhenHandlingEventThen
 
     session->handleEvent(&vmBindIsa->base);
 
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(1u, session->apiEvents.size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule.size());
     EXPECT_EQ(2u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses.size());
     EXPECT_EQ(2u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentCount);
@@ -4414,14 +4398,14 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventWithL0ZebinModuleWhenHandlingEventThen
 
     session->handleEvent(&vmBindIsa->base);
 
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 
     vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_DESTROY;
     vmBindIsa->va_start = isaGpuVa;
 
     session->handleEvent(&vmBindIsa->base);
 
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(1u, session->apiEvents.size());
 
     memset(&event, 0, sizeof(zet_debug_event_t));
 
@@ -4480,7 +4464,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenAttachAfterModuleCreateWhenHandlingEventWit
     memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
     session->handleEvent(&vmBindIsa->base);
 
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule.size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses.size());
 
@@ -4495,7 +4479,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenAttachAfterModuleCreateWhenHandlingEventWit
     handler->ioctlCalled = 0;
     session->handleEvent(&vmBindIsa->base);
 
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(1u, session->apiEvents.size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule.size());
     EXPECT_EQ(2u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses.size());
     EXPECT_EQ(2u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentCount);
@@ -4529,14 +4513,14 @@ TEST_F(DebugApiLinuxVmBindTest, GivenAttachAfterModuleCreateWhenHandlingEventWit
 
     session->handleEvent(&vmBindIsa->base);
 
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 
     vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_DESTROY;
     vmBindIsa->va_start = isaGpuVa;
 
     session->handleEvent(&vmBindIsa->base);
 
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(1u, session->apiEvents.size());
 
     memset(&event, 0, sizeof(zet_debug_event_t));
 
@@ -4605,7 +4589,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenMultipleSegmentsInL0ZebinModuleWhenLoadAddr
 
     session->handleEvent(&vmBindIsa->base);
 
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 }
 
 TEST_F(DebugApiLinuxVmBindTest, GivenMultipleBindEventsWithZebinModuleWhenHandlingEventsThenModuleLoadIsReportedOnceOnly) {
@@ -4647,7 +4631,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenMultipleBindEventsWithZebinModuleWhenHandli
 
     session->handleEvent(&vmBindIsa->base);
 
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(1u, session->apiEvents.size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule.size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses.size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentCount);
@@ -4655,7 +4639,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenMultipleBindEventsWithZebinModuleWhenHandli
     vmBindIsa->vm_handle = vmHandleForVmBind + 1000;
     session->handleEvent(&vmBindIsa->base);
 
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(1u, session->apiEvents.size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule.size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses.size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentCount);
@@ -4783,7 +4767,7 @@ TEST_F(DebugApiLinuxTest, GivenEventsAvailableWhenReadingEventThenEventsAreRetur
 
     zet_debug_event_t debugEvent = {};
     debugEvent.type = ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY;
-    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.push(debugEvent);
+    session->apiEvents.push(debugEvent);
 
     zet_debug_event_t debugEvent2 = {};
     debugEvent2.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
@@ -4791,11 +4775,11 @@ TEST_F(DebugApiLinuxTest, GivenEventsAvailableWhenReadingEventThenEventsAreRetur
     debugEvent2.info.module.moduleBegin = 1000;
     debugEvent2.info.module.moduleEnd = 2000;
     debugEvent2.info.module.load = 0x1234000;
-    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.push(debugEvent2);
+    session->apiEvents.push(debugEvent2);
 
     zet_debug_event_t debugEvent3 = {};
     debugEvent3.type = ZET_DEBUG_EVENT_TYPE_PROCESS_EXIT;
-    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.push(debugEvent3);
+    session->apiEvents.push(debugEvent3);
 
     zet_debug_event_t outputEvent = {};
 
@@ -5756,13 +5740,13 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsErrorAndEinvalWhenReadingIn
     errno = EINVAL;
     session->readInternalEventsAsync();
 
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
-    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_DETACHED, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.front().type);
-    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.pop();
+    EXPECT_EQ(1u, session->apiEvents.size());
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_DETACHED, session->apiEvents.front().type);
+    session->apiEvents.pop();
     errno = 0;
 
     session->readInternalEventsAsync();
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 }
 
 TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsErrorAndEBusyWhenReadingInternalEventsAsyncThenDetachEventIsNotGenerated) {
@@ -5780,7 +5764,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsErrorAndEBusyWhenReadingInt
     errno = EBUSY;
     session->readInternalEventsAsync();
 
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
     errno = 0;
 }
 
@@ -5800,7 +5784,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsZeroWhenReadingInternalEven
     EXPECT_EQ(0, handler->ioctlCalled);
     EXPECT_EQ(0u, handler->debugEventInput.type);
 
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 }
 
 TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsNonZeroWhenReadingInternalEventsAsyncThenEventReadIsCalled) {
@@ -5991,8 +5975,8 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEvent
 
     session->closeAsyncThread();
 
-    if (session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size() > 0) {
-        auto event = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.front();
+    if (session->apiEvents.size() > 0) {
+        auto event = session->apiEvents.front();
         EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_UNAVAILABLE, event.type);
         EXPECT_EQ(0u, event.info.thread.thread.slice);
         EXPECT_EQ(0u, event.info.thread.thread.subslice);
@@ -6025,7 +6009,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEvent
 
     session->closeAsyncThread();
 
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 }
 
 struct DebugApiRegistersAccessFixture : public DebugApiLinuxFixture {

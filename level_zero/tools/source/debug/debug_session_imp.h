@@ -10,6 +10,7 @@
 #include "level_zero/tools/source/debug/debug_session.h"
 
 #include <atomic>
+#include <condition_variable>
 #include <mutex>
 #include <queue>
 
@@ -37,10 +38,13 @@ struct DebugSessionImp : DebugSession {
 
     ze_result_t readRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override;
     ze_result_t writeRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override;
+    ze_result_t readEvent(uint64_t timeout, zet_debug_event_t *event) override;
 
     static const SIP::regset_desc *getSbaRegsetDesc();
     static uint32_t typeToRegsetFlags(uint32_t type);
     constexpr static int64_t interruptTimeout = 2000;
+
+    using ApiEventQueue = std::queue<zet_debug_event_t>;
 
   protected:
     MOCKABLE_VIRTUAL ze_result_t readRegistersImp(EuThread::ThreadId thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues);
@@ -120,6 +124,12 @@ struct DebugSessionImp : DebugSession {
     std::vector<std::pair<ze_device_thread_t, bool>> pendingInterrupts;
     std::vector<EuThread::ThreadId> newlyStoppedThreads;
     std::vector<char> stateSaveAreaHeader;
+
+    ThreadHelper asyncThread;
+    std::mutex asyncThreadMutex;
+
+    ApiEventQueue apiEvents;
+    std::condition_variable apiEventCondition;
 };
 
 } // namespace L0

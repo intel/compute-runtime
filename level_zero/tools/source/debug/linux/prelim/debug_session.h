@@ -17,7 +17,6 @@
 #include "third_party/uapi/prelim/drm/i915_drm.h"
 
 #include <atomic>
-#include <condition_variable>
 #include <mutex>
 #include <queue>
 #include <unordered_set>
@@ -36,7 +35,6 @@ struct DebugSessionLinux : DebugSessionImp {
     ze_result_t initialize() override;
 
     bool closeConnection() override;
-    ze_result_t readEvent(uint64_t timeout, zet_debug_event_t *event) override;
     ze_result_t readMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) override;
     ze_result_t writeMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) override;
     ze_result_t acknowledgeEvent(const zet_debug_event_t *event) override;
@@ -79,7 +77,6 @@ struct DebugSessionLinux : DebugSessionImp {
     static constexpr size_t maxEventSize = 4096;
 
     using ContextHandle = uint64_t;
-    using ApiEventQueue = std::queue<zet_debug_event_t>;
 
     struct ContextParams {
         ContextHandle handle = 0;
@@ -149,7 +146,6 @@ struct DebugSessionLinux : DebugSessionImp {
         uint64_t contextStateSaveAreaGpuVa = 0;
         uint64_t stateBaseAreaGpuVa = 0;
 
-        ApiEventQueue apiEvents;
         std::vector<std::pair<zet_debug_event_t, prelim_drm_i915_debug_event_ack>> eventsToAck;
 
         std::unordered_map<uint64_t, Module> uuidToModule;
@@ -191,7 +187,7 @@ struct DebugSessionLinux : DebugSessionImp {
                 std::pair<zet_debug_event_t, prelim_drm_i915_debug_event_ack>(debugEvent, eventToAck));
         }
 
-        clientHandleToConnection[clientHandle]->apiEvents.push(debugEvent);
+        apiEvents.push(debugEvent);
 
         apiEventCondition.notify_all();
     }
@@ -240,10 +236,6 @@ struct DebugSessionLinux : DebugSessionImp {
     uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override;
     uint64_t getSbaBufferGpuVa(uint64_t memoryHandle);
     void printContextVms();
-
-    ThreadHelper asyncThread;
-    std::mutex asyncThreadMutex;
-    std::condition_variable apiEventCondition;
 
     ThreadHelper internalEventThread;
     std::mutex internalEventThreadMutex;
