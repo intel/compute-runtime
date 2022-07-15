@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -170,7 +170,7 @@ bool testFence(ze_context_handle_t &context, ze_device_handle_t &device) {
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, fence));
 
     // Wait for fence to be signaled
-    SUCCESS_OR_TERMINATE(zeFenceHostSynchronize(fence, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeFenceHostSynchronize(fence, std::numeric_limits<uint64_t>::max()));
     if (verbose)
         std::cout << "zeFenceHostSynchronize success" << std::endl;
 

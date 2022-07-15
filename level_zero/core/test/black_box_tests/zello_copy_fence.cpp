@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,7 +70,7 @@ void testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &devi
                                                            nullptr, 0, nullptr));
         SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
         SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, hFence));
-        SUCCESS_OR_TERMINATE(zeFenceHostSynchronize(hFence, std::numeric_limits<unsigned int>::max()));
+        SUCCESS_OR_TERMINATE(zeFenceHostSynchronize(hFence, std::numeric_limits<uint64_t>::max()));
         if (verbose)
             std::cout << "zeFenceHostSynchronize success iter:" << i << std::endl;
         SUCCESS_OR_TERMINATE(zeFenceReset(hFence));

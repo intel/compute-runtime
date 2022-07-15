@@ -95,7 +95,7 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
 
     if (!syncMode) {
         // If Async mode, use event for sync
-        SUCCESS_OR_TERMINATE(zeEventHostSynchronize(hostEvents[0], std::numeric_limits<uint64_t>::max() - 1));
+        SUCCESS_OR_TERMINATE(zeEventHostSynchronize(hostEvents[0], std::numeric_limits<uint64_t>::max()));
     }
 
     // Validate stack and xe deviceBuffers have the original data from hostBuffer
@@ -217,7 +217,7 @@ void executeGpuKernelAndValidate(ze_context_handle_t context, ze_device_handle_t
 
     if (!syncMode) {
         // If Async mode, use event for sync
-        SUCCESS_OR_TERMINATE(zeEventHostSynchronize(hostEvents[0], std::numeric_limits<uint64_t>::max() - 1));
+        SUCCESS_OR_TERMINATE(zeEventHostSynchronize(hostEvents[0], std::numeric_limits<uint64_t>::max()));
     }
 
     // Validate

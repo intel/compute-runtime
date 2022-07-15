@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -85,7 +85,7 @@ void testPrintfKernel(ze_context_handle_t context, ze_device_handle_t &device) {
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));

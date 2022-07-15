@@ -279,7 +279,7 @@ int main(int argc, char *argv[]) {
     if (verbose) {
         std::cout << "sync results from kernel\n";
     }
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     // Validate results
     int expectedResult = (((1 + 2) * 2) - 1);

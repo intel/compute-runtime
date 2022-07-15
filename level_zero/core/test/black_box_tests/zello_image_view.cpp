@@ -245,7 +245,7 @@ void testAppendImageViewNV12Copy(ze_context_handle_t &context, ze_device_handle_
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     // validate Y plane data
     auto result = memcmp(srcVecY.data(), dstVecY.data(), width * height);
@@ -479,7 +479,7 @@ void testAppendImageViewRGBPCopy(ze_context_handle_t &context, ze_device_handle_
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     // validate Y plane data
     auto result = memcmp(srcVecY.data(), dstVecY.data(), width * height);

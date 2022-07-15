@@ -81,7 +81,7 @@ void testCopyBetweenHeapDeviceAndStack(ze_context_handle_t &context, ze_device_h
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
     // Validate stack and xe buffers have the original data from heapBuffer
     validRet = (0 == memcmp(heapBuffer, stackBuffer, allocSize));
 
@@ -155,7 +155,7 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     // Validate stack and xe deviceBuffers have the original data from hostBuffer
     validRet = (0 == memcmp(hostBuffer, stackBuffer, allocSize));
@@ -258,7 +258,7 @@ void testRegionCopyOf2DSharedMem(ze_context_handle_t &context, ze_device_handle_
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     uint8_t *dstBufferChar = reinterpret_cast<uint8_t *>(dstBuffer);
     if (verbose) {
@@ -367,7 +367,7 @@ void testSharedMemDataAccessWithoutCopy(ze_context_handle_t &context, ze_device_
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     validRet = true;
     uint8_t *bufferChar0 = reinterpret_cast<uint8_t *>(buffer0);
@@ -508,7 +508,7 @@ void testRegionCopyOf3DSharedMem(ze_context_handle_t &context, ze_device_handle_
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     uint8_t *dstBufferChar = reinterpret_cast<uint8_t *>(dstBuffer);
     if (verbose) {

@@ -162,7 +162,7 @@ int main(int argc, char *argv[]) {
 
     // if using async command queue, explicit sync must be used for correctness
     if (useSyncQueue == false)
-        SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+        SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     // Validate input / output
     outputValidationSuccessful = true;
