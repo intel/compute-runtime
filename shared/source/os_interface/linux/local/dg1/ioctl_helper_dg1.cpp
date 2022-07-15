@@ -9,13 +9,16 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 
-#include "third_party/uapi/dg1/drm/i915_drm.h"
-
 namespace NEO {
+namespace Dg1I915 {
+#include "third_party/uapi/dg1/drm/i915_drm.h"
+}
+
+using namespace Dg1I915;
+
 constexpr static auto gfxProduct = IGFX_DG1;
 
 extern bool isQueryDrmTip(const std::vector<uint8_t> &queryInfo);
-extern std::vector<uint8_t> translateToDrmTip(const uint8_t *dataQuery);
 
 template <>
 uint32_t IoctlHelperImpl<gfxProduct>::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) {
@@ -52,11 +55,22 @@ uint32_t IoctlHelperImpl<gfxProduct>::createGemExt(const MemRegionsVec &memClass
     return ret;
 }
 
+std::vector<MemoryRegion> translateDg1RegionInfoToMemoryRegions(const std::vector<uint8_t> &regionInfo) {
+    auto *data = reinterpret_cast<const drm_i915_query_memory_regions *>(regionInfo.data());
+    auto memRegions = std::vector<MemoryRegion>(data->num_regions);
+    for (uint32_t i = 0; i < data->num_regions; i++) {
+        memRegions[i].probedSize = data->regions[i].probed_size;
+        memRegions[i].unallocatedSize = data->regions[i].unallocated_size;
+        memRegions[i].region.memoryClass = data->regions[i].region.memory_class;
+        memRegions[i].region.memoryInstance = data->regions[i].region.memory_instance;
+    }
+    return memRegions;
+}
+
 template <>
 std::vector<MemoryRegion> IoctlHelperImpl<gfxProduct>::translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) {
     if (!isQueryDrmTip(regionInfo)) {
-        auto translated = translateToDrmTip(regionInfo.data());
-        return IoctlHelperUpstream::translateToMemoryRegions(translated);
+        return translateDg1RegionInfoToMemoryRegions(regionInfo);
     }
     return IoctlHelperUpstream::translateToMemoryRegions(regionInfo);
 }
