@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,11 +14,6 @@ namespace NEO {
 template <PRODUCT_FAMILY gfxProduct>
 bool CompilerHwInfoConfigHw<gfxProduct>::isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) const {
     return hwInfo.featureTable.flags.ftrGpGpuMidThreadLevelPreempt;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool CompilerHwInfoConfigHw<gfxProduct>::isForceToStatelessRequired() const {
-    return false;
 }
 
 } // namespace NEO

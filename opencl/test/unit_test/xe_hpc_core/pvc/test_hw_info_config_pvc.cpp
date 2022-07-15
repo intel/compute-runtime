@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
@@ -80,11 +79,6 @@ PVCTEST_F(PvcHwInfoConfig, givenHwInfoConfigAndProgramExtendedPipeControlPriorTo
 
     EXPECT_FALSE(isExtendedWARequired);
     EXPECT_TRUE(isBasicWARequired);
-}
-
-using CompilerHwInfoConfigHelperTestsPvc = ::testing::Test;
-PVCTEST_F(CompilerHwInfoConfigHelperTestsPvc, givenPvcWhenIsForceToStatelessRequiredIsCalledThenReturnsTrue) {
-    EXPECT_TRUE(CompilerHwInfoConfig::get(productFamily)->isForceToStatelessRequired());
 }
 
 using PvcHwInfo = ::testing::Test;

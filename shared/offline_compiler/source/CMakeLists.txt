@@ -36,6 +36,8 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_hw_info_config_base.inl
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_aot_config_bdw_and_later.inl
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_hw_info_config_bdw_and_later.inl
+    ${NEO_SHARED_DIRECTORY}/helpers/compiler_hw_info_config_before_xe_hpc.inl
+    ${NEO_SHARED_DIRECTORY}/helpers/compiler_hw_info_config_xe_hpc_and_later.inl
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_options_parser.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_options_parser.h
     ${NEO_SHARED_DIRECTORY}/helpers/cache_policy.h
