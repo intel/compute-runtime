@@ -231,6 +231,8 @@ int main(int argc, char *argv[]) {
         SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue[i]));
     }
 
+    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
+
     bool aubMode = isAubMode(argc, argv);
     if (aubMode == false) {
         std::cout << "\nZello Multidev Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED")

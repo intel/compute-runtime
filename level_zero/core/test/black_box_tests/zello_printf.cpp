@@ -108,6 +108,9 @@ int main(int argc, char *argv[]) {
               << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
 
     testPrintfKernel(context, device);
+
+    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
+
     // always pass - no printf capturing
     std::cout << "\nZello Printf Always PASS " << std::endl;
 

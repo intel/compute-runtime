@@ -209,6 +209,8 @@ int main(int argc, char *argv[]) {
                   << std::endl;
     }
 
+    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
+
     int resultOnFailure = aubMode ? 0 : 1;
     return outputValidationSuccessful ? 0 : resultOnFailure;
 }
