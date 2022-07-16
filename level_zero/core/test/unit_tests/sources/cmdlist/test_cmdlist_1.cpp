@@ -578,7 +578,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
 
     std::string output = testing::internal::GetCapturedStdout(); // stop capturing
 
-    std::string expectedString = "UMD transferring shared allocation";
+    std::string expectedString = "UMD transferred shared allocation";
     uint32_t occurrences = 0u;
     uint32_t expectedOccurrences = 1u;
     size_t idx = output.find(expectedString);

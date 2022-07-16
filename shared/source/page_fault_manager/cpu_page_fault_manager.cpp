@@ -71,10 +71,18 @@ void PageFaultManager::moveAllocationsWithinUMAllocsManagerToGpuDomain(SVMAllocs
 
 inline void PageFaultManager::migrateStorageToGpuDomain(void *ptr, PageFaultData &pageFaultData) {
     if (pageFaultData.domain == AllocationDomain::Cpu) {
-        if (DebugManager.flags.PrintUmdSharedMigration.get()) {
-            printf("UMD transferring shared allocation %llx from CPU to GPU\n", reinterpret_cast<unsigned long long int>(ptr));
-        }
+        std::chrono::steady_clock::time_point start;
+        std::chrono::steady_clock::time_point end;
+
+        start = std::chrono::steady_clock::now();
         this->transferToGpu(ptr, pageFaultData.cmdQ);
+        end = std::chrono::steady_clock::now();
+        long long elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+
+        if (DebugManager.flags.PrintUmdSharedMigration.get()) {
+            printf("UMD transferred shared allocation %llx (%zu B) from CPU to GPU (%f us)\n", reinterpret_cast<unsigned long long int>(ptr), pageFaultData.size, elapsedTime / 1e3);
+        }
+
         this->protectCPUMemoryAccess(ptr, pageFaultData.size);
     }
     pageFaultData.domain = AllocationDomain::Gpu;
@@ -110,10 +118,17 @@ void PageFaultManager::handleGpuDomainTransferForAubAndTbx(PageFaultManager *pag
 
 inline void PageFaultManager::migrateStorageToCpuDomain(void *ptr, PageFaultData &pageFaultData) {
     if (pageFaultData.domain == AllocationDomain::Gpu) {
-        if (DebugManager.flags.PrintUmdSharedMigration.get()) {
-            printf("UMD transferring shared allocation %llx from GPU to CPU\n", reinterpret_cast<unsigned long long int>(ptr));
-        }
+        std::chrono::steady_clock::time_point start;
+        std::chrono::steady_clock::time_point end;
+
+        start = std::chrono::steady_clock::now();
         this->transferToCpu(ptr, pageFaultData.size, pageFaultData.cmdQ);
+        end = std::chrono::steady_clock::now();
+        long long elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+
+        if (DebugManager.flags.PrintUmdSharedMigration.get()) {
+            printf("UMD transferred shared allocation %llx (%zu B) from GPU to CPU (%f us)\n", reinterpret_cast<unsigned long long int>(ptr), pageFaultData.size, elapsedTime / 1e3);
+        }
         pageFaultData.unifiedMemoryManager->nonGpuDomainAllocs.push_back(ptr);
     }
     pageFaultData.domain = AllocationDomain::Cpu;
