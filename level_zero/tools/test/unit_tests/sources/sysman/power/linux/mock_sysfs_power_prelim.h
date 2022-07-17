@@ -283,8 +283,7 @@ class SysmanDevicePowerFixture : public SysmanDeviceFixture {
             pPmt->keyOffsetMap = deviceKeyOffsetMapPower;
             pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(deviceProperties.subdeviceId, pPmt);
         }
-
-        pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
+        getPowerHandles(0);
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {
@@ -294,7 +293,6 @@ class SysmanDevicePowerFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
         SysmanDeviceFixture::TearDown();
     }
-
     std::vector<zes_pwr_handle_t> getPowerHandles(uint32_t count) {
         std::vector<zes_pwr_handle_t> handles(count, nullptr);
         EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
@@ -345,8 +343,6 @@ class SysmanDevicePowerMultiDeviceFixture : public SysmanMultiDeviceFixture {
             pPmt->keyOffsetMap = deviceKeyOffsetMapPower;
             pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(deviceProperties.subdeviceId, pPmt);
         }
-
-        pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {
@@ -363,7 +359,6 @@ class SysmanDevicePowerMultiDeviceFixture : public SysmanMultiDeviceFixture {
         pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject = mapOriginal;
         SysmanMultiDeviceFixture::TearDown();
     }
-
     std::vector<zes_pwr_handle_t> getPowerHandles(uint32_t count) {
         std::vector<zes_pwr_handle_t> handles(count, nullptr);
         EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);

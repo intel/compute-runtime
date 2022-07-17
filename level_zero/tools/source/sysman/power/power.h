@@ -9,6 +9,7 @@
 #include "level_zero/core/source/device/device.h"
 #include <level_zero/zes_api.h>
 
+#include <mutex>
 #include <vector>
 
 struct _zet_sysman_pwr_handle_t {
@@ -54,6 +55,8 @@ struct PowerHandleContext {
 
   private:
     void createHandle(ze_device_handle_t deviceHandle);
+    std::once_flag initPowerOnce;
+    void initPower();
 };
 
 } // namespace L0

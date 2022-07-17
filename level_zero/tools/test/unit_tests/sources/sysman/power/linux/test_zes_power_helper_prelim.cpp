@@ -32,7 +32,6 @@ class SysmanDevicePowerMultiDeviceFixtureHelper : public SysmanDevicePowerMultiD
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
-        pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
     }
 
     void TearDown() override {

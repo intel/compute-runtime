@@ -55,6 +55,9 @@ Device *WddmSysmanImp::getDeviceHandle() {
 std::vector<ze_device_handle_t> &WddmSysmanImp::getDeviceHandles() {
     return pParentSysmanDeviceImp->deviceHandles;
 }
+ze_device_handle_t WddmSysmanImp::getCoreDeviceHandle() {
+    return pParentSysmanDeviceImp->hCoreDevice;
+}
 NEO::Wddm &WddmSysmanImp::getWddm() {
     UNRECOVERABLE_IF(nullptr == pWddm);
     return *pWddm;

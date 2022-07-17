@@ -400,5 +400,8 @@ OsSysman *OsSysman::create(SysmanDeviceImp *pParentSysmanDeviceImp) {
 std::vector<ze_device_handle_t> &LinuxSysmanImp::getDeviceHandles() {
     return pParentSysmanDeviceImp->deviceHandles;
 }
+ze_device_handle_t LinuxSysmanImp::getCoreDeviceHandle() {
+    return pParentSysmanDeviceImp->hCoreDevice;
+}
 
 } // namespace L0

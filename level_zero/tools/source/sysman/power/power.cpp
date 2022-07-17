@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/basic_math.h"
 
+#include "level_zero/tools/source/sysman/os_sysman.h"
 #include "level_zero/tools/source/sysman/power/power_imp.h"
 
 namespace L0 {
@@ -39,7 +40,14 @@ ze_result_t PowerHandleContext::init(std::vector<ze_device_handle_t> &deviceHand
     return ZE_RESULT_SUCCESS;
 }
 
+void PowerHandleContext::initPower() {
+    std::call_once(initPowerOnce, [this]() {
+        this->init(pOsSysman->getDeviceHandles(), pOsSysman->getCoreDeviceHandle());
+    });
+}
+
 ze_result_t PowerHandleContext::powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) {
+    initPower();
     uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
     uint32_t numToCopy = std::min(*pCount, handleListSize);
     if (0 == *pCount || *pCount > handleListSize) {
@@ -54,6 +62,7 @@ ze_result_t PowerHandleContext::powerGet(uint32_t *pCount, zes_pwr_handle_t *phP
 }
 
 ze_result_t PowerHandleContext::powerGetCardDomain(zes_pwr_handle_t *phPower) {
+    initPower();
     if (nullptr == phPower) {
         return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
     }

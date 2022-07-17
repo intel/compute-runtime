@@ -20,6 +20,7 @@ struct OsSysman {
     virtual ze_result_t init() = 0;
     static OsSysman *create(SysmanDeviceImp *pSysmanImp);
     virtual std::vector<ze_device_handle_t> &getDeviceHandles() = 0;
+    virtual ze_device_handle_t getCoreDeviceHandle() = 0;
 };
 
 } // namespace L0
