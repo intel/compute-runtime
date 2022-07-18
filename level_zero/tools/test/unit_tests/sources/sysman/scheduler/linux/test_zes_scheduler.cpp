@@ -84,7 +84,7 @@ class SysmanDeviceSchedulerFixture : public SysmanDeviceFixture {
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
-        getSchedHandles(0);
+        pSysmanDeviceImp->pSchedulerHandleContext->init(deviceHandles);
     }
 
     void TearDown() override {

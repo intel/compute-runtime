@@ -46,7 +46,7 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
-        getMemoryHandles(0);
+        pSysmanDeviceImp->pMemoryHandleContext->init(deviceHandles);
     }
 
     void TearDown() override {

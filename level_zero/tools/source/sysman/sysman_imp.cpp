@@ -109,6 +109,12 @@ ze_result_t SysmanDeviceImp::init() {
     if (pEngineHandleContext) {
         pEngineHandleContext->init();
     }
+    if (pSchedulerHandleContext) {
+        pSchedulerHandleContext->init(deviceHandles);
+    }
+    if (pMemoryHandleContext) {
+        pMemoryHandleContext->init(deviceHandles);
+    }
     if (pGlobalOperations) {
         pGlobalOperations->init();
     }
