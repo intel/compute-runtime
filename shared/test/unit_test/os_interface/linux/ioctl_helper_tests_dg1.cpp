@@ -26,14 +26,14 @@ DG1TEST_F(IoctlHelperTestsDg1, givenDg1WhenCreateGemExtThenReturnCorrectValue) {
 
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
-    MemRegionsVec memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
+    MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
     auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, {});
 
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(1u, drm->numRegions);
     EXPECT_EQ(1024u, drm->createExt.size);
-    EXPECT_EQ(I915_MEMORY_CLASS_DEVICE, drm->memRegions.memoryClass);
+    EXPECT_EQ(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, drm->memRegions.memoryClass);
 }
 
 DG1TEST_F(IoctlHelperTestsDg1, givenDg1WithDrmTipWhenCreateGemExtWithDebugFlagThenPrintDebugInfo) {
@@ -48,7 +48,7 @@ DG1TEST_F(IoctlHelperTestsDg1, givenDg1WithDrmTipWhenCreateGemExtWithDebugFlagTh
     testing::internal::CaptureStdout();
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
-    MemRegionsVec memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
+    MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
     auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, {});
 
     std::string output = testing::internal::GetCapturedStdout();
@@ -69,7 +69,7 @@ DG1TEST_F(IoctlHelperTestsDg1, givenDg1WhenCreateGemExtWithDebugFlagThenPrintDeb
     testing::internal::CaptureStdout();
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
-    MemRegionsVec memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
+    MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
     auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, {});
 
     std::string output = testing::internal::GetCapturedStdout();

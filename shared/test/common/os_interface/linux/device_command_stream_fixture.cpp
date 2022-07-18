@@ -182,7 +182,7 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         }
     } break;
     case DrmIoctl::GemCreateExt: {
-        auto createExtParams = reinterpret_cast<drm_i915_gem_create_ext *>(arg);
+        auto createExtParams = reinterpret_cast<NEO::I915::drm_i915_gem_create_ext *>(arg);
         createExtSize = createExtParams->size;
         createExtHandle = createExtParams->handle;
         createExtExtensions = createExtParams->extensions;

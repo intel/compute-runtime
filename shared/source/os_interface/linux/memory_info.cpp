@@ -22,10 +22,10 @@ namespace NEO {
 
 MemoryInfo::MemoryInfo(const RegionContainer &regionInfo)
     : drmQueryRegions(regionInfo), systemMemoryRegion(drmQueryRegions[0]) {
-    UNRECOVERABLE_IF(systemMemoryRegion.region.memoryClass != I915_MEMORY_CLASS_SYSTEM);
+    UNRECOVERABLE_IF(systemMemoryRegion.region.memoryClass != drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM);
     std::copy_if(drmQueryRegions.begin(), drmQueryRegions.end(), std::back_inserter(localMemoryRegions),
                  [](const MemoryRegion &memoryRegionInfo) {
-                     return (memoryRegionInfo.region.memoryClass == I915_MEMORY_CLASS_DEVICE);
+                     return (memoryRegionInfo.region.memoryClass == drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE);
                  });
 }
 

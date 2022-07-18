@@ -1443,11 +1443,11 @@ TEST(IoctlHelperTest, whenGettingDrmParamValueThenProperValueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto ioctlHelper = drm.getIoctlHelper();
-    EXPECT_EQ(static_cast<int>(I915_ENGINE_CLASS_RENDER), ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender));
-    EXPECT_EQ(static_cast<int>(I915_ENGINE_CLASS_COPY), ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy));
-    EXPECT_EQ(static_cast<int>(I915_ENGINE_CLASS_VIDEO), ioctlHelper->getDrmParamValue(DrmParam::EngineClassVideo));
-    EXPECT_EQ(static_cast<int>(I915_ENGINE_CLASS_VIDEO_ENHANCE), ioctlHelper->getDrmParamValue(DrmParam::EngineClassVideoEnhance));
-    EXPECT_EQ(static_cast<int>(I915_ENGINE_CLASS_INVALID), ioctlHelper->getDrmParamValue(DrmParam::EngineClassInvalid));
+    EXPECT_EQ(static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER), ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender));
+    EXPECT_EQ(static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY), ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy));
+    EXPECT_EQ(static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO), ioctlHelper->getDrmParamValue(DrmParam::EngineClassVideo));
+    EXPECT_EQ(static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE), ioctlHelper->getDrmParamValue(DrmParam::EngineClassVideoEnhance));
+    EXPECT_EQ(static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_INVALID), ioctlHelper->getDrmParamValue(DrmParam::EngineClassInvalid));
     EXPECT_EQ(static_cast<int>(I915_ENGINE_CLASS_INVALID_NONE), ioctlHelper->getDrmParamValue(DrmParam::EngineClassInvalidNone));
 
     EXPECT_THROW(ioctlHelper->getDrmParamValueBase(DrmParam::EngineClassCompute), std::runtime_error);
@@ -1459,10 +1459,10 @@ TEST(DistanceInfoTest, givenDistanceInfosWhenAssignRegionsFromDistancesThenCorre
     auto ioctlHelper = drm.getIoctlHelper();
 
     std::vector<MemoryRegion> memRegions(4);
-    memRegions[0] = {{I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0};
-    memRegions[1] = {{I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0};
-    memRegions[2] = {{I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0};
-    memRegions[3] = {{I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0};
+    memRegions[0] = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0};
+    memRegions[1] = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0};
+    memRegions[2] = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0};
+    memRegions[3] = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0};
     auto memoryInfo = std::make_unique<MemoryInfo>(memRegions);
 
     std::vector<EngineClassInstance> engines(3);
@@ -1472,7 +1472,7 @@ TEST(DistanceInfoTest, givenDistanceInfosWhenAssignRegionsFromDistancesThenCorre
 
     auto distances = std::vector<DistanceInfo>();
     for (const auto &region : memRegions) {
-        if (region.region.memoryClass == I915_MEMORY_CLASS_SYSTEM) {
+        if (region.region.memoryClass == drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM) {
             continue;
         }
         for (const auto &engine : engines) {

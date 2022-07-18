@@ -100,18 +100,18 @@ TEST(IoctlHelperUpstreamTest, whenGettingDrmParamValueThenPropertValueIsReturned
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     IoctlHelperUpstream ioctlHelper{*drm};
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassCompute), 4);
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassRender), static_cast<int>(I915_ENGINE_CLASS_RENDER));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassCopy), static_cast<int>(I915_ENGINE_CLASS_COPY));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassVideo), static_cast<int>(I915_ENGINE_CLASS_VIDEO));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassVideoEnhance), static_cast<int>(I915_ENGINE_CLASS_VIDEO_ENHANCE));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassInvalid), static_cast<int>(I915_ENGINE_CLASS_INVALID));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassRender), static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassCopy), static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassVideo), static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassVideoEnhance), static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassInvalid), static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_INVALID));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassInvalidNone), static_cast<int>(I915_ENGINE_CLASS_INVALID_NONE));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ExecBlt), static_cast<int>(I915_EXEC_BLT));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ExecDefault), static_cast<int>(I915_EXEC_DEFAULT));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ExecNoReloc), static_cast<int>(I915_EXEC_NO_RELOC));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ExecRender), static_cast<int>(I915_EXEC_RENDER));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::MemoryClassDevice), static_cast<int>(I915_MEMORY_CLASS_DEVICE));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::MemoryClassSystem), static_cast<int>(I915_MEMORY_CLASS_SYSTEM));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::MemoryClassDevice), static_cast<int>(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::MemoryClassSystem), static_cast<int>(drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamChipsetId), static_cast<int>(I915_PARAM_CHIPSET_ID));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamRevision), static_cast<int>(I915_PARAM_REVISION));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamHasExecSoftpin), static_cast<int>(I915_PARAM_HAS_EXEC_SOFTPIN));
@@ -190,14 +190,14 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenCreateGemExtThenReturnCorrectVal
 
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
-    MemRegionsVec memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
+    MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
     auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, {});
 
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(1u, drm->numRegions);
     EXPECT_EQ(1024u, drm->createExt.size);
-    EXPECT_EQ(I915_MEMORY_CLASS_DEVICE, drm->memRegions.memoryClass);
+    EXPECT_EQ(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, drm->memRegions.memoryClass);
 }
 
 TEST(IoctlHelperTestsUpstream, givenUpstreamWhenCreateGemExtWithDebugFlagThenPrintDebugInfo) {
@@ -211,7 +211,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenCreateGemExtWithDebugFlagThenPri
     testing::internal::CaptureStdout();
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
-    MemRegionsVec memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
+    MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
     ioctlHelper->createGemExt(memClassInstance, 1024, handle, {});
 
     std::string output = testing::internal::GetCapturedStdout();
@@ -316,7 +316,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenQueryEngineInfoWithoutDeviceMemo
     ASSERT_NE(nullptr, drm);
     drm->ioctlCallsCount = 0;
     std::vector<MemoryRegion> memRegions{
-        {{I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0}};
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0}};
     drm->memoryInfo.reset(new MemoryInfo(memRegions));
     EXPECT_TRUE(drm->queryEngineInfo());
     EXPECT_EQ(2u, drm->ioctlCallsCount);
@@ -336,9 +336,9 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenQueryEngineInfoWithDeviceMemoryA
     ASSERT_NE(nullptr, drm);
     drm->ioctlCallsCount = 0;
     std::vector<MemoryRegion> memRegions{
-        {{I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
-        {{I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
-        {{I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0}};
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0}};
     drm->memoryInfo.reset(new MemoryInfo(memRegions));
     EXPECT_TRUE(drm->queryEngineInfo());
     EXPECT_EQ(2u, drm->ioctlCallsCount);

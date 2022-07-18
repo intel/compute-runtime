@@ -14,8 +14,8 @@
 #include <vector>
 
 const std::vector<NEO::MemoryRegion> memoryRegions = {
-    {{I915_MEMORY_CLASS_SYSTEM, 0}, 64 * GB, 0},
-    {{I915_MEMORY_CLASS_DEVICE, 0}, 8 * GB, 0}};
+    {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, 64 * GB, 0},
+    {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, 8 * GB, 0}};
 
 struct MockMemoryInfo : public NEO::MemoryInfo {
     MockMemoryInfo() : MemoryInfo(memoryRegions) {}
@@ -23,11 +23,11 @@ struct MockMemoryInfo : public NEO::MemoryInfo {
 };
 
 const std::vector<NEO::MemoryRegion> extendedMemoryRegions = {
-    {{I915_MEMORY_CLASS_SYSTEM, 1}, 64 * GB, 0},
-    {{I915_MEMORY_CLASS_DEVICE, 0x100}, 8 * GB, 0},
-    {{I915_MEMORY_CLASS_DEVICE, 0x200}, 8 * GB, 0},
-    {{I915_MEMORY_CLASS_DEVICE, 0x400}, 8 * GB, 0},
-    {{I915_MEMORY_CLASS_DEVICE, 0x800}, 8 * GB, 0}};
+    {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1}, 64 * GB, 0},
+    {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0x100}, 8 * GB, 0},
+    {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0x200}, 8 * GB, 0},
+    {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0x400}, 8 * GB, 0},
+    {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0x800}, 8 * GB, 0}};
 
 struct MockExtendedMemoryInfo : public NEO::MemoryInfo {
     MockExtendedMemoryInfo() : MemoryInfo(extendedMemoryRegions) {}

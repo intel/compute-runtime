@@ -183,7 +183,7 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
         }
 
         const auto firstMemoryRegion = receivedCreateGemExt->memoryRegions[0];
-        if ((firstMemoryRegion.memoryClass != PRELIM_I915_MEMORY_CLASS_SYSTEM) && (firstMemoryRegion.memoryClass != PRELIM_I915_MEMORY_CLASS_DEVICE)) {
+        if ((firstMemoryRegion.memoryClass != prelim_drm_i915_gem_memory_class::PRELIM_I915_MEMORY_CLASS_SYSTEM) && (firstMemoryRegion.memoryClass != prelim_drm_i915_gem_memory_class::PRELIM_I915_MEMORY_CLASS_DEVICE)) {
             return EINVAL;
         }
 
@@ -287,19 +287,19 @@ bool DrmMockPrelimContext::handlePrelimQueryItem(void *arg) {
             queryEngineInfo->num_engines = numberOfEngines;
             auto p = queryEngineInfo->engines;
             for (uint32_t tile = 0u; tile < numberOfTiles; tile++) {
-                p++->engine = {I915_ENGINE_CLASS_RENDER, DrmMockHelper::getEngineOrMemoryInstanceValue(tile, 0)};
+                p++->engine = {drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER, DrmMockHelper::getEngineOrMemoryInstanceValue(tile, 0)};
                 for (uint32_t i = 0u; i < supportedCopyEnginesMask.size(); i++) {
                     if (supportedCopyEnginesMask.test(i)) {
                         auto copyEngineInfo = p++;
-                        copyEngineInfo->engine = {I915_ENGINE_CLASS_COPY, DrmMockHelper::getEngineOrMemoryInstanceValue(tile, i)};
+                        copyEngineInfo->engine = {drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY, DrmMockHelper::getEngineOrMemoryInstanceValue(tile, i)};
                         copyEngineInfo->capabilities = copyEnginesCapsMap[i];
                     }
                 }
-                p++->engine = {I915_ENGINE_CLASS_VIDEO, DrmMockHelper::getEngineOrMemoryInstanceValue(tile, 0)};
-                p++->engine = {I915_ENGINE_CLASS_VIDEO, DrmMockHelper::getEngineOrMemoryInstanceValue(tile, 0)};
-                p++->engine = {I915_ENGINE_CLASS_VIDEO_ENHANCE, DrmMockHelper::getEngineOrMemoryInstanceValue(tile, 0)};
+                p++->engine = {drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO, DrmMockHelper::getEngineOrMemoryInstanceValue(tile, 0)};
+                p++->engine = {drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO, DrmMockHelper::getEngineOrMemoryInstanceValue(tile, 0)};
+                p++->engine = {drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE, DrmMockHelper::getEngineOrMemoryInstanceValue(tile, 0)};
                 for (auto i = 0u; i < numberOfCCS; i++) {
-                    p++->engine = {PRELIM_I915_ENGINE_CLASS_COMPUTE, DrmMockHelper::getEngineOrMemoryInstanceValue(tile, i)};
+                    p++->engine = {prelim_drm_i915_gem_engine_class::PRELIM_I915_ENGINE_CLASS_COMPUTE, DrmMockHelper::getEngineOrMemoryInstanceValue(tile, i)};
                 }
             }
         }
@@ -325,11 +325,11 @@ bool DrmMockPrelimContext::handlePrelimQueryItem(void *arg) {
             auto queryMemoryRegionInfo = reinterpret_cast<drm_i915_query_memory_regions *>(queryItem->dataPtr);
             EXPECT_EQ(0u, queryMemoryRegionInfo->num_regions);
             queryMemoryRegionInfo->num_regions = numberOfRegions;
-            queryMemoryRegionInfo->regions[0].region.memory_class = PRELIM_I915_MEMORY_CLASS_SYSTEM;
+            queryMemoryRegionInfo->regions[0].region.memory_class = prelim_drm_i915_gem_memory_class::PRELIM_I915_MEMORY_CLASS_SYSTEM;
             queryMemoryRegionInfo->regions[0].region.memory_instance = 1;
             queryMemoryRegionInfo->regions[0].probed_size = 2 * MemoryConstants::gigaByte;
             for (auto tile = 0u; tile < numberOfLocalMemories; tile++) {
-                queryMemoryRegionInfo->regions[1 + tile].region.memory_class = PRELIM_I915_MEMORY_CLASS_DEVICE;
+                queryMemoryRegionInfo->regions[1 + tile].region.memory_class = prelim_drm_i915_gem_memory_class::PRELIM_I915_MEMORY_CLASS_DEVICE;
                 queryMemoryRegionInfo->regions[1 + tile].region.memory_instance = DrmMockHelper::getEngineOrMemoryInstanceValue(tile, 0);
                 queryMemoryRegionInfo->regions[1 + tile].probed_size = 2 * MemoryConstants::gigaByte;
             }
@@ -344,11 +344,11 @@ bool DrmMockPrelimContext::handlePrelimQueryItem(void *arg) {
 
         auto queryDistanceInfo = reinterpret_cast<prelim_drm_i915_query_distance_info *>(queryItem->dataPtr);
         switch (queryDistanceInfo->region.memory_class) {
-        case PRELIM_I915_MEMORY_CLASS_SYSTEM:
+        case prelim_drm_i915_gem_memory_class::PRELIM_I915_MEMORY_CLASS_SYSTEM:
             EXPECT_EQ(sizeof(prelim_drm_i915_query_distance_info), static_cast<size_t>(queryItem->length));
             queryDistanceInfo->distance = -1;
             break;
-        case PRELIM_I915_MEMORY_CLASS_DEVICE: {
+        case prelim_drm_i915_gem_memory_class::PRELIM_I915_MEMORY_CLASS_DEVICE: {
             EXPECT_EQ(sizeof(prelim_drm_i915_query_distance_info), static_cast<size_t>(queryItem->length));
 
             auto engineTile = DrmMockHelper::getTileFromEngineOrMemoryInstance(queryDistanceInfo->engine.engine_instance);
@@ -463,7 +463,7 @@ uint32_t DrmPrelimHelper::getDistanceInfoQueryId() {
 }
 
 uint32_t DrmPrelimHelper::getComputeEngineClass() {
-    return PRELIM_I915_ENGINE_CLASS_COMPUTE;
+    return prelim_drm_i915_gem_engine_class::PRELIM_I915_ENGINE_CLASS_COMPUTE;
 }
 
 uint32_t DrmPrelimHelper::getStringUuidClass() {

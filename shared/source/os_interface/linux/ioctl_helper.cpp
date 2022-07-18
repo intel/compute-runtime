@@ -186,15 +186,15 @@ unsigned int IoctlHelper::getIoctlRequestValueBase(DrmIoctl ioctlRequest) const 
 int IoctlHelper::getDrmParamValueBase(DrmParam drmParam) const {
     switch (drmParam) {
     case DrmParam::EngineClassRender:
-        return I915_ENGINE_CLASS_RENDER;
+        return drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER;
     case DrmParam::EngineClassCopy:
-        return I915_ENGINE_CLASS_COPY;
+        return drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY;
     case DrmParam::EngineClassVideo:
-        return I915_ENGINE_CLASS_VIDEO;
+        return drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO;
     case DrmParam::EngineClassVideoEnhance:
-        return I915_ENGINE_CLASS_VIDEO_ENHANCE;
+        return drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE;
     case DrmParam::EngineClassInvalid:
-        return I915_ENGINE_CLASS_INVALID;
+        return drm_i915_gem_engine_class::I915_ENGINE_CLASS_INVALID;
     case DrmParam::EngineClassInvalidNone:
         return I915_ENGINE_CLASS_INVALID_NONE;
     case DrmParam::ExecBlt:
@@ -206,9 +206,9 @@ int IoctlHelper::getDrmParamValueBase(DrmParam drmParam) const {
     case DrmParam::ExecRender:
         return I915_EXEC_RENDER;
     case DrmParam::MemoryClassDevice:
-        return I915_MEMORY_CLASS_DEVICE;
+        return drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE;
     case DrmParam::MemoryClassSystem:
-        return I915_MEMORY_CLASS_SYSTEM;
+        return drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM;
     case DrmParam::ParamChipsetId:
         return I915_PARAM_CHIPSET_ID;
     case DrmParam::ParamRevision:

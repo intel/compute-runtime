@@ -294,7 +294,7 @@ ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
     }
     auto regions = pDrm->getIoctlHelper()->translateToMemoryRegions(memRegions);
     for (auto region : regions) {
-        if (region.region.memoryClass == I915_MEMORY_CLASS_DEVICE) {
+        if (region.region.memoryClass == drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE) {
             deviceRegions.push_back(region);
         }
     }

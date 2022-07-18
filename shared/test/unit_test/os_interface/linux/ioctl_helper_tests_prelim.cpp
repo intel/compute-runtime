@@ -115,19 +115,19 @@ TEST_F(IoctlPrelimHelperTests, whenGettingIoctlRequestStringThenProperStringIsRe
 }
 
 TEST_F(IoctlPrelimHelperTests, whenGettingDrmParamValueThenPropertValueIsReturned) {
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassCompute), static_cast<int>(PRELIM_I915_ENGINE_CLASS_COMPUTE));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassRender), static_cast<int>(I915_ENGINE_CLASS_RENDER));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassCopy), static_cast<int>(I915_ENGINE_CLASS_COPY));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassVideo), static_cast<int>(I915_ENGINE_CLASS_VIDEO));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassVideoEnhance), static_cast<int>(I915_ENGINE_CLASS_VIDEO_ENHANCE));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassInvalid), static_cast<int>(I915_ENGINE_CLASS_INVALID));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassCompute), static_cast<int>(prelim_drm_i915_gem_engine_class::PRELIM_I915_ENGINE_CLASS_COMPUTE));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassRender), static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassCopy), static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassVideo), static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassVideoEnhance), static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassInvalid), static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_INVALID));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassInvalidNone), static_cast<int>(I915_ENGINE_CLASS_INVALID_NONE));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ExecBlt), static_cast<int>(I915_EXEC_BLT));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ExecDefault), static_cast<int>(I915_EXEC_DEFAULT));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ExecNoReloc), static_cast<int>(I915_EXEC_NO_RELOC));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ExecRender), static_cast<int>(I915_EXEC_RENDER));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::MemoryClassDevice), static_cast<int>(I915_MEMORY_CLASS_DEVICE));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::MemoryClassSystem), static_cast<int>(I915_MEMORY_CLASS_SYSTEM));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::MemoryClassDevice), static_cast<int>(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::MemoryClassSystem), static_cast<int>(drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamChipsetId), static_cast<int>(I915_PARAM_CHIPSET_ID));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamRevision), static_cast<int>(I915_PARAM_REVISION));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamHasExecSoftpin), static_cast<int>(I915_PARAM_HAS_EXEC_SOFTPIN));
@@ -149,10 +149,10 @@ TEST_F(IoctlPrelimHelperTests, whenGettingDrmParamValueThenPropertValueIsReturne
 
 TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenTranslateToMemoryRegionsThenReturnSameData) {
     std::vector<MemoryRegion> expectedMemRegions(2);
-    expectedMemRegions[0].region.memoryClass = PRELIM_I915_MEMORY_CLASS_SYSTEM;
+    expectedMemRegions[0].region.memoryClass = prelim_drm_i915_gem_memory_class::PRELIM_I915_MEMORY_CLASS_SYSTEM;
     expectedMemRegions[0].region.memoryInstance = 0;
     expectedMemRegions[0].probedSize = 1024;
-    expectedMemRegions[1].region.memoryClass = PRELIM_I915_MEMORY_CLASS_DEVICE;
+    expectedMemRegions[1].region.memoryClass = prelim_drm_i915_gem_memory_class::PRELIM_I915_MEMORY_CLASS_DEVICE;
     expectedMemRegions[1].region.memoryInstance = 0;
     expectedMemRegions[1].probedSize = 1024;
 
@@ -176,7 +176,7 @@ TEST_F(IoctlPrelimHelperTests, givenEmptyRegionInstanceClassWhenCreatingVmContro
 }
 
 TEST_F(IoctlPrelimHelperTests, givenValidRegionInstanceClassWhenCreatingVmControlRegionExtThenProperStructIsReturned) {
-    std::optional<MemoryClassInstance> regionInstanceClass = MemoryClassInstance{PRELIM_I915_MEMORY_CLASS_DEVICE, 2};
+    std::optional<MemoryClassInstance> regionInstanceClass = MemoryClassInstance{prelim_drm_i915_gem_memory_class::PRELIM_I915_MEMORY_CLASS_DEVICE, 2};
 
     EXPECT_TRUE(regionInstanceClass.has_value());
 
@@ -187,7 +187,7 @@ TEST_F(IoctlPrelimHelperTests, givenValidRegionInstanceClassWhenCreatingVmContro
     auto regionExt = reinterpret_cast<prelim_drm_i915_gem_vm_region_ext *>(retVal.get());
 
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_I915_GEM_VM_CONTROL_EXT_REGION), regionExt->base.name);
-    EXPECT_EQ(static_cast<uint32_t>(PRELIM_I915_MEMORY_CLASS_DEVICE), regionExt->region.memory_class);
+    EXPECT_EQ(static_cast<uint32_t>(prelim_drm_i915_gem_memory_class::PRELIM_I915_MEMORY_CLASS_DEVICE), regionExt->region.memory_class);
     EXPECT_EQ(2u, regionExt->region.memory_instance);
 }
 
@@ -317,17 +317,17 @@ TEST_F(IoctlPrelimHelperTests, givenValidInputWhenFillVmBindUserFenceThenProperV
 TEST_F(IoctlPrelimHelperTests, givenPrelimWhenGettingEuStallPropertiesThenCorrectPropertiesAreReturned) {
     std::array<uint64_t, 12u> properties = {};
     EXPECT_TRUE(ioctlHelper.getEuStallProperties(properties, 0x101, 0x102, 0x103, 1, 20u));
-    EXPECT_EQ(properties[0], PRELIM_DRM_I915_EU_STALL_PROP_BUF_SZ);
+    EXPECT_EQ(properties[0], prelim_drm_i915_eu_stall_property_id::PRELIM_DRM_I915_EU_STALL_PROP_BUF_SZ);
     EXPECT_EQ(properties[1], 0x101u);
-    EXPECT_EQ(properties[2], PRELIM_DRM_I915_EU_STALL_PROP_SAMPLE_RATE);
+    EXPECT_EQ(properties[2], prelim_drm_i915_eu_stall_property_id::PRELIM_DRM_I915_EU_STALL_PROP_SAMPLE_RATE);
     EXPECT_EQ(properties[3], 0x102u);
-    EXPECT_EQ(properties[4], PRELIM_DRM_I915_EU_STALL_PROP_POLL_PERIOD);
+    EXPECT_EQ(properties[4], prelim_drm_i915_eu_stall_property_id::PRELIM_DRM_I915_EU_STALL_PROP_POLL_PERIOD);
     EXPECT_EQ(properties[5], 0x103u);
-    EXPECT_EQ(properties[6], PRELIM_DRM_I915_EU_STALL_PROP_ENGINE_CLASS);
-    EXPECT_EQ(properties[7], PRELIM_I915_ENGINE_CLASS_COMPUTE);
-    EXPECT_EQ(properties[8], PRELIM_DRM_I915_EU_STALL_PROP_ENGINE_INSTANCE);
+    EXPECT_EQ(properties[6], prelim_drm_i915_eu_stall_property_id::PRELIM_DRM_I915_EU_STALL_PROP_ENGINE_CLASS);
+    EXPECT_EQ(properties[7], prelim_drm_i915_gem_engine_class::PRELIM_I915_ENGINE_CLASS_COMPUTE);
+    EXPECT_EQ(properties[8], prelim_drm_i915_eu_stall_property_id::PRELIM_DRM_I915_EU_STALL_PROP_ENGINE_INSTANCE);
     EXPECT_EQ(properties[9], 1u);
-    EXPECT_EQ(properties[10], PRELIM_DRM_I915_EU_STALL_PROP_EVENT_REPORT_COUNT);
+    EXPECT_EQ(properties[10], prelim_drm_i915_eu_stall_property_id::PRELIM_DRM_I915_EU_STALL_PROP_EVENT_REPORT_COUNT);
     EXPECT_EQ(properties[11], 20u);
 }
 

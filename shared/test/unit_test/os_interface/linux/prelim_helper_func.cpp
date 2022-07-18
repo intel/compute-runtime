@@ -45,7 +45,7 @@ int handlePrelimRequests(DrmIoctl request, void *arg, int ioctlRetVal, int query
             return EINVAL;
         }
 
-        if ((data->memoryClass != PRELIM_I915_MEMORY_CLASS_SYSTEM) && (data->memoryClass != PRELIM_I915_MEMORY_CLASS_DEVICE)) {
+        if ((data->memoryClass != prelim_drm_i915_gem_memory_class::PRELIM_I915_MEMORY_CLASS_SYSTEM) && (data->memoryClass != prelim_drm_i915_gem_memory_class::PRELIM_I915_MEMORY_CLASS_DEVICE)) {
             return EINVAL;
         }
     } else if (request == DrmIoctl::GemClosReserve) {
@@ -77,11 +77,11 @@ int handlePrelimRequests(DrmIoctl request, void *arg, int ioctlRetVal, int query
                     queryEngineInfo->num_engines = numberOfEngines;
                     auto p = queryEngineInfo->engines;
                     for (uint16_t tile = 0u; tile < numberOfTiles; tile++) {
-                        p++->engine = {I915_ENGINE_CLASS_RENDER, tile};
-                        p++->engine = {I915_ENGINE_CLASS_COPY, tile};
-                        p++->engine = {I915_ENGINE_CLASS_VIDEO, tile};
-                        p++->engine = {I915_ENGINE_CLASS_VIDEO_ENHANCE, tile};
-                        p++->engine = {PRELIM_I915_ENGINE_CLASS_COMPUTE, tile};
+                        p++->engine = {drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER, tile};
+                        p++->engine = {drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY, tile};
+                        p++->engine = {drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO, tile};
+                        p++->engine = {drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE, tile};
+                        p++->engine = {prelim_drm_i915_gem_engine_class::PRELIM_I915_ENGINE_CLASS_COMPUTE, tile};
                         p++->engine = {UINT16_MAX, tile};
                     }
                 }

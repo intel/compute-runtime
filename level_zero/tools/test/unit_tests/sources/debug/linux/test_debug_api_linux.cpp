@@ -4870,7 +4870,7 @@ TEST_F(DebugApiLinuxTest, GivenContextParamEventWhenTypeIsParamEngineThenEventIs
 
     auto enginesOffset = offsetof(i915_context_param_engines, engines);
     auto *classInstance = ptrOffset(memory, offset + valueOffset + enginesOffset);
-    i915_engine_class_instance ci = {I915_ENGINE_CLASS_RENDER, 1};
+    i915_engine_class_instance ci = {drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER, 1};
     memcpy(classInstance, &ci, sizeof(i915_engine_class_instance));
 
     ::testing::internal::CaptureStdout();
@@ -4878,7 +4878,7 @@ TEST_F(DebugApiLinuxTest, GivenContextParamEventWhenTypeIsParamEngineThenEventIs
     alignedFree(memory);
 
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].engines.size());
-    EXPECT_EQ(static_cast<uint32_t>(I915_ENGINE_CLASS_RENDER), session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].engines[0].engine_class);
+    EXPECT_EQ(static_cast<uint32_t>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER), session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].engines[0].engine_class);
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].engines[0].engine_instance);
 
     EXPECT_NE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile.end(),
@@ -4934,13 +4934,13 @@ TEST_F(DebugApiLinuxTest, GivenNoVmIdWhenOrZeroEnginesContextParamEventIsHandled
 
     auto enginesOffset = offsetof(i915_context_param_engines, engines);
     auto *classInstance = ptrOffset(memory, offset + valueOffset + enginesOffset);
-    i915_engine_class_instance ci = {I915_ENGINE_CLASS_RENDER, 1};
+    i915_engine_class_instance ci = {drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER, 1};
     memcpy(classInstance, &ci, sizeof(i915_engine_class_instance));
 
     session->handleEvent(&contextParamEvent->base);
 
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].engines.size());
-    EXPECT_EQ(static_cast<uint32_t>(I915_ENGINE_CLASS_RENDER), session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].engines[0].engine_class);
+    EXPECT_EQ(static_cast<uint32_t>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER), session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].engines[0].engine_class);
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].engines[0].engine_instance);
 
     EXPECT_EQ(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile.end(),

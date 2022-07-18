@@ -104,8 +104,8 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWhenCreateBuffer
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableLocalMemory.set(1);
     std::vector<MemoryRegion> regionInfo(2);
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
-    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo));
     mock->ioctlCallsCount = 0;
@@ -127,7 +127,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWhenCreateBuffer
 
     EXPECT_EQ(1u, mock->numRegions);
     auto memRegions = mock->memRegions;
-    EXPECT_EQ(I915_MEMORY_CLASS_DEVICE, memRegions.memoryClass);
+    EXPECT_EQ(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, memRegions.memoryClass);
     EXPECT_EQ(0u, memRegions.memoryInstance);
 
     EXPECT_EQ(gpuAddress, bo->peekAddress());
@@ -146,8 +146,8 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndMem
         auto mock = new DrmTipMock(*executionEnvironment->rootDeviceEnvironments[i]);
 
         std::vector<MemoryRegion> regionInfo(2);
-        regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
-        regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+        regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+        regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
 
         mock->memoryInfo.reset(new MemoryInfo(regionInfo));
         mock->ioctlCallsCount = 0;
@@ -192,8 +192,8 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndMemory
         auto mock = new DrmTipMock(*executionEnvironment->rootDeviceEnvironments[i]);
 
         std::vector<MemoryRegion> regionInfo(2);
-        regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
-        regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+        regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+        regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
 
         mock->memoryInfo.reset(new MemoryInfo(regionInfo));
         mock->ioctlCallsCount = 0;
@@ -252,8 +252,8 @@ TEST_F(DrmMemoryManagerUsmSharedHandleTest, givenMultiRootDeviceEnvironmentAndMe
     auto mock = new DrmTipMock(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
     std::vector<MemoryRegion> regionInfo(2);
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
-    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo));
     mock->ioctlCallsCount = 0;
@@ -320,8 +320,8 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenMemoryInfoWhenAllocateWithAlignm
     DebugManager.flags.EnableBOMmapCreate.set(-1);
 
     std::vector<MemoryRegion> regionInfo(2);
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
-    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo));
     mock->ioctlCallsCount = 0;
@@ -345,8 +345,8 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMemoryInfoAndNotUseObjectMmapProper
     DebugManager.flags.EnableBOMmapCreate.set(0);
 
     std::vector<MemoryRegion> regionInfo(2);
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
-    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo));
     mock->mmapOffsetRetVal = -1;
@@ -368,8 +368,8 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMemoryInfoAndFailedMmapOffsetWhenAl
     DebugManager.flags.EnableBOMmapCreate.set(-1);
 
     std::vector<MemoryRegion> regionInfo(2);
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
-    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo));
     mock->mmapOffsetRetVal = -1;
@@ -388,8 +388,8 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMemoryInfoAndDisabledMmapBOCreation
     DebugManager.flags.EnableBOMmapCreate.set(0);
 
     std::vector<MemoryRegion> regionInfo(2);
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
-    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo));
     mock->mmapOffsetRetVal = -1;
@@ -410,8 +410,8 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMemoryInfoAndFailedGemCreateExtWhen
     DebugManager.flags.EnableBOMmapCreate.set(-1);
 
     std::vector<MemoryRegion> regionInfo(2);
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
-    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo));
     mock->gemCreateExtRetVal = -1;
@@ -957,8 +957,8 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsU
     DebugManager.flags.EnableBOMmapCreate.set(-1);
 
     std::vector<MemoryRegion> regionInfo(2);
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
-    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo));
     mock->ioctlCallsCount = 0;
@@ -995,8 +995,8 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsA
     DebugManager.flags.EnableBOMmapCreate.set(-1);
 
     std::vector<MemoryRegion> regionInfo(2);
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
-    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo));
     mock->ioctlCallsCount = 0;

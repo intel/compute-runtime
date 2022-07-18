@@ -111,7 +111,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtThenReturnSuccess) 
     drm->ioctlCallsCount = 0;
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
-    MemRegionsVec memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
+    MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
     auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, {});
 
     EXPECT_EQ(1u, handle);
@@ -126,7 +126,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithDebugFlagThenPr
     testing::internal::CaptureStdout();
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
-    MemRegionsVec memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
+    MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
     ioctlHelper->createGemExt(memClassInstance, 1024, handle, {});
 
     std::string output = testing::internal::GetCapturedStdout();
@@ -310,11 +310,11 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenQueryDistancesThenCorrectDistan
     auto ioctlHelper = drm->getIoctlHelper();
     std::vector<DistanceInfo> distances(3);
     distances[0].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender)), 0};
-    distances[0].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    distances[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
     distances[1].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender)), 1};
-    distances[1].region = {I915_MEMORY_CLASS_DEVICE, 1};
+    distances[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1};
     distances[2].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy)), 4};
-    distances[2].region = {I915_MEMORY_CLASS_DEVICE, 2};
+    distances[2].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2};
     std::vector<QueryItem> queryItems(distances.size());
     auto ret = ioctlHelper->queryDistances(queryItems, distances);
     EXPECT_EQ(0u, ret);
@@ -326,10 +326,10 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenQueryDistancesThenCorrectDistan
 TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoWithDeviceMemoryThenDistancesUsedAndMultileValuesSet) {
     drm->ioctlCallsCount = 0;
     std::vector<MemoryRegion> memRegions{
-        {{I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
-        {{I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
-        {{I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0},
-        {{I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0}};
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0}};
     drm->memoryInfo.reset(new MemoryInfo(memRegions));
     EXPECT_TRUE(drm->queryEngineInfo());
     EXPECT_EQ(3u, drm->ioctlCallsCount);
@@ -357,9 +357,9 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoWithDeviceMemoryT
 TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoThenCorrectCCSFlagsSet) {
     drm->ioctlCallsCount = 0;
     std::vector<MemoryRegion> memRegions{
-        {{I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
-        {{I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
-        {{I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0}};
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0}};
     drm->memoryInfo.reset(new MemoryInfo(memRegions));
     EXPECT_TRUE(drm->queryEngineInfo());
     EXPECT_EQ(3u, drm->ioctlCallsCount);
@@ -373,10 +373,10 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoThenCorrectCCSFla
 TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenSysmanQueryEngineInfoThenAdditionalEnginesUsed) {
     drm->ioctlCallsCount = 0;
     std::vector<MemoryRegion> memRegions{
-        {{I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
-        {{I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
-        {{I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0},
-        {{I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0}};
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0}};
     drm->memoryInfo.reset(new MemoryInfo(memRegions));
     EXPECT_TRUE(drm->sysmanQueryEngineInfo());
     EXPECT_EQ(3u, drm->ioctlCallsCount);
@@ -396,10 +396,10 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoAndFailIoctlThenF
     drm->queryDistanceIoctlRetVal = -1;
 
     std::vector<MemoryRegion> memRegions{
-        {{I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
-        {{I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
-        {{I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0},
-        {{I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0}};
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0}};
     drm->memoryInfo.reset(new MemoryInfo(memRegions));
     EXPECT_FALSE(drm->queryEngineInfo());
 

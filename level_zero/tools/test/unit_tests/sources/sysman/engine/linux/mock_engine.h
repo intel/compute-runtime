@@ -41,15 +41,15 @@ struct Mock<EngineNeoDrm> : public EngineNeoDrm {
 
     bool queryEngineInfoMockPositiveTest() {
         std::vector<NEO::EngineCapabilities> i915engineInfo(6);
-        i915engineInfo[0].engine.engineClass = I915_ENGINE_CLASS_RENDER;
+        i915engineInfo[0].engine.engineClass = drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER;
         i915engineInfo[0].engine.engineInstance = 0;
-        i915engineInfo[1].engine.engineClass = I915_ENGINE_CLASS_RENDER;
+        i915engineInfo[1].engine.engineClass = drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER;
         i915engineInfo[1].engine.engineInstance = 1;
-        i915engineInfo[2].engine.engineClass = I915_ENGINE_CLASS_VIDEO;
+        i915engineInfo[2].engine.engineClass = drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO;
         i915engineInfo[2].engine.engineInstance = 1;
-        i915engineInfo[3].engine.engineClass = I915_ENGINE_CLASS_COPY;
+        i915engineInfo[3].engine.engineClass = drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY;
         i915engineInfo[3].engine.engineInstance = 0;
-        i915engineInfo[4].engine.engineClass = I915_ENGINE_CLASS_VIDEO_ENHANCE;
+        i915engineInfo[4].engine.engineClass = drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE;
         i915engineInfo[4].engine.engineInstance = 0;
         i915engineInfo[5].engine.engineClass = I915_INVALID_ENGINE_CLASS;
         i915engineInfo[5].engine.engineInstance = 0;

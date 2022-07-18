@@ -24,11 +24,11 @@ const std::string LinuxSchedulerImp::engineDir("engine");
 constexpr uint16_t milliSecsToMicroSecs = 1000;
 
 static const std::map<__u16, std::string> i915EngineClassToSysfsEngineMap = {
-    {I915_ENGINE_CLASS_RENDER, "rcs"},
-    {static_cast<__u16>(I915_ENGINE_CLASS_COMPUTE), "ccs"},
-    {I915_ENGINE_CLASS_COPY, "bcs"},
-    {I915_ENGINE_CLASS_VIDEO, "vcs"},
-    {I915_ENGINE_CLASS_VIDEO_ENHANCE, "vecs"}};
+    {drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER, "rcs"},
+    {static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COMPUTE), "ccs"},
+    {drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY, "bcs"},
+    {drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO, "vcs"},
+    {drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE, "vecs"}};
 
 static const std::map<std::string, zes_engine_type_flag_t> sysfsEngineMapToLevel0EngineType = {
     {"rcs", ZES_ENGINE_TYPE_FLAG_RENDER},
@@ -45,11 +45,11 @@ static const std::multimap<zes_engine_type_flag_t, std::string> level0EngineType
     {ZES_ENGINE_TYPE_FLAG_OTHER, "vecs"}};
 
 static const std::map<std::string, __u16> sysfsEngineMapToi915EngineClass = {
-    {"rcs", I915_ENGINE_CLASS_RENDER},
-    {"ccs", static_cast<__u16>(I915_ENGINE_CLASS_COMPUTE)},
-    {"bcs", I915_ENGINE_CLASS_COPY},
-    {"vcs", I915_ENGINE_CLASS_VIDEO},
-    {"vecs", I915_ENGINE_CLASS_VIDEO_ENHANCE}};
+    {"rcs", drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER},
+    {"ccs", static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COMPUTE)},
+    {"bcs", drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY},
+    {"vcs", drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO},
+    {"vecs", drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE}};
 
 ze_result_t LinuxSchedulerImp::getProperties(zes_sched_properties_t &schedProperties) {
     schedProperties.onSubdevice = onSubdevice;

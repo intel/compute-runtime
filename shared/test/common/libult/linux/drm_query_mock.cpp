@@ -46,7 +46,7 @@ int DrmQueryMock::handleRemainingRequests(DrmIoctl request, void *arg) {
     } else if (request == DrmIoctl::GemContextSetparam && receivedContextParamRequest.param == I915_CONTEXT_PARAM_ENGINES) {
         EXPECT_LE(receivedContextParamRequest.size, sizeof(receivedContextParamEngines));
         memcpy(&receivedContextParamEngines, reinterpret_cast<const void *>(receivedContextParamRequest.value), receivedContextParamRequest.size);
-        auto srcBalancer = reinterpret_cast<const i915_context_engines_load_balance *>(receivedContextParamEngines.extensions);
+        auto srcBalancer = reinterpret_cast<const I915::i915_context_engines_load_balance *>(receivedContextParamEngines.extensions);
         if (srcBalancer) {
             EXPECT_EQ(static_cast<__u32>(I915_CONTEXT_ENGINES_EXT_LOAD_BALANCE), srcBalancer->base.name);
             auto balancerSize = ptrDiff(srcBalancer->engines + srcBalancer->num_siblings, srcBalancer);

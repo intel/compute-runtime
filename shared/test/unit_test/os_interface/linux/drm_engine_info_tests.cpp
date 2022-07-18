@@ -114,13 +114,13 @@ TEST(EngineInfoTest, whenGetEngineInstanceAndTileThenCorrectValuesReturned) {
 
     std::vector<DistanceInfo> distances(4);
     distances[0].engine = engines[0].engine;
-    distances[0].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    distances[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
     distances[1].engine = engines[1].engine;
-    distances[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    distances[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
     distances[2].engine = engines[2].engine;
-    distances[2].region = {I915_MEMORY_CLASS_DEVICE, 1};
+    distances[2].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1};
     distances[3].engine = engines[3].engine;
-    distances[3].region = {I915_MEMORY_CLASS_DEVICE, 1};
+    distances[3].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1};
 
     std::vector<QueryItem> queryItems{distances.size()};
     for (auto i = 0u; i < distances.size(); i++) {
@@ -165,13 +165,13 @@ TEST(EngineInfoTest, whenCreateEngineInfoAndInvalidQueryThenNoEnginesSet) {
 
     std::vector<DistanceInfo> distances(4);
     distances[0].engine = engines[0].engine;
-    distances[0].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    distances[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
     distances[1].engine = engines[1].engine;
-    distances[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    distances[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
     distances[2].engine = engines[2].engine;
-    distances[2].region = {I915_MEMORY_CLASS_DEVICE, 1};
+    distances[2].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1};
     distances[3].engine = engines[3].engine;
-    distances[3].region = {I915_MEMORY_CLASS_DEVICE, 1};
+    distances[3].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1};
 
     std::vector<QueryItem> queryItems{distances.size()};
     for (auto i = 0u; i < distances.size(); i++) {

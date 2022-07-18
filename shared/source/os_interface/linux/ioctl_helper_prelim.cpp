@@ -282,7 +282,7 @@ uint32_t IoctlHelperPrelim20::queryDistances(std::vector<QueryItem> &queryItems,
     }
 
     Query query{};
-    query.itemsPtr = reinterpret_cast<__u64>(queryItems.data());
+    query.itemsPtr = reinterpret_cast<uint64_t>(queryItems.data());
     query.numItems = static_cast<uint32_t>(queryItems.size());
     auto ret = IoctlHelper::ioctl(DrmIoctl::Query, &query);
     for (auto i = 0u; i < i915Distances.size(); i++) {
@@ -297,17 +297,17 @@ std::optional<DrmParam> IoctlHelperPrelim20::getHasPageFaultParamId() {
 
 bool IoctlHelperPrelim20::getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize, uint64_t samplingRate,
                                                uint64_t pollPeriod, uint64_t engineInstance, uint64_t notifyNReports) {
-    properties[0] = PRELIM_DRM_I915_EU_STALL_PROP_BUF_SZ;
+    properties[0] = prelim_drm_i915_eu_stall_property_id::PRELIM_DRM_I915_EU_STALL_PROP_BUF_SZ;
     properties[1] = dssBufferSize;
-    properties[2] = PRELIM_DRM_I915_EU_STALL_PROP_SAMPLE_RATE;
+    properties[2] = prelim_drm_i915_eu_stall_property_id::PRELIM_DRM_I915_EU_STALL_PROP_SAMPLE_RATE;
     properties[3] = samplingRate;
-    properties[4] = PRELIM_DRM_I915_EU_STALL_PROP_POLL_PERIOD;
+    properties[4] = prelim_drm_i915_eu_stall_property_id::PRELIM_DRM_I915_EU_STALL_PROP_POLL_PERIOD;
     properties[5] = pollPeriod;
-    properties[6] = PRELIM_DRM_I915_EU_STALL_PROP_ENGINE_CLASS;
-    properties[7] = PRELIM_I915_ENGINE_CLASS_COMPUTE;
-    properties[8] = PRELIM_DRM_I915_EU_STALL_PROP_ENGINE_INSTANCE;
+    properties[6] = prelim_drm_i915_eu_stall_property_id::PRELIM_DRM_I915_EU_STALL_PROP_ENGINE_CLASS;
+    properties[7] = prelim_drm_i915_gem_engine_class::PRELIM_I915_ENGINE_CLASS_COMPUTE;
+    properties[8] = prelim_drm_i915_eu_stall_property_id::PRELIM_DRM_I915_EU_STALL_PROP_ENGINE_INSTANCE;
     properties[9] = engineInstance;
-    properties[10] = PRELIM_DRM_I915_EU_STALL_PROP_EVENT_REPORT_COUNT;
+    properties[10] = prelim_drm_i915_eu_stall_property_id::PRELIM_DRM_I915_EU_STALL_PROP_EVENT_REPORT_COUNT;
     properties[11] = notifyNReports;
 
     return true;
@@ -548,7 +548,7 @@ unsigned int IoctlHelperPrelim20::getIoctlRequestValue(DrmIoctl ioctlRequest) co
 int IoctlHelperPrelim20::getDrmParamValue(DrmParam drmParam) const {
     switch (drmParam) {
     case DrmParam::EngineClassCompute:
-        return PRELIM_I915_ENGINE_CLASS_COMPUTE;
+        return prelim_drm_i915_gem_engine_class::PRELIM_I915_ENGINE_CLASS_COMPUTE;
     case DrmParam::ParamHasVmBind:
         return PRELIM_I915_PARAM_HAS_VM_BIND;
     case DrmParam::ParamHasPageFault:
