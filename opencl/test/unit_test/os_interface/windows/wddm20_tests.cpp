@@ -520,7 +520,7 @@ TEST_F(Wddm20Tests, WhenMakingResidentAndEvictingThenReturnIsCorrect) {
     EXPECT_TRUE(error);
 
     uint64_t sizeToTrim;
-    error = wddm->evict(&allocation.getHandles()[0], allocation.getNumGmms(), sizeToTrim);
+    error = wddm->evict(&allocation.getHandles()[0], allocation.getNumGmms(), sizeToTrim, true);
     EXPECT_TRUE(error);
 
     auto monitoredFence = osContext->getResidencyController().getMonitoredFence();
@@ -814,7 +814,7 @@ TEST_F(Wddm20Tests, GivenMultipleHandlesWhenMakingResidentThenBytesToTrimIsCorre
     EXPECT_EQ(gdi->getMakeResidentArg().NumBytesToTrim, bytesToTrim);
 }
 
-TEST_F(Wddm20Tests, WhenMakingNonResidentThenEvictIsCalled) {
+TEST_F(Wddm20Tests, WhenMakingNonResidentAndEvictNotNeededThenEvictIsCalledWithProperFlagSet) {
     D3DKMT_HANDLE handle = (D3DKMT_HANDLE)0x1234;
 
     gdi->getEvictArg().AllocationList = nullptr;
@@ -825,12 +825,33 @@ TEST_F(Wddm20Tests, WhenMakingNonResidentThenEvictIsCalled) {
     wddm->callBaseEvict = true;
 
     uint64_t sizeToTrim = 10;
-    wddm->evict(&handle, 1, sizeToTrim);
+    wddm->evict(&handle, 1, sizeToTrim, false);
 
     EXPECT_EQ(1u, gdi->getEvictArg().NumAllocations);
     EXPECT_EQ(&handle, gdi->getEvictArg().AllocationList);
     EXPECT_EQ(wddm->getDeviceHandle(), gdi->getEvictArg().hDevice);
     EXPECT_EQ(0u, gdi->getEvictArg().NumBytesToTrim);
+    EXPECT_EQ(1u, gdi->getEvictArg().Flags.EvictOnlyIfNecessary);
+}
+
+TEST_F(Wddm20Tests, WhenMakingNonResidentAndEvictNeededThenEvictIsCalledWithProperFlagSet) {
+    D3DKMT_HANDLE handle = (D3DKMT_HANDLE)0x1234;
+
+    gdi->getEvictArg().AllocationList = nullptr;
+    gdi->getEvictArg().Flags.Value = 0;
+    gdi->getEvictArg().hDevice = 0;
+    gdi->getEvictArg().NumAllocations = 0;
+    gdi->getEvictArg().NumBytesToTrim = 20;
+    wddm->callBaseEvict = true;
+
+    uint64_t sizeToTrim = 10;
+    wddm->evict(&handle, 1, sizeToTrim, true);
+
+    EXPECT_EQ(1u, gdi->getEvictArg().NumAllocations);
+    EXPECT_EQ(&handle, gdi->getEvictArg().AllocationList);
+    EXPECT_EQ(wddm->getDeviceHandle(), gdi->getEvictArg().hDevice);
+    EXPECT_EQ(0u, gdi->getEvictArg().NumBytesToTrim);
+    EXPECT_EQ(0u, gdi->getEvictArg().Flags.EvictOnlyIfNecessary);
 }
 
 TEST_F(Wddm20Tests, givenDestroyAllocationWhenItIsCalledThenAllocationIsPassedToDestroyAllocation) {
@@ -1072,11 +1093,13 @@ TEST_F(WddmLockWithMakeResidentTests, whenApplyBlockingMakeResidentAndTemporaryR
     allocation.handle = 0x3;
     WddmMock mockWddm(*executionEnvironment->rootDeviceEnvironments[0]);
     mockWddm.makeResidentStatus = false;
+    mockWddm.callBaseEvict = true;
     auto mockTemporaryResources = static_cast<MockWddmResidentAllocationsContainer *>(mockWddm.temporaryResources.get());
     mockTemporaryResources->resourceHandles.push_back(allocation.handle);
     mockWddm.temporaryResources->makeResidentResource(allocation.handle, 0x1000);
     EXPECT_EQ(2u, mockTemporaryResources->evictAllResourcesResult.called);
     EXPECT_EQ(1u, mockWddm.evictResult.called);
+    EXPECT_EQ(0u, gdi->getEvictArg().Flags.EvictOnlyIfNecessary);
     EXPECT_EQ(allocation.handle, mockWddm.makeResidentResult.handlePack[0]);
     EXPECT_EQ(3u, mockWddm.makeResidentResult.called);
 }

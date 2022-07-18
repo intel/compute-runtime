@@ -59,10 +59,10 @@ bool WddmMock::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool c
     }
     return makeResidentStatus;
 }
-bool WddmMock::evict(const D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim) {
+bool WddmMock::evict(const D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim, bool evictNeeded) {
     evictResult.called++;
     if (callBaseEvict) {
-        evictStatus = Wddm::evict(handles, num, sizeToTrim);
+        evictStatus = Wddm::evict(handles, num, sizeToTrim, evictNeeded);
     }
     return evictStatus;
 }

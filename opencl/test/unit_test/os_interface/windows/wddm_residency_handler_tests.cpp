@@ -75,8 +75,10 @@ TEST_F(WddmMemoryOperationsHandlerTest, givenVariousAllocationsWhenMakingResiden
 }
 
 TEST_F(WddmMemoryOperationsHandlerTest, givenRegularAllocationWhenEvictingResidentAllocationThenEvictCalled) {
+    wddm->callBaseEvict = true;
     EXPECT_EQ(wddmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::SUCCESS);
     EXPECT_EQ(wddmMemoryOperationsHandler->evict(nullptr, *wddmAllocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(0u, gdi->getEvictArg().Flags.EvictOnlyIfNecessary);
     EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmAllocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
 }
 

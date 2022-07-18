@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ MemoryOperationsStatus WddmResidentAllocationsContainer::evictAllResourcesNoLock
     }
     uint64_t sizeToTrim = 0;
     uint32_t evictedResources = static_cast<uint32_t>(resourcesToEvict.size());
-    bool success = wddm->evict(resourcesToEvict.data(), evictedResources, sizeToTrim);
+    bool success = wddm->evict(resourcesToEvict.data(), evictedResources, sizeToTrim, true);
     return success ? MemoryOperationsStatus::SUCCESS : MemoryOperationsStatus::FAILED;
 }
 
@@ -54,7 +54,7 @@ MemoryOperationsStatus WddmResidentAllocationsContainer::evictResources(const D3
     UNRECOVERABLE_IF(distance + count > resourceHandles.size());
     resourceHandles.erase(position, position + count);
     uint64_t sizeToTrim = 0;
-    if (!wddm->evict(handles, count, sizeToTrim)) {
+    if (!wddm->evict(handles, count, sizeToTrim, true)) {
         return MemoryOperationsStatus::FAILED;
     }
     return MemoryOperationsStatus::SUCCESS;

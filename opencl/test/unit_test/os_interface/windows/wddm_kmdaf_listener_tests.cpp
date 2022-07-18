@@ -128,7 +128,7 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenEvictIsCalledThenKmDafListenerNotifyE
     MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper());
     uint64_t sizeToTrim;
 
-    wddmWithKmDafMock->evict(&allocation.handle, 1, sizeToTrim);
+    wddmWithKmDafMock->evict(&allocation.handle, 1, sizeToTrim, true);
 
     EXPECT_EQ(wddmWithKmDafMock->featureTable->flags.ftrKmdDaf, wddmWithKmDafMock->getKmDafListenerMock().notifyEvictParametrization.ftrKmdDaf);
     EXPECT_EQ(wddmWithKmDafMock->getAdapter(), wddmWithKmDafMock->getKmDafListenerMock().notifyEvictParametrization.hAdapter);

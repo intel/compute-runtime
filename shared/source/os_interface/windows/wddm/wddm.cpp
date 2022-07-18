@@ -359,13 +359,14 @@ std::vector<std::unique_ptr<HwDeviceId>> Wddm::discoverDevices(ExecutionEnvironm
     return hwDeviceIds;
 }
 
-bool Wddm::evict(const D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &sizeToTrim) {
+bool Wddm::evict(const D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &sizeToTrim, bool evictNeeded) {
     NTSTATUS status = STATUS_SUCCESS;
     D3DKMT_EVICT evict = {};
     evict.AllocationList = handleList;
     evict.hDevice = device;
     evict.NumAllocations = numOfHandles;
     evict.NumBytesToTrim = 0;
+    evict.Flags.EvictOnlyIfNecessary = evictNeeded ? 0 : 1;
 
     status = getGdi()->evict(&evict);
 

@@ -70,7 +70,7 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
 
             if (wddmAllocation->fragmentsStorage.fragmentCount == 0) {
                 DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "Evict allocation: default handle =", wddmAllocation->getDefaultHandle(), "lastFence =", wddmAllocation->getResidencyData().getFenceValueForContextId(osContextId));
-                this->wddm.evict(&wddmAllocation->getHandles()[0], wddmAllocation->getNumGmms(), sizeToTrim);
+                this->wddm.evict(&wddmAllocation->getHandles()[0], wddmAllocation->getNumGmms(), sizeToTrim, false);
             }
 
             for (uint32_t allocationId = 0; allocationId < wddmAllocation->fragmentsStorage.fragmentCount; allocationId++) {
@@ -84,7 +84,7 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
                 }
             }
             if (fragmentsToEvict != 0) {
-                this->wddm.evict((D3DKMT_HANDLE *)fragmentEvictHandles, fragmentsToEvict, sizeToTrim);
+                this->wddm.evict((D3DKMT_HANDLE *)fragmentEvictHandles, fragmentsToEvict, sizeToTrim, false);
             }
             wddmAllocation->getResidencyData().resident[osContextId] = false;
 
@@ -129,7 +129,7 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
         }
 
         if (wddmAllocation->fragmentsStorage.fragmentCount == 0) {
-            this->wddm.evict(&wddmAllocation->getHandles()[0], wddmAllocation->getNumGmms(), sizeToTrim);
+            this->wddm.evict(&wddmAllocation->getHandles()[0], wddmAllocation->getNumGmms(), sizeToTrim, true);
             sizeEvicted = wddmAllocation->getAlignedSize();
         } else {
             auto &fragmentStorageData = wddmAllocation->fragmentsStorage.fragmentStorageData;
@@ -140,7 +140,7 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
             }
 
             if (fragmentsToEvict != 0) {
-                this->wddm.evict((D3DKMT_HANDLE *)fragmentEvictHandles, fragmentsToEvict, sizeToTrim);
+                this->wddm.evict((D3DKMT_HANDLE *)fragmentEvictHandles, fragmentsToEvict, sizeToTrim, true);
 
                 for (uint32_t allocationId = 0; allocationId < wddmAllocation->fragmentsStorage.fragmentCount; allocationId++) {
                     if (fragmentStorageData[allocationId].residency->getFenceValueForContextId(osContextId) <= monitoredFence.lastSubmittedFence) {

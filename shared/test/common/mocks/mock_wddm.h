@@ -124,7 +124,7 @@ class WddmMock : public Wddm {
 
     void resetGdi(Gdi *gdi);
     bool makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim, size_t totalSize) override;
-    bool evict(const D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim) override;
+    bool evict(const D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim, bool evictNeeded) override;
     NTSTATUS createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) override;
 
     WddmMockHelpers::MakeResidentCall makeResidentResult;

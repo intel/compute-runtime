@@ -516,6 +516,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenNotUsedAllocationsFromPreviousPe
     residencyController->getMonitoredFence().currentFenceValue = 20;
 
     wddm->evictResult.called = 0;
+    wddm->callBaseEvict = true;
 
     residencyController->addToTrimCandidateList(&allocation1);
     residencyController->addToTrimCandidateList(&allocation2);
@@ -524,6 +525,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenNotUsedAllocationsFromPreviousPe
 
     // 2 allocations evicted
     EXPECT_EQ(2u, wddm->evictResult.called);
+    EXPECT_EQ(1u, gdi->getEvictArg().Flags.EvictOnlyIfNecessary);
     // removed from trim candidate list
     EXPECT_EQ(0u, residencyController->peekTrimCandidateList().size());
     // marked nonresident
@@ -601,6 +603,7 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, givenTripleAllocation
     residencyController->getMonitoredFence().currentFenceValue = 20;
 
     wddm->evictResult.called = 0;
+    wddm->callBaseEvict = true;
 
     residencyController->addToTrimCandidateList(allocationTriple);
 
@@ -608,6 +611,7 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, givenTripleAllocation
 
     // 2 fragments evicted with one call
     EXPECT_EQ(1u, wddm->evictResult.called);
+    EXPECT_EQ(1u, gdi->getEvictArg().Flags.EvictOnlyIfNecessary);
     // marked nonresident
     EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[0].residency->resident[osContextId]);
     EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[2].residency->resident[osContextId]);
@@ -672,6 +676,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, WhenTrimmingToBudgetThenAllDoneAlloca
     residencyController->getMonitoredFence().currentFenceValue = 1;
 
     wddm->evictResult.called = 0;
+    wddm->callBaseEvict = true;
 
     residencyController->addToTrimCandidateList(&allocation1);
     residencyController->addToTrimCandidateList(&allocation2);
@@ -680,6 +685,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, WhenTrimmingToBudgetThenAllDoneAlloca
     residencyController->trimResidencyToBudget(3 * 4096);
 
     EXPECT_EQ(2u, wddm->evictResult.called);
+    EXPECT_EQ(0u, gdi->getEvictArg().Flags.EvictOnlyIfNecessary);
 
     EXPECT_EQ(1u, residencyController->peekTrimCandidatesCount());
     residencyController->compactTrimCandidateList();
@@ -853,11 +859,11 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, WhenTrimmingToBudgetT
     residencyController->getMonitoredFence().currentFenceValue = 2;
 
     wddm->evictResult.called = 0;
-
+    wddm->callBaseEvict = true;
     residencyController->trimResidencyToBudget(3 * 4096);
 
     EXPECT_EQ(2u, wddm->evictResult.called);
-
+    EXPECT_EQ(0u, gdi->getEvictArg().Flags.EvictOnlyIfNecessary);
     EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[0].residency->resident[osContextId]);
     EXPECT_TRUE(allocationTriple->fragmentsStorage.fragmentStorageData[1].residency->resident[osContextId]);
     EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[2].residency->resident[osContextId]);
