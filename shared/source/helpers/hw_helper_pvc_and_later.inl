@@ -40,14 +40,17 @@ bool HwHelperHw<Family>::isCooperativeDispatchSupported(const EngineGroupType en
 template <>
 uint32_t HwHelperHw<Family>::adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
                                                      const HardwareInfo &hwInfo, bool isEngineInstanced) const {
+    if ((DebugManager.flags.ForceTheoreticalMaxWorkGroupCount.get()) ||
+        (DebugManager.flags.OverrideMaxWorkGroupCount.get() != -1)) {
+        return maxWorkGroupCount;
+    }
     if (!isCooperativeDispatchSupported(engineGroupType, hwInfo)) {
         return 1u;
     }
     auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     bool requiresLimitation = hwInfoConfig.isCooperativeEngineSupported(hwInfo) &&
                               (engineGroupType != EngineGroupType::CooperativeCompute) &&
-                              (!isEngineInstanced) &&
-                              (DebugManager.flags.OverrideMaxWorkGroupCount.get() == -1);
+                              (!isEngineInstanced);
     if (requiresLimitation) {
         auto ccsCount = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
         UNRECOVERABLE_IF(ccsCount == 0);
