@@ -23,6 +23,7 @@ set(TEST_TARGETS
     zello_ipc_copy_dma_buf_p2p
     zello_multidev
     zello_printf
+    zello_p2p_copy
     zello_scratch
     zello_timestamp
     zello_world_global_work_offset

@@ -171,15 +171,17 @@ int32_t getCopyOnlyCommandQueueOrdinal(ze_device_handle_t &device) {
     return copyOnlyQueueGroupOrdinal;
 }
 
-ze_command_queue_handle_t createCommandQueue(ze_context_handle_t &context, ze_device_handle_t &device, uint32_t *ordinal) {
+ze_command_queue_handle_t createCommandQueue(ze_context_handle_t &context, ze_device_handle_t &device,
+                                             uint32_t *ordinal, ze_command_queue_mode_t mode,
+                                             ze_command_queue_priority_t priority) {
     ze_command_queue_handle_t cmdQueue;
     ze_command_queue_desc_t descriptor = {};
     descriptor.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
 
     descriptor.pNext = nullptr;
     descriptor.flags = 0;
-    descriptor.mode = ZE_COMMAND_QUEUE_MODE_DEFAULT;
-    descriptor.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    descriptor.mode = mode;
+    descriptor.priority = priority;
 
     descriptor.ordinal = getCommandQueueOrdinal(device);
     descriptor.index = 0;
@@ -188,6 +190,10 @@ ze_command_queue_handle_t createCommandQueue(ze_context_handle_t &context, ze_de
         *ordinal = descriptor.ordinal;
     }
     return cmdQueue;
+}
+
+ze_command_queue_handle_t createCommandQueue(ze_context_handle_t &context, ze_device_handle_t &device, uint32_t *ordinal) {
+    return createCommandQueue(context, device, ordinal, ZE_COMMAND_QUEUE_MODE_DEFAULT, ZE_COMMAND_QUEUE_PRIORITY_NORMAL);
 }
 
 ze_result_t createCommandList(ze_context_handle_t &context, ze_device_handle_t &device, ze_command_list_handle_t &cmdList) {
@@ -287,9 +293,9 @@ inline void printDeviceProperties(const ze_device_properties_t &props) {
                   << "\n"
                   << " * name : " << props.name << "\n"
                   << " * type : " << ((props.type == ZE_DEVICE_TYPE_GPU) ? "GPU" : "FPGA") << "\n"
-                  << " * vendorId : " << props.vendorId << "\n"
-                  << " * deviceId : " << props.deviceId << "\n"
-                  << " * subdeviceId : " << props.subdeviceId << "\n"
+                  << " * vendorId : " << std::hex << props.vendorId << "\n"
+                  << " * deviceId : " << std::hex << props.deviceId << "\n"
+                  << " * subdeviceId : " << std::dec << props.subdeviceId << "\n"
                   << " * coreClockRate : " << props.coreClockRate << "\n"
                   << " * maxMemAllocSize : " << props.maxMemAllocSize << "\n"
                   << " * maxHardwareContexts : " << props.maxHardwareContexts << "\n"
