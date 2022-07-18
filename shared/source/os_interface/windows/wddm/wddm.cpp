@@ -366,7 +366,6 @@ bool Wddm::evict(const D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_
     evict.hDevice = device;
     evict.NumAllocations = numOfHandles;
     evict.NumBytesToTrim = 0;
-    evict.Flags.EvictOnlyIfNecessary = 1;
 
     status = getGdi()->evict(&evict);
 
