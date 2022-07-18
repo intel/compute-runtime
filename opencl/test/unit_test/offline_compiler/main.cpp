@@ -41,7 +41,9 @@ std::string getRunPath() {
 int main(int argc, char **argv) {
     int retVal = 0;
     bool useDefaultListener = false;
+    bool enableAbrt = true;
     bool enableAlarm = true;
+    bool enableSegv = true;
     bool showTestStats = false;
     bool dumpTestStats = false;
     std::string dumpTestStatsFileName = "";
@@ -149,8 +151,19 @@ int main(int argc, char **argv) {
     gEnvironment = reinterpret_cast<Environment *>(::testing::AddGlobalTestEnvironment(new Environment(devicePrefix, familyNameWithType)));
 
     int sigOut = setAlarm(enableAlarm);
-    if (sigOut != 0)
+    if (sigOut != 0) {
         return sigOut;
+    }
+
+    sigOut = setSegv(enableSegv);
+    if (sigOut != 0) {
+        return sigOut;
+    }
+
+    sigOut = setAbrt(enableAbrt);
+    if (sigOut != 0) {
+        return sigOut;
+    }
 
     retVal = RUN_ALL_TESTS();
 
