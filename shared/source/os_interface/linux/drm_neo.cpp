@@ -352,7 +352,7 @@ void Drm::destroyDrmContext(uint32_t drmContextId) {
 void Drm::destroyDrmVirtualMemory(uint32_t drmVmId) {
     GemVmControl ctl = {};
     ctl.vmId = drmVmId;
-    auto ret = Drm::ioctl(DrmIoctl::GemVmDestroy, &ctl);
+    auto ret = ioctlHelper->ioctl(DrmIoctl::GemVmDestroy, &ctl);
     UNRECOVERABLE_IF(ret != 0);
 }
 
@@ -711,8 +711,11 @@ PhysicalDevicePciBusInfo Drm::getPciBusInfo() const {
     return pciBusInfo;
 }
 
-Drm::~Drm() {
+void Drm::cleanup() {
     destroyVirtualMemoryAddressSpace();
+}
+
+Drm::~Drm() {
     this->printIoctlStatistics();
 }
 

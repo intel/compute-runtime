@@ -43,7 +43,6 @@ uint32_t mmapFuncCalled = 0u;
 uint32_t munmapFuncCalled = 0u;
 bool isInvalidAILTest = false;
 const char *drmVersion = "i915";
-uint32_t ioctlVmDestroyCalled = 0u;
 
 int (*sysCallsOpen)(const char *pathname, int flags) = nullptr;
 ssize_t (*sysCallsPread)(int fd, void *buf, size_t count, off_t offset) = nullptr;
@@ -91,11 +90,6 @@ int ioctl(int fileDescriptor, unsigned long int request, void *arg) {
             auto pVersion = static_cast<DrmVersion *>(arg);
             memcpy_s(pVersion->name, pVersion->nameLen, drmVersion, std::min(pVersion->nameLen, strlen(drmVersion) + 1));
         }
-    }
-    if (request == DRM_IOCTL_I915_GEM_VM_DESTROY) {
-        ioctlVmDestroyCalled++;
-        auto control = static_cast<GemVmControl *>(arg);
-        return (control->vmId > 0) ? 0 : -1;
     }
     if (request == invalidIoctl) {
         errno = 0;

@@ -24,6 +24,7 @@ void Ioctls::reset() {
     gemSetTiling = 0;
     gemGetTiling = 0;
     gemVmCreate = 0;
+    gemVmDestroy = 0;
     primeFdToHandle = 0;
     handleToPrimeFd = 0;
     gemMmapOffset = 0;

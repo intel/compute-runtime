@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2021 Intel Corporation
+# Copyright (C) 2019-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -30,6 +30,7 @@ set(NEO_CORE_OS_INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_environment.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_library.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_memory.cpp

@@ -117,6 +117,14 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
         return storedRetValForVmCreate;
     }
 
+    if ((request == DrmIoctl::GemVmDestroy) && (arg != nullptr)) {
+        ioctlCount.gemVmDestroy++;
+        ioctlCallsCount--;
+        ioctlCount.total--;
+
+        return 0;
+    }
+
     if ((request == DrmIoctl::GemContextDestroy) && (arg != nullptr)) {
         ioctlCount.contextDestroy++;
         auto destroy = static_cast<GemContextDestroy *>(arg);

@@ -21,6 +21,5 @@ extern int (*sysCallsPoll)(struct pollfd *pollFd, unsigned long int numberOfFds,
 extern ssize_t (*sysCallsRead)(int fd, void *buf, size_t count);
 
 extern const char *drmVersion;
-extern uint32_t ioctlVmDestroyCalled;
 } // namespace SysCalls
 } // namespace NEO

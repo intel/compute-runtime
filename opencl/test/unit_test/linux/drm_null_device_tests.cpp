@@ -38,7 +38,7 @@ class DrmNullDeviceTestsFixture {
     void TearDown() { // NOLINT(readability-identifier-naming)
     }
 
-    std::unique_ptr<DrmWrap> drmNullDevice;
+    std::unique_ptr<DrmWrap, std::function<void(Drm *)>> drmNullDevice;
     ExecutionEnvironment executionEnvironment;
 
   protected:

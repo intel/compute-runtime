@@ -260,7 +260,7 @@ TEST_F(DrmSimpleTests, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathere
 
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    auto drm = DrmWrap::createDrm(*executionEnvironment->rootDeviceEnvironments[0]).release();
+    auto drm = DrmWrap::createDrm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     DebugManagerStateRestore restorer;
     DebugManager.flags.PrintIoctlTimes.set(true);
@@ -343,7 +343,7 @@ TEST_F(DrmSimpleTests, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathere
 
     ::testing::internal::CaptureStdout();
 
-    delete drm;
+    drm.reset();
 
     std::string output = ::testing::internal::GetCapturedStdout();
     EXPECT_STRNE("", output.c_str());

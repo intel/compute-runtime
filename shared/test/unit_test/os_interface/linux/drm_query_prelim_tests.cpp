@@ -324,9 +324,9 @@ TEST(DrmBufferObjectTestPrelim, givenPageFaultSupportedWhenVmBindIsAvailableThen
             EXPECT_FALSE(drm.receivedGemVmControl.flags & DrmPrelimHelper::getEnablePageFaultVmCreateFlag());
         }
 
-        VariableBackup<uint32_t> ioctlCountBackup(&SysCalls::ioctlVmDestroyCalled, 0u);
+        drm.ioctlCount.gemVmDestroy = 0;
         drm.destroyDrmVirtualMemory(vmId);
-        EXPECT_EQ(1u, SysCalls::ioctlVmDestroyCalled);
+        EXPECT_EQ(1, drm.ioctlCount.gemVmDestroy.load());
     }
 }
 

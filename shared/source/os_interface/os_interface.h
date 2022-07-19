@@ -92,6 +92,8 @@ class DriverModel : public NonCopyableClass {
         return skipResourceCleanupVar;
     }
 
+    virtual void cleanup() {}
+
     virtual bool isGpuHangDetected(OsContext &osContext) = 0;
 
   protected:
@@ -101,21 +103,15 @@ class DriverModel : public NonCopyableClass {
 
 class OSInterface : public NonCopyableClass {
   public:
-    virtual ~OSInterface() = default;
-    DriverModel *getDriverModel() const {
-        return driverModel.get();
-    };
+    virtual ~OSInterface();
+    DriverModel *getDriverModel() const;
 
-    void setDriverModel(std::unique_ptr<DriverModel> driverModel) {
-        this->driverModel = std::move(driverModel);
-    };
+    void setDriverModel(std::unique_ptr<DriverModel> driverModel);
 
     MOCKABLE_VIRTUAL bool isDebugAttachAvailable() const;
     static bool osEnabled64kbPages;
     static bool osEnableLocalMemory;
-    static bool are64kbPagesEnabled() {
-        return osEnabled64kbPages;
-    }
+    static bool are64kbPagesEnabled();
     static bool newResourceImplicitFlush;
     static bool gpuIdleImplicitFlush;
     static bool requiresSupportForWddmTrimNotification;
@@ -125,10 +121,5 @@ class OSInterface : public NonCopyableClass {
   protected:
     std::unique_ptr<DriverModel> driverModel = nullptr;
 };
-
-static_assert(!std::is_move_constructible_v<NEO::OSInterface>);
-static_assert(!std::is_copy_constructible_v<NEO::OSInterface>);
-static_assert(!std::is_move_assignable_v<NEO::OSInterface>);
-static_assert(!std::is_copy_assignable_v<NEO::OSInterface>);
 
 } // namespace NEO
