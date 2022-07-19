@@ -78,3 +78,13 @@ kernel void memcpy_bytes(__global char *dst, const __global char *src) {
     dst[gid] = src[gid];
 }
 )===";
+
+const char *memcpyBytesWithPrintfTestKernelSrc = R"==(
+__kernel void memcpy_bytes(__global uchar *dst, const __global uchar *src) {
+    unsigned int gid = get_global_id(0);
+    dst[gid] = (uchar)(src[gid] + gid);
+    if (gid == 0) {
+        printf("gid =  %d \n", gid);
+    }
+}
+)==";

@@ -11,6 +11,7 @@ set(TEST_TARGETS
     zello_copy_fence
     zello_copy_image
     zello_copy_only
+    zello_debug_info
     zello_dynamic_link
     zello_dyn_local_arg
     zello_events
@@ -69,6 +70,7 @@ foreach(TEST_NAME ${TEST_TARGETS})
 endforeach()
 
 target_link_libraries(zello_commandlist_immediate PUBLIC ocloc_lib)
+target_link_libraries(zello_debug_info PUBLIC ocloc_lib)
 target_link_libraries(zello_dynamic_link PUBLIC ocloc_lib)
 target_link_libraries(zello_dyn_local_arg PUBLIC ocloc_lib)
 target_link_libraries(zello_fence PUBLIC ocloc_lib)
