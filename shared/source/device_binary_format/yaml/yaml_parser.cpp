@@ -348,7 +348,6 @@ bool isEmptyVector(const Token &token, size_t lineId, std::string &outError) {
 }
 
 bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &outNodes, std::string &outErrReason, std::string &outWarning) {
-    const auto tokensCacheSize = tokens.size();
     StackVec<NodeId, 64> nesting;
     size_t lineId = 0U;
     size_t lastUsedLine = 0u;
@@ -367,20 +366,20 @@ bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &o
             if (lineId > 0u && false == isEmptyVector(tokens[lines[lastUsedLine].first], lastUsedLine, outErrReason)) {
                 return false;
             }
-            reserveBasedOnEstimates(outNodes, static_cast<TokenId>(0u), static_cast<TokenId>(tokensCacheSize), lines[lineId].first);
+            reserveBasedOnEstimates(outNodes, static_cast<size_t>(0U), lines.size(), lineId);
             auto &prev = *outNodes.rbegin();
             auto &parent = outNodes[*nesting.rbegin()];
             auto &curr = addNode(outNodes, prev, parent);
             curr.indent = currLineIndent;
         } else if (currLineIndent > outNodes.rbegin()->indent) {
-            reserveBasedOnEstimates(outNodes, static_cast<TokenId>(0u), static_cast<TokenId>(tokensCacheSize), lines[lineId].first);
+            reserveBasedOnEstimates(outNodes, static_cast<size_t>(0U), lines.size(), lineId);
             auto &parent = *outNodes.rbegin();
             auto &curr = addNode(outNodes, parent);
             curr.indent = currLineIndent;
             nesting.push_back(parent.id);
         } else {
             while (currLineIndent < outNodes[*nesting.rbegin()].indent) {
-                reserveBasedOnEstimates(outNodes, static_cast<TokenId>(0u), static_cast<TokenId>(tokensCacheSize), lines[lineId].first);
+                reserveBasedOnEstimates(outNodes, static_cast<size_t>(0U), lines.size(), lineId);
                 finalizeNode(*nesting.rbegin(), tokens, outNodes, outErrReason, outWarning);
                 UNRECOVERABLE_IF(nesting.empty());
                 nesting.pop_back();
@@ -390,7 +389,7 @@ bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &o
                 outErrReason = constructYamlError(lineId, tokens[lines[lineId].first].pos, tokens[lines[lineId].first].pos + 1, "Invalid indentation");
                 return false;
             } else {
-                reserveBasedOnEstimates(outNodes, static_cast<TokenId>(0u), static_cast<TokenId>(tokensCacheSize), lines[lineId].first);
+                reserveBasedOnEstimates(outNodes, static_cast<size_t>(0U), lines.size(), lineId);
                 auto &prev = outNodes[*nesting.rbegin()];
                 auto &parent = outNodes[prev.parentId];
                 auto &curr = addNode(outNodes, prev, parent);
@@ -414,7 +413,7 @@ bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &o
                 for (auto currTokenId = collectionBeg + 1; currTokenId < collectionEnd; currTokenId += 2) {
                     auto tokenType = tokens[currTokenId].traits.type;
                     UNRECOVERABLE_IF(tokenType != Token::Type::LiteralNumber && tokenType != Token::Type::LiteralString);
-                    reserveBasedOnEstimates(outNodes, static_cast<TokenId>(0u), static_cast<TokenId>(tokensCacheSize), lines[lineId].first);
+                    reserveBasedOnEstimates(outNodes, static_cast<size_t>(0U), lines.size(), lineId);
 
                     auto &parentNode = outNodes[parentNodeId];
                     if (previousSiblingId == std::numeric_limits<size_t>::max()) {
@@ -444,7 +443,7 @@ bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &o
         lastUsedLine = lineId;
         ++lineId;
     }
-
+    outNodes.reserve(outNodes.size() + nesting.size());
     while (false == nesting.empty()) {
         finalizeNode(*nesting.rbegin(), tokens, outNodes, outErrReason, outWarning);
         nesting.pop_back();
