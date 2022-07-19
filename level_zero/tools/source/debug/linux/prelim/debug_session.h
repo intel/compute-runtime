@@ -248,7 +248,7 @@ struct DebugSessionLinux : DebugSessionImp {
 
     uint64_t clientHandle = invalidClientHandle;
     uint64_t clientHandleClosed = invalidClientHandle;
-    uint64_t uuidL0CommandQueueHandle = invalidClientHandle;
+    std::unordered_map<uint64_t, uint32_t> uuidL0CommandQueueHandleToDevice;
     uint64_t euControlInterruptSeqno[NEO::EngineLimits::maxHandleCount];
 
     std::unordered_map<uint64_t, std::unique_ptr<ClientConnection>> clientHandleToConnection;

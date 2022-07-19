@@ -63,7 +63,7 @@ ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal) {
             partitionCount = csr->getActivePartitions();
         }
         if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger()) {
-            device->getL0Debugger()->notifyCommandQueueCreated();
+            device->getL0Debugger()->notifyCommandQueueCreated(device->getNEODevice());
         }
     }
     return returnValue;

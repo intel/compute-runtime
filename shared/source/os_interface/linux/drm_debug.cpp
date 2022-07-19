@@ -109,8 +109,8 @@ void Drm::setContextDebugFlag(uint32_t drmContextId) {
     DEBUG_BREAK_IF(retVal != 0 && contextDebugSupported);
 }
 
-uint32_t Drm::notifyFirstCommandQueueCreated() {
-    const auto result = ioctlHelper->registerStringClassUuid(uuidL0CommandQueueHash, (uintptr_t)uuidL0CommandQueueName, strnlen_s(uuidL0CommandQueueName, 100));
+uint32_t Drm::notifyFirstCommandQueueCreated(const void *data, size_t size) {
+    const auto result = ioctlHelper->registerStringClassUuid(uuidL0CommandQueueHash, (uintptr_t)data, size);
     DEBUG_BREAK_IF(result.retVal);
     return result.handle;
 }

@@ -14,6 +14,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/sources/debugger/l0_debugger_fixture.h"
 
@@ -26,13 +27,13 @@ namespace L0 {
 namespace ult {
 
 struct L0DebuggerLinuxFixture {
-    void SetUp() { // NOLINT(readability-identifier-naming)
+    void SetUp(HardwareInfo *hwInfo = nullptr) {
         auto executionEnvironment = new NEO::ExecutionEnvironment();
-        auto mockBuiltIns = new MockBuiltins();
+        auto mockBuiltIns = new NEO::MockBuiltins();
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->setDebuggingEnabled();
         executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hwInfo ? hwInfo : defaultHwInfo.get());
         executionEnvironment->initializeMemoryManager();
         auto osInterface = new OSInterface();
         drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -50,8 +51,7 @@ struct L0DebuggerLinuxFixture {
         device = driverHandle->devices[0];
     }
 
-    void TearDown() { // NOLINT(readability-identifier-naming)
-    }
+    void TearDown(){};
 
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
@@ -59,7 +59,39 @@ struct L0DebuggerLinuxFixture {
     DrmMockResources *drmMock = nullptr;
 };
 
+struct L0DebuggerLinuxMultitileFixture : public L0DebuggerLinuxFixture {
+
+    void SetUp() {
+
+        DebugManager.flags.CreateMultipleRootDevices.set(1);
+        constexpr auto numSubDevices = 2u;
+        DebugManager.flags.CreateMultipleSubDevices.set(2);
+        hwInfo = *defaultHwInfo;
+
+        hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = 1;
+        hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = numSubDevices;
+        hwInfo.gtSystemInfo.MultiTileArchInfo.Tile0 = 1;
+        hwInfo.gtSystemInfo.MultiTileArchInfo.Tile1 = 1;
+        hwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = 3;
+
+        L0DebuggerLinuxFixture::SetUp(&hwInfo);
+
+        subDevice0 = neoDevice->getSubDevice(0)->getSpecializedDevice<Device>();
+        subDevice1 = neoDevice->getSubDevice(1)->getSpecializedDevice<Device>();
+    }
+
+    void TearDown() {
+        L0DebuggerLinuxFixture::TearDown();
+    }
+
+    DebugManagerStateRestore restorer;
+    HardwareInfo hwInfo;
+    L0::Device *subDevice0 = nullptr;
+    L0::Device *subDevice1 = nullptr;
+};
+
 using L0DebuggerLinuxTest = Test<L0DebuggerLinuxFixture>;
+using L0DebuggerLinuxMultitileTest = Test<L0DebuggerLinuxMultitileFixture>;
 
 TEST_F(L0DebuggerLinuxTest, givenProgramDebuggingEnabledWhenDriverHandleIsCreatedThenItAllocatesL0Debugger) {
     EXPECT_NE(nullptr, neoDevice->getDebugger());
@@ -292,5 +324,40 @@ HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledWhenImmCommandListsCreatedAnd
     EXPECT_EQ(2u, debuggerL0Hw->commandQueueDestroyedCount);
 }
 
+HWTEST_F(L0DebuggerLinuxMultitileTest, givenDebuggingEnabledWhenCommandQueuesCreatedThenDebuggerIsNotified) {
+
+    auto debuggerL0Hw = static_cast<MockDebuggerL0Hw<FamilyType> *>(device->getL0Debugger());
+    drmMock->ioctlCallsCount = 0;
+    neoDevice->getDefaultEngine().commandStreamReceiver->getOsContext().ensureContextInitialized();
+
+    EXPECT_EQ(2u, debuggerL0Hw->uuidL0CommandQueueHandle.size());
+
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue;
+
+    auto commandQueue1 = CommandQueue::create(productFamily, subDevice0, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue);
+    EXPECT_EQ(1u, drmMock->ioctlCallsCount);
+    EXPECT_EQ(1u, debuggerL0Hw->commandQueueCreatedCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto commandQueue2 = CommandQueue::create(productFamily, subDevice1, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue);
+    EXPECT_EQ(2u, debuggerL0Hw->commandQueueCreatedCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    for (uint32_t index = 0; index < neoDevice->getNumSubDevices(); index++) {
+        EXPECT_NE(0u, debuggerL0Hw->uuidL0CommandQueueHandle[index]);
+    }
+
+    commandQueue1->destroy();
+    EXPECT_EQ(1u, debuggerL0Hw->commandQueueDestroyedCount);
+
+    commandQueue2->destroy();
+    EXPECT_EQ(2u, drmMock->unregisterCalledCount);
+    EXPECT_EQ(2u, debuggerL0Hw->commandQueueDestroyedCount);
+
+    for (uint32_t index = 0; index < neoDevice->getNumSubDevices(); index++) {
+        EXPECT_EQ(0u, debuggerL0Hw->uuidL0CommandQueueHandle[index]);
+    }
+}
 } // namespace ult
 } // namespace L0

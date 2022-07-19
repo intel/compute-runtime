@@ -244,7 +244,7 @@ class Drm : public DriverModel {
 
     MOCKABLE_VIRTUAL bool completionFenceSupport();
 
-    MOCKABLE_VIRTUAL uint32_t notifyFirstCommandQueueCreated();
+    MOCKABLE_VIRTUAL uint32_t notifyFirstCommandQueueCreated(const void *data, size_t size);
     MOCKABLE_VIRTUAL void notifyLastCommandQueueDestroyed(uint32_t handle);
 
     uint64_t getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion cacheRegion, CachePolicy cachePolicy, bool closEnabled) const;

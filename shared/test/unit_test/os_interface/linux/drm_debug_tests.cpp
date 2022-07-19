@@ -67,7 +67,7 @@ TEST_F(DrmDebugTest, whenNotifyCommandQueueCreateDestroyAreCalledThenImplementat
     DrmMock drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
     drmMock.ioctlCallsCount = 0;
 
-    auto handle = drmMock.notifyFirstCommandQueueCreated();
+    auto handle = drmMock.notifyFirstCommandQueueCreated(nullptr, 0);
     EXPECT_EQ(0u, handle);
     EXPECT_EQ(0u, drmMock.ioctlCallsCount);
 

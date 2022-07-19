@@ -186,10 +186,10 @@ static NTSTATUS runEscape(NEO::Wddm *wddm, KM_ESCAPE_INFO &escapeInfo) {
     return wddm->escape(escapeCommand);
 }
 
-void DebuggerL0::notifyCommandQueueCreated() {
+void DebuggerL0::notifyCommandQueueCreated(NEO::Device *deviceIn) {
     if (device->getRootDeviceEnvironment().osInterface.get() != nullptr) {
         std::unique_lock<std::mutex> commandQueueCountLock(debuggerL0Mutex);
-        if (++commandQueueCount == 1) {
+        if (++commandQueueCount[0] == 1) {
             auto pWddm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Wddm>();
             int val = 0;
             KM_ESCAPE_INFO escapeInfo = {0};
@@ -202,10 +202,10 @@ void DebuggerL0::notifyCommandQueueCreated() {
     }
 }
 
-void DebuggerL0::notifyCommandQueueDestroyed() {
+void DebuggerL0::notifyCommandQueueDestroyed(NEO::Device *deviceIn) {
     if (device->getRootDeviceEnvironment().osInterface.get() != nullptr) {
         std::unique_lock<std::mutex> commandQueueCountLock(debuggerL0Mutex);
-        if (--commandQueueCount == 0) {
+        if (--commandQueueCount[0] == 0) {
             auto pWddm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Wddm>();
             int val = 0;
             KM_ESCAPE_INFO escapeInfo = {0};
