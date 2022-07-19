@@ -34,15 +34,6 @@ bool ProductConfigHelper::compareConfigs(DeviceAotInfo deviceAotInfo0, DeviceAot
     return deviceAotInfo0.aotConfig.ProductConfig < deviceAotInfo1.aotConfig.ProductConfig;
 }
 
-AOT::PRODUCT_CONFIG ProductConfigHelper::getProductConfigForDeviceId(unsigned short deviceId) {
-    for (const auto &device : deviceAotInfo) {
-        if (std::find(device.deviceIds->begin(), device.deviceIds->end(), deviceId) != device.deviceIds->end()) {
-            return static_cast<AOT::PRODUCT_CONFIG>(device.aotConfig.ProductConfig);
-        }
-    }
-    return AOT::UNKNOWN_ISA;
-}
-
 std::vector<DeviceAotInfo> &ProductConfigHelper::getDeviceAotInfo() {
     return deviceAotInfo;
 }
@@ -68,14 +59,6 @@ NEO::ConstStringRef ProductConfigHelper::getAcronymForAFamily(AOT::FAMILY family
         }
     }
     return {};
-}
-
-const std::string ProductConfigHelper::getAcronymForProductConfig(AOT::PRODUCT_CONFIG config) {
-    auto it = std::find_if(deviceAotInfo.begin(), deviceAotInfo.end(), findProductConfig(config));
-    if (it == deviceAotInfo.end()) {
-        return {};
-    }
-    return it->acronyms.empty() ? parseMajorMinorRevisionValue(it->aotConfig) : it->acronyms.front().str();
 }
 
 AOT::RELEASE ProductConfigHelper::getReleaseForAcronym(const std::string &device) {
