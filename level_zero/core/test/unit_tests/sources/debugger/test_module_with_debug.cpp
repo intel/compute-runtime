@@ -211,8 +211,6 @@ TEST_F(ModuleWithSLDTest, GivenDebugDataWithSingleRelocationWhenInitializingModu
     auto debugger = new MockActiveSourceLevelDebugger(new MockOsLibrary);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(debugger);
 
-    createKernel();
-
     uint8_t binary[10];
     ze_module_desc_t moduleDesc = {};
     moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
@@ -239,9 +237,12 @@ TEST_F(ModuleWithSLDTest, GivenDebugDataWithSingleRelocationWhenInitializingModu
     moduleMock->kernelImmData = &kernelMock.immutableData;
     moduleMock->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
 
+    constexpr size_t mockVIsaSize = 0x10;
+    char mockVIsa[mockVIsaSize]{0};
+
     kernelInfo->kernelDescriptor.external.debugData = std::make_unique<NEO::DebugData>();
-    kernelInfo->kernelDescriptor.external.debugData->vIsa = kernel->getKernelDescriptor().external.debugData->vIsa;
-    kernelInfo->kernelDescriptor.external.debugData->vIsaSize = kernel->getKernelDescriptor().external.debugData->vIsaSize;
+    kernelInfo->kernelDescriptor.external.debugData->vIsa = mockVIsa;
+    kernelInfo->kernelDescriptor.external.debugData->vIsaSize = mockVIsaSize;
     kernelInfo->kernelDescriptor.external.debugData->genIsa = nullptr;
     kernelInfo->kernelDescriptor.external.debugData->genIsaSize = 0;
 
