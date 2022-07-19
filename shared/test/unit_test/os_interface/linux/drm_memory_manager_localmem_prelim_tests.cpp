@@ -1920,11 +1920,11 @@ TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerWhenGetLocalMemorySizeIs
 
     MockExecutionEnvironment executionEnvironment(&hwInfo, true, 4u);
     for (auto i = 0u; i < 4u; i++) {
-        auto drm = new DrmQueryMock(*executionEnvironment.rootDeviceEnvironments[i], &hwInfo);
+        auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment.rootDeviceEnvironments[i], &hwInfo);
         ASSERT_NE(nullptr, drm);
 
         executionEnvironment.rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
-        executionEnvironment.rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+        executionEnvironment.rootDeviceEnvironments[i]->osInterface->setDriverModel(std::move(drm));
     }
     TestedDrmMemoryManager memoryManager(executionEnvironment);
     for (auto i = 0u; i < 4u; i++) {
