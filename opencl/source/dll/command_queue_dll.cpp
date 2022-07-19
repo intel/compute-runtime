@@ -17,4 +17,8 @@ bool CommandQueue::isTimestampWaitEnabled() {
     return true;
 }
 
+void CommandQueue::finishBeforeRelease() {
+    this->finish();
+}
+
 } // namespace NEO
