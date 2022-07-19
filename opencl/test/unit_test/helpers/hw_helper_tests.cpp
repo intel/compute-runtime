@@ -1414,7 +1414,7 @@ HWTEST2_F(HwHelperTest, givenPvcHwHelperWhenGettingIsPlatformFlushTaskEnabledThe
     EXPECT_TRUE(hwHelper.isPlatformFlushTaskEnabled(*defaultHwInfo));
 }
 
-HWTEST2_F(HwHelperTest, givenAtMostGen12lpHwHelperWhenGettingIsPlatformFlushTaskEnabledThenFalseIsReturned, IsAtMostGen12lp) {
+HWTEST2_F(HwHelperTest, givenAtMostGen12lpHwHelperWhenGettingIsPlatformFlushTaskEnabledThenFalseIsReturned, IsAtMostGen11) {
     auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
     EXPECT_FALSE(hwHelper.isPlatformFlushTaskEnabled(*defaultHwInfo));
 }
