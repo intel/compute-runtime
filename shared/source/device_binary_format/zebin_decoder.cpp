@@ -254,9 +254,7 @@ DecodeError readZeInfoExecutionEnvironment(const NEO::Yaml::YamlParser &parser, 
     bool validExecEnv = true;
     for (const auto &execEnvMetadataNd : parser.createChildrenRange(node)) {
         auto key = parser.readKey(execEnvMetadataNd);
-        if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::ExecutionEnv::actualKernelStartOffset == key) {
-            validExecEnv = validExecEnv & readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.actualKernelStartOffset, context, outErrReason);
-        } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::ExecutionEnv::barrierCount == key) {
+        if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::ExecutionEnv::barrierCount == key) {
             validExecEnv = validExecEnv & readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.barrierCount, context, outErrReason);
         } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::ExecutionEnv::disableMidThreadPreemption == key) {
             validExecEnv = validExecEnv & readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.disableMidThreadPreemption, context, outErrReason);

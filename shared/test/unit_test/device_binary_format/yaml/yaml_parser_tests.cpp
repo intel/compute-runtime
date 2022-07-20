@@ -2721,7 +2721,6 @@ TEST(YamlParser, GivenSimpleZebinThenParsesItCorrectly) {
 kernels:         
   - name:            k
     execution_env:   
-      actual_kernel_start_offset: 0
       grf_count:       128
       has_no_stateless_write: true
       simd_size:       32
@@ -2786,27 +2785,22 @@ kernels:
     ASSERT_NE(nullptr, ndBtis);
     EXPECT_STREQ("k", parser.readValue(*ndName).str().c_str());
     { // exec env
-        auto ndActualKernelStartOffset = parser.getChild(*ndExecutionEnv, "actual_kernel_start_offset");
         auto ndGrfCount = parser.getChild(*ndExecutionEnv, "grf_count");
         auto ndHasNoStatelessWrite = parser.getChild(*ndExecutionEnv, "has_no_stateless_write");
         auto ndSimdSize = parser.getChild(*ndExecutionEnv, "simd_size");
         auto ndSubgroupIfp = parser.getChild(*ndExecutionEnv, "subgroup_independent_forward_progress");
-        ASSERT_NE(nullptr, ndActualKernelStartOffset);
         ASSERT_NE(nullptr, ndGrfCount);
         ASSERT_NE(nullptr, ndHasNoStatelessWrite);
         ASSERT_NE(nullptr, ndSimdSize);
         ASSERT_NE(nullptr, ndSubgroupIfp);
-        uint32_t actualKernelStartOffset;
         uint32_t grfCount;
         bool hasNoStatelessWrite;
         uint32_t simdSize;
         bool subgroupIfp;
-        EXPECT_TRUE(parser.readValueChecked(*ndActualKernelStartOffset, actualKernelStartOffset));
         EXPECT_TRUE(parser.readValueChecked(*ndGrfCount, grfCount));
         EXPECT_TRUE(parser.readValueChecked(*ndHasNoStatelessWrite, hasNoStatelessWrite));
         EXPECT_TRUE(parser.readValueChecked(*ndSimdSize, simdSize));
         EXPECT_TRUE(parser.readValueChecked(*ndSubgroupIfp, subgroupIfp));
-        EXPECT_EQ(0U, actualKernelStartOffset);
         EXPECT_EQ(128U, grfCount);
         EXPECT_TRUE(hasNoStatelessWrite);
         EXPECT_EQ(32U, simdSize);

@@ -458,7 +458,8 @@ TEST(ExtractZeInfoKernelSections, GivenKnownSectionsThenCapturesThemProperly) {
 kernels:         
   - name:            some_kernel
     execution_env:   
-      actual_kernel_start_offset: 0
+      grf_count: 128
+      simd_size: 32
     debug_env:
       sip_surface_bti: 0
     payload_arguments: 
@@ -514,7 +515,8 @@ TEST(ExtractZeInfoKernelSections, GivenExperimentalPropertyInKnownSectionsThenSe
 kernels:
   - name:            some_kernel
     execution_env:
-      actual_kernel_start_offset: 0
+      grf_count: 128
+      simd_size: 32
     payload_arguments:
       - arg_type:        global_id_offset
         offset:          0
@@ -968,7 +970,6 @@ TEST(ReadZeInfoExecutionEnvironment, GivenValidYamlEntriesThenSetProperMembers) 
 kernels:         
   - name:            some_kernel
     execution_env: 
-        actual_kernel_start_offset : 5
         barrier_count : 7
         disable_mid_thread_preemption : true
         grf_count : 13
@@ -1012,7 +1013,6 @@ kernels:
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    EXPECT_EQ(5, execEnv.actualKernelStartOffset);
     EXPECT_EQ(7, execEnv.barrierCount);
     EXPECT_TRUE(execEnv.disableMidThreadPreemption);
     EXPECT_EQ(13, execEnv.grfCount);
@@ -1044,7 +1044,7 @@ TEST(ReadZeInfoExecutionEnvironment, GivenUnknownEntryThenEmmitsWarning) {
 kernels:         
   - name:            some_kernel
     execution_env: 
-        actual_kernel_start_offset : 17
+        simd_size : 8
         something_new : 36
 ...
 )===";
@@ -1062,7 +1062,7 @@ kernels:
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"something_new\" in context of some_kernel\n", warnings.c_str());
-    EXPECT_EQ(17, execEnv.actualKernelStartOffset);
+    EXPECT_EQ(8, execEnv.simdSize);
 }
 
 TEST(ReadZeInfoExecutionEnvironment, GivenInvalidValueForKnownEntryThenFails) {
@@ -1070,7 +1070,7 @@ TEST(ReadZeInfoExecutionEnvironment, GivenInvalidValueForKnownEntryThenFails) {
 kernels:         
   - name:            some_kernel
     execution_env: 
-        actual_kernel_start_offset : true
+        simd_size : true
 ...
 )===";
 
@@ -1086,7 +1086,7 @@ kernels:
     auto err = NEO::readZeInfoExecutionEnvironment(parser, execEnvNode, execEnv, "some_kernel", errors, warnings);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read actual_kernel_start_offset from : [true] in context of : some_kernel\n", errors.c_str());
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read simd_size from : [true] in context of : some_kernel\n", errors.c_str());
 }
 
 TEST(ReadZeInfoExecutionEnvironment, GivenInvalidLengthForKnownCollectionEntryThenFails) {
@@ -3020,7 +3020,8 @@ TEST(PopulateKernelDescriptor, GivenInvalidPerThreadPayloadArgYamlEntriesThenFai
 kernels:
     - name : some_kernel
       execution_env:   
-        actual_kernel_start_offset: 0
+        grf_count: 128
+        simd_size: 32
       per_thread_payload_arguments: 
         - arg_type:        local_id
           offset:          aaa
@@ -3048,7 +3049,8 @@ TEST(PopulateKernelDescriptor, GivenInvalidPayloadArgYamlEntriesThenFails) {
 kernels:
     - name : some_kernel
       execution_env:   
-        actual_kernel_start_offset: 0
+        grf_count: 128
+        simd_size: 32
       payload_arguments: 
         - arg_type:        global_id_offset
           offset:          aaa
@@ -3076,7 +3078,8 @@ TEST(PopulateKernelDescriptor, GivenInvalidPerThreadMemoryBufferYamlEntriesThenF
 kernels:
     - name : some_kernel
       execution_env:   
-        actual_kernel_start_offset: 0
+        grf_count: 128
+        simd_size: 32
       per_thread_memory_buffers: 
         - type:        scratch
           usage:       spill_fill_space
@@ -3838,7 +3841,6 @@ TEST(PopulateKernelDescriptor, GivenValidExecutionEnvironmentThenPopulateKernelD
 kernels:
     - name : some_kernel
       execution_env:   
-        actual_kernel_start_offset : 5
         barrier_count : 7
         disable_mid_thread_preemption : true
         grf_count : 13

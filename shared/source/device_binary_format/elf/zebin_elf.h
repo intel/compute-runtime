@@ -130,7 +130,6 @@ static constexpr ConstStringRef perThreadMemoryBuffers("per_thread_memory_buffer
 static constexpr ConstStringRef experimentalProperties("experimental_properties");
 
 namespace ExecutionEnv {
-static constexpr ConstStringRef actualKernelStartOffset("actual_kernel_start_offset");
 static constexpr ConstStringRef barrierCount("barrier_count");
 static constexpr ConstStringRef disableMidThreadPreemption("disable_mid_thread_preemption");
 static constexpr ConstStringRef grfCount("grf_count");
@@ -317,12 +316,10 @@ static constexpr WorkgroupWalkOrderDimensionsT workgroupWalkOrderDimensions = {0
 } // namespace Defaults
 
 static constexpr ConstStringRef required[] = {
-    Tags::Kernel::ExecutionEnv::actualKernelStartOffset,
     Tags::Kernel::ExecutionEnv::grfCount,
     Tags::Kernel::ExecutionEnv::simdSize};
 
 struct ExecutionEnvBaseT {
-    ActualKernelStartOffsetT actualKernelStartOffset = -1;
     BarrierCountT barrierCount = Defaults::barrierCount;
     DisableMidThreadPreemptionT disableMidThreadPreemption = Defaults::disableMidThreadPreemption;
     GrfCountT grfCount = -1;
