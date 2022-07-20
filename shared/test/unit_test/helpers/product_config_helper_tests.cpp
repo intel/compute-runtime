@@ -223,6 +223,17 @@ TEST_F(ProductConfigHelperTests, GivenDifferentReleasesInDeviceAotInfosWhenCompa
     EXPECT_FALSE(lhs == rhs);
 }
 
+TEST_F(ProductConfigHelperTests, GivenDifferentHwInfoInDeviceAotInfosWhenComparingThemThenFalseIsReturned) {
+    DeviceAotInfo lhs{};
+    DeviceAotInfo rhs{};
+
+    lhs.hwInfo = NEO::defaultHwInfo.get();
+    EXPECT_FALSE(lhs == rhs);
+
+    rhs.hwInfo = NEO::defaultHwInfo.get();
+    ASSERT_TRUE(lhs == rhs);
+}
+
 struct AotDeviceInfoTests : public ::testing::Test {
     AotDeviceInfoTests() {
         productConfigHelper = std::make_unique<ProductConfigHelper>();
@@ -475,4 +486,22 @@ TEST_F(AotDeviceInfoTests, givenClearedProductAcronymWhenSearchInRepresentativeA
             EXPECT_LT(cutRepresentativeAcronyms.size(), representativeAcronyms.size());
         }
     }
+}
+
+TEST_F(AotDeviceInfoTests, givenProductConfigWhenGetDeviceAotInfoThenCorrectValuesAreReturned) {
+    auto &enabledProducts = productConfigHelper->getDeviceAotInfo();
+    DeviceAotInfo aotInfo{};
+
+    for (auto &product : enabledProducts) {
+        auto productConfig = static_cast<AOT::PRODUCT_CONFIG>(product.aotConfig.ProductConfig);
+        EXPECT_TRUE(productConfigHelper->getDeviceAotInfoForProductConfig(productConfig, aotInfo));
+        EXPECT_TRUE(aotInfo == product);
+    }
+}
+
+TEST_F(AotDeviceInfoTests, givenUnknownIsaWhenGetDeviceAotInfoThenFalseIsReturned) {
+    DeviceAotInfo aotInfo{}, emptyInfo{};
+
+    EXPECT_FALSE(productConfigHelper->getDeviceAotInfoForProductConfig(AOT::UNKNOWN_ISA, aotInfo));
+    EXPECT_TRUE(aotInfo == emptyInfo);
 }

@@ -12,7 +12,9 @@
 #include "shared/source/device/device.h"
 #include "shared/source/device/root_device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/aub_memory_operations_handler.h"
 #include "shared/source/os_interface/hw_info_config.h"
@@ -30,8 +32,20 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
     executionEnvironment.prepareRootDeviceEnvironments(numRootDevices);
 
     auto productFamily = DebugManager.flags.ProductFamilyOverride.get();
+
+    auto configStr = productFamily;
+    ProductConfigHelper::adjustDeviceName(configStr);
+    auto productConfig = ProductConfigHelper::getProductConfigForAcronym(configStr);
+
     const HardwareInfo *hwInfoConst = getDefaultHwInfo();
-    getHwInfoForPlatformString(productFamily, hwInfoConst);
+    auto productConfigHelper = std::make_unique<ProductConfigHelper>();
+    DeviceAotInfo aotInfo{};
+    auto productConfigFound = productConfigHelper->getDeviceAotInfoForProductConfig(productConfig, aotInfo);
+    if (productConfigFound) {
+        hwInfoConst = aotInfo.hwInfo;
+    } else {
+        getHwInfoForPlatformString(productFamily, hwInfoConst);
+    }
     std::string hwInfoConfigStr;
     uint64_t hwInfoConfig = 0x0;
     DebugManager.getHardwareInfoOverride(hwInfoConfigStr);
@@ -51,6 +65,12 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
 
         HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->platform.eProductFamily);
         hwConfig->configureHardwareCustom(hardwareInfo, nullptr);
+
+        if (productConfigFound) {
+            const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(hardwareInfo->platform.eProductFamily);
+            compilerHwInfoConfig.setProductConfigForHwInfo(*hardwareInfo, aotInfo.aotConfig);
+            hardwareInfo->platform.usDeviceID = aotInfo.deviceIds->front();
+        }
 
         if (DebugManager.flags.OverrideGpuAddressSpace.get() != -1) {
             hardwareInfo->capabilityTable.gpuAddressSpace = maxNBitValue(static_cast<uint64_t>(DebugManager.flags.OverrideGpuAddressSpace.get()));

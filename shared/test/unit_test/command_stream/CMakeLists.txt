@@ -15,6 +15,7 @@ set(NEO_SHARED_tests_command_stream
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_simulated_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/get_devices_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/stream_properties_tests_common.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/stream_properties_tests_common.h

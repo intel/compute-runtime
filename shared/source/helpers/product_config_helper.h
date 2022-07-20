@@ -45,7 +45,7 @@ struct DeviceAotInfo {
     std::vector<NEO::ConstStringRef> acronyms{};
 
     bool operator==(const DeviceAotInfo &rhs) {
-        return aotConfig.ProductConfig == rhs.aotConfig.ProductConfig && family == rhs.family && release == rhs.release;
+        return aotConfig.ProductConfig == rhs.aotConfig.ProductConfig && family == rhs.family && release == rhs.release && hwInfo == rhs.hwInfo;
     }
 };
 
@@ -105,6 +105,7 @@ struct ProductConfigHelper {
     bool isRelease(const std::string &device);
     bool isProductConfig(const std::string &device);
 
+    bool getDeviceAotInfoForProductConfig(AOT::PRODUCT_CONFIG config, DeviceAotInfo &out) const;
     std::vector<DeviceAotInfo> &getDeviceAotInfo();
     std::vector<NEO::ConstStringRef> getRepresentativeProductAcronyms();
     std::vector<NEO::ConstStringRef> getReleasesAcronyms();

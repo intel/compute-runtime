@@ -38,6 +38,16 @@ std::vector<DeviceAotInfo> &ProductConfigHelper::getDeviceAotInfo() {
     return deviceAotInfo;
 }
 
+bool ProductConfigHelper::getDeviceAotInfoForProductConfig(AOT::PRODUCT_CONFIG config, DeviceAotInfo &out) const {
+    auto ret = std::find_if(deviceAotInfo.begin(), deviceAotInfo.end(), findProductConfig(config));
+    if (ret == deviceAotInfo.end()) {
+        return false;
+    }
+
+    out = *ret;
+    return true;
+}
+
 void ProductConfigHelper::adjustDeviceName(std::string &device) {
     std::transform(device.begin(), device.end(), device.begin(), ::tolower);
 
