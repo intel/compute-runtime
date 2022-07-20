@@ -111,11 +111,28 @@ TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleWhenGettingFirmwareProperties
 
     zes_firmware_properties_t properties = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetProperties(handles[0], &properties));
-    EXPECT_STREQ(mockSupportedFwTypes[0].c_str(), properties.name);
+    EXPECT_STREQ("GFX", properties.name);
     EXPECT_STREQ(mockFwVersion.c_str(), properties.version);
 
     pSysmanDeviceImp->pFirmwareHandleContext->handleList.pop_back();
     delete ptestFirmwareImp;
+}
+
+TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleWhenGettingOptionRomPropertiesThenVersionIsReturned) {
+    initFirmware();
+
+    FirmwareImp *pTestFirmwareImp = new FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFwTypes[1]);
+    pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(pTestFirmwareImp);
+
+    auto handles = getFirmwareHandles(mockHandleCount);
+
+    zes_firmware_properties_t properties = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetProperties(handles[1], &properties));
+    EXPECT_STREQ(mockSupportedFwTypes[1].c_str(), properties.name);
+    EXPECT_STREQ(mockOpromVersion.c_str(), properties.version);
+
+    pSysmanDeviceImp->pFirmwareHandleContext->handleList.pop_back();
+    delete pTestFirmwareImp;
 }
 
 TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleWhenGettingOpromPropertiesThenVersionIsReturned) {
@@ -232,7 +249,7 @@ TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleFirmwareLibraryCallFailureWhe
 
     zes_firmware_properties_t properties = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetProperties(handles[0], &properties));
-    EXPECT_STREQ(mockSupportedFwTypes[0].c_str(), properties.name);
+    EXPECT_STREQ("GFX", properties.name);
     EXPECT_STREQ("unknown", properties.version);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetProperties(handles[1], &properties));
