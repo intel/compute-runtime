@@ -371,7 +371,6 @@ TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetProperties
     zes_pci_properties_t properties;
     ON_CALL(*pSysfsAccess.get(), readSymLink(_, _))
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PciSysfsAccess>::getValStringSymLinkEmpty));
-    pPciImp->init();
 
     ze_result_t result = zesDevicePciGetProperties(device, &properties);
 
@@ -696,6 +695,10 @@ TEST_F(ZesPciFixture, WhenConvertingLinkSpeedFromGigatransfersPerSecondToBytesPe
     int64_t speedPci25 = convertPcieSpeedFromGTsToBs(PciLinkSpeeds::Pci2_5GigatransfersPerSecond);
     EXPECT_EQ(speedPci25, static_cast<int64_t>(PciLinkSpeeds::Pci2_5GigatransfersPerSecond * convertMegabitsPerSecondToBytesPerSecond * convertGigabitToMegabit * encodingGen1Gen2));
     EXPECT_EQ(0, convertPcieSpeedFromGTsToBs(0.0));
+}
+TEST_F(SysmanDeviceFixture, GivenValidSysmanHandleWhenCallingzesSysmanPciGetStateThenVerifyzetSysmanPciGetStatsCallReturnNotSupported) {
+    zes_pci_state_t state;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDevicePciGetState(device, &state));
 }
 
 } // namespace ult

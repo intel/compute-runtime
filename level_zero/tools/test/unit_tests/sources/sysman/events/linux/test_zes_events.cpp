@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,8 +50,6 @@ class SysmanEventsFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
         ON_CALL(*pSysfsAccess.get(), readSymLink(_, _))
             .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<EventsSysfsAccess>::getValStringSymLinkSuccess));
-
-        pEventsImp->init();
     }
 
     void TearDown() override {

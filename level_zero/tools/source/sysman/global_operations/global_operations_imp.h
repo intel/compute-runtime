@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "global_operations.h"
 #include "os_global_operations.h"
 
+#include <mutex>
 #include <vector>
 
 namespace L0 {
@@ -33,6 +34,8 @@ class GlobalOperationsImp : public GlobalOperations, NEO::NonCopyableOrMovableCl
   private:
     OsSysman *pOsSysman = nullptr;
     zes_device_properties_t sysmanProperties = {};
+    std::once_flag initGlobalOpOnce;
+    void initGlobalOperations();
 };
 
 } // namespace L0

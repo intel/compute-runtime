@@ -133,7 +133,6 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
         pOsGlobalOperationsPrev = pGlobalOperationsImp->pOsGlobalOperations;
         pGlobalOperationsImp->pOsGlobalOperations = nullptr;
         expectedModelName = neoDevice->getDeviceName(neoDevice->getHardwareInfo());
-        pGlobalOperationsImp->init();
     }
 
     void TearDown() override {
@@ -154,6 +153,10 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pFsAccess = pFsAccessOld;
 
         SysmanDeviceFixture::TearDown();
+    }
+    void initGlobalOps() {
+        zes_device_state_t deviceState;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     }
 };
 class SysmanGlobalOperationsIntegratedFixture : public SysmanGlobalOperationsFixture {
@@ -195,7 +198,6 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDevice
     test = srcVersion;
     ON_CALL(*pFsAccess.get(), read(_, Matcher<std::string &>(_)))
         .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<GlobalOperationsFsAccess>::getValSrcFile));
-    pGlobalOperationsImp->init();
 
     ze_result_t result = zesDeviceGetProperties(device, &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -207,7 +209,6 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDevice
 
     ON_CALL(*pFsAccess.get(), read(_, Matcher<std::string &>(_)))
         .WillByDefault(::testing::Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
-    pGlobalOperationsImp->init();
 
     ze_result_t result = zesDeviceGetProperties(device, &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -218,7 +219,6 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDevice
     zes_device_properties_t properties;
     ON_CALL(*pFsAccess.get(), read(_, Matcher<std::string &>(_)))
         .WillByDefault(::testing::Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
-    pGlobalOperationsImp->init();
 
     ze_result_t result = zesDeviceGetProperties(device, &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -229,7 +229,6 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDevice
     zes_device_properties_t properties;
     ON_CALL(*pFsAccess.get(), read(_, Matcher<std::string &>(_)))
         .WillByDefault(::testing::Return(ZE_RESULT_ERROR_UNKNOWN));
-    pGlobalOperationsImp->init();
 
     ze_result_t result = zesDeviceGetProperties(device, &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -240,7 +239,6 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDevice
     ON_CALL(*pSysfsAccess.get(), read(_, Matcher<std::string &>(_)))
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<GlobalOperationsSysfsAccess>::getFalseValString));
     neoDevice->deviceInfo.vendorId = 1806; // Unknown Vendor id
-    pGlobalOperationsImp->init();
     zes_device_properties_t properties;
     ze_result_t result = zesDeviceGetProperties(device, &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -252,7 +250,6 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDevice
     zes_device_properties_t properties;
     ON_CALL(*pFsAccess.get(), read(_, Matcher<std::string &>(_)))
         .WillByDefault(::testing::Return(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS));
-    pGlobalOperationsImp->init();
 
     ze_result_t result = zesDeviceGetProperties(device, &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -331,8 +328,8 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileRetrievingInfor
         .WillOnce(::testing::Return(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceProcessesGetState(device, &count, nullptr));
 }
-
 TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileRetrievingInformationAboutHostProcessesUsingDeviceThenFailureIsReturnedEvenwithFaultyClient) {
+    initGlobalOps();
     uint32_t count = 0;
     ON_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<GlobalOperationsSysfsAccess>::getScannedDirPidEntires));
@@ -405,7 +402,7 @@ TEST_F(SysmanGlobalOperationsFixture, GivenDeviceIsNotWedgedWhenCallingGetDevice
 }
 
 TEST_F(SysmanGlobalOperationsFixture, GivenForceTrueWhenCallingResetThenSuccessIsReturned) {
-    pGlobalOperationsImp->init();
+    initGlobalOps();
     static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations)->pLinuxSysmanImp = pMockGlobalOpsLinuxSysmanImp.get();
     static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations)->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
     ze_result_t result = zesDeviceReset(device, true);
@@ -415,7 +412,6 @@ TEST_F(SysmanGlobalOperationsFixture, GivenForceTrueWhenCallingResetThenSuccessI
 TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenPermissionDeniedWhenCallingGetDeviceStateThenZeResultErrorInsufficientPermissionsIsReturned) {
 
     pSysfsAccess->isRootSet = false;
-    pGlobalOperationsImp->init();
     ze_result_t result = zesDeviceReset(device, true);
     EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, result);
 }
@@ -426,7 +422,6 @@ TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenDeviceInUseWhenCallingReset
     pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
     ON_CALL(*pProcfsAccess.get(), listProcesses(Matcher<std::vector<::pid_t> &>(_)))
         .WillByDefault(::testing::Invoke(pProcfsAccess.get(), &Mock<GlobalOperationsProcfsAccess>::mockProcessListDeviceInUse));
-    pGlobalOperationsImp->init();
     ze_result_t result = zesDeviceReset(device, false);
     EXPECT_EQ(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE, result);
 }
@@ -445,7 +440,6 @@ TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenDeviceNotInUseWhenCallingRe
         .WillRepeatedly(::testing::Invoke(pProcfsAccess.get(), &Mock<GlobalOperationsProcfsAccess>::mockProcessListDeviceUnused));
     EXPECT_CALL(*pSysfsAccess.get(), bindDevice(_))
         .WillOnce(::testing::Return(ZE_RESULT_SUCCESS));
-    pGlobalOperationsImp->init();
     ze_result_t result = zesDeviceReset(device, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     // Check that reset closed the device
@@ -466,7 +460,6 @@ TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenForceTrueAndDeviceInUseWhen
         .WillOnce(::testing::Invoke(pProcfsAccess.get(), &Mock<GlobalOperationsProcfsAccess>::mockKill));
     EXPECT_CALL(*pSysfsAccess.get(), bindDevice(_))
         .WillOnce(::testing::Return(ZE_RESULT_SUCCESS));
-    pGlobalOperationsImp->init();
     ze_result_t result = zesDeviceReset(device, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
@@ -485,7 +478,6 @@ TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenProcessStartsMidResetWhenCa
         .WillOnce(::testing::Invoke(pProcfsAccess.get(), &Mock<GlobalOperationsProcfsAccess>::mockKill));
     EXPECT_CALL(*pSysfsAccess.get(), bindDevice(_))
         .WillOnce(::testing::Return(ZE_RESULT_SUCCESS));
-    pGlobalOperationsImp->init();
     ze_result_t result = zesDeviceReset(device, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
@@ -504,7 +496,6 @@ TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenProcessStartsMidResetWhenCa
         .WillOnce(::testing::Invoke(pProcfsAccess.get(), &Mock<GlobalOperationsProcfsAccess>::mockKill));
     EXPECT_CALL(*pSysfsAccess.get(), bindDevice(_))
         .WillOnce(::testing::Return(ZE_RESULT_SUCCESS));
-    pGlobalOperationsImp->init();
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
     ultHwConfig.mockedPrepareDeviceEnvironmentsFuncResult = false;
     ze_result_t result = zesDeviceReset(device, false);
@@ -525,7 +516,6 @@ TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenProcessStartsMidResetWhenCa
         .WillOnce(::testing::Invoke(pProcfsAccess.get(), &Mock<GlobalOperationsProcfsAccess>::mockKill));
     EXPECT_CALL(*pSysfsAccess.get(), bindDevice(_))
         .WillOnce(::testing::Return(ZE_RESULT_ERROR_UNKNOWN));
-    pGlobalOperationsImp->init();
     ze_result_t result = zesDeviceReset(device, false);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 }
@@ -536,7 +526,6 @@ TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenDeviceInUseWhenCallingReset
     pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
     EXPECT_CALL(*pProcfsAccess.get(), listProcesses(Matcher<std::vector<::pid_t> &>(_)))
         .WillOnce(::testing::Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
-    pGlobalOperationsImp->init();
     ze_result_t result = zesDeviceReset(device, false);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 }
@@ -552,7 +541,6 @@ TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenProcessStartsMidResetWhenLi
         .WillOnce(::testing::Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
     ON_CALL(*pProcfsAccess.get(), kill(pProcfsAccess->ourDevicePid))
         .WillByDefault(::testing::Invoke(pProcfsAccess.get(), &Mock<GlobalOperationsProcfsAccess>::mockKill));
-    pGlobalOperationsImp->init();
     ze_result_t result = zesDeviceReset(device, false);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 }
@@ -571,7 +559,6 @@ TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenProcessStartsMidResetWhenCa
         .WillOnce(::testing::Invoke(pProcfsAccess.get(), &Mock<GlobalOperationsProcfsAccess>::mockKill));
     EXPECT_CALL(*pFsAccess.get(), write(mockFunctionResetPath, std::string("1")))
         .WillOnce(::testing::Return(ZE_RESULT_ERROR_UNKNOWN));
-    pGlobalOperationsImp->init();
     ze_result_t result = zesDeviceReset(device, false);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 }
@@ -589,7 +576,6 @@ TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenProcessStartsMidResetWhenCa
         .WillByDefault(::testing::Invoke(pProcfsAccess.get(), &Mock<GlobalOperationsProcfsAccess>::mockKill));
     EXPECT_CALL(*pSysfsAccess.get(), unbindDevice(_))
         .WillOnce(::testing::Return(ZE_RESULT_ERROR_UNKNOWN));
-    pGlobalOperationsImp->init();
     ze_result_t result = zesDeviceReset(device, false);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 }
@@ -610,13 +596,11 @@ TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenProcessStartsMidResetWhenCa
         .WillByDefault(::testing::Invoke(pProcfsAccess.get(), &Mock<GlobalOperationsProcfsAccess>::mockKill));
     EXPECT_CALL(*pSysfsAccess.get(), bindDevice(_))
         .WillOnce(::testing::Return(ZE_RESULT_SUCCESS));
-    pGlobalOperationsImp->init();
     ze_result_t result = zesDeviceReset(device, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
-
 TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenProcessWontDieWhenCallingResetThenZeResultErrorHandleObjectInUseErrorIsReturned) {
-
+    initGlobalOps();
     // Pretend another process has the device open
     pProcfsAccess->ourDevicePid = getpid() + 1; // make sure it isn't our process id
     pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
@@ -633,7 +617,6 @@ TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenProcessWontDieWhenCallingRe
         .Times(0);
     EXPECT_CALL(*pSysfsAccess.get(), bindDevice(_))
         .Times(0);
-    pGlobalOperationsImp->init();
     ze_result_t result = zesDeviceReset(device, false);
     EXPECT_EQ(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE, result);
 }
@@ -656,7 +639,6 @@ TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenProcessStartsMidResetWhenCa
         .WillByDefault(::testing::Invoke(pProcfsAccess.get(), &Mock<GlobalOperationsProcfsAccess>::mockKill));
     EXPECT_CALL(*pSysfsAccess.get(), bindDevice(_))
         .WillOnce(::testing::Return(ZE_RESULT_SUCCESS));
-    pGlobalOperationsImp->init();
     ze_result_t result = zesDeviceReset(device, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
@@ -677,6 +659,12 @@ TEST(SysmanGlobalOperationsTest, GivenNotExisitingPciPathWhenPrepareDeviceEnviro
     auto device3 = std::unique_ptr<MockDevice>{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())};
     std::string pciPath3 = "0000:00:04.0";
     EXPECT_FALSE(DeviceFactory::prepareDeviceEnvironment(*device3->getExecutionEnvironment(), pciPath3, 0u));
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenCallingDeviceGetStateThenSuccessResultIsReturned) {
+    zes_device_state_t deviceState;
+    ze_result_t result = zesDeviceGetState(device, &deviceState);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 } // namespace ult

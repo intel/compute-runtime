@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,8 @@
 
 #include "events.h"
 #include "os_events.h"
+
+#include <mutex>
 
 namespace L0 {
 
@@ -26,6 +28,8 @@ class EventsImp : public Events, NEO::NonCopyableOrMovableClass {
 
   private:
     OsSysman *pOsSysman = nullptr;
+    std::once_flag initEventsOnce;
+    void initEvents();
 };
 
 } // namespace L0

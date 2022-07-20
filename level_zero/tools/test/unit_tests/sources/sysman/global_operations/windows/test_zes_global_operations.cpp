@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,7 +43,6 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
         pGlobalOperationsImp = static_cast<L0::GlobalOperationsImp *>(pSysmanDeviceImp->pGlobalOperations);
         pOsGlobalOperationsPrev = pGlobalOperationsImp->pOsGlobalOperations;
         pGlobalOperationsImp->pOsGlobalOperations = nullptr;
-        pGlobalOperationsImp->init();
     }
 
     void TearDown() override {
@@ -66,14 +65,12 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
 
 TEST_F(SysmanGlobalOperationsFixture, GivenForceTrueAndDeviceInUseWhenCallingResetThenSuccessIsReturned) {
     init(true);
-    pGlobalOperationsImp->init();
     ze_result_t result = zesDeviceReset(device, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenCallingResetThenSuccessIsReturned) {
     init(false);
-    pGlobalOperationsImp->init();
     ze_result_t result = zesDeviceReset(device, true);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 }
