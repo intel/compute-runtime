@@ -357,6 +357,12 @@ class CommandQueueHw : public CommandQueue {
     template <uint32_t cmdType>
     cl_int enqueueBlit(const MultiDispatchInfo &multiDispatchInfo, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &bcsCsr);
 
+    bool isSplitEnqueueBlitSupported();
+    bool isSplitEnqueueBlitNeeded(TransferDirection transferDirection, CommandStreamReceiver &csr);
+
+    template <uint32_t cmdType>
+    cl_int enqueueBlitSplit(MultiDispatchInfo &dispatchInfo, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &csr);
+
     template <uint32_t commandType>
     CompletionStamp enqueueNonBlocked(Surface **surfacesForResidency,
                                       size_t surfaceCount,

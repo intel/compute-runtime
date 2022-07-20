@@ -1104,6 +1104,105 @@ size_t CommandQueueHw<GfxFamily>::calculateHostPtrSizeForImage(const size_t *reg
 }
 
 template <typename GfxFamily>
+bool CommandQueueHw<GfxFamily>::isSplitEnqueueBlitSupported() {
+    auto bcsSplit = HwInfoConfig::get(getDevice().getHardwareInfo().platform.eProductFamily)->isBlitSplitEnqueueWARequired(getDevice().getHardwareInfo());
+
+    if (DebugManager.flags.SplitBcsCopy.get() != -1) {
+        bcsSplit = DebugManager.flags.SplitBcsCopy.get();
+    }
+
+    return bcsSplit;
+}
+
+template <typename GfxFamily>
+bool CommandQueueHw<GfxFamily>::isSplitEnqueueBlitNeeded(TransferDirection transferDirection, CommandStreamReceiver &csr) {
+    auto bcsSplit = isSplitEnqueueBlitSupported() &&
+                    csr.getOsContext().getEngineType() == aub_stream::EngineType::ENGINE_BCS &&
+                    (transferDirection == TransferDirection::HostToLocal ||
+                     transferDirection == TransferDirection::LocalToHost);
+
+    if (bcsSplit) {
+        this->constructBcsEnginesForSplit();
+    }
+
+    return bcsSplit;
+}
+
+template <typename GfxFamily>
+template <uint32_t cmdType>
+cl_int CommandQueueHw<GfxFamily>::enqueueBlitSplit(MultiDispatchInfo &dispatchInfo, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &csr) {
+    auto ret = CL_SUCCESS;
+    this->releaseMainCopyEngine();
+
+    StackVec<std::unique_lock<CommandStreamReceiver::MutexType>, 3u> locks;
+    StackVec<CommandStreamReceiver *, 3u> copyEngines;
+    for (auto i = static_cast<uint32_t>(aub_stream::EngineType::ENGINE_BCS2); i <= static_cast<uint32_t>(aub_stream::EngineType::ENGINE_BCS8); i += 2) {
+        auto bcs = getBcsCommandStreamReceiver(static_cast<aub_stream::EngineType>(i));
+        if (bcs) {
+            locks.push_back(std::move(bcs->obtainUniqueOwnership()));
+            copyEngines.push_back(bcs);
+        }
+    }
+    DEBUG_BREAK_IF(copyEngines.size() == 0);
+    TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
+
+    TimestampPacketContainer splitNodes;
+    TimestampPacketContainer previousEnqueueNode;
+    previousEnqueueNode.swapNodes(*this->timestampPacketContainer);
+
+    auto srcOffset = dispatchInfo.peekBuiltinOpParams().srcOffset;
+    auto dstOffset = dispatchInfo.peekBuiltinOpParams().dstOffset;
+    auto size = dispatchInfo.peekBuiltinOpParams().size;
+    auto remainingSize = size;
+
+    for (size_t i = 0; i < copyEngines.size(); i++) {
+        auto localSizeX = remainingSize.x / (copyEngines.size() - i);
+        auto localSizeY = remainingSize.y / (copyEngines.size() - i);
+        auto localSizeZ = remainingSize.z / (copyEngines.size() - i);
+
+        auto localParams = dispatchInfo.peekBuiltinOpParams();
+
+        localParams.size.x = localSizeX;
+        localParams.size.y = localSizeY;
+        localParams.size.z = localSizeZ;
+
+        localParams.srcOffset.x = (srcOffset.x + size.x - remainingSize.x);
+        localParams.srcOffset.y = (srcOffset.y + size.y - remainingSize.y);
+        localParams.srcOffset.z = (srcOffset.z + size.z - remainingSize.z);
+
+        localParams.dstOffset.x = (dstOffset.x + size.x - remainingSize.x);
+        localParams.dstOffset.y = (dstOffset.y + size.y - remainingSize.y);
+        localParams.dstOffset.z = (dstOffset.z + size.z - remainingSize.z);
+
+        dispatchInfo.setBuiltinOpParams(localParams);
+
+        remainingSize.x -= localSizeX;
+        remainingSize.y -= localSizeY;
+        remainingSize.z -= localSizeZ;
+
+        this->timestampPacketContainer->assignAndIncrementNodesRefCounts(previousEnqueueNode);
+
+        ret = enqueueBlit<cmdType>(dispatchInfo, numEventsInWaitList, eventWaitList, remainingSize == 0 ? event : nullptr, false, *copyEngines[i]);
+        DEBUG_BREAK_IF(ret != CL_SUCCESS);
+
+        this->timestampPacketContainer->moveNodesToNewContainer(splitNodes);
+    }
+
+    if (event) {
+        auto e = castToObjectOrAbort<Event>(*event);
+        e->addTimestampPacketNodes(splitNodes);
+    }
+
+    this->timestampPacketContainer->swapNodes(splitNodes);
+
+    if (blocking) {
+        ret = this->finish();
+    }
+
+    return ret;
+}
+
+template <typename GfxFamily>
 template <uint32_t cmdType>
 cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispatchInfo, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &bcsCsr) {
     auto bcsCommandStreamReceiverOwnership = bcsCsr.obtainUniqueOwnership();
@@ -1236,7 +1335,15 @@ cl_int CommandQueueHw<GfxFamily>::dispatchBcsOrGpgpuEnqueue(MultiDispatchInfo &d
     const bool blit = EngineHelpers::isBcs(csr.getOsContext().getEngineType());
 
     if (blit) {
-        return enqueueBlit<cmdType>(dispatchInfo, numEventsInWaitList, eventWaitList, event, blocking, csr);
+        cl_int ret = CL_SUCCESS;
+
+        if (dispatchInfo.peekBuiltinOpParams().bcsSplit) {
+            ret = enqueueBlitSplit<cmdType>(dispatchInfo, numEventsInWaitList, eventWaitList, event, blocking, csr);
+        } else {
+            ret = enqueueBlit<cmdType>(dispatchInfo, numEventsInWaitList, eventWaitList, event, blocking, csr);
+        }
+
+        return ret;
     } else {
         auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInOperation,
                                                                                 this->getClDevice());

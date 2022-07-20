@@ -63,6 +63,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     GeneralSurface mapSurface;
     Surface *surfaces[] = {&srcImgSurf, nullptr};
 
+    auto bcsSplit = this->isSplitEnqueueBlitNeeded(csrSelectionArgs.direction, csr);
+
     bool tempAllocFallback = false;
     if (mapAllocation) {
         surfaces[1] = &mapSurface;
@@ -75,11 +77,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
         if (region[0] != 0 &&
             region[1] != 0 &&
             region[2] != 0) {
-            bool status = csr.createAllocationForHostSurface(hostPtrSurf, true);
+            bool status = selectCsrForHostPtrAllocation(bcsSplit, csr).createAllocationForHostSurface(hostPtrSurf, true);
             if (!status) {
                 if (CL_TRUE == blockingRead) {
                     hostPtrSurf.setIsPtrCopyAllowed(true);
-                    status = csr.createAllocationForHostSurface(hostPtrSurf, true);
+                    status = selectCsrForHostPtrAllocation(bcsSplit, csr).createAllocationForHostSurface(hostPtrSurf, true);
                     if (!status) {
                         return CL_OUT_OF_RESOURCES;
                     }
@@ -89,6 +91,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
                 }
             }
             dstPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddress());
+            this->prepareHostPtrSurfaceForSplit(bcsSplit, *hostPtrSurf.getAllocation());
         }
     }
 
@@ -110,6 +113,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     if (tempAllocFallback) {
         dc.userPtrForPostOperationCpuCopy = ptr;
     }
+    dc.bcsSplit = bcsSplit;
 
     auto eBuiltInOps = EBuiltInOps::CopyImage3dToBuffer;
     MultiDispatchInfo dispatchInfo(dc);

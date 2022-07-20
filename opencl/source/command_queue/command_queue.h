@@ -229,6 +229,10 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     MOCKABLE_VIRTUAL CommandStreamReceiver &selectCsrForBuiltinOperation(const CsrSelectionArgs &args);
     void constructBcsEngine(bool internalUsage);
     MOCKABLE_VIRTUAL void initializeBcsEngine(bool internalUsage);
+    void constructBcsEnginesForSplit();
+    void prepareHostPtrSurfaceForSplit(bool split, GraphicsAllocation &allocation);
+    CommandStreamReceiver &selectCsrForHostPtrAllocation(bool split, CommandStreamReceiver &csr);
+    void releaseMainCopyEngine();
     Device &getDevice() const noexcept;
     ClDevice &getClDevice() const { return *device; }
     Context &getContext() const { return *context; }
@@ -416,6 +420,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool isCopyOnly = false;
     bool bcsAllowed = false;
     bool bcsInitialized = false;
+    bool bcsSplitInitialized = false;
 
     LinearStream *commandStream = nullptr;
 

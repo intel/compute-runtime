@@ -227,9 +227,7 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
     }
 
     void push_back(const DataType &v) { // NOLINT(readability-identifier-naming)
-        if (onStackSize == onStackCaps) {
-            ensureDynamicMem();
-        }
+        isDynamicMemNeeded();
 
         if (usesDynamicMem()) {
             dynamicMem->push_back(v);
@@ -237,6 +235,18 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
         }
 
         new (reinterpret_cast<DataType *>(onStackMemRawBytes) + onStackSize) DataType(v);
+        ++onStackSize;
+    }
+
+    void push_back(DataType &&v) { // NOLINT(readability-identifier-naming)
+        isDynamicMemNeeded();
+
+        if (usesDynamicMem()) {
+            dynamicMem->push_back(std::move(v));
+            return;
+        }
+
+        new (reinterpret_cast<DataType *>(onStackMemRawBytes) + onStackSize) DataType(std::move(v));
         ++onStackSize;
     }
 
@@ -396,6 +406,12 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
                 new (reinterpret_cast<DataType *>(onStackMemRawBytes) + onStackSize) DataType();
                 ++onStackSize;
             }
+        }
+    }
+
+    void isDynamicMemNeeded() {
+        if (onStackSize == onStackCaps) {
+            ensureDynamicMem();
         }
     }
 

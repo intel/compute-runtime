@@ -113,10 +113,7 @@ CommandQueue::~CommandQueue() {
             device->getPerformanceCounters()->shutdown();
         }
 
-        if (auto mainBcs = bcsEngines[0]; mainBcs != nullptr) {
-            auto &selectorCopyEngine = device->getNearestGenericSubDevice(0)->getSelectorCopyEngine();
-            EngineHelpers::releaseBcsEngineType(mainBcs->getEngineType(), selectorCopyEngine);
-        }
+        this->releaseMainCopyEngine();
     }
 
     timestampPacketContainer.reset();
@@ -305,6 +302,47 @@ void CommandQueue::constructBcsEngine(bool internalUsage) {
 
 void CommandQueue::initializeBcsEngine(bool internalUsage) {
     constructBcsEngine(internalUsage);
+}
+
+void CommandQueue::constructBcsEnginesForSplit() {
+    if (!this->bcsSplitInitialized) {
+        for (auto i = static_cast<uint32_t>(aub_stream::EngineType::ENGINE_BCS2); i <= static_cast<uint32_t>(aub_stream::EngineType::ENGINE_BCS8); i += 2) {
+            auto index = EngineHelpers::getBcsIndex(static_cast<aub_stream::EngineType>(i));
+            if (!bcsEngines[index]) {
+                auto &neoDevice = device->getNearestGenericSubDevice(0)->getDevice();
+                bcsEngines[index] = neoDevice.tryGetEngine(static_cast<aub_stream::EngineType>(i), EngineUsage::Regular);
+                bcsEngineTypes.push_back(static_cast<aub_stream::EngineType>(i));
+                if (bcsEngines[index]) {
+                    bcsEngines[index]->osContext->ensureContextInitialized();
+                    bcsEngines[index]->commandStreamReceiver->initDirectSubmission();
+                }
+            }
+        }
+        this->bcsSplitInitialized = true;
+    }
+}
+
+void CommandQueue::prepareHostPtrSurfaceForSplit(bool split, GraphicsAllocation &allocation) {
+    if (split) {
+        for (const auto bcsEngine : this->bcsEngines) {
+            if (bcsEngine) {
+                if (allocation.getTaskCount(bcsEngine->commandStreamReceiver->getOsContext().getContextId()) == GraphicsAllocation::objectNotUsed) {
+                    allocation.updateTaskCount(0u, bcsEngine->commandStreamReceiver->getOsContext().getContextId());
+                }
+            }
+        }
+    }
+}
+
+CommandStreamReceiver &CommandQueue::selectCsrForHostPtrAllocation(bool split, CommandStreamReceiver &csr) {
+    return split ? getGpgpuCommandStreamReceiver() : csr;
+}
+
+void CommandQueue::releaseMainCopyEngine() {
+    if (auto mainBcs = bcsEngines[0]; mainBcs != nullptr) {
+        auto &selectorCopyEngine = device->getNearestGenericSubDevice(0)->getSelectorCopyEngine();
+        EngineHelpers::releaseBcsEngineType(mainBcs->getEngineType(), selectorCopyEngine);
+    }
 }
 
 Device &CommandQueue::getDevice() const noexcept {

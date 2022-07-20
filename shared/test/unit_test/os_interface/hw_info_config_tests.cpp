@@ -52,6 +52,11 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenGettingSharedSystemMemCapabiliti
     }
 }
 
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfIsBlitSplitEnqueueWARequiredThenReturnFalse) {
+    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    EXPECT_FALSE(hwInfoConfig->isBlitSplitEnqueueWARequired(pInHwInfo));
+}
+
 HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenGettingMemoryCapabilitiesThenCorrectValueIsReturned) {
     DebugManagerStateRestore restore;
 

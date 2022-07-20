@@ -70,6 +70,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     GeneralSurface mapSurface;
     Surface *surfaces[] = {&bufferSurf, nullptr};
 
+    auto bcsSplit = this->isSplitEnqueueBlitNeeded(csrSelectionArgs.direction, csr);
+
     if (mapAllocation) {
         surfaces[1] = &mapSurface;
         mapSurface.setGraphicsAllocation(mapAllocation);
@@ -77,10 +79,12 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     } else {
         surfaces[1] = &hostPtrSurf;
         if (size != 0) {
-            bool status = csr.createAllocationForHostSurface(hostPtrSurf, false);
+            bool status = selectCsrForHostPtrAllocation(bcsSplit, csr).createAllocationForHostSurface(hostPtrSurf, false);
             if (!status) {
                 return CL_OUT_OF_RESOURCES;
             }
+            this->prepareHostPtrSurfaceForSplit(bcsSplit, *hostPtrSurf.getAllocation());
+
             srcPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddress());
         }
     }
@@ -94,6 +98,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     dc.dstOffset = {offset, 0, 0};
     dc.size = {size, 0, 0};
     dc.transferAllocation = mapAllocation ? mapAllocation : hostPtrSurf.getAllocation();
+    dc.bcsSplit = bcsSplit;
 
     MultiDispatchInfo dispatchInfo(dc);
     const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingWrite, csr);

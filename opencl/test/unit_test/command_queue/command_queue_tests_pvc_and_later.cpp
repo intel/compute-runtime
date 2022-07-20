@@ -104,6 +104,109 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenDeferCmdQBcsInitializationEnabledWh
     EXPECT_EQ(0u, queue->countBcsEngines());
 }
 
+HWTEST2_F(CommandQueuePvcAndLaterTests, whenConstructBcsEnginesForSplitThenContainsMultipleBcsEngines, IsAtLeastXeHpcCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DeferCmdQBcsInitialization.set(1u);
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    MockDevice *device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
+    MockClDevice clDevice{device};
+    cl_device_id clDeviceId = static_cast<cl_device_id>(&clDevice);
+    ClDeviceVector clDevices{&clDeviceId, 1u};
+    cl_int retVal{};
+    auto context = std::unique_ptr<Context>{Context::create<Context>(nullptr, clDevices, nullptr, nullptr, retVal)};
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    auto queue = std::make_unique<MockCommandQueue>(*context);
+    EXPECT_EQ(0u, queue->countBcsEngines());
+
+    queue->constructBcsEnginesForSplit();
+
+    EXPECT_EQ(4u, queue->countBcsEngines());
+
+    queue->constructBcsEnginesForSplit();
+
+    EXPECT_EQ(4u, queue->countBcsEngines());
+}
+
+HWTEST2_F(CommandQueuePvcAndLaterTests, whenSelectCsrForHostPtrAllocationThenReturnProperEngine, IsAtLeastXeHpcCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DeferCmdQBcsInitialization.set(1u);
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    MockDevice *device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
+    MockClDevice clDevice{device};
+    cl_device_id clDeviceId = static_cast<cl_device_id>(&clDevice);
+    ClDeviceVector clDevices{&clDeviceId, 1u};
+    cl_int retVal{};
+    auto context = std::unique_ptr<Context>{Context::create<Context>(nullptr, clDevices, nullptr, nullptr, retVal)};
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    auto queue = std::make_unique<MockCommandQueue>(*context);
+    EXPECT_EQ(0u, queue->countBcsEngines());
+    queue->constructBcsEnginesForSplit();
+    EXPECT_EQ(4u, queue->countBcsEngines());
+
+    auto &csr1 = queue->selectCsrForHostPtrAllocation(true, *queue->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS2));
+    EXPECT_EQ(&csr1, &queue->getGpgpuCommandStreamReceiver());
+
+    auto &csr2 = queue->selectCsrForHostPtrAllocation(false, *queue->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS2));
+    EXPECT_EQ(&csr2, queue->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS2));
+}
+
+HWTEST2_F(CommandQueuePvcAndLaterTests, whenPrepareHostPtrSurfaceForSplitThenSetTaskCountsToZero, IsAtLeastXeHpcCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DeferCmdQBcsInitialization.set(1u);
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    MockDevice *device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
+    MockClDevice clDevice{device};
+    cl_device_id clDeviceId = static_cast<cl_device_id>(&clDevice);
+    ClDeviceVector clDevices{&clDeviceId, 1u};
+    cl_int retVal{};
+    auto context = std::unique_ptr<Context>{Context::create<Context>(nullptr, clDevices, nullptr, nullptr, retVal)};
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    auto queue = std::make_unique<MockCommandQueue>(*context);
+    EXPECT_EQ(0u, queue->countBcsEngines());
+    queue->constructBcsEnginesForSplit();
+    EXPECT_EQ(4u, queue->countBcsEngines());
+    auto ptr = reinterpret_cast<void *>(0x1234);
+    auto ptrSize = MemoryConstants::pageSize;
+    HostPtrSurface hostPtrSurf(ptr, ptrSize);
+    queue->getGpgpuCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, false);
+
+    queue->prepareHostPtrSurfaceForSplit(false, *hostPtrSurf.getAllocation());
+
+    for (auto i = static_cast<uint32_t>(aub_stream::EngineType::ENGINE_BCS1); i <= static_cast<uint32_t>(aub_stream::EngineType::ENGINE_BCS8); i++) {
+        auto bcs = queue->getBcsCommandStreamReceiver(static_cast<aub_stream::EngineType>(i));
+        if (bcs) {
+            auto contextId = bcs->getOsContext().getContextId();
+            EXPECT_EQ(hostPtrSurf.getAllocation()->getTaskCount(contextId), GraphicsAllocation::objectNotUsed);
+        }
+    }
+
+    queue->prepareHostPtrSurfaceForSplit(true, *hostPtrSurf.getAllocation());
+
+    for (auto i = static_cast<uint32_t>(aub_stream::EngineType::ENGINE_BCS1); i <= static_cast<uint32_t>(aub_stream::EngineType::ENGINE_BCS8); i++) {
+        auto bcs = queue->getBcsCommandStreamReceiver(static_cast<aub_stream::EngineType>(i));
+        if (bcs) {
+            auto contextId = bcs->getOsContext().getContextId();
+            EXPECT_EQ(hostPtrSurf.getAllocation()->getTaskCount(contextId), 0u);
+        }
+    }
+
+    queue->prepareHostPtrSurfaceForSplit(true, *hostPtrSurf.getAllocation());
+
+    for (auto i = static_cast<uint32_t>(aub_stream::EngineType::ENGINE_BCS1); i <= static_cast<uint32_t>(aub_stream::EngineType::ENGINE_BCS8); i++) {
+        auto bcs = queue->getBcsCommandStreamReceiver(static_cast<aub_stream::EngineType>(i));
+        if (bcs) {
+            auto contextId = bcs->getOsContext().getContextId();
+            EXPECT_EQ(hostPtrSurf.getAllocation()->getTaskCount(contextId), 0u);
+        }
+    }
+}
+
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenDeferCmdQBcsInitializationDisabledWhenCreateCommandQueueThenBcsIsInitialized, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.DeferCmdQBcsInitialization.set(0u);

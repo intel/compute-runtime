@@ -58,6 +58,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
     HostPtrSurface hostPtrSurf(srcPtr, hostPtrSize, true);
     GeneralSurface mapSurface;
     Surface *surfaces[] = {&dstImgSurf, nullptr};
+
+    auto bcsSplit = this->isSplitEnqueueBlitNeeded(csrSelectionArgs.direction, csr);
+
     if (mapAllocation) {
         surfaces[1] = &mapSurface;
         mapSurface.setGraphicsAllocation(mapAllocation);
@@ -69,10 +72,12 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
         if (region[0] != 0 &&
             region[1] != 0 &&
             region[2] != 0) {
-            bool status = csr.createAllocationForHostSurface(hostPtrSurf, false);
+            bool status = selectCsrForHostPtrAllocation(bcsSplit, csr).createAllocationForHostSurface(hostPtrSurf, false);
             if (!status) {
                 return CL_OUT_OF_RESOURCES;
             }
+            this->prepareHostPtrSurfaceForSplit(bcsSplit, *hostPtrSurf.getAllocation());
+
             srcPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddress());
         }
     }
@@ -92,6 +97,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
         dc.dstMipLevel = findMipLevel(dstImage->getImageDesc().image_type, origin);
     }
     dc.transferAllocation = mapAllocation ? mapAllocation : hostPtrSurf.getAllocation();
+    dc.bcsSplit = bcsSplit;
 
     auto eBuiltInOps = EBuiltInOps::CopyBufferToImage3d;
     MultiDispatchInfo dispatchInfo(dc);
