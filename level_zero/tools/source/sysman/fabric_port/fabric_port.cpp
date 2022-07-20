@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,6 +43,9 @@ ze_result_t FabricPortHandleContext::init() {
 }
 
 ze_result_t FabricPortHandleContext::fabricPortGet(uint32_t *pCount, zes_fabric_port_handle_t *phPort) {
+    std::call_once(initFabricPortOnce, [this]() {
+        this->init();
+    });
     uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
     uint32_t numToCopy = std::min(*pCount, handleListSize);
     if (0 == *pCount || *pCount > handleListSize) {

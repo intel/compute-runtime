@@ -43,7 +43,6 @@ class ZesFabricPortFixture : public SysmanDeviceFixture {
             .WillByDefault(Return(numPorts));
 
         pFabricPortHandleContext->pFabricDevice = mockFabricDevice;
-        pFabricPortHandleContext->init();
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {

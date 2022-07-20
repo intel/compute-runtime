@@ -44,7 +44,6 @@ class SysmanDeviceFanFixture : public SysmanDeviceFixture {
         }
 
         pSysmanDeviceImp->pFanHandleContext->handleList.clear();
-        pSysmanDeviceImp->pFanHandleContext->init();
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {

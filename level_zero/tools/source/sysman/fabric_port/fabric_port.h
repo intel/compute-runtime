@@ -10,6 +10,7 @@
 
 #include <level_zero/zes_api.h>
 
+#include <mutex>
 #include <vector>
 
 struct _zes_fabric_port_handle_t {
@@ -55,6 +56,9 @@ struct FabricPortHandleContext : NEO::NonCopyableOrMovableClass {
 
     FabricDevice *pFabricDevice = nullptr;
     std::vector<FabricPort *> handleList = {};
+
+  private:
+    std::once_flag initFabricPortOnce;
 };
 
 } // namespace L0

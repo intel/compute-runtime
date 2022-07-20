@@ -100,9 +100,6 @@ ze_result_t SysmanDeviceImp::init() {
     if (pPowerHandleContext) {
         pPowerHandleContext->init(deviceHandles, hCoreDevice);
     }
-    if (pFabricPortHandleContext) {
-        pFabricPortHandleContext->init();
-    }
     if (pPci) {
         pPci->init();
     }
@@ -121,14 +118,8 @@ ze_result_t SysmanDeviceImp::init() {
     if (pEvents) {
         pEvents->init();
     }
-    if (pFanHandleContext) {
-        pFanHandleContext->init();
-    }
     if (pPerformanceHandleContext) {
         pPerformanceHandleContext->init(deviceHandles, hCoreDevice);
-    }
-    if (pEcc) {
-        pEcc->init();
     }
     return result;
 }

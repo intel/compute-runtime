@@ -34,8 +34,6 @@ class ZesEccFixture : public SysmanDeviceFixture {
         pWddmSysmanImp->pFwUtilInterface = pMockFwInterface.get();
 
         pEccImp = static_cast<L0::EccImp *>(pSysmanDeviceImp->pEcc);
-
-        pEccImp->init();
     }
 
     void TearDown() override {
@@ -52,7 +50,6 @@ class ZesEccFixture : public SysmanDeviceFixture {
 TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingzesDeviceEccAvailableThenVerifyApiCallSucceeds) {
     ze_bool_t eccAvailable = false;
 
-    pEccImp->init();
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccAvailable(device, &eccAvailable));
     EXPECT_EQ(true, eccAvailable);
 }
@@ -60,7 +57,6 @@ TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingze
 TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingzesDeviceEccConfigurableThenVerifyApiCallSucceeds) {
     ze_bool_t eccConfigurable = false;
 
-    pEccImp->init();
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccConfigurable(device, &eccConfigurable));
     EXPECT_EQ(true, eccConfigurable);
 }
@@ -89,7 +85,6 @@ TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwDeviceInitFailsThenVerifyApiCal
     pMockFwInterface->mockFwDeviceInit = ZE_RESULT_ERROR_UNKNOWN;
 
     EccImp *tempEccImp = new EccImp(pOsSysman);
-    tempEccImp->init();
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, tempEccImp->deviceEccAvailable(&eccAvailable));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, tempEccImp->deviceEccConfigurable(&eccConfigurable));
 
