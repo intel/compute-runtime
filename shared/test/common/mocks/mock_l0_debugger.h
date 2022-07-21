@@ -37,7 +37,6 @@ class MockDebuggerL0Hw : public NEO::DebuggerL0Hw<GfxFamily> {
     using NEO::DebuggerL0::perContextSbaAllocations;
     using NEO::DebuggerL0::sbaTrackingGpuVa;
     using NEO::DebuggerL0::singleAddressSpaceSbaTracking;
-    using NEO::DebuggerL0::uuidL0CommandQueueHandle;
 
     MockDebuggerL0Hw(NEO::Device *device) : NEO::DebuggerL0Hw<GfxFamily>(device) {}
     ~MockDebuggerL0Hw() override = default;
@@ -81,14 +80,14 @@ class MockDebuggerL0Hw : public NEO::DebuggerL0Hw<GfxFamily> {
         return NEO::DebuggerL0Hw<GfxFamily>::removeZebinModule(moduleHandle);
     }
 
-    void notifyCommandQueueCreated(NEO::Device *device) override {
+    void notifyCommandQueueCreated() override {
         commandQueueCreatedCount++;
-        NEO::DebuggerL0Hw<GfxFamily>::notifyCommandQueueCreated(device);
+        NEO::DebuggerL0Hw<GfxFamily>::notifyCommandQueueCreated();
     }
 
-    void notifyCommandQueueDestroyed(NEO::Device *device) override {
+    void notifyCommandQueueDestroyed() override {
         commandQueueDestroyedCount++;
-        NEO::DebuggerL0Hw<GfxFamily>::notifyCommandQueueDestroyed(device);
+        NEO::DebuggerL0Hw<GfxFamily>::notifyCommandQueueDestroyed();
     }
 
     void registerAllocationType(NEO::GraphicsAllocation *allocation) override {

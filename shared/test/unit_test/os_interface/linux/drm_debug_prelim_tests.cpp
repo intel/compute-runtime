@@ -143,7 +143,7 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenNotifyFirstCommandQueueCreatedCalledThenC
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     auto handle = drm.context.uuidHandle;
-    auto registeredHandle = drm.notifyFirstCommandQueueCreated(nullptr, 0);
+    auto registeredHandle = drm.notifyFirstCommandQueueCreated();
 
     EXPECT_EQ(handle + 1, drm.context.uuidHandle);
     EXPECT_EQ(handle, registeredHandle);
@@ -151,7 +151,8 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenNotifyFirstCommandQueueCreatedCalledThenC
     const auto &receivedUuid = drm.context.receivedRegisterUuid;
     ASSERT_TRUE(receivedUuid);
     EXPECT_EQ(DrmPrelimHelper::getStringUuidClass(), receivedUuid->uuidClass);
-    EXPECT_EQ(receivedUuid->size, 0u);
+    EXPECT_EQ(receivedUuid->size, strlen(uuidL0CommandQueueName));
+    EXPECT_EQ(0, memcmp(reinterpret_cast<const char *>(receivedUuid->ptr), uuidL0CommandQueueName, receivedUuid->size));
     EXPECT_EQ(0, memcmp(receivedUuid->uuid, uuidL0CommandQueueHash, sizeof(receivedUuid->uuid)));
 }
 

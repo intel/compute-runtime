@@ -337,7 +337,7 @@ class DrmMockResources : public DrmMock {
         return bindAvailable;
     }
 
-    uint32_t notifyFirstCommandQueueCreated(const void *data, size_t size) override {
+    uint32_t notifyFirstCommandQueueCreated() override {
         ioctlCallsCount++;
         return 4;
     }
