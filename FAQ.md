@@ -20,7 +20,7 @@ with default / stock configuration (no kernel patches), assuming the underlying
 kernel's drm subsystem is 4.7 or higher. Newer platforms will require a kernel version
 that provides support for that platform (e.g. Coffee Lake requires kernel 4.14 or higher).
 
-Our default (most frequent) validation config is currently Ubuntu 20.04 LTS (as of Q1'21).
+Our default (most frequent) validation config is currently Ubuntu 22.04 LTS (as of Q3'22).
 
 ### Does NEO support Microsoft Windows?
 
@@ -62,17 +62,22 @@ To check support for any device, you can follow these steps:
 1. Check if this Device ID is enumerated in the
 [supported device list](https://github.com/intel/compute-runtime/blob/master/shared/source/dll/devices/devices_base.inl)
 
-### Do you provide binary packages with support for DG1?
-
-Yes. Please refer to official [installation guide](https://dgpu-docs.intel.com/installation-guides/index.html). 
+Note: Additional [list](https://github.com/intel/compute-runtime/blob/master/shared/source/dll/devices/devices_additional.inl) for some newer devices
 
 ### When will support for platform X be added?
 
 We will start adding platform support after platform is disclosed by Intel.
 It is our intention to offer full support ahead of platform's market availability.
 
+## Support that will not be added to the NEO driver
+
+There is no plan to provide the following features or support in the NEO driver (due to business reasons):
+* non-Intel GPUs
+* platforms older than Gen8 (Broadwell) - please use [Beignet driver](https://github.com/intel/beignet)
+* sharing with OpenGL / EGL on Linux 
+
 ## Who are we?
 
-The Compute Runtime team is part of GSE (Graphics Software Engineering).
+The Compute Runtime team is part of AXG SCG (Super Compute Group).
 
 Most of our engineers are located in Poland, United States, and India.

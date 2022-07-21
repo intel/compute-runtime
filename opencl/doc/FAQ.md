@@ -26,9 +26,8 @@ considered experimental.
 
 ### What is the functional delta to the "Beignet" driver?
 
-Intel's former open-source [Beignet driver](https://01.org/beignet) provided
-sharing capabilities with MESA OpenGL driver. Our intention is to provide
-these capabilities in NEO in the future.
+Intel's former open-source [Beignet driver](https://github.com/intel/beignet) provided
+sharing capabilities with MESA OpenGL driver. 
 
 NEO supports platforms starting with Gen8 graphics (formerly Broadwell).
 For earlier platforms, please use Beignet driver.
