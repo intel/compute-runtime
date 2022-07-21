@@ -63,4 +63,10 @@ enum class CachePolicy : uint32_t {
     WriteBack = 3,
 };
 
+enum class PostSyncMode : uint32_t {
+    NoWrite = 0,
+    Timestamp = 1,
+    ImmediateData = 2,
+};
+
 } // namespace NEO

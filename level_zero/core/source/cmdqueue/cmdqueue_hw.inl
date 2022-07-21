@@ -187,7 +187,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         auto commandListPreemption = commandList->getCommandListPreemptionMode();
         if (statePreemption != commandListPreemption) {
             if (preemptionCmdSyncProgramming) {
-                preemptionSize += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl();
+                preemptionSize += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
             }
             preemptionSize += NEO::PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(commandListPreemption, statePreemption);
             statePreemption = commandListPreemption;
@@ -272,7 +272,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     bool dispatchPostSync = isDispatchTaskCountPostSyncRequired(hFence, containsAnyRegularCmdList);
     if (dispatchPostSync) {
-        linearStreamSizeEstimate += isCopyOnlyCommandQueue ? NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite() : NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo);
+        linearStreamSizeEstimate += isCopyOnlyCommandQueue ? NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite()
+                                                           : NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo);
     }
 
     size_t alignedSize = alignUp<size_t>(linearStreamSizeEstimate, minCmdBufferPtrAlign);
@@ -397,7 +398,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
             if (preemptionCmdSyncProgramming) {
                 NEO::PipeControlArgs args;
-                NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(child, args);
+                NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(child, args);
             }
             NEO::PreemptionHelper::programCmdStream<GfxFamily>(child,
                                                                commandListPreemption,
@@ -594,8 +595,6 @@ bool CommandQueueHw<gfxCoreFamily>::isDispatchTaskCountPostSyncRequired(ze_fence
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountPostSync(NEO::LinearStream &commandStream, const NEO::HardwareInfo &hwInfo) {
-    using POST_SYNC_OPERATION = typename GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION;
-
     uint64_t postSyncAddress = csr->getTagAllocation()->getGpuAddress();
     uint32_t postSyncData = csr->peekTaskCount() + 1;
 
@@ -609,9 +608,9 @@ void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountPostSync(NEO::LinearStream 
         args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
         args.workloadPartitionOffset = partitionCount > 1;
         args.notifyEnable = csr->isUsedNotifyEnableForPostSync();
-        NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+        NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
             commandStream,
-            POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+            NEO::PostSyncMode::ImmediateData,
             postSyncAddress,
             postSyncData,
             hwInfo,

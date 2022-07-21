@@ -172,7 +172,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         if (dirtyHeaps) {
             syncArgs.hdcPipelineFlush = true;
         }
-        MemorySynchronizationCommands<Family>::addPipeControl(*container.getCommandStream(), syncArgs);
+        MemorySynchronizationCommands<Family>::addSingleBarrier(*container.getCommandStream(), syncArgs);
 
         if (dirtyHeaps || args.requiresUncachedMocs) {
             STATE_BASE_ADDRESS sba;
@@ -428,7 +428,7 @@ inline size_t EncodeWA<GfxFamily>::getAdditionalPipelineSelectSize(Device &devic
 template <typename GfxFamily>
 inline void EncodeWA<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args,
                                                                                const HardwareInfo &hwInfo, bool isRcs) {
-    MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, args);
+    MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(commandStream, args);
 }
 
 template <typename GfxFamily>

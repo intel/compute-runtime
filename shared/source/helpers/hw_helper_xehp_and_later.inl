@@ -177,7 +177,7 @@ aub_stream::MMIOList HwHelperHw<GfxFamily>::getExtraMmioList(const HardwareInfo 
 }
 
 template <typename GfxFamily>
-bool MemorySynchronizationCommands<GfxFamily>::isPipeControlWArequired(const HardwareInfo &hwInfo) {
+bool MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(const HardwareInfo &hwInfo) {
     if (DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.get() == 1) {
         return hwInfo.featureTable.flags.ftrLocalMemory;
     }

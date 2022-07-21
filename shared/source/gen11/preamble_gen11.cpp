@@ -60,7 +60,7 @@ void PreambleHelper<Family>::addPipeControlBeforeVfeCmd(LinearStream *pCommandSt
         args.depthCacheFlushEnable = true;
         args.dcFlushEnable = true;
     }
-    MemorySynchronizationCommands<Family>::addPipeControl(*pCommandStream, args);
+    MemorySynchronizationCommands<Family>::addSingleBarrier(*pCommandStream, args);
 }
 
 template <>

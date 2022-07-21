@@ -140,7 +140,9 @@ std::string HwHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const 
 }
 
 template <>
-inline void MemorySynchronizationCommands<Family>::setPipeControlExtraProperties(PIPE_CONTROL &pipeControl, PipeControlArgs &args) {
+inline void MemorySynchronizationCommands<Family>::setBarrierExtraProperties(void *barrierCmd, PipeControlArgs &args) {
+    auto &pipeControl = *reinterpret_cast<typename Family::PIPE_CONTROL *>(barrierCmd);
+
     pipeControl.setHdcPipelineFlush(args.hdcPipelineFlush);
 
     if (DebugManager.flags.FlushAllCaches.get()) {
@@ -180,13 +182,13 @@ uint32_t HwHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool l3ena
 }
 
 template <>
-bool MemorySynchronizationCommands<Family>::isPipeControlWArequired(const HardwareInfo &hwInfo) {
+bool MemorySynchronizationCommands<Family>::isBarrierWaRequired(const HardwareInfo &hwInfo) {
     return HwInfoConfig::get(hwInfo.platform.eProductFamily)->pipeControlWARequired(hwInfo);
 }
 
 template <>
-bool MemorySynchronizationCommands<Family>::isPipeControlPriorToPipelineSelectWArequired(const HardwareInfo &hwInfo) {
-    return MemorySynchronizationCommands<Family>::isPipeControlWArequired(hwInfo);
+bool MemorySynchronizationCommands<Family>::isBarrierlPriorToPipelineSelectWaRequired(const HardwareInfo &hwInfo) {
+    return MemorySynchronizationCommands<Family>::isBarrierWaRequired(hwInfo);
 }
 
 template <>

@@ -429,66 +429,43 @@ struct LriHelper {
 
 template <typename GfxFamily>
 struct MemorySynchronizationCommands {
-    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-    using POST_SYNC_OPERATION = typename GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION;
+    static void addSingleBarrier(LinearStream &commandStream, PostSyncMode postSyncMode, uint64_t gpuAddress, uint64_t immediateData, PipeControlArgs &args);
+    static void setSingleBarrier(void *commandsBuffer, PostSyncMode postSyncMode, uint64_t gpuAddress, uint64_t immediateData, PipeControlArgs &args);
+    static void addSingleBarrier(LinearStream &commandStream, PipeControlArgs &args);
+    static void setSingleBarrier(void *commandsBuffer, PipeControlArgs &args);
 
-    static void addPipeControlAndProgramPostSyncOperation(LinearStream &commandStream,
-                                                          POST_SYNC_OPERATION operation,
-                                                          uint64_t gpuAddress,
-                                                          uint64_t immediateData,
-                                                          const HardwareInfo &hwInfo,
-                                                          PipeControlArgs &args);
-    static void setPipeControlAndProgramPostSyncOperation(void *&commandsBuffer,
-                                                          POST_SYNC_OPERATION operation,
-                                                          uint64_t gpuAddress,
-                                                          uint64_t immediateData,
-                                                          const HardwareInfo &hwInfo,
-                                                          PipeControlArgs &args);
-
-    static void addPipeControlWithPostSync(LinearStream &commandStream,
-                                           POST_SYNC_OPERATION operation,
-                                           uint64_t gpuAddress,
-                                           uint64_t immediateData,
-                                           PipeControlArgs &args);
-    static void setPipeControlWithPostSync(void *&commandsBuffer,
-                                           POST_SYNC_OPERATION operation,
-                                           uint64_t gpuAddress,
-                                           uint64_t immediateData,
-                                           PipeControlArgs &args);
+    static void addBarrierWithPostSyncOperation(LinearStream &commandStream, PostSyncMode postSyncMode, uint64_t gpuAddress, uint64_t immediateData, const HardwareInfo &hwInfo, PipeControlArgs &args);
+    static void setBarrierWithPostSyncOperation(void *&commandsBuffer, PostSyncMode postSyncMode, uint64_t gpuAddress, uint64_t immediateData, const HardwareInfo &hwInfo, PipeControlArgs &args);
 
     static void setPostSyncExtraProperties(PipeControlArgs &args, const HardwareInfo &hwInfo);
-    static void setPipeControlWAFlags(PIPE_CONTROL &pipeControl);
 
-    static void addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo);
-    static void setPipeControlWA(void *&commandsBuffer, uint64_t gpuAddress, const HardwareInfo &hwInfo);
+    static void addBarrierWa(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo);
+    static void setBarrierWa(void *&commandsBuffer, uint64_t gpuAddress, const HardwareInfo &hwInfo);
+
+    static void setBarrierWaFlags(void *barrierCmd);
 
     static void addAdditionalSynchronizationForDirectSubmission(LinearStream &commandStream, uint64_t gpuAddress, bool acquire, const HardwareInfo &hwInfo);
     static void addAdditionalSynchronization(LinearStream &commandStream, uint64_t gpuAddress, bool acquire, const HardwareInfo &hwInfo);
     static void setAdditionalSynchronization(void *&commandsBuffer, uint64_t gpuAddress, bool acquire, const HardwareInfo &hwInfo);
-
-    static void addPipeControl(LinearStream &commandStream, PipeControlArgs &args);
-    static void setPipeControl(PIPE_CONTROL &pipeControl, PipeControlArgs &args);
-
-    static void addPipeControlWithCSStallOnly(LinearStream &commandStream);
 
     static bool getDcFlushEnable(bool isFlushPreferred, const HardwareInfo &hwInfo);
 
     static void addFullCacheFlush(LinearStream &commandStream, const HardwareInfo &hwInfo);
     static void setCacheFlushExtraProperties(PipeControlArgs &args);
 
-    static size_t getSizeForPipeControlWithPostSyncOperation(const HardwareInfo &hwInfo);
-    static size_t getSizeForPipeControlWA(const HardwareInfo &hwInfo);
-    static size_t getSizeForSinglePipeControl();
+    static size_t getSizeForBarrierWithPostSyncOperation(const HardwareInfo &hwInfo);
+    static size_t getSizeForBarrierWa(const HardwareInfo &hwInfo);
+    static size_t getSizeForSingleBarrier();
     static size_t getSizeForSingleAdditionalSynchronizationForDirectSubmission(const HardwareInfo &hwInfo);
     static size_t getSizeForSingleAdditionalSynchronization(const HardwareInfo &hwInfo);
     static size_t getSizeForAdditonalSynchronization(const HardwareInfo &hwInfo);
     static size_t getSizeForFullCacheFlush();
 
-    static bool isPipeControlWArequired(const HardwareInfo &hwInfo);
-    static bool isPipeControlPriorToPipelineSelectWArequired(const HardwareInfo &hwInfo);
+    static bool isBarrierWaRequired(const HardwareInfo &hwInfo);
+    static bool isBarrierlPriorToPipelineSelectWaRequired(const HardwareInfo &hwInfo);
 
   protected:
-    static void setPipeControlExtraProperties(PIPE_CONTROL &pipeControl, PipeControlArgs &args);
+    static void setBarrierExtraProperties(void *barrierCmd, PipeControlArgs &args);
 };
 
 union SURFACE_STATE_BUFFER_LENGTH {

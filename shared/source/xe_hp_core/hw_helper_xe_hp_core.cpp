@@ -103,13 +103,17 @@ std::string HwHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const 
 }
 
 template <>
-void MemorySynchronizationCommands<Family>::setPipeControlWAFlags(PIPE_CONTROL &pipeControl) {
+void MemorySynchronizationCommands<Family>::setBarrierWaFlags(void *barrierCmd) {
+    auto &pipeControl = *reinterpret_cast<typename Family::PIPE_CONTROL *>(barrierCmd);
+
     pipeControl.setCommandStreamerStallEnable(true);
     pipeControl.setHdcPipelineFlush(true);
 }
 
 template <>
-void MemorySynchronizationCommands<Family>::setPipeControlExtraProperties(PIPE_CONTROL &pipeControl, PipeControlArgs &args) {
+void MemorySynchronizationCommands<Family>::setBarrierExtraProperties(void *barrierCmd, PipeControlArgs &args) {
+    auto &pipeControl = *reinterpret_cast<typename Family::PIPE_CONTROL *>(barrierCmd);
+
     pipeControl.setHdcPipelineFlush(args.hdcPipelineFlush);
     pipeControl.setCompressionControlSurfaceCcsFlush(args.compressionControlSurfaceCcsFlush);
     pipeControl.setWorkloadPartitionIdOffsetEnable(args.workloadPartitionOffset);

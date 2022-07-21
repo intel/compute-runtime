@@ -59,22 +59,18 @@ bool HwHelperHw<Family>::isStatelessToStatefulWithOffsetSupported() const {
 }
 
 template <>
-void MemorySynchronizationCommands<Family>::addPipeControl(LinearStream &commandStream, PipeControlArgs &args) {
+void MemorySynchronizationCommands<Family>::addSingleBarrier(LinearStream &commandStream, PipeControlArgs &args) {
     Family::PIPE_CONTROL cmd = Family::cmdInitPipeControl;
-    args.dcFlushEnable = true;
-    MemorySynchronizationCommands<Family>::setPipeControl(cmd, args);
+    MemorySynchronizationCommands<Family>::setSingleBarrier(&cmd, args);
+
+    cmd.setDcFlushEnable(true);
+
+    if (DebugManager.flags.DoNotFlushCaches.get()) {
+        cmd.setDcFlushEnable(false);
+    }
+
     Family::PIPE_CONTROL *cmdBuffer = commandStream.getSpaceForCmd<Family::PIPE_CONTROL>();
     *cmdBuffer = cmd;
-}
-
-template <>
-void MemorySynchronizationCommands<Family>::addPipeControlWithCSStallOnly(LinearStream &commandStream) {
-    using PIPE_CONTROL = typename Family::PIPE_CONTROL;
-    PIPE_CONTROL cmd = Family::cmdInitPipeControl;
-    cmd.setCommandStreamerStallEnable(true);
-    cmd.setDcFlushEnable(true);
-    auto pipeControl = commandStream.getSpaceForCmd<PIPE_CONTROL>();
-    *pipeControl = cmd;
 }
 
 template class HwHelperHw<Family>;

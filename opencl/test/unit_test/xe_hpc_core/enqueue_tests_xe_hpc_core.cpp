@@ -91,7 +91,7 @@ XE_HPC_CORETEST_F(MemoryPrefetchTestsXeHpcCore, givenKernelWhenWalkerIsProgramme
 XE_HPC_CORETEST_F(MemoryPrefetchTestsXeHpcCore, givenPrefetchEnabledWhenEstimatingCommandsSizeThenAddStatePrefetch) {
     auto commandQueue = createCommandQueue<FamilyType>();
 
-    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(clDevice->getHardwareInfo()) ? 2 : 1;
+    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(clDevice->getHardwareInfo()) ? 2 : 1;
 
     size_t expected = sizeof(typename FamilyType::COMPUTE_WALKER) +
                       (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +

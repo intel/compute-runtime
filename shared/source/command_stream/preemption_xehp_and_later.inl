@@ -52,7 +52,7 @@ void PreemptionHelper::programStateSipEndWa<GfxFamily>(LinearStream &cmdStream, 
         if (hwHelper.isSipWANeeded(device.getHardwareInfo())) {
 
             NEO::PipeControlArgs args;
-            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(cmdStream, args);
+            NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(cmdStream, args);
 
             auto mmio = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(cmdStream.getSpace(sizeof(MI_LOAD_REGISTER_IMM)));
             MI_LOAD_REGISTER_IMM cmd = GfxFamily::cmdInitLoadRegisterImm;

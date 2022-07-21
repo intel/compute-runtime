@@ -84,7 +84,7 @@ GEN12LPTEST_F(UltCommandStreamReceiverTestGen12Lp, givenDebugEnablingCacheFlushW
     LinearStream stream(buff, sizeof(PIPE_CONTROL) * 3);
 
     PipeControlArgs args;
-    MemorySynchronizationCommands<FamilyType>::addPipeControl(stream, args);
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(stream, args);
 
     parseCommands<FamilyType>(stream, 0);
 
@@ -111,7 +111,7 @@ GEN12LPTEST_F(UltCommandStreamReceiverTestGen12Lp, givenDebugDisablingCacheFlush
     PipeControlArgs args;
     args.dcFlushEnable = true;
     args.hdcPipelineFlush = true;
-    MemorySynchronizationCommands<FamilyType>::addPipeControl(stream, args);
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(stream, args);
 
     parseCommands<FamilyType>(stream, 0);
 

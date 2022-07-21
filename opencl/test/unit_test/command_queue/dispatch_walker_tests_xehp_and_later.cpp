@@ -1097,7 +1097,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, device, nullptr);
     auto &csr = cmdQ->getUltCommandStreamReceiver();
 
-    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(device->getHardwareInfo()) ? 2 : 1;
+    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getHardwareInfo()) ? 2 : 1;
 
     auto baseSize = sizeof(typename FamilyType::COMPUTE_WALKER) +
                     (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
@@ -1154,7 +1154,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, device, nullptr);
     auto &csr = cmdQ->getUltCommandStreamReceiver();
 
-    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(device->getHardwareInfo()) ? 2 : 1;
+    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getHardwareInfo()) ? 2 : 1;
 
     auto baseSize = sizeof(typename FamilyType::COMPUTE_WALKER) +
                     (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
@@ -1205,7 +1205,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWalkerPart
     DebugManager.flags.EnableWalkerPartition.set(0u);
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
-    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(device->getHardwareInfo()) ? 2 : 1;
+    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getHardwareInfo()) ? 2 : 1;
 
     DispatchInfo dispatchInfo{};
     dispatchInfo.setNumberOfWorkgroups({32, 1, 1});
@@ -1225,7 +1225,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenPipeContro
     hwInfo.featureTable.flags.ftrLocalMemory = true;
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
-    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hwInfo) ? 2 : 1;
+    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(hwInfo) ? 2 : 1;
 
     auto baseSize = sizeof(typename FamilyType::COMPUTE_WALKER) +
                     (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
@@ -1242,7 +1242,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
-    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(device->getHardwareInfo()) ? 2 : 1;
+    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getHardwareInfo()) ? 2 : 1;
 
     auto baseSize = sizeof(typename FamilyType::COMPUTE_WALKER) +
                     (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
@@ -1271,7 +1271,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
-    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(device->getHardwareInfo()) ? 2 : 1;
+    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getHardwareInfo()) ? 2 : 1;
 
     auto baseSize = sizeof(typename FamilyType::COMPUTE_WALKER) +
                     (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +

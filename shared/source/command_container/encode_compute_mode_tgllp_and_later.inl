@@ -54,7 +54,9 @@ inline void EncodeComputeMode<Family>::programComputeModeCommandWithSynchronizat
     EncodeComputeMode<Family>::programComputeModeCommand(csr, properties, hwInfo, logicalStateHelper);
 
     if (hasSharedHandles) {
-        MemorySynchronizationCommands<Family>::addPipeControlWithCSStallOnly(csr);
+        PipeControlArgs args;
+        args.csStallOnly = true;
+        MemorySynchronizationCommands<Family>::addSingleBarrier(csr, args);
     }
 
     NEO::EncodeWA<Family>::encodeAdditionalPipelineSelect(csr, args, false, hwInfo, isRcs);

@@ -109,12 +109,12 @@ uint32_t computePartitionCountAndPartitionType(uint32_t preferredMinimalPartitio
             goWithMaxAlgorithm = !!!NEO::DebugManager.flags.WalkerPartitionPreferHighestDimension.get();
         }
 
-        //compute misaligned %, accept imbalance below threshold in favor of Z/Y/X distribution.
+        // compute misaligned %, accept imbalance below threshold in favor of Z/Y/X distribution.
         const float minimalThreshold = 0.05f;
         float zImbalance = static_cast<float>(groupCount.z - alignDown(groupCount.z, preferredMinimalPartitionCount)) / static_cast<float>(groupCount.z);
         float yImbalance = static_cast<float>(groupCount.y - alignDown(groupCount.y, preferredMinimalPartitionCount)) / static_cast<float>(groupCount.y);
 
-        //we first try with deepest dimension to see if we can partition there
+        // we first try with deepest dimension to see if we can partition there
         if (groupCount.z > 1 && (zImbalance <= minimalThreshold)) {
             *outSelectedPartitionType = COMPUTE_WALKER<GfxFamily>::PARTITION_TYPE::PARTITION_TYPE_Z;
         } else if (groupCount.y > 1 && (yImbalance < minimalThreshold)) {
@@ -122,7 +122,7 @@ uint32_t computePartitionCountAndPartitionType(uint32_t preferredMinimalPartitio
         } else if (groupCount.x % preferredMinimalPartitionCount == 0) {
             *outSelectedPartitionType = COMPUTE_WALKER<GfxFamily>::PARTITION_TYPE::PARTITION_TYPE_X;
         }
-        //if we are here then there is no dimension that results in even distribution, choose max dimension to minimize impact
+        // if we are here then there is no dimension that results in even distribution, choose max dimension to minimize impact
         else {
             goWithMaxAlgorithm = true;
         }
@@ -222,7 +222,7 @@ void programWaitForSemaphore(void *&inputAddress, uint32_t &totalBytesProgrammed
 
 template <typename GfxFamily>
 bool programWparidMask(void *&inputAddress, uint32_t &totalBytesProgrammed, uint32_t partitionCount) {
-    //currently only power of 2 values of partitionCount are being supported
+    // currently only power of 2 values of partitionCount are being supported
     if (!Math::isPow2(partitionCount) || partitionCount > 16) {
         return false;
     }
@@ -300,7 +300,7 @@ template <typename GfxFamily>
 void programPipeControlCommand(void *&inputAddress, uint32_t &totalBytesProgrammed, NEO::PipeControlArgs &flushArgs) {
     auto pipeControl = putCommand<PIPE_CONTROL<GfxFamily>>(inputAddress, totalBytesProgrammed);
     PIPE_CONTROL<GfxFamily> cmd = GfxFamily::cmdInitPipeControl;
-    NEO::MemorySynchronizationCommands<GfxFamily>::setPipeControl(cmd, flushArgs);
+    NEO::MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(&cmd, flushArgs);
     *pipeControl = cmd;
 }
 
@@ -311,14 +311,14 @@ void programPostSyncPipeControlCommand(void *&inputAddress,
                                        NEO::PipeControlArgs &flushArgs,
                                        const NEO::HardwareInfo &hwInfo) {
 
-    NEO::MemorySynchronizationCommands<GfxFamily>::setPipeControlAndProgramPostSyncOperation(inputAddress,
-                                                                                             POST_SYNC_OPERATION<GfxFamily>::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-                                                                                             args.postSyncGpuAddress,
-                                                                                             args.postSyncImmediateValue,
-                                                                                             hwInfo,
-                                                                                             flushArgs);
+    NEO::MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(inputAddress,
+                                                                                   NEO::PostSyncMode::ImmediateData,
+                                                                                   args.postSyncGpuAddress,
+                                                                                   args.postSyncImmediateValue,
+                                                                                   hwInfo,
+                                                                                   flushArgs);
 
-    totalBytesProgrammed += static_cast<uint32_t>(NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo));
+    totalBytesProgrammed += static_cast<uint32_t>(NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo));
 }
 
 template <typename GfxFamily>
@@ -402,7 +402,7 @@ void programSelfCleanupEndSection(void *&inputAddress,
                                              useAtomicsForSelfCleanup);
     }
 
-    //this synchronization point ensures that all tiles finished zeroing and will fairly access control section atomic variables
+    // this synchronization point ensures that all tiles finished zeroing and will fairly access control section atomic variables
     programTilesSynchronizationWithAtomics<GfxFamily>(inputAddress, totalBytesProgrammed, finalSyncTileCountAddress, 2 * tileCount);
 }
 
@@ -428,9 +428,9 @@ uint64_t computeControlSectionOffset(WalkerPartitionArgs &args) {
     uint64_t size = 0u;
 
     size += args.synchronizeBeforeExecution ? computeTilesSynchronizationWithAtomicsSectionSize<GfxFamily>() : 0;
-    size += sizeof(LOAD_REGISTER_IMM<GfxFamily>); //predication mask
-    size += sizeof(MI_ATOMIC<GfxFamily>);         //current id for partition
-    size += sizeof(LOAD_REGISTER_REG<GfxFamily>); //id into register
+    size += sizeof(LOAD_REGISTER_IMM<GfxFamily>); // predication mask
+    size += sizeof(MI_ATOMIC<GfxFamily>);         // current id for partition
+    size += sizeof(LOAD_REGISTER_REG<GfxFamily>); // id into register
     size += sizeof(MI_SET_PREDICATE<GfxFamily>) * 2 +
             sizeof(BATCH_BUFFER_START<GfxFamily>) * 2;
     size += (args.semaphoreProgrammingRequired ? sizeof(MI_SEMAPHORE_WAIT<GfxFamily>) * args.partitionCount : 0u);
@@ -537,10 +537,10 @@ void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
                                true,
                                MI_ATOMIC<GfxFamily>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT);
 
-    //move atomic result to wparid
+    // move atomic result to wparid
     programMiLoadRegisterReg<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, generalPurposeRegister4, wparidCCSOffset);
 
-    //enable predication basing on wparid value
+    // enable predication basing on wparid value
     programWparidPredication<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, true);
 
     programMiBatchBufferStart<GfxFamily>(currentBatchBufferPointer,
@@ -550,7 +550,7 @@ void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
                                          true,
                                          args.secondaryBatchBuffer);
 
-    //disable predication to not noop subsequent commands.
+    // disable predication to not noop subsequent commands.
     programWparidPredication<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, false);
 
     if (args.emitSelfCleanup) {
@@ -580,7 +580,7 @@ void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
         programMiLoadRegisterMem<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, args.workPartitionAllocationGpuVa, wparidCCSOffset);
     }
 
-    //this bb start goes to the end of partitioned command buffer
+    // this bb start goes to the end of partitioned command buffer
     programMiBatchBufferStart<GfxFamily>(
         currentBatchBufferPointer,
         totalBytesProgrammed,
@@ -588,7 +588,7 @@ void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
         false,
         args.secondaryBatchBuffer);
 
-    //Walker section
+    // Walker section
     programPartitionedWalker<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, args.partitionCount);
 
     programMiBatchBufferStart<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, gpuAddressOfAllocation, false, args.secondaryBatchBuffer);
@@ -755,7 +755,7 @@ uint64_t computeBarrierControlSectionOffset(WalkerPartitionArgs &args,
     }
 
     if (args.usePostSync) {
-        offset += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo);
+        offset += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo);
     } else {
         offset += sizeof(PIPE_CONTROL<GfxFamily>);
     }

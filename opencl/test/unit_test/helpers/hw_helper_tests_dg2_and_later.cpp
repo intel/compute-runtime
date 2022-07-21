@@ -31,9 +31,9 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenAddingPipeControlWAThenCorrectC
         LinearStream stream(buffer, 128);
         hardwareInfo.featureTable.flags.ftrLocalMemory = ftrLocalMemory;
 
-        MemorySynchronizationCommands<FamilyType>::addPipeControlWA(stream, address, hardwareInfo);
+        MemorySynchronizationCommands<FamilyType>::addBarrierWa(stream, address, hardwareInfo);
 
-        if (MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hardwareInfo) == false) {
+        if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(hardwareInfo) == false) {
             EXPECT_EQ(0u, stream.getUsed());
             continue;
         }
@@ -104,7 +104,7 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, givenRequestedCacheFlushesWhenProgr
     args.hdcPipelineFlush = true;
     args.unTypedDataPortCacheFlush = true;
     args.compressionControlSurfaceCcsFlush = true;
-    MemorySynchronizationCommands<FamilyType>::addPipeControl(stream, args);
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(stream, args);
 
     auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(buffer);
     EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControl));
@@ -121,7 +121,7 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, givenDebugVariableSetWhenProgrammin
     LinearStream stream(buffer, sizeof(buffer));
 
     PipeControlArgs args;
-    MemorySynchronizationCommands<FamilyType>::addPipeControl(stream, args);
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(stream, args);
 
     auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(buffer);
     EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControl));
@@ -141,7 +141,7 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, givenDebugDisableCacheFlushWhenProg
     args.hdcPipelineFlush = true;
     args.unTypedDataPortCacheFlush = true;
     args.compressionControlSurfaceCcsFlush = true;
-    MemorySynchronizationCommands<FamilyType>::addPipeControl(stream, args);
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(stream, args);
 
     auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(buffer);
     EXPECT_FALSE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControl));

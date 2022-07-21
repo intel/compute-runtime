@@ -77,7 +77,7 @@ HWTEST_TEMPLATED_F(DerivedTemplatedFixtureTests, whenExecutingTemplatedTestThenC
 struct TemplatedFixtureBaseTests : public ::testing::Test {
     template <typename T>
     void setUpT() {
-        capturedPipeControlWaRequiredInSetUp = MemorySynchronizationCommands<T>::isPipeControlWArequired(*defaultHwInfo);
+        capturedPipeControlWaRequiredInSetUp = MemorySynchronizationCommands<T>::isBarrierWaRequired(*defaultHwInfo);
     }
 
     template <typename T>
@@ -87,7 +87,7 @@ struct TemplatedFixtureBaseTests : public ::testing::Test {
 };
 
 HWTEST_TEMPLATED_F(TemplatedFixtureBaseTests, whenExecutingTemplatedSetupThenTemplateTargetsCorrectPlatform) {
-    bool capturedPipeControlWaRequiredInTestBody = MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(*defaultHwInfo);
+    bool capturedPipeControlWaRequiredInTestBody = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(*defaultHwInfo);
 
     EXPECT_EQ(capturedPipeControlWaRequiredInTestBody, capturedPipeControlWaRequiredInSetUp);
 }

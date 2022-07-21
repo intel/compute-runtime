@@ -248,9 +248,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPAndLater, WhenAddingPipeC
         LinearStream stream(buffer, 128);
         hardwareInfo.featureTable.flags.ftrLocalMemory = ftrLocalMemory;
 
-        MemorySynchronizationCommands<FamilyType>::addPipeControlWA(stream, address, hardwareInfo);
+        MemorySynchronizationCommands<FamilyType>::addBarrierWa(stream, address, hardwareInfo);
 
-        if (MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hardwareInfo) == false) {
+        if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(hardwareInfo) == false) {
             EXPECT_EQ(0u, stream.getUsed());
             continue;
         }
@@ -322,7 +322,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPAndLater, givenRequestedC
     PipeControlArgs args;
     args.hdcPipelineFlush = true;
     args.compressionControlSurfaceCcsFlush = true;
-    MemorySynchronizationCommands<FamilyType>::addPipeControl(stream, args);
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(stream, args);
 
     auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(buffer);
     EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControl));
@@ -338,7 +338,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPAndLater, givenDebugVaria
     LinearStream stream(buffer, sizeof(buffer));
 
     PipeControlArgs args;
-    MemorySynchronizationCommands<FamilyType>::addPipeControl(stream, args);
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(stream, args);
 
     auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(buffer);
     EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControl));
@@ -356,7 +356,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPAndLater, givenDebugDisab
     PipeControlArgs args;
     args.hdcPipelineFlush = true;
     args.compressionControlSurfaceCcsFlush = true;
-    MemorySynchronizationCommands<FamilyType>::addPipeControl(stream, args);
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(stream, args);
 
     auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(buffer);
     EXPECT_FALSE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControl));
@@ -379,7 +379,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, WhenIsPipeControlWArequir
         hwInfo.featureTable.flags.ftrLocalMemory = ftrLocalMemory;
 
         EXPECT_EQ(UnitTestHelper<FamilyType>::isPipeControlWArequired(hwInfo),
-                  MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hwInfo));
+                  MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(hwInfo));
     }
 }
 
@@ -432,9 +432,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPAndLater, givenPostSyncPi
     PipeControlArgs args;
     args.workloadPartitionOffset = true;
 
-    MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(
+    MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
         stream,
-        POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+        PostSyncMode::ImmediateData,
         gpuAddress,
         data,
         hardwareInfo,

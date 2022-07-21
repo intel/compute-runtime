@@ -43,7 +43,9 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
     UNRECOVERABLE_IF(properties.threadArbitrationPolicy.value == ThreadArbitrationPolicy::NotPresent);
 
     if (properties.threadArbitrationPolicy.isDirty) {
-        MemorySynchronizationCommands<Family>::addPipeControlWithCSStallOnly(csr);
+        PipeControlArgs args;
+        args.csStallOnly = true;
+        MemorySynchronizationCommands<Family>::addSingleBarrier(csr, args);
 
         LriHelper<SKLFamily>::program(&csr,
                                       DebugControlReg2::address,

@@ -210,7 +210,7 @@ void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&
 }
 
 template <>
-bool MemorySynchronizationCommands<Family>::isPipeControlWArequired(const HardwareInfo &hwInfo) {
+bool MemorySynchronizationCommands<Family>::isBarrierWaRequired(const HardwareInfo &hwInfo) {
     if (DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.get() == 1) {
         return true;
     }

@@ -60,7 +60,7 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
 
         PipeControlArgs args = {};
         args.stateCacheInvalidationEnable = true;
-        MemorySynchronizationCommands<Family>::addPipeControl(*pCommandStream, args);
+        MemorySynchronizationCommands<Family>::addSingleBarrier(*pCommandStream, args);
     }
 
     auto pCmd = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
@@ -81,7 +81,7 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
     if (DebugManager.flags.CleanStateInPreamble.get()) {
         PipeControlArgs args = {};
         args.stateCacheInvalidationEnable = true;
-        MemorySynchronizationCommands<Family>::addPipeControl(*pCommandStream, args);
+        MemorySynchronizationCommands<Family>::addSingleBarrier(*pCommandStream, args);
     }
 }
 

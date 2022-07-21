@@ -168,7 +168,7 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingPostSyncC
                                                                   false,
                                                                   true);
     } else {
-        return MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(peekHwInfo());
+        return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekHwInfo());
     }
 }
 
@@ -186,7 +186,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingNoPostSyncCommand
                                                                     false,
                                                                     false);
     } else {
-        MemorySynchronizationCommands<GfxFamily>::addPipeControl(cmdStream, args);
+        MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(cmdStream, args);
     }
 }
 
@@ -208,9 +208,9 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingPostSyncCommandsF
                                                                     false);
         tagNode.setPacketsUsed(this->activePartitions);
     } else {
-        MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+        MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
             cmdStream,
-            PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+            PostSyncMode::ImmediateData,
             barrierTimestampPacketGpuAddress,
             0,
             hwInfo,

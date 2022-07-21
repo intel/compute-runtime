@@ -45,7 +45,7 @@ uint32_t HwHelperHw<Family>::getDefaultRevisionId(const HardwareInfo &hwInfo) co
 }
 
 template <>
-bool MemorySynchronizationCommands<Family>::isPipeControlWArequired(const HardwareInfo &hwInfo) { return true; }
+bool MemorySynchronizationCommands<Family>::isBarrierWaRequired(const HardwareInfo &hwInfo) { return true; }
 
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;

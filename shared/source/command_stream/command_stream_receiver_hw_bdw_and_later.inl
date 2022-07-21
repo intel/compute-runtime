@@ -26,7 +26,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programL3(LinearStream &csr, uin
         PipeControlArgs args = {};
         args.dcFlushEnable = true;
         setClearSlmWorkAroundParameter(args);
-        MemorySynchronizationCommands<GfxFamily>::addPipeControl(csr, args);
+        MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(csr, args);
 
         PreambleHelper<GfxFamily>::programL3(&csr, newL3Config);
         this->lastSentL3Config = newL3Config;
@@ -141,13 +141,13 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingNoPostSyn
 
 template <typename GfxFamily>
 inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingPostSyncCommands() const {
-    return MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(peekHwInfo());
+    return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekHwInfo());
 }
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programStallingNoPostSyncCommandsForBarrier(LinearStream &cmdStream) {
     PipeControlArgs args;
-    MemorySynchronizationCommands<GfxFamily>::addPipeControl(cmdStream, args);
+    MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(cmdStream, args);
 }
 
 template <typename GfxFamily>
@@ -156,9 +156,9 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingPostSyncCommandsF
     const auto &hwInfo = peekHwInfo();
     PipeControlArgs args;
     args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
-    MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+    MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         cmdStream,
-        PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+        PostSyncMode::ImmediateData,
         barrierTimestampPacketGpuAddress,
         0,
         hwInfo,

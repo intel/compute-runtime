@@ -232,9 +232,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         args.tlbInvalidation |= dispatchFlags.memoryMigrationRequired;
         args.textureCacheInvalidationEnable |= dispatchFlags.textureCacheFlush;
         args.workloadPartitionOffset = isMultiTileOperationEnabled();
-        MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+        MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
             commandStreamTask,
-            PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+            PostSyncMode::ImmediateData,
             address,
             taskCount + 1,
             hwInfo,
@@ -461,7 +461,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         if (this->samplerCacheFlushRequired != SamplerCacheFlushState::samplerCacheFlushNotRequired) {
             PipeControlArgs args;
             args.textureCacheInvalidationEnable = true;
-            MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStreamCSR, args);
+            MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(commandStreamCSR, args);
             if (this->samplerCacheFlushRequired == SamplerCacheFlushState::samplerCacheFlushBefore) {
                 this->samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushAfter;
             } else {
@@ -478,7 +478,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (requiresInstructionCacheFlush) {
         PipeControlArgs args;
         args.instructionCacheInvalidateEnable = true;
-        MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStreamCSR, args);
+        MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(commandStreamCSR, args);
         requiresInstructionCacheFlush = false;
     }
 
@@ -492,7 +492,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
         if (programPipeControl) {
             PipeControlArgs args;
-            MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStreamCSR, args);
+            MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(commandStreamCSR, args);
         }
         this->taskLevel = taskLevel;
         DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "this->taskCount", peekTaskCount());
@@ -663,8 +663,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::forcePipeControl(NEO::LinearStream &commandStreamCSR) {
     PipeControlArgs args;
-    MemorySynchronizationCommands<GfxFamily>::addPipeControlWithCSStallOnly(commandStreamCSR);
-    MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStreamCSR, args);
+    args.csStallOnly = true;
+    MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(commandStreamCSR, args);
+
+    args.csStallOnly = false;
+    MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(commandStreamCSR, args);
 }
 
 template <typename GfxFamily>
@@ -707,7 +710,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
         ResidencyContainer surfacesForSubmit;
         ResourcePackage resourcePackage;
         const auto &hwInfo = peekHwInfo();
-        auto pipeControlLocationSize = MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo);
+        auto pipeControlLocationSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo);
         void *currentPipeControlForNooping = nullptr;
         void *epiloguePipeControlLocation = nullptr;
 
@@ -781,9 +784,9 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
                     lastPipeControlArgs.dcFlushEnable = false;
                 }
 
-                MemorySynchronizationCommands<GfxFamily>::setPipeControlAndProgramPostSyncOperation(
+                MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(
                     epiloguePipeControlLocation,
-                    PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+                    PostSyncMode::ImmediateData,
                     getTagAllocation()->getGpuAddress(),
                     lastTaskCount,
                     hwInfo,
@@ -832,7 +835,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     if (!this->isStateSipSent || device.getDebugger()) {
         size += PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(device, isRcs());
     }
-    size += MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl();
+    size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
     size += sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);
 
     size += getCmdSizeForL3Config();
@@ -1201,24 +1204,22 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW() {
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::flushPipeControl() {
-    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-
     auto lock = obtainUniqueOwnership();
 
     const auto &hwInfo = peekHwInfo();
-    auto &commandStream = getCS(MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo));
+    auto &commandStream = getCS(MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo));
     auto commandStreamStart = commandStream.getUsed();
 
     PipeControlArgs args;
     args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
     args.notifyEnable = isUsedNotifyEnableForPostSync();
     args.workloadPartitionOffset = isMultiTileOperationEnabled();
-    MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(commandStream,
-                                                                                        PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-                                                                                        getTagAllocation()->getGpuAddress(),
-                                                                                        taskCount + 1,
-                                                                                        hwInfo,
-                                                                                        args);
+    MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(commandStream,
+                                                                              PostSyncMode::ImmediateData,
+                                                                              getTagAllocation()->getGpuAddress(),
+                                                                              taskCount + 1,
+                                                                              hwInfo,
+                                                                              args);
 
     makeResident(*tagAllocation);
 

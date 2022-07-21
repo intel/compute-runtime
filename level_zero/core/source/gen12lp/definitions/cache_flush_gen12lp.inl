@@ -22,8 +22,7 @@ void CommandListCoreFamily<gfxCoreFamily>::applyMemoryRangesBarrier(uint32_t num
     if (!supportL3Control) {
         NEO::PipeControlArgs args;
         args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
-        NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(),
-                                                                      args);
+        NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
     } else {
         NEO::LinearStream *commandStream = commandContainer.getCommandStream();
         NEO::SVMAllocsManager *svmAllocsManager =

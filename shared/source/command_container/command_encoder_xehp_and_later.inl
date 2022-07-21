@@ -211,7 +211,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
 
         PipeControlArgs syncArgs;
         syncArgs.dcFlushEnable = MemorySynchronizationCommands<Family>::getDcFlushEnable(true, hwInfo);
-        MemorySynchronizationCommands<Family>::addPipeControl(*container.getCommandStream(), syncArgs);
+        MemorySynchronizationCommands<Family>::addSingleBarrier(*container.getCommandStream(), syncArgs);
         STATE_BASE_ADDRESS sbaCmd;
         auto gmmHelper = container.getDevice()->getGmmHelper();
         uint32_t statelessMocsIndex =
@@ -701,7 +701,7 @@ inline void EncodeWA<Family>::addPipeControlPriorToNonPipelinedStateCommand(Line
         NEO::EncodeWA<Family>::setAdditionalPipeControlFlagsForNonPipelineStateCommand(args);
     }
 
-    MemorySynchronizationCommands<Family>::addPipeControl(commandStream, args);
+    MemorySynchronizationCommands<Family>::addSingleBarrier(commandStream, args);
 }
 
 template <typename Family>

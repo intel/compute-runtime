@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1153,7 +1153,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    size_t expectedSize = MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(testHardwareInfo) +
+    size_t expectedSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(testHardwareInfo) +
                           sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
                           sizeof(MI_BATCH_BUFFER_START) +
                           sizeof(WalkerPartition::BarrierControlSection);
@@ -1187,7 +1187,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
         expectedSemaphores++;
     }
 
-    if (MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(testHardwareInfo)) {
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(testHardwareInfo)) {
         expectedPipeControls++;
         if (semaphoreAsAdditionalSync) {
             expectedSemaphores++;
@@ -1230,7 +1230,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     size_t expectedSize = sizeof(MI_STORE_DATA_IMM) +
-                          MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(testHardwareInfo) +
+                          MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(testHardwareInfo) +
                           sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
                           sizeof(MI_BATCH_BUFFER_START) +
                           sizeof(WalkerPartition::BarrierControlSection) +
@@ -1269,7 +1269,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     if (semaphoreAsAdditionalSync) {
         expectedSemaphores++;
     }
-    if (MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(testHardwareInfo)) {
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(testHardwareInfo)) {
         expectedPipeControls++;
         if (semaphoreAsAdditionalSync) {
             expectedSemaphores++;
@@ -1314,7 +1314,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     testHardwareInfo.featureTable.flags.ftrLocalMemory = true;
 
     size_t expectedSize = sizeof(MI_ATOMIC) +
-                          MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(testHardwareInfo) +
+                          MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(testHardwareInfo) +
                           sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
                           sizeof(MI_BATCH_BUFFER_START) +
                           sizeof(WalkerPartition::BarrierControlSection) +
@@ -1350,7 +1350,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     if (semaphoreAsAdditionalSync) {
         expectedSemaphores++;
     }
-    if (MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(testHardwareInfo)) {
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(testHardwareInfo)) {
         expectedPipeControls++;
         if (semaphoreAsAdditionalSync) {
             expectedSemaphores++;

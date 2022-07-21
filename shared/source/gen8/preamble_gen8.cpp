@@ -17,7 +17,7 @@ template <>
 void PreambleHelper<Family>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, EngineGroupType engineGroupType) {
     PipeControlArgs args = {};
     args.dcFlushEnable = true;
-    MemorySynchronizationCommands<Family>::addPipeControl(*pCommandStream, args);
+    MemorySynchronizationCommands<Family>::addSingleBarrier(*pCommandStream, args);
 }
 
 template <>

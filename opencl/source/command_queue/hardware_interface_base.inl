@@ -283,15 +283,12 @@ inline void HardwareInterface<GfxFamily>::dispatchDebugPauseCommands(
     if (!commandQueue.isSpecial()) {
         auto address = commandQueue.getGpgpuCommandStreamReceiver().getDebugPauseStateGPUAddress();
         {
-            using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-            using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
-
             const auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
             PipeControlArgs args;
             args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
-            MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+            MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
                 *commandStream,
-                POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+                PostSyncMode::ImmediateData,
                 address,
                 static_cast<uint64_t>(confirmationTrigger),
                 hwInfo,

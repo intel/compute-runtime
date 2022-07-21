@@ -168,12 +168,12 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabledWhe
     HardwareInfo hardwareInfo = *defaultHwInfo;
 
     hardwareInfo.featureTable.flags.ftrLocalMemory = true;
-    EXPECT_TRUE(MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hardwareInfo));
+    EXPECT_TRUE(MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(hardwareInfo));
 
     constexpr size_t bufferSize = 128u;
     uint8_t buffer[bufferSize];
     LinearStream cmdStream(buffer, bufferSize);
-    MemorySynchronizationCommands<FamilyType>::addPipeControlWA(cmdStream, 0x1000, hardwareInfo);
+    MemorySynchronizationCommands<FamilyType>::addBarrierWa(cmdStream, 0x1000, hardwareInfo);
     EXPECT_EQ(sizeof(PIPE_CONTROL), cmdStream.getUsed());
 }
 
@@ -184,12 +184,12 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabledWhe
     HardwareInfo hardwareInfo = *defaultHwInfo;
 
     hardwareInfo.featureTable.flags.ftrLocalMemory = false;
-    EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hardwareInfo));
+    EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(hardwareInfo));
 
     constexpr size_t bufferSize = 128u;
     uint8_t buffer[bufferSize];
     LinearStream cmdStream(buffer, bufferSize);
-    MemorySynchronizationCommands<FamilyType>::addPipeControlWA(cmdStream, 0x1000, hardwareInfo);
+    MemorySynchronizationCommands<FamilyType>::addBarrierWa(cmdStream, 0x1000, hardwareInfo);
     EXPECT_EQ(0u, cmdStream.getUsed());
 }
 
@@ -201,7 +201,6 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenXeHpgCoreWhenCheckingIfEngineTypeR
 XE_HPG_CORETEST_F(HwHelperTestXeHpgCore,
                   givenDebugFlagAndLocalMemoryIsNotAvailableWhenProgrammingPostSyncPipeControlThenExpectNotAddingWaPipeControl) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 
     DebugManagerStateRestore restore;
     DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
@@ -216,12 +215,12 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore,
     PipeControlArgs args;
     uint64_t gpuAddress = 0xABC0;
     uint64_t immediateValue = 0x10;
-    MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(cmdStream,
-                                                                                         POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-                                                                                         gpuAddress,
-                                                                                         immediateValue,
-                                                                                         hardwareInfo,
-                                                                                         args);
+    MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(cmdStream,
+                                                                               PostSyncMode::ImmediateData,
+                                                                               gpuAddress,
+                                                                               immediateValue,
+                                                                               hardwareInfo,
+                                                                               args);
     EXPECT_EQ(sizeof(PIPE_CONTROL), cmdStream.getUsed());
 
     HardwareParse hwParser;
@@ -239,7 +238,6 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore,
 XE_HPG_CORETEST_F(HwHelperTestXeHpgCore,
                   givenDebugFlagAndLocalMemoryIsAvailableWhenProgrammingPostSyncPipeControlThenExpectAddingWaPipeControl) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 
     DebugManagerStateRestore restore;
     DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
@@ -254,12 +252,12 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore,
     PipeControlArgs args;
     uint64_t gpuAddress = 0xABC0;
     uint64_t immediateValue = 0x10;
-    MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(cmdStream,
-                                                                                         POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-                                                                                         gpuAddress,
-                                                                                         immediateValue,
-                                                                                         hardwareInfo,
-                                                                                         args);
+    MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(cmdStream,
+                                                                               PostSyncMode::ImmediateData,
+                                                                               gpuAddress,
+                                                                               immediateValue,
+                                                                               hardwareInfo,
+                                                                               args);
     EXPECT_EQ(sizeof(PIPE_CONTROL) * 2, cmdStream.getUsed());
 
     HardwareParse hwParser;

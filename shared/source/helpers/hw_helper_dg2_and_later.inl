@@ -12,7 +12,9 @@
 namespace NEO {
 
 template <typename GfxFamily>
-inline void MemorySynchronizationCommands<GfxFamily>::setPipeControlExtraProperties(PIPE_CONTROL &pipeControl, PipeControlArgs &args) {
+inline void MemorySynchronizationCommands<GfxFamily>::setBarrierExtraProperties(void *barrierCmd, PipeControlArgs &args) {
+    auto &pipeControl = *reinterpret_cast<typename GfxFamily::PIPE_CONTROL *>(barrierCmd);
+
     pipeControl.setHdcPipelineFlush(args.hdcPipelineFlush);
     pipeControl.setUnTypedDataPortCacheFlush(args.unTypedDataPortCacheFlush);
     pipeControl.setCompressionControlSurfaceCcsFlush(args.compressionControlSurfaceCcsFlush);
@@ -46,7 +48,9 @@ inline void MemorySynchronizationCommands<GfxFamily>::setCacheFlushExtraProperti
 }
 
 template <typename GfxFamily>
-void MemorySynchronizationCommands<GfxFamily>::setPipeControlWAFlags(PIPE_CONTROL &pipeControl) {
+void MemorySynchronizationCommands<GfxFamily>::setBarrierWaFlags(void *barrierCmd) {
+    auto &pipeControl = *reinterpret_cast<typename GfxFamily::PIPE_CONTROL *>(barrierCmd);
+
     pipeControl.setCommandStreamerStallEnable(true);
     pipeControl.setHdcPipelineFlush(true);
     pipeControl.setUnTypedDataPortCacheFlush(true);

@@ -139,7 +139,7 @@ struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> 
 
         uint8_t buffer[256];
         LinearStream stream(buffer, 256);
-        MemorySynchronizationCommands<FamilyType>::addPipeControlWA(stream, 0ull, hwInfo);
+        MemorySynchronizationCommands<FamilyType>::addBarrierWa(stream, 0ull, hwInfo);
         void *syncPipeControlAddress = reinterpret_cast<void *>(reinterpret_cast<size_t>(startAddress) + stream.getUsed());
         PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(syncPipeControlAddress);
         return pipeControl;
@@ -313,8 +313,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, whenPartitionCountSetTo
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, whenPipeControlIsBeingEmittedWithPartitionBitSetThenMultipleFieldsAreBeingUpdatedWithValue) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
     auto writeAddress = helperSurface->getGpuAddress();
     auto partitionId = 1u;
     auto writeSize = 8u;
@@ -331,8 +329,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, whenPipeControlIsBeingE
 
     void *pipeControlAddress = taskStream->getSpace(0);
     PipeControlArgs args;
-    MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(
-        *taskStream, FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+    MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
+        *taskStream, PostSyncMode::ImmediateData,
         writeAddress, writeValue, device->getHardwareInfo(), args);
 
     auto pipeControl = retrieveSyncPipeControl<FamilyType>(pipeControlAddress, device->getHardwareInfo());
@@ -394,8 +392,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenVariousCompareMode
     //this pipe control should be executed
     void *pipeControlAddress = taskStream->getSpace(0);
     PipeControlArgs args;
-    MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(
-        *taskStream, FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+    MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
+        *taskStream, PostSyncMode::ImmediateData,
         writeAddress, writeValue, device->getHardwareInfo(), args);
 
     auto pipeControl = retrieveSyncPipeControl<FamilyType>(pipeControlAddress, device->getHardwareInfo());
@@ -687,8 +685,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithNesting, givenConditionalBa
 
     //this pipe control should be executed
     PipeControlArgs args;
-    MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(
-        *secondLevelBatchStream, FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+    MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
+        *secondLevelBatchStream, PostSyncMode::ImmediateData,
         writeAddress, writeValue, device->getHardwareInfo(), args);
 
     conditionalBatchBufferEnd = reinterpret_cast<CONDITIONAL_BATCH_BUFFER_END *>(secondLevelBatchStream->getSpace(sizeof(CONDITIONAL_BATCH_BUFFER_END)));
@@ -699,8 +697,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithNesting, givenConditionalBa
 
     writeAddress += sizeof(uint64_t);
     writeValue++;
-    MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(
-        *taskStream, FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+    MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
+        *taskStream, PostSyncMode::ImmediateData,
         writeAddress, writeValue, device->getHardwareInfo(), args);
 
     csr->makeResident(*secondLevelBatch);
@@ -747,8 +745,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithNesting, givenConditionalBa
 
     //this pipe control should NOT be executed
     PipeControlArgs args;
-    MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(
-        *secondLevelBatchStream, FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+    MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
+        *secondLevelBatchStream, PostSyncMode::ImmediateData,
         writeAddress, writeValue, device->getHardwareInfo(), args);
 
     conditionalBatchBufferEnd = reinterpret_cast<CONDITIONAL_BATCH_BUFFER_END *>(secondLevelBatchStream->getSpace(sizeof(CONDITIONAL_BATCH_BUFFER_END)));
@@ -759,8 +757,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithNesting, givenConditionalBa
 
     writeAddress += sizeof(uint64_t);
     writeValue++;
-    MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(
-        *taskStream, FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+    MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
+        *taskStream, PostSyncMode::ImmediateData,
         writeAddress, writeValue, device->getHardwareInfo(), args);
 
     csr->makeResident(*secondLevelBatch);
@@ -792,8 +790,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithNesting, givenCommandBuffer
 
     //this pipe control should be executed
     PipeControlArgs args;
-    MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(
-        *secondLevelBatchStream, FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+    MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
+        *secondLevelBatchStream, PostSyncMode::ImmediateData,
         writeAddress, writeValue, device->getHardwareInfo(), args);
 
     auto batchBufferEnd = reinterpret_cast<BATCH_BUFFER_END *>(secondLevelBatchStream->getSpace(sizeof(BATCH_BUFFER_END)));
@@ -836,8 +834,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithoutNesting, givenConditiona
 
     //this pipe control should't be executed
     PipeControlArgs args;
-    MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(
-        *secondLevelBatchStream, FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+    MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
+        *secondLevelBatchStream, PostSyncMode::ImmediateData,
         writeAddress, writeValue, device->getHardwareInfo(), args);
 
     conditionalBatchBufferEnd = reinterpret_cast<CONDITIONAL_BATCH_BUFFER_END *>(secondLevelBatchStream->getSpace(sizeof(CONDITIONAL_BATCH_BUFFER_END)));
@@ -849,8 +847,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithoutNesting, givenConditiona
     writeAddress += sizeof(uint64_t);
     writeValue++;
     //and this shouldn't as well, we returned to ring
-    MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(
-        *taskStream, FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+    MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
+        *taskStream, PostSyncMode::ImmediateData,
         writeAddress, writeValue, device->getHardwareInfo(), args);
 
     csr->makeResident(*secondLevelBatch);
@@ -896,8 +894,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithoutNesting, givenConditiona
 
     //this pipe control should't be executed
     PipeControlArgs args;
-    MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(
-        *secondLevelBatchStream, FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+    MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
+        *secondLevelBatchStream, PostSyncMode::ImmediateData,
         writeAddress, writeValue, device->getHardwareInfo(), args);
 
     conditionalBatchBufferEnd = reinterpret_cast<CONDITIONAL_BATCH_BUFFER_END *>(secondLevelBatchStream->getSpace(sizeof(CONDITIONAL_BATCH_BUFFER_END)));
@@ -909,8 +907,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithoutNesting, givenConditiona
     writeAddress += sizeof(uint64_t);
     writeValue++;
     //and this should , we returned to primary batch
-    MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(
-        *taskStream, FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+    MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
+        *taskStream, PostSyncMode::ImmediateData,
         writeAddress, writeValue, device->getHardwareInfo(), args);
 
     csr->makeResident(*secondLevelBatch);
@@ -1035,8 +1033,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenGeneralPurposeRegi
     //this command must not execute
     taskStream->getSpace(totalBytesProgrammed);
     PipeControlArgs args;
-    MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(
-        *taskStream, FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+    MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
+        *taskStream, PostSyncMode::ImmediateData,
         writeAddress, writeValue, device->getHardwareInfo(), args);
 
     streamCpuPointer = taskStream->getSpace(0);
@@ -1067,8 +1065,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenPredicationWhenItI
         taskStream->getSpace(totalBytesProgrammed);
         //emit pipe control
         PipeControlArgs args;
-        MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(
-            *taskStream, FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+        MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
+            *taskStream, PostSyncMode::ImmediateData,
             writeAddress, writeValue, device->getHardwareInfo(), args);
 
         //turn off predication
@@ -1120,8 +1118,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenPredicationWhenItI
         //emit pipe control
         void *pipeControlAddress = taskStream->getSpace(0);
         PipeControlArgs args;
-        MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(
-            *taskStream, FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+        MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
+            *taskStream, PostSyncMode::ImmediateData,
             writeAddress, writeValue, device->getHardwareInfo(), args);
 
         auto pipeControl = retrieveSyncPipeControl<FamilyType>(pipeControlAddress, device->getHardwareInfo());

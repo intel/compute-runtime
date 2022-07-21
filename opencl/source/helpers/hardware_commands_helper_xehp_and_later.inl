@@ -167,7 +167,7 @@ void HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(Line
     auto &hardwareInfo = commandQueue.getDevice().getHardwareInfo();
     args.unTypedDataPortCacheFlush = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily).unTypedDataPortCacheFlushRequired();
 
-    MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandStream, args);
+    MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandStream, args);
 
     // 2. flush all affected L3 lines
     if constexpr (GfxFamily::isUsingL3Control) {

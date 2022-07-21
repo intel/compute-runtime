@@ -66,9 +66,9 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
 
     uint64_t address = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketNode);
     PipeControlArgs args;
-    MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+    MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         *cmdStream,
-        PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+        PostSyncMode::ImmediateData,
         address,
         0,
         *rootDeviceEnvironment.getHardwareInfo(),
@@ -80,7 +80,7 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
 template <typename GfxFamily>
 size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel, const DispatchInfo &dispatchInfo) {
     size_t size = sizeof(typename GfxFamily::GPGPU_WALKER) + HardwareCommandsHelper<GfxFamily>::getSizeRequiredCS() +
-                  sizeof(PIPE_CONTROL) * (MemorySynchronizationCommands<GfxFamily>::isPipeControlWArequired(commandQueue.getDevice().getHardwareInfo()) ? 2 : 1);
+                  sizeof(PIPE_CONTROL) * (MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(commandQueue.getDevice().getHardwareInfo()) ? 2 : 1);
     size += HardwareCommandsHelper<GfxFamily>::getSizeRequiredForCacheFlush(commandQueue, pKernel, 0U);
     size += PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(commandQueue.getDevice());
     if (reserveProfilingCmdsSpace) {
@@ -112,9 +112,9 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
     // PIPE_CONTROL for global timestamp
     uint64_t timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, GlobalStartTS);
     PipeControlArgs args;
-    MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+    MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         *commandStream,
-        PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP,
+        PostSyncMode::Timestamp,
         timeStampAddress,
         0llu,
         hwInfo,
@@ -144,9 +144,9 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
     // PIPE_CONTROL for global timestamp
     uint64_t timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, GlobalEndTS);
     PipeControlArgs args;
-    MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+    MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         *commandStream,
-        PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP,
+        PostSyncMode::Timestamp,
         timeStampAddress,
         0llu,
         hwInfo,

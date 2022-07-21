@@ -341,7 +341,7 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
                                   sizeof(MI_STORE_DATA_IMM) +
                                   sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT);
 
-    size_t postSyncSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(device->getHwInfo());
+    size_t postSyncSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(device->getHwInfo());
 
     auto useSizeBefore = cmdListStream->getUsed();
     auto result = commandList->appendBarrier(eventHandle, 0, nullptr);
@@ -450,7 +450,7 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
     size_t timestampRegisters = 2 * (sizeof(MI_LOAD_REGISTER_REG) + sizeof(MI_LOAD_REGISTER_IMM) +
                                      NEO::EncodeMath<FamilyType>::streamCommandSize + sizeof(MI_STORE_REGISTER_MEM));
 
-    size_t postBarrierSynchronization = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSinglePipeControl() +
+    size_t postBarrierSynchronization = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier() +
                                         NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(device->getHwInfo());
     size_t stopRegisters = timestampRegisters + postBarrierSynchronization;
 

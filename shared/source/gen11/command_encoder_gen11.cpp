@@ -51,7 +51,9 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
     using PIPE_CONTROL = typename Family::PIPE_CONTROL;
 
     if (properties.threadArbitrationPolicy.isDirty) {
-        MemorySynchronizationCommands<Family>::addPipeControlWithCSStallOnly(csr);
+        PipeControlArgs args;
+        args.csStallOnly = true;
+        MemorySynchronizationCommands<Family>::addSingleBarrier(csr, args);
 
         LriHelper<Family>::program(&csr,
                                    RowChickenReg4::address,

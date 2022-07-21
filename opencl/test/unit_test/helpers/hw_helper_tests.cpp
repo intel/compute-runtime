@@ -297,9 +297,9 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteTimestampModeWhenHelperIsUsed
     HardwareInfo hardwareInfo = *defaultHwInfo;
 
     PipeControlArgs args;
-    MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(
-        stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, address, immediateData, hardwareInfo, args);
-    auto additionalPcSize = MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(hardwareInfo) - sizeof(PIPE_CONTROL);
+    MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
+        stream, PostSyncMode::Timestamp, address, immediateData, hardwareInfo, args);
+    auto additionalPcSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(hardwareInfo) - sizeof(PIPE_CONTROL);
     auto pipeControlLocationSize = additionalPcSize - MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(hardwareInfo);
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(ptrOffset(stream.getCpuBase(), pipeControlLocationSize));
     ASSERT_NE(nullptr, pipeControl);
@@ -321,7 +321,7 @@ HWTEST_F(PipeControlHelperTests, givenDcFlushNotAllowedWhenProgrammingPipeContro
     PipeControlArgs args;
     args.dcFlushEnable = true;
 
-    MemorySynchronizationCommands<FamilyType>::addPipeControl(stream, args);
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(stream, args);
 
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(stream.getCpuBase());
     ASSERT_NE(nullptr, pipeControl);
@@ -346,9 +346,9 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteImmediateDataModeWhenHelperIs
     HardwareInfo hardwareInfo = *defaultHwInfo;
 
     PipeControlArgs args;
-    MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(
-        stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, immediateData, hardwareInfo, args);
-    auto additionalPcSize = MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(hardwareInfo) - sizeof(PIPE_CONTROL);
+    MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
+        stream, PostSyncMode::ImmediateData, address, immediateData, hardwareInfo, args);
+    auto additionalPcSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(hardwareInfo) - sizeof(PIPE_CONTROL);
     auto pipeControlLocationSize = additionalPcSize - MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(hardwareInfo);
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(ptrOffset(stream.getCpuBase(), pipeControlLocationSize));
     ASSERT_NE(nullptr, pipeControl);
@@ -376,9 +376,9 @@ HWTEST_F(PipeControlHelperTests, givenNotifyEnableArgumentIsTrueWhenHelperIsUsed
 
     PipeControlArgs args;
     args.notifyEnable = true;
-    MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(
-        stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, immediateData, hardwareInfo, args);
-    auto additionalPcSize = MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(hardwareInfo) - sizeof(PIPE_CONTROL);
+    MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
+        stream, PostSyncMode::ImmediateData, address, immediateData, hardwareInfo, args);
+    auto additionalPcSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(hardwareInfo) - sizeof(PIPE_CONTROL);
     auto pipeControlLocationSize = additionalPcSize - MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(hardwareInfo);
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(ptrOffset(stream.getCpuBase(), pipeControlLocationSize));
     ASSERT_NE(nullptr, pipeControl);
@@ -402,8 +402,8 @@ HWTEST_F(PipeControlHelperTests, WhenPipeControlPostSyncTimestampUsedThenCorrect
     uint64_t immediateData = 0x0;
 
     PipeControlArgs args;
-    MemorySynchronizationCommands<FamilyType>::addPipeControlWithPostSync(
-        stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, address, immediateData, args);
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(
+        stream, PostSyncMode::Timestamp, address, immediateData, args);
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(stream.getCpuBase());
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_EQ(address, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
@@ -420,8 +420,8 @@ HWTEST_F(PipeControlHelperTests, WhenPipeControlPostSyncWriteImmediateDataUsedTh
     uint64_t immediateData = 0x1234;
 
     PipeControlArgs args;
-    MemorySynchronizationCommands<FamilyType>::addPipeControlWithPostSync(
-        stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, immediateData, args);
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(
+        stream, PostSyncMode::ImmediateData, address, immediateData, args);
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(stream.getCpuBase());
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_EQ(address, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));

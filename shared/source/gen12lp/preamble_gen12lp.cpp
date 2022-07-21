@@ -38,10 +38,10 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
 
     using PIPELINE_SELECT = typename Family::PIPELINE_SELECT;
 
-    if (MemorySynchronizationCommands<Family>::isPipeControlPriorToPipelineSelectWArequired(hwInfo)) {
+    if (MemorySynchronizationCommands<Family>::isBarrierlPriorToPipelineSelectWaRequired(hwInfo)) {
         PipeControlArgs args;
         args.renderTargetCacheFlushEnable = true;
-        MemorySynchronizationCommands<Family>::addPipeControl(*pCommandStream, args);
+        MemorySynchronizationCommands<Family>::addSingleBarrier(*pCommandStream, args);
     }
 
     auto pCmd = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
@@ -71,7 +71,7 @@ void PreambleHelper<Family>::addPipeControlBeforeVfeCmd(LinearStream *pCommandSt
         args.dcFlushEnable = true;
     }
 
-    MemorySynchronizationCommands<Family>::addPipeControl(*pCommandStream, args);
+    MemorySynchronizationCommands<Family>::addSingleBarrier(*pCommandStream, args);
 }
 
 template <>

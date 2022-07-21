@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,12 +82,12 @@ class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder
     static void dispatchPipeControl(LinearStream &linearStream, TimestampPacketDependencies *, const HardwareInfo &hwInfo) {
         PipeControlArgs args;
         args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(dcFlush, hwInfo);
-        MemorySynchronizationCommands<GfxFamily>::addPipeControl(linearStream, args);
+        MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(linearStream, args);
     }
 
     template <typename GfxFamily>
     static size_t getSizeForSinglePipeControl(size_t, const HardwareInfo &, bool) {
-        return MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl();
+        return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
     }
 
     template <typename GfxFamily>

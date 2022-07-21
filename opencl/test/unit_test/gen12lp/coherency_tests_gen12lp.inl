@@ -244,7 +244,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenCoherencyRequirementWithoutShar
     auto hwInfo = device->getHardwareInfo();
 
     flushTask(false);
-    if (MemorySynchronizationCommands<FamilyType>::isPipeControlPriorToPipelineSelectWArequired(hwInfo)) {
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierlPriorToPipelineSelectWaRequired(hwInfo)) {
         findCmd(true, false, true); // first time
     } else {
         findCmd(true, false, false); // first time
