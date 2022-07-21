@@ -147,15 +147,15 @@ void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::HeapContainer &sshHe
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint64_t scratchAddress) {
     using CFE_STATE = typename GfxFamily::CFE_STATE;
-
-    uint32_t lowScratchAddress = uint32_t(0xFFFFFFFF & scratchAddress);
-
-    CFE_STATE *cfeStateCmd = nullptr;
+    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
+    using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
     auto &commandsToPatch = commandList.getCommandsToPatch();
     for (auto &commandToPatch : commandsToPatch) {
         switch (commandToPatch.type) {
-        case CommandList::CommandToPatch::FrontEndState:
+        case CommandList::CommandToPatch::FrontEndState: {
+            uint32_t lowScratchAddress = uint32_t(0xFFFFFFFF & scratchAddress);
+            CFE_STATE *cfeStateCmd = nullptr;
             cfeStateCmd = reinterpret_cast<CFE_STATE *>(commandToPatch.pCommand);
 
             cfeStateCmd->setScratchSpaceBuffer(lowScratchAddress);
@@ -163,6 +163,55 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
 
             *reinterpret_cast<CFE_STATE *>(commandToPatch.pDestination) = *cfeStateCmd;
             break;
+        }
+        case CommandList::CommandToPatch::PauseOnEnqueueSemaphoreStart: {
+            NEO::EncodeSempahore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandToPatch.pCommand),
+                                                                    csr->getDebugPauseStateGPUAddress(),
+                                                                    static_cast<uint32_t>(NEO::DebugPauseState::hasUserStartConfirmation),
+                                                                    COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
+                                                                    false);
+            break;
+        }
+        case CommandList::CommandToPatch::PauseOnEnqueueSemaphoreEnd: {
+            NEO::EncodeSempahore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandToPatch.pCommand),
+                                                                    csr->getDebugPauseStateGPUAddress(),
+                                                                    static_cast<uint32_t>(NEO::DebugPauseState::hasUserEndConfirmation),
+                                                                    COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
+                                                                    false);
+            break;
+        }
+        case CommandList::CommandToPatch::PauseOnEnqueuePipeControlStart: {
+            auto &hwInfo = device->getNEODevice()->getHardwareInfo();
+
+            NEO::PipeControlArgs args;
+            args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
+
+            auto command = reinterpret_cast<void *>(commandToPatch.pCommand);
+            NEO::MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(
+                command,
+                NEO::PostSyncMode::ImmediateData,
+                csr->getDebugPauseStateGPUAddress(),
+                static_cast<uint64_t>(NEO::DebugPauseState::waitingForUserStartConfirmation),
+                hwInfo,
+                args);
+            break;
+        }
+        case CommandList::CommandToPatch::PauseOnEnqueuePipeControlEnd: {
+            auto &hwInfo = device->getNEODevice()->getHardwareInfo();
+
+            NEO::PipeControlArgs args;
+            args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
+
+            auto command = reinterpret_cast<void *>(commandToPatch.pCommand);
+            NEO::MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(
+                command,
+                NEO::PostSyncMode::ImmediateData,
+                csr->getDebugPauseStateGPUAddress(),
+                static_cast<uint64_t>(NEO::DebugPauseState::waitingForUserEndConfirmation),
+                hwInfo,
+                args);
+            break;
+        }
         default:
             UNRECOVERABLE_IF(true);
         }

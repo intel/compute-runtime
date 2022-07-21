@@ -1005,5 +1005,32 @@ HWTEST2_F(CommandQueueScratchTests, whenPatchCommandsIsCalledThenCommandsAreCorr
     }
 }
 
+using IsWithinNotSupported = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN12LP_CORE>;
+
+HWTEST2_F(CommandQueueScratchTests, givenCommandsToPatchToNotSupportedPlatformWhenPatchCommandsIsCalledThenAbortIsThrown, IsWithinNotSupported) {
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr = nullptr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
+    auto commandQueue = std::make_unique<MockCommandQueueHw<gfxCoreFamily>>(device, csr, &desc);
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+
+    EXPECT_NO_THROW(commandQueue->patchCommands(*commandList, 0));
+    commandList->commandsToPatch.push_back({});
+    EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0));
+    commandList->commandsToPatch.clear();
+
+    CommandList::CommandToPatch commandToPatch;
+
+    commandToPatch.type = CommandList::CommandToPatch::FrontEndState;
+    commandList->commandsToPatch.push_back(commandToPatch);
+    EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0));
+    commandList->commandsToPatch.clear();
+
+    commandToPatch.type = CommandList::CommandToPatch::Invalid;
+    commandList->commandsToPatch.push_back(commandToPatch);
+    EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0));
+    commandList->commandsToPatch.clear();
+}
+
 } // namespace ult
 } // namespace L0

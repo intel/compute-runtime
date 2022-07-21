@@ -13,6 +13,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/helpers/state_base_address.h"
@@ -232,6 +233,15 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     auto threadGroupCount = cmd.getThreadGroupIdXDimension() * cmd.getThreadGroupIdYDimension() * cmd.getThreadGroupIdZDimension();
     EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(idd, hwInfo, threadGroupCount, kernelDescriptor.kernelAttributes.numGrfRequired);
 
+    if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::DebugManager.flags.PauseOnEnqueue.get(), args.device->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
+        void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(hwInfo, false));
+        args.additionalCommands->push_back(commandBuffer);
+
+        using MI_SEMAPHORE_WAIT = typename Family::MI_SEMAPHORE_WAIT;
+        MI_SEMAPHORE_WAIT *semaphoreCommand = listCmdBufferStream->getSpaceForCmd<MI_SEMAPHORE_WAIT>();
+        args.additionalCommands->push_back(semaphoreCommand);
+    }
+
     PreemptionHelper::applyPreemptionWaCmdsBegin<Family>(listCmdBufferStream, *args.device);
 
     auto buffer = listCmdBufferStream->getSpace(sizeof(cmd));
@@ -244,6 +254,15 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     }
 
     args.partitionCount = 1;
+
+    if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::DebugManager.flags.PauseOnEnqueue.get(), args.device->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::AfterWorkload)) {
+        void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(hwInfo, false));
+        args.additionalCommands->push_back(commandBuffer);
+
+        using MI_SEMAPHORE_WAIT = typename Family::MI_SEMAPHORE_WAIT;
+        MI_SEMAPHORE_WAIT *semaphoreCommand = listCmdBufferStream->getSpaceForCmd<MI_SEMAPHORE_WAIT>();
+        args.additionalCommands->push_back(semaphoreCommand);
+    }
 }
 
 template <typename Family>

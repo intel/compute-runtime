@@ -23,6 +23,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/logical_state_helper.h"
+#include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
@@ -96,6 +97,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         ret = this->executeCommandListsCopyOnly(ctx, numCommandLists, phCommandLists, hFence);
     } else {
         ret = this->executeCommandListsRegular(ctx, numCommandLists, phCommandLists, hFence);
+    }
+
+    if (NEO::DebugManager.flags.PauseOnEnqueue.get() != -1) {
+        this->device->getNEODevice()->debugExecutionCounter++;
     }
 
     return ret;
@@ -561,6 +566,20 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeInitial(
 
     linearStreamSizeEstimate += NEO::EncodeKernelArgsBuffer<GfxFamily>::getKernelArgsBufferCmdsSize(this->csr->getKernelArgsBufferAllocation(),
                                                                                                     this->csr->getLogicalStateHelper());
+
+    if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::DebugManager.flags.PauseOnEnqueue.get(),
+                                                    this->device->getNEODevice()->debugExecutionCounter.load(),
+                                                    NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
+        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(this->device->getHwInfo(), false);
+        linearStreamSizeEstimate += sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
+    }
+
+    if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::DebugManager.flags.PauseOnEnqueue.get(),
+                                                    this->device->getNEODevice()->debugExecutionCounter.load(),
+                                                    NEO::PauseOnGpuProperties::PauseMode::AfterWorkload)) {
+        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(this->device->getHwInfo(), false);
+        linearStreamSizeEstimate += sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
+    }
 
     return linearStreamSizeEstimate;
 }

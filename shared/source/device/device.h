@@ -150,6 +150,8 @@ class Device : public ReferenceTrackedObject<Device> {
     MOCKABLE_VIRTUAL bool verifyAdapterLuid();
     void getAdapterMask(uint32_t &nodeMask);
 
+    std::atomic<uint32_t> debugExecutionCounter = 0;
+
   protected:
     Device() = delete;
     Device(ExecutionEnvironment *executionEnvironment, const uint32_t rootDeviceIndex);

@@ -2317,6 +2317,12 @@ void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
             UNRECOVERABLE_IF(commandToPatch.pCommand == nullptr);
             delete reinterpret_cast<VFE_STATE_TYPE *>(commandToPatch.pCommand);
             break;
+        case CommandList::CommandToPatch::PauseOnEnqueueSemaphoreStart:
+        case CommandList::CommandToPatch::PauseOnEnqueueSemaphoreEnd:
+        case CommandList::CommandToPatch::PauseOnEnqueuePipeControlStart:
+        case CommandList::CommandToPatch::PauseOnEnqueuePipeControlEnd:
+            UNRECOVERABLE_IF(commandToPatch.pCommand == nullptr);
+            break;
         default:
             UNRECOVERABLE_IF(true);
         }

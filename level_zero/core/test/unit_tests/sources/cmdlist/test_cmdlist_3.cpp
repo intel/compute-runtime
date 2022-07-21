@@ -1270,6 +1270,50 @@ HWTEST2_F(CommandListCreate, givenNonEmptyCommandsToPatchWhenClearCommandsToPatc
     pCommandList->commandsToPatch.push_back(commandToPatch);
     EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
     EXPECT_TRUE(pCommandList->commandsToPatch.empty());
+
+    commandToPatch = {};
+    commandToPatch.type = CommandList::CommandToPatch::PauseOnEnqueueSemaphoreStart;
+    pCommandList->commandsToPatch.push_back(commandToPatch);
+    EXPECT_ANY_THROW(pCommandList->clearCommandsToPatch());
+    pCommandList->commandsToPatch.clear();
+
+    commandToPatch.pCommand = reinterpret_cast<void *>(0x1234);
+    pCommandList->commandsToPatch.push_back(commandToPatch);
+    EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
+    EXPECT_TRUE(pCommandList->commandsToPatch.empty());
+
+    commandToPatch = {};
+    commandToPatch.type = CommandList::CommandToPatch::PauseOnEnqueueSemaphoreEnd;
+    pCommandList->commandsToPatch.push_back(commandToPatch);
+    EXPECT_ANY_THROW(pCommandList->clearCommandsToPatch());
+    pCommandList->commandsToPatch.clear();
+
+    commandToPatch.pCommand = reinterpret_cast<void *>(0x1234);
+    pCommandList->commandsToPatch.push_back(commandToPatch);
+    EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
+    EXPECT_TRUE(pCommandList->commandsToPatch.empty());
+
+    commandToPatch = {};
+    commandToPatch.type = CommandList::CommandToPatch::PauseOnEnqueuePipeControlStart;
+    pCommandList->commandsToPatch.push_back(commandToPatch);
+    EXPECT_ANY_THROW(pCommandList->clearCommandsToPatch());
+    pCommandList->commandsToPatch.clear();
+
+    commandToPatch.pCommand = reinterpret_cast<void *>(0x1234);
+    pCommandList->commandsToPatch.push_back(commandToPatch);
+    EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
+    EXPECT_TRUE(pCommandList->commandsToPatch.empty());
+
+    commandToPatch = {};
+    commandToPatch.type = CommandList::CommandToPatch::PauseOnEnqueuePipeControlEnd;
+    pCommandList->commandsToPatch.push_back(commandToPatch);
+    EXPECT_ANY_THROW(pCommandList->clearCommandsToPatch());
+    pCommandList->commandsToPatch.clear();
+
+    commandToPatch.pCommand = reinterpret_cast<void *>(0x1234);
+    pCommandList->commandsToPatch.push_back(commandToPatch);
+    EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
+    EXPECT_TRUE(pCommandList->commandsToPatch.empty());
 }
 
 template <NEO::AllocationType AllocType>

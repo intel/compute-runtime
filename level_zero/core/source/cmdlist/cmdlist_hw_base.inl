@@ -10,6 +10,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/simd_helper.h"
@@ -116,25 +117,28 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             kernel->getKernelDescriptor().kernelMetadata.kernelName.c_str(), 0u);
     }
 
+    std::list<void *> additionalCommands;
+
     updateStreamProperties(*kernel, false, launchParams.isCooperative);
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
-        0,                                                     // eventAddress
-        neoDevice,                                             // device
-        kernel,                                                // dispatchInterface
-        reinterpret_cast<const void *>(threadGroupDimensions), // threadGroupDimensions
-        commandListPreemptionMode,                             // preemptionMode
-        0,                                                     // partitionCount
-        launchParams.isIndirect,                               // isIndirect
-        launchParams.isPredicate,                              // isPredicate
-        false,                                                 // isTimestampEvent
-        this->containsStatelessUncachedResource,               // requiresUncachedMocs
-        false,                                                 // useGlobalAtomics
-        internalUsage,                                         // isInternal
-        launchParams.isCooperative,                            // isCooperative
-        false,                                                 // isHostScopeSignalEvent
-        false,                                                 // isKernelUsingSystemAllocation
-        cmdListType == CommandListType::TYPE_IMMEDIATE,        // isKernelDispatchedFromImmediateCmdList
-        engineGroupType == NEO::EngineGroupType::RenderCompute // isRcs
+        0,                                                      // eventAddress
+        neoDevice,                                              // device
+        kernel,                                                 // dispatchInterface
+        reinterpret_cast<const void *>(threadGroupDimensions),  // threadGroupDimensions
+        commandListPreemptionMode,                              // preemptionMode
+        0,                                                      // partitionCount
+        launchParams.isIndirect,                                // isIndirect
+        launchParams.isPredicate,                               // isPredicate
+        false,                                                  // isTimestampEvent
+        this->containsStatelessUncachedResource,                // requiresUncachedMocs
+        false,                                                  // useGlobalAtomics
+        internalUsage,                                          // isInternal
+        launchParams.isCooperative,                             // isCooperative
+        false,                                                  // isHostScopeSignalEvent
+        false,                                                  // isKernelUsingSystemAllocation
+        cmdListType == CommandListType::TYPE_IMMEDIATE,         // isKernelDispatchedFromImmediateCmdList
+        engineGroupType == NEO::EngineGroupType::RenderCompute, // isRcs
+        &additionalCommands                                     // additionalCommands
     };
 
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs, getLogicalStateHelper());
@@ -170,6 +174,20 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     if (functionImmutableData->getDescriptor().kernelAttributes.flags.usesPrintf) {
         storePrintfFunction(kernel);
+    }
+
+    if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::DebugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
+        commandsToPatch.push_back({0x0, additionalCommands.front(), CommandToPatch::PauseOnEnqueuePipeControlStart});
+        additionalCommands.pop_front();
+        commandsToPatch.push_back({0x0, additionalCommands.front(), CommandToPatch::PauseOnEnqueueSemaphoreStart});
+        additionalCommands.pop_front();
+    }
+
+    if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::DebugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::AfterWorkload)) {
+        commandsToPatch.push_back({0x0, additionalCommands.front(), CommandToPatch::PauseOnEnqueuePipeControlEnd});
+        additionalCommands.pop_front();
+        commandsToPatch.push_back({0x0, additionalCommands.front(), CommandToPatch::PauseOnEnqueueSemaphoreEnd});
+        additionalCommands.pop_front();
     }
 
     return ZE_RESULT_SUCCESS;

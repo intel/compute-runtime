@@ -19,6 +19,8 @@
 
 #include "encode_surface_state_args.h"
 
+#include <list>
+
 namespace NEO {
 
 class BindlessHeapsHelper;
@@ -48,6 +50,7 @@ struct EncodeDispatchKernelArgs {
     bool isKernelUsingSystemAllocation = false;
     bool isKernelDispatchedFromImmediateCmdList = false;
     bool isRcs = false;
+    std::list<void *> *additionalCommands = nullptr;
 };
 
 struct EncodeWalkerArgs {

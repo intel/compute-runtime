@@ -50,6 +50,10 @@ struct CommandList : _ze_command_list_handle_t {
     struct CommandToPatch {
         enum CommandType {
             FrontEndState,
+            PauseOnEnqueueSemaphoreStart,
+            PauseOnEnqueueSemaphoreEnd,
+            PauseOnEnqueuePipeControlStart,
+            PauseOnEnqueuePipeControlEnd,
             Invalid
         };
         void *pDestination = nullptr;
