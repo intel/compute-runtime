@@ -48,7 +48,6 @@ class MockDevice : public RootDevice {
   public:
     using Device::addEngineToEngineGroup;
     using Device::allEngines;
-    using Device::allocateRTDispatchGlobals;
     using Device::commandStreamReceivers;
     using Device::createDeviceInternals;
     using Device::createEngine;
@@ -165,6 +164,28 @@ class MockDevice : public RootDevice {
 
     bool verifyAdapterLuid() override;
 
+    void finalizeRayTracing() {
+        for (unsigned int i = 0; i < rtDispatchGlobalsInfos.size(); i++) {
+            auto rtDispatchGlobalsInfo = rtDispatchGlobalsInfos[i];
+            if (rtDispatchGlobalsForceAllocation == true && rtDispatchGlobalsInfo != nullptr) {
+                for (unsigned int j = 0; j < rtDispatchGlobalsInfo->rtDispatchGlobals.size(); j++) {
+                    delete rtDispatchGlobalsInfo->rtDispatchGlobals[j];
+                    rtDispatchGlobalsInfo->rtDispatchGlobals[j] = nullptr;
+                }
+                delete rtDispatchGlobalsInfo->rtDispatchGlobalsArrayAllocation;
+                rtDispatchGlobalsInfo->rtDispatchGlobalsArrayAllocation = nullptr;
+                delete rtDispatchGlobalsInfos[i];
+                rtDispatchGlobalsInfos[i] = nullptr;
+            }
+        }
+
+        Device::finalizeRayTracing();
+    }
+
+    void setRTDispatchGlobalsForceAllocation() {
+        rtDispatchGlobalsForceAllocation = true;
+    }
+
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;
 
     bool isDebuggerActiveParentCall = true;
@@ -173,6 +194,7 @@ class MockDevice : public RootDevice {
     bool callBaseVerifyAdapterLuid = true;
     bool verifyAdapterLuidReturnValue = true;
     size_t maxParameterSizeFromIGC = 0u;
+    bool rtDispatchGlobalsForceAllocation = true;
 };
 
 template <>

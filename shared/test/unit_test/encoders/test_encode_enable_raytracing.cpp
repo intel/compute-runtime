@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ HWTEST_F(CommandEncodeEnableRayTracing, programEnableRayTracing) {
     MockGraphicsAllocation gfxAllocation(static_cast<void *>(pCmdBuffer), sizeof(pCmdBuffer));
     LinearStream stream(&gfxAllocation);
 
-    MockGraphicsAllocation memoryBackedBuffer(static_cast<void *>(pMemoryBackedBuffer), sizeof(pMemoryBackedBuffer));
+    uint64_t memoryBackedBuffer = reinterpret_cast<uint64_t>(&pMemoryBackedBuffer);
 
     EncodeEnableRayTracing<FamilyType>::programEnableRayTracing(stream, memoryBackedBuffer);
 }

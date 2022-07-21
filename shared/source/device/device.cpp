@@ -609,19 +609,19 @@ EngineControl *Device::getInternalCopyEngine() {
     return nullptr;
 }
 
-GraphicsAllocation *Device::getRTDispatchGlobals(uint32_t maxBvhLevels) {
-    if (rtDispatchGlobals.size() == 0) {
+RTDispatchGlobalsInfo *Device::getRTDispatchGlobals(uint32_t maxBvhLevels) {
+    if (rtDispatchGlobalsInfos.size() == 0) {
         return nullptr;
     }
 
-    size_t last = rtDispatchGlobals.size() - 1;
+    size_t last = rtDispatchGlobalsInfos.size() - 1;
     if (maxBvhLevels > last) {
         return nullptr;
     }
 
     for (size_t i = last; i >= maxBvhLevels; i--) {
-        if (rtDispatchGlobals[i] != nullptr) {
-            return rtDispatchGlobals[i];
+        if (rtDispatchGlobalsInfos[i] != nullptr) {
+            return rtDispatchGlobalsInfos[i];
         }
 
         if (i == 0) {
@@ -630,17 +630,22 @@ GraphicsAllocation *Device::getRTDispatchGlobals(uint32_t maxBvhLevels) {
     }
 
     allocateRTDispatchGlobals(maxBvhLevels);
-    return rtDispatchGlobals[maxBvhLevels];
+    return rtDispatchGlobalsInfos[maxBvhLevels];
 }
 
 void Device::initializeRayTracing(uint32_t maxBvhLevels) {
     if (rtMemoryBackedBuffer == nullptr) {
         auto size = RayTracingHelper::getTotalMemoryBackedFifoSize(*this);
-        rtMemoryBackedBuffer = getMemoryManager()->allocateGraphicsMemoryWithProperties({getRootDeviceIndex(), size, AllocationType::BUFFER, getDeviceBitfield()});
+
+        AllocationProperties allocProps(getRootDeviceIndex(), true, size, AllocationType::BUFFER, true, getDeviceBitfield());
+        allocProps.flags.resource48Bit = true;
+        allocProps.flags.isUSMDeviceAllocation = true;
+
+        rtMemoryBackedBuffer = getMemoryManager()->allocateGraphicsMemoryWithProperties(allocProps);
     }
 
-    while (rtDispatchGlobals.size() <= maxBvhLevels) {
-        rtDispatchGlobals.push_back(nullptr);
+    while (rtDispatchGlobalsInfos.size() <= maxBvhLevels) {
+        rtDispatchGlobalsInfos.push_back(nullptr);
     }
 }
 
@@ -648,9 +653,21 @@ void Device::finalizeRayTracing() {
     getMemoryManager()->freeGraphicsMemory(rtMemoryBackedBuffer);
     rtMemoryBackedBuffer = nullptr;
 
-    for (size_t i = 0; i < rtDispatchGlobals.size(); i++) {
-        getMemoryManager()->freeGraphicsMemory(rtDispatchGlobals[i]);
-        rtDispatchGlobals[i] = nullptr;
+    for (size_t i = 0; i < rtDispatchGlobalsInfos.size(); i++) {
+        auto rtDispatchGlobalsInfo = rtDispatchGlobalsInfos[i];
+        if (rtDispatchGlobalsInfo == nullptr) {
+            continue;
+        }
+        for (size_t j = 0; j < rtDispatchGlobalsInfo->rtDispatchGlobals.size(); j++) {
+            getMemoryManager()->freeGraphicsMemory(rtDispatchGlobalsInfo->rtDispatchGlobals[j]);
+            rtDispatchGlobalsInfo->rtDispatchGlobals[j] = nullptr;
+        }
+
+        getMemoryManager()->freeGraphicsMemory(rtDispatchGlobalsInfo->rtDispatchGlobalsArrayAllocation);
+        rtDispatchGlobalsInfo->rtDispatchGlobalsArrayAllocation = nullptr;
+
+        delete rtDispatchGlobalsInfos[i];
+        rtDispatchGlobalsInfos[i] = nullptr;
     }
 }
 
@@ -722,39 +739,89 @@ void Device::getAdapterMask(uint32_t &nodeMask) {
 }
 
 void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
-    DEBUG_BREAK_IF(rtDispatchGlobals.size() < maxBvhLevels + 1);
-    DEBUG_BREAK_IF(rtDispatchGlobals[maxBvhLevels] != nullptr);
+    UNRECOVERABLE_IF(rtDispatchGlobalsInfos.size() < maxBvhLevels + 1);
+    UNRECOVERABLE_IF(rtDispatchGlobalsInfos[maxBvhLevels] != nullptr);
+
     uint32_t extraBytesLocal = 0;
     uint32_t extraBytesGlobal = 0;
     auto size = RayTracingHelper::getDispatchGlobalSize(*this, maxBvhLevels, extraBytesLocal, extraBytesGlobal);
-    auto dispatchGlobalsAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({getRootDeviceIndex(), size, AllocationType::BUFFER, getDeviceBitfield()});
 
-    if (nullptr == dispatchGlobalsAllocation) {
+    const auto deviceCount = HwHelper::getSubDevicesCount(executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->getHardwareInfo());
+
+    auto dispatchGlobalsInfo = new RTDispatchGlobalsInfo(nullptr);
+    if (dispatchGlobalsInfo == nullptr) {
         return;
     }
-
-    struct RTDispatchGlobals dispatchGlobals = {0};
-
-    auto numRtStacks = RayTracingHelper::getNumRtStacks(*this);
-    auto stackSizePerRay = RayTracingHelper::getStackSizePerRay(maxBvhLevels, 0);
-    size_t rtMemOffset = alignUp(stackSizePerRay * numRtStacks, MemoryConstants::cacheLineSize);
 
     auto &hwInfo = getHardwareInfo();
     auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
-    dispatchGlobals.rtMemBasePtr = rtMemOffset;
-    dispatchGlobals.callStackHandlerKSP = reinterpret_cast<uint64_t>(nullptr);
-    dispatchGlobals.stackSizePerRay = stackSizePerRay / 64;
-    dispatchGlobals.numDSSRTStacks = RayTracingHelper::stackDssMultiplier;
-    dispatchGlobals.maxBVHLevels = maxBvhLevels;
+    std::vector<uint64_t> gpuAddressVector;
+    bool allocFailed = false;
 
-    MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *dispatchGlobalsAllocation),
+    for (unsigned int tile = 0; tile < deviceCount; tile++) {
+        AllocationProperties allocProps(getRootDeviceIndex(), true, size, AllocationType::BUFFER, true, getDeviceBitfield());
+        allocProps.flags.resource48Bit = true;
+        allocProps.flags.isUSMDeviceAllocation = true;
+
+        auto dispatchGlobalsAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(allocProps);
+
+        if (dispatchGlobalsAllocation == nullptr) {
+            allocFailed = true;
+            break;
+        }
+
+        auto dispatchGlobalsPtr = dispatchGlobalsAllocation->getGpuAddress();
+        struct RTDispatchGlobals dispatchGlobals = {0};
+
+        dispatchGlobals.rtMemBasePtr = size + dispatchGlobalsPtr;
+        dispatchGlobals.callStackHandlerKSP = reinterpret_cast<uint64_t>(nullptr);
+        dispatchGlobals.stackSizePerRay = 0;
+        dispatchGlobals.numDSSRTStacks = RayTracingHelper::stackDssMultiplier;
+        dispatchGlobals.maxBVHLevels = maxBvhLevels;
+
+        uint32_t *dispatchGlobalsAsArray = reinterpret_cast<uint32_t *>(&dispatchGlobals);
+        dispatchGlobalsAsArray[7] = 1;
+
+        MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(this->getHardwareInfo(), *dispatchGlobalsAllocation),
+                                                         *this,
+                                                         dispatchGlobalsAllocation,
+                                                         0,
+                                                         &dispatchGlobals,
+                                                         sizeof(RTDispatchGlobals));
+
+        dispatchGlobalsInfo->rtDispatchGlobals.push_back(dispatchGlobalsAllocation);
+        gpuAddressVector.push_back(dispatchGlobalsAllocation->getGpuAddress());
+    }
+
+    GraphicsAllocation *dispatchGlobalsArrayAllocation = nullptr;
+    size_t arrayAllocSize = sizeof(uint64_t) * deviceCount;
+
+    if (!allocFailed) {
+        AllocationProperties arrayAllocProps(getRootDeviceIndex(), true, arrayAllocSize,
+                                             AllocationType::BUFFER, true, getDeviceBitfield());
+        arrayAllocProps.flags.resource48Bit = true;
+        arrayAllocProps.flags.isUSMDeviceAllocation = true;
+        dispatchGlobalsArrayAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(arrayAllocProps);
+    }
+
+    if (dispatchGlobalsArrayAllocation == nullptr) {
+        for (auto allocation : dispatchGlobalsInfo->rtDispatchGlobals) {
+            getMemoryManager()->freeGraphicsMemory(allocation);
+        }
+        delete dispatchGlobalsInfo;
+        return;
+    }
+
+    MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(this->getHardwareInfo(), *dispatchGlobalsArrayAllocation),
                                                      *this,
-                                                     dispatchGlobalsAllocation,
+                                                     dispatchGlobalsArrayAllocation,
                                                      0,
-                                                     &dispatchGlobals,
-                                                     sizeof(RTDispatchGlobals));
+                                                     gpuAddressVector.data(),
+                                                     arrayAllocSize);
 
-    rtDispatchGlobals[maxBvhLevels] = dispatchGlobalsAllocation;
+    dispatchGlobalsInfo->rtDispatchGlobalsArrayAllocation = dispatchGlobalsArrayAllocation;
+    rtDispatchGlobalsInfos[maxBvhLevels] = dispatchGlobalsInfo;
 }
+
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,17 +37,14 @@ TEST(RayTracingHelperTests, whenGlobalDispatchSizeIsRequestedThenCorrectValueIsR
     MockContext context(&device);
 
     uint32_t maxBvhLevel = 2;
-    uint32_t extraBytesPerThread = 20;
+    uint32_t extraBytesLocal = 20;
     uint32_t extraBytesGlobal = 100;
 
-    size_t expectedSize = alignUp(RayTracingHelper::getRtGlobalsSize(), MemoryConstants::cacheLineSize) +
-                          alignUp((RayTracingHelper::hitInfoSize +
-                                   RayTracingHelper::bvhStackSize * maxBvhLevel +
-                                   extraBytesPerThread),
-                                  MemoryConstants::cacheLineSize) *
-                              context.getDevice(0)->getHardwareInfo().gtSystemInfo.DualSubSliceCount * RayTracingHelper::stackDssMultiplier +
+    size_t expectedSize = alignUp(sizeof(RTDispatchGlobals), MemoryConstants::cacheLineSize) +
+                          (RayTracingHelper::hitInfoSize + RayTracingHelper::bvhStackSize * maxBvhLevel + extraBytesLocal) * RayTracingHelper::getNumRtStacks(device.getDevice()) +
                           extraBytesGlobal;
-    EXPECT_EQ(expectedSize, RayTracingHelper::getDispatchGlobalSize(device.getDevice(), maxBvhLevel, extraBytesPerThread, extraBytesGlobal));
+    size_t size = RayTracingHelper::getDispatchGlobalSize(device.getDevice(), maxBvhLevel, extraBytesLocal, extraBytesGlobal);
+    EXPECT_EQ(expectedSize, size);
 }
 
 TEST(RayTracingHelperTests, whenNumRtStacksPerDssIsRequestedThenCorrectValueIsReturned) {
@@ -58,6 +55,16 @@ TEST(RayTracingHelperTests, whenNumRtStacksPerDssIsRequestedThenCorrectValueIsRe
                                  ? static_cast<uint32_t>(RayTracingHelper::getNumRtStacks(device) / device.getHardwareInfo().gtSystemInfo.DualSubSliceCount + 0.5)
                                  : RayTracingHelper::stackDssMultiplier;
     EXPECT_EQ(expectedValue, numDssRtStacks);
+}
+
+TEST(RayTracingHelperTests, whenNumRtStacksIsQueriedThenItIsEqualToNumRtStacksPerDssMultipliedByDualSubsliceCount) {
+    MockDevice device;
+
+    uint32_t numDssRtStacksPerDss = RayTracingHelper::getNumRtStacksPerDss(device);
+    uint32_t numDssRtStacks = RayTracingHelper::getNumRtStacks(device);
+    uint32_t subsliceCount = device.getHardwareInfo().gtSystemInfo.DualSubSliceCount;
+
+    EXPECT_EQ(numDssRtStacks, numDssRtStacksPerDss * subsliceCount);
 }
 
 TEST(RayTracingHelperTests, whenNumDssIsRequestedThenCorrectValueIsReturned) {
@@ -72,9 +79,7 @@ TEST(RayTracingHelperTests, whenStackSizePerRayIsRequestedThenCorrectValueIsRetu
     uint32_t maxBvhLevel = 1234;
     uint32_t extraBytesLocal = 5678;
 
-    uint32_t expectedValue = alignUp((RayTracingHelper::hitInfoSize + RayTracingHelper::bvhStackSize * maxBvhLevel +
-                                      extraBytesLocal),
-                                     MemoryConstants::cacheLineSize);
+    uint32_t expectedValue = RayTracingHelper::hitInfoSize + RayTracingHelper::bvhStackSize * maxBvhLevel + extraBytesLocal;
     EXPECT_EQ(RayTracingHelper::getStackSizePerRay(maxBvhLevel, extraBytesLocal), expectedValue);
 }
 

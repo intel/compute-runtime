@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,9 +25,7 @@ HWTEST2_F(CommandEncodeEnableRayTracing, whenEnableRayTracingIsProgrammedThen3DS
     MockGraphicsAllocation gfxAllocation(static_cast<void *>(pCmdBuffer), sizeof(pCmdBuffer));
     LinearStream stream(&gfxAllocation);
 
-    MockGraphicsAllocation memoryBackedBuffer(static_cast<void *>(pMemoryBackedBuffer), sizeof(pMemoryBackedBuffer));
-
-    EncodeEnableRayTracing<FamilyType>::programEnableRayTracing(stream, memoryBackedBuffer);
+    EncodeEnableRayTracing<FamilyType>::programEnableRayTracing(stream, reinterpret_cast<uint64_t>(&pMemoryBackedBuffer));
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, stream.getCpuBase(), stream.getUsed());

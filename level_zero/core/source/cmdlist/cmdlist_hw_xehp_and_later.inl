@@ -301,7 +301,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             return ZE_RESULT_ERROR_UNINITIALIZED;
         } else {
             NEO::LinearStream *linearStream = commandContainer.getCommandStream();
-            NEO::EncodeEnableRayTracing<GfxFamily>::programEnableRayTracing(*linearStream, *memoryBackedBuffer);
+            NEO::EncodeEnableRayTracing<GfxFamily>::programEnableRayTracing(*linearStream, memoryBackedBuffer->getGpuAddress());
         }
     }
 

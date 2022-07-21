@@ -14,6 +14,7 @@
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -92,6 +93,19 @@ TEST_F(DeviceTest, whenAllocateRTDispatchGlobalsIsCalledThenRTDispatchGlobalsIsA
     pDevice->initializeRayTracing(5);
     pDevice->allocateRTDispatchGlobals(3);
     EXPECT_NE(nullptr, pDevice->getRTDispatchGlobals(3));
+}
+
+TEST_F(DeviceTest, givenDispatchGlobalsAllocationFailsThenRTDispatchGlobalsInfoIsNull) {
+    std::unique_ptr<NEO::MemoryManager> otherMemoryManager;
+    otherMemoryManager = std::make_unique<NEO::FailMemoryManager>(1, *pDevice->getExecutionEnvironment());
+    pDevice->getExecutionEnvironment()->memoryManager.swap(otherMemoryManager);
+
+    pDevice->initializeRayTracing(5);
+    auto rtDispatchGlobalsInfo = pDevice->getRTDispatchGlobals(5);
+
+    EXPECT_EQ(nullptr, rtDispatchGlobalsInfo);
+
+    pDevice->getExecutionEnvironment()->memoryManager.swap(otherMemoryManager);
 }
 
 TEST_F(DeviceTest, GivenDeviceWhenGenerateUuidThenValidValuesAreSet) {
@@ -368,4 +382,33 @@ TEST_F(DeviceGetCapsTest, givenFlagEnabled64kbPagesWhenCallConstructorMemoryMana
     DebugManager.flags.Enable64kbpages.set(1); // force true
     memoryManager.reset(new MockMemoryManager(executionEnvironment));
     EXPECT_TRUE(memoryManager->peek64kbPagesEnabled(0u));
+}
+
+TEST_F(DeviceTest, givenDispatchGlobalsAllocationFailsOnSecondSubDeviceThenRtDispatchGlobalsInfoIsNull) {
+    class FailMockMemoryManager : public MockMemoryManager {
+      public:
+        FailMockMemoryManager(NEO::ExecutionEnvironment &executionEnvironment) : MockMemoryManager(false, false, executionEnvironment) {}
+
+        GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) {
+            allocateGraphicsMemoryWithPropertiesCount++;
+            if (allocateGraphicsMemoryWithPropertiesCount > 2) {
+                return nullptr;
+            } else {
+                return MockMemoryManager::allocateGraphicsMemoryWithProperties(properties);
+            }
+        }
+    };
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableWalkerPartition.set(-1);
+    DebugManager.flags.CreateMultipleSubDevices.set(2u);
+
+    UltDeviceFactory deviceFactory{1, 2};
+    ExecutionEnvironment &executionEnvironment = *deviceFactory.rootDevices[0]->executionEnvironment;
+    executionEnvironment.memoryManager = std::make_unique<FailMockMemoryManager>(executionEnvironment);
+
+    deviceFactory.rootDevices[0]->initializeRayTracing(5);
+    auto rtDispatchGlobalsInfo = deviceFactory.rootDevices[0]->getRTDispatchGlobals(5);
+
+    EXPECT_EQ(nullptr, rtDispatchGlobalsInfo);
 }

@@ -732,53 +732,9 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenRayTracingIsInitialized
 
     auto rtDispatchGlobals = neoDevice->getRTDispatchGlobals(NEO::RayTracingHelper::maxBvhLevels);
     EXPECT_NE(nullptr, rtDispatchGlobals);
-
-    size_t residencySize = kernel->getResidencyContainer().size();
-    EXPECT_NE(0u, residencySize);
-
-    EXPECT_EQ(kernel->getResidencyContainer()[residencySize - 1], rtDispatchGlobals);
 }
 
-TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueButKernelDoesNotHaveRTDGAllocationTokenThenRayTracingStillEnabledWithoutAllocation) {
-    KernelDescriptor mockDescriptor = {};
-    mockDescriptor.kernelAttributes.flags.hasRTCalls = true;
-    mockDescriptor.kernelMetadata.kernelName = "rt_test";
-    for (auto i = 0u; i < 3u; i++) {
-        mockDescriptor.kernelAttributes.requiredWorkgroupSize[i] = 0;
-    }
-
-    std::unique_ptr<MockImmutableData> mockKernelImmutableData =
-        std::make_unique<MockImmutableData>(32u);
-    mockKernelImmutableData->kernelDescriptor = &mockDescriptor;
-
-    ModuleBuildLog *moduleBuildLog = nullptr;
-    module = std::make_unique<MockModule>(device,
-                                          moduleBuildLog,
-                                          ModuleType::User,
-                                          32u,
-                                          mockKernelImmutableData.get());
-    module->maxGroupSize = 10;
-
-    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
-    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
-
-    ze_kernel_desc_t kernelDesc = {};
-    kernelDesc.pKernelName = "rt_test";
-
-    auto immDataVector =
-        const_cast<std::vector<std::unique_ptr<KernelImmutableData>> *>(&module->getKernelImmutableDataVector());
-
-    immDataVector->push_back(std::move(mockKernelImmutableData));
-
-    auto result = kernel->initialize(&kernelDesc);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, module->getDevice()->getNEODevice()->getRTMemoryBackedBuffer());
-
-    auto rtDispatchGlobals = neoDevice->getRTDispatchGlobals(NEO::RayTracingHelper::maxBvhLevels);
-    EXPECT_EQ(nullptr, rtDispatchGlobals);
-}
-
-TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndNoRTDispatchGlobalsIsAllocatedThenRayTracingIsNotInitialized) {
+HWTEST2_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndNoRTDispatchGlobalsIsAllocatedThenRayTracingIsNotInitialized, IsAtLeastXeHpgCore) {
     KernelDescriptor mockDescriptor = {};
     mockDescriptor.kernelAttributes.flags.hasRTCalls = true;
     mockDescriptor.kernelMetadata.kernelName = "rt_test";
@@ -809,14 +765,94 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndNoRTDispatchGlobalsIsAll
 
     immDataVector->push_back(std::move(mockKernelImmutableData));
 
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(nullptr);
+    neoDevice->rtDispatchGlobalsForceAllocation = false;
 
-    delete driverHandle->svmAllocsManager;
-    execEnv->memoryManager.reset(new FailMemoryManager(0, *execEnv));
-    driverHandle->setMemoryManager(execEnv->memoryManager.get());
-    driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get(), false);
+    std::unique_ptr<NEO::MemoryManager> otherMemoryManager;
+    otherMemoryManager = std::make_unique<NEO::FailMemoryManager>(0, *neoDevice->executionEnvironment);
+    neoDevice->executionEnvironment->memoryManager.swap(otherMemoryManager);
 
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, kernel->initialize(&kernelDesc));
+
+    neoDevice->executionEnvironment->memoryManager.swap(otherMemoryManager);
+}
+
+HWTEST2_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndRTDispatchGlobalsArrayAllocationFailsThenRayTracingIsNotInitialized, IsAtLeastXeHpgCore) {
+    KernelDescriptor mockDescriptor = {};
+    mockDescriptor.kernelAttributes.flags.hasRTCalls = true;
+    mockDescriptor.kernelMetadata.kernelName = "rt_test";
+    for (auto i = 0u; i < 3u; i++) {
+        mockDescriptor.kernelAttributes.requiredWorkgroupSize[i] = 0;
+    }
+    mockDescriptor.payloadMappings.implicitArgs.rtDispatchGlobals.pointerSize = 4;
+
+    std::unique_ptr<MockImmutableData> mockKernelImmutableData =
+        std::make_unique<MockImmutableData>(32u);
+    mockKernelImmutableData->kernelDescriptor = &mockDescriptor;
+
+    ModuleBuildLog *moduleBuildLog = nullptr;
+    module = std::make_unique<MockModule>(device,
+                                          moduleBuildLog,
+                                          ModuleType::User,
+                                          32u,
+                                          mockKernelImmutableData.get());
+    module->maxGroupSize = 10;
+
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.pKernelName = "rt_test";
+    auto immDataVector =
+        const_cast<std::vector<std::unique_ptr<KernelImmutableData>> *>(&module->getKernelImmutableDataVector());
+
+    immDataVector->push_back(std::move(mockKernelImmutableData));
+
+    neoDevice->rtDispatchGlobalsForceAllocation = false;
+
+    std::unique_ptr<NEO::MemoryManager> otherMemoryManager;
+    // Ensure that allocating RTDispatchGlobals succeeds, but the array allocation fails.
+    otherMemoryManager = std::make_unique<NEO::FailMemoryManager>(1, *neoDevice->executionEnvironment);
+    neoDevice->executionEnvironment->memoryManager.swap(otherMemoryManager);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, kernel->initialize(&kernelDesc));
+
+    neoDevice->executionEnvironment->memoryManager.swap(otherMemoryManager);
+}
+
+HWTEST2_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndRTDispatchGlobalsArrayAllocationSucceedsThenRayTracingIsInitialized, IsPVC) {
+    KernelDescriptor mockDescriptor = {};
+    mockDescriptor.kernelAttributes.flags.hasRTCalls = true;
+    mockDescriptor.kernelMetadata.kernelName = "rt_test";
+    for (auto i = 0u; i < 3u; i++) {
+        mockDescriptor.kernelAttributes.requiredWorkgroupSize[i] = 0;
+    }
+    mockDescriptor.payloadMappings.implicitArgs.rtDispatchGlobals.pointerSize = 4;
+
+    std::unique_ptr<MockImmutableData> mockKernelImmutableData =
+        std::make_unique<MockImmutableData>(32u);
+    mockKernelImmutableData->kernelDescriptor = &mockDescriptor;
+
+    ModuleBuildLog *moduleBuildLog = nullptr;
+    module = std::make_unique<MockModule>(device,
+                                          moduleBuildLog,
+                                          ModuleType::User,
+                                          32u,
+                                          mockKernelImmutableData.get());
+    module->maxGroupSize = 10;
+
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.pKernelName = "rt_test";
+    auto immDataVector =
+        const_cast<std::vector<std::unique_ptr<KernelImmutableData>> *>(&module->getKernelImmutableDataVector());
+
+    immDataVector->push_back(std::move(mockKernelImmutableData));
+
+    neoDevice->rtDispatchGlobalsForceAllocation = false;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->initialize(&kernelDesc));
 }
 
 TEST_F(KernelImmutableDataTests, whenHasRTCallsIsFalseThenRayTracingIsNotInitialized) {
@@ -902,7 +938,7 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenCrossThreadDataIsPatche
     EXPECT_NE(nullptr, rtDispatchGlobals);
 
     auto dispatchGlobalsAddressPatched = *reinterpret_cast<uint64_t *>(ptrOffset(crossThreadData.get(), rtGlobalPointerPatchOffset));
-    auto dispatchGlobalsGpuAddressOffset = static_cast<uint64_t>(rtDispatchGlobals->getGpuAddressToPatch());
+    auto dispatchGlobalsGpuAddressOffset = static_cast<uint64_t>(rtDispatchGlobals->rtDispatchGlobals[0]->getGpuAddressToPatch());
     EXPECT_EQ(dispatchGlobalsGpuAddressOffset, dispatchGlobalsAddressPatched);
 
     kernel->crossThreadData.release();

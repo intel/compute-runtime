@@ -25,10 +25,10 @@ void EncodeSurfaceState<Family>::encodeExtraCacheSettings(R_SURFACE_STATE *surfa
 }
 
 template <typename GfxFamily>
-void EncodeEnableRayTracing<GfxFamily>::programEnableRayTracing(LinearStream &commandStream, GraphicsAllocation &backBuffer) {
+void EncodeEnableRayTracing<GfxFamily>::programEnableRayTracing(LinearStream &commandStream, uint64_t backBuffer) {
     auto cmd = GfxFamily::cmd3dStateBtd;
     cmd.getBtdStateBody().setPerDssMemoryBackedBufferSize(static_cast<typename GfxFamily::_3DSTATE_BTD_BODY::PER_DSS_MEMORY_BACKED_BUFFER_SIZE>(RayTracingHelper::getMemoryBackedFifoSizeToPatch()));
-    cmd.getBtdStateBody().setMemoryBackedBufferBasePointer(backBuffer.getGpuAddress());
+    cmd.getBtdStateBody().setMemoryBackedBufferBasePointer(backBuffer);
     append3dStateBtd(&cmd);
     *commandStream.getSpaceForCmd<typename GfxFamily::_3DSTATE_BTD>() = cmd;
 }

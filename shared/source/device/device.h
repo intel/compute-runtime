@@ -40,6 +40,13 @@ struct EngineGroupT {
 };
 using EngineGroupsT = std::vector<EngineGroupT>;
 
+struct RTDispatchGlobalsInfo {
+    RTDispatchGlobalsInfo(GraphicsAllocation *rtDispatchGlobalsArrayAllocation)
+        : rtDispatchGlobalsArrayAllocation(rtDispatchGlobalsArrayAllocation){};
+    std::vector<GraphicsAllocation *> rtDispatchGlobals;  // per tile
+    GraphicsAllocation *rtDispatchGlobalsArrayAllocation; // above array as visible from device
+};
+
 class Device : public ReferenceTrackedObject<Device> {
   public:
     Device &operator=(const Device &) = delete;
@@ -130,9 +137,10 @@ class Device : public ReferenceTrackedObject<Device> {
     static decltype(&PerformanceCounters::create) createPerformanceCountersFunc;
     std::unique_ptr<SyncBufferHandler> syncBufferHandler;
     GraphicsAllocation *getRTMemoryBackedBuffer() { return rtMemoryBackedBuffer; }
-    GraphicsAllocation *getRTDispatchGlobals(uint32_t maxBvhLevels);
+    RTDispatchGlobalsInfo *getRTDispatchGlobals(uint32_t maxBvhLevels);
     bool rayTracingIsInitialized() const { return rtMemoryBackedBuffer != nullptr; }
     void initializeRayTracing(uint32_t maxBvhLevels);
+    void allocateRTDispatchGlobals(uint32_t maxBvhLevels);
 
     uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const;
     const std::vector<SubDevice *> getSubDevices() const { return subdevices; }
@@ -174,7 +182,6 @@ class Device : public ReferenceTrackedObject<Device> {
     virtual bool genericSubDevicesAllowed();
     bool engineInstancedSubDevicesAllowed();
     void setAsEngineInstanced();
-    void allocateRTDispatchGlobals(uint32_t maxBvhLevels);
     void finalizeRayTracing();
 
     DeviceInfo deviceInfo = {};
@@ -206,7 +213,8 @@ class Device : public ReferenceTrackedObject<Device> {
     uintptr_t specializedDevice = reinterpret_cast<uintptr_t>(nullptr);
 
     GraphicsAllocation *rtMemoryBackedBuffer = nullptr;
-    std::vector<GraphicsAllocation *> rtDispatchGlobals;
+    std::vector<RTDispatchGlobalsInfo *> rtDispatchGlobalsInfos;
+
     struct {
         bool isValid = false;
         std::array<uint8_t, HwInfoConfig::uuidSize> id;
