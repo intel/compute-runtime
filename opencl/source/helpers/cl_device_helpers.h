@@ -18,6 +18,5 @@ struct HardwareInfo;
 
 namespace ClDeviceHelper {
 void getExtraDeviceInfo(const ClDevice &clDevice, cl_device_info paramName, ClDeviceInfoParam &param, const void *&src, size_t &size, size_t &retSize);
-cl_device_feature_capabilities_intel getExtraCapabilities(const HardwareInfo &hwInfo);
 }; // namespace ClDeviceHelper
 } // namespace NEO

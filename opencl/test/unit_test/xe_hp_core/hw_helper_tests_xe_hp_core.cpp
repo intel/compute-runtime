@@ -15,6 +15,7 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/test/unit_test/mocks/mock_cl_hw_helper.h"
@@ -370,4 +371,10 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE,
     pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControlItor);
     EXPECT_EQ(gpuAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
     EXPECT_EQ(immediateValue, pipeControl->getImmediateData());
+}
+
+using HwHelperTestXeHpCoreAndLater = HwHelperTest;
+HWTEST2_F(HwHelperTestXeHpCoreAndLater, WhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue, IsAtLeastXeHpCore) {
+    cl_device_feature_capabilities_intel expectedCapabilities = CL_DEVICE_FEATURE_FLAG_DPAS_INTEL | CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
+    EXPECT_EQ(expectedCapabilities, ClHwHelper::get(renderCoreFamily).getSupportedDeviceFeatureCapabilities(hardwareInfo));
 }
