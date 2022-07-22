@@ -37,9 +37,12 @@ struct DebugSessionWindows : DebugSessionImp {
 
   protected:
     ze_result_t resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) override;
-    void pushApiEvent(zet_debug_event_t &debugEvent) {
+    void DebugSessionWindows::pushApiEvent(zet_debug_event_t &debugEvent, uint32_t seqNo, uint32_t type) {
         std::unique_lock<std::mutex> lock(asyncThreadMutex);
         apiEvents.push(debugEvent);
+        if (debugEvent.flags & ZET_DEBUG_EVENT_FLAG_NEED_ACK) {
+            eventsToAck.push_back({debugEvent, {seqNo, type}});
+        }
         apiEventCondition.notify_all();
     }
 
@@ -98,6 +101,7 @@ struct DebugSessionWindows : DebugSessionImp {
     std::unordered_set<uint64_t> allContexts;
     std::vector<ElfRange> allElfs;
     std::vector<Module> allModules;
+    std::vector<std::pair<zet_debug_event_t, std::pair<uint32_t, uint32_t>>> eventsToAck;
 };
 
 } // namespace L0

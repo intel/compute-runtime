@@ -189,21 +189,30 @@ ze_result_t DebugSessionWindows::handleModuleCreateEvent(uint32_t seqNo, DBGUMD_
     PRINT_DEBUGGER_INFO_LOG("DBGUMD_READ_EVENT_MODULE_CREATE_EVENT_PARAMS: hElfAddressPtr=0x%llX IsModuleCreate=%d LoadAddress=0x%llX ElfModuleSize=%d\n",
                             moduleCreateParams.hElfAddressPtr, moduleCreateParams.IsModuleCreate, moduleCreateParams.LoadAddress, moduleCreateParams.ElfModulesize);
 
-    if (moduleCreateParams.IsModuleCreate) {
-        Module module = {0};
-        module.cpuAddress = moduleCreateParams.hElfAddressPtr;
-        module.gpuAddress = moduleCreateParams.LoadAddress;
-        module.size = moduleCreateParams.ElfModulesize;
-        allModules.push_back(module);
-
-        PRINT_DEBUGGER_INFO_LOG("DBGUMD_READ_EVENT_MODULE_CREATE_EVENT_PARAMS: Immediately acknowledge...\n");
-        return acknowledgeEventImp(seqNo, DBGUMD_READ_EVENT_MODULE_CREATE_NOTIFICATION);
-    } else {
-        auto it = std::find_if(allModules.begin(), allModules.end(), [&](auto &m) { return m.gpuAddress == moduleCreateParams.LoadAddress; });
-        if (it != allModules.end()) {
-            allModules.erase(it);
+    {
+        std::unique_lock<std::mutex> lock(asyncThreadMutex);
+        if (moduleCreateParams.IsModuleCreate) {
+            Module module = {0};
+            module.cpuAddress = moduleCreateParams.hElfAddressPtr;
+            module.gpuAddress = moduleCreateParams.LoadAddress;
+            module.size = moduleCreateParams.ElfModulesize;
+            allModules.push_back(module);
+        } else {
+            auto it = std::find_if(allModules.begin(), allModules.end(), [&](auto &m) { return m.gpuAddress == moduleCreateParams.LoadAddress; });
+            if (it != allModules.end()) {
+                allModules.erase(it);
+            }
         }
     }
+
+    zet_debug_event_t debugEvent = {};
+    debugEvent.type = moduleCreateParams.IsModuleCreate ? ZET_DEBUG_EVENT_TYPE_MODULE_LOAD : ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD;
+    debugEvent.flags = ZET_DEBUG_EVENT_FLAG_NEED_ACK;
+    debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
+    debugEvent.info.module.load = moduleCreateParams.LoadAddress;
+    debugEvent.info.module.moduleBegin = moduleCreateParams.hElfAddressPtr;
+    debugEvent.info.module.moduleEnd = moduleCreateParams.hElfAddressPtr + moduleCreateParams.ElfModulesize;
+    pushApiEvent(debugEvent, seqNo, DBGUMD_READ_EVENT_MODULE_CREATE_NOTIFICATION);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -299,11 +308,11 @@ ze_result_t DebugSessionWindows::handleCreateDebugDataEvent(DBGUMD_READ_EVENT_CR
     } else if (createDebugDataParams.DebugDataType == static_cast<uint32_t>(NEO::DebugDataType::CMD_QUEUE_CREATED)) {
         zet_debug_event_t debugEvent = {};
         debugEvent.type = ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY;
-        pushApiEvent(debugEvent);
+        pushApiEvent(debugEvent, 0, 0);
     } else if (createDebugDataParams.DebugDataType == static_cast<uint32_t>(NEO::DebugDataType::CMD_QUEUE_DESTROYED)) {
         zet_debug_event_t debugEvent = {};
         debugEvent.type = ZET_DEBUG_EVENT_TYPE_PROCESS_EXIT;
-        pushApiEvent(debugEvent);
+        pushApiEvent(debugEvent, 0, 0);
     }
 
     return ZE_RESULT_SUCCESS;
@@ -445,7 +454,17 @@ ze_result_t DebugSessionWindows::writeMemory(ze_device_thread_t thread, const ze
 }
 
 ze_result_t DebugSessionWindows::acknowledgeEvent(const zet_debug_event_t *event) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    std::unique_lock<std::mutex> lock(asyncThreadMutex);
+
+    ze_result_t ret = ZE_RESULT_ERROR_UNKNOWN;
+    auto it = std::find_if(eventsToAck.begin(), eventsToAck.end(), [&](auto &e) { return !memcmp(&e, event, sizeof(zet_debug_event_t)); });
+
+    if (it != eventsToAck.end()) {
+        ret = acknowledgeEventImp(it->second.first, it->second.second);
+        eventsToAck.erase(it);
+    }
+
+    return ret;
 }
 
 ze_result_t DebugSessionWindows::resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) {

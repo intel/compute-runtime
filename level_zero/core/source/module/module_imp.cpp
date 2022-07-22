@@ -1249,7 +1249,7 @@ void ModuleImp::notifyModuleCreate() {
 
         StackVec<NEO::GraphicsAllocation *, 32> segmentAllocs = getModuleAllocations();
 
-        auto minAddressGpuAlloc = std::min_element(segmentAllocs.begin(), segmentAllocs.end(), [](const auto alloc1, const auto alloc2) { return alloc1->getGpuAddress() < alloc2->getGpuAddress(); });
+        auto minAddressGpuAlloc = std::min_element(segmentAllocs.begin(), segmentAllocs.end(), [](const auto &alloc1, const auto &alloc2) { return alloc1->getGpuAddress() < alloc2->getGpuAddress(); });
         debuggerL0->notifyModuleCreate(const_cast<char *>(debugData.vIsa), debugData.vIsaSize, (*minAddressGpuAlloc)->getGpuAddress());
     } else {
         for (auto &kernImmData : kernelImmDatas) {
