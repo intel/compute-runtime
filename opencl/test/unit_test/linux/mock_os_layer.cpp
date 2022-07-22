@@ -237,7 +237,9 @@ int drmContextDestroy(NEO::GemContextDestroy *destroy) {
 
 int drmVirtualMemoryCreate(NEO::GemVmControl *control) {
     assert(control);
-    control->vmId = ++vmId;
+    if (!failOnVirtualMemoryCreate) {
+        control->vmId = ++vmId;
+    }
     return failOnVirtualMemoryCreate;
 }
 
