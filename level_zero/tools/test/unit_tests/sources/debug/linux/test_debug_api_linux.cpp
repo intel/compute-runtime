@@ -296,7 +296,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     using L0::DebugSessionLinux::ThreadControlCmd;
     using L0::DebugSessionLinux::typeToRegsetDesc;
     using L0::DebugSessionLinux::typeToRegsetFlags;
-    using L0::DebugSessionLinux::uuidL0CommandQueueHandle;
+    using L0::DebugSessionLinux::uuidL0CommandQueueHandleToDevice;
     using L0::DebugSessionLinux::writeGpuMemory;
 
     MockDebugSessionLinux(const zet_debug_config_t &config, L0::Device *device, int debugFd) : DebugSessionLinux(config, device, debugFd) {
@@ -1152,6 +1152,9 @@ TEST_F(DebugApiLinuxTest, GivenUuidCommandQueueCreatedHandledThenProcessEntryEve
     EXPECT_EQ(1u, session->apiEvents.size());
     EXPECT_EQ(MockDebugSessionLinux::mockClientHandle, session->clientHandle);
     EXPECT_EQ(3, handler->ioctlCalled);
+
+    EXPECT_EQ(0u, session->uuidL0CommandQueueHandleToDevice[2]);
+
     auto event = session->apiEvents.front();
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY, event.type);
 
@@ -1159,11 +1162,86 @@ TEST_F(DebugApiLinuxTest, GivenUuidCommandQueueCreatedHandledThenProcessEntryEve
     uuid.client_handle = MockDebugSessionLinux::mockClientHandle;
     handler->returnUuid = &readUuid;
     session->handleEvent(&uuid.base);
-    EXPECT_EQ(2u, session->apiEvents.size());
+    EXPECT_EQ(1u, session->apiEvents.size());
     EXPECT_EQ(MockDebugSessionLinux::mockClientHandle, session->clientHandle);
     EXPECT_EQ(4, handler->ioctlCalled);
-    event = session->apiEvents.front();
+}
+
+TEST_F(DebugApiLinuxTest, GivenUuidCommandQueueWhenQueuesOnToSubdevicesCreatedAndDestroyedThenProcessEntryAndExitEventIsGeneratedOnce) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+    session->clientHandle = MockDebugSessionLinux::mockClientHandle;
+
+    prelim_drm_i915_debug_event_uuid uuid = {};
+    uuid.base.type = PRELIM_DRM_I915_DEBUG_EVENT_UUID;
+    uuid.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    uuid.base.size = sizeof(prelim_drm_i915_debug_event_uuid);
+    uuid.client_handle = MockDebugSessionLinux::mockClientHandle;
+    uuid.handle = 2;
+    uuid.payload_size = sizeof(NEO::DebuggerL0::CommandQueueNotification);
+
+    auto uuidHash = NEO::uuidL0CommandQueueHash;
+    prelim_drm_i915_debug_read_uuid readUuid = {};
+    memcpy(readUuid.uuid, uuidHash, strlen(uuidHash));
+
+    NEO::DebuggerL0::CommandQueueNotification notification;
+    notification.subDeviceCount = 2;
+    notification.subDeviceIndex = 1;
+    readUuid.payload_ptr = reinterpret_cast<uint64_t>(&notification);
+    readUuid.payload_size = sizeof(NEO::DebuggerL0::CommandQueueNotification);
+    readUuid.handle = uuid.handle;
+
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+    handler->returnUuid = &readUuid;
+
+    // Handle UUID create for commandQueue on subdevice 1
+    session->handleEvent(&uuid.base);
+    EXPECT_EQ(1, handler->ioctlCalled);
+    EXPECT_EQ(1u, session->apiEvents.size());
+    auto event = session->apiEvents.front();
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY, event.type);
+
+    EXPECT_EQ(1u, session->uuidL0CommandQueueHandleToDevice.size());
+
+    notification.subDeviceCount = 2;
+    notification.subDeviceIndex = 0;
+    uuid.handle = 3;
+    handler->returnUuid = &readUuid;
+
+    // Handle UUID create for commandQueue on subdevice 0
+    session->handleEvent(&uuid.base);
+    EXPECT_EQ(2, handler->ioctlCalled);
+    EXPECT_EQ(1u, session->apiEvents.size());
+
+    EXPECT_EQ(2u, session->uuidL0CommandQueueHandleToDevice.size());
+    EXPECT_EQ(1u, session->uuidL0CommandQueueHandleToDevice[2]);
+    EXPECT_EQ(0u, session->uuidL0CommandQueueHandleToDevice[3]);
+
+    // Handle UUID destroy for commandQueue on subdevice 0
+    uuid.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_DESTROY;
+    session->handleEvent(&uuid.base);
+
+    EXPECT_EQ(1u, session->uuidL0CommandQueueHandleToDevice.size());
+    EXPECT_EQ(1u, session->apiEvents.size());
+
+    // Handle UUID destroy with invalid uuid handle
+    uuid.handle = 300;
+    session->handleEvent(&uuid.base);
+    EXPECT_EQ(1u, session->uuidL0CommandQueueHandleToDevice.size());
+
+    // Handle UUID destroy for commandQueue on subdevice 1
+    uuid.handle = 2;
+    session->handleEvent(&uuid.base);
+    EXPECT_EQ(0u, session->uuidL0CommandQueueHandleToDevice.size());
+    EXPECT_EQ(2u, session->apiEvents.size());
+
+    session->apiEvents.pop();
+    event = session->apiEvents.front();
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_PROCESS_EXIT, event.type);
 }
 
 TEST_F(DebugApiLinuxTest, GivenCommandQueueDestroyedWhenHandlingEventThenExitEventIsGenerated) {
@@ -1173,7 +1251,8 @@ TEST_F(DebugApiLinuxTest, GivenCommandQueueDestroyedWhenHandlingEventThenExitEve
     auto session = std::make_unique<MockDebugSessionLinux>(config, device, 10);
     ASSERT_NE(nullptr, session);
     session->clientHandle = DebugSessionLinux::invalidHandle;
-    session->uuidL0CommandQueueHandle = 5;
+    const uint64_t validUuidCmdQHandle = 5u;
+    session->uuidL0CommandQueueHandleToDevice[validUuidCmdQHandle] = 0;
 
     prelim_drm_i915_debug_event_uuid uuid = {};
     uuid.base.type = PRELIM_DRM_I915_DEBUG_EVENT_UUID;
@@ -1193,7 +1272,7 @@ TEST_F(DebugApiLinuxTest, GivenCommandQueueDestroyedWhenHandlingEventThenExitEve
     session->handleEvent(&uuid.base);
     EXPECT_EQ(0u, session->apiEvents.size());
 
-    uuid.handle = session->uuidL0CommandQueueHandle;
+    uuid.handle = validUuidCmdQHandle;
     session->handleEvent(&uuid.base);
     EXPECT_EQ(0u, session->apiEvents.size());
 

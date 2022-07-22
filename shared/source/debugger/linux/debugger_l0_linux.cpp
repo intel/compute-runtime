@@ -64,20 +64,31 @@ bool DebuggerL0::removeZebinModule(uint32_t moduleHandle) {
     return true;
 }
 
-void DebuggerL0::notifyCommandQueueCreated() {
-    if (device->getRootDeviceEnvironment().osInterface.get() != nullptr) {
-        if (++commandQueueCount == 1) {
-            auto drm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
-            uuidL0CommandQueueHandle = drm->notifyFirstCommandQueueCreated();
+void DebuggerL0::notifyCommandQueueCreated(NEO::Device *device) {
+    if (this->device->getRootDeviceEnvironment().osInterface.get() != nullptr) {
+        std::unique_lock<std::mutex> commandQueueCountLock(debuggerL0Mutex);
+
+        auto index = device->isSubDevice() ? static_cast<NEO::SubDevice *>(device)->getSubDeviceIndex() : 0;
+
+        if (++commandQueueCount[index] == 1) {
+            auto drm = this->device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
+
+            CommandQueueNotification notification = {index, this->device->getNumSubDevices()};
+            uuidL0CommandQueueHandle[index] = drm->notifyFirstCommandQueueCreated(&notification, sizeof(CommandQueueNotification));
         }
     }
 }
 
-void DebuggerL0::notifyCommandQueueDestroyed() {
-    if (device->getRootDeviceEnvironment().osInterface.get() != nullptr) {
-        if (--commandQueueCount == 0) {
-            auto drm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
-            drm->notifyLastCommandQueueDestroyed(uuidL0CommandQueueHandle);
+void DebuggerL0::notifyCommandQueueDestroyed(NEO::Device *device) {
+    if (this->device->getRootDeviceEnvironment().osInterface.get() != nullptr) {
+        std::unique_lock<std::mutex> commandQueueCountLock(debuggerL0Mutex);
+
+        auto index = device->isSubDevice() ? static_cast<NEO::SubDevice *>(device)->getSubDeviceIndex() : 0;
+
+        if (--commandQueueCount[index] == 0) {
+            auto drm = this->device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
+            drm->notifyLastCommandQueueDestroyed(uuidL0CommandQueueHandle[index]);
+            uuidL0CommandQueueHandle[index] = 0;
         }
     }
 }

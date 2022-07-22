@@ -25,6 +25,14 @@ DebugerL0CreateFn debuggerL0Factory[IGFX_MAX_CORE] = {};
 DebuggerL0::DebuggerL0(NEO::Device *device) : device(device) {
     isLegacyMode = false;
 
+    const auto deviceCount = std::max(1u, device->getNumSubDevices());
+    commandQueueCount.resize(deviceCount);
+    uuidL0CommandQueueHandle.resize(deviceCount);
+
+    for (uint32_t i = 0; i < deviceCount; i++) {
+        commandQueueCount[i] = 0;
+        uuidL0CommandQueueHandle[i] = 0;
+    }
     initialize();
 }
 

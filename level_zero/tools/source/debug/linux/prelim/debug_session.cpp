@@ -459,10 +459,20 @@ void DebugSessionLinux::handleEvent(prelim_drm_i915_debug_event *event) {
             clientHandleToConnection[uuid->client_handle]->uuidToModule.erase(uuid->handle);
         }
 
-        if (destroy && (uuidL0CommandQueueHandle == uuid->handle) && (clientHandle == uuid->client_handle)) {
-            zet_debug_event_t debugEvent = {};
-            debugEvent.type = ZET_DEBUG_EVENT_TYPE_PROCESS_EXIT;
-            pushApiEvent(debugEvent, nullptr);
+        if (destroy && (clientHandle == uuid->client_handle)) {
+
+            for (const auto &uuidToDevice : uuidL0CommandQueueHandleToDevice) {
+                if (uuidToDevice.first == uuid->handle) {
+                    uuidL0CommandQueueHandleToDevice.erase(uuidToDevice.first);
+
+                    if (uuidL0CommandQueueHandleToDevice.size() == 0) {
+                        zet_debug_event_t debugEvent = {};
+                        debugEvent.type = ZET_DEBUG_EVENT_TYPE_PROCESS_EXIT;
+                        pushApiEvent(debugEvent, nullptr);
+                    }
+                    break;
+                }
+            }
             break;
         }
 
@@ -485,10 +495,20 @@ void DebugSessionLinux::handleEvent(prelim_drm_i915_debug_event *event) {
                     if (uuidString == NEO::uuidL0CommandQueueHash) {
                         if ((clientHandle == invalidClientHandle) || (clientHandle == uuid->client_handle)) {
                             clientHandle = uuid->client_handle;
-                            uuidL0CommandQueueHandle = uuid->handle;
-                            zet_debug_event_t debugEvent = {};
-                            debugEvent.type = ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY;
-                            pushApiEvent(debugEvent, nullptr);
+
+                            uint32_t deviceIndex = 0;
+                            if (readUuid.payload_size == sizeof(NEO::DebuggerL0::CommandQueueNotification)) {
+                                auto notification = reinterpret_cast<NEO::DebuggerL0::CommandQueueNotification *>(payload.get());
+                                deviceIndex = notification->subDeviceIndex;
+                                UNRECOVERABLE_IF(notification->subDeviceCount > 0 && notification->subDeviceIndex >= notification->subDeviceCount);
+                            }
+
+                            if (uuidL0CommandQueueHandleToDevice.size() == 0) {
+                                zet_debug_event_t debugEvent = {};
+                                debugEvent.type = ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY;
+                                pushApiEvent(debugEvent, nullptr);
+                            }
+                            uuidL0CommandQueueHandleToDevice[uuid->handle] = deviceIndex;
                         }
                     }
 

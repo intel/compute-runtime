@@ -61,7 +61,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::destroy() {
     }
     buffers.destroy(this->getDevice());
     if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger()) {
-        device->getL0Debugger()->notifyCommandQueueDestroyed();
+        device->getL0Debugger()->notifyCommandQueueDestroyed(device->getNEODevice());
     }
     delete this;
     return ZE_RESULT_SUCCESS;

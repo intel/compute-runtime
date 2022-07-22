@@ -12,6 +12,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <type_traits>
 #include <unordered_map>
 
 namespace NEO {
@@ -91,8 +92,8 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
     void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba) override;
     void printTrackedAddresses(uint32_t contextId);
     MOCKABLE_VIRTUAL void registerElf(NEO::DebugData *debugData, NEO::GraphicsAllocation *isaAllocation);
-    MOCKABLE_VIRTUAL void notifyCommandQueueCreated();
-    MOCKABLE_VIRTUAL void notifyCommandQueueDestroyed();
+    MOCKABLE_VIRTUAL void notifyCommandQueueCreated(NEO::Device *device);
+    MOCKABLE_VIRTUAL void notifyCommandQueueDestroyed(NEO::Device *device);
     MOCKABLE_VIRTUAL void notifyModuleLoadAllocations(const StackVec<NEO::GraphicsAllocation *, 32> &allocs);
     MOCKABLE_VIRTUAL void notifyModuleCreate(void *module, uint32_t moduleSize, uint64_t moduleLoadAddress);
     MOCKABLE_VIRTUAL void registerAllocationType(GraphicsAllocation *allocation);
@@ -110,6 +111,11 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
     }
     bool getSingleAddressSpaceSbaTracking() { return singleAddressSpaceSbaTracking; }
 
+    struct CommandQueueNotification {
+        uint32_t subDeviceIndex = 0;
+        uint32_t subDeviceCount = 0;
+    };
+
   protected:
     static bool isAnyTrackedAddressChanged(SbaAddresses sba) {
         return sba.GeneralStateBaseAddress != 0 ||
@@ -125,11 +131,13 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
     std::unordered_map<uint32_t, NEO::GraphicsAllocation *> perContextSbaAllocations;
     NEO::AddressRange sbaTrackingGpuVa{};
     NEO::GraphicsAllocation *moduleDebugArea = nullptr;
-    std::atomic<uint32_t> commandQueueCount = 0u;
-    uint32_t uuidL0CommandQueueHandle = 0;
+    std::vector<uint32_t> commandQueueCount;
+    std::vector<uint32_t> uuidL0CommandQueueHandle;
     bool singleAddressSpaceSbaTracking = false;
     std::mutex debuggerL0Mutex;
 };
+
+static_assert(std::is_standard_layout<DebuggerL0::CommandQueueNotification>::value, "DebuggerL0::CommandQueueNotification issue");
 
 using DebugerL0CreateFn = DebuggerL0 *(*)(NEO::Device *device);
 extern DebugerL0CreateFn debuggerL0Factory[];
