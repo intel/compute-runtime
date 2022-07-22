@@ -238,7 +238,7 @@ KernelImp::~KernelImp() {
         alignedFree(perThreadDataForWholeThreadGroup);
     }
     if (printfBuffer != nullptr) {
-        // not allowed to call virtual function on destructor, so calling printOutput directly
+        //not allowed to call virtual function on destructor, so calling printOutput directly
         PrintfHandler::printOutput(kernelImmData, this->printfBuffer, module->getDevice());
         module->getDevice()->getNEODevice()->getMemoryManager()->freeGraphicsMemory(printfBuffer);
     }
@@ -901,8 +901,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
 
     kernelHasIndirectAccess = kernelDescriptor.kernelAttributes.hasNonKernelArgLoad ||
                               kernelDescriptor.kernelAttributes.hasNonKernelArgStore ||
-                              kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic ||
-                              getImmutableData()->getKernelInfo()->hasIndirectStatelessAccess;
+                              kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic;
 
     if (this->usesRayTracing()) {
         if (this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.rtDispatchGlobals.pointerSize > 0) {
@@ -1029,9 +1028,9 @@ Kernel *Kernel::create(uint32_t productFamily, Module *module,
 }
 
 bool KernelImp::hasIndirectAllocationsAllowed() const {
-    return this->kernelHasIndirectAccess && (unifiedMemoryControls.indirectDeviceAllocationsAllowed ||
-                                             unifiedMemoryControls.indirectHostAllocationsAllowed ||
-                                             unifiedMemoryControls.indirectSharedAllocationsAllowed);
+    return (unifiedMemoryControls.indirectDeviceAllocationsAllowed ||
+            unifiedMemoryControls.indirectHostAllocationsAllowed ||
+            unifiedMemoryControls.indirectSharedAllocationsAllowed);
 }
 
 uint32_t KernelImp::getSlmTotalSize() const {

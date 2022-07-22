@@ -258,8 +258,7 @@ cl_int Kernel::initialize() {
 
     this->kernelHasIndirectAccess |= kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgLoad ||
                                      kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgStore ||
-                                     kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic ||
-                                     kernelInfo.hasIndirectStatelessAccess;
+                                     kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic;
 
     provideInitializationHints();
     // resolve the new kernel info to account for kernel handlers
@@ -1120,14 +1119,6 @@ inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceive
                     commandStreamReceiver.makeResident(*memObj->getMcsAllocation());
                 }
             }
-        } else if (kernelArguments[argIndex].svmAllocation) {
-            auto svmAlloc = kernelArguments[argIndex].svmAllocation;
-            auto pageFaultManager = executionEnvironment.memoryManager->getPageFaultManager();
-            if (pageFaultManager &&
-                this->isUnifiedMemorySyncRequired) {
-                pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(svmAlloc->getGpuAddress()));
-            }
-            commandStreamReceiver.makeResident(*svmAlloc);
         }
     }
 }
@@ -1260,9 +1251,9 @@ void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
 
     gtpinNotifyMakeResident(this, &commandStreamReceiver);
 
-    if (this->kernelHasIndirectAccess && (unifiedMemoryControls.indirectDeviceAllocationsAllowed ||
-                                          unifiedMemoryControls.indirectHostAllocationsAllowed ||
-                                          unifiedMemoryControls.indirectSharedAllocationsAllowed)) {
+    if (unifiedMemoryControls.indirectDeviceAllocationsAllowed ||
+        unifiedMemoryControls.indirectHostAllocationsAllowed ||
+        unifiedMemoryControls.indirectSharedAllocationsAllowed) {
         this->getContext().getSVMAllocsManager()->makeInternalAllocationsResident(commandStreamReceiver, unifiedMemoryControls.generateMask());
     }
 }
@@ -1641,24 +1632,6 @@ cl_int Kernel::setArgImmediate(uint32_t argIndex,
                 size_t maxBytesToCopy = argSize - element.sourceOffset;
                 size_t bytesToCopy = std::min(static_cast<size_t>(element.size), maxBytesToCopy);
                 memcpy_s(pDst, element.size, pSrc, bytesToCopy);
-            }
-        }
-
-        if (KernelArgMetadata::AddressSpaceQualifier::AddrPrivate == kernelInfo.getArgDescriptorAt(argIndex).getTraits().getAddressQualifier() &&
-            sizeof(void *) == argSize &&
-            isAligned<sizeof(void *)>(argVal)) {
-            const auto possibleSvmPointer = *static_cast<void *const *>(argVal);
-            if (possibleSvmPointer && isAligned<sizeof(void *)>(possibleSvmPointer)) {
-                const auto context = this->program->getContextPtr();
-                if (context) {
-                    const auto svmManager = context->getSVMAllocsManager();
-                    if (svmManager) {
-                        auto possibleSvmAlloc = svmManager->getSVMAlloc(possibleSvmPointer);
-                        if (possibleSvmAlloc) {
-                            this->kernelArguments[argIndex].svmAllocation = possibleSvmAlloc->gpuAllocations.getGraphicsAllocation(this->getDevice().getRootDeviceIndex());
-                        }
-                    }
-                }
             }
         }
 
