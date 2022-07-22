@@ -21,6 +21,7 @@
 using namespace NEO;
 using CmdsProgrammingTestsDg2 = UltCommandStreamReceiverTest;
 
+HWTEST_EXCLUDE_PRODUCT(CmdsProgrammingTestsXeHpgCore, givenL3ToL1DebugFlagWhenStatelessMocsIsProgrammedThenItHasL1CachingOn, IGFX_XE_HPG_CORE);
 DG2TEST_F(CmdsProgrammingTestsDg2, givenL3ToL1DebugFlagWhenStatelessMocsIsProgrammedThenItHasL1CachingOn) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
@@ -37,13 +38,14 @@ DG2TEST_F(CmdsProgrammingTestsDg2, givenL3ToL1DebugFlagWhenStatelessMocsIsProgra
 
     auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
 
-    auto actualL1CachePolocy = static_cast<uint8_t>(stateBaseAddress->getL1CachePolicyL1CacheControl());
+    auto actualL1CachePolicy = static_cast<uint8_t>(stateBaseAddress->getL1CachePolicyL1CacheControl());
 
-    const uint8_t expectedL1CachePolicy = FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP;
-    EXPECT_EQ(expectedL1CachePolicy, actualL1CachePolocy);
+    const uint8_t expectedL1CachePolicy = FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB;
+    EXPECT_EQ(expectedL1CachePolicy, actualL1CachePolicy);
 }
 
 DG2TEST_F(CmdsProgrammingTestsDg2, givenSpecificProductFamilyWhenAppendingSbaThenProgramWtL1CachePolicy) {
+
     auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
     AllocationProperties properties(pDevice->getRootDeviceIndex(), 1, AllocationType::BUFFER, pDevice->getDeviceBitfield());
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
@@ -56,11 +58,12 @@ DG2TEST_F(CmdsProgrammingTestsDg2, givenSpecificProductFamilyWhenAppendingSbaThe
                                                                          pDevice->getRootDeviceEnvironment().getGmmHelper(), false,
                                                                          MemoryCompressionState::NotApplicable, true, false, 1u);
 
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP, sbaCmd.getL1CachePolicyL1CacheControl());
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB, sbaCmd.getL1CachePolicyL1CacheControl());
 
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+HWTEST_EXCLUDE_PRODUCT(CmdsProgrammingTestsXeHpgCore, givenL1CachingOverrideWhenStateBaseAddressIsProgrammedThenItMatchesTheOverrideValue, IGFX_XE_HPG_CORE);
 DG2TEST_F(CmdsProgrammingTestsDg2, givenL1CachingOverrideWhenStateBaseAddressIsProgrammedThenItMatchesTheOverrideValue) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceStatelessL1CachingPolicy.set(0u);
@@ -89,7 +92,8 @@ DG2TEST_F(CmdsProgrammingTestsDg2, givenL1CachingOverrideWhenStateBaseAddressIsP
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-DG2TEST_F(CmdsProgrammingTestsDg2, whenAppendingRssThenProgramWBPL1CachePolicy) {
+HWTEST_EXCLUDE_PRODUCT(CmdsProgrammingTestsXeHpgCore, givenXeHpgCoreWhenAppendingRssThenProgramWBPL1CachePolicy, IGFX_XE_HPG_CORE);
+DG2TEST_F(CmdsProgrammingTestsDg2, givenDG2whenAppendingRssThenProgramWBL1CachePolicy) {
     auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
     size_t allocationSize = MemoryConstants::pageSize;
     AllocationProperties properties(pDevice->getRootDeviceIndex(), allocationSize, AllocationType::BUFFER, pDevice->getDeviceBitfield());
@@ -116,39 +120,10 @@ DG2TEST_F(CmdsProgrammingTestsDg2, whenAppendingRssThenProgramWBPL1CachePolicy) 
 
     EncodeSurfaceState<FamilyType>::encodeBuffer(args);
 
-    EXPECT_EQ(FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WBP, rssCmd.getL1CachePolicyL1CacheControl());
+    EXPECT_EQ(FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB, rssCmd.getL1CachePolicyL1CacheControl());
 }
 
-DG2TEST_F(CmdsProgrammingTestsDg2, givenAlignedCacheableReadOnlyBufferThenChoseOclBufferConstPolicy) {
-    MockContext context;
-    const auto size = MemoryConstants::pageSize;
-    const auto ptr = (void *)alignedMalloc(size * 2, MemoryConstants::pageSize);
-    const auto flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY;
-
-    auto retVal = CL_SUCCESS;
-    auto buffer = std::unique_ptr<Buffer>(Buffer::create(
-        &context,
-        flags,
-        size,
-        ptr,
-        retVal));
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    typename FamilyType::RENDER_SURFACE_STATE surfaceState = {};
-    buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false, false);
-
-    const auto expectedMocs = context.getDevice(0)->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
-    const auto actualMocs = surfaceState.getMemoryObjectControlState();
-    EXPECT_EQ(expectedMocs, actualMocs);
-
-    auto actualL1CachePolocy = static_cast<uint8_t>(surfaceState.getL1CachePolicyL1CacheControl());
-
-    const uint8_t expectedL1CachePolicy = FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP;
-    EXPECT_EQ(expectedL1CachePolicy, actualL1CachePolocy);
-
-    alignedFree(ptr);
-}
-
+HWTEST_EXCLUDE_PRODUCT(CmdsProgrammingTestsXeHpgCore, givenAlignedCacheableReadOnlyBufferThenChoseOclBufferConstPolicy, IGFX_XE_HPG_CORE);
 DG2TEST_F(CmdsProgrammingTestsDg2, givenDG2WithBSteppingWhenFlushingTaskThenAdditionalStateBaseAddressCommandIsPresent) {
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
@@ -167,4 +142,23 @@ DG2TEST_F(CmdsProgrammingTestsDg2, givenDG2WithBSteppingWhenFlushingTaskThenAddi
     stateBaseAddressItor++;
     stateBaseAddressItor = find<typename FamilyType::STATE_BASE_ADDRESS *>(stateBaseAddressItor, cmdList.end());
     EXPECT_NE(cmdList.end(), stateBaseAddressItor);
+}
+
+HWTEST_EXCLUDE_PRODUCT(CmdsProgrammingTestsXeHpgCore, givenSpecificProductFamilyWhenAppendingSbaThenProgramWBPL1CachePolicy, IGFX_XE_HPG_CORE);
+DG2TEST_F(CmdsProgrammingTestsDg2, givenDG2WhenAppendingSbaThenProgramWBL1CachePolicy) {
+    auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
+    AllocationProperties properties(pDevice->getRootDeviceIndex(), 1, AllocationType::BUFFER, pDevice->getDeviceBitfield());
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+
+    IndirectHeap indirectHeap(allocation, 1);
+    DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
+    auto sbaCmd = FamilyType::cmdInitStateBaseAddress;
+
+    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(&sbaCmd, &indirectHeap, true, 0,
+                                                                         pDevice->getRootDeviceEnvironment().getGmmHelper(), false,
+                                                                         MemoryCompressionState::NotApplicable, true, false, 1u);
+
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB, sbaCmd.getL1CachePolicyL1CacheControl());
+
+    memoryManager->freeGraphicsMemory(allocation);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/helpers/cache_policy.h"
 
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/cache_policy_base.inl"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 namespace NEO {
