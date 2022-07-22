@@ -62,32 +62,50 @@ NEO::GraphicsAllocation &EventImp<TagSizeT>::getAllocation(Device *device) {
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::calculateProfilingData() {
     constexpr uint32_t skipL3EventPacketIndex = 2u;
-
     globalStartTS = kernelEventCompletionData[0].getGlobalStartValue(0);
     globalEndTS = kernelEventCompletionData[0].getGlobalEndValue(0);
     contextStartTS = kernelEventCompletionData[0].getContextStartValue(0);
     contextEndTS = kernelEventCompletionData[0].getContextEndValue(0);
 
+    auto getEndTS = [](bool &isOverflowed, const std::pair<uint64_t, uint64_t> &currTs, const uint64_t &end) {
+        auto &[currStartTs, currEndTs] = currTs;
+
+        if (isOverflowed == false) {
+            if (currEndTs < currStartTs) {
+                isOverflowed = true;
+                return currEndTs;
+            } else {
+                return std::max(end, currEndTs);
+            }
+        } else {
+            // if already overflowed, then track the endTs of new overflowing ones
+            if (currEndTs < currStartTs) {
+                return std::max(end, currEndTs);
+            }
+        }
+        return end;
+    };
+
+    bool isGlobalTsOverflowed = false;
+    bool isContextTsOverflowed = false;
+
     for (uint32_t kernelId = 0; kernelId < kernelCount; kernelId++) {
-        for (auto packetId = 0u; packetId < kernelEventCompletionData[kernelId].getPacketsUsed(); packetId++) {
+        const auto &eventCompletion = kernelEventCompletionData[kernelId];
+        for (auto packetId = 0u; packetId < eventCompletion.getPacketsUsed(); packetId++) {
             if (this->l3FlushAppliedOnKernel.test(kernelId) && ((packetId % skipL3EventPacketIndex) != 0)) {
                 continue;
             }
-            if (globalStartTS > kernelEventCompletionData[kernelId].getGlobalStartValue(packetId)) {
-                globalStartTS = kernelEventCompletionData[kernelId].getGlobalStartValue(packetId);
-            }
-            if (contextStartTS > kernelEventCompletionData[kernelId].getContextStartValue(packetId)) {
-                contextStartTS = kernelEventCompletionData[kernelId].getContextStartValue(packetId);
-            }
-            if (contextEndTS < kernelEventCompletionData[kernelId].getContextEndValue(packetId)) {
-                contextEndTS = kernelEventCompletionData[kernelId].getContextEndValue(packetId);
-            }
-            if (globalEndTS < kernelEventCompletionData[kernelId].getGlobalEndValue(packetId)) {
-                globalEndTS = kernelEventCompletionData[kernelId].getGlobalEndValue(packetId);
-            }
+            const std::pair<uint64_t, uint64_t> currentGlobal(eventCompletion.getGlobalStartValue(packetId),
+                                                              eventCompletion.getGlobalEndValue(packetId));
+            const std::pair<uint64_t, uint64_t> currentContext(eventCompletion.getContextStartValue(packetId),
+                                                               eventCompletion.getContextEndValue(packetId));
+
+            globalStartTS = std::min(globalStartTS, currentGlobal.first);
+            contextStartTS = std::min(contextStartTS, currentContext.first);
+            globalEndTS = getEndTS(isGlobalTsOverflowed, currentGlobal, globalEndTS);
+            contextEndTS = getEndTS(isContextTsOverflowed, currentContext, contextEndTS);
         }
     }
-
     return ZE_RESULT_SUCCESS;
 }
 

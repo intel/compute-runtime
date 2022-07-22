@@ -1518,6 +1518,47 @@ TEST_F(TimestampEventCreate, givenTimeStampEventUsedOnTwoKernelsWhenL3FlushSetOn
     EXPECT_EQ(static_cast<uint64_t>(kernelEndValue), results.global.kernelEnd);
 }
 
+TEST_F(TimestampEventCreate, givenOverflowingTimeStampDataOnTwoKernelsWhenQueryKernelTimestampIsCalledOverflowIsObserved) {
+    typename MockTimestampPackets32::Packet packetData[4] = {};
+    event->hostAddress = packetData;
+
+    uint32_t maxTimeStampValue = std::numeric_limits<uint32_t>::max();
+
+    //1st kernel 1st packet (overflowing context timestamp)
+    packetData[0].contextStart = maxTimeStampValue - 1;
+    packetData[0].contextEnd = maxTimeStampValue + 1;
+    packetData[0].globalStart = maxTimeStampValue - 2;
+    packetData[0].globalEnd = maxTimeStampValue - 1;
+
+    //2nd kernel 1st packet (overflowing global timestamp)
+    packetData[1].contextStart = maxTimeStampValue - 2;
+    packetData[1].contextEnd = maxTimeStampValue - 1;
+    packetData[1].globalStart = maxTimeStampValue - 1;
+    packetData[1].globalEnd = maxTimeStampValue + 1;
+
+    //2nd kernel 2nd packet (overflowing context timestamp)
+    memcpy(&packetData[2], &packetData[0], sizeof(MockTimestampPackets32::Packet));
+    packetData[2].contextStart = maxTimeStampValue;
+    packetData[2].contextEnd = maxTimeStampValue + 2;
+
+    EXPECT_EQ(1u, event->getPacketsUsedInLastKernel());
+
+    event->increaseKernelCount();
+    event->setPacketsInUse(2u);
+
+    ze_kernel_timestamp_result_t results;
+    event->queryKernelTimestamp(&results);
+
+    auto &hwHelper = HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
+    if (hwHelper.useOnlyGlobalTimestamps() == false) {
+        EXPECT_EQ(static_cast<uint64_t>(maxTimeStampValue - 2), results.context.kernelStart);
+        EXPECT_EQ(static_cast<uint64_t>(maxTimeStampValue + 2), results.context.kernelEnd);
+    }
+
+    EXPECT_EQ(static_cast<uint64_t>(maxTimeStampValue - 2), results.global.kernelStart);
+    EXPECT_EQ(static_cast<uint64_t>(maxTimeStampValue + 1), results.global.kernelEnd);
+}
+
 HWTEST_EXCLUDE_PRODUCT(TimestampEventCreate, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet, IGFX_GEN12LP_CORE);
 
 TEST_F(TimestampEventCreate, givenEventWhenQueryKernelTimestampThenNotReadyReturned) {
