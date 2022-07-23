@@ -51,23 +51,6 @@ void OsContextWin::reInitializeContext() {
     UNRECOVERABLE_IF(!wddm.createContext(*this));
 };
 
-void OsContextWin::getDeviceLuidArray(std::vector<uint8_t> &luidData, size_t arraySize) {
-    auto *wddm = this->getWddm();
-    auto *hwDeviceID = wddm->getHwDeviceId();
-    auto luid = hwDeviceID->getAdapterLuid();
-    luidData.reserve(arraySize);
-    for (size_t i = 0; i < arraySize; i++) {
-        char *luidArray = nullptr;
-        if (i < 4) {
-            luidArray = (char *)&luid.LowPart;
-            luidData.emplace(luidData.end(), luidArray[i]);
-        } else {
-            luidArray = (char *)&luid.HighPart;
-            luidData.emplace(luidData.end(), luidArray[i - 4]);
-        }
-    }
-};
-
 OsContextWin::~OsContextWin() {
     if (contextInitialized && (false == this->wddm.skipResourceCleanup())) {
         wddm.getWddmInterface()->destroyHwQueue(hardwareQueue.handle);

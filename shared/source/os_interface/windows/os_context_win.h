@@ -35,7 +35,6 @@ class OsContextWin : public OsContext {
     MOCKABLE_VIRTUAL WddmResidencyController &getResidencyController() { return residencyController; }
     static OsContext *create(OSInterface *osInterface, uint32_t contextId, const EngineDescriptor &engineDescriptor);
     void reInitializeContext() override;
-    void getDeviceLuidArray(std::vector<uint8_t> &luidData, size_t arraySize);
     MOCKABLE_VIRTUAL bool isDebuggableContext() { return debuggableContext; };
 
   protected:

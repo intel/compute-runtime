@@ -132,9 +132,6 @@ struct DeviceImp : public Device {
     using CmdListCreateFunPtrT = L0::CommandList *(*)(uint32_t, Device *, NEO::EngineGroupType, ze_command_list_flags_t, ze_result_t &);
     CmdListCreateFunPtrT getCmdListCreateFunc(const ze_command_list_desc_t *desc);
 
-    ze_result_t queryDeviceLuid(ze_device_luid_ext_properties_t *deviceLuidProperties);
-    ze_result_t setDeviceLuid(ze_device_luid_ext_properties_t *deviceLuidProperties);
-
   protected:
     void adjustCommandQueueDesc(ze_command_queue_desc_t &desc);
     NEO::EngineGroupsT subDeviceCopyEngineGroups{};
