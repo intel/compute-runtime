@@ -7,10 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/definitions/engine_group_types.h"
-#include "shared/source/helpers/pipeline_select_helper.h"
-#include "shared/source/kernel/kernel_execution_type.h"
 
-#include "engine_node.h"
 #include "igfxfmid.h"
 
 #include <cstddef>

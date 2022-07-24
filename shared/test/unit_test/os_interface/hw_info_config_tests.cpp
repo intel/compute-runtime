@@ -7,9 +7,9 @@
 
 #include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
 
-#include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/mock_hw_info_config_hw.h"
 #include "shared/test/common/helpers/unit_test_helper.h"

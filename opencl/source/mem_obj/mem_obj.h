@@ -6,22 +6,19 @@
  */
 
 #pragma once
-#include "shared/source/debug_settings/debug_settings_manager.h"
+
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/destructor_callbacks.h"
-#include "opencl/source/helpers/mipmap.h"
 #include "opencl/source/mem_obj/map_operations_handler.h"
 #include "opencl/source/sharings/sharing.h"
 
 #include "memory_properties_flags.h"
 
-#include <atomic>
 #include <cstdint>
-#include <list>
 #include <vector>
 
 namespace NEO {

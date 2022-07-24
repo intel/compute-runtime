@@ -14,13 +14,8 @@
 
 #include "CL/cl.h"
 
-#include <array>
 #include <cstdint>
-#include <fstream>
 #include <memory>
-#include <mutex>
-#include <string>
-#include <tuple>
 #include <vector>
 
 namespace NEO {
@@ -40,7 +35,7 @@ struct BuiltinOpParams {
     MemObj *dstMemObj = nullptr;
     GraphicsAllocation *srcSvmAlloc = nullptr;
     GraphicsAllocation *dstSvmAlloc = nullptr;
-    GraphicsAllocation *transferAllocation = nullptr; //mapAllocation or hostPtrAllocation
+    GraphicsAllocation *transferAllocation = nullptr; // mapAllocation or hostPtrAllocation
     AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::None;
     bool unifiedMemoryArgsRequireMemSync = true;
     Vec3<size_t> srcOffset = {0, 0, 0};

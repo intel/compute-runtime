@@ -12,8 +12,6 @@
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include <cinttypes>
-#include <cstddef>
 #include <limits>
 
 namespace NEO {

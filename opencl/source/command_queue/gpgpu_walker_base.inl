@@ -9,28 +9,16 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_helper.h"
-#include "shared/source/helpers/local_id_gen.h"
-#include "shared/source/helpers/pipe_control_args.h"
-#include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/os_context.h"
-#include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/event/user_event.h"
-#include "opencl/source/helpers/cl_validators.h"
-#include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/queue_helpers.h"
-#include "opencl/source/mem_obj/mem_obj.h"
-
-#include <algorithm>
-#include <cmath>
 
 namespace NEO {
 

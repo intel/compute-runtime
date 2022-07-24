@@ -17,7 +17,6 @@
 #include "shared/source/utilities/tag_allocator.h"
 
 #include <cstdint>
-#include <vector>
 
 namespace NEO {
 class CommandStreamReceiver;

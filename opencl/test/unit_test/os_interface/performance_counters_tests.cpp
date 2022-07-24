@@ -6,10 +6,8 @@
  */
 
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/os_interface/os_interface.h"
-#include "shared/source/os_interface/os_time.h"
+#include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/tag_allocator.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"

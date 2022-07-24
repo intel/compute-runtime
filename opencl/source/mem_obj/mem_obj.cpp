@@ -22,6 +22,7 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
+#include "opencl/source/helpers/mipmap.h"
 
 #include <algorithm>
 
@@ -370,7 +371,7 @@ void *MemObj::getBasePtrForMap(uint32_t rootDeviceIndex) {
             AllocationProperties properties{rootDeviceIndex,
                                             false, // allocateMemory
                                             getSize(), AllocationType::MAP_ALLOCATION,
-                                            false, //isMultiStorageAllocation
+                                            false, // isMultiStorageAllocation
                                             context->getDeviceBitfieldForAllocation(rootDeviceIndex)};
 
             auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, memory);

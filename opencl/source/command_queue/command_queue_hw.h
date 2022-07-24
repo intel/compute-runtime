@@ -9,7 +9,6 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/helpers/engine_control.h"
-#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 #include "opencl/source/cl_device/cl_device.h"

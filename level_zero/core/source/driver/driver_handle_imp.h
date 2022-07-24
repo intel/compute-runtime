@@ -14,6 +14,7 @@
 #include "level_zero/core/source/get_extension_function_lookup_map.h"
 
 #include <map>
+#include <mutex>
 
 namespace L0 {
 class HostPointerManager;

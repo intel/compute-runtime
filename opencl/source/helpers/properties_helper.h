@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #pragma once
 
 #include "shared/source/command_stream/csr_deps.h"
-#include "shared/source/command_stream/queue_throttle.h"
 
 #include "opencl/source/api/cl_types.h"
 

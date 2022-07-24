@@ -10,7 +10,6 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/os_interface/hw_info_config.h"
 
 #include "sku_info.h"
 

@@ -11,6 +11,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/memory_manager/surface.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -392,7 +393,7 @@ template <uint32_t numTiles, bool testLocalMemory>
 template <typename FamilyType>
 void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenCompressedBufferWhenAuxTranslationCalledThenResolveAndCompressImpl() {
     if (this->context->getDevice(0u)->areSharedSystemAllocationsAllowed() || !compressionSupported()) {
-        //no support for scenarios where stateless is mixed with blitter compression
+        // no support for scenarios where stateless is mixed with blitter compression
         GTEST_SKIP();
     }
 
@@ -476,20 +477,20 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenReadBufferRectWithO
     GraphicsAllocation *allocation = hostPtrSurface.getAllocation();
     auto srcAllocation = srcBuffer->getGraphicsAllocation(rootDeviceIndex);
 
-    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::BufferToHostPtr, //blitDirection
-                                                                          *bcsCsr,                                          //commandStreamReceiver
-                                                                          srcAllocation,                                    //memObjAllocation
-                                                                          allocation,                                       //preallocatedHostAllocation
-                                                                          pDestMemory,                                      //hostPtr
-                                                                          srcAllocation->getGpuAddress(),                   //memObjGpuVa
-                                                                          allocation->getGpuAddress(),                      //hostAllocGpuVa
-                                                                          hostOrigin,                                       //hostPtrOffset
-                                                                          bufferOrigin,                                     //copyOffset
-                                                                          region,                                           //copySize
-                                                                          hostRowPitch,                                     //hostRowPitch
-                                                                          hostSlicePitch,                                   //hostSlicePitch
-                                                                          bufferRowPitch,                                   //gpuRowPitch
-                                                                          bufferSlicePitch);                                //gpuSlicePitch
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::BufferToHostPtr, // blitDirection
+                                                                          *bcsCsr,                                          // commandStreamReceiver
+                                                                          srcAllocation,                                    // memObjAllocation
+                                                                          allocation,                                       // preallocatedHostAllocation
+                                                                          pDestMemory,                                      // hostPtr
+                                                                          srcAllocation->getGpuAddress(),                   // memObjGpuVa
+                                                                          allocation->getGpuAddress(),                      // hostAllocGpuVa
+                                                                          hostOrigin,                                       // hostPtrOffset
+                                                                          bufferOrigin,                                     // copyOffset
+                                                                          region,                                           // copySize
+                                                                          hostRowPitch,                                     // hostRowPitch
+                                                                          hostSlicePitch,                                   // hostSlicePitch
+                                                                          bufferRowPitch,                                   // gpuRowPitch
+                                                                          bufferSlicePitch);                                // gpuSlicePitch
 
     executeBlitCommand(blitProperties, false);
 
@@ -534,20 +535,20 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenWriteBufferRectWith
     GraphicsAllocation *allocation = hostPtrSurface.getAllocation();
     auto srcAllocation = srcBuffer->getGraphicsAllocation(rootDeviceIndex);
 
-    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer, //blitDirection
-                                                                          *bcsCsr,                                          //commandStreamReceiver
-                                                                          srcAllocation,                                    //memObjAllocation
-                                                                          allocation,                                       //preallocatedHostAllocation
-                                                                          pDestMemory,                                      //hostPtr
-                                                                          srcAllocation->getGpuAddress(),                   //memObjGpuVa
-                                                                          allocation->getGpuAddress(),                      //hostAllocGpuVa
-                                                                          hostOrigin,                                       //hostPtrOffset
-                                                                          bufferOrigin,                                     //copyOffset
-                                                                          region,                                           //copySize
-                                                                          hostRowPitch,                                     //hostRowPitch
-                                                                          hostSlicePitch,                                   //hostSlicePitch
-                                                                          bufferRowPitch,                                   //gpuRowPitch
-                                                                          bufferSlicePitch);                                //gpuSlicePitch
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer, // blitDirection
+                                                                          *bcsCsr,                                          // commandStreamReceiver
+                                                                          srcAllocation,                                    // memObjAllocation
+                                                                          allocation,                                       // preallocatedHostAllocation
+                                                                          pDestMemory,                                      // hostPtr
+                                                                          srcAllocation->getGpuAddress(),                   // memObjGpuVa
+                                                                          allocation->getGpuAddress(),                      // hostAllocGpuVa
+                                                                          hostOrigin,                                       // hostPtrOffset
+                                                                          bufferOrigin,                                     // copyOffset
+                                                                          region,                                           // copySize
+                                                                          hostRowPitch,                                     // hostRowPitch
+                                                                          hostSlicePitch,                                   // hostSlicePitch
+                                                                          bufferRowPitch,                                   // gpuRowPitch
+                                                                          bufferSlicePitch);                                // gpuSlicePitch
 
     executeBlitCommand(blitProperties, false);
 
@@ -586,16 +587,16 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenCopyBufferRectWithO
     size_t dstSlicePitch = dstRowPitch * region[1];
     auto copySize = region[0] * region[1] * region[2];
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(dstBuffer->getGraphicsAllocation(rootDeviceIndex), //dstAllocation
-                                                                     srcBuffer->getGraphicsAllocation(rootDeviceIndex), //srcAllocation
-                                                                     dstOrigin,                                         //dstOffset
-                                                                     srcOrigin,                                         //srcOffset
-                                                                     region,                                            //copySize
-                                                                     srcRowPitch,                                       //srcRowPitch
-                                                                     srcSlicePitch,                                     //srcSlicePitch
-                                                                     dstRowPitch,                                       //dstRowPitch
-                                                                     dstSlicePitch,                                     //dstSlicePitch
-                                                                     clearColorAllocation);                             //clearColorAllocation
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(dstBuffer->getGraphicsAllocation(rootDeviceIndex), // dstAllocation
+                                                                     srcBuffer->getGraphicsAllocation(rootDeviceIndex), // srcAllocation
+                                                                     dstOrigin,                                         // dstOffset
+                                                                     srcOrigin,                                         // srcOffset
+                                                                     region,                                            // copySize
+                                                                     srcRowPitch,                                       // srcRowPitch
+                                                                     srcSlicePitch,                                     // srcSlicePitch
+                                                                     dstRowPitch,                                       // dstRowPitch
+                                                                     dstSlicePitch,                                     // dstSlicePitch
+                                                                     clearColorAllocation);                             // clearColorAllocation
 
     executeBlitCommand(blitProperties, false);
 
@@ -637,16 +638,16 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenCopyBufferRectWithB
     size_t dstSlicePitch = dstRowPitch * region[1];
     auto copySize = region[0] * region[1] * region[2];
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(dstBuffer->getGraphicsAllocation(rootDeviceIndex), //dstAllocation
-                                                                     srcBuffer->getGraphicsAllocation(rootDeviceIndex), //srcAllocation
-                                                                     dstOrigin,                                         //dstOffset
-                                                                     srcOrigin,                                         //srcOffset
-                                                                     region,                                            //copySize
-                                                                     srcRowPitch,                                       //srcRowPitch
-                                                                     srcSlicePitch,                                     //srcSlicePitch
-                                                                     dstRowPitch,                                       //dstRowPitch
-                                                                     dstSlicePitch,                                     //dstSlicePitch
-                                                                     clearColorAllocation);                             //clearColorAllocation
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(dstBuffer->getGraphicsAllocation(rootDeviceIndex), // dstAllocation
+                                                                     srcBuffer->getGraphicsAllocation(rootDeviceIndex), // srcAllocation
+                                                                     dstOrigin,                                         // dstOffset
+                                                                     srcOrigin,                                         // srcOffset
+                                                                     region,                                            // copySize
+                                                                     srcRowPitch,                                       // srcRowPitch
+                                                                     srcSlicePitch,                                     // srcSlicePitch
+                                                                     dstRowPitch,                                       // dstRowPitch
+                                                                     dstSlicePitch,                                     // dstSlicePitch
+                                                                     clearColorAllocation);                             // clearColorAllocation
     executeBlitCommand(blitProperties, false);
     bcsCsr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, QueueThrottle::MEDIUM);
 

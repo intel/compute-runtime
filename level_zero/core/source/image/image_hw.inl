@@ -9,7 +9,6 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/gmm_helper/gmm.h"
-#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/image/image_surface_state.h"

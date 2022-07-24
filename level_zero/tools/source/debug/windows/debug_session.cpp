@@ -7,6 +7,7 @@
 
 #include "level_zero/tools/source/debug/windows/debug_session.h"
 
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/os_interface/windows/wddm_debug.h"
 

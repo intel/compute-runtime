@@ -16,14 +16,9 @@
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/event/event.h"
-#include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/mipmap.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/memory_manager/mem_obj_surface.h"
-
-#include <algorithm>
-#include <new>
 
 namespace NEO {
 
@@ -72,7 +67,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     if (mapAllocation) {
         surfaces[1] = &mapSurface;
         mapSurface.setGraphicsAllocation(mapAllocation);
-        //get offset between base cpu ptr of map allocation and dst ptr
+        // get offset between base cpu ptr of map allocation and dst ptr
         size_t dstOffset = ptrDiff(dstPtr, mapAllocation->getUnderlyingBuffer());
         dstPtr = reinterpret_cast<void *>(mapAllocation->getGpuAddress() + dstOffset);
     } else {

@@ -12,16 +12,12 @@
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include "igfxfmid.h"
 #include "patch_g7.h"
 #include "patch_list.h"
 #include "patch_shared.h"
 #include "program_debug_data.h"
 
 #include <cstdint>
-#include <limits>
-#include <memory>
-#include <utility>
 
 namespace NEO {
 

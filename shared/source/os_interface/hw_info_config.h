@@ -10,7 +10,6 @@
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
-#include "shared/source/unified_memory/usm_memory_support.h"
 
 #include "igfxfmid.h"
 

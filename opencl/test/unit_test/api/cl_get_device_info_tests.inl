@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_info.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"

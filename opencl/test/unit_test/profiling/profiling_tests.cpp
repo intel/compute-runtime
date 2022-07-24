@@ -6,6 +6,8 @@
  */
 
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/utilities/hw_timestamps.h"
+#include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
@@ -14,9 +16,7 @@
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/enqueue_common.h"
-#include "opencl/source/command_queue/enqueue_kernel.h"
 #include "opencl/source/command_queue/enqueue_marker.h"
-#include "opencl/source/command_queue/enqueue_migrate_mem_objects.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/event/event_fixture.h"
@@ -290,7 +290,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueBlockedWithProfilin
         &ue, // user event not signaled
         &event);
 
-    //rseCommands<FamilyType>(*pCmdQ);
+    // rseCommands<FamilyType>(*pCmdQ);
     ASSERT_NE(nullptr, pCmdQ->virtualEvent);
     ASSERT_NE(nullptr, pCmdQ->virtualEvent->peekCommand());
     NEO::LinearStream *eventCommandStream = pCmdQ->virtualEvent->peekCommand()->getCommandStream();
@@ -872,7 +872,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GivenCommandQueueBlo
                                                                           &ue, // user event not signaled
                                                                           &event);
 
-    //rseCommands<FamilyType>(*pCmdQ);
+    // rseCommands<FamilyType>(*pCmdQ);
     ASSERT_NE(nullptr, pCmdQ->virtualEvent);
     ASSERT_NE(nullptr, pCmdQ->virtualEvent->peekCommand());
     NEO::LinearStream *eventCommandStream = pCmdQ->virtualEvent->peekCommand()->getCommandStream();

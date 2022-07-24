@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/common_types.h"
@@ -24,10 +23,8 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
-#include "engine_node.h"
-
-#include <bitset>
 #include <cstdint>
+#include <map>
 #include <mutex>
 #include <vector>
 

@@ -9,12 +9,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/device/device.h"
-#include "shared/source/gmm_helper/gmm.h"
-#include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/cache_policy.h"
-#include "shared/source/helpers/hw_helper.h"
-#include "shared/source/helpers/string.h"
 #include "shared/source/kernel/implicit_args.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
@@ -24,8 +19,6 @@
 #include "level_zero/core/source/module/module.h"
 
 #include "igfxfmid.h"
-
-#include <algorithm>
 
 namespace L0 {
 

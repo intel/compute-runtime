@@ -7,7 +7,6 @@
 
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/test.h"
@@ -18,9 +17,7 @@
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
-#include "opencl/test/unit_test/fixtures/simple_arg_fixture.h"
 #include "opencl/test/unit_test/fixtures/two_walker_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 using namespace NEO;
@@ -419,7 +416,7 @@ struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUnifo
         kernel->setArg(1, outBuffer.get());
 
         sizeWrittenMemory = maxId * typeSize;
-        //add single int size for atomic sum of all work-items
+        // add single int size for atomic sum of all work-items
         sizeWrittenMemory += typeSize;
 
         sizeRemainderMemory = sizeUserMemory - sizeWrittenMemory;
@@ -924,9 +921,9 @@ HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyKernelWhenEnqueuedThenRes
     simulatedCsr->writeMemory(*pBufferSrc->getGraphicsAllocation(device->getRootDeviceIndex()));
     simulatedCsr->writeMemory(*pBufferDst->getGraphicsAllocation(device->getRootDeviceIndex()));
 
-    //Src
+    // Src
     kernel->setArg(0, pBufferSrc.get());
-    //Dst
+    // Dst
     kernel->setArg(1, pBufferDst.get());
 
     retVal = this->pCmdQ->enqueueKernel(

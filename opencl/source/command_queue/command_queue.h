@@ -17,7 +17,6 @@
 #include "opencl/source/helpers/enqueue_properties.h"
 #include "opencl/source/helpers/task_information.h"
 
-#include <atomic>
 #include <cstdint>
 
 namespace NEO {

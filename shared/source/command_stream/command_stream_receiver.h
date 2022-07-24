@@ -13,7 +13,6 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/submissions_aggregator.h"
-#include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/blit_commands_helper.h"
@@ -21,11 +20,10 @@
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/flat_batch_buffer_helper.h"
 #include "shared/source/helpers/options.h"
-#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/source/kernel/grf_config.h"
 #include "shared/source/os_interface/os_thread.h"
 #include "shared/source/utilities/spinlock.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include <chrono>
 #include <cstddef>
@@ -50,6 +48,7 @@ class OSInterface;
 class ScratchSpaceController;
 class HwPerfCounter;
 class HwTimeStamps;
+class GmmHelper;
 class TagAllocatorBase;
 class LogicalStateHelper;
 
@@ -60,10 +59,10 @@ template <typename T1>
 class TagAllocator;
 
 enum class DispatchMode {
-    DeviceDefault = 0,          //default for given device
-    ImmediateDispatch,          //everything is submitted to the HW immediately
-    AdaptiveDispatch,           //dispatching is handled to async thread, which combines batch buffers basing on load (not implemented)
-    BatchedDispatchWithCounter, //dispatching is batched, after n commands there is implicit flush (not implemented)
+    DeviceDefault = 0,          // default for given device
+    ImmediateDispatch,          // everything is submitted to the HW immediately
+    AdaptiveDispatch,           // dispatching is handled to async thread, which combines batch buffers basing on load (not implemented)
+    BatchedDispatchWithCounter, // dispatching is batched, after n commands there is implicit flush (not implemented)
     BatchedDispatch             // dispatching is batched, explicit clFlush is required
 };
 
@@ -73,8 +72,8 @@ class CommandStreamReceiver {
 
     enum class SamplerCacheFlushState {
         samplerCacheFlushNotRequired,
-        samplerCacheFlushBefore, //add sampler cache flush before Walker with redescribed image
-        samplerCacheFlushAfter   //add sampler cache flush after Walker with redescribed image
+        samplerCacheFlushBefore, // add sampler cache flush before Walker with redescribed image
+        samplerCacheFlushAfter   // add sampler cache flush after Walker with redescribed image
     };
 
     using MutexType = std::recursive_mutex;
@@ -119,7 +118,7 @@ class CommandStreamReceiver {
 
     LinearStream &getCS(size_t minRequiredSize = 1024u);
     OSInterface *getOSInterface() const;
-    ExecutionEnvironment &peekExecutionEnvironment() const { return executionEnvironment; };
+    ExecutionEnvironment &peekExecutionEnvironment() const { return executionEnvironment; }
     GmmHelper *peekGmmHelper() const;
 
     MOCKABLE_VIRTUAL void setTagAllocation(GraphicsAllocation *allocation);
@@ -133,7 +132,7 @@ class CommandStreamReceiver {
     volatile uint32_t *getTagAddress() const { return tagAddress; }
     uint64_t getDebugPauseStateGPUAddress() const { return tagAllocation->getGpuAddress() + debugPauseStateAddressOffset; }
 
-    virtual bool waitForFlushStamp(FlushStamp &flushStampToWait) { return true; };
+    virtual bool waitForFlushStamp(FlushStamp &flushStampToWait) { return true; }
 
     uint32_t peekTaskCount() const { return taskCount; }
 

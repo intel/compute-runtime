@@ -8,8 +8,6 @@
 #pragma once
 #include "shared/source/command_stream/preemption_mode.h"
 
-#include "CL/cl.h"
-
 #include <cstdint>
 
 namespace NEO {

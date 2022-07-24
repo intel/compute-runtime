@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,8 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/simd_helper.h"
+#include "shared/source/utilities/hw_timestamps.h"
 
-#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/gpgpu_walker_base.inl"
 
 namespace NEO {
@@ -121,10 +121,10 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
         args);
 
     if (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
-        //MI_STORE_REGISTER_MEM for context local timestamp
+        // MI_STORE_REGISTER_MEM for context local timestamp
         timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, ContextStartTS);
 
-        //low part
+        // low part
         auto pMICmdLow = commandStream->getSpaceForCmd<MI_STORE_REGISTER_MEM>();
         MI_STORE_REGISTER_MEM cmd = GfxFamily::cmdInitStoreRegisterMem;
         adjustMiStoreRegMemMode(&cmd);
@@ -153,10 +153,10 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
         args);
 
     if (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
-        //MI_STORE_REGISTER_MEM for context local timestamp
+        // MI_STORE_REGISTER_MEM for context local timestamp
         uint64_t timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, ContextEndTS);
 
-        //low part
+        // low part
         auto pMICmdLow = commandStream->getSpaceForCmd<MI_STORE_REGISTER_MEM>();
         MI_STORE_REGISTER_MEM cmd = GfxFamily::cmdInitStoreRegisterMem;
         adjustMiStoreRegMemMode(&cmd);

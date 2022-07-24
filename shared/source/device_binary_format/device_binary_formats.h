@@ -14,7 +14,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <igfxfmid.h>
-#include <memory>
 #include <vector>
 
 namespace NEO {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 
 #include <array>
 

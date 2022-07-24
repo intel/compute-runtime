@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -643,7 +644,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoDbgDeviceIdFlagWhenAubCsrIsCreate
 
 HWTEST_F(AubCommandStreamReceiverTests, givenDbgDeviceIdFlagIsSetWhenAubCsrIsCreatedThenUseDebugDeviceId) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.OverrideAubDeviceId.set(9); //this is Hsw, not used
+    DebugManager.flags.OverrideAubDeviceId.set(9); // this is Hsw, not used
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
     EXPECT_EQ(9u, aubCsr->aubDeviceId);
 }

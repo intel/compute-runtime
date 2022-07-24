@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -540,7 +541,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenSvmGpuAllocationWhenHostPtrProvidedThen
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
     EXPECT_EQ(nullptr, allocation->getUnderlyingBuffer());
     EXPECT_EQ(nullptr, allocation->getDriverAllocatedCpuPtr());
-    //limited platforms will not use heap HeapIndex::HEAP_SVM
+    // limited platforms will not use heap HeapIndex::HEAP_SVM
     if (executionEnvironment->rootDeviceEnvironments[0]->isFullRangeSvm()) {
         EXPECT_EQ(svmPtr, reinterpret_cast<void *>(allocation->getGpuAddress()));
     }

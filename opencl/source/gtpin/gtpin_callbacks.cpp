@@ -18,7 +18,6 @@
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/kernel/multi_device_kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
-#include "opencl/source/program/program.h"
 
 #include "CL/cl.h"
 #include "ocl_igc_shared/gtpin/gtpin_ocl_interface.h"

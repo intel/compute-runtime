@@ -7,14 +7,13 @@
 
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/wait_status.h"
-#include "shared/source/device/root_device.h"
-#include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/os_time.h"
+#include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/mock_hw_info_config_hw.h"
@@ -44,7 +43,6 @@
 
 #include "gtest/gtest.h"
 
-#include <list>
 #include <memory>
 
 namespace NEO {
@@ -513,7 +511,7 @@ TEST(L0DeviceTest, givenSingleSliceTopologyWhenConvertingToApiIdsThenSubsliceIds
 
     mapping.subsliceIndices.resize(hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount);
 
-    //disable 5 physical subslices, shift subslice ids by 5
+    // disable 5 physical subslices, shift subslice ids by 5
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount; i++) {
         mapping.subsliceIndices[i] = i + 5;
     }
@@ -565,7 +563,7 @@ TEST(L0DeviceTest, givenSingleSliceTopologyWhenConvertingToPhysicalIdsThenSubsli
 
     mapping.subsliceIndices.resize(hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount);
 
-    //disable 5 physical subslices, shift subslice ids by 5
+    // disable 5 physical subslices, shift subslice ids by 5
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount; i++) {
         mapping.subsliceIndices[i] = i + 5;
     }

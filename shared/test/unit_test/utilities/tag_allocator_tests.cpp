@@ -6,6 +6,8 @@
  */
 
 #include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/utilities/hw_timestamps.h"
+#include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/fixtures/memory_allocator_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

@@ -10,7 +10,6 @@
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/memory_manager/residency_container.h"
 #include "shared/source/unified_memory/unified_memory.h"
-#include "shared/source/utilities/spinlock.h"
 
 #include "memory_properties_flags.h"
 

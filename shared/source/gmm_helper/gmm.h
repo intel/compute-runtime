@@ -10,7 +10,6 @@
 #include "shared/source/memory_manager/definitions/storage_info.h"
 
 #include <cstdint>
-#include <cstdlib>
 #include <memory>
 
 namespace NEO {

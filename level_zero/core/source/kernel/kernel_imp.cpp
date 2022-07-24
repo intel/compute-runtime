@@ -8,6 +8,7 @@
 #include "level_zero/core/source/kernel/kernel_imp.h"
 
 #include "shared/source/debugger/debugger_l0.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -238,7 +239,7 @@ KernelImp::~KernelImp() {
         alignedFree(perThreadDataForWholeThreadGroup);
     }
     if (printfBuffer != nullptr) {
-        //not allowed to call virtual function on destructor, so calling printOutput directly
+        // not allowed to call virtual function on destructor, so calling printOutput directly
         PrintfHandler::printOutput(kernelImmData, this->printfBuffer, module->getDevice());
         module->getDevice()->getNEODevice()->getMemoryManager()->freeGraphicsMemory(printfBuffer);
     }

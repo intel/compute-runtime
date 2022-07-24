@@ -8,6 +8,7 @@
 #include "level_zero/tools/source/debug/linux/prelim/debug_session.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -880,7 +881,7 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                         pushApiEvent(debugEvent, &vmBind->base);
                         shouldAckEvent = false;
                     }
-                } else { //destroyEvent
+                } else { // destroyEvent
 
                     module.segmentVmBindCounter--;
 

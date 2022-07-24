@@ -10,6 +10,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/utilities/hw_timestamps.h"
 #include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -1334,7 +1335,7 @@ HWTEST_F(EventTest, WhenGettingHwTimeStampsThenValidPointerIsReturned) {
     HwTimeStamps *timeStamps = static_cast<TagNode<HwTimeStamps> *>(event->getHwTimeStampNode())->tagForCpuAccess;
     ASSERT_NE(nullptr, timeStamps);
 
-    //this should not cause any heap corruptions
+    // this should not cause any heap corruptions
     ASSERT_EQ(0ULL, timeStamps->GlobalStartTS);
     ASSERT_EQ(0ULL, timeStamps->ContextStartTS);
     ASSERT_EQ(0ULL, timeStamps->GlobalEndTS);

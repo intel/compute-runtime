@@ -13,7 +13,6 @@
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/get_info.h"
@@ -46,7 +45,6 @@
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/mem_obj/pipe.h"
 #include "opencl/source/memory_manager/mem_obj_surface.h"
-#include "opencl/source/platform/platform.h"
 #include "opencl/source/sampler/sampler.h"
 
 #include "patch_list.h"

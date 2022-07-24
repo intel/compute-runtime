@@ -13,6 +13,7 @@
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/range.h"
 #include "shared/source/utilities/stackvec.h"
 #include "shared/source/utilities/tag_allocator.h"

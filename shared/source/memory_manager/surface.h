@@ -10,7 +10,6 @@
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/os_interface/os_context.h"
 
 namespace NEO {
 

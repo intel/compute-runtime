@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/helpers/local_id_gen.h"
-#include "shared/source/kernel/kernel_descriptor.h"
 
 #include "patch_shared.h"
 
@@ -17,6 +16,7 @@
 
 namespace NEO {
 class LinearStream;
+struct KernelDescriptor;
 
 struct PerThreadDataHelper {
     static inline uint32_t getLocalIdSizePerThread(

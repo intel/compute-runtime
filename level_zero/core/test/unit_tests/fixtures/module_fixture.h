@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/program/kernel_info.h"

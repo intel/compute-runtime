@@ -7,23 +7,15 @@
 
 #pragma once
 
-#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/helpers/register_offsets.h"
-#include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/source/utilities/hw_timestamps.h"
-#include "shared/source/utilities/perf_counter.h"
-#include "shared/source/utilities/tag_allocator.h"
 
 #include "opencl/source/command_queue/cl_local_work_size.h"
 #include "opencl/source/command_queue/command_queue.h"
-#include "opencl/source/context/context.h"
-#include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/task_information.h"
-#include "opencl/source/kernel/kernel.h"
 
 namespace NEO {
 

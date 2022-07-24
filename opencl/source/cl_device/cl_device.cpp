@@ -12,6 +12,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/device/sub_device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/driver_info.h"
@@ -120,10 +121,10 @@ ClDevice *ClDevice::getSubDevice(uint32_t deviceId) const {
 
 ClDevice *ClDevice::getNearestGenericSubDevice(uint32_t deviceId) {
     /*
-    * EngineInstanced: Upper level
-    * Generic SubDevice: 'this'
-    * RootCsr Device: Next level SubDevice (generic)
-    */
+     * EngineInstanced: Upper level
+     * Generic SubDevice: 'this'
+     * RootCsr Device: Next level SubDevice (generic)
+     */
 
     if (getDevice().isEngineInstanced()) {
         return rootClDevice.getNearestGenericSubDevice(Math::log2(static_cast<uint32_t>(getDeviceBitfield().to_ulong())));

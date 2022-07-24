@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_context.h"
@@ -564,7 +565,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenOneUsedAllocationFromPreviousPer
     // removed from trim candidate list
     EXPECT_EQ(trimListUnusedPosition, allocation1.getTrimCandidateListPosition(osContextId));
 
-    //marked nonresident
+    // marked nonresident
     EXPECT_FALSE(allocation1.getResidencyData().resident[osContextId]);
     // second stays resident
     EXPECT_TRUE(allocation2.getResidencyData().resident[osContextId]);
@@ -877,7 +878,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenThreeAllocationsAlignedSizeBigge
     size_t alignedSize = 0x1000;
     size_t budget = 2 * alignedSize;
 
-    //trim budget should consider aligned size, not underlying, so if function considers underlying, it should evict three, not two
+    // trim budget should consider aligned size, not underlying, so if function considers underlying, it should evict three, not two
     EXPECT_GT((3 * underlyingSize), budget);
     EXPECT_LT((2 * underlyingSize), budget);
     void *ptr1 = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1000);

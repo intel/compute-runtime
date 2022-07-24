@@ -14,6 +14,7 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/utilities/hw_timestamps.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/fixtures/linear_stream_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -720,7 +721,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), crossThreadDataGrf, sizeof(INLINE_DATA)));
 
     uint32_t simd = kernel->mockKernel->getKernelInfo().getMaxSimdSize();
-    //only X is present
+    // only X is present
     auto sizePerThreadData = getPerThreadSizeLocalIDs(simd, sizeGrf, 1);
     sizePerThreadData = std::max(sizePerThreadData, sizeGrf);
     size_t perThreadTotalDataSize = getThreadsPerWG(simd, lws[0]) * sizePerThreadData;
@@ -823,7 +824,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     EXPECT_EQ(0, memcmp(payloadData, &crossThreadDataTwoGrf[sizeof(INLINE_DATA) / sizeof(uint32_t)], sizeof(INLINE_DATA)));
 
     uint32_t simd = kernel->mockKernel->getKernelInfo().getMaxSimdSize();
-    //only X is present
+    // only X is present
     uint32_t localIdSizePerThread = PerThreadDataHelper::getLocalIdSizePerThread(simd, sizeGrf, 1);
     localIdSizePerThread = std::max(localIdSizePerThread, sizeGrf);
     auto sizePerThreadData = getThreadsPerWG(simd, lws[0]) * localIdSizePerThread;
@@ -831,7 +832,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     auto crossThreadDataSize = kernel->mockKernel->getCrossThreadDataSize();
     crossThreadDataSize -= std::min(static_cast<uint32_t>(sizeof(INLINE_DATA)), crossThreadDataSize);
 
-    //second GRF in indirect
+    // second GRF in indirect
     uint32_t expectedIndirectDataLength = static_cast<uint32_t>(sizePerThreadData + crossThreadDataSize);
     expectedIndirectDataLength = alignUp(expectedIndirectDataLength, COMPUTE_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
     EXPECT_EQ(expectedIndirectDataLength, walker->getIndirectDataLength());
@@ -878,7 +879,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), crossThreadDataGrf, sizeof(INLINE_DATA)));
 
     uint32_t simd = kernel->mockKernel->getKernelInfo().getMaxSimdSize();
-    //only X is present
+    // only X is present
     auto sizePerThreadData = getPerThreadSizeLocalIDs(simd, 1);
     sizePerThreadData = std::max(sizePerThreadData, sizeGrf);
     size_t perThreadTotalDataSize = getThreadsPerWG(simd, lws[0]) * sizePerThreadData;
@@ -931,12 +932,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     EXPECT_EQ(0, memcmp(payloadData, &crossThreadDataTwoGrf[sizeof(INLINE_DATA) / sizeof(uint32_t)], sizeof(INLINE_DATA)));
 
     uint32_t simd = kernel->mockKernel->getKernelInfo().getMaxSimdSize();
-    //only X is present
+    // only X is present
     auto sizePerThreadData = getPerThreadSizeLocalIDs(simd, 1);
     sizePerThreadData = std::max(sizePerThreadData, sizeGrf);
     size_t perThreadTotalDataSize = getThreadsPerWG(simd, lws[0]) * sizePerThreadData;
 
-    //second GRF in indirect
+    // second GRF in indirect
     uint32_t expectedIndirectDataLength = static_cast<uint32_t>(perThreadTotalDataSize + sizeof(INLINE_DATA));
     expectedIndirectDataLength = alignUp(expectedIndirectDataLength, COMPUTE_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
     EXPECT_EQ(expectedIndirectDataLength, walker->getIndirectDataLength());
@@ -1868,7 +1869,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenEnabledLocalIdsGenerationW
         workDim, lws, walkOrder, true, requiredWalkOrder, simd));
     EXPECT_EQ(0u, requiredWalkOrder);
 
-    //incorrect walkOrder returns 6
+    // incorrect walkOrder returns 6
     walkOrder = {2, 2, 0};
     EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
         workDim, lws, walkOrder, true, requiredWalkOrder, simd));

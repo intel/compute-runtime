@@ -9,18 +9,14 @@
 #include "shared/source/built_ins/builtinops/built_in_ops.h"
 #include "shared/source/built_ins/sip_kernel_type.h"
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/helpers/non_copyable_or_moveable.h"
-#include "shared/source/helpers/vec.h"
 
 #include "compiler_options.h"
 
-#include <array>
 #include <cstdint>
 #include <fstream>
 #include <memory>
 #include <mutex>
 #include <string>
-#include <tuple>
 #include <unordered_map>
 #include <vector>
 

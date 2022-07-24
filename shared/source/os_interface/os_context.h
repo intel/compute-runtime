@@ -13,7 +13,6 @@
 
 #include "engine_node.h"
 
-#include <memory>
 #include <mutex>
 
 namespace NEO {

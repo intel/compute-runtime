@@ -8,7 +8,6 @@
 #pragma once
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"

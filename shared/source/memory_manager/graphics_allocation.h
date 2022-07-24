@@ -7,8 +7,6 @@
 
 #pragma once
 
-#include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_type.h"
@@ -20,13 +18,10 @@
 #include "shared/source/utilities/idlist.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include <array>
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
-#include <mutex>
-#include <vector>
 
 namespace NEO {
 
