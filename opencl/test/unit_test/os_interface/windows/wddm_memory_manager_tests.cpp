@@ -1078,7 +1078,7 @@ TEST_F(WddmMemoryManagerTest, GivenOffsetsWhenAllocatingGpuMemHostThenAllocatedO
     ASSERT_NE(nullptr, ptr);
 
     size_t baseOffset = 1024;
-    // misalligned buffer spanning accross 3 pages
+    // misaligned buffer spanning across 3 pages
     auto *gpuAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, false, 2 * MemoryConstants::pageSize}, (char *)ptr + baseOffset);
     // Should be same cpu ptr and gpu ptr
     EXPECT_EQ((char *)ptr + baseOffset, gpuAllocation->getUnderlyingBuffer());
