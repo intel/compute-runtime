@@ -76,3 +76,9 @@ ADLPTEST_F(AdlpHwInfo, givenHwInfoConfigWhenGetProductConfigThenCorrectMatchIsFo
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     EXPECT_EQ(hwInfoConfig.getProductConfigFromHwInfo(hwInfo), AOT::ADL_P);
 }
+
+ADLPTEST_F(AdlpHwInfo, givenHwInfoConfigWhenGettingEvictWhenNecessaryFlagSupportedThenExpectTrue) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    EXPECT_TRUE(hwInfoConfig.isEvictionWhenNecessaryFlagSupported());
+}

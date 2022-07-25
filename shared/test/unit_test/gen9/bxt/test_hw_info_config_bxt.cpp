@@ -100,3 +100,9 @@ BXTTEST_F(BxtHwInfo, givenHwInfoConfigWhenGetProductConfigThenCorrectMatchIsFoun
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     EXPECT_EQ(hwInfoConfig.getProductConfigFromHwInfo(hwInfo), AOT::APL);
 }
+
+BXTTEST_F(BxtHwInfo, givenHwInfoConfigWhenGettingEvictWhenNecessaryFlagSupportedThenExpectTrue) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    EXPECT_TRUE(hwInfoConfig.isEvictionWhenNecessaryFlagSupported());
+}

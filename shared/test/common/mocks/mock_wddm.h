@@ -28,6 +28,7 @@ constexpr auto virtualAllocAddress = is64bit ? 0x7FFFF0000000 : 0xFF000000;
 class WddmMock : public Wddm {
   public:
     using Wddm::adapterBDF;
+    using Wddm::adjustEvictNeededParameter;
     using Wddm::createPagingFenceLogger;
     using Wddm::currentPagingFenceValue;
     using Wddm::dedicatedVideoMemory;
@@ -42,8 +43,10 @@ class WddmMock : public Wddm {
     using Wddm::minAddress;
     using Wddm::pagingFenceAddress;
     using Wddm::pagingQueue;
+    using Wddm::platformSupportsEvictWhenNecessary;
     using Wddm::residencyLogger;
     using Wddm::rootDeviceEnvironment;
+    using Wddm::setPlatformSupportEvictWhenNecessaryFlag;
     using Wddm::temporaryResources;
     using Wddm::timestampFrequency;
     using Wddm::wddmInterface;

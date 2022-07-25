@@ -107,3 +107,9 @@ CFLTEST_F(CflHwInfo, givenHwInfoConfigWhenGetProductConfigThenCorrectMatchIsFoun
     hwInfo.platform.usDeviceID = 0u;
     EXPECT_EQ(hwInfoConfig.getProductConfigFromHwInfo(hwInfo), AOT::UNKNOWN_ISA);
 }
+
+CFLTEST_F(CflHwInfo, givenHwInfoConfigWhenGettingEvictWhenNecessaryFlagSupportedThenExpectTrue) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    EXPECT_TRUE(hwInfoConfig.isEvictionWhenNecessaryFlagSupported());
+}

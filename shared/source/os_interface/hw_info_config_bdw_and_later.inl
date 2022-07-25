@@ -70,4 +70,9 @@ bool HwInfoConfigHw<gfxProduct>::isMatrixMultiplyAccumulateSupported(const Hardw
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isEvictionWhenNecessaryFlagSupported() const {
+    return true;
+}
+
 } // namespace NEO

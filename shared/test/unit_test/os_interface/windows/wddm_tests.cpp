@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -120,6 +121,50 @@ TEST_F(WddmTests, whenGetAdapterLuidThenLuidIsReturned) {
 
     auto luid = wddm->getAdapterLuid();
     EXPECT_TRUE(luid.HighPart == 0 && luid.LowPart == 0);
+}
+
+TEST_F(WddmTests, GivenDebugFlagDisablesEvictWhenNecessarySupportThenFlagIsFalse) {
+    DebugManagerStateRestore restorer{};
+    DebugManager.flags.PlaformSupportEvictWhenNecessaryFlag.set(0);
+
+    auto hwInfoConfig = HwInfoConfig::get(rootDeviceEnvironment->getHardwareInfo()->platform.eProductFamily);
+
+    wddm->setPlatformSupportEvictWhenNecessaryFlag(*hwInfoConfig);
+    EXPECT_FALSE(wddm->platformSupportsEvictWhenNecessary);
+}
+
+TEST_F(WddmTests, GivenDebugFlagEnablesEvictWhenNecessarySupportThenFlagIsTrue) {
+    DebugManagerStateRestore restorer{};
+    DebugManager.flags.PlaformSupportEvictWhenNecessaryFlag.set(1);
+
+    auto hwInfoConfig = HwInfoConfig::get(rootDeviceEnvironment->getHardwareInfo()->platform.eProductFamily);
+
+    wddm->setPlatformSupportEvictWhenNecessaryFlag(*hwInfoConfig);
+    EXPECT_TRUE(wddm->platformSupportsEvictWhenNecessary);
+}
+
+TEST_F(WddmTests, GivenPlatformSupportsEvictWhenNecessaryWhenAdjustingEvictNeededTrueThenExpectTrue) {
+    wddm->platformSupportsEvictWhenNecessary = true;
+    bool value = wddm->adjustEvictNeededParameter(true);
+    EXPECT_TRUE(value);
+}
+
+TEST_F(WddmTests, GivenPlatformNotSupportEvictWhenNecessaryWhenAdjustingEvictNeededTrueThenExpectTrue) {
+    wddm->platformSupportsEvictWhenNecessary = false;
+    bool value = wddm->adjustEvictNeededParameter(true);
+    EXPECT_TRUE(value);
+}
+
+TEST_F(WddmTests, GivenPlatformSupportsEvictWhenNecessaryWhenAdjustingEvictNeededFalseThenExpectFalse) {
+    wddm->platformSupportsEvictWhenNecessary = true;
+    bool value = wddm->adjustEvictNeededParameter(false);
+    EXPECT_FALSE(value);
+}
+
+TEST_F(WddmTests, GivenPlatformNotSupportEvictWhenNecessaryWhenAdjustingEvictNeededFalseThenExpectTrue) {
+    wddm->platformSupportsEvictWhenNecessary = false;
+    bool value = wddm->adjustEvictNeededParameter(false);
+    EXPECT_TRUE(value);
 }
 
 uint64_t waitForSynchronizationObjectFromCpuCounter = 0u;

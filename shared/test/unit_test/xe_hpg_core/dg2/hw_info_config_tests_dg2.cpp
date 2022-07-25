@@ -503,3 +503,9 @@ DG2TEST_F(HwInfoConfigTestDg2, givenHwInfoConfigWhenAskedIfStorageInfoAdjustment
         EXPECT_FALSE(hwInfoConfig->isStorageInfoAdjustmentRequired());
     }
 }
+
+DG2TEST_F(HwInfoConfigTestDg2, givenHwInfoConfigWhenGettingEvictWhenNecessaryFlagSupportedThenExpectTrue) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    EXPECT_TRUE(hwInfoConfig.isEvictionWhenNecessaryFlagSupported());
+}

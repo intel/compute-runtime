@@ -101,3 +101,9 @@ ICLLPTEST_F(IcllpHwInfo, givenHwInfoConfigWhenGetProductConfigThenCorrectMatchIs
     const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     EXPECT_EQ(hwInfoConfig.getProductConfigFromHwInfo(*defaultHwInfo), AOT::ICL);
 }
+
+ICLLPTEST_F(IcllpHwInfo, givenHwInfoConfigWhenGettingEvictWhenNecessaryFlagSupportedThenExpectTrue) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    EXPECT_TRUE(hwInfoConfig.isEvictionWhenNecessaryFlagSupported());
+}

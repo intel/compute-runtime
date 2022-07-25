@@ -213,6 +213,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceImagesSupport, -1, "-1: default, 0: disable
 DECLARE_DEBUG_VARIABLE(bool, DisableScratchPages, false, "Disable scratch pages during VM creations")
 DECLARE_DEBUG_VARIABLE(std::string, OverrideDeviceName, std::string("unk"), "Device name to override")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideL1CachePolicyInSurfaceStateAndStateless, -1, "-1: default, >=0 : following policy will be programmed in render surface state (for regular buffers) and stateless L1 caching")
+DECLARE_DEBUG_VARIABLE(int32_t, PlaformSupportEvictWhenNecessaryFlag, -1, "-1: default - platform specific, 0: disable, 1: enable")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

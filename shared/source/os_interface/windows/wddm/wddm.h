@@ -35,6 +35,7 @@ namespace NEO {
 class Gdi;
 class Gmm;
 class GmmMemory;
+class HwInfoConfig;
 class OsContextWin;
 class SettingsReader;
 class WddmAllocation;
@@ -245,6 +246,13 @@ class Wddm : public DriverModel {
     void getDeviceState();
     MOCKABLE_VIRTUAL void createPagingFenceLogger();
     bool setLowPriorityContextParam(D3DKMT_HANDLE contextHandle);
+    bool adjustEvictNeededParameter(bool evictNeeded) {
+        if (evictNeeded == false && platformSupportsEvictWhenNecessary == false) {
+            evictNeeded = true;
+        }
+        return evictNeeded;
+    }
+    void setPlatformSupportEvictWhenNecessaryFlag(const HwInfoConfig &hwInfoConfig);
 
     static GetSystemInfoFcn getSystemInfo;
 
@@ -253,5 +261,7 @@ class Wddm : public DriverModel {
     std::unique_ptr<WddmResidentAllocationsContainer> temporaryResources;
     std::unique_ptr<WddmResidencyLogger> residencyLogger;
     std::unique_ptr<OSMemory> osMemory;
+
+    bool platformSupportsEvictWhenNecessary = false;
 };
 } // namespace NEO

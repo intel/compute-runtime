@@ -90,6 +90,12 @@ BDWTEST_F(BdwHwInfo, givenHwInfoConfigWhenGetProductConfigThenCorrectMatchIsFoun
     EXPECT_EQ(hwInfoConfig.getProductConfigFromHwInfo(hwInfo), AOT::BDW);
 }
 
+BDWTEST_F(BdwHwInfo, givenHwInfoConfigWhenGettingEvictWhenNecessaryFlagSupportedThenExpectTrue) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    EXPECT_TRUE(hwInfoConfig.isEvictionWhenNecessaryFlagSupported());
+}
+
 using CompilerHwInfoConfigHelperTestsBdw = ::testing::Test;
 BDWTEST_F(CompilerHwInfoConfigHelperTestsBdw, givenBdwWhenIsStatelessToStatefulBufferOffsetSupportedIsCalledThenReturnsTrue) {
     EXPECT_FALSE(CompilerHwInfoConfig::get(productFamily)->isStatelessToStatefulBufferOffsetSupported());

@@ -392,6 +392,11 @@ uint64_t HwInfoConfigHw<IGFX_UNKNOWN>::getHostMemCapabilitiesValue() {
 }
 
 template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isEvictionWhenNecessaryFlagSupported() const {
+    return true;
+}
+
+template <>
 const char *L1CachePolicyHelper<IGFX_UNKNOWN>::getCachingPolicyOptions() {
     return nullptr;
 }

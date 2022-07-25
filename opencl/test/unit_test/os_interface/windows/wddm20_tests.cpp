@@ -815,6 +815,13 @@ TEST_F(Wddm20Tests, GivenMultipleHandlesWhenMakingResidentThenBytesToTrimIsCorre
 }
 
 TEST_F(Wddm20Tests, WhenMakingNonResidentAndEvictNotNeededThenEvictIsCalledWithProperFlagSet) {
+    DebugManagerStateRestore restorer{};
+    DebugManager.flags.PlaformSupportEvictWhenNecessaryFlag.set(1);
+
+    auto productFamily = rootDeviceEnvironment->getHardwareInfo()->platform.eProductFamily;
+    HwInfoConfig *hwConfig = HwInfoConfig::get(productFamily);
+    wddm->setPlatformSupportEvictWhenNecessaryFlag(*hwConfig);
+
     D3DKMT_HANDLE handle = (D3DKMT_HANDLE)0x1234;
 
     gdi->getEvictArg().AllocationList = nullptr;

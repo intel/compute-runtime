@@ -105,6 +105,7 @@ bool Wddm::init() {
     if (hwConfig->configureHwInfoWddm(hardwareInfo.get(), hardwareInfo.get(), nullptr)) {
         return false;
     }
+    setPlatformSupportEvictWhenNecessaryFlag(*hwConfig);
 
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*hardwareInfo);
     rootDeviceEnvironment.setHwInfo(hardwareInfo.get());
@@ -131,6 +132,15 @@ bool Wddm::init() {
     }
 
     return configureDeviceAddressSpace();
+}
+
+void Wddm::setPlatformSupportEvictWhenNecessaryFlag(const HwInfoConfig &hwInfoConfig) {
+    platformSupportsEvictWhenNecessary = hwInfoConfig.isEvictionWhenNecessaryFlagSupported();
+    int32_t overridePlatformSupportsEvictWhenNecessary =
+        DebugManager.flags.PlaformSupportEvictWhenNecessaryFlag.get();
+    if (overridePlatformSupportsEvictWhenNecessary != -1) {
+        platformSupportsEvictWhenNecessary = !!overridePlatformSupportsEvictWhenNecessary;
+    }
 }
 
 bool Wddm::queryAdapterInfo() {
@@ -366,7 +376,7 @@ bool Wddm::evict(const D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_
     evict.hDevice = device;
     evict.NumAllocations = numOfHandles;
     evict.NumBytesToTrim = 0;
-    evict.Flags.EvictOnlyIfNecessary = evictNeeded ? 0 : 1;
+    evict.Flags.EvictOnlyIfNecessary = adjustEvictNeededParameter(evictNeeded) ? 0 : 1;
 
     status = getGdi()->evict(&evict);
 
