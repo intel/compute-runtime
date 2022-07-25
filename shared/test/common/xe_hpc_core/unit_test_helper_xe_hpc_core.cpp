@@ -12,7 +12,7 @@
 #include "shared/test/common/helpers/unit_test_helper.inl"
 #include "shared/test/common/helpers/unit_test_helper_xehp_and_later.inl"
 
-using Family = NEO::XE_HPC_COREFamily;
+using Family = NEO::XeHpcCoreFamily;
 
 #include "unit_test_helper_xe_hpc_core_extra.inl"
 

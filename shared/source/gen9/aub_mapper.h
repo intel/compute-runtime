@@ -13,10 +13,10 @@
 #include "engine_node.h"
 
 namespace NEO {
-struct SKLFamily;
+struct Gen9Family;
 
 template <>
-struct AUBFamilyMapper<SKLFamily> {
+struct AUBFamilyMapper<Gen9Family> {
     enum { device = AubMemDump::DeviceValues::Skl };
 
     using AubTraits = AubMemDump::Traits<device, MemoryConstants::GfxAddressBits>;

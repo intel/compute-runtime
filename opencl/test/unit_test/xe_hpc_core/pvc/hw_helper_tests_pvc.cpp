@@ -76,17 +76,17 @@ PVCTEST_F(HwHelperTestsPvc, givenRevisionEnumAndPlatformFamilyTypeThenProperValu
 }
 
 PVCTEST_F(HwHelperTestsPvc, givenDefaultMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
-    using MI_SEMAPHORE_WAIT = typename XE_HPC_COREFamily::MI_SEMAPHORE_WAIT;
+    using MI_SEMAPHORE_WAIT = typename XeHpcCoreFamily::MI_SEMAPHORE_WAIT;
 
-    EXPECT_EQ(sizeof(MI_SEMAPHORE_WAIT), MemorySynchronizationCommands<XE_HPC_COREFamily>::getSizeForAdditonalSynchronization(*defaultHwInfo));
+    EXPECT_EQ(sizeof(MI_SEMAPHORE_WAIT), MemorySynchronizationCommands<XeHpcCoreFamily>::getSizeForAdditonalSynchronization(*defaultHwInfo));
 }
 
 PVCTEST_F(HwHelperTestsPvc, givenDebugMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
-    using MI_SEMAPHORE_WAIT = typename XE_HPC_COREFamily::MI_SEMAPHORE_WAIT;
+    using MI_SEMAPHORE_WAIT = typename XeHpcCoreFamily::MI_SEMAPHORE_WAIT;
 
-    EXPECT_EQ(2 * sizeof(MI_SEMAPHORE_WAIT), MemorySynchronizationCommands<XE_HPC_COREFamily>::getSizeForAdditonalSynchronization(*defaultHwInfo));
+    EXPECT_EQ(2 * sizeof(MI_SEMAPHORE_WAIT), MemorySynchronizationCommands<XeHpcCoreFamily>::getSizeForAdditonalSynchronization(*defaultHwInfo));
 }
 
 PVCTEST_F(HwHelperTestsPvc, givenRevisionIdWhenGetComputeUnitsUsedForScratchThenReturnValidValue) {

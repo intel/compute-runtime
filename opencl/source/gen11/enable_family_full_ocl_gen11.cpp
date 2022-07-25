@@ -16,7 +16,7 @@
 
 namespace NEO {
 
-using Family = ICLFamily;
+using Family = Gen11Family;
 
 struct EnableOCLGen11 {
     EnableOCLGen11() {

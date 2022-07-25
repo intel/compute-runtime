@@ -10,7 +10,7 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.inl"
 #include "shared/test/common/helpers/unit_test_helper_xehp_and_later.inl"
-using Family = NEO::XE_HPG_COREFamily;
+using Family = NEO::XeHpgCoreFamily;
 
 namespace NEO {
 template <>

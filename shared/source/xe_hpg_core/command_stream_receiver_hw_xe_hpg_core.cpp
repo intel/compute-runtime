@@ -8,7 +8,7 @@
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 #include "shared/source/xe_hpg_core/hw_info.h"
 
-using Family = NEO::XE_HPG_COREFamily;
+using Family = NEO::XeHpgCoreFamily;
 
 #include "shared/source/command_stream/command_stream_receiver_hw_dg2_and_later.inl"
 #include "shared/source/command_stream/command_stream_receiver_hw_xehp_and_later.inl"

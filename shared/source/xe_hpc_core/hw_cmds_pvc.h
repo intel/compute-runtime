@@ -14,7 +14,7 @@
 
 namespace NEO {
 
-struct PVC : public XE_HPC_COREFamily {
+struct PVC : public XeHpcCoreFamily {
     static const PLATFORM platform;
     static const HardwareInfo hwInfo;
     static const uint64_t defaultHardwareInfoConfig;

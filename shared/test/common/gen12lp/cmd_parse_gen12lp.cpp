@@ -6,8 +6,8 @@
  */
 
 #include "shared/source/gen12lp/hw_cmds_base.h"
-using GenStruct = NEO::GEN12LP;
-using GenGfxFamily = NEO::TGLLPFamily;
+using GenStruct = NEO::Gen12Lp;
+using GenGfxFamily = NEO::Gen12LpFamily;
 
 #include "shared/test/common/cmd_parse/cmd_parse_base.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_compute_mode.inl"
@@ -126,8 +126,8 @@ const char *CmdParse<GenGfxFamily>::getCommandNameHwSpecific(void *cmd) {
 template struct CmdParse<GenGfxFamily>;
 
 namespace NEO {
-template void HardwareParse::findHardwareCommands<TGLLPFamily>();
-template void HardwareParse::findHardwareCommands<TGLLPFamily>(IndirectHeap *);
-template const void *HardwareParse::getStatelessArgumentPointer<TGLLPFamily>(const KernelInfo &kernelInfo, uint32_t indexArg, IndirectHeap &ioh, uint32_t rootDeviceIndex);
-template const typename TGLLPFamily::RENDER_SURFACE_STATE *HardwareParse::getSurfaceState<TGLLPFamily>(IndirectHeap *ssh, uint32_t index);
+template void HardwareParse::findHardwareCommands<Gen12LpFamily>();
+template void HardwareParse::findHardwareCommands<Gen12LpFamily>(IndirectHeap *);
+template const void *HardwareParse::getStatelessArgumentPointer<Gen12LpFamily>(const KernelInfo &kernelInfo, uint32_t indexArg, IndirectHeap &ioh, uint32_t rootDeviceIndex);
+template const typename Gen12LpFamily::RENDER_SURFACE_STATE *HardwareParse::getSurfaceState<Gen12LpFamily>(IndirectHeap *ssh, uint32_t index);
 } // namespace NEO

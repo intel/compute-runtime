@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-using GfxFamily = XE_HPG_COREFamily;
+using GfxFamily = XeHpgCoreFamily;
 
 #include "shared/source/command_stream/preemption_xehp_and_later.inl"
 

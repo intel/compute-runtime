@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 #include "opencl/source/helpers/hardware_commands_helper_bdw_and_later.inl"
 
 namespace NEO {
-using FamilyType = ICLFamily;
+using FamilyType = Gen11Family;
 
 template struct HardwareCommandsHelper<FamilyType>;
 } // namespace NEO

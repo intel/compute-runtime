@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-using GfxFamily = ICLFamily;
+using GfxFamily = Gen11Family;
 
 template void PreemptionHelper::programCmdStream<GfxFamily>(LinearStream &cmdStream, PreemptionMode newPreemptionMode,
                                                             PreemptionMode oldPreemptionMode, GraphicsAllocation *preemptionCsr);

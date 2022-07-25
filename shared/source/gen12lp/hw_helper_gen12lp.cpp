@@ -8,7 +8,7 @@
 #include "shared/source/gen12lp/aub_mapper.h"
 #include "shared/source/gen12lp/hw_cmds.h"
 
-using Family = NEO::TGLLPFamily;
+using Family = NEO::Gen12LpFamily;
 
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
 #include "shared/source/helpers/hw_helper_base.inl"

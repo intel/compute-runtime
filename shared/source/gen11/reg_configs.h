@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 
 namespace NEO {
 
-struct ICLFamily;
+struct Gen11Family;
 
 template <>
 struct L3CNTLREGConfig<IGFX_ICELAKE_LP> {
@@ -19,12 +19,12 @@ struct L3CNTLREGConfig<IGFX_ICELAKE_LP> {
 };
 
 template <>
-struct L3CNTLRegisterOffset<ICLFamily> {
+struct L3CNTLRegisterOffset<Gen11Family> {
     static const uint32_t registerOffset = 0x7034;
 };
 
 template <>
-struct DebugModeRegisterOffset<ICLFamily> {
+struct DebugModeRegisterOffset<Gen11Family> {
     enum {
         registerOffset = 0x20d8,
         debugEnabledValue = (1 << 5) | (1 << 21)

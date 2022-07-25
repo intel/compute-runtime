@@ -6,8 +6,8 @@
  */
 
 #include "shared/source/gen9/hw_cmds_base.h"
-using GenStruct = NEO::GEN9;
-using GenGfxFamily = NEO::SKLFamily;
+using GenStruct = NEO::Gen9;
+using GenGfxFamily = NEO::Gen9Family;
 
 #include "shared/test/common/cmd_parse/cmd_parse_base.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_base_mi_arb.inl"
@@ -83,8 +83,8 @@ const char *CmdParse<GenGfxFamily>::getCommandNameHwSpecific(void *cmd) {
 template struct CmdParse<GenGfxFamily>;
 
 namespace NEO {
-template void HardwareParse::findHardwareCommands<SKLFamily>();
-template void HardwareParse::findHardwareCommands<SKLFamily>(IndirectHeap *);
-template const void *HardwareParse::getStatelessArgumentPointer<SKLFamily>(const KernelInfo &kernelInfo, uint32_t indexArg, IndirectHeap &ioh, uint32_t rootDeviceIndex);
-template const typename SKLFamily::RENDER_SURFACE_STATE *HardwareParse::getSurfaceState<SKLFamily>(IndirectHeap *ssh, uint32_t index);
+template void HardwareParse::findHardwareCommands<Gen9Family>();
+template void HardwareParse::findHardwareCommands<Gen9Family>(IndirectHeap *);
+template const void *HardwareParse::getStatelessArgumentPointer<Gen9Family>(const KernelInfo &kernelInfo, uint32_t indexArg, IndirectHeap &ioh, uint32_t rootDeviceIndex);
+template const typename Gen9Family::RENDER_SURFACE_STATE *HardwareParse::getSurfaceState<Gen9Family>(IndirectHeap *ssh, uint32_t index);
 } // namespace NEO

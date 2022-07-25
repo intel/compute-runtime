@@ -16,7 +16,7 @@
 
 namespace NEO {
 
-using Family = TGLLPFamily;
+using Family = Gen12LpFamily;
 
 struct EnableOCLGen12LP {
     EnableOCLGen12LP() {

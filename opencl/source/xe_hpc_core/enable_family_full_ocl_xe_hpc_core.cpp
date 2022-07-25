@@ -16,7 +16,7 @@
 
 namespace NEO {
 
-using Family = XE_HPC_COREFamily;
+using Family = XeHpcCoreFamily;
 
 struct EnableOCLXeHpcCore {
     EnableOCLXeHpcCore() {

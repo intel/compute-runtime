@@ -10,7 +10,7 @@
 
 namespace NEO {
 
-struct LKF : public ICLFamily {
+struct LKF : public Gen11Family {
     static const PLATFORM platform;
     static const HardwareInfo hwInfo;
     static const uint64_t defaultHardwareInfoConfig;

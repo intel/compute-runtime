@@ -12,7 +12,7 @@
 
 namespace NEO {
 
-typedef SKLFamily Family;
+typedef Gen9Family Family;
 
 constexpr auto gfxCore = IGFX_GEN9_CORE;
 
@@ -33,5 +33,5 @@ static enableGen9 enable;
 
 static MockDebuggerL0HwPopulateFactory<gfxCore, Family> mockDebuggerGen9;
 
-template class UltCommandStreamReceiver<SKLFamily>;
+template class UltCommandStreamReceiver<Gen9Family>;
 } // namespace NEO

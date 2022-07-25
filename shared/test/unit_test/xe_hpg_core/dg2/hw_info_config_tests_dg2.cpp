@@ -342,12 +342,12 @@ DG2TEST_F(HwInfoConfigTestDg2, givenDg2WhenSetForceNonCoherentThenProperFlagSet)
     properties.isCoherencyRequired.set(false);
     hwInfoConfig->setForceNonCoherent(&stateComputeMode, properties);
     EXPECT_EQ(FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT, stateComputeMode.getForceNonCoherent());
-    EXPECT_EQ(XE_HPG_COREFamily::stateComputeModeForceNonCoherentMask, stateComputeMode.getMaskBits());
+    EXPECT_EQ(XeHpgCoreFamily::stateComputeModeForceNonCoherentMask, stateComputeMode.getMaskBits());
 
     properties.isCoherencyRequired.set(true);
     hwInfoConfig->setForceNonCoherent(&stateComputeMode, properties);
     EXPECT_EQ(FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_DISABLED, stateComputeMode.getForceNonCoherent());
-    EXPECT_EQ(XE_HPG_COREFamily::stateComputeModeForceNonCoherentMask, stateComputeMode.getMaskBits());
+    EXPECT_EQ(XeHpgCoreFamily::stateComputeModeForceNonCoherentMask, stateComputeMode.getMaskBits());
 }
 
 DG2TEST_F(HwInfoConfigTestDg2, givenEnabledSliceInNonStandardConfigWhenComputeUnitsUsedForScratchThenProperCalculationIsReturned) {

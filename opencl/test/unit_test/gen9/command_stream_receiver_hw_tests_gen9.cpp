@@ -31,7 +31,7 @@ using namespace NEO;
 
 #include "opencl/test/unit_test/command_stream/command_stream_receiver_hw_tests.inl"
 
-using CommandStreamReceiverHwTestGen9 = CommandStreamReceiverHwTest<SKLFamily>;
+using CommandStreamReceiverHwTestGen9 = CommandStreamReceiverHwTest<Gen9Family>;
 
 GEN9TEST_F(UltCommandStreamReceiverTest, whenPreambleIsProgrammedThenStateSipCmdIsNotPresentInPreambleCmdStream) {
     using STATE_SIP = typename FamilyType::STATE_SIP;

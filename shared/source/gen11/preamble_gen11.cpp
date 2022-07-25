@@ -14,7 +14,7 @@
 
 namespace NEO {
 
-using Family = ICLFamily;
+using Family = Gen11Family;
 
 template <>
 uint32_t PreambleHelper<Family>::getL3Config(const HardwareInfo &hwInfo, bool useSLM) {

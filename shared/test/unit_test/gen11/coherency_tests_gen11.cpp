@@ -19,12 +19,12 @@
 using namespace NEO;
 
 struct Gen11CoherencyRequirements : public ::testing::Test {
-    typedef typename ICLFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
+    typedef typename Gen11Family::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
 
-    struct myCsr : public CommandStreamReceiverHw<ICLFamily> {
+    struct myCsr : public CommandStreamReceiverHw<Gen11Family> {
         using CommandStreamReceiver::commandStream;
         using CommandStreamReceiver::streamProperties;
-        myCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<ICLFamily>(executionEnvironment, 0, 1){};
+        myCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<Gen11Family>(executionEnvironment, 0, 1){};
         CsrSizeRequestFlags *getCsrRequestFlags() { return &csrSizeRequestFlags; }
     };
 
@@ -105,7 +105,7 @@ struct Gen11CoherencyProgramingTest : public Gen11CoherencyRequirements {
 
     void findMmio(bool expectToBeProgrammed, uint32_t registerAddress) {
         HardwareParse hwParser;
-        hwParser.parseCommands<ICLFamily>(csr->commandStream, startOffset);
+        hwParser.parseCommands<Gen11Family>(csr->commandStream, startOffset);
         bool foundOne = false;
 
         for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {

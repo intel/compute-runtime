@@ -12,8 +12,8 @@
 
 namespace NEO {
 
-struct BDWFamily;
-using GfxFamily = BDWFamily;
+struct Gen8Family;
+using GfxFamily = Gen8Family;
 static auto coreFamily = IGFX_GEN8_CORE;
 
 template <>

@@ -13,7 +13,7 @@
 
 namespace L0 {
 
-using Family = NEO::XE_HPC_COREFamily;
+using Family = NEO::XeHpcCoreFamily;
 static auto gfxCore = IGFX_XE_HPC_CORE;
 
 template <>

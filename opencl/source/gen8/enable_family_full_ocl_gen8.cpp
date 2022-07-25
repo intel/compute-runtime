@@ -16,7 +16,7 @@
 
 namespace NEO {
 
-using Family = BDWFamily;
+using Family = Gen8Family;
 
 struct EnableOCLGen8 {
     EnableOCLGen8() {

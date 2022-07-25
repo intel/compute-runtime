@@ -15,7 +15,7 @@
 #include "shared/source/helpers/logical_state_helper.inl"
 
 namespace NEO {
-typedef BDWFamily Family;
+typedef Gen8Family Family;
 
 static uint32_t slmSizeId[] = {0, 1, 2, 4, 4, 8, 8, 8, 8, 16, 16, 16, 16, 16, 16, 16};
 

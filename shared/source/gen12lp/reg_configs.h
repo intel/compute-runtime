@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 
 namespace NEO {
 
-struct TGLLPFamily;
+struct Gen12LpFamily;
 template <>
 struct L3CNTLREGConfig<IGFX_TIGERLAKE_LP> {
     static const uint32_t valueForSLM = 0xD0000020u;
@@ -18,13 +18,13 @@ struct L3CNTLREGConfig<IGFX_TIGERLAKE_LP> {
 };
 
 template <>
-struct L3CNTLRegisterOffset<TGLLPFamily> {
+struct L3CNTLRegisterOffset<Gen12LpFamily> {
     static const uint32_t registerOffset = 0xB134;
     static const uint32_t registerOffsetCCS = 0xB234;
 };
 
 template <>
-struct DebugModeRegisterOffset<TGLLPFamily> {
+struct DebugModeRegisterOffset<Gen12LpFamily> {
     enum {
         registerOffset = 0x20d8,
         debugEnabledValue = (1 << 5) | (1 << 21)

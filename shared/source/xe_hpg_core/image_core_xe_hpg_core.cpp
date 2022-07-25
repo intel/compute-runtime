@@ -10,7 +10,7 @@
 
 namespace NEO {
 
-using Family = XE_HPG_COREFamily;
+using Family = XeHpgCoreFamily;
 
 template <>
 void setFilterMode<Family>(Family::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo) {

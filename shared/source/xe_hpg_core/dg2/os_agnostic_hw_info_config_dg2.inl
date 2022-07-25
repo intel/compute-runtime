@@ -9,7 +9,7 @@
 
 template <>
 void HwInfoConfigHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) {
-    using SAMPLER_STATE = typename XE_HPG_COREFamily::SAMPLER_STATE;
+    using SAMPLER_STATE = typename XeHpgCoreFamily::SAMPLER_STATE;
     auto samplerState = reinterpret_cast<SAMPLER_STATE *>(sampler);
     if (DebugManager.flags.ForceSamplerLowFilteringPrecision.get()) {
         samplerState->setLowQualityFilter(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE);
@@ -84,7 +84,7 @@ bool HwInfoConfigHw<gfxProduct>::isMaxThreadsForWorkgroupWARequired(const Hardwa
 
 template <>
 void HwInfoConfigHw<gfxProduct>::setForceNonCoherent(void *const statePtr, const StateComputeModeProperties &properties) {
-    using STATE_COMPUTE_MODE = typename XE_HPG_COREFamily::STATE_COMPUTE_MODE;
+    using STATE_COMPUTE_MODE = typename XeHpgCoreFamily::STATE_COMPUTE_MODE;
     using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
 
     STATE_COMPUTE_MODE &stateComputeMode = *static_cast<STATE_COMPUTE_MODE *>(statePtr);
@@ -93,7 +93,7 @@ void HwInfoConfigHw<gfxProduct>::setForceNonCoherent(void *const statePtr, const
     stateComputeMode.setForceNonCoherent(coherencyValue);
 
     auto mask = stateComputeMode.getMaskBits();
-    mask |= XE_HPG_COREFamily::stateComputeModeForceNonCoherentMask;
+    mask |= XeHpgCoreFamily::stateComputeModeForceNonCoherentMask;
     stateComputeMode.setMaskBits(mask);
 }
 

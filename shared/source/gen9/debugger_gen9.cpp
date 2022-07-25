@@ -11,8 +11,8 @@
 #include "shared/source/helpers/populate_factory.h"
 
 namespace NEO {
-struct SKLFamily;
-using GfxFamily = SKLFamily;
+struct Gen9Family;
+using GfxFamily = Gen9Family;
 
 static auto coreFamily = IGFX_GEN9_CORE;
 

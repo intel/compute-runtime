@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,11 +14,11 @@
 
 using namespace NEO;
 
-typedef ICLFamily::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+typedef Gen11Family::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
 
 struct AppendSurfaceStateParamsTest : public ::testing::Test {
     void SetUp() override {
-        surfaceState = ICLFamily::cmdInitRenderSurfaceState;
+        surfaceState = Gen11Family::cmdInitRenderSurfaceState;
         EXPECT_EQ(RENDER_SURFACE_STATE::SAMPLE_TAP_DISCARD_DISABLE_DISABLE, surfaceState.getSampleTapDiscardDisable());
 
         imageDesc.image_width = 32;
@@ -58,7 +58,7 @@ GEN11TEST_F(AppendSurfaceStateParamsTest, givenImageFormatWithoutAlphaChannelWhe
     imageFormat.image_channel_order = CL_R;
     createImage();
 
-    auto imageHw = static_cast<ImageHw<ICLFamily> *>(image.get());
+    auto imageHw = static_cast<ImageHw<Gen11Family> *>(image.get());
     imageHw->appendSurfaceStateParams(&surfaceState, context.getDevice(0)->getRootDeviceIndex(), false);
 
     bool tapDiscardConfigChanged = RENDER_SURFACE_STATE::SAMPLE_TAP_DISCARD_DISABLE_DISABLE != surfaceState.getSampleTapDiscardDisable();
@@ -70,7 +70,7 @@ GEN11TEST_F(AppendSurfaceStateParamsTest, givenImageFormatWithAlphaChannelWhenAp
     imageFormat.image_channel_order = CL_RGBA;
     createImage();
 
-    auto imageHw = static_cast<ImageHw<ICLFamily> *>(image.get());
+    auto imageHw = static_cast<ImageHw<Gen11Family> *>(image.get());
     imageHw->appendSurfaceStateParams(&surfaceState, context.getDevice(0)->getRootDeviceIndex(), false);
 
     bool tapDiscardConfigChanged = RENDER_SURFACE_STATE::SAMPLE_TAP_DISCARD_DISABLE_DISABLE != surfaceState.getSampleTapDiscardDisable();

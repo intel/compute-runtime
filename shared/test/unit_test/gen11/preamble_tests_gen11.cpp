@@ -11,7 +11,7 @@
 #include "gtest/gtest.h"
 
 using namespace NEO;
-typedef ICLFamily GfxFamily;
+typedef Gen11Family GfxFamily;
 
 #include "shared/test/unit_test/source_level_debugger/source_level_debugger_preamble_test.inl"
 

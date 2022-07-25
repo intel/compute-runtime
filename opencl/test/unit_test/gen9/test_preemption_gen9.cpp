@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,8 +17,8 @@
 namespace NEO {
 
 template <>
-void HardwareParse::findCsrBaseAddress<SKLFamily>() {
-    typedef typename GEN9::GPGPU_CSR_BASE_ADDRESS GPGPU_CSR_BASE_ADDRESS;
+void HardwareParse::findCsrBaseAddress<Gen9Family>() {
+    typedef typename Gen9::GPGPU_CSR_BASE_ADDRESS GPGPU_CSR_BASE_ADDRESS;
     itorGpgpuCsrBaseAddress = find<GPGPU_CSR_BASE_ADDRESS *>(cmdList.begin(), itorWalker);
     if (itorGpgpuCsrBaseAddress != itorWalker) {
         cmdGpgpuCsrBaseAddress = *itorGpgpuCsrBaseAddress;

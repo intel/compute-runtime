@@ -13,10 +13,10 @@
 #include "engine_node.h"
 
 namespace NEO {
-struct BDWFamily;
+struct Gen8Family;
 
 template <>
-struct AUBFamilyMapper<BDWFamily> {
+struct AUBFamilyMapper<Gen8Family> {
     enum { device = AubMemDump::DeviceValues::Bdw };
 
     using AubTraits = AubMemDump::Traits<device, MemoryConstants::GfxAddressBits>;

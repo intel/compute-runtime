@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-using Family = BDWFamily;
+using Family = Gen8Family;
 
 template <>
 void PreambleHelper<Family>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, EngineGroupType engineGroupType) {

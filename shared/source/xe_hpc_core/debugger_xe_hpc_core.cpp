@@ -12,7 +12,7 @@
 
 namespace NEO {
 
-using Family = NEO::XE_HPC_COREFamily;
+using Family = NEO::XeHpcCoreFamily;
 
 static auto coreFamily = IGFX_XE_HPC_CORE;
 

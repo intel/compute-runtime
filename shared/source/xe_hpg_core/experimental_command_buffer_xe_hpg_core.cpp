@@ -9,7 +9,7 @@
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
 namespace NEO {
-typedef XE_HPG_COREFamily GfxFamily;
+typedef XeHpgCoreFamily GfxFamily;
 
 template void ExperimentalCommandBuffer::injectBufferStart<GfxFamily>(LinearStream &parentStream, size_t cmdBufferOffset);
 template size_t ExperimentalCommandBuffer::getRequiredInjectionSize<GfxFamily>() noexcept;

@@ -17,7 +17,7 @@ namespace NEO {
 
 extern HwHelper *hwHelperFactory[IGFX_MAX_CORE];
 
-using Family = TGLLPFamily;
+using Family = Gen12LpFamily;
 static auto gfxFamily = IGFX_GEN12LP_CORE;
 
 struct EnableCoreGen12LP {

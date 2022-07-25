@@ -11,5 +11,5 @@
 #include "shared/source/helpers/state_base_address_skl.inl"
 
 namespace NEO {
-template struct StateBaseAddressHelper<SKLFamily>;
+template struct StateBaseAddressHelper<Gen9Family>;
 }

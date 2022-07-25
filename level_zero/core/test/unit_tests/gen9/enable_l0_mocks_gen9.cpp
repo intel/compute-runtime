@@ -8,8 +8,8 @@
 #include "shared/test/unit_test/mocks/mock_l0_debugger.h"
 
 namespace NEO {
-struct SKLFamily;
-using GfxFamily = SKLFamily;
+struct Gen9Family;
+using GfxFamily = Gen9Family;
 } // namespace NEO
 
 namespace L0 {

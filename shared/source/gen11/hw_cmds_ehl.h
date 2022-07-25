@@ -10,7 +10,7 @@
 
 namespace NEO {
 
-struct EHL : public ICLFamily {
+struct EHL : public Gen11Family {
     static const PLATFORM platform;
     static const HardwareInfo hwInfo;
     static const uint64_t defaultHardwareInfoConfig;

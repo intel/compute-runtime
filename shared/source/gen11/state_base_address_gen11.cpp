@@ -11,5 +11,5 @@
 #include "shared/source/helpers/state_base_address_icllp_and_later.inl"
 
 namespace NEO {
-template struct StateBaseAddressHelper<ICLFamily>;
+template struct StateBaseAddressHelper<Gen11Family>;
 }

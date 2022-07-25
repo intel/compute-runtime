@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-typedef XE_HPG_COREFamily Family;
+typedef XeHpgCoreFamily Family;
 static auto gfxCore = IGFX_XE_HPG_CORE;
 
 template class BufferHw<Family>;

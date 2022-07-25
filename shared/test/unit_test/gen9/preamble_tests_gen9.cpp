@@ -13,7 +13,7 @@
 #include "gtest/gtest.h"
 
 using namespace NEO;
-typedef SKLFamily GfxFamily;
+typedef Gen9Family GfxFamily;
 
 #include "shared/test/unit_test/source_level_debugger/source_level_debugger_preamble_test.inl"
 
@@ -68,15 +68,15 @@ using ThreadArbitrationGen9 = PreambleFixture;
 GEN9TEST_F(ThreadArbitrationGen9, givenPreambleWhenItIsProgrammedThenThreadArbitrationIsNotSet) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
-    typedef SKLFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-    typedef SKLFamily::PIPE_CONTROL PIPE_CONTROL;
+    typedef Gen9Family::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
+    typedef Gen9Family::PIPE_CONTROL PIPE_CONTROL;
     LinearStream &cs = linearStream;
     uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(*defaultHwInfo, true);
     MockDevice mockDevice;
-    PreambleHelper<SKLFamily>::programPreamble(&linearStream, mockDevice, l3Config,
-                                               nullptr, nullptr);
+    PreambleHelper<Gen9Family>::programPreamble(&linearStream, mockDevice, l3Config,
+                                                nullptr, nullptr);
 
-    parseCommands<SKLFamily>(cs);
+    parseCommands<Gen9Family>(cs);
 
     auto ppC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(cmdList.end(), ppC);
@@ -89,21 +89,21 @@ GEN9TEST_F(ThreadArbitrationGen9, givenPreambleWhenItIsProgrammedThenThreadArbit
     EXPECT_NE(0x100u, lri.getDataDword());
 
     MockDevice device;
-    EXPECT_EQ(0u, PreambleHelper<SKLFamily>::getAdditionalCommandsSize(device));
+    EXPECT_EQ(0u, PreambleHelper<Gen9Family>::getAdditionalCommandsSize(device));
 }
 
 GEN9TEST_F(ThreadArbitrationGen9, whenThreadArbitrationPolicyIsProgrammedThenCorrectValuesAreSet) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
-    typedef SKLFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-    typedef SKLFamily::PIPE_CONTROL PIPE_CONTROL;
+    typedef Gen9Family::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
+    typedef Gen9Family::PIPE_CONTROL PIPE_CONTROL;
     LinearStream &cs = linearStream;
     MockDevice mockDevice;
     StreamProperties streamProperties{};
     streamProperties.stateComputeMode.threadArbitrationPolicy.set(ThreadArbitrationPolicy::RoundRobin);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, *defaultHwInfo, nullptr);
 
-    parseCommands<SKLFamily>(cs);
+    parseCommands<Gen9Family>(cs);
 
     auto ppC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(ppC, cmdList.end());
@@ -116,5 +116,5 @@ GEN9TEST_F(ThreadArbitrationGen9, whenThreadArbitrationPolicyIsProgrammedThenCor
     EXPECT_EQ(0x100u, lri.getDataDword());
 
     MockDevice device;
-    EXPECT_EQ(0u, PreambleHelper<SKLFamily>::getAdditionalCommandsSize(device));
+    EXPECT_EQ(0u, PreambleHelper<Gen9Family>::getAdditionalCommandsSize(device));
 }

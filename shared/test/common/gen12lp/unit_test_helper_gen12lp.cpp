@@ -14,7 +14,7 @@
 
 namespace NEO {
 
-using Family = TGLLPFamily;
+using Family = Gen12LpFamily;
 
 template <>
 bool UnitTestHelper<Family>::isL3ConfigProgrammable() {

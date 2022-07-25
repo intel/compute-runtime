@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
-using Family = NEO::XE_HPG_COREFamily;
+using Family = NEO::XeHpgCoreFamily;
 constexpr static auto gfxCore = IGFX_XE_HPG_CORE;
 
 #include "opencl/source/sampler/sampler.h"

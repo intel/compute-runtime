@@ -27,7 +27,7 @@ using namespace NEO;
 
 #include "opencl/test/unit_test/command_stream/command_stream_receiver_hw_tests.inl"
 
-using CommandStreamReceiverHwTestGen11 = CommandStreamReceiverHwTest<ICLFamily>;
+using CommandStreamReceiverHwTestGen11 = CommandStreamReceiverHwTest<Gen11Family>;
 
 GEN11TEST_F(CommandStreamReceiverHwTestGen11, GivenKernelWithSlmWhenPreviousNOSLML3WasSentThenProgramL3WithSLML3Config) {
     givenKernelWithSlmWhenPreviousNOSLML3WasSentThenProgramL3WithSLML3ConfigImpl();

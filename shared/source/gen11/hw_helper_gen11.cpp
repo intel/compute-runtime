@@ -14,7 +14,7 @@
 #include "shared/source/helpers/logical_state_helper.inl"
 
 namespace NEO {
-typedef ICLFamily Family;
+typedef Gen11Family Family;
 
 template <>
 uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const {

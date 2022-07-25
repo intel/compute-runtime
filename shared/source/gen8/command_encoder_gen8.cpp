@@ -9,7 +9,7 @@
 #include "shared/source/gen8/hw_cmds_base.h"
 #include "shared/source/gen8/reg_configs.h"
 
-using Family = NEO::BDWFamily;
+using Family = NEO::Gen8Family;
 
 #include "shared/source/command_container/command_encoder.inl"
 #include "shared/source/command_container/command_encoder_bdw_and_later.inl"

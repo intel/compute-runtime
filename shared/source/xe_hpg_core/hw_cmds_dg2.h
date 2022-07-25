@@ -14,7 +14,7 @@
 
 namespace NEO {
 
-struct DG2 : public XE_HPG_COREFamily {
+struct DG2 : public XeHpgCoreFamily {
     static const PLATFORM platform;
     static const HardwareInfo hwInfo;
     static const uint64_t defaultHardwareInfoConfig;

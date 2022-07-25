@@ -16,7 +16,7 @@
 #include <cstring>
 
 namespace NEO {
-typedef SKLFamily Family;
+typedef Gen9Family Family;
 
 template <>
 SipKernelType HwHelperHw<Family>::getSipKernelType(bool debuggingActive) const {

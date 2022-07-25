@@ -15,7 +15,7 @@
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
 namespace NEO {
-typedef XE_HPG_COREFamily Family;
+typedef XeHpgCoreFamily Family;
 static auto gfxCore = IGFX_XE_HPG_CORE;
 
 template <>

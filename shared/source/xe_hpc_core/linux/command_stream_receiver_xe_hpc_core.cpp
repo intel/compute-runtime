@@ -13,7 +13,7 @@
 
 namespace NEO {
 
-template class DeviceCommandStreamReceiver<XE_HPC_COREFamily>;
-template class DrmCommandStreamReceiver<XE_HPC_COREFamily>;
-template class CommandStreamReceiverWithAUBDump<DrmCommandStreamReceiver<XE_HPC_COREFamily>>;
+template class DeviceCommandStreamReceiver<XeHpcCoreFamily>;
+template class DrmCommandStreamReceiver<XeHpcCoreFamily>;
+template class CommandStreamReceiverWithAUBDump<DrmCommandStreamReceiver<XeHpcCoreFamily>>;
 } // namespace NEO

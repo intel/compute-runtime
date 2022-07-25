@@ -12,7 +12,7 @@
 
 namespace NEO {
 
-using Family = NEO::TGLLPFamily;
+using Family = NEO::Gen12LpFamily;
 
 static auto coreFamily = IGFX_GEN12LP_CORE;
 

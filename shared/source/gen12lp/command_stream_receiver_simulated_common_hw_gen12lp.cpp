@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "shared/source/command_stream/command_stream_receiver_simulated_common_hw_bdw_and_later.inl"
 
 namespace NEO {
-typedef TGLLPFamily Family;
+typedef Gen12LpFamily Family;
 
 template <>
 void CommandStreamReceiverSimulatedCommonHw<Family>::initGlobalMMIO() {

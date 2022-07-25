@@ -13,7 +13,7 @@
 
 namespace NEO {
 
-using Family = XE_HPC_COREFamily;
+using Family = XeHpcCoreFamily;
 
 template <>
 bool ImplicitScalingDispatch<Family>::pipeControlStallRequired = false;

@@ -8,8 +8,8 @@
 #include "shared/test/unit_test/mocks/mock_l0_debugger.h"
 
 namespace NEO {
-struct XE_HPC_COREFamily;
-using GfxFamily = XE_HPC_COREFamily;
+struct XeHpcCoreFamily;
+using GfxFamily = XeHpcCoreFamily;
 } // namespace NEO
 
 namespace L0 {

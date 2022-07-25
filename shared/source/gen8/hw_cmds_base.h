@@ -20,7 +20,7 @@ struct CmdParse;
 
 namespace NEO {
 class LogicalStateHelper;
-struct GEN8 {
+struct Gen8 {
 #include "shared/source/generated/gen8/hw_cmds_generated_gen8.inl"
 
     static constexpr bool supportsSampler = true;
@@ -52,9 +52,9 @@ struct GEN8 {
 
     static_assert(sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor) == sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor::packed), "");
 };
-struct BDWFamily : public GEN8 {
-    using PARSE = CmdParse<BDWFamily>;
-    using GfxFamily = BDWFamily;
+struct Gen8Family : public Gen8 {
+    using PARSE = CmdParse<Gen8Family>;
+    using GfxFamily = Gen8Family;
     using WALKER_TYPE = GPGPU_WALKER;
     using VFE_STATE_TYPE = MEDIA_VFE_STATE;
     using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_SRC_COPY_BLT;

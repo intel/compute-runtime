@@ -11,8 +11,8 @@
 #include "shared/source/helpers/populate_factory.h"
 
 namespace NEO {
-struct ICLFamily;
-using GfxFamily = ICLFamily;
+struct Gen11Family;
+using GfxFamily = Gen11Family;
 static auto coreFamily = IGFX_GEN11_CORE;
 
 template <>

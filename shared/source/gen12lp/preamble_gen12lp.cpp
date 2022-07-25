@@ -15,7 +15,7 @@
 
 namespace NEO {
 
-using Family = TGLLPFamily;
+using Family = Gen12LpFamily;
 
 template <>
 uint32_t PreambleHelper<Family>::getL3Config(const HardwareInfo &hwInfo, bool useSLM) {

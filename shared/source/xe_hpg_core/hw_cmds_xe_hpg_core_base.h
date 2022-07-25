@@ -20,7 +20,7 @@ struct CmdParse;
 
 namespace NEO {
 class LogicalStateHelper;
-struct XE_HPG_CORE {
+struct XeHpgCore {
 #include "shared/source/generated/xe_hpg_core/hw_cmds_generated_xe_hpg_core.inl"
 
     static constexpr uint32_t stateComputeModeZPassAsyncComputeThreadLimitMask = 0b111u;
@@ -59,9 +59,9 @@ struct XE_HPG_CORE {
     static_assert(sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor) == sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor::packed), "");
 };
 
-struct XE_HPG_COREFamily : public XE_HPG_CORE {
-    using PARSE = CmdParse<XE_HPG_COREFamily>;
-    using GfxFamily = XE_HPG_COREFamily;
+struct XeHpgCoreFamily : public XeHpgCore {
+    using PARSE = CmdParse<XeHpgCoreFamily>;
+    using GfxFamily = XeHpgCoreFamily;
     using WALKER_TYPE = COMPUTE_WALKER;
     using VFE_STATE_TYPE = CFE_STATE;
     using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;

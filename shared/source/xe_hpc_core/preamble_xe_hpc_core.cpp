@@ -8,8 +8,8 @@
 #include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 
 namespace NEO {
-struct XE_HPC_COREFamily;
-using Family = XE_HPC_COREFamily;
+struct XeHpcCoreFamily;
+using Family = XeHpcCoreFamily;
 } // namespace NEO
 
 #include "shared/source/command_stream/stream_properties.h"

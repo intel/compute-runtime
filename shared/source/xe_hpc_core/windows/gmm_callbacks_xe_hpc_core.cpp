@@ -10,7 +10,7 @@
 
 namespace NEO {
 
-template struct DeviceCallbacks<XE_HPC_COREFamily>;
-template struct TTCallbacks<XE_HPC_COREFamily>;
+template struct DeviceCallbacks<XeHpcCoreFamily>;
+template struct TTCallbacks<XeHpcCoreFamily>;
 
 } // namespace NEO

@@ -16,7 +16,7 @@ namespace NEO {
 
 extern GTPinHwHelper *gtpinHwHelperFactory[IGFX_MAX_CORE];
 
-using Family = XE_HPC_COREFamily;
+using Family = XeHpcCoreFamily;
 static const auto gfxFamily = IGFX_XE_HPC_CORE;
 
 template class GTPinHwHelperHw<Family>;

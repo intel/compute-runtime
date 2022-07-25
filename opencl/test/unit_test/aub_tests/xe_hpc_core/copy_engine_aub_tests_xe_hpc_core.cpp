@@ -33,7 +33,7 @@ constexpr uint32_t allSupportedCopyEngines[] = {
     aub_stream::EngineType::ENGINE_BCS8,
 };
 
-using OneTileXeHpcTests = CopyEnginesXeHpcFixture<1, XE_HPC_COREFamily>;
+using OneTileXeHpcTests = CopyEnginesXeHpcFixture<1, XeHpcCoreFamily>;
 
 INSTANTIATE_TEST_CASE_P(
     MemCopyBcsCmd,
@@ -84,7 +84,7 @@ XE_HPC_CORETEST_P(OneTileXeHpcTests, givenCopyBufferRectWithBigSizesWhenHostPtrB
     givenCopyBufferRectWithBigSizesWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopiedImpl<FamilyType>();
 }
 
-using OneTileSystemMemoryXeHpcTests = CopyEnginesXeHpcFixture<1, XE_HPC_COREFamily, false>;
+using OneTileSystemMemoryXeHpcTests = CopyEnginesXeHpcFixture<1, XeHpcCoreFamily, false>;
 
 INSTANTIATE_TEST_CASE_P(
     MemCopyBcsCmd,

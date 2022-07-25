@@ -13,7 +13,7 @@
 
 namespace NEO {
 
-using Family = ICLFamily;
+using Family = Gen11Family;
 
 template <>
 uint32_t UnitTestHelper<Family>::getDebugModeRegisterOffset() {
@@ -35,5 +35,5 @@ uint32_t UnitTestHelper<Family>::getTdCtlRegisterValue() {
     return (1u << 7) | (1u << 4);
 }
 
-template struct UnitTestHelper<ICLFamily>;
+template struct UnitTestHelper<Gen11Family>;
 } // namespace NEO

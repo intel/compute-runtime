@@ -39,7 +39,7 @@ std::pair<bool, bool> HwInfoConfigHw<gfxProduct>::isPipeControlPriorToNonPipelin
 
 template <>
 void HwInfoConfigHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) {
-    using SAMPLER_STATE = typename XE_HPC_COREFamily::SAMPLER_STATE;
+    using SAMPLER_STATE = typename XeHpcCoreFamily::SAMPLER_STATE;
 
     auto samplerState = reinterpret_cast<SAMPLER_STATE *>(sampler);
     if (DebugManager.flags.ForceSamplerLowFilteringPrecision.get()) {

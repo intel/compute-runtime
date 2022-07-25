@@ -13,7 +13,7 @@
 
 namespace NEO {
 
-using Family = BDWFamily;
+using Family = Gen8Family;
 static auto gfxCore = IGFX_GEN8_CORE;
 
 template <>

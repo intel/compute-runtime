@@ -17,7 +17,7 @@ namespace NEO {
 
 extern GTPinHwHelper *gtpinHwHelperFactory[IGFX_MAX_CORE];
 
-typedef SKLFamily Family;
+typedef Gen9Family Family;
 static const auto gfxFamily = IGFX_GEN9_CORE;
 
 template <>

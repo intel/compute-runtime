@@ -6,8 +6,8 @@
  */
 
 #include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
-using GenStruct = NEO::XE_HPC_CORE;
-using GenGfxFamily = NEO::XE_HPC_COREFamily;
+using GenStruct = NEO::XeHpcCore;
+using GenGfxFamily = NEO::XeHpcCoreFamily;
 
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 

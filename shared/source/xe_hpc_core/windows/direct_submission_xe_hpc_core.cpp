@@ -16,7 +16,7 @@
 #include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 
 namespace NEO {
-using GfxFamily = XE_HPC_COREFamily;
+using GfxFamily = XeHpcCoreFamily;
 
 template class Dispatcher<GfxFamily>;
 template class BlitterDispatcher<GfxFamily>;

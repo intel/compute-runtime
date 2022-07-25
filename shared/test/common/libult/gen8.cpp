@@ -12,7 +12,7 @@
 
 namespace NEO {
 
-typedef BDWFamily Family;
+typedef Gen8Family Family;
 
 constexpr auto gfxCore = IGFX_GEN8_CORE;
 
@@ -32,5 +32,5 @@ struct enableGen8 {
 static enableGen8 enable;
 static MockDebuggerL0HwPopulateFactory<gfxCore, Family> mockDebuggerGen8;
 
-template class UltCommandStreamReceiver<BDWFamily>;
+template class UltCommandStreamReceiver<Gen8Family>;
 } // namespace NEO

@@ -13,34 +13,34 @@
 namespace NEO {
 
 template <>
-void GpgpuWalkerHelper<SKLFamily>::applyWADisableLSQCROPERFforOCL(NEO::LinearStream *pCommandStream, const Kernel &kernel, bool disablePerfMode) {
+void GpgpuWalkerHelper<Gen9Family>::applyWADisableLSQCROPERFforOCL(NEO::LinearStream *pCommandStream, const Kernel &kernel, bool disablePerfMode) {
     if (disablePerfMode) {
         if (kernel.getKernelInfo().kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages) {
             // Set bit L3SQC_BIT_LQSC_RO_PERF_DIS in L3SQC_REG4
-            GpgpuWalkerHelper<SKLFamily>::addAluReadModifyWriteRegister(pCommandStream, L3SQC_REG4, AluRegisters::OPCODE_OR, L3SQC_BIT_LQSC_RO_PERF_DIS);
+            GpgpuWalkerHelper<Gen9Family>::addAluReadModifyWriteRegister(pCommandStream, L3SQC_REG4, AluRegisters::OPCODE_OR, L3SQC_BIT_LQSC_RO_PERF_DIS);
         }
     } else {
         if (kernel.getKernelInfo().kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages) {
             // Add PIPE_CONTROL with CS_Stall to wait till GPU finishes its work
-            typedef typename SKLFamily::PIPE_CONTROL PIPE_CONTROL;
+            typedef typename Gen9Family::PIPE_CONTROL PIPE_CONTROL;
             auto pipeControlSpace = reinterpret_cast<PIPE_CONTROL *>(pCommandStream->getSpace(sizeof(PIPE_CONTROL)));
-            auto pipeControl = SKLFamily::cmdInitPipeControl;
+            auto pipeControl = Gen9Family::cmdInitPipeControl;
             pipeControl.setCommandStreamerStallEnable(true);
             *pipeControlSpace = pipeControl;
 
             // Clear bit L3SQC_BIT_LQSC_RO_PERF_DIS in L3SQC_REG4
-            GpgpuWalkerHelper<SKLFamily>::addAluReadModifyWriteRegister(pCommandStream, L3SQC_REG4, AluRegisters::OPCODE_AND, ~L3SQC_BIT_LQSC_RO_PERF_DIS);
+            GpgpuWalkerHelper<Gen9Family>::addAluReadModifyWriteRegister(pCommandStream, L3SQC_REG4, AluRegisters::OPCODE_AND, ~L3SQC_BIT_LQSC_RO_PERF_DIS);
         }
     }
 }
 
 template <>
-size_t GpgpuWalkerHelper<SKLFamily>::getSizeForWADisableLSQCROPERFforOCL(const Kernel *pKernel) {
-    typedef typename SKLFamily::MI_LOAD_REGISTER_REG MI_LOAD_REGISTER_REG;
-    typedef typename SKLFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-    typedef typename SKLFamily::PIPE_CONTROL PIPE_CONTROL;
-    typedef typename SKLFamily::MI_MATH MI_MATH;
-    typedef typename SKLFamily::MI_MATH_ALU_INST_INLINE MI_MATH_ALU_INST_INLINE;
+size_t GpgpuWalkerHelper<Gen9Family>::getSizeForWADisableLSQCROPERFforOCL(const Kernel *pKernel) {
+    typedef typename Gen9Family::MI_LOAD_REGISTER_REG MI_LOAD_REGISTER_REG;
+    typedef typename Gen9Family::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
+    typedef typename Gen9Family::PIPE_CONTROL PIPE_CONTROL;
+    typedef typename Gen9Family::MI_MATH MI_MATH;
+    typedef typename Gen9Family::MI_MATH_ALU_INST_INLINE MI_MATH_ALU_INST_INLINE;
     size_t n = 0;
     if (pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages) {
         n += sizeof(PIPE_CONTROL) +
@@ -54,10 +54,10 @@ size_t GpgpuWalkerHelper<SKLFamily>::getSizeForWADisableLSQCROPERFforOCL(const K
     return n;
 }
 
-template class HardwareInterface<SKLFamily>;
+template class HardwareInterface<Gen9Family>;
 
-template class GpgpuWalkerHelper<SKLFamily>;
+template class GpgpuWalkerHelper<Gen9Family>;
 
-template struct EnqueueOperation<SKLFamily>;
+template struct EnqueueOperation<Gen9Family>;
 
 } // namespace NEO

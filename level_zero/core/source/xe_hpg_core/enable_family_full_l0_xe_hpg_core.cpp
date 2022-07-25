@@ -12,7 +12,7 @@
 
 namespace NEO {
 
-using Family = XE_HPG_COREFamily;
+using Family = XeHpgCoreFamily;
 
 struct EnableL0XeHpgCore {
     EnableL0XeHpgCore() {

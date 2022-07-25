@@ -10,4 +10,4 @@
 
 using namespace NEO;
 
-template AubTestsConfig getAubTestsConfig<SKLFamily>();
+template AubTestsConfig getAubTestsConfig<Gen9Family>();

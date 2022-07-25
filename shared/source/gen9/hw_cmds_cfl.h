@@ -10,7 +10,7 @@
 
 namespace NEO {
 
-struct CFL : public SKLFamily {
+struct CFL : public Gen9Family {
     static const PLATFORM platform;
     static const HardwareInfo hwInfo;
     static const uint64_t defaultHardwareInfoConfig;

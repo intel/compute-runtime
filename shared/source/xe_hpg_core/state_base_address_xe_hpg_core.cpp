@@ -10,5 +10,5 @@
 
 namespace NEO {
 #include "shared/source/helpers/state_base_address_xe_hpg_core_and_later.inl"
-template struct StateBaseAddressHelper<XE_HPG_COREFamily>;
+template struct StateBaseAddressHelper<XeHpgCoreFamily>;
 } // namespace NEO

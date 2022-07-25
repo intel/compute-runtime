@@ -13,10 +13,10 @@
 #include "engine_node.h"
 
 namespace NEO {
-struct TGLLPFamily;
+struct Gen12LpFamily;
 
 template <>
-struct AUBFamilyMapper<TGLLPFamily> {
+struct AUBFamilyMapper<Gen12LpFamily> {
     enum { device = AubMemDump::DeviceValues::Tgllp };
 
     using AubTraits = AubMemDump::Traits<device, MemoryConstants::GfxAddressBits>;

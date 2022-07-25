@@ -15,7 +15,7 @@
 
 namespace NEO {
 
-typedef BDWFamily Family;
+typedef Gen8Family Family;
 static auto gfxCore = IGFX_GEN8_CORE;
 
 template class CommandQueueHw<Family>;

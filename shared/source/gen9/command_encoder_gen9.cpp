@@ -9,7 +9,7 @@
 #include "shared/source/gen9/hw_cmds_base.h"
 #include "shared/source/gen9/reg_configs.h"
 
-using Family = NEO::SKLFamily;
+using Family = NEO::Gen9Family;
 
 #include "shared/source/command_container/command_encoder.inl"
 #include "shared/source/command_container/command_encoder_bdw_and_later.inl"
@@ -47,10 +47,10 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
         args.csStallOnly = true;
         MemorySynchronizationCommands<Family>::addSingleBarrier(csr, args);
 
-        LriHelper<SKLFamily>::program(&csr,
-                                      DebugControlReg2::address,
-                                      DebugControlReg2::getRegData(properties.threadArbitrationPolicy.value),
-                                      false);
+        LriHelper<Gen9Family>::program(&csr,
+                                       DebugControlReg2::address,
+                                       DebugControlReg2::getRegData(properties.threadArbitrationPolicy.value),
+                                       false);
     }
 }
 

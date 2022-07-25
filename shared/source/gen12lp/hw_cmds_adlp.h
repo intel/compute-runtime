@@ -9,7 +9,7 @@
 #include "shared/source/gen12lp/hw_cmds_base.h"
 namespace NEO {
 
-struct ADLP : public TGLLPFamily {
+struct ADLP : public Gen12LpFamily {
     static const PLATFORM platform;
     static const HardwareInfo hwInfo;
     static const uint64_t defaultHardwareInfoConfig;

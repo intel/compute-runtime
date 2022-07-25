@@ -13,7 +13,7 @@
 namespace NEO {
 
 template <>
-void StateBaseAddressHelper<BDWFamily>::programStateBaseAddress(
+void StateBaseAddressHelper<Gen8Family>::programStateBaseAddress(
     STATE_BASE_ADDRESS *stateBaseAddress,
     const IndirectHeap *dsh,
     const IndirectHeap *ioh,
@@ -33,7 +33,7 @@ void StateBaseAddressHelper<BDWFamily>::programStateBaseAddress(
     bool areMultipleSubDevicesInContext,
     LogicalStateHelper *logicalStateHelper) {
 
-    *stateBaseAddress = BDWFamily::cmdInitStateBaseAddress;
+    *stateBaseAddress = Gen8Family::cmdInitStateBaseAddress;
 
     if (dsh) {
         stateBaseAddress->setDynamicStateBaseAddressModifyEnable(true);
@@ -81,5 +81,5 @@ void StateBaseAddressHelper<BDWFamily>::programStateBaseAddress(
     appendStateBaseAddressParameters(stateBaseAddress, ssh, setGeneralStateBaseAddress, indirectObjectHeapBaseAddress,
                                      gmmHelper, isMultiOsContextCapable, memoryCompressionState, true, useGlobalAtomics, areMultipleSubDevicesInContext);
 }
-template struct StateBaseAddressHelper<BDWFamily>;
+template struct StateBaseAddressHelper<Gen8Family>;
 } // namespace NEO

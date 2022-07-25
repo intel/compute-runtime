@@ -16,7 +16,7 @@
 using namespace NEO;
 
 template <>
-PreemptionTestHwDetails getPreemptionTestHwDetails<BDWFamily>() {
+PreemptionTestHwDetails getPreemptionTestHwDetails<Gen8Family>() {
     PreemptionTestHwDetails ret;
     ret.modeToRegValueMap[PreemptionMode::ThreadGroup] = 0;
     ret.modeToRegValueMap[PreemptionMode::MidBatch] = (1 << 2);

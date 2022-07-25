@@ -19,7 +19,7 @@ namespace NEO {
 
 extern HwHelper *hwHelperFactory[IGFX_MAX_CORE];
 
-using Family = SKLFamily;
+using Family = Gen9Family;
 static const auto gfxFamily = IGFX_GEN9_CORE;
 
 struct EnableCoreGen9 {

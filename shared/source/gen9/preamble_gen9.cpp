@@ -12,7 +12,7 @@
 
 namespace NEO {
 
-using Family = SKLFamily;
+using Family = Gen9Family;
 
 template <>
 uint32_t PreambleHelper<Family>::getL3Config(const HardwareInfo &hwInfo, bool useSLM) {

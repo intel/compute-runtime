@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-using Family = XE_HPG_COREFamily;
+using Family = XeHpgCoreFamily;
 
 template <>
 bool ImplicitScalingDispatch<Family>::pipeControlStallRequired = true;

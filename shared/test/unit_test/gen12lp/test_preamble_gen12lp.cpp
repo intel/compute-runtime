@@ -19,14 +19,14 @@ typedef PreambleFixture TglLpSlm;
 HWTEST2_F(TglLpSlm, givenTglLpWhenPreambleIsBeingProgrammedThenThreadArbitrationPolicyIsIgnored, IsTGLLP) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
-    typedef TGLLPFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
+    typedef Gen12LpFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     LinearStream &cs = linearStream;
-    uint32_t l3Config = PreambleHelper<TGLLPFamily>::getL3Config(pDevice->getHardwareInfo(), true);
+    uint32_t l3Config = PreambleHelper<Gen12LpFamily>::getL3Config(pDevice->getHardwareInfo(), true);
     MockDevice mockDevice;
-    PreambleHelper<TGLLPFamily>::programPreamble(&linearStream, mockDevice, l3Config,
-                                                 nullptr, nullptr);
+    PreambleHelper<Gen12LpFamily>::programPreamble(&linearStream, mockDevice, l3Config,
+                                                   nullptr, nullptr);
 
-    parseCommands<TGLLPFamily>(cs);
+    parseCommands<Gen12LpFamily>(cs);
 
     // parse through commands and ensure that 0xE404 is not being programmed
     EXPECT_EQ(0U, countMmio<FamilyType>(cmdList.begin(), cmdList.end(), 0xE404));
@@ -34,18 +34,18 @@ HWTEST2_F(TglLpSlm, givenTglLpWhenPreambleIsBeingProgrammedThenThreadArbitration
 
 HWTEST2_F(TglLpSlm, WhenCheckingL3IsConfigurableThenExpectItToBeFalse, IsTGLLP) {
     bool isL3Programmable =
-        PreambleHelper<TGLLPFamily>::isL3Configurable(*defaultHwInfo);
+        PreambleHelper<Gen12LpFamily>::isL3Configurable(*defaultHwInfo);
 
     EXPECT_FALSE(isL3Programmable);
 }
 
 HWTEST2_F(TglLpSlm, WhenPreambleIsCreatedThenSlmIsDisabled, IsTGLLP) {
-    typedef TGLLPFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
+    typedef Gen12LpFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     LinearStream &cs = linearStream;
     uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(pDevice->getHardwareInfo(), true);
     PreambleHelper<FamilyType>::programL3(&cs, l3Config);
 
-    parseCommands<TGLLPFamily>(cs);
+    parseCommands<Gen12LpFamily>(cs);
 
     auto itorLRI = find<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(cmdList.end(), itorLRI);

@@ -13,7 +13,7 @@
 
 namespace NEO {
 
-using Family = TGLLPFamily;
+using Family = Gen12LpFamily;
 static auto gfxCore = IGFX_GEN12LP_CORE;
 
 template <>

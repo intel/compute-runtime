@@ -15,7 +15,7 @@
 
 namespace NEO {
 
-typedef ICLFamily Family;
+typedef Gen11Family Family;
 static auto gfxCore = IGFX_GEN11_CORE;
 
 template class CommandQueueHw<Family>;

@@ -12,7 +12,7 @@
 
 namespace NEO {
 
-typedef XE_HPG_COREFamily Family;
+typedef XeHpgCoreFamily Family;
 
 constexpr auto gfxCore = IGFX_XE_HPG_CORE;
 
@@ -32,5 +32,5 @@ struct enableXeHpgCore {
 static enableXeHpgCore enable;
 static MockDebuggerL0HwPopulateFactory<gfxCore, Family> mockDebuggerXeHpgCore;
 
-template class UltCommandStreamReceiver<XE_HPG_COREFamily>;
+template class UltCommandStreamReceiver<XeHpgCoreFamily>;
 } // namespace NEO

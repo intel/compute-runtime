@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 #include <cstdint>
 
 namespace NEO {
-using FamilyType = SKLFamily;
+using FamilyType = Gen9Family;
 
 template struct HardwareCommandsHelper<FamilyType>;
 } // namespace NEO

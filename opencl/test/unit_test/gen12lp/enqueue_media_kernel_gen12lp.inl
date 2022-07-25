@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@ using namespace NEO;
 typedef MediaKernelFixture<HelloWorldFixtureFactory> MediaKernelTest;
 
 GEN12LPTEST_F(MediaKernelTest, givenGen12LpCsrWhenEnqueueBlockedVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
-    typedef typename TGLLPFamily::PIPELINE_SELECT PIPELINE_SELECT;
+    typedef typename Gen12LpFamily::PIPELINE_SELECT PIPELINE_SELECT;
 
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
@@ -35,7 +35,7 @@ GEN12LPTEST_F(MediaKernelTest, givenGen12LpCsrWhenEnqueueBlockedVmeKernelFirstTi
 
     userEvent.setStatus(CL_COMPLETE);
 
-    parseCommands<TGLLPFamily>(*pCmdQ);
+    parseCommands<Gen12LpFamily>(*pCmdQ);
     ASSERT_NE(cmdPipelineSelect, nullptr);
     auto *pCmd = genCmdCast<PIPELINE_SELECT *>(cmdPipelineSelect);
 
@@ -47,7 +47,7 @@ GEN12LPTEST_F(MediaKernelTest, givenGen12LpCsrWhenEnqueueBlockedVmeKernelFirstTi
 }
 
 GEN12LPTEST_F(MediaKernelTest, givenGen12LpCsrWhenEnqueueBlockedNonVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
-    typedef typename TGLLPFamily::PIPELINE_SELECT PIPELINE_SELECT;
+    typedef typename Gen12LpFamily::PIPELINE_SELECT PIPELINE_SELECT;
 
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
@@ -69,7 +69,7 @@ GEN12LPTEST_F(MediaKernelTest, givenGen12LpCsrWhenEnqueueBlockedNonVmeKernelFirs
 
     userEvent.setStatus(CL_COMPLETE);
 
-    parseCommands<TGLLPFamily>(*pCmdQ);
+    parseCommands<Gen12LpFamily>(*pCmdQ);
     ASSERT_NE(cmdPipelineSelect, nullptr);
     auto *pCmd = genCmdCast<PIPELINE_SELECT *>(cmdPipelineSelect);
 
@@ -81,8 +81,8 @@ GEN12LPTEST_F(MediaKernelTest, givenGen12LpCsrWhenEnqueueBlockedNonVmeKernelFirs
 }
 
 GEN12LPTEST_F(MediaKernelTest, givenGen12LpCsrWhenEnqueueVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
-    typedef typename TGLLPFamily::PIPELINE_SELECT PIPELINE_SELECT;
-    enqueueVmeKernel<TGLLPFamily>();
+    typedef typename Gen12LpFamily::PIPELINE_SELECT PIPELINE_SELECT;
+    enqueueVmeKernel<Gen12LpFamily>();
 
     auto numCommands = getCommandsList<PIPELINE_SELECT>().size();
     EXPECT_EQ(1u, numCommands);
@@ -96,8 +96,8 @@ GEN12LPTEST_F(MediaKernelTest, givenGen12LpCsrWhenEnqueueVmeKernelFirstTimeThenP
 }
 
 GEN12LPTEST_F(MediaKernelTest, givenGen12LpCsrWhenEnqueueNonVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
-    typedef typename TGLLPFamily::PIPELINE_SELECT PIPELINE_SELECT;
-    enqueueRegularKernel<TGLLPFamily>();
+    typedef typename Gen12LpFamily::PIPELINE_SELECT PIPELINE_SELECT;
+    enqueueRegularKernel<Gen12LpFamily>();
 
     auto numCommands = getCommandsList<PIPELINE_SELECT>().size();
     EXPECT_EQ(1u, numCommands);
@@ -111,23 +111,23 @@ GEN12LPTEST_F(MediaKernelTest, givenGen12LpCsrWhenEnqueueNonVmeKernelFirstTimeTh
 }
 
 GEN12LPTEST_F(MediaKernelTest, givenGen12LpCsrWhenEnqueueVmeKernelTwiceThenProgramPipelineSelectOnce) {
-    typedef typename TGLLPFamily::PIPELINE_SELECT PIPELINE_SELECT;
-    enqueueVmeKernel<TGLLPFamily>();
+    typedef typename Gen12LpFamily::PIPELINE_SELECT PIPELINE_SELECT;
+    enqueueVmeKernel<Gen12LpFamily>();
     auto numCommands = getCommandsList<PIPELINE_SELECT>().size();
     EXPECT_EQ(1u, numCommands);
 }
 
 GEN12LPTEST_F(MediaKernelTest, givenGen12LpCsrWhenEnqueueNonVmeKernelTwiceThenProgramPipelineSelectOnce) {
-    typedef typename TGLLPFamily::PIPELINE_SELECT PIPELINE_SELECT;
-    enqueueVmeKernel<TGLLPFamily>();
+    typedef typename Gen12LpFamily::PIPELINE_SELECT PIPELINE_SELECT;
+    enqueueVmeKernel<Gen12LpFamily>();
     auto numCommands = getCommandsList<PIPELINE_SELECT>().size();
     EXPECT_EQ(1u, numCommands);
 }
 
 GEN12LPTEST_F(MediaKernelTest, givenGen12LpCsrWhenEnqueueVmeKernelAfterNonVmeKernelThenProgramPipelineSelectionAndMediaSamplerTwice) {
-    typedef typename TGLLPFamily::PIPELINE_SELECT PIPELINE_SELECT;
-    enqueueRegularKernel<TGLLPFamily>();
-    enqueueVmeKernel<TGLLPFamily>();
+    typedef typename Gen12LpFamily::PIPELINE_SELECT PIPELINE_SELECT;
+    enqueueRegularKernel<Gen12LpFamily>();
+    enqueueVmeKernel<Gen12LpFamily>();
 
     auto commands = getCommandsList<PIPELINE_SELECT>();
     EXPECT_EQ(2u, commands.size());
@@ -140,9 +140,9 @@ GEN12LPTEST_F(MediaKernelTest, givenGen12LpCsrWhenEnqueueVmeKernelAfterNonVmeKer
 }
 
 GEN12LPTEST_F(MediaKernelTest, givenGen12LpCsrWhenEnqueueNonVmeKernelAfterVmeKernelThenProgramProgramPipelineSelectionAndMediaSamplerTwice) {
-    typedef typename TGLLPFamily::PIPELINE_SELECT PIPELINE_SELECT;
-    enqueueVmeKernel<TGLLPFamily>();
-    enqueueRegularKernel<TGLLPFamily>();
+    typedef typename Gen12LpFamily::PIPELINE_SELECT PIPELINE_SELECT;
+    enqueueVmeKernel<Gen12LpFamily>();
+    enqueueRegularKernel<Gen12LpFamily>();
 
     auto commands = getCommandsList<PIPELINE_SELECT>();
     EXPECT_EQ(2u, commands.size());

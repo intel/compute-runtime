@@ -8,7 +8,7 @@
 #include "shared/source/xe_hpg_core/aub_mapper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
-using Family = NEO::XE_HPG_COREFamily;
+using Family = NEO::XeHpgCoreFamily;
 
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/extra_allocation_data_xehp_and_later.inl"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-using Family = XE_HPC_COREFamily;
+using Family = XeHpcCoreFamily;
 static auto gfxCore = IGFX_XE_HPC_CORE;
 
 template <>

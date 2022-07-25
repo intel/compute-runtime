@@ -16,7 +16,7 @@
 
 namespace NEO {
 
-using GfxFamily = SKLFamily;
+using GfxFamily = Gen9Family;
 
 template <>
 size_t PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(const Device &device) {

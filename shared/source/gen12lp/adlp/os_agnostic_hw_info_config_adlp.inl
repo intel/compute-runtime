@@ -36,7 +36,7 @@ template <>
 void HwInfoConfigHw<gfxProduct>::setAdditionalPipelineSelectFields(void *pipelineSelectCmd,
                                                                    const PipelineSelectArgs &pipelineSelectArgs,
                                                                    const HardwareInfo &hwInfo) {
-    using PIPELINE_SELECT = typename TGLLPFamily::PIPELINE_SELECT;
+    using PIPELINE_SELECT = typename Gen12LpFamily::PIPELINE_SELECT;
     auto pipelineSelectTglplpCmd = reinterpret_cast<PIPELINE_SELECT *>(pipelineSelectCmd);
 
     auto mask = pipelineSelectTglplpCmd->getMaskBits();

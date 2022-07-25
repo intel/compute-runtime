@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 
 namespace NEO {
 
-using Family = TGLLPFamily;
+using Family = Gen12LpFamily;
 
 struct EnableL0Gen12LP {
     EnableL0Gen12LP() {

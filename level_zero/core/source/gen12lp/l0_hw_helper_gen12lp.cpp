@@ -14,7 +14,7 @@
 
 namespace L0 {
 
-using Family = NEO::TGLLPFamily;
+using Family = NEO::Gen12LpFamily;
 static auto gfxCore = IGFX_GEN12LP_CORE;
 
 template <>

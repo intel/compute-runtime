@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ using namespace NEO;
 typedef MediaKernelFixture<HelloWorldFixtureFactory> MediaKernelTest;
 
 GEN8TEST_F(MediaKernelTest, givenGen8CSRWhenEnqueueVmeKernelThenProgramOnlyPipelineSelection) {
-    typedef typename BDWFamily::PIPELINE_SELECT PIPELINE_SELECT;
+    typedef typename Gen8Family::PIPELINE_SELECT PIPELINE_SELECT;
     enqueueVmeKernel<FamilyType>();
     auto pCmd = getCommand<PIPELINE_SELECT>();
     auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits;

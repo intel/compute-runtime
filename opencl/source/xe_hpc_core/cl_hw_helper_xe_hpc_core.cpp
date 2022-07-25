@@ -13,7 +13,7 @@
 
 namespace NEO {
 
-using Family = XE_HPC_COREFamily;
+using Family = XeHpcCoreFamily;
 static auto gfxCore = IGFX_XE_HPC_CORE;
 
 #include "opencl/source/helpers/cl_hw_helper_pvc_and_later.inl"

@@ -12,7 +12,7 @@
 
 namespace NEO {
 
-using GfxFamily = BDWFamily;
+using GfxFamily = Gen8Family;
 
 template <>
 struct PreemptionConfig<GfxFamily> {

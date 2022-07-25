@@ -16,7 +16,7 @@
 
 namespace NEO {
 
-using Family = SKLFamily;
+using Family = Gen9Family;
 
 struct EnableOCLGen9 {
     EnableOCLGen9() {

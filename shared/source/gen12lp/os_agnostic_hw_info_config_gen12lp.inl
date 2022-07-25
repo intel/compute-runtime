@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ bool HwInfoConfigHw<gfxProduct>::isPageTableManagerSupported(const HardwareInfo 
 
 template <>
 void HwInfoConfigHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) {
-    using SAMPLER_STATE = typename TGLLPFamily::SAMPLER_STATE;
+    using SAMPLER_STATE = typename Gen12LpFamily::SAMPLER_STATE;
     auto samplerState = reinterpret_cast<SAMPLER_STATE *>(sampler);
     if (DebugManager.flags.ForceSamplerLowFilteringPrecision.get()) {
         samplerState->setLowQualityFilter(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE);

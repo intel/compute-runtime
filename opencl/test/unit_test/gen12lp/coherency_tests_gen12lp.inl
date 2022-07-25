@@ -17,14 +17,14 @@
 using namespace NEO;
 
 struct Gen12LpCoherencyRequirements : public ::testing::Test {
-    using STATE_COMPUTE_MODE = typename TGLLPFamily::STATE_COMPUTE_MODE;
-    using PIPE_CONTROL = typename TGLLPFamily::PIPE_CONTROL;
-    using PIPELINE_SELECT = typename TGLLPFamily::PIPELINE_SELECT;
+    using STATE_COMPUTE_MODE = typename Gen12LpFamily::STATE_COMPUTE_MODE;
+    using PIPE_CONTROL = typename Gen12LpFamily::PIPE_CONTROL;
+    using PIPELINE_SELECT = typename Gen12LpFamily::PIPELINE_SELECT;
 
-    struct myCsr : public CommandStreamReceiverHw<TGLLPFamily> {
+    struct myCsr : public CommandStreamReceiverHw<Gen12LpFamily> {
         using CommandStreamReceiver::commandStream;
         using CommandStreamReceiver::streamProperties;
-        myCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<TGLLPFamily>(executionEnvironment, 0, 1){};
+        myCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<Gen12LpFamily>(executionEnvironment, 0, 1){};
         CsrSizeRequestFlags *getCsrRequestFlags() { return &csrSizeRequestFlags; }
     };
 

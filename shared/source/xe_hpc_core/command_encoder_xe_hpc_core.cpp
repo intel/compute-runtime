@@ -15,7 +15,7 @@
 #include "shared/source/utilities/lookup_array.h"
 #include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 
-using Family = NEO::XE_HPC_COREFamily;
+using Family = NEO::XeHpcCoreFamily;
 
 #include "shared/source/command_container/command_encoder_tgllp_and_later.inl"
 #include "shared/source/command_container/command_encoder_xe_hpc_core_and_later.inl"

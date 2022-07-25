@@ -12,7 +12,7 @@
 
 namespace NEO {
 
-using GfxFamily = NEO::XE_HPG_COREFamily;
+using GfxFamily = NEO::XeHpgCoreFamily;
 
 static auto coreFamily = IGFX_XE_HPG_CORE;
 

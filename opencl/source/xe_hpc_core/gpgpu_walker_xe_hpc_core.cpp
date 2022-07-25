@@ -12,10 +12,10 @@
 
 namespace NEO {
 
-template class GpgpuWalkerHelper<XE_HPC_COREFamily>;
+template class GpgpuWalkerHelper<XeHpcCoreFamily>;
 
-template class HardwareInterface<XE_HPC_COREFamily>;
+template class HardwareInterface<XeHpcCoreFamily>;
 
-template struct EnqueueOperation<XE_HPC_COREFamily>;
+template struct EnqueueOperation<XeHpcCoreFamily>;
 
 } // namespace NEO

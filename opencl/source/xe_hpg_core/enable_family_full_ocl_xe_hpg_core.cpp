@@ -16,7 +16,7 @@
 
 namespace NEO {
 
-using Family = XE_HPG_COREFamily;
+using Family = XeHpgCoreFamily;
 
 struct EnableOCLXeHpgCore {
     EnableOCLXeHpgCore() {

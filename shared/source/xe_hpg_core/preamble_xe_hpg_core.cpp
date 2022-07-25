@@ -8,8 +8,8 @@
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
 namespace NEO {
-struct XE_HPG_COREFamily;
-using Family = XE_HPG_COREFamily;
+struct XeHpgCoreFamily;
+using Family = XeHpgCoreFamily;
 } // namespace NEO
 
 #include "shared/source/helpers/preamble_xehp_and_later.inl"

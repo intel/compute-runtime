@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "shared/source/command_stream/command_stream_receiver_simulated_common_hw_xehp_and_later.inl"
 
 namespace NEO {
-using Family = XE_HPC_COREFamily;
+using Family = XeHpcCoreFamily;
 
 template <>
 bool CommandStreamReceiverSimulatedCommonHw<Family>::expectMemoryCompressed(void *gfxAddress, const void *srcAddress, size_t length) {

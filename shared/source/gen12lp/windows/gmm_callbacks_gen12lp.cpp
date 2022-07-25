@@ -9,6 +9,6 @@
 #include "shared/source/helpers/windows/gmm_callbacks_tgllp_and_later.inl"
 
 namespace NEO {
-template struct DeviceCallbacks<TGLLPFamily>;
-template struct TTCallbacks<TGLLPFamily>;
+template struct DeviceCallbacks<Gen12LpFamily>;
+template struct TTCallbacks<Gen12LpFamily>;
 } // namespace NEO

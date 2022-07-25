@@ -12,7 +12,7 @@
 
 namespace NEO {
 
-typedef TGLLPFamily Family;
+typedef Gen12LpFamily Family;
 
 constexpr auto gfxCore = IGFX_GEN12LP_CORE;
 
@@ -32,5 +32,5 @@ struct enableGen12LP {
 static enableGen12LP enable;
 static MockDebuggerL0HwPopulateFactory<gfxCore, Family> mockDebuggerGen12lp;
 
-template class UltCommandStreamReceiver<TGLLPFamily>;
+template class UltCommandStreamReceiver<Gen12LpFamily>;
 } // namespace NEO

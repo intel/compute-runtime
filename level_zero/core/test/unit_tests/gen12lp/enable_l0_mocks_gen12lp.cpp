@@ -9,8 +9,8 @@
 
 namespace NEO {
 
-struct TGLLPFamily;
-using GfxFamily = TGLLPFamily;
+struct Gen12LpFamily;
+using GfxFamily = Gen12LpFamily;
 
 } // namespace NEO
 

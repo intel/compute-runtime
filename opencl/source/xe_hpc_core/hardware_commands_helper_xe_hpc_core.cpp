@@ -13,7 +13,7 @@
 #include "opencl/source/helpers/hardware_commands_helper_xehp_and_later.inl"
 
 namespace NEO {
-using FamilyType = XE_HPC_COREFamily;
+using FamilyType = XeHpcCoreFamily;
 
 template struct HardwareCommandsHelper<FamilyType>;
 } // namespace NEO

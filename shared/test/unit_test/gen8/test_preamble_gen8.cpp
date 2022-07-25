@@ -17,18 +17,18 @@ using namespace NEO;
 typedef PreambleFixture BdwSlm;
 
 BDWTEST_F(BdwSlm, WhenL3ConfigIsDispatchedThenProperRegisterAddressAndValueAreProgrammed) {
-    typedef BDWFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
+    typedef Gen8Family::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     LinearStream &cs = linearStream;
-    uint32_t l3Config = PreambleHelper<BDWFamily>::getL3Config(*defaultHwInfo, true);
-    PreambleHelper<BDWFamily>::programL3(&cs, l3Config);
+    uint32_t l3Config = PreambleHelper<Gen8Family>::getL3Config(*defaultHwInfo, true);
+    PreambleHelper<Gen8Family>::programL3(&cs, l3Config);
 
-    parseCommands<BDWFamily>(cs);
+    parseCommands<Gen8Family>(cs);
 
     auto itorLRI = find<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itorLRI);
 
     const auto &lri = *reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*itorLRI);
-    auto registerOffset = L3CNTLRegisterOffset<BDWFamily>::registerOffset;
+    auto registerOffset = L3CNTLRegisterOffset<Gen8Family>::registerOffset;
     EXPECT_EQ(registerOffset, lri.getRegisterOffset());
     EXPECT_EQ(1u, lri.getDataDword() & 1);
 }
@@ -62,17 +62,17 @@ BDWTEST_F(Gen8L3Config, WhenPreambleIsCreatedThenL3ProgrammingIsCorrect) {
     bool isL3Programmable;
 
     l3ConfigDifference =
-        PreambleHelper<BDWFamily>::getL3Config(*defaultHwInfo, true) !=
-        PreambleHelper<BDWFamily>::getL3Config(*defaultHwInfo, false);
+        PreambleHelper<Gen8Family>::getL3Config(*defaultHwInfo, true) !=
+        PreambleHelper<Gen8Family>::getL3Config(*defaultHwInfo, false);
     isL3Programmable =
-        PreambleHelper<BDWFamily>::isL3Configurable(*defaultHwInfo);
+        PreambleHelper<Gen8Family>::isL3Configurable(*defaultHwInfo);
 
     EXPECT_EQ(l3ConfigDifference, isL3Programmable);
 }
 
 typedef PreambleFixture ThreadArbitrationGen8;
 BDWTEST_F(ThreadArbitrationGen8, givenPolicyWhenThreadArbitrationProgrammedThenDoNothing) {
-    typedef BDWFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
+    typedef Gen8Family::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     LinearStream &cs = linearStream;
 
     StreamProperties streamProperties{};
@@ -82,12 +82,12 @@ BDWTEST_F(ThreadArbitrationGen8, givenPolicyWhenThreadArbitrationProgrammedThenD
     EXPECT_EQ(0u, cs.getUsed());
 
     MockDevice device;
-    EXPECT_EQ(0u, PreambleHelper<BDWFamily>::getAdditionalCommandsSize(device));
-    EXPECT_EQ(ThreadArbitrationPolicy::AgeBased, HwHelperHw<BDWFamily>::get().getDefaultThreadArbitrationPolicy());
+    EXPECT_EQ(0u, PreambleHelper<Gen8Family>::getAdditionalCommandsSize(device));
+    EXPECT_EQ(ThreadArbitrationPolicy::AgeBased, HwHelperHw<Gen8Family>::get().getDefaultThreadArbitrationPolicy());
 }
 
 BDWTEST_F(ThreadArbitrationGen8, whenGetSupportThreadArbitrationPoliciesIsCalledThenEmptyVectorIsReturned) {
-    auto supportedPolicies = PreambleHelper<BDWFamily>::getSupportedThreadArbitrationPolicies();
+    auto supportedPolicies = PreambleHelper<Gen8Family>::getSupportedThreadArbitrationPolicies();
 
     EXPECT_EQ(0u, supportedPolicies.size());
 }
@@ -99,14 +99,14 @@ BDWTEST_F(Gen8UrbEntryAllocationSize, WhenPreambleIsCreatedThenUrbEntryAllocatio
 }
 
 BDWTEST_F(PreambleVfeState, WhenProgrammingVfeStateThenProgrammingIsCorrect) {
-    typedef BDWFamily::PIPE_CONTROL PIPE_CONTROL;
+    typedef Gen8Family::PIPE_CONTROL PIPE_CONTROL;
 
     LinearStream &cs = linearStream;
-    auto pVfeCmd = PreambleHelper<BDWFamily>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::RenderCompute);
+    auto pVfeCmd = PreambleHelper<Gen8Family>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::RenderCompute);
     StreamProperties emptyProperties{};
-    PreambleHelper<BDWFamily>::programVfeState(pVfeCmd, *defaultHwInfo, 0u, 0, 168u, emptyProperties, nullptr);
+    PreambleHelper<Gen8Family>::programVfeState(pVfeCmd, *defaultHwInfo, 0u, 0, 168u, emptyProperties, nullptr);
 
-    parseCommands<BDWFamily>(cs);
+    parseCommands<Gen8Family>(cs);
 
     auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itorPC);

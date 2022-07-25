@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-using Family = XE_HPC_COREFamily;
+using Family = XeHpcCoreFamily;
 static auto gfxCore = IGFX_XE_HPC_CORE;
 } // namespace NEO
 #include "opencl/source/mem_obj/image_tgllp_and_later.inl"

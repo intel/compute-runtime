@@ -11,7 +11,7 @@
 using namespace NEO;
 
 template <>
-AubTestsConfig getAubTestsConfig<XE_HPG_COREFamily>() {
+AubTestsConfig getAubTestsConfig<XeHpgCoreFamily>() {
     AubTestsConfig aubTestsConfig;
     aubTestsConfig.testCanonicalAddress = true;
     return aubTestsConfig;

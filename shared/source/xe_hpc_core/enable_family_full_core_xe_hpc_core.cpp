@@ -17,7 +17,7 @@ namespace NEO {
 
 extern HwHelper *hwHelperFactory[IGFX_MAX_CORE];
 
-using Family = XE_HPC_COREFamily;
+using Family = XeHpcCoreFamily;
 static auto gfxFamily = IGFX_XE_HPC_CORE;
 
 struct EnableCoreXeHpcCore {

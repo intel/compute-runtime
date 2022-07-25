@@ -14,28 +14,28 @@ using namespace NEO;
 using ImageSurfaceStateTestsGen12LP = ImageSurfaceStateTests;
 
 GEN12LPTEST_F(ImageSurfaceStateTestsGen12LP, givenGmmWithMediaCompressedWhenSetFlagsForMediaCompressionThenAuxiliarySurfaceNoneIsSetAndMemoryCompressionEnable) {
-    auto size = sizeof(typename TGLLPFamily::RENDER_SURFACE_STATE);
+    auto size = sizeof(typename Gen12LpFamily::RENDER_SURFACE_STATE);
     auto surfaceState = std::make_unique<char[]>(size);
-    auto castSurfaceState = reinterpret_cast<typename TGLLPFamily::RENDER_SURFACE_STATE *>(surfaceState.get());
-    castSurfaceState->setAuxiliarySurfaceMode(TGLLPFamily::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
+    auto castSurfaceState = reinterpret_cast<typename Gen12LpFamily::RENDER_SURFACE_STATE *>(surfaceState.get());
+    castSurfaceState->setAuxiliarySurfaceMode(Gen12LpFamily::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
 
     mockGmm->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = false;
     EncodeSurfaceState<FamilyType>::setFlagsForMediaCompression(castSurfaceState, mockGmm.get());
-    EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceMode(), TGLLPFamily::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
+    EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceMode(), Gen12LpFamily::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
     EXPECT_EQ(castSurfaceState->getMemoryCompressionEnable(), false);
     mockGmm->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;
     EncodeSurfaceState<FamilyType>::setFlagsForMediaCompression(castSurfaceState, mockGmm.get());
-    EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceMode(), TGLLPFamily::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
+    EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceMode(), Gen12LpFamily::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
     EXPECT_EQ(castSurfaceState->getMemoryCompressionEnable(), true);
 }
 
 GEN12LPTEST_F(ImageSurfaceStateTestsGen12LP, givenGmmWhenSetClearColorParamsThenClearValueAddressEnable) {
-    auto size = sizeof(typename TGLLPFamily::RENDER_SURFACE_STATE);
+    auto size = sizeof(typename Gen12LpFamily::RENDER_SURFACE_STATE);
     auto surfaceState = std::make_unique<char[]>(size);
-    auto castSurfaceState = reinterpret_cast<typename TGLLPFamily::RENDER_SURFACE_STATE *>(surfaceState.get());
+    auto castSurfaceState = reinterpret_cast<typename Gen12LpFamily::RENDER_SURFACE_STATE *>(surfaceState.get());
 
     mockGmm->gmmResourceInfo->getResourceFlags()->Gpu.IndirectClearColor = true;
-    EncodeSurfaceState<TGLLPFamily>::setClearColorParams(castSurfaceState, mockGmm.get());
+    EncodeSurfaceState<Gen12LpFamily>::setClearColorParams(castSurfaceState, mockGmm.get());
     EXPECT_EQ(castSurfaceState->getClearValueAddressEnable(), true);
 }
 

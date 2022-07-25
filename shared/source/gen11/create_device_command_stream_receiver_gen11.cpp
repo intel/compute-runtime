@@ -13,11 +13,11 @@
 namespace NEO {
 
 template <>
-CommandStreamReceiver *createDeviceCommandStreamReceiver<ICLFamily>(bool withAubDump,
-                                                                    ExecutionEnvironment &executionEnvironment,
-                                                                    uint32_t rootDeviceIndex,
-                                                                    const DeviceBitfield deviceBitfield) {
-    return createCommandStreamReceiver<ICLFamily>(withAubDump, executionEnvironment, rootDeviceIndex, deviceBitfield);
+CommandStreamReceiver *createDeviceCommandStreamReceiver<Gen11Family>(bool withAubDump,
+                                                                      ExecutionEnvironment &executionEnvironment,
+                                                                      uint32_t rootDeviceIndex,
+                                                                      const DeviceBitfield deviceBitfield) {
+    return createCommandStreamReceiver<Gen11Family>(withAubDump, executionEnvironment, rootDeviceIndex, deviceBitfield);
 }
 
 } // namespace NEO

@@ -13,7 +13,7 @@
 
 namespace L0 {
 
-using Family = NEO::SKLFamily;
+using Family = NEO::Gen9Family;
 static auto gfxCore = IGFX_GEN9_CORE;
 
 template <>

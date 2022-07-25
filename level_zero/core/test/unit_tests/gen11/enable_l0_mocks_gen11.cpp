@@ -9,8 +9,8 @@
 
 namespace NEO {
 
-struct ICLFamily;
-using GfxFamily = ICLFamily;
+struct Gen11Family;
+using GfxFamily = Gen11Family;
 } // namespace NEO
 
 namespace L0 {

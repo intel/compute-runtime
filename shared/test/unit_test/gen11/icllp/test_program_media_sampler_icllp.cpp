@@ -19,13 +19,13 @@
 using namespace NEO;
 
 struct Gen11MediaSamplerProgramingTest : public ::testing::Test {
-    typedef typename ICLFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-    typedef typename ICLFamily::PIPE_CONTROL PIPE_CONTROL;
+    typedef typename Gen11Family::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
+    typedef typename Gen11Family::PIPE_CONTROL PIPE_CONTROL;
 
-    struct myCsr : public CommandStreamReceiverHw<ICLFamily> {
+    struct myCsr : public CommandStreamReceiverHw<Gen11Family> {
         using CommandStreamReceiver::commandStream;
-        using CommandStreamReceiverHw<ICLFamily>::programMediaSampler;
-        myCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<ICLFamily>(executionEnvironment, 0, 1){};
+        using CommandStreamReceiverHw<Gen11Family>::programMediaSampler;
+        myCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<Gen11Family>(executionEnvironment, 0, 1){};
         void overrideLastVmeSubliceConfig(bool value) {
             lastVmeSubslicesConfig = value;
         }

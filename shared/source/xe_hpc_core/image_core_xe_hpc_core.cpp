@@ -10,7 +10,7 @@
 
 namespace NEO {
 
-using Family = XE_HPC_COREFamily;
+using Family = XeHpcCoreFamily;
 
 // clang-format off
 #include "shared/source/image/image_bdw_and_later.inl"

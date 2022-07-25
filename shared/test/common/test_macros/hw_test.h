@@ -17,7 +17,7 @@
 #include "test_mode.h"
 
 // Macros to provide template based testing.
-// Test can use FamilyType in the test -- equivalent to SKLFamily
+// Test can use FamilyType in the test -- equivalent to Gen9Family
 #define HWTEST_TEST_(test_suite_name, test_name, parent_class, parent_id, SetUpT_name, TearDownT_name) \
     CHECK_TEST_NAME_LENGTH(test_suite_name, test_name)                                                 \
                                                                                                        \
@@ -219,7 +219,7 @@
                  ::testing::internal::GetTypeId<test_fixture>(), setUpT, tearDownT)
 
 // Macros to provide template based testing.
-// Test can use FamilyType in the test -- equivalent to SKLFamily
+// Test can use FamilyType in the test -- equivalent to Gen9Family
 #define HWCMDTEST_TEST_(cmdset_gen_base, test_suite_name, test_name, parent_class, parent_id)             \
     CHECK_TEST_NAME_LENGTH(test_suite_name, test_name)                                                    \
                                                                                                           \
@@ -281,7 +281,7 @@
                     ::testing::internal::GetTypeId<test_fixture>())
 
 // Equivalent Hw specific macro for permuted tests
-// Test can use FamilyType in the test -- equivalent to SKLFamily
+// Test can use FamilyType in the test -- equivalent to Gen9Family
 #define HWTEST_P(test_suite_name, test_name)                                                                                                              \
     CHECK_TEST_NAME_LENGTH(test_suite_name, test_name)                                                                                                    \
     class GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) : public test_suite_name {                                                                   \

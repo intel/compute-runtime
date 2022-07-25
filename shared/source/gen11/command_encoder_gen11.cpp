@@ -11,7 +11,7 @@
 
 #include "reg_configs_common.h"
 
-using Family = NEO::ICLFamily;
+using Family = NEO::Gen11Family;
 
 #include "shared/source/command_container/command_encoder.inl"
 #include "shared/source/command_container/command_encoder_bdw_and_later.inl"

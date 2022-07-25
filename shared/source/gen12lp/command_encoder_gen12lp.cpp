@@ -12,7 +12,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/preamble.h"
 
-using Family = NEO::TGLLPFamily;
+using Family = NEO::Gen12LpFamily;
 
 #include "shared/source/command_container/command_encoder.inl"
 #include "shared/source/command_container/command_encoder_bdw_and_later.inl"
