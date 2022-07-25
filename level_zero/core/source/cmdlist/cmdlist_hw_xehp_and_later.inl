@@ -246,7 +246,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         isKernelUsingSystemAllocation,                            // isKernelUsingSystemAllocation
         cmdListType == CommandListType::TYPE_IMMEDIATE            // isKernelDispatchedFromImmediateCmdList
     };
-    NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs);
+    NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs, getLogicalStateHelper());
     this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;
 
     if (event) {

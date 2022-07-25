@@ -82,7 +82,7 @@ PVCTEST_F(EncodeKernelPvcTest, givenRevisionBAndAboveWhenSpecialModeRequiredThen
             EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
             dispatchArgs.preemptionMode = NEO::PreemptionMode::Initial;
 
-            EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
+            EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs, nullptr);
             EXPECT_EQ(testInput.expectedValue, cmdContainer->lastPipelineSelectModeRequired);
         }
     }
