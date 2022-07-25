@@ -324,7 +324,7 @@ class DrmCommandStreamForceTileTest : public ::testing::Test {
         delete csr;
         // Expect 2 calls with DRM_IOCTL_I915_GEM_CONTEXT_DESTROY request on OsContextLinux destruction
         // Expect 1 call with DRM_IOCTL_GEM_CLOSE request on BufferObject close
-        mock->expectedIoctlCallsOnDestruction = mock->ioctlCallsCount + 3;
+        mock->expectedIoctlCallsOnDestruction = mock->ioctlCallsCount + 3 + static_cast<uint32_t>(mock->virtualMemoryIds.size());
         mock->expectIoctlCallsOnDestruction = true;
     }
 
@@ -420,7 +420,7 @@ struct DrmImplicitScalingCommandStreamTest : ::testing::Test {
     void TearDown() override {
         // Expect 2 calls with DRM_IOCTL_I915_GEM_CONTEXT_DESTROY request on OsContextLinux destruction
         // Expect 1 call with DRM_IOCTL_GEM_CLOSE request on BufferObject close
-        drm->expectedIoctlCallsOnDestruction = drm->ioctlCallsCount + 3;
+        drm->expectedIoctlCallsOnDestruction = drm->ioctlCallsCount + 3 + static_cast<uint32_t>(drm->virtualMemoryIds.size());
         drm->expectIoctlCallsOnDestruction = true;
     }
 

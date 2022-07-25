@@ -119,8 +119,6 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
 
     if ((request == DrmIoctl::GemVmDestroy) && (arg != nullptr)) {
         ioctlCount.gemVmDestroy++;
-        ioctlCallsCount--;
-        ioctlCount.total--;
 
         return 0;
     }

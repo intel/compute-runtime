@@ -71,7 +71,7 @@ class DrmCommandStreamTest : public ::testing::Test {
         }
         // Expect 1 call with DRM_IOCTL_I915_GEM_CONTEXT_DESTROY request on destroyDrmContext
         // Expect 1 call with DRM_IOCTL_GEM_CLOSE request on BufferObject close
-        mock->expectedIoctlCallsOnDestruction = mock->ioctlCallsCount + 2;
+        mock->expectedIoctlCallsOnDestruction = mock->ioctlCallsCount + 2 + static_cast<uint32_t>(mock->virtualMemoryIds.size());
         mock->expectIoctlCallsOnDestruction = true;
     }
 
