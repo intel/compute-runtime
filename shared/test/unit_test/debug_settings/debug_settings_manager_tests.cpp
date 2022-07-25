@@ -8,11 +8,10 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/debug_file_reader.h"
+#include "shared/test/common/debug_settings/debug_settings_manager_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
-
-#include "debug_settings_manager_fixture.h"
 
 #include <cstdio>
 #include <memory>

@@ -5,11 +5,11 @@
 #
 
 if(TESTS_RKL)
-  set(NEO_SHARED_tests_gen12lp_rkl
-      ${CMAKE_CURRENT_SOURCE_DIR}/excludes_gen12lp_rkl.cpp
+  target_sources(neo_shared_tests PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+                 ${CMAKE_CURRENT_SOURCE_DIR}/excludes_gen12lp_rkl.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_rkl.cpp
   )
-
-  target_sources(${TARGET_NAME} PRIVATE ${NEO_SHARED_tests_gen12lp_rkl})
 
   add_subdirectories()
 endif()
