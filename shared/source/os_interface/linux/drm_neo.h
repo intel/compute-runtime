@@ -125,7 +125,7 @@ class Drm : public DriverModel {
     bool queryTopology(const HardwareInfo &hwInfo, QueryTopologyData &data);
     bool createVirtualMemoryAddressSpace(uint32_t vmCount);
     void destroyVirtualMemoryAddressSpace();
-    uint32_t getVirtualMemoryAddressSpace(uint32_t vmId);
+    uint32_t getVirtualMemoryAddressSpace(uint32_t vmId) const;
     MOCKABLE_VIRTUAL int bindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo);
     MOCKABLE_VIRTUAL int unbindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo);
     int setupHardwareInfo(const DeviceDescriptor *, bool);
@@ -139,7 +139,7 @@ class Drm : public DriverModel {
     bool areNonPersistentContextsSupported() const { return nonPersistentContextsSupported; }
     void checkNonPersistentContextsSupport();
     void setNonPersistentContext(uint32_t drmContextId);
-    bool isPerContextVMRequired() {
+    bool isPerContextVMRequired() const {
         return requirePerContextVM;
     }
     void setPerContextVMRequired(bool required) {
@@ -191,7 +191,7 @@ class Drm : public DriverModel {
         return ioctlHelper.get();
     }
 
-    RootDeviceEnvironment &getRootDeviceEnvironment() {
+    const RootDeviceEnvironment &getRootDeviceEnvironment() const {
         return rootDeviceEnvironment;
     }
 

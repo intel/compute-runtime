@@ -1486,9 +1486,9 @@ BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(Drm *drm, Gmm *
 
     auto banks = std::bitset<32>(memoryBanks);
     if (banks.count() > 1) {
-        ret = memoryInfo->createGemExtWithMultipleRegions(drm, memoryBanks, size, handle);
+        ret = memoryInfo->createGemExtWithMultipleRegions(memoryBanks, size, handle);
     } else {
-        ret = memoryInfo->createGemExtWithSingleRegion(drm, memoryBanks, size, handle);
+        ret = memoryInfo->createGemExtWithSingleRegion(memoryBanks, size, handle);
     }
 
     if (ret != 0) {
@@ -1782,7 +1782,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     createMemoryRegionsForSharedAllocation(*pHwInfo, *memoryInfo, allocationData, memRegions);
 
     uint32_t handle = 0;
-    auto ret = memoryInfo->createGemExt(&drm, memRegions, size, handle, {});
+    auto ret = memoryInfo->createGemExt(memRegions, size, handle, {});
 
     if (ret) {
         return nullptr;

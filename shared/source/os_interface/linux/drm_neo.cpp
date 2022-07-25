@@ -612,7 +612,7 @@ void Drm::destroyVirtualMemoryAddressSpace() {
     virtualMemoryIds.clear();
 }
 
-uint32_t Drm::getVirtualMemoryAddressSpace(uint32_t vmId) {
+uint32_t Drm::getVirtualMemoryAddressSpace(uint32_t vmId) const {
     if (vmId < virtualMemoryIds.size()) {
         return virtualMemoryIds[vmId];
     }
@@ -949,7 +949,7 @@ bool Drm::queryMemoryInfo() {
     auto dataQuery = getMemoryRegions();
     if (!dataQuery.empty()) {
         auto memRegions = ioctlHelper->translateToMemoryRegions(dataQuery);
-        this->memoryInfo.reset(new MemoryInfo(memRegions));
+        this->memoryInfo.reset(new MemoryInfo(memRegions, *this));
         return true;
     }
     return false;

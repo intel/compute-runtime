@@ -63,27 +63,27 @@ class DrmMemoryManagerWithLocalMemoryFixture : public DrmMemoryManagerFixture {
 };
 
 struct MockedMemoryInfo : public NEO::MemoryInfo {
-    MockedMemoryInfo(const std::vector<MemoryRegion> &regionInfo) : MemoryInfo(regionInfo) {}
-    ~MockedMemoryInfo() override{};
+    using NEO::MemoryInfo::MemoryInfo;
+    ~MockedMemoryInfo() override = default;
 
     size_t getMemoryRegionSize(uint32_t memoryBank) override {
         return 1024u;
     }
-    uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) override {
+    uint32_t createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) override {
         if (allocSize == 0) {
             return EINVAL;
         }
         handle = 1u;
         return 0u;
     }
-    uint32_t createGemExtWithSingleRegion(Drm *drm, uint32_t memoryBanks, size_t allocSize, uint32_t &handle) override {
+    uint32_t createGemExtWithSingleRegion(uint32_t memoryBanks, size_t allocSize, uint32_t &handle) override {
         if (allocSize == 0) {
             return EINVAL;
         }
         handle = 1u;
         return 0u;
     }
-    uint32_t createGemExtWithMultipleRegions(Drm *drm, uint32_t memoryBanks, size_t allocSize, uint32_t &handle) override {
+    uint32_t createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle) override {
         if (allocSize == 0) {
             return EINVAL;
         }

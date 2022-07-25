@@ -30,7 +30,7 @@ TEST(EngineInfoTest, givenEngineInfoQuerySupportedWhenQueryingEngineInfoThenEngi
 
     std::vector<MemoryRegion> memRegions{
         {{0, 0}, 0, 0}};
-    drm->memoryInfo.reset(new MemoryInfo(memRegions));
+    drm->memoryInfo.reset(new MemoryInfo(memRegions, *drm));
     drm->queryEngineInfo();
     EXPECT_EQ(2u + drm->virtualMemoryIds.size(), drm->ioctlCallsCount);
     auto engineInfo = drm->getEngineInfo();

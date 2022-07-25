@@ -18,8 +18,7 @@ const std::vector<NEO::MemoryRegion> memoryRegions = {
     {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, 8 * GB, 0}};
 
 struct MockMemoryInfo : public NEO::MemoryInfo {
-    MockMemoryInfo() : MemoryInfo(memoryRegions) {}
-    ~MockMemoryInfo() override = default;
+    MockMemoryInfo(const NEO::Drm &drm) : MemoryInfo(memoryRegions, drm) {}
 };
 
 const std::vector<NEO::MemoryRegion> extendedMemoryRegions = {
@@ -30,6 +29,5 @@ const std::vector<NEO::MemoryRegion> extendedMemoryRegions = {
     {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0x800}, 8 * GB, 0}};
 
 struct MockExtendedMemoryInfo : public NEO::MemoryInfo {
-    MockExtendedMemoryInfo() : MemoryInfo(extendedMemoryRegions) {}
-    ~MockExtendedMemoryInfo() override = default;
+    MockExtendedMemoryInfo(const NEO::Drm &drm) : MemoryInfo(extendedMemoryRegions, drm) {}
 };

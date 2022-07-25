@@ -22,11 +22,11 @@ class MemoryInfo {
 
     virtual ~MemoryInfo(){};
 
-    MemoryInfo(const RegionContainer &regionInfo);
+    MemoryInfo(const RegionContainer &regionInfo, const Drm &drm);
 
     void assignRegionsFromDistances(const std::vector<DistanceInfo> &distances);
 
-    MOCKABLE_VIRTUAL uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId);
+    MOCKABLE_VIRTUAL uint32_t createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId);
 
     MemoryClassInstance getMemoryRegionClassAndInstance(uint32_t memoryBank, const HardwareInfo &hwInfo);
 
@@ -36,12 +36,13 @@ class MemoryInfo {
 
     uint32_t getTileIndex(uint32_t memoryBank, const HardwareInfo &hwInfo);
 
-    MOCKABLE_VIRTUAL uint32_t createGemExtWithSingleRegion(Drm *drm, uint32_t memoryBanks, size_t allocSize, uint32_t &handle);
-    MOCKABLE_VIRTUAL uint32_t createGemExtWithMultipleRegions(Drm *drm, uint32_t memoryBanks, size_t allocSize, uint32_t &handle);
+    MOCKABLE_VIRTUAL uint32_t createGemExtWithSingleRegion(uint32_t memoryBanks, size_t allocSize, uint32_t &handle);
+    MOCKABLE_VIRTUAL uint32_t createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle);
 
     const RegionContainer &getDrmRegionInfos() const { return drmQueryRegions; }
 
   protected:
+    const Drm &drm;
     const RegionContainer drmQueryRegions;
 
     const MemoryRegion &systemMemoryRegion;

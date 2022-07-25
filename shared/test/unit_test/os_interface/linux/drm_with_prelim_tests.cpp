@@ -330,7 +330,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoWithDeviceMemoryT
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0},
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0}};
-    drm->memoryInfo.reset(new MemoryInfo(memRegions));
+    drm->memoryInfo.reset(new MemoryInfo(memRegions, *drm));
     EXPECT_TRUE(drm->queryEngineInfo());
     EXPECT_EQ(3u, drm->ioctlCallsCount);
     auto hwInfo = drm->getRootDeviceEnvironment().getHardwareInfo();
@@ -360,7 +360,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoThenCorrectCCSFla
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0}};
-    drm->memoryInfo.reset(new MemoryInfo(memRegions));
+    drm->memoryInfo.reset(new MemoryInfo(memRegions, *drm));
     EXPECT_TRUE(drm->queryEngineInfo());
     EXPECT_EQ(3u, drm->ioctlCallsCount);
     auto hwInfo = drm->getRootDeviceEnvironment().getHardwareInfo();
@@ -377,7 +377,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenSysmanQueryEngineInfoThenAdditio
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0},
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0}};
-    drm->memoryInfo.reset(new MemoryInfo(memRegions));
+    drm->memoryInfo.reset(new MemoryInfo(memRegions, *drm));
     EXPECT_TRUE(drm->sysmanQueryEngineInfo());
     EXPECT_EQ(3u, drm->ioctlCallsCount);
     auto engineInfo = drm->getEngineInfo();
@@ -400,7 +400,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoAndFailIoctlThenF
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0},
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0}};
-    drm->memoryInfo.reset(new MemoryInfo(memRegions));
+    drm->memoryInfo.reset(new MemoryInfo(memRegions, *drm));
     EXPECT_FALSE(drm->queryEngineInfo());
 
     EXPECT_EQ(3u, drm->ioctlCallsCount);

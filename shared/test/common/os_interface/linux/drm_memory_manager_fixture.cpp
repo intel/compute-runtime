@@ -136,7 +136,7 @@ void DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::SetUp(bool enableLocal
     regionInfo[0].probedSize = 8 * GB;
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
     regionInfo[1].probedSize = 16 * GB;
-    mock->memoryInfo.reset(new MockedMemoryInfo(regionInfo));
+    mock->memoryInfo.reset(new MockedMemoryInfo(regionInfo, *mock));
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
     memoryManager.reset(new TestedDrmMemoryManager(enableLocalMem, false, false, *executionEnvironment));
 

@@ -19,7 +19,7 @@
 
 namespace NEO {
 
-DrmMemoryOperationsHandlerBind::DrmMemoryOperationsHandlerBind(RootDeviceEnvironment &rootDeviceEnvironment, uint32_t rootDeviceIndex)
+DrmMemoryOperationsHandlerBind::DrmMemoryOperationsHandlerBind(const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t rootDeviceIndex)
     : rootDeviceEnvironment(rootDeviceEnvironment),
       rootDeviceIndex(rootDeviceIndex){};
 

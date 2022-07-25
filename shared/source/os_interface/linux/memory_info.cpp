@@ -14,18 +14,20 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
-#include "shared/source/os_interface/linux/i915.h"
 
 #include <iostream>
 
 namespace NEO {
 
-MemoryInfo::MemoryInfo(const RegionContainer &regionInfo)
-    : drmQueryRegions(regionInfo), systemMemoryRegion(drmQueryRegions[0]) {
-    UNRECOVERABLE_IF(systemMemoryRegion.region.memoryClass != drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM);
+MemoryInfo::MemoryInfo(const RegionContainer &regionInfo, const Drm &inputDrm)
+    : drm(inputDrm), drmQueryRegions(regionInfo), systemMemoryRegion(drmQueryRegions[0]) {
+    auto ioctlHelper = drm.getIoctlHelper();
+    const auto memoryClassSystem = ioctlHelper->getDrmParamValue(DrmParam::MemoryClassSystem);
+    const auto memoryClassDevice = ioctlHelper->getDrmParamValue(DrmParam::MemoryClassDevice);
+    UNRECOVERABLE_IF(this->systemMemoryRegion.region.memoryClass != memoryClassSystem);
     std::copy_if(drmQueryRegions.begin(), drmQueryRegions.end(), std::back_inserter(localMemoryRegions),
-                 [](const MemoryRegion &memoryRegionInfo) {
-                     return (memoryRegionInfo.region.memoryClass == drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE);
+                 [&](const MemoryRegion &memoryRegionInfo) {
+                     return (memoryRegionInfo.region.memoryClass == memoryClassDevice);
                  });
 }
 
@@ -54,8 +56,8 @@ void MemoryInfo::assignRegionsFromDistances(const std::vector<DistanceInfo> &dis
     }
 }
 
-uint32_t MemoryInfo::createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) {
-    return drm->getIoctlHelper()->createGemExt(memClassInstances, allocSize, handle, vmId);
+uint32_t MemoryInfo::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) {
+    return this->drm.getIoctlHelper()->createGemExt(memClassInstances, allocSize, handle, vmId);
 }
 
 uint32_t MemoryInfo::getTileIndex(uint32_t memoryBank, const HardwareInfo &hwInfo) {
@@ -106,23 +108,23 @@ void MemoryInfo::printRegionSizes() {
     }
 }
 
-uint32_t MemoryInfo::createGemExtWithSingleRegion(Drm *drm, uint32_t memoryBanks, size_t allocSize, uint32_t &handle) {
-    auto pHwInfo = drm->getRootDeviceEnvironment().getHardwareInfo();
+uint32_t MemoryInfo::createGemExtWithSingleRegion(uint32_t memoryBanks, size_t allocSize, uint32_t &handle) {
+    auto pHwInfo = this->drm.getRootDeviceEnvironment().getHardwareInfo();
     auto regionClassAndInstance = getMemoryRegionClassAndInstance(memoryBanks, *pHwInfo);
     MemRegionsVec region = {regionClassAndInstance};
     std::optional<uint32_t> vmId;
-    if (!drm->isPerContextVMRequired()) {
+    if (!this->drm.isPerContextVMRequired()) {
         if (memoryBanks != 0 && DebugManager.flags.EnablePrivateBO.get()) {
             auto tileIndex = getTileIndex(memoryBanks, *pHwInfo);
-            vmId = drm->getVirtualMemoryAddressSpace(tileIndex);
+            vmId = this->drm.getVirtualMemoryAddressSpace(tileIndex);
         }
     }
-    auto ret = createGemExt(drm, region, allocSize, handle, vmId);
+    auto ret = createGemExt(region, allocSize, handle, vmId);
     return ret;
 }
 
-uint32_t MemoryInfo::createGemExtWithMultipleRegions(Drm *drm, uint32_t memoryBanks, size_t allocSize, uint32_t &handle) {
-    auto pHwInfo = drm->getRootDeviceEnvironment().getHardwareInfo();
+uint32_t MemoryInfo::createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle) {
+    auto pHwInfo = this->drm.getRootDeviceEnvironment().getHardwareInfo();
     auto banks = std::bitset<32>(memoryBanks);
     MemRegionsVec memRegions{};
     size_t currentBank = 0;
@@ -135,7 +137,7 @@ uint32_t MemoryInfo::createGemExtWithMultipleRegions(Drm *drm, uint32_t memoryBa
         }
         currentBank++;
     }
-    auto ret = createGemExt(drm, memRegions, allocSize, handle, {});
+    auto ret = createGemExt(memRegions, allocSize, handle, {});
     return ret;
 }
 

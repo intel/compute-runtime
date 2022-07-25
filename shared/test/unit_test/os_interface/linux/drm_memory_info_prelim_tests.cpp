@@ -201,7 +201,7 @@ struct MultiTileMemoryInfoFixture : public ::testing::Test {
 
         drm = std::make_unique<DrmQueryMock>(*rootDeviceEnvironment, rootDeviceEnvironment->getHardwareInfo());
 
-        memoryInfo = new MemoryInfo(regionInfo);
+        memoryInfo = new MemoryInfo(regionInfo, *drm);
         drm->memoryInfo.reset(memoryInfo);
         drm->queryEngineInfo();
     }
@@ -370,15 +370,15 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemWithExtensionsThenRetu
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
     regionInfo[1].probedSize = 16 * GB;
 
-    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo);
-    ASSERT_NE(nullptr, memoryInfo);
-
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {regionInfo[0].region, regionInfo[1].region};
-    auto ret = memoryInfo->createGemExt(drm.get(), memClassInstance, 1024, handle, {});
+    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
+    ASSERT_NE(nullptr, memoryInfo);
+
+    auto ret = memoryInfo->createGemExt(memClassInstance, 1024, handle, {});
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -396,14 +396,14 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithSingleRegionThe
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
     regionInfo[1].probedSize = 16 * GB;
 
-    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo);
-    ASSERT_NE(nullptr, memoryInfo);
-
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     uint32_t handle = 0;
-    auto ret = memoryInfo->createGemExtWithSingleRegion(drm.get(), 1, 1024, handle);
+
+    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
+    ASSERT_NE(nullptr, memoryInfo);
+    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -426,16 +426,16 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsAndPrivateBOSupportWhenCreatingGemExt
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
     regionInfo[1].probedSize = 16 * GB;
 
-    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo);
-    ASSERT_NE(nullptr, memoryInfo);
-
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     drm->setPerContextVMRequired(false);
 
+    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
+    ASSERT_NE(nullptr, memoryInfo);
+
     uint32_t handle = 0;
-    auto ret = memoryInfo->createGemExtWithSingleRegion(drm.get(), 1, 1024, handle);
+    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -457,16 +457,16 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsAndNoPrivateBOSupportWhenCreatingGemE
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
     regionInfo[1].probedSize = 16 * GB;
 
-    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo);
-    ASSERT_NE(nullptr, memoryInfo);
-
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     drm->setPerContextVMRequired(false);
 
+    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
+    ASSERT_NE(nullptr, memoryInfo);
+
     uint32_t handle = 0;
-    auto ret = memoryInfo->createGemExtWithSingleRegion(drm.get(), 1, 1024, handle);
+    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -487,16 +487,16 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsAndPrivateBOSupportedAndIsPerContextV
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
     regionInfo[1].probedSize = 16 * GB;
 
-    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo);
-    ASSERT_NE(nullptr, memoryInfo);
-
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     drm->setPerContextVMRequired(true);
 
+    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
+    ASSERT_NE(nullptr, memoryInfo);
+
     uint32_t handle = 0;
-    auto ret = memoryInfo->createGemExtWithSingleRegion(drm.get(), 1, 1024, handle);
+    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -522,15 +522,15 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithMultipleRegions
     regionInfo[4].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 3};
     regionInfo[4].probedSize = 16 * GB;
 
-    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo);
-    ASSERT_NE(nullptr, memoryInfo);
-
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
+    ASSERT_NE(nullptr, memoryInfo);
     uint32_t handle = 0;
     uint32_t memoryRegions = 0b1011;
-    auto ret = memoryInfo->createGemExtWithMultipleRegions(drm.get(), memoryRegions, 1024, handle);
+    auto ret = memoryInfo->createGemExtWithMultipleRegions(memoryRegions, 1024, handle);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);

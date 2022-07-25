@@ -50,7 +50,7 @@ struct Mock<MemoryNeoDrm> : public MemoryNeoDrm {
         regionInfo[1].probedSize = probedSizeRegionOne;
         regionInfo[1].unallocatedSize = unallocatedSizeRegionOne;
 
-        this->memoryInfo.reset(new MemoryInfo(regionInfo));
+        this->memoryInfo.reset(new MemoryInfo(regionInfo, *this));
         return true;
     }
 

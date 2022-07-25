@@ -28,7 +28,7 @@ class DrmMemoryManagerLocalMemoryPrelimTest : public ::testing::Test {
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(defaultHwInfo.get());
 
         mock = new DrmQueryMock(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
-        auto memoryInfo = new MockExtendedMemoryInfo();
+        auto memoryInfo = new MockExtendedMemoryInfo(*mock);
         mock->memoryInfo.reset(memoryInfo);
 
         auto &multiTileArchInfo = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo()->gtSystemInfo.MultiTileArchInfo;
@@ -91,7 +91,7 @@ class DrmMemoryManagerFixturePrelim : public DrmMemoryManagerFixture {
         MemoryManagementFixture::SetUp();
         executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
         mock = new DrmMockCustomPrelim(*executionEnvironment->rootDeviceEnvironments[0]);
-        mock->memoryInfo.reset(new MemoryInfo(regionInfo));
+        mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
 
         DrmMemoryManagerFixture::SetUp(mock, true);
     }

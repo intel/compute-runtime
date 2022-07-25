@@ -230,7 +230,7 @@ TEST_F(ZesEngineFixture, givenEngineInfoQuerySupportedWhenQueryingEngineInfoThen
     ASSERT_NE(nullptr, drm);
     std::vector<MemoryRegion> memRegions{
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0}};
-    drm->memoryInfo.reset(new MemoryInfo(memRegions));
+    drm->memoryInfo.reset(new MemoryInfo(memRegions, *drm));
     drm->sysmanQueryEngineInfo();
     auto engineInfo = drm->getEngineInfo();
     ASSERT_NE(nullptr, engineInfo);
@@ -242,7 +242,7 @@ TEST_F(ZesEngineFixture, GivenEngineInfoWithVideoQuerySupportedWhenQueryingEngin
     ASSERT_NE(nullptr, drm);
     std::vector<MemoryRegion> memRegions{
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0}};
-    drm->memoryInfo.reset(new MemoryInfo(memRegions));
+    drm->memoryInfo.reset(new MemoryInfo(memRegions, *drm));
     drm->sysmanQueryEngineInfo();
     auto engineInfo = drm->getEngineInfo();
     ASSERT_NE(nullptr, engineInfo);

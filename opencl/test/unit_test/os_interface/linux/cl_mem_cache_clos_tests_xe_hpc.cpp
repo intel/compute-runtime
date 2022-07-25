@@ -27,7 +27,7 @@ struct BuffersWithClMemCacheClosTests : public DrmMemoryManagerLocalMemoryPrelim
     void SetUp() override {
         DrmMemoryManagerLocalMemoryPrelimTest::SetUp();
 
-        auto memoryInfo = new MockExtendedMemoryInfo();
+        auto memoryInfo = new MockExtendedMemoryInfo(*mock);
 
         mock->memoryInfo.reset(memoryInfo);
         mock->cacheInfo.reset(new MockCacheInfo(*mock, 1024, 2, 32));

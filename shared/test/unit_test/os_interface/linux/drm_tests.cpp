@@ -1463,7 +1463,7 @@ TEST(DistanceInfoTest, givenDistanceInfosWhenAssignRegionsFromDistancesThenCorre
     memRegions[1] = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0};
     memRegions[2] = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0};
     memRegions[3] = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0};
-    auto memoryInfo = std::make_unique<MemoryInfo>(memRegions);
+    auto memoryInfo = std::make_unique<MemoryInfo>(memRegions, drm);
 
     std::vector<EngineClassInstance> engines(3);
     engines[0] = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender)), 0};
