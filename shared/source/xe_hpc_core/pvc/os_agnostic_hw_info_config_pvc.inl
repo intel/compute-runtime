@@ -194,3 +194,8 @@ template <>
 bool HwInfoConfigHw<gfxProduct>::isIpSamplingSupported(const HardwareInfo &hwInfo) const {
     return PVC::isXt(hwInfo);
 }
+
+template <>
+void HwInfoConfigHw<gfxProduct>::adjustNumberOfCcs(HardwareInfo &hwInfo) const {
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+}

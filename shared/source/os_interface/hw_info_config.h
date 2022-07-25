@@ -132,6 +132,7 @@ class HwInfoConfig {
     virtual bool isAssignEngineRoundRobinSupported() const = 0;
     virtual uint32_t getL1CachePolicy() const = 0;
     virtual bool isEvictionWhenNecessaryFlagSupported() const = 0;
+    virtual void adjustNumberOfCcs(HardwareInfo &hwInfo) const = 0;
 
     MOCKABLE_VIRTUAL ~HwInfoConfig() = default;
 
@@ -234,6 +235,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isAssignEngineRoundRobinSupported() const override;
     uint32_t getL1CachePolicy() const override;
     bool isEvictionWhenNecessaryFlagSupported() const override;
+    void adjustNumberOfCcs(HardwareInfo &hwInfo) const override;
 
   protected:
     HwInfoConfigHw() = default;

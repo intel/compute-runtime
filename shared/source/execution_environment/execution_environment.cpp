@@ -199,4 +199,42 @@ void ExecutionEnvironment::parseAffinityMask() {
 
     rootDeviceEnvironments.swap(filteredEnvironments);
 }
+
+void ExecutionEnvironment::adjustCcsCount() const {
+    parseCcsCountLimitations();
+
+    for (auto &rootDeviceEnvironment : rootDeviceEnvironments) {
+        UNRECOVERABLE_IF(!rootDeviceEnvironment);
+        if (!rootDeviceEnvironment->isNumberOfCcsLimited()) {
+            auto hwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
+            auto hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
+            hwInfoConfig->adjustNumberOfCcs(*hwInfo);
+        }
+    }
+}
+
+void ExecutionEnvironment::parseCcsCountLimitations() const {
+    const auto &numberOfCcsString = DebugManager.flags.ZEX_NUMBER_OF_CCS.get();
+
+    if (numberOfCcsString.compare("default") == 0 ||
+        numberOfCcsString.empty()) {
+        return;
+    }
+
+    const uint32_t numRootDevices = static_cast<uint32_t>(rootDeviceEnvironments.size());
+
+    auto numberOfCcsEntries = StringHelpers::split(numberOfCcsString, ",");
+
+    for (const auto &entry : numberOfCcsEntries) {
+        auto subEntries = StringHelpers::split(entry, ":");
+        uint32_t rootDeviceIndex = StringHelpers::toUint32t(subEntries[0]);
+
+        if (rootDeviceIndex < numRootDevices) {
+            if (subEntries.size() > 1) {
+                uint32_t maxCcsCount = StringHelpers::toUint32t(subEntries[1]);
+                rootDeviceEnvironments[rootDeviceIndex]->limitNumberOfCcs(maxCcsCount);
+            }
+        }
+    }
+}
 } // namespace NEO

@@ -27,6 +27,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     virtual void prepareRootDeviceEnvironments(uint32_t numRootDevices);
     void prepareRootDeviceEnvironment(const uint32_t rootDeviceIndexForReInit);
     void parseAffinityMask();
+    void adjustCcsCount() const;
     void sortNeoDevices();
     void sortNeoDevicesDRM();
     void sortNeoDevicesWDDM();
@@ -44,6 +45,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void releaseRootDeviceEnvironmentResources(RootDeviceEnvironment *rootDeviceEnvironment);
 
   protected:
+    void parseCcsCountLimitations() const;
     bool debuggingEnabled = false;
 };
 } // namespace NEO

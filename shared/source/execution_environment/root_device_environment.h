@@ -64,6 +64,8 @@ struct RootDeviceEnvironment {
     BuiltIns *getBuiltIns();
     BindlessHeapsHelper *getBindlessHeapsHelper() const;
     void createBindlessHeapsHelper(MemoryManager *memoryManager, bool availableDevices, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield);
+    void limitNumberOfCcs(uint32_t numberOfCcs);
+    bool isNumberOfCcsLimited() const;
 
     std::unique_ptr<SipKernel> sipKernels[static_cast<uint32_t>(SipKernelType::COUNT)];
     std::unique_ptr<GmmHelper> gmmHelper;
@@ -80,6 +82,9 @@ struct RootDeviceEnvironment {
     ExecutionEnvironment &executionEnvironment;
 
     AffinityMaskHelper deviceAffinityMask{true};
+
+  protected:
+    bool limitedNumberOfCcs = false;
 
   private:
     std::mutex mtx;

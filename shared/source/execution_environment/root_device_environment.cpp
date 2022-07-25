@@ -147,4 +147,14 @@ BuiltIns *RootDeviceEnvironment::getBuiltIns() {
     }
     return this->builtins.get();
 }
+
+void RootDeviceEnvironment::limitNumberOfCcs(uint32_t numberOfCcs) {
+
+    hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = std::min(hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled, numberOfCcs);
+    limitedNumberOfCcs = true;
+}
+
+bool RootDeviceEnvironment::isNumberOfCcsLimited() const {
+    return limitedNumberOfCcs;
+}
 } // namespace NEO
