@@ -514,6 +514,34 @@ TEST(LinkerInputTests, GivenInvalidTextSectionNameWhenDecodingElfTextRelocations
     ASSERT_EQ(0u, relocations.size());
 }
 
+TEST(LinkerInputTests, whenSymbolHasShndxReferringToSectionOfUnknownTypehenDoNotAddItToLinkerInput) {
+    NEO::LinkerInput linkerInput = {};
+    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+    elf64.elfFileHeader = &header;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".invalid.aaa";
+    elf64.setupSecionNames(std::move(sectionNames));
+    elf64.overrideSymbolName = true;
+
+    NEO::Elf::ElfSymbolEntry<NEO::Elf::EI_CLASS_64> symbol;
+    symbol.info = NEO::Elf::SYMBOL_TABLE_TYPE::STT_OBJECT | NEO::Elf::SYMBOL_TABLE_BIND::STB_GLOBAL << 4;
+    symbol.name = 0x20;
+    symbol.other = 0;
+    symbol.shndx = 0;
+    symbol.size = 0x8;
+    symbol.value = 0x4000;
+
+    elf64.symbolTable.emplace_back(symbol);
+
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+
+    auto symbols = linkerInput.getSymbols();
+    ASSERT_EQ(0u, symbols.size());
+}
+
 TEST(LinkerInputTests, GivenValidZebinRelocationTypesWhenDecodingElfTextRelocationsThenCorrectTypeIsSet) {
     NEO::LinkerInput linkerInput = {};
     NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;

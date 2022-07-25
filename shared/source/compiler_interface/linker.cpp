@@ -177,7 +177,9 @@ void LinkerInput::decodeElfSymbolTableAndRelocations(Elf::Elf<Elf::EI_CLASS_64> 
 
             auto symbolSectionName = elf.getSectionName(symbol.shndx);
             auto symbolSegment = getSegmentForSection(symbolSectionName);
-
+            if (NEO::SegmentType::Unknown == symbolSegment) {
+                continue;
+            }
             switch (type) {
             default:
                 DEBUG_BREAK_IF(type != Elf::SYMBOL_TABLE_TYPE::STT_NOTYPE);
