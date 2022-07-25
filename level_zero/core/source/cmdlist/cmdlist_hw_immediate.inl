@@ -10,11 +10,17 @@
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 
 namespace L0 {
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+NEO::LogicalStateHelper *CommandListCoreFamilyImmediate<gfxCoreFamily>::getLogicalStateHelper() const {
+    return this->csr->getLogicalStateHelper();
+}
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAvailableSpace() {

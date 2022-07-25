@@ -129,6 +129,7 @@ HWTEST2_F(AppendMemoryCopy, givenImmediateCommandListWhenAppendingMemoryCopyThen
     commandList->device = device;
     commandList->cmdQImmediate = &cmdQueue;
     commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    commandList->csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
 
     auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);

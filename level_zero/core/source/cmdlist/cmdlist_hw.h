@@ -162,6 +162,8 @@ struct CommandListCoreFamily : CommandListImp {
     ze_result_t executeCommandListImmediate(bool performMigration) override;
     size_t getReserveSshSize();
 
+    virtual NEO::LogicalStateHelper *getLogicalStateHelper() const { return nonImmediateLogicalStateHelper.get(); }
+
   protected:
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernelWithGA(void *dstPtr, NEO::GraphicsAllocation *dstPtrAlloc,
                                                               uint64_t dstOffset, void *srcPtr,
@@ -254,7 +256,9 @@ struct CommandListCoreFamily : CommandListImp {
     ze_result_t addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
     void addFlushRequiredCommand(bool flushOperationRequired, Event *signalEvent);
 
-    std::unique_ptr<NEO::LogicalStateHelper> logicalStateHelper;
+    virtual void createLogicalStateHelper();
+
+    std::unique_ptr<NEO::LogicalStateHelper> nonImmediateLogicalStateHelper;
     size_t cmdListCurrentStartOffset = 0;
     bool containsAnyKernel = false;
 };

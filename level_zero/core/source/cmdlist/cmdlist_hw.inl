@@ -144,9 +144,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
         }
     }
 
-    this->logicalStateHelper.reset(NEO::LogicalStateHelper::create<GfxFamily>());
+    createLogicalStateHelper();
 
     return returnType;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::createLogicalStateHelper() {
+    this->nonImmediateLogicalStateHelper.reset(NEO::LogicalStateHelper::create<GfxFamily>());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -2290,7 +2295,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
 
     finalStreamState.frontEndState.setProperties(isCooperative, kernelAttributes.flags.requiresDisabledEUFusion, disableOverdispatch, -1, hwInfo);
     bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
-    if (finalStreamState.frontEndState.isDirty() && isPatchingVfeStateAllowed && !logicalStateHelper) {
+    if (finalStreamState.frontEndState.isDirty() && isPatchingVfeStateAllowed && !getLogicalStateHelper()) {
         auto pVfeStateAddress = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(commandContainer.getCommandStream(), hwInfo, engineGroupType);
         auto pVfeState = new VFE_STATE_TYPE;
         NEO::PreambleHelper<GfxFamily>::programVfeState(pVfeState, hwInfo, 0, 0, device->getMaxNumHwThreads(), finalStreamState, nullptr);
@@ -2299,7 +2304,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
 
     finalStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, kernel.getSchedulingHintExp(), device->getDevicePreemptionMode(), hwInfo);
 
-    if (finalStreamState.stateComputeMode.isDirty() && !logicalStateHelper) {
+    if (finalStreamState.stateComputeMode.isDirty() && !getLogicalStateHelper()) {
         bool isRcs = (this->engineGroupType == NEO::EngineGroupType::RenderCompute);
         NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommandWithSynchronization(
             *commandContainer.getCommandStream(), finalStreamState.stateComputeMode, {}, false, hwInfo, isRcs, nullptr);

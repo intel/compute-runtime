@@ -120,6 +120,9 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     void updateDispatchFlagsWithRequiredStreamState(NEO::DispatchFlags &dispatchFlags);
 
     ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration);
+
+    void createLogicalStateHelper() override {}
+    NEO::LogicalStateHelper *getLogicalStateHelper() const override;
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>
