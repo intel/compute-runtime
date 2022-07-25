@@ -73,7 +73,7 @@ inline void *LinearStream::getSpace(size_t size) {
         cmdContainer->closeAndAllocateNextCommandBuffer();
     }
     UNRECOVERABLE_IF(sizeUsed + size > maxAvailableSpace);
-    UNRECOVERABLE_IF(reinterpret_cast<int64_t>(buffer) <= 0);
+    UNRECOVERABLE_IF(reinterpret_cast<int64_t>(buffer) == 0);
     auto memory = ptrOffset(buffer, sizeUsed);
     sizeUsed += size;
     return memory;

@@ -66,7 +66,7 @@ TEST_F(LinearStreamTest, GivenNullBufferWhenGettingSpaceThenAssert) {
 }
 
 TEST_F(LinearStreamTest, GivenBadBufferPtrWhenGettingSpaceThenAssert) {
-    int64_t ptr = -1;
+    int64_t ptr = 0;
     linearStream.replaceBuffer(reinterpret_cast<void *>(ptr), 100);
     EXPECT_THROW(linearStream.getSpace(1), std::exception);
 }
