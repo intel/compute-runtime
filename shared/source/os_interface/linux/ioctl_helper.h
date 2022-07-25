@@ -124,6 +124,7 @@ class IoctlHelper {
     void logExecBuffer(const ExecBuffer &execBuffer, std::stringstream &logger);
     int getDrmParamValueBase(DrmParam drmParam) const;
     unsigned int getIoctlRequestValueBase(DrmIoctl ioctlRequest) const;
+    bool setDomainCpu(uint32_t handle, bool writeEnable);
 
     std::string getDrmParamStringBase(DrmParam param) const;
     std::string getIoctlStringBase(DrmIoctl ioctlRequest) const;

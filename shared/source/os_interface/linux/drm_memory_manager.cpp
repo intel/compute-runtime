@@ -1043,15 +1043,9 @@ bool DrmMemoryManager::setDomainCpu(GraphicsAllocation &graphicsAllocation, bool
     if (bo == nullptr)
         return false;
 
-    // move a buffer object to the CPU read, and possibly write domain, including waiting on flushes to occur
-    GemSetDomain setDomain = {};
-    setDomain.handle = bo->peekHandle();
-    setDomain.readDomains = I915_GEM_DOMAIN_CPU;
-    setDomain.writeDomain = writeEnable ? I915_GEM_DOMAIN_CPU : 0;
-
     auto &drm = this->getDrm(graphicsAllocation.getRootDeviceIndex());
     auto ioctlHelper = drm.getIoctlHelper();
-    return ioctlHelper->ioctl(DrmIoctl::GemSetDomain, &setDomain) == 0;
+    return ioctlHelper->setDomainCpu(bo->peekHandle(), writeEnable);
 }
 
 void *DrmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation) {

@@ -133,6 +133,14 @@ std::vector<MemoryRegion> IoctlHelper::translateToMemoryRegions(const std::vecto
     return memRegions;
 }
 
+bool IoctlHelper::setDomainCpu(uint32_t handle, bool writeEnable) {
+    drm_i915_gem_set_domain setDomain{};
+    setDomain.handle = handle;
+    setDomain.read_domains = I915_GEM_DOMAIN_CPU;
+    setDomain.write_domain = writeEnable ? I915_GEM_DOMAIN_CPU : 0;
+    return this->ioctl(DrmIoctl::GemSetDomain, &setDomain) == 0u;
+}
+
 unsigned int IoctlHelper::getIoctlRequestValueBase(DrmIoctl ioctlRequest) const {
     switch (ioctlRequest) {
     case DrmIoctl::Getparam:
