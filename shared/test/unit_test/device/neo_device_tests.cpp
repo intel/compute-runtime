@@ -389,7 +389,7 @@ TEST_F(DeviceTest, givenDispatchGlobalsAllocationFailsOnSecondSubDeviceThenRtDis
       public:
         FailMockMemoryManager(NEO::ExecutionEnvironment &executionEnvironment) : MockMemoryManager(false, false, executionEnvironment) {}
 
-        GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) {
+        GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
             allocateGraphicsMemoryWithPropertiesCount++;
             if (allocateGraphicsMemoryWithPropertiesCount > 2) {
                 return nullptr;
