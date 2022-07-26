@@ -10,6 +10,7 @@
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/sysman/memory/memory_imp.h"
+#include "level_zero/tools/source/sysman/os_sysman.h"
 
 namespace L0 {
 
@@ -36,6 +37,9 @@ ze_result_t MemoryHandleContext::init(std::vector<ze_device_handle_t> &deviceHan
 }
 
 ze_result_t MemoryHandleContext::memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory) {
+    std::call_once(initMemoryOnce, [this]() {
+        this->init(pOsSysman->getDeviceHandles());
+    });
     uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
     uint32_t numToCopy = std::min(*pCount, handleListSize);
     if (0 == *pCount || *pCount > handleListSize) {

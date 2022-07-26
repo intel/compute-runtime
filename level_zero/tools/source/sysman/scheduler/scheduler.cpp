@@ -8,6 +8,7 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
 
+#include "level_zero/tools/source/sysman/os_sysman.h"
 #include "level_zero/tools/source/sysman/scheduler/scheduler_imp.h"
 
 class OsScheduler;
@@ -39,6 +40,9 @@ void SchedulerHandleContext::init(std::vector<ze_device_handle_t> &deviceHandles
 }
 
 ze_result_t SchedulerHandleContext::schedulerGet(uint32_t *pCount, zes_sched_handle_t *phScheduler) {
+    std::call_once(initSchedulerOnce, [this]() {
+        this->init(pOsSysman->getDeviceHandles());
+    });
     uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
     uint32_t numToCopy = std::min(*pCount, handleListSize);
     if (0 == *pCount || *pCount > handleListSize) {

@@ -9,6 +9,7 @@
 #include "level_zero/core/source/device/device.h"
 #include <level_zero/zes_api.h>
 
+#include <mutex>
 #include <vector>
 
 struct _zes_mem_handle_t {
@@ -46,6 +47,7 @@ struct MemoryHandleContext {
 
   private:
     void createHandle(ze_device_handle_t deviceHandle);
+    std::once_flag initMemoryOnce;
 };
 
 } // namespace L0
