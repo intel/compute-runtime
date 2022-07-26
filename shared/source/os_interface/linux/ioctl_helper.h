@@ -129,6 +129,8 @@ class IoctlHelper {
     std::string getDrmParamStringBase(DrmParam param) const;
     std::string getIoctlStringBase(DrmIoctl ioctlRequest) const;
 
+    uint32_t getFlagsForPrimeHandleToFd() const;
+
   protected:
     Drm &drm;
 };

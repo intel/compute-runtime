@@ -28,7 +28,6 @@
 #include "shared/source/os_interface/linux/allocator_helper.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
-#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_interface.h"
 
@@ -1077,13 +1076,13 @@ void DrmMemoryManager::unlockResourceImpl(GraphicsAllocation &graphicsAllocation
 }
 
 int DrmMemoryManager::obtainFdFromHandle(int boHandle, uint32_t rootDeviceIndex) {
-    PrimeHandle openFd{};
-
-    openFd.flags = DRM_CLOEXEC | DRM_RDWR;
-    openFd.handle = boHandle;
-
     auto &drm = this->getDrm(rootDeviceIndex);
     auto ioctlHelper = drm.getIoctlHelper();
+    PrimeHandle openFd{};
+
+    openFd.flags = ioctlHelper->getFlagsForPrimeHandleToFd();
+    openFd.handle = boHandle;
+
     ioctlHelper->ioctl(DrmIoctl::PrimeHandleToFd, &openFd);
 
     return openFd.fileDescriptor;

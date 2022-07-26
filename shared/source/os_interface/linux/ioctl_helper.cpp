@@ -141,6 +141,10 @@ bool IoctlHelper::setDomainCpu(uint32_t handle, bool writeEnable) {
     return this->ioctl(DrmIoctl::GemSetDomain, &setDomain) == 0u;
 }
 
+uint32_t IoctlHelper::getFlagsForPrimeHandleToFd() const {
+    return DRM_CLOEXEC | DRM_RDWR;
+}
+
 unsigned int IoctlHelper::getIoctlRequestValueBase(DrmIoctl ioctlRequest) const {
     switch (ioctlRequest) {
     case DrmIoctl::Getparam:
