@@ -8,11 +8,17 @@
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/device_binary_format/elf/zebin_elf.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/program/program_info.h"
 #include "shared/test/common/device_binary_format/zebin_tests.h"
 #include "shared/test/common/test_macros/test.h"
+
+#include <numeric>
+
+extern PRODUCT_FAMILY productFamily;
+extern GFXCORE_FAMILY renderCoreFamily;
 
 TEST(IsDeviceBinaryFormatZebin, GivenValidExecutableTypeBinaryThenReturnTrue) {
     NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> zebin;
@@ -318,31 +324,53 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenMachineIsIntelGTAndIntelGTNoteSectionIsV
 
     NEO::TargetDevice targetDevice;
     targetDevice.maxPointerSizeInBytes = 8;
-    targetDevice.productFamily = IGFX_SKYLAKE;
-    targetDevice.coreFamily = IGFX_GEN9_CORE;
-    targetDevice.stepping = 6;
-
-    NEO::Elf::IntelGTNote notes[3];
-    for (int i = 0; i < 3; ++i) {
-        notes[i].nameSize = 8;
-        notes[i].descSize = 4;
-        strcpy_s(notes[i].ownerName, notes[i].nameSize, NEO::Elf::IntelGtNoteOwnerName.str().c_str());
-    }
-
-    notes[0].type = NEO::Elf::IntelGTSectionType::ProductFamily;
-    notes[0].desc = targetDevice.productFamily;
-
-    notes[1].type = NEO::Elf::IntelGTSectionType::GfxCore;
-    notes[1].desc = targetDevice.coreFamily;
+    targetDevice.productFamily = productFamily;
+    targetDevice.coreFamily = renderCoreFamily;
+    targetDevice.stepping = NEO::hardwareInfoTable[productFamily]->platform.usRevId;
 
     NEO::Elf::ZebinTargetFlags targetMetadata;
     targetMetadata.validateRevisionId = true;
-    targetMetadata.minHwRevisionId = targetDevice.stepping - 1;
+    targetMetadata.minHwRevisionId = (targetDevice.stepping == 0) ? targetDevice.stepping : targetDevice.stepping - 1;
     targetMetadata.maxHwRevisionId = targetDevice.stepping + 1;
-    notes[2].type = NEO::Elf::IntelGTSectionType::TargetMetadata;
-    notes[2].desc = targetMetadata.packed;
 
-    zebin.appendSection(NEO::Elf::SHT_NOTE, NEO::Elf::SectionsNamesZebin::noteIntelGT, ArrayRef<uint8_t>::fromAny(notes, 3));
+    std::vector<NEO::Elf::ElfNoteSection> elfNoteSections;
+    for (int i = 0; i < 3; i++) {
+        auto &inserted = elfNoteSections.emplace_back();
+        inserted.nameSize = 8;
+        inserted.descSize = 4;
+    }
+
+    elfNoteSections.at(0).type = NEO::Elf::IntelGTSectionType::ProductFamily;
+    elfNoteSections.at(1).type = NEO::Elf::IntelGTSectionType::GfxCore;
+    elfNoteSections.at(2).type = NEO::Elf::IntelGTSectionType::TargetMetadata;
+
+    std::vector<uint8_t *> descDatas;
+    uint8_t platformData[4u];
+    memcpy_s(platformData, 4u, &targetDevice.productFamily, 4u);
+    descDatas.push_back(platformData);
+    uint8_t coreData[4u];
+    memcpy_s(coreData, 4u, &targetDevice.coreFamily, 4u);
+    descDatas.push_back(coreData);
+    uint8_t metadataPackedData[4u];
+    memcpy_s(metadataPackedData, 4u, &targetMetadata.packed, 4u);
+    descDatas.push_back(metadataPackedData);
+
+    const auto sectionDataSize = std::accumulate(elfNoteSections.begin(), elfNoteSections.end(), size_t{0u},
+                                                 [](auto totalSize, const auto &elfNoteSection) {
+                                                     return totalSize + sizeof(NEO::Elf::ElfNoteSection) + elfNoteSection.nameSize + elfNoteSection.descSize;
+                                                 });
+    auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
+    auto sectionDataPointer = noteIntelGTSectionData.get();
+    for (int i = 0; i < 3; i++) {
+        memcpy_s(sectionDataPointer, sizeof(NEO::Elf::ElfNoteSection), &elfNoteSections.at(i), sizeof(NEO::Elf::ElfNoteSection));
+        sectionDataPointer = ptrOffset(sectionDataPointer, sizeof(NEO::Elf::ElfNoteSection));
+        strcpy_s(reinterpret_cast<char *>(sectionDataPointer), elfNoteSections.at(i).nameSize, NEO::Elf::IntelGtNoteOwnerName.str().c_str());
+        sectionDataPointer = ptrOffset(sectionDataPointer, elfNoteSections.at(i).nameSize);
+        memcpy_s(sectionDataPointer, elfNoteSections.at(i).descSize, descDatas.at(i), elfNoteSections.at(i).descSize);
+        sectionDataPointer = ptrOffset(sectionDataPointer, elfNoteSections.at(i).descSize);
+    }
+
+    zebin.appendSection(NEO::Elf::SHT_NOTE, NEO::Elf::SectionsNamesZebin::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
 
     std::string unpackErrors;
     std::string unpackWarnings;

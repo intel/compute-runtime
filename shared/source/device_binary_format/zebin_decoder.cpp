@@ -14,6 +14,7 @@
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/zebin_elf.h"
 #include "shared/source/device_binary_format/yaml/yaml_parser.h"
+#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
 #include "shared/source/utilities/stackvec.h"
@@ -22,22 +23,49 @@
 
 namespace NEO {
 
-bool validateTargetDevice(const Elf::Elf<Elf::EI_CLASS_64> &elf, const TargetDevice &targetDevice) {
+bool validateTargetDevice(const Elf::Elf<Elf::EI_CLASS_64> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning) {
     GFXCORE_FAMILY gfxCore = IGFX_UNKNOWN_CORE;
     PRODUCT_FAMILY productFamily = IGFX_UNKNOWN;
     Elf::ZebinTargetFlags targetMetadata = {};
-    auto intelGTNotes = getIntelGTNotes(elf);
+    std::vector<Elf::IntelGTNote> intelGTNotes = {};
+    auto decodeError = getIntelGTNotes(elf, intelGTNotes, outErrReason, outWarning);
+    if (DecodeError::Success != decodeError) {
+        return false;
+    }
     for (const auto &intelGTNote : intelGTNotes) {
-        switch (intelGTNote->type) {
-        case Elf::IntelGTSectionType::ProductFamily:
-            productFamily = static_cast<PRODUCT_FAMILY>(intelGTNote->desc);
+        switch (intelGTNote.type) {
+        case Elf::IntelGTSectionType::ProductFamily: {
+            DEBUG_BREAK_IF(sizeof(uint32_t) != intelGTNote.data.size());
+            auto productFamilyData = reinterpret_cast<const uint32_t *>(intelGTNote.data.begin());
+            productFamily = static_cast<PRODUCT_FAMILY>(*productFamilyData);
             break;
-        case Elf::IntelGTSectionType::GfxCore:
-            gfxCore = static_cast<GFXCORE_FAMILY>(intelGTNote->desc);
+        }
+        case Elf::IntelGTSectionType::GfxCore: {
+            DEBUG_BREAK_IF(sizeof(uint32_t) != intelGTNote.data.size());
+            auto gfxCoreData = reinterpret_cast<const uint32_t *>(intelGTNote.data.begin());
+            gfxCore = static_cast<GFXCORE_FAMILY>(*gfxCoreData);
             break;
-        case Elf::IntelGTSectionType::TargetMetadata:
-            targetMetadata.packed = intelGTNote->desc;
+        }
+        case Elf::IntelGTSectionType::TargetMetadata: {
+            DEBUG_BREAK_IF(sizeof(uint32_t) != intelGTNote.data.size());
+            auto targetMetadataPacked = reinterpret_cast<const uint32_t *>(intelGTNote.data.begin());
+            targetMetadata.packed = static_cast<uint32_t>(*targetMetadataPacked);
             break;
+        }
+        case Elf::IntelGTSectionType::ZebinVersion: {
+            auto zebinVersionData = reinterpret_cast<const char *>(intelGTNote.data.begin());
+            ConstStringRef versionString(zebinVersionData);
+            Elf::ZebinKernelMetadata::Types::Version receivedZeInfoVersion{0, 0};
+            decodeError = populateZeInfoVersion(receivedZeInfoVersion, versionString, outErrReason);
+            if (DecodeError::Success != decodeError) {
+                return false;
+            }
+            decodeError = validateZeInfoVersion(receivedZeInfoVersion, outErrReason, outWarning);
+            if (DecodeError::Success != decodeError) {
+                return false;
+            }
+            break;
+        }
         default:
             return false;
         }
@@ -50,27 +78,59 @@ bool validateTargetDevice(const Elf::Elf<Elf::EI_CLASS_64> &elf, const TargetDev
     return validForTarget;
 }
 
-std::vector<const Elf::IntelGTNote *> getIntelGTNotes(const Elf::Elf<Elf::EI_CLASS_64> &elf) {
-    std::vector<const Elf::IntelGTNote *> intelGTNotes;
+DecodeError validateZeInfoVersion(const Elf::ZebinKernelMetadata::Types::Version &receivedZeInfoVersion, std::string &outErrReason, std::string &outWarning) {
+    if (receivedZeInfoVersion.major != zeInfoDecoderVersion.major) {
+        outErrReason.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unhandled major version : " + std::to_string(receivedZeInfoVersion.major) + ", decoder is at : " + std::to_string(zeInfoDecoderVersion.major) + "\n");
+        return DecodeError::UnhandledBinary;
+    }
+    if (receivedZeInfoVersion.minor > zeInfoDecoderVersion.minor) {
+        outWarning.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Minor version : " + std::to_string(receivedZeInfoVersion.minor) + " is newer than available in decoder : " + std::to_string(zeInfoDecoderVersion.minor) + " - some features may be skipped\n");
+    }
+    return DecodeError::Success;
+}
+
+DecodeError getIntelGTNotes(const Elf::Elf<Elf::EI_CLASS_64> &elf, std::vector<Elf::IntelGTNote> &intelGTNotes, std::string &outErrReason, std::string &outWarning) {
     for (size_t i = 0; i < elf.sectionHeaders.size(); i++) {
         auto section = elf.sectionHeaders[i];
         if (Elf::SHT_NOTE == section.header->type && Elf::SectionsNamesZebin::noteIntelGT == elf.getSectionName(static_cast<uint32_t>(i))) {
-            auto numEntries = elf.sectionHeaders[i].header->size / sizeof(Elf::IntelGTNote);
-            for (uint32_t i = 0; i < numEntries; ++i) {
-                auto intelGTNote = reinterpret_cast<const Elf::IntelGTNote *>(section.data.begin() + i * sizeof(Elf::IntelGTNote));
+            uint64_t currentPos = 0;
+            auto sectionSize = section.header->size;
+            while (currentPos < sectionSize) {
+                auto intelGTNote = reinterpret_cast<const Elf::ElfNoteSection *>(section.data.begin() + currentPos);
+                auto nameSz = intelGTNote->nameSize;
+                auto descSz = intelGTNote->descSize;
 
-                bool isValidGTNote = sizeof(uint32_t) == intelGTNote->descSize;
-                isValidGTNote &= Elf::IntelGtNoteOwnerName.size() + 1 == intelGTNote->nameSize;
-                isValidGTNote &= Elf::IntelGtNoteOwnerName == ConstStringRef(intelGTNote->ownerName);
-                if (isValidGTNote) {
-                    intelGTNotes.push_back(intelGTNote);
-                } else {
+                auto currOffset = sizeof(Elf::ElfNoteSection) + alignUp(nameSz, 4) + alignUp(descSz, 4);
+                if (currentPos + currOffset > sectionSize) {
+                    intelGTNotes.clear();
+                    outErrReason.append("DeviceBinaryFormat::Zebin : Offseting will cause out-of-bound memory read! Section size: " + std::to_string(sectionSize) +
+                                        ", current section data offset: " + std::to_string(currentPos) + ", next offset : " + std::to_string(currOffset) + "\n");
+                    return DecodeError::InvalidBinary;
+                }
+                currentPos += currOffset;
+
+                auto ownerName = reinterpret_cast<const char *>(ptrOffset(intelGTNote, sizeof(Elf::ElfNoteSection)));
+                bool isValidGTNote = Elf::IntelGtNoteOwnerName.size() + 1 == nameSz;
+                isValidGTNote &= Elf::IntelGtNoteOwnerName == ConstStringRef(ownerName, nameSz - 1);
+                if (false == isValidGTNote) {
+                    outWarning.append("DeviceBinaryFormat::Zebin : Invalid owner name : ");
+                    ownerName[nameSz - 1] == '\0' ? outWarning.append(std::string{ownerName, nameSz - 1}) : outWarning.append(ownerName, nameSz);
+                    outWarning.append(" for IntelGTNote - note will not be used.\n");
                     continue;
                 }
+                auto notesData = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(ptrOffset(ownerName, nameSz)), descSz);
+                if (intelGTNote->type == Elf::IntelGTSectionType::ZebinVersion) {
+                    isValidGTNote &= notesData[descSz - 1] == '\0';
+                    if (false == isValidGTNote) {
+                        outWarning.append("DeviceBinaryFormat::Zebin :  Versioning string is not null-terminated: " + ConstStringRef(reinterpret_cast<const char *>(notesData.begin()), descSz).str() + " - note will not be used.\n");
+                        continue;
+                    }
+                }
+                intelGTNotes.push_back(Elf::IntelGTNote{static_cast<Elf::IntelGTSectionType>(intelGTNote->type), notesData});
             }
         }
     }
-    return intelGTNotes;
+    return DecodeError::Success;
 }
 
 DecodeError extractZebinSections(NEO::Elf::Elf<Elf::EI_CLASS_64> &elf, ZebinSections &out, std::string &outErrReason, std::string &outWarning) {
@@ -1238,18 +1298,22 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<N
     return DecodeError::Success;
 }
 
-NEO::DecodeError populateZeInfoVersion(NEO::Elf::ZebinKernelMetadata::Types::Version &dst,
-                                       NEO::Yaml::YamlParser &yamlParser, const NEO::Yaml::Node &versionNd, std::string &outErrReason, std::string &outWarning) {
+NEO::DecodeError readZeInfoVersionFromZeInfo(NEO::Elf::ZebinKernelMetadata::Types::Version &dst,
+                                             NEO::Yaml::YamlParser &yamlParser, const NEO::Yaml::Node &versionNd, std::string &outErrReason, std::string &outWarning) {
     if (nullptr == yamlParser.getValueToken(versionNd)) {
         outErrReason.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Invalid version format - expected \'MAJOR.MINOR\' string\n");
         return NEO::DecodeError::InvalidBinary;
     }
     auto versionStr = yamlParser.readValueNoQuotes(versionNd);
+    return populateZeInfoVersion(dst, versionStr, outErrReason);
+}
+
+NEO::DecodeError populateZeInfoVersion(NEO::Elf::ZebinKernelMetadata::Types::Version &dst, ConstStringRef &versionStr, std::string &outErrReason) {
     StackVec<char, 32> nullTerminated{versionStr.begin(), versionStr.end()};
     nullTerminated.push_back('\0');
     auto separator = std::find(nullTerminated.begin(), nullTerminated.end(), '.');
     if ((nullTerminated.end() == separator) || (nullTerminated.begin() == separator) || (&*nullTerminated.rbegin() == separator + 1)) {
-        outErrReason.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Invalid version format - expected 'MAJOR.MINOR' string, got : " + yamlParser.readValue(versionNd).str() + "\n");
+        outErrReason.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Invalid version format - expected 'MAJOR.MINOR' string, got : " + std::string{versionStr} + "\n");
         return NEO::DecodeError::InvalidBinary;
     }
     *separator = 0;
@@ -1375,21 +1439,17 @@ DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ProgramInfo
     NEO::Elf::ZebinKernelMetadata::Types::Version zeInfoVersion = zeInfoDecoderVersion;
     if (versionSectionNodes.empty()) {
         outWarning.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : No version info provided (i.e. no " + NEO::Elf::ZebinKernelMetadata::Tags::version.str() + " entry in global scope of DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + ") - will use decoder's default : \'" + std::to_string(zeInfoDecoderVersion.major) + "." + std::to_string(zeInfoDecoderVersion.minor) + "\'\n");
-        zeInfoVersion = NEO::zeInfoDecoderVersion;
+        zeInfoVersion = zeInfoDecoderVersion;
     } else {
-        auto zeInfoErr = populateZeInfoVersion(zeInfoVersion, yamlParser, *versionSectionNodes[0], outErrReason, outWarning);
+        auto zeInfoErr = readZeInfoVersionFromZeInfo(zeInfoVersion, yamlParser, *versionSectionNodes[0], outErrReason, outWarning);
         if (DecodeError::Success != zeInfoErr) {
             return zeInfoErr;
         }
     }
 
-    if (zeInfoVersion.major != zeInfoDecoderVersion.major) {
-        outErrReason.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unhandled major version : " + std::to_string(zeInfoVersion.major) + ", decoder is at : " + std::to_string(zeInfoDecoderVersion.major) + "\n");
-        return DecodeError::UnhandledBinary;
-    }
-
-    if (zeInfoVersion.minor > zeInfoDecoderVersion.minor) {
-        outWarning.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Minor version : " + std::to_string(zeInfoVersion.minor) + " is newer than available in decoder : " + std::to_string(zeInfoDecoderVersion.minor) + " - some features may be skipped\n");
+    auto zeInfoVersionError = validateZeInfoVersion(zeInfoVersion, outErrReason, outWarning);
+    if (DecodeError::Success != zeInfoVersionError) {
+        return zeInfoVersionError;
     }
 
     if (kernelsSectionNodes.size() > 1U) {

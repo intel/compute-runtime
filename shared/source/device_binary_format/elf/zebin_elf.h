@@ -62,17 +62,16 @@ static constexpr ConstStringRef externalFunctions = "Intel_Symbol_Table_Void_Pro
 } // namespace SectionsNamesZebin
 
 static constexpr ConstStringRef IntelGtNoteOwnerName = "IntelGT";
-struct IntelGTNote : ElfNoteSection {
-    char ownerName[8];
-    uint32_t desc;
-};
-static_assert(sizeof(IntelGTNote) == 0x18, "");
 enum IntelGTSectionType : uint32_t {
     ProductFamily = 1,
     GfxCore = 2,
-    TargetMetadata = 3
+    TargetMetadata = 3,
+    ZebinVersion = 4
 };
-
+struct IntelGTNote {
+    IntelGTSectionType type;
+    ArrayRef<const uint8_t> data;
+};
 struct ZebinTargetFlags {
     union {
         struct {

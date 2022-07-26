@@ -63,7 +63,7 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(cons
 
     bool validForTarget = true;
     if (elf.elfFileHeader->machine == Elf::ELF_MACHINE::EM_INTELGT) {
-        validForTarget &= validateTargetDevice(elf, requestedTargetDevice);
+        validForTarget &= validateTargetDevice(elf, requestedTargetDevice, outErrReason, outWarning);
     } else {
         const auto &flags = reinterpret_cast<const NEO::Elf::ZebinTargetFlags &>(elf.elfFileHeader->flags);
         validForTarget &= flags.machineEntryUsesGfxCoreInsteadOfProductFamily

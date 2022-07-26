@@ -16,7 +16,11 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include <numeric>
 #include <vector>
+
+extern PRODUCT_FAMILY productFamily;
+extern GFXCORE_FAMILY renderCoreFamily;
 
 TEST(ExtractZebinSections, WhenElfDoesNotContainValidStringSectionThenFail) {
     NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> elf;
@@ -290,7 +294,7 @@ version: '1.0'
         std::string errors;
         std::string warnings;
         NEO::Elf::ZebinKernelMetadata::Types::Version version;
-        auto err = NEO::populateZeInfoVersion(version, parser, versionNode, errors, warnings);
+        auto err = NEO::readZeInfoVersionFromZeInfo(version, parser, versionNode, errors, warnings);
         EXPECT_EQ(NEO::DecodeError::Success, err);
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
@@ -317,7 +321,7 @@ version: '1.0'
         std::string errors;
         std::string warnings;
         NEO::Elf::ZebinKernelMetadata::Types::Version version;
-        auto err = NEO::populateZeInfoVersion(version, parser, versionNode, errors, warnings);
+        auto err = NEO::readZeInfoVersionFromZeInfo(version, parser, versionNode, errors, warnings);
         EXPECT_EQ(NEO::DecodeError::Success, err);
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
@@ -346,9 +350,9 @@ version: '100'
         std::string errors;
         std::string warnings;
         NEO::Elf::ZebinKernelMetadata::Types::Version version;
-        auto err = NEO::populateZeInfoVersion(version, parser, versionNode, errors, warnings);
+        auto err = NEO::readZeInfoVersionFromZeInfo(version, parser, versionNode, errors, warnings);
         EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
-        EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected \'MAJOR.MINOR\' string, got : \'100\'\n", errors.c_str()) << errors;
+        EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected \'MAJOR.MINOR\' string, got : 100\n", errors.c_str()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
     }
 
@@ -371,9 +375,9 @@ version: '100'
         std::string errors;
         std::string warnings;
         NEO::Elf::ZebinKernelMetadata::Types::Version version;
-        auto err = NEO::populateZeInfoVersion(version, parser, versionNode, errors, warnings);
+        auto err = NEO::readZeInfoVersionFromZeInfo(version, parser, versionNode, errors, warnings);
         EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
-        EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string, got : '12.'\n", errors.c_str()) << errors;
+        EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string, got : 12.\n", errors.c_str()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
     }
 
@@ -396,9 +400,9 @@ version: '100'
         std::string errors;
         std::string warnings;
         NEO::Elf::ZebinKernelMetadata::Types::Version version;
-        auto err = NEO::populateZeInfoVersion(version, parser, versionNode, errors, warnings);
+        auto err = NEO::readZeInfoVersionFromZeInfo(version, parser, versionNode, errors, warnings);
         EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
-        EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string, got : '.12'\n", errors.c_str()) << errors;
+        EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string, got : .12\n", errors.c_str()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
     }
 
@@ -421,9 +425,9 @@ version: '100'
         std::string errors;
         std::string warnings;
         NEO::Elf::ZebinKernelMetadata::Types::Version version;
-        auto err = NEO::populateZeInfoVersion(version, parser, versionNode, errors, warnings);
+        auto err = NEO::readZeInfoVersionFromZeInfo(version, parser, versionNode, errors, warnings);
         EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
-        EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string, got : '.'\n", errors.c_str()) << errors;
+        EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string, got : .\n", errors.c_str()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
     }
 
@@ -446,7 +450,7 @@ version: '100'
         std::string errors;
         std::string warnings;
         NEO::Elf::ZebinKernelMetadata::Types::Version version;
-        auto err = NEO::populateZeInfoVersion(version, parser, versionNode, errors, warnings);
+        auto err = NEO::readZeInfoVersionFromZeInfo(version, parser, versionNode, errors, warnings);
         EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
         EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string\n", errors.c_str()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
@@ -2451,13 +2455,10 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenConstDataStringsSectionThenSetsUpInitDa
 
 TEST(DecodeSingleDeviceBinaryZebin, GivenIntelGTNoteSectionThenAddsItToZebinSections) {
     ZebinTestData::ValidEmptyProgram zebin;
-    NEO::Elf::IntelGTNote note = {};
-    note.nameSize = 8;
-    note.descSize = 4;
-    note.type = NEO::Elf::IntelGTSectionType::GfxCore;
-    strcpy_s(const_cast<char *>(note.ownerName), note.nameSize, NEO::Elf::IntelGtNoteOwnerName.str().c_str());
-    note.desc = GFXCORE_FAMILY::IGFX_GEN9_CORE;
-    zebin.appendSection(NEO::Elf::SHT_NOTE, NEO::Elf::SectionsNamesZebin::noteIntelGT, ArrayRef<uint8_t>::fromAny(&note, 1));
+
+    constexpr int mockIntelGTNotesDataSize = 0x10;
+    std::array<uint8_t, mockIntelGTNotesDataSize> mockIntelGTNotesData = {};
+    zebin.appendSection(NEO::Elf::SHT_NOTE, NEO::Elf::SectionsNamesZebin::noteIntelGT, ArrayRef<uint8_t>::fromAny(mockIntelGTNotesData.data(), mockIntelGTNotesDataSize));
 
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
@@ -2691,7 +2692,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoVersionIsInvalidThenFails) {
     std::string decodeWarnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string, got : '1a'\n", decodeErrors.c_str());
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string, got : 1a\n", decodeErrors.c_str());
     EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
 }
 
@@ -5247,164 +5248,421 @@ class IntelGTNotesFixture : public ::testing::Test {
     void SetUp() override {
         zebin.elfHeader->type = Elf::ET_REL;
         zebin.elfHeader->machine = Elf::ELF_MACHINE::EM_INTELGT;
+    }
 
-        for (int i = 0; i < 3; ++i) {
-            notes[i].nameSize = 8;
-            notes[i].descSize = 4;
-            strcpy_s(notes[i].ownerName, notes[i].nameSize, Elf::IntelGtNoteOwnerName.str().c_str());
+    void appendSingleIntelGTSectionData(const NEO::Elf::ElfNoteSection &elfNoteSection, uint8_t *const intelGTSectionData, const uint8_t *descData, const char *ownerName, size_t spaceAvailable, size_t &offset) {
+        ASSERT_GE(spaceAvailable, sizeof(Elf::ElfNoteSection) + elfNoteSection.nameSize + elfNoteSection.descSize);
+        memcpy_s(ptrOffset(intelGTSectionData, offset), sizeof(NEO::Elf::ElfNoteSection), &elfNoteSection, sizeof(NEO::Elf::ElfNoteSection));
+        offset += sizeof(NEO::Elf::ElfNoteSection);
+        memcpy_s(reinterpret_cast<char *>(ptrOffset(intelGTSectionData, offset)), elfNoteSection.nameSize, ownerName, elfNoteSection.nameSize);
+        offset += elfNoteSection.nameSize;
+        memcpy_s(ptrOffset(intelGTSectionData, offset), elfNoteSection.descSize, descData, elfNoteSection.descSize);
+        offset += elfNoteSection.descSize;
+    }
+
+    void appendSingleIntelGTSectionData(const NEO::Elf::ElfNoteSection &elfNoteSection, uint8_t *const intelGTSectionData, const uint8_t *descData, const char *ownerName, size_t spaceAvailable) {
+        size_t offset = 0u;
+        appendSingleIntelGTSectionData(elfNoteSection, intelGTSectionData, descData, ownerName, spaceAvailable, offset);
+    }
+
+    void appendIntelGTSectionData(std::vector<NEO::Elf::ElfNoteSection> &elfNoteSections, uint8_t *const intelGTSectionData, std::vector<uint8_t *> &descData, size_t spaceAvailable) {
+        size_t idx = 0u, offset = 0u;
+        for (auto &elfNoteSection : elfNoteSections) {
+            appendSingleIntelGTSectionData(elfNoteSection, intelGTSectionData, descData.at(idx), Elf::IntelGtNoteOwnerName.str().c_str(), spaceAvailable, offset);
+            spaceAvailable -= (sizeof(Elf::ElfNoteSection) + elfNoteSection.descSize + elfNoteSection.nameSize);
+            idx++;
         }
     }
+
     ZebinTestData::ValidEmptyProgram zebin;
-    Elf::IntelGTNote notes[3];
 };
 
 TEST_F(IntelGTNotesFixture, WhenGettingIntelGTNotesGivenValidIntelGTNotesSectionThenReturnsIntelGTNotes) {
-    notes[0].type = Elf::IntelGTSectionType::ProductFamily;
-    notes[0].desc = IGFX_SKYLAKE;
+    std::vector<NEO::Elf::ElfNoteSection> elfNoteSections;
 
-    notes[1].type = Elf::IntelGTSectionType::GfxCore;
-    notes[1].desc = IGFX_GEN9_CORE;
+    for (auto i = 0; i < 4; i++) {
+        auto &inserted = elfNoteSections.emplace_back();
+        inserted.nameSize = 8u;
+        inserted.descSize = 4u;
+    }
+    elfNoteSections.at(0).type = Elf::IntelGTSectionType::ProductFamily;
+    elfNoteSections.at(1).type = Elf::IntelGTSectionType::GfxCore;
+    elfNoteSections.at(2).type = Elf::IntelGTSectionType::TargetMetadata;
+    elfNoteSections.at(3).type = Elf::IntelGTSectionType::ZebinVersion;
 
     Elf::ZebinTargetFlags targetMetadata;
     targetMetadata.validateRevisionId = true;
-    targetMetadata.minHwRevisionId = 5;
-    targetMetadata.maxHwRevisionId = 7;
-    notes[2].type = Elf::IntelGTSectionType::TargetMetadata;
-    notes[2].desc = targetMetadata.packed;
+    targetMetadata.minHwRevisionId = hardwareInfoTable[productFamily]->platform.usRevId - 1;
+    targetMetadata.maxHwRevisionId = hardwareInfoTable[productFamily]->platform.usRevId + 1;
+    std::vector<uint8_t *> descData;
 
-    zebin.appendSection(Elf::SHT_NOTE, Elf::SectionsNamesZebin::noteIntelGT, ArrayRef<uint8_t>::fromAny(notes, 3));
+    uint8_t platformData[4];
+    memcpy_s(platformData, 4, &productFamily, 4);
+    descData.push_back(platformData);
+
+    uint8_t coreData[4];
+    memcpy_s(coreData, 4, &renderCoreFamily, 4);
+    descData.push_back(coreData);
+
+    uint8_t metadataPackedData[4];
+    memcpy_s(metadataPackedData, 4, &targetMetadata.packed, 4);
+    descData.push_back(metadataPackedData);
+
+    uint8_t zebinaryVersionData[4] = {0x0, 0x0, 0x0, 0x0};
+    descData.push_back(zebinaryVersionData);
+    const auto sectionDataSize = std::accumulate(elfNoteSections.begin(), elfNoteSections.end(), size_t{0u},
+                                                 [](auto totalSize, const auto &elfNoteSection) {
+                                                     return totalSize + sizeof(NEO::Elf::ElfNoteSection) + elfNoteSection.nameSize + elfNoteSection.descSize;
+                                                 });
+    auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
+
+    appendIntelGTSectionData(elfNoteSections, noteIntelGTSectionData.get(), descData, sectionDataSize);
+    zebin.appendSection(Elf::SHT_NOTE, Elf::SectionsNamesZebin::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
 
     std::string outErrReason, outWarning;
     auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
-    ASSERT_TRUE(outWarning.empty());
-    ASSERT_TRUE(outErrReason.empty());
+    EXPECT_TRUE(outWarning.empty());
+    EXPECT_TRUE(outErrReason.empty());
 
-    auto intelGTNotesRead = getIntelGTNotes(elf);
-    EXPECT_EQ(3U, intelGTNotesRead.size());
+    std::vector<Elf::IntelGTNote> intelGTNotesRead = {};
+    auto decodeError = getIntelGTNotes(elf, intelGTNotesRead, outErrReason, outWarning);
+    EXPECT_EQ(DecodeError::Success, decodeError);
+    EXPECT_TRUE(outWarning.empty());
+    EXPECT_TRUE(outErrReason.empty());
+    EXPECT_EQ(4U, intelGTNotesRead.size());
 
     auto validNotes = true;
     for (size_t i = 0; i < intelGTNotesRead.size(); ++i) {
-        validNotes &= (0 == memcmp(intelGTNotesRead[i], &notes[i], sizeof(Elf::IntelGTNote)));
+        validNotes &= (intelGTNotesRead.at(i).type == elfNoteSections.at(i).type);
+        validNotes &= (intelGTNotesRead.at(i).data.size() == elfNoteSections.at(i).descSize);
+        if (validNotes) {
+            validNotes &= (0 == memcmp(intelGTNotesRead.at(i).data.begin(), descData[i], elfNoteSections.at(i).descSize));
+        }
     }
     EXPECT_TRUE(validNotes);
 }
 
 TEST_F(IntelGTNotesFixture, WhenGettingIntelGTNotesGivenInvalidIntelGTNotesSectionNameThenSectionsIsSkipped) {
-    zebin.appendSection(Elf::SHT_NOTE, ".note.wrong.name", ArrayRef<uint8_t>::fromAny(notes, 3));
+    uint8_t mockSectionData[0x10];
+    zebin.appendSection(Elf::SHT_NOTE, ".note.wrong.name", ArrayRef<uint8_t>::fromAny(mockSectionData, 0x10));
 
     std::string outErrReason, outWarning;
     auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
-    ASSERT_TRUE(outWarning.empty());
-    ASSERT_TRUE(outErrReason.empty());
+    EXPECT_TRUE(outWarning.empty());
+    EXPECT_TRUE(outErrReason.empty());
 
-    auto intelGTNotesRead = getIntelGTNotes(elf);
+    std::vector<Elf::IntelGTNote> intelGTNotesRead = {};
+    auto decodeError = getIntelGTNotes(elf, intelGTNotesRead, outErrReason, outWarning);
+    EXPECT_EQ(DecodeError::Success, decodeError);
+    EXPECT_TRUE(outWarning.empty());
+    EXPECT_TRUE(outErrReason.empty());
     EXPECT_EQ(0U, intelGTNotesRead.size());
 }
 
 TEST_F(IntelGTNotesFixture, WhenGettingIntelGTNotesGivenInvalidIntelGTNotesThenTheNoteIsSkipped) {
-    notes[0].nameSize = 0xbad;
-    notes[1].descSize = 0xbad;
-    strcpy_s(notes[2].ownerName, notes[2].nameSize, "badName");
-    zebin.appendSection(Elf::SHT_NOTE, Elf::SectionsNamesZebin::noteIntelGT, ArrayRef<uint8_t>::fromAny(notes, 3));
+    NEO::Elf::ElfNoteSection elfNoteSection = {};
+    elfNoteSection.nameSize = 8u;
+    elfNoteSection.descSize = 4u;
 
-    std::string outErrReason, outWarning;
-    auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
-    ASSERT_TRUE(outWarning.empty());
-    ASSERT_TRUE(outErrReason.empty());
+    uint8_t mockDescData[4u]{0};
+    auto sectionDataSize = sizeof(Elf::ElfNoteSection) + elfNoteSection.nameSize + elfNoteSection.descSize;
 
-    auto intelGTNotesRead = getIntelGTNotes(elf);
-    EXPECT_EQ(0U, intelGTNotesRead.size());
+    const char badOwnerStringTerminated[8] = "badName";
+    const char arr[8]{'b', 'a', 'a', 'd', 'N', 'a', 'm', 'e'};
+    const char *badOwnerStringNotTerminated = arr;
+
+    for (auto &terminated : {true, false}) {
+        auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
+        terminated ? appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), mockDescData, badOwnerStringTerminated, sectionDataSize) : appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), mockDescData, badOwnerStringNotTerminated, sectionDataSize);
+        zebin.appendSection(Elf::SHT_NOTE, Elf::SectionsNamesZebin::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
+
+        std::string outErrReason, outWarning;
+        auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
+        EXPECT_TRUE(outWarning.empty());
+        EXPECT_TRUE(outErrReason.empty());
+
+        std::vector<Elf::IntelGTNote> intelGTNotesRead = {};
+        auto decodeError = getIntelGTNotes(elf, intelGTNotesRead, outErrReason, outWarning);
+        EXPECT_EQ(DecodeError::Success, decodeError);
+        auto expectedWarning = terminated ? "DeviceBinaryFormat::Zebin : Invalid owner name : badName for IntelGTNote - note will not be used.\n" : "DeviceBinaryFormat::Zebin : Invalid owner name : baadName for IntelGTNote - note will not be used.\n";
+        EXPECT_STREQ(expectedWarning, outWarning.c_str());
+        EXPECT_TRUE(outErrReason.empty());
+        EXPECT_EQ(0U, intelGTNotesRead.size());
+        zebin.removeSection(Elf::SHT_NOTE, Elf::SectionsNamesZebin::noteIntelGT);
+    }
 }
 
 TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidTargetDeviceAndValidNotesThenReturnTrue) {
     TargetDevice targetDevice;
-    targetDevice.productFamily = IGFX_SKYLAKE;
-    targetDevice.coreFamily = IGFX_GEN9_CORE;
+    targetDevice.productFamily = productFamily;
+    targetDevice.coreFamily = renderCoreFamily;
     targetDevice.maxPointerSizeInBytes = 8;
-    targetDevice.stepping = 6;
-    notes[0].type = Elf::IntelGTSectionType::ProductFamily;
-    notes[0].desc = targetDevice.productFamily;
+    targetDevice.stepping = hardwareInfoTable[productFamily]->platform.usRevId;
 
-    notes[1].type = Elf::IntelGTSectionType::GfxCore;
-    notes[1].desc = targetDevice.coreFamily;
+    std::vector<Elf::ElfNoteSection> elfNoteSections;
+    for (int i = 0; i < 3; i++) {
+        auto &inserted = elfNoteSections.emplace_back();
+        inserted.descSize = 4u;
+        inserted.nameSize = 8u;
+    }
+
+    elfNoteSections.at(0).type = Elf::IntelGTSectionType::ProductFamily;
+    elfNoteSections.at(1).type = Elf::IntelGTSectionType::GfxCore;
+    elfNoteSections.at(2).type = Elf::IntelGTSectionType::TargetMetadata;
+    std::vector<uint8_t *> descData;
+
+    uint8_t platformData[4];
+    memcpy_s(platformData, 4, &targetDevice.productFamily, 4);
+    descData.push_back(platformData);
+
+    uint8_t coreData[4];
+    memcpy_s(coreData, 4, &targetDevice.coreFamily, 4);
+    descData.push_back(coreData);
 
     Elf::ZebinTargetFlags targetMetadata;
     targetMetadata.validateRevisionId = true;
-    targetMetadata.minHwRevisionId = targetDevice.stepping - 1;
+    targetMetadata.minHwRevisionId = (targetDevice.stepping == 0) ? targetDevice.stepping : targetDevice.stepping - 1;
     targetMetadata.maxHwRevisionId = targetDevice.stepping + 1;
-    notes[2].type = Elf::IntelGTSectionType::TargetMetadata;
-    notes[2].desc = targetMetadata.packed;
 
-    zebin.appendSection(Elf::SHT_NOTE, Elf::SectionsNamesZebin::noteIntelGT, ArrayRef<uint8_t>::fromAny(notes, 3));
+    uint8_t metadataPackedData[4];
+    memcpy_s(metadataPackedData, 4, &targetMetadata.packed, 4);
+    descData.push_back(metadataPackedData);
+
+    const auto sectionDataSize = std::accumulate(elfNoteSections.begin(), elfNoteSections.end(), size_t{0u},
+                                                 [](auto totalSize, const auto &elfNoteSection) {
+                                                     return totalSize + sizeof(NEO::Elf::ElfNoteSection) + elfNoteSection.nameSize + elfNoteSection.descSize;
+                                                 });
+    auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
+    appendIntelGTSectionData(elfNoteSections, noteIntelGTSectionData.get(), descData, sectionDataSize);
+    zebin.appendSection(Elf::SHT_NOTE, Elf::SectionsNamesZebin::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
 
     std::string outErrReason, outWarning;
     auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
-    ASSERT_TRUE(outWarning.empty());
-    ASSERT_TRUE(outErrReason.empty());
+    EXPECT_TRUE(outWarning.empty());
+    EXPECT_TRUE(outErrReason.empty());
 
-    EXPECT_TRUE(validateTargetDevice(elf, targetDevice));
+    EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning));
 }
 
 TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidTargetDeviceAndNoNotesThenReturnFalse) {
     TargetDevice targetDevice;
-    targetDevice.productFamily = IGFX_SKYLAKE;
-    targetDevice.coreFamily = IGFX_GEN9_CORE;
+    targetDevice.productFamily = productFamily;
+    targetDevice.coreFamily = renderCoreFamily;
     targetDevice.maxPointerSizeInBytes = 8;
-    targetDevice.stepping = 6;
+    targetDevice.stepping = hardwareInfoTable[productFamily]->platform.usRevId;
 
     std::string outErrReason, outWarning;
     auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
-    ASSERT_TRUE(outWarning.empty());
-    ASSERT_TRUE(outErrReason.empty());
+    EXPECT_TRUE(outWarning.empty());
+    EXPECT_TRUE(outErrReason.empty());
 
-    EXPECT_FALSE(validateTargetDevice(elf, targetDevice));
+    EXPECT_FALSE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning));
 }
 
 TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenInvalidTargetDeviceAndValidNotesThenReturnFalse) {
     TargetDevice targetDevice;
-    targetDevice.productFamily = IGFX_SKYLAKE;
-    targetDevice.coreFamily = IGFX_GEN9_CORE;
+    targetDevice.productFamily = productFamily;
+    targetDevice.coreFamily = renderCoreFamily;
     targetDevice.maxPointerSizeInBytes = 8;
-    targetDevice.stepping = 6;
-    notes[0].type = Elf::IntelGTSectionType::ProductFamily;
-    notes[0].desc = targetDevice.productFamily + 2;
+    targetDevice.stepping = hardwareInfoTable[productFamily]->platform.usRevId;
 
-    notes[1].type = Elf::IntelGTSectionType::GfxCore;
-    notes[1].desc = targetDevice.coreFamily + 2;
+    std::vector<Elf::ElfNoteSection> elfNoteSections;
+    for (int i = 0; i < 3; i++) {
+        auto &inserted = elfNoteSections.emplace_back();
+        inserted.descSize = 4u;
+        inserted.nameSize = 8u;
+    }
+
+    elfNoteSections.at(0).type = Elf::IntelGTSectionType::ProductFamily;
+    elfNoteSections.at(1).type = Elf::IntelGTSectionType::GfxCore;
+    elfNoteSections.at(2).type = Elf::IntelGTSectionType::TargetMetadata;
+    std::vector<uint8_t *> descData;
+
+    uint8_t platformData[4];
+    auto invalidPlatform = productFamily + 1;
+    memcpy_s(platformData, 4, &invalidPlatform, 4);
+    descData.push_back(platformData);
+
+    uint8_t coreData[4];
+    auto invalidCore = renderCoreFamily + 1;
+    memcpy_s(coreData, 4, &invalidCore, 4);
+    descData.push_back(coreData);
 
     Elf::ZebinTargetFlags targetMetadata;
     targetMetadata.validateRevisionId = true;
     targetMetadata.minHwRevisionId = targetDevice.stepping + 1;
     targetMetadata.maxHwRevisionId = targetDevice.stepping + 3;
-    notes[2].type = Elf::IntelGTSectionType::TargetMetadata;
-    notes[2].desc = targetMetadata.packed;
 
-    zebin.appendSection(Elf::SHT_NOTE, Elf::SectionsNamesZebin::noteIntelGT, ArrayRef<uint8_t>::fromAny(notes, 3));
+    uint8_t metadataPackedData[4];
+    memcpy_s(metadataPackedData, 4, &targetMetadata.packed, 4);
+    descData.push_back(metadataPackedData);
+
+    const auto sectionDataSize = std::accumulate(elfNoteSections.begin(), elfNoteSections.end(), size_t{0u},
+                                                 [](auto totalSize, const auto &elfNoteSection) {
+                                                     return totalSize + sizeof(NEO::Elf::ElfNoteSection) + elfNoteSection.nameSize + elfNoteSection.descSize;
+                                                 });
+    auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
+    appendIntelGTSectionData(elfNoteSections, noteIntelGTSectionData.get(), descData, sectionDataSize);
+    zebin.appendSection(Elf::SHT_NOTE, Elf::SectionsNamesZebin::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
 
     std::string outErrReason, outWarning;
     auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
-    ASSERT_TRUE(outWarning.empty());
-    ASSERT_TRUE(outErrReason.empty());
+    EXPECT_TRUE(outWarning.empty());
+    EXPECT_TRUE(outErrReason.empty());
 
-    EXPECT_FALSE(validateTargetDevice(elf, targetDevice));
+    EXPECT_FALSE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning));
 }
 
 TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidTargetDeviceAndInvalidNoteTypeThenReturnFalse) {
     TargetDevice targetDevice;
-    targetDevice.productFamily = IGFX_SKYLAKE;
-    targetDevice.coreFamily = IGFX_GEN9_CORE;
+    targetDevice.productFamily = productFamily;
+    targetDevice.coreFamily = renderCoreFamily;
     targetDevice.maxPointerSizeInBytes = 8;
-    targetDevice.stepping = 6;
-    notes[0].type = 4;
-    notes[0].desc = 0;
-    zebin.appendSection(Elf::SHT_NOTE, Elf::SectionsNamesZebin::noteIntelGT, ArrayRef<uint8_t>::fromAny(&notes[0], 1));
+    targetDevice.stepping = hardwareInfoTable[productFamily]->platform.usRevId;
+
+    Elf::ElfNoteSection elfNoteSection = {};
+    elfNoteSection.type = 5;
+    elfNoteSection.descSize = 0u;
+    elfNoteSection.nameSize = 8u;
+    auto sectionDataSize = sizeof(Elf::ElfNoteSection) + elfNoteSection.nameSize + elfNoteSection.descSize;
+    auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
+
+    appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), nullptr, Elf::IntelGtNoteOwnerName.str().c_str(), sectionDataSize);
+    zebin.appendSection(Elf::SHT_NOTE, Elf::SectionsNamesZebin::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
 
     std::string outErrReason, outWarning;
     auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
-    ASSERT_TRUE(outWarning.empty());
-    ASSERT_TRUE(outErrReason.empty());
+    EXPECT_TRUE(outWarning.empty());
+    EXPECT_TRUE(outErrReason.empty());
 
-    EXPECT_FALSE(validateTargetDevice(elf, targetDevice));
+    EXPECT_FALSE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning));
+}
+
+TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenInvalidIntelGTNotesSecionSizeWhichWilLCauseOOBAccessThenReturnFalse) {
+    Elf::ElfNoteSection elfNoteSection = {};
+    elfNoteSection.descSize = 4u;
+    elfNoteSection.nameSize = 8u;
+    elfNoteSection.type = Elf::IntelGTSectionType::ProductFamily;
+
+    uint8_t platformData[4];
+    memcpy_s(platformData, 4, &productFamily, 4);
+
+    auto sectionDataSize = sizeof(Elf::ElfNoteSection) + elfNoteSection.nameSize + elfNoteSection.descSize;
+    auto incorrectSectionDataSize = sectionDataSize + 0x5; //add rubbish data at the end - may cause OOB access.
+    auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(incorrectSectionDataSize);
+
+    appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), platformData, Elf::IntelGtNoteOwnerName.str().c_str(), incorrectSectionDataSize);
+    zebin.appendSection(Elf::SHT_NOTE, Elf::SectionsNamesZebin::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), incorrectSectionDataSize));
+
+    std::string outErrReason, outWarning;
+    auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
+    EXPECT_TRUE(outWarning.empty());
+    EXPECT_TRUE(outErrReason.empty());
+
+    TargetDevice targetDevice;
+    auto result = validateTargetDevice(elf, targetDevice, outErrReason, outWarning);
+    EXPECT_FALSE(result);
+    EXPECT_TRUE(outWarning.empty());
+    auto errStr{"DeviceBinaryFormat::Zebin : Offseting will cause out-of-bound memory read! Section size: " + std::to_string(incorrectSectionDataSize) +
+                ", current section data offset: " + std::to_string(sectionDataSize)};
+    EXPECT_TRUE(std::string::npos != outErrReason.find(errStr));
+}
+
+TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidZeInfoVersionInIntelGTNotesThenZeInfoVersionIsPopulatedCorrectly) {
+    Elf::ElfNoteSection elfNoteSection = {};
+    elfNoteSection.type = 4;
+    elfNoteSection.descSize = 5u;
+    elfNoteSection.nameSize = 8u;
+
+    uint8_t zeInfoVersion[5] = {0x31, 0x2e, 0x31, 0x35, 0x0}; //version "1.15\0"
+
+    ASSERT_EQ(zeInfoDecoderVersion.major, 1u);
+    ASSERT_EQ(zeInfoDecoderVersion.minor, 9u);
+
+    auto sectionDataSize = sizeof(Elf::ElfNoteSection) + elfNoteSection.nameSize + alignUp(elfNoteSection.descSize, 4);
+    auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
+    appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), zeInfoVersion, Elf::IntelGtNoteOwnerName.str().c_str(), sectionDataSize);
+    zebin.appendSection(Elf::SHT_NOTE, Elf::SectionsNamesZebin::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
+
+    std::string outErrReason, outWarning;
+    auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
+    EXPECT_TRUE(outWarning.empty());
+    EXPECT_TRUE(outErrReason.empty());
+
+    TargetDevice targetDevice;
+    validateTargetDevice(elf, targetDevice, outErrReason, outWarning);
+    EXPECT_TRUE(outErrReason.empty());
+}
+
+TEST_F(IntelGTNotesFixture, GivenNotNullTerminatedVersioningStringWhenGettingIntelGTNotesThenEmitWarningAndDontUseIt) {
+    Elf::ElfNoteSection elfNoteSection = {};
+    elfNoteSection.type = 4;
+    elfNoteSection.descSize = 4u;
+    elfNoteSection.nameSize = 8u;
+
+    uint8_t zeInfoVersionNotTerminated[4] = {0x31, 0x2e, 0x31, 0x35}; // version "1.15 not null terminated"
+    auto sectionDataSize = sizeof(Elf::ElfNoteSection) + elfNoteSection.descSize + elfNoteSection.nameSize;
+    auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
+    appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), zeInfoVersionNotTerminated, Elf::IntelGtNoteOwnerName.str().c_str(), sectionDataSize);
+    zebin.appendSection(Elf::SHT_NOTE, Elf::SectionsNamesZebin::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
+
+    std::string outErrReason, outWarning;
+    auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
+    EXPECT_TRUE(outWarning.empty());
+    EXPECT_TRUE(outErrReason.empty());
+
+    std::vector<Elf::IntelGTNote> intelGTNotes = {};
+    auto decodeError = getIntelGTNotes(elf, intelGTNotes, outErrReason, outWarning);
+    EXPECT_EQ(DecodeError::Success, decodeError);
+    EXPECT_EQ(0u, intelGTNotes.size());
+    EXPECT_TRUE(outErrReason.empty());
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin :  Versioning string is not null-terminated: 1.15 - note will not be used.\n", outWarning.c_str());
+}
+
+TEST_F(IntelGTNotesFixture, GivenInvalidVersioningWhenValidatingTargetDeviceThenReturnFalse) {
+    Elf::ElfNoteSection elfNoteSection = {};
+    elfNoteSection.type = 4;
+    elfNoteSection.descSize = 4u;
+    elfNoteSection.nameSize = 8u;
+
+    uint8_t incorrectZeInfoVersion[4] = {0x2e, 0x31, 0x31, 0x0}; // version ".11\0"
+    auto sectionDataSize = sizeof(Elf::ElfNoteSection) + elfNoteSection.descSize + elfNoteSection.nameSize;
+    auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
+    appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), incorrectZeInfoVersion, Elf::IntelGtNoteOwnerName.str().c_str(), sectionDataSize);
+    zebin.appendSection(Elf::SHT_NOTE, Elf::SectionsNamesZebin::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
+
+    std::string outErrReason, outWarning;
+    auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
+    EXPECT_TRUE(outWarning.empty());
+    EXPECT_TRUE(outErrReason.empty());
+
+    TargetDevice targetDevice;
+    validateTargetDevice(elf, targetDevice, outErrReason, outWarning);
+    EXPECT_TRUE(outWarning.empty());
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string, got : .11\n", outErrReason.c_str());
+}
+
+TEST_F(IntelGTNotesFixture, GivenIncompatibleVersioningWhenValidatingTargetDeviceThenReturnFalse) {
+    Elf::ElfNoteSection elfNoteSection = {};
+    elfNoteSection.type = 4;
+    elfNoteSection.descSize = 4u;
+    elfNoteSection.nameSize = 8u;
+
+    uint8_t incompatibleZeInfo[4] = {0x32, 0x2e, 0x3f, 0x0}; // version "2.9\0"
+    auto sectionDataSize = sizeof(Elf::ElfNoteSection) + elfNoteSection.descSize + elfNoteSection.nameSize;
+    auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
+    appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), incompatibleZeInfo, Elf::IntelGtNoteOwnerName.str().c_str(), sectionDataSize);
+    zebin.appendSection(Elf::SHT_NOTE, Elf::SectionsNamesZebin::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
+
+    std::string outErrReason, outWarning;
+    auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
+    EXPECT_TRUE(outWarning.empty());
+    EXPECT_TRUE(outErrReason.empty());
+
+    TargetDevice targetDevice;
+    validateTargetDevice(elf, targetDevice, outErrReason, outWarning);
+    EXPECT_TRUE(outWarning.empty());
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unhandled major version : 2, decoder is at : 1\n", outErrReason.c_str());
 }
 
 TEST(PopulateGlobalDeviceHostNameMapping, givenValidZebinWithGlobalHostAccessTableSectionThenPopulateHostDeviceNameMapCorrectly) {
