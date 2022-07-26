@@ -129,12 +129,11 @@ uint32_t HwHelperHw<GfxFamily>::getMocsIndex(const GmmHelper &gmmHelper, bool l3
 }
 
 template <typename GfxFamily>
-uint32_t HwHelperHw<GfxFamily>::calculateAvailableThreadCount(PRODUCT_FAMILY family, uint32_t grfCount, uint32_t euCount,
-                                                              uint32_t threadsPerEu) {
+uint32_t HwHelperHw<GfxFamily>::calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount) {
     if (grfCount > GrfConfig::DefaultGrfNumber) {
-        return threadsPerEu / 2u * euCount;
+        return hwInfo.gtSystemInfo.ThreadCount / 2u;
     }
-    return threadsPerEu * euCount;
+    return hwInfo.gtSystemInfo.ThreadCount;
 }
 
 template <typename GfxFamily>

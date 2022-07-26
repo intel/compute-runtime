@@ -45,31 +45,31 @@ HWTEST2_F(HwHelperTestPvcAndLater, givenRenderEngineWhenRemapCalledThenUseCccs, 
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_BCS, hardwareInfo));
 }
 
-HWTEST2_F(HwHelperTestPvcAndLater, GivenVariousValuesWhenCallingCalculateAvailableThreadCountThenCorrectValueIsReturned, IsAtLeastXeHpcCore) {
-    struct TestInput {
-        uint32_t grfCount;
-        uint32_t expectedThreadCountPerEu;
-    };
-
-    std::vector<TestInput> grfTestInputs = {
-        {64, 16},
-        {96, 10},
-        {128, 8},
-        {160, 6},
-        {192, 5},
-        {256, 4},
-    };
-
+HWTEST2_F(HwHelperTestPvcAndLater, GivenVariousValuesAndPvcAndLaterPlatformsWhenCallingCalculateAvailableThreadCountThenCorrectValueIsReturned, IsAtLeastXeHpcCore) {
+    std::array<std::pair<uint32_t, uint32_t>, 6> grfTestInputs = {{{64, 16},
+                                                                   {96, 10},
+                                                                   {128, 8},
+                                                                   {160, 6},
+                                                                   {192, 5},
+                                                                   {256, 4}}};
     auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-
-    for (auto &testInput : grfTestInputs) {
-        auto expected = testInput.expectedThreadCountPerEu * hardwareInfo.gtSystemInfo.EUCount;
-        auto result = hwHelper.calculateAvailableThreadCount(
-            hardwareInfo.platform.eProductFamily,
-            testInput.grfCount,
-            hardwareInfo.gtSystemInfo.EUCount,
-            hardwareInfo.gtSystemInfo.ThreadCount / hardwareInfo.gtSystemInfo.EUCount);
+    for (const auto &[grfCount, expectedThreadCountPerEu] : grfTestInputs) {
+        auto expected = expectedThreadCountPerEu * hardwareInfo.gtSystemInfo.EUCount;
+        auto result = hwHelper.calculateAvailableThreadCount(hardwareInfo, grfCount);
         EXPECT_EQ(expected, result);
+    }
+}
+
+HWTEST2_F(HwHelperTestPvcAndLater, GivenModifiedGtSystemInfoAndPvcAndLaterPlatformsWhenCallingCalculateAvailableThreadCountThenCorrectValueIsReturned, IsAtLeastXeHpcCore) {
+    std::array<std::pair<uint32_t, uint32_t>, 3> testInputs = {{{64, 256},
+                                                                {96, 384},
+                                                                {128, 512}}};
+    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto hwInfo = hardwareInfo;
+    for (const auto &[euCount, expectedThreadCount] : testInputs) {
+        hwInfo.gtSystemInfo.EUCount = euCount;
+        auto result = hwHelper.calculateAvailableThreadCount(hwInfo, 256);
+        EXPECT_EQ(expectedThreadCount, result);
     }
 }
 

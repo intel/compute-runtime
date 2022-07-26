@@ -89,8 +89,7 @@ class HwHelper {
     virtual uint32_t getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const = 0;
     virtual bool isLinearStoragePreferred(bool isSharedContext, bool isImage1d, bool forceLinearStorage) = 0;
     virtual uint8_t getBarriersCountFromHasBarriers(uint8_t hasBarriers) const = 0;
-    virtual uint32_t calculateAvailableThreadCount(PRODUCT_FAMILY family, uint32_t grfCount, uint32_t euCount,
-                                                   uint32_t threadsPerEu) = 0;
+    virtual uint32_t calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount) = 0;
     virtual uint32_t alignSlmSize(uint32_t slmSize) = 0;
     virtual uint32_t computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) = 0;
 
@@ -292,7 +291,7 @@ class HwHelperHw : public HwHelper {
 
     uint8_t getBarriersCountFromHasBarriers(uint8_t hasBarriers) const override;
 
-    uint32_t calculateAvailableThreadCount(PRODUCT_FAMILY family, uint32_t grfCount, uint32_t euCount, uint32_t threadsPerEu) override;
+    uint32_t calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount) override;
 
     uint32_t alignSlmSize(uint32_t slmSize) override;
 

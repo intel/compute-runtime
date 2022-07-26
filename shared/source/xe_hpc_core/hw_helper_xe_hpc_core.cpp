@@ -116,13 +116,6 @@ bool HwHelperHw<Family>::isLinearStoragePreferred(bool isSharedContext, bool isI
 }
 
 template <>
-uint32_t HwHelperHw<Family>::calculateAvailableThreadCount(PRODUCT_FAMILY family, uint32_t grfCount, uint32_t euCount,
-                                                           uint32_t threadsPerEu) {
-    auto maxThreadsPerEuCount = 1024u / grfCount;
-    return maxThreadsPerEuCount * euCount;
-}
-
-template <>
 uint32_t HwHelperHw<Family>::getMetricsLibraryGenId() const {
     return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::XeHPC);
 }

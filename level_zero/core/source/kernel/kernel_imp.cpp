@@ -418,10 +418,7 @@ ze_result_t KernelImp::suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount
     }
     auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     auto &descriptor = kernelImmData->getDescriptor();
-    auto availableThreadCount = hwHelper.calculateAvailableThreadCount(
-        hardwareInfo.platform.eProductFamily,
-        descriptor.kernelAttributes.numGrfRequired,
-        hardwareInfo.gtSystemInfo.EUCount, hardwareInfo.gtSystemInfo.ThreadCount / hardwareInfo.gtSystemInfo.EUCount);
+    auto availableThreadCount = hwHelper.calculateAvailableThreadCount(hardwareInfo, descriptor.kernelAttributes.numGrfRequired);
 
     auto barrierCount = descriptor.kernelAttributes.barrierCount;
     const uint32_t workDim = 3;

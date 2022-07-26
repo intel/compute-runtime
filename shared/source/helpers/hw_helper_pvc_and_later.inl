@@ -72,4 +72,10 @@ size_t HwHelperHw<Family>::getPaddingForISAAllocation() const {
     return 0xE00;
 }
 
+template <>
+uint32_t HwHelperHw<Family>::calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount) {
+    auto maxThreadsPerEuCount = 1024u / grfCount;
+    return maxThreadsPerEuCount * hwInfo.gtSystemInfo.EUCount;
+}
+
 } // namespace NEO

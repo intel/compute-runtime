@@ -261,10 +261,7 @@ class KernelImpSuggestMaxCooperativeGroupCountTests : public KernelImp {
         funcInfo.kernelDescriptor = &kernelDescriptor;
         auto &hardwareInfo = device->getHwInfo();
         auto &hwHelper = device->getHwHelper();
-        availableThreadCount = hwHelper.calculateAvailableThreadCount(
-            hardwareInfo.platform.eProductFamily,
-            numGrf,
-            hardwareInfo.gtSystemInfo.EUCount, hardwareInfo.gtSystemInfo.ThreadCount / hardwareInfo.gtSystemInfo.EUCount);
+        availableThreadCount = hwHelper.calculateAvailableThreadCount(hardwareInfo, numGrf);
 
         dssCount = hardwareInfo.gtSystemInfo.DualSubSliceCount;
         if (dssCount == 0) {
