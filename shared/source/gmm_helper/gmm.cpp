@@ -18,10 +18,11 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/allocation_type.h"
+#include "shared/source/memory_manager/definitions/storage_info.h"
 
 namespace NEO {
 Gmm::Gmm(GmmHelper *gmmHelper, const void *alignedPtr, size_t alignedSize, size_t alignment, GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsage,
-         bool preferCompressed, StorageInfo storageInfo, bool allowLargePages) : gmmHelper(gmmHelper) {
+         bool preferCompressed, const StorageInfo &storageInfo, bool allowLargePages) : gmmHelper(gmmHelper) {
     resourceParams.Type = RESOURCE_BUFFER;
     resourceParams.Format = GMM_FORMAT_GENERIC_8BIT;
     resourceParams.BaseWidth64 = static_cast<uint64_t>(alignedSize);
@@ -69,7 +70,7 @@ Gmm::Gmm(GmmHelper *gmmHelper, GMM_RESOURCE_INFO *inputGmm, bool openingHandle) 
 
 Gmm::~Gmm() = default;
 
-Gmm::Gmm(GmmHelper *gmmHelper, ImageInfo &inputOutputImgInfo, StorageInfo storageInfo, bool preferCompressed) : gmmHelper(gmmHelper) {
+Gmm::Gmm(GmmHelper *gmmHelper, ImageInfo &inputOutputImgInfo, const StorageInfo &storageInfo, bool preferCompressed) : gmmHelper(gmmHelper) {
     this->resourceParams = {};
     setupImageResourceParams(inputOutputImgInfo, preferCompressed);
     applyMemoryFlags(storageInfo);
@@ -333,7 +334,7 @@ uint32_t Gmm::getAuxQPitch() {
     return this->gmmResourceInfo->getAuxQPitch();
 }
 
-void Gmm::applyMemoryFlags(StorageInfo &storageInfo) {
+void Gmm::applyMemoryFlags(const StorageInfo &storageInfo) {
     auto hardwareInfo = gmmHelper->getClientContext()->getHardwareInfo();
 
     if (hardwareInfo->featureTable.flags.ftrLocalMemory) {

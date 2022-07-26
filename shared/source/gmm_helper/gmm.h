@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/gmm_helper/gmm_lib.h"
-#include "shared/source/memory_manager/definitions/storage_info.h"
 
 #include <cstdint>
 #include <memory>
@@ -16,6 +15,7 @@ namespace NEO {
 enum class ImagePlane;
 struct HardwareInfo;
 struct ImageInfo;
+struct StorageInfo;
 class GmmResourceInfo;
 class GmmHelper;
 
@@ -23,17 +23,17 @@ class Gmm {
   public:
     virtual ~Gmm();
     Gmm() = delete;
-    Gmm(GmmHelper *gmmHelper, ImageInfo &inputOutputImgInfo, StorageInfo storageInfo, bool preferCompressed);
+    Gmm(GmmHelper *gmmHelper, ImageInfo &inputOutputImgInfo, const StorageInfo &storageInfo, bool preferCompressed);
     Gmm(GmmHelper *gmmHelper, const void *alignedPtr, size_t alignedSize, size_t alignment,
-        GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsage, bool preferCompressed, StorageInfo storageInfo, bool allowLargePages);
+        GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsage, bool preferCompressed, const StorageInfo &storageInfo, bool allowLargePages);
     Gmm(GmmHelper *gmmHelper, GMM_RESOURCE_INFO *inputGmm);
     Gmm(GmmHelper *gmmHelper, GMM_RESOURCE_INFO *inputGmm, bool openingHandle);
 
     void queryImageParams(ImageInfo &inputOutputImgInfo);
 
     void applyAuxFlagsForBuffer(bool preferCompression);
-    void applyMemoryFlags(StorageInfo &storageInfo);
-    void applyAppResource(StorageInfo &storageInfo);
+    void applyMemoryFlags(const StorageInfo &storageInfo);
+    void applyAppResource(const StorageInfo &storageInfo);
 
     bool unifiedAuxTranslationCapable() const;
     bool hasMultisampleControlSurface() const;
