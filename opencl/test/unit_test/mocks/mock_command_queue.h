@@ -206,12 +206,7 @@ class MockCommandQueue : public CommandQueue {
     cl_int enqueueResourceBarrier(BarrierCommand *resourceBarrier, cl_uint numEventsInWaitList, const cl_event *eventWaitList,
                                   cl_event *event) override { return CL_SUCCESS; }
 
-    cl_int finish() override {
-        if (finishCalled) {
-            *finishCalled = true;
-        }
-        return CL_SUCCESS;
-    }
+    cl_int finish() override { return CL_SUCCESS; }
 
     cl_int flush() override { return CL_SUCCESS; }
 
@@ -232,7 +227,6 @@ class MockCommandQueue : public CommandQueue {
     std::atomic<uint32_t> latestTaskCountWaited{std::numeric_limits<uint32_t>::max()};
     std::optional<WaitStatus> waitUntilCompleteReturnValue{};
     int waitUntilCompleteCalledCount{0};
-    bool *finishCalled = nullptr;
 };
 
 template <typename GfxFamily>

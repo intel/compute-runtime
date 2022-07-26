@@ -48,7 +48,6 @@ inline void releaseQueue(cl_command_queue commandQueue, cl_int &retVal) {
     if (queue) {
         queue->flush();
         releaseVirtualEvent(*queue);
-        queue->finishBeforeRelease();
         queue->release();
         retVal = CL_SUCCESS;
     }

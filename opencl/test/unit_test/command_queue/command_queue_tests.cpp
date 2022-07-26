@@ -1531,17 +1531,6 @@ TEST(CommandQueueDestructorTest, whenCommandQueueIsDestroyedThenDestroysTimestam
     EXPECT_EQ(1, context->getRefInternalCount()); // NOLINT(clang-analyzer-cplusplus.NewDelete)
 }
 
-TEST(CommandQueueDestructorTest, GivenCommandQueueWhenDeletedThenFinishIsCalled) {
-    auto context = std::make_unique<MockContext>();
-    EXPECT_EQ(1, context->getRefInternalCount());
-    auto queue = new MockCommandQueue(context.get(), context->getDevice(0), nullptr, false);
-    cl_int ret = 0;
-    bool finishCalled = false;
-    queue->finishCalled = &finishCalled;
-    releaseQueue(queue, ret);
-    EXPECT_TRUE(finishCalled); // NOLINT
-}
-
 TEST(CommandQueuePropertiesTests, whenGetEngineIsCalledThenQueueEngineIsReturned) {
     MockCommandQueue queue;
     EngineControl engineControl;

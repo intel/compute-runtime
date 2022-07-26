@@ -357,8 +357,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     bool isTextureCacheFlushNeeded(uint32_t commandType) const;
 
-    void finishBeforeRelease();
-
   protected:
     void *enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);
     cl_int enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr, EventsRequest &eventsRequest);

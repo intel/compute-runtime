@@ -19,9 +19,4 @@ bool CommandQueue::isTimestampWaitEnabled() {
     return ultHwConfig.useWaitForTimestamps;
 }
 
-void CommandQueue::finishBeforeRelease() {
-    *this->getHwTagAddress() = this->taskCount;
-    this->finish();
-}
-
 } // namespace NEO
