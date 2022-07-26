@@ -217,6 +217,10 @@ int IoctlHelper::getDrmParamValueBase(DrmParam drmParam) const {
         return drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE;
     case DrmParam::MemoryClassSystem:
         return drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM;
+    case DrmParam::MmapOffsetWb:
+        return I915_MMAP_OFFSET_WB;
+    case DrmParam::MmapOffsetWc:
+        return I915_MMAP_OFFSET_WC;
     case DrmParam::ParamChipsetId:
         return I915_PARAM_CHIPSET_ID;
     case DrmParam::ParamRevision:
