@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,8 @@ namespace L0 {
 class PinContext {
   public:
     static ze_result_t init();
+    using OsLibraryLoadPtr = std::add_pointer<NEO::OsLibrary *(const std::string &)>::type;
+    static OsLibraryLoadPtr osLibraryLoadFunction;
 
   private:
     static const std::string gtPinLibraryFilename;

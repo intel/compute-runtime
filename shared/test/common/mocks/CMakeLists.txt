@@ -76,6 +76,7 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_multi_graphics_allocation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_context.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_library.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_library.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_ostime.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_physical_address_allocator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sip.cpp

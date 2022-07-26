@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,10 +11,27 @@
 
 class MockOsLibrary : public NEO::OsLibrary {
   public:
+    MockOsLibrary(void *procAddress, bool isLoaded) : getProcAddressReturn{procAddress}, isLoadedReturn{isLoaded} {}
+    MockOsLibrary() {}
+
+    std::string lastRequestedProcName;
+    void *getProcAddressReturn = nullptr;
+
     void *getProcAddress(const std::string &procName) override {
-        return nullptr;
+        lastRequestedProcName = procName;
+        return getProcAddressReturn;
     }
+
+    bool isLoadedReturn = false;
+
     bool isLoaded() override {
-        return false;
+        return isLoadedReturn;
+    }
+
+    static OsLibrary *loadLibraryNewObject;
+
+    static OsLibrary *load(const std::string &name) {
+        OsLibrary *ptr = loadLibraryNewObject;
+        return ptr;
     }
 };

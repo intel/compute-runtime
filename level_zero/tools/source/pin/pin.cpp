@@ -18,27 +18,28 @@ const std::string gtPinOpenFunctionName = "OpenGTPin";
 
 namespace L0 {
 
-ze_result_t PinContext::init() {
-    std::unique_ptr<NEO::OsLibrary> hGtPinLibrary = nullptr;
+PinContext::OsLibraryLoadPtr PinContext::osLibraryLoadFunction(NEO::OsLibrary::load);
 
-    hGtPinLibrary.reset(NEO::OsLibrary::load(gtPinLibraryFilename.c_str()));
-    if (hGtPinLibrary.get() == nullptr) {
+ze_result_t PinContext::init() {
+    NEO::OsLibrary *hGtPinLibrary = nullptr;
+
+    hGtPinLibrary = PinContext::osLibraryLoadFunction(gtPinLibraryFilename.c_str());
+
+    if (hGtPinLibrary == nullptr) {
         PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Unable to find gtpin library %s\n", gtPinLibraryFilename.c_str());
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
 
     OpenGTPin_fn openGTPin = reinterpret_cast<OpenGTPin_fn>(hGtPinLibrary->getProcAddress(gtPinOpenFunctionName.c_str()));
     if (openGTPin == nullptr) {
-        hGtPinLibrary.reset(nullptr);
         PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Unable to find gtpin library open function symbol %s\n", gtPinOpenFunctionName.c_str());
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
 
     uint32_t openResult = openGTPin(nullptr);
     if (openResult != 0) {
-        hGtPinLibrary.reset(nullptr);
         PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "gtpin library open %s failed with status %u\n", gtPinOpenFunctionName.c_str(), openResult);
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
 
     return ZE_RESULT_SUCCESS;
