@@ -899,30 +899,12 @@ bool ModuleImp::linkBinary() {
 }
 
 ze_result_t ModuleImp::getFunctionPointer(const char *pFunctionName, void **pfnFunction) {
-    // Check if the function is in the exported symbol table
+    // Check if the function is in the exported symbol table, if the symbol cannot be found then this function name is invalid.
     auto symbolIt = symbols.find(pFunctionName);
-    if ((symbolIt != symbols.end()) && (symbolIt->second.symbol.segment == NEO::SegmentType::Instructions)) {
-        *pfnFunction = reinterpret_cast<void *>(symbolIt->second.gpuAddress);
-    }
-    // If the Function Pointer is not in the exported symbol table, then this function might be a kernel.
-    // Check if the function name matches a kernel and return the gpu address to that function
-    if (*pfnFunction == nullptr) {
-        auto kernelImmData = this->getKernelImmutableData(pFunctionName);
-        if (kernelImmData != nullptr) {
-            auto isaAllocation = kernelImmData->getIsaGraphicsAllocation();
-            *pfnFunction = reinterpret_cast<void *>(isaAllocation->getGpuAddress());
-            // Ensure that any kernel in this module which uses this kernel module function pointer has access to the memory.
-            for (auto &data : this->getKernelImmutableDataVector()) {
-                if (data.get() != kernelImmData) {
-                    data.get()->getResidencyContainer().insert(data.get()->getResidencyContainer().end(), isaAllocation);
-                }
-            }
-        }
-    }
-
-    if (*pfnFunction == nullptr) {
+    if ((symbolIt == symbols.end()) || (symbolIt->second.symbol.segment != NEO::SegmentType::Instructions)) {
         return ZE_RESULT_ERROR_INVALID_FUNCTION_NAME;
     }
+    *pfnFunction = reinterpret_cast<void *>(symbolIt->second.gpuAddress);
     return ZE_RESULT_SUCCESS;
 }
 
