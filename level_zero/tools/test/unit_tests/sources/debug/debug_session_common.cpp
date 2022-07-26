@@ -57,6 +57,9 @@ void initStateSaveArea(std::vector<char> &stateSaveArea, SIP::version version) {
     // grfs for 0/0/0/0 - very first eu thread
     fillRegsetForThread(&pStateSaveAreaHeader->regHeader.grf, 0, 0, 0, 0, 'a');
 
+    // grfs for 0/0/4/0 - requred to test resumeWA
+    fillRegsetForThread(&pStateSaveAreaHeader->regHeader.grf, 0, 0, 4, 0, 'a');
+
     if (version.major < 2) {
         // grfs for 0/3/7/3 - somewhere in the middle
         fillRegsetForThread(&pStateSaveAreaHeader->regHeader.grf, 0, 3, 7, 3, 'a');

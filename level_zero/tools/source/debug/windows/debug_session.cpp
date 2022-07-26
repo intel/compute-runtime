@@ -376,7 +376,7 @@ ze_result_t DebugSessionWindows::acknowledgeEventImp(uint32_t seqNo, uint32_t ev
         return DebugSessionWindows::translateEscapeReturnStatusToZeResult(escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
     }
 
-    PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_ACKNOWLEDGE_EVENT - Success\n", status, escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+    PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_ACKNOWLEDGE_EVENT - Success\n");
     return ZE_RESULT_SUCCESS;
 }
 
@@ -520,11 +520,51 @@ ze_result_t DebugSessionWindows::acknowledgeEvent(const zet_debug_event_t *event
 }
 
 ze_result_t DebugSessionWindows::resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    auto hwInfo = connectedDevice->getHwInfo();
+    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t bitmaskSize = 0;
+    l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+    applyResumeWa(bitmask.get(), bitmaskSize);
+    printBitmask(bitmask.get(), bitmaskSize);
+
+    KM_ESCAPE_INFO escapeInfo = {0};
+    escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_EU_CONTROL_CLR_ATT_BIT;
+    escapeInfo.KmEuDbgL0EscapeInfo.EuControlClrAttBitParams.BitmaskArrayPtr = reinterpret_cast<uint64_t>(bitmask.get());
+    escapeInfo.KmEuDbgL0EscapeInfo.EuControlClrAttBitParams.BitMaskSizeInBytes = static_cast<uint32_t>(bitmaskSize);
+
+    auto status = runEscape(escapeInfo);
+    if (STATUS_SUCCESS != status) {
+        PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_EU_CONTROL_CLR_ATT_BIT: Failed - Status: 0x%llX EscapeReturnStatus: %d\n", status, escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+        return DebugSessionWindows::translateNtStatusToZeResult(status);
+    }
+
+    if (DBGUMD_RETURN_ESCAPE_SUCCESS != escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus) {
+        PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_EU_CONTROL_CLR_ATT_BIT: Failed - Status: 0x%llX EscapeReturnStatus: %d\n", status, escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+        return DebugSessionWindows::translateEscapeReturnStatusToZeResult(escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+    }
+
+    PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_EU_CONTROL_CLR_ATT_BIT - Success\n");
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t DebugSessionWindows::interruptImp(uint32_t deviceIndex) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    KM_ESCAPE_INFO escapeInfo = {0};
+    escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_EU_CONTROL_INT_ALL;
+
+    auto status = runEscape(escapeInfo);
+    if (STATUS_SUCCESS != status) {
+        PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_EU_CONTROL_INT_ALL: Failed - Status: 0x%llX EscapeReturnStatus: %d\n", status, escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+        return DebugSessionWindows::translateNtStatusToZeResult(status);
+    }
+
+    if (DBGUMD_RETURN_ESCAPE_SUCCESS != escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus) {
+        PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_EU_CONTROL_INT_ALL: Failed - Status: 0x%llX EscapeReturnStatus: %d\n", status, escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+        return DebugSessionWindows::translateEscapeReturnStatusToZeResult(escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+    }
+
+    PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_EU_CONTROL_INT_ALL - Success\n");
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t DebugSessionWindows::readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) {

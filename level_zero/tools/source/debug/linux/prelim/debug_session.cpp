@@ -1616,24 +1616,6 @@ uint64_t DebugSessionLinux::getContextStateSaveAreaGpuVa(uint64_t memoryHandle) 
     return bindInfo->second.gpuVa;
 }
 
-void DebugSessionLinux::applyResumeWa(uint8_t *bitmask, size_t bitmaskSize) {
-
-    UNRECOVERABLE_IF(bitmaskSize % 8 != 0);
-
-    auto hwInfo = connectedDevice->getHwInfo();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-
-    if (l0HwHelper.isResumeWARequired()) {
-
-        uint32_t *dwordBitmask = reinterpret_cast<uint32_t *>(bitmask);
-        for (uint32_t i = 0; i < bitmaskSize / sizeof(uint32_t) - 1; i = i + 2) {
-            dwordBitmask[i] = dwordBitmask[i] | dwordBitmask[i + 1];
-            dwordBitmask[i + 1] = dwordBitmask[i] | dwordBitmask[i + 1];
-        }
-    }
-    return;
-}
-
 uint32_t DebugSessionLinux::getDeviceIndexFromApiThread(ze_device_thread_t thread) {
     uint32_t deviceIndex = 0;
     auto deviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());

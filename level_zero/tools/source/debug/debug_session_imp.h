@@ -63,6 +63,7 @@ struct DebugSessionImp : DebugSession {
     MOCKABLE_VIRTUAL ze_result_t writeRegistersImp(EuThread::ThreadId thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues);
     Error resumeThreadsWithinDevice(uint32_t deviceIndex, ze_device_thread_t physicalThread);
     MOCKABLE_VIRTUAL bool writeResumeCommand(const std::vector<EuThread::ThreadId> &threadIds);
+    void applyResumeWa(uint8_t *bitmask, size_t bitmaskSize);
     MOCKABLE_VIRTUAL bool checkThreadIsResumed(const EuThread::ThreadId &threadID);
 
     virtual ze_result_t resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) = 0;

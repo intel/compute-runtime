@@ -388,6 +388,24 @@ DebugSessionImp::Error DebugSessionImp::resumeThreadsWithinDevice(uint32_t devic
     return retVal;
 }
 
+void DebugSessionImp::applyResumeWa(uint8_t *bitmask, size_t bitmaskSize) {
+
+    UNRECOVERABLE_IF(bitmaskSize % 8 != 0);
+
+    auto hwInfo = connectedDevice->getHwInfo();
+    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    if (l0HwHelper.isResumeWARequired()) {
+
+        uint32_t *dwordBitmask = reinterpret_cast<uint32_t *>(bitmask);
+        for (uint32_t i = 0; i < bitmaskSize / sizeof(uint32_t) - 1; i = i + 2) {
+            dwordBitmask[i] = dwordBitmask[i] | dwordBitmask[i + 1];
+            dwordBitmask[i + 1] = dwordBitmask[i] | dwordBitmask[i + 1];
+        }
+    }
+    return;
+}
+
 bool DebugSessionImp::writeResumeCommand(const std::vector<EuThread::ThreadId> &threadIds) {
     auto stateSaveAreaHeader = getStateSaveAreaHeader();
     bool success = true;

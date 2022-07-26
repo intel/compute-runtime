@@ -28,7 +28,9 @@ struct MockDebugSessionWindows : DebugSessionWindows {
     using DebugSessionWindows::allContexts;
     using DebugSessionWindows::allElfs;
     using DebugSessionWindows::allModules;
+    using DebugSessionWindows::allThreads;
     using DebugSessionWindows::asyncThread;
+    using DebugSessionWindows::calculateThreadSlotOffset;
     using DebugSessionWindows::closeAsyncThread;
     using DebugSessionWindows::debugArea;
     using DebugSessionWindows::debugAreaVA;
@@ -37,6 +39,7 @@ struct MockDebugSessionWindows : DebugSessionWindows {
     using DebugSessionWindows::eventsToAck;
     using DebugSessionWindows::getSbaBufferGpuVa;
     using DebugSessionWindows::initialize;
+    using DebugSessionWindows::interruptImp;
     using DebugSessionWindows::invalidHandle;
     using DebugSessionWindows::moduleDebugAreaCaptured;
     using DebugSessionWindows::processId;
@@ -47,13 +50,13 @@ struct MockDebugSessionWindows : DebugSessionWindows {
     using DebugSessionWindows::readModuleDebugArea;
     using DebugSessionWindows::readSbaBuffer;
     using DebugSessionWindows::readStateSaveAreaHeader;
+    using DebugSessionWindows::resumeImp;
     using DebugSessionWindows::runEscape;
     using DebugSessionWindows::startAsyncThread;
     using DebugSessionWindows::stateSaveAreaCaptured;
     using DebugSessionWindows::stateSaveAreaVA;
     using DebugSessionWindows::wddm;
     using DebugSessionWindows::writeGpuMemory;
-    using L0::DebugSessionImp::allThreads;
     using L0::DebugSessionImp::apiEvents;
     using L0::DebugSessionImp::attachTile;
     using L0::DebugSessionImp::cleanRootSessionAfterDetach;
@@ -1686,6 +1689,97 @@ TEST_F(DebugApiWindowsTest, GivenErrorCasesWhenReadingStateSaveAreThenMemoryIsNo
     mockWddm->escapeReturnStatus = DBGUMD_RETURN_INVALID_ARGS;
     session->readStateSaveAreaHeader();
     ASSERT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
+}
+
+TEST_F(DebugApiWindowsTest, GivenErrorCasesWhenInterruptImpIsCalledThenErrorIsReturned) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+    session->wddm = mockWddm;
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+
+    mockWddm->ntStatus = STATUS_WAIT_1;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->interruptImp(0));
+    EXPECT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_EU_CONTROL_INT_ALL]);
+
+    mockWddm->ntStatus = STATUS_SUCCESS;
+    mockWddm->escapeReturnStatus = DBGUMD_RETURN_DEBUGGER_ATTACH_DEVICE_BUSY;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, session->interruptImp(0));
+    EXPECT_EQ(2u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_EU_CONTROL_INT_ALL]);
+}
+
+TEST_F(DebugApiWindowsTest, GivenInterruptImpSucceededThenSuccessIsReturned) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+    session->wddm = mockWddm;
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->interruptImp(0));
+    EXPECT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_EU_CONTROL_INT_ALL]);
+}
+
+TEST_F(DebugApiWindowsTest, GivenErrorCasesWhenResumeImpIsCalledThenErrorIsReturned) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+    session->wddm = mockWddm;
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+
+    std::vector<EuThread::ThreadId> threads{{0, 0, 0, 0, 0}, {0, 0, 0, 0, 1}};
+
+    mockWddm->ntStatus = STATUS_WAIT_1;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->resumeImp(threads, 0));
+    EXPECT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_EU_CONTROL_CLR_ATT_BIT]);
+
+    mockWddm->ntStatus = STATUS_SUCCESS;
+    mockWddm->escapeReturnStatus = DBGUMD_RETURN_DEBUGGER_ATTACH_DEVICE_BUSY;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, session->resumeImp(threads, 0));
+    EXPECT_EQ(2u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_EU_CONTROL_CLR_ATT_BIT]);
+}
+
+TEST_F(DebugApiWindowsTest, GivenResumeWARequiredWhenCallingResumeThenWaIsAppliedToBitmask) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+
+    SIP::version version = {2, 0, 0};
+    initStateSaveArea(session->stateSaveAreaHeader, version);
+    session->stateSaveAreaVA = reinterpret_cast<uint64_t>(session->stateSaveAreaHeader.data());
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+
+    mockWddm->srcReadBuffer = mockWddm->dstWriteBuffer = session->stateSaveAreaHeader.data();
+    mockWddm->srcReadBufferBaseAddress = mockWddm->dstWriteBufferBaseAddress = session->stateSaveAreaVA;
+    session->wddm = mockWddm;
+
+    ze_device_thread_t thread = {0, 0, 0, 0};
+    session->allThreads[EuThread::ThreadId(0, thread)]->stopThread(1u);
+
+    auto result = session->resume(thread);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_EU_CONTROL_CLR_ATT_BIT]);
+
+    auto bitmask = mockWddm->euControlBitmask.get();
+    EXPECT_EQ(1u, bitmask[0]);
+
+    auto &l0HwHelper = L0HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    if (l0HwHelper.isResumeWARequired()) {
+        EXPECT_EQ(1u, bitmask[4]);
+    } else {
+        EXPECT_EQ(0u, bitmask[4]);
+    }
+
+    thread = {0, 0, 4, 0};
+    session->allThreads[EuThread::ThreadId(0, thread)]->stopThread(1u);
+
+    result = session->resume(thread);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    bitmask = mockWddm->euControlBitmask.get();
+
+    if (l0HwHelper.isResumeWARequired()) {
+        EXPECT_EQ(1u, bitmask[0]);
+        EXPECT_EQ(1u, bitmask[4]);
+    } else {
+        EXPECT_EQ(0u, bitmask[0]);
+        EXPECT_EQ(1u, bitmask[4]);
+    }
 }
 
 } // namespace ult

@@ -102,7 +102,12 @@ struct WddmEuDebugInterfaceMock : public WddmMock {
         case DBGUMD_ACTION_WRITE_GFX_MEMORY: {
             void *src = reinterpret_cast<void *>(pEscapeInfo->KmEuDbgL0EscapeInfo.ReadGfxMemoryParams.MemoryBufferPtr);
             size_t size = pEscapeInfo->KmEuDbgL0EscapeInfo.ReadGfxMemoryParams.MemoryBufferSize;
-            memcpy(testBuffer, src, size);
+            if (dstWriteBuffer) {
+                auto offsetInMemory = pEscapeInfo->KmEuDbgL0EscapeInfo.ReadGfxMemoryParams.GpuVirtualAddr - dstWriteBufferBaseAddress;
+                memcpy(reinterpret_cast<char *>(dstWriteBuffer) + offsetInMemory, src, size);
+            } else {
+                memcpy(testBuffer, src, size);
+            }
             pEscapeInfo->KmEuDbgL0EscapeInfo.EscapeReturnStatus = escapeReturnStatus;
             break;
         }
@@ -121,6 +126,17 @@ struct WddmEuDebugInterfaceMock : public WddmMock {
                 memcpy(reinterpret_cast<void *>(pEscapeInfo->KmEuDbgL0EscapeInfo.ReadUmdMemoryParams.BufferPtr), elfData, pEscapeInfo->KmEuDbgL0EscapeInfo.ReadUmdMemoryParams.BufferSize);
             }
             pEscapeInfo->KmEuDbgL0EscapeInfo.EscapeReturnStatus = escapeReturnStatus;
+            break;
+        }
+        case DBGUMD_ACTION_EU_CONTROL_CLR_ATT_BIT: {
+            if (pEscapeInfo->KmEuDbgL0EscapeInfo.EuControlClrAttBitParams.BitMaskSizeInBytes != 0) {
+                euControlBitmaskSize = pEscapeInfo->KmEuDbgL0EscapeInfo.EuControlClrAttBitParams.BitMaskSizeInBytes;
+                euControlBitmask = std::make_unique<uint8_t[]>(euControlBitmaskSize);
+                memcpy(euControlBitmask.get(), reinterpret_cast<void *>(pEscapeInfo->KmEuDbgL0EscapeInfo.EuControlClrAttBitParams.BitmaskArrayPtr), euControlBitmaskSize);
+            }
+            break;
+        }
+        case DBGUMD_ACTION_EU_CONTROL_INT_ALL: {
             break;
         }
         }
@@ -179,6 +195,11 @@ struct WddmEuDebugInterfaceMock : public WddmMock {
     uint64_t mockGpuVa = 0x12345678;
     void *srcReadBuffer = nullptr;
     uint64_t srcReadBufferBaseAddress = 0;
+    void *dstWriteBuffer = nullptr;
+    uint64_t dstWriteBufferBaseAddress = 0;
+
+    std::unique_ptr<uint8_t[]> euControlBitmask;
+    size_t euControlBitmaskSize = 0;
 };
 
 } // namespace NEO

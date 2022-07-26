@@ -248,8 +248,6 @@ struct DebugSessionLinux : DebugSessionImp {
     ze_result_t readSbaBuffer(EuThread::ThreadId, NEO::SbaTrackedAddresses &sbaBuffer) override;
     void readStateSaveAreaHeader() override;
 
-    void applyResumeWa(uint8_t *bitmask, size_t bitmaskSize);
-
     ze_result_t readGpuMemory(uint64_t vmHandle, char *output, size_t size, uint64_t gpuVa) override;
     ze_result_t writeGpuMemory(uint64_t vmHandle, const char *input, size_t size, uint64_t gpuVa) override;
     ze_result_t getISAVMHandle(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t &vmHandle);
