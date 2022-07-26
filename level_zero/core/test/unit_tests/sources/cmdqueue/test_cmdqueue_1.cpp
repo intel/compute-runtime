@@ -11,6 +11,7 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_logical_state_helper.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -277,6 +278,79 @@ HWTEST_F(CommandQueueCreate, given100CmdListsWhenExecutingThenCommandStreamIsNot
 
     size_t maxSize = 2 * streamSizeMinimum;
     EXPECT_GT(maxSize, sizeAfter - sizeBefore);
+
+    commandQueue->destroy();
+}
+
+HWTEST_F(CommandQueueCreate, givenLogicalStateHelperWhenExecutingThenMergeStates) {
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+
+    auto mockCsrLogicalStateHelper = new NEO::LogicalStateHelperMock<FamilyType>();
+    auto mockCmdListLogicalStateHelper = new NEO::LogicalStateHelperMock<FamilyType>();
+
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
+    ultCsr->logicalStateHelper.reset(mockCsrLogicalStateHelper);
+
+    Mock<Kernel> kernel;
+    kernel.immutableData.device = device;
+
+    auto commandList = std::unique_ptr<L0::ult::CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    commandList->nonImmediateLogicalStateHelper.reset(mockCmdListLogicalStateHelper);
+
+    ze_group_count_t dispatchFunctionArguments{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    commandList->appendLaunchKernel(kernel.toHandle(), &dispatchFunctionArguments, nullptr, 0, nullptr, launchParams);
+
+    ze_command_list_handle_t cmdListHandles = commandList->toHandle();
+
+    commandQueue->executeCommandLists(1, &cmdListHandles, nullptr, false);
+
+    EXPECT_EQ(1u, mockCsrLogicalStateHelper->mergePipelinedStateCounter);
+    EXPECT_EQ(mockCmdListLogicalStateHelper, mockCsrLogicalStateHelper->latestInputLogicalStateHelperForMerge);
+    EXPECT_EQ(0u, mockCmdListLogicalStateHelper->mergePipelinedStateCounter);
+
+    commandQueue->destroy();
+}
+
+HWTEST_F(CommandQueueCreate, givenLogicalStateHelperAndImmediateCmdListWhenExecutingThenMergeStates) {
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+
+    auto mockCsrLogicalStateHelper = new NEO::LogicalStateHelperMock<FamilyType>();
+
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
+    ultCsr->logicalStateHelper.reset(mockCsrLogicalStateHelper);
+
+    Mock<Kernel> kernel;
+    kernel.immutableData.device = device;
+
+    auto commandList = std::unique_ptr<L0::ult::CommandList>(whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue)));
+
+    ze_group_count_t dispatchFunctionArguments{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    commandList->appendLaunchKernel(kernel.toHandle(), &dispatchFunctionArguments, nullptr, 0, nullptr, launchParams);
+
+    ze_command_list_handle_t cmdListHandles = commandList->toHandle();
+
+    commandQueue->executeCommandLists(1, &cmdListHandles, nullptr, false);
+
+    EXPECT_EQ(0u, mockCsrLogicalStateHelper->mergePipelinedStateCounter);
+    EXPECT_EQ(nullptr, mockCsrLogicalStateHelper->latestInputLogicalStateHelperForMerge);
 
     commandQueue->destroy();
 }

@@ -18,6 +18,7 @@ class LogicalStateHelper {
     virtual ~LogicalStateHelper() = default;
 
     virtual void writeStreamInline(LinearStream &linearStream, bool pipelinedState) = 0;
+    virtual void mergePipelinedState(const LogicalStateHelper &inputLogicalStateHelper) {}
 
   protected:
     LogicalStateHelper() = default;

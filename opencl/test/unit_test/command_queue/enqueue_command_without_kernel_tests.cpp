@@ -67,6 +67,7 @@ HWTEST_F(EnqueueHandlerTest, givenLogicalStateHelperWhenDispatchingCommandsThenA
 
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
     auto logicalStateHelper = new LogicalStateHelperMock<FamilyType>();
+    logicalStateHelper->makeFakeStreamWrite = true;
 
     auto &ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> &>(mockCmdQ->getGpgpuCommandStreamReceiver());
     ultCsr.logicalStateHelper.reset(logicalStateHelper);

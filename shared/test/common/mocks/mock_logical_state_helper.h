@@ -21,11 +21,22 @@ class LogicalStateHelperMock : public GfxFamily::LogicalStateHelperHw {
     void writeStreamInline(LinearStream &linearStream, bool pipelinedState) override {
         writeStreamInlineCalledCounter++;
 
-        auto cmd = linearStream.getSpaceForCmd<typename GfxFamily::MI_NOOP>();
-        *cmd = GfxFamily::cmdInitNoop;
-        cmd->setIdentificationNumber(0x123);
+        if (makeFakeStreamWrite) {
+            auto cmd = linearStream.getSpaceForCmd<typename GfxFamily::MI_NOOP>();
+            *cmd = GfxFamily::cmdInitNoop;
+            cmd->setIdentificationNumber(0x123);
+        }
     }
 
+    void mergePipelinedState(const LogicalStateHelper &inputLogicalStateHelper) override {
+        mergePipelinedStateCounter++;
+
+        latestInputLogicalStateHelperForMerge = &inputLogicalStateHelper;
+    }
+
+    const LogicalStateHelper *latestInputLogicalStateHelperForMerge = nullptr;
     uint32_t writeStreamInlineCalledCounter = 0;
+    uint32_t mergePipelinedStateCounter = 0;
+    bool makeFakeStreamWrite = false;
 };
 } // namespace NEO

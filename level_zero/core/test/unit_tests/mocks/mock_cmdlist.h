@@ -140,6 +140,7 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandListImp {
     using BaseClass::commandListPreemptionMode;
     using BaseClass::csr;
     using BaseClass::initialize;
+    using BaseClass::nonImmediateLogicalStateHelper;
     using BaseClass::partitionCount;
 
     WhiteBox(Device *device);

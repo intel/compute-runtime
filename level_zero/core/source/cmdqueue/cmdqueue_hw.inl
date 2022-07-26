@@ -434,6 +434,11 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         printfFunctionContainer.insert(printfFunctionContainer.end(),
                                        commandList->getPrintfFunctionContainer().begin(),
                                        commandList->getPrintfFunctionContainer().end());
+
+        auto commandListImp = static_cast<CommandListImp *>(commandList);
+        if (!immediateMode && commandListImp->getLogicalStateHelper()) {
+            csr->getLogicalStateHelper()->mergePipelinedState(*commandListImp->getLogicalStateHelper());
+        }
     }
 
     if (performMigration) {
