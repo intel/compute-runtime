@@ -209,6 +209,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ReadBackCommandBufferAllocation, -1, "Read comma
 DECLARE_DEBUG_VARIABLE(int32_t, UseContextEndOffsetForEventCompletion, -1, "Use Context End or Context Start for event completion signalling. -1: default: platform dependent, 0 - Use Context Start, 1 - Use Context End")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceWddmLowPriorityContextValue, -1, "Force scheduling priority value during Wddm low priority context creation. -1 - default.")
 DECLARE_DEBUG_VARIABLE(int32_t, FailBuildProgramWithStatefulAccess, -1, "-1: default, 0: disable, 1: enable, Fail build program/module creation whenever stateful access is discovered (except built in kernels).")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceImagesSupport, -1, "-1: default, 0: disable, 1: enable. Override support for Images.")
 DECLARE_DEBUG_VARIABLE(bool, DisableScratchPages, false, "Disable scratch pages during VM creations")
 DECLARE_DEBUG_VARIABLE(std::string, OverrideDeviceName, std::string("unk"), "Device name to override")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideL1CachePolicyInSurfaceStateAndStateless, -1, "-1: default, >=0 : following policy will be programmed in render surface state (for regular buffers) and stateless L1 caching")

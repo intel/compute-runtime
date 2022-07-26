@@ -106,6 +106,22 @@ TEST_F(DeviceFactoryTest, WhenOverridingUsingDebugManagerThenOverridesAreApplied
               hwInfo->capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds);
 }
 
+TEST_F(DeviceFactoryTest, givenDebugFlagSetWhenCreatingDevicesThenForceImagesSupport) {
+    DebugManagerStateRestore stateRestore;
+
+    for (int32_t flag : {0, 1}) {
+        DebugManager.flags.ForceImagesSupport.set(flag);
+
+        MockExecutionEnvironment mockExecutionEnvironment(defaultHwInfo.get());
+
+        auto success = DeviceFactory::prepareDeviceEnvironments(mockExecutionEnvironment);
+        ASSERT_TRUE(success);
+        auto hwInfo = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
+
+        EXPECT_EQ(!!flag, hwInfo->capabilityTable.supportsImages);
+    }
+}
+
 TEST_F(DeviceFactoryTest, givenZeAffinityMaskSetWhenCreateDevicesThenProperNumberOfDevicesIsReturned) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleRootDevices.set(5);

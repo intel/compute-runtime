@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,6 +55,11 @@ int HwInfoConfig::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo
     if (ret != 0) {
         *outHwInfo = {};
     }
+
+    if (DebugManager.flags.ForceImagesSupport.get() != -1) {
+        outHwInfo->capabilityTable.supportsImages = DebugManager.flags.ForceImagesSupport.get();
+    }
+
     return ret;
 }
 
