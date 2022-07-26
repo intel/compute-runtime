@@ -101,6 +101,11 @@ class MockDebuggerL0Hw : public NEO::DebuggerL0Hw<GfxFamily> {
         NEO::DebuggerL0Hw<GfxFamily>::notifyModuleCreate(module, moduleSize, moduleLoadAddress);
     }
 
+    void notifyModuleDestroy(uint64_t moduleLoadAddress) override {
+        notifyModuleDestroyCount++;
+        NEO::DebuggerL0Hw<GfxFamily>::notifyModuleDestroy(moduleLoadAddress);
+    }
+
     uint32_t captureStateBaseAddressCount = 0;
     uint32_t programSbaTrackingCommandsCount = 0;
     uint32_t getSbaTrackingCommandsSizeCount = 0;
@@ -109,6 +114,7 @@ class MockDebuggerL0Hw : public NEO::DebuggerL0Hw<GfxFamily> {
     uint32_t commandQueueDestroyedCount = 0;
     uint32_t registerAllocationTypeCount = 0;
     uint32_t notifyModuleCreateCount = 0;
+    uint32_t notifyModuleDestroyCount = 0;
     const char *lastReceivedElf = nullptr;
 
     uint32_t segmentCountWithAttachedModuleHandle = 0;

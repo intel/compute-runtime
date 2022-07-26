@@ -16,6 +16,7 @@
 #include "shared/test/common/mocks/windows/mock_wddm_eudebug.h"
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
@@ -108,7 +109,7 @@ HWTEST_F(L0DebuggerWindowsTest, givenDebuggingEnabledAndCommandQueuesAreCreatedA
 TEST_F(L0DebuggerWindowsTest, givenAllocateGraphicsMemoryWhenAllocationRegistrationIsRequiredThenAllocationIsRegistered) {
     auto memoryManager = executionEnvironment->memoryManager.get();
 
-    EXPECT_GE(wddm->registerAllocationTypeCalled, 3u); // At least 1xSBA + 1xMODULE_DEBUG + 1xSTATE_SAVE_AREA during DebuggerL0 init
+    EXPECT_LE(3u, wddm->registerAllocationTypeCalled); // At least 1xSBA + 1xMODULE_DEBUG + 1xSTATE_SAVE_AREA during DebuggerL0 init
     uint32_t registerAllocationTypeCalled = wddm->registerAllocationTypeCalled;
     for (auto allocationType : {AllocationType::DEBUG_CONTEXT_SAVE_AREA,
                                 AllocationType::DEBUG_SBA_TRACKING_BUFFER,
@@ -129,7 +130,7 @@ TEST_F(L0DebuggerWindowsTest, givenAllocateGraphicsMemoryWhenAllocationRegistrat
 TEST_F(L0DebuggerWindowsTest, givenAllocateGraphicsMemoryWhenAllocationRegistrationIsNotRequiredThenAllocationIsNotRegistered) {
     auto memoryManager = executionEnvironment->memoryManager.get();
 
-    EXPECT_GE(wddm->registerAllocationTypeCalled, 3u); // At least 1xSBA + 1xMODULE_DEBUG + 1xSTATE_SAVE_AREA during DebuggerL0 init
+    EXPECT_LE(3u, wddm->registerAllocationTypeCalled); // At least 1xSBA + 1xMODULE_DEBUG + 1xSTATE_SAVE_AREA during DebuggerL0 init
     uint32_t registerAllocationTypeCalled = wddm->registerAllocationTypeCalled;
     auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0u, MemoryConstants::pageSize, AllocationType::BUFFER}));
     EXPECT_EQ(registerAllocationTypeCalled, wddm->registerAllocationTypeCalled);
@@ -140,34 +141,58 @@ TEST_F(L0DebuggerWindowsTest, givenDebuggerL0NotifyModuleCreateCalledAndCreateDe
     wddm->createDebugDataPassedParam.ntStatus = STATUS_UNSUCCESSFUL;
     auto debugger = static_cast<DebuggerL0 *>(neoDevice->getDebugger());
     debugger->notifyModuleCreate((void *)0x12345678, 0x1000, 0x80000000);
-    EXPECT_EQ(wddm->createDebugDataCalled, 1u);
-    EXPECT_EQ(wddm->createDebugDataPassedParam.param.hElfAddressPtr, 0xDEADDEADu);
-    EXPECT_EQ(wddm->moduleCreateNotifyCalled, 0);
+    EXPECT_EQ(1u, wddm->createDebugDataCalled);
+    EXPECT_EQ(0xDEADDEADu, wddm->createDebugDataPassedParam.param.hElfAddressPtr);
+    EXPECT_EQ(0, wddm->moduleCreateNotifyCalled);
 }
 
 TEST_F(L0DebuggerWindowsTest, givenDebuggerL0NotifyModuleCreateCalledAndModuleCreateNotifyEscapeIsFailedThenModuleIsNotRegistered) {
     wddm->moduleCreateNotificationPassedParam.ntStatus = STATUS_UNSUCCESSFUL;
     auto debugger = static_cast<DebuggerL0 *>(neoDevice->getDebugger());
     debugger->notifyModuleCreate((void *)0x12345678, 0x1000, 0x80000000);
-    EXPECT_EQ(wddm->createDebugDataCalled, 1u);
-    EXPECT_EQ(wddm->createDebugDataPassedParam.param.hElfAddressPtr, 0x12345678u);
-    EXPECT_EQ(wddm->moduleCreateNotifyCalled, 1u);
-    EXPECT_EQ(wddm->moduleCreateNotificationPassedParam.param.hElfAddressPtr, 0xDEADDEADu);
+    EXPECT_EQ(1u, wddm->createDebugDataCalled);
+    EXPECT_EQ(0x12345678u, wddm->createDebugDataPassedParam.param.hElfAddressPtr);
+    EXPECT_EQ(1u, wddm->moduleCreateNotifyCalled);
+    EXPECT_EQ(0xDEADDEADu, wddm->moduleCreateNotificationPassedParam.param.hElfAddressPtr);
 }
 
 TEST_F(L0DebuggerWindowsTest, givenDebuggerL0NotifyModuleCreateCalledThenCreateDebugDataAndModuleCreateNotifyEscapesAreCalled) {
     auto debugger = static_cast<DebuggerL0 *>(neoDevice->getDebugger());
     debugger->notifyModuleCreate((void *)0x12345678, 0x1000, 0x80000000);
-    EXPECT_EQ(wddm->createDebugDataCalled, 1u);
-    EXPECT_EQ(wddm->createDebugDataPassedParam.param.DebugDataType, ELF_BINARY);
-    EXPECT_EQ(wddm->createDebugDataPassedParam.param.DataSize, 0x1000);
-    EXPECT_EQ(wddm->createDebugDataPassedParam.param.hElfAddressPtr, 0x12345678u);
+    EXPECT_EQ(1u, wddm->createDebugDataCalled);
+    EXPECT_EQ(ELF_BINARY, wddm->createDebugDataPassedParam.param.DebugDataType);
+    EXPECT_EQ(0x1000, wddm->createDebugDataPassedParam.param.DataSize);
+    EXPECT_EQ(0x12345678u, wddm->createDebugDataPassedParam.param.hElfAddressPtr);
 
-    EXPECT_EQ(wddm->moduleCreateNotifyCalled, 1u);
+    EXPECT_EQ(1u, wddm->moduleCreateNotifyCalled);
     EXPECT_TRUE(wddm->moduleCreateNotificationPassedParam.param.IsCreate);
-    EXPECT_EQ(wddm->moduleCreateNotificationPassedParam.param.Modulesize, 0x1000);
-    EXPECT_EQ(wddm->moduleCreateNotificationPassedParam.param.hElfAddressPtr, 0x12345678u);
-    EXPECT_EQ(wddm->moduleCreateNotificationPassedParam.param.LoadAddress, 0x80000000);
+    EXPECT_EQ(0x1000, wddm->moduleCreateNotificationPassedParam.param.Modulesize);
+    EXPECT_EQ(0x12345678u, wddm->moduleCreateNotificationPassedParam.param.hElfAddressPtr);
+    EXPECT_EQ(0x80000000, wddm->moduleCreateNotificationPassedParam.param.LoadAddress);
+}
+
+TEST_F(L0DebuggerWindowsTest, givenDebuggerL0NotifyModuleDestroyCalledThenModuleDestroyNotifyEscapeIsCalled) {
+    auto debugger = static_cast<DebuggerL0 *>(neoDevice->getDebugger());
+    debugger->notifyModuleDestroy(0x80000000);
+
+    EXPECT_EQ(1u, wddm->moduleCreateNotifyCalled);
+    EXPECT_FALSE(wddm->moduleCreateNotificationPassedParam.param.IsCreate);
+    EXPECT_EQ(0x1000, wddm->moduleCreateNotificationPassedParam.param.Modulesize);
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(), wddm->moduleCreateNotificationPassedParam.param.hElfAddressPtr);
+    EXPECT_EQ(0x80000000, wddm->moduleCreateNotificationPassedParam.param.LoadAddress);
+}
+
+TEST_F(L0DebuggerWindowsTest, givenDebuggerL0NotifyModuleDestroyCalledAndModuleDestroyNotifyEscapeIsFailedThenErrorMessageIsPrinted) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.DebuggerLogBitmask.set(255);
+
+    testing::internal::CaptureStderr();
+    wddm->moduleCreateNotificationPassedParam.ntStatus = STATUS_UNSUCCESSFUL;
+    auto debugger = static_cast<DebuggerL0 *>(neoDevice->getDebugger());
+    debugger->notifyModuleDestroy(0x80000000);
+
+    EXPECT_EQ(1u, wddm->moduleCreateNotifyCalled);
+    EXPECT_TRUE(hasSubstr(testing::internal::GetCapturedStderr(), std::string("KM_ESCAPE_EUDBG_UMD_MODULE_DESTROY_NOTIFY: Failed - Status:")));
 }
 
 } // namespace ult

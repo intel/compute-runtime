@@ -662,8 +662,8 @@ TEST_F(DebugApiWindowsTest, givenModuleDestroyNotificationeEventTypeWhenReadAndH
     mockWddm->eventQueue[0].readEventType = DBGUMD_READ_EVENT_MODULE_CREATE_NOTIFICATION;
     mockWddm->eventQueue[0].seqNo = 123u;
     mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ModuleCreateEventParams.IsModuleCreate = false;
-    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ModuleCreateEventParams.hElfAddressPtr = 0x12345678;
-    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ModuleCreateEventParams.ElfModulesize = 0x1000;
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ModuleCreateEventParams.hElfAddressPtr = 0xDEADDEAD;
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ModuleCreateEventParams.ElfModulesize = 1;
     mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ModuleCreateEventParams.LoadAddress = 0x80000000;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, session->readAndHandleEvent(100));

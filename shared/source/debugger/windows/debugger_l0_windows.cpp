@@ -74,8 +74,7 @@ void DebuggerL0::registerAllocationType(GraphicsAllocation *allocation) {
     allocationDebugDataInfo.DataSize = sizeof(registrationData);
     allocationDebugDataInfo.DataPointer = reinterpret_cast<uint64_t>(&registrationData);
 
-    KM_ESCAPE_INFO escapeInfo;
-    memset(&escapeInfo, 0, sizeof(escapeInfo));
+    KM_ESCAPE_INFO escapeInfo = {0};
     escapeInfo.Header.EscapeCode = GFX_ESCAPE_KMD;
     escapeInfo.Header.Size = sizeof(escapeInfo) - sizeof(escapeInfo.Header);
     escapeInfo.EscapeOperation = KM_ESCAPE_EUDBG_UMD_REGISTER_ALLOCATION_TYPE;
@@ -111,8 +110,7 @@ void DebuggerL0::notifyModuleCreate(void *module, uint32_t moduleSize, uint64_t 
     }
 
     // Register ELF
-    KM_ESCAPE_INFO escapeInfo;
-    memset(&escapeInfo, 0, sizeof(escapeInfo));
+    KM_ESCAPE_INFO escapeInfo = {0};
     escapeInfo.Header.EscapeCode = GFX_ESCAPE_KMD;
     escapeInfo.Header.Size = sizeof(escapeInfo) - sizeof(escapeInfo.Header);
     escapeInfo.EscapeOperation = KM_ESCAPE_EUDBG_UMD_CREATE_DEBUG_DATA;
@@ -142,7 +140,7 @@ void DebuggerL0::notifyModuleCreate(void *module, uint32_t moduleSize, uint64_t 
     PRINT_DEBUGGER_INFO_LOG("KM_ESCAPE_EUDBG_UMD_CREATE_DEBUG_DATA - Success\n");
 
     // Fire MODULE_CREATE event
-    memset(&escapeInfo, 0, sizeof(escapeInfo));
+    escapeInfo = {0};
     escapeInfo.Header.EscapeCode = GFX_ESCAPE_KMD;
     escapeInfo.Header.Size = sizeof(escapeInfo) - sizeof(escapeInfo.Header);
     escapeInfo.EscapeOperation = KM_ESCAPE_EUDBG_UMD_MODULE_CREATE_NOTIFY;
@@ -150,8 +148,6 @@ void DebuggerL0::notifyModuleCreate(void *module, uint32_t moduleSize, uint64_t 
     escapeInfo.KmEuDbgUmdCreateModuleNotification.Modulesize = moduleSize;
     escapeInfo.KmEuDbgUmdCreateModuleNotification.hElfAddressPtr = reinterpret_cast<uint64_t>(module);
     escapeInfo.KmEuDbgUmdCreateModuleNotification.LoadAddress = moduleLoadAddress;
-
-    PRINT_DEBUGGER_INFO_LOG("Sending KM_ESCAPE_EUDBG_UMD_MODULE_CREATE_NOTIFY...\n");
 
     status = wddm->escape(escapeCommand);
 
@@ -161,6 +157,42 @@ void DebuggerL0::notifyModuleCreate(void *module, uint32_t moduleSize, uint64_t 
     }
 
     PRINT_DEBUGGER_INFO_LOG("KM_ESCAPE_EUDBG_UMD_MODULE_CREATE_NOTIFY - Success\n");
+}
+
+void DebuggerL0::notifyModuleDestroy(uint64_t moduleLoadAddress) {
+    if (device->getRootDeviceEnvironment().osInterface == nullptr) {
+        return;
+    }
+
+    KM_ESCAPE_INFO escapeInfo = {0};
+    escapeInfo.Header.EscapeCode = GFX_ESCAPE_KMD;
+    escapeInfo.Header.Size = sizeof(escapeInfo) - sizeof(escapeInfo.Header);
+    escapeInfo.EscapeOperation = KM_ESCAPE_EUDBG_UMD_MODULE_CREATE_NOTIFY;
+    escapeInfo.KmEuDbgUmdCreateModuleNotification.IsCreate = false;
+    escapeInfo.KmEuDbgUmdCreateModuleNotification.Modulesize = 0x1000;
+    escapeInfo.KmEuDbgUmdCreateModuleNotification.hElfAddressPtr = uint64_t(-1);
+    escapeInfo.KmEuDbgUmdCreateModuleNotification.LoadAddress = moduleLoadAddress;
+
+    auto wddm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Wddm>();
+
+    D3DKMT_ESCAPE escapeCommand = {0};
+    escapeCommand.Flags.HardwareAccess = 0;
+    escapeCommand.Flags.Reserved = 0;
+    escapeCommand.hAdapter = wddm->getAdapter();
+    escapeCommand.hContext = (D3DKMT_HANDLE)0;
+    escapeCommand.hDevice = wddm->getDeviceHandle();
+    escapeCommand.pPrivateDriverData = &escapeInfo;
+    escapeCommand.PrivateDriverDataSize = sizeof(escapeInfo);
+    escapeCommand.Type = D3DKMT_ESCAPE_DRIVERPRIVATE;
+
+    auto status = wddm->escape(escapeCommand);
+
+    if (STATUS_SUCCESS != status) {
+        PRINT_DEBUGGER_ERROR_LOG("KM_ESCAPE_EUDBG_UMD_MODULE_DESTROY_NOTIFY: Failed - Status: 0x%llX\n", status);
+        return;
+    }
+
+    PRINT_DEBUGGER_INFO_LOG("KM_ESCAPE_EUDBG_UMD_MODULE_DESTROY_NOTIFY - Success\n");
 }
 
 bool DebuggerL0::removeZebinModule(uint32_t moduleHandle) {

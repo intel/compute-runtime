@@ -569,6 +569,17 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
         kernelImmDatas.push_back(std::move(kernelImmData));
     }
 
+    auto refBin = ArrayRef<const uint8_t>::fromAny(translationUnit->unpackedDeviceBinary.get(), translationUnit->unpackedDeviceBinarySize);
+    if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(refBin)) {
+        isZebinBinary = true;
+    }
+
+    StackVec<NEO::GraphicsAllocation *, 32> moduleAllocs = getModuleAllocations();
+    if (!moduleAllocs.empty()) {
+        auto minGpuAddressAlloc = std::min_element(moduleAllocs.begin(), moduleAllocs.end(), [](const auto &alloc1, const auto &alloc2) { return alloc1->getGpuAddress() < alloc2->getGpuAddress(); });
+        moduleLoadAddress = (*minGpuAddressAlloc)->getGpuAddress();
+    }
+
     registerElfInDebuggerL0();
     this->maxGroupSize = static_cast<uint32_t>(this->translationUnit->device->getNEODevice()->getDeviceInfo().maxWorkGroupSize);
 
@@ -608,7 +619,7 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
 }
 
 void ModuleImp::createDebugZebin() {
-    auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(translationUnit->unpackedDeviceBinary.get()), translationUnit->unpackedDeviceBinarySize);
+    auto refBin = ArrayRef<const uint8_t>::fromAny(translationUnit->unpackedDeviceBinary.get(), translationUnit->unpackedDeviceBinarySize);
     auto segments = getZebinSegments();
     auto debugZebin = NEO::Debug::createDebugZebin(refBin, segments);
 
@@ -619,8 +630,7 @@ void ModuleImp::createDebugZebin() {
 }
 
 void ModuleImp::passDebugData() {
-    auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(translationUnit->unpackedDeviceBinary.get()), translationUnit->unpackedDeviceBinarySize);
-    if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(refBin)) {
+    if (isZebinBinary) {
         createDebugZebin();
         if (device->getSourceLevelDebugger()) {
             NEO::DebugData debugData; // pass debug zebin in vIsa field
@@ -757,8 +767,8 @@ ze_result_t ModuleImp::getDebugInfo(size_t *pDebugDataSize, uint8_t *pDebugData)
     if (translationUnit == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
-    auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(translationUnit->unpackedDeviceBinary.get()), translationUnit->unpackedDeviceBinarySize);
-    if (nullptr == translationUnit->debugData.get() && NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(refBin)) {
+
+    if (nullptr == translationUnit->debugData.get() && isZebinBinary) {
         createDebugZebin();
     }
     if (pDebugData != nullptr) {
@@ -1173,14 +1183,19 @@ bool ModuleImp::populateHostGlobalSymbolsMap(std::unordered_map<std::string, std
 }
 
 ze_result_t ModuleImp::destroy() {
+    notifyModuleDestroy();
+
     auto tempHandle = debugModuleHandle;
     auto tempDevice = device;
     delete this;
+
     if (tempDevice->getL0Debugger() && tempHandle != 0) {
         tempDevice->getL0Debugger()->removeZebinModule(tempHandle);
     }
+
     return ZE_RESULT_SUCCESS;
 }
+
 void ModuleImp::registerElfInDebuggerL0() {
     auto debuggerL0 = device->getL0Debugger();
 
@@ -1188,8 +1203,7 @@ void ModuleImp::registerElfInDebuggerL0() {
         return;
     }
 
-    auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(translationUnit->unpackedDeviceBinary.get()), translationUnit->unpackedDeviceBinarySize);
-    if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(refBin)) {
+    if (isZebinBinary) {
         size_t debugDataSize = 0;
         getDebugInfo(&debugDataSize, nullptr);
 
@@ -1238,19 +1252,14 @@ void ModuleImp::notifyModuleCreate() {
         return;
     }
 
-    auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(translationUnit->unpackedDeviceBinary.get()), translationUnit->unpackedDeviceBinarySize);
-    if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(refBin)) {
+    if (isZebinBinary) {
         size_t debugDataSize = 0;
         getDebugInfo(&debugDataSize, nullptr);
 
         NEO::DebugData debugData; // pass debug zebin in vIsa field
         debugData.vIsa = reinterpret_cast<const char *>(translationUnit->debugData.get());
         debugData.vIsaSize = static_cast<uint32_t>(translationUnit->debugDataSize);
-
-        StackVec<NEO::GraphicsAllocation *, 32> segmentAllocs = getModuleAllocations();
-
-        auto minAddressGpuAlloc = std::min_element(segmentAllocs.begin(), segmentAllocs.end(), [](const auto &alloc1, const auto &alloc2) { return alloc1->getGpuAddress() < alloc2->getGpuAddress(); });
-        debuggerL0->notifyModuleCreate(const_cast<char *>(debugData.vIsa), debugData.vIsaSize, (*minAddressGpuAlloc)->getGpuAddress());
+        debuggerL0->notifyModuleCreate(const_cast<char *>(debugData.vIsa), debugData.vIsaSize, moduleLoadAddress);
     } else {
         for (auto &kernImmData : kernelImmDatas) {
             if (kernImmData->getKernelInfo()->kernelDescriptor.external.debugData.get()) {
@@ -1266,6 +1275,24 @@ void ModuleImp::notifyModuleCreate() {
                 }
 
                 debuggerL0->notifyModuleCreate(const_cast<char *>(notifyDebugData->vIsa), notifyDebugData->vIsaSize, kernImmData->getIsaGraphicsAllocation()->getGpuAddress());
+            }
+        }
+    }
+}
+
+void ModuleImp::notifyModuleDestroy() {
+    auto debuggerL0 = device->getL0Debugger();
+
+    if (!debuggerL0) {
+        return;
+    }
+
+    if (isZebinBinary) {
+        debuggerL0->notifyModuleDestroy(moduleLoadAddress);
+    } else {
+        for (auto &kernImmData : kernelImmDatas) {
+            if (kernImmData->getKernelInfo()->kernelDescriptor.external.debugData.get()) {
+                debuggerL0->notifyModuleDestroy(kernImmData->getIsaGraphicsAllocation()->getGpuAddress());
             }
         }
     }

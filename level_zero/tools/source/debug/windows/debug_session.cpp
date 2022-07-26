@@ -201,6 +201,8 @@ ze_result_t DebugSessionWindows::handleModuleCreateEvent(uint32_t seqNo, DBGUMD_
         } else {
             auto it = std::find_if(allModules.begin(), allModules.end(), [&](auto &m) { return m.gpuAddress == moduleCreateParams.LoadAddress; });
             if (it != allModules.end()) {
+                moduleCreateParams.hElfAddressPtr = it->cpuAddress;
+                moduleCreateParams.ElfModulesize = it->size;
                 allModules.erase(it);
             }
         }

@@ -340,10 +340,13 @@ struct ModuleWithZebinFixture : public DeviceFixture {
     struct MockModuleWithZebin : public L0::ModuleImp {
         using ModuleImp::getDebugInfo;
         using ModuleImp::getZebinSegments;
+        using ModuleImp::isZebinBinary;
         using ModuleImp::kernelImmDatas;
         using ModuleImp::passDebugData;
         using ModuleImp::translationUnit;
-        MockModuleWithZebin(L0::Device *device) : ModuleImp(device, nullptr, ModuleType::User) {}
+        MockModuleWithZebin(L0::Device *device) : ModuleImp(device, nullptr, ModuleType::User) {
+            isZebinBinary = true;
+        }
 
         void addSegments() {
             kernelImmDatas.push_back(std::make_unique<MockImmutableData>(device));

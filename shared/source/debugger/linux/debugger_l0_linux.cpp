@@ -64,6 +64,8 @@ bool DebuggerL0::removeZebinModule(uint32_t moduleHandle) {
     return true;
 }
 
+void DebuggerL0::notifyModuleDestroy(uint64_t moduleLoadAddress) {}
+
 void DebuggerL0::notifyCommandQueueCreated(NEO::Device *device) {
     if (this->device->getRootDeviceEnvironment().osInterface.get() != nullptr) {
         std::unique_lock<std::mutex> commandQueueCountLock(debuggerL0Mutex);

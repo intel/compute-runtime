@@ -142,6 +142,7 @@ struct ModuleImp : public Module {
     void createDebugZebin();
     void registerElfInDebuggerL0();
     void notifyModuleCreate();
+    void notifyModuleDestroy();
     bool populateHostGlobalSymbolsMap(std::unordered_map<std::string, std::string> &devToHostNameMapping);
     StackVec<NEO::GraphicsAllocation *, 32> getModuleAllocations();
 
@@ -164,11 +165,13 @@ struct ModuleImp : public Module {
     bool debugEnabled = false;
     bool isFullyLinked = false;
     bool allocatePrivateMemoryPerDispatch = true;
+    bool isZebinBinary = false;
     ModuleType type;
     NEO::Linker::UnresolvedExternals unresolvedExternalsInfo{};
     std::set<NEO::GraphicsAllocation *> importedSymbolAllocations{};
     uint32_t debugModuleHandle = 0;
     uint32_t profileFlags = 0;
+    uint64_t moduleLoadAddress = std::numeric_limits<uint64_t>::max();
 
     NEO::Linker::PatchableSegments isaSegmentsForPatching;
     std::vector<std::vector<char>> patchedIsaTempStorage;

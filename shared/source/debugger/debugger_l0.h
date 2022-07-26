@@ -96,6 +96,7 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
     MOCKABLE_VIRTUAL void notifyCommandQueueDestroyed(NEO::Device *device);
     MOCKABLE_VIRTUAL void notifyModuleLoadAllocations(const StackVec<NEO::GraphicsAllocation *, 32> &allocs);
     MOCKABLE_VIRTUAL void notifyModuleCreate(void *module, uint32_t moduleSize, uint64_t moduleLoadAddress);
+    MOCKABLE_VIRTUAL void notifyModuleDestroy(uint64_t moduleLoadAddress);
     MOCKABLE_VIRTUAL void registerAllocationType(GraphicsAllocation *allocation);
     void initSbaTrackingMode();
 
