@@ -63,12 +63,8 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsBlockCopy(const BlitProper
         blitCmd.setSourceCompressionFormat(compressionFormat);
     }
 
-    if (MemoryPoolHelper::isSystemMemoryPool(blitProperties.dstAllocation->getMemoryPool())) {
-        blitCmd.setDestinationTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
-    }
-    if (MemoryPoolHelper::isSystemMemoryPool(blitProperties.srcAllocation->getMemoryPool())) {
-        blitCmd.setSourceTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
-    }
+    blitCmd.setDestinationTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
+    blitCmd.setSourceTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
 
     appendExtraMemoryProperties(blitCmd, rootDeviceEnvironment);
 
@@ -136,9 +132,7 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForFillBuffer(NEO::Graphic
         blitCmd.setDestinationCompressionFormat(compressionFormat);
     }
 
-    if (MemoryPoolHelper::isSystemMemoryPool(dstAlloc->getMemoryPool())) {
-        blitCmd.setDestinationTargetMemory(XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_SYSTEM_MEM);
-    }
+    blitCmd.setDestinationTargetMemory(XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_LOCAL_MEM);
 
     appendExtraMemoryProperties(blitCmd, rootDeviceEnvironment);
 
