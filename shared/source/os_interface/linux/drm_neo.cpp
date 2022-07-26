@@ -1108,7 +1108,8 @@ bool Drm::queryTopology(const HardwareInfo &hwInfo, QueryTopologyData &topologyD
 
     // fallback to DRM_I915_QUERY_TOPOLOGY_INFO
 
-    auto dataQuery = this->query(DRM_I915_QUERY_TOPOLOGY_INFO, 0);
+    request = ioctlHelper->getDrmParamValue(DrmParam::QueryTopologyInfo);
+    auto dataQuery = this->query(request, 0);
     if (dataQuery.empty()) {
         return false;
     }

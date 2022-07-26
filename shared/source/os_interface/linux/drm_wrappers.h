@@ -255,6 +255,7 @@ enum class DrmParam {
     QueryHwconfigTable,
     QueryComputeSlices,
     QueryMemoryRegions,
+    QueryTopologyInfo,
     TilingNone,
     TilingY,
 };

@@ -239,6 +239,8 @@ int IoctlHelper::getDrmParamValueBase(DrmParam drmParam) const {
         return DRM_I915_QUERY_ENGINE_INFO;
     case DrmParam::QueryMemoryRegions:
         return DRM_I915_QUERY_MEMORY_REGIONS;
+    case DrmParam::QueryTopologyInfo:
+        return DRM_I915_QUERY_TOPOLOGY_INFO;
     case DrmParam::TilingNone:
         return I915_TILING_NONE;
     case DrmParam::TilingY:
