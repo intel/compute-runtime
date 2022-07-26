@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/test/common/fixtures/memory_allocator_multi_device_fixture.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 

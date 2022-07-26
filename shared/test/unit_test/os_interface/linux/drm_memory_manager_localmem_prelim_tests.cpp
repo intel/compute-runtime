@@ -689,7 +689,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMemoryInfoWhenAllocateWithAli
     AllocationData allocationData;
     allocationData.size = MemoryConstants::pageSize64k;
 
-    auto allocation = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
+    auto allocation = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithAlignment(allocationData));
 
     EXPECT_NE(allocation, nullptr);
     EXPECT_NE(allocation->getMmapPtr(), nullptr);
@@ -861,7 +861,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMemoryInfoAndDisabledMmapBOCr
     AllocationData allocationData;
     allocationData.size = MemoryConstants::pageSize64k;
 
-    auto allocation = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
+    auto allocation = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithAlignment(allocationData));
 
     EXPECT_NE(allocation, nullptr);
     EXPECT_EQ(static_cast<int>(mock->returnHandle), allocation->getBO()->peekHandle() + 1);
@@ -885,7 +885,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMemoryInfoAndNotUseObjectMmap
     allocationData.size = MemoryConstants::pageSize64k;
     allocationData.useMmapObject = false;
 
-    auto allocation = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
+    auto allocation = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithAlignment(allocationData));
 
     EXPECT_NE(allocation, nullptr);
     EXPECT_EQ(static_cast<int>(mock->returnHandle), allocation->getBO()->peekHandle() + 1);

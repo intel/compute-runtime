@@ -7,19 +7,19 @@
 
 #pragma once
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/os_interface/linux/drm_allocation.h"
-#include "shared/source/os_interface/linux/drm_buffer_object.h"
-#include "shared/source/os_interface/linux/drm_neo.h"
-
-#include "drm_gem_close_worker.h"
 
 #include <limits>
 #include <map>
 #include <sys/mman.h>
+#include <unistd.h>
 
 namespace NEO {
 class BufferObject;
 class Drm;
+class DrmGemCloseWorker;
+class DrmAllocation;
+
+enum class gemCloseWorkerMode;
 
 class DrmMemoryManager : public MemoryManager {
   public:
@@ -84,9 +84,7 @@ class DrmMemoryManager : public MemoryManager {
     DrmAllocation *createUSMHostAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool hasMappedPtr);
     void releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex) override;
     void createDeviceSpecificMemResources(uint32_t rootDeviceIndex) override;
-    bool allowIndirectAllocationsAsPack(uint32_t rootDeviceIndex) override {
-        return this->getDrm(rootDeviceIndex).isVmBindAvailable();
-    }
+    bool allowIndirectAllocationsAsPack(uint32_t rootDeviceIndex) override;
 
   protected:
     MOCKABLE_VIRTUAL BufferObject *findAndReferenceSharedBufferObject(int boHandle, uint32_t rootDeviceIndex);
@@ -100,17 +98,17 @@ class DrmMemoryManager : public MemoryManager {
     uint32_t getDefaultDrmContextId(uint32_t rootDeviceIndex) const;
     size_t getUserptrAlignment();
 
-    DrmAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override;
-    DrmAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) override;
-    DrmAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override;
+    GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override;
+    GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) override;
+    GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override;
     DrmAllocation *allocateGraphicsMemoryWithAlignmentImpl(const AllocationData &allocationData);
     DrmAllocation *createAllocWithAlignmentFromUserptr(const AllocationData &allocationData, size_t size, size_t alignment, size_t alignedSVMSize, uint64_t gpuAddress);
     DrmAllocation *createAllocWithAlignment(const AllocationData &allocationData, size_t size, size_t alignment, size_t alignedSize, uint64_t gpuAddress);
     DrmAllocation *createMultiHostAllocation(const AllocationData &allocationData);
     void obtainGpuAddress(const AllocationData &allocationData, BufferObject *bo, uint64_t gpuAddress);
-    DrmAllocation *allocateUSMHostGraphicsMemory(const AllocationData &allocationData) override;
-    DrmAllocation *allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) override;
-    DrmAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) override;
+    GraphicsAllocation *allocateUSMHostGraphicsMemory(const AllocationData &allocationData) override;
+    GraphicsAllocation *allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) override;
+    GraphicsAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateMemoryByKMD(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override;
     GraphicsAllocation *allocateGraphicsMemoryWithGpuVa(const AllocationData &allocationData) override;
@@ -120,7 +118,7 @@ class DrmMemoryManager : public MemoryManager {
     MOCKABLE_VIRTUAL void *lockBufferObject(BufferObject *bo);
     MOCKABLE_VIRTUAL void unlockBufferObject(BufferObject *bo);
     void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override;
-    DrmAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData, bool useLocalMemory) override;
+    GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData, bool useLocalMemory) override;
     void cleanupBeforeReturn(const AllocationData &allocationData, GfxPartition *gfxPartition, DrmAllocation *drmAllocation, GraphicsAllocation *graphicsAllocation, uint64_t &gpuAddress, size_t &sizeAllocated);
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
     bool createDrmAllocation(Drm *drm, DrmAllocation *allocation, uint64_t gpuAddress, size_t maxOsContextCount);

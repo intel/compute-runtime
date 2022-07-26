@@ -9,6 +9,8 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/heap_assigner.h"
 #include "shared/source/os_interface/linux/allocator_helper.h"
+#include "shared/source/os_interface/linux/drm_allocation.h"
+#include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -329,7 +331,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenMemoryInfoWhenAllocateWithAlignm
     AllocationData allocationData;
     allocationData.size = MemoryConstants::pageSize64k;
 
-    auto allocation = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
+    auto allocation = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithAlignment(allocationData));
 
     EXPECT_NE(allocation, nullptr);
     EXPECT_NE(allocation->getMmapPtr(), nullptr);
@@ -355,7 +357,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMemoryInfoAndNotUseObjectMmapProper
     allocationData.size = MemoryConstants::pageSize64k;
     allocationData.useMmapObject = false;
 
-    auto allocation = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
+    auto allocation = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithAlignment(allocationData));
 
     EXPECT_NE(allocation, nullptr);
     EXPECT_EQ(static_cast<int>(mock->returnHandle), allocation->getBO()->peekHandle() + 1);
@@ -397,7 +399,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMemoryInfoAndDisabledMmapBOCreation
     AllocationData allocationData;
     allocationData.size = MemoryConstants::pageSize64k;
 
-    auto allocation = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
+    auto allocation = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithAlignment(allocationData));
 
     EXPECT_NE(allocation, nullptr);
     EXPECT_EQ(static_cast<int>(mock->returnHandle), allocation->getBO()->peekHandle() + 1);

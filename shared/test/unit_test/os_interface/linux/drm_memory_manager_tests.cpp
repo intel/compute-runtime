@@ -559,7 +559,7 @@ TEST_F(DrmMemoryManagerTest, WhenAskedAndAllowedAndBigAllocationHostPtrThenPinAf
     allocationData.size = 10 * MB;
     allocationData.hostPtr = ::alignedMalloc(allocationData.size, 4096);
     allocationData.flags.forcePin = true;
-    auto alloc = memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData);
+    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData));
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
@@ -583,7 +583,7 @@ TEST_F(DrmMemoryManagerTest, givenSmallAllocationHostPtrAllocationWhenForcePinIs
     allocationData.size = 4 * 1024;
     allocationData.hostPtr = ::alignedMalloc(allocationData.size, 4096);
     allocationData.flags.forcePin = true;
-    auto alloc = memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData);
+    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData));
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
@@ -602,7 +602,7 @@ TEST_F(DrmMemoryManagerTest, WhenNotAskedButAllowedHostPtrThendoNotPinAfterAlloc
 
     allocationData.size = 4 * 1024;
     allocationData.hostPtr = ::alignedMalloc(allocationData.size, 4096);
-    auto alloc = memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData);
+    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData));
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
@@ -621,7 +621,7 @@ TEST_F(DrmMemoryManagerTest, WhenAskedButNotAllowedHostPtrThenDoNotPinAfterAlloc
     allocationData.size = 4 * 1024;
     allocationData.hostPtr = ::alignedMalloc(allocationData.size, 4096);
     allocationData.flags.forcePin = true;
-    auto alloc = memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData);
+    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData));
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
@@ -2149,7 +2149,7 @@ TEST_F(DrmMemoryManagerUSMHostAllocationTests, givenCallToAllocateGraphicsMemory
     AllocationData allocationData;
     allocationData.size = 16384;
     allocationData.rootDeviceIndex = rootDeviceIndex;
-    NEO::DrmAllocation *alloc = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
+    auto alloc = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
     EXPECT_NE(nullptr, alloc);
     memoryManager->freeGraphicsMemoryImpl(alloc);
 }
@@ -2552,7 +2552,7 @@ TEST_F(DrmMemoryManagerTest, givenForcePinAndHostMemoryValidationEnabledWhenSmal
     // one page is too small for early pinning but pinning is used for host memory validation
     allocationData.size = 4 * 1024;
     allocationData.hostPtr = ::alignedMalloc(allocationData.size, 4096);
-    auto alloc = memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData);
+    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData));
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
@@ -2648,7 +2648,7 @@ TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryFor
 
     allocationData.size = 4 * MB + 16 * 1024;
     allocationData.hostPtr = reinterpret_cast<const void *>(0x10000000);
-    auto allocation0 = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
+    auto allocation0 = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData));
 
     allocationData.hostPtr = reinterpret_cast<const void *>(0x20000000);
     auto allocation1 = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
@@ -2657,9 +2657,9 @@ TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryFor
 
     allocationData.size = 4 * MB + 12 * 1024;
     allocationData.hostPtr = reinterpret_cast<const void *>(0x30000000);
-    allocation0 = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
+    allocation0 = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData));
 
-    EXPECT_EQ((uint64_t)(allocation0->getBO()->peekSize()), 4 * MB + 12 * 1024);
+    EXPECT_EQ(static_cast<uint64_t>(allocation0->getBO()->peekSize()), 4 * MB + 12 * 1024);
 
     memoryManager->freeGraphicsMemory(allocation0);
     memoryManager->freeGraphicsMemory(allocation1);
@@ -2719,7 +2719,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenForcePinNotAllowedAndH
     allocationData.hostPtr = ::alignedMalloc(allocationData.size, 4096);
     allocationData.flags.forcePin = true;
     allocationData.rootDeviceIndex = device->getRootDeviceIndex();
-    auto alloc = memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData);
+    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData));
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
@@ -2745,7 +2745,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenForcePinNotAllowedAndH
     allocationData.hostPtr = ::alignedMalloc(allocationData.size, 4096);
     allocationData.flags.forcePin = true;
     allocationData.rootDeviceIndex = device->getRootDeviceIndex();
-    auto alloc = memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData);
+    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData));
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
@@ -3109,7 +3109,7 @@ TEST_F(DrmMemoryManagerTest, givenSvmCpuAllocationWhenSizeAndAlignmentProvidedTh
     allocationData.type = AllocationType::SVM_CPU;
     allocationData.rootDeviceIndex = rootDeviceIndex;
 
-    DrmAllocation *allocation = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
+    auto allocation = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithAlignment(allocationData));
     ASSERT_NE(nullptr, allocation);
 
     EXPECT_EQ(AllocationType::SVM_CPU, allocation->getAllocationType());
@@ -3151,7 +3151,7 @@ TEST_F(DrmMemoryManagerTest, givenSvmCpuAllocationWhenSizeAndAlignmentProvidedBu
     allocationData.type = AllocationType::SVM_CPU;
     allocationData.rootDeviceIndex = rootDeviceIndex;
 
-    DrmAllocation *allocation = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
+    auto allocation = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
     EXPECT_EQ(nullptr, allocation);
 }
 

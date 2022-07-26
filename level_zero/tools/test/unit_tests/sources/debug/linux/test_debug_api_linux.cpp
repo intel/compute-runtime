@@ -11,6 +11,7 @@
 #define _I915_DRM_H_
 #define _UAPI_I915_DRM_H_
 
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
