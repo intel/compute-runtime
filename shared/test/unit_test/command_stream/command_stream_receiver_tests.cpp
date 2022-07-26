@@ -2097,3 +2097,9 @@ HWTEST_F(CommandStreamReceiverTest, givenMultipleActivePartitionsWhenWaitLogIsEn
 
     EXPECT_STREQ(expectedOutput.str().c_str(), output.c_str());
 }
+
+TEST_F(CommandStreamReceiverTest, givenPreambleFlagIsSetWhenGettingFlagStateThenExpectCorrectState) {
+    EXPECT_FALSE(commandStreamReceiver->getPreambleSetFlag());
+    commandStreamReceiver->setPreambleSetFlag(true);
+    EXPECT_TRUE(commandStreamReceiver->getPreambleSetFlag());
+}

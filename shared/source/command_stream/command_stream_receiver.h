@@ -340,6 +340,14 @@ class CommandStreamReceiver {
 
     LogicalStateHelper *getLogicalStateHelper() const;
 
+    bool getPreambleSetFlag() const {
+        return isPreambleSent;
+    }
+
+    void setPreambleSetFlag(bool value) {
+        isPreambleSent = value;
+    }
+
   protected:
     void cleanupResources();
     void printDeviceIndex();

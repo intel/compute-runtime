@@ -251,6 +251,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     gsbaStateDirty |= csr->getGSBAStateDirty();
     frontEndStateDirty |= csr->getMediaVFEStateDirty();
+    bool gpgpuEnabled = csr->getPreambleSetFlag();
     if (!isCopyOnlyCommandQueue) {
 
         if (!gpgpuEnabled) {
@@ -315,6 +316,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     if (!isCopyOnlyCommandQueue) {
         if (!gpgpuEnabled) {
             programPipelineSelect(child);
+            csr->setPreambleSetFlag(true);
         }
 
         if (NEO::Debugger::isDebugEnabled(internalUsage) && !commandQueueDebugCmdsProgrammed) {
@@ -585,7 +587,6 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::programPipelineSelect(NEO::LinearStream &commandStream) {
     NEO::PipelineSelectArgs args = {0, 0};
     NEO::PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, args, device->getHwInfo());
-    gpgpuEnabled = true;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

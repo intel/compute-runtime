@@ -101,7 +101,6 @@ struct CommandQueueImp : public CommandQueue {
 
     std::atomic<uint32_t> taskCount{0};
 
-    bool gpgpuEnabled = false;
     bool useKmdWaitFunction = false;
 };
 

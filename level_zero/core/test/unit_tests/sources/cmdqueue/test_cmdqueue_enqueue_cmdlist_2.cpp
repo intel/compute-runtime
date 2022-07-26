@@ -121,5 +121,67 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, whenUsingFenceThenLastPipeC
     commandQueue->destroy();
 }
 
+HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingSingleCsrWhenExecutingFirstTimeOnBothThenPipelineSelectProgrammedOnce, IsAtMostXeHpcCore) {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+
+    bool additionalPipelineSelect = NEO::HwInfoConfig::get(device->getHwInfo().platform.eProductFamily)->is3DPipelineSelectWARequired() &&
+                                    neoDevice->getDefaultEngine().commandStreamReceiver->isRcs();
+
+    ze_result_t returnValue;
+
+    ze_command_list_handle_t commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ze_command_queue_desc_t queueDesc = {};
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_NE(nullptr, commandQueue->commandStream);
+
+    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+    returnValue = commandQueue->executeCommandLists(1, &commandList, nullptr, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandQueue->commandStream->getCpuBase(), usedSpaceBefore),
+        usedSpaceAfter - usedSpaceBefore));
+
+    auto pipelineSelect = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
+    size_t expectedFirstPipelineSelectCount = 1u;
+    if (additionalPipelineSelect) {
+        expectedFirstPipelineSelectCount += 2;
+    }
+    EXPECT_EQ(expectedFirstPipelineSelectCount, pipelineSelect.size());
+
+    cmdList.clear();
+
+    auto commandQueue2 = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_NE(nullptr, commandQueue2->commandStream);
+
+    usedSpaceBefore = commandQueue2->commandStream->getUsed();
+    returnValue = commandQueue2->executeCommandLists(1, &commandList, nullptr, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    usedSpaceAfter = commandQueue2->commandStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandQueue2->commandStream->getCpuBase(), usedSpaceBefore),
+        usedSpaceAfter - usedSpaceBefore));
+
+    pipelineSelect = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
+    constexpr size_t expectedSecondPipelineSelectCount = 0u;
+    EXPECT_EQ(expectedSecondPipelineSelectCount, pipelineSelect.size());
+
+    CommandList::fromHandle(commandList)->destroy();
+    commandQueue->destroy();
+    commandQueue2->destroy();
+}
+
 } // namespace ult
 } // namespace L0
