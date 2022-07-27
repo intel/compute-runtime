@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/memory_manager/host_ptr_manager.h"
 
+#include "shared/source/helpers/abort.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 using namespace NEO;
@@ -110,7 +111,7 @@ OsHandleStorage HostPtrManager::populateAlreadyAllocatedFragments(AllocationRequ
             handleStorage.fragmentStorageData[i].cpuPtr = requirements.allocationFragments[i].allocationPtr;
             handleStorage.fragmentStorageData[i].fragmentSize = requirements.allocationFragments[i].allocationSize;
         } else {
-            //abort whole application instead of silently passing.
+            // abort whole application instead of silently passing.
             abortExecution();
             return handleStorage;
         }
@@ -178,7 +179,7 @@ FragmentStorage *HostPtrManager::getFragment(HostPtrEntryKey key) {
     return nullptr;
 }
 
-//for given inputs see if any allocation overlaps
+// for given inputs see if any allocation overlaps
 FragmentStorage *HostPtrManager::getFragmentAndCheckForOverlaps(uint32_t rootDeviceIndex, const void *inPtr, size_t size, OverlapStatus &overlappingStatus) {
     std::lock_guard<decltype(allocationsMutex)> lock(allocationsMutex);
     void *inputPtr = const_cast<void *>(inPtr);
@@ -212,7 +213,7 @@ FragmentStorage *HostPtrManager::getFragmentAndCheckForOverlaps(uint32_t rootDev
                 return nullptr;
             }
         }
-        //next fragment doesn't have to be after the inputPtr
+        // next fragment doesn't have to be after the inputPtr
         if (nextElement != partialAllocations.end()) {
             if (nextElement->first.rootDeviceIndex != rootDeviceIndex) {
                 return nullptr;
@@ -220,7 +221,7 @@ FragmentStorage *HostPtrManager::getFragmentAndCheckForOverlaps(uint32_t rootDev
             auto &storedNextElement = nextElement->second;
             auto storedNextEndAddress = (uintptr_t)storedNextElement.fragmentCpuPointer + storedNextElement.fragmentSize;
             auto storedNextStartAddress = (uintptr_t)storedNextElement.fragmentCpuPointer;
-            //check if this allocation is after the inputPtr
+            // check if this allocation is after the inputPtr
             if ((uintptr_t)inputPtr < storedNextStartAddress) {
                 if (inputEndAddress > storedNextStartAddress) {
                     overlappingStatus = OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT;
