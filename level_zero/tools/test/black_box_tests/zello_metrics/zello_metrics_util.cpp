@@ -382,6 +382,7 @@ void TestSettings::parseArguments(int argc, char *argv[]) {
         {"verboseLevel", required_argument, nullptr, 'v'},
         {"metricGroupName", required_argument, nullptr, 'm'},
         {"eventNReports", required_argument, nullptr, 'e'},
+        {"showSystemInfo", no_argument, nullptr, 'y'},
         {0, 0, 0, 0},
     };
 
@@ -394,9 +395,11 @@ void TestSettings::parseArguments(int argc, char *argv[]) {
                      "\n  -t,   --test <test name>              run the specific test(\"all\" runs all tests)"
                      "\n  -d,   --device <deviceId>             device ID to run the test"
                      "\n  -s,   --subdevice <subdeviceId>       sub-device ID to run the test"
-                     "\n  -v,   --verboseLevel <verboseLevel>   verbosity level(-2:error|-1:warning|(default)0:info|1:debug"
+                     "\n  -v,   --verboseLevel <verboseLevel>   verbosity level(-2:error|-1:warning|(default)0:info|1:debug)"
                      "\n  -m,   --metricGroupName <name>        metric group name"
                      "\n  -e,   --eventNReports <report count>  report count threshold for event generation"
+                     "\n  -y,   --showSystemInfo                capture and show system info like frequency and power"
+                     "\n                                        (requires ZES_ENABLE_SYSMAN=1)"
                      "\n  -h,   --help                          display help message"
                      "\n";
     };
@@ -406,7 +409,7 @@ void TestSettings::parseArguments(int argc, char *argv[]) {
         return;
     }
 
-    while ((opt = getopt_long(argc, argv, "ht:d:s:v:m:e:", longOpts, nullptr)) != -1) {
+    while ((opt = getopt_long(argc, argv, "ht:d:s:v:m:e:y", longOpts, nullptr)) != -1) {
         switch (opt) {
         case 't':
             testName = optarg;
@@ -430,6 +433,10 @@ void TestSettings::parseArguments(int argc, char *argv[]) {
 
         case 'e':
             eventNReportCount = std::atoi(optarg);
+            break;
+
+        case 'y':
+            showSystemInfo = true;
             break;
 
         case 'h':

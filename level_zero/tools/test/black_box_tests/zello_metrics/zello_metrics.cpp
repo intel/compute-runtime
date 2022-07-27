@@ -161,7 +161,9 @@ bool streamTest() {
     zmu::TestMachineConfiguration machineConfig = {};
     zmu::getTestMachineConfiguration(machineConfig);
 
-    auto streamRun = [](uint32_t deviceId, int32_t subDeviceId, std::string &metricGroupName) {
+    auto testSettings = zmu::TestSettings::get();
+
+    auto streamRun = [&testSettings](uint32_t deviceId, int32_t subDeviceId, std::string &metricGroupName) {
         if (!zmu::isDeviceAvailable(deviceId, subDeviceId)) {
             return false;
         }
@@ -171,6 +173,14 @@ bool streamTest() {
         std::unique_ptr<SingleDeviceSingleQueueExecutionCtxt> executionCtxt =
             std::make_unique<SingleDeviceSingleQueueExecutionCtxt>(deviceId, subDeviceId);
         executionCtxt->setExecutionTimeInMilliseconds(200);
+
+        std::unique_ptr<Power> power = std::make_unique<Power>(executionCtxt->getDeviceHandle(0));
+        std::unique_ptr<Frequency> frequency = std::make_unique<Frequency>(executionCtxt->getDeviceHandle(0));
+
+        if (testSettings->showSystemInfo) {
+            executionCtxt->addSystemParameterCapture(power.get());
+            executionCtxt->addSystemParameterCapture(frequency.get());
+        }
         std::unique_ptr<CopyBufferToBuffer> workload1 =
             std::make_unique<CopyBufferToBuffer>(executionCtxt.get());
         std::unique_ptr<AppendMemoryCopyFromHeapToDeviceAndBackToHost> workload2 =
@@ -185,10 +195,15 @@ bool streamTest() {
         testRunner->addWorkload(workload1.get());
         testRunner->addWorkload(workload2.get());
 
-        return testRunner->run();
-    };
+        bool runStatus = testRunner->run();
 
-    auto testSettings = zmu::TestSettings::get();
+        if (testSettings->showSystemInfo) {
+            power->showAll(2.0);
+            frequency->showAll(2.0);
+        }
+
+        return runStatus;
+    };
 
     if (testSettings->deviceId == -1) {
         for (uint32_t deviceId = 0; deviceId < machineConfig.deviceCount; deviceId++) {
@@ -584,6 +599,106 @@ bool streamMpCollectionWorkloadDifferentProcess() {
     return status;
 }
 
+bool streamPowerFrequencyTest() {
+
+    // This test verifies Power and Frequency usage in Streamer mode
+    // Requires ZES_ENABLE_SYSMAN=1
+
+    bool status = true;
+    const uint32_t deviceId = 0;
+    const int32_t subDeviceId = -1;
+    const std::string metricGroupName("ComputeBasic");
+
+    LOG(zmu::LogLevel::DEBUG) << "Running Stream Power Frequency Test : Device [" << deviceId << ", " << subDeviceId << " ] : Metric Group :" << metricGroupName.c_str() << "\n";
+
+    auto streamRun = [&deviceId, &subDeviceId, &metricGroupName](bool workloadEnable, bool streamerEnable,
+                                                                 std::pair<double, double> &powerMinMax,
+                                                                 std::pair<double, double> &freqMinMax) {
+        if (!zmu::isDeviceAvailable(0, -1)) {
+            return false;
+        }
+
+        std::unique_ptr<SingleDeviceSingleQueueExecutionCtxt> executionCtxt =
+            std::make_unique<SingleDeviceSingleQueueExecutionCtxt>(deviceId, subDeviceId);
+        executionCtxt->setExecutionTimeInMilliseconds(300);
+
+        std::unique_ptr<Power> power = std::make_unique<Power>(executionCtxt->getDeviceHandle(0));
+        std::unique_ptr<Frequency> frequency = std::make_unique<Frequency>(executionCtxt->getDeviceHandle(0));
+        executionCtxt->addSystemParameterCapture(power.get());
+        executionCtxt->addSystemParameterCapture(frequency.get());
+
+        std::unique_ptr<SingleMetricStreamerCollector> collector =
+            std::make_unique<SingleMetricStreamerCollector>(executionCtxt.get(), metricGroupName.c_str());
+        std::unique_ptr<CopyBufferToBuffer> workload1 =
+            std::make_unique<CopyBufferToBuffer>(executionCtxt.get());
+        std::unique_ptr<AppendMemoryCopyFromHeapToDeviceAndBackToHost> workload2 =
+            std::make_unique<AppendMemoryCopyFromHeapToDeviceAndBackToHost>(executionCtxt.get());
+        auto testSettings = zmu::TestSettings::get();
+        collector->setNotifyReportCount(testSettings->eventNReportCount);
+
+        std::unique_ptr<SingleDeviceTestRunner> testRunner = std::make_unique<SingleDeviceTestRunner>(static_cast<ExecutionContext *>(executionCtxt.get()));
+        if (streamerEnable == true) {
+            testRunner->addCollector(collector.get());
+        }
+        if (workloadEnable == true) {
+            testRunner->addWorkload(workload1.get());
+            testRunner->addWorkload(workload2.get());
+        }
+        bool runStatus = testRunner->run();
+
+        power->getMinMax(powerMinMax.first, powerMinMax.second);
+        frequency->getMinMax(freqMinMax.first, freqMinMax.second);
+        return runStatus;
+    };
+
+    // Get power and frequency with workload and metrics
+
+    uint32_t sampleCount = 100;
+
+    std::pair<double, double> powerMinMax = {};
+    std::pair<double, double> freqMinMax = {};
+
+    double maxPowerWithWorkloadAndMetrics = std::numeric_limits<double>::min();
+    double maxFrequencyWithWorkloadAndMetrics = std::numeric_limits<double>::min();
+
+    double avgPowerWithWorkloadAndMetrics = 0.0;
+
+    for (uint32_t index = 0; index < sampleCount; index++) {
+        status &= streamRun(true, true, powerMinMax, freqMinMax);
+
+        avgPowerWithWorkloadAndMetrics += powerMinMax.second;
+
+        maxPowerWithWorkloadAndMetrics = std::max(maxPowerWithWorkloadAndMetrics, powerMinMax.second);
+        maxFrequencyWithWorkloadAndMetrics = std::max(maxFrequencyWithWorkloadAndMetrics, freqMinMax.second);
+    }
+
+    avgPowerWithWorkloadAndMetrics /= sampleCount;
+
+    double maxPowerWithWorkload = std::numeric_limits<double>::min();
+    double maxFrequencyWithWorkload = std::numeric_limits<double>::min();
+
+    double avgPowerWithWorkload = 0.0;
+
+    for (uint32_t index = 0; index < sampleCount; index++) {
+        status &= streamRun(true, false, powerMinMax, freqMinMax);
+        maxPowerWithWorkload = std::max(maxPowerWithWorkload, powerMinMax.second);
+        maxFrequencyWithWorkload = std::max(maxFrequencyWithWorkload, freqMinMax.second);
+        avgPowerWithWorkload += powerMinMax.second;
+    }
+
+    avgPowerWithWorkload /= sampleCount;
+
+    LOG(zmu::LogLevel::INFO) << "Workload + Streamer [ Max Power Used : " << maxPowerWithWorkloadAndMetrics << "W | Frequency : " << maxFrequencyWithWorkloadAndMetrics << "Hz \n";
+    LOG(zmu::LogLevel::INFO) << "Workload            [ Max Power Used: " << maxPowerWithWorkload << "W | Frequency : " << maxFrequencyWithWorkload << "Hz \n";
+    LOG(zmu::LogLevel::INFO) << "Metrics Overhead    [ Power Used: " << (maxPowerWithWorkloadAndMetrics - maxPowerWithWorkload) << "W | Frequency : "
+                             << (maxFrequencyWithWorkloadAndMetrics - maxFrequencyWithWorkload) << "Hz \n";
+    LOG(zmu::LogLevel::INFO) << "Workload + Streamer [ Avg Power Used : " << avgPowerWithWorkloadAndMetrics << "\n";
+    LOG(zmu::LogLevel::INFO) << "Workload            [ Avg Power Used : " << avgPowerWithWorkload << "\n";
+    LOG(zmu::LogLevel::INFO) << "Metrics Overhead    [ Avg Power Used : " << avgPowerWithWorkloadAndMetrics - avgPowerWithWorkload << "\n";
+
+    return status;
+}
+
 int main(int argc, char *argv[]) {
 
     std::map<std::string, std::function<bool()>> tests;
@@ -595,6 +710,7 @@ int main(int argc, char *argv[]) {
     tests["stream_mt_collection_workload_different_threads"] = streamMtCollectionWorkloadDifferentThreads;
     tests["stream_mp_collection_workload_same_process"] = streamMpCollectionWorkloadSameProcess;
     tests["stream_mp_collection_workload_different_process"] = streamMpCollectionWorkloadDifferentProcess;
+    tests["streamPowerFrequencyTest"] = streamPowerFrequencyTest;
 
     auto testSettings = zmu::TestSettings::get();
     testSettings->parseArguments(argc, argv);

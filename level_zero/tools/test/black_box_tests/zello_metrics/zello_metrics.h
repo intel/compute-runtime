@@ -8,6 +8,7 @@
 #pragma once
 
 #include <level_zero/ze_api.h>
+#include <level_zero/zes_api.h>
 #include <level_zero/zet_api.h>
 
 #include <iostream>
@@ -32,6 +33,17 @@
         }                                                                      \
     } while (0);
 
+class SystemParameter {
+
+  public:
+    SystemParameter(ze_device_handle_t device) : device(device) {}
+    virtual void capture(std::string s) = 0;
+    virtual void showAll(double minDiff) = 0;
+
+  protected:
+    ze_device_handle_t device = nullptr;
+};
+
 class ExecutionContext {
 
   public:
@@ -50,8 +62,13 @@ class ExecutionContext {
     virtual bool activateMetricGroups();
     virtual bool deactivateMetricGroups();
 
+    void addSystemParameterCapture(SystemParameter *sysParameter) {
+        systemParameterList.push_back(sysParameter);
+    }
+
   protected:
     std::vector<zet_metric_group_handle_t> activeMetricGroups = {};
+    std::vector<SystemParameter *> systemParameterList = {};
 };
 
 class Workload {
@@ -242,4 +259,30 @@ class SingleDeviceTestRunner {
     std::vector<Workload *> workloadList = {};
     ExecutionContext *executionCtxt = nullptr;
     bool disableCommandListExecution = false;
+};
+
+class Power : public SystemParameter {
+  public:
+    Power(ze_device_handle_t device);
+    virtual ~Power() = default;
+    void capture(std::string s) override;
+    void showAll(double minDiff) override;
+    void getMinMax(double &min, double &max);
+
+  private:
+    std::vector<std::pair<zes_power_energy_counter_t, std::string>> energyCounters = {};
+    zes_pwr_handle_t handle = nullptr;
+};
+
+class Frequency : public SystemParameter {
+  public:
+    Frequency(ze_device_handle_t device);
+    virtual ~Frequency() = default;
+    void capture(std::string s) override;
+    void showAll(double minDiff) override;
+    void getMinMax(double &min, double &max);
+
+  private:
+    zes_freq_handle_t handle = nullptr;
+    std::vector<std::pair<double, std::string>> frequencies = {};
 };

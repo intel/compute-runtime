@@ -39,6 +39,7 @@ class TestSettings {
     int32_t verboseLevel = 0;
     std::string metricGroupName = "TestOa";
     uint32_t eventNReportCount = 1;
+    bool showSystemInfo = false;
 
   private:
     TestSettings() = default;
