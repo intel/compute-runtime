@@ -105,4 +105,15 @@ inline bool UnitTestHelper<GfxFamily>::getWorkloadPartitionForStoreRegisterMemCm
     return storeRegisterMem.getWorkloadPartitionIdOffsetEnable();
 }
 
+template <typename GfxFamily>
+GenCmdList::iterator UnitTestHelper<GfxFamily>::findMidThreadPreemptionAllocationCommand(GenCmdList::iterator begin, GenCmdList::iterator end) {
+    return end;
+}
+
+template <typename GfxFamily>
+std::vector<GenCmdList::iterator> UnitTestHelper<GfxFamily>::findAllMidThreadPreemptionAllocationCommand(GenCmdList::iterator begin, GenCmdList::iterator end) {
+    std::vector<GenCmdList::iterator> emptyList;
+    return emptyList;
+}
+
 } // namespace NEO

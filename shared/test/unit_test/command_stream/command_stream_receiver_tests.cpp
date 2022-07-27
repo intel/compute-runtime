@@ -2103,3 +2103,11 @@ TEST_F(CommandStreamReceiverTest, givenPreambleFlagIsSetWhenGettingFlagStateThen
     commandStreamReceiver->setPreambleSetFlag(true);
     EXPECT_TRUE(commandStreamReceiver->getPreambleSetFlag());
 }
+
+TEST_F(CommandStreamReceiverTest, givenPreemptionSentIsInitialWhenSettingPreemptionToNewModeThenExpectCorrectPreemption) {
+    PreemptionMode mode = PreemptionMode::Initial;
+    EXPECT_EQ(mode, commandStreamReceiver->getPreemptionMode());
+    mode = PreemptionMode::ThreadGroup;
+    commandStreamReceiver->setPreemptionMode(mode);
+    EXPECT_EQ(mode, commandStreamReceiver->getPreemptionMode());
+}

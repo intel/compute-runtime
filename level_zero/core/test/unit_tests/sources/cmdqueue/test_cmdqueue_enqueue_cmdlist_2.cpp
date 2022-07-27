@@ -183,5 +183,80 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingS
     commandQueue2->destroy();
 }
 
+using IsMmioPreemptionUsed = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_XE_HPC_CORE>;
+
+HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingSingleCsrWhenExecutingFirstTimeOnBothQueuesThenPreemptionModeIsProgrammedOnce, IsMmioPreemptionUsed) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    ze_result_t returnValue;
+
+    ze_command_list_handle_t commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    CommandList::fromHandle(commandList)->commandListPreemptionMode = NEO::PreemptionMode::ThreadGroup;
+
+    ze_command_queue_desc_t queueDesc = {};
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_NE(nullptr, commandQueue->commandStream);
+
+    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+    returnValue = commandQueue->executeCommandLists(1, &commandList, nullptr, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandQueue->commandStream->getCpuBase(), usedSpaceBefore),
+        usedSpaceAfter - usedSpaceBefore));
+
+    auto loadRegisterImmList = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+    size_t foundPreemptionMmioCount = 0;
+    for (auto it : loadRegisterImmList) {
+        auto cmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*it);
+        if (cmd->getRegisterOffset() == 0x2580) {
+            foundPreemptionMmioCount++;
+        }
+    }
+
+    constexpr size_t expectedFirstPreemptionMmioCount = 1u;
+    EXPECT_EQ(expectedFirstPreemptionMmioCount, foundPreemptionMmioCount);
+
+    cmdList.clear();
+    foundPreemptionMmioCount = 0;
+
+    auto commandQueue2 = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_NE(nullptr, commandQueue2->commandStream);
+
+    usedSpaceBefore = commandQueue2->commandStream->getUsed();
+    returnValue = commandQueue2->executeCommandLists(1, &commandList, nullptr, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    usedSpaceAfter = commandQueue2->commandStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandQueue2->commandStream->getCpuBase(), usedSpaceBefore),
+        usedSpaceAfter - usedSpaceBefore));
+
+    loadRegisterImmList = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+    for (auto it : loadRegisterImmList) {
+        auto cmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*it);
+        if (cmd->getRegisterOffset() == 0x2580) {
+            foundPreemptionMmioCount++;
+        }
+    }
+
+    constexpr size_t expectedSecondPreemptionMmioCount = 0u;
+    EXPECT_EQ(expectedSecondPreemptionMmioCount, foundPreemptionMmioCount);
+
+    CommandList::fromHandle(commandList)->destroy();
+    commandQueue->destroy();
+    commandQueue2->destroy();
+}
+
 } // namespace ult
 } // namespace L0

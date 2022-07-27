@@ -122,7 +122,6 @@ HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrWhenCallingExecuteCommandListsThenPoll
 
     auto aubCsr = static_cast<NEO::UltAubCommandStreamReceiver<FamilyType> *>(csr);
     CommandQueue *queue = static_cast<CommandQueue *>(L0::CommandQueue::fromHandle(commandQueue));
-    queue->setCommandQueuePreemptionMode(PreemptionMode::Disabled);
     EXPECT_EQ(aubCsr->pollForCompletionCalled, 0u);
 
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));

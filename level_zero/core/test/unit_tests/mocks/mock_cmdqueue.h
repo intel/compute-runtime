@@ -33,7 +33,6 @@ struct WhiteBox<::L0::CommandQueue> : public ::L0::CommandQueueImp {
     using BaseClass::synchronizeByPollingForTaskCount;
     using BaseClass::taskCount;
     using CommandQueue::activeSubDevices;
-    using CommandQueue::commandQueuePreemptionMode;
     using CommandQueue::internalUsage;
     using CommandQueue::partitionCount;
 

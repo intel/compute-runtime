@@ -348,6 +348,14 @@ class CommandStreamReceiver {
         isPreambleSent = value;
     }
 
+    PreemptionMode getPreemptionMode() const {
+        return lastPreemptionMode;
+    }
+
+    void setPreemptionMode(PreemptionMode value) {
+        lastPreemptionMode = value;
+    }
+
   protected:
     void cleanupResources();
     void printDeviceIndex();
