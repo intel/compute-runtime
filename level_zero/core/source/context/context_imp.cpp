@@ -177,6 +177,10 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
         unifiedMemoryProperties.allocationFlags.flags.locallyUncachedResource = 1;
     }
 
+    if (lookupTable.rayTracingMemory == true) {
+        unifiedMemoryProperties.allocationFlags.flags.resource48Bit = 1;
+    }
+
     void *usmPtr =
         this->driverHandle->svmAllocsManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
     if (usmPtr == nullptr) {
@@ -204,6 +208,8 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
     auto neoDevice = device->getNEODevice();
 
     bool relaxedSizeAllowed = NEO::DebugManager.flags.AllowUnrestrictedSize.get();
+    bool rayTracingAllocation = false;
+
     if (deviceDesc->pNext) {
         const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(deviceDesc->pNext);
         if (extendedDesc->stype == ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC) {
@@ -213,6 +219,8 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
             relaxedSizeAllowed = true;
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_RAYTRACING_MEM_ALLOC_EXT_DESC) {
+            rayTracingAllocation = true;
         }
     }
 
@@ -263,6 +271,10 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
 
     if (hostDesc->flags & ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT) {
         unifiedMemoryProperties.allocationFlags.allocFlags.usmInitialPlacementCpu = 1;
+    }
+
+    if (rayTracingAllocation) {
+        unifiedMemoryProperties.allocationFlags.flags.resource48Bit = 1;
     }
 
     void *usmPtr = nullptr;
