@@ -197,6 +197,20 @@ unsigned int IoctlHelper::getIoctlRequestValueBase(DrmIoctl ioctlRequest) const 
 
 int IoctlHelper::getDrmParamValueBase(DrmParam drmParam) const {
     switch (drmParam) {
+    case DrmParam::ContextParamEngines:
+        return I915_CONTEXT_PARAM_ENGINES;
+    case DrmParam::ContextParamGttSize:
+        return I915_CONTEXT_PARAM_GTT_SIZE;
+    case DrmParam::ContextParamPersistence:
+        return I915_CONTEXT_PARAM_PERSISTENCE;
+    case DrmParam::ContextParamPriority:
+        return I915_CONTEXT_PARAM_PRIORITY;
+    case DrmParam::ContextParamRecoverable:
+        return I915_CONTEXT_PARAM_RECOVERABLE;
+    case DrmParam::ContextParamSseu:
+        return I915_CONTEXT_PARAM_SSEU;
+    case DrmParam::ContextParamVm:
+        return I915_CONTEXT_PARAM_VM;
     case DrmParam::EngineClassRender:
         return drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER;
     case DrmParam::EngineClassCopy:

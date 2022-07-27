@@ -196,7 +196,7 @@ bool Drm::readSysFsAsString(const std::string &relativeFilePath, std::string &re
 
 int Drm::queryGttSize(uint64_t &gttSizeOutput) {
     GemContextParam contextParam = {0};
-    contextParam.param = I915_CONTEXT_PARAM_GTT_SIZE;
+    contextParam.param = ioctlHelper->getDrmParamValue(DrmParam::ContextParamGttSize);
 
     int ret = ioctlHelper->ioctl(DrmIoctl::GemContextGetparam, &contextParam);
     if (ret == 0) {
@@ -239,7 +239,7 @@ void Drm::checkQueueSliceSupport() {
 void Drm::setLowPriorityContextParam(uint32_t drmContextId) {
     GemContextParam gcp = {};
     gcp.contextId = drmContextId;
-    gcp.param = I915_CONTEXT_PARAM_PRIORITY;
+    gcp.param = ioctlHelper->getDrmParamValue(DrmParam::ContextParamPriority);
     gcp.value = -1023;
 
     auto retVal = ioctlHelper->ioctl(DrmIoctl::GemContextSetparam, &gcp);
@@ -248,7 +248,7 @@ void Drm::setLowPriorityContextParam(uint32_t drmContextId) {
 
 int Drm::getQueueSliceCount(GemContextParamSseu *sseu) {
     GemContextParam contextParam = {};
-    contextParam.param = I915_CONTEXT_PARAM_SSEU;
+    contextParam.param = ioctlHelper->getDrmParamValue(DrmParam::ContextParamSseu);
     sseu->engine.engineClass = ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender);
     sseu->engine.engineInstance = ioctlHelper->getDrmParamValue(DrmParam::ExecDefault);
     contextParam.value = reinterpret_cast<uint64_t>(sseu);
@@ -265,7 +265,7 @@ bool Drm::setQueueSliceCount(uint64_t sliceCount) {
         GemContextParam contextParam = {};
         sseu.sliceMask = getSliceMask(sliceCount);
 
-        contextParam.param = I915_CONTEXT_PARAM_SSEU;
+        contextParam.param = ioctlHelper->getDrmParamValue(DrmParam::ContextParamSseu);
         contextParam.contextId = 0;
         contextParam.value = reinterpret_cast<uint64_t>(&sseu);
         contextParam.size = sizeof(struct GemContextParamSseu);
@@ -279,7 +279,7 @@ bool Drm::setQueueSliceCount(uint64_t sliceCount) {
 
 void Drm::checkNonPersistentContextsSupport() {
     GemContextParam contextParam = {};
-    contextParam.param = I915_CONTEXT_PARAM_PERSISTENCE;
+    contextParam.param = ioctlHelper->getDrmParamValue(DrmParam::ContextParamPersistence);
 
     auto retVal = ioctlHelper->ioctl(DrmIoctl::GemContextGetparam, &contextParam);
     if (retVal == 0 && contextParam.value == 1) {
@@ -292,7 +292,7 @@ void Drm::checkNonPersistentContextsSupport() {
 void Drm::setNonPersistentContext(uint32_t drmContextId) {
     GemContextParam contextParam = {};
     contextParam.contextId = drmContextId;
-    contextParam.param = I915_CONTEXT_PARAM_PERSISTENCE;
+    contextParam.param = ioctlHelper->getDrmParamValue(DrmParam::ContextParamPersistence);
 
     ioctlHelper->ioctl(DrmIoctl::GemContextSetparam, &contextParam);
 }
@@ -300,7 +300,7 @@ void Drm::setNonPersistentContext(uint32_t drmContextId) {
 void Drm::setUnrecoverableContext(uint32_t drmContextId) {
     GemContextParam contextParam = {};
     contextParam.contextId = drmContextId;
-    contextParam.param = I915_CONTEXT_PARAM_RECOVERABLE;
+    contextParam.param = ioctlHelper->getDrmParamValue(DrmParam::ContextParamRecoverable);
     contextParam.value = 0;
     contextParam.size = 0;
 
@@ -321,7 +321,7 @@ uint32_t Drm::createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequeste
 
     if (drmVmId > 0) {
         extSetparam.base.name = I915_CONTEXT_CREATE_EXT_SETPARAM;
-        extSetparam.param.param = I915_CONTEXT_PARAM_VM;
+        extSetparam.param.param = ioctlHelper->getDrmParamValue(DrmParam::ContextParamVm);
         extSetparam.param.value = drmVmId;
         gcc.extensions = reinterpret_cast<uint64_t>(&extSetparam);
         gcc.flags |= I915_CONTEXT_CREATE_FLAGS_USE_EXTENSIONS;
@@ -361,7 +361,7 @@ int Drm::queryVmId(uint32_t drmContextId, uint32_t &vmId) {
     GemContextParam param{};
     param.contextId = drmContextId;
     param.value = 0;
-    param.param = I915_CONTEXT_PARAM_VM;
+    param.param = ioctlHelper->getDrmParamValue(DrmParam::ContextParamVm);
     auto retVal = ioctlHelper->ioctl(DrmIoctl::GemContextGetparam, &param);
 
     vmId = static_cast<uint32_t>(param.value);
@@ -1236,7 +1236,7 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
     GemContextParam param{};
     param.contextId = drmContextId;
     param.size = static_cast<uint32_t>(ptrDiff(contextEngines.engines + numEnginesInContext, &contextEngines));
-    param.param = I915_CONTEXT_PARAM_ENGINES;
+    param.param = ioctlHelper->getDrmParamValue(DrmParam::ContextParamEngines);
     param.value = castToUint64(&contextEngines);
 
     auto ioctlValue = ioctlHelper->ioctl(DrmIoctl::GemContextSetparam, &param);

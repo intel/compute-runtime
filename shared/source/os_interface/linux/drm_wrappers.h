@@ -227,6 +227,13 @@ enum class DrmIoctl {
 };
 
 enum class DrmParam {
+    ContextParamEngines,
+    ContextParamGttSize,
+    ContextParamPersistence,
+    ContextParamPriority,
+    ContextParamRecoverable,
+    ContextParamSseu,
+    ContextParamVm,
     EngineClassRender,
     EngineClassCompute,
     EngineClassCopy,
