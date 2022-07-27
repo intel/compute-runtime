@@ -13,6 +13,10 @@
 
 #include "level_zero/api/driver_experimental/public/zex_api.h"
 
+///////////////////////////////////////////////////////////////////////////////
+// It indicates that the application wants the L0 driver implementation to use
+// memory referenced by **ptr passed in `zeMemAllocHost` or `zeMemAllocShared`.
+// Can be set in `ze_host_mem_alloc_flags_t`.
 constexpr uint32_t ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR = ZE_BIT(30);
 
 ///////////////////////////////////////////////////////////////////////////////
