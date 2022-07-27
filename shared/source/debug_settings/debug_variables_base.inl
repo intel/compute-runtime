@@ -78,11 +78,13 @@ DECLARE_DEBUG_VARIABLE(bool, DisableGpuHangDetection, false, "Disable GPU hang d
 DECLARE_DEBUG_VARIABLE(bool, DisableForceToStateless, false, "If platform requires force to stateless for buffers, then this flag can disable this requirement")
 DECLARE_DEBUG_VARIABLE(bool, DebuggerDisableSingleAddressSbaTracking, false, "Disable SBA Tracking command programming in single address space mode")
 DECLARE_DEBUG_VARIABLE(bool, ForceTheoreticalMaxWorkGroupCount, false, "Do not apply any limitation to max cooperative/concurrent work-group count queries")
+DECLARE_DEBUG_VARIABLE(bool, DisableScratchPages, false, "Disable scratch pages during VM creations")
 DECLARE_DEBUG_VARIABLE(std::string, ForceDeviceId, std::string("unk"), "DeviceId selected for testing")
 DECLARE_DEBUG_VARIABLE(std::string, FilterDeviceId, std::string("unk"), "Device id filter, adapter matching device id will be opened. Ignored when unk.")
 DECLARE_DEBUG_VARIABLE(std::string, FilterBdfPath, std::string("unk"), "Linux-only, BDF path filter, only matching paths will be opened. Ignored when unk.")
 DECLARE_DEBUG_VARIABLE(std::string, LoadBinarySipFromFile, std::string("unk"), "Select binary file to load SIP kernel raw binary. When file named *_header.* exists, it is used as header")
 DECLARE_DEBUG_VARIABLE(std::string, InjectInternalBuildOptions, std::string("unk"), "Appends internal build options string to user modules")
+DECLARE_DEBUG_VARIABLE(std::string, OverrideDeviceName, std::string("unk"), "Device name to override")
 DECLARE_DEBUG_VARIABLE(int64_t, OverrideMultiStoragePlacement, -1, "-1: disable, 0+: tile mask, each bit corresponds to tile")
 DECLARE_DEBUG_VARIABLE(int64_t, ForceCompressionDisabledForCompressedBlitCopies, -1, "-1: default, 0: disabled, 1: enabled. If compression is required, set AUX_CCS_E, but force CompressionEnable filed. 0 should result in uncompressed read/write")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceL1Caching, -1, "-1: default, 0: disable, 1: enable, When set to true driver will program L1 cache policy for surface state and stateless accesses")
@@ -210,8 +212,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, UseContextEndOffsetForEventCompletion, -1, "Use 
 DECLARE_DEBUG_VARIABLE(int32_t, ForceWddmLowPriorityContextValue, -1, "Force scheduling priority value during Wddm low priority context creation. -1 - default.")
 DECLARE_DEBUG_VARIABLE(int32_t, FailBuildProgramWithStatefulAccess, -1, "-1: default, 0: disable, 1: enable, Fail build program/module creation whenever stateful access is discovered (except built in kernels).")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceImagesSupport, -1, "-1: default, 0: disable, 1: enable. Override support for Images.")
-DECLARE_DEBUG_VARIABLE(bool, DisableScratchPages, false, "Disable scratch pages during VM creations")
-DECLARE_DEBUG_VARIABLE(std::string, OverrideDeviceName, std::string("unk"), "Device name to override")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideL1CachePolicyInSurfaceStateAndStateless, -1, "-1: default, >=0 : following policy will be programmed in render surface state (for regular buffers) and stateless L1 caching")
 DECLARE_DEBUG_VARIABLE(int32_t, PlaformSupportEvictWhenNecessaryFlag, -1, "-1: default - platform specific, 0: disable, 1: enable")
 
@@ -286,7 +286,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, PreferInternalBcsEngine, -1, "-1: default, 0:dis
 DECLARE_DEBUG_VARIABLE(int32_t, ReuseKernelBinaries, -1, "-1: default, 0:disabled, 1: enabled. If enabled, driver reuses kernel binaries.")
 
 /*DIRECT SUBMISSION FLAGS*/
-DECLARE_DEBUG_VARIABLE(bool, DirectSubmissionPrintBuffers, false, "Print address of submitted command buffers")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDirectSubmission, -1, "-1: default (disabled), 0: disable, 1:enable. Enables direct submission of command buffers bypassing KMD")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionBufferPlacement, -1, "-1: do not override, 0: non-system, 1: system")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionSemaphorePlacement, -1, "-1: do not override, 0: non-system, 1: system")
@@ -312,17 +311,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionReadBackRingBuffer, -1, "-1: def
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionInsertExtraMiMemFenceCommands, -1, "-1: default, 0 - disable, 1 - enable. If enabled, add extra MI_MEM_FENCE instructions with acquire bit set")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionInsertSfenceInstructionPriorToSubmission, -1, "-1: default, 0 - disable, 1 - Instert _mm_sfence before unlocking semaphore only, 2 - insert before and after semaphore")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionMaxRingBuffers, -1, "-1: default, >0: max ring buffer count, During switch ring buffer, if there is no available ring, wait for completion instead of allocating new one if DirectSubmissionMaxRingBuffers is reached")
-
-/* IMPLICIT SCALING */
-DECLARE_DEBUG_VARIABLE(int32_t, EnableWalkerPartition, -1, "-1: default, 0: disable, 1: enable, Enables Walker Partitioning via WPARID.")
-DECLARE_DEBUG_VARIABLE(int32_t, EnableImplicitScaling, -1, "-1: default for API, 0: disable implicit scaling support on a given API, 1: enable implicit scaling support on a given API.")
-DECLARE_DEBUG_VARIABLE(int32_t, SynchronizeWalkerInWparidMode, -1, "-1: default, 0: do not synchronize 1: synchronize all tiles prior to doing work distribution")
-DECLARE_DEBUG_VARIABLE(int32_t, SynchronizeWithSemaphores, -1, "-1: default (disabled),  1: Emit Semaphores waiting after Walker completion in WPARID mode 0: do not emit semaphores after Walker")
-DECLARE_DEBUG_VARIABLE(int32_t, UseCrossAtomicSynchronization, -1, "-1: default (enabled), 1: Cross Tile Atomic Synchronization present 0: Cross tile atomic synchronization disabled")
-DECLARE_DEBUG_VARIABLE(int32_t, UseAtomicsForSelfCleanupSection, -1, "-1: default (disabled), 0: use store data op, 1: use atomic op")
-DECLARE_DEBUG_VARIABLE(int32_t, ProgramWalkerPartitionSelfCleanup, -1, "-1: default (API dependent), 0: Do not program self cleanup, 1: program self cleanup")
-DECLARE_DEBUG_VARIABLE(int32_t, WparidRegisterProgramming, -1, "-1: default (enabled), 0: do not program wparid register, 1: programming wparid register")
-DECLARE_DEBUG_VARIABLE(int32_t, UsePipeControlAfterPartitionedWalker, -1, "-1: default (enabled), 0: do not add PipeControl, 1: add PipeControl")
+DECLARE_DEBUG_VARIABLE(bool, DirectSubmissionPrintBuffers, false, "Print address of submitted command buffers")
 
 /*FEATURE FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, USMEvictAfterMigration, false, "Evict USM allocation after implicit migration to GPU")
@@ -407,6 +396,17 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableChipsetUniqueUUID, -1, "Enables retrieving
 DECLARE_DEBUG_VARIABLE(int32_t, EnableFlushTaskSubmission, -1, "Driver uses csr flushTask for immediate commandlist submissions, -1:default (enabled), 0:disabled, 1:enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableBcsSwControlWa, -1, "Enable BCS WA via BCSSWCONTROL MMIO. -1: default, 0: disabled, 1: if src in system mem, 2: if dst in system mem, 3: if src and dst in system mem, 4: always")
 
+/* IMPLICIT SCALING */
+DECLARE_DEBUG_VARIABLE(int32_t, EnableWalkerPartition, -1, "-1: default, 0: disable, 1: enable, Enables Walker Partitioning via WPARID.")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableImplicitScaling, -1, "-1: default for API, 0: disable implicit scaling support on a given API, 1: enable implicit scaling support on a given API.")
+DECLARE_DEBUG_VARIABLE(int32_t, SynchronizeWalkerInWparidMode, -1, "-1: default, 0: do not synchronize 1: synchronize all tiles prior to doing work distribution")
+DECLARE_DEBUG_VARIABLE(int32_t, SynchronizeWithSemaphores, -1, "-1: default (disabled),  1: Emit Semaphores waiting after Walker completion in WPARID mode 0: do not emit semaphores after Walker")
+DECLARE_DEBUG_VARIABLE(int32_t, UseCrossAtomicSynchronization, -1, "-1: default (enabled), 1: Cross Tile Atomic Synchronization present 0: Cross tile atomic synchronization disabled")
+DECLARE_DEBUG_VARIABLE(int32_t, UseAtomicsForSelfCleanupSection, -1, "-1: default (disabled), 0: use store data op, 1: use atomic op")
+DECLARE_DEBUG_VARIABLE(int32_t, ProgramWalkerPartitionSelfCleanup, -1, "-1: default (API dependent), 0: Do not program self cleanup, 1: program self cleanup")
+DECLARE_DEBUG_VARIABLE(int32_t, WparidRegisterProgramming, -1, "-1: default (enabled), 0: do not program wparid register, 1: programming wparid register")
+DECLARE_DEBUG_VARIABLE(int32_t, UsePipeControlAfterPartitionedWalker, -1, "-1: default (enabled), 0: do not add PipeControl, 1: add PipeControl")
+
 /*EXPERIMENTAL TOGGLES*/
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalSetWalkerPartitionCount, 0, "Experimental implementation: Set number of COMPUTE_WALKERs for a given Partition Type, 0 - do not set the feature.")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalSetWalkerPartitionType, -1, "Experimental implementation: Set COMPUTE_WALKER Partition Type. Valid values for types from 1 to 3")
@@ -416,6 +416,17 @@ DECLARE_DEBUG_VARIABLE(bool, ExperimentalEnableL0DebuggerForOpenCL, false, "Expe
 DECLARE_DEBUG_VARIABLE(bool, ExperimentalEnableDeviceAllocationCache, false, "Experimentally enable allocation cache.")
 
 /*DRIVER TOGGLES*/
+DECLARE_DEBUG_VARIABLE(bool, UseMaxSimdSizeToDeduceMaxWorkgroupSize, false, "With this flag on, max workgroup size is deduced using SIMD32 instead of SIMD8, this causes the max wkg size to be 4 times bigger")
+DECLARE_DEBUG_VARIABLE(bool, ReturnRawGpuTimestamps, false, "Driver returns raw GPU timestamps instead of calculated ones.")
+DECLARE_DEBUG_VARIABLE(bool, EnableDeviceBasedTimestamps, false, "Driver returns timestamps in nanoseconds based on device timer.")
+DECLARE_DEBUG_VARIABLE(bool, UseCommandBufferHeaderSizeForWddmQueueSubmission, true, "0: Page size (4096), 1: sizeof(COMMAND_BUFFER_HEADER)")
+DECLARE_DEBUG_VARIABLE(bool, DisableDeepBind, false, "Disable passing RTLD_DEEPBIND flag to all dlopen calls.")
+DECLARE_DEBUG_VARIABLE(bool, UseUmKmDataTranslator, false, "Use helper library for UMD<->KMD (WDDM) struct layout compatibility")
+DECLARE_DEBUG_VARIABLE(bool, SkipFlushingEventsOnGetStatusCalls, false, "When set to 1, events are not causing internal flush when querying for CL_EVENT_COMMAND_EXECUTION_STATUS")
+DECLARE_DEBUG_VARIABLE(bool, AllowUnrestrictedSize, false, "Allow allocating memory with greater size than MAX_MEM_ALLOC_SIZE")
+DECLARE_DEBUG_VARIABLE(bool, ForceDefaultThreadArbitrationPolicyIfNotSpecified, false, "When executing kernel without thread arbitration hint specified, ensure the default setting is used")
+DECLARE_DEBUG_VARIABLE(bool, ForceAllResourcesUncached, false, "When set, all memory operations for all resources are forced to UC. This overrides all caching-related debug variables and globally disables all caches")
+DECLARE_DEBUG_VARIABLE(bool, EnableDebuggerMmapMemoryAccess, false, "Mmap used to access memory by debug api, valid only on Linux OS")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceOCLVersion, 0, "Force specific OpenCL API version")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceOCL21FeaturesSupport, -1, "-1: default, 0: disable, 1:enable. Force support of OpenCL 2.0 and OpenCL 2.1 API features")
 DECLARE_DEBUG_VARIABLE(int32_t, ForcePreemptionMode, -1, "Keep this variable in sync with PreemptionMode enum. -1 - devices default mode, 1 - disable, 2 - midBatch, 3 - threadGroup, 4 - midThread")
@@ -446,19 +457,8 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableTimestampWaitForEvents, -1, "Wait on event
 DECLARE_DEBUG_VARIABLE(int32_t, DeferOsContextInitialization, -1, "-1: default, 0: create all contexts immediately, 1: defer, if possible")
 DECLARE_DEBUG_VARIABLE(int32_t, UsmInitialPlacement, -1, "-1: default, 0: optimize for first CPU access, 1: optimize for first GPU access")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceHostPointerImport, -1, "-1: default, 0: disable, 1: enable, Forces the driver to import every host pointer coming into driver, WARNING this is not spec compliant.")
-DECLARE_DEBUG_VARIABLE(bool, UseMaxSimdSizeToDeduceMaxWorkgroupSize, false, "With this flag on, max workgroup size is deduced using SIMD32 instead of SIMD8, this causes the max wkg size to be 4 times bigger")
-DECLARE_DEBUG_VARIABLE(bool, ReturnRawGpuTimestamps, false, "Driver returns raw GPU timestamps instead of calculated ones.")
-DECLARE_DEBUG_VARIABLE(bool, EnableDeviceBasedTimestamps, false, "Driver returns timestamps in nanoseconds based on device timer.")
-DECLARE_DEBUG_VARIABLE(bool, UseCommandBufferHeaderSizeForWddmQueueSubmission, true, "0: Page size (4096), 1: sizeof(COMMAND_BUFFER_HEADER)")
-DECLARE_DEBUG_VARIABLE(bool, DisableDeepBind, false, "Disable passing RTLD_DEEPBIND flag to all dlopen calls.")
-DECLARE_DEBUG_VARIABLE(bool, UseUmKmDataTranslator, false, "Use helper library for UMD<->KMD (WDDM) struct layout compatibility")
-DECLARE_DEBUG_VARIABLE(bool, SkipFlushingEventsOnGetStatusCalls, false, "When set to 1, events are not causing internal flush when querying for CL_EVENT_COMMAND_EXECUTION_STATUS")
-DECLARE_DEBUG_VARIABLE(bool, AllowUnrestrictedSize, false, "Allow allocating memory with greater size than MAX_MEM_ALLOC_SIZE")
-DECLARE_DEBUG_VARIABLE(bool, ForceDefaultThreadArbitrationPolicyIfNotSpecified, false, "When executing kernel without thread arbitration hint specified, ensure the default setting is used")
 DECLARE_DEBUG_VARIABLE(int32_t, ProgramExtendedPipeControlPriorToNonPipelinedStateCommand, -1, "-1: default, 0: disable, 1: enable, Program additional extended version of PIPE CONTROL command before non pipelined state command")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideDrmRegion, -1, "-1: disable, 0+: override to given memory region for all allocations")
-DECLARE_DEBUG_VARIABLE(bool, ForceAllResourcesUncached, false, "When set, all memory operations for all resources are forced to UC. This overrides all caching-related debug variables and globally disables all caches")
-DECLARE_DEBUG_VARIABLE(bool, EnableDebuggerMmapMemoryAccess, false, "Mmap used to access memory by debug api, valid only on Linux OS")
 
 /* Binary Cache */
 DECLARE_DEBUG_VARIABLE(bool, BinaryCacheTrace, false, "enable cl_cache to produce .trace files with information about hash computation")
