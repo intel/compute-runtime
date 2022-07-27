@@ -752,10 +752,10 @@ TEST_F(OfflineCompilerTests, givenFamilyAcronymWhenIdsCommandIsInvokeThenSuccess
         testing::internal::CaptureStdout();
         int retVal = OfflineCompiler::queryAcronymIds(argv.size(), argv, oclocArgHelperWithoutInput.get());
         std::string output = testing::internal::GetCapturedStdout();
-        expectedOutput << "Matched ids:";
+        expectedOutput << "Matched ids:\n";
 
         for (const auto &prefix : expected) {
-            expectedOutput << "\n" + prefix;
+            expectedOutput << prefix << "\n";
         }
         EXPECT_STREQ(expectedOutput.str().c_str(), output.c_str());
         EXPECT_EQ(OclocErrorCode::SUCCESS, retVal);
@@ -786,10 +786,10 @@ TEST_F(OfflineCompilerTests, givenReleaseAcronymWhenIdsCommandIsInvokeThenSucces
         testing::internal::CaptureStdout();
         int retVal = OfflineCompiler::queryAcronymIds(argv.size(), argv, oclocArgHelperWithoutInput.get());
         std::string output = testing::internal::GetCapturedStdout();
-        expectedOutput << "Matched ids:";
+        expectedOutput << "Matched ids:\n";
 
         for (const auto &prefix : expected) {
-            expectedOutput << "\n" + prefix;
+            expectedOutput << prefix << "\n";
         }
         EXPECT_STREQ(expectedOutput.str().c_str(), output.c_str());
         EXPECT_EQ(OclocErrorCode::SUCCESS, retVal);
@@ -820,10 +820,10 @@ TEST_F(OfflineCompilerTests, givenProductAcronymWhenIdsCommandIsInvokeThenSucces
         testing::internal::CaptureStdout();
         int retVal = OfflineCompiler::queryAcronymIds(argv.size(), argv, oclocArgHelperWithoutInput.get());
         std::string output = testing::internal::GetCapturedStdout();
-        expectedOutput << "Matched ids:";
+        expectedOutput << "Matched ids:\n";
 
         for (const auto &prefix : expected) {
-            expectedOutput << "\n" + prefix;
+            expectedOutput << prefix << "\n";
         }
         EXPECT_STREQ(expectedOutput.str().c_str(), output.c_str());
         EXPECT_EQ(OclocErrorCode::SUCCESS, retVal);
