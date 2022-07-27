@@ -718,6 +718,95 @@ TEST_F(MemoryTest, whenAllocatingHostMemoryWithUseHostPtrFlagThenExternalHostPtr
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
+struct SVMAllocsManagerSharedAllocZexPointerMock : public NEO::SVMAllocsManager {
+    SVMAllocsManagerSharedAllocZexPointerMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
+    void *createHostUnifiedMemoryAllocation(size_t size,
+                                            const UnifiedMemoryProperties &memoryProperties) override {
+        hostUnifiedMemoryAllocationTimes++;
+        return alignedMalloc(4096u, 4096u);
+    }
+    void *createSharedUnifiedMemoryAllocation(size_t size,
+                                              const UnifiedMemoryProperties &svmProperties,
+                                              void *cmdQ) override {
+
+        sharedUnifiedMemoryAllocationTimes++;
+        return alignedMalloc(4096u, 4096u);
+    }
+
+    uint32_t hostUnifiedMemoryAllocationTimes = 0;
+    uint32_t sharedUnifiedMemoryAllocationTimes = 0;
+};
+
+struct ContextZexPointerMock : public ContextImp {
+    ContextZexPointerMock(L0::DriverHandleImp *driverHandle) : ContextImp(driverHandle) {}
+    ze_result_t freeMem(const void *ptr) override {
+        alignedFree(const_cast<void *>(ptr));
+        return ZE_RESULT_SUCCESS;
+    }
+};
+
+struct ZexHostPointerTests : public ::testing::Test {
+    void SetUp() override {
+        NEO::MockCompilerEnableGuard mock(true);
+        neoDevice =
+            NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
+        auto mockBuiltIns = new MockBuiltins();
+        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+        NEO::DeviceVector devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+        driverHandle = std::make_unique<DriverHandleImp>();
+        driverHandle->initialize(std::move(devices));
+        prevSvmAllocsManager = driverHandle->svmAllocsManager;
+        currSvmAllocsManager = new SVMAllocsManagerSharedAllocZexPointerMock(driverHandle->memoryManager);
+        driverHandle->svmAllocsManager = currSvmAllocsManager;
+        device = driverHandle->devices[0];
+
+        context = std::make_unique<ContextZexPointerMock>(driverHandle.get());
+        EXPECT_NE(context, nullptr);
+        context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
+        auto neoDevice = device->getNEODevice();
+        context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
+        context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
+    }
+
+    void TearDown() override {
+        driverHandle->svmAllocsManager = prevSvmAllocsManager;
+        delete currSvmAllocsManager;
+    }
+    NEO::SVMAllocsManager *prevSvmAllocsManager;
+    SVMAllocsManagerSharedAllocZexPointerMock *currSvmAllocsManager;
+    std::unique_ptr<DriverHandleImp> driverHandle;
+    NEO::MockDevice *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+    std::unique_ptr<ContextZexPointerMock> context;
+};
+
+TEST_F(ZexHostPointerTests, whenAllocatingSharedMemoryWithUseHostPtrFlagThenCreateHostUSMAlloc) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.flags = ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR;
+    uint32_t prevAllocCounterShared = currSvmAllocsManager->sharedUnifiedMemoryAllocationTimes;
+    uint32_t prevAllocCounterHost = currSvmAllocsManager->hostUnifiedMemoryAllocationTimes;
+    ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 &hostDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    uint32_t curAllocCounterShared = currSvmAllocsManager->sharedUnifiedMemoryAllocationTimes;
+    uint32_t curAllocCounterHost = currSvmAllocsManager->hostUnifiedMemoryAllocationTimes;
+    EXPECT_EQ(curAllocCounterShared, prevAllocCounterShared);
+    EXPECT_EQ(curAllocCounterHost, prevAllocCounterHost + 1);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
 TEST_F(MemoryTest, whenAllocatingSharedMemoryWithDeviceInitialPlacementBiasFlagThenFlagsAreSetupCorrectly) {
     size_t size = 10;
     size_t alignment = 1u;
