@@ -1177,8 +1177,8 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
 
     uint32_t numEnginesInContext = 1;
 
-    I915_DEFINE_CONTEXT_PARAM_ENGINES(contextEngines, 1 + maxEngines){};
-    I915_DEFINE_CONTEXT_ENGINES_LOAD_BALANCE(balancer, maxEngines){};
+    ContextParamEngines<1 + maxEngines> contextEngines{};
+    ContextEnginesLoadBalance<maxEngines> balancer{};
 
     contextEngines.engines[0] = {engine->engineClass, engine->engineInstance};
 
@@ -1186,21 +1186,21 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
     unsigned int engineCount = static_cast<unsigned int>(numberOfCCS);
     if (useVirtualEnginesForCcs && engine->engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCompute) && numberOfCCS > 1u) {
         numEnginesInContext = numberOfCCS + 1;
-        balancer.num_siblings = numberOfCCS;
+        balancer.numSiblings = numberOfCCS;
         setupVirtualEngines = true;
     }
 
     bool includeMainCopyEngineInGroup = false;
     if (useVirtualEnginesForBcs && engine->engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy) && numberOfBCS > 1u) {
         numEnginesInContext = static_cast<uint32_t>(numberOfBCS) + 1;
-        balancer.num_siblings = numberOfBCS;
+        balancer.numSiblings = numberOfBCS;
         setupVirtualEngines = true;
         engineCount = static_cast<unsigned int>(rootDeviceEnvironment.getHardwareInfo()->featureTable.ftrBcsInfo.size());
         if (EngineHelpers::getBcsIndex(engineType) == 0u) {
             includeMainCopyEngineInGroup = true;
         } else {
             engineCount--;
-            balancer.num_siblings = numberOfBCS - 1;
+            balancer.numSiblings = numberOfBCS - 1;
             numEnginesInContext = static_cast<uint32_t>(numberOfBCS);
         }
     }
@@ -1208,8 +1208,8 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
     if (setupVirtualEngines) {
         balancer.base.name = I915_CONTEXT_ENGINES_EXT_LOAD_BALANCE;
         contextEngines.extensions = castToUint64(&balancer);
-        contextEngines.engines[0].engine_class = ioctlHelper->getDrmParamValue(DrmParam::EngineClassInvalid);
-        contextEngines.engines[0].engine_instance = ioctlHelper->getDrmParamValue(DrmParam::EngineClassInvalidNone);
+        contextEngines.engines[0].engineClass = ioctlHelper->getDrmParamValue(DrmParam::EngineClassInvalid);
+        contextEngines.engines[0].engineInstance = ioctlHelper->getDrmParamValue(DrmParam::EngineClassInvalidNone);
 
         for (auto engineIndex = 0u; engineIndex < engineCount; engineIndex++) {
             if (useVirtualEnginesForBcs && engine->engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy)) {

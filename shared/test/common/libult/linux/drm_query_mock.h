@@ -31,8 +31,8 @@ class DrmQueryMock : public DrmMock {
     };
 
     static constexpr uint32_t maxEngineCount{9};
-    I915_DEFINE_CONTEXT_ENGINES_LOAD_BALANCE(receivedContextEnginesLoadBalance, maxEngineCount){};
-    I915_DEFINE_CONTEXT_PARAM_ENGINES(receivedContextParamEngines, 1 + maxEngineCount){};
+    ContextEnginesLoadBalance<maxEngineCount> receivedContextEnginesLoadBalance{};
+    ContextParamEngines<1 + maxEngineCount> receivedContextParamEngines{};
 
     BcsInfoMask supportedCopyEnginesMask = 1;
     uint32_t i915QuerySuccessCount = std::numeric_limits<uint32_t>::max();

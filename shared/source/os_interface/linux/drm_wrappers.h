@@ -177,6 +177,22 @@ struct PrimeHandle {
     int32_t fileDescriptor;
 };
 
+template <uint32_t numEngines>
+struct ContextParamEngines {
+    uint64_t extensions;
+    EngineClassInstance engines[numEngines];
+} __attribute__((packed));
+
+template <uint32_t numEngines>
+struct ContextEnginesLoadBalance {
+    DrmUserExtension base;
+    uint16_t engineIndex;
+    uint16_t numSiblings;
+    uint32_t flags;
+    uint64_t reserved;
+    EngineClassInstance engines[numEngines];
+} __attribute__((packed));
+
 struct DrmVersion {
     int versionMajor;
     int versionMinor;

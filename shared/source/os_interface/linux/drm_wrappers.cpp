@@ -161,6 +161,19 @@ static_assert(offsetof(DrmVersion, date) == offsetof(drm_version, date));
 static_assert(offsetof(DrmVersion, descLen) == offsetof(drm_version, desc_len));
 static_assert(offsetof(DrmVersion, desc) == offsetof(drm_version, desc));
 
+typedef I915_DEFINE_CONTEXT_PARAM_ENGINES(I915ContextParamEngines, 3);
+static_assert(sizeof(ContextParamEngines<3>) == sizeof(I915ContextParamEngines));
+static_assert(offsetof(ContextParamEngines<3>, extensions) == offsetof(I915ContextParamEngines, extensions));
+static_assert(offsetof(ContextParamEngines<3>, engines) == offsetof(I915ContextParamEngines, engines));
+
+typedef I915_DEFINE_CONTEXT_ENGINES_LOAD_BALANCE(I915ContextEnginesLoadBalance, 3);
+static_assert(sizeof(ContextEnginesLoadBalance<3>) == sizeof(I915ContextEnginesLoadBalance));
+static_assert(offsetof(ContextEnginesLoadBalance<3>, base) == offsetof(I915ContextEnginesLoadBalance, base));
+static_assert(offsetof(ContextEnginesLoadBalance<3>, engineIndex) == offsetof(I915ContextEnginesLoadBalance, engine_index));
+static_assert(offsetof(ContextEnginesLoadBalance<3>, numSiblings) == offsetof(I915ContextEnginesLoadBalance, num_siblings));
+static_assert(offsetof(ContextEnginesLoadBalance<3>, flags) == offsetof(I915ContextEnginesLoadBalance, flags));
+static_assert(offsetof(ContextEnginesLoadBalance<3>, engines) == offsetof(I915ContextEnginesLoadBalance, engines));
+
 unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest, IoctlHelper *ioctlHelper) {
     if (ioctlHelper) {
         return ioctlHelper->getIoctlRequestValue(ioctlRequest);

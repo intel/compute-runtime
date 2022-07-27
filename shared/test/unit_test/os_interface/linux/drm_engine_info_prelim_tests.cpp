@@ -158,8 +158,8 @@ static void givenEngineTypeWhenBindingDrmContextThenContextParamEngineIsSet(std:
     EXPECT_EQ(ptrDiff(enginesStruct.engines + 1u, &enginesStruct), drm->receivedContextParamRequest.size);
     auto extensions = drm->receivedContextParamEngines.extensions;
     EXPECT_EQ(0ull, extensions);
-    EXPECT_EQ(engineClass, drm->receivedContextParamEngines.engines[0].engine_class);
-    EXPECT_EQ(0u, DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextParamEngines.engines[0].engine_instance));
+    EXPECT_EQ(engineClass, drm->receivedContextParamEngines.engines[0].engineClass);
+    EXPECT_EQ(0u, DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextParamEngines.engines[0].engineInstance));
 }
 
 TEST(DrmTest, givenRcsEngineWhenBindingDrmContextThenContextParamEngineIsSet) {
@@ -189,17 +189,17 @@ static void givenBcsEngineTypeWhenBindingDrmContextThenContextParamEngineIsSet(s
     if (EngineHelpers::isBcsVirtualEngineEnabled(engineType)) {
         EXPECT_NE(0ull, extensions);
         EXPECT_EQ(ptrDiff(drm->receivedContextParamEngines.engines + 1 + numBcsSiblings, &drm->receivedContextParamEngines), drm->receivedContextParamRequest.size);
-        EXPECT_EQ(static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_INVALID), drm->receivedContextParamEngines.engines[0].engine_class);
-        EXPECT_EQ(static_cast<__u16>(I915_ENGINE_CLASS_INVALID_NONE), drm->receivedContextParamEngines.engines[0].engine_instance);
+        EXPECT_EQ(static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_INVALID), drm->receivedContextParamEngines.engines[0].engineClass);
+        EXPECT_EQ(static_cast<__u16>(I915_ENGINE_CLASS_INVALID_NONE), drm->receivedContextParamEngines.engines[0].engineInstance);
         EXPECT_EQ(static_cast<__u32>(I915_CONTEXT_ENGINES_EXT_LOAD_BALANCE), drm->receivedContextEnginesLoadBalance.base.name);
-        EXPECT_EQ(numBcsSiblings, drm->receivedContextEnginesLoadBalance.num_siblings);
+        EXPECT_EQ(numBcsSiblings, drm->receivedContextEnginesLoadBalance.numSiblings);
         for (auto balancedEngine = 0u; balancedEngine < numBcsSiblings; balancedEngine++) {
-            EXPECT_EQ(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY, drm->receivedContextEnginesLoadBalance.engines[balancedEngine].engine_class);
+            EXPECT_EQ(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY, drm->receivedContextEnginesLoadBalance.engines[balancedEngine].engineClass);
             auto engineInstance = engineIndex ? balancedEngine + 1 : balancedEngine;
-            EXPECT_EQ(engineInstance, DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextEnginesLoadBalance.engines[balancedEngine].engine_instance));
-            EXPECT_EQ(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY, drm->receivedContextParamEngines.engines[1 + balancedEngine].engine_class);
-            EXPECT_EQ(engineInstance, DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextParamEngines.engines[1 + balancedEngine].engine_instance));
-            auto engineTile = DrmMockHelper::getTileFromEngineOrMemoryInstance(drm->receivedContextEnginesLoadBalance.engines[balancedEngine].engine_instance);
+            EXPECT_EQ(engineInstance, DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextEnginesLoadBalance.engines[balancedEngine].engineInstance));
+            EXPECT_EQ(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY, drm->receivedContextParamEngines.engines[1 + balancedEngine].engineClass);
+            EXPECT_EQ(engineInstance, DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextParamEngines.engines[1 + balancedEngine].engineInstance));
+            auto engineTile = DrmMockHelper::getTileFromEngineOrMemoryInstance(drm->receivedContextEnginesLoadBalance.engines[balancedEngine].engineInstance);
             EXPECT_EQ(engineTile, tileId);
         }
     } else {
@@ -287,10 +287,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, givenLinkBcsEngineWithoutMainC
             auto extensions = drm->receivedContextParamEngines.extensions;
             EXPECT_NE(0ull, extensions);
             EXPECT_EQ(ptrDiff(drm->receivedContextParamEngines.engines + 1 + numBcsSiblings, &drm->receivedContextParamEngines), drm->receivedContextParamRequest.size);
-            EXPECT_EQ(static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_INVALID), drm->receivedContextParamEngines.engines[0].engine_class);
-            EXPECT_EQ(static_cast<__u16>(I915_ENGINE_CLASS_INVALID_NONE), drm->receivedContextParamEngines.engines[0].engine_instance);
+            EXPECT_EQ(static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_INVALID), drm->receivedContextParamEngines.engines[0].engineClass);
+            EXPECT_EQ(static_cast<__u16>(I915_ENGINE_CLASS_INVALID_NONE), drm->receivedContextParamEngines.engines[0].engineInstance);
             EXPECT_EQ(static_cast<__u32>(I915_CONTEXT_ENGINES_EXT_LOAD_BALANCE), drm->receivedContextEnginesLoadBalance.base.name);
-            EXPECT_EQ(numBcsSiblings, drm->receivedContextEnginesLoadBalance.num_siblings);
+            EXPECT_EQ(numBcsSiblings, drm->receivedContextEnginesLoadBalance.numSiblings);
         }
     }
 }
@@ -335,10 +335,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, giveNotAllLinkBcsEnginesWhenBi
             auto extensions = drm->receivedContextParamEngines.extensions;
             EXPECT_NE(0ull, extensions);
             EXPECT_EQ(ptrDiff(drm->receivedContextParamEngines.engines + 1 + numBcsSiblings, &drm->receivedContextParamEngines), drm->receivedContextParamRequest.size);
-            EXPECT_EQ(static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_INVALID), drm->receivedContextParamEngines.engines[0].engine_class);
-            EXPECT_EQ(static_cast<__u16>(I915_ENGINE_CLASS_INVALID_NONE), drm->receivedContextParamEngines.engines[0].engine_instance);
+            EXPECT_EQ(static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_INVALID), drm->receivedContextParamEngines.engines[0].engineClass);
+            EXPECT_EQ(static_cast<__u16>(I915_ENGINE_CLASS_INVALID_NONE), drm->receivedContextParamEngines.engines[0].engineInstance);
             EXPECT_EQ(static_cast<__u32>(I915_CONTEXT_ENGINES_EXT_LOAD_BALANCE), drm->receivedContextEnginesLoadBalance.base.name);
-            EXPECT_EQ(numBcsSiblings, drm->receivedContextEnginesLoadBalance.num_siblings);
+            EXPECT_EQ(numBcsSiblings, drm->receivedContextEnginesLoadBalance.numSiblings);
         } else {
             EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_BLT), engineFlag);
             EXPECT_EQ(0u, drm->receivedContextParamRequestCount);
@@ -468,8 +468,8 @@ HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesDisabledWhenCreatingContex
         EXPECT_EQ(ptrDiff(drm->receivedContextParamEngines.engines + 1, &drm->receivedContextParamEngines), drm->receivedContextParamRequest.size);
         auto extensions = drm->receivedContextParamEngines.extensions;
         EXPECT_EQ(0ull, extensions);
-        EXPECT_EQ(static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY), drm->receivedContextParamEngines.engines[0].engine_class);
-        EXPECT_EQ(static_cast<__u16>(engineIndex), DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextParamEngines.engines[0].engine_instance));
+        EXPECT_EQ(static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY), drm->receivedContextParamEngines.engines[0].engineClass);
+        EXPECT_EQ(static_cast<__u16>(engineIndex), DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextParamEngines.engines[0].engineInstance));
     }
 }
 
@@ -515,14 +515,14 @@ TEST(DrmTest, givenVirtualEnginesEnabledWhenCreatingContextThenEnableLoadBalanci
         auto extensions = drm->receivedContextParamEngines.extensions;
         EXPECT_NE(0ull, extensions);
         EXPECT_EQ(static_cast<__u32>(I915_CONTEXT_ENGINES_EXT_LOAD_BALANCE), drm->receivedContextEnginesLoadBalance.base.name);
-        EXPECT_EQ(numberOfCCS, drm->receivedContextEnginesLoadBalance.num_siblings);
-        EXPECT_EQ(static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_INVALID), drm->receivedContextParamEngines.engines[0].engine_class);
-        EXPECT_EQ(static_cast<__u16>(I915_ENGINE_CLASS_INVALID_NONE), drm->receivedContextParamEngines.engines[0].engine_instance);
+        EXPECT_EQ(numberOfCCS, drm->receivedContextEnginesLoadBalance.numSiblings);
+        EXPECT_EQ(static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_INVALID), drm->receivedContextParamEngines.engines[0].engineClass);
+        EXPECT_EQ(static_cast<__u16>(I915_ENGINE_CLASS_INVALID_NONE), drm->receivedContextParamEngines.engines[0].engineInstance);
         for (auto balancedEngine = 0u; balancedEngine < numberOfCCS; balancedEngine++) {
-            EXPECT_EQ(DrmPrelimHelper::getComputeEngineClass(), drm->receivedContextEnginesLoadBalance.engines[balancedEngine].engine_class);
-            EXPECT_EQ(balancedEngine, DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextEnginesLoadBalance.engines[balancedEngine].engine_instance));
-            EXPECT_EQ(DrmPrelimHelper::getComputeEngineClass(), drm->receivedContextParamEngines.engines[1 + balancedEngine].engine_class);
-            EXPECT_EQ(balancedEngine, DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextParamEngines.engines[1 + balancedEngine].engine_instance));
+            EXPECT_EQ(DrmPrelimHelper::getComputeEngineClass(), drm->receivedContextEnginesLoadBalance.engines[balancedEngine].engineClass);
+            EXPECT_EQ(balancedEngine, DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextEnginesLoadBalance.engines[balancedEngine].engineInstance));
+            EXPECT_EQ(DrmPrelimHelper::getComputeEngineClass(), drm->receivedContextParamEngines.engines[1 + balancedEngine].engineClass);
+            EXPECT_EQ(balancedEngine, DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextParamEngines.engines[1 + balancedEngine].engineInstance));
         }
     }
 }
@@ -559,14 +559,14 @@ TEST(DrmTest, givenVirtualEnginesEnabledWhenCreatingContextThenEnableLoadBalanci
         auto extensions = drm->receivedContextParamEngines.extensions;
         EXPECT_NE(0ull, extensions);
         EXPECT_EQ(static_cast<__u32>(I915_CONTEXT_ENGINES_EXT_LOAD_BALANCE), drm->receivedContextEnginesLoadBalance.base.name);
-        EXPECT_EQ(numberOfCCS, drm->receivedContextEnginesLoadBalance.num_siblings);
-        EXPECT_EQ(static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_INVALID), drm->receivedContextParamEngines.engines[0].engine_class);
-        EXPECT_EQ(static_cast<__u16>(I915_ENGINE_CLASS_INVALID_NONE), drm->receivedContextParamEngines.engines[0].engine_instance);
+        EXPECT_EQ(numberOfCCS, drm->receivedContextEnginesLoadBalance.numSiblings);
+        EXPECT_EQ(static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_INVALID), drm->receivedContextParamEngines.engines[0].engineClass);
+        EXPECT_EQ(static_cast<__u16>(I915_ENGINE_CLASS_INVALID_NONE), drm->receivedContextParamEngines.engines[0].engineInstance);
         for (auto balancedEngine = 0u; balancedEngine < numberOfCCS; balancedEngine++) {
-            EXPECT_EQ(DrmPrelimHelper::getComputeEngineClass(), drm->receivedContextEnginesLoadBalance.engines[balancedEngine].engine_class);
-            EXPECT_EQ(balancedEngine, DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextEnginesLoadBalance.engines[balancedEngine].engine_instance));
-            EXPECT_EQ(DrmPrelimHelper::getComputeEngineClass(), drm->receivedContextParamEngines.engines[1 + balancedEngine].engine_class);
-            EXPECT_EQ(balancedEngine, DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextParamEngines.engines[1 + balancedEngine].engine_instance));
+            EXPECT_EQ(DrmPrelimHelper::getComputeEngineClass(), drm->receivedContextEnginesLoadBalance.engines[balancedEngine].engineClass);
+            EXPECT_EQ(balancedEngine, DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextEnginesLoadBalance.engines[balancedEngine].engineInstance));
+            EXPECT_EQ(DrmPrelimHelper::getComputeEngineClass(), drm->receivedContextParamEngines.engines[1 + balancedEngine].engineClass);
+            EXPECT_EQ(balancedEngine, DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextParamEngines.engines[1 + balancedEngine].engineInstance));
         }
     }
 }
@@ -628,8 +628,8 @@ TEST(DrmTest, givenVirtualEnginesDisabledWhenCreatingContextThenDontEnableLoadBa
         EXPECT_EQ(ptrDiff(drm->receivedContextParamEngines.engines + 1, &drm->receivedContextParamEngines), drm->receivedContextParamRequest.size);
         auto extensions = drm->receivedContextParamEngines.extensions;
         EXPECT_EQ(0ull, extensions);
-        EXPECT_EQ(static_cast<__u16>(DrmPrelimHelper::getComputeEngineClass()), drm->receivedContextParamEngines.engines[0].engine_class);
-        EXPECT_EQ(static_cast<__u16>(engineIndex), DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextParamEngines.engines[0].engine_instance));
+        EXPECT_EQ(static_cast<__u16>(DrmPrelimHelper::getComputeEngineClass()), drm->receivedContextParamEngines.engines[0].engineClass);
+        EXPECT_EQ(static_cast<__u16>(engineIndex), DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextParamEngines.engines[0].engineInstance));
     }
 }
 
@@ -661,8 +661,8 @@ TEST(DrmTest, givenEngineInstancedDeviceWhenCreatingContextThenDontUseVirtualEng
         EXPECT_EQ(ptrDiff(drm->receivedContextParamEngines.engines + 1, &drm->receivedContextParamEngines), drm->receivedContextParamRequest.size);
         auto extensions = drm->receivedContextParamEngines.extensions;
         EXPECT_EQ(0ull, extensions);
-        EXPECT_EQ(static_cast<__u16>(DrmPrelimHelper::getComputeEngineClass()), drm->receivedContextParamEngines.engines[0].engine_class);
-        EXPECT_EQ(static_cast<__u16>(engineIndex), DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextParamEngines.engines[0].engine_instance));
+        EXPECT_EQ(static_cast<__u16>(DrmPrelimHelper::getComputeEngineClass()), drm->receivedContextParamEngines.engines[0].engineClass);
+        EXPECT_EQ(static_cast<__u16>(engineIndex), DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextParamEngines.engines[0].engineInstance));
     }
 }
 
@@ -692,8 +692,8 @@ TEST(DrmTest, givenVirtualEnginesEnabledAndNotEnoughCcsEnginesWhenCreatingContex
     auto extensions = drm->receivedContextParamEngines.extensions;
     EXPECT_EQ(0ull, extensions);
 
-    EXPECT_EQ(DrmPrelimHelper::getComputeEngineClass(), drm->receivedContextParamEngines.engines[0].engine_class);
-    EXPECT_EQ(0, DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextParamEngines.engines[0].engine_instance));
+    EXPECT_EQ(DrmPrelimHelper::getComputeEngineClass(), drm->receivedContextParamEngines.engines[0].engineClass);
+    EXPECT_EQ(0, DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextParamEngines.engines[0].engineInstance));
 }
 
 TEST(DrmTest, givenVirtualEnginesEnabledAndNonCcsEnginesWhenCreatingContextThenDontEnableLoadBalancing) {
@@ -720,7 +720,7 @@ TEST(DrmTest, givenVirtualEnginesEnabledAndNonCcsEnginesWhenCreatingContextThenD
     auto extensions = drm->receivedContextParamEngines.extensions;
     EXPECT_EQ(0ull, extensions);
 
-    EXPECT_EQ(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY, drm->receivedContextParamEngines.engines[0].engine_class);
+    EXPECT_EQ(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY, drm->receivedContextParamEngines.engines[0].engineClass);
 }
 
 TEST(DrmTest, givenInvalidTileWhenBindingDrmContextThenErrorIsReturned) {
