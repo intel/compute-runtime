@@ -178,7 +178,7 @@ int drmSetContextParam(NEO::GemContextParam *param) {
     int ret = 0;
 
     switch (param->param) {
-    case I915_CONTEXT_PRIVATE_PARAM_BOOST:
+    case NEO::contextPrivateParamBoost:
         ret = failOnParamBoost;
         break;
     case I915_CONTEXT_PARAM_VM:

@@ -150,7 +150,7 @@ bool Drm::queryI915DeviceIdAndRevision() {
 int Drm::enableTurboBoost() {
     GemContextParam contextParam = {};
 
-    contextParam.param = I915_CONTEXT_PRIVATE_PARAM_BOOST;
+    contextParam.param = contextPrivateParamBoost;
     contextParam.value = 1;
     return ioctlHelper->ioctl(DrmIoctl::GemContextSetparam, &contextParam);
 }

@@ -137,7 +137,7 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_PRIORITY) {
             return this->storedRetVal;
         }
-        if ((receivedContextParamRequest.param == I915_CONTEXT_PRIVATE_PARAM_BOOST) && (receivedContextParamRequest.value == 1)) {
+        if ((receivedContextParamRequest.param == contextPrivateParamBoost) && (receivedContextParamRequest.value == 1)) {
             return this->storedRetVal;
         }
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_SSEU) {
