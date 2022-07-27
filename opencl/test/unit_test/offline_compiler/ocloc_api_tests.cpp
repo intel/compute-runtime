@@ -176,7 +176,7 @@ TEST(OclocApiTests, GivenInvalidQueryWhenQueryingThenErrorIsReturned) {
     std::string output = testing::internal::GetCapturedStdout();
 
     EXPECT_EQ(retVal, NEO::OclocErrorCode::INVALID_COMMAND_LINE);
-    EXPECT_STREQ("Error: Invalid command line. Uknown argument unknown_query.", output.c_str());
+    EXPECT_STREQ("Error: Invalid command line. Unknown argument unknown_query.", output.c_str());
 }
 
 TEST(OclocApiTests, givenNoAcronymWhenIdsCommandIsInvokeThenErrorIsReported) {
@@ -209,7 +209,7 @@ TEST(OclocApiTests, givenUnknownAcronymWhenIdsCommandIsInvokeThenErrorIsReported
     std::string output = testing::internal::GetCapturedStdout();
 
     EXPECT_EQ(retVal, NEO::OclocErrorCode::INVALID_COMMAND_LINE);
-    EXPECT_STREQ("Error: Invalid command line. Uknown acronym unk.\n", output.c_str());
+    EXPECT_STREQ("Error: Invalid command line. Unknown acronym unk.\n", output.c_str());
 }
 
 TEST(OclocApiTests, WhenGoodFamilyNameIsProvidedThenSuccessIsReturned) {

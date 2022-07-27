@@ -136,7 +136,7 @@ int OfflineCompiler::query(size_t numArgs, const std::vector<std::string> &allAr
     } else if ("--help" == arg) {
         printQueryHelp(helper);
     } else {
-        helper->printf("Error: Invalid command line. Uknown argument %s.", arg.c_str());
+        helper->printf("Error: Invalid command line. Unknown argument %s.", arg.c_str());
         retVal = INVALID_COMMAND_LINE;
     }
 
@@ -188,7 +188,7 @@ int OfflineCompiler::queryAcronymIds(size_t numArgs, const std::vector<std::stri
             }
         }
     } else {
-        helper->printf("Error: Invalid command line. Uknown acronym %s.\n", allArgs[2].c_str());
+        helper->printf("Error: Invalid command line. Unknown acronym %s.\n", allArgs[2].c_str());
         retVal = INVALID_COMMAND_LINE;
         return retVal;
     }
@@ -199,7 +199,7 @@ int OfflineCompiler::queryAcronymIds(size_t numArgs, const std::vector<std::stri
             os << "\n";
         os << prefix;
     }
-    helper->printf("Matched ids:\n%s", os.str().c_str());
+    helper->printf("Matched ids:\n%s\n", os.str().c_str());
 
     return retVal;
 }
