@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,9 +36,9 @@ class HwDeviceIdWddm : public HwDeviceId {
     }
 
   protected:
-    const D3DKMT_HANDLE adapter;
     const LUID adapterLuid;
-    OsEnvironment *osEnvironment;
     std::unique_ptr<UmKmDataTranslator> umKmDataTranslator;
+    OsEnvironment *osEnvironment;
+    const D3DKMT_HANDLE adapter;
 };
 } // namespace NEO

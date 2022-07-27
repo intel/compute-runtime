@@ -40,10 +40,10 @@ class OsContextWin : public OsContext {
   protected:
     void initializeContext() override;
 
-    D3DKMT_HANDLE wddmContextHandle = 0;
+    WddmResidencyController residencyController;
     HardwareQueue hardwareQueue;
     Wddm &wddm;
-    WddmResidencyController residencyController;
+    D3DKMT_HANDLE wddmContextHandle = 0;
     bool debuggableContext = false;
 };
 } // namespace NEO

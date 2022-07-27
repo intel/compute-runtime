@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,18 +66,21 @@ class WddmResidencyController {
     bool isInitialized() const;
 
   protected:
-    Wddm &wddm;
-    uint32_t osContextId;
     MonitoredFence monitoredFence = {};
+
+    ResidencyContainer trimCandidateList;
 
     SpinLock lock;
     SpinLock trimCallbackLock;
 
-    bool memoryBudgetExhausted = false;
     uint64_t lastTrimFenceValue = 0u;
-    ResidencyContainer trimCandidateList;
+
+    Wddm &wddm;
+    VOID *trimCallbackHandle = nullptr;
+
+    uint32_t osContextId;
     uint32_t trimCandidatesCount = 0;
 
-    VOID *trimCallbackHandle = nullptr;
+    bool memoryBudgetExhausted = false;
 };
 } // namespace NEO

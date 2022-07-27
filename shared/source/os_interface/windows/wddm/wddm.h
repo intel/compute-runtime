@@ -208,35 +208,6 @@ class Wddm : public DriverModel {
     PhyicalDevicePciSpeedInfo getPciSpeedInfo() const override;
 
   protected:
-    std::unique_ptr<HwDeviceIdWddm> hwDeviceId;
-    D3DKMT_HANDLE device = 0;
-    D3DKMT_HANDLE pagingQueue = 0;
-    D3DKMT_HANDLE pagingQueueSyncObject = 0;
-
-    uint64_t *pagingFenceAddress = nullptr;
-    std::atomic<std::uint64_t> currentPagingFenceValue{0};
-
-    // Adapter information
-    std::unique_ptr<PLATFORM> gfxPlatform;
-    std::unique_ptr<GT_SYSTEM_INFO> gtSystemInfo;
-    std::unique_ptr<FeatureTable> featureTable;
-    std::unique_ptr<WorkaroundTable> workaroundTable;
-    GMM_GFX_PARTITIONING gfxPartition{};
-    ADAPTER_BDF adapterBDF{};
-    uint64_t systemSharedMemory = 0;
-    uint64_t dedicatedVideoMemory = 0;
-    uint32_t maxRenderFrequency = 0;
-    uint32_t timestampFrequency = 0u;
-    bool instrumentationEnabled = false;
-    std::string deviceRegistryPath;
-    RootDeviceEnvironment &rootDeviceEnvironment;
-    unsigned int enablePreemptionRegValue = 1;
-
-    unsigned long hwContextId = 0;
-    uintptr_t maximumApplicationAddress = 0;
-    std::unique_ptr<GmmMemory> gmmMemory;
-    uintptr_t minAddress = 0;
-
     Wddm(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
     MOCKABLE_VIRTUAL bool waitOnGPU(D3DKMT_HANDLE context);
     bool createDevice(PreemptionMode preemptionMode);
@@ -254,14 +225,50 @@ class Wddm : public DriverModel {
     }
     void setPlatformSupportEvictWhenNecessaryFlag(const HwInfoConfig &hwInfoConfig);
 
-    static GetSystemInfoFcn getSystemInfo;
+    GMM_GFX_PARTITIONING gfxPartition{};
+    ADAPTER_BDF adapterBDF{};
 
+    std::string deviceRegistryPath;
+
+    std::atomic<std::uint64_t> currentPagingFenceValue{0};
+
+    uint64_t systemSharedMemory = 0;
+    uint64_t dedicatedVideoMemory = 0;
+
+    // Adapter information
+    std::unique_ptr<PLATFORM> gfxPlatform;
+    std::unique_ptr<GT_SYSTEM_INFO> gtSystemInfo;
+    std::unique_ptr<FeatureTable> featureTable;
+    std::unique_ptr<WorkaroundTable> workaroundTable;
+
+    std::unique_ptr<HwDeviceIdWddm> hwDeviceId;
+    std::unique_ptr<GmmMemory> gmmMemory;
     std::unique_ptr<KmDafListener> kmDafListener;
     std::unique_ptr<WddmInterface> wddmInterface;
     std::unique_ptr<WddmResidentAllocationsContainer> temporaryResources;
     std::unique_ptr<WddmResidencyLogger> residencyLogger;
     std::unique_ptr<OSMemory> osMemory;
 
+    static GetSystemInfoFcn getSystemInfo;
+    RootDeviceEnvironment &rootDeviceEnvironment;
+
+    uint64_t *pagingFenceAddress = nullptr;
+
+    uintptr_t maximumApplicationAddress = 0;
+    uintptr_t minAddress = 0;
+
+    unsigned long hwContextId = 0;
+
+    D3DKMT_HANDLE device = 0;
+    D3DKMT_HANDLE pagingQueue = 0;
+    D3DKMT_HANDLE pagingQueueSyncObject = 0;
+
+    uint32_t maxRenderFrequency = 0;
+    uint32_t timestampFrequency = 0u;
+
+    unsigned int enablePreemptionRegValue = 1;
+
     bool platformSupportsEvictWhenNecessary = false;
+    bool instrumentationEnabled = false;
 };
 } // namespace NEO

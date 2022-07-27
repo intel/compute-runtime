@@ -80,7 +80,7 @@ class Gdi {
 
   protected:
     MOCKABLE_VIRTUAL bool getAllProcAddresses();
-    bool initialized = false;
     std::unique_ptr<NEO::OsLibrary> gdiDll;
+    bool initialized = false;
 };
 } // namespace NEO

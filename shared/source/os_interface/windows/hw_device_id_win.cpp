@@ -21,8 +21,10 @@ HwDeviceIdWddm::~HwDeviceIdWddm() {
 HwDeviceIdWddm::HwDeviceIdWddm(D3DKMT_HANDLE adapterIn, LUID adapterLuidIn,
                                OsEnvironment *osEnvironmentIn, std::unique_ptr<UmKmDataTranslator> umKmDataTranslator)
     : HwDeviceId(DriverModelType::WDDM),
-      adapter(adapterIn), adapterLuid(adapterLuidIn), osEnvironment(osEnvironmentIn),
-      umKmDataTranslator(std::move(umKmDataTranslator)) {}
+      adapterLuid(adapterLuidIn), umKmDataTranslator(std::move(umKmDataTranslator)),
+      osEnvironment(osEnvironmentIn), adapter(adapterIn) {
+}
+
 Gdi *HwDeviceIdWddm::getGdi() const {
     return static_cast<OsEnvironmentWin *>(osEnvironment)->gdi.get();
 };
