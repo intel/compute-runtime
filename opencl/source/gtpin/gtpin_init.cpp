@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,6 @@
 
 #include "gtpin_init.h"
 
-#include "shared/source/device/device.h"
-
-#include "opencl/source/platform/platform.h"
-
-#include "CL/cl.h"
 #include "gtpin_helpers.h"
 
 using namespace gtpin;

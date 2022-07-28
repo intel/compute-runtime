@@ -7,7 +7,6 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/mem_obj/image.h"
