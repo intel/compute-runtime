@@ -143,6 +143,158 @@ TEST_F(WddmTests, GivenDebugFlagEnablesEvictWhenNecessarySupportThenFlagIsTrue) 
     EXPECT_TRUE(wddm->platformSupportsEvictWhenNecessary);
 }
 
+TEST_F(WddmTests, GivenProperTopologyDataAndDebugFlagsEnabledWhenInitializingWddmThenExpectTopologyMapCreateAndReturnTrue) {
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = 10;
+    defaultHwInfo.get()->gtSystemInfo.SliceCount = 1; // Only one slice enabled
+
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].Enabled = true;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DualSubSliceEnabledCount = 1;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[0].Enabled = true;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[0].SubSlice[0].Enabled = true;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[0].SubSlice[0].EuEnabledCount = 4;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[0].SubSlice[1].Enabled = true;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[0].SubSlice[1].EuEnabledCount = 4;
+
+    const HardwareInfo *hwInfo = defaultHwInfo.get();
+    std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo->platform,
+                                                         &hwInfo->gtSystemInfo,
+                                                         hwInfo->capabilityTable.gpuAddressSpace));
+
+    wddm->rootDeviceEnvironment.executionEnvironment.setDebuggingEnabled();
+    EXPECT_TRUE(wddm->init());
+    const auto &topologyMap = wddm->getTopologyMap();
+    EXPECT_EQ(topologyMap.size(), 1u);
+}
+
+TEST_F(WddmTests, GivenNoSubsliceEnabledAndDebugFlagsEnabledWhenInitializingWddmThenExpectTopologyMapNotCreateAndReturnFalse) {
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = 10;
+    defaultHwInfo.get()->gtSystemInfo.SliceCount = 1; // Only one slice enabled
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DualSubSliceEnabledCount = 1;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[0].Enabled = true;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[0].SubSlice[0].Enabled = false;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[0].SubSlice[1].Enabled = false;
+
+    const HardwareInfo *hwInfo = defaultHwInfo.get();
+    std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo->platform,
+                                                         &hwInfo->gtSystemInfo,
+                                                         hwInfo->capabilityTable.gpuAddressSpace));
+
+    wddm->rootDeviceEnvironment.executionEnvironment.setDebuggingEnabled();
+    EXPECT_FALSE(wddm->init());
+    const auto &topologyMap = wddm->getTopologyMap();
+    EXPECT_TRUE(topologyMap.empty());
+}
+
+TEST_F(WddmTests, GivenProperTopologyDataWhenQueryingTopologyThenExpectTrue) {
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    defaultHwInfo.get()->gtSystemInfo.MultiTileArchInfo.TileCount = 1;
+    defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = 10;
+    defaultHwInfo.get()->gtSystemInfo.SliceCount = 1; // Only one slice enabled
+
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].Enabled = true;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DualSubSliceEnabledCount = 2;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[0].Enabled = false; // DSS[0] disabled
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[1].Enabled = true;  // DSS[1] enabled
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[1].SubSlice[0].Enabled = false;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[1].SubSlice[1].Enabled = true;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[1].SubSlice[1].EuEnabledCount = 4;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[2].Enabled = false; // DSS[2] disabled
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[3].Enabled = true;  // DSS[3] enabled
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[3].SubSlice[0].Enabled = true;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[3].SubSlice[1].Enabled = true;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[3].SubSlice[1].EuEnabledCount = 4;
+    for (uint32_t i = 1; i < defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported; i++) {
+        defaultHwInfo.get()->gtSystemInfo.SliceInfo[i].Enabled = false;
+    }
+
+    wddm->rootDeviceEnvironment.setHwInfo(defaultHwInfo.get());
+    EXPECT_TRUE(wddm->buildTopologyMapping());
+    const auto &topologyMap = wddm->getTopologyMap();
+    EXPECT_EQ(topologyMap.size(), 1u);
+    EXPECT_EQ(topologyMap.at(0).sliceIndices.size(), 1u);
+    EXPECT_EQ(topologyMap.at(0).sliceIndices[0], 0);
+    EXPECT_EQ(topologyMap.at(0).subsliceIndices.size(), 3u);
+    EXPECT_EQ(topologyMap.at(0).subsliceIndices[0], 3);
+    EXPECT_EQ(topologyMap.at(0).subsliceIndices[1], 6);
+    EXPECT_EQ(topologyMap.at(0).subsliceIndices[2], 7);
+}
+
+TEST_F(WddmTests, GivenMoreThanOneEnabledSliceWhenQueryingTopologyThenExpectTrueAndNoSubSliceIndicesInTopology) {
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    defaultHwInfo.get()->gtSystemInfo.MultiTileArchInfo.TileCount = 1;
+    defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = 10;
+    defaultHwInfo.get()->gtSystemInfo.SliceCount = 2;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].Enabled = false;
+
+    uint32_t index = 1;
+    for (uint32_t enabledSliceCount = 0; enabledSliceCount < defaultHwInfo.get()->gtSystemInfo.SliceCount; enabledSliceCount++) {
+        defaultHwInfo.get()->gtSystemInfo.SliceInfo[index].Enabled = true;
+        defaultHwInfo.get()->gtSystemInfo.SliceInfo[index].DualSubSliceEnabledCount = 1;
+        defaultHwInfo.get()->gtSystemInfo.SliceInfo[index].DSSInfo[0].Enabled = true;
+        defaultHwInfo.get()->gtSystemInfo.SliceInfo[index].DSSInfo[0].SubSlice[0].Enabled = true;
+        defaultHwInfo.get()->gtSystemInfo.SliceInfo[index].DSSInfo[0].SubSlice[0].EuEnabledCount = 4;
+        defaultHwInfo.get()->gtSystemInfo.SliceInfo[index].DSSInfo[0].SubSlice[1].Enabled = true;
+        defaultHwInfo.get()->gtSystemInfo.SliceInfo[index].DSSInfo[0].SubSlice[1].EuEnabledCount = 4;
+        index++;
+    }
+    for (; index < defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported; index++) {
+        defaultHwInfo.get()->gtSystemInfo.SliceInfo[index].Enabled = false;
+    }
+
+    wddm->rootDeviceEnvironment.setHwInfo(defaultHwInfo.get());
+    EXPECT_TRUE(wddm->buildTopologyMapping());
+    const auto &topologyMap = wddm->getTopologyMap();
+    EXPECT_EQ(topologyMap.size(), 1u);
+    EXPECT_EQ(topologyMap.at(0).sliceIndices.size(), 2u);
+    EXPECT_EQ(topologyMap.at(0).sliceIndices[0], 1);
+    EXPECT_EQ(topologyMap.at(0).sliceIndices[1], 2);
+    EXPECT_TRUE(topologyMap.at(0).subsliceIndices.empty());
+}
+
+TEST_F(WddmTests, GivenNoSubsliceEnabledWhenQueryingTopologyThenExpectFalse) {
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    defaultHwInfo.get()->gtSystemInfo.MultiTileArchInfo.TileCount = 1;
+    defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = 10;
+    defaultHwInfo.get()->gtSystemInfo.SliceCount = 1;
+
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DualSubSliceEnabledCount = 1;
+    // Lets say, DSS 0 is disabled and dss 1 is enabled, thus overall DSS enable count is 1
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[0].Enabled = false;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[1].Enabled = true;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[0].SubSlice[0].Enabled = false;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[0].SubSlice[1].Enabled = false;
+
+    wddm->rootDeviceEnvironment.setHwInfo(defaultHwInfo.get());
+    EXPECT_FALSE(wddm->buildTopologyMapping());
+}
+
+TEST_F(WddmTests, GivenNoEuThreadsEnabledWhenQueryingTopologyThenExpectFalse) {
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    defaultHwInfo.get()->gtSystemInfo.MultiTileArchInfo.TileCount = 1;
+    defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = 10;
+    defaultHwInfo.get()->gtSystemInfo.SliceCount = 1;
+
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DualSubSliceEnabledCount = 1;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[0].Enabled = true;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[0].SubSlice[0].Enabled = true;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[0].SubSlice[0].EuEnabledCount = 0;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[0].SubSlice[1].Enabled = false;
+    wddm->rootDeviceEnvironment.setHwInfo(defaultHwInfo.get());
+    EXPECT_FALSE(wddm->buildTopologyMapping());
+}
+
+TEST_F(WddmTests, GivenNoSliceEnabledWhenQueryingTopologyThenExpectFalse) {
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    defaultHwInfo.get()->gtSystemInfo.MultiTileArchInfo.TileCount = 1;
+    for (uint32_t i = 0; i < GT_MAX_SLICE; i++) {
+        defaultHwInfo.get()->gtSystemInfo.SliceInfo[i].Enabled = false;
+    }
+    wddm->rootDeviceEnvironment.setHwInfo(defaultHwInfo.get());
+    EXPECT_FALSE(wddm->buildTopologyMapping());
+}
+
 TEST_F(WddmTests, GivenPlatformSupportsEvictWhenNecessaryWhenAdjustingEvictNeededTrueThenExpectTrue) {
     wddm->platformSupportsEvictWhenNecessary = true;
     bool value = wddm->adjustEvictNeededParameter(true);

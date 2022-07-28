@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/topology_map.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_context.h"
@@ -23,6 +24,7 @@
 
 #include "sku_info.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <limits>
 #include <memory>
@@ -206,12 +208,17 @@ class Wddm : public DriverModel {
     }
 
     PhyicalDevicePciSpeedInfo getPciSpeedInfo() const override;
+    bool buildTopologyMapping();
+    const TopologyMap &getTopologyMap();
 
     uint32_t getAdditionalAdapterInfoOptions() const {
         return additionalAdapterInfoOptions;
     }
 
   protected:
+    TopologyMap topologyMap;
+    bool translateTopologyInfo(TopologyMapping &mapping);
+
     Wddm(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
     MOCKABLE_VIRTUAL bool waitOnGPU(D3DKMT_HANDLE context);
     bool createDevice(PreemptionMode preemptionMode);

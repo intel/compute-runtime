@@ -131,6 +131,12 @@ bool Wddm::init() {
         gmmMemory.reset(GmmMemory::create(rootDeviceEnvironment.getGmmClientContext()));
     }
 
+    if (rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled()) {
+        if (!buildTopologyMapping()) {
+            return false;
+        }
+    }
+
     return configureDeviceAddressSpace();
 }
 
@@ -141,6 +147,82 @@ void Wddm::setPlatformSupportEvictWhenNecessaryFlag(const HwInfoConfig &hwInfoCo
     if (overridePlatformSupportsEvictWhenNecessary != -1) {
         platformSupportsEvictWhenNecessary = !!overridePlatformSupportsEvictWhenNecessary;
     }
+}
+
+bool Wddm::buildTopologyMapping() {
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+
+    bool ret = true;
+    UNRECOVERABLE_IF(hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount > 1);
+    TopologyMapping mapping;
+    if (!translateTopologyInfo(mapping)) {
+        ret = false;
+        return ret;
+    }
+    this->topologyMap[0] = mapping;
+
+    return ret;
+}
+
+bool Wddm::translateTopologyInfo(TopologyMapping &mapping) {
+    int sliceCount = 0;
+    int subSliceCount = 0;
+    uint32_t dualSubSliceCount = 0;
+    int euCount = 0;
+    std::vector<int> sliceIndices;
+    auto gtSystemInfo = rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo;
+    sliceIndices.reserve(gtSystemInfo.SliceCount);
+
+    for (uint32_t x = 0; x < gtSystemInfo.MaxSlicesSupported; x++) {
+        if (!gtSystemInfo.SliceInfo[x].Enabled) {
+            continue;
+        }
+        sliceIndices.push_back(x);
+        sliceCount++;
+
+        std::vector<int> subSliceIndices;
+        subSliceIndices.reserve((gtSystemInfo.SliceInfo[x].DualSubSliceEnabledCount) * GT_MAX_SUBSLICE_PER_DSS);
+
+        // subSliceIndex is used to track the index number of subslices from all DSS in this slice
+        int subSliceIndex = -1;
+        for (uint32_t dss = 0; dss < GT_MAX_DUALSUBSLICE_PER_SLICE; dss++) {
+            if (!gtSystemInfo.SliceInfo[x].DSSInfo[dss].Enabled) {
+                subSliceIndex += 2;
+                continue;
+            }
+            dualSubSliceCount++;
+
+            for (uint32_t y = 0; y < GT_MAX_SUBSLICE_PER_DSS; y++) {
+                subSliceIndex++;
+                if (!gtSystemInfo.SliceInfo[x].DSSInfo[dss].SubSlice[y].Enabled) {
+                    continue;
+                }
+                subSliceCount++;
+                subSliceIndices.push_back(subSliceIndex);
+
+                euCount += gtSystemInfo.SliceInfo[x].DSSInfo[dss].SubSlice[y].EuEnabledCount;
+            }
+        }
+
+        // single slice available
+        if (sliceCount == 1) {
+            mapping.subsliceIndices = std::move(subSliceIndices);
+        }
+    }
+
+    if (sliceIndices.size()) {
+        mapping.sliceIndices = std::move(sliceIndices);
+    }
+
+    if (sliceCount != 1) {
+        mapping.subsliceIndices.clear();
+    }
+
+    return (sliceCount && subSliceCount && euCount);
+}
+
+const TopologyMap &Wddm::getTopologyMap() {
+    return topologyMap;
 }
 
 bool Wddm::queryAdapterInfo() {
