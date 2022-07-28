@@ -53,7 +53,7 @@ HWTEST2_F(KernelPropertyTest, givenDG2WhenGetInternalOptionsThenWriteByPassBuild
     MockModuleTranslationUnit moduleTu(this->device);
     auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
     EXPECT_TRUE(ret);
-    EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-store-cache-default=7 -cl-load-cache-default=4"), std::string::npos);
+    EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-store-cache-default=2 -cl-load-cache-default=4"), std::string::npos);
 }
 
 } // namespace ult

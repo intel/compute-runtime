@@ -37,10 +37,10 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenL3ToL1DebugFlagWhenStatele
 
     auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
 
-    auto actualL1CachePolicy = static_cast<uint8_t>(stateBaseAddress->getL1CachePolicyL1CacheControl());
+    auto actualL1CachePolocy = static_cast<uint8_t>(stateBaseAddress->getL1CachePolicyL1CacheControl());
 
     const uint8_t expectedL1CachePolicy = 0;
-    EXPECT_EQ(expectedL1CachePolicy, actualL1CachePolicy);
+    EXPECT_EQ(expectedL1CachePolicy, actualL1CachePolocy);
 }
 
 XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenSpecificProductFamilyWhenAppendingSbaThenProgramWBPL1CachePolicy) {
@@ -89,7 +89,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenL1CachingOverrideWhenState
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenXeHpgCoreWhenAppendingRssThenProgramWBPL1CachePolicy) {
+XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, whenAppendingRssThenProgramWBPL1CachePolicy) {
     auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
     size_t allocationSize = MemoryConstants::pageSize;
     AllocationProperties properties(pDevice->getRootDeviceIndex(), allocationSize, AllocationType::BUFFER, pDevice->getDeviceBitfield());
@@ -141,10 +141,10 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenAlignedCacheableReadOnlyBu
     const auto actualMocs = surfaceState.getMemoryObjectControlState();
     EXPECT_EQ(expectedMocs, actualMocs);
 
-    auto actualL1CachePolicy = static_cast<uint8_t>(surfaceState.getL1CachePolicyL1CacheControl());
+    auto actualL1CachePolocy = static_cast<uint8_t>(surfaceState.getL1CachePolicyL1CacheControl());
 
     const uint8_t expectedL1CachePolicy = 0;
-    EXPECT_EQ(expectedL1CachePolicy, actualL1CachePolicy);
+    EXPECT_EQ(expectedL1CachePolicy, actualL1CachePolocy);
 
     alignedFree(ptr);
 }

@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/helpers/cache_policy.h"
-#include "shared/source/helpers/cache_policy_base.inl"
 
 namespace NEO {
 

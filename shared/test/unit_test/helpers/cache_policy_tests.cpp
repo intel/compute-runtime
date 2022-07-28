@@ -16,12 +16,12 @@ HWTEST2_F(HwInfoConfigTest, givenL1CachePolicyHelperWhenUnsupportedL1PoliciesAnd
     EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(), 0u);
 }
 
-HWTEST2_F(HwInfoConfigTest, givenAtLeastXeHpgCoreWhenGetL1CachePolicyThenReturnCorrectValue, IsAtLeastXeHpgCore) {
+HWTEST2_F(HwInfoConfigTest, givenAtLeastDG2WhenGetL1CachePolicyThenReturnCorrectValue, IsAtLeastXeHpgCore) {
     using GfxFamily = typename HwMapper<productFamily>::GfxFamily;
     EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(), GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP);
 }
 
-HWTEST2_F(HwInfoConfigTest, givenAtLeastXeHpgCoreAndWriteBackPolicyWhenGetL1CachePolicyThenReturnCorrectValue, IsAtLeastXeHpgCore) {
+HWTEST2_F(HwInfoConfigTest, givenAtLeastDG2AndWriteBackPolicyWhenGetL1CachePolicyThenReturnCorrectValue, IsAtLeastXeHpgCore) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
 
