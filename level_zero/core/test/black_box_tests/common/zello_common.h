@@ -114,10 +114,33 @@ inline bool isAubMode(int argc, char *argv[]) {
     }
 
     if (verbose) {
-        std::cerr << "Aub mode detected";
+        std::cerr << "Aub mode detected" << std::endl;
     }
 
     return true;
+}
+
+inline bool isCommandListShared(int argc, char *argv[]) {
+    bool enabled = isParamEnabled(argc, argv, "-c", "--cmdlist");
+    if (enabled == false) {
+        return false;
+    }
+
+    std::cerr << "Command List shared between tests" << std::endl;
+
+    return true;
+}
+
+inline void selectQueueMode(ze_command_queue_desc_t &desc, bool useSync) {
+    if (useSync) {
+        if (verbose)
+            std::cout << "Choosing Command Queue mode synchronous" << std::endl;
+        desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    } else {
+        if (verbose)
+            std::cout << "Choosing Command Queue mode asynchronous" << std::endl;
+        desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    }
 }
 
 inline uint32_t getBufferLength(int argc, char *argv[], uint32_t defaultLength) {

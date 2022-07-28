@@ -94,10 +94,7 @@ int main(int argc, char *argv[]) {
     cmdQueueDesc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
     cmdQueueDesc.pNext = nullptr;
     cmdQueueDesc.flags = 0;
-    if (useSyncQueue)
-        cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
-    else
-        cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    selectQueueMode(cmdQueueDesc, useSyncQueue);
 
     cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
     cmdQueueDesc.ordinal = getCommandQueueOrdinal(device);

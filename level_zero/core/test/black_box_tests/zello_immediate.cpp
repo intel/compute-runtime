@@ -28,15 +28,7 @@ void createImmediateCommandList(ze_device_handle_t &device,
     cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
     cmdQueueDesc.ordinal = queueGroupOrdinal;
     cmdQueueDesc.index = 0;
-    if (syncMode) {
-        if (verbose)
-            std::cout << "Choosing Command Queue mode synchronous" << std::endl;
-        cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
-    } else {
-        if (verbose)
-            std::cout << "Choosing Command Queue mode asynchronous" << std::endl;
-        cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    }
+    selectQueueMode(cmdQueueDesc, syncMode);
     SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
 }
 
