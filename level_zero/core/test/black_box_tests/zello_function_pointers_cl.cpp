@@ -70,11 +70,14 @@ __kernel void workaround_kernel() {
 )==";
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello Function Pointers CL";
+
     constexpr size_t allocSize = 4096;
 
     // 1. Setup
     bool outputValidationSuccessful;
     verbose = isVerbose(argc, argv);
+    bool aubMode = isAubMode(argc, argv);
 
     ze_context_handle_t context = nullptr;
     ze_driver_handle_t driverHandle = nullptr;
@@ -83,9 +86,7 @@ int main(int argc, char *argv[]) {
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    std::cout << "Device : \n"
-              << " * name : " << deviceProperties.name << "\n"
-              << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
+    printDeviceProperties(deviceProperties);
 
     std::string buildLog;
     auto spirV = compileToSpirV(functionPointersProgram, "", buildLog);
@@ -227,12 +228,7 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
-    bool aubMode = isAubMode(argc, argv);
-    if (aubMode == false) {
-        std::cout << "\nZello Function Pointers CL Results validation "
-                  << (outputValidationSuccessful ? "PASSED" : "FAILED")
-                  << std::endl;
-    }
+    printResult(aubMode, outputValidationSuccessful, blackBoxName);
     int resultOnFailure = aubMode ? 0 : 1;
     return outputValidationSuccessful ? 0 : resultOnFailure;
 }

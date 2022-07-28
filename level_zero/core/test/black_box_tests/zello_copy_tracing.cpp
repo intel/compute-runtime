@@ -648,7 +648,9 @@ void setEnvironmentVariable(const char *variableName, const char *variableValue)
 }
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello Copy Tracing";
     verbose = isVerbose(argc, argv);
+    bool aubMode = isAubMode(argc, argv);
 
     setEnvironmentVariable("ZET_ENABLE_API_TRACING_EXP", "1");
 
@@ -735,11 +737,11 @@ int main(int argc, char *argv[]) {
     bool outputValidationSuccessful;
     testAppendMemoryCopy0(context, device, outputValidationSuccessful,
                           deviceDdiTable, cmdQueueDdiTable, cmdListDdiTable, memDdiTable);
-    if (outputValidationSuccessful) {
+    if (outputValidationSuccessful || aubMode) {
         testAppendMemoryCopy1(context, device, outputValidationSuccessful,
                               deviceDdiTable, cmdQueueDdiTable, cmdListDdiTable, memDdiTable);
     }
-    if (outputValidationSuccessful) {
+    if (outputValidationSuccessful || aubMode) {
         testAppendMemoryCopy2(context, device, outputValidationSuccessful,
                               deviceDdiTable, cmdQueueDdiTable, cmdListDdiTable, memDdiTable);
     }
@@ -788,11 +790,7 @@ int main(int argc, char *argv[]) {
 
     SUCCESS_OR_TERMINATE(contextDdiTable.pfnDestroy(context));
 
-    bool aubMode = isAubMode(argc, argv);
-    if (aubMode == false) {
-        std::cout << "\nZello Copy Tracing Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED")
-                  << std::endl;
-    }
+    printResult(aubMode, outputValidationSuccessful, blackBoxName);
 
     int resultOnFailure = aubMode ? 0 : 1;
     return outputValidationSuccessful ? 0 : resultOnFailure;

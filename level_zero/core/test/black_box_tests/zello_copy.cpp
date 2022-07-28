@@ -9,7 +9,6 @@
 
 #include <iomanip>
 
-extern bool verbose;
 bool verbose = false;
 
 void testAppendMemoryCopyFromHeapToDeviceToStack(ze_context_handle_t context, ze_device_handle_t &device, bool &validRet) {
@@ -495,7 +494,9 @@ void testAppendMemoryCopy3DRegion(ze_context_handle_t context, ze_device_handle_
 }
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello Copy";
     verbose = isVerbose(argc, argv);
+    bool aubMode = isAubMode(argc, argv);
 
     ze_context_handle_t context = nullptr;
     auto devices = zelloInitContextAndGetDevices(context);
@@ -504,23 +505,29 @@ int main(int argc, char *argv[]) {
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    std::cout << "Device : \n"
-              << " * name : " << deviceProperties.name << "\n"
-              << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
+    printDeviceProperties(deviceProperties);
 
     testAppendMemoryCopyFromHeapToDeviceToStack(context, device, outputValidationSuccessful);
-    if (outputValidationSuccessful)
+    if (outputValidationSuccessful || aubMode) {
         testAppendMemoryCopyFromHostToDeviceToStack(context, device, outputValidationSuccessful);
-    if (outputValidationSuccessful)
+    }
+    if (outputValidationSuccessful || aubMode) {
         testAppendMemoryCopy2DRegion(context, device, outputValidationSuccessful);
-    if (outputValidationSuccessful)
+    }
+    if (outputValidationSuccessful || aubMode) {
         testAppendMemoryFillWithSomePattern(context, device, outputValidationSuccessful);
-    if (outputValidationSuccessful)
+    }
+    if (outputValidationSuccessful || aubMode) {
         testAppendMemoryCopy3DRegion(context, device, outputValidationSuccessful);
-    if (outputValidationSuccessful)
+    }
+    if (outputValidationSuccessful || aubMode) {
         testMemoryFillWithWordSizedPattern(context, device, outputValidationSuccessful);
+    }
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
-    std::cout << "\nZello Copy Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
+
+    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+
+    outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
     return (outputValidationSuccessful ? 0 : 1);
 }

@@ -17,8 +17,8 @@
 bool verbose = false;
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello Copy With Printf";
     verbose = isVerbose(argc, argv);
-
     bool aubMode = isAubMode(argc, argv);
 
     // X. Prepare spirV
@@ -175,10 +175,7 @@ int main(int argc, char *argv[]) {
     delete[] initDataDst;
     delete[] readBackData;
 
-    if (aubMode == false) {
-        std::cout << "\nZello Copy Kernel With Printf Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED")
-                  << std::endl;
-    }
+    printResult(aubMode, outputValidationSuccessful, blackBoxName);
     int resultOnFailure = aubMode ? 0 : 1;
     return outputValidationSuccessful ? 0 : resultOnFailure;
 }

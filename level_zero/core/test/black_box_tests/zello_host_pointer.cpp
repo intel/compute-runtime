@@ -7,7 +7,6 @@
 
 #include "zello_common.h"
 
-extern bool verbose;
 bool verbose = false;
 
 typedef ze_result_t (*pFnzexDriverImportExternalPointer)(ze_driver_handle_t, void *, size_t);
@@ -82,7 +81,10 @@ void executeGpuKernelAndValidate(ze_driver_handle_t &driverHandle, ze_context_ha
 }
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello Host Pointer";
     verbose = isVerbose(argc, argv);
+    bool aubMode = isAubMode(argc, argv);
+
     ze_context_handle_t context = {};
     ze_driver_handle_t driverHandle = {};
     auto devices = zelloInitContextAndGetDevices(context, driverHandle);
@@ -92,14 +94,13 @@ int main(int argc, char *argv[]) {
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    std::cout << "Device : \n"
-              << " * name : " << deviceProperties.name << "\n"
-              << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
+    printDeviceProperties(deviceProperties);
 
     executeGpuKernelAndValidate(driverHandle, context, device, outputValidationSuccessful);
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
-    std::cout << "\nZello Host Pointer Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
+    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
     return (outputValidationSuccessful ? 0 : 1);
 }

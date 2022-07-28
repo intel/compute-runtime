@@ -558,7 +558,10 @@ void testRegionCopyOf3DSharedMem(ze_context_handle_t &context, ze_device_handle_
 }
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello Copy Only";
     verbose = isVerbose(argc, argv);
+    bool aubMode = isAubMode(argc, argv);
+
     ze_context_handle_t context = nullptr;
     ze_driver_handle_t driverHandle = nullptr;
     auto devices = zelloInitContextAndGetDevices(context, driverHandle);
@@ -566,23 +569,26 @@ int main(int argc, char *argv[]) {
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    std::cout << "Device : \n"
-              << " * name : " << deviceProperties.name << "\n"
-              << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
+    printDeviceProperties(deviceProperties);
 
     bool outputValidationSuccessful = true;
-    if (outputValidationSuccessful)
-        testCopyBetweenHeapDeviceAndStack(context, device, outputValidationSuccessful);
-    if (outputValidationSuccessful)
+    testCopyBetweenHeapDeviceAndStack(context, device, outputValidationSuccessful);
+    if (outputValidationSuccessful || aubMode) {
         testCopyBetweenHostMemAndDeviceMem(context, device, outputValidationSuccessful);
-    if (outputValidationSuccessful)
+    }
+    if (outputValidationSuccessful || aubMode) {
         testRegionCopyOf2DSharedMem(context, device, outputValidationSuccessful);
-    if (outputValidationSuccessful)
+    }
+    if (outputValidationSuccessful || aubMode) {
         testSharedMemDataAccessWithoutCopy(context, device, outputValidationSuccessful);
-    if (outputValidationSuccessful)
+    }
+    if (outputValidationSuccessful || aubMode) {
         testRegionCopyOf3DSharedMem(context, device, outputValidationSuccessful);
+    }
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
-    std::cout << "\nZello Copy Only Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
+
+    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
     return (outputValidationSuccessful ? 0 : 1);
 }

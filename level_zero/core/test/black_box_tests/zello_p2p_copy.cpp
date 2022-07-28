@@ -22,6 +22,7 @@ struct DevObjects {
 };
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello P2P Copy";
     verbose = isVerbose(argc, argv);
     bool aubMode = isAubMode(argc, argv);
 
@@ -44,12 +45,7 @@ int main(int argc, char *argv[]) {
     for (uint32_t i = 0; i < deviceCount; i++) {
         ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
         SUCCESS_OR_TERMINATE(zeDeviceGetProperties(devices[i], &deviceProperties));
-
         printDeviceProperties(deviceProperties);
-        if (!verbose && aubMode == false) {
-            std::cout << deviceProperties.name << " ID: "
-                      << deviceProperties.deviceId << "\n";
-        }
 
         ze_device_p2p_properties_t deviceP2PProperties;
         for (uint32_t j = 0; j < deviceCount; j++) {
@@ -151,11 +147,7 @@ int main(int argc, char *argv[]) {
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
-    if (aubMode == false) {
-        std::cout << "\nZello P2P Copy Results validation "
-                  << (outputValidationSuccessful ? "PASSED" : "FAILED")
-                  << std::endl;
-    }
+    printResult(aubMode, outputValidationSuccessful, blackBoxName);
     int resultOnFailure = aubMode ? 0 : 1;
     return outputValidationSuccessful ? 0 : resultOnFailure;
 }

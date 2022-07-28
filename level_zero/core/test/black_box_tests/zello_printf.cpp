@@ -14,7 +14,6 @@
 #include <iomanip>
 #include <iostream>
 
-extern bool verbose;
 bool verbose = false;
 
 const char *source = R"===(
@@ -103,9 +102,7 @@ int main(int argc, char *argv[]) {
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    std::cout << "Device : \n"
-              << " * name : " << deviceProperties.name << "\n"
-              << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
+    printDeviceProperties(deviceProperties);
 
     testPrintfKernel(context, device);
 

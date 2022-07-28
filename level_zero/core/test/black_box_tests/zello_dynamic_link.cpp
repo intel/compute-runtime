@@ -79,12 +79,13 @@ int lib_func_add5(int x) {
 }
 )===";
 
-extern bool verbose;
 bool verbose = false;
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello Dynamic Link";
     bool outputValidationSuccessful = true;
     verbose = isVerbose(argc, argv);
+    bool aubMode = isAubMode(argc, argv);
     bool circularDep = isCircularDepTest(argc, argv);
     int numModules = 2;
 
@@ -309,6 +310,9 @@ int main(int argc, char *argv[]) {
         SUCCESS_OR_TERMINATE(zeModuleDestroy(exportModule2));
     }
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
-    std::cout << "\nZello Dynamic Link Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
-    return 0;
+
+    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+
+    outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
+    return (outputValidationSuccessful ? 0 : 1);
 }

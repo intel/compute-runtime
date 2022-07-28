@@ -87,7 +87,9 @@ void testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &devi
 }
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello Copy Fence";
     verbose = isVerbose(argc, argv);
+    bool aubMode = isAubMode(argc, argv);
 
     ze_context_handle_t context = nullptr;
     ze_driver_handle_t driverHandle = nullptr;
@@ -95,15 +97,14 @@ int main(int argc, char *argv[]) {
     auto device = devices[0];
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    std::cout << "Device : \n"
-              << " * name : " << deviceProperties.name << "\n"
-              << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
+    printDeviceProperties(deviceProperties);
 
     bool outputValidationSuccessful;
     testAppendMemoryCopy(context, device, outputValidationSuccessful);
-    SUCCESS_OR_WARNING_BOOL(outputValidationSuccessful);
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
-    std::cout << "\nZello Copy Fence Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
+
+    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
     return (outputValidationSuccessful ? 0 : 1);
 }

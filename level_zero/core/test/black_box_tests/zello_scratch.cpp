@@ -8,10 +8,9 @@
 #include "zello_common.h"
 #include "zello_compile.h"
 
-extern bool verbose;
 bool verbose = false;
 
-const char *module = R"===(
+const char *moduleSrc = R"===(
 typedef long16 TYPE;
 __attribute__((reqd_work_group_size(32, 1, 1))) // force LWS to 32
 __attribute__((intel_reqd_sub_group_size(16)))   // force SIMD to 16
@@ -94,7 +93,7 @@ void executeGpuKernelAndValidate(ze_context_handle_t context, ze_device_handle_t
     }
 
     std::string buildLog;
-    auto spirV = compileToSpirV(module, "", buildLog);
+    auto spirV = compileToSpirV(moduleSrc, "", buildLog);
     if (buildLog.size() > 0) {
         std::cout << "Build log " << buildLog;
     }
@@ -119,6 +118,10 @@ void executeGpuKernelAndValidate(ze_context_handle_t context, ze_device_handle_t
         std::cout << "Build log:" << strLog << std::endl;
 
         free(strLog);
+        SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
+        std::cout << "\nZello Scratch Results validation FAILED. Module creation error."
+                  << std::endl;
+        SUCCESS_OR_TERMINATE_BOOL(false);
     }
     SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
 
@@ -179,23 +182,24 @@ void executeGpuKernelAndValidate(ze_context_handle_t context, ze_device_handle_t
 }
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello Scratch";
     verbose = isVerbose(argc, argv);
     ze_context_handle_t context = nullptr;
+    bool aubMode = isAubMode(argc, argv);
+
     auto devices = zelloInitContextAndGetDevices(context);
     auto device = devices[0];
     bool outputValidationSuccessful;
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    std::cout << "Device : \n"
-              << " * name : " << deviceProperties.name << "\n"
-              << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n\n";
+    printDeviceProperties(deviceProperties);
 
     executeGpuKernelAndValidate(context, device, outputValidationSuccessful);
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
-    std::cout << "\nZello Scratch Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
-
-    return 0;
+    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
+    return (outputValidationSuccessful ? 0 : 1);
 }

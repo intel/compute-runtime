@@ -188,9 +188,11 @@ bool testLocalBarrier(ze_context_handle_t &context, ze_device_handle_t &device) 
 }
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello Dyn Local Arg";
     bool outputValidationSuccessful;
 
     verbose = isVerbose(argc, argv);
+    bool aubMode = isAubMode(argc, argv);
 
     ze_context_handle_t context = nullptr;
     ze_driver_handle_t driverHandle = nullptr;
@@ -199,17 +201,13 @@ int main(int argc, char *argv[]) {
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    std::cout << deviceProperties.name << std::endl;
+    printDeviceProperties(deviceProperties);
 
     outputValidationSuccessful = testLocalBarrier(context, device);
 
-    bool aubMode = isAubMode(argc, argv);
-    if (aubMode == false) {
-        std::cout << "\nZello Dyn Local Arg Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED")
-                  << std::endl;
-    }
-
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
+
+    printResult(aubMode, outputValidationSuccessful, blackBoxName);
 
     int resultOnFailure = aubMode ? 0 : 1;
     return outputValidationSuccessful ? 0 : resultOnFailure;

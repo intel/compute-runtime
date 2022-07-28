@@ -173,6 +173,10 @@ void executeGpuKernelAndValidate(ze_context_handle_t context, ze_device_handle_t
             std::cout << "Build log:" << strLog << std::endl;
 
             free(strLog);
+            SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
+            std::cout << "\nZello Immediate Results validation FAILED. Module creation error."
+                      << std::endl;
+            SUCCESS_OR_TERMINATE_BOOL(false);
         }
         SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
 
@@ -237,7 +241,11 @@ void executeGpuKernelAndValidate(ze_context_handle_t context, ze_device_handle_t
 }
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello Immediate";
+
     verbose = isVerbose(argc, argv);
+    bool aubMode = isAubMode(argc, argv);
+
     ze_context_handle_t context = nullptr;
     ze_driver_handle_t driverHandle = nullptr;
     auto devices = zelloInitContextAndGetDevices(context, driverHandle);
@@ -245,17 +253,15 @@ int main(int argc, char *argv[]) {
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    std::cout << "Device : \n"
-              << " * name : " << deviceProperties.name << "\n"
-              << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
+    printDeviceProperties(deviceProperties);
 
     bool outputValidationSuccessful = true;
-    if (outputValidationSuccessful) {
+    if (outputValidationSuccessful || aubMode) {
         //Sync mode with Compute queue
         std::cout << "Test case: Sync mode compute queue with Kernel launch \n";
         executeGpuKernelAndValidate(context, device, true, outputValidationSuccessful);
     }
-    if (outputValidationSuccessful) {
+    if (outputValidationSuccessful || aubMode) {
         //Async mode with Compute queue
         std::cout << "\nTest case: Async mode compute queue with Kernel launch \n";
         executeGpuKernelAndValidate(context, device, false, outputValidationSuccessful);
@@ -312,12 +318,12 @@ int main(int argc, char *argv[]) {
     if (!copyQueueFound) {
         std::cout << "No Copy queue group found. Skipping further test runs\n";
     } else {
-        if (outputValidationSuccessful) {
+        if (outputValidationSuccessful || aubMode) {
             //Sync mode with Copy queue
             std::cout << "\nTest case: Sync mode copy queue for memory copy\n";
             testCopyBetweenHostMemAndDeviceMem(context, copyQueueDev, true, copyQueueGroup, outputValidationSuccessful);
         }
-        if (outputValidationSuccessful) {
+        if (outputValidationSuccessful || aubMode) {
             //Async mode with Copy queue
             std::cout << "\nTest case: Async mode copy queue for memory copy\n";
             testCopyBetweenHostMemAndDeviceMem(context, copyQueueDev, false, copyQueueGroup, outputValidationSuccessful);
@@ -325,6 +331,8 @@ int main(int argc, char *argv[]) {
     }
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
-    std::cout << "\nZello Immediate Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
+
+    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
     return (outputValidationSuccessful ? 0 : 1);
 }

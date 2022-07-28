@@ -370,19 +370,12 @@ void testAppendGpuFunction(ze_context_handle_t &context, ze_device_handle_t &dev
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
 }
 
-void printResult(bool aubMode, bool outputValidationSuccessful, std::string &currentTest) {
-    if (aubMode == false)
-        std::cout << "\nZello Command list Immediate " << currentTest
-                  << "  Results validation "
-                  << (outputValidationSuccessful ? "PASSED" : "FAILED")
-                  << std::endl
-                  << std::endl;
-}
-
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName("Zello Command List Immediate");
     verbose = isVerbose(argc, argv);
     bool useSyncQueue = isSyncQueueEnabled(argc, argv);
     bool commandListShared = isCommandListShared(argc, argv);
+    bool aubMode = isAubMode(argc, argv);
 
     ze_context_handle_t context = nullptr;
     ze_driver_handle_t driverHandle = nullptr;
@@ -391,10 +384,9 @@ int main(int argc, char *argv[]) {
 
     ze_device_properties_t device0Properties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device0, &device0Properties));
-    std::cout << device0Properties.name << std::endl;
+    printDeviceProperties(device0Properties);
 
     bool outputValidationSuccessful = false;
-    bool aubMode = isAubMode(argc, argv);
 
     ze_command_list_handle_t cmdList = nullptr;
     if (commandListShared) {
@@ -411,19 +403,19 @@ int main(int argc, char *argv[]) {
     std::string currentTest;
     currentTest = "Standard Memory Copy";
     testAppendMemoryCopy(context, device0, useSyncQueue, outputValidationSuccessful, cmdList);
-    printResult(aubMode, outputValidationSuccessful, currentTest);
+    printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
 
-    if (outputValidationSuccessful) {
+    if (outputValidationSuccessful || aubMode) {
         currentTest = "Memory Copy Region";
         testAppendMemoryCopyRegion(context, device0, useSyncQueue, outputValidationSuccessful, cmdList);
-        printResult(aubMode, outputValidationSuccessful, currentTest);
+        printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
     }
 
     outputValidationSuccessful = true;
-    if (outputValidationSuccessful) {
+    if (outputValidationSuccessful || aubMode) {
         currentTest = "Launch GPU Kernel";
         testAppendGpuFunction(context, device0, useSyncQueue, outputValidationSuccessful, cmdList);
-        printResult(aubMode, outputValidationSuccessful, currentTest);
+        printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
     }
 
     if (commandListShared) {

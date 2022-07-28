@@ -17,7 +17,10 @@ bool verbose = false;
 bool useSyncQueue = false;
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello World USM";
     verbose = isVerbose(argc, argv);
+    bool aubMode = isAubMode(argc, argv);
+
     useSyncQueue = isSyncQueueEnabled(argc, argv);
     bool outputValidationSuccessful = false;
     // 1. Set-up
@@ -46,9 +49,7 @@ int main(int argc, char *argv[]) {
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    std::cout << "Device : \n"
-              << " * name : " << deviceProperties.name << "\n"
-              << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
+    printDeviceProperties(deviceProperties);
 
     file.seekg(0, file.end);
     auto length = file.tellg();
@@ -71,6 +72,10 @@ int main(int argc, char *argv[]) {
         std::cout << "Build log:" << strLog << std::endl;
 
         free(strLog);
+        SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
+        std::cout << "\nZello World Usm Results validation FAILED. Module creation error."
+                  << std::endl;
+        SUCCESS_OR_TERMINATE_BOOL(false);
     }
     SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
 
@@ -198,6 +203,7 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
-    std::cout << "\nZello World USM Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
-    return 0;
+    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
+    return outputValidationSuccessful ? 0 : 1;
 }

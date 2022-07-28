@@ -154,6 +154,25 @@ inline uint32_t getBufferLength(int argc, char *argv[], uint32_t defaultLength) 
     return length;
 }
 
+inline void printResult(bool aubMode, bool outputValidationSuccessful, const std::string &blackBoxName, const std::string &currentTest) {
+    if (aubMode == false) {
+        std::cout << std::endl
+                  << blackBoxName;
+        if (!currentTest.empty()) {
+            std::cout << " " << currentTest;
+        }
+        std::cout << " Results validation "
+                  << (outputValidationSuccessful ? "PASSED" : "FAILED")
+                  << std::endl
+                  << std::endl;
+    }
+}
+
+inline void printResult(bool aubMode, bool outputValidationSuccessful, const std::string &blackBoxName) {
+    std::string currentTest{};
+    printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
+}
+
 uint32_t getCommandQueueOrdinal(ze_device_handle_t &device) {
     uint32_t numQueueGroups = 0;
     SUCCESS_OR_TERMINATE(zeDeviceGetCommandQueueGroupProperties(device, &numQueueGroups, nullptr));
@@ -332,6 +351,11 @@ inline void printDeviceProperties(const ze_device_properties_t &props) {
                   << " * numSlices  : " << props.numSlices << "\n"
                   << " * physicalEUSimdWidth  : " << props.physicalEUSimdWidth << "\n"
                   << " * timerResolution : " << props.timerResolution << "\n";
+    } else {
+        std::cout << "Device : \n"
+                  << " * name : " << props.name << "\n"
+                  << " * vendorId : " << std::hex << props.vendorId << "\n"
+                  << " * deviceId : " << std::hex << props.deviceId << std::dec << "\n";
     }
 }
 
@@ -350,6 +374,26 @@ inline void printP2PProperties(const ze_device_p2p_properties_t &props, bool can
         std::cout << "\t* accessSupported: " << std::boolalpha << static_cast<bool>(!!(props.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS)) << "\n";
         std::cout << "\t* atomicsSupported: " << std::boolalpha << static_cast<bool>(!!(props.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS)) << "\n";
         std::cout << "\t* canAccessPeer: " << std::boolalpha << static_cast<bool>(canAccessPeer) << "\n";
+    }
+}
+
+inline void printKernelProperties(const ze_kernel_properties_t &props, const char *kernelName) {
+    if (verbose) {
+        std::cout << "Kernel : \n"
+                  << " * name : " << kernelName << "\n"
+                  << " * uuid.mid : " << props.uuid.mid << "\n"
+                  << " * uuid.kid : " << props.uuid.kid << "\n"
+                  << " * maxSubgroupSize : " << props.maxSubgroupSize << "\n"
+                  << " * localMemSize : " << props.localMemSize << "\n"
+                  << " * spillMemSize : " << props.spillMemSize << "\n"
+                  << " * privateMemSize : " << props.privateMemSize << "\n"
+                  << " * maxNumSubgroups : " << props.maxNumSubgroups << "\n"
+                  << " * numKernelArgs : " << props.numKernelArgs << "\n"
+                  << " * requiredSubgroupSize : " << props.requiredSubgroupSize << "\n"
+                  << " * requiredNumSubGroups : " << props.requiredNumSubGroups << "\n"
+                  << " * requiredGroupSizeX : " << props.requiredGroupSizeX << "\n"
+                  << " * requiredGroupSizeY : " << props.requiredGroupSizeY << "\n"
+                  << " * requiredGroupSizeZ : " << props.requiredGroupSizeZ << "\n";
     }
 }
 
