@@ -177,11 +177,12 @@ struct PrimeHandle {
     int32_t fileDescriptor;
 };
 
+#pragma pack(1)
 template <uint32_t numEngines>
 struct ContextParamEngines {
     uint64_t extensions;
     EngineClassInstance engines[numEngines];
-} __attribute__((packed));
+};
 
 template <uint32_t numEngines>
 struct ContextEnginesLoadBalance {
@@ -191,7 +192,8 @@ struct ContextEnginesLoadBalance {
     uint32_t flags;
     uint64_t reserved;
     EngineClassInstance engines[numEngines];
-} __attribute__((packed));
+};
+#pragma pack()
 
 struct DrmVersion {
     int versionMajor;
