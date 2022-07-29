@@ -31,7 +31,9 @@ struct DebugSessionMock : public L0::DebugSession {
     using L0::DebugSession::getSingleThreadsForDevice;
     using L0::DebugSession::isBindlessSystemRoutine;
 
-    DebugSessionMock(const zet_debug_config_t &config, L0::Device *device) : DebugSession(config, device), config(config){};
+    DebugSessionMock(const zet_debug_config_t &config, L0::Device *device) : DebugSession(config, device), config(config) {
+        createEuThreads();
+    };
     bool closeConnection() override { return true; }
     ze_result_t initialize() override {
         if (config.pid == 0) {
@@ -72,6 +74,13 @@ struct DebugSessionMock : public L0::DebugSession {
 
     bool readModuleDebugArea() override {
         return true;
+    }
+
+    void detachTileDebugSession(DebugSession *tileSession) override {}
+    bool areAllTileDebugSessionDetached() override { return true; }
+
+    L0::DebugSession *attachTileDebugSession(L0::Device *device) override {
+        return nullptr;
     }
 
     zet_debug_config_t config;

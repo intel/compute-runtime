@@ -262,6 +262,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     using L0::DebugSessionImp::interruptSent;
     using L0::DebugSessionImp::isValidGpuAddress;
     using L0::DebugSessionImp::stateSaveAreaHeader;
+    using L0::DebugSessionImp::tileSessions;
     using L0::DebugSessionImp::triggerEvents;
 
     using L0::DebugSessionLinux::asyncThread;
@@ -1009,6 +1010,21 @@ TEST_F(DebugApiLinuxTest, GivenSuccessfulInitializationWhenCreatingDebugSessionT
 
     auto mockSession = static_cast<DebugSessionMock *>(session.get());
     EXPECT_TRUE(mockSession->asyncThreadStarted);
+}
+
+TEST_F(DebugApiLinuxTest, GivenRootDeviceWhenDebugSessionIsCreatedForTheSecondTimeThenSuccessIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto sessionMock = device->createDebugSession(config, result);
+    ASSERT_NE(nullptr, sessionMock);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto sessionMock2 = device->createDebugSession(config, result);
+    EXPECT_EQ(sessionMock, sessionMock2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 TEST_F(DebugApiLinuxTest, GivenClientAndMatchingUuidEventsWhenReadingEventsThenProcessEntryIsReturned) {
@@ -6765,5 +6781,41 @@ TEST_F(DebugApiLinuxMultitileTest, GivenMultitileDeviceWhenCallingAreRequestedTh
     stopped = sessionMock->areRequestedThreadsStopped(allSlices);
     EXPECT_TRUE(stopped);
 }
+
+TEST_F(DebugApiLinuxMultitileTest, GivenTileAttachEnabledAndMultitileDeviceWhenInitializingDebugSessionThenTileSessionsAreCreated) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(1);
+
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinux>(config, deviceImp, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandler;
+    handler->pollRetVal = 1;
+
+    prelim_drm_i915_debug_event_client clientCreate = {};
+    clientCreate.base.type = PRELIM_DRM_I915_DEBUG_EVENT_CLIENT;
+    clientCreate.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    clientCreate.base.size = sizeof(prelim_drm_i915_debug_event_client);
+    clientCreate.handle = MockDebugSessionLinux::mockClientHandle;
+    handler->eventQueue.push({reinterpret_cast<char *>(&clientCreate), static_cast<uint64_t>(clientCreate.base.size)});
+
+    session->ioctlHandler.reset(handler);
+    session->clientHandle = MockDebugSessionLinux::mockClientHandle;
+    session->clientHandleToConnection[session->clientHandle]->vmToContextStateSaveAreaBindInfo[1u] = {0x1000, 0x1000};
+
+    session->initialize();
+
+    ASSERT_EQ(numSubDevices, session->tileSessions.size());
+
+    EXPECT_EQ(neoDevice->getSubDevice(0)->getSpecializedDevice<L0::Device>(), session->tileSessions[0].first->getConnectedDevice());
+    EXPECT_EQ(neoDevice->getSubDevice(1)->getSpecializedDevice<L0::Device>(), session->tileSessions[1].first->getConnectedDevice());
+
+    EXPECT_FALSE(session->tileSessions[0].second);
+    EXPECT_FALSE(session->tileSessions[1].second);
+}
+
 } // namespace ult
 } // namespace L0

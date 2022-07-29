@@ -12,14 +12,22 @@
 
 namespace L0 {
 namespace DebugApiHandlers {
+
+std::mutex debugSessionMutex;
+
 ze_result_t debugAttach(zet_device_handle_t hDevice, const zet_debug_config_t *config, zet_debug_session_handle_t *phDebug) {
     ze_result_t result = ZE_RESULT_SUCCESS;
+
+    if (!L0::Device::fromHandle(hDevice)->getNEODevice()->isSubDevice() && NEO::DebugManager.flags.ExperimentalEnableTileAttach.get()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     auto session = L0::Device::fromHandle(hDevice)->getDebugSession(*config);
 
+    std::unique_lock<std::mutex> lock(debugSessionMutex);
     if (!session) {
         session = L0::Device::fromHandle(hDevice)->createDebugSession(*config, result);
     }
-
     if (session) {
         *phDebug = session->toHandle();
     }
@@ -31,8 +39,23 @@ ze_result_t debugDetach(zet_debug_session_handle_t hDebug) {
     if (session) {
         auto device = session->getConnectedDevice();
         device->removeDebugSession();
+
         session->closeConnection();
-        delete session;
+        if (!device->getNEODevice()->isSubDevice()) {
+            delete session;
+        } else {
+            std::unique_lock<std::mutex> lock(debugSessionMutex);
+            auto rootL0Device = device->getNEODevice()->getRootDevice()->getSpecializedDevice<DeviceImp>();
+            zet_debug_config_t dummy = {};
+            auto rootSession = rootL0Device->getDebugSession(dummy);
+            rootSession->detachTileDebugSession(session);
+
+            if (rootSession->areAllTileDebugSessionDetached()) {
+
+                rootL0Device->removeDebugSession();
+                delete rootSession;
+            }
+        }
     }
     return ZE_RESULT_SUCCESS;
 }

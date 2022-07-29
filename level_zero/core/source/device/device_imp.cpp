@@ -45,6 +45,7 @@
 #include "level_zero/core/source/printf_handler/printf_handler.h"
 #include "level_zero/core/source/sampler/sampler.h"
 #include "level_zero/tools/source/debug/debug_session.h"
+#include "level_zero/tools/source/debug/debug_session_imp.h"
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/sysman/sysman.h"
 
@@ -916,7 +917,8 @@ ze_result_t DeviceImp::getDebugProperties(zet_device_debug_properties_t *pDebugP
         isDebugAttachAvailable = false;
     }
 
-    if (isDebugAttachAvailable && !isSubdevice) {
+    bool tileAttach = NEO::DebugManager.flags.ExperimentalEnableTileAttach.get();
+    if (isDebugAttachAvailable && (isSubdevice == tileAttach)) {
         pDebugProperties->flags = zet_device_debug_property_flag_t::ZET_DEVICE_DEBUG_PROPERTY_FLAG_ATTACH;
     } else {
         pDebugProperties->flags = 0;
@@ -1330,14 +1332,38 @@ DebugSession *DeviceImp::getDebugSession(const zet_debug_config_t &config) {
 
 DebugSession *DeviceImp::createDebugSession(const zet_debug_config_t &config, ze_result_t &result) {
     if (!this->isSubdevice) {
-        auto session = DebugSession::create(config, this, result);
-        debugSession.reset(session);
+        if (debugSession.get() == nullptr) {
+            auto session = DebugSession::create(config, this, result);
+            debugSession.reset(session);
+        } else {
+            result = ZE_RESULT_SUCCESS;
+        }
+    } else if (NEO::DebugManager.flags.ExperimentalEnableTileAttach.get()) {
+        result = ZE_RESULT_SUCCESS;
+        auto rootL0Device = getNEODevice()->getRootDevice()->getSpecializedDevice<DeviceImp>();
+
+        auto session = rootL0Device->getDebugSession(config);
+        if (!session) {
+            session = rootL0Device->createDebugSession(config, result);
+        }
+
+        if (result == ZE_RESULT_SUCCESS) {
+            debugSession.reset(session->attachTileDebugSession(this));
+            result = debugSession ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
     } else {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
+
     return debugSession.get();
 }
 
+void DeviceImp::removeDebugSession() {
+    debugSession.release();
+}
+void DeviceImp::setDebugSession(DebugSession *session) {
+    debugSession.reset(session);
+}
 bool DeviceImp::toPhysicalSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, uint32_t &subslice, uint32_t &deviceIndex) {
     auto hwInfo = neoDevice->getRootDeviceEnvironment().getHardwareInfo();
     uint32_t subDeviceCount = NEO::HwHelper::getSubDevicesCount(hwInfo);

@@ -13,6 +13,7 @@
 #include <condition_variable>
 #include <mutex>
 #include <queue>
+#include <unordered_set>
 
 namespace SIP {
 struct StateSaveAreaHeader;
@@ -31,7 +32,10 @@ struct DebugSessionImp : DebugSession {
         Unknown
     };
 
-    DebugSessionImp(const zet_debug_config_t &config, Device *device) : DebugSession(config, device) {}
+    DebugSessionImp(const zet_debug_config_t &config, Device *device) : DebugSession(config, device) {
+        tileAttachEnabled = NEO::DebugManager.flags.ExperimentalEnableTileAttach.get();
+        createEuThreads();
+    }
 
     ze_result_t interrupt(ze_device_thread_t thread) override;
     ze_result_t resume(ze_device_thread_t thread) override;
@@ -39,6 +43,10 @@ struct DebugSessionImp : DebugSession {
     ze_result_t readRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override;
     ze_result_t writeRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override;
     ze_result_t readEvent(uint64_t timeout, zet_debug_event_t *event) override;
+
+    DebugSession *attachTileDebugSession(Device *device) override;
+    void detachTileDebugSession(DebugSession *tileSession) override;
+    bool areAllTileDebugSessionDetached() override;
 
     static const SIP::regset_desc *getSbaRegsetDesc();
     static uint32_t typeToRegsetFlags(uint32_t type);
@@ -124,6 +132,9 @@ struct DebugSessionImp : DebugSession {
     std::vector<std::pair<ze_device_thread_t, bool>> pendingInterrupts;
     std::vector<EuThread::ThreadId> newlyStoppedThreads;
     std::vector<char> stateSaveAreaHeader;
+
+    std::vector<std::pair<DebugSession *, bool>> tileSessions; // DebugSession, attached
+    bool tileAttachEnabled = false;
 
     ThreadHelper asyncThread;
     std::mutex asyncThreadMutex;

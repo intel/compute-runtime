@@ -43,6 +43,10 @@ DebugSessionLinux::DebugSessionLinux(const zet_debug_config_t &config, Device *d
 DebugSessionLinux::~DebugSessionLinux() {
     closeAsyncThread();
     closeInternalEventsThread();
+    for (auto &session : tileSessions) {
+        delete session.first;
+    }
+    tileSessions.resize(0);
 }
 
 DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *device, ze_result_t &result) {
@@ -240,6 +244,16 @@ ze_result_t DebugSessionLinux::initialize() {
         return ZE_RESULT_NOT_READY;
     }
 
+    auto numTiles = connectedDevice->getNEODevice()->getNumSubDevices();
+    if (numTiles > 0 && tileAttachEnabled) {
+        tileSessions.resize(numTiles);
+        zet_debug_config_t config = {};
+
+        for (uint32_t i = 0; i < numTiles; i++) {
+            auto subDevice = connectedDevice->getNEODevice()->getSubDevice(i)->getSpecializedDevice<Device>();
+            tileSessions[i] = std::pair<DebugSession *, bool>{new TileDebugSessionLinux(config, subDevice, this), false};
+        }
+    }
     startInternalEventsThread();
 
     bool allEventsCollected = false;
@@ -1603,4 +1617,34 @@ ze_device_thread_t DebugSessionLinux::convertToApi(EuThread::ThreadId threadId) 
 
     return thread;
 }
+
+ze_result_t TileDebugSessionLinux::interrupt(ze_device_thread_t thread) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+};
+
+ze_result_t TileDebugSessionLinux::resume(ze_device_thread_t thread) {
+
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+};
+
+ze_result_t TileDebugSessionLinux::readMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+};
+
+ze_result_t TileDebugSessionLinux::writeMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+};
+
+ze_result_t TileDebugSessionLinux::acknowledgeEvent(const zet_debug_event_t *event) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+};
+
+ze_result_t TileDebugSessionLinux::readRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+};
+
+ze_result_t TileDebugSessionLinux::writeRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+};
+
 } // namespace L0

@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/tools/source/debug/debug_session.h"
 #include "level_zero/tools/source/debug/debug_session_imp.h"
 
@@ -28,6 +29,9 @@ struct EngineClassInstance;
 namespace L0 {
 
 struct DebugSessionLinux : DebugSessionImp {
+
+    friend struct TileDebugSessionLinux;
+
     ~DebugSessionLinux() override;
     DebugSessionLinux(const zet_debug_config_t &config, Device *device, int debugFd);
 
@@ -150,6 +154,7 @@ struct DebugSessionLinux : DebugSessionImp {
     };
 
     static ze_result_t translateDebuggerOpenErrno(int error);
+
     constexpr static uint64_t invalidClientHandle = std::numeric_limits<uint64_t>::max();
     constexpr static uint64_t invalidHandle = std::numeric_limits<uint64_t>::max();
 
@@ -259,6 +264,48 @@ struct DebugSessionLinux : DebugSessionImp {
     uint64_t euControlInterruptSeqno[NEO::EngineLimits::maxHandleCount];
 
     std::unordered_map<uint64_t, std::unique_ptr<ClientConnection>> clientHandleToConnection;
+};
+
+struct TileDebugSessionLinux : DebugSessionLinux {
+    TileDebugSessionLinux(zet_debug_config_t config, Device *device, DebugSessionImp *rootDebugSession) : DebugSessionLinux(config, device, 0),
+                                                                                                          rootDebugSession(reinterpret_cast<DebugSessionLinux *>(rootDebugSession)){};
+    ~TileDebugSessionLinux() override = default;
+
+    bool closeConnection() override { return true; };
+    ze_result_t initialize() override { return ZE_RESULT_SUCCESS; };
+
+    ze_result_t interrupt(ze_device_thread_t thread) override;
+
+    ze_result_t resume(ze_device_thread_t thread) override;
+    ze_result_t readMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) override;
+    ze_result_t writeMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) override;
+    ze_result_t acknowledgeEvent(const zet_debug_event_t *event) override;
+    ze_result_t readRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override;
+    ze_result_t writeRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override;
+
+  protected:
+    void startAsyncThread() override { UNRECOVERABLE_IF(true); };
+
+    bool readModuleDebugArea() override { return true; };
+
+    uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override {
+        return 0;
+    };
+
+    void readStateSaveAreaHeader() override{};
+
+    ze_result_t readGpuMemory(uint64_t vmHandle, char *output, size_t size, uint64_t gpuVa) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    };
+    ze_result_t writeGpuMemory(uint64_t vmHandle, const char *input, size_t size, uint64_t gpuVa) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    };
+
+    ze_result_t readSbaBuffer(EuThread::ThreadId threadId, NEO::SbaTrackedAddresses &sbaBuffer) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    };
+
+    DebugSessionLinux *rootDebugSession = nullptr;
 };
 
 } // namespace L0

@@ -21,23 +21,33 @@
 namespace L0 {
 
 DebugSession::DebugSession(const zet_debug_config_t &config, Device *device) : connectedDevice(device) {
+}
+
+void DebugSession::createEuThreads() {
     if (connectedDevice) {
-        auto &hwInfo = connectedDevice->getHwInfo();
-        const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
-        const uint32_t numEuPerSubslice = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
-        const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
-        uint32_t subDeviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
 
-        for (uint32_t tileIndex = 0; tileIndex < subDeviceCount; tileIndex++) {
-            for (uint32_t sliceID = 0; sliceID < hwInfo.gtSystemInfo.MaxSlicesSupported; sliceID++) {
-                for (uint32_t subsliceID = 0; subsliceID < numSubslicesPerSlice; subsliceID++) {
-                    for (uint32_t euID = 0; euID < numEuPerSubslice; euID++) {
+        bool isRootDevice = !connectedDevice->getNEODevice()->isSubDevice();
+        bool isSubDevice = connectedDevice->getNEODevice()->isSubDevice();
 
-                        for (uint32_t threadID = 0; threadID < numThreadsPerEu; threadID++) {
+        if ((isRootDevice && NEO::DebugManager.flags.ExperimentalEnableTileAttach.get() == 0) ||
+            (isSubDevice && NEO::DebugManager.flags.ExperimentalEnableTileAttach.get() == 1)) {
+            auto &hwInfo = connectedDevice->getHwInfo();
+            const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
+            const uint32_t numEuPerSubslice = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
+            const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
+            uint32_t subDeviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
 
-                            EuThread::ThreadId thread = {tileIndex, sliceID, subsliceID, euID, threadID};
+            for (uint32_t tileIndex = 0; tileIndex < subDeviceCount; tileIndex++) {
+                for (uint32_t sliceID = 0; sliceID < hwInfo.gtSystemInfo.MaxSlicesSupported; sliceID++) {
+                    for (uint32_t subsliceID = 0; subsliceID < numSubslicesPerSlice; subsliceID++) {
+                        for (uint32_t euID = 0; euID < numEuPerSubslice; euID++) {
 
-                            allThreads[uint64_t(thread)] = std::make_unique<EuThread>(thread);
+                            for (uint32_t threadID = 0; threadID < numThreadsPerEu; threadID++) {
+
+                                EuThread::ThreadId thread = {tileIndex, sliceID, subsliceID, euID, threadID};
+
+                                allThreads[uint64_t(thread)] = std::make_unique<EuThread>(thread);
+                            }
                         }
                     }
                 }
@@ -259,6 +269,36 @@ void DebugSession::printBitmask(uint8_t *bitmask, size_t bitmaskSize) {
             PRINT_DEBUGGER_LOG(stdout, "\n [%lu] = %#018" PRIx64, static_cast<uint64_t>(i), bitmask64);
         }
     }
+}
+
+DebugSession *DebugSessionImp::attachTileDebugSession(Device *device) {
+    std::unique_lock<std::mutex> lock(asyncThreadMutex);
+
+    uint32_t subDeviceIndex = Math::log2(static_cast<uint32_t>(device->getNEODevice()->getDeviceBitfield().to_ulong()));
+
+    auto &[tileSession, attached] = tileSessions[subDeviceIndex];
+    if (attached) {
+        return nullptr;
+    }
+    attached = true;
+
+    return tileSession;
+}
+
+void DebugSessionImp::detachTileDebugSession(DebugSession *tileSession) {
+    std::unique_lock<std::mutex> lock(asyncThreadMutex);
+
+    uint32_t subDeviceIndex = Math::log2(static_cast<uint32_t>(tileSession->getConnectedDevice()->getNEODevice()->getDeviceBitfield().to_ulong()));
+    tileSessions[subDeviceIndex].second = false;
+}
+
+bool DebugSessionImp::areAllTileDebugSessionDetached() {
+    for (const auto &session : tileSessions) {
+        if (session.second == true) {
+            return false;
+        }
+    }
+    return true;
 }
 
 ze_result_t DebugSessionImp::interrupt(ze_device_thread_t thread) {

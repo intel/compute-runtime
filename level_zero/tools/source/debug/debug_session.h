@@ -30,6 +30,7 @@ struct DebugSession : _zet_debug_session_handle_t {
     static DebugSession *fromHandle(zet_debug_session_handle_t handle) { return static_cast<DebugSession *>(handle); }
     inline zet_debug_session_handle_t toHandle() { return this; }
 
+    void createEuThreads();
     virtual bool closeConnection() = 0;
     virtual ze_result_t initialize() = 0;
 
@@ -79,6 +80,10 @@ struct DebugSession : _zet_debug_session_handle_t {
     virtual ze_device_thread_t convertToApi(EuThread::ThreadId threadId);
 
     ze_result_t sanityMemAccessThreadCheck(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc);
+
+    virtual DebugSession *attachTileDebugSession(Device *device) = 0;
+    virtual void detachTileDebugSession(DebugSession *tileSession) = 0;
+    virtual bool areAllTileDebugSessionDetached() = 0;
 
     struct ThreadHelper {
         void close() {

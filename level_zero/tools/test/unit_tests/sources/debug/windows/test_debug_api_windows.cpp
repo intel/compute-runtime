@@ -188,6 +188,21 @@ TEST_F(DebugApiWindowsTest, givenDebugAttachIsNotAvailableWhenGetDebugProperties
     EXPECT_EQ(0u, debugProperties.flags);
 }
 
+TEST_F(DebugApiWindowsTest, GivenRootDeviceWhenDebugSessionIsCreatedForTheSecondTimeThenSuccessIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto sessionMock = device->createDebugSession(config, result);
+    ASSERT_NE(nullptr, sessionMock);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto sessionMock2 = device->createDebugSession(config, result);
+    EXPECT_EQ(sessionMock, sessionMock2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
 using isDebugSupportedProduct = IsWithinProducts<IGFX_DG1, IGFX_PVC>;
 HWTEST2_F(DebugApiWindowsTest, givenDebugAttachAvailableWhenGetDebugPropertiesCalledThenCorrectFlagIsReturned, isDebugSupportedProduct) {
     zet_device_debug_properties_t debugProperties = {};
