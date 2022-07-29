@@ -1479,33 +1479,6 @@ TEST_F(PatchTokenTests, WhenBuildingProgramThenGwsIsSet) {
     ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize[2]);
 }
 
-TEST_F(PatchTokenTests, WhenBuildingProgramThenLwsIsSet) {
-    CreateProgramFromBinary(pContext, pContext->getDevices(), "kernel_data_param");
-
-    ASSERT_NE(nullptr, pProgram);
-    retVal = pProgram->build(
-        pProgram->getDevices(),
-        nullptr,
-        false);
-
-    ASSERT_EQ(CL_SUCCESS, retVal);
-
-    auto pKernelInfo = pProgram->getKernelInfo("test", rootDeviceIndex);
-
-    ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0]);
-    ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[1]);
-    ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[2]);
-
-    pKernelInfo = pProgram->getKernelInfo("test_get_local_size", rootDeviceIndex);
-
-    ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0]);
-    ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[1]);
-    ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[2]);
-    ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize2[0]);
-    ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize2[1]);
-    ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize2[2]);
-}
-
 TEST_F(PatchTokenTests, WhenBuildingProgramThenConstantKernelArgsAreAvailable) {
     // PATCH_TOKEN_STATELESS_CONSTANT_MEMORY_OBJECT_KERNEL_ARGUMENT
 
