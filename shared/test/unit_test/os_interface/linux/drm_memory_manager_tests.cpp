@@ -4041,10 +4041,36 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetMemPrefetchIsCalledThen
     TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
     BufferObject bo(mock, 3, 1, 1024, 0);
 
-    DrmAllocation drmAllocation(0, AllocationType::UNIFIED_SHARED_MEMORY, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
-    EXPECT_EQ(&bo, drmAllocation.getBO());
+    MockDrmAllocation drmAllocation(AllocationType::UNIFIED_SHARED_MEMORY, MemoryPool::LocalMemory);
+    drmAllocation.bufferObjects[0] = &bo;
+
+    memoryManager.registeredEngines = EngineControlContainer{this->device->allEngines};
+    for (auto engine : memoryManager.registeredEngines) {
+        engine.osContext->incRefInternal();
+    }
 
     EXPECT_TRUE(memoryManager.setMemPrefetch(&drmAllocation, 0, rootDeviceIndex));
+
+    EXPECT_TRUE(drmAllocation.bindBOsCalled);
+}
+
+TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetMemPrefetchFailsToBindBufferObjectThenReturnFalse) {
+    TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+    BufferObject bo(mock, 3, 1, 1024, 0);
+
+    MockDrmAllocation drmAllocation(AllocationType::UNIFIED_SHARED_MEMORY, MemoryPool::LocalMemory);
+    drmAllocation.bufferObjects[0] = &bo;
+
+    memoryManager.registeredEngines = EngineControlContainer{this->device->allEngines};
+    for (auto engine : memoryManager.registeredEngines) {
+        engine.osContext->incRefInternal();
+    }
+
+    drmAllocation.bindBOsRetValue = -1;
+
+    EXPECT_FALSE(memoryManager.setMemPrefetch(&drmAllocation, 0, rootDeviceIndex));
+
+    EXPECT_TRUE(drmAllocation.bindBOsCalled);
 }
 
 TEST_F(DrmMemoryManagerTest, givenPageFaultIsUnSupportedWhenCallingBindBoOnBufferAllocationThenAllocationShouldNotPageFaultAndExplicitResidencyIsNotRequired) {

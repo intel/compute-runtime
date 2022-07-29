@@ -238,6 +238,14 @@ bool DrmMemoryManager::setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdvise
 
 bool DrmMemoryManager::setMemPrefetch(GraphicsAllocation *gfxAllocation, uint32_t subDeviceId, uint32_t rootDeviceIndex) {
     auto drmAllocation = static_cast<DrmAllocation *>(gfxAllocation);
+    auto osContextLinux = static_cast<OsContextLinux *>(registeredEngines[defaultEngineIndex[rootDeviceIndex]].osContext);
+    auto vmHandleId = subDeviceId;
+
+    auto retVal = drmAllocation->bindBOs(osContextLinux, vmHandleId, nullptr, true);
+    if (retVal != 0) {
+        DEBUG_BREAK_IF(true);
+        return false;
+    }
 
     return drmAllocation->setMemPrefetch(&this->getDrm(rootDeviceIndex), subDeviceId);
 }

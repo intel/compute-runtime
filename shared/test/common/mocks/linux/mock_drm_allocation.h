@@ -54,8 +54,16 @@ class MockDrmAllocation : public DrmAllocation {
         DrmAllocation::markForCapture();
     }
 
+    int bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind) override {
+        bindBOsCalled = true;
+        DrmAllocation::bindBOs(osContext, vmHandleId, bufferObjects, bind);
+        return bindBOsRetValue;
+    }
+
     bool registerBOBindExtHandleCalled = false;
     bool markedForCapture = false;
+    bool bindBOsCalled = false;
+    int bindBOsRetValue = 0;
 };
 
 } // namespace NEO
