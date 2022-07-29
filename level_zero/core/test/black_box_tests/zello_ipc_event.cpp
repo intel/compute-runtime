@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,8 +15,6 @@
 #define CHILDPROCESSES 1
 
 int sv[CHILDPROCESSES][2];
-extern bool verbose;
-bool verbose = false;
 
 size_t allocSize = 4096 + 7; // +7 to break alignment and make it harder
 
@@ -99,64 +97,20 @@ inline void initializeProcess(ze_context_handle_t &context,
                               ze_device_handle_t &device,
                               ze_command_queue_handle_t &cmdQueue,
                               ze_command_list_handle_t &cmdList) {
-    SUCCESS_OR_TERMINATE(zeInit(ZE_INIT_FLAG_GPU_ONLY));
-
-    // Retrieve driver
-    uint32_t driverCount = 0;
-    SUCCESS_OR_TERMINATE(zeDriverGet(&driverCount, nullptr));
-
-    ze_driver_handle_t driverHandle;
-    SUCCESS_OR_TERMINATE(zeDriverGet(&driverCount, &driverHandle));
-
-    ze_context_desc_t contextDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC};
-    SUCCESS_OR_TERMINATE(zeContextCreate(driverHandle, &contextDesc, &context));
-
-    // Retrieve device
-    uint32_t deviceCount = 0;
-    SUCCESS_OR_TERMINATE(zeDeviceGet(driverHandle, &deviceCount, nullptr));
-
-    deviceCount = 1;
-    SUCCESS_OR_TERMINATE(zeDeviceGet(driverHandle, &deviceCount, &device));
+    auto devices = zelloInitContextAndGetDevices(context);
+    device = devices[0];
 
     // Print some properties
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-
-    std::cout << "Device : \n"
-              << " * name : " << deviceProperties.name << "\n"
-              << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
+    printDeviceProperties(deviceProperties);
 
     // Create command queue
-    uint32_t numQueueGroups = 0;
-    SUCCESS_OR_TERMINATE(zeDeviceGetCommandQueueGroupProperties(device, &numQueueGroups, nullptr));
-    if (numQueueGroups == 0) {
-        std::cerr << "No queue groups found!\n";
-        std::terminate();
-    }
-    std::vector<ze_command_queue_group_properties_t> queueProperties(numQueueGroups);
-    for (auto &queueProperty : queueProperties) {
-        queueProperty.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_GROUP_PROPERTIES;
-    }
-    SUCCESS_OR_TERMINATE(zeDeviceGetCommandQueueGroupProperties(device, &numQueueGroups,
-                                                                queueProperties.data()));
-
-    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    for (uint32_t i = 0; i < numQueueGroups; i++) {
-        if (queueProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE) {
-            cmdQueueDesc.ordinal = i;
-        }
-    }
-    cmdQueueDesc.index = 0;
-    cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
-
-    // Create command list
-    ze_command_list_desc_t cmdListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
-    cmdListDesc.commandQueueGroupOrdinal = cmdQueueDesc.ordinal;
-    SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDesc, &cmdList));
+    cmdQueue = createCommandQueue(context, device, nullptr, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL);
+    SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList));
 }
 
-void run_client(int commSocket, uint32_t clientId) {
+void runClient(int commSocket, uint32_t clientId) {
     std::cout << "Client " << clientId << ", process ID: " << std::dec << getpid() << "\n";
 
     ze_context_handle_t context;
@@ -242,7 +196,7 @@ void run_client(int commSocket, uint32_t clientId) {
     delete[] heapBuffer;
 }
 
-void run_server(bool &validRet) {
+void runServer(bool &validRet) {
     std::cout << "Server process ID " << std::dec << getpid() << "\n";
 
     ze_context_handle_t context;
@@ -367,6 +321,7 @@ void run_server(bool &validRet) {
 }
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello IPC Event";
     verbose = isVerbose(argc, argv);
     bool outputValidationSuccessful;
 
@@ -389,17 +344,13 @@ int main(int argc, char *argv[]) {
             exit(1);
         } else if (childPids[i] == 0) {
             close(sv[i][0]);
-            run_client(sv[i][1], i);
+            runClient(sv[i][1], i);
             close(sv[i][1]);
             exit(0);
         }
     }
+    runServer(outputValidationSuccessful);
 
-    run_server(outputValidationSuccessful);
-
-    std::cout << "\nZello IPC Results validation "
-              << (outputValidationSuccessful ? "PASSED" : "FAILED")
-              << std::endl;
-
+    printResult(false, outputValidationSuccessful, blackBoxName);
     return (outputValidationSuccessful ? 0 : 1);
 }

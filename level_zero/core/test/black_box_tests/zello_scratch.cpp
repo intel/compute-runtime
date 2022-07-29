@@ -8,8 +8,6 @@
 #include "zello_common.h"
 #include "zello_compile.h"
 
-bool verbose = false;
-
 const char *moduleSrc = R"===(
 typedef long16 TYPE;
 __attribute__((reqd_work_group_size(32, 1, 1))) // force LWS to 32

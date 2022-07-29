@@ -13,8 +13,6 @@
 #include <iostream>
 #include <memory>
 
-bool verbose = false;
-
 void testAppendImageCopy(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
     const size_t width = 32;
     const size_t height = 24;

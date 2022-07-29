@@ -12,8 +12,6 @@
 #include <iostream>
 #include <memory>
 
-bool verbose = false;
-
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello Multidev";
     verbose = isVerbose(argc, argv);

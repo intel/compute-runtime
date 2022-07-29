@@ -7,8 +7,6 @@
 
 #include "zello_common.h"
 
-bool verbose = false;
-
 void executeGpuKernelAndValidate(ze_context_handle_t context, ze_device_handle_t &device, bool &outputValidationSuccessful) {
     ze_command_queue_handle_t cmdQueue;
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};

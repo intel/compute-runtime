@@ -14,8 +14,6 @@
 #include <iomanip>
 #include <iostream>
 
-bool verbose = false;
-
 const char *source = R"===(
 __kernel void test_printf(__global char *dst, __global char *src){
     uint gid = get_global_id(0);

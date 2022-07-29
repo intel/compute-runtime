@@ -8,8 +8,6 @@
 #include "zello_common.h"
 #include "zello_compile.h"
 
-bool verbose = false;
-
 const char *readNV12Module = R"===(
     __kernel void
     ReadNV12Kernel(

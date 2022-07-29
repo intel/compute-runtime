@@ -9,8 +9,6 @@
 
 #include <iomanip>
 
-bool verbose = false;
-
 void testAppendMemoryCopyFromHeapToDeviceToStack(ze_context_handle_t context, ze_device_handle_t &device, bool &validRet) {
     const size_t allocSize = 4096 + 7; // +7 to break alignment and make it harder
     char *heapBuffer = new char[allocSize];

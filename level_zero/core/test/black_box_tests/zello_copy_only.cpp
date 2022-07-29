@@ -15,8 +15,6 @@
 #include <limits>
 #include <memory>
 
-bool verbose = false;
-
 void testCopyBetweenHeapDeviceAndStack(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
     const size_t allocSize = 4096 + 7; // +7 to brake alignment and make it harder
     char *heapBuffer = new char[allocSize];

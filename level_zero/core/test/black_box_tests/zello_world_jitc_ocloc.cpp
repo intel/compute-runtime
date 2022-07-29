@@ -8,8 +8,6 @@
 #include "zello_common.h"
 #include "zello_compile.h"
 
-bool verbose = false;
-
 const char *moduleSrc = R"===(
 __kernel void kernel_copy(__global char *dst, __global char *src){
     uint gid = get_global_id(0);

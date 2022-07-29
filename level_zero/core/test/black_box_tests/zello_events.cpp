@@ -14,8 +14,6 @@
 #include <memory>
 #include <vector>
 
-bool verbose = false;
-
 void createCmdQueueAndCmdList(ze_device_handle_t &device,
                               ze_context_handle_t &context,
                               ze_command_queue_handle_t &cmdqueue,

@@ -24,8 +24,6 @@
 #include <stdlib.h>
 #endif
 
-bool verbose = false;
-
 struct UserTracerData {
     uint32_t tracerData;
 };

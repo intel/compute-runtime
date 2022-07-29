@@ -12,8 +12,6 @@
 #include <iostream>
 #include <limits>
 
-bool verbose = false;
-
 void testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &device, bool &useSyncCmdQ, bool &validRet, ze_command_list_handle_t &sharedCmdList) {
     const size_t allocSize = 4096;
     char *heapBuffer = new char[allocSize];

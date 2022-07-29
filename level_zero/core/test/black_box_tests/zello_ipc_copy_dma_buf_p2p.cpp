@@ -12,8 +12,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-extern bool verbose;
-bool verbose = false;
 bool useCopyEngine = false;
 
 uint8_t uinitializedPattern = 1;
@@ -329,6 +327,7 @@ void runServer(int commSocket, bool &validRet) {
 }
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello IPC P2P";
     verbose = isVerbose(argc, argv);
     bool outputValidationSuccessful;
 
@@ -355,9 +354,6 @@ int main(int argc, char *argv[]) {
         close(sv[0]);
     }
 
-    std::cout << "\nZello IPC P2P Results validation "
-              << (outputValidationSuccessful ? "PASSED" : "FAILED")
-              << std::endl;
-
-    return 0;
+    printResult(false, outputValidationSuccessful, blackBoxName);
+    return outputValidationSuccessful ? 0 : 1;
 }

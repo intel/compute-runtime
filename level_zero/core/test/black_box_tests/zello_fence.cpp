@@ -14,8 +14,6 @@
 #include <iostream>
 #include <memory>
 
-bool verbose = false;
-
 const char *clProgram = R"==(
 __kernel void increment_by_one(__global uchar *dst, __global uchar *src) {
     unsigned int gid = get_global_id(0);

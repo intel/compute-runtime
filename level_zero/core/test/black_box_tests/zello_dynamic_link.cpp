@@ -79,8 +79,6 @@ int lib_func_add5(int x) {
 }
 )===";
 
-bool verbose = false;
-
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello Dynamic Link";
     bool outputValidationSuccessful = true;

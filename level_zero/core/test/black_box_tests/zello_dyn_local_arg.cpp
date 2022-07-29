@@ -13,8 +13,6 @@
 #include <memory>
 #include <vector>
 
-bool verbose = false;
-
 const char *clProgram = R"==(
 __kernel void local_barrier_arg(__local int *local_dst1, __global int *dst, __local int *local_dst2,
         __local ulong *local_dst3, __local int *local_dst4) {

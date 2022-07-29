@@ -5,6 +5,22 @@
 #
 
 set(L0_BLACK_BOX_TEST_PROJECT_FOLDER "ze_intel_gpu/black_box_tests")
+
+set(L0_BLACK_BOX_TEST_SHARED_LIB "zello_shared_lib")
+
+add_library(${L0_BLACK_BOX_TEST_SHARED_LIB} STATIC
+            ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+            ${CMAKE_CURRENT_SOURCE_DIR}/common/zello_common.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/common/zello_common.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/common/zello_compile.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/common/zello_compile.h
+)
+
+target_link_libraries(${L0_BLACK_BOX_TEST_SHARED_LIB} PUBLIC ocloc_lib)
+target_include_directories(${L0_BLACK_BOX_TEST_SHARED_LIB} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/common)
+
+set_target_properties(${L0_BLACK_BOX_TEST_SHARED_LIB} PROPERTIES FOLDER ${L0_BLACK_BOX_TEST_PROJECT_FOLDER})
+
 set(TEST_TARGETS
     zello_commandlist_immediate
     zello_copy
@@ -62,25 +78,10 @@ foreach(TEST_NAME ${TEST_TARGETS})
 
   set_target_properties(${TEST_NAME} PROPERTIES FOLDER ${L0_BLACK_BOX_TEST_PROJECT_FOLDER})
 
-  target_sources(${TEST_NAME} PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-                 ${CMAKE_CURRENT_SOURCE_DIR}/common/zello_common.h
-                 ${CMAKE_CURRENT_SOURCE_DIR}/common/zello_compile.h
-  )
+  add_dependencies(${TEST_NAME} ${L0_BLACK_BOX_TEST_SHARED_LIB})
+  target_link_libraries(${TEST_NAME} PUBLIC ${L0_BLACK_BOX_TEST_SHARED_LIB})
 endforeach()
 
-target_link_libraries(zello_commandlist_immediate PUBLIC ocloc_lib)
-target_link_libraries(zello_copy_kernel_printf PUBLIC ocloc_lib)
-target_link_libraries(zello_debug_info PUBLIC ocloc_lib)
-target_link_libraries(zello_dynamic_link PUBLIC ocloc_lib)
-target_link_libraries(zello_dyn_local_arg PUBLIC ocloc_lib)
-target_link_libraries(zello_fence PUBLIC ocloc_lib)
-target_link_libraries(zello_function_pointers_cl PUBLIC ocloc_lib)
-target_link_libraries(zello_image_view PUBLIC ocloc_lib)
-target_link_libraries(zello_multidev PUBLIC ocloc_lib)
-target_link_libraries(zello_printf PUBLIC ocloc_lib)
-target_link_libraries(zello_scratch PUBLIC ocloc_lib)
-target_link_libraries(zello_world_global_work_offset PUBLIC ocloc_lib)
-target_link_libraries(zello_world_jitc_ocloc PUBLIC ocloc_lib)
-
 add_subdirectories()
+
+create_project_source_tree(${L0_BLACK_BOX_TEST_SHARED_LIB})

@@ -15,8 +15,6 @@
 #include <memory>
 #include <vector>
 
-bool verbose = false;
-
 #define imageIndex(buf, x, y, z, chan) \
     (buf)[(chan) +                     \
           (x)*channels +               \

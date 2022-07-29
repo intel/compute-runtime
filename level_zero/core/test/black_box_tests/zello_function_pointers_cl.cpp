@@ -14,8 +14,6 @@
 #include <iostream>
 #include <memory>
 
-bool verbose = false;
-
 const char *functionPointersProgram = R"==(
 __global char *__builtin_IB_get_function_pointer(__constant char *function_name);
 void __builtin_IB_call_function_pointer(__global char *function_pointer,

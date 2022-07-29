@@ -7,8 +7,6 @@
 
 #include "zello_common.h"
 
-bool verbose = false;
-
 inline std::vector<uint8_t> loadBinaryFile(const std::string &filePath) {
     std::ifstream stream(filePath, std::ios::binary);
     if (!stream.good()) {

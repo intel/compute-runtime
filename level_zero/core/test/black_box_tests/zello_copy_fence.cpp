@@ -14,8 +14,6 @@
 #include <limits>
 #include <memory>
 
-bool verbose = false;
-
 void testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
     const size_t allocSize = 4096;
     char *heapBuffer = new char[allocSize];

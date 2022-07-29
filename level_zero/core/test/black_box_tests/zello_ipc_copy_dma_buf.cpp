@@ -15,8 +15,6 @@
 #define CHILDPROCESSES 4
 
 int sv[CHILDPROCESSES][2];
-extern bool verbose;
-bool verbose = false;
 
 size_t allocSize = 131072 + 7; // +7 to break alignment and make it harder
 
@@ -313,6 +311,7 @@ void runServer(bool &validRet) {
 }
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello IPC";
     verbose = isVerbose(argc, argv);
     bool outputValidationSuccessful;
 
@@ -339,9 +338,6 @@ int main(int argc, char *argv[]) {
 
     runServer(outputValidationSuccessful);
 
-    std::cout << "\nZello IPC Results validation "
-              << (outputValidationSuccessful ? "PASSED" : "FAILED")
-              << std::endl;
-
-    return 0;
+    printResult(false, outputValidationSuccessful, blackBoxName);
+    return outputValidationSuccessful ? 0 : 1;
 }

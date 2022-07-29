@@ -15,8 +15,6 @@
 #include <limits>
 #include <memory>
 
-bool verbose = false;
-
 void createImmediateCommandList(ze_device_handle_t &device,
                                 ze_context_handle_t &context,
                                 uint32_t queueGroupOrdinal,

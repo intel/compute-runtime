@@ -13,7 +13,6 @@
 #include <iostream>
 #include <memory>
 
-bool verbose = false;
 bool useSyncQueue = false;
 
 int main(int argc, char *argv[]) {

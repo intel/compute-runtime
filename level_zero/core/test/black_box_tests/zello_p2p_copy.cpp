@@ -11,8 +11,6 @@
 #include <iostream>
 #include <memory>
 
-bool verbose = false;
-
 struct DevObjects {
     ze_command_queue_handle_t cmdQueue;
     ze_command_list_handle_t cmdList;
