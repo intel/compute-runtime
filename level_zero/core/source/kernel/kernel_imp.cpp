@@ -903,22 +903,28 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
 
     if (this->usesRayTracing()) {
         uint32_t bvhLevels = NEO::RayTracingHelper::maxBvhLevels;
-        neoDevice->initializeRayTracing(bvhLevels);
-        auto rtDispatchGlobalsInfo = neoDevice->getRTDispatchGlobals(bvhLevels);
-        if (rtDispatchGlobalsInfo == nullptr) {
-            return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+        auto arg = this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.rtDispatchGlobals;
+        if (arg.pointerSize == 0) {
+            // kernel is allocating its own RTDispatchGlobals manually
+            neoDevice->initializeRayTracing(0);
+        } else {
+            neoDevice->initializeRayTracing(bvhLevels);
+            auto rtDispatchGlobalsInfo = neoDevice->getRTDispatchGlobals(bvhLevels);
+            if (rtDispatchGlobalsInfo == nullptr) {
+                return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+            }
+
+            for (auto rtDispatchGlobals : rtDispatchGlobalsInfo->rtDispatchGlobals) {
+                this->residencyContainer.push_back(rtDispatchGlobals);
+            }
+
+            auto address = rtDispatchGlobalsInfo->rtDispatchGlobals[0]->getGpuAddressToPatch();
+            NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize),
+                              arg,
+                              static_cast<uintptr_t>(address));
+
+            this->residencyContainer.push_back(neoDevice->getRTMemoryBackedBuffer());
         }
-
-        for (auto rtDispatchGlobals : rtDispatchGlobalsInfo->rtDispatchGlobals) {
-            this->residencyContainer.push_back(rtDispatchGlobals);
-        }
-
-        auto address = rtDispatchGlobalsInfo->rtDispatchGlobals[0]->getGpuAddressToPatch();
-        NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize),
-                          this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.rtDispatchGlobals,
-                          static_cast<uintptr_t>(address));
-
-        this->residencyContainer.push_back(neoDevice->getRTMemoryBackedBuffer());
     }
 
     return ZE_RESULT_SUCCESS;
