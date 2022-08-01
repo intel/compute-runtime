@@ -811,24 +811,6 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenFreeAllocFromSharedHandl
     EXPECT_EQ(lastDestroyed, expectedDestroyHandle);
 }
 
-TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenFreeAllocFromHostPtrIsCalledThenDestroyResourceHandle) {
-    auto size = 13u;
-    auto hostPtr = reinterpret_cast<const void *>(0x10001);
-
-    AllocationData allocationData;
-    allocationData.size = size;
-    allocationData.hostPtr = hostPtr;
-    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData));
-
-    auto expectedDestroyHandle = allocation->resourceHandle;
-    EXPECT_NE(0u, expectedDestroyHandle);
-    auto lastDestroyed = getMockLastDestroyedResHandleFcn();
-    EXPECT_EQ(0u, lastDestroyed);
-    memoryManager->freeGraphicsMemory(allocation);
-    lastDestroyed = getMockLastDestroyedResHandleFcn();
-    EXPECT_EQ(lastDestroyed, expectedDestroyHandle);
-}
-
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerSizeZeroWhenCreateFromSharedHandleIsCalledThenUpdateSize) {
     auto osHandle = 1u;
     auto size = 4096u;

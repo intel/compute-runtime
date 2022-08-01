@@ -565,7 +565,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
         input->fragmentsStorage.fragmentCount > 0) {
         cleanGraphicsMemoryCreatedFromHostPtr(gfxAllocation);
     } else {
-        if (input->resourceHandle != 0) {
+        if (input->peekSharedHandle() || input->peekInternalHandle(nullptr) != 0) {
             [[maybe_unused]] auto status = tryDeferDeletions(nullptr, 0, input->resourceHandle, gfxAllocation->getRootDeviceIndex());
             DEBUG_BREAK_IF(!status);
         } else {
