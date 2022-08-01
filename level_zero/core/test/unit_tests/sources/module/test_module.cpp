@@ -3119,6 +3119,7 @@ TEST_F(ModuleWithZebinTest, givenNonZebinaryFormatWhenGettingDebugInfoThenDebugZ
     size_t mockProgramSize = sizeof(Elf::ElfFileHeader<Elf::EI_CLASS_64>);
     module->translationUnit->unpackedDeviceBinary = std::make_unique<char[]>(mockProgramSize);
     module->translationUnit->unpackedDeviceBinarySize = mockProgramSize;
+    module->isZebinBinary = false;
     size_t debugDataSize;
     ze_result_t retCode = module->getDebugInfo(&debugDataSize, nullptr);
     EXPECT_EQ(debugDataSize, 0u);
