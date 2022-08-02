@@ -27,6 +27,7 @@
 #include "shared/source/memory_manager/deferred_deleter.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/memory_manager/prefetch_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -62,6 +63,7 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
 
     if (anyLocalMemorySupported) {
         pageFaultManager = PageFaultManager::create();
+        prefetchManager = PrefetchManager::create();
     }
 
     if (DebugManager.flags.EnableMultiStorageResources.get() != -1) {

@@ -85,6 +85,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     removeHostPtrAllocations();
     commandContainer.reset();
     containsStatelessUncachedResource = false;
+    performMemoryPrefetch = false;
     indirectAllocationsAllowed = false;
     unifiedMemoryControls.indirectHostAllocationsAllowed = false;
     unifiedMemoryControls.indirectSharedAllocationsAllowed = false;

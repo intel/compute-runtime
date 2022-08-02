@@ -34,6 +34,7 @@ class ExecutionEnvironment;
 class Gmm;
 class HostPtrManager;
 class OsContext;
+class PrefetchManager;
 
 enum AllocationUsage {
     TEMPORARY_ALLOCATION,
@@ -152,6 +153,10 @@ class MemoryManager {
 
     PageFaultManager *getPageFaultManager() const {
         return pageFaultManager.get();
+    }
+
+    PrefetchManager *getPrefetchManager() const {
+        return prefetchManager.get();
     }
 
     void waitForDeletions();
@@ -313,6 +318,7 @@ class MemoryManager {
     std::vector<std::unique_ptr<LocalMemoryUsageBankSelector>> externalLocalMemoryUsageBankSelector;
     void *reservedMemory = nullptr;
     std::unique_ptr<PageFaultManager> pageFaultManager;
+    std::unique_ptr<PrefetchManager> prefetchManager;
     OSMemory::ReservedCpuAddressRange reservedCpuAddressRange;
     HeapAssigner heapAssigner;
     AlignmentSelector alignmentSelector = {};

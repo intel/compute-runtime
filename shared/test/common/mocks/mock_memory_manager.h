@@ -43,6 +43,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::multiContextResourceDestructor;
     using MemoryManager::overrideAllocationData;
     using MemoryManager::pageFaultManager;
+    using MemoryManager::prefetchManager;
     using MemoryManager::registeredEngines;
     using MemoryManager::supportsMultiStorageResources;
     using MemoryManager::useNonSvmHostPtrAlloc;

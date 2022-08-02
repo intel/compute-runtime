@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/memory_manager/prefetch_manager.h"
+
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw.inl"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
@@ -33,7 +35,11 @@ ze_result_t CommandListCoreFamily<IGFX_XE_HPC_CORE>::appendMemoryPrefetch(const 
     }
 
     if (NEO::DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.get() > 0) {
-        svmAllocMgr->prefetchMemory(*device->getNEODevice(), *allocData);
+        this->performMemoryPrefetch = true;
+        auto prefetchManager = device->getDriverHandle()->getMemoryManager()->getPrefetchManager();
+        if (prefetchManager) {
+            prefetchManager->insertAllocation(*allocData);
+        }
     }
 
     if (NEO::DebugManager.flags.AddStatePrefetchCmdToMemoryPrefetchAPI.get() != 1) {

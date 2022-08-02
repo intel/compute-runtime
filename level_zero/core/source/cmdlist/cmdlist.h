@@ -229,6 +229,9 @@ struct CommandList : _ze_command_list_handle_t {
     bool containsCooperativeKernels() const {
         return containsCooperativeKernelsFlag;
     }
+    bool isMemoryPrefetchRequested() const {
+        return performMemoryPrefetch;
+    }
 
     enum CommandListType : uint32_t {
         TYPE_REGULAR = 0u,
@@ -293,6 +296,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool internalUsage = false;
     bool containsCooperativeKernelsFlag = false;
     bool containsStatelessUncachedResource = false;
+    bool performMemoryPrefetch = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

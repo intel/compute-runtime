@@ -27,6 +27,7 @@
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/prefetch_manager.h"
 #include "shared/source/memory_manager/residency_container.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
@@ -83,6 +84,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     auto anyCommandListWithoutCooperativeKernels = false;
     bool anyCommandListRequiresDisabledEUFusion = false;
     bool cachedMOCSAllowed = true;
+    bool performMemoryPrefetch = false;
 
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
@@ -107,6 +109,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         // If the Command List has commands that require uncached MOCS, then any changes to the commands in the queue requires the uncached MOCS
         if (commandList->requiresQueueUncachedMocs && cachedMOCSAllowed == true) {
             cachedMOCSAllowed = false;
+        }
+
+        if (commandList->isMemoryPrefetchRequested()) {
+            performMemoryPrefetch = true;
         }
     }
 
@@ -444,6 +450,12 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     if (performMigration) {
         auto commandList = CommandList::fromHandle(phCommandLists[0]);
         commandList->migrateSharedAllocations();
+    }
+
+    if (performMemoryPrefetch) {
+        auto prefetchManager = device->getDriverHandle()->getMemoryManager()->getPrefetchManager();
+        prefetchManager->migrateAllocationsToGpu(*this->device->getDriverHandle()->getSvmAllocsManager(), *this->device->getNEODevice());
+        performMemoryPrefetch = false;
     }
 
     if (!isCopyOnlyCommandQueue && stateSipRequired) {
