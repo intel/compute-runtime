@@ -504,7 +504,7 @@ HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenTaskLevelIsIncremented) {
 }
 
 HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenCsrTaskLevelIsIncremented) {
-    //this test case assumes IOQ
+    // this test case assumes IOQ
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.taskCount = pCmdQ->taskCount + 100;
     csr.taskLevel = pCmdQ->taskLevel + 50;
@@ -771,9 +771,10 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenEnqueueK
 
     auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().peekHead();
 
-    //Three more surfaces from preemptionAllocation, SipKernel and clearColorAllocation
+    // Three more surfaces from preemptionAllocation, SipKernel and clearColorAllocation
     size_t csrSurfaceCount = (pDevice->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
     csrSurfaceCount -= pDevice->getHardwareInfo().capabilityTable.supportsImages ? 0 : 1;
+    csrSurfaceCount += mockCsr->getKernelArgsBufferAllocation() ? 1 : 0;
     size_t timestampPacketSurfacesCount = mockCsr->peekTimestampPacketWriteEnabled() ? 1 : 0;
     size_t fenceSurfaceCount = mockCsr->globalFenceAllocation ? 1 : 0;
     size_t clearColorSize = mockCsr->clearColorAllocation ? 1 : 0;
@@ -926,7 +927,7 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenKernelIs
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
     size_t gws[3] = {1, 0, 0};
-    //make sure csr emits something
+    // make sure csr emits something
     mockCsrmockCsr.mediaVfeStateDirty = true;
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     mockCsrmockCsr.mediaVfeStateDirty = true;

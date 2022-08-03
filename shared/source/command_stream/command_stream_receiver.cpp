@@ -324,6 +324,11 @@ void CommandStreamReceiver::cleanupResources() {
         getMemoryManager()->freeGraphicsMemory(workPartitionAllocation);
         workPartitionAllocation = nullptr;
     }
+
+    if (kernelArgsBufferAllocation) {
+        getMemoryManager()->freeGraphicsMemory(kernelArgsBufferAllocation);
+        kernelArgsBufferAllocation = nullptr;
+    }
 }
 
 WaitStatus CommandStreamReceiver::waitForCompletionWithTimeout(const WaitParams &params, uint32_t taskCountToWait) {

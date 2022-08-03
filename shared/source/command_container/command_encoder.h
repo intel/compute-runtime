@@ -456,4 +456,11 @@ struct EncodeMemoryFence {
     static void encodeSystemMemoryFence(LinearStream &commandStream, const GraphicsAllocation *globalFenceAllocation, LogicalStateHelper *logicalStateHelper);
 };
 
+template <typename GfxFamily>
+struct EncodeKernelArgsBuffer {
+    static size_t getKernelArgsBufferCmdsSize(const GraphicsAllocation *kernelArgsBufferAllocation, LogicalStateHelper *logicalStateHelper);
+
+    static void encodeKernelArgsBufferCmds(const GraphicsAllocation *kernelArgsBufferAllocation, LogicalStateHelper *logicalStateHelper);
+};
+
 } // namespace NEO

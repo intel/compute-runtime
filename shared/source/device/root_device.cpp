@@ -67,6 +67,7 @@ void RootDevice::initializeRootCommandStreamReceiver() {
     rootCommandStreamReceiver->initializeTagAllocation();
     rootCommandStreamReceiver->createGlobalFenceAllocation();
     rootCommandStreamReceiver->createWorkPartitionAllocation(*this);
+    rootCommandStreamReceiver->createKernelArgsBufferAllocation();
     commandStreamReceivers.push_back(std::move(rootCommandStreamReceiver));
 
     EngineControl engine{commandStreamReceivers.back().get(), osContext};

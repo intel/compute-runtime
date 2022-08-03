@@ -68,8 +68,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
                                                                     false,
                                                                     NEO::MemoryCompressionState::NotApplicable,
                                                                     false,
-                                                                    1u,
-                                                                    nullptr);
+                                                                    1u);
     *sbaCmdBuf = sbaCmd;
     csr->setGSBAStateDirty(false);
 

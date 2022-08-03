@@ -15,7 +15,6 @@ enum class MemoryCompressionState;
 class GmmHelper;
 class IndirectHeap;
 class LinearStream;
-class LogicalStateHelper;
 struct DispatchFlags;
 struct HardwareInfo;
 
@@ -42,8 +41,7 @@ struct StateBaseAddressHelper {
         bool isMultiOsContextCapable,
         MemoryCompressionState memoryCompressionState,
         bool useGlobalAtomics,
-        bool areMultipleSubDevicesInContext,
-        LogicalStateHelper *logicalStateHelper);
+        bool areMultipleSubDevicesInContext);
 
     static void appendIohParameters(STATE_BASE_ADDRESS *stateBaseAddress, const IndirectHeap *ioh, bool useGlobalHeapsBaseAddress, uint64_t indirectObjectHeapBaseAddress);
 

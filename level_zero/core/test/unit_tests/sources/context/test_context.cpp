@@ -520,6 +520,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     const ze_command_queue_desc_t desc = {};
     MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr.initializeTagAllocation();
+    csr.createKernelArgsBufferAllocation();
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
 
     ze_result_t returnValue;
@@ -570,6 +571,7 @@ HWTEST2_F(ContextMakeMemoryResidentAndMigrationTests,
     const ze_command_queue_desc_t desc = {};
     MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr.initializeTagAllocation();
+    csr.createKernelArgsBufferAllocation();
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
 
     ze_result_t returnValue;
@@ -618,6 +620,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     const ze_command_queue_desc_t desc = {};
     MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr.initializeTagAllocation();
+    csr.createKernelArgsBufferAllocation();
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
 
     ze_result_t returnValue;

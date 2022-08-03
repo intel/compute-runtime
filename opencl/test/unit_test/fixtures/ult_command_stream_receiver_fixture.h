@@ -12,6 +12,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -152,6 +153,16 @@ struct UltCommandStreamReceiverTest
         commandStreamReceiver.lastSentUseGlobalAtomics = false;
         commandStreamReceiver.streamProperties.stateComputeMode.setProperties(0, GrfConfig::DefaultGrfNumber,
                                                                               hwHelper.getDefaultThreadArbitrationPolicy(), pDevice->getPreemptionMode(), *defaultHwInfo);
+
+        auto logicalStateHelper = commandStreamReceiver.getLogicalStateHelper();
+
+        if (logicalStateHelper) {
+            uint8_t buffer[512] = {};
+            LinearStream tempStream(buffer, sizeof(buffer));
+
+            EncodeKernelArgsBuffer<GfxFamily>::encodeKernelArgsBufferCmds(commandStreamReceiver.getKernelArgsBufferAllocation(), logicalStateHelper);
+            logicalStateHelper->writeStreamInline(tempStream, false);
+        }
     }
 
     template <typename GfxFamily>

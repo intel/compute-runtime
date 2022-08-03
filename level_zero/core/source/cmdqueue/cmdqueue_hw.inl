@@ -282,6 +282,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                                                            : NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo);
     }
 
+    linearStreamSizeEstimate += NEO::EncodeKernelArgsBuffer<GfxFamily>::getKernelArgsBufferCmdsSize(csr->getKernelArgsBufferAllocation(), csr->getLogicalStateHelper());
+
     size_t alignedSize = alignUp<size_t>(linearStreamSizeEstimate, minCmdBufferPtrAlign);
     size_t padding = alignedSize - linearStreamSizeEstimate;
 
@@ -368,6 +370,12 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     if (programActivePartitionConfig) {
         csrHw->programActivePartitionConfig(child);
+    }
+
+    NEO::EncodeKernelArgsBuffer<GfxFamily>::encodeKernelArgsBufferCmds(csr->getKernelArgsBufferAllocation(), csr->getLogicalStateHelper());
+
+    if (csr->getKernelArgsBufferAllocation()) {
+        csr->makeResident(*csr->getKernelArgsBufferAllocation());
     }
 
     if (csr->getLogicalStateHelper()) {

@@ -507,6 +507,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     void flushTagUpdate() override{};
     void updateTagFromWait() override{};
     bool isUpdateTagFromWaitEnabled() override { return false; };
+    void createKernelArgsBufferAllocation() override {}
 
     bool isMultiOsContextCapable() const override { return false; }
 

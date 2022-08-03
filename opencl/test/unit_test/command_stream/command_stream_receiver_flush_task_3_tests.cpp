@@ -74,6 +74,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
     csrSurfaceCount -= pDevice->getHardwareInfo().capabilityTable.supportsImages ? 0 : 1;
     csrSurfaceCount += mockCsr->globalFenceAllocation ? 1 : 0;
     csrSurfaceCount += mockCsr->clearColorAllocation ? 1 : 0;
+    csrSurfaceCount += mockCsr->getKernelArgsBufferAllocation() ? 1 : 0;
 
     //we should have 3 heaps, tag allocation and csr command stream + cq
     EXPECT_EQ(5u + csrSurfaceCount, cmdBuffer->surfaces.size());
@@ -809,6 +810,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTotalRes
     }
 
     mockCsr->initializeTagAllocation();
+    mockCsr->createKernelArgsBufferAllocation();
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);

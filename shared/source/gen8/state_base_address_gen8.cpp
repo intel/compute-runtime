@@ -30,8 +30,7 @@ void StateBaseAddressHelper<Gen8Family>::programStateBaseAddress(
     bool isMultiOsContextCapable,
     MemoryCompressionState memoryCompressionState,
     bool useGlobalAtomics,
-    bool areMultipleSubDevicesInContext,
-    LogicalStateHelper *logicalStateHelper) {
+    bool areMultipleSubDevicesInContext) {
 
     *stateBaseAddress = Gen8Family::cmdInitStateBaseAddress;
 

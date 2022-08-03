@@ -31,6 +31,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::blitterDirectSubmission;
     using BaseClass::checkPlatformSupportsGpuIdleImplicitFlush;
     using BaseClass::checkPlatformSupportsNewResourceImplicitFlush;
+    using BaseClass::createKernelArgsBufferAllocation;
     using BaseClass::directSubmission;
     using BaseClass::dshState;
     using BaseClass::getCmdSizeForPrologue;
@@ -41,6 +42,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::isBlitterDirectSubmissionEnabled;
     using BaseClass::isDirectSubmissionEnabled;
     using BaseClass::isPerDssBackedBufferSent;
+    using BaseClass::kernelArgsBufferAllocation;
     using BaseClass::logicalStateHelper;
     using BaseClass::makeResident;
     using BaseClass::perDssBackedBuffer;

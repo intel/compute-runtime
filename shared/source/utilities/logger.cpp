@@ -162,6 +162,8 @@ const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation
         return "INTERNAL_HEAP";
     case AllocationType::INTERNAL_HOST_MEMORY:
         return "INTERNAL_HOST_MEMORY";
+    case AllocationType::KERNEL_ARGS_BUFFER:
+        return "KERNEL_ARGS_BUFFER";
     case AllocationType::KERNEL_ISA:
         return "KERNEL_ISA";
     case AllocationType::KERNEL_ISA_INTERNAL:

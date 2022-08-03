@@ -69,8 +69,7 @@ HWTEST2_F(SBATest, WhenProgramStateBaseAddressParametersIsCalledThenSBACmdHasBin
         true,
         MemoryCompressionState::NotApplicable,
         false,
-        1u,
-        nullptr);
+        1u);
 
     EXPECT_EQ(ssh.getMaxAvailableSpace() / 64 - 1, cmd->getBindlessSurfaceStateSize());
     EXPECT_EQ(ssh.getHeapGpuBase(), cmd->getBindlessSurfaceStateBaseAddress());
@@ -107,8 +106,8 @@ HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenProgramStateBas
         true,
         MemoryCompressionState::NotApplicable,
         false,
-        1u,
-        nullptr);
+        1u);
+
     EXPECT_TRUE(cmd->getBindlessSurfaceStateBaseAddressModifyEnable());
     EXPECT_EQ(cmd->getBindlessSurfaceStateBaseAddress(), globalBindlessHeapsBaseAddress);
 
@@ -147,8 +146,7 @@ HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenPassingIndirect
         true,
         MemoryCompressionState::NotApplicable,
         false,
-        1u,
-        nullptr);
+        1u);
 
     EXPECT_EQ(cmd->getIndirectObjectBaseAddress(), indirectObjectBaseAddress);
 }
@@ -206,8 +204,8 @@ HWTEST2_F(SBATest, givenGlobalBindlessBaseAddressWhenSshIsPassedThenBindlessSurf
         true,
         MemoryCompressionState::NotApplicable,
         false,
-        1u,
-        nullptr);
+        1u);
+
     EXPECT_EQ(cmd->getBindlessSurfaceStateBaseAddress(), globalBindlessHeapsBaseAddress);
 }
 HWTEST2_F(SBATest, givenSurfaceStateHeapWhenNotUsingGlobalHeapBaseThenBindlessSurfaceBaseIsSshBase, IsAtLeastSkl) {
@@ -238,8 +236,8 @@ HWTEST2_F(SBATest, givenSurfaceStateHeapWhenNotUsingGlobalHeapBaseThenBindlessSu
         true,
         MemoryCompressionState::NotApplicable,
         false,
-        1u,
-        nullptr);
+        1u);
+
     EXPECT_EQ(ssh.getHeapGpuBase(), cmd->getBindlessSurfaceStateBaseAddress());
 }
 

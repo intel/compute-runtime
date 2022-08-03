@@ -359,6 +359,8 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
         return false;
     }
 
+    commandStreamReceiver->createKernelArgsBufferAllocation();
+
     if (isDefaultEngine) {
         defaultEngineIndex = deviceCsrIndex;
     }

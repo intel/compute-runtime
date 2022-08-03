@@ -176,6 +176,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void configurePostSyncWriteOffset();
     void unregisterDirectSubmissionFromController();
     constexpr bool isGlobalAtomicsProgrammingRequired(bool currentValue) const;
+    void createKernelArgsBufferAllocation() override;
 
     HeapDirtyState dshState;
     HeapDirtyState iohState;

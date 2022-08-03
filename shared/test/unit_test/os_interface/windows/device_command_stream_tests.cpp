@@ -864,6 +864,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenI
         csrSurfaceCount = 2;
     }
     csrSurfaceCount += mockCsr->globalFenceAllocation ? 1 : 0;
+    csrSurfaceCount += mockCsr->getKernelArgsBufferAllocation() ? 1 : 0;
 
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
