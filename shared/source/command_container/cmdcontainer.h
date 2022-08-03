@@ -35,7 +35,7 @@ enum class ErrorCode {
 
 class CommandContainer : public NonCopyableOrMovableClass {
   public:
-    static constexpr size_t defaultListCmdBufferSize = MemoryConstants::kiloByte * 256;
+    static constexpr size_t defaultListCmdBufferSize = 1u * MemoryConstants ::megaByte;
     static constexpr size_t cmdBufferReservedSize = MemoryConstants::cacheLineSize +
                                                     CSRequirements::csOverfetchSize;
     static constexpr size_t totalCmdBufferSize = defaultListCmdBufferSize + cmdBufferReservedSize;

@@ -236,7 +236,6 @@ IndirectHeap *CommandContainer::getHeapWithRequiredSizeAndAlignment(HeapType hea
 void CommandContainer::handleCmdBufferAllocations(size_t startIndex) {
     for (size_t i = startIndex; i < cmdBufferAllocations.size(); i++) {
         if (this->reusableAllocationList) {
-            this->device->getMemoryManager()->handleFenceCompletion(cmdBufferAllocations[i]);
             reusableAllocationList->pushFrontOne(*cmdBufferAllocations[i]);
         } else {
             this->device->getMemoryManager()->freeGraphicsMemory(cmdBufferAllocations[i]);
