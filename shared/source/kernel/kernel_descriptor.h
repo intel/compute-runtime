@@ -11,6 +11,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/kernel/debug_data.h"
+#include "shared/source/kernel/grf_config.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/kernel/kernel_arg_metadata.h"
 #include "shared/source/utilities/stackvec.h"
@@ -149,7 +150,7 @@ struct KernelDescriptor {
         uint16_t inlineDataPayloadSize = 0U;
         uint16_t perThreadDataSize = 0U;
         uint16_t numArgsToPatch = 0U;
-        uint16_t numGrfRequired = 0U;
+        uint16_t numGrfRequired = GrfConfig::DefaultGrfNumber;
         uint8_t barrierCount = 0u;
         bool hasNonKernelArgLoad = true;
         bool hasNonKernelArgStore = true;

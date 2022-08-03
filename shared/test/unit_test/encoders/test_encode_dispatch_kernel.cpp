@@ -798,6 +798,7 @@ HWTEST_F(EncodeDispatchKernelTest, givenNonBindlessOrStatelessArgWhenDispatching
 
     dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.numEntries = numBindingTable;
     dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.tableOffset = 0U;
+    dispatchInterface->kernelDescriptor.kernelAttributes.numGrfRequired = 128U;
 
     auto &arg = dispatchInterface->kernelDescriptor.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>();
     arg.bindless = NEO::undefined<CrossThreadDataOffset>;
@@ -828,6 +829,7 @@ HWTEST_F(EncodeDispatchKernelTest, givenNonBindlessOrStatelessArgWhenDispatching
 
     dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.numEntries = numBindingTable;
     dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.tableOffset = 0U;
+    dispatchInterface->kernelDescriptor.kernelAttributes.numGrfRequired = 128U;
 
     sshData = reinterpret_cast<uint8_t *>(&bindingTableState);
     dispatchInterface->getSurfaceStateHeapDataResult = const_cast<uint8_t *>(sshData);

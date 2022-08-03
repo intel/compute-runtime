@@ -25,7 +25,7 @@ TEST(KernelDescriptor, WhenDefaultInitializedThenValuesAreCleared) {
     EXPECT_EQ(0U, desc.kernelAttributes.crossThreadDataSize);
     EXPECT_EQ(0U, desc.kernelAttributes.perThreadDataSize);
     EXPECT_EQ(0U, desc.kernelAttributes.numArgsToPatch);
-    EXPECT_EQ(0U, desc.kernelAttributes.numGrfRequired);
+    EXPECT_EQ(128U, desc.kernelAttributes.numGrfRequired);
     EXPECT_EQ(NEO::KernelDescriptor::BindfulAndStateless, desc.kernelAttributes.bufferAddressingMode);
     EXPECT_EQ(NEO::KernelDescriptor::Bindful, desc.kernelAttributes.imageAddressingMode);
     EXPECT_EQ(NEO::KernelDescriptor::Bindful, desc.kernelAttributes.samplerAddressingMode);

@@ -60,16 +60,16 @@ HWTEST2_F(DG2CommandEncoderTest, givenInterfaceDescriptorDataWhenForceThreadGrou
 
         for (auto numberOfThreadsInGroup : {1u, 4u, 16u}) {
             iddArg.setNumberOfThreadsInGpgpuThreadGroup(numberOfThreadsInGroup);
-            EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, hwInfo);
+            EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, hwInfo, 0, 0);
 
             if (hwInfoConfig.isDisableOverdispatchAvailable(hwInfo)) {
                 if (numberOfThreadsInGroup == 1) {
-                    EXPECT_EQ(2u, iddArg.getThreadGroupDispatchSize());
+                    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2, iddArg.getThreadGroupDispatchSize());
                 } else {
-                    EXPECT_EQ(3u, iddArg.getThreadGroupDispatchSize());
+                    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1, iddArg.getThreadGroupDispatchSize());
                 }
             } else {
-                EXPECT_EQ(0u, iddArg.getThreadGroupDispatchSize());
+                EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8, iddArg.getThreadGroupDispatchSize());
             }
         }
     }

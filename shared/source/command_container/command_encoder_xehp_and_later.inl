@@ -257,7 +257,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     walkerCmd.setPredicateEnable(args.isPredicate);
 
-    EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(idd, hwInfo);
+    auto threadGroupCount = walkerCmd.getThreadGroupIdXDimension() * walkerCmd.getThreadGroupIdYDimension() * walkerCmd.getThreadGroupIdZDimension();
+    EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(idd, hwInfo, threadGroupCount, kernelDescriptor.kernelAttributes.numGrfRequired);
 
     EncodeDispatchKernel<Family>::appendAdditionalIDDFields(&idd, hwInfo, threadsPerThreadGroup,
                                                             args.dispatchInterface->getSlmTotalSize(),

@@ -111,6 +111,7 @@ struct Mock<::L0::Kernel> : public WhiteBox<::L0::Kernel> {
         kernelTokens.header = &kernelHeader;
 
         iOpenCL::SPatchExecutionEnvironment execEnv = {};
+        execEnv.NumGRFRequired = 128;
         execEnv.LargestCompiledSIMDSize = 8;
         kernelTokens.tokens.executionEnvironment = &execEnv;
 

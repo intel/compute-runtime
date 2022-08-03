@@ -88,9 +88,10 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenProgramInterfaceDescriptor
     auto usedIndirectHeapBefore = indirectHeap.getUsed();
     indirectHeap.getSpace(sizeof(INTERFACE_DESCRIPTOR_DATA));
 
+    const uint32_t threadGroupCount = 1u;
     size_t crossThreadDataSize = kernel->getCrossThreadDataSize();
     HardwareCommandsHelper<FamilyType>::sendInterfaceDescriptorData(
-        indirectHeap, 0, 0, crossThreadDataSize, 64, 0, 0, 0, 1, *kernel, 0, pDevice->getPreemptionMode(), nullptr, *pDevice);
+        indirectHeap, 0, 0, crossThreadDataSize, 64, 0, 0, 0, threadGroupCount, 1, *kernel, 0, pDevice->getPreemptionMode(), nullptr, *pDevice);
 
     auto usedIndirectHeapAfter = indirectHeap.getUsed();
     EXPECT_EQ(sizeof(INTERFACE_DESCRIPTOR_DATA), usedIndirectHeapAfter - usedIndirectHeapBefore);
@@ -309,6 +310,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenAllocatingIndirectStateRes
 
     const size_t localWorkSize = 256;
     const size_t localWorkSizes[3]{localWorkSize, 1, 1};
+    const uint32_t threadGroupCount = 1u;
 
     auto &commandStream = cmdQ.getCS(1024);
     auto pWalkerCmd = static_cast<GPGPU_WALKER *>(commandStream.getSpace(sizeof(GPGPU_WALKER)));
@@ -343,6 +345,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenAllocatingIndirectStateRes
         kernel->getKernelStartAddress(true, kernelUsesLocalIds, isCcsUsed, false),
         kernel->getKernelInfo().getMaxSimdSize(),
         localWorkSizes,
+        threadGroupCount,
         idToffset,
         interfaceDescriptorIndex,
         pDevice->getPreemptionMode(),
@@ -385,6 +388,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWithFourBindingTabl
     auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 8192);
     const size_t localWorkSize = 256;
     const size_t localWorkSizes[3]{localWorkSize, 1, 1};
+    const uint32_t threadGroupCount = 1u;
     uint32_t interfaceDescriptorIndex = 0;
     auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
     auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel);
@@ -398,6 +402,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWithFourBindingTabl
         mockKernelWithInternal->mockKernel->getKernelStartAddress(true, kernelUsesLocalIds, isCcsUsed, false),
         mockKernelWithInternal->mockKernel->getKernelInfo().getMaxSimdSize(),
         localWorkSizes,
+        threadGroupCount,
         0,
         interfaceDescriptorIndex,
         pDevice->getPreemptionMode(),
@@ -431,6 +436,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWith100BindingTable
     auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 8192);
     const size_t localWorkSize = 256;
     const size_t localWorkSizes[3]{localWorkSize, 1, 1};
+    const uint32_t threadGroupCount = 1u;
     uint32_t interfaceDescriptorIndex = 0;
     auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
     auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel);
@@ -444,6 +450,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWith100BindingTable
         mockKernelWithInternal->mockKernel->getKernelStartAddress(true, kernelUsesLocalIds, isCcsUsed, false),
         mockKernelWithInternal->mockKernel->getKernelInfo().getMaxSimdSize(),
         localWorkSizes,
+        threadGroupCount,
         0,
         interfaceDescriptorIndex,
         pDevice->getPreemptionMode(),
@@ -487,6 +494,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
     const size_t localWorkSizeY = 3;
     const size_t localWorkSizeZ = 4;
     const size_t localWorkSizes[3]{localWorkSizeX, localWorkSizeY, localWorkSizeZ};
+    const uint32_t threadGroupCount = 1u;
 
     auto &commandStream = cmdQ.getCS(1024);
     auto pWalkerCmd = static_cast<GPGPU_WALKER *>(commandStream.getSpace(sizeof(GPGPU_WALKER)));
@@ -523,6 +531,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
         mockKernel.getKernelStartAddress(true, kernelUsesLocalIds, isCcsUsed, false),
         modifiedKernelInfo.getMaxSimdSize(),
         localWorkSizes,
+        threadGroupCount,
         idToffset,
         interfaceDescriptorIndex,
         pDevice->getPreemptionMode(),
@@ -578,6 +587,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenSendingIndirectStateThenBi
     ASSERT_NE(nullptr, kernel);
 
     const size_t localWorkSizes[3]{256, 1, 1};
+    const uint32_t threadGroupCount = 1u;
 
     auto &commandStream = cmdQ.getCS(1024);
     auto pWalkerCmd = static_cast<GPGPU_WALKER *>(commandStream.getSpace(sizeof(GPGPU_WALKER)));
@@ -613,6 +623,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenSendingIndirectStateThenBi
         kernel->getKernelStartAddress(true, kernelUsesLocalIds, isCcsUsed, false),
         kernel->getKernelInfo().getMaxSimdSize(),
         localWorkSizes,
+        threadGroupCount,
         0,
         interfaceDescriptorIndex,
         pDevice->getPreemptionMode(),
@@ -701,6 +712,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
         EXPECT_EQ(numSurfaces, pKernel->getNumberOfBindingTableStates());
 
         const size_t localWorkSizes[3]{256, 1, 1};
+        const uint32_t threadGroupCount = 1u;
 
         dsh.getSpace(sizeof(INTERFACE_DESCRIPTOR_DATA));
 
@@ -722,6 +734,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
             pKernel->getKernelStartAddress(true, kernelUsesLocalIds, isCcsUsed, false),
             pKernel->getKernelInfo().getMaxSimdSize(),
             localWorkSizes,
+            threadGroupCount,
             0,
             interfaceDescriptorIndex,
             pDevice->getPreemptionMode(),
@@ -847,6 +860,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithInvalidSamplerS
     auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 8192);
     const size_t localWorkSize = 256;
     const size_t localWorkSizes[3]{localWorkSize, 1, 1};
+    const uint32_t threadGroupCount = 1u;
     uint32_t interfaceDescriptorIndex = 0;
     auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
     auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel);
@@ -863,6 +877,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithInvalidSamplerS
         mockKernelWithInternal->mockKernel->getKernelStartAddress(true, kernelUsesLocalIds, isCcsUsed, false),
         mockKernelWithInternal->mockKernel->getKernelInfo().getMaxSimdSize(),
         localWorkSizes,
+        threadGroupCount,
         0,
         interfaceDescriptorIndex,
         pDevice->getPreemptionMode(),
@@ -887,6 +902,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithInvalidSamplerS
         mockKernelWithInternal->mockKernel->getKernelStartAddress(true, kernelUsesLocalIds, isCcsUsed, false),
         mockKernelWithInternal->mockKernel->getKernelInfo().getMaxSimdSize(),
         localWorkSizes,
+        threadGroupCount,
         0,
         interfaceDescriptorIndex,
         pDevice->getPreemptionMode(),
@@ -909,6 +925,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
 
     CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
     const size_t localWorkSizes[3]{1, 1, 1};
+    const uint32_t threadGroupCount = 1u;
 
     auto &commandStream = cmdQ.getCS(1024);
     auto pWalkerCmd = static_cast<GPGPU_WALKER *>(commandStream.getSpace(sizeof(GPGPU_WALKER)));
@@ -957,6 +974,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
         mockKernelWithInternal->mockKernel->getKernelStartAddress(true, kernelUsesLocalIds, isCcsUsed, false),
         8,
         localWorkSizes,
+        threadGroupCount,
         interfaceDescriptorTableOffset,
         interfaceDescriptorIndex,
         pDevice->getPreemptionMode(),

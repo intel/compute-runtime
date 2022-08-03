@@ -614,12 +614,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInterfaceDescriptorDa
     uint32_t revisions[] = {REVISION_A0, REVISION_B};
     for (auto revision : revisions) {
         hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, hwInfo);
-        EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, hwInfo);
+        EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, hwInfo, 0, 0);
 
         if (hwInfoConfig.isDisableOverdispatchAvailable(hwInfo)) {
-            EXPECT_EQ(3u, iddArg.getThreadGroupDispatchSize());
+            EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1, iddArg.getThreadGroupDispatchSize());
         } else {
-            EXPECT_EQ(0u, iddArg.getThreadGroupDispatchSize());
+            EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8, iddArg.getThreadGroupDispatchSize());
         }
     }
 }
@@ -629,13 +629,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInterfaceDescriptorDa
 
     INTERFACE_DESCRIPTOR_DATA iddArg;
     iddArg = FamilyType::cmdInitInterfaceDescriptorData;
+    iddArg.setNumberOfThreadsInGpgpuThreadGroup(1u);
+
     const uint32_t forceThreadGroupDispatchSize = 1;
     const uint32_t defaultThreadGroupDispatchSize = iddArg.getThreadGroupDispatchSize();
+    const uint32_t threadGroupCount = 1u;
 
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceThreadGroupDispatchSize.set(forceThreadGroupDispatchSize);
 
-    EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, pDevice->getHardwareInfo());
+    EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, pDevice->getHardwareInfo(), threadGroupCount, 1);
 
     EXPECT_NE(defaultThreadGroupDispatchSize, iddArg.getThreadGroupDispatchSize());
     EXPECT_EQ(forceThreadGroupDispatchSize, iddArg.getThreadGroupDispatchSize());

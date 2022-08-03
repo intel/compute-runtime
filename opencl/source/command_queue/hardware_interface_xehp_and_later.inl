@@ -60,6 +60,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     size_t globalOffsets[3] = {dispatchInfo.getOffset().x, dispatchInfo.getOffset().y, dispatchInfo.getOffset().z};
     size_t startWorkGroups[3] = {walkerArgs.startOfWorkgroups->x, walkerArgs.startOfWorkgroups->y, walkerArgs.startOfWorkgroups->z};
     size_t numWorkGroups[3] = {walkerArgs.numberOfWorkgroups->x, walkerArgs.numberOfWorkgroups->y, walkerArgs.numberOfWorkgroups->z};
+    auto threadGroupCount = static_cast<uint32_t>(walkerArgs.numberOfWorkgroups->x * walkerArgs.numberOfWorkgroups->y * walkerArgs.numberOfWorkgroups->z);
     uint32_t requiredWalkOrder = 0u;
 
     bool localIdsGenerationByRuntime = EncodeDispatchKernel<GfxFamily>::isRuntimeLocalIdsGenerationRequired(
@@ -98,6 +99,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         kernel.getKernelStartAddress(localIdsGenerationByRuntime, kernelUsesLocalIds, isCcsUsed, false),
         simd,
         walkerArgs.localWorkSizes,
+        threadGroupCount,
         walkerArgs.offsetInterfaceDescriptorTable,
         walkerArgs.interfaceDescriptorIndex,
         walkerArgs.preemptionMode,

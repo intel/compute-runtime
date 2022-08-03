@@ -113,6 +113,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     size_t bindingTablePointer,
     [[maybe_unused]] size_t offsetSamplerState,
     uint32_t numSamplers,
+    const uint32_t threadGroupCount,
     uint32_t threadsPerThreadGroup,
     const Kernel &kernel,
     uint32_t bindingTablePrefetchSize,
@@ -169,7 +170,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
                                                           hardwareInfo);
 
     PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(&interfaceDescriptor, preemptionMode);
-    EncodeDispatchKernel<GfxFamily>::adjustInterfaceDescriptorData(interfaceDescriptor, hardwareInfo);
+
+    EncodeDispatchKernel<GfxFamily>::adjustInterfaceDescriptorData(interfaceDescriptor, hardwareInfo, threadGroupCount, kernelDescriptor.kernelAttributes.numGrfRequired);
 
     *pInterfaceDescriptor = interfaceDescriptor;
     return (size_t)offsetInterfaceDescriptor;
@@ -185,6 +187,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     uint64_t kernelStartOffset,
     uint32_t simd,
     const size_t localWorkSize[3],
+    const uint32_t threadGroupCount,
     const uint64_t offsetInterfaceDescriptorTable,
     uint32_t &interfaceDescriptorIndex,
     PreemptionMode preemptionMode,
@@ -263,6 +266,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         dstBindingTablePointer,
         samplerStateOffset,
         samplerCount,
+        threadGroupCount,
         threadsPerThreadGroup,
         kernel,
         bindingTablePrefetchSize,
