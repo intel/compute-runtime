@@ -390,6 +390,81 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenSubmissionT
     }
 }
 
+using BlitEnqueueForceFlagsTests = BlitEnqueueTests<1>;
+HWTEST_TEMPLATED_F(BlitEnqueueForceFlagsTests, givenFlagsToForceCsrLockAndNonBlockedQueueWhenEnqueueBlitThenLockAreSetCorrectly) {
+    using CsrType = UltCommandStreamReceiver<FamilyType>;
+    auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
+    auto mockCsr = static_cast<CsrType *>(&mockCommandQueue->getGpgpuCommandStreamReceiver());
+
+    auto buffer = createBuffer(1, false);
+    buffer->forceDisallowCPUCopy = true;
+    mockCommandQueue->setQueueBlocked = false;
+    int hostPtr = 0;
+    {
+        DebugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(-1);
+        DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
+        mockCsr->recursiveLockCounter = 0u;
+        mockCommandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+        EXPECT_EQ(1u, mockCsr->recursiveLockCounter);
+    }
+    {
+        DebugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(-1);
+        DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
+        mockCsr->recursiveLockCounter = 0u;
+        mockCommandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+        EXPECT_EQ(1u, mockCsr->recursiveLockCounter);
+    }
+    {
+        DebugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(1);
+        DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
+        mockCsr->recursiveLockCounter = 0u;
+        mockCommandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+        EXPECT_EQ(0u, mockCsr->recursiveLockCounter);
+    }
+    {
+        DebugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(1);
+        DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
+        mockCsr->recursiveLockCounter = 0u;
+        mockCommandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+        EXPECT_EQ(1u, mockCsr->recursiveLockCounter);
+    }
+}
+
+HWTEST_TEMPLATED_F(BlitEnqueueForceFlagsTests, givenFlagToForceCsrLockAndBlockedQueueWhenGpgpuSubmissionForBcsNotRequiredAndCallEnqueueBlitThenLockAreSetCorrectly) {
+    using CsrType = UltCommandStreamReceiver<FamilyType>;
+    auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
+    auto mockCsr = static_cast<CsrType *>(&mockCommandQueue->getGpgpuCommandStreamReceiver());
+
+    auto buffer = createBuffer(1, false);
+    buffer->forceDisallowCPUCopy = true;
+    int hostPtr = 0;
+
+    DebugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(1);
+
+    mockCsr->recursiveLockCounter = 0u;
+    mockCommandQueue->setQueueBlocked = true;
+    mockCommandQueue->forceGpgpuSubmissionForBcsRequired = 0;
+    mockCommandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(0u, mockCsr->recursiveLockCounter);
+}
+HWTEST_TEMPLATED_F(BlitEnqueueForceFlagsTests, givenFlagToForceCsrLockAndBlockedQueueWhenGpgpuSubmissionForBcsRequiredAndCallEnqueueBlitThenLockAreSetCorrectly) {
+    using CsrType = UltCommandStreamReceiver<FamilyType>;
+    auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
+    auto mockCsr = static_cast<CsrType *>(&mockCommandQueue->getGpgpuCommandStreamReceiver());
+
+    auto buffer = createBuffer(1, false);
+    buffer->forceDisallowCPUCopy = true;
+    int hostPtr = 0;
+
+    DebugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(1);
+
+    mockCsr->recursiveLockCounter = 0u;
+    mockCommandQueue->setQueueBlocked = true;
+    mockCommandQueue->forceGpgpuSubmissionForBcsRequired = 1;
+    mockCommandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(1u, mockCsr->recursiveLockCounter);
+}
+
 using BlitCopyTests = BlitEnqueueTests<1>;
 
 HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWhenCreatingWithoutAllowedCpuAccessThenUseBcsForTransfer) {

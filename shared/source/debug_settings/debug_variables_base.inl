@@ -112,6 +112,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideLeastOccupiedBank, -1, "-1: default,  >=
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideRevision, -1, "-1: default,  >=0: Revision id")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceCacheFlushForBcs, -1, "Force cache flush from gpgpu engine before dispatching BCS copy. -1: default,  1: enabled, 0: disabled")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceGpgpuSubmissionForBcsEnqueue, -1, "-1: Default, 1: Submit gpgpu command buffer with cache flushing and completion synchronization, 0: Do nothing, if possible")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission, -1, "-1: Default, 1: Force gpgpu command stream receiver lock for bcs enqueue only when gpgpu submission, 0: Do nothing, if possible")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableUsmCompression, -1, "enable compression support for L0 USM Device and Shared Device side: -1 default, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableHostUsmSupport, -1, "-1: default, 0: disable, 1: enable, Enables USM host memory")
 DECLARE_DEBUG_VARIABLE(int32_t, MediaVfeStateMaxSubSlices, -1, ">=0: Programs Media Vfe State Maximum Number of Dual-Subslices to given value ")

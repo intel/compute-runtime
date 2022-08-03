@@ -1117,6 +1117,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
 
     std::unique_ptr<KernelOperation> blockedCommandsData;
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
+    if (DebugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.get() != 1) {
+        commandStreamReceiverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
+    }
 
     auto blockQueue = false;
     auto taskLevel = 0u;
@@ -1165,7 +1168,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
     LinearStream *gpgpuCommandStream = {};
     size_t gpgpuCommandStreamStart = {};
     if (gpgpuSubmission) {
-        commandStreamReceiverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
+        if (DebugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.get() == 1) {
+            commandStreamReceiverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
+        }
         gpgpuCommandStream = obtainCommandStream<cmdType>(csrDeps, true, blockQueue, multiDispatchInfo, eventsRequest, blockedCommandsData, nullptr, 0, false);
         gpgpuCommandStreamStart = gpgpuCommandStream->getUsed();
     }
@@ -1182,7 +1187,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
         }
 
         if (gpgpuSubmission) {
-            commandStreamReceiverOwnership.unlock();
+            if (DebugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.get() == 1) {
+                commandStreamReceiverOwnership.unlock();
+            }
         }
 
         if (eventBuilder.getEvent()) {
@@ -1199,13 +1206,17 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
         enqueueBlocked(cmdType, nullptr, 0, multiDispatchInfo, timestampPacketDependencies, blockedCommandsData, enqueueProperties, eventsRequest, eventBuilder, nullptr, &bcsCsr);
 
         if (gpgpuSubmission) {
-            commandStreamReceiverOwnership.unlock();
+            if (DebugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.get() == 1) {
+                commandStreamReceiverOwnership.unlock();
+            }
         }
     }
 
     timestampPacketDependencies.moveNodesToNewContainer(*deferredTimestampPackets);
     csrDeps.copyNodesToNewContainer(*deferredTimestampPackets);
-
+    if (DebugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.get() != 1) {
+        commandStreamReceiverOwnership.unlock();
+    }
     queueOwnership.unlock();
     bcsCommandStreamReceiverOwnership.unlock();
 

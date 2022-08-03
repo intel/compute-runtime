@@ -382,6 +382,18 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         isBlitEnqueueImageAllowed = BaseClass::blitEnqueueImageAllowed(origin, region, image);
         return isBlitEnqueueImageAllowed;
     }
+    bool isQueueBlocked() override {
+        if (setQueueBlocked != -1) {
+            return setQueueBlocked;
+        }
+        return BaseClass::isQueueBlocked();
+    }
+    bool isGpgpuSubmissionForBcsRequired(bool queueBlocked, TimestampPacketDependencies &timestampPacketDependencies) const override {
+        if (forceGpgpuSubmissionForBcsRequired != -1) {
+            return forceGpgpuSubmissionForBcsRequired;
+        }
+        return BaseClass::isGpgpuSubmissionForBcsRequired(queueBlocked, timestampPacketDependencies);
+    }
 
     unsigned int lastCommandType;
     std::vector<Kernel *> lastEnqueuedKernels;
@@ -396,6 +408,8 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     bool notifyEnqueueSVMMemcpyCalled = false;
     bool cpuDataTransferHandlerCalled = false;
     bool useBcsCsrOnNotifyEnabled = false;
+    int setQueueBlocked = -1;
+    int forceGpgpuSubmissionForBcsRequired = -1;
     mutable bool isBlitEnqueueImageAllowed = false;
     struct OverrideReturnValue {
         bool enabled = false;

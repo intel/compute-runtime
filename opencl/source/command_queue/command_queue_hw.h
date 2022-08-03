@@ -497,7 +497,7 @@ class CommandQueueHw : public CommandQueue {
                                    KernelOperation *blockedCommandsData,
                                    TimestampPacketDependencies &timestampPacketDependencies);
 
-    bool isGpgpuSubmissionForBcsRequired(bool queueBlocked, TimestampPacketDependencies &timestampPacketDependencies) const;
+    MOCKABLE_VIRTUAL bool isGpgpuSubmissionForBcsRequired(bool queueBlocked, TimestampPacketDependencies &timestampPacketDependencies) const;
     void setupEvent(EventBuilder &eventBuilder, cl_event *outEvent, uint32_t cmdType);
 
     bool isBlitAuxTranslationRequired(const MultiDispatchInfo &multiDispatchInfo);
