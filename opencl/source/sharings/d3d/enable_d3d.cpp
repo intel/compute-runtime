@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -104,11 +104,11 @@ std::string D3DSharingBuilderFactory<D3DTypesHelper::D3D9>::getExtensions(Driver
 }
 
 std::string D3DSharingBuilderFactory<D3DTypesHelper::D3D10>::getExtensions(DriverInfo *driverInfo) {
-    return "cl_khr_d3d10_sharing ";
+    return extensionEnabled ? "cl_khr_d3d10_sharing " : "";
 }
 
 std::string D3DSharingBuilderFactory<D3DTypesHelper::D3D11>::getExtensions(DriverInfo *driverInfo) {
-    return "cl_khr_d3d11_sharing cl_intel_d3d11_nv12_media_sharing ";
+    return extensionEnabled ? "cl_khr_d3d11_sharing cl_intel_d3d11_nv12_media_sharing " : "";
 }
 
 void D3DSharingBuilderFactory<D3DTypesHelper::D3D9>::fillGlobalDispatchTable() {
@@ -169,9 +169,13 @@ void D3DSharingBuilderFactory<D3DTypesHelper::D3D9>::setExtensionEnabled(DriverI
     extensionEnabled = driverInfo->getMediaSharingSupport();
 }
 
-void D3DSharingBuilderFactory<D3DTypesHelper::D3D10>::setExtensionEnabled(DriverInfo *driverInfo) {}
+void D3DSharingBuilderFactory<D3DTypesHelper::D3D10>::setExtensionEnabled(DriverInfo *driverInfo) {
+    extensionEnabled = driverInfo->getMediaSharingSupport();
+}
 
-void D3DSharingBuilderFactory<D3DTypesHelper::D3D11>::setExtensionEnabled(DriverInfo *driverInfo) {}
+void D3DSharingBuilderFactory<D3DTypesHelper::D3D11>::setExtensionEnabled(DriverInfo *driverInfo) {
+    extensionEnabled = driverInfo->getMediaSharingSupport();
+}
 
 static SharingFactory::RegisterSharing<D3DSharingBuilderFactory<D3DTypesHelper::D3D9>, D3DSharingFunctions<D3DTypesHelper::D3D9>> D3D9Sharing;
 static SharingFactory::RegisterSharing<D3DSharingBuilderFactory<D3DTypesHelper::D3D10>, D3DSharingFunctions<D3DTypesHelper::D3D10>> D3D10Sharing;
