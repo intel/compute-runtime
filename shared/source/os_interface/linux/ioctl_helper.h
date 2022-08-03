@@ -66,7 +66,7 @@ class IoctlHelper {
     IoctlHelper(Drm &drmArg) : drm(drmArg){};
     virtual ~IoctlHelper() {}
     static std::unique_ptr<IoctlHelper> get(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion, const std::string &drmVersion, Drm &drm);
-    uint32_t ioctl(DrmIoctl request, void *arg);
+    virtual uint32_t ioctl(DrmIoctl request, void *arg);
 
     virtual bool isVmBindAvailable() = 0;
     virtual uint32_t createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) = 0;
@@ -114,7 +114,7 @@ class IoctlHelper {
 
     virtual std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo);
 
-    uint32_t createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex);
+    virtual uint32_t createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex);
     std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data);
 
     void fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture);
@@ -122,7 +122,7 @@ class IoctlHelper {
 
     void fillExecBuffer(ExecBuffer &execBuffer, uintptr_t buffersPtr, uint32_t bufferCount, uint32_t startOffset, uint32_t size, uint64_t flags, uint32_t drmContextId);
     void logExecBuffer(const ExecBuffer &execBuffer, std::stringstream &logger);
-    int getDrmParamValueBase(DrmParam drmParam) const;
+    virtual int getDrmParamValueBase(DrmParam drmParam) const;
     unsigned int getIoctlRequestValueBase(DrmIoctl ioctlRequest) const;
     bool setDomainCpu(uint32_t handle, bool writeEnable);
 

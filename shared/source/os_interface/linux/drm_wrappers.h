@@ -242,6 +242,9 @@ enum class DrmIoctl {
     GemClosReserve,
     GemClosFree,
     GemCacheReserve,
+    SyncobjCreate,
+    SyncobjWait,
+    SyncobjDestroy,
 };
 
 enum class DrmParam {
