@@ -97,6 +97,9 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
     if (useDeviceAlloc) {
         NEO::AllocationProperties allocationProperties{*rootDeviceIndices.begin(), alignedSize, allocationType, devices[0]->getNEODevice()->getDeviceBitfield()};
         allocationProperties.alignment = eventAlignment;
+        if (eventPoolFlags & ZE_EVENT_POOL_FLAG_IPC) {
+            this->isShareableEventMemory = true;
+        }
 
         auto graphicsAllocation = driver->getMemoryManager()->allocateGraphicsMemoryWithProperties(allocationProperties);
         if (graphicsAllocation) {
@@ -111,6 +114,10 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
         eventPoolPtr = driver->getMemoryManager()->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices,
                                                                                                    allocationProperties,
                                                                                                    *eventPoolAllocations);
+
+        if (eventPoolFlags & ZE_EVENT_POOL_FLAG_IPC) {
+            this->isShareableEventMemory = eventPoolAllocations->getDefaultGraphicsAllocation()->isShareableHostMemory;
+        }
 
         allocatedMemory = (nullptr != eventPoolPtr);
     }

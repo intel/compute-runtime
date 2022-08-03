@@ -277,6 +277,7 @@ struct EventPoolImp : public EventPool {
     ContextImp *context = nullptr;
     size_t numEvents;
     bool isImportedIpcPool = false;
+    bool isShareableEventMemory = false;
 
   protected:
     uint32_t eventAlignment = 0;

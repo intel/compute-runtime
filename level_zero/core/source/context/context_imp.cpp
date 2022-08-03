@@ -525,6 +525,9 @@ ze_result_t EventPoolImp::getIpcHandle(ze_ipc_event_pool_handle_t *pIpcHandle) {
     // For the event pool, this contains:
     // - the number of events the pool has.
     // - the id for the device used during pool creation
+    if (!this->isShareableEventMemory) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
 
     uint64_t handle = this->eventPoolAllocations->getDefaultGraphicsAllocation()->peekInternalHandle(this->context->getDriverHandle()->getMemoryManager());
 

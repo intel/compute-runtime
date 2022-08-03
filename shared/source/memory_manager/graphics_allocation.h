@@ -267,6 +267,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     constexpr static uint32_t objectNotUsed = std::numeric_limits<uint32_t>::max();
     constexpr static uint32_t objectAlwaysResident = std::numeric_limits<uint32_t>::max() - 1;
     std::atomic<uint32_t> hostPtrTaskCountAssignment{0};
+    bool isShareableHostMemory = false;
 
   protected:
     struct UsageInfo {

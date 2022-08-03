@@ -1705,7 +1705,7 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         }
 
         bo.release();
-
+        allocation->isShareableHostMemory = true;
         return allocation.release();
     } else {
         return createAllocWithAlignmentFromUserptr(allocationData, size, alignment, alignedSize, gpuAddress);
