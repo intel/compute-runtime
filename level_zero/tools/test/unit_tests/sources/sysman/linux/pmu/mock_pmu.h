@@ -29,15 +29,8 @@ class MockPmuInterfaceImpForSysman : public PmuInterfaceImp {
 template <>
 struct Mock<MockPmuInterfaceImpForSysman> : public MockPmuInterfaceImpForSysman {
     Mock<MockPmuInterfaceImpForSysman>(LinuxSysmanImp *pLinuxSysmanImp) : MockPmuInterfaceImpForSysman(pLinuxSysmanImp) {}
-    int64_t mockedPerfEventOpenAndSuccessReturn(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags) {
-        return mockPmuFd;
-    }
 
-    int64_t mockedPerfEventOpenAndFailureReturn(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags) {
-        return -1;
-    }
-
-    int mockedReadCountersForGroupSuccess(int fd, uint64_t *data, ssize_t sizeOfdata) {
+    int pmuRead(int fd, uint64_t *data, ssize_t sizeOfdata) override {
         data[0] = mockEventCount;
         data[1] = mockTimeStamp;
         data[2] = mockEvent1Val;
@@ -45,23 +38,15 @@ struct Mock<MockPmuInterfaceImpForSysman> : public MockPmuInterfaceImpForSysman 
         return 0;
     }
 
-    int mockGetErrorNoSuccess() {
-        return EINVAL;
-    }
-    int mockGetErrorNoFailure() {
-        return EBADF;
-    }
-    MOCK_METHOD(int, pmuRead, (int fd, uint64_t *data, ssize_t sizeOfdata), (override));
-    MOCK_METHOD(int64_t, perfEventOpen, (perf_event_attr * attr, pid_t pid, int cpu, int groupFd, uint64_t flags), (override));
-    MOCK_METHOD(int, getErrorNo, (), (override));
+    ADDMETHOD_NOBASE(perfEventOpen, int64_t, mockPmuFd, (perf_event_attr * attr, pid_t pid, int cpu, int groupFd, uint64_t flags));
+    ADDMETHOD_NOBASE(getErrorNo, int, EINVAL, ());
 };
 
 class PmuFsAccess : public FsAccess {};
 
 template <>
 struct Mock<PmuFsAccess> : public PmuFsAccess {
-    MOCK_METHOD(ze_result_t, read, (const std::string file, uint32_t &val), (override));
-    ze_result_t readValSuccess(const std::string file, uint32_t &val) {
+    ze_result_t read(const std::string file, uint32_t &val) override {
         val = 18;
         return ZE_RESULT_SUCCESS;
     }
