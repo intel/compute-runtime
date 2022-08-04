@@ -39,7 +39,7 @@ class RayTracingHelper : public NonCopyableOrMovableClass {
     }
 
     static uint32_t getNumRtStacks(const Device &device) {
-        return device.getHardwareInfo().gtSystemInfo.DualSubSliceCount * stackDssMultiplier;
+        return device.getHardwareInfo().gtSystemInfo.MaxDualSubSlicesSupported * stackDssMultiplier;
     }
 
     static uint32_t getNumRtStacksPerDss(const Device &device) {
@@ -47,7 +47,7 @@ class RayTracingHelper : public NonCopyableOrMovableClass {
     }
 
     static uint32_t getNumDss(const Device &device) {
-        return device.getHardwareInfo().gtSystemInfo.DualSubSliceCount;
+        return device.getHardwareInfo().gtSystemInfo.MaxDualSubSlicesSupported;
     }
 
     static uint32_t getStackSizePerRay(uint32_t maxBvhLevel, uint32_t extraBytesLocal) {
