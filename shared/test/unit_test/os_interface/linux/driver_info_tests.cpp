@@ -43,13 +43,6 @@ TEST(DriverInfo, GivenDriverInfoWhenLinuxThenReturnDefault) {
     EXPECT_STREQ(defaultVersion.c_str(), resultVersion.c_str());
 }
 
-TEST(DriverInfo, givenGetMediaSharingSupportWhenLinuxThenReturnTrue) {
-    auto hwInfo = *defaultHwInfo;
-    std::unique_ptr<DriverInfo> driverInfo(DriverInfo::create(&hwInfo, nullptr));
-
-    EXPECT_TRUE(driverInfo->getMediaSharingSupport());
-}
-
 TEST(DriverInfo, givenGetImageSupportWhenHwInfoSupportsImagesThenReturnTrueOtherwiseFalse) {
     auto hwInfo = *defaultHwInfo;
 
@@ -57,7 +50,7 @@ TEST(DriverInfo, givenGetImageSupportWhenHwInfoSupportsImagesThenReturnTrueOther
         hwInfo.capabilityTable.supportsImages = supportsImages;
         std::unique_ptr<DriverInfo> driverInfo(DriverInfo::create(&hwInfo, nullptr));
 
-        EXPECT_EQ(supportsImages, driverInfo->getImageSupport());
+        EXPECT_EQ(supportsImages, driverInfo->getMediaSharingSupport());
     }
 }
 } // namespace NEO

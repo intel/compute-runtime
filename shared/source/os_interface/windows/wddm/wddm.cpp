@@ -188,6 +188,8 @@ bool Wddm::queryAdapterInfo() {
         maxRenderFrequency = adapterInfo.MaxRenderFreq;
         timestampFrequency = adapterInfo.GfxTimeStampFreq;
         instrumentationEnabled = adapterInfo.Caps.InstrumentationIsEnabled != 0;
+
+        populateAdditionalAdapterInfoOptions(adapterInfo);
     }
 
     return status == STATUS_SUCCESS;

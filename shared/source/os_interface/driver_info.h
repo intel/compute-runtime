@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/helpers/debug_helpers.h"
+
 #include <cstdint>
 #include <limits>
 #include <string>
@@ -38,22 +40,37 @@ struct PhyicalDevicePciSpeedInfo {
     int64_t maxBandwidth = unknown;
 };
 
+enum class DriverInfoType { UNKNOWN,
+                            WINDOWS,
+                            LINUX };
 class DriverInfo {
   public:
-    DriverInfo()
-        : pciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue) {}
+    DriverInfo(DriverInfoType driverInfoType)
+        : driverInfoType(driverInfoType), pciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue) {}
 
     static DriverInfo *create(const HardwareInfo *hwInfo, const OSInterface *osInterface);
 
     virtual ~DriverInfo() = default;
 
+    template <typename DerivedType>
+    DerivedType *as() {
+        UNRECOVERABLE_IF(DerivedType::driverInfoType != this->driverInfoType);
+        return static_cast<DerivedType *>(this);
+    }
+
+    template <typename DerivedType>
+    DerivedType *as() const {
+        UNRECOVERABLE_IF(DerivedType::driverInfoType != this->driverInfoType);
+        return static_cast<const DerivedType *>(this);
+    }
+
     virtual std::string getDeviceName(std::string defaultName) { return defaultName; }
     virtual std::string getVersion(std::string defaultVersion) { return defaultVersion; }
     virtual bool getMediaSharingSupport() { return true; }
-    virtual bool getImageSupport() { return true; }
     virtual PhysicalDevicePciBusInfo getPciBusInfo() { return pciBusInfo; }
 
   protected:
+    DriverInfoType driverInfoType;
     PhysicalDevicePciBusInfo pciBusInfo;
 };
 

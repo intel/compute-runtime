@@ -177,29 +177,11 @@ TEST_F(DriverInfoWindowsTest, GivenDriverInfoWhenThenReturnNonNullptr) {
     EXPECT_TRUE(registryReaderMock->properVersionKey);
 };
 
-TEST(DriverInfo, givenDriverInfoWhenGetStringReturnNotMeaningEmptyStringThenEnableSharingSupport) {
+TEST(DriverInfo, givenDriverInfoWhenGetMediaSharingSupportThenTrueIsReturned) {
     MockDriverInfoWindows driverInfo("", PhysicalDevicePciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue));
-    MockRegistryReader *registryReaderMock = new MockRegistryReader();
-
-    driverInfo.registryReader.reset(registryReaderMock);
     auto enable = driverInfo.getMediaSharingSupport();
 
     EXPECT_TRUE(enable);
-    EXPECT_EQ(is64bit, registryReaderMock->using64bit);
-    EXPECT_TRUE(registryReaderMock->properMediaSharingExtensions);
-};
-
-TEST(DriverInfo, givenDriverInfoWhenGetStringReturnMeaningEmptyStringThenDisableSharingSupport) {
-    MockDriverInfoWindows driverInfo("", PhysicalDevicePciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue));
-    MockRegistryReader *registryReaderMock = new MockRegistryReader();
-    registryReaderMock->returnString = "<>";
-    driverInfo.registryReader.reset(registryReaderMock);
-
-    auto enable = driverInfo.getMediaSharingSupport();
-
-    EXPECT_FALSE(enable);
-    EXPECT_EQ(is64bit, registryReaderMock->using64bit);
-    EXPECT_TRUE(registryReaderMock->properMediaSharingExtensions);
 };
 
 TEST(DriverInfo, givenFullPathToRegistryWhenCreatingDriverInfoWindowsThenTheRegistryPathIsTrimmed) {
@@ -260,18 +242,6 @@ TEST_F(DriverInfoWindowsTest, whenCurrentLibraryIsLoadedFromDifferentDriverStore
     currentLibraryPathBackup = L"driverStore\\different_driverStore\\myLib.dll";
 
     EXPECT_FALSE(driverInfo->isCompatibleDriverStore());
-}
-
-TEST_F(DriverInfoWindowsTest, givenDriverInfoWindowsWhenGetImageSupportIsCalledThenReturnTrue) {
-    MockExecutionEnvironment executionEnvironment;
-    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
-    std::unique_ptr<OSInterface> osInterface(new OSInterface());
-    osInterface->setDriverModel(std::unique_ptr<DriverModel>(Wddm::createWddm(nullptr, rootDeviceEnvironment)));
-    EXPECT_NE(nullptr, osInterface->getDriverModel()->as<Wddm>());
-
-    std::unique_ptr<DriverInfo> driverInfo(DriverInfo::create(nullptr, osInterface.get()));
-
-    EXPECT_TRUE(driverInfo->getImageSupport());
 }
 
 } // namespace NEO

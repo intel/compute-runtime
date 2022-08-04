@@ -27,10 +27,10 @@ DriverInfo *DriverInfo::create(const HardwareInfo *hwInfo, const OSInterface *os
 };
 
 DriverInfoLinux::DriverInfoLinux(bool imageSupport, const PhysicalDevicePciBusInfo &pciBusInfo)
-    : imageSupport(imageSupport) {
+    : DriverInfo(DriverInfoType::LINUX), imageSupport(imageSupport) {
     this->pciBusInfo = pciBusInfo;
 }
 
-bool DriverInfoLinux::getImageSupport() { return imageSupport; }
+bool DriverInfoLinux::getMediaSharingSupport() { return imageSupport; }
 
 } // namespace NEO
