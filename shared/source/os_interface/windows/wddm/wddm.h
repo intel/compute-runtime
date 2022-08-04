@@ -207,10 +207,6 @@ class Wddm : public DriverModel {
 
     PhyicalDevicePciSpeedInfo getPciSpeedInfo() const override;
 
-    uint32_t getAdditionalAdapterInfoOptions() {
-        return additionalAdapterInfoOptions;
-    }
-
   protected:
     Wddm(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
     MOCKABLE_VIRTUAL bool waitOnGPU(D3DKMT_HANDLE context);
@@ -228,7 +224,6 @@ class Wddm : public DriverModel {
         return evictNeeded;
     }
     void setPlatformSupportEvictWhenNecessaryFlag(const HwInfoConfig &hwInfoConfig);
-    void populateAdditionalAdapterInfoOptions(const ADAPTER_INFO_KMD &adapterInfo);
 
     GMM_GFX_PARTITIONING gfxPartition{};
     ADAPTER_BDF adapterBDF{};
@@ -270,7 +265,6 @@ class Wddm : public DriverModel {
 
     uint32_t maxRenderFrequency = 0;
     uint32_t timestampFrequency = 0u;
-    uint32_t additionalAdapterInfoOptions = 0u;
 
     unsigned int enablePreemptionRegValue = 1;
 

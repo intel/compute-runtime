@@ -28,7 +28,6 @@ constexpr auto virtualAllocAddress = is64bit ? 0x7FFFF0000000 : 0xFF000000;
 class WddmMock : public Wddm {
   public:
     using Wddm::adapterBDF;
-    using Wddm::additionalAdapterInfoOptions;
     using Wddm::adjustEvictNeededParameter;
     using Wddm::createPagingFenceLogger;
     using Wddm::currentPagingFenceValue;
@@ -45,7 +44,6 @@ class WddmMock : public Wddm {
     using Wddm::pagingFenceAddress;
     using Wddm::pagingQueue;
     using Wddm::platformSupportsEvictWhenNecessary;
-    using Wddm::populateAdditionalAdapterInfoOptions;
     using Wddm::residencyLogger;
     using Wddm::rootDeviceEnvironment;
     using Wddm::setPlatformSupportEvictWhenNecessaryFlag;
@@ -104,7 +102,7 @@ class WddmMock : public Wddm {
 
     bool configureDeviceAddressSpace() {
         configureDeviceAddressSpaceResult.called++;
-        // create context cant be called before configureDeviceAddressSpace
+        //create context cant be called before configureDeviceAddressSpace
         if (createContextResult.called > 0) {
             return configureDeviceAddressSpaceResult.success = false;
         } else {

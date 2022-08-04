@@ -149,11 +149,6 @@ TEST_F(WddmTests, GivenPlatformSupportsEvictWhenNecessaryWhenAdjustingEvictNeede
     EXPECT_TRUE(value);
 }
 
-TEST_F(WddmTests, GivenWddmWhenAdditionalAdapterInfoOptionIsSetThenCorrectValueIsReturned) {
-    wddm->additionalAdapterInfoOptions = 13u;
-    EXPECT_EQ(13u, wddm->getAdditionalAdapterInfoOptions());
-}
-
 TEST_F(WddmTests, GivenPlatformNotSupportEvictWhenNecessaryWhenAdjustingEvictNeededTrueThenExpectTrue) {
     wddm->platformSupportsEvictWhenNecessary = false;
     bool value = wddm->adjustEvictNeededParameter(true);

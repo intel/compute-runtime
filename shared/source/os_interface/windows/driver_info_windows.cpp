@@ -33,6 +33,18 @@ std::string getCurrentLibraryPath() {
 }
 
 namespace NEO {
+
+DriverInfo *DriverInfo::create(const HardwareInfo *hwInfo, const OSInterface *osInterface) {
+    if (osInterface == nullptr) {
+        return nullptr;
+    }
+
+    auto wddm = osInterface->getDriverModel()->as<Wddm>();
+    UNRECOVERABLE_IF(wddm == nullptr);
+
+    return new DriverInfoWindows(wddm->getDeviceRegistryPath(), wddm->getPciBusInfo());
+};
+
 DriverInfoWindows::DriverInfoWindows(const std::string &fullPath, const PhysicalDevicePciBusInfo &pciBusInfo)
     : path(DriverInfoWindows::trimRegistryKey(fullPath)), registryReader(createRegistryReaderFunc(path)) {
     this->pciBusInfo = pciBusInfo;
