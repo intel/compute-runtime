@@ -7,7 +7,7 @@
 
 #include "zello_common.h"
 
-void executeGpuKernelAndValidate(ze_context_handle_t context, ze_device_handle_t &device, bool &outputValidationSuccessful) {
+void executeGpuKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &device, bool &outputValidationSuccessful) {
     ze_command_queue_handle_t cmdQueue;
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     ze_command_list_handle_t cmdList;
@@ -130,6 +130,13 @@ void executeGpuKernelAndValidate(ze_context_handle_t context, ze_device_handle_t
     SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
+
+    if (kernel != nullptr) {
+        SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
+    }
+    if (module != nullptr) {
+        SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
+    }
 }
 
 int main(int argc, char *argv[]) {

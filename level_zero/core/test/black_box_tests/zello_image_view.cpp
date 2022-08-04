@@ -173,11 +173,10 @@ void testAppendImageViewNV12Copy(ze_context_handle_t &context, ze_device_handle_
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
 
+    // create kernel which reads NV12 surface
+    ze_module_handle_t module = nullptr;
+    ze_kernel_handle_t kernel = nullptr;
     {
-        // create kernel which reads NV12 surface
-        ze_module_handle_t module = nullptr;
-        ze_kernel_handle_t kernel = nullptr;
-
         ze_module_desc_t moduleDesc = {};
         ze_module_build_log_handle_t buildlog;
         moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
@@ -285,6 +284,8 @@ void testAppendImageViewNV12Copy(ze_context_handle_t &context, ze_device_handle_
     SUCCESS_OR_TERMINATE(zeImageDestroy(planeUVImageView));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
+    SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
 }
 
 void testAppendImageViewRGBPCopy(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {

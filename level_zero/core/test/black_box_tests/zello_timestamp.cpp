@@ -223,6 +223,8 @@ bool testKernelTimestampHostQuery(ze_context_handle_t &context,
     SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
+    SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
     return true;
 }
 
@@ -341,6 +343,8 @@ bool testKernelTimestampApendQuery(ze_context_handle_t &context,
     SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
+    SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
     return true;
 }
 

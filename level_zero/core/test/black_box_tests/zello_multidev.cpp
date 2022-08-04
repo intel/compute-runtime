@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
         SUCCESS_OR_TERMINATE(zeKernelCreate(module[i], &kernelDesc, &kernel[i]));
     }
 
-    // ITERATE OVER DEVICES and Launch the function
+    // iterate over devices and launch the kernel
     for (uint32_t i = 0; i < deviceCount; i++) {
         std::cout << "Launching kernels for device " << i << " " << deviceNames[i] << "\n";
         uint32_t groupSizeX = 32u;
@@ -169,10 +169,10 @@ int main(int argc, char *argv[]) {
         SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(
             cmdList[i], dstBuffer, initDataDst, sizeof(initDataDst), nullptr, 0, nullptr));
 
-        // copying of data must finish before running the user function
+        // copying of data must finish before running the user kernel
         SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList[i], nullptr, 0, nullptr));
 
-        // Set function args and get ready to dispatch
+        // set kernel args and get ready to dispatch
         SUCCESS_OR_TERMINATE(
             zeKernelSetArgumentValue(kernel[i], 0, sizeof(dstBuffer), &dstBuffer));
         SUCCESS_OR_TERMINATE(
@@ -191,7 +191,7 @@ int main(int argc, char *argv[]) {
         SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(
             cmdList[i], kernel[i], &dispatchTraits, nullptr, 0, nullptr));
 
-        // Barrier to complete function
+        // barrier to complete kernel
         uint8_t readBackData[allocSize];
         memset(readBackData, 2, sizeof(readBackData));
         SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList[i], nullptr, 0, nullptr));

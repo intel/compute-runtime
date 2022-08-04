@@ -18,7 +18,7 @@ __kernel void kernel_copy(__global char *dst, __global char *src){
 }
 )===";
 
-void executeKernelAndValidate(ze_context_handle_t context,
+void executeKernelAndValidate(ze_context_handle_t &context,
                               ze_device_handle_t &device,
                               ze_kernel_exp_dditable_t &kernelExpDdiTable,
                               bool &outputValidationSuccessful) {
@@ -155,6 +155,8 @@ void executeKernelAndValidate(ze_context_handle_t context,
     SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
+    SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
 }
 
 int main(int argc, char *argv[]) {

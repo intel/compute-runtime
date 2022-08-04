@@ -74,6 +74,10 @@ void testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &devi
     if (sharedCmdList == nullptr) {
         SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     }
+    SUCCESS_OR_TERMINATE(zeEventDestroy(event));
+    SUCCESS_OR_TERMINATE(zeEventDestroy(event2));
+    SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
+    SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool2));
 }
 
 void testAppendMemoryCopyRegion(ze_context_handle_t &context, ze_device_handle_t &device, bool useSyncCmdQ, bool &validRet, ze_command_list_handle_t &sharedCmdList) {
@@ -216,14 +220,18 @@ void testAppendMemoryCopyRegion(ze_context_handle_t &context, ze_device_handle_t
     if (sharedCmdList == nullptr) {
         SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     }
+    SUCCESS_OR_TERMINATE(zeEventDestroy(event));
+    SUCCESS_OR_TERMINATE(zeEventDestroy(event2));
+    SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
+    SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool2));
 }
 
-void testAppendGpuFunction(ze_context_handle_t &context, ze_device_handle_t &device, bool useSyncCmdQ, bool &validRet, ze_command_list_handle_t &sharedCmdList) {
+void testAppendGpuKernel(ze_context_handle_t &context, ze_device_handle_t &device, bool useSyncCmdQ, bool &validRet, ze_command_list_handle_t &sharedCmdList) {
     constexpr size_t allocSize = 4096;
     constexpr size_t bytesPerThread = sizeof(char);
     constexpr size_t numThreads = allocSize / bytesPerThread;
     ze_module_handle_t module;
-    ze_kernel_handle_t function;
+    ze_kernel_handle_t kernel;
     ze_command_list_handle_t cmdList;
     ze_event_pool_handle_t eventPool, eventPool2;
     ze_event_handle_t event, event2;
@@ -245,21 +253,21 @@ void testAppendGpuFunction(ze_context_handle_t &context, ze_device_handle_t &dev
     moduleDesc.inputSize = moduleBinary.size();
     SUCCESS_OR_TERMINATE(zeModuleCreate(context, device, &moduleDesc, &module, nullptr));
 
-    ze_kernel_desc_t functionDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    functionDesc.pKernelName = "memcpy_bytes";
-    SUCCESS_OR_TERMINATE(zeKernelCreate(module, &functionDesc, &function));
+    ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernelDesc.pKernelName = "memcpy_bytes";
+    SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
 
     uint32_t groupSizeX = 32u;
     uint32_t groupSizeY = 1u;
     uint32_t groupSizeZ = 1u;
-    SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(function, numThreads, 1U, 1U, &groupSizeX,
+    SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(kernel, numThreads, 1U, 1U, &groupSizeX,
                                                   &groupSizeY, &groupSizeZ));
     SUCCESS_OR_TERMINATE_BOOL(numThreads % groupSizeX == 0);
     if (verbose) {
         std::cout << "Group size : (" << groupSizeX << ", " << groupSizeY << ", " << groupSizeZ
                   << ")" << std::endl;
     }
-    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(function, groupSizeX, groupSizeY, groupSizeZ));
+    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
 
     if (sharedCmdList == nullptr) {
         ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
@@ -320,8 +328,8 @@ void testAppendGpuFunction(ze_context_handle_t &context, ze_device_handle_t &dev
         SUCCESS_OR_TERMINATE(zeEventHostReset(event2));
     }
 
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(function, 0, sizeof(dstBuffer), &dstBuffer));
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(function, 1, sizeof(srcBuffer), &srcBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(dstBuffer), &dstBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(srcBuffer), &srcBuffer));
 
     ze_group_count_t dispatchTraits;
     dispatchTraits.groupCountX = numThreads / groupSizeX;
@@ -333,7 +341,7 @@ void testAppendGpuFunction(ze_context_handle_t &context, ze_device_handle_t &dev
                   << std::endl;
     }
     SUCCESS_OR_TERMINATE_BOOL(dispatchTraits.groupCountX * groupSizeX == allocSize);
-    SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, function, &dispatchTraits,
+    SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits,
                                                          useSyncCmdQ ? nullptr : event, 0, nullptr));
     if (!useSyncCmdQ) {
         // If Async mode, use event for syncing copies
@@ -364,7 +372,11 @@ void testAppendGpuFunction(ze_context_handle_t &context, ze_device_handle_t &dev
         SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     }
 
-    SUCCESS_OR_TERMINATE(zeKernelDestroy(function));
+    SUCCESS_OR_TERMINATE(zeEventDestroy(event));
+    SUCCESS_OR_TERMINATE(zeEventDestroy(event2));
+    SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
+    SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool2));
+    SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
 }
 
@@ -409,10 +421,9 @@ int main(int argc, char *argv[]) {
         printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
     }
 
-    outputValidationSuccessful = true;
     if (outputValidationSuccessful || aubMode) {
         currentTest = "Launch GPU Kernel";
-        testAppendGpuFunction(context, device0, useSyncQueue, outputValidationSuccessful, cmdList);
+        testAppendGpuKernel(context, device0, useSyncQueue, outputValidationSuccessful, cmdList);
         printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
     }
 

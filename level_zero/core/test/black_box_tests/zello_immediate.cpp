@@ -107,7 +107,7 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
 }
 
-void executeGpuKernelAndValidate(ze_context_handle_t context, ze_device_handle_t &device, bool syncMode, bool &outputValidationSuccessful) {
+void executeGpuKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &device, bool syncMode, bool &outputValidationSuccessful) {
     ze_command_list_handle_t cmdList;
 
     uint32_t computeOrdinal = getCommandQueueOrdinal(device);
@@ -233,6 +233,7 @@ void executeGpuKernelAndValidate(ze_context_handle_t context, ze_device_handle_t
     for (auto event : hostEvents) {
         SUCCESS_OR_TERMINATE(zeEventDestroy(event));
     }
+    SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPoolHost));
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));

@@ -21,7 +21,7 @@ __kernel void test_printf(__global char *dst, __global char *src){
 }
 )===";
 
-void testPrintfKernel(ze_context_handle_t context, ze_device_handle_t &device) {
+void testPrintfKernel(ze_context_handle_t &context, ze_device_handle_t &device) {
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
     ze_command_queue_handle_t cmdQueue;

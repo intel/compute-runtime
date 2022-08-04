@@ -21,8 +21,7 @@
           (y)*channels * hostWidth +   \
           (z)*channels * hostWidth * hostHeight]
 
-void testAppendImageFunction(ze_driver_handle_t driver,
-                             ze_context_handle_t &context,
+void testAppendImageFunction(ze_context_handle_t &context,
                              ze_device_handle_t &device,
                              ze_command_queue_handle_t &cmdQueue,
                              uint32_t cmdQueueOrdinal,
@@ -228,17 +227,17 @@ int main(int argc, char *argv[]) {
     std::string caseName;
     if (do1D) {
         caseName = "1D";
-        testAppendImageFunction(driver, context, device, cmdQueue, cmdQueueOrdinal, success1D, ZE_IMAGE_TYPE_1D);
+        testAppendImageFunction(context, device, cmdQueue, cmdQueueOrdinal, success1D, ZE_IMAGE_TYPE_1D);
         printResult(aubMode, success1D, blackBoxName, caseName);
     }
     if (do2D) {
         caseName = "2D";
-        testAppendImageFunction(driver, context, device, cmdQueue, cmdQueueOrdinal, success2D, ZE_IMAGE_TYPE_2D);
+        testAppendImageFunction(context, device, cmdQueue, cmdQueueOrdinal, success2D, ZE_IMAGE_TYPE_2D);
         printResult(aubMode, success1D, blackBoxName, caseName);
     }
     if (do3D) {
         caseName = "3D";
-        testAppendImageFunction(driver, context, device, cmdQueue, cmdQueueOrdinal, success3D, ZE_IMAGE_TYPE_3D);
+        testAppendImageFunction(context, device, cmdQueue, cmdQueueOrdinal, success3D, ZE_IMAGE_TYPE_3D);
         printResult(aubMode, success1D, blackBoxName, caseName);
     }
     teardown(context, cmdQueue);

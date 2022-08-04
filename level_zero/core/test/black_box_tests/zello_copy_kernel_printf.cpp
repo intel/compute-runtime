@@ -105,11 +105,11 @@ int main(int argc, char *argv[]) {
                                                        allocSize, nullptr,
                                                        0, nullptr));
 
-    // copying of data must finish before running the user function
+    // copying of data must finish before running the user kernel
     SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(
         cmdList, nullptr, 0, nullptr));
 
-    // 3. Encode run user function
+    // 3. Set arguments for user kernel
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(dstBuffer), &dstBuffer));
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(srcBuffer), &srcBuffer));
 

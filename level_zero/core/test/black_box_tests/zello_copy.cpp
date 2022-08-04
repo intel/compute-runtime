@@ -9,7 +9,7 @@
 
 #include <iomanip>
 
-void testAppendMemoryCopyFromHeapToDeviceToStack(ze_context_handle_t context, ze_device_handle_t &device, bool &validRet) {
+void testAppendMemoryCopyFromHeapToDeviceToStack(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
     const size_t allocSize = 4096 + 7; // +7 to break alignment and make it harder
     char *heapBuffer = new char[allocSize];
     void *zeBuffer = nullptr;
@@ -57,7 +57,7 @@ void testAppendMemoryCopyFromHeapToDeviceToStack(ze_context_handle_t context, ze
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
 }
 
-void testAppendMemoryCopyFromHostToDeviceToStack(ze_context_handle_t context, ze_device_handle_t &device, bool &validRet) {
+void testAppendMemoryCopyFromHostToDeviceToStack(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
     const size_t allocSize = 4096 + 7; // +7 to break alignment and make it harder
     char *hostBuffer;
     void *zeBuffer = nullptr;
@@ -111,7 +111,7 @@ void testAppendMemoryCopyFromHostToDeviceToStack(ze_context_handle_t context, ze
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
 }
 
-void testAppendMemoryCopy2DRegion(ze_context_handle_t context, ze_device_handle_t &device, bool &validRet) {
+void testAppendMemoryCopy2DRegion(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
     validRet = true;
 
     ze_command_queue_handle_t cmdQueue;
@@ -220,7 +220,7 @@ void testAppendMemoryCopy2DRegion(ze_context_handle_t context, ze_device_handle_
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
 }
 
-void testMemoryFillWithWordSizedPattern(ze_context_handle_t context, ze_device_handle_t &device, bool &validRet) {
+void testMemoryFillWithWordSizedPattern(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
     const size_t allocSize = 10;
     char pattern[] = {'\001', '\002'};
     void *zeBuffer = nullptr;
@@ -273,7 +273,7 @@ void testMemoryFillWithWordSizedPattern(ze_context_handle_t context, ze_device_h
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
 }
 
-void testAppendMemoryFillWithSomePattern(ze_context_handle_t context, ze_device_handle_t &device, bool &validRet) {
+void testAppendMemoryFillWithSomePattern(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
     const size_t allocSize = 4096 + 7;
 
     char pattern0 = 5;
@@ -364,7 +364,7 @@ void testAppendMemoryFillWithSomePattern(ze_context_handle_t context, ze_device_
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
 }
 
-void testAppendMemoryCopy3DRegion(ze_context_handle_t context, ze_device_handle_t &device, bool &validRet) {
+void testAppendMemoryCopy3DRegion(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
     validRet = true;
 
     ze_command_queue_handle_t cmdQueue;
