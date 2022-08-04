@@ -35,20 +35,26 @@ void executeGpuKernelAndValidate(ze_context_handle_t &context,
                                  ze_module_handle_t &module,
                                  ze_kernel_handle_t &kernel,
                                  bool &outputValidationSuccessful,
-                                 bool useImmediateCommandList) {
-    ze_command_queue_handle_t cmdQueue;
-    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    ze_command_list_handle_t cmdList;
-    ze_event_pool_handle_t eventPool;
+                                 bool useImmediateCommandList,
+                                 bool useAsync,
+                                 int allocFlagValue) {
+    ze_command_queue_handle_t cmdQueue = nullptr;
+    ze_command_list_handle_t cmdList = nullptr;
+    ze_event_pool_handle_t eventPool = nullptr;
     ze_event_handle_t event = nullptr;
 
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     cmdQueueDesc.ordinal = getCommandQueueOrdinal(device);
     cmdQueueDesc.index = 0;
-    cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    if (useAsync) {
+        cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+        createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+    } else {
+        cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    }
 
     if (useImmediateCommandList) {
         SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
-        createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
     } else {
         SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
         SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList));
@@ -64,12 +70,10 @@ void executeGpuKernelAndValidate(ze_context_handle_t &context,
     uint32_t srcMemorySize = expectedMemorySize * srcAdditionalMul;
     uint32_t idxMemorySize = arraySize * sizeof(uint32_t);
 
-    ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
-    deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
-    deviceDesc.ordinal = 0;
-
     ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
-    hostDesc.flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED;
+    if (allocFlagValue != 0) {
+        hostDesc.flags = static_cast<ze_host_mem_alloc_flag_t>(allocFlagValue);
+    }
 
     void *srcBuffer = nullptr;
     SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, srcMemorySize, 1, &srcBuffer));
@@ -122,13 +126,14 @@ void executeGpuKernelAndValidate(ze_context_handle_t &context,
                                                          event,
                                                          0, nullptr));
 
-    if (useImmediateCommandList) {
-        SUCCESS_OR_TERMINATE(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
-    } else {
+    if (!useImmediateCommandList) {
         // Close list and submit for execution
         SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
         SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-        SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
+    }
+
+    if (useAsync) {
+        SUCCESS_OR_TERMINATE(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
     }
 
     // Validate
@@ -141,7 +146,9 @@ void executeGpuKernelAndValidate(ze_context_handle_t &context,
             if (srcCharBuffer[i] != dstCharBuffer[i]) {
                 std::cout << "srcBuffer[" << i << "] = " << static_cast<unsigned int>(srcCharBuffer[i]) << " not equal to "
                           << "dstBuffer[" << i << "] = " << static_cast<unsigned int>(dstCharBuffer[i]) << "\n";
-                break;
+                if (!verbose) {
+                    break;
+                }
             }
         }
     }
@@ -152,10 +159,11 @@ void executeGpuKernelAndValidate(ze_context_handle_t &context,
     SUCCESS_OR_TERMINATE(zeMemFree(context, idxBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, expectedMemory));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
-    if (useImmediateCommandList) {
+    if (useAsync) {
         SUCCESS_OR_TERMINATE(zeEventDestroy(event));
         SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
-    } else {
+    }
+    if (!useImmediateCommandList) {
         SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
     }
 }
@@ -218,6 +226,8 @@ int main(int argc, char *argv[]) {
     verbose = isVerbose(argc, argv);
     bool aubMode = isAubMode(argc, argv);
     bool immediateFirst = isImmediateFirst(argc, argv);
+    bool useAsync = isAsyncQueueEnabled(argc, argv);
+    int allocFlagValue = getAllocationFlag(argc, argv, 0);
 
     ze_context_handle_t context = nullptr;
     auto devices = zelloInitContextAndGetDevices(context);
@@ -246,13 +256,13 @@ int main(int argc, char *argv[]) {
         }
     };
 
-    executeGpuKernelAndValidate(context, device, module, kernel, outputValidationSuccessful, immediateFirst);
+    executeGpuKernelAndValidate(context, device, module, kernel, outputValidationSuccessful, immediateFirst, useAsync, allocFlagValue);
     caseName = selectCaseName(immediateFirst);
     printResult(aubMode, outputValidationSuccessful, blackBoxName, caseName);
 
     if (outputValidationSuccessful || aubMode) {
         immediateFirst = !immediateFirst;
-        executeGpuKernelAndValidate(context, device, module, kernel, outputValidationSuccessful, immediateFirst);
+        executeGpuKernelAndValidate(context, device, module, kernel, outputValidationSuccessful, immediateFirst, useAsync, allocFlagValue);
         caseName = selectCaseName(immediateFirst);
         printResult(aubMode, outputValidationSuccessful, blackBoxName, caseName);
     }

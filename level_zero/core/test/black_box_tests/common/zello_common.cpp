@@ -7,6 +7,8 @@
 
 #include "zello_common.h"
 
+#include <bitset>
+
 bool verbose;
 
 bool isParamEnabled(int argc, char *argv[], const char *shortName, const char *longName) {
@@ -70,6 +72,18 @@ bool isSyncQueueEnabled(int argc, char *argv[]) {
     return true;
 }
 
+bool isAsyncQueueEnabled(int argc, char *argv[]) {
+    bool enabled = isParamEnabled(argc, argv, "-as", "--async");
+    if (enabled == false) {
+        std::cerr << "Sync Queue detected" << std::endl;
+        return false;
+    }
+
+    std::cerr << "Async Queue detected" << std::endl;
+
+    return true;
+}
+
 bool isAubMode(int argc, char *argv[]) {
     bool enabled = isParamEnabled(argc, argv, "-a", "--aub");
     if (enabled == false) {
@@ -92,6 +106,20 @@ bool isCommandListShared(int argc, char *argv[]) {
     std::cerr << "Command List shared between tests" << std::endl;
 
     return true;
+}
+
+bool getAllocationFlag(int argc, char *argv[], int defaultValue) {
+    int value = getParamValue(argc, argv, "-A", "-allocflag", defaultValue);
+    std::cerr << "Allocation flag ";
+    if (value != defaultValue) {
+        std::cerr << "override ";
+    } else {
+        std::cerr << "default ";
+    }
+    std::bitset<4> bitValue(value);
+    std::cerr << "value 0b" << bitValue << std::endl;
+
+    return value;
 }
 
 void selectQueueMode(ze_command_queue_desc_t &desc, bool useSync) {

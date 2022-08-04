@@ -56,9 +56,13 @@ bool isVerbose(int argc, char *argv[]);
 
 bool isSyncQueueEnabled(int argc, char *argv[]);
 
+bool isAsyncQueueEnabled(int argc, char *argv[]);
+
 bool isAubMode(int argc, char *argv[]);
 
 bool isCommandListShared(int argc, char *argv[]);
+
+bool getAllocationFlag(int argc, char *argv[], int defaultValue);
 
 void selectQueueMode(ze_command_queue_desc_t &desc, bool useSync);
 
