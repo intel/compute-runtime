@@ -61,6 +61,8 @@ struct StateBaseAddressHelper {
 
     static void programBindingTableBaseAddress(LinearStream &commandStream, const IndirectHeap &ssh, GmmHelper *gmmHelper);
 
+    static void programBindingTableBaseAddress(LinearStream &commandStream, uint64_t baseAddress, uint32_t sizeInPages, GmmHelper *gmmHelper);
+
     static uint32_t getMaxBindlessSurfaceStates();
 };
 } // namespace NEO

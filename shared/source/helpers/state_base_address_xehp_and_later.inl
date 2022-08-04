@@ -90,13 +90,13 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
 }
 
 template <typename GfxFamily>
-void StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(LinearStream &commandStream, const IndirectHeap &ssh, GmmHelper *gmmHelper) {
+void StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(LinearStream &commandStream, uint64_t baseAddress, uint32_t sizeInPages, GmmHelper *gmmHelper) {
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename GfxFamily::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 
     auto bindingTablePoolAlloc = commandStream.getSpaceForCmd<_3DSTATE_BINDING_TABLE_POOL_ALLOC>();
     _3DSTATE_BINDING_TABLE_POOL_ALLOC cmd = GfxFamily::cmdInitStateBindingTablePoolAlloc;
-    cmd.setBindingTablePoolBaseAddress(ssh.getHeapGpuBase());
-    cmd.setBindingTablePoolBufferSize(ssh.getHeapSizeInPages());
+    cmd.setBindingTablePoolBaseAddress(baseAddress);
+    cmd.setBindingTablePoolBufferSize(sizeInPages);
     cmd.setSurfaceObjectControlStateIndexToMocsTables(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
     if (DebugManager.flags.DisableCachingForHeaps.get()) {
         cmd.setSurfaceObjectControlStateIndexToMocsTables(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED));

@@ -505,13 +505,9 @@ void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_B
 
     if (container.isHeapDirty(HeapType::SURFACE_STATE)) {
         auto heap = container.getIndirectHeap(HeapType::SURFACE_STATE);
-        auto cmd = Family::cmdInitStateBindingTablePoolAlloc;
-        cmd.setBindingTablePoolBaseAddress(heap->getHeapGpuBase());
-        cmd.setBindingTablePoolBufferSize(heap->getHeapSizeInPages());
-        cmd.setSurfaceObjectControlStateIndexToMocsTables(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
-
-        auto buffer = container.getCommandStream()->getSpace(sizeof(cmd));
-        *(typename Family::_3DSTATE_BINDING_TABLE_POOL_ALLOC *)buffer = cmd;
+        StateBaseAddressHelper<Family>::programBindingTableBaseAddress(*container.getCommandStream(),
+                                                                       *heap,
+                                                                       gmmHelper);
     }
 }
 

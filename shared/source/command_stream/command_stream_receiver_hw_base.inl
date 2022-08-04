@@ -403,18 +403,20 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         }
 
         auto stateBaseAddressCmdOffset = commandStreamCSR.getUsed();
-        auto pCmd = static_cast<STATE_BASE_ADDRESS *>(StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStreamCSR));
-        STATE_BASE_ADDRESS cmd;
+        auto stateBaseAddressCmdBuffer = static_cast<STATE_BASE_ADDRESS *>(StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStreamCSR));
         auto instructionHeapBaseAddress = getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, getMemoryManager()->isLocalMemoryUsedForIsa(rootDeviceIndex));
+        uint64_t indirectObjectStateBaseAddress = getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, ioh->getGraphicsAllocation()->isAllocatedInLocalMemoryPool());
+
+        STATE_BASE_ADDRESS stateBaseAddressCmd;
         StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
-            &cmd,
+            &stateBaseAddressCmd,
             dsh,
             ioh,
             ssh,
             newGSHbase,
             true,
             mocsIndex,
-            getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, ioh->getGraphicsAllocation()->isAllocatedInLocalMemoryPool()),
+            indirectObjectStateBaseAddress,
             instructionHeapBaseAddress,
             0,
             true,
@@ -425,15 +427,15 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             dispatchFlags.useGlobalAtomics,
             dispatchFlags.areMultipleSubDevicesInContext);
 
-        if (pCmd) {
-            *pCmd = cmd;
+        if (stateBaseAddressCmdBuffer) {
+            *stateBaseAddressCmdBuffer = stateBaseAddressCmd;
         }
 
-        programAdditionalStateBaseAddress(commandStreamCSR, cmd, device);
+        programAdditionalStateBaseAddress(commandStreamCSR, stateBaseAddressCmd, device);
 
         if (debuggingEnabled && !device.getDebugger()->isLegacy()) {
             NEO::Debugger::SbaAddresses sbaAddresses = {};
-            NEO::EncodeStateBaseAddress<GfxFamily>::setSbaAddressesForDebugger(sbaAddresses, cmd);
+            NEO::EncodeStateBaseAddress<GfxFamily>::setSbaAddressesForDebugger(sbaAddresses, stateBaseAddressCmd);
             device.getDebugger()->captureStateBaseAddress(commandStreamCSR, sbaAddresses);
         }
 

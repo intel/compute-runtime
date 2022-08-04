@@ -24,17 +24,25 @@ namespace L0 {
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool useLocalMemoryForIndirectHeap, NEO::LinearStream &commandStream, bool cachedMOCSAllowed) {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
+    NEO::Device *neoDevice = device->getNEODevice();
+    auto &hwInfo = neoDevice->getHardwareInfo();
+    uint32_t rootDeviceIndex = neoDevice->getRootDeviceIndex();
+
+    bool multiOsContextCapable = device->isImplicitScalingCapable();
+
+    uint64_t indirectObjectStateBaseAddress = neoDevice->getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, useLocalMemoryForIndirectHeap);
+    uint64_t instructionStateBaseAddress = neoDevice->getMemoryManager()->getInternalHeapBaseAddress(
+        rootDeviceIndex, neoDevice->getMemoryManager()->isLocalMemoryUsedForIsa(rootDeviceIndex));
+
     if (NEO::ApiSpecificConfig::getBindlessConfiguration()) {
-        NEO::Device *neoDevice = device->getNEODevice();
         auto globalHeapsBase = neoDevice->getBindlessHeapsHelper()->getGlobalHeapsBase();
-        auto &hwInfo = neoDevice->getHardwareInfo();
+
         bool isRcs = this->getCsr()->isRcs();
 
         NEO::EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStream, hwInfo, isRcs);
         auto sbaCmdBuf = static_cast<STATE_BASE_ADDRESS *>(NEO::StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStream));
 
         STATE_BASE_ADDRESS sbaCmd;
-        bool multiOsContextCapable = device->isImplicitScalingCapable();
         NEO::StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(&sbaCmd,
                                                                         nullptr,
                                                                         nullptr,
@@ -42,8 +50,8 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
                                                                         0,
                                                                         true,
                                                                         (device->getMOCS(cachedMOCSAllowed, false) >> 1),
-                                                                        neoDevice->getMemoryManager()->getInternalHeapBaseAddress(neoDevice->getRootDeviceIndex(), useLocalMemoryForIndirectHeap),
-                                                                        neoDevice->getMemoryManager()->getInternalHeapBaseAddress(neoDevice->getRootDeviceIndex(), neoDevice->getMemoryManager()->isLocalMemoryUsedForIsa(neoDevice->getRootDeviceIndex())),
+                                                                        indirectObjectStateBaseAddress,
+                                                                        instructionStateBaseAddress,
                                                                         globalHeapsBase,
                                                                         true,
                                                                         true,
@@ -69,13 +77,10 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         }
 
         auto heap = neoDevice->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::GLOBAL_SSH);
-        auto cmd = GfxFamily::cmdInitStateBindingTablePoolAlloc;
-        cmd.setBindingTablePoolBaseAddress(heap->getHeapGpuBase());
-        cmd.setBindingTablePoolBufferSize(heap->getHeapSizeInPages());
-        cmd.setSurfaceObjectControlStateIndexToMocsTables(neoDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
-
-        auto buffer = commandStream.getSpace(sizeof(cmd));
-        *(typename GfxFamily::_3DSTATE_BINDING_TABLE_POOL_ALLOC *)buffer = cmd;
+        NEO::StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(
+            commandStream,
+            *heap,
+            neoDevice->getGmmHelper());
     }
     csr->setGSBAStateDirty(false);
 }

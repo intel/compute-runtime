@@ -106,4 +106,9 @@ void *StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(LinearStream &cmdStre
     return cmdStream.getSpace(sizeof(STATE_BASE_ADDRESS));
 }
 
+template <typename GfxFamily>
+void StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(LinearStream &commandStream, const IndirectHeap &ssh, GmmHelper *gmmHelper) {
+    StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(commandStream, ssh.getHeapGpuBase(), ssh.getHeapSizeInPages(), gmmHelper);
+}
+
 } // namespace NEO
