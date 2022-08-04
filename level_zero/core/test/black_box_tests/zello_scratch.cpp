@@ -30,16 +30,29 @@ scratch_kernel(__global int *resIdx, global TYPE *src, global TYPE *dst) {
 }
 )===";
 
-void executeGpuKernelAndValidate(ze_context_handle_t context, ze_device_handle_t &device, bool &outputValidationSuccessful) {
+void executeGpuKernelAndValidate(ze_context_handle_t &context,
+                                 ze_device_handle_t &device,
+                                 ze_module_handle_t &module,
+                                 ze_kernel_handle_t &kernel,
+                                 bool &outputValidationSuccessful,
+                                 bool useImmediateCommandList) {
     ze_command_queue_handle_t cmdQueue;
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     ze_command_list_handle_t cmdList;
+    ze_event_pool_handle_t eventPool;
+    ze_event_handle_t event = nullptr;
 
     cmdQueueDesc.ordinal = getCommandQueueOrdinal(device);
     cmdQueueDesc.index = 0;
     cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
-    SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList));
+
+    if (useImmediateCommandList) {
+        SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
+        createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+    } else {
+        SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
+        SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList));
+    }
 
     // Create two shared buffers
     uint32_t arraySize = 32;
@@ -90,15 +103,73 @@ void executeGpuKernelAndValidate(ze_context_handle_t context, ze_device_handle_t
         }
     }
 
+    uint32_t groupSizeX = arraySize;
+    uint32_t groupSizeY = 1u;
+    uint32_t groupSizeZ = 1u;
+    SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(kernel, groupSizeX, 1U, 1U, &groupSizeX, &groupSizeY, &groupSizeZ));
+    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
+
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 2, sizeof(dstBuffer), &dstBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(srcBuffer), &srcBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(idxBuffer), &idxBuffer));
+
+    ze_group_count_t dispatchTraits;
+    dispatchTraits.groupCountX = 1u;
+    dispatchTraits.groupCountY = 1u;
+    dispatchTraits.groupCountZ = 1u;
+
+    SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits,
+                                                         event,
+                                                         0, nullptr));
+
+    if (useImmediateCommandList) {
+        SUCCESS_OR_TERMINATE(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
+    } else {
+        // Close list and submit for execution
+        SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
+        SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
+        SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
+    }
+
+    // Validate
+    outputValidationSuccessful = true;
+    if (memcmp(dstBuffer, expectedMemory, expectedMemorySize)) {
+        outputValidationSuccessful = false;
+        uint8_t *srcCharBuffer = static_cast<uint8_t *>(expectedMemory);
+        uint8_t *dstCharBuffer = static_cast<uint8_t *>(dstBuffer);
+        for (size_t i = 0; i < expectedMemorySize; i++) {
+            if (srcCharBuffer[i] != dstCharBuffer[i]) {
+                std::cout << "srcBuffer[" << i << "] = " << static_cast<unsigned int>(srcCharBuffer[i]) << " not equal to "
+                          << "dstBuffer[" << i << "] = " << static_cast<unsigned int>(dstCharBuffer[i]) << "\n";
+                break;
+            }
+        }
+    }
+
+    // Cleanup
+    SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, idxBuffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, expectedMemory));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
+    if (useImmediateCommandList) {
+        SUCCESS_OR_TERMINATE(zeEventDestroy(event));
+        SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
+    } else {
+        SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
+    }
+}
+
+void createModuleKernel(ze_context_handle_t &context,
+                        ze_device_handle_t &device,
+                        ze_module_handle_t &module,
+                        ze_kernel_handle_t &kernel) {
     std::string buildLog;
     auto spirV = compileToSpirV(moduleSrc, "", buildLog);
     if (buildLog.size() > 0) {
         std::cout << "Build log " << buildLog;
     }
     SUCCESS_OR_TERMINATE((0 == spirV.size()));
-
-    ze_module_handle_t module = nullptr;
-    ze_kernel_handle_t kernel = nullptr;
 
     ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
     ze_module_build_log_handle_t buildlog;
@@ -130,61 +201,25 @@ void executeGpuKernelAndValidate(ze_context_handle_t context, ze_device_handle_t
     ze_kernel_properties_t kernelProperties{ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeKernelGetProperties(kernel, &kernelProperties));
     std::cout << "Scratch size = " << kernelProperties.spillMemSize << "\n";
+}
 
-    uint32_t groupSizeX = arraySize;
-    uint32_t groupSizeY = 1u;
-    uint32_t groupSizeZ = 1u;
-    SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(kernel, groupSizeX, 1U, 1U, &groupSizeX, &groupSizeY, &groupSizeZ));
-    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
+inline bool isImmediateFirst(int argc, char *argv[]) {
+    bool enabled = isParamEnabled(argc, argv, "-i", "--immediate");
 
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 2, sizeof(dstBuffer), &dstBuffer));
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(srcBuffer), &srcBuffer));
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(idxBuffer), &idxBuffer));
-
-    ze_group_count_t dispatchTraits;
-    dispatchTraits.groupCountX = 1u;
-    dispatchTraits.groupCountY = 1u;
-    dispatchTraits.groupCountZ = 1u;
-
-    SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits,
-                                                         nullptr, 0, nullptr));
-
-    // Close list and submit for execution
-    SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
-    SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
-
-    // Validate
-    outputValidationSuccessful = true;
-    if (memcmp(dstBuffer, expectedMemory, expectedMemorySize)) {
-        outputValidationSuccessful = false;
-        uint8_t *srcCharBuffer = static_cast<uint8_t *>(expectedMemory);
-        uint8_t *dstCharBuffer = static_cast<uint8_t *>(dstBuffer);
-        for (size_t i = 0; i < expectedMemorySize; i++) {
-            if (srcCharBuffer[i] != dstCharBuffer[i]) {
-                std::cout << "srcBuffer[" << i << "] = " << static_cast<unsigned int>(srcCharBuffer[i]) << " not equal to "
-                          << "dstBuffer[" << i << "] = " << static_cast<unsigned int>(dstCharBuffer[i]) << "\n";
-                break;
-            }
-        }
+    if (verbose && enabled) {
+        std::cerr << "Immediate Command List executed first" << std::endl;
     }
 
-    // Cleanup
-    SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
-    SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
-    SUCCESS_OR_TERMINATE(zeMemFree(context, idxBuffer));
-    SUCCESS_OR_TERMINATE(zeMemFree(context, expectedMemory));
-    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
-    SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
+    return enabled;
 }
 
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello Scratch";
     verbose = isVerbose(argc, argv);
-    ze_context_handle_t context = nullptr;
     bool aubMode = isAubMode(argc, argv);
+    bool immediateFirst = isImmediateFirst(argc, argv);
 
+    ze_context_handle_t context = nullptr;
     auto devices = zelloInitContextAndGetDevices(context);
     auto device = devices[0];
     bool outputValidationSuccessful;
@@ -193,11 +228,39 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
     printDeviceProperties(deviceProperties);
 
-    executeGpuKernelAndValidate(context, device, outputValidationSuccessful);
+    ze_module_handle_t module = nullptr;
+    ze_kernel_handle_t kernel = nullptr;
 
+    createModuleKernel(context, device, module, kernel);
+
+    const std::string regularCaseName = "Regular Command List";
+    const std::string immediateCaseName = "Immediate Command List";
+
+    std::string caseName;
+
+    auto selectCaseName = [&regularCaseName, &immediateCaseName](bool immediate) {
+        if (immediate) {
+            return immediateCaseName;
+        } else {
+            return regularCaseName;
+        }
+    };
+
+    executeGpuKernelAndValidate(context, device, module, kernel, outputValidationSuccessful, immediateFirst);
+    caseName = selectCaseName(immediateFirst);
+    printResult(aubMode, outputValidationSuccessful, blackBoxName, caseName);
+
+    if (outputValidationSuccessful || aubMode) {
+        immediateFirst = !immediateFirst;
+        executeGpuKernelAndValidate(context, device, module, kernel, outputValidationSuccessful, immediateFirst);
+        caseName = selectCaseName(immediateFirst);
+        printResult(aubMode, outputValidationSuccessful, blackBoxName, caseName);
+    }
+
+    SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
-    printResult(aubMode, outputValidationSuccessful, blackBoxName);
     outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
     return (outputValidationSuccessful ? 0 : 1);
 }
