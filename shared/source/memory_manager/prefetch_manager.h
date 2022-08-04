@@ -27,7 +27,7 @@ class PrefetchManager : public NonCopyableOrMovableClass {
 
     void insertAllocation(SvmAllocationData &svmData);
 
-    void migrateAllocationsToGpu(SVMAllocsManager &unifiedMemoryManager, Device &device);
+    MOCKABLE_VIRTUAL void migrateAllocationsToGpu(SVMAllocsManager &unifiedMemoryManager, Device &device);
 
   protected:
     std::vector<SvmAllocationData> allocations;
