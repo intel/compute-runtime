@@ -6,14 +6,16 @@
  */
 
 #pragma once
-#include "level_zero/tools/source/sysman/frequency/linux/os_frequency_imp.h"
+#include "level_zero/tools/source/sysman/frequency/linux/os_frequency_imp_prelim.h"
 
 namespace L0 {
 namespace ult {
 
 const std::string minFreqFile("gt/gt0/rps_min_freq_mhz");
+const std::string minDefaultFreqFile("gt/gt0/.defaults/rps_min_freq_mhz");
 const std::string maxFreqFile("gt/gt0/rps_max_freq_mhz");
 const std::string boostFreqFile("gt/gt0/rps_boost_freq_mhz");
+const std::string maxDefaultFreqFile("gt/gt0/.defaults/rps_max_freq_mhz");
 const std::string requestFreqFile("gt/gt0/punit_req_freq_mhz");
 const std::string tdpFreqFile("gt/gt0/rapl_PL1_freq_mhz");
 const std::string actualFreqFile("gt/gt0/rps_act_freq_mhz");
@@ -49,6 +51,8 @@ struct Mock<FrequencySysfsAccess> : public FrequencySysfsAccess {
     double mockMax = 0;
     double mockBoost = 0;
     double mockRequest = 0;
+    double mockDefaultMin = 1;
+    double mockDefaultMax = 1000;
     double mockTdp = 0;
     double mockActual = 0;
     double mockEfficient = 0;
@@ -60,6 +64,7 @@ struct Mock<FrequencySysfsAccess> : public FrequencySysfsAccess {
     uint32_t throttleReasonPL4Val = 0;
     uint32_t throttleReasonThermalVal = 0;
     ze_result_t mockReadDoubleValResult = ZE_RESULT_SUCCESS;
+    ze_result_t mockReadUnsignedIntResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadRequestResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadTdpResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadEfficientResult = ZE_RESULT_SUCCESS;
@@ -67,110 +72,15 @@ struct Mock<FrequencySysfsAccess> : public FrequencySysfsAccess {
     ze_result_t mockReadMinValResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadMaxValResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadMaxResult = ZE_RESULT_SUCCESS;
-    ze_result_t mockReadVal32Result = ZE_RESULT_SUCCESS;
+    ze_result_t mockReadPL1Result = ZE_RESULT_SUCCESS;
+    ze_result_t mockReadPL2Result = ZE_RESULT_SUCCESS;
+    ze_result_t mockReadPL4Result = ZE_RESULT_SUCCESS;
+    ze_result_t mockReadThermalResult = ZE_RESULT_SUCCESS;
     ze_result_t mockWriteMaxResult = ZE_RESULT_SUCCESS;
     ze_result_t mockWriteMinResult = ZE_RESULT_SUCCESS;
-    bool mockReadPL1Error = false;
-    bool mockReadPL2Error = false;
-    bool mockReadPL4Error = false;
-    bool mockReadThermalError = false;
-    bool isLegacy = false;
+    ze_bool_t isLegacy = false;
 
     ADDMETHOD_NOBASE(directoryExists, bool, true, (const std::string path));
-
-    ze_result_t setValU32(const std::string file, uint32_t val) {
-        if (file.compare(throttleReasonStatusFile) == 0) {
-            throttleVal = val;
-        }
-        if (file.compare(throttleReasonPL1File) == 0) {
-            throttleReasonPL1Val = val;
-        }
-        if (file.compare(throttleReasonPL2File) == 0) {
-            throttleReasonPL2Val = val;
-        }
-        if (file.compare(throttleReasonPL4File) == 0) {
-            throttleReasonPL4Val = val;
-        }
-        if (file.compare(throttleReasonThermalFile) == 0) {
-            throttleReasonThermalVal = val;
-        }
-
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t setValU32Legacy(const std::string file, uint32_t val) {
-        if (file.compare(throttleReasonStatusFileLegacy) == 0) {
-            throttleVal = val;
-        }
-        if (file.compare(throttleReasonPL1FileLegacy) == 0) {
-            throttleReasonPL1Val = val;
-        }
-        if (file.compare(throttleReasonPL2FileLegacy) == 0) {
-            throttleReasonPL2Val = val;
-        }
-        if (file.compare(throttleReasonPL4FileLegacy) == 0) {
-            throttleReasonPL4Val = val;
-        }
-        if (file.compare(throttleReasonThermalFileLegacy) == 0) {
-            throttleReasonThermalVal = val;
-        }
-
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t getValLegacy(const std::string file, double &val) {
-        if (file.compare(minFreqFileLegacy) == 0) {
-            val = mockMin;
-        }
-        if (file.compare(maxFreqFileLegacy) == 0) {
-            val = mockMax;
-        }
-        if (file.compare(requestFreqFileLegacy) == 0) {
-            val = mockRequest;
-        }
-        if (file.compare(tdpFreqFileLegacy) == 0) {
-            val = mockTdp;
-        }
-        if (file.compare(actualFreqFileLegacy) == 0) {
-            val = mockActual;
-        }
-        if (file.compare(efficientFreqFileLegacy) == 0) {
-            val = mockEfficient;
-        }
-        if (file.compare(maxValFreqFileLegacy) == 0) {
-            val = mockMaxVal;
-        }
-        if (file.compare(minValFreqFileLegacy) == 0) {
-            val = mockMinVal;
-        }
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t setValLegacy(const std::string file, const double val) {
-        if (file.compare(minFreqFileLegacy) == 0) {
-            mockMin = val;
-        } else if (file.compare(maxFreqFileLegacy) == 0) {
-            mockMax = val;
-        } else if (file.compare(boostFreqFileLegacy) == 0) {
-            mockBoost = val;
-        } else if (file.compare(requestFreqFileLegacy) == 0) {
-            mockRequest = val;
-        } else if (file.compare(tdpFreqFileLegacy) == 0) {
-            mockTdp = val;
-        } else if (file.compare(actualFreqFileLegacy) == 0) {
-            mockActual = val;
-        } else if (file.compare(efficientFreqFileLegacy) == 0) {
-            mockEfficient = val;
-        } else if (file.compare(maxValFreqFileLegacy) == 0) {
-            mockMaxVal = val;
-        } else if (file.compare(minValFreqFileLegacy) == 0) {
-            mockMinVal = val;
-        } else {
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        }
-
-        return ZE_RESULT_SUCCESS;
-    }
 
     ze_result_t read(const std::string file, double &val) override {
         if (mockReadDoubleValResult != ZE_RESULT_SUCCESS) {
@@ -218,9 +128,102 @@ struct Mock<FrequencySysfsAccess> : public FrequencySysfsAccess {
                 return mockReadMinValResult;
             }
             val = mockMinVal;
+        } else if (file.compare(minDefaultFreqFile) == 0) {
+            val = mockDefaultMin;
+        } else if (file.compare(maxDefaultFreqFile) == 0) {
+            val = mockDefaultMax;
         } else {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
+
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t read(const std::string file, uint32_t &val) override {
+        if (mockReadUnsignedIntResult != ZE_RESULT_SUCCESS) {
+            return mockReadUnsignedIntResult;
+        }
+
+        if (isLegacy) {
+            return getValU32Legacy(file, val);
+        }
+        if (file.compare(throttleReasonStatusFile) == 0) {
+            val = throttleVal;
+        }
+        if (file.compare(throttleReasonPL1File) == 0) {
+            if (mockReadPL1Result != ZE_RESULT_SUCCESS) {
+                return mockReadPL1Result;
+            }
+            val = throttleReasonPL1Val;
+        }
+        if (file.compare(throttleReasonPL2File) == 0) {
+            if (mockReadPL2Result != ZE_RESULT_SUCCESS) {
+                return mockReadPL2Result;
+            }
+            val = throttleReasonPL2Val;
+        }
+        if (file.compare(throttleReasonPL4File) == 0) {
+            if (mockReadPL4Result != ZE_RESULT_SUCCESS) {
+                return mockReadPL4Result;
+            }
+            val = throttleReasonPL4Val;
+        }
+        if (file.compare(throttleReasonThermalFile) == 0) {
+            if (mockReadThermalResult != ZE_RESULT_SUCCESS) {
+                return mockReadThermalResult;
+            }
+            val = throttleReasonThermalVal;
+        }
+
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t getValLegacy(const std::string file, double &val) {
+        if (file.compare(minFreqFileLegacy) == 0) {
+            val = mockMin;
+        }
+        if (file.compare(maxFreqFileLegacy) == 0) {
+            val = mockMax;
+        }
+        if (file.compare(requestFreqFileLegacy) == 0) {
+            val = mockRequest;
+        }
+        if (file.compare(tdpFreqFileLegacy) == 0) {
+            val = mockTdp;
+        }
+        if (file.compare(actualFreqFileLegacy) == 0) {
+            val = mockActual;
+        }
+        if (file.compare(efficientFreqFileLegacy) == 0) {
+            val = mockEfficient;
+        }
+        if (file.compare(maxValFreqFileLegacy) == 0) {
+            val = mockMaxVal;
+        }
+        if (file.compare(minValFreqFileLegacy) == 0) {
+            val = mockMinVal;
+        }
+
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t getValU32Legacy(const std::string file, uint32_t &val) {
+        if (file.compare(throttleReasonStatusFileLegacy) == 0) {
+            val = throttleVal;
+        }
+        if (file.compare(throttleReasonPL1FileLegacy) == 0) {
+            val = throttleReasonPL1Val;
+        }
+        if (file.compare(throttleReasonPL2FileLegacy) == 0) {
+            val = throttleReasonPL2Val;
+        }
+        if (file.compare(throttleReasonPL4FileLegacy) == 0) {
+            val = throttleReasonPL4Val;
+        }
+        if (file.compare(throttleReasonThermalFileLegacy) == 0) {
+            val = throttleReasonThermalVal;
+        }
+
         return ZE_RESULT_SUCCESS;
     }
 
@@ -258,46 +261,74 @@ struct Mock<FrequencySysfsAccess> : public FrequencySysfsAccess {
         if (file.compare(minValFreqFile) == 0) {
             mockMinVal = val;
         }
+
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t getValU32(const std::string file, uint32_t &val) {
-        if ((file.compare(throttleReasonStatusFile) == 0) || (file.compare(throttleReasonStatusFileLegacy) == 0)) {
-            val = throttleVal;
+    ze_result_t setValU32(const std::string file, uint32_t val) {
+        if (file.compare(throttleReasonStatusFile) == 0) {
+            throttleVal = val;
         }
-        if ((file.compare(throttleReasonPL1File) == 0) || (file.compare(throttleReasonPL1FileLegacy) == 0)) {
-            if (mockReadPL1Error) {
-                return ZE_RESULT_ERROR_NOT_AVAILABLE;
-            }
-            val = throttleReasonPL1Val;
+        if (file.compare(throttleReasonPL1File) == 0) {
+            throttleReasonPL1Val = val;
         }
-        if ((file.compare(throttleReasonPL2File) == 0) || (file.compare(throttleReasonPL2FileLegacy) == 0)) {
-            if (mockReadPL2Error) {
-                return ZE_RESULT_ERROR_NOT_AVAILABLE;
-            }
-            val = throttleReasonPL2Val;
+        if (file.compare(throttleReasonPL2File) == 0) {
+            throttleReasonPL2Val = val;
         }
-        if ((file.compare(throttleReasonPL4File) == 0) || (file.compare(throttleReasonPL4FileLegacy) == 0)) {
-            if (mockReadPL4Error) {
-                return ZE_RESULT_ERROR_NOT_AVAILABLE;
-            }
-            val = throttleReasonPL4Val;
+        if (file.compare(throttleReasonPL4File) == 0) {
+            throttleReasonPL4Val = val;
         }
-        if ((file.compare(throttleReasonThermalFile) == 0) || (file.compare(throttleReasonThermalFileLegacy) == 0)) {
-            if (mockReadThermalError) {
-                return ZE_RESULT_ERROR_NOT_AVAILABLE;
-            }
-            val = throttleReasonThermalVal;
+        if (file.compare(throttleReasonThermalFile) == 0) {
+            throttleReasonThermalVal = val;
         }
 
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t read(const std::string file, uint32_t &val) override {
-        if (mockReadVal32Result != ZE_RESULT_SUCCESS) {
-            return mockReadVal32Result;
+    ze_result_t setValLegacy(const std::string file, const double val) {
+        if (file.compare(minFreqFileLegacy) == 0) {
+            mockMin = val;
+        } else if (file.compare(maxFreqFileLegacy) == 0) {
+            mockMax = val;
+        } else if (file.compare(boostFreqFileLegacy) == 0) {
+            mockBoost = val;
+        } else if (file.compare(requestFreqFileLegacy) == 0) {
+            mockRequest = val;
+        } else if (file.compare(tdpFreqFileLegacy) == 0) {
+            mockTdp = val;
+        } else if (file.compare(actualFreqFileLegacy) == 0) {
+            mockActual = val;
+        } else if (file.compare(efficientFreqFileLegacy) == 0) {
+            mockEfficient = val;
+        } else if (file.compare(maxValFreqFileLegacy) == 0) {
+            mockMaxVal = val;
+        } else if (file.compare(minValFreqFileLegacy) == 0) {
+            mockMinVal = val;
+        } else {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
-        return getValU32(file, val);
+
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t setValU32Legacy(const std::string file, uint32_t val) {
+        if (file.compare(throttleReasonStatusFileLegacy) == 0) {
+            throttleVal = val;
+        }
+        if (file.compare(throttleReasonPL1FileLegacy) == 0) {
+            throttleReasonPL1Val = val;
+        }
+        if (file.compare(throttleReasonPL2FileLegacy) == 0) {
+            throttleReasonPL2Val = val;
+        }
+        if (file.compare(throttleReasonPL4FileLegacy) == 0) {
+            throttleReasonPL4Val = val;
+        }
+        if (file.compare(throttleReasonThermalFileLegacy) == 0) {
+            throttleReasonThermalVal = val;
+        }
+
+        return ZE_RESULT_SUCCESS;
     }
 
     ze_result_t write(const std::string file, double val) override {
