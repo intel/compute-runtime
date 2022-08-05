@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -461,6 +462,95 @@ HWTEST2_F(CommandListCreate, givenCommandListAndHostPointersWhenMemoryCopyCalled
     } else {
         EXPECT_EQ(nullptr, pc);
     }
+}
+
+using CmdlistAppendLaunchKernelTests = Test<ModuleImmutableDataFixture>;
+
+using IsBetweenGen9AndGen12lp = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN12LP_CORE>;
+HWTEST2_F(CmdlistAppendLaunchKernelTests,
+          givenImmediateCommandListUsesFlushTaskWhenDispatchingKernelWithSpillScratchSpaceThenExpectCsrHasCorrectValuesSet, IsBetweenGen9AndGen12lp) {
+    constexpr uint32_t scratchPerThreadSize = 0x200;
+
+    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
+    auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
+    kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = false;
+    kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = scratchPerThreadSize;
+    createModuleFromBinary(0u, false, mockKernelImmData.get());
+
+    auto kernel = std::make_unique<MockKernel>(module.get());
+
+    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernel->initialize(&kernelDesc);
+
+    kernel->setGroupSize(4, 5, 6);
+    kernel->setGroupCount(3, 2, 1);
+    kernel->setGlobalOffsetExp(1, 2, 3);
+    kernel->patchGlobalOffset();
+
+    ze_result_t result;
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+    ASSERT_NE(nullptr, commandList);
+    commandList->isFlushTaskSubmissionEnabled = true;
+    ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    commandList->device = device;
+    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    commandList->csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+
+    ze_group_count_t groupCount = {3, 2, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(scratchPerThreadSize, commandList->getCommandListPerThreadScratchSize());
+
+    auto ultCsr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    EXPECT_EQ(scratchPerThreadSize, ultCsr->requiredScratchSize);
+}
+
+HWTEST2_F(CmdlistAppendLaunchKernelTests,
+          givenImmediateCommandListUsesFlushTaskWhenDispatchingKernelWithSpillAndPrivateScratchSpaceThenExpectCsrHasCorrectValuesSet, IsAtLeastXeHpCore) {
+    constexpr uint32_t scratchPerThreadSize = 0x200;
+    constexpr uint32_t privateScratchPerThreadSize = 0x100;
+
+    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
+    auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
+    kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = false;
+    kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = scratchPerThreadSize;
+    kernelDescriptor->kernelAttributes.perThreadScratchSize[1] = privateScratchPerThreadSize;
+    createModuleFromBinary(0u, false, mockKernelImmData.get());
+
+    auto kernel = std::make_unique<MockKernel>(module.get());
+
+    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernel->initialize(&kernelDesc);
+
+    kernel->setGroupSize(4, 5, 6);
+    kernel->setGroupCount(3, 2, 1);
+    kernel->setGlobalOffsetExp(1, 2, 3);
+    kernel->patchGlobalOffset();
+
+    ze_result_t result;
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+    ASSERT_NE(nullptr, commandList);
+    commandList->isFlushTaskSubmissionEnabled = true;
+    ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    commandList->device = device;
+    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    commandList->csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+
+    ze_group_count_t groupCount = {3, 2, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(scratchPerThreadSize, commandList->getCommandListPerThreadScratchSize());
+    EXPECT_EQ(privateScratchPerThreadSize, commandList->getCommandListPerThreadPrivateScratchSize());
+
+    auto ultCsr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    EXPECT_EQ(scratchPerThreadSize, ultCsr->requiredScratchSize);
+    EXPECT_EQ(privateScratchPerThreadSize, ultCsr->requiredPrivateScratchSize);
 }
 
 } // namespace ult

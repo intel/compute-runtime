@@ -119,6 +119,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::commandsToPatch;
     using BaseClass::csr;
     using BaseClass::finalStreamState;
+    using BaseClass::isFlushTaskSubmissionEnabled;
     using BaseClass::partitionCount;
     using BaseClass::requiredStreamState;
 

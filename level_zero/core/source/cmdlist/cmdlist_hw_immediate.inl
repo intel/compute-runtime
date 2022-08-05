@@ -93,7 +93,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
 
     this->handleIndirectAllocationResidency();
 
-    this->csr->setRequiredScratchSizes(this->getCommandListPerThreadScratchSize(), this->getCommandListPerThreadScratchSize());
+    this->csr->setRequiredScratchSizes(this->getCommandListPerThreadScratchSize(), this->getCommandListPerThreadPrivateScratchSize());
 
     if (performMigration) {
         auto deviceImp = static_cast<DeviceImp *>(this->device);
