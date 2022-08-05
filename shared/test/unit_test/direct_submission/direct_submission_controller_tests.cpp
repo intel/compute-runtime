@@ -133,7 +133,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWithNotStar
     controller.directSubmissionControllingThread.reset();
 }
 
-TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegisterCsrsThenTimeoutIsAdjusted) {
+TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegisterCsrsThenTimeoutIsNotAdjusted) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
@@ -183,13 +183,13 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
     EXPECT_EQ(controller.timeout, 5000);
 
     controller.registerDirectSubmission(&csr1);
-    EXPECT_EQ(controller.timeout, 1250);
+    EXPECT_EQ(controller.timeout, 5000);
 
     controller.registerDirectSubmission(&csr2);
-    EXPECT_EQ(controller.timeout, 312);
+    EXPECT_EQ(controller.timeout, 5000);
 
     controller.registerDirectSubmission(&csr4);
-    EXPECT_EQ(controller.timeout, 312);
+    EXPECT_EQ(controller.timeout, 5000);
 
     controller.unregisterDirectSubmission(&csr);
     controller.unregisterDirectSubmission(&csr1);
@@ -199,6 +199,8 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
 }
 
 TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegisterCsrsFromDifferentSubdevicesThenTimeoutIsAdjusted) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionControllerDivisor.set(4);
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();

@@ -304,7 +304,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionNewResourceTlbFlush, -1, "-1: dr
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionDisableMonitorFence, -1, "Disable dispatching monitor fence commands")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDirectSubmissionController, -1, "Enable direct submission terminating after given timeout, -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionControllerTimeout, -1, "Set direct submission controller timeout, -1: default 5000 us, >=0: timeout in us")
-DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionControllerDivisor, -1, "Set direct submission controller timeout divider, -1: default 2, >0: divider value")
+DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionControllerDivisor, -1, "Set direct submission controller timeout divider, -1: default 1, >0: divider value")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionForceLocalMemoryStorageMode, -1, "Force local memory storage for command/ring/semaphore buffer, -1: default - for all engines, 0: disabled, 1: for multiOsContextCapable engine, 2: for all engines")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableRingSwitchTagUpdateWa, -1, "-1: default, 0 - disable, 1 - enable. If enabled, completionFences wont be updated if ring is not running.")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionReadBackCommandBuffer, -1, "-1: default - disabled, 0 - disable, 1 - enable. If enabled, read first dword of cmd buffer after handling residency.")
