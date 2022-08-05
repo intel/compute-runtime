@@ -220,10 +220,6 @@ ze_result_t DebugSession::sanityMemAccessThreadCheck(ze_device_thread_t thread, 
             return ZE_RESULT_SUCCESS;
         }
     } else if (DebugSession::isSingleThread(thread)) {
-        if (desc->type != ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT) {
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        }
-
         if (!areRequestedThreadsStopped(thread)) {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         } else {
@@ -355,7 +351,6 @@ DebugSessionImp::Error DebugSessionImp::resumeThreadsWithinDevice(uint32_t devic
 
     std::vector<ze_device_thread_t> resumeThreads;
     std::vector<EuThread::ThreadId> resumeThreadIds;
-
     for (auto &threadId : singleThreads) {
         if (allThreads[threadId]->isRunning()) {
             continue;
@@ -446,16 +441,13 @@ bool DebugSessionImp::writeResumeCommand(const std::vector<EuThread::ThreadId> &
         }
     } else // >= 2u
     {
-        auto *regdesc = &stateSaveAreaHeader->regHeader.cmd;
         SIP::sip_command resumeCommand = {0};
         resumeCommand.command = static_cast<uint32_t>(NEO::SipKernel::COMMAND::RESUME);
 
         for (auto &threadID : threadIds) {
-            PRINT_DEBUGGER_INFO_LOG("Write RESUME for %s\n", EuThread::toString(threadID).c_str());
-            auto result = registersAccessHelper(allThreads[threadID].get(), regdesc, 0, 1, &resumeCommand, true);
+            ze_result_t result = cmdRegisterAccessHelper(threadID, resumeCommand, true);
             if (result != ZE_RESULT_SUCCESS) {
                 success = false;
-                PRINT_DEBUGGER_ERROR_LOG("Failed to write RESUME command for thread %s\n", EuThread::toString(threadID).c_str());
             }
         }
     }
@@ -1144,6 +1136,20 @@ ze_result_t DebugSessionImp::registersAccessHelper(const EuThread *thread, const
     return ret == 0 ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
 
+ze_result_t DebugSessionImp::cmdRegisterAccessHelper(const EuThread::ThreadId &threadId, SIP::sip_command &command, bool write) {
+    auto stateSaveAreaHeader = getStateSaveAreaHeader();
+    auto *regdesc = &stateSaveAreaHeader->regHeader.cmd;
+
+    PRINT_DEBUGGER_INFO_LOG("Access CMD %d for thread %s\n", command.command, EuThread::toString(threadId).c_str());
+
+    ze_result_t result = registersAccessHelper(allThreads[threadId].get(), regdesc, 0, 1, &command, write);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_DEBUGGER_ERROR_LOG("Failed to access CMD for thread %s\n", EuThread::toString(threadId).c_str());
+    }
+
+    return result;
+}
+
 ze_result_t DebugSessionImp::readRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {
     if (!isSingleThread(thread)) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
@@ -1206,19 +1212,27 @@ ze_result_t DebugSessionImp::writeRegistersImp(EuThread::ThreadId threadId, uint
     return registersAccessHelper(allThreads[threadId].get(), regdesc, start, count, pRegisterValues, true);
 }
 
-bool DebugSessionImp::isValidGpuAddress(uint64_t address) const {
-    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-    auto decanonizedAddress = gmmHelper->decanonize(address);
-    bool validAddress = gmmHelper->isValidCanonicalGpuAddress(address);
+bool DebugSessionImp::isValidGpuAddress(const zet_debug_memory_space_desc_t *desc) const {
 
-    if (address == decanonizedAddress || validAddress) {
-        return true;
+    if (desc->type == ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT) {
+        auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+        auto decanonizedAddress = gmmHelper->decanonize(desc->address);
+        bool validAddress = gmmHelper->isValidCanonicalGpuAddress(desc->address);
+
+        if (desc->address == decanonizedAddress || validAddress) {
+            return true;
+        }
+    } else if (desc->type == ZET_DEBUG_MEMORY_SPACE_TYPE_SLM) {
+        if (desc->address & (1 << slmAddressSpaceTag)) { // IGC sets bit 28 to identify SLM address
+            return true;
+        }
     }
+
     return false;
 }
 
 ze_result_t DebugSessionImp::validateThreadAndDescForMemoryAccess(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc) {
-    if (!isValidGpuAddress(desc->address)) {
+    if (!isValidGpuAddress(desc)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -1226,6 +1240,111 @@ ze_result_t DebugSessionImp::validateThreadAndDescForMemoryAccess(ze_device_thre
     if (status != ZE_RESULT_SUCCESS) {
         return status;
     }
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t DebugSessionImp::waitForCmdReady(EuThread::ThreadId threadId, uint16_t retryCount) {
+    ze_result_t status;
+    SIP::sip_command sipCommand = {0};
+
+    for (uint16_t attempts = 0; attempts < retryCount; attempts++) {
+        status = cmdRegisterAccessHelper(threadId, sipCommand, false);
+        if (status != ZE_RESULT_SUCCESS) {
+            return status;
+        }
+
+        if (sipCommand.command == static_cast<uint32_t>(NEO::SipKernel::COMMAND::READY)) {
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    if (sipCommand.command != static_cast<uint32_t>(NEO::SipKernel::COMMAND::READY)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t DebugSessionImp::readSLMMemory(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
+    ze_result_t status;
+    SIP::sip_command sipCommand = {0};
+    char *output = static_cast<char *>(buffer);
+
+    status = waitForCmdReady(threadId, sipRetryCount);
+    if (status != ZE_RESULT_SUCCESS) {
+        return status;
+    }
+
+    uint64_t offset = desc->address & maxNBitValue(slmAddressSpaceTag);
+
+    // SIP accesses SLM in read units of slmSendBytesSize at offset units of the same size
+    uint32_t offsetUnits = static_cast<uint32_t>(std::ceil(static_cast<float>(offset) / slmSendBytesSize));
+    uint32_t frontPadding = offset % slmSendBytesSize;
+    uint32_t remainingSlmSendUnits = static_cast<uint32_t>(std::ceil(static_cast<float>(size) / slmSendBytesSize));
+
+    if (frontPadding) {
+        offsetUnits--;
+        if ((size + frontPadding) > (remainingSlmSendUnits * slmSendBytesSize)) {
+            remainingSlmSendUnits++;
+        }
+    }
+
+    uint32_t maxUnitsPerLoop = EXCHANGE_BUFFER_SIZE / slmSendBytesSize;
+    uint32_t loops = static_cast<uint32_t>(std::ceil(static_cast<float>(remainingSlmSendUnits) / maxUnitsPerLoop));
+
+    char *tmpBuffer = new char[remainingSlmSendUnits * slmSendBytesSize];
+    uint32_t readUnits = 0;
+    uint32_t bytesAlreadRead = 0;
+
+    sipCommand.offset = offsetUnits;
+
+    for (uint32_t loop = 0; loop < loops; loop++) {
+
+        if (remainingSlmSendUnits >= maxUnitsPerLoop) {
+            readUnits = maxUnitsPerLoop;
+        } else {
+            readUnits = remainingSlmSendUnits;
+        }
+
+        sipCommand.command = static_cast<uint32_t>(NEO::SipKernel::COMMAND::SLM_READ);
+        sipCommand.size = static_cast<uint32_t>(readUnits);
+
+        status = cmdRegisterAccessHelper(threadId, sipCommand, true);
+        if (status != ZE_RESULT_SUCCESS) {
+            delete[] tmpBuffer;
+            return status;
+        }
+
+        status = resumeImp(std::vector<EuThread::ThreadId>{threadId}, threadId.tileIndex);
+        if (status != ZE_RESULT_SUCCESS) {
+            delete[] tmpBuffer;
+            return status;
+        }
+
+        status = waitForCmdReady(threadId, sipRetryCount);
+        if (status != ZE_RESULT_SUCCESS) {
+            delete[] tmpBuffer;
+            return status;
+        }
+
+        status = cmdRegisterAccessHelper(threadId, sipCommand, false);
+        if (status != ZE_RESULT_SUCCESS) {
+            delete[] tmpBuffer;
+            return status;
+        }
+
+        memcpy_s(tmpBuffer + bytesAlreadRead, readUnits * slmSendBytesSize, sipCommand.buffer, readUnits * slmSendBytesSize);
+
+        remainingSlmSendUnits -= readUnits;
+        sipCommand.offset += readUnits;
+        bytesAlreadRead += readUnits * slmSendBytesSize;
+    }
+
+    memcpy_s(output, size, tmpBuffer + frontPadding, size);
+
+    delete[] tmpBuffer;
+
     return ZE_RESULT_SUCCESS;
 }
 

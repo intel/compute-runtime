@@ -59,6 +59,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::isValidGpuAddress;
     using L0::DebugSessionImp::newlyStoppedThreads;
     using L0::DebugSessionImp::pendingInterrupts;
+    using L0::DebugSessionImp::readSLMMemory;
     using L0::DebugSessionImp::readStateSaveAreaHeader;
     using L0::DebugSessionImp::tileAttachEnabled;
     using L0::DebugSessionImp::tileSessions;
@@ -106,12 +107,14 @@ struct MockDebugSession : public L0::DebugSessionImp {
     ze_result_t readMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) override {
         return readMemoryResult;
     }
+
     ze_result_t writeMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) override {
         return ZE_RESULT_SUCCESS;
     }
     ze_result_t acknowledgeEvent(const zet_debug_event_t *event) override {
         return ZE_RESULT_SUCCESS;
     }
+
     ze_result_t readRegistersImp(EuThread::ThreadId thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
         readRegistersCallCount++;
         readRegistersReg = type;
@@ -223,6 +226,45 @@ struct MockDebugSession : public L0::DebugSessionImp {
         return L0::DebugSessionImp::writeResumeCommand(threadIds);
     }
 
+    ze_result_t cmdRegisterAccessHelper(const EuThread::ThreadId &threadId, SIP::sip_command &command, bool write) override {
+
+        if (slmTesting) {
+            if (write &&
+                (command.command == static_cast<uint32_t>(NEO::SipKernel::COMMAND::SLM_READ) ||
+                 command.command == static_cast<uint32_t>(NEO::SipKernel::COMMAND::SLM_WRITE))) {
+                cmdResgisterWrittenForSLM = true;
+                if (forceCmdAccessFail) {
+                    return ZE_RESULT_FORCE_UINT32;
+                }
+            }
+
+            if (cmdResgisterWrittenForSLM) {
+                cmdRegisterAccessCount++;
+            }
+            if (!forceSlmCmdNotReady) {
+                if (cmdRegisterAccessCount == 3) { //Data is made available by SIP
+                    command.command = 1;           // NEO::SipKernel::COMMAND::READY
+                    uint64_t offset = command.offset * 16;
+                    uint32_t size = command.size * 16;
+
+                    memcpy_s(command.buffer, size, slMemory + offset, size);
+
+                    auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(this->stateSaveAreaHeader.data()))->regHeader.cmd;
+                    this->registersAccessHelper(this->allThreads[threadId].get(), regdesc, 0, 1, &command, true);
+
+                } else if (cmdRegisterAccessCount == 4) { // Reading the data
+                    cmdRegisterAccessCount = 0;
+                    cmdResgisterWrittenForSLM = false;
+                    if (!memcmp(slMemory, "FailReadingData", strlen("FailReadingData"))) {
+                        return ZE_RESULT_FORCE_UINT32;
+                    }
+                }
+            }
+        }
+
+        return L0::DebugSessionImp::cmdRegisterAccessHelper(threadId, command, write);
+    }
+
     bool checkThreadIsResumed(const EuThread::ThreadId &threadID) override {
         checkThreadIsResumedCalled++;
         if (skipCheckThreadIsResumed) {
@@ -289,6 +331,14 @@ struct MockDebugSession : public L0::DebugSessionImp {
     bool attachTileCalled = false;
     bool detachTileCalled = false;
     std::vector<uint32_t> cleanRootSessionDeviceIndices;
+
+    int cmdRegisterAccessCount = 0;
+    bool cmdResgisterWrittenForSLM = false;
+    bool forceSlmCmdNotReady = false;
+    bool forceCmdAccessFail = false;
+    bool slmTesting = false;
+    static constexpr int slmSize = 256;
+    char slMemory[slmSize];
 };
 
 using DebugSessionTest = ::testing::Test;
@@ -1805,6 +1855,7 @@ struct DebugSessionRegistersAccess {
             session->writeGpuMemory(0, reinterpret_cast<char *>(&srMagic), sizeof(srMagic), reinterpret_cast<uint64_t>(pStateSaveAreaHeader) + srMagicOffset);
         }
     }
+
     ze_device_thread_t stoppedThread = {0, 0, 0, 0};
     EuThread::ThreadId stoppedThreadId{0, stoppedThread};
     std::unique_ptr<MockDebugSession> session;
@@ -2050,12 +2101,13 @@ TEST_F(DebugSessionRegistersAccessTest, GivenSipVersion2WhenWritingResumeCommand
 
     dumpRegisterState();
 
-    session->skipWriteResumeCommand = false;
-    session->writeResumeCommand(threads);
-
     auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.cmd;
     SIP::sip_command resumeCommand = {0};
     resumeCommand.command = 11;
+    session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, &resumeCommand, true);
+
+    session->skipWriteResumeCommand = false;
+    session->writeResumeCommand(threads);
 
     session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, &resumeCommand, false);
     EXPECT_EQ(resumeValue, resumeCommand.command);
@@ -2063,6 +2115,134 @@ TEST_F(DebugSessionRegistersAccessTest, GivenSipVersion2WhenWritingResumeCommand
     resumeCommand.command = 11;
     session->registersAccessHelper(session->allThreads[thread3].get(), regdesc, 0, 1, &resumeCommand, false);
     EXPECT_EQ(resumeValue, resumeCommand.command);
+}
+
+TEST_F(DebugSessionRegistersAccessTest, GivenSipVersion2WhenReadingSLMThenReadisSuccessfull) {
+    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+
+    {
+        auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeader.state_area_offset +
+                    pStateSaveAreaHeader->regHeader.state_save_size * 16;
+        session->stateSaveAreaHeader.resize(size);
+        session->slmTesting = true;
+        int i;
+        for (i = 0; i < session->slmSize; i++) {
+            session->slMemory[i] = i & 127;
+        }
+    }
+
+    EuThread::ThreadId thread0(0, 0, 0, 0, 0);
+
+    std::vector<EuThread::ThreadId> threads;
+    threads.push_back(thread0);
+
+    dumpRegisterState();
+
+    auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.cmd;
+    SIP::sip_command resumeCommand = {0};
+    resumeCommand.command = 1; // NEO::SipKernel::COMMAND::READY;
+    session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, &resumeCommand, true);
+
+    zet_debug_memory_space_desc_t desc;
+    desc.address = 0x10000000;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM;
+
+    session->skipWriteResumeCommand = false;
+
+    char output[EXCHANGE_BUFFER_SIZE * 3];
+    memset(output, 0, EXCHANGE_BUFFER_SIZE * 3);
+
+    int readSize = 7;
+    auto retVal = session->readSLMMemory(thread0, &desc, readSize, output);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+    int i = 0;
+    for (i = 0; i < readSize; i++) {
+        EXPECT_EQ(output[i], session->slMemory[i]);
+    }
+    memset(output, 0, EXCHANGE_BUFFER_SIZE * 3);
+
+    desc.address = 0x10000005;
+    retVal = session->readSLMMemory(thread0, &desc, readSize, output);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+    for (i = 0; i < readSize; i++) {
+        EXPECT_EQ(output[i], session->slMemory[i + 0x5]);
+    }
+    memset(output, 0, EXCHANGE_BUFFER_SIZE * 3);
+
+    desc.address = 0x1000000f;
+    retVal = session->readSLMMemory(thread0, &desc, readSize, output);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+    for (i = 0; i < readSize; i++) {
+        EXPECT_EQ(output[i], session->slMemory[i + 0xf]);
+    }
+    memset(output, 0, EXCHANGE_BUFFER_SIZE * 3);
+
+    readSize = 132;
+    retVal = session->readSLMMemory(thread0, &desc, readSize, output);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+    for (i = 0; i < readSize; i++) {
+        EXPECT_EQ(output[i], session->slMemory[i + 0xf]);
+    }
+    memset(output, 0, EXCHANGE_BUFFER_SIZE * 3);
+}
+
+TEST_F(DebugSessionRegistersAccessTest, GivenSipVersion2WhenReadingSLMThenTestFailConditions) {
+    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+
+    {
+        auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeader.state_area_offset +
+                    pStateSaveAreaHeader->regHeader.state_save_size * 16;
+        session->stateSaveAreaHeader.resize(size);
+        session->slmTesting = true;
+    }
+
+    EuThread::ThreadId thread0(0, 0, 0, 0, 0);
+
+    std::vector<EuThread::ThreadId> threads;
+    threads.push_back(thread0);
+
+    dumpRegisterState();
+
+    auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.cmd;
+    SIP::sip_command resumeCommand = {0};
+    resumeCommand.command = 1; // NEO::SipKernel::COMMAND::READY;
+    session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, &resumeCommand, true);
+
+    zet_debug_memory_space_desc_t desc;
+    desc.address = 0x10000000;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM;
+
+    session->skipWriteResumeCommand = false;
+
+    constexpr int readSize = EXCHANGE_BUFFER_SIZE * 2;
+    char output[readSize];
+
+    memcpy_s(session->slMemory, strlen("FailReadingData"), "FailReadingData", strlen("FailReadingData"));
+    auto retVal = session->readSLMMemory(thread0, &desc, readSize, output);
+    EXPECT_EQ(ZE_RESULT_FORCE_UINT32, retVal);
+
+    session->resumeImpResult = ZE_RESULT_ERROR_UNKNOWN;
+    retVal = session->readSLMMemory(thread0, &desc, readSize, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+    session->resumeImpResult = ZE_RESULT_SUCCESS;
+
+    session->forceCmdAccessFail = true;
+    retVal = session->readSLMMemory(thread0, &desc, readSize, output);
+    EXPECT_EQ(ZE_RESULT_FORCE_UINT32, retVal);
+    session->forceCmdAccessFail = false;
+
+    session->forceSlmCmdNotReady = true;
+    retVal = session->readSLMMemory(thread0, &desc, readSize, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
+    session->forceSlmCmdNotReady = false;
+
+    session->stateSaveAreaHeader[0] = '!';
+    retVal = session->readSLMMemory(thread0, &desc, readSize, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
 }
 
 TEST_F(DebugSessionRegistersAccessTest, GivenBindlessSipVersion2WhenCallingResumeThenResumeInCmdRegisterIsWritten) {
@@ -2246,13 +2426,16 @@ TEST(DebugSessionTest, givenCanonicalOrDecanonizedAddressWhenCheckingValidAddres
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
-    uint64_t address = 0xffffffff12345678;
+    zet_debug_memory_space_desc_t desc;
+    desc.address = 0xffffffff12345678;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
 
-    EXPECT_TRUE(sessionMock->isValidGpuAddress(address));
+    EXPECT_TRUE(sessionMock->isValidGpuAddress(&desc));
 
     auto gmmHelper = neoDevice->getGmmHelper();
-    auto decanonized = gmmHelper->decanonize(address);
-    EXPECT_TRUE(sessionMock->isValidGpuAddress(decanonized));
+    auto decanonized = gmmHelper->decanonize(desc.address);
+    desc.address = decanonized;
+    EXPECT_TRUE(sessionMock->isValidGpuAddress(&desc));
 }
 
 TEST(DebugSessionTest, givenInvalidAddressWhenCheckingValidAddressThenFalseIsReturned) {
@@ -2268,7 +2451,14 @@ TEST(DebugSessionTest, givenInvalidAddressWhenCheckingValidAddressThenFalseIsRet
     auto addressWidth = gmmHelper->getAddressWidth();
     uint64_t address = maxNBitValue(addressWidth) << 1 | 0x4000;
 
-    EXPECT_FALSE(sessionMock->isValidGpuAddress(address));
+    zet_debug_memory_space_desc_t desc;
+    desc.address = address;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    EXPECT_FALSE(sessionMock->isValidGpuAddress(&desc));
+
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_FORCE_UINT32;
+    EXPECT_FALSE(sessionMock->isValidGpuAddress(&desc));
 }
 
 TEST(DebugSessionTest, givenDebugSessionWhenGettingTimeDiffThenDiffReturned) {

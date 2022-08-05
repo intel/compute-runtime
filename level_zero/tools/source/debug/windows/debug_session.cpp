@@ -454,6 +454,10 @@ ze_result_t DebugSessionWindows::readMemory(ze_device_thread_t thread, const zet
         return status;
     }
 
+    if (desc->type != ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     if (isVAElf(desc, size)) {
         return readElfSpace(desc, size, buffer);
     }
@@ -485,6 +489,10 @@ ze_result_t DebugSessionWindows::writeMemory(ze_device_thread_t thread, const ze
     ze_result_t status = validateThreadAndDescForMemoryAccess(thread, desc);
     if (status != ZE_RESULT_SUCCESS) {
         return status;
+    }
+
+    if (desc->type != ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
     uint64_t memoryHandle = DebugSessionWindows::invalidHandle;

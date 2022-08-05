@@ -431,9 +431,6 @@ TEST(DebugSession, givenDifferentCombinationsOfThreadsAndMemoryTypeCheckExpected
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, retVal);
 
     thread = {0, 0, 0, 1};
-    retVal = sessionMock->sanityMemAccessThreadCheck(thread, &desc);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, retVal);
-
     desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
 
     retVal = sessionMock->sanityMemAccessThreadCheck(thread, &desc);

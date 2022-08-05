@@ -1281,7 +1281,7 @@ TEST_F(DebugApiWindowsTest, GivenInvalidAddressWhenCallingReadMemoryThenErrorIsR
     desc.address = 0xf0ffffff00000000;
     desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
 
-    EXPECT_FALSE(session->isValidGpuAddress(desc.address));
+    EXPECT_FALSE(session->isValidGpuAddress(&desc));
 
     char output[bufferSize] = {};
     auto retVal = session->readMemory(thread, &desc, bufferSize, output);
@@ -1300,7 +1300,7 @@ TEST_F(DebugApiWindowsTest, GivenInvalidAddressWhenCallingWriteMemoryThenErrorIs
     desc.address = 0xf0ffffff00000000;
     desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
 
-    EXPECT_FALSE(session->isValidGpuAddress(desc.address));
+    EXPECT_FALSE(session->isValidGpuAddress(&desc));
 
     char output[bufferSize] = {};
     auto retVal = session->writeMemory(thread, &desc, bufferSize, output);
@@ -1490,7 +1490,7 @@ TEST_F(DebugApiWindowsTest, WhenCallingWriteMemoryForExpectedFailureCasesThenErr
 
     desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM;
     auto retVal = session->writeMemory(thread, &desc, size, output);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, retVal);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, retVal);
 
     desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
 
@@ -1553,7 +1553,7 @@ TEST_F(DebugApiWindowsTest, WhenCallingReadMemoryForExpectedFailureCasesThenErro
 
     desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM;
     auto retVal = session->readMemory(thread, &desc, size, output);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, retVal);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, retVal);
 
     desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
 

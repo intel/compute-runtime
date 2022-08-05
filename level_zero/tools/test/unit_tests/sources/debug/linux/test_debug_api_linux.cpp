@@ -1645,7 +1645,7 @@ TEST_F(DebugApiLinuxTest, GivenInvalidAddressWhenCallingReadMemoryThenErrorIsRet
     desc.address = 0xf0ffffff00000000;
     desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
 
-    EXPECT_FALSE(session->isValidGpuAddress(desc.address));
+    EXPECT_FALSE(session->isValidGpuAddress(&desc));
 
     char output[bufferSize];
     session->vmHandle = UINT64_MAX;
@@ -1691,20 +1691,12 @@ TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryForISAForExpectedFailureCasesThen
 
     desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM;
 
-    thread.slice = 1;
-    thread.subslice = 1;
-    thread.eu = 1;
-    thread.thread = 1;
-
-    auto retVal = session->readMemory(thread, &desc, size, output);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, retVal);
-
     thread.slice = UINT32_MAX;
     thread.subslice = UINT32_MAX;
     thread.eu = UINT32_MAX;
     thread.thread = UINT32_MAX;
 
-    retVal = session->readMemory(thread, &desc, size, output);
+    auto retVal = session->readMemory(thread, &desc, size, output);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, retVal);
 
     desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
@@ -1957,7 +1949,7 @@ TEST_F(DebugApiLinuxTest, GivenInvalidAddressWhenCallingWriteMemoryThenErrorIsRe
     desc.address = 0xf0ffffff00000000;
     desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
 
-    EXPECT_FALSE(session->isValidGpuAddress(desc.address));
+    EXPECT_FALSE(session->isValidGpuAddress(&desc));
 
     char output[bufferSize];
     session->vmHandle = UINT64_MAX;
@@ -2000,10 +1992,6 @@ TEST_F(DebugApiLinuxTest, WhenCallingWriteMemoryForExpectedFailureCasesThenError
     char output[bufferSize];
     size_t size = bufferSize;
 
-    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM;
-    auto retVal = session->writeMemory(thread, &desc, size, output);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, retVal);
-
     desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
 
     thread.slice = UINT32_MAX;
@@ -2011,7 +1999,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingWriteMemoryForExpectedFailureCasesThenError
     thread.eu = 0;
     thread.thread = 0;
 
-    retVal = session->writeMemory(thread, &desc, size, output);
+    auto retVal = session->writeMemory(thread, &desc, size, output);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, retVal);
 
     thread.slice = UINT32_MAX;
@@ -2066,6 +2054,12 @@ TEST_F(DebugApiLinuxTest, WhenCallingWriteMemoryForExpectedFailureCasesThenError
 
     retVal = session->writeMemory(thread, &desc, size, output);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
+
+    session->ensureThreadStopped(thread);
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM;
+    desc.address = 0x10000000;
+    retVal = session->writeMemory(thread, &desc, size, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, retVal);
 }
 
 TEST_F(DebugApiLinuxTest, GivenErrorFromVmOpenWhenCallingReadGpuMemoryThenCloseIsNotCalledAndErrorReturned) {
@@ -6363,6 +6357,38 @@ TEST_F(DebugApiRegistersAccessTest, GivenThreadWhenReadingSystemRoutineIdentThen
     EXPECT_EQ(0u, srIdent.version.minor);
     EXPECT_EQ(0u, srIdent.version.patch);
     EXPECT_STREQ("srmagic", srIdent.magic);
+}
+
+TEST_F(DebugApiRegistersAccessTest, GivenSipNotUpdatingSipCmdThenAccessToSlmFailsGracefully) {
+    SIP::version version = {2, 0, 0};
+    initStateSaveArea(session->stateSaveAreaHeader, version);
+
+    ioctlHandler = new MockIoctlHandler;
+    ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
+    ioctlHandler->mmapBase = stateSaveAreaGpuVa;
+
+    ioctlHandler->setPreadMemory(session->stateSaveAreaHeader.data(), session->stateSaveAreaHeader.size(), stateSaveAreaGpuVa);
+    ioctlHandler->setPwriteMemory(session->stateSaveAreaHeader.data(), session->stateSaveAreaHeader.size(), stateSaveAreaGpuVa);
+
+    session->ioctlHandler.reset(ioctlHandler);
+    session->vmHandle = 7;
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToStateBaseAreaBindInfo[vmHandle] = {stateSaveAreaGpuVa + maxDbgSurfaceSize, sizeof(SbaTrackedAddresses)};
+
+    ze_device_thread_t thread;
+    thread.slice = 0;
+    thread.subslice = 0;
+    thread.eu = 0;
+    thread.thread = 0;
+
+    zet_debug_memory_space_desc_t desc;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM;
+    desc.address = 0x10000000;
+
+    char output[bufferSize];
+    session->ensureThreadStopped(thread);
+
+    auto retVal = session->readMemory(thread, &desc, bufferSize, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
 }
 
 TEST_F(DebugApiRegistersAccessTest, GivenNoVmHandleWhenReadingSystemRoutineIdentThenFalseIsReturned) {

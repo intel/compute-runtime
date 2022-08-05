@@ -7,6 +7,7 @@
 
 #include "level_zero/tools/source/debug/linux/prelim/debug_session.h"
 
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/array_count.h"
@@ -1525,6 +1526,19 @@ ze_result_t DebugSessionLinux::readMemory(ze_device_thread_t thread, const zet_d
         return status;
     }
 
+    if (desc->type == ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT) {
+        status = readDefaultMemory(thread, desc, size, buffer);
+    } else {
+        auto threadId = convertToThreadId(thread);
+        status = readSLMMemory(threadId, desc, size, buffer);
+    }
+
+    return status;
+}
+
+ze_result_t DebugSessionLinux::readDefaultMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
+    ze_result_t status;
+
     bool isa = tryReadIsa(connectedDevice->getNEODevice()->getDeviceBitfield(), desc, size, buffer, status);
     if (isa) {
         return status;
@@ -1552,6 +1566,10 @@ ze_result_t DebugSessionLinux::writeMemory(ze_device_thread_t thread, const zet_
     ze_result_t status = validateThreadAndDescForMemoryAccess(thread, desc);
     if (status != ZE_RESULT_SUCCESS) {
         return status;
+    }
+
+    if (desc->type != ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
     auto deviceBitfield = connectedDevice->getNEODevice()->getDeviceBitfield();

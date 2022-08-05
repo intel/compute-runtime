@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/built_ins/sip.h"
+
 #include "level_zero/tools/source/debug/debug_session.h"
 
 #include <atomic>
@@ -76,6 +78,9 @@ struct DebugSessionImp : DebugSession {
 
     virtual ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) = 0;
     virtual ze_result_t writeGpuMemory(uint64_t memoryHandle, const char *input, size_t size, uint64_t gpuVa) = 0;
+    ze_result_t readSLMMemory(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc,
+                              size_t size, void *buffer);
+
     ze_result_t validateThreadAndDescForMemoryAccess(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc);
 
     virtual void enqueueApiEvent(zet_debug_event_t &debugEvent) = 0;
@@ -99,6 +104,8 @@ struct DebugSessionImp : DebugSession {
 
     ze_result_t registersAccessHelper(const EuThread *thread, const SIP::regset_desc *regdesc,
                                       uint32_t start, uint32_t count, void *pRegisterValues, bool write);
+    MOCKABLE_VIRTUAL ze_result_t cmdRegisterAccessHelper(const EuThread::ThreadId &threadId, SIP::sip_command &command, bool write);
+    ze_result_t waitForCmdReady(EuThread::ThreadId threadId, uint16_t retryCount);
 
     const SIP::regset_desc *typeToRegsetDesc(uint32_t type);
     uint32_t getRegisterSize(uint32_t type);
@@ -120,7 +127,7 @@ struct DebugSessionImp : DebugSession {
         }
     }
 
-    bool isValidGpuAddress(uint64_t address) const;
+    bool isValidGpuAddress(const zet_debug_memory_space_desc_t *desc) const;
 
     MOCKABLE_VIRTUAL int64_t getTimeDifferenceMilliseconds(std::chrono::high_resolution_clock::time_point time) {
         auto now = std::chrono::high_resolution_clock::now();
@@ -150,6 +157,9 @@ struct DebugSessionImp : DebugSession {
 
     ApiEventQueue apiEvents;
     std::condition_variable apiEventCondition;
+    constexpr static uint16_t slmAddressSpaceTag = 28;
+    constexpr static uint16_t slmSendBytesSize = 16;
+    constexpr static uint16_t sipRetryCount = 10;
 };
 
 } // namespace L0
