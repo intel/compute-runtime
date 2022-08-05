@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -95,8 +95,8 @@ if(MSVC)
                         PROPERTIES
                         VS_DEBUGGER_COMMAND_ARGUMENTS
                         "${L0_TESTS_FILTER_OPTION} --gtest_catch_exceptions=0 ${L0_TESTS_LISTENER_OPTION}"
-                        VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir
-  )")
+                        VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)"
+  )
 endif()
 
 add_dependencies(unit_tests ${TARGET_NAME})
