@@ -210,11 +210,14 @@ TEST(MemoryProperties, givenClUncompressedHintFlagWhenCreateMemoryPropertiesThen
 }
 
 struct MemoryPropertiesHelperTests : ::testing::Test {
-    MockContext context;
+    MockUnrestrictiveContext context;
     MemoryProperties memoryProperties;
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
+    cl_mem_properties_intel rootDeviceId = reinterpret_cast<cl_mem_properties_intel>(static_cast<cl_device_id>(context.pRootDevice));
+    cl_mem_properties_intel subDevice0Id = reinterpret_cast<cl_mem_properties_intel>(static_cast<cl_device_id>(context.pSubDevice0));
+    cl_mem_properties_intel subDevice1Id = reinterpret_cast<cl_mem_properties_intel>(static_cast<cl_device_id>(context.pSubDevice1));
 };
 
 TEST_F(MemoryPropertiesHelperTests, givenNullPropertiesWhenParsingMemoryPropertiesThenTrueIsReturned) {
@@ -244,6 +247,8 @@ TEST_F(MemoryPropertiesHelperTests, givenValidPropertiesWhenParsingMemoryPropert
             CL_MEM_UNCOMPRESSED_HINT_INTEL,
         CL_MEM_ALLOC_FLAGS_INTEL,
         CL_MEM_ALLOC_WRITE_COMBINED_INTEL, CL_MEM_ALLOC_DEFAULT_INTEL,
+        CL_MEM_DEVICE_ID_INTEL,
+        rootDeviceId,
         0};
 
     EXPECT_TRUE(ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
@@ -509,4 +514,46 @@ TEST_F(MemoryPropertiesHelperTests, WhenCallingSetInitialPlacementThenCorrectVal
         MemoryPropertiesHelper::setUSMInitialPlacement(allocationProperties, initialPlacement);
         EXPECT_EQ(initialPlacement, allocationProperties.usmInitialPlacement);
     }
+}
+
+TEST_F(MemoryPropertiesHelperTests, givenDeviceSpecifiedMultipleTimesWhenParsingExtraMemoryPropertiesThenFalseIsReturned) {
+    cl_mem_properties_intel propertiesToTest[][5] = {
+        {CL_MEM_DEVICE_ID_INTEL, subDevice0Id, CL_MEM_DEVICE_ID_INTEL, subDevice0Id, 0},
+        {CL_MEM_DEVICE_ID_INTEL, subDevice0Id, CL_MEM_DEVICE_ID_INTEL, subDevice1Id, 0}};
+
+    for (auto properties : propertiesToTest) {
+        EXPECT_FALSE(ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                     MemoryPropertiesHelper::ObjType::UNKNOWN, context));
+    }
+}
+
+TEST_F(MemoryPropertiesHelperTests, givenInvalidDeviceIdWhenParsingExtraMemoryPropertiesThenFalseIsReturned) {
+    cl_mem_properties_intel properties[] = {
+        CL_MEM_DEVICE_ID_INTEL, rootDeviceId + 1,
+        0};
+
+    EXPECT_FALSE(ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                 MemoryPropertiesHelper::ObjType::UNKNOWN, context));
+}
+
+TEST_F(MemoryPropertiesHelperTests, givenRootDeviceIdWhenParsingExtraMemoryPropertiesThenValuesAreProperlySet) {
+    cl_mem_properties_intel properties[] = {
+        CL_MEM_DEVICE_ID_INTEL, rootDeviceId,
+        0};
+
+    EXPECT_TRUE(ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                MemoryPropertiesHelper::ObjType::UNKNOWN, context));
+    EXPECT_EQ(0b11u, memoryProperties.pDevice->getDeviceBitfield().to_ulong());
+    EXPECT_EQ(&context.pRootDevice->getDevice(), memoryProperties.pDevice);
+}
+
+TEST_F(MemoryPropertiesHelperTests, givenSubDeviceIdWhenParsingExtraMemoryPropertiesThenValuesAreProperlySet) {
+    cl_mem_properties_intel properties[] = {
+        CL_MEM_DEVICE_ID_INTEL, subDevice1Id,
+        0};
+
+    EXPECT_TRUE(ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                MemoryPropertiesHelper::ObjType::UNKNOWN, context));
+    EXPECT_EQ(0b10u, memoryProperties.pDevice->getDeviceBitfield().to_ulong());
+    EXPECT_EQ(&context.pSubDevice1->getDevice(), memoryProperties.pDevice);
 }

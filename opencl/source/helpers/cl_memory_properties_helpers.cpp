@@ -16,10 +16,12 @@ namespace NEO {
 bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryProperties &memoryProperties,
                                                      cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel,
                                                      cl_mem_alloc_flags_intel &allocflags, MemoryPropertiesHelper::ObjType objectType, Context &context) {
-    Device *pDevice = &context.getDevice(0)->getDevice();
+    bool deviceSet = false;
+    Device *pDevice = context.getDevice(0)->getDevice().getRootDevice();
     uint64_t handle = 0;
     uint64_t handleType = 0;
     uintptr_t hostptr = 0;
+
     if (properties != nullptr) {
         for (int i = 0; properties[i] != 0; i += 2) {
             switch (properties[i]) {
@@ -32,6 +34,19 @@ bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_int
             case CL_MEM_ALLOC_FLAGS_INTEL:
                 allocflags |= static_cast<cl_mem_alloc_flags_intel>(properties[i + 1]);
                 break;
+            case CL_MEM_DEVICE_ID_INTEL: {
+                if (deviceSet) {
+                    return false;
+                }
+                cl_device_id deviceId = reinterpret_cast<cl_device_id>(properties[i + 1]);
+                auto pClDevice = NEO::castToObject<ClDevice>(deviceId);
+                if ((pClDevice == nullptr) || (!context.isDeviceAssociated(*pClDevice))) {
+                    return false;
+                }
+                pDevice = &pClDevice->getDevice();
+                deviceSet = true;
+                break;
+            }
             case CL_MEM_ALLOC_USE_HOST_PTR_INTEL:
                 hostptr = static_cast<uintptr_t>(properties[i + 1]);
                 break;
@@ -62,9 +77,8 @@ bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_int
         return isFieldValid(flags, MemObjHelper::validFlagsForImage) &&
                isFieldValid(flagsIntel, MemObjHelper::validFlagsForImageIntel);
     default:
-        break;
+        return true;
     }
-    return true;
 }
 
 } // namespace NEO

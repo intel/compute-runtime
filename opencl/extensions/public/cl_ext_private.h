@@ -72,6 +72,8 @@ using cl_unified_shared_memory_type_intel = cl_uint;
 #define CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE (1 << 25)
 #define CL_MEM_48BIT_RESOURCE_INTEL (1 << 26)
 
+#define CL_MEM_DEVICE_ID_INTEL 0x10011
+
 // Used with clEnqueueVerifyMemory
 #define CL_MEM_COMPARE_EQUAL 0u
 #define CL_MEM_COMPARE_NOT_EQUAL 1u
