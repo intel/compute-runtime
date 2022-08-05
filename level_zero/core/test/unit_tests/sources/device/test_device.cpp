@@ -1096,7 +1096,7 @@ TEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescOrd
     engineGroups.push_back(engineGroupRender);
 
     uint32_t expectedOrdinal = 1u;
-    deviceImp->adjustCommandQueueDesc(desc);
+    deviceImp->adjustCommandQueueDesc(desc.ordinal, desc.index);
     EXPECT_EQ(desc.ordinal, expectedOrdinal);
 }
 
@@ -1141,7 +1141,7 @@ HWTEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescO
 
     uint32_t expectedOrdinal = 1u;
     uint32_t expectedIndex = 2u;
-    deviceImp->adjustCommandQueueDesc(desc);
+    deviceImp->adjustCommandQueueDesc(desc.ordinal, desc.index);
     EXPECT_EQ(desc.ordinal, expectedOrdinal);
     EXPECT_EQ(desc.index, expectedIndex);
 }
@@ -1155,7 +1155,7 @@ TEST_F(DeviceTest, givenNodeOrdinalFlagNotSetWhenCallAdjustCommandQueueDescThenD
     ze_command_queue_desc_t desc = {};
     EXPECT_EQ(desc.ordinal, 0u);
 
-    deviceImp->adjustCommandQueueDesc(desc);
+    deviceImp->adjustCommandQueueDesc(desc.ordinal, desc.index);
     EXPECT_EQ(desc.ordinal, 0u);
 }
 

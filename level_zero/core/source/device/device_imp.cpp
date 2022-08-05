@@ -163,11 +163,15 @@ ze_result_t DeviceImp::createCommandList(const ze_command_list_desc_t *desc,
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
+    uint32_t index = 0;
+    uint32_t commandQueueGroupOrdinal = desc->commandQueueGroupOrdinal;
+    adjustCommandQueueDesc(commandQueueGroupOrdinal, index);
+
     NEO::EngineGroupType engineGroupType{};
-    if (desc->commandQueueGroupOrdinal < numEngineGroups) {
-        engineGroupType = engineGroups[desc->commandQueueGroupOrdinal].engineGroupType;
+    if (commandQueueGroupOrdinal < numEngineGroups) {
+        engineGroupType = engineGroups[commandQueueGroupOrdinal].engineGroupType;
     } else {
-        engineGroupType = subDeviceEngineGroups[desc->commandQueueGroupOrdinal - numEngineGroups].engineGroupType;
+        engineGroupType = subDeviceEngineGroups[commandQueueGroupOrdinal - numEngineGroups].engineGroupType;
     }
 
     auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
@@ -188,21 +192,24 @@ ze_result_t DeviceImp::createCommandListImmediate(const ze_command_queue_desc_t 
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
+    ze_command_queue_desc_t commandQueueDesc = *desc;
+    adjustCommandQueueDesc(commandQueueDesc.ordinal, commandQueueDesc.index);
+
     NEO::EngineGroupType engineGroupType{};
-    if (desc->ordinal < numEngineGroups) {
-        engineGroupType = engineGroups[desc->ordinal].engineGroupType;
+    if (commandQueueDesc.ordinal < numEngineGroups) {
+        engineGroupType = engineGroups[commandQueueDesc.ordinal].engineGroupType;
     } else {
-        engineGroupType = subDeviceEngineGroups[desc->ordinal - numEngineGroups].engineGroupType;
+        engineGroupType = subDeviceEngineGroups[commandQueueDesc.ordinal - numEngineGroups].engineGroupType;
     }
 
     auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    *phCommandList = CommandList::createImmediate(productFamily, this, desc, false, engineGroupType, returnValue);
+    *phCommandList = CommandList::createImmediate(productFamily, this, &commandQueueDesc, false, engineGroupType, returnValue);
 
     return returnValue;
 }
 
-void DeviceImp::adjustCommandQueueDesc(ze_command_queue_desc_t &desc) {
+void DeviceImp::adjustCommandQueueDesc(uint32_t &ordinal, uint32_t &index) {
     auto nodeOrdinal = NEO::DebugManager.flags.NodeOrdinal.get();
     if (nodeOrdinal != -1) {
         const NEO::HardwareInfo &hwInfo = neoDevice->getHardwareInfo();
@@ -213,15 +220,15 @@ void DeviceImp::adjustCommandQueueDesc(ze_command_queue_desc_t &desc) {
         uint32_t currentEngineIndex = 0u;
         for (const auto &engine : engineGroups) {
             if (engine.engineGroupType == engineGroupType) {
-                desc.ordinal = currentEngineIndex;
+                ordinal = currentEngineIndex;
                 break;
             }
             currentEngineIndex++;
         }
         currentEngineIndex = 0u;
-        for (const auto &engine : engineGroups[desc.ordinal].engines) {
+        for (const auto &engine : engineGroups[ordinal].engines) {
             if (engine.getEngineType() == static_cast<aub_stream::EngineType>(nodeOrdinal)) {
-                desc.index = currentEngineIndex;
+                index = currentEngineIndex;
                 break;
             }
             currentEngineIndex++;
@@ -239,7 +246,7 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
     auto &subDeviceEngineGroups = this->getSubDeviceCopyEngineGroups();
 
     ze_command_queue_desc_t commandQueueDesc = *desc;
-    adjustCommandQueueDesc(commandQueueDesc);
+    adjustCommandQueueDesc(commandQueueDesc.ordinal, commandQueueDesc.index);
 
     if (!this->isQueueGroupOrdinalValid(commandQueueDesc.ordinal)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
