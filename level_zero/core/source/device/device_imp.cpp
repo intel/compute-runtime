@@ -38,6 +38,7 @@
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/event/event.h"
+#include "level_zero/core/source/fabric/fabric.h"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/module/module.h"
@@ -998,6 +999,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
 
     UNRECOVERABLE_IF(device == nullptr);
 
+    device->isSubdevice = isSubDevice;
     device->setDriverHandle(driverHandle);
     neoDevice->setSpecializedDevice(device);
 
@@ -1066,7 +1068,6 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
         if (subDevice == nullptr) {
             return nullptr;
         }
-        static_cast<DeviceImp *>(subDevice)->isSubdevice = true;
         static_cast<DeviceImp *>(subDevice)->setDebugSurface(debugSurface);
         device->subDevices.push_back(static_cast<Device *>(subDevice));
     }
@@ -1112,6 +1113,8 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     device->resourcesReleased = false;
 
     device->populateSubDeviceCopyEngineGroups();
+
+    device->fabricVertex = std::unique_ptr<FabricVertex>(FabricVertex::createFromDevice(device));
 
     return device;
 }

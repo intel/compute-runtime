@@ -49,4 +49,22 @@ ze_result_t zetMetricGroupCalculateMultipleMetricValuesExp(
     uint32_t *pMetricCounts,
     zet_typed_value_t *pMetricValues);
 
+ze_result_t zeFabricVertexGetExp(
+    ze_driver_handle_t hDriver,
+    uint32_t *pCount,
+    ze_fabric_vertex_handle_t *phVertices);
+
+ze_result_t zeFabricVertexGetSubVerticesExp(
+    ze_fabric_vertex_handle_t hVertex,
+    uint32_t *pCount,
+    ze_fabric_vertex_handle_t *phSubvertices);
+
+ze_result_t zeFabricVertexGetPropertiesExp(
+    ze_fabric_vertex_handle_t hVertex,
+    ze_fabric_vertex_exp_properties_t *pVertexProperties);
+
+ze_result_t zeFabricVertexGetDeviceExp(
+    ze_fabric_vertex_handle_t hVertex,
+    ze_device_handle_t *phDevice);
+
 } // namespace L0

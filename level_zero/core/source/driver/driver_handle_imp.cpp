@@ -19,6 +19,7 @@
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/source/driver/host_pointer_manager.h"
+#include "level_zero/core/source/fabric/fabric.h"
 
 #include "driver_version_l0.h"
 
@@ -614,6 +615,30 @@ ze_result_t DriverHandleImp::checkMemoryAccessFromDevice(Device *device, const v
     }
 
     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+}
+
+ze_result_t DriverHandleImp::fabricVertexGetExp(uint32_t *pCount, ze_fabric_vertex_handle_t *phVertices) {
+
+    uint32_t deviceCount = 0;
+    getDevice(&deviceCount, nullptr);
+
+    if (*pCount == 0) {
+        *pCount = deviceCount;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    std::vector<ze_device_handle_t> deviceHandles;
+    deviceHandles.resize(deviceCount);
+    getDevice(&deviceCount, deviceHandles.data());
+
+    *pCount = std::min(deviceCount, *pCount);
+
+    for (uint32_t index = 0; index < *pCount; index++) {
+        auto deviceImp = static_cast<DeviceImp *>(deviceHandles[index]);
+        phVertices[index] = deviceImp->fabricVertex->toHandle();
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 } // namespace L0

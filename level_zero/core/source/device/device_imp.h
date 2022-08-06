@@ -24,6 +24,7 @@ class DriverInfo;
 
 namespace L0 {
 struct SysmanDevice;
+struct FabricVertex;
 class CacheReservation;
 
 struct DeviceImp : public Device {
@@ -132,6 +133,7 @@ struct DeviceImp : public Device {
 
     using CmdListCreateFunPtrT = L0::CommandList *(*)(uint32_t, Device *, NEO::EngineGroupType, ze_command_list_flags_t, ze_result_t &);
     CmdListCreateFunPtrT getCmdListCreateFunc(const ze_command_list_desc_t *desc);
+    std::unique_ptr<FabricVertex> fabricVertex;
 
   protected:
     void adjustCommandQueueDesc(uint32_t &ordinal, uint32_t &index);

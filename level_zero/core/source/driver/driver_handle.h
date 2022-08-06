@@ -65,6 +65,7 @@ struct DriverHandle : _ze_driver_handle_t {
                                                                      size_t size,
                                                                      uint32_t rootDeviceIndex,
                                                                      uintptr_t *gpuAddress) = 0;
+    virtual ze_result_t fabricVertexGetExp(uint32_t *pCount, ze_fabric_vertex_handle_t *phDevices) = 0;
 
     static DriverHandle *fromHandle(ze_driver_handle_t handle) { return static_cast<DriverHandle *>(handle); }
     inline ze_driver_handle_t toHandle() { return this; }

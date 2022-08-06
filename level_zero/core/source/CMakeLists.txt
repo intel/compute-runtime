@@ -50,6 +50,8 @@ set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/event/event.h
     ${CMAKE_CURRENT_SOURCE_DIR}/fence/fence.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/fence/fence.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/fabric/fabric.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/fabric/fabric.h
     ${CMAKE_CURRENT_SOURCE_DIR}/helpers/allocation_extensions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/helpers/allocation_extensions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/helpers/api_specific_config_l0.cpp
