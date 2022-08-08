@@ -16,6 +16,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/program/program_initialization.h"
+#include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/fixtures/memory_allocator_fixture.h"
 #include "shared/test/common/fixtures/memory_manager_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -35,7 +36,6 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/hw_test.h"
-#include "shared/test/unit_test/compiler_interface/linker_mock.h"
 #include "shared/test/unit_test/helpers/raii_hw_helper.h"
 
 #include "opencl/source/event/event.h"

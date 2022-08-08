@@ -5,9 +5,9 @@
  *
  */
 
+#include "shared/test/common/device_binary_format/zebin_tests.h"
 #include "shared/test/common/mocks/mock_source_level_debugger.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/device_binary_format/zebin_tests.h"
 
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/program/program_with_zebin.h"

@@ -7,7 +7,7 @@
 
 #include "opencl/test/unit_test/program/program_with_zebin.h"
 
-#include "shared/test/unit_test/device_binary_format/zebin_tests.h"
+#include "shared/test/common/device_binary_format/zebin_tests.h"
 
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 

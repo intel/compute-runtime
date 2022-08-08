@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
-target_sources(${TARGET_NAME} PRIVATE
+target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${CMAKE_CURRENT_SOURCE_DIR}/ar/ar_decoder_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/ar/ar_encoder_tests.cpp
@@ -19,11 +19,8 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/elf/elf_tests_data.h
                ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_decoder_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_dumper_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_tests.h
                ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_validator_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/yaml/yaml_parser_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/zebin_debug_binary_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/zebin_decoder_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/zebin_tests.h
 )
-

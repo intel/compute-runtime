@@ -8,8 +8,8 @@
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/kernel/kernel_descriptor_from_patchtokens.h"
+#include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 
 TEST(KernelDescriptorFromPatchtokens, GivenKernelWithRTDispatchGlobalsThenKernelDescriptorIsProperlyPopulated) {
     std::vector<uint8_t> storage;

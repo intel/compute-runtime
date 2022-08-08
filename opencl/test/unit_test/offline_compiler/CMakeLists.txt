@@ -85,7 +85,7 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${NEO_SHARED_DIRECTORY}/memory_manager/deferred_deleter.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_compilers.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_compilers.h
-    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/device_binary_format/zebin_tests.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/device_binary_format/zebin_tests.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_excludes.cpp

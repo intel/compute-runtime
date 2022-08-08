@@ -7,7 +7,7 @@
 
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/device_binary_format/patchtokens_validator.h"
-#include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
+#include "shared/test/common/device_binary_format/patchtokens_tests.h"
 
 #include "gtest/gtest.h"
 

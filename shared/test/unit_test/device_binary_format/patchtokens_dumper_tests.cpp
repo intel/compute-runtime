@@ -8,9 +8,9 @@
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/device_binary_format/patchtokens_dumper.h"
 #include "shared/source/helpers/compiler_hw_info_config.h"
+#include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 
 #include <sstream>
 #include <unordered_set>

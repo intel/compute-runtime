@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/execution_environment/execution_environment.h"
-#include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
+#include "shared/test/common/device_binary_format/patchtokens_tests.h"
 
 #include "opencl/source/program/create.inl"
 #include "opencl/source/program/program.h"

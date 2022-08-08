@@ -9,9 +9,9 @@
 #include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/kernel/kernel_descriptor_from_patchtokens.h"
+#include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 
 TEST(KernelDescriptorFromPatchtokens, GivenEmptyInputKernelFromPatchtokensThenOnlySetsUpPointerSizeAndBinaryType) {
     NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens;

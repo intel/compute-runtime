@@ -43,7 +43,7 @@ macro(macro_for_each_core_type)
       set(SRC_FILE ${NEO_SHARED_TEST_DIRECTORY}/common/${BRANCH}${CORE_TYPE_LOWER}/unit_test_helper_${CORE_TYPE_LOWER}.cpp)
       if(EXISTS ${SRC_FILE})
         list(APPEND neo_libult_common_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
-        include_directories(${NEO_SHARED_TEST_DIRECTORY}/common/${BRANCH}${CORE_TYPE_LOWER}/definitions${BRANCH_DIR_SUFFIX})
+        target_include_directories(neo_libult_common PRIVATE ${NEO_SHARED_TEST_DIRECTORY}/common/${BRANCH}${CORE_TYPE_LOWER}/definitions${BRANCH_DIR_SUFFIX})
       endif()
       foreach(SRC_IT "enable_family_full_core_" "implicit_scaling_")
         set(SRC_FILE ${NEO_SHARED_DIRECTORY}${BRANCH}${CORE_TYPE_LOWER}${BRANCH_DIR}${SRC_IT}${CORE_TYPE_LOWER}.cpp)
@@ -128,19 +128,15 @@ if(TESTS_XEHP_AND_LATER)
   )
 endif()
 
-get_property(NEO_SHARED_TESTS_CMD_PARSE GLOBAL PROPERTY NEO_SHARED_TESTS_CMD_PARSE)
-list(APPEND neo_libult_common_SRCS_LIB_ULT
-     ${NEO_SHARED_TESTS_CMD_PARSE}
-)
 set_property(GLOBAL PROPERTY neo_libult_common_SRCS_LIB_ULT ${neo_libult_common_SRCS_LIB_ULT})
 
 set_property(GLOBAL PROPERTY neo_libult_common_SRCS_ENABLE_TESTED_HW ${neo_libult_common_SRCS_ENABLE_TESTED_HW})
 
 set_property(GLOBAL PROPERTY neo_libult_common_SRCS_ENABLE_TESTED_HW_LINUX ${neo_libult_common_SRCS_ENABLE_TESTED_HW_LINUX})
 
-add_library(neo_libult_common OBJECT EXCLUDE_FROM_ALL
-            ${neo_libult_common_SRCS_LIB_ULT}
-            ${neo_libult_common_SRCS_ENABLE_TESTED_HW}
+target_sources(neo_libult_common PRIVATE
+               ${neo_libult_common_SRCS_LIB_ULT}
+               ${neo_libult_common_SRCS_ENABLE_TESTED_HW}
 )
 
 set(neo_libult_common_SRCS_LIB_ULT_WIN

@@ -7,7 +7,7 @@
 
 #include "shared/offline_compiler/source/ocloc_validator.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
-#include "shared/test/unit_test/device_binary_format/zebin_tests.h"
+#include "shared/test/common/device_binary_format/zebin_tests.h"
 
 #include "opencl/test/unit_test/offline_compiler/mock/mock_argument_helper.h"
 

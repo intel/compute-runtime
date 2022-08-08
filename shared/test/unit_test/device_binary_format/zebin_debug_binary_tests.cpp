@@ -8,9 +8,9 @@
 #include "shared/source/device_binary_format/debug_zebin.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/zebin_elf.h"
+#include "shared/test/common/device_binary_format/zebin_tests.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/device_binary_format/zebin_tests.h"
 
 using namespace NEO::Elf;
 TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
