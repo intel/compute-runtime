@@ -49,6 +49,10 @@ if(NOT NEO_SKIP_UNIT_TESTS)
                              ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/includes${BRANCH_DIR_SUFFIX}
   )
 
+  if(UNIX AND NOT DISABLE_WDDM_LINUX)
+    target_include_directories(${TARGET_NAME} PUBLIC ${WDK_INCLUDE_PATHS})
+  endif()
+
   if(WIN32)
     target_link_libraries(${TARGET_NAME} dbghelp)
   endif()

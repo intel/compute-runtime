@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/options.h"
 #include "shared/source/os_interface/windows/d3dkmthk_wrapper.h"
+#include "shared/source/os_interface/windows/gdi_interface_logging.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 #include "shared/source/utilities/api_intercept.h"
 
@@ -86,6 +87,12 @@ class ThkWrapper {
             NTSTATUS status;
             status = mFunc(param);
             SYSTEM_LEAVE(getId<Param>());
+            return status;
+        } else if constexpr (GdiLogging::gdiLoggingSupport) {
+            NTSTATUS status;
+            GdiLogging::logEnter<Param>(param);
+            status = mFunc(param);
+            GdiLogging::logExit<Param>(status, param);
             return status;
         } else {
             return mFunc(param);

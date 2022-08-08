@@ -24,6 +24,15 @@ Gdi::Gdi() : gdiDll(NEO::OsLibrary::load(getGdiName(), nullptr)) {
     if (gdiDll) {
         initialized = Gdi::getAllProcAddresses();
     }
+    if constexpr (GdiLogging::gdiLoggingSupport) {
+        GdiLogging::init();
+    }
+}
+
+Gdi::~Gdi() {
+    if constexpr (GdiLogging::gdiLoggingSupport) {
+        GdiLogging::close();
+    }
 }
 
 bool Gdi::setupHwQueueProcAddresses() {

@@ -253,6 +253,8 @@ DECLARE_DEBUG_VARIABLE(bool, PrintIoctlTimes, false, "Print ioctl times")
 DECLARE_DEBUG_VARIABLE(bool, PrintIoctlEntries, false, "Print ioctl being called")
 DECLARE_DEBUG_VARIABLE(bool, PrintUmdSharedMigration, false, "Print log message when shared allocation is being migrated by UMD")
 DECLARE_DEBUG_VARIABLE(bool, PrintImageBlitBlockCopyCmdDetails, false, "Prints XY_BLOCK_COPY_BLT command details")
+DECLARE_DEBUG_VARIABLE(bool, LogGdiCalls, false, "Log GDI calls")
+DECLARE_DEBUG_VARIABLE(bool, LogGdiCallsToFile, false, "Log GDI calls to file")
 
 /*PERFORMANCE FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, DisableZeroCopyForBuffers, false, "When active all buffer allocations will not share memory with CPU.")

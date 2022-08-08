@@ -19,7 +19,7 @@ namespace NEO {
 class Gdi {
   public:
     Gdi();
-    MOCKABLE_VIRTUAL ~Gdi() = default;
+    MOCKABLE_VIRTUAL ~Gdi();
 
     ThkWrapper<IN OUT D3DKMT_OPENADAPTERFROMLUID *> openAdapterFromLuid{};
     ThkWrapper<IN OUT D3DKMT_CREATEALLOCATION *> createAllocation_{};
