@@ -114,10 +114,10 @@ struct DebugSessionLinux : DebugSessionImp {
     };
 
     struct Module {
-        std::unordered_set<uint64_t> loadAddresses;
+        std::unordered_set<uint64_t> loadAddresses[NEO::EngineLimits::maxHandleCount];
         uint64_t elfUuidHandle;
         uint32_t segmentCount;
-        int segmentVmBindCounter;
+        int segmentVmBindCounter[NEO::EngineLimits::maxHandleCount];
     };
 
     static bool apiEventCompare(const zet_debug_event_t &event1, const zet_debug_event_t &event2) {
@@ -137,7 +137,7 @@ struct DebugSessionLinux : DebugSessionImp {
         std::unordered_map<uint64_t, BindInfo> vmToStateBaseAreaBindInfo;
         std::unordered_map<uint64_t, uint32_t> vmToTile;
 
-        std::unordered_map<uint64_t, std::unique_ptr<IsaAllocation>> isaMap;
+        std::unordered_map<uint64_t, std::unique_ptr<IsaAllocation>> isaMap[NEO::EngineLimits::maxHandleCount];
         std::unordered_map<uint64_t, uint64_t> elfMap;
         std::unordered_map<uint64_t, ContextHandle> lrcToContextHandle;
 

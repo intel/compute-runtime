@@ -454,8 +454,8 @@ void DebugSessionLinux::handleEvent(prelim_drm_i915_debug_event *event) {
         bool create = event->flags & PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
 
         if (destroy && clientHandleToConnection[uuid->client_handle]->uuidMap[uuid->handle].classIndex == NEO::DrmResourceClass::L0ZebinModule) {
-            DEBUG_BREAK_IF(clientHandleToConnection[uuid->client_handle]->uuidToModule[uuid->handle].segmentVmBindCounter != 0 ||
-                           clientHandleToConnection[uuid->client_handle]->uuidToModule[uuid->handle].loadAddresses.size() > 0);
+            DEBUG_BREAK_IF(clientHandleToConnection[uuid->client_handle]->uuidToModule[uuid->handle].segmentVmBindCounter[0] != 0 ||
+                           clientHandleToConnection[uuid->client_handle]->uuidToModule[uuid->handle].loadAddresses[0].size() > 0);
 
             clientHandleToConnection[uuid->client_handle]->uuidToModule.erase(uuid->handle);
         }
@@ -542,7 +542,10 @@ void DebugSessionLinux::handleEvent(prelim_drm_i915_debug_event *event) {
 
                             auto &newModule = connection->uuidToModule[handle];
                             newModule.segmentCount = 0;
-                            newModule.segmentVmBindCounter = 0;
+                            for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
+                                newModule.segmentVmBindCounter[i] = 0;
+                                newModule.loadAddresses[i].clear();
+                            }
                         }
                         extractUuidData(uuid->client_handle, uuidData);
                     }
@@ -706,6 +709,7 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
         uint32_t index = 0;
         auto connection = clientHandleToConnection[vmBind->client_handle].get();
         const auto uuid = vmBind->uuids[index];
+        const auto tileIndex = 0;
 
         if (connection->uuidMap.find(uuid) == connection->uuidMap.end()) {
             PRINT_DEBUGGER_ERROR_LOG("Unknown UUID handle = %llu\n", (uint64_t)uuid);
@@ -754,9 +758,9 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                 }
             }
 
-            if (connection->isaMap.find(vmBind->va_start) == connection->isaMap.end() && createEvent) {
+            if (connection->isaMap[tileIndex].find(vmBind->va_start) == connection->isaMap[tileIndex].end() && createEvent) {
 
-                auto &isaMap = connection->isaMap;
+                auto &isaMap = connection->isaMap[tileIndex];
                 auto &elfMap = connection->elfMap;
 
                 auto isa = std::make_unique<IsaAllocation>();
@@ -806,7 +810,7 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
 
                 // If ACK flag is not set when triggering MODULE LOAD event, auto-ack immediately
                 if ((vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) == 0) {
-                    connection->isaMap[vmBind->va_start]->moduleLoadEventAck = true;
+                    isaMap[vmBind->va_start]->moduleLoadEventAck = true;
                 }
                 memLock.unlock();
 
@@ -818,20 +822,20 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
 
             if (createEvent) {
                 std::unique_lock<std::mutex> lock(asyncThreadMutex);
-                if (!connection->isaMap[vmBind->va_start]->moduleLoadEventAck && perKernelModules) {
+                if (!connection->isaMap[tileIndex][vmBind->va_start]->moduleLoadEventAck && perKernelModules) {
                     PRINT_DEBUGGER_INFO_LOG("Add event to ack, seqno = %llu", (uint64_t)vmBind->base.seqno);
-                    connection->isaMap[vmBind->va_start]->ackEvents.push_back(vmBind->base);
+                    connection->isaMap[tileIndex][vmBind->va_start]->ackEvents.push_back(vmBind->base);
                     shouldAckEvent = false;
                 }
 
-                connection->isaMap[vmBind->va_start]->vmBindCounter++;
+                connection->isaMap[tileIndex][vmBind->va_start]->vmBindCounter++;
             }
 
-            if (destroyEvent && connection->isaMap.find(vmBind->va_start) != connection->isaMap.end()) {
-                DEBUG_BREAK_IF(connection->isaMap[vmBind->va_start]->vmBindCounter == 0);
-                connection->isaMap[vmBind->va_start]->vmBindCounter--;
-                if (connection->isaMap[vmBind->va_start]->vmBindCounter == 0) {
-                    const auto &isa = connection->isaMap[vmBind->va_start];
+            if (destroyEvent && connection->isaMap[tileIndex].find(vmBind->va_start) != connection->isaMap[tileIndex].end()) {
+                DEBUG_BREAK_IF(connection->isaMap[tileIndex][vmBind->va_start]->vmBindCounter == 0);
+                connection->isaMap[tileIndex][vmBind->va_start]->vmBindCounter--;
+                if (connection->isaMap[tileIndex][vmBind->va_start]->vmBindCounter == 0) {
+                    const auto &isa = connection->isaMap[tileIndex][vmBind->va_start];
 
                     zet_debug_event_t debugEvent = {};
 
@@ -848,7 +852,7 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                         pushApiEvent(debugEvent, nullptr);
                     }
                     std::unique_lock<std::mutex> memLock(asyncThreadMutex);
-                    connection->isaMap.erase(vmBind->va_start);
+                    connection->isaMap[tileIndex].erase(vmBind->va_start);
                     memLock.unlock();
                 }
             }
@@ -860,15 +864,15 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                 auto &module = connection->uuidToModule[vmBind->uuids[uuidIter]];
 
                 if (createEvent) {
-                    module.segmentVmBindCounter++;
+                    module.segmentVmBindCounter[tileIndex]++;
 
-                    DEBUG_BREAK_IF(module.loadAddresses.size() > module.segmentCount);
-                    bool canTriggerEvent = module.loadAddresses.size() == (module.segmentCount - 1);
-                    module.loadAddresses.insert(vmBind->va_start);
+                    DEBUG_BREAK_IF(module.loadAddresses[tileIndex].size() > module.segmentCount);
+                    bool canTriggerEvent = module.loadAddresses[tileIndex].size() == (module.segmentCount - 1);
+                    module.loadAddresses[tileIndex].insert(vmBind->va_start);
 
-                    if (canTriggerEvent && module.loadAddresses.size() == module.segmentCount) {
+                    if (canTriggerEvent && module.loadAddresses[tileIndex].size() == module.segmentCount) {
                         auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-                        loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses.begin(), module.loadAddresses.end()));
+                        loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses[tileIndex].begin(), module.loadAddresses[tileIndex].end()));
                         PRINT_DEBUGGER_INFO_LOG("Zebin module loaded at: %p, with %u isa allocations", (void *)loadAddress, module.segmentCount);
 
                         zet_debug_event_t debugEvent = {};
@@ -883,14 +887,14 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                     }
                 } else { // destroyEvent
 
-                    module.segmentVmBindCounter--;
+                    module.segmentVmBindCounter[tileIndex]--;
 
-                    if (module.segmentVmBindCounter == 0) {
+                    if (module.segmentVmBindCounter[tileIndex] == 0) {
 
                         zet_debug_event_t debugEvent = {};
 
                         auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-                        auto loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses.begin(), module.loadAddresses.end()));
+                        auto loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses[tileIndex].begin(), module.loadAddresses[tileIndex].end()));
                         debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD;
                         debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
                         debugEvent.info.module.load = loadAddress;
@@ -898,7 +902,7 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                         debugEvent.info.module.moduleEnd = connection->uuidMap[module.elfUuidHandle].ptr + connection->uuidMap[module.elfUuidHandle].dataSize;
 
                         pushApiEvent(debugEvent, nullptr);
-                        module.loadAddresses.clear();
+                        module.loadAddresses[tileIndex].clear();
                     }
                 }
             }
@@ -1174,7 +1178,7 @@ ze_result_t DebugSessionLinux::interruptImp(uint32_t deviceIndex) {
 
 ze_result_t DebugSessionLinux::getISAVMHandle(const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t &vmHandle) {
     auto accessVA = desc->address;
-    auto &isaMap = clientHandleToConnection[clientHandle]->isaMap;
+    auto &isaMap = clientHandleToConnection[clientHandle]->isaMap[0];
     ze_result_t status = ZE_RESULT_ERROR_UNINITIALIZED;
     vmHandle = invalidHandle;
 
@@ -1380,9 +1384,9 @@ ze_result_t DebugSessionLinux::acknowledgeEvent(const zet_debug_event_t *event) 
 
                 auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
                 auto isaVaStart = gmmHelper->decanonize(event->info.module.load);
-                auto isa = connection->isaMap.find(isaVaStart);
+                auto isa = connection->isaMap[0].find(isaVaStart);
 
-                if (isa != connection->isaMap.end()) {
+                if (isa != connection->isaMap[0].end()) {
                     for (auto &event : isa->second->ackEvents) {
                         prelim_drm_i915_debug_event_ack eventToAck = {};
                         eventToAck.type = event.type;

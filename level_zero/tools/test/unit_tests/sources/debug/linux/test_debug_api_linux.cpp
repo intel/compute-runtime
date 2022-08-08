@@ -1853,7 +1853,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryForISAThenMemoryIsRead) {
     isa->moduleBegin = 0;
     isa->moduleEnd = 0;
 
-    auto &isaMap = session->clientHandleToConnection[session->clientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[session->clientHandle]->isaMap[0];
     isaMap[isaGpuVa] = std::move(isa);
     isaMap[isaGpuVa]->vmBindCounter = 5;
 
@@ -2047,7 +2047,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryForISAForExpectedFailureCasesThen
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinux::mockClientHandle;
 
-    auto &isaMap = session->clientHandleToConnection[session->clientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[session->clientHandle]->isaMap[0];
     uint64_t isaGpuVa = 0x345000;
     uint64_t isaSize = 0x2000;
 
@@ -2220,7 +2220,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingWriteMemoryForISAThenMemoryIsWritten) {
     isa->moduleBegin = 0;
     isa->moduleEnd = 0;
 
-    auto &isaMap = session->clientHandleToConnection[session->clientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[session->clientHandle]->isaMap[0];
     isaMap[isaGpuVa] = std::move(isa);
     isaMap[isaGpuVa]->vmBindCounter = 5;
 
@@ -2362,7 +2362,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingWriteMemoryForExpectedFailureCasesThenError
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinux::mockClientHandle;
 
-    auto &isaMap = session->clientHandleToConnection[session->clientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[session->clientHandle]->isaMap[0];
     uint64_t isaGpuVa = 0x345000;
     uint64_t isaSize = 0x2000;
 
@@ -3405,7 +3405,7 @@ TEST_F(DebugApiLinuxTest, GivenUuidEventForL0ZebinModuleWhenHandlingEventThenKer
 
     // inject module segment
     auto &module = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[l0ModuleUuid.handle];
-    module.loadAddresses.insert(0x12340000);
+    module.loadAddresses[0].insert(0x12340000);
 
     l0ModuleUuid.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_DESTROY;
     l0ModuleUuid.payload_size = 0;
@@ -3853,8 +3853,8 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventWithAckFlagWhenHandlingEventForISAThen
     EXPECT_EQ(ZET_DEBUG_EVENT_FLAG_NEED_ACK, event.flags);
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_LOAD, event.type);
 
-    auto isaIter = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap.find(isaGpuVa);
-    ASSERT_NE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap.end(), isaIter);
+    auto isaIter = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0].find(isaGpuVa);
+    ASSERT_NE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0].end(), isaIter);
 
     EXPECT_EQ(1u, isaIter->second->ackEvents.size());
     auto ackedEvent = isaIter->second->ackEvents[0];
@@ -3891,8 +3891,8 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventForISAWhenModuleLoadEventAlreadyAckedT
 
     session->handleEvent(&vmBindIsa->base);
 
-    auto isaIter = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap.find(isaGpuVa);
-    ASSERT_NE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap.end(), isaIter);
+    auto isaIter = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0].find(isaGpuVa);
+    ASSERT_NE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0].end(), isaIter);
     EXPECT_EQ(1u, isaIter->second->ackEvents.size());
 
     auto event = session->apiEvents.front();
@@ -3935,8 +3935,8 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventForIsaWithoutAckTriggeredBeforeAttachW
 
     session->handleEvent(&vmBindIsa->base);
 
-    auto isaIter = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap.find(isaGpuVa);
-    ASSERT_NE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap.end(), isaIter);
+    auto isaIter = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0].find(isaGpuVa);
+    ASSERT_NE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0].end(), isaIter);
     EXPECT_EQ(0u, isaIter->second->ackEvents.size());
     // Auto-acked event
     EXPECT_TRUE(isaIter->second->moduleLoadEventAck);
@@ -3983,15 +3983,15 @@ TEST_F(DebugApiLinuxVmBindTest, GivenIsaRemovedWhenModuleLoadEventIsAckedThenSuc
 
     session->handleEvent(&vmBindIsa->base);
 
-    auto isaIter = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap.find(isaGpuVa);
-    ASSERT_NE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap.end(), isaIter);
+    auto isaIter = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0].find(isaGpuVa);
+    ASSERT_NE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0].end(), isaIter);
     EXPECT_EQ(1u, isaIter->second->ackEvents.size());
 
     zet_debug_event_t event = {};
     auto result = session->readEvent(0, &event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap.clear();
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0].clear();
 
     result = session->acknowledgeEvent(&event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -4043,7 +4043,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenVmBindEventWithAckNeededForIsaWhenHandlingE
 
     session->handleEvent(&vmBindIsa->base);
 
-    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0];
 
     EXPECT_EQ(1u, isaMap.size());
     EXPECT_NE(isaMap.end(), isaMap.find(isaGpuVa));
@@ -4087,7 +4087,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenCookieWhenHandlingVmBindForIsaThenIsaAlloca
 
     session->handleEvent(&vmBindIsa->base);
 
-    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0];
 
     EXPECT_EQ(1u, isaMap.size());
     EXPECT_NE(isaMap.end(), isaMap.find(isaGpuVa));
@@ -4125,7 +4125,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenNoCookieWhenHandlingVmBindForIsaThenIsaAllo
 
     session->handleEvent(&vmBindIsa->base);
 
-    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0];
 
     EXPECT_EQ(1u, isaMap.size());
     EXPECT_NE(isaMap.end(), isaMap.find(isaGpuVa));
@@ -4162,7 +4162,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenTwoVmBindEventForTheSameIsaInDifferentVMWhe
 
     session->handleEvent(&vmBindIsa->base);
 
-    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0];
     EXPECT_EQ(1u, isaMap.size());
     EXPECT_NE(isaMap.end(), isaMap.find(isaGpuVa));
     auto isaAllocation = isaMap[isaGpuVa].get();
@@ -4201,7 +4201,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenVmBindDestroyEventForIsaWhenHandlingEventTh
 
     session->handleEvent(&vmBindIsa->base);
 
-    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0];
     EXPECT_EQ(0u, isaMap.size());
 }
 
@@ -4227,7 +4227,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenVmBindEventForIsaWhenReadingEventThenModule
 
     memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
 
-    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0];
     EXPECT_EQ(0u, isaMap.size());
 
     session->handleEvent(&vmBindIsa->base);
@@ -4278,7 +4278,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenVmBindCreateAndDestroyEventsForIsaWhenReadi
 
     memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
 
-    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0];
     EXPECT_EQ(0u, isaMap.size());
 
     session->handleEvent(&vmBindIsa->base);
@@ -4318,7 +4318,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenIsaBoundMultipleTimesWhenHandlingVmBindDest
     uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
     prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
 
-    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0];
 
     auto isa = std::make_unique<DebugSessionLinux::IsaAllocation>();
     isa->bindInfo = {isaGpuVa, isaSize};
@@ -4428,10 +4428,10 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventWithL0ZebinModuleWhenHandlingEventThen
 
     EXPECT_EQ(0u, session->apiEvents.size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule.size());
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses.size());
+    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses[0].size());
 
     // event not pushed to ack
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[isaGpuVa]->ackEvents.size());
+    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0][isaGpuVa]->ackEvents.size());
     EXPECT_EQ(1, handler->ioctlCalled); // ACK
     EXPECT_EQ(vmBindIsa->base.seqno, handler->debugEventAcked.seqno);
 
@@ -4444,19 +4444,19 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventWithL0ZebinModuleWhenHandlingEventThen
 
     EXPECT_EQ(1u, session->apiEvents.size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule.size());
-    EXPECT_EQ(2u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses.size());
+    EXPECT_EQ(2u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses[0].size());
     EXPECT_EQ(2u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentCount);
 
     // event not pushed to ack
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[isaGpuVa2]->ackEvents.size());
+    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0][isaGpuVa2]->ackEvents.size());
     EXPECT_EQ(0, handler->ioctlCalled);
     EXPECT_EQ(0u, handler->debugEventAcked.seqno);
 
-    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0];
     EXPECT_EQ(2u, isaMap.size());
 
-    EXPECT_FALSE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[isaGpuVa]->moduleLoadEventAck);
-    EXPECT_FALSE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[isaGpuVa2]->moduleLoadEventAck);
+    EXPECT_FALSE(isaMap[isaGpuVa]->moduleLoadEventAck);
+    EXPECT_FALSE(isaMap[isaGpuVa2]->moduleLoadEventAck);
 
     zet_debug_event_t event = {};
     ze_result_t result = zetDebugReadEvent(session->toHandle(), 0, &event);
@@ -4543,10 +4543,10 @@ TEST_F(DebugApiLinuxVmBindTest, GivenAttachAfterModuleCreateWhenHandlingEventWit
 
     EXPECT_EQ(0u, session->apiEvents.size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule.size());
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses.size());
+    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses[0].size());
 
     // event not pushed to ack
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[isaGpuVa]->ackEvents.size());
+    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0][isaGpuVa]->ackEvents.size());
     EXPECT_EQ(0, handler->ioctlCalled);
     EXPECT_EQ(0u, handler->debugEventAcked.seqno);
 
@@ -4558,19 +4558,19 @@ TEST_F(DebugApiLinuxVmBindTest, GivenAttachAfterModuleCreateWhenHandlingEventWit
 
     EXPECT_EQ(1u, session->apiEvents.size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule.size());
-    EXPECT_EQ(2u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses.size());
+    EXPECT_EQ(2u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses[0].size());
     EXPECT_EQ(2u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentCount);
 
     // event not pushed to ack
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[isaGpuVa]->ackEvents.size());
+    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0][isaGpuVa]->ackEvents.size());
     EXPECT_EQ(0, handler->ioctlCalled);
     EXPECT_EQ(0u, handler->debugEventAcked.seqno); // Not acked
 
-    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0];
     EXPECT_EQ(2u, isaMap.size());
 
-    EXPECT_TRUE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[isaGpuVa]->moduleLoadEventAck);
-    EXPECT_TRUE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[isaGpuVa2]->moduleLoadEventAck);
+    EXPECT_TRUE(isaMap[isaGpuVa2]->moduleLoadEventAck);
+    EXPECT_TRUE(isaMap[isaGpuVa]->moduleLoadEventAck);
 
     zet_debug_event_t event = {};
     ze_result_t result = zetDebugReadEvent(session->toHandle(), 0, &event);
@@ -4710,7 +4710,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenMultipleBindEventsWithZebinModuleWhenHandli
 
     EXPECT_EQ(1u, session->apiEvents.size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule.size());
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses.size());
+    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses[0].size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentCount);
 
     vmBindIsa->vm_handle = vmHandleForVmBind + 1000;
@@ -4718,10 +4718,10 @@ TEST_F(DebugApiLinuxVmBindTest, GivenMultipleBindEventsWithZebinModuleWhenHandli
 
     EXPECT_EQ(1u, session->apiEvents.size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule.size());
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses.size());
+    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses[0].size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentCount);
 
-    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0];
     EXPECT_EQ(1u, isaMap.size());
 
     zet_debug_event_t event = {};
