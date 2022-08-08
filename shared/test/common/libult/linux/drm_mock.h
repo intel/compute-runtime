@@ -32,7 +32,6 @@ class DrmMock : public Drm {
     using Drm::classHandles;
     using Drm::completionFenceSupported;
     using Drm::contextDebugSupported;
-    using Drm::deviceId;
     using Drm::engineInfo;
     using Drm::fenceVal;
     using Drm::generateElfUUID;
@@ -48,7 +47,6 @@ class DrmMock : public Drm {
     using Drm::queryAndSetVmBindPatIndexProgrammingSupport;
     using Drm::queryDeviceIdAndRevision;
     using Drm::requirePerContextVM;
-    using Drm::revisionId;
     using Drm::setupIoctlHelper;
     using Drm::sliceCountChangeSupported;
     using Drm::systemInfo;

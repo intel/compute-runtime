@@ -16,10 +16,8 @@
 
 class DrmWrap : public NEO::Drm {
   public:
-    using Drm::deviceId;
     using Drm::ioctlStatistics;
     using Drm::queryDeviceIdAndRevision;
-    using Drm::revisionId;
     using Drm::virtualMemoryIds;
     static std::unique_ptr<DrmWrap, std::function<void(Drm *)>> createDrm(RootDeviceEnvironment &rootDeviceEnvironment) {
         auto hwDeviceIds = OSInterface::discoverDevices(rootDeviceEnvironment.executionEnvironment);

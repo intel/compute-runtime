@@ -32,46 +32,46 @@ const DeviceDescriptor deviceDescriptorTable[] = {
     {0, nullptr, nullptr}};
 
 Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {
-    std::unique_ptr<Drm> drmObject;
+    std::unique_ptr<Drm> drm;
     if (DebugManager.flags.EnableNullHardware.get() == true) {
-        drmObject.reset(new DrmNullDevice(std::move(hwDeviceId), rootDeviceEnvironment));
+        drm.reset(new DrmNullDevice(std::move(hwDeviceId), rootDeviceEnvironment));
     } else {
-        drmObject.reset(new Drm(std::move(hwDeviceId), rootDeviceEnvironment));
+        drm.reset(new Drm(std::move(hwDeviceId), rootDeviceEnvironment));
     }
 
-    if (!drmObject->queryDeviceIdAndRevision()) {
+    if (!drm->queryDeviceIdAndRevision()) {
+        return nullptr;
+    }
+    auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
+    if (!DeviceFactory::isAllowedDeviceId(hwInfo->platform.usDeviceID, DebugManager.flags.FilterDeviceId.get())) {
         return nullptr;
     }
 
-    if (!DeviceFactory::isAllowedDeviceId(drmObject->deviceId, DebugManager.flags.FilterDeviceId.get())) {
-        return nullptr;
-    }
-
-    const DeviceDescriptor *device = nullptr;
-    const char *devName = "";
-    for (auto &d : deviceDescriptorTable) {
-        if (drmObject->deviceId == d.deviceId) {
-            device = &d;
-            devName = d.devName;
+    const DeviceDescriptor *deviceDescriptor = nullptr;
+    const char *deviceName = "";
+    for (auto &deviceDescriptorEntry : deviceDescriptorTable) {
+        if (hwInfo->platform.usDeviceID == deviceDescriptorEntry.deviceId) {
+            deviceDescriptor = &deviceDescriptorEntry;
+            deviceName = deviceDescriptorEntry.devName;
             break;
         }
     }
     int ret = 0;
-    if (device) {
-        ret = drmObject->setupHardwareInfo(device, true);
+    if (deviceDescriptor) {
+        ret = drm->setupHardwareInfo(deviceDescriptor, true);
         if (ret != 0) {
             return nullptr;
         }
-        rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.deviceName = devName;
+        hwInfo->capabilityTable.deviceName = deviceName;
     } else {
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr,
-                         "FATAL: Unknown device: deviceId: %04x, revisionId: %04x\n", drmObject->deviceId, drmObject->revisionId);
+                         "FATAL: Unknown device: deviceId: %04x, revisionId: %04x\n", hwInfo->platform.usDeviceID, hwInfo->platform.usRevId);
         return nullptr;
     }
 
     // Detect device parameters
     int hasExecSoftPin = 0;
-    ret = drmObject->getExecSoftPin(hasExecSoftPin);
+    ret = drm->getExecSoftPin(hasExecSoftPin);
     if (ret != 0) {
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query Soft Pin parameter!\n");
         return nullptr;
@@ -84,42 +84,42 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
     }
 
     // Activate the Turbo Boost Frequency feature
-    ret = drmObject->enableTurboBoost();
+    ret = drm->enableTurboBoost();
     if (ret != 0) {
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to request OCL Turbo Boost\n");
     }
 
-    if (!drmObject->queryMemoryInfo()) {
-        drmObject->setPerContextVMRequired(true);
+    if (!drm->queryMemoryInfo()) {
+        drm->setPerContextVMRequired(true);
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to query memory info\n");
     }
 
-    if (!drmObject->queryEngineInfo()) {
-        drmObject->setPerContextVMRequired(true);
+    if (!drm->queryEngineInfo()) {
+        drm->setPerContextVMRequired(true);
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to query engine info\n");
     }
 
-    drmObject->checkContextDebugSupport();
+    drm->checkContextDebugSupport();
 
-    drmObject->queryPageFaultSupport();
+    drm->queryPageFaultSupport();
 
     if (rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled()) {
-        if (drmObject->isVmBindAvailable()) {
-            drmObject->setPerContextVMRequired(true);
+        if (drm->isVmBindAvailable()) {
+            drm->setPerContextVMRequired(true);
         } else {
             printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Debugging not supported\n");
         }
     }
 
-    if (!drmObject->isPerContextVMRequired()) {
-        if (!drmObject->createVirtualMemoryAddressSpace(HwHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()))) {
+    if (!drm->isPerContextVMRequired()) {
+        if (!drm->createVirtualMemoryAddressSpace(HwHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()))) {
             printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "INFO: Device doesn't support GEM Virtual Memory\n");
         }
     }
 
-    drmObject->queryAdapterBDF();
+    drm->queryAdapterBDF();
 
-    return drmObject.release();
+    return drm.release();
 }
 
 void Drm::overrideBindSupport(bool &useVmBind) {

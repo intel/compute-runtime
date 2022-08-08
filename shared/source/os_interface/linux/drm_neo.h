@@ -330,9 +330,6 @@ class Drm : public DriverModel {
     RootDeviceEnvironment &rootDeviceEnvironment;
     uint64_t uuid = 0;
 
-    int deviceId = 0;
-    int revisionId = 0;
-
     bool sliceCountChangeSupported = false;
     bool preemptionSupported = false;
     bool nonPersistentContextsSupported = false;

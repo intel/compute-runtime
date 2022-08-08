@@ -133,16 +133,21 @@ int Drm::getExecSoftPin(int &execSoftPin) {
 }
 
 bool Drm::queryI915DeviceIdAndRevision() {
-    auto ret = getParamIoctl(DrmParam::ParamChipsetId, &this->deviceId);
+    HardwareInfo *hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
+    int deviceId = hwInfo->platform.usDeviceID;
+    int revisionId = hwInfo->platform.usRevId;
+    auto ret = getParamIoctl(DrmParam::ParamChipsetId, &deviceId);
     if (ret != 0) {
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device ID parameter!\n");
         return false;
     }
-    ret = getParamIoctl(DrmParam::ParamRevision, &this->revisionId);
+    ret = getParamIoctl(DrmParam::ParamRevision, &revisionId);
     if (ret != 0) {
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device Rev ID parameter!\n");
         return false;
     }
+    hwInfo->platform.usDeviceID = deviceId;
+    hwInfo->platform.usRevId = revisionId;
     return true;
 }
 
@@ -390,12 +395,14 @@ int Drm::getErrno() {
 }
 
 int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTableAndWorkaroundTable) {
-    rootDeviceEnvironment.setHwInfo(device->pHwInfo);
     HardwareInfo *hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
-    int ret;
+    auto deviceId = hwInfo->platform.usDeviceID;
+    auto revisionId = hwInfo->platform.usRevId;
 
-    hwInfo->platform.usDeviceID = this->deviceId;
-    hwInfo->platform.usRevId = this->revisionId;
+    rootDeviceEnvironment.setHwInfo(device->pHwInfo);
+
+    hwInfo->platform.usDeviceID = deviceId;
+    hwInfo->platform.usRevId = revisionId;
 
     const auto productFamily = hwInfo->platform.eProductFamily;
     setupIoctlHelper(productFamily);
@@ -407,7 +414,7 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     if (!status) {
         PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Topology query failed!\n");
 
-        ret = getEuTotal(topologyData.euCount);
+        auto ret = getEuTotal(topologyData.euCount);
         if (ret != 0) {
             PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query EU total parameter!\n");
             return ret;
