@@ -27,7 +27,6 @@
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_bind.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
-#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/os_inc.h"
@@ -229,7 +228,8 @@ bool Drm::isGpuHangDetected(OsContext &osContext) {
 void Drm::checkPreemptionSupport() {
     int value = 0;
     auto ret = getParamIoctl(DrmParam::ParamHasScheduler, &value);
-    preemptionSupported = ((0 == ret) && (value & I915_SCHEDULER_CAP_PREEMPTION));
+    auto schedulerCapPreemption = ioctlHelper->getDrmParamValue(DrmParam::SchedulerCapPreemption);
+    preemptionSupported = ((0 == ret) && (value & schedulerCapPreemption));
 }
 
 void Drm::checkQueueSliceSupport() {
@@ -320,11 +320,11 @@ uint32_t Drm::createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequeste
     GemContextCreateExtSetParam extSetparam = {};
 
     if (drmVmId > 0) {
-        extSetparam.base.name = I915_CONTEXT_CREATE_EXT_SETPARAM;
+        extSetparam.base.name = ioctlHelper->getDrmParamValue(DrmParam::ContextCreateExtSetparam);
         extSetparam.param.param = ioctlHelper->getDrmParamValue(DrmParam::ContextParamVm);
         extSetparam.param.value = drmVmId;
         gcc.extensions = reinterpret_cast<uint64_t>(&extSetparam);
-        gcc.flags |= I915_CONTEXT_CREATE_FLAGS_USE_EXTENSIONS;
+        gcc.flags |= ioctlHelper->getDrmParamValue(DrmParam::ContextCreateFlagsUseExtensions);
     }
 
     if (DebugManager.flags.CreateContextWithAccessCounters.get() != -1) {
@@ -543,7 +543,9 @@ std::string Drm::getDrmVersion(int fileDescriptor) {
     version.name = name;
     version.nameLen = 5;
 
-    int ret = SysCalls::ioctl(fileDescriptor, DRM_IOCTL_VERSION, &version);
+    auto requestValue = getIoctlRequestValue(DrmIoctl::Version, nullptr);
+
+    int ret = SysCalls::ioctl(fileDescriptor, requestValue, &version);
     if (ret) {
         return {};
     }
@@ -1206,7 +1208,7 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
     }
 
     if (setupVirtualEngines) {
-        balancer.base.name = I915_CONTEXT_ENGINES_EXT_LOAD_BALANCE;
+        balancer.base.name = ioctlHelper->getDrmParamValue(DrmParam::ContextEnginesExtLoadBalance);
         contextEngines.extensions = castToUint64(&balancer);
         contextEngines.engines[0].engineClass = ioctlHelper->getDrmParamValue(DrmParam::EngineClassInvalid);
         contextEngines.engines[0].engineInstance = ioctlHelper->getDrmParamValue(DrmParam::EngineClassInvalidNone);

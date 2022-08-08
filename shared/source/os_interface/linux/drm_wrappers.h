@@ -245,9 +245,13 @@ enum class DrmIoctl {
     SyncobjCreate,
     SyncobjWait,
     SyncobjDestroy,
+    Version,
 };
 
 enum class DrmParam {
+    ContextCreateExtSetparam,
+    ContextCreateFlagsUseExtensions,
+    ContextEnginesExtLoadBalance,
     ContextParamEngines,
     ContextParamGttSize,
     ContextParamPersistence,
@@ -286,6 +290,7 @@ enum class DrmParam {
     QueryComputeSlices,
     QueryMemoryRegions,
     QueryTopologyInfo,
+    SchedulerCapPreemption,
     TilingNone,
     TilingY,
 };

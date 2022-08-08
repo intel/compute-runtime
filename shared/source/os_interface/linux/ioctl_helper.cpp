@@ -197,6 +197,12 @@ unsigned int IoctlHelper::getIoctlRequestValueBase(DrmIoctl ioctlRequest) const 
 
 int IoctlHelper::getDrmParamValueBase(DrmParam drmParam) const {
     switch (drmParam) {
+    case DrmParam::ContextCreateExtSetparam:
+        return I915_CONTEXT_CREATE_EXT_SETPARAM;
+    case DrmParam::ContextCreateFlagsUseExtensions:
+        return I915_CONTEXT_CREATE_FLAGS_USE_EXTENSIONS;
+    case DrmParam::ContextEnginesExtLoadBalance:
+        return I915_CONTEXT_ENGINES_EXT_LOAD_BALANCE;
     case DrmParam::ContextParamEngines:
         return I915_CONTEXT_PARAM_ENGINES;
     case DrmParam::ContextParamGttSize:
@@ -263,6 +269,8 @@ int IoctlHelper::getDrmParamValueBase(DrmParam drmParam) const {
         return DRM_I915_QUERY_MEMORY_REGIONS;
     case DrmParam::QueryTopologyInfo:
         return DRM_I915_QUERY_TOPOLOGY_INFO;
+    case DrmParam::SchedulerCapPreemption:
+        return I915_SCHEDULER_CAP_PREEMPTION;
     case DrmParam::TilingNone:
         return I915_TILING_NONE;
     case DrmParam::TilingY:

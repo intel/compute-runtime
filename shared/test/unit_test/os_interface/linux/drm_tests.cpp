@@ -1367,6 +1367,10 @@ TEST(DrmWrapperTest, WhenGettingDrmIoctlGetparamValueThenIoctlHelperIsNotNeeded)
     EXPECT_THROW(getIoctlRequestValue(DrmIoctl::DG1GemCreateExt, nullptr), std::runtime_error);
 }
 
+TEST(DrmWrapperTest, WhenGettingDrmIoctlVersionValueThenIoctlHelperIsNotNeeded) {
+    EXPECT_EQ(getIoctlRequestValue(DrmIoctl::Version, nullptr), static_cast<unsigned int>(DRM_IOCTL_VERSION));
+}
+
 TEST(DrmWrapperTest, WhenGettingChipsetIdParamValueThenIoctlHelperIsNotNeeded) {
     EXPECT_EQ(getDrmParamValue(DrmParam::ParamChipsetId, nullptr), static_cast<int>(I915_PARAM_CHIPSET_ID));
 }

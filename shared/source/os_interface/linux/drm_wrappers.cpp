@@ -21,6 +21,8 @@ unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest, IoctlHelper *ioctlHelpe
     switch (ioctlRequest) {
     case DrmIoctl::Getparam:
         return DRM_IOCTL_I915_GETPARAM;
+    case DrmIoctl::Version:
+        return DRM_IOCTL_VERSION;
     default:
         UNRECOVERABLE_IF(true);
         return 0;

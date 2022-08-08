@@ -99,6 +99,9 @@ TEST(IoctlHelperUpstreamTest, whenGettingDrmParamValueThenPropertValueIsReturned
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     IoctlHelperUpstream ioctlHelper{*drm};
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ContextCreateExtSetparam), static_cast<int>(I915_CONTEXT_CREATE_EXT_SETPARAM));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ContextCreateFlagsUseExtensions), static_cast<int>(I915_CONTEXT_CREATE_FLAGS_USE_EXTENSIONS));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ContextEnginesExtLoadBalance), static_cast<int>(I915_CONTEXT_ENGINES_EXT_LOAD_BALANCE));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ContextParamEngines), static_cast<int>(I915_CONTEXT_PARAM_ENGINES));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ContextParamGttSize), static_cast<int>(I915_CONTEXT_PARAM_GTT_SIZE));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ContextParamPersistence), static_cast<int>(I915_CONTEXT_PARAM_PERSISTENCE));
@@ -135,6 +138,7 @@ TEST(IoctlHelperUpstreamTest, whenGettingDrmParamValueThenPropertValueIsReturned
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::QueryMemoryRegions), static_cast<int>(DRM_I915_QUERY_MEMORY_REGIONS));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::QueryTopologyInfo), static_cast<int>(DRM_I915_QUERY_TOPOLOGY_INFO));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::QueryComputeSlices), 0);
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::SchedulerCapPreemption), static_cast<int>(I915_SCHEDULER_CAP_PREEMPTION));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::TilingNone), static_cast<int>(I915_TILING_NONE));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::TilingY), static_cast<int>(I915_TILING_Y));
 }
