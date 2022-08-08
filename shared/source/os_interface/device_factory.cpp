@@ -99,6 +99,7 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
     }
 
     executionEnvironment.parseAffinityMask();
+    executionEnvironment.adjustCcsCount();
     executionEnvironment.calculateMaxOsContextCount();
     return true;
 }
@@ -158,6 +159,7 @@ bool DeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &executionEnv
 
     executionEnvironment.sortNeoDevices();
     executionEnvironment.parseAffinityMask();
+    executionEnvironment.adjustCcsCount();
     executionEnvironment.calculateMaxOsContextCount();
 
     return true;

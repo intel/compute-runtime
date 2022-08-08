@@ -480,4 +480,6 @@ uint32_t HwInfoConfigHw<gfxProduct>::getL1CachePolicy() const {
     return L1CachePolicyHelper<gfxProduct>::getL1CachePolicy();
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+void HwInfoConfigHw<gfxProduct>::adjustNumberOfCcs(HardwareInfo &hwInfo) const {}
 } // namespace NEO
