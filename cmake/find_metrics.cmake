@@ -78,7 +78,7 @@ if(NOT NEO__METRICS_LIBRARY_INCLUDE_DIR STREQUAL "")
 endif()
 
 # Metrics Discovery Detection
-dependency_detect("Metrics Discovery" "" METRICS_DISCOVERY "../metrics/discovery" TRUE)
+dependency_detect("Metrics Discovery" libigdmd METRICS_DISCOVERY "../metrics/discovery" TRUE)
 if(NOT NEO__METRICS_DISCOVERY_INCLUDE_DIR STREQUAL "")
   include_directories("${NEO__METRICS_DISCOVERY_INCLUDE_DIR}")
 endif()
