@@ -251,15 +251,6 @@ class ZesPciFixture : public SysmanDeviceFixture {
         pOriginalSysfsAccess = pLinuxSysmanImp->pSysfsAccess;
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
 
-        ON_CALL(*pSysfsAccess.get(), read(_, Matcher<std::vector<std::string> &>(_)))
-            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PciSysfsAccess>::getValVector));
-        ON_CALL(*pSysfsAccess.get(), readSymLink(_, _))
-            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PciSysfsAccess>::getValStringSymLink));
-        ON_CALL(*pSysfsAccess.get(), getRealPath(_, _))
-            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PciSysfsAccess>::getValStringRealPath));
-        ON_CALL(*pSysfsAccess.get(), isRootUser())
-            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PciSysfsAccess>::checkRootUser));
-
         pPciImp = static_cast<L0::PciImp *>(pSysmanDeviceImp->pPci);
         pOsPciPrev = pPciImp->pOsPci;
         pPciImp->pOsPci = nullptr;
@@ -369,8 +360,8 @@ TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenSettingLmemSupportAndCallingzetS
 
 TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetPropertiesAndBdfStringIsEmptyThenVerifyApiCallSucceeds) {
     zes_pci_properties_t properties;
-    ON_CALL(*pSysfsAccess.get(), readSymLink(_, _))
-        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PciSysfsAccess>::getValStringSymLinkEmpty));
+
+    pSysfsAccess->isStringSymLinkEmpty = true;
 
     ze_result_t result = zesDevicePciGetProperties(device, &properties);
 
