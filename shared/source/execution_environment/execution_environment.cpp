@@ -199,14 +199,4 @@ void ExecutionEnvironment::parseAffinityMask() {
 
     rootDeviceEnvironments.swap(filteredEnvironments);
 }
-
-void ExecutionEnvironment::adjustCcsCount() const {
-    for (auto &rootDeviceEnvironment : rootDeviceEnvironments) {
-        UNRECOVERABLE_IF(!rootDeviceEnvironment);
-        auto hwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
-        auto hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
-        hwInfoConfig->adjustNumberOfCcs(*hwInfo);
-    }
-}
-
 } // namespace NEO
