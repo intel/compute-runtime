@@ -29,4 +29,4 @@ add_custom_command(
                    COMMAND igdrcl_mt_tests --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=${GTEST_REPEAT} ${GTEST_OUTPUT} ${NEO_TESTS_LISTENER_OPTION} --rev_id ${revision_id}
 )
 
-add_dependencies(run_${product}_${revision_id}_mt_unit_tests prepare_test_kernels_for_ocl)
+add_dependencies(run_${product}_${revision_id}_mt_unit_tests prepare_test_kernels_for_ocl prepare_test_kernels_for_shared)
