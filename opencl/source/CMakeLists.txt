@@ -69,7 +69,6 @@ else()
   target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
                              ${NEO_SHARED_DIRECTORY}/os_interface/linux
                              ${NEO_SOURCE_DIR}/opencl/source/os_interface/linux
-                             ${I915_INCLUDES_DIR}
   )
 endif()
 

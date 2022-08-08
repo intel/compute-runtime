@@ -318,7 +318,6 @@ if(BUILD_WITH_L0)
   if(UNIX)
     target_include_directories(${TARGET_NAME_L0} PUBLIC
                                ${L0_ROOT_DIR}/core/source/os_interface/linux
-                               ${I915_INCLUDES_DIR}
     )
     target_include_directories(${TARGET_NAME_L0} PRIVATE
                                ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}
@@ -436,7 +435,6 @@ if(BUILD_WITH_L0)
       )
     else()
       target_include_directories(${LIB_NAME} PUBLIC
-                                 ${I915_INCLUDES_DIR}
                                  ${CMAKE_CURRENT_SOURCE_DIR}/os_interface/linux
       )
     endif()

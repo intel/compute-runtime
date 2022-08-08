@@ -474,9 +474,10 @@ if(UNIX)
   endif()
   message(STATUS "i915 prelim headers detection: ${NEO_ENABLE_i915_PRELIM_DETECTION}")
 endif()
-
-get_filename_component(I915_INCLUDES_DIR "${NEO_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}uapi" ABSOLUTE)
-message(STATUS "i915 includes dir: ${I915_INCLUDES_DIR}")
+if(NOT DEFINED I915_HEADERS_DIR)
+  get_filename_component(I915_HEADERS_DIR "${NEO_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}uapi" ABSOLUTE)
+endif()
+message(STATUS "i915 includes dir: ${I915_HEADERS_DIR}")
 
 # Enable/Disable BuiltIns compilation during build
 set(COMPILE_BUILT_INS TRUE CACHE BOOL "Enable built-in kernels compilation")
@@ -760,7 +761,12 @@ include_directories(${NEO_SHARED_DIRECTORY}/gen_common${BRANCH_DIR_SUFFIX})
 if(WIN32)
   include_directories(${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory${BRANCH_DIR_SUFFIX})
 else()
-  include_directories(${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory)
+  include_directories(${I915_HEADERS_DIR}
+                      ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory
+  )
+  if("${BRANCH_TYPE}" STREQUAL "")
+    include_directories(${NEO_SOURCE_DIR}/third_party/uapi/prelim)
+  endif()
 endif()
 include_directories(${NEO_SHARED_DIRECTORY}/helpers/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SHARED_DIRECTORY}/memory_properties${BRANCH_DIR_SUFFIX})

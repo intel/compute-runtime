@@ -15,11 +15,5 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
 )
 
-if((NEO_ENABLE_i915_PRELIM_DETECTION) AND ("${BRANCH_TYPE}" STREQUAL ""))
-  target_include_directories(${L0_STATIC_LIB_NAME} PUBLIC
-                             ${I915_INCLUDES_DIR}/prelim
-  )
-endif()
-
 # Make our source files visible to parent
 set_property(GLOBAL PROPERTY L0_TOOLS_SOURCES ${L0_TOOLS_SOURCES})
