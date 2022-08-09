@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/helpers/hw_helper.h"
-#include "shared/test/common/fixtures/preemption_fixture.h"
+#include "shared/test/unit_test/fixtures/preemption_fixture.h"
 
 using namespace NEO;
 

@@ -9,11 +9,11 @@
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
-#include "shared/test/common/fixtures/command_container_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/mocks/mock_dispatch_kernel_encoder_interface.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/encoders/test_encode_dispatch_kernel_dg2_and_later.h"
+#include "shared/test/unit_test/fixtures/command_container_fixture.h"
+#include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
 
 using namespace NEO;
 

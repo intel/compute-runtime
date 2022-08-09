@@ -6,10 +6,10 @@
  */
 
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/test/common/fixtures/front_window_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/fixtures/front_window_fixture.h"
 
 namespace NEO {
 

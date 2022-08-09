@@ -13,7 +13,6 @@
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/utilities/cpuintrinsics.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
-#include "shared/test/common/fixtures/direct_submission_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
@@ -24,6 +23,7 @@
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/unit_test/fixtures/direct_submission_fixture.h"
 
 namespace CpuIntrinsicsTests {
 extern std::atomic<uint32_t> sfenceCounter;

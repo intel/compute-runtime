@@ -8,9 +8,9 @@
 #include "shared/source/direct_submission/dispatchers/blitter_dispatcher.h"
 #include "shared/source/xe_hp_core/hw_cmds.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
-#include "shared/test/common/fixtures/direct_submission_fixture.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/unit_test/fixtures/direct_submission_fixture.h"
 
 using DirectSubmissionTestXE_HP_CORE = Test<DirectSubmissionFixture>;
 

@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/common/fixtures/front_window_fixture.h"
+#include "shared/test/unit_test/fixtures/front_window_fixture.h"
 
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
-#include "shared/test/common/fixtures/command_container_fixture.h"
+#include "shared/test/unit_test/fixtures/command_container_fixture.h"
 
 using namespace NEO;
 

@@ -8,8 +8,8 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
-#include "shared/test/common/fixtures/preemption_fixture.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/unit_test/fixtures/preemption_fixture.h"
 
 using namespace NEO;
 

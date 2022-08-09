@@ -8,10 +8,10 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
-#include "shared/test/common/fixtures/command_container_fixture.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/mocks/mock_dispatch_kernel_encoder_interface.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/fixtures/command_container_fixture.h"
+#include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
 
 using namespace NEO;
 

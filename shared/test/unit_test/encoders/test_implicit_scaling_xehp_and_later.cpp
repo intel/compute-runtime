@@ -8,8 +8,8 @@
 #include "shared/source/command_container/walker_partition_interface.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
-#include "shared/test/common/fixtures/implicit_scaling_fixture.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/unit_test/fixtures/implicit_scaling_fixture.h"
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenGetSizeWhenDispatchingCmdBufferThenConsumedSizeMatchEstimatedAndCmdBufferHasCorrectCmds) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;

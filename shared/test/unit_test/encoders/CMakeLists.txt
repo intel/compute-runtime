@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
-target_sources(${TARGET_NAME} PRIVATE
+target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${CMAKE_CURRENT_SOURCE_DIR}/test_command_encoder.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_atomic.cpp
@@ -21,7 +21,7 @@ target_sources(${TARGET_NAME} PRIVATE
 )
 
 if(TESTS_XEHP_AND_LATER)
-  target_sources(${TARGET_NAME} PRIVATE
+  target_sources(neo_shared_tests PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_tests_xehp_and_later.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_dispatch_kernel_xehp_and_later.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_grf_mode_xe_hp_and_later.cpp
@@ -37,38 +37,30 @@ if(TESTS_XEHP_AND_LATER)
 endif()
 
 if(TESTS_XE_HP_CORE)
-  target_sources(${TARGET_NAME} PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_implicit_scaling_xe_hp.cpp
-  )
+  target_sources(neo_shared_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/test_implicit_scaling_xe_hp.cpp)
 endif()
 
 if(TESTS_DG2_AND_LATER)
-  target_sources(${TARGET_NAME} PRIVATE
+  target_sources(neo_shared_tests PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_dispatch_kernel_dg2_and_later.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_dispatch_kernel_dg2_and_later.h
   )
 endif()
 
 if(TESTS_DG2)
-  target_sources(${TARGET_NAME} PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_tests_dg2.cpp
-  )
+  target_sources(neo_shared_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_tests_dg2.cpp)
 endif()
 
 if(TESTS_XE_HPG_CORE)
-  target_sources(${TARGET_NAME} PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_implicit_scaling_xe_hpg.cpp
-  )
+  target_sources(neo_shared_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/test_implicit_scaling_xe_hpg.cpp)
 endif()
 
 if(TESTS_XE_HPC_CORE)
-  target_sources(${TARGET_NAME} PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_implicit_scaling_xe_hpc.cpp
-  )
+  target_sources(neo_shared_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/test_implicit_scaling_xe_hpc.cpp)
 endif()
 
 if(TESTS_PVC_AND_LATER)
-  target_sources(${TARGET_NAME} PRIVATE
+  target_sources(neo_shared_tests PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_3dstate_btd_pvc_and_later.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_dispatch_kernel_pvc_and_later.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/walker_partition_tests_pvc_and_later.cpp

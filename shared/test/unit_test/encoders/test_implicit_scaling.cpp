@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_container/walker_partition_interface.h"
-#include "shared/test/common/fixtures/implicit_scaling_fixture.h"
+#include "shared/test/unit_test/fixtures/implicit_scaling_fixture.h"
 
 TEST_F(ImplicitScalingTests, givenMultiTileDeviceWhenApiAndOsSupportThenFeatureEnabled) {
     EXPECT_TRUE(ImplicitScalingHelper::isImplicitScalingEnabled(twoTile, true));
