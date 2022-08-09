@@ -1400,8 +1400,8 @@ ze_result_t DebugSessionLinux::accessDefaultMemForThreadAll(const zet_debug_memo
 
 ze_result_t DebugSessionLinux::acknowledgeEvent(const zet_debug_event_t *event) {
     std::unique_lock<std::mutex> lock(asyncThreadMutex);
-    for (size_t i = 0; i < clientHandleToConnection[clientHandle]->eventsToAck.size(); i++) {
-        if (apiEventCompare(*event, clientHandleToConnection[clientHandle]->eventsToAck[i].first)) {
+    for (size_t i = 0; i < eventsToAck.size(); i++) {
+        if (apiEventCompare(*event, eventsToAck[i].first)) {
 
             bool perKernelIsaAcked = false;
             if (event->type == ZET_DEBUG_EVENT_TYPE_MODULE_LOAD) {
@@ -1429,13 +1429,13 @@ ze_result_t DebugSessionLinux::acknowledgeEvent(const zet_debug_event_t *event) 
             }
 
             if (!perKernelIsaAcked) {
-                auto eventToAck = clientHandleToConnection[clientHandle]->eventsToAck[i].second;
+                auto eventToAck = eventsToAck[i].second;
                 auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_ACK_EVENT, &eventToAck);
                 PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_ACK_EVENT seqno = %llu, ret = %d errno = %d\n", (uint64_t)eventToAck.seqno, ret, ret != 0 ? errno : 0);
             }
 
-            auto iter = clientHandleToConnection[clientHandle]->eventsToAck.begin() + i;
-            clientHandleToConnection[clientHandle]->eventsToAck.erase(iter);
+            auto iter = eventsToAck.begin() + i;
+            eventsToAck.erase(iter);
 
             return ZE_RESULT_SUCCESS;
         }

@@ -145,8 +145,6 @@ struct DebugSessionLinux : DebugSessionImp {
         uint64_t contextStateSaveAreaGpuVa = 0;
         uint64_t stateBaseAreaGpuVa = 0;
 
-        std::vector<std::pair<zet_debug_event_t, prelim_drm_i915_debug_event_ack>> eventsToAck;
-
         std::unordered_map<uint64_t, Module> uuidToModule;
     };
 
@@ -182,7 +180,7 @@ struct DebugSessionLinux : DebugSessionImp {
             eventToAck.flags = 0;
             debugEvent.flags = ZET_DEBUG_EVENT_FLAG_NEED_ACK;
 
-            clientHandleToConnection[clientHandle]->eventsToAck.push_back(
+            eventsToAck.push_back(
                 std::pair<zet_debug_event_t, prelim_drm_i915_debug_event_ack>(debugEvent, eventToAck));
         }
 
@@ -246,6 +244,7 @@ struct DebugSessionLinux : DebugSessionImp {
     std::mutex internalEventThreadMutex;
     std::condition_variable internalEventCondition;
     std::queue<std::unique_ptr<uint64_t[]>> internalEventQueue;
+    std::vector<std::pair<zet_debug_event_t, prelim_drm_i915_debug_event_ack>> eventsToAck;
 
     int fd = 0;
     int ioctl(unsigned long request, void *arg);

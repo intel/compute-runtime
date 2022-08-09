@@ -272,6 +272,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     using L0::DebugSessionLinux::closeAsyncThread;
     using L0::DebugSessionLinux::debugArea;
     using L0::DebugSessionLinux::euControlInterruptSeqno;
+    using L0::DebugSessionLinux::eventsToAck;
     using L0::DebugSessionLinux::extractVaFromUuidString;
     using L0::DebugSessionLinux::getRegisterSetProperties;
     using L0::DebugSessionLinux::getStateSaveAreaHeader;
@@ -3845,7 +3846,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventWithAckFlagWhenHandlingEventForISAThen
     session->handleEvent(&vmBindIsa->base);
 
     EXPECT_EQ(1u, session->apiEvents.size());
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->eventsToAck.size());
+    EXPECT_EQ(1u, session->eventsToAck.size());
 
     auto event = session->apiEvents.front();
     session->apiEvents.pop();
@@ -4039,7 +4040,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenVmBindEventWithAckNeededForIsaWhenHandlingE
 
     memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
 
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->eventsToAck.size());
+    EXPECT_EQ(0u, session->eventsToAck.size());
 
     session->handleEvent(&vmBindIsa->base);
 
@@ -4055,8 +4056,8 @@ TEST_F(DebugApiLinuxVmBindTest, GivenVmBindEventWithAckNeededForIsaWhenHandlingE
     EXPECT_EQ(3u, isaAllocation->vmHandle);
     EXPECT_TRUE(isaAllocation->tileInstanced);
 
-    ASSERT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->eventsToAck.size());
-    auto eventToAck = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->eventsToAck[0].second;
+    ASSERT_EQ(1u, session->eventsToAck.size());
+    auto eventToAck = session->eventsToAck[0].second;
     EXPECT_EQ(vmBindIsa->base.type, eventToAck.type);
     EXPECT_EQ(vmBindIsa->base.seqno, eventToAck.seqno);
     EXPECT_EQ(0u, handler->debugEventAcked.seqno);
@@ -4236,7 +4237,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenVmBindEventForIsaWhenReadingEventThenModule
     EXPECT_EQ(isaGpuVa, isaMap[isaGpuVa]->bindInfo.gpuVa);
 
     // No event to ACK if vmBind doesn't have ACK flag
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->eventsToAck.size());
+    EXPECT_EQ(0u, session->eventsToAck.size());
 
     zet_debug_event_t event = {};
     ze_result_t result = zetDebugReadEvent(session->toHandle(), 0, &event);
