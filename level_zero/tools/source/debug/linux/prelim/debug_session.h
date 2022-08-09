@@ -227,6 +227,12 @@ struct DebugSessionLinux : DebugSessionImp {
     ze_result_t getElfOffset(const zet_debug_memory_space_desc_t *desc, size_t size, const char *&elfData, uint64_t &offset);
     ze_result_t readElfSpace(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer,
                              const char *&elfData, const uint64_t offset);
+    bool tryReadElf(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, ze_result_t &status);
+
+    bool tryWriteIsa(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer, ze_result_t &status);
+    bool tryReadIsa(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, ze_result_t &status);
+    bool tryAccessIsa(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, bool write, ze_result_t &status);
+    ze_result_t accessDefaultMemForThreadAll(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, bool write);
 
     bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srIdent) override;
 

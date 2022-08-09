@@ -1213,6 +1213,24 @@ void DebugSessionLinux::printContextVms() {
     }
 }
 
+bool DebugSessionLinux::tryReadElf(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, ze_result_t &status) {
+    const char *elfData = nullptr;
+    uint64_t offset = 0;
+
+    std::unique_lock<std::mutex> memLock(asyncThreadMutex);
+
+    status = getElfOffset(desc, size, elfData, offset);
+    if (status == ZE_RESULT_ERROR_INVALID_ARGUMENT) {
+        return true;
+    }
+
+    if (elfData) {
+        status = readElfSpace(desc, size, buffer, elfData, offset);
+        return true;
+    }
+    return false;
+}
+
 ze_result_t DebugSessionLinux::getElfOffset(const zet_debug_memory_space_desc_t *desc, size_t size, const char *&elfData, uint64_t &offset) {
     auto &elfMap = clientHandleToConnection[clientHandle]->elfMap;
     auto accessVA = desc->address;
@@ -1262,55 +1280,22 @@ ze_result_t DebugSessionLinux::readMemory(ze_device_thread_t thread, const zet_d
         return status;
     }
 
-    uint64_t vmHandle = invalidHandle;
-    std::vector<uint64_t> allVms;
-    bool isaAccess = false;
-    {
-        std::unique_lock<std::mutex> memLock(asyncThreadMutex);
-
-        status = getISAVMHandle(desc, size, vmHandle);
-        if (status == ZE_RESULT_SUCCESS) {
-            isaAccess = true;
-        } else if (status == ZE_RESULT_ERROR_INVALID_ARGUMENT) {
-            return status;
-        }
-
-        if (vmHandle == invalidHandle) {
-            const char *elfData = nullptr;
-            uint64_t offset = 0;
-            status = getElfOffset(desc, size, elfData, offset);
-            if (status == ZE_RESULT_ERROR_INVALID_ARGUMENT) {
-                return status;
-            }
-
-            if (elfData) {
-                return readElfSpace(desc, size, buffer, elfData, offset);
-            }
-
-            auto &vmIds = clientHandleToConnection[clientHandle]->vmIds;
-            allVms.resize(vmIds.size());
-            std::copy(vmIds.begin(), vmIds.end(), allVms.begin());
-        }
+    bool isa = tryReadIsa(0, desc, size, buffer, status);
+    if (isa) {
+        return status;
     }
 
-    if (isaAccess || DebugSession::isThreadAll(thread)) {
-        if (allVms.size() > 0) {
-            for (auto vmHandle : allVms) {
-                status = readGpuMemory(vmHandle, static_cast<char *>(buffer), size, desc->address);
-                if (status == ZE_RESULT_SUCCESS) {
-                    return status;
-                }
-            }
-        } else if (vmHandle != invalidHandle) {
-            status = readGpuMemory(vmHandle, static_cast<char *>(buffer), size, desc->address);
-            return status;
-        }
+    bool elf = tryReadElf(desc, size, buffer, status);
+    if (elf) {
+        return status;
+    }
 
-        return ZE_RESULT_ERROR_UNINITIALIZED;
+    if (DebugSession::isThreadAll(thread)) {
+        return accessDefaultMemForThreadAll(desc, size, const_cast<void *>(buffer), false);
     }
 
     auto threadId = convertToThreadId(thread);
-    vmHandle = allThreads[threadId]->getMemoryHandle();
+    auto vmHandle = allThreads[threadId]->getMemoryHandle();
     if (vmHandle == invalidHandle) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
@@ -1329,8 +1314,35 @@ ze_result_t DebugSessionLinux::writeMemory(ze_device_thread_t thread, const zet_
         return status;
     }
 
+    bool isa = tryWriteIsa(0, desc, size, buffer, status);
+    if (isa) {
+        return status;
+    }
+
+    if (DebugSession::isThreadAll(thread)) {
+        return accessDefaultMemForThreadAll(desc, size, const_cast<void *>(buffer), true);
+    }
+
+    auto threadId = convertToThreadId(thread);
+    auto threadVmHandle = allThreads[threadId]->getMemoryHandle();
+    if (threadVmHandle == invalidHandle) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    return writeGpuMemory(threadVmHandle, static_cast<const char *>(buffer), size, desc->address);
+}
+
+bool DebugSessionLinux::tryWriteIsa(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer, ze_result_t &status) {
+    return tryAccessIsa(deviceIndex, desc, size, const_cast<void *>(buffer), true, status);
+}
+
+bool DebugSessionLinux::tryReadIsa(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, ze_result_t &status) {
+    return tryAccessIsa(deviceIndex, desc, size, buffer, false, status);
+}
+
+bool DebugSessionLinux::tryAccessIsa(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, bool write, ze_result_t &status) {
+    status = ZE_RESULT_ERROR_NOT_AVAILABLE;
     uint64_t vmHandle = invalidHandle;
-    std::vector<uint64_t> allVms;
     bool isaAccess = false;
     {
         std::unique_lock<std::mutex> memLock(asyncThreadMutex);
@@ -1339,38 +1351,51 @@ ze_result_t DebugSessionLinux::writeMemory(ze_device_thread_t thread, const zet_
         if (status == ZE_RESULT_SUCCESS) {
             isaAccess = true;
         } else if (status == ZE_RESULT_ERROR_INVALID_ARGUMENT) {
-            return status;
-        }
-
-        if (vmHandle == invalidHandle) {
-            auto &vmIds = clientHandleToConnection[clientHandle]->vmIds;
-            allVms.resize(vmIds.size());
-            std::copy(vmIds.begin(), vmIds.end(), allVms.begin());
+            return true;
         }
     }
 
-    if (isaAccess || DebugSession::isThreadAll(thread)) {
-        if (allVms.size() > 0) {
-            for (auto vmHandle : allVms) {
-                status = writeGpuMemory(vmHandle, static_cast<const char *>(buffer), size, desc->address);
-                if (status == ZE_RESULT_SUCCESS) {
-                    return status;
-                }
+    if (isaAccess) {
+
+        if (vmHandle != invalidHandle) {
+            if (write) {
+                status = writeGpuMemory(vmHandle, static_cast<char *>(buffer), size, desc->address);
+            } else {
+                status = readGpuMemory(vmHandle, static_cast<char *>(buffer), size, desc->address);
             }
-        } else if (vmHandle != invalidHandle) {
-            status = writeGpuMemory(vmHandle, static_cast<const char *>(buffer), size, desc->address);
-            return status;
+        } else {
+            status = ZE_RESULT_ERROR_UNINITIALIZED;
         }
-        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    return isaAccess;
+}
+ze_result_t DebugSessionLinux::accessDefaultMemForThreadAll(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, bool write) {
+    auto status = ZE_RESULT_ERROR_UNINITIALIZED;
+    std::vector<uint64_t> allVms;
+
+    {
+        std::unique_lock<std::mutex> memLock(asyncThreadMutex);
+
+        auto &vmIds = clientHandleToConnection[clientHandle]->vmIds;
+        allVms.resize(vmIds.size());
+        std::copy(vmIds.begin(), vmIds.end(), allVms.begin());
     }
 
-    auto threadId = convertToThreadId(thread);
-    vmHandle = allThreads[threadId]->getMemoryHandle();
-    if (vmHandle == invalidHandle) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
+    if (allVms.size() > 0) {
+        for (auto vmHandle : allVms) {
+            if (write) {
+                status = writeGpuMemory(vmHandle, static_cast<char *>(buffer), size, desc->address);
+            } else {
+                status = readGpuMemory(vmHandle, static_cast<char *>(buffer), size, desc->address);
+            }
+            if (status == ZE_RESULT_SUCCESS) {
+                return status;
+            }
+        }
 
-    return writeGpuMemory(vmHandle, static_cast<const char *>(buffer), size, desc->address);
+        status = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+    return status;
 }
 
 ze_result_t DebugSessionLinux::acknowledgeEvent(const zet_debug_event_t *event) {

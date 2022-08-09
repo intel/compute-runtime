@@ -1965,7 +1965,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryforAllThreadsOnDefaultMemoryThenM
     handler->mmapFail = true;
     handler->preadRetVal = -1;
     retVal = session->readMemory(thread, &desc, bufferSize, output);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, retVal);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
 }
 
 TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryforASingleThreadThenMemoryIsRead) {
@@ -2278,7 +2278,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingWriteMemoryForAllThreadsOnDefaultMemoryThen
     // Fail with a found VMid.
     handler->pwriteRetVal = -1;
     retVal = session->writeMemory(thread, &desc, bufferSize, output);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, retVal);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
 }
 
 TEST_F(DebugApiLinuxTest, WhenCallingWriteMemoryForASignleThreadThenMemoryIsWritten) {
