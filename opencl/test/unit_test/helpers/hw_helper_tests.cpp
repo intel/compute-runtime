@@ -1393,14 +1393,12 @@ TEST(HwHelperTests, whenBlitterSupportIsDisabledThenDontExposeAnyBcsEngine) {
     }
 }
 
-using NotXeHPOrDG2 = AreNotGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
-HWTEST2_F(HwHelperTest, givenNotAtsOrDg2WhenDisableL3ForDebugCalledThenFalseIsReturned, NotXeHPOrDG2) {
+HWTEST2_F(HwHelperTest, givenNotXeHpOrXeHpgCoreWhenDisableL3ForDebugCalledThenFalseIsReturned, IsNotXeHpOrXeHpgCore) {
     const auto &hwHelper = HwHelper::get(renderCoreFamily);
     EXPECT_FALSE(hwHelper.disableL3CacheForDebug(*defaultHwInfo));
 }
 
-using ATSOrDG2 = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
-HWTEST2_F(HwHelperTest, givenAtsOrDg2WhenDisableL3ForDebugCalledThenTrueIsReturned, ATSOrDG2) {
+HWTEST2_F(HwHelperTest, givenXeHpOrXeHpgCoreWhenDisableL3ForDebugCalledThenTrueIsReturned, IsXeHpOrXeHpgCore) {
     const auto &hwHelper = HwHelper::get(renderCoreFamily);
     EXPECT_TRUE(hwHelper.disableL3CacheForDebug(*defaultHwInfo));
 }
@@ -1488,7 +1486,7 @@ HWTEST_F(LogicalStateHelperTest, whenCreatingLogicalStateHelperThenReturnNullptr
     EXPECT_EQ(nullptr, LogicalStateHelper::create<FamilyType>());
 }
 
-HWTEST2_F(HwHelperTest, GivenVariousValuesAndXeHpAndLaterPlatformsWhenCallingCalculateAvailableThreadCountThenCorrectValueIsReturned, ATSOrDG2) {
+HWTEST2_F(HwHelperTest, GivenVariousValuesAndXeHpOrXeHpgCoreWhenCallingCalculateAvailableThreadCountThenCorrectValueIsReturned, IsXeHpOrXeHpgCore) {
     std::array<std::pair<uint32_t, uint32_t>, 3> grfTestInputs = {{{64, 8},
                                                                    {128, 8},
                                                                    {256, 4}}};
@@ -1502,7 +1500,7 @@ HWTEST2_F(HwHelperTest, GivenVariousValuesAndXeHpAndLaterPlatformsWhenCallingCal
     }
 }
 
-HWTEST2_F(HwHelperTest, GivenModifiedGtSystemInfoAndXeHpAndLaterPlatformsWhenCallingCalculateAvailableThreadCountThenCorrectValueIsReturned, ATSOrDG2) {
+HWTEST2_F(HwHelperTest, GivenModifiedGtSystemInfoAndXeHpOrXeHpgCoreWhenCallingCalculateAvailableThreadCountThenCorrectValueIsReturned, IsXeHpOrXeHpgCore) {
     std::array<std::tuple<uint32_t, uint32_t, uint32_t>, 3> testInputs = {{{1, 64, 1},
                                                                            {5, 128, 5},
                                                                            {8, 256, 4}}};

@@ -887,8 +887,7 @@ TEST(SourceLevelDebugger, givenDebuggerLibraryAvailableAndExperimentalEnableSour
 
 using LegacyDebuggerTest = ::testing::Test;
 
-using NotXeHPOrDG2 = AreNotGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
-HWTEST2_F(LegacyDebuggerTest, givenNotAtsOrDg2AndDebugIsActiveThenDisableL3CacheInGmmHelperIsNotSet, NotXeHPOrDG2) {
+HWTEST2_F(LegacyDebuggerTest, givenNotXeHpOrXeHpgCoreAndDebugIsActiveThenDisableL3CacheInGmmHelperIsNotSet, IsNotXeHpOrXeHpgCore) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.EnableMockSourceLevelDebugger.set(1);
     auto executionEnvironment = new ExecutionEnvironment();
@@ -898,8 +897,7 @@ HWTEST2_F(LegacyDebuggerTest, givenNotAtsOrDg2AndDebugIsActiveThenDisableL3Cache
     EXPECT_FALSE(static_cast<MockGmmHelper *>(platform.getClDevice(0)->getDevice().getGmmHelper())->allResourcesUncached);
 }
 
-using ATSOrDG2 = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
-HWTEST2_F(LegacyDebuggerTest, givenAtsOrDg2AndDebugIsActiveThenDisableL3CacheInGmmHelperIsSet, ATSOrDG2) {
+HWTEST2_F(LegacyDebuggerTest, givenXeHpOrXeHpgCoreAndDebugIsActiveThenDisableL3CacheInGmmHelperIsSet, IsXeHpOrXeHpgCore) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.EnableMockSourceLevelDebugger.set(1);
     auto executionEnvironment = new ExecutionEnvironment();

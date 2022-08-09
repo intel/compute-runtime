@@ -405,7 +405,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLater,
 
 HWTEST2_F(AppendMemoryCopyXeHpAndLater,
           givenCommandListAndEventWithSignalScopeWhenTimestampProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForThreeSeparateKernelsAndL3FlushWithPostSyncAddedOnce,
-          isXeHpOrXeHpgCore) {
+          IsXeHpOrXeHpgCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using COMPUTE_WALKER = typename GfxFamily::COMPUTE_WALKER;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
@@ -491,7 +491,7 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLater,
 
 HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLater,
           givenMultiTileCommandListAndEventWithSignalScopeWhenTimestampProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForThreeSeparateMultiTileKernelsAndL3FlushWithPostSyncAddedForScopedEvent,
-          isXeHpOrXeHpgCore) {
+          IsXeHpOrXeHpgCore) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -586,7 +586,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLater,
 }
 
 HWTEST2_F(AppendMemoryCopyXeHpAndLater,
-          givenCommandListWhenMemoryCopyWithSignalEventScopeSetToSubDeviceThenB2BPipeControlIsAddedWithDcFlushWithPostSyncForLastPC, isXeHpOrXeHpgCore) {
+          givenCommandListWhenMemoryCopyWithSignalEventScopeSetToSubDeviceThenB2BPipeControlIsAddedWithDcFlushWithPostSyncForLastPC, IsXeHpOrXeHpgCore) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;

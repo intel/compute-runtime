@@ -82,7 +82,7 @@ HWTEST_F(HwInfoConfigTest, givenForceThreadArbitrationPolicyProgrammingWithScmFl
     EXPECT_TRUE(hwInfoConfig.isThreadArbitrationPolicyReportedWithScm());
 }
 
-HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenIsImplicitScalingSupportedThenExpectFalse, isNotXeHpOrXeHpcCore) {
+HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenIsImplicitScalingSupportedThenExpectFalse, IsNotXeHpOrXeHpcCore) {
     const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     EXPECT_FALSE(hwInfoConfig.isImplicitScalingSupported(*defaultHwInfo));
 }

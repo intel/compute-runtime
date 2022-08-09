@@ -714,7 +714,7 @@ TEST_F(EventCreate, givenAnEventCreateWithInvalidIndexUsingThisEventPoolThenErro
     ASSERT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, value);
 }
 
-HWTEST2_F(EventCreate, givenPlatformSupportMultTileWhenDebugKeyIsSetToNotUseContextEndThenDoNotUseContextEndOffset, isXeHpOrXeHpcCore) {
+HWTEST2_F(EventCreate, givenPlatformSupportMultTileWhenDebugKeyIsSetToNotUseContextEndThenDoNotUseContextEndOffset, IsXeHpOrXeHpcCore) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.UseContextEndOffsetForEventCompletion.set(0);
 
@@ -751,7 +751,7 @@ HWTEST2_F(EventCreate, givenPlatformSupportMultTileWhenDebugKeyIsSetToNotUseCont
     event->destroy();
 }
 
-HWTEST2_F(EventCreate, givenPlatformNotSupportsMultTileWhenDebugKeyIsSetToUseContextEndThenUseContextEndOffset, isNotXeHpOrXeHpcCore) {
+HWTEST2_F(EventCreate, givenPlatformNotSupportsMultTileWhenDebugKeyIsSetToUseContextEndThenUseContextEndOffset, IsNotXeHpOrXeHpcCore) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.UseContextEndOffsetForEventCompletion.set(1);
 

@@ -35,11 +35,12 @@ using IsAtMostXeHpgCore = IsAtMostGfxCore<IGFX_XE_HPG_CORE>;
 using IsAtLeastXeHpcCore = IsAtLeastGfxCore<IGFX_XE_HPC_CORE>;
 using IsAtMostXeHpcCore = IsAtMostGfxCore<IGFX_XE_HPC_CORE>;
 
-using isXeHpOrXeHpgCore = IsAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
-using isXeHpOrXeHpcCore = IsAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPC_CORE>;
-using isXeHpcOrXeHpgCore = IsAnyGfxCores<IGFX_XE_HPC_CORE, IGFX_XE_HPG_CORE>;
+using IsXeHpOrXeHpgCore = IsAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
+using IsXeHpOrXeHpcCore = IsAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPC_CORE>;
+using IsXeHpcOrXeHpgCore = IsAnyGfxCores<IGFX_XE_HPC_CORE, IGFX_XE_HPG_CORE>;
 
-using isNotXeHpOrXeHpcCore = IsNotAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPC_CORE>;
+using IsNotXeHpOrXeHpgCore = IsNotAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
+using IsNotXeHpOrXeHpcCore = IsNotAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPC_CORE>;
 
 using IsSKL = IsProduct<IGFX_SKYLAKE>;
 using IsKBL = IsProduct<IGFX_KABYLAKE>;

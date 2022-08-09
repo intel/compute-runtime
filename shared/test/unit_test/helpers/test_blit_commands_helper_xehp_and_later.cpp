@@ -952,7 +952,7 @@ HWTEST2_F(BlitTests, givenLinearResourceInfoWithNotZeroPitchWhenAppendImageComma
     EXPECT_NE(bltCmd.getSourcePitch(), gmm->gmmResourceInfo->getRenderPitch());
 }
 
-HWTEST2_F(BlitTests, givenCompressionInfoWhenAppendImageCommandsThenCorrectPropertiesAreSet, isXeHpOrXeHpgCore) {
+HWTEST2_F(BlitTests, givenCompressionInfoWhenAppendImageCommandsThenCorrectPropertiesAreSet, IsXeHpOrXeHpgCore) {
     auto verifyCompressionFormat = [](bool mediaCompressed, bool renderCompressed, uint32_t compressionFormat) {
         if (mediaCompressed || renderCompressed) {
             EXPECT_GT(compressionFormat, 0u);

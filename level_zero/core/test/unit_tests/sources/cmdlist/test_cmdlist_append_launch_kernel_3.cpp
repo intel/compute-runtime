@@ -453,8 +453,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernel
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-using WithinXeHPAndXeHPC = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE_HPC_CORE>;
-HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenAppendingKernelWithImmediateListWithoutFlushTaskThenNewCmdBufferAllocated, WithinXeHPAndXeHPC) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenAppendingKernelWithImmediateListWithoutFlushTaskThenNewCmdBufferAllocated, IsWithinXeGfxFamily) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(0);
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
