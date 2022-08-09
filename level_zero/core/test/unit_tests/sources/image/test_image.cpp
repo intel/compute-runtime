@@ -399,6 +399,44 @@ HWTEST2_F(ImageCreate, givenNTHandleWhenCreatingImageThenSuccessIsReturned, IsAt
     imageHW.reset(nullptr);
 }
 
+HWTEST2_F(ImageCreate, givenNTHandleWhenCreatingNV12ImageThenSuccessIsReturnedAndUVOffsetIsSet, IsAtLeastSkl) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    constexpr uint32_t yOffsetForUVPlane = 8u; // mock sets reqOffsetInfo.Lock.Offset to 16 and reqOffsetInfo.Lock.Pitch to 2
+
+    ze_image_desc_t desc = {};
+
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_NV12;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.width = 11;
+    desc.height = 13;
+    desc.depth = 17;
+
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_A;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_G;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_B;
+
+    uint64_t imageHandle = 0x1;
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.handle = &imageHandle;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    desc.pNext = &importNTHandle;
+
+    delete driverHandle->svmAllocsManager;
+    execEnv->memoryManager.reset(new MemoryManagerNTHandleMock(*execEnv));
+    driverHandle->setMemoryManager(execEnv->memoryManager.get());
+    driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get(), false);
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    ASSERT_EQ(imageHW->getAllocation()->peekSharedHandle(), NEO::toOsHandle(importNTHandle.handle));
+    EXPECT_EQ(yOffsetForUVPlane, imageHW->surfaceState.getYOffsetForUOrUvPlane());
+}
+
 class FailMemoryManagerMock : public NEO::OsAgnosticMemoryManager {
   public:
     FailMemoryManagerMock(NEO::ExecutionEnvironment &executionEnvironment) : NEO::OsAgnosticMemoryManager(executionEnvironment) {}
