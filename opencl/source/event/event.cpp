@@ -11,6 +11,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/helpers/mt_helpers.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/utilities/perf_counter.h"
@@ -563,7 +564,9 @@ void Event::transitionExecutionStatus(int32_t newExecutionStatus) const {
     DBG_LOG(EventsDebugEnable, "transitionExecutionStatus event", this, " new status", newExecutionStatus, "previousStatus", prevStatus);
 
     while (prevStatus > newExecutionStatus) {
-        executionStatus.compare_exchange_weak(prevStatus, newExecutionStatus);
+        if (NEO::MultiThreadHelpers::atomicCompareExchangeWeakSpin(executionStatus, prevStatus, newExecutionStatus)) {
+            break;
+        }
     }
     if (NEO::DebugManager.flags.EventsTrackerEnable.get()) {
         EventsTracker::getEventsTracker().notifyTransitionedExecutionStatus();

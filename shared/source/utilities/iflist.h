@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
+#include "shared/source/helpers/mt_helpers.h"
 
 #include <atomic>
 #include <memory>
@@ -166,7 +168,7 @@ class IFList {
 
     template <bool C = ThreadSafe>
     typename std::enable_if<C, void>::type compareExchangeHead(NodeObjectType *&expected, NodeObjectType *desired) {
-        while (!std::atomic_compare_exchange_weak(&head, &expected, desired)) {
+        while (!NEO::MultiThreadHelpers::atomicCompareExchangeWeakSpin(head, expected, desired)) {
             ;
         }
     }

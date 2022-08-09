@@ -79,7 +79,6 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_walk_order.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/interlocked_max.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_helpers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties.cpp
@@ -96,6 +95,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}memory_properties_helpers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_properties_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_properties_helpers_base.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/mt_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/neo_driver_version.h
     ${CMAKE_CURRENT_SOURCE_DIR}/non_copyable_or_moveable.h
     ${CMAKE_CURRENT_SOURCE_DIR}/options.h

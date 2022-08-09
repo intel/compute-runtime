@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "shared/source/helpers/interlocked_max.h"
+#include "shared/source/helpers/mt_helpers.h"
 #include "shared/source/os_interface/os_context.h"
 
 #include <atomic>
@@ -33,7 +33,7 @@ class OsContextLinux : public OsContext {
     uint32_t peekTlbFlushCounter() const { return tlbFlushCounter.load(); }
 
     void setTlbFlushed(uint32_t newCounter) {
-        interlockedMax(lastFlushedTlbFlushCounter, newCounter);
+        NEO::MultiThreadHelpers::interlockedMax(lastFlushedTlbFlushCounter, newCounter);
     };
     bool isTlbFlushRequired() const {
         return (tlbFlushCounter.load() > lastFlushedTlbFlushCounter.load());

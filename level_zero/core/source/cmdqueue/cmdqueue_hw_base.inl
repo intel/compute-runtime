@@ -15,7 +15,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/interlocked_max.h"
+#include "shared/source/helpers/mt_helpers.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/helpers/state_base_address_bdw_and_later.inl"
