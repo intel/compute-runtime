@@ -23,6 +23,7 @@ static const std::vector<unsigned short> adlsDeviceIds{
     0xA782,
     0xA783,
     0xA788,
-    0xA789};
+    0xA789,
+    0xA78B};
 
 } // namespace NEO

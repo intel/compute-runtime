@@ -70,6 +70,7 @@ DEVICE( 0xA782, AdlsHwConfig )
 DEVICE( 0xA783, AdlsHwConfig )
 DEVICE( 0xA788, AdlsHwConfig )
 DEVICE( 0xA789, AdlsHwConfig )
+DEVICE( 0xA78B, AdlsHwConfig )
 #endif
 
 #ifdef SUPPORT_ADLN
