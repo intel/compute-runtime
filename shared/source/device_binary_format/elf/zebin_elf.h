@@ -411,7 +411,8 @@ enum ArgType : uint8_t {
     ArgTypeImageFlatBaseOffset,
     ArgTypeImageFlatWidth,
     ArgTypeImageFlatHeight,
-    ArgTypeImageFlatPitch
+    ArgTypeImageFlatPitch,
+    ArgTypeMax
 };
 
 namespace PerThreadPayloadArgument {
@@ -439,6 +440,7 @@ enum MemoryAddressingMode : uint8_t {
     MemoryAddressingModeStateless,
     MemoryAddressingModeBindless,
     MemoryAddressingModeSharedLocalMemory,
+    MemoryAddressIngModeMax
 };
 
 enum AddressSpace : uint8_t {
@@ -448,6 +450,7 @@ enum AddressSpace : uint8_t {
     AddressSpaceConstant,
     AddressSpaceImage,
     AddressSpaceSampler,
+    AddressSpaceMax
 };
 
 enum AccessType : uint8_t {
@@ -455,12 +458,14 @@ enum AccessType : uint8_t {
     AccessTypeReadonly = 1,
     AccessTypeWriteonly,
     AccessTypeReadwrite,
+    AccessTypeMax
 };
 
 enum ImageType : uint8_t {
     ImageTypeUnknown,
-    MediaImage,
-    MediaBlockImage
+    ImageTypeMedia,
+    ImageTypeMediaBlock,
+    ImageTypeMax
 };
 
 using ArgTypeT = ArgType;
@@ -512,14 +517,16 @@ enum AllocationType : uint8_t {
     AllocationTypeUnknown = 0,
     AllocationTypeGlobal,
     AllocationTypeScratch,
-    AllocationTypeSlm
+    AllocationTypeSlm,
+    AllocationTypeMax
 };
 
 enum MemoryUsage : uint8_t {
     MemoryUsageUnknown = 0,
     MemoryUsagePrivateSpace,
     MemoryUsageSpillFillSpace,
-    MemoryUsageSingleSpace
+    MemoryUsageSingleSpace,
+    MemoryUsageMax
 };
 
 using SizeT = int32_t;

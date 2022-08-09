@@ -7,6 +7,7 @@
 
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/zebin_elf.h"
+#include "shared/source/device_binary_format/elf/zeinfo_enum_lookup.h"
 #include "shared/source/device_binary_format/zebin_decoder.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
@@ -1447,413 +1448,27 @@ kernels:
     EXPECT_STREQ("Missing source offset value for element in argByValue\n", errors.c_str());
 }
 
-TEST(ReadEnumCheckedArgType, GivenValidStringRepresentationThenParseItCorrectly) {
-    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::ArgType;
-    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadPayloadArgument::ArgType;
-    NEO::Yaml::Token tokPackedLocalIds(packedLocalIds, NEO::Yaml::Token::Token::LiteralString);
-    NEO::Yaml::Token tokLocalId(localId, NEO::Yaml::Token::Token::LiteralString);
-    NEO::Yaml::Token tokLocalSize(localSize, NEO::Yaml::Token::Token::LiteralString);
-    NEO::Yaml::Token tokGroupCount(groupCount, NEO::Yaml::Token::Token::LiteralString);
-    NEO::Yaml::Token tokGlobalSize(globalSize, NEO::Yaml::Token::Token::LiteralString);
-    NEO::Yaml::Token tokEnqueuedLocalSize(enqueuedLocalSize, NEO::Yaml::Token::Token::LiteralString);
-    NEO::Yaml::Token tokGlobalIdOffset(globalIdOffset, NEO::Yaml::Token::Token::LiteralString);
-    NEO::Yaml::Token tokPrivateBaseStateless(privateBaseStateless, NEO::Yaml::Token::Token::LiteralString);
-    NEO::Yaml::Token tokArgByValue(argByvalue, NEO::Yaml::Token::Token::LiteralString);
-    NEO::Yaml::Token tokArgByPointer(argBypointer, NEO::Yaml::Token::Token::LiteralString);
-    NEO::Yaml::Token tokBufferOffset(bufferOffset, NEO::Yaml::Token::Token::LiteralString);
-
-    using ArgType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgType;
-    ArgType enumPackedLocalIds, enumLocalId, enumLocalSize, enumGroupCount, enumGlobalSize,
-        enumEnqueuedLocalSize, enumGlobalIdOffset, enumPrivateBaseStateless, enumArgByValue, enumArgByPointer, enumBufferOffset;
+TEST(ReadZeInfoEnumChecked, GivenInvalidNodeThenFail) {
+    using ArgType = NEO::Zebin::ZeInfo::EnumLookup::ArgType::ArgType;
+    NEO::Yaml::YamlParser parser;
+    NEO::Yaml::Node node;
+    ArgType outEnumValue;
     std::string errors;
-    bool success;
 
-    success = NEO::readEnumChecked(&tokPackedLocalIds, enumPackedLocalIds, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(ArgType::ArgTypePackedLocalIds, enumPackedLocalIds);
-
-    success = NEO::readEnumChecked(&tokLocalId, enumLocalId, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(ArgType::ArgTypeLocalId, enumLocalId);
-
-    success = NEO::readEnumChecked(&tokLocalSize, enumLocalSize, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(ArgType::ArgTypeLocalSize, enumLocalSize);
-
-    success = NEO::readEnumChecked(&tokGroupCount, enumGroupCount, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(ArgType::ArgTypeGroupCount, enumGroupCount);
-
-    success = NEO::readEnumChecked(&tokGlobalSize, enumGlobalSize, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(ArgType::ArgTypeGlobalSize, enumGlobalSize);
-
-    success = NEO::readEnumChecked(&tokEnqueuedLocalSize, enumEnqueuedLocalSize, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(ArgType::ArgTypeEnqueuedLocalSize, enumEnqueuedLocalSize);
-
-    success = NEO::readEnumChecked(&tokGlobalIdOffset, enumGlobalIdOffset, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(ArgType::ArgTypeGlobalIdOffset, enumGlobalIdOffset);
-
-    success = NEO::readEnumChecked(&tokPrivateBaseStateless, enumPrivateBaseStateless, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(ArgType::ArgTypePrivateBaseStateless, enumPrivateBaseStateless);
-
-    success = NEO::readEnumChecked(&tokArgByValue, enumArgByValue, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(ArgType::ArgTypeArgByvalue, enumArgByValue);
-
-    success = NEO::readEnumChecked(&tokArgByPointer, enumArgByPointer, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(ArgType::ArgTypeArgBypointer, enumArgByPointer);
-
-    success = NEO::readEnumChecked(&tokBufferOffset, enumBufferOffset, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(ArgType::ArgTypeBufferOffset, enumBufferOffset);
-}
-
-TEST(ReadEnumCheckedArgType, GivenNullTokenThenFail) {
-    using ArgType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgType;
-    ArgType enumRepresentation;
-    std::string errors;
-    bool success;
-
-    success = NEO::readEnumChecked(nullptr, enumRepresentation, "some_kernel", errors);
+    bool success = NEO::readZeInfoEnumChecked(parser, node, outEnumValue, "some_kernel", errors);
     EXPECT_FALSE(success);
 }
 
-TEST(ReadEnumCheckedArgType, GivenUnknownStringRepresentationThenFail) {
-    using ArgType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgType;
-    ArgType enumRepresentation;
+TEST(ReadEnumChecked, GivenInvalidEnumStringThenReturnErrorAndFail) {
+    using ArgType = NEO::Zebin::ZeInfo::EnumLookup::ArgType::ArgType;
+    ArgType outEnumValue;
     std::string errors;
-    bool success;
 
-    NEO::Yaml::Token someEntry("some_entry", NEO::Yaml::Token::Token::LiteralString);
-    success = NEO::readEnumChecked(&someEntry, enumRepresentation, "some_kernel", errors);
+    bool success = NEO::readEnumChecked("invalid_enum_string_representation", outEnumValue, "some_kernel", errors);
     EXPECT_FALSE(success);
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unhandled \"some_entry\" argument type in context of some_kernel\n", errors.c_str());
-}
+    EXPECT_EQ(ArgType::ArgTypeUnknown, outEnumValue);
 
-TEST(ReadEnumCheckedMemoryAddressingMode, GivenValidStringRepresentationThenParseItCorrectly) {
-    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::MemoryAddressingMode;
-
-    NEO::Yaml::Token tokStateless(stateless, NEO::Yaml::Token::Token::LiteralString);
-    NEO::Yaml::Token tokStateful(stateful, NEO::Yaml::Token::Token::LiteralString);
-    NEO::Yaml::Token tokBindless(bindless, NEO::Yaml::Token::Token::LiteralString);
-    NEO::Yaml::Token tokSharedLocalMemory(sharedLocalMemory, NEO::Yaml::Token::Token::LiteralString);
-
-    using MemoryAddressingMode = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::MemoryAddressingMode;
-    MemoryAddressingMode enumStateless, enumStateful, enumBindless, enumSharedLocalMemory;
-    std::string errors;
-    bool success;
-
-    success = NEO::readEnumChecked(&tokStateless, enumStateless, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(MemoryAddressingMode::MemoryAddressingModeStateless, enumStateless);
-
-    success = NEO::readEnumChecked(&tokStateful, enumStateful, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(MemoryAddressingMode::MemoryAddressingModeStateful, enumStateful);
-
-    success = NEO::readEnumChecked(&tokBindless, enumBindless, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(MemoryAddressingMode::MemoryAddressingModeBindless, enumBindless);
-
-    success = NEO::readEnumChecked(&tokSharedLocalMemory, enumSharedLocalMemory, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(MemoryAddressingMode::MemoryAddressingModeSharedLocalMemory, enumSharedLocalMemory);
-}
-
-TEST(ReadEnumCheckedMemoryAddressingMode, GivenNullTokenThenFail) {
-    using MemoryAddressingMode = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::MemoryAddressingMode;
-    MemoryAddressingMode enumRepresentation;
-    std::string errors;
-    bool success;
-
-    success = NEO::readEnumChecked(nullptr, enumRepresentation, "some_kernel", errors);
-    EXPECT_FALSE(success);
-}
-
-TEST(ReadEnumCheckedMemoryAddressingMode, GivenUnknownStringRepresentationThenFail) {
-    using MemoryAddressingMode = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::MemoryAddressingMode;
-    MemoryAddressingMode enumRepresentation;
-    std::string errors;
-    bool success;
-
-    NEO::Yaml::Token someEntry("some_entry", NEO::Yaml::Token::Token::LiteralString);
-    success = NEO::readEnumChecked(&someEntry, enumRepresentation, "some_kernel", errors);
-    EXPECT_FALSE(success);
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unhandled \"some_entry\" memory addressing mode in context of some_kernel\n", errors.c_str());
-}
-
-TEST(ReadEnumCheckedAddressSpace, GivenValidStringRepresentationThenParseItCorrectly) {
-    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::AddrSpace;
-
-    NEO::Yaml::Token tokGlobal(global, NEO::Yaml::Token::Token::LiteralString);
-    NEO::Yaml::Token tokLocal(local, NEO::Yaml::Token::Token::LiteralString);
-    NEO::Yaml::Token tokConstant(constant, NEO::Yaml::Token::Token::LiteralString);
-    NEO::Yaml::Token tokImage(image, NEO::Yaml::Token::Token::LiteralString);
-    NEO::Yaml::Token tokSampler(sampler, NEO::Yaml::Token::Token::LiteralString);
-
-    using AddressSpace = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AddressSpace;
-    AddressSpace enumGlobal, enumLocal, enumConstant, enumImage, enumSampler;
-    std::string errors;
-    bool success;
-
-    success = NEO::readEnumChecked(&tokGlobal, enumGlobal, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(AddressSpace::AddressSpaceGlobal, enumGlobal);
-
-    success = NEO::readEnumChecked(&tokLocal, enumLocal, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(AddressSpace::AddressSpaceLocal, enumLocal);
-
-    success = NEO::readEnumChecked(&tokConstant, enumConstant, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(AddressSpace::AddressSpaceConstant, enumConstant);
-
-    success = NEO::readEnumChecked(&tokImage, enumImage, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(AddressSpace::AddressSpaceImage, enumImage);
-
-    success = NEO::readEnumChecked(&tokSampler, enumSampler, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(AddressSpace::AddressSpaceSampler, enumSampler);
-}
-
-TEST(ReadEnumCheckedAddressSpace, GivenNullTokenThenFail) {
-    using AddressSpace = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AddressSpace;
-    AddressSpace enumRepresentation;
-    std::string errors;
-    bool success;
-
-    success = NEO::readEnumChecked(nullptr, enumRepresentation, "some_kernel", errors);
-    EXPECT_FALSE(success);
-}
-
-TEST(ReadEnumCheckedAddressSpace, GivenUnknownStringRepresentationThenFail) {
-    using AddressSpace = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AddressSpace;
-    AddressSpace enumRepresentation;
-    std::string errors;
-    bool success;
-
-    NEO::Yaml::Token someEntry("some_entry", NEO::Yaml::Token::Token::LiteralString);
-    success = NEO::readEnumChecked(&someEntry, enumRepresentation, "some_kernel", errors);
-    EXPECT_FALSE(success);
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unhandled \"some_entry\" address space in context of some_kernel\n", errors.c_str());
-}
-
-TEST(ReadEnumCheckedAccessType, GivenValidStringRepresentationThenParseItCorrectly) {
-    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::AccessType;
-
-    NEO::Yaml::Token tokReadOnly(readonly, NEO::Yaml::Token::Token::LiteralString);
-    NEO::Yaml::Token tokWriteOnly(writeonly, NEO::Yaml::Token::Token::LiteralString);
-    NEO::Yaml::Token tokReadWrite(readwrite, NEO::Yaml::Token::Token::LiteralString);
-
-    using AccessType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AccessType;
-    AccessType enumReadOnly, enumWriteOnly, enumReadWrite;
-    std::string errors;
-    bool success;
-
-    success = NEO::readEnumChecked(&tokReadOnly, enumReadOnly, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(AccessType::AccessTypeReadonly, enumReadOnly);
-
-    success = NEO::readEnumChecked(&tokWriteOnly, enumWriteOnly, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(AccessType::AccessTypeWriteonly, enumWriteOnly);
-
-    success = NEO::readEnumChecked(&tokReadWrite, enumReadWrite, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(AccessType::AccessTypeReadwrite, enumReadWrite);
-}
-
-TEST(ReadEnumCheckedAccessType, GivenNullTokenThenFail) {
-    using AccessType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AccessType;
-    AccessType enumRepresentation;
-    std::string errors;
-    bool success;
-
-    success = NEO::readEnumChecked(nullptr, enumRepresentation, "some_kernel", errors);
-    EXPECT_FALSE(success);
-}
-
-TEST(ReadEnumCheckedAccessType, GivenUnknownStringRepresentationThenFail) {
-    using AccessType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AccessType;
-    AccessType enumRepresentation;
-    std::string errors;
-    bool success;
-
-    NEO::Yaml::Token someEntry("some_entry", NEO::Yaml::Token::Token::LiteralString);
-    success = NEO::readEnumChecked(&someEntry, enumRepresentation, "some_kernel", errors);
-    EXPECT_FALSE(success);
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unhandled \"some_entry\" access type in context of some_kernel\n", errors.c_str());
-}
-
-TEST(ReadEnumCheckedAllocationType, GivenValidStringRepresentationThenParseItCorrectly) {
-    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::AllocationType;
-
-    NEO::Yaml::Token tokGlobal(global, NEO::Yaml::Token::Token::LiteralString);
-    NEO::Yaml::Token tokScratch(scratch, NEO::Yaml::Token::Token::LiteralString);
-    NEO::Yaml::Token tokSlm(slm, NEO::Yaml::Token::Token::LiteralString);
-
-    using AllocationType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::AllocationType;
-    AllocationType enumGlobal, enumScratch, enumSlm;
-    std::string errors;
-    bool success;
-
-    success = NEO::readEnumChecked(&tokGlobal, enumGlobal, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(AllocationType::AllocationTypeGlobal, enumGlobal);
-
-    success = NEO::readEnumChecked(&tokScratch, enumScratch, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(AllocationType::AllocationTypeScratch, enumScratch);
-
-    success = NEO::readEnumChecked(&tokSlm, enumSlm, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(AllocationType::AllocationTypeSlm, enumSlm);
-}
-
-TEST(ReadEnumCheckedAllocationType, GivenNullTokenThenFail) {
-    using AllocationType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::AllocationType;
-    AllocationType enumRepresentation;
-    std::string errors;
-    bool success;
-
-    success = NEO::readEnumChecked(nullptr, enumRepresentation, "some_kernel", errors);
-    EXPECT_FALSE(success);
-}
-
-TEST(ReadEnumCheckedAllocationType, GivenUnknownStringRepresentationThenFail) {
-    using AllocationType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::AllocationType;
-    AllocationType enumRepresentation;
-    std::string errors;
-    bool success;
-
-    NEO::Yaml::Token someEntry("some_entry", NEO::Yaml::Token::Token::LiteralString);
-    success = NEO::readEnumChecked(&someEntry, enumRepresentation, "some_kernel", errors);
-    EXPECT_FALSE(success);
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unhandled \"some_entry\" per-thread memory buffer allocation type in context of some_kernel\n", errors.c_str());
-}
-
-TEST(ReadEnumCheckedMemoryUsage, GivenValidStringRepresentationThenParseItCorrectly) {
-    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::MemoryUsage;
-
-    NEO::Yaml::Token tokPrivateSpace(privateSpace, NEO::Yaml::Token::Token::LiteralString);
-    NEO::Yaml::Token tokSpillFillSpace(spillFillSpace, NEO::Yaml::Token::Token::LiteralString);
-    NEO::Yaml::Token tokSingleSpace(singleSpace, NEO::Yaml::Token::Token::LiteralString);
-
-    using MemoryUsage = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::MemoryUsage;
-    MemoryUsage enumPrivateSpace, enumSpillFillSpace, enumSingleSpace;
-    std::string errors;
-    bool success;
-
-    success = NEO::readEnumChecked(&tokPrivateSpace, enumPrivateSpace, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(MemoryUsage::MemoryUsagePrivateSpace, enumPrivateSpace);
-
-    success = NEO::readEnumChecked(&tokSpillFillSpace, enumSpillFillSpace, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(MemoryUsage::MemoryUsageSpillFillSpace, enumSpillFillSpace);
-
-    success = NEO::readEnumChecked(&tokSingleSpace, enumSingleSpace, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(MemoryUsage::MemoryUsageSingleSpace, enumSingleSpace);
-}
-
-TEST(ReadEnumCheckedMemoryUsage, GivenNullTokenThenFail) {
-    using MemoryUsage = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::MemoryUsage;
-    MemoryUsage enumRepresentation;
-    std::string errors;
-    bool success;
-
-    success = NEO::readEnumChecked(nullptr, enumRepresentation, "some_kernel", errors);
-    EXPECT_FALSE(success);
-}
-
-TEST(ReadEnumCheckedMemoryUsage, GivenUnknownStringRepresentationThenFail) {
-    using MemoryUsage = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::MemoryUsage;
-    MemoryUsage enumRepresentation;
-    std::string errors;
-    bool success;
-
-    NEO::Yaml::Token someEntry("some_entry", NEO::Yaml::Token::Token::LiteralString);
-    success = NEO::readEnumChecked(&someEntry, enumRepresentation, "some_kernel", errors);
-    EXPECT_FALSE(success);
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unhandled \"some_entry\" per-thread memory buffer usage type in context of some_kernel\n", errors.c_str());
-}
-
-TEST(ReadEnumCheckedImageType, GiveValidStringRepresentationThenParseItCorrectly) {
-    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::ImageType;
-
-    NEO::Yaml::Token tokMedia(imageTypeMedia, NEO::Yaml::Token::Token::LiteralString);
-    NEO::Yaml::Token tokBlock(imageTypeBlock, NEO::Yaml::Token::Token::LiteralString);
-
-    using ImageType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::ImageType;
-    ImageType enumMedia, enumBlock;
-    std::string errors;
-    bool success;
-
-    success = NEO::readEnumChecked(&tokMedia, enumMedia, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(ImageType::MediaImage, enumMedia);
-
-    success = NEO::readEnumChecked(&tokBlock, enumBlock, "some_kernel", errors);
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(ImageType::MediaBlockImage, enumBlock);
-}
-
-TEST(ReadEnumCheckedImageType, GivenNullTokenThenFail) {
-    using ImageType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::ImageType;
-    ImageType enumRepresentation;
-    std::string errors;
-
-    bool success = NEO::readEnumChecked(nullptr, enumRepresentation, "some_kernel", errors);
-    EXPECT_FALSE(success);
-}
-
-TEST(ReadEnumCheckedImageType, GivenUnknownStringRepresentationThenFail) {
-    using ImageType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::ImageType;
-    ImageType enumRepresentation;
-    std::string errors;
-
-    NEO::Yaml::Token someEntry("some_entry", NEO::Yaml::Token::Token::LiteralString);
-    bool success = NEO::readEnumChecked(&someEntry, enumRepresentation, "some_kernel", errors);
-    EXPECT_FALSE(success);
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unhandled \"some_entry\" image type in context of some_kernel\n", errors.c_str());
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unhandled \"invalid_enum_string_representation\" argument type in context of some_kernel\n", errors.c_str());
 }
 
 TEST(ReadZeInfoPerThreadPayloadArguments, GivenValidYamlEntriesThenSetProperMembers) {
@@ -5762,7 +5377,7 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenInvalidIntelGTNotesSe
     memcpy_s(platformData, 4, &productFamily, 4);
 
     auto sectionDataSize = sizeof(Elf::ElfNoteSection) + elfNoteSection.nameSize + elfNoteSection.descSize;
-    auto incorrectSectionDataSize = sectionDataSize + 0x5; //add rubbish data at the end - may cause OOB access.
+    auto incorrectSectionDataSize = sectionDataSize + 0x5; // add rubbish data at the end - may cause OOB access.
     auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(incorrectSectionDataSize);
 
     appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), platformData, Elf::IntelGtNoteOwnerName.str().c_str(), incorrectSectionDataSize);
@@ -5788,7 +5403,7 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidZeInfoVersionInI
     elfNoteSection.descSize = 5u;
     elfNoteSection.nameSize = 8u;
 
-    uint8_t zeInfoVersion[5] = {0x31, 0x2e, 0x31, 0x35, 0x0}; //version "1.15\0"
+    uint8_t zeInfoVersion[5] = {0x31, 0x2e, 0x31, 0x35, 0x0}; // version "1.15\0"
 
     ASSERT_EQ(zeInfoDecoderVersion.major, 1u);
     ASSERT_EQ(zeInfoDecoderVersion.minor, 9u);

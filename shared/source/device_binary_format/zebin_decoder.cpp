@@ -13,6 +13,7 @@
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/zebin_elf.h"
+#include "shared/source/device_binary_format/elf/zeinfo_enum_lookup.h"
 #include "shared/source/device_binary_format/yaml/yaml_parser.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/program/kernel_info.h"
@@ -407,225 +408,29 @@ DecodeError readZeInfoExperimentalProperties(const NEO::Yaml::YamlParser &parser
     return validExperimentalProperty ? DecodeError::Success : DecodeError::InvalidBinary;
 }
 
-bool readEnumChecked(const Yaml::Token *token, NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgType &out, ConstStringRef context, std::string &outErrReason) {
+template <typename T>
+bool readEnumChecked(ConstStringRef enumString, T &outValue, ConstStringRef kernelName, std::string &outErrReason) {
+    using EnumLooker = NEO::Zebin::ZeInfo::EnumLookup::EnumLooker<T>;
+    auto enumVal = EnumLooker::members.find(enumString);
+    outValue = enumVal.value_or(static_cast<T>(0));
+
+    if (false == enumVal.has_value()) {
+        outErrReason.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unhandled \"" + enumString.str() + "\" " + EnumLooker::name.str() + " in context of " + kernelName.str() + "\n");
+    }
+
+    return enumVal.has_value();
+}
+
+template <typename T>
+bool readZeInfoEnumChecked(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node, T &outValue, ConstStringRef kernelName, std::string &outErrReason) {
+    auto token = parser.getValueToken(node);
     if (nullptr == token) {
         return false;
     }
-
-    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel;
-    using ArgTypeT = NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgType;
     auto tokenValue = token->cstrref();
-    if (tokenValue == PerThreadPayloadArgument::ArgType::packedLocalIds) {
-        out = ArgTypeT::ArgTypePackedLocalIds;
-    } else if (tokenValue == PerThreadPayloadArgument::ArgType::localId) {
-        out = ArgTypeT::ArgTypeLocalId;
-    } else if (tokenValue == PayloadArgument::ArgType::localSize) {
-        out = ArgTypeT::ArgTypeLocalSize;
-    } else if (tokenValue == PayloadArgument::ArgType::groupCount) {
-        out = ArgTypeT::ArgTypeGroupCount;
-    } else if (tokenValue == PayloadArgument::ArgType::globalSize) {
-        out = ArgTypeT::ArgTypeGlobalSize;
-    } else if (tokenValue == PayloadArgument::ArgType::enqueuedLocalSize) {
-        out = ArgTypeT::ArgTypeEnqueuedLocalSize;
-    } else if (tokenValue == PayloadArgument::ArgType::globalIdOffset) {
-        out = ArgTypeT::ArgTypeGlobalIdOffset;
-    } else if (tokenValue == PayloadArgument::ArgType::privateBaseStateless) {
-        out = ArgTypeT::ArgTypePrivateBaseStateless;
-    } else if (tokenValue == PayloadArgument::ArgType::argByvalue) {
-        out = ArgTypeT::ArgTypeArgByvalue;
-    } else if (tokenValue == PayloadArgument::ArgType::argBypointer) {
-        out = ArgTypeT::ArgTypeArgBypointer;
-    } else if (tokenValue == PayloadArgument::ArgType::bufferAddress) {
-        out = ArgTypeT::ArgTypeBufferAddress;
-    } else if (tokenValue == PayloadArgument::ArgType::bufferOffset) {
-        out = ArgTypeT::ArgTypeBufferOffset;
-    } else if (tokenValue == PayloadArgument::ArgType::printfBuffer) {
-        out = ArgTypeT::ArgTypePrintfBuffer;
-    } else if (tokenValue == PayloadArgument::ArgType::workDimensions) {
-        out = ArgTypeT::ArgTypeWorkDimensions;
-    } else if (tokenValue == PayloadArgument::ArgType::implicitArgBuffer) {
-        out = ArgTypeT::ArgTypeImplicitArgBuffer;
-    } else if (tokenValue == PayloadArgument::ArgType::Image::width) {
-        out = ArgTypeT::ArgTypeImageWidth;
-    } else if (tokenValue == PayloadArgument::ArgType::Image::height) {
-        out = ArgTypeT::ArgTypeImageHeight;
-    } else if (tokenValue == PayloadArgument::ArgType::Image::depth) {
-        out = ArgTypeT::ArgTypeImageDepth;
-    } else if (tokenValue == PayloadArgument::ArgType::Image::channelDataType) {
-        out = ArgTypeT::ArgTypeImageChannelDataType;
-    } else if (tokenValue == PayloadArgument::ArgType::Image::channelOrder) {
-        out = ArgTypeT::ArgTypeImageChannelOrder;
-    } else if (tokenValue == PayloadArgument::ArgType::Image::arraySize) {
-        out = ArgTypeT::ArgTypeImageArraySize;
-    } else if (tokenValue == PayloadArgument::ArgType::Image::numSamples) {
-        out = ArgTypeT::ArgTypeImageNumSamples;
-    } else if (tokenValue == PayloadArgument::ArgType::Image::numMipLevels) {
-        out = ArgTypeT::ArgTypeImageMipLevels;
-    } else if (tokenValue == PayloadArgument::ArgType::Image::flatBaseOffset) {
-        out = ArgTypeT::ArgTypeImageFlatBaseOffset;
-    } else if (tokenValue == PayloadArgument::ArgType::Image::flatWidth) {
-        out = ArgTypeT::ArgTypeImageFlatWidth;
-    } else if (tokenValue == PayloadArgument::ArgType::Image::flatHeight) {
-        out = ArgTypeT::ArgTypeImageFlatHeight;
-    } else if (tokenValue == PayloadArgument::ArgType::Image::flatPitch) {
-        out = ArgTypeT::ArgTypeImageFlatPitch;
-    } else {
-        outErrReason.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unhandled \"" + tokenValue.str() + "\" argument type in context of " + context.str() + "\n");
-        return false;
-    }
-    return true;
+    return readEnumChecked(tokenValue, outValue, kernelName, outErrReason);
 }
-
-bool readEnumChecked(const Yaml::Token *token, NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::MemoryAddressingMode &out,
-                     ConstStringRef context, std::string &outErrReason) {
-    if (nullptr == token) {
-        return false;
-    }
-
-    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::MemoryAddressingMode;
-    using AddrMode = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::MemoryAddressingMode;
-    auto tokenValue = token->cstrref();
-
-    if (stateless == tokenValue) {
-        out = AddrMode::MemoryAddressingModeStateless;
-    } else if (stateful == tokenValue) {
-        out = AddrMode::MemoryAddressingModeStateful;
-    } else if (bindless == tokenValue) {
-        out = AddrMode::MemoryAddressingModeBindless;
-    } else if (sharedLocalMemory == tokenValue) {
-        out = AddrMode::MemoryAddressingModeSharedLocalMemory;
-    } else {
-        outErrReason.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unhandled \"" + tokenValue.str() + "\" memory addressing mode in context of " + context.str() + "\n");
-        return false;
-    }
-
-    return true;
-}
-
-bool readEnumChecked(const Yaml::Token *token, NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AddressSpace &out,
-                     ConstStringRef context, std::string &outErrReason) {
-    if (nullptr == token) {
-        return false;
-    }
-
-    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::AddrSpace;
-    using AddrSpace = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AddressSpace;
-    auto tokenValue = token->cstrref();
-
-    if (global == tokenValue) {
-        out = AddrSpace::AddressSpaceGlobal;
-    } else if (local == tokenValue) {
-        out = AddrSpace::AddressSpaceLocal;
-    } else if (constant == tokenValue) {
-        out = AddrSpace::AddressSpaceConstant;
-    } else if (image == tokenValue) {
-        out = AddrSpace::AddressSpaceImage;
-    } else if (sampler == tokenValue) {
-        out = AddrSpace::AddressSpaceSampler;
-    } else {
-        outErrReason.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unhandled \"" + tokenValue.str() + "\" address space in context of " + context.str() + "\n");
-        return false;
-    }
-
-    return true;
-}
-
-bool readEnumChecked(const Yaml::Token *token, NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AccessType &out,
-                     ConstStringRef context, std::string &outErrReason) {
-    if (nullptr == token) {
-        return false;
-    }
-
-    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::AccessType;
-    using AccessType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AccessType;
-    auto tokenValue = token->cstrref();
-
-    static constexpr ConstStringRef readonly("readonly");
-    static constexpr ConstStringRef writeonly("writeonly");
-    static constexpr ConstStringRef readwrite("readwrite");
-
-    if (readonly == tokenValue) {
-        out = AccessType::AccessTypeReadonly;
-    } else if (writeonly == tokenValue) {
-        out = AccessType::AccessTypeWriteonly;
-    } else if (readwrite == tokenValue) {
-        out = AccessType::AccessTypeReadwrite;
-    } else {
-        outErrReason.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unhandled \"" + tokenValue.str() + "\" access type in context of " + context.str() + "\n");
-        return false;
-    }
-
-    return true;
-}
-
-bool readEnumChecked(const Yaml::Token *token, NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::ImageType &out, ConstStringRef context, std::string &outErrReason) {
-    if (nullptr == token) {
-        return false;
-    }
-
-    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::ImageType;
-    using ImageType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::ImageType;
-    auto tokenValue = token->cstrref();
-
-    if (imageTypeMedia == tokenValue) {
-        out = ImageType::MediaImage;
-    } else if (imageTypeBlock == tokenValue) {
-        out = ImageType::MediaBlockImage;
-    } else {
-        outErrReason.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unhandled \"" + tokenValue.str() + "\" image type in context of " + context.str() + "\n");
-        return false;
-    }
-
-    return true;
-}
-
-bool readEnumChecked(const Yaml::Token *token, NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::AllocationType &out,
-                     ConstStringRef context, std::string &outErrReason) {
-    if (nullptr == token) {
-        return false;
-    }
-
-    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::AllocationType;
-    using AllocType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::AllocationType;
-    auto tokenValue = token->cstrref();
-
-    if (global == tokenValue) {
-        out = AllocType::AllocationTypeGlobal;
-    } else if (scratch == tokenValue) {
-        out = AllocType::AllocationTypeScratch;
-    } else if (slm == tokenValue) {
-        out = AllocType::AllocationTypeSlm;
-    } else {
-        outErrReason.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unhandled \"" + tokenValue.str() + "\" per-thread memory buffer allocation type in context of " + context.str() + "\n");
-        return false;
-    }
-
-    return true;
-}
-
-bool readEnumChecked(const Yaml::Token *token, NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::MemoryUsage &out,
-                     ConstStringRef context, std::string &outErrReason) {
-    if (nullptr == token) {
-        return false;
-    }
-
-    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::MemoryUsage;
-    using Usage = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::MemoryUsage;
-    auto tokenValue = token->cstrref();
-
-    if (privateSpace == tokenValue) {
-        out = Usage::MemoryUsagePrivateSpace;
-    } else if (spillFillSpace == tokenValue) {
-        out = Usage::MemoryUsageSpillFillSpace;
-    } else if (singleSpace == tokenValue) {
-        out = Usage::MemoryUsageSingleSpace;
-    } else {
-        outErrReason.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unhandled \"" + tokenValue.str() + "\" per-thread memory buffer usage type in context of " + context.str() + "\n");
-        return false;
-    }
-
-    return true;
-}
+template bool readZeInfoEnumChecked<NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::ArgTypeT>(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node, NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::ArgTypeT &outValue, ConstStringRef kernelName, std::string &outErrReason);
 
 DecodeError readZeInfoPerThreadPayloadArguments(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node,
                                                 ZeInfoPerThreadPayloadArguments &outPerThreadPayloadArguments,
@@ -639,9 +444,8 @@ DecodeError readZeInfoPerThreadPayloadArguments(const NEO::Yaml::YamlParser &par
         for (const auto &perThreadPayloadArgumentMemberNd : parser.createChildrenRange(perThredPayloadArgumentNd)) {
             auto key = parser.readKey(perThreadPayloadArgumentMemberNd);
             if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadPayloadArgument::argType == key) {
-                auto argTypeToken = parser.getValueToken(perThreadPayloadArgumentMemberNd);
                 argTypeStr = parser.readValue(perThreadPayloadArgumentMemberNd);
-                validPerThreadPayload &= readEnumChecked(argTypeToken, perThreadPayloadArgMetadata.argType, context, outErrReason);
+                validPerThreadPayload &= readZeInfoEnumChecked(parser, perThreadPayloadArgumentMemberNd, perThreadPayloadArgMetadata.argType, context, outErrReason);
             } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadPayloadArgument::size == key) {
                 validPerThreadPayload &= readZeInfoValueChecked(parser, perThreadPayloadArgumentMemberNd, perThreadPayloadArgMetadata.size, context, outErrReason);
             } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadPayloadArgument::offset == key) {
@@ -672,8 +476,7 @@ DecodeError readZeInfoPayloadArguments(const NEO::Yaml::YamlParser &parser, cons
         for (const auto &payloadArgumentMemberNd : parser.createChildrenRange(payloadArgumentNd)) {
             auto key = parser.readKey(payloadArgumentMemberNd);
             if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::argType == key) {
-                auto argTypeToken = parser.getValueToken(payloadArgumentMemberNd);
-                validPayload &= readEnumChecked(argTypeToken, payloadArgMetadata.argType, context, outErrReason);
+                validPayload &= readZeInfoEnumChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.argType, context, outErrReason);
             } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::argIndex == key) {
                 validPayload &= parser.readValueChecked(payloadArgumentMemberNd, payloadArgMetadata.argIndex);
                 outMaxPayloadArgumentIndex = std::max<int32_t>(outMaxPayloadArgumentIndex, payloadArgMetadata.argIndex);
@@ -682,14 +485,11 @@ DecodeError readZeInfoPayloadArguments(const NEO::Yaml::YamlParser &parser, cons
             } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::size == key) {
                 validPayload &= readZeInfoValueChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.size, context, outErrReason);
             } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::addrmode == key) {
-                auto memTypeToken = parser.getValueToken(payloadArgumentMemberNd);
-                validPayload &= readEnumChecked(memTypeToken, payloadArgMetadata.addrmode, context, outErrReason);
+                validPayload &= readZeInfoEnumChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.addrmode, context, outErrReason);
             } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::addrspace == key) {
-                auto addrSpaceToken = parser.getValueToken(payloadArgumentMemberNd);
-                validPayload &= readEnumChecked(addrSpaceToken, payloadArgMetadata.addrspace, context, outErrReason);
+                validPayload &= readZeInfoEnumChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.addrspace, context, outErrReason);
             } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::accessType == key) {
-                auto accessTypeToken = parser.getValueToken(payloadArgumentMemberNd);
-                validPayload &= readEnumChecked(accessTypeToken, payloadArgMetadata.accessType, context, outErrReason);
+                validPayload &= readZeInfoEnumChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.accessType, context, outErrReason);
             } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::samplerIndex == key) {
                 validPayload &= parser.readValueChecked(payloadArgumentMemberNd, payloadArgMetadata.samplerIndex);
                 outMaxSamplerIndex = std::max<int32_t>(outMaxSamplerIndex, payloadArgMetadata.samplerIndex);
@@ -698,8 +498,7 @@ DecodeError readZeInfoPayloadArguments(const NEO::Yaml::YamlParser &parser, cons
             } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::slmArgAlignment == key) {
                 validPayload &= readZeInfoValueChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.slmArgAlignment, context, outErrReason);
             } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::imageType == key) {
-                auto imageTypeToken = parser.getValueToken(payloadArgumentMemberNd);
-                validPayload &= readEnumChecked(imageTypeToken, payloadArgMetadata.imageType, context, outErrReason);
+                validPayload &= readZeInfoEnumChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.imageType, context, outErrReason);
             } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::imageTransformable == key) {
                 validPayload &= readZeInfoValueChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.imageTransformable, context, outErrReason);
             } else {
@@ -746,11 +545,9 @@ DecodeError readZeInfoPerThreadMemoryBuffers(const NEO::Yaml::YamlParser &parser
         for (const auto &perThreadMemoryBufferMemberNd : parser.createChildrenRange(perThreadMemoryBufferNd)) {
             auto key = parser.readKey(perThreadMemoryBufferMemberNd);
             if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::allocationType == key) {
-                auto allocationTypeToken = parser.getValueToken(perThreadMemoryBufferMemberNd);
-                validBuffer &= readEnumChecked(allocationTypeToken, perThreadMemoryBufferMetadata.allocationType, context, outErrReason);
+                validBuffer &= readZeInfoEnumChecked(parser, perThreadMemoryBufferMemberNd, perThreadMemoryBufferMetadata.allocationType, context, outErrReason);
             } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::memoryUsage == key) {
-                auto memoryUsageToken = parser.getValueToken(perThreadMemoryBufferMemberNd);
-                validBuffer &= readEnumChecked(memoryUsageToken, perThreadMemoryBufferMetadata.memoryUsage, context, outErrReason);
+                validBuffer &= readZeInfoEnumChecked(parser, perThreadMemoryBufferMemberNd, perThreadMemoryBufferMetadata.memoryUsage, context, outErrReason);
             } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::size == key) {
                 validBuffer &= readZeInfoValueChecked(parser, perThreadMemoryBufferMemberNd, perThreadMemoryBufferMetadata.size, context, outErrReason);
             } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::isSimtThread == key) {
@@ -911,8 +708,8 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
         case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AddressSpaceImage: {
             dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>(true);
             auto &extendedInfo = dst.payloadMappings.explicitArgs[src.argIndex].getExtendedTypeInfo();
-            extendedInfo.isMediaImage = (src.imageType == NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::ImageType::MediaImage);
-            extendedInfo.isMediaBlockImage = (src.imageType == NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::ImageType::MediaBlockImage);
+            extendedInfo.isMediaImage = (src.imageType == NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::ImageType::ImageTypeMedia);
+            extendedInfo.isMediaBlockImage = (src.imageType == NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::ImageType::ImageTypeMediaBlock);
             extendedInfo.isTransformable = src.imageTransformable;
         } break;
         case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AddressSpaceSampler:

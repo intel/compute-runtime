@@ -24,6 +24,7 @@ set(NEO_DEVICE_BINARY_FORMAT
     ${CMAKE_CURRENT_SOURCE_DIR}/elf/elf_encoder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/elf/ocl_elf.h
     ${CMAKE_CURRENT_SOURCE_DIR}/elf/zebin_elf.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/elf/zeinfo_enum_lookup.h
     ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_decoder.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_decoder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_dumper.cpp
