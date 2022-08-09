@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 

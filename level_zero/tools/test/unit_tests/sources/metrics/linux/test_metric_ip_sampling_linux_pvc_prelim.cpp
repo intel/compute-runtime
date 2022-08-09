@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/test/common/libult/linux/drm_mock.h"

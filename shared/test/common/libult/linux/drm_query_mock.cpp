@@ -8,6 +8,7 @@
 #include "shared/test/common/libult/linux/drm_query_mock.h"
 
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/os_interface/linux/i915.h"
 
 #include "gtest/gtest.h"
 

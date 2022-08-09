@@ -18,6 +18,7 @@
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_command_stream.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_default.h"
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"

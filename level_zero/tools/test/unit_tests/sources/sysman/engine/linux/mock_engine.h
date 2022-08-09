@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/os_interface/linux/engine_info.h"
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"

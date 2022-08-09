@@ -9,6 +9,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/os_interface/linux/engine_info.h"
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"

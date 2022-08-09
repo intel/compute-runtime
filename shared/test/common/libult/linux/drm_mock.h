@@ -11,7 +11,6 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
-#include "shared/source/os_interface/linux/i915.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/linux/mock_drm_wrappers.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"

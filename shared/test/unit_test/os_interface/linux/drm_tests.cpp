@@ -8,6 +8,7 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/os_inc.h"
 #include "shared/source/os_interface/os_interface.h"

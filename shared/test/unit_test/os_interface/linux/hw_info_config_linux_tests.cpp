@@ -8,6 +8,7 @@
 #include "shared/test/unit_test/os_interface/linux/hw_info_config_linux_tests.h"
 
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
