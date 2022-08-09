@@ -199,8 +199,8 @@ HWTEST2_F(MultipleDeviceUuidTest, whenRetrievingDeviceUuidThenCorrectUuidIsRecei
     });
 
     VariableBackup<decltype(SysCalls::sysCallsPread)> mockPread(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        const std::string unSetGuid("0x0");
-        const uint32_t unSetBytesRead = 0;
+        const std::string unSetGuid("0x41fe79a5");
+        const uint32_t unSetBytesRead = 8;
         std::vector<std::pair<std::string, std::string>> supportedFiles = {
             {"/sys/class/intel_pmt/telem1/guid", unSetGuid},
             {"/sys/class/intel_pmt/telem1/offset", "0"},
@@ -213,7 +213,7 @@ HWTEST2_F(MultipleDeviceUuidTest, whenRetrievingDeviceUuidThenCorrectUuidIsRecei
             if (supportedFiles[fd].second == "dummy") {
                 uint64_t data = 0xFEEDBEADDEABDEEF;
                 memcpy(buf, &data, sizeof(data));
-                if (unSetGuid == "0x0") {
+                if (unSetGuid == "0x41fe79a5") {
                     return unSetBytesRead;
                 } else {
                     return sizeof(data);
@@ -222,7 +222,7 @@ HWTEST2_F(MultipleDeviceUuidTest, whenRetrievingDeviceUuidThenCorrectUuidIsRecei
             if (supportedFiles[fd].second == "dummy1") {
                 uint64_t data = 0xABCDEFFEDCBA;
                 memcpy(buf, &data, sizeof(data));
-                if (unSetGuid == "0x0") {
+                if (unSetGuid == "0x41fe79a5") {
                     return unSetBytesRead;
                 } else {
                     return sizeof(data);
