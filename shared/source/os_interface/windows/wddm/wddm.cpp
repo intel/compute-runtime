@@ -606,7 +606,7 @@ NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKM
     createAllocation.NumAllocations = 1;
     createAllocation.Flags.CreateShared = outSharedHandle ? TRUE : FALSE;
     createAllocation.Flags.NtSecuritySharing = outSharedHandle ? TRUE : FALSE;
-    createAllocation.Flags.CreateResource = outSharedHandle || alignedCpuPtr ? TRUE : FALSE;
+    createAllocation.Flags.CreateResource = outSharedHandle ? TRUE : FALSE;
     createAllocation.pAllocationInfo2 = &allocationInfo;
     createAllocation.hDevice = device;
 
