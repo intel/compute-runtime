@@ -377,7 +377,19 @@ ze_result_t DebugSessionWindows::translateEscapeReturnStatusToZeResult(uint32_t 
 }
 
 ze_result_t DebugSessionWindows::readElfSpace(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+
+    KM_ESCAPE_INFO escapeInfo = {0};
+    escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_READ_UMD_MEMORY;
+    escapeInfo.KmEuDbgL0EscapeInfo.ReadUmdMemoryParams.hElfHandle = desc->address;
+    escapeInfo.KmEuDbgL0EscapeInfo.ReadUmdMemoryParams.BufferSize = static_cast<uint32_t>(size);
+    escapeInfo.KmEuDbgL0EscapeInfo.ReadUmdMemoryParams.BufferPtr = reinterpret_cast<uint64_t>(buffer);
+
+    auto status = runEscape(escapeInfo);
+    if (STATUS_SUCCESS != status || DBGUMD_RETURN_ESCAPE_SUCCESS != escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus) {
+        PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_READ_UMD_MEMORY: Failed - ProcessId: %d Status: %d EscapeReturnStatus: %d\n", processId, status, escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+        return DebugSessionWindows::translateEscapeReturnStatusToZeResult(escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 bool DebugSessionWindows::isVAElf(const zet_debug_memory_space_desc_t *desc, size_t size) {

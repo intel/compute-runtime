@@ -115,11 +115,19 @@ struct WddmEuDebugInterfaceMock : public WddmMock {
             acknowledgeEventPassedParam = pEscapeInfo->KmEuDbgL0EscapeInfo.AckEventParams;
             break;
         }
+        case DBGUMD_ACTION_READ_UMD_MEMORY: {
+            if (elfData != nullptr && escapeReturnStatus == DBGUMD_RETURN_ESCAPE_SUCCESS) {
+                memcpy(reinterpret_cast<void *>(pEscapeInfo->KmEuDbgL0EscapeInfo.ReadUmdMemoryParams.BufferPtr), elfData, pEscapeInfo->KmEuDbgL0EscapeInfo.ReadUmdMemoryParams.BufferSize);
+            }
+            pEscapeInfo->KmEuDbgL0EscapeInfo.EscapeReturnStatus = escapeReturnStatus;
+            break;
+        }
         }
 
         return ntStatus;
     };
 
+    void *elfData = nullptr;
     uint32_t numEvents = 0;
     uint32_t curEvent = 0;
     struct {

@@ -1097,7 +1097,7 @@ TEST_F(DebugApiWindowsTest, WhenCallingReadMemoryForSingleThreadThenMemoryIsRead
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
 }
 
-TEST_F(DebugApiWindowsTest, WhenCallingReadMemoryForElfThenUnsupportedFeatureIsReturned) {
+TEST_F(DebugApiWindowsTest, WhenCallingReadMemoryForElfThenElfisRead) {
     auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
     ASSERT_NE(nullptr, session);
     session->wddm = mockWddm;
@@ -1114,7 +1114,7 @@ TEST_F(DebugApiWindowsTest, WhenCallingReadMemoryForElfThenUnsupportedFeatureIsR
     MockDebugSessionWindows::ElfRange elf = {elfVaStart, elfVaEnd};
     session->allElfs.push_back(elf);
     char output[bufferSize] = {0};
-
+    mockWddm->elfData = elfData;
     ze_device_thread_t thread;
     thread.slice = UINT32_MAX;
     thread.subslice = UINT32_MAX;
@@ -1123,9 +1123,18 @@ TEST_F(DebugApiWindowsTest, WhenCallingReadMemoryForElfThenUnsupportedFeatureIsR
     zet_debug_memory_space_desc_t desc;
     desc.address = elfVaStart;
     desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    mockWddm->escapeReturnStatus = DBGUMD_RETURN_INVALID_ARGS;
     auto retVal = session->readMemory(thread, &desc, bufferSize, output);
+    ASSERT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_UMD_MEMORY]);
+    ASSERT_NE(ZE_RESULT_SUCCESS, retVal);
+
+    mockWddm->escapeReturnStatus = DBGUMD_RETURN_ESCAPE_SUCCESS;
+    retVal = session->readMemory(thread, &desc, bufferSize, output);
     ASSERT_EQ(0u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, retVal);
+    ASSERT_EQ(2u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_UMD_MEMORY]);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, retVal);
+    EXPECT_EQ(memcmp(output, elfData, bufferSize), 0);
 
     desc.address = elfVaEnd - 1;
     retVal = session->readMemory(thread, &desc, bufferSize, output);
