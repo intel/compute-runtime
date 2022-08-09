@@ -84,7 +84,7 @@ struct MetricsLibrary {
     virtual bool getContextData(Device &device, ContextCreateData_1_0 &contextData);
 
     ConfigurationHandle_1_0 createConfiguration(const zet_metric_group_handle_t metricGroup,
-                                                const zet_metric_group_properties_t properties);
+                                                const zet_metric_group_properties_t &properties);
     ConfigurationHandle_1_0 addConfiguration(const zet_metric_group_handle_t metricGroup);
 
     ClientGen getGenType(const uint32_t gen) const;
