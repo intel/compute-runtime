@@ -167,6 +167,8 @@ static constexpr ConstStringRef accessType("access_type");
 static constexpr ConstStringRef samplerIndex("sampler_index");
 static constexpr ConstStringRef sourceOffset("source_offset");
 static constexpr ConstStringRef slmArgAlignment("slm_alignment");
+static constexpr ConstStringRef imageType("image_type");
+static constexpr ConstStringRef imageTransformable("image_transformable");
 namespace ArgType {
 static constexpr ConstStringRef localSize("local_size");
 static constexpr ConstStringRef groupCount("group_count");
@@ -181,7 +183,25 @@ static constexpr ConstStringRef bufferOffset("buffer_offset");
 static constexpr ConstStringRef printfBuffer("printf_buffer");
 static constexpr ConstStringRef workDimensions("work_dimensions");
 static constexpr ConstStringRef implicitArgBuffer("implicit_arg_buffer");
+namespace Image {
+static constexpr ConstStringRef width("image_width");
+static constexpr ConstStringRef height("image_height");
+static constexpr ConstStringRef depth("image_depth");
+static constexpr ConstStringRef channelDataType("image_channel_data_type");
+static constexpr ConstStringRef channelOrder("image_channel_order");
+static constexpr ConstStringRef arraySize("image_array_size");
+static constexpr ConstStringRef numSamples("image_num_samples");
+static constexpr ConstStringRef numMipLevels("image_mip_levels");
+static constexpr ConstStringRef flatBaseOffset("image_flat_base_offset");
+static constexpr ConstStringRef flatWidth("image_flat_width");
+static constexpr ConstStringRef flatHeight("image_flat_height");
+static constexpr ConstStringRef flatPitch("image_flat_pitch");
+} // namespace Image
 } // namespace ArgType
+namespace ImageType {
+static constexpr ConstStringRef imageTypeMedia("media");
+static constexpr ConstStringRef imageTypeBlock("media_block");
+} // namespace ImageType
 namespace MemoryAddressingMode {
 static constexpr ConstStringRef stateless("stateless");
 static constexpr ConstStringRef stateful("stateful");
@@ -378,7 +398,19 @@ enum ArgType : uint8_t {
     ArgTypeBufferOffset,
     ArgTypePrintfBuffer,
     ArgTypeWorkDimensions,
-    ArgTypeImplicitArgBuffer
+    ArgTypeImplicitArgBuffer,
+    ArgTypeImageWidth,
+    ArgTypeImageHeight,
+    ArgTypeImageDepth,
+    ArgTypeImageChannelDataType,
+    ArgTypeImageChannelOrder,
+    ArgTypeImageArraySize,
+    ArgTypeImageNumSamples,
+    ArgTypeImageMipLevels,
+    ArgTypeImageFlatBaseOffset,
+    ArgTypeImageFlatWidth,
+    ArgTypeImageFlatHeight,
+    ArgTypeImageFlatPitch
 };
 
 namespace PerThreadPayloadArgument {
@@ -424,6 +456,12 @@ enum AccessType : uint8_t {
     AccessTypeReadwrite,
 };
 
+enum ImageType : uint8_t {
+    ImageTypeUnknown,
+    MediaImage,
+    MediaBlockImage
+};
+
 using ArgTypeT = ArgType;
 using OffseT = int32_t;
 using SourceOffseT = int32_t;
@@ -453,6 +491,8 @@ struct PayloadArgumentBaseT {
     AccessTypeT accessType = AccessTypeUnknown;
     SamplerIndexT samplerIndex = Defaults::samplerIndex;
     SlmAlignmentT slmArgAlignment = Defaults::slmArgAlignment;
+    ImageType imageType = ImageTypeUnknown;
+    bool imageTransformable = false;
 };
 
 } // namespace PayloadArgument

@@ -1814,6 +1814,48 @@ TEST(ReadEnumCheckedMemoryUsage, GivenUnknownStringRepresentationThenFail) {
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unhandled \"some_entry\" per-thread memory buffer usage type in context of some_kernel\n", errors.c_str());
 }
 
+TEST(ReadEnumCheckedImageType, GiveValidStringRepresentationThenParseItCorrectly) {
+    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::ImageType;
+
+    NEO::Yaml::Token tokMedia(imageTypeMedia, NEO::Yaml::Token::Token::LiteralString);
+    NEO::Yaml::Token tokBlock(imageTypeBlock, NEO::Yaml::Token::Token::LiteralString);
+
+    using ImageType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::ImageType;
+    ImageType enumMedia, enumBlock;
+    std::string errors;
+    bool success;
+
+    success = NEO::readEnumChecked(&tokMedia, enumMedia, "some_kernel", errors);
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_EQ(ImageType::MediaImage, enumMedia);
+
+    success = NEO::readEnumChecked(&tokBlock, enumBlock, "some_kernel", errors);
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_EQ(ImageType::MediaBlockImage, enumBlock);
+}
+
+TEST(ReadEnumCheckedImageType, GivenNullTokenThenFail) {
+    using ImageType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::ImageType;
+    ImageType enumRepresentation;
+    std::string errors;
+
+    bool success = NEO::readEnumChecked(nullptr, enumRepresentation, "some_kernel", errors);
+    EXPECT_FALSE(success);
+}
+
+TEST(ReadEnumCheckedImageType, GivenUnknownStringRepresentationThenFail) {
+    using ImageType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::ImageType;
+    ImageType enumRepresentation;
+    std::string errors;
+
+    NEO::Yaml::Token someEntry("some_entry", NEO::Yaml::Token::Token::LiteralString);
+    bool success = NEO::readEnumChecked(&someEntry, enumRepresentation, "some_kernel", errors);
+    EXPECT_FALSE(success);
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unhandled \"some_entry\" image type in context of some_kernel\n", errors.c_str());
+}
+
 TEST(ReadZeInfoPerThreadPayloadArguments, GivenValidYamlEntriesThenSetProperMembers) {
     NEO::ConstStringRef yaml = R"===(---
 kernels:         
@@ -5243,6 +5285,128 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypePrintfBufferWhenOffset
     ASSERT_EQ(32U, printfSurfaceAddress.stateless);
     EXPECT_EQ(8U, printfSurfaceAddress.pointerSize);
 }
+TEST(PopulateArgDescriptorCrossthreadPayload, GivenValidImageArgumentWithImageMetadataThenPopulatesKernelDescriptor) {
+    NEO::ConstStringRef zeinfo = R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:
+                simd_size: 32
+              payload_arguments:
+                - arg_type:        arg_bypointer
+                  offset:          0
+                  size:            0
+                  arg_index:       0
+                  addrmode:        stateful
+                  addrspace:       image
+                  access_type:     readwrite
+                  image_type:      media
+                  image_transformable: true
+                - arg_type:        arg_bypointer
+                  offset:          0
+                  size:            0
+                  arg_index:       1
+                  addrmode:        stateful
+                  addrspace:       image
+                  access_type:     readwrite
+                  image_type:      media_block
+                - arg_type:        image_height
+                  offset:          0
+                  size:            4
+                  arg_index:       1
+                - arg_type:        image_width
+                  offset:          4
+                  size:            4
+                  arg_index:       1
+                - arg_type:        image_depth
+                  offset:          8
+                  size:            4
+                  arg_index:       1
+                - arg_type:        image_channel_data_type
+                  offset:          12
+                  size:            4
+                  arg_index:       1
+                - arg_type:        image_channel_order
+                  offset:          16
+                  size:            4
+                  arg_index:       1
+                - arg_type:        image_array_size
+                  offset:          20
+                  size:            4
+                  arg_index:       1
+                - arg_type:        image_num_samples
+                  offset:          24
+                  size:            4
+                  arg_index:       1
+                - arg_type:        image_mip_levels
+                  offset:          28
+                  size:            4
+                  arg_index:       1
+                - arg_type:        image_flat_base_offset
+                  offset:          32
+                  size:            8
+                  arg_index:       1
+                - arg_type:        image_flat_width
+                  offset:          40
+                  size:            4
+                  arg_index:       1
+                - arg_type:        image_flat_height
+                  offset:          44
+                  size:            4
+                  arg_index:       1
+                - arg_type:        image_flat_pitch
+                  offset:          48
+                  size:            4
+                  arg_index:       1
+              binding_table_indices:
+                - bti_value:       1
+                  arg_index:       0
+                - bti_value:       2
+                  arg_index:       1
+)===";
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    std::string errors, warnings;
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    NEO::ZebinSections zebinSections;
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    auto &args = programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs;
+
+    EXPECT_EQ(64U, args[0].as<ArgDescImage>().bindful);
+    EXPECT_TRUE(args[0].getExtendedTypeInfo().isMediaImage);
+    EXPECT_TRUE(args[0].getExtendedTypeInfo().isTransformable);
+
+    EXPECT_EQ(128U, args[1].as<ArgDescImage>().bindful);
+    EXPECT_TRUE(args[1].getExtendedTypeInfo().isMediaBlockImage);
+    EXPECT_FALSE(args[1].getExtendedTypeInfo().isTransformable);
+    const auto &imgMetadata = args[1].as<ArgDescImage>().metadataPayload;
+    EXPECT_EQ(0U, imgMetadata.imgHeight);
+    EXPECT_EQ(4U, imgMetadata.imgWidth);
+    EXPECT_EQ(8U, imgMetadata.imgDepth);
+    EXPECT_EQ(12U, imgMetadata.channelDataType);
+    EXPECT_EQ(16U, imgMetadata.channelOrder);
+    EXPECT_EQ(20U, imgMetadata.arraySize);
+    EXPECT_EQ(24U, imgMetadata.numSamples);
+    EXPECT_EQ(28U, imgMetadata.numMipLevels);
+    EXPECT_EQ(32U, imgMetadata.flatBaseOffset);
+    EXPECT_EQ(40U, imgMetadata.flatWidth);
+    EXPECT_EQ(44U, imgMetadata.flatHeight);
+    EXPECT_EQ(48U, imgMetadata.flatPitch);
+}
+
 class IntelGTNotesFixture : public ::testing::Test {
   protected:
     void SetUp() override {

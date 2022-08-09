@@ -444,6 +444,30 @@ bool readEnumChecked(const Yaml::Token *token, NEO::Elf::ZebinKernelMetadata::Ty
         out = ArgTypeT::ArgTypeWorkDimensions;
     } else if (tokenValue == PayloadArgument::ArgType::implicitArgBuffer) {
         out = ArgTypeT::ArgTypeImplicitArgBuffer;
+    } else if (tokenValue == PayloadArgument::ArgType::Image::width) {
+        out = ArgTypeT::ArgTypeImageWidth;
+    } else if (tokenValue == PayloadArgument::ArgType::Image::height) {
+        out = ArgTypeT::ArgTypeImageHeight;
+    } else if (tokenValue == PayloadArgument::ArgType::Image::depth) {
+        out = ArgTypeT::ArgTypeImageDepth;
+    } else if (tokenValue == PayloadArgument::ArgType::Image::channelDataType) {
+        out = ArgTypeT::ArgTypeImageChannelDataType;
+    } else if (tokenValue == PayloadArgument::ArgType::Image::channelOrder) {
+        out = ArgTypeT::ArgTypeImageChannelOrder;
+    } else if (tokenValue == PayloadArgument::ArgType::Image::arraySize) {
+        out = ArgTypeT::ArgTypeImageArraySize;
+    } else if (tokenValue == PayloadArgument::ArgType::Image::numSamples) {
+        out = ArgTypeT::ArgTypeImageNumSamples;
+    } else if (tokenValue == PayloadArgument::ArgType::Image::numMipLevels) {
+        out = ArgTypeT::ArgTypeImageMipLevels;
+    } else if (tokenValue == PayloadArgument::ArgType::Image::flatBaseOffset) {
+        out = ArgTypeT::ArgTypeImageFlatBaseOffset;
+    } else if (tokenValue == PayloadArgument::ArgType::Image::flatWidth) {
+        out = ArgTypeT::ArgTypeImageFlatWidth;
+    } else if (tokenValue == PayloadArgument::ArgType::Image::flatHeight) {
+        out = ArgTypeT::ArgTypeImageFlatHeight;
+    } else if (tokenValue == PayloadArgument::ArgType::Image::flatPitch) {
+        out = ArgTypeT::ArgTypeImageFlatPitch;
     } else {
         outErrReason.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unhandled \"" + tokenValue.str() + "\" argument type in context of " + context.str() + "\n");
         return false;
@@ -527,6 +551,27 @@ bool readEnumChecked(const Yaml::Token *token, NEO::Elf::ZebinKernelMetadata::Ty
         out = AccessType::AccessTypeReadwrite;
     } else {
         outErrReason.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unhandled \"" + tokenValue.str() + "\" access type in context of " + context.str() + "\n");
+        return false;
+    }
+
+    return true;
+}
+
+bool readEnumChecked(const Yaml::Token *token, NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::ImageType &out, ConstStringRef context, std::string &outErrReason) {
+    if (nullptr == token) {
+        return false;
+    }
+
+    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::ImageType;
+    using ImageType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::ImageType;
+    auto tokenValue = token->cstrref();
+
+    if (imageTypeMedia == tokenValue) {
+        out = ImageType::MediaImage;
+    } else if (imageTypeBlock == tokenValue) {
+        out = ImageType::MediaBlockImage;
+    } else {
+        outErrReason.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unhandled \"" + tokenValue.str() + "\" image type in context of " + context.str() + "\n");
         return false;
     }
 
@@ -651,6 +696,11 @@ DecodeError readZeInfoPayloadArguments(const NEO::Yaml::YamlParser &parser, cons
                 validPayload &= readZeInfoValueChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.sourceOffset, context, outErrReason);
             } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::slmArgAlignment == key) {
                 validPayload &= readZeInfoValueChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.slmArgAlignment, context, outErrReason);
+            } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::imageType == key) {
+                auto imageTypeToken = parser.getValueToken(payloadArgumentMemberNd);
+                validPayload &= readEnumChecked(imageTypeToken, payloadArgMetadata.imageType, context, outErrReason);
+            } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::imageTransformable == key) {
+                validPayload &= readZeInfoValueChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.imageTransformable, context, outErrReason);
             } else {
                 outWarning.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unknown entry \"" + key.str() + "\" for payload argument in context of " + context.str() + "\n");
             }
@@ -857,9 +907,13 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
             argTraits.addressQualifier = KernelArgMetadata::AddrConstant;
             dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(true);
             break;
-        case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AddressSpaceImage:
+        case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AddressSpaceImage: {
             dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>(true);
-            break;
+            auto &extendedInfo = dst.payloadMappings.explicitArgs[src.argIndex].getExtendedTypeInfo();
+            extendedInfo.isMediaImage = (src.imageType == NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::ImageType::MediaImage);
+            extendedInfo.isMediaBlockImage = (src.imageType == NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::ImageType::MediaBlockImage);
+            extendedInfo.isTransformable = src.imageTransformable;
+        } break;
         case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AddressSpaceSampler:
             static constexpr auto maxSamplerStateSize = 16U;
             static constexpr auto maxIndirectSamplerStateSize = 64U;
@@ -1015,8 +1069,67 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
         dst.kernelAttributes.flags.requiresImplicitArgs = true;
         break;
     }
-    }
 
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageHeight: {
+        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>();
+        arg.metadataPayload.imgHeight = src.offset;
+    } break;
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageWidth: {
+        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>();
+        arg.metadataPayload.imgWidth = src.offset;
+    } break;
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageDepth: {
+        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>();
+        arg.metadataPayload.imgDepth = src.offset;
+    } break;
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageChannelDataType: {
+        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>();
+        arg.metadataPayload.channelDataType = src.offset;
+    } break;
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageChannelOrder: {
+        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>();
+        arg.metadataPayload.channelOrder = src.offset;
+    } break;
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageArraySize: {
+        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>();
+        arg.metadataPayload.arraySize = src.offset;
+    } break;
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageNumSamples: {
+        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>();
+        arg.metadataPayload.numSamples = src.offset;
+    } break;
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageMipLevels: {
+        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>();
+        arg.metadataPayload.numMipLevels = src.offset;
+    } break;
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageFlatBaseOffset: {
+        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>();
+        arg.metadataPayload.flatBaseOffset = src.offset;
+    } break;
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageFlatWidth: {
+        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>();
+        arg.metadataPayload.flatWidth = src.offset;
+    } break;
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageFlatHeight: {
+        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>();
+        arg.metadataPayload.flatHeight = src.offset;
+    } break;
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageFlatPitch: {
+        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>();
+        arg.metadataPayload.flatPitch = src.offset;
+    } break;
+    }
     return DecodeError::Success;
 }
 
