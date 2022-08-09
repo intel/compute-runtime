@@ -37,6 +37,7 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
          ++allocationIter) {
         void *allocationPtr = allocationIter->allocation;
         SvmAllocationData *svmAllocData = svmAllocsManager->getSVMAlloc(allocationPtr);
+        UNRECOVERABLE_IF(!svmAllocData);
         if (svmAllocData->device == unifiedMemoryProperties.device &&
             svmAllocData->allocationFlagsProperty.allFlags == unifiedMemoryProperties.allocationFlags.allFlags &&
             svmAllocData->allocationFlagsProperty.allAllocFlags == unifiedMemoryProperties.allocationFlags.allAllocFlags) {
