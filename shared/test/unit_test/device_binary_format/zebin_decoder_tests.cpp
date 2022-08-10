@@ -11,6 +11,7 @@
 #include "shared/source/device_binary_format/zebin_decoder.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
 #include "shared/test/common/device_binary_format/zebin_tests.h"
@@ -3897,47 +3898,6 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenAddressSpaceIsI
     EXPECT_TRUE(programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].is<NEO::ArgDescriptor::ArgTImage>());
 }
 
-TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenAddressSpaceIsSamplerThenPopulatesArgDescriptorAccordingly) {
-    using AddressSpace = NEO::KernelArgMetadata::AddressSpaceQualifier;
-    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::AddrSpace;
-
-    std::string zeinfo = R"===(
-    kernels:
-        - name : 'some_kernel'
-            execution_env:   
-                simd_size: 32
-            payload_arguments: 
-                - arg_type : arg_bypointer
-                  arg_index	: 0
-                  addrspace:       sampler
-                  access_type:     readwrite
-                  addrmode: stateful
-    )===";
-    NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
-    std::string errors, warnings;
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::Yaml::YamlParser parser;
-    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
-    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
-
-    NEO::ZebinSections zebinSections;
-    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
-
-    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
-    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_TRUE(warnings.empty()) << warnings;
-    ASSERT_EQ(1U, programInfo.kernelInfos.size());
-    ASSERT_EQ(1U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
-    EXPECT_TRUE(programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].is<NEO::ArgDescriptor::ArgTSampler>());
-}
-
 TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenAccessQualifierIsKnownThenPopulatesArgDescriptorAccordingly) {
     using AccessQualifier = NEO::KernelArgMetadata::AccessQualifier;
     using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::AccessType;
@@ -4900,6 +4860,7 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypePrintfBufferWhenOffset
     ASSERT_EQ(32U, printfSurfaceAddress.stateless);
     EXPECT_EQ(8U, printfSurfaceAddress.pointerSize);
 }
+
 TEST(PopulateArgDescriptorCrossthreadPayload, GivenValidImageArgumentWithImageMetadataThenPopulatesKernelDescriptor) {
     NEO::ConstStringRef zeinfo = R"===(
         kernels:
@@ -4914,7 +4875,7 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenValidImageArgumentWithImageMe
                   addrmode:        stateful
                   addrspace:       image
                   access_type:     readwrite
-                  image_type:      media
+                  image_type:      image_2d_media
                   image_transformable: true
                 - arg_type:        arg_bypointer
                   offset:          0
@@ -4923,7 +4884,7 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenValidImageArgumentWithImageMe
                   addrmode:        stateful
                   addrspace:       image
                   access_type:     readwrite
-                  image_type:      media_block
+                  image_type:      image_2d_media_block
                 - arg_type:        image_height
                   offset:          0
                   size:            4
@@ -4952,23 +4913,23 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenValidImageArgumentWithImageMe
                   offset:          24
                   size:            4
                   arg_index:       1
-                - arg_type:        image_mip_levels
+                - arg_type:        image_num_mip_levels
                   offset:          28
                   size:            4
                   arg_index:       1
-                - arg_type:        image_flat_base_offset
+                - arg_type:        flat_image_baseoffset
                   offset:          32
                   size:            8
                   arg_index:       1
-                - arg_type:        image_flat_width
+                - arg_type:        flat_image_width
                   offset:          40
                   size:            4
                   arg_index:       1
-                - arg_type:        image_flat_height
+                - arg_type:        flat_image_height
                   offset:          44
                   size:            4
                   arg_index:       1
-                - arg_type:        image_flat_pitch
+                - arg_type:        flat_image_pitch
                   offset:          48
                   size:            4
                   arg_index:       1
@@ -5020,6 +4981,128 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenValidImageArgumentWithImageMe
     EXPECT_EQ(40U, imgMetadata.flatWidth);
     EXPECT_EQ(44U, imgMetadata.flatHeight);
     EXPECT_EQ(48U, imgMetadata.flatPitch);
+}
+
+TEST(PopulateArgDescriptorCrossthreadPayload, GivenValidSamplerArgumentWithMetadataThenPopulatesKernelDescriptor) {
+    NEO::ConstStringRef zeinfo = R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:
+                simd_size: 32
+              payload_arguments:
+                - arg_type:        arg_bypointer
+                  offset:          0
+                  size:            0
+                  arg_index:       0
+                  addrmode:        stateful
+                  addrspace:       sampler
+                  access_type:     readwrite
+                  sampler_index:   0
+                - arg_type:        arg_bypointer
+                  offset:          0
+                  size:            0
+                  arg_index:       1
+                  addrmode:        stateful
+                  addrspace:       sampler
+                  access_type:     readwrite
+                  sampler_index:   1
+                  sampler_type:    vd
+                - arg_type:        arg_bypointer
+                  offset:          0
+                  size:            0
+                  arg_index:       2
+                  addrmode:        stateful
+                  addrspace:       sampler
+                  access_type:     readwrite
+                  sampler_index:   2
+                  sampler_type:    ve
+                - arg_type:        sampler_snap_wa
+                  offset:          0
+                  size:            4
+                  arg_index:       2
+                - arg_type:        sampler_normalized
+                  offset:          4
+                  size:            4
+                  arg_index:       2
+                - arg_type:        sampler_address
+                  offset:          8
+                  size:            4
+                  arg_index:       2
+                - arg_type:        arg_bypointer
+                  offset:          12
+                  size:            0
+                  arg_index:       3
+                  addrmode:        bindless
+                  addrspace:       sampler
+                  access_type:     readwrite
+                  sampler_type:    vme
+                - arg_type:        vme_mb_block_type
+                  offset:          20
+                  size:            4
+                  arg_index:       3
+                - arg_type:        vme_subpixel_mode
+                  offset:          24
+                  size:            4
+                  arg_index:       3
+                - arg_type:        vme_sad_adjust_mode
+                  offset:          28
+                  size:            4
+                  arg_index:       3
+                - arg_type:        vme_search_path_type
+                  offset:          32
+                  size:            4
+                  arg_index:       3
+)===";
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    std::string errors, warnings;
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    NEO::ZebinSections zebinSections;
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+
+    const auto &kd = programInfo.kernelInfos[0]->kernelDescriptor;
+    auto &args = kd.payloadMappings.explicitArgs;
+
+    auto &sampler0 = args[0].as<ArgDescSampler>();
+    EXPECT_EQ(64U, sampler0.bindful);
+
+    auto &sampler1 = args[1].as<ArgDescSampler>();
+    EXPECT_TRUE(args[1].getExtendedTypeInfo().isAccelerator);
+    EXPECT_EQ(80U, sampler1.bindful);
+
+    auto &sampler2 = args[2].as<ArgDescSampler>();
+    EXPECT_TRUE(args[2].getExtendedTypeInfo().isAccelerator);
+    EXPECT_EQ(96U, sampler2.bindful);
+    EXPECT_EQ(0U, sampler2.metadataPayload.samplerSnapWa);
+    EXPECT_EQ(4U, sampler2.metadataPayload.samplerNormalizedCoords);
+    EXPECT_EQ(8U, sampler2.metadataPayload.samplerAddressingMode);
+
+    auto &sampler3 = args[3].as<ArgDescSampler>();
+    EXPECT_TRUE(args[3].getExtendedTypeInfo().isAccelerator);
+    EXPECT_TRUE(args[3].getExtendedTypeInfo().hasVmeExtendedDescriptor);
+    EXPECT_EQ(12U, sampler3.bindless);
+    auto vmePayload = static_cast<NEO::ArgDescVme *>(kd.payloadMappings.explicitArgsExtendedDescriptors[3].get());
+    EXPECT_EQ(20U, vmePayload->mbBlockType);
+    EXPECT_EQ(24U, vmePayload->subpixelMode);
+    EXPECT_EQ(28U, vmePayload->sadAdjustMode);
+    EXPECT_EQ(32U, vmePayload->searchPathType);
+
+    EXPECT_TRUE(kd.kernelAttributes.flags.usesSamplers);
+    EXPECT_TRUE(kd.kernelAttributes.flags.usesVme);
 }
 
 class IntelGTNotesFixture : public ::testing::Test {

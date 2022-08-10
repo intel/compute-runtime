@@ -17,10 +17,12 @@ namespace ArgType {
 using namespace Tags::Kernel::PayloadArgument::ArgType;
 using namespace Tags::Kernel::PerThreadPayloadArgument::ArgType;
 using namespace Tags::Kernel::PayloadArgument::ArgType::Image;
+using namespace Tags::Kernel::PayloadArgument::ArgType::Sampler;
+using namespace Tags::Kernel::PayloadArgument::ArgType::Sampler::Vme;
 using ArgType = Types::Kernel::ArgType;
 
 static constexpr ConstStringRef name = "argument type";
-static constexpr LookupArray<ConstStringRef, ArgType, 27> lookup({{{packedLocalIds, ArgType::ArgTypePackedLocalIds},
+static constexpr LookupArray<ConstStringRef, ArgType, 34> lookup({{{packedLocalIds, ArgType::ArgTypePackedLocalIds},
                                                                    {localId, ArgType::ArgTypeLocalId},
                                                                    {localSize, ArgType::ArgTypeLocalSize},
                                                                    {groupCount, ArgType::ArgTypeGroupCount},
@@ -46,7 +48,14 @@ static constexpr LookupArray<ConstStringRef, ArgType, 27> lookup({{{packedLocalI
                                                                    {flatBaseOffset, ArgType::ArgTypeImageFlatBaseOffset},
                                                                    {flatWidth, ArgType::ArgTypeImageFlatWidth},
                                                                    {flatHeight, ArgType::ArgTypeImageFlatHeight},
-                                                                   {flatPitch, ArgType::ArgTypeImageFlatPitch}}});
+                                                                   {flatPitch, ArgType::ArgTypeImageFlatPitch},
+                                                                   {snapWa, ArgType::ArgTypeSamplerSnapWa},
+                                                                   {normCoords, ArgType::ArgTypeSamplerNormCoords},
+                                                                   {addrMode, ArgType::ArgTypeSamplerAddrMode},
+                                                                   {blockType, ArgType::ArgTypeVmeMbBlockType},
+                                                                   {subpixelMode, ArgType::ArgTypeVmeSubpixelMode},
+                                                                   {sadAdjustMode, ArgType::ArgTypeVmeSadAdjustMode},
+                                                                   {searchPathType, ArgType::ArgTypeVmeSearchPathType}}});
 static_assert(lookup.size() == ArgType::ArgTypeMax - 1, "Every enum field must be present");
 } // namespace ArgType
 namespace MemoryAddressingMode {
@@ -103,11 +112,42 @@ namespace ImageType {
 using namespace Tags::Kernel::PayloadArgument::ImageType;
 using ImageType = Types::Kernel::PayloadArgument::ImageType;
 static constexpr ConstStringRef name = "image type";
-static constexpr LookupArray<ConstStringRef, ImageType, 2> lookup({{{imageTypeMedia, ImageType::ImageTypeMedia},
-                                                                    {imageTypeBlock, ImageType::ImageTypeMediaBlock}}});
+static constexpr LookupArray<ConstStringRef, ImageType, 16> lookup({{{imageTypeBuffer, ImageType::ImageTypeBuffer},
+                                                                     {imageType1D, ImageType::ImageType1D},
+                                                                     {imageType1DArray, ImageType::ImageType1DArray},
+                                                                     {imageType2D, ImageType::ImageType2D},
+                                                                     {imageType2DArray, ImageType::ImageType2DArray},
+                                                                     {imageType3D, ImageType::ImageType3D},
+                                                                     {imageTypeCube, ImageType::ImageTypeCube},
+                                                                     {imageTypeCubeArray, ImageType::ImageTypeCubeArray},
+                                                                     {imageType2DDepth, ImageType::ImageType2DDepth},
+                                                                     {imageType2DArrayDepth, ImageType::ImageType2DArrayDepth},
+                                                                     {imageType2DMSAA, ImageType::ImageType2DMSAA},
+                                                                     {imageType2DMSAADepth, ImageType::ImageType2DMSAADepth},
+                                                                     {imageType2DArrayMSAA, ImageType::ImageType2DArrayMSAA},
+                                                                     {imageType2DArrayMSAADepth, ImageType::ImageType2DArrayMSAADepth},
+                                                                     {imageType2DMedia, ImageType::ImageType2DMedia},
+                                                                     {imageType2DMediaBlock, ImageType::ImageType2DMediaBlock}}});
 static_assert(lookup.size() == ImageType::ImageTypeMax - 1, "Every enum field must be present");
-
 } // namespace ImageType
+namespace SamplerType {
+using namespace Tags::Kernel::PayloadArgument::SamplerType;
+using SamplerType = Types::Kernel::PayloadArgument::SamplerType;
+static constexpr ConstStringRef name = "sampler type";
+static constexpr LookupArray<ConstStringRef, SamplerType, 12> lookup({{{samplerTypeTexture, SamplerType::SamplerTypeTexture},
+                                                                       {samplerType8x8, SamplerType::SamplerType8x8},
+                                                                       {samplerType2DConsolve8x8, SamplerType::SamplerType2DConvolve8x8},
+                                                                       {samplerTypeErode8x8, SamplerType::SamplerTypeErode8x8},
+                                                                       {samplerTypeDilate8x8, SamplerType::SamplerTypeDilate8x8},
+                                                                       {samplerTypeMinMaxFilter8x8, SamplerType::SamplerTypeMinMaxFilter8x8},
+                                                                       {samplerTypeCentroid8x8, SamplerType::SamplerTypeBoolCentroid8x8},
+                                                                       {samplerTypeBoolCentroid8x8, SamplerType::SamplerTypeBoolCentroid8x8},
+                                                                       {samplerTypeBoolSum8x8, SamplerType::SamplerTypeBoolSum8x8},
+                                                                       {samplerTypeVME, SamplerType::SamplerTypeVME},
+                                                                       {samplerTypeVE, SamplerType::SamplerTypeVE},
+                                                                       {samplerTypeVD, SamplerType::SamplerTypeVD}}});
+static_assert(lookup.size() == SamplerType::SamplerTypeMax - 1, "Every enum field must be present");
+} // namespace SamplerType
 
 template <typename T>
 struct EnumLooker {};
@@ -146,5 +186,10 @@ template <>
 struct EnumLooker<Types::Kernel::PayloadArgument::ImageType> {
     static constexpr ConstStringRef name = ImageType::name;
     static constexpr auto members = ImageType::lookup;
+};
+template <>
+struct EnumLooker<Types::Kernel::PayloadArgument::SamplerType> {
+    static constexpr ConstStringRef name = SamplerType::name;
+    static constexpr auto members = SamplerType::lookup;
 };
 } // namespace NEO::Zebin::ZeInfo::EnumLookup

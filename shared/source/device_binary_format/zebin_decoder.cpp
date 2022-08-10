@@ -16,6 +16,7 @@
 #include "shared/source/device_binary_format/elf/zeinfo_enum_lookup.h"
 #include "shared/source/device_binary_format/yaml/yaml_parser.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
 #include "shared/source/utilities/stackvec.h"
@@ -501,6 +502,8 @@ DecodeError readZeInfoPayloadArguments(const NEO::Yaml::YamlParser &parser, cons
                 validPayload &= readZeInfoEnumChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.imageType, context, outErrReason);
             } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::imageTransformable == key) {
                 validPayload &= readZeInfoValueChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.imageTransformable, context, outErrReason);
+            } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::samplerType == key) {
+                validPayload &= readZeInfoEnumChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.samplerType, context, outErrReason);
             } else {
                 outWarning.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unknown entry \"" + key.str() + "\" for payload argument in context of " + context.str() + "\n");
             }
@@ -674,6 +677,17 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
 NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::PayloadArgumentBaseT &src, NEO::KernelDescriptor &dst, uint32_t &crossThreadDataSize,
                                        std::string &outErrReason, std::string &outWarning) {
     crossThreadDataSize = std::max<uint32_t>(crossThreadDataSize, src.offset + src.size);
+
+    auto &explicitArgs = dst.payloadMappings.explicitArgs;
+    auto getVmeDescriptor = [&src, &dst]() {
+        auto &argsExt = dst.payloadMappings.explicitArgsExtendedDescriptors;
+        argsExt.resize(dst.payloadMappings.explicitArgs.size());
+        if (argsExt[src.argIndex] == nullptr) {
+            argsExt[src.argIndex] = std::make_unique<ArgDescVme>();
+        }
+        return static_cast<ArgDescVme *>(argsExt[src.argIndex].get());
+    };
+
     switch (src.argType) {
     default:
         outErrReason.append("DeviceBinaryFormat::Zebin : Invalid arg type in cross thread data section in context of : " + dst.kernelMetadata.kernelName + ".\n");
@@ -686,7 +700,8 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
     }
 
     case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeArgBypointer: {
-        auto &argTraits = dst.payloadMappings.explicitArgs[src.argIndex].getTraits();
+        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex];
+        auto &argTraits = arg.getTraits();
         switch (src.addrspace) {
         default:
             UNRECOVERABLE_IF(NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AddressSpaceUnknown != src.addrspace);
@@ -708,15 +723,23 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
         case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AddressSpaceImage: {
             dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>(true);
             auto &extendedInfo = dst.payloadMappings.explicitArgs[src.argIndex].getExtendedTypeInfo();
-            extendedInfo.isMediaImage = (src.imageType == NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::ImageType::ImageTypeMedia);
-            extendedInfo.isMediaBlockImage = (src.imageType == NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::ImageType::ImageTypeMediaBlock);
+            extendedInfo.isMediaImage = (src.imageType == NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::ImageType::ImageType2DMedia);
+            extendedInfo.isMediaBlockImage = (src.imageType == NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::ImageType::ImageType2DMediaBlock);
             extendedInfo.isTransformable = src.imageTransformable;
+            dst.kernelAttributes.flags.usesImages = true;
         } break;
-        case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AddressSpaceSampler:
-            static constexpr auto maxSamplerStateSize = 16U;
-            static constexpr auto maxIndirectSamplerStateSize = 64U;
-            dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescSampler>(true).bindful = maxIndirectSamplerStateSize + maxSamplerStateSize * src.samplerIndex;
-            break;
+        case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AddressSpaceSampler: {
+            using SamplerType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::SamplerType;
+            dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescSampler>(true);
+            auto &extendedInfo = arg.getExtendedTypeInfo();
+            extendedInfo.isAccelerator = (src.samplerType == SamplerType::SamplerTypeVME) ||
+                                         (src.samplerType == SamplerType::SamplerTypeVE) ||
+                                         (src.samplerType == SamplerType::SamplerTypeVD);
+            const bool usesVme = src.samplerType == SamplerType::SamplerTypeVME;
+            extendedInfo.hasVmeExtendedDescriptor = usesVme;
+            dst.kernelAttributes.flags.usesVme = usesVme;
+            dst.kernelAttributes.flags.usesSamplers = true;
+        } break;
         }
 
         switch (src.accessType) {
@@ -744,6 +767,12 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
             outErrReason.append("Invalid or missing memory addressing mode for arg idx : " + std::to_string(src.argIndex) + " in context of : " + dst.kernelMetadata.kernelName + ".\n");
             return DecodeError::InvalidBinary;
         case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::MemoryAddressingModeStateful:
+            if (dst.payloadMappings.explicitArgs[src.argIndex].is<NEO::ArgDescriptor::ArgTSampler>()) {
+                static constexpr auto maxSamplerStateSize = 16U;
+                static constexpr auto maxIndirectSamplerStateSize = 64U;
+                auto &sampler = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescSampler>();
+                sampler.bindful = maxIndirectSamplerStateSize + maxSamplerStateSize * src.samplerIndex;
+            }
             break;
         case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::MemoryAddressingModeStateless:
             if (false == dst.payloadMappings.explicitArgs[src.argIndex].is<NEO::ArgDescriptor::ArgTPointer>()) {
@@ -868,65 +897,81 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
         break;
     }
 
-    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageHeight: {
-        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>();
-        arg.metadataPayload.imgHeight = src.offset;
-    } break;
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageHeight:
+        explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.imgHeight = src.offset;
+        break;
 
-    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageWidth: {
-        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>();
-        arg.metadataPayload.imgWidth = src.offset;
-    } break;
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageWidth:
+        explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.imgWidth = src.offset;
+        break;
 
-    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageDepth: {
-        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>();
-        arg.metadataPayload.imgDepth = src.offset;
-    } break;
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageDepth:
+        explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.imgDepth = src.offset;
+        break;
 
-    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageChannelDataType: {
-        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>();
-        arg.metadataPayload.channelDataType = src.offset;
-    } break;
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageChannelDataType:
+        explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.channelDataType = src.offset;
+        break;
 
-    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageChannelOrder: {
-        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>();
-        arg.metadataPayload.channelOrder = src.offset;
-    } break;
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageChannelOrder:
+        explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.channelOrder = src.offset;
+        break;
 
-    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageArraySize: {
-        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>();
-        arg.metadataPayload.arraySize = src.offset;
-    } break;
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageArraySize:
+        explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.arraySize = src.offset;
+        break;
 
-    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageNumSamples: {
-        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>();
-        arg.metadataPayload.numSamples = src.offset;
-    } break;
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageNumSamples:
+        explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.numSamples = src.offset;
+        break;
 
-    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageMipLevels: {
-        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>();
-        arg.metadataPayload.numMipLevels = src.offset;
-    } break;
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageMipLevels:
+        explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.numMipLevels = src.offset;
+        break;
 
-    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageFlatBaseOffset: {
-        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>();
-        arg.metadataPayload.flatBaseOffset = src.offset;
-    } break;
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageFlatBaseOffset:
+        explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.flatBaseOffset = src.offset;
+        break;
 
-    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageFlatWidth: {
-        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>();
-        arg.metadataPayload.flatWidth = src.offset;
-    } break;
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageFlatWidth:
+        explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.flatWidth = src.offset;
+        break;
 
-    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageFlatHeight: {
-        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>();
-        arg.metadataPayload.flatHeight = src.offset;
-    } break;
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageFlatHeight:
+        explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.flatHeight = src.offset;
+        break;
 
-    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageFlatPitch: {
-        auto &arg = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>();
-        arg.metadataPayload.flatPitch = src.offset;
-    } break;
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImageFlatPitch:
+        explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.flatPitch = src.offset;
+        break;
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeSamplerAddrMode:
+        explicitArgs[src.argIndex].as<ArgDescSampler>(true).metadataPayload.samplerAddressingMode = src.offset;
+        break;
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeSamplerNormCoords:
+        explicitArgs[src.argIndex].as<ArgDescSampler>(true).metadataPayload.samplerNormalizedCoords = src.offset;
+        break;
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeSamplerSnapWa:
+        explicitArgs[src.argIndex].as<ArgDescSampler>(true).metadataPayload.samplerSnapWa = src.offset;
+        break;
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeVmeMbBlockType:
+        getVmeDescriptor()->mbBlockType = src.offset;
+        break;
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeVmeSubpixelMode:
+        getVmeDescriptor()->subpixelMode = src.offset;
+        break;
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeVmeSadAdjustMode:
+        getVmeDescriptor()->sadAdjustMode = src.offset;
+        break;
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeVmeSearchPathType:
+        getVmeDescriptor()->searchPathType = src.offset;
+        break;
     }
     return DecodeError::Success;
 }
