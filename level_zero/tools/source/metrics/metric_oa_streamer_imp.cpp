@@ -232,9 +232,9 @@ uint32_t OaMetricStreamerImp::getRequiredBufferSize(const uint32_t maxReportCoun
     DEBUG_BREAK_IF(rawReportSize == 0);
     uint32_t maxOaBufferReportCount = oaBufferSize / rawReportSize;
 
-    // Trim to OA buffer size if needed.
-    return maxReportCount > maxOaBufferReportCount ? oaBufferSize
-                                                   : maxReportCount * rawReportSize;
+    // Trim report count if needed.
+    const auto reportCount = std::min(maxOaBufferReportCount, maxReportCount);
+    return reportCount * rawReportSize;
 }
 
 ze_result_t OaMetricGroupImp::openForDevice(Device *pDevice, zet_metric_streamer_desc_t &desc,
