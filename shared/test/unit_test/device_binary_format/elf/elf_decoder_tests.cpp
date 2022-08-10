@@ -10,9 +10,9 @@
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/file_io.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "gtest/gtest.h"
 

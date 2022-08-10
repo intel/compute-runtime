@@ -15,7 +15,6 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/bit_helpers_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_tests_gen12lp.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/cmd_buffer_validator.h
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_buffer_validator_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/compiler_hw_info_config_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/debug_helpers_tests.cpp
@@ -27,7 +26,6 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/flush_stamp_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/get_gpgpu_engines_tests.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/get_info_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/gtest_helpers.h
                ${CMAKE_CURRENT_SOURCE_DIR}/hash_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/heap_assigner_shared_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/kernel_helpers_tests.cpp
@@ -65,7 +63,10 @@ if(TESTS_DG2_AND_LATER)
 endif()
 
 if(TESTS_PVC_AND_LATER)
-  target_sources(neo_shared_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/test_blit_commands_helper_pvc_and_later.cpp)
+  target_sources(neo_shared_tests PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_blit_commands_helper_pvc_and_later.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/simd_helper_tests_pvc_and_later.inl
+  )
 endif()
 
 add_subdirectories()

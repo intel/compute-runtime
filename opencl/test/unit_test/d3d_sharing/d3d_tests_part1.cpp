@@ -9,7 +9,7 @@
 #include "shared/source/os_interface/windows/driver_info_windows.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/unit_test/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/mem_obj/image.h"

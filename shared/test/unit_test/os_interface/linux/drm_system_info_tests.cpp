@@ -8,9 +8,9 @@
 #include "shared/source/os_interface/linux/system_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/os_interface/linux/drm_mock_device_blob.h"
-#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "gtest/gtest.h"
 

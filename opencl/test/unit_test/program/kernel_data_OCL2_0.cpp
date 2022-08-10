@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/unit_test/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 
 #include "opencl/test/unit_test/fixtures/kernel_data_fixture.h"
 

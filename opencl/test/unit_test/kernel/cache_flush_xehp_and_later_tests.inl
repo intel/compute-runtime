@@ -8,10 +8,10 @@
 #pragma once
 #include "shared/source/helpers/l3_range.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/test/common/helpers/cmd_buffer_validator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/helpers/cmd_buffer_validator.h"
 #include "shared/test/unit_test/helpers/static_size3.h"
 
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"

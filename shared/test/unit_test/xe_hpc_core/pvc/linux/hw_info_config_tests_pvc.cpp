@@ -8,12 +8,12 @@
 #include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/xe_hpc_core/pvc/product_configs_pvc.h"
 #include "shared/test/unit_test/fixtures/product_config_fixture.h"
-#include "shared/test/unit_test/helpers/gtest_helpers.h"
 #include "shared/test/unit_test/os_interface/linux/hw_info_config_linux_tests.h"
 
 using namespace NEO;

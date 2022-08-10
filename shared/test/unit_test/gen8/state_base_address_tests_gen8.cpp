@@ -6,9 +6,9 @@
  */
 
 #include "shared/source/gen8/hw_cmds.h"
-#include "shared/test/common/helpers/state_base_address_tests.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/helpers/state_base_address_tests.h"
 
 BDWTEST_F(SBATest, givenUsedBindlessBuffersWhenAppendStateBaseAddressParametersIsCalledThenSBACmdHasNotBindingSurfaceStateProgrammed) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;

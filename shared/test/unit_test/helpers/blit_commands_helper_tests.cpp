@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/common/helpers/blit_commands_helper_tests.inl"
+#include "shared/test/unit_test/helpers/blit_commands_helper_tests.inl"
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver.h"

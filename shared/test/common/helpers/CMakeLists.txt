@@ -4,8 +4,10 @@
 # SPDX-License-Identifier: MIT
 #
 
-if(TESTS_PVC_AND_LATER)
-  target_sources(${TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/simd_helper_tests_pvc_and_later.inl)
-endif()
+target_sources(neo_libult_common PRIVATE
+               ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+               ${CMAKE_CURRENT_SOURCE_DIR}/cmd_buffer_validator.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/gtest_helpers.h
+)
 
 add_subdirectories()

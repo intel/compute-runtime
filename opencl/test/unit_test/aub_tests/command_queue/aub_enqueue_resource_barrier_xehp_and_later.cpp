@@ -5,9 +5,9 @@
  *
  */
 
+#include "shared/test/common/helpers/cmd_buffer_validator.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/helpers/cmd_buffer_validator.h"
 
 #include "opencl/source/command_queue/resource_barrier.h"
 #include "opencl/source/mem_obj/buffer.h"

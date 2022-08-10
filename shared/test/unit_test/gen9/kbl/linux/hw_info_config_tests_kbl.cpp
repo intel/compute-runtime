@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/execution_environment/execution_environment.h"
-#include "shared/test/unit_test/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/unit_test/os_interface/linux/hw_info_config_linux_tests.h"
 
 using namespace NEO;

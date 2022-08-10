@@ -5,7 +5,7 @@
 #
 
 if(TESTS_GEN11)
-  target_sources(${TARGET_NAME} PRIVATE
+  target_sources(neo_libult_common PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_traits_gen11.h
   )

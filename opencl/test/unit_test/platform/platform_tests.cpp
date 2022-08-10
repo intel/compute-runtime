@@ -11,6 +11,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_builtins.h"
@@ -20,7 +21,6 @@
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/mock_source_level_debugger.h"
 #include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
-#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/sharings/sharing_factory.h"

@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/common/helpers/simd_helper_tests.inl"
+#include "shared/test/unit_test/helpers/simd_helper_tests.inl"
 
 using namespace NEO;
 
