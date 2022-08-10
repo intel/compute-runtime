@@ -202,5 +202,6 @@ class DirectSubmissionHw {
     bool miMemFenceRequired = false;
     bool systemMemoryFenceAddressSet = false;
     bool completionFenceSupported = false;
+    bool isDisablePrefetcherRequired = false;
 };
 } // namespace NEO

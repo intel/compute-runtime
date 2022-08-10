@@ -313,8 +313,9 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableRingSwitchTagUpdateWa, -1, "-1: default, 0
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionReadBackCommandBuffer, -1, "-1: default - disabled, 0 - disable, 1 - enable. If enabled, read first dword of cmd buffer after handling residency.")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionReadBackRingBuffer, -1, "-1: default - disabled, 0 - disable, 1 - enable. If enabled, read first dword of ring buffer after handling residency.")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionInsertExtraMiMemFenceCommands, -1, "-1: default, 0 - disable, 1 - enable. If enabled, add extra MI_MEM_FENCE instructions with acquire bit set")
-DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionInsertSfenceInstructionPriorToSubmission, -1, "-1: default, 0 - disable, 1 - Instert _mm_sfence before unlocking semaphore only, 2 - insert before and after semaphore")
+DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionInsertSfenceInstructionPriorToSubmission, -1, "-1: default, 0 - disable, 1 - Insert _mm_sfence before unlocking semaphore only, 2 - insert before and after semaphore")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionMaxRingBuffers, -1, "-1: default, >0: max ring buffer count, During switch ring buffer, if there is no available ring, wait for completion instead of allocating new one if DirectSubmissionMaxRingBuffers is reached")
+DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionDisablePrefetcher, -1, "-1: default, 0 - disable, 1 - enable. If enabled, disable prefetcher is being dispatched")
 DECLARE_DEBUG_VARIABLE(bool, DirectSubmissionPrintBuffers, false, "Print address of submitted command buffers")
 
 /*FEATURE FLAGS*/

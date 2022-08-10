@@ -926,7 +926,9 @@ HWTEST_F(DirectSubmissionTest,
     EXPECT_EQ(expectedStoreAddress, storeDataCmdAtPosition->getAddress());
 
     cmdBufferPosition += sizeof(MI_STORE_DATA_IMM);
-    cmdBufferPosition += directSubmission.getSizeDisablePrefetcher();
+    if (HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isPrefetcherDisablingInDirectSubmissionRequired()) {
+        cmdBufferPosition += directSubmission.getSizeDisablePrefetcher();
+    }
     MI_SEMAPHORE_WAIT *semaphoreWaitCmdAtPosition = genCmdCast<MI_SEMAPHORE_WAIT *>(cmdBufferPosition);
     ASSERT_NE(nullptr, semaphoreWaitCmdAtPosition);
     EXPECT_EQ(COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
@@ -1102,4 +1104,25 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionTest, givenDebugFlagSetWhenDispatch
     ASSERT_NE(nullptr, arbCheck);
 
     EXPECT_EQ(0u, arbCheck->getPreParserDisable());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionTest, givenDisablePrefetcherDebugFlagDisabledWhenDispatchingPrefetcherThenSetCorrectValue) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.DirectSubmissionDisablePrefetcher.set(0);
+
+    using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
+    using Dispatcher = BlitterDispatcher<FamilyType>;
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+
+    bool ret = directSubmission.allocateResources();
+    EXPECT_TRUE(ret);
+
+    directSubmission.dispatchDisablePrefetcher(true);
+
+    HardwareParse hwParse;
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
+    hwParse.findHardwareCommands<FamilyType>();
+    MI_ARB_CHECK *arbCheck = hwParse.getCommand<MI_ARB_CHECK>();
+    EXPECT_EQ(nullptr, arbCheck);
 }

@@ -16,4 +16,8 @@ if(TESTS_XE_HP_CORE)
   target_sources(neo_shared_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission_tests_xe_hp_core.cpp)
 endif()
 
+if(TESTS_XE_HPC_CORE)
+  target_sources(neo_shared_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission_tests_xe_hpc_core.cpp)
+endif()
+
 add_subdirectories()

@@ -65,6 +65,11 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
         disableCpuCacheFlush = disableCacheFlushKey == 1 ? true : false;
     }
 
+    isDisablePrefetcherRequired = hwInfoConfig->isPrefetcherDisablingInDirectSubmissionRequired();
+    if (DebugManager.flags.DirectSubmissionDisablePrefetcher.get() != -1) {
+        isDisablePrefetcherRequired = !!DebugManager.flags.DirectSubmissionDisablePrefetcher.get();
+    }
+
     UNRECOVERABLE_IF(!CpuInfo::getInstance().isFeatureSupported(CpuInfo::featureClflush) && !disableCpuCacheFlush);
 
     createDiagnostic();
@@ -298,7 +303,10 @@ template <typename GfxFamily, typename Dispatcher>
 inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeSemaphoreSection() {
     size_t semaphoreSize = EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait();
     semaphoreSize += getSizePrefetchMitigation();
-    semaphoreSize += 2 * getSizeDisablePrefetcher();
+
+    if (isDisablePrefetcherRequired) {
+        semaphoreSize += 2 * getSizeDisablePrefetcher();
+    }
 
     if (miMemFenceRequired) {
         semaphoreSize += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronizationForDirectSubmission(*hwInfo);

@@ -482,4 +482,9 @@ uint32_t HwInfoConfigHw<gfxProduct>::getL1CachePolicy() const {
 
 template <PRODUCT_FAMILY gfxProduct>
 void HwInfoConfigHw<gfxProduct>::adjustNumberOfCcs(HardwareInfo &hwInfo) const {}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isPrefetcherDisablingInDirectSubmissionRequired() const {
+    return true;
+}
 } // namespace NEO
