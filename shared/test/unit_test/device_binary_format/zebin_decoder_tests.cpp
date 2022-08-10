@@ -5556,6 +5556,56 @@ TEST_F(IntelGTNotesFixture, WhenGettingIntelGTNotesGivenInvalidIntelGTNotesThenT
     }
 }
 
+TEST_F(IntelGTNotesFixture, GivenValidTargetDeviceAndNoteWithUnrecognizedTypeWhenValidatingTargetDeviceThenEmitWarning) {
+    TargetDevice targetDevice;
+    targetDevice.productFamily = productFamily;
+    targetDevice.coreFamily = renderCoreFamily;
+    targetDevice.maxPointerSizeInBytes = 8;
+    targetDevice.stepping = hardwareInfoTable[productFamily]->platform.usRevId;
+
+    std::vector<Elf::ElfNoteSection> elfNotes = {};
+    for (int i = 0; i < 3; i++) {
+        auto &inserted = elfNotes.emplace_back();
+        inserted.descSize = 4u;
+        inserted.nameSize = 8u;
+    }
+    elfNotes.at(0).type = Elf::IntelGTSectionType::ProductFamily;
+    elfNotes.at(1).type = Elf::IntelGTSectionType::GfxCore;
+    elfNotes.at(2).type = Elf::IntelGTSectionType::LastSupported + 1; //unsupported
+    std::vector<uint8_t *> descDatas;
+
+    uint8_t platformDescData[4u];
+    memcpy_s(platformDescData, 4u, &targetDevice.productFamily, 4u);
+    descDatas.push_back(platformDescData);
+
+    uint8_t coreDescData[4u];
+    memcpy_s(coreDescData, 4u, &targetDevice.coreFamily, 4u);
+    descDatas.push_back(coreDescData);
+
+    uint8_t mockDescData[4]{0};
+    descDatas.push_back(mockDescData);
+
+    const auto sectionDataSize = std::accumulate(elfNotes.begin(), elfNotes.end(), size_t{0u},
+                                                 [](auto totalSize, const auto &elfNote) {
+                                                     return totalSize + sizeof(NEO::Elf::ElfNoteSection) + elfNote.nameSize + elfNote.descSize;
+                                                 });
+    auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
+
+    appendIntelGTSectionData(elfNotes, noteIntelGTSectionData.get(), descDatas, sectionDataSize);
+    zebin.appendSection(Elf::SHT_NOTE, Elf::SectionsNamesZebin::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
+    std::string outErrReason, outWarning;
+    auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
+    EXPECT_TRUE(outWarning.empty());
+    EXPECT_TRUE(outErrReason.empty());
+
+    auto validationRes = validateTargetDevice(elf, targetDevice, outErrReason, outWarning);
+    EXPECT_TRUE(validationRes);
+    EXPECT_TRUE(outErrReason.empty());
+
+    auto expectedWarning = "DeviceBinaryFormat::Zebin : Unrecognized IntelGTNote type: " + std::to_string(elfNotes.at(2).type) + "\n";
+    EXPECT_STREQ(expectedWarning.c_str(), outWarning.c_str());
+}
+
 TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidTargetDeviceAndValidNotesThenReturnTrue) {
     TargetDevice targetDevice;
     targetDevice.productFamily = productFamily;

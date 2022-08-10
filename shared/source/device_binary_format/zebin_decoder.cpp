@@ -67,7 +67,8 @@ bool validateTargetDevice(const Elf::Elf<Elf::EI_CLASS_64> &elf, const TargetDev
             break;
         }
         default:
-            return false;
+            outWarning.append("DeviceBinaryFormat::Zebin : Unrecognized IntelGTNote type: " + std::to_string(intelGTNote.type) + "\n");
+            break;
         }
     }
     bool validForTarget = (gfxCore != IGFX_UNKNOWN_CORE) | (productFamily != IGFX_UNKNOWN);

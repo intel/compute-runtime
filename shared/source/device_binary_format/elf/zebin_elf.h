@@ -66,7 +66,8 @@ enum IntelGTSectionType : uint32_t {
     ProductFamily = 1,
     GfxCore = 2,
     TargetMetadata = 3,
-    ZebinVersion = 4
+    ZebinVersion = 4,
+    LastSupported = ZebinVersion
 };
 struct IntelGTNote {
     IntelGTSectionType type;
