@@ -34,16 +34,13 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/memory_management_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/ptr_math_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/raii_hw_helper.h
                ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/static_size3.h
                ${CMAKE_CURRENT_SOURCE_DIR}/string_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/string_to_hash_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_debug_variables.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/ult_limits.h
 )
 
 if(MSVC OR COMPILER_SUPPORTS_SSE42)

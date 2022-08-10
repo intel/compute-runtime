@@ -14,6 +14,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
+#include "shared/test/common/helpers/raii_hw_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_csr.h"
@@ -21,7 +22,6 @@
 #include "shared/test/common/mocks/mock_hw_helper.h"
 #include "shared/test/common/mocks/mock_submissions_aggregator.h"
 #include "shared/test/common/test_macros/hw_test.h"
-#include "shared/test/unit_test/helpers/raii_hw_helper.h"
 
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"

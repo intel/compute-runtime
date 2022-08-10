@@ -19,11 +19,11 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_csr.h"
-#include "shared/test/common/mocks/mock_direct_submission_diagnostic_collector.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/fixtures/direct_submission_fixture.h"
+#include "shared/test/unit_test/mocks/mock_direct_submission_diagnostic_collector.h"
 
 namespace CpuIntrinsicsTests {
 extern std::atomic<uint32_t> sfenceCounter;

@@ -14,9 +14,9 @@
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/cmd_buffer_validator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/static_size3.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/helpers/static_size3.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"

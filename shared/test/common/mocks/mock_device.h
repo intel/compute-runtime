@@ -11,9 +11,9 @@
 #include "shared/source/device/root_device.h"
 #include "shared/source/device/sub_device.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
 
 namespace NEO {
 class CommandStreamReceiver;

@@ -16,11 +16,11 @@
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
-#include "shared/test/common/mocks/mock_csr_simulated_common_hw.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/unit_test/mocks/mock_csr_simulated_common_hw.h"
 
 #include <array>
 #include <memory>

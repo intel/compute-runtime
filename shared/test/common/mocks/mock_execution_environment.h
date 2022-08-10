@@ -9,7 +9,7 @@
 
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/hw_helper.h"
-#include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
+#include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 
 namespace NEO {
 extern bool useMockGmm;

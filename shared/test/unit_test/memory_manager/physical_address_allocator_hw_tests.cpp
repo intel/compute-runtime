@@ -7,8 +7,8 @@
 
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/physical_address_allocator.h"
-#include "shared/test/common/mocks/mock_physical_address_allocator.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/unit_test/mocks/mock_physical_address_allocator.h"
 
 using namespace NEO;
 

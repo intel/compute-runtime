@@ -8,10 +8,10 @@
 #include "shared/source/command_stream/command_stream_receiver_simulated_hw.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/mocks/mock_aub_stream.h"
-#include "shared/test/common/mocks/mock_csr_simulated_common_hw.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/mocks/mock_aub_stream.h"
+#include "shared/test/unit_test/mocks/mock_csr_simulated_common_hw.h"
 
 using namespace NEO;
 

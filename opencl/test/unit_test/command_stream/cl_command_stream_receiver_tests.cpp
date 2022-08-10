@@ -7,10 +7,10 @@
 
 #include "shared/source/memory_manager/surface.h"
 #include "shared/test/common/fixtures/device_fixture.h"
+#include "shared/test/common/helpers/raii_hw_helper.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_hw_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
-#include "shared/test/unit_test/helpers/raii_hw_helper.h"
 
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"

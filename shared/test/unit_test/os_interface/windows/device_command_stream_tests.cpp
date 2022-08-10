@@ -26,6 +26,7 @@
 #include "shared/source/os_interface/windows/wddm_residency_controller.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
+#include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
@@ -38,11 +39,10 @@
 #include "shared/test/common/mocks/mock_submissions_aggregator.h"
 #include "shared/test/common/mocks/mock_wddm_interface23.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
-#include "shared/test/common/mocks/windows/mock_wddm_direct_submission.h"
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
-#include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
+#include "shared/test/unit_test/mocks/windows/mock_wddm_direct_submission.h"
 
 #include "hw_cmds.h"
 

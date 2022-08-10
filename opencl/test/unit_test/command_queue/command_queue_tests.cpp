@@ -16,6 +16,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/raii_hw_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -27,7 +28,6 @@
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
-#include "shared/test/unit_test/helpers/raii_hw_helper.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/event.h"

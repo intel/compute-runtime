@@ -5,9 +5,7 @@
 #
 
 if(WIN32)
-  target_sources(${TARGET_NAME} PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_windows_tests.cpp
-  )
+  target_sources(neo_shared_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_windows_tests.cpp)
 
   add_subdirectories()
 endif()

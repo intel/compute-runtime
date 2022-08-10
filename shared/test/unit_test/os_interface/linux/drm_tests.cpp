@@ -19,9 +19,9 @@
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
-#include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
+#include "shared/test/unit_test/mocks/linux/mock_os_context_linux.h"
 
 #include "gtest/gtest.h"
 

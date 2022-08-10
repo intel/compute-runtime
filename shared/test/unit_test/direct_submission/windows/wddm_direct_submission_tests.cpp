@@ -17,8 +17,8 @@
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
-#include "shared/test/common/mocks/windows/mock_wddm_direct_submission.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
+#include "shared/test/unit_test/mocks/windows/mock_wddm_direct_submission.h"
 
 using namespace NEO;
 
