@@ -107,10 +107,6 @@ bool PreambleHelper<GfxFamily>::isL3Configurable(const HardwareInfo &hwInfo) {
 }
 
 template <typename GfxFamily>
-void PreambleHelper<GfxFamily>::programAdditionalFieldsInVfeState(VFE_STATE_TYPE *mediaVfeState, const HardwareInfo &hwInfo, bool disableEUFusion) {
-}
-
-template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::appendProgramVFEState(const HardwareInfo &hwInfo, const StreamProperties &streamProperties, void *cmd) {}
 
 template <typename GfxFamily>

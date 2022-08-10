@@ -44,19 +44,19 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
         MemorySynchronizationCommands<Family>::addSingleBarrier(*pCommandStream, args);
     }
 
-    auto pCmd = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
-    PIPELINE_SELECT cmd = Family::cmdInitPipelineSelect;
+    auto cmdSpace = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
+    PIPELINE_SELECT pipelineSelectCmd = Family::cmdInitPipelineSelect;
 
     auto mask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits;
     auto pipeline = pipelineSelectArgs.is3DPipelineRequired ? PIPELINE_SELECT::PIPELINE_SELECTION_3D : PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU;
 
-    cmd.setMaskBits(mask);
-    cmd.setPipelineSelection(pipeline);
-    cmd.setMediaSamplerDopClockGateEnable(!pipelineSelectArgs.mediaSamplerRequired);
+    pipelineSelectCmd.setMaskBits(mask);
+    pipelineSelectCmd.setPipelineSelection(pipeline);
+    pipelineSelectCmd.setMediaSamplerDopClockGateEnable(!pipelineSelectArgs.mediaSamplerRequired);
 
-    HwInfoConfig::get(hwInfo.platform.eProductFamily)->setAdditionalPipelineSelectFields(&cmd, pipelineSelectArgs, hwInfo);
+    HwInfoConfig::get(hwInfo.platform.eProductFamily)->setAdditionalPipelineSelectFields(&pipelineSelectCmd, pipelineSelectArgs, hwInfo);
 
-    *pCmd = cmd;
+    *cmdSpace = pipelineSelectCmd;
 }
 
 template <>
@@ -84,7 +84,9 @@ uint32_t PreambleHelper<Family>::getUrbEntryAllocationSize() {
 }
 
 template <>
-void PreambleHelper<Family>::programAdditionalFieldsInVfeState(VFE_STATE_TYPE *mediaVfeState, const HardwareInfo &hwInfo, bool disableEUFusion) {
+void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, const StreamProperties &streamProperties, void *cmd) {
+    VFE_STATE_TYPE *mediaVfeState = static_cast<VFE_STATE_TYPE *>(cmd);
+    bool disableEUFusion = streamProperties.frontEndState.disableEUFusion.value == 1;
     auto &hwHelper = HwHelperHw<Family>::get();
     if (!hwHelper.isFusedEuDispatchEnabled(hwInfo, disableEUFusion)) {
         mediaVfeState->setDisableSlice0Subslice2(true);
@@ -94,6 +96,6 @@ void PreambleHelper<Family>::programAdditionalFieldsInVfeState(VFE_STATE_TYPE *m
     }
 }
 
-// Explicitly instantiate PreambleHelper for TGLLP device family
+// Explicitly instantiate PreambleHelper for Gen12Lp device family
 template struct PreambleHelper<Family>;
 } // namespace NEO
