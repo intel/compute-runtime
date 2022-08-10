@@ -147,6 +147,7 @@ void Wddm::setPlatformSupportEvictWhenNecessaryFlag(const HwInfoConfig &hwInfoCo
     if (overridePlatformSupportsEvictWhenNecessary != -1) {
         platformSupportsEvictWhenNecessary = !!overridePlatformSupportsEvictWhenNecessary;
     }
+    forceEvictOnlyIfNecessary = DebugManager.flags.ForceEvictOnlyIfNecessaryFlag.get();
 }
 
 bool Wddm::buildTopologyMapping() {

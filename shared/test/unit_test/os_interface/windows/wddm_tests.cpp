@@ -143,6 +143,22 @@ TEST_F(WddmTests, GivenDebugFlagEnablesEvictWhenNecessarySupportThenFlagIsTrue) 
     EXPECT_TRUE(wddm->platformSupportsEvictWhenNecessary);
 }
 
+TEST_F(WddmTests, givenDebugFlagForceEvictOnlyIfNecessaryAllValuesThenForceSettingIsSetCorrectly) {
+    DebugManagerStateRestore restorer{};
+    auto hwInfoConfig = HwInfoConfig::get(rootDeviceEnvironment->getHardwareInfo()->platform.eProductFamily);
+
+    wddm->setPlatformSupportEvictWhenNecessaryFlag(*hwInfoConfig);
+    EXPECT_EQ(-1, wddm->forceEvictOnlyIfNecessary);
+
+    DebugManager.flags.ForceEvictOnlyIfNecessaryFlag.set(0);
+    wddm->setPlatformSupportEvictWhenNecessaryFlag(*hwInfoConfig);
+    EXPECT_EQ(0, wddm->forceEvictOnlyIfNecessary);
+
+    DebugManager.flags.ForceEvictOnlyIfNecessaryFlag.set(1);
+    wddm->setPlatformSupportEvictWhenNecessaryFlag(*hwInfoConfig);
+    EXPECT_EQ(1, wddm->forceEvictOnlyIfNecessary);
+}
+
 TEST_F(WddmTests, GivenProperTopologyDataAndDebugFlagsEnabledWhenInitializingWddmThenExpectTopologyMapCreateAndReturnTrue) {
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = 10;
@@ -315,6 +331,19 @@ TEST_F(WddmTests, GivenPlatformNotSupportEvictWhenNecessaryWhenAdjustingEvictNee
 TEST_F(WddmTests, GivenPlatformSupportsEvictWhenNecessaryWhenAdjustingEvictNeededFalseThenExpectFalse) {
     wddm->platformSupportsEvictWhenNecessary = true;
     bool value = wddm->adjustEvictNeededParameter(false);
+    EXPECT_FALSE(value);
+}
+
+TEST_F(WddmTests, GivenForceEvictOnlyIfNecessarySetToNotUseTheEvictFlagWhenAdjustingEvictNeededAlwaysIsFalseThenExpectTrue) {
+    wddm->platformSupportsEvictWhenNecessary = true;
+    wddm->forceEvictOnlyIfNecessary = 0;
+    bool value = wddm->adjustEvictNeededParameter(false);
+    EXPECT_TRUE(value);
+}
+
+TEST_F(WddmTests, GivenForceEvictOnlyIfNecessarySetToUseEvictFlagWhenAdjustingEvictNeededAlwaysIsTrueThenExpectFalse) {
+    wddm->forceEvictOnlyIfNecessary = 1;
+    bool value = wddm->adjustEvictNeededParameter(true);
     EXPECT_FALSE(value);
 }
 

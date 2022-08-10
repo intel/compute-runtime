@@ -37,6 +37,7 @@ class WddmMock : public Wddm {
     using Wddm::deviceRegistryPath;
     using Wddm::enablePreemptionRegValue;
     using Wddm::featureTable;
+    using Wddm::forceEvictOnlyIfNecessary;
     using Wddm::getSystemInfo;
     using Wddm::gmmMemory;
     using Wddm::hwDeviceId;

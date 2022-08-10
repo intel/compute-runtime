@@ -232,6 +232,9 @@ class Wddm : public DriverModel {
         if (evictNeeded == false && platformSupportsEvictWhenNecessary == false) {
             evictNeeded = true;
         }
+        if (forceEvictOnlyIfNecessary != -1) {
+            evictNeeded = !forceEvictOnlyIfNecessary;
+        }
         return evictNeeded;
     }
     void setPlatformSupportEvictWhenNecessaryFlag(const HwInfoConfig &hwInfoConfig);
@@ -278,6 +281,7 @@ class Wddm : public DriverModel {
     uint32_t maxRenderFrequency = 0;
     uint32_t timestampFrequency = 0u;
     uint32_t additionalAdapterInfoOptions = 0u;
+    int32_t forceEvictOnlyIfNecessary = -1;
 
     unsigned int enablePreemptionRegValue = 1;
 
