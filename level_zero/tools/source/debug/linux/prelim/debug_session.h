@@ -103,6 +103,7 @@ struct DebugSessionLinux : DebugSessionImp {
         uint64_t elfUuidHandle;
         uint64_t vmHandle;
         bool tileInstanced = false;
+        bool perKernelModule = true;
 
         uint64_t moduleBegin;
         uint64_t moduleEnd;
@@ -209,6 +210,7 @@ struct DebugSessionLinux : DebugSessionImp {
     void handleContextParamEvent(prelim_drm_i915_debug_event_context_param *contextParam);
     void handleAttentionEvent(prelim_drm_i915_debug_event_eu_attention *attention);
     void handleEnginesEvent(prelim_drm_i915_debug_event_engines *engines);
+    bool ackIsaEvents(uint32_t deviceIndex, uint64_t isaVa);
 
     void extractUuidData(uint64_t client, const UuidData &uuidData);
     uint64_t extractVaFromUuidString(std::string &uuid);

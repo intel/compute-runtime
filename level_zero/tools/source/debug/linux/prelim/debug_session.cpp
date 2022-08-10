@@ -770,6 +770,7 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                 isa->moduleBegin = 0;
                 isa->moduleEnd = 0;
                 isa->tileInstanced = tileInstanced;
+                isa->perKernelModule = perKernelModules;
 
                 for (index = 1; index < vmBind->num_uuids; index++) {
                     if (connection->uuidMap[vmBind->uuids[index]].classIndex == NEO::DrmResourceClass::Elf) {
@@ -815,7 +816,8 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                 memLock.unlock();
 
                 if (perKernelModules) {
-                    pushApiEvent(debugEvent, &vmBind->base);
+                    debugEvent.flags = (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) ? ZET_DEBUG_EVENT_FLAG_NEED_ACK : 0;
+                    pushApiEvent(debugEvent, nullptr);
                     shouldAckEvent = false;
                 }
             }
@@ -1398,49 +1400,66 @@ ze_result_t DebugSessionLinux::accessDefaultMemForThreadAll(const zet_debug_memo
     return status;
 }
 
-ze_result_t DebugSessionLinux::acknowledgeEvent(const zet_debug_event_t *event) {
+bool DebugSessionLinux::ackIsaEvents(uint32_t deviceIndex, uint64_t isaVa) {
     std::unique_lock<std::mutex> lock(asyncThreadMutex);
-    for (size_t i = 0; i < eventsToAck.size(); i++) {
-        if (apiEventCompare(*event, eventsToAck[i].first)) {
 
-            bool perKernelIsaAcked = false;
-            if (event->type == ZET_DEBUG_EVENT_TYPE_MODULE_LOAD) {
-                auto connection = clientHandleToConnection[clientHandle].get();
+    auto connection = clientHandleToConnection[clientHandle].get();
 
-                auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-                auto isaVaStart = gmmHelper->decanonize(event->info.module.load);
-                auto isa = connection->isaMap[0].find(isaVaStart);
+    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+    auto isaVaStart = gmmHelper->decanonize(isaVa);
+    auto isa = connection->isaMap[deviceIndex].find(isaVaStart);
 
-                if (isa != connection->isaMap[0].end()) {
-                    for (auto &event : isa->second->ackEvents) {
-                        prelim_drm_i915_debug_event_ack eventToAck = {};
-                        eventToAck.type = event.type;
-                        eventToAck.seqno = event.seqno;
-                        eventToAck.flags = 0;
+    if (isa != connection->isaMap[deviceIndex].end()) {
 
-                        auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_ACK_EVENT, &eventToAck);
-                        PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_ACK_EVENT seqno = %llu, ret = %d errno = %d\n", (uint64_t)event.seqno, ret, ret != 0 ? errno : 0);
+        //zebin modules do not store ackEvents per ISA
+        UNRECOVERABLE_IF(isa->second->ackEvents.size() > 0 && isa->second->perKernelModule == false);
 
-                        perKernelIsaAcked = true;
-                    }
-                    isa->second->ackEvents.clear();
-                    isa->second->moduleLoadEventAck = true;
-                }
-            }
+        for (auto &event : isa->second->ackEvents) {
+            prelim_drm_i915_debug_event_ack eventToAck = {};
+            eventToAck.type = event.type;
+            eventToAck.seqno = event.seqno;
+            eventToAck.flags = 0;
 
-            if (!perKernelIsaAcked) {
+            auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_ACK_EVENT, &eventToAck);
+            PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_ACK_EVENT seqno = %llu, ret = %d errno = %d\n", (uint64_t)event.seqno, ret, ret != 0 ? errno : 0);
+        }
+
+        isa->second->ackEvents.clear();
+        isa->second->moduleLoadEventAck = true;
+        return true;
+    }
+    return false;
+}
+
+ze_result_t DebugSessionLinux::acknowledgeEvent(const zet_debug_event_t *event) {
+
+    const zet_debug_event_t apiEventToAck = *event;
+    {
+        std::unique_lock<std::mutex> lock(asyncThreadMutex);
+
+        for (size_t i = 0; i < eventsToAck.size(); i++) {
+            if (apiEventCompare(apiEventToAck, eventsToAck[i].first)) {
+
                 auto eventToAck = eventsToAck[i].second;
                 auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_ACK_EVENT, &eventToAck);
                 PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_ACK_EVENT seqno = %llu, ret = %d errno = %d\n", (uint64_t)eventToAck.seqno, ret, ret != 0 ? errno : 0);
+
+                auto iter = eventsToAck.begin() + i;
+                eventsToAck.erase(iter);
+
+                return ZE_RESULT_SUCCESS;
             }
+        }
+    }
 
-            auto iter = eventsToAck.begin() + i;
-            eventsToAck.erase(iter);
+    if (apiEventToAck.type == ZET_DEBUG_EVENT_TYPE_MODULE_LOAD) {
 
+        if (ackIsaEvents(0, apiEventToAck.info.module.load)) {
             return ZE_RESULT_SUCCESS;
         }
     }
-    return ZE_RESULT_ERROR_UNKNOWN;
+
+    return ZE_RESULT_ERROR_UNINITIALIZED;
 }
 
 bool DebugSessionLinux::readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srIdent) {
