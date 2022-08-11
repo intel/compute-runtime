@@ -72,7 +72,7 @@ void testAppendImageViewNV12Copy(ze_context_handle_t &context, ze_device_handle_
                                   nullptr,
                                   (ZE_IMAGE_FLAG_BIAS_UNCACHED),
                                   ZE_IMAGE_TYPE_2D,
-                                  {ZE_IMAGE_FORMAT_LAYOUT_NV12, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_NV12, ZE_IMAGE_FORMAT_TYPE_UNORM,
                                    ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
                                    ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
                                   width,

@@ -473,6 +473,7 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
             if (desc->format != ZE_MODULE_FORMAT_IL_SPIRV) {
                 return false;
             }
+            this->builtFromSPIRv = true;
             const ze_module_program_exp_desc_t *programExpDesc =
                 reinterpret_cast<const ze_module_program_exp_desc_t *>(expDesc);
             std::vector<const char *> inputSpirVs;
@@ -531,6 +532,7 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
             success = this->translationUnit->createFromNativeBinary(
                 reinterpret_cast<const char *>(desc->pInputModule), desc->inputSize);
         } else if (desc->format == ZE_MODULE_FORMAT_IL_SPIRV) {
+            this->builtFromSPIRv = true;
             success = this->translationUnit->buildFromSpirV(reinterpret_cast<const char *>(desc->pInputModule),
                                                             static_cast<uint32_t>(desc->inputSize),
                                                             buildOptions.c_str(),

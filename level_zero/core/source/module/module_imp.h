@@ -123,6 +123,8 @@ struct ModuleImp : public Module {
 
     bool isDebugEnabled() const override;
 
+    bool isSPIRv() { return builtFromSPIRv; }
+
     bool shouldAllocatePrivateMemoryPerDispatch() const override {
         return allocatePrivateMemoryPerDispatch;
     }
@@ -162,6 +164,7 @@ struct ModuleImp : public Module {
 
     std::unordered_map<std::string, HostGlobalSymbol> hostGlobalSymbolsMap;
 
+    bool builtFromSPIRv = false;
     bool debugEnabled = false;
     bool isFullyLinked = false;
     bool allocatePrivateMemoryPerDispatch = true;
