@@ -22,17 +22,27 @@ HWTEST2_F(SBATest, WhenAppendStateBaseAddressParametersIsCalledThenSBACmdHasBind
     stateBaseAddress.setBindlessSurfaceStateBaseAddress(0);
     stateBaseAddress.setBindlessSurfaceStateBaseAddressModifyEnable(false);
 
-    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(
-        &stateBaseAddress,
-        &ssh,
-        false,
-        0,
-        nullptr,
-        false,
-        MemoryCompressionState::NotApplicable,
-        true,
-        false,
-        1u);
+    StateBaseAddressHelperArgs<FamilyType> args = {
+        0,                                     // generalStateBase
+        0,                                     // indirectObjectHeapBaseAddress
+        0,                                     // instructionHeapBaseAddress
+        0,                                     // globalHeapsBaseAddress
+        &stateBaseAddress,                     // stateBaseAddressCmd
+        nullptr,                               // dsh
+        nullptr,                               // ioh
+        &ssh,                                  // ssh
+        nullptr,                               // gmmHelper
+        0,                                     // statelessMocsIndex
+        MemoryCompressionState::NotApplicable, // memoryCompressionState
+        false,                                 // setInstructionStateBaseAddress
+        false,                                 // setGeneralStateBaseAddress
+        false,                                 // useGlobalHeapsBaseAddress
+        false,                                 // isMultiOsContextCapable
+        false,                                 // useGlobalAtomics
+        false                                  // areMultipleSubDevicesInContext
+    };
+
+    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
 
     EXPECT_EQ(ssh.getMaxAvailableSpace() / 64 - 1, stateBaseAddress.getBindlessSurfaceStateSize());
     EXPECT_EQ(ssh.getHeapGpuBase(), stateBaseAddress.getBindlessSurfaceStateBaseAddress());
@@ -52,24 +62,27 @@ HWTEST2_F(SBATest, WhenProgramStateBaseAddressParametersIsCalledThenSBACmdHasBin
     STATE_BASE_ADDRESS *cmd = reinterpret_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(0));
     *cmd = stateBaseAddress;
 
-    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(
-        cmd,
-        nullptr,
-        nullptr,
-        &ssh,
-        0,
-        false,
-        0,
-        0,
-        0,
-        0,
-        false,
-        false,
-        pDevice->getGmmHelper(),
-        true,
-        MemoryCompressionState::NotApplicable,
-        false,
-        1u);
+    StateBaseAddressHelperArgs<FamilyType> args = {
+        0,                                     // generalStateBase
+        0,                                     // indirectObjectHeapBaseAddress
+        0,                                     // instructionHeapBaseAddress
+        0,                                     // globalHeapsBaseAddress
+        cmd,                                   // stateBaseAddressCmd
+        nullptr,                               // dsh
+        nullptr,                               // ioh
+        &ssh,                                  // ssh
+        pDevice->getGmmHelper(),               // gmmHelper
+        0,                                     // statelessMocsIndex
+        MemoryCompressionState::NotApplicable, // memoryCompressionState
+        false,                                 // setInstructionStateBaseAddress
+        false,                                 // setGeneralStateBaseAddress
+        false,                                 // useGlobalHeapsBaseAddress
+        false,                                 // isMultiOsContextCapable
+        false,                                 // useGlobalAtomics
+        false                                  // areMultipleSubDevicesInContext
+    };
+
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
     EXPECT_EQ(ssh.getMaxAvailableSpace() / 64 - 1, cmd->getBindlessSurfaceStateSize());
     EXPECT_EQ(ssh.getHeapGpuBase(), cmd->getBindlessSurfaceStateBaseAddress());
@@ -89,24 +102,28 @@ HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenProgramStateBas
     NEO::LinearStream cmdStream(buffer.begin(), buffer.size());
 
     STATE_BASE_ADDRESS *cmd = reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStream.getSpace(0));
-    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(
-        cmd,
-        nullptr,
-        nullptr,
-        nullptr,
-        0,
-        false,
-        0,
-        0,
-        0,
-        globalBindlessHeapsBaseAddress,
-        false,
-        true,
-        pDevice->getGmmHelper(),
-        true,
-        MemoryCompressionState::NotApplicable,
-        false,
-        1u);
+
+    StateBaseAddressHelperArgs<FamilyType> args = {
+        0,                                     // generalStateBase
+        0,                                     // indirectObjectHeapBaseAddress
+        0,                                     // instructionHeapBaseAddress
+        globalBindlessHeapsBaseAddress,        // globalHeapsBaseAddress
+        cmd,                                   // stateBaseAddressCmd
+        nullptr,                               // dsh
+        nullptr,                               // ioh
+        nullptr,                               // ssh
+        pDevice->getGmmHelper(),               // gmmHelper
+        0,                                     // statelessMocsIndex
+        MemoryCompressionState::NotApplicable, // memoryCompressionState
+        false,                                 // setInstructionStateBaseAddress
+        false,                                 // setGeneralStateBaseAddress
+        true,                                  // useGlobalHeapsBaseAddress
+        false,                                 // isMultiOsContextCapable
+        false,                                 // useGlobalAtomics
+        false                                  // areMultipleSubDevicesInContext
+    };
+
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
     EXPECT_TRUE(cmd->getBindlessSurfaceStateBaseAddressModifyEnable());
     EXPECT_EQ(cmd->getBindlessSurfaceStateBaseAddress(), globalBindlessHeapsBaseAddress);
@@ -129,24 +146,28 @@ HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenPassingIndirect
     NEO::LinearStream cmdStream(buffer.begin(), buffer.size());
 
     STATE_BASE_ADDRESS *cmd = reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStream.getSpace(0));
-    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(
-        cmd,
-        nullptr,
-        nullptr,
-        nullptr,
-        0,
-        false,
-        0,
-        indirectObjectBaseAddress,
-        0,
-        globalBindlessHeapsBaseAddress,
-        false,
-        true,
-        pDevice->getGmmHelper(),
-        true,
-        MemoryCompressionState::NotApplicable,
-        false,
-        1u);
+
+    StateBaseAddressHelperArgs<FamilyType> args = {
+        0,                                     // generalStateBase
+        indirectObjectBaseAddress,             // indirectObjectHeapBaseAddress
+        0,                                     // instructionHeapBaseAddress
+        globalBindlessHeapsBaseAddress,        // globalHeapsBaseAddress
+        cmd,                                   // stateBaseAddressCmd
+        nullptr,                               // dsh
+        nullptr,                               // ioh
+        nullptr,                               // ssh
+        pDevice->getGmmHelper(),               // gmmHelper
+        0,                                     // statelessMocsIndex
+        MemoryCompressionState::NotApplicable, // memoryCompressionState
+        false,                                 // setInstructionStateBaseAddress
+        false,                                 // setGeneralStateBaseAddress
+        true,                                  // useGlobalHeapsBaseAddress
+        false,                                 // isMultiOsContextCapable
+        false,                                 // useGlobalAtomics
+        false                                  // areMultipleSubDevicesInContext
+    };
+
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
     EXPECT_EQ(cmd->getIndirectObjectBaseAddress(), indirectObjectBaseAddress);
 }
@@ -161,17 +182,27 @@ HWTEST2_F(SBATest, givenSbaWhenOverrideBindlessSurfaceBaseIsFalseThenBindlessSur
     stateBaseAddress.setBindlessSurfaceStateBaseAddress(0);
     stateBaseAddress.setBindlessSurfaceStateBaseAddressModifyEnable(false);
 
-    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(
-        &stateBaseAddress,
-        &ssh,
-        false,
-        0,
-        pDevice->getRootDeviceEnvironment().getGmmHelper(),
-        false,
-        MemoryCompressionState::NotApplicable,
-        false,
-        false,
-        1u);
+    StateBaseAddressHelperArgs<FamilyType> args = {
+        0,                                                  // generalStateBase
+        0,                                                  // indirectObjectHeapBaseAddress
+        0,                                                  // instructionHeapBaseAddress
+        0,                                                  // globalHeapsBaseAddress
+        &stateBaseAddress,                                  // stateBaseAddressCmd
+        nullptr,                                            // dsh
+        nullptr,                                            // ioh
+        nullptr,                                            // ssh
+        pDevice->getRootDeviceEnvironment().getGmmHelper(), // gmmHelper
+        0,                                                  // statelessMocsIndex
+        MemoryCompressionState::NotApplicable,              // memoryCompressionState
+        false,                                              // setInstructionStateBaseAddress
+        false,                                              // setGeneralStateBaseAddress
+        true,                                               // useGlobalHeapsBaseAddress
+        false,                                              // isMultiOsContextCapable
+        false,                                              // useGlobalAtomics
+        false                                               // areMultipleSubDevicesInContext
+    };
+
+    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, false);
 
     EXPECT_EQ(0u, stateBaseAddress.getBindlessSurfaceStateBaseAddress());
 }
@@ -187,24 +218,28 @@ HWTEST2_F(SBATest, givenGlobalBindlessBaseAddressWhenSshIsPassedThenBindlessSurf
     NEO::LinearStream cmdStream(buffer.begin(), buffer.size());
 
     STATE_BASE_ADDRESS *cmd = reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStream.getSpace(0));
-    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(
-        cmd,
-        nullptr,
-        nullptr,
-        &ssh,
-        0,
-        false,
-        0,
-        0,
-        0,
-        globalBindlessHeapsBaseAddress,
-        false,
-        true,
-        pDevice->getGmmHelper(),
-        true,
-        MemoryCompressionState::NotApplicable,
-        false,
-        1u);
+
+    StateBaseAddressHelperArgs<FamilyType> args = {
+        0,                                     // generalStateBase
+        0,                                     // indirectObjectHeapBaseAddress
+        0,                                     // instructionHeapBaseAddress
+        globalBindlessHeapsBaseAddress,        // globalHeapsBaseAddress
+        cmd,                                   // stateBaseAddressCmd
+        nullptr,                               // dsh
+        nullptr,                               // ioh
+        &ssh,                                  // ssh
+        pDevice->getGmmHelper(),               // gmmHelper
+        0,                                     // statelessMocsIndex
+        MemoryCompressionState::NotApplicable, // memoryCompressionState
+        false,                                 // setInstructionStateBaseAddress
+        false,                                 // setGeneralStateBaseAddress
+        true,                                  // useGlobalHeapsBaseAddress
+        false,                                 // isMultiOsContextCapable
+        false,                                 // useGlobalAtomics
+        false                                  // areMultipleSubDevicesInContext
+    };
+
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
     EXPECT_EQ(cmd->getBindlessSurfaceStateBaseAddress(), globalBindlessHeapsBaseAddress);
 }
@@ -219,24 +254,28 @@ HWTEST2_F(SBATest, givenSurfaceStateHeapWhenNotUsingGlobalHeapBaseThenBindlessSu
     NEO::LinearStream cmdStream(buffer.begin(), buffer.size());
 
     STATE_BASE_ADDRESS *cmd = reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStream.getSpace(0));
-    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(
-        cmd,
-        nullptr,
-        nullptr,
-        &ssh,
-        0,
-        false,
-        0,
-        0,
-        0,
-        globalBindlessHeapsBaseAddress,
-        false,
-        false,
-        pDevice->getGmmHelper(),
-        true,
-        MemoryCompressionState::NotApplicable,
-        false,
-        1u);
+
+    StateBaseAddressHelperArgs<FamilyType> args = {
+        0,                                     // generalStateBase
+        0,                                     // indirectObjectHeapBaseAddress
+        0,                                     // instructionHeapBaseAddress
+        globalBindlessHeapsBaseAddress,        // globalHeapsBaseAddress
+        cmd,                                   // stateBaseAddressCmd
+        nullptr,                               // dsh
+        nullptr,                               // ioh
+        &ssh,                                  // ssh
+        pDevice->getGmmHelper(),               // gmmHelper
+        0,                                     // statelessMocsIndex
+        MemoryCompressionState::NotApplicable, // memoryCompressionState
+        false,                                 // setInstructionStateBaseAddress
+        false,                                 // setGeneralStateBaseAddress
+        false,                                 // useGlobalHeapsBaseAddress
+        false,                                 // isMultiOsContextCapable
+        false,                                 // useGlobalAtomics
+        false                                  // areMultipleSubDevicesInContext
+    };
+
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
     EXPECT_EQ(ssh.getHeapGpuBase(), cmd->getBindlessSurfaceStateBaseAddress());
 }
@@ -271,11 +310,29 @@ HWTEST2_F(SBATest, givenDebugFlagSetWhenAppendingSbaThenProgramCorrectL1CachePol
         {3, FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WT},
         {4, FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WS}};
 
+    StateBaseAddressHelperArgs<FamilyType> args = {
+        0,                                                  // generalStateBase
+        0,                                                  // indirectObjectHeapBaseAddress
+        0,                                                  // instructionHeapBaseAddress
+        0,                                                  // globalHeapsBaseAddress
+        &sbaCmd,                                            // stateBaseAddressCmd
+        nullptr,                                            // dsh
+        nullptr,                                            // ioh
+        &indirectHeap,                                      // ssh
+        pDevice->getRootDeviceEnvironment().getGmmHelper(), // gmmHelper
+        0,                                                  // statelessMocsIndex
+        MemoryCompressionState::NotApplicable,              // memoryCompressionState
+        false,                                              // setInstructionStateBaseAddress
+        true,                                               // setGeneralStateBaseAddress
+        false,                                              // useGlobalHeapsBaseAddress
+        false,                                              // isMultiOsContextCapable
+        false,                                              // useGlobalAtomics
+        false                                               // areMultipleSubDevicesInContext
+    };
+
     for (const auto &input : testInputs) {
         DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(input.option);
-        StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(&sbaCmd, &indirectHeap, true, 0,
-                                                                             pDevice->getRootDeviceEnvironment().getGmmHelper(), false,
-                                                                             MemoryCompressionState::NotApplicable, true, false, 1u);
+        StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
 
         EXPECT_EQ(input.cachePolicy, sbaCmd.getL1CachePolicyL1CacheControl());
     }

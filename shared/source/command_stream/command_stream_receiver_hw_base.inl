@@ -408,24 +408,28 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         uint64_t indirectObjectStateBaseAddress = getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, ioh->getGraphicsAllocation()->isAllocatedInLocalMemoryPool());
 
         STATE_BASE_ADDRESS stateBaseAddressCmd;
-        StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
-            &stateBaseAddressCmd,
-            dsh,
-            ioh,
-            ssh,
-            newGSHbase,
-            true,
-            mocsIndex,
-            indirectObjectStateBaseAddress,
-            instructionHeapBaseAddress,
-            0,
-            true,
-            false,
-            device.getGmmHelper(),
-            isMultiOsContextCapable(),
-            memoryCompressionState,
-            dispatchFlags.useGlobalAtomics,
-            dispatchFlags.areMultipleSubDevicesInContext);
+
+        StateBaseAddressHelperArgs<GfxFamily> args = {
+            newGSHbase,                                  // generalStateBase
+            indirectObjectStateBaseAddress,              // indirectObjectHeapBaseAddress
+            instructionHeapBaseAddress,                  // instructionHeapBaseAddress
+            0,                                           // globalHeapsBaseAddress
+            &stateBaseAddressCmd,                        // stateBaseAddressCmd
+            dsh,                                         // dsh
+            ioh,                                         // ioh
+            ssh,                                         // ssh
+            device.getGmmHelper(),                       // gmmHelper
+            mocsIndex,                                   // statelessMocsIndex
+            memoryCompressionState,                      // memoryCompressionState
+            true,                                        // setInstructionStateBaseAddress
+            true,                                        // setGeneralStateBaseAddress
+            false,                                       // useGlobalHeapsBaseAddress
+            isMultiOsContextCapable(),                   // isMultiOsContextCapable
+            dispatchFlags.useGlobalAtomics,              // useGlobalAtomics
+            dispatchFlags.areMultipleSubDevicesInContext // areMultipleSubDevicesInContext
+        };
+
+        StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(args);
 
         if (stateBaseAddressCmdBuffer) {
             *stateBaseAddressCmdBuffer = stateBaseAddressCmd;

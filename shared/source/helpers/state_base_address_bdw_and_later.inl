@@ -14,17 +14,17 @@ void StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(LinearStr
 }
 
 template <typename GfxFamily>
-void StateBaseAddressHelper<GfxFamily>::appendIohParameters(typename GfxFamily::STATE_BASE_ADDRESS *stateBaseAddress, const IndirectHeap *ioh, bool useGlobalHeapsBaseAddress, uint64_t indirectObjectHeapBaseAddress) {
-    if (useGlobalHeapsBaseAddress) {
-        stateBaseAddress->setIndirectObjectBaseAddressModifyEnable(true);
-        stateBaseAddress->setIndirectObjectBufferSizeModifyEnable(true);
-        stateBaseAddress->setIndirectObjectBaseAddress(indirectObjectHeapBaseAddress);
-        stateBaseAddress->setIndirectObjectBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
-    } else if (ioh) {
-        stateBaseAddress->setIndirectObjectBaseAddressModifyEnable(true);
-        stateBaseAddress->setIndirectObjectBufferSizeModifyEnable(true);
-        stateBaseAddress->setIndirectObjectBaseAddress(ioh->getHeapGpuBase());
-        stateBaseAddress->setIndirectObjectBufferSize(ioh->getHeapSizeInPages());
+void StateBaseAddressHelper<GfxFamily>::appendIohParameters(StateBaseAddressHelperArgs<GfxFamily> &args) {
+    if (args.useGlobalHeapsBaseAddress) {
+        args.stateBaseAddressCmd->setIndirectObjectBaseAddressModifyEnable(true);
+        args.stateBaseAddressCmd->setIndirectObjectBufferSizeModifyEnable(true);
+        args.stateBaseAddressCmd->setIndirectObjectBaseAddress(args.indirectObjectHeapBaseAddress);
+        args.stateBaseAddressCmd->setIndirectObjectBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
+    } else if (args.ioh) {
+        args.stateBaseAddressCmd->setIndirectObjectBaseAddressModifyEnable(true);
+        args.stateBaseAddressCmd->setIndirectObjectBufferSizeModifyEnable(true);
+        args.stateBaseAddressCmd->setIndirectObjectBaseAddress(args.ioh->getHeapGpuBase());
+        args.stateBaseAddressCmd->setIndirectObjectBufferSize(args.ioh->getHeapSizeInPages());
     }
 }
 

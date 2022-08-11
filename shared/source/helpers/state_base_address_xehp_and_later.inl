@@ -27,66 +27,58 @@ void setSbaStatelessCompressionParams(typename GfxFamily::STATE_BASE_ADDRESS *st
 
 template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
-    STATE_BASE_ADDRESS *stateBaseAddress,
-    const IndirectHeap *ssh,
-    bool setGeneralStateBaseAddress,
-    uint64_t internalHeapBase,
-    GmmHelper *gmmHelper,
-    bool isMultiOsContextCapable,
-    MemoryCompressionState memoryCompressionState,
-    bool overrideBindlessSurfaceStateBase,
-    bool useGlobalAtomics,
-    bool areMultipleSubDevicesInContext) {
+    StateBaseAddressHelperArgs<GfxFamily> &args,
+    bool overrideBindlessSurfaceStateBase) {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
-    if (setGeneralStateBaseAddress && is64bit) {
-        stateBaseAddress->setGeneralStateBaseAddress(gmmHelper->decanonize(internalHeapBase));
+    if (args.setGeneralStateBaseAddress && is64bit) {
+        args.stateBaseAddressCmd->setGeneralStateBaseAddress(args.gmmHelper->decanonize(args.indirectObjectHeapBaseAddress));
     }
 
-    if (overrideBindlessSurfaceStateBase && ssh) {
-        stateBaseAddress->setBindlessSurfaceStateBaseAddress(ssh->getHeapGpuBase());
-        stateBaseAddress->setBindlessSurfaceStateBaseAddressModifyEnable(true);
-        const auto surfaceStateCount = ssh->getMaxAvailableSpace() / sizeof(RENDER_SURFACE_STATE);
-        stateBaseAddress->setBindlessSurfaceStateSize(static_cast<uint32_t>(surfaceStateCount - 1));
+    if (overrideBindlessSurfaceStateBase && args.ssh) {
+        args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddress(args.ssh->getHeapGpuBase());
+        args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddressModifyEnable(true);
+        const auto surfaceStateCount = args.ssh->getMaxAvailableSpace() / sizeof(RENDER_SURFACE_STATE);
+        args.stateBaseAddressCmd->setBindlessSurfaceStateSize(static_cast<uint32_t>(surfaceStateCount - 1));
     }
 
-    stateBaseAddress->setBindlessSamplerStateBaseAddressModifyEnable(true);
+    args.stateBaseAddressCmd->setBindlessSamplerStateBaseAddressModifyEnable(true);
 
-    auto heapResourceUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::INTERNAL_HEAP, DebugManager.flags.DisableCachingForHeaps.get(), *gmmHelper->getHardwareInfo());
-    auto heapMocsValue = gmmHelper->getMOCS(heapResourceUsage);
+    auto heapResourceUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::INTERNAL_HEAP, DebugManager.flags.DisableCachingForHeaps.get(), *args.gmmHelper->getHardwareInfo());
+    auto heapMocsValue = args.gmmHelper->getMOCS(heapResourceUsage);
 
-    stateBaseAddress->setSurfaceStateMemoryObjectControlState(heapMocsValue);
-    stateBaseAddress->setDynamicStateMemoryObjectControlState(heapMocsValue);
-    stateBaseAddress->setGeneralStateMemoryObjectControlState(heapMocsValue);
-    stateBaseAddress->setBindlessSurfaceStateMemoryObjectControlState(heapMocsValue);
-    stateBaseAddress->setBindlessSamplerStateMemoryObjectControlState(heapMocsValue);
+    args.stateBaseAddressCmd->setSurfaceStateMemoryObjectControlState(heapMocsValue);
+    args.stateBaseAddressCmd->setDynamicStateMemoryObjectControlState(heapMocsValue);
+    args.stateBaseAddressCmd->setGeneralStateMemoryObjectControlState(heapMocsValue);
+    args.stateBaseAddressCmd->setBindlessSurfaceStateMemoryObjectControlState(heapMocsValue);
+    args.stateBaseAddressCmd->setBindlessSamplerStateMemoryObjectControlState(heapMocsValue);
 
-    bool enableMultiGpuAtomics = isMultiOsContextCapable;
+    bool enableMultiGpuAtomics = args.isMultiOsContextCapable;
     if (DebugManager.flags.EnableMultiGpuAtomicsOptimization.get()) {
-        enableMultiGpuAtomics = useGlobalAtomics && (isMultiOsContextCapable || areMultipleSubDevicesInContext);
+        enableMultiGpuAtomics = args.useGlobalAtomics && (args.isMultiOsContextCapable || args.areMultipleSubDevicesInContext);
     }
-    stateBaseAddress->setDisableSupportForMultiGpuAtomicsForStatelessAccesses(!enableMultiGpuAtomics);
+    args.stateBaseAddressCmd->setDisableSupportForMultiGpuAtomicsForStatelessAccesses(!enableMultiGpuAtomics);
 
-    stateBaseAddress->setDisableSupportForMultiGpuPartialWritesForStatelessMessages(!isMultiOsContextCapable);
+    args.stateBaseAddressCmd->setDisableSupportForMultiGpuPartialWritesForStatelessMessages(!args.isMultiOsContextCapable);
 
     if (DebugManager.flags.ForceMultiGpuAtomics.get() != -1) {
-        stateBaseAddress->setDisableSupportForMultiGpuAtomicsForStatelessAccesses(!!DebugManager.flags.ForceMultiGpuAtomics.get());
+        args.stateBaseAddressCmd->setDisableSupportForMultiGpuAtomicsForStatelessAccesses(!!DebugManager.flags.ForceMultiGpuAtomics.get());
     }
 
     if (DebugManager.flags.ForceMultiGpuPartialWrites.get() != -1) {
-        stateBaseAddress->setDisableSupportForMultiGpuPartialWritesForStatelessMessages(!!DebugManager.flags.ForceMultiGpuPartialWrites.get());
+        args.stateBaseAddressCmd->setDisableSupportForMultiGpuPartialWritesForStatelessMessages(!!DebugManager.flags.ForceMultiGpuPartialWrites.get());
     }
 
-    if (memoryCompressionState != MemoryCompressionState::NotApplicable) {
-        setSbaStatelessCompressionParams<GfxFamily>(stateBaseAddress, memoryCompressionState);
+    if (args.memoryCompressionState != MemoryCompressionState::NotApplicable) {
+        setSbaStatelessCompressionParams<GfxFamily>(args.stateBaseAddressCmd, args.memoryCompressionState);
     }
 
-    if (stateBaseAddress->getStatelessDataPortAccessMemoryObjectControlState() == gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) && DebugManager.flags.ForceL1Caching.get() != 0) {
-        stateBaseAddress->setStatelessDataPortAccessMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
+    if (args.stateBaseAddressCmd->getStatelessDataPortAccessMemoryObjectControlState() == args.gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) && DebugManager.flags.ForceL1Caching.get() != 0) {
+        args.stateBaseAddressCmd->setStatelessDataPortAccessMemoryObjectControlState(args.gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
     }
 
-    appendExtraCacheSettings(stateBaseAddress, gmmHelper->getHardwareInfo());
+    appendExtraCacheSettings(args.stateBaseAddressCmd, args.gmmHelper->getHardwareInfo());
 }
 
 template <typename GfxFamily>
@@ -106,7 +98,7 @@ void StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(LinearStr
 }
 
 template <typename GfxFamily>
-void StateBaseAddressHelper<GfxFamily>::appendIohParameters(STATE_BASE_ADDRESS *stateBaseAddress, const IndirectHeap *ioh, bool useGlobalHeapsBaseAddress, uint64_t indirectObjectHeapBaseAddress) {
+void StateBaseAddressHelper<GfxFamily>::appendIohParameters(StateBaseAddressHelperArgs<GfxFamily> &args) {
 }
 
 template <typename GfxFamily>

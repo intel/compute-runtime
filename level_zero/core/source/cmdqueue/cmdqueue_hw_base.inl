@@ -52,23 +52,27 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
     auto indirectObjectHeapBaseAddress = neoDevice->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), useLocalMemoryForIndirectHeap);
     auto instructionHeapBaseAddress = neoDevice->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), neoDevice->getMemoryManager()->isLocalMemoryUsedForIsa(neoDevice->getRootDeviceIndex()));
 
-    NEO::StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(&sbaCmd,
-                                                                    nullptr,
-                                                                    nullptr,
-                                                                    nullptr,
-                                                                    gsba,
-                                                                    true,
-                                                                    (device->getMOCS(cachedMOCSAllowed, false) >> 1),
-                                                                    indirectObjectHeapBaseAddress,
-                                                                    instructionHeapBaseAddress,
-                                                                    globalHeapsBase,
-                                                                    true,
-                                                                    useGlobalSshAndDsh,
-                                                                    neoDevice->getGmmHelper(),
-                                                                    false,
-                                                                    NEO::MemoryCompressionState::NotApplicable,
-                                                                    false,
-                                                                    1u);
+    NEO::StateBaseAddressHelperArgs<GfxFamily> args = {
+        gsba,                                             // generalStateBase
+        indirectObjectHeapBaseAddress,                    // indirectObjectHeapBaseAddress
+        instructionHeapBaseAddress,                       // instructionHeapBaseAddress
+        globalHeapsBase,                                  // globalHeapsBaseAddress
+        &sbaCmd,                                          // stateBaseAddressCmd
+        nullptr,                                          // dsh
+        nullptr,                                          // ioh
+        nullptr,                                          // ssh
+        neoDevice->getGmmHelper(),                        // gmmHelper
+        (device->getMOCS(cachedMOCSAllowed, false) >> 1), // statelessMocsIndex
+        NEO::MemoryCompressionState::NotApplicable,       // memoryCompressionState
+        true,                                             // setInstructionStateBaseAddress
+        true,                                             // setGeneralStateBaseAddress
+        useGlobalSshAndDsh,                               // useGlobalHeapsBaseAddress
+        false,                                            // isMultiOsContextCapable
+        false,                                            // useGlobalAtomics
+        false                                             // areMultipleSubDevicesInContext
+    };
+
+    NEO::StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(args);
     *sbaCmdBuf = sbaCmd;
     csr->setGSBAStateDirty(false);
 

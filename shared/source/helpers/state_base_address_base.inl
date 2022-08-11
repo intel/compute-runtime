@@ -17,88 +17,71 @@
 namespace NEO {
 template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
-    STATE_BASE_ADDRESS *stateBaseAddress,
-    const IndirectHeap *dsh,
-    const IndirectHeap *ioh,
-    const IndirectHeap *ssh,
-    uint64_t generalStateBase,
-    bool setGeneralStateBaseAddress,
-    uint32_t statelessMocsIndex,
-    uint64_t indirectObjectHeapBaseAddress,
-    uint64_t instructionHeapBaseAddress,
-    uint64_t globalHeapsBaseAddress,
-    bool setInstructionStateBaseAddress,
-    bool useGlobalHeapsBaseAddress,
-    GmmHelper *gmmHelper,
-    bool isMultiOsContextCapable,
-    MemoryCompressionState memoryCompressionState,
-    bool useGlobalAtomics,
-    bool areMultipleSubDevicesInContext) {
+    StateBaseAddressHelperArgs<GfxFamily> &args) {
 
-    *stateBaseAddress = GfxFamily::cmdInitStateBaseAddress;
+    *args.stateBaseAddressCmd = GfxFamily::cmdInitStateBaseAddress;
     bool overrideBindlessSurfaceStateBase = true;
 
     const auto surfaceStateCount = getMaxBindlessSurfaceStates();
-    stateBaseAddress->setBindlessSurfaceStateSize(surfaceStateCount);
+    args.stateBaseAddressCmd->setBindlessSurfaceStateSize(surfaceStateCount);
 
-    if (useGlobalHeapsBaseAddress) {
-        stateBaseAddress->setDynamicStateBaseAddressModifyEnable(true);
-        stateBaseAddress->setDynamicStateBufferSizeModifyEnable(true);
-        stateBaseAddress->setDynamicStateBaseAddress(globalHeapsBaseAddress);
-        stateBaseAddress->setDynamicStateBufferSize(MemoryConstants::pageSize64k);
+    if (args.useGlobalHeapsBaseAddress) {
+        args.stateBaseAddressCmd->setDynamicStateBaseAddressModifyEnable(true);
+        args.stateBaseAddressCmd->setDynamicStateBufferSizeModifyEnable(true);
+        args.stateBaseAddressCmd->setDynamicStateBaseAddress(args.globalHeapsBaseAddress);
+        args.stateBaseAddressCmd->setDynamicStateBufferSize(MemoryConstants::pageSize64k);
 
-        stateBaseAddress->setSurfaceStateBaseAddressModifyEnable(true);
-        stateBaseAddress->setSurfaceStateBaseAddress(globalHeapsBaseAddress);
+        args.stateBaseAddressCmd->setSurfaceStateBaseAddressModifyEnable(true);
+        args.stateBaseAddressCmd->setSurfaceStateBaseAddress(args.globalHeapsBaseAddress);
 
-        stateBaseAddress->setBindlessSurfaceStateBaseAddressModifyEnable(true);
-        stateBaseAddress->setBindlessSurfaceStateBaseAddress(globalHeapsBaseAddress);
+        args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddressModifyEnable(true);
+        args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddress(args.globalHeapsBaseAddress);
 
         overrideBindlessSurfaceStateBase = false;
     } else {
-        if (dsh) {
-            stateBaseAddress->setDynamicStateBaseAddressModifyEnable(true);
-            stateBaseAddress->setDynamicStateBufferSizeModifyEnable(true);
-            stateBaseAddress->setDynamicStateBaseAddress(dsh->getHeapGpuBase());
-            stateBaseAddress->setDynamicStateBufferSize(dsh->getHeapSizeInPages());
+        if (args.dsh) {
+            args.stateBaseAddressCmd->setDynamicStateBaseAddressModifyEnable(true);
+            args.stateBaseAddressCmd->setDynamicStateBufferSizeModifyEnable(true);
+            args.stateBaseAddressCmd->setDynamicStateBaseAddress(args.dsh->getHeapGpuBase());
+            args.stateBaseAddressCmd->setDynamicStateBufferSize(args.dsh->getHeapSizeInPages());
         }
 
-        if (ssh) {
-            stateBaseAddress->setSurfaceStateBaseAddressModifyEnable(true);
-            stateBaseAddress->setSurfaceStateBaseAddress(ssh->getHeapGpuBase());
+        if (args.ssh) {
+            args.stateBaseAddressCmd->setSurfaceStateBaseAddressModifyEnable(true);
+            args.stateBaseAddressCmd->setSurfaceStateBaseAddress(args.ssh->getHeapGpuBase());
         }
     }
 
-    appendIohParameters(stateBaseAddress, ioh, useGlobalHeapsBaseAddress, indirectObjectHeapBaseAddress);
+    appendIohParameters(args);
 
-    if (setInstructionStateBaseAddress) {
-        stateBaseAddress->setInstructionBaseAddressModifyEnable(true);
-        stateBaseAddress->setInstructionBaseAddress(instructionHeapBaseAddress);
-        stateBaseAddress->setInstructionBufferSizeModifyEnable(true);
-        stateBaseAddress->setInstructionBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
+    if (args.setInstructionStateBaseAddress) {
+        args.stateBaseAddressCmd->setInstructionBaseAddressModifyEnable(true);
+        args.stateBaseAddressCmd->setInstructionBaseAddress(args.instructionHeapBaseAddress);
+        args.stateBaseAddressCmd->setInstructionBufferSizeModifyEnable(true);
+        args.stateBaseAddressCmd->setInstructionBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
 
-        auto resourceUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::INTERNAL_HEAP, DebugManager.flags.DisableCachingForHeaps.get(), *gmmHelper->getHardwareInfo());
+        auto resourceUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::INTERNAL_HEAP, DebugManager.flags.DisableCachingForHeaps.get(), *args.gmmHelper->getHardwareInfo());
 
-        stateBaseAddress->setInstructionMemoryObjectControlState(gmmHelper->getMOCS(resourceUsage));
+        args.stateBaseAddressCmd->setInstructionMemoryObjectControlState(args.gmmHelper->getMOCS(resourceUsage));
     }
 
-    if (setGeneralStateBaseAddress) {
-        stateBaseAddress->setGeneralStateBaseAddressModifyEnable(true);
-        stateBaseAddress->setGeneralStateBufferSizeModifyEnable(true);
+    if (args.setGeneralStateBaseAddress) {
+        args.stateBaseAddressCmd->setGeneralStateBaseAddressModifyEnable(true);
+        args.stateBaseAddressCmd->setGeneralStateBufferSizeModifyEnable(true);
         // GSH must be set to 0 for stateless
-        stateBaseAddress->setGeneralStateBaseAddress(gmmHelper->decanonize(generalStateBase));
-        stateBaseAddress->setGeneralStateBufferSize(0xfffff);
+        args.stateBaseAddressCmd->setGeneralStateBaseAddress(args.gmmHelper->decanonize(args.generalStateBase));
+        args.stateBaseAddressCmd->setGeneralStateBufferSize(0xfffff);
     }
 
     if (DebugManager.flags.OverrideStatelessMocsIndex.get() != -1) {
-        statelessMocsIndex = DebugManager.flags.OverrideStatelessMocsIndex.get();
+        args.statelessMocsIndex = DebugManager.flags.OverrideStatelessMocsIndex.get();
     }
 
-    statelessMocsIndex = statelessMocsIndex << 1;
+    args.statelessMocsIndex = args.statelessMocsIndex << 1;
 
-    stateBaseAddress->setStatelessDataPortAccessMemoryObjectControlState(statelessMocsIndex);
+    args.stateBaseAddressCmd->setStatelessDataPortAccessMemoryObjectControlState(args.statelessMocsIndex);
 
-    appendStateBaseAddressParameters(stateBaseAddress, ssh, setGeneralStateBaseAddress, indirectObjectHeapBaseAddress, gmmHelper,
-                                     isMultiOsContextCapable, memoryCompressionState, overrideBindlessSurfaceStateBase, useGlobalAtomics, areMultipleSubDevicesInContext);
+    appendStateBaseAddressParameters(args, overrideBindlessSurfaceStateBase);
 }
 
 template <typename GfxFamily>

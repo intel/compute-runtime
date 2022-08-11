@@ -367,27 +367,34 @@ void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_B
 
     auto gmmHelper = device.getGmmHelper();
 
-    StateBaseAddressHelper<Family>::programStateBaseAddress(
-        &sbaCmd,
-        container.isHeapDirty(HeapType::DYNAMIC_STATE) ? container.getIndirectHeap(HeapType::DYNAMIC_STATE) : nullptr,
-        container.isHeapDirty(HeapType::INDIRECT_OBJECT) ? container.getIndirectHeap(HeapType::INDIRECT_OBJECT) : nullptr,
-        container.isHeapDirty(HeapType::SURFACE_STATE) ? container.getIndirectHeap(HeapType::SURFACE_STATE) : nullptr,
-        0,
-        false,
-        statelessMocsIndex,
-        container.getIndirectObjectHeapBaseAddress(),
-        container.getInstructionHeapBaseAddress(),
-        0,
-        false,
-        false,
-        gmmHelper,
-        false,
-        MemoryCompressionState::NotApplicable,
-        useGlobalAtomics,
-        1u);
+    auto dsh = container.isHeapDirty(HeapType::DYNAMIC_STATE) ? container.getIndirectHeap(HeapType::DYNAMIC_STATE) : nullptr;
+    auto ioh = container.isHeapDirty(HeapType::INDIRECT_OBJECT) ? container.getIndirectHeap(HeapType::INDIRECT_OBJECT) : nullptr;
+    auto ssh = container.isHeapDirty(HeapType::SURFACE_STATE) ? container.getIndirectHeap(HeapType::SURFACE_STATE) : nullptr;
 
-    auto pCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(container.getCommandStream()->getSpace(sizeof(STATE_BASE_ADDRESS)));
-    *pCmd = sbaCmd;
+    StateBaseAddressHelperArgs<Family> args = {
+        0,                                            // generalStateBase
+        container.getIndirectObjectHeapBaseAddress(), // indirectObjectHeapBaseAddress
+        container.getInstructionHeapBaseAddress(),    // instructionHeapBaseAddress
+        0,                                            // globalHeapsBaseAddress
+        &sbaCmd,                                      // stateBaseAddressCmd
+        dsh,                                          // dsh
+        ioh,                                          // ioh
+        ssh,                                          // ssh
+        gmmHelper,                                    // gmmHelper
+        statelessMocsIndex,                           // statelessMocsIndex
+        NEO::MemoryCompressionState::NotApplicable,   // memoryCompressionState
+        false,                                        // setInstructionStateBaseAddress
+        false,                                        // setGeneralStateBaseAddress
+        false,                                        // useGlobalHeapsBaseAddress
+        false,                                        // isMultiOsContextCapable
+        useGlobalAtomics,                             // useGlobalAtomics
+        false                                         // areMultipleSubDevicesInContext
+    };
+
+    StateBaseAddressHelper<Family>::programStateBaseAddress(args);
+
+    auto cmdSpace = reinterpret_cast<STATE_BASE_ADDRESS *>(container.getCommandStream()->getSpace(sizeof(STATE_BASE_ADDRESS)));
+    *cmdSpace = sbaCmd;
 
     EncodeWA<Family>::encodeAdditionalPipelineSelect(*container.getCommandStream(), {}, false, hwInfo, isRcs);
 }

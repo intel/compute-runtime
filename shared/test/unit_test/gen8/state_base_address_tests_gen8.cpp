@@ -18,17 +18,27 @@ BDWTEST_F(SBATest, givenUsedBindlessBuffersWhenAppendStateBaseAddressParametersI
     STATE_BASE_ADDRESS stateBaseAddress = {};
     STATE_BASE_ADDRESS stateBaseAddressReference = {};
 
-    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(
-        &stateBaseAddress,
-        &ssh,
-        false,
-        0,
-        nullptr,
-        false,
-        MemoryCompressionState::NotApplicable,
-        true,
-        false,
-        1u);
+    StateBaseAddressHelperArgs<FamilyType> args = {
+        0,                                     // generalStateBase
+        0,                                     // indirectObjectHeapBaseAddress
+        0,                                     // instructionHeapBaseAddress
+        0,                                     // globalHeapsBaseAddress
+        &stateBaseAddress,                     // stateBaseAddressCmd
+        nullptr,                               // dsh
+        nullptr,                               // ioh
+        &ssh,                                  // ssh
+        nullptr,                               // gmmHelper
+        0,                                     // statelessMocsIndex
+        MemoryCompressionState::NotApplicable, // memoryCompressionState
+        false,                                 // setInstructionStateBaseAddress
+        false,                                 // setGeneralStateBaseAddress
+        false,                                 // useGlobalHeapsBaseAddress
+        false,                                 // isMultiOsContextCapable
+        false,                                 // useGlobalAtomics
+        false                                  // areMultipleSubDevicesInContext
+    };
+
+    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
 
     EXPECT_EQ(0u, ssh.getUsed());
     EXPECT_EQ(0, memcmp(&stateBaseAddressReference, &stateBaseAddress, sizeof(STATE_BASE_ADDRESS)));
