@@ -13,7 +13,7 @@
 
 namespace NEO {
 
-using AlocationHelperTests = Test<ClDeviceFixture>;
+using AlocationHelperTests = TestLegacy<ClDeviceFixture>;
 
 HWTEST_F(AlocationHelperTests, givenLinearStreamTypeWhenUseExternalAllocatorForSshAndDshDisabledThenUse32BitIsFalse) {
     DebugManagerStateRestore dbgRestorer;

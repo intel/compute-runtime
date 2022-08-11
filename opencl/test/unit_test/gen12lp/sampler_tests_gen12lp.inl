@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 
 using namespace NEO;
 
-typedef Test<ClDeviceFixture> Gen12LpSamplerTest;
+typedef TestLegacy<ClDeviceFixture> Gen12LpSamplerTest;
 
 HWTEST2_F(Gen12LpSamplerTest, givenTglLpSamplerWhenUsingDefaultFilteringAndAppendSamplerStateParamsThenDisableLowQualityFilter, IsTGLLP) {
     EXPECT_FALSE(DebugManager.flags.ForceSamplerLowFilteringPrecision.get());

@@ -28,7 +28,7 @@
 namespace L0 {
 namespace ult {
 
-struct CommandQueueExecuteCommandLists : public Test<DeviceFixture> {
+struct CommandQueueExecuteCommandLists : public TestLegacy<DeviceFixture> {
     void SetUp() override {
         DeviceFixture::SetUp();
 
@@ -58,7 +58,7 @@ struct CommandQueueExecuteCommandLists : public Test<DeviceFixture> {
     ze_command_list_handle_t commandLists[numCommandLists];
 };
 
-struct MultiDeviceCommandQueueExecuteCommandLists : public Test<MultiDeviceFixture> {
+struct MultiDeviceCommandQueueExecuteCommandLists : public TestLegacy<MultiDeviceFixture> {
     void SetUp() override {
         DebugManager.flags.EnableWalkerPartition.set(1);
         numRootDevices = 1u;
@@ -976,7 +976,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenCopyCommandQueueWhenExecutingCopy
     commandQueue->destroy();
 }
 
-struct CommandQueueExecuteCommandListSWTagsTests : public Test<DeviceFixture> {
+struct CommandQueueExecuteCommandListSWTagsTests : public TestLegacy<DeviceFixture> {
     void SetUp() override {
         DebugManager.flags.EnableSWTags.set(true);
         DeviceFixture::SetUp();

@@ -56,7 +56,7 @@ const size_t n = 512;
 [[maybe_unused]] const cl_mem_properties_intel propertiesUncacheable[] = {CL_MEM_FLAGS_INTEL, CL_MEM_LOCALLY_UNCACHED_RESOURCE, 0};
 [[maybe_unused]] const cl_mem_properties_intel propertiesUncacheableInSurfaceState[] = {CL_MEM_FLAGS_INTEL, CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE, 0};
 
-using clMemLocallyUncachedResourceFixture = Test<HelloWorldFixture<HelloWorldFixtureFactory>>;
+using clMemLocallyUncachedResourceFixture = TestLegacy<HelloWorldFixture<HelloWorldFixtureFactory>>;
 
 HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, GivenAtLeastOneLocallyUncacheableResourceWhenSettingKernelArgumentsThenKernelIsUncacheable) {
     cl_int retVal = CL_SUCCESS;

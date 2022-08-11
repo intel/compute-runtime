@@ -12,7 +12,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
-using CommandEncoderXeHpgCorePlusTests = Test<DeviceFixture>;
+using CommandEncoderXeHpgCorePlusTests = TestLegacy<DeviceFixture>;
 
 HWTEST2_F(CommandEncoderXeHpgCorePlusTests, givenSpecifiedL1CacheControlWhenAppendingRssThenProgramProvidedL1CachePolicy, IsAtLeastXeHpgCore) {
     DebugManagerStateRestore restorer;

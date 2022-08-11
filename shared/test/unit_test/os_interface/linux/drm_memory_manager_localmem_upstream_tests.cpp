@@ -647,7 +647,7 @@ TEST_F(DrmMemoryManagerLocalMemoryWithCustomMockTest, givenDrmMemoryManagerWithL
     EXPECT_EQ(nullptr, bo.peekLockedAddress());
 }
 
-using DrmMemoryManagerFailInjectionTest = Test<DrmMemoryManagerFixtureImpl>;
+using DrmMemoryManagerFailInjectionTest = TestLegacy<DrmMemoryManagerFixtureImpl>;
 
 HWTEST2_F(DrmMemoryManagerFailInjectionTest, givenEnabledLocalMemoryWhenNewFailsThenAllocateInDevicePoolReturnsStatusErrorAndNullallocation, NonDefaultIoctlsSupported) {
     mock->ioctl_expected.total = -1; //don't care
@@ -795,7 +795,7 @@ TEST_F(DrmMemoryManagerCopyMemoryToAllocationTest, givenDrmMemoryManagerWhenCopy
     drmMemoryManger.freeGraphicsMemory(allocation);
 }
 
-using DrmMemoryManagerTestImpl = Test<DrmMemoryManagerFixtureImpl>;
+using DrmMemoryManagerTestImpl = TestLegacy<DrmMemoryManagerFixtureImpl>;
 
 HWTEST2_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryThenCallIoctlGemMapOffsetAndReturnLockedPtr, NonDefaultIoctlsSupported) {
     mockExp->ioctl_expected.gemCreateExt = 1;

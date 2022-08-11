@@ -46,7 +46,7 @@
 
 using namespace NEO;
 
-using DrmMemoryManagerTest = Test<DrmMemoryManagerFixture>;
+using DrmMemoryManagerTest = TestLegacy<DrmMemoryManagerFixture>;
 
 struct ClDrmMemoryManagerTest : public DrmMemoryManagerTest {
     void SetUp() override {

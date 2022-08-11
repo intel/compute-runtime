@@ -69,7 +69,7 @@ class DrmTestsFixture {
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
 };
 
-typedef Test<DrmTestsFixture> DrmTests;
+typedef TestLegacy<DrmTestsFixture> DrmTests;
 
 void initializeTestedDevice() {
     for (uint32_t i = 0; deviceDescriptorTable[i].deviceId != 0; i++) {

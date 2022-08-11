@@ -55,7 +55,7 @@ class KernelArgSvmApiFixture : public ApiFixture<> {
     char pCrossThreadData[64]{};
 };
 
-typedef Test<KernelArgSvmApiFixture> clSetKernelArgSVMPointerTests;
+typedef TestLegacy<KernelArgSvmApiFixture> clSetKernelArgSVMPointerTests;
 
 namespace ULT {
 

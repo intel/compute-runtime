@@ -71,7 +71,7 @@ class KernelArgSvmFixture : public ContextFixture, public ClDeviceFixture {
     char pCrossThreadData[64];
 };
 
-typedef Test<KernelArgSvmFixture> KernelArgSvmTest;
+typedef TestLegacy<KernelArgSvmFixture> KernelArgSvmTest;
 
 TEST_F(KernelArgSvmTest, GivenValidSvmPtrWhenSettingKernelArgThenSvmPtrIsCorrect) {
     const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();

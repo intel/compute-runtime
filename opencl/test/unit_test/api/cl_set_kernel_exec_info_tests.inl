@@ -53,7 +53,7 @@ class KernelExecInfoFixture : public ApiFixture<> {
     cl_device_svm_capabilities svmCapabilities = 0;
 };
 
-typedef Test<KernelExecInfoFixture> clSetKernelExecInfoTests;
+typedef TestLegacy<KernelExecInfoFixture> clSetKernelExecInfoTests;
 
 namespace ULT {
 

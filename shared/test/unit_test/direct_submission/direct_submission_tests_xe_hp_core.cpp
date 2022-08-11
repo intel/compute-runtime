@@ -12,7 +12,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/fixtures/direct_submission_fixture.h"
 
-using DirectSubmissionTestXE_HP_CORE = Test<DirectSubmissionFixture>;
+using DirectSubmissionTestXE_HP_CORE = TestLegacy<DirectSubmissionFixture>;
 
 XE_HP_CORE_TEST_F(DirectSubmissionTestXE_HP_CORE, givenBlitterUsedWhenDispatchingPrefetchMitigationThenExpectBbStartCmd) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;

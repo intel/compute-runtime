@@ -14,7 +14,7 @@
 
 using namespace NEO;
 
-using CommandEncodeEnableRayTracing = Test<CommandEncodeStatesFixture>;
+using CommandEncodeEnableRayTracing = TestLegacy<CommandEncodeStatesFixture>;
 
 HWTEST2_F(CommandEncodeEnableRayTracing, whenEnableRayTracingIsProgrammedThen3DStateBtdIsEncodedInStream, IsAtLeastXeHpcCore) {
     using _3DSTATE_BTD = typename FamilyType::_3DSTATE_BTD;

@@ -23,7 +23,7 @@
 
 #include "hw_cmds_xe_hpc_core_base.h"
 
-using HwHelperTestsXeHpcCore = Test<ClDeviceFixture>;
+using HwHelperTestsXeHpcCore = TestLegacy<ClDeviceFixture>;
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenXeHpcThenAuxTranslationIsNotRequired) {
     auto &clHwHelper = ClHwHelper::get(renderCoreFamily);

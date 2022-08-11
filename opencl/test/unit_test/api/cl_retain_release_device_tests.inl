@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,10 +11,10 @@
 
 using namespace NEO;
 
-struct clRetainReleaseDeviceTests : Test<PlatformFixture> {
+struct clRetainReleaseDeviceTests : TestLegacy<PlatformFixture> {
     void SetUp() override {
         DebugManager.flags.CreateMultipleRootDevices.set(maxRootDeviceCount);
-        Test<PlatformFixture>::SetUp();
+        TestLegacy<PlatformFixture>::SetUp();
     }
     DebugManagerStateRestore restorer;
     const uint32_t rootDeviceIndex = 1u;

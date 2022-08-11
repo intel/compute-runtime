@@ -69,7 +69,7 @@ class DispatchInfoBuilderFixture : public ContextFixture, public ClDeviceFixture
     char pCrossThreadData[128];
 };
 
-typedef Test<DispatchInfoBuilderFixture> DispatchInfoBuilderTest;
+typedef TestLegacy<DispatchInfoBuilderFixture> DispatchInfoBuilderTest;
 
 template <SplitDispatch::Dim Dim, SplitDispatch::SplitMode Mode>
 class DispatchInfoBuilderMock : DispatchInfoBuilder<Dim, Mode> {

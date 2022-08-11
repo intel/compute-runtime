@@ -13,7 +13,7 @@
 namespace L0 {
 namespace ult {
 
-using DevicePropertyTest = Test<DeviceFixture>;
+using DevicePropertyTest = TestLegacy<DeviceFixture>;
 
 HWTEST2_F(DevicePropertyTest, givenReturnedDevicePropertiesThenExpectedPropertiesFlagsSet, IsGen9) {
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
@@ -25,7 +25,7 @@ HWTEST2_F(DevicePropertyTest, givenReturnedDevicePropertiesThenExpectedPropertie
     EXPECT_EQ(ZE_DEVICE_PROPERTY_FLAG_INTEGRATED, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED);
 }
 
-using CommandQueueGroupTest = Test<DeviceFixture>;
+using CommandQueueGroupTest = TestLegacy<DeviceFixture>;
 
 HWTEST2_F(CommandQueueGroupTest, givenCommandQueuePropertiesCallThenCorrectNumberOfGroupsIsReturned, IsGen9) {
     uint32_t count = 0;

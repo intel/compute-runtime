@@ -15,7 +15,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandListAppendGen9 = Test<DeviceFixture>;
+using CommandListAppendGen9 = TestLegacy<DeviceFixture>;
 
 TEST(CommandListAppendMemoryRangesBarrier, WhenAppendingMemoryRangesBarrierThenSuccessIsReturned) {
     MockCommandList commandList;

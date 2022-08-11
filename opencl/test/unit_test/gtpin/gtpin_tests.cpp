@@ -218,7 +218,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
     DebugManagerStateRestore restore;
 };
 
-typedef Test<GTPinFixture> GTPinTests;
+typedef TestLegacy<GTPinFixture> GTPinTests;
 
 TEST_F(GTPinTests, givenInvalidArgumentsThenGTPinInitFails) {
     bool isInitialized = false;
@@ -2402,7 +2402,7 @@ class GTPinFixtureWithLocalMemory : public GTPinFixture {
     DebugManagerStateRestore restore;
 };
 
-using GTPinTestsWithLocalMemory = Test<GTPinFixtureWithLocalMemory>;
+using GTPinTestsWithLocalMemory = TestLegacy<GTPinFixtureWithLocalMemory>;
 
 TEST_F(GTPinTestsWithLocalMemory, whenPlatformHasNoSvmSupportThenGtPinBufferCantBeAllocatedInSharedMemory) {
     DebugManager.flags.GTPinAllocateBufferInSharedMemory.set(-1);

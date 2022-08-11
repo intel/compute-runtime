@@ -19,7 +19,7 @@
 
 namespace NEO {
 
-using Gen9EnqueueTest = Test<ClDeviceFixture>;
+using Gen9EnqueueTest = TestLegacy<ClDeviceFixture>;
 GEN9TEST_F(Gen9EnqueueTest, givenKernelRequiringIndependentForwardProgressWhenKernelIsSubmittedThenRoundRobinPolicyIsProgrammed) {
     MockContext mc;
     CommandQueueHw<Gen9Family> cmdQ{&mc, pClDevice, 0, false};

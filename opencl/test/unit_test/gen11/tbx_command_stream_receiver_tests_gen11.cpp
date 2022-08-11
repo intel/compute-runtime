@@ -14,7 +14,7 @@
 
 using namespace NEO;
 
-using Gen11TbxCommandStreamReceiverTests = Test<ClDeviceFixture>;
+using Gen11TbxCommandStreamReceiverTests = TestLegacy<ClDeviceFixture>;
 
 GEN11TEST_F(Gen11TbxCommandStreamReceiverTests, whenAskedForPollForCompletionParametersThenReturnCorrectValues) {
     class MyMockTbxHw : public TbxCommandStreamReceiverHw<FamilyType> {

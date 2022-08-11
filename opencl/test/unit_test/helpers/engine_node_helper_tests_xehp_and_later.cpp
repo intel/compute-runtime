@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-using EngineNodeHelperTestsXeHPAndLater = ::Test<ClDeviceFixture>;
+using EngineNodeHelperTestsXeHPAndLater = ::TestLegacy<ClDeviceFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, EngineNodeHelperTestsXeHPAndLater, WhenGetBcsEngineTypeIsCalledThenBcsEngineIsReturned) {
     const auto hwInfo = pDevice->getHardwareInfo();

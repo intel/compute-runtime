@@ -14,7 +14,7 @@
 namespace L0 {
 namespace ult {
 
-using DeviceFixtureGen12LP = Test<DeviceFixture>;
+using DeviceFixtureGen12LP = TestLegacy<DeviceFixture>;
 
 HWTEST2_F(DeviceFixtureGen12LP, GivenTargetGen12LPaWhenGettingMemoryPropertiesThenMemoryNameComesAsDDR, IsGen12LP) {
     ze_device_memory_properties_t memProperties = {};
@@ -25,7 +25,7 @@ HWTEST2_F(DeviceFixtureGen12LP, GivenTargetGen12LPaWhenGettingMemoryPropertiesTh
     EXPECT_EQ(0u, memProperties.maxClockRate);
 }
 
-using CommandQueueGroupTest = Test<DeviceFixture>;
+using CommandQueueGroupTest = TestLegacy<DeviceFixture>;
 
 HWTEST2_F(CommandQueueGroupTest,
           givenNoBlitterSupportAndNoCCSThenOneQueueGroupIsReturned, IsGen12LP) {
@@ -74,7 +74,7 @@ class DeviceCopyQueueGroupFixture : public DeviceFixture {
     DebugManagerStateRestore restorer;
 };
 
-using DeviceCopyQueueGroupTest = Test<DeviceCopyQueueGroupFixture>;
+using DeviceCopyQueueGroupTest = TestLegacy<DeviceCopyQueueGroupFixture>;
 
 HWTEST2_F(DeviceCopyQueueGroupTest,
           givenBlitterSupportAndEnableBlitterOperationsSupportSetToZeroThenNoCopyEngineIsReturned, IsGen12LP) {

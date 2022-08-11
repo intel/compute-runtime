@@ -141,7 +141,7 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleAndIfSysmanDeviceInitFailsThen
     static_cast<DeviceImp *>(device)->setSysmanHandle(pSysmanDeviceOriginal);
 }
 
-using MockDeviceSysmanGetTest = Test<DeviceFixture>;
+using MockDeviceSysmanGetTest = TestLegacy<DeviceFixture>;
 TEST_F(MockDeviceSysmanGetTest, GivenValidSysmanHandleSetInDeviceStructWhenGetThisSysmanHandleThenHandlesShouldBeSimilar) {
     SysmanDeviceImp *sysman = new SysmanDeviceImp(device->toHandle());
     device->setSysmanHandle(sysman);
@@ -397,7 +397,7 @@ class UnknownDriverModel : public DriverModel {
     }
 };
 
-using SysmanUnknownDriverModelTest = Test<DeviceFixture>;
+using SysmanUnknownDriverModelTest = TestLegacy<DeviceFixture>;
 TEST_F(SysmanUnknownDriverModelTest, GivenDriverModelTypeIsNotDrmWhenExecutingSysmanOnLinuxThenErrorIsReturned) {
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
     auto &osInterface = device->getOsInterface();

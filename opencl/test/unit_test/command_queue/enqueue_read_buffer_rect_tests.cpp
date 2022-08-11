@@ -632,7 +632,7 @@ HWTEST_F(EnqueueReadWriteBufferRectDispatch, givenOffsetResultingInMisalignedPtr
     }
 }
 
-using NegativeFailAllocationTest = Test<NegativeFailAllocationCommandEnqueueBaseFixture>;
+using NegativeFailAllocationTest = TestLegacy<NegativeFailAllocationCommandEnqueueBaseFixture>;
 
 HWTEST_F(NegativeFailAllocationTest, givenEnqueueReadBufferRectWhenHostPtrAllocationCreationFailsThenReturnOutOfResource) {
     cl_int retVal = CL_SUCCESS;

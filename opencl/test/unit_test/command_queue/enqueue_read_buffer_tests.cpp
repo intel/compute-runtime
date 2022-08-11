@@ -720,7 +720,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenEnqueueReadBufferNonBlockingWhenAUBDump
     EXPECT_FALSE(srcBuffer->forceDisallowCPUCopy);
 }
 
-using NegativeFailAllocationTest = Test<NegativeFailAllocationCommandEnqueueBaseFixture>;
+using NegativeFailAllocationTest = TestLegacy<NegativeFailAllocationCommandEnqueueBaseFixture>;
 
 HWTEST_F(NegativeFailAllocationTest, givenEnqueueReadBufferWhenHostPtrAllocationCreationFailsThenReturnOutOfResource) {
     cl_int retVal = CL_SUCCESS;

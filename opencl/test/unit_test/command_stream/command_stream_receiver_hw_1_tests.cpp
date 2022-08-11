@@ -508,7 +508,7 @@ HWTEST_F(CommandStreamReceiverFlushTests, WhenAddingBatchBufferEndThenBatchBuffe
         ptrOffset(commandStream.getCpuBase(), usedPrevious));
     EXPECT_NE(nullptr, batchBufferEnd);
 }
-typedef Test<ClDeviceFixture> CommandStreamReceiverHwTest;
+typedef TestLegacy<ClDeviceFixture> CommandStreamReceiverHwTest;
 
 HWTEST_F(CommandStreamReceiverHwTest, givenCsrHwWhenTypeIsCheckedThenCsrHwIsReturned) {
     auto csr = std::unique_ptr<CommandStreamReceiver>(CommandStreamReceiverHw<FamilyType>::create(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));

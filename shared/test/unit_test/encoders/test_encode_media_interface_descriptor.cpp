@@ -11,7 +11,7 @@
 
 using namespace NEO;
 
-using CommandEncodeStatesTest = Test<CommandEncodeStatesFixture>;
+using CommandEncodeStatesTest = TestLegacy<CommandEncodeStatesFixture>;
 
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, WhenProgrammingThenMediaInterfaceDescriptorLoadIsUsed) {
     using MEDIA_STATE_FLUSH = typename FamilyType::MEDIA_STATE_FLUSH;

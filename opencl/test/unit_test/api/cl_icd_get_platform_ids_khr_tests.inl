@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 
 using namespace NEO;
 
-using clIcdGetPlatformIDsKHRTests = Test<PlatformFixture>;
+using clIcdGetPlatformIDsKHRTests = TestLegacy<PlatformFixture>;
 
 namespace ULT {
 

@@ -28,7 +28,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandQueueExecuteCommandListsGen9 = Test<DeviceFixture>;
+using CommandQueueExecuteCommandListsGen9 = TestLegacy<DeviceFixture>;
 
 GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenPipelineSelectAndVfeStateAreAddedToCmdBuffer) {
     const ze_command_queue_desc_t desc = {};

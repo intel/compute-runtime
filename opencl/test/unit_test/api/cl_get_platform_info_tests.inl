@@ -12,14 +12,14 @@
 
 using namespace NEO;
 
-struct clGetPlatformInfoTests : Test<PlatformFixture> {
+struct clGetPlatformInfoTests : TestLegacy<PlatformFixture> {
     void SetUp() override {
-        Test<PlatformFixture>::SetUp();
+        TestLegacy<PlatformFixture>::SetUp();
     }
 
     void TearDown() override {
         delete[] paramValue;
-        Test<PlatformFixture>::TearDown();
+        TestLegacy<PlatformFixture>::TearDown();
     }
 
     char *getPlatformInfoString(Platform *pPlatform, cl_platform_info paramName) {

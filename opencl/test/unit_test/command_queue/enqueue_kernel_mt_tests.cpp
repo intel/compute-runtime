@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 
 typedef HelloWorldFixture<HelloWorldFixtureFactory> EnqueueKernelFixture;
-typedef Test<EnqueueKernelFixture> EnqueueKernelTest;
+typedef TestLegacy<EnqueueKernelFixture> EnqueueKernelTest;
 
 HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenFinishIsCalledThenBatchesSubmissionsAreFlushed) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());

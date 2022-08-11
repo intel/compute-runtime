@@ -505,7 +505,7 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenEnqueueWriteBufferCalledWhenLockedPtrI
     EXPECT_EQ(0u, memoryManager.unlockResourceCalled);
 }
 
-using NegativeFailAllocationTest = Test<NegativeFailAllocationCommandEnqueueBaseFixture>;
+using NegativeFailAllocationTest = TestLegacy<NegativeFailAllocationCommandEnqueueBaseFixture>;
 
 HWTEST_F(NegativeFailAllocationTest, givenEnqueueWriteBufferWhenHostPtrAllocationCreationFailsThenReturnOutOfResource) {
     cl_int retVal = CL_SUCCESS;

@@ -86,7 +86,7 @@ struct XeHPAndLaterDispatchWalkerBasicFixture : public LinearStreamFixture {
     std::unique_ptr<MockKernelWithInternals> kernel;
 };
 
-using XeHPAndLaterDispatchWalkerBasicTest = Test<XeHPAndLaterDispatchWalkerBasicFixture>;
+using XeHPAndLaterDispatchWalkerBasicTest = TestLegacy<XeHPAndLaterDispatchWalkerBasicFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWorkDimOneThenLocalWorkSizeEqualsLocalXDim) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;

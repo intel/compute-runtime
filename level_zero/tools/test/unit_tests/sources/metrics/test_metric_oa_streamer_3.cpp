@@ -17,7 +17,7 @@ using ::testing::Return;
 namespace L0 {
 namespace ult {
 
-using MetricStreamerMultiDeviceTest = Test<MetricStreamerMultiDeviceFixture>;
+using MetricStreamerMultiDeviceTest = TestLegacy<MetricStreamerMultiDeviceFixture>;
 
 TEST_F(MetricStreamerMultiDeviceTest, givenEnableWalkerPartitionIsOnWhenZetCommandListAppendMetricStreamerMarkerIsCalledForSubDeviceThenReturnsSuccess) {
 

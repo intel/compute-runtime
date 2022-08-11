@@ -136,9 +136,9 @@ void PageTableEntryChecker::testEntry<MockPDPE>(MockPDPE *pageTable, uint32_t pt
     EXPECT_EQ(reinterpret_cast<void *>(expectedValue), pageTable->entries[0]->entries[0]->entries[pteIndex]);
 }
 
-typedef Test<PageTableFixture> PageTableTests32;
-typedef Test<PageTableFixture> PageTableTests48;
-typedef Test<PageTableFixture> PageTableTestsGPU;
+typedef TestLegacy<PageTableFixture> PageTableTests32;
+typedef TestLegacy<PageTableFixture> PageTableTests48;
+typedef TestLegacy<PageTableFixture> PageTableTestsGPU;
 
 TEST_F(PageTableTests48, WhenPageTableIsCreatedThenWalkerIsDummy) {
     PageTable<void, 0, 9> pt(&allocator);

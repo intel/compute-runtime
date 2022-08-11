@@ -19,22 +19,22 @@
 namespace L0 {
 namespace ult {
 
-struct PerContextAddressSpaceFixture : public Test<DeviceFixture> {
+struct PerContextAddressSpaceFixture : public TestLegacy<DeviceFixture> {
     void SetUp() override {
         NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(0);
-        Test<DeviceFixture>::SetUp();
+        TestLegacy<DeviceFixture>::SetUp();
     }
 
     void TearDown() override {
-        Test<DeviceFixture>::TearDown();
+        TestLegacy<DeviceFixture>::TearDown();
     }
 
     DebugManagerStateRestore restorer;
 };
 
-using L0DebuggerPerContextAddressSpaceTest = Test<L0DebuggerPerContextAddressSpaceFixture>;
+using L0DebuggerPerContextAddressSpaceTest = TestLegacy<L0DebuggerPerContextAddressSpaceFixture>;
 
-using L0DebuggerTest = Test<L0DebuggerHwFixture>;
+using L0DebuggerTest = TestLegacy<L0DebuggerHwFixture>;
 
 using L0DebuggerParameterizedTests = L0DebuggerHwParameterizedFixture;
 
@@ -208,7 +208,7 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledAndDebuggerLogsWhenCommandQueueIs
     commandQueue->destroy();
 }
 
-using L0DebuggerSimpleTest = Test<DeviceFixture>;
+using L0DebuggerSimpleTest = TestLegacy<DeviceFixture>;
 
 HWTEST2_F(L0DebuggerSimpleTest, givenNullL0DebuggerAndDebuggerLogsWhenCommandQueueIsSynchronizedThenSbaAddressesAreNotPrinted, Gen12Plus) {
     DebugManagerStateRestore restorer;
@@ -332,14 +332,14 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenSbaB
 
 INSTANTIATE_TEST_CASE_P(SBAModesForDebugger, L0DebuggerParameterizedTests, ::testing::Values(0, 1));
 
-struct L0DebuggerSingleAddressSpace : public Test<L0DebuggerHwFixture> {
+struct L0DebuggerSingleAddressSpace : public TestLegacy<L0DebuggerHwFixture> {
     void SetUp() override {
         NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(1);
-        Test<L0DebuggerHwFixture>::SetUp();
+        TestLegacy<L0DebuggerHwFixture>::SetUp();
     }
 
     void TearDown() override {
-        Test<L0DebuggerHwFixture>::TearDown();
+        TestLegacy<L0DebuggerHwFixture>::TearDown();
     }
 
     DebugManagerStateRestore restorer;

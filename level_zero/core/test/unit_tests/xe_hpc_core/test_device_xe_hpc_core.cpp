@@ -20,7 +20,7 @@ namespace ult {
 
 HWTEST_EXCLUDE_PRODUCT(AppendMemoryCopy, givenCopyOnlyCommandListAndHostPointersWhenMemoryCopyCalledThenPipeControlWithDcFlushAddedIsNotAddedAfterBlitCopy, IGFX_XE_HPC_CORE);
 
-using DeviceTestXeHpc = Test<DeviceFixture>;
+using DeviceTestXeHpc = TestLegacy<DeviceFixture>;
 
 HWTEST2_F(DeviceTestXeHpc, WhenGettingImagePropertiesThenPropertiesAreNotSet, IsXeHpcCore) {
     ze_image_properties_t properties{};
@@ -85,7 +85,7 @@ HWTEST2_F(DeviceTestXeHpc, givenXeHpcBStepWhenCreatingMultiTileDeviceThenExpectI
     delete device;
 }
 
-using MultiDeviceCommandQueueGroupWithNineCopyEnginesTest = Test<SingleRootMultiSubDeviceFixtureWithImplicitScaling<9, 1>>;
+using MultiDeviceCommandQueueGroupWithNineCopyEnginesTest = TestLegacy<SingleRootMultiSubDeviceFixtureWithImplicitScaling<9, 1>>;
 
 HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenMainAndLinkCopyEngineSupportAndCCSAndImplicitScalingThenExpectedQueueGroupsAreReturned, IsXeHpcCore) {
     uint32_t count = 0;
@@ -279,7 +279,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenMainAndLinkC
     }
 }
 
-using MultiDeviceCommandQueueGroupWithNoCopyEnginesTest = Test<SingleRootMultiSubDeviceFixtureWithImplicitScaling<0, 1>>;
+using MultiDeviceCommandQueueGroupWithNoCopyEnginesTest = TestLegacy<SingleRootMultiSubDeviceFixtureWithImplicitScaling<0, 1>>;
 HWTEST2_F(MultiDeviceCommandQueueGroupWithNoCopyEnginesTest,
           givenNoCopyEngineSupportAndCCSAndImplicitScalingThenExpectedQueueGroupsAreReturned, IsXeHpcCore) {
     uint32_t count = 0;
@@ -298,7 +298,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNoCopyEnginesTest,
     }
 }
 
-using MultiDeviceCommandQueueGroupWithNoCopyEnginesAndNoImplicitScalingTest = Test<SingleRootMultiSubDeviceFixtureWithImplicitScaling<0, 0>>;
+using MultiDeviceCommandQueueGroupWithNoCopyEnginesAndNoImplicitScalingTest = TestLegacy<SingleRootMultiSubDeviceFixtureWithImplicitScaling<0, 0>>;
 HWTEST2_F(MultiDeviceCommandQueueGroupWithNoCopyEnginesAndNoImplicitScalingTest,
           givenNoCopyEngineSupportAndCCSAndNoImplicitScalingThenOnlyTheQueueGroupsFromSubDeviceAreReturned, IsXeHpcCore) {
     uint32_t count = 0;
@@ -317,7 +317,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNoCopyEnginesAndNoImplicitScalingTest,
     }
 }
 
-using CommandQueueGroupTest = Test<DeviceFixture>;
+using CommandQueueGroupTest = TestLegacy<DeviceFixture>;
 
 HWTEST2_F(CommandQueueGroupTest, givenNoBlitterSupportAndNoCCSThenOneQueueGroupIsReturned, IsXeHpcCore) {
     const uint32_t rootDeviceIndex = 0u;
@@ -374,7 +374,7 @@ class DeviceCopyQueueGroupXeHpcFixture : public DeviceFixture {
     }
     DebugManagerStateRestore restorer;
 };
-using DeviceCopyQueueGroupXeHpcTest = Test<DeviceCopyQueueGroupXeHpcFixture>;
+using DeviceCopyQueueGroupXeHpcTest = TestLegacy<DeviceCopyQueueGroupXeHpcFixture>;
 
 HWTEST2_F(DeviceCopyQueueGroupXeHpcTest,
           givenBlitterSupportAndEnableBlitterOperationsSupportSetToZeroThenNoCopyEngineIsReturned, IsXeHpcCore) {

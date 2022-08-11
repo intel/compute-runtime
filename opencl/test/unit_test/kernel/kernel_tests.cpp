@@ -401,7 +401,7 @@ class KernelFromBinaryTest : public ProgramSimpleFixture {
         ProgramSimpleFixture::TearDown();
     }
 };
-typedef Test<KernelFromBinaryTest> KernelFromBinaryTests;
+typedef TestLegacy<KernelFromBinaryTest> KernelFromBinaryTests;
 
 TEST_F(KernelFromBinaryTests, GivenKernelNumArgsWhenGettingInfoThenNumberOfKernelArgsIsReturned) {
     CreateProgramFromBinary(pContext, pContext->getDevices(), "kernel_num_args");
@@ -490,9 +490,9 @@ TEST_F(KernelFromBinaryTests, givenArgumentDeclaredAsConstantWhenKernelIsCreated
     EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(0).isReadOnly());
 }
 
-typedef Test<ClDeviceFixture> KernelPrivateSurfaceTest;
-typedef Test<ClDeviceFixture> KernelGlobalSurfaceTest;
-typedef Test<ClDeviceFixture> KernelConstantSurfaceTest;
+typedef TestLegacy<ClDeviceFixture> KernelPrivateSurfaceTest;
+typedef TestLegacy<ClDeviceFixture> KernelGlobalSurfaceTest;
+typedef TestLegacy<ClDeviceFixture> KernelConstantSurfaceTest;
 
 class CommandStreamReceiverMock : public CommandStreamReceiver {
     typedef CommandStreamReceiver BaseClass;
@@ -1052,7 +1052,7 @@ TEST_F(KernelConstantSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenCon
     delete kernel;
 }
 
-typedef Test<ClDeviceFixture> KernelResidencyTest;
+typedef TestLegacy<ClDeviceFixture> KernelResidencyTest;
 
 HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenKernelIsaIsMadeResident) {
     ASSERT_NE(nullptr, pDevice);
@@ -2085,7 +2085,7 @@ HWTEST_F(KernelResidencyTest, WhenMakingArgsResidentThenImageFromImageCheckIsCor
     EXPECT_EQ(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushBefore, commandStreamReceiver.samplerCacheFlushRequired);
 }
 
-struct KernelExecutionEnvironmentTest : public Test<ClDeviceFixture> {
+struct KernelExecutionEnvironmentTest : public TestLegacy<ClDeviceFixture> {
     void SetUp() override {
         ClDeviceFixture::SetUp();
 
@@ -2160,7 +2160,7 @@ TEST_F(KernelExecutionEnvironmentTest, GivenCompiledWorkGroupSizeIsGreaterThanMa
     this->pKernelInfo->kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2] = oldRequiredWorkGroupSizeZ;
 }
 
-struct KernelCrossThreadTests : Test<ClDeviceFixture> {
+struct KernelCrossThreadTests : TestLegacy<ClDeviceFixture> {
     KernelCrossThreadTests() {
     }
 
@@ -3043,7 +3043,7 @@ TEST_F(KernelTests, givenKernelWithSimdEqual1WhenKernelCreatedThenMaxWorgGroupSi
     EXPECT_EQ(kernel->getMaxKernelWorkGroupSize(), maxThreadsPerWG);
 }
 
-struct KernelLargeGrfTests : Test<ClDeviceFixture> {
+struct KernelLargeGrfTests : TestLegacy<ClDeviceFixture> {
     void SetUp() override {
         ClDeviceFixture::SetUp();
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
@@ -3130,7 +3130,7 @@ HWTEST2_F(KernelConstantSurfaceTest, givenKernelWithConstantSurfaceWhenKernelIsC
     program.setConstantSurface(nullptr);
 }
 
-using KernelImplicitArgsTest = Test<ClDeviceFixture>;
+using KernelImplicitArgsTest = TestLegacy<ClDeviceFixture>;
 TEST_F(KernelImplicitArgsTest, WhenKernelRequiresImplicitArgsThenImplicitArgsStructIsCreatedAndProperlyInitialized) {
     auto pKernelInfo = std::make_unique<MockKernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;

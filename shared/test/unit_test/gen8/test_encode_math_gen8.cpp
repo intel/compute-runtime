@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-using CommandEncoderMathTestGen8 = Test<DeviceFixture>;
+using CommandEncoderMathTestGen8 = TestLegacy<DeviceFixture>;
 
 GEN8TEST_F(CommandEncoderMathTestGen8, WhenAppendsAGreaterThanThenPredicateCorrectlySet) {
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;

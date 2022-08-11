@@ -58,7 +58,7 @@ struct TbxFixture : public TbxCommandStreamFixture,
     }
 };
 
-using TbxCommandStreamTests = Test<TbxFixture>;
+using TbxCommandStreamTests = TestLegacy<TbxFixture>;
 using TbxCommandSteamSimpleTest = TbxCommandStreamTests;
 
 template <typename GfxFamily>

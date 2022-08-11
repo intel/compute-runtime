@@ -79,7 +79,7 @@ struct GdiInterfaceLoggingFixture : public GdiInterfaceLoggingNoInitFixture {
     }
 };
 
-using GdiInterfaceLoggingTest = Test<GdiInterfaceLoggingFixture>;
+using GdiInterfaceLoggingTest = TestLegacy<GdiInterfaceLoggingFixture>;
 
 TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingOpenAdapterFromLuidThenExpectCorrectStrings) {
     D3DKMT_OPENADAPTERFROMLUID param = {};
@@ -1282,7 +1282,7 @@ struct GdiInterfaceLoggingToFileFixture : public GdiInterfaceLoggingFixture {
     }
 };
 
-using GdiInterfaceLoggingToFileTest = Test<GdiInterfaceLoggingToFileFixture>;
+using GdiInterfaceLoggingToFileTest = TestLegacy<GdiInterfaceLoggingToFileFixture>;
 
 TEST_F(GdiInterfaceLoggingToFileTest, WhenGdiLoggingIsEnabledWhenLoggingAnyGdiThenExpectLogCountCorrect) {
     D3DKMT_OPENADAPTERFROMLUID param = {};
@@ -1295,7 +1295,7 @@ TEST_F(GdiInterfaceLoggingToFileTest, WhenGdiLoggingIsEnabledWhenLoggingAnyGdiTh
     EXPECT_EQ(2u, NEO::IoFunctions::mockVfptrinfCalled);
 }
 
-using GdiInterfaceLoggingBaseTest = Test<GdiInterfaceLoggingBaseFixture>;
+using GdiInterfaceLoggingBaseTest = TestLegacy<GdiInterfaceLoggingBaseFixture>;
 
 TEST_F(GdiInterfaceLoggingBaseTest, WhenGdiLoggingIsDisabledWhenLoggingAnyGdiThenExpectNoLogCall) {
     D3DKMT_OPENADAPTERFROMLUID param = {};

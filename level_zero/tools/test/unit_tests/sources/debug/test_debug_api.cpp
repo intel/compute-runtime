@@ -34,7 +34,7 @@ struct DebugApiFixture : public DeviceFixture {
     MockBuiltins *mockBuiltins = nullptr;
 };
 
-using DebugApiTest = Test<DebugApiFixture>;
+using DebugApiTest = TestLegacy<DebugApiFixture>;
 
 TEST_F(DebugApiTest, givenDeviceWhenGettingDebugPropertiesThenNoFlagIsSet) {
     zet_device_debug_properties_t debugProperties = {};

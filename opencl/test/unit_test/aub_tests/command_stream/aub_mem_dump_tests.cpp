@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,7 +43,7 @@ TEST(PageTableTraits, when32BitTraitsAreUsedThenPageTableAddressesAreCorrect) {
     EXPECT_EQ(BIT(36), AubMemDump::PageTableTraits<32>::pdpBaseAddress);
 }
 
-typedef Test<ClDeviceFixture> AubMemDumpTests;
+typedef TestLegacy<ClDeviceFixture> AubMemDumpTests;
 
 HWTEST_F(AubMemDumpTests, givenAubFileStreamWhenOpenAndCloseIsCalledThenFileNameIsReportedCorrectly) {
     AUBCommandStreamReceiver::AubFileStream aubFile;

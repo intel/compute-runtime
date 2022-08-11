@@ -14,7 +14,7 @@
 
 using namespace NEO;
 
-typedef Test<ClDeviceFixture> XeHPUsDeviceIdTest;
+typedef TestLegacy<ClDeviceFixture> XeHPUsDeviceIdTest;
 
 XEHPTEST_F(XeHPUsDeviceIdTest, WhenGettingHardwareInfoThenProductFamilyIsXeHpSdv) {
     EXPECT_EQ(IGFX_XE_HP_SDV, pDevice->getHardwareInfo().platform.eProductFamily);

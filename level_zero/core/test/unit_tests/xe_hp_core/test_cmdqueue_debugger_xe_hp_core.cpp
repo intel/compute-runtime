@@ -24,8 +24,8 @@
 namespace L0 {
 namespace ult {
 
-using CommandQueueDebugCommandsForSldXeHP = Test<ActiveDebuggerFixture>;
-using CommandQueueDebugCommandsDebuggerL0XeHP = Test<L0DebuggerHwFixture>;
+using CommandQueueDebugCommandsForSldXeHP = TestLegacy<ActiveDebuggerFixture>;
+using CommandQueueDebugCommandsDebuggerL0XeHP = TestLegacy<L0DebuggerHwFixture>;
 
 XEHPTEST_F(CommandQueueDebugCommandsForSldXeHP, givenSteppingA0OrBWhenGlobalSipIsUsedThenMmioIsRestoredAtTheEndOfCmdBuffer) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;

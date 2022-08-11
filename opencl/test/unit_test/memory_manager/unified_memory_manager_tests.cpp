@@ -58,9 +58,9 @@ struct SVMMemoryAllocatorFixture {
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 };
 
-using SVMMemoryAllocatorTest = Test<SVMMemoryAllocatorFixture<false>>;
+using SVMMemoryAllocatorTest = TestLegacy<SVMMemoryAllocatorFixture<false>>;
 
-using SVMLocalMemoryAllocatorTest = Test<SVMMemoryAllocatorFixture<true>>;
+using SVMLocalMemoryAllocatorTest = TestLegacy<SVMMemoryAllocatorFixture<true>>;
 
 TEST_F(SVMMemoryAllocatorTest, whenCreateZeroSizedSVMAllocationThenReturnNullptr) {
     auto ptr = svmManager->createSVMAlloc(0, {}, rootDeviceIndices, deviceBitfields);

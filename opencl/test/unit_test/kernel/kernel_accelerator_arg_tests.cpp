@@ -79,7 +79,7 @@ class KernelArgAcceleratorFixture : public ContextFixture, public ClDeviceFixtur
     char pCrossThreadData[64];
 };
 
-typedef Test<KernelArgAcceleratorFixture> KernelArgAcceleratorTest;
+typedef TestLegacy<KernelArgAcceleratorFixture> KernelArgAcceleratorTest;
 
 TEST_F(KernelArgAcceleratorTest, WhenCreatingVmeAcceleratorThenCorrectKernelArgsAreSet) {
     cl_int status;

@@ -18,7 +18,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandQueueExecuteCommandListsSimpleTest = Test<DeviceFixture>;
+using CommandQueueExecuteCommandListsSimpleTest = TestLegacy<DeviceFixture>;
 
 HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, GivenSynchronousModeWhenExecutingCommandListThenSynchronizeIsCalled, IsAtLeastSkl) {
     ze_command_queue_desc_t desc;

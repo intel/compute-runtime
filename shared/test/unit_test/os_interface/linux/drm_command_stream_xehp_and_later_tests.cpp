@@ -69,7 +69,7 @@ struct DrmCommandStreamMultiTileMemExecFixture {
     DrmMemoryManager *memoryManager = nullptr;
 };
 
-using DrmCommandStreamMultiTileMemExecTest = Test<DrmCommandStreamMultiTileMemExecFixture>;
+using DrmCommandStreamMultiTileMemExecTest = TestLegacy<DrmCommandStreamMultiTileMemExecFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSupportsCompletionFenceAndVmBindWhenCallingCsrExecThenMultipleTagAllocationIsPassed) {
     auto *testCsr = new TestedDrmCommandStreamReceiver<FamilyType>(*executionEnvironment, 0, device->getDeviceBitfield());

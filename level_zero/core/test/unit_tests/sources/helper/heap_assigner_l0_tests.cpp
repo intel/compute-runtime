@@ -16,7 +16,7 @@
 namespace L0 {
 namespace ult {
 
-using AlocationHelperTests = Test<DeviceFixture>;
+using AlocationHelperTests = TestLegacy<DeviceFixture>;
 
 using Platforms = IsAtMostProduct<IGFX_TIGERLAKE_LP>;
 

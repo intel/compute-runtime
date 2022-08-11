@@ -682,7 +682,7 @@ struct InitDirectSubmissionFixture {
     std::unique_ptr<MockDevice> device;
 };
 
-using InitDirectSubmissionTest = Test<InitDirectSubmissionFixture>;
+using InitDirectSubmissionTest = TestLegacy<InitDirectSubmissionFixture>;
 
 HWTEST_F(InitDirectSubmissionTest, givenDirectSubmissionControllerEnabledWhenInitDirectSubmissionThenCsrIsRegistered) {
     DebugManagerStateRestore restorer;

@@ -23,7 +23,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandListCreate = Test<DeviceFixture>;
+using CommandListCreate = TestLegacy<DeviceFixture>;
 
 HWTEST2_F(CommandListCreate, givenIndirectAccessFlagsAreChangedWhenResetingCommandListThenExpectAllFlagsSetToDefault, IsAtLeastSkl) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
@@ -213,7 +213,7 @@ HWTEST2_F(CommandListCreate, givenSingleTileOnlyPlatformsWhenProgrammingMultiTil
     EXPECT_EQ(usedBefore, usedAfter);
 }
 
-using CommandListAppendLaunchKernel = Test<ModuleFixture>;
+using CommandListAppendLaunchKernel = TestLegacy<ModuleFixture>;
 HWTEST2_F(CommandListAppendLaunchKernel, givenSignalEventWhenAppendLaunchCooperativeKernelIsCalledThenSuccessIsReturned, IsAtLeastSkl) {
     createKernel();
 
@@ -464,7 +464,7 @@ HWTEST2_F(CommandListCreate, givenCommandListAndHostPointersWhenMemoryCopyCalled
     }
 }
 
-using CmdlistAppendLaunchKernelTests = Test<ModuleImmutableDataFixture>;
+using CmdlistAppendLaunchKernelTests = TestLegacy<ModuleImmutableDataFixture>;
 
 using IsBetweenGen9AndGen12lp = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN12LP_CORE>;
 HWTEST2_F(CmdlistAppendLaunchKernelTests,

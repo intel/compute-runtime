@@ -22,7 +22,7 @@
 namespace L0 {
 namespace ult {
 
-struct L0BindlessAub : Test<AUBFixtureL0> {
+struct L0BindlessAub : TestLegacy<AUBFixtureL0> {
 
     void SetUp() override {
         DebugManager.flags.UseBindlessMode.set(1);

@@ -20,7 +20,7 @@ using ::testing::Return;
 namespace L0 {
 namespace ult {
 
-using MetricEnumerationTestWindows = Test<MetricContextFixture>;
+using MetricEnumerationTestWindows = TestLegacy<MetricContextFixture>;
 
 TEST_F(MetricEnumerationTestWindows, givenCorrectWindowsAdapterWhenGetMetricsAdapterThenReturnSuccess) {
 

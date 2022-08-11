@@ -12,7 +12,7 @@
 #include "shared/test/unit_test/direct_submission/dispatchers/dispatcher_fixture.h"
 #include "shared/test/unit_test/fixtures/preemption_fixture.h"
 
-using RenderDispatcherTest = Test<DispatcherFixture>;
+using RenderDispatcherTest = TestLegacy<DispatcherFixture>;
 
 using namespace NEO;
 

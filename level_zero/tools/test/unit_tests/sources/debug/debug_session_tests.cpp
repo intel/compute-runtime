@@ -1342,7 +1342,7 @@ TEST(DebugSessionTest, GivenBindlessSipVersion2WhenResumingThreadThenCheckIfThre
     EXPECT_EQ(1u, sessionMock->checkThreadIsResumedCalled);
 }
 
-using MultiTileDebugSessionTest = Test<MultipleDevicesWithCustomHwInfo>;
+using MultiTileDebugSessionTest = TestLegacy<MultipleDevicesWithCustomHwInfo>;
 
 TEST_F(MultiTileDebugSessionTest, givenThreadsFromMultipleTilesWhenResumeCalledThenThreadsResumedInAllTiles) {
     zet_debug_config_t config = {};
@@ -1701,7 +1701,7 @@ struct DebugSessionRegistersAccess {
     NEO::MockDevice *neoDevice = nullptr;
 };
 
-using DebugSessionRegistersAccessTest = Test<DebugSessionRegistersAccess>;
+using DebugSessionRegistersAccessTest = TestLegacy<DebugSessionRegistersAccess>;
 
 TEST_F(DebugSessionRegistersAccessTest, givenTypeToRegsetDescCalledThenCorrectRegdescIsReturned) {
     session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);

@@ -1019,7 +1019,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBothCsWhenFlushingTaskThenCha
     EXPECT_EQ(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT, bbs->getAddressSpaceIndicator());
 }
 
-typedef Test<ClDeviceFixture> CommandStreamReceiverCQFlushTaskTests;
+typedef TestLegacy<ClDeviceFixture> CommandStreamReceiverCQFlushTaskTests;
 HWTEST_F(CommandStreamReceiverCQFlushTaskTests, WhenGettingCsThenReturnCsWithEnoughSize) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();

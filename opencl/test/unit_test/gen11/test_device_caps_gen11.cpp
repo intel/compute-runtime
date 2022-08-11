@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-typedef Test<ClDeviceFixture> Gen11DeviceCaps;
+typedef TestLegacy<ClDeviceFixture> Gen11DeviceCaps;
 
 GEN11TEST_F(Gen11DeviceCaps, GivenDefaultWhenCheckingPreemptionModeThenMidThreadIsReturned) {
     EXPECT_TRUE(PreemptionMode::MidThread == pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);

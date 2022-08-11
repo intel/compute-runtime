@@ -14,7 +14,7 @@
 namespace L0 {
 namespace ult {
 
-using KernelPropertyTest = Test<DeviceFixture>;
+using KernelPropertyTest = TestLegacy<DeviceFixture>;
 
 HWTEST2_F(KernelPropertyTest, givenKernelExtendedPropertiesStructureWhenKernelPropertiesCalledThenPropertiesAreCorrectlySet, IsXeHpgCore) {
     ze_device_module_properties_t kernelProperties = {};

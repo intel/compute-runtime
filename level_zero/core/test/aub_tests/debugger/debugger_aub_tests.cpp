@@ -28,7 +28,7 @@
 namespace L0 {
 namespace ult {
 
-struct DebuggerAub : Test<AUBFixtureL0> {
+struct DebuggerAub : TestLegacy<AUBFixtureL0> {
 
     void SetUp() override {
         AUBFixtureL0::SetUp(NEO::defaultHwInfo.get(), true);

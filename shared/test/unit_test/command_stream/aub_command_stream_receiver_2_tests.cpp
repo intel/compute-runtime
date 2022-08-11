@@ -33,7 +33,7 @@
 
 using namespace NEO;
 
-using AubCommandStreamReceiverTests = Test<AubCommandStreamReceiverFixture>;
+using AubCommandStreamReceiverTests = TestLegacy<AubCommandStreamReceiverFixture>;
 
 struct FlatBatchBufferHelperAubTests : AubCommandStreamReceiverTests {
     void SetUp() override {
@@ -855,7 +855,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenEngineI
     EXPECT_NE(0u, aubCsr->handle);
 }
 
-using InjectMmmioTest = Test<DeviceFixture>;
+using InjectMmmioTest = TestLegacy<DeviceFixture>;
 
 HWTEST_F(InjectMmmioTest, givenAddMmioKeySetToZeroWhenInitAdditionalMmioCalledThenDoNotWriteMmio) {
     DebugManagerStateRestore stateRestore;

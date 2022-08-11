@@ -52,7 +52,7 @@ PVCTEST_F(CommandEncodeStatesPvcTest, GivenSmallSlmTotalSizesWhenSetAdditionalIn
     }
 }
 
-using EncodeKernelPvcTest = Test<CommandEncodeStatesFixture>;
+using EncodeKernelPvcTest = TestLegacy<CommandEncodeStatesFixture>;
 
 PVCTEST_F(EncodeKernelPvcTest, givenRevisionBAndAboveWhenSpecialModeRequiredThenDontReprogramPipelineSelect) {
     bool requiresUncachedMocs = false;

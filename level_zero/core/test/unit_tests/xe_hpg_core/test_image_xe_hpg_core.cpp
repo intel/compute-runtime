@@ -19,7 +19,7 @@
 namespace L0 {
 namespace ult {
 
-using ImageCreate = Test<DeviceFixture>;
+using ImageCreate = TestLegacy<DeviceFixture>;
 
 HWTEST2_F(ImageCreate, WhenGettingImagePropertiesThenPropertiesSetCorrectly, IsXeHpgCore) {
     ze_image_properties_t properties;

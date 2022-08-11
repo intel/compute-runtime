@@ -46,7 +46,7 @@ class DrmNullDeviceTestsFixture {
     DebugManagerStateRestore dbgRestorer;
 };
 
-typedef Test<DrmNullDeviceTestsFixture> DrmNullDeviceTests;
+typedef TestLegacy<DrmNullDeviceTestsFixture> DrmNullDeviceTests;
 
 TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENcallGetDeviceIdTHENreturnProperDeviceId) {
     int ret = drmNullDevice->queryDeviceIdAndRevision();

@@ -47,7 +47,7 @@ class ModuleOnlineCompiled : public DeviceFixture, public testing::Test {
     std::unique_ptr<WhiteBox<L0::Module>> module;
 };
 
-using ModuleTests = Test<DeviceFixture>;
+using ModuleTests = TestLegacy<DeviceFixture>;
 
 TEST_F(ModuleTests, WhenCreatingBuildOptionsThenOptionsParsedCorrectly) {
     auto module = new ModuleImp(device, nullptr, ModuleType::User);

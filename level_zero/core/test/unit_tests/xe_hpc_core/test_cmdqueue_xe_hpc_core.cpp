@@ -45,7 +45,7 @@ struct CommandQueueCreateMultiOrdinalFixture : public DeviceFixture {
     L0::Device *device = nullptr;
 };
 
-using CommandQueueCommandsXeHpc = Test<DeviceFixture>;
+using CommandQueueCommandsXeHpc = TestLegacy<DeviceFixture>;
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsThenGlobalFenceAllocationIsResident, IsXeHpcCore) {
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;

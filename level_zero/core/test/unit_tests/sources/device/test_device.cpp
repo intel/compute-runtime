@@ -2026,7 +2026,7 @@ HWTEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTwoRootDevicesFromSame
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, res);
 }
 
-using DeviceTests = Test<DeviceFixture>;
+using DeviceTests = TestLegacy<DeviceFixture>;
 
 TEST_F(DeviceTests, WhenGettingMemoryAccessPropertiesThenSuccessIsReturned) {
     ze_device_memory_access_properties_t properties;
@@ -2663,7 +2663,7 @@ TEST_F(MultipleDevicesTest, givenTopologyMapForSubdeviceZeroWhenGettingPhysicalS
     EXPECT_FALSE(ret);
 }
 
-using MultipleDevicesWithCustomHwInfoTest = Test<MultipleDevicesWithCustomHwInfo>;
+using MultipleDevicesWithCustomHwInfoTest = TestLegacy<MultipleDevicesWithCustomHwInfo>;
 
 TEST_F(MultipleDevicesWithCustomHwInfoTest, givenTopologyWhenMappingToAndFromApiAndPhysicalSliceIdThenIdsAreMatching) {
     L0::Device *device0 = driverHandle->devices[0];
@@ -3247,7 +3247,7 @@ struct MultiSubDeviceFixture : public DeviceFixture {
     std::unique_ptr<VariableBackup<bool>> apiSupportBackup;
 };
 
-using MultiSubDeviceTest = Test<MultiSubDeviceFixture<true, true, -1, -1>>;
+using MultiSubDeviceTest = TestLegacy<MultiSubDeviceFixture<true, true, -1, -1>>;
 TEST_F(MultiSubDeviceTest, GivenApiSupportAndLocalMemoryEnabledWhenDeviceContainsSubDevicesThenItIsImplicitScalingCapable) {
     if (NEO::HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily).platformSupportsImplicitScaling(neoDevice->getHardwareInfo())) {
         EXPECT_TRUE(device->isImplicitScalingCapable());
@@ -3258,25 +3258,25 @@ TEST_F(MultiSubDeviceTest, GivenApiSupportAndLocalMemoryEnabledWhenDeviceContain
     }
 }
 
-using MultiSubDeviceTestNoApi = Test<MultiSubDeviceFixture<true, false, -1, -1>>;
+using MultiSubDeviceTestNoApi = TestLegacy<MultiSubDeviceFixture<true, false, -1, -1>>;
 TEST_F(MultiSubDeviceTestNoApi, GivenNoApiSupportAndLocalMemoryEnabledWhenDeviceContainsSubDevicesThenItIsNotImplicitScalingCapable) {
     EXPECT_FALSE(device->isImplicitScalingCapable());
     EXPECT_EQ(subDevice, deviceImp->getActiveDevice());
 }
 
-using MultiSubDeviceTestNoLocalMemory = Test<MultiSubDeviceFixture<false, true, -1, -1>>;
+using MultiSubDeviceTestNoLocalMemory = TestLegacy<MultiSubDeviceFixture<false, true, -1, -1>>;
 TEST_F(MultiSubDeviceTestNoLocalMemory, GivenApiSupportAndLocalMemoryDisabledWhenDeviceContainsSubDevicesThenItIsNotImplicitScalingCapable) {
     EXPECT_FALSE(device->isImplicitScalingCapable());
     EXPECT_EQ(subDevice, deviceImp->getActiveDevice());
 }
 
-using MultiSubDeviceTestNoApiForceOn = Test<MultiSubDeviceFixture<true, false, 1, -1>>;
+using MultiSubDeviceTestNoApiForceOn = TestLegacy<MultiSubDeviceFixture<true, false, 1, -1>>;
 TEST_F(MultiSubDeviceTestNoApiForceOn, GivenNoApiSupportAndLocalMemoryEnabledWhenForcedImplicitScalingThenItIsImplicitScalingCapable) {
     EXPECT_TRUE(device->isImplicitScalingCapable());
     EXPECT_EQ(neoDevice, deviceImp->getActiveDevice());
 }
 
-using MultiSubDeviceEnabledImplicitScalingTest = Test<MultiSubDeviceFixture<true, true, -1, 1>>;
+using MultiSubDeviceEnabledImplicitScalingTest = TestLegacy<MultiSubDeviceFixture<true, true, -1, 1>>;
 TEST_F(MultiSubDeviceEnabledImplicitScalingTest, GivenApiSupportAndLocalMemoryEnabledWhenDeviceContainsSubDevicesAndSupportsImplicitScalingThenItIsImplicitScalingCapable) {
     EXPECT_TRUE(device->isImplicitScalingCapable());
     EXPECT_EQ(neoDevice, deviceImp->getActiveDevice());
@@ -3291,7 +3291,7 @@ TEST_F(MultiSubDeviceEnabledImplicitScalingTest, GivenEnabledImplicitScalingWhen
     EXPECT_EQ(defaultEngine.commandStreamReceiver, csr);
 }
 
-using DeviceSimpleTests = Test<DeviceFixture>;
+using DeviceSimpleTests = TestLegacy<DeviceFixture>;
 
 static_assert(ZE_MEMORY_ACCESS_CAP_FLAG_RW == UNIFIED_SHARED_MEMORY_ACCESS, "Flags value difference");
 static_assert(ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC == UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS, "Flags value difference");

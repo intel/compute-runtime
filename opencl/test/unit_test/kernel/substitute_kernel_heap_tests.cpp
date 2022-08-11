@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-typedef Test<ClDeviceFixture> KernelSubstituteTest;
+typedef TestLegacy<ClDeviceFixture> KernelSubstituteTest;
 
 TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithGreaterSizeThenAllocatesNewKernelAllocation) {
     MockKernelWithInternals kernel(*pClDevice);

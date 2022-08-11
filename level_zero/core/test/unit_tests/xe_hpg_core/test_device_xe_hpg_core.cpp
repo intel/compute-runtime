@@ -12,7 +12,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandQueueGroupTest = Test<DeviceFixture>;
+using CommandQueueGroupTest = TestLegacy<DeviceFixture>;
 
 HWTEST2_F(CommandQueueGroupTest, givenNoBlitterSupportAndNoCCSThenOneQueueGroupIsReturned, IsXeHpgCore) {
     const uint32_t rootDeviceIndex = 0u;
@@ -97,7 +97,7 @@ class DeviceCopyQueueGroupFixture : public DeviceFixture {
     DebugManagerStateRestore restorer;
 };
 
-using DeviceCopyQueueGroupTest = Test<DeviceCopyQueueGroupFixture>;
+using DeviceCopyQueueGroupTest = TestLegacy<DeviceCopyQueueGroupFixture>;
 
 HWTEST2_F(DeviceCopyQueueGroupTest,
           givenBlitterSupportAndEnableBlitterOperationsSupportSetToZeroThenNoCopyEngineIsReturned, IsXeHpgCore) {
@@ -123,7 +123,7 @@ HWTEST2_F(DeviceCopyQueueGroupTest,
     }
 }
 
-using TestDeviceXeHpgCore = Test<DeviceFixture>;
+using TestDeviceXeHpgCore = TestLegacy<DeviceFixture>;
 HWTEST2_F(TestDeviceXeHpgCore, givenReturnedDevicePropertiesThenExpectedPropertyFlagsSet, IsXeHpgCore) {
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
 

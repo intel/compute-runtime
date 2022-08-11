@@ -11,15 +11,15 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 using namespace NEO;
-struct BcsTests : public Test<ClDeviceFixture> {
+struct BcsTests : public TestLegacy<ClDeviceFixture> {
     void SetUp() override {
-        Test<ClDeviceFixture>::SetUp();
+        TestLegacy<ClDeviceFixture>::SetUp();
         context = std::make_unique<MockContext>(pClDevice);
     }
 
     void TearDown() override {
         context.reset();
-        Test<ClDeviceFixture>::TearDown();
+        TestLegacy<ClDeviceFixture>::TearDown();
     }
 
     std::optional<uint32_t> flushBcsTask(CommandStreamReceiver *bcsCsr, const BlitProperties &blitProperties, bool blocking, Device &device) {

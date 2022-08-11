@@ -20,7 +20,7 @@
 
 using namespace NEO;
 
-using ResourceBarrierAubTest = Test<KernelAUBFixture<SimpleKernelFixture>>;
+using ResourceBarrierAubTest = TestLegacy<KernelAUBFixture<SimpleKernelFixture>>;
 
 struct L3ControlSupportedMatcher {
     template <PRODUCT_FAMILY productFamily>

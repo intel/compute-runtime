@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 
-using Gen11AubBatchBufferTests = Test<NEO::ClDeviceFixture>;
+using Gen11AubBatchBufferTests = TestLegacy<NEO::ClDeviceFixture>;
 
 static constexpr auto gpuBatchBufferAddr = 0x800400001000; // 48-bit GPU address
 

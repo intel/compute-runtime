@@ -871,7 +871,7 @@ TEST(DebugSessionTest, GivenNullptrEventWhenReadingEventThenErrorNullptrReturned
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, result);
 }
 
-using DebugApiLinuxTest = Test<DebugApiLinuxFixture>;
+using DebugApiLinuxTest = TestLegacy<DebugApiLinuxFixture>;
 
 TEST_F(DebugApiLinuxTest, givenDeviceWhenCallingDebugAttachThenSuccessAndValidSessionHandleAreReturned) {
     zet_debug_config_t config = {};
@@ -3710,7 +3710,7 @@ struct DebugApiLinuxVmBindFixture : public DebugApiLinuxFixture {
     std::unique_ptr<MockDebugSessionLinux> session;
 };
 
-using DebugApiLinuxVmBindTest = Test<DebugApiLinuxVmBindFixture>;
+using DebugApiLinuxVmBindTest = TestLegacy<DebugApiLinuxVmBindFixture>;
 
 TEST_F(DebugApiLinuxVmBindTest, GivenVmBindEventWithKnownUuidClassWhenHandlingEventThenBindInfoIsStoredForVm) {
     uint64_t sbaAddress = 0x1234000;
@@ -5400,7 +5400,7 @@ TEST_F(DebugApiLinuxTest, givenEnginesEventHandledThenLrcToContextHandleMapIsFil
     EXPECT_TRUE(hasSubstr(infoMessage, std::string("ENGINES event: client_handle = 34, ctx_handle = 20, num_engines = 2 DESTROY")));
 }
 
-using DebugApiLinuxAttentionTest = Test<DebugApiLinuxFixture>;
+using DebugApiLinuxAttentionTest = TestLegacy<DebugApiLinuxFixture>;
 
 TEST_F(DebugApiLinuxAttentionTest, GivenEuAttentionEventForThreadsWhenHandlingEventThenNewlyStoppedThreadsSaved) {
     zet_debug_config_t config = {};
@@ -5801,7 +5801,7 @@ TEST_F(DebugApiLinuxAttentionTest, GivenInvalidVmHandleWhenHandlingAttentionEven
     EXPECT_EQ(0u, sessionMock->pendingInterrupts.size());
     EXPECT_FALSE(sessionMock->triggerEvents);
 }
-using DebugApiLinuxAsyncThreadTest = Test<DebugApiLinuxFixture>;
+using DebugApiLinuxAsyncThreadTest = TestLegacy<DebugApiLinuxFixture>;
 
 TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsErrorAndEinvalWhenReadingInternalEventsAsyncThenDetachEventIsGenerated) {
     zet_debug_config_t config = {};
@@ -6125,7 +6125,7 @@ struct DebugApiRegistersAccessFixture : public DebugApiLinuxFixture {
     EuThread::ThreadId stoppedThreadId{0, stoppedThread};
 };
 
-using DebugApiRegistersAccessTest = Test<DebugApiRegistersAccessFixture>;
+using DebugApiRegistersAccessTest = TestLegacy<DebugApiRegistersAccessFixture>;
 
 TEST_F(DebugApiRegistersAccessTest, givenInvalidClientHandleWhenReadRegistersCalledThenErrorIsReturned) {
     session->clientHandle = MockDebugSessionLinux::invalidClientHandle;
@@ -6637,7 +6637,7 @@ TEST_F(DebugApiRegistersAccessTest, givenWriteSbaRegistersCalledThenErrorInvalid
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugWriteRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, 0, 1, nullptr));
 }
 
-using DebugApiLinuxMultitileTest = Test<DebugApiLinuxMultiDeviceFixture>;
+using DebugApiLinuxMultitileTest = TestLegacy<DebugApiLinuxMultiDeviceFixture>;
 
 TEST_F(DebugApiLinuxMultitileTest, GivenMultitileDeviceWhenCallingResumeThenThreadsFromBothTilesAreResumed) {
     zet_debug_config_t config = {};

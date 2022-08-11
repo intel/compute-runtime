@@ -14,7 +14,7 @@
 using namespace NEO;
 
 using DrmBufferObjectPrelimFixture = DrmBufferObjectFixture<DrmMockCustomPrelim>;
-using DrmBufferObjectPrelimTest = Test<DrmBufferObjectPrelimFixture>;
+using DrmBufferObjectPrelimTest = TestLegacy<DrmBufferObjectPrelimFixture>;
 
 TEST_F(DrmBufferObjectPrelimTest, GivenCompletionAddressWhenCallingExecThenReturnIsCorrect) {
     mock->ioctl_expected.total = 1;

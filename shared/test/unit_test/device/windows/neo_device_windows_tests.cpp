@@ -12,7 +12,7 @@
 #include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/test_macros/test.h"
 
-using DeviceTest = Test<DeviceFixture>;
+using DeviceTest = TestLegacy<DeviceFixture>;
 
 TEST_F(DeviceTest, GivenDeviceWhenGetAdapterLuidThenLuidIsSet) {
     std::array<uint8_t, HwInfoConfig::luidSize> luid, expectedLuid;

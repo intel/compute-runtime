@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ class DestructorCallbackFixture : public MemoryManagementFixture {
     cl_int retVal = CL_SUCCESS;
 };
 
-typedef Test<DestructorCallbackFixture> DestructorCallbackTest;
+typedef TestLegacy<DestructorCallbackFixture> DestructorCallbackTest;
 
 static std::vector<int> calls(32);
 void CL_CALLBACK callBack1(cl_mem memObj, void *userData) {

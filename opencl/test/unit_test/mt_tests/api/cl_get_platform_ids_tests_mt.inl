@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 
 using namespace NEO;
 
-using clGetPlatformIDsMtTests = Test<PlatformFixture>;
+using clGetPlatformIDsMtTests = TestLegacy<PlatformFixture>;
 
 namespace ULT {
 

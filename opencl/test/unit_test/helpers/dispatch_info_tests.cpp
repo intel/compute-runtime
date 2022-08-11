@@ -53,7 +53,7 @@ class DispatchInfoFixture : public ContextFixture, public ClDeviceFixture {
     MockKernel *pKernel = nullptr;
 };
 
-typedef Test<DispatchInfoFixture> DispatchInfoTest;
+typedef TestLegacy<DispatchInfoFixture> DispatchInfoTest;
 
 TEST_F(DispatchInfoTest, GivenNoGeometryWhenDispatchInfoIsCreatedThenValuesAreSetCorrectly) {
     std::unique_ptr<DispatchInfo> dispatchInfo(new DispatchInfo);

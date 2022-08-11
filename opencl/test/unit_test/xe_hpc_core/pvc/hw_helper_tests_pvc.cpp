@@ -16,7 +16,7 @@
 
 namespace NEO {
 
-using HwHelperTestsPvcXt = Test<HwHelperTestsXeHpcCore>;
+using HwHelperTestsPvcXt = TestLegacy<HwHelperTestsXeHpcCore>;
 
 PVCTEST_F(HwHelperTestsPvcXt, givenSingleTileCsrOnPvcXtWhenAllocatingCsrSpecificAllocationsAndIsNotBaseDieA0ThenStoredInProperMemoryPool) {
     auto hwInfo = *defaultHwInfo;
@@ -34,7 +34,7 @@ PVCTEST_F(HwHelperTestsPvcXt, givenMultiTileCsrOnPvcWhenAllocatingCsrSpecificAll
     checkIfMultiTileCsrWhenAllocatingCsrSpecificAllocationsThenStoredInLocalMemoryPool(&hwInfo);
 }
 
-using HwHelperTestsPvc = Test<HwHelperTestsXeHpcCore>;
+using HwHelperTestsPvc = TestLegacy<HwHelperTestsXeHpcCore>;
 PVCTEST_F(HwHelperTestsPvc, givenRevisionEnumAndPlatformFamilyTypeThenProperValueForIsWorkaroundRequiredIsReturned) {
     uint32_t steppings[] = {
         REVISION_A0,

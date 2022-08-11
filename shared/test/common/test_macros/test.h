@@ -16,6 +16,20 @@ struct Test
       public ::testing::Test {
 
     void SetUp() override {
+        Fixture::setUp();
+    }
+
+    void TearDown() override {
+        Fixture::tearDown();
+    }
+};
+
+template <typename Fixture>
+struct TestLegacy
+    : public Fixture,
+      public ::testing::Test {
+
+    void SetUp() override {
         Fixture::SetUp();
     }
 

@@ -29,5 +29,5 @@ struct LinearStreamFixture {
     uint32_t pCmdBuffer[1024]{};
 };
 
-typedef Test<LinearStreamFixture> LinearStreamTest;
+typedef TestLegacy<LinearStreamFixture> LinearStreamTest;
 } // namespace NEO

@@ -27,7 +27,7 @@ class AddressMapperFixture {
     AddressMapper *mapper;
 };
 
-typedef Test<AddressMapperFixture> AddressMapperTests;
+typedef TestLegacy<AddressMapperFixture> AddressMapperTests;
 
 TEST_F(AddressMapperTests, GivenAlignedPointersWhenMappingThenPointersAreAligned) {
     uint32_t m1 = mapper->map((void *)0x1000, MemoryConstants::pageSize);

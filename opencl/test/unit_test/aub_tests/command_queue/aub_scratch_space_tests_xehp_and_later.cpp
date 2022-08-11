@@ -127,7 +127,7 @@ struct Gen12AubScratchSpaceForPrivateFixture : public KernelAUBFixture<SimpleKer
     uint32_t maxIterations2;
 };
 
-using Gen12AubScratchSpaceForPrivateTest = Test<Gen12AubScratchSpaceForPrivateFixture>;
+using Gen12AubScratchSpaceForPrivateTest = TestLegacy<Gen12AubScratchSpaceForPrivateFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, Gen12AubScratchSpaceForPrivateTest, WhenKernelUsesScratchSpaceForPrivateThenExpectCorrectResults) {
     cl_uint workDim = 1;
@@ -297,7 +297,7 @@ struct Gen12AubScratchSpaceForSpillFillFixture : public KernelAUBFixture<Default
     GraphicsAllocation *offsetAllocation;
 };
 
-using Gen12AubScratchSpaceForSpillFillTest = Test<Gen12AubScratchSpaceForSpillFillFixture>;
+using Gen12AubScratchSpaceForSpillFillTest = TestLegacy<Gen12AubScratchSpaceForSpillFillFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, Gen12AubScratchSpaceForSpillFillTest, givenSurfaceStateScratchSpaceEnabledWhenKernelUsesScratchForSpillFillThenExpectCorrectResults) {
     cl_uint workDim = 1;

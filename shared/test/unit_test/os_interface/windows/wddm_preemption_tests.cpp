@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
+class WddmPreemptionTests : public TestLegacy<WddmFixtureWithMockGdiDll> {
   public:
     void SetUp() override {
         WddmFixtureWithMockGdiDll::SetUp();

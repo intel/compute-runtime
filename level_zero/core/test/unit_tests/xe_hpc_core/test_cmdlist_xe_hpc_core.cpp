@@ -28,7 +28,7 @@ struct LocalMemoryModuleFixture : public ModuleFixture {
     DebugManagerStateRestore restore;
 };
 
-using CommandListAppendLaunchKernelXeHpcCore = Test<LocalMemoryModuleFixture>;
+using CommandListAppendLaunchKernelXeHpcCore = TestLegacy<LocalMemoryModuleFixture>;
 HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenKernelUsingSyncBufferWhenAppendLaunchCooperativeKernelIsCalledThenCorrectValueIsReturned, IsXeHpcCore) {
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &hwConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
@@ -64,7 +64,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenKernelUsingSyncBufferWhen
     }
 }
 
-using CommandListStatePrefetchXeHpcCore = Test<ModuleFixture>;
+using CommandListStatePrefetchXeHpcCore = TestLegacy<ModuleFixture>;
 
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenUnifiedSharedMemoryWhenPrefetchApiIsCalledThenDontRequestMemoryPrefetchByDefault, IsXeHpcCore) {
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
@@ -386,7 +386,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     commandQueue->destroy();
 }
 
-using CommandListEventFenceTestsXeHpcCore = Test<ModuleFixture>;
+using CommandListEventFenceTestsXeHpcCore = TestLegacy<ModuleFixture>;
 
 HWTEST2_F(CommandListEventFenceTestsXeHpcCore, givenCommandListWithProfilingEventAfterCommandWhenRevId03ThenMiFenceIsAdded, IsXeHpcCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
@@ -449,7 +449,7 @@ HWTEST2_F(CommandListEventFenceTestsXeHpcCore, givenCommandListWithRegularEventA
     EXPECT_NE(cmdList.end(), itor);
 }
 
-using CommandListAppendRangesBarrierXeHpcCore = Test<DeviceFixture>;
+using CommandListAppendRangesBarrierXeHpcCore = TestLegacy<DeviceFixture>;
 
 HWTEST2_F(CommandListAppendRangesBarrierXeHpcCore, givenCallToAppendRangesBarrierThenPipeControlProgrammed, IsXeHpcCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;

@@ -107,9 +107,9 @@ struct MultiTileAppendFillFixture : public AppendFillFixture {
     DebugManagerStateRestore restorer;
 };
 
-using AppendFillTest = Test<AppendFillFixture>;
+using AppendFillTest = TestLegacy<AppendFillFixture>;
 
-using MultiTileAppendFillTest = Test<MultiTileAppendFillFixture>;
+using MultiTileAppendFillTest = TestLegacy<MultiTileAppendFillFixture>;
 
 HWTEST2_F(AppendFillTest,
           givenCallToAppendMemoryFillWithImmediateValueThenSuccessIsReturned, IsAtLeastSkl) {

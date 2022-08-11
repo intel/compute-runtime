@@ -15,7 +15,7 @@
 
 namespace L0 {
 namespace ult {
-struct TimestampEvent : public Test<DeviceFixture> {
+struct TimestampEvent : public TestLegacy<DeviceFixture> {
     void SetUp() override {
         DeviceFixture::SetUp();
         ze_event_pool_desc_t eventPoolDesc = {};

@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-using BuiltInTestL0 = Test<NEO::DeviceFixture>;
+using BuiltInTestL0 = TestLegacy<NEO::DeviceFixture>;
 
 TEST_F(BuiltInTestL0, GivenBuiltinTypeIntermediateWhenGettingBuiltinResourceForNotRegisteredRevisionThenResourceSizeIsNonZero) {
     pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usRevId += 0xdead;

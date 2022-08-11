@@ -128,7 +128,7 @@ struct InlineDataFixture : AubDispatchThreadDataFixture {
     }
 };
 
-using XeHPAndLaterAubInlineDataTest = Test<InlineDataFixture>;
+using XeHPAndLaterAubInlineDataTest = TestLegacy<InlineDataFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadFitIntoSingleGrfWhenInlineDataAllowedThenCopyAllCrossThreadIntoInline) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
@@ -297,7 +297,7 @@ struct HwLocalIdsFixture : AubDispatchThreadDataFixture {
     }
 };
 
-using XeHPAndLaterAubHwLocalIdsTest = Test<HwLocalIdsFixture>;
+using XeHPAndLaterAubHwLocalIdsTest = TestLegacy<HwLocalIdsFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, WhenEnqueueDimensionsArePow2ThenSetEmitLocalIdsAndGenerateLocalIdsFields) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
@@ -417,7 +417,7 @@ struct HwLocalIdsWithSubGroups : AubDispatchThreadDataFixture {
     }
 };
 
-using XeHPAndLaterAubHwLocalIdsWithSubgroupsTest = Test<HwLocalIdsWithSubGroups>;
+using XeHPAndLaterAubHwLocalIdsWithSubgroupsTest = TestLegacy<HwLocalIdsWithSubGroups>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsWithSubgroupsTest, givenKernelUsingSubgroupsWhenLocalIdsAreGeneratedByHwThenValuesAreCorrect) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;

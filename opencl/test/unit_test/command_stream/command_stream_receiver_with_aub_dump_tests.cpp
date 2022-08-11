@@ -171,7 +171,7 @@ struct CommandStreamReceiverWithAubDumpTest : public ::testing::TestWithParam<bo
     bool createAubCSR;
 };
 
-struct CommandStreamReceiverWithAubDumpSimpleTest : Test<MockAubCenterFixture>, DeviceFixture {
+struct CommandStreamReceiverWithAubDumpSimpleTest : TestLegacy<MockAubCenterFixture>, DeviceFixture {
     void SetUp() override {
         DeviceFixture::SetUp();
         MockAubCenterFixture::SetUp();

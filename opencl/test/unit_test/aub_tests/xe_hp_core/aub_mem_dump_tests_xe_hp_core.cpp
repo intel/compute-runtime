@@ -14,7 +14,7 @@
 
 namespace NEO {
 extern bool overrideCommandStreamReceiverCreation;
-using XeHpCoreAubMemDumpTests = Test<ClDeviceFixture>;
+using XeHpCoreAubMemDumpTests = TestLegacy<ClDeviceFixture>;
 
 XE_HP_CORE_TEST_F(XeHpCoreAubMemDumpTests, GivenCcsThenExpectationsAreMet) {
     setupAUB<FamilyType>(pDevice, aub_stream::ENGINE_CCS);

@@ -466,7 +466,7 @@ struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUnifo
     ClHardwareParse hwParser;
 };
 
-using AUBSimpleKernelStatelessTest = Test<KernelAUBFixture<SimpleKernelStatelessFixture>>;
+using AUBSimpleKernelStatelessTest = TestLegacy<KernelAUBFixture<SimpleKernelStatelessFixture>>;
 
 HWTEST_F(AUBSimpleKernelStatelessTest, givenSimpleKernelWhenStatelessPathIsUsedThenExpectCorrectBuffer) {
 
@@ -512,7 +512,7 @@ HWTEST_F(AUBSimpleKernelStatelessTest, givenSimpleKernelWhenStatelessPathIsUsedT
                              bufferExpected, bufferSize);
 }
 
-using AUBSimpleArgNonUniformTest = Test<AUBSimpleArgNonUniformFixture>;
+using AUBSimpleArgNonUniformTest = TestLegacy<AUBSimpleArgNonUniformFixture>;
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork1DimNonUniformGroupThenExpectTwoWalkers) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     cl_uint workDim = 1;

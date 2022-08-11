@@ -26,7 +26,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandListAppendLaunchKernel = Test<ModuleFixture>;
+using CommandListAppendLaunchKernel = TestLegacy<ModuleFixture>;
 
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenFunctionWhenBindingTablePrefetchAllowedThenProgramBindingTableEntryCount) {
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
@@ -695,7 +695,7 @@ HWTEST_F(CommandListAppendLaunchKernelWithImplicitArgs, givenIndirectDispatchWit
     context->freeMem(alloc);
 }
 
-using MultiTileImmediateCommandListAppendLaunchFunctionXeHpCoreTest = Test<MultiTileImmediateCommandListAppendLaunchFunctionFixture>;
+using MultiTileImmediateCommandListAppendLaunchFunctionXeHpCoreTest = TestLegacy<MultiTileImmediateCommandListAppendLaunchFunctionFixture>;
 
 HWTEST2_F(MultiTileImmediateCommandListAppendLaunchFunctionXeHpCoreTest, givenImplicitScalingWhenUsingImmediateCommandListThenDoNotAddSelfCleanup, IsAtLeastXeHpCore) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;

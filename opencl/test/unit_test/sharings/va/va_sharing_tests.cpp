@@ -1238,7 +1238,7 @@ TEST_F(VaSharingTests, givenPlaneArgumentEquals2WithoutNoProperFormatsThenReturn
     EXPECT_EQ(result, CL_SUCCESS);
 }
 
-class VaDeviceTests : public Test<PlatformFixture> {
+class VaDeviceTests : public TestLegacy<PlatformFixture> {
   public:
     VaDeviceTests() {
         ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;

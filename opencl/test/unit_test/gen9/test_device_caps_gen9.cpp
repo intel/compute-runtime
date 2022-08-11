@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-typedef Test<ClDeviceFixture> Gen9DeviceCaps;
+typedef TestLegacy<ClDeviceFixture> Gen9DeviceCaps;
 
 GEN9TEST_F(Gen9DeviceCaps, WhenCheckingExtensionStringThenFp64CorrectlyReported) {
     const auto &caps = pClDevice->getDeviceInfo();

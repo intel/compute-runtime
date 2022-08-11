@@ -28,7 +28,7 @@
 
 using namespace NEO;
 
-using CommandEncodeStatesTest = Test<CommandEncodeStatesFixture>;
+using CommandEncodeStatesTest = TestLegacy<CommandEncodeStatesFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeGraterThanZeroWhenDispatchingKernelThenSharedMemorySizeIsSetCorrectly) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
@@ -955,7 +955,7 @@ struct CommandEncodeStatesImplicitScalingFixture : public CommandEncodeStatesFix
     std::unique_ptr<VariableBackup<bool>> apiSupportBackup;
 };
 
-using CommandEncodeStatesImplicitScaling = Test<CommandEncodeStatesImplicitScalingFixture>;
+using CommandEncodeStatesImplicitScaling = TestLegacy<CommandEncodeStatesImplicitScalingFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesImplicitScaling,
             givenStaticPartitioningWhenNonTimestampEventProvidedThenExpectTimestampComputeWalkerPostSync) {
@@ -1002,7 +1002,7 @@ struct CommandEncodeStatesDynamicImplicitScalingFixture : CommandEncodeStatesImp
     DebugManagerStateRestore restore{};
 };
 
-using CommandEncodeStatesDynamicImplicitScaling = Test<CommandEncodeStatesDynamicImplicitScalingFixture>;
+using CommandEncodeStatesDynamicImplicitScaling = TestLegacy<CommandEncodeStatesDynamicImplicitScalingFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImplicitScalingWhenEncodingDispatchKernelThenExpectPartitionCommandBuffer) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;

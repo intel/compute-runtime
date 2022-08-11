@@ -11,7 +11,7 @@
 
 using namespace NEO;
 
-using clGetExtensionFunctionAddressForPlatformTests = Test<PlatformFixture>;
+using clGetExtensionFunctionAddressForPlatformTests = TestLegacy<PlatformFixture>;
 
 namespace ULT {
 

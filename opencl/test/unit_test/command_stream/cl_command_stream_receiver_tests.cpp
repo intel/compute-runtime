@@ -44,7 +44,7 @@ TEST(ClCommandStreamReceiverTest, WhenMakingResidentThenBufferResidencyFlagIsSet
     delete buffer;
 }
 
-using ClCommandStreamReceiverTests = Test<DeviceFixture>;
+using ClCommandStreamReceiverTests = TestLegacy<DeviceFixture>;
 
 HWTEST_F(ClCommandStreamReceiverTests, givenCommandStreamReceiverWhenFenceAllocationIsRequiredAndCreateGlobalFenceAllocationIsCalledThenFenceAllocationIsAllocated) {
     RAIIHwHelperFactory<MockHwHelperWithFenceAllocation<FamilyType>> hwHelperBackup{pDevice->getHardwareInfo().platform.eRenderCoreFamily};

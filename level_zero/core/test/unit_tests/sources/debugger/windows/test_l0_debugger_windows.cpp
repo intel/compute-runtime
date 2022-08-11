@@ -74,7 +74,7 @@ struct L0DebuggerWindowsFixture {
     MockGdi *gdi = nullptr;
 };
 
-using L0DebuggerWindowsTest = Test<L0DebuggerWindowsFixture>;
+using L0DebuggerWindowsTest = TestLegacy<L0DebuggerWindowsFixture>;
 
 TEST_F(L0DebuggerWindowsTest, givenProgramDebuggingEnabledWhenDriverHandleIsCreatedThenItAllocatesL0Debugger) {
     EXPECT_NE(nullptr, neoDevice->getDebugger());

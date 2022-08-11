@@ -17,7 +17,7 @@
 
 using namespace NEO;
 
-using PvcDeviceCapsTests = Test<ClDeviceFixture>;
+using PvcDeviceCapsTests = TestLegacy<ClDeviceFixture>;
 
 PVCTEST_F(PvcDeviceCapsTests, givenPvcProductWhenCheckBlitterOperationsSupportThenReturnFalse) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.blitterOperationsSupported);

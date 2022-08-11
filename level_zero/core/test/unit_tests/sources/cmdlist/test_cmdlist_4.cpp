@@ -20,7 +20,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandListCreate = Test<DeviceFixture>;
+using CommandListCreate = TestLegacy<DeviceFixture>;
 
 HWTEST2_F(CommandListCreate, givenCopyOnlyCommandListWhenAppendWriteGlobalTimestampCalledThenMiFlushDWWithTimestampEncoded, IsAtLeastSkl) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
@@ -248,7 +248,7 @@ class CommandListImmediateFlushTaskTests : public DeviceFixture {
     DebugManagerStateRestore restorer;
 };
 
-using CommandListImmediateFlushTaskComputeTests = Test<CommandListImmediateFlushTaskTests>;
+using CommandListImmediateFlushTaskComputeTests = TestLegacy<CommandListImmediateFlushTaskTests>;
 HWTEST2_F(CommandListImmediateFlushTaskComputeTests, givenDG2CommandListIsInititalizedThenByDefaultFlushTaskSubmissionEnabled, IsDG2) {
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
@@ -720,7 +720,7 @@ HWTEST2_F(CommandListCreate, whenCommandListIsCreatedThenFlagsAreCorrectlySet, I
     }
 }
 
-using HostPointerManagerCommandListTest = Test<HostPointerManagerFixure>;
+using HostPointerManagerCommandListTest = TestLegacy<HostPointerManagerFixure>;
 HWTEST2_F(HostPointerManagerCommandListTest,
           givenImportedHostPointerWhenAppendMemoryFillUsingHostPointerThenAppendFillUsingHostPointerAllocation,
           IsAtLeastSkl) {

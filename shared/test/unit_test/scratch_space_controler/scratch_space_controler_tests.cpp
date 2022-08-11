@@ -45,7 +45,7 @@ class MockScratchSpaceControllerBase : public ScratchSpaceControllerBase {
     bool programBindlessSurfaceStateForScratchCalled = false;
 };
 
-using ScratchComtrolerTests = Test<DeviceFixture>;
+using ScratchComtrolerTests = TestLegacy<DeviceFixture>;
 
 HWTEST_F(ScratchComtrolerTests, givenCommandQueueWhenProgramHeapsCalledThenThenProgramHeapsCalled) {
     MockCsrHw2<FamilyType> csr(*pDevice->getExecutionEnvironment(), 0, pDevice->getDeviceBitfield());

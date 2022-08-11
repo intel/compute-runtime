@@ -27,7 +27,7 @@
 namespace L0 {
 namespace ult {
 
-using MultiDeviceContextTests = Test<MultiDeviceFixture>;
+using MultiDeviceContextTests = TestLegacy<MultiDeviceFixture>;
 
 TEST_F(MultiDeviceContextTests,
        whenCreatingContextWithZeroNumDevicesThenAllDevicesAreAssociatedWithTheContext) {
@@ -224,7 +224,7 @@ TEST_F(ContextHostAllocTests,
     context->destroy();
 }
 
-using ContextGetStatusTest = Test<DeviceFixture>;
+using ContextGetStatusTest = TestLegacy<DeviceFixture>;
 TEST_F(ContextGetStatusTest, givenCallToContextGetStatusThenCorrectErrorCodeIsReturnedWhenResourcesHaveBeenReleased) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -246,7 +246,7 @@ TEST_F(ContextGetStatusTest, givenCallToContextGetStatusThenCorrectErrorCodeIsRe
     context->destroy();
 }
 
-using ContextPowerSavingHintTest = Test<DeviceFixture>;
+using ContextPowerSavingHintTest = TestLegacy<DeviceFixture>;
 TEST_F(ContextPowerSavingHintTest, givenCallToContextCreateWithPowerHintDescThenPowerHintSetInDriverHandle) {
     ze_context_handle_t hContext;
     ze_context_desc_t ctxtDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC};
@@ -313,7 +313,7 @@ TEST_F(ContextPowerSavingHintTest, givenCallToContextCreateWithoutPowerHintDescT
     context->destroy();
 }
 
-using ContextTest = Test<DeviceFixture>;
+using ContextTest = TestLegacy<DeviceFixture>;
 
 TEST_F(ContextTest, whenCreatingAndDestroyingContextThenSuccessIsReturned) {
     ze_context_handle_t hContext;
@@ -326,7 +326,7 @@ TEST_F(ContextTest, whenCreatingAndDestroyingContextThenSuccessIsReturned) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-using ContextMakeMemoryResidentTests = Test<HostPointerManagerFixure>;
+using ContextMakeMemoryResidentTests = TestLegacy<HostPointerManagerFixure>;
 
 TEST_F(ContextMakeMemoryResidentTests,
        givenUknownPointerPassedToMakeMemoryResidentThenInvalidArgumentIsReturned) {

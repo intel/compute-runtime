@@ -12,7 +12,7 @@
 
 using namespace NEO;
 
-using HwHelperDg2OrBelowTests = Test<ClDeviceFixture>;
+using HwHelperDg2OrBelowTests = TestLegacy<ClDeviceFixture>;
 
 using isDG2OrBelow = IsAtMostProduct<IGFX_DG2>;
 HWTEST2_F(HwHelperDg2OrBelowTests, WhenGettingIsKmdMigrationSupportedThenFalseIsReturned, isDG2OrBelow) {

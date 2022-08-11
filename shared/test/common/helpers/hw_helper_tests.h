@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-using HwHelperTest = Test<DeviceFixture>;
+using HwHelperTest = TestLegacy<DeviceFixture>;
 
 struct ComputeSlmTestInput {
     uint32_t expected;

@@ -45,7 +45,7 @@ class WddmMemoryManagerFixture : public GdiDllFixture {
     const uint32_t rootDeviceIndex = 0u;
 };
 
-typedef ::Test<WddmMemoryManagerFixture> WddmMemoryManagerTest;
+typedef ::TestLegacy<WddmMemoryManagerFixture> WddmMemoryManagerTest;
 
 class MockWddmMemoryManagerFixture {
   public:
@@ -90,7 +90,7 @@ class MockWddmMemoryManagerFixture {
     MockGdi *gdi = nullptr;
 };
 
-typedef ::Test<MockWddmMemoryManagerFixture> WddmMemoryManagerResidencyTest;
+typedef ::TestLegacy<MockWddmMemoryManagerFixture> WddmMemoryManagerResidencyTest;
 
 class ExecutionEnvironmentFixture : public ::testing::Test {
   public:

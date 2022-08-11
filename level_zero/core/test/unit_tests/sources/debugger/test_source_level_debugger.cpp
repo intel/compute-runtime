@@ -25,7 +25,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandQueueDebugCommandsTest = Test<ActiveDebuggerFixture>;
+using CommandQueueDebugCommandsTest = TestLegacy<ActiveDebuggerFixture>;
 
 HWTEST2_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsExecutedThenKernelDebugCommandsAreAdded, IsAtMostGen12lp) {
     NEO::MockCompilerEnableGuard mock(true);
@@ -158,7 +158,7 @@ HWTEST2_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsE
     commandQueue->destroy();
 }
 
-using SLDebuggerInternalUsageTest = Test<ActiveDebuggerFixture>;
+using SLDebuggerInternalUsageTest = TestLegacy<ActiveDebuggerFixture>;
 
 HWTEST2_F(SLDebuggerInternalUsageTest, givenDebuggingEnabledWhenInternalCmdQIsUsedThenDebuggerPathsAreNotExecuted, IsAtLeastSkl) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
@@ -232,7 +232,7 @@ HWTEST2_F(SLDebuggerInternalUsageTest, givenDebuggingEnabledWhenInternalCmdQIsUs
     commandList->destroy();
 }
 
-using DeviceWithDebuggerEnabledTest = Test<ActiveDebuggerFixture>;
+using DeviceWithDebuggerEnabledTest = TestLegacy<ActiveDebuggerFixture>;
 
 TEST_F(DeviceWithDebuggerEnabledTest, givenDebuggingEnabledWhenDeviceIsCreatedThenItHasDebugSurfaceCreatedWithCorrectAllocationType) {
     ASSERT_NE(nullptr, deviceL0->getDebugSurface());

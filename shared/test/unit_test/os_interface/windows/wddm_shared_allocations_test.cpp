@@ -60,7 +60,7 @@ class WddmSharedTestsFixture : public GdiDllFixture, public MockExecutionEnviron
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
 };
 
-using WdmmSharedTests = Test<WddmSharedTestsFixture>;
+using WdmmSharedTests = TestLegacy<WddmSharedTestsFixture>;
 
 TEST_F(WdmmSharedTests, WhenCreatingSharedAllocationAndGetNTHandleFailedThenAllocationIsDeletedAndHandlesAreSetToZero) {
     init();

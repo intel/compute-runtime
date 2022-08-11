@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ class CacheReservationFixture : public DeviceFixture {
     CacheReservation *cache = nullptr;
 };
 
-using CacheReservationTest = Test<CacheReservationFixture>;
+using CacheReservationTest = TestLegacy<CacheReservationFixture>;
 
 TEST_F(CacheReservationTest, GivenCacheReservationCreatedWhenCallingReserveCacheThenReturnFalse) {
     size_t cacheLevel = 3;

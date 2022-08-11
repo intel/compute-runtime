@@ -262,7 +262,7 @@ TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCa
     EXPECT_FALSE(mockHwContext1->readMemoryCalled);
 }
 
-using AubCommandStreamReceiverTests = Test<AubCommandStreamReceiverFixture>;
+using AubCommandStreamReceiverTests = TestLegacy<AubCommandStreamReceiverFixture>;
 
 HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWritableWhenDumpAllocationIsCalledAndDumpFormatIsSpecifiedThenGraphicsAllocationShouldBeDumped) {
     DebugManagerStateRestore dbgRestore;

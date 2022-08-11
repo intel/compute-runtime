@@ -40,7 +40,7 @@ class DrmMemManagerFixture {
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;
 };
 
-using DrmFrontWindowPoolAllocatorTests = Test<DrmMemManagerFixture>;
+using DrmFrontWindowPoolAllocatorTests = TestLegacy<DrmMemManagerFixture>;
 
 TEST_F(DrmFrontWindowPoolAllocatorTests, givenAllocateInSpecialPoolFlagWhenDrmAllocate32BitGraphicsMemoryThenAllocateAtHeapBegining) {
     AllocationData allocData = {};

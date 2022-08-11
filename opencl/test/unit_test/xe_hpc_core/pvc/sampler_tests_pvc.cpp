@@ -18,7 +18,7 @@
 
 using namespace NEO;
 
-typedef Test<ClDeviceFixture> PvcSamplerTest;
+typedef TestLegacy<ClDeviceFixture> PvcSamplerTest;
 
 PVCTEST_F(PvcSamplerTest, givenPvcSamplerWhenUsingDefaultFilteringAndAppendSamplerStateParamsThenDisableLowQualityFilter) {
     EXPECT_FALSE(DebugManager.flags.ForceSamplerLowFilteringPrecision.get());

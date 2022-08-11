@@ -16,7 +16,7 @@
 
 using namespace NEO;
 
-using FileLoggerTests = Test<MockExecutionEnvironmentGmmFixture>;
+using FileLoggerTests = TestLegacy<MockExecutionEnvironmentGmmFixture>;
 
 TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     std::string testFile = "testfile";

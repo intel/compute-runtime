@@ -19,7 +19,7 @@
 namespace L0 {
 namespace ult {
 
-using DeviceTestPvcXt = Test<DeviceFixtureXeHpcTests>;
+using DeviceTestPvcXt = TestLegacy<DeviceFixtureXeHpcTests>;
 
 PVCTEST_F(DeviceTestPvcXt, whenCallingGetMemoryPropertiesWithNonNullPtrAndRevisionIsNotBaseDieA0OnPvcXtThenMaxClockRateReturnedIsZero) {
     auto &device = driverHandle->devices[0];
@@ -31,7 +31,7 @@ PVCTEST_F(DeviceTestPvcXt, whenCallingGetMemoryPropertiesWithNonNullPtrAndRevisi
     checkIfCallingGetMemoryPropertiesWithNonNullPtrThenMaxClockRateReturnZero(hwInfo);
 }
 
-using DeviceTestPvc = Test<DeviceFixtureXeHpcTests>;
+using DeviceTestPvc = TestLegacy<DeviceFixtureXeHpcTests>;
 PVCTEST_F(DeviceTestPvc, givenPvcAStepWhenCreatingMultiTileDeviceThenExpectImplicitScalingDisabled) {
     auto hwInfo = *NEO::defaultHwInfo;
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);

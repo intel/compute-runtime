@@ -19,7 +19,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandListAppendEventReset = Test<CommandListFixture>;
+using CommandListAppendEventReset = TestLegacy<CommandListFixture>;
 
 HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenResetEventAppendedThenStoreDataImmIsGenerated) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;

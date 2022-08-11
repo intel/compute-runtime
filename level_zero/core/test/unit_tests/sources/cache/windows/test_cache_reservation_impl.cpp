@@ -29,7 +29,7 @@ class CacheReservationFixture : public DeviceFixture {
     CacheReservation *cache = nullptr;
 };
 
-using CacheReservationTest = Test<CacheReservationFixture>;
+using CacheReservationTest = TestLegacy<CacheReservationFixture>;
 
 TEST_F(CacheReservationTest, GivenCacheReservationCreatedWhenCallingReserveCacheThenReturnFalse) {
     size_t cacheLevel = 3;

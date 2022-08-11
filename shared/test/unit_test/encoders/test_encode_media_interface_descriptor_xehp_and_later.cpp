@@ -9,7 +9,7 @@
 
 using namespace NEO;
 
-using CommandEncodeStatesTest = Test<CommandEncodeStatesFixture>;
+using CommandEncodeStatesTest = TestLegacy<CommandEncodeStatesFixture>;
 
 HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWhenEncodingMediaDescriptorThenUsedSizeDidNotIncreased, IsAtLeastXeHpCore) {
     auto sizeBefore = cmdContainer->getCommandStream()->getUsed();

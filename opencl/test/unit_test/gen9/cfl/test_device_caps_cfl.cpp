@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-typedef Test<ClDeviceFixture> CflDeviceCaps;
+typedef TestLegacy<ClDeviceFixture> CflDeviceCaps;
 
 CFLTEST_F(CflDeviceCaps, GivenCFLWhenCheckftr64KBpagesThenTrue) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftr64KBpages);

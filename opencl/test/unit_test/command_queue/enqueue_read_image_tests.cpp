@@ -1036,7 +1036,7 @@ HWTEST_P(MipMapReadImageTest, GivenImageWithMipLevelNonZeroWhenReadImageIsCalled
 INSTANTIATE_TEST_CASE_P(MipMapReadImageTest_GivenImageWithMipLevelNonZeroWhenWriteImageIsCalledThenProperMipLevelIsSet,
                         MipMapReadImageTest, ::testing::Values(CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D));
 
-using NegativeFailAllocationTest = Test<NegativeFailAllocationCommandEnqueueBaseFixture>;
+using NegativeFailAllocationTest = TestLegacy<NegativeFailAllocationCommandEnqueueBaseFixture>;
 
 HWTEST_F(NegativeFailAllocationTest, givenEnqueueWriteImageWhenHostPtrAllocationCreationFailsThenReturnOutOfResource) {
     cl_int retVal = CL_SUCCESS;
@@ -1063,7 +1063,7 @@ HWTEST_F(NegativeFailAllocationTest, givenEnqueueWriteImageWhenHostPtrAllocation
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
 }
 
-using OneMipLevelReadImageTests = Test<OneMipLevelImageFixture>;
+using OneMipLevelReadImageTests = TestLegacy<OneMipLevelImageFixture>;
 
 HWTEST_F(OneMipLevelReadImageTests, GivenNotMippedImageWhenReadingImageThenDoNotProgramSourceMipLevel) {
     auto queue = createQueue<FamilyType>();

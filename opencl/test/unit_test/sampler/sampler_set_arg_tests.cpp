@@ -102,7 +102,7 @@ class SamplerSetArgFixture : public ClDeviceFixture {
     Sampler *sampler = nullptr;
 };
 
-typedef Test<SamplerSetArgFixture> SamplerSetArgTest;
+typedef TestLegacy<SamplerSetArgFixture> SamplerSetArgTest;
 HWTEST_F(SamplerSetArgTest, WhenSettingKernelArgSamplerThenSamplerStatesAreCorrect) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
     createSampler();

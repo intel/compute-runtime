@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@
 
 using namespace NEO;
 
-class ZeroSizeEnqueueHandlerTest : public Test<ClDeviceFixture> {
+class ZeroSizeEnqueueHandlerTest : public TestLegacy<ClDeviceFixture> {
   public:
     MockContext context;
     cl_int retVal;

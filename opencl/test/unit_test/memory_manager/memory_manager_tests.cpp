@@ -58,7 +58,7 @@
 
 using namespace NEO;
 
-typedef Test<MemoryAllocatorFixture> MemoryAllocatorTest;
+typedef TestLegacy<MemoryAllocatorFixture> MemoryAllocatorTest;
 
 TEST(MemoryManagerTest, givenDebugVariableWhenCreatingMemoryManagerThenSetSupportForMultiStorageResources) {
     DebugManagerStateRestore restore;
@@ -1852,7 +1852,7 @@ TEST_F(MemoryAllocatorTest, GivenSizeWhenGmmIsCreatedThenNonNullPointerIsReturne
     delete gmm;
 }
 
-typedef Test<MemoryManagerWithCsrFixture> MemoryManagerWithCsrTest;
+typedef TestLegacy<MemoryManagerWithCsrFixture> MemoryManagerWithCsrTest;
 
 TEST_F(MemoryManagerWithCsrTest, GivenAllocationsInHostPtrManagerWhenBiggerOverllapingAllocationIsCreatedAndNothingToCleanThenAbortExecution) {
     void *cpuPtr1 = (void *)0x100004;
@@ -2557,7 +2557,7 @@ TEST(MemoryManagerTest, givenForcedLinearImages3DImageAndProperDescriptorValuesW
     alignedFree(hostPtr);
 }
 
-class HeapSelectorTest : public Test<ClDeviceFixture> {
+class HeapSelectorTest : public TestLegacy<ClDeviceFixture> {
   public:
     using BaseClass = ClDeviceFixture;
     void SetUp() override {

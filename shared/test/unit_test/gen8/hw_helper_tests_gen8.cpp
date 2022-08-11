@@ -50,7 +50,7 @@ GEN8TEST_F(MemorySynchronizatiopCommandsTestsGen8, WhenProgrammingCacheFlushThen
     EXPECT_TRUE(pipeControl->getConstantCacheInvalidationEnable());
 }
 
-using HwInfoConfigTestGen8 = Test<DeviceFixture>;
+using HwInfoConfigTestGen8 = TestLegacy<DeviceFixture>;
 GEN8TEST_F(HwInfoConfigTestGen8, givenHwInfosWhenIsMatrixMultiplyAccumulateSupportedThenReturnFalse) {
     EXPECT_FALSE(HwInfoConfig::get(productFamily)->isMatrixMultiplyAccumulateSupported(*defaultHwInfo));
 }

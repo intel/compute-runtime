@@ -13,7 +13,7 @@
 #include "hw_cmds_xe_hpc_core_base.h"
 
 using namespace NEO;
-using XeHpcCoreBuiltInTests = Test<DeviceFixture>;
+using XeHpcCoreBuiltInTests = TestLegacy<DeviceFixture>;
 
 XE_HPC_CORETEST_F(XeHpcCoreBuiltInTests, GivenBuiltinTypeBinaryWhenGettingBuiltinResourceForNotRegisteredRevisionThenBinaryBuiltinIsNotAvailable) {
     pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usRevId += 0xdead;

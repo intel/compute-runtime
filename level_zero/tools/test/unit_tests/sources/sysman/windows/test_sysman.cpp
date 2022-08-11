@@ -15,7 +15,7 @@
 namespace L0 {
 namespace ult {
 
-using MockDeviceSysmanGetTest = Test<DeviceFixture>;
+using MockDeviceSysmanGetTest = TestLegacy<DeviceFixture>;
 TEST_F(MockDeviceSysmanGetTest, GivenValidSysmanHandleSetInDeviceStructWhenGetThisSysmanHandleThenHandlesShouldBeSimilar) {
     SysmanDeviceImp *sysman = new SysmanDeviceImp(device->toHandle());
     device->setSysmanHandle(sysman);

@@ -41,7 +41,7 @@ struct FinishFixture : public ClDeviceFixture,
     }
 };
 
-typedef Test<FinishFixture> FinishTest;
+typedef TestLegacy<FinishFixture> FinishTest;
 
 HWTEST_F(FinishTest, GivenCsGreaterThanCqWhenFinishIsCalledThenPipeControlIsNotAdded) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;

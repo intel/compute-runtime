@@ -35,7 +35,7 @@
 #include "GL/glext.h"
 #include "igfxfmid.h"
 
-using MockExecutionEnvironmentGmmFixtureTest = Test<NEO::MockExecutionEnvironmentGmmFixture>;
+using MockExecutionEnvironmentGmmFixtureTest = TestLegacy<NEO::MockExecutionEnvironmentGmmFixture>;
 
 using namespace ::testing;
 

@@ -10,7 +10,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
 
-using DeviceTest = Test<DeviceFixture>;
+using DeviceTest = TestLegacy<DeviceFixture>;
 
 TEST_F(DeviceTest, GivenDeviceWhenGetAdapterLuidThenLuidIsNotSet) {
     std::array<uint8_t, HwInfoConfig::luidSize> luid, expectedLuid;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 
 using namespace NEO;
 
-typedef Test<ClDeviceFixture> XeHpgCoreOnlyTeset;
+typedef TestLegacy<ClDeviceFixture> XeHpgCoreOnlyTeset;
 
 XE_HPG_CORETEST_F(XeHpgCoreOnlyTeset, WhenGettingRenderCoreFamilyThenXeHpgCoreIsReturned) {
     EXPECT_EQ(IGFX_XE_HPG_CORE, pDevice->getRenderCoreFamily());

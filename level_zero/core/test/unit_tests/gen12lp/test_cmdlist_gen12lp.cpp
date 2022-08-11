@@ -21,7 +21,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandListCreate = Test<DeviceFixture>;
+using CommandListCreate = TestLegacy<DeviceFixture>;
 
 template <PRODUCT_FAMILY productFamily>
 struct CommandListAdjustStateComputeMode : public WhiteBox<::L0::CommandListProductFamily<productFamily>> {

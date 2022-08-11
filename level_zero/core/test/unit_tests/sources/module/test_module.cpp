@@ -36,7 +36,7 @@
 namespace L0 {
 namespace ult {
 
-using ModuleTest = Test<ModuleFixture>;
+using ModuleTest = TestLegacy<ModuleFixture>;
 
 HWTEST_F(ModuleTest, givenBinaryWithDebugDataWhenModuleCreatedFromNativeBinaryThenDebugDataIsStored) {
     size_t size = 0;
@@ -372,7 +372,7 @@ HWTEST_F(ModuleTest, givenUnalignedHostBufferWhenSurfaceStateProgrammedThenUnali
     Kernel::fromHandle(kernelHandle)->destroy();
 }
 
-using ModuleUncachedBufferTest = Test<ModuleFixture>;
+using ModuleUncachedBufferTest = TestLegacy<ModuleFixture>;
 
 struct KernelImpUncachedTest : public KernelImp {
     using KernelImp::kernelRequiresUncachedMocsCount;
@@ -665,7 +665,7 @@ struct ModuleSpecConstantsFixture : public DeviceFixture {
 };
 
 template <typename T1, typename T2>
-using ModuleSpecConstantsTests = Test<ModuleSpecConstantsFixture<T1, T2>>;
+using ModuleSpecConstantsTests = TestLegacy<ModuleSpecConstantsFixture<T1, T2>>;
 
 using ModuleSpecConstantsLongTests = ModuleSpecConstantsTests<uint32_t, uint64_t>;
 TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWithLongSizeInDescriptorThenModuleCorrectlyPassesThemToTheCompiler) {
@@ -990,7 +990,7 @@ struct ModuleStaticLinkFixture : public DeviceFixture {
     bool testSingle = false;
 };
 
-using ModuleStaticLinkTests = Test<ModuleStaticLinkFixture>;
+using ModuleStaticLinkTests = TestLegacy<ModuleStaticLinkFixture>;
 
 TEST_F(ModuleStaticLinkTests, givenMultipleModulesProvidedForSpirVStaticLinkAndCompilerFailsThenFailureIsReturned) {
     runLinkFailureTest();
@@ -1012,7 +1012,7 @@ TEST_F(ModuleStaticLinkTests, givenSingleModuleProvidedForSpirVStaticLinkAndBuil
     runSprivLinkBuildWithOneModule();
 }
 
-using ModuleLinkingTest = Test<DeviceFixture>;
+using ModuleLinkingTest = TestLegacy<DeviceFixture>;
 
 HWTEST_F(ModuleLinkingTest, whenExternFunctionsAllocationIsPresentThenItsBeingAddedToResidencyContainer) {
     Mock<Module> module(device, nullptr);
@@ -1097,7 +1097,7 @@ HWTEST_F(ModuleLinkingTest, givenNotFullyLinkedModuleWhenCreatingKernelThenError
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_MODULE_UNLINKED, retVal);
 }
 
-using ModulePropertyTest = Test<ModuleFixture>;
+using ModulePropertyTest = TestLegacy<ModuleFixture>;
 
 TEST_F(ModulePropertyTest, whenZeModuleGetPropertiesIsCalledThenGetPropertiesIsCalled) {
     Mock<Module> module(device, nullptr);
@@ -1144,21 +1144,21 @@ TEST_F(ModulePropertyTest, givenCallToGetPropertiesWithUnresolvedSymbolsThenFlag
     EXPECT_EQ(expectedFlags, moduleProperties.flags);
 }
 
-struct ModuleFunctionPointerTests : public Test<ModuleFixture> {
+struct ModuleFunctionPointerTests : public TestLegacy<ModuleFixture> {
     void SetUp() override {
-        Test<ModuleFixture>::SetUp();
+        TestLegacy<ModuleFixture>::SetUp();
         module0 = std::make_unique<WhiteBox<::L0::Module>>(device, nullptr, ModuleType::User);
     }
     void TearDown() override {
         module0.reset(nullptr);
-        Test<ModuleFixture>::TearDown();
+        TestLegacy<ModuleFixture>::TearDown();
     }
     std::unique_ptr<WhiteBox<::L0::Module>> module0;
 };
 
-struct ModuleDynamicLinkTests : public Test<DeviceFixture> {
+struct ModuleDynamicLinkTests : public TestLegacy<DeviceFixture> {
     void SetUp() override {
-        Test<DeviceFixture>::SetUp();
+        TestLegacy<DeviceFixture>::SetUp();
         module0 = std::make_unique<WhiteBox<::L0::Module>>(device, nullptr, ModuleType::User);
         module1 = std::make_unique<WhiteBox<::L0::Module>>(device, nullptr, ModuleType::User);
         module2 = std::make_unique<WhiteBox<::L0::Module>>(device, nullptr, ModuleType::User);
@@ -1167,7 +1167,7 @@ struct ModuleDynamicLinkTests : public Test<DeviceFixture> {
         module0.reset(nullptr);
         module1.reset(nullptr);
         module2.reset(nullptr);
-        Test<DeviceFixture>::TearDown();
+        TestLegacy<DeviceFixture>::TearDown();
     }
     std::unique_ptr<WhiteBox<::L0::Module>> module0;
     std::unique_ptr<WhiteBox<::L0::Module>> module1;
@@ -1657,7 +1657,7 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolsNotPresentInAnoth
     zeModuleBuildLogDestroy(dynLinkLog);
 }
 
-using ModuleDynamicLinkTest = Test<ModuleFixture>;
+using ModuleDynamicLinkTest = TestLegacy<ModuleFixture>;
 TEST_F(ModuleDynamicLinkTest, givenUnresolvedSymbolsWhenModuleIsCreatedThenIsaAllocationsAreNotCopied) {
     NEO::MockCompilerEnableGuard mock(true);
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
@@ -1944,7 +1944,7 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
     }
 }
 
-using ContextModuleCreateTest = Test<ContextFixture>;
+using ContextModuleCreateTest = TestLegacy<ContextFixture>;
 
 HWTEST_F(ContextModuleCreateTest, givenCallToCreateModuleThenModuleIsReturned) {
     std::string testFile;
@@ -1971,7 +1971,7 @@ HWTEST_F(ContextModuleCreateTest, givenCallToCreateModuleThenModuleIsReturned) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-using ModuleTranslationUnitTest = Test<DeviceFixture>;
+using ModuleTranslationUnitTest = TestLegacy<DeviceFixture>;
 
 struct MockModuleTU : public L0::ModuleTranslationUnit {
     MockModuleTU(L0::Device *device) : L0::ModuleTranslationUnit(device) {}
@@ -2386,7 +2386,7 @@ TEST(ModuleBuildLog, WhenTooSmallBufferIsPassedToGetStringThenErrorIsReturned) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, destroyResult);
 }
 
-using PrintfModuleTest = Test<DeviceFixture>;
+using PrintfModuleTest = TestLegacy<DeviceFixture>;
 
 HWTEST_F(PrintfModuleTest, GivenModuleWithPrintfWhenKernelIsCreatedThenPrintfAllocationIsPlacedInResidencyContainer) {
     std::string testFile;
@@ -2618,7 +2618,7 @@ TEST_F(ModuleTest, whenContainsStatefulAccessIsCalledThenResultIsCorrect) {
     }
 }
 
-using ModuleInitializeTest = Test<DeviceFixture>;
+using ModuleInitializeTest = TestLegacy<DeviceFixture>;
 
 TEST_F(ModuleInitializeTest, whenModuleInitializeIsCalledThenCorrectResultIsReturned) {
     class MockModuleImp : public ModuleImp {
@@ -2691,7 +2691,7 @@ TEST_F(ModuleInitializeTest, whenModuleInitializeIsCalledThenCorrectResultIsRetu
     }
 }
 
-using ModuleDebugDataTest = Test<DeviceFixture>;
+using ModuleDebugDataTest = TestLegacy<DeviceFixture>;
 TEST_F(ModuleDebugDataTest, GivenDebugDataWithRelocationsWhenCreatingRelocatedDebugDataThenRelocationsAreApplied) {
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
@@ -2843,7 +2843,7 @@ TEST_F(ModuleTest, givenModuleWithGlobalSymbolsMapWhenPopulatingMapWithSymbolFro
     EXPECT_STREQ(expectedErrorOutput.c_str(), module0->getTranslationUnit()->buildLog.c_str());
 }
 
-using ModuleTests = Test<DeviceFixture>;
+using ModuleTests = TestLegacy<DeviceFixture>;
 TEST_F(ModuleTests, whenCopyingPatchedSegmentsThenAllocationsAreSetWritableForTbxAndAub) {
     auto pModule = std::make_unique<Module>(device, nullptr, ModuleType::User);
 
@@ -3036,7 +3036,7 @@ TEST_F(ModuleTests, givenModuleWithGlobalAndConstAllocationsWhenGettingModuleAll
     EXPECT_NE(allocs.end(), iter);
 }
 
-using ModuleIsaCopyTest = Test<ModuleImmutableDataFixture>;
+using ModuleIsaCopyTest = TestLegacy<ModuleImmutableDataFixture>;
 
 TEST_F(ModuleIsaCopyTest, whenModuleIsInitializedThenIsaIsCopied) {
     MockImmutableMemoryManager *mockMemoryManager = static_cast<MockImmutableMemoryManager *>(device->getNEODevice()->getMemoryManager());
@@ -3060,7 +3060,7 @@ TEST_F(ModuleIsaCopyTest, whenModuleIsInitializedThenIsaIsCopied) {
     }
 }
 
-using ModuleWithZebinTest = Test<ModuleWithZebinFixture>;
+using ModuleWithZebinTest = TestLegacy<ModuleWithZebinFixture>;
 TEST_F(ModuleWithZebinTest, givenNoZebinThenSegmentsAreEmpty) {
     auto segments = module->getZebinSegments();
 

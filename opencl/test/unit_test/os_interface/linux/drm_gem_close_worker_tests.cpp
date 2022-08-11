@@ -97,7 +97,7 @@ class DrmGemCloseWorkerFixture {
     MockExecutionEnvironment executionEnvironment;
 };
 
-typedef Test<DrmGemCloseWorkerFixture> DrmGemCloseWorkerTests;
+typedef TestLegacy<DrmGemCloseWorkerFixture> DrmGemCloseWorkerTests;
 
 TEST_F(DrmGemCloseWorkerTests, WhenClosingGemThenSucceeds) {
     this->drmMock->gem_close_expected = 1;

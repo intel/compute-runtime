@@ -23,7 +23,7 @@
 namespace L0 {
 namespace ult {
 
-using ContextCommandListCreate = Test<ContextFixture>;
+using ContextCommandListCreate = TestLegacy<ContextFixture>;
 
 TEST_F(ContextCommandListCreate, whenCreatingCommandListFromContextThenSuccessIsReturned) {
     ze_command_list_desc_t desc = {};
@@ -61,7 +61,7 @@ HWTEST2_F(ContextCommandListCreate, givenImmediateCmdListWhenGettingLogicalState
     commandList->destroy();
 }
 
-using CommandListCreate = Test<DeviceFixture>;
+using CommandListCreate = TestLegacy<DeviceFixture>;
 
 TEST_F(CommandListCreate, whenCommandListIsCreatedWithInvalidProductFamilyThenFailureIsReturned) {
     ze_result_t returnValue;
@@ -345,7 +345,7 @@ TEST_F(CommandListCreate, givenValidPtrThenAppendMemAdviseSetAndClearCachingThen
     ASSERT_EQ(res, ZE_RESULT_SUCCESS);
 }
 
-using CommandListMemAdvisePageFault = Test<PageFaultDeviceFixture>;
+using CommandListMemAdvisePageFault = TestLegacy<PageFaultDeviceFixture>;
 
 TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerThenAppendMemAdviseWithReadOnlyAndDevicePreferredClearsMigrationBlocked) {
     size_t size = 10;

@@ -14,7 +14,7 @@
 
 using namespace NEO;
 
-using ResourceBarrierTest = Test<CommandEnqueueFixture>;
+using ResourceBarrierTest = TestLegacy<CommandEnqueueFixture>;
 
 HWTEST_F(ResourceBarrierTest, givenNullArgsAndHWCommandQueueWhenEnqueueResourceBarrierCalledThenCorrectStatusReturned) {
     cl_resource_barrier_descriptor_intel descriptor{};

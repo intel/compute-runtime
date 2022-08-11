@@ -14,14 +14,14 @@
 
 namespace NEO {
 
-struct SingleAddressSpaceFixture : public Test<NEO::DeviceFixture> {
+struct SingleAddressSpaceFixture : public TestLegacy<NEO::DeviceFixture> {
     void SetUp() override {
         NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(1);
-        Test<NEO::DeviceFixture>::SetUp();
+        TestLegacy<NEO::DeviceFixture>::SetUp();
     }
 
     void TearDown() override {
-        Test<NEO::DeviceFixture>::TearDown();
+        TestLegacy<NEO::DeviceFixture>::TearDown();
     }
 
     DebugManagerStateRestore restorer;

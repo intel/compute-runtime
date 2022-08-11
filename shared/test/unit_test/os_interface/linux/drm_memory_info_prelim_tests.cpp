@@ -115,7 +115,7 @@ struct DrmVmTestFixture {
     static constexpr uint8_t tileCount = 4u;
 };
 
-using DrmVmTestTest = Test<DrmVmTestFixture>;
+using DrmVmTestTest = TestLegacy<DrmVmTestFixture>;
 
 TEST_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedWhenCreatingVirtualMemoryThenVmCreatedUsingNewRegion) {
     DebugManager.flags.EnableLocalMemory.set(1);

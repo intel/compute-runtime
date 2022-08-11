@@ -25,10 +25,10 @@
 namespace L0 {
 namespace ult {
 
-using CommandListCreate = Test<DeviceFixture>;
-using CommandListAppendLaunchKernel = Test<ModuleFixture>;
+using CommandListCreate = TestLegacy<DeviceFixture>;
+using CommandListAppendLaunchKernel = TestLegacy<ModuleFixture>;
 
-using CommandListAppendLaunchKernelWithAtomics = Test<ModuleFixture>;
+using CommandListAppendLaunchKernelWithAtomics = TestLegacy<ModuleFixture>;
 
 HWTEST2_F(CommandListAppendLaunchKernelWithAtomics, givenKernelWithNoGlobalAtomicsThenLastSentGlobalAtomicsInContainerStaysFalse, IsXeHpCore) {
     Mock<::L0::Kernel> kernel;
@@ -144,7 +144,7 @@ HWTEST2_F(CommandListAppendLaunchKernelWithAtomics, givenKernelWithGlobalAtomics
     EXPECT_FALSE(pCommandList->commandContainer.lastSentUseGlobalAtomics);
 }
 
-using MultTileCommandListAppendLaunchKernelL3Flush = Test<MultiTileCommandListFixture<false, false, false>>;
+using MultTileCommandListAppendLaunchKernelL3Flush = TestLegacy<MultiTileCommandListFixture<false, false, false>>;
 
 HWTEST2_F(MultTileCommandListAppendLaunchKernelL3Flush, givenKernelWithRegularEventAndWithWalkerPartitionThenProperCommandsEncoded, IsXeHpCore) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
@@ -262,7 +262,7 @@ HWTEST2_F(MultTileCommandListAppendLaunchKernelL3Flush, givenKernelWithTimestamp
     ASSERT_LE(1u, postSyncCount);
 }
 
-using CommandListAppendLaunchKernelL3Flush = Test<ModuleFixture>;
+using CommandListAppendLaunchKernelL3Flush = TestLegacy<ModuleFixture>;
 HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithEventAndWithoutWalkerPartitionThenProperCommandsEncoded, IsXeHpCore) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 

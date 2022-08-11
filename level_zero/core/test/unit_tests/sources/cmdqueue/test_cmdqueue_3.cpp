@@ -376,7 +376,7 @@ HWTEST2_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenWalkerP
     EXPECT_EQ(nullptr, workPartitionAllocation);
 }
 
-using CommandQueueIndirectAllocations = Test<ModuleFixture>;
+using CommandQueueIndirectAllocations = TestLegacy<ModuleFixture>;
 HWTEST_F(CommandQueueIndirectAllocations, givenCommandQueueWhenExecutingCommandListsThenExpectedIndirectAllocationsAddedToResidencyContainer) {
     const ze_command_queue_desc_t desc = {};
 

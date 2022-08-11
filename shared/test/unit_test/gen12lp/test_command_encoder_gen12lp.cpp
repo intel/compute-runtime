@@ -17,7 +17,7 @@
 
 using namespace NEO;
 
-using CommandEncoderTest = Test<DeviceFixture>;
+using CommandEncoderTest = TestLegacy<DeviceFixture>;
 
 GEN12LPTEST_F(CommandEncoderTest, WhenAdjustComputeModeIsCalledThenStateComputeModeShowsNonCoherencySet) {
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;

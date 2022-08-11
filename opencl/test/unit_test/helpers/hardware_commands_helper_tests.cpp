@@ -1196,7 +1196,7 @@ TEST_F(HardwareCommandsTest, givenCacheFlushAfterWalkerEnabledWhenPlatformNotSup
     EXPECT_EQ(0U, allocationsForCacheFlush.size());
 }
 
-using KernelCacheFlushTests = Test<HelloWorldFixture<HelloWorldFixtureFactory>>;
+using KernelCacheFlushTests = TestLegacy<HelloWorldFixture<HelloWorldFixtureFactory>>;
 
 HWTEST_F(KernelCacheFlushTests, givenLocallyUncachedBufferWhenGettingAllocationsForFlushThenEmptyVectorIsReturned) {
     DebugManagerStateRestore dbgRestore;
@@ -1225,7 +1225,7 @@ HWTEST_F(KernelCacheFlushTests, givenLocallyUncachedBufferWhenGettingAllocations
     clReleaseMemObject(bufferRegular);
 }
 
-struct HardwareCommandsImplicitArgsTests : Test<ClDeviceFixture> {
+struct HardwareCommandsImplicitArgsTests : TestLegacy<ClDeviceFixture> {
 
     void SetUp() override {
         ClDeviceFixture::SetUp();

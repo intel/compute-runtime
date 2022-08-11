@@ -793,7 +793,7 @@ HWTEST_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThr
 }
 
 typedef HelloWorldFixture<HelloWorldFixtureFactory> EnqueueKernelFixture;
-typedef Test<EnqueueKernelFixture> EnqueueKernelTest;
+typedef TestLegacy<EnqueueKernelFixture> EnqueueKernelTest;
 
 template <typename FamilyType>
 class MyCmdQ : public MockCommandQueueHw<FamilyType> {

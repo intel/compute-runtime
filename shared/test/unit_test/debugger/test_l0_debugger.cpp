@@ -173,7 +173,7 @@ TEST(Debugger, GivenLegacyDebuggerWhenInitializingDebuggerL0ThenAbortIsCalledAft
     executionEnvironment->decRefInternal();
 }
 
-using L0DebuggerTest = Test<DeviceFixture>;
+using L0DebuggerTest = TestLegacy<DeviceFixture>;
 
 HWTEST_F(L0DebuggerTest, GivenDeviceWhenAllocateCalledThenDebuggerIsCreated) {
     auto debugger = DebuggerL0Hw<FamilyType>::allocate(pDevice);

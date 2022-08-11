@@ -16,7 +16,7 @@
 namespace L0 {
 namespace ult {
 
-using AppendMemoryCopy = Test<DeviceFixture>;
+using AppendMemoryCopy = TestLegacy<DeviceFixture>;
 
 HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyRegionCalledThenTwoNewAllocationAreAddedToHostMapPtr, IsAtLeastSkl) {
     MockAppendMemoryCopy<gfxCoreFamily> cmdList;

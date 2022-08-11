@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-using CommandEncodeAtomic = Test<CommandEncodeStatesFixture>;
+using CommandEncodeAtomic = TestLegacy<CommandEncodeStatesFixture>;
 
 HWTEST_F(CommandEncodeAtomic, WhenProgrammingMiAtomicThenExpectAllFieldsSetCorrectly) {
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;

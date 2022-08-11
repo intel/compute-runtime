@@ -20,7 +20,7 @@
 
 using namespace NEO;
 
-using Dg2UsDeviceIdTest = Test<ClDeviceFixture>;
+using Dg2UsDeviceIdTest = TestLegacy<ClDeviceFixture>;
 
 DG2TEST_F(Dg2UsDeviceIdTest, givenDg2ProductWhenCheckBlitterOperationsSupportThenReturnFalse) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.blitterOperationsSupported);

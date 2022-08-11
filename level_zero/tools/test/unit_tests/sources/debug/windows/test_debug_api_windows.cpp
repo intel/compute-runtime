@@ -113,7 +113,7 @@ struct DebugApiWindowsFixture : public DeviceFixture {
     WddmEuDebugInterfaceMock *mockWddm = nullptr;
 };
 
-using DebugApiWindowsTest = Test<DebugApiWindowsFixture>;
+using DebugApiWindowsTest = TestLegacy<DebugApiWindowsFixture>;
 
 TEST_F(DebugApiWindowsTest, GivenReadOfGpuVaFailDueToEscapeCallFailureWhenTryingToReadSbaThenErrorIsReported) {
     zet_debug_config_t config = {};
@@ -849,7 +849,7 @@ TEST(DebugSessionWindowsTest, whenTranslateEscapeErrorStatusCalledThenCorrectZeR
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, DebugSessionWindows::translateEscapeReturnStatusToZeResult(DBGUMD_RETURN_TYPE_MAX));
 }
 
-using DebugApiWindowsAsyncThreadTest = Test<DebugApiWindowsFixture>;
+using DebugApiWindowsAsyncThreadTest = TestLegacy<DebugApiWindowsFixture>;
 
 TEST_F(DebugApiWindowsAsyncThreadTest, GivenDebugSessionWhenStartingAndClosingAsyncThreadThenThreadIsStartedAndFinishes) {
     auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);

@@ -290,7 +290,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenAdjustComputeModeIsCalledThenC
     EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT, pScm->getEuThreadSchedulingModeOverride());
 }
 
-using EncodeKernelXeHpcCoreTest = Test<CommandEncodeStatesFixture>;
+using EncodeKernelXeHpcCoreTest = TestLegacy<CommandEncodeStatesFixture>;
 
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNoFenceAsPostSyncOperationInComputeWalkerWhenEnqueueKernelIsCalledThenDoNotGenerateFenceCommands) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;

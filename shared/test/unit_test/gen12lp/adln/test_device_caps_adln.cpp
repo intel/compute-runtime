@@ -12,7 +12,7 @@
 
 using namespace NEO;
 
-using AdlnUsDeviceIdTest = Test<DeviceFixture>;
+using AdlnUsDeviceIdTest = TestLegacy<DeviceFixture>;
 
 ADLNTEST_F(AdlnUsDeviceIdTest, WhenCheckingIsSimulationThenTrueReturnedOnlyForSimulationId) {
     unsigned short adlnSimulationIds[1] = {

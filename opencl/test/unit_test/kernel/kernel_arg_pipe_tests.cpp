@@ -73,7 +73,7 @@ class KernelArgPipeFixture : public ContextFixture, public ClDeviceFixture {
     char pCrossThreadData[64];
 };
 
-typedef Test<KernelArgPipeFixture> KernelArgPipeTest;
+typedef TestLegacy<KernelArgPipeFixture> KernelArgPipeTest;
 
 TEST_F(KernelArgPipeTest, GivenValidPipeWhenSettingKernelArgThenPipeAddressIsCorrect) {
     Pipe *pipe = new MockPipe(pContext);

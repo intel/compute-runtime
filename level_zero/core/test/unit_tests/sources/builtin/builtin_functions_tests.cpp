@@ -82,7 +82,7 @@ class BuiltinFunctionsLibFixture : public DeviceFixture {
 };
 
 template <bool useImagesBuiltins, bool isStateless>
-using TestBuiltinFunctionsLibImpl = Test<BuiltinFunctionsLibFixture<useImagesBuiltins, isStateless>>;
+using TestBuiltinFunctionsLibImpl = TestLegacy<BuiltinFunctionsLibFixture<useImagesBuiltins, isStateless>>;
 
 class TestBuiltinFunctionsLibImplDefault : public TestBuiltinFunctionsLibImpl<false, false> {};
 class TestBuiltinFunctionsLibImplStateless : public TestBuiltinFunctionsLibImpl<false, true> {};

@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-typedef Test<ClDeviceFixture> SklDeviceCaps;
+typedef TestLegacy<ClDeviceFixture> SklDeviceCaps;
 
 SKLTEST_F(SklDeviceCaps, WhenCheckingProfilingTimerResolutionThenCorrectResolutionIsReturned) {
     const auto &caps = pDevice->getDeviceInfo();
@@ -35,7 +35,7 @@ SKLTEST_F(SklDeviceCaps, WhenCheckingCapabilitiesThenSvmIsEnabled) {
     EXPECT_EQ(expectedCaps, caps.svmCapabilities);
 }
 
-typedef Test<ClDeviceFixture> SklUsDeviceIdTest;
+typedef TestLegacy<ClDeviceFixture> SklUsDeviceIdTest;
 
 SKLTEST_F(SklUsDeviceIdTest, WhenCheckingIsSimulationThenTrueReturnedOnlyForSimulationId) {
     unsigned short sklSimulationIds[6] = {

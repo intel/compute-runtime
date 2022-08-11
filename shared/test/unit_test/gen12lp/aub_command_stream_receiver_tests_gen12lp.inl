@@ -20,7 +20,7 @@
 
 using namespace NEO;
 
-using Gen12LPAubCommandStreamReceiverTests = Test<DeviceFixture>;
+using Gen12LPAubCommandStreamReceiverTests = TestLegacy<DeviceFixture>;
 
 GEN12LPTEST_F(Gen12LPAubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetGUCWorkQueueItemHeaderIsCalledThenAppropriateValueDependingOnEngineTypeIsReturned) {
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));

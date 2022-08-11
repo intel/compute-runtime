@@ -14,7 +14,7 @@
 
 using namespace NEO;
 
-using TestDg2HwInfoConfig = Test<DeviceFixture>;
+using TestDg2HwInfoConfig = TestLegacy<DeviceFixture>;
 
 HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTestWindows, givenHardwareInfoWhenCallingIsAdditionalStateBaseAddressWARequiredThenFalseIsReturned, IGFX_DG2);
 HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTestWindows, givenHardwareInfoWhenCallingIsMaxThreadsForWorkgroupWARequiredThenFalseIsReturned, IGFX_DG2);

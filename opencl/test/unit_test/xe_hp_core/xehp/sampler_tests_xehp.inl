@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 
 using namespace NEO;
 
-typedef Test<ClDeviceFixture> XeHPSamplerTest;
+typedef TestLegacy<ClDeviceFixture> XeHPSamplerTest;
 
 XEHPTEST_F(XeHPSamplerTest, givenXeHPSamplerWhenUsingDefaultFilteringAndAppendSamplerStateParamsThenDisableLowQualityFilter) {
     EXPECT_FALSE(DebugManager.flags.ForceSamplerLowFilteringPrecision.get());

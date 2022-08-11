@@ -27,7 +27,7 @@ namespace iOpenCL {
 struct SKernelBinaryHeaderCommon;
 }
 
-class KernelImageArgTest : public Test<NEO::ClDeviceFixture> {
+class KernelImageArgTest : public TestLegacy<NEO::ClDeviceFixture> {
   public:
     KernelImageArgTest() {
     }

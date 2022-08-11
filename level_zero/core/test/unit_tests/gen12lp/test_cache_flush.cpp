@@ -19,7 +19,7 @@
 namespace L0 {
 namespace ult {
 
-using CacheFlushTests = Test<DeviceFixture>;
+using CacheFlushTests = TestLegacy<DeviceFixture>;
 
 HWTEST2_F(CacheFlushTests, GivenCommandStreamWithSingleL3RangeAndNonZeroPostSyncAddressWhenFlushGpuCacheIsCalledThenPostSyncOperationIsSetForL3Control, IsDG1) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;

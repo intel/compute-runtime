@@ -54,7 +54,7 @@ TEST(zeInit, whenCallingZeInitWithoutGpuOnlyFlagThenInitializeOnDriverIsNotCalle
     EXPECT_EQ(0u, driver.initCalledCount);
 }
 
-using DriverHandleImpTest = Test<DeviceFixture>;
+using DriverHandleImpTest = TestLegacy<DeviceFixture>;
 TEST_F(DriverHandleImpTest, givenDriverImpWhenCallingupdateRootDeviceBitFieldsThendeviceBitfieldsAreUpdatedInAccordanceWithNeoDevice) {
     auto hwInfo = *NEO::defaultHwInfo;
     auto newNeoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
@@ -64,7 +64,7 @@ TEST_F(DriverHandleImpTest, givenDriverImpWhenCallingupdateRootDeviceBitFieldsTh
     EXPECT_EQ(newNeoDevice->getDeviceBitfield(), entry->second);
 }
 
-using DriverVersionTest = Test<DeviceFixture>;
+using DriverVersionTest = TestLegacy<DeviceFixture>;
 
 TEST_F(DriverVersionTest, givenCallToGetExtensionPropertiesThenSupportedExtensionsAreReturned) {
     uint32_t count = 0;
@@ -150,7 +150,7 @@ TEST_F(DriverVersionTest, whenCallingGetDriverPropertiesRepeatedlyThenTheSameUui
     }
 }
 
-using ImportNTHandle = Test<DeviceFixture>;
+using ImportNTHandle = TestLegacy<DeviceFixture>;
 
 class MemoryManagerNTHandleMock : public NEO::OsAgnosticMemoryManager {
   public:
@@ -653,7 +653,7 @@ struct HostImportApiFixture : public HostPointerManagerFixure {
     ze_driver_handle_t driverHandle;
 };
 
-using DriverExperimentalApiTest = Test<HostImportApiFixture>;
+using DriverExperimentalApiTest = TestLegacy<HostImportApiFixture>;
 
 TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPointer) {
     decltype(&zexDriverImportExternalPointer) expectedImport = L0::zexDriverImportExternalPointer;

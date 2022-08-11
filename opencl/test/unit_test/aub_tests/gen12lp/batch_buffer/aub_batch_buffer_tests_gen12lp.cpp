@@ -16,8 +16,8 @@
 #include "opencl/test/unit_test/aub_tests/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 
-using Gen12LPAubBatchBufferTests = Test<NEO::ClDeviceFixture>;
-using Gen12LPTimestampTests = Test<HelloWorldFixture<AUBHelloWorldFixtureFactory>>;
+using Gen12LPAubBatchBufferTests = TestLegacy<NEO::ClDeviceFixture>;
+using Gen12LPTimestampTests = TestLegacy<HelloWorldFixture<AUBHelloWorldFixtureFactory>>;
 
 static constexpr auto gpuBatchBufferAddr = 0x400400001000; // 47-bit GPU address
 

@@ -14,7 +14,7 @@
 namespace L0 {
 namespace ult {
 
-using KernelImp = Test<DeviceFixture>;
+using KernelImp = TestLegacy<DeviceFixture>;
 
 TEST_F(KernelImp, GivenCrossThreadDataThenIsCorrectlyPatchedWithGlobalWorkSizeAndGroupCount) {
     uint32_t *crossThreadData =

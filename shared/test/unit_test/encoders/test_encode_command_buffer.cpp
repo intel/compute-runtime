@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-using EncodeBatchBufferStartOrEndTest = Test<DeviceFixture>;
+using EncodeBatchBufferStartOrEndTest = TestLegacy<DeviceFixture>;
 
 HWTEST_F(EncodeBatchBufferStartOrEndTest, givenCommandContainerWhenEncodeBBEndThenCommandIsAdded) {
     CommandContainer cmdContainer;
@@ -94,7 +94,7 @@ HWTEST_F(EncodeBatchBufferStartOrEndTest, givenGpuAddressWhenEncodeBBStartThenAd
     }
 }
 
-using EncodeNoopTest = Test<DeviceFixture>;
+using EncodeNoopTest = TestLegacy<DeviceFixture>;
 
 HWTEST_F(EncodeNoopTest, WhenAligningLinearStreamToCacheLineSizeThenItIsAlignedCorrectly) {
     CommandContainer cmdContainer;

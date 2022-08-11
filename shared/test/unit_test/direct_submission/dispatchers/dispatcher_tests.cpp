@@ -12,7 +12,7 @@
 
 using namespace NEO;
 
-using DispatcherTest = Test<DispatcherFixture>;
+using DispatcherTest = TestLegacy<DispatcherFixture>;
 
 HWTEST_F(DispatcherTest, givenBaseDispatcherWhenAskingForStartCmdSizeThenReturnBbStartCmdSize) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;

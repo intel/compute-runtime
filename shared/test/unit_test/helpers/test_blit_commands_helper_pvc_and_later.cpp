@@ -12,7 +12,7 @@
 
 #include "gtest/gtest.h"
 
-using BlitTests = Test<DeviceFixture>;
+using BlitTests = TestLegacy<DeviceFixture>;
 
 HWTEST2_F(BlitTests, givenOneBytePatternWhenFillPatternWithBlitThenCommandIsProgrammed, IsPVC) {
     using MEM_SET = typename FamilyType::MEM_SET;

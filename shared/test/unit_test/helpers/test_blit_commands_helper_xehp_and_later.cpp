@@ -18,7 +18,7 @@
 #include "gtest/gtest.h"
 #include "test_traits_common.h"
 
-using BlitTests = Test<DeviceFixture>;
+using BlitTests = TestLegacy<DeviceFixture>;
 
 using BlitPlatforms = IsAtLeastProduct<IGFX_XE_HP_SDV>;
 

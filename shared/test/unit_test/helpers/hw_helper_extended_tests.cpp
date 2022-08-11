@@ -11,7 +11,7 @@
 
 using namespace NEO;
 
-typedef Test<DeviceFixture> HwHelperTest;
+typedef TestLegacy<DeviceFixture> HwHelperTest;
 
 HWTEST_F(HwHelperTest, GivenHwInfoWithEnabledBliterWhenCheckCopyEnginesCountThenReturnedOne) {
     HardwareInfo hwInfo{};

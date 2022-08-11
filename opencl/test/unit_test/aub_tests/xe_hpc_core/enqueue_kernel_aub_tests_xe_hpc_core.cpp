@@ -17,7 +17,7 @@ using namespace NEO;
 
 extern const HardwareInfo *defaultHwInfo;
 
-using AUBSimpleKernelStatelessTest = Test<KernelAUBFixture<SimpleKernelStatelessFixture>>;
+using AUBSimpleKernelStatelessTest = TestLegacy<KernelAUBFixture<SimpleKernelStatelessFixture>>;
 
 HWTEST_F(AUBSimpleKernelStatelessTest, givenPrefetchEnabledWhenEnqueuedKernelThenDataIsCorrect) {
     DebugManagerStateRestore restore;

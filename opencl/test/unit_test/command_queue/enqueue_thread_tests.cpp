@@ -133,7 +133,7 @@ struct EnqueueThreadingFixture : public ClDeviceFixture {
     }
 };
 
-typedef Test<EnqueueThreadingFixture> EnqueueThreading;
+typedef TestLegacy<EnqueueThreadingFixture> EnqueueThreading;
 
 struct EnqueueThreadingImage : EnqueueThreading {
     void SetUp() override {

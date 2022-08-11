@@ -67,7 +67,7 @@ class CommandListMemoryExtensionFixture : public DeviceFixture {
     void *ptr = nullptr;
 };
 
-using CommandListAppendWaitOnMemExtension = Test<CommandListMemoryExtensionFixture>;
+using CommandListAppendWaitOnMemExtension = TestLegacy<CommandListMemoryExtensionFixture>;
 
 TEST_F(CommandListAppendWaitOnMemExtension, givenAppendWaitOnMemReturnsUnsupported) {
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -76,7 +76,7 @@ TEST_F(CommandListAppendWaitOnMemExtension, givenAppendWaitOnMemReturnsUnsupport
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-using CommandListAppendWriteToMemExtension = Test<CommandListMemoryExtensionFixture>;
+using CommandListAppendWriteToMemExtension = TestLegacy<CommandListMemoryExtensionFixture>;
 
 TEST_F(CommandListAppendWriteToMemExtension, givenAppendWriteToMemReturnsUnsupported) {
     ze_result_t result = ZE_RESULT_SUCCESS;

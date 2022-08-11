@@ -172,9 +172,9 @@ class WddmCommandStreamMockGdiTest : public ::testing::Test {
     }
 };
 
-using WddmCommandStreamTest = ::Test<WddmCommandStreamFixture>;
-using WddmDefaultTest = ::Test<DeviceFixture>;
-struct DeviceCommandStreamTest : ::Test<MockAubCenterFixture>, DeviceFixture {
+using WddmCommandStreamTest = ::TestLegacy<WddmCommandStreamFixture>;
+using WddmDefaultTest = ::TestLegacy<DeviceFixture>;
+struct DeviceCommandStreamTest : ::TestLegacy<MockAubCenterFixture>, DeviceFixture {
     void SetUp() override {
         DeviceFixture::SetUp();
         MockAubCenterFixture::SetUp();
@@ -322,7 +322,7 @@ struct WddmPreemptionHeaderFixture {
     WddmMock *wddm = nullptr;
 };
 
-using WddmPreemptionHeaderTests = ::Test<WddmPreemptionHeaderFixture>;
+using WddmPreemptionHeaderTests = ::TestLegacy<WddmPreemptionHeaderFixture>;
 
 TEST_F(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOffWhenWorkloadIsSubmittedThenHeaderDoesntHavePreemptionFieldSet) {
     hwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;

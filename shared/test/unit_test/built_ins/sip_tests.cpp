@@ -74,7 +74,7 @@ TEST(SipBinaryFromFile, givenFilenameWithoutExtnesionWhenCreatingHeaderFilenameT
     EXPECT_EQ("abc_header", headerName);
 }
 
-using RawBinarySipTest = Test<RawBinarySipFixture>;
+using RawBinarySipTest = TestLegacy<RawBinarySipFixture>;
 
 TEST_F(RawBinarySipTest, givenRawBinaryFileWhenInitSipKernelThenSipIsLoadedFromFile) {
     bool ret = SipKernel::initSipKernel(SipKernelType::Csr, *pDevice);
@@ -289,7 +289,7 @@ struct HexadecimalHeaderSipKernel : public SipKernel {
     using SipKernel::getSipKernelImpl;
     using SipKernel::initHexadecimalArraySipKernel;
 };
-using HexadecimalHeaderSipTest = Test<DeviceFixture>;
+using HexadecimalHeaderSipTest = TestLegacy<DeviceFixture>;
 
 TEST_F(HexadecimalHeaderSipTest, whenInitHexadecimalArraySipKernelIsCalledThenSipKernelIsCorrect) {
     VariableBackup<SipClassType> backupSipClassType(&SipKernel::classType, SipClassType::HexadecimalHeaderFile);
@@ -333,7 +333,7 @@ TEST_F(HexadecimalHeaderSipTest, whenInitHexadecimalArraySipKernelIsCalledTwiceT
     EXPECT_EQ(sipAllocation, sipAllocation2);
 }
 
-using StateSaveAreaSipTest = Test<RawBinarySipFixture>;
+using StateSaveAreaSipTest = TestLegacy<RawBinarySipFixture>;
 
 TEST_F(StateSaveAreaSipTest, givenEmptyStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenMaxDbgSurfaceSizeIsReturned) {
     MockSipData::useMockSip = true;

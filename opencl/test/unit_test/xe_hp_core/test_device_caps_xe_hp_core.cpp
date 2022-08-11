@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-typedef Test<ClDeviceFixture> XE_HP_COREDeviceCaps;
+typedef TestLegacy<ClDeviceFixture> XE_HP_COREDeviceCaps;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XE_HP_COREDeviceCaps, givenKernelWhenCanTransformImagesIsCalledThenReturnsTrue) {
     MockKernelWithInternals mockKernel(*pClDevice);

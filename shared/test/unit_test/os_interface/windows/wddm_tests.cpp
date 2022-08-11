@@ -404,7 +404,7 @@ struct WddmSkipResourceCleanupFixtureWithMockGdiDll : public GdiDllFixture, publ
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
 };
 
-using WddmSkipResourceCleanupFixtureTests = Test<WddmSkipResourceCleanupFixtureWithMockGdiDll>;
+using WddmSkipResourceCleanupFixtureTests = TestLegacy<WddmSkipResourceCleanupFixtureWithMockGdiDll>;
 
 TEST_F(WddmSkipResourceCleanupFixtureTests, givenWaitForSynchronizationObjectFromCpuWhenSkipResourceCleanupIsTrueThenSuccessIsReturnedAndGdiFunctionIsNotCalled) {
     VariableBackup<uint64_t> varBackup(&waitForSynchronizationObjectFromCpuCounter);

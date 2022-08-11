@@ -30,7 +30,7 @@ TEST(BindlessHeapsHelper, givenBindlessModeFlagDisabledWhenCreatingRootDevicesTh
     EXPECT_EQ(deviceFactory->rootDevices[0]->getBindlessHeapsHelper(), nullptr);
 }
 
-using BindlessHeapsHelperTests = Test<MemManagerFixture>;
+using BindlessHeapsHelperTests = TestLegacy<MemManagerFixture>;
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenItsCreatedThenSpecialSshAllocatedAtHeapBegining) {
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumGenericSubDevices() > 1, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());

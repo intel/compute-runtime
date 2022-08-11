@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ TEST(zeCommandListAppendMemoryPrefetch, whenCalledThenRedirectedToObject) {
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-using zeCommandListAppendMemAdviseTest = Test<DeviceFixture>;
+using zeCommandListAppendMemAdviseTest = TestLegacy<DeviceFixture>;
 TEST_F(zeCommandListAppendMemAdviseTest, whenCalledThenRedirectedToObject) {
     MockCommandList commandList;
 

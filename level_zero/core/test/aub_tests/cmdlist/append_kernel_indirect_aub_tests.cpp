@@ -19,7 +19,7 @@
 namespace L0 {
 namespace ult {
 
-struct AUBAppendKernelIndirectL0 : Test<AUBFixtureL0> {
+struct AUBAppendKernelIndirectL0 : TestLegacy<AUBFixtureL0> {
 
     static ze_module_handle_t createModuleFromFile(const std::string &fileName, ze_context_handle_t context, ze_device_handle_t device) {
         ze_module_handle_t moduleHandle;

@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-using XeHPComputeWorkgroupSizeTest = Test<ClDeviceFixture>;
+using XeHPComputeWorkgroupSizeTest = TestLegacy<ClDeviceFixture>;
 
 XEHPTEST_F(XeHPComputeWorkgroupSizeTest, giveXeHpA0WhenKernelIsaIsBelowThresholdAndThereAreNoImageBarriersAndSlmThenSmallWorkgorupSizeIsSelected) {
     auto program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));

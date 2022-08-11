@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 
 using namespace NEO;
 
-struct clCreateContextFromTypeTests : Test<PlatformFixture> {
+struct clCreateContextFromTypeTests : TestLegacy<PlatformFixture> {
     cl_int retVal = CL_DEVICE_NOT_AVAILABLE;
 };
 

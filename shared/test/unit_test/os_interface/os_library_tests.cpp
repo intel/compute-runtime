@@ -71,7 +71,7 @@ TEST(OSLibraryTest, whenSymbolNameIsInvalidThenGetProcAddressReturnsNullPointer)
     EXPECT_EQ(nullptr, ptr);
 }
 
-using OsLibraryTestWithFailureInjection = Test<MemoryManagementFixture>;
+using OsLibraryTestWithFailureInjection = TestLegacy<MemoryManagementFixture>;
 
 TEST_F(OsLibraryTestWithFailureInjection, GivenFailureInjectionWhenLibraryIsLoadedThenOnlyFailedAllocationIsNull) {
     InjectedFunction method = [](size_t failureIndex) {

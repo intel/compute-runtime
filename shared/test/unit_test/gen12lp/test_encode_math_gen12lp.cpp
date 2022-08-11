@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-using CommandEncoderMathTestGen12Lp = Test<DeviceFixture>;
+using CommandEncoderMathTestGen12Lp = TestLegacy<DeviceFixture>;
 
 GEN12LPTEST_F(CommandEncoderMathTestGen12Lp, WhenAppendsAGreaterThanThenPredicateCorrectlySetAndRemapEnabled) {
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;

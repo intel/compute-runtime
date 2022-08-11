@@ -1377,7 +1377,7 @@ class PatchTokenFromBinaryTest : public ProgramSimpleFixture {
         ProgramSimpleFixture::TearDown();
     }
 };
-using PatchTokenTests = Test<PatchTokenFromBinaryTest>;
+using PatchTokenTests = TestLegacy<PatchTokenFromBinaryTest>;
 
 template <typename FamilyType>
 class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
@@ -1556,7 +1556,7 @@ class ProgramPatchTokenFromBinaryTest : public ProgramSimpleFixture {
         ProgramSimpleFixture::TearDown();
     }
 };
-typedef Test<ProgramPatchTokenFromBinaryTest> ProgramPatchTokenTests;
+typedef TestLegacy<ProgramPatchTokenFromBinaryTest> ProgramPatchTokenTests;
 
 TEST(ProgramFromBinaryTests, givenBinaryWithInvalidICBEThenErrorIsReturned) {
     cl_int retVal = CL_INVALID_BINARY;
@@ -1644,7 +1644,7 @@ TEST(ProgramFromBinaryTests, givenEmptyProgramThenErrorIsReturned) {
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
 }
 
-using ProgramWithDebugSymbolsTests = Test<ProgramSimpleFixture>;
+using ProgramWithDebugSymbolsTests = TestLegacy<ProgramSimpleFixture>;
 
 TEST_F(ProgramWithDebugSymbolsTests, GivenProgramCreatedWithDashGOptionWhenGettingProgramBinariesThenDebugDataIsIncluded) {
     CreateProgramFromBinary(pContext, pContext->getDevices(), "CopyBuffer_simd16", "-g");
@@ -2969,7 +2969,7 @@ TEST(setProgramSpecializationConstantTest, givenUninitializedCompilerinterfaceWh
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
 }
 
-using ProgramBinTest = Test<ProgramSimpleFixture>;
+using ProgramBinTest = TestLegacy<ProgramSimpleFixture>;
 
 TEST_F(ProgramBinTest, givenPrintProgramBinaryProcessingTimeSetWhenBuildProgramThenProcessingTimeIsPrinted) {
     DebugManagerStateRestore restorer;

@@ -139,7 +139,7 @@ HWTEST_F(EncodeMathMMIOTest, givenAluRegistersWhenEncodeAluAndIsCalledThenAluPar
     EXPECT_EQ(aluParam[4].DW0.Value, 0u);
 }
 
-using CommandEncoderMathTest = Test<DeviceFixture>;
+using CommandEncoderMathTest = TestLegacy<DeviceFixture>;
 
 HWTEST_F(CommandEncoderMathTest, WhenReservingCommandThenBitfieldSetCorrectly) {
     using MI_MATH = typename FamilyType::MI_MATH;

@@ -25,7 +25,7 @@
 using namespace NEO;
 
 typedef HelloWorldFixture<HelloWorldFixtureFactory> EnqueueKernelFixture;
-typedef Test<EnqueueKernelFixture> EnqueueKernelTest;
+typedef TestLegacy<EnqueueKernelFixture> EnqueueKernelTest;
 
 TEST_F(EnqueueKernelTest, GivenNullKernelWhenEnqueuingKernelThenInvalidKernelErrorIsReturned) {
     size_t globalWorkSize[3] = {1, 1, 1};

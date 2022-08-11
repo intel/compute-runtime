@@ -17,7 +17,7 @@
 
 namespace L0 {
 namespace ult {
-using CommandListTests = Test<DeviceFixture>;
+using CommandListTests = TestLegacy<DeviceFixture>;
 
 HWTEST2_F(CommandListTests, givenDG2WithBSteppingWhenCreatingCommandListThenAdditionalStateBaseAddressCmdIsAdded, IsDG2) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;

@@ -253,7 +253,7 @@ struct AubWalkerPartitionZeroFixture : public AubWalkerPartitionFixture {
     std::unique_ptr<AllocationProperties> commandBufferProperties;
 };
 
-using AubWalkerPartitionZeroTest = Test<AubWalkerPartitionZeroFixture>;
+using AubWalkerPartitionZeroTest = TestLegacy<AubWalkerPartitionZeroFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, whenPartitionCountSetToZeroThenProvideEqualSingleWalker) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
@@ -649,7 +649,7 @@ struct MultiLevelBatchAubFixture : public AUBFixture {
     GraphicsAllocation *thirdLevelBatch = nullptr;
 };
 
-using MultiLevelBatchTestsWithNesting = Test<MultiLevelBatchAubFixture<true>>;
+using MultiLevelBatchTestsWithNesting = TestLegacy<MultiLevelBatchAubFixture<true>>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithNesting, givenConditionalBatchBufferEndWhenItExitsThirdLevelCommandBufferThenSecondLevelBatchIsResumed) {
     auto writeAddress = helperSurface->getGpuAddress();
@@ -802,7 +802,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithNesting, givenCommandBuffer
     flushStream();
     expectMemory<FamilyType>(reinterpret_cast<void *>(writeAddress), &writeValue, sizeof(writeValue));
 }
-using MultiLevelBatchTestsWithoutNesting = Test<MultiLevelBatchAubFixture<false>>;
+using MultiLevelBatchTestsWithoutNesting = TestLegacy<MultiLevelBatchAubFixture<false>>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithoutNesting, givenConditionalBBEndWhenItExitsFromSecondLevelThenUpperLevelIsResumed) {
     auto writeAddress = helperSurface->getGpuAddress();
@@ -1184,7 +1184,7 @@ INSTANTIATE_TEST_CASE_P(
         ::testing::ValuesIn(DispatchParamtersForTests),
         ::testing::ValuesIn(testWorkingDimensions)));
 
-using AubWparidTests = Test<AubWalkerPartitionFixture>;
+using AubWparidTests = TestLegacy<AubWalkerPartitionFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, AubWparidTests, whenPartitionCountSetAndPartitionIdSpecifiedViaWPARIDThenProvideEqualNumberWalkers) {
     size_t globalWorkOffset[3] = {0, 0, 0};

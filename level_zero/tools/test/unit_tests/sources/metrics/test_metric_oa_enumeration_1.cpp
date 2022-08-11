@@ -22,7 +22,7 @@ using ::testing::Return;
 
 namespace L0 {
 namespace ult {
-using MetricEnumerationTest = Test<MetricContextFixture>;
+using MetricEnumerationTest = TestLegacy<MetricContextFixture>;
 TEST_F(MetricEnumerationTest, givenIncorrectMetricsDiscoveryDeviceWhenZetGetMetricGroupIsCalledThenNoMetricGroupsAreReturned) {
 
     EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
@@ -887,7 +887,7 @@ TEST_F(MetricEnumerationTest, givenValidEventBasedMetricGroupWhenzetContextActiv
     EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
 }
 
-using MultiDeviceMetricEnumerationTest = Test<MetricMultiDeviceFixture>;
+using MultiDeviceMetricEnumerationTest = TestLegacy<MetricMultiDeviceFixture>;
 
 TEST_F(MultiDeviceMetricEnumerationTest, givenMultipleDevicesAndValidEventBasedMetricGroupWhenzetContextActivateMetricGroupsIsCalledThenReturnsSuccess) {
 

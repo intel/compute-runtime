@@ -11,7 +11,7 @@
 
 using namespace NEO;
 
-typedef Test<ClDeviceFixture> KblDeviceCaps;
+typedef TestLegacy<ClDeviceFixture> KblDeviceCaps;
 
 KBLTEST_F(KblDeviceCaps, GivenKBLWhenCheckftr64KBpagesThenTrue) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftr64KBpages);

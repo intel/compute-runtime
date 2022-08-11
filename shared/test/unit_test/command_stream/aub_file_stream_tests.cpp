@@ -32,7 +32,7 @@
 
 using namespace NEO;
 
-using AubFileStreamTests = Test<AubCommandStreamReceiverFixture>;
+using AubFileStreamTests = TestLegacy<AubCommandStreamReceiverFixture>;
 
 struct AddPatchInfoCommentsAubTests : AubFileStreamTests {
     void SetUp() override {

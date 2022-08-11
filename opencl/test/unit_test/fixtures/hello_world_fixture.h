@@ -128,7 +128,7 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
 };
 
 template <typename FixtureFactory>
-struct HelloWorldTest : Test<HelloWorldFixture<FixtureFactory>> {
+struct HelloWorldTest : TestLegacy<HelloWorldFixture<FixtureFactory>> {
 };
 
 template <typename FixtureFactory>

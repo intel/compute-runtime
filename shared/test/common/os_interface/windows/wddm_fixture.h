@@ -30,7 +30,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 namespace NEO {
-struct WddmFixture : public Test<MockExecutionEnvironmentGmmFixture> {
+struct WddmFixture : public TestLegacy<MockExecutionEnvironmentGmmFixture> {
     void SetUp() override {
         MockExecutionEnvironmentGmmFixture::SetUp();
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
@@ -167,8 +167,8 @@ struct WddmInstrumentationGmmFixture : DeviceFixture {
 };
 
 using WddmTest = WddmFixture;
-using WddmTestWithMockGdiDll = Test<WddmFixtureWithMockGdiDll>;
-using WddmTestWithMockGdiDllNoCleanup = Test<WddmFixtureWithMockGdiDllWddmNoCleanup>;
-using WddmInstrumentationTest = Test<WddmInstrumentationGmmFixture>;
+using WddmTestWithMockGdiDll = TestLegacy<WddmFixtureWithMockGdiDll>;
+using WddmTestWithMockGdiDllNoCleanup = TestLegacy<WddmFixtureWithMockGdiDllWddmNoCleanup>;
+using WddmInstrumentationTest = TestLegacy<WddmInstrumentationGmmFixture>;
 using WddmTestSingle = ::testing::Test;
 } // namespace NEO

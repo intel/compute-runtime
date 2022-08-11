@@ -99,8 +99,8 @@ struct L0DebuggerLinuxMultitileFixture : public L0DebuggerLinuxFixture {
     L0::Device *subDevice1 = nullptr;
 };
 
-using L0DebuggerLinuxTest = Test<L0DebuggerLinuxFixture>;
-using L0DebuggerLinuxMultitileTest = Test<L0DebuggerLinuxMultitileFixture>;
+using L0DebuggerLinuxTest = TestLegacy<L0DebuggerLinuxFixture>;
+using L0DebuggerLinuxMultitileTest = TestLegacy<L0DebuggerLinuxMultitileFixture>;
 
 TEST_F(L0DebuggerLinuxTest, givenProgramDebuggingEnabledWhenDriverHandleIsCreatedThenItAllocatesL0Debugger) {
     EXPECT_NE(nullptr, neoDevice->getDebugger());

@@ -17,7 +17,7 @@
 
 using namespace NEO;
 
-using CommandEncoderTest = Test<DeviceFixture>;
+using CommandEncoderTest = TestLegacy<DeviceFixture>;
 
 GEN9TEST_F(CommandEncoderTest, WhenProgrammingThenLoadRegisterImmIsUsed) {
     CommandContainer cmdContainer;

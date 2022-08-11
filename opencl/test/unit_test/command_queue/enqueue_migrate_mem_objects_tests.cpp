@@ -33,7 +33,7 @@ class MigrateMemObjectsFixture
     }
 };
 
-typedef Test<MigrateMemObjectsFixture> MigrateMemObjectsTest;
+typedef TestLegacy<MigrateMemObjectsFixture> MigrateMemObjectsTest;
 
 TEST_F(MigrateMemObjectsTest, GivenNullEventWhenMigratingEventsThenSuccessIsReturned) {
 

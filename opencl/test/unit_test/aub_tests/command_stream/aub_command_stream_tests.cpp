@@ -70,7 +70,7 @@ struct AUBFixture : public AUBCommandStreamFixture,
     }
 };
 
-typedef Test<AUBFixture> AUBcommandstreamTests;
+typedef TestLegacy<AUBFixture> AUBcommandstreamTests;
 
 HWTEST_F(AUBcommandstreamTests, WhenFlushingTwiceThenCompletes) {
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(*pCS, nullptr);

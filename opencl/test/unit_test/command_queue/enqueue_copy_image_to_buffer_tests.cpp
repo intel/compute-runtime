@@ -365,7 +365,7 @@ HWTEST_F(EnqueueCopyImageToBufferStatefulTest, givenBufferWhenCopyingImageToBuff
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-using OneMipLevelCopyImageToBufferImageTests = Test<OneMipLevelImageFixture>;
+using OneMipLevelCopyImageToBufferImageTests = TestLegacy<OneMipLevelImageFixture>;
 
 HWTEST_F(OneMipLevelCopyImageToBufferImageTests, GivenNotMippedImageWhenCopyingImageToBufferThenDoNotProgramSourceMipLevel) {
     auto dstBuffer = std::unique_ptr<Buffer>(createBuffer());

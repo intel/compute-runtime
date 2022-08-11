@@ -83,7 +83,7 @@ struct MiAtomicAubFixture : public AUBFixture {
     GraphicsAllocation *systemSurface = nullptr;
 };
 
-using MiAtomicAubTest = Test<MiAtomicAubFixture>;
+using MiAtomicAubTest = TestLegacy<MiAtomicAubFixture>;
 
 HWTEST_F(MiAtomicAubTest, WhenDispatchingAtomicMoveOperationThenExpectCorrectEndValues) {
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;

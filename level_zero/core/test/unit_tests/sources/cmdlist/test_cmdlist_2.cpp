@@ -19,8 +19,8 @@
 namespace L0 {
 namespace ult {
 
-using CommandListCreate = Test<DeviceFixture>;
-using CommandListAppend = Test<CommandListFixture>;
+using CommandListCreate = TestLegacy<DeviceFixture>;
+using CommandListAppend = TestLegacy<CommandListFixture>;
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
@@ -1199,7 +1199,7 @@ HWTEST2_F(CommandListCreate, givenCommandListThenSshCorrectlyReserved, Supported
     EXPECT_EQ(commandList.getReserveSshSize(), size);
 }
 
-using CommandListAppendMemoryCopyBlit = Test<CommandListFixture>;
+using CommandListAppendMemoryCopyBlit = TestLegacy<CommandListFixture>;
 
 HWTEST2_F(CommandListAppendMemoryCopyBlit, whenAppendMemoryCopyBlitIsAppendedAndNoSpaceIsAvailableThenNextCommandBufferIsCreated, IsAtLeastSkl) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;

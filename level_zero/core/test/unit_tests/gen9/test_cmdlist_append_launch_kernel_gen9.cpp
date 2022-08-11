@@ -15,7 +15,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandListAppendLaunchKernel = Test<ModuleFixture>;
+using CommandListAppendLaunchKernel = TestLegacy<ModuleFixture>;
 using IsGen9Core = IsWithinProducts<IGFX_SKYLAKE, IGFX_COFFEELAKE>;
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenKernelWithSLMThenL3IsProgrammedWithSLMValue, IsGen9Core) {

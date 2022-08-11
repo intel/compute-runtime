@@ -35,4 +35,4 @@ struct ImplicitScalingFixture : public CommandEncodeStatesFixture {
     void *alignedMemory = nullptr;
 };
 
-using ImplicitScalingTests = Test<ImplicitScalingFixture>;
+using ImplicitScalingTests = TestLegacy<ImplicitScalingFixture>;

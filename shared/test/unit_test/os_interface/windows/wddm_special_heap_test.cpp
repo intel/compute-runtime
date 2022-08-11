@@ -43,7 +43,7 @@ class WddmMemManagerFixture {
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;
 };
 
-using WddmFrontWindowPoolAllocatorTests = Test<WddmMemManagerFixture>;
+using WddmFrontWindowPoolAllocatorTests = TestLegacy<WddmMemManagerFixture>;
 
 TEST_F(WddmFrontWindowPoolAllocatorTests, givenAllocateInFrontWindowPoolFlagWhenWddmAllocate32BitGraphicsMemoryThenAllocateAtHeapBegining) {
     AllocationData allocData = {};

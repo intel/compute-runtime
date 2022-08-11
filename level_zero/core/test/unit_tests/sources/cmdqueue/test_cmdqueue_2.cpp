@@ -29,7 +29,7 @@
 namespace L0 {
 namespace ult {
 
-using ContextCreateCommandQueueTest = Test<ContextFixture>;
+using ContextCreateCommandQueueTest = TestLegacy<ContextFixture>;
 
 TEST_F(ContextCreateCommandQueueTest, givenCallToContextCreateCommandQueueThenCallSucceeds) {
     ze_command_queue_desc_t desc = {};
@@ -109,7 +109,7 @@ HWTEST_F(ContextCreateCommandQueueTest, givenRootDeviceAndImplicitScalingDisable
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
 }
 
-using AubCsrTest = Test<AubCsrFixture>;
+using AubCsrTest = TestLegacy<AubCsrFixture>;
 
 HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrWhenCallingExecuteCommandListsThenPollForCompletionIsCalled) {
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
@@ -134,8 +134,8 @@ HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrWhenCallingExecuteCommandListsThenPoll
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
 }
 
-using CommandQueueSynchronizeTest = Test<ContextFixture>;
-using MultiTileCommandQueueSynchronizeTest = Test<SingleRootMultiSubDeviceFixture>;
+using CommandQueueSynchronizeTest = TestLegacy<ContextFixture>;
+using MultiTileCommandQueueSynchronizeTest = TestLegacy<SingleRootMultiSubDeviceFixture>;
 
 template <typename GfxFamily>
 struct SynchronizeCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
@@ -503,7 +503,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSynchronousCommandQueueWhenTagUpdateF
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
 }
 
-using CommandQueuePowerHintTest = Test<ContextFixture>;
+using CommandQueuePowerHintTest = TestLegacy<ContextFixture>;
 
 HWTEST_F(CommandQueuePowerHintTest, givenDriverHandleWithPowerHintAndOsContextPowerHintUnsetThenSuccessIsReturned) {
     auto csr = std::unique_ptr<TestCmdQueueCsr<FamilyType>>(new TestCmdQueueCsr<FamilyType>(*device->getNEODevice()->getExecutionEnvironment(),
@@ -698,7 +698,7 @@ TEST_F(CommandQueueInitTests, whenDestroyCommandQueueThenStoreCommandBuffersAsRe
     EXPECT_FALSE(deviceImp->allocationsForReuse->peekIsEmpty());
 }
 
-struct DeviceWithDualStorage : Test<DeviceFixture> {
+struct DeviceWithDualStorage : TestLegacy<DeviceFixture> {
     void SetUp() override {
         NEO::MockCompilerEnableGuard mock(true);
         DebugManager.flags.EnableLocalMemory.set(1);
@@ -775,7 +775,7 @@ HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAnd
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     commandQueue->destroy();
 }
-using CommandQueueScratchTests = Test<DeviceFixture>;
+using CommandQueueScratchTests = TestLegacy<DeviceFixture>;
 
 using Platforms = IsAtLeastProduct<IGFX_XE_HP_SDV>;
 

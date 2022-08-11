@@ -24,7 +24,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandQueueCreate = Test<DeviceFixture>;
+using CommandQueueCreate = TestLegacy<DeviceFixture>;
 
 TEST_F(CommandQueueCreate, whenCreatingCommandQueueThenItIsInitialized) {
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
@@ -640,7 +640,7 @@ TEST_F(CommandQueueCreate, givenCmdQueueWithBlitCopyWhenExecutingCopyBlitCommand
     commandQueue->destroy();
 }
 
-using DeviceCreateCommandQueueTest = Test<DeviceFixture>;
+using DeviceCreateCommandQueueTest = TestLegacy<DeviceFixture>;
 TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescWhenCreateCommandQueueIsCalledThenLowPriorityCsrIsAssigned) {
     ze_command_queue_desc_t desc{};
     desc.ordinal = 0u;
@@ -839,7 +839,7 @@ struct MultiDeviceCreateCommandQueueFixture : MultiDeviceFixture {
     }
 };
 
-using MultiDeviceCreateCommandQueueTest = Test<MultiDeviceCreateCommandQueueFixture>;
+using MultiDeviceCreateCommandQueueTest = TestLegacy<MultiDeviceCreateCommandQueueFixture>;
 
 TEST_F(MultiDeviceCreateCommandQueueTest, givenLowPriorityDescWhenCreateCommandQueueIsCalledThenLowPriorityCsrIsAssigned) {
     auto device = driverHandle->devices[0];
@@ -887,7 +887,7 @@ class MockCommandQueue : public L0::CommandQueueHw<gfxCoreFamily> {
     }
 };
 
-using ExecuteCommandListTests = Test<ContextFixture>;
+using ExecuteCommandListTests = TestLegacy<ContextFixture>;
 HWTEST2_F(ExecuteCommandListTests, givenExecuteCommandListWhenItReturnsThenContainersAreEmpty, IsAtLeastSkl) {
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr;
@@ -945,7 +945,7 @@ HWTEST2_F(ExecuteCommandListTests, givenOutOfMemorySubmitBatchBufferThenExecuteC
     commandList->destroy();
 }
 
-using CommandQueueDestroy = Test<DeviceFixture>;
+using CommandQueueDestroy = TestLegacy<DeviceFixture>;
 HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndScratchWhenExecuteThenSshWasUsed, IsAtLeastSkl) {
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr;

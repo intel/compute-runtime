@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@
 using namespace NEO;
 
 ////////////////////////////////////////////////////////////////////////////////
-typedef Test<MemoryManagementFixture> ContextFailureInjection;
+typedef TestLegacy<MemoryManagementFixture> ContextFailureInjection;
 
 TEST_F(ContextFailureInjection, GivenFailedAllocationInjectionWhenCreatingContextThenOutOfHostMemoryErrorIsReturned) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));

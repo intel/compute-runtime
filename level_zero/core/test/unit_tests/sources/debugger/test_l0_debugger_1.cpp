@@ -21,7 +21,7 @@
 namespace L0 {
 namespace ult {
 
-using L0DebuggerTest = Test<L0DebuggerHwFixture>;
+using L0DebuggerTest = TestLegacy<L0DebuggerHwFixture>;
 using L0DebuggerParameterizedTests = L0DebuggerHwParameterizedFixture;
 
 TEST_F(L0DebuggerTest, givenL0DebuggerWhenCallingIsLegacyThenFalseIsReturned) {
@@ -75,7 +75,7 @@ TEST_F(L0DebuggerTest, givenProgramDebuggingEnabledWhenDebuggerIsCreatedThenComp
     EXPECT_FALSE(neoDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedImages);
 }
 
-using L0DebuggerPerContextAddressSpaceTest = Test<L0DebuggerPerContextAddressSpaceFixture>;
+using L0DebuggerPerContextAddressSpaceTest = TestLegacy<L0DebuggerPerContextAddressSpaceFixture>;
 HWTEST_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledWhenCommandListIsExecutedThenValidKernelDebugCommandsAreAdded) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using STATE_SIP = typename FamilyType::STATE_SIP;
@@ -219,7 +219,7 @@ HWTEST_P(L0DebuggerParameterizedTests, givenEnabledDebuggingWhenIsaTypeAllocated
     }
 }
 
-using L0DebuggerSimpleTest = Test<DeviceFixture>;
+using L0DebuggerSimpleTest = TestLegacy<DeviceFixture>;
 
 HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledWithImmediateCommandListToInvokeNonKernelOperationsThenSuccessIsReturned) {
     DebugManagerStateRestore restorer;

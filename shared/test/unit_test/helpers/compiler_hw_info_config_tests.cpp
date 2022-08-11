@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-using CompilerHwInfoConfigFixture = Test<DeviceFixture>;
+using CompilerHwInfoConfigFixture = TestLegacy<DeviceFixture>;
 
 HWTEST_F(CompilerHwInfoConfigFixture, WhenIsMidThreadPreemptionIsSupportedIsCalledThenCorrectResultIsReturned) {
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();

@@ -22,7 +22,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandQueueExecuteCommandListsXE_HP_CORE = Test<DeviceFixture>;
+using CommandQueueExecuteCommandListsXE_HP_CORE = TestLegacy<DeviceFixture>;
 
 XE_HP_CORE_TEST_F(CommandQueueExecuteCommandListsXE_HP_CORE, WhenExecutingCmdListsThenPipelineSelectAndCfeStateAreAddedToCmdBuffer) {
     const ze_command_queue_desc_t desc = {};

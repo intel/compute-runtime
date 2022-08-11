@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,7 +51,7 @@ struct KernelSubGroupInfoFixture : HelloWorldFixture<HelloWorldFixtureFactory> {
 
 namespace ULT {
 
-typedef Test<KernelSubGroupInfoFixture> KernelSubGroupInfoTest;
+typedef TestLegacy<KernelSubGroupInfoFixture> KernelSubGroupInfoTest;
 
 template <typename ParamType>
 struct KernelSubGroupInfoParamFixture : KernelSubGroupInfoFixture,

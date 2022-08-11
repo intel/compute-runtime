@@ -43,7 +43,7 @@ void populatePointerKernelArg(ArgDescPointer &dst,
 namespace L0 {
 namespace ult {
 
-using KernelInitTest = Test<ModuleImmutableDataFixture>;
+using KernelInitTest = TestLegacy<ModuleImmutableDataFixture>;
 
 TEST_F(KernelInitTest, givenKernelToInitWhenItHasUnknownArgThenUnknowKernelArgHandlerAssigned) {
     uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
@@ -62,7 +62,7 @@ TEST_F(KernelInitTest, givenKernelToInitWhenItHasUnknownArgThenUnknowKernelArgHa
     EXPECT_EQ(mockKernelImmData->getDescriptor().payloadMappings.explicitArgs[0].type, NEO::ArgDescriptor::ArgTUnknown);
 }
 
-using KernelBaseAddressTests = Test<ModuleImmutableDataFixture>;
+using KernelBaseAddressTests = TestLegacy<ModuleImmutableDataFixture>;
 TEST_F(KernelBaseAddressTests, whenQueryingKernelBaseAddressThenCorrectAddressIsReturned) {
     uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
 
@@ -102,7 +102,7 @@ struct MockKernelWithCallTracking : Mock<::L0::Kernel> {
     size_t setArgBufferWithAllocCalled = 0u;
 };
 
-using SetKernelArgCacheTest = Test<ModuleFixture>;
+using SetKernelArgCacheTest = TestLegacy<ModuleFixture>;
 
 TEST_F(SetKernelArgCacheTest, givenValidBufferArgumentWhenSetMultipleTimesThenSetArgBufferWithAllocOnlyCalledIfNeeded) {
     MockKernelWithCallTracking mockKernel;
@@ -172,7 +172,7 @@ TEST_F(SetKernelArgCacheTest, givenValidBufferArgumentWhenSetMultipleTimesThenSe
     svmAllocsManager->freeSVMAlloc(svmAllocation);
 }
 
-using KernelImpSetGroupSizeTest = Test<DeviceFixture>;
+using KernelImpSetGroupSizeTest = TestLegacy<DeviceFixture>;
 
 TEST_F(KernelImpSetGroupSizeTest, WhenCalculatingLocalIdsThenGrfSizeIsTakenFromCapabilityTable) {
     Mock<Kernel> mockKernel;
@@ -246,7 +246,7 @@ TEST_F(KernelImpSetGroupSizeTest, givenZeroGroupSizeWhenSettingGroupSizeThenInva
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
 }
 
-using SetKernelArg = Test<ModuleFixture>;
+using SetKernelArg = TestLegacy<ModuleFixture>;
 using ImageSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
 
 HWTEST2_F(SetKernelArg, givenImageAndKernelWhenSetArgImageThenCrossThreadDataIsSet, ImageSupport) {
@@ -390,7 +390,7 @@ class KernelImmutableDataFixture : public ModuleImmutableDataFixture {
     }
 };
 
-using KernelImmutableDataTests = Test<KernelImmutableDataFixture>;
+using KernelImmutableDataTests = TestLegacy<KernelImmutableDataFixture>;
 
 TEST_F(KernelImmutableDataTests, givenKernelInitializedWithNoPrivateMemoryThenPrivateMemoryIsNull) {
     uint32_t perHwThreadPrivateMemorySizeRequested = 0u;
@@ -1490,7 +1490,7 @@ TEST_F(KernelPropertiesTests, WhenGetExtensionIsCalledWithUnknownExtensionTypeTh
     EXPECT_EQ(nullptr, kernel->getExtension(0U));
 }
 
-using KernelLocalIdsTest = Test<ModuleFixture>;
+using KernelLocalIdsTest = TestLegacy<ModuleFixture>;
 
 TEST_F(KernelLocalIdsTest, WhenKernelIsCreatedThenDefaultLocalIdGenerationbyRuntimeIsTrue) {
     createKernel();
@@ -1498,9 +1498,9 @@ TEST_F(KernelLocalIdsTest, WhenKernelIsCreatedThenDefaultLocalIdGenerationbyRunt
     EXPECT_TRUE(kernel->requiresGenerationOfLocalIdsByRuntime());
 }
 
-struct KernelIsaTests : Test<ModuleFixture> {
+struct KernelIsaTests : TestLegacy<ModuleFixture> {
     void SetUp() override {
-        Test<ModuleFixture>::SetUp();
+        TestLegacy<ModuleFixture>::SetUp();
 
         auto &capabilityTable = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable;
         bool createBcsEngine = !capabilityTable.blitterOperationsSupported;
@@ -1649,7 +1649,7 @@ TEST_F(KernelIsaTests, givenGlobalBuffersWhenCreatingKernelImmutableDataThenBuff
     EXPECT_EQ(1, std::count(resCont.begin(), resCont.end(), &globalConstBuffer));
 }
 
-using KernelImpPatchBindlessTest = Test<ModuleFixture>;
+using KernelImpPatchBindlessTest = TestLegacy<ModuleFixture>;
 
 TEST_F(KernelImpPatchBindlessTest, GivenKernelImpWhenPatchBindlessOffsetCalledThenOffsetPatchedCorrectly) {
     Mock<Kernel> kernel;
@@ -1746,7 +1746,7 @@ HWTEST2_F(KernelImpPatchBindlessTest, GivenKernelImpWhenSetSurfaceStateBindfulTh
     EXPECT_TRUE(memcmp(&surfaceStateAfter, &surfaceStateBefore, size) == 0);
 }
 
-using KernelImpL3CachingTests = Test<ModuleFixture>;
+using KernelImpL3CachingTests = TestLegacy<ModuleFixture>;
 
 HWTEST2_F(KernelImpL3CachingTests, GivenKernelImpWhenSetSurfaceStateWithUnalignedMemoryThenL3CachingIsDisabled, MatchAny) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
@@ -1845,7 +1845,7 @@ TEST_F(KernelImpPatchBindlessTest, GivenUndefiedBidfulAndBindlesstOffsetWhenSetA
     EXPECT_FALSE(mockKernel.setSurfaceStateCalled);
 }
 
-using KernelBindlessUncachedMemoryTests = Test<ModuleFixture>;
+using KernelBindlessUncachedMemoryTests = TestLegacy<ModuleFixture>;
 
 TEST_F(KernelBindlessUncachedMemoryTests, givenBindlessKernelAndAllocDataNoTfoundThenKernelRequiresUncachedMocsIsSet) {
     ze_kernel_desc_t desc = {};
@@ -2173,7 +2173,7 @@ HWTEST2_F(SetKernelArg, givenSupportsMediaBlockAndIsMediaBlockImageWhenSetArgIma
     }
 }
 
-using ImportHostPointerSetKernelArg = Test<ImportHostPointerModuleFixture>;
+using ImportHostPointerSetKernelArg = TestLegacy<ImportHostPointerModuleFixture>;
 TEST_F(ImportHostPointerSetKernelArg, givenHostPointerImportedWhenSettingKernelArgThenUseHostPointerAllocation) {
     createKernel();
 
@@ -2242,7 +2242,7 @@ TEST_F(KernelGlobalWorkOffsetTests, whenSettingGlobalOffsetThenCrossThreadDataIs
     EXPECT_EQ(*(dst.begin() + desc.payloadMappings.dispatchTraits.globalWorkOffset[2]), globalOffsetz);
 }
 
-using KernelWorkDimTests = Test<ModuleImmutableDataFixture>;
+using KernelWorkDimTests = TestLegacy<ModuleImmutableDataFixture>;
 
 TEST_F(KernelWorkDimTests, givenGroupCountsWhenPatchingWorkDimThenCrossThreadDataIsPatched) {
     uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
@@ -2279,7 +2279,7 @@ TEST_F(KernelWorkDimTests, givenGroupCountsWhenPatchingWorkDimThenCrossThreadDat
     }
 }
 
-using KernelPrintHandlerTest = Test<ModuleFixture>;
+using KernelPrintHandlerTest = TestLegacy<ModuleFixture>;
 struct MyPrintfHandler : public PrintfHandler {
     static uint32_t getPrintfSurfaceInitialDataSize() {
         return PrintfHandler::printfSurfaceInitialDataSize;
@@ -2300,7 +2300,7 @@ TEST_F(KernelPrintHandlerTest, whenPrintPrintfOutputIsCalledThenPrintfBufferIsUs
     EXPECT_EQ(buffer, MyPrintfHandler::getPrintfSurfaceInitialDataSize());
 }
 
-using PrintfTest = Test<DeviceFixture>;
+using PrintfTest = TestLegacy<DeviceFixture>;
 
 TEST_F(PrintfTest, givenKernelWithPrintfThenPrintfBufferIsCreated) {
     Mock<Module> mockModule(this->device, nullptr);
@@ -2373,7 +2373,7 @@ TEST_F(PrintfTest, WhenCreatingPrintfBufferThenCrossThreadDataIsPatched) {
     mockKernel.crossThreadData.release();
 }
 
-using KernelPatchtokensPrintfStringMapTests = Test<ModuleImmutableDataFixture>;
+using KernelPatchtokensPrintfStringMapTests = TestLegacy<ModuleImmutableDataFixture>;
 
 TEST_F(KernelPatchtokensPrintfStringMapTests, givenKernelWithPrintfStringsMapUsageEnabledWhenPrintOutputThenProperStringIsPrinted) {
     std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
@@ -2458,7 +2458,7 @@ TEST_F(KernelPatchtokensPrintfStringMapTests, givenKernelWithPrintfStringsMapUsa
     EXPECT_STREQ(expectedString.c_str(), output.c_str());
 }
 
-using KernelImplicitArgTests = Test<ModuleImmutableDataFixture>;
+using KernelImplicitArgTests = TestLegacy<ModuleImmutableDataFixture>;
 
 TEST_F(KernelImplicitArgTests, givenKernelWithImplicitArgsWhenInitializeThenPrintfSurfaceIsCreatedAndProperlyPatchedInImplicitArgs) {
     std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
@@ -2543,7 +2543,7 @@ TEST_F(KernelImplicitArgTests, givenKernelWithImplicitArgsWhenSettingKernelParam
     EXPECT_EQ(0, memcmp(pImplicitArgs, &expectedImplicitArgs, sizeof(ImplicitArgs)));
 }
 
-using MultiTileModuleTest = Test<MultiTileModuleFixture>;
+using MultiTileModuleTest = TestLegacy<MultiTileModuleFixture>;
 
 HWTEST2_F(MultiTileModuleTest, GivenMultiTileDeviceWhenSettingKernelArgAndSurfaceStateThenMultiTileFlagsAreSetCorrectly, IsXeHpCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;

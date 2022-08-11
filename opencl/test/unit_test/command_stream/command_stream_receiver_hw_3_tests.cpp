@@ -19,7 +19,7 @@ struct MockScratchSpaceController : ScratchSpaceControllerBase {
     using ScratchSpaceControllerBase::ScratchSpaceControllerBase;
 };
 
-using ScratchSpaceControllerTest = Test<ClDeviceFixture>;
+using ScratchSpaceControllerTest = TestLegacy<ClDeviceFixture>;
 
 TEST_F(ScratchSpaceControllerTest, whenScratchSpaceControllerIsDestroyedThenItReleasePrivateScratchSpaceAllocation) {
     MockScratchSpaceController scratchSpaceController(pDevice->getRootDeviceIndex(), *pDevice->getExecutionEnvironment(), *pDevice->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());

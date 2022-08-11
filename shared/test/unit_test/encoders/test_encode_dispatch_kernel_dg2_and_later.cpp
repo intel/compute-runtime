@@ -19,7 +19,7 @@
 
 using namespace NEO;
 
-using CommandEncodeStatesTestDg2AndLater = Test<CommandEncodeStatesFixture>;
+using CommandEncodeStatesTestDg2AndLater = TestLegacy<CommandEncodeStatesFixture>;
 
 HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenEventAddressWhenEncodeAndPVCAndDG2ThenSetDataportSubsliceCacheFlushIstSet, IsAtLeastXeHpgCore) {
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;

@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-using EhlTest = Test<ClDeviceFixture>;
+using EhlTest = TestLegacy<ClDeviceFixture>;
 
 EHLTEST_F(EhlTest, givenDeviceIdWhenAskingForSimulationThenReturnValidValue) {
     unsigned short ehlSimulationIds[2] = {

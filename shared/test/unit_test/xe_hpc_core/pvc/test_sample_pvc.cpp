@@ -12,7 +12,7 @@
 
 using namespace NEO;
 
-using PvcOnlyTest = Test<DeviceFixture>;
+using PvcOnlyTest = TestLegacy<DeviceFixture>;
 
 PVCTEST_F(PvcOnlyTest, WhenGettingHardwareInfoThenPvcIsReturned) {
     EXPECT_EQ(IGFX_PVC, pDevice->getHardwareInfo().platform.eProductFamily);

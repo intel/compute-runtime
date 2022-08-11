@@ -14,7 +14,7 @@
 
 using namespace NEO;
 
-using Dg1DeviceCaps = Test<ClDeviceFixture>;
+using Dg1DeviceCaps = TestLegacy<ClDeviceFixture>;
 
 DG1TEST_F(Dg1DeviceCaps, givenDg1WhenCheckSupportCacheFlushAfterWalkerThenFalse) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.supportCacheFlushAfterWalker);

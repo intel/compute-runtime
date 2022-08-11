@@ -27,8 +27,8 @@
 namespace L0 {
 namespace ult {
 
-using ImageCreate = Test<DeviceFixture>;
-using ImageView = Test<DeviceFixture>;
+using ImageCreate = TestLegacy<DeviceFixture>;
+using ImageView = TestLegacy<DeviceFixture>;
 
 HWTEST2_F(ImageCreate, givenValidImageDescriptionWhenImageCreateThenImageIsCreatedCorrectly, IsAtLeastSkl) {
     ze_image_desc_t zeDesc = {};
@@ -813,7 +813,7 @@ TEST(ImageFormatDescHelperTest, givenSupportedSwizzlesThenProperClEnumIsReturned
     EXPECT_EQ(getClChannelOrder(format), static_cast<cl_channel_order>(CL_BGRA));
 }
 
-using ImageGetMemoryProperties = Test<DeviceFixture>;
+using ImageGetMemoryProperties = TestLegacy<DeviceFixture>;
 
 HWTEST2_F(ImageGetMemoryProperties, givenImageMemoryPropertiesExpStructureWhenGetMemroyPropertiesThenProperDataAreSet, IsAtLeastSkl) {
     ze_image_desc_t zeDesc = {};

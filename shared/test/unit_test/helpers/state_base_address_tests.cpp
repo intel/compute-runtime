@@ -76,7 +76,7 @@ HWTEST2_F(SBATest, WhenProgramStateBaseAddressParametersIsCalledThenSBACmdHasBin
     EXPECT_TRUE(cmd->getBindlessSurfaceStateBaseAddressModifyEnable());
 }
 
-using SbaForBindlessTests = Test<DeviceFixture>;
+using SbaForBindlessTests = TestLegacy<DeviceFixture>;
 
 HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenProgramStateBaseAddressThenSbaProgrammedCorrectly, IsAtLeastSkl) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;

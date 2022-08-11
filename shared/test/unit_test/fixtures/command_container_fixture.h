@@ -82,4 +82,4 @@ struct WalkerThreadFixture {
     uint32_t requiredWorkGroupOrder;
 };
 
-using WalkerThreadTest = Test<WalkerThreadFixture>;
+using WalkerThreadTest = TestLegacy<WalkerThreadFixture>;

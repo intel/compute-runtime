@@ -29,7 +29,7 @@
 
 using namespace NEO;
 
-struct KernelArgBufferTest : public Test<KernelArgBufferFixture> {
+struct KernelArgBufferTest : public TestLegacy<KernelArgBufferFixture> {
     struct AllocationTypeHelper {
         AllocationType allocationType;
         bool compressed;
@@ -770,7 +770,7 @@ class KernelArgBufferFixtureBindless : public KernelArgBufferFixture {
     const CrossThreadDataOffset bindlessOffset = 0x10;
 };
 
-typedef Test<KernelArgBufferFixtureBindless> KernelArgBufferTestBindless;
+typedef TestLegacy<KernelArgBufferFixtureBindless> KernelArgBufferTestBindless;
 
 HWTEST_F(KernelArgBufferTestBindless, givenUsedBindlessBuffersWhenPatchingSurfaceStateOffsetsThenCorrectOffsetIsPatchedInCrossThreadData) {
     using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;

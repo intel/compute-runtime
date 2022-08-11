@@ -24,7 +24,7 @@ struct KernelInfo;
 struct WorkaroundTable;
 
 using PreemptionEnqueueKernelFixture = HelloWorldFixture<HelloWorldFixtureFactory>;
-using PreemptionEnqueueKernelTest = Test<PreemptionEnqueueKernelFixture>;
+using PreemptionEnqueueKernelTest = TestLegacy<PreemptionEnqueueKernelFixture>;
 } // namespace NEO
 
 class DevicePreemptionTests : public ::testing::Test {

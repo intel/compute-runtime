@@ -184,7 +184,7 @@ struct CommandQueueGroupMultiDeviceFixture : public MultiDeviceFixture {
     L0::Device *device = nullptr;
 };
 
-using CommandQueueGroupMultiDevice = Test<CommandQueueGroupMultiDeviceFixture>;
+using CommandQueueGroupMultiDevice = TestLegacy<CommandQueueGroupMultiDeviceFixture>;
 
 HWTEST2_F(CommandQueueGroupMultiDevice,
           givenCommandQueuePropertiesCallThenCallSucceedsAndCommandListImmediateIsCreated, IsGen9) {

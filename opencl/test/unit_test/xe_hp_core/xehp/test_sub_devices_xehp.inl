@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-using XeHPUsDeviceIdTest = Test<ClDeviceFixture>;
+using XeHPUsDeviceIdTest = TestLegacy<ClDeviceFixture>;
 
 HWTEST_EXCLUDE_PRODUCT(SubDeviceTests, givenCCSEngineWhenCallingGetDefaultEngineWithWaThenTheSameEngineIsReturned, IGFX_XE_HP_SDV);
 

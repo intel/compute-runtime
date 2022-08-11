@@ -75,7 +75,7 @@ void givenUseBindlessBuiltinEnabledWhenBinExtensionPassedThenNameHasBindlessPref
 
 using namespace NEO;
 
-using BuiltInSharedTest = Test<DeviceFixture>;
+using BuiltInSharedTest = TestLegacy<DeviceFixture>;
 HWTEST_F(BuiltInSharedTest, GivenBuiltinTypeBinaryWhenGettingBuiltinResourceForNotRegisteredRevisionThenBuiltinFromDefaultRevisionIsTaken) {
     pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usRevId += 0xdead;
     auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());

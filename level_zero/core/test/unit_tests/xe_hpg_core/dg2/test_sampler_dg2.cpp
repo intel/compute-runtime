@@ -15,7 +15,7 @@
 namespace L0 {
 namespace ult {
 
-using SamplerCreateTest = Test<DeviceFixture>;
+using SamplerCreateTest = TestLegacy<DeviceFixture>;
 
 HWTEST2_F(SamplerCreateTest, givenDg2WhenInitializeSamplerAndForceSamplerLowFilteringPrecisionIsFalseThenLowQualityFilterIsDisabled, IsDG2) {
     using SAMPLER_STATE = typename NEO::XeHpgCoreFamily::SAMPLER_STATE;

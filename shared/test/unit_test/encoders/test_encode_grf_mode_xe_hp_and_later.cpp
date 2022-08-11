@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-using CommandEncodeStatesTest = Test<CommandEncodeStatesFixture>;
+using CommandEncodeStatesTest = TestLegacy<CommandEncodeStatesFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenCommandContainerWhenNumGrfRequiredIsDefaultThenLargeGrfModeDisabled) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;

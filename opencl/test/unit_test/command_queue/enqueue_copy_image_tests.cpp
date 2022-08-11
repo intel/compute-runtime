@@ -347,7 +347,7 @@ INSTANTIATE_TEST_CASE_P(MipMapCopyImageTest_GivenImagesWithNonZeroMipLevelsWhenC
                             ::testing::ValuesIn(types),
                             ::testing::ValuesIn(types)));
 
-using OneMipLevelCopyImageImageTests = Test<OneMipLevelImageFixture>;
+using OneMipLevelCopyImageImageTests = TestLegacy<OneMipLevelImageFixture>;
 
 HWTEST_F(OneMipLevelCopyImageImageTests, GivenNotMippedImageWhenCopyingImageThenDoNotProgramSourceAndDestinationMipLevels) {
     auto dstImage = std::unique_ptr<Image>(createImage());
