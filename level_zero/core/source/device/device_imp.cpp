@@ -447,6 +447,22 @@ ze_result_t DeviceImp::getP2PProperties(ze_device_handle_t hPeerDevice,
         }
     }
 
+    if (pP2PProperties->pNext) {
+        ze_base_desc_t *extendedDesc = reinterpret_cast<ze_base_desc_t *>(pP2PProperties->pNext);
+        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_DEVICE_P2P_BANDWIDTH_EXP_PROPERTIES) {
+            ze_device_p2p_bandwidth_exp_properties_t *bandwidthPropertiesDesc =
+                reinterpret_cast<ze_device_p2p_bandwidth_exp_properties_t *>(extendedDesc);
+
+            bandwidthPropertiesDesc->logicalBandwidth = 0;
+            bandwidthPropertiesDesc->physicalBandwidth = 0;
+            bandwidthPropertiesDesc->bandwidthUnit = ZE_BANDWIDTH_UNIT_UNKNOWN;
+
+            bandwidthPropertiesDesc->logicalLatency = 0;
+            bandwidthPropertiesDesc->physicalLatency = 0;
+            bandwidthPropertiesDesc->latencyUnit = ZE_LATENCY_UNIT_UNKNOWN;
+        }
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 

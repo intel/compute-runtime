@@ -2150,6 +2150,42 @@ TEST_F(MultipleDevicesP2PDevice0Access0Atomic0Device1Access0Atomic0Test, WhenCal
     EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
 }
 
+TEST_F(MultipleDevicesP2PDevice0Access0Atomic0Device1Access0Atomic0Test, WhenCallingGetP2PPropertiesWithBandwidthPropertiesExtensionThenPropertiesSet) {
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    ze_device_p2p_properties_t p2pProperties = {};
+    ze_device_p2p_bandwidth_exp_properties_t p2pBandwidthProps = {};
+
+    p2pProperties.pNext = &p2pBandwidthProps;
+    p2pBandwidthProps.stype = ZE_STRUCTURE_TYPE_DEVICE_P2P_BANDWIDTH_EXP_PROPERTIES;
+    p2pBandwidthProps.pNext = nullptr;
+
+    device0->getP2PProperties(device1, &p2pProperties);
+
+    EXPECT_EQ(0u, p2pBandwidthProps.logicalBandwidth);
+    EXPECT_EQ(0u, p2pBandwidthProps.physicalBandwidth);
+    EXPECT_EQ(ZE_BANDWIDTH_UNIT_UNKNOWN, p2pBandwidthProps.bandwidthUnit);
+
+    EXPECT_EQ(0u, p2pBandwidthProps.logicalLatency);
+    EXPECT_EQ(0u, p2pBandwidthProps.physicalLatency);
+    EXPECT_EQ(ZE_LATENCY_UNIT_UNKNOWN, p2pBandwidthProps.latencyUnit);
+}
+
+TEST_F(MultipleDevicesP2PDevice0Access0Atomic0Device1Access0Atomic0Test, WhenCallingGetP2PPropertiesWithPNextStypeNotSetThenGetP2PPropertiesReturnsSuccessfully) {
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    ze_device_p2p_properties_t p2pProperties = {};
+    ze_device_p2p_bandwidth_exp_properties_t p2pBandwidthProps = {};
+
+    p2pProperties.pNext = &p2pBandwidthProps;
+
+    auto res = device0->getP2PProperties(device1, &p2pProperties);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
 using MultipleDevicesP2PDevice0Access0Atomic0Device1Access1Atomic0Test = MultipleDevicesP2PFixture<0, 0, 1, 0>;
 TEST_F(MultipleDevicesP2PDevice0Access0Atomic0Device1Access1Atomic0Test, WhenCallingGetP2PPropertiesWithOnlyOneDeviceHavingAccessSupportThenNoSupportIsReturned) {
     L0::Device *device0 = driverHandle->devices[0];
