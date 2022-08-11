@@ -40,7 +40,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
     NEO::EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStream, hwInfo, isRcs);
     NEO::EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStream, {}, true, hwInfo, isRcs);
 
-    auto sbaCmdBuf = static_cast<STATE_BASE_ADDRESS *>(NEO::StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStream));
+    auto sbaCmdBuf = NEO::StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStream);
     STATE_BASE_ADDRESS sbaCmd;
 
     bool useGlobalSshAndDsh = NEO::ApiSpecificConfig::getBindlessConfiguration();

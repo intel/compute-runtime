@@ -403,7 +403,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         }
 
         auto stateBaseAddressCmdOffset = commandStreamCSR.getUsed();
-        auto stateBaseAddressCmdBuffer = static_cast<STATE_BASE_ADDRESS *>(StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStreamCSR));
+        auto stateBaseAddressCmdBuffer = StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStreamCSR);
         auto instructionHeapBaseAddress = getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, getMemoryManager()->isLocalMemoryUsedForIsa(rootDeviceIndex));
         uint64_t indirectObjectStateBaseAddress = getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, ioh->getGraphicsAllocation()->isAllocatedInLocalMemoryPool());
 

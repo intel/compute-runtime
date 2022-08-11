@@ -85,8 +85,8 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
 }
 
 template <typename GfxFamily>
-void *StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(LinearStream &cmdStream) {
-    return cmdStream.getSpace(sizeof(STATE_BASE_ADDRESS));
+typename GfxFamily::STATE_BASE_ADDRESS *StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(LinearStream &cmdStream) {
+    return cmdStream.getSpaceForCmd<typename GfxFamily::STATE_BASE_ADDRESS>();
 }
 
 template <typename GfxFamily>

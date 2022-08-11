@@ -40,7 +40,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         bool isRcs = this->getCsr()->isRcs();
 
         NEO::EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStream, hwInfo, isRcs);
-        auto sbaCmdBuf = static_cast<STATE_BASE_ADDRESS *>(NEO::StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStream));
+        auto sbaCmdBuf = NEO::StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStream);
 
         STATE_BASE_ADDRESS sbaCmd;
         NEO::StateBaseAddressHelperArgs<GfxFamily> args = {
@@ -68,7 +68,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
 
         auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
         if (hwInfoConfig.isAdditionalStateBaseAddressWARequired(hwInfo)) {
-            sbaCmdBuf = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));
+            sbaCmdBuf = NEO::StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStream);
             *sbaCmdBuf = sbaCmd;
         }
 

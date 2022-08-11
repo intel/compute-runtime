@@ -393,7 +393,7 @@ void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_B
 
     StateBaseAddressHelper<Family>::programStateBaseAddress(args);
 
-    auto cmdSpace = reinterpret_cast<STATE_BASE_ADDRESS *>(container.getCommandStream()->getSpace(sizeof(STATE_BASE_ADDRESS)));
+    auto cmdSpace = StateBaseAddressHelper<Family>::getSpaceForSbaCmd(*container.getCommandStream());
     *cmdSpace = sbaCmd;
 
     EncodeWA<Family>::encodeAdditionalPipelineSelect(*container.getCommandStream(), {}, false, hwInfo, isRcs);

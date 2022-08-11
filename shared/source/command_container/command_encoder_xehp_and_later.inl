@@ -500,13 +500,13 @@ void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_B
 
     StateBaseAddressHelper<Family>::programStateBaseAddress(args);
 
-    auto cmdSpace = reinterpret_cast<STATE_BASE_ADDRESS *>(container.getCommandStream()->getSpace(sizeof(STATE_BASE_ADDRESS)));
+    auto cmdSpace = StateBaseAddressHelper<Family>::getSpaceForSbaCmd(*container.getCommandStream());
     *cmdSpace = sbaCmd;
 
     auto &hwInfo = container.getDevice()->getHardwareInfo();
     auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     if (hwInfoConfig.isAdditionalStateBaseAddressWARequired(hwInfo)) {
-        cmdSpace = reinterpret_cast<STATE_BASE_ADDRESS *>(container.getCommandStream()->getSpace(sizeof(STATE_BASE_ADDRESS)));
+        cmdSpace = StateBaseAddressHelper<Family>::getSpaceForSbaCmd(*container.getCommandStream());
         *cmdSpace = sbaCmd;
     }
 

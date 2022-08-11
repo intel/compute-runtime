@@ -48,8 +48,8 @@ void CommandStreamReceiverHw<Family>::programAdditionalStateBaseAddress(LinearSt
     auto &hwInfo = *device.getRootDeviceEnvironment().getHardwareInfo();
     auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     if (hwInfoConfig.isAdditionalStateBaseAddressWARequired(hwInfo)) {
-        auto pCmd = static_cast<STATE_BASE_ADDRESS *>(csr.getSpace(sizeof(STATE_BASE_ADDRESS)));
-        *pCmd = cmd;
+        auto cmdSpace = StateBaseAddressHelper<Family>::getSpaceForSbaCmd(csr);
+        *cmdSpace = cmd;
     }
 }
 
