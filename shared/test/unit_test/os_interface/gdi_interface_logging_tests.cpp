@@ -23,13 +23,13 @@ extern bool enabledLogging;
 } // namespace NEO
 
 struct GdiInterfaceLoggingBaseFixture {
-    void SetUp() {
+    void setUp() {
         mockFopenCalledBackup = std::make_unique<VariableBackup<uint32_t>>(&NEO::IoFunctions::mockFopenCalled, 0);
         mockFcloseCalledBackup = std::make_unique<VariableBackup<uint32_t>>(&NEO::IoFunctions::mockFcloseCalled, 0);
         mockVfptrinfCalledBackup = std::make_unique<VariableBackup<uint32_t>>(&NEO::IoFunctions::mockVfptrinfCalled, 0);
     }
 
-    void TearDown() {
+    void tearDown() {
     }
 
     std::unique_ptr<VariableBackup<uint32_t>> mockFopenCalledBackup;
@@ -38,15 +38,15 @@ struct GdiInterfaceLoggingBaseFixture {
 };
 
 struct GdiInterfaceLoggingNoInitFixture : public GdiInterfaceLoggingBaseFixture {
-    void SetUp() {
-        GdiInterfaceLoggingBaseFixture::SetUp();
+    void setUp() {
+        GdiInterfaceLoggingBaseFixture::setUp();
         openFile = DebugManager.flags.LogGdiCallsToFile.get();
         DebugManager.flags.LogGdiCalls.set(true);
         mockVfptrinfUseStdioFunctionBackup = std::make_unique<VariableBackup<bool>>(&NEO::IoFunctions::mockVfptrinfUseStdioFunction, !openFile);
     }
 
-    void TearDown() {
-        GdiInterfaceLoggingBaseFixture::TearDown();
+    void tearDown() {
+        GdiInterfaceLoggingBaseFixture::tearDown();
     }
 
     DebugManagerStateRestore dbgRestorer;
@@ -58,8 +58,8 @@ struct GdiInterfaceLoggingNoInitFixture : public GdiInterfaceLoggingBaseFixture 
 };
 
 struct GdiInterfaceLoggingFixture : public GdiInterfaceLoggingNoInitFixture {
-    void SetUp() {
-        GdiInterfaceLoggingNoInitFixture::SetUp();
+    void setUp() {
+        GdiInterfaceLoggingNoInitFixture::setUp();
         GdiLogging::init();
         if (GdiInterfaceLoggingNoInitFixture::openFile) {
             EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
@@ -68,18 +68,31 @@ struct GdiInterfaceLoggingFixture : public GdiInterfaceLoggingNoInitFixture {
         }
     }
 
-    void TearDown() {
+    void tearDown() {
         GdiLogging::close();
         if (GdiInterfaceLoggingNoInitFixture::openFile) {
             EXPECT_EQ(1u, NEO::IoFunctions::mockFcloseCalled);
         } else {
             EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
         }
-        GdiInterfaceLoggingNoInitFixture::TearDown();
+        GdiInterfaceLoggingNoInitFixture::tearDown();
     }
 };
 
-using GdiInterfaceLoggingTest = TestLegacy<GdiInterfaceLoggingFixture>;
+struct GdiInterfaceLoggingToFileFixture : public GdiInterfaceLoggingFixture {
+    void setUp() {
+        DebugManager.flags.LogGdiCallsToFile.set(true);
+        GdiInterfaceLoggingFixture::setUp();
+    }
+
+    void tearDown() {
+        GdiInterfaceLoggingFixture::tearDown();
+    }
+};
+
+using GdiInterfaceLoggingToFileTest = Test<GdiInterfaceLoggingToFileFixture>;
+using GdiInterfaceLoggingBaseTest = Test<GdiInterfaceLoggingBaseFixture>;
+using GdiInterfaceLoggingTest = Test<GdiInterfaceLoggingFixture>;
 
 TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingOpenAdapterFromLuidThenExpectCorrectStrings) {
     D3DKMT_OPENADAPTERFROMLUID param = {};
@@ -1271,19 +1284,6 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingSetContextSche
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
-struct GdiInterfaceLoggingToFileFixture : public GdiInterfaceLoggingFixture {
-    void SetUp() {
-        DebugManager.flags.LogGdiCallsToFile.set(true);
-        GdiInterfaceLoggingFixture::SetUp();
-    }
-
-    void TearDown() {
-        GdiInterfaceLoggingFixture::TearDown();
-    }
-};
-
-using GdiInterfaceLoggingToFileTest = TestLegacy<GdiInterfaceLoggingToFileFixture>;
-
 TEST_F(GdiInterfaceLoggingToFileTest, WhenGdiLoggingIsEnabledWhenLoggingAnyGdiThenExpectLogCountCorrect) {
     D3DKMT_OPENADAPTERFROMLUID param = {};
 
@@ -1294,8 +1294,6 @@ TEST_F(GdiInterfaceLoggingToFileTest, WhenGdiLoggingIsEnabledWhenLoggingAnyGdiTh
     GdiLogging::logExit<D3DKMT_OPENADAPTERFROMLUID *>(status, &param);
     EXPECT_EQ(2u, NEO::IoFunctions::mockVfptrinfCalled);
 }
-
-using GdiInterfaceLoggingBaseTest = TestLegacy<GdiInterfaceLoggingBaseFixture>;
 
 TEST_F(GdiInterfaceLoggingBaseTest, WhenGdiLoggingIsDisabledWhenLoggingAnyGdiThenExpectNoLogCall) {
     D3DKMT_OPENADAPTERFROMLUID param = {};
