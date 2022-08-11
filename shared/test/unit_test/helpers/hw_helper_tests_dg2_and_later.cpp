@@ -12,7 +12,7 @@
 
 using namespace NEO;
 
-using HwHelperDg2AndLaterTest = TestLegacy<DeviceFixture>;
+using HwHelperDg2AndLaterTest = Test<DeviceFixture>;
 
 HWTEST2_F(HwHelperDg2AndLaterTest, GivenUseL1CacheAsTrueWhenCallSetL1CachePolicyThenL1CachePolicyL1CacheControlIsSetProperly, IsAtLeastXeHpgCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;

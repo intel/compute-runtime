@@ -14,19 +14,19 @@ using namespace NEO;
 
 class CommandSetMMIOFixture : public DeviceFixture {
   public:
-    void SetUp() {
-        DeviceFixture::SetUp();
+    void setUp() {
+        DeviceFixture::setUp();
         cmdContainer = std::make_unique<CommandContainer>();
         cmdContainer->initialize(pDevice, nullptr, true);
     }
-    void TearDown() {
+    void tearDown() {
         cmdContainer.reset();
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
     std::unique_ptr<CommandContainer> cmdContainer;
 };
 
-using CommandSetMMIOTest = TestLegacy<CommandSetMMIOFixture>;
+using CommandSetMMIOTest = Test<CommandSetMMIOFixture>;
 
 HWTEST_F(CommandSetMMIOTest, WhenProgrammingThenLoadRegisterImmIsUsed) {
     EncodeSetMMIO<FamilyType>::encodeIMM(*cmdContainer.get(), 0x2000, 0xbaa, false);

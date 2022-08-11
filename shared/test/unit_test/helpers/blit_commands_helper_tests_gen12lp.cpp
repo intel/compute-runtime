@@ -20,7 +20,7 @@
 
 using namespace NEO;
 
-using BlitTests = TestLegacy<DeviceFixture>;
+using BlitTests = Test<DeviceFixture>;
 
 HWTEST2_F(BlitTests, givenOneBytePerPixelWhenAppendColorDepthThenCorrectDepthIsSet, IsGen12LP) {
     using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;

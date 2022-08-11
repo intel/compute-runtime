@@ -148,7 +148,7 @@ struct WddmFixtureWithMockGdiDllWddmNoCleanup : public GdiDllFixture, public Moc
 
 struct WddmInstrumentationGmmFixture : DeviceFixture {
     void SetUp() {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         executionEnvironment = pDevice->getExecutionEnvironment();
         auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
         wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
@@ -158,7 +158,7 @@ struct WddmInstrumentationGmmFixture : DeviceFixture {
         rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
     }
     void TearDown() {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     WddmMock *wddm;

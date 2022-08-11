@@ -23,25 +23,25 @@
 
 namespace L0 {
 namespace ult {
-struct CommandListAppendLaunchKernelSWTags : public TestLegacy<ModuleFixture> {
+struct CommandListAppendLaunchKernelSWTags : public Test<ModuleFixture> {
     void SetUp() override {
         NEO::MockCompilerEnableGuard mock(true);
         NEO::DebugManager.flags.EnableSWTags.set(true);
-        ModuleFixture::SetUp();
+        ModuleFixture::setUp();
     }
 
     DebugManagerStateRestore dbgRestorer;
 };
 
-struct CommandListDualStorage : public TestLegacy<ModuleFixture> {
+struct CommandListDualStorage : public Test<ModuleFixture> {
     void SetUp() override {
         NEO::MockCompilerEnableGuard mock(true);
         DebugManager.flags.EnableLocalMemory.set(1);
         DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(1);
-        ModuleFixture::SetUp();
+        ModuleFixture::setUp();
     }
     void TearDown() override {
-        ModuleFixture::TearDown();
+        ModuleFixture::tearDown();
     }
     DebugManagerStateRestore restorer;
 };
@@ -799,7 +799,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendMemoryC
     EXPECT_TRUE(tagFound);
 }
 
-using CommandListArbitrationPolicyTest = TestLegacy<ModuleFixture>;
+using CommandListArbitrationPolicyTest = Test<ModuleFixture>;
 
 HWTEST_F(CommandListArbitrationPolicyTest, whenCreatingCommandListThenDefaultThreadArbitrationPolicyIsUsed) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
@@ -921,7 +921,7 @@ HWTEST_F(CommandListArbitrationPolicyTest, whenCommandListIsResetThenOriginalThr
     }
 }
 
-using CmdlistAppendLaunchKernelTests = TestLegacy<ModuleImmutableDataFixture>;
+using CmdlistAppendLaunchKernelTests = Test<ModuleImmutableDataFixture>;
 struct CmdlistAppendLaunchKernelWithImplicitArgsTests : CmdlistAppendLaunchKernelTests {
 
     void SetUp() override {
@@ -1215,7 +1215,7 @@ HWTEST_F(CmdlistAppendLaunchKernelTests, whenEncodingWorkDimForIndirectDispatchT
     }
 }
 
-using CommandListAppendLaunchKernel = TestLegacy<ModuleFixture>;
+using CommandListAppendLaunchKernel = Test<ModuleFixture>;
 HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernelsWhenAppendLaunchCooperativeKernelIsCalledThenReturnError, IsAtLeastSkl) {
     Mock<::L0::Kernel> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
@@ -1276,7 +1276,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenDebugToggleSetWhenUpdateStreamProp
     EXPECT_EQ(defaultThreadArbitrationPolicy, pCommandList->finalStreamState.stateComputeMode.threadArbitrationPolicy.value);
 }
 
-using MultiTileCommandListAppendLaunchFunctionXeHpCoreTest = TestLegacy<MultiTileCommandListAppendLaunchFunctionFixture>;
+using MultiTileCommandListAppendLaunchFunctionXeHpCoreTest = Test<MultiTileCommandListAppendLaunchFunctionFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListAppendLaunchFunctionXeHpCoreTest, givenImplicitScalingEnabledWhenAppendingKernelWithEventThenAllEventPacketsAreUsed) {
     ze_event_pool_desc_t eventPoolDesc = {};

@@ -13,7 +13,7 @@
 
 namespace L0 {
 namespace ult {
-using CommandQueueTestDG2 = TestLegacy<DeviceFixture>;
+using CommandQueueTestDG2 = Test<DeviceFixture>;
 
 HWTEST2_F(CommandQueueTestDG2, givenBindlessEnabledWhenEstimateStateBaseAddressCmdSizeCalledOnDG2ThenReturnedSizeOf2SBAAndPCAnd3DBindingTablePoolPool, IsDG2) {
     DebugManagerStateRestore restorer;

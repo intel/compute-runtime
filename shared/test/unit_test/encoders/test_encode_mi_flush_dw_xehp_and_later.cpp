@@ -10,7 +10,7 @@
 
 using namespace NEO;
 
-using XeHPAndLaterEncodeMiFlushDWTest = TestLegacy<CommandEncodeStatesFixture>;
+using XeHPAndLaterEncodeMiFlushDWTest = Test<CommandEncodeStatesFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterEncodeMiFlushDWTest, whenMiFlushDwIsProgrammedThenSetFlushCcsAndLlc) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;

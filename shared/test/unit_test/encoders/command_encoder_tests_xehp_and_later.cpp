@@ -36,7 +36,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterHardwareCommandsTest, givenXeHPAndLater
     EXPECT_EQ(0u, EncodeWA<FamilyType>::getAdditionalPipelineSelectSize(device));
 }
 
-using XeHPAndLaterCommandEncoderTest = TestLegacy<DeviceFixture>;
+using XeHPAndLaterCommandEncoderTest = Test<DeviceFixture>;
 
 HWTEST2_F(XeHPAndLaterCommandEncoderTest, whenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsAtLeastXeHpCore) {
     auto container = CommandContainer();

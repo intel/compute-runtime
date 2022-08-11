@@ -173,16 +173,16 @@ class WddmCommandStreamMockGdiTest : public ::testing::Test {
 };
 
 using WddmCommandStreamTest = ::TestLegacy<WddmCommandStreamFixture>;
-using WddmDefaultTest = ::TestLegacy<DeviceFixture>;
+using WddmDefaultTest = ::Test<DeviceFixture>;
 struct DeviceCommandStreamTest : ::TestLegacy<MockAubCenterFixture>, DeviceFixture {
     void SetUp() override {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         MockAubCenterFixture::SetUp();
         setMockAubCenter(pDevice->getRootDeviceEnvironmentRef());
     }
     void TearDown() override {
         MockAubCenterFixture::TearDown();
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 };
 

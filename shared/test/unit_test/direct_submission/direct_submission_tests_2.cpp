@@ -29,9 +29,9 @@ namespace CpuIntrinsicsTests {
 extern std::atomic<uint32_t> sfenceCounter;
 } // namespace CpuIntrinsicsTests
 
-using DirectSubmissionTest = TestLegacy<DirectSubmissionFixture>;
+using DirectSubmissionTest = Test<DirectSubmissionFixture>;
 
-using DirectSubmissionDispatchBufferTest = TestLegacy<DirectSubmissionDispatchBufferFixture>;
+using DirectSubmissionDispatchBufferTest = Test<DirectSubmissionDispatchBufferFixture>;
 
 struct DirectSubmissionDispatchMiMemFenceTest : public DirectSubmissionDispatchBufferTest {
     void SetUp() override {

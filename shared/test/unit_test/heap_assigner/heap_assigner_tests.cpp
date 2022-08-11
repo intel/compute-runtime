@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-class AlocationHelperTests : public TestLegacy<DeviceFixture> {
+class AlocationHelperTests : public Test<DeviceFixture> {
   public:
     HeapAssigner heapAssigner = {};
 };

@@ -16,7 +16,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandListProgramL3 = TestLegacy<DeviceFixture>;
+using CommandListProgramL3 = Test<DeviceFixture>;
 
 template <PRODUCT_FAMILY productFamily>
 struct CommandListAdjustStateComputeMode : public WhiteBox<::L0::CommandListProductFamily<productFamily>> {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ using NEO::Device;
 using NEO::HardwareInfo;
 using NEO::platformDevices;
 
-void DeviceFixture::SetUp() {
+void DeviceFixture::setUp() {
     pDevice = ClDeviceHelper<>::create();
     ASSERT_NE(nullptr, pDevice);
 
@@ -24,6 +24,6 @@ void DeviceFixture::SetUp() {
     ASSERT_NE(nullptr, const_cast<uint32_t *>(pTagMemory));
 }
 
-void DeviceFixture::TearDown() {
+void DeviceFixture::tearDown() {
     delete pDevice;
 }

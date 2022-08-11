@@ -57,7 +57,7 @@ class SysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
         auto &osInterface = device->getOsInterface();
         osInterface.setDriverModel(std::make_unique<SysmanMockDrm>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
@@ -87,7 +87,7 @@ class SysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
             GTEST_SKIP();
         }
 
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
         unsetenv("ZES_ENABLE_SYSMAN");
     }
 
@@ -106,7 +106,7 @@ class SysmanMultiDeviceFixture : public MultiDeviceFixture, public ::testing::Te
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
-        MultiDeviceFixture::SetUp();
+        MultiDeviceFixture::setUp();
         device = driverHandle->devices[0];
         neoDevice = device->getNEODevice();
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
@@ -143,7 +143,7 @@ class SysmanMultiDeviceFixture : public MultiDeviceFixture, public ::testing::Te
             GTEST_SKIP();
         }
         unsetenv("ZES_ENABLE_SYSMAN");
-        MultiDeviceFixture::TearDown();
+        MultiDeviceFixture::tearDown();
     }
 
     SysmanDevice *pSysmanDevice = nullptr;

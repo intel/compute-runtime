@@ -24,7 +24,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandQueueExecuteCommandListsXeHpgCore = TestLegacy<DeviceFixture>;
+using CommandQueueExecuteCommandListsXeHpgCore = Test<DeviceFixture>;
 
 XE_HPG_CORETEST_F(CommandQueueExecuteCommandListsXeHpgCore, WhenExecutingCmdListsThenPipelineSelectAndCfeStateAreAddedToCmdBuffer) {
     const ze_command_queue_desc_t desc = {};

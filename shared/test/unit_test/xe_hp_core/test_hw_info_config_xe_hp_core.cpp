@@ -17,7 +17,7 @@
 
 using namespace NEO;
 
-using XeHPMaxThreadsTest = TestLegacy<DeviceFixture>;
+using XeHPMaxThreadsTest = Test<DeviceFixture>;
 
 XEHPTEST_F(XeHPMaxThreadsTest, givenXEHPWithA0SteppingThenMaxThreadsForWorkgroupWAIsRequired) {
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
@@ -35,7 +35,7 @@ XEHPTEST_F(XeHPMaxThreadsTest, givenXEHPWithBSteppingThenMaxThreadsForWorkgroupW
     EXPECT_FALSE(isWARequired);
 }
 
-using TestXeHPHwInfoConfig = TestLegacy<DeviceFixture>;
+using TestXeHPHwInfoConfig = Test<DeviceFixture>;
 
 XEHPTEST_F(TestXeHPHwInfoConfig, givenHwInfoConfigWhenRevisionIsAtLeastBThenAllowStatelessCompression) {
     DebugManagerStateRestore restore;

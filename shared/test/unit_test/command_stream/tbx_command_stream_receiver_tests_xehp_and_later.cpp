@@ -30,7 +30,7 @@ struct XeHPAndLaterTbxCommandStreamReceiverTests : DeviceFixture, ::testing::Tes
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 };
 

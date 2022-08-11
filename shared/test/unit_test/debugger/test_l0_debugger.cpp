@@ -173,7 +173,7 @@ TEST(Debugger, GivenLegacyDebuggerWhenInitializingDebuggerL0ThenAbortIsCalledAft
     executionEnvironment->decRefInternal();
 }
 
-using L0DebuggerTest = TestLegacy<DeviceFixture>;
+using L0DebuggerTest = Test<DeviceFixture>;
 
 HWTEST_F(L0DebuggerTest, GivenDeviceWhenAllocateCalledThenDebuggerIsCreated) {
     auto debugger = DebuggerL0Hw<FamilyType>::allocate(pDevice);
@@ -568,11 +568,11 @@ HWTEST_F(L0DebuggerMultiSubDeviceTest, givenMultiSubDevicesWhenSbaTrackingBuffer
 struct L0DebuggerSimpleParameterizedTest : public ::testing::TestWithParam<int>, DeviceFixture {
     void SetUp() override {
         NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(GetParam());
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     DebugManagerStateRestore restorer;

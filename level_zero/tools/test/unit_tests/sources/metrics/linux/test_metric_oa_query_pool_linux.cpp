@@ -33,14 +33,14 @@ class MetricQueryPoolLinuxTest : public MetricContextFixture,
                                  public ::testing::Test {
   public:
     void SetUp() override {
-        MetricContextFixture::SetUp();
+        MetricContextFixture::setUp();
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
         auto &osInterface = device->getOsInterface();
         osInterface.setDriverModel(std::make_unique<DrmMock>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
     }
 
     void TearDown() override {
-        MetricContextFixture::TearDown();
+        MetricContextFixture::tearDown();
     }
 };
 
@@ -211,14 +211,14 @@ class MetricEnumerationTestLinux : public MetricContextFixture,
                                    public ::testing::Test {
   public:
     void SetUp() override {
-        MetricContextFixture::SetUp();
+        MetricContextFixture::setUp();
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
         auto &osInterface = device->getOsInterface();
         osInterface.setDriverModel(std::make_unique<DrmMock>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
     }
 
     void TearDown() override {
-        MetricContextFixture::TearDown();
+        MetricContextFixture::tearDown();
     }
 };
 

@@ -1342,7 +1342,7 @@ TEST(DebugSessionTest, GivenBindlessSipVersion2WhenResumingThreadThenCheckIfThre
     EXPECT_EQ(1u, sessionMock->checkThreadIsResumedCalled);
 }
 
-using MultiTileDebugSessionTest = TestLegacy<MultipleDevicesWithCustomHwInfo>;
+using MultiTileDebugSessionTest = Test<MultipleDevicesWithCustomHwInfo>;
 
 TEST_F(MultiTileDebugSessionTest, givenThreadsFromMultipleTilesWhenResumeCalledThenThreadsResumedInAllTiles) {
     zet_debug_config_t config = {};

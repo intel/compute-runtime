@@ -17,7 +17,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandListStatePrefetchPvcXt = TestLegacy<CommandListStatePrefetchXeHpcCore>;
+using CommandListStatePrefetchPvcXt = Test<CommandListStatePrefetchXeHpcCore>;
 
 PVCTEST_F(CommandListStatePrefetchPvcXt, givenCommandBufferIsExhaustedWhenPrefetchApiCalledAndIsPvcXtNotBaseDieA0ThenProgramStatePrefetch) {
     auto hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
@@ -36,7 +36,7 @@ PVCTEST_F(CommandListStatePrefetchPvcXt, givenDebugFlagSetWhenPrefetchApiCalledA
     checkIfDebugFlagSetWhenPrefetchApiCalledAThenStatePrefetchProgrammed(hwInfo);
 }
 
-using CommandListEventFenceTestsPvc = TestLegacy<ModuleFixture>;
+using CommandListEventFenceTestsPvc = Test<ModuleFixture>;
 
 PVCTEST_F(CommandListEventFenceTestsPvc, givenCommandListWithProfilingEventAfterCommandOnPvcRev00ThenMiFenceIsNotAdded) {
     using GfxFamily = typename NEO::GfxFamilyMapper<IGFX_XE_HPC_CORE>::GfxFamily;
@@ -69,7 +69,7 @@ PVCTEST_F(CommandListEventFenceTestsPvc, givenCommandListWithProfilingEventAfter
     EXPECT_EQ(cmdList.end(), itor);
 }
 
-using CommandListAppendBarrierXeHpcCore = TestLegacy<DeviceFixture>;
+using CommandListAppendBarrierXeHpcCore = Test<DeviceFixture>;
 
 PVCTEST_F(CommandListAppendBarrierXeHpcCore, givenCommandListWhenAppendingBarrierThenPipeControlIsProgrammedAndHdcAndUnTypedFlushesAreSet) {
     using GfxFamily = typename NEO::GfxFamilyMapper<IGFX_XE_HPC_CORE>::GfxFamily;

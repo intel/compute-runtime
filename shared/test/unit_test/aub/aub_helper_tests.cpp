@@ -105,7 +105,7 @@ TEST(AubHelper, WhenHBMSizePerTileInGigabytesIsNotSetThenGetMemBankSizeReturnsCo
     EXPECT_EQ(8 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(&hwInfo));
 }
 
-using AubHelperHwTest = TestLegacy<DeviceFixture>;
+using AubHelperHwTest = Test<DeviceFixture>;
 
 HWTEST_F(AubHelperHwTest, GivenDisabledLocalMemoryWhenGetDataHintForPml4EntryIsCalledThenTraceNotypeIsReturned) {
     AubHelperHw<FamilyType> aubHelper(false);

@@ -50,7 +50,7 @@ TEST(Device, givenNoDebuggerWhenGettingDebuggerThenNullptrIsReturned) {
     EXPECT_EQ(nullptr, device->getSourceLevelDebugger());
 }
 
-using DeviceTest = TestLegacy<DeviceFixture>;
+using DeviceTest = Test<DeviceFixture>;
 
 TEST_F(DeviceTest, whenInitializeRayTracingIsCalledAndRtBackedBufferIsNullptrThenMemoryBackedBufferIsCreated) {
     EXPECT_EQ(nullptr, pDevice->getRTMemoryBackedBuffer());
@@ -124,7 +124,7 @@ TEST_F(DeviceTest, GivenDeviceWhenGenerateUuidThenValidValuesAreSet) {
     EXPECT_EQ(memcmp(&uuid, &expectedUuid, HwInfoConfig::uuidSize), 0);
 }
 
-using DeviceGetCapsTest = TestLegacy<DeviceFixture>;
+using DeviceGetCapsTest = Test<DeviceFixture>;
 
 TEST_F(DeviceGetCapsTest, givenMockCompilerInterfaceWhenInitializeCapsIsCalledThenMaxParameterSizeIsSetCorrectly) {
     auto pCompilerInterface = new MockCompilerInterface;

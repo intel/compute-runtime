@@ -19,7 +19,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandListAppendWaitOnEvent = TestLegacy<CommandListFixture>;
+using CommandListAppendWaitOnEvent = Test<CommandListFixture>;
 
 HWTEST_F(CommandListAppendWaitOnEvent, WhenAppendingWaitOnEventThenSemaphoreWaitCmdIsGenerated) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
@@ -386,7 +386,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenCommandBufferIsEmptyWhenAppendingWai
     EXPECT_EQ(1u, semaphoreWaitsFound);
 }
 
-using MultTileCommandListAppendWaitOnEvent = TestLegacy<MultiTileCommandListFixture<false, false, false>>;
+using MultTileCommandListAppendWaitOnEvent = Test<MultiTileCommandListFixture<false, false, false>>;
 HWTEST2_F(MultTileCommandListAppendWaitOnEvent,
           GivenMultiTileCmdListWhenPartitionedEventUsedToWaitThenExpectProperGpuAddressAndSemaphoreCount, IsAtLeastXeHpCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;

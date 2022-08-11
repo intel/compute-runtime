@@ -13,13 +13,13 @@
 namespace NEO {
 struct AubCommandStreamReceiverFixture : public DeviceFixture, MockAubCenterFixture {
     void SetUp() {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         MockAubCenterFixture::SetUp();
         setMockAubCenter(*pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
     }
     void TearDown() {
         MockAubCenterFixture::TearDown();
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 };
 } // namespace NEO

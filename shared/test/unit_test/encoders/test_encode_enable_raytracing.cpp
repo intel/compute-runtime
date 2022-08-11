@@ -14,7 +14,7 @@
 
 using namespace NEO;
 
-using CommandEncodeEnableRayTracing = TestLegacy<CommandEncodeStatesFixture>;
+using CommandEncodeEnableRayTracing = Test<CommandEncodeStatesFixture>;
 
 HWTEST_F(CommandEncodeEnableRayTracing, programEnableRayTracing) {
     uint32_t pCmdBuffer[1024];

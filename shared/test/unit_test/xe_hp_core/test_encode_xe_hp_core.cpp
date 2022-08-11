@@ -124,11 +124,11 @@ struct EncodeKernelGlobalAtomicsFixture : public CommandEncodeStatesFixture, pub
         osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&OSInterface::osEnableLocalMemory, true);
         mockDeviceBackup = std::make_unique<VariableBackup<bool>>(&MockDevice::createSingleDevice, false);
 
-        CommandEncodeStatesFixture::SetUp();
+        CommandEncodeStatesFixture::setUp();
     }
 
     void TearDown() override {
-        CommandEncodeStatesFixture::TearDown();
+        CommandEncodeStatesFixture::tearDown();
     }
 
     DebugManagerStateRestore restorer;

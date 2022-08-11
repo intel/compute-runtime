@@ -48,7 +48,7 @@ using namespace std::chrono_literals;
 struct CommandStreamReceiverTest : public DeviceFixture,
                                    public ::testing::Test {
     void SetUp() override {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
 
         commandStreamReceiver = &pDevice->getGpgpuCommandStreamReceiver();
         ASSERT_NE(nullptr, commandStreamReceiver);
@@ -57,7 +57,7 @@ struct CommandStreamReceiverTest : public DeviceFixture,
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     CommandStreamReceiver *commandStreamReceiver = nullptr;

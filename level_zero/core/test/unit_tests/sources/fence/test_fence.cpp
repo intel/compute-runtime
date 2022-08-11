@@ -33,7 +33,7 @@ extern std::function<void()> setupPauseAddress;
 namespace L0 {
 namespace ult {
 
-using FenceTest = TestLegacy<DeviceFixture>;
+using FenceTest = Test<DeviceFixture>;
 TEST_F(FenceTest, whenQueryingStatusThenCsrAllocationsAreDownloaded) {
     auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     *csr->tagAddress = 0;
@@ -169,7 +169,7 @@ TEST_F(FenceTest, GivenSuccessfulQueryResultAndNoTimeoutWhenHostSynchronizeIsCal
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-using FenceSynchronizeTest = TestLegacy<DeviceFixture>;
+using FenceSynchronizeTest = Test<DeviceFixture>;
 
 TEST_F(FenceSynchronizeTest, givenCallToFenceHostSynchronizeWithTimeoutZeroAndStateInitialThenHostSynchronizeReturnsNotReady) {
     std::unique_ptr<MockCommandStreamReceiver> csr = nullptr;
@@ -275,7 +275,7 @@ TEST_F(FenceSynchronizeTest, givenInfiniteTimeoutWhenWaitingForFenceCompletionTh
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-using FenceAubCsrTest = TestLegacy<DeviceFixture>;
+using FenceAubCsrTest = Test<DeviceFixture>;
 
 HWTEST_F(FenceAubCsrTest, givenCallToFenceHostSynchronizeWithAubModeCsrReturnsSuccess) {
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;

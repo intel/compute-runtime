@@ -25,7 +25,7 @@ namespace ult {
 class CommandListCreateGen9 : public DeviceFixture, public testing::Test {
   public:
     void SetUp() override {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
 
         dispatchFunctionArguments.groupCountX = 1u;
         dispatchFunctionArguments.groupCountY = 2u;
@@ -40,7 +40,7 @@ class CommandListCreateGen9 : public DeviceFixture, public testing::Test {
             free(ptr);
         }
 
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     std::vector<void *> isaBuffers;

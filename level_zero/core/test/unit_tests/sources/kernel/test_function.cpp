@@ -14,7 +14,7 @@
 namespace L0 {
 namespace ult {
 
-using KernelImp = TestLegacy<DeviceFixture>;
+using KernelImp = Test<DeviceFixture>;
 
 TEST_F(KernelImp, GivenCrossThreadDataThenIsCorrectlyPatchedWithGlobalWorkSizeAndGroupCount) {
     uint32_t *crossThreadData =
@@ -104,11 +104,11 @@ TEST_F(KernelImp, WhenSuggestingGroupSizeThenClampToMaxGroupSize) {
 class KernelImpSuggestGroupSize : public DeviceFixture, public ::testing::TestWithParam<uint32_t> {
   public:
     void SetUp() override {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 };
 

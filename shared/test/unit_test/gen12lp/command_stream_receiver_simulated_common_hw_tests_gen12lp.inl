@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-using Gen12LPCommandStreamReceiverSimulatedCommonHwTests = TestLegacy<DeviceFixture>;
+using Gen12LPCommandStreamReceiverSimulatedCommonHwTests = Test<DeviceFixture>;
 
 GEN12LPTEST_F(Gen12LPCommandStreamReceiverSimulatedCommonHwTests, givenAubCommandStreamReceiverWhewGlobalMmiosAreInitializedThenMOCSRegistersAreConfigured) {
     MockSimulatedCsrHw<FamilyType> csrSimulatedCommonHw(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());

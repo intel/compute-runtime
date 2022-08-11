@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-using XeHPAndLaterCommandEncoderMathTest = TestLegacy<DeviceFixture>;
+using XeHPAndLaterCommandEncoderMathTest = Test<DeviceFixture>;
 
 HWTEST2_F(XeHPAndLaterCommandEncoderMathTest, WhenAppendsAGreaterThanThenPredicateCorrectlySetAndRemapEnabled, IsAtLeastXeHpCore) {
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;

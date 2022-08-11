@@ -20,12 +20,12 @@ class MetricIpSamplingWindowsTest : public DeviceFixture,
                                     public ::testing::Test {
   public:
     void SetUp() override {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         metricIpSamplingOsInterface = MetricIpSamplingOsInterface::create(static_cast<L0::Device &>(*device));
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
     std::unique_ptr<MetricIpSamplingOsInterface> metricIpSamplingOsInterface = nullptr;
 };

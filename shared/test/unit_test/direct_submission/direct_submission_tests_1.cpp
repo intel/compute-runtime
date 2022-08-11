@@ -24,7 +24,7 @@
 #include "shared/test/unit_test/fixtures/direct_submission_fixture.h"
 #include "shared/test/unit_test/mocks/mock_direct_submission_diagnostic_collector.h"
 
-using DirectSubmissionTest = TestLegacy<DirectSubmissionFixture>;
+using DirectSubmissionTest = Test<DirectSubmissionFixture>;
 
 HWTEST_F(DirectSubmissionTest, whenDebugCacheFlushDisabledSetThenExpectNoCpuCacheFlush) {
     DebugManagerStateRestore restore;

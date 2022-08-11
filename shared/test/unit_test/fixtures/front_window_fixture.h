@@ -19,8 +19,8 @@ class MemManagerFixture : public DeviceFixture {
         void forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uint64_t range);
     };
 
-    void SetUp();
-    void TearDown();
+    void setUp();
+    void tearDown();
 
     std::unique_ptr<FrontWindowMemManagerMock> memManager;
 };

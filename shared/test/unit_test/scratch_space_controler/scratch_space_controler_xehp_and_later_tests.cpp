@@ -47,7 +47,7 @@ class MockScratchSpaceControllerXeHPAndLater : public ScratchSpaceControllerXeHP
     bool scratchDirty = false;
 };
 
-using ScratchComtrolerTests = TestLegacy<DeviceFixture>;
+using ScratchComtrolerTests = Test<DeviceFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchComtrolerTests, givenBindlessModeOnWhenGetPatchedOffsetCalledThenBindlessOffsetReturned) {
     DebugManagerStateRestore restorer;

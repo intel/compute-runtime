@@ -19,8 +19,8 @@ struct Device;
 namespace ult {
 
 struct MultiTileCommandListAppendLaunchFunctionFixture : public MultiDeviceModuleFixture {
-    void SetUp();
-    void TearDown();
+    void setUp();
+    void tearDown();
 
     ContextImp *contextImp = nullptr;
     WhiteBox<::L0::CommandList> *commandList = nullptr;
@@ -29,8 +29,8 @@ struct MultiTileCommandListAppendLaunchFunctionFixture : public MultiDeviceModul
 };
 
 struct MultiTileImmediateCommandListAppendLaunchFunctionFixture : public MultiDeviceModuleFixture {
-    void SetUp();
-    void TearDown();
+    void setUp();
+    void tearDown();
 
     ContextImp *contextImp = nullptr;
     L0::Device *device = nullptr;

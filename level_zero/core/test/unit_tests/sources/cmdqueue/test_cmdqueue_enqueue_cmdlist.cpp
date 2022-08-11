@@ -28,9 +28,9 @@
 namespace L0 {
 namespace ult {
 
-struct CommandQueueExecuteCommandLists : public TestLegacy<DeviceFixture> {
+struct CommandQueueExecuteCommandLists : public Test<DeviceFixture> {
     void SetUp() override {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
 
         ze_result_t returnValue;
         commandLists[0] = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle();
@@ -48,7 +48,7 @@ struct CommandQueueExecuteCommandLists : public TestLegacy<DeviceFixture> {
             commandList->destroy();
         }
 
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     template <typename FamilyType>
@@ -58,11 +58,11 @@ struct CommandQueueExecuteCommandLists : public TestLegacy<DeviceFixture> {
     ze_command_list_handle_t commandLists[numCommandLists];
 };
 
-struct MultiDeviceCommandQueueExecuteCommandLists : public TestLegacy<MultiDeviceFixture> {
+struct MultiDeviceCommandQueueExecuteCommandLists : public Test<MultiDeviceFixture> {
     void SetUp() override {
         DebugManager.flags.EnableWalkerPartition.set(1);
         numRootDevices = 1u;
-        MultiDeviceFixture::SetUp();
+        MultiDeviceFixture::setUp();
 
         uint32_t deviceCount = 1;
         ze_device_handle_t deviceHandle;
@@ -88,7 +88,7 @@ struct MultiDeviceCommandQueueExecuteCommandLists : public TestLegacy<MultiDevic
             commandList->destroy();
         }
 
-        MultiDeviceFixture::TearDown();
+        MultiDeviceFixture::tearDown();
     }
 
     L0::Device *device = nullptr;
@@ -976,10 +976,10 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenCopyCommandQueueWhenExecutingCopy
     commandQueue->destroy();
 }
 
-struct CommandQueueExecuteCommandListSWTagsTests : public TestLegacy<DeviceFixture> {
+struct CommandQueueExecuteCommandListSWTagsTests : public Test<DeviceFixture> {
     void SetUp() override {
         DebugManager.flags.EnableSWTags.set(true);
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
 
         ze_result_t returnValue;
         commandLists[0] = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle();
@@ -1006,7 +1006,7 @@ struct CommandQueueExecuteCommandListSWTagsTests : public TestLegacy<DeviceFixtu
             commandList->destroy();
         }
 
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     DebugManagerStateRestore dbgRestorer;

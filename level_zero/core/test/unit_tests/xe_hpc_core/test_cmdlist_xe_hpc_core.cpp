@@ -21,14 +21,14 @@ namespace L0 {
 namespace ult {
 
 struct LocalMemoryModuleFixture : public ModuleFixture {
-    void SetUp() {
+    void setUp() {
         DebugManager.flags.EnableLocalMemory.set(1);
-        ModuleFixture::SetUp();
+        ModuleFixture::setUp();
     }
     DebugManagerStateRestore restore;
 };
 
-using CommandListAppendLaunchKernelXeHpcCore = TestLegacy<LocalMemoryModuleFixture>;
+using CommandListAppendLaunchKernelXeHpcCore = Test<LocalMemoryModuleFixture>;
 HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenKernelUsingSyncBufferWhenAppendLaunchCooperativeKernelIsCalledThenCorrectValueIsReturned, IsXeHpcCore) {
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &hwConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
@@ -64,7 +64,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenKernelUsingSyncBufferWhen
     }
 }
 
-using CommandListStatePrefetchXeHpcCore = TestLegacy<ModuleFixture>;
+using CommandListStatePrefetchXeHpcCore = Test<ModuleFixture>;
 
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenUnifiedSharedMemoryWhenPrefetchApiIsCalledThenDontRequestMemoryPrefetchByDefault, IsXeHpcCore) {
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
@@ -386,7 +386,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     commandQueue->destroy();
 }
 
-using CommandListEventFenceTestsXeHpcCore = TestLegacy<ModuleFixture>;
+using CommandListEventFenceTestsXeHpcCore = Test<ModuleFixture>;
 
 HWTEST2_F(CommandListEventFenceTestsXeHpcCore, givenCommandListWithProfilingEventAfterCommandWhenRevId03ThenMiFenceIsAdded, IsXeHpcCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
@@ -449,7 +449,7 @@ HWTEST2_F(CommandListEventFenceTestsXeHpcCore, givenCommandListWithRegularEventA
     EXPECT_NE(cmdList.end(), itor);
 }
 
-using CommandListAppendRangesBarrierXeHpcCore = TestLegacy<DeviceFixture>;
+using CommandListAppendRangesBarrierXeHpcCore = Test<DeviceFixture>;
 
 HWTEST2_F(CommandListAppendRangesBarrierXeHpcCore, givenCallToAppendRangesBarrierThenPipeControlProgrammed, IsXeHpcCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;

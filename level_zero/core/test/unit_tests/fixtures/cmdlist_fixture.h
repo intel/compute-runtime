@@ -21,8 +21,8 @@ namespace ult {
 
 class CommandListFixture : public DeviceFixture {
   public:
-    void SetUp() {
-        DeviceFixture::SetUp();
+    void setUp() {
+        DeviceFixture::setUp();
         ze_result_t returnValue;
         commandList.reset(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
 
@@ -39,11 +39,11 @@ class CommandListFixture : public DeviceFixture {
         event = std::unique_ptr<Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     }
 
-    void TearDown() {
+    void tearDown() {
         event.reset(nullptr);
         eventPool.reset(nullptr);
         commandList.reset(nullptr);
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     std::unique_ptr<L0::ult::CommandList> commandList;
@@ -53,12 +53,12 @@ class CommandListFixture : public DeviceFixture {
 
 template <bool createImmediate, bool createInternal, bool createCopy>
 struct MultiTileCommandListFixture : public SingleRootMultiSubDeviceFixture {
-    void SetUp() {
+    void setUp() {
         DebugManager.flags.EnableImplicitScaling.set(1);
         osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&NEO::OSInterface::osEnableLocalMemory, true);
         apiSupportBackup = std::make_unique<VariableBackup<bool>>(&NEO::ImplicitScaling::apiSupport, true);
 
-        SingleRootMultiSubDeviceFixture::SetUp();
+        SingleRootMultiSubDeviceFixture::setUp();
         ze_result_t returnValue;
 
         NEO::EngineGroupType cmdListEngineType = createCopy ? NEO::EngineGroupType::Copy : NEO::EngineGroupType::RenderCompute;
@@ -84,8 +84,8 @@ struct MultiTileCommandListFixture : public SingleRootMultiSubDeviceFixture {
         event = std::unique_ptr<Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     }
 
-    void TearDown() {
-        SingleRootMultiSubDeviceFixture::TearDown();
+    void tearDown() {
+        SingleRootMultiSubDeviceFixture::tearDown();
     }
 
     std::unique_ptr<L0::ult::CommandList> commandList;

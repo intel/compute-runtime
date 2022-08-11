@@ -26,13 +26,13 @@ class ImageSurfaceStateTests : public DeviceFixture,
   public:
     ImageSurfaceStateTests() = default;
     void SetUp() override {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         gmmHelper = pDevice->getGmmHelper();
         mockGmm = std::make_unique<MockGmm>(gmmHelper);
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     std::unique_ptr<MockGmm> mockGmm;

@@ -118,7 +118,7 @@ class MetricIpSamplingLinuxTestPrelim : public DeviceFixture,
                                         public ::testing::Test {
   public:
     void SetUp() override {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
         auto &osInterface = device->getOsInterface();
         osInterface.setDriverModel(std::make_unique<DrmPrelimMock>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
@@ -127,7 +127,7 @@ class MetricIpSamplingLinuxTestPrelim : public DeviceFixture,
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
     std::unique_ptr<MetricIpSamplingOsInterface> metricIpSamplingOsInterface = nullptr;
 };

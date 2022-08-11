@@ -16,7 +16,7 @@
 namespace L0 {
 namespace ult {
 
-using MultiPartitionPrologueTest = TestLegacy<DeviceFixture>;
+using MultiPartitionPrologueTest = Test<DeviceFixture>;
 HWTEST2_F(MultiPartitionPrologueTest, whenAppendMultiPartitionPrologueIsCalledThenCommandListIsUpdated, IsAtLeastXeHpCore) {
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
@@ -72,7 +72,7 @@ HWTEST2_F(MultiPartitionPrologueTest, whenAppendMultiPartitionPrologueIsCalledTh
     auto result = commandList->close();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 }
-using MultiPartitionEpilogueTest = TestLegacy<DeviceFixture>;
+using MultiPartitionEpilogueTest = Test<DeviceFixture>;
 HWTEST2_F(MultiPartitionEpilogueTest, whenAppendMultiPartitionEpilogueIsCalledThenCommandListIsUpdated, IsAtLeastXeHpCore) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 

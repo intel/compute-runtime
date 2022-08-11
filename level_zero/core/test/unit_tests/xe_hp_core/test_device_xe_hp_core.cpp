@@ -12,7 +12,7 @@
 namespace L0 {
 namespace ult {
 
-using DeviceFixtureXeHpCore = TestLegacy<DeviceFixture>;
+using DeviceFixtureXeHpCore = Test<DeviceFixture>;
 
 HWTEST2_F(DeviceFixtureXeHpCore, GivenTargetXeHpCoreaWhenGettingMemoryPropertiesThenMemoryNameComesAsHBM, IsXeHpCore) {
     ze_device_memory_properties_t memProperties = {};
@@ -32,7 +32,7 @@ HWTEST2_F(DeviceFixtureXeHpCore, givenReturnedDevicePropertiesThenExpectedProper
     EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED);
 }
 
-using CommandQueueGroupTest = TestLegacy<DeviceFixture>;
+using CommandQueueGroupTest = Test<DeviceFixture>;
 
 HWTEST2_F(CommandQueueGroupTest, givenNoBlitterSupportAndNoCCSThenOneQueueGroupIsReturned, IsXeHpCore) {
     const uint32_t rootDeviceIndex = 0u;
@@ -104,22 +104,22 @@ HWTEST2_F(CommandQueueGroupTest, givenBlitterSupportAndCCSThenThreeQueueGroupsAr
     }
 }
 
-class DeviceCopyQueueGroupFixture : public DeviceFixture {
+class DeviceCopyQueueGroupXeHpCoreFixture : public DeviceFixture {
   public:
-    void SetUp() {
+    void setUp() {
         DebugManager.flags.EnableBlitterOperationsSupport.set(0);
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
     }
 
-    void TearDown() {
-        DeviceFixture::TearDown();
+    void tearDown() {
+        DeviceFixture::tearDown();
     }
     DebugManagerStateRestore restorer;
 };
 
-using DeviceCopyQueueGroupTest = TestLegacy<DeviceCopyQueueGroupFixture>;
+using DeviceCopyQueueGroupXeHpCoreTest = Test<DeviceCopyQueueGroupXeHpCoreFixture>;
 
-HWTEST2_F(DeviceCopyQueueGroupTest,
+HWTEST2_F(DeviceCopyQueueGroupXeHpCoreTest,
           givenBlitterSupportAndEnableBlitterOperationsSupportSetToZeroThenNoCopyEngineIsReturned, IsXeHpCore) {
     const uint32_t rootDeviceIndex = 0u;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();

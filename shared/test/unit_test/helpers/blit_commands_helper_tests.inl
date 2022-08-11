@@ -16,11 +16,11 @@ using namespace NEO;
 
 struct BlitColorTests : public DeviceFixture, public testing::TestWithParam<size_t> {
     void SetUp() override {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 };
 

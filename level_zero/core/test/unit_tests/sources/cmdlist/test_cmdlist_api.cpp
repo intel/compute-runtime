@@ -29,7 +29,7 @@ TEST(zeCommandListAppendMemoryPrefetch, whenCalledThenRedirectedToObject) {
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-using zeCommandListAppendMemAdviseTest = TestLegacy<DeviceFixture>;
+using zeCommandListAppendMemAdviseTest = Test<DeviceFixture>;
 TEST_F(zeCommandListAppendMemAdviseTest, whenCalledThenRedirectedToObject) {
     MockCommandList commandList;
 

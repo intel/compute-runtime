@@ -14,7 +14,7 @@
 #include "shared/test/unit_test/mocks/mock_aub_stream.h"
 #include "shared/test/unit_test/mocks/mock_csr_simulated_common_hw.h"
 
-using XeHPAndLaterMockSimulatedCsrHwTests = TestLegacy<DeviceFixture>;
+using XeHPAndLaterMockSimulatedCsrHwTests = Test<DeviceFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterMockSimulatedCsrHwTests, givenLocalMemoryEnabledWhenGlobalMmiosAreInitializedThenLmemIsInitializedAndLmemCfgMmioIsWritten) {
     std::unique_ptr<MockSimulatedCsrHw<FamilyType>> csrSimulatedCommonHw(new MockSimulatedCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
@@ -202,7 +202,7 @@ class XeHPAndLaterTileRangeRegisterTest : public DeviceFixture, public ::testing
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     void checkMMIOs(MMIOList &list, uint32_t tilesNumber, uint32_t localMemorySizeTotalInGB) {

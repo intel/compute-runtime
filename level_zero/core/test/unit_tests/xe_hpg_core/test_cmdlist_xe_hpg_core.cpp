@@ -27,7 +27,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandListCreate = TestLegacy<DeviceFixture>;
+using CommandListCreate = Test<DeviceFixture>;
 
 HWTEST2_F(CommandListCreate, WhenCreatingCommandListThenBindingTablePoolAllocAddedToBatchBuffer, IsXeHpgCore) {
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
@@ -381,7 +381,7 @@ HWTEST2_F(CommandListCreate, GivenComputeModePropertiesWhenUpdateStreamPropertie
     EXPECT_FALSE(pCommandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
 }
 
-using CommandListAppendLaunchKernelXeHpgCore = TestLegacy<ModuleFixture>;
+using CommandListAppendLaunchKernelXeHpgCore = Test<ModuleFixture>;
 HWTEST2_F(CommandListAppendLaunchKernelXeHpgCore, givenEventWhenAppendKernelIsCalledThenImmediateDataPostSyncIsAdded, IsXeHpgCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;

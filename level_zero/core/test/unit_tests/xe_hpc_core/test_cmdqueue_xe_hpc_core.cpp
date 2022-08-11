@@ -22,30 +22,7 @@
 namespace L0 {
 namespace ult {
 
-struct CommandQueueCreateMultiOrdinalFixture : public DeviceFixture {
-    void SetUp() {
-        NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-        hwInfo.featureTable.flags.ftrCCSNode = true;
-        hwInfo.featureTable.ftrBcsInfo = 0;
-        hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
-
-        neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
-        NEO::DeviceVector devices;
-        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
-        driverHandle->initialize(std::move(devices));
-        device = driverHandle->devices[0];
-    }
-
-    void TearDown() {
-    }
-
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
-    NEO::MockDevice *neoDevice = nullptr;
-    L0::Device *device = nullptr;
-};
-
-using CommandQueueCommandsXeHpc = TestLegacy<DeviceFixture>;
+using CommandQueueCommandsXeHpc = Test<DeviceFixture>;
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsThenGlobalFenceAllocationIsResident, IsXeHpcCore) {
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;

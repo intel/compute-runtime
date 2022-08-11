@@ -500,7 +500,7 @@ TEST(DebugSession, GivenLogsDisabledWhenPrintBitmaskCalledThenBitmaskIsNotPrinte
     EXPECT_EQ(0u, output.size());
 }
 
-using DebugSessionMultiTile = TestLegacy<MultipleDevicesWithCustomHwInfo>;
+using DebugSessionMultiTile = Test<MultipleDevicesWithCustomHwInfo>;
 
 TEST_F(DebugSessionMultiTile, givenApiThreadAndMultipleTilesWhenConvertingToPhysicalThenCorrectValueReturned) {
     L0::Device *device = driverHandle->devices[0];

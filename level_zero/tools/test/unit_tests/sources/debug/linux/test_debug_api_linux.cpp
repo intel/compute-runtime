@@ -482,7 +482,7 @@ struct DebugApiLinuxFixture : public DeviceFixture {
             auto executionEnvironment = MockDevice::prepareExecutionEnvironment(hwInfo, 0u);
             DeviceFixture::setupWithExecutionEnvironment(*executionEnvironment);
         } else {
-            DeviceFixture::SetUp();
+            DeviceFixture::setUp();
         }
 
         mockDrm = new DrmQueryMock(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
@@ -503,7 +503,7 @@ struct DebugApiLinuxFixture : public DeviceFixture {
     }
 
     void TearDown() {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
     DrmQueryMock *mockDrm = nullptr;
     static constexpr uint8_t bufferSize = 16;
@@ -511,7 +511,7 @@ struct DebugApiLinuxFixture : public DeviceFixture {
 
 struct DebugApiLinuxMultiDeviceFixture : public MultipleDevicesWithCustomHwInfo {
     void SetUp() {
-        MultipleDevicesWithCustomHwInfo::SetUp();
+        MultipleDevicesWithCustomHwInfo::setUp();
         neoDevice = driverHandle->devices[0]->getNEODevice();
 
         L0::Device *device = driverHandle->devices[0];
@@ -537,7 +537,7 @@ struct DebugApiLinuxMultiDeviceFixture : public MultipleDevicesWithCustomHwInfo 
     }
 
     void TearDown() {
-        MultipleDevicesWithCustomHwInfo::TearDown();
+        MultipleDevicesWithCustomHwInfo::tearDown();
     }
     NEO::Device *neoDevice = nullptr;
     L0::DeviceImp *deviceImp = nullptr;

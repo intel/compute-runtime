@@ -20,7 +20,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandListCreate = TestLegacy<DeviceFixture>;
+using CommandListCreate = Test<DeviceFixture>;
 
 HWTEST2_F(CommandListCreate, givenCopyOnlyCommandListWhenAppendWriteGlobalTimestampCalledThenMiFlushDWWithTimestampEncoded, IsAtLeastSkl) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
@@ -240,10 +240,10 @@ HWTEST_F(CommandListCreate, givenUseCsrImmediateSubmissionEnabledForCopyImmediat
 class CommandListImmediateFlushTaskTests : public DeviceFixture {
   public:
     void SetUp() {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
     }
     void TearDown() {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
     DebugManagerStateRestore restorer;
 };

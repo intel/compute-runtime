@@ -25,7 +25,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandListAppendLaunchKernel = TestLegacy<ModuleFixture>;
+using CommandListAppendLaunchKernel = Test<ModuleFixture>;
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithIndirectAllocationsAllowedThenCommandListReturnsExpectedIndirectAllocationsAllowed) {
     createKernel();

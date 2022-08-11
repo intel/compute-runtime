@@ -219,7 +219,7 @@ HWTEST_P(L0DebuggerParameterizedTests, givenEnabledDebuggingWhenIsaTypeAllocated
     }
 }
 
-using L0DebuggerSimpleTest = TestLegacy<DeviceFixture>;
+using L0DebuggerSimpleTest = Test<DeviceFixture>;
 
 HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledWithImmediateCommandListToInvokeNonKernelOperationsThenSuccessIsReturned) {
     DebugManagerStateRestore restorer;

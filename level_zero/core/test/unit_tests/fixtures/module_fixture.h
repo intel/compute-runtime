@@ -149,7 +149,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
         }
     };
 
-    void SetUp() {
+    void setUp() {
         auto executionEnvironment = MockDevice::prepareExecutionEnvironment(NEO::defaultHwInfo.get(), 0u);
         memoryManager = new MockImmutableMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
@@ -192,9 +192,9 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
         kernel->initialize(&desc);
     }
 
-    void TearDown() {
+    void tearDown() {
         module.reset(nullptr);
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     const std::string binaryFilename = "test_kernel";
@@ -205,9 +205,9 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
 };
 
 struct ModuleFixture : public DeviceFixture {
-    void SetUp() {
+    void setUp() {
         NEO::MockCompilerEnableGuard mock(true);
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         createModuleFromBinary();
     }
 
@@ -242,10 +242,10 @@ struct ModuleFixture : public DeviceFixture {
         kernel->initialize(&desc);
     }
 
-    void TearDown() {
+    void tearDown() {
         kernel.reset(nullptr);
         module.reset(nullptr);
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     const std::string binaryFilename = "test_kernel";
@@ -256,8 +256,8 @@ struct ModuleFixture : public DeviceFixture {
 };
 
 struct MultiDeviceModuleFixture : public MultiDeviceFixture {
-    void SetUp() {
-        MultiDeviceFixture::SetUp();
+    void setUp() {
+        MultiDeviceFixture::setUp();
         modules.resize(numRootDevices);
     }
 
@@ -293,12 +293,12 @@ struct MultiDeviceModuleFixture : public MultiDeviceFixture {
         kernel->initialize(&desc);
     }
 
-    void TearDown() {
+    void tearDown() {
         kernel.reset(nullptr);
         for (auto &module : modules) {
             module.reset(nullptr);
         }
-        MultiDeviceFixture::TearDown();
+        MultiDeviceFixture::tearDown();
     }
 
     const std::string binaryFilename = "test_kernel";
@@ -391,30 +391,30 @@ struct ModuleWithZebinFixture : public DeviceFixture {
 
         const char strings[12] = "Hello olleH";
     };
-    void SetUp() {
+    void setUp() {
         NEO::MockCompilerEnableGuard mock(true);
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         module = std::make_unique<MockModuleWithZebin>(device);
     }
 
-    void TearDown() {
+    void tearDown() {
         module.reset(nullptr);
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
     std::unique_ptr<MockModuleWithZebin> module;
 };
 
 struct ImportHostPointerModuleFixture : public ModuleFixture {
-    void SetUp() {
+    void setUp() {
         DebugManager.flags.EnableHostPointerImport.set(1);
-        ModuleFixture::SetUp();
+        ModuleFixture::setUp();
 
         hostPointer = driverHandle->getMemoryManager()->allocateSystemMemory(MemoryConstants::pageSize, MemoryConstants::pageSize);
     }
 
-    void TearDown() {
+    void tearDown() {
         driverHandle->getMemoryManager()->freeSystemMemory(hostPointer);
-        ModuleFixture::TearDown();
+        ModuleFixture::tearDown();
     }
 
     DebugManagerStateRestore debugRestore;
@@ -422,19 +422,19 @@ struct ImportHostPointerModuleFixture : public ModuleFixture {
 };
 
 struct MultiTileModuleFixture : public MultiDeviceModuleFixture {
-    void SetUp() {
+    void setUp() {
         DebugManager.flags.EnableImplicitScaling.set(1);
         MultiDeviceFixture::numRootDevices = 1u;
         MultiDeviceFixture::numSubDevices = 2u;
 
-        MultiDeviceModuleFixture::SetUp();
+        MultiDeviceModuleFixture::setUp();
         createModuleFromBinary(0);
 
         device = driverHandle->devices[0];
     }
 
-    void TearDown() {
-        MultiDeviceModuleFixture::TearDown();
+    void tearDown() {
+        MultiDeviceModuleFixture::tearDown();
     }
 
     DebugManagerStateRestore debugRestore;

@@ -19,14 +19,14 @@
 namespace L0 {
 namespace ult {
 
-struct PerContextAddressSpaceFixture : public TestLegacy<DeviceFixture> {
+struct PerContextAddressSpaceFixture : public Test<DeviceFixture> {
     void SetUp() override {
         NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(0);
-        TestLegacy<DeviceFixture>::SetUp();
+        Test<DeviceFixture>::SetUp();
     }
 
     void TearDown() override {
-        TestLegacy<DeviceFixture>::TearDown();
+        Test<DeviceFixture>::TearDown();
     }
 
     DebugManagerStateRestore restorer;
@@ -208,7 +208,7 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledAndDebuggerLogsWhenCommandQueueIs
     commandQueue->destroy();
 }
 
-using L0DebuggerSimpleTest = TestLegacy<DeviceFixture>;
+using L0DebuggerSimpleTest = Test<DeviceFixture>;
 
 HWTEST2_F(L0DebuggerSimpleTest, givenNullL0DebuggerAndDebuggerLogsWhenCommandQueueIsSynchronizedThenSbaAddressesAreNotPrinted, Gen12Plus) {
     DebugManagerStateRestore restorer;

@@ -54,7 +54,7 @@ TEST(zeInit, whenCallingZeInitWithoutGpuOnlyFlagThenInitializeOnDriverIsNotCalle
     EXPECT_EQ(0u, driver.initCalledCount);
 }
 
-using DriverHandleImpTest = TestLegacy<DeviceFixture>;
+using DriverHandleImpTest = Test<DeviceFixture>;
 TEST_F(DriverHandleImpTest, givenDriverImpWhenCallingupdateRootDeviceBitFieldsThendeviceBitfieldsAreUpdatedInAccordanceWithNeoDevice) {
     auto hwInfo = *NEO::defaultHwInfo;
     auto newNeoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
@@ -64,7 +64,7 @@ TEST_F(DriverHandleImpTest, givenDriverImpWhenCallingupdateRootDeviceBitFieldsTh
     EXPECT_EQ(newNeoDevice->getDeviceBitfield(), entry->second);
 }
 
-using DriverVersionTest = TestLegacy<DeviceFixture>;
+using DriverVersionTest = Test<DeviceFixture>;
 
 TEST_F(DriverVersionTest, givenCallToGetExtensionPropertiesThenSupportedExtensionsAreReturned) {
     uint32_t count = 0;
@@ -150,7 +150,7 @@ TEST_F(DriverVersionTest, whenCallingGetDriverPropertiesRepeatedlyThenTheSameUui
     }
 }
 
-using ImportNTHandle = TestLegacy<DeviceFixture>;
+using ImportNTHandle = Test<DeviceFixture>;
 
 class MemoryManagerNTHandleMock : public NEO::OsAgnosticMemoryManager {
   public:

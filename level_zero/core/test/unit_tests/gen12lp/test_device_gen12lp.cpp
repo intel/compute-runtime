@@ -14,7 +14,7 @@
 namespace L0 {
 namespace ult {
 
-using DeviceFixtureGen12LP = TestLegacy<DeviceFixture>;
+using DeviceFixtureGen12LP = Test<DeviceFixture>;
 
 HWTEST2_F(DeviceFixtureGen12LP, GivenTargetGen12LPaWhenGettingMemoryPropertiesThenMemoryNameComesAsDDR, IsGen12LP) {
     ze_device_memory_properties_t memProperties = {};
@@ -25,7 +25,7 @@ HWTEST2_F(DeviceFixtureGen12LP, GivenTargetGen12LPaWhenGettingMemoryPropertiesTh
     EXPECT_EQ(0u, memProperties.maxClockRate);
 }
 
-using CommandQueueGroupTest = TestLegacy<DeviceFixture>;
+using CommandQueueGroupTest = Test<DeviceFixture>;
 
 HWTEST2_F(CommandQueueGroupTest,
           givenNoBlitterSupportAndNoCCSThenOneQueueGroupIsReturned, IsGen12LP) {
@@ -61,22 +61,22 @@ HWTEST2_F(CommandQueueGroupTest,
     EXPECT_EQ(count, 2u);
 }
 
-class DeviceCopyQueueGroupFixture : public DeviceFixture {
+class DeviceCopyQueueGroupGen12LpFixture : public DeviceFixture {
   public:
-    void SetUp() {
+    void setUp() {
         DebugManager.flags.EnableBlitterOperationsSupport.set(0);
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
     }
 
-    void TearDown() {
-        DeviceFixture::TearDown();
+    void tearDown() {
+        DeviceFixture::tearDown();
     }
     DebugManagerStateRestore restorer;
 };
 
-using DeviceCopyQueueGroupTest = TestLegacy<DeviceCopyQueueGroupFixture>;
+using DeviceCopyQueueGroupGen12LpTest = Test<DeviceCopyQueueGroupGen12LpFixture>;
 
-HWTEST2_F(DeviceCopyQueueGroupTest,
+HWTEST2_F(DeviceCopyQueueGroupGen12LpTest,
           givenBlitterSupportAndEnableBlitterOperationsSupportSetToZeroThenNoCopyEngineIsReturned, IsGen12LP) {
     const uint32_t rootDeviceIndex = 0u;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();

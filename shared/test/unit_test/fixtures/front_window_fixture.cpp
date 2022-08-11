@@ -15,12 +15,13 @@ using namespace NEO;
 
 MemManagerFixture::FrontWindowMemManagerMock::FrontWindowMemManagerMock(NEO::ExecutionEnvironment &executionEnvironment) : MockMemoryManager(executionEnvironment) {}
 void MemManagerFixture::FrontWindowMemManagerMock::forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uint64_t range) { getGfxPartition(rootDeviceIndex)->init(range, 0, 0, gfxPartitions.size(), true); }
-void MemManagerFixture::SetUp() {
+
+void MemManagerFixture::setUp() {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
-    DeviceFixture::SetUp();
+    DeviceFixture::setUp();
     memManager = std::unique_ptr<FrontWindowMemManagerMock>(new FrontWindowMemManagerMock(*pDevice->getExecutionEnvironment()));
 }
-void MemManagerFixture::TearDown() {
-    DeviceFixture::TearDown();
+void MemManagerFixture::tearDown() {
+    DeviceFixture::tearDown();
 }

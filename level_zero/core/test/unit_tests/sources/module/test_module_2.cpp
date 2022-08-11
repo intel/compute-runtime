@@ -21,7 +21,7 @@ namespace ult {
 class ModuleOnlineCompiled : public DeviceFixture, public testing::Test {
   public:
     void SetUp() override {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
 
         std::string kernelFilename;
         size_t spvModuleSize = 0;
@@ -42,12 +42,12 @@ class ModuleOnlineCompiled : public DeviceFixture, public testing::Test {
 
     void TearDown() override {
         module.reset(nullptr);
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
     std::unique_ptr<WhiteBox<L0::Module>> module;
 };
 
-using ModuleTests = TestLegacy<DeviceFixture>;
+using ModuleTests = Test<DeviceFixture>;
 
 TEST_F(ModuleTests, WhenCreatingBuildOptionsThenOptionsParsedCorrectly) {
     auto module = new ModuleImp(device, nullptr, ModuleType::User);

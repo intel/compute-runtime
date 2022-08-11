@@ -17,7 +17,7 @@
 
 using namespace NEO;
 
-using CommandEncodeStatesTestPvcAndLater = TestLegacy<CommandEncodeStatesFixture>;
+using CommandEncodeStatesTestPvcAndLater = Test<CommandEncodeStatesFixture>;
 
 HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenOverrideSlmTotalSizeDebugVariableWhenDispatchingKernelThenSharedMemorySizeIsSetCorrectly, IsAtLeastXeHpcCore) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
@@ -93,7 +93,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTestPvcAndLater, givenCommandCon
     EXPECT_EQ(hwInfoConfig.isGrfNumReportedWithScm(), cmd->getLargeGrfMode());
 }
 
-using CommandEncodeStatesTestHpc = TestLegacy<CommandEncodeStatesFixture>;
+using CommandEncodeStatesTestHpc = Test<CommandEncodeStatesFixture>;
 HWTEST2_F(CommandEncodeStatesTestHpc, GivenVariousSlmTotalSizesAndSettingRevIDToDifferentValuesWhenSetAdditionalInfoIsCalledThenCorrectValuesAreSet, IsPVC) {
     using PREFERRED_SLM_ALLOCATION_SIZE = typename FamilyType::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
 

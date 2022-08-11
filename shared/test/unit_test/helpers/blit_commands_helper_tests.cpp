@@ -131,7 +131,7 @@ TEST(BlitCommandsHelperTest, GivenCopySizeYAndZEqual0WhenConstructingPropertiesF
     EXPECT_EQ(blitProperties.copySize, expectedSize);
 }
 
-using BlitTests = TestLegacy<DeviceFixture>;
+using BlitTests = Test<DeviceFixture>;
 
 HWTEST_F(BlitTests, givenDebugVariablesWhenGettingMaxBlitSizeThenHonorUseProvidedValues) {
     DebugManagerStateRestore restore{};

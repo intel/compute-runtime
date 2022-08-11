@@ -25,7 +25,7 @@
 
 using namespace NEO;
 
-using CommandEncodeStatesTest = TestLegacy<CommandEncodeStatesFixture>;
+using CommandEncodeStatesTest = Test<CommandEncodeStatesFixture>;
 
 TEST_F(CommandEncodeStatesTest, givenDefaultCommandContainerWhenGettingNumIddPerBlockThen64IsReturned) {
     auto numIdds = cmdContainer->getNumIddPerBlock();
@@ -57,7 +57,7 @@ HWTEST_F(CommandEncodeStatesTest, givenDispatchInterfaceWhenDispatchKernelThenWa
     ASSERT_NE(itorPC, commands.end());
 }
 
-using CommandEncodeStatesUncachedMocsTests = TestLegacy<CommandEncodeStatesFixture>;
+using CommandEncodeStatesUncachedMocsTests = Test<CommandEncodeStatesFixture>;
 
 HWTEST_F(CommandEncodeStatesUncachedMocsTests, whenEncodingDispatchKernelWithUncachedMocsAndDirtyHeapsThenCorrectMocsIsSet) {
     DebugManagerStateRestore restore;
@@ -698,7 +698,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNextIddInBlockZeorWhenD
     ASSERT_NE(itorPC, commands.end());
 }
 
-using EncodeDispatchKernelTest = TestLegacy<CommandEncodeStatesFixture>;
+using EncodeDispatchKernelTest = Test<CommandEncodeStatesFixture>;
 
 HWTEST2_F(EncodeDispatchKernelTest, givenBindfulKernelWhenDispatchingKernelThenSshFromContainerIsUsed, IsAtLeastSkl) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
@@ -1037,8 +1037,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, InterfaceDescriptorDataTests, givenVariousValuesWhen
     EXPECT_TRUE(idd.getBarrierEnable());
 }
 
-using BindlessCommandEncodeStatesTest = TestLegacy<MemManagerFixture>;
-using BindlessCommandEncodeStatesContainerTest = TestLegacy<CommandEncodeStatesFixture>;
+using BindlessCommandEncodeStatesTest = Test<MemManagerFixture>;
+using BindlessCommandEncodeStatesContainerTest = Test<CommandEncodeStatesFixture>;
 
 HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindlessKernelAndBindlessModeEnabledWhenEncodingKernelThenCmdContainerHasNullptrSSH) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;

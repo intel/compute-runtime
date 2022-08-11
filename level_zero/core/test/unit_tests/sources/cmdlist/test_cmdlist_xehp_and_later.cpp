@@ -24,7 +24,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandListTests = TestLegacy<DeviceFixture>;
+using CommandListTests = Test<DeviceFixture>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListTests, whenCommandListIsCreatedThenPCAndStateBaseAddressCmdsAreAddedAndCorrectlyProgrammed) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -149,7 +149,7 @@ HWTEST2_F(CommandListTests, whenCommandListIsCreatedAndProgramExtendedPipeContro
     EXPECT_TRUE(cmdSba->getDisableSupportForMultiGpuAtomicsForStatelessAccesses());
 }
 
-using MultiTileCommandListTests = TestLegacy<MultiTileCommandListFixture<false, false, false>>;
+using MultiTileCommandListTests = Test<MultiTileCommandListFixture<false, false, false>>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListTests, givenPartitionedCommandListWhenCommandListIsCreatedThenStateBaseAddressCmdWithMultiPartialAndAtomicsCorrectlyProgrammed) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
@@ -180,14 +180,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListTests, givenPartitionedCommandL
     EXPECT_TRUE(cmdSba->getDisableSupportForMultiGpuAtomicsForStatelessAccesses());
 }
 
-using CommandListTestsReserveSize = TestLegacy<DeviceFixture>;
+using CommandListTestsReserveSize = Test<DeviceFixture>;
 HWTEST2_F(CommandListTestsReserveSize, givenCommandListWhenGetReserveSshSizeThen4PagesReturned, IsAtLeastXeHpCore) {
     L0::CommandListCoreFamily<gfxCoreFamily> commandList(1u);
 
     EXPECT_EQ(commandList.getReserveSshSize(), 4 * MemoryConstants::pageSize);
 }
 
-using CommandListAppendLaunchKernel = TestLegacy<ModuleFixture>;
+using CommandListAppendLaunchKernel = Test<ModuleFixture>;
 HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsWhenUpdateStreamPropertiesIsCalledThenRequiredStateFinalStateAndCommandsToPatchAreCorrectlySet, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
@@ -279,8 +279,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsAndPatchingDisallowe
     pCommandList->reset();
 }
 
-using AppendMemoryCopyXeHpAndLater = TestLegacy<DeviceFixture>;
-using MultiTileAppendMemoryCopyXeHpAndLater = TestLegacy<ImplicitScalingRootDevice>;
+using AppendMemoryCopyXeHpAndLater = Test<DeviceFixture>;
+using MultiTileAppendMemoryCopyXeHpAndLater = Test<ImplicitScalingRootDevice>;
 
 HWTEST2_F(AppendMemoryCopyXeHpAndLater,
           givenCommandListWhenTimestampProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForThreeSeparateKernels,

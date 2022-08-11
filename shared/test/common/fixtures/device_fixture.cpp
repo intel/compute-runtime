@@ -12,7 +12,7 @@
 #include "gtest/gtest.h"
 
 namespace NEO {
-void DeviceFixture::SetUp() {
+void DeviceFixture::setUp() {
     hardwareInfo = *defaultHwInfo;
     setUpImpl(&hardwareInfo);
 }
@@ -26,7 +26,7 @@ void DeviceFixture::setUpImpl(const NEO::HardwareInfo *hardwareInfo) {
     ASSERT_NE(nullptr, const_cast<uint32_t *>(pTagMemory));
 }
 
-void DeviceFixture::TearDown() {
+void DeviceFixture::tearDown() {
     delete pDevice;
     pDevice = nullptr;
 }

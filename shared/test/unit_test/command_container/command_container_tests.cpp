@@ -24,10 +24,10 @@ class CommandContainerTest : public DeviceFixture,
   public:
     void SetUp() override {
         ::testing::Test::SetUp();
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
     }
     void TearDown() override {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
         ::testing::Test::TearDown();
     }
 };
@@ -554,11 +554,11 @@ class CommandContainerHeaps : public DeviceFixture,
                               public ::testing::TestWithParam<IndirectHeap::Type> {
   public:
     void SetUp() override {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 };
 

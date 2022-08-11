@@ -28,7 +28,7 @@
 
 using namespace NEO;
 
-using CommandEncodeStatesTest = TestLegacy<CommandEncodeStatesFixture>;
+using CommandEncodeStatesTest = Test<CommandEncodeStatesFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeGraterThanZeroWhenDispatchingKernelThenSharedMemorySizeIsSetCorrectly) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
@@ -936,17 +936,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, WhenExecutionMaskNotZ
 }
 
 struct CommandEncodeStatesImplicitScalingFixture : public CommandEncodeStatesFixture {
-    void SetUp() {
+    void setUp() {
         DebugManager.flags.CreateMultipleSubDevices.set(2);
         osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&OSInterface::osEnableLocalMemory, true);
         mockDeviceBackup = std::make_unique<VariableBackup<bool>>(&MockDevice::createSingleDevice, false);
         apiSupportBackup = std::make_unique<VariableBackup<bool>>(&ImplicitScaling::apiSupport, true);
 
-        CommandEncodeStatesFixture::SetUp();
+        CommandEncodeStatesFixture::setUp();
     }
 
-    void TearDown() {
-        CommandEncodeStatesFixture::TearDown();
+    void tearDown() {
+        CommandEncodeStatesFixture::tearDown();
     }
 
     DebugManagerStateRestore restorer;
@@ -955,7 +955,7 @@ struct CommandEncodeStatesImplicitScalingFixture : public CommandEncodeStatesFix
     std::unique_ptr<VariableBackup<bool>> apiSupportBackup;
 };
 
-using CommandEncodeStatesImplicitScaling = TestLegacy<CommandEncodeStatesImplicitScalingFixture>;
+using CommandEncodeStatesImplicitScaling = Test<CommandEncodeStatesImplicitScalingFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesImplicitScaling,
             givenStaticPartitioningWhenNonTimestampEventProvidedThenExpectTimestampComputeWalkerPostSync) {
@@ -990,19 +990,19 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesImplicitScaling,
 }
 
 struct CommandEncodeStatesDynamicImplicitScalingFixture : CommandEncodeStatesImplicitScalingFixture {
-    void SetUp() {
+    void setUp() {
         DebugManager.flags.EnableStaticPartitioning.set(0);
-        CommandEncodeStatesImplicitScalingFixture::SetUp();
+        CommandEncodeStatesImplicitScalingFixture::setUp();
     }
 
-    void TearDown() {
-        CommandEncodeStatesImplicitScalingFixture::TearDown();
+    void tearDown() {
+        CommandEncodeStatesImplicitScalingFixture::tearDown();
     }
 
     DebugManagerStateRestore restore{};
 };
 
-using CommandEncodeStatesDynamicImplicitScaling = TestLegacy<CommandEncodeStatesDynamicImplicitScalingFixture>;
+using CommandEncodeStatesDynamicImplicitScaling = Test<CommandEncodeStatesDynamicImplicitScalingFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImplicitScalingWhenEncodingDispatchKernelThenExpectPartitionCommandBuffer) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;

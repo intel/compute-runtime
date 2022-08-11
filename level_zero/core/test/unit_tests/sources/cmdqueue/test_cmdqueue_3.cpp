@@ -225,11 +225,11 @@ struct CommandQueueCommands : DeviceFixture, ::testing::Test {
     void SetUp() override {
         DebugManager.flags.ForcePreemptionMode.set(static_cast<int>(NEO::PreemptionMode::Disabled));
         DebugManager.flags.CreateMultipleSubDevices.set(multiTile ? 2 : 1);
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     template <typename FamilyType>
@@ -376,7 +376,7 @@ HWTEST2_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenWalkerP
     EXPECT_EQ(nullptr, workPartitionAllocation);
 }
 
-using CommandQueueIndirectAllocations = TestLegacy<ModuleFixture>;
+using CommandQueueIndirectAllocations = Test<ModuleFixture>;
 HWTEST_F(CommandQueueIndirectAllocations, givenCommandQueueWhenExecutingCommandListsThenExpectedIndirectAllocationsAddedToResidencyContainer) {
     const ze_command_queue_desc_t desc = {};
 

@@ -24,7 +24,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandQueueCreate = TestLegacy<DeviceFixture>;
+using CommandQueueCreate = Test<DeviceFixture>;
 
 TEST_F(CommandQueueCreate, whenCreatingCommandQueueThenItIsInitialized) {
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
@@ -640,7 +640,7 @@ TEST_F(CommandQueueCreate, givenCmdQueueWithBlitCopyWhenExecutingCopyBlitCommand
     commandQueue->destroy();
 }
 
-using DeviceCreateCommandQueueTest = TestLegacy<DeviceFixture>;
+using DeviceCreateCommandQueueTest = Test<DeviceFixture>;
 TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescWhenCreateCommandQueueIsCalledThenLowPriorityCsrIsAssigned) {
     ze_command_queue_desc_t desc{};
     desc.ordinal = 0u;
@@ -833,13 +833,13 @@ TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescAndWithoutLowPriorityCs
 }
 
 struct MultiDeviceCreateCommandQueueFixture : MultiDeviceFixture {
-    void SetUp() {
+    void setUp() {
         DebugManager.flags.EnableImplicitScaling = false;
-        MultiDeviceFixture::SetUp();
+        MultiDeviceFixture::setUp();
     }
 };
 
-using MultiDeviceCreateCommandQueueTest = TestLegacy<MultiDeviceCreateCommandQueueFixture>;
+using MultiDeviceCreateCommandQueueTest = Test<MultiDeviceCreateCommandQueueFixture>;
 
 TEST_F(MultiDeviceCreateCommandQueueTest, givenLowPriorityDescWhenCreateCommandQueueIsCalledThenLowPriorityCsrIsAssigned) {
     auto device = driverHandle->devices[0];
@@ -887,7 +887,7 @@ class MockCommandQueue : public L0::CommandQueueHw<gfxCoreFamily> {
     }
 };
 
-using ExecuteCommandListTests = TestLegacy<ContextFixture>;
+using ExecuteCommandListTests = Test<DeviceFixture>;
 HWTEST2_F(ExecuteCommandListTests, givenExecuteCommandListWhenItReturnsThenContainersAreEmpty, IsAtLeastSkl) {
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr;
@@ -945,7 +945,7 @@ HWTEST2_F(ExecuteCommandListTests, givenOutOfMemorySubmitBatchBufferThenExecuteC
     commandList->destroy();
 }
 
-using CommandQueueDestroy = TestLegacy<DeviceFixture>;
+using CommandQueueDestroy = Test<DeviceFixture>;
 HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndScratchWhenExecuteThenSshWasUsed, IsAtLeastSkl) {
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr;

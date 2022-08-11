@@ -276,7 +276,7 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-using MemoryTest = TestLegacy<DeviceFixture>;
+using MemoryTest = Test<DeviceFixture>;
 
 struct CompressionMemoryTest : public MemoryTest {
     GraphicsAllocation *allocDeviceMem(size_t size) {
@@ -3046,7 +3046,7 @@ TEST_F(MemoryFailedOpenIpcHandleImplicitScalingTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-using DeviceMemorySizeTest = TestLegacy<DeviceFixture>;
+using DeviceMemorySizeTest = Test<DeviceFixture>;
 
 TEST_F(DeviceMemorySizeTest, givenSizeGreaterThanLimitThenDeviceAllocationFails) {
     size_t size = neoDevice->getDeviceInfo().maxMemAllocSize + 1;
@@ -3438,7 +3438,7 @@ TEST_F(AllocHostMemoryTest,
     EXPECT_EQ(nullptr, ptr);
 }
 
-using ContextMemoryTest = TestLegacy<ContextFixture>;
+using ContextMemoryTest = Test<DeviceFixture>;
 
 TEST_F(ContextMemoryTest, whenAllocatingSharedAllocationFromContextThenAllocationSucceeds) {
     size_t size = 10u;

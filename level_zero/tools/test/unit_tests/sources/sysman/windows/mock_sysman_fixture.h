@@ -39,7 +39,7 @@ class SysmanDeviceFixture : public DeviceFixture, public SysmanEnabledFixture {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
 
         SysmanEnabledFixture::SetUp();
@@ -55,7 +55,7 @@ class SysmanDeviceFixture : public DeviceFixture, public SysmanEnabledFixture {
             GTEST_SKIP();
         }
         SysmanEnabledFixture::TearDown();
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     SysmanDevice *pSysmanDevice = nullptr;

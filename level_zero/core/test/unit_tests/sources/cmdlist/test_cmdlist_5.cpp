@@ -20,7 +20,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandListCreate = TestLegacy<DeviceFixture>;
+using CommandListCreate = Test<DeviceFixture>;
 
 HWTEST_F(CommandListCreate, givenCommandListWithInvalidWaitEventArgWhenAppendQueryKernelTimestampsThenProperErrorRetruned) {
     ze_result_t returnValue;

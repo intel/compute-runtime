@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-using BlitterDispatcheTest = TestLegacy<DispatcherFixture>;
+using BlitterDispatcheTest = Test<DispatcherFixture>;
 
 HWTEST_F(BlitterDispatcheTest, givenBlitterWhenAskingForPreemptionCmdSizeThenReturnZero) {
     EXPECT_EQ(0u, BlitterDispatcher<FamilyType>::getSizePreemption());

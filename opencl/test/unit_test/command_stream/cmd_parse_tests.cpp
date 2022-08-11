@@ -11,7 +11,7 @@
 
 using namespace NEO;
 
-using CommandParse = TestLegacy<DeviceFixture>;
+using CommandParse = Test<DeviceFixture>;
 
 HWTEST_F(CommandParse, WhenGeneratingCommandBufferThenIsNotNull) {
     typedef typename FamilyType::PARSE PARSE;

@@ -14,7 +14,7 @@
 
 using namespace NEO;
 
-using DG2CommandEncoderTest = TestLegacy<DeviceFixture>;
+using DG2CommandEncoderTest = Test<DeviceFixture>;
 HWTEST_EXCLUDE_PRODUCT(XeHPAndLaterCommandEncoderTest, whenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned_IsAtLeastXeHpCore, IGFX_DG2);
 HWTEST_EXCLUDE_PRODUCT(CommandEncoderTest, whenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned_Platforms, IGFX_DG2);
 HWTEST_EXCLUDE_PRODUCT(XeHPAndLaterCommandEncoderTest, givenCommandContainerWithDirtyHeapWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned_IsAtLeastXeHpCore, IGFX_DG2);

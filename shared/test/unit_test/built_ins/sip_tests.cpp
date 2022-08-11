@@ -19,7 +19,7 @@
 using namespace NEO;
 
 struct RawBinarySipFixture : public DeviceFixture {
-    void SetUp() {
+    void setUp() {
         DebugManager.flags.LoadBinarySipFromFile.set("dummy_file.bin");
 
         backupSipInitType = std::make_unique<VariableBackup<bool>>(&MockSipData::useMockSip, false);
@@ -37,11 +37,11 @@ struct RawBinarySipFixture : public DeviceFixture {
         backupFcloseCalled = std::make_unique<VariableBackup<uint32_t>>(&IoFunctions::mockFcloseCalled, 0u);
         backupFailAfterNFopenCount = std::make_unique<VariableBackup<uint32_t>>(&IoFunctions::failAfterNFopenCount, 0u);
 
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
     }
 
-    void TearDown() {
-        DeviceFixture::TearDown();
+    void tearDown() {
+        DeviceFixture::tearDown();
     }
 
     DebugManagerStateRestore dbgRestorer;
@@ -74,7 +74,7 @@ TEST(SipBinaryFromFile, givenFilenameWithoutExtnesionWhenCreatingHeaderFilenameT
     EXPECT_EQ("abc_header", headerName);
 }
 
-using RawBinarySipTest = TestLegacy<RawBinarySipFixture>;
+using RawBinarySipTest = Test<RawBinarySipFixture>;
 
 TEST_F(RawBinarySipTest, givenRawBinaryFileWhenInitSipKernelThenSipIsLoadedFromFile) {
     bool ret = SipKernel::initSipKernel(SipKernelType::Csr, *pDevice);
@@ -289,7 +289,7 @@ struct HexadecimalHeaderSipKernel : public SipKernel {
     using SipKernel::getSipKernelImpl;
     using SipKernel::initHexadecimalArraySipKernel;
 };
-using HexadecimalHeaderSipTest = TestLegacy<DeviceFixture>;
+using HexadecimalHeaderSipTest = Test<DeviceFixture>;
 
 TEST_F(HexadecimalHeaderSipTest, whenInitHexadecimalArraySipKernelIsCalledThenSipKernelIsCorrect) {
     VariableBackup<SipClassType> backupSipClassType(&SipKernel::classType, SipClassType::HexadecimalHeaderFile);
@@ -333,7 +333,7 @@ TEST_F(HexadecimalHeaderSipTest, whenInitHexadecimalArraySipKernelIsCalledTwiceT
     EXPECT_EQ(sipAllocation, sipAllocation2);
 }
 
-using StateSaveAreaSipTest = TestLegacy<RawBinarySipFixture>;
+using StateSaveAreaSipTest = Test<RawBinarySipFixture>;
 
 TEST_F(StateSaveAreaSipTest, givenEmptyStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenMaxDbgSurfaceSizeIsReturned) {
     MockSipData::useMockSip = true;

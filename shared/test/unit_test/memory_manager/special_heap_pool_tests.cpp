@@ -13,7 +13,7 @@
 
 namespace NEO {
 
-using FrontWindowAllocatorTests = TestLegacy<MemManagerFixture>;
+using FrontWindowAllocatorTests = Test<MemManagerFixture>;
 
 TEST_F(FrontWindowAllocatorTests, givenAllocateInFrontWindowPoolFlagWhenAllocate32BitGraphicsMemoryThenAllocateAtHeapBegining) {
     AllocationData allocData = {};

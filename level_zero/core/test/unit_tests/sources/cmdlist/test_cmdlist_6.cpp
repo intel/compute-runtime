@@ -17,7 +17,7 @@
 namespace L0 {
 namespace ult {
 
-using MultiTileImmediateCommandListTest = TestLegacy<MultiTileCommandListFixture<true, false, false>>;
+using MultiTileImmediateCommandListTest = Test<MultiTileCommandListFixture<true, false, false>>;
 
 HWTEST2_F(MultiTileImmediateCommandListTest, GivenMultiTileDeviceWhenCreatingImmediateCommandListThenExpectPartitionCountMatchTileCount, IsWithinXeGfxFamily) {
     EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
@@ -28,7 +28,7 @@ HWTEST2_F(MultiTileImmediateCommandListTest, GivenMultiTileDeviceWhenCreatingImm
     EXPECT_EQ(2u, commandList->partitionCount);
 }
 
-using MultiTileImmediateInternalCommandListTest = TestLegacy<MultiTileCommandListFixture<true, true, false>>;
+using MultiTileImmediateInternalCommandListTest = Test<MultiTileCommandListFixture<true, true, false>>;
 
 HWTEST2_F(MultiTileImmediateInternalCommandListTest, GivenMultiTileDeviceWhenCreatingInternalImmediateCommandListThenExpectPartitionCountEqualOne, IsWithinXeGfxFamily) {
     EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
@@ -39,7 +39,7 @@ HWTEST2_F(MultiTileImmediateInternalCommandListTest, GivenMultiTileDeviceWhenCre
     EXPECT_EQ(1u, commandList->partitionCount);
 }
 
-using MultiTileCopyEngineCommandListTest = TestLegacy<MultiTileCommandListFixture<false, false, true>>;
+using MultiTileCopyEngineCommandListTest = Test<MultiTileCommandListFixture<false, false, true>>;
 
 HWTEST2_F(MultiTileCopyEngineCommandListTest, GivenMultiTileDeviceWhenCreatingCopyEngineCommandListThenExpectPartitionCountEqualOne, IsWithinXeGfxFamily) {
     EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
@@ -50,7 +50,7 @@ HWTEST2_F(MultiTileCopyEngineCommandListTest, GivenMultiTileDeviceWhenCreatingCo
     EXPECT_EQ(1u, commandList->partitionCount);
 }
 
-using CommandListExecuteImmediate = TestLegacy<DeviceFixture>;
+using CommandListExecuteImmediate = Test<DeviceFixture>;
 HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenRequiredStreamStateIsCorrectlyReported, IsAtLeastSkl) {
     auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
     auto &hwInfoConfig = *NEO::HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
@@ -111,7 +111,7 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     EXPECT_FALSE(commandListImmediate.containsAnyKernel);
 }
 
-using CommandListTest = TestLegacy<DeviceFixture>;
+using CommandListTest = Test<DeviceFixture>;
 using IsDcFlushSupportedPlatform = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_XE_HP_CORE>;
 
 HWTEST2_F(CommandListTest, givenCopyCommandListWhenRequiredFlushOperationThenExpectNoPipeControl, IsDcFlushSupportedPlatform) {

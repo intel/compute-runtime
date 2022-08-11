@@ -87,7 +87,7 @@ TEST_F(CommandListCreateNegativeTest, whenDeviceAllocationFailsDuringCommandList
     ASSERT_EQ(nullptr, commandList);
 }
 
-using CommandListCreate = TestLegacy<DeviceFixture>;
+using CommandListCreate = Test<DeviceFixture>;
 
 HWTEST2_F(CommandListCreate, givenHostAllocInMapWhenGettingAllocInRangeThenAllocFromMapReturned, IsAtLeastSkl) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();

@@ -18,7 +18,7 @@ using ::testing::Return;
 namespace L0 {
 namespace ult {
 
-using MetricStreamerMultiDeviceTest = TestLegacy<MetricStreamerMultiDeviceFixture>;
+using MetricStreamerMultiDeviceTest = Test<MetricStreamerMultiDeviceFixture>;
 
 TEST_F(MetricStreamerMultiDeviceTest, givenInvalidMetricGroupTypeWhenZetMetricStreamerOpenIsCalledThenReturnsFail) {
 

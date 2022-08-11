@@ -168,9 +168,9 @@ HWTEST2_F(CommandQueueThreadArbitrationPolicyTests,
 }
 
 struct CommandQueueGroupMultiDeviceFixture : public MultiDeviceFixture {
-    void SetUp() {
+    void setUp() {
         NEO::MockCompilerEnableGuard mock(true);
-        MultiDeviceFixture::SetUp();
+        MultiDeviceFixture::setUp();
         uint32_t count = 1;
         ze_device_handle_t hDevice;
         ze_result_t res = driverHandle->getDevice(&count, &hDevice);
@@ -178,13 +178,13 @@ struct CommandQueueGroupMultiDeviceFixture : public MultiDeviceFixture {
         device = L0::Device::fromHandle(hDevice);
         ASSERT_NE(nullptr, device);
     }
-    void TearDown() {
-        MultiDeviceFixture::TearDown();
+    void tearDown() {
+        MultiDeviceFixture::tearDown();
     }
     L0::Device *device = nullptr;
 };
 
-using CommandQueueGroupMultiDevice = TestLegacy<CommandQueueGroupMultiDeviceFixture>;
+using CommandQueueGroupMultiDevice = Test<CommandQueueGroupMultiDeviceFixture>;
 
 HWTEST2_F(CommandQueueGroupMultiDevice,
           givenCommandQueuePropertiesCallThenCallSucceedsAndCommandListImmediateIsCreated, IsGen9) {

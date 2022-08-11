@@ -19,7 +19,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandListAppendSignalEvent = TestLegacy<CommandListFixture>;
+using CommandListAppendSignalEvent = Test<CommandListFixture>;
 HWTEST_F(CommandListAppendSignalEvent, WhenAppendingSignalEventWithoutScopeThenMiStoreImmIsGenerated) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;

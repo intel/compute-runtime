@@ -38,10 +38,10 @@ class MockIpSamplingOsInterface : public MetricIpSamplingOsInterface {
     bool isDependencyAvailable() override { return false; }
 };
 
-void MetricContextFixture::SetUp() {
+void MetricContextFixture::setUp() {
 
     // Call base class.
-    ContextFixture::SetUp();
+    DeviceFixture::setUp();
 
     // Initialize metric api.
     auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
@@ -67,7 +67,7 @@ void MetricContextFixture::SetUp() {
     metricsDeviceParams.Version.MinorNumber = MetricEnumeration::requiredMetricsDiscoveryMinorVersion;
 }
 
-void MetricContextFixture::TearDown() {
+void MetricContextFixture::tearDown() {
 
     // Restore original metrics library
     delete mockMetricsLibrary->handle;
@@ -79,7 +79,7 @@ void MetricContextFixture::TearDown() {
     mockMetricEnumeration.reset();
 
     // Call base class.
-    ContextFixture::TearDown();
+    DeviceFixture::tearDown();
 }
 
 void MetricContextFixture::openMetricsAdapter() {
@@ -133,10 +133,10 @@ void MetricContextFixture::openMetricsAdapterGroup() {
         .WillOnce(Return(TCompletionCode::CC_OK));
 }
 
-void MetricMultiDeviceFixture::SetUp() {
+void MetricMultiDeviceFixture::setUp() {
     DebugManager.flags.EnableImplicitScaling.set(1);
 
-    MultiDeviceFixture::SetUp();
+    MultiDeviceFixture::setUp();
 
     devices.resize(driverHandle->devices.size());
 
@@ -180,7 +180,7 @@ void MetricMultiDeviceFixture::SetUp() {
     metricsDeviceParams.Version.MinorNumber = MetricEnumeration::requiredMetricsDiscoveryMinorVersion;
 }
 
-void MetricMultiDeviceFixture::TearDown() {
+void MetricMultiDeviceFixture::tearDown() {
 
     auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
     const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
@@ -207,7 +207,7 @@ void MetricMultiDeviceFixture::TearDown() {
     mockMetricEnumeration->setMockedApi(nullptr);
     mockMetricEnumeration.reset();
 
-    MultiDeviceFixture::TearDown();
+    MultiDeviceFixture::tearDown();
 }
 
 void MetricMultiDeviceFixture::openMetricsAdapter() {

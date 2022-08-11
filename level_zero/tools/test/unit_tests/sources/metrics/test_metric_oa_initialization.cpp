@@ -43,7 +43,7 @@ class MockOsLibrary : public NEO::OsLibrary {
     }
 };
 
-using MetricInitializationTest = TestLegacy<MetricContextFixture>;
+using MetricInitializationTest = Test<MetricContextFixture>;
 
 TEST_F(MetricInitializationTest, GivenOaDependenciesAreAvailableThenMetricInitializationIsSuccess) {
 

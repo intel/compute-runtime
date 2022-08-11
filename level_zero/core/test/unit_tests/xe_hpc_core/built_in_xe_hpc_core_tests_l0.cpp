@@ -16,7 +16,7 @@
 namespace L0 {
 namespace ult {
 
-using XeHpcCoreBuiltInTestL0 = TestLegacy<NEO::DeviceFixture>;
+using XeHpcCoreBuiltInTestL0 = Test<NEO::DeviceFixture>;
 
 HWTEST_EXCLUDE_PRODUCT(BuiltInSharedTest, GivenBuiltinTypeBinaryWhenGettingBuiltinResourceForNotRegisteredRevisionThenBuiltinFromDefaultRevisionIsTaken, IGFX_XE_HPC_CORE);
 HWTEST_EXCLUDE_PRODUCT(BuiltInTestL0, givenDeviceWithUnregisteredBinaryBuiltinWhenGettingBuiltinKernelThenTakeBinaryBuiltinFromDefaultRevision, IGFX_XE_HPC_CORE);

@@ -41,8 +41,8 @@ extern std::function<void()> setupPauseAddress;
 
 namespace L0 {
 namespace ult {
-using EventPoolCreate = TestLegacy<DeviceFixture>;
-using EventCreate = TestLegacy<DeviceFixture>;
+using EventPoolCreate = Test<DeviceFixture>;
+using EventCreate = Test<DeviceFixture>;
 
 class MemoryManagerEventPoolFailMock : public NEO::MemoryManager {
   public:
@@ -294,7 +294,7 @@ class MemoryManagerEventPoolIPCMock : public NEO::MockMemoryManager {
     NEO::MockGraphicsAllocation *alloc;
 };
 
-using EventPoolIPCHandleTests = TestLegacy<DeviceFixture>;
+using EventPoolIPCHandleTests = Test<DeviceFixture>;
 
 TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolThenHandleAndNumberOfEventsAreReturnedInHandle) {
     uint32_t numEvents = 4;
@@ -428,7 +428,7 @@ TEST_F(EventPoolIPCHandleTests, GivenEventPoolWithIPCEventFlagAndHostMemoryThenS
     EXPECT_FALSE(allocation->getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex())->isShareableHostMemory);
 }
 
-using EventPoolOpenIPCHandleFailTests = TestLegacy<DeviceFixture>;
+using EventPoolOpenIPCHandleFailTests = Test<DeviceFixture>;
 
 TEST_F(EventPoolOpenIPCHandleFailTests, givenFailureToAllocateMemoryWhenOpeningIpcHandleForEventPoolThenInvalidArgumentIsReturned) {
     uint32_t numEvents = 4;
@@ -497,7 +497,7 @@ class MultiDeviceEventPoolOpenIPCHandleFailTestsMemoryManager : public FailMemor
     uint32_t calls = 0;
 };
 
-using MultiDeviceEventPoolOpenIPCHandleFailTests = TestLegacy<MultiDeviceFixture>;
+using MultiDeviceEventPoolOpenIPCHandleFailTests = Test<MultiDeviceFixture>;
 
 TEST_F(MultiDeviceEventPoolOpenIPCHandleFailTests,
        givenFailureToAllocateMemoryWhenOpeningIpcHandleForEventPoolWithMultipleDevicesThenOutOfHostMemoryIsReturned) {
@@ -788,10 +788,10 @@ HWTEST2_F(EventCreate, givenPlatformNotSupportsMultTileWhenDebugKeyIsSetToUseCon
     event->destroy();
 }
 
-class EventSynchronizeTest : public TestLegacy<DeviceFixture> {
+class EventSynchronizeTest : public Test<DeviceFixture> {
   public:
     void SetUp() override {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         ze_event_pool_desc_t eventPoolDesc = {};
         eventPoolDesc.count = 1;
         eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
@@ -812,7 +812,7 @@ class EventSynchronizeTest : public TestLegacy<DeviceFixture> {
     void TearDown() override {
         event.reset(nullptr);
         eventPool.reset(nullptr);
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     std::unique_ptr<L0::EventPool> eventPool = nullptr;
@@ -1002,7 +1002,7 @@ TEST_F(EventSynchronizeTest, givenInfiniteTimeoutWhenWaitingForTimestampEventCom
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-using EventPoolIPCEventResetTests = TestLegacy<DeviceFixture>;
+using EventPoolIPCEventResetTests = Test<DeviceFixture>;
 
 TEST_F(EventPoolIPCEventResetTests, whenOpeningIpcHandleForEventPoolCreateWithIpcFlagThenEventsInNewPoolAreNotReset) {
     std::unique_ptr<L0::EventPoolImp> eventPool = nullptr;
@@ -1068,7 +1068,7 @@ TEST_F(EventPoolIPCEventResetTests, whenOpeningIpcHandleForEventPoolCreateWithIp
     EXPECT_EQ(*hostAddr2, Event::STATE_INITIAL);
 }
 
-using EventAubCsrTest = TestLegacy<DeviceFixture>;
+using EventAubCsrTest = Test<DeviceFixture>;
 
 HWTEST_F(EventAubCsrTest, givenCallToEventHostSynchronizeWithAubModeCsrReturnsSuccess) {
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
@@ -1132,10 +1132,10 @@ struct EventCreateAllocationResidencyTest : public ::testing::Test {
     L0::Device *device = nullptr;
 };
 
-class TimestampEventCreate : public TestLegacy<DeviceFixture> {
+class TimestampEventCreate : public Test<DeviceFixture> {
   public:
     void SetUp() override {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         ze_event_pool_desc_t eventPoolDesc = {};
         eventPoolDesc.count = 1;
         eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
@@ -1156,7 +1156,7 @@ class TimestampEventCreate : public TestLegacy<DeviceFixture> {
     void TearDown() override {
         event.reset(nullptr);
         eventPool.reset(nullptr);
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     std::unique_ptr<L0::EventPool> eventPool;
@@ -1267,10 +1267,10 @@ TEST_F(TimestampEventCreate, givenEventWithStaticPartitionOffThenQueryTimestampE
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-class TimestampDeviceEventCreate : public TestLegacy<DeviceFixture> {
+class TimestampDeviceEventCreate : public Test<DeviceFixture> {
   public:
     void SetUp() override {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         ze_event_pool_desc_t eventPoolDesc = {};
         eventPoolDesc.count = 1;
         eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
@@ -1291,7 +1291,7 @@ class TimestampDeviceEventCreate : public TestLegacy<DeviceFixture> {
     void TearDown() override {
         event.reset(nullptr);
         eventPool.reset(nullptr);
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     std::unique_ptr<L0::EventPool> eventPool;
@@ -1305,7 +1305,7 @@ TEST_F(TimestampDeviceEventCreate, givenTimestampDeviceEventThenAllocationsIsOfG
     EXPECT_EQ(NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER, allocation->getAllocationType());
 }
 
-using EventQueryTimestampExpWithSubDevice = TestLegacy<MultiDeviceFixture>;
+using EventQueryTimestampExpWithSubDevice = Test<MultiDeviceFixture>;
 
 TEST_F(EventQueryTimestampExpWithSubDevice, givenEventWhenQuerytimestampExpWithSubDeviceThenReturnsCorrectValueReturned) {
     std::unique_ptr<L0::EventPool> eventPool;
@@ -1542,7 +1542,7 @@ TEST_F(TimestampEventCreate, givenEventWhenQueryKernelTimestampThenNotReadyRetur
     EXPECT_EQ(0u, resultTimestamp.global.kernelEnd);
 }
 
-using EventPoolCreateMultiDevice = TestLegacy<MultiDeviceFixture>;
+using EventPoolCreateMultiDevice = Test<MultiDeviceFixture>;
 
 TEST_F(EventPoolCreateMultiDevice, givenReturnSubDevicesAsApiDevicesWhenCallZeGetDevicesThenSubDevicesAreReturnedAsSeparateDevices) {
     DebugManagerStateRestore restorer;
@@ -1683,7 +1683,7 @@ TEST_F(EventPoolCreateMultiDevice, whenCreatingEventPoolWithNoDevicesThenEventPo
     EXPECT_EQ(allocation->getGraphicsAllocations().size(), numRootDevices);
 }
 
-using EventPoolCreateSingleDevice = TestLegacy<DeviceFixture>;
+using EventPoolCreateSingleDevice = Test<DeviceFixture>;
 
 TEST_F(EventPoolCreateSingleDevice, whenCreatingEventPoolWithNoDevicesThenEventPoolCreateSucceedsAndSingleDeviceIsUsed) {
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -1800,7 +1800,7 @@ TEST_F(EventPoolCreateNegativeTest, whenInitializingEventPoolButMemoryManagerFai
 class EventFixture : public DeviceFixture {
   public:
     void SetUp() {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
 
         auto hDevice = device->toHandle();
         ze_result_t result = ZE_RESULT_SUCCESS;
@@ -1810,7 +1810,7 @@ class EventFixture : public DeviceFixture {
     void TearDown() {
         eventPool->destroy();
 
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     ze_event_pool_desc_t eventPoolDesc = {
@@ -1968,7 +1968,7 @@ TEST_F(EventTests, WhenSettingL3FlushOnEventThenSetOnParticularKernel) {
 
 struct EventSizeFixture : public DeviceFixture {
     void SetUp() {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         hDevice = device->toHandle();
     }
 
@@ -1976,7 +1976,7 @@ struct EventSizeFixture : public DeviceFixture {
         eventObj0.reset(nullptr);
         eventObj1.reset(nullptr);
         eventPool.reset(nullptr);
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     void createEvents() {

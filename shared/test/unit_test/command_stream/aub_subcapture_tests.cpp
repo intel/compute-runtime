@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,12 +16,12 @@ using namespace NEO;
 struct AubSubCaptureTest : public DeviceFixture,
                            public ::testing::Test {
     void SetUp() override {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         dbgRestore = new DebugManagerStateRestore();
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
         delete dbgRestore;
     }
     static constexpr const char *kernelName = "kernel_name";

@@ -12,7 +12,7 @@
 namespace L0 {
 namespace ult {
 
-using KernelPropertyTest = TestLegacy<DeviceFixture>;
+using KernelPropertyTest = Test<DeviceFixture>;
 
 HWTEST2_F(KernelPropertyTest, givenReturnedKernelPropertiesThenExpectedDp4aSupportReturned, IsGen9) {
     ze_device_module_properties_t kernelProps = {};

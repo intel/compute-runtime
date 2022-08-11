@@ -12,8 +12,8 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
-void ImplicitScalingFixture::SetUp() {
-    CommandEncodeStatesFixture::SetUp();
+void ImplicitScalingFixture::setUp() {
+    CommandEncodeStatesFixture::setUp();
     apiSupportBackup = std::make_unique<VariableBackup<bool>>(&ImplicitScaling::apiSupport, true);
     osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&OSInterface::osEnableLocalMemory, true);
 
@@ -32,7 +32,7 @@ void ImplicitScalingFixture::SetUp() {
     testHardwareInfo = *defaultHwInfo;
 }
 
-void ImplicitScalingFixture::TearDown() {
+void ImplicitScalingFixture::tearDown() {
     alignedFree(alignedMemory);
-    CommandEncodeStatesFixture::TearDown();
+    CommandEncodeStatesFixture::tearDown();
 }

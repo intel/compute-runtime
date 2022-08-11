@@ -34,7 +34,7 @@ struct VeryLargeTag : public BaseTag {
 struct SoftwareTagsManagerTests : public DeviceFixture, public ::testing::Test {
     void SetUp() override {
         DebugManager.flags.EnableSWTags.set(true);
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
 
         tagsManager = pDevice->getRootDeviceEnvironment().tagsManager.get();
 
@@ -44,7 +44,7 @@ struct SoftwareTagsManagerTests : public DeviceFixture, public ::testing::Test {
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     template <typename GfxFamily>

@@ -20,15 +20,15 @@ class CommandEncodeStatesFixture : public DeviceFixture {
         using CommandContainer::dirtyHeaps;
     };
 
-    void SetUp() {
-        DeviceFixture::SetUp();
+    void setUp() {
+        DeviceFixture::setUp();
         cmdContainer = std::make_unique<MyMockCommandContainer>();
         cmdContainer->initialize(pDevice, nullptr, true);
         cmdContainer->setDirtyStateForAllHeaps(false);
     }
-    void TearDown() {
+    void tearDown() {
         cmdContainer.reset();
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
     std::unique_ptr<MyMockCommandContainer> cmdContainer;
     KernelDescriptor descriptor;

@@ -67,14 +67,14 @@ class BuiltinFunctionsLibFixture : public DeviceFixture {
             module.release();
         }
     };
-    void SetUp() {
-        DeviceFixture::SetUp();
+    void setUp() {
+        DeviceFixture::setUp();
         mockDevicePtr = std::unique_ptr<MockDeviceForSpv<useImagesBuiltins, isStateless>>(new MockDeviceForSpv<useImagesBuiltins, isStateless>(device->getNEODevice(), device->getNEODevice()->getExecutionEnvironment(), driverHandle.get()));
         mockBuiltinFunctionsLibImpl.reset(new MockBuiltinFunctionsLibImpl(mockDevicePtr.get(), neoDevice->getBuiltIns()));
     }
-    void TearDown() {
+    void tearDown() {
         mockBuiltinFunctionsLibImpl.reset();
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     std::unique_ptr<MockBuiltinFunctionsLibImpl> mockBuiltinFunctionsLibImpl;
@@ -82,7 +82,7 @@ class BuiltinFunctionsLibFixture : public DeviceFixture {
 };
 
 template <bool useImagesBuiltins, bool isStateless>
-using TestBuiltinFunctionsLibImpl = TestLegacy<BuiltinFunctionsLibFixture<useImagesBuiltins, isStateless>>;
+using TestBuiltinFunctionsLibImpl = Test<BuiltinFunctionsLibFixture<useImagesBuiltins, isStateless>>;
 
 class TestBuiltinFunctionsLibImplDefault : public TestBuiltinFunctionsLibImpl<false, false> {};
 class TestBuiltinFunctionsLibImplStateless : public TestBuiltinFunctionsLibImpl<false, true> {};

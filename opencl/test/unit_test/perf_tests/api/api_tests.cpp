@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ void api_fixture::SetUp() {
     setReferenceTime();
 
     PlatformFixture::SetUp(numPlatformDevices, platformDevices);
-    DeviceFixture::SetUp();
+    DeviceFixture::setUp();
     ASSERT_NE(nullptr, pDevice);
 
     auto pDevice = pPlatform->getDevice(0);
@@ -40,7 +40,7 @@ void api_fixture::TearDown() {
     delete pContext;
     delete pProgram;
     CommandQueueHwFixture::TearDown();
-    DeviceFixture::TearDown();
+    DeviceFixture::tearDown();
     PlatformFixture::TearDown();
 }
 } // namespace NEO

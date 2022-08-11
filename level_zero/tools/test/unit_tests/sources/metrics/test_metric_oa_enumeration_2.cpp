@@ -20,7 +20,7 @@ using ::testing::Return;
 
 namespace L0 {
 namespace ult {
-using MetricEnumerationTest = TestLegacy<MetricContextFixture>;
+using MetricEnumerationTest = Test<MetricContextFixture>;
 
 TEST_F(MetricEnumerationTest, givenTimeAndBufferSizeWhenOpenIoStreamReturnsErrorThenTheMetricGroupOpenIoStreamReturnsErrorUnknown) {
 
@@ -138,7 +138,7 @@ TEST_F(MetricEnumerationTest, givenTTypedValueWhenCopyValueIsCalledReturnsFilled
     }
 }
 
-using MetricEnumerationMultiDeviceTest = TestLegacy<MetricMultiDeviceFixture>;
+using MetricEnumerationMultiDeviceTest = Test<MetricMultiDeviceFixture>;
 
 TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceWhenLoadDependenciesIsCalledThenOpenMetricsSubDeviceWillBeCalled) {
 

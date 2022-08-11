@@ -26,7 +26,7 @@
 namespace L0 {
 namespace ult {
 
-using ContextIsShareable = TestLegacy<DeviceFixture>;
+using ContextIsShareable = Test<DeviceFixture>;
 TEST_F(ContextIsShareable, whenCallingisSharedMemoryThenCorrectResultIsReturned) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -57,7 +57,7 @@ TEST_F(ContextIsShareable, whenCallingisSharedMemoryThenCorrectResultIsReturned)
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-using GetMemHandlePtrTest = TestLegacy<GetMemHandlePtrTestFixture>;
+using GetMemHandlePtrTest = Test<GetMemHandlePtrTestFixture>;
 TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithValidNTHandleThenSuccessIsReturned) {
     MemoryManagerMemHandleMock *fixtureMemoryManager = static_cast<MemoryManagerMemHandleMock *>(currMemoryManager);
 

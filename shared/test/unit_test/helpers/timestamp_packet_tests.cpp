@@ -203,12 +203,12 @@ struct DeviceTimestampPacketTests : public ::testing::Test, DeviceFixture {
 
     void SetUp() override {
         DebugManager.flags.EnableTimestampPacket.set(1);
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         executionEnvironment = pDevice->executionEnvironment;
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     };
 };
 

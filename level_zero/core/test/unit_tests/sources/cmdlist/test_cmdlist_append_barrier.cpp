@@ -18,7 +18,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandListAppendBarrier = TestLegacy<CommandListFixture>;
+using CommandListAppendBarrier = Test<CommandListFixture>;
 
 HWTEST_F(CommandListAppendBarrier, WhenAppendingBarrierThenPipeControlIsGenerated) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -191,7 +191,7 @@ void validateMultiTileBarrier(void *cmdBuffer, size_t &parsedOffset,
     }
 }
 
-using MultiTileCommandListAppendBarrier = TestLegacy<MultiTileCommandListFixture<false, false, false>>;
+using MultiTileCommandListAppendBarrier = Test<MultiTileCommandListFixture<false, false, false>>;
 
 HWTEST2_F(MultiTileCommandListAppendBarrier, WhenAppendingBarrierThenPipeControlIsGenerated, IsWithinXeGfxFamily) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -505,7 +505,7 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
                                            true);
 }
 
-using MultiTileImmediateCommandListAppendBarrier = TestLegacy<MultiTileCommandListFixture<true, false, false>>;
+using MultiTileImmediateCommandListAppendBarrier = Test<MultiTileCommandListFixture<true, false, false>>;
 
 HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
           givenMultiTileImmediateCommandListWhenAppendingBarrierThenExpectCrossTileSyncAndNoCleanupSection, IsWithinXeGfxFamily) {

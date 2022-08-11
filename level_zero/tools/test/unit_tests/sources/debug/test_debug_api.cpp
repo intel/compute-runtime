@@ -20,7 +20,7 @@ namespace ult {
 
 struct DebugApiFixture : public DeviceFixture {
     void SetUp() {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
         mockBuiltins = new MockBuiltins();
         mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
@@ -28,7 +28,7 @@ struct DebugApiFixture : public DeviceFixture {
     }
 
     void TearDown() {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     MockBuiltins *mockBuiltins = nullptr;

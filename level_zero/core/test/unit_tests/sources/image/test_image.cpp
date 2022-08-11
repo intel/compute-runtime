@@ -27,8 +27,8 @@
 namespace L0 {
 namespace ult {
 
-using ImageCreate = TestLegacy<DeviceFixture>;
-using ImageView = TestLegacy<DeviceFixture>;
+using ImageCreate = Test<DeviceFixture>;
+using ImageView = Test<DeviceFixture>;
 
 HWTEST2_F(ImageCreate, givenValidImageDescriptionWhenImageCreateThenImageIsCreatedCorrectly, IsAtLeastSkl) {
     ze_image_desc_t zeDesc = {};
@@ -95,11 +95,11 @@ HWTEST2_F(ImageCreate, givenValidImageDescriptionWhenImageCreateWithUnsupportedI
 class TestImageFormats : public DeviceFixture, public testing::TestWithParam<std::pair<ze_image_format_layout_t, ze_image_format_type_t>> {
   public:
     void SetUp() override {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 };
 
@@ -813,7 +813,7 @@ TEST(ImageFormatDescHelperTest, givenSupportedSwizzlesThenProperClEnumIsReturned
     EXPECT_EQ(getClChannelOrder(format), static_cast<cl_channel_order>(CL_BGRA));
 }
 
-using ImageGetMemoryProperties = TestLegacy<DeviceFixture>;
+using ImageGetMemoryProperties = Test<DeviceFixture>;
 
 HWTEST2_F(ImageGetMemoryProperties, givenImageMemoryPropertiesExpStructureWhenGetMemroyPropertiesThenProperDataAreSet, IsAtLeastSkl) {
     ze_image_desc_t zeDesc = {};

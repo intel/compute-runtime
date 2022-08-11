@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-using XeHpcCoreOnlyTest = TestLegacy<DeviceFixture>;
+using XeHpcCoreOnlyTest = Test<DeviceFixture>;
 
 XE_HPC_CORETEST_F(XeHpcCoreOnlyTest, WhenGettingRenderCoreFamilyThenOnlyHpcCoreIsReturned) {
     EXPECT_EQ(IGFX_XE_HPC_CORE, pDevice->getRenderCoreFamily());

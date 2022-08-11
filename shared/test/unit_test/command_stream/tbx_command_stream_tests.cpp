@@ -45,7 +45,7 @@ struct TbxFixture : public TbxCommandStreamFixture,
     TbxFixture() : MockAubCenterFixture(CommandStreamReceiverType::CSR_TBX) {}
 
     void SetUp() {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         setMockAubCenter(*pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
         TbxCommandStreamFixture::SetUp(pDevice);
         MockAubCenterFixture::SetUp();
@@ -54,7 +54,7 @@ struct TbxFixture : public TbxCommandStreamFixture,
     void TearDown() {
         MockAubCenterFixture::TearDown();
         TbxCommandStreamFixture::TearDown();
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 };
 

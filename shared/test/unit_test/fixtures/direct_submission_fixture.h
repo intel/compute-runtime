@@ -22,8 +22,8 @@ extern std::atomic<uintptr_t> lastClFlushedPtr;
 }
 
 struct DirectSubmissionFixture : public DeviceFixture {
-    void SetUp() {
-        DeviceFixture::SetUp();
+    void setUp() {
+        DeviceFixture::setUp();
         DeviceFactory::prepareDeviceEnvironments(*pDevice->getExecutionEnvironment());
 
         osContext = pDevice->getDefaultEngine().osContext;
@@ -33,8 +33,8 @@ struct DirectSubmissionFixture : public DeviceFixture {
 };
 
 struct DirectSubmissionDispatchBufferFixture : public DirectSubmissionFixture {
-    void SetUp() {
-        DirectSubmissionFixture::SetUp();
+    void setUp() {
+        DirectSubmissionFixture::setUp();
         MemoryManager *memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
         const AllocationProperties commandBufferProperties{pDevice->getRootDeviceIndex(), 0x1000,
                                                            AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()};
@@ -45,11 +45,11 @@ struct DirectSubmissionDispatchBufferFixture : public DirectSubmissionFixture {
         batchBuffer.usedSize = 0x40;
     }
 
-    void TearDown() {
+    void tearDown() {
         MemoryManager *memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
         memoryManager->freeGraphicsMemory(commandBuffer);
 
-        DirectSubmissionFixture::TearDown();
+        DirectSubmissionFixture::tearDown();
     }
 
     BatchBuffer batchBuffer;

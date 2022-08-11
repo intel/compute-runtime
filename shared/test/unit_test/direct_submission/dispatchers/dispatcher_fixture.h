@@ -14,8 +14,8 @@ namespace NEO {
 
 class DispatcherFixture : public DeviceFixture {
   public:
-    void SetUp();
-    void TearDown();
+    void setUp();
+    void tearDown();
 
     NEO::LinearStream cmdBuffer;
     void *bufferAllocation;

@@ -100,14 +100,14 @@ struct MockDebugSessionWindows : DebugSessionWindows {
 
 struct DebugApiWindowsFixture : public DeviceFixture {
     void SetUp() {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         mockWddm = new WddmEuDebugInterfaceMock(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
         neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
         neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockWddm));
     }
 
     void TearDown() {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
     static constexpr uint8_t bufferSize = 16;
     WddmEuDebugInterfaceMock *mockWddm = nullptr;

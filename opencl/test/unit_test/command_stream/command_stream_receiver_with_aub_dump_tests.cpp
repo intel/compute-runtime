@@ -140,7 +140,7 @@ struct MyMockCsrWithAubDump : CommandStreamReceiverWithAUBDump<BaseCSR> {
 
 struct CommandStreamReceiverWithAubDumpTest : public ::testing::TestWithParam<bool /*createAubCSR*/>, MockAubCenterFixture, DeviceFixture {
     void SetUp() override {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         MockAubCenterFixture::SetUp();
         setMockAubCenter(pDevice->getRootDeviceEnvironmentRef());
         executionEnvironment = pDevice->getExecutionEnvironment();
@@ -162,7 +162,7 @@ struct CommandStreamReceiverWithAubDumpTest : public ::testing::TestWithParam<bo
     void TearDown() override {
         delete csrWithAubDump;
         MockAubCenterFixture::TearDown();
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     ExecutionEnvironment *executionEnvironment;
@@ -173,13 +173,13 @@ struct CommandStreamReceiverWithAubDumpTest : public ::testing::TestWithParam<bo
 
 struct CommandStreamReceiverWithAubDumpSimpleTest : TestLegacy<MockAubCenterFixture>, DeviceFixture {
     void SetUp() override {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         MockAubCenterFixture::SetUp();
         setMockAubCenter(pDevice->getRootDeviceEnvironmentRef());
     }
     void TearDown() override {
         MockAubCenterFixture::TearDown();
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 };
 

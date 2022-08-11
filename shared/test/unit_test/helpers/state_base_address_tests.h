@@ -18,7 +18,7 @@
 
 struct SBATest : public NEO::DeviceFixture, public ::testing::Test {
     void SetUp() override {
-        NEO::DeviceFixture::SetUp();
+        NEO::DeviceFixture::setUp();
         size_t sizeStream = 512;
         size_t alignmentStream = 0x1000;
         sshBuffer = alignedMalloc(sizeStream, alignmentStream);
@@ -36,7 +36,7 @@ struct SBATest : public NEO::DeviceFixture, public ::testing::Test {
         alignedFree(linearStreamBuffer);
         delete ssh.getGraphicsAllocation();
         alignedFree(sshBuffer);
-        NEO::DeviceFixture::TearDown();
+        NEO::DeviceFixture::tearDown();
     }
     IndirectHeap ssh = {nullptr};
     void *sshBuffer = nullptr;

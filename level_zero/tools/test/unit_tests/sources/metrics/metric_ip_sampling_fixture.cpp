@@ -24,7 +24,7 @@ void MetricIpSamplingFixture::SetUp() {
 
     MultiDeviceFixture::numRootDevices = 1;
     MultiDeviceFixture::numSubDevices = 2;
-    MultiDeviceFixture::SetUp();
+    MultiDeviceFixture::setUp();
     testDevices.reserve(MultiDeviceFixture::numRootDevices +
                         (MultiDeviceFixture::numRootDevices *
                          MultiDeviceFixture::numSubDevices));
@@ -52,7 +52,7 @@ void MetricIpSamplingFixture::SetUp() {
 }
 
 void MetricIpSamplingFixture::TearDown() {
-    MultiDeviceFixture::TearDown();
+    MultiDeviceFixture::tearDown();
 }
 
 } // namespace ult

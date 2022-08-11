@@ -154,7 +154,7 @@ TEST_F(LinearStreamTest, givenLinearStreamWithoutCmdContainerWhenOneByteLeftInSt
     reinterpret_cast<MyLinearStreamMock *>(&linearStream)->sizeUsed = linearStream.getMaxAvailableSpace() - 1;
     EXPECT_NO_THROW(linearStream.getSpace(1));
 }
-using CommandContainerLinearStreamTest = TestLegacy<DeviceFixture>;
+using CommandContainerLinearStreamTest = Test<DeviceFixture>;
 TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenOneByteLeftInStreamThenGetSpaceThrowAbort) {
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, true);

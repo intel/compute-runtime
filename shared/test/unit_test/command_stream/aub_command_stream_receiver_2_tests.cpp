@@ -855,7 +855,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenEngineI
     EXPECT_NE(0u, aubCsr->handle);
 }
 
-using InjectMmmioTest = TestLegacy<DeviceFixture>;
+using InjectMmmioTest = Test<DeviceFixture>;
 
 HWTEST_F(InjectMmmioTest, givenAddMmioKeySetToZeroWhenInitAdditionalMmioCalledThenDoNotWriteMmio) {
     DebugManagerStateRestore stateRestore;

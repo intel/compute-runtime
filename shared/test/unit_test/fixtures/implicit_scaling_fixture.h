@@ -19,8 +19,8 @@
 using namespace NEO;
 
 struct ImplicitScalingFixture : public CommandEncodeStatesFixture {
-    void SetUp();
-    void TearDown();
+    void setUp();
+    void tearDown();
 
     static constexpr uint64_t gpuVa = (1ull << 48);
     static constexpr size_t bufferSize = 1024u;
@@ -35,4 +35,4 @@ struct ImplicitScalingFixture : public CommandEncodeStatesFixture {
     void *alignedMemory = nullptr;
 };
 
-using ImplicitScalingTests = TestLegacy<ImplicitScalingFixture>;
+using ImplicitScalingTests = Test<ImplicitScalingFixture>;

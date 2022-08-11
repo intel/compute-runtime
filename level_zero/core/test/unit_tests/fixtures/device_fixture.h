@@ -32,8 +32,8 @@ class MockBuiltins;
 
 struct DeviceFixture {
     NEO::MockCompilerEnableGuard compilerMock = NEO::MockCompilerEnableGuard(true);
-    void SetUp();    // NOLINT(readability-identifier-naming)
-    void TearDown(); // NOLINT(readability-identifier-naming)
+    void setUp();
+    void tearDown();
     void setupWithExecutionEnvironment(NEO::ExecutionEnvironment &executionEnvironment);
 
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
@@ -66,8 +66,8 @@ struct DriverHandleGetMemHandlePtrMock : public L0::DriverHandleImp {
 
 struct GetMemHandlePtrTestFixture {
     NEO::MockCompilerEnableGuard compilerMock = NEO::MockCompilerEnableGuard(true);
-    void SetUp();    // NOLINT(readability-identifier-naming)
-    void TearDown(); // NOLINT(readability-identifier-naming)
+    void setUp();
+    void tearDown();
     NEO::MemoryManager *prevMemoryManager = nullptr;
     MemoryManagerMemHandleMock *currMemoryManager = nullptr;
     std::unique_ptr<DriverHandleGetMemHandlePtrMock> driverHandle;
@@ -80,8 +80,8 @@ struct PageFaultDeviceFixture {
     PageFaultDeviceFixture();
     ~PageFaultDeviceFixture();
     NEO::MockCompilerEnableGuard compilerMock = NEO::MockCompilerEnableGuard(true);
-    void SetUp();    // NOLINT(readability-identifier-naming)
-    void TearDown(); // NOLINT(readability-identifier-naming)
+    void setUp();
+    void tearDown();
 
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     std::unique_ptr<MockMemoryManager> mockMemoryManager;
@@ -94,8 +94,8 @@ struct PageFaultDeviceFixture {
 
 struct MultiDeviceFixture {
     NEO::MockCompilerEnableGuard compilerMock = NEO::MockCompilerEnableGuard(true);
-    void SetUp();    // NOLINT(readability-identifier-naming)
-    void TearDown(); // NOLINT(readability-identifier-naming)
+    void setUp();
+    void tearDown();
 
     DebugManagerStateRestore restorer;
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
@@ -106,27 +106,22 @@ struct MultiDeviceFixture {
 };
 
 struct SingleRootMultiSubDeviceFixture : public MultiDeviceFixture {
-    void SetUp();
+    void setUp();
 
     L0::Device *device = nullptr;
     NEO::Device *neoDevice = nullptr;
 };
 
 struct ImplicitScalingRootDevice : public SingleRootMultiSubDeviceFixture {
-    void SetUp() {
+    void setUp() {
         DebugManager.flags.EnableImplicitScaling.set(1);
-        SingleRootMultiSubDeviceFixture::SetUp();
+        SingleRootMultiSubDeviceFixture::setUp();
     }
 };
 
-struct ContextFixture : DeviceFixture {
-    void SetUp();
-    void TearDown();
-};
-
 struct MultipleDevicesWithCustomHwInfo {
-    void SetUp();      // NOLINT(readability-identifier-naming)
-    void TearDown() {} // NOLINT(readability-identifier-naming)
+    void setUp();
+    void tearDown() {}
     NEO::HardwareInfo hwInfo;
     const uint32_t numSubslicesPerSlice = 4;
     const uint32_t numEuPerSubslice = 8;
@@ -166,8 +161,8 @@ struct SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl : public MultiDevi
     uint32_t numEngineGroups = 0;
     uint32_t subDeviceNumEngineGroups = 0;
 
-    void SetUp();
-    void TearDown();
+    void setUp();
+    void tearDown();
 };
 template <uint32_t copyEngineCount, uint32_t implicitScalingArg>
 struct SingleRootMultiSubDeviceFixtureWithImplicitScaling : public SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl {

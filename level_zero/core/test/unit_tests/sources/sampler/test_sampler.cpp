@@ -33,16 +33,16 @@ const auto samplerIsNormalized = ::testing::Values(
 using SamplerCreateSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
 
 class SamplerCreateTest
-    : public TestLegacy<DeviceFixture>,
+    : public Test<DeviceFixture>,
       public ::testing::WithParamInterface<std::tuple<ze_sampler_address_mode_t,
                                                       ze_sampler_filter_mode_t,
                                                       ze_bool_t>> {
   public:
     void SetUp() override {
-        TestLegacy<DeviceFixture>::SetUp();
+        Test<DeviceFixture>::SetUp();
     }
     void TearDown() override {
-        TestLegacy<DeviceFixture>::TearDown();
+        Test<DeviceFixture>::TearDown();
     }
 };
 
@@ -151,7 +151,7 @@ INSTANTIATE_TEST_CASE_P(SamplerDescCombinations, SamplerCreateTest,
                                            samplerFilterMode,
                                            samplerIsNormalized));
 
-using ContextCreateSamplerTest = TestLegacy<ContextFixture>;
+using ContextCreateSamplerTest = Test<DeviceFixture>;
 
 HWTEST2_F(ContextCreateSamplerTest, givenDifferentDescriptorValuesThenSamplerIsCorrectlyCreated, SamplerCreateSupport) {
     ze_sampler_address_mode_t addressMode = ZE_SAMPLER_ADDRESS_MODE_NONE;

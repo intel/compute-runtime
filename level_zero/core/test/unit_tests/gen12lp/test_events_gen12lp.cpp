@@ -15,9 +15,9 @@
 
 namespace L0 {
 namespace ult {
-struct TimestampEvent : public TestLegacy<DeviceFixture> {
+struct TimestampEvent : public Test<DeviceFixture> {
     void SetUp() override {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         ze_event_pool_desc_t eventPoolDesc = {};
         eventPoolDesc.count = 1;
         eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
@@ -38,7 +38,7 @@ struct TimestampEvent : public TestLegacy<DeviceFixture> {
     void TearDown() override {
         event.reset(nullptr);
         eventPool.reset(nullptr);
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     std::unique_ptr<L0::EventPool> eventPool;

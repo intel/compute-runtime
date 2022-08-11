@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-using Gen8DeviceCaps = TestLegacy<DeviceFixture>;
+using Gen8DeviceCaps = Test<DeviceFixture>;
 
 GEN8TEST_F(Gen8DeviceCaps, GivenDefaultWhenCheckingPreemptionModeThenDisabledIsReported) {
     EXPECT_TRUE(PreemptionMode::Disabled == pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);

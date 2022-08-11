@@ -58,7 +58,7 @@ class MockDriverHandle : public L0::DriverHandleImp {
     NEO::SvmAllocationData data{rootDeviceIndex};
 };
 
-using AppendMemoryCopy = TestLegacy<DeviceFixture>;
+using AppendMemoryCopy = Test<DeviceFixture>;
 
 HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListWhenAppenBlitFillCalledWithLargePatternSizeThenMemCopyWasCalled, IsAtLeastSkl) {
     MockCommandListForMemFill<gfxCoreFamily> cmdList;
