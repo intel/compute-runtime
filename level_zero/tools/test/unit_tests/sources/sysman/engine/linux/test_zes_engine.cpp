@@ -48,7 +48,6 @@ class ZesEngineFixture : public SysmanDeviceFixture {
         pFsAccess = std::make_unique<NiceMock<Mock<EngineFsAccess>>>();
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
 
-        EngineHandleContext *pEngineHandleContext = pSysmanDeviceImp->pEngineHandleContext;
         pDrm = std::make_unique<NiceMock<Mock<EngineNeoDrm>>>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment()));
         pDrm->setupIoctlHelper(neoDevice->getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily);
         pPmuInterface = std::make_unique<NiceMock<Mock<MockPmuInterfaceImp>>>(pLinuxSysmanImp);
@@ -69,7 +68,7 @@ class ZesEngineFixture : public SysmanDeviceFixture {
         ON_CALL(*pFsAccess.get(), read(_, _))
             .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<EngineFsAccess>::readValSuccess));
 
-        pEngineHandleContext->init();
+        getEngineHandles(0);
     }
 
     void TearDown() override {

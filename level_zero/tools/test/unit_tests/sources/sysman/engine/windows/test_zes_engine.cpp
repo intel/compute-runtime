@@ -38,7 +38,7 @@ class SysmanDeviceEngineFixture : public SysmanDeviceFixture {
         }
 
         pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
-        pSysmanDeviceImp->pEngineHandleContext->init();
+        get_engine_handles(0);
     }
 
     void TearDown() override {

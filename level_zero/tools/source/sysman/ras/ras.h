@@ -46,10 +46,14 @@ struct RasHandleContext {
 
     OsSysman *pOsSysman = nullptr;
     std::vector<Ras *> handleList = {};
+    bool isRasInitDone() {
+        return rasInitDone;
+    }
 
   private:
     void createHandle(zes_ras_error_type_t type, ze_device_handle_t deviceHandle);
     std::once_flag initRasOnce;
+    bool rasInitDone = false;
 };
 
 } // namespace L0

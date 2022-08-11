@@ -8,6 +8,9 @@
 #include "shared/test/common/mocks/mock_driver_info.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/tools/source/sysman/diagnostics/linux/os_diagnostics_imp.h"
+#include "level_zero/tools/source/sysman/firmware/linux/os_firmware_imp.h"
+#include "level_zero/tools/source/sysman/ras/ras_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
 
 namespace L0 {
@@ -332,6 +335,51 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenGettingFwUtilInterfaceAndG
 
     EXPECT_EQ(pLinuxSysmanImp->getFwUtilInterface(), nullptr);
     pLinuxSysmanImp->pFwUtilInterface = pFwUtilInterfaceOld;
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidEnumeratedHandlesWhenReleaseIsCalledThenHandleCountZeroIsReturned) {
+    uint32_t count = 0;
+
+    const std::vector<std::string> mockSupportedDiagTypes = {"MOCKSUITE1", "MOCKSUITE2"};
+    std::vector<std::string> mockSupportedFirmwareTypes = {"GSC", "OptionROM", "PSC"};
+
+    FirmwareImp *ptestFirmwareImp = new FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFirmwareTypes[0]);
+    pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
+    count = 0;
+    ze_result_t result = zesDeviceEnumFirmwares(device->toHandle(), &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, 1u);
+
+    count = 0;
+    DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
+    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(ptestDiagnosticsImp);
+    result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, 1u);
+
+    count = 0;
+    RasImp *pRas = new RasImp(pSysmanDeviceImp->pRasHandleContext->pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, device->toHandle());
+    pSysmanDeviceImp->pRasHandleContext->handleList.push_back(pRas);
+    result = zesDeviceEnumRasErrorSets(device->toHandle(), &count, NULL);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, 3u);
+
+    pLinuxSysmanImp->releaseSysmanDeviceResources();
+
+    count = 0;
+    result = zesDeviceEnumFirmwares(device->toHandle(), &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, 0u);
+
+    count = 0;
+    result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, 0u);
+
+    count = 0;
+    result = zesDeviceEnumRasErrorSets(device->toHandle(), &count, NULL);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, 0u);
 }
 
 TEST_F(SysmanMultiDeviceFixture, GivenValidDeviceHandleHavingSubdevicesWhenValidatingSysmanHandlesForSubdevicesThenSysmanHandleForSubdeviceWillBeSameAsSysmanHandleForDevice) {

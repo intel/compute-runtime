@@ -45,10 +45,14 @@ struct FirmwareHandleContext {
 
     OsSysman *pOsSysman = nullptr;
     std::vector<Firmware *> handleList = {};
+    bool isFirmwareInitDone() {
+        return firmwareInitDone;
+    }
 
   private:
     void createHandle(const std::string &fwType);
     std::once_flag initFirmwareOnce;
+    bool firmwareInitDone = false;
 };
 
 } // namespace L0

@@ -284,13 +284,21 @@ void LinuxSysmanImp::reInitSysmanDeviceResources() {
     getSysmanDeviceImp()->updateSubDeviceHandlesLocally();
     createPmtHandles();
     createFwUtilInterface();
-    getSysmanDeviceImp()->pRasHandleContext->init(getSysmanDeviceImp()->deviceHandles);
-    getSysmanDeviceImp()->pEngineHandleContext->init();
+    if (getSysmanDeviceImp()->pRasHandleContext->isRasInitDone()) {
+        getSysmanDeviceImp()->pRasHandleContext->init(getSysmanDeviceImp()->deviceHandles);
+    }
+    if (getSysmanDeviceImp()->pEngineHandleContext->isEngineInitDone()) {
+        getSysmanDeviceImp()->pEngineHandleContext->init();
+    }
     if (!diagnosticsReset) {
-        getSysmanDeviceImp()->pDiagnosticsHandleContext->init();
+        if (getSysmanDeviceImp()->pDiagnosticsHandleContext->isDiagnosticsInitDone()) {
+            getSysmanDeviceImp()->pDiagnosticsHandleContext->init();
+        }
     }
     this->diagnosticsReset = false;
-    getSysmanDeviceImp()->pFirmwareHandleContext->init();
+    if (getSysmanDeviceImp()->pFirmwareHandleContext->isFirmwareInitDone()) {
+        getSysmanDeviceImp()->pFirmwareHandleContext->init();
+    }
 }
 
 ze_result_t LinuxSysmanImp::initDevice() {

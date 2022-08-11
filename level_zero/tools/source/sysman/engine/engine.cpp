@@ -47,6 +47,10 @@ void EngineHandleContext::releaseEngines() {
 }
 
 ze_result_t EngineHandleContext::engineGet(uint32_t *pCount, zes_engine_handle_t *phEngine) {
+    std::call_once(initEngineOnce, [this]() {
+        this->init();
+        this->engineInitDone = true;
+    });
     uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
     uint32_t numToCopy = std::min(*pCount, handleListSize);
     if (0 == *pCount || *pCount > handleListSize) {

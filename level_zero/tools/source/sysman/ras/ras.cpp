@@ -41,6 +41,7 @@ ze_result_t RasHandleContext::rasGet(uint32_t *pCount,
                                      zes_ras_handle_t *phRas) {
     std::call_once(initRasOnce, [this]() {
         this->init(pOsSysman->getDeviceHandles());
+        this->rasInitDone = true;
     });
     uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
     uint32_t numToCopy = std::min(*pCount, handleListSize);

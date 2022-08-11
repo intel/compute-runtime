@@ -41,6 +41,7 @@ void FirmwareHandleContext::init() {
 ze_result_t FirmwareHandleContext::firmwareGet(uint32_t *pCount, zes_firmware_handle_t *phFirmware) {
     std::call_once(initFirmwareOnce, [this]() {
         this->init();
+        this->firmwareInitDone = true;
     });
     uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
     uint32_t numToCopy = std::min(*pCount, handleListSize);

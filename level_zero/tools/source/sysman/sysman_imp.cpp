@@ -97,9 +97,6 @@ ze_result_t SysmanDeviceImp::init() {
     if (ZE_RESULT_SUCCESS != result) {
         return result;
     }
-    if (pEngineHandleContext) {
-        pEngineHandleContext->init();
-    }
     return result;
 }
 

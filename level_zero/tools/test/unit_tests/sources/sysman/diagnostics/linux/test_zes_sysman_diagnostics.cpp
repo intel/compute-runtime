@@ -629,6 +629,29 @@ TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingReleaseResour
     pLinuxSysmanImp->releaseDeviceResources();
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxSysmanImp->initDevice());
 }
+TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleAndHandleCountZeroWhenCallingReInitThenValidCountIsReturnedAndVerifyzesDeviceEnumDiagnosticTestSuitesSucceeds) {
+    uint32_t count = 0;
+    if (productFamily != IGFX_PVC) {
+        mockDiagHandleCount = 0;
+    }
+    ze_result_t result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, mockDiagHandleCount);
+
+    for (const auto &handle : pSysmanDeviceImp->pDiagnosticsHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.clear();
+    pSysmanDeviceImp->pDiagnosticsHandleContext->supportedDiagTests.clear();
+
+    pLinuxSysmanImp->diagnosticsReset = false;
+    pLinuxSysmanImp->reInitSysmanDeviceResources();
+
+    count = 0;
+    result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, mockDiagHandleCount);
+}
 
 }; // namespace ult
 }; // namespace L0

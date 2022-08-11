@@ -36,6 +36,7 @@ void DiagnosticsHandleContext::init() {
 ze_result_t DiagnosticsHandleContext::diagnosticsGet(uint32_t *pCount, zes_diag_handle_t *phDiagnostics) {
     std::call_once(initDiagnosticsOnce, [this]() {
         this->init();
+        this->diagnosticsInitDone = true;
     });
     uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
     uint32_t numToCopy = std::min(*pCount, handleListSize);
