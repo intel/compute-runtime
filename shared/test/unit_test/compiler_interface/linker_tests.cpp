@@ -901,7 +901,7 @@ TEST(LinkerInputTests, GivenGlobalAndLocalElfSymbolsWhenDecodingThenOnlyGlobalSy
     EXPECT_TRUE(linkerInput.getTraits().exportsFunctions);
 }
 
-TEST(LinkerInputTests, GivenGlobalFunctionsInTwoSegementsWhenDecodingThenUnrecoverableIsCalled) {
+TEST(LinkerInputTests, GivenGlobalFunctionsInTwoSegmentsWhenDecodingThenUnrecoverableIsCalled) {
     NEO::LinkerInput linkerInput = {};
     NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
     MockElf<NEO::Elf::EI_CLASS_64> elf64;
