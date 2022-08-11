@@ -9,8 +9,8 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/test/common/fixtures/preamble_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/unit_test/preamble/preamble_fixture.h"
 
 using namespace NEO;
 

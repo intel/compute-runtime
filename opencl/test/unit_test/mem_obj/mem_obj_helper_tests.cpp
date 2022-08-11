@@ -8,7 +8,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-#include "shared/test/unit_test/utilities/base_object_utils.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"

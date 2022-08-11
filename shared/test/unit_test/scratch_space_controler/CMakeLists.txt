@@ -1,18 +1,16 @@
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
-target_sources(${TARGET_NAME} PRIVATE
+target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${CMAKE_CURRENT_SOURCE_DIR}/scratch_space_controler_tests.cpp
 )
 
 if(TESTS_XEHP_AND_LATER)
-  target_sources(${TARGET_NAME} PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/scratch_space_controler_xehp_and_later_tests.cpp
-  )
+  target_sources(neo_shared_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/scratch_space_controler_xehp_and_later_tests.cpp)
 endif()
 
 add_subdirectories()

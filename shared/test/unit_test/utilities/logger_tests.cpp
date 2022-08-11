@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/unit_test/utilities/logger_tests.h"
+#include "shared/test/common/utilities/logger_tests.h"
 
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -13,7 +13,7 @@
 #include "shared/source/utilities/logger.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
-#include "shared/test/unit_test/utilities/base_object_utils.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "gtest/gtest.h"
 

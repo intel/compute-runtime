@@ -25,7 +25,7 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/utilities/destructor_counted.h"
+#include "shared/test/common/utilities/destructor_counted.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_async_event_handler.h"

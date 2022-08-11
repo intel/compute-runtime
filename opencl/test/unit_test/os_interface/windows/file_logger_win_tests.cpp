@@ -10,7 +10,7 @@
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
-#include "shared/test/unit_test/utilities/logger_tests.h"
+#include "shared/test/common/utilities/logger_tests.h"
 
 #include "opencl/test/unit_test/os_interface/windows/mock_wddm_allocation.h"
 

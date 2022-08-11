@@ -7,7 +7,7 @@
 
 #include "shared/source/device/device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/unit_test/utilities/base_object_utils.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/context/context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"

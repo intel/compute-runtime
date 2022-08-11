@@ -9,7 +9,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
-#include "shared/test/unit_test/utilities/destructor_counted.h"
+#include "shared/test/common/utilities/destructor_counted.h"
 
 namespace NEO {
 

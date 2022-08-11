@@ -7,7 +7,7 @@
 
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/utilities/base_object_utils.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/accelerators/intel_accelerator.h"
 #include "opencl/source/accelerators/intel_motion_estimation.h"

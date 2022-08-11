@@ -5,7 +5,5 @@
 #
 
 if(UNIX)
-  target_sources(${TARGET_NAME} PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/cpuinfo_tests_x86_64_linux.cpp
-  )
+  target_sources(neo_shared_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/cpuinfo_tests_x86_64_linux.cpp)
 endif()

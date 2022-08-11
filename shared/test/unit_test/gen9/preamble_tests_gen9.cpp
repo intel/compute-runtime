@@ -6,16 +6,16 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/test/common/fixtures/preamble_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/unit_test/preamble/preamble_fixture.h"
-#include "shared/test/unit_test/source_level_debugger/source_level_debugger_preamble_test.h"
+#include "shared/test/common/source_level_debugger/source_level_debugger_preamble_test.h"
 
 #include "gtest/gtest.h"
 
 using namespace NEO;
 typedef Gen9Family GfxFamily;
 
-#include "shared/test/unit_test/source_level_debugger/source_level_debugger_preamble_test.inl"
+#include "shared/test/common/source_level_debugger/source_level_debugger_preamble_test.inl"
 
 using PreambleTestGen9 = ::testing::Test;
 

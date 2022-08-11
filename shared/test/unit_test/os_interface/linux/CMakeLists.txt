@@ -87,8 +87,7 @@ endif()
 set_property(GLOBAL PROPERTY NEO_CORE_OS_INTERFACE_TESTS_LINUX ${NEO_CORE_OS_INTERFACE_TESTS_LINUX})
 
 if(UNIX)
-  target_sources(${TARGET_NAME} PRIVATE
-                 ${NEO_CORE_OS_INTERFACE_TESTS_LINUX}
-  )
+  target_sources(neo_shared_tests PRIVATE ${NEO_CORE_OS_INTERFACE_TESTS_LINUX})
 endif()
+
 add_subdirectories()
