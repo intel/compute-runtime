@@ -21,7 +21,7 @@
 using namespace NEO;
 
 ////////////////////////////////////////////////////////////////////////////////
-typedef TestLegacy<MemoryManagementFixture> ContextFailureInjection;
+typedef Test<MemoryManagementFixture> ContextFailureInjection;
 
 TEST_F(ContextFailureInjection, GivenFailedAllocationInjectionWhenCreatingContextThenOutOfHostMemoryErrorIsReturned) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));

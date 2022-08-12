@@ -43,8 +43,8 @@
 using namespace NEO;
 using namespace ::testing;
 
-void WddmMemoryManagerFixture::SetUp() {
-    GdiDllFixture::SetUp();
+void WddmMemoryManagerFixture::setUp() {
+    GdiDllFixture::setUp();
 
     executionEnvironment = platform()->peekExecutionEnvironment();
     rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].get();

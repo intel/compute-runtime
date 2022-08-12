@@ -32,11 +32,11 @@
 
 namespace {
 using MemoryManagerMultiDeviceSharedHandleTest = MemoryAllocatorMultiDeviceFixture<2>;
-using DrmMemoryManagerTest = TestLegacy<DrmMemoryManagerFixture>;
-using DrmMemoryManagerWithLocalMemoryTest = TestLegacy<DrmMemoryManagerWithLocalMemoryFixture>;
-using DrmMemoryManagerWithExplicitExpectationsTest = TestLegacy<DrmMemoryManagerFixtureWithoutQuietIoctlExpectation>;
-using DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest = TestLegacy<DrmMemoryManagerFixtureWithLocalMemoryAndWithoutQuietIoctlExpectation>;
-using DrmMemoryManagerUSMHostAllocationTests = TestLegacy<DrmMemoryManagerFixture>;
+using DrmMemoryManagerTest = Test<DrmMemoryManagerFixture>;
+using DrmMemoryManagerWithLocalMemoryTest = Test<DrmMemoryManagerWithLocalMemoryFixture>;
+using DrmMemoryManagerWithExplicitExpectationsTest = Test<DrmMemoryManagerFixtureWithoutQuietIoctlExpectation>;
+using DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest = Test<DrmMemoryManagerFixtureWithLocalMemoryAndWithoutQuietIoctlExpectation>;
+using DrmMemoryManagerUSMHostAllocationTests = Test<DrmMemoryManagerFixture>;
 
 AllocationProperties createAllocationProperties(uint32_t rootDeviceIndex, size_t size, bool forcePin) {
     MockAllocationProperties properties(rootDeviceIndex, size);
@@ -2140,7 +2140,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForInternalAllocationWit
     memoryManager->freeGraphicsMemory(drmAllocation);
 }
 
-using DrmMemoryManagerUSMHostAllocationTests = TestLegacy<DrmMemoryManagerFixture>;
+using DrmMemoryManagerUSMHostAllocationTests = Test<DrmMemoryManagerFixture>;
 
 TEST_F(DrmMemoryManagerUSMHostAllocationTests, givenCallToAllocateGraphicsMemoryWithAlignmentWithIsHostUsmAllocationSetToFalseThenNewHostPointerIsUsedAndAllocationIsCreatedSuccesfully) {
     mock->ioctl_expected.gemUserptr = 1;
@@ -3956,7 +3956,7 @@ TEST(DrmMemoryManagerSimpleTest, WhenDrmIsCreatedThenQueryPageFaultSupportIsCall
     EXPECT_TRUE(static_cast<DrmMock *>(drm.get())->queryPageFaultSupportCalled);
 }
 
-using DrmMemoryManagerWithLocalMemoryTest = TestLegacy<DrmMemoryManagerWithLocalMemoryFixture>;
+using DrmMemoryManagerWithLocalMemoryTest = Test<DrmMemoryManagerWithLocalMemoryFixture>;
 
 TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWithLocalMemoryWhenLockResourceIsCalledOnAllocationInLocalMemoryThenReturnNullPtr) {
     DrmAllocation drmAllocation(rootDeviceIndex, AllocationType::UNKNOWN, nullptr, nullptr, 0u, 0u, MemoryPool::LocalMemory);
@@ -3967,7 +3967,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWithLocalMemory
     memoryManager->unlockResource(&drmAllocation);
 }
 
-using DrmMemoryManagerTest = TestLegacy<DrmMemoryManagerFixture>;
+using DrmMemoryManagerTest = Test<DrmMemoryManagerFixture>;
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenCopyMemoryToAllocationThenAllocationIsFilledWithCorrectData) {
     mock->ioctl_expected.gemUserptr = 1;

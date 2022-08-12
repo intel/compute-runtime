@@ -19,9 +19,9 @@ struct MockAubCenterFixture {
     MockAubCenterFixture() = default;
     MockAubCenterFixture(CommandStreamReceiverType commandStreamReceiverType) : commandStreamReceiverType(commandStreamReceiverType){};
 
-    void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
     }
-    void TearDown() { // NOLINT(readability-identifier-naming)
+    void tearDown() {
     }
 
     static void setMockAubCenter(RootDeviceEnvironment &rootDeviceEnvironment) {

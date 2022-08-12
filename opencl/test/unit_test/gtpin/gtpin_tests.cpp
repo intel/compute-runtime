@@ -161,14 +161,14 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
     using ContextFixture::SetUp;
 
   public:
-    void SetUp() override {
+    void setUp() {
         DebugManager.flags.GTPinAllocateBufferInSharedMemory.set(false);
         setUpImpl();
     }
 
     void setUpImpl() {
         platformsImpl->clear();
-        MemoryManagementFixture::SetUp();
+        MemoryManagementFixture::setUp();
         constructPlatform();
         pPlatform = platform();
         auto executionEnvironment = pPlatform->peekExecutionEnvironment();
@@ -200,10 +200,10 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
         kernelOffset = 0;
     }
 
-    void TearDown() override {
+    void tearDown() {
         ContextFixture::TearDown();
         platformsImpl->clear();
-        MemoryManagementFixture::TearDown();
+        MemoryManagementFixture::tearDown();
         NEO::isGTPinInitialized = false;
     }
 
@@ -218,7 +218,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
     DebugManagerStateRestore restore;
 };
 
-typedef TestLegacy<GTPinFixture> GTPinTests;
+typedef Test<GTPinFixture> GTPinTests;
 
 TEST_F(GTPinTests, givenInvalidArgumentsThenGTPinInitFails) {
     bool isInitialized = false;
@@ -2391,18 +2391,18 @@ HWTEST_F(GTPinTests, givenGtPinInitializedWhenSubmittingKernelCommandThenFlushed
 
 class GTPinFixtureWithLocalMemory : public GTPinFixture {
   public:
-    void SetUp() override {
+    void setUp() {
         DebugManager.flags.EnableLocalMemory.set(true);
         DebugManager.flags.GTPinAllocateBufferInSharedMemory.set(true);
         GTPinFixture::setUpImpl();
     }
-    void TearDown() override {
-        GTPinFixture::TearDown();
+    void tearDown() {
+        GTPinFixture::tearDown();
     }
     DebugManagerStateRestore restore;
 };
 
-using GTPinTestsWithLocalMemory = TestLegacy<GTPinFixtureWithLocalMemory>;
+using GTPinTestsWithLocalMemory = Test<GTPinFixtureWithLocalMemory>;
 
 TEST_F(GTPinTestsWithLocalMemory, whenPlatformHasNoSvmSupportThenGtPinBufferCantBeAllocatedInSharedMemory) {
     DebugManager.flags.GTPinAllocateBufferInSharedMemory.set(-1);

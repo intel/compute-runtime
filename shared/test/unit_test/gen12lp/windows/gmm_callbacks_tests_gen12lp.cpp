@@ -21,7 +21,7 @@
 
 using namespace NEO;
 
-using Gen12LpGmmCallbacksTests = ::TestLegacy<GmmCallbacksFixture>;
+using Gen12LpGmmCallbacksTests = ::Test<GmmCallbacksFixture>;
 
 template <typename GfxFamily>
 struct MockAubCsrToTestNotifyAubCapture : public AUBCommandStreamReceiverHw<GfxFamily> {

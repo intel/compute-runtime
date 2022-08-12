@@ -55,13 +55,13 @@ struct clCreateCommandQueueWithPropertiesApi : public ApiFixture<>,
 
     void SetUp() override {
         platformsImpl->clear();
-        MemoryManagementFixture::SetUp();
+        MemoryManagementFixture::setUp();
         ApiFixture::SetUp();
     }
 
     void TearDown() override {
         ApiFixture::TearDown();
-        MemoryManagementFixture::TearDown();
+        MemoryManagementFixture::tearDown();
     }
 };
 

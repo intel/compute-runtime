@@ -15,8 +15,8 @@ class MemoryManager;
 
 class TbxCommandStreamFixture {
   public:
-    void SetUp(MockDevice *pDevice); // NOLINT(readability-identifier-naming)
-    void TearDown();                 // NOLINT(readability-identifier-naming)
+    void setUp(MockDevice *pDevice);
+    void tearDown();
 
     CommandStreamReceiver *pCommandStreamReceiver = nullptr;
 

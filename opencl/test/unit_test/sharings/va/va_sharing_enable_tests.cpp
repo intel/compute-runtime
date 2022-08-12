@@ -34,14 +34,14 @@ class VaSharingEnablerTests : public MemoryManagementFixture,
                               public ::testing::Test {
   public:
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
+        MemoryManagementFixture::setUp();
         factory.reset(new VaSharingBuilderFactory());
         ASSERT_NE(nullptr, factory.get());
     }
 
     void TearDown() override {
         factory.reset(nullptr);
-        MemoryManagementFixture::TearDown();
+        MemoryManagementFixture::tearDown();
     }
     std::unique_ptr<VaSharingBuilderFactory> factory;
 };

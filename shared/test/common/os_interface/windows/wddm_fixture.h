@@ -30,9 +30,9 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 namespace NEO {
-struct WddmFixture : public TestLegacy<MockExecutionEnvironmentGmmFixture> {
+struct WddmFixture : public Test<MockExecutionEnvironmentGmmFixture> {
     void SetUp() override {
-        MockExecutionEnvironmentGmmFixture::SetUp();
+        MockExecutionEnvironmentGmmFixture::setUp();
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
         auto osEnvironment = new OsEnvironmentWin();
         gdi = new MockGdi();
@@ -62,9 +62,9 @@ struct WddmFixture : public TestLegacy<MockExecutionEnvironmentGmmFixture> {
 };
 
 struct WddmFixtureWithMockGdiDll : public GdiDllFixture, public MockExecutionEnvironmentGmmFixture {
-    void SetUp() override {
-        MockExecutionEnvironmentGmmFixture::SetUp();
-        GdiDllFixture::SetUp();
+    void setUp() {
+        MockExecutionEnvironmentGmmFixture::setUp();
+        GdiDllFixture::setUp();
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
         wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
         wddmMockInterface = new WddmMockInterface20(*wddm);
@@ -87,8 +87,8 @@ struct WddmFixtureWithMockGdiDll : public GdiDllFixture, public MockExecutionEnv
         osContext->ensureContextInitialized();
     }
 
-    void TearDown() override {
-        GdiDllFixture::TearDown();
+    void tearDown() {
+        GdiDllFixture::tearDown();
     }
 
     WddmMock *wddm = nullptr;
@@ -110,9 +110,9 @@ struct NoCleanupWddmMock : WddmMock {
 };
 
 struct WddmFixtureWithMockGdiDllWddmNoCleanup : public GdiDllFixture, public MockExecutionEnvironmentGmmFixture {
-    void SetUp() override {
-        MockExecutionEnvironmentGmmFixture::SetUp();
-        GdiDllFixture::SetUp();
+    void setUp() {
+        MockExecutionEnvironmentGmmFixture::setUp();
+        GdiDllFixture::setUp();
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
         wddm = new NoCleanupWddmMock(*rootDeviceEnvironment);
         wddmMockInterface = new WddmMockInterface20(*wddm);
@@ -135,8 +135,8 @@ struct WddmFixtureWithMockGdiDllWddmNoCleanup : public GdiDllFixture, public Moc
         osContext->ensureContextInitialized();
     }
 
-    void TearDown() override {
-        GdiDllFixture::TearDown();
+    void tearDown() {
+        GdiDllFixture::tearDown();
     }
 
     NoCleanupWddmMock *wddm = nullptr;
@@ -147,7 +147,7 @@ struct WddmFixtureWithMockGdiDllWddmNoCleanup : public GdiDllFixture, public Moc
 };
 
 struct WddmInstrumentationGmmFixture : DeviceFixture {
-    void SetUp() {
+    void setUp() {
         DeviceFixture::setUp();
         executionEnvironment = pDevice->getExecutionEnvironment();
         auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
@@ -157,7 +157,7 @@ struct WddmInstrumentationGmmFixture : DeviceFixture {
         rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
         rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
     }
-    void TearDown() {
+    void tearDown() {
         DeviceFixture::tearDown();
     }
 
@@ -167,8 +167,8 @@ struct WddmInstrumentationGmmFixture : DeviceFixture {
 };
 
 using WddmTest = WddmFixture;
-using WddmTestWithMockGdiDll = TestLegacy<WddmFixtureWithMockGdiDll>;
-using WddmTestWithMockGdiDllNoCleanup = TestLegacy<WddmFixtureWithMockGdiDllWddmNoCleanup>;
-using WddmInstrumentationTest = TestLegacy<WddmInstrumentationGmmFixture>;
+using WddmTestWithMockGdiDll = Test<WddmFixtureWithMockGdiDll>;
+using WddmTestWithMockGdiDllNoCleanup = Test<WddmFixtureWithMockGdiDllWddmNoCleanup>;
+using WddmInstrumentationTest = Test<WddmInstrumentationGmmFixture>;
 using WddmTestSingle = ::testing::Test;
 } // namespace NEO

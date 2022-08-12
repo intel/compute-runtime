@@ -40,25 +40,25 @@ struct TbxFixture : public TbxCommandStreamFixture,
                     public DeviceFixture,
                     public MockAubCenterFixture {
 
-    using TbxCommandStreamFixture::SetUp;
+    using TbxCommandStreamFixture::setUp;
 
     TbxFixture() : MockAubCenterFixture(CommandStreamReceiverType::CSR_TBX) {}
 
-    void SetUp() {
+    void setUp() {
         DeviceFixture::setUp();
         setMockAubCenter(*pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
-        TbxCommandStreamFixture::SetUp(pDevice);
-        MockAubCenterFixture::SetUp();
+        TbxCommandStreamFixture::setUp(pDevice);
+        MockAubCenterFixture::setUp();
     }
 
-    void TearDown() {
-        MockAubCenterFixture::TearDown();
-        TbxCommandStreamFixture::TearDown();
+    void tearDown() {
+        MockAubCenterFixture::tearDown();
+        TbxCommandStreamFixture::tearDown();
         DeviceFixture::tearDown();
     }
 };
 
-using TbxCommandStreamTests = TestLegacy<TbxFixture>;
+using TbxCommandStreamTests = Test<TbxFixture>;
 using TbxCommandSteamSimpleTest = TbxCommandStreamTests;
 
 template <typename GfxFamily>

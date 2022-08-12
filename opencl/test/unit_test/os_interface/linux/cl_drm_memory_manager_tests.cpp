@@ -46,14 +46,14 @@
 
 using namespace NEO;
 
-using DrmMemoryManagerTest = TestLegacy<DrmMemoryManagerFixture>;
+using DrmMemoryManagerTest = Test<DrmMemoryManagerFixture>;
 
 struct ClDrmMemoryManagerTest : public DrmMemoryManagerTest {
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
+        MemoryManagementFixture::setUp();
 
         executionEnvironment = MockClDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
-        DrmMemoryManagerFixture::SetUp(new DrmMockCustom(*executionEnvironment->rootDeviceEnvironments[0]), false);
+        DrmMemoryManagerFixture::setUp(new DrmMockCustom(*executionEnvironment->rootDeviceEnvironments[0]), false);
         pClDevice = new MockClDevice{device}; // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
         device->incRefInternal();
     }

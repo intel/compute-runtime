@@ -48,11 +48,11 @@ TEST(allocation, GivenFailingAllocationOneWhenCreatingAllocationsThenOnlyOneAllo
 struct MemoryManagementTest : public MemoryManagementFixture,
                               public ::testing::Test {
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
+        MemoryManagementFixture::setUp();
     }
 
     void TearDown() override {
-        MemoryManagementFixture::TearDown();
+        MemoryManagementFixture::tearDown();
     }
 };
 

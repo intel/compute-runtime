@@ -24,9 +24,9 @@ class WddmSharedAllocationsMock : public WddmMock {
 
 class WddmSharedTestsFixture : public GdiDllFixture, public MockExecutionEnvironmentGmmFixture {
   public:
-    void SetUp() override {
-        MockExecutionEnvironmentGmmFixture::SetUp();
-        GdiDllFixture::SetUp();
+    void setUp() {
+        MockExecutionEnvironmentGmmFixture::setUp();
+        GdiDllFixture::setUp();
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
         wddm = new WddmSharedAllocationsMock(*rootDeviceEnvironment);
         wddmMockInterface = new WddmMockInterface20(*wddm);
@@ -49,8 +49,8 @@ class WddmSharedTestsFixture : public GdiDllFixture, public MockExecutionEnviron
         osContext->ensureContextInitialized();
     }
 
-    void TearDown() override {
-        GdiDllFixture::TearDown();
+    void tearDown() {
+        GdiDllFixture::tearDown();
     }
 
     WddmSharedAllocationsMock *wddm = nullptr;
@@ -60,7 +60,7 @@ class WddmSharedTestsFixture : public GdiDllFixture, public MockExecutionEnviron
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
 };
 
-using WdmmSharedTests = TestLegacy<WddmSharedTestsFixture>;
+using WdmmSharedTests = Test<WddmSharedTestsFixture>;
 
 TEST_F(WdmmSharedTests, WhenCreatingSharedAllocationAndGetNTHandleFailedThenAllocationIsDeletedAndHandlesAreSetToZero) {
     init();

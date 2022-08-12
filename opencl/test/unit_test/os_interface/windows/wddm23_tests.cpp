@@ -27,7 +27,7 @@ using namespace NEO;
 
 struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture {
     void SetUp() override {
-        GdiDllFixture::SetUp();
+        GdiDllFixture::setUp();
 
         executionEnvironment = platform()->peekExecutionEnvironment();
         wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[0].get()));
@@ -51,7 +51,7 @@ struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture {
     }
 
     void TearDown() override {
-        GdiDllFixture::TearDown();
+        GdiDllFixture::tearDown();
     }
 
     std::unique_ptr<OsContextWin> osContext;

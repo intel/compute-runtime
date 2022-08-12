@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 
 namespace NEO {
 
-void TbxCommandStreamFixture::SetUp(MockDevice *pDevice) {
+void TbxCommandStreamFixture::setUp(MockDevice *pDevice) {
     // Create our TBX command stream receiver based on HW type
     pCommandStreamReceiver = TbxCommandStreamReceiver::create("", false, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     ASSERT_NE(nullptr, pCommandStreamReceiver);
@@ -23,7 +23,7 @@ void TbxCommandStreamFixture::SetUp(MockDevice *pDevice) {
     pDevice->resetCommandStreamReceiver(pCommandStreamReceiver);
 }
 
-void TbxCommandStreamFixture::TearDown() {
+void TbxCommandStreamFixture::tearDown() {
     delete memoryManager;
 }
 } // namespace NEO

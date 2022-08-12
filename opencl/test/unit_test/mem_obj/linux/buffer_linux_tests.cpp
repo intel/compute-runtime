@@ -80,13 +80,13 @@ struct ValidExportHostPtr
     typedef ExportBufferTests BaseClass;
 
     using ExportBufferTests::SetUp;
-    using MemoryManagementFixture::SetUp;
+    using MemoryManagementFixture::setUp;
 
     ValidExportHostPtr() {
     }
 
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
+        MemoryManagementFixture::setUp();
         BaseClass::SetUp();
 
         ASSERT_NE(nullptr, pDevice);
@@ -95,7 +95,7 @@ struct ValidExportHostPtr
     void TearDown() override {
         delete buffer;
         BaseClass::TearDown();
-        MemoryManagementFixture::TearDown();
+        MemoryManagementFixture::tearDown();
     }
 
     cl_int retVal = CL_INVALID_VALUE;

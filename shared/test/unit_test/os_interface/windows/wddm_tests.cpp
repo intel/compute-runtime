@@ -366,9 +366,9 @@ class WddmSkipResourceCleanupMock : public WddmMock {
 };
 
 struct WddmSkipResourceCleanupFixtureWithMockGdiDll : public GdiDllFixture, public MockExecutionEnvironmentGmmFixture {
-    void SetUp() override {
-        MockExecutionEnvironmentGmmFixture::SetUp();
-        GdiDllFixture::SetUp();
+    void setUp() {
+        MockExecutionEnvironmentGmmFixture::setUp();
+        GdiDllFixture::setUp();
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
         wddm = static_cast<WddmSkipResourceCleanupMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
         wddmMockInterface = new WddmMockInterface20(*wddm);
@@ -391,10 +391,10 @@ struct WddmSkipResourceCleanupFixtureWithMockGdiDll : public GdiDllFixture, publ
         osContext->ensureContextInitialized();
     }
 
-    void TearDown() override {
+    void tearDown() {
         osContext.reset(nullptr);
-        GdiDllFixture::TearDown();
-        MockExecutionEnvironmentGmmFixture::TearDown();
+        GdiDllFixture::tearDown();
+        MockExecutionEnvironmentGmmFixture::tearDown();
     }
 
     WddmSkipResourceCleanupMock *wddm = nullptr;
@@ -404,7 +404,7 @@ struct WddmSkipResourceCleanupFixtureWithMockGdiDll : public GdiDllFixture, publ
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
 };
 
-using WddmSkipResourceCleanupFixtureTests = TestLegacy<WddmSkipResourceCleanupFixtureWithMockGdiDll>;
+using WddmSkipResourceCleanupFixtureTests = Test<WddmSkipResourceCleanupFixtureWithMockGdiDll>;
 
 TEST_F(WddmSkipResourceCleanupFixtureTests, givenWaitForSynchronizationObjectFromCpuWhenSkipResourceCleanupIsTrueThenSuccessIsReturnedAndGdiFunctionIsNotCalled) {
     VariableBackup<uint64_t> varBackup(&waitForSynchronizationObjectFromCpuCounter);

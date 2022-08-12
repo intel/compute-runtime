@@ -33,19 +33,19 @@ class DrmMemoryManagerFixtureImpl : public DrmMemoryManagerFixture {
   public:
     DrmMockCustom *mockExp;
 
-    void SetUp() override {
+    void setUp() {
         backup = std::make_unique<VariableBackup<UltHwConfig>>(&ultHwConfig);
         ultHwConfig.csrBaseCallCreatePreemption = false;
 
-        MemoryManagementFixture::SetUp();
+        MemoryManagementFixture::setUp();
         executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
         mockExp = new DrmMockCustom(*executionEnvironment->rootDeviceEnvironments[0]);
-        DrmMemoryManagerFixture::SetUp(mockExp, true);
+        DrmMemoryManagerFixture::setUp(mockExp, true);
     }
 
-    void TearDown() override {
+    void tearDown() {
         mockExp->testIoctls();
-        DrmMemoryManagerFixture::TearDown();
+        DrmMemoryManagerFixture::tearDown();
     }
     std::unique_ptr<VariableBackup<UltHwConfig>> backup;
 };
@@ -647,7 +647,7 @@ TEST_F(DrmMemoryManagerLocalMemoryWithCustomMockTest, givenDrmMemoryManagerWithL
     EXPECT_EQ(nullptr, bo.peekLockedAddress());
 }
 
-using DrmMemoryManagerFailInjectionTest = TestLegacy<DrmMemoryManagerFixtureImpl>;
+using DrmMemoryManagerFailInjectionTest = Test<DrmMemoryManagerFixtureImpl>;
 
 HWTEST2_F(DrmMemoryManagerFailInjectionTest, givenEnabledLocalMemoryWhenNewFailsThenAllocateInDevicePoolReturnsStatusErrorAndNullallocation, NonDefaultIoctlsSupported) {
     mock->ioctl_expected.total = -1; //don't care
@@ -795,7 +795,7 @@ TEST_F(DrmMemoryManagerCopyMemoryToAllocationTest, givenDrmMemoryManagerWhenCopy
     drmMemoryManger.freeGraphicsMemory(allocation);
 }
 
-using DrmMemoryManagerTestImpl = TestLegacy<DrmMemoryManagerFixtureImpl>;
+using DrmMemoryManagerTestImpl = Test<DrmMemoryManagerFixtureImpl>;
 
 HWTEST2_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryThenCallIoctlGemMapOffsetAndReturnLockedPtr, NonDefaultIoctlsSupported) {
     mockExp->ioctl_expected.gemCreateExt = 1;

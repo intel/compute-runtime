@@ -17,10 +17,13 @@
 
 struct InternalAllocationStorageTest : public MemoryAllocatorFixture,
                                        public ::testing::Test {
-    using MemoryAllocatorFixture::TearDown;
     void SetUp() override {
-        MemoryAllocatorFixture::SetUp();
+        MemoryAllocatorFixture::setUp();
         storage = csr->getInternalAllocationStorage();
+    }
+
+    void TearDown() override {
+        MemoryAllocatorFixture::tearDown();
     }
     InternalAllocationStorage *storage;
 };

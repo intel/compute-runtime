@@ -20,22 +20,22 @@ class DestructorCallbackFixture : public MemoryManagementFixture {
     DestructorCallbackFixture() {
     }
 
-    void SetUp() override {
-        MemoryManagementFixture::SetUp();
+    void setUp() {
+        MemoryManagementFixture::setUp();
         BufferDefaults::context = new MockContext;
     }
 
-    void TearDown() override {
+    void tearDown() {
         delete BufferDefaults::context;
         platformsImpl->clear();
-        MemoryManagementFixture::TearDown();
+        MemoryManagementFixture::tearDown();
     }
 
   protected:
     cl_int retVal = CL_SUCCESS;
 };
 
-typedef TestLegacy<DestructorCallbackFixture> DestructorCallbackTest;
+typedef Test<DestructorCallbackFixture> DestructorCallbackTest;
 
 static std::vector<int> calls(32);
 void CL_CALLBACK callBack1(cl_mem memObj, void *userData) {

@@ -24,7 +24,7 @@ class WddmMemManagerFixture {
         FrontWindowMemManagerMock(NEO::ExecutionEnvironment &executionEnvironment) : MockWddmMemoryManager(executionEnvironment) {}
     };
 
-    void SetUp() {
+    void setUp() {
         DebugManagerStateRestore dbgRestorer;
         DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
         executionEnvironment = std::make_unique<ExecutionEnvironment>();
@@ -37,13 +37,13 @@ class WddmMemManagerFixture {
         wddm->callBaseMapGpuVa = false;
         memManager = std::unique_ptr<FrontWindowMemManagerMock>(new FrontWindowMemManagerMock(*executionEnvironment));
     }
-    void TearDown() {
+    void tearDown() {
     }
     std::unique_ptr<FrontWindowMemManagerMock> memManager;
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;
 };
 
-using WddmFrontWindowPoolAllocatorTests = TestLegacy<WddmMemManagerFixture>;
+using WddmFrontWindowPoolAllocatorTests = Test<WddmMemManagerFixture>;
 
 TEST_F(WddmFrontWindowPoolAllocatorTests, givenAllocateInFrontWindowPoolFlagWhenWddmAllocate32BitGraphicsMemoryThenAllocateAtHeapBegining) {
     AllocationData allocData = {};

@@ -58,15 +58,15 @@ struct CommandQueueMemoryDevice
     : public MemoryManagementFixture,
       public ClDeviceFixture {
 
-    void SetUp() override {
-        MemoryManagementFixture::SetUp();
+    void setUp() {
+        MemoryManagementFixture::setUp();
         ClDeviceFixture::SetUp();
     }
 
-    void TearDown() override {
+    void tearDown() {
         ClDeviceFixture::TearDown();
         platformsImpl->clear();
-        MemoryManagementFixture::TearDown();
+        MemoryManagementFixture::tearDown();
     }
 };
 
@@ -83,7 +83,7 @@ struct CommandQueueTest
     }
 
     void SetUp() override {
-        CommandQueueMemoryDevice::SetUp();
+        CommandQueueMemoryDevice::setUp();
         properties = GetParam();
 
         cl_device_id device = pClDevice;
@@ -94,7 +94,7 @@ struct CommandQueueTest
     void TearDown() override {
         CommandQueueFixture::TearDown();
         ContextFixture::TearDown();
-        CommandQueueMemoryDevice::TearDown();
+        CommandQueueMemoryDevice::tearDown();
     }
 
     cl_command_queue_properties properties;
@@ -386,13 +386,13 @@ TEST(CommandQueue, givenCmdQueueBlockedByAbortedVirtualEventWhenUnblockingThenUp
 struct CommandQueueCommandStreamTest : public CommandQueueMemoryDevice,
                                        public ::testing::Test {
     void SetUp() override {
-        CommandQueueMemoryDevice::SetUp();
+        CommandQueueMemoryDevice::setUp();
         context.reset(new MockContext(pClDevice));
     }
 
     void TearDown() override {
         context.reset();
-        CommandQueueMemoryDevice::TearDown();
+        CommandQueueMemoryDevice::tearDown();
     }
     std::unique_ptr<MockContext> context;
 };
@@ -584,13 +584,13 @@ HWTEST_F(CommandQueueCommandStreamTest, givenMultiDispatchInfoWithSingleKernelWi
 struct CommandQueueIndirectHeapTest : public CommandQueueMemoryDevice,
                                       public ::testing::TestWithParam<IndirectHeap::Type> {
     void SetUp() override {
-        CommandQueueMemoryDevice::SetUp();
+        CommandQueueMemoryDevice::setUp();
         context.reset(new MockContext(pClDevice));
     }
 
     void TearDown() override {
         context.reset();
-        CommandQueueMemoryDevice::TearDown();
+        CommandQueueMemoryDevice::tearDown();
     }
     std::unique_ptr<MockContext> context;
 };

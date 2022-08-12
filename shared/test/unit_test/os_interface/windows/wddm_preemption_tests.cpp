@@ -15,10 +15,10 @@
 
 using namespace NEO;
 
-class WddmPreemptionTests : public TestLegacy<WddmFixtureWithMockGdiDll> {
+class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
   public:
     void SetUp() override {
-        WddmFixtureWithMockGdiDll::SetUp();
+        WddmFixtureWithMockGdiDll::setUp();
         const HardwareInfo hwInfo = *defaultHwInfo;
         memcpy(&hwInfoTest, &hwInfo, sizeof(hwInfoTest));
         dbgRestorer = new DebugManagerStateRestore();
@@ -27,7 +27,7 @@ class WddmPreemptionTests : public TestLegacy<WddmFixtureWithMockGdiDll> {
 
     void TearDown() override {
         delete dbgRestorer;
-        WddmFixtureWithMockGdiDll::TearDown();
+        WddmFixtureWithMockGdiDll::tearDown();
     }
 
     void createAndInitWddm(unsigned int forceReturnPreemptionRegKeyValue) {

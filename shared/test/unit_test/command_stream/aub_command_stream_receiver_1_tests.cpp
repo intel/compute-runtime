@@ -26,7 +26,7 @@
 
 using namespace NEO;
 
-using AubCommandStreamReceiverTests = TestLegacy<AubCommandStreamReceiverFixture>;
+using AubCommandStreamReceiverTests = Test<AubCommandStreamReceiverFixture>;
 
 template <typename GfxFamily>
 struct MockAubCsrToTestDumpAubNonWritable : public AUBCommandStreamReceiverHw<GfxFamily> {

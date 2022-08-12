@@ -999,13 +999,13 @@ struct ValidHostPtr
     typedef BufferTest BaseClass;
 
     using BufferTest::SetUp;
-    using MemoryManagementFixture::SetUp;
+    using MemoryManagementFixture::setUp;
 
     ValidHostPtr() {
     }
 
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
+        MemoryManagementFixture::setUp();
         BaseClass::SetUp();
 
         ASSERT_NE(nullptr, pDevice);
@@ -1014,7 +1014,7 @@ struct ValidHostPtr
     void TearDown() override {
         delete buffer;
         BaseClass::TearDown();
-        MemoryManagementFixture::TearDown();
+        MemoryManagementFixture::tearDown();
     }
 
     Buffer *createBuffer() {

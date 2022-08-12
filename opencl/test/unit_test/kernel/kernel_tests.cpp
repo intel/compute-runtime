@@ -666,9 +666,9 @@ TEST_F(KernelPrivateSurfaceTest, WhenPrivateSurfaceAllocationFailsThenOutOfResou
         delete kernel;
     };
     auto f = new MemoryManagementFixture();
-    f->SetUp();
+    f->setUp();
     f->injectFailures(method);
-    f->TearDown();
+    f->tearDown();
     delete f;
 }
 

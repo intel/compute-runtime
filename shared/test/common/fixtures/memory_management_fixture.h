@@ -19,18 +19,18 @@ struct MemoryManagementFixture {
     virtual ~MemoryManagementFixture() { MemoryManagement::detailedAllocationLoggingActive = false; };
 
     // Typical Fixture methods
-    virtual void SetUp(void);    // NOLINT(readability-identifier-naming)
-    virtual void TearDown(void); // NOLINT(readability-identifier-naming)
+    void setUp();
+    void tearDown();
 
     // Helper methods
     void setFailingAllocation(size_t allocation);
-    void clearFailingAllocation(void);
+    void clearFailingAllocation();
 
     ::testing::AssertionResult assertLeak(
         const char *leakExpr,
         size_t leakIndex);
 
-    void checkForLeaks(void);
+    void checkForLeaks();
 
     typedef std::function<void(size_t)> InjectedFunction;
     void injectFailures(InjectedFunction &method, uint32_t maxIndex = 0);

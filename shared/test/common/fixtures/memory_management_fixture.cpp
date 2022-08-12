@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ extern const char *frontEndDllName;
 extern const char *igcDllName;
 } // namespace Os
 
-void MemoryManagementFixture::SetUp() {
+void MemoryManagementFixture::setUp() {
     EXPECT_EQ(static_cast<size_t>(-1), MemoryManagement::failingAllocation);
     MemoryManagement::indexAllocation = 0;
     MemoryManagement::indexDeallocation = 0;
@@ -39,7 +39,7 @@ void MemoryManagementFixture::SetUp() {
     MemoryManagement::logTraces = MemoryManagement::captureCallStacks;
 }
 
-void MemoryManagementFixture::TearDown() {
+void MemoryManagementFixture::tearDown() {
     clearFailingAllocation();
     checkForLeaks();
     MemoryManagement::logTraces = false;

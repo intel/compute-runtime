@@ -1393,7 +1393,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSipKernelTypeWhenAllocatingTh
     memoryManager->freeGraphicsMemory(sipAllocation);
 }
 
-using DrmMemoryManagerFailInjectionPrelimTest = TestLegacy<DrmMemoryManagerFixturePrelim>;
+using DrmMemoryManagerFailInjectionPrelimTest = Test<DrmMemoryManagerFixturePrelim>;
 
 TEST_F(DrmMemoryManagerFailInjectionPrelimTest, givenEnabledLocalMemoryWhenNewFailsThenAllocateInDevicePoolReturnsStatusErrorAndNullallocation) {
     mock->ioctl_expected.total = -1; //don't care
@@ -1573,7 +1573,7 @@ TEST_F(DrmMemoryManagerCopyMemoryToAllocationPrelimTest, givenDrmMemoryManagerWh
     drmMemoryManger.freeGraphicsMemory(allocation);
 }
 
-typedef TestLegacy<DrmMemoryManagerFixturePrelim> DrmMemoryManagerTestPrelim;
+typedef Test<DrmMemoryManagerFixturePrelim> DrmMemoryManagerTestPrelim;
 
 TEST_F(DrmMemoryManagerTestPrelim, whenSettingNumHandlesThenTheyAreRetrievedCorrectly) {
     mock->ioctl_expected.primeFdToHandle = 2;

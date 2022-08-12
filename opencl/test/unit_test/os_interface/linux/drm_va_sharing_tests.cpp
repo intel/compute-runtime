@@ -17,7 +17,7 @@
 
 namespace NEO {
 
-using DrmVaSharingTest = TestLegacy<DrmMemoryManagerFixture>;
+using DrmVaSharingTest = Test<DrmMemoryManagerFixture>;
 
 TEST_F(DrmVaSharingTest, givenDrmMemoryManagerWhenSharedVaSurfaceIsImportedWithDrmPrimeFdToHandleThenDrmPrimeFdCanBeClosed) {
     mock->ioctl_expected.total = -1;

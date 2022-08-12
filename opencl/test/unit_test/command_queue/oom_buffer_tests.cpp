@@ -46,7 +46,7 @@ struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
 
     void SetUp() override {
         MemoryManagement::breakOnAllocationEvent = 77;
-        MemoryManagementFixture::SetUp();
+        MemoryManagementFixture::setUp();
         ClDeviceFixture::SetUp();
         context = new MockContext(pClDevice);
         BufferDefaults::context = context;
@@ -84,7 +84,7 @@ struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
         SimpleArgKernelFixture::TearDown();
         CommandQueueFixture::TearDown();
         ClDeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
+        MemoryManagementFixture::tearDown();
     }
 
     MockContext *context;

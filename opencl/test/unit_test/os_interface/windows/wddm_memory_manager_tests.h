@@ -32,10 +32,10 @@ using namespace ::testing;
 
 class WddmMemoryManagerFixture : public GdiDllFixture {
   public:
-    void SetUp() override;
+    void setUp();
 
-    void TearDown() override {
-        GdiDllFixture::TearDown();
+    void tearDown() {
+        GdiDllFixture::tearDown();
     }
 
     ExecutionEnvironment *executionEnvironment;
@@ -45,7 +45,7 @@ class WddmMemoryManagerFixture : public GdiDllFixture {
     const uint32_t rootDeviceIndex = 0u;
 };
 
-typedef ::TestLegacy<WddmMemoryManagerFixture> WddmMemoryManagerTest;
+typedef ::Test<WddmMemoryManagerFixture> WddmMemoryManagerTest;
 
 class MockWddmMemoryManagerFixture {
   public:
@@ -141,16 +141,16 @@ class BufferWithWddmMemory : public ::testing::Test,
                              public WddmMemoryManagerFixture {
   public:
   protected:
-    void SetUp() {
-        WddmMemoryManagerFixture::SetUp();
+    void SetUp() override {
+        WddmMemoryManagerFixture::setUp();
         tmp = context.getMemoryManager();
         context.memoryManager = memoryManager.get();
         flags = 0;
     }
 
-    void TearDown() {
+    void TearDown() override {
         context.memoryManager = tmp;
-        WddmMemoryManagerFixture::TearDown();
+        WddmMemoryManagerFixture::tearDown();
     }
 
     MemoryManager *tmp;

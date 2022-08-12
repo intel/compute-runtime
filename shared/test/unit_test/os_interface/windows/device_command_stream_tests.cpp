@@ -58,7 +58,7 @@ class WddmCommandStreamFixture {
 
     DebugManagerStateRestore stateRestore;
 
-    void SetUp() {
+    void setUp() {
         HardwareInfo *hwInfo = nullptr;
         DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
         auto executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
@@ -74,7 +74,7 @@ class WddmCommandStreamFixture {
         csr->getOsContext().ensureContextInitialized();
     }
 
-    void TearDown() {
+    void tearDown() {
     }
 };
 
@@ -172,16 +172,16 @@ class WddmCommandStreamMockGdiTest : public ::testing::Test {
     }
 };
 
-using WddmCommandStreamTest = ::TestLegacy<WddmCommandStreamFixture>;
+using WddmCommandStreamTest = ::Test<WddmCommandStreamFixture>;
 using WddmDefaultTest = ::Test<DeviceFixture>;
-struct DeviceCommandStreamTest : ::TestLegacy<MockAubCenterFixture>, DeviceFixture {
+struct DeviceCommandStreamTest : ::Test<MockAubCenterFixture>, DeviceFixture {
     void SetUp() override {
         DeviceFixture::setUp();
-        MockAubCenterFixture::SetUp();
+        MockAubCenterFixture::setUp();
         setMockAubCenter(pDevice->getRootDeviceEnvironmentRef());
     }
     void TearDown() override {
-        MockAubCenterFixture::TearDown();
+        MockAubCenterFixture::tearDown();
         DeviceFixture::tearDown();
     }
 };
@@ -307,13 +307,13 @@ TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledThenCoherencyRequiredFl
 }
 
 struct WddmPreemptionHeaderFixture {
-    void SetUp() {
+    void setUp() {
         executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
         executionEnvironment->incRefInternal();
         wddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Wddm>());
     }
 
-    void TearDown() {
+    void tearDown() {
         executionEnvironment->decRefInternal();
     }
 
@@ -322,7 +322,7 @@ struct WddmPreemptionHeaderFixture {
     WddmMock *wddm = nullptr;
 };
 
-using WddmPreemptionHeaderTests = ::TestLegacy<WddmPreemptionHeaderFixture>;
+using WddmPreemptionHeaderTests = ::Test<WddmPreemptionHeaderFixture>;
 
 TEST_F(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOffWhenWorkloadIsSubmittedThenHeaderDoesntHavePreemptionFieldSet) {
     hwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;

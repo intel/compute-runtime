@@ -19,13 +19,13 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
 
-using MockExecutionEnvironmentTagTest = TestLegacy<NEO::MockExecutionEnvironmentGmmFixture>;
+using MockExecutionEnvironmentTagTest = Test<NEO::MockExecutionEnvironmentGmmFixture>;
 
 using namespace NEO;
 
 struct AppResourceTests : public MockExecutionEnvironmentTagTest {
     void SetUp() override {
-        MockExecutionEnvironmentGmmFixture::SetUp();
+        MockExecutionEnvironmentGmmFixture::setUp();
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
         localPlatformDevice = rootDeviceEnvironment->getMutableHardwareInfo();
     }

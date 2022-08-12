@@ -83,22 +83,22 @@ class DrmMemoryManagerLocalMemoryWithCustomPrelimMockTest : public ::testing::Te
 
 class DrmMemoryManagerFixturePrelim : public DrmMemoryManagerFixture {
   public:
-    void SetUp() override {
+    void setUp() {
         regionInfo.resize(2);
         regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
         regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
-        MemoryManagementFixture::SetUp();
+        MemoryManagementFixture::setUp();
         executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
         mock = new DrmMockCustomPrelim(*executionEnvironment->rootDeviceEnvironments[0]);
         mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
 
-        DrmMemoryManagerFixture::SetUp(mock, true);
+        DrmMemoryManagerFixture::setUp(mock, true);
     }
 
-    void TearDown() override {
+    void tearDown() {
         mock->testIoctls();
-        DrmMemoryManagerFixture::TearDown();
+        DrmMemoryManagerFixture::tearDown();
     }
 
     std::vector<MemoryRegion> regionInfo;

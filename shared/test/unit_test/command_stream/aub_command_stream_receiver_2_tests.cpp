@@ -33,7 +33,7 @@
 
 using namespace NEO;
 
-using AubCommandStreamReceiverTests = TestLegacy<AubCommandStreamReceiverFixture>;
+using AubCommandStreamReceiverTests = Test<AubCommandStreamReceiverFixture>;
 
 struct FlatBatchBufferHelperAubTests : AubCommandStreamReceiverTests {
     void SetUp() override {

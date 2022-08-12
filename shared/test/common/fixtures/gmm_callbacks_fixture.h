@@ -13,12 +13,12 @@
 using namespace NEO;
 
 struct GmmCallbacksFixture {
-    void SetUp() {
+    void setUp() {
         executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
         executionEnvironment->incRefInternal();
     }
 
-    void TearDown() {
+    void tearDown() {
         executionEnvironment->decRefInternal();
     }
 

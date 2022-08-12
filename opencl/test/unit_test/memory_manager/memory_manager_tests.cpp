@@ -58,7 +58,7 @@
 
 using namespace NEO;
 
-typedef TestLegacy<MemoryAllocatorFixture> MemoryAllocatorTest;
+typedef Test<MemoryAllocatorFixture> MemoryAllocatorTest;
 
 TEST(MemoryManagerTest, givenDebugVariableWhenCreatingMemoryManagerThenSetSupportForMultiStorageResources) {
     DebugManagerStateRestore restore;

@@ -17,8 +17,8 @@ class GmmClientContext;
 
 class MockExecutionEnvironmentGmmFixture {
   protected:
-    void SetUp();    // NOLINT(readability-identifier-naming)
-    void TearDown(); // NOLINT(readability-identifier-naming)
+    void setUp();
+    void tearDown();
 
     std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
 

@@ -31,14 +31,14 @@ void DrmMemoryManagerBasic::SetUp() {
     }
 }
 
-void DrmMemoryManagerFixture::SetUp() {
-    MemoryManagementFixture::SetUp();
+void DrmMemoryManagerFixture::setUp() {
+    MemoryManagementFixture::setUp();
 
     executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
-    SetUp(new DrmMockCustom(*executionEnvironment->rootDeviceEnvironments[0]), false);
+    setUp(new DrmMockCustom(*executionEnvironment->rootDeviceEnvironments[0]), false);
 } // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
-void DrmMemoryManagerFixture::SetUp(DrmMockCustom *mock, bool localMemoryEnabled) {
+void DrmMemoryManagerFixture::setUp(DrmMockCustom *mock, bool localMemoryEnabled) {
     ASSERT_NE(nullptr, executionEnvironment);
     executionEnvironment->incRefInternal();
     DebugManager.flags.DeferOsContextInitialization.set(0);
@@ -70,7 +70,7 @@ void DrmMemoryManagerFixture::SetUp(DrmMockCustom *mock, bool localMemoryEnabled
     mock->reset();
 }
 
-void DrmMemoryManagerFixture::TearDown() {
+void DrmMemoryManagerFixture::tearDown() {
     mock->testIoctls();
     mock->reset();
 
@@ -97,26 +97,26 @@ void DrmMemoryManagerFixture::TearDown() {
     }
     mock->testIoctls();
     executionEnvironment->decRefInternal();
-    MemoryManagementFixture::TearDown();
+    MemoryManagementFixture::tearDown();
     mmapVector.clear();
 }
 
-void DrmMemoryManagerWithLocalMemoryFixture::SetUp() {
+void DrmMemoryManagerWithLocalMemoryFixture::setUp() {
     backup = std::make_unique<VariableBackup<UltHwConfig>>(&ultHwConfig);
     ultHwConfig.csrBaseCallCreatePreemption = false;
 
-    MemoryManagementFixture::SetUp();
+    MemoryManagementFixture::setUp();
     executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
-    DrmMemoryManagerFixture::SetUp(new DrmMockCustom(*executionEnvironment->rootDeviceEnvironments[0]), true);
+    DrmMemoryManagerFixture::setUp(new DrmMockCustom(*executionEnvironment->rootDeviceEnvironments[0]), true);
 } // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
-void DrmMemoryManagerWithLocalMemoryFixture::TearDown() {
-    DrmMemoryManagerFixture::TearDown();
+void DrmMemoryManagerWithLocalMemoryFixture::tearDown() {
+    DrmMemoryManagerFixture::tearDown();
 }
 
-void DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::SetUp() {
-    SetUp(false);
+void DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::setUp() {
+    setUp(false);
 }
-void DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::SetUp(bool enableLocalMem) {
+void DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::setUp(bool enableLocalMem) {
     DebugManager.flags.DeferOsContextInitialization.set(0);
 
     executionEnvironment = new ExecutionEnvironment;
@@ -146,14 +146,14 @@ void DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::SetUp(bool enableLocal
     }
     device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, rootDeviceIndex));
 }
-void DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::TearDown() {
+void DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::tearDown() {
 }
 
-void DrmMemoryManagerFixtureWithLocalMemoryAndWithoutQuietIoctlExpectation::SetUp() {
-    DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::SetUp(true);
+void DrmMemoryManagerFixtureWithLocalMemoryAndWithoutQuietIoctlExpectation::setUp() {
+    DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::setUp(true);
 }
-void DrmMemoryManagerFixtureWithLocalMemoryAndWithoutQuietIoctlExpectation::TearDown() {
-    DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::TearDown();
+void DrmMemoryManagerFixtureWithLocalMemoryAndWithoutQuietIoctlExpectation::tearDown() {
+    DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::tearDown();
 }
 
 } // namespace NEO

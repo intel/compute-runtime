@@ -13,7 +13,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 namespace NEO {
-using GmmTests = TestLegacy<MockExecutionEnvironmentGmmFixture>;
+using GmmTests = Test<MockExecutionEnvironmentGmmFixture>;
 TEST_F(GmmTests, givenResourceUsageTypesCacheableWhenGreateGmmThenFlagCachcableIsTrue) {
     StorageInfo storageInfo{};
     for (auto resourceUsageType : {GMM_RESOURCE_USAGE_OCL_IMAGE,

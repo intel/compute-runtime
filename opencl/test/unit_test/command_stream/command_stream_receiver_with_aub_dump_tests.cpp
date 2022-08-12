@@ -141,7 +141,7 @@ struct MyMockCsrWithAubDump : CommandStreamReceiverWithAUBDump<BaseCSR> {
 struct CommandStreamReceiverWithAubDumpTest : public ::testing::TestWithParam<bool /*createAubCSR*/>, MockAubCenterFixture, DeviceFixture {
     void SetUp() override {
         DeviceFixture::setUp();
-        MockAubCenterFixture::SetUp();
+        MockAubCenterFixture::setUp();
         setMockAubCenter(pDevice->getRootDeviceEnvironmentRef());
         executionEnvironment = pDevice->getExecutionEnvironment();
         executionEnvironment->initializeMemoryManager();
@@ -161,7 +161,7 @@ struct CommandStreamReceiverWithAubDumpTest : public ::testing::TestWithParam<bo
 
     void TearDown() override {
         delete csrWithAubDump;
-        MockAubCenterFixture::TearDown();
+        MockAubCenterFixture::tearDown();
         DeviceFixture::tearDown();
     }
 
@@ -171,14 +171,14 @@ struct CommandStreamReceiverWithAubDumpTest : public ::testing::TestWithParam<bo
     bool createAubCSR;
 };
 
-struct CommandStreamReceiverWithAubDumpSimpleTest : TestLegacy<MockAubCenterFixture>, DeviceFixture {
+struct CommandStreamReceiverWithAubDumpSimpleTest : Test<MockAubCenterFixture>, DeviceFixture {
     void SetUp() override {
         DeviceFixture::setUp();
-        MockAubCenterFixture::SetUp();
+        MockAubCenterFixture::setUp();
         setMockAubCenter(pDevice->getRootDeviceEnvironmentRef());
     }
     void TearDown() override {
-        MockAubCenterFixture::TearDown();
+        MockAubCenterFixture::tearDown();
         DeviceFixture::tearDown();
     }
 };

@@ -17,7 +17,7 @@
 
 using namespace NEO;
 
-void MemoryAllocatorMultiDeviceSystemSpecificFixture::SetUp(ExecutionEnvironment &executionEnvironment) {
+void MemoryAllocatorMultiDeviceSystemSpecificFixture::setUp(ExecutionEnvironment &executionEnvironment) {
     static D3DDDI_OPENALLOCATIONINFO allocationInfo;
     auto gdi = new MockGdi();
     gdi->getQueryResourceInfoArgOut().NumAllocations = 1;
@@ -37,4 +37,4 @@ void MemoryAllocatorMultiDeviceSystemSpecificFixture::SetUp(ExecutionEnvironment
     executionEnvironment.osEnvironment.reset(osEnvironment);
 }
 
-void MemoryAllocatorMultiDeviceSystemSpecificFixture::TearDown(ExecutionEnvironment &executionEnvironment) {}
+void MemoryAllocatorMultiDeviceSystemSpecificFixture::tearDown(ExecutionEnvironment &executionEnvironment) {}

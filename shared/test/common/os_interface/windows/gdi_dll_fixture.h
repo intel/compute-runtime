@@ -16,7 +16,7 @@ using namespace NEO;
 OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace);
 
 struct GdiDllFixture {
-    virtual void SetUp() {
+    void setUp() {
         const HardwareInfo *hwInfo = defaultHwInfo.get();
         mockGdiDll.reset(setAdapterInfo(&hwInfo->platform, &hwInfo->gtSystemInfo, hwInfo->capabilityTable.gpuAddressSpace));
 
@@ -65,7 +65,7 @@ struct GdiDllFixture {
         *getRegisterTrimNotificationFailCallFcn() = false;
     }
 
-    virtual void TearDown() {
+    void tearDown() {
         *getCreateHwQueueDataFcn() = {};
         *getDestroyHwQueueDataFcn() = {};
         *getSubmitCommandToHwQueueDataFcn() = {};

@@ -715,7 +715,7 @@ struct CreateImageHostPtr
     }
 
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
+        MemoryManagementFixture::setUp();
         BaseClass::SetUp();
     }
 
@@ -723,7 +723,7 @@ struct CreateImageHostPtr
         delete image;
         BaseClass::TearDown();
         platformsImpl->clear();
-        MemoryManagementFixture::TearDown();
+        MemoryManagementFixture::tearDown();
     }
 
     Image *createImage(cl_int &retVal) {

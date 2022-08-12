@@ -20,8 +20,8 @@ using namespace NEO;
 
 class MemoryAllocatorMultiDeviceSystemSpecificFixture {
   public:
-    void SetUp(ExecutionEnvironment &executionEnvironment);    // NOLINT(readability-identifier-naming)
-    void TearDown(ExecutionEnvironment &executionEnvironment); // NOLINT(readability-identifier-naming)
+    void setUp(ExecutionEnvironment &executionEnvironment);
+    void tearDown(ExecutionEnvironment &executionEnvironment);
 
     std::unique_ptr<Gmm> gmm;
 };
@@ -30,7 +30,7 @@ template <uint32_t numRootDevices>
 class MemoryAllocatorMultiDeviceFixture : public MemoryManagementFixture, public MemoryAllocatorMultiDeviceSystemSpecificFixture, public ::testing::TestWithParam<bool> {
   public:
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
+        MemoryManagementFixture::setUp();
 
         isOsAgnosticMemoryManager = GetParam();
         DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
@@ -43,13 +43,13 @@ class MemoryAllocatorMultiDeviceFixture : public MemoryManagementFixture, public
         memoryManager = executionEnvironment->memoryManager.get();
 
         if (!isOsAgnosticMemoryManager) {
-            MemoryAllocatorMultiDeviceSystemSpecificFixture::SetUp(*executionEnvironment);
+            MemoryAllocatorMultiDeviceSystemSpecificFixture::setUp(*executionEnvironment);
         }
     }
 
     void TearDown() override {
         if (!isOsAgnosticMemoryManager) {
-            MemoryAllocatorMultiDeviceSystemSpecificFixture::TearDown(*executionEnvironment);
+            MemoryAllocatorMultiDeviceSystemSpecificFixture::tearDown(*executionEnvironment);
         }
     }
 
@@ -67,7 +67,7 @@ template <uint32_t numRootDevices, uint32_t numSubDevices>
 class MemoryAllocatorMultiDeviceAndMultiTileFixture : public MemoryManagementFixture, public MemoryAllocatorMultiDeviceSystemSpecificFixture, public ::testing::TestWithParam<bool> {
   public:
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
+        MemoryManagementFixture::setUp();
 
         isOsAgnosticMemoryManager = GetParam();
         DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
@@ -81,13 +81,13 @@ class MemoryAllocatorMultiDeviceAndMultiTileFixture : public MemoryManagementFix
         memoryManager = executionEnvironment->memoryManager.get();
 
         if (!isOsAgnosticMemoryManager) {
-            MemoryAllocatorMultiDeviceSystemSpecificFixture::SetUp(*executionEnvironment);
+            MemoryAllocatorMultiDeviceSystemSpecificFixture::setUp(*executionEnvironment);
         }
     }
 
     void TearDown() override {
         if (!isOsAgnosticMemoryManager) {
-            MemoryAllocatorMultiDeviceSystemSpecificFixture::TearDown(*executionEnvironment);
+            MemoryAllocatorMultiDeviceSystemSpecificFixture::tearDown(*executionEnvironment);
         }
     }
 

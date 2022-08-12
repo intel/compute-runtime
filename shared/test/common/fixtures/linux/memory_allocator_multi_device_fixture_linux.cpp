@@ -11,13 +11,13 @@
 
 using namespace NEO;
 
-void MemoryAllocatorMultiDeviceSystemSpecificFixture::SetUp(ExecutionEnvironment &executionEnvironment) {
+void MemoryAllocatorMultiDeviceSystemSpecificFixture::setUp(ExecutionEnvironment &executionEnvironment) {
     auto memoryManager = static_cast<TestedDrmMemoryManager *>(executionEnvironment.memoryManager.get());
     auto bufferObject = new (std::nothrow) BufferObject(&memoryManager->getDrm(0u), 3, 0, 10, MemoryManager::maxOsContextCount);
     memoryManager->pushSharedBufferObject(bufferObject);
 }
 
-void MemoryAllocatorMultiDeviceSystemSpecificFixture::TearDown(ExecutionEnvironment &executionEnvironment) {
+void MemoryAllocatorMultiDeviceSystemSpecificFixture::tearDown(ExecutionEnvironment &executionEnvironment) {
     auto memoryManager = static_cast<TestedDrmMemoryManager *>(executionEnvironment.memoryManager.get());
     auto bufferObject = memoryManager->sharingBufferObjects.back();
     memoryManager->eraseSharedBufferObject(bufferObject);
