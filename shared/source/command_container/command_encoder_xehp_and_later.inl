@@ -77,7 +77,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                              sizePerThreadData, hwInfo);
     auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     hwInfoConfig.updateIddCommand(&idd, kernelDescriptor.kernelAttributes.numGrfRequired,
-                                  args.dispatchInterface->getSchedulingHintExp());
+                                  kernelDescriptor.kernelAttributes.threadArbitrationPolicy);
 
     bool localIdsGenerationByRuntime = args.dispatchInterface->requiresGenerationOfLocalIdsByRuntime();
     auto requiredWorkgroupOrder = args.dispatchInterface->getRequiredWorkgroupOrder();

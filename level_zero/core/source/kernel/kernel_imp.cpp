@@ -1066,18 +1066,14 @@ NEO::GraphicsAllocation *KernelImp::getIsaAllocation() const {
 }
 
 ze_result_t KernelImp::setSchedulingHintExp(ze_scheduling_hint_exp_desc_t *pHint) {
-
+    auto &threadArbitrationPolicy = const_cast<NEO::ThreadArbitrationPolicy &>(getKernelDescriptor().kernelAttributes.threadArbitrationPolicy);
     if (pHint->flags == ZE_SCHEDULING_HINT_EXP_FLAG_OLDEST_FIRST) {
-        this->schedulingHintExpFlag = NEO::ThreadArbitrationPolicy::AgeBased;
+        threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::AgeBased;
     } else if (pHint->flags == ZE_SCHEDULING_HINT_EXP_FLAG_ROUND_ROBIN) {
-        this->schedulingHintExpFlag = NEO::ThreadArbitrationPolicy::RoundRobin;
+        threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobin;
     } else {
-        this->schedulingHintExpFlag = NEO::ThreadArbitrationPolicy::RoundRobinAfterDependency;
+        threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobinAfterDependency;
     }
     return ZE_RESULT_SUCCESS;
-}
-
-int32_t KernelImp::getSchedulingHintExp() const {
-    return this->schedulingHintExpFlag;
-}
+} // namespace L0
 } // namespace L0

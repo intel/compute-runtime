@@ -232,9 +232,12 @@ cl_int Kernel::initialize() {
         Buffer::setSurfaceState(&pClDevice->getDevice(), surfaceState, false, false, 0, nullptr, 0, nullptr, 0, 0, useGlobalAtomics, areMultipleSubDevicesInContext());
     }
 
-    setThreadArbitrationPolicy(hwHelper.getDefaultThreadArbitrationPolicy());
+    auto &threadArbitrationPolicy = const_cast<ThreadArbitrationPolicy &>(kernelInfo.kernelDescriptor.kernelAttributes.threadArbitrationPolicy);
+    if (threadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent) {
+        threadArbitrationPolicy = static_cast<ThreadArbitrationPolicy>(hwHelper.getDefaultThreadArbitrationPolicy());
+    }
     if (false == kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress) {
-        setThreadArbitrationPolicy(ThreadArbitrationPolicy::AgeBased);
+        threadArbitrationPolicy = ThreadArbitrationPolicy::AgeBased;
     }
 
     auto &clHwHelper = ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
@@ -2230,18 +2233,19 @@ void Kernel::updateAuxTranslationRequired() {
 int Kernel::setKernelThreadArbitrationPolicy(uint32_t policy) {
     auto &hwInfo = clDevice.getHardwareInfo();
     auto &hwHelper = NEO::ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &threadArbitrationPolicy = const_cast<ThreadArbitrationPolicy &>(getDescriptor().kernelAttributes.threadArbitrationPolicy);
     if (!hwHelper.isSupportedKernelThreadArbitrationPolicy()) {
-        this->threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
+        threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
         return CL_INVALID_DEVICE;
     } else if (policy == CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL) {
-        this->threadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobin;
+        threadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobin;
     } else if (policy == CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_OLDEST_FIRST_INTEL) {
-        this->threadArbitrationPolicy = ThreadArbitrationPolicy::AgeBased;
+        threadArbitrationPolicy = ThreadArbitrationPolicy::AgeBased;
     } else if (policy == CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_AFTER_DEPENDENCY_ROUND_ROBIN_INTEL ||
                policy == CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_STALL_BASED_ROUND_ROBIN_INTEL) {
-        this->threadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobinAfterDependency;
+        threadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobinAfterDependency;
     } else {
-        this->threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
+        threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
         return CL_INVALID_VALUE;
     }
     return CL_SUCCESS;

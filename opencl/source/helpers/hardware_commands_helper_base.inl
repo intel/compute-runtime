@@ -144,7 +144,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
                                                 sizeCrossThreadData, sizePerThreadData, hardwareInfo);
     auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
     hwInfoConfig.updateIddCommand(&interfaceDescriptor, kernelDescriptor.kernelAttributes.numGrfRequired,
-                                  kernel.getThreadArbitrationPolicy());
+                                  kernelDescriptor.kernelAttributes.threadArbitrationPolicy);
 
     EncodeDispatchKernel<GfxFamily>::appendAdditionalIDDFields(&interfaceDescriptor, hardwareInfo, threadsPerThreadGroup,
                                                                slmTotalSize, SlmPolicy::SlmPolicyNone);

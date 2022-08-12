@@ -45,8 +45,6 @@ struct DispatchKernelEncoderI {
     virtual uint32_t getRequiredWorkgroupOrder() const = 0;
     virtual bool requiresGenerationOfLocalIdsByRuntime() const = 0;
 
-    virtual int32_t getSchedulingHintExp() const = 0;
-
     virtual ImplicitArgs *getImplicitArgs() const = 0;
 };
 } // namespace NEO

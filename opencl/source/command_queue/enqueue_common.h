@@ -768,7 +768,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         ClPreemptionHelper::taskPreemptionMode(getDevice(), multiDispatchInfo),                     // preemptionMode
         numGrfRequired,                                                                             // numGrfRequired
         L3CachingSettings::l3CacheOn,                                                               // l3CacheSettings
-        kernel->getThreadArbitrationPolicy(),                                                       // threadArbitrationPolicy
+        kernel->getDescriptor().kernelAttributes.threadArbitrationPolicy,                           // threadArbitrationPolicy
         kernel->getAdditionalKernelExecInfo(),                                                      // additionalKernelExecInfo
         kernel->getExecutionType(),                                                                 // kernelExecutionType
         memoryCompressionState,                                                                     // memoryCompressionState

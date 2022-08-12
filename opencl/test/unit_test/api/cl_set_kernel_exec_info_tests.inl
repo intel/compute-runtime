@@ -318,8 +318,7 @@ HWTEST_F(clSetKernelExecInfoTests, givenKernelExecInfoThreadArbitrationPolicyWhe
         &newThreadArbitrationPolicy                          // const void *param_value
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(getNewKernelArbitrationPolicy(newThreadArbitrationPolicy), pMockKernel->threadArbitrationPolicy);
-    EXPECT_EQ(getNewKernelArbitrationPolicy(newThreadArbitrationPolicy), pMockKernel->getThreadArbitrationPolicy());
+    EXPECT_EQ(getNewKernelArbitrationPolicy(newThreadArbitrationPolicy), pMockKernel->getDescriptor().kernelAttributes.threadArbitrationPolicy);
 }
 
 HWTEST_F(clSetKernelExecInfoTests, givenKernelExecInfoThreadArbitrationPolicyWhenNotSupportedAndSettingAdditionalKernelInfoThenClInvalidDeviceIsReturned) {

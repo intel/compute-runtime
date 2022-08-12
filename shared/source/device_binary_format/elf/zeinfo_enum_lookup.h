@@ -58,6 +58,7 @@ static constexpr LookupArray<ConstStringRef, ArgType, 34> lookup({{{packedLocalI
                                                                    {searchPathType, ArgType::ArgTypeVmeSearchPathType}}});
 static_assert(lookup.size() == ArgType::ArgTypeMax - 1, "Every enum field must be present");
 } // namespace ArgType
+
 namespace MemoryAddressingMode {
 namespace AddrModeTag = Tags::Kernel::PayloadArgument::MemoryAddressingMode;
 using AddrMode = Types::Kernel::PayloadArgument::MemoryAddressingMode;
@@ -68,6 +69,7 @@ static constexpr LookupArray<ConstStringRef, AddrMode, 4> lookup({{{AddrModeTag:
 static constexpr ConstStringRef name = "addressing mode";
 static_assert(lookup.size() == AddrMode::MemoryAddressIngModeMax - 1, "Every enum field must be present");
 } // namespace MemoryAddressingMode
+
 namespace AddressSpace {
 using namespace Tags::Kernel::PayloadArgument::AddrSpace;
 using AddrSpace = Types::Kernel::PayloadArgument::AddressSpace;
@@ -80,6 +82,7 @@ static constexpr LookupArray<ConstStringRef, AddrSpace, 5> lookup({{{global, Add
                                                                     {sampler, AddrSpace::AddressSpaceSampler}}});
 static_assert(lookup.size() == AddrSpace::AddressSpaceMax - 1, "Every enum field must be present");
 } // namespace AddressSpace
+
 namespace AccessType {
 using namespace Tags::Kernel::PayloadArgument::AccessType;
 using AccessType = Types::Kernel::PayloadArgument::AccessType;
@@ -90,6 +93,7 @@ static constexpr LookupArray<ConstStringRef, AccessType, 3> lookup({{{readonly, 
                                                                      {readwrite, AccessType::AccessTypeReadwrite}}});
 static_assert(lookup.size() == AccessType::AccessTypeMax - 1, "Every enum field must be present");
 } // namespace AccessType
+
 namespace AllocationType {
 using namespace Tags::Kernel::PerThreadMemoryBuffer::AllocationType;
 using AllocType = Types::Kernel::PerThreadMemoryBuffer::AllocationType;
@@ -99,6 +103,7 @@ static constexpr LookupArray<ConstStringRef, AllocType, 3> lookup({{{global, All
                                                                     {slm, AllocType::AllocationTypeSlm}}});
 static_assert(lookup.size() == AllocType::AllocationTypeMax - 1, "Every enum field must be present");
 } // namespace AllocationType
+
 namespace MemoryUsage {
 using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::MemoryUsage;
 using MemoryUsage = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::MemoryUsage;
@@ -108,6 +113,7 @@ static constexpr LookupArray<ConstStringRef, MemoryUsage, 3> lookup({{{privateSp
                                                                       {singleSpace, MemoryUsage::MemoryUsageSingleSpace}}});
 static_assert(lookup.size() == MemoryUsage::MemoryUsageMax - 1, "Every enum field must be present");
 } // namespace MemoryUsage
+
 namespace ImageType {
 using namespace Tags::Kernel::PayloadArgument::ImageType;
 using ImageType = Types::Kernel::PayloadArgument::ImageType;
@@ -130,6 +136,7 @@ static constexpr LookupArray<ConstStringRef, ImageType, 16> lookup({{{imageTypeB
                                                                      {imageType2DMediaBlock, ImageType::ImageType2DMediaBlock}}});
 static_assert(lookup.size() == ImageType::ImageTypeMax - 1, "Every enum field must be present");
 } // namespace ImageType
+
 namespace SamplerType {
 using namespace Tags::Kernel::PayloadArgument::SamplerType;
 using SamplerType = Types::Kernel::PayloadArgument::SamplerType;
@@ -149,6 +156,16 @@ static constexpr LookupArray<ConstStringRef, SamplerType, 12> lookup({{{samplerT
 static_assert(lookup.size() == SamplerType::SamplerTypeMax - 1, "Every enum field must be present");
 } // namespace SamplerType
 
+namespace ThreadSchedulingMode {
+using namespace Tags::Kernel::ExecutionEnv::ThreadSchedulingMode;
+using ThreadSchedulingMode = Types::Kernel::ExecutionEnv::ThreadSchedulingMode;
+static constexpr ConstStringRef name = "thread scheduling mode";
+static constexpr LookupArray<ConstStringRef, ThreadSchedulingMode, 3> lookup({{{ageBased, ThreadSchedulingMode::ThreadSchedulingModeAgeBased},
+                                                                               {roundRobin, ThreadSchedulingMode::ThreadSchedulingModeRoundRobin},
+                                                                               {roundRobinStall, ThreadSchedulingMode::ThreadSchedulingModeRoundRobinStall}}});
+static_assert(lookup.size() == ThreadSchedulingMode::ThreadSchedulingModeMax - 1, "Every enum field must be present");
+} // namespace ThreadSchedulingMode
+
 template <typename T>
 struct EnumLooker {};
 
@@ -157,39 +174,52 @@ struct EnumLooker<Types::Kernel::ArgType> {
     static constexpr ConstStringRef name = ArgType::name;
     static constexpr auto members = ArgType::lookup;
 };
+
 template <>
 struct EnumLooker<Types::Kernel::PayloadArgument::MemoryAddressingMode> {
     static constexpr ConstStringRef name = MemoryAddressingMode::name;
     static constexpr auto members = MemoryAddressingMode::lookup;
 };
+
 template <>
 struct EnumLooker<Types::Kernel::PayloadArgument::AddressSpace> {
     static constexpr ConstStringRef name = AddressSpace::name;
     static constexpr auto members = AddressSpace::lookup;
 };
+
 template <>
 struct EnumLooker<Types::Kernel::PayloadArgument::AccessType> {
     static constexpr ConstStringRef name = AccessType::name;
     static constexpr auto members = AccessType::lookup;
 };
+
 template <>
 struct EnumLooker<Types::Kernel::PerThreadMemoryBuffer::AllocationType> {
     static constexpr ConstStringRef name = AllocationType::name;
     static constexpr auto members = AllocationType::lookup;
 };
+
 template <>
 struct EnumLooker<Types::Kernel::PerThreadMemoryBuffer::MemoryUsage> {
     static constexpr ConstStringRef name = MemoryUsage::name;
     static constexpr auto members = MemoryUsage::lookup;
 };
+
 template <>
 struct EnumLooker<Types::Kernel::PayloadArgument::ImageType> {
     static constexpr ConstStringRef name = ImageType::name;
     static constexpr auto members = ImageType::lookup;
 };
+
 template <>
 struct EnumLooker<Types::Kernel::PayloadArgument::SamplerType> {
     static constexpr ConstStringRef name = SamplerType::name;
     static constexpr auto members = SamplerType::lookup;
+};
+
+template <>
+struct EnumLooker<Types::Kernel::ExecutionEnv::ThreadSchedulingMode> {
+    static constexpr ConstStringRef name = ThreadSchedulingMode::name;
+    static constexpr auto members = ThreadSchedulingMode::lookup;
 };
 } // namespace NEO::Zebin::ZeInfo::EnumLookup

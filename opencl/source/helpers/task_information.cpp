@@ -188,7 +188,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         preemptionMode,                                                                   // preemptionMode
         kernelDescriptor.kernelAttributes.numGrfRequired,                                 // numGrfRequired
         L3CachingSettings::l3CacheOn,                                                     // l3CacheSettings
-        kernel->getThreadArbitrationPolicy(),                                             // threadArbitrationPolicy
+        kernelDescriptor.kernelAttributes.threadArbitrationPolicy,                        // threadArbitrationPolicy
         kernel->getAdditionalKernelExecInfo(),                                            // additionalKernelExecInfo
         kernel->getExecutionType(),                                                       // kernelExecutionType
         memoryCompressionState,                                                           // memoryCompressionState

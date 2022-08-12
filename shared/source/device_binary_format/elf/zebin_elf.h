@@ -151,6 +151,12 @@ static constexpr ConstStringRef simdSize("simd_size");
 static constexpr ConstStringRef slmSize("slm_size");
 static constexpr ConstStringRef subgroupIndependentForwardProgress("subgroup_independent_forward_progress");
 static constexpr ConstStringRef workGroupWalkOrderDimensions("work_group_walk_order_dimensions");
+static constexpr ConstStringRef threadSchedulingMode("thread_scheduling_mode");
+namespace ThreadSchedulingMode {
+static constexpr ConstStringRef ageBased("age_based");
+static constexpr ConstStringRef roundRobin("round_robin");
+static constexpr ConstStringRef roundRobinStall("round_robin_stall");
+} // namespace ThreadSchedulingMode
 } // namespace ExecutionEnv
 
 namespace DebugEnv {
@@ -325,6 +331,14 @@ struct Version {
 
 namespace Kernel {
 namespace ExecutionEnv {
+enum ThreadSchedulingMode : uint8_t {
+    ThreadSchedulingModeUnknown,
+    ThreadSchedulingModeAgeBased,
+    ThreadSchedulingModeRoundRobin,
+    ThreadSchedulingModeRoundRobinStall,
+    ThreadSchedulingModeMax
+};
+
 using ActualKernelStartOffsetT = int32_t;
 using BarrierCountT = int32_t;
 using DisableMidThreadPreemptionT = bool;
@@ -350,6 +364,7 @@ using SimdSizeT = int32_t;
 using SlmSizeT = int32_t;
 using SubgroupIndependentForwardProgressT = bool;
 using WorkgroupWalkOrderDimensionsT = int32_t[3];
+using ThreadSchedulingModeT = ThreadSchedulingMode;
 
 namespace Defaults {
 static constexpr BarrierCountT barrierCount = 0;
@@ -374,6 +389,7 @@ static constexpr RequireDisableEUFusionT requireDisableEUFusion = false;
 static constexpr SlmSizeT slmSize = 0;
 static constexpr SubgroupIndependentForwardProgressT subgroupIndependentForwardProgress = false;
 static constexpr WorkgroupWalkOrderDimensionsT workgroupWalkOrderDimensions = {0, 1, 2};
+static constexpr ThreadSchedulingModeT threadSchedulingMode = ThreadSchedulingModeUnknown;
 } // namespace Defaults
 
 static constexpr ConstStringRef required[] = {
@@ -402,6 +418,7 @@ struct ExecutionEnvBaseT {
     SlmSizeT slmSize = Defaults::slmSize;
     SubgroupIndependentForwardProgressT subgroupIndependentForwardProgress = Defaults::subgroupIndependentForwardProgress;
     WorkgroupWalkOrderDimensionsT workgroupWalkOrderDimensions{Defaults::workgroupWalkOrderDimensions[0], Defaults::workgroupWalkOrderDimensions[1], Defaults::workgroupWalkOrderDimensions[2]};
+    ThreadSchedulingModeT threadSchedulingMode = Defaults::threadSchedulingMode;
 };
 
 struct ExperimentalPropertiesBaseT {

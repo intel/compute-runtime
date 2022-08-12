@@ -310,9 +310,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
 
     bool isBuiltIn = false;
 
-    int32_t getThreadArbitrationPolicy() const {
-        return threadArbitrationPolicy;
-    }
     KernelExecutionType getExecutionType() const {
         return executionType;
     }
@@ -353,9 +350,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     bool areStatelessWritesUsed() { return containsStatelessWrites; }
     int setKernelThreadArbitrationPolicy(uint32_t propertyValue);
     cl_int setKernelExecutionType(cl_execution_info_kernel_type_intel executionType);
-    void setThreadArbitrationPolicy(int32_t policy) {
-        this->threadArbitrationPolicy = policy;
-    }
     void getSuggestedLocalWorkSize(const cl_uint workDim, const size_t *globalWorkSize, const size_t *globalWorkOffset,
                                    size_t *localWorkSize);
     uint32_t getMaxWorkGroupCount(const cl_uint workDim, const size_t *localWorkSize, const CommandQueue *commandQueue) const;
@@ -520,8 +514,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
 
     AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::None;
     KernelExecutionType executionType = KernelExecutionType::Default;
-
-    int32_t threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
 
     uint32_t patchedArgumentsNum = 0;
     uint32_t startOffset = 0;

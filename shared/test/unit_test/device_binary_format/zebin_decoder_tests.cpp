@@ -1003,6 +1003,7 @@ kernels:
           - 0
           - 1
           - 2 
+        thread_scheduling_mode: age_based
 ...
 )===";
 
@@ -1043,6 +1044,8 @@ kernels:
     EXPECT_EQ(0, execEnv.workgroupWalkOrderDimensions[0]);
     EXPECT_EQ(1, execEnv.workgroupWalkOrderDimensions[1]);
     EXPECT_EQ(2, execEnv.workgroupWalkOrderDimensions[2]);
+    using ThreadSchedulingMode = NEO::Elf::ZebinKernelMetadata::Types::Kernel::ExecutionEnv::ThreadSchedulingMode;
+    EXPECT_EQ(ThreadSchedulingMode::ThreadSchedulingModeAgeBased, execEnv.threadSchedulingMode);
 }
 
 TEST(ReadZeInfoExecutionEnvironment, GivenUnknownEntryThenEmmitsWarning) {
@@ -2845,6 +2848,49 @@ kernels:
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid arg type in per-thread data section in context of : some_kernel.\n", decodeErrors.c_str());
+}
+
+TEST(PopulateKernelDescriptor, GivenValidThreadSchedulingModesThenPopulateCorrectly) {
+    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::ExecutionEnv::ThreadSchedulingMode;
+
+    std::pair<ConstStringRef, ThreadArbitrationPolicy> threadSchedulingModes[3] = {
+        {ageBased, ThreadArbitrationPolicy::AgeBased},
+        {roundRobin, ThreadArbitrationPolicy::RoundRobin},
+        {roundRobinStall, ThreadArbitrationPolicy::RoundRobinAfterDependency}};
+    for (auto &[str, val] : threadSchedulingModes) {
+        std::string zeinfo = R"===(
+        kernels:
+            - name: some_kernel
+              execution_env:   
+                simd_size: 32
+                thread_scheduling_mode: )===" +
+                             str.str() +
+                             R"===(
+        )===";
+
+        NEO::ProgramInfo programInfo;
+        ZebinTestData::ValidEmptyProgram zebin;
+        zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+        std::string errors, warnings;
+        auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+        ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+        NEO::Yaml::YamlParser parser;
+        bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+        ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+        NEO::ZebinSections zebinSections;
+        auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+        ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+        auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+        auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+        EXPECT_EQ(NEO::DecodeError::Success, err);
+        EXPECT_TRUE(warnings.empty()) << warnings;
+        EXPECT_TRUE(errors.empty()) << errors;
+
+        EXPECT_EQ(val, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.threadArbitrationPolicy);
+    }
 }
 
 TEST(PopulateKernelDescriptor, GivenValidLocalIdThenAlignUpChannelSizeToGrfSize) {
@@ -5269,7 +5315,7 @@ TEST_F(IntelGTNotesFixture, GivenValidTargetDeviceAndNoteWithUnrecognizedTypeWhe
     }
     elfNotes.at(0).type = Elf::IntelGTSectionType::ProductFamily;
     elfNotes.at(1).type = Elf::IntelGTSectionType::GfxCore;
-    elfNotes.at(2).type = Elf::IntelGTSectionType::LastSupported + 1; //unsupported
+    elfNotes.at(2).type = Elf::IntelGTSectionType::LastSupported + 1; // unsupported
     std::vector<uint8_t *> descDatas;
 
     uint8_t platformDescData[4u];
@@ -5481,19 +5527,17 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenInvalidIntelGTNotesSe
 }
 
 TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidZeInfoVersionInIntelGTNotesThenZeInfoVersionIsPopulatedCorrectly) {
+    auto decoderVersion = std::to_string(zeInfoDecoderVersion.major) + "." + std::to_string(zeInfoDecoderVersion.minor);
+
     Elf::ElfNoteSection elfNoteSection = {};
     elfNoteSection.type = 4;
-    elfNoteSection.descSize = 5u;
+    elfNoteSection.descSize = static_cast<uint32_t>(decoderVersion.length() + 1);
     elfNoteSection.nameSize = 8u;
-
-    uint8_t zeInfoVersion[5] = {0x31, 0x2e, 0x31, 0x35, 0x0}; // version "1.15\0"
-
-    ASSERT_EQ(zeInfoDecoderVersion.major, 1u);
-    ASSERT_EQ(zeInfoDecoderVersion.minor, 9u);
 
     auto sectionDataSize = sizeof(Elf::ElfNoteSection) + elfNoteSection.nameSize + alignUp(elfNoteSection.descSize, 4);
     auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
-    appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), zeInfoVersion, Elf::IntelGtNoteOwnerName.str().c_str(), sectionDataSize);
+    appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), reinterpret_cast<const uint8_t *>(decoderVersion.c_str()),
+                                   Elf::IntelGtNoteOwnerName.str().c_str(), sectionDataSize);
     zebin.appendSection(Elf::SHT_NOTE, Elf::SectionsNamesZebin::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
 
     std::string outErrReason, outWarning;

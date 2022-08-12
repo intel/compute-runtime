@@ -66,7 +66,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithOldestFirstThreadArbitrat
     ze_scheduling_hint_exp_desc_t pHint{};
     pHint.flags = ZE_SCHEDULING_HINT_EXP_FLAG_OLDEST_FIRST;
     kernel->setSchedulingHintExp(&pHint);
-    ASSERT_EQ(kernel->getSchedulingHintExp(), NEO::ThreadArbitrationPolicy::AgeBased);
+    ASSERT_EQ(kernel->getKernelDescriptor().kernelAttributes.threadArbitrationPolicy, NEO::ThreadArbitrationPolicy::AgeBased);
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithRRThreadArbitrationPolicySetUsingSchedulingHintExtensionThenCorrectInternalPolicyIsReturned) {
@@ -74,7 +74,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithRRThreadArbitrationPolicy
     ze_scheduling_hint_exp_desc_t pHint{};
     pHint.flags = ZE_SCHEDULING_HINT_EXP_FLAG_ROUND_ROBIN;
     kernel->setSchedulingHintExp(&pHint);
-    ASSERT_EQ(kernel->getSchedulingHintExp(), NEO::ThreadArbitrationPolicy::RoundRobin);
+    ASSERT_EQ(kernel->getKernelDescriptor().kernelAttributes.threadArbitrationPolicy, NEO::ThreadArbitrationPolicy::RoundRobin);
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithStallRRThreadArbitrationPolicySetUsingSchedulingHintExtensionThenCorrectInternalPolicyIsReturned) {
@@ -82,7 +82,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithStallRRThreadArbitrationP
     ze_scheduling_hint_exp_desc_t pHint{};
     pHint.flags = ZE_SCHEDULING_HINT_EXP_FLAG_STALL_BASED_ROUND_ROBIN;
     kernel->setSchedulingHintExp(&pHint);
-    ASSERT_EQ(kernel->getSchedulingHintExp(), NEO::ThreadArbitrationPolicy::RoundRobinAfterDependency);
+    ASSERT_EQ(kernel->getKernelDescriptor().kernelAttributes.threadArbitrationPolicy, NEO::ThreadArbitrationPolicy::RoundRobinAfterDependency);
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithThreadArbitrationPolicySetUsingSchedulingHintExtensionTheSameFlagIsUsedToSetCmdListThreadArbitrationPolicy) {

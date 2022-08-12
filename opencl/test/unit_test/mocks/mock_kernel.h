@@ -128,7 +128,6 @@ class MockKernel : public Kernel {
     using Kernel::privateSurface;
     using Kernel::singleSubdevicePreferredInCurrentEnqueue;
     using Kernel::svmAllocationsRequireCacheFlush;
-    using Kernel::threadArbitrationPolicy;
     using Kernel::unifiedMemoryControls;
 
     using Kernel::slmSizes;
