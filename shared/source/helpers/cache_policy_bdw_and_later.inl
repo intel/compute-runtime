@@ -6,12 +6,23 @@
  */
 
 #include "shared/source/helpers/cache_policy.h"
+#include "shared/source/helpers/cache_policy_base.inl"
 
 namespace NEO {
 
 template <PRODUCT_FAMILY gfxProduct>
 const char *L1CachePolicyHelper<gfxProduct>::getCachingPolicyOptions() {
     return nullptr;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t L1CachePolicyHelper<gfxProduct>::getDefaultL1CachePolicy() {
+    return 0u;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t L1CachePolicyHelper<gfxProduct>::getUncachedL1CachePolicy() {
+    return 1u;
 }
 
 } // namespace NEO

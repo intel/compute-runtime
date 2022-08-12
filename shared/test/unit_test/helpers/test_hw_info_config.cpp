@@ -107,13 +107,13 @@ HWTEST2_F(HwInfoConfigTest, givenAtMostXeHPWhenGetCachingPolicyOptionsThenReturn
     EXPECT_EQ(compilerHwInfoConfig->getCachingPolicyOptions(), nullptr);
 }
 
-HWTEST2_F(HwInfoConfigTest, givenAtLeastDG2WhenGetCachingPolicyOptionsThenReturnWriteByPassPolicyOption, IsAtLeastXeHpgCore) {
+HWTEST2_F(HwInfoConfigTest, givenAtLeastXeHpgCoreWhenGetCachingPolicyOptionsThenReturnWriteByPassPolicyOption, IsAtLeastXeHpgCore) {
     auto compilerHwInfoConfig = CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     const char *expectedStr = "-cl-store-cache-default=2 -cl-load-cache-default=4";
     EXPECT_EQ(0, memcmp(compilerHwInfoConfig->getCachingPolicyOptions(), expectedStr, strlen(expectedStr)));
 }
 
-HWTEST2_F(HwInfoConfigTest, givenAtLeastDG2WhenGetCachingPolicyOptionsThenReturnWriteBackPolicyOption, IsAtLeastXeHpgCore) {
+HWTEST2_F(HwInfoConfigTest, givenAtLeastXeHpgCoreWhenGetCachingPolicyOptionsThenReturnWriteBackPolicyOption, IsAtLeastXeHpgCore) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
 
@@ -122,9 +122,19 @@ HWTEST2_F(HwInfoConfigTest, givenAtLeastDG2WhenGetCachingPolicyOptionsThenReturn
     EXPECT_EQ(0, memcmp(compilerHwInfoConfig->getCachingPolicyOptions(), expectedStr, strlen(expectedStr)));
 }
 
+HWTEST2_F(HwInfoConfigTest, givenAtLeastXeHpgCoreAndDebugFlagSetForceAllResourcesUncachedWhenGetCachingPolicyOptionsThenReturnUncachedPolicyOption, IsAtLeastXeHpgCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
+    DebugManager.flags.ForceAllResourcesUncached.set(true);
+
+    auto compilerHwInfoConfig = CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    const char *expectedStr = "-cl-store-cache-default=1 -cl-load-cache-default=1";
+    EXPECT_EQ(0, memcmp(compilerHwInfoConfig->getCachingPolicyOptions(), expectedStr, strlen(expectedStr)));
+}
+
 HWTEST2_F(HwInfoConfigTest, givenCachePolicyWithoutCorrespondingBuildOptionWhenGetCachingPolicyOptionsThenReturnNullptr, IsAtLeastXeHpgCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(1);
+    DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(5);
 
     auto compilerHwInfoConfig = CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     EXPECT_EQ(nullptr, compilerHwInfoConfig->getCachingPolicyOptions());
@@ -146,6 +156,9 @@ HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigAndDebugFlagWhenGetL1CachePolicyThe
 
     DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(4);
     EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WS, hwInfoConfig->getL1CachePolicy());
+
+    DebugManager.flags.ForceAllResourcesUncached.set(true);
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_UC, hwInfoConfig->getL1CachePolicy());
 }
 
 HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenGetL1CachePolicyThenReturnWriteByPass, IsAtLeastXeHpgCore) {

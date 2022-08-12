@@ -19,7 +19,8 @@ void EncodeSurfaceState<Family>::encodeExtraCacheSettings(R_SURFACE_STATE *surfa
     auto cachePolicy = static_cast<L1_CACHE_POLICY>(hwInfoConfig->getL1CachePolicy());
     surfaceState->setL1CachePolicyL1CacheControl(cachePolicy);
 
-    if (DebugManager.flags.OverrideL1CacheControlInSurfaceState.get() != -1) {
+    if (DebugManager.flags.OverrideL1CacheControlInSurfaceState.get() != -1 &&
+        DebugManager.flags.ForceAllResourcesUncached.get() == false) {
         surfaceState->setL1CachePolicyL1CacheControl(static_cast<L1_CACHE_POLICY>(DebugManager.flags.OverrideL1CacheControlInSurfaceState.get()));
     }
 }

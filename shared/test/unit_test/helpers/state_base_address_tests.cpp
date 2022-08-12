@@ -284,6 +284,7 @@ HWTEST2_F(SBATest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSetti
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     auto stateBaseAddress = FamilyType::cmdInitStateBaseAddress;
     auto expectedStateBaseAddress = FamilyType::cmdInitStateBaseAddress;
+    DebugManagerStateRestore restore;
 
     StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(&stateBaseAddress, &hardwareInfo);
     EXPECT_EQ(0, memcmp(&stateBaseAddress, &expectedStateBaseAddress, sizeof(STATE_BASE_ADDRESS)));
@@ -291,6 +292,35 @@ HWTEST2_F(SBATest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSetti
     DebugManager.flags.ForceStatelessL1CachingPolicy.set(2);
     StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(&stateBaseAddress, &hardwareInfo);
     EXPECT_EQ(0, memcmp(&stateBaseAddress, &expectedStateBaseAddress, sizeof(STATE_BASE_ADDRESS)));
+
+    DebugManager.flags.ForceAllResourcesUncached.set(true);
+    StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(&stateBaseAddress, &hardwareInfo);
+    EXPECT_EQ(0, memcmp(&stateBaseAddress, &expectedStateBaseAddress, sizeof(STATE_BASE_ADDRESS)));
+}
+
+HWTEST2_F(SBATest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSettingsThenProgramCorrectL1CachePolicy, IsAtLeastXeHpgCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    auto stateBaseAddress = FamilyType::cmdInitStateBaseAddress;
+    DebugManagerStateRestore restore;
+
+    StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(&stateBaseAddress, &hardwareInfo);
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP, stateBaseAddress.getL1CachePolicyL1CacheControl());
+
+    DebugManager.flags.ForceStatelessL1CachingPolicy.set(2);
+    StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(&stateBaseAddress, &hardwareInfo);
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB, stateBaseAddress.getL1CachePolicyL1CacheControl());
+
+    DebugManager.flags.ForceStatelessL1CachingPolicy.set(3);
+    StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(&stateBaseAddress, &hardwareInfo);
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WT, stateBaseAddress.getL1CachePolicyL1CacheControl());
+
+    DebugManager.flags.ForceStatelessL1CachingPolicy.set(4);
+    StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(&stateBaseAddress, &hardwareInfo);
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WS, stateBaseAddress.getL1CachePolicyL1CacheControl());
+
+    DebugManager.flags.ForceAllResourcesUncached.set(true);
+    StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(&stateBaseAddress, &hardwareInfo);
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_UC, stateBaseAddress.getL1CachePolicyL1CacheControl());
 }
 
 HWTEST2_F(SBATest, givenDebugFlagSetWhenAppendingSbaThenProgramCorrectL1CachePolicy, IsAtLeastXeHpgCore) {
@@ -331,10 +361,15 @@ HWTEST2_F(SBATest, givenDebugFlagSetWhenAppendingSbaThenProgramCorrectL1CachePol
     };
 
     for (const auto &input : testInputs) {
+        DebugManagerStateRestore restore;
         DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(input.option);
         StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
 
         EXPECT_EQ(input.cachePolicy, sbaCmd.getL1CachePolicyL1CacheControl());
+
+        DebugManager.flags.ForceAllResourcesUncached.set(true);
+        StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_UC, sbaCmd.getL1CachePolicyL1CacheControl());
     }
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -370,6 +405,7 @@ HWTEST2_F(SBATest, givenDebugFlagSetWhenAppendingRssThenProgramCorrectL1CachePol
         {4, FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WS}};
 
     for (const auto &input : testInputs) {
+        DebugManagerStateRestore restore;
         DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(input.option);
         EncodeSurfaceState<FamilyType>::encodeBuffer(args);
         EXPECT_EQ(input.cachePolicy, rssCmd.getL1CachePolicyL1CacheControl());

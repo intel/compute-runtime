@@ -11,7 +11,8 @@ void StateBaseAddressHelper<GfxFamily>::appendExtraCacheSettings(STATE_BASE_ADDR
     auto cachePolicy = hwInfoConfig->getL1CachePolicy();
     stateBaseAddress->setL1CachePolicyL1CacheControl(static_cast<typename STATE_BASE_ADDRESS::L1_CACHE_POLICY>(cachePolicy));
 
-    if (DebugManager.flags.ForceStatelessL1CachingPolicy.get() != -1) {
+    if (DebugManager.flags.ForceStatelessL1CachingPolicy.get() != -1 &&
+        DebugManager.flags.ForceAllResourcesUncached.get() == false) {
         stateBaseAddress->setL1CachePolicyL1CacheControl(static_cast<typename STATE_BASE_ADDRESS::L1_CACHE_POLICY>(DebugManager.flags.ForceStatelessL1CachingPolicy.get()));
     }
 }

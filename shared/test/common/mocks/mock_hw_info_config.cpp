@@ -411,6 +411,16 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isPrefetcherDisablingInDirectSubmissionRequir
     return true;
 }
 
+template <>
+uint32_t L1CachePolicyHelper<IGFX_UNKNOWN>::getL1CachePolicy() {
+    return L1CachePolicyHelper<IGFX_UNKNOWN>::getDefaultL1CachePolicy();
+}
+
+template <>
+uint32_t L1CachePolicyHelper<IGFX_UNKNOWN>::getUncachedL1CachePolicy() {
+    return 1u;
+}
+
 } // namespace NEO
 
 #include "shared/source/os_interface/hw_info_config.inl"

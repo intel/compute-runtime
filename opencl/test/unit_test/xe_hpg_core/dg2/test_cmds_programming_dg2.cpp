@@ -110,7 +110,13 @@ DG2TEST_F(CmdsProgrammingTestsDg2, givenL1CachingOverrideWhenStateBaseAddressIsP
 
     EXPECT_EQ(0u, sbaCmd.getL1CachePolicyL1CacheControl());
 
-    DebugManager.flags.ForceStatelessL1CachingPolicy.set(1u);
+    DebugManager.flags.ForceStatelessL1CachingPolicy.set(2u);
+
+    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
+
+    EXPECT_EQ(2u, sbaCmd.getL1CachePolicyL1CacheControl());
+
+    DebugManager.flags.ForceAllResourcesUncached.set(true);
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
 

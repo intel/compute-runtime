@@ -45,5 +45,11 @@ HWTEST2_F(CommandEncoderXeHpgCorePlusTests, givenSpecifiedL1CacheControlWhenAppe
     EncodeSurfaceState<FamilyType>::encodeBuffer(args);
 
     EXPECT_EQ(static_cast<uint32_t>(l1CacheControl), rssCmd.getL1CachePolicyL1CacheControl());
+
+    DebugManager.flags.ForceAllResourcesUncached.set(true);
+    EncodeSurfaceState<FamilyType>::encodeBuffer(args);
+
+    EXPECT_EQ(static_cast<uint32_t>(FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY_UC), rssCmd.getL1CachePolicyL1CacheControl());
+
     memoryManager->freeGraphicsMemory(allocation);
 }
