@@ -669,6 +669,10 @@ TEST(DecoderHelperTest, GivenGfxCoreFamilyWhenTranslatingToIgaGenBaseThenExpecte
         std::pair{IGFX_GEN9_CORE, IGA_GEN9},
         std::pair{IGFX_GEN11_CORE, IGA_GEN11},
         std::pair{IGFX_GEN11LP_CORE, IGA_GEN11},
+        std::pair{IGFX_GEN12LP_CORE, IGA_XE},
+        std::pair{IGFX_XE_HP_CORE, IGA_XE_HP},
+        std::pair{IGFX_XE_HPG_CORE, IGA_XE_HPG},
+        std::pair{IGFX_XE_HPC_CORE, IGA_XE_HPC},
         std::pair{IGFX_UNKNOWN_CORE, IGA_GEN_INVALID}};
 
     for (const auto &[input, expectedOutput] : translations) {
@@ -686,6 +690,17 @@ TEST(DecoderHelperTest, GivenProductFamilyWhenTranslatingToIgaGenBaseThenExpecte
         std::pair{IGFX_COFFEELAKE, IGA_GEN9p5},
         std::pair{IGFX_ICELAKE, IGA_GEN11},
         std::pair{IGFX_ICELAKE_LP, IGA_GEN11},
+        std::pair{IGFX_LAKEFIELD, IGA_GEN11},
+        std::pair{IGFX_ELKHARTLAKE, IGA_GEN11},
+        std::pair{IGFX_TIGERLAKE_LP, IGA_XE},
+        std::pair{IGFX_ROCKETLAKE, IGA_XE},
+        std::pair{IGFX_ALDERLAKE_N, IGA_XE},
+        std::pair{IGFX_ALDERLAKE_P, IGA_XE},
+        std::pair{IGFX_ALDERLAKE_S, IGA_XE},
+        std::pair{IGFX_DG1, IGA_XE},
+        std::pair{IGFX_XE_HP_SDV, IGA_XE_HP},
+        std::pair{IGFX_DG2, IGA_XE_HPG},
+        std::pair{IGFX_PVC, IGA_XE_HPC},
         std::pair{IGFX_UNKNOWN, IGA_GEN_INVALID}};
 
     for (const auto &[input, expectedOutput] : translations) {
