@@ -451,8 +451,8 @@ DG2TEST_F(ProductConfigTests, givenDg2G10DeviceIdWhenDifferentRevisionIsPassedTh
 }
 
 DG2TEST_F(ProductConfigTests, givenDg2DeviceIdWhenIncorrectRevisionIsPassedThenCorrectProductConfigIsReturned) {
-    for (const auto &dg2 : {dg2G10DeviceIds, dg2G11DeviceIds}) {
-        for (const auto &deviceId : dg2) {
+    for (const auto *dg2 : {&dg2G10DeviceIds, &dg2G11DeviceIds}) {
+        for (const auto &deviceId : *dg2) {
             hwInfo.platform.usDeviceID = deviceId;
             hwInfo.platform.usRevId = CommonConstants::invalidRevisionID;
             productConfig = hwInfoConfig->getProductConfigFromHwInfo(hwInfo);

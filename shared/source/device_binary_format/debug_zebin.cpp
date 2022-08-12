@@ -118,8 +118,8 @@ void DebugZebinCreator::applyRelocations() {
         }
     }
 
-    for (const auto &relocations : {elf.getDebugInfoRelocations(), elf.getRelocations()}) {
-        for (const auto &reloc : relocations) {
+    for (const auto *relocations : {&elf.getDebugInfoRelocations(), &elf.getRelocations()}) {
+        for (const auto &reloc : *relocations) {
             auto relocType = static_cast<RELOC_TYPE_ZEBIN>(reloc.relocType);
             if (isRelocTypeSupported(relocType) == false) {
                 continue;

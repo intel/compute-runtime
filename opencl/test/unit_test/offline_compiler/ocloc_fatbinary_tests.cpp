@@ -261,8 +261,8 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceArgProvidedWhenUnknownFami
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceArgProvidedWhenKnownNameIsPassedWithCoreSuffixThenRequestedFatBinaryReturnsTrue) {
-    for (const auto &acronyms : {enabledFamiliesAcronyms, enabledReleasesAcronyms}) {
-        for (const auto &acronym : acronyms) {
+    for (const auto *acronyms : {&enabledFamiliesAcronyms, &enabledReleasesAcronyms}) {
+        for (const auto &acronym : *acronyms) {
             auto acronymStr = acronym.str() + "_core";
             const char *name[] = {"ocloc", "-device", acronymStr.c_str()};
             EXPECT_TRUE(NEO::requestedFatBinary(3, name, oclocArgHelperWithoutInput.get()));
@@ -271,8 +271,8 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceArgProvidedWhenKnownNameIs
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceArgProvidedWhenKnownNameIsPassedThenRequestedFatBinaryReturnsTrue) {
-    for (const auto &acronyms : {enabledFamiliesAcronyms, enabledReleasesAcronyms}) {
-        for (const auto &acronym : acronyms) {
+    for (const auto *acronyms : {&enabledFamiliesAcronyms, &enabledReleasesAcronyms}) {
+        for (const auto &acronym : *acronyms) {
             auto acronymStr = acronym.str();
             const char *name[] = {"ocloc", "-device", acronymStr.c_str()};
             EXPECT_TRUE(NEO::requestedFatBinary(3, name, oclocArgHelperWithoutInput.get()));
@@ -286,7 +286,8 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenUnkownArchitectureThenReturnEmpt
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenClosedRangeTooExtensiveWhenProductsOrFamiliesOrReleasesAreValidThenFailIsReturned) {
-    for (const auto &enabledAcronyms : {enabledProductsAcronyms, enabledReleasesAcronyms, enabledFamiliesAcronyms}) {
+    for (const auto *enabledAcronymsPtr : {&enabledProductsAcronyms, &enabledReleasesAcronyms, &enabledFamiliesAcronyms}) {
+        const auto &enabledAcronyms = *enabledAcronymsPtr;
         if (enabledAcronyms.size() < 3) {
             GTEST_SKIP();
         }
@@ -323,8 +324,8 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenAcronymOpenRangeWhenAcronymIsUnk
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenClosedRangeWhenAnyOfAcronymIsUnknownThenReturnEmptyList) {
-    for (const auto &vec : {enabledProductsAcronyms, enabledReleasesAcronyms, enabledFamiliesAcronyms}) {
-        for (const auto &acronym : vec) {
+    for (const auto *vec : {&enabledProductsAcronyms, &enabledReleasesAcronyms, &enabledFamiliesAcronyms}) {
+        for (const auto &acronym : *vec) {
             auto got = NEO::getTargetProductsForFatbinary("unk:" + acronym.str(), oclocArgHelperWithoutInput.get());
             EXPECT_TRUE(got.empty());
 

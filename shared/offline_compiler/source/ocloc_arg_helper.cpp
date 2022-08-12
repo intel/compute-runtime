@@ -161,7 +161,7 @@ bool OclocArgHelper::getHwInfoForProductConfig(uint32_t productConfig, NEO::Hard
         return retVal;
     }
 
-    auto deviceAotMap = productConfigHelper->getDeviceAotInfo();
+    const auto &deviceAotMap = productConfigHelper->getDeviceAotInfo();
     for (auto &deviceConfig : deviceAotMap) {
         if (deviceConfig.aotConfig.ProductConfig == productConfig) {
             hwInfo = *deviceConfig.hwInfo;

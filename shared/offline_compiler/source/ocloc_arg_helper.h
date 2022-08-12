@@ -110,10 +110,10 @@ class OclocArgHelper {
     }
 
     template <typename... Args>
-    static auto getArgsWithoutDuplicate(Args... args) {
+    static auto getArgsWithoutDuplicate(const Args &...args) {
         std::vector<NEO::ConstStringRef> out{};
-        for (const auto &acronyms : {args...}) {
-            for (const auto &acronym : acronyms) {
+        for (const auto *acronyms : {std::addressof(args)...}) {
+            for (const auto &acronym : *acronyms) {
                 if (!std::any_of(out.begin(), out.end(), findDuplicate(acronym))) {
                     out.push_back(acronym);
                 }
@@ -123,10 +123,10 @@ class OclocArgHelper {
     }
 
     template <typename... Args>
-    static auto createStringForArgs(Args... args) {
+    static auto createStringForArgs(const Args &...args) {
         std::ostringstream os;
-        for (const auto &acronyms : {args...}) {
-            for (const auto &acronym : acronyms) {
+        for (const auto *acronyms : {std::addressof(args)...}) {
+            for (const auto &acronym : *acronyms) {
                 if (os.tellp())
                     os << ", ";
                 os << acronym.str();
