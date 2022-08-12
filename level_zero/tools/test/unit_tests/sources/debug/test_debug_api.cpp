@@ -19,7 +19,7 @@ namespace L0 {
 namespace ult {
 
 struct DebugApiFixture : public DeviceFixture {
-    void SetUp() {
+    void setUp() {
         DeviceFixture::setUp();
         neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
         mockBuiltins = new MockBuiltins();
@@ -27,14 +27,14 @@ struct DebugApiFixture : public DeviceFixture {
         neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltins);
     }
 
-    void TearDown() {
+    void tearDown() {
         DeviceFixture::tearDown();
     }
 
     MockBuiltins *mockBuiltins = nullptr;
 };
 
-using DebugApiTest = TestLegacy<DebugApiFixture>;
+using DebugApiTest = Test<DebugApiFixture>;
 
 TEST_F(DebugApiTest, givenDeviceWhenGettingDebugPropertiesThenNoFlagIsSet) {
     zet_device_debug_properties_t debugProperties = {};

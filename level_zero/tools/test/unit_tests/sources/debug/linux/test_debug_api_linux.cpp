@@ -473,11 +473,11 @@ void initStateSaveArea(std::vector<char> &stateSaveArea, SIP::version version) {
 }
 
 struct DebugApiLinuxFixture : public DeviceFixture {
-    void SetUp() {
-        SetUp(nullptr);
+    void setUp() {
+        setUp(nullptr);
     }
 
-    void SetUp(NEO::HardwareInfo *hwInfo) {
+    void setUp(NEO::HardwareInfo *hwInfo) {
         if (hwInfo != nullptr) {
             auto executionEnvironment = MockDevice::prepareExecutionEnvironment(hwInfo, 0u);
             DeviceFixture::setupWithExecutionEnvironment(*executionEnvironment);
@@ -502,7 +502,7 @@ struct DebugApiLinuxFixture : public DeviceFixture {
         neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
     }
 
-    void TearDown() {
+    void tearDown() {
         DeviceFixture::tearDown();
     }
     DrmQueryMock *mockDrm = nullptr;
@@ -510,7 +510,7 @@ struct DebugApiLinuxFixture : public DeviceFixture {
 };
 
 struct DebugApiLinuxMultiDeviceFixture : public MultipleDevicesWithCustomHwInfo {
-    void SetUp() {
+    void setUp() {
         MultipleDevicesWithCustomHwInfo::setUp();
         neoDevice = driverHandle->devices[0]->getNEODevice();
 
@@ -536,7 +536,7 @@ struct DebugApiLinuxMultiDeviceFixture : public MultipleDevicesWithCustomHwInfo 
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
     }
 
-    void TearDown() {
+    void tearDown() {
         MultipleDevicesWithCustomHwInfo::tearDown();
     }
     NEO::Device *neoDevice = nullptr;
@@ -871,7 +871,7 @@ TEST(DebugSessionTest, GivenNullptrEventWhenReadingEventThenErrorNullptrReturned
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, result);
 }
 
-using DebugApiLinuxTest = TestLegacy<DebugApiLinuxFixture>;
+using DebugApiLinuxTest = Test<DebugApiLinuxFixture>;
 
 TEST_F(DebugApiLinuxTest, givenDeviceWhenCallingDebugAttachThenSuccessAndValidSessionHandleAreReturned) {
     zet_debug_config_t config = {};
@@ -3622,8 +3622,8 @@ TEST_F(DebugApiLinuxTest, GivenUuidEventOfKnownClassWhenHandlingEventThenGpuAddr
 }
 
 struct DebugApiLinuxVmBindFixture : public DebugApiLinuxFixture {
-    void SetUp() {
-        DebugApiLinuxFixture::SetUp();
+    void setUp() {
+        DebugApiLinuxFixture::setUp();
 
         zet_debug_config_t config = {};
         config.pid = 0x1234;
@@ -3686,8 +3686,8 @@ struct DebugApiLinuxVmBindFixture : public DebugApiLinuxFixture {
         session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap.emplace(stateSaveUUID, std::move(stateSaveUuidData));
     }
 
-    void TearDown() {
-        DebugApiLinuxFixture::TearDown();
+    void tearDown() {
+        DebugApiLinuxFixture::tearDown();
     }
 
     const uint64_t sbaClassHandle = 1;
@@ -3710,7 +3710,7 @@ struct DebugApiLinuxVmBindFixture : public DebugApiLinuxFixture {
     std::unique_ptr<MockDebugSessionLinux> session;
 };
 
-using DebugApiLinuxVmBindTest = TestLegacy<DebugApiLinuxVmBindFixture>;
+using DebugApiLinuxVmBindTest = Test<DebugApiLinuxVmBindFixture>;
 
 TEST_F(DebugApiLinuxVmBindTest, GivenVmBindEventWithKnownUuidClassWhenHandlingEventThenBindInfoIsStoredForVm) {
     uint64_t sbaAddress = 0x1234000;
@@ -5408,7 +5408,7 @@ TEST_F(DebugApiLinuxTest, givenEnginesEventHandledThenLrcToContextHandleMapIsFil
     EXPECT_TRUE(hasSubstr(infoMessage, std::string("ENGINES event: client_handle = 34, ctx_handle = 20, num_engines = 2 DESTROY")));
 }
 
-using DebugApiLinuxAttentionTest = TestLegacy<DebugApiLinuxFixture>;
+using DebugApiLinuxAttentionTest = Test<DebugApiLinuxFixture>;
 
 TEST_F(DebugApiLinuxAttentionTest, GivenEuAttentionEventForThreadsWhenHandlingEventThenNewlyStoppedThreadsSaved) {
     zet_debug_config_t config = {};
@@ -5809,7 +5809,7 @@ TEST_F(DebugApiLinuxAttentionTest, GivenInvalidVmHandleWhenHandlingAttentionEven
     EXPECT_EQ(0u, sessionMock->pendingInterrupts.size());
     EXPECT_FALSE(sessionMock->triggerEvents);
 }
-using DebugApiLinuxAsyncThreadTest = TestLegacy<DebugApiLinuxFixture>;
+using DebugApiLinuxAsyncThreadTest = Test<DebugApiLinuxFixture>;
 
 TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsErrorAndEinvalWhenReadingInternalEventsAsyncThenDetachEventIsGenerated) {
     zet_debug_config_t config = {};
@@ -6099,11 +6099,11 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEvent
 }
 
 struct DebugApiRegistersAccessFixture : public DebugApiLinuxFixture {
-    void SetUp() {
+    void setUp() {
         hwInfo = *NEO::defaultHwInfo.get();
         hwInfo.gtSystemInfo.SubSliceCount = 6 * hwInfo.gtSystemInfo.SliceCount;
 
-        DebugApiLinuxFixture::SetUp(&hwInfo);
+        DebugApiLinuxFixture::setUp(&hwInfo);
 
         mockBuiltins = new MockBuiltins();
         mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(1);
@@ -6118,8 +6118,8 @@ struct DebugApiRegistersAccessFixture : public DebugApiLinuxFixture {
         session->allThreads[stoppedThreadId]->stopThread(1u);
     }
 
-    void TearDown() {
-        DebugApiLinuxFixture::TearDown();
+    void tearDown() {
+        DebugApiLinuxFixture::tearDown();
     }
     NEO::HardwareInfo hwInfo;
     std::unique_ptr<MockDebugSessionLinux> session;
@@ -6133,7 +6133,7 @@ struct DebugApiRegistersAccessFixture : public DebugApiLinuxFixture {
     EuThread::ThreadId stoppedThreadId{0, stoppedThread};
 };
 
-using DebugApiRegistersAccessTest = TestLegacy<DebugApiRegistersAccessFixture>;
+using DebugApiRegistersAccessTest = Test<DebugApiRegistersAccessFixture>;
 
 TEST_F(DebugApiRegistersAccessTest, givenInvalidClientHandleWhenReadRegistersCalledThenErrorIsReturned) {
     session->clientHandle = MockDebugSessionLinux::invalidClientHandle;
@@ -6645,7 +6645,7 @@ TEST_F(DebugApiRegistersAccessTest, givenWriteSbaRegistersCalledThenErrorInvalid
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugWriteRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, 0, 1, nullptr));
 }
 
-using DebugApiLinuxMultitileTest = TestLegacy<DebugApiLinuxMultiDeviceFixture>;
+using DebugApiLinuxMultitileTest = Test<DebugApiLinuxMultiDeviceFixture>;
 
 TEST_F(DebugApiLinuxMultitileTest, GivenMultitileDeviceWhenCallingResumeThenThreadsFromBothTilesAreResumed) {
     zet_debug_config_t config = {};

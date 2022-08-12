@@ -831,11 +831,11 @@ TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenCompiler
 }
 
 struct ModuleStaticLinkFixture : public DeviceFixture {
-    void SetUp() {
+    void setUp() {
         DeviceFixture::setUp();
     }
 
-    void TearDown() {
+    void tearDown() {
         DeviceFixture::tearDown();
     }
 

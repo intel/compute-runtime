@@ -239,16 +239,16 @@ HWTEST_F(CommandListCreate, givenUseCsrImmediateSubmissionEnabledForCopyImmediat
 
 class CommandListImmediateFlushTaskTests : public DeviceFixture {
   public:
-    void SetUp() {
+    void setUp() {
         DeviceFixture::setUp();
     }
-    void TearDown() {
+    void tearDown() {
         DeviceFixture::tearDown();
     }
     DebugManagerStateRestore restorer;
 };
 
-using CommandListImmediateFlushTaskComputeTests = TestLegacy<CommandListImmediateFlushTaskTests>;
+using CommandListImmediateFlushTaskComputeTests = Test<CommandListImmediateFlushTaskTests>;
 HWTEST2_F(CommandListImmediateFlushTaskComputeTests, givenDG2CommandListIsInititalizedThenByDefaultFlushTaskSubmissionEnabled, IsDG2) {
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
