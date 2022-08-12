@@ -32,7 +32,7 @@ namespace L0 {
 namespace ult {
 
 struct L0DebuggerWindowsFixture {
-    void SetUp() {
+    void setUp() {
         executionEnvironment = new NEO::ExecutionEnvironment;
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->setDebuggingEnabled();
@@ -62,7 +62,7 @@ struct L0DebuggerWindowsFixture {
         device = driverHandle->devices[0];
     }
 
-    void TearDown() {
+    void tearDown() {
     }
 
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
@@ -74,7 +74,7 @@ struct L0DebuggerWindowsFixture {
     MockGdi *gdi = nullptr;
 };
 
-using L0DebuggerWindowsTest = TestLegacy<L0DebuggerWindowsFixture>;
+using L0DebuggerWindowsTest = Test<L0DebuggerWindowsFixture>;
 
 TEST_F(L0DebuggerWindowsTest, givenProgramDebuggingEnabledWhenDriverHandleIsCreatedThenItAllocatesL0Debugger) {
     EXPECT_NE(nullptr, neoDevice->getDebugger());

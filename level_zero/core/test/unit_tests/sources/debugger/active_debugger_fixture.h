@@ -27,7 +27,7 @@ namespace L0 {
 namespace ult {
 
 struct ActiveDebuggerFixture {
-    void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
         NEO::MockCompilerEnableGuard mock(true);
         ze_result_t returnValue;
         auto executionEnvironment = new NEO::ExecutionEnvironment();
@@ -67,7 +67,7 @@ struct ActiveDebuggerFixture {
         deviceL0 = L0::Device::fromHandle(hDevice);
         ASSERT_NE(nullptr, deviceL0);
     }
-    void TearDown() { // NOLINT(readability-identifier-naming)
+    void tearDown() {
         L0::GlobalDriver = nullptr;
     }
 

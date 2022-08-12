@@ -21,7 +21,7 @@ namespace L0 {
 namespace ult {
 
 struct L0DebuggerFixture {
-    void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
         NEO::MockCompilerEnableGuard mock(true);
         auto executionEnvironment = new NEO::ExecutionEnvironment();
         auto mockBuiltIns = new NEO::MockBuiltins();
@@ -54,7 +54,7 @@ struct L0DebuggerFixture {
         device = driverHandle->devices[0];
     }
 
-    void TearDown() { // NOLINT(readability-identifier-naming)
+    void tearDown() {
     }
 
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
@@ -68,14 +68,14 @@ struct L0DebuggerFixture {
 };
 
 struct L0DebuggerHwFixture : public L0DebuggerFixture {
-    void SetUp() {
-        L0DebuggerFixture::SetUp();
+    void setUp() {
+        L0DebuggerFixture::setUp();
         debuggerHw = static_cast<DebuggerL0 *>(neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.get());
         neoDevice->setPreemptionMode(PreemptionMode::Disabled);
     }
 
-    void TearDown() {
-        L0DebuggerFixture::TearDown();
+    void tearDown() {
+        L0DebuggerFixture::tearDown();
         debuggerHw = nullptr;
     }
     template <typename GfxFamily>
@@ -86,12 +86,12 @@ struct L0DebuggerHwFixture : public L0DebuggerFixture {
 };
 
 struct L0DebuggerPerContextAddressSpaceFixture : public L0DebuggerHwFixture {
-    void SetUp() {
+    void setUp() {
         NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(0);
-        L0DebuggerHwFixture::SetUp();
+        L0DebuggerHwFixture::setUp();
     }
-    void TearDown() {
-        L0DebuggerHwFixture::TearDown();
+    void tearDown() {
+        L0DebuggerHwFixture::tearDown();
     }
     DebugManagerStateRestore restorer;
 };
@@ -99,10 +99,10 @@ struct L0DebuggerPerContextAddressSpaceFixture : public L0DebuggerHwFixture {
 struct L0DebuggerHwParameterizedFixture : ::testing::TestWithParam<int>, public L0DebuggerHwFixture {
     void SetUp() override {
         NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(GetParam());
-        L0DebuggerHwFixture::SetUp();
+        L0DebuggerHwFixture::setUp();
     }
     void TearDown() override {
-        L0DebuggerHwFixture::TearDown();
+        L0DebuggerHwFixture::tearDown();
     }
     DebugManagerStateRestore restorer;
 };

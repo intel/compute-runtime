@@ -38,14 +38,14 @@ class ZeAPITracingCoreTestsFixture {
     ZeAPITracingCoreTestsFixture(){};
 
   protected:
-    virtual void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
         driver_ddiTable.enableTracing = true;
         myThreadPrivateTracerData.onList = false;
         myThreadPrivateTracerData.isInitialized = false;
         myThreadPrivateTracerData.testAndSetThreadTracerDataInitializedAndOnList();
     }
 
-    virtual void TearDown() { // NOLINT(readability-identifier-naming)
+    void tearDown() {
         myThreadPrivateTracerData.removeThreadTracerDataFromList();
         driver_ddiTable.enableTracing = false;
     }
@@ -55,11 +55,11 @@ class ZeApiTracingCoreTests : public ZeAPITracingCoreTestsFixture, public ::test
 
   protected:
     void SetUp() override {
-        ZeAPITracingCoreTestsFixture::SetUp();
+        ZeAPITracingCoreTestsFixture::setUp();
     }
 
     void TearDown() override {
-        ZeAPITracingCoreTestsFixture::TearDown();
+        ZeAPITracingCoreTestsFixture::tearDown();
     }
 };
 
@@ -76,7 +76,7 @@ class ZeApiTracingRuntimeTests : public ZeAPITracingCoreTestsFixture, public ::t
     void SetUp() override {
         ze_result_t result;
 
-        ZeAPITracingCoreTestsFixture::SetUp();
+        ZeAPITracingCoreTestsFixture::setUp();
         userData = &defaultUserData;
         tracerDesc.pUserData = userData;
         result = zetTracerExpCreate(nullptr, &tracerDesc, &apiTracerHandle);
@@ -91,7 +91,7 @@ class ZeApiTracingRuntimeTests : public ZeAPITracingCoreTestsFixture, public ::t
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         result = zetTracerExpDestroy(apiTracerHandle);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        ZeAPITracingCoreTestsFixture::TearDown();
+        ZeAPITracingCoreTestsFixture::tearDown();
     }
 
     void setTracerCallbacksAndEnableTracer() {
@@ -136,7 +136,7 @@ class ZeApiTracingRuntimeMultipleArgumentsTests : public ZeAPITracingCoreTestsFi
     void SetUp() override {
         ze_result_t result;
 
-        ZeAPITracingCoreTestsFixture::SetUp();
+        ZeAPITracingCoreTestsFixture::setUp();
 
         pUserData0 = &defaultUserData0;
         tracerDesc0.pUserData = pUserData0;
@@ -185,7 +185,7 @@ class ZeApiTracingRuntimeMultipleArgumentsTests : public ZeAPITracingCoreTestsFi
         result = zetTracerExpDestroy(apiTracerHandle3);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-        ZeAPITracingCoreTestsFixture::TearDown();
+        ZeAPITracingCoreTestsFixture::tearDown();
     }
 
     void setTracerCallbacksAndEnableTracer() {

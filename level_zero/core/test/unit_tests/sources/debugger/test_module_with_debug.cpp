@@ -25,7 +25,7 @@
 
 namespace L0 {
 namespace ult {
-using DeviceWithDebuggerEnabledTest = TestLegacy<ActiveDebuggerFixture>;
+using DeviceWithDebuggerEnabledTest = Test<ActiveDebuggerFixture>;
 TEST_F(DeviceWithDebuggerEnabledTest, givenDebuggingEnabledWhenModuleIsCreatedThenDebugOptionsAreUsed) {
     NEO::MockCompilerEnableGuard mock(true);
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
@@ -376,7 +376,7 @@ HWTEST_F(KernelDebugSurfaceTest, givenDebuggerAndBindfulKernelWhenAppendingKerne
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER, debugSurfaceState->getSurfaceType());
 }
 
-using ModuleWithDebuggerL0Test = TestLegacy<L0DebuggerHwFixture>;
+using ModuleWithDebuggerL0Test = Test<L0DebuggerHwFixture>;
 TEST_F(ModuleWithDebuggerL0Test, givenDebuggingEnabledWhenModuleIsCreatedThenDebugOptionsAreNotUsed) {
     NEO::MockCompilerEnableGuard mock(true);
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
@@ -401,7 +401,7 @@ TEST_F(ModuleWithDebuggerL0Test, givenDebuggingEnabledWhenModuleIsCreatedThenDeb
     EXPECT_FALSE(CompilerOptions::contains(cip->buildOptions, L0::BuildOptions::optDisable));
 }
 
-using KernelInitializeTest = TestLegacy<L0DebuggerHwFixture>;
+using KernelInitializeTest = Test<L0DebuggerHwFixture>;
 
 TEST_F(KernelInitializeTest, givenDebuggingEnabledWhenKernelsAreInitializedThenAllocationsAreNotResidentAndNotCopied) {
     uint32_t kernelHeap = 0xDEAD;
@@ -549,7 +549,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenNoDebugDataWhenInitializingModuleThenDoN
     EXPECT_EQ(0u, getMockDebuggerL0Hw<FamilyType>()->notifyModuleCreateCount);
 }
 
-using ModuleWithZebinAndL0DebuggerTest = TestLegacy<L0DebuggerHwFixture>;
+using ModuleWithZebinAndL0DebuggerTest = Test<L0DebuggerHwFixture>;
 
 HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinDebugDataWhenInitializingModuleThenRegisterElfAndNotifyModuleCreate) {
     NEO::MockCompilerEnableGuard mock(true);

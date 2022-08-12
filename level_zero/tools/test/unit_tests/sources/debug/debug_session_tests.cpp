@@ -1660,7 +1660,7 @@ TEST_F(MultiTileDebugSessionTest, givenAllSlicesInRequestWhenAllInterruptsReturn
 }
 
 struct DebugSessionRegistersAccess {
-    void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
         zet_debug_config_t config = {};
         config.pid = 0x1234;
         auto hwInfo = *NEO::defaultHwInfo.get();
@@ -1673,7 +1673,7 @@ struct DebugSessionRegistersAccess {
         session->allThreads[stoppedThreadId]->stopThread(1u);
     }
 
-    void TearDown() { // NOLINT(readability-identifier-naming)
+    void tearDown() {
     }
 
     void dumpRegisterState() {
@@ -1701,7 +1701,7 @@ struct DebugSessionRegistersAccess {
     NEO::MockDevice *neoDevice = nullptr;
 };
 
-using DebugSessionRegistersAccessTest = TestLegacy<DebugSessionRegistersAccess>;
+using DebugSessionRegistersAccessTest = Test<DebugSessionRegistersAccess>;
 
 TEST_F(DebugSessionRegistersAccessTest, givenTypeToRegsetDescCalledThenCorrectRegdescIsReturned) {
     session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);

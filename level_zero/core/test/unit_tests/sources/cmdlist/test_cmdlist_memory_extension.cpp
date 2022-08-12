@@ -25,7 +25,7 @@ namespace ult {
 
 class CommandListMemoryExtensionFixture : public DeviceFixture {
   public:
-    void SetUp() {
+    void setUp() {
         DeviceFixture::setUp();
         ze_result_t returnValue;
         commandList.reset(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
@@ -52,7 +52,7 @@ class CommandListMemoryExtensionFixture : public DeviceFixture {
         EXPECT_NE(nullptr, ptr);
     }
 
-    void TearDown() {
+    void tearDown() {
         context->freeMem(ptr);
         event.reset(nullptr);
         eventPool.reset(nullptr);
@@ -67,7 +67,7 @@ class CommandListMemoryExtensionFixture : public DeviceFixture {
     void *ptr = nullptr;
 };
 
-using CommandListAppendWaitOnMemExtension = TestLegacy<CommandListMemoryExtensionFixture>;
+using CommandListAppendWaitOnMemExtension = Test<CommandListMemoryExtensionFixture>;
 
 TEST_F(CommandListAppendWaitOnMemExtension, givenAppendWaitOnMemReturnsUnsupported) {
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -76,7 +76,7 @@ TEST_F(CommandListAppendWaitOnMemExtension, givenAppendWaitOnMemReturnsUnsupport
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-using CommandListAppendWriteToMemExtension = TestLegacy<CommandListMemoryExtensionFixture>;
+using CommandListAppendWriteToMemExtension = Test<CommandListMemoryExtensionFixture>;
 
 TEST_F(CommandListAppendWriteToMemExtension, givenAppendWriteToMemReturnsUnsupported) {
     ze_result_t result = ZE_RESULT_SUCCESS;

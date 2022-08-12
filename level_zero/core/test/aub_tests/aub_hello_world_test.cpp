@@ -18,7 +18,7 @@
 namespace L0 {
 namespace ult {
 
-using AUBHelloWorldL0 = TestLegacy<AUBFixtureL0>;
+using AUBHelloWorldL0 = Test<AUBFixtureL0>;
 TEST_F(AUBHelloWorldL0, whenAppendMemoryCopyIsCalledThenMemoryIsProperlyCopied) {
     uint8_t size = 8;
     uint8_t val = 255;

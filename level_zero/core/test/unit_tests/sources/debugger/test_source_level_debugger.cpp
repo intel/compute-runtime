@@ -25,7 +25,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandQueueDebugCommandsTest = TestLegacy<ActiveDebuggerFixture>;
+using CommandQueueDebugCommandsTest = Test<ActiveDebuggerFixture>;
 
 HWTEST2_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsExecutedThenKernelDebugCommandsAreAdded, IsAtMostGen12lp) {
     NEO::MockCompilerEnableGuard mock(true);
@@ -158,7 +158,7 @@ HWTEST2_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsE
     commandQueue->destroy();
 }
 
-using SLDebuggerInternalUsageTest = TestLegacy<ActiveDebuggerFixture>;
+using SLDebuggerInternalUsageTest = Test<ActiveDebuggerFixture>;
 
 HWTEST2_F(SLDebuggerInternalUsageTest, givenDebuggingEnabledWhenInternalCmdQIsUsedThenDebuggerPathsAreNotExecuted, IsAtLeastSkl) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
@@ -232,7 +232,7 @@ HWTEST2_F(SLDebuggerInternalUsageTest, givenDebuggingEnabledWhenInternalCmdQIsUs
     commandList->destroy();
 }
 
-using DeviceWithDebuggerEnabledTest = TestLegacy<ActiveDebuggerFixture>;
+using DeviceWithDebuggerEnabledTest = Test<ActiveDebuggerFixture>;
 
 TEST_F(DeviceWithDebuggerEnabledTest, givenDebuggingEnabledWhenDeviceIsCreatedThenItHasDebugSurfaceCreatedWithCorrectAllocationType) {
     ASSERT_NE(nullptr, deviceL0->getDebugSurface());
@@ -247,10 +247,10 @@ struct TwoSubDevicesDebuggerEnabledTest : public ActiveDebuggerFixture, public :
     void SetUp() override {
         DebugManager.flags.CreateMultipleSubDevices.set(2);
         VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
-        ActiveDebuggerFixture::SetUp();
+        ActiveDebuggerFixture::setUp();
     }
     void TearDown() override {
-        ActiveDebuggerFixture::TearDown();
+        ActiveDebuggerFixture::tearDown();
     }
     DebugManagerStateRestore restorer;
 };

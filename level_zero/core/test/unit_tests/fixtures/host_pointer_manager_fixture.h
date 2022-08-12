@@ -25,7 +25,7 @@ namespace L0 {
 namespace ult {
 
 struct HostPointerManagerFixure {
-    void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
         NEO::MockCompilerEnableGuard mock(true);
         NEO::DeviceVector devices;
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
@@ -51,7 +51,7 @@ struct HostPointerManagerFixure {
         context = L0::Context::fromHandle(hContext);
     }
 
-    void TearDown() { // NOLINT(readability-identifier-naming)
+    void tearDown() {
         context->destroy();
 
         hostDriverHandle->getMemoryManager()->freeSystemMemory(heapPointer);
@@ -72,26 +72,26 @@ struct HostPointerManagerFixure {
 };
 
 struct ForceDisabledHostPointerManagerFixure : public HostPointerManagerFixure {
-    void SetUp() {
+    void setUp() {
         DebugManager.flags.EnableHostPointerImport.set(0);
 
-        HostPointerManagerFixure::SetUp();
+        HostPointerManagerFixure::setUp();
     }
 
-    void TearDown() {
-        HostPointerManagerFixure::TearDown();
+    void tearDown() {
+        HostPointerManagerFixure::tearDown();
     }
 };
 
 struct ForceEnabledHostPointerManagerFixure : public HostPointerManagerFixure {
-    void SetUp() {
+    void setUp() {
         DebugManager.flags.EnableHostPointerImport.set(1);
 
-        HostPointerManagerFixure::SetUp();
+        HostPointerManagerFixure::setUp();
     }
 
-    void TearDown() {
-        HostPointerManagerFixure::TearDown();
+    void tearDown() {
+        HostPointerManagerFixure::tearDown();
     }
 };
 

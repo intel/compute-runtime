@@ -28,15 +28,15 @@
 namespace L0 {
 namespace ult {
 
-struct DebuggerAub : TestLegacy<AUBFixtureL0> {
+struct DebuggerAub : Test<AUBFixtureL0> {
 
     void SetUp() override {
-        AUBFixtureL0::SetUp(NEO::defaultHwInfo.get(), true);
+        AUBFixtureL0::setUp(NEO::defaultHwInfo.get(), true);
     }
     void TearDown() override {
 
         module->destroy();
-        AUBFixtureL0::TearDown();
+        AUBFixtureL0::tearDown();
     }
 
     void createModuleFromFile(const std::string &fileName, ze_context_handle_t context, L0::Device *device) {

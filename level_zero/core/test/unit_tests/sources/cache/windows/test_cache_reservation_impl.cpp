@@ -17,19 +17,19 @@ namespace ult {
 
 class CacheReservationFixture : public DeviceFixture {
   public:
-    void SetUp() {
+    void setUp() {
         DeviceFixture::setUp();
         auto deviceImp = static_cast<DeviceImp *>(device);
         ASSERT_NE(nullptr, deviceImp->cacheReservation.get());
         cache = deviceImp->cacheReservation.get();
     }
-    void TearDown() {
+    void tearDown() {
         DeviceFixture::tearDown();
     }
     CacheReservation *cache = nullptr;
 };
 
-using CacheReservationTest = TestLegacy<CacheReservationFixture>;
+using CacheReservationTest = Test<CacheReservationFixture>;
 
 TEST_F(CacheReservationTest, GivenCacheReservationCreatedWhenCallingReserveCacheThenReturnFalse) {
     size_t cacheLevel = 3;

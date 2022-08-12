@@ -28,7 +28,7 @@ namespace ult {
 
 struct L0DebuggerLinuxFixture {
 
-    void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
         setUp(nullptr);
     }
 
@@ -56,7 +56,7 @@ struct L0DebuggerLinuxFixture {
         device = driverHandle->devices[0];
     }
 
-    void TearDown() { // NOLINT(readability-identifier-naming)
+    void tearDown() {
         drmMock = nullptr;
         device = nullptr;
         neoDevice = nullptr;
@@ -70,7 +70,7 @@ struct L0DebuggerLinuxFixture {
 
 struct L0DebuggerLinuxMultitileFixture : public L0DebuggerLinuxFixture {
 
-    void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
 
         DebugManager.flags.CreateMultipleRootDevices.set(1);
         constexpr auto numSubDevices = 2u;
@@ -89,8 +89,8 @@ struct L0DebuggerLinuxMultitileFixture : public L0DebuggerLinuxFixture {
         subDevice1 = neoDevice->getSubDevice(1)->getSpecializedDevice<Device>();
     }
 
-    void TearDown() { // NOLINT(readability-identifier-naming)
-        L0DebuggerLinuxFixture::TearDown();
+    void tearDown() {
+        L0DebuggerLinuxFixture::tearDown();
     }
 
     DebugManagerStateRestore restorer;
@@ -99,8 +99,8 @@ struct L0DebuggerLinuxMultitileFixture : public L0DebuggerLinuxFixture {
     L0::Device *subDevice1 = nullptr;
 };
 
-using L0DebuggerLinuxTest = TestLegacy<L0DebuggerLinuxFixture>;
-using L0DebuggerLinuxMultitileTest = TestLegacy<L0DebuggerLinuxMultitileFixture>;
+using L0DebuggerLinuxTest = Test<L0DebuggerLinuxFixture>;
+using L0DebuggerLinuxMultitileTest = Test<L0DebuggerLinuxMultitileFixture>;
 
 TEST_F(L0DebuggerLinuxTest, givenProgramDebuggingEnabledWhenDriverHandleIsCreatedThenItAllocatesL0Debugger) {
     EXPECT_NE(nullptr, neoDevice->getDebugger());

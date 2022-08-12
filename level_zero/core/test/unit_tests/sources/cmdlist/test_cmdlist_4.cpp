@@ -720,7 +720,7 @@ HWTEST2_F(CommandListCreate, whenCommandListIsCreatedThenFlagsAreCorrectlySet, I
     }
 }
 
-using HostPointerManagerCommandListTest = TestLegacy<HostPointerManagerFixure>;
+using HostPointerManagerCommandListTest = Test<HostPointerManagerFixure>;
 HWTEST2_F(HostPointerManagerCommandListTest,
           givenImportedHostPointerWhenAppendMemoryFillUsingHostPointerThenAppendFillUsingHostPointerAllocation,
           IsAtLeastSkl) {

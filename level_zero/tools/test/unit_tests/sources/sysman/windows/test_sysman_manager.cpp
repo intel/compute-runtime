@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,7 @@ class SysmanKmdManagerFixture : public ::testing::Test {
   protected:
     Mock<MockKmdSysManager> *pKmdSysManager = nullptr;
 
-    void SetUp() {
+    void SetUp() override {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }

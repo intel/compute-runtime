@@ -32,9 +32,9 @@ struct PerContextAddressSpaceFixture : public Test<DeviceFixture> {
     DebugManagerStateRestore restorer;
 };
 
-using L0DebuggerPerContextAddressSpaceTest = TestLegacy<L0DebuggerPerContextAddressSpaceFixture>;
+using L0DebuggerPerContextAddressSpaceTest = Test<L0DebuggerPerContextAddressSpaceFixture>;
 
-using L0DebuggerTest = TestLegacy<L0DebuggerHwFixture>;
+using L0DebuggerTest = Test<L0DebuggerHwFixture>;
 
 using L0DebuggerParameterizedTests = L0DebuggerHwParameterizedFixture;
 
@@ -332,14 +332,14 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenSbaB
 
 INSTANTIATE_TEST_CASE_P(SBAModesForDebugger, L0DebuggerParameterizedTests, ::testing::Values(0, 1));
 
-struct L0DebuggerSingleAddressSpace : public TestLegacy<L0DebuggerHwFixture> {
+struct L0DebuggerSingleAddressSpace : public Test<L0DebuggerHwFixture> {
     void SetUp() override {
         NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(1);
-        TestLegacy<L0DebuggerHwFixture>::SetUp();
+        Test<L0DebuggerHwFixture>::SetUp();
     }
 
     void TearDown() override {
-        TestLegacy<L0DebuggerHwFixture>::TearDown();
+        Test<L0DebuggerHwFixture>::TearDown();
     }
 
     DebugManagerStateRestore restorer;

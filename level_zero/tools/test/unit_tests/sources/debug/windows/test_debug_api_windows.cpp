@@ -99,21 +99,21 @@ struct MockDebugSessionWindows : DebugSessionWindows {
 };
 
 struct DebugApiWindowsFixture : public DeviceFixture {
-    void SetUp() {
+    void setUp() {
         DeviceFixture::setUp();
         mockWddm = new WddmEuDebugInterfaceMock(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
         neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
         neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockWddm));
     }
 
-    void TearDown() {
+    void tearDown() {
         DeviceFixture::tearDown();
     }
     static constexpr uint8_t bufferSize = 16;
     WddmEuDebugInterfaceMock *mockWddm = nullptr;
 };
 
-using DebugApiWindowsTest = TestLegacy<DebugApiWindowsFixture>;
+using DebugApiWindowsTest = Test<DebugApiWindowsFixture>;
 
 TEST_F(DebugApiWindowsTest, GivenReadOfGpuVaFailDueToEscapeCallFailureWhenTryingToReadSbaThenErrorIsReported) {
     zet_debug_config_t config = {};
@@ -849,7 +849,7 @@ TEST(DebugSessionWindowsTest, whenTranslateEscapeErrorStatusCalledThenCorrectZeR
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, DebugSessionWindows::translateEscapeReturnStatusToZeResult(DBGUMD_RETURN_TYPE_MAX));
 }
 
-using DebugApiWindowsAsyncThreadTest = TestLegacy<DebugApiWindowsFixture>;
+using DebugApiWindowsAsyncThreadTest = Test<DebugApiWindowsFixture>;
 
 TEST_F(DebugApiWindowsAsyncThreadTest, GivenDebugSessionWhenStartingAndClosingAsyncThreadThenThreadIsStartedAndFinishes) {
     auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);

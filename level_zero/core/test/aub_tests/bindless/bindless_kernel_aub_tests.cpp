@@ -22,17 +22,17 @@
 namespace L0 {
 namespace ult {
 
-struct L0BindlessAub : TestLegacy<AUBFixtureL0> {
+struct L0BindlessAub : Test<AUBFixtureL0> {
 
     void SetUp() override {
         DebugManager.flags.UseBindlessMode.set(1);
         DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
-        AUBFixtureL0::SetUp();
+        AUBFixtureL0::setUp();
     }
     void TearDown() override {
 
         module->destroy();
-        AUBFixtureL0::TearDown();
+        AUBFixtureL0::tearDown();
     }
 
     void createModuleFromFile(const std::string &fileName, ze_context_handle_t context, L0::Device *device) {

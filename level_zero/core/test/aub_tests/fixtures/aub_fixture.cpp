@@ -33,10 +33,10 @@ void AUBFixtureL0::prepareCopyEngines(NEO::MockDevice &device, const std::string
     }
 }
 
-void AUBFixtureL0::SetUp() {
-    SetUp(NEO::defaultHwInfo.get(), false);
+void AUBFixtureL0::setUp() {
+    setUp(NEO::defaultHwInfo.get(), false);
 }
-void AUBFixtureL0::SetUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEnabled) {
+void AUBFixtureL0::setUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEnabled) {
     ASSERT_NE(nullptr, hardwareInfo);
     const auto &hwInfo = *hardwareInfo;
 
@@ -92,7 +92,7 @@ void AUBFixtureL0::SetUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEn
     pCmdq = CommandQueue::create(hwInfo.platform.eProductFamily, device, csr, &queueDesc, false, false, returnValue);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
-void AUBFixtureL0::TearDown() {
+void AUBFixtureL0::tearDown() {
     context->destroy();
     pCmdq->destroy();
 }

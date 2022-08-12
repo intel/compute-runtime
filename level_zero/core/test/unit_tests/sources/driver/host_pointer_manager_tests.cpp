@@ -15,7 +15,7 @@
 namespace L0 {
 namespace ult {
 
-using HostPointerManagerTest = TestLegacy<HostPointerManagerFixure>;
+using HostPointerManagerTest = Test<HostPointerManagerFixure>;
 
 TEST_F(HostPointerManagerTest,
        givenMultipleGraphicsAllocationWhenCopyingHostPointerDataThenCopyOnlyExistingAllocations) {
@@ -437,7 +437,7 @@ TEST_F(HostPointerManagerTest, givenMisalignedPointerRegisteredWhenGettingRelati
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-using ForceDisabledHostPointerManagerTest = TestLegacy<ForceDisabledHostPointerManagerFixure>;
+using ForceDisabledHostPointerManagerTest = Test<ForceDisabledHostPointerManagerFixure>;
 
 TEST_F(ForceDisabledHostPointerManagerTest, givenHostPointerManagerForceDisabledThenReturnFeatureUnsupported) {
     EXPECT_EQ(nullptr, hostDriverHandle->hostPointerManager.get());
@@ -458,7 +458,7 @@ TEST_F(ForceDisabledHostPointerManagerTest, givenHostPointerManagerForceDisabled
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-using ForceEnabledHostPointerManagerTest = TestLegacy<ForceEnabledHostPointerManagerFixure>;
+using ForceEnabledHostPointerManagerTest = Test<ForceEnabledHostPointerManagerFixure>;
 
 TEST_F(ForceEnabledHostPointerManagerTest, givenHostPointerManagerForceEnabledThenReturnSuccess) {
     EXPECT_NE(nullptr, hostDriverHandle->hostPointerManager.get());

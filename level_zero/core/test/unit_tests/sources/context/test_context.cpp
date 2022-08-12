@@ -326,7 +326,7 @@ TEST_F(ContextTest, whenCreatingAndDestroyingContextThenSuccessIsReturned) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-using ContextMakeMemoryResidentTests = TestLegacy<HostPointerManagerFixure>;
+using ContextMakeMemoryResidentTests = Test<HostPointerManagerFixure>;
 
 TEST_F(ContextMakeMemoryResidentTests,
        givenUknownPointerPassedToMakeMemoryResidentThenInvalidArgumentIsReturned) {
