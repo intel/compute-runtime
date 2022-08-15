@@ -308,7 +308,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
 
     bool skipBlitCalls = false;
     bool storeFlushedTaskStream = false;
-    std::unique_ptr<uint8_t> storedTaskStream;
+    std::unique_ptr<uint8_t[]> storedTaskStream;
     size_t storedTaskStreamSize = 0;
 
     int flushCalledCount = 0;
