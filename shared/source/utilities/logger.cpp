@@ -22,7 +22,7 @@ FileLogger<globalDebugFunctionalityLevel> &fileLoggerInstance() {
 
 template <DebugFunctionalityLevel DebugLevel>
 FileLogger<DebugLevel>::FileLogger(std::string filename, const DebugVariables &flags) {
-    logFileName = filename;
+    logFileName = std::move(filename);
     std::remove(logFileName.c_str());
 
     dumpKernels = flags.DumpKernels.get();
@@ -37,7 +37,7 @@ FileLogger<DebugLevel>::~FileLogger() = default;
 
 template <DebugFunctionalityLevel DebugLevel>
 void FileLogger<DebugLevel>::writeToFile(std::string filename, const char *str, size_t length, std::ios_base::openmode mode) {
-    std::unique_lock<std::mutex> theLock(mutex);
+    std::lock_guard theLock(mutex);
     std::ofstream outFile(filename, mode);
     if (outFile.is_open()) {
         outFile.write(str, length);

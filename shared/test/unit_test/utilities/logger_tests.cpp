@@ -351,7 +351,7 @@ struct DummyEvaluator {
         wasCalled = true;
     }
 
-    operator const char *() {
+    operator const char *() const {
         return "";
     }
 };
