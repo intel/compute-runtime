@@ -211,7 +211,7 @@ struct Linker {
         if (!success) {
             return LinkingStatus::Error;
         }
-        patchInstructionsSegments(instructionsSegments, outUnresolvedExternals);
+        patchInstructionsSegments(instructionsSegments, outUnresolvedExternals, kernelDescriptors);
         patchDataSegments(globalVariablesSegInfo, globalConstantsSegInfo, globalVariablesSeg, globalConstantsSeg,
                           outUnresolvedExternals, pDevice, constantsInitData, variablesInitData);
         resolveImplicitArgs(kernelDescriptors, pDevice);
@@ -241,7 +241,7 @@ struct Linker {
 
     bool processRelocations(const SegmentInfo &globalVariables, const SegmentInfo &globalConstants, const SegmentInfo &exportedFunctions, const SegmentInfo &globalStrings);
 
-    void patchInstructionsSegments(const std::vector<PatchableSegment> &instructionsSegments, std::vector<UnresolvedExternal> &outUnresolvedExternals);
+    void patchInstructionsSegments(const std::vector<PatchableSegment> &instructionsSegments, std::vector<UnresolvedExternal> &outUnresolvedExternals, const KernelDescriptorsT &kernelDescriptors);
 
     void patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const SegmentInfo &globalConstantsSegInfo,
                            GraphicsAllocation *globalVariablesSeg, GraphicsAllocation *globalConstantsSeg,
@@ -260,9 +260,6 @@ struct Linker {
 
 std::string constructLinkerErrorMessage(const Linker::UnresolvedExternals &unresolvedExternals, const std::vector<std::string> &instructionsSegmentsNames);
 std::string constructRelocationsDebugMessage(const Linker::RelocatedSymbolsMap &relocatedSymbols);
-constexpr bool shouldIgnoreRelocation(const LinkerInput::RelocationInfo &relocation) {
-    return LinkerInput::RelocationInfo::Type::PerThreadPayloadOffset == relocation.type;
-}
 inline bool isDataSegment(const SegmentType &segment) {
     return segment == SegmentType::GlobalConstants || segment == SegmentType::GlobalVariables;
 }

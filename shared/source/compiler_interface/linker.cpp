@@ -318,7 +318,7 @@ void Linker::patchAddress(void *relocAddress, const uint64_t value, const Linker
     }
 }
 
-void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &instructionsSegments, std::vector<UnresolvedExternal> &outUnresolvedExternals) {
+void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &instructionsSegments, std::vector<UnresolvedExternal> &outUnresolvedExternals, const KernelDescriptorsT &kernelDescriptors) {
     if (false == data.getTraits().requiresPatchingOfInstructionSegments) {
         return;
     }
@@ -330,11 +330,15 @@ void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
         auto &thisSegmentRelocs = *relocsIt;
         const PatchableSegment &instSeg = *segIt;
         for (const auto &relocation : thisSegmentRelocs) {
-            if (shouldIgnoreRelocation(relocation)) {
-                continue;
-            }
             UNRECOVERABLE_IF(nullptr == instSeg.hostPointer);
+            bool invalidOffset = relocation.offset + addressSizeInBytes(relocation.type) > instSeg.segmentSize;
+            DEBUG_BREAK_IF(invalidOffset);
+
             auto relocAddress = ptrOffset(instSeg.hostPointer, static_cast<uintptr_t>(relocation.offset));
+            if (relocation.type == LinkerInput::RelocationInfo::Type::PerThreadPayloadOffset) {
+                *reinterpret_cast<uint32_t *>(relocAddress) = kernelDescriptors.at(segId)->kernelAttributes.crossThreadDataSize;
+                continue;
+            };
             if (relocation.symbolName == implicitArgsRelocationSymbolName) {
                 if (pImplicitArgsRelocationAddresses.find(segId) == pImplicitArgsRelocationAddresses.end()) {
                     pImplicitArgsRelocationAddresses.insert({segId, {}});
@@ -343,17 +347,12 @@ void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
                 continue;
             }
             auto symbolIt = relocatedSymbols.find(relocation.symbolName);
-
-            bool invalidOffset = relocation.offset + addressSizeInBytes(relocation.type) > instSeg.segmentSize;
             bool unresolvedExternal = (symbolIt == relocatedSymbols.end());
-
-            DEBUG_BREAK_IF(invalidOffset);
             if (invalidOffset || unresolvedExternal) {
                 uint32_t segId = static_cast<uint32_t>(segIt - instructionsSegments.begin());
                 outUnresolvedExternals.push_back(UnresolvedExternal{relocation, segId, invalidOffset});
                 continue;
             }
-
             uint64_t patchValue = symbolIt->second.gpuAddress + relocation.addend;
             patchAddress(relocAddress, patchValue, relocation);
         }
