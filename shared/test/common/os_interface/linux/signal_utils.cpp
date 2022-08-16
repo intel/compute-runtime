@@ -9,6 +9,7 @@
 
 #include "gtest/gtest.h"
 
+#include <time.h>
 #include <unistd.h>
 
 std::string lastTest("");
@@ -17,8 +18,13 @@ namespace NEO {
 extern const unsigned int ultIterationMaxTime;
 }
 
+int newStdOut = -1;
+
 struct sigaction oldSigAbrt;
 void handleSIGABRT(int signal) {
+    if (newStdOut != -1) {
+        dup2(newStdOut, 1);
+    }
     std::cout << "SIGABRT on: " << lastTest << std::endl;
     if (sigaction(SIGABRT, &oldSigAbrt, nullptr) == -1) {
         std::cout << "FATAL: cannot fatal SIGABRT handler" << std::endl;
@@ -31,12 +37,25 @@ void handleSIGABRT(int signal) {
     raise(signal);
 }
 
+struct timespec startTimeSpec = {};
+struct timespec alrmTimeSpec = {};
 void handleSIGALRM(int signal) {
-    std::cout << "Tests timeout on: " << lastTest << std::endl;
+    if (newStdOut != -1) {
+        dup2(newStdOut, 1);
+    }
+    std::cout << "Tests timeout: ";
+    if (clock_gettime(CLOCK_MONOTONIC_RAW, &alrmTimeSpec) == 0) {
+        auto deltaSec = alrmTimeSpec.tv_sec - startTimeSpec.tv_sec;
+        std::cout << " after: " << deltaSec << " seconds";
+    }
+    std::cout << " on: " << lastTest << std::endl;
     abort();
 }
 
 void handleSIGSEGV(int signal) {
+    if (newStdOut != -1) {
+        dup2(newStdOut, 1);
+    }
     std::cout << "SIGSEGV on: " << lastTest << std::endl;
     abort();
 }
@@ -51,12 +70,19 @@ int setAbrt(bool enableAbrt) {
         std::cout << "FATAL ERROR: cannot intercept SIGABRT" << std::endl;
         return -2;
     }
+    if (newStdOut == -1) {
+        newStdOut = dup(1);
+    }
     return 0;
 }
 
 int setAlarm(bool enableAlarm) {
     std::cout << "enable SIGALRM handler: " << enableAlarm << std::endl;
     if (enableAlarm) {
+        if (clock_gettime(CLOCK_MONOTONIC_RAW, &startTimeSpec)) {
+            startTimeSpec.tv_sec = 0;
+        }
+
         auto currentUltIterationMaxTime = NEO::ultIterationMaxTime;
         auto ultIterationMaxTimeEnv = getenv("NEO_ULT_ITERATION_MAX_TIME");
         if (ultIterationMaxTimeEnv != nullptr) {
@@ -71,6 +97,9 @@ int setAlarm(bool enableAlarm) {
         if (sigaction(SIGALRM, &sa, NULL) == -1) {
             std::cout << "FATAL ERROR: cannot intercept SIGALRM" << std::endl;
             return -2;
+        }
+        if (newStdOut == -1) {
+            newStdOut = dup(1);
         }
         alarm(alarmTime);
         std::cout << "set timeout to: " << alarmTime << std::endl;
@@ -87,6 +116,9 @@ int setSegv(bool enableSegv) {
     if (sigaction(SIGSEGV, &sa, NULL) == -1) {
         std::cout << "FATAL ERROR: cannot intercept SIGSEGV" << std::endl;
         return -2;
+    }
+    if (newStdOut == -1) {
+        newStdOut = dup(1);
     }
     return 0;
 }
