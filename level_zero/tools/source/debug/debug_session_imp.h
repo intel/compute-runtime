@@ -135,6 +135,7 @@ struct DebugSessionImp : DebugSession {
 
     std::vector<std::pair<DebugSession *, bool>> tileSessions; // DebugSession, attached
     bool tileAttachEnabled = false;
+    bool tileSessionsEnabled = false;
 
     ThreadHelper asyncThread;
     std::mutex asyncThreadMutex;

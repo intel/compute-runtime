@@ -244,16 +244,7 @@ ze_result_t DebugSessionLinux::initialize() {
         return ZE_RESULT_NOT_READY;
     }
 
-    auto numTiles = connectedDevice->getNEODevice()->getNumSubDevices();
-    if (numTiles > 0 && tileAttachEnabled) {
-        tileSessions.resize(numTiles);
-        zet_debug_config_t config = {};
-
-        for (uint32_t i = 0; i < numTiles; i++) {
-            auto subDevice = connectedDevice->getNEODevice()->getSubDevice(i)->getSpecializedDevice<Device>();
-            tileSessions[i] = std::pair<DebugSession *, bool>{new TileDebugSessionLinux(config, subDevice, this), false};
-        }
-    }
+    createTileSessionsIfEnabled();
     startInternalEventsThread();
 
     bool allEventsCollected = false;
@@ -283,6 +274,24 @@ ze_result_t DebugSessionLinux::initialize() {
     }
 
     return ZE_RESULT_NOT_READY;
+}
+
+void DebugSessionLinux::createTileSessionsIfEnabled() {
+    auto numTiles = connectedDevice->getNEODevice()->getNumSubDevices();
+    if (numTiles > 0 && tileAttachEnabled) {
+        tileSessions.resize(numTiles);
+        zet_debug_config_t config = {};
+
+        for (uint32_t i = 0; i < numTiles; i++) {
+            auto subDevice = connectedDevice->getNEODevice()->getSubDevice(i)->getSpecializedDevice<Device>();
+            tileSessions[i] = std::pair<DebugSession *, bool>{createTileSession(config, subDevice, this), false};
+        }
+        tileSessionsEnabled = true;
+    }
+}
+
+TileDebugSessionLinux *DebugSessionLinux::createTileSession(const zet_debug_config_t &config, Device *device, DebugSessionImp *rootDebugSession) {
+    return new TileDebugSessionLinux(config, device, rootDebugSession);
 }
 
 void *DebugSessionLinux::asyncThreadFunction(void *arg) {
@@ -370,7 +379,15 @@ void DebugSessionLinux::readInternalEventsAsync() {
 
         PRINT_DEBUGGER_INFO_LOG("Debugger detached\n", "");
 
-        pushApiEvent(debugEvent, nullptr);
+        if (tileSessionsEnabled) {
+            auto numTiles = connectedDevice->getNEODevice()->getNumSubDevices();
+            for (uint32_t tileIndex = 0; tileIndex < numTiles; tileIndex++) {
+                reinterpret_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent, nullptr);
+                reinterpret_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->detached = true;
+            }
+        } else {
+            pushApiEvent(debugEvent, nullptr);
+        }
         detached = true;
     } else if (numberOfFds > 0) {
 
@@ -478,13 +495,18 @@ void DebugSessionLinux::handleEvent(prelim_drm_i915_debug_event *event) {
 
             for (const auto &uuidToDevice : uuidL0CommandQueueHandleToDevice) {
                 if (uuidToDevice.first == uuid->handle) {
+                    auto deviceIndex = uuidToDevice.second;
                     uuidL0CommandQueueHandleToDevice.erase(uuidToDevice.first);
 
-                    if (uuidL0CommandQueueHandleToDevice.size() == 0) {
-                        zet_debug_event_t debugEvent = {};
-                        debugEvent.type = ZET_DEBUG_EVENT_TYPE_PROCESS_EXIT;
+                    zet_debug_event_t debugEvent = {};
+                    debugEvent.type = ZET_DEBUG_EVENT_TYPE_PROCESS_EXIT;
+
+                    if (tileSessionsEnabled) {
+                        reinterpret_cast<TileDebugSessionLinux *>(tileSessions[deviceIndex].first)->pushApiEvent(debugEvent, nullptr);
+                    } else if (uuidL0CommandQueueHandleToDevice.size() == 0) {
                         pushApiEvent(debugEvent, nullptr);
                     }
+
                     break;
                 }
             }
@@ -518,9 +540,14 @@ void DebugSessionLinux::handleEvent(prelim_drm_i915_debug_event *event) {
                                 UNRECOVERABLE_IF(notification->subDeviceCount > 0 && notification->subDeviceIndex >= notification->subDeviceCount);
                             }
 
-                            if (uuidL0CommandQueueHandleToDevice.size() == 0) {
-                                zet_debug_event_t debugEvent = {};
-                                debugEvent.type = ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY;
+                            zet_debug_event_t debugEvent = {};
+                            debugEvent.type = ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY;
+
+                            if (tileSessionsEnabled) {
+                                UNRECOVERABLE_IF(uuidL0CommandQueueHandleToDevice.find(uuid->handle) != uuidL0CommandQueueHandleToDevice.end());
+
+                                reinterpret_cast<TileDebugSessionLinux *>(tileSessions[deviceIndex].first)->pushApiEvent(debugEvent, nullptr);
+                            } else if (uuidL0CommandQueueHandleToDevice.size() == 0) {
                                 pushApiEvent(debugEvent, nullptr);
                             }
                             uuidL0CommandQueueHandleToDevice[uuid->handle] = deviceIndex;
@@ -723,7 +750,7 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
         uint32_t index = 0;
         auto connection = clientHandleToConnection[vmBind->client_handle].get();
         const auto uuid = vmBind->uuids[index];
-        const auto tileIndex = 0;
+        const auto tileIndex = tileSessionsEnabled ? connection->vmToTile[vmHandle] : 0;
 
         if (connection->uuidMap.find(uuid) == connection->uuidMap.end()) {
             PRINT_DEBUGGER_ERROR_LOG("Unknown UUID handle = %llu\n", (uint64_t)uuid);
@@ -823,16 +850,28 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                 // Expect non canonical va_start
                 DEBUG_BREAK_IF(gmmHelper->decanonize(vmBind->va_start) != vmBind->va_start);
 
+                bool apiEventNeedsAck = (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK);
                 // If ACK flag is not set when triggering MODULE LOAD event, auto-ack immediately
-                if ((vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) == 0) {
+                if (apiEventNeedsAck == false) {
                     isaMap[vmBind->va_start]->moduleLoadEventAck = true;
+                }
+
+                if (tileSessionsEnabled) {
+                    auto tileAttached = tileSessions[tileIndex].second;
+                    if (!tileAttached) {
+                        isaMap[vmBind->va_start]->moduleLoadEventAck = true;
+                        apiEventNeedsAck = false;
+                    }
                 }
                 memLock.unlock();
 
                 if (perKernelModules) {
-                    debugEvent.flags = (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) ? ZET_DEBUG_EVENT_FLAG_NEED_ACK : 0;
-                    pushApiEvent(debugEvent, nullptr);
-                    shouldAckEvent = false;
+                    debugEvent.flags = apiEventNeedsAck ? ZET_DEBUG_EVENT_FLAG_NEED_ACK : 0;
+                    if (tileSessionsEnabled) {
+                        reinterpret_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent, nullptr);
+                    } else {
+                        pushApiEvent(debugEvent, nullptr);
+                    }
                 }
             }
 
@@ -865,7 +904,11 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                     debugEvent.info.module.moduleEnd = isa->moduleEnd;
 
                     if (perKernelModules) {
-                        pushApiEvent(debugEvent, nullptr);
+                        if (tileSessionsEnabled) {
+                            reinterpret_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent, nullptr);
+                        } else {
+                            pushApiEvent(debugEvent, nullptr);
+                        }
                     }
                     std::unique_lock<std::mutex> memLock(asyncThreadMutex);
                     connection->isaMap[tileIndex].erase(vmBind->va_start);
@@ -898,8 +941,18 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                         debugEvent.info.module.moduleBegin = connection->uuidMap[module.elfUuidHandle].ptr;
                         debugEvent.info.module.moduleEnd = connection->uuidMap[module.elfUuidHandle].ptr + connection->uuidMap[module.elfUuidHandle].dataSize;
 
-                        pushApiEvent(debugEvent, &vmBind->base);
-                        shouldAckEvent = false;
+                        if (!tileSessionsEnabled) {
+                            pushApiEvent(debugEvent, &vmBind->base);
+                            shouldAckEvent = false;
+                        } else {
+                            auto tileAttached = tileSessions[tileIndex].second;
+                            if (!tileAttached) {
+                                reinterpret_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent, nullptr);
+                            } else {
+                                reinterpret_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent, &vmBind->base);
+                                shouldAckEvent = false;
+                            }
+                        }
                     }
                 } else { // destroyEvent
 
@@ -917,7 +970,11 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                         debugEvent.info.module.moduleBegin = connection->uuidMap[module.elfUuidHandle].ptr;
                         debugEvent.info.module.moduleEnd = connection->uuidMap[module.elfUuidHandle].ptr + connection->uuidMap[module.elfUuidHandle].dataSize;
 
-                        pushApiEvent(debugEvent, nullptr);
+                        if (tileSessionsEnabled) {
+                            reinterpret_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent, nullptr);
+                        } else {
+                            pushApiEvent(debugEvent, nullptr);
+                        }
                         module.loadAddresses[tileIndex].clear();
                     }
                 }
@@ -1286,17 +1343,14 @@ ze_result_t DebugSessionLinux::readElfSpace(const zet_debug_memory_space_desc_t 
 }
 
 ze_result_t DebugSessionLinux::readMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
-
-    if (clientHandle == invalidClientHandle) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
-
     ze_result_t status = validateThreadAndDescForMemoryAccess(thread, desc);
     if (status != ZE_RESULT_SUCCESS) {
         return status;
     }
 
-    bool isa = tryReadIsa(0, desc, size, buffer, status);
+    uint32_t deviceIndex = connectedDevice->getNEODevice()->isSubDevice() ? Math::log2(static_cast<uint32_t>(connectedDevice->getNEODevice()->getDeviceBitfield().to_ulong())) : 0;
+
+    bool isa = tryReadIsa(deviceIndex, desc, size, buffer, status);
     if (isa) {
         return status;
     }
@@ -1320,17 +1374,14 @@ ze_result_t DebugSessionLinux::readMemory(ze_device_thread_t thread, const zet_d
 }
 
 ze_result_t DebugSessionLinux::writeMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) {
-
-    if (clientHandle == invalidClientHandle) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
-
     ze_result_t status = validateThreadAndDescForMemoryAccess(thread, desc);
     if (status != ZE_RESULT_SUCCESS) {
         return status;
     }
 
-    bool isa = tryWriteIsa(0, desc, size, buffer, status);
+    uint32_t deviceIndex = connectedDevice->getNEODevice()->isSubDevice() ? Math::log2(static_cast<uint32_t>(connectedDevice->getNEODevice()->getDeviceBitfield().to_ulong())) : 0;
+
+    bool isa = tryWriteIsa(deviceIndex, desc, size, buffer, status);
     if (isa) {
         return status;
     }
@@ -1389,13 +1440,7 @@ ze_result_t DebugSessionLinux::accessDefaultMemForThreadAll(const zet_debug_memo
     auto status = ZE_RESULT_ERROR_UNINITIALIZED;
     std::vector<uint64_t> allVms;
 
-    {
-        std::unique_lock<std::mutex> memLock(asyncThreadMutex);
-
-        auto &vmIds = clientHandleToConnection[clientHandle]->vmIds;
-        allVms.resize(vmIds.size());
-        std::copy(vmIds.begin(), vmIds.end(), allVms.begin());
-    }
+    allVms = getAllMemoryHandles();
 
     if (allVms.size() > 0) {
         for (auto vmHandle : allVms) {
@@ -1618,24 +1663,21 @@ ze_device_thread_t DebugSessionLinux::convertToApi(EuThread::ThreadId threadId) 
     return thread;
 }
 
+void TileDebugSessionLinux::readStateSaveAreaHeader() {
+
+    const auto header = rootDebugSession->getStateSaveAreaHeader();
+    if (header) {
+        auto headerSize = rootDebugSession->stateSaveAreaHeader.size();
+        this->stateSaveAreaHeader.assign(reinterpret_cast<const char *>(header), reinterpret_cast<const char *>(header) + headerSize);
+    }
+};
+
 ze_result_t TileDebugSessionLinux::interrupt(ze_device_thread_t thread) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 };
 
 ze_result_t TileDebugSessionLinux::resume(ze_device_thread_t thread) {
 
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-};
-
-ze_result_t TileDebugSessionLinux::readMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-};
-
-ze_result_t TileDebugSessionLinux::writeMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-};
-
-ze_result_t TileDebugSessionLinux::acknowledgeEvent(const zet_debug_event_t *event) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 };
 

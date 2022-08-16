@@ -1175,6 +1175,8 @@ DeviceImp::~DeviceImp() {
             delete pSysmanDevice;
             pSysmanDevice = nullptr;
         }
+    } else {
+        debugSession.release();
     }
 }
 
