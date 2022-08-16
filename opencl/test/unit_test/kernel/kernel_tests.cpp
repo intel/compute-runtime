@@ -56,7 +56,7 @@ class KernelTests : public ProgramFromBinaryFixture {
 
   protected:
     void SetUp() override {
-        ProgramFromBinaryFixture::SetUp("CopyBuffer_simd32", "CopyBuffer");
+        ProgramFromBinaryFixture::setUp("CopyBuffer_simd32", "CopyBuffer");
         ASSERT_NE(nullptr, pProgram);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
@@ -394,17 +394,17 @@ TEST_F(KernelTests, WhenIsSingleSubdevicePreferredIsCalledThenCorrectValuesAreRe
 
 class KernelFromBinaryTest : public ProgramSimpleFixture {
   public:
-    void SetUp() override {
-        ProgramSimpleFixture::SetUp();
+    void setUp() {
+        ProgramSimpleFixture::setUp();
     }
-    void TearDown() override {
-        ProgramSimpleFixture::TearDown();
+    void tearDown() {
+        ProgramSimpleFixture::tearDown();
     }
 };
-typedef TestLegacy<KernelFromBinaryTest> KernelFromBinaryTests;
+typedef Test<KernelFromBinaryTest> KernelFromBinaryTests;
 
 TEST_F(KernelFromBinaryTests, GivenKernelNumArgsWhenGettingInfoThenNumberOfKernelArgsIsReturned) {
-    CreateProgramFromBinary(pContext, pContext->getDevices(), "kernel_num_args");
+    createProgramFromBinary(pContext, pContext->getDevices(), "kernel_num_args");
 
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
@@ -443,7 +443,7 @@ TEST_F(KernelFromBinaryTests, GivenKernelNumArgsWhenGettingInfoThenNumberOfKerne
 }
 
 TEST_F(KernelFromBinaryTests, WhenRegularKernelIsCreatedThenItIsNotBuiltIn) {
-    CreateProgramFromBinary(pContext, pContext->getDevices(), "simple_kernels");
+    createProgramFromBinary(pContext, pContext->getDevices(), "simple_kernels");
 
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
@@ -474,7 +474,7 @@ TEST_F(KernelFromBinaryTests, WhenRegularKernelIsCreatedThenItIsNotBuiltIn) {
 }
 
 TEST_F(KernelFromBinaryTests, givenArgumentDeclaredAsConstantWhenKernelIsCreatedThenArgumentIsMarkedAsReadOnly) {
-    CreateProgramFromBinary(pContext, pContext->getDevices(), "simple_kernels");
+    createProgramFromBinary(pContext, pContext->getDevices(), "simple_kernels");
 
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
@@ -490,9 +490,9 @@ TEST_F(KernelFromBinaryTests, givenArgumentDeclaredAsConstantWhenKernelIsCreated
     EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(0).isReadOnly());
 }
 
-typedef TestLegacy<ClDeviceFixture> KernelPrivateSurfaceTest;
-typedef TestLegacy<ClDeviceFixture> KernelGlobalSurfaceTest;
-typedef TestLegacy<ClDeviceFixture> KernelConstantSurfaceTest;
+typedef Test<ClDeviceFixture> KernelPrivateSurfaceTest;
+typedef Test<ClDeviceFixture> KernelGlobalSurfaceTest;
+typedef Test<ClDeviceFixture> KernelConstantSurfaceTest;
 
 class CommandStreamReceiverMock : public CommandStreamReceiver {
     typedef CommandStreamReceiver BaseClass;
@@ -1052,7 +1052,7 @@ TEST_F(KernelConstantSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenCon
     delete kernel;
 }
 
-typedef TestLegacy<ClDeviceFixture> KernelResidencyTest;
+typedef Test<ClDeviceFixture> KernelResidencyTest;
 
 HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenKernelIsaIsMadeResident) {
     ASSERT_NE(nullptr, pDevice);
@@ -2085,9 +2085,9 @@ HWTEST_F(KernelResidencyTest, WhenMakingArgsResidentThenImageFromImageCheckIsCor
     EXPECT_EQ(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushBefore, commandStreamReceiver.samplerCacheFlushRequired);
 }
 
-struct KernelExecutionEnvironmentTest : public TestLegacy<ClDeviceFixture> {
+struct KernelExecutionEnvironmentTest : public Test<ClDeviceFixture> {
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
 
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
         pKernelInfo = std::make_unique<KernelInfo>();
@@ -2100,7 +2100,7 @@ struct KernelExecutionEnvironmentTest : public TestLegacy<ClDeviceFixture> {
     void TearDown() override {
         delete kernel;
 
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     MockKernel *kernel;
@@ -2160,12 +2160,12 @@ TEST_F(KernelExecutionEnvironmentTest, GivenCompiledWorkGroupSizeIsGreaterThanMa
     this->pKernelInfo->kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2] = oldRequiredWorkGroupSizeZ;
 }
 
-struct KernelCrossThreadTests : TestLegacy<ClDeviceFixture> {
+struct KernelCrossThreadTests : Test<ClDeviceFixture> {
     KernelCrossThreadTests() {
     }
 
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
 
         pKernelInfo = std::make_unique<MockKernelInfo>();
@@ -2175,7 +2175,7 @@ struct KernelCrossThreadTests : TestLegacy<ClDeviceFixture> {
 
     void TearDown() override {
 
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     std::unique_ptr<MockProgram> program;
@@ -3043,16 +3043,16 @@ TEST_F(KernelTests, givenKernelWithSimdEqual1WhenKernelCreatedThenMaxWorgGroupSi
     EXPECT_EQ(kernel->getMaxKernelWorkGroupSize(), maxThreadsPerWG);
 }
 
-struct KernelLargeGrfTests : TestLegacy<ClDeviceFixture> {
+struct KernelLargeGrfTests : Test<ClDeviceFixture> {
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
         pKernelInfo = std::make_unique<KernelInfo>();
         pKernelInfo->kernelDescriptor.kernelAttributes.crossThreadDataSize = 64;
     }
 
     void TearDown() override {
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     std::unique_ptr<MockProgram> program;
@@ -3130,7 +3130,7 @@ HWTEST2_F(KernelConstantSurfaceTest, givenKernelWithConstantSurfaceWhenKernelIsC
     program.setConstantSurface(nullptr);
 }
 
-using KernelImplicitArgsTest = TestLegacy<ClDeviceFixture>;
+using KernelImplicitArgsTest = Test<ClDeviceFixture>;
 TEST_F(KernelImplicitArgsTest, WhenKernelRequiresImplicitArgsThenImplicitArgsStructIsCreatedAndProperlyInitialized) {
     auto pKernelInfo = std::make_unique<MockKernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;

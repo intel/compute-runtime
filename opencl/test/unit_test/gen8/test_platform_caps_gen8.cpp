@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-using Gen8PlatformCaps = TestLegacy<PlatformFixture>;
+using Gen8PlatformCaps = Test<PlatformFixture>;
 
 GEN8TEST_F(Gen8PlatformCaps, WhenCheckingExtensionStringThenFp64IsSupported) {
     const auto &caps = pPlatform->getPlatformInfo();

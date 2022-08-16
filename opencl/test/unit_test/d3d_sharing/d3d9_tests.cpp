@@ -90,7 +90,7 @@ class D3D9Tests : public PlatformFixture, public ::testing::Test {
     }
 
     void SetUp() override {
-        PlatformFixture::SetUp();
+        PlatformFixture::setUp();
         memoryManager = std::make_unique<MockMM>(*pPlatform->peekExecutionEnvironment());
         context = new MockContext(pPlatform->getClDevice(0));
         context->preferD3dSharedResources = true;
@@ -116,7 +116,7 @@ class D3D9Tests : public PlatformFixture, public ::testing::Test {
         if (!memoryManager->gmmOwnershipPassed) {
             delete gmm;
         }
-        PlatformFixture::TearDown();
+        PlatformFixture::tearDown();
     }
 
     MockD3DSharingFunctions<D3D9> *mockSharingFcns;

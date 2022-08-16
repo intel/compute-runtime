@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ void CL_CALLBACK notifyFuncProgram(
     void *userData) {
     *((char *)userData) = 'a';
 }
-void api_fixture_using_aligned_memory_manager::SetUp() {
+void ApiFixtureUsingAlignedMemoryManager::setUp() {
     retVal = CL_SUCCESS;
     retSize = 0;
 
@@ -39,7 +39,7 @@ void api_fixture_using_aligned_memory_manager::SetUp() {
     ASSERT_NE(nullptr, kernel);
 }
 
-void api_fixture_using_aligned_memory_manager::TearDown() {
+void ApiFixtureUsingAlignedMemoryManager::tearDown() {
     delete kernel;
     delete commandQueue;
     context->release();

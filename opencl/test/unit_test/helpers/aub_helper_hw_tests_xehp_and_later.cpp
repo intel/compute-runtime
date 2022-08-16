@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-using AubHelperHwTestXeHPAndLater = TestLegacy<ClDeviceFixture>;
+using AubHelperHwTestXeHPAndLater = Test<ClDeviceFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, AubHelperHwTestXeHPAndLater, givenAubHelperWhenGetDataHintForPml4EntryIsCalledThenTracePpgttLevel4IsReturned) {
     AubHelperHw<FamilyType> aubHelper(true);

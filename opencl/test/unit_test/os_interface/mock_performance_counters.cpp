@@ -319,32 +319,32 @@ StatusCode MockMetricsLibraryValidInterface::GetData(GetReportData_1_0 *data) {
 }
 
 //////////////////////////////////////////////////////
-// PerformanceCountersDeviceFixture::SetUp
+// PerformanceCountersDeviceFixture::setUp
 //////////////////////////////////////////////////////
-void PerformanceCountersDeviceFixture::SetUp() {
+void PerformanceCountersDeviceFixture::setUp() {
     createFunc = Device::createPerformanceCountersFunc;
     Device::createPerformanceCountersFunc = [](Device *) { return MockPerformanceCounters::create(); };
 }
 
 //////////////////////////////////////////////////////
-// PerformanceCountersDeviceFixture::TearDown
+// PerformanceCountersDeviceFixture::tearDown
 //////////////////////////////////////////////////////
-void PerformanceCountersDeviceFixture::TearDown() {
+void PerformanceCountersDeviceFixture::tearDown() {
     Device::createPerformanceCountersFunc = createFunc;
 }
 
 //////////////////////////////////////////////////////
 // PerformanceCountersMetricsLibraryFixture::SetUp
 //////////////////////////////////////////////////////
-void PerformanceCountersMetricsLibraryFixture::SetUp() {
-    PerformanceCountersFixture::SetUp();
+void PerformanceCountersMetricsLibraryFixture::setUp() {
+    PerformanceCountersFixture::setUp();
 }
 
 //////////////////////////////////////////////////////
 // PerformanceCountersMetricsLibraryFixture::TearDown
 //////////////////////////////////////////////////////
-void PerformanceCountersMetricsLibraryFixture::TearDown() {
-    PerformanceCountersFixture::TearDown();
+void PerformanceCountersMetricsLibraryFixture::tearDown() {
+    PerformanceCountersFixture::tearDown();
 }
 
 //////////////////////////////////////////////////////

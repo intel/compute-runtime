@@ -12,7 +12,7 @@
 #include "gtest/gtest.h"
 
 namespace NEO {
-void ClDeviceFixture::SetUp() {
+void ClDeviceFixture::setUp() {
     hardwareInfo = *defaultHwInfo;
     setUpImpl(&hardwareInfo);
 }
@@ -30,7 +30,7 @@ void ClDeviceFixture::setUpImpl(const NEO::HardwareInfo *hardwareInfo) {
     this->osContext = pDevice->getDefaultEngine().osContext;
 }
 
-void ClDeviceFixture::TearDown() {
+void ClDeviceFixture::tearDown() {
     delete pClDevice;
     pClDevice = nullptr;
     pDevice = nullptr;

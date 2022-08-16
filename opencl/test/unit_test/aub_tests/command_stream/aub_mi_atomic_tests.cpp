@@ -17,8 +17,8 @@
 using namespace NEO;
 
 struct MiAtomicAubFixture : public AUBFixture {
-    void SetUp() override {
-        AUBFixture::SetUp(nullptr);
+    void setUp() {
+        AUBFixture::setUp(nullptr);
         auto memoryManager = this->device->getMemoryManager();
 
         AllocationProperties commandBufferProperties = {device->getRootDeviceIndex(),
@@ -53,13 +53,13 @@ struct MiAtomicAubFixture : public AUBFixture {
                                  streamAllocation->getUnderlyingBufferSize());
     }
 
-    void TearDown() override {
+    void tearDown() {
         auto memoryManager = this->device->getMemoryManager();
         memoryManager->freeGraphicsMemory(streamAllocation);
         memoryManager->freeGraphicsMemory(deviceSurface);
         memoryManager->freeGraphicsMemory(systemSurface);
 
-        AUBFixture::TearDown();
+        AUBFixture::tearDown();
     }
 
     void flushStream() {
@@ -83,7 +83,7 @@ struct MiAtomicAubFixture : public AUBFixture {
     GraphicsAllocation *systemSurface = nullptr;
 };
 
-using MiAtomicAubTest = TestLegacy<MiAtomicAubFixture>;
+using MiAtomicAubTest = Test<MiAtomicAubFixture>;
 
 HWTEST_F(MiAtomicAubTest, WhenDispatchingAtomicMoveOperationThenExpectCorrectEndValues) {
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;

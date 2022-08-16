@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,9 +11,9 @@
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
 namespace NEO {
-void ProgramFixture::CreateProgramWithSource(Context *pContext,
+void ProgramFixture::createProgramWithSource(Context *pContext,
                                              const std::string &sourceFileName) {
-    Cleanup();
+    cleanup();
     cl_int retVal = CL_SUCCESS;
     std::string testFile;
 
@@ -40,7 +40,7 @@ void ProgramFixture::CreateProgramWithSource(Context *pContext,
     ASSERT_EQ(CL_SUCCESS, retVal);
 }
 
-void ProgramFixture::CreateProgramFromBinary(Context *pContext,
+void ProgramFixture::createProgramFromBinary(Context *pContext,
                                              const ClDeviceVector &deviceVector,
                                              const std::string &binaryFileName,
                                              cl_int &retVal,
@@ -66,13 +66,13 @@ void ProgramFixture::CreateProgramFromBinary(Context *pContext,
         retVal);
 }
 
-void ProgramFixture::CreateProgramFromBinary(Context *pContext,
+void ProgramFixture::createProgramFromBinary(Context *pContext,
                                              const ClDeviceVector &deviceVector,
                                              const std::string &binaryFileName,
                                              const std::string &options) {
-    Cleanup();
+    cleanup();
     cl_int retVal = CL_SUCCESS;
-    CreateProgramFromBinary(
+    createProgramFromBinary(
         pContext,
         deviceVector,
         binaryFileName,

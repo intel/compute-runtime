@@ -26,7 +26,7 @@ class CreateImage3DTest : public ClDeviceFixture,
 
   protected:
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         context = new MockContext(pClDevice);
 
         // clang-format off
@@ -48,7 +48,7 @@ class CreateImage3DTest : public ClDeviceFixture,
 
     void TearDown() override {
         delete context;
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     cl_image_format imageFormat;

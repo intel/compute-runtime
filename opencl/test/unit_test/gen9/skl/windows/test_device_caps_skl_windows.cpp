@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-typedef TestLegacy<ClDeviceFixture> SklDeviceCapsWindows;
+typedef Test<ClDeviceFixture> SklDeviceCapsWindows;
 
 SKLTEST_F(SklDeviceCapsWindows, GivenWhenGettingKmdNotifyPropertiesThenItIsDisabled) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableKmdNotify);

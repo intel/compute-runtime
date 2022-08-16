@@ -25,20 +25,20 @@ struct PerformanceCountersDeviceTest : public PerformanceCountersDeviceFixture,
                                        public DeviceInstrumentationFixture,
                                        public ::testing::Test {
     void SetUp() override {
-        PerformanceCountersDeviceFixture::SetUp();
+        PerformanceCountersDeviceFixture::setUp();
     }
     void TearDown() override {
-        PerformanceCountersDeviceFixture::TearDown();
+        PerformanceCountersDeviceFixture::tearDown();
     }
 };
 
 TEST_F(PerformanceCountersDeviceTest, GivenEnabledInstrumentationWhenGettingPerformanceCountersThenNonNullPtrIsReturned) {
-    DeviceInstrumentationFixture::SetUp(true);
+    DeviceInstrumentationFixture::setUp(true);
     EXPECT_NE(nullptr, device->getPerformanceCounters());
 }
 
 TEST_F(PerformanceCountersDeviceTest, GivenDisabledInstrumentationWhenGettingPerformanceCountersThenNullPtrIsReturned) {
-    DeviceInstrumentationFixture::SetUp(false);
+    DeviceInstrumentationFixture::setUp(false);
     EXPECT_EQ(nullptr, device->getPerformanceCounters());
 }
 
@@ -46,11 +46,11 @@ struct PerformanceCountersTest : public PerformanceCountersFixture,
                                  public ::testing::Test {
   public:
     void SetUp() override {
-        PerformanceCountersFixture::SetUp();
+        PerformanceCountersFixture::setUp();
     }
 
     void TearDown() override {
-        PerformanceCountersFixture::TearDown();
+        PerformanceCountersFixture::tearDown();
     }
 };
 
@@ -212,7 +212,7 @@ struct PerformanceCountersMetricsLibraryTest : public PerformanceCountersMetrics
 
   public:
     void SetUp() override {
-        PerformanceCountersMetricsLibraryFixture::SetUp();
+        PerformanceCountersMetricsLibraryFixture::setUp();
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
         osContext = std::make_unique<MockOsContext>(0, EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
                                                                                                     PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));
@@ -220,7 +220,7 @@ struct PerformanceCountersMetricsLibraryTest : public PerformanceCountersMetrics
     }
 
     void TearDown() override {
-        PerformanceCountersMetricsLibraryFixture::TearDown();
+        PerformanceCountersMetricsLibraryFixture::tearDown();
     }
     std::unique_ptr<OsContext> osContext;
 };

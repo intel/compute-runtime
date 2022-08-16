@@ -16,7 +16,7 @@
 
 using namespace NEO;
 
-typedef TestLegacy<ClDeviceFixture> XeHPSamplerTest;
+typedef Test<ClDeviceFixture> XeHPSamplerTest;
 
 XEHPTEST_F(XeHPSamplerTest, givenXeHPSamplerWhenUsingDefaultFilteringAndAppendSamplerStateParamsThenDisableLowQualityFilter) {
     EXPECT_FALSE(DebugManager.flags.ForceSamplerLowFilteringPrecision.get());

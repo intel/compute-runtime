@@ -11,13 +11,13 @@
 
 using namespace NEO;
 
-typedef TestLegacy<ClDeviceFixture> TigerlakeLpOnlyTest;
+typedef Test<ClDeviceFixture> TigerlakeLpOnlyTest;
 
 HWTEST2_F(TigerlakeLpOnlyTest, WhenGettingHardwareInfoThenProductFamilyIsTigerlakeLp, IsTGLLP) {
     EXPECT_EQ(IGFX_TIGERLAKE_LP, pDevice->getHardwareInfo().platform.eProductFamily);
 }
 
-typedef TestLegacy<ClDeviceFixture> Gen12LpOnlyTeset;
+typedef Test<ClDeviceFixture> Gen12LpOnlyTeset;
 
 GEN12LPTEST_F(Gen12LpOnlyTeset, WhenGettingRenderCoreFamilyThenGen12lpCoreIsReturned) {
     EXPECT_NE(IGFX_GEN9_CORE, pDevice->getRenderCoreFamily());

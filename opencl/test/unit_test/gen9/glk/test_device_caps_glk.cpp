@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-typedef TestLegacy<ClDeviceFixture> Gen9DeviceCaps;
+typedef Test<ClDeviceFixture> Gen9DeviceCaps;
 
 GLKTEST_F(Gen9DeviceCaps, WhenCheckingProfilingTimerResolutionThenCorrectResolutionIsReturned) {
     const auto &caps = pDevice->getDeviceInfo();
@@ -36,7 +36,7 @@ GLKTEST_F(Gen9DeviceCaps, GlkIs32BitOsAllocatorAvailable) {
     }
 }
 
-typedef TestLegacy<ClDeviceFixture> GlkUsDeviceIdTest;
+typedef Test<ClDeviceFixture> GlkUsDeviceIdTest;
 
 GLKTEST_F(GlkUsDeviceIdTest, WhenCheckingIsSimulationThenTrueReturnedOnlyForSimulationId) {
     unsigned short glkSimulationIds[3] = {

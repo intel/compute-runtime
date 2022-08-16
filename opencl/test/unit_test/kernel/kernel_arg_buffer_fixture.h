@@ -24,11 +24,11 @@ using namespace NEO;
 
 class KernelArgBufferFixture : public ContextFixture, public ClDeviceFixture {
 
-    using ContextFixture::SetUp;
+    using ContextFixture::setUp;
 
   public:
-    void SetUp();
-    void TearDown();
+    void setUp();
+    void tearDown();
 
     cl_int retVal = CL_SUCCESS;
     MockProgram *pProgram = nullptr;

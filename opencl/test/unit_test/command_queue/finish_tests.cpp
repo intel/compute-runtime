@@ -24,24 +24,24 @@ struct FinishFixture : public ClDeviceFixture,
                        public CommandStreamFixture,
                        public HardwareParse {
 
-    void SetUp() override {
-        ClDeviceFixture::SetUp();
-        CommandQueueHwFixture::SetUp(pClDevice, 0);
+    void setUp() {
+        ClDeviceFixture::setUp();
+        CommandQueueHwFixture::setUp(pClDevice, 0);
         ASSERT_NE(nullptr, pCmdQ);
-        CommandStreamFixture::SetUp(pCmdQ);
+        CommandStreamFixture::setUp(pCmdQ);
         ASSERT_NE(nullptr, pCS);
         HardwareParse::setUp();
     }
 
-    void TearDown() override {
+    void tearDown() {
         HardwareParse::tearDown();
-        CommandStreamFixture::TearDown();
-        CommandQueueHwFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        CommandStreamFixture::tearDown();
+        CommandQueueHwFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 };
 
-typedef TestLegacy<FinishFixture> FinishTest;
+typedef Test<FinishFixture> FinishTest;
 
 HWTEST_F(FinishTest, GivenCsGreaterThanCqWhenFinishIsCalledThenPipeControlIsNotAdded) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;

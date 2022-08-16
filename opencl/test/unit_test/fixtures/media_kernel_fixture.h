@@ -65,7 +65,7 @@ struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
         Parent::kernelFilename = "vme_kernels";
         Parent::kernelName = "non_vme_kernel";
 
-        Parent::SetUp();
+        Parent::setUp();
         ClHardwareParse::setUp();
 
         ASSERT_NE(nullptr, pKernel);
@@ -91,7 +91,7 @@ struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
         pMultiDeviceVmeKernel->release();
 
         ClHardwareParse::tearDown();
-        Parent::TearDown();
+        Parent::tearDown();
     }
 
     GenCmdList::iterator itorWalker1;

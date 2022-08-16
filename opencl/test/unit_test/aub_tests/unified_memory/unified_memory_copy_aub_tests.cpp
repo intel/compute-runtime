@@ -18,7 +18,7 @@ class UnifiedMemoryCopyAubTest : public UnifiedMemoryAubFixture,
     std::vector<char> srcValues, dstValues;
 
     void SetUp() override {
-        UnifiedMemoryAubFixture::SetUp();
+        UnifiedMemoryAubFixture::setUp();
 
         srcMemoryType = std::get<0>(GetParam());
         dstMemoryType = std::get<1>(GetParam());
@@ -36,7 +36,7 @@ class UnifiedMemoryCopyAubTest : public UnifiedMemoryAubFixture,
     void TearDown() override {
         this->freeUSM(srcPtr, srcMemoryType);
         this->freeUSM(dstPtr, dstMemoryType);
-        UnifiedMemoryAubFixture::TearDown();
+        UnifiedMemoryAubFixture::tearDown();
     }
 };
 

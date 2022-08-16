@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-typedef TestLegacy<ClDeviceFixture> BxtDeviceCaps;
+typedef Test<ClDeviceFixture> BxtDeviceCaps;
 
 BXTTEST_F(BxtDeviceCaps, WhenCheckingProfilingTimerResolutionThenCorrectResolutionIsReturned) {
     const auto &caps = pDevice->getDeviceInfo();
@@ -45,7 +45,7 @@ BXTTEST_F(BxtDeviceCaps, WhenCheckFtrSupportsInteger64BitAtomicsThenReturnFalse)
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
 }
 
-typedef TestLegacy<ClDeviceFixture> BxtUsDeviceIdTest;
+typedef Test<ClDeviceFixture> BxtUsDeviceIdTest;
 
 BXTTEST_F(BxtUsDeviceIdTest, WhenCheckingIsSimulationThenTrueReturnedOnlyForSimulationId) {
     unsigned short bxtSimulationIds[3] = {

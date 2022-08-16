@@ -33,8 +33,8 @@ class SamplerSetArgFixture : public ClDeviceFixture {
     }
 
   protected:
-    void SetUp() {
-        ClDeviceFixture::SetUp();
+    void setUp() {
+        ClDeviceFixture::setUp();
         pKernelInfo = std::make_unique<MockKernelInfo>();
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
@@ -62,12 +62,12 @@ class SamplerSetArgFixture : public ClDeviceFixture {
         retVal = CL_INVALID_VALUE;
     }
 
-    void TearDown() {
+    void tearDown() {
         delete pMultiDeviceKernel;
 
         delete sampler;
         delete context;
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     bool crossThreadDataUnchanged() {
@@ -102,7 +102,7 @@ class SamplerSetArgFixture : public ClDeviceFixture {
     Sampler *sampler = nullptr;
 };
 
-typedef TestLegacy<SamplerSetArgFixture> SamplerSetArgTest;
+typedef Test<SamplerSetArgFixture> SamplerSetArgTest;
 HWTEST_F(SamplerSetArgTest, WhenSettingKernelArgSamplerThenSamplerStatesAreCorrect) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
     createSampler();
@@ -390,10 +390,10 @@ struct NormalizedTest
     : public SamplerSetArgFixture,
       public ::testing::TestWithParam<uint32_t /*cl_bool*/> {
     void SetUp() override {
-        SamplerSetArgFixture::SetUp();
+        SamplerSetArgFixture::setUp();
     }
     void TearDown() override {
-        SamplerSetArgFixture::TearDown();
+        SamplerSetArgFixture::tearDown();
     }
 };
 
@@ -441,10 +441,10 @@ struct AddressingModeTest
     : public SamplerSetArgFixture,
       public ::testing::TestWithParam<uint32_t /*cl_addressing_mode*/> {
     void SetUp() override {
-        SamplerSetArgFixture::SetUp();
+        SamplerSetArgFixture::setUp();
     }
     void TearDown() override {
-        SamplerSetArgFixture::TearDown();
+        SamplerSetArgFixture::tearDown();
     }
 };
 
@@ -560,10 +560,10 @@ struct FilterModeTest
     : public SamplerSetArgFixture,
       public ::testing::TestWithParam<uint32_t /*cl_filter_mode*/> {
     void SetUp() override {
-        SamplerSetArgFixture::SetUp();
+        SamplerSetArgFixture::setUp();
     }
     void TearDown() override {
-        SamplerSetArgFixture::TearDown();
+        SamplerSetArgFixture::tearDown();
     }
 };
 

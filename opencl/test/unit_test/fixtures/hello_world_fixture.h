@@ -39,23 +39,23 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
     typedef typename FixtureFactory::KernelFixture KernelFixture;
 
     using CommandQueueFixture::pCmdQ;
-    using CommandQueueFixture::SetUp;
+    using CommandQueueFixture::setUp;
     using CommandStreamFixture::pCS;
-    using CommandStreamFixture::SetUp;
-    using HelloWorldKernelFixture::SetUp;
-    using IndirectHeapFixture::SetUp;
+    using CommandStreamFixture::setUp;
+    using HelloWorldKernelFixture::setUp;
+    using IndirectHeapFixture::setUp;
     using KernelFixture::pKernel;
 
   public:
-    void SetUp() override {
-        ClDeviceFixture::SetUp();
+    void setUp() {
+        ClDeviceFixture::setUp();
         ASSERT_NE(nullptr, pClDevice);
-        CommandQueueFixture::SetUp(pClDevice, 0);
+        CommandQueueFixture::setUp(pClDevice, 0);
         ASSERT_NE(nullptr, pCmdQ);
-        CommandStreamFixture::SetUp(pCmdQ);
+        CommandStreamFixture::setUp(pCmdQ);
         ASSERT_NE(nullptr, pCS);
-        IndirectHeapFixture::SetUp(pCmdQ);
-        KernelFixture::SetUp(pClDevice, kernelFilename, kernelName);
+        IndirectHeapFixture::setUp(pCmdQ);
+        KernelFixture::setUp(pClDevice, kernelFilename, kernelName);
         ASSERT_NE(nullptr, pKernel);
 
         auto retVal = CL_INVALID_VALUE;
@@ -85,18 +85,18 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
         pKernel->setArg(1, destBuffer);
     }
 
-    void TearDown() override {
+    void tearDown() {
         pCmdQ->flush();
 
         srcBuffer->release();
         destBuffer->release();
 
-        KernelFixture::TearDown();
-        IndirectHeapFixture::TearDown();
-        CommandStreamFixture::TearDown();
-        CommandQueueFixture::TearDown();
+        KernelFixture::tearDown();
+        IndirectHeapFixture::tearDown();
+        CommandStreamFixture::tearDown();
+        CommandQueueFixture::tearDown();
         BufferDefaults::context->release();
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
     Buffer *srcBuffer = nullptr;
     Buffer *destBuffer = nullptr;
@@ -128,7 +128,7 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
 };
 
 template <typename FixtureFactory>
-struct HelloWorldTest : TestLegacy<HelloWorldFixture<FixtureFactory>> {
+struct HelloWorldTest : Test<HelloWorldFixture<FixtureFactory>> {
 };
 
 template <typename FixtureFactory>

@@ -26,17 +26,17 @@ using namespace NEO;
 
 class KernelArgPipeFixture : public ContextFixture, public ClDeviceFixture {
 
-    using ContextFixture::SetUp;
+    using ContextFixture::setUp;
 
   public:
     KernelArgPipeFixture() {
     }
 
   protected:
-    void SetUp() {
-        ClDeviceFixture::SetUp();
+    void setUp() {
+        ClDeviceFixture::setUp();
         cl_device_id device = pClDevice;
-        ContextFixture::SetUp(1, &device);
+        ContextFixture::setUp(1, &device);
 
         // define kernel info
         pKernelInfo = std::make_unique<MockKernelInfo>();
@@ -56,12 +56,12 @@ class KernelArgPipeFixture : public ContextFixture, public ClDeviceFixture {
         pKernel->setKernelArgHandler(0, &Kernel::setArgPipe);
     }
 
-    void TearDown() {
+    void tearDown() {
         delete pKernel;
 
         delete pProgram;
-        ContextFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        ContextFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
@@ -73,7 +73,7 @@ class KernelArgPipeFixture : public ContextFixture, public ClDeviceFixture {
     char pCrossThreadData[64];
 };
 
-typedef TestLegacy<KernelArgPipeFixture> KernelArgPipeTest;
+typedef Test<KernelArgPipeFixture> KernelArgPipeTest;
 
 TEST_F(KernelArgPipeTest, GivenValidPipeWhenSettingKernelArgThenPipeAddressIsCorrect) {
     Pipe *pipe = new MockPipe(pContext);

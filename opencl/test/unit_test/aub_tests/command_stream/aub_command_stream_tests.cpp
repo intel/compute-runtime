@@ -26,19 +26,19 @@ struct AUBFixture : public AUBCommandStreamFixture,
                     public CommandQueueFixture,
                     public ClDeviceFixture {
 
-    using AUBCommandStreamFixture::SetUp;
-    using CommandQueueFixture::SetUp;
+    using AUBCommandStreamFixture::setUp;
+    using CommandQueueFixture::setUp;
 
-    void SetUp() {
-        ClDeviceFixture::SetUp();
-        CommandQueueFixture::SetUp(nullptr, pClDevice, 0);
-        AUBCommandStreamFixture::SetUp(pCmdQ);
+    void setUp() {
+        ClDeviceFixture::setUp();
+        CommandQueueFixture::setUp(nullptr, pClDevice, 0);
+        AUBCommandStreamFixture::setUp(pCmdQ);
     }
 
-    void TearDown() override {
-        AUBCommandStreamFixture::TearDown();
-        CommandQueueFixture::TearDown();
-        ClDeviceFixture::TearDown();
+    void tearDown() {
+        AUBCommandStreamFixture::tearDown();
+        CommandQueueFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     template <typename FamilyType>
@@ -70,7 +70,7 @@ struct AUBFixture : public AUBCommandStreamFixture,
     }
 };
 
-typedef TestLegacy<AUBFixture> AUBcommandstreamTests;
+using AUBcommandstreamTests = Test<AUBFixture>;
 
 HWTEST_F(AUBcommandstreamTests, WhenFlushingTwiceThenCompletes) {
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(*pCS, nullptr);

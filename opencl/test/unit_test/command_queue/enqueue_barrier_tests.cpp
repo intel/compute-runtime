@@ -19,7 +19,7 @@
 
 using namespace NEO;
 
-using BarrierTest = TestLegacy<CommandEnqueueFixture>;
+using BarrierTest = Test<CommandEnqueueFixture>;
 
 HWTEST_F(BarrierTest, givenCsrWithHigherLevelThenCommandQueueWhenEnqueueBarrierIsCalledThenCommandQueueAlignsToCsrWithoutSendingAnyCommands) {
     auto pCmdQ = this->pCmdQ;

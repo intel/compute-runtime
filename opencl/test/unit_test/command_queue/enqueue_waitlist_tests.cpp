@@ -52,12 +52,8 @@ struct EnqueueWaitlistTest : public EnqueueWaitlistFixture,
     typedef CommandQueueHwFixture CommandQueueFixture;
     using CommandQueueHwFixture::pCmdQ;
 
-    EnqueueWaitlistTest(void) {
-        buffer = nullptr;
-    }
-
     void SetUp() override {
-        EnqueueWaitlistFixture::SetUp();
+        EnqueueWaitlistFixture::setUp();
         buffer = BufferHelper<>::create();
         bufferNonZeroCopy = new UnalignedBuffer(BufferDefaults::context, &bufferNonZeroCopyAlloc);
         image = Image1dHelper<>::create(BufferDefaults::context);
@@ -69,17 +65,17 @@ struct EnqueueWaitlistTest : public EnqueueWaitlistFixture,
         bufferNonZeroCopy->decRefInternal();
         image->decRefInternal();
         imageNonZeroCopy->decRefInternal();
-        EnqueueWaitlistFixture::TearDown();
+        EnqueueWaitlistFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
     cl_int error = CL_SUCCESS;
 
     MockGraphicsAllocation bufferNonZeroCopyAlloc{nullptr, MemoryConstants::pageSize};
-    Buffer *buffer;
-    Buffer *bufferNonZeroCopy;
-    Image *image;
-    Image *imageNonZeroCopy;
+    Buffer *buffer = nullptr;
+    Buffer *bufferNonZeroCopy = nullptr;
+    Image *image = nullptr;
+    Image *imageNonZeroCopy = nullptr;
 
     void testError(cl_int error, std::string str) {
         EXPECT_EQ(CL_SUCCESS, error) << str << std::endl;

@@ -18,7 +18,7 @@ struct clGetImageInfoTests : public ApiFixture<>,
                              public ::testing::Test {
 
     void SetUp() override {
-        ApiFixture::SetUp();
+        ApiFixture::setUp();
 
         imageFormat.image_channel_order = CL_RGBA;
         imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -44,7 +44,7 @@ struct clGetImageInfoTests : public ApiFixture<>,
         retVal = clReleaseMemObject(image);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
 
     cl_image_format imageFormat;

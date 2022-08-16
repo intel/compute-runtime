@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-using clGetDeviceIDsTests = TestLegacy<PlatformFixture>;
+using clGetDeviceIDsTests = Test<PlatformFixture>;
 
 namespace ULT {
 

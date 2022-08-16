@@ -30,15 +30,15 @@ struct OOMCommandQueueTest : public ClDeviceFixture,
                              public CommandQueueFixture,
                              public ::testing::TestWithParam<OOMSetting> {
 
-    using CommandQueueFixture::SetUp;
+    using CommandQueueFixture::setUp;
 
     OOMCommandQueueTest() {
     }
 
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         context = new MockContext(pClDevice);
-        CommandQueueFixture::SetUp(context, pClDevice, 0);
+        CommandQueueFixture::setUp(context, pClDevice, 0);
 
         const auto &oomSetting = GetParam();
         auto oomSize = 10u;
@@ -60,9 +60,9 @@ struct OOMCommandQueueTest : public ClDeviceFixture,
     }
 
     void TearDown() override {
-        CommandQueueFixture::TearDown();
+        CommandQueueFixture::tearDown();
         context->release();
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     MockContext *context;

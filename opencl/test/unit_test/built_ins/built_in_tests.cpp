@@ -59,7 +59,7 @@ class BuiltInTests
       public ::testing::Test {
 
     using BuiltInFixture::SetUp;
-    using ContextFixture::SetUp;
+    using ContextFixture::setUp;
 
   public:
     BuiltInTests() {
@@ -70,17 +70,17 @@ class BuiltInTests
 
     void SetUp() override {
         DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         cl_device_id device = pClDevice;
-        ContextFixture::SetUp(1, &device);
+        ContextFixture::setUp(1, &device);
         BuiltInFixture::SetUp(pDevice);
     }
 
     void TearDown() override {
         allBuiltIns.clear();
         BuiltInFixture::TearDown();
-        ContextFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        ContextFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     void appendBuiltInStringFromFile(std::string builtInFile, size_t &size) {

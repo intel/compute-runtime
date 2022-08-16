@@ -23,12 +23,12 @@ class CommandStreamReceiverHwTestWithLocalMemory : public ClDeviceFixture,
     void SetUp() override {
         dbgRestore = std::make_unique<DebugManagerStateRestore>();
         DebugManager.flags.EnableLocalMemory.set(1);
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         HardwareParse::setUp();
     }
     void TearDown() override {
         HardwareParse::tearDown();
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
   private:

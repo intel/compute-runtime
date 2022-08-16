@@ -60,7 +60,7 @@ class DrmGemCloseWorkerFixture {
     DrmMockForWorker *drmMock;
     uint32_t deadCnt = deadCntInit;
 
-    void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
         this->drmMock = new DrmMockForWorker(*executionEnvironment.rootDeviceEnvironments[0]);
 
         auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
@@ -79,7 +79,7 @@ class DrmGemCloseWorkerFixture {
         this->drmMock->gem_close_expected = 0;
     }
 
-    void TearDown() { // NOLINT(readability-identifier-naming)
+    void tearDown() {
         if (this->drmMock->gem_close_expected >= 0) {
             EXPECT_EQ(this->drmMock->gem_close_expected, this->drmMock->gem_close_cnt);
         }
@@ -97,7 +97,7 @@ class DrmGemCloseWorkerFixture {
     MockExecutionEnvironment executionEnvironment;
 };
 
-typedef TestLegacy<DrmGemCloseWorkerFixture> DrmGemCloseWorkerTests;
+typedef Test<DrmGemCloseWorkerFixture> DrmGemCloseWorkerTests;
 
 TEST_F(DrmGemCloseWorkerTests, WhenClosingGemThenSucceeds) {
     this->drmMock->gem_close_expected = 1;

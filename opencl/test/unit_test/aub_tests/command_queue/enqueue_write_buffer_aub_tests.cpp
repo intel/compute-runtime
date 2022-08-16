@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,11 +22,11 @@ struct WriteBufferHw
       public ::testing::Test {
 
     void SetUp() override {
-        CommandEnqueueAUBFixture::SetUp();
+        CommandEnqueueAUBFixture::setUp();
     }
 
     void TearDown() override {
-        CommandEnqueueAUBFixture::TearDown();
+        CommandEnqueueAUBFixture::tearDown();
     }
 };
 
@@ -115,11 +115,11 @@ struct AUBWriteBufferUnaligned
       public ::testing::Test {
 
     void SetUp() override {
-        CommandEnqueueAUBFixture::SetUp();
+        CommandEnqueueAUBFixture::setUp();
     }
 
     void TearDown() override {
-        CommandEnqueueAUBFixture::TearDown();
+        CommandEnqueueAUBFixture::tearDown();
     }
 
     template <typename FamilyType>

@@ -97,7 +97,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
     void SetUp() override {
         VariableBackup<UltHwConfig> backup(&ultHwConfig);
         ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
-        PlatformFixture::SetUp();
+        PlatformFixture::setUp();
         rootDeviceIndex = pPlatform->getClDevice(0)->getRootDeviceIndex();
         context = new MockContext(pPlatform->getClDevice(0));
         context->preferD3dSharedResources = true;
@@ -134,7 +134,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
         if (!mockMM->gmmOwnershipPassed) {
             delete gmm;
         }
-        PlatformFixture::TearDown();
+        PlatformFixture::tearDown();
     }
 
     cl_int pickParam(cl_int d3d10, cl_int d3d11) {

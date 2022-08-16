@@ -21,7 +21,7 @@ using namespace NEO;
 struct KernelSLMAndBarrierTest : public ClDeviceFixture,
                                  public ::testing::TestWithParam<uint32_t> {
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
 
         kernelInfo.setCrossThreadDataSize(sizeof(crossThreadData));
@@ -34,7 +34,7 @@ struct KernelSLMAndBarrierTest : public ClDeviceFixture,
         kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
     }
     void TearDown() override {
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     uint32_t simd;

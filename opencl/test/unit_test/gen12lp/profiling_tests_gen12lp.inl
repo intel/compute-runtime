@@ -18,13 +18,13 @@ using namespace NEO;
 struct ProfilingTestsGen12LP : public CommandEnqueueFixture,
                                public ::testing::Test {
     void SetUp() override {
-        CommandEnqueueFixture::SetUp(CL_QUEUE_PROFILING_ENABLE);
+        CommandEnqueueFixture::setUp(CL_QUEUE_PROFILING_ENABLE);
         mockKernelWithInternals = std::make_unique<MockKernelWithInternals>(*pClDevice, nullptr);
     }
 
     void TearDown() override {
         mockKernelWithInternals.reset();
-        CommandEnqueueFixture::TearDown();
+        CommandEnqueueFixture::tearDown();
     }
 
     std::unique_ptr<MockKernelWithInternals> mockKernelWithInternals;

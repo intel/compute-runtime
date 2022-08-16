@@ -209,8 +209,8 @@ class MockPerformanceCounters {
 // PerformanceCountersDeviceFixture
 //////////////////////////////////////////////////////
 struct PerformanceCountersDeviceFixture {
-    virtual void SetUp();    // NOLINT(readability-identifier-naming)
-    virtual void TearDown(); // NOLINT(readability-identifier-naming)
+    void setUp();
+    void tearDown();
     decltype(&PerformanceCounters::create) createFunc;
 };
 
@@ -222,8 +222,8 @@ struct RootDeviceEnvironment;
 struct PerformanceCountersFixture {
     PerformanceCountersFixture();
     ~PerformanceCountersFixture();
-    virtual void SetUp();    // NOLINT(readability-identifier-naming)
-    virtual void TearDown(); // NOLINT(readability-identifier-naming)
+    void setUp();
+    void tearDown();
     cl_queue_properties queueProperties = {};
     std::unique_ptr<MockClDevice> device;
     std::unique_ptr<MockContext> context;
@@ -238,8 +238,8 @@ struct PerformanceCountersFixture {
 //////////////////////////////////////////////////////
 struct PerformanceCountersMetricsLibraryFixture : PerformanceCountersFixture {
 
-    void SetUp() override;
-    void TearDown() override;
+    void setUp();
+    void tearDown();
 
     PerformanceCounters *initDeviceWithPerformanceCounters(const bool validMetricsLibraryApi, const bool mockMatricsLibrary);
 };

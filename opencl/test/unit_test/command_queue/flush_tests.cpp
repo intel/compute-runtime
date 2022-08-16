@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,18 +20,18 @@ struct FlushTest
       public CommandStreamFixture,
       public ::testing::Test {
 
-    using CommandQueueFixture::SetUp;
+    using CommandQueueFixture::setUp;
 
     void SetUp() override {
-        ClDeviceFixture::SetUp();
-        CommandQueueFixture::SetUp(nullptr, pClDevice, 0);
-        CommandStreamFixture::SetUp(pCmdQ);
+        ClDeviceFixture::setUp();
+        CommandQueueFixture::setUp(nullptr, pClDevice, 0);
+        CommandStreamFixture::setUp(pCmdQ);
     }
 
     void TearDown() override {
-        CommandStreamFixture::TearDown();
-        CommandQueueFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        CommandStreamFixture::tearDown();
+        CommandQueueFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 };
 

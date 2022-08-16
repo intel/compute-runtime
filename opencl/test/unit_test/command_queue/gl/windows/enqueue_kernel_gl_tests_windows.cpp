@@ -24,7 +24,7 @@
 using namespace NEO;
 
 typedef HelloWorldFixture<HelloWorldFixtureFactory> EnqueueKernelFixture;
-typedef TestLegacy<EnqueueKernelFixture> EnqueueKernelTest;
+typedef Test<EnqueueKernelFixture> EnqueueKernelTest;
 
 TEST_F(EnqueueKernelTest, givenKernelWithSharedObjArgsWhenEnqueueIsCalledThenResetPatchAddress) {
 

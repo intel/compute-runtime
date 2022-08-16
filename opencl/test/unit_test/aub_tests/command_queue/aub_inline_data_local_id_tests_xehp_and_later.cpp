@@ -35,8 +35,8 @@ struct AubDispatchThreadDataFixture : public KernelAUBFixture<SimpleKernelFixtur
         size_t gwsSize = 0;
         size_t lwsSize = 0;
     };
-    void SetUp() override {
-        KernelAUBFixture<SimpleKernelFixture>::SetUp();
+    void setUp() {
+        KernelAUBFixture<SimpleKernelFixture>::setUp();
         variablesCount = arrayCount(variables);
 
         BufferDefaults::context = context;
@@ -54,7 +54,7 @@ struct AubDispatchThreadDataFixture : public KernelAUBFixture<SimpleKernelFixtur
         }
     }
 
-    void TearDown() override {
+    void tearDown() {
         pCmdQ->flush();
 
         for (size_t i = 0; i < variablesCount; i++) {
@@ -72,7 +72,7 @@ struct AubDispatchThreadDataFixture : public KernelAUBFixture<SimpleKernelFixtur
             }
         }
         BufferDefaults::context = nullptr;
-        KernelAUBFixture<SimpleKernelFixture>::TearDown();
+        KernelAUBFixture<SimpleKernelFixture>::tearDown();
     }
 
     std::unique_ptr<DebugManagerStateRestore> debugRestorer;
@@ -83,14 +83,14 @@ struct AubDispatchThreadDataFixture : public KernelAUBFixture<SimpleKernelFixtur
 };
 
 struct InlineDataFixture : AubDispatchThreadDataFixture {
-    void SetUp() override {
+    void setUp() {
         debugRestorer = std::make_unique<DebugManagerStateRestore>();
         DebugManager.flags.EnablePassInlineData.set(true);
 
         initializeKernel3Variables();
         initializeKernel4Variables();
 
-        AubDispatchThreadDataFixture::SetUp();
+        AubDispatchThreadDataFixture::setUp();
 
         setUpKernel3();
     }
@@ -128,7 +128,7 @@ struct InlineDataFixture : AubDispatchThreadDataFixture {
     }
 };
 
-using XeHPAndLaterAubInlineDataTest = TestLegacy<InlineDataFixture>;
+using XeHPAndLaterAubInlineDataTest = Test<InlineDataFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadFitIntoSingleGrfWhenInlineDataAllowedThenCopyAllCrossThreadIntoInline) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
@@ -250,13 +250,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadSize
 }
 
 struct HwLocalIdsFixture : AubDispatchThreadDataFixture {
-    void SetUp() override {
+    void setUp() {
         debugRestorer = std::make_unique<DebugManagerStateRestore>();
         DebugManager.flags.EnableHwGenerationLocalIds.set(1);
 
         initializeKernel2Variables();
 
-        AubDispatchThreadDataFixture::SetUp();
+        AubDispatchThreadDataFixture::setUp();
 
         if (kernels[2]->getKernelInfo().kernelDescriptor.kernelAttributes.flags.passInlineData) {
             DebugManager.flags.EnablePassInlineData.set(true);
@@ -297,7 +297,7 @@ struct HwLocalIdsFixture : AubDispatchThreadDataFixture {
     }
 };
 
-using XeHPAndLaterAubHwLocalIdsTest = TestLegacy<HwLocalIdsFixture>;
+using XeHPAndLaterAubHwLocalIdsTest = Test<HwLocalIdsFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, WhenEnqueueDimensionsArePow2ThenSetEmitLocalIdsAndGenerateLocalIdsFields) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
@@ -403,13 +403,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, givenNonPowOf2LocalW
 }
 
 struct HwLocalIdsWithSubGroups : AubDispatchThreadDataFixture {
-    void SetUp() override {
+    void setUp() {
         debugRestorer = std::make_unique<DebugManagerStateRestore>();
         DebugManager.flags.EnableHwGenerationLocalIds.set(1);
 
         kernelIds |= (1 << 9);
         variables[0].sizeUserMemory = 16 * KB;
-        AubDispatchThreadDataFixture::SetUp();
+        AubDispatchThreadDataFixture::setUp();
 
         memset(variables[0].destMemory, 0, variables[0].sizeUserMemory);
         variables[0].expectedMemory = alignedMalloc(variables[0].sizeUserMemory, 4096);
@@ -417,7 +417,7 @@ struct HwLocalIdsWithSubGroups : AubDispatchThreadDataFixture {
     }
 };
 
-using XeHPAndLaterAubHwLocalIdsWithSubgroupsTest = TestLegacy<HwLocalIdsWithSubGroups>;
+using XeHPAndLaterAubHwLocalIdsWithSubgroupsTest = Test<HwLocalIdsWithSubGroups>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsWithSubgroupsTest, givenKernelUsingSubgroupsWhenLocalIdsAreGeneratedByHwThenValuesAreCorrect) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;

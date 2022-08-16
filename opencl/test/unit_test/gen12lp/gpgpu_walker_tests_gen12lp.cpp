@@ -46,7 +46,7 @@ class MockKernelWithApplicableWa : public MockKernel {
 
 struct HardwareInterfaceTests : public ClDeviceFixture, public LinearStreamFixture, public ::testing::Test {
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         LinearStreamFixture::setUp();
 
         pContext = new NEO::MockContext(pClDevice);
@@ -64,7 +64,7 @@ struct HardwareInterfaceTests : public ClDeviceFixture, public LinearStreamFixtu
         pContext->release();
 
         LinearStreamFixture::tearDown();
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     CommandQueue *pCommandQueue = nullptr;

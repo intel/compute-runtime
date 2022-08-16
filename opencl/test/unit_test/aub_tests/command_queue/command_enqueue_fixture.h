@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,15 +19,15 @@ namespace NEO {
 
 struct CommandEnqueueAUBFixture : public CommandEnqueueBaseFixture,
                                   public AUBCommandStreamFixture {
-    using AUBCommandStreamFixture::SetUp;
-    void SetUp() override {
-        CommandEnqueueBaseFixture::SetUp(cl_command_queue_properties(0));
-        AUBCommandStreamFixture::SetUp(pCmdQ);
+    using AUBCommandStreamFixture::setUp;
+    void setUp() {
+        CommandEnqueueBaseFixture::setUp(cl_command_queue_properties(0));
+        AUBCommandStreamFixture::setUp(pCmdQ);
     }
 
-    void TearDown() override {
-        AUBCommandStreamFixture::TearDown();
-        CommandEnqueueBaseFixture::TearDown();
+    void tearDown() {
+        AUBCommandStreamFixture::tearDown();
+        CommandEnqueueBaseFixture::tearDown();
     }
 };
 } // namespace NEO

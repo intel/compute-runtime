@@ -19,10 +19,10 @@ struct MultiTileBuffersXeHPAndLater : public MulticontextAubFixture, public ::te
     static constexpr uint32_t numTiles = 2;
 
     void SetUp() override {
-        MulticontextAubFixture::SetUp(numTiles, EnabledCommandStreamers::Single, false);
+        MulticontextAubFixture::setUp(numTiles, EnabledCommandStreamers::Single, false);
     }
     void TearDown() override {
-        MulticontextAubFixture::TearDown();
+        MulticontextAubFixture::tearDown();
     }
 };
 

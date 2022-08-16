@@ -15,19 +15,19 @@ namespace NEO {
 
 struct EnqueueFillBufferFixture : public CommandEnqueueFixture {
 
-    void SetUp() override {
-        CommandEnqueueFixture::SetUp();
+    void setUp() {
+        CommandEnqueueFixture::setUp();
 
         BufferDefaults::context = new MockContext;
 
         buffer = BufferHelper<>::create();
     }
 
-    void TearDown() override {
+    void tearDown() {
         delete buffer;
         delete BufferDefaults::context;
 
-        CommandEnqueueFixture::TearDown();
+        CommandEnqueueFixture::tearDown();
     }
 
     template <typename FamilyType>

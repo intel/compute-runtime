@@ -16,7 +16,7 @@
 
 using namespace NEO;
 
-typedef TestLegacy<ClDeviceFixture> XeHpgCoreDeviceCaps;
+typedef Test<ClDeviceFixture> XeHpgCoreDeviceCaps;
 
 XE_HPG_CORETEST_F(XeHpgCoreDeviceCaps, givenXeHpgCoreWhenCheckFtrSupportsInteger64BitAtomicsThenReturnTrue) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);

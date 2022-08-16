@@ -23,7 +23,7 @@
 
 namespace NEO {
 
-void MulticontextAubFixture::SetUp(uint32_t numberOfTiles, EnabledCommandStreamers enabledCommandStreamers, bool enableCompression) {
+void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreamers enabledCommandStreamers, bool enableCompression) {
     this->numberOfEnabledTiles = numberOfTiles;
     const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
 
@@ -153,7 +153,7 @@ void MulticontextAubFixture::SetUp(uint32_t numberOfTiles, EnabledCommandStreame
     }
 }
 
-void MulticontextAubFixture::TearDown() {
+void MulticontextAubFixture::tearDown() {
     auto filename = DebugManager.flags.AUBDumpCaptureFileName.get();
 
     std::string tileString = std::to_string(numberOfEnabledTiles) + "tx";

@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-typedef TestLegacy<ClDeviceFixture> DeviceTest;
+typedef Test<ClDeviceFixture> DeviceTest;
 
 BXTTEST_F(DeviceTest, givenBxtDeviceWhenAskedForProflingTimerResolutionThen52IsReturned) {
     auto resolution = pDevice->getProfilingTimerResolution();

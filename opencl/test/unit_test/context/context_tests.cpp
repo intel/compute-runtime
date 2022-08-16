@@ -51,10 +51,10 @@ class WhiteBoxContext : public Context {
 struct ContextTest : public PlatformFixture,
                      public ::testing::Test {
 
-    using PlatformFixture::SetUp;
+    using PlatformFixture::setUp;
 
     void SetUp() override {
-        PlatformFixture::SetUp();
+        PlatformFixture::setUp();
 
         properties.push_back(CL_CONTEXT_PLATFORM);
         properties.push_back(reinterpret_cast<cl_context_properties>(pPlatform));
@@ -66,7 +66,7 @@ struct ContextTest : public PlatformFixture,
 
     void TearDown() override {
         delete context;
-        PlatformFixture::TearDown();
+        PlatformFixture::tearDown();
     }
 
     uint32_t getRootDeviceIndex() {
@@ -734,7 +734,7 @@ struct GTPinContextDestroyTest : ContextTest {
     }
 
     void TearDown() override {
-        PlatformFixture::TearDown();
+        PlatformFixture::tearDown();
     }
 };
 

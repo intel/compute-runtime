@@ -77,14 +77,14 @@ class ProgramWithKernelDebuggingTest : public ProgramFixture,
         KernelFilenameHelper::getKernelFilenameFromInternalOption(kernelOption, filename);
 
         kbHelper = std::make_unique<KernelBinaryHelper>(filename, false);
-        CreateProgramWithSource(
+        createProgramWithSource(
             &mockContext,
             "copybuffer.cl");
         pProgram->enableKernelDebug();
     }
 
     void TearDown() override {
-        ProgramFixture::TearDown();
+        ProgramFixture::tearDown();
     }
     std::unique_ptr<KernelBinaryHelper> kbHelper;
     MockUnrestrictiveContext mockContext;

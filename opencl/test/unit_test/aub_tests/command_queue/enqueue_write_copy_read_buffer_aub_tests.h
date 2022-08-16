@@ -19,11 +19,11 @@ struct AubWriteCopyReadBuffer : public AUBFixture,
                                 public ::testing::Test {
 
     void SetUp() override {
-        AUBFixture::SetUp(nullptr);
+        AUBFixture::setUp(nullptr);
     }
 
     void TearDown() override {
-        AUBFixture::TearDown();
+        AUBFixture::tearDown();
     }
 
     template <typename FamilyType>

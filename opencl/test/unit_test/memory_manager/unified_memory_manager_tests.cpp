@@ -36,7 +36,7 @@ template <bool enableLocalMemory>
 struct SVMMemoryAllocatorFixture {
     SVMMemoryAllocatorFixture() : executionEnvironment(defaultHwInfo.get()) {}
 
-    virtual void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
         bool svmSupported = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.ftrSvm;
         if (!svmSupported) {
             GTEST_SKIP();
@@ -48,7 +48,7 @@ struct SVMMemoryAllocatorFixture {
             memoryManager->pageFaultManager.reset(new MockPageFaultManager);
         }
     }
-    virtual void TearDown() { // NOLINT(readability-identifier-naming)
+    void tearDown() {
     }
 
     MockExecutionEnvironment executionEnvironment;
@@ -58,9 +58,9 @@ struct SVMMemoryAllocatorFixture {
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 };
 
-using SVMMemoryAllocatorTest = TestLegacy<SVMMemoryAllocatorFixture<false>>;
+using SVMMemoryAllocatorTest = Test<SVMMemoryAllocatorFixture<false>>;
 
-using SVMLocalMemoryAllocatorTest = TestLegacy<SVMMemoryAllocatorFixture<true>>;
+using SVMLocalMemoryAllocatorTest = Test<SVMMemoryAllocatorFixture<true>>;
 
 TEST_F(SVMMemoryAllocatorTest, whenCreateZeroSizedSVMAllocationThenReturnNullptr) {
     auto ptr = svmManager->createSVMAlloc(0, {}, rootDeviceIndices, deviceBitfields);

@@ -11,10 +11,10 @@
 
 using namespace NEO;
 
-struct clRetainReleaseDeviceTests : TestLegacy<PlatformFixture> {
+struct clRetainReleaseDeviceTests : Test<PlatformFixture> {
     void SetUp() override {
         DebugManager.flags.CreateMultipleRootDevices.set(maxRootDeviceCount);
-        TestLegacy<PlatformFixture>::SetUp();
+        Test<PlatformFixture>::SetUp();
     }
     DebugManagerStateRestore restorer;
     const uint32_t rootDeviceIndex = 1u;

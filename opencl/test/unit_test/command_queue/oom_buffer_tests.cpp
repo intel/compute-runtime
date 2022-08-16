@@ -37,22 +37,19 @@ struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
                                    public HelloWorldKernelFixture,
                                    public ::testing::TestWithParam<OOMSetting> {
 
-    using CommandQueueFixture::SetUp;
-    using HelloWorldKernelFixture::SetUp;
-    using SimpleArgKernelFixture::SetUp;
-
-    OOMCommandQueueBufferTest() {
-    }
+    using CommandQueueFixture::setUp;
+    using HelloWorldKernelFixture::setUp;
+    using SimpleArgKernelFixture::setUp;
 
     void SetUp() override {
         MemoryManagement::breakOnAllocationEvent = 77;
         MemoryManagementFixture::setUp();
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         context = new MockContext(pClDevice);
         BufferDefaults::context = context;
-        CommandQueueFixture::SetUp(context, pClDevice, 0);
-        SimpleArgKernelFixture::SetUp(pClDevice);
-        HelloWorldKernelFixture::SetUp(pClDevice, "CopyBuffer_simd", "CopyBuffer");
+        CommandQueueFixture::setUp(context, pClDevice, 0);
+        SimpleArgKernelFixture::setUp(pClDevice);
+        HelloWorldKernelFixture::setUp(pClDevice, "CopyBuffer_simd", "CopyBuffer");
 
         srcBuffer = BufferHelper<>::create();
         dstBuffer = BufferHelper<>::create();
@@ -80,14 +77,14 @@ struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
         delete dstBuffer;
         delete srcBuffer;
         context->release();
-        HelloWorldKernelFixture::TearDown();
-        SimpleArgKernelFixture::TearDown();
-        CommandQueueFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        HelloWorldKernelFixture::tearDown();
+        SimpleArgKernelFixture::tearDown();
+        CommandQueueFixture::tearDown();
+        ClDeviceFixture::tearDown();
         MemoryManagementFixture::tearDown();
     }
 
-    MockContext *context;
+    MockContext *context = nullptr;
     Buffer *srcBuffer = nullptr;
     Buffer *dstBuffer = nullptr;
 };

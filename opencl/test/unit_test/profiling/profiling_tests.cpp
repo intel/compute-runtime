@@ -32,7 +32,7 @@ namespace NEO {
 struct ProfilingTests : public CommandEnqueueFixture,
                         public ::testing::Test {
     void SetUp() override {
-        CommandEnqueueFixture::SetUp(CL_QUEUE_PROFILING_ENABLE);
+        CommandEnqueueFixture::setUp(CL_QUEUE_PROFILING_ENABLE);
 
         program = ReleaseableObjectPtr<MockProgram>(new MockProgram(toClDeviceVector(*pClDevice)));
         program->setContext(&ctx);
@@ -47,7 +47,7 @@ struct ProfilingTests : public CommandEnqueueFixture,
     }
 
     void TearDown() override {
-        CommandEnqueueFixture::TearDown();
+        CommandEnqueueFixture::tearDown();
     }
 
     ReleaseableObjectPtr<MockProgram> program;
@@ -668,11 +668,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTest, givenRawTimestampsDebugModeWhenS
 
 struct ProfilingWithPerfCountersTests : public PerformanceCountersFixture, ::testing::Test {
     void SetUp() override {
-        SetUp(defaultHwInfo.get());
+        setUp(defaultHwInfo.get());
     }
 
-    void SetUp(const NEO::HardwareInfo *hardwareInfo) {
-        PerformanceCountersFixture::SetUp();
+    void setUp(const NEO::HardwareInfo *hardwareInfo) {
+        PerformanceCountersFixture::setUp();
 
         HardwareInfo hwInfo = *hardwareInfo;
         if (hwInfo.capabilityTable.defaultEngineType == aub_stream::EngineType::ENGINE_CCS) {
@@ -694,7 +694,7 @@ struct ProfilingWithPerfCountersTests : public PerformanceCountersFixture, ::tes
     }
 
     void TearDown() override {
-        PerformanceCountersFixture::TearDown();
+        PerformanceCountersFixture::tearDown();
     }
 
     template <typename GfxFamily>
@@ -721,7 +721,7 @@ struct ProfilingWithPerfCountersOnCCSTests : ProfilingWithPerfCountersTests {
     void SetUp() override {
         auto hwInfo = *defaultHwInfo;
         hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
-        ProfilingWithPerfCountersTests::SetUp(&hwInfo);
+        ProfilingWithPerfCountersTests::setUp(&hwInfo);
     }
 
     void TearDown() override {

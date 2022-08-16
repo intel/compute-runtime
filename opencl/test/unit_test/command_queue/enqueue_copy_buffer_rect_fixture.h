@@ -55,7 +55,7 @@ struct EnqueueCopyBufferRectTest : public CommandEnqueueFixture,
     };
 
     void SetUp(void) override {
-        CommandEnqueueFixture::SetUp();
+        CommandEnqueueFixture::setUp();
         BufferDefaults::context = new MockContext;
 
         srcBuffer = BufferHelper<BufferRect>::create();
@@ -66,7 +66,7 @@ struct EnqueueCopyBufferRectTest : public CommandEnqueueFixture,
         delete srcBuffer;
         delete dstBuffer;
         delete BufferDefaults::context;
-        CommandEnqueueFixture::TearDown();
+        CommandEnqueueFixture::tearDown();
     }
 
   protected:

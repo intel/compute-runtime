@@ -27,7 +27,7 @@ class MediaImageSetArgTest : public ClDeviceFixture,
 
   protected:
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         context = new MockContext(pClDevice);
 
         pKernelInfo = std::make_unique<MockKernelInfo>();
@@ -63,7 +63,7 @@ class MediaImageSetArgTest : public ClDeviceFixture,
         delete pMultiDeviceKernel;
         program.reset();
         delete context;
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;

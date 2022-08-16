@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-using LkfTest = TestLegacy<ClDeviceFixture>;
+using LkfTest = Test<ClDeviceFixture>;
 
 LKFTEST_F(LkfTest, givenLkfWhenSlmSizeIsRequiredThenReturnCorrectValue) {
     EXPECT_EQ(64u, pDevice->getHardwareInfo().capabilityTable.slmSize);

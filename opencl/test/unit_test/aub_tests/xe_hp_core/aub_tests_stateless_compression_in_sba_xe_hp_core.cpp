@@ -31,11 +31,11 @@ struct StatelessCompressionInSBA : public KernelAUBFixture<StatelessCopyKernelFi
         DebugManager.flags.EnableLocalMemory.set(true);
         DebugManager.flags.NodeOrdinal.set(GetParam());
         DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
-        KernelAUBFixture<StatelessCopyKernelFixture>::SetUp();
+        KernelAUBFixture<StatelessCopyKernelFixture>::setUp();
     }
 
     void TearDown() override {
-        KernelAUBFixture<StatelessCopyKernelFixture>::TearDown();
+        KernelAUBFixture<StatelessCopyKernelFixture>::tearDown();
     }
 
     DebugManagerStateRestore debugRestorer;
@@ -261,12 +261,12 @@ struct UmStatelessCompressionInSBA : public KernelAUBFixture<StatelessKernelWith
         DebugManager.flags.EnableLocalMemory.set(true);
         DebugManager.flags.NodeOrdinal.set(GetParam());
         DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
-        KernelAUBFixture<StatelessKernelWithIndirectAccessFixture>::SetUp();
+        KernelAUBFixture<StatelessKernelWithIndirectAccessFixture>::setUp();
         EXPECT_TRUE(multiDeviceKernel->getKernel(rootDeviceIndex)->getKernelInfo().hasIndirectStatelessAccess);
     }
 
     void TearDown() override {
-        KernelAUBFixture<StatelessKernelWithIndirectAccessFixture>::TearDown();
+        KernelAUBFixture<StatelessKernelWithIndirectAccessFixture>::tearDown();
     }
 
     DebugManagerStateRestore debugRestorer;
@@ -481,16 +481,16 @@ struct StatelessCompressionInSBAWithBCS : public MulticontextAubFixture,
         DebugManager.flags.EnableStatelessCompression.set(1);
         DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
         DebugManager.flags.EnableBlitterOperationsSupport.set(true);
-        MulticontextAubFixture::SetUp(1, EnabledCommandStreamers::Single, true);
-        StatelessCopyKernelFixture::SetUp(tileDevices[0], context.get());
+        MulticontextAubFixture::setUp(1, EnabledCommandStreamers::Single, true);
+        StatelessCopyKernelFixture::setUp(tileDevices[0], context.get());
         if (!tileDevices[0]->getHardwareInfo().featureTable.flags.ftrLocalMemory) {
             GTEST_SKIP();
         }
     }
 
     void TearDown() override {
-        MulticontextAubFixture::TearDown();
-        StatelessCopyKernelFixture::TearDown();
+        MulticontextAubFixture::tearDown();
+        StatelessCopyKernelFixture::tearDown();
     }
 
     DebugManagerStateRestore debugRestorer;

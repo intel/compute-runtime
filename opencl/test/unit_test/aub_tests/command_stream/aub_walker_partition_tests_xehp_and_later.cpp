@@ -43,11 +43,11 @@ struct DispatchParamters {
 };
 
 struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> {
-    void SetUp() override {
+    void setUp() {
         debugRestorer = std::make_unique<DebugManagerStateRestore>();
         DebugManager.flags.EnableTimestampPacket.set(1);
         kernelIds |= (1 << 5);
-        KernelAUBFixture<SimpleKernelFixture>::SetUp();
+        KernelAUBFixture<SimpleKernelFixture>::setUp();
 
         size_t userMemorySize = 16 * MemoryConstants::kiloByte;
         if (generateRandomInput) {
@@ -66,10 +66,10 @@ struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> 
         kernels[5]->setArg(0, dstBuffer.get());
     }
 
-    void TearDown() override {
+    void tearDown() {
         pCmdQ->flush();
 
-        KernelAUBFixture<SimpleKernelFixture>::TearDown();
+        KernelAUBFixture<SimpleKernelFixture>::tearDown();
     }
     template <typename FamilyType>
     void validatePartitionProgramming(uint64_t postSyncAddress, int32_t partitionCount) {
@@ -160,7 +160,7 @@ struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> 
 struct AubWalkerPartitionTest : public AubWalkerPartitionFixture,
                                 public ::testing::TestWithParam<std::tuple<int32_t, int32_t, DispatchParamters, uint32_t>> {
     void SetUp() override {
-        AubWalkerPartitionFixture::SetUp();
+        AubWalkerPartitionFixture::setUp();
         std::tie(partitionCount, partitionType, dispatchParamters, workingDimensions) = GetParam();
 
         if (generateRandomInput) {
@@ -204,13 +204,13 @@ struct AubWalkerPartitionTest : public AubWalkerPartitionFixture,
         DebugManager.flags.EnableWalkerPartition.set(1u);
     }
     void TearDown() override {
-        AubWalkerPartitionFixture::TearDown();
+        AubWalkerPartitionFixture::tearDown();
     }
 };
 
 struct AubWalkerPartitionZeroFixture : public AubWalkerPartitionFixture {
-    void SetUp() override {
-        AubWalkerPartitionFixture::SetUp();
+    void setUp() {
+        AubWalkerPartitionFixture::setUp();
 
         partitionCount = 0;
         partitionType = 0;
@@ -227,11 +227,11 @@ struct AubWalkerPartitionZeroFixture : public AubWalkerPartitionFixture {
         memset(helperSurface->getUnderlyingBuffer(), 0, MemoryConstants::pageSize);
         taskStream = std::make_unique<LinearStream>(streamAllocation);
     }
-    void TearDown() override {
+    void tearDown() {
         auto memoryManager = this->device->getMemoryManager();
         memoryManager->freeGraphicsMemory(streamAllocation);
         memoryManager->freeGraphicsMemory(helperSurface);
-        AubWalkerPartitionFixture::TearDown();
+        AubWalkerPartitionFixture::tearDown();
     }
 
     void flushStream() {
@@ -253,7 +253,7 @@ struct AubWalkerPartitionZeroFixture : public AubWalkerPartitionFixture {
     std::unique_ptr<AllocationProperties> commandBufferProperties;
 };
 
-using AubWalkerPartitionZeroTest = TestLegacy<AubWalkerPartitionZeroFixture>;
+using AubWalkerPartitionZeroTest = Test<AubWalkerPartitionZeroFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, whenPartitionCountSetToZeroThenProvideEqualSingleWalker) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
@@ -583,7 +583,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenVariousCompareMode
 }
 template <bool enableNesting>
 struct MultiLevelBatchAubFixture : public AUBFixture {
-    void SetUp() override {
+    void setUp() {
         if (enableNesting) {
             //turn on Batch Buffer nesting
             DebugManager.flags.AubDumpAddMmioRegistersList.set(
@@ -593,7 +593,7 @@ struct MultiLevelBatchAubFixture : public AUBFixture {
             DebugManager.flags.AubDumpAddMmioRegistersList.set(
                 "0x1A09C;0x10000000");
         }
-        AUBFixture::SetUp(nullptr);
+        AUBFixture::setUp(nullptr);
 
         auto memoryManager = this->device->getMemoryManager();
 
@@ -608,7 +608,7 @@ struct MultiLevelBatchAubFixture : public AUBFixture {
         secondLevelBatchStream = std::make_unique<LinearStream>(secondLevelBatch);
         thirdLevelBatchStream = std::make_unique<LinearStream>(thirdLevelBatch);
     };
-    void TearDown() override {
+    void tearDown() {
         DebugManager.flags.AubDumpAddMmioRegistersList.getRef() = "unk";
         DebugManager.flags.AubDumpAddMmioRegistersList.getRef().shrink_to_fit();
 
@@ -618,7 +618,7 @@ struct MultiLevelBatchAubFixture : public AUBFixture {
         memoryManager->freeGraphicsMemory(streamAllocation);
         memoryManager->freeGraphicsMemory(helperSurface);
 
-        AUBFixture::TearDown();
+        AUBFixture::tearDown();
     };
 
     void flushStream() {
@@ -649,7 +649,7 @@ struct MultiLevelBatchAubFixture : public AUBFixture {
     GraphicsAllocation *thirdLevelBatch = nullptr;
 };
 
-using MultiLevelBatchTestsWithNesting = TestLegacy<MultiLevelBatchAubFixture<true>>;
+using MultiLevelBatchTestsWithNesting = Test<MultiLevelBatchAubFixture<true>>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithNesting, givenConditionalBatchBufferEndWhenItExitsThirdLevelCommandBufferThenSecondLevelBatchIsResumed) {
     auto writeAddress = helperSurface->getGpuAddress();
@@ -802,7 +802,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithNesting, givenCommandBuffer
     flushStream();
     expectMemory<FamilyType>(reinterpret_cast<void *>(writeAddress), &writeValue, sizeof(writeValue));
 }
-using MultiLevelBatchTestsWithoutNesting = TestLegacy<MultiLevelBatchAubFixture<false>>;
+using MultiLevelBatchTestsWithoutNesting = Test<MultiLevelBatchAubFixture<false>>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithoutNesting, givenConditionalBBEndWhenItExitsFromSecondLevelThenUpperLevelIsResumed) {
     auto writeAddress = helperSurface->getGpuAddress();
@@ -1184,7 +1184,7 @@ INSTANTIATE_TEST_CASE_P(
         ::testing::ValuesIn(DispatchParamtersForTests),
         ::testing::ValuesIn(testWorkingDimensions)));
 
-using AubWparidTests = TestLegacy<AubWalkerPartitionFixture>;
+using AubWparidTests = Test<AubWalkerPartitionFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, AubWparidTests, whenPartitionCountSetAndPartitionIdSpecifiedViaWPARIDThenProvideEqualNumberWalkers) {
     size_t globalWorkOffset[3] = {0, 0, 0};

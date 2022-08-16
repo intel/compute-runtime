@@ -18,7 +18,7 @@ namespace NEO {
 using namespace SplitDispatch;
 
 class DispatchInfoBuilderFixture : public ContextFixture, public ClDeviceFixture {
-    using ContextFixture::SetUp;
+    using ContextFixture::setUp;
 
   public:
     DispatchInfoBuilderFixture() {}
@@ -27,10 +27,10 @@ class DispatchInfoBuilderFixture : public ContextFixture, public ClDeviceFixture
     }
 
   protected:
-    void SetUp() {
-        ClDeviceFixture::SetUp();
+    void setUp() {
+        ClDeviceFixture::setUp();
         cl_device_id device = pClDevice;
-        ContextFixture::SetUp(1, &device);
+        ContextFixture::setUp(1, &device);
         pKernelInfo = std::make_unique<MockKernelInfo>();
 
         pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
@@ -55,12 +55,12 @@ class DispatchInfoBuilderFixture : public ContextFixture, public ClDeviceFixture
         pKernel->isBuiltIn = true;
     }
 
-    void TearDown() {
+    void tearDown() {
         delete pKernel;
         delete pProgram;
 
-        ContextFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        ContextFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     std::unique_ptr<MockKernelInfo> pKernelInfo;
@@ -69,7 +69,7 @@ class DispatchInfoBuilderFixture : public ContextFixture, public ClDeviceFixture
     char pCrossThreadData[128];
 };
 
-typedef TestLegacy<DispatchInfoBuilderFixture> DispatchInfoBuilderTest;
+typedef Test<DispatchInfoBuilderFixture> DispatchInfoBuilderTest;
 
 template <SplitDispatch::Dim Dim, SplitDispatch::SplitMode Mode>
 class DispatchInfoBuilderMock : DispatchInfoBuilder<Dim, Mode> {

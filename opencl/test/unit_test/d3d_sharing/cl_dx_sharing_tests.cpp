@@ -152,7 +152,7 @@ struct clIntelSharingFormatQueryDX1X : public PlatformFixture, public ::testing:
     size_t retSize;
 
     void SetUp() override {
-        PlatformFixture::SetUp();
+        PlatformFixture::setUp();
         context = new MockContext(pPlatform->getClDevice(0));
         mockSharingFcns = new MockD3DSharingFunctions<T>();
         context->setSharingFunctions(mockSharingFcns);
@@ -165,7 +165,7 @@ struct clIntelSharingFormatQueryDX1X : public PlatformFixture, public ::testing:
     }
     void TearDown() override {
         delete context;
-        PlatformFixture::TearDown();
+        PlatformFixture::tearDown();
     }
 };
 

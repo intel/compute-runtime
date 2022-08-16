@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-using XeHPAndLaterSamplerTest = TestLegacy<ClDeviceFixture>;
+using XeHPAndLaterSamplerTest = Test<ClDeviceFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterSamplerTest, GivenDefaultThenLowQualityFilterIsDisabled) {
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;

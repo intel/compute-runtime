@@ -1048,14 +1048,14 @@ struct InternalsEventWithPerfCountersTest
     : public InternalsEventTest,
       public PerformanceCountersFixture {
     void SetUp() override {
-        PerformanceCountersFixture::SetUp();
+        PerformanceCountersFixture::setUp();
         InternalsEventTest::SetUp();
         pDevice->setPerfCounters(MockPerformanceCounters::create());
     }
 
     void TearDown() override {
         InternalsEventTest::TearDown();
-        PerformanceCountersFixture::TearDown();
+        PerformanceCountersFixture::tearDown();
     }
 };
 HWTEST_F(InternalsEventWithPerfCountersTest, givenCpuProfilingPerfCountersPathWhenEnqueuedMarkerThenDontUseTimeStampNodePerfCounterNode) {

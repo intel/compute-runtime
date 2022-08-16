@@ -14,7 +14,7 @@
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 
 typedef HelloWorldFixture<HelloWorldFixtureFactory> EnqueueKernelFixture;
-typedef TestLegacy<EnqueueKernelFixture> EnqueueKernelTest;
+typedef Test<EnqueueKernelFixture> EnqueueKernelTest;
 
 HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenFinishIsCalledThenBatchesSubmissionsAreFlushed) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());

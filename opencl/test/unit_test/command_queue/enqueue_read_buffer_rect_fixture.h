@@ -18,7 +18,7 @@ namespace NEO {
 struct EnqueueReadBufferRectTest : public CommandEnqueueFixture,
                                    public ::testing::Test {
     void SetUp() override {
-        CommandEnqueueFixture::SetUp();
+        CommandEnqueueFixture::setUp();
         context.reset(new MockContext(pCmdQ->getDevice().getSpecializedDevice<ClDevice>()));
         BufferDefaults::context = context.get();
 
@@ -43,7 +43,7 @@ struct EnqueueReadBufferRectTest : public CommandEnqueueFixture,
         ::alignedFree(hostPtr);
 
         context.reset();
-        CommandEnqueueFixture::TearDown();
+        CommandEnqueueFixture::tearDown();
     }
 
   protected:

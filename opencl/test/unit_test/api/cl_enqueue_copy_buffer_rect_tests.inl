@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,10 +16,10 @@ using namespace NEO;
 
 struct clEnqueueCopyBufferRectTests : public ApiFixture<0>, ::testing::Test {
     void SetUp() override {
-        ApiFixture::SetUp();
+        ApiFixture::setUp();
     }
     void TearDown() override {
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
 };
 

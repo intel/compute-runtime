@@ -37,7 +37,7 @@ class SubBufferTest : public ClDeviceFixture,
 
     void TearDown() override {
         delete buffer;
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;

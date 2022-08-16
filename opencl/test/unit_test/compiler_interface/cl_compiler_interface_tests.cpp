@@ -20,7 +20,7 @@ class ClCompilerInterfaceTest : public ClDeviceFixture,
                                 public ::testing::Test {
   public:
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
 
         // create the compiler interface
         this->pCompilerInterface = new MockCompilerInterface();
@@ -47,7 +47,7 @@ class ClCompilerInterfaceTest : public ClDeviceFixture,
     void TearDown() override {
         pSource.reset();
 
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     MockCompilerInterface *pCompilerInterface;

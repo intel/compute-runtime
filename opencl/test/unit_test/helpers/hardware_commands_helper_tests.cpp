@@ -31,10 +31,10 @@
 using namespace NEO;
 
 void HardwareCommandsTest::SetUp() {
-    ClDeviceFixture::SetUp();
+    ClDeviceFixture::setUp();
     ASSERT_NE(nullptr, pClDevice);
     cl_device_id device = pClDevice;
-    ContextFixture::SetUp(1, &device);
+    ContextFixture::setUp(1, &device);
     ASSERT_NE(nullptr, pContext);
     BuiltInFixture::SetUp(pDevice);
     ASSERT_NE(nullptr, pBuiltIns);
@@ -45,8 +45,8 @@ void HardwareCommandsTest::SetUp() {
 void HardwareCommandsTest::TearDown() {
     mockKernelWithInternal.reset(nullptr);
     BuiltInFixture::TearDown();
-    ContextFixture::TearDown();
-    ClDeviceFixture::TearDown();
+    ContextFixture::tearDown();
+    ClDeviceFixture::tearDown();
 }
 
 void HardwareCommandsTest::addSpaceForSingleKernelArg() {
@@ -1196,7 +1196,7 @@ TEST_F(HardwareCommandsTest, givenCacheFlushAfterWalkerEnabledWhenPlatformNotSup
     EXPECT_EQ(0U, allocationsForCacheFlush.size());
 }
 
-using KernelCacheFlushTests = TestLegacy<HelloWorldFixture<HelloWorldFixtureFactory>>;
+using KernelCacheFlushTests = Test<HelloWorldFixture<HelloWorldFixtureFactory>>;
 
 HWTEST_F(KernelCacheFlushTests, givenLocallyUncachedBufferWhenGettingAllocationsForFlushThenEmptyVectorIsReturned) {
     DebugManagerStateRestore dbgRestore;
@@ -1225,10 +1225,10 @@ HWTEST_F(KernelCacheFlushTests, givenLocallyUncachedBufferWhenGettingAllocations
     clReleaseMemObject(bufferRegular);
 }
 
-struct HardwareCommandsImplicitArgsTests : TestLegacy<ClDeviceFixture> {
+struct HardwareCommandsImplicitArgsTests : Test<ClDeviceFixture> {
 
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         indirectHeapAllocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
 
         expectedImplicitArgs.numWorkDim = 3;
@@ -1246,7 +1246,7 @@ struct HardwareCommandsImplicitArgsTests : TestLegacy<ClDeviceFixture> {
 
     void TearDown() override {
         pDevice->getMemoryManager()->freeGraphicsMemory(indirectHeapAllocation);
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     template <typename FamilyType>

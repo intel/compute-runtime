@@ -30,7 +30,7 @@ struct HardwareCommandsTest : ClDeviceFixture,
                               ::testing::Test {
 
     using BuiltInFixture::SetUp;
-    using ContextFixture::SetUp;
+    using ContextFixture::setUp;
 
     void SetUp() override;
     void TearDown() override;

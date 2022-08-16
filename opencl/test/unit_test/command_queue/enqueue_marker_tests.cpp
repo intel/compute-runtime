@@ -18,7 +18,7 @@
 
 using namespace NEO;
 
-using MarkerTest = TestLegacy<CommandEnqueueFixture>;
+using MarkerTest = Test<CommandEnqueueFixture>;
 
 HWTEST_F(MarkerTest, GivenCsrAndCmdqWithSameTaskLevelWhenEnqueingMarkerThenPipeControlIsAdded) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;

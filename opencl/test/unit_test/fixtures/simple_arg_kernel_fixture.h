@@ -72,11 +72,11 @@ inline const char *typeName(unsigned short &) {
 class SimpleArgKernelFixture : public ProgramFixture {
 
   public:
-    using ProgramFixture::SetUp;
+    using ProgramFixture::setUp;
 
   protected:
-    virtual void SetUp(ClDevice *pDevice) {
-        ProgramFixture::SetUp();
+    void setUp(ClDevice *pDevice) {
+        ProgramFixture::setUp();
 
         std::string testFile;
         int forTheName = 0;
@@ -94,7 +94,7 @@ class SimpleArgKernelFixture : public ProgramFixture {
         ASSERT_EQ(CL_SUCCESS, retVal);
         ASSERT_NE(nullptr, pContext);
 
-        CreateProgramFromBinary(
+        createProgramFromBinary(
             pContext,
             deviceVector,
             testFile);
@@ -117,7 +117,7 @@ class SimpleArgKernelFixture : public ProgramFixture {
         ASSERT_EQ(CL_SUCCESS, retVal);
     }
 
-    void TearDown() override {
+    void tearDown() {
         if (pKernel) {
             delete pKernel;
             pKernel = nullptr;
@@ -125,7 +125,7 @@ class SimpleArgKernelFixture : public ProgramFixture {
 
         pContext->release();
 
-        ProgramFixture::TearDown();
+        ProgramFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
@@ -135,13 +135,13 @@ class SimpleArgKernelFixture : public ProgramFixture {
 
 class SimpleArgNonUniformKernelFixture : public ProgramFixture {
   public:
-    using ProgramFixture::SetUp;
+    using ProgramFixture::setUp;
 
   protected:
-    void SetUp(ClDevice *device, Context *context) {
-        ProgramFixture::SetUp();
+    void setUp(ClDevice *device, Context *context) {
+        ProgramFixture::setUp();
 
-        CreateProgramFromBinary(
+        createProgramFromBinary(
             context,
             context->getDevices(),
             "simple_nonuniform",
@@ -163,13 +163,13 @@ class SimpleArgNonUniformKernelFixture : public ProgramFixture {
         ASSERT_EQ(CL_SUCCESS, retVal);
     }
 
-    void TearDown() override {
+    void tearDown() {
         if (kernel) {
             delete kernel;
             kernel = nullptr;
         }
 
-        ProgramFixture::TearDown();
+        ProgramFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
@@ -178,14 +178,14 @@ class SimpleArgNonUniformKernelFixture : public ProgramFixture {
 
 class SimpleKernelFixture : public ProgramFixture {
   public:
-    using ProgramFixture::SetUp;
+    using ProgramFixture::setUp;
 
   protected:
-    void SetUp(ClDevice *device, Context *context) {
-        ProgramFixture::SetUp();
+    void setUp(ClDevice *device, Context *context) {
+        ProgramFixture::setUp();
 
         std::string programName("simple_kernels");
-        CreateProgramFromBinary(
+        createProgramFromBinary(
             context,
             toClDeviceVector(*device),
             programName);
@@ -212,14 +212,14 @@ class SimpleKernelFixture : public ProgramFixture {
         }
     }
 
-    void TearDown() override {
+    void tearDown() {
         for (size_t i = 0; i < maxKernelsCount; i++) {
             if (kernels[i]) {
                 kernels[i].reset(nullptr);
             }
         }
 
-        ProgramFixture::TearDown();
+        ProgramFixture::tearDown();
     }
 
     uint32_t kernelIds = 0;
@@ -231,15 +231,15 @@ class SimpleKernelFixture : public ProgramFixture {
 class SimpleKernelStatelessFixture : public ProgramFixture {
   public:
     DebugManagerStateRestore restorer;
-    using ProgramFixture::SetUp;
+    using ProgramFixture::setUp;
 
   protected:
-    void SetUp(ClDevice *device, Context *context) {
-        ProgramFixture::SetUp();
+    void setUp(ClDevice *device, Context *context) {
+        ProgramFixture::setUp();
         DebugManager.flags.DisableStatelessToStatefulOptimization.set(true);
         DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(false);
 
-        CreateProgramFromBinary(
+        createProgramFromBinary(
             context,
             toClDeviceVector(*device),
             "stateless_kernel");
@@ -260,8 +260,8 @@ class SimpleKernelStatelessFixture : public ProgramFixture {
         ASSERT_EQ(CL_SUCCESS, retVal);
     }
 
-    void TearDown() override {
-        ProgramFixture::TearDown();
+    void tearDown() {
+        ProgramFixture::tearDown();
     }
 
     std::unique_ptr<Kernel> kernel = nullptr;
@@ -271,15 +271,15 @@ class SimpleKernelStatelessFixture : public ProgramFixture {
 class StatelessCopyKernelFixture : public ProgramFixture {
   public:
     DebugManagerStateRestore restorer;
-    using ProgramFixture::SetUp;
+    using ProgramFixture::setUp;
 
   protected:
-    void SetUp(ClDevice *device, Context *context) {
-        ProgramFixture::SetUp();
+    void setUp(ClDevice *device, Context *context) {
+        ProgramFixture::setUp();
         DebugManager.flags.DisableStatelessToStatefulOptimization.set(true);
         DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(false);
 
-        CreateProgramFromBinary(
+        createProgramFromBinary(
             context,
             toClDeviceVector(*device),
             "stateless_copy_buffer");
@@ -300,8 +300,8 @@ class StatelessCopyKernelFixture : public ProgramFixture {
         ASSERT_EQ(CL_SUCCESS, retVal);
     }
 
-    void TearDown() override {
-        ProgramFixture::TearDown();
+    void tearDown() {
+        ProgramFixture::tearDown();
     }
 
     std::unique_ptr<MultiDeviceKernel> multiDeviceKernel = nullptr;
@@ -312,15 +312,15 @@ class StatelessCopyKernelFixture : public ProgramFixture {
 class StatelessKernelWithIndirectAccessFixture : public ProgramFixture {
   public:
     DebugManagerStateRestore restorer;
-    using ProgramFixture::SetUp;
+    using ProgramFixture::setUp;
 
   protected:
-    void SetUp(ClDevice *device, Context *context) {
-        ProgramFixture::SetUp();
+    void setUp(ClDevice *device, Context *context) {
+        ProgramFixture::setUp();
         DebugManager.flags.DisableStatelessToStatefulOptimization.set(true);
         DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(false);
 
-        CreateProgramFromBinary(
+        createProgramFromBinary(
             context,
             toClDeviceVector(*device),
             "indirect_access_kernel");
@@ -342,8 +342,8 @@ class StatelessKernelWithIndirectAccessFixture : public ProgramFixture {
         EXPECT_TRUE(multiDeviceKernel->getKernel(device->getRootDeviceIndex())->getKernelInfo().hasIndirectStatelessAccess);
     }
 
-    void TearDown() override {
-        ProgramFixture::TearDown();
+    void tearDown() {
+        ProgramFixture::tearDown();
     }
 
     std::unique_ptr<MultiDeviceKernel> multiDeviceKernel = nullptr;
@@ -352,20 +352,20 @@ class StatelessKernelWithIndirectAccessFixture : public ProgramFixture {
 
 class BindlessKernelFixture : public ProgramFixture {
   public:
-    using ProgramFixture::SetUp;
-    void SetUp(ClDevice *device, Context *context) {
-        ProgramFixture::SetUp();
+    using ProgramFixture::setUp;
+    void setUp(ClDevice *device, Context *context) {
+        ProgramFixture::setUp();
         this->deviceCl = device;
         this->contextCl = context;
     }
 
-    void TearDown() override {
-        ProgramFixture::TearDown();
+    void tearDown() {
+        ProgramFixture::tearDown();
     }
 
     void createKernel(const std::string &programName, const std::string &kernelName) {
         DebugManager.flags.UseBindlessMode.set(1);
-        CreateProgramFromBinary(
+        createProgramFromBinary(
             contextCl,
             contextCl->getDevices(),
             programName);

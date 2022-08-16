@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,20 +17,20 @@ struct ContextGetInfoTest : public PlatformFixture,
                             public ContextFixture,
                             public ::testing::Test {
 
-    using ContextFixture::SetUp;
-    using PlatformFixture::SetUp;
+    using ContextFixture::setUp;
+    using PlatformFixture::setUp;
 
     ContextGetInfoTest() {
     }
 
     void SetUp() override {
-        PlatformFixture::SetUp();
-        ContextFixture::SetUp(num_devices, devices);
+        PlatformFixture::setUp();
+        ContextFixture::setUp(num_devices, devices);
     }
 
     void TearDown() override {
-        ContextFixture::TearDown();
-        PlatformFixture::TearDown();
+        ContextFixture::tearDown();
+        PlatformFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;

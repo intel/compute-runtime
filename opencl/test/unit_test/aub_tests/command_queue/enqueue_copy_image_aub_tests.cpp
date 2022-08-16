@@ -20,14 +20,14 @@ struct AUBCopyImage
       public ::testing::WithParamInterface<std::tuple<uint32_t, uint32_t>>,
       public ::testing::Test {
     void SetUp() override {
-        ImageAubFixture::SetUp(enableBlitter);
+        ImageAubFixture::setUp(enableBlitter);
     }
 
     void TearDown() override {
         srcImage.reset();
         dstImage.reset();
 
-        ImageAubFixture::TearDown();
+        ImageAubFixture::tearDown();
     }
 
     template <typename FamilyType>

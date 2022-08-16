@@ -25,9 +25,9 @@ namespace NEO {
 struct ImageAubFixture : public ClDeviceFixture, public AUBCommandStreamFixture {
     typedef AUBCommandStreamFixture CommandStreamFixture;
 
-    using AUBCommandStreamFixture::SetUp;
+    using AUBCommandStreamFixture::setUp;
 
-    void SetUp(bool enableBlitter) {
+    void setUp(bool enableBlitter) {
         if (enableBlitter) {
             if (!(HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isBlitterForImagesSupported())) {
                 GTEST_SKIP();
@@ -37,7 +37,7 @@ struct ImageAubFixture : public ClDeviceFixture, public AUBCommandStreamFixture 
             hardwareInfo.capabilityTable.blitterOperationsSupported = true;
             ClDeviceFixture::setUpImpl(&hardwareInfo);
         } else {
-            ClDeviceFixture::SetUp();
+            ClDeviceFixture::setUp();
         }
 
         context = new MockContext(pClDevice);
@@ -47,10 +47,10 @@ struct ImageAubFixture : public ClDeviceFixture, public AUBCommandStreamFixture 
         EXPECT_EQ(CL_SUCCESS, retVal);
         pCmdQ = castToObject<CommandQueue>(clQueue);
 
-        CommandStreamFixture::SetUp(pCmdQ);
+        CommandStreamFixture::setUp(pCmdQ);
     }
 
-    void TearDown() override {
+    void tearDown() {
         if (pCmdQ) {
             auto blocked = pCmdQ->isQueueBlocked();
             UNRECOVERABLE_IF(blocked);
@@ -60,8 +60,8 @@ struct ImageAubFixture : public ClDeviceFixture, public AUBCommandStreamFixture 
             context->release();
         }
 
-        CommandStreamFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        CommandStreamFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     DebugManagerStateRestore restorer;

@@ -14,7 +14,7 @@
 
 using namespace NEO;
 
-using Gen12LpKernelTest = TestLegacy<ClDeviceFixture>;
+using Gen12LpKernelTest = Test<ClDeviceFixture>;
 GEN12LPTEST_F(Gen12LpKernelTest, givenKernelWhenCanTransformImagesIsCalledThenReturnsFalse) {
     MockKernelWithInternals mockKernel(*pClDevice);
     auto retVal = mockKernel.mockKernel->Kernel::canTransformImages();

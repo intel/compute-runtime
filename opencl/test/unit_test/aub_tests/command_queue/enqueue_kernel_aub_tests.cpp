@@ -51,13 +51,13 @@ struct AUBHelloWorld
       public ::testing::Test {
 
     void SetUp() override {
-        HelloWorldFixture<AUBHelloWorldFixtureFactory>::SetUp();
+        HelloWorldFixture<AUBHelloWorldFixtureFactory>::setUp();
         ClHardwareParse::setUp();
     }
 
     void TearDown() override {
         ClHardwareParse::tearDown();
-        HelloWorldFixture<AUBHelloWorldFixtureFactory>::TearDown();
+        HelloWorldFixture<AUBHelloWorldFixtureFactory>::tearDown();
     }
 };
 
@@ -125,12 +125,12 @@ struct AUBHelloWorldIntegrateTest : public HelloWorldFixture<AUBHelloWorldFixtur
         if (KernelFixture::simd < HwHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily).getMinimalSIMDSize()) {
             GTEST_SKIP();
         }
-        ParentClass::SetUp();
+        ParentClass::setUp();
     }
 
     void TearDown() override {
         if (!IsSkipped()) {
-            ParentClass::TearDown();
+            ParentClass::tearDown();
         }
     }
 
@@ -209,16 +209,16 @@ struct AUBSimpleArg
       public ClHardwareParse,
       public ::testing::Test {
 
-    using SimpleArgKernelFixture::SetUp;
+    using SimpleArgKernelFixture::setUp;
 
     void SetUp() override {
-        SimpleArgFixture<AUBSimpleArgFixtureFactory>::SetUp();
+        SimpleArgFixture<AUBSimpleArgFixtureFactory>::setUp();
         ClHardwareParse::setUp();
     }
 
     void TearDown() override {
         ClHardwareParse::tearDown();
-        SimpleArgFixture<AUBSimpleArgFixtureFactory>::TearDown();
+        SimpleArgFixture<AUBSimpleArgFixtureFactory>::tearDown();
     }
 };
 
@@ -316,12 +316,12 @@ struct AUBSimpleArgIntegrateTest : public SimpleArgFixture<AUBSimpleArgFixtureFa
         if (simd < HwHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily).getMinimalSIMDSize()) {
             GTEST_SKIP();
         }
-        ParentClass::SetUp();
+        ParentClass::setUp();
     }
 
     void TearDown() override {
         if (!IsSkipped()) {
-            ParentClass::TearDown();
+            ParentClass::tearDown();
         }
     }
     cl_uint simd;
@@ -372,9 +372,9 @@ INSTANTIATE_TEST_CASE_P(
 } // namespace ULT
 
 struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUniformKernelFixture> {
-    void SetUp() override {
+    void setUp() {
         REQUIRE_OCL_21_OR_SKIP(NEO::defaultHwInfo);
-        KernelAUBFixture<SimpleArgNonUniformKernelFixture>::SetUp();
+        KernelAUBFixture<SimpleArgNonUniformKernelFixture>::setUp();
 
         sizeUserMemory = alignUp(typeItems * typeSize, 64);
 
@@ -430,7 +430,7 @@ struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUnifo
         remainderBufferGpuAddress = ptrOffset(bufferGpuAddress, sizeWrittenMemory);
     }
 
-    void TearDown() override {
+    void tearDown() {
         if (NEO::defaultHwInfo->capabilityTable.supportsOcl21Features == false) {
             return;
         }
@@ -446,7 +446,7 @@ struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUnifo
             alignedFree(expectedRemainderMemory);
             expectedRemainderMemory = nullptr;
         }
-        KernelAUBFixture<SimpleArgNonUniformKernelFixture>::TearDown();
+        KernelAUBFixture<SimpleArgNonUniformKernelFixture>::tearDown();
     }
     unsigned int deviceClVersionSupport;
 
@@ -466,7 +466,7 @@ struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUnifo
     ClHardwareParse hwParser;
 };
 
-using AUBSimpleKernelStatelessTest = TestLegacy<KernelAUBFixture<SimpleKernelStatelessFixture>>;
+using AUBSimpleKernelStatelessTest = Test<KernelAUBFixture<SimpleKernelStatelessFixture>>;
 
 HWTEST_F(AUBSimpleKernelStatelessTest, givenSimpleKernelWhenStatelessPathIsUsedThenExpectCorrectBuffer) {
 
@@ -512,7 +512,7 @@ HWTEST_F(AUBSimpleKernelStatelessTest, givenSimpleKernelWhenStatelessPathIsUsedT
                              bufferExpected, bufferSize);
 }
 
-using AUBSimpleArgNonUniformTest = TestLegacy<AUBSimpleArgNonUniformFixture>;
+using AUBSimpleArgNonUniformTest = Test<AUBSimpleArgNonUniformFixture>;
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork1DimNonUniformGroupThenExpectTwoWalkers) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     cl_uint workDim = 1;
@@ -871,11 +871,11 @@ struct AUBBindlessKernel : public KernelAUBFixture<BindlessKernelFixture>,
     void SetUp() override {
         DebugManager.flags.UseBindlessMode.set(1);
         DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
-        KernelAUBFixture<BindlessKernelFixture>::SetUp();
+        KernelAUBFixture<BindlessKernelFixture>::setUp();
     }
 
     void TearDown() override {
-        KernelAUBFixture<BindlessKernelFixture>::TearDown();
+        KernelAUBFixture<BindlessKernelFixture>::tearDown();
     }
     DebugManagerStateRestore restorer;
 };

@@ -13,12 +13,12 @@
 namespace NEO {
 
 struct CommandStreamFixture {
-    void SetUp(CommandQueue *pCmdQ) { // NOLINT(readability-identifier-naming)
+    void setUp(CommandQueue *pCmdQ) {
         pCS = &pCmdQ->getCS(1024);
         pCmdBuffer = pCS->getCpuBase();
     }
 
-    virtual void TearDown() { // NOLINT(readability-identifier-naming)
+    void tearDown() {
     }
 
     LinearStream *pCS = nullptr;

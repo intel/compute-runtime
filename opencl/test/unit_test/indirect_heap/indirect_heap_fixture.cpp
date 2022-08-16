@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-void IndirectHeapFixture::SetUp(CommandQueue *pCmdQ) {
+void IndirectHeapFixture::setUp(CommandQueue *pCmdQ) {
     pDSH = &pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 8192);
     pSSH = &pCmdQ->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 4096);
     pIOH = &pCmdQ->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 4096);

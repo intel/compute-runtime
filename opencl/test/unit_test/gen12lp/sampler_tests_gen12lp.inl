@@ -16,7 +16,7 @@
 
 using namespace NEO;
 
-typedef TestLegacy<ClDeviceFixture> Gen12LpSamplerTest;
+typedef Test<ClDeviceFixture> Gen12LpSamplerTest;
 
 HWTEST2_F(Gen12LpSamplerTest, givenTglLpSamplerWhenUsingDefaultFilteringAndAppendSamplerStateParamsThenDisableLowQualityFilter, IsTGLLP) {
     EXPECT_FALSE(DebugManager.flags.ForceSamplerLowFilteringPrecision.get());

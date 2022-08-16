@@ -24,20 +24,20 @@
 using namespace NEO;
 
 class GetMemObjectInfo : public ::testing::Test, public PlatformFixture, public ClDeviceFixture {
-    using ClDeviceFixture::SetUp;
-    using PlatformFixture::SetUp;
+    using ClDeviceFixture::setUp;
+    using PlatformFixture::setUp;
 
   public:
     void SetUp() override {
-        PlatformFixture::SetUp();
-        ClDeviceFixture::SetUp();
+        PlatformFixture::setUp();
+        ClDeviceFixture::setUp();
         BufferDefaults::context = new MockContext;
     }
 
     void TearDown() override {
         delete BufferDefaults::context;
-        ClDeviceFixture::TearDown();
-        PlatformFixture::TearDown();
+        ClDeviceFixture::tearDown();
+        PlatformFixture::tearDown();
     }
 };
 

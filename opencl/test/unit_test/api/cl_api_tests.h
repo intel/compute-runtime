@@ -28,7 +28,7 @@ namespace NEO {
 template <uint32_t rootDeviceIndex = 1u>
 struct ApiFixture {
 
-    virtual void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
         DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
         executionEnvironment = new ClExecutionEnvironment();
         prepareDeviceEnvironments(*executionEnvironment);
@@ -56,7 +56,7 @@ struct ApiFixture {
         ASSERT_NE(nullptr, pKernel);
     }
 
-    virtual void TearDown() { // NOLINT(readability-identifier-naming)
+    void tearDown() {
         pMultiDeviceKernel->release();
         pCommandQueue->release();
         pContext->release();
@@ -95,17 +95,17 @@ struct ApiFixture {
 struct api_tests : public ApiFixture<>,
                    public ::testing::Test {
     void SetUp() override {
-        ApiFixture::SetUp();
+        ApiFixture::setUp();
     }
     void TearDown() override {
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
 };
 
-struct api_fixture_using_aligned_memory_manager {
+struct ApiFixtureUsingAlignedMemoryManager {
   public:
-    virtual void SetUp();    // NOLINT(readability-identifier-naming)
-    virtual void TearDown(); // NOLINT(readability-identifier-naming)
+    void setUp();
+    void tearDown();
 
     cl_int retVal;
     size_t retSize;
@@ -117,7 +117,7 @@ struct api_fixture_using_aligned_memory_manager {
     MockClDevice *device;
 };
 
-using api_test_using_aligned_memory_manager = TestLegacy<api_fixture_using_aligned_memory_manager>;
+using api_test_using_aligned_memory_manager = Test<ApiFixtureUsingAlignedMemoryManager>;
 
 void CL_CALLBACK notifyFuncProgram(
     cl_program program,

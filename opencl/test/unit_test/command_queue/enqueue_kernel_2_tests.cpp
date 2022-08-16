@@ -118,12 +118,12 @@ struct EnqueueKernelTypeTest : public HelloWorldFixture<HelloWorldFixtureFactory
     }
 
     void SetUp() override {
-        ParentClass::SetUp();
+        ParentClass::setUp();
         ClHardwareParse::setUp();
     }
     void TearDown() override {
         ClHardwareParse::tearDown();
-        ParentClass::TearDown();
+        ParentClass::tearDown();
     }
     size_t globalWorkSize[3];
     size_t localWorkSize[3];
@@ -793,7 +793,7 @@ HWTEST_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThr
 }
 
 typedef HelloWorldFixture<HelloWorldFixtureFactory> EnqueueKernelFixture;
-typedef TestLegacy<EnqueueKernelFixture> EnqueueKernelTest;
+typedef Test<EnqueueKernelFixture> EnqueueKernelTest;
 
 template <typename FamilyType>
 class MyCmdQ : public MockCommandQueueHw<FamilyType> {

@@ -17,12 +17,12 @@ using namespace NEO;
 
 class ScenarioTest : public ::testing::Test,
                      public PlatformFixture {
-    using PlatformFixture::SetUp;
+    using PlatformFixture::setUp;
 
   protected:
     void SetUp() override {
         DebugManager.flags.EnableTimestampPacket.set(false);
-        PlatformFixture::SetUp();
+        PlatformFixture::setUp();
 
         auto pDevice = pPlatform->getClDevice(0);
         ASSERT_NE(nullptr, pDevice);
@@ -43,7 +43,7 @@ class ScenarioTest : public ::testing::Test,
         context->release();
         program->release();
 
-        PlatformFixture::TearDown();
+        PlatformFixture::tearDown();
     }
 
     cl_int retVal;

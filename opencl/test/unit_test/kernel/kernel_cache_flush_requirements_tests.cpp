@@ -27,10 +27,10 @@ class KernelWithCacheFlushTests : public PlatformFixture, public testing::TestWi
     void TearDown() override {
     }
     void initializePlatform() {
-        PlatformFixture::SetUp();
+        PlatformFixture::setUp();
     }
     void clearPlatform() {
-        PlatformFixture::TearDown();
+        PlatformFixture::tearDown();
     }
 };
 TEST_F(KernelWithCacheFlushTests, givenDeviceWhichDoesntRequireCacheFlushWhenCheckIfKernelRequireFlushThenReturnedFalse) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,11 +13,11 @@ using namespace NEO;
 
 struct XE_HP_COREPlatformCaps : public PlatformFixture, public ::testing::Test {
     void SetUp() override {
-        PlatformFixture::SetUp();
+        PlatformFixture::setUp();
     }
 
     void TearDown() override {
-        PlatformFixture::TearDown();
+        PlatformFixture::tearDown();
     }
 };
 

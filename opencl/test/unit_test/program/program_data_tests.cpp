@@ -37,8 +37,8 @@ class ProgramDataTestBase : public testing::Test,
                             public PlatformFixture,
                             public ProgramFixture {
 
-    using ContextFixture::SetUp;
-    using PlatformFixture::SetUp;
+    using ContextFixture::setUp;
+    using PlatformFixture::setUp;
 
   public:
     ProgramDataTestBase() {
@@ -51,24 +51,24 @@ class ProgramDataTestBase : public testing::Test,
     void buildAndDecodeProgramPatchList();
 
     void SetUp() override {
-        PlatformFixture::SetUp();
+        PlatformFixture::setUp();
         pClDevice = pPlatform->getClDevice(0);
         rootDeviceIndex = pClDevice->getRootDeviceIndex();
         cl_device_id device = pClDevice;
 
-        ContextFixture::SetUp(1, &device);
-        ProgramFixture::SetUp();
+        ContextFixture::setUp(1, &device);
+        ProgramFixture::setUp();
 
-        CreateProgramWithSource(
+        createProgramWithSource(
             pContext,
             "CopyBuffer_simd16.cl");
     }
 
     void TearDown() override {
         knownSource.reset();
-        ProgramFixture::TearDown();
-        ContextFixture::TearDown();
-        PlatformFixture::TearDown();
+        ProgramFixture::tearDown();
+        ContextFixture::tearDown();
+        PlatformFixture::tearDown();
     }
 
     size_t setupConstantAllocation() {
@@ -456,7 +456,7 @@ TEST(ProgramScopeMetadataTest, WhenPatchingGlobalSurfaceThenPickProperSourceBuff
 }
 
 TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeConstantBufferPatchTokensAreReadThenConstantPointerOffsetIsPatchedWith32bitPointer) {
-    CreateProgramWithSource(pContext, "CopyBuffer_simd16.cl");
+    createProgramWithSource(pContext, "CopyBuffer_simd16.cl");
     ASSERT_NE(nullptr, pProgram);
 
     MockProgram *prog = pProgram;
@@ -502,7 +502,7 @@ TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeConstantB
 }
 
 TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeGlobalPointerPatchTokensAreReadThenGlobalPointerOffsetIsPatchedWith32bitPointer) {
-    CreateProgramWithSource(pContext, "CopyBuffer_simd16.cl");
+    createProgramWithSource(pContext, "CopyBuffer_simd16.cl");
     ASSERT_NE(nullptr, pProgram);
 
     MockProgram *prog = pProgram;

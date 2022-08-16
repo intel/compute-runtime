@@ -11,7 +11,7 @@
 
 using namespace NEO;
 
-typedef TestLegacy<ClDeviceFixture> XeHpgCoreOnlyTeset;
+typedef Test<ClDeviceFixture> XeHpgCoreOnlyTeset;
 
 XE_HPG_CORETEST_F(XeHpgCoreOnlyTeset, WhenGettingRenderCoreFamilyThenXeHpgCoreIsReturned) {
     EXPECT_EQ(IGFX_XE_HPG_CORE, pDevice->getRenderCoreFamily());

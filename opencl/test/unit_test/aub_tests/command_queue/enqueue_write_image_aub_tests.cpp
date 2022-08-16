@@ -33,13 +33,13 @@ struct AUBWriteImage
       public ::testing::WithParamInterface<std::tuple<uint32_t /*cl_channel_type*/, uint32_t /*cl_channel_order*/, WriteImageParams>>,
       public ::testing::Test {
     void SetUp() override {
-        ImageAubFixture::SetUp(enableBlitter);
+        ImageAubFixture::setUp(enableBlitter);
     }
 
     void TearDown() override {
         dstImage.reset();
 
-        ImageAubFixture::TearDown();
+        ImageAubFixture::tearDown();
     }
 
     template <typename FamilyType>

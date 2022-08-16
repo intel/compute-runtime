@@ -25,7 +25,7 @@ struct PerThreadDataTests : public ClDeviceFixture,
                             ::testing::Test {
 
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
 
         kernelInfo.setLocalIds({localIdX, localIdY, localIdZ});
         kernelInfo.kernelDescriptor.kernelAttributes.flags.usesFlattenedLocalIds = flattenedId;
@@ -46,7 +46,7 @@ struct PerThreadDataTests : public ClDeviceFixture,
 
     void TearDown() override {
         alignedFree(indirectHeapMemory);
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     const std::array<uint8_t, 3> workgroupWalkOrder = {{0, 1, 2}};

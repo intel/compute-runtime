@@ -16,7 +16,7 @@
 
 using namespace NEO;
 
-typedef TestLegacy<ClDeviceFixture> Gen9SamplerTest;
+typedef Test<ClDeviceFixture> Gen9SamplerTest;
 
 GEN9TEST_F(Gen9SamplerTest, WhenAppendingSamplerStateParamsThenStateIsNotChanged) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;

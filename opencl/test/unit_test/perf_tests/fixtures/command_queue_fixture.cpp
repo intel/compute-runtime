@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,18 +34,18 @@ CommandQueue *CommandQueueHwFixture::createCommandQueue(
     return funcCreate(context, pDevice, properties);
 }
 
-void CommandQueueHwFixture::SetUp() {
+void CommandQueueHwFixture::setUp() {
     ASSERT_NE(nullptr, pCmdQ);
 }
 
-void CommandQueueHwFixture::SetUp(
+void CommandQueueHwFixture::setUp(
     Device *pDevice, Context *context) {
     ASSERT_NE(nullptr, pDevice);
     pCmdQ = createCommandQueue(context, pDevice);
-    CommandQueueHwFixture::SetUp();
+    CommandQueueHwFixture::setUp();
 }
 
-void CommandQueueHwFixture::TearDown() {
+void CommandQueueHwFixture::tearDown() {
     delete pCmdQ;
 }
 
@@ -63,7 +63,7 @@ CommandQueue *CommandQueueFixture::createCommandQueue(
         properties);
 }
 
-void CommandQueueFixture::SetUp(
+void CommandQueueFixture::setUp(
     Context *context,
     Device *device,
     cl_command_queue_properties properties) {
@@ -73,7 +73,7 @@ void CommandQueueFixture::SetUp(
         properties);
 }
 
-void CommandQueueFixture::TearDown() {
+void CommandQueueFixture::tearDown() {
     delete pCmdQ;
     pCmdQ = nullptr;
 }

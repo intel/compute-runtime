@@ -31,10 +31,10 @@ using namespace NEO;
 template <uint32_t numberOfTiles, MulticontextAubFixture::EnabledCommandStreamers enabledCommandStreamers>
 struct MultitileMulticontextTests : public MulticontextAubFixture, public ::testing::Test {
     void SetUp() override {
-        MulticontextAubFixture::SetUp(numberOfTiles, enabledCommandStreamers, false);
+        MulticontextAubFixture::setUp(numberOfTiles, enabledCommandStreamers, false);
     }
     void TearDown() override {
-        MulticontextAubFixture::TearDown();
+        MulticontextAubFixture::tearDown();
     }
 
     template <typename FamilyType>
@@ -230,7 +230,7 @@ struct EnqueueWithWalkerPartitionFourTilesTests : public FourTilesSingleContextT
         kernelIds |= (1 << 8);
 
         FourTilesSingleContextTest::SetUp();
-        SimpleKernelFixture::SetUp(rootDevice, context.get());
+        SimpleKernelFixture::setUp(rootDevice, context.get());
 
         rootCsr = rootDevice->getDefaultEngine().commandStreamReceiver;
         EXPECT_EQ(4u, rootCsr->getOsContext().getNumSupportedDevices());
@@ -248,7 +248,7 @@ struct EnqueueWithWalkerPartitionFourTilesTests : public FourTilesSingleContextT
     }
 
     void TearDown() override {
-        SimpleKernelFixture::TearDown();
+        SimpleKernelFixture::tearDown();
         FourTilesSingleContextTest::TearDown();
     }
 

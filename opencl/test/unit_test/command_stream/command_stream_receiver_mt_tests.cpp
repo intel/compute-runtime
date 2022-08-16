@@ -17,14 +17,14 @@ using namespace NEO;
 struct CommandStreamReceiverMtTest : public ClDeviceFixture,
                                      public ::testing::Test {
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
 
         commandStreamReceiver = &pDevice->getGpgpuCommandStreamReceiver();
         ASSERT_NE(nullptr, commandStreamReceiver);
     }
 
     void TearDown() override {
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     CommandStreamReceiver *commandStreamReceiver;

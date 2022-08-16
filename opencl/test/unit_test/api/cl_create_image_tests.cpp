@@ -28,7 +28,7 @@ struct clCreateImageTests : public ApiFixture<>,
                             public T {
 
     void SetUp() override {
-        ApiFixture::SetUp();
+        ApiFixture::setUp();
 
         // clang-format off
         imageFormat.image_channel_order     = CL_RGBA;
@@ -48,7 +48,7 @@ struct clCreateImageTests : public ApiFixture<>,
     }
 
     void TearDown() override {
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
 
     cl_image_format imageFormat;

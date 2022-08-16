@@ -43,7 +43,7 @@ TEST(PageTableTraits, when32BitTraitsAreUsedThenPageTableAddressesAreCorrect) {
     EXPECT_EQ(BIT(36), AubMemDump::PageTableTraits<32>::pdpBaseAddress);
 }
 
-typedef TestLegacy<ClDeviceFixture> AubMemDumpTests;
+typedef Test<ClDeviceFixture> AubMemDumpTests;
 
 HWTEST_F(AubMemDumpTests, givenAubFileStreamWhenOpenAndCloseIsCalledThenFileNameIsReportedCorrectly) {
     AUBCommandStreamReceiver::AubFileStream aubFile;

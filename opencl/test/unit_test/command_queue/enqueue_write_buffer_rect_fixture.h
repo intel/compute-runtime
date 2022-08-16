@@ -19,7 +19,7 @@ namespace NEO {
 struct EnqueueWriteBufferRectTest : public CommandEnqueueFixture,
                                     public ::testing::Test {
     void SetUp() override {
-        CommandEnqueueFixture::SetUp();
+        CommandEnqueueFixture::setUp();
         context.reset(new MockContext(pClDevice));
         BufferDefaults::context = context.get();
 
@@ -44,7 +44,7 @@ struct EnqueueWriteBufferRectTest : public CommandEnqueueFixture,
         nonZeroCopyBuffer.reset();
         ::alignedFree(hostPtr);
         context.reset();
-        CommandEnqueueFixture::TearDown();
+        CommandEnqueueFixture::tearDown();
     }
 
   protected:

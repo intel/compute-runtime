@@ -19,7 +19,7 @@
 
 using namespace NEO;
 
-using SamplerTest = TestLegacy<ClDeviceFixture>;
+using SamplerTest = Test<ClDeviceFixture>;
 
 HWTEST2_F(SamplerTest, givenDg2SamplerWhenUsingDefaultFilteringAndAppendSamplerStateParamsThenNotEnableLowQualityFilter, IsDG2) {
     EXPECT_FALSE(DebugManager.flags.ForceSamplerLowFilteringPrecision.get());

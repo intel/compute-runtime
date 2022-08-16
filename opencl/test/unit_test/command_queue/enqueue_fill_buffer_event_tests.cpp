@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,11 +20,11 @@ struct FillBufferEventTests : public EnqueueFillBufferFixture,
     typedef EnqueueFillBufferFixture BaseClass;
 
     void SetUp() override {
-        BaseClass::SetUp();
+        BaseClass::setUp();
     }
 
     void TearDown() override {
-        BaseClass::TearDown();
+        BaseClass::tearDown();
     }
 };
 

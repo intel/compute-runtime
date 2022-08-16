@@ -22,7 +22,7 @@
 
 using namespace NEO;
 
-typedef TestLegacy<ClDeviceFixture> AubAllocDumpTests;
+typedef Test<ClDeviceFixture> AubAllocDumpTests;
 
 struct AubFileStreamMock : public AubMemDump::AubFileStream {
     void write(const char *data, size_t size) override {

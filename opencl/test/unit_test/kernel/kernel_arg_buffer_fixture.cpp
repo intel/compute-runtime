@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,10 +26,10 @@
 
 using namespace NEO;
 
-void KernelArgBufferFixture::SetUp() {
-    ClDeviceFixture::SetUp();
+void KernelArgBufferFixture::setUp() {
+    ClDeviceFixture::setUp();
     cl_device_id device = pClDevice;
-    ContextFixture::SetUp(1, &device);
+    ContextFixture::setUp(1, &device);
 
     // define kernel info
     pKernelInfo = std::make_unique<MockKernelInfo>();
@@ -51,10 +51,10 @@ void KernelArgBufferFixture::SetUp() {
     pKernel->setKernelArgHandler(0, &Kernel::setArgBuffer);
 }
 
-void KernelArgBufferFixture::TearDown() {
+void KernelArgBufferFixture::tearDown() {
     delete pKernel;
 
     delete pProgram;
-    ContextFixture::TearDown();
-    ClDeviceFixture::TearDown();
+    ContextFixture::tearDown();
+    ClDeviceFixture::tearDown();
 }

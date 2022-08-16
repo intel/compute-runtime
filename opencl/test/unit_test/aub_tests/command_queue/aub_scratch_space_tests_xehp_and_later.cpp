@@ -22,12 +22,12 @@
 using namespace NEO;
 
 struct Gen12AubScratchSpaceForPrivateFixture : public KernelAUBFixture<SimpleKernelFixture> {
-    void SetUp() override {
+    void setUp() {
         debugRestorer = std::make_unique<DebugManagerStateRestore>();
 
         kernelIdx = 6;
         kernelIds |= (1 << kernelIdx);
-        KernelAUBFixture<SimpleKernelFixture>::SetUp();
+        KernelAUBFixture<SimpleKernelFixture>::setUp();
 
         arraySize = 32;
         vectorSize = 2;
@@ -86,7 +86,7 @@ struct Gen12AubScratchSpaceForPrivateFixture : public KernelAUBFixture<SimpleKer
         kernels[kernelIdx]->setArg(4, sizeof(uint32_t), &maxIterations2);
     }
 
-    void TearDown() override {
+    void tearDown() {
         pCmdQ->flush();
 
         if (expectedMemory) {
@@ -102,7 +102,7 @@ struct Gen12AubScratchSpaceForPrivateFixture : public KernelAUBFixture<SimpleKer
             dstBuffer = nullptr;
         }
 
-        KernelAUBFixture<SimpleKernelFixture>::TearDown();
+        KernelAUBFixture<SimpleKernelFixture>::tearDown();
     }
 
     std::unique_ptr<DebugManagerStateRestore> debugRestorer;
@@ -127,7 +127,7 @@ struct Gen12AubScratchSpaceForPrivateFixture : public KernelAUBFixture<SimpleKer
     uint32_t maxIterations2;
 };
 
-using Gen12AubScratchSpaceForPrivateTest = TestLegacy<Gen12AubScratchSpaceForPrivateFixture>;
+using Gen12AubScratchSpaceForPrivateTest = Test<Gen12AubScratchSpaceForPrivateFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, Gen12AubScratchSpaceForPrivateTest, WhenKernelUsesScratchSpaceForPrivateThenExpectCorrectResults) {
     cl_uint workDim = 1;
@@ -156,14 +156,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, Gen12AubScratchSpaceForPrivateTest, WhenKernelUsesS
 
 class DefaultGrfKernelFixture : public ProgramFixture {
   public:
-    using ProgramFixture::SetUp;
+    using ProgramFixture::setUp;
 
   protected:
-    void SetUp(ClDevice *device, Context *context) {
-        ProgramFixture::SetUp();
+    void setUp(ClDevice *device, Context *context) {
+        ProgramFixture::setUp();
 
         std::string programName("simple_spill_fill_kernel");
-        CreateProgramFromBinary(
+        createProgramFromBinary(
             context,
             context->getDevices(),
             programName);
@@ -182,12 +182,12 @@ class DefaultGrfKernelFixture : public ProgramFixture {
             &retVal));
     }
 
-    void TearDown() override {
+    void tearDown() {
         if (kernel) {
             kernel.reset(nullptr);
         }
 
-        ProgramFixture::TearDown();
+        ProgramFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
@@ -195,10 +195,10 @@ class DefaultGrfKernelFixture : public ProgramFixture {
 };
 
 struct Gen12AubScratchSpaceForSpillFillFixture : public KernelAUBFixture<DefaultGrfKernelFixture> {
-    void SetUp() override {
+    void setUp() {
         debugRestorer = std::make_unique<DebugManagerStateRestore>();
 
-        KernelAUBFixture<DefaultGrfKernelFixture>::SetUp();
+        KernelAUBFixture<DefaultGrfKernelFixture>::setUp();
 
         arraySize = 32;
         typeSize = sizeof(cl_int);
@@ -252,7 +252,7 @@ struct Gen12AubScratchSpaceForSpillFillFixture : public KernelAUBFixture<Default
         offsetAllocation = createHostPtrAllocationFromSvmPtr(offsetBuffer, offsetMemorySize);
     }
 
-    void TearDown() override {
+    void tearDown() {
         pCmdQ->flush();
 
         if (expectedMemory) {
@@ -272,7 +272,7 @@ struct Gen12AubScratchSpaceForSpillFillFixture : public KernelAUBFixture<Default
             offsetBuffer = nullptr;
         }
 
-        KernelAUBFixture<DefaultGrfKernelFixture>::TearDown();
+        KernelAUBFixture<DefaultGrfKernelFixture>::tearDown();
     }
 
     std::unique_ptr<DebugManagerStateRestore> debugRestorer;
@@ -297,7 +297,7 @@ struct Gen12AubScratchSpaceForSpillFillFixture : public KernelAUBFixture<Default
     GraphicsAllocation *offsetAllocation;
 };
 
-using Gen12AubScratchSpaceForSpillFillTest = TestLegacy<Gen12AubScratchSpaceForSpillFillFixture>;
+using Gen12AubScratchSpaceForSpillFillTest = Test<Gen12AubScratchSpaceForSpillFillFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, Gen12AubScratchSpaceForSpillFillTest, givenSurfaceStateScratchSpaceEnabledWhenKernelUsesScratchForSpillFillThenExpectCorrectResults) {
     cl_uint workDim = 1;

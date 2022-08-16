@@ -21,7 +21,7 @@
 
 namespace NEO {
 
-void AUBCommandStreamFixture::SetUp(CommandQueue *pCmdQ) {
+void AUBCommandStreamFixture::setUp(CommandQueue *pCmdQ) {
     ASSERT_NE(pCmdQ, nullptr);
     auto &device = reinterpret_cast<MockDevice &>(pCmdQ->getDevice());
     const auto &hwInfo = device.getHardwareInfo();
@@ -39,13 +39,13 @@ void AUBCommandStreamFixture::SetUp(CommandQueue *pCmdQ) {
 
     AUBFixture::prepareCopyEngines(device, strfilename.str());
 
-    CommandStreamFixture::SetUp(pCmdQ);
+    CommandStreamFixture::setUp(pCmdQ);
 
     pTagMemory = pCommandStreamReceiver->getTagAddress();
     this->commandQueue = pCmdQ;
 }
 
-void AUBCommandStreamFixture::TearDown() {
-    CommandStreamFixture::TearDown();
+void AUBCommandStreamFixture::tearDown() {
+    CommandStreamFixture::tearDown();
 }
 } // namespace NEO

@@ -23,11 +23,11 @@ struct EnqueueFillBuffer : public EnqueueFillBufferFixture,
     typedef EnqueueFillBufferFixture BaseClass;
 
     void SetUp() override {
-        BaseClass::SetUp();
+        BaseClass::setUp();
     }
 
     void TearDown() override {
-        BaseClass::TearDown();
+        BaseClass::tearDown();
     }
 };
 
@@ -133,14 +133,14 @@ struct InvalidPatternSize : public EnqueueFillBufferFixture,
     }
 
     void SetUp() override {
-        BaseClass::SetUp();
+        BaseClass::setUp();
         patternSize = GetParam();
         pattern = new char[patternSize];
     }
 
     void TearDown() override {
         delete[] pattern;
-        BaseClass::TearDown();
+        BaseClass::tearDown();
     }
 
     size_t patternSize = 0;

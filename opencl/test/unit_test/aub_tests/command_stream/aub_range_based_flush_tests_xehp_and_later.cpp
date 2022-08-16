@@ -30,11 +30,11 @@ struct RangeBasedFlushTest : public KernelAUBFixture<SimpleKernelFixture>, publi
     void SetUp() override {
         DebugManager.flags.PerformImplicitFlushForNewResource.set(0);
         DebugManager.flags.PerformImplicitFlushForIdleGpu.set(0);
-        KernelAUBFixture<SimpleKernelFixture>::SetUp();
+        KernelAUBFixture<SimpleKernelFixture>::setUp();
     };
 
     void TearDown() override {
-        KernelAUBFixture<SimpleKernelFixture>::TearDown();
+        KernelAUBFixture<SimpleKernelFixture>::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;

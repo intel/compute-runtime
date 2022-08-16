@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,11 +22,11 @@ struct VerifyMemoryBufferHw
       public ::testing::TestWithParam<std::tuple<size_t, uint64_t>> {
 
     void SetUp() override {
-        CommandEnqueueAUBFixture::SetUp();
+        CommandEnqueueAUBFixture::setUp();
     }
 
     void TearDown() override {
-        CommandEnqueueAUBFixture::TearDown();
+        CommandEnqueueAUBFixture::tearDown();
     }
 };
 

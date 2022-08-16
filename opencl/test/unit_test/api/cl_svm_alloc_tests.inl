@@ -25,12 +25,12 @@ class ClSvmAllocTemplateTests : public ApiFixture<>,
                                 public testing::TestWithParam<uint64_t /*cl_mem_flags*/> {
   public:
     void SetUp() override {
-        ApiFixture::SetUp();
+        ApiFixture::setUp();
         REQUIRE_SVM_OR_SKIP(pDevice);
     }
 
     void TearDown() override {
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
 };
 

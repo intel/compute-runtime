@@ -36,9 +36,9 @@ std::unique_ptr<PerformanceCounters> MockPerformanceCounters::create() {
 }
 
 //////////////////////////////////////////////////////
-// PerformanceCountersFixture::SetUp
+// PerformanceCountersFixture::setUp
 //////////////////////////////////////////////////////
-void PerformanceCountersFixture::SetUp() {
+void PerformanceCountersFixture::setUp() {
     device = std::make_unique<MockClDevice>(new MockDevice());
     context = std::make_unique<MockContext>(device.get());
     queue = std::make_unique<MockCommandQueue>(context.get(), device.get(), &queueProperties, false);
@@ -48,8 +48,8 @@ void PerformanceCountersFixture::SetUp() {
 }
 
 //////////////////////////////////////////////////////
-// PerformanceCountersFixture::TearDown
+// PerformanceCountersFixture::tearDown
 //////////////////////////////////////////////////////
-void PerformanceCountersFixture::TearDown() {
+void PerformanceCountersFixture::tearDown() {
 }
 } // namespace NEO

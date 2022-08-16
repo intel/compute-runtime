@@ -23,12 +23,12 @@ struct PostSyncWriteXeHPTests : public HelloWorldFixture<AUBHelloWorldFixtureFac
     void SetUp() override {
         DebugManager.flags.EnableTimestampPacket.set(true);
 
-        HelloWorldFixture<AUBHelloWorldFixtureFactory>::SetUp();
+        HelloWorldFixture<AUBHelloWorldFixtureFactory>::setUp();
         EXPECT_TRUE(pCommandStreamReceiver->peekTimestampPacketWriteEnabled());
     };
 
     void TearDown() override {
-        HelloWorldFixture<AUBHelloWorldFixtureFactory>::TearDown();
+        HelloWorldFixture<AUBHelloWorldFixtureFactory>::tearDown();
     }
 
     DebugManagerStateRestore restore;

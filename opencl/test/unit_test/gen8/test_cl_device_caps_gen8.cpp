@@ -14,7 +14,7 @@
 
 using namespace NEO;
 
-using Gen8ClDeviceCaps = TestLegacy<ClDeviceFixture>;
+using Gen8ClDeviceCaps = Test<ClDeviceFixture>;
 
 GEN8TEST_F(Gen8ClDeviceCaps, WhenCheckingExtensionStringThenFp64IsSupported) {
     const auto &caps = pClDevice->getDeviceInfo();

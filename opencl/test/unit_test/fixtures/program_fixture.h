@@ -18,29 +18,29 @@ namespace NEO {
 
 class ProgramFixture {
   public:
-    void CreateProgramFromBinary(Context *pContext, // NOLINT(readability-identifier-naming)
+    void createProgramFromBinary(Context *pContext,
                                  const ClDeviceVector &deviceVector,
                                  const std::string &binaryFileName,
                                  cl_int &retVal,
                                  const std::string &options = "");
 
-    void CreateProgramFromBinary(Context *pContext, // NOLINT(readability-identifier-naming)
+    void createProgramFromBinary(Context *pContext,
                                  const ClDeviceVector &deviceVector,
                                  const std::string &binaryFileName,
                                  const std::string &options = "");
 
-    void CreateProgramWithSource(Context *pContext, // NOLINT(readability-identifier-naming)
+    void createProgramWithSource(Context *pContext,
                                  const std::string &sourceFileName);
 
   protected:
-    virtual void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
     }
 
-    virtual void TearDown() { // NOLINT(readability-identifier-naming)
-        Cleanup();
+    void tearDown() {
+        cleanup();
     }
 
-    void Cleanup() { // NOLINT(readability-identifier-naming)
+    void cleanup() {
         if (pProgram != nullptr) {
             pProgram->release();
         }

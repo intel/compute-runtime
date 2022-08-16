@@ -16,7 +16,7 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 using namespace NEO;
-using EngineNodeHelperPvcTests = ::TestLegacy<ClDeviceFixture>;
+using EngineNodeHelperPvcTests = ::Test<ClDeviceFixture>;
 
 PVCTEST_F(EngineNodeHelperPvcTests, WhenGetBcsEngineTypeIsCalledForPVCThenCorrectBcsEngineIsReturned) {
     using namespace aub_stream;

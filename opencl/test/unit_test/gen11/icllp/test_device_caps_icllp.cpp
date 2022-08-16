@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-using IcllpTest = TestLegacy<ClDeviceFixture>;
+using IcllpTest = Test<ClDeviceFixture>;
 
 ICLLPTEST_F(IcllpTest, givenIcllpWhenSlmSizeIsRequiredThenReturnCorrectValue) {
     EXPECT_EQ(64u, pDevice->getHardwareInfo().capabilityTable.slmSize);

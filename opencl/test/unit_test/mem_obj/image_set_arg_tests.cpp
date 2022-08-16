@@ -62,7 +62,7 @@ class ImageSetArgTest : public ClDeviceFixture,
     }
 
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         pKernelInfo = std::make_unique<MockKernelInfo>();
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
@@ -98,7 +98,7 @@ class ImageSetArgTest : public ClDeviceFixture,
         delete pMultiDeviceKernel;
 
         delete context;
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
@@ -918,7 +918,7 @@ HWTEST_F(ImageSetArgTest, givenNonCompressedResourceWhenSettingImgArgThenDontSet
 class ImageMediaBlockSetArgTest : public ImageSetArgTest {
   protected:
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         pKernelInfo = std::make_unique<MockKernelInfo>();
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 

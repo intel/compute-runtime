@@ -25,7 +25,7 @@ class CreateImage2DTest : public ClDeviceFixture,
 
   protected:
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         types = GetParam();
 
         // clang-format off
@@ -52,7 +52,7 @@ class CreateImage2DTest : public ClDeviceFixture,
 
     void TearDown() override {
         delete context;
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
     Image *createImageWithFlags(cl_mem_flags flags) {
         auto surfaceFormat = Image::getSurfaceFormatFromTable(

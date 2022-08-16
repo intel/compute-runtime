@@ -90,7 +90,7 @@ class MockWddmMemoryManagerFixture {
     MockGdi *gdi = nullptr;
 };
 
-typedef ::TestLegacy<MockWddmMemoryManagerFixture> WddmMemoryManagerResidencyTest;
+typedef ::Test<MockWddmMemoryManagerFixture> WddmMemoryManagerResidencyTest;
 
 class ExecutionEnvironmentFixture : public ::testing::Test {
   public:

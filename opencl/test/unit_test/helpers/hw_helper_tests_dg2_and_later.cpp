@@ -17,7 +17,7 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 
 using PipeControlHelperTestsDg2AndLater = ::testing::Test;
-using HwHelperTestsDg2AndLater = TestLegacy<ClDeviceFixture>;
+using HwHelperTestsDg2AndLater = Test<ClDeviceFixture>;
 
 HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenAddingPipeControlWAThenCorrectCommandsAreProgrammed, IsAtLeastXeHpgCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;

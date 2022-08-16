@@ -18,7 +18,7 @@
 
 using namespace NEO;
 
-using ClTbxCommandStreamTests = TestLegacy<ClDeviceFixture>;
+using ClTbxCommandStreamTests = Test<ClDeviceFixture>;
 HWTEST_F(ClTbxCommandStreamTests, givenTbxCsrWhenDispatchBlitEnqueueThenProcessCorrectly) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableBlitterOperationsSupport.set(1);

@@ -29,16 +29,16 @@ class BufferSetArgTest : public ContextFixture,
                          public ClDeviceFixture,
                          public testing::Test {
 
-    using ContextFixture::SetUp;
+    using ContextFixture::setUp;
 
   public:
     BufferSetArgTest() {}
 
   protected:
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         cl_device_id device = pClDevice;
-        ContextFixture::SetUp(1, &device);
+        ContextFixture::setUp(1, &device);
         pKernelInfo = std::make_unique<MockKernelInfo>();
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
@@ -73,8 +73,8 @@ class BufferSetArgTest : public ContextFixture,
         delete pMultiDeviceKernel;
 
         delete pProgram;
-        ContextFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        ContextFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;

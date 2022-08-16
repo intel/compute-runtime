@@ -37,13 +37,13 @@ using namespace NEO;
 
 struct DispatchWalkerTest : public CommandQueueFixture, public ClDeviceFixture, public ::testing::Test {
 
-    using CommandQueueFixture::SetUp;
+    using CommandQueueFixture::setUp;
 
     void SetUp() override {
         DebugManager.flags.EnableTimestampPacket.set(0);
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         context = std::make_unique<MockContext>(pClDevice);
-        CommandQueueFixture::SetUp(context.get(), pClDevice, 0);
+        CommandQueueFixture::setUp(context.get(), pClDevice, 0);
 
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
 
@@ -64,9 +64,9 @@ struct DispatchWalkerTest : public CommandQueueFixture, public ClDeviceFixture, 
     }
 
     void TearDown() override {
-        CommandQueueFixture::TearDown();
+        CommandQueueFixture::tearDown();
         context.reset();
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     std::unique_ptr<KernelOperation> createBlockedCommandsData(CommandQueue &commandQueue) {

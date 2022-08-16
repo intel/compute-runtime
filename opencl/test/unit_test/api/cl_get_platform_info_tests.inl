@@ -12,14 +12,14 @@
 
 using namespace NEO;
 
-struct clGetPlatformInfoTests : TestLegacy<PlatformFixture> {
+struct clGetPlatformInfoTests : Test<PlatformFixture> {
     void SetUp() override {
-        TestLegacy<PlatformFixture>::SetUp();
+        Test<PlatformFixture>::SetUp();
     }
 
     void TearDown() override {
         delete[] paramValue;
-        TestLegacy<PlatformFixture>::TearDown();
+        Test<PlatformFixture>::TearDown();
     }
 
     char *getPlatformInfoString(Platform *pPlatform, cl_platform_info paramName) {
@@ -213,7 +213,7 @@ TEST_F(clGetPlatformInfoTests, WhenCheckingPlatformExtensionsWithVersionThenThey
 
 class GetPlatformInfoTests : public PlatformFixture,
                              public testing::TestWithParam<uint32_t /*cl_platform_info*/> {
-    using PlatformFixture::SetUp;
+    using PlatformFixture::setUp;
 
   public:
     GetPlatformInfoTests() {}
@@ -221,11 +221,11 @@ class GetPlatformInfoTests : public PlatformFixture,
   protected:
     void SetUp() override {
         platformInfo = GetParam();
-        PlatformFixture::SetUp();
+        PlatformFixture::setUp();
     }
 
     void TearDown() override {
-        PlatformFixture::TearDown();
+        PlatformFixture::tearDown();
     }
 
     char *getPlatformInfoString(Platform *pPlatform, cl_platform_info paramName) {

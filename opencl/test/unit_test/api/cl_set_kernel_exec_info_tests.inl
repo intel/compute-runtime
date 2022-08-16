@@ -17,8 +17,8 @@ using namespace NEO;
 
 class KernelExecInfoFixture : public ApiFixture<> {
   protected:
-    void SetUp() override {
-        ApiFixture::SetUp();
+    void setUp() {
+        ApiFixture::setUp();
 
         pKernelInfo = std::make_unique<KernelInfo>();
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
@@ -33,7 +33,7 @@ class KernelExecInfoFixture : public ApiFixture<> {
         }
     }
 
-    void TearDown() override {
+    void tearDown() {
         if (svmCapabilities != 0) {
             clSVMFree(pContext, ptrSvm);
         }
@@ -42,7 +42,7 @@ class KernelExecInfoFixture : public ApiFixture<> {
             delete pMockMultiDeviceKernel;
         }
 
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
@@ -53,7 +53,7 @@ class KernelExecInfoFixture : public ApiFixture<> {
     cl_device_svm_capabilities svmCapabilities = 0;
 };
 
-typedef TestLegacy<KernelExecInfoFixture> clSetKernelExecInfoTests;
+typedef Test<KernelExecInfoFixture> clSetKernelExecInfoTests;
 
 namespace ULT {
 

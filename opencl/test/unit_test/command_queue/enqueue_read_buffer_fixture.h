@@ -21,7 +21,7 @@ struct EnqueueReadBufferTypeTest : public CommandEnqueueFixture,
     }
 
     void SetUp() override {
-        CommandEnqueueFixture::SetUp();
+        CommandEnqueueFixture::setUp();
         BufferDefaults::context = new MockContext;
         srcBuffer.reset(BufferHelper<>::create());
         nonZeroCopyBuffer.reset(BufferHelper<BufferUseHostPtr<>>::create());
@@ -31,7 +31,7 @@ struct EnqueueReadBufferTypeTest : public CommandEnqueueFixture,
         srcBuffer.reset(nullptr);
         nonZeroCopyBuffer.reset(nullptr);
         delete BufferDefaults::context;
-        CommandEnqueueFixture::TearDown();
+        CommandEnqueueFixture::tearDown();
     }
 
   protected:

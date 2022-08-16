@@ -28,14 +28,14 @@ enum class NewAluOpcodes : uint32_t {
 
 struct MiMath : public AUBFixture, public ::testing::Test {
     void SetUp() override {
-        AUBFixture::SetUp(defaultHwInfo.get());
+        AUBFixture::setUp(defaultHwInfo.get());
 
         streamAllocation = this->device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()});
         taskStream = std::make_unique<LinearStream>(streamAllocation);
     }
     void TearDown() override {
         this->device->getMemoryManager()->freeGraphicsMemory(streamAllocation);
-        AUBFixture::TearDown();
+        AUBFixture::tearDown();
     }
 
     void flushStream() {

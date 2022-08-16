@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ using namespace NEO;
 
 struct ImageTestsTgllAndLater : ClDeviceFixture, testing::Test {
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         context = std::make_unique<MockContext>(pClDevice);
         srcImage = std::unique_ptr<Image>(Image3dHelper<>::create(context.get()));
     }
@@ -24,7 +24,7 @@ struct ImageTestsTgllAndLater : ClDeviceFixture, testing::Test {
     void TearDown() override {
         srcImage.reset();
         context.reset();
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     std::unique_ptr<MockContext> context{};

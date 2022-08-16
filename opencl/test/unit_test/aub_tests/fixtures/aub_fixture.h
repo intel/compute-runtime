@@ -53,7 +53,7 @@ class AUBFixture : public CommandQueueHwFixture {
         }
     }
 
-    void SetUp(const HardwareInfo *hardwareInfo) {
+    void setUp(const HardwareInfo *hardwareInfo) {
         const HardwareInfo &hwInfo = hardwareInfo ? *hardwareInfo : *defaultHwInfo;
 
         auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
@@ -77,10 +77,10 @@ class AUBFixture : public CommandQueueHwFixture {
 
         prepareCopyEngines(*pDevice, strfilename.str());
 
-        CommandQueueHwFixture::SetUp(AUBFixture::device.get(), cl_command_queue_properties(0));
+        CommandQueueHwFixture::setUp(AUBFixture::device.get(), cl_command_queue_properties(0));
     }
-    void TearDown() override {
-        CommandQueueHwFixture::TearDown();
+    void tearDown() {
+        CommandQueueHwFixture::tearDown();
     }
 
     GraphicsAllocation *createHostPtrAllocationFromSvmPtr(void *svmPtr, size_t size);
@@ -172,20 +172,20 @@ class AUBFixture : public CommandQueueHwFixture {
     ExecutionEnvironment *executionEnvironment;
 
   private:
-    using CommandQueueHwFixture::SetUp;
+    using CommandQueueHwFixture::setUp;
 }; // namespace NEO
 
 template <typename KernelFixture>
 struct KernelAUBFixture : public AUBFixture,
                           public KernelFixture {
-    void SetUp() override {
-        AUBFixture::SetUp(nullptr);
-        KernelFixture::SetUp(device.get(), context);
+    void setUp() {
+        AUBFixture::setUp(nullptr);
+        KernelFixture::setUp(device.get(), context);
     }
 
-    void TearDown() override {
-        KernelFixture::TearDown();
-        AUBFixture::TearDown();
+    void tearDown() {
+        KernelFixture::tearDown();
+        AUBFixture::tearDown();
     }
 };
 } // namespace NEO

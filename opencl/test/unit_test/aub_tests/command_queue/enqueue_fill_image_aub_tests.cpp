@@ -80,7 +80,7 @@ struct AubFillImage
       public ::testing::WithParamInterface<std::tuple<FillChannelType, uint32_t /*cl_channel_order*/, FillImageParams>>,
       public ::testing::Test {
 
-    using AUBCommandStreamFixture::SetUp;
+    using AUBCommandStreamFixture::setUp;
 
     typedef AUBCommandStreamFixture CommandStreamFixture;
 
@@ -95,8 +95,8 @@ struct AubFillImage
             //sRGBA and sBGRA support only unorm int8 type
             GTEST_SKIP();
         }
-        CommandDeviceFixture::SetUp(cl_command_queue_properties(0));
-        CommandStreamFixture::SetUp(pCmdQ);
+        CommandDeviceFixture::setUp(cl_command_queue_properties(0));
+        CommandStreamFixture::setUp(pCmdQ);
 
         context = std::make_unique<MockContext>(pClDevice);
         if ((pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features == false) && (channelOrder == CL_sRGBA || channelOrder == CL_sBGRA)) {
@@ -108,8 +108,8 @@ struct AubFillImage
         image.reset();
         context.reset();
 
-        CommandStreamFixture::TearDown();
-        CommandDeviceFixture::TearDown();
+        CommandStreamFixture::tearDown();
+        CommandDeviceFixture::tearDown();
     }
 
     std::unique_ptr<MockContext> context;

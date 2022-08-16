@@ -31,16 +31,13 @@ struct GetSizeRequiredBufferTest : public CommandEnqueueFixture,
                                    public HelloWorldKernelFixture,
                                    public ::testing::Test {
 
-    using HelloWorldKernelFixture::SetUp;
-    using SimpleArgKernelFixture::SetUp;
-
-    GetSizeRequiredBufferTest() {
-    }
+    using HelloWorldKernelFixture::setUp;
+    using SimpleArgKernelFixture::setUp;
 
     void SetUp() override {
-        CommandEnqueueFixture::SetUp();
-        SimpleArgKernelFixture::SetUp(pClDevice);
-        HelloWorldKernelFixture::SetUp(pClDevice, "CopyBuffer_simd", "CopyBuffer");
+        CommandEnqueueFixture::setUp();
+        SimpleArgKernelFixture::setUp(pClDevice);
+        HelloWorldKernelFixture::setUp(pClDevice, "CopyBuffer_simd", "CopyBuffer");
         BufferDefaults::context = new MockContext;
         srcBuffer = BufferHelper<>::create();
         dstBuffer = BufferHelper<>::create();
@@ -53,9 +50,9 @@ struct GetSizeRequiredBufferTest : public CommandEnqueueFixture,
         delete dstBuffer;
         delete srcBuffer;
         delete BufferDefaults::context;
-        HelloWorldKernelFixture::TearDown();
-        SimpleArgKernelFixture::TearDown();
-        CommandEnqueueFixture::TearDown();
+        HelloWorldKernelFixture::tearDown();
+        SimpleArgKernelFixture::tearDown();
+        CommandEnqueueFixture::tearDown();
     }
 
     Buffer *srcBuffer = nullptr;

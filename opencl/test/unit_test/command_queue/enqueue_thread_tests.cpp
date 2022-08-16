@@ -66,16 +66,16 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
 };
 
 struct EnqueueThreadingFixture : public ClDeviceFixture {
-    void SetUp() {
-        ClDeviceFixture::SetUp();
+    void setUp() {
+        ClDeviceFixture::setUp();
         context = new MockContext(pClDevice);
         pCmdQ = nullptr;
     }
 
-    void TearDown() {
+    void tearDown() {
         delete pCmdQ;
         context->release();
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     template <typename FamilyType>
@@ -133,7 +133,7 @@ struct EnqueueThreadingFixture : public ClDeviceFixture {
     }
 };
 
-typedef TestLegacy<EnqueueThreadingFixture> EnqueueThreading;
+typedef Test<EnqueueThreadingFixture> EnqueueThreading;
 
 struct EnqueueThreadingImage : EnqueueThreading {
     void SetUp() override {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ PlatformFixture::PlatformFixture()
 {
 }
 
-void PlatformFixture::SetUp(size_t numDevices, const HardwareInfo **pDevices) {
+void PlatformFixture::setUp(size_t numDevices, const HardwareInfo **pDevices) {
     pPlatform = platform();
     ASSERT_EQ(0u, pPlatform->getNumDevices());
 
@@ -41,7 +41,7 @@ void PlatformFixture::SetUp(size_t numDevices, const HardwareInfo **pDevices) {
     }
 }
 
-void PlatformFixture::TearDown() {
+void PlatformFixture::tearDown() {
     pPlatform->shutdown();
     delete[] devices;
 }

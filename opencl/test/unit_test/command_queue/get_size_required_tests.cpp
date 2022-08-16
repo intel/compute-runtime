@@ -21,7 +21,7 @@ struct GetSizeRequiredTest : public CommandEnqueueFixture,
                              public ::testing::Test {
 
     void SetUp() override {
-        CommandEnqueueFixture::SetUp();
+        CommandEnqueueFixture::setUp();
         dsh = &pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u);
         ioh = &pCmdQ->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 0u);
         ssh = &pCmdQ->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0u);
@@ -32,7 +32,7 @@ struct GetSizeRequiredTest : public CommandEnqueueFixture,
     }
 
     void TearDown() override {
-        CommandEnqueueFixture::TearDown();
+        CommandEnqueueFixture::tearDown();
     }
 
     IndirectHeap *dsh;

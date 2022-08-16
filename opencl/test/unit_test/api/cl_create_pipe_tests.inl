@@ -25,20 +25,20 @@ namespace ClCreatePipeTests {
 
 class ClCreatePipeWithParamTests : public ApiFixture<>, public testing::TestWithParam<uint64_t> {
     void SetUp() override {
-        ApiFixture::SetUp();
+        ApiFixture::setUp();
     }
     void TearDown() override {
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
     VariableBackup<bool> supportsPipesBackup{&defaultHwInfo->capabilityTable.supportsPipes, true};
 };
 
 class ClCreatePipeWithParamNegativeTests : public ApiFixture<>, public testing::TestWithParam<uint64_t> {
     void SetUp() override {
-        ApiFixture::SetUp();
+        ApiFixture::setUp();
     }
     void TearDown() override {
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
     VariableBackup<bool> supportsPipesBackup{&defaultHwInfo->capabilityTable.supportsPipes, true};
 };

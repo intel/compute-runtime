@@ -26,11 +26,11 @@ class EnqueueFillImageTest : public EnqueueFillImageTestFixture,
                              public ::testing::Test {
   public:
     void SetUp(void) override {
-        EnqueueFillImageTestFixture::SetUp();
+        EnqueueFillImageTestFixture::setUp();
     }
 
     void TearDown(void) override {
-        EnqueueFillImageTestFixture::TearDown();
+        EnqueueFillImageTestFixture::tearDown();
     }
 };
 

@@ -63,14 +63,14 @@
 using namespace NEO;
 
 void ProgramTests::SetUp() {
-    ClDeviceFixture::SetUp();
+    ClDeviceFixture::setUp();
     cl_device_id device = pClDevice;
-    ContextFixture::SetUp(1, &device);
+    ContextFixture::setUp(1, &device);
 }
 
 void ProgramTests::TearDown() {
-    ContextFixture::TearDown();
-    ClDeviceFixture::TearDown();
+    ContextFixture::tearDown();
+    ClDeviceFixture::tearDown();
 }
 
 class NoCompilerInterfaceRootDeviceEnvironment : public RootDeviceEnvironment {
@@ -235,7 +235,7 @@ TEST_F(ProgramFromBinaryTest, GivenProgramWithNoExecutableCodeWhenGettingNumKern
     size_t paramValueSize = sizeof(paramValue);
     size_t paramValueSizeRet = 0;
 
-    CreateProgramFromBinary(pContext, pContext->getDevices(), binaryFileName);
+    createProgramFromBinary(pContext, pContext->getDevices(), binaryFileName);
     MockProgram *p = pProgram;
     p->setBuildStatus(CL_BUILD_NONE);
 
@@ -287,7 +287,7 @@ TEST_F(ProgramFromBinaryTest, GivenProgramWithNoExecutableCodeWhenGettingKernelN
     size_t paramValueSize = sizeof(size_t *);
     size_t paramValueSizeRet = 0;
 
-    CreateProgramFromBinary(pContext, pContext->getDevices(), binaryFileName);
+    createProgramFromBinary(pContext, pContext->getDevices(), binaryFileName);
     MockProgram *p = pProgram;
     p->setBuildStatus(CL_BUILD_NONE);
 
@@ -555,7 +555,7 @@ TEST_F(ProgramFromBinaryTest, GivenGlobalVariableTotalSizeSetWhenGettingBuildGlo
     EXPECT_EQ(globalVarSize, 0u);
 
     // Set GlobalVariableTotalSize as 1024
-    CreateProgramFromBinary(pContext, pContext->getDevices(), binaryFileName);
+    createProgramFromBinary(pContext, pContext->getDevices(), binaryFileName);
     MockProgram *p = pProgram;
     ProgramInfo programInfo;
 
@@ -723,7 +723,7 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
     KernelBinaryHelper kbHelper(binaryFileName, true);
     auto device = pPlatform->getClDevice(0);
 
-    CreateProgramWithSource(
+    createProgramWithSource(
         pContext,
         sourceFileName);
 
@@ -1006,7 +1006,7 @@ TEST_F(ProgramFromSourceTest, GivenDifferentCommpilerOptionsWhenBuildingProgramT
 
     auto rootDeviceIndex = pContext->getDevice(0)->getRootDeviceIndex();
 
-    CreateProgramWithSource(
+    createProgramWithSource(
         pContext,
         sourceFileName);
 
@@ -1068,7 +1068,7 @@ TEST_F(ProgramFromSourceTest, GivenEmptyProgramWhenCreatingProgramThenInvalidVal
 }
 
 TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenCompilingProgramThenSuccessOrCorrectErrorCodeIsReturned) {
-    CreateProgramWithSource(
+    createProgramWithSource(
         pContext,
         sourceFileName);
 
@@ -1271,7 +1271,7 @@ TEST_F(ProgramFromSourceTest, GivenAdvancedOptionsWhenCreatingProgramThenSuccess
 }
 
 TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenLinkingProgramThenSuccessOrCorrectErrorCodeIsReturned) {
-    CreateProgramWithSource(
+    createProgramWithSource(
         pContext,
         sourceFileName);
 
@@ -1370,14 +1370,14 @@ TEST_F(ProgramFromSourceTest, GivenInvalidOptionsWhenCreatingLibraryThenCorrectE
 
 class PatchTokenFromBinaryTest : public ProgramSimpleFixture {
   public:
-    void SetUp() override {
-        ProgramSimpleFixture::SetUp();
+    void setUp() {
+        ProgramSimpleFixture::setUp();
     }
-    void TearDown() override {
-        ProgramSimpleFixture::TearDown();
+    void tearDown() {
+        ProgramSimpleFixture::tearDown();
     }
 };
-using PatchTokenTests = TestLegacy<PatchTokenFromBinaryTest>;
+using PatchTokenTests = Test<PatchTokenFromBinaryTest>;
 
 template <typename FamilyType>
 class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
@@ -1399,7 +1399,7 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
 };
 
 HWTEST_F(PatchTokenTests, givenKernelRequiringConstantAllocationWhenMakeResidentIsCalledThenConstantAllocationIsMadeResident) {
-    CreateProgramFromBinary(pContext, pContext->getDevices(), "test_constant_memory");
+    createProgramFromBinary(pContext, pContext->getDevices(), "test_constant_memory");
 
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
@@ -1462,7 +1462,7 @@ HWTEST_F(PatchTokenTests, givenKernelRequiringConstantAllocationWhenMakeResident
 }
 
 TEST_F(PatchTokenTests, WhenBuildingProgramThenGwsIsSet) {
-    CreateProgramFromBinary(pContext, pContext->getDevices(), "kernel_data_param");
+    createProgramFromBinary(pContext, pContext->getDevices(), "kernel_data_param");
 
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
@@ -1482,7 +1482,7 @@ TEST_F(PatchTokenTests, WhenBuildingProgramThenGwsIsSet) {
 TEST_F(PatchTokenTests, WhenBuildingProgramThenConstantKernelArgsAreAvailable) {
     // PATCH_TOKEN_STATELESS_CONSTANT_MEMORY_OBJECT_KERNEL_ARGUMENT
 
-    CreateProgramFromBinary(pContext, pContext->getDevices(), "test_basic_constant");
+    createProgramFromBinary(pContext, pContext->getDevices(), "test_basic_constant");
 
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
@@ -1522,7 +1522,7 @@ TEST_F(PatchTokenTests, GivenVmeKernelWhenBuildingKernelThenArgAvailable) {
     }
     // PATCH_TOKEN_INLINE_VME_SAMPLER_INFO token indicates a VME kernel.
 
-    CreateProgramFromBinary(pContext, pContext->getDevices(), "vme_kernels");
+    createProgramFromBinary(pContext, pContext->getDevices(), "vme_kernels");
 
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
@@ -1549,14 +1549,14 @@ TEST_F(PatchTokenTests, GivenVmeKernelWhenBuildingKernelThenArgAvailable) {
 
 class ProgramPatchTokenFromBinaryTest : public ProgramSimpleFixture {
   public:
-    void SetUp() override {
-        ProgramSimpleFixture::SetUp();
+    void setUp() {
+        ProgramSimpleFixture::setUp();
     }
-    void TearDown() override {
-        ProgramSimpleFixture::TearDown();
+    void tearDown() {
+        ProgramSimpleFixture::tearDown();
     }
 };
-typedef TestLegacy<ProgramPatchTokenFromBinaryTest> ProgramPatchTokenTests;
+typedef Test<ProgramPatchTokenFromBinaryTest> ProgramPatchTokenTests;
 
 TEST(ProgramFromBinaryTests, givenBinaryWithInvalidICBEThenErrorIsReturned) {
     cl_int retVal = CL_INVALID_BINARY;
@@ -1644,10 +1644,10 @@ TEST(ProgramFromBinaryTests, givenEmptyProgramThenErrorIsReturned) {
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
 }
 
-using ProgramWithDebugSymbolsTests = TestLegacy<ProgramSimpleFixture>;
+using ProgramWithDebugSymbolsTests = Test<ProgramSimpleFixture>;
 
 TEST_F(ProgramWithDebugSymbolsTests, GivenProgramCreatedWithDashGOptionWhenGettingProgramBinariesThenDebugDataIsIncluded) {
-    CreateProgramFromBinary(pContext, pContext->getDevices(), "CopyBuffer_simd16", "-g");
+    createProgramFromBinary(pContext, pContext->getDevices(), "CopyBuffer_simd16", "-g");
 
     ASSERT_NE(nullptr, pProgram);
 
@@ -2969,14 +2969,14 @@ TEST(setProgramSpecializationConstantTest, givenUninitializedCompilerinterfaceWh
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
 }
 
-using ProgramBinTest = TestLegacy<ProgramSimpleFixture>;
+using ProgramBinTest = Test<ProgramSimpleFixture>;
 
 TEST_F(ProgramBinTest, givenPrintProgramBinaryProcessingTimeSetWhenBuildProgramThenProcessingTimeIsPrinted) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.PrintProgramBinaryProcessingTime.set(true);
     testing::internal::CaptureStdout();
 
-    CreateProgramFromBinary(pContext, pContext->getDevices(), "kernel_data_param");
+    createProgramFromBinary(pContext, pContext->getDevices(), "kernel_data_param");
 
     auto retVal = pProgram->build(
         pProgram->getDevices(),

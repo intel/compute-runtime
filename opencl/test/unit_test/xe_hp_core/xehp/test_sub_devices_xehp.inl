@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-using XeHPUsDeviceIdTest = TestLegacy<ClDeviceFixture>;
+using XeHPUsDeviceIdTest = Test<ClDeviceFixture>;
 
 HWTEST_EXCLUDE_PRODUCT(SubDeviceTests, givenCCSEngineWhenCallingGetDefaultEngineWithWaThenTheSameEngineIsReturned, IGFX_XE_HP_SDV);
 

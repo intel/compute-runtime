@@ -26,8 +26,8 @@ class CommandStreamReceiver;
 
 class AUBCommandStreamFixture : public CommandStreamFixture {
   public:
-    virtual void SetUp(CommandQueue *pCommandQueue);
-    void TearDown() override;
+    void setUp(CommandQueue *pCommandQueue);
+    void tearDown();
 
     template <typename FamilyType>
     AUBCommandStreamReceiverHw<FamilyType> *getAubCsr() const {

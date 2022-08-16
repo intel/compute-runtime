@@ -35,7 +35,7 @@
 
 using namespace NEO;
 
-typedef TestLegacy<ClDeviceFixture> DeviceTest;
+typedef Test<ClDeviceFixture> DeviceTest;
 
 TEST_F(DeviceTest, givenDeviceWhenGetProductAbbrevThenReturnsHardwarePrefix) {
     const auto productAbbrev = pDevice->getProductAbbrev();

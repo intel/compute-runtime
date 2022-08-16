@@ -28,7 +28,7 @@
 
 using namespace NEO;
 
-typedef TestLegacy<KernelArgBufferFixture> KernelArgBufferTest;
+typedef Test<KernelArgBufferFixture> KernelArgBufferTest;
 
 TEST_F(KernelArgBufferTest, givenSharedBufferWhenSetArgIsCalledThenReportSharedObjUsage) {
     MockGlSharing glSharing;

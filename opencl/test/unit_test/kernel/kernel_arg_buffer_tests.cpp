@@ -29,7 +29,7 @@
 
 using namespace NEO;
 
-struct KernelArgBufferTest : public TestLegacy<KernelArgBufferFixture> {
+struct KernelArgBufferTest : public Test<KernelArgBufferFixture> {
     struct AllocationTypeHelper {
         AllocationType allocationType;
         bool compressed;
@@ -750,9 +750,9 @@ TEST_F(KernelArgBufferTest, givenSVMAllocsManagerWithCompressedSVMAllocationsWhe
 
 class KernelArgBufferFixtureBindless : public KernelArgBufferFixture {
   public:
-    void SetUp() {
+    void setUp() {
         DebugManager.flags.UseBindlessMode.set(1);
-        KernelArgBufferFixture::SetUp();
+        KernelArgBufferFixture::setUp();
 
         pBuffer = new MockBuffer();
         ASSERT_NE(nullptr, pBuffer);
@@ -761,16 +761,16 @@ class KernelArgBufferFixtureBindless : public KernelArgBufferFixture {
         pKernelInfo->argAsPtr(0).stateless = undefined<CrossThreadDataOffset>;
         pKernelInfo->argAsPtr(0).bindful = undefined<SurfaceStateHeapOffset>;
     }
-    void TearDown() {
+    void tearDown() {
         delete pBuffer;
-        KernelArgBufferFixture::TearDown();
+        KernelArgBufferFixture::tearDown();
     }
     DebugManagerStateRestore restorer;
     MockBuffer *pBuffer;
     const CrossThreadDataOffset bindlessOffset = 0x10;
 };
 
-typedef TestLegacy<KernelArgBufferFixtureBindless> KernelArgBufferTestBindless;
+typedef Test<KernelArgBufferFixtureBindless> KernelArgBufferTestBindless;
 
 HWTEST_F(KernelArgBufferTestBindless, givenUsedBindlessBuffersWhenPatchingSurfaceStateOffsetsThenCorrectOffsetIsPatchedInCrossThreadData) {
     using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;

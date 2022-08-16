@@ -20,10 +20,10 @@ class CommandStreamReceiverHwTestXeHpgCore : public ClDeviceFixture,
   public:
     void SetUp() override {
         DebugManager.flags.EnableLocalMemory.set(1);
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
     }
     void TearDown() override {
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
   private:

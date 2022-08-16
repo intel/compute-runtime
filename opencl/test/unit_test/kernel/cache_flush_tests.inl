@@ -203,7 +203,7 @@ class GivenCacheFlushAfterWalkerEnabledWhenProgramGlobalSurfacePresentAndPostSyn
 };
 
 using EnqueueKernelFixture = HelloWorldFixture<HelloWorldFixtureFactory>;
-using EnqueueKernelTest = TestLegacy<EnqueueKernelFixture>;
+using EnqueueKernelTest = Test<EnqueueKernelFixture>;
 
 template <typename FamilyType>
 class GivenCacheFlushAfterWalkerEnabledAndProperSteppingIsSetWhenAllocationRequiresCacheFlushThenFlushCommandPresentAfterWalker : public EnqueueKernelTest {

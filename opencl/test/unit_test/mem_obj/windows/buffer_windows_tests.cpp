@@ -49,13 +49,13 @@ class ExportBufferTests : public ClDeviceFixture,
   protected:
     void SetUp() override {
         flags = CL_MEM_READ_WRITE;
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         context.reset(new MockContext(pClDevice));
     }
 
     void TearDown() override {
         context.reset();
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;

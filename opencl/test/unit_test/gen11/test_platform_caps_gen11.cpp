@@ -15,11 +15,11 @@ using namespace NEO;
 
 struct Gen11PlatformCaps : public PlatformFixture, public ::testing::Test {
     void SetUp() override {
-        PlatformFixture::SetUp();
+        PlatformFixture::setUp();
     }
 
     void TearDown() override {
-        PlatformFixture::TearDown();
+        PlatformFixture::tearDown();
     }
 };
 

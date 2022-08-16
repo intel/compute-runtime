@@ -23,7 +23,7 @@ extern const DeviceDescriptor NEO::deviceDescriptorTable[];
 
 class DrmNullDeviceTestsFixture {
   public:
-    void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
         if (deviceDescriptorTable[0].deviceId == 0) {
             GTEST_SKIP();
         }
@@ -36,7 +36,7 @@ class DrmNullDeviceTestsFixture {
         ASSERT_NE(drmNullDevice, nullptr);
     }
 
-    void TearDown() { // NOLINT(readability-identifier-naming)
+    void tearDown() {
     }
 
     std::unique_ptr<DrmWrap, std::function<void(Drm *)>> drmNullDevice;
@@ -46,7 +46,7 @@ class DrmNullDeviceTestsFixture {
     DebugManagerStateRestore dbgRestorer;
 };
 
-typedef TestLegacy<DrmNullDeviceTestsFixture> DrmNullDeviceTests;
+typedef Test<DrmNullDeviceTestsFixture> DrmNullDeviceTests;
 
 TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENcallGetDeviceIdTHENreturnProperDeviceId) {
     int ret = drmNullDevice->queryDeviceIdAndRevision();

@@ -14,7 +14,7 @@ using namespace NEO;
 
 namespace ULT {
 
-using clGetPlatformInfoMtTests = TestLegacy<PlatformFixture>;
+using clGetPlatformInfoMtTests = Test<PlatformFixture>;
 
 TEST_F(clGetPlatformInfoMtTests, GivenMultipleThreadsQueryingPlatformExtensionsWithVersionThenReturnedValuesAreValid) {
     UltClDeviceFactory deviceFactory{1, 0};

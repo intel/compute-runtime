@@ -21,51 +21,51 @@ namespace NEO {
 
 struct CommandDeviceFixture : public ClDeviceFixture,
                               public CommandQueueHwFixture {
-    using CommandQueueHwFixture::SetUp;
-    void SetUp(cl_command_queue_properties cmdQueueProperties = 0) {
-        ClDeviceFixture::SetUp();
-        CommandQueueHwFixture::SetUp(pClDevice, cmdQueueProperties);
+    using CommandQueueHwFixture::setUp;
+    void setUp(cl_command_queue_properties cmdQueueProperties = 0) {
+        ClDeviceFixture::setUp();
+        CommandQueueHwFixture::setUp(pClDevice, cmdQueueProperties);
     }
 
-    void TearDown() override {
-        CommandQueueHwFixture::TearDown();
-        ClDeviceFixture::TearDown();
+    void tearDown() {
+        CommandQueueHwFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 };
 
 struct CommandEnqueueBaseFixture : CommandDeviceFixture,
                                    public IndirectHeapFixture,
                                    public ClHardwareParse {
-    using IndirectHeapFixture::SetUp;
-    void SetUp(cl_command_queue_properties cmdQueueProperties = 0) {
-        CommandDeviceFixture::SetUp(cmdQueueProperties);
-        IndirectHeapFixture::SetUp(pCmdQ);
+    using IndirectHeapFixture::setUp;
+    void setUp(cl_command_queue_properties cmdQueueProperties = 0) {
+        CommandDeviceFixture::setUp(cmdQueueProperties);
+        IndirectHeapFixture::setUp(pCmdQ);
         ClHardwareParse::setUp();
     }
 
-    void TearDown() override {
+    void tearDown() {
         ClHardwareParse::tearDown();
-        IndirectHeapFixture::TearDown();
-        CommandDeviceFixture::TearDown();
+        IndirectHeapFixture::tearDown();
+        CommandDeviceFixture::tearDown();
     }
 };
 
 struct CommandEnqueueFixture : public CommandEnqueueBaseFixture,
                                public CommandStreamFixture {
-    void SetUp(cl_command_queue_properties cmdQueueProperties = 0) {
-        CommandEnqueueBaseFixture::SetUp(cmdQueueProperties);
-        CommandStreamFixture::SetUp(pCmdQ);
+    void setUp(cl_command_queue_properties cmdQueueProperties = 0) {
+        CommandEnqueueBaseFixture::setUp(cmdQueueProperties);
+        CommandStreamFixture::setUp(pCmdQ);
     }
 
-    void TearDown() override {
-        CommandEnqueueBaseFixture::TearDown();
-        CommandStreamFixture::TearDown();
+    void tearDown() {
+        CommandEnqueueBaseFixture::tearDown();
+        CommandStreamFixture::tearDown();
     }
 };
 
 struct NegativeFailAllocationCommandEnqueueBaseFixture : public CommandEnqueueBaseFixture {
-    void SetUp() override {
-        CommandEnqueueBaseFixture::SetUp();
+    void setUp() {
+        CommandEnqueueBaseFixture::setUp();
         failMemManager.reset(new FailMemoryManager(*pDevice->getExecutionEnvironment()));
 
         BufferDefaults::context = context;
@@ -77,13 +77,13 @@ struct NegativeFailAllocationCommandEnqueueBaseFixture : public CommandEnqueueBa
         pDevice->injectMemoryManager(failMemManager.release());
     }
 
-    void TearDown() override {
+    void tearDown() {
         pDevice->injectMemoryManager(oldMemManager);
         buffer.reset(nullptr);
         image.reset(nullptr);
         BufferDefaults::context = nullptr;
         Image2dDefaults::context = nullptr;
-        CommandEnqueueBaseFixture::TearDown();
+        CommandEnqueueBaseFixture::tearDown();
     }
 
     std::unique_ptr<Buffer> buffer;

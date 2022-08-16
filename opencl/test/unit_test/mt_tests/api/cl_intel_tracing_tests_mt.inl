@@ -18,10 +18,10 @@ using namespace NEO;
 
 namespace ULT {
 
-struct IntelTracingMtTest : public TestLegacy<PlatformFixture> {
+struct IntelTracingMtTest : public Test<PlatformFixture> {
     void SetUp() override {
         DebugManager.flags.CreateMultipleRootDevices.set(maxRootDeviceCount);
-        TestLegacy<PlatformFixture>::SetUp();
+        Test<PlatformFixture>::SetUp();
         testedClDevice = pPlatform->getClDevice(rootDeviceIndex);
     }
     DebugManagerStateRestore restorer;

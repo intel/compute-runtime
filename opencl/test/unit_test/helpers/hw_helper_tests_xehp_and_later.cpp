@@ -25,7 +25,7 @@
 
 #include "engine_node.h"
 
-using HwHelperTestXeHPAndLater = TestLegacy<ClDeviceFixture>;
+using HwHelperTestXeHPAndLater = Test<ClDeviceFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, WhenGettingMaxBarriersPerSliceThen32IsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);

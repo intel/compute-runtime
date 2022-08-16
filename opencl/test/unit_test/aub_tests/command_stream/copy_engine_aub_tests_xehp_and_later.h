@@ -48,7 +48,7 @@ struct CopyEngineXeHPAndLater : public MulticontextAubFixture, public ::testing:
         DebugManager.flags.RenderCompressedBuffersEnabled.set(true);
         DebugManager.flags.RenderCompressedImagesEnabled.set(true);
 
-        MulticontextAubFixture::SetUp(numTiles, EnabledCommandStreamers::Single, true);
+        MulticontextAubFixture::setUp(numTiles, EnabledCommandStreamers::Single, true);
 
         defaultCommandQueue = commandQueues[0][0].get();
         bcsCsr = tileDevices[0]->getNearestGenericSubDevice(0)->getEngine(bcsEngineType, EngineUsage::Regular).commandStreamReceiver;
@@ -67,7 +67,7 @@ struct CopyEngineXeHPAndLater : public MulticontextAubFixture, public ::testing:
     }
 
     void TearDown() override {
-        MulticontextAubFixture::TearDown();
+        MulticontextAubFixture::tearDown();
     }
 
     virtual bool compressionSupported() const {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,8 +30,8 @@ struct EnqueueUnmapMemObjTest : public ClDeviceFixture,
     }
 
     void SetUp() override {
-        ClDeviceFixture::SetUp();
-        CommandQueueFixture::SetUp(pClDevice, 0);
+        ClDeviceFixture::setUp();
+        CommandQueueFixture::setUp(pClDevice, 0);
         BufferDefaults::context = new MockContext;
         buffer = BufferHelper<BufferUseHostPtr<>>::create();
         mappedPtr = pCmdQ->enqueueMapBuffer(buffer, CL_TRUE, CL_MAP_READ, 0, 8, 0, nullptr, nullptr, retVal);
@@ -40,8 +40,8 @@ struct EnqueueUnmapMemObjTest : public ClDeviceFixture,
     void TearDown() override {
         delete buffer;
         delete BufferDefaults::context;
-        CommandQueueFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        CommandQueueFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;

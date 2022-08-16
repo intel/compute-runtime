@@ -27,13 +27,13 @@ class ClSetEventCallbackTests : public ApiFixture<>,
     void SetUp() override {
         dbgRestore.reset(new DebugManagerStateRestore());
         DebugManager.flags.EnableAsyncEventsHandler.set(false);
-        ApiFixture::SetUp();
+        ApiFixture::setUp();
         cbInvoked = 0;
         cbData = nullptr;
     }
 
     void TearDown() override {
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
 
     std::unique_ptr<DebugManagerStateRestore> dbgRestore;

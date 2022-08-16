@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-typedef TestLegacy<ClDeviceFixture> Gen12LpDeviceCaps;
+typedef Test<ClDeviceFixture> Gen12LpDeviceCaps;
 
 HWTEST2_F(Gen12LpDeviceCaps, WhenCheckingExtensionStringThenFp64IsNotSupported, IsTGLLP) {
     const auto &caps = pClDevice->getDeviceInfo();
@@ -113,7 +113,7 @@ GEN12LPTEST_F(Gen12LpDeviceCaps, givenGen12LpDeviceWhenCheckingPipesSupportThenF
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.supportsPipes);
 }
 
-using TglLpUsDeviceIdTest = TestLegacy<ClDeviceFixture>;
+using TglLpUsDeviceIdTest = Test<ClDeviceFixture>;
 
 HWTEST2_F(TglLpUsDeviceIdTest, WhenCheckingSimulationCapThenResultIsCorrect, IsTGLLP) {
     unsigned short tglLpSimulationIds[2] = {

@@ -31,13 +31,13 @@ struct EnqueueSvmMemCopyTest : public ClDeviceFixture,
     }
 
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
 
         if (!pDevice->isFullRangeSvm()) {
             return;
         }
 
-        CommandQueueFixture::SetUp(pClDevice, 0);
+        CommandQueueFixture::setUp(pClDevice, 0);
         srcSvmPtr = context->getSVMAllocsManager()->createSVMAlloc(256, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
         ASSERT_NE(nullptr, srcSvmPtr);
         dstSvmPtr = context->getSVMAllocsManager()->createSVMAlloc(256, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
@@ -56,9 +56,9 @@ struct EnqueueSvmMemCopyTest : public ClDeviceFixture,
         if (pDevice->isFullRangeSvm()) {
             context->getSVMAllocsManager()->freeSVMAlloc(srcSvmPtr);
             context->getSVMAllocsManager()->freeSVMAlloc(dstSvmPtr);
-            CommandQueueFixture::TearDown();
+            CommandQueueFixture::tearDown();
         }
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     void *srcSvmPtr = nullptr;

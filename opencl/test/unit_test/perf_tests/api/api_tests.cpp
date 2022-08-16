@@ -22,7 +22,7 @@ void api_fixture::SetUp() {
 
     setReferenceTime();
 
-    PlatformFixture::SetUp(numPlatformDevices, platformDevices);
+    PlatformFixture::setUp(numPlatformDevices, platformDevices);
     DeviceFixture::setUp();
     ASSERT_NE(nullptr, pDevice);
 
@@ -32,15 +32,15 @@ void api_fixture::SetUp() {
     cl_device_id clDevice = pDevice;
     pContext = Context::create(nullptr, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal);
 
-    CommandQueueHwFixture::SetUp(pDevice, pContext);
+    CommandQueueHwFixture::setUp(pDevice, pContext);
 }
 
 void api_fixture::TearDown() {
     delete pKernel;
     delete pContext;
     delete pProgram;
-    CommandQueueHwFixture::TearDown();
+    CommandQueueHwFixture::tearDown();
     DeviceFixture::tearDown();
-    PlatformFixture::TearDown();
+    PlatformFixture::tearDown();
 }
 } // namespace NEO

@@ -16,11 +16,11 @@ using namespace NEO;
 
 struct XeHpcCorePlatformCaps : public PlatformFixture, public ::testing::Test {
     void SetUp() override {
-        PlatformFixture::SetUp();
+        PlatformFixture::setUp();
     }
 
     void TearDown() override {
-        PlatformFixture::TearDown();
+        PlatformFixture::tearDown();
     }
 };
 

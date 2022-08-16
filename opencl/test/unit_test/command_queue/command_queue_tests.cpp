@@ -60,11 +60,11 @@ struct CommandQueueMemoryDevice
 
     void setUp() {
         MemoryManagementFixture::setUp();
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
     }
 
     void tearDown() {
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
         platformsImpl->clear();
         MemoryManagementFixture::tearDown();
     }
@@ -76,8 +76,8 @@ struct CommandQueueTest
       public CommandQueueFixture,
       ::testing::TestWithParam<uint64_t /*cl_command_queue_properties*/> {
 
-    using CommandQueueFixture::SetUp;
-    using ContextFixture::SetUp;
+    using CommandQueueFixture::setUp;
+    using ContextFixture::setUp;
 
     CommandQueueTest() {
     }
@@ -87,13 +87,13 @@ struct CommandQueueTest
         properties = GetParam();
 
         cl_device_id device = pClDevice;
-        ContextFixture::SetUp(1, &device);
-        CommandQueueFixture::SetUp(pContext, pClDevice, properties);
+        ContextFixture::setUp(1, &device);
+        CommandQueueFixture::setUp(pContext, pClDevice, properties);
     }
 
     void TearDown() override {
-        CommandQueueFixture::TearDown();
-        ContextFixture::TearDown();
+        CommandQueueFixture::tearDown();
+        ContextFixture::tearDown();
         CommandQueueMemoryDevice::tearDown();
     }
 
@@ -183,18 +183,18 @@ struct GetTagTest : public ClDeviceFixture,
                     public CommandStreamFixture,
                     public ::testing::Test {
 
-    using CommandQueueFixture::SetUp;
+    using CommandQueueFixture::setUp;
 
     void SetUp() override {
-        ClDeviceFixture::SetUp();
-        CommandQueueFixture::SetUp(nullptr, pClDevice, 0);
-        CommandStreamFixture::SetUp(pCmdQ);
+        ClDeviceFixture::setUp();
+        CommandQueueFixture::setUp(nullptr, pClDevice, 0);
+        CommandStreamFixture::setUp(pCmdQ);
     }
 
     void TearDown() override {
-        CommandStreamFixture::TearDown();
-        CommandQueueFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        CommandStreamFixture::tearDown();
+        CommandQueueFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 };
 

@@ -26,17 +26,17 @@ using namespace NEO;
 
 class KernelArgSvmFixture : public ContextFixture, public ClDeviceFixture {
 
-    using ContextFixture::SetUp;
+    using ContextFixture::setUp;
 
   public:
     KernelArgSvmFixture() {
     }
 
   protected:
-    void SetUp() {
-        ClDeviceFixture::SetUp();
+    void setUp() {
+        ClDeviceFixture::setUp();
         cl_device_id device = pClDevice;
-        ContextFixture::SetUp(1, &device);
+        ContextFixture::setUp(1, &device);
 
         // define kernel info
         pKernelInfo = std::make_unique<MockKernelInfo>();
@@ -54,12 +54,12 @@ class KernelArgSvmFixture : public ContextFixture, public ClDeviceFixture {
         pKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
     }
 
-    void TearDown() {
+    void tearDown() {
         delete pKernel;
 
         delete pProgram;
-        ContextFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        ContextFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
@@ -71,7 +71,7 @@ class KernelArgSvmFixture : public ContextFixture, public ClDeviceFixture {
     char pCrossThreadData[64];
 };
 
-typedef TestLegacy<KernelArgSvmFixture> KernelArgSvmTest;
+typedef Test<KernelArgSvmFixture> KernelArgSvmTest;
 
 TEST_F(KernelArgSvmTest, GivenValidSvmPtrWhenSettingKernelArgThenSvmPtrIsCorrect) {
     const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();

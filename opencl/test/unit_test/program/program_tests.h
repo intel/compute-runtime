@@ -15,7 +15,7 @@ class ProgramTests : public NEO::ClDeviceFixture,
                      public ::testing::Test,
                      public NEO::ContextFixture {
 
-    using NEO::ContextFixture::SetUp;
+    using NEO::ContextFixture::setUp;
 
   public:
     void SetUp() override;

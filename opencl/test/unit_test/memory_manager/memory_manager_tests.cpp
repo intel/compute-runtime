@@ -2557,16 +2557,16 @@ TEST(MemoryManagerTest, givenForcedLinearImages3DImageAndProperDescriptorValuesW
     alignedFree(hostPtr);
 }
 
-class HeapSelectorTest : public TestLegacy<ClDeviceFixture> {
+class HeapSelectorTest : public Test<ClDeviceFixture> {
   public:
     using BaseClass = ClDeviceFixture;
     void SetUp() override {
         executionEnvironment = std::unique_ptr<MockExecutionEnvironment>(new MockExecutionEnvironment(defaultHwInfo.get()));
         memoryManager = std::unique_ptr<MockMemoryManager>(new MockMemoryManager(false, false, *executionEnvironment.get()));
-        BaseClass::SetUp();
+        BaseClass::setUp();
     }
     void TearDown() override {
-        BaseClass::TearDown();
+        BaseClass::tearDown();
     }
     std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
     std::unique_ptr<MockMemoryManager> memoryManager;

@@ -1002,7 +1002,7 @@ class ClUnifiedSharedMemoryEventTests : public CommandQueueHwFixture,
     }
     void TearDown() override {
         clReleaseEvent(event);
-        CommandQueueHwFixture::TearDown();
+        CommandQueueHwFixture::tearDown();
     }
 
     cl_event event = nullptr;

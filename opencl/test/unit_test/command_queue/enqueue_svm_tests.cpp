@@ -43,8 +43,8 @@ struct EnqueueSvmTest : public ClDeviceFixture,
 
     void SetUp() override {
         REQUIRE_SVM_OR_SKIP(defaultHwInfo);
-        ClDeviceFixture::SetUp();
-        CommandQueueFixture::SetUp(pClDevice, 0);
+        ClDeviceFixture::setUp();
+        CommandQueueFixture::setUp(pClDevice, 0);
         ptrSVM = context->getSVMAllocsManager()->createSVMAlloc(256, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
     }
 
@@ -53,8 +53,8 @@ struct EnqueueSvmTest : public ClDeviceFixture,
             return;
         }
         context->getSVMAllocsManager()->freeSVMAlloc(ptrSVM);
-        CommandQueueFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        CommandQueueFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     std::pair<ReleaseableObjectPtr<Buffer>, void *> createBufferAndMapItOnGpu() {
@@ -1094,7 +1094,7 @@ struct EnqueueSvmTestLocalMemory : public ClDeviceFixture,
         dbgRestore = std::make_unique<DebugManagerStateRestore>();
         DebugManager.flags.EnableLocalMemory.set(1);
 
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         context = std::make_unique<MockContext>(pClDevice, true);
         size = 256;
         svmPtr = context->getSVMAllocsManager()->createSVMAlloc(size, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
@@ -1108,7 +1108,7 @@ struct EnqueueSvmTestLocalMemory : public ClDeviceFixture,
         }
         context->getSVMAllocsManager()->freeSVMAlloc(svmPtr);
         context.reset(nullptr);
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;

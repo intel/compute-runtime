@@ -62,13 +62,13 @@ struct CommandStreamReceiverHwTestXeHPAndLater : public ClDeviceFixture,
                                                  public ::testing::Test {
 
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         HardwareParse::setUp();
     }
 
     void TearDown() override {
         HardwareParse::tearDown();
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 };
 

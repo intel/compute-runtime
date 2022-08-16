@@ -15,20 +15,20 @@
 namespace NEO {
 
 struct EnqueueFillImageTestFixture : public CommandEnqueueFixture {
-    void SetUp(void) override {
+    void setUp() {
         REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
-        CommandEnqueueFixture::SetUp();
+        CommandEnqueueFixture::setUp();
         context = new MockContext(pClDevice);
         image = Image2dHelper<>::create(context);
     }
 
-    void TearDown(void) override {
+    void tearDown() {
         if (testing::Test::IsSkipped()) {
             return;
         }
         delete image;
         delete context;
-        CommandEnqueueFixture::TearDown();
+        CommandEnqueueFixture::tearDown();
     }
 
   protected:

@@ -27,14 +27,14 @@ struct VerifyMemoryImageHw
       public ::testing::TestWithParam<TestOffset> {
 
     void SetUp() override {
-        CommandEnqueueAUBFixture::SetUp();
+        CommandEnqueueAUBFixture::setUp();
         if (!pDevice->getDeviceInfo().imageSupport) {
             GTEST_SKIP();
         }
     }
 
     void TearDown() override {
-        CommandEnqueueAUBFixture::TearDown();
+        CommandEnqueueAUBFixture::tearDown();
     }
 };
 

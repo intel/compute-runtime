@@ -32,11 +32,11 @@ class ZeroCopyBufferTest : public ClDeviceFixture,
         if (sizeToAlloc > 0) {
             host_ptr = (void *)alignedMalloc(sizeToAlloc, alignment);
         }
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
     }
 
     void TearDown() override {
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
         alignedFree(host_ptr);
     }
 

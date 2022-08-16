@@ -27,8 +27,8 @@ struct EnqueueSvmMemFillTest : public ClDeviceFixture,
     }
 
     void SetUp() override {
-        ClDeviceFixture::SetUp();
-        CommandQueueFixture::SetUp(pClDevice, 0);
+        ClDeviceFixture::setUp();
+        CommandQueueFixture::setUp(pClDevice, 0);
         REQUIRE_SVM_OR_SKIP(pDevice);
         patternSize = (size_t)GetParam();
         ASSERT_TRUE((0 < patternSize) && (patternSize <= 128));
@@ -46,8 +46,8 @@ struct EnqueueSvmMemFillTest : public ClDeviceFixture,
         if (svmPtr) {
             context->getSVMAllocsManager()->freeSVMAlloc(svmPtr);
         }
-        CommandQueueFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        CommandQueueFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     const uint64_t pattern[16] = {0x0011223344556677, 0x8899AABBCCDDEEFF, 0xFFEEDDCCBBAA9988, 0x7766554433221100,

@@ -20,25 +20,25 @@ struct GetCommandQueueInfoTest : public ClDeviceFixture,
                                  public ContextFixture,
                                  public CommandQueueFixture,
                                  ::testing::TestWithParam<uint64_t /*cl_command_queue_properties*/> {
-    using CommandQueueFixture::SetUp;
-    using ContextFixture::SetUp;
+    using CommandQueueFixture::setUp;
+    using ContextFixture::setUp;
 
     GetCommandQueueInfoTest() {
     }
 
     void SetUp() override {
         properties = GetParam();
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
 
         cl_device_id device = pClDevice;
-        ContextFixture::SetUp(1, &device);
-        CommandQueueFixture::SetUp(pContext, pClDevice, properties);
+        ContextFixture::setUp(1, &device);
+        CommandQueueFixture::setUp(pContext, pClDevice, properties);
     }
 
     void TearDown() override {
-        CommandQueueFixture::TearDown();
-        ContextFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        CommandQueueFixture::tearDown();
+        ContextFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     const HardwareInfo *pHwInfo = nullptr;

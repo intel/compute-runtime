@@ -32,7 +32,7 @@ class EnqueueDebugKernelTest : public ProgramSimpleFixture,
                                public ::testing::Test {
   public:
     void SetUp() override {
-        ProgramSimpleFixture::SetUp();
+        ProgramSimpleFixture::setUp();
         device = pClDevice;
         pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(new SourceLevelDebugger(nullptr));
 
@@ -46,7 +46,7 @@ class EnqueueDebugKernelTest : public ProgramSimpleFixture,
             KernelFilenameHelper::getKernelFilenameFromInternalOption(kernelOption, filename);
 
             kbHelper = new KernelBinaryHelper(filename, false);
-            CreateProgramWithSource(
+            createProgramWithSource(
                 pContext,
                 "copybuffer.cl");
             pProgram->enableKernelDebug();
@@ -82,7 +82,7 @@ class EnqueueDebugKernelTest : public ProgramSimpleFixture,
             delete kbHelper;
             pMultiDeviceKernel->release();
         }
-        ProgramSimpleFixture::TearDown();
+        ProgramSimpleFixture::tearDown();
     }
     cl_device_id device;
     Kernel *debugKernel = nullptr;

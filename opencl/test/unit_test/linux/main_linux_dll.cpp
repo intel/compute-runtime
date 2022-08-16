@@ -54,7 +54,7 @@ using namespace NEO;
 
 class DrmTestsFixture {
   public:
-    void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
         if (deviceDescriptorTable[0].deviceId == 0) {
             GTEST_SKIP();
         }
@@ -63,13 +63,13 @@ class DrmTestsFixture {
         rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
     }
 
-    void TearDown() { // NOLINT(readability-identifier-naming)
+    void tearDown() {
     }
     ExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
 };
 
-typedef TestLegacy<DrmTestsFixture> DrmTests;
+typedef Test<DrmTestsFixture> DrmTests;
 
 void initializeTestedDevice() {
     for (uint32_t i = 0; deviceDescriptorTable[i].deviceId != 0; i++) {

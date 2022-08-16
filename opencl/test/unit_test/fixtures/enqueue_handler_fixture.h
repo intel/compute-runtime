@@ -13,13 +13,13 @@ class EnqueueHandlerTest : public NEO::ClDeviceFixture,
                            public testing::Test {
   public:
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         context = new NEO::MockContext(pClDevice);
     }
 
     void TearDown() override {
         context->decRefInternal();
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
     NEO::MockContext *context;
 };

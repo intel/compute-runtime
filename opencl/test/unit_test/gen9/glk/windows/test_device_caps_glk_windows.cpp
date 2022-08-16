@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-typedef TestLegacy<ClDeviceFixture> GlkDeviceCapsWindows;
+typedef Test<ClDeviceFixture> GlkDeviceCapsWindows;
 
 GLKTEST_F(GlkDeviceCapsWindows, WhenCheckingKmdNotifyPropertiesThenKmdNotifyIsEnabledCorrectly) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableKmdNotify);

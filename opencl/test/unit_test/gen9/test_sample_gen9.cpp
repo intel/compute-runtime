@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-typedef TestLegacy<ClDeviceFixture> Gen9OnlyTest;
+typedef Test<ClDeviceFixture> Gen9OnlyTest;
 
 GEN9TEST_F(Gen9OnlyTest, WhenGettingRenderCoreFamilyThenGen9CoreIsReturned) {
     EXPECT_EQ(IGFX_GEN9_CORE, pDevice->getRenderCoreFamily());

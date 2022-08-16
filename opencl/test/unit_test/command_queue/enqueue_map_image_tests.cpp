@@ -36,8 +36,8 @@ struct EnqueueMapImageTest : public ClDeviceFixture,
     void SetUp() override {
         REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
-        ClDeviceFixture::SetUp();
-        CommandQueueFixture::SetUp(pClDevice, 0);
+        ClDeviceFixture::setUp();
+        CommandQueueFixture::setUp(pClDevice, 0);
         context = new MockContext(pClDevice);
         image = ImageHelper<ImageUseHostPtr<Image2dDefaults>>::create(context);
     }
@@ -48,8 +48,8 @@ struct EnqueueMapImageTest : public ClDeviceFixture,
         }
         delete image;
         context->release();
-        CommandQueueFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        CommandQueueFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     MockContext *context;
@@ -995,13 +995,13 @@ struct EnqueueMapImageTypeTest : public CommandEnqueueFixture,
     }
 
     void SetUp() override {
-        CommandEnqueueFixture::SetUp();
+        CommandEnqueueFixture::setUp();
         image = ImageHelper<ImageUseHostPtr<Image2dDefaults>>::create(&context);
     }
 
     void TearDown() override {
         delete image;
-        CommandEnqueueFixture::TearDown();
+        CommandEnqueueFixture::tearDown();
     }
 
   protected:

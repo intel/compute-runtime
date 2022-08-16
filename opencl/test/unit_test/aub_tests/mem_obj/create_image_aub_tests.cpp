@@ -30,14 +30,14 @@ struct AUBCreateImage
       public ::testing::Test {
     typedef AUBCommandStreamFixture CommandStreamFixture;
 
-    using AUBCommandStreamFixture::SetUp;
+    using AUBCommandStreamFixture::setUp;
 
     void SetUp() override {
         if (!(defaultHwInfo->capabilityTable.supportsImages)) {
             GTEST_SKIP();
         }
-        CommandDeviceFixture::SetUp(cl_command_queue_properties(0));
-        CommandStreamFixture::SetUp(pCmdQ);
+        CommandDeviceFixture::setUp(cl_command_queue_properties(0));
+        CommandStreamFixture::setUp(pCmdQ);
 
         imageFormat.image_channel_data_type = CL_UNORM_INT8;
         imageFormat.image_channel_order = CL_RGBA;
@@ -56,8 +56,8 @@ struct AUBCreateImage
 
     void TearDown() override {
         image.reset();
-        CommandStreamFixture::TearDown();
-        CommandDeviceFixture::TearDown();
+        CommandStreamFixture::tearDown();
+        CommandDeviceFixture::tearDown();
     }
 
     std::unique_ptr<Image> image;

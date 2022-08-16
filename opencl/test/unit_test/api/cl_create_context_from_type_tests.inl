@@ -12,7 +12,7 @@
 
 using namespace NEO;
 
-struct clCreateContextFromTypeTests : TestLegacy<PlatformFixture> {
+struct clCreateContextFromTypeTests : Test<PlatformFixture> {
     cl_int retVal = CL_DEVICE_NOT_AVAILABLE;
 };
 

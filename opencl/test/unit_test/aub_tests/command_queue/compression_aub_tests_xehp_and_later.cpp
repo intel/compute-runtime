@@ -52,7 +52,7 @@ struct CompressionXeHPAndLater : public AUBFixture,
             GTEST_SKIP();
         }
 
-        AUBFixture::SetUp(defaultHwInfo.get());
+        AUBFixture::setUp(defaultHwInfo.get());
         auto &ftrTable = device->getHardwareInfo().featureTable;
         if ((!ftrTable.flags.ftrFlatPhysCCS) ||
             (!ftrTable.flags.ftrLocalMemory && useLocalMemory)) {
@@ -61,7 +61,7 @@ struct CompressionXeHPAndLater : public AUBFixture,
         context->contextType = ContextType::CONTEXT_TYPE_SPECIALIZED;
     }
     void TearDown() override {
-        AUBFixture::TearDown();
+        AUBFixture::tearDown();
     }
     std::unique_ptr<DebugManagerStateRestore> debugRestorer;
 

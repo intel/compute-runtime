@@ -616,9 +616,9 @@ struct CompressedBuffersTests : public ::testing::Test {
         for (auto &rootDeviceEnvironment : executionEnvironment->rootDeviceEnvironments) {
             rootDeviceEnvironment->initGmm();
         }
-        SetUp(executionEnvironment);
+        setUp(executionEnvironment);
     }
-    void SetUp(ExecutionEnvironment *executionEnvironment) {
+    void setUp(ExecutionEnvironment *executionEnvironment) {
         hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
         device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0u));
         context = std::make_unique<MockContext>(device.get(), true);
@@ -764,7 +764,7 @@ struct CompressedBuffersSvmTests : public CompressedBuffersTests {
         executionEnvironment->prepareRootDeviceEnvironments(1u);
         hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
         hwInfo->capabilityTable.gpuAddressSpace = MemoryConstants::max48BitAddress;
-        CompressedBuffersTests::SetUp(executionEnvironment);
+        CompressedBuffersTests::setUp(executionEnvironment);
     }
 };
 
@@ -860,13 +860,13 @@ class BufferTest : public ClDeviceFixture,
   protected:
     void SetUp() override {
         flags = GetParam();
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         context.reset(new MockContext(pClDevice));
     }
 
     void TearDown() override {
         context.reset();
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
@@ -998,7 +998,7 @@ struct ValidHostPtr
       public MemoryManagementFixture {
     typedef BufferTest BaseClass;
 
-    using BufferTest::SetUp;
+    using BufferTest::setUp;
     using MemoryManagementFixture::setUp;
 
     ValidHostPtr() {
@@ -1886,10 +1886,10 @@ INSTANTIATE_TEST_CASE_P(
 
 struct BufferUnmapTest : public ClDeviceFixture, public ::testing::Test {
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
     }
     void TearDown() override {
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 };
 

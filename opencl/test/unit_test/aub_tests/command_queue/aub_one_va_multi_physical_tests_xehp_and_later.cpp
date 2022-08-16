@@ -17,10 +17,10 @@ using namespace NEO;
 struct OneVAFourPhysicalStoragesTest : public MulticontextAubFixture, public ::testing::Test {
     static const uint32_t numTiles = 4;
     void SetUp() override {
-        MulticontextAubFixture::SetUp(numTiles, MulticontextAubFixture::EnabledCommandStreamers::Single, false);
+        MulticontextAubFixture::setUp(numTiles, MulticontextAubFixture::EnabledCommandStreamers::Single, false);
     }
     void TearDown() override {
-        MulticontextAubFixture::TearDown();
+        MulticontextAubFixture::tearDown();
     }
 };
 

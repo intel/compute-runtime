@@ -12,7 +12,7 @@
 
 using namespace NEO;
 
-using clIcdGetPlatformIDsKHRTests = TestLegacy<PlatformFixture>;
+using clIcdGetPlatformIDsKHRTests = Test<PlatformFixture>;
 
 namespace ULT {
 

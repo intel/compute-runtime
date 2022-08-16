@@ -24,20 +24,6 @@ struct Test
     }
 };
 
-template <typename Fixture>
-struct TestLegacy
-    : public Fixture,
-      public ::testing::Test {
-
-    void SetUp() override {
-        Fixture::SetUp();
-    }
-
-    void TearDown() override {
-        Fixture::TearDown();
-    }
-};
-
 #define TO_STR2(x) #x
 #define TO_STR(x) TO_STR2(x)
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,8 +26,8 @@ class ProgramFromSourceTest : public ContextFixture,
                               public ProgramFixture,
                               public testing::TestWithParam<std::tuple<const char *, const char *, const char *>> {
 
-    using ContextFixture::SetUp;
-    using PlatformFixture::SetUp;
+    using ContextFixture::setUp;
+    using PlatformFixture::setUp;
 
   protected:
     void SetUp() override {
@@ -36,22 +36,22 @@ class ProgramFromSourceTest : public ContextFixture,
         kernelName = "CopyBuffer";
         kbHelper = new KernelBinaryHelper(binaryFileName);
 
-        PlatformFixture::SetUp();
+        PlatformFixture::setUp();
         cl_device_id device = pPlatform->getClDevice(0);
         rootDeviceIndex = pPlatform->getClDevice(0)->getRootDeviceIndex();
-        ContextFixture::SetUp(1, &device);
-        ProgramFixture::SetUp();
+        ContextFixture::setUp(1, &device);
+        ProgramFixture::setUp();
 
-        CreateProgramWithSource(
+        createProgramWithSource(
             pContext,
             sourceFileName);
     }
 
     void TearDown() override {
         knownSource.reset();
-        ProgramFixture::TearDown();
-        ContextFixture::TearDown();
-        PlatformFixture::TearDown();
+        ProgramFixture::tearDown();
+        ContextFixture::tearDown();
+        PlatformFixture::tearDown();
         delete kbHelper;
     }
 

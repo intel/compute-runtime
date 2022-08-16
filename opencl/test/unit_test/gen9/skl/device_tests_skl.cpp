@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-typedef TestLegacy<ClDeviceFixture> DeviceTest;
+typedef Test<ClDeviceFixture> DeviceTest;
 
 SKLTEST_F(DeviceTest, givenSklDeviceWhenAskedForProflingTimerResolutionThen83IsReturned) {
     auto resolution = pDevice->getProfilingTimerResolution();

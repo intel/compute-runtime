@@ -10,7 +10,7 @@
 
 namespace NEO {
 
-using Gen12LPAubMemDumpTests = TestLegacy<ClDeviceFixture>;
+using Gen12LPAubMemDumpTests = Test<ClDeviceFixture>;
 
 GEN12LPTEST_F(Gen12LPAubMemDumpTests, GivenCcsThenExpectationsAreMet) {
     setupAUB<FamilyType>(pDevice, aub_stream::ENGINE_CCS);

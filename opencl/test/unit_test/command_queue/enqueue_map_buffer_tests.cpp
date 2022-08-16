@@ -33,8 +33,8 @@ struct EnqueueMapBufferTest : public ClDeviceFixture,
     }
 
     void SetUp() override {
-        ClDeviceFixture::SetUp();
-        CommandQueueFixture::SetUp(pClDevice, 0);
+        ClDeviceFixture::setUp();
+        CommandQueueFixture::setUp(pClDevice, 0);
         BufferDefaults::context = new MockContext;
 
         buffer = BufferHelper<BufferUseHostPtr<>>::create();
@@ -43,8 +43,8 @@ struct EnqueueMapBufferTest : public ClDeviceFixture,
     void TearDown() override {
         delete buffer;
         delete BufferDefaults::context;
-        CommandQueueFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        CommandQueueFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;

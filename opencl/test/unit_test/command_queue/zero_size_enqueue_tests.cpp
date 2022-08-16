@@ -19,7 +19,7 @@
 
 using namespace NEO;
 
-class ZeroSizeEnqueueHandlerTest : public TestLegacy<ClDeviceFixture> {
+class ZeroSizeEnqueueHandlerTest : public Test<ClDeviceFixture> {
   public:
     MockContext context;
     cl_int retVal;

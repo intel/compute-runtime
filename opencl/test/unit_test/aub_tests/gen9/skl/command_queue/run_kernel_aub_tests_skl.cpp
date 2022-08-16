@@ -18,11 +18,11 @@ class AUBRunKernelIntegrateTest : public RunKernelFixture<AUBRunKernelFixtureFac
 
   protected:
     void SetUp() override {
-        ParentClass::SetUp();
+        ParentClass::setUp();
     }
 
     void TearDown() override {
-        ParentClass::TearDown();
+        ParentClass::tearDown();
     }
 };
 
@@ -39,7 +39,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenOoqExecutionThenExpectationsMet) {
 
     std::string kernelFilename;
     retrieveBinaryKernelFilename(kernelFilename, "simple_kernels_", ".bin");
-    Program *pProgram = CreateProgramFromBinary(kernelFilename);
+    Program *pProgram = createProgramFromBinary(kernelFilename);
     ASSERT_NE(nullptr, pProgram);
 
     retVal = pProgram->build(
@@ -262,7 +262,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenDeviceSideVmeThenExpectationsMet) {
 
     std::string kernelFilename;
     retrieveBinaryKernelFilename(kernelFilename, "vme_kernels_", ".bin");
-    Program *pProgram = CreateProgramFromBinary(kernelFilename);
+    Program *pProgram = createProgramFromBinary(kernelFilename);
     ASSERT_NE(nullptr, pProgram);
 
     retVal = pProgram->build(

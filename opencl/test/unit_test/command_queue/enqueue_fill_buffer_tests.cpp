@@ -29,7 +29,7 @@
 
 using namespace NEO;
 
-typedef TestLegacy<EnqueueFillBufferFixture> EnqueueFillBufferCmdTests;
+typedef Test<EnqueueFillBufferFixture> EnqueueFillBufferCmdTests;
 
 HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenTaskCountIsAlignedWithCsr) {
     //this test case assumes IOQ

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,31 +26,31 @@ struct ProgramFromBinaryFixture : public ClDeviceFixture,
                                   public ProgramFixture,
                                   public testing::Test {
 
-    using ContextFixture::SetUp;
+    using ContextFixture::setUp;
 
     void SetUp() override {
-        ProgramFromBinaryFixture::SetUp("CopyBuffer_simd32", "CopyBuffer");
+        ProgramFromBinaryFixture::setUp("CopyBuffer_simd32", "CopyBuffer");
     }
-    void SetUp(const char *binaryFileName, const char *kernelName) {
+    void setUp(const char *binaryFileName, const char *kernelName) {
         this->binaryFileName = binaryFileName;
         this->kernelName = kernelName;
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
 
         cl_device_id device = pClDevice;
-        ContextFixture::SetUp(1, &device);
-        ProgramFixture::SetUp();
+        ContextFixture::setUp(1, &device);
+        ProgramFixture::setUp();
 
         if (options.size())
-            CreateProgramFromBinary(pContext, pContext->getDevices(), binaryFileName, options);
+            createProgramFromBinary(pContext, pContext->getDevices(), binaryFileName, options);
         else
-            CreateProgramFromBinary(pContext, pContext->getDevices(), binaryFileName);
+            createProgramFromBinary(pContext, pContext->getDevices(), binaryFileName);
     }
 
     void TearDown() override {
         knownSource.reset();
-        ProgramFixture::TearDown();
-        ContextFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        ProgramFixture::tearDown();
+        ContextFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     void setOptions(std::string &optionsIn) {
@@ -70,22 +70,22 @@ struct ProgramFromBinaryFixture : public ClDeviceFixture,
 class ProgramSimpleFixture : public ClDeviceFixture,
                              public ContextFixture,
                              public ProgramFixture {
-    using ContextFixture::SetUp;
+    using ContextFixture::setUp;
 
   public:
-    void SetUp() override {
-        ClDeviceFixture::SetUp();
+    void setUp() {
+        ClDeviceFixture::setUp();
 
         cl_device_id device = pClDevice;
-        ContextFixture::SetUp(1, &device);
-        ProgramFixture::SetUp();
+        ContextFixture::setUp(1, &device);
+        ProgramFixture::setUp();
     }
 
-    void TearDown() override {
+    void tearDown() {
         knownSource.reset();
-        ProgramFixture::TearDown();
-        ContextFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        ProgramFixture::tearDown();
+        ContextFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
   protected:

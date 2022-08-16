@@ -26,7 +26,7 @@ class ImageArraySizeTest : public ClDeviceFixture,
 
   protected:
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         types = GetParam();
 
         // clang-format off
@@ -57,7 +57,7 @@ class ImageArraySizeTest : public ClDeviceFixture,
             clReleaseMemObject(imageDesc.mem_object);
         }
         delete context;
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     cl_image_format imageFormat;

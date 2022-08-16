@@ -158,7 +158,7 @@ struct MockResidentTestsPageFaultManager : public MockPageFaultManager {
 };
 
 class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
-    using ContextFixture::SetUp;
+    using ContextFixture::setUp;
 
   public:
     void setUp() {
@@ -182,7 +182,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
         pDevice = pPlatform->getClDevice(0);
         rootDeviceIndex = pDevice->getRootDeviceIndex();
         cl_device_id device = pDevice;
-        ContextFixture::SetUp(1, &device);
+        ContextFixture::setUp(1, &device);
 
         driverServices.bufferAllocate = nullptr;
         driverServices.bufferDeallocate = nullptr;
@@ -201,7 +201,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
     }
 
     void tearDown() {
-        ContextFixture::TearDown();
+        ContextFixture::tearDown();
         platformsImpl->clear();
         MemoryManagementFixture::tearDown();
         NEO::isGTPinInitialized = false;

@@ -22,12 +22,12 @@ struct CopyBufferRectHw
       public ::testing::TestWithParam<std::tuple<size_t, size_t, size_t, size_t, size_t, size_t, bool>> {
 
     void SetUp() override {
-        CommandEnqueueAUBFixture::SetUp();
+        CommandEnqueueAUBFixture::setUp();
         std::tie(srcOrigin0, srcOrigin1, srcOrigin2, dstOrigin0, dstOrigin1, dstOrigin2, copy3D) = GetParam();
     }
 
     void TearDown() override {
-        CommandEnqueueAUBFixture::TearDown();
+        CommandEnqueueAUBFixture::tearDown();
     }
 
     size_t srcOrigin0;

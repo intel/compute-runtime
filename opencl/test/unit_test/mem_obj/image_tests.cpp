@@ -58,9 +58,9 @@ class CreateImageTest : public ClDeviceFixture,
 
   protected:
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
 
-        CommandQueueFixture::SetUp(pClDevice, 0);
+        CommandQueueFixture::setUp(pClDevice, 0);
         flags = GetParam();
 
         // clang-format off
@@ -81,8 +81,8 @@ class CreateImageTest : public ClDeviceFixture,
     }
 
     void TearDown() override {
-        CommandQueueFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        CommandQueueFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     cl_image_format imageFormat;

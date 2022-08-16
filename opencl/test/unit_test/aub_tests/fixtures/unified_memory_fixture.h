@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,18 +20,18 @@ extern bool disabled;
 
 class UnifiedMemoryAubFixture : public AUBFixture {
   public:
-    using AUBFixture::TearDown;
+    using AUBFixture::tearDown;
 
     cl_int retVal = CL_SUCCESS;
     const size_t dataSize = MemoryConstants::megaByte;
     bool skipped = false;
 
-    void SetUp() override {
+    void setUp() {
         if (PagaFaultManagerTestConfig::disabled) {
             skipped = true;
             GTEST_SKIP();
         }
-        AUBFixture::SetUp(nullptr);
+        AUBFixture::setUp(nullptr);
         if (!platform()->peekExecutionEnvironment()->memoryManager->getPageFaultManager()) {
             skipped = true;
             GTEST_SKIP();
