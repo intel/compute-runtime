@@ -107,11 +107,11 @@ class PageTableFixture {
     uint64_t startAddress = 0x1000;
 
   public:
-    void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
         startAddress = 0x1000;
     }
 
-    void TearDown() { // NOLINT(readability-identifier-naming)
+    void tearDown() {
     }
 };
 
@@ -136,9 +136,9 @@ void PageTableEntryChecker::testEntry<MockPDPE>(MockPDPE *pageTable, uint32_t pt
     EXPECT_EQ(reinterpret_cast<void *>(expectedValue), pageTable->entries[0]->entries[0]->entries[pteIndex]);
 }
 
-typedef TestLegacy<PageTableFixture> PageTableTests32;
-typedef TestLegacy<PageTableFixture> PageTableTests48;
-typedef TestLegacy<PageTableFixture> PageTableTestsGPU;
+using PageTableTests32 = Test<PageTableFixture>;
+using PageTableTests48 = Test<PageTableFixture>;
+using PageTableTestsGPU = Test<PageTableFixture>;
 
 TEST_F(PageTableTests48, WhenPageTableIsCreatedThenWalkerIsDummy) {
     PageTable<void, 0, 9> pt(&allocator);

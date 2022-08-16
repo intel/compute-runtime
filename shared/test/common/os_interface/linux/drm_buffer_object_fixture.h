@@ -65,11 +65,11 @@ template <typename DrmClass>
 class DrmBufferObjectFixture {
   public:
     std::unique_ptr<DrmClass> mock;
-    TestedBufferObject *bo;
-    ExecObject execObjectsStorage[256];
+    TestedBufferObject *bo = nullptr;
+    ExecObject execObjectsStorage[256]{};
     std::unique_ptr<OsContextLinux> osContext;
 
-    void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
         this->mock = std::make_unique<DrmClass>(*executionEnvironment.rootDeviceEnvironments[0]);
         ASSERT_NE(nullptr, this->mock);
         executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock.get(), 0u);
@@ -79,7 +79,7 @@ class DrmBufferObjectFixture {
         ASSERT_NE(nullptr, bo);
     }
 
-    void TearDown() { // NOLINT(readability-identifier-naming)
+    void tearDown() {
         delete bo;
         if (this->mock->ioctl_expected.total >= 0) {
             EXPECT_EQ(this->mock->ioctl_expected.total, this->mock->ioctl_cnt.total);

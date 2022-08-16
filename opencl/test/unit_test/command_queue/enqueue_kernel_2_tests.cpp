@@ -119,10 +119,10 @@ struct EnqueueKernelTypeTest : public HelloWorldFixture<HelloWorldFixtureFactory
 
     void SetUp() override {
         ParentClass::SetUp();
-        ClHardwareParse::SetUp();
+        ClHardwareParse::setUp();
     }
     void TearDown() override {
-        ClHardwareParse::TearDown();
+        ClHardwareParse::tearDown();
         ParentClass::TearDown();
     }
     size_t globalWorkSize[3];

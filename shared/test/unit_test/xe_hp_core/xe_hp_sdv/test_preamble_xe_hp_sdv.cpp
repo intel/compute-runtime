@@ -19,11 +19,11 @@ using namespace NEO;
 
 struct XeHPSlm : HardwareParse, ::testing::Test {
     void SetUp() override {
-        HardwareParse::SetUp();
+        HardwareParse::setUp();
     }
 
     void TearDown() override {
-        HardwareParse::TearDown();
+        HardwareParse::tearDown();
     }
 
     uint32_t cmdBuffer[1024]{};

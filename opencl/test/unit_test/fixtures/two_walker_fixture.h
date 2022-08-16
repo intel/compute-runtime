@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,11 +54,11 @@ struct TwoWalkerTest
 
     void SetUp() override {
         Parent::SetUp();
-        ClHardwareParse::SetUp();
+        ClHardwareParse::setUp();
     }
 
     void TearDown() override {
-        ClHardwareParse::TearDown();
+        ClHardwareParse::tearDown();
         Parent::TearDown();
     }
 

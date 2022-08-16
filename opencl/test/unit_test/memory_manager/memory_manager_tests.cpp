@@ -1852,7 +1852,7 @@ TEST_F(MemoryAllocatorTest, GivenSizeWhenGmmIsCreatedThenNonNullPointerIsReturne
     delete gmm;
 }
 
-typedef TestLegacy<MemoryManagerWithCsrFixture> MemoryManagerWithCsrTest;
+typedef Test<MemoryManagerWithCsrFixture> MemoryManagerWithCsrTest;
 
 TEST_F(MemoryManagerWithCsrTest, GivenAllocationsInHostPtrManagerWhenBiggerOverllapingAllocationIsCreatedAndNothingToCleanThenAbortExecution) {
     void *cpuPtr1 = (void *)0x100004;

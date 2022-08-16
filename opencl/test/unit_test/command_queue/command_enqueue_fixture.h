@@ -40,11 +40,11 @@ struct CommandEnqueueBaseFixture : CommandDeviceFixture,
     void SetUp(cl_command_queue_properties cmdQueueProperties = 0) {
         CommandDeviceFixture::SetUp(cmdQueueProperties);
         IndirectHeapFixture::SetUp(pCmdQ);
-        ClHardwareParse::SetUp();
+        ClHardwareParse::setUp();
     }
 
     void TearDown() override {
-        ClHardwareParse::TearDown();
+        ClHardwareParse::tearDown();
         IndirectHeapFixture::TearDown();
         CommandDeviceFixture::TearDown();
     }

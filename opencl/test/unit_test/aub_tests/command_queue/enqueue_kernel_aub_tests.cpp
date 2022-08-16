@@ -52,11 +52,11 @@ struct AUBHelloWorld
 
     void SetUp() override {
         HelloWorldFixture<AUBHelloWorldFixtureFactory>::SetUp();
-        ClHardwareParse::SetUp();
+        ClHardwareParse::setUp();
     }
 
     void TearDown() override {
-        ClHardwareParse::TearDown();
+        ClHardwareParse::tearDown();
         HelloWorldFixture<AUBHelloWorldFixtureFactory>::TearDown();
     }
 };
@@ -213,11 +213,11 @@ struct AUBSimpleArg
 
     void SetUp() override {
         SimpleArgFixture<AUBSimpleArgFixtureFactory>::SetUp();
-        ClHardwareParse::SetUp();
+        ClHardwareParse::setUp();
     }
 
     void TearDown() override {
-        ClHardwareParse::TearDown();
+        ClHardwareParse::tearDown();
         SimpleArgFixture<AUBSimpleArgFixtureFactory>::TearDown();
     }
 };

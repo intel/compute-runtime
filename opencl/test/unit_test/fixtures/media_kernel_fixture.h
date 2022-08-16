@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,7 +66,7 @@ struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
         Parent::kernelName = "non_vme_kernel";
 
         Parent::SetUp();
-        ClHardwareParse::SetUp();
+        ClHardwareParse::setUp();
 
         ASSERT_NE(nullptr, pKernel);
         ASSERT_EQ(false, pKernel->isVmeKernel());
@@ -90,7 +90,7 @@ struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
         }
         pMultiDeviceVmeKernel->release();
 
-        ClHardwareParse::TearDown();
+        ClHardwareParse::tearDown();
         Parent::TearDown();
     }
 

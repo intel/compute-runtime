@@ -23,7 +23,7 @@ class DrmMemManagerFixture {
         void forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uint64_t range) { getGfxPartition(rootDeviceIndex)->init(range, 0, 0, gfxPartitions.size(), true); }
     };
 
-    void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
         DebugManagerStateRestore dbgRestorer;
         DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
         executionEnvironment = std::make_unique<ExecutionEnvironment>();
@@ -34,13 +34,13 @@ class DrmMemManagerFixture {
         executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(new DrmMock(*executionEnvironment->rootDeviceEnvironments[0])));
         memManager = std::unique_ptr<FrontWindowMemManagerMock>(new FrontWindowMemManagerMock(*executionEnvironment));
     }
-    void TearDown() { // NOLINT(readability-identifier-naming)
+    void tearDown() {
     }
     std::unique_ptr<FrontWindowMemManagerMock> memManager;
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;
 };
 
-using DrmFrontWindowPoolAllocatorTests = TestLegacy<DrmMemManagerFixture>;
+using DrmFrontWindowPoolAllocatorTests = Test<DrmMemManagerFixture>;
 
 TEST_F(DrmFrontWindowPoolAllocatorTests, givenAllocateInSpecialPoolFlagWhenDrmAllocate32BitGraphicsMemoryThenAllocateAtHeapBegining) {
     AllocationData allocData = {};

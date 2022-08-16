@@ -832,7 +832,7 @@ TEST_F(HostPtrManagerTest, GivenHostPtrManagerFilledWithFragmentsWhenAskedForOve
     EXPECT_NE(nullptr, fragment3);
 }
 
-using HostPtrAllocationTest = TestLegacy<MemoryManagerWithCsrFixture>;
+using HostPtrAllocationTest = Test<MemoryManagerWithCsrFixture>;
 
 TEST_F(HostPtrAllocationTest, givenTwoAllocationsThatSharesOneFragmentWhenOneIsDestroyedThenFragmentRemains) {
 

@@ -20,7 +20,7 @@
 using namespace NEO;
 
 using DrmMockBufferObjectFixture = DrmBufferObjectFixture<DrmMockCustom>;
-using DrmBufferObjectTest = TestLegacy<DrmMockBufferObjectFixture>;
+using DrmBufferObjectTest = Test<DrmMockBufferObjectFixture>;
 
 TEST_F(DrmBufferObjectTest, WhenCallingExecThenReturnIsCorrect) {
     mock->ioctl_expected.total = 1;

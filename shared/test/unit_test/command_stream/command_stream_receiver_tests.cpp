@@ -665,7 +665,7 @@ HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitInMultiRootDevic
 }
 
 struct InitDirectSubmissionFixture {
-    void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
         DebugManager.flags.EnableDirectSubmission.set(1);
         executionEnvironment = new MockExecutionEnvironment();
         DeviceFactory::prepareDeviceEnvironments(*executionEnvironment);
@@ -675,14 +675,14 @@ struct InitDirectSubmissionFixture {
         device.reset(new MockDevice(executionEnvironment, 0u));
     }
 
-    void TearDown() {} // NOLINT(readability-identifier-naming)
+    void tearDown() {}
 
     DebugManagerStateRestore restore;
     MockExecutionEnvironment *executionEnvironment;
     std::unique_ptr<MockDevice> device;
 };
 
-using InitDirectSubmissionTest = TestLegacy<InitDirectSubmissionFixture>;
+using InitDirectSubmissionTest = Test<InitDirectSubmissionFixture>;
 
 HWTEST_F(InitDirectSubmissionTest, givenDirectSubmissionControllerEnabledWhenInitDirectSubmissionThenCsrIsRegistered) {
     DebugManagerStateRestore restorer;

@@ -86,7 +86,7 @@ TEST(MemoryInfoPrelim, givenNewMemoryInfoQuerySupportedWhenQueryingMemoryInfoThe
 }
 
 struct DrmVmTestFixture {
-    void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
         executionEnvironment = std::make_unique<ExecutionEnvironment>();
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
@@ -104,7 +104,7 @@ struct DrmVmTestFixture {
         ASSERT_NE(nullptr, drm);
     }
 
-    void TearDown() {} // NOLINT(readability-identifier-naming)
+    void tearDown() {}
 
     DebugManagerStateRestore restorer;
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;
@@ -115,7 +115,7 @@ struct DrmVmTestFixture {
     static constexpr uint8_t tileCount = 4u;
 };
 
-using DrmVmTestTest = TestLegacy<DrmVmTestFixture>;
+using DrmVmTestTest = Test<DrmVmTestFixture>;
 
 TEST_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedWhenCreatingVirtualMemoryThenVmCreatedUsingNewRegion) {
     DebugManager.flags.EnableLocalMemory.set(1);

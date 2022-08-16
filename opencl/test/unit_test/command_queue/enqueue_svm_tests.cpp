@@ -1436,7 +1436,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionIs
     hwParse.parseCommands<FamilyType>(stream);
     auto walkerCount = hwParse.getCommandCount<WALKER_TYPE>();
     EXPECT_EQ(1u, walkerCount);
-    hwParse.TearDown();
+    hwParse.tearDown();
 
     cl_event event = nullptr;
     retVal = queue.enqueueSVMUnmap(

@@ -28,7 +28,7 @@
 using namespace NEO;
 
 struct DrmCommandStreamMultiTileMemExecFixture {
-    void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
         DebugManager.flags.CreateMultipleSubDevices.set(2u);
         DebugManager.flags.EnableImplicitScaling.set(1);
         DebugManager.flags.EnableForcePin.set(false);
@@ -57,7 +57,7 @@ struct DrmCommandStreamMultiTileMemExecFixture {
         device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0));
     }
 
-    void TearDown() { // NOLINT(readability-identifier-naming)
+    void tearDown() {
         executionEnvironment->decRefInternal();
     }
 
@@ -69,7 +69,7 @@ struct DrmCommandStreamMultiTileMemExecFixture {
     DrmMemoryManager *memoryManager = nullptr;
 };
 
-using DrmCommandStreamMultiTileMemExecTest = TestLegacy<DrmCommandStreamMultiTileMemExecFixture>;
+using DrmCommandStreamMultiTileMemExecTest = Test<DrmCommandStreamMultiTileMemExecFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSupportsCompletionFenceAndVmBindWhenCallingCsrExecThenMultipleTagAllocationIsPassed) {
     auto *testCsr = new TestedDrmCommandStreamReceiver<FamilyType>(*executionEnvironment, 0, device->getDeviceBitfield());

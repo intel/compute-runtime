@@ -29,7 +29,7 @@ struct UltCommandStreamReceiverTest
       ::testing::Test {
     void SetUp() override {
         ClDeviceFixture::SetUp();
-        ClHardwareParse::SetUp();
+        ClHardwareParse::setUp();
 
         cmdBuffer = alignedMalloc(sizeStream, alignmentStream);
         dshBuffer = alignedMalloc(sizeStream, alignmentStream);
@@ -82,7 +82,7 @@ struct UltCommandStreamReceiverTest
         alignedFree(iohBuffer);
         alignedFree(dshBuffer);
         alignedFree(cmdBuffer);
-        ClHardwareParse::TearDown();
+        ClHardwareParse::tearDown();
         ClDeviceFixture::TearDown();
     }
 

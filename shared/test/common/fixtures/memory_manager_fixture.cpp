@@ -16,7 +16,7 @@
 
 using namespace NEO;
 
-void MemoryManagerWithCsrFixture::SetUp() {
+void MemoryManagerWithCsrFixture::setUp() {
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     executionEnvironment.rootDeviceEnvironments[0]->initGmm();
@@ -31,5 +31,5 @@ void MemoryManagerWithCsrFixture::SetUp() {
     csr->setupContext(*osContext);
 }
 
-void MemoryManagerWithCsrFixture::TearDown() {
+void MemoryManagerWithCsrFixture::tearDown() {
 }

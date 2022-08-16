@@ -27,12 +27,12 @@ struct TwoIOQsTwoDependentWalkers : public HelloWorldTest<HelloWorldFixtureFacto
 
     void SetUp() override {
         Parent::SetUp();
-        ClHardwareParse::SetUp();
+        ClHardwareParse::setUp();
     }
 
     void TearDown() override {
         delete pCmdQ2;
-        ClHardwareParse::TearDown();
+        ClHardwareParse::tearDown();
         Parent::TearDown();
     }
 

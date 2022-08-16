@@ -19,11 +19,11 @@ struct PreambleFixture : public DeviceFixture,
                          public ::testing::Test {
     void SetUp() override {
         DeviceFixture::setUp();
-        HardwareParse::SetUp();
+        HardwareParse::setUp();
     }
 
     void TearDown() override {
-        HardwareParse::TearDown();
+        HardwareParse::tearDown();
         DeviceFixture::tearDown();
     }
 };
@@ -35,17 +35,17 @@ class PreambleVfeState : public DeviceFixture,
   public:
     void SetUp() override {
         ::testing::Test::SetUp();
-        LinearStreamFixture::SetUp();
-        HardwareParse::SetUp();
+        LinearStreamFixture::setUp();
+        HardwareParse::setUp();
         DeviceFixture::setUp();
         testWaTable = &pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->workaroundTable;
     }
     void TearDown() override {
         DeviceFixture::tearDown();
-        HardwareParse::TearDown();
-        LinearStreamFixture::TearDown();
+        HardwareParse::tearDown();
+        LinearStreamFixture::tearDown();
         ::testing::Test::TearDown();
     }
 
-    WorkaroundTable *testWaTable;
+    WorkaroundTable *testWaTable = nullptr;
 };

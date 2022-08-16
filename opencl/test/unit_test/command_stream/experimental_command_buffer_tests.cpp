@@ -331,7 +331,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     EXPECT_NE(oldCmdBufferAddress, newCmdBufferAddress);
     EXPECT_NE(oldExCmdBufferGpuAddr, newExCmdBufferGpuAddr);
 
-    hwParserCsr.TearDown();
+    hwParserCsr.tearDown();
     hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, csrCmdBufferOffset);
     bbList = hwParserCsr.getCommandsList<MI_BATCH_BUFFER_START>();
     bbStart = nullptr;

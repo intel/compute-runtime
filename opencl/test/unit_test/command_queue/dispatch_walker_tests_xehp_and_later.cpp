@@ -42,8 +42,8 @@ using namespace NEO;
 using WalkerDispatchTest = ::testing::Test;
 
 struct XeHPAndLaterDispatchWalkerBasicFixture : public LinearStreamFixture {
-    void SetUp() override {
-        LinearStreamFixture::SetUp();
+    void setUp() {
+        LinearStreamFixture::setUp();
         memset(globalOffsets, 0, sizeof(globalOffsets));
         memset(startWorkGroups, 0, sizeof(startWorkGroups));
 
@@ -86,7 +86,7 @@ struct XeHPAndLaterDispatchWalkerBasicFixture : public LinearStreamFixture {
     std::unique_ptr<MockKernelWithInternals> kernel;
 };
 
-using XeHPAndLaterDispatchWalkerBasicTest = TestLegacy<XeHPAndLaterDispatchWalkerBasicFixture>;
+using XeHPAndLaterDispatchWalkerBasicTest = Test<XeHPAndLaterDispatchWalkerBasicFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWorkDimOneThenLocalWorkSizeEqualsLocalXDim) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;

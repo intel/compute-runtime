@@ -30,11 +30,11 @@ struct FinishFixture : public ClDeviceFixture,
         ASSERT_NE(nullptr, pCmdQ);
         CommandStreamFixture::SetUp(pCmdQ);
         ASSERT_NE(nullptr, pCS);
-        HardwareParse::SetUp();
+        HardwareParse::setUp();
     }
 
     void TearDown() override {
-        HardwareParse::TearDown();
+        HardwareParse::tearDown();
         CommandStreamFixture::TearDown();
         CommandQueueHwFixture::TearDown();
         ClDeviceFixture::TearDown();

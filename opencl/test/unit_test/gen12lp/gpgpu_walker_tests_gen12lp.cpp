@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,7 +47,7 @@ class MockKernelWithApplicableWa : public MockKernel {
 struct HardwareInterfaceTests : public ClDeviceFixture, public LinearStreamFixture, public ::testing::Test {
     void SetUp() override {
         ClDeviceFixture::SetUp();
-        LinearStreamFixture::SetUp();
+        LinearStreamFixture::setUp();
 
         pContext = new NEO::MockContext(pClDevice);
         pCommandQueue = new MockCommandQueue(pContext, pClDevice, nullptr, false);
@@ -63,7 +63,7 @@ struct HardwareInterfaceTests : public ClDeviceFixture, public LinearStreamFixtu
         pCommandQueue->release();
         pContext->release();
 
-        LinearStreamFixture::TearDown();
+        LinearStreamFixture::tearDown();
         ClDeviceFixture::TearDown();
     }
 
@@ -105,7 +105,7 @@ GEN12LPTEST_F(HardwareInterfaceTests, GivenKernelWithApplicableWaDisableRccRhwoO
     size_t expectedUsedForDisableWa = 2 * (sizeof(PIPE_CONTROL) + sizeof(MI_LOAD_REGISTER_IMM));
     ASSERT_EQ(expectedUsedForDisableWa, linearStream.getUsed());
 
-    hwParse.TearDown();
+    hwParse.tearDown();
     hwParse.parseCommands<FamilyType>(linearStream, expectedUsedForEnableWa);
     itorPipeCtrl = find<PIPE_CONTROL *>(hwParse.cmdList.begin(), hwParse.cmdList.end());
     ASSERT_NE(hwParse.cmdList.end(), itorPipeCtrl);

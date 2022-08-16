@@ -26,8 +26,8 @@
 using namespace NEO;
 
 struct Dg2AndLaterDispatchWalkerBasicFixture : public LinearStreamFixture {
-    void SetUp() override {
-        LinearStreamFixture::SetUp();
+    void setUp() {
+        LinearStreamFixture::setUp();
         memset(globalOffsets, 0, sizeof(globalOffsets));
         memset(startWorkGroups, 0, sizeof(startWorkGroups));
         memset(&threadPayload, 0, sizeof(threadPayload));
@@ -71,7 +71,7 @@ struct Dg2AndLaterDispatchWalkerBasicFixture : public LinearStreamFixture {
 };
 
 using WalkerDispatchTestDg2AndLater = ::testing::Test;
-using Dg2AndLaterDispatchWalkerBasicTest = TestLegacy<Dg2AndLaterDispatchWalkerBasicFixture>;
+using Dg2AndLaterDispatchWalkerBasicTest = Test<Dg2AndLaterDispatchWalkerBasicFixture>;
 using matcherDG2AndLater = IsAtLeastXeHpgCore;
 
 HWTEST2_F(WalkerDispatchTestDg2AndLater, whenProgramComputeWalkerThenApplyL3WAForSpecificPlatformAndRevision, matcherDG2AndLater) {

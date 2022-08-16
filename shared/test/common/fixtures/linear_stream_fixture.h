@@ -15,19 +15,19 @@
 namespace NEO {
 
 struct LinearStreamFixture {
-    LinearStreamFixture(void)
+    LinearStreamFixture()
         : gfxAllocation(static_cast<void *>(pCmdBuffer), sizeof(pCmdBuffer)), linearStream(&gfxAllocation) {
     }
 
-    virtual void SetUp(void) { // NOLINT(readability-identifier-naming)
+    void setUp() {
     }
 
-    virtual void TearDown(void) { // NOLINT(readability-identifier-naming)
+    void tearDown() {
     }
     MockGraphicsAllocation gfxAllocation;
     LinearStream linearStream;
     uint32_t pCmdBuffer[1024]{};
 };
 
-typedef TestLegacy<LinearStreamFixture> LinearStreamTest;
+using LinearStreamTest = Test<LinearStreamFixture>;
 } // namespace NEO
