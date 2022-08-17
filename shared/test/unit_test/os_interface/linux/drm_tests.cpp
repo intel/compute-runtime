@@ -1263,6 +1263,29 @@ TEST(DrmTest, GivenCompletionFenceDebugFlagWhenCreatingDrmObjectThenExpectCorrec
     EXPECT_FALSE(drmDisabled.completionFenceSupport());
 }
 
+TEST(DrmTest, GivenMinusEbusyIoctlErrorWhenCallingExecbufferThenCallIoctlAgain) {
+    ExecutionEnvironment executionEnvironment{};
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+
+    DrmMock drm{*executionEnvironment.rootDeviceEnvironments[0]};
+
+    VariableBackup<decltype(SysCalls::sysCallsIoctl)> mockIoctl(&SysCalls::sysCallsIoctl);
+    VariableBackup<int> mockErrno(&errno);
+
+    SysCalls::sysCallsIoctl = [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+        static int ioctlCount;
+        ioctlCount++;
+        if (ioctlCount == 1) {
+            errno = -EBUSY;
+            return -1;
+        }
+        ioctlCount = 0;
+        return 0;
+    };
+
+    EXPECT_EQ(0, drm.Drm::ioctl(DrmIoctl::GemExecbuffer2, nullptr));
+}
+
 TEST(DrmTest, GivenIoctlErrorWhenIsGpuHangIsCalledThenErrorIsThrown) {
     ExecutionEnvironment executionEnvironment{};
     executionEnvironment.prepareRootDeviceEnvironments(1);

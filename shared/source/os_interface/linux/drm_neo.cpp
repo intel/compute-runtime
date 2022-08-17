@@ -108,7 +108,7 @@ int Drm::ioctl(DrmIoctl request, void *arg) {
             }
         }
 
-    } while (ret == -1 && (returnedErrno == EINTR || returnedErrno == EAGAIN || returnedErrno == EBUSY));
+    } while (ret == -1 && (returnedErrno == EINTR || returnedErrno == EAGAIN || returnedErrno == EBUSY || returnedErrno == -EBUSY));
     SYSTEM_LEAVE(request);
     return ret;
 }
