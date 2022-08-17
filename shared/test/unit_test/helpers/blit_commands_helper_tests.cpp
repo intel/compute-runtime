@@ -410,19 +410,19 @@ HWTEST2_F(BlitColorTests, givenCommandStreamAndPaternSizeEqualOneWhenCallToDispa
     size_t patternSize = 1;
     auto expecttedDepth = getColorDepth<FamilyType>(patternSize);
     GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProgrammed<FamilyType> test(pDevice);
-    test.TestBodyImpl(patternSize, expecttedDepth);
+    test.testBodyImpl(patternSize, expecttedDepth);
 }
 HWTEST2_F(BlitColorTests, givenCommandStreamAndPaternSizeEqualTwoWhenCallToDispatchMemoryFillThenColorDepthAreProgrammedCorrectly, BlitColor) {
     size_t patternSize = 2;
     auto expecttedDepth = getColorDepth<FamilyType>(patternSize);
     GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProgrammed<FamilyType> test(pDevice);
-    test.TestBodyImpl(patternSize, expecttedDepth);
+    test.testBodyImpl(patternSize, expecttedDepth);
 }
 HWTEST2_F(BlitColorTests, givenCommandStreamAndPaternSizeEqualFourWhenCallToDispatchMemoryFillThenColorDepthAreProgrammedCorrectly, BlitColor) {
     size_t patternSize = 4;
     auto expecttedDepth = getColorDepth<FamilyType>(patternSize);
     GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProgrammed<FamilyType> test(pDevice);
-    test.TestBodyImpl(patternSize, expecttedDepth);
+    test.testBodyImpl(patternSize, expecttedDepth);
 }
 
 using BlitPlatforms = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
@@ -456,7 +456,7 @@ HWTEST2_P(BlitFastColorTest, givenCommandStreamWhenCallToDispatchMemoryFillThenC
     auto patternSize = GetParam();
     auto expecttedDepth = getFastColorDepth<FamilyType>(patternSize);
     GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProgrammed<FamilyType> test(pDevice);
-    test.TestBodyImpl(patternSize, expecttedDepth);
+    test.testBodyImpl(patternSize, expecttedDepth);
 }
 
 INSTANTIATE_TEST_CASE_P(size_t,

@@ -13,7 +13,7 @@ namespace NEO {
 template <typename WALKER_TYPE>
 class GivenSimdSizeWhenGetSimdConfigCalledThenCorrectEnumReturned {
   public:
-    static void TestBodyImpl() { // NOLINT(readability-identifier-naming)
+    static void testBodyImpl() {
         uint32_t simd = 32;
         auto result = getSimdConfig<WALKER_TYPE>(simd);
         EXPECT_EQ(result, WALKER_TYPE::SIMD_SIZE::SIMD_SIZE_SIMD32);

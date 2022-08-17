@@ -250,7 +250,7 @@ HWTEST2_P(BlitTestsTestXeHpc, givenCommandStreamWhenCallToDispatchMemoryFillThen
     auto patternSize = GetParam();
     auto expecttedDepth = getColorDepth<FamilyType>(patternSize);
     GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProgrammedPVC<FamilyType> test(pDevice);
-    test.TestBodyImpl(patternSize, expecttedDepth);
+    test.testBodyImpl(patternSize, expecttedDepth);
 }
 
 INSTANTIATE_TEST_CASE_P(size_t,

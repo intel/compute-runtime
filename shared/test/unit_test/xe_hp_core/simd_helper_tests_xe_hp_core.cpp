@@ -12,5 +12,5 @@ using namespace NEO;
 using TestSimdConfigSet = ::testing::Test;
 
 XE_HP_CORE_TEST_F(TestSimdConfigSet, GivenSimdSizeWhenGetSimdConfigCalledThenCorrectEnumReturnedXeHpCore) {
-    GivenSimdSizeWhenGetSimdConfigCalledThenCorrectEnumReturned<typename FamilyType::COMPUTE_WALKER>::TestBodyImpl();
+    GivenSimdSizeWhenGetSimdConfigCalledThenCorrectEnumReturned<typename FamilyType::COMPUTE_WALKER>::testBodyImpl();
 }
