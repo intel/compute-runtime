@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
+#include "shared/test/common/device_binary_format/elf/elf_tests_data.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
@@ -13,7 +14,6 @@
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_source_level_debugger.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/device_binary_format/elf/elf_tests_data.h"
 
 #include "opencl/test/unit_test/fixtures/program_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"

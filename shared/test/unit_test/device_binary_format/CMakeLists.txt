@@ -16,7 +16,6 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/elf/elf_decoder_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/elf/elf_encoder_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/elf/elf_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/elf/elf_tests_data.h
                ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_decoder_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_dumper_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_validator_tests.cpp
