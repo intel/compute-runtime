@@ -317,15 +317,6 @@ TEST_F(DeviceFactoryTest, givenInvalidHwConfigStringWhenPreparingDeviceEnvironme
     EXPECT_FALSE(success);
 }
 
-HWTEST_F(DeviceFactoryTest, givenInvalidHwConfigStringWhenPrepareDeviceEnvironmentsForProductFamilyOverrideThenThrowsException) {
-    DebugManagerStateRestore stateRestore;
-    DebugManager.flags.HardwareInfoOverride.set("1x1x1");
-
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-
-    EXPECT_ANY_THROW(DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment));
-}
-
 TEST_F(DeviceFactoryTest, givenPrepareDeviceEnvironmentsCallWhenItIsDoneThenOsInterfaceIsAllocated) {
     bool success = DeviceFactory::prepareDeviceEnvironments(*executionEnvironment);
     EXPECT_TRUE(success);

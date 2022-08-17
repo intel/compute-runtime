@@ -11,12 +11,8 @@ const uint64_t DG2::defaultHardwareInfoConfig = 0;
 void DG2::adjustHardwareInfo(HardwareInfo *hwInfo) {}
 
 void setupDG2HardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
-    if (hwInfoConfig == 0x0) {
-        // Default config
-        Dg2HwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else {
-        UNRECOVERABLE_IF(true);
-    }
+    DG2::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+    Dg2HwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
 }
 
 void (*DG2::setupHardwareInfo)(HardwareInfo *, bool, const uint64_t) = setupDG2HardwareInfoImpl;
