@@ -114,11 +114,11 @@ bool MockMetricsLibrary::commandBufferGetSize(const CommandBufferData_1_0 &comma
 void *MockMetricsLibraryDll::getProcAddress(const std::string &procName) {
     if (procName == METRICS_LIBRARY_CONTEXT_CREATE_1_0) {
         return validContextCreate
-                   ? reinterpret_cast<void *>(&MockMetricsLibraryValidInterface::ContextCreate)
+                   ? reinterpret_cast<void *>(&MockMetricsLibraryValidInterface::contextCreate)
                    : nullptr;
     } else if (procName == METRICS_LIBRARY_CONTEXT_DELETE_1_0) {
         return validContextDelete
-                   ? reinterpret_cast<void *>(&MockMetricsLibraryValidInterface::ContextDelete)
+                   ? reinterpret_cast<void *>(&MockMetricsLibraryValidInterface::contextDelete)
                    : nullptr;
     } else {
         return nullptr;
@@ -135,7 +135,7 @@ bool MockMetricsLibraryDll::isLoaded() {
 //////////////////////////////////////////////////////
 // MockMetricsLibraryValidInterface::ContextCreate
 //////////////////////////////////////////////////////
-StatusCode MockMetricsLibraryValidInterface::ContextCreate(ClientType_1_0 clientType, ContextCreateData_1_0 *createData, ContextHandle_1_0 *handle) {
+StatusCode MockMetricsLibraryValidInterface::contextCreate(ClientType_1_0 clientType, ContextCreateData_1_0 *createData, ContextHandle_1_0 *handle) {
 
     // Validate input.
     EXPECT_EQ(clientType.Api, ClientApi::OpenCL);
@@ -157,7 +157,7 @@ StatusCode MockMetricsLibraryValidInterface::ContextCreate(ClientType_1_0 client
 //////////////////////////////////////////////////////
 // MockMetricsLibraryValidInterface::ContextDelete
 //////////////////////////////////////////////////////
-StatusCode MockMetricsLibraryValidInterface::ContextDelete(const ContextHandle_1_0 handle) {
+StatusCode MockMetricsLibraryValidInterface::contextDelete(const ContextHandle_1_0 handle) {
 
     auto validHandle = handle.IsValid();
     auto library = static_cast<MockMetricsLibraryValidInterface *>(handle.data);
@@ -178,7 +178,7 @@ StatusCode MockMetricsLibraryValidInterface::ContextDelete(const ContextHandle_1
 //////////////////////////////////////////////////////
 // MockMetricsLibraryInterface::QueryCreate
 //////////////////////////////////////////////////////
-StatusCode MockMetricsLibraryValidInterface::QueryCreate(const QueryCreateData_1_0 *createData, QueryHandle_1_0 *handle) {
+StatusCode MockMetricsLibraryValidInterface::queryCreate(const QueryCreateData_1_0 *createData, QueryHandle_1_0 *handle) {
 
     EXPECT_NE(handle, nullptr);
     EXPECT_NE(createData, nullptr);
@@ -193,7 +193,7 @@ StatusCode MockMetricsLibraryValidInterface::QueryCreate(const QueryCreateData_1
 //////////////////////////////////////////////////////
 // MockMetricsLibraryValidInterface::QueryDelete
 //////////////////////////////////////////////////////
-StatusCode MockMetricsLibraryValidInterface::QueryDelete(const QueryHandle_1_0 handle) {
+StatusCode MockMetricsLibraryValidInterface::queryDelete(const QueryHandle_1_0 handle) {
 
     if (handle.IsValid()) {
         delete (uint32_t *)handle.data;
@@ -205,7 +205,7 @@ StatusCode MockMetricsLibraryValidInterface::QueryDelete(const QueryHandle_1_0 h
 //////////////////////////////////////////////////////
 // MockMetricsLibraryValidInterface::CommandBufferGetSize
 //////////////////////////////////////////////////////
-StatusCode MockMetricsLibraryValidInterface::CommandBufferGetSize(const CommandBufferData_1_0 *data, CommandBufferSize_1_0 *size) {
+StatusCode MockMetricsLibraryValidInterface::commandBufferGetSize(const CommandBufferData_1_0 *data, CommandBufferSize_1_0 *size) {
     auto library = static_cast<MockMetricsLibraryValidInterface *>(data->HandleContext.data);
     EXPECT_NE(data, nullptr);
     EXPECT_TRUE(data->HandleContext.IsValid());
@@ -225,7 +225,7 @@ StatusCode MockMetricsLibraryValidInterface::CommandBufferGetSize(const CommandB
 //////////////////////////////////////////////////////
 // MockMetricsLibraryValidInterface::CommandBufferGet
 //////////////////////////////////////////////////////
-StatusCode MockMetricsLibraryValidInterface::CommandBufferGet(const CommandBufferData_1_0 *data) {
+StatusCode MockMetricsLibraryValidInterface::commandBufferGet(const CommandBufferData_1_0 *data) {
     EXPECT_NE(data, nullptr);
     EXPECT_TRUE(data->HandleContext.IsValid());
     EXPECT_TRUE(data->QueryHwCounters.Handle.IsValid());
@@ -239,7 +239,7 @@ StatusCode MockMetricsLibraryValidInterface::CommandBufferGet(const CommandBuffe
 //////////////////////////////////////////////////////
 // MockMetricsLibraryValidInterface::CommandBufferGet
 //////////////////////////////////////////////////////
-StatusCode MockMetricsLibraryValidInterface::GetParameter(const ParameterType parameter, ValueType *type, TypedValue_1_0 *value) {
+StatusCode MockMetricsLibraryValidInterface::getParameter(const ParameterType parameter, ValueType *type, TypedValue_1_0 *value) {
     EXPECT_NE(type, nullptr);
     EXPECT_NE(value, nullptr);
     switch (parameter) {
@@ -261,7 +261,7 @@ StatusCode MockMetricsLibraryValidInterface::GetParameter(const ParameterType pa
 //////////////////////////////////////////////////////
 // MockMetricsLibraryValidInterface::ConfigurationCreate
 //////////////////////////////////////////////////////
-StatusCode ML_STDCALL MockMetricsLibraryValidInterface::ConfigurationCreate(const ConfigurationCreateData_1_0 *createData, ConfigurationHandle_1_0 *handle) {
+StatusCode ML_STDCALL MockMetricsLibraryValidInterface::configurationCreate(const ConfigurationCreateData_1_0 *createData, ConfigurationHandle_1_0 *handle) {
     EXPECT_NE(createData, nullptr);
     EXPECT_NE(handle, nullptr);
     EXPECT_TRUE(createData->HandleContext.IsValid());
@@ -288,7 +288,7 @@ StatusCode ML_STDCALL MockMetricsLibraryValidInterface::ConfigurationCreate(cons
 //////////////////////////////////////////////////////
 // MockMetricsLibraryValidInterface::ConfigurationActivate
 //////////////////////////////////////////////////////
-StatusCode ML_STDCALL MockMetricsLibraryValidInterface::ConfigurationActivate(const ConfigurationHandle_1_0 handle, const ConfigurationActivateData_1_0 *activateData) {
+StatusCode ML_STDCALL MockMetricsLibraryValidInterface::configurationActivate(const ConfigurationHandle_1_0 handle, const ConfigurationActivateData_1_0 *activateData) {
     auto api = static_cast<MockMetricsLibraryValidInterface *>(handle.data);
     return api->validActivateConfigurationOa
                ? StatusCode::Success
@@ -298,7 +298,7 @@ StatusCode ML_STDCALL MockMetricsLibraryValidInterface::ConfigurationActivate(co
 //////////////////////////////////////////////////////
 // MockMetricsLibraryValidInterface::ConfigurationDelete
 //////////////////////////////////////////////////////
-StatusCode ML_STDCALL MockMetricsLibraryValidInterface::ConfigurationDelete(const ConfigurationHandle_1_0 handle) {
+StatusCode ML_STDCALL MockMetricsLibraryValidInterface::configurationDelete(const ConfigurationHandle_1_0 handle) {
     EXPECT_TRUE(handle.IsValid());
 
     return StatusCode::Success;
@@ -307,7 +307,7 @@ StatusCode ML_STDCALL MockMetricsLibraryValidInterface::ConfigurationDelete(cons
 //////////////////////////////////////////////////////
 // MockMetricsLibraryValidInterface::GetData
 //////////////////////////////////////////////////////
-StatusCode MockMetricsLibraryValidInterface::GetData(GetReportData_1_0 *data) {
+StatusCode MockMetricsLibraryValidInterface::getData(GetReportData_1_0 *data) {
     EXPECT_NE(data, nullptr);
     EXPECT_EQ(data->Type, ObjectType::QueryHwCounters);
     EXPECT_TRUE(data->Query.Handle.IsValid());
