@@ -8,8 +8,8 @@
 #pragma once
 
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/unit_test/page_fault_manager/mock_cpu_page_fault_manager.h"
 
 #include <memory>
 

@@ -7,11 +7,11 @@
 
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_compilers.h"
+#include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_svm_manager.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/page_fault_manager/mock_cpu_page_fault_manager.h"
 
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"

@@ -28,7 +28,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/mock.h
                ${CMAKE_CURRENT_SOURCE_DIR}/white_box.h
-               ${NEO_SHARED_TEST_DIRECTORY}/unit_test/tests_configuration.h
+               ${NEO_SHARED_TEST_DIRECTORY}/common/tests_configuration.h
                ${NEO_SOURCE_DIR}/level_zero/core/test/common/gen_kernel.cmake
 )
 

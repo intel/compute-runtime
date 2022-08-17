@@ -33,6 +33,7 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_compiler_interface_spirv.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_compilers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_compilers.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_cpu_page_fault_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_csr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_debugger.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_deferrable_deletion.cpp

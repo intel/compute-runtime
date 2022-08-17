@@ -23,8 +23,8 @@
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
-#include "shared/test/unit_test/test_stats.h"
-#include "shared/test/unit_test/tests_configuration.h"
+#include "shared/test/common/test_stats.h"
+#include "shared/test/common/tests_configuration.h"
 
 #include "opencl/source/os_interface/ocl_reg_path.h"
 #include "opencl/source/platform/platform.h"

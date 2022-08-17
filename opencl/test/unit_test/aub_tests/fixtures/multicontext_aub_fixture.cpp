@@ -14,7 +14,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/tests_configuration.h"
+#include "shared/test/common/tests_configuration.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/platform/platform.h"

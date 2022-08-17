@@ -1,17 +1,17 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/page_fault_manager/linux/cpu_page_fault_manager_linux.h"
+#include "shared/test/common/fixtures/cpu_page_fault_manager_tests_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
-#include "shared/test/unit_test/page_fault_manager/cpu_page_fault_manager_tests_fixture.h"
-#include "shared/test/unit_test/page_fault_manager/mock_cpu_page_fault_manager.h"
 
 #include "gtest/gtest.h"
 

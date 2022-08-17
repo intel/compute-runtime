@@ -10,7 +10,7 @@
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/unit_test/tests_configuration.h"
+#include "shared/test/common/tests_configuration.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/context/context_imp.h"

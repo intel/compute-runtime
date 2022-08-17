@@ -12,6 +12,7 @@
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/source/utilities/logger.h"
+#include "shared/test/common/base_ult_config_listener.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/default_hw_info.inl"
 #include "shared/test/common/helpers/memory_leak_listener.h"
@@ -21,8 +22,7 @@
 #include "shared/test/common/libult/signal_utils.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_sip.h"
-#include "shared/test/unit_test/base_ult_config_listener.h"
-#include "shared/test/unit_test/test_stats.h"
+#include "shared/test/common/test_stats.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/compiler_interface/l0_reg_path.h"

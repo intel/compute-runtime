@@ -30,7 +30,7 @@ set_target_properties(run_ocl_tests PROPERTIES FOLDER ${PLATFORM_SPECIFIC_TEST_T
 
 set(IGDRCL_SRCS_tests_local
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/tests_configuration.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/tests_configuration.h
 )
 
 add_subdirectory(libult)

@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/memory_manager/allocations_list.h"
+#include "shared/test/common/fixtures/cpu_page_fault_manager_tests_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -16,7 +17,6 @@
 #include "shared/test/common/mocks/mock_svm_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
-#include "shared/test/unit_test/page_fault_manager/cpu_page_fault_manager_tests_fixture.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"

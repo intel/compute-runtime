@@ -6,8 +6,8 @@
  */
 
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/tests_configuration.h"
 #include "shared/test/common/utilities/base_object_utils.h"
-#include "shared/test/unit_test/tests_configuration.h"
 
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/multicontext_aub_fixture.h"

@@ -36,7 +36,7 @@ target_sources(
                ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/main.cpp
                ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/mock.h
                ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/white_box.h
-               ${NEO_SHARED_TEST_DIRECTORY}/unit_test/tests_configuration.h
+               ${NEO_SHARED_TEST_DIRECTORY}/common/tests_configuration.h
 )
 
 target_sources(

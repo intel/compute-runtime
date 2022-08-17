@@ -9,7 +9,7 @@
 #include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/libult/signal_utils.h"
-#include "shared/test/unit_test/test_stats.h"
+#include "shared/test/common/test_stats.h"
 
 #include "environment.h"
 #include "limits.h"

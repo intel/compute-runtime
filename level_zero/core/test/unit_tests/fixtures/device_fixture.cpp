@@ -8,9 +8,9 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-#include "shared/test/unit_test/page_fault_manager/mock_cpu_page_fault_manager.h"
 
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"

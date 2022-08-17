@@ -12,7 +12,7 @@ set(L0_AUB_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 list(APPEND L0_AUB_TESTS__TARGET_OBJECTS
      ${CMAKE_CURRENT_SOURCE_DIR}/aub_hello_world_test.cpp
      ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/main.cpp
-     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/tests_configuration.h
+     ${NEO_SHARED_TEST_DIRECTORY}/common/tests_configuration.h
 )
 
 function(ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION)

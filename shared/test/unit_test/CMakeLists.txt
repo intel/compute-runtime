@@ -22,12 +22,12 @@ if(NOT NEO_SKIP_UNIT_TESTS)
   ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION()
   link_libraries(${ASAN_LIBS} ${TSAN_LIBS})
 
-  add_executable(${TARGET_NAME}
+  add_executable(neo_shared_tests
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/tests_configuration.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/ult_specific_config.cpp
                  ${NEO_SHARED_DIRECTORY}/helpers/allow_deferred_deleter.cpp
+                 ${NEO_SHARED_TEST_DIRECTORY}/common/tests_configuration.h
                  ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/api_specific_config_shared_tests.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_checks_shared.cpp
                  $<TARGET_OBJECTS:mock_gmm>
@@ -37,12 +37,12 @@ if(NOT NEO_SKIP_UNIT_TESTS)
                  $<TARGET_OBJECTS:neo_shared_mocks>
   )
 
-  add_dependencies(${TARGET_NAME} test_dynamic_lib)
+  add_dependencies(neo_shared_tests test_dynamic_lib)
 
-  set_property(TARGET ${TARGET_NAME} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
-  set_target_properties(${TARGET_NAME} PROPERTIES FOLDER "${SHARED_TEST_PROJECTS_FOLDER}")
+  set_property(TARGET neo_shared_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
+  set_target_properties(neo_shared_tests PROPERTIES FOLDER "${SHARED_TEST_PROJECTS_FOLDER}")
 
-  target_include_directories(${TARGET_NAME} PRIVATE
+  target_include_directories(neo_shared_tests PRIVATE
                              ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
                              ${ENGINE_NODE_DIR}
                              ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
@@ -50,21 +50,21 @@ if(NOT NEO_SKIP_UNIT_TESTS)
   )
 
   if(UNIX AND NOT DISABLE_WDDM_LINUX)
-    target_include_directories(${TARGET_NAME} PUBLIC ${WDK_INCLUDE_PATHS})
+    target_include_directories(neo_shared_tests PUBLIC ${WDK_INCLUDE_PATHS})
   endif()
 
   if(WIN32)
-    target_link_libraries(${TARGET_NAME} dbghelp)
+    target_link_libraries(neo_shared_tests dbghelp)
   endif()
 
-  target_link_libraries(${TARGET_NAME}
+  target_link_libraries(neo_shared_tests
                         gmock-gtest
                         ${NEO_SHARED_MOCKABLE_LIB_NAME}
                         ${NEO_EXTRA_LIBS}
   )
 
   if(MSVC)
-    set_target_properties(${TARGET_NAME} PROPERTIES
+    set_target_properties(neo_shared_tests PROPERTIES
                           VS_DEBUGGER_COMMAND_ARGUMENTS "--gtest_filter=* --gtest_catch_exceptions=0 --enable_default_listener --disable_pagefaulting_tests"
                           VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)"
     )
@@ -81,9 +81,9 @@ if(NOT NEO_SKIP_UNIT_TESTS)
     add_subdirectories()
   endif()
 
-  target_sources(${TARGET_NAME} PRIVATE $<TARGET_OBJECTS:neo_unit_tests_config>)
+  target_sources(neo_shared_tests PRIVATE $<TARGET_OBJECTS:neo_unit_tests_config>)
   add_dependencies(unit_tests prepare_test_kernels_for_shared)
-  add_dependencies(unit_tests ${TARGET_NAME})
+  add_dependencies(unit_tests neo_shared_tests)
 
-  create_project_source_tree(${TARGET_NAME})
+  create_project_source_tree(neo_shared_tests)
 endif()

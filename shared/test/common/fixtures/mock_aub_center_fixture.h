@@ -11,7 +11,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
-#include "shared/test/unit_test/tests_configuration.h"
+#include "shared/test/common/tests_configuration.h"
 
 namespace NEO {
 struct MockAubCenterFixture {
