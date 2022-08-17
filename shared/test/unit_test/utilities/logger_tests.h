@@ -19,7 +19,7 @@ class TestFileLogger : public NEO::FileLogger<DebugLevel> {
   public:
     using NEO::FileLogger<DebugLevel>::FileLogger;
 
-    ~TestFileLogger() {
+    ~TestFileLogger() override {
         std::remove(NEO::FileLogger<DebugLevel>::logFileName.c_str());
     }
 

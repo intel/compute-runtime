@@ -65,7 +65,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     MockDebugSession(const zet_debug_config_t &config, L0::Device *device) : DebugSessionImp(config, device) {
     }
 
-    ~MockDebugSession() {
+    ~MockDebugSession() override {
         for (auto session : tileSessions) {
             delete session.first;
         }
