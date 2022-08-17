@@ -29,7 +29,7 @@ struct HardwareCommandsTest : ClDeviceFixture,
                               BuiltInFixture,
                               ::testing::Test {
 
-    using BuiltInFixture::SetUp;
+    using BuiltInFixture::setUp;
     using ContextFixture::setUp;
 
     void SetUp() override;

@@ -14,8 +14,8 @@ class Device;
 
 class BuiltInFixture {
   public:
-    void SetUp(NEO::Device *pDevice); // NOLINT(readability-identifier-naming)
-    void TearDown();                  // NOLINT(readability-identifier-naming)
+    void setUp(NEO::Device *pDevice);
+    void tearDown();
 
     NEO::BuiltIns *pBuiltIns = nullptr;
 };

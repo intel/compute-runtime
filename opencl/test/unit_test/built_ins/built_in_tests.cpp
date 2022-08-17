@@ -58,7 +58,7 @@ class BuiltInTests
       public ContextFixture,
       public ::testing::Test {
 
-    using BuiltInFixture::SetUp;
+    using BuiltInFixture::setUp;
     using ContextFixture::setUp;
 
   public:
@@ -73,12 +73,12 @@ class BuiltInTests
         ClDeviceFixture::setUp();
         cl_device_id device = pClDevice;
         ContextFixture::setUp(1, &device);
-        BuiltInFixture::SetUp(pDevice);
+        BuiltInFixture::setUp(pDevice);
     }
 
     void TearDown() override {
         allBuiltIns.clear();
-        BuiltInFixture::TearDown();
+        BuiltInFixture::tearDown();
         ContextFixture::tearDown();
         ClDeviceFixture::tearDown();
     }

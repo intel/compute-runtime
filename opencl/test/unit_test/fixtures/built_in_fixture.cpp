@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 
 using namespace NEO;
 
-void BuiltInFixture::SetUp(Device *pDevice) {
+void BuiltInFixture::setUp(Device *pDevice) {
     // create an instance of the builtins
     pBuiltIns = pDevice->getBuiltIns();
     pBuiltIns->setCacheingEnableState(false);
@@ -38,7 +38,7 @@ void BuiltInFixture::SetUp(Device *pDevice) {
     gEnvironment->igcPushDebugVars(igcDebugVars);
 }
 
-void BuiltInFixture::TearDown() {
+void BuiltInFixture::tearDown() {
     gEnvironment->igcPopDebugVars();
     gEnvironment->fclPopDebugVars();
 }
