@@ -165,7 +165,7 @@ void runClient(int commSocket, uint32_t clientId) {
         SUCCESS_OR_TERMINATE(zeEventHostReset(event));
         ze_result_t eventStatus = zeEventQueryStatus(event);
         if (eventStatus != ZE_RESULT_NOT_READY) {
-            std::cerr << "Event reset in clinent failed\n";
+            std::cerr << "Event reset in client failed\n";
             std::terminate();
         }
     }
@@ -213,7 +213,7 @@ void runServer(bool &validRet) {
     ze_event_pool_handle_t eventPool = {};
     ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.count = numEvents;
-    eventPoolDesc.flags = {};
+    eventPoolDesc.flags = {ZE_EVENT_POOL_FLAG_IPC | ZE_EVENT_POOL_FLAG_HOST_VISIBLE};
     SUCCESS_OR_TERMINATE(zeEventPoolCreate(context, &eventPoolDesc, 1, &device, &eventPool));
 
     std::vector<ze_event_handle_t> events(numEvents);
