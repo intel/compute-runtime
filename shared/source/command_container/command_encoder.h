@@ -47,6 +47,7 @@ struct EncodeDispatchKernelArgs {
     bool isHostScopeSignalEvent = false;
     bool isKernelUsingSystemAllocation = false;
     bool isKernelDispatchedFromImmediateCmdList = false;
+    bool isRcs = false;
 };
 
 struct EncodeWalkerArgs {
@@ -241,12 +242,25 @@ struct EncodeMediaInterfaceDescriptorLoad {
 };
 
 template <typename GfxFamily>
+struct EncodeStateBaseAddressArgs {
+    using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
+
+    CommandContainer *container = nullptr;
+    STATE_BASE_ADDRESS &sbaCmd;
+
+    uint32_t statelessMocsIndex = 0;
+
+    bool useGlobalAtomics = false;
+    bool multiOsContextCapable = false;
+    bool isRcs = false;
+};
+
+template <typename GfxFamily>
 struct EncodeStateBaseAddress {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
-    static void encode(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd, bool multiOsContextCapable);
-    static void encode(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd, uint32_t statelessMocsIndex, bool useGlobalAtomics, bool multiOsContextCapable);
+    static void encode(EncodeStateBaseAddressArgs<GfxFamily> &args);
     static void setSbaAddressesForDebugger(NEO::Debugger::SbaAddresses &sbaAddress, const STATE_BASE_ADDRESS &sbaCmd);
-    static size_t getRequiredSizeForStateBaseAddress(Device &device, CommandContainer &container);
+    static size_t getRequiredSizeForStateBaseAddress(Device &device, CommandContainer &container, bool isRcs);
 };
 
 template <typename GfxFamily>
@@ -313,7 +327,7 @@ template <typename GfxFamily>
 struct EncodeWA {
     static void encodeAdditionalPipelineSelect(LinearStream &stream, const PipelineSelectArgs &args, bool is3DPipeline,
                                                const HardwareInfo &hwInfo, bool isRcs);
-    static size_t getAdditionalPipelineSelectSize(Device &device);
+    static size_t getAdditionalPipelineSelectSize(Device &device, bool isRcs);
 
     static void addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args,
                                                               const HardwareInfo &hwInfo, bool isRcs);

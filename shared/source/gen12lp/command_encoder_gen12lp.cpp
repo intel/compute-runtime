@@ -25,9 +25,9 @@ using Family = NEO::Gen12LpFamily;
 namespace NEO {
 
 template <>
-size_t EncodeWA<Family>::getAdditionalPipelineSelectSize(Device &device) {
+size_t EncodeWA<Family>::getAdditionalPipelineSelectSize(Device &device, bool isRcs) {
     size_t size = 0;
-    if (device.getDefaultEngine().commandStreamReceiver->isRcs()) {
+    if (isRcs) {
         size += 2 * PreambleHelper<Family>::getCmdSizeForPipelineSelect(device.getHardwareInfo());
     }
     return size;

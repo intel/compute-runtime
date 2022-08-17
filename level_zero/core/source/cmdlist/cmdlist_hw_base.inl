@@ -133,7 +133,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         launchParams.isCooperative,                            // isCooperative
         false,                                                 // isHostScopeSignalEvent
         false,                                                 // isKernelUsingSystemAllocation
-        cmdListType == CommandListType::TYPE_IMMEDIATE         // isKernelDispatchedFromImmediateCmdList
+        cmdListType == CommandListType::TYPE_IMMEDIATE,        // isKernelDispatchedFromImmediateCmdList
+        engineGroupType == NEO::EngineGroupType::RenderCompute // isRcs
     };
 
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs, getLogicalStateHelper());

@@ -43,7 +43,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         auto sbaCmdBuf = NEO::StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStream);
 
         STATE_BASE_ADDRESS sbaCmd;
-        NEO::StateBaseAddressHelperArgs<GfxFamily> args = {
+        NEO::StateBaseAddressHelperArgs<GfxFamily> stateBaseAddressHelperArgs = {
             0,                                                // generalStateBase
             indirectObjectStateBaseAddress,                   // indirectObjectHeapBaseAddress
             instructionStateBaseAddress,                      // instructionHeapBaseAddress
@@ -63,7 +63,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
             false                                             // areMultipleSubDevicesInContext
         };
 
-        NEO::StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(args);
+        NEO::StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(stateBaseAddressHelperArgs);
         *sbaCmdBuf = sbaCmd;
 
         auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);

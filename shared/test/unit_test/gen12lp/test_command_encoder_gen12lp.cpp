@@ -7,17 +7,20 @@
 
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/unit_test/fixtures/command_container_fixture.h"
 
 #include "reg_configs_common.h"
 
 using namespace NEO;
 
 using CommandEncoderTest = Test<DeviceFixture>;
+using CommandEncodeStatesTest = Test<CommandEncodeStatesFixture>;
 
 GEN12LPTEST_F(CommandEncoderTest, WhenAdjustComputeModeIsCalledThenStateComputeModeShowsNonCoherencySet) {
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
@@ -68,7 +71,7 @@ struct MockOsContext : public OsContext {
     using OsContext::engineType;
 };
 
-GEN12LPTEST_F(CommandEncoderTest, givenVariousEngineTypesWhenEncodeSBAThenAdditionalPipelineSelectWAIsAppliedOnlyToRcs) {
+GEN12LPTEST_F(CommandEncodeStatesTest, givenVariousEngineTypesWhenEncodeSbaThenAdditionalPipelineSelectWAIsAppliedOnlyToRcs) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
@@ -78,9 +81,14 @@ GEN12LPTEST_F(CommandEncoderTest, givenVariousEngineTypesWhenEncodeSBAThenAdditi
     auto ret = cmdContainer.initialize(pDevice, nullptr, true);
     ASSERT_EQ(ErrorCode::SUCCESS, ret);
 
+    auto gmmHelper = cmdContainer.getDevice()->getRootDeviceEnvironment().getGmmHelper();
+    uint32_t statelessMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
+
     {
         STATE_BASE_ADDRESS sba;
-        EncodeStateBaseAddress<FamilyType>::encode(cmdContainer, sba, false);
+        EncodeStateBaseAddressArgs<FamilyType> args = createDefaultEncodeStateBaseAddressArgs<FamilyType>(&cmdContainer, sba, statelessMocsIndex);
+        args.isRcs = true;
+        EncodeStateBaseAddress<FamilyType>::encode(args);
 
         GenCmdList commands;
         CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed());
@@ -95,10 +103,10 @@ GEN12LPTEST_F(CommandEncoderTest, givenVariousEngineTypesWhenEncodeSBAThenAdditi
     cmdContainer.reset();
 
     {
-        static_cast<MockOsContext *>(pDevice->getDefaultEngine().osContext)->engineType = aub_stream::ENGINE_CCS;
-
         STATE_BASE_ADDRESS sba;
-        EncodeStateBaseAddress<FamilyType>::encode(cmdContainer, sba, false);
+        EncodeStateBaseAddressArgs<FamilyType> args = createDefaultEncodeStateBaseAddressArgs<FamilyType>(&cmdContainer, sba, statelessMocsIndex);
+        args.isRcs = false;
+        EncodeStateBaseAddress<FamilyType>::encode(args);
 
         GenCmdList commands;
         CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed());

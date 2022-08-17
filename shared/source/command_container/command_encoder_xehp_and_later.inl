@@ -215,7 +215,15 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         auto gmmHelper = container.getDevice()->getGmmHelper();
         uint32_t statelessMocsIndex =
             args.requiresUncachedMocs ? (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1) : (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
-        EncodeStateBaseAddress<Family>::encode(container, sbaCmd, statelessMocsIndex, args.useGlobalAtomics, args.partitionCount > 1);
+
+        EncodeStateBaseAddressArgs<Family> encodeStateBaseAddressArgs = {
+            &container,
+            sbaCmd,
+            statelessMocsIndex,
+            args.useGlobalAtomics,
+            args.partitionCount > 1,
+            args.isRcs};
+        EncodeStateBaseAddress<Family>::encode(encodeStateBaseAddressArgs);
         container.setDirtyStateForAllHeaps(false);
         args.requiresUncachedMocs = false;
     }
@@ -464,62 +472,55 @@ void EncodeStateBaseAddress<Family>::setSbaAddressesForDebugger(NEO::Debugger::S
 }
 
 template <typename Family>
-void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd, bool multiOsContextCapable) {
-    auto gmmHelper = container.getDevice()->getRootDeviceEnvironment().getGmmHelper();
-    uint32_t statelessMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
-    EncodeStateBaseAddress<Family>::encode(container, sbaCmd, statelessMocsIndex, false, multiOsContextCapable);
-}
+void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &args) {
+    auto gmmHelper = args.container->getDevice()->getRootDeviceEnvironment().getGmmHelper();
 
-template <typename Family>
-void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd, uint32_t statelessMocsIndex, bool useGlobalAtomics, bool multiOsContextCapable) {
-    auto gmmHelper = container.getDevice()->getRootDeviceEnvironment().getGmmHelper();
+    auto dsh = args.container->isHeapDirty(HeapType::DYNAMIC_STATE) ? args.container->getIndirectHeap(HeapType::DYNAMIC_STATE) : nullptr;
+    auto ioh = args.container->isHeapDirty(HeapType::INDIRECT_OBJECT) ? args.container->getIndirectHeap(HeapType::INDIRECT_OBJECT) : nullptr;
+    auto ssh = args.container->isHeapDirty(HeapType::SURFACE_STATE) ? args.container->getIndirectHeap(HeapType::SURFACE_STATE) : nullptr;
 
-    auto dsh = container.isHeapDirty(HeapType::DYNAMIC_STATE) ? container.getIndirectHeap(HeapType::DYNAMIC_STATE) : nullptr;
-    auto ioh = container.isHeapDirty(HeapType::INDIRECT_OBJECT) ? container.getIndirectHeap(HeapType::INDIRECT_OBJECT) : nullptr;
-    auto ssh = container.isHeapDirty(HeapType::SURFACE_STATE) ? container.getIndirectHeap(HeapType::SURFACE_STATE) : nullptr;
-
-    StateBaseAddressHelperArgs<Family> args = {
-        0,                                            // generalStateBase
-        container.getIndirectObjectHeapBaseAddress(), // indirectObjectHeapBaseAddress
-        container.getInstructionHeapBaseAddress(),    // instructionHeapBaseAddress
-        0,                                            // globalHeapsBaseAddress
-        &sbaCmd,                                      // stateBaseAddressCmd
-        dsh,                                          // dsh
-        ioh,                                          // ioh
-        ssh,                                          // ssh
-        gmmHelper,                                    // gmmHelper
-        statelessMocsIndex,                           // statelessMocsIndex
-        NEO::MemoryCompressionState::NotApplicable,   // memoryCompressionState
-        true,                                         // setInstructionStateBaseAddress
-        true,                                         // setGeneralStateBaseAddress
-        false,                                        // useGlobalHeapsBaseAddress
-        multiOsContextCapable,                        // isMultiOsContextCapable
-        useGlobalAtomics,                             // useGlobalAtomics
-        false                                         // areMultipleSubDevicesInContext
+    StateBaseAddressHelperArgs<Family> stateBaseAddressHelperArgs = {
+        0,                                                  // generalStateBase
+        args.container->getIndirectObjectHeapBaseAddress(), // indirectObjectHeapBaseAddress
+        args.container->getInstructionHeapBaseAddress(),    // instructionHeapBaseAddress
+        0,                                                  // globalHeapsBaseAddress
+        &args.sbaCmd,                                       // stateBaseAddressCmd
+        dsh,                                                // dsh
+        ioh,                                                // ioh
+        ssh,                                                // ssh
+        gmmHelper,                                          // gmmHelper
+        args.statelessMocsIndex,                            // statelessMocsIndex
+        NEO::MemoryCompressionState::NotApplicable,         // memoryCompressionState
+        true,                                               // setInstructionStateBaseAddress
+        true,                                               // setGeneralStateBaseAddress
+        false,                                              // useGlobalHeapsBaseAddress
+        args.multiOsContextCapable,                         // isMultiOsContextCapable
+        args.useGlobalAtomics,                              // useGlobalAtomics
+        false                                               // areMultipleSubDevicesInContext
     };
 
-    StateBaseAddressHelper<Family>::programStateBaseAddress(args);
+    StateBaseAddressHelper<Family>::programStateBaseAddress(stateBaseAddressHelperArgs);
 
-    auto cmdSpace = StateBaseAddressHelper<Family>::getSpaceForSbaCmd(*container.getCommandStream());
-    *cmdSpace = sbaCmd;
+    auto cmdSpace = StateBaseAddressHelper<Family>::getSpaceForSbaCmd(*args.container->getCommandStream());
+    *cmdSpace = args.sbaCmd;
 
-    auto &hwInfo = container.getDevice()->getHardwareInfo();
+    auto &hwInfo = args.container->getDevice()->getHardwareInfo();
     auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     if (hwInfoConfig.isAdditionalStateBaseAddressWARequired(hwInfo)) {
-        cmdSpace = StateBaseAddressHelper<Family>::getSpaceForSbaCmd(*container.getCommandStream());
-        *cmdSpace = sbaCmd;
+        cmdSpace = StateBaseAddressHelper<Family>::getSpaceForSbaCmd(*args.container->getCommandStream());
+        *cmdSpace = args.sbaCmd;
     }
 
-    if (container.isHeapDirty(HeapType::SURFACE_STATE)) {
-        auto heap = container.getIndirectHeap(HeapType::SURFACE_STATE);
-        StateBaseAddressHelper<Family>::programBindingTableBaseAddress(*container.getCommandStream(),
+    if (args.container->isHeapDirty(HeapType::SURFACE_STATE)) {
+        auto heap = args.container->getIndirectHeap(HeapType::SURFACE_STATE);
+        StateBaseAddressHelper<Family>::programBindingTableBaseAddress(*args.container->getCommandStream(),
                                                                        *heap,
                                                                        gmmHelper);
     }
 }
 
 template <typename Family>
-size_t EncodeStateBaseAddress<Family>::getRequiredSizeForStateBaseAddress(Device &device, CommandContainer &container) {
+size_t EncodeStateBaseAddress<Family>::getRequiredSizeForStateBaseAddress(Device &device, CommandContainer &container, bool isRcs) {
     auto &hwInfo = device.getHardwareInfo();
     auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
@@ -677,7 +678,7 @@ inline void EncodeWA<Family>::encodeAdditionalPipelineSelect(LinearStream &strea
                                                              const HardwareInfo &hwInfo, bool isRcs) {}
 
 template <typename Family>
-inline size_t EncodeWA<Family>::getAdditionalPipelineSelectSize(Device &device) {
+inline size_t EncodeWA<Family>::getAdditionalPipelineSelectSize(Device &device, bool isRcs) {
     return 0u;
 }
 template <typename Family>

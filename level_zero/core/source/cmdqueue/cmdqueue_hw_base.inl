@@ -52,7 +52,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
     auto indirectObjectHeapBaseAddress = neoDevice->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), useLocalMemoryForIndirectHeap);
     auto instructionHeapBaseAddress = neoDevice->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), neoDevice->getMemoryManager()->isLocalMemoryUsedForIsa(neoDevice->getRootDeviceIndex()));
 
-    NEO::StateBaseAddressHelperArgs<GfxFamily> args = {
+    NEO::StateBaseAddressHelperArgs<GfxFamily> stateBaseAddressHelperArgs = {
         gsba,                                             // generalStateBase
         indirectObjectHeapBaseAddress,                    // indirectObjectHeapBaseAddress
         instructionHeapBaseAddress,                       // instructionHeapBaseAddress
@@ -72,7 +72,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         false                                             // areMultipleSubDevicesInContext
     };
 
-    NEO::StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(args);
+    NEO::StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(stateBaseAddressHelperArgs);
     *sbaCmdBuf = sbaCmd;
     csr->setGSBAStateDirty(false);
 
@@ -92,7 +92,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSize() {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
-    size_t size = sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL) + NEO::EncodeWA<GfxFamily>::getAdditionalPipelineSelectSize(*device->getNEODevice());
+    size_t size = sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL) + NEO::EncodeWA<GfxFamily>::getAdditionalPipelineSelectSize(*device->getNEODevice(), this->csr->isRcs());
 
     if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger() != nullptr) {
         const size_t trackedAddressesCount = 6;

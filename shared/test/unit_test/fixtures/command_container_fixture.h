@@ -53,9 +53,25 @@ class CommandEncodeStatesFixture : public DeviceFixture {
             false,                    // isCooperative
             false,                    // isHostScopeSignalEvent
             false,                    // isKernelUsingSystemAllocation
-            false                     // isKernelDispatchedFromImmediateCmdList
+            false,                    // isKernelDispatchedFromImmediateCmdList
+            false                     // isRcs
         };
 
+        return args;
+    }
+
+    template <typename FamilyType>
+    EncodeStateBaseAddressArgs<FamilyType> createDefaultEncodeStateBaseAddressArgs(
+        CommandContainer *container,
+        typename FamilyType::STATE_BASE_ADDRESS &sbaCmd,
+        uint32_t statelessMocs) {
+        EncodeStateBaseAddressArgs<FamilyType> args = {
+            container,
+            sbaCmd,
+            statelessMocs,
+            false,
+            false,
+            false};
         return args;
     }
 };

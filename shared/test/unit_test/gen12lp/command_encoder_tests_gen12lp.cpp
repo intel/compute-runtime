@@ -32,7 +32,7 @@ GEN12LPTEST_F(Gen12LpCommandEncodeTest, givenGen12LpPlatformWhenDefaultEngineIsR
     auto csr = std::make_unique<MyCommandStreamReceiverMock<true>>(*device.getExecutionEnvironment(), 0, device.getDeviceBitfield());
     auto oldCsr = device.getDefaultEngine().commandStreamReceiver;
     device.getDefaultEngine().commandStreamReceiver = csr.get();
-    EXPECT_EQ(2 * PreambleHelper<FamilyType>::getCmdSizeForPipelineSelect(device.getHardwareInfo()), EncodeWA<FamilyType>::getAdditionalPipelineSelectSize(device));
+    EXPECT_EQ(2 * PreambleHelper<FamilyType>::getCmdSizeForPipelineSelect(device.getHardwareInfo()), EncodeWA<FamilyType>::getAdditionalPipelineSelectSize(device, csr->isRcs()));
     device.getDefaultEngine().commandStreamReceiver = oldCsr;
 }
 
@@ -41,6 +41,6 @@ GEN12LPTEST_F(Gen12LpCommandEncodeTest, givenGen12LpPlatformWhenDefaultEngineIsN
     auto csr = std::make_unique<MyCommandStreamReceiverMock<false>>(*device.getExecutionEnvironment(), 0, device.getDeviceBitfield());
     auto oldCsr = device.getDefaultEngine().commandStreamReceiver;
     device.getDefaultEngine().commandStreamReceiver = csr.get();
-    EXPECT_EQ(0u, EncodeWA<FamilyType>::getAdditionalPipelineSelectSize(device));
+    EXPECT_EQ(0u, EncodeWA<FamilyType>::getAdditionalPipelineSelectSize(device, csr->isRcs()));
     device.getDefaultEngine().commandStreamReceiver = oldCsr;
 }
