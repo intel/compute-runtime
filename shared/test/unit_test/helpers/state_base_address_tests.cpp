@@ -27,6 +27,7 @@ HWTEST2_F(SBATest, WhenAppendStateBaseAddressParametersIsCalledThenSBACmdHasBind
         0,                                     // indirectObjectHeapBaseAddress
         0,                                     // instructionHeapBaseAddress
         0,                                     // globalHeapsBaseAddress
+        0,                                     // surfaceStateBaseAddress
         &stateBaseAddress,                     // stateBaseAddressCmd
         nullptr,                               // dsh
         nullptr,                               // ioh
@@ -39,7 +40,8 @@ HWTEST2_F(SBATest, WhenAppendStateBaseAddressParametersIsCalledThenSBACmdHasBind
         false,                                 // useGlobalHeapsBaseAddress
         false,                                 // isMultiOsContextCapable
         false,                                 // useGlobalAtomics
-        false                                  // areMultipleSubDevicesInContext
+        false,                                 // areMultipleSubDevicesInContext
+        false                                  // overrideSurfaceStateBaseAddress
     };
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
@@ -67,6 +69,7 @@ HWTEST2_F(SBATest, WhenProgramStateBaseAddressParametersIsCalledThenSBACmdHasBin
         0,                                     // indirectObjectHeapBaseAddress
         0,                                     // instructionHeapBaseAddress
         0,                                     // globalHeapsBaseAddress
+        0,                                     // surfaceStateBaseAddress
         cmd,                                   // stateBaseAddressCmd
         nullptr,                               // dsh
         nullptr,                               // ioh
@@ -79,7 +82,8 @@ HWTEST2_F(SBATest, WhenProgramStateBaseAddressParametersIsCalledThenSBACmdHasBin
         false,                                 // useGlobalHeapsBaseAddress
         false,                                 // isMultiOsContextCapable
         false,                                 // useGlobalAtomics
-        false                                  // areMultipleSubDevicesInContext
+        false,                                 // areMultipleSubDevicesInContext
+        false                                  // overrideSurfaceStateBaseAddress
     };
 
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
@@ -87,6 +91,47 @@ HWTEST2_F(SBATest, WhenProgramStateBaseAddressParametersIsCalledThenSBACmdHasBin
     EXPECT_EQ(ssh.getMaxAvailableSpace() / 64 - 1, cmd->getBindlessSurfaceStateSize());
     EXPECT_EQ(ssh.getHeapGpuBase(), cmd->getBindlessSurfaceStateBaseAddress());
     EXPECT_TRUE(cmd->getBindlessSurfaceStateBaseAddressModifyEnable());
+
+    EXPECT_TRUE(cmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(ssh.getHeapGpuBase(), cmd->getSurfaceStateBaseAddress());
+}
+
+HWTEST2_F(SBATest,
+          givenProgramSurfaceStateBaseAddressUsingHeapBaseWhenOverrideSurfaceStateBaseAddressUsedThenSbaDispatchedWithOverrideValue, IsAtLeastSkl) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    EXPECT_NE(IGFX_BROADWELL, ::productFamily);
+
+    constexpr uint64_t surfaceStateBaseAddress = 0xBADA550000;
+
+    STATE_BASE_ADDRESS cmd;
+
+    StateBaseAddressHelperArgs<FamilyType> args = {
+        0,                                     // generalStateBase
+        0,                                     // indirectObjectHeapBaseAddress
+        0,                                     // instructionHeapBaseAddress
+        0,                                     // globalHeapsBaseAddress
+        surfaceStateBaseAddress,               // surfaceStateBaseAddress
+        &cmd,                                  // stateBaseAddressCmd
+        nullptr,                               // dsh
+        nullptr,                               // ioh
+        &ssh,                                  // ssh
+        pDevice->getGmmHelper(),               // gmmHelper
+        0,                                     // statelessMocsIndex
+        MemoryCompressionState::NotApplicable, // memoryCompressionState
+        false,                                 // setInstructionStateBaseAddress
+        false,                                 // setGeneralStateBaseAddress
+        false,                                 // useGlobalHeapsBaseAddress
+        false,                                 // isMultiOsContextCapable
+        false,                                 // useGlobalAtomics
+        false,                                 // areMultipleSubDevicesInContext
+        true                                   // overrideSurfaceStateBaseAddress
+    };
+
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
+
+    EXPECT_TRUE(cmd.getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(surfaceStateBaseAddress, cmd.getSurfaceStateBaseAddress());
 }
 
 using SbaForBindlessTests = Test<DeviceFixture>;
@@ -96,7 +141,7 @@ HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenProgramStateBas
 
     EXPECT_NE(IGFX_BROADWELL, ::productFamily);
 
-    uint64_t globalBindlessHeapsBaseAddress = 0x12340000;
+    constexpr uint64_t globalBindlessHeapsBaseAddress = 0x12340000;
 
     StackVec<char, 4096> buffer(4096);
     NEO::LinearStream cmdStream(buffer.begin(), buffer.size());
@@ -108,6 +153,7 @@ HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenProgramStateBas
         0,                                     // indirectObjectHeapBaseAddress
         0,                                     // instructionHeapBaseAddress
         globalBindlessHeapsBaseAddress,        // globalHeapsBaseAddress
+        0,                                     // surfaceStateBaseAddress
         cmd,                                   // stateBaseAddressCmd
         nullptr,                               // dsh
         nullptr,                               // ioh
@@ -120,16 +166,82 @@ HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenProgramStateBas
         true,                                  // useGlobalHeapsBaseAddress
         false,                                 // isMultiOsContextCapable
         false,                                 // useGlobalAtomics
-        false                                  // areMultipleSubDevicesInContext
+        false,                                 // areMultipleSubDevicesInContext
+        false                                  // overrideSurfaceStateBaseAddress
     };
 
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
     EXPECT_TRUE(cmd->getBindlessSurfaceStateBaseAddressModifyEnable());
-    EXPECT_EQ(cmd->getBindlessSurfaceStateBaseAddress(), globalBindlessHeapsBaseAddress);
+    EXPECT_EQ(globalBindlessHeapsBaseAddress, cmd->getBindlessSurfaceStateBaseAddress());
 
     auto surfaceStateCount = StateBaseAddressHelper<FamilyType>::getMaxBindlessSurfaceStates();
     EXPECT_EQ(surfaceStateCount, cmd->getBindlessSurfaceStateSize());
+
+    EXPECT_TRUE(cmd->getBindlessSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(globalBindlessHeapsBaseAddress, cmd->getBindlessSurfaceStateBaseAddress());
+
+    EXPECT_TRUE(cmd->getDynamicStateBaseAddressModifyEnable());
+    EXPECT_TRUE(cmd->getDynamicStateBufferSizeModifyEnable());
+    EXPECT_EQ(globalBindlessHeapsBaseAddress, cmd->getDynamicStateBaseAddress());
+
+    EXPECT_TRUE(cmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(globalBindlessHeapsBaseAddress, cmd->getSurfaceStateBaseAddress());
+}
+
+HWTEST2_F(SbaForBindlessTests,
+          givenGlobalBindlessBaseAddressOverridenSurfaceStateBaseAddressWhenProgramStateBaseAddressThenSbaProgrammedCorrectly, IsAtLeastSkl) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    EXPECT_NE(IGFX_BROADWELL, ::productFamily);
+
+    constexpr uint64_t globalBindlessHeapsBaseAddress = 0x12340000;
+    constexpr uint64_t surfaceStateBaseAddress = 0xBADA550000;
+
+    StackVec<char, 4096> buffer(4096);
+    NEO::LinearStream cmdStream(buffer.begin(), buffer.size());
+
+    STATE_BASE_ADDRESS *cmd = reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStream.getSpace(0));
+
+    StateBaseAddressHelperArgs<FamilyType> args = {
+        0,                                     // generalStateBase
+        0,                                     // indirectObjectHeapBaseAddress
+        0,                                     // instructionHeapBaseAddress
+        globalBindlessHeapsBaseAddress,        // globalHeapsBaseAddress
+        surfaceStateBaseAddress,               // surfaceStateBaseAddress
+        cmd,                                   // stateBaseAddressCmd
+        nullptr,                               // dsh
+        nullptr,                               // ioh
+        nullptr,                               // ssh
+        pDevice->getGmmHelper(),               // gmmHelper
+        0,                                     // statelessMocsIndex
+        MemoryCompressionState::NotApplicable, // memoryCompressionState
+        false,                                 // setInstructionStateBaseAddress
+        false,                                 // setGeneralStateBaseAddress
+        true,                                  // useGlobalHeapsBaseAddress
+        false,                                 // isMultiOsContextCapable
+        false,                                 // useGlobalAtomics
+        false,                                 // areMultipleSubDevicesInContext
+        true                                   // overrideSurfaceStateBaseAddress
+    };
+
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
+
+    EXPECT_TRUE(cmd->getBindlessSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(globalBindlessHeapsBaseAddress, cmd->getBindlessSurfaceStateBaseAddress());
+
+    auto surfaceStateCount = StateBaseAddressHelper<FamilyType>::getMaxBindlessSurfaceStates();
+    EXPECT_EQ(surfaceStateCount, cmd->getBindlessSurfaceStateSize());
+
+    EXPECT_TRUE(cmd->getBindlessSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(globalBindlessHeapsBaseAddress, cmd->getBindlessSurfaceStateBaseAddress());
+
+    EXPECT_TRUE(cmd->getDynamicStateBaseAddressModifyEnable());
+    EXPECT_TRUE(cmd->getDynamicStateBufferSizeModifyEnable());
+    EXPECT_EQ(globalBindlessHeapsBaseAddress, cmd->getDynamicStateBaseAddress());
+
+    EXPECT_TRUE(cmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(surfaceStateBaseAddress, cmd->getSurfaceStateBaseAddress());
 }
 
 using IohSupported = IsWithinGfxCore<GFXCORE_FAMILY::IGFX_GEN9_CORE, GFXCORE_FAMILY::IGFX_GEN12LP_CORE>;
@@ -139,8 +251,8 @@ HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenPassingIndirect
 
     EXPECT_NE(IGFX_BROADWELL, ::productFamily);
 
-    uint64_t globalBindlessHeapsBaseAddress = 0x12340000;
-    uint64_t indirectObjectBaseAddress = 0x12340000;
+    constexpr uint64_t globalBindlessHeapsBaseAddress = 0x12340000;
+    constexpr uint64_t indirectObjectBaseAddress = 0x12340000;
 
     StackVec<char, 4096> buffer(4096);
     NEO::LinearStream cmdStream(buffer.begin(), buffer.size());
@@ -152,6 +264,7 @@ HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenPassingIndirect
         indirectObjectBaseAddress,             // indirectObjectHeapBaseAddress
         0,                                     // instructionHeapBaseAddress
         globalBindlessHeapsBaseAddress,        // globalHeapsBaseAddress
+        0,                                     // surfaceStateBaseAddress
         cmd,                                   // stateBaseAddressCmd
         nullptr,                               // dsh
         nullptr,                               // ioh
@@ -164,7 +277,8 @@ HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenPassingIndirect
         true,                                  // useGlobalHeapsBaseAddress
         false,                                 // isMultiOsContextCapable
         false,                                 // useGlobalAtomics
-        false                                  // areMultipleSubDevicesInContext
+        false,                                 // areMultipleSubDevicesInContext
+        false                                  // overrideSurfaceStateBaseAddress
     };
 
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
@@ -187,6 +301,7 @@ HWTEST2_F(SBATest, givenSbaWhenOverrideBindlessSurfaceBaseIsFalseThenBindlessSur
         0,                                                  // indirectObjectHeapBaseAddress
         0,                                                  // instructionHeapBaseAddress
         0,                                                  // globalHeapsBaseAddress
+        0,                                                  // surfaceStateBaseAddress
         &stateBaseAddress,                                  // stateBaseAddressCmd
         nullptr,                                            // dsh
         nullptr,                                            // ioh
@@ -199,7 +314,8 @@ HWTEST2_F(SBATest, givenSbaWhenOverrideBindlessSurfaceBaseIsFalseThenBindlessSur
         true,                                               // useGlobalHeapsBaseAddress
         false,                                              // isMultiOsContextCapable
         false,                                              // useGlobalAtomics
-        false                                               // areMultipleSubDevicesInContext
+        false,                                              // areMultipleSubDevicesInContext
+        false                                               // overrideSurfaceStateBaseAddress
     };
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, false);
@@ -212,7 +328,7 @@ HWTEST2_F(SBATest, givenGlobalBindlessBaseAddressWhenSshIsPassedThenBindlessSurf
 
     EXPECT_NE(IGFX_BROADWELL, ::productFamily);
 
-    uint64_t globalBindlessHeapsBaseAddress = 0x12340000;
+    constexpr uint64_t globalBindlessHeapsBaseAddress = 0x12340000;
 
     StackVec<char, 4096> buffer(4096);
     NEO::LinearStream cmdStream(buffer.begin(), buffer.size());
@@ -224,6 +340,7 @@ HWTEST2_F(SBATest, givenGlobalBindlessBaseAddressWhenSshIsPassedThenBindlessSurf
         0,                                     // indirectObjectHeapBaseAddress
         0,                                     // instructionHeapBaseAddress
         globalBindlessHeapsBaseAddress,        // globalHeapsBaseAddress
+        0,                                     // surfaceStateBaseAddress
         cmd,                                   // stateBaseAddressCmd
         nullptr,                               // dsh
         nullptr,                               // ioh
@@ -236,7 +353,8 @@ HWTEST2_F(SBATest, givenGlobalBindlessBaseAddressWhenSshIsPassedThenBindlessSurf
         true,                                  // useGlobalHeapsBaseAddress
         false,                                 // isMultiOsContextCapable
         false,                                 // useGlobalAtomics
-        false                                  // areMultipleSubDevicesInContext
+        false,                                 // areMultipleSubDevicesInContext
+        false                                  // overrideSurfaceStateBaseAddress
     };
 
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
@@ -248,7 +366,7 @@ HWTEST2_F(SBATest, givenSurfaceStateHeapWhenNotUsingGlobalHeapBaseThenBindlessSu
 
     EXPECT_NE(IGFX_BROADWELL, ::productFamily);
 
-    uint64_t globalBindlessHeapsBaseAddress = 0x12340000;
+    constexpr uint64_t globalBindlessHeapsBaseAddress = 0x12340000;
 
     StackVec<char, 4096> buffer(4096);
     NEO::LinearStream cmdStream(buffer.begin(), buffer.size());
@@ -260,6 +378,7 @@ HWTEST2_F(SBATest, givenSurfaceStateHeapWhenNotUsingGlobalHeapBaseThenBindlessSu
         0,                                     // indirectObjectHeapBaseAddress
         0,                                     // instructionHeapBaseAddress
         globalBindlessHeapsBaseAddress,        // globalHeapsBaseAddress
+        0,                                     // surfaceStateBaseAddress
         cmd,                                   // stateBaseAddressCmd
         nullptr,                               // dsh
         nullptr,                               // ioh
@@ -272,7 +391,8 @@ HWTEST2_F(SBATest, givenSurfaceStateHeapWhenNotUsingGlobalHeapBaseThenBindlessSu
         false,                                 // useGlobalHeapsBaseAddress
         false,                                 // isMultiOsContextCapable
         false,                                 // useGlobalAtomics
-        false                                  // areMultipleSubDevicesInContext
+        false,                                 // areMultipleSubDevicesInContext
+        false                                  // overrideSurfaceStateBaseAddress
     };
 
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
@@ -345,6 +465,7 @@ HWTEST2_F(SBATest, givenDebugFlagSetWhenAppendingSbaThenProgramCorrectL1CachePol
         0,                                                  // indirectObjectHeapBaseAddress
         0,                                                  // instructionHeapBaseAddress
         0,                                                  // globalHeapsBaseAddress
+        0,                                                  // surfaceStateBaseAddress
         &sbaCmd,                                            // stateBaseAddressCmd
         nullptr,                                            // dsh
         nullptr,                                            // ioh
@@ -357,7 +478,8 @@ HWTEST2_F(SBATest, givenDebugFlagSetWhenAppendingSbaThenProgramCorrectL1CachePol
         false,                                              // useGlobalHeapsBaseAddress
         false,                                              // isMultiOsContextCapable
         false,                                              // useGlobalAtomics
-        false                                               // areMultipleSubDevicesInContext
+        false,                                              // areMultipleSubDevicesInContext
+        false                                               // overrideSurfaceStateBaseAddress
     };
 
     for (const auto &input : testInputs) {

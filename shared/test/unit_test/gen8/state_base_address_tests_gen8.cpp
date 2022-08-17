@@ -23,6 +23,7 @@ BDWTEST_F(SBATest, givenUsedBindlessBuffersWhenAppendStateBaseAddressParametersI
         0,                                     // indirectObjectHeapBaseAddress
         0,                                     // instructionHeapBaseAddress
         0,                                     // globalHeapsBaseAddress
+        0,                                     // surfaceStateBaseAddress
         &stateBaseAddress,                     // stateBaseAddressCmd
         nullptr,                               // dsh
         nullptr,                               // ioh
@@ -35,11 +36,48 @@ BDWTEST_F(SBATest, givenUsedBindlessBuffersWhenAppendStateBaseAddressParametersI
         false,                                 // useGlobalHeapsBaseAddress
         false,                                 // isMultiOsContextCapable
         false,                                 // useGlobalAtomics
-        false                                  // areMultipleSubDevicesInContext
+        false,                                 // areMultipleSubDevicesInContext
+        false                                  // overrideSurfaceStateBaseAddress
     };
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
 
     EXPECT_EQ(0u, ssh.getUsed());
     EXPECT_EQ(0, memcmp(&stateBaseAddressReference, &stateBaseAddress, sizeof(STATE_BASE_ADDRESS)));
+}
+
+BDWTEST_F(SBATest,
+          givenUsedBindlessBuffersAndOverridenSurfaceStateBaseAddressWhenAppendStateBaseAddressParametersIsCalledThenSbaCmdHasCorrectSurfaceStateBaseAddress) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    constexpr uint64_t surfaceStateBaseAddress = 0xBADA550000;
+
+    STATE_BASE_ADDRESS stateBaseAddressCmd = {};
+
+    StateBaseAddressHelperArgs<FamilyType> args = {
+        0,                                     // generalStateBase
+        0,                                     // indirectObjectHeapBaseAddress
+        0,                                     // instructionHeapBaseAddress
+        0,                                     // globalHeapsBaseAddress
+        surfaceStateBaseAddress,               // surfaceStateBaseAddress
+        &stateBaseAddressCmd,                  // stateBaseAddressCmd
+        nullptr,                               // dsh
+        nullptr,                               // ioh
+        &ssh,                                  // ssh
+        nullptr,                               // gmmHelper
+        0,                                     // statelessMocsIndex
+        MemoryCompressionState::NotApplicable, // memoryCompressionState
+        false,                                 // setInstructionStateBaseAddress
+        false,                                 // setGeneralStateBaseAddress
+        false,                                 // useGlobalHeapsBaseAddress
+        false,                                 // isMultiOsContextCapable
+        false,                                 // useGlobalAtomics
+        false,                                 // areMultipleSubDevicesInContext
+        true                                   // overrideSurfaceStateBaseAddress
+    };
+
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
+
+    EXPECT_TRUE(stateBaseAddressCmd.getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(surfaceStateBaseAddress, stateBaseAddressCmd.getSurfaceStateBaseAddress());
 }

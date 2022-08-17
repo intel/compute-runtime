@@ -57,6 +57,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         indirectObjectHeapBaseAddress,                    // indirectObjectHeapBaseAddress
         instructionHeapBaseAddress,                       // instructionHeapBaseAddress
         globalHeapsBase,                                  // globalHeapsBaseAddress
+        0,                                                // surfaceStateBaseAddress
         &sbaCmd,                                          // stateBaseAddressCmd
         nullptr,                                          // dsh
         nullptr,                                          // ioh
@@ -69,7 +70,8 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         useGlobalSshAndDsh,                               // useGlobalHeapsBaseAddress
         false,                                            // isMultiOsContextCapable
         false,                                            // useGlobalAtomics
-        false                                             // areMultipleSubDevicesInContext
+        false,                                            // areMultipleSubDevicesInContext
+        false                                             // overrideSurfaceStateBaseAddress
     };
 
     NEO::StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(stateBaseAddressHelperArgs);

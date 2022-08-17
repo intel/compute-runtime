@@ -73,6 +73,11 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
         args.stateBaseAddressCmd->setGeneralStateBufferSize(0xfffff);
     }
 
+    if (args.overrideSurfaceStateBaseAddress) {
+        args.stateBaseAddressCmd->setSurfaceStateBaseAddressModifyEnable(true);
+        args.stateBaseAddressCmd->setSurfaceStateBaseAddress(args.surfaceStateBaseAddress);
+    }
+
     if (DebugManager.flags.OverrideStatelessMocsIndex.get() != -1) {
         args.statelessMocsIndex = DebugManager.flags.OverrideStatelessMocsIndex.get();
     }

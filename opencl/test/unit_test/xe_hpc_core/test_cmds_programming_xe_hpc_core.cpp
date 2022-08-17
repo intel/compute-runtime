@@ -56,6 +56,7 @@ XE_HPC_CORETEST_F(CmdsProgrammingTestsXeHpcCore, givenSpecificProductFamilyWhenA
         0,                                                  // indirectObjectHeapBaseAddress
         0,                                                  // instructionHeapBaseAddress
         0,                                                  // globalHeapsBaseAddress
+        0,                                                  // surfaceStateBaseAddress
         &sbaCmd,                                            // stateBaseAddressCmd
         nullptr,                                            // dsh
         nullptr,                                            // ioh
@@ -68,7 +69,8 @@ XE_HPC_CORETEST_F(CmdsProgrammingTestsXeHpcCore, givenSpecificProductFamilyWhenA
         false,                                              // useGlobalHeapsBaseAddress
         false,                                              // isMultiOsContextCapable
         false,                                              // useGlobalAtomics
-        false                                               // areMultipleSubDevicesInContext
+        false,                                              // areMultipleSubDevicesInContext
+        false                                               // overrideSurfaceStateBaseAddress
     };
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
 
@@ -92,6 +94,7 @@ XE_HPC_CORETEST_F(CmdsProgrammingTestsXeHpcCore, givenL1CachingOverrideWhenState
         0,                                                  // indirectObjectHeapBaseAddress
         0,                                                  // instructionHeapBaseAddress
         0,                                                  // globalHeapsBaseAddress
+        0,                                                  // surfaceStateBaseAddress
         &sbaCmd,                                            // stateBaseAddressCmd
         nullptr,                                            // dsh
         nullptr,                                            // ioh
@@ -104,7 +107,8 @@ XE_HPC_CORETEST_F(CmdsProgrammingTestsXeHpcCore, givenL1CachingOverrideWhenState
         false,                                              // useGlobalHeapsBaseAddress
         false,                                              // isMultiOsContextCapable
         false,                                              // useGlobalAtomics
-        false                                               // areMultipleSubDevicesInContext
+        false,                                              // areMultipleSubDevicesInContext
+        false                                               // overrideSurfaceStateBaseAddress
     };
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
 

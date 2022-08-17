@@ -330,6 +330,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
         internalHeapBase,                      // indirectObjectHeapBaseAddress
         instructionHeapBase,                   // instructionHeapBaseAddress
         0,                                     // globalHeapsBaseAddress
+        0,                                     // surfaceStateBaseAddress
         &sbaCmd,                               // stateBaseAddressCmd
         nullptr,                               // dsh
         nullptr,                               // ioh
@@ -342,7 +343,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
         false,                                 // useGlobalHeapsBaseAddress
         false,                                 // isMultiOsContextCapable
         false,                                 // useGlobalAtomics
-        false                                  // areMultipleSubDevicesInContext
+        false,                                 // areMultipleSubDevicesInContext
+        false                                  // overrideSurfaceStateBaseAddress
     };
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 

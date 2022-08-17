@@ -56,6 +56,7 @@ DG2TEST_F(CmdsProgrammingTestsDg2, givenSpecificProductFamilyWhenAppendingSbaThe
         0,                                                  // indirectObjectHeapBaseAddress
         0,                                                  // instructionHeapBaseAddress
         0,                                                  // globalHeapsBaseAddress
+        0,                                                  // surfaceStateBaseAddress
         &sbaCmd,                                            // stateBaseAddressCmd
         nullptr,                                            // dsh
         nullptr,                                            // ioh
@@ -68,7 +69,8 @@ DG2TEST_F(CmdsProgrammingTestsDg2, givenSpecificProductFamilyWhenAppendingSbaThe
         false,                                              // useGlobalHeapsBaseAddress
         false,                                              // isMultiOsContextCapable
         false,                                              // useGlobalAtomics
-        false                                               // areMultipleSubDevicesInContext
+        false,                                              // areMultipleSubDevicesInContext
+        false                                               // overrideSurfaceStateBaseAddress
     };
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
 
@@ -92,6 +94,7 @@ DG2TEST_F(CmdsProgrammingTestsDg2, givenL1CachingOverrideWhenStateBaseAddressIsP
         0,                                                  // indirectObjectHeapBaseAddress
         0,                                                  // instructionHeapBaseAddress
         0,                                                  // globalHeapsBaseAddress
+        0,                                                  // surfaceStateBaseAddress
         &sbaCmd,                                            // stateBaseAddressCmd
         nullptr,                                            // dsh
         nullptr,                                            // ioh
@@ -104,7 +107,8 @@ DG2TEST_F(CmdsProgrammingTestsDg2, givenL1CachingOverrideWhenStateBaseAddressIsP
         false,                                              // useGlobalHeapsBaseAddress
         false,                                              // isMultiOsContextCapable
         false,                                              // useGlobalAtomics
-        false                                               // areMultipleSubDevicesInContext
+        false,                                              // areMultipleSubDevicesInContext
+        false                                               // overrideSurfaceStateBaseAddress
     };
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
 

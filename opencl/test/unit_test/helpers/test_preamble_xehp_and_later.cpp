@@ -466,6 +466,7 @@ HWTEST2_F(StateBaseAddressXeHPAndLaterTests, givenMemoryCompressionEnabledWhenAp
             0,                                                  // indirectObjectHeapBaseAddress
             0,                                                  // instructionHeapBaseAddress
             0,                                                  // globalHeapsBaseAddress
+            0,                                                  // surfaceStateBaseAddress
             &sbaCmd,                                            // stateBaseAddressCmd
             nullptr,                                            // dsh
             nullptr,                                            // ioh
@@ -478,7 +479,8 @@ HWTEST2_F(StateBaseAddressXeHPAndLaterTests, givenMemoryCompressionEnabledWhenAp
             false,                                              // useGlobalHeapsBaseAddress
             false,                                              // isMultiOsContextCapable
             false,                                              // useGlobalAtomics
-            false                                               // areMultipleSubDevicesInContext
+            false,                                              // areMultipleSubDevicesInContext
+            false                                               // overrideSurfaceStateBaseAddress
         };
         StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
         if (memoryCompressionState == MemoryCompressionState::Enabled) {
@@ -504,6 +506,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, StateBaseAddressXeHPAndLaterTests, givenNonZeroInte
         ihba,                                               // indirectObjectHeapBaseAddress
         0,                                                  // instructionHeapBaseAddress
         0,                                                  // globalHeapsBaseAddress
+        0,                                                  // surfaceStateBaseAddress
         &sbaCmd,                                            // stateBaseAddressCmd
         nullptr,                                            // dsh
         nullptr,                                            // ioh
@@ -516,7 +519,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, StateBaseAddressXeHPAndLaterTests, givenNonZeroInte
         false,                                              // useGlobalHeapsBaseAddress
         false,                                              // isMultiOsContextCapable
         false,                                              // useGlobalAtomics
-        false                                               // areMultipleSubDevicesInContext
+        false,                                              // areMultipleSubDevicesInContext
+        false                                               // overrideSurfaceStateBaseAddress
     };
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
     EXPECT_EQ(0ull, sbaCmd.getGeneralStateBaseAddress());

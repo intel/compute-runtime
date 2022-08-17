@@ -377,6 +377,7 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
         args.container->getIndirectObjectHeapBaseAddress(), // indirectObjectHeapBaseAddress
         args.container->getInstructionHeapBaseAddress(),    // instructionHeapBaseAddress
         0,                                                  // globalHeapsBaseAddress
+        0,                                                  // surfaceStateBaseAddress
         &args.sbaCmd,                                       // stateBaseAddressCmd
         dsh,                                                // dsh
         ioh,                                                // ioh
@@ -389,7 +390,8 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
         false,                                              // useGlobalHeapsBaseAddress
         false,                                              // isMultiOsContextCapable
         args.useGlobalAtomics,                              // useGlobalAtomics
-        false                                               // areMultipleSubDevicesInContext
+        false,                                              // areMultipleSubDevicesInContext
+        false                                               // overrideSurfaceStateBaseAddress
     };
 
     StateBaseAddressHelper<Family>::programStateBaseAddress(stateBaseAddressHelperArgs);

@@ -410,23 +410,25 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         STATE_BASE_ADDRESS stateBaseAddressCmd;
 
         StateBaseAddressHelperArgs<GfxFamily> args = {
-            newGSHbase,                                  // generalStateBase
-            indirectObjectStateBaseAddress,              // indirectObjectHeapBaseAddress
-            instructionHeapBaseAddress,                  // instructionHeapBaseAddress
-            0,                                           // globalHeapsBaseAddress
-            &stateBaseAddressCmd,                        // stateBaseAddressCmd
-            dsh,                                         // dsh
-            ioh,                                         // ioh
-            ssh,                                         // ssh
-            device.getGmmHelper(),                       // gmmHelper
-            mocsIndex,                                   // statelessMocsIndex
-            memoryCompressionState,                      // memoryCompressionState
-            true,                                        // setInstructionStateBaseAddress
-            true,                                        // setGeneralStateBaseAddress
-            false,                                       // useGlobalHeapsBaseAddress
-            isMultiOsContextCapable(),                   // isMultiOsContextCapable
-            dispatchFlags.useGlobalAtomics,              // useGlobalAtomics
-            dispatchFlags.areMultipleSubDevicesInContext // areMultipleSubDevicesInContext
+            newGSHbase,                                   // generalStateBase
+            indirectObjectStateBaseAddress,               // indirectObjectHeapBaseAddress
+            instructionHeapBaseAddress,                   // instructionHeapBaseAddress
+            0,                                            // globalHeapsBaseAddress
+            0,                                            // surfaceStateBaseAddress
+            &stateBaseAddressCmd,                         // stateBaseAddressCmd
+            dsh,                                          // dsh
+            ioh,                                          // ioh
+            ssh,                                          // ssh
+            device.getGmmHelper(),                        // gmmHelper
+            mocsIndex,                                    // statelessMocsIndex
+            memoryCompressionState,                       // memoryCompressionState
+            true,                                         // setInstructionStateBaseAddress
+            true,                                         // setGeneralStateBaseAddress
+            false,                                        // useGlobalHeapsBaseAddress
+            isMultiOsContextCapable(),                    // isMultiOsContextCapable
+            dispatchFlags.useGlobalAtomics,               // useGlobalAtomics
+            dispatchFlags.areMultipleSubDevicesInContext, // areMultipleSubDevicesInContext
+            false                                         // overrideSurfaceStateBaseAddress
         };
 
         StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(args);
@@ -610,7 +612,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     streamToSubmit.getGraphicsAllocation()->updateTaskCount(this->taskCount + 1, this->osContext->getContextId());
     streamToSubmit.getGraphicsAllocation()->updateResidencyTaskCount(this->taskCount + 1, this->osContext->getContextId());
 
-    if (submitCSR | submitTask) {
+    if (submitCSR || submitTask) {
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
             flushHandler(batchBuffer, this->getResidencyAllocations());
             if (dispatchFlags.blocking || dispatchFlags.dcFlush || dispatchFlags.guardCommandBufferWithPipeControl) {
