@@ -27,7 +27,7 @@ TEST(StringHelpers, GivenParamsWhenUsingStrncpyThenReturnIsCorrect) {
     ret = strncpy_s(dst, 1024, nullptr, 1024);
     EXPECT_EQ(ret, -EINVAL);
 
-    ret = strncpy_s(dst, 512, src, 1024);
+    ret = strncpy_s(dst, 10, src, 1024);
     EXPECT_EQ(ret, -ERANGE);
 
     memset(dst, 0, sizeof(dst));
@@ -37,17 +37,39 @@ TEST(StringHelpers, GivenParamsWhenUsingStrncpyThenReturnIsCorrect) {
     for (size_t i = strlen(src) / 2; i < sizeof(dst); i++)
         EXPECT_EQ(0, dst[i]);
 
-    memset(dst, 0, sizeof(dst));
-    ret = strncpy_s(dst, strlen(src) / 2, src, strlen(src) / 2);
-    EXPECT_EQ(ret, 0);
-    EXPECT_EQ(0, memcmp(dst, src, strlen(src) / 2));
-    for (size_t i = strlen(src) / 2; i < sizeof(dst); i++)
-        EXPECT_EQ(0, dst[i]);
+    ret = strncpy_s(dst, 1024, src, 1024);
+    ASSERT_EQ(0, ret);
 
-    strncpy_s(dst, 1024, src, 1024);
     EXPECT_EQ(0, memcmp(dst, src, strlen(src)));
     for (size_t i = strlen(src); i < sizeof(dst); i++)
         EXPECT_EQ(0, dst[i]);
+}
+
+TEST(StringHelpers, GivenCountGreaterEqualToNumberOfElementsThenReturnErangeAndSetFirstStringToNullTerminator) {
+    // strncpy_s() copies at most COUNT bytes and appends null-terminator at dst[COUNT].
+    // It means, that for given COUNT, at least COUNT+1 bytes are required in dst buffer.
+
+    const size_t firstWordLength = 9;
+    char src[] = "c-strings are serious business!";
+
+    char dst[firstWordLength] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'};
+    const auto ret = strncpy_s(dst, sizeof(dst), src, firstWordLength);
+
+    EXPECT_EQ(-ERANGE, ret);
+}
+
+TEST(StringHelpers, GivenNotNullTerminatedSourceThenCopyAtMostCountBytesAndAppendNulltermination) {
+    // If null-terminator is missing, then strncpy_s() copies COUNT bytes and stores it at dst[COUNT].
+
+    const size_t srcLength = 8;
+    char src[srcLength] = {'c', '-', 's', 't', 'r', 'i', 'n', 'g'};
+
+    const size_t nullterminatorLength = 1;
+    char dst[srcLength + nullterminatorLength] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'};
+    const auto ret = strncpy_s(dst, sizeof(dst), src, srcLength);
+
+    ASSERT_EQ(0, ret);
+    EXPECT_STREQ("c-string", dst);
 }
 
 TEST(StringHelpers, GivenParamsWhenUsingMemmoveThenReturnIsCorrect) {

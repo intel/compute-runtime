@@ -474,9 +474,9 @@ ze_result_t KernelImp::getSourceAttributes(uint32_t *pSize, char **pString) {
     if (pString == nullptr) {
         *pSize = (uint32_t)desc.kernelMetadata.kernelLanguageAttributes.length() + 1;
     } else {
-        strncpy_s(*pString, desc.kernelMetadata.kernelLanguageAttributes.length() + 1,
+        strncpy_s(*pString, *pSize,
                   desc.kernelMetadata.kernelLanguageAttributes.c_str(),
-                  desc.kernelMetadata.kernelLanguageAttributes.length() + 1);
+                  desc.kernelMetadata.kernelLanguageAttributes.length());
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -721,7 +721,8 @@ ze_result_t KernelImp::getKernelName(size_t *pSize, char *pName) {
 
     *pSize = std::min(*pSize, kernelNameSize);
     strncpy_s(pName, *pSize,
-              this->kernelImmData->getDescriptor().kernelMetadata.kernelName.c_str(), kernelNameSize);
+              this->kernelImmData->getDescriptor().kernelMetadata.kernelName.c_str(),
+              this->kernelImmData->getDescriptor().kernelMetadata.kernelName.size());
 
     return ZE_RESULT_SUCCESS;
 }

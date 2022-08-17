@@ -169,7 +169,7 @@ TEST_P(PrintfInt8Test, GivenFormatContainingIntWhenPrintingThenValueIsInserted) 
     char referenceOutput[maxPrintfOutputLength];
     char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     snprintf(referenceOutput, sizeof(referenceOutput), input.format.c_str(), input.value);
 
@@ -209,7 +209,7 @@ TEST_P(PrintfInt32Test, GivenFormatContainingIntWhenPrintingThenValueIsInserted)
     char referenceOutput[maxPrintfOutputLength];
     char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     snprintf(referenceOutput, sizeof(referenceOutput), input.format.c_str(), input.value);
 
@@ -250,7 +250,7 @@ TEST_P(PrintfUint32Test, GivenFormatContainingUintWhenPrintingThenValueIsInserte
     char referenceOutput[maxPrintfOutputLength];
     char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     snprintf(referenceOutput, sizeof(referenceOutput), input.format.c_str(), input.value);
 
@@ -267,7 +267,7 @@ TEST_P(PrintfUint32Test, GivenBufferSizeGreaterThanPrintBufferWhenPrintingThenBu
 
     char referenceOutput[maxPrintfOutputLength] = "";
     char actualOutput[maxPrintfOutputLength] = "";
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     EXPECT_STREQ(referenceOutput, actualOutput);
 }
@@ -302,7 +302,7 @@ TEST_P(PrintfFloatTest, GivenFormatContainingFloatWhenPrintingThenValueIsInserte
     char referenceOutput[maxPrintfOutputLength];
     char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     snprintf(referenceOutput, sizeof(referenceOutput), input.format.c_str(), input.value);
 
@@ -345,7 +345,7 @@ TEST_P(PrintfDoubleToFloatTest, GivenFormatContainingFloatAndDoubleWhenPrintingT
     char referenceOutput[maxPrintfOutputLength];
     char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     snprintf(referenceOutput, sizeof(referenceOutput), input.format.c_str(), input.value);
 
@@ -390,7 +390,7 @@ TEST_P(PrintfDoubleTest, GivenFormatContainingDoubleWhenPrintingThenValueIsInser
     char referenceOutput[maxPrintfOutputLength];
     char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     if (input.format[input.format.length() - 1] == 'F')
         input.format[input.format.length() - 1] = 'f';
@@ -420,7 +420,7 @@ TEST_P(PrintfSpecialTest, GivenFormatContainingDoublePercentageWhenPrintingThenV
 
     char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     EXPECT_STREQ(input.second.c_str(), actualOutput);
 }
@@ -450,7 +450,7 @@ TEST_P(PrintfNoArgumentsTest, GivenNoArgumentsWhenPrintingThenCharsAreEscaped) {
 
     char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     EXPECT_STREQ(input.second.c_str(), actualOutput);
 }
@@ -478,7 +478,7 @@ TEST_P(PrintfStringTest, GivenFormatContainingStringWhenPrintingThenValueIsInser
     char referenceOutput[maxPrintfOutputLength];
     char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     snprintf(referenceOutput, sizeof(referenceOutput), input.format.c_str(), input.value.c_str());
 
@@ -499,7 +499,7 @@ TEST_F(PrintFormatterTest, GivenLongStringValueWhenPrintedThenFullStringIsPrinte
 
     char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     EXPECT_STREQ(testedLongString, actualOutput);
 }
@@ -517,7 +517,7 @@ TEST_F(PrintFormatterTest, GivenStringSpecifierWhenLongStringIsPassedAsValueThen
 
     char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     EXPECT_STREQ(testedLongString, actualOutput);
 }
@@ -533,7 +533,7 @@ TEST_F(PrintFormatterTest, GivenTooLongStringWhenPrintedThenOutputIsTruncated) {
     std::unique_ptr<char[]> actualOutput(new char[PrintFormatter::maxSinglePrintStringLength + 1024]);
 
     printFormatter->printKernelOutput([&actualOutput](char *str) { 
-        size_t length = strnlen_s(str, PrintFormatter::maxSinglePrintStringLength + 1024);
+        size_t length = strnlen_s(str, PrintFormatter::maxSinglePrintStringLength + 1023);
         strncpy_s(actualOutput.get(), PrintFormatter::maxSinglePrintStringLength + 1024, str, length); });
 
     auto testedLength = strnlen_s(testedLongString.get(), PrintFormatter::maxSinglePrintStringLength + 1024);
@@ -550,7 +550,7 @@ TEST_F(PrintFormatterTest, GivenNullTokenWhenPrintingThenNullIsInserted) {
 
     char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     EXPECT_STREQ("(null)", actualOutput);
 }
@@ -572,7 +572,7 @@ TEST_F(PrintFormatterTest, GivenVector2WhenPrintingThenAllValuesAreInserted) {
 
     char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     EXPECT_STREQ("1,2", actualOutput);
 }
@@ -593,7 +593,7 @@ TEST_F(PrintFormatterTest, GivenVector4WhenPrintingThenAllValuesAreInserted) {
 
     char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     EXPECT_STREQ("1,2,3,4", actualOutput);
 }
@@ -614,7 +614,7 @@ TEST_F(PrintFormatterTest, GivenVector8WhenPrintingThenAllValuesAreInserted) {
 
     char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     EXPECT_STREQ("1,2,3,4,5,6,7,8", actualOutput);
 }
@@ -635,7 +635,7 @@ TEST_F(PrintFormatterTest, GivenVector16WhenPrintingThenAllValuesAreInserted) {
 
     char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     EXPECT_STREQ("1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16", actualOutput);
 }
@@ -656,7 +656,7 @@ TEST_F(PrintFormatterTest, GivenVectorOfBytesWhenPrintingThenAllValuesAreInserte
 
     char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     EXPECT_STREQ("1,2", actualOutput);
 }
@@ -676,7 +676,7 @@ TEST_F(PrintFormatterTest, GivenVectorOfShortsWhenPrintingThenAllValuesAreInsert
 
     char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     EXPECT_STREQ("1,2", actualOutput);
 }
@@ -696,7 +696,7 @@ TEST_F(PrintFormatterTest, GivenVectorOfIntsWhenPrintingThenAllValuesAreInserted
 
     char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     EXPECT_STREQ("1,2", actualOutput);
 }
@@ -716,7 +716,7 @@ TEST_F(PrintFormatterTest, GivenSpecialVectorWhenPrintingThenAllValuesAreInserte
 
     char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     EXPECT_STREQ("1,2", actualOutput);
 }
@@ -735,7 +735,7 @@ TEST_F(PrintFormatterTest, GivenVectorOfLongsWhenPrintingThenAllValuesAreInserte
 
     char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     EXPECT_STREQ("1,2", actualOutput);
 }
@@ -755,7 +755,7 @@ TEST_F(PrintFormatterTest, GivenVectorOfFloatsWhenPrintingThenAllValuesAreInsert
 
     char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     EXPECT_STREQ("1.000000,2.000000", actualOutput);
 }
@@ -775,7 +775,7 @@ TEST_F(PrintFormatterTest, GivenVectorOfDoublesWhenPrintingThenAllValuesAreInser
 
     char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     EXPECT_STREQ("1.000000,2.000000", actualOutput);
 }
@@ -801,7 +801,7 @@ TEST_F(PrintFormatterTest, GivenPointerWhenPrintingThenValueIsInserted) {
 
     snprintf(referenceOutput, sizeof(referenceOutput), "%p", reinterpret_cast<void *>(&temp));
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     EXPECT_STREQ(referenceOutput, actualOutput);
 }
@@ -829,7 +829,7 @@ TEST_F(PrintFormatterTest, GivenPointerWith32BitKernelWhenPrintingThen32BitPoint
 
     snprintf(referenceOutput, sizeof(referenceOutput), "%p", pointer);
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     EXPECT_STREQ(referenceOutput, actualOutput);
 }
@@ -866,7 +866,7 @@ TEST_F(PrintFormatterTest, Given2ByteVectorsWhenPrintingThenDataBufferParsedProp
 
     char actualOutput[maxPrintfOutputLength];
 
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
     EXPECT_STREQ("1,2,3,4 1,2,3,4", actualOutput);
 }
@@ -874,7 +874,7 @@ TEST_F(PrintFormatterTest, Given2ByteVectorsWhenPrintingThenDataBufferParsedProp
 TEST_F(PrintFormatterTest, GivenEmptyBufferWhenPrintingThenFailSafely) {
     char actualOutput[maxPrintfOutputLength];
     actualOutput[0] = 0;
-    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
     EXPECT_STREQ("", actualOutput);
 }
 
@@ -884,7 +884,7 @@ TEST_F(PrintFormatterTest, GivenNoStringMapAndBufferWithFormatStringThenItIsPrin
     storeData(formatString);
 
     char output[maxPrintfOutputLength];
-    printFormatter->printKernelOutput([&output](char *str) { strncpy_s(output, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&output](char *str) { strncpy_s(output, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
     EXPECT_STREQ(formatString, output);
 }
 
@@ -902,7 +902,7 @@ TEST_F(PrintFormatterTest, GivenNoStringMapAndBufferWithFormatStringAnd2StringsT
 
     const char *expectedOutput = "str1 str2";
     char output[maxPrintfOutputLength];
-    printFormatter->printKernelOutput([&output](char *str) { strncpy_s(output, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    printFormatter->printKernelOutput([&output](char *str) { strncpy_s(output, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
     EXPECT_STREQ(expectedOutput, output);
 }
 

@@ -14,7 +14,7 @@ ze_result_t LinuxFirmwareImp::getFirmwareVersion(std::string fwType, zes_firmwar
     std::string fwVersion;
     ze_result_t result = pFwInterface->getFwVersion(fwType, fwVersion);
     if (ZE_RESULT_SUCCESS == result) {
-        strncpy_s(static_cast<char *>(pProperties->version), ZES_STRING_PROPERTY_SIZE, fwVersion.c_str(), ZES_STRING_PROPERTY_SIZE);
+        strncpy_s(static_cast<char *>(pProperties->version), ZES_STRING_PROPERTY_SIZE, fwVersion.c_str(), ZES_STRING_PROPERTY_SIZE - 1);
     }
     return result;
 }
