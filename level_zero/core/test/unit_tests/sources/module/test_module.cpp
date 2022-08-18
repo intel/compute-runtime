@@ -553,19 +553,17 @@ struct ModuleSpecConstantsFixture : public DeviceFixture {
     }
 
     void runTest() {
-        std::string testFile;
-        retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".spv");
+        auto additionalSections = {ZebinTestData::appendElfAdditionalSection::SPIRV};
+        zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), additionalSections);
+        const auto &src = zebinData->storage;
 
-        size_t size = 0;
-        auto src = loadDataFromFile(testFile.c_str(), size);
-
-        ASSERT_NE(0u, size);
-        ASSERT_NE(nullptr, src);
+        ASSERT_NE(nullptr, src.data());
+        ASSERT_NE(0u, src.size());
 
         ze_module_desc_t moduleDesc = {};
         moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
-        moduleDesc.inputSize = size;
+        moduleDesc.pInputModule = src.data();
+        moduleDesc.inputSize = src.size();
 
         specConstants.numConstants = mockCompiler->moduleNumSpecConstants;
         for (uint32_t i = mockCompiler->moduleNumSpecConstants / 2; i > 0; i--) {
@@ -592,13 +590,14 @@ struct ModuleSpecConstantsFixture : public DeviceFixture {
     }
 
     void runTestStatic() {
-        std::string testFile;
-        retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".spv");
+        auto additionalSections = {ZebinTestData::appendElfAdditionalSection::SPIRV};
+        zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), additionalSections);
+        const auto &src = zebinData->storage;
 
-        size_t sizeModule1, sizeModule2 = 0;
-        auto srcModule1 = loadDataFromFile(testFile.c_str(), sizeModule1);
-        auto srcModule2 = loadDataFromFile(testFile.c_str(), sizeModule2);
-
+        auto srcModule1 = src.data();
+        auto srcModule2 = src.data();
+        auto sizeModule1 = src.size();
+        auto sizeModule2 = src.size();
         ASSERT_NE(0u, sizeModule1);
         ASSERT_NE(0u, sizeModule2);
         ASSERT_NE(nullptr, srcModule1);
@@ -626,9 +625,9 @@ struct ModuleSpecConstantsFixture : public DeviceFixture {
         specConstantsArray.push_back(&specConstants);
 
         inputSizes.push_back(sizeModule1);
-        inputSpirVs.push_back(reinterpret_cast<const uint8_t *>(srcModule1.get()));
+        inputSpirVs.push_back(srcModule1);
         inputSizes.push_back(sizeModule2);
-        inputSpirVs.push_back(reinterpret_cast<const uint8_t *>(srcModule2.get()));
+        inputSpirVs.push_back(srcModule2);
 
         staticLinkModuleDesc.count = 2;
         staticLinkModuleDesc.inputSizes = inputSizes.data();
@@ -652,7 +651,7 @@ struct ModuleSpecConstantsFixture : public DeviceFixture {
     std::vector<const void *> specConstantsPointerValues;
     std::vector<uint32_t> specConstantsPointerIds;
 
-    const std::string binaryFilename = "test_kernel";
+    std::unique_ptr<ZebinTestData::ZebinWithL0TestCommonModule> zebinData;
     const std::string kernelName = "test";
     MockCompilerInterfaceWithSpecConstants<T1, T2> *mockCompiler;
     MockModuleTranslationUnit *mockTranslationUnit;
@@ -682,19 +681,17 @@ TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenCompiler
     mockCompiler = new FailingMockCompilerInterfaceWithSpecConstants(moduleNumSpecConstants);
     auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
     rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
-    std::string testFile;
-    retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".spv");
+    auto additionalSections = {ZebinTestData::appendElfAdditionalSection::SPIRV};
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), additionalSections);
+    const auto &src = zebinData->storage;
 
-    size_t size = 0;
-    auto src = loadDataFromFile(testFile.c_str(), size);
-
-    ASSERT_NE(0u, size);
-    ASSERT_NE(nullptr, src);
+    ASSERT_NE(nullptr, src.data());
+    ASSERT_NE(0u, src.size());
 
     ze_module_desc_t moduleDesc = {};
     moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
-    moduleDesc.inputSize = size;
+    moduleDesc.pInputModule = src.data();
+    moduleDesc.inputSize = src.size();
 
     specConstants.numConstants = mockCompiler->moduleNumSpecConstants;
     for (uint32_t i = 0; i < mockCompiler->moduleNumSpecConstants / 2; i++) {
@@ -715,19 +712,17 @@ TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenCompiler
 }
 
 TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenUserPassTooMuchConstsIdsThenModuleInitFails) {
-    std::string testFile;
-    retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".spv");
+    auto additionalSections = {ZebinTestData::appendElfAdditionalSection::SPIRV};
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), additionalSections);
+    const auto &src = zebinData->storage;
 
-    size_t size = 0;
-    auto src = loadDataFromFile(testFile.c_str(), size);
-
-    ASSERT_NE(0u, size);
-    ASSERT_NE(nullptr, src);
+    ASSERT_NE(nullptr, src.data());
+    ASSERT_NE(0u, src.size());
 
     ze_module_desc_t moduleDesc = {};
     moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
-    moduleDesc.inputSize = size;
+    moduleDesc.pInputModule = src.data();
+    moduleDesc.inputSize = src.size();
 
     specConstants.numConstants = mockCompiler->moduleNumSpecConstants;
     for (uint32_t i = mockCompiler->moduleNumSpecConstants / 2; i > 0; i--) {
@@ -773,12 +768,14 @@ TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenCompiler
     mockCompiler = new FailingMockCompilerInterfaceWithSpecConstants(moduleNumSpecConstants);
     auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
     rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
-    std::string testFile;
-    retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".spv");
+    auto additionalSections = {ZebinTestData::appendElfAdditionalSection::SPIRV};
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), additionalSections);
+    const auto &src = zebinData->storage;
 
-    size_t sizeModule1, sizeModule2 = 0;
-    auto srcModule1 = loadDataFromFile(testFile.c_str(), sizeModule1);
-    auto srcModule2 = loadDataFromFile(testFile.c_str(), sizeModule2);
+    auto sizeModule1 = src.size();
+    auto sizeModule2 = src.size();
+    auto srcModule1 = src.data();
+    auto srcModule2 = src.data();
 
     ASSERT_NE(0u, sizeModule1);
     ASSERT_NE(0u, sizeModule2);
@@ -807,9 +804,9 @@ TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenCompiler
     specConstantsArray.push_back(&specConstants);
 
     inputSizes.push_back(sizeModule1);
-    inputSpirVs.push_back(reinterpret_cast<const uint8_t *>(srcModule1.get()));
+    inputSpirVs.push_back(srcModule1);
     inputSizes.push_back(sizeModule2);
-    inputSpirVs.push_back(reinterpret_cast<const uint8_t *>(srcModule2.get()));
+    inputSpirVs.push_back(srcModule2);
 
     staticLinkModuleDesc.count = 2;
     staticLinkModuleDesc.inputSizes = inputSizes.data();
@@ -834,12 +831,15 @@ struct ModuleStaticLinkFixture : public DeviceFixture {
     }
 
     void loadModules(bool multiple) {
-        std::string testFile;
-        retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".spv");
+        auto additionalSections = {ZebinTestData::appendElfAdditionalSection::SPIRV};
+        zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), additionalSections);
+        const auto &storage = zebinData->storage;
 
-        srcModule1 = loadDataFromFile(testFile.c_str(), sizeModule1);
+        srcModule1 = storage.data();
+        sizeModule1 = storage.size();
         if (multiple) {
-            srcModule2 = loadDataFromFile(testFile.c_str(), sizeModule2);
+            srcModule2 = storage.data();
+            sizeModule2 = storage.size();
         }
 
         ASSERT_NE(0u, sizeModule1);
@@ -855,11 +855,11 @@ struct ModuleStaticLinkFixture : public DeviceFixture {
         combinedModuleDesc.pNext = &staticLinkModuleDesc;
 
         inputSizes.push_back(sizeModule1);
-        inputSpirVs.push_back(reinterpret_cast<const uint8_t *>(srcModule1.get()));
+        inputSpirVs.push_back(srcModule1);
         staticLinkModuleDesc.count = 1;
         if (multiple) {
             inputSizes.push_back(sizeModule2);
-            inputSpirVs.push_back(reinterpret_cast<const uint8_t *>(srcModule2.get()));
+            inputSpirVs.push_back(srcModule2);
             staticLinkModuleDesc.count = 2;
         }
         staticLinkModuleDesc.inputSizes = inputSizes.data();
@@ -970,11 +970,11 @@ struct ModuleStaticLinkFixture : public DeviceFixture {
         EXPECT_TRUE(success);
         module->destroy();
     }
-    const std::string binaryFilename = "test_kernel";
+    std::unique_ptr<ZebinTestData::ZebinWithL0TestCommonModule> zebinData;
     const std::string kernelName = "test";
     MockModuleTranslationUnit *mockTranslationUnit;
-    std::unique_ptr<char[]> srcModule1;
-    std::unique_ptr<char[]> srcModule2;
+    const uint8_t *srcModule1;
+    const uint8_t *srcModule2;
     size_t sizeModule1, sizeModule2 = 0;
     std::vector<const uint8_t *> inputSpirVs;
     std::vector<size_t> inputSizes;

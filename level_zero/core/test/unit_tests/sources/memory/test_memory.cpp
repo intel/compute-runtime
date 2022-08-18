@@ -2211,7 +2211,6 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
     std::unique_ptr<UltDeviceFactory> deviceFactory;
     std::unique_ptr<ContextShareableMock> context;
 
-    const std::string binaryFilename = "test_kernel";
     const std::string kernelName = "test";
     const uint32_t numKernelArguments = 6;
     std::unique_ptr<L0::Module> module;

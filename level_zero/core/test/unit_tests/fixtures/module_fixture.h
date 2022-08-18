@@ -190,7 +190,6 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
         DeviceFixture::tearDown();
     }
 
-    const std::string binaryFilename = "test_kernel";
     const std::string kernelName = "test";
     const uint32_t numKernelArguments = 6;
     std::unique_ptr<MockModule> module;
