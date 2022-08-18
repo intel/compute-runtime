@@ -63,13 +63,13 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(SysmanGlobalOperationsFixture, GivenForceTrueAndDeviceInUseWhenCallingResetThenSuccessIsReturned) {
+TEST_F(SysmanGlobalOperationsFixture, DISABLED_GivenForceTrueAndDeviceInUseWhenCallingResetThenSuccessIsReturned) {
     init(true);
     ze_result_t result = zesDeviceReset(device, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenCallingResetThenSuccessIsReturned) {
+TEST_F(SysmanGlobalOperationsFixture, DISABLED_GivenProcessStartsMidResetWhenCallingResetThenSuccessIsReturned) {
     init(false);
     ze_result_t result = zesDeviceReset(device, true);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);

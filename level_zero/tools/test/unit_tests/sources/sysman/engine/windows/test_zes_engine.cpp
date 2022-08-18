@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,13 +60,13 @@ class SysmanDeviceEngineFixture : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(SysmanDeviceEngineFixture, GivenComponentCountZeroWhenEnumeratingEngineGroupsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
+TEST_F(SysmanDeviceEngineFixture, DISABLED_GivenComponentCountZeroWhenEnumeratingEngineGroupsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, engineHandleComponentCount);
 }
 
-TEST_F(SysmanDeviceEngineFixture, GivenInvalidComponentCountWhenEnumeratingEngineGroupsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
+TEST_F(SysmanDeviceEngineFixture, DISABLED_GivenInvalidComponentCountWhenEnumeratingEngineGroupsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, engineHandleComponentCount);
@@ -76,7 +76,7 @@ TEST_F(SysmanDeviceEngineFixture, GivenInvalidComponentCountWhenEnumeratingEngin
     EXPECT_EQ(count, engineHandleComponentCount);
 }
 
-TEST_F(SysmanDeviceEngineFixture, GivenComponentCountZeroWhenEnumeratingEngineGroupsThenValidPowerHandlesIsReturned) {
+TEST_F(SysmanDeviceEngineFixture, DISABLED_GivenComponentCountZeroWhenEnumeratingEngineGroupsThenValidPowerHandlesIsReturned) {
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, engineHandleComponentCount);
@@ -88,7 +88,7 @@ TEST_F(SysmanDeviceEngineFixture, GivenComponentCountZeroWhenEnumeratingEngineGr
     }
 }
 
-TEST_F(SysmanDeviceEngineFixture, GivenValidHandleGetPropertiesThenCorrectEngineGroupIsReturned) {
+TEST_F(SysmanDeviceEngineFixture, DISABLED_GivenValidHandleGetPropertiesThenCorrectEngineGroupIsReturned) {
     auto handles = get_engine_handles(engineHandleComponentCount);
     uint32_t engineGroupIndex = 0;
     for (auto handle : handles) {
@@ -103,7 +103,7 @@ TEST_F(SysmanDeviceEngineFixture, GivenValidHandleGetPropertiesThenCorrectEngine
     }
 }
 
-TEST_F(SysmanDeviceEngineFixture, GivenValidHandleGetAvtivityThenCorrectValuesAreReturned) {
+TEST_F(SysmanDeviceEngineFixture, DISABLED_GivenValidHandleGetAvtivityThenCorrectValuesAreReturned) {
     auto handles = get_engine_handles(engineHandleComponentCount);
     uint32_t engineGroupIndex = 0;
     for (auto handle : handles) {

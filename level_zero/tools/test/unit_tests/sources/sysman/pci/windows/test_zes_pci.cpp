@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -83,7 +83,7 @@ class SysmanDevicePciFixture : public SysmanDeviceFixture {
     MemoryManager *pMemoryManagerOld;
 };
 
-TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetPropertiesWithLocalMemoryThenVerifyzetSysmanPciGetPropertiesCallSucceeds) {
+TEST_F(SysmanDevicePciFixture, DISABLED_GivenValidSysmanHandleWhenCallingzetSysmanPciGetPropertiesWithLocalMemoryThenVerifyzetSysmanPciGetPropertiesCallSucceeds) {
     setLocalMemorySupportedAndReinit(true);
 
     zes_pci_properties_t properties;
@@ -99,7 +99,7 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetP
     EXPECT_EQ(properties.maxSpeed.width, pKmdSysManager->mockMaxLinkWidth[KmdSysman::PciDomainsType::PciRootPort]);
 }
 
-TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetPropertiesWithNoLocalMemoryThenVerifyzetSysmanPciGetPropertiesCallSucceeds) {
+TEST_F(SysmanDevicePciFixture, DISABLED_GivenValidSysmanHandleWhenCallingzetSysmanPciGetPropertiesWithNoLocalMemoryThenVerifyzetSysmanPciGetPropertiesCallSucceeds) {
     setLocalMemorySupportedAndReinit(false);
 
     zes_pci_properties_t properties;
@@ -115,12 +115,12 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetP
     EXPECT_EQ(properties.maxSpeed.width, pKmdSysManager->mockMaxLinkWidth[KmdSysman::PciDomainsType::PciCurrentDevice]);
 }
 
-TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetBarsThenVerifyzetSysmanPciGetBarsCallSucceeds) {
+TEST_F(SysmanDevicePciFixture, DISABLED_GivenValidSysmanHandleWhenCallingzetSysmanPciGetBarsThenVerifyzetSysmanPciGetBarsCallSucceeds) {
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciGetBars(device, &count, nullptr));
 }
 
-TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetBarsThenVerifyzetSysmanPciGetBarsCallSucceedsWith1_2Extension) {
+TEST_F(SysmanDevicePciFixture, DISABLED_GivenValidSysmanHandleWhenCallingzetSysmanPciGetBarsThenVerifyzetSysmanPciGetBarsCallSucceedsWith1_2Extension) {
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciGetBars(device, &count, nullptr));
     EXPECT_NE(count, 0u);
@@ -144,7 +144,7 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetB
     }
 }
 
-TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingPciGetBarsThenVerifyAPICallSucceedsWith1_2ExtensionWithNullPtr) {
+TEST_F(SysmanDevicePciFixture, DISABLED_GivenValidSysmanHandleWhenCallingPciGetBarsThenVerifyAPICallSucceedsWith1_2ExtensionWithNullPtr) {
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciGetBars(device, &count, nullptr));
     EXPECT_NE(count, 0u);
@@ -162,7 +162,7 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingPciGetBarsThenVe
     pBarProps = nullptr;
 }
 
-TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetBarsThenVerifyzetSysmanPciGetBarsCallSucceedsWith1_2ExtensionWrongType) {
+TEST_F(SysmanDevicePciFixture, DISABLED_GivenValidSysmanHandleWhenCallingzetSysmanPciGetBarsThenVerifyzetSysmanPciGetBarsCallSucceedsWith1_2ExtensionWrongType) {
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciGetBars(device, &count, nullptr));
     EXPECT_NE(count, 0u);
@@ -185,7 +185,7 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetB
     }
 }
 
-TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetStatsWithLocalMemoryThenVerifyzetSysmanPciGetBarsCallSucceeds) {
+TEST_F(SysmanDevicePciFixture, DISABLED_GivenValidSysmanHandleWhenCallingzetSysmanPciGetStatsWithLocalMemoryThenVerifyzetSysmanPciGetBarsCallSucceeds) {
     setLocalMemorySupportedAndReinit(true);
 
     zes_pci_state_t state;
@@ -195,7 +195,7 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetS
     EXPECT_EQ(state.speed.width, pKmdSysManager->mockCurrentLinkWidth[KmdSysman::PciDomainsType::PciRootPort]);
 }
 
-TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetStatsWithNoLocalMemoryThenVerifyzetSysmanPciGetBarsCallSucceeds) {
+TEST_F(SysmanDevicePciFixture, DISABLED_GivenValidSysmanHandleWhenCallingzetSysmanPciGetStatsWithNoLocalMemoryThenVerifyzetSysmanPciGetBarsCallSucceeds) {
     setLocalMemorySupportedAndReinit(false);
 
     zes_pci_state_t state;
@@ -205,7 +205,7 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetS
     EXPECT_EQ(state.speed.width, pKmdSysManager->mockCurrentLinkWidth[KmdSysman::PciDomainsType::PciCurrentDevice]);
 }
 
-TEST_F(SysmanDevicePciFixture, WhenConvertingLinkSpeedThenResultIsCorrect) {
+TEST_F(SysmanDevicePciFixture, DISABLED_WhenConvertingLinkSpeedThenResultIsCorrect) {
     for (int32_t i = PciGenerations::PciGen1; i <= PciGenerations::PciGen5; i++) {
         double speed = convertPciGenToLinkSpeed(i);
         int32_t gen = convertLinkSpeedToPciGen(speed);

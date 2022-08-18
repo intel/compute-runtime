@@ -107,7 +107,7 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
     MemoryManager *pMemoryManagerOld;
 };
 
-TEST_F(SysmanDeviceMemoryFixture, GivenComponentCountZeroWhenEnumeratingMemoryModulesWithLocalMemorySupportThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
+TEST_F(SysmanDeviceMemoryFixture, DISABLED_GivenComponentCountZeroWhenEnumeratingMemoryModulesWithLocalMemorySupportThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
     setLocalSupportedAndReinit(true);
 
     uint32_t count = 0;
@@ -115,7 +115,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenComponentCountZeroWhenEnumeratingMemoryMo
     EXPECT_EQ(count, memoryHandleComponentCount);
 }
 
-TEST_F(SysmanDeviceMemoryFixture, GivenInvalidComponentCountWhenEnumeratingMemoryModulesWithLocalMemorySupportThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
+TEST_F(SysmanDeviceMemoryFixture, DISABLED_GivenInvalidComponentCountWhenEnumeratingMemoryModulesWithLocalMemorySupportThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
     setLocalSupportedAndReinit(true);
 
     uint32_t count = 0;
@@ -127,7 +127,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenInvalidComponentCountWhenEnumeratingMemor
     EXPECT_EQ(count, memoryHandleComponentCount);
 }
 
-TEST_F(SysmanDeviceMemoryFixture, GivenComponentCountZeroWhenEnumeratingMemoryModulesWithLocalMemorySupportThenValidPowerHandlesIsReturned) {
+TEST_F(SysmanDeviceMemoryFixture, DISABLED_GivenComponentCountZeroWhenEnumeratingMemoryModulesWithLocalMemorySupportThenValidPowerHandlesIsReturned) {
     setLocalSupportedAndReinit(true);
 
     uint32_t count = 0;
@@ -141,7 +141,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenComponentCountZeroWhenEnumeratingMemoryMo
     }
 }
 
-TEST_F(SysmanDeviceMemoryFixture, GivenComponentCountZeroWhenEnumeratingMemoryModulesWithNoLocalMemorySupportThenZeroCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
+TEST_F(SysmanDeviceMemoryFixture, DISABLED_GivenComponentCountZeroWhenEnumeratingMemoryModulesWithNoLocalMemorySupportThenZeroCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
     setLocalSupportedAndReinit(false);
 
     uint32_t count = 0;
@@ -149,7 +149,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenComponentCountZeroWhenEnumeratingMemoryMo
     EXPECT_EQ(count, memoryHandleComponentCount);
 }
 
-TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingGettingPropertiesWithLocalMemoryThenCallSucceeds) {
+TEST_F(SysmanDeviceMemoryFixture, DISABLED_GivenValidMemoryHandleWhenCallingGettingPropertiesWithLocalMemoryThenCallSucceeds) {
     pKmdSysManager->mockMemoryLocation = KmdSysman::MemoryLocationsType::DeviceMemory;
     setLocalSupportedAndReinit(true);
 
@@ -187,7 +187,7 @@ TEST_F(SysmanDeviceMemoryFixture, DISABLED_GivenValidMemoryHandleWhenGettingStat
     }
 }
 
-TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenGettingBandwidthThenCallSucceeds) {
+TEST_F(SysmanDeviceMemoryFixture, DISABLED_GivenValidMemoryHandleWhenGettingBandwidthThenCallSucceeds) {
     setLocalSupportedAndReinit(true);
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 

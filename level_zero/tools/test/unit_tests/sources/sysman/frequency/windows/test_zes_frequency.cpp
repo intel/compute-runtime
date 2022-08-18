@@ -88,7 +88,7 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequencyDomainsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
+TEST_F(SysmanDeviceFrequencyFixture, DISABLED_GivenComponentCountZeroWhenEnumeratingFrequencyDomainsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
     init(true);
 
     uint32_t count = 0;
@@ -96,7 +96,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequ
     EXPECT_EQ(count, frequencyHandleComponentCount);
 }
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenInvalidComponentCountWhenEnumeratingFrequencyDomainsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
+TEST_F(SysmanDeviceFrequencyFixture, DISABLED_GivenInvalidComponentCountWhenEnumeratingFrequencyDomainsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
     init(true);
 
     uint32_t count = 0;
@@ -108,7 +108,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenInvalidComponentCountWhenEnumeratingFr
     EXPECT_EQ(count, frequencyHandleComponentCount);
 }
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequencyDomainsThenValidPowerHandlesIsReturned) {
+TEST_F(SysmanDeviceFrequencyFixture, DISABLED_GivenComponentCountZeroWhenEnumeratingFrequencyDomainsThenValidPowerHandlesIsReturned) {
     init(true);
 
     uint32_t count = 0;
@@ -122,7 +122,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequ
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyGetPropertiesThenSuccessIsReturned) {
+TEST_F(SysmanDeviceFrequencyFixture, DISABLED_GivenValidFrequencyHandleWhenCallingzesFrequencyGetPropertiesThenSuccessIsReturned) {
     init(true);
 
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
@@ -145,7 +145,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesAllowSetCallsToFalseFrequencyGetPropertiesThenSuccessIsReturned) {
+TEST_F(SysmanDeviceFrequencyFixture, DISABLED_GivenValidFrequencyHandleWhenCallingzesAllowSetCallsToFalseFrequencyGetPropertiesThenSuccessIsReturned) {
     init(false);
 
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
@@ -168,7 +168,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesAllo
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAndZeroCountWhenCallingzesFrequencyGetAvailableClocksThenCallSucceeds) {
+TEST_F(SysmanDeviceFrequencyFixture, DISABLED_GivenValidFrequencyHandleAndZeroCountWhenCallingzesFrequencyGetAvailableClocksThenCallSucceeds) {
     init(true);
 
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
@@ -189,7 +189,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAndZeroCountWhenCa
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAndCorrectCountWhenCallingzesFrequencyGetAvailableClocksThenCallSucceeds) {
+TEST_F(SysmanDeviceFrequencyFixture, DISABLED_GivenValidFrequencyHandleAndCorrectCountWhenCallingzesFrequencyGetAvailableClocksThenCallSucceeds) {
     init(true);
 
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
@@ -214,7 +214,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAndCorrectCountWhe
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyGetRangeThenVerifyzesFrequencyGetRangeTestCallSucceeds) {
+TEST_F(SysmanDeviceFrequencyFixture, DISABLED_GivenValidFrequencyHandleWhenCallingzesFrequencyGetRangeThenVerifyzesFrequencyGetRangeTestCallSucceeds) {
     init(true);
 
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
@@ -234,7 +234,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeTest1CallSucceeds) {
+TEST_F(SysmanDeviceFrequencyFixture, DISABLED_GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeTest1CallSucceeds) {
     init(true);
 
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
@@ -262,7 +262,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeTest2CallSucceeds) {
+TEST_F(SysmanDeviceFrequencyFixture, DISABLED_GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeTest2CallSucceeds) {
     init(true);
 
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
@@ -291,7 +291,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyGetStateThenVerifyCallSucceeds) {
+TEST_F(SysmanDeviceFrequencyFixture, DISABLED_GivenValidFrequencyHandleWhenCallingzesFrequencyGetStateThenVerifyCallSucceeds) {
     init(true);
 
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
@@ -321,7 +321,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyGetThrottleTimeThenVerifyCallFails) {
+TEST_F(SysmanDeviceFrequencyFixture, DISABLED_GivenValidFrequencyHandleWhenCallingzesFrequencyGetThrottleTimeThenVerifyCallFails) {
     init(true);
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     for (auto handle : handles) {
@@ -330,7 +330,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetCapabilitiesThenVerifyCallSucceeds) {
+TEST_F(SysmanDeviceFrequencyFixture, DISABLED_GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetCapabilitiesThenVerifyCallSucceeds) {
     init(false);
     uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
@@ -354,7 +354,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetFrequencyTargetThenVerifyCallSucceeds) {
+TEST_F(SysmanDeviceFrequencyFixture, DISABLED_GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetFrequencyTargetThenVerifyCallSucceeds) {
     init(false);
     uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
@@ -366,7 +366,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetVoltageTargetThenVerifyCallSucceeds) {
+TEST_F(SysmanDeviceFrequencyFixture, DISABLED_GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetVoltageTargetThenVerifyCallSucceeds) {
     init(false);
     uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
@@ -379,7 +379,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetModeThenVerifyCallSucceeds) {
+TEST_F(SysmanDeviceFrequencyFixture, DISABLED_GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetModeThenVerifyCallSucceeds) {
     init(false);
     uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
@@ -391,7 +391,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToFalseWhenCallingzesFrequencyOcSetFrequencyTargetThenVerifyCallFails) {
+TEST_F(SysmanDeviceFrequencyFixture, DISABLED_GivenValidFrequencyHandleAllowSetCallsToFalseWhenCallingzesFrequencyOcSetFrequencyTargetThenVerifyCallFails) {
     init(false);
     uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
@@ -402,7 +402,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToFal
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToFalseWhenCallingzesFrequencyOcSetVoltageTargetThenVerifyCallFails) {
+TEST_F(SysmanDeviceFrequencyFixture, DISABLED_GivenValidFrequencyHandleAllowSetCallsToFalseWhenCallingzesFrequencyOcSetVoltageTargetThenVerifyCallFails) {
     init(false);
     uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
@@ -413,7 +413,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToFal
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToFalseWhenCallingzesFrequencyOcSetModeThenVerifyCallFails) {
+TEST_F(SysmanDeviceFrequencyFixture, DISABLED_GivenValidFrequencyHandleAllowSetCallsToFalseWhenCallingzesFrequencyOcSetModeThenVerifyCallFails) {
     init(false);
     uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
@@ -424,7 +424,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToFal
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToTrueWhenCallingzesFrequencyOcSetFrequencyTargetThenVerifyCallSucceed) {
+TEST_F(SysmanDeviceFrequencyFixture, DISABLED_GivenValidFrequencyHandleAllowSetCallsToTrueWhenCallingzesFrequencyOcSetFrequencyTargetThenVerifyCallSucceed) {
     init(true);
     uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
@@ -438,7 +438,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToTru
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToTrueWhenCallingzesFrequencyOcSetVoltageTargetThenVerifyCallSucceed) {
+TEST_F(SysmanDeviceFrequencyFixture, DISABLED_GivenValidFrequencyHandleAllowSetCallsToTrueWhenCallingzesFrequencyOcSetVoltageTargetThenVerifyCallSucceed) {
     init(true);
     uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
@@ -453,7 +453,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToTru
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToTrueWhenCallingzesFrequencyOcSetModeThenVerifyCallSucceed) {
+TEST_F(SysmanDeviceFrequencyFixture, DISABLED_GivenValidFrequencyHandleAllowSetCallsToTrueWhenCallingzesFrequencyOcSetModeThenVerifyCallSucceed) {
     init(true);
     uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
