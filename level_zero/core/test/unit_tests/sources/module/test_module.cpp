@@ -2868,6 +2868,46 @@ TEST_F(ModuleTests, givenConstDataStringSectionWhenLinkingModuleThenSegmentIsPat
     EXPECT_EQ(static_cast<size_t>(stringsAddr), *reinterpret_cast<size_t *>(patchAddr));
 }
 
+TEST_F(ModuleTests, givenImplicitArgsRelocationAndStackCallsWhenLinkingBuiltinModuleThenSegmentIsNotPatchedAndImplicitArgsAreNotRequired) {
+    auto pModule = std::make_unique<WhiteBox<Module>>(device, nullptr, ModuleType::Builtin);
+
+    pModule->maxGroupSize = 32;
+
+    char data[64]{};
+    auto kernelInfo = new KernelInfo();
+    kernelInfo->heapInfo.KernelHeapSize = 64;
+    kernelInfo->heapInfo.pKernelHeap = data;
+
+    std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
+    kernelImmData->initialize(kernelInfo, device, 0, nullptr, nullptr, true);
+
+    kernelImmData->kernelDescriptor->kernelAttributes.flags.useStackCalls = true;
+    auto isaCpuPtr = reinterpret_cast<char *>(kernelImmData->isaGraphicsAllocation->getUnderlyingBuffer());
+    pModule->kernelImmDatas.push_back(std::move(kernelImmData));
+    pModule->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
+    auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
+    linkerInput->traits.requiresPatchingOfInstructionSegments = true;
+    linkerInput->textRelocations.push_back({{implicitArgsRelocationSymbolName, 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
+    pModule->translationUnit->programInfo.linkerInput = std::move(linkerInput);
+
+    EXPECT_FALSE(kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
+    auto status = pModule->linkBinary();
+    EXPECT_TRUE(status);
+    EXPECT_FALSE(kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
+
+    ze_kernel_handle_t kernelHandle;
+
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.pKernelName = kernelInfo->kernelDescriptor.kernelMetadata.kernelName.c_str();
+
+    ze_result_t res = pModule->createKernel(&kernelDesc, &kernelHandle);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_EQ(0u, *reinterpret_cast<uint32_t *>(ptrOffset(isaCpuPtr, 0x8)));
+    Kernel::fromHandle(kernelHandle)->destroy();
+}
+
 TEST_F(ModuleTests, givenImplicitArgsRelocationAndStackCallsWhenLinkingModuleThenSegmentIsPatchedAndImplicitArgsAreRequired) {
     auto pModule = std::make_unique<Module>(device, nullptr, ModuleType::User);
 

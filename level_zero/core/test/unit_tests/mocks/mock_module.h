@@ -28,6 +28,7 @@ struct WhiteBox<::L0::Module> : public ::L0::ModuleImp {
     using BaseClass::importedSymbolAllocations;
     using BaseClass::isFullyLinked;
     using BaseClass::kernelImmDatas;
+    using BaseClass::maxGroupSize;
     using BaseClass::symbols;
     using BaseClass::translationUnit;
     using BaseClass::type;

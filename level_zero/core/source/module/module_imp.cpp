@@ -882,7 +882,12 @@ bool ModuleImp::linkBinary() {
         return LinkingStatus::LinkedPartially == linkStatus;
     } else if (type != ModuleType::Builtin) {
         copyPatchedSegments(isaSegmentsForPatching);
+    } else {
+        for (auto &kernelDescriptor : kernelDescriptors) {
+            kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = false;
+        }
     }
+
     DBG_LOG(PrintRelocations, NEO::constructRelocationsDebugMessage(this->symbols));
     isFullyLinked = true;
     for (auto kernelId = 0u; kernelId < kernelImmDatas.size(); kernelId++) {
