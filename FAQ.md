@@ -76,6 +76,19 @@ There is no plan to provide the following features or support in the NEO driver 
 * platforms older than Gen8 (Broadwell) - please use [Beignet driver](https://github.com/intel/beignet)
 * sharing with OpenGL / EGL on Linux 
 
+## Capabilities
+
+### How much memory is available to the application? 
+
+Actual available memory should be read from the driver capabilities using the dedicated API. The driver will report available memory depending on the type of graphics device
+(discrete vs. integrated) and operating system as follows:
+* discrete on Linux - 95% of device memory
+* integrated on Linux - 80% of system memory
+* discrete on Windows - 80% of device memory
+* integrated on Windows - 80% of system memory
+
+Ignoring these instructions may lead to undefined behavior, including abort.
+
 ## Who are we?
 
 The Compute Runtime team is part of AXG SCG (Super Compute Group).
