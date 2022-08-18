@@ -8,6 +8,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hash.h"
 #include "shared/source/memory_manager/surface.h"
@@ -723,6 +724,12 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenContextIsCreatedThenCorrect
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCallbacksAreCalled) {
+
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerHwInfoConfig.isForceToStatelessRequired() || !compilerHwInfoConfig.isStatelessToStatefulBufferOffsetSupported()) {
+        GTEST_SKIP();
+    }
+
     gtpinCallbacks.onContextCreate = onContextCreate;
     gtpinCallbacks.onContextDestroy = onContextDestroy;
     gtpinCallbacks.onKernelCreate = onKernelCreate;
@@ -873,6 +880,12 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGTPinCallbacksAreCalled) {
+
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerHwInfoConfig.isForceToStatelessRequired() || !compilerHwInfoConfig.isStatelessToStatefulBufferOffsetSupported()) {
+        GTEST_SKIP();
+    }
+
     gtpinCallbacks.onContextCreate = onContextCreate;
     gtpinCallbacks.onContextDestroy = onContextDestroy;
     gtpinCallbacks.onKernelCreate = onKernelCreate;
@@ -1071,6 +1084,12 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenK
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenGTPinSubmitKernelCallbackIsNotCalled) {
+
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerHwInfoConfig.isForceToStatelessRequired() || !compilerHwInfoConfig.isStatelessToStatefulBufferOffsetSupported()) {
+        GTEST_SKIP();
+    }
+
     gtpinCallbacks.onContextCreate = onContextCreate;
     gtpinCallbacks.onContextDestroy = onContextDestroy;
     gtpinCallbacks.onKernelCreate = onKernelCreate;
@@ -1185,6 +1204,12 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenG
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenBlockedKernelWithoutSSHIsUsedThenGTPinSubmitKernelCallbackIsNotCalled) {
+
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerHwInfoConfig.isForceToStatelessRequired() || !compilerHwInfoConfig.isStatelessToStatefulBufferOffsetSupported()) {
+        GTEST_SKIP();
+    }
+
     gtpinCallbacks.onContextCreate = onContextCreate;
     gtpinCallbacks.onContextDestroy = onContextDestroy;
     gtpinCallbacks.onKernelCreate = onKernelCreate;
@@ -1308,6 +1333,12 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenBlockedKernelWithoutSSHIsUs
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwiceThenGTPinCreateKernelCallbackIsCalledOnce) {
+
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerHwInfoConfig.isForceToStatelessRequired() || !compilerHwInfoConfig.isStatelessToStatefulBufferOffsetSupported()) {
+        GTEST_SKIP();
+    }
+
     gtpinCallbacks.onContextCreate = onContextCreate;
     gtpinCallbacks.onContextDestroy = onContextDestroy;
     gtpinCallbacks.onKernelCreate = onKernelCreate;
@@ -1471,6 +1502,10 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
 }
 
 TEST_F(GTPinTests, givenMultipleKernelSubmissionsWhenOneOfGtpinSurfacesIsNullThenOnlyNonNullSurfacesAreMadeResident) {
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerHwInfoConfig.isForceToStatelessRequired() || !compilerHwInfoConfig.isStatelessToStatefulBufferOffsetSupported()) {
+        GTEST_SKIP();
+    }
     gtpinCallbacks.onContextCreate = onContextCreate;
     gtpinCallbacks.onContextDestroy = onContextDestroy;
     gtpinCallbacks.onKernelCreate = onKernelCreate;
@@ -1533,6 +1568,8 @@ TEST_F(GTPinTests, givenMultipleKernelSubmissionsWhenOneOfGtpinSurfacesIsNullThe
     auto pCmdQueue = castToObject<CommandQueue>(cmdQ);
 
     gtpinNotifyKernelSubmit(pMultiDeviceKernel1, pCmdQueue);
+
+    ASSERT_NE(0u, kernelExecQueue.size());
     EXPECT_EQ(nullptr, kernelExecQueue[0].gtpinResource);
 
     CommandStreamReceiver &csr = pCmdQueue->getGpgpuCommandStreamReceiver();
@@ -1592,6 +1629,12 @@ TEST_F(GTPinTests, givenMultipleKernelSubmissionsWhenOneOfGtpinSurfacesIsNullThe
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKernelSubmitRelatedNotificationsAreCalled) {
+
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerHwInfoConfig.isForceToStatelessRequired() || !compilerHwInfoConfig.isStatelessToStatefulBufferOffsetSupported()) {
+        GTEST_SKIP();
+    }
+
     gtpinCallbacks.onContextCreate = onContextCreate;
     gtpinCallbacks.onContextDestroy = onContextDestroy;
     gtpinCallbacks.onKernelCreate = onKernelCreate;
@@ -1787,6 +1830,12 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKerne
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOneKernelIsSubmittedSeveralTimesThenCorrectBuffersAreMadeResident) {
+
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerHwInfoConfig.isForceToStatelessRequired() || !compilerHwInfoConfig.isStatelessToStatefulBufferOffsetSupported()) {
+        GTEST_SKIP();
+    }
+
     gtpinCallbacks.onContextCreate = onContextCreate;
     gtpinCallbacks.onContextDestroy = onContextDestroy;
     gtpinCallbacks.onKernelCreate = onKernelCreate;
@@ -2035,6 +2084,11 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenLowMemoryConditionOccursThe
 }
 
 TEST_F(GTPinTests, givenKernelWithSSHThenVerifyThatSSHResizeWorksWell) {
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerHwInfoConfig.isForceToStatelessRequired() || !compilerHwInfoConfig.isStatelessToStatefulBufferOffsetSupported()) {
+        GTEST_SKIP();
+    }
+
     cl_kernel kernel = nullptr;
     cl_program pProgram = nullptr;
     cl_device_id device = (cl_device_id)pDevice;
@@ -2221,7 +2275,7 @@ TEST(GTPinOfflineTests, givenGtPinInDisabledStateWhenCallbacksFromEnqueuePathAre
     auto dummyQueue = reinterpret_cast<void *>(0x1000);
     uint32_t dummyCompletedTask = 0u;
 
-    //now call gtpin function with dummy data, this must not crash
+    // now call gtpin function with dummy data, this must not crash
     gtpinNotifyKernelSubmit(dummyKernel, dummyQueue);
     gtpinNotifyPreFlushTask(dummyQueue);
     gtpinNotifyTaskCompletion(dummyCompletedTask);
@@ -2491,7 +2545,9 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBuf
 
 HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBufferIsAllocatedInSharedMemoryThenSetSurfaceStateForTheBufferAndMakeItResident) {
     GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo())) {
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo()) ||
+        compilerHwInfoConfig.isForceToStatelessRequired() || !compilerHwInfoConfig.isStatelessToStatefulBufferOffsetSupported()) {
         GTEST_SKIP();
     }
 

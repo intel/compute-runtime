@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -554,6 +555,8 @@ HWTEST_F(EnqueueKernelTest, GivenGpuHangAndBlockingCallWhenEnqueingKernelThenOut
 }
 
 HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenIndirectDataIsAdded) {
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+
     auto dshBefore = pDSH->getUsed();
     auto iohBefore = pIOH->getUsed();
     auto sshBefore = pSSH->getUsed();
@@ -561,7 +564,7 @@ HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenIndirectDataIsAdded) {
     callOneWorkItemNDRKernel();
     EXPECT_TRUE(UnitTestHelper<FamilyType>::evaluateDshUsage(dshBefore, pDSH->getUsed(), &pKernel->getKernelInfo().kernelDescriptor, rootDeviceIndex));
     EXPECT_NE(iohBefore, pIOH->getUsed());
-    if (pKernel->usesBindfulAddressingForBuffers() || pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.usesImages) {
+    if ((pKernel->usesBindfulAddressingForBuffers() || pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.usesImages) && compilerHwInfoConfig.isStatelessToStatefulBufferOffsetSupported()) {
         EXPECT_NE(sshBefore, pSSH->getUsed());
     }
 }
