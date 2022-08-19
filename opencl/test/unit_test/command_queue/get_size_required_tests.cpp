@@ -73,7 +73,7 @@ HWTEST_F(GetSizeRequiredTest, WhenEnqueuingMarkerThenHeapsAndCommandBufferAreNot
     size_t expectedStreamSize = 0;
     if (pCmdQ->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         expectedStreamSize = alignUp(MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(
-                                         pDevice->getHardwareInfo()),
+                                         pDevice->getHardwareInfo(), false),
                                      MemoryConstants::cacheLineSize);
     }
     EXPECT_EQ(expectedStreamSize, commandStream.getUsed() - usedBeforeCS);
@@ -100,7 +100,7 @@ HWTEST_F(GetSizeRequiredTest, WhenEnqueuingBarrierThenHeapsAndCommandBufferAreNo
     size_t expectedStreamSize = 0;
     if (pCmdQ->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         expectedStreamSize = alignUp(MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(
-                                         pDevice->getHardwareInfo()),
+                                         pDevice->getHardwareInfo(), false),
                                      MemoryConstants::cacheLineSize);
     }
 

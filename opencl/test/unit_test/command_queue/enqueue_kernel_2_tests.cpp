@@ -900,7 +900,7 @@ HWTEST_F(EnqueueAuxKernelTests, givenMultipleArgsWhenAuxTranslationIsRequiredThe
     auto pipeControls = findAll<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
 
     auto additionalPcCount = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(
-                                 pDevice->getHardwareInfo()) /
+                                 pDevice->getHardwareInfo(), false) /
                              sizeof(typename FamilyType::PIPE_CONTROL);
 
     // |AuxToNonAux|NDR|NonAuxToAux|
@@ -1016,7 +1016,7 @@ HWTEST_F(EnqueueKernelTest, givenTimestampWriteEnableWhenMarkerProfilingWithoutW
     auto baseCommandStreamSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_MARKER, {}, false, false, false, *pCmdQ, multiDispatchInfo, false, false);
     auto extendedCommandStreamSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_MARKER, {}, false, false, false, *pCmdQ, multiDispatchInfo, true, false);
 
-    EXPECT_EQ(baseCommandStreamSize + 4 * EncodeStoreMMIO<FamilyType>::size + MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(), extendedCommandStreamSize);
+    EXPECT_EQ(baseCommandStreamSize + 4 * EncodeStoreMMIO<FamilyType>::size + MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false), extendedCommandStreamSize);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueKernelTest, givenTimestampWriteEnableOnMultiTileQueueWhenMarkerProfilingWithoutWaitListThenSizeHasFourMMIOStoresAndCrossTileBarrier) {

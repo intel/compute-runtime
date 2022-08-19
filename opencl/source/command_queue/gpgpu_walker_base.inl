@@ -173,7 +173,7 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
     if (blitEnqueue) {
         size_t expectedSizeCS = TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<GfxFamily>();
         if (commandQueueHw.isCacheFlushForBcsRequired()) {
-            expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo);
+            expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo, false);
         }
 
         return expectedSizeCS;
@@ -195,7 +195,7 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
             expectedSizeCS += 4 * EncodeStoreMMIO<GfxFamily>::size;
         }
     } else if (isMarkerWithProfiling) {
-        expectedSizeCS += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
+        expectedSizeCS += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
         if (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
             expectedSizeCS += 2 * EncodeStoreMMIO<GfxFamily>::size;
         }
@@ -205,7 +205,7 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
     }
 
     if (DebugManager.flags.PauseOnEnqueue.get() != -1) {
-        expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier() * 2;
+        expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false) * 2;
         expectedSizeCS += sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT) * 2;
     }
 
@@ -231,7 +231,7 @@ template <typename GfxFamily>
 size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSNonKernel(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue) {
     size_t size = 0;
     if (reserveProfilingCmdsSpace) {
-        size += 2 * sizeof(PIPE_CONTROL) + 4 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+        size += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false) + 4 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
     }
     return size;
 }

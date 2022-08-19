@@ -130,10 +130,10 @@ void GpgpuWalkerHelper<GfxFamily>::adjustMiStoreRegMemMode(MI_STORE_REG_MEM<GfxF
 
 template <typename GfxFamily>
 size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel, const DispatchInfo &dispatchInfo) {
-    size_t numPipeControls = MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(commandQueue.getDevice().getHardwareInfo()) ? 2 : 1;
+    size_t numBarriers = MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(commandQueue.getDevice().getHardwareInfo()) ? 2 : 1;
 
     size_t size = sizeof(typename GfxFamily::COMPUTE_WALKER) +
-                  (sizeof(typename GfxFamily::PIPE_CONTROL) * numPipeControls) +
+                  (MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false) * numBarriers) +
                   HardwareCommandsHelper<GfxFamily>::getSizeRequiredCS() +
                   EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(pKernel->getKernelInfo().heapInfo.KernelHeapSize, commandQueue.getDevice().getHardwareInfo());
     auto devices = commandQueue.getGpgpuCommandStreamReceiver().getOsContext().getDeviceBitfield();
@@ -170,7 +170,7 @@ size_t EnqueueOperation<GfxFamily>::getSizeForCacheFlushAfterWalkerCommands(cons
     size_t size = 0;
 
     if (kernel.requiresCacheFlushCommand(commandQueue)) {
-        size += sizeof(typename GfxFamily::PIPE_CONTROL);
+        size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
 
         if constexpr (GfxFamily::isUsingL3Control) {
             StackVec<GraphicsAllocation *, 32> allocationsForCacheFlush;

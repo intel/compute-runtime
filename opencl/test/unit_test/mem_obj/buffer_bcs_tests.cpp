@@ -769,7 +769,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBufferOperationWithoutKernelWhenEstimati
     auto expectedSize = TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<FamilyType>();
 
     if (cmdQ->isCacheFlushForBcsRequired()) {
-        expectedSize += MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(hwInfo);
+        expectedSize += MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(hwInfo, false);
     }
 
     EXPECT_EQ(expectedSize, readBufferCmdsSize);

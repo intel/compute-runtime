@@ -141,7 +141,7 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingNoPostSyn
 
 template <typename GfxFamily>
 inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingPostSyncCommands() const {
-    return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekHwInfo());
+    return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekHwInfo(), false);
 }
 
 template <typename GfxFamily>

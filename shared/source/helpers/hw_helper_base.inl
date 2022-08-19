@@ -216,7 +216,7 @@ template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(LinearStream &commandStream, PostSyncMode postSyncMode, uint64_t gpuAddress, uint64_t immediateData,
                                                                                const HardwareInfo &hwInfo, PipeControlArgs &args) {
 
-    void *commandBuffer = commandStream.getSpace(MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo));
+    void *commandBuffer = commandStream.getSpace(MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo, args.tlbInvalidation));
 
     MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(commandBuffer, postSyncMode, gpuAddress, immediateData, hwInfo, args);
 }
@@ -234,7 +234,7 @@ void MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(
 
     setPostSyncExtraProperties(args, hwInfo);
     MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(commandsBuffer, postSyncMode, gpuAddress, immediateData, args);
-    commandsBuffer = ptrOffset(commandsBuffer, getSizeForSingleBarrier());
+    commandsBuffer = ptrOffset(commandsBuffer, getSizeForSingleBarrier(args.tlbInvalidation));
 
     MemorySynchronizationCommands<GfxFamily>::setAdditionalSynchronization(commandsBuffer, gpuAddress, false, hwInfo);
 }
@@ -251,7 +251,7 @@ void MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(void *commandsBu
 
 template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(LinearStream &commandStream, PostSyncMode postSyncMode, uint64_t gpuAddress, uint64_t immediateData, PipeControlArgs &args) {
-    auto barrier = commandStream.getSpace(MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier());
+    auto barrier = commandStream.getSpace(MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(args.tlbInvalidation));
 
     setSingleBarrier(barrier, postSyncMode, gpuAddress, immediateData, args);
 }
@@ -368,13 +368,13 @@ bool MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(bool isFlushPref
 }
 
 template <typename GfxFamily>
-size_t MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier() {
+size_t MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(bool tlbInvalidationRequired) {
     return sizeof(typename GfxFamily::PIPE_CONTROL);
 }
 
 template <typename GfxFamily>
-size_t MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(const HardwareInfo &hwInfo) {
-    size_t size = getSizeForSingleBarrier() +
+size_t MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(const HardwareInfo &hwInfo, bool tlbInvalidationRequired) {
+    size_t size = getSizeForSingleBarrier(tlbInvalidationRequired) +
                   getSizeForBarrierWa(hwInfo) +
                   getSizeForSingleAdditionalSynchronization(hwInfo);
     return size;
@@ -384,7 +384,7 @@ template <typename GfxFamily>
 size_t MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWa(const HardwareInfo &hwInfo) {
     size_t size = 0;
     if (MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(hwInfo)) {
-        size = getSizeForSingleBarrier() +
+        size = getSizeForSingleBarrier(false) +
                getSizeForSingleAdditionalSynchronization(hwInfo);
     }
     return size;
@@ -532,16 +532,11 @@ size_t HwHelperHw<GfxFamily>::getSingleTimestampPacketSizeHw() {
 
 template <typename GfxFamily>
 size_t MemorySynchronizationCommands<GfxFamily>::getSizeForFullCacheFlush() {
-    return sizeof(typename GfxFamily::PIPE_CONTROL);
+    return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(true);
 }
 
 template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::addFullCacheFlush(LinearStream &commandStream, const HardwareInfo &hwInfo) {
-    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-
-    PIPE_CONTROL *pipeControl = commandStream.getSpaceForCmd<PIPE_CONTROL>();
-    PIPE_CONTROL cmd = GfxFamily::cmdInitPipeControl;
-
     PipeControlArgs args;
     args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
     args.renderTargetCacheFlushEnable = true;
@@ -552,8 +547,7 @@ void MemorySynchronizationCommands<GfxFamily>::addFullCacheFlush(LinearStream &c
     args.stateCacheInvalidationEnable = true;
     args.tlbInvalidation = true;
     MemorySynchronizationCommands<GfxFamily>::setCacheFlushExtraProperties(args);
-    MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(&cmd, args);
-    *pipeControl = cmd;
+    MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(commandStream, args);
 }
 
 template <typename GfxFamily>

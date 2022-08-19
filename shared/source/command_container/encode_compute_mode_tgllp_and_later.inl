@@ -20,11 +20,11 @@ size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const HardwareInfo &h
     std::ignore = isExtendedWARequired;
 
     if (isBasicWARequired) {
-        size += sizeof(typename Family::PIPE_CONTROL);
+        size += MemorySynchronizationCommands<Family>::getSizeForSingleBarrier(false);
     }
     size += sizeof(typename Family::STATE_COMPUTE_MODE);
     if (hasSharedHandles) {
-        size += sizeof(typename Family::PIPE_CONTROL);
+        size += MemorySynchronizationCommands<Family>::getSizeForSingleBarrier(false);
     }
     if (hwInfoConfig.is3DPipelineSelectWARequired() && isRcs) {
         size += (2 * PreambleHelper<Family>::getCmdSizeForPipelineSelect(hwInfo));
@@ -36,8 +36,6 @@ template <typename Family>
 inline void EncodeComputeMode<Family>::programComputeModeCommandWithSynchronization(
     LinearStream &csr, StateComputeModeProperties &properties, const PipelineSelectArgs &args,
     bool hasSharedHandles, const HardwareInfo &hwInfo, bool isRcs, LogicalStateHelper *logicalStateHelper) {
-
-    using PIPE_CONTROL = typename Family::PIPE_CONTROL;
 
     NEO::EncodeWA<Family>::encodeAdditionalPipelineSelect(csr, args, true, hwInfo, isRcs);
 

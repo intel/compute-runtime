@@ -1502,7 +1502,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenBarrierNodeSetWhe
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.barrierTimestampPacketNodes = &timestampPacketDependencies.barrierNodes;
 
-    size_t expectedCmdSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(hwInfo);
+    size_t expectedCmdSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(hwInfo, false);
     size_t estimatedCmdSize = commandStreamReceiver->getCmdSizeForStallingCommands(dispatchFlags);
     EXPECT_EQ(expectedCmdSize, estimatedCmdSize);
 

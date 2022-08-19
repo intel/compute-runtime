@@ -452,9 +452,9 @@ struct MemorySynchronizationCommands {
     static void addFullCacheFlush(LinearStream &commandStream, const HardwareInfo &hwInfo);
     static void setCacheFlushExtraProperties(PipeControlArgs &args);
 
-    static size_t getSizeForBarrierWithPostSyncOperation(const HardwareInfo &hwInfo);
+    static size_t getSizeForBarrierWithPostSyncOperation(const HardwareInfo &hwInfo, bool tlbInvalidationRequired);
     static size_t getSizeForBarrierWa(const HardwareInfo &hwInfo);
-    static size_t getSizeForSingleBarrier();
+    static size_t getSizeForSingleBarrier(bool tlbInvalidationRequired);
     static size_t getSizeForSingleAdditionalSynchronizationForDirectSubmission(const HardwareInfo &hwInfo);
     static size_t getSizeForSingleAdditionalSynchronization(const HardwareInfo &hwInfo);
     static size_t getSizeForAdditonalSynchronization(const HardwareInfo &hwInfo);
@@ -462,8 +462,6 @@ struct MemorySynchronizationCommands {
 
     static bool isBarrierWaRequired(const HardwareInfo &hwInfo);
     static bool isBarrierlPriorToPipelineSelectWaRequired(const HardwareInfo &hwInfo);
-
-  protected:
     static void setBarrierExtraProperties(void *barrierCmd, PipeControlArgs &args);
 };
 

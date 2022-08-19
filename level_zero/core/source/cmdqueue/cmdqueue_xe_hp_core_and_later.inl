@@ -94,7 +94,6 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSize() {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
-    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename GfxFamily::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 
     NEO::Device *neoDevice = device->getNEODevice();
@@ -103,7 +102,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSize() {
     size_t size = 0;
 
     if (NEO::ApiSpecificConfig::getBindlessConfiguration()) {
-        size += sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL) + sizeof(_3DSTATE_BINDING_TABLE_POOL_ALLOC);
+        size += sizeof(STATE_BASE_ADDRESS) + NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false) + sizeof(_3DSTATE_BINDING_TABLE_POOL_ALLOC);
 
         if (hwInfoConfig.isAdditionalStateBaseAddressWARequired(hwInfo)) {
             size += sizeof(STATE_BASE_ADDRESS);

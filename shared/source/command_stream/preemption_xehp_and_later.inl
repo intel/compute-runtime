@@ -79,7 +79,7 @@ size_t PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(Device &device, b
         HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
         if (hwHelper.isSipWANeeded(hwInfo)) {
-            size += sizeof(typename GfxFamily::PIPE_CONTROL);
+            size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
             size += 2 * sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
         } else {
             auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
@@ -87,7 +87,7 @@ size_t PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(Device &device, b
             const auto isWARequired = isBasicWARequired || isExtendedWARequired;
 
             if (isWARequired) {
-                size += sizeof(typename GfxFamily::PIPE_CONTROL);
+                size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
             }
             size += sizeof(typename GfxFamily::STATE_SIP);
         }

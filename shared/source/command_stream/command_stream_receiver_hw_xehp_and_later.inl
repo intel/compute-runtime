@@ -30,7 +30,7 @@ template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize(const Device &device) const {
     size_t size = sizeof(typename GfxFamily::STATE_BASE_ADDRESS);
     size += sizeof(typename GfxFamily::_3DSTATE_BINDING_TABLE_POOL_ALLOC);
-    size += sizeof(PIPE_CONTROL);
+    size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
 
     auto &hwInfo = *device.getRootDeviceEnvironment().getHardwareInfo();
     auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
@@ -157,7 +157,7 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingNoPostSyn
                                                                   false,
                                                                   false);
     } else {
-        return sizeof(typename GfxFamily::PIPE_CONTROL);
+        return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
     }
 }
 
@@ -168,7 +168,7 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingPostSyncC
                                                                   false,
                                                                   true);
     } else {
-        return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekHwInfo());
+        return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekHwInfo(), false);
     }
 }
 

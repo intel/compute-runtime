@@ -973,7 +973,7 @@ HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenStaticPartitionEnabledWh
     commandStreamReceiver->staticWorkPartitioningEnabled = true;
     commandStreamReceiver->activePartitions = 1;
 
-    size_t expectedCmdSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(hwInfo);
+    size_t expectedCmdSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(hwInfo, false);
     size_t estimatedCmdSize = commandStreamReceiver->getCmdSizeForStallingCommands(dispatchFlags);
     EXPECT_EQ(expectedCmdSize, estimatedCmdSize);
 
@@ -1021,7 +1021,7 @@ HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenStaticPartitionDisabledW
     commandStreamReceiver->staticWorkPartitioningEnabled = false;
     commandStreamReceiver->activePartitions = 2;
 
-    size_t expectedCmdSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(hwInfo);
+    size_t expectedCmdSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(hwInfo, false);
     size_t estimatedCmdSize = commandStreamReceiver->getCmdSizeForStallingCommands(dispatchFlags);
     EXPECT_EQ(expectedCmdSize, estimatedCmdSize);
 
@@ -1072,7 +1072,7 @@ HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenStaticPartitionEnabledWh
     commandStreamReceiver->staticWorkPartitioningEnabled = true;
     commandStreamReceiver->activePartitions = 2;
 
-    size_t expectedSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(hwInfo) +
+    size_t expectedSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(hwInfo, false) +
                           sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
                           sizeof(MI_BATCH_BUFFER_START) +
                           2 * sizeof(uint32_t);

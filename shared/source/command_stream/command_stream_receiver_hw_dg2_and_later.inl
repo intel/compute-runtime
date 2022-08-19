@@ -41,7 +41,7 @@ size_t CommandStreamReceiverHw<Family>::getCmdSizeForPerDssBackedBuffer(const Ha
     std::ignore = isBasicWARequired;
 
     if (isExtendedWARequired) {
-        size += sizeof(typename Family::PIPE_CONTROL);
+        size += MemorySynchronizationCommands<Family>::getSizeForSingleBarrier(false);
     }
 
     return size;

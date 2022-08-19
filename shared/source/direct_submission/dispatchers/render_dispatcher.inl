@@ -46,7 +46,7 @@ inline void RenderDispatcher<GfxFamily>::dispatchMonitorFence(LinearStream &cmdB
 
 template <typename GfxFamily>
 inline size_t RenderDispatcher<GfxFamily>::getSizeMonitorFence(const HardwareInfo &hwInfo) {
-    return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo);
+    return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo, false);
 }
 
 template <typename GfxFamily>
@@ -72,7 +72,7 @@ inline size_t RenderDispatcher<GfxFamily>::getSizeCacheFlush(const HardwareInfo 
 
 template <typename GfxFamily>
 inline size_t RenderDispatcher<GfxFamily>::getSizeTlbFlush() {
-    return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
+    return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(true);
 }
 
 } // namespace NEO

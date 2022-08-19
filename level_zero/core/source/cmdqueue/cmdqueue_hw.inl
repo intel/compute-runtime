@@ -121,7 +121,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     linearStreamSizeEstimate += this->estimateLinearStreamSizeComplementary(ctx, phCommandLists, numCommandLists);
     linearStreamSizeEstimate += this->computePreemptionSize(ctx, phCommandLists, numCommandLists);
     linearStreamSizeEstimate += this->computeDebuggerCmdsSize(ctx);
-    linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(this->device->getHwInfo());
+    linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(this->device->getHwInfo(), false);
 
     NEO::LinearStream child(nullptr);
     if (const auto ret = this->makeAlignedChildStreamAndSetGpuBase(child, linearStreamSizeEstimate); ret != ZE_RESULT_SUCCESS) {
@@ -491,7 +491,7 @@ size_t CommandQueueHw<gfxCoreFamily>::computePreemptionSize(
 
         if (ctx.statePreemption != commandListPreemption) {
             if (this->preemptionCmdSyncProgramming) {
-                preemptionSize += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
+                preemptionSize += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
             }
             preemptionSize += NEO::PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(commandListPreemption, ctx.statePreemption);
             ctx.statePreemption = commandListPreemption;

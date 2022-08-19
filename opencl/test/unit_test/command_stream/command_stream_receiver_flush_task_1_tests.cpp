@@ -118,7 +118,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInBatch
 
     //we do level change that will emit PPC, fill all the space so only BB end fits.
     taskLevel++;
-    auto ppcSize = MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier();
+    auto ppcSize = MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false);
     auto fillSize = MemoryConstants::cacheLineSize - ppcSize - sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     csrCommandStream.getSpace(fillSize);
     auto expectedUsedSize = 2 * MemoryConstants::cacheLineSize;

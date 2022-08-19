@@ -723,7 +723,6 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
         ResidencyContainer surfacesForSubmit;
         ResourcePackage resourcePackage;
         const auto &hwInfo = peekHwInfo();
-        auto pipeControlLocationSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo);
         void *currentPipeControlForNooping = nullptr;
         void *epiloguePipeControlLocation = nullptr;
 
@@ -735,6 +734,8 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
             auto currentBBendLocation = primaryCmdBuffer->batchBufferEndLocation;
             auto lastTaskCount = primaryCmdBuffer->taskCount;
             auto lastPipeControlArgs = primaryCmdBuffer->epiloguePipeControlArgs;
+
+            auto pipeControlLocationSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo, lastPipeControlArgs.tlbInvalidation);
 
             FlushStampUpdateHelper flushStampUpdateHelper;
             flushStampUpdateHelper.insert(primaryCmdBuffer->flushStamp->getStampReference());
@@ -848,7 +849,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     if (!this->isStateSipSent || device.getDebugger()) {
         size += PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(device, isRcs());
     }
-    size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
+    size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
     size += sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);
 
     size += getCmdSizeForL3Config();
@@ -886,11 +887,11 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     }
 
     if (requiresInstructionCacheFlush) {
-        size += sizeof(typename GfxFamily::PIPE_CONTROL);
+        size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
     }
 
     if (DebugManager.flags.ForcePipeControlPriorToWalker.get()) {
-        size += 2 * sizeof(PIPE_CONTROL);
+        size += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
     }
 
     return size;
@@ -1222,13 +1223,15 @@ void CommandStreamReceiverHw<GfxFamily>::flushPipeControl() {
     auto lock = obtainUniqueOwnership();
 
     const auto &hwInfo = peekHwInfo();
-    auto &commandStream = getCS(MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo));
-    auto commandStreamStart = commandStream.getUsed();
 
     PipeControlArgs args;
     args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
     args.notifyEnable = isUsedNotifyEnableForPostSync();
     args.workloadPartitionOffset = isMultiTileOperationEnabled();
+
+    auto &commandStream = getCS(MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo, args.tlbInvalidation));
+    auto commandStreamStart = commandStream.getUsed();
+
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(commandStream,
                                                                               PostSyncMode::ImmediateData,
                                                                               getTagAllocation()->getGpuAddress(),

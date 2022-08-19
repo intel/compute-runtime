@@ -92,9 +92,9 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSize() {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
-    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
-    size_t size = sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL) + NEO::EncodeWA<GfxFamily>::getAdditionalPipelineSelectSize(*device->getNEODevice(), this->csr->isRcs());
+    size_t size = sizeof(STATE_BASE_ADDRESS) + NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false) +
+                  NEO::EncodeWA<GfxFamily>::getAdditionalPipelineSelectSize(*device->getNEODevice(), this->csr->isRcs());
 
     if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger() != nullptr) {
         const size_t trackedAddressesCount = 6;

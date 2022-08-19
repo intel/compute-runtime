@@ -62,11 +62,9 @@ size_t ExperimentalCommandBuffer::getTotalExperimentalSize() noexcept {
 
 template <typename GfxFamily>
 size_t ExperimentalCommandBuffer::getTimeStampPipeControlSize() noexcept {
-    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-
     // Two P_C for timestamps
     return 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(
-                   *commandStreamReceiver->peekExecutionEnvironment().rootDeviceEnvironments[commandStreamReceiver->getRootDeviceIndex()]->getHardwareInfo());
+                   *commandStreamReceiver->peekExecutionEnvironment().rootDeviceEnvironments[commandStreamReceiver->getRootDeviceIndex()]->getHardwareInfo(), false);
 }
 
 template <typename GfxFamily>
