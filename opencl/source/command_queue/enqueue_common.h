@@ -1136,13 +1136,18 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlitSplit(MultiDispatchInfo &dispatchIn
 
     StackVec<std::unique_lock<CommandStreamReceiver::MutexType>, 3u> locks;
     StackVec<CommandStreamReceiver *, 3u> copyEngines;
-    for (auto i = static_cast<uint32_t>(aub_stream::EngineType::ENGINE_BCS2); i <= static_cast<uint32_t>(aub_stream::EngineType::ENGINE_BCS8); i += 2) {
-        auto bcs = getBcsCommandStreamReceiver(static_cast<aub_stream::EngineType>(i));
-        if (bcs) {
-            locks.push_back(std::move(bcs->obtainUniqueOwnership()));
-            copyEngines.push_back(bcs);
+
+    for (uint32_t i = 0; i < bcsInfoMaskSize; i++) {
+        if (this->splitEngines.test(i)) {
+            auto engineType = EngineHelpers::mapBcsIndexToEngineType(i, true);
+            auto bcs = getBcsCommandStreamReceiver(engineType);
+            if (bcs) {
+                locks.push_back(std::move(bcs->obtainUniqueOwnership()));
+                copyEngines.push_back(bcs);
+            }
         }
     }
+
     DEBUG_BREAK_IF(copyEngines.size() == 0);
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
 

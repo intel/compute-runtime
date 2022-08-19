@@ -305,21 +305,28 @@ void CommandQueue::initializeBcsEngine(bool internalUsage) {
 }
 
 void CommandQueue::constructBcsEnginesForSplit() {
-    if (!this->bcsSplitInitialized) {
-        for (auto i = static_cast<uint32_t>(aub_stream::EngineType::ENGINE_BCS2); i <= static_cast<uint32_t>(aub_stream::EngineType::ENGINE_BCS8); i += 2) {
-            auto index = EngineHelpers::getBcsIndex(static_cast<aub_stream::EngineType>(i));
-            if (!bcsEngines[index]) {
-                auto &neoDevice = device->getNearestGenericSubDevice(0)->getDevice();
-                bcsEngines[index] = neoDevice.tryGetEngine(static_cast<aub_stream::EngineType>(i), EngineUsage::Regular);
-                bcsEngineTypes.push_back(static_cast<aub_stream::EngineType>(i));
-                if (bcsEngines[index]) {
-                    bcsEngines[index]->osContext->ensureContextInitialized();
-                    bcsEngines[index]->commandStreamReceiver->initDirectSubmission();
-                }
+    if (this->bcsSplitInitialized) {
+        return;
+    }
+
+    if (DebugManager.flags.SplitBcsMask.get() > 0) {
+        this->splitEngines = DebugManager.flags.SplitBcsMask.get();
+    }
+
+    for (uint32_t i = 0; i < bcsInfoMaskSize; i++) {
+        if (this->splitEngines.test(i) && !bcsEngines[i]) {
+            auto &neoDevice = device->getNearestGenericSubDevice(0)->getDevice();
+            auto engineType = EngineHelpers::mapBcsIndexToEngineType(i, true);
+            bcsEngines[i] = neoDevice.tryGetEngine(engineType, EngineUsage::Regular);
+            bcsEngineTypes.push_back(engineType);
+            if (bcsEngines[i]) {
+                bcsEngines[i]->osContext->ensureContextInitialized();
+                bcsEngines[i]->commandStreamReceiver->initDirectSubmission();
             }
         }
-        this->bcsSplitInitialized = true;
     }
+
+    this->bcsSplitInitialized = true;
 }
 
 void CommandQueue::prepareHostPtrSurfaceForSplit(bool split, GraphicsAllocation &allocation) {

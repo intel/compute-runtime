@@ -129,6 +129,37 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, whenConstructBcsEnginesForSplitThenConta
     EXPECT_EQ(4u, queue->countBcsEngines());
 }
 
+HWTEST2_F(CommandQueuePvcAndLaterTests, givenSplitBcsMaskWhenConstructBcsEnginesForSplitThenContainsGivenBcsEngines, IsAtLeastXeHpcCore) {
+    DebugManagerStateRestore restorer;
+    std::bitset<bcsInfoMaskSize> bcsMask = 0b100110101;
+    DebugManager.flags.DeferCmdQBcsInitialization.set(1u);
+    DebugManager.flags.SplitBcsMask.set(static_cast<int>(bcsMask.to_ulong()));
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    MockDevice *device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
+    MockClDevice clDevice{device};
+    cl_device_id clDeviceId = static_cast<cl_device_id>(&clDevice);
+    ClDeviceVector clDevices{&clDeviceId, 1u};
+    cl_int retVal{};
+    auto context = std::unique_ptr<Context>{Context::create<Context>(nullptr, clDevices, nullptr, nullptr, retVal)};
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    auto queue = std::make_unique<MockCommandQueue>(*context);
+    EXPECT_EQ(0u, queue->countBcsEngines());
+
+    queue->constructBcsEnginesForSplit();
+
+    EXPECT_EQ(5u, queue->countBcsEngines());
+
+    for (uint32_t i = 0; i < bcsInfoMaskSize; i++) {
+        if (bcsMask.test(i)) {
+            EXPECT_NE(queue->bcsEngines[i], nullptr);
+        } else {
+            EXPECT_EQ(queue->bcsEngines[i], nullptr);
+        }
+    }
+}
+
 HWTEST2_F(CommandQueuePvcAndLaterTests, whenSelectCsrForHostPtrAllocationThenReturnProperEngine, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.DeferCmdQBcsInitialization.set(1u);
