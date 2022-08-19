@@ -12,6 +12,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/helpers/state_base_address_tests.h"
 
 using namespace NEO;
 
@@ -48,4 +49,76 @@ DG2TEST_F(CommandEncodeDG2Test, whenProgrammingStateComputeModeThenProperFieldsA
     EXPECT_EQ(STATE_COMPUTE_MODE::PIXEL_ASYNC_COMPUTE_THREAD_LIMIT_MAX_2, pScm->getPixelAsyncComputeThreadLimit());
     EXPECT_EQ(STATE_COMPUTE_MODE::Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_64, pScm->getZPassAsyncComputeThreadLimit());
     EXPECT_TRUE(pScm->getLargeGrfMode());
+}
+
+using Dg2SbaTest = SbaTest;
+
+DG2TEST_F(Dg2SbaTest, givenSpecificProductFamilyWhenAppendingSbaThenProgramWtL1CachePolicy) {
+    auto sbaCmd = FamilyType::cmdInitStateBaseAddress;
+    StateBaseAddressHelperArgs<FamilyType> args = {
+        0,                                                  // generalStateBase
+        0,                                                  // indirectObjectHeapBaseAddress
+        0,                                                  // instructionHeapBaseAddress
+        0,                                                  // globalHeapsBaseAddress
+        0,                                                  // surfaceStateBaseAddress
+        &sbaCmd,                                            // stateBaseAddressCmd
+        nullptr,                                            // dsh
+        nullptr,                                            // ioh
+        &ssh,                                               // ssh
+        pDevice->getRootDeviceEnvironment().getGmmHelper(), // gmmHelper
+        0,                                                  // statelessMocsIndex
+        MemoryCompressionState::NotApplicable,              // memoryCompressionState
+        false,                                              // setInstructionStateBaseAddress
+        true,                                               // setGeneralStateBaseAddress
+        false,                                              // useGlobalHeapsBaseAddress
+        false,                                              // isMultiOsContextCapable
+        false,                                              // useGlobalAtomics
+        false,                                              // areMultipleSubDevicesInContext
+        false                                               // overrideSurfaceStateBaseAddress
+    };
+    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
+
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP, sbaCmd.getL1CachePolicyL1CacheControl());
+}
+
+DG2TEST_F(Dg2SbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProgrammedThenItMatchesTheOverrideValue) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceStatelessL1CachingPolicy.set(0u);
+    auto sbaCmd = FamilyType::cmdInitStateBaseAddress;
+    StateBaseAddressHelperArgs<FamilyType> args = {
+        0,                                                  // generalStateBase
+        0,                                                  // indirectObjectHeapBaseAddress
+        0,                                                  // instructionHeapBaseAddress
+        0,                                                  // globalHeapsBaseAddress
+        0,                                                  // surfaceStateBaseAddress
+        &sbaCmd,                                            // stateBaseAddressCmd
+        nullptr,                                            // dsh
+        nullptr,                                            // ioh
+        &ssh,                                               // ssh
+        pDevice->getRootDeviceEnvironment().getGmmHelper(), // gmmHelper
+        0,                                                  // statelessMocsIndex
+        MemoryCompressionState::NotApplicable,              // memoryCompressionState
+        false,                                              // setInstructionStateBaseAddress
+        true,                                               // setGeneralStateBaseAddress
+        false,                                              // useGlobalHeapsBaseAddress
+        false,                                              // isMultiOsContextCapable
+        false,                                              // useGlobalAtomics
+        false,                                              // areMultipleSubDevicesInContext
+        false                                               // overrideSurfaceStateBaseAddress
+    };
+    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
+
+    EXPECT_EQ(0u, sbaCmd.getL1CachePolicyL1CacheControl());
+
+    DebugManager.flags.ForceStatelessL1CachingPolicy.set(2u);
+
+    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
+
+    EXPECT_EQ(2u, sbaCmd.getL1CachePolicyL1CacheControl());
+
+    DebugManager.flags.ForceAllResourcesUncached.set(true);
+
+    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
+
+    EXPECT_EQ(1u, sbaCmd.getL1CachePolicyL1CacheControl());
 }

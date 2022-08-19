@@ -16,17 +16,29 @@
 
 #include "gtest/gtest.h"
 
-struct SBATest : public NEO::DeviceFixture, public ::testing::Test {
+struct SbaTest : public NEO::DeviceFixture, public ::testing::Test {
     void SetUp() override {
         NEO::DeviceFixture::setUp();
         size_t sizeStream = 512;
         size_t alignmentStream = 0x1000;
+
         sshBuffer = alignedMalloc(sizeStream, alignmentStream);
         ASSERT_NE(nullptr, sshBuffer);
-
         ssh.replaceBuffer(sshBuffer, sizeStream);
         auto graphicsAllocation = new MockGraphicsAllocation(sshBuffer, sizeStream);
         ssh.replaceGraphicsAllocation(graphicsAllocation);
+
+        dshBuffer = alignedMalloc(sizeStream, alignmentStream);
+        ASSERT_NE(nullptr, dshBuffer);
+        dsh.replaceBuffer(dshBuffer, sizeStream);
+        graphicsAllocation = new MockGraphicsAllocation(dshBuffer, sizeStream);
+        dsh.replaceGraphicsAllocation(graphicsAllocation);
+
+        iohBuffer = alignedMalloc(sizeStream, alignmentStream);
+        ASSERT_NE(nullptr, iohBuffer);
+        ioh.replaceBuffer(iohBuffer, sizeStream);
+        graphicsAllocation = new MockGraphicsAllocation(iohBuffer, sizeStream);
+        ioh.replaceGraphicsAllocation(graphicsAllocation);
 
         linearStreamBuffer = alignedMalloc(sizeStream, alignmentStream);
         commandStream.replaceBuffer(linearStreamBuffer, alignmentStream);
@@ -34,13 +46,27 @@ struct SBATest : public NEO::DeviceFixture, public ::testing::Test {
 
     void TearDown() override {
         alignedFree(linearStreamBuffer);
+
         delete ssh.getGraphicsAllocation();
         alignedFree(sshBuffer);
+
+        delete dsh.getGraphicsAllocation();
+        alignedFree(dshBuffer);
+
+        delete ioh.getGraphicsAllocation();
+        alignedFree(iohBuffer);
+
         NEO::DeviceFixture::tearDown();
     }
     IndirectHeap ssh = {nullptr};
-    void *sshBuffer = nullptr;
-    void *linearStreamBuffer = nullptr;
+    IndirectHeap dsh = {nullptr};
+    IndirectHeap ioh = {nullptr};
+
     DebugManagerStateRestore restorer;
     LinearStream commandStream;
+
+    void *sshBuffer = nullptr;
+    void *dshBuffer = nullptr;
+    void *iohBuffer = nullptr;
+    void *linearStreamBuffer = nullptr;
 };

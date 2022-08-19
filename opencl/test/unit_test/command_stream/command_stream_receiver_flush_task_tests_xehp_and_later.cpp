@@ -317,67 +317,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, wh
     EXPECT_NE(nullptr, bindingTablePoolAlloc);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenNoHeapsProvidedWhenSBAIsProgrammedThenBaseAddressesAreNotSetAndBindlessSurfaceStateSizeSetToMax) {
-    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
-
-    uint64_t instructionHeapBase = 0x10000;
-    uint64_t internalHeapBase = 0x10000;
-    uint64_t generalStateBase = 0x30000;
-    STATE_BASE_ADDRESS sbaCmd;
-    StateBaseAddressHelperArgs<FamilyType> args = {
-        generalStateBase,                      // generalStateBase
-        internalHeapBase,                      // indirectObjectHeapBaseAddress
-        instructionHeapBase,                   // instructionHeapBaseAddress
-        0,                                     // globalHeapsBaseAddress
-        0,                                     // surfaceStateBaseAddress
-        &sbaCmd,                               // stateBaseAddressCmd
-        nullptr,                               // dsh
-        nullptr,                               // ioh
-        nullptr,                               // ssh
-        pDevice->getGmmHelper(),               // gmmHelper
-        0,                                     // statelessMocsIndex
-        MemoryCompressionState::NotApplicable, // memoryCompressionState
-        true,                                  // setInstructionStateBaseAddress
-        true,                                  // setGeneralStateBaseAddress
-        false,                                 // useGlobalHeapsBaseAddress
-        false,                                 // isMultiOsContextCapable
-        false,                                 // useGlobalAtomics
-        false,                                 // areMultipleSubDevicesInContext
-        false                                  // overrideSurfaceStateBaseAddress
-    };
-    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
-
-    EXPECT_FALSE(sbaCmd.getDynamicStateBaseAddressModifyEnable());
-    EXPECT_FALSE(sbaCmd.getDynamicStateBufferSizeModifyEnable());
-    EXPECT_EQ(0u, sbaCmd.getDynamicStateBaseAddress());
-    EXPECT_EQ(0u, sbaCmd.getDynamicStateBufferSize());
-
-    EXPECT_FALSE(sbaCmd.getSurfaceStateBaseAddressModifyEnable());
-    EXPECT_EQ(0u, sbaCmd.getSurfaceStateBaseAddress());
-
-    EXPECT_TRUE(sbaCmd.getInstructionBaseAddressModifyEnable());
-    EXPECT_EQ(instructionHeapBase, sbaCmd.getInstructionBaseAddress());
-    EXPECT_TRUE(sbaCmd.getInstructionBufferSizeModifyEnable());
-    EXPECT_EQ(MemoryConstants::sizeOf4GBinPageEntities, sbaCmd.getInstructionBufferSize());
-
-    EXPECT_TRUE(sbaCmd.getGeneralStateBaseAddressModifyEnable());
-    EXPECT_TRUE(sbaCmd.getGeneralStateBufferSizeModifyEnable());
-    if constexpr (is64bit) {
-        auto gmmHelper = pDevice->getGmmHelper();
-        EXPECT_EQ(gmmHelper->decanonize(internalHeapBase), sbaCmd.getGeneralStateBaseAddress());
-    } else {
-        EXPECT_EQ(generalStateBase, sbaCmd.getGeneralStateBaseAddress());
-    }
-    EXPECT_EQ(0xfffffu, sbaCmd.getGeneralStateBufferSize());
-
-    EXPECT_EQ(0u, sbaCmd.getBindlessSurfaceStateBaseAddress());
-    EXPECT_FALSE(sbaCmd.getBindlessSurfaceStateBaseAddressModifyEnable());
-
-    auto surfaceStateCount = StateBaseAddressHelper<FamilyType>::getMaxBindlessSurfaceStates();
-    EXPECT_EQ(surfaceStateCount, sbaCmd.getBindlessSurfaceStateSize());
-}
-
 using isXeHPOrAbove = IsAtLeastProduct<IGFX_XE_HP_SDV>;
 HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, whenFlushAllCachesVariableIsSetAndAddPipeControlIsCalledThenFieldsAreProperlySet, isXeHPOrAbove) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;

@@ -10,7 +10,7 @@
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/helpers/state_base_address_tests.h"
 
-BDWTEST_F(SBATest, givenUsedBindlessBuffersWhenAppendStateBaseAddressParametersIsCalledThenSBACmdHasNotBindingSurfaceStateProgrammed) {
+BDWTEST_F(SbaTest, givenUsedBindlessBuffersWhenAppendStateBaseAddressParametersIsCalledThenSBACmdHasNotBindingSurfaceStateProgrammed) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     DebugManager.flags.UseBindlessMode.set(1);
@@ -46,7 +46,7 @@ BDWTEST_F(SBATest, givenUsedBindlessBuffersWhenAppendStateBaseAddressParametersI
     EXPECT_EQ(0, memcmp(&stateBaseAddressReference, &stateBaseAddress, sizeof(STATE_BASE_ADDRESS)));
 }
 
-BDWTEST_F(SBATest,
+BDWTEST_F(SbaTest,
           givenUsedBindlessBuffersAndOverridenSurfaceStateBaseAddressWhenAppendStateBaseAddressParametersIsCalledThenSbaCmdHasCorrectSurfaceStateBaseAddress) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
