@@ -60,6 +60,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::newlyStoppedThreads;
     using L0::DebugSessionImp::pendingInterrupts;
     using L0::DebugSessionImp::readStateSaveAreaHeader;
+    using L0::DebugSessionImp::tileAttachEnabled;
     using L0::DebugSessionImp::tileSessions;
 
     MockDebugSession(const zet_debug_config_t &config, L0::Device *device) : DebugSessionImp(config, device) {
@@ -81,7 +82,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
 
             for (uint32_t i = 0; i < numTiles; i++) {
                 auto subDevice = connectedDevice->getNEODevice()->getSubDevice(i)->getSpecializedDevice<Device>();
-                tileSessions[i] = std::pair<DebugSession *, bool>{new MockDebugSession(config, subDevice), false};
+                tileSessions[i] = std::pair<DebugSessionImp *, bool>{new MockDebugSession(config, subDevice), false};
             }
         }
 
@@ -1550,6 +1551,41 @@ TEST_F(MultiTileDebugSessionTest, givenTwoDevicesInRequestsWhenSendingInterrupts
     EXPECT_EQ(2u, sessionMock->expectedAttentionEvents);
 }
 
+TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenSendingInterruptsThenInterruptIsSentWithCorrectDeviceIndex) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(1);
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    L0::Device *device = driverHandle->devices[0];
+    L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, deviceImp);
+
+    sessionMock->interruptImpResult = ZE_RESULT_SUCCESS;
+    sessionMock->tileAttachEnabled = true;
+    sessionMock->initialize();
+
+    auto tileSession1 = static_cast<MockDebugSession *>(sessionMock->tileSessions[1].first);
+    auto tileSession0 = static_cast<MockDebugSession *>(sessionMock->tileSessions[0].first);
+
+    ze_device_thread_t apiThread = {0, 0, 0, 0};
+
+    auto result = tileSession1->interrupt(apiThread);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = tileSession0->interrupt(apiThread);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    tileSession1->sendInterrupts();
+    tileSession0->sendInterrupts();
+
+    EXPECT_TRUE(tileSession1->interruptSent);
+    EXPECT_TRUE(tileSession0->interruptSent);
+    EXPECT_EQ(1u, tileSession1->interruptedDevices[0]);
+    EXPECT_EQ(0u, tileSession0->interruptedDevices[0]);
+}
+
 TEST_F(MultiTileDebugSessionTest, givenAllSlicesInRequestWhenSendingInterruptsThenTwoInterruptsCalled) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -1679,6 +1715,45 @@ TEST_F(MultiTileDebugSessionTest, givenAllSlicesInRequestWhenAllInterruptsReturn
 
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_UNAVAILABLE, sessionMock->events[0].type);
     EXPECT_TRUE(DebugSession::areThreadsEqual(apiThread, sessionMock->events[0].info.thread.thread));
+}
+
+TEST_F(MultiTileDebugSessionTest, GivenMultitileDeviceWhenCallingAreRequestedThreadsStoppedThenCorrectValueIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    L0::Device *device = driverHandle->devices[0];
+    L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, deviceImp);
+    ASSERT_NE(nullptr, sessionMock);
+
+    ze_device_thread_t thread = {0, 0, 0, 0};
+    ze_device_thread_t allSlices = {UINT32_MAX, 0, 0, 0};
+
+    sessionMock->allThreads[EuThread::ThreadId(0, thread)]->stopThread(1u);
+    sessionMock->allThreads[EuThread::ThreadId(1, thread)]->stopThread(1u);
+
+    auto stopped = sessionMock->areRequestedThreadsStopped(thread);
+    EXPECT_TRUE(stopped);
+
+    stopped = sessionMock->areRequestedThreadsStopped(allSlices);
+    EXPECT_FALSE(stopped);
+
+    for (uint32_t i = 0; i < sliceCount; i++) {
+        EuThread::ThreadId threadId(0, i, 0, 0, 0);
+        sessionMock->allThreads[threadId]->stopThread(1u);
+    }
+
+    stopped = sessionMock->areRequestedThreadsStopped(allSlices);
+    EXPECT_FALSE(stopped);
+
+    for (uint32_t i = 0; i < sliceCount; i++) {
+        EuThread::ThreadId threadId(1, i, 0, 0, 0);
+        sessionMock->allThreads[threadId]->stopThread(1u);
+    }
+
+    stopped = sessionMock->areRequestedThreadsStopped(allSlices);
+    EXPECT_TRUE(stopped);
 }
 
 struct DebugSessionRegistersAccess {

@@ -6216,48 +6216,5 @@ TEST_F(DebugApiLinuxMultitileTest, givenApiThreadAndMultipleTilesWhenGettingDevi
     EXPECT_EQ(1u, deviceIndex);
 }
 
-TEST_F(DebugApiLinuxMultitileTest, GivenMultitileDeviceWhenCallingAreRequestedThreadsStoppedThenCorrectValueIsReturned) {
-    zet_debug_config_t config = {};
-    config.pid = 0x1234;
-
-    auto sessionMock = std::make_unique<MockDebugSessionLinux>(config, deviceImp, 10);
-    ASSERT_NE(nullptr, sessionMock);
-    SIP::version version = {2, 0, 0};
-    initStateSaveArea(sessionMock->stateSaveAreaHeader, version);
-
-    auto handler = new MockIoctlHandler;
-    sessionMock->ioctlHandler.reset(handler);
-    sessionMock->clientHandle = MockDebugSessionLinux::mockClientHandle;
-    sessionMock->clientHandleToConnection[sessionMock->clientHandle]->vmToContextStateSaveAreaBindInfo[1u] = {0x1000, 0x1000};
-
-    ze_device_thread_t thread = {0, 0, 0, 0};
-    ze_device_thread_t allSlices = {UINT32_MAX, 0, 0, 0};
-
-    sessionMock->allThreads[EuThread::ThreadId(0, thread)]->stopThread(1u);
-    sessionMock->allThreads[EuThread::ThreadId(1, thread)]->stopThread(1u);
-
-    auto stopped = sessionMock->areRequestedThreadsStopped(thread);
-    EXPECT_TRUE(stopped);
-
-    stopped = sessionMock->areRequestedThreadsStopped(allSlices);
-    EXPECT_FALSE(stopped);
-
-    for (uint32_t i = 0; i < sliceCount; i++) {
-        EuThread::ThreadId threadId(0, i, 0, 0, 0);
-        sessionMock->allThreads[threadId]->stopThread(1u);
-    }
-
-    stopped = sessionMock->areRequestedThreadsStopped(allSlices);
-    EXPECT_FALSE(stopped);
-
-    for (uint32_t i = 0; i < sliceCount; i++) {
-        EuThread::ThreadId threadId(1, i, 0, 0, 0);
-        sessionMock->allThreads[threadId]->stopThread(1u);
-    }
-
-    stopped = sessionMock->areRequestedThreadsStopped(allSlices);
-    EXPECT_TRUE(stopped);
-}
-
 } // namespace ult
 } // namespace L0

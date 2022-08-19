@@ -37,7 +37,13 @@ void DebugSession::createEuThreads() {
             const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
             uint32_t subDeviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
 
+            UNRECOVERABLE_IF(isSubDevice && subDeviceCount > 1);
+
             for (uint32_t tileIndex = 0; tileIndex < subDeviceCount; tileIndex++) {
+
+                if (isSubDevice) {
+                    tileIndex = Math::log2(static_cast<uint32_t>(connectedDevice->getNEODevice()->getDeviceBitfield().to_ulong()));
+                }
                 for (uint32_t sliceID = 0; sliceID < hwInfo.gtSystemInfo.MaxSlicesSupported; sliceID++) {
                     for (uint32_t subsliceID = 0; subsliceID < numSubslicesPerSlice; subsliceID++) {
                         for (uint32_t euID = 0; euID < numEuPerSubslice; euID++) {
@@ -176,18 +182,28 @@ bool DebugSession::areRequestedThreadsStopped(ze_device_thread_t thread) {
     auto deviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
     uint32_t deviceIndex = getDeviceIndexFromApiThread(thread);
 
-    for (uint32_t i = 0; i < deviceCount; i++) {
-        if (i == deviceIndex || deviceIndex == UINT32_MAX) {
-            auto physicalThread = convertToPhysicalWithinDevice(thread, i);
-            auto singleThreads = getSingleThreadsForDevice(i, physicalThread, hwInfo);
+    auto areAllThreadsStopped = [this, &hwInfo](uint32_t deviceIndex, const ze_device_thread_t &thread) -> bool {
+        auto physicalThread = convertToPhysicalWithinDevice(thread, deviceIndex);
+        auto singleThreads = getSingleThreadsForDevice(deviceIndex, physicalThread, hwInfo);
 
-            for (auto &threadId : singleThreads) {
+        for (auto &threadId : singleThreads) {
 
-                if (allThreads[threadId]->isStopped()) {
-                    continue;
-                }
-                return false;
+            if (allThreads[threadId]->isStopped()) {
+                continue;
             }
+            return false;
+        }
+        return true;
+    };
+
+    if (deviceIndex != UINT32_MAX) {
+        return areAllThreadsStopped(deviceIndex, thread);
+    }
+
+    for (uint32_t i = 0; i < deviceCount; i++) {
+
+        if (areAllThreadsStopped(i, thread) == false) {
+            return false;
         }
     }
 
@@ -282,6 +298,7 @@ DebugSession *DebugSessionImp::attachTileDebugSession(Device *device) {
     }
     attached = true;
 
+    PRINT_DEBUGGER_INFO_LOG("TileDebugSession attached, deviceIndex = %lu\n", subDeviceIndex);
     return tileSession;
 }
 
@@ -290,6 +307,8 @@ void DebugSessionImp::detachTileDebugSession(DebugSession *tileSession) {
 
     uint32_t subDeviceIndex = Math::log2(static_cast<uint32_t>(tileSession->getConnectedDevice()->getNEODevice()->getDeviceBitfield().to_ulong()));
     tileSessions[subDeviceIndex].second = false;
+
+    PRINT_DEBUGGER_INFO_LOG("TileDebugSession detached, deviceIndex = %lu\n", subDeviceIndex);
 }
 
 bool DebugSessionImp::areAllTileDebugSessionDetached() {
@@ -461,8 +480,13 @@ ze_result_t DebugSessionImp::resume(ze_device_thread_t thread) {
 
     if (singleDevice) {
         uint32_t deviceIndex = 0;
-        if (thread.slice != UINT32_MAX) {
-            deviceIndex = getDeviceIndexFromApiThread(thread);
+
+        if (connectedDevice->getNEODevice()->isSubDevice()) {
+            deviceIndex = Math::log2(static_cast<uint32_t>(connectedDevice->getNEODevice()->getDeviceBitfield().to_ulong()));
+        } else {
+            if (thread.slice != UINT32_MAX) {
+                deviceIndex = getDeviceIndexFromApiThread(thread);
+            }
         }
         auto physicalThread = convertToPhysicalWithinDevice(thread, deviceIndex);
         auto result = resumeThreadsWithinDevice(deviceIndex, physicalThread);
@@ -521,6 +545,11 @@ void DebugSessionImp::sendInterrupts() {
 
     if (deviceCount == 1) {
         uint32_t deviceIndex = 0;
+
+        if (connectedDevice->getNEODevice()->isSubDevice()) {
+            deviceIndex = Math::log2(static_cast<uint32_t>(connectedDevice->getNEODevice()->getDeviceBitfield().to_ulong()));
+        }
+
         ze_result_t result;
         {
             std::unique_lock<std::mutex> lock(threadStateMutex);

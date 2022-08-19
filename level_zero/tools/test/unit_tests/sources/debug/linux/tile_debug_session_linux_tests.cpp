@@ -18,7 +18,7 @@
 namespace L0 {
 namespace ult {
 
-TEST(TileDebugSessionLinuxTest, GivenTileDebugSessionWhenCallingFunctionsThenUnsupportedErrorIsReturnedOrImplementationIsEmpty) {
+TEST(TileDebugSessionLinuxTest, GivenTileDebugSessionWhenCallingFunctionsThenImplementationIsEmpty) {
     auto hwInfo = *NEO::defaultHwInfo.get();
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
 
@@ -28,23 +28,6 @@ TEST(TileDebugSessionLinuxTest, GivenTileDebugSessionWhenCallingFunctionsThenUns
 
     auto session = std::make_unique<MockTileDebugSessionLinux>(zet_debug_config_t{0x1234}, &deviceImp, nullptr);
     ASSERT_NE(nullptr, session);
-
-    ze_device_thread_t thread = {0, 0, 0, 0};
-
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, session->interrupt(thread));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, session->resume(thread));
-
-    uint32_t type = 0;
-    uint32_t start = 0;
-    uint32_t count = 1;
-
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, session->readRegisters(thread, type, start, count, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, session->writeRegisters(thread, type, start, count, nullptr));
-
-    EuThread::ThreadId threadId{0, 0, 0, 0, 0};
-    NEO::SbaTrackedAddresses sbaBuffer = {};
-
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, session->readSbaBuffer(threadId, sbaBuffer));
 
     EXPECT_TRUE(session->closeConnection());
     EXPECT_TRUE(session->readModuleDebugArea());
@@ -79,6 +62,17 @@ TEST(TileDebugSessionLinuxTest, GivenTileDebugSessionWhenCallingFunctionsThenCal
     allVms = session->getAllMemoryHandles();
     EXPECT_EQ(1u, allVms.size());
     EXPECT_EQ(6u, allVms[0]);
+
+    auto sbaGpuVa = session->getSbaBufferGpuVa(5);
+    EXPECT_EQ(0u, sbaGpuVa);
+
+    DebugSessionLinux::BindInfo sbaInfo = {0x567000, 0x200};
+    rootSession->clientHandleToConnection[rootSession->clientHandle]->vmToStateBaseAreaBindInfo[5] = sbaInfo;
+
+    sbaGpuVa = session->getSbaBufferGpuVa(5);
+    auto rootSbaGpuVa = rootSession->getSbaBufferGpuVa(5);
+    EXPECT_EQ(0x567000u, sbaGpuVa);
+    EXPECT_EQ(rootSbaGpuVa, sbaGpuVa);
 }
 
 TEST(TileDebugSessionLinuxTest, GivenTileDebugSessionWhenReadingContextStateSaveAreaHeaderThenHeaderIsCopiedFromRootSession) {
@@ -120,8 +114,8 @@ struct TileAttachFixture : public DebugApiLinuxMultiDeviceFixture, public MockDe
         session->createTileSessionsIfEnabled();
         rootSession = session.get();
 
-        tileSessions[0] = reinterpret_cast<MockTileDebugSessionLinux *>(rootSession->tileSessions[0].first);
-        tileSessions[1] = reinterpret_cast<MockTileDebugSessionLinux *>(rootSession->tileSessions[1].first);
+        tileSessions[0] = static_cast<MockTileDebugSessionLinux *>(rootSession->tileSessions[0].first);
+        tileSessions[1] = static_cast<MockTileDebugSessionLinux *>(rootSession->tileSessions[1].first);
 
         setupSessionClassHandlesAndUuidMap(session.get());
         setupVmToTile(session.get());
@@ -169,6 +163,18 @@ TEST_F(TileAttachTest, GivenTileAttachEnabledAndMultitileDeviceWhenInitializingD
 
     EXPECT_FALSE(session->tileSessions[0].second);
     EXPECT_FALSE(session->tileSessions[1].second);
+
+    auto threadId0 = tileSessions[0]->allThreads.begin()->second->getThreadId();
+    auto threadId1 = tileSessions[1]->allThreads.begin()->second->getThreadId();
+
+    EXPECT_EQ(0u, threadId0.tileIndex);
+    EXPECT_EQ(1u, threadId1.tileIndex);
+
+    threadId0 = tileSessions[0]->allThreads.rbegin()->second->getThreadId();
+    threadId1 = tileSessions[1]->allThreads.rbegin()->second->getThreadId();
+
+    EXPECT_EQ(0u, threadId0.tileIndex);
+    EXPECT_EQ(1u, threadId1.tileIndex);
 }
 
 TEST_F(TileAttachTest, GivenTileAttachDisabledAndMultitileDeviceWhenCreatingTileSessionsThenSessionsAreNotCreated) {
@@ -229,7 +235,7 @@ TEST_F(TileAttachTest, givenTileDeviceWhenCallingDebugAttachAndDetachManyTimesTh
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(TileAttachTest, givenTileDeviceWhenCallingDebugAttachTwiceThenTheSameSessionIsRrturned) {
+TEST_F(TileAttachTest, givenTileDeviceWhenCallingDebugAttachTwiceThenTheSameSessionIsReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     zet_debug_session_handle_t debugSession0 = nullptr, debugSession0Second = nullptr;
@@ -520,6 +526,203 @@ TEST_F(TileAttachTest, WhenCallingReadWriteMemoryforASingleThreadThenMemoryIsRea
     result = zetDebugWriteMemory(tileSessions[0]->toHandle(), thread, &desc, bufferSize, &output);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1u, handler->pwriteCalled);
+}
+
+TEST_F(TileAttachTest, givenExecutingThreadWhenInterruptingAndResumingThenCallsAreSentThroughRootSession) {
+    // deubg attach both tiles
+    rootSession->tileSessions[0].second = true;
+    rootSession->tileSessions[1].second = true;
+
+    SIP::version version = {2, 0, 0};
+    initStateSaveArea(rootSession->stateSaveAreaHeader, version);
+
+    ze_device_thread_t apiThread = {0, 0, 0, 0};
+
+    for (uint32_t tile = 0; tile < 2; tile++) {
+        EuThread::ThreadId threadId = {tile, apiThread};
+
+        auto result = zetDebugInterrupt(tileSessions[tile]->toHandle(), apiThread);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+        tileSessions[tile]->sendInterrupts();
+        EXPECT_EQ(tile, rootSession->interruptedDevice);
+
+        tileSessions[tile]->ensureThreadStopped(apiThread, 4);
+        tileSessions[tile]->writeResumeResult = 1;
+
+        result = zetDebugResume(tileSessions[tile]->toHandle(), apiThread);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+        ASSERT_EQ(1u, rootSession->resumedThreads.size());
+        ASSERT_EQ(1u, rootSession->resumedDevices.size());
+        EXPECT_EQ(threadId.slice, rootSession->resumedThreads[0][0].slice);
+        EXPECT_EQ(threadId.subslice, rootSession->resumedThreads[0][0].subslice);
+        EXPECT_EQ(threadId.eu, rootSession->resumedThreads[0][0].eu);
+        EXPECT_EQ(threadId.thread, rootSession->resumedThreads[0][0].thread);
+        EXPECT_EQ(threadId.tileIndex, rootSession->resumedThreads[0][0].tileIndex);
+        EXPECT_EQ(tile, rootSession->resumedDevices[0]);
+
+        rootSession->resumedThreads.clear();
+        rootSession->resumedDevices.clear();
+    }
+}
+
+TEST_F(TileAttachTest, givenTwoInterruptsSentWhenCheckingTriggerEventsThenTriggerEventsIsSetForTiles) {
+    // deubg attach both tiles
+    rootSession->tileSessions[0].second = true;
+    rootSession->tileSessions[1].second = true;
+
+    ze_device_thread_t apiThread = {0, 0, 0, 0};
+
+    auto result = zetDebugInterrupt(tileSessions[0]->toHandle(), apiThread);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    tileSessions[0]->sendInterrupts();
+    EXPECT_EQ(0u, tileSessions[0]->expectedAttentionEvents);
+    EXPECT_EQ(0u, rootSession->interruptedDevice);
+
+    rootSession->newAttentionRaised(0);
+
+    tileSessions[0]->checkTriggerEventsForAttention();
+    EXPECT_TRUE(tileSessions[0]->triggerEvents);
+
+    result = zetDebugInterrupt(tileSessions[1]->toHandle(), apiThread);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(0u, tileSessions[1]->expectedAttentionEvents);
+
+    tileSessions[1]->sendInterrupts();
+    EXPECT_EQ(0u, tileSessions[1]->expectedAttentionEvents);
+    EXPECT_FALSE(tileSessions[1]->triggerEvents);
+    EXPECT_EQ(1u, rootSession->interruptedDevice);
+
+    rootSession->newAttentionRaised(1);
+    EXPECT_EQ(0u, tileSessions[1]->expectedAttentionEvents);
+    tileSessions[1]->checkTriggerEventsForAttention();
+
+    EXPECT_TRUE(tileSessions[1]->triggerEvents);
+}
+
+TEST_F(TileAttachTest, givenInterruptSentWhenHandlingAttentionEventThenTriggerEventsIsSetForTileSession) {
+    // deubg attach both tiles
+    rootSession->tileSessions[0].second = true;
+    rootSession->tileSessions[1].second = true;
+
+    ze_device_thread_t apiThread = {0, 0, 0, 0};
+
+    auto result = zetDebugInterrupt(tileSessions[1]->toHandle(), apiThread);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    tileSessions[1]->sendInterrupts();
+
+    uint64_t ctxHandle = 2;
+    uint64_t vmHandle = 7;
+    uint64_t lrcHandle = 8;
+
+    rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[ctxHandle].vm = vmHandle;
+    rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->lrcToContextHandle[lrcHandle] = ctxHandle;
+    rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile[vmHandle] = 1;
+
+    uint8_t data[sizeof(prelim_drm_i915_debug_event_eu_attention) + 128];
+
+    tileSessions[1]->ensureThreadStopped(apiThread, vmHandle);
+
+    auto engineInfo = mockDrm->getEngineInfo();
+    auto engineInstance = engineInfo->getEngineInstance(1, hwInfo.capabilityTable.defaultEngineType);
+
+    prelim_drm_i915_debug_event_eu_attention attention = {};
+    attention.base.type = PRELIM_DRM_I915_DEBUG_EVENT_EU_ATTENTION;
+    attention.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_STATE_CHANGE;
+    attention.base.size = sizeof(prelim_drm_i915_debug_event_eu_attention);
+    attention.base.seqno = 2;
+    attention.client_handle = MockDebugSessionLinux::mockClientHandle;
+    attention.lrc_handle = lrcHandle;
+    attention.flags = 0;
+    attention.ci.engine_class = engineInstance->engineClass;
+    attention.ci.engine_instance = engineInstance->engineInstance;
+    attention.bitmask_size = 0;
+
+    memcpy(data, &attention, sizeof(prelim_drm_i915_debug_event_eu_attention));
+    rootSession->handleEvent(reinterpret_cast<prelim_drm_i915_debug_event *>(data));
+
+    EXPECT_TRUE(tileSessions[1]->triggerEvents);
+}
+
+TEST_F(TileAttachTest, givenStoppedThreadsWhenHandlingAttentionEventThenStoppedThreadsFromRaisedAttentionAreProcessed) {
+    // deubg attach both tiles
+    rootSession->tileSessions[0].second = true;
+    rootSession->tileSessions[1].second = true;
+
+    uint64_t ctxHandle = 2;
+    uint64_t vmHandle = 7;
+    uint64_t lrcHandle = 8;
+
+    rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[ctxHandle].vm = vmHandle;
+    rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->lrcToContextHandle[lrcHandle] = ctxHandle;
+    rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile[vmHandle] = 1;
+
+    uint8_t data[sizeof(prelim_drm_i915_debug_event_eu_attention) + 128];
+
+    auto engineInfo = mockDrm->getEngineInfo();
+    auto engineInstance = engineInfo->getEngineInstance(1, hwInfo.capabilityTable.defaultEngineType);
+
+    EuThread::ThreadId thread = {1, 0, 0, 0, 0};
+    tileSessions[1]->stoppedThreads[thread.packed] = 1;
+
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t bitmaskSize = 0;
+    auto &hwInfo = neoDevice->getHardwareInfo();
+    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    l0HwHelper.getAttentionBitmaskForSingleThreads({thread}, hwInfo, bitmask, bitmaskSize);
+
+    prelim_drm_i915_debug_event_eu_attention attention = {};
+    attention.base.type = PRELIM_DRM_I915_DEBUG_EVENT_EU_ATTENTION;
+    attention.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_STATE_CHANGE;
+    attention.base.size = sizeof(prelim_drm_i915_debug_event_eu_attention);
+    attention.base.seqno = 2;
+    attention.client_handle = MockDebugSessionLinux::mockClientHandle;
+    attention.lrc_handle = lrcHandle;
+    attention.flags = 0;
+    attention.ci.engine_class = engineInstance->engineClass;
+    attention.ci.engine_instance = engineInstance->engineInstance;
+    attention.bitmask_size = static_cast<uint32_t>(bitmaskSize);
+
+    memcpy(data, &attention, sizeof(prelim_drm_i915_debug_event_eu_attention));
+    memcpy(ptrOffset(data, offsetof(prelim_drm_i915_debug_event_eu_attention, bitmask)), bitmask.get(), std::min(size_t(128), bitmaskSize));
+
+    rootSession->handleEvent(reinterpret_cast<prelim_drm_i915_debug_event *>(data));
+
+    EXPECT_EQ(1u, tileSessions[1]->newlyStoppedThreads.size());
+    EXPECT_TRUE(tileSessions[1]->triggerEvents);
+}
+
+using TileAttachAsyncThreadTest = Test<TileAttachFixture>;
+
+TEST_F(TileAttachAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEventIsReadThenThreadUnavailableEventIsGenerated) {
+    rootSession->tileSessions[0].second = true;
+    tileSessions[0]->returnTimeDiff = DebugSessionLinux::interruptTimeout * 10;
+
+    ze_device_thread_t thread = {0, 0, 0, 0};
+    auto result = tileSessions[0]->interrupt(thread);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    rootSession->startAsyncThread();
+
+    while (rootSession->getInternalEventCounter == 0)
+        ;
+
+    rootSession->closeAsyncThread();
+
+    zet_debug_event_t event = {};
+    result = zetDebugReadEvent(tileSessions[0]->toHandle(), 0, &event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_UNAVAILABLE, event.type);
+    EXPECT_EQ(0u, event.info.thread.thread.slice);
+    EXPECT_EQ(0u, event.info.thread.thread.subslice);
+    EXPECT_EQ(0u, event.info.thread.thread.eu);
+    EXPECT_EQ(0u, event.info.thread.thread.thread);
 }
 
 TEST_F(TileAttachTest, GivenEventWithL0ZebinModuleWhenHandlingEventThenModuleLoadAndUnloadEventsAreReportedForLastKernel) {

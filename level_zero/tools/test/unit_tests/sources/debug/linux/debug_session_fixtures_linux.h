@@ -238,6 +238,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     using L0::DebugSessionImp::expectedAttentionEvents;
     using L0::DebugSessionImp::interruptSent;
     using L0::DebugSessionImp::isValidGpuAddress;
+    using L0::DebugSessionImp::newAttentionRaised;
     using L0::DebugSessionImp::stateSaveAreaHeader;
     using L0::DebugSessionImp::tileAttachEnabled;
     using L0::DebugSessionImp::tileSessions;
@@ -256,6 +257,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     using L0::DebugSessionLinux::eventsToAck;
     using L0::DebugSessionLinux::extractVaFromUuidString;
     using L0::DebugSessionLinux::getRegisterSetProperties;
+    using L0::DebugSessionLinux::getSbaBufferGpuVa;
     using L0::DebugSessionLinux::getStateSaveAreaHeader;
     using L0::DebugSessionLinux::handleEvent;
     using L0::DebugSessionLinux::handleEventsAsync;
@@ -318,6 +320,11 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
         resumedThreads.push_back(threads);
         resumedDevices.push_back(deviceIndex);
         return L0::DebugSessionLinux::resumeImp(threads, deviceIndex);
+    }
+
+    ze_result_t interruptImp(uint32_t deviceIndex) override {
+        interruptedDevice = deviceIndex;
+        return L0::DebugSessionLinux::interruptImp(deviceIndex);
     }
 
     void handleEvent(prelim_drm_i915_debug_event *event) override {
@@ -391,6 +398,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     uint32_t writeResumeCommandCalled = 0;
     bool skipcheckThreadIsResumed = true;
     uint32_t checkThreadIsResumedCalled = 0;
+    uint32_t interruptedDevice = std::numeric_limits<uint32_t>::max();
 
     std::vector<uint32_t> resumedDevices;
     std::vector<std::vector<EuThread::ThreadId>> resumedThreads;
@@ -403,9 +411,17 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
 
 struct MockTileDebugSessionLinux : TileDebugSessionLinux {
     using DebugSession::allThreads;
+    using DebugSessionImp::checkTriggerEventsForAttention;
+    using DebugSessionImp::expectedAttentionEvents;
+    using DebugSessionImp::interruptImp;
+    using DebugSessionImp::newlyStoppedThreads;
+    using DebugSessionImp::resumeImp;
+    using DebugSessionImp::sendInterrupts;
     using DebugSessionImp::stateSaveAreaHeader;
+    using DebugSessionImp::triggerEvents;
     using TileDebugSessionLinux::getAllMemoryHandles;
     using TileDebugSessionLinux::getContextStateSaveAreaGpuVa;
+    using TileDebugSessionLinux::getSbaBufferGpuVa;
     using TileDebugSessionLinux::readGpuMemory;
     using TileDebugSessionLinux::readModuleDebugArea;
     using TileDebugSessionLinux::readSbaBuffer;
@@ -421,6 +437,36 @@ struct MockTileDebugSessionLinux : TileDebugSessionLinux {
         }
         allThreads[threadId]->stopThread(vmHandle);
     }
+
+    bool writeResumeCommand(const std::vector<EuThread::ThreadId> &threadIds) override {
+        if (writeResumeResult != -1) {
+            return writeResumeResult == 0 ? false : true;
+        }
+        return writeResumeCommand(threadIds);
+    }
+
+    bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srIdent) override {
+        srIdent.count = 0;
+        if (stoppedThreads.size()) {
+            auto entry = stoppedThreads.find(thread->getThreadId());
+            if (entry != stoppedThreads.end()) {
+                srIdent.count = entry->second;
+            }
+            return true;
+        }
+        return L0::DebugSessionLinux::readSystemRoutineIdent(thread, vmHandle, srIdent);
+    }
+
+    int64_t getTimeDifferenceMilliseconds(std::chrono::high_resolution_clock::time_point time) override {
+        if (returnTimeDiff != -1) {
+            return returnTimeDiff;
+        }
+        return L0::DebugSessionLinux::getTimeDifferenceMilliseconds(time);
+    }
+
+    int writeResumeResult = -1;
+    int64_t returnTimeDiff = -1;
+    std::unordered_map<uint64_t, uint8_t> stoppedThreads;
 };
 
 size_t threadSlotOffset(SIP::StateSaveAreaHeader *pStateSaveAreaHeader, int slice, int subslice, int eu, int thread);

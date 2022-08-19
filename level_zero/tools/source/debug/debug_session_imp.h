@@ -133,7 +133,7 @@ struct DebugSessionImp : DebugSession {
     std::vector<EuThread::ThreadId> newlyStoppedThreads;
     std::vector<char> stateSaveAreaHeader;
 
-    std::vector<std::pair<DebugSession *, bool>> tileSessions; // DebugSession, attached
+    std::vector<std::pair<DebugSessionImp *, bool>> tileSessions; // DebugSession, attached
     bool tileAttachEnabled = false;
     bool tileSessionsEnabled = false;
 
