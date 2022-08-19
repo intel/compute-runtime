@@ -4671,7 +4671,6 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeBufferOffsetWhenOffset
     ASSERT_EQ(1U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
     const auto &arg = programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>();
     EXPECT_EQ(8, arg.bufferOffset);
-    EXPECT_EQ(4, arg.pointerSize);
 }
 
 TEST(PopulateArgDescriptorCrossthreadPayload, givenPureStatefulArgWithBufferAddressWhenThereIsNoStatelessAccessThenPopulatesKernelDescriptorAndArgIsPureStateful) {
