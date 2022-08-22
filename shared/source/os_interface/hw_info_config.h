@@ -136,6 +136,23 @@ class HwInfoConfig {
     virtual void adjustNumberOfCcs(HardwareInfo &hwInfo) const = 0;
     virtual bool isPrefetcherDisablingInDirectSubmissionRequired() const = 0;
 
+    virtual bool getFrontEndPropertyScratchSizeSupport() const = 0;
+    virtual bool getFrontEndPropertyPrivateScratchSizeSupport() const = 0;
+
+    virtual bool getScmPropertyThreadArbitrationSupport() const = 0;
+    virtual bool getScmPropertyCoherencySupport() const = 0;
+    virtual bool getScmPropertyZPassAsyncSupport() const = 0;
+    virtual bool getScmPropertyPixelAsyncSupport() const = 0;
+    virtual bool getScmPropertyLargeGrfSupport() const = 0;
+    virtual bool getScmPropertyDevicePreemptionSupport() const = 0;
+
+    virtual bool getSbaPropertyGlobalAtomicsSupport() const = 0;
+    virtual bool getSbaPropertyStatelessMocsSupport() const = 0;
+
+    virtual bool getPreemptionDbgPropertyPreemptionModeSupport() const = 0;
+    virtual bool getPreemptionDbgPropertyStateSipSupport() const = 0;
+    virtual bool getPreemptionDbgPropertyCsrSurfaceSupport() const = 0;
+
     MOCKABLE_VIRTUAL ~HwInfoConfig() = default;
 
   protected:
@@ -240,6 +257,23 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isEvictionIfNecessaryFlagSupported() const override;
     void adjustNumberOfCcs(HardwareInfo &hwInfo) const override;
     bool isPrefetcherDisablingInDirectSubmissionRequired() const override;
+
+    bool getFrontEndPropertyScratchSizeSupport() const override;
+    bool getFrontEndPropertyPrivateScratchSizeSupport() const override;
+
+    bool getScmPropertyThreadArbitrationSupport() const override;
+    bool getScmPropertyCoherencySupport() const override;
+    bool getScmPropertyZPassAsyncSupport() const override;
+    bool getScmPropertyPixelAsyncSupport() const override;
+    bool getScmPropertyLargeGrfSupport() const override;
+    bool getScmPropertyDevicePreemptionSupport() const override;
+
+    bool getSbaPropertyGlobalAtomicsSupport() const override;
+    bool getSbaPropertyStatelessMocsSupport() const override;
+
+    bool getPreemptionDbgPropertyPreemptionModeSupport() const override;
+    bool getPreemptionDbgPropertyStateSipSupport() const override;
+    bool getPreemptionDbgPropertyCsrSurfaceSupport() const override;
 
   protected:
     HwInfoConfigHw() = default;
