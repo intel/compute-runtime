@@ -71,3 +71,7 @@ using IsAtLeastSkl = IsAtLeastProduct<IGFX_SKYLAKE>;
 using IsAtMostDg2 = IsAtMostProduct<IGFX_DG2>;
 
 using IsNotPVC = IsNotWithinProducts<IGFX_PVC, IGFX_PVC>;
+
+using HasStatefulSupport = IsNotAnyGfxCores<IGFX_XE_HPC_CORE>;
+
+using HasNoStatefulSupport = IsAnyGfxCores<IGFX_XE_HPC_CORE>;

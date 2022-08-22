@@ -199,3 +199,8 @@ template <>
 void HwInfoConfigHw<gfxProduct>::adjustNumberOfCcs(HardwareInfo &hwInfo) const {
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
 }
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isStatefulAddressingModeSupported() const {
+    return false;
+}

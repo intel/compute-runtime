@@ -14,6 +14,7 @@
 #include "os_inc.h"
 
 #include <cstdint>
+#include <sstream>
 
 namespace NEO {
 
@@ -72,24 +73,52 @@ BuiltinResourceT createBuiltinResource(const BuiltinResourceT &r) {
     return BuiltinResourceT(r);
 }
 
-std::string createBuiltinResourceName(EBuiltInOps::Type builtin, const std::string &extension,
-                                      const std::string &platformName, uint32_t deviceRevId) {
-    std::string ret;
-    if (platformName.size() > 0) {
-        ret = platformName;
-        ret += "_" + std::to_string(deviceRevId);
-        ret += "_";
-    }
-    if (extension == ".bin") {
-        ret += ApiSpecificConfig::getBindlessConfiguration() ? "bindless_" : "bindful_";
-    }
-    ret += getBuiltinAsString(builtin);
+std::string createBuiltinResourceName(EBuiltInOps::Type builtin, const std::string &extension) {
+    return getBuiltinAsString(builtin) + extension;
+}
 
-    if (extension.size() > 0) {
-        ret += extension;
-    }
+StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, BuiltinCode::ECodeType type, const Device &device) {
+    auto &hwInfo = device.getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    return ret;
+    const auto platformName = getFamilyNameWithType(hwInfo);
+    const auto revisionId = std::to_string(hwInfo.platform.usRevId);
+    const auto builtinName = getBuiltinAsString(builtin);
+    const auto extension = BuiltinCode::getExtension(type);
+    auto getAddressingMode = [type, &hwInfo, builtin]() {
+        if (type == BuiltinCode::ECodeType::Binary) {
+            const bool requiresStatelessAddressing = (false == HwInfoConfig::get(hwInfo.platform.eProductFamily)->isStatefulAddressingModeSupported());
+            const bool builtInUsesStatelessAddressing = EBuiltInOps::isStateless(builtin);
+            if (builtInUsesStatelessAddressing || requiresStatelessAddressing) {
+                return "stateless_";
+            } else if (ApiSpecificConfig::getBindlessConfiguration()) {
+                return "bindless_";
+            } else {
+                return "bindful_";
+            }
+        }
+        return "";
+    };
+    const auto addressingMode = getAddressingMode();
+
+    auto createBuiltinResourceName = [](ConstStringRef platformName, ConstStringRef revisionId, ConstStringRef addressingMode, ConstStringRef builtinName, ConstStringRef extension) {
+        std::ostringstream outResourceName;
+        if (false == platformName.empty()) {
+            outResourceName << platformName.str() << "_" << revisionId.str() << "_";
+        }
+        outResourceName << addressingMode.str() << builtinName.str() << extension.str();
+        return outResourceName.str();
+    };
+    StackVec<std::string, 3> resourcesToLookup = {};
+    resourcesToLookup.push_back(createBuiltinResourceName(platformName, revisionId, addressingMode, builtinName, extension));
+
+    const bool requiresSpecificResource = (BuiltinCode::ECodeType::Binary == type && hwHelper.isRevisionSpecificBinaryBuiltinRequired());
+    if (false == requiresSpecificResource) {
+        const auto defaultRevisionId = std::to_string(hwHelper.getDefaultRevisionId(hwInfo));
+        resourcesToLookup.push_back(createBuiltinResourceName(platformName, defaultRevisionId, addressingMode, builtinName, extension));
+        resourcesToLookup.push_back(createBuiltinResourceName("", "", addressingMode, builtinName, extension));
+    }
+    return resourcesToLookup;
 }
 
 std::string joinPath(const std::string &lhs, const std::string &rhs) {
@@ -186,33 +215,17 @@ BuiltinCode BuiltinsLib::getBuiltinCode(EBuiltInOps::Type builtin, BuiltinCode::
 }
 
 BuiltinResourceT BuiltinsLib::getBuiltinResource(EBuiltInOps::Type builtin, BuiltinCode::ECodeType requestedCodeType, Device &device) {
-    BuiltinResourceT bc;
-    auto &hwInfo = device.getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    std::string resourceNameGeneric = createBuiltinResourceName(builtin, BuiltinCode::getExtension(requestedCodeType));
-    std::string resourceNameForPlatformType = createBuiltinResourceName(builtin, BuiltinCode::getExtension(requestedCodeType),
-                                                                        getFamilyNameWithType(hwInfo),
-                                                                        hwHelper.getDefaultRevisionId(hwInfo));
-    std::string resourceNameForPlatformTypeAndStepping = createBuiltinResourceName(builtin, BuiltinCode::getExtension(requestedCodeType),
-                                                                                   getFamilyNameWithType(hwInfo),
-                                                                                   hwInfo.platform.usRevId);
-
-    StackVec<const std::string *, 3> resourcesToLookup;
-    resourcesToLookup.push_back(&resourceNameForPlatformTypeAndStepping);
-    if (BuiltinCode::ECodeType::Binary != requestedCodeType || !hwHelper.isRevisionSpecificBinaryBuiltinRequired()) {
-        resourcesToLookup.push_back(&resourceNameForPlatformType);
-        resourcesToLookup.push_back(&resourceNameGeneric);
-    }
-    for (auto &rn : resourcesToLookup) { // first look for dedicated version, only fallback to generic one
-        for (auto &s : allStorages) {
-            UNRECOVERABLE_IF(!rn);
-            bc = s->load(*rn);
-            if (bc.size() != 0) {
-                return bc;
+    BuiltinResourceT builtinResource;
+    auto resourcesToLookup = getBuiltinResourceNames(builtin, requestedCodeType, device);
+    for (auto &resourceName : resourcesToLookup) {
+        for (auto &storage : allStorages) {
+            builtinResource = storage->load(resourceName);
+            if (builtinResource.size() != 0) {
+                return builtinResource;
             }
         }
     }
-    return bc;
+    return builtinResource;
 }
 
 } // namespace NEO

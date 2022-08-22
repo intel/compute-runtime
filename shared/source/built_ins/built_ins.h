@@ -36,10 +36,38 @@ static constexpr ConstStringRef mediaKernelsBuildOptionsList[] = {
 
 static constexpr CompilerOptions::ConstConcatenation<> mediaKernelsBuildOptions{mediaKernelsBuildOptionsList};
 
+struct BuiltinCode {
+    enum class ECodeType {
+        Any = 0,          // for requesting "any" code available - priorities as below
+        Binary = 1,       // ISA - highest priority
+        Intermediate = 2, // SPIR/LLVM - medium prioroty
+        Source = 3,       // OCL C - lowest priority
+        COUNT,
+        INVALID
+    };
+
+    static const char *getExtension(BuiltinCode::ECodeType ct) {
+        switch (ct) {
+        default:
+            return "";
+        case BuiltinCode::ECodeType::Binary:
+            return ".bin";
+        case BuiltinCode::ECodeType::Intermediate:
+            return ".bc";
+        case BuiltinCode::ECodeType::Source:
+            return ".cl";
+        }
+    }
+
+    BuiltinCode::ECodeType type;
+    BuiltinResourceT resource;
+    Device *targetDevice;
+};
+
 BuiltinResourceT createBuiltinResource(const char *ptr, size_t size);
 BuiltinResourceT createBuiltinResource(const BuiltinResourceT &r);
-std::string createBuiltinResourceName(EBuiltInOps::Type builtin, const std::string &extension,
-                                      const std::string &platformName = "", uint32_t deviceRevId = 0);
+std::string createBuiltinResourceName(EBuiltInOps::Type builtin, const std::string &extension);
+StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, BuiltinCode::ECodeType type, const Device &device);
 std::string joinPath(const std::string &lhs, const std::string &rhs);
 const char *getBuiltinAsString(EBuiltInOps::Type builtin);
 const char *getAdditionalBuiltinAsString(EBuiltInOps::Type builtin);
@@ -95,34 +123,6 @@ class EmbeddedStorage : public Storage {
 
   protected:
     BuiltinResourceT loadImpl(const std::string &fullResourceName) override;
-};
-
-struct BuiltinCode {
-    enum class ECodeType {
-        Any = 0,          // for requesting "any" code available - priorities as below
-        Binary = 1,       // ISA - highest priority
-        Intermediate = 2, // SPIR/LLVM - medium prioroty
-        Source = 3,       // OCL C - lowest priority
-        COUNT,
-        INVALID
-    };
-
-    static const char *getExtension(ECodeType ct) {
-        switch (ct) {
-        default:
-            return "";
-        case ECodeType::Binary:
-            return ".bin";
-        case ECodeType::Intermediate:
-            return ".bc";
-        case ECodeType::Source:
-            return ".cl";
-        }
-    }
-
-    ECodeType type;
-    BuiltinResourceT resource;
-    Device *targetDevice;
 };
 
 class BuiltinsLib {

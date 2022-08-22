@@ -52,6 +52,7 @@ target_sources(${TARGET_NAME} PRIVATE
                $<TARGET_OBJECTS:neo_libult_cs>
                $<TARGET_OBJECTS:neo_libult>
                $<TARGET_OBJECTS:neo_shared_mocks>
+               $<TARGET_OBJECTS:${BUILTINS_BINARIES_STATELESS_LIB_NAME}>
                $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDFUL_LIB_NAME}>
                $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDLESS_LIB_NAME}>
                $<TARGET_OBJECTS:neo_aub_tests_config>

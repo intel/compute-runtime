@@ -179,3 +179,8 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenIsPrefetcherDisablingInDirectSub
     const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     EXPECT_TRUE(hwInfoConfig.isPrefetcherDisablingInDirectSubmissionRequired());
 }
+
+HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenIsStatefulAddressingModeSupportedThenReturnTrue, HasStatefulSupport) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    EXPECT_TRUE(hwInfoConfig.isStatefulAddressingModeSupported());
+}

@@ -135,6 +135,7 @@ class HwInfoConfig {
     virtual bool isEvictionIfNecessaryFlagSupported() const = 0;
     virtual void adjustNumberOfCcs(HardwareInfo &hwInfo) const = 0;
     virtual bool isPrefetcherDisablingInDirectSubmissionRequired() const = 0;
+    virtual bool isStatefulAddressingModeSupported() const = 0;
 
     MOCKABLE_VIRTUAL ~HwInfoConfig() = default;
 
@@ -240,6 +241,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isEvictionIfNecessaryFlagSupported() const override;
     void adjustNumberOfCcs(HardwareInfo &hwInfo) const override;
     bool isPrefetcherDisablingInDirectSubmissionRequired() const override;
+    bool isStatefulAddressingModeSupported() const override;
 
   protected:
     HwInfoConfigHw() = default;

@@ -74,3 +74,8 @@ PVCTEST_F(PVCHwInfoConfig, givenPVCHwInfoConfigWhenIsPrefetcherDisablingInDirect
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     EXPECT_FALSE(hwInfoConfig.isPrefetcherDisablingInDirectSubmissionRequired());
 }
+
+PVCTEST_F(PVCHwInfoConfig, givenPVCHwInfoConfigWhenIsStatefulAddressingModeSupportedThenReturnFalse) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    EXPECT_FALSE(hwInfoConfig.isStatefulAddressingModeSupported());
+}

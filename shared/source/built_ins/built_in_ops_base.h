@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include <algorithm>
+#include <array>
 #include <cstdint>
 
 namespace NEO {
@@ -31,6 +33,16 @@ constexpr Type FillImage1d{14};
 constexpr Type FillImage2d{15};
 constexpr Type FillImage3d{16};
 constexpr Type QueryKernelTimestamps{17};
+
+constexpr bool isStateless(Type type) {
+    constexpr std::array<Type, 5> statelessBuiltins{{CopyBufferToBufferStateless, CopyBufferRectStateless, FillBufferStateless, CopyBufferToImage3dStateless, CopyImage3dToBufferStateless}};
+    for (auto &builtinType : statelessBuiltins) {
+        if (type == builtinType) {
+            return true;
+        }
+    }
+    return false;
+}
 
 constexpr Type MaxBaseValue{17};
 constexpr Type COUNT{64};

@@ -1485,21 +1485,6 @@ TEST_F(BuiltInTests, GivenBuiltinResourceWhenCreatingBuiltinResourceThenSizesAre
     EXPECT_EQ(br1, br2);
 }
 
-TEST_F(BuiltInTests, WhenCreatingBuiltinResourceNameThenCorrectStringIsReturned) {
-    EBuiltInOps::Type builtin = EBuiltInOps::CopyBufferToBuffer;
-    const std::string extension = ".cl";
-    const std::string platformName = "skl";
-    const uint32_t deviceRevId = 9;
-
-    std::string resourceNameGeneric = createBuiltinResourceName(builtin, extension);
-    std::string resourceNameForPlatform = createBuiltinResourceName(builtin, extension, platformName);
-    std::string resourceNameForPlatformAndStepping = createBuiltinResourceName(builtin, extension, platformName, deviceRevId);
-
-    EXPECT_EQ(0, strcmp("copy_buffer_to_buffer.builtin_kernel.cl", resourceNameGeneric.c_str()));
-    EXPECT_EQ(0, strcmp("skl_0_copy_buffer_to_buffer.builtin_kernel.cl", resourceNameForPlatform.c_str()));
-    EXPECT_EQ(0, strcmp("skl_9_copy_buffer_to_buffer.builtin_kernel.cl", resourceNameForPlatformAndStepping.c_str()));
-}
-
 TEST_F(BuiltInTests, WhenJoiningPathThenPathsAreJoinedWithCorrectSeparator) {
     std::string resourceName = "copy_buffer_to_buffer.builtin_kernel.cl";
     std::string resourcePath = "path";
