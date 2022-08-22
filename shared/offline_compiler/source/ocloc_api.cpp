@@ -45,6 +45,7 @@ Commands:
   multi                 Compiles multiple files using a config file.
   validate              Validates Intel Compute GPU device binary.
   query                 Extracts versioning info.
+  ids                   Return matching versions <major>.<minor>.<revision>.
 
 Default command (when none provided) is 'compile'.
 
@@ -69,6 +70,9 @@ Examples:
 
   Concatenate fat binaries
     ocloc concat <fat binary> <fat binary> ... [-out <concatenated fat binary name>]
+
+  Return matching version for an acronym
+    ocloc ids dg1
 )===";
 
 extern "C" {
