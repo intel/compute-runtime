@@ -19,7 +19,7 @@
 
 #include "gtest/gtest.h"
 
-#include <type_traits>
+#include <memory>
 
 using namespace NEO;
 
@@ -48,20 +48,17 @@ HWTEST_F(SurfaceTest, GivenSurfaceWhenInterfaceIsUsedThenSurfaceBehavesCorrectly
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(engine, PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
     csr->setupContext(*osContext);
 
-    Surface *surface = createSurface::create(this->data,
-                                             &this->buffer,
-                                             &this->gfxAllocation);
-    ASSERT_NE(nullptr, surface); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    std::unique_ptr<Surface> surface{createSurface::create(this->data,
+                                                           &this->buffer,
+                                                           &this->gfxAllocation)};
+    ASSERT_NE(nullptr, surface);
 
-    Surface *duplicatedSurface = surface->duplicate();
-    ASSERT_NE(nullptr, duplicatedSurface); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    std::unique_ptr<Surface> duplicatedSurface{surface->duplicate()};
+    ASSERT_NE(nullptr, duplicatedSurface);
 
     surface->makeResident(*csr);
 
     EXPECT_EQ(1u, csr->madeResidentGfxAllocations.size());
-
-    delete duplicatedSurface;
-    delete surface;
 }
 
 class CoherentMemObjSurface : public SurfaceTest {
@@ -72,11 +69,8 @@ class CoherentMemObjSurface : public SurfaceTest {
 };
 
 TEST_F(CoherentMemObjSurface, GivenCoherentMemObjWhenCreatingSurfaceFromMemObjThenSurfaceIsCoherent) {
-    Surface *surface = createSurface::create(this->data,
-                                             &this->buffer,
-                                             &this->gfxAllocation);
-
+    std::unique_ptr<Surface> surface{createSurface::create(this->data,
+                                                           &this->buffer,
+                                                           &this->gfxAllocation)};
     EXPECT_TRUE(surface->IsCoherent);
-
-    delete surface;
 }
