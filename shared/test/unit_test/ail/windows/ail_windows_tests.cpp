@@ -11,6 +11,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 namespace NEO {
+
 using AILTests = ::testing::Test;
 namespace SysCalls {
 extern const wchar_t *currentLibraryPath;
@@ -49,4 +50,19 @@ HWTEST2_F(AILTests, givenValidApplicationPathWithoutLongNameWhenAILinitProcessEx
 
     EXPECT_EQ("application", ailTemp.processName);
 }
+
+HWTEST2_F(AILTests, givenApplicationPathWithNonLatinCharactersWhenAILinitProcessExecutableNameThenProperProcessNameIsReturned, IsAtLeastGen12lp) {
+    VariableBackup<const wchar_t *> applicationPathBackup(&SysCalls::currentLibraryPath);
+    applicationPathBackup = L"C\\\u4E20\u4E24\\application";
+
+    VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
+
+    AILMock<productFamily> ailTemp;
+    ailConfigurationTable[productFamily] = &ailTemp;
+
+    EXPECT_EQ(ailTemp.initProcessExecutableName(), true);
+
+    EXPECT_EQ("application", ailTemp.processName);
+}
+
 } // namespace NEO
