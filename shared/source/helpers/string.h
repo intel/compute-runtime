@@ -115,8 +115,11 @@ inline std::unique_ptr<T[]> makeCopy(const void *src, size_t size) {
     if (size == 0) {
         return nullptr;
     }
-    using ElT = typename std::remove_all_extents<T>::type;
-    std::unique_ptr<T[]> copiedData(new ElT[size]);
+
+    static_assert(sizeof(T) == 1u && std::is_trivially_copyable_v<T>);
+
+    auto copiedData = std::make_unique<T[]>(size);
     memcpy_s(copiedData.get(), size, src, size);
+
     return copiedData;
 }
