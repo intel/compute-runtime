@@ -229,7 +229,7 @@ class Wddm : public DriverModel {
     MOCKABLE_VIRTUAL void createPagingFenceLogger();
     bool setLowPriorityContextParam(D3DKMT_HANDLE contextHandle);
     bool adjustEvictNeededParameter(bool evictNeeded) {
-        if (evictNeeded == false && platformSupportsEvictWhenNecessary == false) {
+        if (evictNeeded == false && platformSupportsEvictIfNecessary == false) {
             evictNeeded = true;
         }
         if (forceEvictOnlyIfNecessary != -1) {
@@ -237,7 +237,7 @@ class Wddm : public DriverModel {
         }
         return evictNeeded;
     }
-    void setPlatformSupportEvictWhenNecessaryFlag(const HwInfoConfig &hwInfoConfig);
+    void setPlatformSupportEvictIfNecessaryFlag(const HwInfoConfig &hwInfoConfig);
     void populateAdditionalAdapterInfoOptions(const ADAPTER_INFO_KMD &adapterInfo);
 
     GMM_GFX_PARTITIONING gfxPartition{};
@@ -285,7 +285,7 @@ class Wddm : public DriverModel {
 
     unsigned int enablePreemptionRegValue = 1;
 
-    bool platformSupportsEvictWhenNecessary = false;
+    bool platformSupportsEvictIfNecessary = false;
     bool instrumentationEnabled = false;
 };
 } // namespace NEO

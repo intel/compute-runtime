@@ -108,8 +108,8 @@ CFLTEST_F(CflHwInfo, givenHwInfoConfigWhenGetProductConfigThenCorrectMatchIsFoun
     EXPECT_EQ(hwInfoConfig.getProductConfigFromHwInfo(hwInfo), AOT::UNKNOWN_ISA);
 }
 
-CFLTEST_F(CflHwInfo, givenHwInfoConfigWhenGettingEvictWhenNecessaryFlagSupportedThenExpectTrue) {
+CFLTEST_F(CflHwInfo, givenHwInfoConfigWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
     HardwareInfo hwInfo = *defaultHwInfo;
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig.isEvictionWhenNecessaryFlagSupported());
+    EXPECT_TRUE(hwInfoConfig.isEvictionIfNecessaryFlagSupported());
 }

@@ -45,11 +45,11 @@ class WddmMock : public Wddm {
     using Wddm::minAddress;
     using Wddm::pagingFenceAddress;
     using Wddm::pagingQueue;
-    using Wddm::platformSupportsEvictWhenNecessary;
+    using Wddm::platformSupportsEvictIfNecessary;
     using Wddm::populateAdditionalAdapterInfoOptions;
     using Wddm::residencyLogger;
     using Wddm::rootDeviceEnvironment;
-    using Wddm::setPlatformSupportEvictWhenNecessaryFlag;
+    using Wddm::setPlatformSupportEvictIfNecessaryFlag;
     using Wddm::temporaryResources;
     using Wddm::timestampFrequency;
     using Wddm::wddmInterface;

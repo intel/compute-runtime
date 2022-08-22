@@ -143,8 +143,8 @@ DG1TEST_F(Dg1HwInfo, givenHwInfoConfigWhenGetProductConfigThenCorrectMatchIsFoun
     EXPECT_EQ(hwInfoConfig.getProductConfigFromHwInfo(*defaultHwInfo), AOT::DG1);
 }
 
-DG1TEST_F(Dg1HwInfo, givenHwInfoConfigWhenGettingEvictWhenNecessaryFlagSupportedThenExpectTrue) {
+DG1TEST_F(Dg1HwInfo, givenHwInfoConfigWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
     HardwareInfo hwInfo = *defaultHwInfo;
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig.isEvictionWhenNecessaryFlagSupported());
+    EXPECT_TRUE(hwInfoConfig.isEvictionIfNecessaryFlagSupported());
 }

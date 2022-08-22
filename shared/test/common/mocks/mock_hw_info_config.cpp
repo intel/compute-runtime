@@ -392,7 +392,7 @@ uint64_t HwInfoConfigHw<IGFX_UNKNOWN>::getHostMemCapabilitiesValue() {
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isEvictionWhenNecessaryFlagSupported() const {
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isEvictionIfNecessaryFlagSupported() const {
     return true;
 }
 

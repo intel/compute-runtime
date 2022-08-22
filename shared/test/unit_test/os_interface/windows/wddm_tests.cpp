@@ -123,39 +123,39 @@ TEST_F(WddmTests, whenGetAdapterLuidThenLuidIsReturned) {
     EXPECT_TRUE(luid.HighPart == 0 && luid.LowPart == 0);
 }
 
-TEST_F(WddmTests, GivenDebugFlagDisablesEvictWhenNecessarySupportThenFlagIsFalse) {
+TEST_F(WddmTests, GivenDebugFlagDisablesEvictIfNecessarySupportThenFlagIsFalse) {
     DebugManagerStateRestore restorer{};
-    DebugManager.flags.PlaformSupportEvictWhenNecessaryFlag.set(0);
+    DebugManager.flags.PlaformSupportEvictIfNecessaryFlag.set(0);
 
     auto hwInfoConfig = HwInfoConfig::get(rootDeviceEnvironment->getHardwareInfo()->platform.eProductFamily);
 
-    wddm->setPlatformSupportEvictWhenNecessaryFlag(*hwInfoConfig);
-    EXPECT_FALSE(wddm->platformSupportsEvictWhenNecessary);
+    wddm->setPlatformSupportEvictIfNecessaryFlag(*hwInfoConfig);
+    EXPECT_FALSE(wddm->platformSupportsEvictIfNecessary);
 }
 
-TEST_F(WddmTests, GivenDebugFlagEnablesEvictWhenNecessarySupportThenFlagIsTrue) {
+TEST_F(WddmTests, GivenDebugFlagEnablesEvictIfNecessarySupportThenFlagIsTrue) {
     DebugManagerStateRestore restorer{};
-    DebugManager.flags.PlaformSupportEvictWhenNecessaryFlag.set(1);
+    DebugManager.flags.PlaformSupportEvictIfNecessaryFlag.set(1);
 
     auto hwInfoConfig = HwInfoConfig::get(rootDeviceEnvironment->getHardwareInfo()->platform.eProductFamily);
 
-    wddm->setPlatformSupportEvictWhenNecessaryFlag(*hwInfoConfig);
-    EXPECT_TRUE(wddm->platformSupportsEvictWhenNecessary);
+    wddm->setPlatformSupportEvictIfNecessaryFlag(*hwInfoConfig);
+    EXPECT_TRUE(wddm->platformSupportsEvictIfNecessary);
 }
 
 TEST_F(WddmTests, givenDebugFlagForceEvictOnlyIfNecessaryAllValuesThenForceSettingIsSetCorrectly) {
     DebugManagerStateRestore restorer{};
     auto hwInfoConfig = HwInfoConfig::get(rootDeviceEnvironment->getHardwareInfo()->platform.eProductFamily);
 
-    wddm->setPlatformSupportEvictWhenNecessaryFlag(*hwInfoConfig);
+    wddm->setPlatformSupportEvictIfNecessaryFlag(*hwInfoConfig);
     EXPECT_EQ(-1, wddm->forceEvictOnlyIfNecessary);
 
     DebugManager.flags.ForceEvictOnlyIfNecessaryFlag.set(0);
-    wddm->setPlatformSupportEvictWhenNecessaryFlag(*hwInfoConfig);
+    wddm->setPlatformSupportEvictIfNecessaryFlag(*hwInfoConfig);
     EXPECT_EQ(0, wddm->forceEvictOnlyIfNecessary);
 
     DebugManager.flags.ForceEvictOnlyIfNecessaryFlag.set(1);
-    wddm->setPlatformSupportEvictWhenNecessaryFlag(*hwInfoConfig);
+    wddm->setPlatformSupportEvictIfNecessaryFlag(*hwInfoConfig);
     EXPECT_EQ(1, wddm->forceEvictOnlyIfNecessary);
 }
 
@@ -311,8 +311,8 @@ TEST_F(WddmTests, GivenNoSliceEnabledWhenQueryingTopologyThenExpectFalse) {
     EXPECT_FALSE(wddm->buildTopologyMapping());
 }
 
-TEST_F(WddmTests, GivenPlatformSupportsEvictWhenNecessaryWhenAdjustingEvictNeededTrueThenExpectTrue) {
-    wddm->platformSupportsEvictWhenNecessary = true;
+TEST_F(WddmTests, GivenPlatformSupportsEvictIfNecessaryWhenAdjustingEvictNeededTrueThenExpectTrue) {
+    wddm->platformSupportsEvictIfNecessary = true;
     bool value = wddm->adjustEvictNeededParameter(true);
     EXPECT_TRUE(value);
 }
@@ -322,20 +322,20 @@ TEST_F(WddmTests, GivenWddmWhenAdditionalAdapterInfoOptionIsSetThenCorrectValueI
     EXPECT_EQ(13u, wddm->getAdditionalAdapterInfoOptions());
 }
 
-TEST_F(WddmTests, GivenPlatformNotSupportEvictWhenNecessaryWhenAdjustingEvictNeededTrueThenExpectTrue) {
-    wddm->platformSupportsEvictWhenNecessary = false;
+TEST_F(WddmTests, GivenPlatformNotSupportEvictIfNecessaryWhenAdjustingEvictNeededTrueThenExpectTrue) {
+    wddm->platformSupportsEvictIfNecessary = false;
     bool value = wddm->adjustEvictNeededParameter(true);
     EXPECT_TRUE(value);
 }
 
-TEST_F(WddmTests, GivenPlatformSupportsEvictWhenNecessaryWhenAdjustingEvictNeededFalseThenExpectFalse) {
-    wddm->platformSupportsEvictWhenNecessary = true;
+TEST_F(WddmTests, GivenPlatformSupportsEvictIfNecessaryWhenAdjustingEvictNeededFalseThenExpectFalse) {
+    wddm->platformSupportsEvictIfNecessary = true;
     bool value = wddm->adjustEvictNeededParameter(false);
     EXPECT_FALSE(value);
 }
 
 TEST_F(WddmTests, GivenForceEvictOnlyIfNecessarySetToNotUseTheEvictFlagWhenAdjustingEvictNeededAlwaysIsFalseThenExpectTrue) {
-    wddm->platformSupportsEvictWhenNecessary = true;
+    wddm->platformSupportsEvictIfNecessary = true;
     wddm->forceEvictOnlyIfNecessary = 0;
     bool value = wddm->adjustEvictNeededParameter(false);
     EXPECT_TRUE(value);
@@ -347,8 +347,8 @@ TEST_F(WddmTests, GivenForceEvictOnlyIfNecessarySetToUseEvictFlagWhenAdjustingEv
     EXPECT_FALSE(value);
 }
 
-TEST_F(WddmTests, GivenPlatformNotSupportEvictWhenNecessaryWhenAdjustingEvictNeededFalseThenExpectTrue) {
-    wddm->platformSupportsEvictWhenNecessary = false;
+TEST_F(WddmTests, GivenPlatformNotSupportEvictIfNecessaryWhenAdjustingEvictNeededFalseThenExpectTrue) {
+    wddm->platformSupportsEvictIfNecessary = false;
     bool value = wddm->adjustEvictNeededParameter(false);
     EXPECT_TRUE(value);
 }

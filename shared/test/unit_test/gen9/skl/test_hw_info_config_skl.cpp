@@ -115,8 +115,8 @@ SKLTEST_F(SklHwInfo, givenHwInfoConfigWhenGetProductConfigThenCorrectMatchIsFoun
     EXPECT_EQ(hwInfoConfig.getProductConfigFromHwInfo(hwInfo), AOT::SKL);
 }
 
-SKLTEST_F(SklHwInfo, givenHwInfoConfigWhenGettingEvictWhenNecessaryFlagSupportedThenExpectTrue) {
+SKLTEST_F(SklHwInfo, givenHwInfoConfigWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
     HardwareInfo hwInfo = *defaultHwInfo;
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig.isEvictionWhenNecessaryFlagSupported());
+    EXPECT_TRUE(hwInfoConfig.isEvictionIfNecessaryFlagSupported());
 }

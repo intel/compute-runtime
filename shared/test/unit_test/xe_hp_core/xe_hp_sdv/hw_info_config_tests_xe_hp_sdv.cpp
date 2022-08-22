@@ -15,8 +15,8 @@ using namespace NEO;
 
 using HwInfoConfigTestXeHpSdv = ::testing::Test;
 
-XEHPTEST_F(HwInfoConfigTestXeHpSdv, givenHwInfoConfigWhenGettingEvictWhenNecessaryFlagSupportedThenExpectTrue) {
+XEHPTEST_F(HwInfoConfigTestXeHpSdv, givenHwInfoConfigWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
     HardwareInfo hwInfo = *defaultHwInfo;
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig.isEvictionWhenNecessaryFlagSupported());
+    EXPECT_TRUE(hwInfoConfig.isEvictionIfNecessaryFlagSupported());
 }

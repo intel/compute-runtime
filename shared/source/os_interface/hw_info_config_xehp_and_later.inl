@@ -74,7 +74,7 @@ bool HwInfoConfigHw<gfxProduct>::isMatrixMultiplyAccumulateSupported(const Hardw
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isEvictionWhenNecessaryFlagSupported() const {
+bool HwInfoConfigHw<gfxProduct>::isEvictionIfNecessaryFlagSupported() const {
     return true;
 }
 

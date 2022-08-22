@@ -105,7 +105,7 @@ bool Wddm::init() {
     if (hwConfig->configureHwInfoWddm(hardwareInfo.get(), hardwareInfo.get(), nullptr)) {
         return false;
     }
-    setPlatformSupportEvictWhenNecessaryFlag(*hwConfig);
+    setPlatformSupportEvictIfNecessaryFlag(*hwConfig);
 
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*hardwareInfo);
     rootDeviceEnvironment.setHwInfo(hardwareInfo.get());
@@ -140,12 +140,12 @@ bool Wddm::init() {
     return configureDeviceAddressSpace();
 }
 
-void Wddm::setPlatformSupportEvictWhenNecessaryFlag(const HwInfoConfig &hwInfoConfig) {
-    platformSupportsEvictWhenNecessary = hwInfoConfig.isEvictionWhenNecessaryFlagSupported();
-    int32_t overridePlatformSupportsEvictWhenNecessary =
-        DebugManager.flags.PlaformSupportEvictWhenNecessaryFlag.get();
-    if (overridePlatformSupportsEvictWhenNecessary != -1) {
-        platformSupportsEvictWhenNecessary = !!overridePlatformSupportsEvictWhenNecessary;
+void Wddm::setPlatformSupportEvictIfNecessaryFlag(const HwInfoConfig &hwInfoConfig) {
+    platformSupportsEvictIfNecessary = hwInfoConfig.isEvictionIfNecessaryFlagSupported();
+    int32_t overridePlatformSupportsEvictIfNecessary =
+        DebugManager.flags.PlaformSupportEvictIfNecessaryFlag.get();
+    if (overridePlatformSupportsEvictIfNecessary != -1) {
+        platformSupportsEvictIfNecessary = !!overridePlatformSupportsEvictIfNecessary;
     }
     forceEvictOnlyIfNecessary = DebugManager.flags.ForceEvictOnlyIfNecessaryFlag.get();
 }

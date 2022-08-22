@@ -64,10 +64,10 @@ PVCTEST_F(PVCHwInfoConfig, givenPvcHwInfoWhenIsIpSamplingSupportedThenCorrectRes
     }
 }
 
-PVCTEST_F(PVCHwInfoConfig, givenHwInfoConfigWhenGettingEvictWhenNecessaryFlagSupportedThenExpectTrue) {
+PVCTEST_F(PVCHwInfoConfig, givenHwInfoConfigWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
     HardwareInfo hwInfo = *defaultHwInfo;
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig.isEvictionWhenNecessaryFlagSupported());
+    EXPECT_TRUE(hwInfoConfig.isEvictionIfNecessaryFlagSupported());
 }
 
 PVCTEST_F(PVCHwInfoConfig, givenPVCHwInfoConfigWhenIsPrefetcherDisablingInDirectSubmissionRequiredThenFalseIsReturned) {
