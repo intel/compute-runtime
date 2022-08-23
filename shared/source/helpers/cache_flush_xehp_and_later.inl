@@ -27,6 +27,9 @@ inline size_t getSizeNeededForL3Control(const Range<L3Range> &ranges) {
 }
 
 template <typename GfxFamily>
+void adjustL3ControlField(void *l3ControlBuffer);
+
+template <typename GfxFamily>
 inline void flushGpuCache(LinearStream *commandStream, const Range<L3Range> &ranges, uint64_t postSyncAddress, const HardwareInfo &hwInfo) {
     using L3_FLUSH_ADDRESS_RANGE = typename GfxFamily::L3_FLUSH_ADDRESS_RANGE;
     using L3_CONTROL = typename GfxFamily::L3_CONTROL;
@@ -45,6 +48,7 @@ inline void flushGpuCache(LinearStream *commandStream, const Range<L3Range> &ran
         cmdL3Control.getPostSyncData().setAddress(postSyncAddress);
         cmdL3Control.getPostSyncData().setImmediateData(0);
     }
+    adjustL3ControlField<GfxFamily>(&cmdL3Control);
     *l3Control = cmdL3Control;
 
     l3Control++;

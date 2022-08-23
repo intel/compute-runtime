@@ -428,7 +428,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             isMultiOsContextCapable(),                    // isMultiOsContextCapable
             dispatchFlags.useGlobalAtomics,               // useGlobalAtomics
             dispatchFlags.areMultipleSubDevicesInContext, // areMultipleSubDevicesInContext
-            false                                         // overrideSurfaceStateBaseAddress
+            false,                                        // overrideSurfaceStateBaseAddress
+            debuggingEnabled || device.isDebuggerActive() // isDebuggerActive
         };
 
         StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(args);

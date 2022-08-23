@@ -18,7 +18,7 @@ using Family = NEO::XeHpFamily;
 #include "shared/source/command_container/command_encoder_tgllp_and_later.inl"
 #include "shared/source/command_container/image_surface_state/compression_params_tgllp_and_later.inl"
 #include "shared/source/command_container/image_surface_state/compression_params_xehp_and_later.inl"
-
+#include "shared/source/helpers/cache_flush_xehp_and_later.inl"
 namespace NEO {
 
 template <>
@@ -26,7 +26,7 @@ void EncodeDispatchKernel<Family>::adjustTimestampPacket(WALKER_TYPE &walkerCmd,
 }
 
 template <>
-inline void EncodeSurfaceState<Family>::encodeExtraCacheSettings(R_SURFACE_STATE *surfaceState, const HardwareInfo &hwInfo) {
+inline void EncodeSurfaceState<Family>::encodeExtraCacheSettings(R_SURFACE_STATE *surfaceState, const EncodeSurfaceStateArgs &args) {
 }
 
 template <>
@@ -81,6 +81,11 @@ constexpr bool EncodeDispatchKernel<Family>::shouldUpdateGlobalAtomics(bool &cur
     }
     return false;
 }
+
+template <>
+void adjustL3ControlField<Family>(void *l3ControlBuffer) { ; }
+
+template void flushGpuCache<Family>(LinearStream *commandStream, const Range<L3Range> &ranges, uint64_t postSyncAddress, const HardwareInfo &hwInfo);
 
 template struct EncodeDispatchKernel<Family>;
 template struct EncodeStates<Family>;

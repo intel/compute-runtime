@@ -75,7 +75,7 @@ struct KernelHw : public KernelImp {
         if (l3Enabled == false) {
             this->kernelRequiresQueueUncachedMocsCount++;
         }
-
+        auto isDebuggerActive = neoDevice->isDebuggerActive() || neoDevice->getDebugger() != nullptr;
         NEO::EncodeSurfaceStateArgs args;
         args.outMemory = &surfaceState;
         args.graphicsAddress = bufferAddressForSsh;
@@ -87,6 +87,7 @@ struct KernelHw : public KernelImp {
         args.useGlobalAtomics = kernelImmData->getDescriptor().kernelAttributes.flags.useGlobalAtomics;
         args.areMultipleSubDevicesInContext = args.numAvailableDevices > 1;
         args.implicitScaling = device->isImplicitScalingCapable();
+        args.isDebuggerActive = isDebuggerActive;
 
         NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
         *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress) = surfaceState;

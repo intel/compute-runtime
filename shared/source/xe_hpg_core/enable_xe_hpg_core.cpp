@@ -18,9 +18,12 @@ namespace NEO {
 #ifdef SUPPORT_DG2
 
 template <>
-uint32_t L1CachePolicyHelper<IGFX_DG2>::getDefaultL1CachePolicy() {
+uint32_t L1CachePolicyHelper<IGFX_DG2>::getDefaultL1CachePolicy(bool isDebuggerActive) {
     using GfxFamily = HwMapper<IGFX_DG2>::GfxFamily;
-    return GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP;
+    if (isDebuggerActive) {
+        return GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP;
+    }
+    return GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB;
 }
 
 template struct L1CachePolicyHelper<IGFX_DG2>;

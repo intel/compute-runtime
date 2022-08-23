@@ -11,6 +11,7 @@ if(TESTS_XE_HPG_CORE)
   target_sources(neo_shared_tests PRIVATE
                  ${IGDRCL_SRCS_tests_xe_hpg_core_excludes}
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+                 ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_tests_xe_hpg_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests_xe_hpg_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/hw_cmds_xe_hpg_core_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_xe_hpg_core.cpp

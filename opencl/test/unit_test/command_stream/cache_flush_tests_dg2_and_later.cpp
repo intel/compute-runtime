@@ -46,7 +46,7 @@ HWTEST2_F(CacheFlushTestsDg2AndLater, WhenProgrammingCacheFlushAfterWalkerThenEx
     if constexpr (FamilyType::isUsingL3Control) {
         using L3_CONTROL = typename FamilyType::L3_CONTROL;
         expectedCommands.push_back(new MatchHwCmd<FamilyType, L3_CONTROL>(
-            1, Expects{EXPECT_MEMBER(L3_CONTROL, getUnTypedDataPortCacheFlush, false)}));
+            1, Expects{EXPECT_MEMBER(L3_CONTROL, getUnTypedDataPortCacheFlush, true)}));
     }
 
     bool cmdBuffOk = expectCmdBuff<FamilyType>(cmdQ.getCS(0), 0, std::move(expectedCommands), &err);

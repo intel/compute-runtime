@@ -48,7 +48,10 @@ if(TESTS_DG2_AND_LATER)
 endif()
 
 if(TESTS_DG2)
-  target_sources(neo_shared_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_tests_dg2.cpp)
+  target_sources(neo_shared_tests PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_tests_dg2.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_states_dg2.cpp
+  )
 endif()
 
 if(TESTS_XE_HPG_CORE)

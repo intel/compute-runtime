@@ -78,7 +78,7 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
         args.stateBaseAddressCmd->setStatelessDataPortAccessMemoryObjectControlState(args.gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
     }
 
-    appendExtraCacheSettings(args.stateBaseAddressCmd, args.gmmHelper->getHardwareInfo());
+    appendExtraCacheSettings(args);
 }
 
 template <typename GfxFamily>

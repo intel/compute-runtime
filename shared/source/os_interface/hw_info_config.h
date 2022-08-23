@@ -133,7 +133,7 @@ class HwInfoConfig {
     virtual bool isCpuCopyNecessary(const void *ptr, MemoryManager *memoryManager) const = 0;
     virtual bool isAdjustWalkOrderAvailable(const HardwareInfo &hwInfo) const = 0;
     virtual bool isAssignEngineRoundRobinSupported() const = 0;
-    virtual uint32_t getL1CachePolicy() const = 0;
+    virtual uint32_t getL1CachePolicy(bool isDebuggerActive) const = 0;
     virtual bool isEvictionIfNecessaryFlagSupported() const = 0;
     virtual void adjustNumberOfCcs(HardwareInfo &hwInfo) const = 0;
     virtual bool isPrefetcherDisablingInDirectSubmissionRequired() const = 0;
@@ -264,7 +264,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isCpuCopyNecessary(const void *ptr, MemoryManager *memoryManager) const override;
     bool isAdjustWalkOrderAvailable(const HardwareInfo &hwInfo) const override;
     bool isAssignEngineRoundRobinSupported() const override;
-    uint32_t getL1CachePolicy() const override;
+    uint32_t getL1CachePolicy(bool isDebuggerActive) const override;
     bool isEvictionIfNecessaryFlagSupported() const override;
     void adjustNumberOfCcs(HardwareInfo &hwInfo) const override;
     bool isPrefetcherDisablingInDirectSubmissionRequired() const override;

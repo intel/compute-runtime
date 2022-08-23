@@ -10,6 +10,7 @@
 #include "shared/source/command_container/command_encoder_xehp_and_later.inl"
 #include "shared/source/command_container/encode_compute_mode_tgllp_and_later.inl"
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/helpers/cache_flush_xehp_and_later.inl"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/utilities/lookup_array.h"
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
@@ -184,6 +185,15 @@ void EncodeDispatchKernel<Family>::adjustWalkOrder(WALKER_TYPE &walkerCmd, uint3
         }
     }
 }
+
+template <>
+void adjustL3ControlField<Family>(void *l3ControlBuffer) {
+    using L3_CONTROL = typename Family::L3_CONTROL;
+    auto l3Control = reinterpret_cast<L3_CONTROL *>(l3ControlBuffer);
+    l3Control->setUnTypedDataPortCacheFlush(true);
+}
+
+template void flushGpuCache<Family>(LinearStream *commandStream, const Range<L3Range> &ranges, uint64_t postSyncAddress, const HardwareInfo &hwInfo);
 
 template struct EncodeDispatchKernel<Family>;
 template struct EncodeStates<Family>;

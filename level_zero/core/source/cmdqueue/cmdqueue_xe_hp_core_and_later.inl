@@ -41,6 +41,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
 
         NEO::EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStream, hwInfo, isRcs);
         auto sbaCmdBuf = NEO::StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStream);
+        auto isDebuggerActive = neoDevice->isDebuggerActive() || neoDevice->getDebugger() != nullptr;
 
         STATE_BASE_ADDRESS sbaCmd;
         NEO::StateBaseAddressHelperArgs<GfxFamily> stateBaseAddressHelperArgs = {
@@ -62,7 +63,8 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
             multiOsContextCapable,                            // isMultiOsContextCapable
             false,                                            // useGlobalAtomics
             false,                                            // areMultipleSubDevicesInContext
-            false                                             // overrideSurfaceStateBaseAddress
+            false,                                            // overrideSurfaceStateBaseAddress
+            isDebuggerActive                                  // isDebuggerActive
         };
 
         NEO::StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(stateBaseAddressHelperArgs);

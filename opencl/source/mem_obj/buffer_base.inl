@@ -30,6 +30,7 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, boo
     auto rootDeviceIndex = device.getRootDeviceIndex();
     auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
     const auto isReadOnly = isValueSet(getFlags(), CL_MEM_READ_ONLY) || isReadOnlyArgument;
+    auto isDebuggerActive = device.isDebuggerActive() || device.getDebugger() != nullptr;
 
     NEO::EncodeSurfaceStateArgs args;
     args.outMemory = memory;
@@ -45,6 +46,7 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, boo
     args.useGlobalAtomics = useGlobalAtomics;
     args.areMultipleSubDevicesInContext = areMultipleSubDevicesInContext;
     args.implicitScaling = ImplicitScalingHelper::isImplicitScalingEnabled(device.getDeviceBitfield(), true);
+    args.isDebuggerActive = isDebuggerActive;
     appendSurfaceStateArgs(args);
     EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
 }
