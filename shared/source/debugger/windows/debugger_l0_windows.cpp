@@ -169,8 +169,8 @@ void DebuggerL0::notifyModuleDestroy(uint64_t moduleLoadAddress) {
     escapeInfo.Header.Size = sizeof(escapeInfo) - sizeof(escapeInfo.Header);
     escapeInfo.EscapeOperation = KM_ESCAPE_EUDBG_UMD_MODULE_CREATE_NOTIFY;
     escapeInfo.KmEuDbgUmdCreateModuleNotification.IsCreate = false;
-    escapeInfo.KmEuDbgUmdCreateModuleNotification.Modulesize = 0x1000;
-    escapeInfo.KmEuDbgUmdCreateModuleNotification.hElfAddressPtr = uint64_t(-1);
+    escapeInfo.KmEuDbgUmdCreateModuleNotification.Modulesize = 0;
+    escapeInfo.KmEuDbgUmdCreateModuleNotification.hElfAddressPtr = 0;
     escapeInfo.KmEuDbgUmdCreateModuleNotification.LoadAddress = moduleLoadAddress;
 
     auto wddm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Wddm>();

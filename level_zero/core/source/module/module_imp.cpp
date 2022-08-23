@@ -1262,26 +1262,17 @@ void ModuleImp::notifyModuleCreate() {
     if (isZebinBinary) {
         size_t debugDataSize = 0;
         getDebugInfo(&debugDataSize, nullptr);
-
-        NEO::DebugData debugData; // pass debug zebin in vIsa field
-        debugData.vIsa = reinterpret_cast<const char *>(translationUnit->debugData.get());
-        debugData.vIsaSize = static_cast<uint32_t>(translationUnit->debugDataSize);
-        debuggerL0->notifyModuleCreate(const_cast<char *>(debugData.vIsa), debugData.vIsaSize, moduleLoadAddress);
+        UNRECOVERABLE_IF(!translationUnit->debugData);
+        debuggerL0->notifyModuleCreate(translationUnit->debugData.get(), static_cast<uint32_t>(debugDataSize), moduleLoadAddress);
     } else {
         for (auto &kernImmData : kernelImmDatas) {
-            if (kernImmData->getKernelInfo()->kernelDescriptor.external.debugData.get()) {
-                NEO::DebugData *notifyDebugData = kernImmData->getKernelInfo()->kernelDescriptor.external.debugData.get();
-                NEO::DebugData relocatedDebugData;
+            auto debugData = kernImmData->getKernelInfo()->kernelDescriptor.external.debugData.get();
+            auto relocatedDebugData = kernImmData->getKernelInfo()->kernelDescriptor.external.relocatedDebugData.get();
 
-                if (kernImmData->getKernelInfo()->kernelDescriptor.external.relocatedDebugData.get()) {
-                    relocatedDebugData.genIsa = kernImmData->getKernelInfo()->kernelDescriptor.external.debugData->genIsa;
-                    relocatedDebugData.genIsaSize = kernImmData->getKernelInfo()->kernelDescriptor.external.debugData->genIsaSize;
-                    relocatedDebugData.vIsa = reinterpret_cast<char *>(kernImmData->getKernelInfo()->kernelDescriptor.external.relocatedDebugData.get());
-                    relocatedDebugData.vIsaSize = kernImmData->getKernelInfo()->kernelDescriptor.external.debugData->vIsaSize;
-                    notifyDebugData = &relocatedDebugData;
-                }
-
-                debuggerL0->notifyModuleCreate(const_cast<char *>(notifyDebugData->vIsa), notifyDebugData->vIsaSize, kernImmData->getIsaGraphicsAllocation()->getGpuAddress());
+            if (debugData) {
+                debuggerL0->notifyModuleCreate(relocatedDebugData ? reinterpret_cast<char *>(relocatedDebugData) : const_cast<char *>(debugData->vIsa), debugData->vIsaSize, kernImmData->getIsaGraphicsAllocation()->getGpuAddress());
+            } else {
+                debuggerL0->notifyModuleCreate(nullptr, 0, kernImmData->getIsaGraphicsAllocation()->getGpuAddress());
             }
         }
     }
@@ -1298,9 +1289,7 @@ void ModuleImp::notifyModuleDestroy() {
         debuggerL0->notifyModuleDestroy(moduleLoadAddress);
     } else {
         for (auto &kernImmData : kernelImmDatas) {
-            if (kernImmData->getKernelInfo()->kernelDescriptor.external.debugData.get()) {
-                debuggerL0->notifyModuleDestroy(kernImmData->getIsaGraphicsAllocation()->getGpuAddress());
-            }
+            debuggerL0->notifyModuleDestroy(kernImmData->getIsaGraphicsAllocation()->getGpuAddress());
         }
     }
 }

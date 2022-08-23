@@ -303,11 +303,13 @@ ze_result_t DebugSessionWindows::readAllocationDebugData(uint32_t seqNo, uint64_
 ze_result_t DebugSessionWindows::handleCreateDebugDataEvent(DBGUMD_READ_EVENT_CREATE_DEBUG_DATA_PARAMS &createDebugDataParams) {
     PRINT_DEBUGGER_INFO_LOG("DBGUMD_READ_EVENT_CREATE_DEBUG_DATA_PARAMS: Type: %d BufferPtr: 0x%llX DataSize: 0x%lX\n", createDebugDataParams.DebugDataType, createDebugDataParams.DataBufferPtr, createDebugDataParams.DataSize);
     if (createDebugDataParams.DebugDataType == ELF_BINARY) {
-        std::unique_lock<std::mutex> lock(asyncThreadMutex);
-        ElfRange elf;
-        elf.startVA = createDebugDataParams.DataBufferPtr;
-        elf.endVA = elf.startVA + createDebugDataParams.DataSize;
-        allElfs.push_back(elf);
+        if (createDebugDataParams.DataBufferPtr && createDebugDataParams.DataSize) {
+            std::unique_lock<std::mutex> lock(asyncThreadMutex);
+            ElfRange elf = {};
+            elf.startVA = createDebugDataParams.DataBufferPtr;
+            elf.endVA = elf.startVA + createDebugDataParams.DataSize;
+            allElfs.push_back(elf);
+        }
     } else if (createDebugDataParams.DebugDataType == static_cast<uint32_t>(NEO::DebugDataType::CMD_QUEUE_CREATED)) {
         zet_debug_event_t debugEvent = {};
         debugEvent.type = ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY;

@@ -177,8 +177,8 @@ TEST_F(L0DebuggerWindowsTest, givenDebuggerL0NotifyModuleDestroyCalledThenModule
 
     EXPECT_EQ(1u, wddm->moduleCreateNotifyCalled);
     EXPECT_FALSE(wddm->moduleCreateNotificationPassedParam.param.IsCreate);
-    EXPECT_EQ(0x1000, wddm->moduleCreateNotificationPassedParam.param.Modulesize);
-    EXPECT_EQ(std::numeric_limits<uint64_t>::max(), wddm->moduleCreateNotificationPassedParam.param.hElfAddressPtr);
+    EXPECT_EQ(0u, wddm->moduleCreateNotificationPassedParam.param.Modulesize);
+    EXPECT_EQ(0ull, wddm->moduleCreateNotificationPassedParam.param.hElfAddressPtr);
     EXPECT_EQ(0x80000000, wddm->moduleCreateNotificationPassedParam.param.LoadAddress);
 }
 

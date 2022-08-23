@@ -504,6 +504,38 @@ TEST_F(DebugApiWindowsTest, givenDebugDataEventTypeWhenReadAndHandleEventCalledT
     EXPECT_EQ(elf.endVA, 0xa008u);
 }
 
+TEST_F(DebugApiWindowsTest, givenDebugDataEventTypeAndNullDebugDataPtrWhenReadAndHandleEventCalledThenResultDebugDataIsNotSaved) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
+    session->wddm = mockWddm;
+
+    mockWddm->numEvents = 1;
+    mockWddm->eventQueue[0].readEventType = DBGUMD_READ_EVENT_CREATE_DEBUG_DATA;
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ReadCreateDebugDataParams.DebugDataType = ELF_BINARY;
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ReadCreateDebugDataParams.DataBufferPtr = 0;
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ReadCreateDebugDataParams.DataSize = 8;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readAndHandleEvent(100));
+    EXPECT_TRUE(session->allElfs.empty());
+}
+
+TEST_F(DebugApiWindowsTest, givenDebugDataEventTypeAndNullDebugDataSizeWhenReadAndHandleEventCalledThenResultDebugDataIsNotSaved) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
+    session->wddm = mockWddm;
+
+    mockWddm->numEvents = 1;
+    mockWddm->eventQueue[0].readEventType = DBGUMD_READ_EVENT_CREATE_DEBUG_DATA;
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ReadCreateDebugDataParams.DebugDataType = ELF_BINARY;
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ReadCreateDebugDataParams.DataBufferPtr = 0xa000;
+    mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.ReadCreateDebugDataParams.DataSize = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readAndHandleEvent(100));
+    EXPECT_TRUE(session->allElfs.empty());
+}
+
 TEST(DebugSessionTest, GivenNullptrEventWhenReadingEventThenErrorNullptrReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
