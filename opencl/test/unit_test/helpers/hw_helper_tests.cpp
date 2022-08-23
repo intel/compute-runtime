@@ -193,7 +193,7 @@ TEST_F(HwHelperTest, givenEngineTypeRcsWhenCsTraitsAreQueiredThenCorrectNameInTr
     EXPECT_NE(nullptr, &helper);
 
     auto &csTraits = helper.getCsTraits(aub_stream::ENGINE_RCS);
-    EXPECT_STREQ("RCS", csTraits.name);
+    EXPECT_STREQ("RCS", csTraits.name.c_str());
 }
 
 using isTglLpOrBelow = IsAtMostProduct<IGFX_TIGERLAKE_LP>;
