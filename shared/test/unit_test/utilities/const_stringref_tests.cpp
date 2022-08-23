@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -237,4 +237,17 @@ TEST(ConstStringStartsWith, GivenInvalidPrefixThenReturnsFalse) {
     EXPECT_FALSE(str.startsWith("ome"));
     EXPECT_FALSE(str.startsWith("some text "));
     EXPECT_FALSE(str.startsWith("substr some text"));
+}
+
+TEST(ConstStringStartsWithConstString, GivenRightPrefixThenReturnsTrue) {
+    ConstStringRef str = "some text";
+    EXPECT_TRUE(str.startsWith(ConstStringRef("some")));
+    EXPECT_TRUE(str.startsWith(ConstStringRef("some text")));
+}
+
+TEST(ConstStringStartsWithConstString, GivenInvalidPrefixThenReturnsFalse) {
+    ConstStringRef str = "some text";
+    EXPECT_FALSE(str.startsWith(ConstStringRef("some text and more")));
+    EXPECT_FALSE(str.startsWith(ConstStringRef("some diff")));
+    EXPECT_FALSE(str.startsWith(ConstStringRef("ome text")));
 }

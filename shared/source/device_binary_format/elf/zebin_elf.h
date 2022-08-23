@@ -51,6 +51,7 @@ constexpr ConstStringRef dataGlobal = ".data.global";
 constexpr ConstStringRef dataConstString = ".data.const.string";
 constexpr ConstStringRef symtab = ".symtab";
 constexpr ConstStringRef relTablePrefix = ".rel.";
+constexpr ConstStringRef relaTablePrefix = ".rela.";
 constexpr ConstStringRef spv = ".spv";
 constexpr ConstStringRef debugPrefix = ".debug_";
 constexpr ConstStringRef debugInfo = ".debug_info";

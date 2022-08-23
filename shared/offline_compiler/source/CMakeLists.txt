@@ -58,6 +58,7 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/helpers/product_config_helper.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/product_config_helper.h
     ${NEO_SHARED_DIRECTORY}/os_interface/os_library.h
+    ${NEO_SHARED_DIRECTORY}/utilities/directory.h
     ${NEO_SHARED_DIRECTORY}/utilities/io_functions.cpp
     ${NEO_SHARED_DIRECTORY}/utilities/io_functions.h
     ${OCLOC_DIRECTORY}/source/default_cache_config.cpp
@@ -69,6 +70,8 @@ set(CLOC_LIB_SRCS_LIB
     ${OCLOC_DIRECTORY}/source/decoder/helper.h
     ${OCLOC_DIRECTORY}/source/decoder/iga_wrapper.h
     ${OCLOC_DIRECTORY}/source/decoder/translate_platform_base.h
+    ${OCLOC_DIRECTORY}/source/decoder/zebin_manipulator.cpp
+    ${OCLOC_DIRECTORY}/source/decoder/zebin_manipulator.h
     ${OCLOC_DIRECTORY}/source/multi_command.cpp
     ${OCLOC_DIRECTORY}/source/multi_command.h
     ${OCLOC_DIRECTORY}/source/ocloc_api.cpp
@@ -119,6 +122,7 @@ if(WIN32)
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_inc.h
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_library_win.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_library_win.h
+       ${NEO_SOURCE_DIR}/shared/source/utilities/windows/directory.cpp
   )
 else()
   list(APPEND CLOC_LIB_SRCS_LIB
@@ -128,6 +132,7 @@ else()
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_library_linux.h
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
        ${OCLOC_DIRECTORY}/source/linux/os_library_ocloc_helper.cpp
+       ${NEO_SOURCE_DIR}/shared/source/utilities/linux/directory.cpp
   )
 endif()
 

@@ -9,6 +9,7 @@
 
 #include "shared/offline_compiler/source/decoder/binary_decoder.h"
 #include "shared/offline_compiler/source/decoder/binary_encoder.h"
+#include "shared/offline_compiler/source/decoder/zebin_manipulator.h"
 #include "shared/offline_compiler/source/multi_command.h"
 #include "shared/offline_compiler/source/ocloc_concat.h"
 #include "shared/offline_compiler/source/ocloc_error_code.h"
@@ -18,6 +19,9 @@
 #include "shared/offline_compiler/source/offline_compiler.h"
 #include "shared/offline_compiler/source/offline_linker.h"
 #include "shared/offline_compiler/source/utilities/safety_caller.h"
+#include "shared/source/device_binary_format/device_binary_formats.h"
+#include "shared/source/device_binary_format/elf/elf_decoder.h"
+#include "shared/source/device_binary_format/elf/zebin_elf.h"
 
 #include <memory>
 
@@ -166,34 +170,48 @@ int link(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
 };
 
 int disassemble(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
-    BinaryDecoder disasm(argHelper);
-    int retVal = disasm.validateInput(args);
+    const auto binaryFormat = ZebinManipulator::getBinaryFormatForDisassemble(argHelper, args);
+    auto decode = [&args](auto &decoder) -> int {
+        int retVal = decoder.validateInput(args);
+        if (decoder.showHelp) {
+            decoder.printHelp();
+            return OclocErrorCode::SUCCESS;
+        }
+        return (retVal == OclocErrorCode::SUCCESS) ? decoder.decode() : retVal;
+    };
 
-    if (disasm.showHelp) {
-        disasm.printHelp();
-        return retVal;
-    }
+    if (binaryFormat == ZebinManipulator::BinaryFormats::PatchTokens) {
+        BinaryDecoder disasm(argHelper);
+        return decode(disasm);
 
-    if (retVal == 0) {
-        return disasm.decode();
+    } else if (binaryFormat == ZebinManipulator::BinaryFormats::Zebin32b) {
+        ZebinManipulator::ZebinDecoder<Elf::EI_CLASS_32> decoder(argHelper);
+        return decode(decoder);
     } else {
-        return retVal;
+        ZebinManipulator::ZebinDecoder<Elf::EI_CLASS_64> decoder(argHelper);
+        return decode(decoder);
     }
 }
 
 int assemble(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
-    BinaryEncoder assembler(argHelper);
-    int retVal = assembler.validateInput(args);
-
-    if (assembler.showHelp) {
-        assembler.printHelp();
-        return retVal;
-    }
-
-    if (retVal == 0) {
-        return assembler.encode();
+    const auto binaryFormat = ZebinManipulator::getBinaryFormatForAssemble(argHelper, args);
+    auto encode = [&args](auto &encoder) -> int {
+        int retVal = encoder.validateInput(args);
+        if (encoder.showHelp) {
+            encoder.printHelp();
+            return OclocErrorCode::SUCCESS;
+        }
+        return (retVal == OclocErrorCode::SUCCESS) ? encoder.encode() : retVal;
+    };
+    if (binaryFormat == ZebinManipulator::BinaryFormats::PatchTokens) {
+        BinaryEncoder assembler(argHelper);
+        return encode(assembler);
+    } else if (binaryFormat == ZebinManipulator::BinaryFormats::Zebin32b) {
+        ZebinManipulator::ZebinEncoder<Elf::EI_CLASS_32> encoder(argHelper);
+        return encode(encoder);
     } else {
-        return retVal;
+        ZebinManipulator::ZebinEncoder<Elf::EI_CLASS_64> encoder(argHelper);
+        return encode(encoder);
     }
 }
 

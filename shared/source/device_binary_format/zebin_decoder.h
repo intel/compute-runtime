@@ -48,10 +48,14 @@ struct ZeInfoKernelSections {
     UniqueNode inlineSamplersNd;
 };
 
+DecodeError validateZeInfoVersion(const Elf::ZebinKernelMetadata::Types::Version &receivedZeInfoVersion, std::string &outErrReason, std::string &outWarning);
+
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
 bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning);
 
-DecodeError validateZeInfoVersion(const Elf::ZebinKernelMetadata::Types::Version &receivedZeInfoVersion, std::string &outErrReason, std::string &outWarning);
+template <Elf::ELF_IDENTIFIER_CLASS numBits>
+DecodeError decodeIntelGTNoteSection(ArrayRef<const uint8_t> intelGTNotesSection, std::vector<Elf::IntelGTNote> &intelGTNotes, std::string &outErrReason, std::string &outWarning);
+
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
 DecodeError getIntelGTNotes(const Elf::Elf<numBits> &elf, std::vector<Elf::IntelGTNote> &intelGTNotes, std::string &outErrReason, std::string &outWarning);
 

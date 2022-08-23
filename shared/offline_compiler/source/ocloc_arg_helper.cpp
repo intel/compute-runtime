@@ -22,8 +22,9 @@
 void Source::toVectorOfStrings(std::vector<std::string> &lines, bool replaceTabs) {
     std::string line;
     const char *file = reinterpret_cast<const char *>(data);
+    const char *end = file + length;
 
-    while (*file != '\0') {
+    while (file != end && *file != '\0') {
         if (replaceTabs && *file == '\t') {
             line += ' ';
         } else if (*file == '\n') {

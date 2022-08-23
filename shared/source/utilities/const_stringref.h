@@ -168,6 +168,23 @@ class ConstStringRef {
         return ('\0' == *rhs);
     }
 
+    constexpr bool startsWith(ConstStringRef subString) const noexcept {
+        if (subString.length() > len) {
+            return false;
+        }
+        const char *findEnd = ptr + subString.length();
+        const char *lhs = ptr;
+        const char *rhs = subString.begin();
+        while ((lhs < findEnd)) {
+            if (*lhs != *rhs) {
+                return false;
+            }
+            lhs++;
+            rhs++;
+        }
+        return true;
+    }
+
     constexpr bool isEqualWithoutSeparator(const char separator, const char *subString) const noexcept {
         const char *end = ptr + len;
         const char *lhs = ptr;

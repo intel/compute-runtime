@@ -18,6 +18,8 @@ set(IGDRCL_SRCS_cloc
 set(IGDRCL_SRCS_offline_compiler_mock
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_decoder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_encoder.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_zebin_decoder.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_zebin_encoder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_iga_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_argument_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_multi_command.h
@@ -58,6 +60,7 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/encoder_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/iga_wrapper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/iga_wrapper_tests.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/decoder/zebin_manipulator_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/default_cache_config_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/environment.h
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp

@@ -23,6 +23,7 @@ class MockOclocArgHelper : public OclocArgHelper {
     using OclocArgHelper::hasOutput;
     using OclocArgHelper::headers;
     using OclocArgHelper::inputs;
+    using OclocArgHelper::messagePrinter;
 
     using OclocArgHelper::findSourceFile;
 
@@ -64,6 +65,11 @@ class MockOclocArgHelper : public OclocArgHelper {
 
         if (shouldReturnEmptyVectorOfStrings) {
             lines.clear();
+        } else {
+            auto ss = std::stringstream(filesMap[filename]);
+            for (std::string line; std::getline(ss, line);) {
+                lines.push_back(line);
+            }
         }
     }
 

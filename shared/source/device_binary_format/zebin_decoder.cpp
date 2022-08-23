@@ -109,51 +109,57 @@ DecodeError validateZeInfoVersion(const Elf::ZebinKernelMetadata::Types::Version
 }
 
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
+DecodeError decodeIntelGTNoteSection(ArrayRef<const uint8_t> intelGTNotesSection, std::vector<Elf::IntelGTNote> &intelGTNotes, std::string &outErrReason, std::string &outWarning) {
+    uint64_t currentPos = 0;
+    auto sectionSize = intelGTNotesSection.size();
+    while (currentPos < sectionSize) {
+        auto intelGTNote = reinterpret_cast<const Elf::ElfNoteSection *>(intelGTNotesSection.begin() + currentPos);
+        auto nameSz = intelGTNote->nameSize;
+        auto descSz = intelGTNote->descSize;
+
+        auto currOffset = sizeof(Elf::ElfNoteSection) + alignUp(nameSz, 4) + alignUp(descSz, 4);
+        if (currentPos + currOffset > sectionSize) {
+            intelGTNotes.clear();
+            outErrReason.append("DeviceBinaryFormat::Zebin : Offseting will cause out-of-bound memory read! Section size: " + std::to_string(sectionSize) +
+                                ", current section data offset: " + std::to_string(currentPos) + ", next offset : " + std::to_string(currOffset) + "\n");
+            return DecodeError::InvalidBinary;
+        }
+        currentPos += currOffset;
+
+        auto ownerName = reinterpret_cast<const char *>(ptrOffset(intelGTNote, sizeof(Elf::ElfNoteSection)));
+        bool isValidGTNote = Elf::IntelGtNoteOwnerName.size() + 1 == nameSz;
+        isValidGTNote &= Elf::IntelGtNoteOwnerName == ConstStringRef(ownerName, nameSz - 1);
+        if (false == isValidGTNote) {
+            if (0u == nameSz) {
+                outWarning.append("DeviceBinaryFormat::Zebin : Empty owner name.\n");
+            } else {
+                std::string invalidOwnerName{ownerName, nameSz};
+                invalidOwnerName.erase(std::remove_if(invalidOwnerName.begin(),
+                                                      invalidOwnerName.end(),
+                                                      [](unsigned char c) { return '\0' == c; }));
+                outWarning.append("DeviceBinaryFormat::Zebin : Invalid owner name : " + invalidOwnerName + " for IntelGTNote - note will not be used.\n");
+            }
+            continue;
+        }
+        auto notesData = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(ptrOffset(ownerName, nameSz)), descSz);
+        if (intelGTNote->type == Elf::IntelGTSectionType::ZebinVersion) {
+            isValidGTNote &= notesData[descSz - 1] == '\0';
+            if (false == isValidGTNote) {
+                outWarning.append("DeviceBinaryFormat::Zebin :  Versioning string is not null-terminated: " + ConstStringRef(reinterpret_cast<const char *>(notesData.begin()), descSz).str() + " - note will not be used.\n");
+                continue;
+            }
+        }
+        intelGTNotes.push_back(Elf::IntelGTNote{static_cast<Elf::IntelGTSectionType>(intelGTNote->type), notesData});
+    }
+    return DecodeError::Success;
+}
+
+template <Elf::ELF_IDENTIFIER_CLASS numBits>
 DecodeError getIntelGTNotes(const Elf::Elf<numBits> &elf, std::vector<Elf::IntelGTNote> &intelGTNotes, std::string &outErrReason, std::string &outWarning) {
     for (size_t i = 0; i < elf.sectionHeaders.size(); i++) {
         auto section = elf.sectionHeaders[i];
         if (Elf::SHT_NOTE == section.header->type && Elf::SectionsNamesZebin::noteIntelGT == elf.getSectionName(static_cast<uint32_t>(i))) {
-            uint64_t currentPos = 0;
-            auto sectionSize = section.header->size;
-            while (currentPos < sectionSize) {
-                auto intelGTNote = reinterpret_cast<const Elf::ElfNoteSection *>(section.data.begin() + currentPos);
-                auto nameSz = intelGTNote->nameSize;
-                auto descSz = intelGTNote->descSize;
-
-                auto currOffset = sizeof(Elf::ElfNoteSection) + alignUp(nameSz, 4) + alignUp(descSz, 4);
-                if (currentPos + currOffset > sectionSize) {
-                    intelGTNotes.clear();
-                    outErrReason.append("DeviceBinaryFormat::Zebin : Offseting will cause out-of-bound memory read! Section size: " + std::to_string(sectionSize) +
-                                        ", current section data offset: " + std::to_string(currentPos) + ", next offset : " + std::to_string(currOffset) + "\n");
-                    return DecodeError::InvalidBinary;
-                }
-                currentPos += currOffset;
-
-                auto ownerName = reinterpret_cast<const char *>(ptrOffset(intelGTNote, sizeof(Elf::ElfNoteSection)));
-                bool isValidGTNote = Elf::IntelGtNoteOwnerName.size() + 1 == nameSz;
-                isValidGTNote &= Elf::IntelGtNoteOwnerName == ConstStringRef(ownerName, nameSz - 1);
-                if (false == isValidGTNote) {
-                    if (0u == nameSz) {
-                        outWarning.append("DeviceBinaryFormat::Zebin : Empty owner name.\n");
-                    } else {
-                        std::string invalidOwnerName{ownerName, nameSz};
-                        invalidOwnerName.erase(std::remove_if(invalidOwnerName.begin(),
-                                                              invalidOwnerName.end(),
-                                                              [](unsigned char c) { return '\0' == c; }));
-                        outWarning.append("DeviceBinaryFormat::Zebin : Invalid owner name : " + invalidOwnerName + " for IntelGTNote - note will not be used.\n");
-                    }
-                    continue;
-                }
-                auto notesData = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(ptrOffset(ownerName, nameSz)), descSz);
-                if (intelGTNote->type == Elf::IntelGTSectionType::ZebinVersion) {
-                    isValidGTNote &= notesData[descSz - 1] == '\0';
-                    if (false == isValidGTNote) {
-                        outWarning.append("DeviceBinaryFormat::Zebin :  Versioning string is not null-terminated: " + ConstStringRef(reinterpret_cast<const char *>(notesData.begin()), descSz).str() + " - note will not be used.\n");
-                        continue;
-                    }
-                }
-                intelGTNotes.push_back(Elf::IntelGTNote{static_cast<Elf::IntelGTSectionType>(intelGTNote->type), notesData});
-            }
+            return decodeIntelGTNoteSection<numBits>(section.data, intelGTNotes, outErrReason, outWarning);
         }
     }
     return DecodeError::Success;

@@ -27,9 +27,11 @@ struct MockIgaWrapper : public IgaWrapper {
     }
 
     void setGfxCore(GFXCORE_FAMILY core) override {
+        setGfxCoreWasCalled = true;
     }
 
     void setProductFamily(PRODUCT_FAMILY product) override {
+        setProductFamilyWasCalled = true;
     }
 
     bool isKnownPlatform() const override {
@@ -48,4 +50,6 @@ struct MockIgaWrapper : public IgaWrapper {
     bool disasmWasCalled = false;
     bool asmWasCalled = false;
     bool isKnownPlatformReturnValue = false;
+    bool setProductFamilyWasCalled = false;
+    bool setGfxCoreWasCalled = false;
 };

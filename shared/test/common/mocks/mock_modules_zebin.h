@@ -9,6 +9,8 @@
 
 #include "shared/source/device_binary_format/elf/zebin_elf.h"
 #include "shared/source/device_binary_format/zebin_decoder.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/utilities/const_stringref.h"
 #include "shared/test/common/mocks/mock_elf.h"
 
@@ -260,5 +262,43 @@ kernels:
         arg_index:       1
 -)===";
 };
+
+inline std::vector<uint8_t> createIntelGTNoteSection(PRODUCT_FAMILY productFamily, GFXCORE_FAMILY coreFamily, NEO::Elf::ZebinTargetFlags flags, NEO::ConstStringRef version) {
+    std::array<NEO::Elf::ElfNoteSection, 4> notes = {{{8, 4, NEO::Elf::IntelGTSectionType::ProductFamily},
+                                                      {8, 4, NEO::Elf::IntelGTSectionType::GfxCore},
+                                                      {8, 4, NEO::Elf::IntelGTSectionType::TargetMetadata},
+                                                      {8, static_cast<uint32_t>(alignUp(version.length(), 4U)), NEO::Elf::IntelGTSectionType::ZebinVersion}}};
+
+    std::array<std::vector<uint8_t>, 4> descData;
+    descData[0].resize(4);
+    std::memcpy(descData[0].data(), &productFamily, 4);
+
+    descData[1].resize(4);
+    std::memcpy(descData[1].data(), &coreFamily, 4);
+
+    descData[2].resize(4);
+    std::memcpy(descData[2].data(), &flags.packed, 4);
+
+    descData[3].resize(notes[3].descSize);
+    std::memcpy(descData[3].data(), version.data(), notes[3].descSize);
+
+    size_t noteSectionSize = 0U;
+    for (auto &note : notes) {
+        noteSectionSize += sizeof(note) + note.descSize + note.nameSize;
+    }
+
+    std::vector<uint8_t> intelGTNotesSection(noteSectionSize);
+    auto intelGTNotes = intelGTNotesSection.data();
+    for (size_t i = 0; i < 4U; i++) {
+        auto &note = notes[i];
+        std::memcpy(intelGTNotes, &note, sizeof(NEO::Elf::ElfNoteSection));
+        intelGTNotes = ptrOffset(intelGTNotes, sizeof(NEO::Elf::ElfNoteSection));
+        std::memcpy(intelGTNotes, NEO::Elf::IntelGtNoteOwnerName.data(), note.nameSize);
+        intelGTNotes = ptrOffset(intelGTNotes, note.nameSize);
+        std::memcpy(intelGTNotes, descData[i].data(), note.descSize);
+        intelGTNotes = ptrOffset(intelGTNotes, note.descSize);
+    }
+    return intelGTNotesSection;
+}
 
 } // namespace ZebinTestData
