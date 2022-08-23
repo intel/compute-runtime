@@ -718,8 +718,4 @@ bool HwHelperHw<GfxFamily>::isPatIndexFallbackWaRequired() const {
     return false;
 }
 
-template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isDevicePreemptionModeTrackedInScm() const {
-    return false;
-}
 } // namespace NEO

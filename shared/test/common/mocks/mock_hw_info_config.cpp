@@ -369,10 +369,6 @@ void HwInfoConfigHw<IGFX_UNKNOWN>::updateIddCommand(void *const commandPtr, uint
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isGrfNumReportedWithScm() const {
-    return false;
-}
-template <>
 void HwInfoConfigHw<IGFX_UNKNOWN>::enableCompression(HardwareInfo *hwInfo) {
 }
 

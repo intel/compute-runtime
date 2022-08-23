@@ -9,7 +9,7 @@
 
 using namespace NEO;
 
-void StateComputeModeProperties::setPropertiesExtra(const StateComputeModePropertiesSupport &supportFlags) {
+void StateComputeModeProperties::setPropertiesExtra() {
 }
 void StateComputeModeProperties::setPropertiesExtra(const StateComputeModeProperties &properties) {
 }

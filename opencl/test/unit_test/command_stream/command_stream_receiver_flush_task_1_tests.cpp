@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
@@ -76,8 +77,13 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenOverrideThreadArbitrationPoli
     EXPECT_EQ(-1, commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 
     flushTask(commandStreamReceiver);
-    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin,
-              commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
+    if (HwInfoConfig::get(pDevice->getHardwareInfo().platform.eProductFamily)->isThreadArbitrationPolicyReportedWithScm()) {
+        EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin,
+                  commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
+    } else {
+        EXPECT_EQ(-1,
+                  commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
+    }
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, WhenFlushingTaskThenTaskCountIsIncremented) {

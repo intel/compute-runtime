@@ -35,9 +35,12 @@ struct StateComputeModeProperties {
     void clearIsDirty();
 
     bool isDirtyExtra() const;
-    void setPropertiesExtra(const StateComputeModePropertiesSupport &supportFlags);
+    void setPropertiesExtra();
     void setPropertiesExtra(const StateComputeModeProperties &properties);
     void clearIsDirtyExtra();
+
+    StateComputeModePropertiesSupport scmPropertiesSupport = {};
+    bool propertiesSupportLoaded = false;
 };
 
 struct FrontEndPropertiesSupport {

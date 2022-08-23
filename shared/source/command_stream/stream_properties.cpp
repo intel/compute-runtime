@@ -16,17 +16,22 @@ using namespace NEO;
 
 void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode,
                                                const HardwareInfo &hwInfo) {
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    StateComputeModePropertiesSupport scmPropertiesSupport = {};
-    hwInfoConfig.fillScmPropertiesSupportStructure(scmPropertiesSupport);
+    if (this->propertiesSupportLoaded == false) {
+        auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+        hwInfoConfig.fillScmPropertiesSupportStructure(this->scmPropertiesSupport);
+        this->propertiesSupportLoaded = true;
+    }
+
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     clearIsDirty();
 
-    int32_t isCoherencyRequired = (requiresCoherency ? 1 : 0);
-    this->isCoherencyRequired.set(isCoherencyRequired);
+    if (this->scmPropertiesSupport.coherencyRequired) {
+        int32_t isCoherencyRequired = (requiresCoherency ? 1 : 0);
+        this->isCoherencyRequired.set(isCoherencyRequired);
+    }
 
-    if (scmPropertiesSupport.largeGrfMode &&
+    if (this->scmPropertiesSupport.largeGrfMode &&
         (this->largeGrfMode.value == -1 || numGrfRequired != GrfConfig::NotApplicable)) {
         int32_t largeGrfMode = (numGrfRequired == GrfConfig::LargeGrfNumber ? 1 : 0);
         this->largeGrfMode.set(largeGrfMode);
@@ -36,13 +41,17 @@ void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t 
     if (DebugManager.flags.ForceZPassAsyncComputeThreadLimit.get() != -1) {
         zPassAsyncComputeThreadLimit = DebugManager.flags.ForceZPassAsyncComputeThreadLimit.get();
     }
-    this->zPassAsyncComputeThreadLimit.set(zPassAsyncComputeThreadLimit);
+    if (zPassAsyncComputeThreadLimit != -1 && this->scmPropertiesSupport.zPassAsyncComputeThreadLimit) {
+        this->zPassAsyncComputeThreadLimit.set(zPassAsyncComputeThreadLimit);
+    }
 
     int32_t pixelAsyncComputeThreadLimit = -1;
     if (DebugManager.flags.ForcePixelAsyncComputeThreadLimit.get() != -1) {
         pixelAsyncComputeThreadLimit = DebugManager.flags.ForcePixelAsyncComputeThreadLimit.get();
     }
-    this->pixelAsyncComputeThreadLimit.set(pixelAsyncComputeThreadLimit);
+    if (pixelAsyncComputeThreadLimit != -1 && this->scmPropertiesSupport.pixelAsyncComputeThreadLimit) {
+        this->pixelAsyncComputeThreadLimit.set(pixelAsyncComputeThreadLimit);
+    }
 
     bool setDefaultThreadArbitrationPolicy = (threadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent) &&
                                              (NEO::DebugManager.flags.ForceDefaultThreadArbitrationPolicyIfNotSpecified.get() ||
@@ -53,15 +62,15 @@ void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t 
     if (DebugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
         threadArbitrationPolicy = DebugManager.flags.OverrideThreadArbitrationPolicy.get();
     }
-    if (scmPropertiesSupport.threadArbitrationPolicy) {
+    if (this->scmPropertiesSupport.threadArbitrationPolicy) {
         this->threadArbitrationPolicy.set(threadArbitrationPolicy);
     }
 
-    if (hwHelper.isDevicePreemptionModeTrackedInScm()) {
+    if (this->scmPropertiesSupport.devicePreemptionMode) {
         this->devicePreemptionMode.set(static_cast<int32_t>(devicePreemptionMode));
     }
 
-    setPropertiesExtra(scmPropertiesSupport);
+    setPropertiesExtra();
 }
 
 void StateComputeModeProperties::setProperties(const StateComputeModeProperties &properties) {

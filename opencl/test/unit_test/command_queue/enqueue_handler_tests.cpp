@@ -655,7 +655,7 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenNotSupportedPolicyChangeThen
     EXPECT_EQ(CL_SUCCESS, enqueueResult);
     EXPECT_NE(getNewKernelArbitrationPolicy(euThreadSetting),
               pDevice->getUltCommandStreamReceiver<FamilyType>().streamProperties.stateComputeMode.threadArbitrationPolicy.value);
-    EXPECT_EQ(0, pDevice->getUltCommandStreamReceiver<FamilyType>().streamProperties.stateComputeMode.threadArbitrationPolicy.value);
+    EXPECT_EQ(-1, pDevice->getUltCommandStreamReceiver<FamilyType>().streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 
     mockCmdQ->release();
 }

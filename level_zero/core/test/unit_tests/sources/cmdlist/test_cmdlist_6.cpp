@@ -70,10 +70,13 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     commandListImmediate.requiredStreamState.stateComputeMode.threadArbitrationPolicy.value = NEO::ThreadArbitrationPolicy::RoundRobin;
     commandListImmediate.executeCommandListImmediateWithFlushTask(false);
 
+    NEO::StateComputeModePropertiesSupport scmPropertiesSupport = {};
+    hwInfoConfig.fillScmPropertiesSupportStructure(scmPropertiesSupport);
+
     int expectedDisableOverdispatch = hwInfoConfig.isDisableOverdispatchAvailable(*defaultHwInfo);
-    bool expectedIsCoherencyRequired = hwHelper.forceNonGpuCoherencyWA(true);
-    int expectedLargeGrfMode = hwInfoConfig.isGrfNumReportedWithScm() ? 1 : -1;
-    int expectedThreadArbitrationPolicy = hwInfoConfig.isThreadArbitrationPolicyReportedWithScm() ? NEO::ThreadArbitrationPolicy::RoundRobin : -1;
+    int32_t expectedIsCoherencyRequired = scmPropertiesSupport.coherencyRequired ? hwHelper.forceNonGpuCoherencyWA(true) : -1;
+    int expectedLargeGrfMode = scmPropertiesSupport.largeGrfMode ? 1 : -1;
+    int expectedThreadArbitrationPolicy = scmPropertiesSupport.threadArbitrationPolicy ? NEO::ThreadArbitrationPolicy::RoundRobin : -1;
     EXPECT_EQ(1, currentCsrStreamProperties.frontEndState.computeDispatchAllWalkerEnable.value);
     EXPECT_EQ(1, currentCsrStreamProperties.frontEndState.disableEUFusion.value);
     EXPECT_EQ(expectedDisableOverdispatch, currentCsrStreamProperties.frontEndState.disableOverdispatch.value);
@@ -89,12 +92,13 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     commandListImmediate.requiredStreamState.stateComputeMode.threadArbitrationPolicy.value = NEO::ThreadArbitrationPolicy::AgeBased;
     commandListImmediate.executeCommandListImmediateWithFlushTask(false);
 
-    expectedLargeGrfMode = hwInfoConfig.isGrfNumReportedWithScm() ? 0 : -1;
-    expectedThreadArbitrationPolicy = hwInfoConfig.isThreadArbitrationPolicyReportedWithScm() ? NEO::ThreadArbitrationPolicy::AgeBased : -1;
+    expectedLargeGrfMode = scmPropertiesSupport.largeGrfMode ? 0 : -1;
+    expectedIsCoherencyRequired = scmPropertiesSupport.coherencyRequired ? 0 : -1;
+    expectedThreadArbitrationPolicy = scmPropertiesSupport.threadArbitrationPolicy ? NEO::ThreadArbitrationPolicy::AgeBased : -1;
     EXPECT_EQ(0, currentCsrStreamProperties.frontEndState.computeDispatchAllWalkerEnable.value);
     EXPECT_EQ(0, currentCsrStreamProperties.frontEndState.disableEUFusion.value);
     EXPECT_EQ(0, currentCsrStreamProperties.frontEndState.disableOverdispatch.value);
-    EXPECT_EQ(0, currentCsrStreamProperties.stateComputeMode.isCoherencyRequired.value);
+    EXPECT_EQ(expectedIsCoherencyRequired, currentCsrStreamProperties.stateComputeMode.isCoherencyRequired.value);
     EXPECT_EQ(expectedLargeGrfMode, currentCsrStreamProperties.stateComputeMode.largeGrfMode.value);
     EXPECT_EQ(expectedThreadArbitrationPolicy, currentCsrStreamProperties.stateComputeMode.threadArbitrationPolicy.value);
 }

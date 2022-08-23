@@ -411,7 +411,7 @@ bool HwInfoConfigHw<gfxProduct>::isGrfNumReportedWithScm() const {
     if (DebugManager.flags.ForceGrfNumProgrammingWithScm.get() != -1) {
         return DebugManager.flags.ForceGrfNumProgrammingWithScm.get();
     }
-    return true;
+    return HwInfoConfigHw<gfxProduct>::getScmPropertyLargeGrfModeSupport();
 }
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -419,7 +419,7 @@ bool HwInfoConfigHw<gfxProduct>::isThreadArbitrationPolicyReportedWithScm() cons
     if (DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.get() != -1) {
         return DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.get();
     }
-    return true;
+    return HwInfoConfigHw<gfxProduct>::getScmPropertyThreadArbitrationPolicySupport();
 }
 
 template <PRODUCT_FAMILY gfxProduct>

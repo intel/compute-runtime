@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/test.h"
@@ -65,7 +66,9 @@ TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValu
     DebugManager.flags.ForceGrfNumProgrammingWithScm.set(1);
     DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 
-    auto isDevicePreemptionModeTrackedInScm = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).isDevicePreemptionModeTrackedInScm();
+    StateComputeModePropertiesSupport scmPropertiesSupport = {};
+    auto hwInfoConfig = HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    hwInfoConfig->fillScmPropertiesSupportStructure(scmPropertiesSupport);
 
     int32_t threadArbitrationPolicyValues[] = {
         ThreadArbitrationPolicy::AgeBased, ThreadArbitrationPolicy::RoundRobin,
@@ -80,12 +83,16 @@ TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValu
                 for (auto threadArbitrationPolicy : threadArbitrationPolicyValues) {
                     properties.stateComputeMode.setProperties(requiresCoherency, largeGrf ? 256 : 128, threadArbitrationPolicy, preemptionMode, *defaultHwInfo);
                     EXPECT_EQ(largeGrf, properties.stateComputeMode.largeGrfMode.value);
-                    EXPECT_EQ(requiresCoherency, properties.stateComputeMode.isCoherencyRequired.value);
+                    if (scmPropertiesSupport.coherencyRequired) {
+                        EXPECT_EQ(requiresCoherency, properties.stateComputeMode.isCoherencyRequired.value);
+                    } else {
+                        EXPECT_EQ(-1, properties.stateComputeMode.isCoherencyRequired.value);
+                    }
                     EXPECT_EQ(-1, properties.stateComputeMode.zPassAsyncComputeThreadLimit.value);
                     EXPECT_EQ(-1, properties.stateComputeMode.pixelAsyncComputeThreadLimit.value);
                     EXPECT_EQ(threadArbitrationPolicy, properties.stateComputeMode.threadArbitrationPolicy.value);
 
-                    if (isDevicePreemptionModeTrackedInScm) {
+                    if (scmPropertiesSupport.devicePreemptionMode) {
                         EXPECT_EQ(preemptionMode, static_cast<PreemptionMode>(properties.stateComputeMode.devicePreemptionMode.value));
                     } else {
                         EXPECT_EQ(-1, properties.stateComputeMode.devicePreemptionMode.value);
@@ -98,19 +105,31 @@ TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValu
     for (auto forceZPassAsyncComputeThreadLimit : ::testing::Bool()) {
         DebugManager.flags.ForceZPassAsyncComputeThreadLimit.set(forceZPassAsyncComputeThreadLimit);
         properties.stateComputeMode.setProperties(false, 0u, 0u, PreemptionMode::MidBatch, *defaultHwInfo);
-        EXPECT_EQ(forceZPassAsyncComputeThreadLimit, properties.stateComputeMode.zPassAsyncComputeThreadLimit.value);
+        if (scmPropertiesSupport.zPassAsyncComputeThreadLimit) {
+            EXPECT_EQ(forceZPassAsyncComputeThreadLimit, properties.stateComputeMode.zPassAsyncComputeThreadLimit.value);
+        } else {
+            EXPECT_EQ(-1, properties.stateComputeMode.zPassAsyncComputeThreadLimit.value);
+        }
     }
 
     for (auto forcePixelAsyncComputeThreadLimit : ::testing::Bool()) {
         DebugManager.flags.ForcePixelAsyncComputeThreadLimit.set(forcePixelAsyncComputeThreadLimit);
         properties.stateComputeMode.setProperties(false, 0u, 0u, PreemptionMode::MidBatch, *defaultHwInfo);
-        EXPECT_EQ(forcePixelAsyncComputeThreadLimit, properties.stateComputeMode.pixelAsyncComputeThreadLimit.value);
+        if (scmPropertiesSupport.pixelAsyncComputeThreadLimit) {
+            EXPECT_EQ(forcePixelAsyncComputeThreadLimit, properties.stateComputeMode.pixelAsyncComputeThreadLimit.value);
+        } else {
+            EXPECT_EQ(-1, properties.stateComputeMode.pixelAsyncComputeThreadLimit.value);
+        }
     }
 
     for (auto threadArbitrationPolicy : threadArbitrationPolicyValues) {
         DebugManager.flags.OverrideThreadArbitrationPolicy.set(threadArbitrationPolicy);
         properties.stateComputeMode.setProperties(false, 0u, 0u, PreemptionMode::MidBatch, *defaultHwInfo);
-        EXPECT_EQ(threadArbitrationPolicy, properties.stateComputeMode.threadArbitrationPolicy.value);
+        if (scmPropertiesSupport.threadArbitrationPolicy) {
+            EXPECT_EQ(threadArbitrationPolicy, properties.stateComputeMode.threadArbitrationPolicy.value);
+        } else {
+            EXPECT_EQ(-1, properties.stateComputeMode.threadArbitrationPolicy.value);
+        }
     }
 }
 

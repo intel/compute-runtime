@@ -50,9 +50,9 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenGetThreadEuRatioForScratchThen8I
     EXPECT_EQ(8u, hwInfoConfig.getThreadEuRatioForScratch(*defaultHwInfo));
 }
 
-HWTEST_F(HwInfoConfigTest, whenIsGrfNumReportedWithScmIsQueriedThenTrueIsReturned) {
+HWTEST_F(HwInfoConfigTest, givenDefaultSettingWhenIsGrfNumReportedIsCalledThenScmSupportProductValueIsReturned) {
     const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig.isGrfNumReportedWithScm());
+    EXPECT_EQ(hwInfoConfig.getScmPropertyLargeGrfModeSupport(), hwInfoConfig.isGrfNumReportedWithScm());
 }
 
 HWTEST_F(HwInfoConfigTest, givenForceGrfNumProgrammingWithScmFlagSetWhenIsGrfNumReportedWithScmIsQueriedThenCorrectValueIsReturned) {
@@ -66,9 +66,9 @@ HWTEST_F(HwInfoConfigTest, givenForceGrfNumProgrammingWithScmFlagSetWhenIsGrfNum
     EXPECT_TRUE(hwInfoConfig.isGrfNumReportedWithScm());
 }
 
-HWTEST_F(HwInfoConfigTest, whenIsThreadArbitrationPolicyReportedWithScmIsQueriedThenTrueIsReturned) {
+HWTEST_F(HwInfoConfigTest, givenDefaultSettingWhenIsThreadArbitrationPolicyReportedIsCalledThenScmSupportProductValueReturned) {
     const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig.isThreadArbitrationPolicyReportedWithScm());
+    EXPECT_EQ(hwInfoConfig.getScmPropertyThreadArbitrationPolicySupport(), hwInfoConfig.isThreadArbitrationPolicyReportedWithScm());
 }
 
 HWTEST_F(HwInfoConfigTest, givenForceThreadArbitrationPolicyProgrammingWithScmFlagSetWhenIsThreadArbitrationPolicyReportedWithScmIsQueriedThenCorrectValueIsReturned) {
