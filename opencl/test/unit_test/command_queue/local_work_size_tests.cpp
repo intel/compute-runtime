@@ -41,6 +41,80 @@ TEST(localWorkSizeTest, givenDisableEUFusionWhenCreatingWorkSizeInfoThenCorrectM
     EXPECT_EQ(expectedMinWGS, wsInfo.minWorkGroupSize);
 }
 
+TEST(localWorkSizeTest, GivenSlmLargerThanLocalThenWarningIsReturned) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.PrintDebugMessages.set(true);
+    ::testing::internal::CaptureStderr();
+
+    EXPECT_THROW(WorkSizeInfo wsInfo(256,                 // maxWorkGroupSize
+                                     1u,                  // hasBariers
+                                     8,                   // simdSize
+                                     128u,                // slmTotalSize
+                                     defaultHwInfo.get(), // hardwareInfo
+                                     32u,                 // numThreadsPerSubSlice
+                                     64u,                 // localMemorySize
+                                     false,               // imgUsed
+                                     false,               // yTiledSurface
+                                     false                // disableEUFusion
+                                     ),
+                 std::exception);
+
+    std::string output = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(std::string("Size of SLM (128) larger than available (64)\n"), output);
+}
+
+TEST(localWorkSizeTest, GivenSlmSmallerThanLocalThenWarningIsNotReturned) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.PrintDebugMessages.set(true);
+    ::testing::internal::CaptureStderr();
+
+    WorkSizeInfo wsInfo(256,                 // maxWorkGroupSize
+                        1u,                  // hasBariers
+                        8,                   // simdSize
+                        64u,                 // slmTotalSize
+                        defaultHwInfo.get(), // hardwareInfo
+                        32u,                 // numThreadsPerSubSlice
+                        128u,                // localMemorySize
+                        false,               // imgUsed
+                        false,               // yTiledSurface
+                        false                // disableEUFusion
+    );
+
+    std::string output = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(std::string(""), output);
+}
+
+TEST(localWorkSizeTest, whenSettingHasBarriersWithNoFusedDispatchThenMinWorkGroupSizeIsSetCorrectly) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.CFEFusedEUDispatch.set(0);
+
+    WorkSizeInfo wsInfo0(256,                 // maxWorkGroupSize
+                         0u,                  // hasBariers
+                         8,                   // simdSize
+                         0u,                  // slmTotalSize
+                         defaultHwInfo.get(), // hardwareInfo
+                         32u,                 // numThreadsPerSubSlice
+                         128u,                // localMemorySize
+                         false,               // imgUsed
+                         false,               // yTiledSurface
+                         false                // disableEUFusion
+    );
+    EXPECT_EQ(0u, wsInfo0.minWorkGroupSize);
+
+    WorkSizeInfo wsInfo1(256,                 // maxWorkGroupSize
+                         1u,                  // hasBariers
+                         8,                   // simdSize
+                         0u,                  // slmTotalSize
+                         defaultHwInfo.get(), // hardwareInfo
+                         32u,                 // numThreadsPerSubSlice
+                         128u,                // localMemorySize
+                         false,               // imgUsed
+                         false,               // yTiledSurface
+                         false                // disableEUFusion
+    );
+    EXPECT_NE(0u, wsInfo1.minWorkGroupSize);
+}
+
 TEST(localWorkSizeTest, given3DimWorkGroupAndSimdEqual8AndBarriersWhenComputeCalledThenLocalGroupComputedCorrectly) {
     WorkSizeInfo wsInfo(256,                 // maxWorkGroupSize
                         1u,                  // hasBariers

@@ -61,6 +61,9 @@ void WorkSizeInfo::setMinWorkGroupSize(const HardwareInfo *hwInfo, bool disableE
         minWorkGroupSize = numThreadsPerSubSlice * simdSize / maxBarriersPerHSlice;
     }
     if (slmTotalSize > 0) {
+        if (localMemSize < slmTotalSize) {
+            PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%d) larger than available (%d)\n", slmTotalSize, localMemSize);
+        }
         UNRECOVERABLE_IF(localMemSize < slmTotalSize);
         minWorkGroupSize = std::max(maxWorkGroupSize / ((localMemSize / slmTotalSize)), minWorkGroupSize);
     }
