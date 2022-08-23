@@ -86,6 +86,8 @@ void VASharingFunctions::querySupportedVaImageFormats(VADisplay vaDisplay) {
                     supported2PlaneFormats.emplace_back(allVaFormats[i]);
                 } else if (VASurface::isSupportedFourCCThreePlaneFormat(allVaFormats[i].fourcc)) {
                     supported3PlaneFormats.emplace_back(allVaFormats[i]);
+                } else if (VASurface::isSupportedPackedFormat(allVaFormats[i].fourcc)) {
+                    supportedPackedFormats.emplace_back(allVaFormats[i]);
                 }
             }
         }
@@ -111,7 +113,7 @@ cl_int VASharingFunctions::getSupportedFormats(cl_mem_flags flags,
         if (plane == 2) {
             *numImageFormats = static_cast<cl_uint>(supported3PlaneFormats.size());
         } else if (plane < 2) {
-            *numImageFormats = static_cast<cl_uint>(supported2PlaneFormats.size() + supported3PlaneFormats.size());
+            *numImageFormats = static_cast<cl_uint>(supported2PlaneFormats.size() + supported3PlaneFormats.size() + supportedPackedFormats.size());
         }
     }
 
@@ -121,11 +123,12 @@ cl_int VASharingFunctions::getSupportedFormats(cl_mem_flags flags,
             memcpy_s(formats, elementsToCopy * sizeof(VAImageFormat), &supported3PlaneFormats[0], elementsToCopy * sizeof(VAImageFormat));
         }
     } else if (plane < 2) {
-        if (formats != nullptr && (supported2PlaneFormats.size() > 0 || supported3PlaneFormats.size() > 0)) {
-            uint32_t elementsToCopy = std::min(numEntries, static_cast<uint32_t>(supported2PlaneFormats.size() + supported3PlaneFormats.size()));
+        if (formats != nullptr && (supported2PlaneFormats.size() > 0 || supported3PlaneFormats.size() > 0 || supportedPackedFormats.size() > 0)) {
+            uint32_t elementsToCopy = std::min(numEntries, static_cast<uint32_t>(supported2PlaneFormats.size() + supported3PlaneFormats.size() + supportedPackedFormats.size()));
             std::vector<VAImageFormat> tmpFormats;
             tmpFormats.insert(tmpFormats.end(), supported2PlaneFormats.begin(), supported2PlaneFormats.end());
             tmpFormats.insert(tmpFormats.end(), supported3PlaneFormats.begin(), supported3PlaneFormats.end());
+            tmpFormats.insert(tmpFormats.end(), supportedPackedFormats.begin(), supportedPackedFormats.end());
             memcpy_s(formats, elementsToCopy * sizeof(VAImageFormat), &tmpFormats[0], elementsToCopy * sizeof(VAImageFormat));
         }
     }
