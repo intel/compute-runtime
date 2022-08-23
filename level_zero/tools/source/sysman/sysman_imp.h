@@ -74,6 +74,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     ze_result_t deviceSetEccState(const zes_device_ecc_desc_t *newState, zes_device_ecc_properties_t *pState) override;
     bool deviceEventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) override;
     static void getSysmanDeviceInfo(zes_device_handle_t hDevice, uint32_t &subdeviceId, ze_bool_t &onSubdevice);
+    static PRODUCT_FAMILY getProductFamily(Device *pDevice);
 
     void updateSubDeviceHandlesLocally();
 

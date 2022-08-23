@@ -37,9 +37,9 @@ class PlatformMonitoringTech : NEO::NonCopyableOrMovableClass {
     std::string telemetryDeviceEntry{};
     std::map<std::string, uint64_t> keyOffsetMap;
     ze_result_t getKeyOffsetMap(std::string guid, std::map<std::string, uint64_t> &keyOffsetMap);
-    ze_result_t init(FsAccess *pFsAccess, const std::string &gpuUpstreamPortPath);
+    ze_result_t init(FsAccess *pFsAccess, const std::string &gpuUpstreamPortPath, PRODUCT_FAMILY productFamily);
     static void doInitPmtObject(FsAccess *pFsAccess, uint32_t subdeviceId, PlatformMonitoringTech *pPmt, const std::string &gpuUpstreamPortPath,
-                                std::map<uint32_t, L0::PlatformMonitoringTech *> &mapOfSubDeviceIdToPmtObject);
+                                std::map<uint32_t, L0::PlatformMonitoringTech *> &mapOfSubDeviceIdToPmtObject, PRODUCT_FAMILY productFamily);
     decltype(&NEO::SysCalls::open) openFunction = NEO::SysCalls::open;
     decltype(&NEO::SysCalls::close) closeFunction = NEO::SysCalls::close;
     decltype(&NEO::SysCalls::pread) preadFunction = NEO::SysCalls::pread;

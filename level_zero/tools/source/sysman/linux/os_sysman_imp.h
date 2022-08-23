@@ -61,7 +61,6 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     void createFwUtilInterface();
     void releaseFwUtilInterface();
     void releaseLocalDrmHandle();
-    PRODUCT_FAMILY getProductFamily();
     void releaseSysmanDeviceResources();
     MOCKABLE_VIRTUAL void releaseDeviceResources();
     MOCKABLE_VIRTUAL ze_result_t initDevice();

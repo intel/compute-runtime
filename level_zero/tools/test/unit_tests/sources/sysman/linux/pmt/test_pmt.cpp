@@ -80,22 +80,25 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenTelemDirectoryContainNowTelemEntryWhenenum
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesThenCheckForErrorThatCouldHappenDuringWhileValidatingTelemNode) {
     pTestFsAccess->getRealPathResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
     PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), gpuUpstreamPortPathInPmt);
+    auto productFamily = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getHardwareInfo().platform.eProductFamily;
     auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
-    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), gpuUpstreamPortPathInPmt), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), gpuUpstreamPortPathInPmt, productFamily), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 }
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesThenCheckForErrorThatCouldHappenDuringGUIDRead) {
     pTestFsAccess->readStringResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
     PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), gpuUpstreamPortPathInPmt);
+    auto productFamily = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getHardwareInfo().platform.eProductFamily;
     auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
-    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), gpuUpstreamPortPathInPmt), ZE_RESULT_ERROR_NOT_AVAILABLE);
+    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), gpuUpstreamPortPathInPmt, productFamily), ZE_RESULT_ERROR_NOT_AVAILABLE);
 }
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesThenCheckForErrorIfGUIDReadValueIsNotSupported) {
     pTestFsAccess->readInvalidString = true;
     PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), gpuUpstreamPortPathInPmt);
+    auto productFamily = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getHardwareInfo().platform.eProductFamily;
     auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
-    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), gpuUpstreamPortPathInPmt), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), gpuUpstreamPortPathInPmt, productFamily), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenSomeKeyWhenCallingreadValueWithUint64TypeThenCheckForErrorBranches) {
@@ -115,8 +118,9 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenSomeKeyWhenCallingreadValueWithUint32TypeT
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesThenCheckForErrorThatCouldHappenDuringbaseOffsetRead) {
     pTestFsAccess->readUnsignedResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
     PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), gpuUpstreamPortPathInPmt);
+    auto productFamily = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getHardwareInfo().platform.eProductFamily;
     auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
-    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), gpuUpstreamPortPathInPmt), ZE_RESULT_ERROR_NOT_AVAILABLE);
+    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), gpuUpstreamPortPathInPmt, productFamily), ZE_RESULT_ERROR_NOT_AVAILABLE);
 }
 
 inline static int openMock(const char *pathname, int flags) {
@@ -225,9 +229,10 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenDoingPMTInitThenPMTmapOfS
         Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
         auto pPmt = new PublicPlatformMonitoringTech(pTestFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
                                                      deviceProperties.subdeviceId);
+        auto productFamily = SysmanDeviceImp::getProductFamily(Device::fromHandle(deviceHandle));
         UNRECOVERABLE_IF(nullptr == pPmt);
         PublicPlatformMonitoringTech::doInitPmtObject(pTestFsAccess.get(), deviceProperties.subdeviceId, pPmt,
-                                                      gpuUpstreamPortPathInPmt, mapOfSubDeviceIdToPmtObject);
+                                                      gpuUpstreamPortPathInPmt, mapOfSubDeviceIdToPmtObject, productFamily);
         auto subDeviceIdToPmtEntry = mapOfSubDeviceIdToPmtObject.find(deviceProperties.subdeviceId);
         EXPECT_EQ(subDeviceIdToPmtEntry->second, pPmt);
         delete pPmt;
@@ -242,9 +247,10 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenBaseOffsetReadFailWhenDoingPMTInitThenPMTm
         Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
         auto pPmt = new PublicPlatformMonitoringTech(pTestFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
                                                      deviceProperties.subdeviceId);
+        auto productFamily = SysmanDeviceImp::getProductFamily(Device::fromHandle(deviceHandle));
         UNRECOVERABLE_IF(nullptr == pPmt);
         PublicPlatformMonitoringTech::doInitPmtObject(pTestFsAccess.get(), deviceProperties.subdeviceId, pPmt,
-                                                      gpuUpstreamPortPathInPmt, mapOfSubDeviceIdToPmtObject);
+                                                      gpuUpstreamPortPathInPmt, mapOfSubDeviceIdToPmtObject, productFamily);
         EXPECT_TRUE(mapOfSubDeviceIdToPmtObject.empty());
     }
 }

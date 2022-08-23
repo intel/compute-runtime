@@ -87,10 +87,6 @@ FirmwareUtil *LinuxSysmanImp::getFwUtilInterface() {
     return pFwUtilInterface;
 }
 
-PRODUCT_FAMILY LinuxSysmanImp::getProductFamily() {
-    return pDevice->getNEODevice()->getHardwareInfo().platform.eProductFamily;
-}
-
 FsAccess &LinuxSysmanImp::getFsAccess() {
     UNRECOVERABLE_IF(nullptr == pFsAccess);
     return *pFsAccess;

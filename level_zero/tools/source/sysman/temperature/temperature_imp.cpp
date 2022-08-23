@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "level_zero/tools/source/sysman/temperature/temperature_imp.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 
 namespace L0 {
 
@@ -36,10 +37,11 @@ void TemperatureImp::init() {
 }
 
 TemperatureImp::TemperatureImp(const ze_device_handle_t &deviceHandle, OsSysman *pOsSysman, zes_temp_sensors_t type) {
-    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-    pOsTemperature = OsTemperature::create(pOsSysman, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
-                                           deviceProperties.subdeviceId, type);
+    uint32_t subdeviceId = 0;
+    ze_bool_t onSubdevice = false;
+    SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subdeviceId, onSubdevice);
+    pOsTemperature = OsTemperature::create(pOsSysman, onSubdevice,
+                                           subdeviceId, type);
     init();
 }
 

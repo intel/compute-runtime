@@ -297,7 +297,7 @@ LinuxPowerImp::LinuxPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pPmt = pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId);
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
-    productFamily = pLinuxSysmanImp->getProductFamily();
+    productFamily = SysmanDeviceImp::getProductFamily(pLinuxSysmanImp->getDeviceHandle());
     if ((productFamily == IGFX_PVC) || (productFamily == IGFX_XE_HP_SDV)) {
         criticalPowerLimit = "curr1_crit";
     } else {

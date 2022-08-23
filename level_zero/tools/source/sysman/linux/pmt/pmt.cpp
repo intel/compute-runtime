@@ -121,9 +121,11 @@ ze_result_t PlatformMonitoringTech::enumerateRootTelemIndex(FsAccess *pFsAccess,
     return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
 }
 
-ze_result_t PlatformMonitoringTech::init(FsAccess *pFsAccess, const std::string &gpuUpstreamPortPath) {
+ze_result_t PlatformMonitoringTech::init(FsAccess *pFsAccess, const std::string &gpuUpstreamPortPath, PRODUCT_FAMILY productFamily) {
     std::string telemNode = telem + std::to_string(rootDeviceTelemNodeIndex);
-    if (isSubdevice) {
+    // For XE_HP_SDV and PVC single tile devices, telemetry info is retrieved from
+    // tile's telem node rather from root device telem node.
+    if ((isSubdevice) || ((productFamily == IGFX_PVC) || (productFamily == IGFX_XE_HP_SDV))) {
         uint32_t telemNodeIndex = 0;
         // If rootDeviceTelemNode is telem1, then rootDeviceTelemNodeIndex = 1
         // And thus for subdevice0 --> telem node will be telem2,
@@ -174,8 +176,8 @@ PlatformMonitoringTech::PlatformMonitoringTech(FsAccess *pFsAccess, ze_bool_t on
 
 void PlatformMonitoringTech::doInitPmtObject(FsAccess *pFsAccess, uint32_t subdeviceId, PlatformMonitoringTech *pPmt,
                                              const std::string &gpuUpstreamPortPath,
-                                             std::map<uint32_t, L0::PlatformMonitoringTech *> &mapOfSubDeviceIdToPmtObject) {
-    if (pPmt->init(pFsAccess, gpuUpstreamPortPath) == ZE_RESULT_SUCCESS) {
+                                             std::map<uint32_t, L0::PlatformMonitoringTech *> &mapOfSubDeviceIdToPmtObject, PRODUCT_FAMILY productFamily) {
+    if (pPmt->init(pFsAccess, gpuUpstreamPortPath, productFamily) == ZE_RESULT_SUCCESS) {
         mapOfSubDeviceIdToPmtObject.emplace(subdeviceId, pPmt);
         return;
     }
@@ -190,10 +192,11 @@ void PlatformMonitoringTech::create(const std::vector<ze_device_handle_t> &devic
             uint32_t subdeviceId = 0;
             ze_bool_t onSubdevice = false;
             SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subdeviceId, onSubdevice);
+            auto productFamily = SysmanDeviceImp::getProductFamily(Device::fromHandle(deviceHandle));
             auto pPmt = new PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId);
             UNRECOVERABLE_IF(nullptr == pPmt);
             PlatformMonitoringTech::doInitPmtObject(pFsAccess, subdeviceId, pPmt,
-                                                    gpuUpstreamPortPath, mapOfSubDeviceIdToPmtObject);
+                                                    gpuUpstreamPortPath, mapOfSubDeviceIdToPmtObject, productFamily);
         }
     }
 }

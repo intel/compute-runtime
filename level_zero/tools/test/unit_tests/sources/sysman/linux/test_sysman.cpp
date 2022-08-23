@@ -321,11 +321,6 @@ TEST_F(SysmanDeviceFixture, GivenNullDrmHandleWhenGettingDrmHandleThenValidDrmHa
     EXPECT_NO_THROW(pLinuxSysmanImp->getDrm());
 }
 
-TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenProductFamilyFromDeviceThenValidCorrectProductFamilyIsReturned) {
-    auto productFamily = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getHardwareInfo().platform.eProductFamily;
-    EXPECT_EQ(productFamily, pLinuxSysmanImp->getProductFamily());
-}
-
 TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenGettingFwUtilInterfaceAndGetPciBdfFailsThenFailureIsReturned) {
     auto deviceImp = static_cast<L0::DeviceImp *>(pLinuxSysmanImp->getDeviceHandle());
 

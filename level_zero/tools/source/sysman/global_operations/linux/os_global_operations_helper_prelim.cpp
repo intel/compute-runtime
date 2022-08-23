@@ -11,7 +11,7 @@
 namespace L0 {
 void LinuxGlobalOperationsImp::getRepairStatus(zes_device_state_t *pState) {
     bool ifrStatus = false;
-    if (IGFX_PVC == pLinuxSysmanImp->getProductFamily()) {
+    if (IGFX_PVC == SysmanDeviceImp::getProductFamily(pDevice)) {
         auto pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
         if (pFwInterface != nullptr) {
             if (ZE_RESULT_SUCCESS == pFwInterface->fwDeviceInit()) {
