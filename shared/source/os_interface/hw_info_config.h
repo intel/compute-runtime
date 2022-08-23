@@ -21,6 +21,7 @@ namespace NEO {
 
 struct HardwareInfo;
 struct StateComputeModeProperties;
+struct StateComputeModePropertiesSupport;
 struct PipelineSelectArgs;
 class OSInterface;
 class HwInfoConfig;
@@ -137,10 +138,30 @@ class HwInfoConfig {
     virtual bool isPrefetcherDisablingInDirectSubmissionRequired() const = 0;
     virtual bool isStatefulAddressingModeSupported() const = 0;
 
+    virtual bool getFrontEndPropertyScratchSizeSupport() const = 0;
+    virtual bool getFrontEndPropertyPrivateScratchSizeSupport() const = 0;
+
+    virtual bool getScmPropertyThreadArbitrationPolicySupport() const = 0;
+    virtual bool getScmPropertyCoherencyRequiredSupport() const = 0;
+    virtual bool getScmPropertyZPassAsyncComputeThreadLimitSupport() const = 0;
+    virtual bool getScmPropertyPixelAsyncComputeThreadLimitSupport() const = 0;
+    virtual bool getScmPropertyLargeGrfModeSupport() const = 0;
+    virtual bool getScmPropertyDevicePreemptionModeSupport() const = 0;
+
+    virtual bool getSbaPropertyGlobalAtomicsSupport() const = 0;
+    virtual bool getSbaPropertyStatelessMocsSupport() const = 0;
+
+    virtual bool getPreemptionDbgPropertyPreemptionModeSupport() const = 0;
+    virtual bool getPreemptionDbgPropertyStateSipSupport() const = 0;
+    virtual bool getPreemptionDbgPropertyCsrSurfaceSupport() const = 0;
+
+    virtual void fillScmPropertiesSupportStructure(StateComputeModePropertiesSupport &propertiesSupport) = 0;
+
     MOCKABLE_VIRTUAL ~HwInfoConfig() = default;
 
   protected:
     virtual LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
+    virtual void fillScmPropertiesSupportStructureBase(StateComputeModePropertiesSupport &propertiesSupport) = 0;
 
   public:
     uint32_t threadsPerEu = 0u;
@@ -243,6 +264,25 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isPrefetcherDisablingInDirectSubmissionRequired() const override;
     bool isStatefulAddressingModeSupported() const override;
 
+    bool getFrontEndPropertyScratchSizeSupport() const override;
+    bool getFrontEndPropertyPrivateScratchSizeSupport() const override;
+
+    bool getScmPropertyThreadArbitrationPolicySupport() const override;
+    bool getScmPropertyCoherencyRequiredSupport() const override;
+    bool getScmPropertyZPassAsyncComputeThreadLimitSupport() const override;
+    bool getScmPropertyPixelAsyncComputeThreadLimitSupport() const override;
+    bool getScmPropertyLargeGrfModeSupport() const override;
+    bool getScmPropertyDevicePreemptionModeSupport() const override;
+
+    bool getSbaPropertyGlobalAtomicsSupport() const override;
+    bool getSbaPropertyStatelessMocsSupport() const override;
+
+    bool getPreemptionDbgPropertyPreemptionModeSupport() const override;
+    bool getPreemptionDbgPropertyStateSipSupport() const override;
+    bool getPreemptionDbgPropertyCsrSurfaceSupport() const override;
+
+    void fillScmPropertiesSupportStructure(StateComputeModePropertiesSupport &propertiesSupport) override;
+
   protected:
     HwInfoConfigHw() = default;
 
@@ -252,6 +292,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     uint64_t getHostMemCapabilitiesValue();
     bool getHostMemCapabilitiesSupported(const HardwareInfo *hwInfo);
     LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
+    void fillScmPropertiesSupportStructureBase(StateComputeModePropertiesSupport &propertiesSupport) override;
 };
 
 template <PRODUCT_FAMILY gfxProduct>

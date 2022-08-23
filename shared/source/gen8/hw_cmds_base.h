@@ -27,6 +27,35 @@ struct Gen8 {
     static constexpr bool isUsingGenericMediaStateClear = true;
     static constexpr bool isUsingMiMemFence = false;
 
+    struct FrontEndStateSupport {
+        static constexpr bool scratchSize = true;
+        static constexpr bool privateScratchSize = false;
+    };
+
+    struct StateComputeModeStateSupport {
+        static constexpr bool threadArbitrationPolicy = false;
+        static constexpr bool coherencyRequired = true;
+        static constexpr bool largeGrfMode = false;
+        static constexpr bool zPassAsyncComputeThreadLimit = false;
+        static constexpr bool pixelAsyncComputeThreadLimit = false;
+        static constexpr bool devicePreemptionMode = false;
+    };
+
+    struct StateBaseAddressStateSupport {
+        static constexpr bool globalAtomics = false;
+        static constexpr bool statelessMocs = true;
+    };
+
+    struct PipelineSelectStateSupport {
+        static constexpr bool commandSupport = true;
+    };
+
+    struct PreemptionDebugSupport {
+        static constexpr bool preemptionMode = true;
+        static constexpr bool stateSip = true;
+        static constexpr bool csrSurface = false;
+    };
+
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {
         union {
             struct {

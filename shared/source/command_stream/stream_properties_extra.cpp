@@ -9,7 +9,7 @@
 
 using namespace NEO;
 
-void StateComputeModeProperties::setPropertiesExtra(bool reportNumGrf, bool reportThreadArbitrationPolicy) {
+void StateComputeModeProperties::setPropertiesExtra(const StateComputeModePropertiesSupport &supportFlags) {
 }
 void StateComputeModeProperties::setPropertiesExtra(const StateComputeModeProperties &properties) {
 }

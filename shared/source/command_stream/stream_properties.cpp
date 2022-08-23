@@ -19,13 +19,15 @@ void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t 
     auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
+    StateComputeModePropertiesSupport scmPropertiesSupport = {};
+    hwInfoConfig.fillScmPropertiesSupportStructure(scmPropertiesSupport);
     clearIsDirty();
 
     int32_t isCoherencyRequired = (requiresCoherency ? 1 : 0);
     this->isCoherencyRequired.set(isCoherencyRequired);
 
-    bool reportNumGrf = hwInfoConfig.isGrfNumReportedWithScm();
-    if (reportNumGrf && (this->largeGrfMode.value == -1 || numGrfRequired != GrfConfig::NotApplicable)) {
+    if (scmPropertiesSupport.largeGrfMode &&
+        (this->largeGrfMode.value == -1 || numGrfRequired != GrfConfig::NotApplicable)) {
         int32_t largeGrfMode = (numGrfRequired == GrfConfig::LargeGrfNumber ? 1 : 0);
         this->largeGrfMode.set(largeGrfMode);
     }
@@ -51,8 +53,7 @@ void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t 
     if (DebugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
         threadArbitrationPolicy = DebugManager.flags.OverrideThreadArbitrationPolicy.get();
     }
-    bool reportThreadArbitrationPolicy = hwInfoConfig.isThreadArbitrationPolicyReportedWithScm();
-    if (reportThreadArbitrationPolicy) {
+    if (scmPropertiesSupport.threadArbitrationPolicy) {
         this->threadArbitrationPolicy.set(threadArbitrationPolicy);
     }
 
@@ -60,7 +61,7 @@ void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t 
         this->devicePreemptionMode.set(static_cast<int32_t>(devicePreemptionMode));
     }
 
-    setPropertiesExtra(reportNumGrf, reportThreadArbitrationPolicy);
+    setPropertiesExtra(scmPropertiesSupport);
 }
 
 void StateComputeModeProperties::setProperties(const StateComputeModeProperties &properties) {

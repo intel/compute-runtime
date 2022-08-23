@@ -505,3 +505,18 @@ HWTEST_F(HwInfoConfigTest, givenSamplerStateWhenAdjustSamplerStateThenNothingIsC
 
     EXPECT_EQ(0, memcmp(&initialState, &state, sizeof(SAMPLER_STATE)));
 }
+
+HWTEST_F(HwInfoConfigTest, WhenFillingScmPropertiesSupportThenExpectUseCorrectGetters) {
+    StateComputeModePropertiesSupport scmPropertiesSupport = {};
+
+    auto hwInfoConfig = HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+
+    hwInfoConfig->fillScmPropertiesSupportStructure(scmPropertiesSupport);
+
+    EXPECT_EQ(hwInfoConfig->isThreadArbitrationPolicyReportedWithScm(), scmPropertiesSupport.threadArbitrationPolicy);
+    EXPECT_EQ(hwInfoConfig->getScmPropertyCoherencyRequiredSupport(), scmPropertiesSupport.coherencyRequired);
+    EXPECT_EQ(hwInfoConfig->getScmPropertyZPassAsyncComputeThreadLimitSupport(), scmPropertiesSupport.zPassAsyncComputeThreadLimit);
+    EXPECT_EQ(hwInfoConfig->getScmPropertyPixelAsyncComputeThreadLimitSupport(), scmPropertiesSupport.pixelAsyncComputeThreadLimit);
+    EXPECT_EQ(hwInfoConfig->isGrfNumReportedWithScm(), scmPropertiesSupport.largeGrfMode);
+    EXPECT_EQ(hwInfoConfig->getScmPropertyDevicePreemptionModeSupport(), scmPropertiesSupport.devicePreemptionMode);
+}

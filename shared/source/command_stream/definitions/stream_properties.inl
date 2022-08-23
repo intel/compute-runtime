@@ -10,6 +10,15 @@
 
 namespace NEO {
 
+struct StateComputeModePropertiesSupport {
+    bool coherencyRequired = false;
+    bool largeGrfMode = false;
+    bool zPassAsyncComputeThreadLimit = false;
+    bool pixelAsyncComputeThreadLimit = false;
+    bool threadArbitrationPolicy = false;
+    bool devicePreemptionMode = false;
+};
+
 struct StateComputeModeProperties {
     StreamProperty isCoherencyRequired{};
     StreamProperty largeGrfMode{};
@@ -26,9 +35,16 @@ struct StateComputeModeProperties {
     void clearIsDirty();
 
     bool isDirtyExtra() const;
-    void setPropertiesExtra(bool reportNumGrf, bool reportThreadArbitrationPolicy);
+    void setPropertiesExtra(const StateComputeModePropertiesSupport &supportFlags);
     void setPropertiesExtra(const StateComputeModeProperties &properties);
     void clearIsDirtyExtra();
+};
+
+struct FrontEndPropertiesSupport {
+    bool dispatchAllWalker = false;
+    bool euFusion = false;
+    bool overdispatch = false;
+    bool singleSliceDispatchCcs = false;
 };
 
 struct FrontEndProperties {

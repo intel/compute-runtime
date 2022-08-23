@@ -34,6 +34,35 @@ struct XeHpCore {
     static constexpr bool isUsingGenericMediaStateClear = true;
     static constexpr bool isUsingMiMemFence = false;
 
+    struct FrontEndStateSupport {
+        static constexpr bool scratchSize = true;
+        static constexpr bool privateScratchSize = true;
+    };
+
+    struct StateComputeModeStateSupport {
+        static constexpr bool threadArbitrationPolicy = false;
+        static constexpr bool coherencyRequired = true;
+        static constexpr bool largeGrfMode = true;
+        static constexpr bool zPassAsyncComputeThreadLimit = false;
+        static constexpr bool pixelAsyncComputeThreadLimit = false;
+        static constexpr bool devicePreemptionMode = false;
+    };
+
+    struct StateBaseAddressStateSupport {
+        static constexpr bool globalAtomics = true;
+        static constexpr bool statelessMocs = true;
+    };
+
+    struct PipelineSelectStateSupport {
+        static constexpr bool commandSupport = true;
+    };
+
+    struct PreemptionDebugSupport {
+        static constexpr bool preemptionMode = true;
+        static constexpr bool stateSip = true;
+        static constexpr bool csrSurface = false;
+    };
+
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {
         union {
             struct {

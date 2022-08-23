@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/gen11/hw_cmds_base.h"
+#include "shared/source/gen11/hw_cmds_ehl.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/hw_info_config.inl"
 #include "shared/source/os_interface/hw_info_config_bdw_and_later.inl"
