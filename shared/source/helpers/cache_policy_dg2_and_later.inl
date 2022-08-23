@@ -12,14 +12,14 @@
 namespace NEO {
 
 template <PRODUCT_FAMILY gfxProduct>
-const char *L1CachePolicyHelper<gfxProduct>::getCachingPolicyOptions() {
+const char *L1CachePolicyHelper<gfxProduct>::getCachingPolicyOptions(bool isDebuggerActive) {
     using GfxFamily = typename HwMapper<gfxProduct>::GfxFamily;
 
     static constexpr const char *writeBackCachingPolicy = "-cl-store-cache-default=7 -cl-load-cache-default=4";
     static constexpr const char *writeByPassCachingPolicy = "-cl-store-cache-default=2 -cl-load-cache-default=4";
     static constexpr const char *uncachedCachingPolicy = "-cl-store-cache-default=1 -cl-load-cache-default=1";
 
-    switch (L1CachePolicyHelper<gfxProduct>::getL1CachePolicy()) {
+    switch (L1CachePolicyHelper<gfxProduct>::getL1CachePolicy(isDebuggerActive)) {
     case GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP:
         return writeByPassCachingPolicy;
     case GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB:
@@ -32,7 +32,7 @@ const char *L1CachePolicyHelper<gfxProduct>::getCachingPolicyOptions() {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t L1CachePolicyHelper<gfxProduct>::getDefaultL1CachePolicy() {
+uint32_t L1CachePolicyHelper<gfxProduct>::getDefaultL1CachePolicy(bool isDebuggerActive) {
     using GfxFamily = typename HwMapper<gfxProduct>::GfxFamily;
     return GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP;
 }

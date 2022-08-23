@@ -275,6 +275,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         args.useGlobalAtomics = kernelImp->getKernelDescriptor().kernelAttributes.flags.useGlobalAtomics;
         args.areMultipleSubDevicesInContext = args.numAvailableDevices > 1;
         args.implicitScaling = this->partitionCount > 1;
+        args.isDebuggerActive = true;
 
         NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
         *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateSpace) = surfaceState;

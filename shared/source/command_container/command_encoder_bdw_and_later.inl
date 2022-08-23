@@ -371,6 +371,7 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
     auto dsh = args.container->isHeapDirty(HeapType::DYNAMIC_STATE) ? args.container->getIndirectHeap(HeapType::DYNAMIC_STATE) : nullptr;
     auto ioh = args.container->isHeapDirty(HeapType::INDIRECT_OBJECT) ? args.container->getIndirectHeap(HeapType::INDIRECT_OBJECT) : nullptr;
     auto ssh = args.container->isHeapDirty(HeapType::SURFACE_STATE) ? args.container->getIndirectHeap(HeapType::SURFACE_STATE) : nullptr;
+    auto isDebuggerActive = device.isDebuggerActive() || device.getDebugger() != nullptr;
 
     StateBaseAddressHelperArgs<Family> stateBaseAddressHelperArgs = {
         0,                                                  // generalStateBase
@@ -391,7 +392,8 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
         false,                                              // isMultiOsContextCapable
         args.useGlobalAtomics,                              // useGlobalAtomics
         false,                                              // areMultipleSubDevicesInContext
-        false                                               // overrideSurfaceStateBaseAddress
+        false,                                              // overrideSurfaceStateBaseAddress
+        isDebuggerActive                                    // isDebuggerActive
     };
 
     StateBaseAddressHelper<Family>::programStateBaseAddress(stateBaseAddressHelperArgs);
@@ -457,7 +459,7 @@ inline void EncodeWA<GfxFamily>::adjustCompressionFormatForPlanarImage(uint32_t 
 template <typename GfxFamily>
 inline void EncodeSurfaceState<GfxFamily>::encodeExtraBufferParams(EncodeSurfaceStateArgs &args) {
     auto surfaceState = reinterpret_cast<R_SURFACE_STATE *>(args.outMemory);
-    encodeExtraCacheSettings(surfaceState, *args.gmmHelper->getHardwareInfo());
+    encodeExtraCacheSettings(surfaceState, args);
 }
 
 template <typename GfxFamily>

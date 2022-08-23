@@ -26,7 +26,7 @@ void EncodeDispatchKernel<Family>::adjustTimestampPacket(WALKER_TYPE &walkerCmd,
 }
 
 template <>
-inline void EncodeSurfaceState<Family>::encodeExtraCacheSettings(R_SURFACE_STATE *surfaceState, const HardwareInfo &hwInfo) {
+inline void EncodeSurfaceState<Family>::encodeExtraCacheSettings(R_SURFACE_STATE *surfaceState, const EncodeSurfaceStateArgs &args) {
 }
 
 template <>

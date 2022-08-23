@@ -53,7 +53,7 @@ DG2TEST_F(CommandEncodeDG2Test, whenProgrammingStateComputeModeThenProperFieldsA
 
 using Dg2SbaTest = SbaTest;
 
-DG2TEST_F(Dg2SbaTest, givenSpecificProductFamilyWhenAppendingSbaThenProgramWtL1CachePolicy) {
+DG2TEST_F(Dg2SbaTest, givenSpecificProductFamilyWhenAppendingSbaThenProgramWBL1CachePolicyUnlessDebuggerIsActive) {
     auto sbaCmd = FamilyType::cmdInitStateBaseAddress;
     StateBaseAddressHelperArgs<FamilyType> args = {
         0,                                                  // generalStateBase
@@ -74,10 +74,14 @@ DG2TEST_F(Dg2SbaTest, givenSpecificProductFamilyWhenAppendingSbaThenProgramWtL1C
         false,                                              // isMultiOsContextCapable
         false,                                              // useGlobalAtomics
         false,                                              // areMultipleSubDevicesInContext
-        false                                               // overrideSurfaceStateBaseAddress
+        false,                                              // overrideSurfaceStateBaseAddress
+        false                                               // isDebuggerActive
     };
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB, sbaCmd.getL1CachePolicyL1CacheControl());
 
+    args.isDebuggerActive = true;
+    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
     EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP, sbaCmd.getL1CachePolicyL1CacheControl());
 }
 

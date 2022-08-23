@@ -29,6 +29,6 @@ void StateBaseAddressHelper<GfxFamily>::appendIohParameters(StateBaseAddressHelp
 }
 
 template <typename GfxFamily>
-void StateBaseAddressHelper<GfxFamily>::appendExtraCacheSettings(STATE_BASE_ADDRESS *stateBaseAddress, const HardwareInfo *hwInfo) {}
+void StateBaseAddressHelper<GfxFamily>::appendExtraCacheSettings(StateBaseAddressHelperArgs<GfxFamily> &args) {}
 
 } // namespace NEO

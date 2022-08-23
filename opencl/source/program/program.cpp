@@ -105,7 +105,8 @@ std::string Program::getInternalOptions() const {
     }
 
     CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::preserveVec3Type);
-    CompilerOptions::concatenateAppend(internalOptions, compilerHwInfoConfig.getCachingPolicyOptions());
+    auto isDebuggerActive = pClDevice->getDevice().isDebuggerActive() || pClDevice->getDevice().getDebugger() != nullptr;
+    CompilerOptions::concatenateAppend(internalOptions, compilerHwInfoConfig.getCachingPolicyOptions(isDebuggerActive));
     return internalOptions;
 }
 

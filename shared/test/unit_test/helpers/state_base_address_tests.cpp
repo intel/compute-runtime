@@ -42,7 +42,8 @@ HWTEST2_F(SbaTest, WhenAppendStateBaseAddressParametersIsCalledThenSBACmdHasBind
         false,                                 // isMultiOsContextCapable
         false,                                 // useGlobalAtomics
         false,                                 // areMultipleSubDevicesInContext
-        false                                  // overrideSurfaceStateBaseAddress
+        false,                                 // overrideSurfaceStateBaseAddress
+        false                                  // isDebuggerActive
     };
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
@@ -84,7 +85,8 @@ HWTEST2_F(SbaTest, WhenProgramStateBaseAddressParametersIsCalledThenSBACmdHasBin
         false,                                 // isMultiOsContextCapable
         false,                                 // useGlobalAtomics
         false,                                 // areMultipleSubDevicesInContext
-        false                                  // overrideSurfaceStateBaseAddress
+        false,                                 // overrideSurfaceStateBaseAddress
+        false                                  // isDebuggerActive
     };
 
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
@@ -126,7 +128,8 @@ HWTEST2_F(SbaTest,
         false,                                 // isMultiOsContextCapable
         false,                                 // useGlobalAtomics
         false,                                 // areMultipleSubDevicesInContext
-        true                                   // overrideSurfaceStateBaseAddress
+        true,                                  // overrideSurfaceStateBaseAddress
+        false                                  // isDebuggerActive
     };
 
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
@@ -168,7 +171,8 @@ HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenProgramStateBas
         false,                                 // isMultiOsContextCapable
         false,                                 // useGlobalAtomics
         false,                                 // areMultipleSubDevicesInContext
-        false                                  // overrideSurfaceStateBaseAddress
+        false,                                 // overrideSurfaceStateBaseAddress
+        false                                  // isDebuggerActive
     };
 
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
@@ -223,7 +227,8 @@ HWTEST2_F(SbaForBindlessTests,
         false,                                 // isMultiOsContextCapable
         false,                                 // useGlobalAtomics
         false,                                 // areMultipleSubDevicesInContext
-        true                                   // overrideSurfaceStateBaseAddress
+        true,                                  // overrideSurfaceStateBaseAddress
+        false                                  // isDebuggerActive
     };
 
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
@@ -279,7 +284,8 @@ HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenPassingIndirect
         false,                                 // isMultiOsContextCapable
         false,                                 // useGlobalAtomics
         false,                                 // areMultipleSubDevicesInContext
-        false                                  // overrideSurfaceStateBaseAddress
+        false,                                 // overrideSurfaceStateBaseAddress
+        false                                  // isDebuggerActive
     };
 
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
@@ -316,7 +322,8 @@ HWTEST2_F(SbaTest, givenSbaWhenOverrideBindlessSurfaceBaseIsFalseThenBindlessSur
         false,                                              // isMultiOsContextCapable
         false,                                              // useGlobalAtomics
         false,                                              // areMultipleSubDevicesInContext
-        false                                               // overrideSurfaceStateBaseAddress
+        false,                                              // overrideSurfaceStateBaseAddress
+        false                                               // isDebuggerActive
     };
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, false);
@@ -355,7 +362,8 @@ HWTEST2_F(SbaTest, givenGlobalBindlessBaseAddressWhenSshIsPassedThenBindlessSurf
         false,                                 // isMultiOsContextCapable
         false,                                 // useGlobalAtomics
         false,                                 // areMultipleSubDevicesInContext
-        false                                  // overrideSurfaceStateBaseAddress
+        false,                                 // overrideSurfaceStateBaseAddress
+        false                                  // isDebuggerActive
     };
 
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
@@ -393,7 +401,8 @@ HWTEST2_F(SbaTest, givenSurfaceStateHeapWhenNotUsingGlobalHeapBaseThenBindlessSu
         false,                                 // isMultiOsContextCapable
         false,                                 // useGlobalAtomics
         false,                                 // areMultipleSubDevicesInContext
-        false                                  // overrideSurfaceStateBaseAddress
+        false,                                 // overrideSurfaceStateBaseAddress
+        false                                  // isDebuggerActive
     };
 
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
@@ -407,41 +416,110 @@ HWTEST2_F(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSetti
     auto expectedStateBaseAddress = FamilyType::cmdInitStateBaseAddress;
     DebugManagerStateRestore restore;
 
-    StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(&stateBaseAddress, &hardwareInfo);
+    StateBaseAddressHelperArgs<FamilyType> args = {
+        0,                                     // generalStateBase
+        0,                                     // indirectObjectHeapBaseAddress
+        0,                                     // instructionHeapBaseAddress
+        0,                                     // globalHeapsBaseAddress
+        0,                                     // surfaceStateBaseAddress
+        &stateBaseAddress,                     // stateBaseAddressCmd
+        nullptr,                               // dsh
+        nullptr,                               // ioh
+        &ssh,                                  // ssh
+        pDevice->getGmmHelper(),               // gmmHelper
+        0,                                     // statelessMocsIndex
+        MemoryCompressionState::NotApplicable, // memoryCompressionState
+        false,                                 // setInstructionStateBaseAddress
+        false,                                 // setGeneralStateBaseAddress
+        false,                                 // useGlobalHeapsBaseAddress
+        false,                                 // isMultiOsContextCapable
+        false,                                 // useGlobalAtomics
+        false,                                 // areMultipleSubDevicesInContext
+        false,                                 // overrideSurfaceStateBaseAddress
+        false                                  // isDebuggerActive
+    };
+
+    StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
     EXPECT_EQ(0, memcmp(&stateBaseAddress, &expectedStateBaseAddress, sizeof(STATE_BASE_ADDRESS)));
 
     DebugManager.flags.ForceStatelessL1CachingPolicy.set(2);
-    StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(&stateBaseAddress, &hardwareInfo);
+    StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
     EXPECT_EQ(0, memcmp(&stateBaseAddress, &expectedStateBaseAddress, sizeof(STATE_BASE_ADDRESS)));
 
     DebugManager.flags.ForceAllResourcesUncached.set(true);
-    StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(&stateBaseAddress, &hardwareInfo);
+    StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
     EXPECT_EQ(0, memcmp(&stateBaseAddress, &expectedStateBaseAddress, sizeof(STATE_BASE_ADDRESS)));
 }
 
 HWTEST2_F(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSettingsThenProgramCorrectL1CachePolicy, IsAtLeastXeHpgCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     auto stateBaseAddress = FamilyType::cmdInitStateBaseAddress;
-    DebugManagerStateRestore restore;
 
-    StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(&stateBaseAddress, &hardwareInfo);
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP, stateBaseAddress.getL1CachePolicyL1CacheControl());
+    StateBaseAddressHelperArgs<FamilyType> args = {
+        0,                                     // generalStateBase
+        0,                                     // indirectObjectHeapBaseAddress
+        0,                                     // instructionHeapBaseAddress
+        0,                                     // globalHeapsBaseAddress
+        0,                                     // surfaceStateBaseAddress
+        &stateBaseAddress,                     // stateBaseAddressCmd
+        nullptr,                               // dsh
+        nullptr,                               // ioh
+        &ssh,                                  // ssh
+        pDevice->getGmmHelper(),               // gmmHelper
+        0,                                     // statelessMocsIndex
+        MemoryCompressionState::NotApplicable, // memoryCompressionState
+        false,                                 // setInstructionStateBaseAddress
+        false,                                 // setGeneralStateBaseAddress
+        false,                                 // useGlobalHeapsBaseAddress
+        false,                                 // isMultiOsContextCapable
+        false,                                 // useGlobalAtomics
+        false,                                 // areMultipleSubDevicesInContext
+        false,                                 // overrideSurfaceStateBaseAddress
+        false                                  // isDebuggerActive
+    };
+    {
+        DebugManagerStateRestore restore;
+        StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP, stateBaseAddress.getL1CachePolicyL1CacheControl());
 
-    DebugManager.flags.ForceStatelessL1CachingPolicy.set(2);
-    StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(&stateBaseAddress, &hardwareInfo);
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB, stateBaseAddress.getL1CachePolicyL1CacheControl());
+        DebugManager.flags.ForceStatelessL1CachingPolicy.set(2);
+        StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB, stateBaseAddress.getL1CachePolicyL1CacheControl());
 
-    DebugManager.flags.ForceStatelessL1CachingPolicy.set(3);
-    StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(&stateBaseAddress, &hardwareInfo);
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WT, stateBaseAddress.getL1CachePolicyL1CacheControl());
+        DebugManager.flags.ForceStatelessL1CachingPolicy.set(3);
+        StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WT, stateBaseAddress.getL1CachePolicyL1CacheControl());
 
-    DebugManager.flags.ForceStatelessL1CachingPolicy.set(4);
-    StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(&stateBaseAddress, &hardwareInfo);
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WS, stateBaseAddress.getL1CachePolicyL1CacheControl());
+        DebugManager.flags.ForceStatelessL1CachingPolicy.set(4);
+        StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WS, stateBaseAddress.getL1CachePolicyL1CacheControl());
 
-    DebugManager.flags.ForceAllResourcesUncached.set(true);
-    StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(&stateBaseAddress, &hardwareInfo);
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_UC, stateBaseAddress.getL1CachePolicyL1CacheControl());
+        DebugManager.flags.ForceAllResourcesUncached.set(true);
+        StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_UC, stateBaseAddress.getL1CachePolicyL1CacheControl());
+    }
+    args.isDebuggerActive = true;
+    {
+        DebugManagerStateRestore restore;
+        StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP, stateBaseAddress.getL1CachePolicyL1CacheControl());
+
+        DebugManager.flags.ForceStatelessL1CachingPolicy.set(2);
+        StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB, stateBaseAddress.getL1CachePolicyL1CacheControl());
+
+        DebugManager.flags.ForceStatelessL1CachingPolicy.set(3);
+        StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WT, stateBaseAddress.getL1CachePolicyL1CacheControl());
+
+        DebugManager.flags.ForceStatelessL1CachingPolicy.set(4);
+        StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WS, stateBaseAddress.getL1CachePolicyL1CacheControl());
+
+        DebugManager.flags.ForceAllResourcesUncached.set(true);
+        StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_UC, stateBaseAddress.getL1CachePolicyL1CacheControl());
+    }
 }
 
 HWTEST2_F(SbaTest, givenDebugFlagSetWhenAppendingSbaThenProgramCorrectL1CachePolicy, IsAtLeastXeHpgCore) {
@@ -475,7 +553,8 @@ HWTEST2_F(SbaTest, givenDebugFlagSetWhenAppendingSbaThenProgramCorrectL1CachePol
         false,                                              // isMultiOsContextCapable
         false,                                              // useGlobalAtomics
         false,                                              // areMultipleSubDevicesInContext
-        false                                               // overrideSurfaceStateBaseAddress
+        false,                                              // overrideSurfaceStateBaseAddress
+        false                                               // isDebuggerActive
     };
 
     for (const auto &input : testInputs) {
@@ -555,7 +634,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, SbaTest, whenGeneralStateBaseAddressIsProgrammedThen
         false,                                 // isMultiOsContextCapable
         false,                                 // useGlobalAtomics
         false,                                 // areMultipleSubDevicesInContext
-        false                                  // overrideSurfaceStateBaseAddress
+        false,                                 // overrideSurfaceStateBaseAddress
+        false                                  // isDebuggerActive
     };
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
@@ -586,7 +666,8 @@ HWTEST_F(SbaTest, givenNonZeroGeneralStateBaseAddressWhenProgrammingIsDisabledTh
         false,                                 // isMultiOsContextCapable
         false,                                 // useGlobalAtomics
         false,                                 // areMultipleSubDevicesInContext
-        false                                  // overrideSurfaceStateBaseAddress
+        false,                                 // overrideSurfaceStateBaseAddress
+        false                                  // isDebuggerActive
     };
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
@@ -619,7 +700,8 @@ HWTEST_F(SbaTest, givenNonZeroInternalHeapBaseAddressWhenProgrammingIsDisabledTh
         false,                                 // isMultiOsContextCapable
         false,                                 // useGlobalAtomics
         false,                                 // areMultipleSubDevicesInContext
-        false                                  // overrideSurfaceStateBaseAddress
+        false,                                 // overrideSurfaceStateBaseAddress
+        false                                  // isDebuggerActive
     };
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
@@ -658,7 +740,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, SbaTest, givenSbaProgrammingWhenHeapsAreNotProvidedT
         false,                                 // isMultiOsContextCapable
         false,                                 // useGlobalAtomics
         false,                                 // areMultipleSubDevicesInContext
-        false                                  // overrideSurfaceStateBaseAddress
+        false,                                 // overrideSurfaceStateBaseAddress
+        false                                  // isDebuggerActive
     };
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
@@ -717,7 +800,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, SbaTest,
         false,                                 // isMultiOsContextCapable
         false,                                 // useGlobalAtomics
         false,                                 // areMultipleSubDevicesInContext
-        false                                  // overrideSurfaceStateBaseAddress
+        false,                                 // overrideSurfaceStateBaseAddress
+        false                                  // isDebuggerActive
     };
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 

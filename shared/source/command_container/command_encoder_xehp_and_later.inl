@@ -473,11 +473,13 @@ void EncodeStateBaseAddress<Family>::setSbaAddressesForDebugger(NEO::Debugger::S
 
 template <typename Family>
 void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &args) {
-    auto gmmHelper = args.container->getDevice()->getRootDeviceEnvironment().getGmmHelper();
+    auto &device = *args.container->getDevice();
+    auto gmmHelper = device.getRootDeviceEnvironment().getGmmHelper();
 
     auto dsh = args.container->isHeapDirty(HeapType::DYNAMIC_STATE) ? args.container->getIndirectHeap(HeapType::DYNAMIC_STATE) : nullptr;
     auto ioh = args.container->isHeapDirty(HeapType::INDIRECT_OBJECT) ? args.container->getIndirectHeap(HeapType::INDIRECT_OBJECT) : nullptr;
     auto ssh = args.container->isHeapDirty(HeapType::SURFACE_STATE) ? args.container->getIndirectHeap(HeapType::SURFACE_STATE) : nullptr;
+    auto isDebuggerActive = device.isDebuggerActive() || device.getDebugger() != nullptr;
 
     StateBaseAddressHelperArgs<Family> stateBaseAddressHelperArgs = {
         0,                                                  // generalStateBase
@@ -498,7 +500,8 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
         args.multiOsContextCapable,                         // isMultiOsContextCapable
         args.useGlobalAtomics,                              // useGlobalAtomics
         false,                                              // areMultipleSubDevicesInContext
-        false                                               // overrideSurfaceStateBaseAddress
+        false,                                              // overrideSurfaceStateBaseAddress
+        isDebuggerActive                                    // isDebuggerActive
     };
 
     StateBaseAddressHelper<Family>::programStateBaseAddress(stateBaseAddressHelperArgs);
@@ -506,7 +509,7 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
     auto cmdSpace = StateBaseAddressHelper<Family>::getSpaceForSbaCmd(*args.container->getCommandStream());
     *cmdSpace = args.sbaCmd;
 
-    auto &hwInfo = args.container->getDevice()->getHardwareInfo();
+    auto &hwInfo = device.getHardwareInfo();
     auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     if (hwInfoConfig.isAdditionalStateBaseAddressWARequired(hwInfo)) {
         cmdSpace = StateBaseAddressHelper<Family>::getSpaceForSbaCmd(*args.container->getCommandStream());
@@ -630,7 +633,7 @@ void EncodeSurfaceState<Family>::encodeExtraBufferParams(EncodeSurfaceStateArgs 
         surfaceState->setMemoryObjectControlState(args.gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
     }
 
-    encodeExtraCacheSettings(surfaceState, *args.gmmHelper->getHardwareInfo());
+    encodeExtraCacheSettings(surfaceState, args);
 
     encodeImplicitScalingParams(args);
 
