@@ -11,6 +11,7 @@
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/debug/linux/prelim/debug_session.h"
+#include "level_zero/tools/test/unit_tests/sources/debug/debug_session_common.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/linux/debug_session_fixtures_linux.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
 

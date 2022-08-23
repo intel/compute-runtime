@@ -627,6 +627,25 @@ void DebugSessionImp::sendInterrupts() {
     }
 }
 
+bool DebugSessionImp::readSystemRoutineIdent(EuThread *thread, uint64_t memoryHandle, SIP::sr_ident &srIdent) {
+    auto stateSaveAreaHeader = getStateSaveAreaHeader();
+    if (!stateSaveAreaHeader) {
+        return false;
+    }
+
+    auto gpuVa = getContextStateSaveAreaGpuVa(memoryHandle);
+    if (gpuVa == 0) {
+        return false;
+    }
+    auto threadSlotOffset = calculateThreadSlotOffset(thread->getThreadId());
+    auto srMagicOffset = threadSlotOffset + getStateSaveAreaHeader()->regHeader.sr_magic_offset;
+
+    if (ZE_RESULT_SUCCESS != readGpuMemory(memoryHandle, reinterpret_cast<char *>(&srIdent), sizeof(srIdent), gpuVa + srMagicOffset)) {
+        return false;
+    }
+    return true;
+}
+
 void DebugSessionImp::markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(EuThread::ThreadId threadId, uint64_t memoryHandle) {
 
     SIP::sr_ident srMagic = {};

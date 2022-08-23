@@ -73,7 +73,7 @@ struct DebugSessionImp : DebugSession {
     ze_result_t validateThreadAndDescForMemoryAccess(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc);
 
     virtual void enqueueApiEvent(zet_debug_event_t &debugEvent) = 0;
-    virtual bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srMagic) = 0;
+    MOCKABLE_VIRTUAL bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srMagic);
 
     ze_result_t readSbaRegisters(EuThread::ThreadId thread, uint32_t start, uint32_t count, void *pRegisterValues);
     MOCKABLE_VIRTUAL bool isForceExceptionOrForceExternalHaltOnlyExceptionReason(uint32_t *cr0);
@@ -89,9 +89,7 @@ struct DebugSessionImp : DebugSession {
     void validateAndSetStateSaveAreaHeader(const std::vector<char> &data);
     virtual void readStateSaveAreaHeader(){};
 
-    virtual uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) {
-        return 0;
-    };
+    virtual uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) = 0;
 
     ze_result_t registersAccessHelper(const EuThread *thread, const SIP::regset_desc *regdesc,
                                       uint32_t start, uint32_t count, void *pRegisterValues, bool write);

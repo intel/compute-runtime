@@ -28,6 +28,7 @@
 #include "level_zero/include/zet_intel_gpu_debug.h"
 #include "level_zero/tools/source/debug/debug_handlers.h"
 #include "level_zero/tools/source/debug/linux/prelim/debug_session.h"
+#include "level_zero/tools/test/unit_tests/sources/debug/debug_session_common.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/linux/debug_session_fixtures_linux.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
 

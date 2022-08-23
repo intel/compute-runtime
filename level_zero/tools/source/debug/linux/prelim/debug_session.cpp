@@ -1580,25 +1580,6 @@ ze_result_t DebugSessionLinux::acknowledgeEvent(const zet_debug_event_t *event) 
     return ZE_RESULT_ERROR_UNINITIALIZED;
 }
 
-bool DebugSessionLinux::readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srIdent) {
-    auto stateSaveAreaHeader = getStateSaveAreaHeader();
-    if (!stateSaveAreaHeader) {
-        return false;
-    }
-
-    auto gpuVa = getContextStateSaveAreaGpuVa(vmHandle);
-    if (gpuVa == 0) {
-        return false;
-    }
-    auto threadSlotOffset = calculateThreadSlotOffset(thread->getThreadId());
-    auto srMagicOffset = threadSlotOffset + getStateSaveAreaHeader()->regHeader.sr_magic_offset;
-
-    if (ZE_RESULT_SUCCESS != readGpuMemory(vmHandle, reinterpret_cast<char *>(&srIdent), sizeof(srIdent), gpuVa + srMagicOffset)) {
-        return false;
-    }
-    return true;
-}
-
 ze_result_t DebugSessionLinux::readSbaBuffer(EuThread::ThreadId threadId, NEO::SbaTrackedAddresses &sbaBuffer) {
     auto vmHandle = allThreads[threadId]->getMemoryHandle();
 

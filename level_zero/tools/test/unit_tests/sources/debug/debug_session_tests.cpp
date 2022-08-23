@@ -229,7 +229,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
         if (returnStateSaveAreaGpuVa) {
             return reinterpret_cast<uint64_t>(this->stateSaveAreaHeader.data());
         }
-        return DebugSessionImp::getContextStateSaveAreaGpuVa(memoryHandle);
+        return 0;
     };
 
     int64_t getTimeDifferenceMilliseconds(std::chrono::high_resolution_clock::time_point time) override {

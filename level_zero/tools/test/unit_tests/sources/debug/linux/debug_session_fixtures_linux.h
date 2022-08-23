@@ -361,7 +361,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
             }
             return true;
         }
-        return L0::DebugSessionLinux::readSystemRoutineIdent(thread, vmHandle, srIdent);
+        return L0::DebugSessionImp::readSystemRoutineIdent(thread, vmHandle, srIdent);
     }
 
     bool writeResumeCommand(const std::vector<EuThread::ThreadId> &threadIds) override {
@@ -480,12 +480,6 @@ struct MockTileDebugSessionLinux : TileDebugSessionLinux {
     int64_t returnTimeDiff = -1;
     std::unordered_map<uint64_t, uint8_t> stoppedThreads;
 };
-
-size_t threadSlotOffset(SIP::StateSaveAreaHeader *pStateSaveAreaHeader, int slice, int subslice, int eu, int thread);
-
-size_t regOffsetInThreadSlot(const SIP::regset_desc *regdesc, uint32_t start);
-
-void initStateSaveArea(std::vector<char> &stateSaveArea, SIP::version version);
 
 struct DebugApiLinuxFixture : public DeviceFixture {
     void setUp() {

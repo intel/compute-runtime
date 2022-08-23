@@ -91,7 +91,8 @@ struct WddmEuDebugInterfaceMock : public WddmMock {
             void *dst = reinterpret_cast<void *>(pEscapeInfo->KmEuDbgL0EscapeInfo.ReadGfxMemoryParams.MemoryBufferPtr);
             size_t size = pEscapeInfo->KmEuDbgL0EscapeInfo.ReadGfxMemoryParams.MemoryBufferSize;
             if (srcReadBuffer) {
-                memcpy(dst, srcReadBuffer, size);
+                auto offsetInMemory = pEscapeInfo->KmEuDbgL0EscapeInfo.ReadGfxMemoryParams.GpuVirtualAddr - srcReadBufferBaseAddress;
+                memcpy(dst, reinterpret_cast<char *>(srcReadBuffer) + offsetInMemory, size);
             } else {
                 memset(dst, 0xaa, size);
             }
@@ -177,6 +178,7 @@ struct WddmEuDebugInterfaceMock : public WddmMock {
     uint8_t testBuffer[bufferSize] = {0};
     uint64_t mockGpuVa = 0x12345678;
     void *srcReadBuffer = nullptr;
+    uint64_t srcReadBufferBaseAddress = 0;
 };
 
 } // namespace NEO

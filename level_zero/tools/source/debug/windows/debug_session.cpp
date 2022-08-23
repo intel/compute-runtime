@@ -11,6 +11,8 @@
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/os_interface/windows/wddm_debug.h"
 
+#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
+
 #include "common/StateSaveAreaHeader.h"
 
 namespace L0 {
@@ -112,6 +114,8 @@ void *DebugSessionWindows::asyncThreadFunction(void *arg) {
 
     while (self->asyncThread.threadActive) {
         self->readAndHandleEvent(100);
+        self->sendInterrupts();
+        self->generateEventsAndResumeStoppedThreads();
     }
 
     PRINT_DEBUGGER_INFO_LOG("Debugger async thread closing\n", "");
@@ -221,7 +225,38 @@ ze_result_t DebugSessionWindows::handleModuleCreateEvent(uint32_t seqNo, DBGUMD_
 }
 
 ze_result_t DebugSessionWindows::handleEuAttentionBitsEvent(DBGUMD_READ_EVENT_EU_ATTN_BIT_SET_PARAMS &euAttentionBitsParams) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    PRINT_DEBUGGER_INFO_LOG("DBGUMD_READ_EVENT_EU_ATTN_BIT_SET_PARAMS: hContextHandle=0x%llX LRCA=%d BitMaskSizeInBytes=%d BitmaskArrayPtr=0x%llX\n",
+                            euAttentionBitsParams.hContextHandle, euAttentionBitsParams.LRCA,
+                            euAttentionBitsParams.BitMaskSizeInBytes, euAttentionBitsParams.BitmaskArrayPtr);
+
+    auto hwInfo = connectedDevice->getHwInfo();
+    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    auto threadsWithAttention = l0HwHelper.getThreadsFromAttentionBitmask(hwInfo, 0u,
+                                                                          reinterpret_cast<uint8_t *>(euAttentionBitsParams.BitmaskArrayPtr),
+                                                                          euAttentionBitsParams.BitMaskSizeInBytes);
+
+    printBitmask(reinterpret_cast<uint8_t *>(euAttentionBitsParams.BitmaskArrayPtr), euAttentionBitsParams.BitMaskSizeInBytes);
+
+    PRINT_DEBUGGER_THREAD_LOG("ATTENTION received for thread count = %d\n", (int)threadsWithAttention.size());
+
+    uint64_t memoryHandle = DebugSessionWindows::invalidHandle;
+    {
+        std::unique_lock<std::mutex> lock(asyncThreadMutex);
+        if (allContexts.empty()) {
+            return ZE_RESULT_ERROR_UNINITIALIZED;
+        }
+        memoryHandle = *allContexts.begin();
+    }
+
+    for (auto &threadId : threadsWithAttention) {
+        PRINT_DEBUGGER_THREAD_LOG("ATTENTION event for thread: %s\n", EuThread::toString(threadId).c_str());
+        markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(threadId, memoryHandle);
+    }
+
+    checkTriggerEventsForAttention();
+
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t DebugSessionWindows::handleAllocationDataEvent(uint32_t seqNo, DBGUMD_READ_EVENT_READ_ALLOCATION_DATA_PARAMS &allocationDataParams) {
@@ -533,10 +568,7 @@ ze_result_t DebugSessionWindows::writeGpuMemory(uint64_t memoryHandle, const cha
 }
 
 void DebugSessionWindows::enqueueApiEvent(zet_debug_event_t &debugEvent) {
-}
-
-bool DebugSessionWindows::readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srMagic) {
-    return false;
+    pushApiEvent(debugEvent, 0, 0);
 }
 
 ze_result_t DebugSessionWindows::readSbaBuffer(EuThread::ThreadId threadId, NEO::SbaTrackedAddresses &sbaBuffer) {

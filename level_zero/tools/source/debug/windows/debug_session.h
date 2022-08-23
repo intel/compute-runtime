@@ -55,6 +55,9 @@ struct DebugSessionWindows : DebugSessionImp {
     ze_result_t readElfSpace(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer);
 
     ze_result_t readSbaBuffer(EuThread::ThreadId, NEO::SbaTrackedAddresses &sbaBuffer) override;
+    uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override {
+        return this->stateSaveAreaVA.load();
+    }
     void readStateSaveAreaHeader() override;
 
     MOCKABLE_VIRTUAL ze_result_t readAndHandleEvent(uint64_t timeoutMs);
@@ -67,7 +70,6 @@ struct DebugSessionWindows : DebugSessionImp {
     ze_result_t readAllocationDebugData(uint32_t seqNo, uint64_t umdDataBufferPtr, void *outBuf, size_t outBufSize);
 
     void enqueueApiEvent(zet_debug_event_t &debugEvent) override;
-    bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srMagic) override;
     bool readModuleDebugArea() override;
     void startAsyncThread() override;
     void closeAsyncThread();
