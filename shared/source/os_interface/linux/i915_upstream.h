@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 namespace NEO {
 namespace UpstreamI915 {
 #include "third_party/uapi/drm/i915_drm.h"

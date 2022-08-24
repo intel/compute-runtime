@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include <linux/types.h>
 #include <sys/ioctl.h>
 namespace NEO {

@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #ifndef _UAPI_I915_DRM_H_
 #include <linux/types.h>
 #include <sys/ioctl.h>
