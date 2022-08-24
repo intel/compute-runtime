@@ -20,7 +20,6 @@
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/per_thread_data.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/helpers/supported_media_surface_formats.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -1553,10 +1552,6 @@ cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
     auto pImage = castToObject<Image>(clMemObj);
 
     if (pImage && argSize == sizeof(cl_mem *)) {
-        auto surfFormat = pImage->getSurfaceFormatInfo().surfaceFormat.GenxSurfaceFormat;
-        if (arg.getExtendedTypeInfo().isMediaBlockImage && !SupportedMediaFormatsHelper::isMediaFormatSupported(surfFormat)) {
-            return CL_INVALID_ARG_VALUE;
-        }
         if (pImage->peekSharingHandler()) {
             usingSharedObjArgs = true;
         }

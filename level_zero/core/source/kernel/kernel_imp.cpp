@@ -18,7 +18,6 @@
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/string.h"
-#include "shared/source/helpers/supported_media_surface_formats.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/kernel/implicit_args.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
@@ -661,11 +660,6 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
                               kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].getExtendedTypeInfo().isMediaBlockImage);
     const auto &arg = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescImage>();
     const auto image = Image::fromHandle(*static_cast<const ze_image_handle_t *>(argVal));
-
-    auto surfFormat = image->getImageInfo().surfaceFormat->GenxSurfaceFormat;
-    if (isMediaBlockImage && !NEO::SupportedMediaFormatsHelper::isMediaFormatSupported(surfFormat)) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT;
-    }
 
     if (kernelImmData->getDescriptor().kernelAttributes.imageAddressingMode == NEO::KernelDescriptor::Bindless) {
         image->copySurfaceStateToSSH(patchBindlessSurfaceState(image->getAllocation(), arg.bindless), 0u, isMediaBlockImage);
