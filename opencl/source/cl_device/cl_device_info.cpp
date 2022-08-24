@@ -17,7 +17,6 @@
 #include "opencl/source/cl_device/cl_device_get_cap.inl"
 #include "opencl/source/cl_device/cl_device_info_map.h"
 #include "opencl/source/cl_device/cl_device_vector.h"
-#include "opencl/source/helpers/cl_device_helpers.h"
 #include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/platform/platform.h"
@@ -325,12 +324,15 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         src = &param.uint;
         retSize = srcSize = sizeof(cl_uint);
         break;
+    case CL_DEVICE_EU_THREAD_COUNTS_INTEL:
+        src = getSharedDeviceInfo().threadsPerEUConfigs.begin();
+        retSize = srcSize = (getSharedDeviceInfo().threadsPerEUConfigs.size() * sizeof(uint32_t));
+        break;
     default:
         if (getDeviceInfoForImage(paramName, src, srcSize, retSize) && !getSharedDeviceInfo().imageSupport) {
             src = &value;
             break;
         }
-        ClDeviceHelper::getExtraDeviceInfo(*this, paramName, param, src, srcSize, retSize);
     }
 
     auto getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, src, srcSize);

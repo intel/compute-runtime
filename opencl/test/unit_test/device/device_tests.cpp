@@ -178,6 +178,24 @@ HWTEST_F(DeviceTest, WhenDeviceIsCreatedThenActualEngineTypeIsSameAsDefault) {
     EXPECT_EQ(defaultCounter, 1);
 }
 
+TEST_F(DeviceTest, givenDeviceWithThreadsPerEUConfigsWhenQueryingEuThreadCountsThenConfigsAreReturned) {
+    cl_int retVal = CL_SUCCESS;
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(NEO::defaultHwInfo.get(), 0));
+    const StackVec<uint32_t, 6> configs = {123U, 456U};
+    device->sharedDeviceInfo.threadsPerEUConfigs = configs;
+
+    size_t paramRetSize;
+    retVal = device->getDeviceInfo(CL_DEVICE_EU_THREAD_COUNTS_INTEL, 0, nullptr, &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(configs.size() * sizeof(cl_uint), paramRetSize);
+
+    auto euThreadCounts = std::make_unique<uint32_t[]>(paramRetSize / sizeof(cl_uint));
+    retVal = device->getDeviceInfo(CL_DEVICE_EU_THREAD_COUNTS_INTEL, paramRetSize, euThreadCounts.get(), nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(123U, euThreadCounts[0]);
+    EXPECT_EQ(456U, euThreadCounts[1]);
+}
+
 HWTEST_F(DeviceTest, givenNoHwCsrTypeAndModifiedDefaultEngineIndexWhenIsSimulationIsCalledThenTrueIsReturned) {
     EXPECT_FALSE(pDevice->isSimulation());
     auto csr = TbxCommandStreamReceiver::create("", false, *pDevice->executionEnvironment, 0, 1);

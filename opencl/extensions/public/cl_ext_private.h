@@ -338,3 +338,7 @@ typedef cl_bitfield cl_command_queue_mdapi_properties_intel;
 #if !defined(cl_khr_external_memory_dma_buf)
 #define CL_EXTERNAL_MEMORY_HANDLE_DMA_BUF_KHR 0x2067
 #endif
+
+// cl_intel_variable_eu_thread_count
+#define CL_DEVICE_EU_THREAD_COUNTS_INTEL 0x1000A // placeholder
+#define CL_KERNEL_EU_THREAD_COUNT_INTEL 0x1000B // placeholder

@@ -449,7 +449,6 @@ cl_int Kernel::getInfo(cl_kernel_info paramName, size_t paramValueSize,
         srcSize = sizeof(nonCannonizedGpuAddress);
         break;
     default:
-        getAdditionalInfo(paramName, pSrc, srcSize);
         break;
     }
 
@@ -583,8 +582,11 @@ cl_int Kernel::getWorkGroupInfo(cl_kernel_work_group_info paramName,
         srcSize = sizeof(privateMemSize);
         pSrc = &privateMemSize;
         break;
+    case CL_KERNEL_EU_THREAD_COUNT_INTEL:
+        srcSize = sizeof(cl_uint);
+        pSrc = &this->getKernelInfo().kernelDescriptor.kernelAttributes.numThreadsRequired;
+        break;
     default:
-        getAdditionalWorkGroupInfo(paramName, pSrc, srcSize);
         break;
     }
 

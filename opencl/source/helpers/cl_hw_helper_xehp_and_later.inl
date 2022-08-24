@@ -7,7 +7,6 @@
 
 #include "shared/source/os_interface/hw_info_config.h"
 
-#include "opencl/source/helpers/cl_device_helpers.h"
 #include "opencl/source/helpers/cl_hw_helper.h"
 
 namespace NEO {
