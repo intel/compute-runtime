@@ -421,45 +421,6 @@ uint32_t L1CachePolicyHelper<IGFX_UNKNOWN>::getUncachedL1CachePolicy() {
     return 1u;
 }
 
-struct UnknownProduct {
-    struct FrontEndStateSupport {
-        static constexpr bool scratchSize = false;
-        static constexpr bool privateScratchSize = false;
-    };
-
-    struct StateComputeModeStateSupport {
-        static constexpr bool threadArbitration = false;
-        static constexpr bool coherency = false;
-        static constexpr bool largeGrf = false;
-        static constexpr bool zPassAsyncCompute = false;
-        static constexpr bool pixelAsyncCompute = false;
-        static constexpr bool preemptionMode = false;
-    };
-
-    struct StateBaseAddressStateSupport {
-        static constexpr bool globalAtomics = false;
-        static constexpr bool statelessMocs = false;
-    };
-
-    struct PipelineSelectStateSupport {
-        static constexpr bool commandSupport = false;
-    };
-
-    struct PreemptionDebugSupport {
-        static constexpr bool preemptionMode = false;
-        static constexpr bool stateSip = false;
-        static constexpr bool csrSurface = false;
-    };
-};
-
-template <>
-struct HwMapper<IGFX_UNKNOWN> {
-    enum { gfxFamily = IGFX_UNKNOWN_CORE };
-
-    static const char *abbreviation;
-    using GfxProduct = UnknownProduct;
-};
-
 } // namespace NEO
 
 #include "shared/source/os_interface/hw_info_config.inl"

@@ -27,36 +27,6 @@ struct PVC : public XeHpcCoreFamily {
     static const uint32_t maxSubslicesSupported = 64;
     static const uint32_t maxDualSubslicesSupported = 64;
     static const RuntimeCapabilityTable capabilityTable;
-
-    struct FrontEndStateSupport {
-        static constexpr bool scratchSize = true;
-        static constexpr bool privateScratchSize = true;
-    };
-
-    struct StateComputeModeStateSupport {
-        static constexpr bool threadArbitration = true;
-        static constexpr bool coherency = true;
-        static constexpr bool largeGrf = true;
-        static constexpr bool zPassAsyncCompute = false;
-        static constexpr bool pixelAsyncCompute = false;
-        static constexpr bool preemptionMode = false;
-    };
-
-    struct StateBaseAddressStateSupport {
-        static constexpr bool globalAtomics = false;
-        static constexpr bool statelessMocs = true;
-    };
-
-    struct PipelineSelectStateSupport {
-        static constexpr bool commandSupport = true;
-    };
-
-    struct PreemptionDebugSupport {
-        static constexpr bool preemptionMode = true;
-        static constexpr bool stateSip = true;
-        static constexpr bool csrSurface = false;
-    };
-
     static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig);
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
     static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);

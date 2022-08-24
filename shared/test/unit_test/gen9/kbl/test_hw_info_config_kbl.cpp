@@ -120,25 +120,3 @@ KBLTEST_F(KblHwInfo, givenHwInfoConfigWhenGettingEvictIfNecessaryFlagSupportedTh
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     EXPECT_TRUE(hwInfoConfig.isEvictionIfNecessaryFlagSupported());
 }
-
-KBLTEST_F(KblHwInfo, givenHwInfoConfigWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-
-    EXPECT_TRUE(hwInfoConfig.getScmPropertyThreadArbitrationSupport());
-    EXPECT_FALSE(hwInfoConfig.getScmPropertyCoherencySupport());
-    EXPECT_FALSE(hwInfoConfig.getScmPropertyZPassAsyncSupport());
-    EXPECT_FALSE(hwInfoConfig.getScmPropertyPixelAsyncSupport());
-    EXPECT_FALSE(hwInfoConfig.getScmPropertyLargeGrfSupport());
-    EXPECT_FALSE(hwInfoConfig.getScmPropertyDevicePreemptionSupport());
-
-    EXPECT_FALSE(hwInfoConfig.getSbaPropertyGlobalAtomicsSupport());
-    EXPECT_TRUE(hwInfoConfig.getSbaPropertyStatelessMocsSupport());
-
-    EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyScratchSizeSupport());
-    EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyPrivateScratchSizeSupport());
-
-    EXPECT_TRUE(hwInfoConfig.getPreemptionDbgPropertyPreemptionModeSupport());
-    EXPECT_TRUE(hwInfoConfig.getPreemptionDbgPropertyStateSipSupport());
-    EXPECT_TRUE(hwInfoConfig.getPreemptionDbgPropertyCsrSurfaceSupport());
-}

@@ -28,35 +28,6 @@ struct Gen12Lp {
     static constexpr uint32_t stateComputeModeForceNonCoherentMask = (0b11u << 3);
     static constexpr bool isUsingMiMemFence = false;
 
-    struct FrontEndStateSupport {
-        static constexpr bool scratchSize = true;
-        static constexpr bool privateScratchSize = false;
-    };
-
-    struct StateComputeModeStateSupport {
-        static constexpr bool threadArbitration = false;
-        static constexpr bool coherency = true;
-        static constexpr bool largeGrf = false;
-        static constexpr bool zPassAsyncCompute = false;
-        static constexpr bool pixelAsyncCompute = false;
-        static constexpr bool preemptionMode = false;
-    };
-
-    struct StateBaseAddressStateSupport {
-        static constexpr bool globalAtomics = false;
-        static constexpr bool statelessMocs = true;
-    };
-
-    struct PipelineSelectStateSupport {
-        static constexpr bool commandSupport = true;
-    };
-
-    struct PreemptionDebugSupport {
-        static constexpr bool preemptionMode = true;
-        static constexpr bool stateSip = true;
-        static constexpr bool csrSurface = true;
-    };
-
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {
         union {
             struct {

@@ -16,8 +16,6 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 
-#include "hw_cmds.h"
-
 #include <bitset>
 
 namespace NEO {
@@ -494,83 +492,4 @@ template <PRODUCT_FAMILY gfxProduct>
 bool HwInfoConfigHw<gfxProduct>::isPrefetcherDisablingInDirectSubmissionRequired() const {
     return true;
 }
-
-template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getScmPropertyThreadArbitrationSupport() const {
-    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
-    return GfxProduct::StateComputeModeStateSupport::threadArbitration;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getScmPropertyCoherencySupport() const {
-    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
-    return GfxProduct::StateComputeModeStateSupport::coherency;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getScmPropertyZPassAsyncSupport() const {
-    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
-    return GfxProduct::StateComputeModeStateSupport::zPassAsyncCompute;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getScmPropertyPixelAsyncSupport() const {
-    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
-    return GfxProduct::StateComputeModeStateSupport::pixelAsyncCompute;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getScmPropertyLargeGrfSupport() const {
-    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
-    return GfxProduct::StateComputeModeStateSupport::largeGrf;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getScmPropertyDevicePreemptionSupport() const {
-    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
-    return GfxProduct::StateComputeModeStateSupport::preemptionMode;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getSbaPropertyGlobalAtomicsSupport() const {
-    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
-    return GfxProduct::StateBaseAddressStateSupport::globalAtomics;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getSbaPropertyStatelessMocsSupport() const {
-    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
-    return GfxProduct::StateBaseAddressStateSupport::statelessMocs;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getPreemptionDbgPropertyPreemptionModeSupport() const {
-    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
-    return GfxProduct::PreemptionDebugSupport::preemptionMode;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getPreemptionDbgPropertyStateSipSupport() const {
-    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
-    return GfxProduct::PreemptionDebugSupport::stateSip;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getPreemptionDbgPropertyCsrSurfaceSupport() const {
-    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
-    return GfxProduct::PreemptionDebugSupport::csrSurface;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getFrontEndPropertyScratchSizeSupport() const {
-    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
-    return GfxProduct::FrontEndStateSupport::scratchSize;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::getFrontEndPropertyPrivateScratchSizeSupport() const {
-    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
-    return GfxProduct::FrontEndStateSupport::privateScratchSize;
-}
-
 } // namespace NEO
