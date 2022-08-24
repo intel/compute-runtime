@@ -65,19 +65,16 @@ ze_result_t WddmPowerImp::getPropertiesExt(zes_power_ext_properties_t *pExtPoper
 }
 
 ze_result_t WddmPowerImp::getEnergyCounter(zes_power_energy_counter_t *pEnergy) {
-    uint32_t energyUnits = 0;
+    uint64_t energyCounter64Bit = 0;
     uint32_t timestampFrequency = 0;
+    uint64_t valueTimeStamp = 0;
     std::vector<KmdSysman::RequestProperty> vRequests = {};
     std::vector<KmdSysman::ResponseProperty> vResponses = {};
     KmdSysman::RequestProperty request = {};
 
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::PowerComponent;
-
-    request.requestId = KmdSysman::Requests::Power::EnergyCounterUnits;
-    vRequests.push_back(request);
-
-    request.requestId = KmdSysman::Requests::Power::CurrentEnergyCounter;
+    request.requestId = KmdSysman::Requests::Power::CurrentEnergyCounter64Bit;
     vRequests.push_back(request);
 
     request.commandId = KmdSysman::Command::Get;
@@ -92,22 +89,13 @@ ze_result_t WddmPowerImp::getEnergyCounter(zes_power_energy_counter_t *pEnergy) 
     }
 
     if (vResponses[0].returnCode == KmdSysman::Success) {
-        memcpy_s(&energyUnits, sizeof(uint32_t), vResponses[0].dataBuffer, sizeof(uint32_t));
+        memcpy_s(&energyCounter64Bit, sizeof(uint64_t), vResponses[0].dataBuffer, sizeof(uint64_t));
+        pEnergy->energy = energyCounter64Bit;
+        memcpy_s(&valueTimeStamp, sizeof(uint64_t), (vResponses[0].dataBuffer + sizeof(uint64_t)), sizeof(uint64_t));
     }
 
-    uint32_t valueCounter = 0;
-    uint64_t valueTimeStamp = 0;
     if (vResponses[1].returnCode == KmdSysman::Success) {
-        memcpy_s(&valueCounter, sizeof(uint32_t), vResponses[1].dataBuffer, sizeof(uint32_t));
-        uint32_t conversionUnit = (1 << energyUnits);
-        double valueConverted = static_cast<double>(valueCounter) / static_cast<double>(conversionUnit);
-        valueConverted *= static_cast<double>(convertJouleToMicroJoule);
-        pEnergy->energy = static_cast<uint64_t>(valueConverted);
-        memcpy_s(&valueTimeStamp, sizeof(uint64_t), (vResponses[1].dataBuffer + sizeof(uint32_t)), sizeof(uint64_t));
-    }
-
-    if (vResponses[2].returnCode == KmdSysman::Success) {
-        memcpy_s(&timestampFrequency, sizeof(uint32_t), vResponses[2].dataBuffer, sizeof(uint32_t));
+        memcpy_s(&timestampFrequency, sizeof(uint32_t), vResponses[1].dataBuffer, sizeof(uint32_t));
         double timeFactor = 1.0 / static_cast<double>(timestampFrequency);
         timeFactor = static_cast<double>(valueTimeStamp) * timeFactor;
         timeFactor *= static_cast<double>(microFacor);
