@@ -211,6 +211,8 @@ struct DebugSessionLinux : DebugSessionImp {
         internalEventThread.close();
     }
 
+    bool closeFd();
+
     virtual std::vector<uint64_t> getAllMemoryHandles() {
         std::vector<uint64_t> allVms;
         std::unique_lock<std::mutex> memLock(asyncThreadMutex);

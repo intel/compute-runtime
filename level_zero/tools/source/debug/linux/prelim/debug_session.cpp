@@ -47,6 +47,7 @@ DebugSessionLinux::~DebugSessionLinux() {
         delete session.first;
     }
     tileSessions.resize(0);
+    closeFd();
 }
 
 DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *device, ze_result_t &result) {
@@ -341,6 +342,21 @@ void DebugSessionLinux::closeAsyncThread() {
     internalEventThread.close();
 }
 
+bool DebugSessionLinux::closeFd() {
+    if (fd == 0) {
+        return false;
+    }
+
+    auto res = NEO::SysCalls::close(fd);
+
+    if (res != 0) {
+        PRINT_DEBUGGER_ERROR_LOG("Debug connection close() on fd: %d failed: retCode: %d\n", fd, res);
+        return false;
+    }
+    fd = 0;
+    return true;
+}
+
 std::unique_ptr<uint64_t[]> DebugSessionLinux::getInternalEvent() {
     std::unique_ptr<uint64_t[]> eventMemory;
 
@@ -427,18 +443,8 @@ void DebugSessionLinux::readInternalEventsAsync() {
 
 bool DebugSessionLinux::closeConnection() {
     closeAsyncThread();
-    internalEventThread.close();
-    if (fd == 0) {
-        return false;
-    }
-
-    auto res = NEO::SysCalls::close(fd);
-
-    if (res != 0) {
-        PRINT_DEBUGGER_ERROR_LOG("Debug connection close() on fd: %d failed: retCode: %d\n", fd, res);
-        return false;
-    }
-    return true;
+    closeInternalEventsThread();
+    return closeFd();
 }
 
 void DebugSessionLinux::handleEvent(prelim_drm_i915_debug_event *event) {

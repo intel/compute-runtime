@@ -15,6 +15,15 @@
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
 
 #include <memory>
+
+namespace NEO {
+namespace SysCalls {
+extern uint32_t closeFuncCalled;
+extern int closeFuncArgPassed;
+extern int closeFuncRetVal;
+} // namespace SysCalls
+} // namespace NEO
+
 namespace L0 {
 namespace ult {
 
@@ -188,6 +197,29 @@ TEST_F(TileAttachTest, GivenTileAttachDisabledAndMultitileDeviceWhenCreatingTile
     session->createTileSessionsIfEnabled();
 
     ASSERT_EQ(0u, session->tileSessions.size());
+}
+
+TEST_F(TileAttachTest, givenTileDeviceWhenCallingDebugDetachOnLastSessionThenRootSessionIsClosed) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    zet_debug_session_handle_t debugSession0 = nullptr;
+
+    auto result = zetDebugAttach(neoDevice->getSubDevice(0)->getSpecializedDevice<L0::Device>()->toHandle(), &config, &debugSession0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, debugSession0);
+
+    NEO::SysCalls::closeFuncCalled = 0;
+    NEO::SysCalls::closeFuncArgPassed = 0;
+
+    auto debugFd = rootSession->fd;
+    result = zetDebugDetach(debugSession0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(1u, NEO::SysCalls::closeFuncCalled);
+    EXPECT_EQ(debugFd, NEO::SysCalls::closeFuncArgPassed);
+
+    NEO::SysCalls::closeFuncCalled = 0;
+    NEO::SysCalls::closeFuncArgPassed = 0;
 }
 
 TEST_F(TileAttachTest, givenTileDeviceWhenCallingDebugAttachAndDetachThenSuccessAndValidSessionHandleAreReturned) {

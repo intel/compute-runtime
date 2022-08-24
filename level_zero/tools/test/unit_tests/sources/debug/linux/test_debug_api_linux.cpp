@@ -954,12 +954,32 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenClosingConnectionThenSysCallClose
     EXPECT_NE(nullptr, session);
 
     NEO::SysCalls::closeFuncCalled = 0;
+    NEO::SysCalls::closeFuncArgPassed = 0;
+
     auto ret = session->closeConnection();
     EXPECT_TRUE(ret);
 
     EXPECT_EQ(1u, NEO::SysCalls::closeFuncCalled);
     EXPECT_EQ(10, NEO::SysCalls::closeFuncArgPassed);
     EXPECT_FALSE(session->asyncThread.threadActive);
+
+    NEO::SysCalls::closeFuncCalled = 0;
+    NEO::SysCalls::closeFuncArgPassed = 0;
+}
+
+TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenDestroyedThenSysCallCloseOnFdIsCalled) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+    EXPECT_NE(nullptr, session);
+
+    NEO::SysCalls::closeFuncCalled = 0;
+    NEO::SysCalls::closeFuncArgPassed = 0;
+
+    session.reset(nullptr);
+    EXPECT_EQ(1u, NEO::SysCalls::closeFuncCalled);
+    EXPECT_EQ(10, NEO::SysCalls::closeFuncArgPassed);
 
     NEO::SysCalls::closeFuncCalled = 0;
     NEO::SysCalls::closeFuncArgPassed = 0;
