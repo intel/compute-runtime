@@ -123,7 +123,7 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenAllocatingHeapsThenSetCorrectA
 TEST_F(CommandContainerTest, givenCommandContainerWhenInitializeThenEverythingIsInitialized) {
     CommandContainer cmdContainer;
     auto status = cmdContainer.initialize(pDevice, nullptr, true);
-    EXPECT_EQ(ErrorCode::SUCCESS, status);
+    EXPECT_EQ(CommandContainer::ErrorCode::SUCCESS, status);
 
     EXPECT_EQ(pDevice, cmdContainer.getDevice());
     EXPECT_NE(cmdContainer.getHeapHelper(), nullptr);
@@ -153,7 +153,7 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenInitializeThenEverythingIs
 TEST_F(CommandContainerTest, givenCommandContainerWhenHeapNotRequiredThenHeapIsNotInitialized) {
     CommandContainer cmdContainer;
     auto status = cmdContainer.initialize(pDevice, nullptr, false);
-    EXPECT_EQ(ErrorCode::SUCCESS, status);
+    EXPECT_EQ(CommandContainer::ErrorCode::SUCCESS, status);
 
     EXPECT_EQ(pDevice, cmdContainer.getDevice());
     EXPECT_EQ(cmdContainer.getHeapHelper(), nullptr);
@@ -190,7 +190,7 @@ TEST_F(CommandContainerTest, givenEnabledLocalMemoryAndIsaInSystemMemoryWhenCmdC
 
     CommandContainer cmdContainer;
     auto status = cmdContainer.initialize(device.get(), nullptr, true);
-    EXPECT_EQ(ErrorCode::SUCCESS, status);
+    EXPECT_EQ(CommandContainer::ErrorCode::SUCCESS, status);
 
     EXPECT_EQ(instructionHeapBaseAddress, cmdContainer.getInstructionHeapBaseAddress());
 }
@@ -199,7 +199,7 @@ TEST_F(CommandContainerTest, givenCommandContainerDuringInitWhenAllocateGfxMemor
     CommandContainer cmdContainer;
     pDevice->executionEnvironment->memoryManager.reset(new FailMemoryManager(0, *pDevice->executionEnvironment));
     auto status = cmdContainer.initialize(pDevice, nullptr, true);
-    EXPECT_EQ(ErrorCode::OUT_OF_DEVICE_MEMORY, status);
+    EXPECT_EQ(CommandContainer::ErrorCode::OUT_OF_DEVICE_MEMORY, status);
 }
 
 TEST_F(CommandContainerTest, givenCmdContainerWithAllocsListWhenAllocateAndResetThenCmdBufferAllocIsReused) {
@@ -241,7 +241,7 @@ TEST_F(CommandContainerTest, givenCommandContainerDuringInitWhenAllocateHeapMemo
     auto tempMemoryManager = pDevice->executionEnvironment->memoryManager.release();
     pDevice->executionEnvironment->memoryManager.reset(new FailMemoryManager(1, *pDevice->executionEnvironment));
     auto status = cmdContainer.initialize(pDevice, nullptr, true);
-    EXPECT_EQ(ErrorCode::OUT_OF_DEVICE_MEMORY, status);
+    EXPECT_EQ(CommandContainer::ErrorCode::OUT_OF_DEVICE_MEMORY, status);
     delete tempMemoryManager;
 }
 

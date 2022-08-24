@@ -58,7 +58,7 @@ CommandContainer::CommandContainer(uint32_t maxNumAggregatedIdds) : CommandConta
     numIddsPerBlock = maxNumAggregatedIdds;
 }
 
-ErrorCode CommandContainer::initialize(Device *device, AllocationsList *reusableAllocationList, bool requireHeaps) {
+CommandContainer::ErrorCode CommandContainer::initialize(Device *device, AllocationsList *reusableAllocationList, bool requireHeaps) {
     this->device = device;
     this->reusableAllocationList = reusableAllocationList;
 

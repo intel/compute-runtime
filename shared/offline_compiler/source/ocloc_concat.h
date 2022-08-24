@@ -18,9 +18,10 @@ namespace Ar {
 struct Ar;
 }
 
-using ErrorCode = uint32_t;
 class OclocConcat {
   public:
+    using ErrorCode = uint32_t;
+
     OclocConcat() = delete;
     OclocConcat(const OclocConcat &) = delete;
     OclocConcat &operator=(const OclocConcat &) = delete;

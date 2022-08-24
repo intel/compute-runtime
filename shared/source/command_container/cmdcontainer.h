@@ -28,13 +28,13 @@ using CmdBufferContainer = std::vector<GraphicsAllocation *>;
 using HeapContainer = std::vector<GraphicsAllocation *>;
 using HeapType = IndirectHeapType;
 
-enum class ErrorCode {
-    SUCCESS = 0,
-    OUT_OF_DEVICE_MEMORY = 1
-};
-
 class CommandContainer : public NonCopyableOrMovableClass {
   public:
+    enum class ErrorCode {
+        SUCCESS = 0,
+        OUT_OF_DEVICE_MEMORY = 1
+    };
+
     static constexpr size_t defaultListCmdBufferSize = 1u * MemoryConstants ::megaByte;
     static constexpr size_t cmdBufferReservedSize = MemoryConstants::cacheLineSize +
                                                     CSRequirements::csOverfetchSize;

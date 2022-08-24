@@ -55,9 +55,9 @@ namespace L0 {
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct EncodeStateBaseAddress;
 
-inline ze_result_t parseErrorCode(NEO::ErrorCode returnValue) {
+inline ze_result_t parseErrorCode(NEO::CommandContainer::ErrorCode returnValue) {
     switch (returnValue) {
-    case NEO::ErrorCode::OUT_OF_DEVICE_MEMORY:
+    case NEO::CommandContainer::ErrorCode::OUT_OF_DEVICE_MEMORY:
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     default:
         return ZE_RESULT_SUCCESS;
