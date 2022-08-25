@@ -6,29 +6,31 @@
  */
 
 #include "shared/source/os_interface/linux/engine_info.h"
+#include "shared/source/os_interface/linux/i915_prelim.h"
 
 #include "level_zero/tools/source/sysman/engine/linux/os_engine_imp.h"
 
 #include "sysman/linux/os_sysman_imp.h"
-#include "third_party/uapi/prelim/drm/i915_drm_prelim.h"
 
 namespace L0 {
 
+using NEO::PrelimI915::I915_SAMPLE_BUSY;
+
 static const std::multimap<__u16, zes_engine_group_t> i915ToEngineMap = {
-    {static_cast<__u16>(I915_ENGINE_CLASS_RENDER), ZES_ENGINE_GROUP_RENDER_SINGLE},
-    {static_cast<__u16>(I915_ENGINE_CLASS_VIDEO), ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE},
-    {static_cast<__u16>(I915_ENGINE_CLASS_VIDEO), ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE},
-    {static_cast<__u16>(I915_ENGINE_CLASS_COPY), ZES_ENGINE_GROUP_COPY_SINGLE},
-    {static_cast<__u16>(PRELIM_I915_ENGINE_CLASS_COMPUTE), ZES_ENGINE_GROUP_COMPUTE_SINGLE},
-    {static_cast<__u16>(I915_ENGINE_CLASS_VIDEO_ENHANCE), ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE}};
+    {static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER), ZES_ENGINE_GROUP_RENDER_SINGLE},
+    {static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO), ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE},
+    {static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO), ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE},
+    {static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY), ZES_ENGINE_GROUP_COPY_SINGLE},
+    {static_cast<__u16>(prelim_drm_i915_gem_engine_class::PRELIM_I915_ENGINE_CLASS_COMPUTE), ZES_ENGINE_GROUP_COMPUTE_SINGLE},
+    {static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE), ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE}};
 
 static const std::multimap<zes_engine_group_t, __u16> engineToI915Map = {
-    {ZES_ENGINE_GROUP_RENDER_SINGLE, static_cast<__u16>(I915_ENGINE_CLASS_RENDER)},
-    {ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE, static_cast<__u16>(I915_ENGINE_CLASS_VIDEO)},
-    {ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE, static_cast<__u16>(I915_ENGINE_CLASS_VIDEO)},
-    {ZES_ENGINE_GROUP_COPY_SINGLE, static_cast<__u16>(I915_ENGINE_CLASS_COPY)},
-    {ZES_ENGINE_GROUP_COMPUTE_SINGLE, static_cast<__u16>(PRELIM_I915_ENGINE_CLASS_COMPUTE)},
-    {ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE, static_cast<__u16>(I915_ENGINE_CLASS_VIDEO_ENHANCE)}};
+    {ZES_ENGINE_GROUP_RENDER_SINGLE, static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER)},
+    {ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE, static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO)},
+    {ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE, static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO)},
+    {ZES_ENGINE_GROUP_COPY_SINGLE, static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY)},
+    {ZES_ENGINE_GROUP_COMPUTE_SINGLE, static_cast<__u16>(prelim_drm_i915_gem_engine_class::PRELIM_I915_ENGINE_CLASS_COMPUTE)},
+    {ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE, static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE)}};
 
 zes_engine_group_t LinuxEngineImp::getGroupFromEngineType(zes_engine_group_t type) {
     if (type == ZES_ENGINE_GROUP_RENDER_SINGLE) {
