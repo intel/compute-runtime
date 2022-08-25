@@ -12,9 +12,11 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/cache_info.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 
 #include <algorithm>
 #include <cerrno>
@@ -24,6 +26,11 @@
 #include <sys/ioctl.h>
 
 namespace NEO {
+
+IoctlHelperPrelim20::IoctlHelperPrelim20(Drm &drmArg) : IoctlHelper(drmArg) {
+    auto fileDescriptor = this->drm.getFileDescriptor();
+    SysCalls::fcntl(fileDescriptor, F_SETFL, SysCalls::fcntl(fileDescriptor, F_GETFL) | O_NONBLOCK);
+};
 
 bool IoctlHelperPrelim20::isSetPairAvailable() {
     int setPairSupported = 0;
@@ -644,6 +651,8 @@ std::string IoctlHelperPrelim20::getIoctlString(DrmIoctl ioctlRequest) const {
         return getIoctlStringBase(ioctlRequest);
     }
 }
+
+bool IoctlHelperPrelim20::shouldBreakIoctlLoopOnWouldBlock(DrmIoctl ioctlRequest) const { return ioctlRequest == DrmIoctl::GemExecbuffer2; }
 
 static_assert(sizeof(MemoryClassInstance) == sizeof(prelim_drm_i915_gem_memory_class_instance));
 static_assert(offsetof(MemoryClassInstance, memoryClass) == offsetof(prelim_drm_i915_gem_memory_class_instance, memory_class));

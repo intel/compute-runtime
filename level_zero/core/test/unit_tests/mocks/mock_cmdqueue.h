@@ -92,6 +92,9 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
 
     NEO::SubmissionStatus submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr, bool isCooperative) override {
         residencyContainerSnapshot = residencyContainer;
+        if (submitBatchBufferReturnValue.has_value()) {
+            return *submitBatchBufferReturnValue;
+        }
         return BaseClass::submitBatchBuffer(offset, residencyContainer, endingCmdPtr, isCooperative);
     }
 
@@ -99,6 +102,7 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     NEO::ResidencyContainer residencyContainerSnapshot;
     ze_result_t synchronizeReturnValue{ZE_RESULT_SUCCESS};
     std::optional<NEO::WaitStatus> reserveLinearStreamSizeReturnValue{};
+    std::optional<NEO::SubmissionStatus> submitBatchBufferReturnValue{};
 };
 
 struct Deleter {

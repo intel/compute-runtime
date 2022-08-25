@@ -39,6 +39,9 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchB
 
             int ret = this->exec(batchBuffer, tileIterator, drmContextIds[contextIndex], contextIndex);
             if (ret) {
+                if (ret == EWOULDBLOCK) {
+                    return SubmissionStatus::OUT_OF_HOST_MEMORY;
+                }
                 return SubmissionStatus::FAILED;
             }
 
