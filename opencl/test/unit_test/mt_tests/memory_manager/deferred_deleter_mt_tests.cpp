@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,16 +12,6 @@
 #include "gtest/gtest.h"
 
 using namespace NEO;
-
-TEST(DeferredDeleter, WhenDeferredDeleterIsCreatedThenItIsNotMoveableOrCopyable) {
-    EXPECT_FALSE(std::is_move_constructible<DeferredDeleter>::value);
-    EXPECT_FALSE(std::is_copy_constructible<DeferredDeleter>::value);
-}
-
-TEST(DeferredDeleter, WhenDeferredDeleterIsCreatedThenItIsNotAssignable) {
-    EXPECT_FALSE(std::is_move_assignable<DeferredDeleter>::value);
-    EXPECT_FALSE(std::is_copy_assignable<DeferredDeleter>::value);
-}
 
 struct DeferredDeleterTest : public ::testing::Test {
 

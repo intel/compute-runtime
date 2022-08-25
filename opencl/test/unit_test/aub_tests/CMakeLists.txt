@@ -49,9 +49,6 @@ target_include_directories(igdrcl_aub_tests PRIVATE
                            ${NEO_SOURCE_DIR}/shared/test/common/helpers/includes${BRANCH_DIR_SUFFIX}
 )
 
-target_sources(igdrcl_aub_tests PRIVATE
-               ${NEO_SHARED_TEST_DIRECTORY}/unit_test/page_fault_manager/default_asan_options.cpp
-)
 copy_gmm_dll_for(igdrcl_aub_tests)
 add_subdirectories()
 
