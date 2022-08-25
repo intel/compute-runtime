@@ -396,8 +396,7 @@ bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
     if (svmData) {
         if (InternalMemoryType::DEVICE_UNIFIED_MEMORY == svmData->memoryType &&
             this->usmDeviceAllocationsCacheEnabled) {
-            size_t alignedSize = alignUp<size_t>(svmData->size, svmData->pageSizeForAlignment);
-            this->usmDeviceAllocationsCache.insert(alignedSize, ptr);
+            this->usmDeviceAllocationsCache.insert(svmData->size, ptr);
             return true;
         }
         this->freeSVMAllocImpl(ptr, blocking, svmData);

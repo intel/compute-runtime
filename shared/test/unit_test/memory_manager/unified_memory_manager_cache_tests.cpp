@@ -82,8 +82,11 @@ TEST(SvmDeviceAllocationCacheTest, givenAllocationsWithDifferentSizesWhenAllocat
     auto testDataset = std::vector<SvmDeviceAllocationCacheSimpleTestDataType>(
         {
             {(allocationSizeBasis << 0), nullptr},
+            {(allocationSizeBasis << 0) + 1, nullptr},
             {(allocationSizeBasis << 1), nullptr},
+            {(allocationSizeBasis << 1) + 1, nullptr},
             {(allocationSizeBasis << 2), nullptr},
+            {(allocationSizeBasis << 2) + 1, nullptr},
         });
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);

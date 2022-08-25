@@ -151,6 +151,9 @@ ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
 DriverHandleImp::~DriverHandleImp() {
     if (memoryManager != nullptr) {
         memoryManager->peekExecutionEnvironment().prepareForCleanup();
+        if (this->svmAllocsManager) {
+            this->svmAllocsManager->trimUSMDeviceAllocCache();
+        }
     }
 
     for (auto &device : this->devices) {
