@@ -52,6 +52,9 @@ struct MockDebugSessionWindows : DebugSessionWindows {
     using DebugSessionWindows::wddm;
     using DebugSessionWindows::writeGpuMemory;
     using L0::DebugSessionImp::apiEvents;
+    using L0::DebugSessionImp::attachTile;
+    using L0::DebugSessionImp::cleanRootSessionAfterDetach;
+    using L0::DebugSessionImp::detachTile;
     using L0::DebugSessionImp::getStateSaveAreaHeader;
     using L0::DebugSessionImp::isValidGpuAddress;
 
@@ -114,6 +117,16 @@ struct DebugApiWindowsFixture : public DeviceFixture {
 };
 
 using DebugApiWindowsTest = Test<DebugApiWindowsFixture>;
+
+TEST_F(DebugApiWindowsTest, GivenSessionWhenCallingUnsupportedMethodsThenUnrecoverableIsCalled) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
+    EXPECT_THROW(session->attachTile(), std::exception);
+    EXPECT_THROW(session->detachTile(), std::exception);
+    EXPECT_THROW(session->cleanRootSessionAfterDetach(0), std::exception);
+}
 
 TEST_F(DebugApiWindowsTest, GivenReadOfGpuVaFailDueToEscapeCallFailureWhenTryingToReadSbaThenErrorIsReported) {
     zet_debug_config_t config = {};

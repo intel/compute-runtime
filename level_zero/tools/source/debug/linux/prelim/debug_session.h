@@ -233,6 +233,14 @@ struct DebugSessionLinux : DebugSessionImp {
     void handleEnginesEvent(prelim_drm_i915_debug_event_engines *engines);
     virtual bool ackIsaEvents(uint32_t deviceIndex, uint64_t isaVa);
 
+    void attachTile() override {
+        UNRECOVERABLE_IF(true);
+    }
+    void detachTile() override {
+        UNRECOVERABLE_IF(true);
+    }
+    void cleanRootSessionAfterDetach(uint32_t deviceIndex) override;
+
     void extractUuidData(uint64_t client, const UuidData &uuidData);
     uint64_t extractVaFromUuidString(std::string &uuid);
 
@@ -293,8 +301,16 @@ struct TileDebugSessionLinux : DebugSessionLinux {
     bool closeConnection() override { return true; }
     ze_result_t initialize() override { return ZE_RESULT_SUCCESS; }
 
+    bool insertModule(zet_debug_event_info_module_t module);
+    bool removeModule(zet_debug_event_info_module_t module);
+    bool processEntry();
+    bool processExit();
+    void attachTile() override;
+    void detachTile() override;
+
   protected:
     void startAsyncThread() override { UNRECOVERABLE_IF(true); };
+    void cleanRootSessionAfterDetach(uint32_t deviceIndex) override { UNRECOVERABLE_IF(true); };
 
     bool readModuleDebugArea() override { return true; };
 
@@ -347,6 +363,10 @@ struct TileDebugSessionLinux : DebugSessionLinux {
 
     DebugSessionLinux *rootDebugSession = nullptr;
     uint32_t tileIndex = std::numeric_limits<uint32_t>::max();
+    bool isAttached = false;
+    bool processEntryState = false;
+
+    std::unordered_map<uint64_t, zet_debug_event_info_module_t> modules;
 };
 
 } // namespace L0

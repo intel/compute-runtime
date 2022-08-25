@@ -56,6 +56,7 @@ struct MockIoctlHandler : public L0::DebugSessionLinux::IoctlHandler {
         } else if ((request == PRELIM_I915_DEBUG_IOCTL_ACK_EVENT) && (arg != nullptr)) {
             auto debugEvent = reinterpret_cast<prelim_drm_i915_debug_event *>(arg);
             debugEventAcked = *debugEvent;
+            ackCount++;
             return 0;
         } else if ((request == PRELIM_I915_DEBUG_IOCTL_READ_UUID) && (arg != nullptr)) {
             prelim_drm_i915_debug_read_uuid *uuid = reinterpret_cast<prelim_drm_i915_debug_read_uuid *>(arg);
@@ -229,11 +230,14 @@ struct MockIoctlHandler : public L0::DebugSessionLinux::IoctlHandler {
     std::atomic<int> pollCounter = 0;
     EventQueue eventQueue;
     uint64_t euControlOutputSeqno = 10;
+    uint32_t ackCount = 0;
 };
 
 struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     using L0::DebugSessionImp::allThreads;
     using L0::DebugSessionImp::apiEvents;
+    using L0::DebugSessionImp::attachTile;
+    using L0::DebugSessionImp::detachTile;
     using L0::DebugSessionImp::enqueueApiEvent;
     using L0::DebugSessionImp::expectedAttentionEvents;
     using L0::DebugSessionImp::interruptSent;
@@ -412,6 +416,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
 
 struct MockTileDebugSessionLinux : TileDebugSessionLinux {
     using DebugSession::allThreads;
+    using DebugSessionImp::apiEvents;
     using DebugSessionImp::checkTriggerEventsForAttention;
     using DebugSessionImp::expectedAttentionEvents;
     using DebugSessionImp::interruptImp;
@@ -420,9 +425,15 @@ struct MockTileDebugSessionLinux : TileDebugSessionLinux {
     using DebugSessionImp::sendInterrupts;
     using DebugSessionImp::stateSaveAreaHeader;
     using DebugSessionImp::triggerEvents;
+    using DebugSessionLinux::detached;
+    using DebugSessionLinux::pushApiEvent;
+    using TileDebugSessionLinux::cleanRootSessionAfterDetach;
     using TileDebugSessionLinux::getAllMemoryHandles;
     using TileDebugSessionLinux::getContextStateSaveAreaGpuVa;
     using TileDebugSessionLinux::getSbaBufferGpuVa;
+    using TileDebugSessionLinux::isAttached;
+    using TileDebugSessionLinux::modules;
+    using TileDebugSessionLinux::processEntryState;
     using TileDebugSessionLinux::readGpuMemory;
     using TileDebugSessionLinux::readModuleDebugArea;
     using TileDebugSessionLinux::readSbaBuffer;

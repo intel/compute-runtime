@@ -48,6 +48,10 @@ struct DebugSessionImp : DebugSession {
     void detachTileDebugSession(DebugSession *tileSession) override;
     bool areAllTileDebugSessionDetached() override;
 
+    virtual void attachTile() = 0;
+    virtual void detachTile() = 0;
+    virtual void cleanRootSessionAfterDetach(uint32_t deviceIndex) = 0;
+
     static const SIP::regset_desc *getSbaRegsetDesc();
     static uint32_t typeToRegsetFlags(uint32_t type);
     constexpr static int64_t interruptTimeout = 2000;

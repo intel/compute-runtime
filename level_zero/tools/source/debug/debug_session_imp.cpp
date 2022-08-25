@@ -296,6 +296,8 @@ DebugSession *DebugSessionImp::attachTileDebugSession(Device *device) {
     if (attached) {
         return nullptr;
     }
+
+    tileSessions[subDeviceIndex].first->attachTile();
     attached = true;
 
     PRINT_DEBUGGER_INFO_LOG("TileDebugSession attached, deviceIndex = %lu\n", subDeviceIndex);
@@ -306,7 +308,10 @@ void DebugSessionImp::detachTileDebugSession(DebugSession *tileSession) {
     std::unique_lock<std::mutex> lock(asyncThreadMutex);
 
     uint32_t subDeviceIndex = Math::log2(static_cast<uint32_t>(tileSession->getConnectedDevice()->getNEODevice()->getDeviceBitfield().to_ulong()));
+
     tileSessions[subDeviceIndex].second = false;
+    tileSessions[subDeviceIndex].first->detachTile();
+    cleanRootSessionAfterDetach(subDeviceIndex);
 
     PRINT_DEBUGGER_INFO_LOG("TileDebugSession detached, deviceIndex = %lu\n", subDeviceIndex);
 }

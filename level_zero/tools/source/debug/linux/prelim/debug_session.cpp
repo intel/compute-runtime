@@ -429,7 +429,7 @@ void DebugSessionLinux::readInternalEventsAsync() {
             maxLoopCount--;
 
             if (result == ZE_RESULT_SUCCESS) {
-                std::unique_lock<std::mutex> lock(internalEventThreadMutex);
+                std::lock_guard<std::mutex> lock(internalEventThreadMutex);
 
                 auto memory = std::make_unique<uint64_t[]>(maxEventSize / sizeof(uint64_t));
                 memcpy(memory.get(), event, maxEventSize);
@@ -515,6 +515,7 @@ void DebugSessionLinux::handleEvent(prelim_drm_i915_debug_event *event) {
                     debugEvent.type = ZET_DEBUG_EVENT_TYPE_PROCESS_EXIT;
 
                     if (tileSessionsEnabled) {
+                        reinterpret_cast<TileDebugSessionLinux *>(tileSessions[deviceIndex].first)->processExit();
                         static_cast<TileDebugSessionLinux *>(tileSessions[deviceIndex].first)->pushApiEvent(debugEvent, nullptr);
                     } else if (uuidL0CommandQueueHandleToDevice.size() == 0) {
                         pushApiEvent(debugEvent, nullptr);
@@ -558,7 +559,7 @@ void DebugSessionLinux::handleEvent(prelim_drm_i915_debug_event *event) {
 
                             if (tileSessionsEnabled) {
                                 UNRECOVERABLE_IF(uuidL0CommandQueueHandleToDevice.find(uuid->handle) != uuidL0CommandQueueHandleToDevice.end());
-
+                                static_cast<TileDebugSessionLinux *>(tileSessions[deviceIndex].first)->processEntry();
                                 static_cast<TileDebugSessionLinux *>(tileSessions[deviceIndex].first)->pushApiEvent(debugEvent, nullptr);
                             } else if (uuidL0CommandQueueHandleToDevice.size() == 0) {
                                 pushApiEvent(debugEvent, nullptr);
@@ -704,7 +705,7 @@ void DebugSessionLinux::readStateSaveAreaHeader() {
     size_t totalSize = 0;
 
     {
-        std::unique_lock<std::mutex> lock(asyncThreadMutex);
+        std::lock_guard<std::mutex> lock(asyncThreadMutex);
         if (clientHandleToConnection[clientHandle]->vmToContextStateSaveAreaBindInfo.size() > 0) {
             vm = clientHandleToConnection[clientHandle]->vmToContextStateSaveAreaBindInfo.begin()->first;
             gpuVa = clientHandleToConnection[clientHandle]->vmToContextStateSaveAreaBindInfo.begin()->second.gpuVa;
@@ -775,7 +776,7 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
 
         if (connection->classHandleToIndex.find(classUuid) != connection->classHandleToIndex.end()) {
 
-            std::unique_lock<std::mutex> lock(asyncThreadMutex);
+            std::lock_guard<std::mutex> lock(asyncThreadMutex);
 
             if (connection->classHandleToIndex[classUuid].second ==
                 static_cast<uint32_t>(NEO::DrmResourceClass::SbaTrackingBuffer)) {
@@ -883,8 +884,12 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
 
                 if (perKernelModules) {
                     debugEvent.flags = apiEventNeedsAck ? ZET_DEBUG_EVENT_FLAG_NEED_ACK : 0;
+
                     if (tileSessionsEnabled) {
-                        static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent, nullptr);
+                        auto tileAttached = static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->insertModule(debugEvent.info.module);
+                        if (tileAttached) {
+                            static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent, nullptr);
+                        }
                     } else {
                         pushApiEvent(debugEvent, nullptr);
                     }
@@ -892,7 +897,7 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
             }
 
             if (createEvent) {
-                std::unique_lock<std::mutex> lock(asyncThreadMutex);
+                std::lock_guard<std::mutex> lock(asyncThreadMutex);
                 if (!connection->isaMap[tileIndex][vmBind->va_start]->moduleLoadEventAck && perKernelModules) {
                     PRINT_DEBUGGER_INFO_LOG("Add event to ack, seqno = %llu", (uint64_t)vmBind->base.seqno);
                     connection->isaMap[tileIndex][vmBind->va_start]->ackEvents.push_back(vmBind->base);
@@ -921,6 +926,7 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
 
                     if (perKernelModules) {
                         if (tileSessionsEnabled) {
+                            static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->removeModule(debugEvent.info.module);
                             static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent, nullptr);
                         } else {
                             pushApiEvent(debugEvent, nullptr);
@@ -961,10 +967,10 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                             pushApiEvent(debugEvent, &vmBind->base);
                             shouldAckEvent = false;
                         } else {
-                            auto tileAttached = tileSessions[tileIndex].second;
-                            if (!tileAttached) {
-                                static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent, nullptr);
-                            } else {
+
+                            auto tileAttached = static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->insertModule(debugEvent.info.module);
+
+                            if (tileAttached) {
                                 static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent, &vmBind->base);
                                 shouldAckEvent = false;
                             }
@@ -987,7 +993,13 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                         debugEvent.info.module.moduleEnd = connection->uuidMap[module.elfUuidHandle].ptr + connection->uuidMap[module.elfUuidHandle].dataSize;
 
                         if (tileSessionsEnabled) {
-                            static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent, nullptr);
+
+                            auto tileAttached = static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->removeModule(debugEvent.info.module);
+
+                            if (tileAttached) {
+                                static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent, nullptr);
+                            }
+
                         } else {
                             pushApiEvent(debugEvent, nullptr);
                         }
@@ -1314,7 +1326,7 @@ bool DebugSessionLinux::tryReadElf(const zet_debug_memory_space_desc_t *desc, si
     const char *elfData = nullptr;
     uint64_t offset = 0;
 
-    std::unique_lock<std::mutex> memLock(asyncThreadMutex);
+    std::lock_guard<std::mutex> memLock(asyncThreadMutex);
 
     status = getElfOffset(desc, size, elfData, offset);
     if (status == ZE_RESULT_ERROR_INVALID_ARGUMENT) {
@@ -1436,7 +1448,7 @@ bool DebugSessionLinux::tryAccessIsa(uint32_t deviceIndex, const zet_debug_memor
     uint64_t vmHandle = invalidHandle;
     bool isaAccess = false;
     {
-        std::unique_lock<std::mutex> memLock(asyncThreadMutex);
+        std::lock_guard<std::mutex> memLock(asyncThreadMutex);
 
         status = getISAVMHandle(desc, size, vmHandle);
         if (status == ZE_RESULT_SUCCESS) {
@@ -1484,7 +1496,7 @@ ze_result_t DebugSessionLinux::accessDefaultMemForThreadAll(const zet_debug_memo
 }
 
 bool DebugSessionLinux::ackIsaEvents(uint32_t deviceIndex, uint64_t isaVa) {
-    std::unique_lock<std::mutex> lock(asyncThreadMutex);
+    std::lock_guard<std::mutex> lock(asyncThreadMutex);
 
     auto connection = clientHandleToConnection[clientHandle].get();
 
@@ -1514,11 +1526,34 @@ bool DebugSessionLinux::ackIsaEvents(uint32_t deviceIndex, uint64_t isaVa) {
     return false;
 }
 
+void DebugSessionLinux::cleanRootSessionAfterDetach(uint32_t deviceIndex) {
+    auto connection = clientHandleToConnection[clientHandle].get();
+
+    for (const auto &isa : connection->isaMap[deviceIndex]) {
+
+        //zebin modules do not store ackEvents per ISA
+        UNRECOVERABLE_IF(isa.second->ackEvents.size() > 0 && isa.second->perKernelModule == false);
+
+        for (auto &event : isa.second->ackEvents) {
+            prelim_drm_i915_debug_event_ack eventToAck = {};
+            eventToAck.type = event.type;
+            eventToAck.seqno = event.seqno;
+            eventToAck.flags = 0;
+
+            auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_ACK_EVENT, &eventToAck);
+            PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_ACK_EVENT seqno = %llu, ret = %d errno = %d\n", (uint64_t)event.seqno, ret, ret != 0 ? errno : 0);
+        }
+
+        isa.second->ackEvents.clear();
+        isa.second->moduleLoadEventAck = true;
+    }
+}
+
 ze_result_t DebugSessionLinux::acknowledgeEvent(const zet_debug_event_t *event) {
 
     const zet_debug_event_t apiEventToAck = *event;
     {
-        std::unique_lock<std::mutex> lock(asyncThreadMutex);
+        std::lock_guard<std::mutex> lock(asyncThreadMutex);
 
         for (size_t i = 0; i < eventsToAck.size(); i++) {
             if (apiEventCompare(apiEventToAck, eventsToAck[i].first)) {
@@ -1580,7 +1615,7 @@ ze_result_t DebugSessionLinux::readSbaBuffer(EuThread::ThreadId threadId, NEO::S
 }
 
 uint64_t DebugSessionLinux::getSbaBufferGpuVa(uint64_t memoryHandle) {
-    std::unique_lock<std::mutex> lock(asyncThreadMutex);
+    std::lock_guard<std::mutex> lock(asyncThreadMutex);
     auto bindInfo = clientHandleToConnection[clientHandle]->vmToStateBaseAreaBindInfo.find(memoryHandle);
     if (bindInfo == clientHandleToConnection[clientHandle]->vmToStateBaseAreaBindInfo.end()) {
         return 0;
@@ -1590,7 +1625,7 @@ uint64_t DebugSessionLinux::getSbaBufferGpuVa(uint64_t memoryHandle) {
 }
 
 uint64_t DebugSessionLinux::getContextStateSaveAreaGpuVa(uint64_t memoryHandle) {
-    std::unique_lock<std::mutex> lock(asyncThreadMutex);
+    std::lock_guard<std::mutex> lock(asyncThreadMutex);
     auto bindInfo = clientHandleToConnection[clientHandle]->vmToContextStateSaveAreaBindInfo.find(memoryHandle);
     if (bindInfo == clientHandleToConnection[clientHandle]->vmToContextStateSaveAreaBindInfo.end()) {
         return 0;
@@ -1695,5 +1730,78 @@ void TileDebugSessionLinux::readStateSaveAreaHeader() {
         this->stateSaveAreaHeader.assign(reinterpret_cast<const char *>(header), reinterpret_cast<const char *>(header) + headerSize);
     }
 };
+
+bool TileDebugSessionLinux::insertModule(zet_debug_event_info_module_t module) {
+    std::lock_guard<std::mutex> lock(asyncThreadMutex);
+    modules.insert({module.load, module});
+    return isAttached;
+}
+
+bool TileDebugSessionLinux::removeModule(zet_debug_event_info_module_t module) {
+    std::lock_guard<std::mutex> lock(asyncThreadMutex);
+    modules.erase(module.load);
+    return isAttached;
+}
+
+bool TileDebugSessionLinux::processEntry() {
+    std::lock_guard<std::mutex> lock(asyncThreadMutex);
+    processEntryState = true;
+    return isAttached;
+}
+
+bool TileDebugSessionLinux::processExit() {
+    std::lock_guard<std::mutex> lock(asyncThreadMutex);
+    processEntryState = false;
+    return isAttached;
+}
+
+void TileDebugSessionLinux::attachTile() {
+    std::lock_guard<std::mutex> lock(asyncThreadMutex);
+
+    // clear apiEvents queue
+    apiEvents = decltype(apiEvents){};
+
+    if (detached) {
+        zet_debug_event_t debugEvent = {};
+        debugEvent.type = ZET_DEBUG_EVENT_TYPE_DETACHED;
+        debugEvent.info.detached.reason = ZET_DEBUG_DETACH_REASON_INVALID;
+
+        apiEvents.push(debugEvent);
+    } else {
+        if (processEntryState) {
+            zet_debug_event_t event = {};
+            event.type = ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY;
+            event.flags = 0;
+            apiEvents.push(event);
+        }
+
+        if (modules.size()) {
+            zet_debug_event_t event = {};
+            event.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
+            event.flags = 0;
+
+            for (const auto &module : modules) {
+                memcpy_s(&event.info.module, sizeof(event.info.module), &module.second, sizeof(module.second));
+                apiEvents.push(event);
+            }
+        }
+    }
+    isAttached = true;
+}
+
+void TileDebugSessionLinux::detachTile() {
+    {
+        std::lock_guard<std::mutex> lock(asyncThreadMutex);
+        isAttached = false;
+
+        for (size_t i = 0; i < eventsToAck.size(); i++) {
+
+            auto eventToAck = eventsToAck[i].second;
+            auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_ACK_EVENT, &eventToAck);
+            PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_ACK_EVENT seqno = %llu, ret = %d errno = %d\n", (uint64_t)eventToAck.seqno, ret, ret != 0 ? errno : 0);
+        }
+        eventsToAck.clear();
+    }
+}
 
 } // namespace L0

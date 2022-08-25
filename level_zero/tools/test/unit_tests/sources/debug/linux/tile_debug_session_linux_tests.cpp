@@ -44,6 +44,7 @@ TEST(TileDebugSessionLinuxTest, GivenTileDebugSessionWhenCallingFunctionsThenImp
     EXPECT_EQ(ZE_RESULT_SUCCESS, session->initialize());
 
     EXPECT_THROW(session->startAsyncThread(), std::exception);
+    EXPECT_THROW(session->cleanRootSessionAfterDetach(0), std::exception);
 }
 
 TEST(TileDebugSessionLinuxTest, GivenTileDebugSessionWhenCallingFunctionsThenCallsAreRedirectedToRootSession) {
@@ -313,6 +314,7 @@ TEST_F(TileAttachTest, givenCmdQsCreatedAndDestroyedWhenReadingEventsThenProcess
     ze_result_t result = zetDebugReadEvent(tileSessions[1]->toHandle(), 0, &event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY, event.type);
+    EXPECT_TRUE(tileSessions[1]->processEntryState);
 
     notification.subDeviceCount = 2;
     notification.subDeviceIndex = 0;
@@ -326,6 +328,7 @@ TEST_F(TileAttachTest, givenCmdQsCreatedAndDestroyedWhenReadingEventsThenProcess
     result = zetDebugReadEvent(tileSessions[0]->toHandle(), 0, &event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY, event.type);
+    EXPECT_TRUE(tileSessions[0]->processEntryState);
 
     // Handle UUID destroy for commandQueue on subdevice 0
     uuid.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_DESTROY;
@@ -335,6 +338,7 @@ TEST_F(TileAttachTest, givenCmdQsCreatedAndDestroyedWhenReadingEventsThenProcess
     result = zetDebugReadEvent(tileSessions[0]->toHandle(), 0, &event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_PROCESS_EXIT, event.type);
+    EXPECT_FALSE(tileSessions[0]->processEntryState);
 
     // Handle UUID destroy for commandQueue on subdevice 1
     uuid.handle = 2;
@@ -344,6 +348,34 @@ TEST_F(TileAttachTest, givenCmdQsCreatedAndDestroyedWhenReadingEventsThenProcess
     result = zetDebugReadEvent(tileSessions[1]->toHandle(), 0, &event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_PROCESS_EXIT, event.type);
+    EXPECT_FALSE(tileSessions[1]->processEntryState);
+}
+
+TEST_F(TileAttachTest, givenTileSessionWhenAttchingThenProcessEntryEventIsGeneratedBasedOnEntryState) {
+
+    tileSessions[1]->processEntryState = true;
+
+    tileSessions[1]->attachTile();
+    ASSERT_EQ(1u, tileSessions[1]->apiEvents.size());
+
+    auto event = tileSessions[1]->apiEvents.front();
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY, event.type);
+
+    tileSessions[1]->detachTile();
+    tileSessions[1]->processEntryState = false;
+
+    tileSessions[1]->attachTile();
+    EXPECT_EQ(0u, tileSessions[1]->apiEvents.size());
+}
+
+TEST_F(TileAttachTest, givenDetachedRootSessionWhenAttchingTileThenDetachedEventIsGenerated) {
+    tileSessions[1]->detached = true;
+
+    tileSessions[1]->attachTile();
+    ASSERT_EQ(1u, tileSessions[1]->apiEvents.size());
+
+    auto event = tileSessions[1]->apiEvents.front();
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_DETACHED, event.type);
 }
 
 TEST_F(TileAttachTest, givenPollReturnsErrorAndEinvalWhenReadingEventsThenProcessDetachedEventForAllTilesIsReturned) {
@@ -729,6 +761,66 @@ TEST_F(TileAttachTest, givenStoppedThreadsWhenHandlingAttentionEventThenStoppedT
     EXPECT_TRUE(tileSessions[1]->triggerEvents);
 }
 
+TEST_F(TileAttachTest, GivenEventsWithOsEventToAckWhenDetachingTileThenAllEventsAreAcked) {
+    uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
+    prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
+    vmBindIsa->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
+    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE | PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK;
+    vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 3 * sizeof(typeOfUUID);
+    vmBindIsa->base.seqno = 10;
+    vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
+    vmBindIsa->va_start = isaGpuVa;
+    vmBindIsa->va_length = isaSize;
+    vmBindIsa->vm_handle = vm0;
+    vmBindIsa->num_uuids = 0;
+
+    auto handler = new MockIoctlHandler;
+    rootSession->ioctlHandler.reset(handler);
+
+    zet_debug_event_t debugEvent = {};
+    debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
+    debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
+    debugEvent.info.module.load = isaGpuVa;
+    debugEvent.info.module.moduleBegin = 0;
+    debugEvent.info.module.moduleEnd = 0;
+
+    tileSessions[0]->pushApiEvent(debugEvent, &vmBindIsa->base);
+
+    debugEvent.info.module.load = 0x999000;
+    vmBindIsa->va_start = 0x999000;
+    tileSessions[0]->pushApiEvent(debugEvent, &vmBindIsa->base);
+
+    debugEvent.info.module.load = 0x12000;
+    vmBindIsa->va_start = 0x12000;
+    tileSessions[0]->pushApiEvent(debugEvent, &vmBindIsa->base);
+
+    tileSessions[0]->detachTile();
+    EXPECT_EQ(3u, handler->ackCount);
+    EXPECT_EQ(vmBindIsa->base.seqno, handler->debugEventAcked.seqno);
+    EXPECT_EQ(vmBindIsa->base.type, handler->debugEventAcked.type);
+}
+
+TEST_F(TileAttachTest, GivenTileAttachedAndIsaWithOsEventToAckWhenDetachingTileThenAllEventsAreAcked) {
+    auto handler = new MockIoctlHandler;
+    rootSession->ioctlHandler.reset(handler);
+
+    rootSession->tileSessions[0].second = true;
+    tileSessions[0]->attachTile();
+
+    addIsaVmBindEvent(rootSession, vm0, true, true);
+
+    EXPECT_EQ(0u, handler->ackCount);
+    rootSession->detachTileDebugSession(tileSessions[0]);
+
+    EXPECT_EQ(1u, handler->ackCount);
+    EXPECT_EQ(20u, handler->debugEventAcked.seqno);
+    EXPECT_EQ(static_cast<uint32_t>(PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND), handler->debugEventAcked.type);
+
+    auto isa = rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0][isaGpuVa].get();
+    EXPECT_EQ(0u, isa->ackEvents.size());
+    EXPECT_TRUE(isa->moduleLoadEventAck);
+}
+
 using TileAttachAsyncThreadTest = Test<TileAttachFixture>;
 
 TEST_F(TileAttachAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEventIsReadThenThreadUnavailableEventIsGenerated) {
@@ -758,13 +850,13 @@ TEST_F(TileAttachAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEventIsR
 }
 
 TEST_F(TileAttachTest, GivenEventWithL0ZebinModuleWhenHandlingEventThenModuleLoadAndUnloadEventsAreReportedForLastKernel) {
-    uint64_t isaGpuVa = 0x345000;
     uint64_t isaGpuVa2 = 0x340000;
-    uint64_t isaSize = 0x2000;
     uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
     prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
 
     rootSession->tileSessions[0].second = true;
+    tileSessions[0]->isAttached = true;
+
     auto handler = new MockIoctlHandler;
     rootSession->ioctlHandler.reset(handler);
 
@@ -827,7 +919,10 @@ TEST_F(TileAttachTest, GivenEventWithL0ZebinModuleWhenHandlingEventThenModuleLoa
 
         bool attachedAfterModuleLoaded = false;
         if (rootSession->tileSessions[tile].second == false) {
-            rootSession->tileSessions[tile].second = true;
+            zet_debug_session_handle_t session = nullptr;
+            zet_debug_config_t config = {};
+            config.pid = 0x1234;
+            zetDebugAttach(neoDevice->getSubDevice(tile)->getSpecializedDevice<L0::Device>()->toHandle(), &config, &session);
             attachedAfterModuleLoaded = true;
         }
 
@@ -907,6 +1002,55 @@ TEST_F(TileAttachTest, GivenEventWithL0ZebinModuleWhenHandlingEventThenModuleLoa
                       rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[elfUUID].dataSize,
                   event.info.module.moduleEnd);
     }
+}
+
+TEST_F(TileAttachTest, GivenZebinModuleDestroyedBeforeAttachWhenAttachingThenModuleLoadEventIsNotReported) {
+    uint64_t isaGpuVa2 = 0x340000;
+    uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
+    prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
+    uint64_t vmHandle = vm1;
+
+    vmBindIsa->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
+    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE | PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK;
+    vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 3 * sizeof(typeOfUUID);
+    vmBindIsa->base.seqno = 10;
+    vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
+    vmBindIsa->va_start = isaGpuVa;
+    vmBindIsa->va_length = isaSize;
+    vmBindIsa->vm_handle = vmHandle;
+    vmBindIsa->num_uuids = 4;
+    auto *uuids = reinterpret_cast<typeOfUUID *>(ptrOffset(vmBindIsaData, sizeof(prelim_drm_i915_debug_event_vm_bind)));
+    typeOfUUID uuidsTemp[4];
+    uuidsTemp[0] = static_cast<typeOfUUID>(isaUUID);
+    uuidsTemp[1] = static_cast<typeOfUUID>(cookieUUID);
+    uuidsTemp[2] = static_cast<typeOfUUID>(elfUUID);
+    uuidsTemp[3] = static_cast<typeOfUUID>(zebinModuleUUID);
+
+    memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
+    rootSession->handleEvent(&vmBindIsa->base);
+
+    vmBindIsa->va_start = isaGpuVa2;
+    vmBindIsa->base.seqno = 11;
+
+    rootSession->handleEvent(&vmBindIsa->base);
+
+    EXPECT_EQ(1u, rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule.size());
+    EXPECT_EQ(1u, tileSessions[1]->modules.size());
+    EXPECT_EQ(isaGpuVa2, tileSessions[1]->modules.begin()->second.load);
+
+    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_DESTROY;
+    vmBindIsa->va_start = isaGpuVa2;
+
+    rootSession->handleEvent(&vmBindIsa->base);
+
+    EXPECT_EQ(0u, rootSession->apiEvents.size());
+
+    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_DESTROY;
+    vmBindIsa->va_start = isaGpuVa;
+
+    rootSession->handleEvent(&vmBindIsa->base);
+
+    EXPECT_EQ(0u, tileSessions[1]->modules.size());
 }
 
 } // namespace ult

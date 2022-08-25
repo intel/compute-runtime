@@ -71,6 +71,17 @@ struct DebugSessionWindows : DebugSessionImp {
     bool readModuleDebugArea() override;
     void startAsyncThread() override;
     void closeAsyncThread();
+
+    void attachTile() override {
+        UNRECOVERABLE_IF(true);
+    }
+    void detachTile() override {
+        UNRECOVERABLE_IF(true);
+    }
+    void cleanRootSessionAfterDetach(uint32_t deviceIndex) override {
+        UNRECOVERABLE_IF(true);
+    }
+
     static void *asyncThreadFunction(void *arg);
 
     MOCKABLE_VIRTUAL void getSbaBufferGpuVa(uint64_t &gpuVa);

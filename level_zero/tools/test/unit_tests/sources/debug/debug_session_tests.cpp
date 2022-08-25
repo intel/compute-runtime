@@ -89,6 +89,10 @@ struct MockDebugSession : public L0::DebugSessionImp {
         return ZE_RESULT_SUCCESS;
     }
 
+    void attachTile() override { attachTileCalled = true; };
+    void detachTile() override { detachTileCalled = true; };
+    void cleanRootSessionAfterDetach(uint32_t deviceIndex) override { cleanRootSessionDeviceIndices.push_back(deviceIndex); };
+
     ze_result_t readEvent(uint64_t timeout, zet_debug_event_t *event) override {
         return ZE_RESULT_SUCCESS;
     }
@@ -275,6 +279,10 @@ struct MockDebugSession : public L0::DebugSessionImp {
 
     int returnTimeDiff = -1;
     bool returnStateSaveAreaGpuVa = true;
+
+    bool attachTileCalled = false;
+    bool detachTileCalled = false;
+    std::vector<uint32_t> cleanRootSessionDeviceIndices;
 };
 
 using DebugSessionTest = ::testing::Test;
@@ -2474,6 +2482,7 @@ TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenAttachingToTileDevic
 
     auto subDevice0 = neoDevice->getSubDevice(0)->getSpecializedDevice<Device>();
     auto subDevice1 = neoDevice->getSubDevice(1)->getSpecializedDevice<Device>();
+    auto tileSession1 = static_cast<MockDebugSession *>(sessionMock->tileSessions[1].first);
 
     auto result = zetDebugAttach(subDevice0->toHandle(), &config, &debugSession0);
 
@@ -2485,6 +2494,7 @@ TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenAttachingToTileDevic
 
     EXPECT_NE(nullptr, deviceImp->getDebugSession(config));
 
+    EXPECT_FALSE(tileSession1->attachTileCalled);
     result = zetDebugAttach(subDevice1->toHandle(), &config, &debugSession1);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -2492,12 +2502,18 @@ TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenAttachingToTileDevic
 
     EXPECT_TRUE(sessionMock->tileSessions[1].second);
     EXPECT_EQ(sessionMock->tileSessions[1].first, L0::DebugSession::fromHandle(debugSession1));
+    EXPECT_TRUE(tileSession1->attachTileCalled);
+    EXPECT_FALSE(tileSession1->detachTileCalled);
 
     result = zetDebugDetach(debugSession1);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, deviceImp->getDebugSession(config));
     EXPECT_FALSE(sessionMock->tileSessions[1].second);
+
+    EXPECT_TRUE(tileSession1->detachTileCalled);
+    ASSERT_EQ(1u, sessionMock->cleanRootSessionDeviceIndices.size());
+    EXPECT_EQ(1u, sessionMock->cleanRootSessionDeviceIndices[0]);
 
     result = zetDebugDetach(debugSession0);
 

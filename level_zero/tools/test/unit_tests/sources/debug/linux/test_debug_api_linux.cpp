@@ -400,6 +400,23 @@ TEST(DebugSessionTest, GivenRootDebugSessionWhenCreateTileSessionCalledThenSessi
     EXPECT_NE(nullptr, tileSession);
 }
 
+TEST(DebugSessionTest, GivenRootLinuxSessionWhenCallingTileSepcificFunctionsThenUnrecoverableIsCalled) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+
+    auto mockDrm = new DrmQueryMock(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
+
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSessionLinux>(zet_debug_config_t{0x1234}, &deviceImp, 10);
+    ASSERT_NE(nullptr, sessionMock);
+
+    EXPECT_THROW(sessionMock->attachTile(), std::exception);
+    EXPECT_THROW(sessionMock->detachTile(), std::exception);
+}
+
 using DebugApiLinuxTest = Test<DebugApiLinuxFixture>;
 
 TEST_F(DebugApiLinuxTest, givenDeviceWhenCallingDebugAttachThenSuccessAndValidSessionHandleAreReturned) {
