@@ -201,9 +201,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
 
     this->csr->getResidencyAllocations().reserve(ctx.spaceForResidency);
 
-    this->handleScratchSpaceAndUpdateGSBAStateDirtyFlag(ctx);
-    this->setFrontEndStateProperties(ctx);
-
     linearStreamSizeEstimate += NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite();
 
     NEO::LinearStream child(nullptr);
@@ -212,28 +209,20 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
     }
 
     this->allocateGlobalFenceAndMakeItResident();
-    this->allocateWorkPartitionAndMakeItResident();
     this->allocateTagsManagerHeapsAndMakeThemResidentIfSWTagsEnabled(child);
     this->csr->programHardwareContext(child);
-    this->makeSbaTrackingBufferResidentIfL0DebuggerEnabled(ctx.isDebugEnabled);
 
-    this->programActivePartitionConfig(ctx.isProgramActivePartitionConfigRequired, child);
     this->encodeKernelArgsBufferAndMakeItResident();
 
     this->writeCsrStreamInlineIfLogicalStateHelperAvailable(child);
 
     for (auto i = 0u; i < numCommandLists; ++i) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
-
-        this->patchCommands(*commandList, this->csr->getScratchSpaceController()->getScratchPatchAddress());
         this->programOneCmdListBatchBufferStart(commandList, child);
         this->mergeOneCmdListPipelinedState(commandList);
     }
-    this->collectPrintfContentsFromAllCommandsLists(phCommandLists, numCommandLists);
     this->migrateSharedAllocationsIfRequested(ctx.isMigrationRequested, phCommandLists[0]);
-    this->prefetchMemoryIfRequested(ctx.performMemoryPrefetch);
 
-    this->csr->setPreemptionMode(ctx.statePreemption);
     this->assignCsrTaskCountToFenceIfAvailable(hFence);
 
     this->dispatchTaskCountPostSyncByMiFlushDw(ctx.isDispatchTaskCountPostSyncRequired, child);
