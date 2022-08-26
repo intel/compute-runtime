@@ -73,7 +73,7 @@ enum FAMILY : uint32_t {
     FAMILY_MAX,
 };
 
-static const std::map<std::string, FAMILY> familyAcronyms = {
+inline const std::map<std::string, FAMILY> familyAcronyms = {
 #ifdef SUPPORT_GEN8
     {"gen8", GEN8_FAMILY},
 #endif
@@ -91,7 +91,7 @@ static const std::map<std::string, FAMILY> familyAcronyms = {
 #endif
 };
 
-static const std::map<std::string, RELEASE> releaseAcronyms = {
+inline const std::map<std::string, RELEASE> releaseAcronyms = {
 #ifdef SUPPORT_GEN8
     {"gen8", GEN8_RELEASE},
 #endif
@@ -115,7 +115,7 @@ static const std::map<std::string, RELEASE> releaseAcronyms = {
 #endif
 };
 
-static const std::map<std::string, AOT::PRODUCT_CONFIG> productConfigAcronyms = {
+inline const std::map<std::string, AOT::PRODUCT_CONFIG> productConfigAcronyms = {
 #ifdef SUPPORT_BDW
     {"bdw", BDW},
 #endif
