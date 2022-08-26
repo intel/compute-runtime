@@ -1533,37 +1533,51 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         } else {
             builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferImmediate);
         }
-        uint32_t groupSizeX = builtinFunction->getImmutableData()->getDescriptor().kernelAttributes.simdSize;
-        if (groupSizeX > static_cast<uint32_t>(size)) {
-            groupSizeX = static_cast<uint32_t>(size);
+        const auto dataTypeSize = sizeof(uint32_t) * 4;
+        size_t adjustedSize = std::max(static_cast<size_t>(1u), size / (dataTypeSize));
+        size_t groupSizeX = device->getDeviceInfo().maxWorkGroupSize;
+        if (groupSizeX > adjustedSize) {
+            groupSizeX = adjustedSize;
         }
-        if (builtinFunction->setGroupSize(groupSizeX, 1u, 1u)) {
+        if (builtinFunction->setGroupSize(static_cast<uint32_t>(groupSizeX), 1u, 1u)) {
             DEBUG_BREAK_IF(true);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
 
-        uint32_t value = *(reinterpret_cast<const unsigned char *>(pattern));
+        size_t groups = adjustedSize / groupSizeX;
+        size_t remainingBytes = static_cast<size_t>((adjustedSize % groupSizeX) * dataTypeSize +
+                                                    size % dataTypeSize);
+        ze_group_count_t dispatchFuncArgs{static_cast<uint32_t>(groups), 1u, 1u};
+
+        uint32_t value = 0;
+        memset(&value, *reinterpret_cast<const unsigned char *>(pattern), 4);
         builtinFunction->setArgBufferWithAlloc(0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
         builtinFunction->setArgumentValue(1, sizeof(dstAllocation.offset), &dstAllocation.offset);
         builtinFunction->setArgumentValue(2, sizeof(value), &value);
 
         appendEventForProfilingAllWalkers(signalEvent, true);
 
-        uint32_t groups = static_cast<uint32_t>(size) / groupSizeX;
-        ze_group_count_t dispatchFuncArgs{groups, 1u, 1u};
         res = appendLaunchKernelSplit(builtinFunction, &dispatchFuncArgs, signalEvent, launchParams);
         if (res) {
             return res;
         }
 
-        uint32_t groupRemainderSizeX = static_cast<uint32_t>(size) % groupSizeX;
-        if (groupRemainderSizeX) {
-            builtinFunction->setGroupSize(groupRemainderSizeX, 1u, 1u);
-            ze_group_count_t dispatchFuncRemainderArgs{1u, 1u, 1u};
-
-            size_t dstOffset = dstAllocation.offset + (size - groupRemainderSizeX);
+        if (remainingBytes) {
+            if (isStateless) {
+                builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferImmediateRightLeftOverStateless);
+            } else {
+                builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferImmediateRightLeftOver);
+            }
+            uint32_t groupSizeY = 1, groupSizeZ = 1;
+            uint32_t groupSizeX = static_cast<uint32_t>(remainingBytes);
+            builtinFunction->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ);
+            builtinFunction->setGroupSize(groupSizeX, groupSizeY, groupSizeZ);
+            ze_group_count_t dispatchFuncRemainderArgs{static_cast<uint32_t>(remainingBytes / groupSizeX), 1u, 1u};
+            size_t dstOffset = dstAllocation.offset + (size - remainingBytes);
+            value = *(reinterpret_cast<const unsigned char *>(pattern));
             builtinFunction->setArgBufferWithAlloc(0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
             builtinFunction->setArgumentValue(1, sizeof(dstOffset), &dstOffset);
+            builtinFunction->setArgumentValue(2, sizeof(value), &value);
 
             res = appendLaunchKernelSplit(builtinFunction, &dispatchFuncRemainderArgs, signalEvent, launchParams);
             if (res) {
@@ -1578,7 +1592,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         } else {
             builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferMiddle);
         }
-
         size_t middleElSize = sizeof(uint32_t);
         size_t adjustedSize = size / middleElSize;
         uint32_t groupSizeX = static_cast<uint32_t>(adjustedSize);
