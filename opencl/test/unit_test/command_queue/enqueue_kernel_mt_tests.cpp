@@ -152,12 +152,12 @@ HWTEST_F(EnqueueKernelTest, givenTwoThreadsAndBcsEnabledWhenEnqueueWriteBufferAn
     auto function = [&]() {
         while (!startEnqueueProcess)
             ;
+        cl_int fRetVal;
         for (int i = 0; i < iterationCount; i++) {
-
-            retVal = clEnqueueWriteBuffer(queue, buffer0, false, 0, bufferSize, data, 0, nullptr, nullptr);
-            EXPECT_EQ(CL_SUCCESS, retVal);
-            retVal = clEnqueueNDRangeKernel(queue, kernel, workDim, gws, gwsSize, lws, 0, nullptr, nullptr);
-            EXPECT_EQ(CL_SUCCESS, retVal);
+            fRetVal = clEnqueueWriteBuffer(queue, buffer0, false, 0, bufferSize, data, 0, nullptr, nullptr);
+            EXPECT_EQ(CL_SUCCESS, fRetVal);
+            fRetVal = clEnqueueNDRangeKernel(queue, kernel, workDim, gws, gwsSize, lws, 0, nullptr, nullptr);
+            EXPECT_EQ(CL_SUCCESS, fRetVal);
         }
     };
 
@@ -273,17 +273,19 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledWhenThread1EnqueueWriteBufferAndThrea
     auto functionEnqueueWriteBuffer = [&]() {
         while (!startEnqueueProcess)
             ;
+        cl_int fRetVal;
         for (int i = 0; i < iterationCount; i++) {
-            retVal = clEnqueueWriteBuffer(queue, buffer0, false, 0, bufferSize, data, 0, nullptr, nullptr);
-            EXPECT_EQ(CL_SUCCESS, retVal);
+            fRetVal = clEnqueueWriteBuffer(queue, buffer0, false, 0, bufferSize, data, 0, nullptr, nullptr);
+            EXPECT_EQ(CL_SUCCESS, fRetVal);
         }
     };
     auto functionEnqueueNDRangeKernel = [&]() {
         while (!startEnqueueProcess)
             ;
+        cl_int fRetVal;
         for (int i = 0; i < iterationCount; i++) {
-            retVal = clEnqueueNDRangeKernel(queue, kernel, workDim, gws, gwsSize, lws, 0, nullptr, nullptr);
-            EXPECT_EQ(CL_SUCCESS, retVal);
+            fRetVal = clEnqueueNDRangeKernel(queue, kernel, workDim, gws, gwsSize, lws, 0, nullptr, nullptr);
+            EXPECT_EQ(CL_SUCCESS, fRetVal);
         }
     };
 
@@ -395,26 +397,163 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledAndQueuePerThreadWhenEnqueueWriteBuff
     auto function = [&]() {
         while (!startEnqueueProcess)
             ;
-
-        auto queue = clCreateCommandQueue(context, deviceId, 0, &retVal);
-        EXPECT_EQ(CL_SUCCESS, retVal);
+        cl_int fRetVal;
+        auto queue = clCreateCommandQueue(context, deviceId, 0, &fRetVal);
+        EXPECT_EQ(CL_SUCCESS, fRetVal);
         EXPECT_NE(nullptr, queue);
         for (int i = 0; i < iterationCount; i++) {
 
-            retVal = clEnqueueWriteBuffer(queue, buffer0, false, 0, bufferSize, data, 0, nullptr, nullptr);
-            EXPECT_EQ(CL_SUCCESS, retVal);
-            retVal = clEnqueueNDRangeKernel(queue, kernel, workDim, gws, gwsSize, lws, 0, nullptr, nullptr);
-            EXPECT_EQ(CL_SUCCESS, retVal);
+            fRetVal = clEnqueueWriteBuffer(queue, buffer0, false, 0, bufferSize, data, 0, nullptr, nullptr);
+            EXPECT_EQ(CL_SUCCESS, fRetVal);
+            fRetVal = clEnqueueNDRangeKernel(queue, kernel, workDim, gws, gwsSize, lws, 0, nullptr, nullptr);
+            EXPECT_EQ(CL_SUCCESS, fRetVal);
         }
-        retVal = clFinish(queue);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        retVal = clReleaseCommandQueue(queue);
-        EXPECT_EQ(CL_SUCCESS, retVal);
+        fRetVal = clFinish(queue);
+        EXPECT_EQ(CL_SUCCESS, fRetVal);
+        fRetVal = clReleaseCommandQueue(queue);
+        EXPECT_EQ(CL_SUCCESS, fRetVal);
     };
 
     std::vector<std::thread> threads;
     for (auto thread = 0; thread < threadCount; thread++) {
         threads.push_back(std::thread(function));
+    }
+
+    startEnqueueProcess = true;
+
+    for (auto &thread : threads) {
+        thread.join();
+    }
+
+    retVal = clReleaseMemObject(buffer0);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseMemObject(buffer1);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseKernel(kernel);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseProgram(program);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseContext(context);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+HWTEST_F(EnqueueKernelTest, givenBcsEnabledAndQueuePerThreadWhenHalfQueuesEnqueueWriteBufferAndSecondHalfEnqueueNDRangeKernelInLoopThenIsNoRace) {
+    DebugManagerStateRestore debugRestorer;
+    DebugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(1);
+    HardwareInfo hwInfo = *defaultHwInfo.get();
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    REQUIRE_FULL_BLITTER_OR_SKIP(&hwInfo);
+
+    std::atomic<bool> startEnqueueProcess(false);
+
+    auto iterationCount = 40;
+    const auto threadCount = 10;
+
+    constexpr size_t n = 256;
+    unsigned int data[n] = {};
+    constexpr size_t bufferSize = n * sizeof(unsigned int);
+
+    size_t gws[3] = {1, 0, 0};
+    size_t gwsSize[3] = {n, 1, 1};
+    size_t lws[3] = {1, 1, 1};
+    cl_uint workDim = 1;
+
+    KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
+    std::string testFile;
+    testFile.append(clFiles);
+    testFile.append("CopyBuffer_simd16.cl");
+    size_t sourceSize = 0;
+    auto pSource = loadDataFromFile(testFile.c_str(), sourceSize);
+    EXPECT_NE(0u, sourceSize);
+    EXPECT_NE(nullptr, pSource);
+
+    MockClDevice mockClDevice{MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, pDevice->executionEnvironment, 0)};
+
+    const cl_device_id deviceId = &mockClDevice;
+    auto context = clCreateContext(nullptr, 1, &deviceId, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, context);
+
+    const char *sources[1] = {pSource.get()};
+    auto program = clCreateProgramWithSource(
+        context,
+        1,
+        sources,
+        &sourceSize,
+        &retVal);
+    ASSERT_NE(nullptr, program);
+
+    retVal = clBuildProgram(
+        program,
+        1,
+        &deviceId,
+        nullptr,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto kernel = clCreateKernel(program, "CopyBuffer", &retVal);
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    auto buffer0 = clCreateBuffer(context, flags, bufferSize, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    auto buffer1 = clCreateBuffer(context, flags, bufferSize, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clSetKernelArg(kernel, 0, sizeof(cl_mem), &buffer0);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clSetKernelArg(kernel, 1, sizeof(cl_mem), &buffer1);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    std::vector<std::thread::id> threadsIds;
+    auto functionEnqueueWriteBuffer = [&]() {
+        while (!startEnqueueProcess)
+            ;
+        cl_int fRetVal;
+        auto queue = clCreateCommandQueue(context, deviceId, 0, &fRetVal);
+        EXPECT_EQ(CL_SUCCESS, fRetVal);
+        EXPECT_NE(nullptr, queue);
+        for (int i = 0; i < iterationCount; i++) {
+            fRetVal = clEnqueueWriteBuffer(queue, buffer0, false, 0, bufferSize, data, 0, nullptr, nullptr);
+            EXPECT_EQ(CL_SUCCESS, fRetVal);
+        }
+        fRetVal = clFinish(queue);
+        EXPECT_EQ(CL_SUCCESS, fRetVal);
+        EXPECT_TRUE(NEO::castToObject<MockCommandQueueHw<FamilyType>>(queue)->bcsInitialized);
+        fRetVal = clReleaseCommandQueue(queue);
+        EXPECT_EQ(CL_SUCCESS, fRetVal);
+    };
+    auto functionEnqueueNDRangeKernel = [&]() {
+        while (!startEnqueueProcess)
+            ;
+        cl_int fRetVal;
+        auto queue = clCreateCommandQueue(context, deviceId, 0, &fRetVal);
+        EXPECT_EQ(CL_SUCCESS, fRetVal);
+        EXPECT_NE(nullptr, queue);
+        for (int i = 0; i < iterationCount; i++) {
+            fRetVal = clEnqueueNDRangeKernel(queue, kernel, workDim, gws, gwsSize, lws, 0, nullptr, nullptr);
+            EXPECT_EQ(CL_SUCCESS, fRetVal);
+        }
+        fRetVal = clFinish(queue);
+        EXPECT_EQ(CL_SUCCESS, fRetVal);
+        EXPECT_TRUE(NEO::castToObject<MockCommandQueueHw<FamilyType>>(queue)->bcsInitialized);
+        fRetVal = clReleaseCommandQueue(queue);
+        EXPECT_EQ(CL_SUCCESS, fRetVal);
+    };
+
+    std::vector<std::thread> threads;
+    for (auto thread = 0; thread < threadCount; thread++) {
+        if (thread < threadCount / 2) {
+            threads.push_back(std::thread(functionEnqueueNDRangeKernel));
+        } else {
+            threads.push_back(std::thread(functionEnqueueWriteBuffer));
+        }
     }
 
     startEnqueueProcess = true;
