@@ -23,7 +23,7 @@ namespace ult {
 
 class MockNlDll : public NEO::OsLibrary {
   public:
-    MOCK_METHOD(bool, isLoaded, (), (override));
+    bool isLoaded() override { return false; }
     void *getProcAddress(const std::string &procName) override;
 
     void deleteEntryPoint(const std::string &procName);

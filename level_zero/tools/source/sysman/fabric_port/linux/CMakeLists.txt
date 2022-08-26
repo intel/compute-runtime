@@ -16,8 +16,6 @@ if(NEO_ENABLE_i915_PRELIM_DETECTION)
 
   if(LIBGENL_FOUND)
     set(L0_SRCS_TOOLS_SYSMAN_FABRICPORT_LINUX_ACCESS
-        ${CMAKE_CURRENT_SOURCE_DIR}/iaf_nl_api.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/iaf_nl_api.h
         ${CMAKE_CURRENT_SOURCE_DIR}/fabric_device_access.h
         ${CMAKE_CURRENT_SOURCE_DIR}/fabric_device_access_imp.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/fabric_device_access_imp.h

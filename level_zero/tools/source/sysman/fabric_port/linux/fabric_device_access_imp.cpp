@@ -13,25 +13,67 @@
 
 namespace L0 {
 
-const std::string iafPath = "device/";
-const std::string iafDirectoryLegacy = "iaf.";
-const std::string iafDirectory = "i915.iaf.";
-const std::string fabricIdFile = "/iaf_fabric_id";
+void FabricDeviceAccessNl::readIafPortStatus(zes_fabric_port_state_t &state, const IafPortState &iafPortState) {
+
+    state.failureReasons = 0;
+    state.qualityIssues = 0;
+    switch (iafPortState.healthStatus) {
+    case IAF_FPORT_HEALTH_OFF:
+        state.status = ZES_FABRIC_PORT_STATUS_DISABLED;
+        break;
+    case IAF_FPORT_HEALTH_FAILED:
+        state.status = ZES_FABRIC_PORT_STATUS_FAILED;
+        if (1 == iafPortState.failed || 1 == iafPortState.isolated || 1 == iafPortState.linkDown) {
+            state.failureReasons |= ZES_FABRIC_PORT_FAILURE_FLAG_FAILED;
+        }
+        if (1 == iafPortState.didNotTrain) {
+            state.failureReasons |= ZES_FABRIC_PORT_FAILURE_FLAG_TRAINING_TIMEOUT;
+        }
+        if (1 == iafPortState.flapping) {
+            state.failureReasons |= ZES_FABRIC_PORT_FAILURE_FLAG_FLAPPING;
+        }
+        break;
+    case IAF_FPORT_HEALTH_DEGRADED:
+        state.status = ZES_FABRIC_PORT_STATUS_DEGRADED;
+        if (1 == iafPortState.lqi) {
+            state.qualityIssues |= ZES_FABRIC_PORT_QUAL_ISSUE_FLAG_LINK_ERRORS;
+        }
+        if (1 == iafPortState.lwd || 1 == iafPortState.rate) {
+            state.qualityIssues |= ZES_FABRIC_PORT_QUAL_ISSUE_FLAG_SPEED;
+        }
+        break;
+    case IAF_FPORT_HEALTH_HEALTHY:
+        state.status = ZES_FABRIC_PORT_STATUS_HEALTHY;
+        break;
+    default:
+        state.status = ZES_FABRIC_PORT_STATUS_UNKNOWN;
+        break;
+    }
+}
 
 ze_result_t FabricDeviceAccessNl::getState(const zes_fabric_port_id_t portId, zes_fabric_port_state_t &state) {
-    ze_result_t result = pIafNlApi->fPortStatusQuery(portId, state);
+    IafPortState iafPortState = {};
+    const IafPortId iafPortId(portId.fabricId, portId.attachId, portId.portNumber);
+    ze_result_t result = pIafNlApi->fPortStatusQuery(iafPortId, iafPortState);
     if (ZE_RESULT_SUCCESS != result) {
         return result;
     }
+    readIafPortStatus(state, iafPortState);
+
     uint64_t guid;
     uint8_t portNumber;
-    zes_fabric_port_speed_t maxRxSpeed;
-    zes_fabric_port_speed_t maxTxSpeed;
+    IafPortSpeed maxRxSpeed = {};
+    IafPortSpeed maxTxSpeed = {};
+    IafPortSpeed rxSpeed = {};
+    IafPortSpeed txSpeed = {};
 
-    result = pIafNlApi->fportProperties(portId, guid, portNumber, maxRxSpeed, maxTxSpeed, state.rxSpeed, state.txSpeed);
+    result = pIafNlApi->fportProperties(iafPortId, guid, portNumber, maxRxSpeed, maxTxSpeed, rxSpeed, txSpeed);
     if (ZE_RESULT_SUCCESS != result) {
         return result;
     }
+    readIafPortSpeed(state.rxSpeed, rxSpeed);
+    readIafPortSpeed(state.txSpeed, txSpeed);
+
     switch (state.status) {
     case ZES_FABRIC_PORT_STATUS_HEALTHY:
     case ZES_FABRIC_PORT_STATUS_DEGRADED:
@@ -54,39 +96,51 @@ ze_result_t FabricDeviceAccessNl::getState(const zes_fabric_port_id_t portId, ze
 }
 
 ze_result_t FabricDeviceAccessNl::getThroughput(const zes_fabric_port_id_t portId, zes_fabric_port_throughput_t &througput) {
-    return pIafNlApi->getThroughput(portId, througput);
+    const IafPortId iafPortId(portId.fabricId, portId.attachId, portId.portNumber);
+    IafPortThroughPut iafThroughPut = {};
+    ze_result_t result = pIafNlApi->getThroughput(iafPortId, iafThroughPut);
+    readIafPortThroughPut(througput, iafThroughPut);
+    return result;
 }
 
 ze_result_t FabricDeviceAccessNl::getPortEnabledState(const zes_fabric_port_id_t portId, bool &enabled) {
-    return pIafNlApi->portStateQuery(portId, enabled);
+    const IafPortId iafPortId(portId.fabricId, portId.attachId, portId.portNumber);
+    return pIafNlApi->portStateQuery(iafPortId, enabled);
 }
 
 ze_result_t FabricDeviceAccessNl::getPortBeaconState(const zes_fabric_port_id_t portId, bool &enabled) {
-    return pIafNlApi->portBeaconStateQuery(portId, enabled);
+    const IafPortId iafPortId(portId.fabricId, portId.attachId, portId.portNumber);
+    return pIafNlApi->portBeaconStateQuery(iafPortId, enabled);
 }
 
 ze_result_t FabricDeviceAccessNl::enablePortBeaconing(const zes_fabric_port_id_t portId) {
-    return pIafNlApi->portBeaconEnable(portId);
+    const IafPortId iafPortId(portId.fabricId, portId.attachId, portId.portNumber);
+    return pIafNlApi->portBeaconEnable(iafPortId);
 }
 
 ze_result_t FabricDeviceAccessNl::disablePortBeaconing(const zes_fabric_port_id_t portId) {
-    return pIafNlApi->portBeaconDisable(portId);
+    const IafPortId iafPortId(portId.fabricId, portId.attachId, portId.portNumber);
+    return pIafNlApi->portBeaconDisable(iafPortId);
 }
 
 ze_result_t FabricDeviceAccessNl::enable(const zes_fabric_port_id_t portId) {
-    return pIafNlApi->portEnable(portId);
+    const IafPortId iafPortId(portId.fabricId, portId.attachId, portId.portNumber);
+    return pIafNlApi->portEnable(iafPortId);
 }
 
 ze_result_t FabricDeviceAccessNl::disable(const zes_fabric_port_id_t portId) {
-    return pIafNlApi->portDisable(portId);
+    const IafPortId iafPortId(portId.fabricId, portId.attachId, portId.portNumber);
+    return pIafNlApi->portDisable(iafPortId);
 }
 
 ze_result_t FabricDeviceAccessNl::enableUsage(const zes_fabric_port_id_t portId) {
-    return pIafNlApi->portUsageEnable(portId);
+    const IafPortId iafPortId(portId.fabricId, portId.attachId, portId.portNumber);
+    return pIafNlApi->portUsageEnable(iafPortId);
 }
 
 ze_result_t FabricDeviceAccessNl::disableUsage(const zes_fabric_port_id_t portId) {
-    return pIafNlApi->portUsageDisable(portId);
+    const IafPortId iafPortId(portId.fabricId, portId.attachId, portId.portNumber);
+    return pIafNlApi->portUsageDisable(iafPortId);
 }
 
 ze_result_t FabricDeviceAccessNl::forceSweep() {
@@ -98,13 +152,24 @@ ze_result_t FabricDeviceAccessNl::routingQuery(uint32_t &start, uint32_t &end) {
 }
 
 ze_result_t FabricDeviceAccessNl::getPorts(std::vector<zes_fabric_port_id_t> &ports) {
-    ze_result_t result;
-    result = init();
+
+    std::vector<IafPort> iafPorts = {};
+    std::string iafRealPath = {};
+    pLinuxSysmanImp->getSysfsAccess().getRealPath(iafPath, iafRealPath);
+    ze_result_t result = pIafNlApi->getPorts(iafRealPath, iafPorts);
     if (ZE_RESULT_SUCCESS != result) {
         return result;
     }
+
+    //Update fabricPorts
+    for (const auto &iafPort : iafPorts) {
+        Port port = {};
+        readIafPort(port, iafPort);
+        fabricPorts.push_back(port);
+    }
+
     ports.clear();
-    for (auto port : myPorts) {
+    for (auto port : fabricPorts) {
         ports.push_back(port.portId);
     }
     return ZE_RESULT_SUCCESS;
@@ -112,7 +177,7 @@ ze_result_t FabricDeviceAccessNl::getPorts(std::vector<zes_fabric_port_id_t> &po
 
 void FabricDeviceAccessNl::getProperties(const zes_fabric_port_id_t portId, std::string &model, bool &onSubdevice,
                                          uint32_t &subdeviceId, zes_fabric_port_speed_t &maxRxSpeed, zes_fabric_port_speed_t &maxTxSpeed) {
-    for (auto port : myPorts) {
+    for (auto port : fabricPorts) {
         UNRECOVERABLE_IF(portId.fabricId != port.portId.fabricId);
         if (portId.attachId == port.portId.attachId && portId.portNumber == port.portId.portNumber) {
             model = port.model;
@@ -135,46 +200,6 @@ ze_result_t FabricDeviceAccessNl::getNumSubdevices(const uint32_t fabricId, uint
 
 ze_result_t FabricDeviceAccessNl::getSubdevice(const uint32_t fabricId, const uint32_t subdevice, uint64_t &guid, std::vector<uint8_t> &ports) {
     return pIafNlApi->subdevicePropertiesGet(fabricId, subdevice, guid, ports);
-}
-
-ze_result_t FabricDeviceAccessNl::getPortSpeeds(const zes_fabric_port_id_t portId, zes_fabric_port_speed_t &maxRxSpeed, zes_fabric_port_speed_t &maxTxSpeed) {
-    uint64_t guid;
-    uint8_t portNumber;
-    zes_fabric_port_speed_t rxSpeed;
-    zes_fabric_port_speed_t txSpeed;
-
-    return pIafNlApi->fportProperties(portId, guid, portNumber, maxRxSpeed, maxTxSpeed, rxSpeed, txSpeed);
-}
-
-ze_result_t FabricDeviceAccessNl::initMyPorts(const uint32_t fabricId) {
-    uint32_t numSubdevices;
-
-    if (ZE_RESULT_SUCCESS != getNumSubdevices(fabricId, numSubdevices)) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-    for (uint32_t subdevice = 0; subdevice < numSubdevices; subdevice++) {
-        uint64_t guid;
-        std::vector<uint8_t> ports;
-
-        if (ZE_RESULT_SUCCESS != getSubdevice(fabricId, subdevice, guid, ports)) {
-            myPorts.clear();
-            return ZE_RESULT_ERROR_UNKNOWN;
-        }
-        for (auto port : ports) {
-            Port p;
-            p.onSubdevice = numSubdevices > 1;
-            p.portId.fabricId = fabricId;
-            p.portId.attachId = subdevice;
-            p.portId.portNumber = port;
-            p.model = "XeLink";
-            if (ZE_RESULT_SUCCESS != getPortSpeeds(p.portId, p.maxRxSpeed, p.maxTxSpeed)) {
-                myPorts.clear();
-                return ZE_RESULT_ERROR_UNKNOWN;
-            }
-            myPorts.push_back(p);
-        }
-    }
-    return ZE_RESULT_SUCCESS;
 }
 
 void FabricDeviceAccessNl::populateGuidMap() {
@@ -205,44 +230,6 @@ void FabricDeviceAccessNl::populateGuidMap() {
         }
     }
     return;
-}
-
-ze_result_t FabricDeviceAccessNl::init() {
-    if (myPorts.empty()) {
-        std::string path;
-        path.clear();
-        std::vector<std::string> list;
-        if (ZE_RESULT_SUCCESS != pLinuxSysmanImp->getSysfsAccess().scanDirEntries(iafPath, list)) {
-            // There should be a device directory
-            return ZE_RESULT_ERROR_UNKNOWN;
-        }
-        for (auto entry : list) {
-            if ((!iafDirectoryLegacy.compare(entry.substr(0, iafDirectoryLegacy.length()))) || (!iafDirectory.compare(entry.substr(0, iafDirectory.length())))) {
-                // device/iaf.X/iaf_fabric_id or device/i915.iaf.X/iaf_fabric_id, where X is the hardware slot number
-                path = iafPath + entry + fabricIdFile;
-            }
-        }
-        if (path.empty()) {
-            // This device does not have a fabric
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        }
-        std::string fabricIdStr;
-        fabricIdStr.clear();
-        if (ZE_RESULT_SUCCESS != pLinuxSysmanImp->getSysfsAccess().read(path, fabricIdStr)) {
-            // This device has a fabric, but the iaf module isn't running
-            return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
-        }
-        unsigned long myFabricId = 0UL;
-        size_t end = 0;
-        myFabricId = std::stoul(fabricIdStr, &end, 16);
-        if (fabricIdStr.length() != end || myFabricId > std::numeric_limits<uint32_t>::max()) {
-            return ZE_RESULT_ERROR_UNKNOWN;
-        }
-        if (ZE_RESULT_SUCCESS != initMyPorts(static_cast<uint32_t>(myFabricId))) {
-            return ZE_RESULT_ERROR_UNKNOWN;
-        }
-    }
-    return ZE_RESULT_SUCCESS;
 }
 
 FabricDeviceAccessNl::FabricDeviceAccessNl(OsSysman *pOsSysman) {

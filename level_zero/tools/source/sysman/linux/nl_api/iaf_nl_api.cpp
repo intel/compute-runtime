@@ -7,8 +7,10 @@
 
 #include "iaf_nl_api.h"
 
-#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
+#include "shared/source/utilities/directory.h"
 
+#include <fcntl.h>
 #include <netlink/attr.h>
 #include <netlink/genl/ctrl.h>
 #include <netlink/genl/family.h>
@@ -219,91 +221,47 @@ ze_result_t IafNlApi::handleResponse(const uint16_t cmdOp, struct genl_info *inf
 }
 
 ze_result_t IafNlApi::fPortStatusQueryRsp(struct genl_info *info, void *pOutput) {
-    zes_fabric_port_state_t *pState = reinterpret_cast<zes_fabric_port_state_t *>(pOutput);
+    IafPortState *pState = reinterpret_cast<IafPortState *>(pOutput);
 
     const struct nlmsghdr *nlh = info->nlh;
     auto nla = pNlApi->nlmsgAttrdata(nlh, GENL_HDRLEN);
     auto rem = pNlApi->nlmsgAttrlen(nlh, GENL_HDRLEN);
     for (; pNlApi->nlaOk(nla, rem); nla = pNlApi->nlaNext(nla, &(rem))) {
         if (pNlApi->nlaType(nla) == IAF_ATTR_FABRIC_PORT) {
-            uint8_t healthStatus = 0;
-            uint8_t lqi = 0;
-            uint8_t lwd = 0;
-            uint8_t rate = 0;
-            uint8_t failed = 0;
-            uint8_t isolated = 0;
-            uint8_t flapping = 0;
-            uint8_t linkDown = 0;
-            uint8_t didNotTrain = 0;
-
             auto cur = (struct nlattr *)pNlApi->nlaData(nla);
             auto rem = pNlApi->nlaLen(nla);
             for (; pNlApi->nlaOk(cur, rem); cur = pNlApi->nlaNext(cur, &(rem))) {
                 switch (pNlApi->nlaType(cur)) {
                 case IAF_ATTR_FPORT_HEALTH:
-                    healthStatus = pNlApi->nlaGetU8(cur);
+                    pState->healthStatus = pNlApi->nlaGetU8(cur);
                     break;
                 case IAF_ATTR_FPORT_ISSUE_LQI:
-                    lqi = pNlApi->nlaGetU8(cur);
+                    pState->lqi = pNlApi->nlaGetU8(cur);
                     break;
                 case IAF_ATTR_FPORT_ISSUE_LWD:
-                    lwd = pNlApi->nlaGetU8(cur);
+                    pState->lwd = pNlApi->nlaGetU8(cur);
                     break;
                 case IAF_ATTR_FPORT_ISSUE_RATE:
-                    rate = pNlApi->nlaGetU8(cur);
+                    pState->rate = pNlApi->nlaGetU8(cur);
                     break;
                 case IAF_ATTR_FPORT_ERROR_FAILED:
-                    failed = pNlApi->nlaGetU8(cur);
+                    pState->failed = pNlApi->nlaGetU8(cur);
                     break;
                 case IAF_ATTR_FPORT_ERROR_ISOLATED:
-                    isolated = pNlApi->nlaGetU8(cur);
+                    pState->isolated = pNlApi->nlaGetU8(cur);
                     break;
                 case IAF_ATTR_FPORT_ERROR_FLAPPING:
-                    flapping = pNlApi->nlaGetU8(cur);
+                    pState->flapping = pNlApi->nlaGetU8(cur);
                     break;
                 case IAF_ATTR_FPORT_ERROR_LINK_DOWN:
-                    linkDown = pNlApi->nlaGetU8(cur);
+                    pState->linkDown = pNlApi->nlaGetU8(cur);
                     break;
                 case IAF_ATTR_FPORT_ERROR_DID_NOT_TRAIN:
-                    didNotTrain = pNlApi->nlaGetU8(cur);
+                    pState->didNotTrain = pNlApi->nlaGetU8(cur);
                     break;
                 default:
                     break;
                 }
-            }
-            switch (healthStatus) {
-            case IAF_FPORT_HEALTH_OFF:
-                pState->status = ZES_FABRIC_PORT_STATUS_DISABLED;
-                break;
-            case IAF_FPORT_HEALTH_FAILED:
-                pState->status = ZES_FABRIC_PORT_STATUS_FAILED;
-                pState->failureReasons = 0;
-                if (1 == failed || 1 == isolated || 1 == linkDown) {
-                    pState->failureReasons |= ZES_FABRIC_PORT_FAILURE_FLAG_FAILED;
-                }
-                if (1 == didNotTrain) {
-                    pState->failureReasons |= ZES_FABRIC_PORT_FAILURE_FLAG_TRAINING_TIMEOUT;
-                }
-                if (1 == flapping) {
-                    pState->failureReasons |= ZES_FABRIC_PORT_FAILURE_FLAG_FLAPPING;
-                }
-                break;
-            case IAF_FPORT_HEALTH_DEGRADED:
-                pState->status = ZES_FABRIC_PORT_STATUS_DEGRADED;
-                pState->qualityIssues = 0;
-                if (1 == lqi) {
-                    pState->qualityIssues |= ZES_FABRIC_PORT_QUAL_ISSUE_FLAG_LINK_ERRORS;
-                }
-                if (1 == lwd || 1 == rate) {
-                    pState->qualityIssues |= ZES_FABRIC_PORT_QUAL_ISSUE_FLAG_SPEED;
-                }
-                break;
-            case IAF_FPORT_HEALTH_HEALTHY:
-                pState->status = ZES_FABRIC_PORT_STATUS_HEALTHY;
-                break;
-            default:
-                pState->status = ZES_FABRIC_PORT_STATUS_UNKNOWN;
-                break;
             }
         }
     }
@@ -311,7 +269,7 @@ ze_result_t IafNlApi::fPortStatusQueryRsp(struct genl_info *info, void *pOutput)
 }
 
 ze_result_t IafNlApi::getThroughputRsp(struct genl_info *info, void *pOutput) {
-    zes_fabric_port_throughput_t *pThroughput = reinterpret_cast<zes_fabric_port_throughput_t *>(pOutput);
+    IafPortThroughPut *pThroughput = reinterpret_cast<IafPortThroughPut *>(pOutput);
     pThroughput->txCounter = 0UL;
     pThroughput->rxCounter = 0UL;
     if (info->attrs[IAF_ATTR_FPORT_TX_BYTES]) {
@@ -545,43 +503,43 @@ int32_t IafNlApi::translateWidth(uint8_t width) {
     return -1;
 }
 
-ze_result_t IafNlApi::fPortStatusQuery(const zes_fabric_port_id_t portId, zes_fabric_port_state_t &state) {
+ze_result_t IafNlApi::fPortStatusQuery(const IafPortId portId, IafPortState &state) {
     return issueRequest(IAF_CMD_OP_FPORT_STATUS_QUERY, portId.fabricId, portId.attachId, portId.portNumber, reinterpret_cast<void *>(&state));
 }
 
-ze_result_t IafNlApi::getThroughput(const zes_fabric_port_id_t portId, zes_fabric_port_throughput_t &throughput) {
+ze_result_t IafNlApi::getThroughput(const IafPortId portId, IafPortThroughPut &throughput) {
     return issueRequest(IAF_CMD_OP_FPORT_XMIT_RECV_COUNTS, portId.fabricId, portId.attachId, portId.portNumber, reinterpret_cast<void *>(&throughput));
 }
 
-ze_result_t IafNlApi::portStateQuery(const zes_fabric_port_id_t portId, bool &enabled) {
+ze_result_t IafNlApi::portStateQuery(const IafPortId portId, bool &enabled) {
     return issueRequest(IAF_CMD_OP_PORT_STATE_QUERY, portId.fabricId, portId.attachId, portId.portNumber, reinterpret_cast<void *>(&enabled));
 }
 
-ze_result_t IafNlApi::portBeaconStateQuery(const zes_fabric_port_id_t portId, bool &enabled) {
+ze_result_t IafNlApi::portBeaconStateQuery(const IafPortId portId, bool &enabled) {
     return issueRequest(IAF_CMD_OP_PORT_BEACON_STATE_QUERY, portId.fabricId, portId.attachId, portId.portNumber, reinterpret_cast<void *>(&enabled));
 }
 
-ze_result_t IafNlApi::portBeaconEnable(const zes_fabric_port_id_t portId) {
+ze_result_t IafNlApi::portBeaconEnable(const IafPortId portId) {
     return issueRequest(IAF_CMD_OP_PORT_BEACON_ENABLE, portId.fabricId, portId.attachId, portId.portNumber, nullptr);
 }
 
-ze_result_t IafNlApi::portBeaconDisable(const zes_fabric_port_id_t portId) {
+ze_result_t IafNlApi::portBeaconDisable(const IafPortId portId) {
     return issueRequest(IAF_CMD_OP_PORT_BEACON_DISABLE, portId.fabricId, portId.attachId, portId.portNumber, nullptr);
 }
 
-ze_result_t IafNlApi::portEnable(const zes_fabric_port_id_t portId) {
+ze_result_t IafNlApi::portEnable(const IafPortId portId) {
     return issueRequest(IAF_CMD_OP_PORT_ENABLE, portId.fabricId, portId.attachId, portId.portNumber, nullptr);
 }
 
-ze_result_t IafNlApi::portDisable(const zes_fabric_port_id_t portId) {
+ze_result_t IafNlApi::portDisable(const IafPortId portId) {
     return issueRequest(IAF_CMD_OP_PORT_DISABLE, portId.fabricId, portId.attachId, portId.portNumber, nullptr);
 }
 
-ze_result_t IafNlApi::portUsageEnable(const zes_fabric_port_id_t portId) {
+ze_result_t IafNlApi::portUsageEnable(const IafPortId portId) {
     return issueRequest(IAF_CMD_OP_PORT_USAGE_ENABLE, portId.fabricId, portId.attachId, portId.portNumber, nullptr);
 }
 
-ze_result_t IafNlApi::portUsageDisable(const zes_fabric_port_id_t portId) {
+ze_result_t IafNlApi::portUsageDisable(const IafPortId portId) {
     return issueRequest(IAF_CMD_OP_PORT_USAGE_DISABLE, portId.fabricId, portId.attachId, portId.portNumber, nullptr);
 }
 
@@ -622,9 +580,9 @@ ze_result_t IafNlApi::subdevicePropertiesGet(const uint32_t fabricId, const uint
     return result;
 }
 
-ze_result_t IafNlApi::fportProperties(const zes_fabric_port_id_t portId, uint64_t &neighborGuid, uint8_t &neighborPortNumber,
-                                      zes_fabric_port_speed_t &maxRxSpeed, zes_fabric_port_speed_t &maxTxSpeed,
-                                      zes_fabric_port_speed_t &rxSpeed, zes_fabric_port_speed_t &txSpeed) {
+ze_result_t IafNlApi::fportProperties(const IafPortId portId, uint64_t &neighborGuid, uint8_t &neighborPortNumber,
+                                      IafPortSpeed &maxRxSpeed, IafPortSpeed &maxTxSpeed,
+                                      IafPortSpeed &rxSpeed, IafPortSpeed &txSpeed) {
     PortProperties portProperties;
     portProperties.neighborGuid = 0UL;
     portProperties.neighborPortNumber = 0U;
@@ -724,6 +682,81 @@ void IafNlApi::cleanup() {
     pNlApi->nlSocketFree(nlSock);
     nlSock = nullptr;
     pNlApi->genlUnregisterFamily(&ops);
+}
+
+ze_result_t IafNlApi::initPorts(const uint32_t fabricId, std::vector<IafPort> &iafPorts) {
+    uint32_t numSubdevices;
+
+    if (ZE_RESULT_SUCCESS != fabricDeviceProperties(fabricId, numSubdevices)) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+    for (uint32_t subdevice = 0; subdevice < numSubdevices; subdevice++) {
+        uint64_t guid;
+        std::vector<uint8_t> ports;
+
+        if (ZE_RESULT_SUCCESS != subdevicePropertiesGet(fabricId, subdevice, guid, ports)) {
+            iafPorts.clear();
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
+        for (auto port : ports) {
+            IafPort p = {};
+            IafPortSpeed rxSpeed, txSpeed;
+            uint8_t neighbourPortNumber = 0;
+            uint64_t neighbourGuid = 0;
+            p.onSubdevice = numSubdevices > 1;
+            p.portId.fabricId = fabricId;
+            p.portId.attachId = subdevice;
+            p.portId.portNumber = port;
+            p.model = "XeLink";
+            if (ZE_RESULT_SUCCESS != fportProperties(p.portId, neighbourGuid, neighbourPortNumber,
+                                                     p.maxRxSpeed, p.maxTxSpeed, rxSpeed, txSpeed)) {
+                iafPorts.clear();
+                return ZE_RESULT_ERROR_UNKNOWN;
+            }
+            iafPorts.push_back(p);
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t IafNlApi::getPorts(const std::string &devicePciPath, std::vector<IafPort> &ports) {
+
+    std::string path;
+    path.clear();
+    std::vector<std::string> list = NEO::Directory::getFiles(devicePciPath);
+    for (auto entry : list) {
+        if ((entry.find(iafDirectory) != std::string::npos) ||
+            (entry.find(iafDirectoryLegacy) != std::string::npos)) {
+            path = entry + fabricIdFile;
+            break;
+        }
+    }
+    if (path.empty()) {
+        // This device does not have a fabric
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    std::string fabricIdStr(64, '\0');
+    int fd = NEO::SysCalls::open(path.c_str(), O_RDONLY);
+    if (fd < 0) {
+        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+    }
+
+    ssize_t bytesRead = NEO::SysCalls::pread(fd, fabricIdStr.data(), fabricIdStr.size() - 1, 0);
+    NEO::SysCalls::close(fd);
+    if (bytesRead <= 0) {
+        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+    }
+    unsigned long myFabricId = 0UL;
+    size_t end = 0;
+    myFabricId = std::stoul(fabricIdStr, &end, 16);
+    if (myFabricId > std::numeric_limits<uint32_t>::max()) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+    if (ZE_RESULT_SUCCESS != initPorts(static_cast<uint32_t>(myFabricId), ports)) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 IafNlApi::IafNlApi() {

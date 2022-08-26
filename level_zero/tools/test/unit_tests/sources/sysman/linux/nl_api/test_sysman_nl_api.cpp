@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "mock_nl_api.h"
+#include "mock_nl_dll.h"
 
 extern bool sysmanUltsEnable;
 
