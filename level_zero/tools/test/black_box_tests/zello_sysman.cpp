@@ -94,7 +94,8 @@ void usage() {
                  "\n  -g,   --global                                                                    selectively run device/global operations black box test"
                  "\n  -R,   --ras                                                                       selectively run ras black box test"
                  "\n  -E,   --event                                                                     set and listen to events black box test"
-                 "\n  -r,   --reset force|noforce                                                       selectively run device reset test"
+                 "\n  -r,   --reset force|noforce                                                       selectively run device reset test on all devices"
+                 "\n        [deviceNo]                                                                  optionally run device reset test only on specified device"
                  "\n  -i,   --firmware <image>                                                          selectively run device firmware test <image> is the firmware binary needed to flash"
                  "\n  -F,   --fabricport                                                                selectively run fabricport black box test"
                  "\n  -d,   --diagnostics                                                               selectively run diagnostics black box test"
@@ -1317,7 +1318,7 @@ int main(int argc, char *argv[]) {
     bool pFactorIsSet = true;
     std::vector<std::string> buf;
     uint32_t deviceIndex = 0;
-    while ((opt = getopt_long(argc, argv, "hdpPfsectogmrFEi:C", longOpts, nullptr)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hdpPfsectogmr:FEi:C", longOpts, nullptr)) != -1) {
         switch (opt) {
         case 'h':
             usage();
@@ -1436,9 +1437,19 @@ int main(int argc, char *argv[]) {
                 usage();
                 exit(0);
             }
-            std::for_each(devices.begin(), devices.end(), [&](auto device) {
-                testSysmanReset(device, force);
-            });
+            if (optind < argc) {
+                deviceIndex = static_cast<uint32_t>(std::stoi(argv[optind]));
+                if (deviceIndex >= devices.size()) {
+                    std::cout << "Invalid deviceId specified for device reset" << std::endl;
+                    usage();
+                    exit(0);
+                }
+                testSysmanReset(devices[deviceIndex], force);
+            } else {
+                std::for_each(devices.begin(), devices.end(), [&](auto device) {
+                    testSysmanReset(device, force);
+                });
+            }
             break;
         case 'E':
             std::for_each(devices.begin(), devices.end(), [&](auto device) {
