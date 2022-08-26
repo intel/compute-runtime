@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,12 +9,12 @@
 #include <cstddef>
 #include <cstdint>
 
-static const int ptrGarbageContent[16] = {
+inline const int ptrGarbageContent[16] = {
     0x0131, 0x133, 0xA, 0xEF,
     0x0131, 0x133, 0xA, 0xEF,
     0x0131, 0x133, 0xA, 0xEF,
     0x0131, 0x133, 0xA, 0xEF};
-static const auto ptrGarbage = (void *)ptrGarbageContent;
+inline const auto ptrGarbage = (void *)ptrGarbageContent;
 
 template <typename T>
 inline T ptrOffset(T ptrBefore, size_t offset) {

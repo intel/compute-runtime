@@ -10,7 +10,7 @@
 #include <vector>
 
 namespace NEO {
-static const std::vector<unsigned short> bdwDeviceIds{
+inline const std::vector<unsigned short> bdwDeviceIds{
     0x1602,
     0x160A,
     0x1606,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -188,7 +188,7 @@ struct ArgTypeTraits {
 };
 
 namespace {
-static constexpr auto ArgTypeMetadataSize = sizeof(ArgTypeTraits);
+constexpr auto ArgTypeMetadataSize = sizeof(ArgTypeTraits);
 static_assert(ArgTypeMetadataSize <= 4, "Keep it small");
 } // namespace
 

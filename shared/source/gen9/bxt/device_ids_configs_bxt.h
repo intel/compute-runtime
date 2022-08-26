@@ -10,7 +10,7 @@
 #include <vector>
 
 namespace NEO {
-static const std::vector<unsigned short> bxtDeviceIds{
+inline const std::vector<unsigned short> bxtDeviceIds{
     0x9906,
     0x9907,
     0x0A84,

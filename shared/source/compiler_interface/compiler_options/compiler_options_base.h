@@ -15,29 +15,29 @@
 
 namespace NEO {
 namespace CompilerOptions {
-static constexpr ConstStringRef greaterThan4gbBuffersRequired = "-cl-intel-greater-than-4GB-buffer-required";
-static constexpr ConstStringRef hasBufferOffsetArg = "-cl-intel-has-buffer-offset-arg";
-static constexpr ConstStringRef kernelDebugEnable = "-cl-kernel-debug-enable";
-static constexpr ConstStringRef arch32bit = "-m32";
-static constexpr ConstStringRef arch64bit = "-m64";
-static constexpr ConstStringRef debugKernelEnable = "-cl-kernel-debug-enable";
-static constexpr ConstStringRef optDisable = "-cl-opt-disable";
-static constexpr ConstStringRef argInfo = "-cl-kernel-arg-info";
-static constexpr ConstStringRef gtpinRera = "-cl-intel-gtpin-rera";
-static constexpr ConstStringRef finiteMathOnly = "-cl-finite-math-only";
-static constexpr ConstStringRef fastRelaxedMath = "-cl-fast-relaxed-math";
-static constexpr ConstStringRef preserveVec3Type = "-fpreserve-vec3-type";
-static constexpr ConstStringRef createLibrary = "-create-library";
-static constexpr ConstStringRef generateDebugInfo = "-g";
-static constexpr ConstStringRef bindlessMode = "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode";
-static constexpr ConstStringRef uniformWorkgroupSize = "-cl-uniform-work-group-size";
-static constexpr ConstStringRef forceEmuInt32DivRem = "-cl-intel-force-emu-int32divrem";
-static constexpr ConstStringRef forceEmuInt32DivRemSP = "-cl-intel-force-emu-sp-int32divrem";
-static constexpr ConstStringRef allowZebin = "-cl-intel-allow-zebin";
-static constexpr ConstStringRef enableImageSupport = "-D__IMAGE_SUPPORT__=1";
-static constexpr ConstStringRef optLevel = "-ze-opt-level=O";
-static constexpr ConstStringRef excludeIrFromZebin = "-exclude-ir-from-zebin";
-static constexpr ConstStringRef noRecompiledFromIr = "-Wno-recompiled-from-ir";
+constexpr ConstStringRef greaterThan4gbBuffersRequired = "-cl-intel-greater-than-4GB-buffer-required";
+constexpr ConstStringRef hasBufferOffsetArg = "-cl-intel-has-buffer-offset-arg";
+constexpr ConstStringRef kernelDebugEnable = "-cl-kernel-debug-enable";
+constexpr ConstStringRef arch32bit = "-m32";
+constexpr ConstStringRef arch64bit = "-m64";
+constexpr ConstStringRef debugKernelEnable = "-cl-kernel-debug-enable";
+constexpr ConstStringRef optDisable = "-cl-opt-disable";
+constexpr ConstStringRef argInfo = "-cl-kernel-arg-info";
+constexpr ConstStringRef gtpinRera = "-cl-intel-gtpin-rera";
+constexpr ConstStringRef finiteMathOnly = "-cl-finite-math-only";
+constexpr ConstStringRef fastRelaxedMath = "-cl-fast-relaxed-math";
+constexpr ConstStringRef preserveVec3Type = "-fpreserve-vec3-type";
+constexpr ConstStringRef createLibrary = "-create-library";
+constexpr ConstStringRef generateDebugInfo = "-g";
+constexpr ConstStringRef bindlessMode = "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode";
+constexpr ConstStringRef uniformWorkgroupSize = "-cl-uniform-work-group-size";
+constexpr ConstStringRef forceEmuInt32DivRem = "-cl-intel-force-emu-int32divrem";
+constexpr ConstStringRef forceEmuInt32DivRemSP = "-cl-intel-force-emu-sp-int32divrem";
+constexpr ConstStringRef allowZebin = "-cl-intel-allow-zebin";
+constexpr ConstStringRef enableImageSupport = "-D__IMAGE_SUPPORT__=1";
+constexpr ConstStringRef optLevel = "-ze-opt-level=O";
+constexpr ConstStringRef excludeIrFromZebin = "-exclude-ir-from-zebin";
+constexpr ConstStringRef noRecompiledFromIr = "-Wno-recompiled-from-ir";
 
 constexpr size_t nullterminateSize = 1U;
 constexpr size_t spaceSeparatorSize = 1U;

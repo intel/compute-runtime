@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,9 +15,9 @@
 
 namespace NEO {
 
-static constexpr ConstStringRef llvmBcMagic = "BC\xc0\xde";
-static constexpr ConstStringRef spirvMagic = "\x07\x23\x02\x03";
-static constexpr ConstStringRef spirvMagicInv = "\x03\x02\x23\x07";
+constexpr ConstStringRef llvmBcMagic = "BC\xc0\xde";
+constexpr ConstStringRef spirvMagic = "\x07\x23\x02\x03";
+constexpr ConstStringRef spirvMagicInv = "\x03\x02\x23\x07";
 
 inline bool hasSameMagic(ConstStringRef expectedMagic, ArrayRef<const uint8_t> binary) {
     auto binaryMagicLen = std::min(expectedMagic.size(), binary.size());

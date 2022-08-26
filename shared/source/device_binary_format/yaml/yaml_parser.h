@@ -140,7 +140,7 @@ constexpr const char *consumeStringLiteral(ConstStringRef wholeText, const char 
 
 using TokenId = uint32_t;
 
-static constexpr TokenId invalidTokenId = std::numeric_limits<TokenId>::max();
+constexpr TokenId invalidTokenId = std::numeric_limits<TokenId>::max();
 
 struct Token {
     enum Type : uint8_t { Identifier,
@@ -280,7 +280,7 @@ constexpr ConstStringRef inlineCollectionYamlErrorMsg = "NEO::Yaml : Inline coll
 bool tokenize(ConstStringRef text, LinesCache &outLines, TokensCache &outTokens, std::string &outErrReason, std::string &outWarning);
 
 using NodeId = uint32_t;
-static constexpr NodeId invalidNodeID = std::numeric_limits<NodeId>::max();
+constexpr NodeId invalidNodeID = std::numeric_limits<NodeId>::max();
 
 struct alignas(32) Node {
     TokenId key = invalidTokenId;

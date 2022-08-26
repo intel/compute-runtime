@@ -17,7 +17,7 @@
 
 namespace NEO {
 
-static const size_t maxFlushSubrangeCount = 126;
+inline const size_t maxFlushSubrangeCount = 126;
 struct L3Range {
     static constexpr uint64_t minAlignment = MemoryConstants::pageSize;
     static constexpr uint64_t minAlignmentMask = minAlignment - 1ULL;

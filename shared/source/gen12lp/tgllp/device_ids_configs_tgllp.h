@@ -10,7 +10,7 @@
 #include <vector>
 
 namespace NEO {
-static const std::vector<unsigned short> tgllpDeviceIds{
+inline const std::vector<unsigned short> tgllpDeviceIds{
     0xFF20,
     0x9A49,
     0x9A40,

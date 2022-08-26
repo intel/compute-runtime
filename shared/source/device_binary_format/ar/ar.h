@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,8 +12,8 @@
 namespace NEO {
 namespace Ar {
 
-static constexpr ConstStringRef arMagic = "!<arch>\n";
-static constexpr ConstStringRef arFileEntryTrailingMagic = "\x60\x0A";
+constexpr ConstStringRef arMagic = "!<arch>\n";
+constexpr ConstStringRef arFileEntryTrailingMagic = "\x60\x0A";
 
 struct ArFileEntryHeader {
     char identifier[16] = {'/', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '};
@@ -27,9 +27,9 @@ struct ArFileEntryHeader {
 static_assert(60U == sizeof(ArFileEntryHeader), "");
 
 namespace SpecialFileNames {
-static constexpr ConstStringRef longFileNamesFile = "//";
-static const char longFileNamePrefix = '/';
-static const char fileNameTerminator = '/';
+constexpr ConstStringRef longFileNamesFile = "//";
+constexpr char longFileNamePrefix = '/';
+constexpr char fileNameTerminator = '/';
 } // namespace SpecialFileNames
 
 } // namespace Ar

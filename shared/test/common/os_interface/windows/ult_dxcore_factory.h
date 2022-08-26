@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 #include <dxgi.h>
 
 namespace NEO {
-static constexpr auto error = 1;
+constexpr auto error = 1;
 
 class UltDxCoreAdapter : public IDXCoreAdapter {
   public:

@@ -10,8 +10,8 @@
 #include <vector>
 
 namespace NEO {
-static const std::vector<unsigned short> amlDeviceIds{0x591C};
-static const std::vector<unsigned short> kblDeviceIds{
+inline const std::vector<unsigned short> amlDeviceIds{0x591C};
+inline const std::vector<unsigned short> kblDeviceIds{
     0x5902,
     0x590B,
     0x590A,

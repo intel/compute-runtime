@@ -10,7 +10,7 @@
 #include <vector>
 
 namespace NEO {
-static const std::vector<unsigned short> rklDeviceIds{
+inline const std::vector<unsigned short> rklDeviceIds{
     0x4C80,
     0x4C8A,
     0x4C8B,

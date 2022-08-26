@@ -24,7 +24,7 @@
 
 using namespace NEO;
 
-const int maxHintCounter = 6;
+constexpr int maxHintCounter = 6;
 
 bool containsHint(const char *providedHint, char *userData);
 

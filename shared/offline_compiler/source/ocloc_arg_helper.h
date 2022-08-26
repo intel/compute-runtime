@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-static constexpr auto *oclocStdoutLogName = "stdout.log";
+constexpr auto *oclocStdoutLogName = "stdout.log";
 
 struct Source {
     const uint8_t *data;

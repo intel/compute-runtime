@@ -10,7 +10,7 @@
 #include <vector>
 
 namespace NEO {
-static const std::vector<unsigned short> glkDeviceIds{
+inline const std::vector<unsigned short> glkDeviceIds{
     0x3184,
     0x3185};
 } // namespace NEO

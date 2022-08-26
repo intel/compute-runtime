@@ -10,5 +10,5 @@
 #include <vector>
 
 namespace NEO {
-static const std::vector<unsigned short> lkfDeviceIds{0x9840};
+inline const std::vector<unsigned short> lkfDeviceIds{0x9840};
 } // namespace NEO
