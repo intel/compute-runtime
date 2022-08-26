@@ -29,6 +29,8 @@ enum class Builtin : uint32_t {
     CopyBufferToBufferSideStateless,
     FillBufferImmediate,
     FillBufferImmediateStateless,
+    FillBufferImmediateRightLeftOver,
+    FillBufferImmediateRightLeftOverStateless,
     FillBufferSSHOffset,
     FillBufferSSHOffsetStateless,
     FillBufferMiddle,
