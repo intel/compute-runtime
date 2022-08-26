@@ -14,10 +14,11 @@ namespace NEO {
 template <typename GfxFamily>
 inline void MemorySynchronizationCommands<GfxFamily>::setBarrierExtraProperties(void *barrierCmd, PipeControlArgs &args) {
     auto &pipeControl = *reinterpret_cast<typename GfxFamily::PIPE_CONTROL *>(barrierCmd);
+    auto flushSpecificCaches = DebugManager.flags.FlushSpecificCache.get() > 0 ? DebugManager.flags.FlushSpecificCache.get() : 0;
 
-    pipeControl.setHdcPipelineFlush(args.hdcPipelineFlush);
-    pipeControl.setUnTypedDataPortCacheFlush(args.unTypedDataPortCacheFlush);
-    pipeControl.setCompressionControlSurfaceCcsFlush(args.compressionControlSurfaceCcsFlush);
+    pipeControl.setHdcPipelineFlush(args.hdcPipelineFlush || FlushSpecificCacheHelper::isHdcPipelineFlushSet(flushSpecificCaches));
+    pipeControl.setUnTypedDataPortCacheFlush(args.unTypedDataPortCacheFlush || FlushSpecificCacheHelper::isUnTypedDataPortCacheFlushSet(flushSpecificCaches));
+    pipeControl.setCompressionControlSurfaceCcsFlush(args.compressionControlSurfaceCcsFlush || FlushSpecificCacheHelper::isCompressionControlSurfaceCcsFlushSet(flushSpecificCaches));
     pipeControl.setWorkloadPartitionIdOffsetEnable(args.workloadPartitionOffset);
     pipeControl.setAmfsFlushEnable(args.amfsFlushEnable);
 

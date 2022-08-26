@@ -66,6 +66,8 @@ using IsDG2 = IsProduct<IGFX_DG2>;
 
 using IsPVC = IsProduct<IGFX_PVC>;
 
+using IsXeHPOrAbove = IsAtLeastProduct<IGFX_XE_HP_SDV>;
+
 using IsAtLeastSkl = IsAtLeastProduct<IGFX_SKYLAKE>;
 
 using IsAtMostDg2 = IsAtMostProduct<IGFX_DG2>;

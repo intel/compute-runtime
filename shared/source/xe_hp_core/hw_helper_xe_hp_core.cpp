@@ -113,9 +113,10 @@ void MemorySynchronizationCommands<Family>::setBarrierWaFlags(void *barrierCmd) 
 template <>
 void MemorySynchronizationCommands<Family>::setBarrierExtraProperties(void *barrierCmd, PipeControlArgs &args) {
     auto &pipeControl = *reinterpret_cast<typename Family::PIPE_CONTROL *>(barrierCmd);
+    auto flushSpecificCaches = DebugManager.flags.FlushSpecificCache.get() > 0 ? DebugManager.flags.FlushSpecificCache.get() : 0;
 
-    pipeControl.setHdcPipelineFlush(args.hdcPipelineFlush);
-    pipeControl.setCompressionControlSurfaceCcsFlush(args.compressionControlSurfaceCcsFlush);
+    pipeControl.setHdcPipelineFlush(args.hdcPipelineFlush || FlushSpecificCacheHelper::isHdcPipelineFlushSet(flushSpecificCaches));
+    pipeControl.setCompressionControlSurfaceCcsFlush(args.compressionControlSurfaceCcsFlush || FlushSpecificCacheHelper::isCompressionControlSurfaceCcsFlushSet(flushSpecificCaches));
     pipeControl.setWorkloadPartitionIdOffsetEnable(args.workloadPartitionOffset);
     pipeControl.setAmfsFlushEnable(args.amfsFlushEnable);
 
