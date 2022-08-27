@@ -21,13 +21,13 @@ bool isL3Capable(const GraphicsAllocation &graphicsAllocation);
 template <PRODUCT_FAMILY gfxProduct>
 struct L1CachePolicyHelper {
 
-    static const char *getCachingPolicyOptions(bool isDebuggerActive);
+    static const char *getCachingPolicyOptions();
 
-    static uint32_t getDefaultL1CachePolicy(bool isDebuggerActive);
+    static uint32_t getDefaultL1CachePolicy();
 
     static uint32_t getUncachedL1CachePolicy();
 
-    static uint32_t getL1CachePolicy(bool isDebuggerActive);
+    static uint32_t getL1CachePolicy();
 };
 
 } // namespace NEO

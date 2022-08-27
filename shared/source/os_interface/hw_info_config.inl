@@ -482,8 +482,8 @@ template <PRODUCT_FAMILY gfxProduct>
 bool HwInfoConfigHw<gfxProduct>::isAdjustWalkOrderAvailable(const HardwareInfo &hwInfo) const { return false; }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t HwInfoConfigHw<gfxProduct>::getL1CachePolicy(bool isDebuggerActive) const {
-    return L1CachePolicyHelper<gfxProduct>::getL1CachePolicy(isDebuggerActive);
+uint32_t HwInfoConfigHw<gfxProduct>::getL1CachePolicy() const {
+    return L1CachePolicyHelper<gfxProduct>::getL1CachePolicy();
 }
 
 template <PRODUCT_FAMILY gfxProduct>

@@ -45,7 +45,6 @@ struct StateBaseAddressHelperArgs {
     bool useGlobalAtomics = false;
     bool areMultipleSubDevicesInContext = false;
     bool overrideSurfaceStateBaseAddress = false;
-    bool isDebuggerActive = false;
 };
 
 template <typename GfxFamily>
@@ -61,7 +60,7 @@ struct StateBaseAddressHelper {
     static void appendStateBaseAddressParameters(StateBaseAddressHelperArgs<GfxFamily> &args,
                                                  bool overrideBindlessSurfaceStateBase);
 
-    static void appendExtraCacheSettings(StateBaseAddressHelperArgs<GfxFamily> &args);
+    static void appendExtraCacheSettings(STATE_BASE_ADDRESS *stateBaseAddress, const HardwareInfo *hwInfo);
 
     static void programBindingTableBaseAddress(LinearStream &commandStream, const IndirectHeap &ssh, GmmHelper *gmmHelper);
 

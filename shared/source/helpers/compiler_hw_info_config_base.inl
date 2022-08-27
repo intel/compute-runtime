@@ -26,8 +26,8 @@ void CompilerHwInfoConfigHw<gfxProduct>::adjustHwInfoForIgc(HardwareInfo &hwInfo
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-const char *CompilerHwInfoConfigHw<gfxProduct>::getCachingPolicyOptions(bool isDebuggerActive) const {
-    return L1CachePolicyHelper<gfxProduct>::getCachingPolicyOptions(isDebuggerActive);
+const char *CompilerHwInfoConfigHw<gfxProduct>::getCachingPolicyOptions() const {
+    return L1CachePolicyHelper<gfxProduct>::getCachingPolicyOptions();
 };
 
 } // namespace NEO

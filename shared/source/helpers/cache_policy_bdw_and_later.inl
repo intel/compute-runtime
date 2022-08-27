@@ -11,12 +11,12 @@
 namespace NEO {
 
 template <PRODUCT_FAMILY gfxProduct>
-const char *L1CachePolicyHelper<gfxProduct>::getCachingPolicyOptions(bool isDebuggerActive) {
+const char *L1CachePolicyHelper<gfxProduct>::getCachingPolicyOptions() {
     return nullptr;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t L1CachePolicyHelper<gfxProduct>::getDefaultL1CachePolicy(bool isDebuggerActive) {
+uint32_t L1CachePolicyHelper<gfxProduct>::getDefaultL1CachePolicy() {
     return 0u;
 }
 

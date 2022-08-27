@@ -121,8 +121,8 @@ std::string ModuleTranslationUnit::generateCompilerOptions(const char *buildOpti
     }
     std::string internalOptions = NEO::CompilerOptions::concatenate(internalBuildOptions, BuildOptions::hasBufferOffsetArg);
     auto &neoDevice = *device->getNEODevice();
-    auto isDebuggerActive = neoDevice.getDeviceInfo().debuggerActive;
-    if (isDebuggerActive) {
+
+    if (neoDevice.getDeviceInfo().debuggerActive) {
         if (NEO::SourceLevelDebugger::shouldAppendOptDisable(*device->getSourceLevelDebugger())) {
             NEO::CompilerOptions::concatenateAppend(options, BuildOptions::optDisable);
         }
@@ -139,7 +139,7 @@ std::string ModuleTranslationUnit::generateCompilerOptions(const char *buildOpti
         internalOptions = NEO::CompilerOptions::concatenate(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired);
     }
 
-    NEO::CompilerOptions::concatenateAppend(internalOptions, compilerHwInfoConfig.getCachingPolicyOptions(isDebuggerActive));
+    NEO::CompilerOptions::concatenateAppend(internalOptions, compilerHwInfoConfig.getCachingPolicyOptions());
     return internalOptions;
 }
 

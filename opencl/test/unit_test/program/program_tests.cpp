@@ -1743,7 +1743,7 @@ TEST_F(ProgramTests, whenGetInternalOptionsThenLSCPolicyIsSet) {
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     auto internalOptions = program.getInternalOptions();
     const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    auto expectedPolicy = compilerHwInfoConfig.getCachingPolicyOptions(false);
+    auto expectedPolicy = compilerHwInfoConfig.getCachingPolicyOptions();
     if (expectedPolicy != nullptr) {
         EXPECT_TRUE(CompilerOptions::contains(internalOptions, expectedPolicy));
     } else {

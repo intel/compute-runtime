@@ -393,12 +393,12 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isEvictionIfNecessaryFlagSupported() const {
 }
 
 template <>
-const char *L1CachePolicyHelper<IGFX_UNKNOWN>::getCachingPolicyOptions(bool isDebuggerActive) {
+const char *L1CachePolicyHelper<IGFX_UNKNOWN>::getCachingPolicyOptions() {
     return nullptr;
 }
 
 template <>
-uint32_t L1CachePolicyHelper<IGFX_UNKNOWN>::getDefaultL1CachePolicy(bool isDebuggerActive) {
+uint32_t L1CachePolicyHelper<IGFX_UNKNOWN>::getDefaultL1CachePolicy() {
     return 0u;
 }
 
@@ -408,8 +408,8 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isPrefetcherDisablingInDirectSubmissionRequir
 }
 
 template <>
-uint32_t L1CachePolicyHelper<IGFX_UNKNOWN>::getL1CachePolicy(bool isDebuggerActive) {
-    return L1CachePolicyHelper<IGFX_UNKNOWN>::getDefaultL1CachePolicy(isDebuggerActive);
+uint32_t L1CachePolicyHelper<IGFX_UNKNOWN>::getL1CachePolicy() {
+    return L1CachePolicyHelper<IGFX_UNKNOWN>::getDefaultL1CachePolicy();
 }
 
 template <>

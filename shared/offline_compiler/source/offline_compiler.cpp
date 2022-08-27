@@ -779,7 +779,7 @@ void OfflineCompiler::appendExtraInternalOptions(std::string &internalOptions) {
     if (compilerHwInfoConfig.isForceEmuInt32DivRemSPRequired()) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);
     }
-    CompilerOptions::concatenateAppend(internalOptions, compilerHwInfoConfig.getCachingPolicyOptions(false));
+    CompilerOptions::concatenateAppend(internalOptions, compilerHwInfoConfig.getCachingPolicyOptions());
 }
 
 void OfflineCompiler::parseDebugSettings() {

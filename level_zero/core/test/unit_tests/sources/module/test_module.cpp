@@ -2259,7 +2259,7 @@ HWTEST_F(ModuleTranslationUnitTest, givenInternalOptionsThenLSCCachePolicyIsSet)
     auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
     const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     EXPECT_TRUE(ret);
-    auto expectedPolicy = compilerHwInfoConfig.getCachingPolicyOptions(false);
+    auto expectedPolicy = compilerHwInfoConfig.getCachingPolicyOptions();
     if (expectedPolicy != nullptr) {
         EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find(expectedPolicy), std::string::npos);
     } else {

@@ -52,7 +52,6 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
 
     auto indirectObjectHeapBaseAddress = neoDevice->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), useLocalMemoryForIndirectHeap);
     auto instructionHeapBaseAddress = neoDevice->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), neoDevice->getMemoryManager()->isLocalMemoryUsedForIsa(neoDevice->getRootDeviceIndex()));
-    auto isDebuggerActive = neoDevice->isDebuggerActive() || neoDevice->getDebugger() != nullptr;
 
     NEO::StateBaseAddressHelperArgs<GfxFamily> stateBaseAddressHelperArgs = {
         gsba,                                             // generalStateBase
@@ -73,8 +72,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         false,                                            // isMultiOsContextCapable
         false,                                            // useGlobalAtomics
         false,                                            // areMultipleSubDevicesInContext
-        false,                                            // overrideSurfaceStateBaseAddress
-        isDebuggerActive                                  // isDebuggerActive
+        false                                             // overrideSurfaceStateBaseAddress
     };
 
     NEO::StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(stateBaseAddressHelperArgs);

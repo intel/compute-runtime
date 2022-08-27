@@ -31,7 +31,6 @@ struct EncodeSurfaceStateArgsBase {
     bool useGlobalAtomics = false;
     bool areMultipleSubDevicesInContext = false;
     bool implicitScaling = false;
-    bool isDebuggerActive = false;
 
   protected:
     EncodeSurfaceStateArgsBase() = default;
