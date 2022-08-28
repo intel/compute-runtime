@@ -6,17 +6,21 @@
  */
 
 #pragma once
-#include "shared/source/built_ins/sip_kernel_type.h"
-#include "shared/source/helpers/hw_info.h"
-#include "shared/source/program/program_info.h"
 
+#include "shared/source/built_ins/sip_kernel_type.h"
+
+#include <cstddef>
 #include <memory>
+#include <string>
 #include <vector>
+
 namespace NEO {
 
 class Device;
 class GraphicsAllocation;
 class MemoryManager;
+
+struct HardwareInfo;
 struct RootDeviceEnvironment;
 
 class SipKernel {
@@ -68,4 +72,5 @@ class SipKernel {
     GraphicsAllocation *sipAllocation = nullptr;
     SipKernelType type = SipKernelType::COUNT;
 };
+
 } // namespace NEO

@@ -13,6 +13,8 @@
 
 #include "level_zero/core/source/module/module.h"
 
+#include "igfxfmid.h"
+
 #include <list>
 #include <memory>
 #include <string>

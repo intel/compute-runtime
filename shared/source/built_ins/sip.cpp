@@ -14,6 +14,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -59,7 +60,7 @@ std::vector<char> readFile(const std::string &fileName, size_t &retSize) {
 
 SipKernel::~SipKernel() = default;
 
-SipKernel::SipKernel(SipKernelType type, GraphicsAllocation *sipAlloc, std::vector<char> ssah) : stateSaveAreaHeader(ssah), sipAllocation(sipAlloc), type(type) {
+SipKernel::SipKernel(SipKernelType type, GraphicsAllocation *sipAlloc, std::vector<char> ssah) : stateSaveAreaHeader(std::move(ssah)), sipAllocation(sipAlloc), type(type) {
 }
 
 GraphicsAllocation *SipKernel::getSipAllocation() const {
@@ -74,7 +75,7 @@ size_t SipKernel::getStateSaveAreaSize(Device *device) const {
     auto &hwInfo = device->getHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto maxDbgSurfaceSize = hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
-    auto stateSaveAreaHeader = getStateSaveAreaHeader();
+    const auto &stateSaveAreaHeader = getStateSaveAreaHeader();
     if (stateSaveAreaHeader.empty()) {
         return maxDbgSurfaceSize;
     }
