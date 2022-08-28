@@ -533,7 +533,7 @@ if(BUILD_WITH_L0)
     add_subdirectory_unique(core/test/unit_tests)
     add_subdirectory_unique(core/test/aub_tests)
     add_subdirectory_unique(tools/test/unit_tests)
-    add_subdirectory_unique(experimental/test/unit_tests)
+
   else()
     hide_subdir(core/test/common)
     hide_subdir(core/test/unit_tests)
