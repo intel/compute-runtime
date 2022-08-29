@@ -45,7 +45,7 @@ struct DeviceFixture {
 };
 
 struct DriverHandleGetMemHandlePtrMock : public L0::DriverHandleImp {
-    void *importFdHandle(ze_device_handle_t hDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::GraphicsAllocation **pAloc) override {
+    void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::GraphicsAllocation **pAloc) override {
         if (failHandleLookup) {
             return nullptr;
         }

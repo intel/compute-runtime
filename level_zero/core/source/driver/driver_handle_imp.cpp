@@ -449,8 +449,7 @@ bool DriverHandleImp::isRemoteResourceNeeded(void *ptr, NEO::GraphicsAllocation 
     return (alloc == nullptr || (allocData && ((allocData->gpuAllocations.getGraphicsAllocations().size() - 1) < device->getRootDeviceIndex())));
 }
 
-void *DriverHandleImp::importFdHandle(ze_device_handle_t hDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::GraphicsAllocation **pAlloc) {
-    auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
+void *DriverHandleImp::importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::GraphicsAllocation **pAlloc) {
     NEO::osHandle osHandle = static_cast<NEO::osHandle>(handle);
     NEO::AllocationProperties unifiedMemoryProperties{neoDevice->getRootDeviceIndex(),
                                                       MemoryConstants::pageSize,
@@ -490,8 +489,7 @@ void *DriverHandleImp::importFdHandle(ze_device_handle_t hDevice, ze_ipc_memory_
     return reinterpret_cast<void *>(alloc->getGpuAddress());
 }
 
-void *DriverHandleImp::importFdHandles(ze_device_handle_t hDevice, ze_ipc_memory_flags_t flags, std::vector<NEO::osHandle> handles, NEO::GraphicsAllocation **pAlloc) {
-    auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
+void *DriverHandleImp::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, std::vector<NEO::osHandle> handles, NEO::GraphicsAllocation **pAlloc) {
     NEO::AllocationProperties unifiedMemoryProperties{neoDevice->getRootDeviceIndex(),
                                                       MemoryConstants::pageSize,
                                                       NEO::AllocationType::BUFFER,
@@ -552,19 +550,20 @@ NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
         alloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
         UNRECOVERABLE_IF(alloc == nullptr);
         ze_ipc_memory_flags_t flags = {};
+        uint32_t numHandles = alloc->getNumHandles();
 
-        if (!deviceImp->isSubdevice && deviceImp->isImplicitScalingCapable()) {
-            uint32_t numHandles = alloc->getNumHandles();
+        if (numHandles > 1) {
             UNRECOVERABLE_IF(numHandles == 0);
             std::vector<NEO::osHandle> handles;
             for (uint32_t i = 0; i < numHandles; i++) {
                 int handle = static_cast<int>(alloc->peekInternalHandle(this->getMemoryManager(), i));
                 handles.push_back(handle);
             }
-            peerPtr = this->importFdHandles(device, flags, handles, &alloc);
+            auto neoDevice = device->getNEODevice()->getRootDevice();
+            peerPtr = this->importFdHandles(neoDevice, flags, handles, &alloc);
         } else {
             uint64_t handle = alloc->peekInternalHandle(this->getMemoryManager());
-            peerPtr = this->importFdHandle(device, flags, handle, &alloc);
+            peerPtr = this->importFdHandle(device->getNEODevice(), flags, handle, &alloc);
         }
 
         if (peerPtr == nullptr) {

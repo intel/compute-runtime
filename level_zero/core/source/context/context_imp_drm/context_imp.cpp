@@ -7,8 +7,8 @@
 
 #include "level_zero/core/source/context/context_imp.h"
 
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
-
 namespace L0 {
 
 bool ContextImp::isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice) {
@@ -20,7 +20,7 @@ bool ContextImp::isShareableMemory(const void *exportDesc, bool exportableMemory
 }
 
 void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, ze_ipc_memory_flags_t flags) {
-    return this->driverHandle->importFdHandle(hDevice, flags, handle, nullptr);
+    return this->driverHandle->importFdHandle(Device::fromHandle(hDevice)->getNEODevice(), flags, handle, nullptr);
 }
 
 } // namespace L0

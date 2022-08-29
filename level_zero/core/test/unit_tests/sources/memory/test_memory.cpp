@@ -180,7 +180,7 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     void *ipcPtr;
     NEO::GraphicsAllocation *ipcAlloc = nullptr;
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(context->getDriverHandle());
-    ipcPtr = driverHandleImp->importFdHandles(device->toHandle(), flags, handles, &ipcAlloc);
+    ipcPtr = driverHandleImp->importFdHandles(device->getNEODevice(), flags, handles, &ipcAlloc);
     EXPECT_NE(ipcPtr, nullptr);
     EXPECT_NE(ipcAlloc, nullptr);
 
@@ -230,7 +230,7 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     void *ipcPtr;
     NEO::GraphicsAllocation *ipcAlloc = nullptr;
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(context->getDriverHandle());
-    ipcPtr = driverHandleImp->importFdHandles(device->toHandle(), flags, handles, &ipcAlloc);
+    ipcPtr = driverHandleImp->importFdHandles(device->getNEODevice(), flags, handles, &ipcAlloc);
     EXPECT_NE(ipcPtr, nullptr);
     EXPECT_NE(ipcAlloc, nullptr);
 
@@ -272,6 +272,41 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     void *ipcPtr;
     result = context->openIpcMemHandles(device->toHandle(), numIpcHandles, ipcHandles.data(), flags, &ipcPtr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryExportImportImplicitScalingTest,
+       whenCallingGetImportFdHandleAndAllocationFailsThenNullptrIsReturned) {
+    currMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_ipc_mem_handle_t ipcHandle{};
+    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    uint64_t handle = 0u;
+    memcpy_s(&handle,
+             sizeof(handle),
+             reinterpret_cast<void *>(ipcHandle.data),
+             sizeof(handle));
+
+    ze_ipc_memory_flags_t flags = {};
+    NEO::GraphicsAllocation *ipcAlloc = nullptr;
+    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(context->getDriverHandle());
+    void *ipcPtr = driverHandleImp->importFdHandle(device->getNEODevice(), flags, handle, &ipcAlloc);
+    EXPECT_EQ(ipcPtr, nullptr);
 
     result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1541,7 +1576,7 @@ TEST_F(ContextMemoryTests, givenMultipleSubDevicesWhenAllocatingThenUseCorrectGl
 }
 
 struct DriverHandleFailGetFdMock : public L0::DriverHandleImp {
-    void *importFdHandle(ze_device_handle_t hDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::GraphicsAllocation **pAloc) override {
+    void *importFdHandle(NEO::Device *neoDevicee, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::GraphicsAllocation **pAloc) override {
         importFdHandleCalledTimes++;
         if (mockFd == allocationMap.second) {
             return allocationMap.first;
@@ -3630,7 +3665,7 @@ TEST_F(ImportFdUncachedTests,
        givenCallToImportFdHandleWithUncachedFlagsThenLocallyUncachedResourceIsSet) {
     ze_ipc_memory_flags_t flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
     uint64_t handle = 1;
-    void *ptr = driverHandle->importFdHandle(device->toHandle(), flags, handle, nullptr);
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, nullptr);
     EXPECT_NE(nullptr, ptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -3643,7 +3678,7 @@ TEST_F(ImportFdUncachedTests,
        givenCallToImportFdHandleWithUncachedIpcFlagsThenLocallyUncachedResourceIsSet) {
     ze_ipc_memory_flags_t flags = ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED;
     uint64_t handle = 1;
-    void *ptr = driverHandle->importFdHandle(device->toHandle(), flags, handle, nullptr);
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, nullptr);
     EXPECT_NE(nullptr, ptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -3656,7 +3691,7 @@ TEST_F(ImportFdUncachedTests,
        givenCallToImportFdHandleWithBothUncachedFlagsThenLocallyUncachedResourceIsSet) {
     ze_ipc_memory_flags_t flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED | ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED;
     uint64_t handle = 1;
-    void *ptr = driverHandle->importFdHandle(device->toHandle(), flags, handle, nullptr);
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, nullptr);
     EXPECT_NE(nullptr, ptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -3669,7 +3704,7 @@ TEST_F(ImportFdUncachedTests,
        givenCallToImportFdHandleWithoutUncachedFlagsThenLocallyUncachedResourceIsNotSet) {
     ze_ipc_memory_flags_t flags = {};
     uint64_t handle = 1;
-    void *ptr = driverHandle->importFdHandle(device->toHandle(), flags, handle, nullptr);
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, nullptr);
     EXPECT_NE(nullptr, ptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);

@@ -40,7 +40,7 @@ void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, z
     if (isNTHandle) {
         return this->driverHandle->importNTHandle(hDevice, reinterpret_cast<void *>(handle));
     } else if (driverType == NEO::DriverModelType::DRM) {
-        return this->driverHandle->importFdHandle(hDevice, flags, handle, nullptr);
+        return this->driverHandle->importFdHandle(Device::fromHandle(hDevice)->getNEODevice(), flags, handle, nullptr);
     } else {
         return nullptr;
     }

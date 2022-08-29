@@ -503,8 +503,9 @@ ze_result_t ContextImp::openIpcMemHandles(ze_device_handle_t hDevice,
                  sizeof(handle));
         handles.push_back(static_cast<NEO::osHandle>(handle));
     }
+    auto neoDevice = Device::fromHandle(hDevice)->getNEODevice()->getRootDevice();
 
-    *pptr = this->driverHandle->importFdHandles(hDevice, flags, handles, nullptr);
+    *pptr = this->driverHandle->importFdHandles(neoDevice, flags, handles, nullptr);
     if (nullptr == *pptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
