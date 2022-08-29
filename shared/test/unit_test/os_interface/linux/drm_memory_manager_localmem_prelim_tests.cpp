@@ -1393,10 +1393,24 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSipKernelTypeWhenAllocatingTh
     memoryManager->freeGraphicsMemory(sipAllocation);
 }
 
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenDebugVariableSetWhenAllocatingThenForceHeapAlignment) {
+    DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(static_cast<int32_t>(MemoryConstants::megaByte * 2));
+
+    const auto allocType = AllocationType::KERNEL_ISA_INTERNAL;
+    AllocationProperties properties = {rootDeviceIndex, 0x1000, allocType, device->getDeviceBitfield()};
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+
+    EXPECT_TRUE(isAligned(allocation->getGpuAddress(), MemoryConstants::megaByte * 2));
+    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 using DrmMemoryManagerFailInjectionPrelimTest = Test<DrmMemoryManagerFixturePrelim>;
 
 TEST_F(DrmMemoryManagerFailInjectionPrelimTest, givenEnabledLocalMemoryWhenNewFailsThenAllocateInDevicePoolReturnsStatusErrorAndNullallocation) {
-    mock->ioctl_expected.total = -1; //don't care
+    mock->ioctl_expected.total = -1; // don't care
     class MockGfxPartition : public GfxPartition {
       public:
         MockGfxPartition() : GfxPartition(reservedCpuAddressRange) {

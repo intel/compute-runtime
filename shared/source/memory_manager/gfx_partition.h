@@ -68,7 +68,7 @@ class GfxPartition {
         return getHeap(heapIndex).allocate(size);
     }
 
-    uint64_t heapAllocateWithCustomAlignment(HeapIndex heapIndex, size_t &size, size_t alignment) {
+    MOCKABLE_VIRTUAL uint64_t heapAllocateWithCustomAlignment(HeapIndex heapIndex, size_t &size, size_t alignment) {
         return getHeap(heapIndex).allocateWithCustomAlignment(size, alignment);
     }
 

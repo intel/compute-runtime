@@ -42,6 +42,14 @@ class MockGfxPartition : public GfxPartition {
         return mockGpuVa;
     }
 
+    uint64_t heapAllocateWithCustomAlignment(HeapIndex heapIndex, size_t &size, size_t alignment) override {
+        if (callHeapAllocate) {
+            return getHeap(heapIndex).allocateWithCustomAlignment(size, alignment);
+        }
+        heapAllocateIndex = heapIndex;
+        return mockGpuVa;
+    }
+
     void heapFree(HeapIndex heapIndex, uint64_t ptr, size_t size) override {
         if (callHeapAllocate) {
             getHeap(heapIndex).free(ptr, size);
