@@ -118,6 +118,9 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchKernelAttribute
             ++it;
         }
     }
+
+    constexpr ConstStringRef invalidKernelAttrBeg = "invalid_kernel(";
+    dst.kernelAttributes.flags.isInvalid = (attributes.find(invalidKernelAttrBeg.data()) != std::string::npos);
 }
 
 void populatePointerKernelArg(ArgDescPointer &dst,

@@ -40,6 +40,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                                                                                const CmdListKernelLaunchParams &launchParams) {
     UNRECOVERABLE_IF(kernel == nullptr);
     const auto &kernelDescriptor = kernel->getKernelDescriptor();
+    if (kernelDescriptor.kernelAttributes.flags.isInvalid) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
     appendEventForProfiling(event, true, false);
     const auto functionImmutableData = kernel->getImmutableData();
     auto perThreadScratchSize = std::max<std::uint32_t>(this->getCommandListPerThreadScratchSize(),

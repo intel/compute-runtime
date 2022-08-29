@@ -207,7 +207,8 @@ struct KernelDescriptor {
                 bool requiresImplicitArgs : 1;
                 bool useStackCalls : 1;
                 bool hasRTCalls : 1;
-                bool reserved : 2;
+                bool isInvalid : 1;
+                bool reserved : 1;
             };
             std::array<bool, 3> packed;
         } flags = {};

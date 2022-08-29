@@ -507,6 +507,19 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 }
 
+HWTEST_F(CommandListAppendLaunchKernel, givenInvalidKernelWhenAppendingThenReturnErrorInvalidArgument) {
+    createKernel();
+    const_cast<NEO::KernelDescriptor &>(kernel->getKernelDescriptor()).kernelAttributes.flags.isInvalid = true;
+    ze_result_t returnValue;
+    auto commandList = std::unique_ptr<L0::CommandList>(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ze_group_count_t groupCount{8, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    returnValue = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0U, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
+}
+
 struct CommandListAppendLaunchKernelWithImplicitArgs : CommandListAppendLaunchKernel {
     template <typename FamilyType>
     uint64_t getIndirectHeapOffsetForImplicitArgsBuffer(const Mock<::L0::Kernel> &kernel) {
@@ -629,7 +642,7 @@ HWTEST_F(CommandListAppendLaunchKernelWithImplicitArgs, givenIndirectDispatchWit
 
     EXPECT_EQ(cmd2->getDataDword(), memoryMaskCmd.getDataDword());
 
-    itor++; //MI_MATH_ALU_INST_INLINE doesn't have tagMI_COMMAND_OPCODE, can't find it in cmdList
+    itor++; // MI_MATH_ALU_INST_INLINE doesn't have tagMI_COMMAND_OPCODE, can't find it in cmdList
     EXPECT_NE(itor, cmdList.end());
     itor = find<MI_LOAD_REGISTER_IMM *>(++itor, cmdList.end());
     EXPECT_NE(itor, cmdList.end());
@@ -648,7 +661,7 @@ HWTEST_F(CommandListAppendLaunchKernelWithImplicitArgs, givenIndirectDispatchWit
     itor = find<MI_LOAD_REGISTER_REG *>(++itor, cmdList.end());
     EXPECT_NE(itor, cmdList.end());
 
-    itor++; //MI_MATH_ALU_INST_INLINE doesn't have tagMI_COMMAND_OPCODE, can't find it in cmdList
+    itor++; // MI_MATH_ALU_INST_INLINE doesn't have tagMI_COMMAND_OPCODE, can't find it in cmdList
     EXPECT_NE(itor, cmdList.end());
     itor++;
     EXPECT_NE(itor, cmdList.end());
@@ -658,7 +671,7 @@ HWTEST_F(CommandListAppendLaunchKernelWithImplicitArgs, givenIndirectDispatchWit
     itor = find<MI_LOAD_REGISTER_REG *>(++itor, cmdList.end());
     EXPECT_NE(itor, cmdList.end());
 
-    itor++; //MI_MATH_ALU_INST_INLINE doesn't have tagMI_COMMAND_OPCODE, can't find it in cmdList
+    itor++; // MI_MATH_ALU_INST_INLINE doesn't have tagMI_COMMAND_OPCODE, can't find it in cmdList
     EXPECT_NE(itor, cmdList.end());
     itor++;
     EXPECT_NE(itor, cmdList.end());
@@ -679,7 +692,7 @@ HWTEST_F(CommandListAppendLaunchKernelWithImplicitArgs, givenIndirectDispatchWit
 
     itor = find<MI_LOAD_REGISTER_REG *>(++itor, cmdList.end());
     EXPECT_NE(itor, cmdList.end());
-    itor++; //MI_MATH_ALU_INST_INLINE doesn't have tagMI_COMMAND_OPCODE, can't find it in cmdList
+    itor++; // MI_MATH_ALU_INST_INLINE doesn't have tagMI_COMMAND_OPCODE, can't find it in cmdList
     EXPECT_NE(itor, cmdList.end());
     itor++;
     EXPECT_NE(itor, cmdList.end());

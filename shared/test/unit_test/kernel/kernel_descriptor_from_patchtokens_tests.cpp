@@ -470,6 +470,21 @@ TEST(KernelDescriptorFromPatchtokens, GivenhKernelAttributesThenPopulatesStrings
     NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
     EXPECT_EQ(attribute, kernelDescriptor.kernelMetadata.kernelLanguageAttributes);
     EXPECT_EQ(32U, kernelDescriptor.kernelMetadata.requiredSubGroupSize);
+    EXPECT_FALSE(kernelDescriptor.kernelAttributes.flags.isInvalid);
+}
+
+TEST(KernelDescriptorFromPatchtokens, GivenInvalidKernelAttributeThenInvalidKernelFlagIsSet) {
+    using AttributeInfoToken = iOpenCL::SPatchKernelAttributesInfo;
+    constexpr ConstStringRef attribute = "invalid_kernel(\"uses-fp64-math\")";
+
+    std::vector<uint8_t> tokenStorage(sizeof(AttributeInfoToken) + attribute.size());
+    auto &token = *reinterpret_cast<AttributeInfoToken *>(tokenStorage.data());
+    token.AttributesSize = static_cast<uint32_t>(attribute.size());
+    std::memcpy(tokenStorage.data() + sizeof(AttributeInfoToken), attribute.data(), attribute.length());
+
+    NEO::KernelDescriptor kernelDescriptor;
+    NEO::populateKernelDescriptor(kernelDescriptor, token);
+    EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.isInvalid);
 }
 
 TEST(KernelDescriptorFromPatchtokens, GivenValidKernelWithArgThenMetadataIsProperlyPopulated) {
