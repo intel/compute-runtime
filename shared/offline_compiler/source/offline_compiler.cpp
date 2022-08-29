@@ -11,6 +11,7 @@
 #include "shared/offline_compiler/source/queries.h"
 #include "shared/offline_compiler/source/utilities/get_git_version_info.h"
 #include "shared/source/compiler_interface/compiler_options.h"
+#include "shared/source/compiler_interface/default_cache_config.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
@@ -213,6 +214,18 @@ struct OfflineCompiler::buildInfo {
 
 int OfflineCompiler::buildIrBinary() {
     int retVal = SUCCESS;
+
+    if (allowCaching) {
+        irHash = cache->getCachedFileName(getHardwareInfo(),
+                                          sourceCode,
+                                          options,
+                                          internalOptions);
+        irBinary = cache->loadCachedBinary(irHash, irBinarySize).release();
+        if (irBinary) {
+            return retVal;
+        }
+    }
+
     UNRECOVERABLE_IF(!fclFacade->isInitialized());
     pBuildInfo->intermediateRepresentation = useLlvmText ? IGC::CodeType::llvmLl
                                                          : (useLlvmBc ? IGC::CodeType::llvmBc : preferredIntermediateRepresentation);
@@ -281,6 +294,10 @@ int OfflineCompiler::buildIrBinary() {
 
     updateBuildLog(pBuildInfo->fclOutput->GetBuildLog()->GetMemory<char>(), pBuildInfo->fclOutput->GetBuildLog()->GetSizeRaw());
 
+    if (allowCaching) {
+        cache->cacheBinary(irHash, irBinary, static_cast<uint32_t>(irBinarySize));
+    }
+
     return retVal;
 }
 
@@ -314,54 +331,75 @@ std::string OfflineCompiler::validateInputType(const std::string &input, bool is
 int OfflineCompiler::buildSourceCode() {
     int retVal = SUCCESS;
 
-    do {
-        if (sourceCode.empty()) {
-            retVal = INVALID_PROGRAM;
-            break;
+    if (sourceCode.empty()) {
+        return INVALID_PROGRAM;
+    }
+
+    if (allowCaching) {
+        irHash = cache->getCachedFileName(getHardwareInfo(), sourceCode, options, internalOptions);
+        irBinary = cache->loadCachedBinary(irHash, irBinarySize).release();
+
+        genHash = cache->getCachedFileName(getHardwareInfo(), ArrayRef<const char>(irBinary, irBinarySize), options, internalOptions);
+        genBinary = cache->loadCachedBinary(genHash, genBinarySize).release();
+
+        if (irBinary && genBinary) {
+            if (!CompilerOptions::contains(internalOptions, CompilerOptions::debugKernelEnable))
+                return retVal;
+            else {
+                dbgHash = cache->getCachedFileName(getHardwareInfo(), irHash, options, internalOptions);
+                debugDataBinary = cache->loadCachedBinary(dbgHash, debugDataBinarySize).release();
+                if (debugDataBinary)
+                    return retVal;
+            }
         }
+    }
 
-        UNRECOVERABLE_IF(!igcFacade->isInitialized());
+    UNRECOVERABLE_IF(!igcFacade->isInitialized());
 
-        auto inputTypeWarnings = validateInputType(sourceCode, inputFileLlvm, inputFileSpirV);
-        this->argHelper->printf(inputTypeWarnings.c_str());
+    auto inputTypeWarnings = validateInputType(sourceCode, inputFileLlvm, inputFileSpirV);
+    this->argHelper->printf(inputTypeWarnings.c_str());
 
-        CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> igcOutput;
-        bool inputIsIntermediateRepresentation = inputFileLlvm || inputFileSpirV;
-        if (false == inputIsIntermediateRepresentation) {
-            retVal = buildIrBinary();
-            if (retVal != SUCCESS)
-                break;
+    CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> igcOutput;
+    bool inputIsIntermediateRepresentation = inputFileLlvm || inputFileSpirV;
+    if (false == inputIsIntermediateRepresentation) {
+        retVal = buildIrBinary();
+        if (retVal != SUCCESS)
+            return retVal;
 
-            auto igcTranslationCtx = igcFacade->createTranslationContext(pBuildInfo->intermediateRepresentation, IGC::CodeType::oclGenBin);
-            igcOutput = igcTranslationCtx->Translate(pBuildInfo->fclOutput->GetOutput(), pBuildInfo->fclOptions.get(),
-                                                     pBuildInfo->fclInternalOptions.get(),
-                                                     nullptr, 0);
+        auto igcTranslationCtx = igcFacade->createTranslationContext(pBuildInfo->intermediateRepresentation, IGC::CodeType::oclGenBin);
+        igcOutput = igcTranslationCtx->Translate(pBuildInfo->fclOutput->GetOutput(), pBuildInfo->fclOptions.get(),
+                                                 pBuildInfo->fclInternalOptions.get(),
+                                                 nullptr, 0);
 
-        } else {
-            storeBinary(irBinary, irBinarySize, sourceCode.c_str(), sourceCode.size());
-            isSpirV = inputFileSpirV;
-            auto igcSrc = igcFacade->createConstBuffer(sourceCode.c_str(), sourceCode.size());
-            auto igcOptions = igcFacade->createConstBuffer(options.c_str(), options.size());
-            auto igcInternalOptions = igcFacade->createConstBuffer(internalOptions.c_str(), internalOptions.size());
-            auto igcTranslationCtx = igcFacade->createTranslationContext(inputFileSpirV ? IGC::CodeType::spirV : IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin);
-            igcOutput = igcTranslationCtx->Translate(igcSrc.get(), igcOptions.get(), igcInternalOptions.get(), nullptr, 0);
-        }
-        if (igcOutput == nullptr) {
-            retVal = OUT_OF_HOST_MEMORY;
-            break;
-        }
-        UNRECOVERABLE_IF(igcOutput->GetBuildLog() == nullptr);
-        UNRECOVERABLE_IF(igcOutput->GetOutput() == nullptr);
-        updateBuildLog(igcOutput->GetBuildLog()->GetMemory<char>(), igcOutput->GetBuildLog()->GetSizeRaw());
+    } else {
+        storeBinary(irBinary, irBinarySize, sourceCode.c_str(), sourceCode.size());
+        isSpirV = inputFileSpirV;
+        auto igcSrc = igcFacade->createConstBuffer(sourceCode.c_str(), sourceCode.size());
+        auto igcOptions = igcFacade->createConstBuffer(options.c_str(), options.size());
+        auto igcInternalOptions = igcFacade->createConstBuffer(internalOptions.c_str(), internalOptions.size());
+        auto igcTranslationCtx = igcFacade->createTranslationContext(inputFileSpirV ? IGC::CodeType::spirV : IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin);
+        igcOutput = igcTranslationCtx->Translate(igcSrc.get(), igcOptions.get(), igcInternalOptions.get(), nullptr, 0);
+    }
+    if (igcOutput == nullptr) {
+        return OUT_OF_HOST_MEMORY;
+    }
+    UNRECOVERABLE_IF(igcOutput->GetBuildLog() == nullptr);
+    UNRECOVERABLE_IF(igcOutput->GetOutput() == nullptr);
+    updateBuildLog(igcOutput->GetBuildLog()->GetMemory<char>(), igcOutput->GetBuildLog()->GetSizeRaw());
 
-        if (igcOutput->GetOutput()->GetSizeRaw() != 0) {
-            storeBinary(genBinary, genBinarySize, igcOutput->GetOutput()->GetMemory<char>(), igcOutput->GetOutput()->GetSizeRaw());
-        }
-        if (igcOutput->GetDebugData()->GetSizeRaw() != 0) {
-            storeBinary(debugDataBinary, debugDataBinarySize, igcOutput->GetDebugData()->GetMemory<char>(), igcOutput->GetDebugData()->GetSizeRaw());
-        }
-        retVal = igcOutput->Successful() ? SUCCESS : BUILD_PROGRAM_FAILURE;
-    } while (0);
+    if (igcOutput->GetOutput()->GetSizeRaw() != 0) {
+        storeBinary(genBinary, genBinarySize, igcOutput->GetOutput()->GetMemory<char>(), igcOutput->GetOutput()->GetSizeRaw());
+    }
+    if (igcOutput->GetDebugData()->GetSizeRaw() != 0) {
+        storeBinary(debugDataBinary, debugDataBinarySize, igcOutput->GetDebugData()->GetMemory<char>(), igcOutput->GetDebugData()->GetSizeRaw());
+    }
+    if (allowCaching) {
+        cache->cacheBinary(irHash, irBinary, static_cast<uint32_t>(irBinarySize));
+        cache->cacheBinary(genHash, genBinary, static_cast<uint32_t>(genBinarySize));
+        cache->cacheBinary(dbgHash, debugDataBinary, static_cast<uint32_t>(debugDataBinarySize));
+    }
+
+    retVal = igcOutput->Successful() ? SUCCESS : BUILD_PROGRAM_FAILURE;
 
     return retVal;
 }
@@ -504,6 +542,8 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     std::unique_ptr<char[]> sourceFromFile;
     size_t sourceFromFileSize = 0;
     this->pBuildInfo = std::make_unique<buildInfo>();
+    auto cacheConfig = getDefaultCompilerCacheConfig();
+    cacheDir = cacheConfig.cacheDir;
     retVal = parseCommandLine(numArgs, allArgs);
     if (showHelp) {
         printUsage();
@@ -630,6 +670,11 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         argHelper->printf("Error! IGC initialization failure. Error code = %d\n", igcInitializationResult);
         return igcInitializationResult;
     }
+    if (allowCaching) {
+        cacheConfig.cacheDir = cacheDir;
+        cache = std::make_unique<CompilerCache>(cacheConfig);
+        createDir(cacheConfig.cacheDir);
+    }
 
     return retVal;
 }
@@ -686,6 +731,9 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         } else if (("-out_dir" == currArg) && hasMoreArgs) {
             outputDirectory = argv[argIndex + 1];
             argIndex++;
+        } else if (("-cache_dir" == currArg) && hasMoreArgs) {
+            cacheDir = argv[argIndex + 1];
+            argIndex++;
         } else if ("-q" == currArg) {
             argHelper->getPrinterRef() = MessagePrinter(true);
             quiet = true;
@@ -712,6 +760,8 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
                 break;
             }
             argIndex++;
+        } else if ("-allow_caching" == currArg) {
+            allowCaching = true;
         } else {
             argHelper->printf("Invalid option (arg %d): %s\n", argIndex, argv[argIndex].c_str());
             retVal = INVALID_COMMAND_LINE;
@@ -908,6 +958,13 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
   -out_dir <output_dir>         Optional output directory.
                                 Default is current working directory.
 
+  -allow_caching                Allows caching binaries from compilation (like spirv,
+                                gen or debug data) and loading them by ocloc
+                                when the same program is compiled again.
+
+  -cache_dir <output_dir>       Optional caching directory.
+                                Default directory is "ocloc_cache".
+
   -options <options>            Optional OpenCL C compilation options
                                 as defined by OpenCL specification.
                                 Special options for Vector Compute:
@@ -1023,6 +1080,18 @@ bool OfflineCompiler::generateElfBinary() {
         return true;
     }
 
+    if (allowCaching) {
+        elfHash = cache->getCachedFileName(getHardwareInfo(),
+                                           genHash,
+                                           options,
+                                           internalOptions);
+        auto loadedData = cache->loadCachedBinary(elfHash, elfBinarySize);
+        elfBinary.assign(loadedData.get(), loadedData.get() + elfBinarySize);
+        if (!elfBinary.empty()) {
+            return true;
+        }
+    }
+
     SingleDeviceBinary binary = {};
     binary.buildOptions = this->options;
     binary.intermediateRepresentation = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->irBinary), this->irBinarySize);
@@ -1056,7 +1125,9 @@ bool OfflineCompiler::generateElfBinary() {
     }
 
     this->elfBinary = elfEncoder.encode();
-
+    if (allowCaching) {
+        cache->cacheBinary(elfHash, reinterpret_cast<char *>(elfBinary.data()), static_cast<uint32_t>(this->elfBinary.size()));
+    }
     return true;
 }
 

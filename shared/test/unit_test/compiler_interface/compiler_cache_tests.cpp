@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/global_environment.h"
+#include "shared/test/common/mocks/mock_compiler_cache.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/test_macros/test.h"
@@ -26,25 +27,6 @@
 #include <memory>
 
 using namespace NEO;
-
-class CompilerCacheMock : public CompilerCache {
-  public:
-    CompilerCacheMock() : CompilerCache(CompilerCacheConfig{}) {
-    }
-
-    bool cacheBinary(const std::string kernelFileHash, const char *pBinary, uint32_t binarySize) override {
-        cacheInvoked++;
-        return cacheResult;
-    }
-
-    std::unique_ptr<char[]> loadCachedBinary(const std::string kernelFileHash, size_t &cachedBinarySize) override {
-        return loadResult ? std::unique_ptr<char[]>{new char[1]} : nullptr;
-    }
-
-    bool cacheResult = false;
-    uint32_t cacheInvoked = 0u;
-    bool loadResult = false;
-};
 
 TEST(HashGeneration, givenMisalignedBufferWhenPassedToUpdateFunctionThenProperPtrDataIsUsed) {
     Hash hash;

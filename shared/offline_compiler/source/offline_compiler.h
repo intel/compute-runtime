@@ -25,6 +25,7 @@ namespace NEO {
 
 struct HardwareInfo;
 class OsLibrary;
+class CompilerCache;
 
 std::string convertToPascalCase(const std::string &inString);
 
@@ -111,7 +112,7 @@ All supported acronyms: %s.
     void storeBinary(char *&pDst, size_t &dstSize, const void *pSrc, const size_t srcSize);
     MOCKABLE_VIRTUAL int buildSourceCode();
     MOCKABLE_VIRTUAL std::string validateInputType(const std::string &input, bool isLlvm, bool isSpirv);
-    int buildIrBinary();
+    MOCKABLE_VIRTUAL int buildIrBinary();
     void updateBuildLog(const char *pErrorString, const size_t errorStringSize);
     MOCKABLE_VIRTUAL bool generateElfBinary();
     std::string generateFilePathForIr(const std::string &fileNameBase) {
@@ -144,7 +145,10 @@ All supported acronyms: %s.
     std::string optionsReadFromFile = "";
     std::string internalOptionsReadFromFile = "";
     std::string formatToEnforce = "";
+    std::string irHash, genHash, dbgHash, elfHash;
+    std::string cacheDir;
 
+    bool allowCaching = false;
     bool dumpFiles = true;
     bool useLlvmText = false;
     bool useLlvmBc = false;
@@ -162,6 +166,7 @@ All supported acronyms: %s.
     bool excludeIr = false;
 
     std::vector<uint8_t> elfBinary;
+    size_t elfBinarySize = 0;
     char *genBinary = nullptr;
     size_t genBinarySize = 0;
     char *irBinary = nullptr;
@@ -175,6 +180,7 @@ All supported acronyms: %s.
 
     std::unique_ptr<OclocIgcFacade> igcFacade{nullptr};
     std::unique_ptr<OclocFclFacade> fclFacade{nullptr};
+    std::unique_ptr<CompilerCache> cache;
     IGC::CodeType::CodeType_t preferredIntermediateRepresentation;
 
     OclocArgHelper *argHelper = nullptr;

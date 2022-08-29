@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/offline_compiler/source/offline_compiler.h"
+#include "shared/source/compiler_interface/default_cache_config.h"
 
 #include "opencl/test/unit_test/offline_compiler/mock/mock_argument_helper.h"
 #include "opencl/test/unit_test/offline_compiler/mock/mock_ocloc_fcl_facade.h"
@@ -20,12 +21,19 @@ namespace NEO {
 
 class MockOfflineCompiler : public OfflineCompiler {
   public:
+    using OfflineCompiler::allowCaching;
     using OfflineCompiler::appendExtraInternalOptions;
     using OfflineCompiler::argHelper;
-    using OfflineCompiler::buildIrBinary;
+    using OfflineCompiler::cache;
+    using OfflineCompiler::dbgHash;
+    using OfflineCompiler::debugDataBinary;
+    using OfflineCompiler::debugDataBinarySize;
     using OfflineCompiler::deviceConfig;
     using OfflineCompiler::deviceName;
+    using OfflineCompiler::dumpFiles;
     using OfflineCompiler::elfBinary;
+    using OfflineCompiler::elfBinarySize;
+    using OfflineCompiler::elfHash;
     using OfflineCompiler::excludeIr;
     using OfflineCompiler::fclFacade;
     using OfflineCompiler::forceStatelessToStatefulOptimization;
@@ -33,6 +41,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::genBinarySize;
     using OfflineCompiler::generateFilePathForIr;
     using OfflineCompiler::generateOptsSuffix;
+    using OfflineCompiler::genHash;
     using OfflineCompiler::getStringWithinDelimiters;
     using OfflineCompiler::hwInfo;
     using OfflineCompiler::hwInfoConfig;
@@ -45,6 +54,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::internalOptions;
     using OfflineCompiler::irBinary;
     using OfflineCompiler::irBinarySize;
+    using OfflineCompiler::irHash;
     using OfflineCompiler::isSpirV;
     using OfflineCompiler::options;
     using OfflineCompiler::outputDirectory;
@@ -96,6 +106,13 @@ class MockOfflineCompiler : public OfflineCompiler {
         return OfflineCompiler::build();
     }
 
+    int buildIrBinary() override {
+        if (overrideBuildIrBinaryStatus) {
+            return buildIrBinaryStatus;
+        }
+        return OfflineCompiler::buildIrBinary();
+    }
+
     int buildSourceCode() override {
         if (overrideBuildSourceCodeStatus) {
             return buildSourceCodeStatus;
@@ -128,6 +145,8 @@ class MockOfflineCompiler : public OfflineCompiler {
     }
 
     std::map<std::string, std::string> filesMap{};
+    int buildIrBinaryStatus = 0;
+    bool overrideBuildIrBinaryStatus = false;
     int buildSourceCodeStatus = 0;
     bool overrideBuildSourceCodeStatus = false;
     uint32_t generateElfBinaryCalled = 0u;

@@ -58,6 +58,7 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/encoder_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/iga_wrapper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/iga_wrapper_tests.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/default_cache_config_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/environment.h
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_iga_dll.cpp
