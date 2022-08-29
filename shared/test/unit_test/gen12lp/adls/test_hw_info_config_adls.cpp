@@ -103,4 +103,9 @@ ADLSTEST_F(AdlsHwInfo, givenHwInfoConfigWhenGetCommandsStreamPropertiesSupportTh
     EXPECT_TRUE(hwInfoConfig.getPreemptionDbgPropertyPreemptionModeSupport());
     EXPECT_TRUE(hwInfoConfig.getPreemptionDbgPropertyStateSipSupport());
     EXPECT_TRUE(hwInfoConfig.getPreemptionDbgPropertyCsrSurfaceSupport());
+
+    EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyComputeDispatchAllWalkerSupport());
+    EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyDisableEuFusionSupport());
+    EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyDisableOverDispatchSupport());
+    EXPECT_FALSE(hwInfoConfig.getFrontEndPropertySingleSliceDispatchCcsModeSupport());
 }

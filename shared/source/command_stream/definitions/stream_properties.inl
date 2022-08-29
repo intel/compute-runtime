@@ -44,10 +44,10 @@ struct StateComputeModeProperties {
 };
 
 struct FrontEndPropertiesSupport {
-    bool dispatchAllWalker = false;
-    bool euFusion = false;
-    bool overdispatch = false;
-    bool singleSliceDispatchCcs = false;
+    bool computeDispatchAllWalker = false;
+    bool disableEuFusion = false;
+    bool disableOverdispatch = false;
+    bool singleSliceDispatchCcsMode = false;
 };
 
 struct FrontEndProperties {
@@ -56,13 +56,16 @@ struct FrontEndProperties {
     StreamProperty disableOverdispatch{};
     StreamProperty singleSliceDispatchCcsMode{};
 
-    void setProperties(bool isCooperativeKernel, bool disableEUFusion, bool disableOverdispatch, int32_t engineInstancedDevice,
-                       const HardwareInfo &hwInfo);
+    void setProperties(bool isCooperativeKernel, bool disableEUFusion, bool disableOverdispatch, int32_t engineInstancedDevice, const HardwareInfo &hwInfo);
     void setProperties(const FrontEndProperties &properties);
+    void setPropertySingleSliceDispatchCcsMode(int32_t engineInstancedDevice, const HardwareInfo &hwInfo);
     bool isDirty() const;
 
   protected:
     void clearIsDirty();
+
+    FrontEndPropertiesSupport frontEndPropertiesSupport = {};
+    bool propertiesSupportLoaded = false;
 };
 
 } // namespace NEO

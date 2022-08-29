@@ -31,6 +31,10 @@ struct PVC : public XeHpcCoreFamily {
     struct FrontEndStateSupport {
         static constexpr bool scratchSize = true;
         static constexpr bool privateScratchSize = true;
+        static constexpr bool computeDispatchAllWalker = true;
+        static constexpr bool disableEuFusion = false;
+        static constexpr bool disableOverdispatch = true;
+        static constexpr bool singleSliceDispatchCcsMode = true;
     };
 
     struct StateComputeModeStateSupport {

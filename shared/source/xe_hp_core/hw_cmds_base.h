@@ -37,6 +37,10 @@ struct XeHpCore {
     struct FrontEndStateSupport {
         static constexpr bool scratchSize = true;
         static constexpr bool privateScratchSize = true;
+        static constexpr bool computeDispatchAllWalker = false;
+        static constexpr bool disableEuFusion = false;
+        static constexpr bool disableOverdispatch = true;
+        static constexpr bool singleSliceDispatchCcsMode = true;
     };
 
     struct StateComputeModeStateSupport {

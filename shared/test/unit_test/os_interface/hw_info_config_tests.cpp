@@ -520,3 +520,15 @@ HWTEST_F(HwInfoConfigTest, WhenFillingScmPropertiesSupportThenExpectUseCorrectGe
     EXPECT_EQ(hwInfoConfig->isGrfNumReportedWithScm(), scmPropertiesSupport.largeGrfMode);
     EXPECT_EQ(hwInfoConfig->getScmPropertyDevicePreemptionModeSupport(), scmPropertiesSupport.devicePreemptionMode);
 }
+
+HWTEST_F(HwInfoConfigTest, WhenFillingFrontEndPropertiesSupportThenExpectUseCorrectGetters) {
+    FrontEndPropertiesSupport frontEndPropertiesSupport = {};
+
+    auto hwInfoConfig = HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+
+    hwInfoConfig->fillFrontEndPropertiesSupportStructure(frontEndPropertiesSupport);
+    EXPECT_EQ(hwInfoConfig->getFrontEndPropertyComputeDispatchAllWalkerSupport(), frontEndPropertiesSupport.computeDispatchAllWalker);
+    EXPECT_EQ(hwInfoConfig->getFrontEndPropertyDisableEuFusionSupport(), frontEndPropertiesSupport.disableEuFusion);
+    EXPECT_EQ(hwInfoConfig->getFrontEndPropertyDisableOverDispatchSupport(), frontEndPropertiesSupport.disableOverdispatch);
+    EXPECT_EQ(hwInfoConfig->getFrontEndPropertySingleSliceDispatchCcsModeSupport(), frontEndPropertiesSupport.singleSliceDispatchCcsMode);
+}

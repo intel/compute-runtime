@@ -100,4 +100,9 @@ PVCTEST_F(PVCHwInfoConfig, givenHwInfoConfigWhenGetCommandsStreamPropertiesSuppo
     EXPECT_TRUE(hwInfoConfig.getPreemptionDbgPropertyPreemptionModeSupport());
     EXPECT_TRUE(hwInfoConfig.getPreemptionDbgPropertyStateSipSupport());
     EXPECT_FALSE(hwInfoConfig.getPreemptionDbgPropertyCsrSurfaceSupport());
+
+    EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyComputeDispatchAllWalkerSupport());
+    EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyDisableEuFusionSupport());
+    EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyDisableOverDispatchSupport());
+    EXPECT_TRUE(hwInfoConfig.getFrontEndPropertySingleSliceDispatchCcsModeSupport());
 }

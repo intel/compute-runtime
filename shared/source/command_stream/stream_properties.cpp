@@ -102,14 +102,42 @@ void StateComputeModeProperties::clearIsDirty() {
     clearIsDirtyExtra();
 }
 
-void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableEUFusion, bool disableOverdispatch,
-                                       int32_t engineInstancedDevice, const HardwareInfo &hwInfo) {
+void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableEUFusion, bool disableOverdispatch, int32_t engineInstancedDevice, const HardwareInfo &hwInfo) {
+    if (this->propertiesSupportLoaded == false) {
+        auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+        hwInfoConfig.fillFrontEndPropertiesSupportStructure(this->frontEndPropertiesSupport);
+        this->propertiesSupportLoaded = true;
+    }
+
     clearIsDirty();
 
-    this->computeDispatchAllWalkerEnable.set(isCooperativeKernel);
-    this->disableEUFusion.set(disableEUFusion);
-    this->disableOverdispatch.set(disableOverdispatch);
-    this->singleSliceDispatchCcsMode.set(engineInstancedDevice);
+    if (this->frontEndPropertiesSupport.computeDispatchAllWalker) {
+        this->computeDispatchAllWalkerEnable.set(isCooperativeKernel);
+    }
+
+    if (this->frontEndPropertiesSupport.disableEuFusion) {
+        this->disableEUFusion.set(disableEUFusion);
+    }
+
+    if (frontEndPropertiesSupport.disableOverdispatch) {
+        this->disableOverdispatch.set(disableOverdispatch);
+    }
+
+    if (this->frontEndPropertiesSupport.singleSliceDispatchCcsMode) {
+        this->singleSliceDispatchCcsMode.set(engineInstancedDevice);
+    }
+}
+
+void FrontEndProperties::setPropertySingleSliceDispatchCcsMode(int32_t engineInstancedDevice, const HardwareInfo &hwInfo) {
+    if (this->propertiesSupportLoaded == false) {
+        auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+        hwInfoConfig.fillFrontEndPropertiesSupportStructure(this->frontEndPropertiesSupport);
+        this->propertiesSupportLoaded = true;
+    }
+    this->singleSliceDispatchCcsMode.isDirty = false;
+    if (this->frontEndPropertiesSupport.singleSliceDispatchCcsMode) {
+        this->singleSliceDispatchCcsMode.set(engineInstancedDevice);
+    }
 }
 
 void FrontEndProperties::setProperties(const FrontEndProperties &properties) {

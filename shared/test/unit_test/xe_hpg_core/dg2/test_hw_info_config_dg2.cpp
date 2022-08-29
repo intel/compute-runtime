@@ -91,4 +91,9 @@ DG2TEST_F(TestDg2HwInfoConfig, givenHwInfoConfigWhenGetCommandsStreamPropertiesS
     EXPECT_TRUE(hwInfoConfig.getPreemptionDbgPropertyPreemptionModeSupport());
     EXPECT_TRUE(hwInfoConfig.getPreemptionDbgPropertyStateSipSupport());
     EXPECT_FALSE(hwInfoConfig.getPreemptionDbgPropertyCsrSurfaceSupport());
+
+    EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyComputeDispatchAllWalkerSupport());
+    EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyDisableEuFusionSupport());
+    EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyDisableOverDispatchSupport());
+    EXPECT_TRUE(hwInfoConfig.getFrontEndPropertySingleSliceDispatchCcsModeSupport());
 }

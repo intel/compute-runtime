@@ -360,7 +360,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenUpdateStreamPropertiesIsCalledThenR
     EXPECT_EQ(-1, pCommandList->finalStreamState.frontEndState.disableOverdispatch.value);
 
     const auto &hwInfoConfig = *NEO::HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    int32_t expectedDisableOverdispatch = hwInfoConfig.isDisableOverdispatchAvailable(*defaultHwInfo);
+    int32_t expectedDisableOverdispatch = hwInfoConfig.isDisableOverdispatchAvailable(*defaultHwInfo) ? 1 : 0;
+    expectedDisableOverdispatch = hwInfoConfig.getFrontEndPropertyDisableOverDispatchSupport() ? expectedDisableOverdispatch : -1;
 
     pCommandList->updateStreamProperties(kernel, false, false);
     EXPECT_EQ(expectedDisableOverdispatch, pCommandList->requiredStreamState.frontEndState.disableOverdispatch.value);

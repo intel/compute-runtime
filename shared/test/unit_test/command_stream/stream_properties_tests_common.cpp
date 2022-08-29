@@ -17,6 +17,11 @@
 
 using namespace NEO;
 
+struct MockFrontEndProperties : public FrontEndProperties {
+    using FrontEndProperties::frontEndPropertiesSupport;
+    using FrontEndProperties::propertiesSupportLoaded;
+};
+
 TEST(StreamPropertiesTests, whenPropertyValueIsChangedThenProperStateIsSet) {
     NEO::StreamProperty streamProperty;
 
@@ -46,15 +51,36 @@ TEST(StreamPropertiesTests, whenPropertyValueIsChangedThenProperStateIsSet) {
 
 TEST(StreamPropertiesTests, whenSettingCooperativeKernelPropertiesThenCorrectValueIsSet) {
     StreamProperties properties;
+
+    FrontEndPropertiesSupport frontEndPropertiesSupport = {};
+    auto hwInfoConfig = HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    hwInfoConfig->fillFrontEndPropertiesSupportStructure(frontEndPropertiesSupport);
+
     for (auto isEngineInstanced : ::testing::Bool()) {
         for (auto isCooperativeKernel : ::testing::Bool()) {
             for (auto disableOverdispatch : ::testing::Bool()) {
                 for (auto disableEUFusion : ::testing::Bool()) {
                     properties.frontEndState.setProperties(isCooperativeKernel, disableEUFusion, disableOverdispatch, isEngineInstanced, *defaultHwInfo);
-                    EXPECT_EQ(isCooperativeKernel, properties.frontEndState.computeDispatchAllWalkerEnable.value);
-                    EXPECT_EQ(disableEUFusion, properties.frontEndState.disableEUFusion.value);
-                    EXPECT_EQ(disableOverdispatch, properties.frontEndState.disableOverdispatch.value);
-                    EXPECT_EQ(isEngineInstanced, properties.frontEndState.singleSliceDispatchCcsMode.value);
+                    if (frontEndPropertiesSupport.computeDispatchAllWalker) {
+                        EXPECT_EQ(isCooperativeKernel, properties.frontEndState.computeDispatchAllWalkerEnable.value);
+                    } else {
+                        EXPECT_EQ(-1, properties.frontEndState.computeDispatchAllWalkerEnable.value);
+                    }
+                    if (frontEndPropertiesSupport.disableEuFusion) {
+                        EXPECT_EQ(disableEUFusion, properties.frontEndState.disableEUFusion.value);
+                    } else {
+                        EXPECT_EQ(-1, properties.frontEndState.disableEUFusion.value);
+                    }
+                    if (frontEndPropertiesSupport.disableOverdispatch) {
+                        EXPECT_EQ(disableOverdispatch, properties.frontEndState.disableOverdispatch.value);
+                    } else {
+                        EXPECT_EQ(-1, properties.frontEndState.disableOverdispatch.value);
+                    }
+                    if (frontEndPropertiesSupport.singleSliceDispatchCcsMode) {
+                        EXPECT_EQ(isEngineInstanced, properties.frontEndState.singleSliceDispatchCcsMode.value);
+                    } else {
+                        EXPECT_EQ(-1, properties.frontEndState.singleSliceDispatchCcsMode.value);
+                    }
                 }
             }
         }
@@ -214,4 +240,32 @@ TEST(StreamPropertiesTests, givenOtherStateComputeModePropertiesStructWhenSetPro
 
 TEST(StreamPropertiesTests, givenOtherFrontEndPropertiesStructWhenSetPropertiesIsCalledThenCorrectValuesAreSet) {
     verifySettingPropertiesFromOtherStruct<FrontEndProperties, getAllFrontEndProperties>();
+}
+
+TEST(StreamPropertiesTests, givenSingleDispatchCcsFrontEndPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
+    FrontEndPropertiesSupport fePropertiesSupport{};
+    auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    hwInfoConfig.fillFrontEndPropertiesSupportStructure(fePropertiesSupport);
+
+    MockFrontEndProperties feProperties{};
+    EXPECT_FALSE(feProperties.propertiesSupportLoaded);
+
+    int32_t engineInstancedDevice = 1;
+
+    feProperties.setPropertySingleSliceDispatchCcsMode(engineInstancedDevice, *defaultHwInfo);
+    EXPECT_TRUE(feProperties.propertiesSupportLoaded);
+    if (fePropertiesSupport.singleSliceDispatchCcsMode) {
+        EXPECT_TRUE(feProperties.singleSliceDispatchCcsMode.isDirty);
+        EXPECT_EQ(engineInstancedDevice, feProperties.singleSliceDispatchCcsMode.value);
+    } else {
+        EXPECT_FALSE(feProperties.singleSliceDispatchCcsMode.isDirty);
+        EXPECT_EQ(-1, feProperties.singleSliceDispatchCcsMode.value);
+    }
+
+    feProperties.frontEndPropertiesSupport.singleSliceDispatchCcsMode = true;
+    engineInstancedDevice = 2;
+
+    feProperties.setPropertySingleSliceDispatchCcsMode(engineInstancedDevice, *defaultHwInfo);
+    EXPECT_TRUE(feProperties.singleSliceDispatchCcsMode.isDirty);
+    EXPECT_EQ(engineInstancedDevice, feProperties.singleSliceDispatchCcsMode.value);
 }

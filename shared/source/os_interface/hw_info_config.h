@@ -20,6 +20,7 @@ enum PRODUCT_CONFIG : uint32_t;
 namespace NEO {
 
 struct HardwareInfo;
+struct FrontEndPropertiesSupport;
 struct StateComputeModeProperties;
 struct StateComputeModePropertiesSupport;
 struct PipelineSelectArgs;
@@ -140,6 +141,10 @@ class HwInfoConfig {
 
     virtual bool getFrontEndPropertyScratchSizeSupport() const = 0;
     virtual bool getFrontEndPropertyPrivateScratchSizeSupport() const = 0;
+    virtual bool getFrontEndPropertyComputeDispatchAllWalkerSupport() const = 0;
+    virtual bool getFrontEndPropertyDisableEuFusionSupport() const = 0;
+    virtual bool getFrontEndPropertyDisableOverDispatchSupport() const = 0;
+    virtual bool getFrontEndPropertySingleSliceDispatchCcsModeSupport() const = 0;
 
     virtual bool getScmPropertyThreadArbitrationPolicySupport() const = 0;
     virtual bool getScmPropertyCoherencyRequiredSupport() const = 0;
@@ -156,6 +161,7 @@ class HwInfoConfig {
     virtual bool getPreemptionDbgPropertyCsrSurfaceSupport() const = 0;
 
     virtual void fillScmPropertiesSupportStructure(StateComputeModePropertiesSupport &propertiesSupport) = 0;
+    virtual void fillFrontEndPropertiesSupportStructure(FrontEndPropertiesSupport &propertiesSupport) = 0;
 
     MOCKABLE_VIRTUAL ~HwInfoConfig() = default;
 
@@ -266,6 +272,10 @@ class HwInfoConfigHw : public HwInfoConfig {
 
     bool getFrontEndPropertyScratchSizeSupport() const override;
     bool getFrontEndPropertyPrivateScratchSizeSupport() const override;
+    bool getFrontEndPropertyComputeDispatchAllWalkerSupport() const override;
+    bool getFrontEndPropertyDisableEuFusionSupport() const override;
+    bool getFrontEndPropertyDisableOverDispatchSupport() const override;
+    bool getFrontEndPropertySingleSliceDispatchCcsModeSupport() const override;
 
     bool getScmPropertyThreadArbitrationPolicySupport() const override;
     bool getScmPropertyCoherencyRequiredSupport() const override;
@@ -282,6 +292,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool getPreemptionDbgPropertyCsrSurfaceSupport() const override;
 
     void fillScmPropertiesSupportStructure(StateComputeModePropertiesSupport &propertiesSupport) override;
+    void fillFrontEndPropertiesSupportStructure(FrontEndPropertiesSupport &propertiesSupport) override;
 
   protected:
     HwInfoConfigHw() = default;

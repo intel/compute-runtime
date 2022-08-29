@@ -2291,7 +2291,8 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
 
     finalStreamState.frontEndState.setProperties(isCooperative, kernelAttributes.flags.requiresDisabledEUFusion, disableOverdispatch, -1, hwInfo);
     bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
-    if (finalStreamState.frontEndState.isDirty() && isPatchingVfeStateAllowed && !getLogicalStateHelper()) {
+    auto logicalStateHelperBlock = !getLogicalStateHelper();
+    if (finalStreamState.frontEndState.isDirty() && isPatchingVfeStateAllowed && logicalStateHelperBlock) {
         auto pVfeStateAddress = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(commandContainer.getCommandStream(), hwInfo, engineGroupType);
         auto pVfeState = new VFE_STATE_TYPE;
         NEO::PreambleHelper<GfxFamily>::programVfeState(pVfeState, hwInfo, 0, 0, device->getMaxNumHwThreads(), finalStreamState, nullptr);
@@ -2300,7 +2301,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
 
     finalStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), hwInfo);
 
-    if (finalStreamState.stateComputeMode.isDirty() && !getLogicalStateHelper()) {
+    if (finalStreamState.stateComputeMode.isDirty() && logicalStateHelperBlock) {
         bool isRcs = (this->engineGroupType == NEO::EngineGroupType::RenderCompute);
         NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommandWithSynchronization(
             *commandContainer.getCommandStream(), finalStreamState.stateComputeMode, {}, false, hwInfo, isRcs, nullptr);

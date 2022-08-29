@@ -41,4 +41,9 @@ XEHPTEST_F(HwInfoConfigTestXeHpSdv, givenHwInfoConfigWhenGetCommandsStreamProper
     EXPECT_TRUE(hwInfoConfig.getPreemptionDbgPropertyPreemptionModeSupport());
     EXPECT_TRUE(hwInfoConfig.getPreemptionDbgPropertyStateSipSupport());
     EXPECT_FALSE(hwInfoConfig.getPreemptionDbgPropertyCsrSurfaceSupport());
+
+    EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyComputeDispatchAllWalkerSupport());
+    EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyDisableEuFusionSupport());
+    EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyDisableOverDispatchSupport());
+    EXPECT_TRUE(hwInfoConfig.getFrontEndPropertySingleSliceDispatchCcsModeSupport());
 }

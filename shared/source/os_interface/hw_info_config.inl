@@ -592,4 +592,36 @@ bool HwInfoConfigHw<gfxProduct>::getFrontEndPropertyPrivateScratchSizeSupport() 
     return GfxProduct::FrontEndStateSupport::privateScratchSize;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::getFrontEndPropertyComputeDispatchAllWalkerSupport() const {
+    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
+    return GfxProduct::FrontEndStateSupport::computeDispatchAllWalker;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::getFrontEndPropertyDisableEuFusionSupport() const {
+    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
+    return GfxProduct::FrontEndStateSupport::disableEuFusion;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::getFrontEndPropertyDisableOverDispatchSupport() const {
+    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
+    return GfxProduct::FrontEndStateSupport::disableOverdispatch;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::getFrontEndPropertySingleSliceDispatchCcsModeSupport() const {
+    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
+    return GfxProduct::FrontEndStateSupport::singleSliceDispatchCcsMode;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+void HwInfoConfigHw<gfxProduct>::fillFrontEndPropertiesSupportStructure(FrontEndPropertiesSupport &propertiesSupport) {
+    propertiesSupport.computeDispatchAllWalker = getFrontEndPropertyComputeDispatchAllWalkerSupport();
+    propertiesSupport.disableEuFusion = getFrontEndPropertyDisableEuFusionSupport();
+    propertiesSupport.disableOverdispatch = getFrontEndPropertyDisableOverDispatchSupport();
+    propertiesSupport.singleSliceDispatchCcsMode = getFrontEndPropertySingleSliceDispatchCcsModeSupport();
+}
+
 } // namespace NEO

@@ -597,7 +597,7 @@ void CommandQueueHw<gfxCoreFamily>::setFrontEndStateProperties(CommandListExecut
         streamProperties.frontEndState.setProperties(ctx.anyCommandListWithCooperativeKernels, ctx.anyCommandListRequiresDisabledEUFusion,
                                                      disableOverdispatch, isEngineInstanced, hwInfo);
     } else {
-        streamProperties.frontEndState.singleSliceDispatchCcsMode.set(isEngineInstanced);
+        streamProperties.frontEndState.setPropertySingleSliceDispatchCcsMode(isEngineInstanced, hwInfo);
     }
     ctx.frontEndStateDirty |= (streamProperties.frontEndState.isDirty() && !this->csr->getLogicalStateHelper());
     ctx.frontEndStateDirty |= csr->getMediaVFEStateDirty();

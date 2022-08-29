@@ -29,6 +29,10 @@ struct Gen9 {
     struct FrontEndStateSupport {
         static constexpr bool scratchSize = true;
         static constexpr bool privateScratchSize = false;
+        static constexpr bool computeDispatchAllWalker = false;
+        static constexpr bool disableEuFusion = false;
+        static constexpr bool disableOverdispatch = false;
+        static constexpr bool singleSliceDispatchCcsMode = false;
     };
 
     struct StateComputeModeStateSupport {
