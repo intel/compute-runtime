@@ -29,6 +29,7 @@ constexpr ConstStringRef fastRelaxedMath = "-cl-fast-relaxed-math";
 constexpr ConstStringRef preserveVec3Type = "-fpreserve-vec3-type";
 constexpr ConstStringRef createLibrary = "-create-library";
 constexpr ConstStringRef generateDebugInfo = "-g";
+constexpr ConstStringRef generateSourcePath = "-s";
 constexpr ConstStringRef bindlessMode = "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode";
 constexpr ConstStringRef uniformWorkgroupSize = "-cl-uniform-work-group-size";
 constexpr ConstStringRef forceEmuInt32DivRem = "-cl-intel-force-emu-int32divrem";
@@ -175,6 +176,8 @@ bool operator==(const ConstConcatenation<MaxLength> &lhs, const ConstStringRef &
 bool contains(const char *options, ConstStringRef optionToFind);
 
 bool contains(const std::string &options, ConstStringRef optionToFind);
+
+std::string wrapInQuotes(const std::string &stringToWrap);
 
 using TokenizedString = StackVec<ConstStringRef, 32>;
 TokenizedString tokenize(ConstStringRef src, char sperator = ' ');
