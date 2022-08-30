@@ -7,10 +7,6 @@
 
 #pragma once
 
-#include "shared/source/command_stream/csr_definitions.h"
-
-#include "level_zero/core/source/cmdqueue/cmdqueue.h"
-#include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include <level_zero/ze_api.h>
 
 #include <chrono>
@@ -19,6 +15,8 @@
 struct _ze_fence_handle_t {};
 
 namespace L0 {
+
+struct CommandQueueImp;
 
 struct Fence : _ze_fence_handle_t {
     static Fence *create(CommandQueueImp *cmdQueue, const ze_fence_desc_t *desc);

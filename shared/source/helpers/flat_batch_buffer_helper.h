@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@ namespace NEO {
 enum class DispatchMode;
 class MemoryManager;
 class ExecutionEnvironment;
+struct HardwareInfo;
 
 class FlatBatchBufferHelper {
   public:

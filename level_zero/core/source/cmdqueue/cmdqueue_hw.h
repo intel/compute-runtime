@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/helpers/hw_info.h"
+
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 
 namespace NEO {

@@ -8,9 +8,8 @@
 #include "level_zero/core/source/fence/fence.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/helpers/constants.h"
-#include "shared/source/helpers/string.h"
-#include "shared/source/memory_manager/memory_manager.h"
+
+#include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 
 namespace L0 {
 

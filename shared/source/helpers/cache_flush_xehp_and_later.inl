@@ -11,6 +11,8 @@
 
 namespace NEO {
 
+struct HardwareInfo;
+
 template <typename GfxFamily>
 inline size_t getSizeNeededToFlushGpuCache(const Range<L3Range> &ranges, bool usePostSync) {
     size_t size = sizeof(typename GfxFamily::L3_CONTROL) * (ranges.size() / maxFlushSubrangeCount + 1);

@@ -10,6 +10,7 @@
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/helpers/completion_stamp.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 
