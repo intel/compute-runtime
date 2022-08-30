@@ -70,7 +70,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     GeneralSurface mapSurface;
     Surface *surfaces[] = {&dstBufferSurf, nullptr};
 
-    auto bcsSplit = this->isSplitEnqueueBlitNeeded(csrSelectionArgs.direction, csr);
+    auto bcsSplit = this->isSplitEnqueueBlitNeeded(csrSelectionArgs.direction, getTotalSizeFromRectRegion(region), csr);
 
     if (region[0] != 0 && region[1] != 0 && region[2] != 0) {
         if (mapAllocation) {

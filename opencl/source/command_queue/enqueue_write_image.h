@@ -59,7 +59,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
     GeneralSurface mapSurface;
     Surface *surfaces[] = {&dstImgSurf, nullptr};
 
-    auto bcsSplit = this->isSplitEnqueueBlitNeeded(csrSelectionArgs.direction, csr);
+    auto bcsSplit = this->isSplitEnqueueBlitNeeded(csrSelectionArgs.direction, getTotalSizeFromRectRegion(region), csr);
 
     if (mapAllocation) {
         surfaces[1] = &mapSurface;

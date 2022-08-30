@@ -1115,9 +1115,12 @@ bool CommandQueueHw<GfxFamily>::isSplitEnqueueBlitSupported() {
 }
 
 template <typename GfxFamily>
-bool CommandQueueHw<GfxFamily>::isSplitEnqueueBlitNeeded(TransferDirection transferDirection, CommandStreamReceiver &csr) {
+bool CommandQueueHw<GfxFamily>::isSplitEnqueueBlitNeeded(TransferDirection transferDirection, size_t transferSize, CommandStreamReceiver &csr) {
+    constexpr size_t minimalSizeForBcsSplit = 16 * MemoryConstants::megaByte;
+
     auto bcsSplit = isSplitEnqueueBlitSupported() &&
                     csr.getOsContext().getEngineType() == aub_stream::EngineType::ENGINE_BCS &&
+                    transferSize >= minimalSizeForBcsSplit &&
                     (transferDirection == TransferDirection::HostToLocal ||
                      transferDirection == TransferDirection::LocalToHost);
 
@@ -1126,6 +1129,14 @@ bool CommandQueueHw<GfxFamily>::isSplitEnqueueBlitNeeded(TransferDirection trans
     }
 
     return bcsSplit;
+}
+
+template <typename GfxFamily>
+size_t CommandQueueHw<GfxFamily>::getTotalSizeFromRectRegion(const size_t *region) {
+    auto size = region[0];
+    size *= (region[1] == 0 ? 1 : region[1]);
+    size *= (region[2] == 0 ? 1 : region[2]);
+    return size;
 }
 
 template <typename GfxFamily>

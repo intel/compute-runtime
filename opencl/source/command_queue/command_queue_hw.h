@@ -358,7 +358,8 @@ class CommandQueueHw : public CommandQueue {
     cl_int enqueueBlit(const MultiDispatchInfo &multiDispatchInfo, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &bcsCsr);
 
     bool isSplitEnqueueBlitSupported();
-    bool isSplitEnqueueBlitNeeded(TransferDirection transferDirection, CommandStreamReceiver &csr);
+    bool isSplitEnqueueBlitNeeded(TransferDirection transferDirection, size_t transferSize, CommandStreamReceiver &csr);
+    size_t getTotalSizeFromRectRegion(const size_t *region);
 
     template <uint32_t cmdType>
     cl_int enqueueBlitSplit(MultiDispatchInfo &dispatchInfo, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &csr);
