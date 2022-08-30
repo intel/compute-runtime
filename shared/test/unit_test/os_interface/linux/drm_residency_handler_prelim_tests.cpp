@@ -105,21 +105,25 @@ struct DrmMemoryOperationsHandlerBindFixture : public ::testing::Test {
 using DrmMemoryOperationsHandlerBindMultiRootDeviceTest = DrmMemoryOperationsHandlerBindFixture<2u>;
 
 TEST_F(DrmMemoryOperationsHandlerBindMultiRootDeviceTest, whenSetNewResourceBoundToVMThenAllContextsUsingThatVMHasSetNewResourceBound) {
+    struct MockOsContextLinux : OsContextLinux {
+        using OsContextLinux::lastFlushedTlbFlushCounter;
+    };
+
     mock->setNewResourceBoundToVM(1u);
 
     for (const auto &engine : device->getAllEngines()) {
-        auto osContexLinux = static_cast<OsContextLinux *>(engine.osContext);
+        auto osContexLinux = static_cast<MockOsContextLinux *>(engine.osContext);
         if (osContexLinux->getDeviceBitfield().test(1u)) {
-            EXPECT_TRUE(osContexLinux->getNewResourceBound());
+            EXPECT_TRUE(osContexLinux->isTlbFlushRequired());
         } else {
-            EXPECT_FALSE(osContexLinux->getNewResourceBound());
+            EXPECT_FALSE(osContexLinux->isTlbFlushRequired());
         }
 
-        osContexLinux->setNewResourceBound(false);
+        osContexLinux->lastFlushedTlbFlushCounter.store(osContexLinux->peekTlbFlushCounter());
     }
     for (const auto &engine : devices[1]->getAllEngines()) {
         auto osContexLinux = static_cast<OsContextLinux *>(engine.osContext);
-        EXPECT_FALSE(osContexLinux->getNewResourceBound());
+        EXPECT_FALSE(osContexLinux->isTlbFlushRequired());
     }
 
     auto mock2 = executionEnvironment->rootDeviceEnvironments[1u]->osInterface->getDriverModel()->as<DrmQueryMock>();
@@ -128,14 +132,14 @@ TEST_F(DrmMemoryOperationsHandlerBindMultiRootDeviceTest, whenSetNewResourceBoun
     for (const auto &engine : devices[1]->getAllEngines()) {
         auto osContexLinux = static_cast<OsContextLinux *>(engine.osContext);
         if (osContexLinux->getDeviceBitfield().test(0u)) {
-            EXPECT_TRUE(osContexLinux->getNewResourceBound());
+            EXPECT_TRUE(osContexLinux->isTlbFlushRequired());
         } else {
-            EXPECT_FALSE(osContexLinux->getNewResourceBound());
+            EXPECT_FALSE(osContexLinux->isTlbFlushRequired());
         }
     }
     for (const auto &engine : device->getAllEngines()) {
         auto osContexLinux = static_cast<OsContextLinux *>(engine.osContext);
-        EXPECT_FALSE(osContexLinux->getNewResourceBound());
+        EXPECT_FALSE(osContexLinux->isTlbFlushRequired());
     }
 }
 

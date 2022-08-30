@@ -25,6 +25,7 @@
 #include "igfxfmid.h"
 
 #include <array>
+#include <atomic>
 #include <cerrno>
 #include <fcntl.h>
 #include <limits>

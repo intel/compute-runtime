@@ -636,7 +636,7 @@ void Drm::setNewResourceBoundToVM(uint32_t vmHandleId) {
             auto osContextLinux = static_cast<OsContextLinux *>(engine.osContext);
 
             if (&osContextLinux->getDrm() == this) {
-                osContextLinux->setNewResourceBound(true);
+                osContextLinux->setNewResourceBound();
             }
         }
     }

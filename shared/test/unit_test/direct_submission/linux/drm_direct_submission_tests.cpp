@@ -542,7 +542,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlushWhenDi
     EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), sizeof(PIPE_CONTROL));
 }
 
-HWTEST_F(DrmDirectSubmissionTest, givenNewResourceBoundhWhenDispatchCommandBufferThenTlbIsFlushed) {
+HWTEST_F(DrmDirectSubmissionTest, givenNewResourceBoundWhenDispatchCommandBufferThenTlbIsFlushed) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using Dispatcher = RenderDispatcher<FamilyType>;
 
@@ -554,9 +554,10 @@ HWTEST_F(DrmDirectSubmissionTest, givenNewResourceBoundhWhenDispatchCommandBuffe
     bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);
 
-    osContext->setNewResourceBound(true);
+    osContext->setNewResourceBound();
 
     EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), sizeof(PIPE_CONTROL));
+    EXPECT_TRUE(osContext->isTlbFlushRequired());
 
     directSubmission.handleNewResourcesSubmission();
 
@@ -567,12 +568,12 @@ HWTEST_F(DrmDirectSubmissionTest, givenNewResourceBoundhWhenDispatchCommandBuffe
     auto *pipeControl = hwParse.getCommand<PIPE_CONTROL>();
     EXPECT_TRUE(pipeControl->getTlbInvalidate());
     EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
-    EXPECT_FALSE(osContext->getNewResourceBound());
+    EXPECT_FALSE(osContext->isTlbFlushRequired());
 
-    EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), 0u);
+    EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), sizeof(PIPE_CONTROL));
 }
 
-HWTEST_F(DrmDirectSubmissionTest, givenNoNewResourceBoundhWhenDispatchCommandBufferThenTlbIsNotFlushed) {
+HWTEST_F(DrmDirectSubmissionTest, givenNoNewResourceBoundWhenDispatchCommandBufferThenTlbIsNotFlushed) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using Dispatcher = RenderDispatcher<FamilyType>;
 
@@ -584,9 +585,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenNoNewResourceBoundhWhenDispatchCommandBuf
     bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);
 
-    osContext->setNewResourceBound(false);
-
-    EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), 0u);
+    EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), sizeof(PIPE_CONTROL));
 
     directSubmission.handleNewResourcesSubmission();
 
@@ -596,12 +595,12 @@ HWTEST_F(DrmDirectSubmissionTest, givenNoNewResourceBoundhWhenDispatchCommandBuf
     hwParse.findHardwareCommands<FamilyType>();
     auto *pipeControl = hwParse.getCommand<PIPE_CONTROL>();
     EXPECT_EQ(pipeControl, nullptr);
-    EXPECT_FALSE(osContext->getNewResourceBound());
+    EXPECT_FALSE(osContext->isTlbFlushRequired());
 
-    EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), 0u);
+    EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), sizeof(PIPE_CONTROL));
 }
 
-HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlusZeroAndNewResourceBoundhWhenDispatchCommandBufferThenTlbIsNotFlushed) {
+HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlushZeroAndNewResourceBoundWhenDispatchCommandBufferThenTlbIsNotFlushed) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using Dispatcher = RenderDispatcher<FamilyType>;
 
@@ -613,9 +612,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlusZeroAnd
     bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);
 
-    osContext->setNewResourceBound(true);
-
-    EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), 0u);
+    EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), sizeof(PIPE_CONTROL));
 
     directSubmission.handleNewResourcesSubmission();
 
@@ -625,9 +622,9 @@ HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlusZeroAnd
     hwParse.findHardwareCommands<FamilyType>();
     auto *pipeControl = hwParse.getCommand<PIPE_CONTROL>();
     EXPECT_EQ(pipeControl, nullptr);
-    EXPECT_FALSE(osContext->getNewResourceBound());
+    EXPECT_FALSE(osContext->isTlbFlushRequired());
 
-    EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), 0u);
+    EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), sizeof(PIPE_CONTROL));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DrmDirectSubmissionTest, givenMultipleActiveTilesWhenWaitingForTagUpdateThenQueryAllActiveTiles) {

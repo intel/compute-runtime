@@ -150,7 +150,7 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::handleResidency() {
 template <typename GfxFamily, typename Dispatcher>
 bool DrmDirectSubmission<GfxFamily, Dispatcher>::isNewResourceHandleNeeded() {
     auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
-    auto newResourcesBound = osContextLinux->getNewResourceBound();
+    auto newResourcesBound = osContextLinux->isTlbFlushRequired();
 
     if (DebugManager.flags.DirectSubmissionNewResourceTlbFlush.get() != -1) {
         newResourcesBound = DebugManager.flags.DirectSubmissionNewResourceTlbFlush.get();
@@ -162,22 +162,18 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::isNewResourceHandleNeeded() {
 template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::handleNewResourcesSubmission() {
     if (isNewResourceHandleNeeded()) {
-        Dispatcher::dispatchTlbFlush(this->ringCommandStream, this->gpuVaForMiFlush, *this->hwInfo);
-    }
+        auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
+        auto tlbFlushCounter = osContextLinux->peekTlbFlushCounter();
 
-    auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
-    osContextLinux->setNewResourceBound(false);
+        Dispatcher::dispatchTlbFlush(this->ringCommandStream, this->gpuVaForMiFlush, *this->hwInfo);
+        osContextLinux->setTlbFlushed(tlbFlushCounter);
+    }
 }
 
 template <typename GfxFamily, typename Dispatcher>
 size_t DrmDirectSubmission<GfxFamily, Dispatcher>::getSizeNewResourceHandler() {
-    size_t size = 0u;
-
-    if (isNewResourceHandleNeeded()) {
-        size += Dispatcher::getSizeTlbFlush();
-    }
-
-    return size;
+    // Overestimate to avoid race
+    return Dispatcher::getSizeTlbFlush();
 }
 
 template <typename GfxFamily, typename Dispatcher>
