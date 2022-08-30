@@ -104,7 +104,7 @@ bool HwInfoConfigHw<gfxProduct>::isDefaultEngineTypeAdjustmentRequired(const Har
 
 template <>
 bool HwInfoConfigHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
-    return getSteppingFromHwRevId(hwInfo) >= REVISION_B;
+    return getSteppingFromHwRevId(hwInfo) >= REVISION_B || DG2::isG11(hwInfo) || DG2::isG12(hwInfo);
 }
 
 template <>

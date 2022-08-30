@@ -54,13 +54,38 @@ DG2TEST_F(HwInfoConfigTestDg2, givenDg2ConfigWhenSetupHardwareInfoThenGtSystemIn
     EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
 }
 
-DG2TEST_F(HwInfoConfigTestDg2, givenHwInfoConfigWhenAdditionalKernelExecInfoSupportCheckedThenCorrectValueIsReturned) {
+DG2TEST_F(HwInfoConfigTestDg2, givenG10DevIdWhenAdditionalKernelExecInfoSupportCheckedThenCorrectValueIsReturned) {
     const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    auto hwInfo = *defaultHwInfo;
-    EXPECT_FALSE(hwInfoConfig.isDisableOverdispatchAvailable(hwInfo));
+    HardwareInfo myHwInfo = *defaultHwInfo;
+    myHwInfo.platform.usDeviceID = dg2G10DeviceIds[0];
+    EXPECT_FALSE(hwInfoConfig.isDisableOverdispatchAvailable(myHwInfo));
 
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
-    EXPECT_TRUE(hwInfoConfig.isDisableOverdispatchAvailable(hwInfo));
+    myHwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, myHwInfo);
+    EXPECT_TRUE(hwInfoConfig.isDisableOverdispatchAvailable(myHwInfo));
+}
+
+DG2TEST_F(HwInfoConfigTestDg2, givenG11DevIdWhenIsDisableOverdispatchAvailableCalledThenTrueReturnedForAllSteppings) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    HardwareInfo myHwInfo = *defaultHwInfo;
+    myHwInfo.platform.usDeviceID = dg2G11DeviceIds[0];
+    myHwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, myHwInfo);
+    EXPECT_TRUE(hwInfoConfig.isDisableOverdispatchAvailable(myHwInfo));
+    myHwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, myHwInfo);
+    EXPECT_TRUE(hwInfoConfig.isDisableOverdispatchAvailable(myHwInfo));
+    myHwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_C, myHwInfo);
+    EXPECT_TRUE(hwInfoConfig.isDisableOverdispatchAvailable(myHwInfo));
+}
+
+DG2TEST_F(HwInfoConfigTestDg2, givenG12DevIdWhenIsDisableOverdispatchAvailableCalledThenTrueReturnedForAllSteppings) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    HardwareInfo myHwInfo = *defaultHwInfo;
+    myHwInfo.platform.usDeviceID = dg2G12DeviceIds[0];
+    myHwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, myHwInfo);
+    EXPECT_TRUE(hwInfoConfig.isDisableOverdispatchAvailable(myHwInfo));
+    myHwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, myHwInfo);
+    EXPECT_TRUE(hwInfoConfig.isDisableOverdispatchAvailable(myHwInfo));
+    myHwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_C, myHwInfo);
+    EXPECT_TRUE(hwInfoConfig.isDisableOverdispatchAvailable(myHwInfo));
 }
 
 DG2TEST_F(HwInfoConfigTestDg2, whenAdjustingDefaultEngineTypeThenSelectEngineTypeBasedOnRevisionId) {
