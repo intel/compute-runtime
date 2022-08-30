@@ -336,6 +336,9 @@ class DrmMockResources : public DrmMock {
 
     uint32_t notifyFirstCommandQueueCreated(const void *data, size_t size) override {
         ioctlCallsCount++;
+        capturedCmdQData = std::make_unique<uint64_t[]>((size + sizeof(uint64_t) - 1) / sizeof(uint64_t));
+        capturedCmdQSize = size;
+        memcpy(capturedCmdQData.get(), data, size);
         return 4;
     }
 
@@ -352,4 +355,6 @@ class DrmMockResources : public DrmMock {
     uint64_t registeredData[128];
     size_t registeredDataSize;
     uint32_t currentCookie = 2;
+    std::unique_ptr<uint64_t[]> capturedCmdQData = nullptr;
+    size_t capturedCmdQSize = 0;
 };

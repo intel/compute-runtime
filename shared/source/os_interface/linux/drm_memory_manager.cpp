@@ -296,9 +296,9 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocation(OsHandleStorage &
 }
 
 GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) {
-    if (allocationData.type == NEO::AllocationType::DEBUG_CONTEXT_SAVE_AREA ||
-        (allocationData.type == NEO::AllocationType::DEBUG_SBA_TRACKING_BUFFER &&
-         allocationData.storageInfo.subDeviceBitfield.count() > 1)) {
+    if ((allocationData.type == NEO::AllocationType::DEBUG_CONTEXT_SAVE_AREA ||
+         allocationData.type == NEO::AllocationType::DEBUG_SBA_TRACKING_BUFFER) &&
+        allocationData.storageInfo.subDeviceBitfield.count() > 1) {
         return createMultiHostAllocation(allocationData);
     }
 

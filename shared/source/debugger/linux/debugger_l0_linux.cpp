@@ -70,12 +70,36 @@ void DebuggerL0::notifyCommandQueueCreated(NEO::Device *device) {
     if (this->device->getRootDeviceEnvironment().osInterface.get() != nullptr) {
         std::unique_lock<std::mutex> commandQueueCountLock(debuggerL0Mutex);
 
-        auto index = device->isSubDevice() ? static_cast<NEO::SubDevice *>(device)->getSubDeviceIndex() : 0;
+        if (!device->isSubDevice() && device->getDeviceBitfield().count() > 1) {
+            UNRECOVERABLE_IF(this->device->getNumSubDevices() != device->getDeviceBitfield().count());
+
+            for (size_t i = 0; i < device->getDeviceBitfield().size(); i++) {
+                if (device->getDeviceBitfield().test(i)) {
+                    if (++commandQueueCount[i] == 1) {
+                        auto drm = this->device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
+
+                        CommandQueueNotification notification = {static_cast<uint32_t>(i), this->device->getNumSubDevices()};
+                        uuidL0CommandQueueHandle[i] = drm->notifyFirstCommandQueueCreated(&notification, sizeof(CommandQueueNotification));
+                    }
+                }
+            }
+            return;
+        }
+
+        auto index = 0u;
+        auto deviceIndex = 0u;
+
+        if (device->isSubDevice()) {
+            index = static_cast<NEO::SubDevice *>(device)->getSubDeviceIndex();
+            deviceIndex = index;
+        } else if (device->getDeviceBitfield().count() == 1) {
+            deviceIndex = Math::log2(static_cast<uint32_t>(device->getDeviceBitfield().to_ulong()));
+        }
 
         if (++commandQueueCount[index] == 1) {
             auto drm = this->device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
 
-            CommandQueueNotification notification = {index, this->device->getNumSubDevices()};
+            CommandQueueNotification notification = {deviceIndex, this->device->getNumSubDevices()};
             uuidL0CommandQueueHandle[index] = drm->notifyFirstCommandQueueCreated(&notification, sizeof(CommandQueueNotification));
         }
     }
@@ -84,6 +108,21 @@ void DebuggerL0::notifyCommandQueueCreated(NEO::Device *device) {
 void DebuggerL0::notifyCommandQueueDestroyed(NEO::Device *device) {
     if (this->device->getRootDeviceEnvironment().osInterface.get() != nullptr) {
         std::unique_lock<std::mutex> commandQueueCountLock(debuggerL0Mutex);
+
+        if (!device->isSubDevice() && device->getDeviceBitfield().count() > 1) {
+            UNRECOVERABLE_IF(this->device->getNumSubDevices() != device->getDeviceBitfield().count());
+
+            for (size_t i = 0; i < device->getDeviceBitfield().size(); i++) {
+                if (device->getDeviceBitfield().test(i)) {
+                    if (--commandQueueCount[i] == 0) {
+                        auto drm = this->device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
+                        drm->notifyLastCommandQueueDestroyed(uuidL0CommandQueueHandle[i]);
+                        uuidL0CommandQueueHandle[i] = 0;
+                    }
+                }
+            }
+            return;
+        }
 
         auto index = device->isSubDevice() ? static_cast<NEO::SubDevice *>(device)->getSubDeviceIndex() : 0;
 

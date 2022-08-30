@@ -3742,6 +3742,56 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenAllocateGraphicsMemory
     auto mem = debugSurface->getUnderlyingBuffer();
     ASSERT_NE(nullptr, mem);
 
+    EXPECT_EQ(3u, debugSurface->getNumGmms());
+
+    auto &bos = debugSurface->getBOs();
+
+    EXPECT_NE(nullptr, bos[0]);
+    EXPECT_NE(nullptr, bos[1]);
+    EXPECT_NE(nullptr, bos[3]);
+
+    EXPECT_EQ(debugSurface->getGpuAddress(), bos[0]->peekAddress());
+    EXPECT_EQ(debugSurface->getGpuAddress(), bos[1]->peekAddress());
+    EXPECT_EQ(debugSurface->getGpuAddress(), bos[3]->peekAddress());
+
+    auto sipType = SipKernel::getSipKernelType(*device);
+    SipKernel::initSipKernel(sipType, *device);
+
+    auto &stateSaveAreaHeader = NEO::SipKernel::getSipKernel(*device).getStateSaveAreaHeader();
+    mem = ptrOffset(mem, stateSaveAreaHeader.size());
+    auto size = debugSurface->getUnderlyingBufferSize() - stateSaveAreaHeader.size();
+
+    EXPECT_TRUE(memoryZeroed(mem, size));
+
+    memoryManager->freeGraphicsMemory(debugSurface);
+}
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenAffinityMaskDeviceWithBitfieldIndex1SetWhenAllocatingDebugSurfaceThenSingleAllocationWithOneBoIsCreated) {
+    NEO::DebugManager.flags.CreateMultipleSubDevices.set(2);
+
+    AffinityMaskHelper affinityMask;
+    affinityMask.enableGenericSubDevice(1);
+
+    executionEnvironment->rootDeviceEnvironments[0]->deviceAffinityMask = affinityMask;
+    AllocationProperties debugSurfaceProperties{0, true, MemoryConstants::pageSize, NEO::AllocationType::DEBUG_CONTEXT_SAVE_AREA, false, false, 0b0010};
+    auto debugSurface = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(debugSurfaceProperties));
+
+    EXPECT_NE(nullptr, debugSurface);
+
+    auto mem = debugSurface->getUnderlyingBuffer();
+    ASSERT_NE(nullptr, mem);
+
+    EXPECT_EQ(1u, debugSurface->getNumGmms());
+
+    auto &bos = debugSurface->getBOs();
+    auto bo = debugSurface->getBO();
+
+    EXPECT_NE(nullptr, bos[0]);
+    EXPECT_EQ(nullptr, bos[1]);
+    EXPECT_EQ(bos[0], bo);
+
+    EXPECT_EQ(debugSurface->getGpuAddress(), bos[0]->peekAddress());
+
     auto sipType = SipKernel::getSipKernelType(*device);
     SipKernel::initSipKernel(sipType, *device);
 
