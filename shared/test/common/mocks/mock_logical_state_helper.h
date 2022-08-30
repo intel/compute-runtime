@@ -22,9 +22,11 @@ class LogicalStateHelperMock : public GfxFamily::LogicalStateHelperHw {
         writeStreamInlineCalledCounter++;
 
         if (makeFakeStreamWrite) {
-            auto cmd = linearStream.getSpaceForCmd<typename GfxFamily::MI_NOOP>();
-            *cmd = GfxFamily::cmdInitNoop;
-            cmd->setIdentificationNumber(0x123);
+            auto cmd = GfxFamily::cmdInitNoop;
+            cmd.setIdentificationNumber(0x123);
+
+            auto cmdBuffer = linearStream.getSpaceForCmd<typename GfxFamily::MI_NOOP>();
+            *cmdBuffer = cmd;
         }
     }
 
