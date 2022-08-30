@@ -193,6 +193,10 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateSyncBuf
     populatePointerKernelArg(dst.payloadMappings.implicitArgs.syncBufferAddress, token, dst.kernelAttributes.bufferAddressingMode);
 }
 
+void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateRTGlobalBuffer &token) {
+    populatePointerKernelArg(dst.payloadMappings.implicitArgs.rtDispatchGlobals, token, dst.kernelAttributes.bufferAddressingMode);
+}
+
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchString &token) {
     uint32_t stringIndex = token.Index;
     const char *stringData = reinterpret_cast<const char *>(&token + 1);
@@ -470,23 +474,7 @@ void populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary::Ker
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateStatelessEventPoolSurface);
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateStatelessDefaultDeviceQueueSurface);
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateSyncBuffer);
-
-    {
-        uint32_t heapOffset = 0;
-        uint32_t paramOffset = 0;
-        uint32_t paramSize = 0;
-
-        if (src.tokens.allocateRTGlobalBuffer != nullptr) {
-            auto allocateRTGlobalBuffer = static_cast<const struct iOpenCL::SPatchAllocateRTGlobalBuffer *>(src.tokens.allocateRTGlobalBuffer);
-            heapOffset = allocateRTGlobalBuffer->SurfaceStateHeapOffset;
-            paramOffset = allocateRTGlobalBuffer->DataParamOffset;
-            paramSize = allocateRTGlobalBuffer->DataParamSize;
-        }
-
-        populatePointerKernelArg(dst.payloadMappings.implicitArgs.rtDispatchGlobals,
-                                 paramOffset, paramSize, heapOffset, heapOffset,
-                                 dst.kernelAttributes.bufferAddressingMode);
-    }
+    populateKernelDescriptorIfNotNull(dst, src.tokens.allocateRTGlobalBuffer);
 
     dst.payloadMappings.explicitArgs.resize(src.tokens.kernelArgs.size());
     dst.explicitArgsExtendedMetadata.resize(src.tokens.kernelArgs.size());

@@ -17,9 +17,9 @@ TEST(KernelDescriptorFromPatchtokens, GivenKernelWithRTDispatchGlobalsThenKernel
     NEO::KernelDescriptor dst{};
     NEO::populateKernelDescriptor(dst, kernelTokens, 4);
 
-    EXPECT_EQ(0, dst.payloadMappings.implicitArgs.rtDispatchGlobals.stateless);
+    EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, dst.payloadMappings.implicitArgs.rtDispatchGlobals.stateless);
     EXPECT_EQ(0, dst.payloadMappings.implicitArgs.rtDispatchGlobals.pointerSize);
-    EXPECT_EQ(0, dst.payloadMappings.implicitArgs.rtDispatchGlobals.bindful);
+    EXPECT_EQ(NEO::undefined<NEO::SurfaceStateHeapOffset>, dst.payloadMappings.implicitArgs.rtDispatchGlobals.bindful);
     EXPECT_TRUE(NEO::isUndefinedOffset(dst.payloadMappings.implicitArgs.rtDispatchGlobals.bindless));
 
     EXPECT_EQ(NEO::KernelDescriptor::BindfulAndStateless, dst.kernelAttributes.bufferAddressingMode);
