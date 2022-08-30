@@ -17,6 +17,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
@@ -132,7 +133,7 @@ CompilerInterface *RootDeviceEnvironment::getCompilerInterface() {
         std::lock_guard<std::mutex> autolock(this->mtx);
         if (this->compilerInterface.get() == nullptr) {
             auto cache = std::make_unique<CompilerCache>(getDefaultCompilerCacheConfig());
-            this->compilerInterface.reset(CompilerInterface::createInstance(std::move(cache), true));
+            this->compilerInterface.reset(CompilerInterface::createInstance(std::move(cache), ApiSpecificConfig::getApiType() == ApiSpecificConfig::ApiType::OCL));
         }
     }
     return this->compilerInterface.get();

@@ -10,6 +10,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/os_inc_base.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/raii_hw_helper.h"
@@ -267,6 +268,17 @@ TEST(DeviceCleanup, givenDeviceWhenItIsDestroyedThenFlushBatchedSubmissionsIsCal
     mockDevice.reset(nullptr);
 
     EXPECT_EQ(1, flushedBatchedSubmissionsCalledCount);
+}
+
+TEST(DeviceCreation, GiveNonExistingFclWhenCreatingDeviceThenCompilerInterfaceIsNotCreated) {
+    VariableBackup<const char *> frontEndDllName(&Os::frontEndDllName);
+    Os::frontEndDllName = "_fake_fcl1_so";
+
+    auto mockDevice = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
+    ASSERT_NE(nullptr, mockDevice);
+
+    auto compilerInterface = mockDevice->getCompilerInterface();
+    ASSERT_EQ(nullptr, compilerInterface);
 }
 
 TEST(DeviceCreation, givenSelectedAubCsrInDebugVarsWhenDeviceIsCreatedThenIsSimulationReturnsTrue) {
