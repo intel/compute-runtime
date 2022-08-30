@@ -178,11 +178,11 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, whenSelectCsrForHostPtrAllocationThenRet
     queue->constructBcsEnginesForSplit();
     EXPECT_EQ(4u, queue->countBcsEngines());
 
-    auto &csr1 = queue->selectCsrForHostPtrAllocation(true, *queue->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS2));
+    auto &csr1 = queue->selectCsrForHostPtrAllocation(true, *queue->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS1));
     EXPECT_EQ(&csr1, &queue->getGpgpuCommandStreamReceiver());
 
-    auto &csr2 = queue->selectCsrForHostPtrAllocation(false, *queue->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS2));
-    EXPECT_EQ(&csr2, queue->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS2));
+    auto &csr2 = queue->selectCsrForHostPtrAllocation(false, *queue->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS1));
+    EXPECT_EQ(&csr2, queue->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS1));
 }
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, whenPrepareHostPtrSurfaceForSplitThenSetTaskCountsToZero, IsAtLeastXeHpcCore) {
