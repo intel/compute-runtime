@@ -1285,9 +1285,9 @@ ze_result_t DebugSessionLinux::interruptImp(uint32_t deviceIndex) {
     return result == 0 ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_NOT_AVAILABLE;
 }
 
-ze_result_t DebugSessionLinux::getISAVMHandle(const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t &vmHandle) {
+ze_result_t DebugSessionLinux::getISAVMHandle(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t &vmHandle) {
     auto accessVA = desc->address;
-    auto &isaMap = clientHandleToConnection[clientHandle]->isaMap[0];
+    auto &isaMap = clientHandleToConnection[clientHandle]->isaMap[deviceIndex];
     ze_result_t status = ZE_RESULT_ERROR_UNINITIALIZED;
     vmHandle = invalidHandle;
 
@@ -1450,7 +1450,7 @@ bool DebugSessionLinux::tryAccessIsa(uint32_t deviceIndex, const zet_debug_memor
     {
         std::lock_guard<std::mutex> memLock(asyncThreadMutex);
 
-        status = getISAVMHandle(desc, size, vmHandle);
+        status = getISAVMHandle(deviceIndex, desc, size, vmHandle);
         if (status == ZE_RESULT_SUCCESS) {
             isaAccess = true;
         } else if (status == ZE_RESULT_ERROR_INVALID_ARGUMENT) {

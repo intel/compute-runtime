@@ -106,6 +106,11 @@ class MockDebuggerL0Hw : public NEO::DebuggerL0Hw<GfxFamily> {
         NEO::DebuggerL0Hw<GfxFamily>::notifyModuleDestroy(moduleLoadAddress);
     }
 
+    void notifyModuleLoadAllocations(NEO::Device *device, const StackVec<NEO::GraphicsAllocation *, 32> &allocs) override {
+        notifyModuleLoadAllocationsCapturedDevice = device;
+        NEO::DebuggerL0Hw<GfxFamily>::notifyModuleLoadAllocations(device, allocs);
+    }
+
     uint32_t captureStateBaseAddressCount = 0;
     uint32_t programSbaTrackingCommandsCount = 0;
     uint32_t getSbaTrackingCommandsSizeCount = 0;
@@ -120,6 +125,7 @@ class MockDebuggerL0Hw : public NEO::DebuggerL0Hw<GfxFamily> {
     uint32_t segmentCountWithAttachedModuleHandle = 0;
     uint32_t removedZebinModuleHandle = 0;
     uint32_t moduleHandleToReturn = std::numeric_limits<uint32_t>::max();
+    NEO::Device *notifyModuleLoadAllocationsCapturedDevice = nullptr;
 };
 
 template <>

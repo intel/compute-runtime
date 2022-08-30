@@ -17,6 +17,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/module/module_imp.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/core/test/unit_tests/sources/debugger/l0_debugger_fixture.h"
@@ -418,6 +419,59 @@ TEST_F(KernelInitializeTest, givenDebuggingEnabledWhenKernelsAreInitializedThenA
     auto isa = kernelImmutableData.getIsaGraphicsAllocation()->getUnderlyingBuffer();
     EXPECT_NE(0, memcmp(isa, &kernelHeap, sizeof(kernelHeap)));
 };
+
+using ModuleWithDebuggerL0MultiTileTest = Test<SingleRootMultiSubDeviceFixture>;
+
+HWTEST_F(ModuleWithDebuggerL0MultiTileTest, GivenSubDeviceWhenCreatingModuleThenModuleCreateIsNotifiedWithCorrectDevice) {
+    NEO::MockCompilerEnableGuard mock(true);
+    auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
+    neoDevice->getExecutionEnvironment()->setDebuggingEnabled();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->initDebuggerL0(neoDevice);
+    auto memoryOperationsHandler = new NEO::MockMemoryOperations();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->memoryOperationsInterface.reset(memoryOperationsHandler);
+
+    auto subDevice0 = neoDevice->getSubDevice(0)->getSpecializedDevice<Device>();
+
+    uint8_t binary[10];
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = binary;
+    moduleDesc.inputSize = 10;
+    ModuleBuildLog *moduleBuildLog = nullptr;
+
+    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(subDevice0, moduleBuildLog, ModuleType::User);
+    moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(subDevice0);
+
+    uint32_t kernelHeap = 0;
+    auto kernelInfo = new KernelInfo();
+    kernelInfo->heapInfo.KernelHeapSize = 1;
+    kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
+
+    Mock<::L0::Kernel> kernelMock;
+    kernelMock.module = moduleMock.get();
+    kernelMock.immutableData.kernelInfo = kernelInfo;
+    kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0;
+
+    moduleMock->kernelImmData = &kernelMock.immutableData;
+    moduleMock->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
+
+    kernelInfo->kernelDescriptor.external.debugData = std::make_unique<NEO::DebugData>();
+
+    auto debugData = MockElfEncoder<>::createRelocateableDebugDataElf();
+    kernelInfo->kernelDescriptor.external.debugData->vIsaSize = static_cast<uint32_t>(debugData.size());
+    kernelInfo->kernelDescriptor.external.debugData->vIsa = reinterpret_cast<char *>(debugData.data());
+    kernelInfo->kernelDescriptor.external.debugData->genIsa = nullptr;
+    kernelInfo->kernelDescriptor.external.debugData->genIsaSize = 0;
+
+    EXPECT_TRUE(moduleMock->initialize(&moduleDesc, subDevice0->getNEODevice()));
+
+    auto debuggerL0Hw = static_cast<MockDebuggerL0Hw<FamilyType> *>(device->getL0Debugger());
+    EXPECT_EQ(1u, debuggerL0Hw->notifyModuleCreateCount);
+    EXPECT_EQ(subDevice0->getNEODevice(), debuggerL0Hw->notifyModuleLoadAllocationsCapturedDevice);
+
+    EXPECT_EQ(1, memoryOperationsHandler->makeResidentCalledCount);
+}
 
 HWTEST_F(ModuleWithDebuggerL0Test, GivenDebugDataWithRelocationsWhenInitializingModuleThenRegisterElfWithRelocatedElfAndModuleCreateNotified) {
     NEO::MockCompilerEnableGuard mock(true);

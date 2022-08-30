@@ -218,7 +218,7 @@ HWTEST_F(L0DebuggerTest, givenDebuggerWithoutMemoryOperationsHandlerWhenNotifyin
                                   MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     allocs.push_back(&alloc);
 
-    debugger->notifyModuleLoadAllocations(allocs);
+    debugger->notifyModuleLoadAllocations(pDevice, allocs);
 }
 
 HWTEST_F(L0DebuggerTest, givenDebuggerWhenCreatedThenModuleHeapDebugAreaIsCreated) {

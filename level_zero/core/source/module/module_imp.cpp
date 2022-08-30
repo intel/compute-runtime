@@ -613,7 +613,7 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
 
         if (device->getL0Debugger()) {
             auto allocs = getModuleAllocations();
-            device->getL0Debugger()->notifyModuleLoadAllocations(allocs);
+            device->getL0Debugger()->notifyModuleLoadAllocations(device->getNEODevice(), allocs);
             notifyModuleCreate();
         }
     }

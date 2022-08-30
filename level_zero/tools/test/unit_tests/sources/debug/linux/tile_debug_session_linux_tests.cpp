@@ -494,7 +494,7 @@ TEST_F(TileAttachTest, GivenTileAndVmBindEventsForIsaWhenReadingEventThenModuleL
 TEST_F(TileAttachTest, GivenIsaWhenReadingOrWritingMemoryThenMemoryIsReadAndWritten) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
-    zet_debug_session_handle_t debugSession0 = nullptr;
+    zet_debug_session_handle_t debugSession0 = nullptr, debugSession1 = nullptr;
 
     zetDebugAttach(neoDevice->getSubDevice(0)->getSpecializedDevice<L0::Device>()->toHandle(), &config, &debugSession0);
 
@@ -516,6 +516,7 @@ TEST_F(TileAttachTest, GivenIsaWhenReadingOrWritingMemoryThenMemoryIsReadAndWrit
     ze_result_t result = zetDebugReadMemory(tileSessions[0]->toHandle(), thread, &desc, bufferSize, &output);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(vm0, handler->vmOpen.handle);
 
     for (int i = 0; i < bufferSize; i++) {
         EXPECT_EQ(static_cast<char>(0xaa), output[i]);
@@ -527,6 +528,16 @@ TEST_F(TileAttachTest, GivenIsaWhenReadingOrWritingMemoryThenMemoryIsReadAndWrit
     result = zetDebugWriteMemory(tileSessions[0]->toHandle(), thread, &desc, bufferSize, &output);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1u, handler->pwriteCalled);
+    EXPECT_EQ(vm0, handler->vmOpen.handle);
+
+    zetDebugAttach(neoDevice->getSubDevice(0)->getSpecializedDevice<L0::Device>()->toHandle(), &config, &debugSession1);
+    addIsaVmBindEvent(rootSession, vm1, true, true);
+    handler->preadCalled = 0;
+
+    result = zetDebugReadMemory(tileSessions[1]->toHandle(), thread, &desc, bufferSize, &output);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(vm1, handler->vmOpen.handle);
+    EXPECT_EQ(1u, handler->preadCalled);
 }
 
 TEST_F(TileAttachTest, GivenElfAddressWhenReadMemoryCalledTheElfMemoryIsRead) {

@@ -136,7 +136,7 @@ void DebuggerL0::captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddres
     }
 }
 
-void DebuggerL0::notifyModuleLoadAllocations(const StackVec<NEO::GraphicsAllocation *, 32> &allocs) {
+void DebuggerL0::notifyModuleLoadAllocations(Device *device, const StackVec<NEO::GraphicsAllocation *, 32> &allocs) {
     NEO::MemoryOperationsHandler *memoryOperationsIface = device->getRootDeviceEnvironment().memoryOperationsInterface.get();
     if (memoryOperationsIface) {
         for (auto gfxAlloc : allocs) {
