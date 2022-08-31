@@ -78,7 +78,7 @@ function(compile_builtin core_type platform_type builtin bits builtin_options mo
       get_filename_component(absolute_filepath_spv ${OUTPUT_FILE_SPV} ABSOLUTE)
       add_custom_command(
                          OUTPUT ${OUTPUT_FILES_BINARIES}
-                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath_spv} -spirv_input -device ${DEFAULT_SUPPORTED_${core_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -output ${mode}_${BASENAME}_${REVISION_ID} -out_dir ${OUTPUTDIR} -revision_id ${REVISION_ID} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
+                         COMMAND ${ocloc_cmd_prefix} -q -gen_file -file ${absolute_filepath_spv} -spirv_input -device ${DEFAULT_SUPPORTED_${core_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -output ${mode}_${BASENAME}_${REVISION_ID} -out_dir ${OUTPUTDIR} -revision_id ${REVISION_ID} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
                          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                          DEPENDS ${OUTPUT_FILE_SPV} ocloc copy_compiler_files
       )

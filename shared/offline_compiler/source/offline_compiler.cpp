@@ -1100,9 +1100,10 @@ void OfflineCompiler::writeOutAllFiles() {
     }
 
     if (genBinary) {
-        std::string genOutputFile = generateFilePath(outputDirectory, fileBase, ".gen") + generateOptsSuffix();
-
-        argHelper->saveOutput(genOutputFile, genBinary, genBinarySize);
+        if (useGenFile) {
+            std::string genOutputFile = generateFilePath(outputDirectory, fileBase, ".gen") + generateOptsSuffix();
+            argHelper->saveOutput(genOutputFile, genBinary, genBinarySize);
+        }
 
         if (useCppFile) {
             std::string cppOutputFile = generateFilePath(outputDirectory, fileBase, ".cpp");

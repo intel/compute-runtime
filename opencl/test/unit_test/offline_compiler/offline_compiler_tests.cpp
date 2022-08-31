@@ -126,6 +126,7 @@ TEST_F(MultiCommandTests, GivenOutputFileWhenBuildingMultiCommandThenSuccessIsRe
     };
 
     std::vector<std::string> singleArgs = {
+        "-gen_file",
         "-file",
         clFiles + "copybuffer.cl",
         "-device",
@@ -177,7 +178,7 @@ TEST_F(MultiCommandTests, GivenSpecifiedOutputDirWhenBuildingMultiCommandThenSuc
     for (int i = 0; i < numOfBuild; i++) {
         std::string outFileName = "offline_compiler_test/build_no_" + std::to_string(i + 1);
         EXPECT_TRUE(compilerOutputExists(outFileName, "bc") || compilerOutputExists(outFileName, "spv"));
-        EXPECT_TRUE(compilerOutputExists(outFileName, "gen"));
+        EXPECT_FALSE(compilerOutputExists(outFileName, "gen"));
         EXPECT_TRUE(compilerOutputExists(outFileName, "bin"));
     }
 
@@ -226,7 +227,7 @@ TEST_F(MultiCommandTests, GivenSpecifiedOutputDirWithProductConfigValueWhenBuild
     for (int i = 0; i < numOfBuild; i++) {
         std::string outFileName = "offline_compiler_test/build_no_" + std::to_string(i + 1);
         EXPECT_TRUE(compilerOutputExists(outFileName, "bc") || compilerOutputExists(outFileName, "spv"));
-        EXPECT_TRUE(compilerOutputExists(outFileName, "gen"));
+        EXPECT_FALSE(compilerOutputExists(outFileName, "gen"));
         EXPECT_TRUE(compilerOutputExists(outFileName, "bin"));
     }
 
@@ -309,7 +310,7 @@ TEST_F(MultiCommandTests, GivenOutputFileListFlagWhenBuildingMultiCommandThenSuc
     for (int i = 0; i < numOfBuild; i++) {
         std::string outFileName = pMultiCommand->outDirForBuilds + "/build_no_" + std::to_string(i + 1);
         EXPECT_TRUE(compilerOutputExists(outFileName, "bc") || compilerOutputExists(outFileName, "spv"));
-        EXPECT_TRUE(compilerOutputExists(outFileName, "gen"));
+        EXPECT_FALSE(compilerOutputExists(outFileName, "gen"));
         EXPECT_TRUE(compilerOutputExists(outFileName, "bin"));
     }
 
@@ -1614,7 +1615,7 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingThenBuildSucceeds) {
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(compilerOutputExists("copybuffer", "bc") || compilerOutputExists("copybuffer", "spv"));
-    EXPECT_TRUE(compilerOutputExists("copybuffer", "gen"));
+    EXPECT_FALSE(compilerOutputExists("copybuffer", "gen"));
     EXPECT_TRUE(compilerOutputExists("copybuffer", "bin"));
 
     std::string buildLog = pOfflineCompiler->getBuildLog();
@@ -1654,7 +1655,7 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingWithDeviceConfigValueThenBuild
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(compilerOutputExists("copybuffer", "bc") || compilerOutputExists("copybuffer", "spv"));
-    EXPECT_TRUE(compilerOutputExists("copybuffer", "gen"));
+    EXPECT_FALSE(compilerOutputExists("copybuffer", "gen"));
     EXPECT_TRUE(compilerOutputExists("copybuffer", "bin"));
 
     std::string buildLog = pOfflineCompiler->getBuildLog();
@@ -1680,7 +1681,7 @@ TEST_F(OfflineCompilerTests, GivenLlvmTextWhenBuildingThenBuildSucceeds) {
     retVal = pOfflineCompiler->build();
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(compilerOutputExists("copybuffer", "ll"));
-    EXPECT_TRUE(compilerOutputExists("copybuffer", "gen"));
+    EXPECT_FALSE(compilerOutputExists("copybuffer", "gen"));
     EXPECT_TRUE(compilerOutputExists("copybuffer", "bin"));
 
     delete pOfflineCompiler;
@@ -1764,7 +1765,7 @@ TEST_F(OfflineCompilerTests, GivenCppFileWhenBuildingThenBuildSucceeds) {
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(compilerOutputExists("copybuffer", "cpp"));
     EXPECT_TRUE(compilerOutputExists("copybuffer", "bc") || compilerOutputExists("copybuffer", "spv"));
-    EXPECT_TRUE(compilerOutputExists("copybuffer", "gen"));
+    EXPECT_FALSE(compilerOutputExists("copybuffer", "gen"));
     EXPECT_TRUE(compilerOutputExists("copybuffer", "bin"));
 
     delete pOfflineCompiler;
@@ -1787,7 +1788,7 @@ TEST_F(OfflineCompilerTests, GivenOutputDirWhenBuildingThenBuildSucceeds) {
     retVal = pOfflineCompiler->build();
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(compilerOutputExists("offline_compiler_test/copybuffer", "bc") || compilerOutputExists("offline_compiler_test/copybuffer", "spv"));
-    EXPECT_TRUE(compilerOutputExists("offline_compiler_test/copybuffer", "gen"));
+    EXPECT_FALSE(compilerOutputExists("offline_compiler_test/copybuffer", "gen"));
     EXPECT_TRUE(compilerOutputExists("offline_compiler_test/copybuffer", "bin"));
 
     delete pOfflineCompiler;
@@ -2485,7 +2486,7 @@ TEST(OfflineCompilerTest, givenOutputFileOptionWhenSourceIsCompiledThenOutputFil
 
     EXPECT_TRUE(compilerOutputExists("myOutputFileName", "bc") || compilerOutputExists("myOutputFileName", "spv"));
     EXPECT_TRUE(compilerOutputExists("myOutputFileName", "bin"));
-    EXPECT_TRUE(compilerOutputExists("myOutputFileName", "gen"));
+    EXPECT_FALSE(compilerOutputExists("myOutputFileName", "gen"));
 }
 
 TEST(OfflineCompilerTest, givenDebugDataAvailableWhenSourceIsBuiltThenDebugDataFileIsCreated) {
@@ -2521,7 +2522,7 @@ TEST(OfflineCompilerTest, givenDebugDataAvailableWhenSourceIsBuiltThenDebugDataF
 
     EXPECT_TRUE(compilerOutputExists("myOutputFileName", "bc") || compilerOutputExists("myOutputFileName", "spv"));
     EXPECT_TRUE(compilerOutputExists("myOutputFileName", "bin"));
-    EXPECT_TRUE(compilerOutputExists("myOutputFileName", "gen"));
+    EXPECT_FALSE(compilerOutputExists("myOutputFileName", "gen"));
     EXPECT_TRUE(compilerOutputExists("myOutputFileName", "dbg"));
 
     NEO::setIgcDebugVars(gEnvironment->igcDebugVars);
@@ -3107,7 +3108,7 @@ TEST(OclocCompile, givenSpirvInputThenDontGenerateSpirvFile) {
     ASSERT_EQ(0, retVal);
     retVal = ocloc.build();
     EXPECT_EQ(0, retVal);
-    EXPECT_TRUE(compilerOutputExists("offline_compiler_test/binary_with_zeroes", "gen"));
+    EXPECT_FALSE(compilerOutputExists("offline_compiler_test/binary_with_zeroes", "gen"));
     EXPECT_TRUE(compilerOutputExists("offline_compiler_test/binary_with_zeroes", "bin"));
     EXPECT_FALSE(compilerOutputExists("offline_compiler_test/binary_with_zeroes", "spv"));
 }
