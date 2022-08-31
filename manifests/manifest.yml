@@ -54,7 +54,7 @@ components:
     dest_dir: libva
     type: git
     branch: libva
-    revision: c9bb65b
+    revision: 2.2.0
     repository: https://github.com/intel/libva.git
   wdk:
     dest_dir: wdk
