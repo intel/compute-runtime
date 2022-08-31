@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,9 @@ KernelBinaryHelper::KernelBinaryHelper(const std::string &name, bool appendOptio
 
     retrieveBinaryKernelFilename(fclDebugVars.fileName, name + "_", ".bc");
     retrieveBinaryKernelFilename(igcDebugVars.fileName, name + "_", ".gen");
+
+    appendBinaryNameSuffix(fclDebugVars.fileNameSuffix);
+    appendBinaryNameSuffix(igcDebugVars.fileNameSuffix);
 
     fclDebugVars.appendOptionsToFileName = appendOptionsToFileName;
     igcDebugVars.appendOptionsToFileName = appendOptionsToFileName;

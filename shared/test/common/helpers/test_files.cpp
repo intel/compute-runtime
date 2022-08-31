@@ -26,9 +26,12 @@ void retrieveBinaryKernelFilename(std::string &outputFilename, const std::string
     outputFilename.reserve(2 * testFiles.length());
     outputFilename.append(testFiles);
     outputFilename.append(kernelName);
+    if (false == options.empty()) {
+        outputFilename.append(options);
+        outputFilename.append("_");
+    }
     outputFilename.append(binaryNameSuffix);
     outputFilename.append(extension);
-    outputFilename.append(options);
 
     if (!fileExists(outputFilename) && (extension == ".bc")) {
         retrieveBinaryKernelFilename(outputFilename, kernelName, ".spv", options);
@@ -49,4 +52,8 @@ void retrieveBinaryKernelFilenameApiSpecific(std::string &outputFilename, const 
     if (!fileExists(outputFilename) && (extension == ".bc")) {
         retrieveBinaryKernelFilename(outputFilename, kernelName, ".spv", options);
     }
+}
+
+void appendBinaryNameSuffix(std::string &outputFileNameSuffix) {
+    outputFileNameSuffix.append(binaryNameSuffix);
 }

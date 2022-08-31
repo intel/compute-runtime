@@ -22,7 +22,6 @@ function(level_zero_generate_kernels target_list platform_name suffix revision_i
     if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
       set(output_files
           ${outputpath_base}.bin
-          ${outputpath_base}.gen
           ${outputpath_base}.spv
           ${outputpath_base}.dbg
       )
@@ -37,15 +36,15 @@ function(level_zero_generate_kernels target_list platform_name suffix revision_i
 
       list(APPEND ${target_list} ${output_files})
     else()
-      foreach(_file_name "bin" "gen" "spv" "dbg")
-        set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/${relativeDir}/${basename}_${suffix}.${_file_name}")
+      foreach(extension "bin" "spv" "dbg")
+        set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/${relativeDir}/${basename}_${suffix}.${extension}")
         add_custom_command(
-                           OUTPUT ${outputpath_base}.${_file_name}
+                           OUTPUT ${outputpath_base}.${extension}
                            COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}
                            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${outputdir}
         )
 
-        list(APPEND ${target_list} ${outputpath_base}.${_file_name})
+        list(APPEND ${target_list} ${outputpath_base}.${extension})
       endforeach()
     endif()
   endforeach()
@@ -72,7 +71,6 @@ function(level_zero_generate_kernels_with_internal_options target_list platform_
     if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
       set(output_files
           ${outputpath_base}.bin
-          ${outputpath_base}.gen
           ${outputpath_base}.spv
           ${outputpath_base}.dbg
       )
@@ -89,15 +87,15 @@ function(level_zero_generate_kernels_with_internal_options target_list platform_
 
       list(APPEND ${target_list} ${output_files})
     else()
-      foreach(_file_name "bin" "gen" "spv" "dbg")
-        set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/${relativeDir}/${prefix}_${basename}_${suffix}.${_file_name}")
+      foreach(extension "bin" "spv" "dbg")
+        set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/${relativeDir}/${prefix}_${basename}_${suffix}.${extension}")
         add_custom_command(
-                           OUTPUT ${outputpath_base}.${_file_name}
+                           OUTPUT ${outputpath_base}.${extension}
                            COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}
                            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${outputdir}
         )
 
-        list(APPEND ${target_list} ${outputpath_base}.${_file_name})
+        list(APPEND ${target_list} ${outputpath_base}.${extension})
       endforeach()
     endif()
   endforeach()

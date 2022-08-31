@@ -46,6 +46,7 @@ struct MockCompilerDebugVars {
     std::string *receivedInput = nullptr;
 
     std::string fileName;
+    std::string fileNameSuffix;
     std::string translationContextCreationError;
 };
 
