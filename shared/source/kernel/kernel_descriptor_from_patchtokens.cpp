@@ -59,7 +59,7 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchExecutionEnviro
     dst.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress = (0 != execEnv.SubgroupIndependentForwardProgressRequired);
     dst.kernelAttributes.flags.useGlobalAtomics = (0 != execEnv.HasGlobalAtomics);
     dst.kernelAttributes.flags.usesFencesForReadWriteImages = (0 != execEnv.UsesFencesForReadWriteImages);
-    dst.kernelAttributes.flags.usesSpecialPipelineSelectMode = (0 != execEnv.HasDPAS);
+    dst.kernelAttributes.flags.usesSystolicPipelineSelectMode = (0 != execEnv.HasDPAS);
     dst.kernelAttributes.flags.usesStatelessWrites = (0 != execEnv.StatelessWritesCount);
     dst.kernelAttributes.flags.useStackCalls = (0 != execEnv.HasStackCalls);
     dst.kernelAttributes.flags.hasRTCalls = (0 != execEnv.HasRTCalls);

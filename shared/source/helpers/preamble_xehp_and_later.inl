@@ -26,22 +26,20 @@ template <>
 bool PreambleHelper<Family>::isSystolicModeConfigurable(const HardwareInfo &hwInfo);
 
 template <typename Family>
-void PreambleHelper<Family>::appendProgramPipelineSelect(void *cmd, bool isSpecialModeSelected, const HardwareInfo &hwInfo) {
-    using PIPELINE_SELECT = typename Family::PIPELINE_SELECT;
-    auto command = static_cast<PIPELINE_SELECT *>(cmd);
-    auto mask = command->getMaskBits();
+void PreambleHelper<Family>::appendProgramPipelineSelect(typename Family::PIPELINE_SELECT &cmd, bool isSystolicModeSelected, const HardwareInfo &hwInfo) {
+    auto mask = cmd.getMaskBits();
 
     if (PreambleHelper<Family>::isSystolicModeConfigurable(hwInfo)) {
-        command->setSystolicModeEnable(isSpecialModeSelected);
+        cmd.setSystolicModeEnable(isSystolicModeSelected);
         mask |= pipelineSelectSystolicModeEnableMaskBits;
     }
 
     if (DebugManager.flags.OverrideSystolicPipelineSelect.get() != -1) {
-        command->setSystolicModeEnable(DebugManager.flags.OverrideSystolicPipelineSelect.get());
+        cmd.setSystolicModeEnable(DebugManager.flags.OverrideSystolicPipelineSelect.get());
         mask |= pipelineSelectSystolicModeEnableMaskBits;
     }
 
-    command->setMaskBits(mask);
+    cmd.setMaskBits(mask);
 }
 
 template <typename Family>
@@ -54,16 +52,16 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
     PIPELINE_SELECT cmd = Family::cmdInitPipelineSelect;
 
     if (DebugManager.flags.CleanStateInPreamble.get()) {
-        auto pCmd = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
+        auto cmdBuffer = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
         cmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_3D);
-        *pCmd = cmd;
+        *cmdBuffer = cmd;
 
         PipeControlArgs args = {};
         args.stateCacheInvalidationEnable = true;
         MemorySynchronizationCommands<Family>::addSingleBarrier(*pCommandStream, args);
     }
 
-    auto pCmd = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
+    auto cmdBuffer = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
 
     auto mask = pipelineSelectEnablePipelineSelectMaskBits;
 
@@ -74,9 +72,9 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
     }
     cmd.setMaskBits(mask);
 
-    appendProgramPipelineSelect(&cmd, pipelineSelectArgs.specialPipelineSelectMode, hwInfo);
+    appendProgramPipelineSelect(cmd, pipelineSelectArgs.systolicPipelineSelectMode, hwInfo);
 
-    *pCmd = cmd;
+    *cmdBuffer = cmd;
 
     if (DebugManager.flags.CleanStateInPreamble.get()) {
         PipeControlArgs args = {};

@@ -35,9 +35,9 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenIsGlobalFenceInCommandStreamRequ
     EXPECT_FALSE(hwInfoConfig.isGlobalFenceInCommandStreamRequired(*defaultHwInfo));
 }
 
-HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenIsSpecialPipelineSelectModeChangedThenFalseIsReturned) {
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenIsSystolicPipelineSelectModeChangedThenFalseIsReturned) {
     const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    EXPECT_FALSE(hwInfoConfig.isSpecialPipelineSelectModeChanged(*defaultHwInfo));
+    EXPECT_FALSE(hwInfoConfig.isSystolicPipelineSelectModeChanged(*defaultHwInfo));
 }
 
 HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenIsSystolicModeConfigurabledThenFalseIsReturned) {

@@ -46,10 +46,10 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForL3Config() const { retur
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::programPipelineSelect(LinearStream &commandStream, PipelineSelectArgs &pipelineSelectArgs) {
-    if (csrSizeRequestFlags.mediaSamplerConfigChanged || csrSizeRequestFlags.specialPipelineSelectModeChanged || !isPreambleSent) {
+    if (csrSizeRequestFlags.mediaSamplerConfigChanged || csrSizeRequestFlags.systolicPipelineSelectMode || !isPreambleSent) {
         PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, pipelineSelectArgs, peekHwInfo());
         this->lastMediaSamplerConfig = pipelineSelectArgs.mediaSamplerRequired;
-        this->lastSpecialPipelineSelectMode = pipelineSelectArgs.specialPipelineSelectMode;
+        this->lastSystolicPipelineSelectMode = pipelineSelectArgs.systolicPipelineSelectMode;
     }
 }
 

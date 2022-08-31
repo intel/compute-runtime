@@ -223,7 +223,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         }
         dispatchFlags.barrierTimestampPacketNodes = &timestampPacketDependencies->barrierNodes;
     }
-    dispatchFlags.pipelineSelectArgs.specialPipelineSelectMode = kernel->requiresSpecialPipelineSelectMode();
+    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = kernel->requiresSystolicPipelineSelectMode();
     if (anyUncacheableArgs) {
         dispatchFlags.l3CacheSettings = L3CachingSettings::l3CacheOff;
     } else if (!kernel->areStatelessWritesUsed()) {

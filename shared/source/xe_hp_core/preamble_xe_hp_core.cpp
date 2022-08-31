@@ -47,9 +47,9 @@ void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, c
 }
 
 template <>
-bool PreambleHelper<Family>::isSpecialPipelineSelectModeChanged(bool lastSpecialPipelineSelectMode, bool newSpecialPipelineSelectMode,
-                                                                const HardwareInfo &hwInfo) {
-    return lastSpecialPipelineSelectMode != newSpecialPipelineSelectMode;
+bool PreambleHelper<Family>::isSystolicPipelineSelectModeChanged(bool lastSystolicPipelineSelectMode, bool newSystolicPipelineSelectMode,
+                                                                 const HardwareInfo &hwInfo) {
+    return lastSystolicPipelineSelectMode != newSystolicPipelineSelectMode;
 }
 
 template <>

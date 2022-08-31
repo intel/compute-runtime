@@ -357,7 +357,7 @@ bool HwInfoConfigHw<gfxProduct>::programAllStateComputeCommandFields() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isSpecialPipelineSelectModeChanged(const HardwareInfo &hwInfo) const {
+bool HwInfoConfigHw<gfxProduct>::isSystolicPipelineSelectModeChanged(const HardwareInfo &hwInfo) const {
     return false;
 }
 

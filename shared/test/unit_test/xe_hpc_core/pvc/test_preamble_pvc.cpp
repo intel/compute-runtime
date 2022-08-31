@@ -52,7 +52,7 @@ PVCTEST_F(PreamblePipelineSelectState, givenRevisionBAndAboveWhenCallingProgramP
     auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
 
     PipelineSelectArgs pipelineArgs;
-    pipelineArgs.specialPipelineSelectMode = true;
+    pipelineArgs.systolicPipelineSelectMode = true;
 
     struct {
         unsigned short revId;

@@ -120,9 +120,9 @@ using XeHPPipelineSelect = ::testing::Test;
 XEHPTEST_F(XeHPPipelineSelect, WhenAppendProgramPipelineSelectThenCorrectValuesSet) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     PIPELINE_SELECT cmd = FamilyType::cmdInitPipelineSelect;
-    PreambleHelper<FamilyType>::appendProgramPipelineSelect(&cmd, true, *defaultHwInfo);
+    PreambleHelper<FamilyType>::appendProgramPipelineSelect(cmd, true, *defaultHwInfo);
     EXPECT_TRUE(cmd.getSystolicModeEnable());
-    PreambleHelper<FamilyType>::appendProgramPipelineSelect(&cmd, false, *defaultHwInfo);
+    PreambleHelper<FamilyType>::appendProgramPipelineSelect(cmd, false, *defaultHwInfo);
     EXPECT_FALSE(cmd.getSystolicModeEnable());
     EXPECT_EQ(pipelineSelectSystolicModeEnableMaskBits, cmd.getMaskBits());
 }

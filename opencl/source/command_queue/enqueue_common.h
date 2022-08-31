@@ -700,7 +700,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
 
     auto mediaSamplerRequired = false;
     uint32_t numGrfRequired = GrfConfig::DefaultGrfNumber;
-    auto specialPipelineSelectMode = false;
+    auto systolicPipelineSelectMode = false;
     Kernel *kernel = nullptr;
     bool auxTranslationRequired = false;
     bool useGlobalAtomics = false;
@@ -716,7 +716,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         mediaSamplerRequired |= kernel->isVmeKernel();
         auto numGrfRequiredByKernel = static_cast<uint32_t>(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.numGrfRequired);
         numGrfRequired = std::max(numGrfRequired, numGrfRequiredByKernel);
-        specialPipelineSelectMode |= kernel->requiresSpecialPipelineSelectMode();
+        systolicPipelineSelectMode |= kernel->requiresSystolicPipelineSelectMode();
         auxTranslationRequired |= kernel->isAuxTranslationRequired();
         if (kernel->hasUncacheableStatelessArgs()) {
             anyUncacheableArgs = true;
@@ -791,7 +791,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         isTextureCacheFlushNeeded(commandType));                                                    // textureCacheFlush
 
     dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = mediaSamplerRequired;
-    dispatchFlags.pipelineSelectArgs.specialPipelineSelectMode = specialPipelineSelectMode;
+    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = systolicPipelineSelectMode;
 
     dispatchFlags.disableEUFusion = kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion;
 

@@ -306,7 +306,7 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::programAllStateComputeCommandFields() const {
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isSpecialPipelineSelectModeChanged(const HardwareInfo &hwInfo) const {
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isSystolicPipelineSelectModeChanged(const HardwareInfo &hwInfo) const {
     return false;
 }
 

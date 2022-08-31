@@ -283,7 +283,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
 
     bool getAllowNonUniform() const { return program->getAllowNonUniform(); }
     bool isVmeKernel() const { return kernelInfo.kernelDescriptor.kernelAttributes.flags.usesVme; }
-    bool requiresSpecialPipelineSelectMode() const { return specialPipelineSelectMode; }
+    bool requiresSystolicPipelineSelectMode() const { return systolicPipelineSelectMode; }
 
     void performKernelTuning(CommandStreamReceiver &commandStreamReceiver, const Vec3<size_t> &lws, const Vec3<size_t> &gws, const Vec3<size_t> &offsets, TimestampPacketContainer *timestampContainer);
     MOCKABLE_VIRTUAL bool isSingleSubdevicePreferred() const;
@@ -527,7 +527,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     bool usingImages = false;
     bool usingImagesOnly = false;
     bool auxTranslationRequired = false;
-    bool specialPipelineSelectMode = false;
+    bool systolicPipelineSelectMode = false;
     bool svmAllocationsRequireCacheFlush = false;
     bool isUnifiedMemorySyncRequired = true;
     bool debugEnabled = false;

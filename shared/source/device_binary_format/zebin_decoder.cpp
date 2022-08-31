@@ -1098,7 +1098,7 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<N
     kernelDescriptor.kernelAttributes.flags.useGlobalAtomics = execEnv.hasGlobalAtomics;
     kernelDescriptor.kernelAttributes.flags.useStackCalls = execEnv.hasStackCalls;
     kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages = execEnv.hasFenceForImageAccess;
-    kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode = execEnv.hasDpas;
+    kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = execEnv.hasDpas;
     kernelDescriptor.kernelAttributes.flags.usesStatelessWrites = (false == execEnv.hasNoStatelessWrite);
     kernelDescriptor.kernelAttributes.barrierCount = execEnv.barrierCount;
     kernelDescriptor.kernelAttributes.bufferAddressingMode = (execEnv.has4GBBuffers) ? KernelDescriptor::Stateless : KernelDescriptor::BindfulAndStateless;

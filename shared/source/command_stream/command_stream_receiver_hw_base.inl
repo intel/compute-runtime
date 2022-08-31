@@ -261,9 +261,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     }
 
     auto newL3Config = PreambleHelper<GfxFamily>::getL3Config(hwInfo, dispatchFlags.useSLM);
-    auto isSpecialPipelineSelectModeChanged = PreambleHelper<GfxFamily>::isSpecialPipelineSelectModeChanged(lastSpecialPipelineSelectMode,
-                                                                                                            dispatchFlags.pipelineSelectArgs.specialPipelineSelectMode,
-                                                                                                            hwInfo);
+    auto isSystolicPipelineSelectModeChanged = PreambleHelper<GfxFamily>::isSystolicPipelineSelectModeChanged(lastSystolicPipelineSelectMode,
+                                                                                                              dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode,
+                                                                                                              hwInfo);
 
     auto requiresCoherency = hwHelper.forceNonGpuCoherencyWA(dispatchFlags.requiresCoherency);
     this->streamProperties.stateComputeMode.setProperties(requiresCoherency, dispatchFlags.numGrfRequired,
@@ -272,7 +272,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     csrSizeRequestFlags.l3ConfigChanged = this->lastSentL3Config != newL3Config;
     csrSizeRequestFlags.preemptionRequestChanged = this->lastPreemptionMode != dispatchFlags.preemptionMode;
     csrSizeRequestFlags.mediaSamplerConfigChanged = this->lastMediaSamplerConfig != static_cast<int8_t>(dispatchFlags.pipelineSelectArgs.mediaSamplerRequired);
-    csrSizeRequestFlags.specialPipelineSelectModeChanged = isSpecialPipelineSelectModeChanged;
+    csrSizeRequestFlags.systolicPipelineSelectMode = isSystolicPipelineSelectModeChanged;
 
     csrSizeRequestFlags.activePartitionsChanged = isProgramActivePartitionConfigRequired();
 
@@ -902,7 +902,7 @@ template <typename GfxFamily>
 inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPipelineSelect() const {
     size_t size = 0;
     if ((csrSizeRequestFlags.mediaSamplerConfigChanged ||
-         csrSizeRequestFlags.specialPipelineSelectModeChanged ||
+         csrSizeRequestFlags.systolicPipelineSelectMode ||
          !isPreambleSent) &&
         !isPipelineSelectAlreadyProgrammed()) {
         size += PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(peekHwInfo());

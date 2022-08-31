@@ -107,7 +107,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenLargeGrfModeDisabledThenExpectedCommands
 
 HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithKernelDpasThenSystolicModeEnabled, IsWithinXeGfxFamily) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
-    descriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode = true;
+    descriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = true;
     EncodeComputeMode<FamilyType>::adjustPipelineSelect(*cmdContainer.get(), descriptor);
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -121,7 +121,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithKernelDpasThenSystol
 
 HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithNoKernelDpasThenSystolicModeIsNotEnabled, IsWithinXeGfxFamily) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
-    descriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode = false;
+    descriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = false;
     EncodeComputeMode<FamilyType>::adjustPipelineSelect(*cmdContainer.get(), descriptor);
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -138,7 +138,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenDebugModeToOverrideSystolicModeToTrueWhe
     DebugManager.flags.OverrideSystolicPipelineSelect.set(1);
 
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
-    descriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode = false;
+    descriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = false;
     EncodeComputeMode<FamilyType>::adjustPipelineSelect(*cmdContainer.get(), descriptor);
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -155,7 +155,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenDebugModeToOverrideSystolicModeToFalseWh
     DebugManager.flags.OverrideSystolicPipelineSelect.set(0);
 
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
-    descriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode = true;
+    descriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = true;
     EncodeComputeMode<FamilyType>::adjustPipelineSelect(*cmdContainer.get(), descriptor);
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -175,7 +175,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenLargeGrfModeEnabledThenExpectedCommandsA
 
     auto usedSpaceBefore = cmdContainer->getCommandStream()->getUsed();
 
-    descriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode = true;
+    descriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = true;
     NEO::EncodeComputeMode<GfxFamily>::adjustPipelineSelect(*cmdContainer, descriptor);
     StreamProperties streamProperties{};
     streamProperties.stateComputeMode.largeGrfMode.set(1);
@@ -213,7 +213,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenLargeGrfModeEnabledAndDisabledThenExpect
 
     auto usedSpaceBefore = cmdContainer->getCommandStream()->getUsed();
 
-    descriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode = true;
+    descriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = true;
     NEO::EncodeComputeMode<GfxFamily>::adjustPipelineSelect(*cmdContainer, descriptor);
     StreamProperties streamProperties{};
     streamProperties.stateComputeMode.largeGrfMode.set(1);

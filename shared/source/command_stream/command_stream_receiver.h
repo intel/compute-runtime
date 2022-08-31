@@ -460,7 +460,7 @@ class CommandStreamReceiver {
     bool timestampPacketWriteEnabled = false;
     bool staticWorkPartitioningEnabled = false;
     bool nTo1SubmissionModelEnabled = false;
-    bool lastSpecialPipelineSelectMode = false;
+    bool lastSystolicPipelineSelectMode = false;
     bool requiresInstructionCacheFlush = false;
 
     bool localMemoryEnabled = false;

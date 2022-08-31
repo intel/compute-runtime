@@ -60,7 +60,7 @@ PVCTEST_F(EncodeKernelPvcTest, givenRevisionBAndAboveWhenSpecialModeRequiredThen
 
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
-    dispatchInterface->kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode = true;
+    dispatchInterface->kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = true;
 
     struct {
         unsigned short revId;
@@ -93,7 +93,7 @@ PVCTEST_F(EncodeKernelPvcTest, givenRevisionBAndAboveWhenSpecialModeRequiredAndA
     auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
 
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
-    dispatchInterface->kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode = true;
+    dispatchInterface->kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = true;
 
     struct {
         unsigned short revId;

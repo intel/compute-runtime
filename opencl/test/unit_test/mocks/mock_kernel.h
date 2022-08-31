@@ -243,7 +243,7 @@ class MockKernel : public Kernel {
     void makeResident(CommandStreamReceiver &commandStreamReceiver) override;
     void getResidency(std::vector<Surface *> &dst) override;
 
-    void setSpecialPipelineSelectMode(bool value) { specialPipelineSelectMode = value; }
+    void setSystolicPipelineSelectMode(bool value) { systolicPipelineSelectMode = value; }
 
     bool requiresCacheFlushCommand(const CommandQueue &commandQueue) const override;
 

@@ -2178,7 +2178,7 @@ void Kernel::reconfigureKernel() {
         maxKernelWorkGroupSize >>= 1;
     }
     this->containsStatelessWrites = kernelDescriptor.kernelAttributes.flags.usesStatelessWrites;
-    this->specialPipelineSelectMode = kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode;
+    this->systolicPipelineSelectMode = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode;
 }
 
 bool Kernel::requiresCacheFlushCommand(const CommandQueue &commandQueue) const {

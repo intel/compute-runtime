@@ -65,11 +65,11 @@ PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenNotExistPolicyWhenFlushin
     EXPECT_EQ(notExistPolicy, commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 }
 
-PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenRevisionBAndAboveWhenLastSpecialPipelineSelectModeIsTrueAndFlushTaskIsCalledThenDontReprogramPipelineSelect) {
+PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenRevisionBAndAboveWhenLastSystolicPipelineSelectModeIsTrueAndFlushTaskIsCalledThenDontReprogramPipelineSelect) {
     auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    flushTaskFlags.pipelineSelectArgs.specialPipelineSelectMode = true;
+    flushTaskFlags.pipelineSelectArgs.systolicPipelineSelectMode = true;
     flushTaskFlags.pipelineSelectArgs.mediaSamplerRequired = false;
 
     struct {
@@ -90,8 +90,8 @@ PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenRevisionBAndAboveWhenLast
 
         flushTask(commandStreamReceiver);
 
-        EXPECT_EQ(testInput.expectedValue, commandStreamReceiver.lastSpecialPipelineSelectMode);
-        commandStreamReceiver.lastSpecialPipelineSelectMode = false;
+        EXPECT_EQ(testInput.expectedValue, commandStreamReceiver.lastSystolicPipelineSelectMode);
+        commandStreamReceiver.lastSystolicPipelineSelectMode = false;
     }
 }
 

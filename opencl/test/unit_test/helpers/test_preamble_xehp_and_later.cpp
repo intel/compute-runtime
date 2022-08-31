@@ -542,12 +542,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, RenderSurfaceStateXeHPAndLaterTests, givenSpecificP
 
 using PipelineSelectTest = ::testing::Test;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, PipelineSelectTest, whenCallingIsSpecialPipelineSelectModeChangedThenReturnCorrectValue) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, PipelineSelectTest, whenCallingIsSystolicPipelineSelectModeChangedThenReturnCorrectValue) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
-    bool oldPipelineSelectSpecialMode = true;
-    bool newPipelineSelectSpecialMode = false;
+    bool oldPipelineSelectSystolicMode = true;
+    bool newPipelineSelectSystolicMode = false;
 
-    auto result = PreambleHelper<FamilyType>::isSpecialPipelineSelectModeChanged(oldPipelineSelectSpecialMode, newPipelineSelectSpecialMode, *defaultHwInfo);
+    auto result = PreambleHelper<FamilyType>::isSystolicPipelineSelectModeChanged(oldPipelineSelectSystolicMode, newPipelineSelectSystolicMode, *defaultHwInfo);
     EXPECT_TRUE(result);
 }
 

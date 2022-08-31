@@ -264,7 +264,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, WhenAppendProgramPipelineSelectThenNot
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     PIPELINE_SELECT cmd = FamilyType::cmdInitPipelineSelect;
     cmd.setMaskBits(pipelineSelectEnablePipelineSelectMaskBits);
-    PreambleHelper<FamilyType>::appendProgramPipelineSelect(&cmd, true, *defaultHwInfo);
+    PreambleHelper<FamilyType>::appendProgramPipelineSelect(cmd, true, *defaultHwInfo);
     EXPECT_EQ(pipelineSelectEnablePipelineSelectMaskBits, cmd.getMaskBits());
 }
 

@@ -124,7 +124,7 @@ struct CsrSizeRequestFlags {
     bool preemptionRequestChanged = false;
     bool mediaSamplerConfigChanged = false;
     bool hasSharedHandles = false;
-    bool specialPipelineSelectModeChanged = false;
+    bool systolicPipelineSelectMode = false;
     bool activePartitionsChanged = false;
 };
 } // namespace NEO

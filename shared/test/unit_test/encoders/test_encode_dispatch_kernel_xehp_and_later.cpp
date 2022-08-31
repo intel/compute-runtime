@@ -1283,7 +1283,7 @@ HWTEST2_F(CommandEncodeStatesTest,
     bool dpasModeRequired = true;
     cmdContainer->lastPipelineSelectModeRequired = false;
 
-    dispatchInterface->kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode = dpasModeRequired;
+    dispatchInterface->kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = dpasModeRequired;
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
@@ -1313,7 +1313,7 @@ HWTEST2_F(CommandEncodeStatesTest,
     bool dpasModeRequired = true;
     DebugManager.flags.OverrideSystolicPipelineSelect.set(!dpasModeRequired);
     cmdContainer->lastPipelineSelectModeRequired = false;
-    dispatchInterface->kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode = dpasModeRequired;
+    dispatchInterface->kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = dpasModeRequired;
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
@@ -1340,7 +1340,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest,
 
     bool dpasModeRequired = true;
     cmdContainer->lastPipelineSelectModeRequired = dpasModeRequired;
-    dispatchInterface->kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode = dpasModeRequired;
+    dispatchInterface->kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = dpasModeRequired;
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);

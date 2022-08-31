@@ -43,5 +43,5 @@ void HwInfoConfigHw<gfxProduct>::setAdditionalPipelineSelectFields(void *pipelin
 
     mask |= pipelineSelectSystolicModeEnableMaskBits;
     pipelineSelectTglplpCmd->setMaskBits(mask);
-    pipelineSelectTglplpCmd->setSpecialModeEnable(pipelineSelectArgs.specialPipelineSelectMode);
+    pipelineSelectTglplpCmd->setSpecialModeEnable(pipelineSelectArgs.systolicPipelineSelectMode);
 }

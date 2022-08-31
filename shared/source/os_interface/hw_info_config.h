@@ -108,7 +108,7 @@ class HwInfoConfig {
     virtual bool getUuid(Device *device, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) const = 0;
     virtual bool isFlushTaskAllowed() const = 0;
     virtual bool programAllStateComputeCommandFields() const = 0;
-    virtual bool isSpecialPipelineSelectModeChanged(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isSystolicPipelineSelectModeChanged(const HardwareInfo &hwInfo) const = 0;
     virtual bool isSystolicModeConfigurable(const HardwareInfo &hwInfo) const = 0;
     virtual bool isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const = 0;
@@ -239,7 +239,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool getUuid(Device *device, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) const override;
     bool isFlushTaskAllowed() const override;
     bool programAllStateComputeCommandFields() const override;
-    bool isSpecialPipelineSelectModeChanged(const HardwareInfo &hwInfo) const override;
+    bool isSystolicPipelineSelectModeChanged(const HardwareInfo &hwInfo) const override;
     bool isSystolicModeConfigurable(const HardwareInfo &hwInfo) const override;
     bool isComputeDispatchAllWalkerEnableInComputeWalkerRequired(const HardwareInfo &hwInfo) const override;
     bool isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const override;

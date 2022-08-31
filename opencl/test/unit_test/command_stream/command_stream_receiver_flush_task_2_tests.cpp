@@ -1084,7 +1084,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenSpecialPipelineSelectModeCha
     CsrSizeRequestFlags csrSizeRequest = {};
     DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
-    csrSizeRequest.specialPipelineSelectModeChanged = true;
+    csrSizeRequest.systolicPipelineSelectMode = true;
     commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
     size_t size = commandStreamReceiver.getCmdSizeForPipelineSelect();
 

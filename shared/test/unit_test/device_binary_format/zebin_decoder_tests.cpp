@@ -2615,7 +2615,7 @@ TEST(PopulateKernelDescriptor, GivenMinimalExecutionEnvThenPopulateKernelDescrip
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, Defaults::hasGlobalAtomics);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.useStackCalls, Defaults::hasStackCalls);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages, Defaults::hasFenceForImageAccess);
-    EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode, Defaults::hasDpas);
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode, Defaults::hasDpas);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesStatelessWrites, (false == Defaults::hasNoStatelessWrite));
     EXPECT_EQ(kernelDescriptor.kernelAttributes.barrierCount, static_cast<uint8_t>(Defaults::barrierCount));
     EXPECT_EQ(kernelDescriptor.kernelAttributes.binaryFormat, DeviceBinaryFormat::Zebin);

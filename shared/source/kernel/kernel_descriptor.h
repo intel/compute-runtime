@@ -183,7 +183,7 @@ struct KernelDescriptor {
         union {
             struct {
                 // 0
-                bool usesSpecialPipelineSelectMode : 1;
+                bool usesSystolicPipelineSelectMode : 1;
                 bool usesStringMapForPrintf : 1;
                 bool usesPrintf : 1;
                 bool usesFencesForReadWriteImages : 1;

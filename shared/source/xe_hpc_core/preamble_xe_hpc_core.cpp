@@ -59,11 +59,11 @@ bool PreambleHelper<Family>::isSystolicModeConfigurable(const HardwareInfo &hwIn
 }
 
 template <>
-bool PreambleHelper<Family>::isSpecialPipelineSelectModeChanged(bool lastSpecialPipelineSelectMode, bool newSpecialPipelineSelectMode,
-                                                                const HardwareInfo &hwInfo) {
+bool PreambleHelper<Family>::isSystolicPipelineSelectModeChanged(bool lastSystolicPipelineSelectMode, bool newSystolicPipelineSelectMode,
+                                                                 const HardwareInfo &hwInfo) {
 
     const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    return (lastSpecialPipelineSelectMode != newSpecialPipelineSelectMode) && hwInfoConfig.isSpecialPipelineSelectModeChanged(hwInfo);
+    return (lastSystolicPipelineSelectMode != newSystolicPipelineSelectMode) && hwInfoConfig.isSystolicPipelineSelectModeChanged(hwInfo);
 }
 
 template struct PreambleHelper<Family>;

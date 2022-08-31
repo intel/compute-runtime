@@ -65,9 +65,9 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         threadDimsVec = {threadDims[0], threadDims[1], threadDims[2]};
     }
 
-    bool specialModeRequired = kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode;
-    if (PreambleHelper<Family>::isSpecialPipelineSelectModeChanged(container.lastPipelineSelectModeRequired, specialModeRequired, hwInfo)) {
-        container.lastPipelineSelectModeRequired = specialModeRequired;
+    bool systolicModeRequired = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode;
+    if (PreambleHelper<Family>::isSystolicPipelineSelectModeChanged(container.lastPipelineSelectModeRequired, systolicModeRequired, hwInfo)) {
+        container.lastPipelineSelectModeRequired = systolicModeRequired;
         EncodeComputeMode<Family>::adjustPipelineSelect(container, kernelDescriptor);
     }
 
@@ -596,9 +596,9 @@ template <typename Family>
 void EncodeComputeMode<Family>::adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor) {
     using PIPELINE_SELECT = typename Family::PIPELINE_SELECT;
     auto pipelineSelectCmd = Family::cmdInitPipelineSelect;
-    auto isSpecialModeSelected = kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode;
+    auto isSystolicModeSelected = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode;
 
-    PreambleHelper<Family>::appendProgramPipelineSelect(&pipelineSelectCmd, isSpecialModeSelected, container.getDevice()->getHardwareInfo());
+    PreambleHelper<Family>::appendProgramPipelineSelect(pipelineSelectCmd, isSystolicModeSelected, container.getDevice()->getHardwareInfo());
 
     pipelineSelectCmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
 
