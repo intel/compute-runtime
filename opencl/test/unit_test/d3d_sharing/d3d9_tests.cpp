@@ -1007,6 +1007,12 @@ TEST_F(D3D9Tests, givenInvalidClMemObjectPassedOnReleaseListWhenCallIsMadeThenFa
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
+TEST_F(D3D9Tests, givenInvalidClMemObjectPassedOnReleaseDX9ObjectsWhenCallIsMadeThenFailureIsReturned) {
+    auto fakeObject = reinterpret_cast<cl_mem>(cmdQ);
+    auto retVal = clEnqueueReleaseDX9ObjectsINTEL(cmdQ, 1, &fakeObject, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
+}
+
 TEST_F(D3D9Tests, givenResourcesCreatedFromDifferentDevicesWhenAcquireReleaseCalledThenUpdateDevice) {
     mockSharingFcns->getTexture2dDescSetParams = true;
     mockSharingFcns->getTexture2dDescParamsSet.textureDesc = mockSharingFcns->mockTexture2dDesc;

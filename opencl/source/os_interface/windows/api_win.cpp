@@ -184,6 +184,11 @@ cl_int CL_API_CALL clEnqueueReleaseDX9ObjectsINTEL(cl_command_queue commandQueue
         return retVal;
     }
 
+    retVal = validateObjects(MemObjList(numObjects, memObjects));
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+
     for (unsigned int object = 0; object < numObjects; object++) {
         auto memObject = castToObject<MemObj>(memObjects[object]);
         if (!static_cast<D3DSharing<D3DTypesHelper::D3D9> *>(memObject->peekSharingHandler())->isSharedResource()) {
