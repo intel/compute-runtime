@@ -909,6 +909,16 @@ TEST_F(InternalsEventTest, givenPassingEventWhenWaitingForEventsThenWaititingIsS
     EXPECT_NE(Event::executionAbortedDueToGpuHang, passingEvent.peekExecutionStatus());
 }
 
+TEST_F(InternalsEventTest, givenEventWhenWaitThenWaitForTimestampsCalled) {
+    MockCommandQueue cmdQ(mockContext, pClDevice, nullptr, false);
+    MockEvent<Event> event(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
+    EXPECT_FALSE(cmdQ.waitForTimestampsCalled);
+
+    event.wait(false, false);
+
+    EXPECT_TRUE(cmdQ.waitForTimestampsCalled);
+}
+
 TEST_F(InternalsEventTest, GivenProfilingWHENMapOperationTHENTimesSet) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     MockCommandQueue *pCmdQ = new MockCommandQueue(mockContext, pClDevice, props, false);
