@@ -38,11 +38,6 @@
 #include "shared/test/common/os_interface/linux/drm_command_stream_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "opencl/source/mem_obj/buffer.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_buffer.h"
-#include "opencl/test/unit_test/mocks/mock_program.h"
-
 #include "gtest/gtest.h"
 
 using namespace NEO;
