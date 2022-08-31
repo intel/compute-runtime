@@ -16,6 +16,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/string.h"
 
 #include <cassert>
 #include <optional>
@@ -60,6 +61,13 @@ Command *putCommand(void *&inputAddress, uint32_t &totalBytesProgrammed) {
     totalBytesProgrammed += sizeof(Command);
     auto commandToReturn = reinterpret_cast<Command *>(inputAddress);
     inputAddress = ptrOffset(inputAddress, sizeof(Command));
+    return commandToReturn;
+}
+
+inline void *putCommand(void *&inputAddress, uint32_t &totalBytesProgrammed, size_t commandSize) {
+    totalBytesProgrammed += static_cast<uint32_t>(commandSize);
+    auto commandToReturn = inputAddress;
+    inputAddress = ptrOffset(inputAddress, commandSize);
     return commandToReturn;
 }
 
@@ -298,10 +306,16 @@ void programMiLoadRegisterMem(void *&inputAddress, uint32_t &totalBytesProgramme
 
 template <typename GfxFamily>
 void programPipeControlCommand(void *&inputAddress, uint32_t &totalBytesProgrammed, NEO::PipeControlArgs &flushArgs) {
-    auto pipeControl = putCommand<PIPE_CONTROL<GfxFamily>>(inputAddress, totalBytesProgrammed);
-    PIPE_CONTROL<GfxFamily> cmd = GfxFamily::cmdInitPipeControl;
-    NEO::MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(&cmd, flushArgs);
-    *pipeControl = cmd;
+    auto singleBarrierSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(flushArgs.tlbInvalidation);
+
+    auto pipeControl = putCommand(inputAddress, totalBytesProgrammed, singleBarrierSize);
+
+    UNRECOVERABLE_IF(sizeof(PIPE_CONTROL<GfxFamily>) < singleBarrierSize);
+    uint8_t cmd[sizeof(PIPE_CONTROL<GfxFamily>)] = {};
+
+    NEO::MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(cmd, flushArgs);
+
+    memcpy_s(pipeControl, singleBarrierSize, cmd, singleBarrierSize);
 }
 
 template <typename GfxFamily>
@@ -435,7 +449,7 @@ uint64_t computeControlSectionOffset(WalkerPartitionArgs &args) {
             sizeof(BATCH_BUFFER_START<GfxFamily>) * 2;
     size += (args.semaphoreProgrammingRequired ? sizeof(MI_SEMAPHORE_WAIT<GfxFamily>) * args.partitionCount : 0u);
     size += computeWalkerSectionSize<GfxFamily>();
-    size += args.emitPipeControlStall ? sizeof(PIPE_CONTROL<GfxFamily>) : 0u;
+    size += args.emitPipeControlStall ? NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false) : 0u;
     if (args.crossTileAtomicSynchronization || args.emitSelfCleanup) {
         size += computeTilesSynchronizationWithAtomicsSectionSize<GfxFamily>();
     }
@@ -641,7 +655,7 @@ uint64_t computeStaticPartitioningControlSectionOffset(WalkerPartitionArgs &args
                                         ? sizeof(LOAD_REGISTER_MEM<GfxFamily>)
                                         : 0u;
     const auto pipeControlSize = args.emitPipeControlStall
-                                     ? sizeof(PIPE_CONTROL<GfxFamily>)
+                                     ? NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false)
                                      : 0u;
     const auto bbStartSize = isStartAndControlSectionRequired<GfxFamily>(args)
                                  ? sizeof(BATCH_BUFFER_START<GfxFamily>)
