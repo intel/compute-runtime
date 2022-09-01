@@ -62,7 +62,7 @@ HWTEST2_F(CommandQueueTestDG2, givenBindlessEnabledWhenProgramStateBaseAddressCa
         ASSERT_NE(cmdList.end(), sbaItor);
         auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*sbaItor);
 
-        EXPECT_EQ(STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB, cmdSba->getL1CachePolicyL1CacheControl());
+        EXPECT_EQ(STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP, cmdSba->getL1CachePolicyL1CacheControl());
     }
     {
         const_cast<NEO::DeviceInfo &>(device->getDeviceInfo()).debuggerActive = true;

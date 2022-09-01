@@ -37,7 +37,7 @@ HWTEST2_F(CommandEncodeStatesDG2Test, givenCommandContainerWhenSetStateBaseAddre
 
     auto cmd = genCmdCast<STATE_BASE_ADDRESS *>(*itorCmd);
 
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB, cmd->getL1CachePolicyL1CacheControl());
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP, cmd->getL1CachePolicyL1CacheControl());
 }
 
 HWTEST2_F(CommandEncodeStatesDG2Test, givenCommandContainerAndDebuggerActiveWhenSetStateBaseAddressCalledThenCachePolicyIsWBP, IsDG2) {
