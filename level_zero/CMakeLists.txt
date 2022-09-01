@@ -210,6 +210,7 @@ if(BUILD_WITH_L0)
               SHARED
               ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
               ${NEO_SHARED_DIRECTORY}/dll/create_command_stream.cpp
+              ${NEO_SHARED_DIRECTORY}/dll/device_dll.cpp
               ${NEO_SHARED_DIRECTORY}/dll/direct_submission_controller_enabled.cpp
               ${NEO_SHARED_DIRECTORY}/dll/options_dll.cpp
               ${NEO_SHARED_DIRECTORY}/gmm_helper/page_table_mngr.cpp

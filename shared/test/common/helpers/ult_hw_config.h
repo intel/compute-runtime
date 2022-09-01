@@ -13,6 +13,7 @@ struct UltHwConfig {
     bool useMockedPrepareDeviceEnvironmentsFunc = true;
     bool forceOsAgnosticMemoryManager = true;
     bool useWaitForTimestamps = false;
+    bool useBlitSplit = false;
 
     bool csrFailInitDirectSubmission = false;
     bool csrBaseCallDirectSubmissionAvailable = false;
