@@ -454,13 +454,13 @@ void testSysmanPci(ze_device_handle_t &device) {
     zes_pci_properties_t properties = {};
     VALIDATECALL(zesDevicePciGetProperties(device, &properties));
     if (verbose) {
-        std::cout << "properties.address.domain = " << properties.address.domain << std::endl;
-        std::cout << "properties.address.bus = " << properties.address.bus << std::endl;
-        std::cout << "properties.address.device = " << properties.address.device << std::endl;
-        std::cout << "properties.address.function = " << properties.address.function << std::endl;
-        std::cout << "properties.maxSpeed.gen = " << properties.maxSpeed.gen << std::endl;
-        std::cout << "properties.maxSpeed.width = " << properties.maxSpeed.width << std::endl;
-        std::cout << "properties.maxSpeed.maxBandwidth = " << properties.maxSpeed.maxBandwidth << std::endl;
+        std::cout << "properties.address.domain = " << std::hex << properties.address.domain << std::endl;
+        std::cout << "properties.address.bus = " << std::hex << properties.address.bus << std::endl;
+        std::cout << "properties.address.device = " << std::hex << properties.address.device << std::endl;
+        std::cout << "properties.address.function = " << std::hex << properties.address.function << std::endl;
+        std::cout << "properties.maxSpeed.gen = " << std::dec << properties.maxSpeed.gen << std::endl;
+        std::cout << "properties.maxSpeed.width = " << std::dec << properties.maxSpeed.width << std::endl;
+        std::cout << "properties.maxSpeed.maxBandwidth = " << std::dec << properties.maxSpeed.maxBandwidth << std::endl;
     }
 
     uint32_t count = 0;
