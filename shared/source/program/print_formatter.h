@@ -82,8 +82,10 @@ class PrintFormatter {
 
     template <class T>
     size_t typedPrintToken(char *output, size_t size, const char *formatString) {
-        T value = {0};
+        T value{0};
         read(&value);
+        constexpr auto offsetToBeDwordAligned = static_cast<uint32_t>(std::max(int64_t(sizeof(int) - sizeof(T)), int64_t(0)));
+        currentOffset += offsetToBeDwordAligned;
         return simpleSprintf(output, size, formatString, value);
     }
 
