@@ -17,4 +17,8 @@ bool CommandQueue::isTimestampWaitEnabled() {
     return true;
 }
 
+bool CommandQueue::isBlitSplitEnabled() {
+    return true;
+}
+
 } // namespace NEO

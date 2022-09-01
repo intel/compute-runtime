@@ -83,6 +83,11 @@ PVCTEST_F(HwInfoConfigTestLinuxPvc, givenOsInterfaceIsNullWhenGetDeviceMemoryPhy
     EXPECT_EQ(0u, hwInfoConfig->getDeviceMemoryPhysicalSizeInBytes(nullptr, 0));
 }
 
+PVCTEST_F(HwInfoConfigTestLinuxPvc, givenHwInfoConfigWhenAskedIsBlitSplitEnqueueWARequiredThenReturnTrue) {
+    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    EXPECT_TRUE(hwInfoConfig->isBlitSplitEnqueueWARequired(pInHwInfo));
+}
+
 PVCTEST_F(HwInfoConfigTestLinuxPvc, givenOsInterfaceIsNullWhenGetDeviceMemoryMaxBandWidthInBytesPerSecondIsCalledThenReturnZero) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     auto testHwInfo = *defaultHwInfo;

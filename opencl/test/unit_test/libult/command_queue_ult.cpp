@@ -19,4 +19,8 @@ bool CommandQueue::isTimestampWaitEnabled() {
     return ultHwConfig.useWaitForTimestamps;
 }
 
+bool CommandQueue::isBlitSplitEnabled() {
+    return ultHwConfig.useBlitSplit;
+}
+
 } // namespace NEO
