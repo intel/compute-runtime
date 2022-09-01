@@ -48,6 +48,39 @@ typedef int (*pIgscDeviceOpromVersion)(struct igsc_device_handle *handle,
                                        struct igsc_oprom_version *version);
 
 typedef int (*pIgscDeviceClose)(struct igsc_device_handle *handle);
+typedef int (*pIgscIfrGetStatusExt)(struct igsc_device_handle *handle,
+                                    uint32_t *supportedTests,
+                                    uint32_t *hwCapabilities,
+                                    uint32_t *ifrApplied,
+                                    uint32_t *prevErrors,
+                                    uint32_t *pendingReset);
+typedef int (*pIgscIafPscUpdate)(struct igsc_device_handle *handle,
+                                 const uint8_t *buffer,
+                                 const uint32_t bufferLen,
+                                 igsc_progress_func_t progressFunc,
+                                 void *ctx);
+typedef int (*pIgscGfspMemoryErrors)(struct igsc_device_handle *handle,
+                                     struct igsc_gfsp_mem_err *tiles);
+
+typedef int (*pIgscIfrRunArrayScanTest)(struct igsc_device_handle *handle,
+                                        uint32_t *status,
+                                        uint32_t *extendedStatus,
+                                        uint32_t *pendingReset,
+                                        uint32_t *errorCode);
+
+typedef int (*pIgscIfrRunMemPPRTest)(struct igsc_device_handle *handle,
+                                     uint32_t *status,
+                                     uint32_t *pendingReset,
+                                     uint32_t *errorCode);
+
+typedef int (*pIgscGetEccConfig)(struct igsc_device_handle *handle,
+                                 uint8_t *curEccState,
+                                 uint8_t *penEccState);
+
+typedef int (*pIgscSetEccConfig)(struct igsc_device_handle *handle,
+                                 uint8_t reqEccState,
+                                 uint8_t *curEccState,
+                                 uint8_t *penEccState);
 
 extern pIgscDeviceInitByDevice deviceInitByDevice;
 extern pIgscDeviceGetDeviceInfo deviceGetDeviceInfo;
@@ -61,6 +94,13 @@ extern pIgscImageOpromType imageOpromType;
 extern pIgscDeviceOpromUpdate deviceOpromUpdate;
 extern pIgscDeviceOpromVersion deviceOpromVersion;
 extern pIgscDeviceClose deviceClose;
+extern pIgscIfrGetStatusExt deviceIfrGetStatusExt;
+extern pIgscIafPscUpdate iafPscUpdate;
+extern pIgscGfspMemoryErrors gfspMemoryErrors;
+extern pIgscIfrRunArrayScanTest deviceIfrRunArrayScanTest;
+extern pIgscIfrRunMemPPRTest deviceIfrRunMemPPRTest;
+extern pIgscGetEccConfig getEccConfig;
+extern pIgscSetEccConfig setEccConfig;
 
 class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
   public:
