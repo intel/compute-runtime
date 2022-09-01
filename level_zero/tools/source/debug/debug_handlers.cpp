@@ -7,6 +7,8 @@
 
 #include "level_zero/tools/source/debug/debug_handlers.h"
 
+#include "shared/source/os_interface/debug_env_reader.h"
+
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/tools/source/debug/debug_session.h"
 
@@ -20,6 +22,14 @@ ze_result_t debugAttach(zet_device_handle_t hDevice, const zet_debug_config_t *c
 
     if (!L0::Device::fromHandle(hDevice)->getNEODevice()->isSubDevice() && NEO::DebugManager.flags.ExperimentalEnableTileAttach.get()) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    NEO::EnvironmentVariableReader envReader;
+    auto affinityMask = envReader.getSetting("ZE_AFFINITY_MASK", std::string(""));
+
+    if (!affinityMask.empty()) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stdout,
+                              "%s", "ZE_AFFINITY_MASK is not recommended while using program debug API\n");
     }
 
     auto session = L0::Device::fromHandle(hDevice)->getDebugSession(*config);

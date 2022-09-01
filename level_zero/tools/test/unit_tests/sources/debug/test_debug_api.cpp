@@ -5,7 +5,10 @@
  *
  */
 
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -313,7 +316,7 @@ TEST(DebugSessionTest, givenDeviceWithDebugSessionWhenRemoveCalledThenSessionIsN
     EXPECT_EQ(nullptr, deviceImp.debugSession.get());
 }
 
-TEST(DebugSessionTest, givenSubDeviceWhenCreateingSessionThenNullptrReturned) {
+TEST(DebugSessionTest, givenSubDeviceWhenCreatingSessionThenNullptrReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -328,7 +331,7 @@ TEST(DebugSessionTest, givenSubDeviceWhenCreateingSessionThenNullptrReturned) {
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-TEST(DebugSessionTest, givenRootDeviceWhenCreateingSessionThenResultReturnedIsCorrect) {
+TEST(DebugSessionTest, givenRootDeviceWhenCreatingSessionThenResultReturnedIsCorrect) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -346,6 +349,28 @@ TEST(DebugSessionTest, givenRootDeviceWhenCreateingSessionThenResultReturnedIsCo
 
     EXPECT_EQ(nullptr, session);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+TEST_F(DebugApiTest, givenZeAffinityMaskAndEnabledDebugMessagesWhenDebugAttachCalledThenMessageIsPrinted) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_AFFINITY_MASK", "0.1"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    deviceImp.debugSession.reset(new DebugSessionMock(config, &deviceImp));
+
+    testing::internal::CaptureStdout();
+    zet_debug_session_handle_t debugSession = nullptr;
+    zetDebugAttach(deviceImp.toHandle(), &config, &debugSession);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(std::string("ZE_AFFINITY_MASK is not recommended while using program debug API\n"), output);
 }
 
 } // namespace ult
