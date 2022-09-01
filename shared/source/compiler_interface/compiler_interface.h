@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -144,7 +144,7 @@ class CompilerInterface {
     MOCKABLE_VIRTUAL bool loadIgc();
 
     static SpinLock spinlock;
-    MOCKABLE_VIRTUAL std::unique_lock<SpinLock> lock() {
+    [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<SpinLock> lock() {
         return std::unique_lock<SpinLock>{spinlock};
     }
     std::unique_ptr<CompilerCache> cache = nullptr;

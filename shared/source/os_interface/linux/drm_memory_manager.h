@@ -72,7 +72,7 @@ class DrmMemoryManager : public MemoryManager {
     bool setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdviseFlags flags, uint32_t rootDeviceIndex) override;
     bool setMemPrefetch(GraphicsAllocation *gfxAllocation, uint32_t subDeviceId, uint32_t rootDeviceIndex) override;
 
-    std::unique_lock<std::mutex> acquireAllocLock();
+    [[nodiscard]] std::unique_lock<std::mutex> acquireAllocLock();
     std::vector<GraphicsAllocation *> &getSysMemAllocs();
     std::vector<GraphicsAllocation *> &getLocalMemAllocs(uint32_t rootDeviceIndex);
     void registerSysMemAlloc(GraphicsAllocation *allocation) override;

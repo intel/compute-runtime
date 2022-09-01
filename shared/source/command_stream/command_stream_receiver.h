@@ -194,7 +194,7 @@ class CommandStreamReceiver {
     MOCKABLE_VIRTUAL bool createPreemptionAllocation();
     MOCKABLE_VIRTUAL bool createPerDssBackedBuffer(Device &device);
     virtual void createKernelArgsBufferAllocation() = 0;
-    MOCKABLE_VIRTUAL std::unique_lock<MutexType> obtainUniqueOwnership();
+    [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<MutexType> obtainUniqueOwnership();
 
     bool peekTimestampPacketWriteEnabled() const { return timestampPacketWriteEnabled; }
 
@@ -365,7 +365,7 @@ class CommandStreamReceiver {
     bool checkImplicitFlushForGpuIdle();
     void downloadTagAllocation(uint32_t taskCountToWait);
     void printTagAddressContent(uint32_t taskCountToWait, int64_t waitTimeout, bool start);
-    MOCKABLE_VIRTUAL std::unique_lock<MutexType> obtainHostPtrSurfaceCreationLock();
+    [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<MutexType> obtainHostPtrSurfaceCreationLock();
 
     std::unique_ptr<FlushStampTracker> flushStamp;
     std::unique_ptr<SubmissionAggregator> submissionAggregator;

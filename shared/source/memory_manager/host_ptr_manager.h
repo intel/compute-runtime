@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ class HostPtrManager {
     bool releaseHostPtr(uint32_t rootDeviceIndex, const void *ptr);
     void storeFragment(uint32_t rootDeviceIndex, AllocationStorageData &storageData);
     void storeFragment(uint32_t rootDeviceIndex, FragmentStorage &fragment);
-    std::unique_lock<std::recursive_mutex> obtainOwnership();
+    [[nodiscard]] std::unique_lock<std::recursive_mutex> obtainOwnership();
 
   protected:
     static AllocationRequirements getAllocationRequirements(uint32_t rootDeviceIndex, const void *inputPtr, size_t size);

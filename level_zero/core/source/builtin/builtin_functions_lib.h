@@ -67,7 +67,7 @@ struct BuiltinFunctionsLib {
     virtual Kernel *getImageFunction(ImageBuiltin func) = 0;
     virtual void initBuiltinKernel(Builtin builtId) = 0;
     virtual void initBuiltinImageKernel(ImageBuiltin func) = 0;
-    MOCKABLE_VIRTUAL std::unique_lock<MutexType> obtainUniqueOwnership();
+    [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<MutexType> obtainUniqueOwnership();
 
   protected:
     BuiltinFunctionsLib() = default;

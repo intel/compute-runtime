@@ -32,8 +32,8 @@ class WddmResidencyController {
 
     static void APIENTRY trimCallback(_Inout_ D3DKMT_TRIMNOTIFICATION *trimNotification);
 
-    MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock();
-    std::unique_lock<SpinLock> acquireTrimCallbackLock();
+    [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock();
+    [[nodiscard]] std::unique_lock<SpinLock> acquireTrimCallbackLock();
 
     WddmAllocation *getTrimCandidateHead();
     void addToTrimCandidateList(GraphicsAllocation *allocation);
