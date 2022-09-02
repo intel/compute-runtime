@@ -8,6 +8,7 @@
 #include "shared/source/gen_common/reg_configs_common.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/mock_hw_info_config_hw.h"
 #include "shared/test/common/mocks/mock_gmm_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -528,6 +529,34 @@ HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledCommandLis
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     commandList->destroy();
+}
+
+HWTEST2_F(L0DebuggerTest, givenDebuggerEnabledAndL1CachePolicyWBWhenAppendingThenDebugSurfaceHasCachePolicyWBP, IsAtLeastXeHpgCore) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    MockHwInfoConfigHw<productFamily> hwInfoConfig;
+    VariableBackup<HwInfoConfig *> hwInfoConfigFactoryBackup{&NEO::hwInfoConfigFactory[static_cast<size_t>(hwInfo.platform.eProductFamily)]};
+    hwInfoConfigFactoryBackup = &hwInfoConfig;
+    hwInfoConfig.returnedL1CachePolicy = RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB;
+    hwInfoConfig.returnedL1CachePolicyIfDebugger = RENDER_SURFACE_STATE::L1_CACHE_POLICY_WBP;
+
+    Mock<::L0::Kernel> kernel;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    returnValue = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    commandList->close();
+
+    auto *ssh = commandList->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    ASSERT_NE(ssh, nullptr);
+    auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ssh->getCpuBase());
+    ASSERT_NE(debugSurfaceState, nullptr);
+    auto debugSurface = static_cast<L0::DeviceImp *>(device)->getDebugSurface();
+    ASSERT_NE(debugSurface, nullptr);
+    ASSERT_EQ(debugSurface->getGpuAddress(), debugSurfaceState->getSurfaceBaseAddress());
+    EXPECT_EQ(debugSurfaceState->getL1CachePolicyL1CacheControl(), RENDER_SURFACE_STATE::L1_CACHE_POLICY_WBP);
 }
 
 HWTEST2_F(L0DebuggerTest, givenNotXeHpOrXeHpgCoreAndDebugIsActiveThenDisableL3CacheInGmmHelperIsNotSet, IsNotXeHpOrXeHpgCore) {

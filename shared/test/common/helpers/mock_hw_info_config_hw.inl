@@ -56,3 +56,11 @@ template <>
 uint32_t MockHwInfoConfigHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) {
     return 800u;
 }
+
+template <>
+uint32_t MockHwInfoConfigHw<gfxProduct>::getL1CachePolicy(bool isDebuggerActive) const {
+    if (isDebuggerActive) {
+        return this->returnedL1CachePolicyIfDebugger;
+    }
+    return this->returnedL1CachePolicy;
+}

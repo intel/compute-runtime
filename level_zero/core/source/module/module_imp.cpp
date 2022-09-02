@@ -139,7 +139,7 @@ std::string ModuleTranslationUnit::generateCompilerOptions(const char *buildOpti
     if (forceToStatelessRequired || statelessToStatefulOptimizationDisabled) {
         internalOptions = NEO::CompilerOptions::concatenate(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired);
     }
-
+    isDebuggerActive |= neoDevice.getDebugger() != nullptr;
     NEO::CompilerOptions::concatenateAppend(internalOptions, compilerHwInfoConfig.getCachingPolicyOptions(isDebuggerActive));
     return internalOptions;
 }

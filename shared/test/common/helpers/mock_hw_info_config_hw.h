@@ -20,6 +20,7 @@ struct MockHwInfoConfigHw : NEO::HwInfoConfigHw<productFamily> {
     int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) override;
     uint64_t getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) override;
     uint32_t getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) override;
+    uint32_t getL1CachePolicy(bool isDebuggerActive) const override;
 
     bool use128MbEdram = false;
     bool enableMidThreadPreemption = false;
@@ -28,6 +29,8 @@ struct MockHwInfoConfigHw : NEO::HwInfoConfigHw<productFamily> {
     bool failOnConfigureHardwareCustom = false;
     bool isCooperativeEngineSupportedValue = true;
     uint32_t returnedStepping = 0;
+    uint32_t returnedL1CachePolicy = 0;
+    uint32_t returnedL1CachePolicyIfDebugger = 0;
     std::vector<int32_t> threadArbPolicies = {};
 };
 } // namespace NEO
