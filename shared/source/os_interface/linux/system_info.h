@@ -31,6 +31,7 @@ struct SystemInfo {
     uint32_t getTotalPsThreads() const { return totalPsThreads; }
     uint32_t getMaxRCS() const { return maxRCS; }
     uint32_t getMaxCCS() const { return maxCCS; }
+    uint32_t getL3BankSizeInKb() const { return l3BankSizeInKb; }
 
     void checkSysInfoMismatch(HardwareInfo *hwInfo);
 
@@ -50,6 +51,7 @@ struct SystemInfo {
     uint32_t totalPsThreads = 0;
     uint32_t maxRCS = 0;
     uint32_t maxCCS = 0;
+    uint32_t l3BankSizeInKb = 0;
 };
 
 } // namespace NEO

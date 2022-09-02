@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -127,6 +127,9 @@ static constexpr uint32_t dummyDeviceBlobData[] = {
     INTEL_HWCONFIG_DS_MIN_DEREF_BLOCK_SIZE_HANDLE_COUNT,
     1,
     0x2C,
+    INTEL_HWCONFIG_L3_BANK_SIZE_IN_KB,
+    1,
+    0x2D,
 };
 
 const std::vector<uint8_t> inputBlobData(reinterpret_cast<const uint8_t *>(dummyDeviceBlobData),

@@ -898,6 +898,10 @@ void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo) {
     gtSysInfo->MaxSlicesSupported = sysInfo->getMaxSlicesSupported();
     gtSysInfo->MaxSubSlicesSupported = sysInfo->getMaxDualSubSlicesSupported();
     gtSysInfo->MaxDualSubSlicesSupported = sysInfo->getMaxDualSubSlicesSupported();
+
+    uint32_t bankCount = (hwInfo->gtSystemInfo.L3BankCount > 0) ? hwInfo->gtSystemInfo.L3BankCount : hwInfo->gtSystemInfo.DualSubSliceCount;
+
+    gtSysInfo->L3CacheSizeInKb = sysInfo->getL3BankSizeInKb() * bankCount;
 }
 
 void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
