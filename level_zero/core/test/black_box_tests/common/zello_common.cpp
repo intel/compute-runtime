@@ -31,6 +31,9 @@ int getParamValue(int argc, char *argv[], const char *shortName, const char *lon
     for (; arg != argE; ++arg) {
         if ((0 == strcmp(*arg, shortName)) || (0 == strcmp(*arg, longName))) {
             arg++;
+            if (arg == argE) {
+                break;
+            }
             return atoi(*arg);
         }
     }
