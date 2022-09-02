@@ -228,6 +228,14 @@ struct CommandListCoreFamily : CommandListImp {
                                         const ze_group_count_t *threadGroupDimensions,
                                         Event *event,
                                         const CmdListKernelLaunchParams &launchParams);
+
+    ze_result_t appendUnalignedFillKernel(bool isStateless,
+                                          uint32_t unalignedSize,
+                                          AlignedAllocationData dstAllocation,
+                                          const void *pattern,
+                                          Event *signalEvent,
+                                          CmdListKernelLaunchParams launchParams);
+
     ze_result_t prepareIndirectParams(const ze_group_count_t *threadGroupDimensions);
     void updateStreamProperties(Kernel &kernel, bool isMultiOsContextCapable, bool isCooperative);
     void clearCommandsToPatch();
@@ -248,7 +256,6 @@ struct CommandListCoreFamily : CommandListImp {
     NEO::PipeControlArgs createBarrierFlags();
     void appendMultiTileBarrier(NEO::Device &neoDevice);
     size_t estimateBufferSizeMultiTileBarrier(const NEO::HardwareInfo &hwInfo);
-
     uint64_t getInputBufferSize(NEO::ImageType imageType, uint64_t bytesPerPixel, const ze_image_region_t *region);
     MOCKABLE_VIRTUAL AlignedAllocationData getAlignedAllocation(Device *device, const void *buffer, uint64_t bufferSize, bool hostCopyAllowed);
     ze_result_t addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);

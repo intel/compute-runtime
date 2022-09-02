@@ -1463,6 +1463,31 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryPrefetch(const voi
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendUnalignedFillKernel(bool isStateless, uint32_t unalignedSize, AlignedAllocationData dstAllocation, const void *pattern, Event *signalEvent, CmdListKernelLaunchParams launchParams) {
+    Kernel *builtinFunction = nullptr;
+    if (isStateless) {
+        builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferImmediateLeftOverStateless);
+    } else {
+        builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferImmediateLeftOver);
+    }
+    uint32_t groupSizeY = 1, groupSizeZ = 1;
+    uint32_t groupSizeX = static_cast<uint32_t>(unalignedSize);
+    builtinFunction->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ);
+    builtinFunction->setGroupSize(groupSizeX, groupSizeY, groupSizeZ);
+    ze_group_count_t dispatchFuncRemainderArgs{static_cast<uint32_t>(unalignedSize / groupSizeX), 1u, 1u};
+    uint32_t value = *(reinterpret_cast<const unsigned char *>(pattern));
+    builtinFunction->setArgBufferWithAlloc(0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
+    builtinFunction->setArgumentValue(1, sizeof(dstAllocation.offset), &dstAllocation.offset);
+    builtinFunction->setArgumentValue(2, sizeof(value), &value);
+
+    auto res = appendLaunchKernelSplit(builtinFunction, &dispatchFuncRemainderArgs, signalEvent, launchParams);
+    if (res) {
+        return res;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                                                                    const void *pattern,
                                                                    size_t patternSize,
@@ -1524,8 +1549,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     launchParams.isKernelSplitOperation = true;
     launchParams.isBuiltInKernel = true;
     launchParams.isDestinationAllocationInSystemMemory = hostPointerNeedsFlush;
-
     if (patternSize == 1) {
+        size_t middleSize = size;
+        uint32_t leftRemainder = sizeof(uint32_t) - (dstAllocation.offset % sizeof(uint32_t));
+        if (dstAllocation.offset % sizeof(uint32_t) != 0 && leftRemainder <= size) {
+            res = appendUnalignedFillKernel(isStateless, leftRemainder, dstAllocation, pattern, signalEvent, launchParams);
+            if (res) {
+                return res;
+            }
+            middleSize -= leftRemainder;
+            dstAllocation.offset += leftRemainder;
+        }
         Kernel *builtinFunction = nullptr;
 
         if (isStateless) {
@@ -1534,7 +1568,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferImmediate);
         }
         const auto dataTypeSize = sizeof(uint32_t) * 4;
-        size_t adjustedSize = size / dataTypeSize;
+        size_t adjustedSize = middleSize / dataTypeSize;
         size_t groupSizeX = device->getDeviceInfo().maxWorkGroupSize;
         if (groupSizeX > adjustedSize && adjustedSize > 0) {
             groupSizeX = adjustedSize;
@@ -1545,8 +1579,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         }
 
         size_t groups = adjustedSize / groupSizeX;
-        size_t remainingBytes = static_cast<size_t>((adjustedSize % groupSizeX) * dataTypeSize +
-                                                    size % dataTypeSize);
+        uint32_t remainingBytes = static_cast<uint32_t>((adjustedSize % groupSizeX) * dataTypeSize +
+                                                        middleSize % dataTypeSize);
         ze_group_count_t dispatchFuncArgs{static_cast<uint32_t>(groups), 1u, 1u};
 
         uint32_t value = 0;
@@ -1563,23 +1597,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         }
 
         if (remainingBytes) {
-            if (isStateless) {
-                builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferImmediateRightLeftOverStateless);
-            } else {
-                builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferImmediateRightLeftOver);
-            }
-            uint32_t groupSizeY = 1, groupSizeZ = 1;
-            uint32_t groupSizeX = static_cast<uint32_t>(remainingBytes);
-            builtinFunction->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ);
-            builtinFunction->setGroupSize(groupSizeX, groupSizeY, groupSizeZ);
-            ze_group_count_t dispatchFuncRemainderArgs{static_cast<uint32_t>(remainingBytes / groupSizeX), 1u, 1u};
-            size_t dstOffset = dstAllocation.offset + (size - remainingBytes);
-            value = *(reinterpret_cast<const unsigned char *>(pattern));
-            builtinFunction->setArgBufferWithAlloc(0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
-            builtinFunction->setArgumentValue(1, sizeof(dstOffset), &dstOffset);
-            builtinFunction->setArgumentValue(2, sizeof(value), &value);
-
-            res = appendLaunchKernelSplit(builtinFunction, &dispatchFuncRemainderArgs, signalEvent, launchParams);
+            dstAllocation.offset += (middleSize - remainingBytes);
+            res = appendUnalignedFillKernel(isStateless, remainingBytes, dstAllocation, pattern, signalEvent, launchParams);
             if (res) {
                 return res;
             }
@@ -1628,7 +1647,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
             patternAllocOffset += patternSizeToCopy;
         } while (patternAllocOffset < patternAllocationSize);
-
         builtinFunction->setArgBufferWithAlloc(0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
         builtinFunction->setArgumentValue(1, sizeof(dstAllocation.offset), &dstAllocation.offset);
         builtinFunction->setArgBufferWithAlloc(2, reinterpret_cast<uintptr_t>(patternGfxAllocPtr), patternGfxAlloc);

@@ -79,12 +79,12 @@ void BuiltinFunctionsLibImpl::initBuiltinKernel(Builtin func) {
         builtinName = "FillBufferImmediate";
         builtin = NEO::EBuiltInOps::FillBufferStateless;
         break;
-    case Builtin::FillBufferImmediateRightLeftOver:
-        builtinName = "FillBufferImmediateRightLeftOver";
+    case Builtin::FillBufferImmediateLeftOver:
+        builtinName = "FillBufferImmediateLeftOver";
         builtin = NEO::EBuiltInOps::FillBuffer;
         break;
-    case Builtin::FillBufferImmediateRightLeftOverStateless:
-        builtinName = "FillBufferImmediateRightLeftOver";
+    case Builtin::FillBufferImmediateLeftOverStateless:
+        builtinName = "FillBufferImmediateLeftOver";
         builtin = NEO::EBuiltInOps::FillBufferStateless;
         break;
     case Builtin::FillBufferSSHOffset:

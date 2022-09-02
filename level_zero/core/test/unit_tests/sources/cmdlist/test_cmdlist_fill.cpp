@@ -53,7 +53,7 @@ class AppendFillFixture : public DeviceFixture {
             if (numberOfCallsToAppendLaunchKernelWithParams == thresholdOfCallsToAppendLaunchKernelWithParamsToFail) {
                 return ZE_RESULT_ERROR_UNKNOWN;
             }
-            if (numberOfCallsToAppendLaunchKernelWithParams < 2) {
+            if (numberOfCallsToAppendLaunchKernelWithParams < 3) {
                 threadGroupDimensions[numberOfCallsToAppendLaunchKernelWithParams] = *pThreadGroupDimensions;
                 xGroupSizes[numberOfCallsToAppendLaunchKernelWithParams] = kernel->getGroupSize()[0];
             }
@@ -63,8 +63,8 @@ class AppendFillFixture : public DeviceFixture {
                                                                                       event,
                                                                                       launchParams);
         }
-        ze_group_count_t threadGroupDimensions[2];
-        uint32_t xGroupSizes[2];
+        ze_group_count_t threadGroupDimensions[3];
+        uint32_t xGroupSizes[3];
         uint32_t thresholdOfCallsToAppendLaunchKernelWithParamsToFail = std::numeric_limits<uint32_t>::max();
         uint32_t numberOfCallsToAppendLaunchKernelWithParams = 0;
     };
@@ -278,6 +278,62 @@ HWTEST2_F(AppendFillTest,
     auto dataTypeSize = sizeof(uint32_t) * 4;
     auto expectedGroupCount = size / (dataTypeSize * groupSize);
     EXPECT_EQ(expectedGroupCount, commandList->threadGroupDimensions[0].groupCountX);
+    delete[] ptr;
+}
+
+HWTEST2_F(AppendFillTest,
+          givenAppendMemoryFillWhenPtrWithOffsetAndPatternSizeIsOneThenThreeKernelsDispatched, IsAtLeastSkl) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+
+    auto commandList = std::make_unique<WhiteBox<MockCommandList<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    int pattern = 0;
+    uint32_t offset = 1;
+    const size_t size = 1024;
+    uint8_t *ptr = new uint8_t[size];
+    ze_result_t result = commandList->appendMemoryFill(ptr + offset, &pattern, 1, size - offset, nullptr, 0, nullptr);
+    size_t filledSize = commandList->xGroupSizes[0] * commandList->threadGroupDimensions[0].groupCountX;
+    filledSize += commandList->xGroupSizes[1] * commandList->threadGroupDimensions[1].groupCountX * 16;
+    filledSize += commandList->xGroupSizes[2] * commandList->threadGroupDimensions[2].groupCountX;
+    EXPECT_EQ(sizeof(uint32_t) - offset, commandList->xGroupSizes[0]);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(3u, commandList->numberOfCallsToAppendLaunchKernelWithParams);
+    EXPECT_EQ(size - offset, filledSize);
+    delete[] ptr;
+}
+
+HWTEST2_F(AppendFillTest,
+          givenAppendMemoryFillWhenPtrWithOffsetAndSmallSizeAndPatternSizeIsOneThenTwoKernelsDispatched, IsAtLeastSkl) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+
+    auto commandList = std::make_unique<WhiteBox<MockCommandList<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    int pattern = 0;
+    uint32_t offset = 1;
+    const size_t size = 2;
+    uint8_t *ptr = new uint8_t[size];
+    ze_result_t result = commandList->appendMemoryFill(ptr + offset, &pattern, 1, size - offset, nullptr, 0, nullptr);
+    size_t filledSize = commandList->xGroupSizes[0] * commandList->threadGroupDimensions[0].groupCountX * 16;
+    filledSize += commandList->xGroupSizes[1] * commandList->threadGroupDimensions[1].groupCountX;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(2u, commandList->numberOfCallsToAppendLaunchKernelWithParams);
+    EXPECT_EQ(size - offset, filledSize);
+    delete[] ptr;
+}
+
+HWTEST2_F(AppendFillTest,
+          givenAppendMemoryFillWhenPtrWithOffsetAndFailAppendUnalignedFillKernelThenReturnError, IsAtLeastSkl) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+
+    auto commandList = std::make_unique<WhiteBox<MockCommandList<gfxCoreFamily>>>();
+    commandList->thresholdOfCallsToAppendLaunchKernelWithParamsToFail = 0;
+    commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    int pattern = 0;
+    uint32_t offset = 1;
+    const size_t size = 1024;
+    uint8_t *ptr = new uint8_t[size];
+    ze_result_t result = commandList->appendMemoryFill(ptr + offset, &pattern, 1, size - offset, nullptr, 0, nullptr);
+    EXPECT_NE(ZE_RESULT_SUCCESS, result);
     delete[] ptr;
 }
 
