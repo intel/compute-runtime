@@ -14,7 +14,9 @@
 
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 
 namespace L0 {
 namespace ult {
@@ -145,6 +147,18 @@ void validateTimestampRegisters(GenCmdList &cmdList,
     itor++;
     startIt = itor;
 }
+
+struct MultiReturnCommandListFixture : public ModuleImmutableDataFixture {
+    void setUp();
+    void tearDown();
+
+    DebugManagerStateRestore restorer;
+
+    std::unique_ptr<MockImmutableData> mockKernelImmData;
+    std::unique_ptr<L0::ult::CommandList> commandList;
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    L0::ult::CommandQueue *commandQueue;
+};
 
 } // namespace ult
 } // namespace L0

@@ -1979,5 +1979,12 @@ HWTEST2_F(CommandListCreate, givenNullEventWhenAppendEventAfterWalkerThenNothing
     EXPECT_EQ(commandList->commandContainer.getCommandStream()->getUsed(), usedBefore);
 }
 
+TEST_F(CommandListCreate, givenCreatedCommandListWhenGettingMultiReturnPointFlagThenDefaultValuseIsFalse) {
+    ze_result_t returnValue;
+    std::unique_ptr<L0::ult::CommandList> commandList(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    ASSERT_NE(nullptr, commandList.get());
+    EXPECT_FALSE(commandList->multiReturnPointCommandList);
+}
+
 } // namespace ult
 } // namespace L0

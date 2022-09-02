@@ -1719,5 +1719,23 @@ TEST_F(CommandQueueCreate, givenOverrideCmdQueueSyncModeToSynchronousWhenCommand
     commandQueue->destroy();
 }
 
+TEST_F(CommandQueueCreate, givenCreatedCommandQueueWhenGettingMultiReturnPointFlagThenDefaultValuseIsFalse) {
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+
+    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
+    ASSERT_NE(nullptr, commandQueue);
+    EXPECT_FALSE(commandQueue->multiReturnPointCommandList);
+
+    commandQueue->destroy();
+}
+
 } // namespace ult
 } // namespace L0

@@ -38,6 +38,11 @@ CommandQueueImp::CommandQueueImp(Device *device, NEO::CommandStreamReceiver *csr
     if (overrideUseKmdWaitFunction != -1) {
         useKmdWaitFunction = !!(overrideUseKmdWaitFunction);
     }
+
+    int overrideMultiReturnPointCommandList = NEO::DebugManager.flags.MultiReturnPointCommandList.get();
+    if (overrideMultiReturnPointCommandList != -1) {
+        multiReturnPointCommandList = !!(overrideMultiReturnPointCommandList);
+    }
 }
 
 ze_result_t CommandQueueImp::destroy() {

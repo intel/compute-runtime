@@ -34,6 +34,7 @@ struct WhiteBox<::L0::CommandQueue> : public ::L0::CommandQueueImp {
     using BaseClass::taskCount;
     using CommandQueue::activeSubDevices;
     using CommandQueue::internalUsage;
+    using CommandQueue::multiReturnPointCommandList;
     using CommandQueue::partitionCount;
 
     WhiteBox(Device *device, NEO::CommandStreamReceiver *csr,
@@ -63,6 +64,7 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     using BaseClass::printfFunctionContainer;
     using L0::CommandQueue::activeSubDevices;
     using L0::CommandQueue::internalUsage;
+    using L0::CommandQueue::multiReturnPointCommandList;
     using L0::CommandQueue::partitionCount;
     using L0::CommandQueue::preemptionCmdSyncProgramming;
     using L0::CommandQueueImp::csr;

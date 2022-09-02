@@ -25,6 +25,12 @@
 
 namespace L0 {
 
+CommandList::CommandList(uint32_t numIddsPerBlock) : commandContainer(numIddsPerBlock) {
+    if (NEO::DebugManager.flags.MultiReturnPointCommandList.get() != -1) {
+        multiReturnPointCommandList = !!NEO::DebugManager.flags.MultiReturnPointCommandList.get();
+    }
+}
+
 CommandListAllocatorFn commandListFactory[IGFX_MAX_PRODUCT] = {};
 CommandListAllocatorFn commandListFactoryImmediate[IGFX_MAX_PRODUCT] = {};
 

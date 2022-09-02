@@ -5,6 +5,9 @@
  *
  */
 
+#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -551,6 +554,834 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     auto ultCsr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     EXPECT_EQ(scratchPerThreadSize, ultCsr->requiredScratchSize);
     EXPECT_EQ(privateScratchPerThreadSize, ultCsr->requiredPrivateScratchSize);
+}
+
+using MultiReturnCommandListTest = Test<MultiReturnCommandListFixture>;
+
+HWTEST2_F(MultiReturnCommandListTest, givenMultiReturnIsUsedWhenPropertyDisableEuFusionSupportedThenExpectReturnPointsAndBbEndProgramming, IsAtLeastSkl) {
+    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+    NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
+    NEO::HwInfoConfig::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
+
+    EXPECT_TRUE(commandList->multiReturnPointCommandList);
+
+    auto &cmdStream = *commandList->commandContainer.getCommandStream();
+    auto &cmdBuffers = commandList->commandContainer.getCmdBufferAllocations();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresDisabledEUFusion = 1;
+
+    size_t usedBefore = cmdStream.getUsed();
+    commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    size_t usedAfter = cmdStream.getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdStream.getCpuBase(), usedBefore),
+        (usedAfter - usedBefore)));
+    ASSERT_NE(0u, cmdList.size());
+
+    if (fePropertiesSupport.disableEuFusion) {
+        auto bbEndCmd = genCmdCast<MI_BATCH_BUFFER_END *>(*cmdList.begin());
+        EXPECT_NE(nullptr, bbEndCmd);
+
+        ASSERT_EQ(1u, commandList->getReturnPointsSize());
+        auto &returnPoint = commandList->getReturnPoints()[0];
+
+        uint64_t expectedGpuAddress = cmdStream.getGpuBase() + usedBefore + sizeof(MI_BATCH_BUFFER_END);
+        EXPECT_EQ(expectedGpuAddress, returnPoint.gpuAddress);
+        EXPECT_EQ(cmdStream.getGraphicsAllocation(), returnPoint.currentCmdBuffer);
+        EXPECT_TRUE(returnPoint.configSnapshot.frontEndState.disableEUFusion.isDirty);
+        EXPECT_EQ(1, returnPoint.configSnapshot.frontEndState.disableEUFusion.value);
+
+        EXPECT_EQ(1u, cmdBuffers.size());
+        EXPECT_EQ(cmdBuffers[0], returnPoint.currentCmdBuffer);
+    } else {
+        auto bbEndCmd = genCmdCast<MI_BATCH_BUFFER_END *>(*cmdList.begin());
+        EXPECT_EQ(nullptr, bbEndCmd);
+
+        EXPECT_EQ(0u, commandList->getReturnPointsSize());
+    }
+
+    usedBefore = cmdStream.getUsed();
+    commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    usedAfter = cmdStream.getUsed();
+
+    cmdList.clear();
+
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdStream.getCpuBase(), usedBefore),
+        (usedAfter - usedBefore)));
+    ASSERT_NE(0u, cmdList.size());
+
+    if (fePropertiesSupport.disableEuFusion) {
+        auto bbEndCmd = genCmdCast<MI_BATCH_BUFFER_END *>(*cmdList.begin());
+        EXPECT_EQ(nullptr, bbEndCmd);
+
+        EXPECT_EQ(1u, commandList->getReturnPointsSize());
+    } else {
+        auto bbEndCmd = genCmdCast<MI_BATCH_BUFFER_END *>(*cmdList.begin());
+        EXPECT_EQ(nullptr, bbEndCmd);
+
+        EXPECT_EQ(0u, commandList->getReturnPointsSize());
+    }
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresDisabledEUFusion = 0;
+
+    cmdStream.getSpace(cmdStream.getAvailableSpace() - sizeof(MI_BATCH_BUFFER_END));
+    auto oldCmdBuffer = cmdStream.getGraphicsAllocation();
+
+    commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    usedBefore = 0;
+    usedAfter = cmdStream.getUsed();
+
+    auto newCmdBuffer = cmdStream.getGraphicsAllocation();
+    ASSERT_NE(oldCmdBuffer, newCmdBuffer);
+
+    cmdList.clear();
+
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdStream.getCpuBase(), usedBefore),
+        (usedAfter - usedBefore)));
+    ASSERT_NE(0u, cmdList.size());
+
+    if (fePropertiesSupport.disableEuFusion) {
+        auto bbEndCmd = genCmdCast<MI_BATCH_BUFFER_END *>(*cmdList.begin());
+        EXPECT_NE(nullptr, bbEndCmd);
+
+        ASSERT_EQ(2u, commandList->getReturnPointsSize());
+        auto &returnPoint = commandList->getReturnPoints()[1];
+
+        uint64_t expectedGpuAddress = cmdStream.getGpuBase() + usedBefore + sizeof(MI_BATCH_BUFFER_END);
+        EXPECT_EQ(expectedGpuAddress, returnPoint.gpuAddress);
+        EXPECT_EQ(cmdStream.getGraphicsAllocation(), returnPoint.currentCmdBuffer);
+        EXPECT_TRUE(returnPoint.configSnapshot.frontEndState.disableEUFusion.isDirty);
+        EXPECT_EQ(0, returnPoint.configSnapshot.frontEndState.disableEUFusion.value);
+
+        EXPECT_EQ(2u, cmdBuffers.size());
+        EXPECT_EQ(cmdBuffers[1], returnPoint.currentCmdBuffer);
+    }
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresDisabledEUFusion = 1;
+
+    cmdStream.getSpace(cmdStream.getAvailableSpace() - 2 * sizeof(MI_BATCH_BUFFER_END));
+
+    usedBefore = cmdStream.getUsed();
+    void *oldBase = cmdStream.getCpuBase();
+    oldCmdBuffer = cmdStream.getGraphicsAllocation();
+
+    commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+
+    newCmdBuffer = cmdStream.getGraphicsAllocation();
+    ASSERT_NE(oldCmdBuffer, newCmdBuffer);
+
+    cmdList.clear();
+
+    size_t parseSpace = sizeof(MI_BATCH_BUFFER_END);
+    if (fePropertiesSupport.disableEuFusion) {
+        parseSpace *= 2;
+    }
+
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(oldBase, usedBefore),
+        parseSpace));
+
+    if (fePropertiesSupport.disableEuFusion) {
+        ASSERT_EQ(2u, cmdList.size());
+        for (auto &cmd : cmdList) {
+            auto bbEndCmd = genCmdCast<MI_BATCH_BUFFER_END *>(cmd);
+            EXPECT_NE(nullptr, bbEndCmd);
+        }
+        ASSERT_EQ(3u, commandList->getReturnPointsSize());
+        auto &returnPoint = commandList->getReturnPoints()[2];
+
+        uint64_t expectedGpuAddress = oldCmdBuffer->getGpuAddress() + usedBefore + sizeof(MI_BATCH_BUFFER_END);
+        EXPECT_EQ(expectedGpuAddress, returnPoint.gpuAddress);
+        EXPECT_EQ(oldCmdBuffer, returnPoint.currentCmdBuffer);
+        EXPECT_TRUE(returnPoint.configSnapshot.frontEndState.disableEUFusion.isDirty);
+        EXPECT_EQ(1, returnPoint.configSnapshot.frontEndState.disableEUFusion.value);
+
+        EXPECT_EQ(3u, cmdBuffers.size());
+        EXPECT_EQ(cmdBuffers[1], returnPoint.currentCmdBuffer);
+    } else {
+        ASSERT_EQ(1u, cmdList.size());
+        for (auto &cmd : cmdList) {
+            auto bbEndCmd = genCmdCast<MI_BATCH_BUFFER_END *>(cmd);
+            EXPECT_NE(nullptr, bbEndCmd);
+        }
+    }
+
+    if (fePropertiesSupport.disableEuFusion) {
+        commandList->reset();
+        EXPECT_EQ(0u, commandList->getReturnPointsSize());
+    }
+}
+
+HWTEST2_F(MultiReturnCommandListTest, givenMultiReturnIsUsedWhenPropertyComputeDispatchAllWalkerSupportedThenExpectReturnPointsAndBbEndProgramming, IsAtLeastSkl) {
+    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+    NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
+    NEO::HwInfoConfig::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
+
+    EXPECT_TRUE(commandList->multiReturnPointCommandList);
+
+    NEO::DebugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
+
+    auto &cmdStream = *commandList->commandContainer.getCommandStream();
+    auto &cmdBuffers = commandList->commandContainer.getCmdBufferAllocations();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+
+    size_t usedBefore = cmdStream.getUsed();
+    commandList->appendLaunchCooperativeKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
+    size_t usedAfter = cmdStream.getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdStream.getCpuBase(), usedBefore),
+        (usedAfter - usedBefore)));
+    ASSERT_NE(0u, cmdList.size());
+
+    if (fePropertiesSupport.computeDispatchAllWalker) {
+        auto bbEndCmd = genCmdCast<MI_BATCH_BUFFER_END *>(*cmdList.begin());
+        EXPECT_NE(nullptr, bbEndCmd);
+
+        EXPECT_EQ(1u, commandList->getReturnPointsSize());
+        auto &returnPoint = commandList->getReturnPoints()[0];
+
+        uint64_t expectedGpuAddress = cmdStream.getGpuBase() + usedBefore + sizeof(MI_BATCH_BUFFER_END);
+        EXPECT_EQ(expectedGpuAddress, returnPoint.gpuAddress);
+        EXPECT_EQ(cmdStream.getGraphicsAllocation(), returnPoint.currentCmdBuffer);
+        EXPECT_TRUE(returnPoint.configSnapshot.frontEndState.computeDispatchAllWalkerEnable.isDirty);
+        EXPECT_EQ(1, returnPoint.configSnapshot.frontEndState.computeDispatchAllWalkerEnable.value);
+    } else {
+        auto bbEndCmd = genCmdCast<MI_BATCH_BUFFER_END *>(*cmdList.begin());
+        EXPECT_EQ(nullptr, bbEndCmd);
+
+        EXPECT_EQ(0u, commandList->getReturnPointsSize());
+    }
+
+    usedBefore = cmdStream.getUsed();
+    commandList->appendLaunchCooperativeKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
+    usedAfter = cmdStream.getUsed();
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdStream.getCpuBase(), usedBefore),
+        (usedAfter - usedBefore)));
+    ASSERT_NE(0u, cmdList.size());
+
+    if (fePropertiesSupport.computeDispatchAllWalker) {
+        auto bbEndCmd = genCmdCast<MI_BATCH_BUFFER_END *>(*cmdList.begin());
+        EXPECT_EQ(nullptr, bbEndCmd);
+
+        EXPECT_EQ(1u, commandList->getReturnPointsSize());
+    } else {
+        auto bbEndCmd = genCmdCast<MI_BATCH_BUFFER_END *>(*cmdList.begin());
+        EXPECT_EQ(nullptr, bbEndCmd);
+
+        EXPECT_EQ(0u, commandList->getReturnPointsSize());
+    }
+
+    auto oldCmdBuffer = cmdStream.getGraphicsAllocation();
+    void *oldBase = cmdStream.getCpuBase();
+    cmdStream.getSpace(cmdStream.getAvailableSpace() - 2 * sizeof(MI_BATCH_BUFFER_END));
+    usedBefore = cmdStream.getUsed();
+    commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+
+    auto newCmdBuffer = cmdStream.getGraphicsAllocation();
+    ASSERT_NE(oldCmdBuffer, newCmdBuffer);
+
+    cmdList.clear();
+
+    size_t parseSpace = sizeof(MI_BATCH_BUFFER_END);
+    if (fePropertiesSupport.computeDispatchAllWalker) {
+        parseSpace *= 2;
+    }
+
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(oldBase, usedBefore),
+        parseSpace));
+
+    if (fePropertiesSupport.computeDispatchAllWalker) {
+        ASSERT_EQ(2u, cmdList.size());
+        for (auto &cmd : cmdList) {
+            auto bbEndCmd = genCmdCast<MI_BATCH_BUFFER_END *>(cmd);
+            EXPECT_NE(nullptr, bbEndCmd);
+        }
+        ASSERT_EQ(2u, commandList->getReturnPointsSize());
+        auto &returnPoint = commandList->getReturnPoints()[1];
+
+        uint64_t expectedGpuAddress = oldCmdBuffer->getGpuAddress() + usedBefore + sizeof(MI_BATCH_BUFFER_END);
+        EXPECT_EQ(expectedGpuAddress, returnPoint.gpuAddress);
+        EXPECT_EQ(oldCmdBuffer, returnPoint.currentCmdBuffer);
+        EXPECT_TRUE(returnPoint.configSnapshot.frontEndState.computeDispatchAllWalkerEnable.isDirty);
+        EXPECT_EQ(0, returnPoint.configSnapshot.frontEndState.computeDispatchAllWalkerEnable.value);
+
+        EXPECT_EQ(2u, cmdBuffers.size());
+        EXPECT_EQ(cmdBuffers[0], returnPoint.currentCmdBuffer);
+    } else {
+        ASSERT_EQ(1u, cmdList.size());
+        for (auto &cmd : cmdList) {
+            auto bbEndCmd = genCmdCast<MI_BATCH_BUFFER_END *>(cmd);
+            EXPECT_NE(nullptr, bbEndCmd);
+        }
+    }
+
+    cmdStream.getSpace(cmdStream.getAvailableSpace() - sizeof(MI_BATCH_BUFFER_END));
+    oldCmdBuffer = cmdStream.getGraphicsAllocation();
+
+    usedBefore = 0;
+    commandList->appendLaunchCooperativeKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
+    usedAfter = cmdStream.getUsed();
+
+    newCmdBuffer = cmdStream.getGraphicsAllocation();
+    ASSERT_NE(oldCmdBuffer, newCmdBuffer);
+
+    cmdList.clear();
+
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdStream.getCpuBase(), usedBefore),
+        (usedAfter - usedBefore)));
+    ASSERT_NE(0u, cmdList.size());
+
+    if (fePropertiesSupport.computeDispatchAllWalker) {
+        auto bbEndCmd = genCmdCast<MI_BATCH_BUFFER_END *>(*cmdList.begin());
+        EXPECT_NE(nullptr, bbEndCmd);
+
+        ASSERT_EQ(3u, commandList->getReturnPointsSize());
+        auto &returnPoint = commandList->getReturnPoints()[2];
+
+        uint64_t expectedGpuAddress = cmdStream.getGpuBase() + usedBefore + sizeof(MI_BATCH_BUFFER_END);
+        EXPECT_EQ(expectedGpuAddress, returnPoint.gpuAddress);
+        EXPECT_EQ(cmdStream.getGraphicsAllocation(), returnPoint.currentCmdBuffer);
+        EXPECT_TRUE(returnPoint.configSnapshot.frontEndState.computeDispatchAllWalkerEnable.isDirty);
+        EXPECT_EQ(1, returnPoint.configSnapshot.frontEndState.computeDispatchAllWalkerEnable.value);
+
+        EXPECT_EQ(3u, cmdBuffers.size());
+        EXPECT_EQ(cmdBuffers[2], returnPoint.currentCmdBuffer);
+    } else {
+        auto bbEndCmd = genCmdCast<MI_BATCH_BUFFER_END *>(*cmdList.begin());
+        EXPECT_EQ(nullptr, bbEndCmd);
+
+        EXPECT_EQ(0u, commandList->getReturnPointsSize());
+    }
+
+    if (fePropertiesSupport.computeDispatchAllWalker) {
+        commandList->reset();
+        EXPECT_EQ(0u, commandList->getReturnPointsSize());
+    }
+}
+
+HWTEST2_F(MultiReturnCommandListTest,
+          givenMultiReturnCmdListIsExecutedWhenPropertyDisableEuFusionSupportedThenExpectFrontEndProgrammingInCmdQueue, IsAtLeastSkl) {
+    using VFE_STATE_TYPE = typename FamilyType::VFE_STATE_TYPE;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+
+    NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
+    NEO::HwInfoConfig::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
+
+    EXPECT_TRUE(commandList->multiReturnPointCommandList);
+    EXPECT_TRUE(commandQueue->multiReturnPointCommandList);
+
+    auto &cmdListStream = *commandList->commandContainer.getCommandStream();
+    auto &cmdListBuffers = commandList->commandContainer.getCmdBufferAllocations();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    ze_result_t result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresDisabledEUFusion = 1;
+
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresDisabledEUFusion = 0;
+    cmdListStream.getSpace(cmdListStream.getAvailableSpace() - sizeof(MI_BATCH_BUFFER_END));
+
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresDisabledEUFusion = 1;
+    cmdListStream.getSpace(cmdListStream.getAvailableSpace() - 2 * sizeof(MI_BATCH_BUFFER_END));
+
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    if (fePropertiesSupport.disableEuFusion) {
+        EXPECT_EQ(3u, commandList->getReturnPointsSize());
+    } else {
+        EXPECT_EQ(0u, commandList->getReturnPointsSize());
+    }
+
+    auto &returnPoints = commandList->getReturnPoints();
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(3u, cmdListBuffers.size());
+
+    auto &cmdQueueStream = *commandQueue->commandStream;
+    size_t usedBefore = cmdQueueStream.getUsed();
+
+    auto cmdListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    size_t usedAfter = cmdQueueStream.getUsed();
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdQueueStream.getCpuBase(), usedBefore),
+        (usedAfter - usedBefore)));
+    ASSERT_NE(0u, cmdList.size());
+    auto nextIt = cmdList.begin();
+
+    if (fePropertiesSupport.disableEuFusion) {
+        auto feCmdList = findAll<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+        EXPECT_EQ(4u, feCmdList.size());
+        auto bbStartCmdList = findAll<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
+        EXPECT_EQ(6u, bbStartCmdList.size());
+
+        // initial FE -> requiresDisabledEUFusion = 0
+        {
+            auto feStateIt = find<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), feStateIt);
+            auto &feState = *genCmdCast<VFE_STATE_TYPE *>(*feStateIt);
+            EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
+
+            nextIt = feStateIt;
+        }
+        // initial jump to 1st cmd buffer
+        {
+            auto bbStartIt = find<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), bbStartIt);
+            auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*bbStartIt);
+
+            uint64_t bbStartGpuAddress = cmdListBuffers[0]->getGpuAddress();
+
+            EXPECT_EQ(bbStartGpuAddress, bbStart->getBatchBufferStartAddress());
+            EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+
+            nextIt = bbStartIt;
+        }
+        // reconfiguration FE -> requiresDisabledEUFusion = 1
+        {
+            auto feStateIt = find<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), feStateIt);
+            auto &feState = *genCmdCast<VFE_STATE_TYPE *>(*feStateIt);
+            EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
+
+            nextIt = feStateIt;
+        }
+        // jump to 1st cmd buffer after reconfiguration
+        {
+            auto bbStartIt = find<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), bbStartIt);
+            auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*bbStartIt);
+
+            uint64_t bbStartGpuAddress = returnPoints[0].gpuAddress;
+            EXPECT_EQ(cmdListBuffers[0], returnPoints[0].currentCmdBuffer);
+
+            EXPECT_EQ(bbStartGpuAddress, bbStart->getBatchBufferStartAddress());
+            EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+
+            nextIt = ++bbStartIt;
+        }
+
+        // jump to 2nd cmd buffer
+        {
+            auto bbStartIt = find<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), bbStartIt);
+            auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*bbStartIt);
+
+            uint64_t bbStartGpuAddress = cmdListBuffers[1]->getGpuAddress();
+
+            EXPECT_EQ(bbStartGpuAddress, bbStart->getBatchBufferStartAddress());
+            EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+
+            nextIt = bbStartIt;
+        }
+
+        // reconfiguration FE -> requiresDisabledEUFusion = 0
+        {
+            auto feStateIt = find<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), feStateIt);
+            auto &feState = *genCmdCast<VFE_STATE_TYPE *>(*feStateIt);
+            EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
+
+            nextIt = feStateIt;
+        }
+        // jump to 2nd cmd buffer after 2nd reconfiguration
+        {
+            auto bbStartIt = find<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), bbStartIt);
+            auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*bbStartIt);
+
+            uint64_t bbStartGpuAddress = returnPoints[1].gpuAddress;
+            EXPECT_EQ(cmdListBuffers[1], returnPoints[1].currentCmdBuffer);
+
+            EXPECT_EQ(bbStartGpuAddress, bbStart->getBatchBufferStartAddress());
+            EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+
+            nextIt = bbStartIt;
+        }
+
+        // reconfiguration FE -> requiresDisabledEUFusion = 1
+        {
+            auto feStateIt = find<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), feStateIt);
+            auto &feState = *genCmdCast<VFE_STATE_TYPE *>(*feStateIt);
+            EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
+
+            nextIt = feStateIt;
+        }
+        // jump to 2nd cmd buffer after 3rd reconfiguration
+        {
+            auto bbStartIt = find<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), bbStartIt);
+            auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*bbStartIt);
+
+            uint64_t bbStartGpuAddress = returnPoints[2].gpuAddress;
+            EXPECT_EQ(cmdListBuffers[1], returnPoints[2].currentCmdBuffer);
+
+            EXPECT_EQ(bbStartGpuAddress, bbStart->getBatchBufferStartAddress());
+            EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+
+            nextIt = ++bbStartIt;
+        }
+
+        // jump to 3rd cmd buffer
+        {
+            auto bbStartIt = find<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), bbStartIt);
+            auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*bbStartIt);
+
+            uint64_t bbStartGpuAddress = cmdListBuffers[2]->getGpuAddress();
+
+            EXPECT_EQ(bbStartGpuAddress, bbStart->getBatchBufferStartAddress());
+            EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+        }
+    } else {
+        auto feCmdList = findAll<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+        EXPECT_EQ(1u, feCmdList.size());
+        auto bbStartCmdList = findAll<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
+        EXPECT_EQ(3u, bbStartCmdList.size());
+
+        // initial FE
+        {
+            auto feStateIt = find<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), feStateIt);
+            auto &feState = *genCmdCast<VFE_STATE_TYPE *>(*feStateIt);
+            EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
+
+            nextIt = feStateIt;
+        }
+        // jump to 1st cmd buffer
+        {
+            auto bbStartIt = find<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), bbStartIt);
+            auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*bbStartIt);
+
+            uint64_t bbStartGpuAddress = cmdListBuffers[0]->getGpuAddress();
+
+            EXPECT_EQ(bbStartGpuAddress, bbStart->getBatchBufferStartAddress());
+            EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+
+            nextIt = ++bbStartIt;
+        }
+        // jump to 2nd cmd buffer
+        {
+            auto bbStartIt = find<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), bbStartIt);
+            auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*bbStartIt);
+
+            uint64_t bbStartGpuAddress = cmdListBuffers[1]->getGpuAddress();
+
+            EXPECT_EQ(bbStartGpuAddress, bbStart->getBatchBufferStartAddress());
+            EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+
+            nextIt = ++bbStartIt;
+        }
+        // jump to 3rd cmd buffer
+        {
+            auto bbStartIt = find<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), bbStartIt);
+            auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*bbStartIt);
+
+            uint64_t bbStartGpuAddress = cmdListBuffers[2]->getGpuAddress();
+
+            EXPECT_EQ(bbStartGpuAddress, bbStart->getBatchBufferStartAddress());
+            EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+        }
+    }
+}
+
+HWTEST2_F(MultiReturnCommandListTest,
+          givenMultiReturnCmdListIsExecutedWhenPropertyComputeDispatchAllWalkerSupportedThenExpectFrontEndProgrammingInCmdQueue, IsAtLeastSkl) {
+    using VFE_STATE_TYPE = typename FamilyType::VFE_STATE_TYPE;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+
+    NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
+    NEO::HwInfoConfig::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
+
+    NEO::DebugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
+
+    EXPECT_TRUE(commandList->multiReturnPointCommandList);
+    EXPECT_TRUE(commandQueue->multiReturnPointCommandList);
+
+    auto &cmdListStream = *commandList->commandContainer.getCommandStream();
+    auto &cmdListBuffers = commandList->commandContainer.getCmdBufferAllocations();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    ze_result_t result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->appendLaunchCooperativeKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->appendLaunchCooperativeKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    cmdListStream.getSpace(cmdListStream.getAvailableSpace() - 2 * sizeof(MI_BATCH_BUFFER_END));
+
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    cmdListStream.getSpace(cmdListStream.getAvailableSpace() - sizeof(MI_BATCH_BUFFER_END));
+
+    result = commandList->appendLaunchCooperativeKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    if (fePropertiesSupport.computeDispatchAllWalker) {
+        EXPECT_EQ(3u, commandList->getReturnPointsSize());
+    } else {
+        EXPECT_EQ(0u, commandList->getReturnPointsSize());
+    }
+
+    auto &returnPoints = commandList->getReturnPoints();
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(3u, cmdListBuffers.size());
+
+    auto &cmdQueueStream = *commandQueue->commandStream;
+    size_t usedBefore = cmdQueueStream.getUsed();
+
+    auto cmdListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    size_t usedAfter = cmdQueueStream.getUsed();
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdQueueStream.getCpuBase(), usedBefore),
+        (usedAfter - usedBefore)));
+    ASSERT_NE(0u, cmdList.size());
+    auto nextIt = cmdList.begin();
+
+    if (fePropertiesSupport.computeDispatchAllWalker) {
+        auto feCmdList = findAll<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+        EXPECT_EQ(4u, feCmdList.size());
+        auto bbStartCmdList = findAll<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
+        EXPECT_EQ(6u, bbStartCmdList.size());
+
+        // initial FE -> computeDispatchAllWalker = 0
+        {
+            auto feStateIt = find<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), feStateIt);
+            auto &feState = *genCmdCast<VFE_STATE_TYPE *>(*feStateIt);
+            EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(feState));
+
+            nextIt = feStateIt;
+        }
+        // initial jump to 1st cmd buffer
+        {
+            auto bbStartIt = find<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), bbStartIt);
+            auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*bbStartIt);
+
+            uint64_t bbStartGpuAddress = cmdListBuffers[0]->getGpuAddress();
+
+            EXPECT_EQ(bbStartGpuAddress, bbStart->getBatchBufferStartAddress());
+            EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+
+            nextIt = bbStartIt;
+        }
+
+        // reconfiguration FE -> computeDispatchAllWalker = 1
+        {
+            auto feStateIt = find<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), feStateIt);
+            auto &feState = *genCmdCast<VFE_STATE_TYPE *>(*feStateIt);
+            EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(feState));
+
+            nextIt = feStateIt;
+        }
+        // jump to 1st cmd buffer after reconfiguration
+        {
+            auto bbStartIt = find<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), bbStartIt);
+            auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*bbStartIt);
+
+            uint64_t bbStartGpuAddress = returnPoints[0].gpuAddress;
+            EXPECT_EQ(cmdListBuffers[0], returnPoints[0].currentCmdBuffer);
+
+            EXPECT_EQ(bbStartGpuAddress, bbStart->getBatchBufferStartAddress());
+            EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+
+            nextIt = bbStartIt;
+        }
+
+        // reconfiguration FE -> requiresDisabledEUFusion = 0
+        {
+            auto feStateIt = find<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), feStateIt);
+            auto &feState = *genCmdCast<VFE_STATE_TYPE *>(*feStateIt);
+            EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(feState));
+
+            nextIt = feStateIt;
+        }
+        // jump to 2nd cmd buffer after 2nd reconfiguration
+        {
+            auto bbStartIt = find<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), bbStartIt);
+            auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*bbStartIt);
+
+            uint64_t bbStartGpuAddress = returnPoints[1].gpuAddress;
+            EXPECT_EQ(cmdListBuffers[0], returnPoints[1].currentCmdBuffer);
+
+            EXPECT_EQ(bbStartGpuAddress, bbStart->getBatchBufferStartAddress());
+            EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+
+            nextIt = ++bbStartIt;
+        }
+
+        // jump to 2nd cmd buffer
+        {
+            auto bbStartIt = find<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), bbStartIt);
+            auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*bbStartIt);
+
+            uint64_t bbStartGpuAddress = cmdListBuffers[1]->getGpuAddress();
+
+            EXPECT_EQ(bbStartGpuAddress, bbStart->getBatchBufferStartAddress());
+            EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+
+            nextIt = ++bbStartIt;
+        }
+
+        // jump to 3rd cmd buffer
+        {
+            auto bbStartIt = find<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), bbStartIt);
+            auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*bbStartIt);
+
+            uint64_t bbStartGpuAddress = cmdListBuffers[2]->getGpuAddress();
+
+            EXPECT_EQ(bbStartGpuAddress, bbStart->getBatchBufferStartAddress());
+            EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+
+            nextIt = bbStartIt;
+        }
+
+        // reconfiguration FE -> requiresDisabledEUFusion = 1
+        {
+            auto feStateIt = find<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), feStateIt);
+            auto &feState = *genCmdCast<VFE_STATE_TYPE *>(*feStateIt);
+            EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(feState));
+
+            nextIt = feStateIt;
+        }
+        // jump to 3nd cmd buffer after 3rd reconfiguration
+        {
+            auto bbStartIt = find<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), bbStartIt);
+            auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*bbStartIt);
+
+            uint64_t bbStartGpuAddress = returnPoints[2].gpuAddress;
+            EXPECT_EQ(cmdListBuffers[2], returnPoints[2].currentCmdBuffer);
+
+            EXPECT_EQ(bbStartGpuAddress, bbStart->getBatchBufferStartAddress());
+            EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+        }
+
+    } else {
+        auto feCmdList = findAll<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+        EXPECT_EQ(1u, feCmdList.size());
+        auto bbStartCmdList = findAll<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
+        EXPECT_EQ(3u, bbStartCmdList.size());
+
+        // initial FE
+        {
+            auto feStateIt = find<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), feStateIt);
+            auto &feState = *genCmdCast<VFE_STATE_TYPE *>(*feStateIt);
+            EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(feState));
+
+            nextIt = feStateIt;
+        }
+        // jump to 1st cmd buffer
+        {
+            auto bbStartIt = find<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), bbStartIt);
+            auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*bbStartIt);
+
+            uint64_t bbStartGpuAddress = cmdListBuffers[0]->getGpuAddress();
+
+            EXPECT_EQ(bbStartGpuAddress, bbStart->getBatchBufferStartAddress());
+            EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+
+            nextIt = ++bbStartIt;
+        }
+        // jump to 2nd cmd buffer
+        {
+            auto bbStartIt = find<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), bbStartIt);
+            auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*bbStartIt);
+
+            uint64_t bbStartGpuAddress = cmdListBuffers[1]->getGpuAddress();
+
+            EXPECT_EQ(bbStartGpuAddress, bbStart->getBatchBufferStartAddress());
+            EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+
+            nextIt = ++bbStartIt;
+        }
+        // jump to 3rd cmd buffer
+        {
+            auto bbStartIt = find<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
+            ASSERT_NE(cmdList.end(), bbStartIt);
+            auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*bbStartIt);
+
+            uint64_t bbStartGpuAddress = cmdListBuffers[2]->getGpuAddress();
+
+            EXPECT_EQ(bbStartGpuAddress, bbStart->getBatchBufferStartAddress());
+            EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+        }
+    }
 }
 
 } // namespace ult

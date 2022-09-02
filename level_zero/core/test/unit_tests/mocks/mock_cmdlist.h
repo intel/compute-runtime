@@ -60,6 +60,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::hostPtrMap;
     using BaseClass::indirectAllocationsAllowed;
     using BaseClass::initialize;
+    using BaseClass::multiReturnPointCommandList;
     using BaseClass::partitionCount;
     using BaseClass::patternAllocations;
     using BaseClass::requiredStreamState;
@@ -120,6 +121,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::csr;
     using BaseClass::finalStreamState;
     using BaseClass::isFlushTaskSubmissionEnabled;
+    using BaseClass::multiReturnPointCommandList;
     using BaseClass::partitionCount;
     using BaseClass::requiredStreamState;
 
@@ -141,6 +143,7 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandListImp {
     using BaseClass::commandListPreemptionMode;
     using BaseClass::csr;
     using BaseClass::initialize;
+    using BaseClass::multiReturnPointCommandList;
     using BaseClass::nonImmediateLogicalStateHelper;
     using BaseClass::partitionCount;
 

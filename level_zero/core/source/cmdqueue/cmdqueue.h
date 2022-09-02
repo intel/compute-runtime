@@ -60,6 +60,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     bool commandQueueDebugCmdsProgrammed = false;
     bool isCopyOnlyCommandQueue = false;
     bool internalUsage = false;
+    bool multiReturnPointCommandList = false;
 };
 
 using CommandQueueAllocatorFn = CommandQueue *(*)(Device *device, NEO::CommandStreamReceiver *csr,

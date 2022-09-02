@@ -70,14 +70,25 @@ PVCTEST_F(PVCHwInfoConfig, givenHwInfoConfigWhenGettingEvictIfNecessaryFlagSuppo
     EXPECT_TRUE(hwInfoConfig.isEvictionIfNecessaryFlagSupported());
 }
 
-PVCTEST_F(PVCHwInfoConfig, givenPVCHwInfoConfigWhenIsPrefetcherDisablingInDirectSubmissionRequiredThenFalseIsReturned) {
+PVCTEST_F(PVCHwInfoConfig, givenPvcHwInfoConfigWhenIsPrefetcherDisablingInDirectSubmissionRequiredThenFalseIsReturned) {
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     EXPECT_FALSE(hwInfoConfig.isPrefetcherDisablingInDirectSubmissionRequired());
 }
 
-PVCTEST_F(PVCHwInfoConfig, givenPVCHwInfoConfigWhenIsStatefulAddressingModeSupportedThenReturnFalse) {
+PVCTEST_F(PVCHwInfoConfig, givenPvcHwInfoConfigWhenIsStatefulAddressingModeSupportedThenReturnFalse) {
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     EXPECT_FALSE(hwInfoConfig.isStatefulAddressingModeSupported());
+}
+
+PVCTEST_F(PVCHwInfoConfig, givenPvcSteppingWhenQueryIsComputeDispatchAllWalkerEnableInCfeStateRequiredThenAppropriateValueIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    auto hwInfo = *defaultHwInfo;
+
+    hwInfo.platform.usRevId = 0x0;
+    EXPECT_FALSE(hwInfoConfig.isComputeDispatchAllWalkerEnableInCfeStateRequired(hwInfo));
+
+    hwInfo.platform.usRevId = 0x6;
+    EXPECT_TRUE(hwInfoConfig.isComputeDispatchAllWalkerEnableInCfeStateRequired(hwInfo));
 }
 
 PVCTEST_F(PVCHwInfoConfig, givenHwInfoConfigWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {

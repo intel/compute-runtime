@@ -35,12 +35,18 @@ struct CmdListKernelLaunchParams {
     bool isDestinationAllocationInSystemMemory = false;
 };
 
+struct CmdListReturnPoint {
+    NEO::StreamProperties configSnapshot;
+    uint64_t gpuAddress = 0;
+    NEO::GraphicsAllocation *currentCmdBuffer = nullptr;
+};
+
 struct CommandList : _ze_command_list_handle_t {
     static constexpr uint32_t defaultNumIddsPerBlock = 64u;
     static constexpr uint32_t commandListimmediateIddsPerBlock = 1u;
 
     CommandList() = delete;
-    CommandList(uint32_t numIddsPerBlock) : commandContainer(numIddsPerBlock) {}
+    CommandList(uint32_t numIddsPerBlock);
 
     template <typename Type>
     struct Allocator {
@@ -261,6 +267,14 @@ struct CommandList : _ze_command_list_handle_t {
         return commandsToPatch;
     }
 
+    std::vector<CmdListReturnPoint> &getReturnPoints() {
+        return returnPoints;
+    }
+
+    uint32_t getReturnPointsSize() const {
+        return static_cast<uint32_t>(returnPoints.size());
+    }
+
     void makeResidentAndMigrate(bool);
     void migrateSharedAllocations();
 
@@ -287,6 +301,7 @@ struct CommandList : _ze_command_list_handle_t {
     std::map<const void *, NEO::GraphicsAllocation *> hostPtrMap;
     std::vector<NEO::GraphicsAllocation *> ownedPrivateAllocations;
     std::vector<NEO::GraphicsAllocation *> patternAllocations;
+    std::vector<CmdListReturnPoint> returnPoints;
 
     NEO::StreamProperties requiredStreamState{};
     NEO::StreamProperties finalStreamState{};
@@ -301,6 +316,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool containsCooperativeKernelsFlag = false;
     bool containsStatelessUncachedResource = false;
     bool performMemoryPrefetch = false;
+    bool multiReturnPointCommandList = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

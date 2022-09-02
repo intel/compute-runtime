@@ -112,6 +112,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     }
     this->ownedPrivateAllocations.clear();
     cmdListCurrentStartOffset = 0;
+    this->returnPoints.clear();
     return ZE_RESULT_SUCCESS;
 }
 
@@ -122,6 +123,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->commandListPreemptionMode = device->getDevicePreemptionMode();
     this->engineGroupType = engineGroupType;
     this->flags = flags;
+    if (this->multiReturnPointCommandList) {
+        this->returnPoints.reserve(32);
+    }
 
     if (device->isImplicitScalingCapable() && !this->internalUsage && !isCopyOnly()) {
         this->partitionCount = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count());
@@ -2323,11 +2327,25 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
     finalStreamState.frontEndState.setProperties(isCooperative, kernelAttributes.flags.requiresDisabledEUFusion, disableOverdispatch, -1, hwInfo);
     bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
     auto logicalStateHelperBlock = !getLogicalStateHelper();
-    if (finalStreamState.frontEndState.isDirty() && isPatchingVfeStateAllowed && logicalStateHelperBlock) {
-        auto pVfeStateAddress = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(commandContainer.getCommandStream(), hwInfo, engineGroupType);
-        auto pVfeState = new VFE_STATE_TYPE;
-        NEO::PreambleHelper<GfxFamily>::programVfeState(pVfeState, hwInfo, 0, 0, device->getMaxNumHwThreads(), finalStreamState, nullptr);
-        commandsToPatch.push_back({pVfeStateAddress, pVfeState, CommandToPatch::FrontEndState});
+
+    if (finalStreamState.frontEndState.isDirty() && logicalStateHelperBlock) {
+        if (isPatchingVfeStateAllowed) {
+            auto pVfeStateAddress = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(commandContainer.getCommandStream(), hwInfo, engineGroupType);
+            auto pVfeState = new VFE_STATE_TYPE;
+            NEO::PreambleHelper<GfxFamily>::programVfeState(pVfeState, hwInfo, 0, 0, device->getMaxNumHwThreads(), finalStreamState, nullptr);
+            commandsToPatch.push_back({pVfeStateAddress, pVfeState, CommandToPatch::FrontEndState});
+        }
+        if (this->multiReturnPointCommandList) {
+            auto &stream = *commandContainer.getCommandStream();
+            NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferEnd(stream);
+
+            CmdListReturnPoint returnPoint = {
+                {},
+                stream.getGpuBase() + stream.getUsed(),
+                stream.getGraphicsAllocation()};
+            returnPoint.configSnapshot.frontEndState.setProperties(finalStreamState.frontEndState);
+            returnPoints.push_back(returnPoint);
+        }
     }
 
     finalStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), hwInfo);

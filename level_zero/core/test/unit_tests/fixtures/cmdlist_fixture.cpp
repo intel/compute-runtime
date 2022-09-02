@@ -7,6 +7,8 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 
+#include "shared/source/os_interface/hw_info_config.h"
+
 namespace L0 {
 namespace ult {
 
@@ -67,6 +69,48 @@ void MultiTileCommandListFixtureInit::setUpParams(bool createImmediate, bool cre
 
     eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
     event = std::unique_ptr<Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+}
+
+void MultiReturnCommandListFixture::setUp() {
+    DebugManager.flags.MultiReturnPointCommandList.set(1);
+
+    ModuleImmutableDataFixture::setUp();
+
+    auto revId = NEO::HwInfoConfig::get(device->getHwInfo().platform.eProductFamily)->getHwRevIdFromStepping(REVISION_B, device->getHwInfo());
+    neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usRevId = revId;
+
+    ze_result_t returnValue;
+
+    ze_command_queue_desc_t queueDesc{};
+    queueDesc.ordinal = 0u;
+    queueDesc.index = 0u;
+    queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+
+    commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                     device,
+                                                     neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                     &queueDesc,
+                                                     false,
+                                                     false,
+                                                     returnValue));
+
+    NEO::EngineGroupType engineGroupType = NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily).getEngineGroupType(neoDevice->getDefaultEngine().getEngineType(), neoDevice->getDefaultEngine().getEngineUsage(), device->getHwInfo());
+
+    commandList.reset(whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue)));
+
+    mockKernelImmData = std::make_unique<MockImmutableData>(0u);
+    createModuleFromMockBinary(0u, false, mockKernelImmData.get());
+
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+    createKernel(kernel.get());
+}
+
+void MultiReturnCommandListFixture::tearDown() {
+    commandQueue->destroy();
+    commandList.reset(nullptr);
+    kernel.reset(nullptr);
+    mockKernelImmData.reset(nullptr);
+    ModuleImmutableDataFixture::tearDown();
 }
 
 } // namespace ult

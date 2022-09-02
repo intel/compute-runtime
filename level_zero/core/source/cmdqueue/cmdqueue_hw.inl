@@ -44,6 +44,7 @@
 #include "level_zero/core/source/fence/fence.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
+#include <algorithm>
 #include <limits>
 #include <thread>
 
@@ -281,15 +282,21 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListFrontEndIfDirty(
     auto &streamProperties = this->csr->getStreamProperties();
     bool shouldProgramVfe = ctx.frontEndStateDirty;
 
-    if (isPatchingVfeStateAllowed) {
+    ctx.cmdListBeginState.frontEndState = {};
+
+    if (isPatchingVfeStateAllowed || this->multiReturnPointCommandList) {
         auto &requiredStreamState = commandList->getRequiredStreamState();
         streamProperties.frontEndState.setProperties(requiredStreamState.frontEndState);
+        streamProperties.frontEndState.setPropertySingleSliceDispatchCcsMode(ctx.engineInstanced, device->getHwInfo());
+
         shouldProgramVfe |= streamProperties.frontEndState.isDirty();
     }
 
+    ctx.cmdListBeginState.frontEndState.setProperties(streamProperties.frontEndState);
+
     this->programFrontEndAndClearDirtyFlag(shouldProgramVfe, ctx, cmdStream);
 
-    if (isPatchingVfeStateAllowed) {
+    if (isPatchingVfeStateAllowed || this->multiReturnPointCommandList) {
         auto &finalStreamState = commandList->getFinalStreamState();
         streamProperties.frontEndState.setProperties(finalStreamState.frontEndState);
     }
@@ -341,7 +348,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateFrontEndCmdSizeForMultipleCommandL
 
     auto singleFrontEndCmdSize = estimateFrontEndCmdSize();
     bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
-    if (!isPatchingVfeStateAllowed) {
+    if (!isPatchingVfeStateAllowed && !this->multiReturnPointCommandList) {
         return isFrontEndStateDirty * singleFrontEndCmdSize;
     }
 
@@ -352,10 +359,15 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateFrontEndCmdSizeForMultipleCommandL
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
         auto &requiredStreamState = commandList->getRequiredStreamState();
         streamPropertiesCopy.frontEndState.setProperties(requiredStreamState.frontEndState);
-
+        streamPropertiesCopy.frontEndState.setPropertySingleSliceDispatchCcsMode(engineInstanced, device->getHwInfo());
         if (isFrontEndStateDirty || streamPropertiesCopy.frontEndState.isDirty()) {
             estimatedSize += singleFrontEndCmdSize;
             isFrontEndStateDirty = false;
+        }
+        if (this->multiReturnPointCommandList) {
+            uint32_t frontEndChanges = commandList->getReturnPointsSize();
+            estimatedSize += (frontEndChanges * singleFrontEndCmdSize);
+            estimatedSize += (frontEndChanges * NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferStartSize());
         }
         auto &finalStreamState = commandList->getFinalStreamState();
         streamPropertiesCopy.frontEndState.setProperties(finalStreamState.frontEndState);
@@ -594,11 +606,11 @@ void CommandQueueHw<gfxCoreFamily>::setFrontEndStateProperties(CommandListExecut
     auto isEngineInstanced = csr->getOsContext().isEngineInstanced();
     auto &streamProperties = this->csr->getStreamProperties();
     bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
-    if (!isPatchingVfeStateAllowed) {
+    if (!isPatchingVfeStateAllowed && !this->multiReturnPointCommandList) {
         streamProperties.frontEndState.setProperties(ctx.anyCommandListWithCooperativeKernels, ctx.anyCommandListRequiresDisabledEUFusion,
                                                      disableOverdispatch, isEngineInstanced, hwInfo);
     } else {
-        streamProperties.frontEndState.setPropertySingleSliceDispatchCcsMode(isEngineInstanced, hwInfo);
+        ctx.engineInstanced = isEngineInstanced;
     }
     ctx.frontEndStateDirty |= (streamProperties.frontEndState.isDirty() && !this->csr->getLogicalStateHelper());
     ctx.frontEndStateDirty |= csr->getMediaVFEStateDirty();
@@ -836,10 +848,14 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListBatchBufferStart(CommandLis
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::programOneCmdListBatchBufferStart(CommandList *commandList, NEO::LinearStream &cmdStream, CommandListExecutionContext &ctx) {
-
     auto &cmdBufferAllocations = commandList->commandContainer.getCmdBufferAllocations();
     auto cmdBufferCount = cmdBufferAllocations.size();
     bool isCommandListImmediate = (commandList->cmdListType == CommandList::CommandListType::TYPE_IMMEDIATE) ? true : false;
+
+    auto &returnPoints = commandList->getReturnPoints();
+    uint32_t returnPointsSize = commandList->getReturnPointsSize();
+    uint32_t cmdBufferProgress = 0;
+    uint32_t returnPointIdx = 0;
 
     for (size_t iter = 0; iter < cmdBufferCount; iter++) {
         auto allocation = cmdBufferAllocations[iter];
@@ -848,6 +864,29 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListBatchBufferStart(CommandLis
             startOffset = ptrOffset(allocation->getGpuAddress(), commandList->commandContainer.currentLinearStreamStartOffset);
         }
         NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&cmdStream, startOffset, true);
+        if (returnPointsSize > 0) {
+            bool cmdBufferHasRestarts = std::find_if(
+                                            std::next(returnPoints.begin(), cmdBufferProgress),
+                                            returnPoints.end(),
+                                            [allocation](CmdListReturnPoint &retPt) {
+                                                return retPt.currentCmdBuffer == allocation;
+                                            }) != returnPoints.end();
+            if (cmdBufferHasRestarts) {
+                while (returnPointIdx < returnPointsSize && allocation == returnPoints[returnPointIdx].currentCmdBuffer) {
+                    auto scratchSpaceController = this->csr->getScratchSpaceController();
+                    ctx.cmdListBeginState.frontEndState.setProperties(returnPoints[returnPointIdx].configSnapshot.frontEndState);
+                    programFrontEnd(scratchSpaceController->getScratchPatchAddress(),
+                                    scratchSpaceController->getPerThreadScratchSpaceSize(),
+                                    cmdStream,
+                                    ctx.cmdListBeginState);
+                    NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&cmdStream,
+                                                                                         returnPoints[returnPointIdx].gpuAddress,
+                                                                                         true);
+                    returnPointIdx++;
+                }
+                cmdBufferProgress++;
+            }
+        }
     }
 }
 
