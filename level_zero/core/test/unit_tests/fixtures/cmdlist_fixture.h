@@ -21,30 +21,8 @@ namespace ult {
 
 class CommandListFixture : public DeviceFixture {
   public:
-    void setUp() {
-        DeviceFixture::setUp();
-        ze_result_t returnValue;
-        commandList.reset(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
-
-        ze_event_pool_desc_t eventPoolDesc = {};
-        eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
-        eventPoolDesc.count = 2;
-
-        ze_event_desc_t eventDesc = {};
-        eventDesc.index = 0;
-        eventDesc.wait = 0;
-        eventDesc.signal = 0;
-
-        eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
-        event = std::unique_ptr<Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
-    }
-
-    void tearDown() {
-        event.reset(nullptr);
-        eventPool.reset(nullptr);
-        commandList.reset(nullptr);
-        DeviceFixture::tearDown();
-    }
+    void setUp();
+    void tearDown();
 
     std::unique_ptr<L0::ult::CommandList> commandList;
     std::unique_ptr<EventPool> eventPool;
@@ -64,10 +42,10 @@ struct MultiTileCommandListFixture : public SingleRootMultiSubDeviceFixture {
         NEO::EngineGroupType cmdListEngineType = createCopy ? NEO::EngineGroupType::Copy : NEO::EngineGroupType::RenderCompute;
 
         if (!createImmediate) {
-            commandList.reset(whiteboxCast(CommandList::create(productFamily, device, cmdListEngineType, 0u, returnValue)));
+            commandList.reset(whiteboxCast(CommandList::create(device->getHwInfo().platform.eProductFamily, device, cmdListEngineType, 0u, returnValue)));
         } else {
             const ze_command_queue_desc_t desc = {};
-            commandList.reset(whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, createInternal, cmdListEngineType, returnValue)));
+            commandList.reset(whiteboxCast(CommandList::createImmediate(device->getHwInfo().platform.eProductFamily, device, &desc, createInternal, cmdListEngineType, returnValue)));
         }
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 

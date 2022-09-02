@@ -9,6 +9,7 @@ set(TARGET_NAME ${TARGET_NAME_L0}_fixtures)
 set(L0_FIXTURES_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_csr_fixture.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_fixture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/device_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/device_fixture.cpp
