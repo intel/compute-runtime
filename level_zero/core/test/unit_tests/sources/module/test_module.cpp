@@ -1789,7 +1789,7 @@ TEST_F(ModuleFunctionPointerTests, givenInvalidFunctionNameAndModuleWithExported
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_FUNCTION_NAME, res);
 }
 
-TEST_F(ModuleFunctionPointerTests, givenModuleWithExportedKernelThenGetFunctionPointerOfKernelFunctionReturnsInvalidFunctionName) {
+TEST_F(ModuleFunctionPointerTests, givenModuleWithExportedSymbolThenGetFunctionPointerReturnsGpuAddressToKernelFunction) {
 
     uint64_t gpuAddress = 0x12345;
 
@@ -1819,7 +1819,9 @@ TEST_F(ModuleFunctionPointerTests, givenModuleWithExportedKernelThenGetFunctionP
 
     void *functionPointer = nullptr;
     ze_result_t res = module0->getFunctionPointer("kernelFunction", &functionPointer);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_FUNCTION_NAME, res);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_EQ(reinterpret_cast<uint64_t>(functionPointer), module0->kernelImmDatas[0]->getIsaGraphicsAllocation()->getGpuAddress());
 }
 
 class DeviceModuleSetArgBufferTest : public ModuleFixture, public ::testing::Test {
