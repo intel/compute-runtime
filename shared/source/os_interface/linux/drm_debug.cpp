@@ -32,7 +32,8 @@ bool Drm::registerResourceClasses() {
 }
 
 uint32_t Drm::registerResource(DrmResourceClass classType, const void *data, size_t size) {
-    if (classHandles.size() < static_cast<uint32_t>(classType)) {
+    const auto classIndex = static_cast<uint32_t>(classType);
+    if (classHandles.size() <= classIndex) {
         return 0;
     }
 
@@ -43,7 +44,7 @@ uint32_t Drm::registerResource(DrmResourceClass classType, const void *data, siz
         uuid = generateUUID();
     }
 
-    const auto uuidClass = classHandles[static_cast<uint32_t>(classType)];
+    const auto uuidClass = classHandles[classIndex];
     const auto ptr = size > 0 ? (uintptr_t)data : 0;
     const auto result = ioctlHelper->registerUuid(uuid, uuidClass, ptr, size);
 
