@@ -29,40 +29,10 @@ class CommandListFixture : public DeviceFixture {
     std::unique_ptr<Event> event;
 };
 
-template <bool createImmediate, bool createInternal, bool createCopy>
-struct MultiTileCommandListFixture : public SingleRootMultiSubDeviceFixture {
-    void setUp() {
-        DebugManager.flags.EnableImplicitScaling.set(1);
-        osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&NEO::OSInterface::osEnableLocalMemory, true);
-        apiSupportBackup = std::make_unique<VariableBackup<bool>>(&NEO::ImplicitScaling::apiSupport, true);
-
-        SingleRootMultiSubDeviceFixture::setUp();
-        ze_result_t returnValue;
-
-        NEO::EngineGroupType cmdListEngineType = createCopy ? NEO::EngineGroupType::Copy : NEO::EngineGroupType::RenderCompute;
-
-        if (!createImmediate) {
-            commandList.reset(whiteboxCast(CommandList::create(device->getHwInfo().platform.eProductFamily, device, cmdListEngineType, 0u, returnValue)));
-        } else {
-            const ze_command_queue_desc_t desc = {};
-            commandList.reset(whiteboxCast(CommandList::createImmediate(device->getHwInfo().platform.eProductFamily, device, &desc, createInternal, cmdListEngineType, returnValue)));
-        }
-        ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
-
-        ze_event_pool_desc_t eventPoolDesc = {};
-        eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
-        eventPoolDesc.count = 2;
-
-        ze_event_desc_t eventDesc = {};
-        eventDesc.index = 0;
-        eventDesc.wait = 0;
-        eventDesc.signal = 0;
-
-        eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
-        event = std::unique_ptr<Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
-    }
-
-    void tearDown() {
+struct MultiTileCommandListFixtureInit : public SingleRootMultiSubDeviceFixture {
+    void setUp();
+    void setUpParams(bool createImmediate, bool createInternal, bool createCopy);
+    inline void tearDown() {
         SingleRootMultiSubDeviceFixture::tearDown();
     }
 
@@ -71,6 +41,18 @@ struct MultiTileCommandListFixture : public SingleRootMultiSubDeviceFixture {
     std::unique_ptr<Event> event;
     std::unique_ptr<VariableBackup<bool>> apiSupportBackup;
     std::unique_ptr<VariableBackup<bool>> osLocalMemoryBackup;
+};
+
+template <bool createImmediate, bool createInternal, bool createCopy>
+struct MultiTileCommandListFixture : public MultiTileCommandListFixtureInit {
+    void setUp() {
+        MultiTileCommandListFixtureInit::setUp();
+        MultiTileCommandListFixtureInit::setUpParams(createImmediate, createInternal, createCopy);
+    }
+
+    void tearDown() {
+        MultiTileCommandListFixtureInit::tearDown();
+    }
 };
 
 template <typename FamilyType>
