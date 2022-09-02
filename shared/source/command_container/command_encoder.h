@@ -400,10 +400,19 @@ struct EncodeBatchBufferStartOrEnd {
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
     using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
 
+    static constexpr size_t getBatchBufferStartSize() {
+        return sizeof(MI_BATCH_BUFFER_START);
+    }
+
+    static constexpr size_t getBatchBufferEndSize() {
+        return sizeof(MI_BATCH_BUFFER_END);
+    }
+
     static void programBatchBufferStart(LinearStream *commandStream,
                                         uint64_t address,
                                         bool secondLevel);
     static void programBatchBufferEnd(CommandContainer &container);
+    static void programBatchBufferEnd(LinearStream &commandStream);
 };
 
 template <typename GfxFamily>

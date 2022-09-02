@@ -1259,11 +1259,12 @@ void CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream &commandStr
                                                                         0ull,
                                                                         false);
     } else {
-        auto batchBufferEnd = reinterpret_cast<MI_BATCH_BUFFER_END *>(commandStreamTask.getSpace(sizeof(MI_BATCH_BUFFER_END)));
+        auto batchBufferEnd = commandStreamTask.getSpaceForCmd<MI_BATCH_BUFFER_END>();
         *batchBufferEnd = GfxFamily::cmdInitBatchBufferEnd;
     }
 
-    auto bytesToPad = sizeof(MI_BATCH_BUFFER_START) - sizeof(MI_BATCH_BUFFER_END);
+    auto bytesToPad = EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferStartSize() -
+                      EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferEndSize();
     EncodeNoop<GfxFamily>::emitNoop(commandStreamTask, bytesToPad);
     EncodeNoop<GfxFamily>::alignToCacheLine(commandStreamTask);
 

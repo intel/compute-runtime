@@ -547,13 +547,13 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeInitial(
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
         linearStreamSizeEstimate += commandList->commandContainer.getCmdBufferAllocations().size();
     }
-    linearStreamSizeEstimate *= sizeof(MI_BATCH_BUFFER_START);
+    linearStreamSizeEstimate *= NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferStartSize();
     linearStreamSizeEstimate += this->csr->getCmdsSizeForHardwareContext();
 
     if (ctx.isDirectSubmissionEnabled) {
-        linearStreamSizeEstimate += sizeof(MI_BATCH_BUFFER_START);
+        linearStreamSizeEstimate += NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferStartSize();
     } else {
-        linearStreamSizeEstimate += sizeof(MI_BATCH_BUFFER_END);
+        linearStreamSizeEstimate += NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferEndSize();
     }
 
     auto csrHw = reinterpret_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(this->csr);
