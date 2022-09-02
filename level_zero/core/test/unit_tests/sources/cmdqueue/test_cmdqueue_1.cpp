@@ -882,7 +882,7 @@ class MockCommandQueue : public L0::CommandQueueHw<gfxCoreFamily> {
         this->mockHeapContainer = heapContainer;
     }
 
-    void programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSize, NEO::LinearStream &commandStream) override {
+    void programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSize, NEO::LinearStream &commandStream, NEO::StreamProperties &streamProperties) override {
         return;
     }
 };

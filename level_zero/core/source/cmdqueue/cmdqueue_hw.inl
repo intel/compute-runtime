@@ -164,7 +164,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
         this->programOneCmdListFrontEndIfDirty(ctx, commandList, child);
 
         this->patchCommands(*commandList, this->csr->getScratchSpaceController()->getScratchPatchAddress());
-        this->programOneCmdListBatchBufferStart(commandList, child);
+        this->programOneCmdListBatchBufferStart(commandList, child, ctx);
         this->mergeOneCmdListPipelinedState(commandList);
     }
 
@@ -307,12 +307,13 @@ void CommandQueueHw<gfxCoreFamily>::programFrontEndAndClearDirtyFlag(
     auto scratchSpaceController = this->csr->getScratchSpaceController();
     programFrontEnd(scratchSpaceController->getScratchPatchAddress(),
                     scratchSpaceController->getPerThreadScratchSpaceSize(),
-                    cmdStream);
+                    cmdStream,
+                    csr->getStreamProperties());
     ctx.frontEndStateDirty = false;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSize, NEO::LinearStream &cmdStream) {
+void CommandQueueHw<gfxCoreFamily>::programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSize, NEO::LinearStream &cmdStream, NEO::StreamProperties &streamProperties) {
     UNRECOVERABLE_IF(csr == nullptr);
     auto &hwInfo = device->getHwInfo();
     auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
@@ -324,7 +325,7 @@ void CommandQueueHw<gfxCoreFamily>::programFrontEnd(uint64_t scratchAddress, uin
                                                     perThreadScratchSpaceSize,
                                                     scratchAddress,
                                                     device->getMaxNumHwThreads(),
-                                                    csr->getStreamProperties(),
+                                                    streamProperties,
                                                     csr->getLogicalStateHelper());
     csr->setMediaVFEStateDirty(false);
 }
@@ -336,7 +337,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateFrontEndCmdSize() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateFrontEndCmdSizeForMultipleCommandLists(
-    bool isFrontEndStateDirty, uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists) {
+    bool isFrontEndStateDirty, uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists, int32_t engineInstanced) {
 
     auto singleFrontEndCmdSize = estimateFrontEndCmdSize();
     bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
@@ -625,7 +626,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
         linearStreamSizeEstimate += estimatePipelineSelect();
     }
 
-    linearStreamSizeEstimate += estimateFrontEndCmdSizeForMultipleCommandLists(ctx.frontEndStateDirty, numCommandLists, phCommandLists);
+    linearStreamSizeEstimate += estimateFrontEndCmdSizeForMultipleCommandLists(ctx.frontEndStateDirty, numCommandLists, phCommandLists, ctx.engineInstanced);
 
     if (ctx.gsbaStateDirty) {
         linearStreamSizeEstimate += estimateStateBaseAddressCmdSize();
@@ -829,6 +830,12 @@ void CommandQueueHw<gfxCoreFamily>::writeCsrStreamInlineIfLogicalStateHelperAvai
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::programOneCmdListBatchBufferStart(CommandList *commandList, NEO::LinearStream &cmdStream) {
+    CommandListExecutionContext ctx = {};
+    programOneCmdListBatchBufferStart(commandList, cmdStream, ctx);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::programOneCmdListBatchBufferStart(CommandList *commandList, NEO::LinearStream &cmdStream, CommandListExecutionContext &ctx) {
 
     auto &cmdBufferAllocations = commandList->commandContainer.getCmdBufferAllocations();
     auto cmdBufferCount = cmdBufferAllocations.size();

@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/hw_info.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
@@ -33,10 +34,10 @@ struct CommandQueueHw : public CommandQueueImp {
 
     void programStateBaseAddress(uint64_t gsba, bool useLocalMemoryForIndirectHeap, NEO::LinearStream &commandStream, bool cachedMOCSAllowed);
     size_t estimateStateBaseAddressCmdSize();
-    MOCKABLE_VIRTUAL void programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSize, NEO::LinearStream &commandStream);
+    MOCKABLE_VIRTUAL void programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSize, NEO::LinearStream &commandStream, NEO::StreamProperties &streamProperties);
 
     MOCKABLE_VIRTUAL size_t estimateFrontEndCmdSizeForMultipleCommandLists(bool isFrontEndStateDirty, uint32_t numCommandLists,
-                                                                           ze_command_list_handle_t *phCommandLists);
+                                                                           ze_command_list_handle_t *phCommandLists, int32_t engineInstanced);
     size_t estimateFrontEndCmdSize();
     size_t estimatePipelineSelect();
     void programPipelineSelectIfGpgpuDisabled(NEO::LinearStream &commandStream);
@@ -52,6 +53,8 @@ struct CommandQueueHw : public CommandQueueImp {
 
   protected:
     struct CommandListExecutionContext {
+
+        CommandListExecutionContext() {}
 
         CommandListExecutionContext(ze_command_list_handle_t *phCommandLists,
                                     uint32_t numCommandLists,
@@ -72,11 +75,13 @@ struct CommandQueueHw : public CommandQueueImp {
         bool gsbaStateDirty = false;
         bool frontEndStateDirty = false;
         size_t spaceForResidency = 0;
+        NEO::StreamProperties cmdListBeginState{};
         NEO::PreemptionMode preemptionMode{};
         NEO::PreemptionMode statePreemption{};
         uint32_t perThreadScratchSpaceSize = 0;
         uint32_t perThreadPrivateScratchSize = 0;
-        const bool isPreemptionModeInitial{};
+        int32_t engineInstanced = -1;
+        const bool isPreemptionModeInitial{false};
         bool isDevicePreemptionModeMidThread{};
         bool isDebugEnabled{};
         bool stateSipRequired{};
@@ -139,6 +144,7 @@ struct CommandQueueHw : public CommandQueueImp {
                                                  CommandList *commandList,
                                                  NEO::LinearStream &commandStream);
     inline void programOneCmdListBatchBufferStart(CommandList *commandList, NEO::LinearStream &commandStream);
+    inline void programOneCmdListBatchBufferStart(CommandList *commandList, NEO::LinearStream &commandStream, CommandListExecutionContext &ctx);
     inline void mergeOneCmdListPipelinedState(CommandList *commandList);
     inline void programFrontEndAndClearDirtyFlag(bool shouldFrontEndBeProgrammed,
                                                  CommandListExecutionContext &ctx,
