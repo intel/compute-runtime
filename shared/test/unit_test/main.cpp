@@ -28,7 +28,6 @@
 #include "shared/test/common/test_stats.h"
 #include "shared/test/common/tests_configuration.h"
 
-#include "gmock/gmock.h"
 #include "hw_cmds_default.h"
 #include "test_files_setup.h"
 
@@ -87,20 +86,6 @@ void applyWorkarounds() {
         std::stringstream ss("1");
         int val;
         ss >> val;
-    }
-    {
-        class BaseClass {
-          public:
-            int method(int param) { return 1; }
-        };
-        class MockClass : public BaseClass {
-          public:
-            MOCK_METHOD1(method, int(int param));
-        };
-        ::testing::NiceMock<MockClass> mockObj;
-        EXPECT_CALL(mockObj, method(::testing::_))
-            .Times(1);
-        mockObj.method(2);
     }
 
     //intialize rand
@@ -175,7 +160,7 @@ int main(int argc, char **argv) {
     }
 #endif
 
-    ::testing::InitGoogleMock(&argc, argv);
+    ::testing::InitGoogleTest(&argc, argv);
     HardwareInfo hwInfoForTests = DEFAULT_TEST_PLATFORM::hwInfo;
 
     uint32_t euPerSubSlice = 0;
