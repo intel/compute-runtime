@@ -26,13 +26,8 @@ void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, c
     command->setComputeOverdispatchDisable(streamProperties.frontEndState.disableOverdispatch.value == 1);
     command->setSingleSliceDispatchCcsMode(streamProperties.frontEndState.singleSliceDispatchCcsMode.value == 1);
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-
-    if (hwInfoConfig.getSteppingFromHwRevId(hwInfo) >= REVISION_B) {
-        const auto programComputeDispatchAllWalkerEnableInCfeState = hwInfoConfig.isComputeDispatchAllWalkerEnableInCfeStateRequired(hwInfo);
-        if (programComputeDispatchAllWalkerEnableInCfeState && streamProperties.frontEndState.computeDispatchAllWalkerEnable.value > 0) {
-            command->setComputeDispatchAllWalkerEnable(true);
-        }
+    if (streamProperties.frontEndState.computeDispatchAllWalkerEnable.value > 0) {
+        command->setComputeDispatchAllWalkerEnable(true);
     }
 
     if (DebugManager.flags.CFEComputeDispatchAllWalkerEnable.get() != -1) {

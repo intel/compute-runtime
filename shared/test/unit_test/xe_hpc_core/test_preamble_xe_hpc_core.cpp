@@ -55,7 +55,7 @@ XE_HPC_CORETEST_F(PreambleCfeState, givenKernelExecutionTypeConcurrentAndRevisio
     ASSERT_NE(cmdList.end(), cfeStateIt);
     auto cfeState = reinterpret_cast<CFE_STATE *>(*cfeStateIt);
 
-    uint32_t expectedValue = hwInfoConfig.isComputeDispatchAllWalkerEnableInCfeStateRequired(hwInfo);
+    uint32_t expectedValue = streamProperties.frontEndState.computeDispatchAllWalkerEnable.isDirty ? streamProperties.frontEndState.computeDispatchAllWalkerEnable.value : 0;
     EXPECT_EQ(expectedValue, cfeState->getComputeDispatchAllWalkerEnable());
     EXPECT_FALSE(cfeState->getSingleSliceDispatchCcsMode());
 }

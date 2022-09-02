@@ -54,7 +54,7 @@ TEST(StreamPropertiesTests, whenSettingCooperativeKernelPropertiesThenCorrectVal
 
     FrontEndPropertiesSupport frontEndPropertiesSupport = {};
     auto hwInfoConfig = HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    hwInfoConfig->fillFrontEndPropertiesSupportStructure(frontEndPropertiesSupport);
+    hwInfoConfig->fillFrontEndPropertiesSupportStructure(frontEndPropertiesSupport, *defaultHwInfo);
 
     for (auto isEngineInstanced : ::testing::Bool()) {
         for (auto isCooperativeKernel : ::testing::Bool()) {
@@ -245,7 +245,7 @@ TEST(StreamPropertiesTests, givenOtherFrontEndPropertiesStructWhenSetPropertiesI
 TEST(StreamPropertiesTests, givenSingleDispatchCcsFrontEndPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
     FrontEndPropertiesSupport fePropertiesSupport{};
     auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    hwInfoConfig.fillFrontEndPropertiesSupportStructure(fePropertiesSupport);
+    hwInfoConfig.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, *defaultHwInfo);
 
     MockFrontEndProperties feProperties{};
     EXPECT_FALSE(feProperties.propertiesSupportLoaded);

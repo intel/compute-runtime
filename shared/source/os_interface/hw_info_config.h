@@ -161,7 +161,7 @@ class HwInfoConfig {
     virtual bool getPreemptionDbgPropertyCsrSurfaceSupport() const = 0;
 
     virtual void fillScmPropertiesSupportStructure(StateComputeModePropertiesSupport &propertiesSupport) = 0;
-    virtual void fillFrontEndPropertiesSupportStructure(FrontEndPropertiesSupport &propertiesSupport) = 0;
+    virtual void fillFrontEndPropertiesSupportStructure(FrontEndPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) = 0;
 
     MOCKABLE_VIRTUAL ~HwInfoConfig() = default;
 
@@ -292,7 +292,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool getPreemptionDbgPropertyCsrSurfaceSupport() const override;
 
     void fillScmPropertiesSupportStructure(StateComputeModePropertiesSupport &propertiesSupport) override;
-    void fillFrontEndPropertiesSupportStructure(FrontEndPropertiesSupport &propertiesSupport) override;
+    void fillFrontEndPropertiesSupportStructure(FrontEndPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) override;
 
   protected:
     HwInfoConfigHw() = default;

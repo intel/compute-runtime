@@ -105,7 +105,7 @@ void StateComputeModeProperties::clearIsDirty() {
 void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableEUFusion, bool disableOverdispatch, int32_t engineInstancedDevice, const HardwareInfo &hwInfo) {
     if (this->propertiesSupportLoaded == false) {
         auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-        hwInfoConfig.fillFrontEndPropertiesSupportStructure(this->frontEndPropertiesSupport);
+        hwInfoConfig.fillFrontEndPropertiesSupportStructure(this->frontEndPropertiesSupport, hwInfo);
         this->propertiesSupportLoaded = true;
     }
 
@@ -131,7 +131,7 @@ void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableEUF
 void FrontEndProperties::setPropertySingleSliceDispatchCcsMode(int32_t engineInstancedDevice, const HardwareInfo &hwInfo) {
     if (this->propertiesSupportLoaded == false) {
         auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-        hwInfoConfig.fillFrontEndPropertiesSupportStructure(this->frontEndPropertiesSupport);
+        hwInfoConfig.fillFrontEndPropertiesSupportStructure(this->frontEndPropertiesSupport, hwInfo);
         this->propertiesSupportLoaded = true;
     }
     this->singleSliceDispatchCcsMode.isDirty = false;

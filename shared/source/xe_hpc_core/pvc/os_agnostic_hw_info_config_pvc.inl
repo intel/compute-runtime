@@ -192,7 +192,7 @@ uint32_t HwInfoConfigHw<gfxProduct>::getThreadEuRatioForScratch(const HardwareIn
 
 template <>
 bool HwInfoConfigHw<gfxProduct>::isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const {
-    return true;
+    return getSteppingFromHwRevId(hwInfo) >= REVISION_B;
 }
 
 template <>

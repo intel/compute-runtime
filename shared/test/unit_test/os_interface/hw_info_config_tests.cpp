@@ -526,8 +526,8 @@ HWTEST_F(HwInfoConfigTest, WhenFillingFrontEndPropertiesSupportThenExpectUseCorr
 
     auto hwInfoConfig = HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
 
-    hwInfoConfig->fillFrontEndPropertiesSupportStructure(frontEndPropertiesSupport);
-    EXPECT_EQ(hwInfoConfig->getFrontEndPropertyComputeDispatchAllWalkerSupport(), frontEndPropertiesSupport.computeDispatchAllWalker);
+    hwInfoConfig->fillFrontEndPropertiesSupportStructure(frontEndPropertiesSupport, pInHwInfo);
+    EXPECT_EQ(hwInfoConfig->isComputeDispatchAllWalkerEnableInCfeStateRequired(pInHwInfo), frontEndPropertiesSupport.computeDispatchAllWalker);
     EXPECT_EQ(hwInfoConfig->getFrontEndPropertyDisableEuFusionSupport(), frontEndPropertiesSupport.disableEuFusion);
     EXPECT_EQ(hwInfoConfig->getFrontEndPropertyDisableOverDispatchSupport(), frontEndPropertiesSupport.disableOverdispatch);
     EXPECT_EQ(hwInfoConfig->getFrontEndPropertySingleSliceDispatchCcsModeSupport(), frontEndPropertiesSupport.singleSliceDispatchCcsMode);

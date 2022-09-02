@@ -393,7 +393,7 @@ uint32_t HwInfoConfigHw<gfxProduct>::getThreadEuRatioForScratch(const HardwareIn
 
 template <PRODUCT_FAMILY gfxProduct>
 bool HwInfoConfigHw<gfxProduct>::isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const {
-    return false;
+    return getFrontEndPropertyComputeDispatchAllWalkerSupport();
 }
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -617,8 +617,8 @@ bool HwInfoConfigHw<gfxProduct>::getFrontEndPropertySingleSliceDispatchCcsModeSu
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void HwInfoConfigHw<gfxProduct>::fillFrontEndPropertiesSupportStructure(FrontEndPropertiesSupport &propertiesSupport) {
-    propertiesSupport.computeDispatchAllWalker = getFrontEndPropertyComputeDispatchAllWalkerSupport();
+void HwInfoConfigHw<gfxProduct>::fillFrontEndPropertiesSupportStructure(FrontEndPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) {
+    propertiesSupport.computeDispatchAllWalker = isComputeDispatchAllWalkerEnableInCfeStateRequired(hwInfo);
     propertiesSupport.disableEuFusion = getFrontEndPropertyDisableEuFusionSupport();
     propertiesSupport.disableOverdispatch = getFrontEndPropertyDisableOverDispatchSupport();
     propertiesSupport.singleSliceDispatchCcsMode = getFrontEndPropertySingleSliceDispatchCcsModeSupport();
