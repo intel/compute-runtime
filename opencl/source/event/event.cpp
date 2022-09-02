@@ -428,8 +428,7 @@ inline WaitStatus Event::wait(bool blocking, bool useQuickKmdSleep) {
     }
 
     Range<CopyEngineState> states{&bcsState, bcsState.isValid() ? 1u : 0u};
-    auto waitedOnTimestamps = cmdQueue->waitForTimestamps(states, taskCount.load());
-    const auto waitStatus = cmdQueue->waitUntilComplete(taskCount.load(), states, flushStamp->peekStamp(), useQuickKmdSleep, true, waitedOnTimestamps);
+    const auto waitStatus = cmdQueue->waitUntilComplete(taskCount.load(), states, flushStamp->peekStamp(), useQuickKmdSleep);
     if (waitStatus == WaitStatus::GpuHang) {
         return WaitStatus::GpuHang;
     }
