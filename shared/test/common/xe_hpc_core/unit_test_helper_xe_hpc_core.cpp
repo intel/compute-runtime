@@ -90,6 +90,11 @@ uint32_t UnitTestHelper<Family>::getTdCtlRegisterValue() {
     return (1u << 7) | (1u << 4) | (1u << 2) | (1u << 0);
 }
 
+template <>
+bool UnitTestHelper<Family>::getComputeDispatchAllWalkerFromFrontEndCommand(const typename Family::VFE_STATE_TYPE &feCmd) {
+    return feCmd.getComputeDispatchAllWalkerEnable();
+}
+
 template struct UnitTestHelper<Family>;
 
 } // namespace NEO

@@ -51,5 +51,10 @@ uint32_t UnitTestHelper<Family>::getTdCtlRegisterValue() {
     return (1u << 7) | (1u << 4);
 }
 
+template <>
+bool UnitTestHelper<Family>::getDisableFusionStateFromFrontEndCommand(const typename Family::VFE_STATE_TYPE &feCmd) {
+    return feCmd.getDisableSlice0Subslice2();
+}
+
 template struct UnitTestHelper<Family>;
 } // namespace NEO
