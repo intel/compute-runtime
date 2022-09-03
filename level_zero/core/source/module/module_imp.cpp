@@ -51,8 +51,6 @@ NEO::ConstStringRef greaterThan4GbRequired = "-ze-opt-greater-than-4GB-buffer-re
 NEO::ConstStringRef hasBufferOffsetArg = "-ze-intel-has-buffer-offset-arg";
 NEO::ConstStringRef debugKernelEnable = "-ze-kernel-debug-enable";
 NEO::ConstStringRef profileFlags = "-zet-profile-flags";
-NEO::ConstStringRef enableLibraryCompile = "-library-compilation";
-NEO::ConstStringRef enableGlobalVariableSymbols = "-ze-take-global-address";
 } // namespace BuildOptions
 
 ModuleTranslationUnit::ModuleTranslationUnit(L0::Device *device)
@@ -174,70 +172,6 @@ bool ModuleTranslationUnit::processSpecConstantInfo(NEO::CompilerInterface *comp
     return true;
 }
 
-bool ModuleTranslationUnit::attemptGenBinaryCompile(NEO::TranslationInput inputArgs, bool staticLink, bool libraryExportRequired, bool globalExportRequired) {
-    auto result = this->compileGenBinary(inputArgs, staticLink);
-    std::string enableGlobalFlag(BuildOptions::enableGlobalVariableSymbols.str().c_str());
-    std::string enableLibraryFlag(BuildOptions::enableLibraryCompile.str().c_str());
-    bool completedGlobalFlagRemovalCheck = false;
-    bool completedLibraryFlagRemovalCheck = false;
-    if (result == false) {
-        if (!globalExportRequired || !libraryExportRequired) {
-            // If the build failed, attempt to remove the implicit flags for Global Variables and/or Library Compile
-            std::string reducedOptions(options);
-            // Attempt build with only removing the Global Variable Flag
-            if (!globalExportRequired) {
-                std::string globalFlagRemoved(options);
-                size_t optionPos = std::string::npos;
-                optionPos = reducedOptions.find(enableGlobalFlag.c_str());
-                if (optionPos != std::string::npos) {
-                    reducedOptions.erase(optionPos, BuildOptions::enableGlobalVariableSymbols.length());
-                }
-                optionPos = globalFlagRemoved.find(enableGlobalFlag.c_str());
-                if (optionPos != std::string::npos) {
-                    globalFlagRemoved.erase(optionPos, BuildOptions::enableGlobalVariableSymbols.length());
-                    inputArgs.apiOptions = ArrayRef<const char>(globalFlagRemoved.c_str(), globalFlagRemoved.length());
-                    result = this->compileGenBinary(inputArgs, staticLink);
-                    if (result == true) {
-                        options.assign(globalFlagRemoved);
-                        return result;
-                    }
-                }
-                completedGlobalFlagRemovalCheck = true;
-            }
-            // Attempt build with only removing the Library Export Symbol Flag
-            if (!libraryExportRequired) {
-                std::string libraryFlagRemoved(options);
-                size_t optionPos = std::string::npos;
-                optionPos = reducedOptions.find(enableLibraryFlag.c_str());
-                if (optionPos != std::string::npos) {
-                    reducedOptions.erase(optionPos, BuildOptions::enableLibraryCompile.length());
-                }
-                optionPos = libraryFlagRemoved.find(enableLibraryFlag.c_str());
-                if (optionPos != std::string::npos) {
-                    libraryFlagRemoved.erase(optionPos, BuildOptions::enableLibraryCompile.length());
-                    inputArgs.apiOptions = ArrayRef<const char>(libraryFlagRemoved.c_str(), libraryFlagRemoved.length());
-                    result = this->compileGenBinary(inputArgs, staticLink);
-                    if (result == true) {
-                        options.assign(libraryFlagRemoved);
-                        return result;
-                    }
-                }
-                completedLibraryFlagRemovalCheck = true;
-            }
-            // Attempt build with the removal of both library and Global Variable flags
-            if (completedGlobalFlagRemovalCheck && completedLibraryFlagRemovalCheck) {
-                inputArgs.apiOptions = ArrayRef<const char>(reducedOptions.c_str(), reducedOptions.length());
-                result = this->compileGenBinary(inputArgs, staticLink);
-                if (result == true) {
-                    options.assign(reducedOptions);
-                    return result;
-                }
-            }
-        }
-    }
-    return result;
-}
-
 bool ModuleTranslationUnit::compileGenBinary(NEO::TranslationInput inputArgs, bool staticLink) {
     auto compilerInterface = device->getNEODevice()->getCompilerInterface();
     UNRECOVERABLE_IF(nullptr == compilerInterface);
@@ -271,7 +205,7 @@ bool ModuleTranslationUnit::compileGenBinary(NEO::TranslationInput inputArgs, bo
 }
 
 bool ModuleTranslationUnit::staticLinkSpirV(std::vector<const char *> inputSpirVs, std::vector<uint32_t> inputModuleSizes, const char *buildOptions, const char *internalBuildOptions,
-                                            std::vector<const ze_module_constants_t *> specConstants, bool libraryExportRequired, bool globalExportRequired) {
+                                            std::vector<const ze_module_constants_t *> specConstants) {
     auto compilerInterface = device->getNEODevice()->getCompilerInterface();
     UNRECOVERABLE_IF(nullptr == compilerInterface);
 
@@ -291,11 +225,11 @@ bool ModuleTranslationUnit::staticLinkSpirV(std::vector<const char *> inputSpirV
     linkInputArgs.src = ArrayRef<const char>(reinterpret_cast<const char *>(spirvElfSource.data()), spirvElfSource.size());
     linkInputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
     linkInputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
-    return this->attemptGenBinaryCompile(linkInputArgs, true, libraryExportRequired, globalExportRequired);
+    return this->compileGenBinary(linkInputArgs, true);
 }
 
 bool ModuleTranslationUnit::buildFromSpirV(const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions,
-                                           const ze_module_constants_t *pConstants, bool libraryExportRequired, bool globalExportRequired) {
+                                           const ze_module_constants_t *pConstants) {
     auto compilerInterface = device->getNEODevice()->getCompilerInterface();
     UNRECOVERABLE_IF(nullptr == compilerInterface);
 
@@ -310,10 +244,10 @@ bool ModuleTranslationUnit::buildFromSpirV(const char *input, uint32_t inputSize
     inputArgs.src = ArrayRef<const char>(input, inputSize);
     inputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
     inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
-    return this->attemptGenBinaryCompile(inputArgs, false, libraryExportRequired, globalExportRequired);
+    return this->compileGenBinary(inputArgs, false);
 }
 
-bool ModuleTranslationUnit::createFromNativeBinary(const char *input, size_t inputSize, bool libraryExportRequired, bool globalExportRequired) {
+bool ModuleTranslationUnit::createFromNativeBinary(const char *input, size_t inputSize) {
     UNRECOVERABLE_IF((nullptr == device) || (nullptr == device->getNEODevice()));
     auto productAbbreviation = NEO::hardwarePrefix[device->getNEODevice()->getHardwareInfo().platform.eProductFamily];
 
@@ -366,7 +300,7 @@ bool ModuleTranslationUnit::createFromNativeBinary(const char *input, size_t inp
             updateBuildLog(NEO::CompilerWarnings::recompiledFromIr.str());
         }
 
-        return buildFromSpirV(this->irBinary.get(), static_cast<uint32_t>(this->irBinarySize), this->options.c_str(), "", nullptr, libraryExportRequired, globalExportRequired);
+        return buildFromSpirV(this->irBinary.get(), static_cast<uint32_t>(this->irBinarySize), this->options.c_str(), "", nullptr);
     } else {
         return processUnpackedBinary();
     }
@@ -574,17 +508,13 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
                                                                  inputModuleSizes,
                                                                  buildOptions.c_str(),
                                                                  internalBuildOptions.c_str(),
-                                                                 specConstants,
-                                                                 this->libraryExportRequired,
-                                                                 this->globalExportRequired);
+                                                                 specConstants);
             } else {
                 success = this->translationUnit->buildFromSpirV(reinterpret_cast<const char *>(programExpDesc->pInputModules[0]),
                                                                 inputModuleSizes[0],
                                                                 buildOptions.c_str(),
                                                                 internalBuildOptions.c_str(),
-                                                                firstSpecConstants,
-                                                                this->libraryExportRequired,
-                                                                this->globalExportRequired);
+                                                                firstSpecConstants);
             }
         } else {
             return false;
@@ -600,16 +530,14 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
 
         if (desc->format == ZE_MODULE_FORMAT_NATIVE) {
             success = this->translationUnit->createFromNativeBinary(
-                reinterpret_cast<const char *>(desc->pInputModule), desc->inputSize, this->libraryExportRequired, this->globalExportRequired);
+                reinterpret_cast<const char *>(desc->pInputModule), desc->inputSize);
         } else if (desc->format == ZE_MODULE_FORMAT_IL_SPIRV) {
             this->builtFromSPIRv = true;
             success = this->translationUnit->buildFromSpirV(reinterpret_cast<const char *>(desc->pInputModule),
                                                             static_cast<uint32_t>(desc->inputSize),
                                                             buildOptions.c_str(),
                                                             internalBuildOptions.c_str(),
-                                                            desc->pConstants,
-                                                            this->libraryExportRequired,
-                                                            this->globalExportRequired);
+                                                            desc->pConstants);
         } else {
             return false;
         }
@@ -752,20 +680,13 @@ void ModuleImp::createBuildOptions(const char *pBuildFlags, std::string &apiOpti
         moveBuildOption(apiOptions, apiOptions, NEO::CompilerOptions::optDisable, BuildOptions::optDisable);
         moveBuildOption(internalBuildOptions, apiOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired, BuildOptions::greaterThan4GbRequired);
         moveBuildOption(internalBuildOptions, apiOptions, NEO::CompilerOptions::allowZebin, NEO::CompilerOptions::allowZebin);
+
         moveOptLevelOption(apiOptions, apiOptions);
         moveProfileFlagsOption(apiOptions, apiOptions);
-        this->libraryExportRequired = moveBuildOption(apiOptions, apiOptions, BuildOptions::enableLibraryCompile, BuildOptions::enableLibraryCompile);
-        this->globalExportRequired = moveBuildOption(apiOptions, apiOptions, BuildOptions::enableGlobalVariableSymbols, BuildOptions::enableGlobalVariableSymbols);
         createBuildExtraOptions(apiOptions, internalBuildOptions);
     }
     if (NEO::ApiSpecificConfig::getBindlessConfiguration()) {
         NEO::CompilerOptions::concatenateAppend(internalBuildOptions, NEO::CompilerOptions::bindlessMode.str());
-    }
-    if (!this->libraryExportRequired && NEO::DebugManager.flags.EnableProgramSymbolTableGeneration.get()) {
-        NEO::CompilerOptions::concatenateAppend(apiOptions, BuildOptions::enableLibraryCompile.str());
-    }
-    if (!this->globalExportRequired && NEO::DebugManager.flags.EnableGlobalSymbolGeneration.get()) {
-        NEO::CompilerOptions::concatenateAppend(apiOptions, BuildOptions::enableGlobalVariableSymbols.str());
     }
 }
 
