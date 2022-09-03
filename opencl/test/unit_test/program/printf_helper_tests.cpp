@@ -33,6 +33,8 @@ class PrintFormatterTest : public testing::Test {
     uint8_t buffer;
 
     MockGraphicsAllocation *data;
+    MockKernel *kernel;
+    std::unique_ptr<MockProgram> program;
     std::unique_ptr<MockKernelInfo> kernelInfo;
     ClDevice *device;
 
@@ -48,6 +50,9 @@ class PrintFormatterTest : public testing::Test {
         data = new MockGraphicsAllocation(underlyingBuffer, maxPrintfOutputLength);
 
         kernelInfo = std::make_unique<MockKernelInfo>();
+        device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
+        program = std::make_unique<MockProgram>(toClDeviceVector(*device));
+        kernel = new MockKernel(program.get(), *kernelInfo, *device);
 
         printFormatter = std::unique_ptr<PrintFormatter>(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), printfBufferSize, is32bit, &kernelInfo->kernelDescriptor.kernelMetadata.printfStringsMap));
 
@@ -59,6 +64,8 @@ class PrintFormatterTest : public testing::Test {
 
     void TearDown() override {
         delete data;
+        delete kernel;
+        delete device;
     }
 
     enum class PRINTF_DATA_TYPE : int {
@@ -79,7 +86,6 @@ class PrintFormatterTest : public testing::Test {
         VECTOR_DOUBLE
     };
 
-    PRINTF_DATA_TYPE getPrintfDataType(char value) { return PRINTF_DATA_TYPE::BYTE; };
     PRINTF_DATA_TYPE getPrintfDataType(int8_t value) { return PRINTF_DATA_TYPE::BYTE; };
     PRINTF_DATA_TYPE getPrintfDataType(uint8_t value) { return PRINTF_DATA_TYPE::BYTE; };
     PRINTF_DATA_TYPE getPrintfDataType(int16_t value) { return PRINTF_DATA_TYPE::SHORT; };
@@ -94,14 +100,8 @@ class PrintFormatterTest : public testing::Test {
 
     template <class T>
     void injectValue(T value) {
-        auto dataType = getPrintfDataType(value);
-        storeData(dataType);
-        if (dataType == PRINTF_DATA_TYPE::BYTE ||
-            dataType == PRINTF_DATA_TYPE::SHORT) {
-            storeData(static_cast<int>(value));
-        } else {
-            storeData(value);
-        }
+        storeData(getPrintfDataType(value));
+        storeData(value);
     }
 
     void injectStringValue(int value) {
@@ -901,24 +901,6 @@ TEST_F(PrintFormatterTest, GivenNoStringMapAndBufferWithFormatStringAnd2StringsT
     storeData(string2);
 
     const char *expectedOutput = "str1 str2";
-    char output[maxPrintfOutputLength];
-    printFormatter->printKernelOutput([&output](char *str) { strncpy_s(output, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
-    EXPECT_STREQ(expectedOutput, output);
-}
-
-TEST_F(PrintFormatterTest, GivenTypeSmallerThan4BThenItIsReadAs4BValue) {
-    printFormatter.reset(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), printfBufferSize, true));
-    const char *formatString = "%c %hd %d";
-    storeData(formatString);
-
-    char byteValue = 'a';
-    injectValue(byteValue);
-    short shortValue = 123;
-    injectValue(shortValue);
-    int intValue = 456;
-    injectValue(intValue);
-
-    const char *expectedOutput = "a 123 456";
     char output[maxPrintfOutputLength];
     printFormatter->printKernelOutput([&output](char *str) { strncpy_s(output, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
     EXPECT_STREQ(expectedOutput, output);
