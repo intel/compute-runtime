@@ -1105,8 +1105,7 @@ size_t CommandQueueHw<GfxFamily>::calculateHostPtrSizeForImage(const size_t *reg
 
 template <typename GfxFamily>
 bool CommandQueueHw<GfxFamily>::isSplitEnqueueBlitSupported() {
-    auto bcsSplit = HwInfoConfig::get(getDevice().getHardwareInfo().platform.eProductFamily)->isBlitSplitEnqueueWARequired(getDevice().getHardwareInfo()) &&
-                    CommandQueue::isBlitSplitEnabled();
+    auto bcsSplit = HwInfoConfig::get(getDevice().getHardwareInfo().platform.eProductFamily)->isBlitSplitEnqueueWARequired(getDevice().getHardwareInfo());
 
     if (DebugManager.flags.SplitBcsCopy.get() != -1) {
         bcsSplit = DebugManager.flags.SplitBcsCopy.get();

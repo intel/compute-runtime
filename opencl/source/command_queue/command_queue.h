@@ -251,7 +251,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     static bool isAssignEngineRoundRobinEnabled();
     static bool isTimestampWaitEnabled();
-    static bool isBlitSplitEnabled();
 
     MOCKABLE_VIRTUAL void releaseIndirectHeap(IndirectHeap::Type heapType);
 

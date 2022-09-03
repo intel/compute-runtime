@@ -166,11 +166,6 @@ bool HwInfoConfigHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const Hardware
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isBlitSplitEnqueueWARequired(const HardwareInfo &hwInfo) const {
-    return true;
-}
-
-template <>
 bool HwInfoConfigHw<gfxProduct>::isImplicitScalingSupported(const HardwareInfo &hwInfo) const {
     return getSteppingFromHwRevId(hwInfo) >= REVISION_B;
 }
