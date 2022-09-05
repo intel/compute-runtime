@@ -1286,7 +1286,8 @@ ze_result_t DebugSessionLinux::interruptImp(uint32_t deviceIndex) {
 }
 
 ze_result_t DebugSessionLinux::getISAVMHandle(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t &vmHandle) {
-    auto accessVA = desc->address;
+    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+    auto accessVA = gmmHelper->decanonize(desc->address);
     auto &isaMap = clientHandleToConnection[clientHandle]->isaMap[deviceIndex];
     ze_result_t status = ZE_RESULT_ERROR_UNINITIALIZED;
     vmHandle = invalidHandle;

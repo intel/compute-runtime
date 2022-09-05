@@ -1462,6 +1462,41 @@ TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryForISAThenMemoryIsRead) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
 }
 
+TEST_F(DebugApiLinuxTest, GivenCanonizedAddressWhenGettingIsaVmHandleThenCorrectVmIsReturned) {
+    auto session = std::make_unique<MockDebugSessionLinux>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+    session->clientHandle = MockDebugSessionLinux::mockClientHandle;
+
+    const uint64_t isaGpuVa = device->getHwInfo().capabilityTable.gpuAddressSpace - 0x3000;
+    const uint64_t isaSize = 0x2000;
+    auto gmmHelper = neoDevice->getGmmHelper();
+
+    auto isa = std::make_unique<DebugSessionLinux::IsaAllocation>();
+    isa->bindInfo = {isaGpuVa, isaSize};
+    isa->vmHandle = 3;
+    isa->elfUuidHandle = DebugSessionLinux::invalidHandle;
+    isa->moduleBegin = 0;
+    isa->moduleEnd = 0;
+
+    auto &isaMap = session->clientHandleToConnection[session->clientHandle]->isaMap[0];
+    isaMap[isaGpuVa] = std::move(isa);
+    isaMap[isaGpuVa]->vmBindCounter = 1;
+
+    zet_debug_memory_space_desc_t desc;
+    desc.address = gmmHelper->canonize(isaGpuVa);
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    if (Math::log2(device->getHwInfo().capabilityTable.gpuAddressSpace + 1) >= 48) {
+        EXPECT_NE(isaGpuVa, desc.address);
+    }
+
+    uint64_t vmHandle = 0;
+
+    auto retVal = session->getISAVMHandle(0, &desc, isaSize, vmHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+    EXPECT_EQ(3u, vmHandle);
+}
+
 TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryForELFThenMemoryIsRead) {
     auto session = std::make_unique<MockDebugSessionLinux>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
