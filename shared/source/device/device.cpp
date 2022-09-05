@@ -14,6 +14,7 @@
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -394,6 +395,17 @@ uint64_t Device::getProfilingTimerClock() {
     return getOSTime()->getDynamicDeviceTimerClock(getHardwareInfo());
 }
 
+bool Device::isBcsSplitSupported() {
+    auto bcsSplit = HwInfoConfig::get(getHardwareInfo().platform.eProductFamily)->isBlitSplitEnqueueWARequired(getHardwareInfo()) &&
+                    ApiSpecificConfig::isBcsSplitWaSupported();
+
+    if (DebugManager.flags.SplitBcsCopy.get() != -1) {
+        bcsSplit = DebugManager.flags.SplitBcsCopy.get();
+    }
+
+    return bcsSplit;
+}
+
 bool Device::isSimulation() const {
     auto &hwInfo = getHardwareInfo();
 
@@ -498,10 +510,10 @@ Device *Device::getSubDevice(uint32_t deviceId) const {
 
 Device *Device::getNearestGenericSubDevice(uint32_t deviceId) {
     /*
-    * EngineInstanced: Upper level
-    * Generic SubDevice: 'this'
-    * RootCsr Device: Next level SubDevice (generic)
-    */
+     * EngineInstanced: Upper level
+     * Generic SubDevice: 'this'
+     * RootCsr Device: Next level SubDevice (generic)
+     */
 
     if (engineInstanced) {
         return getRootDevice()->getNearestGenericSubDevice(Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong())));

@@ -295,11 +295,11 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenCheckIsSplitEnqueueBlit
     auto *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(this->pCmdQ);
     {
         DebugManager.flags.SplitBcsCopy.set(1);
-        EXPECT_TRUE(cmdQHw->isSplitEnqueueBlitSupported());
+        EXPECT_TRUE(cmdQHw->getDevice().isBcsSplitSupported());
     }
     {
         DebugManager.flags.SplitBcsCopy.set(0);
-        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitSupported());
+        EXPECT_FALSE(cmdQHw->getDevice().isBcsSplitSupported());
     }
 }
 

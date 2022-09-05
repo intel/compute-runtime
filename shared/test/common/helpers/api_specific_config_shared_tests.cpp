@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,9 @@ namespace NEO {
 ApiSpecificConfig::ApiType apiTypeForUlts = ApiSpecificConfig::OCL;
 bool ApiSpecificConfig::isStatelessCompressionSupported() {
     return ApiSpecificConfig::ApiType::OCL == ApiSpecificConfig::getApiType();
+}
+bool ApiSpecificConfig::isBcsSplitWaSupported() {
+    return false;
 }
 bool ApiSpecificConfig::getHeapConfiguration() {
     return DebugManager.flags.UseExternalAllocatorForSshAndDsh.get();

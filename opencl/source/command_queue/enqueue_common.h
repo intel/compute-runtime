@@ -1104,21 +1104,10 @@ size_t CommandQueueHw<GfxFamily>::calculateHostPtrSizeForImage(const size_t *reg
 }
 
 template <typename GfxFamily>
-bool CommandQueueHw<GfxFamily>::isSplitEnqueueBlitSupported() {
-    auto bcsSplit = HwInfoConfig::get(getDevice().getHardwareInfo().platform.eProductFamily)->isBlitSplitEnqueueWARequired(getDevice().getHardwareInfo());
-
-    if (DebugManager.flags.SplitBcsCopy.get() != -1) {
-        bcsSplit = DebugManager.flags.SplitBcsCopy.get();
-    }
-
-    return bcsSplit;
-}
-
-template <typename GfxFamily>
 bool CommandQueueHw<GfxFamily>::isSplitEnqueueBlitNeeded(TransferDirection transferDirection, size_t transferSize, CommandStreamReceiver &csr) {
     constexpr size_t minimalSizeForBcsSplit = 16 * MemoryConstants::megaByte;
 
-    auto bcsSplit = isSplitEnqueueBlitSupported() &&
+    auto bcsSplit = getDevice().isBcsSplitSupported() &&
                     csr.getOsContext().getEngineType() == aub_stream::EngineType::ENGINE_BCS &&
                     transferSize >= minimalSizeForBcsSplit &&
                     (transferDirection == TransferDirection::HostToLocal ||
