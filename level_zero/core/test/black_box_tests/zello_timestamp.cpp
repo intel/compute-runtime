@@ -348,6 +348,175 @@ bool testKernelTimestampApendQuery(ze_context_handle_t &context,
     return true;
 }
 
+bool testKernelTimestampMapToHostTimescale(int argc, char *argv[],
+                                           ze_context_handle_t &context,
+                                           ze_device_handle_t &device) {
+
+    ze_command_queue_handle_t cmdQueue;
+    ze_command_list_handle_t cmdList;
+    ze_module_handle_t module;
+    ze_kernel_handle_t kernel;
+    void *srcBuffer = nullptr;
+    void *dstBuffer = nullptr;
+    void *timestampBuffer = nullptr;
+    ze_event_pool_handle_t eventPool;
+    ze_event_handle_t kernelTsEvent;
+
+    bool runTillDeviceTsOverflows = isParamEnabled(argc, argv, "-o", "--runTillOverflow");
+
+    // Create commandQueue and cmdList
+    createCmdQueueAndCmdList(context, device, cmdQueue, cmdList);
+
+    auto appendKernel = [&module, &kernel, &srcBuffer, &dstBuffer, &timestampBuffer,
+                         &context, &device, &eventPool, &kernelTsEvent](ze_command_list_handle_t &cmdList) {
+        // Create two shared buffers
+        constexpr size_t allocSize = 4096 * 51200;
+        ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
+        deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
+        deviceDesc.ordinal = 0;
+
+        ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+        hostDesc.flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED;
+
+        SUCCESS_OR_TERMINATE(zeMemAllocShared(context, &deviceDesc, &hostDesc, allocSize, 1, device, &srcBuffer));
+        SUCCESS_OR_TERMINATE(zeMemAllocShared(context, &deviceDesc, &hostDesc, allocSize, 1, device, &dstBuffer));
+        SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, sizeof(ze_kernel_timestamp_result_t), 1, &timestampBuffer));
+
+        // Initialize memory
+        constexpr uint8_t val = 55;
+        memset(srcBuffer, val, allocSize);
+        memset(dstBuffer, 0, allocSize);
+        memset(timestampBuffer, 0, sizeof(ze_kernel_timestamp_result_t));
+
+        // Create kernel
+        auto spirvModule = loadBinaryFile("copy_buffer_to_buffer.spv");
+        if (spirvModule.size() == 0) {
+            return false;
+        }
+
+        ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
+        moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvModule.data());
+        moduleDesc.inputSize = spirvModule.size();
+        SUCCESS_OR_TERMINATE(zeModuleCreate(context, device, &moduleDesc, &module, nullptr));
+
+        ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
+        kernelDesc.pKernelName = "CopyBufferToBufferBytes";
+        SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
+
+        uint32_t groupSizeX = 32u;
+        uint32_t groupSizeY = 1u;
+        uint32_t groupSizeZ = 1u;
+        SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(kernel, allocSize, 1U, 1U, &groupSizeX, &groupSizeY, &groupSizeZ));
+        SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
+
+        uint32_t offset = 0;
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(dstBuffer), &dstBuffer));
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(srcBuffer), &srcBuffer));
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 2, sizeof(uint32_t), &offset));
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 3, sizeof(uint32_t), &offset));
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 4, sizeof(uint32_t), &offset));
+
+        ze_group_count_t dispatchTraits;
+        dispatchTraits.groupCountX = allocSize / groupSizeX;
+        dispatchTraits.groupCountY = 1u;
+        dispatchTraits.groupCountZ = 1u;
+
+        createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, 1, &kernelTsEvent, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+        SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, kernelTsEvent, 0, nullptr));
+
+        return true;
+    };
+
+    appendKernel(cmdList);
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0u, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendQueryKernelTimestamps(cmdList, 1u, &kernelTsEvent, timestampBuffer, nullptr, nullptr, 0u, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
+
+    ze_device_properties_t devProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &devProperties));
+
+    const uint64_t kernelTimestampMaxValueInCycles = (1ull << devProperties.kernelTimestampValidBits) - 1;
+    const uint64_t timestampMaxValueInCycles = (1ull << devProperties.timestampValidBits) - 1;
+    std::cout << "KernelTimestampMaxValueInCycles: " << kernelTimestampMaxValueInCycles << " | validBits : " << devProperties.kernelTimestampValidBits << "\n";
+    std::cout << "TimestampMaxValueInCycles: " << timestampMaxValueInCycles << " | validBits : " << devProperties.timestampValidBits << "\n";
+    std::cout << "timerResolution: " << devProperties.timerResolution << "\n";
+
+    auto convertDeviceTsToNanoseconds = [&devProperties](uint64_t deviceTs) {
+        return static_cast<uint64_t>(deviceTs * devProperties.timerResolution);
+    };
+
+    auto getDuration = [](uint64_t startTs, uint64_t endTs, uint32_t timestampValidBits) {
+        const uint64_t maxValue = (1ull << timestampValidBits) - 1;
+
+        if (startTs > endTs) {
+            // Resolve overflows
+            return endTs + (maxValue - startTs);
+        } else {
+            return endTs - startTs;
+        }
+    };
+
+    uint64_t unusedHostTs, referenceDeviceTs;
+
+    SUCCESS_OR_TERMINATE(zeDeviceGetGlobalTimestamps(device, &unusedHostTs, &referenceDeviceTs));
+    std::cout << "ReferenceDeviceTs: " << referenceDeviceTs << "\n";
+
+    for (uint32_t i = 0, iter = 0; i < 10; i++) {
+        uint64_t submitHostTs, submitDeviceTs;
+        // Get host and device timestamp before submission
+        SUCCESS_OR_TERMINATE(zeDeviceGetGlobalTimestamps(device, &submitHostTs, &submitDeviceTs));
+        SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
+        SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
+        ze_kernel_timestamp_result_t *kernelTsResults = reinterpret_cast<ze_kernel_timestamp_result_t *>(timestampBuffer);
+
+        // High Level Approach:
+        // startTimeStamp = (submitHostTs - submitDeviceTs) + kernelDeviceTsStart
+        // deviceDuration = kernelDeviceTsEnd - kernelDeviceTsStart
+        // endTimeStamp = startTimeStamp + deviceDuration
+
+        // Get offset between Device and Host timestamps
+        int64_t tsOffset = submitHostTs - convertDeviceTsToNanoseconds(submitDeviceTs);
+
+        // Add the offset to the kernel timestamp to find the start timestamp on the CPU timescale
+        uint64_t startTimeStamp = static_cast<uint64_t>(convertDeviceTsToNanoseconds(kernelTsResults->global.kernelStart) + tsOffset);
+        if (startTimeStamp < submitHostTs) {
+            tsOffset += static_cast<uint64_t>(convertDeviceTsToNanoseconds(kernelTimestampMaxValueInCycles));
+            startTimeStamp = static_cast<uint64_t>(convertDeviceTsToNanoseconds(kernelTsResults->global.kernelStart) + tsOffset);
+        }
+
+        // Get the kernel timestamp duration
+        uint64_t deviceDuration = getDuration(kernelTsResults->global.kernelStart, kernelTsResults->global.kernelEnd, devProperties.kernelTimestampValidBits);
+        uint64_t deviceDurationNs = static_cast<uint64_t>(convertDeviceTsToNanoseconds(deviceDuration));
+
+        // Add the duration to the startTimeStamp to get the endTimeStamp
+        uint64_t endTimeStamp = startTimeStamp + deviceDurationNs;
+        std::cout << "[" << iter << "]";
+        std::cout << " | kernel[start,end]: [" << kernelTsResults->global.kernelStart << ", " << kernelTsResults->global.kernelEnd << "]";
+        std::cout << " | submit[host,device]: [" << submitHostTs << ", " << submitDeviceTs << "]";
+        std::cout << " | deviceTsOnHostTimescale[start, end] : [" << startTimeStamp << ", " << endTimeStamp << " ] \n";
+        ++iter;
+        if (runTillDeviceTsOverflows) {
+            i = 0;
+            if (referenceDeviceTs > submitDeviceTs) {
+                runTillDeviceTsOverflows = false;
+            }
+        }
+    }
+
+    // Cleanup
+    SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, timestampBuffer));
+    SUCCESS_OR_TERMINATE(zeEventDestroy(kernelTsEvent));
+    SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
+    SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
+    SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
+    return true;
+}
+
 int main(int argc, char *argv[]) {
     const std::string blackBoxName("Zello Timestamp");
     verbose = isVerbose(argc, argv);
