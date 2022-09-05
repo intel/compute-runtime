@@ -18,14 +18,18 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-
-namespace std {
-static std::string to_string(const std::string &arg) { // NOLINT(readability-identifier-naming)
-    return arg;
-}
-} // namespace std
+#include <type_traits>
 
 namespace NEO {
+
+template <typename T>
+static std::string toString(const T &arg) {
+    if constexpr (std::is_convertible_v<std::string, T>) {
+        return static_cast<std::string>(arg);
+    } else {
+        return std::to_string(arg);
+    }
+}
 
 template <DebugFunctionalityLevel DebugLevel>
 DebugSettingsManager<DebugLevel>::DebugSettingsManager(const char *registryPath) {
@@ -58,7 +62,7 @@ template <DebugFunctionalityLevel DebugLevel>
 template <typename DataType>
 void DebugSettingsManager<DebugLevel>::dumpNonDefaultFlag(const char *variableName, const DataType &variableValue, const DataType &defaultValue) {
     if (variableValue != defaultValue) {
-        const auto variableStringValue = std::to_string(variableValue);
+        const auto variableStringValue = toString(variableValue);
         PRINT_DEBUG_STRING(true, stdout, "Non-default value of debug variable: %s = %s\n", variableName, variableStringValue.c_str());
     }
 }
