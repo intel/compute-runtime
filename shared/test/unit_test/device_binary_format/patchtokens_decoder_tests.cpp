@@ -1018,8 +1018,11 @@ TEST(ProgramDecoder, GivenValidProgramWithConstantSurfacesThenDecodingSucceedsAn
     decodedProgram = {};
     auto inlineSize = programToEncode.programScopeTokens.allocateConstantMemorySurface[0]->InlineDataSize;
     auto secondConstantSurfaceOff = programToEncode.storage.size();
-    programToEncode.storage.insert(programToEncode.storage.end(), reinterpret_cast<uint8_t *>(programToEncode.constSurfMutable),
-                                   reinterpret_cast<uint8_t *>(programToEncode.constSurfMutable + 1));
+
+    std::vector<uint8_t> copiedConstSurfMutable(reinterpret_cast<uint8_t *>(programToEncode.constSurfMutable),
+                                                reinterpret_cast<uint8_t *>(programToEncode.constSurfMutable + 1));
+    programToEncode.storage.insert(programToEncode.storage.end(), copiedConstSurfMutable.begin(), copiedConstSurfMutable.end());
+
     programToEncode.storage.resize(programToEncode.storage.size() + inlineSize);
     programToEncode.recalcTokPtr();
     decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.blobs.programInfo, decodedProgram);
@@ -1064,8 +1067,11 @@ TEST(ProgramDecoder, GivenValidProgramWithGlobalSurfacesThenDecodingSucceedsAndT
     decodedProgram = {};
     auto inlineSize = programToEncode.programScopeTokens.allocateGlobalMemorySurface[0]->InlineDataSize;
     auto secondGlobalSurfaceOff = programToEncode.storage.size();
-    programToEncode.storage.insert(programToEncode.storage.end(), reinterpret_cast<uint8_t *>(programToEncode.globalSurfMutable),
-                                   reinterpret_cast<uint8_t *>(programToEncode.globalSurfMutable + 1));
+
+    std::vector<uint8_t> copiedGlobalSurfMutable(reinterpret_cast<uint8_t *>(programToEncode.globalSurfMutable),
+                                                 reinterpret_cast<uint8_t *>(programToEncode.globalSurfMutable + 1));
+    programToEncode.storage.insert(programToEncode.storage.end(), copiedGlobalSurfMutable.begin(), copiedGlobalSurfMutable.end());
+
     programToEncode.storage.resize(programToEncode.storage.size() + inlineSize);
     programToEncode.recalcTokPtr();
     decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.blobs.programInfo, decodedProgram);
@@ -1155,7 +1161,10 @@ TEST(ProgramDecoder, GivenValidProgramWithKernelThenDecodingSucceedsAndTokensAre
 TEST(ProgramDecoder, GivenValidProgramWithTwoKernelsWhenThenDecodingSucceeds) {
     PatchTokensTestData::ValidProgramWithKernelUsingSlm programToEncode;
     programToEncode.headerMutable->NumberOfKernels = 2;
-    programToEncode.storage.insert(programToEncode.storage.end(), programToEncode.kernels[0].blobs.kernelInfo.begin(), programToEncode.kernels[0].blobs.kernelInfo.end());
+
+    std::vector<uint8_t> copiedKernelInfo(programToEncode.kernels[0].blobs.kernelInfo.begin(), programToEncode.kernels[0].blobs.kernelInfo.end());
+    programToEncode.storage.insert(programToEncode.storage.end(), copiedKernelInfo.begin(), copiedKernelInfo.end());
+
     NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.storage, decodedProgram);
     EXPECT_TRUE(decodeSuccess);
@@ -1188,7 +1197,10 @@ TEST(ProgramDecoder, GivenProgramWithMultipleKernelsWhenFailsToDecodeKernelThenD
     PatchTokensTestData::ValidProgramWithKernelUsingSlm programToEncode;
     programToEncode.slmMutable->Size = 0U;
     programToEncode.headerMutable->NumberOfKernels = 2;
-    programToEncode.storage.insert(programToEncode.storage.end(), programToEncode.kernels[0].blobs.kernelInfo.begin(), programToEncode.kernels[0].blobs.kernelInfo.end());
+
+    std::vector<uint8_t> copiedKernelInfo(programToEncode.kernels[0].blobs.kernelInfo.begin(), programToEncode.kernels[0].blobs.kernelInfo.end());
+    programToEncode.storage.insert(programToEncode.storage.end(), copiedKernelInfo.begin(), copiedKernelInfo.end());
+
     NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.storage, decodedProgram);
     EXPECT_FALSE(decodeSuccess);

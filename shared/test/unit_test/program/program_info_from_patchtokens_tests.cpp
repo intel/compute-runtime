@@ -302,7 +302,10 @@ TEST(PopulateProgramInfoFromPatchtokensTests, GivenProgramWithKernelsWhenKernelH
 TEST(PopulateProgramInfoFromPatchtokensTests, givenProgramWithKernelWhenKernelHasHostAccessTableThenPopulateDeviceHostNameMapCorrectly) {
     PatchTokensTestData::ValidProgramWithKernelUsingHostAccessTable programToEncode;
     programToEncode.headerMutable->NumberOfKernels = 1;
-    programToEncode.storage.insert(programToEncode.storage.end(), programToEncode.kernels[0].blobs.kernelInfo.begin(), programToEncode.kernels[0].blobs.kernelInfo.end());
+
+    std::vector<uint8_t> copiedKernelInfo(programToEncode.kernels[0].blobs.kernelInfo.begin(), programToEncode.kernels[0].blobs.kernelInfo.end());
+    programToEncode.storage.insert(programToEncode.storage.end(), copiedKernelInfo.begin(), copiedKernelInfo.end());
+
     NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.storage, decodedProgram);
     EXPECT_TRUE(decodeSuccess);

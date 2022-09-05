@@ -17,8 +17,11 @@ HWTEST_F(HwParseTest, WhenEmptyBufferThenDontExpectCommands) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     bool cmdBuffOk = false;
 
-    GenCmdList::iterator beg, end;
-    end = beg;
+    GenCmdList cmdList;
+
+    auto beg = cmdList.begin();
+    auto end = cmdList.end();
+
     cmdBuffOk = expectCmdBuff<FamilyType>(beg, end,
                                           std::vector<MatchCmd *>{});
     EXPECT_TRUE(cmdBuffOk);
