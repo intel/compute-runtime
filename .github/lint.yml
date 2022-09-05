@@ -1,0 +1,64 @@
+use-configs:
+  - lint/opensource/copyrights
+  - lint/opensource/banned_words
+  - lint/allowed_includes
+lint:
+  clang-format:
+    included:
+      - \.cpp$
+      - \.h$
+      - \.inl$
+      - \.hpp$
+    excluded:
+      - third_party/
+      - infra/
+      - scripts/
+
+  cmake-format:
+    included:
+      - CMakeLists.txt$
+      - \.cmake$
+    excluded:
+      - third_party/
+      - infra/
+
+  copyright:
+    excluded:
+      - third_party/
+      - scripts/tests/copyright/out/
+    mit_header:
+      year_constraints:
+        opencl: 2018
+        shared: 2018
+        level_zero: 2020
+
+  ults-needed:
+    component_names:
+      - opencl
+      - shared
+      - level_zero/core
+      - level_zero/experimental
+      - level_zero/tools
+
+  banned_words:
+    exclude:
+      - third_party/
+    master:
+      todo:
+        exclude:
+          - GUIDELINES.md
+
+  allowed_includes:
+    excluded:
+      - third_party/
+    header_extensions:
+      - .h
+      - .hpp
+      - .inl
+      - .builtin_kernel
+
+  reference_projects:
+    - NEO
+    - IGC
+    - LOCI
+    - HSD
