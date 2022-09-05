@@ -188,6 +188,7 @@ const HardwareInfo PvcHwConfig::hwInfo = {
 
 GT_SYSTEM_INFO PvcHwConfig::gtSystemInfo = {0};
 void PvcHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    PVC::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->CsrSizeInMb = 8;
     gtSysInfo->IsL3HashModeEnabled = false;

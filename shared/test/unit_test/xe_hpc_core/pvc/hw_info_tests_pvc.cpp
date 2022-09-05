@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -87,4 +88,12 @@ PVCTEST_F(PvcConfigHwInfoTests, givenPvcConfigWhenSetupMultiTileInfoBaseThenGtSy
     EXPECT_TRUE(gtSystemInfo.MultiTileArchInfo.IsValid);
     EXPECT_EQ(2u, gtSystemInfo.MultiTileArchInfo.TileCount);
     EXPECT_EQ(static_cast<uint8_t>(maxNBitValue(2u)), gtSystemInfo.MultiTileArchInfo.TileMask);
+}
+
+PVCTEST_F(PvcConfigHwInfoTests, givenPvcHwConfigWhenSetupHardwareInfoThenSharedSystemMemCapabilitiesIsCorrect) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    auto &capabilityTable = hwInfo.capabilityTable;
+    PvcHwConfig::setupHardwareInfo(&hwInfo, false);
+    uint64_t expectedSharedSystemMemCapabilities = (UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS | UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS);
+    EXPECT_EQ(expectedSharedSystemMemCapabilities, capabilityTable.sharedSystemMemCapabilities);
 }
