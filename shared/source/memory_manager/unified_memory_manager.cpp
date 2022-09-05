@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
@@ -137,9 +138,12 @@ void SVMAllocsManager::makeInternalAllocationsResident(CommandStreamReceiver &co
 
 SVMAllocsManager::SVMAllocsManager(MemoryManager *memoryManager, bool multiOsContextSupport)
     : memoryManager(memoryManager), multiOsContextSupport(multiOsContextSupport) {
-    if (DebugManager.flags.ExperimentalEnableDeviceAllocationCache.get()) {
+    this->usmDeviceAllocationsCacheEnabled = NEO::ApiSpecificConfig::isDeviceAllocationCacheEnabled();
+    if (DebugManager.flags.ExperimentalEnableDeviceAllocationCache.get() != -1) {
+        this->usmDeviceAllocationsCacheEnabled = !!DebugManager.flags.ExperimentalEnableDeviceAllocationCache.get();
+    }
+    if (this->usmDeviceAllocationsCacheEnabled) {
         this->initUsmDeviceAllocationsCache();
-        this->usmDeviceAllocationsCacheEnabled = true;
     }
 }
 

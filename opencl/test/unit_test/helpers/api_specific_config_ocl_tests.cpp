@@ -44,6 +44,10 @@ TEST(ApiSpecificConfigOclTests, WhenGettingRegistryPathThenOclRegistryPathIsRetu
     EXPECT_STREQ(oclRegPath, ApiSpecificConfig::getRegistryPath());
 }
 
+TEST(ApiSpecificConfigOclTests, WhenCheckingIfDeviceAllocationCacheIsEnabledThenReturnFalse) {
+    EXPECT_FALSE(ApiSpecificConfig::isDeviceAllocationCacheEnabled());
+}
+
 TEST(ApiSpecificConfigOclTests, givenEnableStatelessCompressionWhenProvidingSvmGpuAllocationThenPreferCompressedBuffer) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.RenderCompressedBuffersEnabled.set(1);

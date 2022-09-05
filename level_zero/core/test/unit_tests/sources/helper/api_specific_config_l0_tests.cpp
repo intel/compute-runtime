@@ -41,6 +41,11 @@ TEST(ApiSpecificConfigL0Tests, givenMaxAllocSizeWhenGettingReducedMaxAllocSizeTh
 TEST(ApiSpecificConfigL0Tests, WhenGettingRegistryPathThenL0RegistryPathIsReturned) {
     EXPECT_STREQ(L0::registryPath, ApiSpecificConfig::getRegistryPath());
 }
+
+TEST(ApiSpecificConfigL0Tests, WhenCheckingIfDeviceAllocationCacheIsEnabledThenReturnFalse) {
+    EXPECT_FALSE(ApiSpecificConfig::isDeviceAllocationCacheEnabled());
+}
+
 TEST(ImplicitScalingApiTests, givenLevelZeroApiUsedThenSupportEnabled) {
     EXPECT_TRUE(ImplicitScaling::apiSupport);
 }

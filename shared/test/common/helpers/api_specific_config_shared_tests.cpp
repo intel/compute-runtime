@@ -27,6 +27,10 @@ bool ApiSpecificConfig::getBindlessConfiguration() {
     }
 }
 
+bool ApiSpecificConfig::isDeviceAllocationCacheEnabled() {
+    return false;
+}
+
 ApiSpecificConfig::ApiType ApiSpecificConfig::getApiType() {
     return apiTypeForUlts;
 }

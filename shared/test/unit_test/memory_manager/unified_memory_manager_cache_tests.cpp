@@ -16,6 +16,16 @@
 
 using namespace NEO;
 
+TEST(SvmDeviceAllocationCacheTest, givenAllocationCacheDefaultWhenCheckingIfEnabledThenItIsDisabled) {
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
+    auto device = deviceFactory->rootDevices[0];
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
+    ASSERT_EQ(DebugManager.flags.ExperimentalEnableDeviceAllocationCache.get(), -1);
+    EXPECT_FALSE(svmManager->usmDeviceAllocationsCacheEnabled);
+}
+
 struct SvmDeviceAllocationCacheSimpleTestDataType {
     size_t allocationSize;
     void *allocation;
