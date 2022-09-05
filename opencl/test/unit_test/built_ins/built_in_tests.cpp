@@ -1262,13 +1262,9 @@ TEST_F(BuiltInTests, WhenGettingBuilderInfoTwiceThenPointerIsSame) {
 }
 
 TEST_F(BuiltInTests, GivenUnknownBuiltInOpWhenGettingBuilderInfoThenExceptionThrown) {
-    bool caughtException = false;
-    try {
-        BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::COUNT, *pClDevice);
-    } catch (const std::runtime_error &) {
-        caughtException = true;
-    }
-    EXPECT_TRUE(caughtException);
+    EXPECT_THROW(
+        BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::COUNT, *pClDevice),
+        std::runtime_error);
 }
 
 TEST_F(BuiltInTests, GivenUnsupportedBuildTypeWhenBuildingDispatchInfoThenFalseIsReturned) {

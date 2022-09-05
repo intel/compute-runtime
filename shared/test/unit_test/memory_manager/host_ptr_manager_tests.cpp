@@ -574,14 +574,8 @@ TEST_F(HostPtrManagerTest, GivenFragmentSizeNonZeroWhenGettingFragmentThenCorrec
     auto ptr3 = (void *)0x040000;
     auto size3 = MemoryConstants::pageSize * 2;
     requiredAllocations = hostPtrManager.getAllocationRequirements(rootDeviceIndex, ptr3, size3);
-    auto catchme = false;
-    try {
-        OsHandleStorage st = hostPtrManager.populateAlreadyAllocatedFragments(requiredAllocations);
-        EXPECT_EQ(st.fragmentCount, 0u);
-    } catch (...) {
-        catchme = true;
-    }
-    EXPECT_TRUE(catchme);
+
+    EXPECT_ANY_THROW(hostPtrManager.populateAlreadyAllocatedFragments(requiredAllocations));
 }
 
 TEST_F(HostPtrManagerTest, WhenCheckingForOverlapsThenCorrectStatusIsReturned) {

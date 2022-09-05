@@ -1868,18 +1868,11 @@ TEST_F(MemoryManagerWithCsrTest, GivenAllocationsInHostPtrManagerWhenBiggerOverl
 
     GraphicsAllocation *graphicsAllocation3 = nullptr;
 
-    bool catchMe = false;
-    try {
-        graphicsAllocation3 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, MemoryConstants::pageSize * 10}, cpuPtr3);
-    } catch (...) {
-        catchMe = true;
-    }
+    EXPECT_ANY_THROW(graphicsAllocation3 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, MemoryConstants::pageSize * 10}, cpuPtr3));
 
     EXPECT_NE(nullptr, graphicsAllocation1);
     EXPECT_NE(nullptr, graphicsAllocation2);
     EXPECT_EQ(nullptr, graphicsAllocation3);
-
-    EXPECT_TRUE(catchMe);
 
     EXPECT_EQ((uintptr_t)cpuPtr1 & ~MemoryConstants::pageMask, (uintptr_t)graphicsAllocation1->fragmentsStorage.fragmentStorageData[0].cpuPtr);
     EXPECT_EQ((uintptr_t)cpuPtr2 & ~MemoryConstants::pageMask, (uintptr_t)graphicsAllocation2->fragmentsStorage.fragmentStorageData[0].cpuPtr);
