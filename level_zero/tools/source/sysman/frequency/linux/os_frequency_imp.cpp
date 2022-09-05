@@ -51,6 +51,19 @@ ze_result_t LinuxFrequencyImp::osFrequencyGetRange(zes_freq_range_t *pLimits) {
 ze_result_t LinuxFrequencyImp::osFrequencySetRange(const zes_freq_range_t *pLimits) {
     double newMin = round(pLimits->min);
     double newMax = round(pLimits->max);
+    if (newMax == -1 && newMin == -1) {
+        double maxDefault = 0, minDefault = 0;
+        ze_result_t result1, result2, result;
+        result1 = pSysfsAccess->read(maxDefaultFreqFile, maxDefault);
+        result2 = pSysfsAccess->read(minDefaultFreqFile, minDefault);
+        if (result1 == ZE_RESULT_SUCCESS && result2 == ZE_RESULT_SUCCESS) {
+            result = setMax(maxDefault);
+            if (ZE_RESULT_SUCCESS != result) {
+                return result;
+            }
+            return setMin(minDefault);
+        }
+    }
     double currentMax = 0.0;
     ze_result_t result = getMax(currentMax);
     if (ZE_RESULT_SUCCESS != result) {
@@ -319,6 +332,8 @@ void LinuxFrequencyImp::init() {
     if (pSysfsAccess->directoryExists(baseDir)) {
         minFreqFile = baseDir + "rps_min_freq_mhz";
         maxFreqFile = baseDir + "rps_max_freq_mhz";
+        minDefaultFreqFile = baseDir + ".defaults/rps_min_freq_mhz";
+        maxDefaultFreqFile = baseDir + ".defaults/rps_max_freq_mhz";
         boostFreqFile = baseDir + "rps_boost_freq_mhz";
         requestFreqFile = baseDir + "punit_req_freq_mhz";
         tdpFreqFile = baseDir + "rapl_PL1_freq_mhz";

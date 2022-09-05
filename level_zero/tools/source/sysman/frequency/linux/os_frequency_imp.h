@@ -54,6 +54,8 @@ class LinuxFrequencyImp : public OsFrequency, NEO::NonCopyableOrMovableClass {
   private:
     std::string minFreqFile;
     std::string maxFreqFile;
+    std::string minDefaultFreqFile;
+    std::string maxDefaultFreqFile;
     std::string boostFreqFile;
     std::string requestFreqFile;
     std::string tdpFreqFile;

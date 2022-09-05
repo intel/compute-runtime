@@ -269,6 +269,54 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
     }
 }
 
+TEST_F(SysmanDeviceFrequencyFixture, GivenNegativeRangeSetWhenGetRangeIsCalledThenReturnsValueFromDefaultPath) {
+    auto handles = getFreqHandles(handleComponentCount);
+    for (auto &handle : handles) {
+        const double negativeMin = -1;
+        const double negativeMax = -1;
+        zes_freq_range_t limits;
+
+        limits.min = negativeMin;
+        limits.max = negativeMax;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencySetRange(handle, &limits));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetRange(handle, &limits));
+        EXPECT_EQ(pSysfsAccess->mockDefaultMin, limits.min);
+        EXPECT_EQ(pSysfsAccess->mockDefaultMax, limits.max);
+        EXPECT_DOUBLE_EQ(pSysfsAccess->mockBoost, limits.max);
+    }
+}
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenNegativeRangeWhenSetRangeIsCalledAndSettingMaxValueFailsThenFailureIsReturned) {
+    pSysfsAccess->mockWriteMaxResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    auto handles = getFreqHandles(handleComponentCount);
+    for (auto &handle : handles) {
+        const double negativeMin = -1;
+        const double negativeMax = -1;
+        zes_freq_range_t limits;
+
+        limits.min = negativeMin;
+        limits.max = negativeMax;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFrequencySetRange(handle, &limits));
+    }
+}
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenNegativeRangeWhenSetRangeIsCalledAndGettingDefaultMaxValueFailsThenNoFreqRangeIsInEffect) {
+    pSysfsAccess->mockReadDefaultMaxResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    auto handles = getFreqHandles(handleComponentCount);
+    for (auto &handle : handles) {
+        const double negativeMin = -1;
+        const double negativeMax = -1;
+        zes_freq_range_t limits;
+
+        limits.min = negativeMin;
+        limits.max = negativeMax;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencySetRange(handle, &limits));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetRange(handle, &limits));
+        EXPECT_DOUBLE_EQ(-1, limits.min);
+        EXPECT_DOUBLE_EQ(-1, limits.max);
+    }
+}
+
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeTest2CallSucceeds) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {

@@ -13,6 +13,8 @@ namespace ult {
 
 const std::string minFreqFile("gt/gt0/rps_min_freq_mhz");
 const std::string maxFreqFile("gt/gt0/rps_max_freq_mhz");
+const std::string minDefaultFreqFile("gt/gt0/.defaults/rps_min_freq_mhz");
+const std::string maxDefaultFreqFile("gt/gt0/.defaults/rps_max_freq_mhz");
 const std::string boostFreqFile("gt/gt0/rps_boost_freq_mhz");
 const std::string requestFreqFile("gt/gt0/punit_req_freq_mhz");
 const std::string tdpFreqFile("gt/gt0/rapl_PL1_freq_mhz");
@@ -49,6 +51,8 @@ struct Mock<FrequencySysfsAccess> : public FrequencySysfsAccess {
     double mockMax = 0;
     double mockBoost = 0;
     double mockRequest = 0;
+    double mockDefaultMin = 1;
+    double mockDefaultMax = 1000;
     double mockTdp = 0;
     double mockActual = 0;
     double mockEfficient = 0;
@@ -66,6 +70,8 @@ struct Mock<FrequencySysfsAccess> : public FrequencySysfsAccess {
     ze_result_t mockReadActualResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadMinValResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadMaxValResult = ZE_RESULT_SUCCESS;
+    ze_result_t mockReadDefaultMinResult = ZE_RESULT_SUCCESS;
+    ze_result_t mockReadDefaultMaxResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadMaxResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadVal32Result = ZE_RESULT_SUCCESS;
     ze_result_t mockWriteMaxResult = ZE_RESULT_SUCCESS;
@@ -218,6 +224,16 @@ struct Mock<FrequencySysfsAccess> : public FrequencySysfsAccess {
                 return mockReadMinValResult;
             }
             val = mockMinVal;
+        } else if (file.compare(minDefaultFreqFile) == 0) {
+            if (mockReadDefaultMinResult != ZE_RESULT_SUCCESS) {
+                return mockReadDefaultMinResult;
+            }
+            val = mockDefaultMin;
+        } else if (file.compare(maxDefaultFreqFile) == 0) {
+            if (mockReadDefaultMaxResult != ZE_RESULT_SUCCESS) {
+                return mockReadDefaultMaxResult;
+            }
+            val = mockDefaultMax;
         } else {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
