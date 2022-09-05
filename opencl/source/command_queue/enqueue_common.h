@@ -1134,8 +1134,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlitSplit(MultiDispatchInfo &dispatchIn
     auto ret = CL_SUCCESS;
     this->releaseMainCopyEngine();
 
-    StackVec<std::unique_lock<CommandStreamReceiver::MutexType>, 3u> locks;
-    StackVec<CommandStreamReceiver *, 3u> copyEngines;
+    StackVec<std::unique_lock<CommandStreamReceiver::MutexType>, 4u> locks;
+    StackVec<CommandStreamReceiver *, 4u> copyEngines;
 
     for (uint32_t i = 0; i < bcsInfoMaskSize; i++) {
         if (this->splitEngines.test(i)) {
@@ -1199,6 +1199,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlitSplit(MultiDispatchInfo &dispatchIn
     }
 
     this->timestampPacketContainer->swapNodes(splitNodes);
+
+    queueOwnership.unlock();
+    for (auto &lock : locks) {
+        lock.unlock();
+    }
 
     if (blocking) {
         ret = this->finish();
