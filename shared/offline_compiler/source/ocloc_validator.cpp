@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,13 +49,14 @@ int validate(const std::vector<std::string> &args, OclocArgHelper *argHelper) {
     }
 
     auto fileData = argHelper->readBinaryFile(fileName);
-    argHelper->printf("Validating : %s (%d bytes).\n", fileName.c_str(), fileData.size());
+    argHelper->printf("Validating : %s (%zd bytes).\n", fileName.c_str(), fileData.size());
 
     deviceBinary.deviceBinary = deviceBinary.deviceBinary.fromAny(fileData.data(), fileData.size());
     if (false == NEO::isDeviceBinaryFormat<DeviceBinaryFormat::Zebin>(deviceBinary.deviceBinary)) {
-        argHelper->printf("Input is not a Zebin file (not elf or wrong elf object file type)\n", errors.c_str());
+        argHelper->printf("Input is not a Zebin file (not elf or wrong elf object file type)\n");
         return -2;
     }
+
     auto decodeResult = NEO::decodeSingleDeviceBinary<DeviceBinaryFormat::Zebin>(programInfo, deviceBinary, errors, warnings);
     if (false == warnings.empty()) {
         argHelper->printf("Validator detected potential problems :\n%s\n", warnings.c_str());
@@ -68,12 +69,12 @@ int validate(const std::vector<std::string> &args, OclocArgHelper *argHelper) {
     if (NEO::DecodeError::Success == decodeResult) {
         argHelper->printf("Statistics : \n");
         if (0 != programInfo.globalVariables.size) {
-            argHelper->printf("Binary contains global variables section of size :  %d.\n", programInfo.globalVariables.size);
+            argHelper->printf("Binary contains global variables section of size :  %zd.\n", programInfo.globalVariables.size);
         }
         if (0 != programInfo.globalConstants.size) {
-            argHelper->printf("Binary contains global constants section of size :  %d.\n", programInfo.globalConstants.size);
+            argHelper->printf("Binary contains global constants section of size :  %zd.\n", programInfo.globalConstants.size);
         }
-        argHelper->printf("Binary contains %d kernels.\n", programInfo.kernelInfos.size());
+        argHelper->printf("Binary contains %zd kernels.\n", programInfo.kernelInfos.size());
         for (size_t i = 0U; i < programInfo.kernelInfos.size(); ++i) {
             const auto &kernelDescriptor = programInfo.kernelInfos[i]->kernelDescriptor;
             argHelper->printf("\nKernel #%d named %s:\n", static_cast<int>(i), kernelDescriptor.kernelMetadata.kernelName.c_str());
