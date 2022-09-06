@@ -42,9 +42,6 @@ class SysmanKmdManagerFixture : public ::testing::Test {
             GTEST_SKIP();
         }
         pKmdSysManager = new Mock<MockKmdSysManager>;
-
-        EXPECT_CALL(*pKmdSysManager, escape(_, _, _, _, _))
-            .WillRepeatedly(::testing::Invoke(pKmdSysManager, &Mock<MockKmdSysManager>::mock_escape));
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {

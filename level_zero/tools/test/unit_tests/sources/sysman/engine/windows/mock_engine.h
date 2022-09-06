@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -79,7 +79,7 @@ struct Mock<EngineKmdSysManager> : public EngineKmdSysManager {
     }
 
     Mock() = default;
-    ~Mock() = default;
+    ~Mock() override = default;
 };
 
 } // namespace ult

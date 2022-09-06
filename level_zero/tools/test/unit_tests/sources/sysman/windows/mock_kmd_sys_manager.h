@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,10 +35,14 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
     ze_bool_t allowSetCalls = false;
     ze_bool_t fanSupported = false;
     uint32_t mockPowerLimit1 = 2500;
+    bool mockEscapeResult = true;
+    bool mockRequestSingle = false;
+    bool mockRequestMultiple = false;
+    bool requestMultipleSizeDiff = false;
+    ze_result_t mockRequestSingleResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    ze_result_t mockRequestMultipleResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
 
     MockEventHandle handles[KmdSysman::Events::MaxEvents][mockKmdMaxHandlesPerEvent];
-
-    MOCK_METHOD(bool, escape, (uint32_t escapeOp, uint64_t pDataIn, uint32_t dataInSize, uint64_t pDataOut, uint32_t dataOutSize));
 
     MOCKABLE_VIRTUAL void getInterfaceProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) {
         pResponse->outDataSize = 0;
@@ -293,6 +297,26 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
         }
     }
 
+    ze_result_t requestSingle(KmdSysman::RequestProperty &In, KmdSysman::ResponseProperty &Out) {
+        if (mockRequestSingle == false) {
+            return KmdSysManager::requestSingle(In, Out);
+        }
+        return mockRequestSingleResult;
+    }
+
+    ze_result_t requestMultiple(std::vector<KmdSysman::RequestProperty> &vIn, std::vector<KmdSysman::ResponseProperty> &vOut) {
+        if (mockRequestMultiple == false) {
+            return KmdSysManager::requestMultiple(vIn, vOut);
+        } else {
+            if (requestMultipleSizeDiff == true) {
+                KmdSysman::ResponseProperty temp;
+                vOut.push_back(temp);
+            }
+            return mockRequestMultipleResult;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
     void setProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) {
         if (!allowSetCalls) {
             pResponse->outDataSize = 0;
@@ -383,7 +407,10 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
         }
     }
 
-    bool mock_escape(uint32_t escapeOp, uint64_t pInPtr, uint32_t dataInSize, uint64_t pOutPtr, uint32_t dataOutSize) {
+    bool escape(uint32_t escapeOp, uint64_t pInPtr, uint32_t dataInSize, uint64_t pOutPtr, uint32_t dataOutSize) {
+        if (mockEscapeResult == false) {
+            return mockEscapeResult;
+        }
         void *pDataIn = reinterpret_cast<void *>(pInPtr);
         void *pDataOut = reinterpret_cast<void *>(pOutPtr);
 
@@ -473,7 +500,7 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
     }
 
     Mock() = default;
-    ~Mock() = default;
+    ~Mock() override = default;
 };
 
 } // namespace ult

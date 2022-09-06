@@ -29,9 +29,6 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
 
         pKmdSysManager = new Mock<TemperatureKmdSysManager>;
 
-        EXPECT_CALL(*pKmdSysManager, escape(_, _, _, _, _))
-            .WillRepeatedly(::testing::Invoke(pKmdSysManager, &Mock<TemperatureKmdSysManager>::mock_escape));
-
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
         pWddmSysmanImp->pKmdSysManager = pKmdSysManager;
 

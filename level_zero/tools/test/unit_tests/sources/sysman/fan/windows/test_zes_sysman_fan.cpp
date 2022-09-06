@@ -33,9 +33,6 @@ class SysmanDeviceFanFixture : public SysmanDeviceFixture {
         pKmdSysManager->allowSetCalls = allowSetCalls;
         pKmdSysManager->fanSupported = fanSupported;
 
-        EXPECT_CALL(*pKmdSysManager, escape(_, _, _, _, _))
-            .WillRepeatedly(::testing::Invoke(pKmdSysManager.get(), &Mock<FanKmdSysManager>::mock_escape));
-
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
         pWddmSysmanImp->pKmdSysManager = pKmdSysManager.get();
 
@@ -49,8 +46,8 @@ class SysmanDeviceFanFixture : public SysmanDeviceFixture {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
-        SysmanDeviceFixture::TearDown();
         pWddmSysmanImp->pKmdSysManager = pOriginalKmdSysManager;
+        SysmanDeviceFixture::TearDown();
     }
 
     std::vector<zes_fan_handle_t> getFanHandles() {
@@ -62,7 +59,7 @@ class SysmanDeviceFanFixture : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(SysmanDeviceFanFixture, DISABLED_GivenComponentCountZeroWhenEnumeratingFansThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
+TEST_F(SysmanDeviceFanFixture, GivenComponentCountZeroWhenEnumeratingFansThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
     init(true, true);
 
     uint32_t count = 0;
@@ -70,7 +67,7 @@ TEST_F(SysmanDeviceFanFixture, DISABLED_GivenComponentCountZeroWhenEnumeratingFa
     EXPECT_EQ(count, fanHandleComponentCount);
 }
 
-TEST_F(SysmanDeviceFanFixture, DISABLED_GivenInvalidComponentCountWhenEnumeratingFansThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
+TEST_F(SysmanDeviceFanFixture, GivenInvalidComponentCountWhenEnumeratingFansThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
     init(true, true);
 
     uint32_t count = 0;
@@ -82,7 +79,7 @@ TEST_F(SysmanDeviceFanFixture, DISABLED_GivenInvalidComponentCountWhenEnumeratin
     EXPECT_EQ(count, fanHandleComponentCount);
 }
 
-TEST_F(SysmanDeviceFanFixture, DISABLED_GivenComponentCountZeroWhenEnumeratingFansThenValidFanHandlesIsReturned) {
+TEST_F(SysmanDeviceFanFixture, GivenComponentCountZeroWhenEnumeratingFansThenValidFanHandlesIsReturned) {
     init(true, true);
 
     uint32_t count = 0;
@@ -96,7 +93,7 @@ TEST_F(SysmanDeviceFanFixture, DISABLED_GivenComponentCountZeroWhenEnumeratingFa
     }
 }
 
-TEST_F(SysmanDeviceFanFixture, DISABLED_GivenValidFanHandleWhenGettingFanPropertiesAllowSetToTrueThenCallSucceeds) {
+TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanPropertiesAllowSetToTrueThenCallSucceeds) {
     // Setting allow set calls or not
     init(true, true);
 
@@ -118,7 +115,7 @@ TEST_F(SysmanDeviceFanFixture, DISABLED_GivenValidFanHandleWhenGettingFanPropert
     }
 }
 
-TEST_F(SysmanDeviceFanFixture, DISABLED_GivenValidFanHandleWhenGettingFanPropertiesAllowSetToFalseThenControlToFalse) {
+TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanPropertiesAllowSetToFalseThenControlToFalse) {
     // Setting allow set calls or not
     init(false, true);
 
@@ -132,7 +129,7 @@ TEST_F(SysmanDeviceFanFixture, DISABLED_GivenValidFanHandleWhenGettingFanPropert
     }
 }
 
-TEST_F(SysmanDeviceFanFixture, DISABLED_GivenValidNoSupportForFanCheckFanHandleCountIsZero) {
+TEST_F(SysmanDeviceFanFixture, GivenValidNoSupportForFanCheckFanHandleCountIsZero) {
     // Setting allow set calls or not
     init(false, false);
 
@@ -141,7 +138,7 @@ TEST_F(SysmanDeviceFanFixture, DISABLED_GivenValidNoSupportForFanCheckFanHandleC
     EXPECT_EQ(count, 0u);
 }
 
-TEST_F(SysmanDeviceFanFixture, DISABLED_GivenValidFanHandleWhenGettingFanPropertiesAllowSetToFalseThenCallSucceeds) {
+TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanPropertiesAllowSetToFalseThenCallSucceeds) {
     // Setting allow set calls or not
     init(true, true);
 
@@ -163,7 +160,7 @@ TEST_F(SysmanDeviceFanFixture, DISABLED_GivenValidFanHandleWhenGettingFanPropert
     }
 }
 
-TEST_F(SysmanDeviceFanFixture, DISABLED_GivenValidFanHandleWhenGettingFanConfigThenUnsupportedIsReturned) {
+TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanConfigThenUnsupportedIsReturned) {
     // Setting allow set calls or not
     init(true, true);
 
@@ -175,7 +172,7 @@ TEST_F(SysmanDeviceFanFixture, DISABLED_GivenValidFanHandleWhenGettingFanConfigT
     }
 }
 
-TEST_F(SysmanDeviceFanFixture, DISABLED_GivenValidFanHandleWhenSettingDefaultModeThenSupportedIsReturned) {
+TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenSettingDefaultModeThenSupportedIsReturned) {
     // Setting allow set calls or not
     init(true, true);
 
@@ -186,7 +183,7 @@ TEST_F(SysmanDeviceFanFixture, DISABLED_GivenValidFanHandleWhenSettingDefaultMod
     }
 }
 
-TEST_F(SysmanDeviceFanFixture, DISABLED_GivenValidFanHandleWhenSettingFixedSpeedModeThenUnsupportedIsReturned) {
+TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenSettingFixedSpeedModeThenUnsupportedIsReturned) {
     // Setting allow set calls or not
     init(true, true);
 
@@ -198,7 +195,7 @@ TEST_F(SysmanDeviceFanFixture, DISABLED_GivenValidFanHandleWhenSettingFixedSpeed
     }
 }
 
-TEST_F(SysmanDeviceFanFixture, DISABLED_GivenValidFanHandleWhenSettingTheSpeedTableModeWithNumberOfPointsZeroThenUnsupportedIsReturned) {
+TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenSettingTheSpeedTableModeWithNumberOfPointsZeroThenUnsupportedIsReturned) {
     // Setting allow set calls or not
     init(true, true);
 
@@ -210,7 +207,7 @@ TEST_F(SysmanDeviceFanFixture, DISABLED_GivenValidFanHandleWhenSettingTheSpeedTa
     }
 }
 
-TEST_F(SysmanDeviceFanFixture, DISABLED_GivenValidFanHandleWhenSettingTheSpeedTableModeWithGreaterThanMaxNumberOfPointsThenUnsupportedIsReturned) {
+TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenSettingTheSpeedTableModeWithGreaterThanMaxNumberOfPointsThenUnsupportedIsReturned) {
     // Setting allow set calls or not
     init(true, true);
 
@@ -223,7 +220,7 @@ TEST_F(SysmanDeviceFanFixture, DISABLED_GivenValidFanHandleWhenSettingTheSpeedTa
     }
 }
 
-TEST_F(SysmanDeviceFanFixture, DISABLED_GivenValidFanHandleWhenGettingFanSpeedWithRPMUnitThenValidFanSpeedReadingsRetrieved) {
+TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanSpeedWithRPMUnitThenValidFanSpeedReadingsRetrieved) {
     // Setting allow set calls or not
     init(true, true);
 
@@ -239,7 +236,7 @@ TEST_F(SysmanDeviceFanFixture, DISABLED_GivenValidFanHandleWhenGettingFanSpeedWi
     }
 }
 
-TEST_F(SysmanDeviceFanFixture, DISABLED_GivenValidFanHandleWhenGettingFanSpeedWithPercentUnitThenUnsupportedIsReturned) {
+TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanSpeedWithPercentUnitThenUnsupportedIsReturned) {
     // Setting allow set calls or not
     init(true, true);
 

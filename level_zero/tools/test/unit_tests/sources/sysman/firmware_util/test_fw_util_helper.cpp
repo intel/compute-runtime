@@ -52,7 +52,7 @@ static inline int mockEccConfigSetFailure(struct igsc_device_handle *handle, uin
     return -1;
 }
 
-TEST(LinuxFwStatusExtTest, GivenIFRWasSetWhenFirmwareUtilChecksIFRThenIFRStatusIsUpdated) {
+TEST(FwStatusExtTest, GivenIFRWasSetWhenFirmwareUtilChecksIFRThenIFRStatusIsUpdated) {
 
     if (!sysmanUltsEnable) {
         GTEST_SKIP();
@@ -74,7 +74,7 @@ TEST(LinuxFwStatusExtTest, GivenIFRWasSetWhenFirmwareUtilChecksIFRThenIFRStatusI
     delete pFwUtilImp;
 }
 
-TEST(LinuxFwStatusExtTest, GivenStatusCallFailsWhenFirmwareUtilChecksIFRThenStatusCallFails) {
+TEST(FwStatusExtTest, GivenStatusCallFailsWhenFirmwareUtilChecksIFRThenStatusCallFails) {
 
     if (!sysmanUltsEnable) {
         GTEST_SKIP();
@@ -95,7 +95,7 @@ TEST(LinuxFwStatusExtTest, GivenStatusCallFailsWhenFirmwareUtilChecksIFRThenStat
     delete pFwUtilImp;
 }
 
-TEST(LinuxFwRunDiagTest, GivenValidSupportedDiagnosticsTestsParamWhenFirmwareUtilSupportedTestsAreRequestedThenSupportedTestsAreRun) {
+TEST(FwRunDiagTest, GivenValidSupportedDiagnosticsTestsParamWhenFirmwareUtilSupportedTestsAreRequestedThenSupportedTestsAreRun) {
 
     if (!sysmanUltsEnable) {
         GTEST_SKIP();
@@ -136,7 +136,7 @@ TEST(LinuxFwRunDiagTest, GivenValidSupportedDiagnosticsTestsParamWhenFirmwareUti
     delete pFwUtilImp;
 }
 
-TEST(LinuxFwGetProcAddressTest, GivenValidFwUtilMethodNameWhenFirmwareUtilIsInitalizedThenCorrectMethodsAreLoaded) {
+TEST(FwGetProcAddressTest, GivenValidFwUtilMethodNameWhenFirmwareUtilIsInitalizedThenCorrectMethodsAreLoaded) {
     struct IFRmockOsLibrary : OsLibrary {
       public:
         ~IFRmockOsLibrary() override = default;
@@ -168,7 +168,7 @@ TEST(LinuxFwGetProcAddressTest, GivenValidFwUtilMethodNameWhenFirmwareUtilIsInit
     delete pFwUtilImp;
 }
 
-TEST(LinuxFwEccTest, GivenFwEccConfigCallFailsWhenCallingFirmwareUtilSetAndGetEccThenCorrespondingCallFails) {
+TEST(FwEccTest, GivenFwEccConfigCallFailsWhenCallingFirmwareUtilSetAndGetEccThenCorrespondingCallFails) {
 
     if (!sysmanUltsEnable) {
         GTEST_SKIP();

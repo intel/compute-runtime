@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,14 +22,14 @@ class KmdSysManager {
   public:
     static KmdSysManager *create(NEO::Wddm *pWddm);
     KmdSysManager() = default;
-    ~KmdSysManager() = default;
+    virtual ~KmdSysManager() = default;
 
-    MOCKABLE_VIRTUAL ze_result_t requestSingle(KmdSysman::RequestProperty &In, KmdSysman::ResponseProperty &Out);
-    ze_result_t requestMultiple(std::vector<KmdSysman::RequestProperty> &vIn, std::vector<KmdSysman::ResponseProperty> &vOut);
+    virtual ze_result_t requestSingle(KmdSysman::RequestProperty &In, KmdSysman::ResponseProperty &Out);
+    virtual ze_result_t requestMultiple(std::vector<KmdSysman::RequestProperty> &vIn, std::vector<KmdSysman::ResponseProperty> &vOut);
     NEO::Wddm *GetWddmAccess() { return pWddmAccess; }
 
   private:
-    MOCKABLE_VIRTUAL bool escape(uint32_t escapeOp, uint64_t pDataIn, uint32_t dataInSize, uint64_t pDataOut, uint32_t dataOutSize);
+    virtual bool escape(uint32_t escapeOp, uint64_t pDataIn, uint32_t dataInSize, uint64_t pDataOut, uint32_t dataOutSize);
 
     bool parseBufferIn(KmdSysman::GfxSysmanMainHeaderIn *pIn, std::vector<KmdSysman::RequestProperty> &vIn);
     bool parseBufferOut(KmdSysman::GfxSysmanMainHeaderOut *pOut, std::vector<KmdSysman::ResponseProperty> &vOut);

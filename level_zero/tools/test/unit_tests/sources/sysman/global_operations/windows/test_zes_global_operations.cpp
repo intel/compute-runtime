@@ -20,7 +20,7 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
     L0::GlobalOperations *pGlobalOperationsPrev = nullptr;
     L0::GlobalOperationsImp *pGlobalOperationsImp;
 
-    Mock<GlobalOpsKmdSysManager> *pKmdSysManager = nullptr;
+    std::unique_ptr<Mock<GlobalOpsKmdSysManager>> pKmdSysManager = nullptr;
     KmdSysManager *pOriginalKmdSysManager = nullptr;
     void SetUp() override {
         if (!sysmanUltsEnable) {
@@ -30,15 +30,12 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
     }
 
     void init(bool allowSetCalls) {
-        pKmdSysManager = new Mock<GlobalOpsKmdSysManager>;
+        pKmdSysManager.reset(new Mock<GlobalOpsKmdSysManager>);
 
         pKmdSysManager->allowSetCalls = allowSetCalls;
 
-        EXPECT_CALL(*pKmdSysManager, escape(_, _, _, _, _))
-            .WillRepeatedly(::testing::Invoke(pKmdSysManager, &Mock<GlobalOpsKmdSysManager>::mock_escape));
-
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
-        pWddmSysmanImp->pKmdSysManager = pKmdSysManager;
+        pWddmSysmanImp->pKmdSysManager = pKmdSysManager.get();
 
         pGlobalOperationsImp = static_cast<L0::GlobalOperationsImp *>(pSysmanDeviceImp->pGlobalOperations);
         pOsGlobalOperationsPrev = pGlobalOperationsImp->pOsGlobalOperations;
@@ -54,22 +51,30 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
         }
         pGlobalOperationsImp->pOsGlobalOperations = pOsGlobalOperationsPrev;
         pGlobalOperationsImp = nullptr;
-        SysmanDeviceFixture::TearDown();
         pWddmSysmanImp->pKmdSysManager = pOriginalKmdSysManager;
-        if (pKmdSysManager != nullptr) {
-            delete pKmdSysManager;
-            pKmdSysManager = nullptr;
-        }
+        SysmanDeviceFixture::TearDown();
     }
 };
 
-TEST_F(SysmanGlobalOperationsFixture, DISABLED_GivenForceTrueAndDeviceInUseWhenCallingResetThenSuccessIsReturned) {
+TEST_F(SysmanGlobalOperationsFixture, GivenForceTrueAndDeviceInUseWhenCallingResetThenSuccessIsReturned) {
     init(true);
     ze_result_t result = zesDeviceReset(device, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, DISABLED_GivenProcessStartsMidResetWhenCallingResetThenSuccessIsReturned) {
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDeviceGetStateThenFailureIsReturned) {
+    init(true);
+    zes_device_state_t pState = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceGetState(device, &pState));
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDeviceProcessesGetStateThenFailureIsReturned) {
+    init(true);
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceProcessesGetState(device, &count, nullptr));
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenCallingResetThenSuccessIsReturned) {
     init(false);
     ze_result_t result = zesDeviceReset(device, true);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);

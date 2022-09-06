@@ -39,9 +39,6 @@ class SysmanEventsFixture : public SysmanDeviceFixture {
 
         pKmdSysManager->allowSetCalls = allowSetCalls;
 
-        EXPECT_CALL(*pKmdSysManager, escape(_, _, _, _, _))
-            .WillRepeatedly(::testing::Invoke(pKmdSysManager.get(), &Mock<MockKmdSysManager>::mock_escape));
-
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
         pWddmSysmanImp->pKmdSysManager = pKmdSysManager.get();
 

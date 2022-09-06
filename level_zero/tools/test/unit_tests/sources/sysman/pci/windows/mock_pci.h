@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,6 +34,16 @@ struct Mock<PciKmdSysManager> : public PciKmdSysManager {
     uint32_t mockCurrentLinkWidth[3] = {1, 0, 1};
     uint32_t mockResizableBarSupported[3] = {1, 1, 1};
     uint32_t mockResizableBarEnabled[3] = {1, 1, 1};
+    uint32_t pciBusReturnCode = KmdSysman::KmdSysmanSuccess;
+    uint32_t pciDomainReturnCode = KmdSysman::KmdSysmanSuccess;
+    uint32_t pciDeviceReturnCode = KmdSysman::KmdSysmanSuccess;
+    uint32_t pciFunctionReturnCode = KmdSysman::KmdSysmanSuccess;
+    uint32_t pciMaxLinkSpeedReturnCode = KmdSysman::KmdSysmanSuccess;
+    uint32_t pciMaxLinkWidthReturnCode = KmdSysman::KmdSysmanSuccess;
+    uint32_t pciCurrentLinkSpeedReturnCode = KmdSysman::KmdSysmanSuccess;
+    uint32_t pciCurrentLinkWidthReturnCode = KmdSysman::KmdSysmanSuccess;
+    uint32_t pciResizableBarSupportedReturnCode = KmdSysman::KmdSysmanSuccess;
+    uint32_t pciResizableBarEnabledReturnCode = KmdSysman::KmdSysmanSuccess;
 
     void getPciProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) override {
         uint8_t *pBuffer = reinterpret_cast<uint8_t *>(pResponse);
@@ -45,61 +55,61 @@ struct Mock<PciKmdSysManager> : public PciKmdSysManager {
         case KmdSysman::Requests::Pci::Domain: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
             *pValue = mockDomain[domain];
-            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outReturnCode = pciDomainReturnCode;
             pResponse->outDataSize = sizeof(uint32_t);
         } break;
         case KmdSysman::Requests::Pci::Bus: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
             *pValue = mockBus[domain];
-            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outReturnCode = pciBusReturnCode;
             pResponse->outDataSize = sizeof(uint32_t);
         } break;
         case KmdSysman::Requests::Pci::Device: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
             *pValue = mockDevice[domain];
-            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outReturnCode = pciDeviceReturnCode;
             pResponse->outDataSize = sizeof(uint32_t);
         } break;
         case KmdSysman::Requests::Pci::Function: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
             *pValue = mockFunction[domain];
-            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outReturnCode = pciFunctionReturnCode;
             pResponse->outDataSize = sizeof(uint32_t);
         } break;
         case KmdSysman::Requests::Pci::MaxLinkSpeed: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
             *pValue = mockMaxLinkSpeed[domain];
-            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outReturnCode = pciMaxLinkSpeedReturnCode;
             pResponse->outDataSize = sizeof(uint32_t);
         } break;
         case KmdSysman::Requests::Pci::MaxLinkWidth: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
             *pValue = mockMaxLinkWidth[domain];
-            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outReturnCode = pciMaxLinkWidthReturnCode;
             pResponse->outDataSize = sizeof(uint32_t);
         } break;
         case KmdSysman::Requests::Pci::CurrentLinkSpeed: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
             *pValue = mockCurrentLinkSpeed[domain];
-            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outReturnCode = pciCurrentLinkSpeedReturnCode;
             pResponse->outDataSize = sizeof(uint32_t);
         } break;
         case KmdSysman::Requests::Pci::CurrentLinkWidth: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
             *pValue = mockCurrentLinkWidth[domain];
-            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outReturnCode = pciCurrentLinkWidthReturnCode;
             pResponse->outDataSize = sizeof(uint32_t);
         } break;
         case KmdSysman::Requests::Pci::ResizableBarSupported: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
             *pValue = mockResizableBarSupported[domain];
-            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outReturnCode = pciResizableBarSupportedReturnCode;
             pResponse->outDataSize = sizeof(uint32_t);
         } break;
         case KmdSysman::Requests::Pci::ResizableBarEnabled: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
             *pValue = mockResizableBarEnabled[domain];
-            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outReturnCode = pciResizableBarEnabledReturnCode;
             pResponse->outDataSize = sizeof(uint32_t);
         } break;
         default: {

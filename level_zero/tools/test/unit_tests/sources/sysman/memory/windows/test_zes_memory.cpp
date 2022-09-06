@@ -35,9 +35,6 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
 
         pKmdSysManager = new Mock<MemoryKmdSysManager>;
 
-        EXPECT_CALL(*pKmdSysManager, escape(_, _, _, _, _))
-            .WillRepeatedly(::testing::Invoke(pKmdSysManager, &Mock<MemoryKmdSysManager>::mock_escape));
-
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
         pWddmSysmanImp->pKmdSysManager = pKmdSysManager;
 
