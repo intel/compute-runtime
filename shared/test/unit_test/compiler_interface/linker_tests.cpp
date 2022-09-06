@@ -2519,3 +2519,183 @@ TEST(LinkerTests, givenPerThreadPayloadOffsetRelocationWhenPatchingInstructionSe
     auto perThreadPayloadOffsetPatchedValue = reinterpret_cast<uint32_t *>(ptrOffset(segmentToPatch.hostPointer, static_cast<size_t>(rel.offset)));
     EXPECT_EQ(kd.kernelAttributes.crossThreadDataSize, static_cast<uint32_t>(*perThreadPayloadOffsetPatchedValue));
 }
+
+TEST(LinkerTests, givenRelocationToInstructionSegmentWithLocalSymbolPointingToSameSegmentThenItIsPatched) {
+    std::string kernelName{"test_kernel"};
+    WhiteBox<NEO::LinkerInput> linkerInput;
+    linkerInput.traits.requiresPatchingOfInstructionSegments = true;
+    NEO::LinkerInput::RelocationInfo rela;
+    rela.offset = 0U;
+    rela.addend = 128U;
+    rela.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+    rela.symbolName = kernelName;
+    rela.relocationSegment = NEO::SegmentType::Instructions;
+    linkerInput.textRelocations.push_back({rela});
+
+    WhiteBox<NEO::Linker> linker(linkerInput);
+    constexpr uint64_t symValue = 64U;
+    linker.localRelocatedSymbols[kernelName].gpuAddress = symValue;
+
+    uint64_t instructionSegmentData{std::numeric_limits<uint64_t>::max()};
+    NEO::Linker::PatchableSegment instructionSegmentToPatch;
+    instructionSegmentToPatch.hostPointer = reinterpret_cast<void *>(&instructionSegmentData);
+    instructionSegmentToPatch.segmentSize = sizeof(instructionSegmentData);
+
+    NEO::Linker::UnresolvedExternals unresolvedExternals;
+    ASSERT_EQ(0u, unresolvedExternals.size());
+    NEO::Linker::KernelDescriptorsT kernelDescriptors;
+
+    KernelDescriptor kd;
+    kd.kernelMetadata.kernelName = kernelName;
+    kernelDescriptors.push_back(&kd);
+    linker.patchInstructionsSegments({instructionSegmentToPatch}, unresolvedExternals, kernelDescriptors);
+    auto instructionSegmentPatchedData = reinterpret_cast<uint64_t *>(ptrOffset(instructionSegmentToPatch.hostPointer, static_cast<size_t>(rela.offset)));
+    EXPECT_EQ(symValue + rela.addend, static_cast<uint64_t>(*instructionSegmentPatchedData));
+    EXPECT_EQ(0u, unresolvedExternals.size());
+}
+
+TEST(LinkerTests, givenRelocationToInstructionSegmentWithLocalSymbolPointingToDifferentSegmentThenItIsNotPatched) {
+    std::string kernelName{"test_kernel"};
+    WhiteBox<NEO::LinkerInput> linkerInput;
+    linkerInput.traits.requiresPatchingOfInstructionSegments = true;
+    NEO::LinkerInput::RelocationInfo rela;
+    rela.offset = 0U;
+    rela.addend = 128U;
+    rela.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+    rela.symbolName = kernelName;
+    rela.relocationSegment = NEO::SegmentType::Instructions;
+    linkerInput.textRelocations.push_back({rela});
+
+    WhiteBox<NEO::Linker> linker(linkerInput);
+    constexpr uint64_t symValue = 64U;
+    linker.localRelocatedSymbols[kernelName].gpuAddress = symValue;
+
+    uint64_t instructionSegmentData{std::numeric_limits<uint64_t>::max()};
+    NEO::Linker::PatchableSegment instructionSegmentToPatch;
+    instructionSegmentToPatch.hostPointer = reinterpret_cast<void *>(&instructionSegmentData);
+    instructionSegmentToPatch.segmentSize = sizeof(instructionSegmentData);
+
+    NEO::Linker::UnresolvedExternals unresolvedExternals;
+    ASSERT_EQ(0u, unresolvedExternals.size());
+    NEO::Linker::KernelDescriptorsT kernelDescriptors;
+
+    KernelDescriptor kd;
+    kd.kernelMetadata.kernelName = "not_matching";
+    kernelDescriptors.push_back(&kd);
+    linker.patchInstructionsSegments({instructionSegmentToPatch}, unresolvedExternals, kernelDescriptors);
+    auto instructionSegmentPatchedData = reinterpret_cast<uint64_t *>(ptrOffset(instructionSegmentToPatch.hostPointer, static_cast<size_t>(rela.offset)));
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(), static_cast<uint64_t>(*instructionSegmentPatchedData));
+    EXPECT_EQ(1u, unresolvedExternals.size());
+}
+
+TEST(LinkerTests, givenRelocationToInstructionSegmentWithLocalUndefinedSymbolThenItIsPatchedWithZeroes) {
+    WhiteBox<NEO::LinkerInput> linkerInput;
+    linkerInput.traits.requiresPatchingOfInstructionSegments = true;
+    NEO::LinkerInput::RelocationInfo rela;
+    rela.offset = 0U;
+    rela.addend = 128U;
+    rela.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+    rela.symbolName = "";
+    rela.relocationSegment = NEO::SegmentType::Instructions;
+    linkerInput.textRelocations.push_back({rela});
+
+    WhiteBox<NEO::Linker> linker(linkerInput);
+    EXPECT_TRUE(linker.relocatedSymbols.empty());
+    EXPECT_TRUE(linker.localRelocatedSymbols.empty());
+
+    uint64_t instructionSegmentData{std::numeric_limits<uint64_t>::max()};
+    NEO::Linker::PatchableSegment instructionSegmentToPatch;
+    instructionSegmentToPatch.hostPointer = reinterpret_cast<void *>(&instructionSegmentData);
+    instructionSegmentToPatch.segmentSize = sizeof(instructionSegmentData);
+
+    NEO::Linker::UnresolvedExternals unresolvedExternals;
+    ASSERT_EQ(0u, unresolvedExternals.size());
+    NEO::Linker::KernelDescriptorsT kernelDescriptors;
+
+    linker.patchInstructionsSegments({instructionSegmentToPatch}, unresolvedExternals, kernelDescriptors);
+    auto instructionSegmentPatchedData = reinterpret_cast<uint64_t *>(ptrOffset(instructionSegmentToPatch.hostPointer, static_cast<size_t>(rela.offset)));
+    EXPECT_EQ(0u, static_cast<uint64_t>(*instructionSegmentPatchedData));
+    EXPECT_EQ(0u, unresolvedExternals.size());
+}
+
+TEST(LinkerTests, givenElfWithLocalSymbolsWhenDecodingElfSymbolTableAndRelocationsThenOnlySymbolsWithTypeFunctionArePopulated) {
+    NEO::LinkerInput linkerInput = {};
+    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+    elf64.elfFileHeader = &header;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    std::string kernelName = "test_kernel";
+    sectionNames[0] = NEO::Elf::SectionsNamesZebin::textPrefix.str() + kernelName;
+    elf64.setupSecionNames(std::move(sectionNames));
+    elf64.overrideSymbolName = true;
+
+    elf64.symbolTable.reserve(2);
+    auto &localFuncSymbol = elf64.symbolTable.emplace_back();
+    localFuncSymbol.setBinding(NEO::Elf::SYMBOL_TABLE_BIND::STB_LOCAL);
+    localFuncSymbol.setType(NEO::Elf::SYMBOL_TABLE_TYPE::STT_FUNC);
+    localFuncSymbol.name = 0x20;
+    localFuncSymbol.other = 0;
+    localFuncSymbol.shndx = 0;
+    localFuncSymbol.size = 0x8;
+    localFuncSymbol.value = 0x4000;
+
+    auto &localIgnoredSymbol = elf64.symbolTable.emplace_back();
+    localIgnoredSymbol.setBinding(NEO::Elf::SYMBOL_TABLE_BIND::STB_LOCAL);
+    localIgnoredSymbol.setType(NEO::Elf::SYMBOL_TABLE_TYPE::STT_OBJECT);
+    localIgnoredSymbol.name = std::numeric_limits<uint32_t>::max();
+    localIgnoredSymbol.other = std::numeric_limits<uint8_t>::max();
+    localIgnoredSymbol.shndx = std::numeric_limits<uint16_t>::max();
+    localIgnoredSymbol.size = std::numeric_limits<uint64_t>::max();
+    localIgnoredSymbol.value = std::numeric_limits<uint64_t>::max();
+
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+
+    const auto &symbols = linkerInput.getSymbols();
+    EXPECT_EQ(0u, symbols.size());
+
+    const auto &localSymbols = linkerInput.getLocalSymbols();
+    EXPECT_EQ(1u, localSymbols.size());
+
+    const auto &retrievedSymbol = localSymbols.at(std::to_string(localFuncSymbol.name));
+    EXPECT_EQ(retrievedSymbol.offset, localFuncSymbol.value);
+    EXPECT_EQ(retrievedSymbol.size, localFuncSymbol.size);
+    EXPECT_STREQ(retrievedSymbol.targetedKernelSectionName.c_str(), kernelName.c_str());
+}
+
+TEST(LinkerTest, givenLocalFuncSymbolsWhenProcessingRelocationsThenLocalSymbolsAreRelocated) {
+    std::string kernelName{"test_kernel"};
+    WhiteBox<NEO::LinkerInput> linkerInput;
+
+    LocalFuncSymbolInfo localSymInfo;
+    localSymInfo.offset = 0x20;
+    localSymInfo.size = 0x30;
+    localSymInfo.targetedKernelSectionName = kernelName;
+
+    LocalFuncSymbolInfo ignoredSymInfo;
+    ignoredSymInfo.offset = 0x40;
+    ignoredSymInfo.size = 0x50;
+    ignoredSymInfo.targetedKernelSectionName = "mismatched_kernel";
+
+    linkerInput.localSymbols[localSymInfo.targetedKernelSectionName] = localSymInfo;
+    linkerInput.localSymbols[ignoredSymInfo.targetedKernelSectionName] = ignoredSymInfo;
+
+    WhiteBox<NEO::Linker> linker(linkerInput);
+    const NEO::Linker::SegmentInfo gVariables{}, gConstants{}, expFuncs{}, gStrings{};
+    NEO::Linker::PatchableSegments insSegments;
+    insSegments.reserve(2);
+    auto &emplacedTargeted = insSegments.emplace_back();
+    emplacedTargeted.gpuAddress = 0x1000;
+    emplacedTargeted.kernelName = kernelName;
+
+    auto &emplacedOther = insSegments.emplace_back();
+    emplacedOther.gpuAddress = 0x2000;
+    emplacedOther.kernelName = "other_kernel";
+
+    auto res = linker.processRelocations(gVariables, gConstants, expFuncs, gStrings, insSegments);
+    EXPECT_TRUE(res);
+    EXPECT_EQ(1u, linker.localRelocatedSymbols.size());
+    const auto &localRelocatedSymbolInfo = linker.localRelocatedSymbols.at(kernelName);
+    EXPECT_EQ(emplacedTargeted.gpuAddress + localSymInfo.offset, localRelocatedSymbolInfo.gpuAddress);
+}

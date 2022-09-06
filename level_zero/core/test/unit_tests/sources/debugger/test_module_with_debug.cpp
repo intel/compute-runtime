@@ -994,7 +994,7 @@ HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleWithUnresolvedSymb
     }
 
     NEO::SymbolInfo symbolInfo{};
-    NEO::Linker::RelocatedSymbol relocatedSymbol{symbolInfo, gpuAddress};
+    NEO::Linker::RelocatedSymbol<SymbolInfo> relocatedSymbol{symbolInfo, gpuAddress};
 
     auto module1 = std::make_unique<Module>(device, nullptr, ModuleType::User);
 

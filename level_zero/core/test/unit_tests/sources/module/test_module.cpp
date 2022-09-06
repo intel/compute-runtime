@@ -1212,7 +1212,7 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolWhenTheOtherModule
     unresolvedExternal.unresolvedRelocation = unresolvedRelocation;
 
     NEO::SymbolInfo symbolInfo{};
-    NEO::Linker::RelocatedSymbol relocatedSymbol{symbolInfo, gpuAddress};
+    NEO::Linker::RelocatedSymbol<NEO::SymbolInfo> relocatedSymbol{symbolInfo, gpuAddress};
 
     char kernelHeap[MemoryConstants::pageSize] = {};
 
@@ -1258,7 +1258,7 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolWhenTheOtherModule
     unresolvedExternal.unresolvedRelocation = unresolvedRelocation;
 
     NEO::SymbolInfo symbolInfo{};
-    NEO::Linker::RelocatedSymbol relocatedSymbol{symbolInfo, gpuAddress};
+    NEO::Linker::RelocatedSymbol<NEO::SymbolInfo> relocatedSymbol{symbolInfo, gpuAddress};
 
     char kernelHeap[MemoryConstants::pageSize] = {};
 
@@ -1320,13 +1320,13 @@ TEST_F(ModuleDynamicLinkTests, givenMultipleModulesWithUnresolvedSymbolWhenTheEa
     unresolvedExternalChained.unresolvedRelocation = unresolvedRelocationChained;
 
     NEO::SymbolInfo module0SymbolInfo{};
-    NEO::Linker::RelocatedSymbol module0RelocatedSymbol{module0SymbolInfo, gpuAddress0};
+    NEO::Linker::RelocatedSymbol<NEO::SymbolInfo> module0RelocatedSymbol{module0SymbolInfo, gpuAddress0};
 
     NEO::SymbolInfo module1SymbolInfo{};
-    NEO::Linker::RelocatedSymbol module1RelocatedSymbol{module1SymbolInfo, gpuAddress1};
+    NEO::Linker::RelocatedSymbol<NEO::SymbolInfo> module1RelocatedSymbol{module1SymbolInfo, gpuAddress1};
 
     NEO::SymbolInfo module2SymbolInfo{};
-    NEO::Linker::RelocatedSymbol module2RelocatedSymbol{module2SymbolInfo, gpuAddress2};
+    NEO::Linker::RelocatedSymbol<NEO::SymbolInfo> module2RelocatedSymbol{module2SymbolInfo, gpuAddress2};
 
     char kernelHeap[MemoryConstants::pageSize] = {};
 
@@ -1464,13 +1464,13 @@ TEST_F(ModuleDynamicLinkTests, givenMultipleModulesWithUnresolvedSymbolWhenTheEa
     unresolvedExternalChained.unresolvedRelocation = unresolvedRelocationChained;
 
     NEO::SymbolInfo module0SymbolInfo{};
-    NEO::Linker::RelocatedSymbol module0RelocatedSymbol{module0SymbolInfo, gpuAddress0};
+    NEO::Linker::RelocatedSymbol<NEO::SymbolInfo> module0RelocatedSymbol{module0SymbolInfo, gpuAddress0};
 
     NEO::SymbolInfo module1SymbolInfo{};
-    NEO::Linker::RelocatedSymbol module1RelocatedSymbol{module1SymbolInfo, gpuAddress1};
+    NEO::Linker::RelocatedSymbol<NEO::SymbolInfo> module1RelocatedSymbol{module1SymbolInfo, gpuAddress1};
 
     NEO::SymbolInfo module2SymbolInfo{};
-    NEO::Linker::RelocatedSymbol module2RelocatedSymbol{module2SymbolInfo, gpuAddress2};
+    NEO::Linker::RelocatedSymbol<NEO::SymbolInfo> module2RelocatedSymbol{module2SymbolInfo, gpuAddress2};
 
     char kernelHeap[MemoryConstants::pageSize] = {};
 
@@ -1550,10 +1550,10 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolWhenTheOtherModule
     unresolvedExternal2.unresolvedRelocation = unresolvedRelocation2;
 
     NEO::SymbolInfo symbolInfo{};
-    NEO::Linker::RelocatedSymbol relocatedSymbol{symbolInfo, gpuAddress};
+    NEO::Linker::RelocatedSymbol<NEO::SymbolInfo> relocatedSymbol{symbolInfo, gpuAddress};
 
     NEO::SymbolInfo symbolInfo2{};
-    NEO::Linker::RelocatedSymbol relocatedSymbol2{symbolInfo2, gpuAddress};
+    NEO::Linker::RelocatedSymbol<NEO::SymbolInfo> relocatedSymbol2{symbolInfo2, gpuAddress};
 
     char kernelHeap[MemoryConstants::pageSize] = {};
 
@@ -1732,7 +1732,7 @@ TEST_F(ModuleFunctionPointerTests, givenModuleWithExportedSymbolThenGetFunctionP
 
     NEO::SymbolInfo symbolInfo{};
     symbolInfo.segment = NEO::SegmentType::Instructions;
-    NEO::Linker::RelocatedSymbol relocatedSymbol{symbolInfo, gpuAddress};
+    NEO::Linker::RelocatedSymbol<NEO::SymbolInfo> relocatedSymbol{symbolInfo, gpuAddress};
 
     char kernelHeap[MemoryConstants::pageSize] = {};
 
@@ -1762,7 +1762,7 @@ TEST_F(ModuleFunctionPointerTests, givenInvalidFunctionNameAndModuleWithExported
 
     NEO::SymbolInfo symbolInfo{};
     symbolInfo.segment = NEO::SegmentType::Instructions;
-    NEO::Linker::RelocatedSymbol relocatedSymbol{symbolInfo, gpuAddress};
+    NEO::Linker::RelocatedSymbol<NEO::SymbolInfo> relocatedSymbol{symbolInfo, gpuAddress};
 
     char kernelHeap[MemoryConstants::pageSize] = {};
 
@@ -1795,7 +1795,7 @@ TEST_F(ModuleFunctionPointerTests, givenModuleWithExportedSymbolThenGetFunctionP
 
     NEO::SymbolInfo symbolInfo{};
     symbolInfo.segment = NEO::SegmentType::Instructions;
-    NEO::Linker::RelocatedSymbol relocatedSymbol{symbolInfo, gpuAddress};
+    NEO::Linker::RelocatedSymbol<NEO::SymbolInfo> relocatedSymbol{symbolInfo, gpuAddress};
 
     char kernelHeap[MemoryConstants::pageSize] = {};
 
@@ -2711,7 +2711,7 @@ TEST_F(ModuleTest, givenModuleWithSymbolWhenGettingGlobalPointerThenSizeAndPoint
     uint64_t gpuAddress = 0x12345000;
 
     NEO::SymbolInfo symbolInfo{0, 1024u, SegmentType::GlobalVariables};
-    NEO::Linker::RelocatedSymbol relocatedSymbol{symbolInfo, gpuAddress};
+    NEO::Linker::RelocatedSymbol<NEO::SymbolInfo> relocatedSymbol{symbolInfo, gpuAddress};
 
     auto module0 = std::make_unique<Module>(device, nullptr, ModuleType::User);
     module0->symbols["symbol"] = relocatedSymbol;
@@ -2729,7 +2729,7 @@ TEST_F(ModuleTest, givenModuleWithSymbolWhenGettingGlobalPointerWithNullptrInput
     uint64_t gpuAddress = 0x12345000;
 
     NEO::SymbolInfo symbolInfo{0, 1024u, SegmentType::GlobalVariables};
-    NEO::Linker::RelocatedSymbol relocatedSymbol{symbolInfo, gpuAddress};
+    NEO::Linker::RelocatedSymbol<NEO::SymbolInfo> relocatedSymbol{symbolInfo, gpuAddress};
 
     auto module0 = std::make_unique<Module>(device, nullptr, ModuleType::User);
     module0->symbols["symbol"] = relocatedSymbol;
@@ -2747,11 +2747,11 @@ TEST_F(ModuleTest, givenModuleWithGlobalSymbolMapWhenGettingGlobalPointerByHostS
     size_t symbolsSize = 1024u;
     uint64_t globalVarGpuAddress = 0x12345000;
     NEO::SymbolInfo globalVariablesSymbolInfo{0, static_cast<uint32_t>(symbolsSize), SegmentType::GlobalVariables};
-    NEO::Linker::RelocatedSymbol globalVariablesRelocatedSymbol{globalVariablesSymbolInfo, globalVarGpuAddress};
+    NEO::Linker::RelocatedSymbol<NEO::SymbolInfo> globalVariablesRelocatedSymbol{globalVariablesSymbolInfo, globalVarGpuAddress};
 
     uint64_t globalConstGpuAddress = 0x12347000;
     NEO::SymbolInfo globalConstantsSymbolInfo{0, static_cast<uint32_t>(symbolsSize), SegmentType::GlobalConstants};
-    NEO::Linker::RelocatedSymbol globalConstansRelocatedSymbol{globalConstantsSymbolInfo, globalConstGpuAddress};
+    NEO::Linker::RelocatedSymbol<NEO::SymbolInfo> globalConstansRelocatedSymbol{globalConstantsSymbolInfo, globalConstGpuAddress};
 
     auto module0 = std::make_unique<MockModule>(device, nullptr, ModuleType::User);
     module0->symbols["devSymbolOne"] = globalVariablesRelocatedSymbol;
@@ -2797,7 +2797,7 @@ TEST_F(ModuleTest, givenModuleWithGlobalSymbolsMapWhenPopulatingMapWithSymbolFro
     size_t symbolSize = 1024u;
     uint64_t gpuAddress = 0x12345000;
     NEO::SymbolInfo symbolInfo{0, static_cast<uint32_t>(symbolSize), SegmentType::Instructions};
-    NEO::Linker::RelocatedSymbol relocatedSymbol{symbolInfo, gpuAddress};
+    NEO::Linker::RelocatedSymbol<NEO::SymbolInfo> relocatedSymbol{symbolInfo, gpuAddress};
 
     auto module0 = std::make_unique<MockModule>(device, nullptr, ModuleType::User);
     module0->symbols[incorrectDevSymbolName] = relocatedSymbol;
@@ -2825,7 +2825,7 @@ TEST_F(ModuleTests, whenCopyingPatchedSegmentsThenAllocationsAreSetWritableForTb
     linkerInput->traits.requiresPatchingOfInstructionSegments = true;
     pModule->translationUnit->programInfo.linkerInput = std::move(linkerInput);
 
-    NEO::Linker::PatchableSegments segments{{data, 1}};
+    NEO::Linker::PatchableSegments segments{{data, 0u, 1, std::string{}}};
 
     auto allocation = pModule->kernelImmDatas[0]->getIsaGraphicsAllocation();
 

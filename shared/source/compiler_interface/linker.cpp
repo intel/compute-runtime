@@ -203,6 +203,14 @@ void LinkerInput::decodeElfSymbolTableAndRelocations(Elf::Elf<Elf::EI_CLASS_64> 
             } break;
             }
             symbols.insert({elf.getSymbolName(symbol.name), symbolInfo});
+        } else if (type == Elf::SYMBOL_TABLE_TYPE::STT_FUNC) {
+            DEBUG_BREAK_IF(Elf::SYMBOL_TABLE_BIND::STB_LOCAL != bind);
+            LocalFuncSymbolInfo localSymbolInfo;
+            localSymbolInfo.offset = static_cast<uint32_t>(symbol.value);
+            localSymbolInfo.size = static_cast<uint32_t>(symbol.size);
+            auto symbolSectionName = elf.getSectionName(symbol.shndx);
+            localSymbolInfo.targetedKernelSectionName = symbolSectionName.substr(Elf::SectionsNamesZebin::textPrefix.length());
+            localSymbols.insert({elf.getSymbolName(symbol.name), localSymbolInfo});
         }
     }
 
@@ -267,7 +275,8 @@ void LinkerInput::parseRelocationForExtFuncUsage(const RelocationInfo &relocInfo
     }
 }
 
-bool Linker::processRelocations(const SegmentInfo &globalVariables, const SegmentInfo &globalConstants, const SegmentInfo &exportedFunctions, const SegmentInfo &globalStrings) {
+bool Linker::processRelocations(const SegmentInfo &globalVariables, const SegmentInfo &globalConstants, const SegmentInfo &exportedFunctions, const SegmentInfo &globalStrings,
+                                const PatchableSegments &instructionsSegments) {
     relocatedSymbols.reserve(data.getSymbols().size());
     for (auto &symbol : data.getSymbols()) {
         const SegmentInfo *seg = nullptr;
@@ -294,6 +303,15 @@ bool Linker::processRelocations(const SegmentInfo &globalVariables, const Segmen
             return false;
         }
         relocatedSymbols[symbol.first] = {symbol.second, gpuAddress};
+    }
+    localRelocatedSymbols.reserve(data.getLocalSymbols().size());
+    for (auto &localSymbol : data.getLocalSymbols()) {
+        for (auto &s : instructionsSegments) {
+            if (s.kernelName == localSymbol.second.targetedKernelSectionName) {
+                uintptr_t gpuAddress = s.gpuAddress + localSymbol.second.offset;
+                localRelocatedSymbols[localSymbol.first] = {localSymbol.second, gpuAddress};
+            }
+        }
     }
     return true;
 }
@@ -347,6 +365,20 @@ void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
                 continue;
             }
             auto symbolIt = relocatedSymbols.find(relocation.symbolName);
+            if (symbolIt == relocatedSymbols.end()) {
+                auto localSymbolIt = localRelocatedSymbols.find(relocation.symbolName);
+                if (localRelocatedSymbols.end() != localSymbolIt) {
+                    if (localSymbolIt->first == kernelDescriptors[segId]->kernelMetadata.kernelName) {
+                        uint64_t patchValue = localSymbolIt->second.gpuAddress + relocation.addend;
+                        patchAddress(relocAddress, patchValue, relocation);
+                        continue;
+                    }
+                } else if (relocation.symbolName.empty()) {
+                    uint64_t patchValue = 0;
+                    patchAddress(relocAddress, patchValue, relocation);
+                    continue;
+                }
+            }
             bool unresolvedExternal = (symbolIt == relocatedSymbols.end());
             if (invalidOffset || unresolvedExternal) {
                 uint32_t segId = static_cast<uint32_t>(segIt - instructionsSegments.begin());
@@ -536,7 +568,7 @@ void Linker::resolveBuiltins(Device *pDevice, UnresolvedExternals &outUnresolved
     int vecIndex = static_cast<int>(outUnresolvedExternals.size() - 1u);
     for (; vecIndex >= 0; --vecIndex) {
         if (outUnresolvedExternals[vecIndex].unresolvedRelocation.symbolName == subDeviceID) {
-            RelocatedSymbol symbol;
+            RelocatedSymbol<SymbolInfo> symbol;
             symbol.gpuAddress = static_cast<uintptr_t>(pDevice->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress());
             auto relocAddress = ptrOffset(instructionsSegments[outUnresolvedExternals[vecIndex].instructionsSegmentId].hostPointer,
                                           static_cast<uintptr_t>(outUnresolvedExternals[vecIndex].unresolvedRelocation.offset));

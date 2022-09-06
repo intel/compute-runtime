@@ -586,6 +586,7 @@ TEST(ProgramLinkBinaryTest, whenLinkerUnresolvedExternalThenLinkFailedAndBuildLo
     kernelHeap.resize(32, 7);
     kernelInfo.heapInfo.pKernelHeap = kernelHeap.data();
     kernelInfo.heapInfo.KernelHeapSize = static_cast<uint32_t>(kernelHeap.size());
+    kernelInfo.createKernelAllocation(device->getDevice(), false);
     program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
     program.setLinkerInput(rootDeviceIndex, std::move(linkerInput));
 
@@ -600,6 +601,7 @@ TEST(ProgramLinkBinaryTest, whenLinkerUnresolvedExternalThenLinkFailedAndBuildLo
     expectedUnresolvedExternals.push_back(Linker::UnresolvedExternal{relocation, 0, false});
     auto expectedError = constructLinkerErrorMessage(expectedUnresolvedExternals, std::vector<std::string>{"kernel : " + kernelInfo.kernelDescriptor.kernelMetadata.kernelName});
     EXPECT_TRUE(hasSubstr(buildLog, expectedError));
+    device->getMemoryManager()->freeGraphicsMemory(kernelInfo.getGraphicsAllocation());
 }
 
 TEST_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched) {

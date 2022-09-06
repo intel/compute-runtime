@@ -854,11 +854,12 @@ bool ModuleImp::linkBinary() {
     if (linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
         patchedIsaTempStorage.reserve(this->kernelImmDatas.size());
         kernelDescriptors.reserve(this->kernelImmDatas.size());
-        for (const auto &kernelInfo : this->translationUnit->programInfo.kernelInfos) {
+        for (size_t i = 0; i < kernelImmDatas.size(); i++) {
+            auto kernelInfo = this->translationUnit->programInfo.kernelInfos.at(i);
             auto &kernHeapInfo = kernelInfo->heapInfo;
             const char *originalIsa = reinterpret_cast<const char *>(kernHeapInfo.pKernelHeap);
             patchedIsaTempStorage.push_back(std::vector<char>(originalIsa, originalIsa + kernHeapInfo.KernelHeapSize));
-            isaSegmentsForPatching.push_back(Linker::PatchableSegment{patchedIsaTempStorage.rbegin()->data(), kernHeapInfo.KernelHeapSize});
+            isaSegmentsForPatching.push_back(Linker::PatchableSegment{patchedIsaTempStorage.rbegin()->data(), static_cast<uintptr_t>(kernelImmDatas.at(i)->getIsaGraphicsAllocation()->getGpuAddressToPatch()), kernHeapInfo.KernelHeapSize, kernelInfo->kernelDescriptor.kernelMetadata.kernelName});
             kernelDescriptors.push_back(&kernelInfo->kernelDescriptor);
         }
     }
@@ -1084,11 +1085,12 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
         if (moduleId->translationUnit->programInfo.linkerInput && moduleId->translationUnit->programInfo.linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
             if (patchedIsaTempStorage.empty()) {
                 patchedIsaTempStorage.reserve(moduleId->kernelImmDatas.size());
-                for (const auto &kernelInfo : moduleId->translationUnit->programInfo.kernelInfos) {
+                for (size_t i = 0; i < kernelImmDatas.size(); i++) {
+                    const auto kernelInfo = this->translationUnit->programInfo.kernelInfos.at(i);
                     auto &kernHeapInfo = kernelInfo->heapInfo;
                     const char *originalIsa = reinterpret_cast<const char *>(kernHeapInfo.pKernelHeap);
                     patchedIsaTempStorage.push_back(std::vector<char>(originalIsa, originalIsa + kernHeapInfo.KernelHeapSize));
-                    isaSegmentsForPatching.push_back(NEO::Linker::PatchableSegment{patchedIsaTempStorage.rbegin()->data(), kernHeapInfo.KernelHeapSize});
+                    isaSegmentsForPatching.push_back(NEO::Linker::PatchableSegment{patchedIsaTempStorage.rbegin()->data(), static_cast<uintptr_t>(kernelImmDatas.at(i)->getIsaGraphicsAllocation()->getGpuAddressToPatch()), kernHeapInfo.KernelHeapSize, kernelInfo->kernelDescriptor.kernelMetadata.kernelName});
                 }
             }
             for (const auto &unresolvedExternal : moduleId->unresolvedExternalsInfo) {

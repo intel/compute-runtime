@@ -100,7 +100,8 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const
             auto &kernHeapInfo = kernelInfo->heapInfo;
             const char *originalIsa = reinterpret_cast<const char *>(kernHeapInfo.pKernelHeap);
             patchedIsaTempStorage.push_back(std::vector<char>(originalIsa, originalIsa + kernHeapInfo.KernelHeapSize));
-            isaSegmentsForPatching.push_back(Linker::PatchableSegment{patchedIsaTempStorage.rbegin()->data(), kernHeapInfo.KernelHeapSize});
+            DEBUG_BREAK_IF(nullptr == kernelInfo->getGraphicsAllocation());
+            isaSegmentsForPatching.push_back(Linker::PatchableSegment{patchedIsaTempStorage.rbegin()->data(), static_cast<uintptr_t>(kernelInfo->getGraphicsAllocation()->getGpuAddressToPatch()), kernHeapInfo.KernelHeapSize, kernelInfo->kernelDescriptor.kernelMetadata.kernelName});
             kernelDescriptors.push_back(&kernelInfo->kernelDescriptor);
         }
     }
@@ -123,9 +124,6 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const
     } else if (linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
         for (auto kernelId = 0u; kernelId < kernelInfoArray.size(); kernelId++) {
             const auto &kernelInfo = kernelInfoArray[kernelId];
-            if (nullptr == kernelInfo->getGraphicsAllocation()) {
-                continue;
-            }
             auto &kernHeapInfo = kernelInfo->heapInfo;
             auto segmentId = &kernelInfo - &kernelInfoArray[0];
             auto &hwInfo = pDevice->getHardwareInfo();

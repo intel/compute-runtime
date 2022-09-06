@@ -1319,6 +1319,9 @@ TEST_F(KernelDataTest, givenRelocationTablePatchTokenThenLinkerInputIsCreated) {
     token.Token = PATCH_TOKEN_PROGRAM_RELOCATION_TABLE;
     token.Size = static_cast<uint32_t>(sizeof(SPatchFunctionTableInfo));
     token.NumEntries = 0;
+    kernelHeapSize = 0x100; //force creating kernel allocation for ISA
+    auto kernelHeapData = std::make_unique<char[]>(kernelHeapSize);
+    pKernelHeap = kernelHeapData.get();
 
     pPatchList = &token;
     patchListSize = token.Size;
