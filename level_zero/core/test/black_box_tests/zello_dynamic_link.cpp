@@ -141,7 +141,7 @@ int main(int argc, char *argv[]) {
         std::cout << "reading export module for spirv\n";
     }
     std::string buildLog;
-    auto exportBinaryModule = compileToSpirV(const_cast<const char *>(exportModuleSrcValue), "", buildLog);
+    auto exportBinaryModule = compileToSpirV(exportModuleSrcValue, "", buildLog);
     if (buildLog.size() > 0) {
         std::cout << "Build log " << buildLog;
     }
@@ -190,7 +190,7 @@ int main(int argc, char *argv[]) {
     if (verbose) {
         std::cout << "reading import module for spirv\n";
     }
-    auto importBinaryModule = compileToSpirV(const_cast<const char *>(importModuleSrcValue), "", buildLog);
+    auto importBinaryModule = compileToSpirV(importModuleSrcValue, "", buildLog);
     if (buildLog.size() > 0) {
         std::cout << "Build log " << buildLog;
     }

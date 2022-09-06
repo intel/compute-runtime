@@ -131,7 +131,7 @@ ClDevice *ClDevice::getNearestGenericSubDevice(uint32_t deviceId) {
     }
 
     if (subDevices.empty() || !getDevice().hasRootCsr()) {
-        return const_cast<ClDevice *>(this);
+        return this;
     }
     UNRECOVERABLE_IF(deviceId >= subDevices.size());
     return subDevices[deviceId].get();

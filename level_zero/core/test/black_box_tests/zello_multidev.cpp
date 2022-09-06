@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
     kernel.resize(deviceCount);
 
     std::string buildLog;
-    auto moduleBinary = compileToSpirV(const_cast<const char *>(memcpyBytesTestKernelSrc), "", buildLog);
+    auto moduleBinary = compileToSpirV(memcpyBytesTestKernelSrc, "", buildLog);
     if (buildLog.size() > 0) {
         std::cout << "Build log " << buildLog;
     }

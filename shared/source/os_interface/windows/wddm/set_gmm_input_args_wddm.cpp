@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ void Wddm::setGmmInputArgs(void *args) {
 
     gmmInArgs->stAdapterBDF = this->adapterBDF;
     gmmInArgs->ClientType = GMM_CLIENT::GMM_OCL_VISTA;
-    gmmInArgs->DeviceRegistryPath = const_cast<char *>(deviceRegistryPath.c_str());
+    gmmInArgs->DeviceRegistryPath = deviceRegistryPath.c_str();
 }
 
 } // namespace NEO

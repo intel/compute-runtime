@@ -84,7 +84,7 @@ void testAppendImageFunction(ze_context_handle_t &context,
     ze_image_region_t srcRegion = {inOffsetX, inOffsetY, inOffsetZ, hostWidth, hostHeight, hostDepth};
 
     SUCCESS_OR_TERMINATE(
-        zeImageCreate(context, device, const_cast<const ze_image_desc_t *>(&srcImgDesc), &srcImg));
+        zeImageCreate(context, device, &srcImgDesc, &srcImg));
 
     ze_image_desc_t dstImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
                                   nullptr,
@@ -102,7 +102,7 @@ void testAppendImageFunction(ze_context_handle_t &context,
     ze_image_region_t dstRegion = {outOffsetX, outOffsetY, outOffsetZ, hostWidth, hostHeight, hostDepth};
 
     SUCCESS_OR_TERMINATE(
-        zeImageCreate(context, device, const_cast<const ze_image_desc_t *>(&dstImgDesc), &dstImg));
+        zeImageCreate(context, device, &dstImgDesc, &dstImg));
 
     uint32_t *srcBuffer = new uint32_t[hostSize];
     uint32_t *dstBuffer = new uint32_t[hostSize];

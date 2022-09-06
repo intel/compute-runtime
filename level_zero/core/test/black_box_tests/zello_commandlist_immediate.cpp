@@ -172,7 +172,7 @@ void testAppendMemoryCopyRegion(ze_context_handle_t &context, ze_device_handle_t
 
     // Perform the copy
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopyRegion(cmdList, dstBuffer, &dstRegion, dstWidth, 0,
-                                                             const_cast<const void *>(srcBuffer), &srcRegion, srcWidth, 0,
+                                                             srcBuffer, &srcRegion, srcWidth, 0,
                                                              useSyncCmdQ ? nullptr : event,
                                                              0, nullptr));
 
@@ -241,7 +241,7 @@ void testAppendGpuKernel(ze_context_handle_t &context, ze_device_handle_t &devic
     void *dstBuffer = nullptr;
 
     std::string buildLog;
-    auto moduleBinary = compileToSpirV(const_cast<const char *>(memcpyBytesTestKernelSrc), "", buildLog);
+    auto moduleBinary = compileToSpirV(memcpyBytesTestKernelSrc, "", buildLog);
     if (buildLog.size() > 0) {
         std::cout << "Build log " << buildLog;
     }

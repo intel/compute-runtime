@@ -607,7 +607,7 @@ struct ModuleSpecConstantsFixture : public DeviceFixture {
         ze_module_program_exp_desc_t staticLinkModuleDesc = {ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC};
         std::vector<const uint8_t *> inputSpirVs;
         std::vector<size_t> inputSizes;
-        std::vector<ze_module_constants_t *> specConstantsArray;
+        std::vector<const ze_module_constants_t *> specConstantsArray;
         combinedModuleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
         combinedModuleDesc.pNext = &staticLinkModuleDesc;
 
@@ -632,7 +632,7 @@ struct ModuleSpecConstantsFixture : public DeviceFixture {
         staticLinkModuleDesc.count = 2;
         staticLinkModuleDesc.inputSizes = inputSizes.data();
         staticLinkModuleDesc.pInputModules = inputSpirVs.data();
-        staticLinkModuleDesc.pConstants = const_cast<const ze_module_constants_t **>(specConstantsArray.data());
+        staticLinkModuleDesc.pConstants = specConstantsArray.data();
 
         auto module = new Module(device, nullptr, ModuleType::User);
         module->translationUnit.reset(mockTranslationUnit);
@@ -786,7 +786,7 @@ TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenCompiler
     ze_module_program_exp_desc_t staticLinkModuleDesc = {ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC};
     std::vector<const uint8_t *> inputSpirVs;
     std::vector<size_t> inputSizes;
-    std::vector<ze_module_constants_t *> specConstantsArray;
+    std::vector<const ze_module_constants_t *> specConstantsArray;
     combinedModuleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
     combinedModuleDesc.pNext = &staticLinkModuleDesc;
 
@@ -811,7 +811,7 @@ TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenCompiler
     staticLinkModuleDesc.count = 2;
     staticLinkModuleDesc.inputSizes = inputSizes.data();
     staticLinkModuleDesc.pInputModules = inputSpirVs.data();
-    staticLinkModuleDesc.pConstants = const_cast<const ze_module_constants_t **>(specConstantsArray.data());
+    staticLinkModuleDesc.pConstants = specConstantsArray.data();
 
     auto module = new Module(device, nullptr, ModuleType::User);
     module->translationUnit.reset(mockTranslationUnit);
@@ -931,13 +931,13 @@ struct ModuleStaticLinkFixture : public DeviceFixture {
 
         setupExpProgramDesc(ZE_MODULE_FORMAT_IL_SPIRV, testMultiple);
 
-        std::vector<char *> buildFlags;
+        std::vector<const char *> buildFlags;
         std::string module1BuildFlags("-ze-opt-disable");
         std::string module2BuildFlags("-ze-opt-greater-than-4GB-buffer-required");
-        buildFlags.push_back(const_cast<char *>(module1BuildFlags.c_str()));
-        buildFlags.push_back(const_cast<char *>(module2BuildFlags.c_str()));
+        buildFlags.push_back(module1BuildFlags.c_str());
+        buildFlags.push_back(module2BuildFlags.c_str());
 
-        staticLinkModuleDesc.pBuildFlags = const_cast<const char **>(buildFlags.data());
+        staticLinkModuleDesc.pBuildFlags = buildFlags.data();
 
         auto module = new Module(device, nullptr, ModuleType::User);
         module->translationUnit.reset(mockTranslationUnit);
@@ -957,11 +957,11 @@ struct ModuleStaticLinkFixture : public DeviceFixture {
 
         setupExpProgramDesc(ZE_MODULE_FORMAT_IL_SPIRV, testSingle);
 
-        std::vector<char *> buildFlags;
+        std::vector<const char *> buildFlags;
         std::string module1BuildFlags("-ze-opt-disable");
-        buildFlags.push_back(const_cast<char *>(module1BuildFlags.c_str()));
+        buildFlags.push_back(module1BuildFlags.c_str());
 
-        staticLinkModuleDesc.pBuildFlags = const_cast<const char **>(buildFlags.data());
+        staticLinkModuleDesc.pBuildFlags = buildFlags.data();
 
         auto module = new Module(device, nullptr, ModuleType::User);
         module->translationUnit.reset(mockTranslationUnit);

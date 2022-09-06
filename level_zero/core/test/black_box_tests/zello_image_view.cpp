@@ -84,7 +84,7 @@ void testAppendImageViewNV12Copy(ze_context_handle_t &context, ze_device_handle_
     ze_image_handle_t srcImg;
 
     SUCCESS_OR_TERMINATE(
-        zeImageCreate(context, device, const_cast<const ze_image_desc_t *>(&srcImgDesc), &srcImg));
+        zeImageCreate(context, device, &srcImgDesc, &srcImg));
 
     // create image_veiw for Y plane
     ze_image_view_planar_exp_desc_t planeYdesc = {};
@@ -329,7 +329,7 @@ void testAppendImageViewRGBPCopy(ze_context_handle_t &context, ze_device_handle_
     ze_image_handle_t srcImg;
 
     SUCCESS_OR_TERMINATE(
-        zeImageCreate(context, device, const_cast<const ze_image_desc_t *>(&srcImgDesc), &srcImg));
+        zeImageCreate(context, device, &srcImgDesc, &srcImg));
 
     // create image_veiw for Y plane
     ze_image_view_planar_exp_desc_t planeYdesc = {};

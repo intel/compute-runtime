@@ -521,7 +521,7 @@ Device *Device::getNearestGenericSubDevice(uint32_t deviceId) {
     }
 
     if (subdevices.empty() || !hasRootCsr()) {
-        return const_cast<Device *>(this);
+        return this;
     }
     UNRECOVERABLE_IF(deviceId >= subdevices.size());
     return subdevices[deviceId];

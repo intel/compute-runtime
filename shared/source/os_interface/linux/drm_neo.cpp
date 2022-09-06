@@ -1034,7 +1034,7 @@ bool Drm::queryEngineInfo(bool isSysmanEnabled) {
 
     memInfo->assignRegionsFromDistances(distanceInfos);
 
-    auto &multiTileArchInfo = const_cast<GT_MULTI_TILE_ARCH_INFO &>(hwInfo->gtSystemInfo.MultiTileArchInfo);
+    auto &multiTileArchInfo = hwInfo->gtSystemInfo.MultiTileArchInfo;
     multiTileArchInfo.IsValid = true;
     multiTileArchInfo.TileCount = tileCount;
     multiTileArchInfo.TileMask = static_cast<uint8_t>(maxNBitValue(tileCount));

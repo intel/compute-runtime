@@ -251,7 +251,7 @@ void testRegionCopyOf2DSharedMem(ze_context_handle_t &context, ze_device_handle_
 
     // Perform the copy
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopyRegion(cmdList, dstBuffer, &dstRegion, dstWidth, 0,
-                                                             const_cast<const void *>(srcBuffer), &srcRegion, srcWidth, 0,
+                                                             srcBuffer, &srcRegion, srcWidth, 0,
                                                              nullptr, 0, nullptr));
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
@@ -501,7 +501,7 @@ void testRegionCopyOf3DSharedMem(ze_context_handle_t &context, ze_device_handle_
 
     // Perform the copy
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopyRegion(cmdList, dstBuffer, &dstRegion, dstWidth, (dstWidth * dstHeight),
-                                                             const_cast<const void *>(srcBuffer), &srcRegion, srcWidth, (srcWidth * srcHeight),
+                                                             srcBuffer, &srcRegion, srcWidth, (srcWidth * srcHeight),
                                                              nullptr, 0, nullptr));
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));

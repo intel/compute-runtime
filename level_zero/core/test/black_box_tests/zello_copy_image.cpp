@@ -54,7 +54,7 @@ void testAppendImageCopy(ze_context_handle_t &context, ze_device_handle_t &devic
     ze_image_region_t srcRegion = {0, 0, 0, width, height, depth};
 
     SUCCESS_OR_TERMINATE(
-        zeImageCreate(context, device, const_cast<const ze_image_desc_t *>(&srcImgDesc), &srcImg));
+        zeImageCreate(context, device, &srcImgDesc, &srcImg));
 
     ze_image_desc_t dstImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
                                   nullptr,
@@ -72,7 +72,7 @@ void testAppendImageCopy(ze_context_handle_t &context, ze_device_handle_t &devic
     ze_image_region_t dstRegion = {0, 0, 0, width, height, depth};
 
     SUCCESS_OR_TERMINATE(
-        zeImageCreate(context, device, const_cast<const ze_image_desc_t *>(&dstImgDesc), &dstImg));
+        zeImageCreate(context, device, &dstImgDesc, &dstImg));
 
     uint8_t *srcBuffer = new uint8_t[size];
     uint8_t *dstBuffer = new uint8_t[size];

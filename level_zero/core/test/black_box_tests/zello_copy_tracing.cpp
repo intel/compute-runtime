@@ -592,7 +592,7 @@ void testAppendMemoryCopy2(ze_context_handle_t &context, ze_device_handle_t &dev
 
     // Perform the copy
     SUCCESS_OR_TERMINATE(cmdListDdiTable.pfnAppendMemoryCopyRegion(cmdList, dstBuffer, &dstRegion, dstWidth, 0,
-                                                                   const_cast<const void *>(srcBuffer), &srcRegion, srcWidth, 0,
+                                                                   srcBuffer, &srcRegion, srcWidth, 0,
                                                                    nullptr, 0, nullptr));
 
     SUCCESS_OR_TERMINATE(cmdListDdiTable.pfnClose(cmdList));
