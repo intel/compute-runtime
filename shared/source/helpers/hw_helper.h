@@ -135,7 +135,6 @@ class HwHelper {
     virtual bool isEngineTypeRemappingToHwSpecificRequired() const = 0;
 
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
-    static uint32_t getCopyEnginesCount(const HardwareInfo &hwInfo);
 
     virtual bool isSipKernelAsHexadecimalArrayPreferred() const = 0;
     virtual void setSipKernelData(uint32_t *&sipKernelBinary, size_t &kernelBinarySize) const = 0;
