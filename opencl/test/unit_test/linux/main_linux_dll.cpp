@@ -895,10 +895,6 @@ TEST(CommandQueueTest, whenCheckEngineTimestampWaitEnabledThenReturnsTrue) {
     EXPECT_TRUE(CommandQueue::isTimestampWaitEnabled());
 }
 
-TEST(DeviceTest, whenCheckBlitSplitEnabledThenReturnsTrue) {
-    EXPECT_TRUE(Device::isBlitSplitEnabled());
-}
-
 TEST(PlatformsDestructor, whenGlobalPlatformsDestructorIsCalledThenGlobalPlatformsAreDestroyed) {
     EXPECT_NE(nullptr, platformsImpl);
     platformsDestructor();
