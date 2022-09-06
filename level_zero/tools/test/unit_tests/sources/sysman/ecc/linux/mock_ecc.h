@@ -18,15 +18,10 @@ template <>
 struct Mock<EccFwInterface> : public EccFwInterface {
     ze_result_t mockFwGetEccConfigResult = ZE_RESULT_SUCCESS;
     ze_result_t mockFwSetEccConfigResult = ZE_RESULT_SUCCESS;
-    ze_result_t mockFwDeviceInit = ZE_RESULT_SUCCESS;
 
     ze_bool_t mockSetConfig = true;
     uint8_t mockCurrentState = 0;
     uint8_t mockPendingState = 0;
-
-    ze_result_t fwDeviceInit() override {
-        return mockFwDeviceInit;
-    }
 
     ze_result_t fwGetEccConfig(uint8_t *currentState, uint8_t *pendingState) override {
         if (mockFwGetEccConfigResult != ZE_RESULT_SUCCESS) {
@@ -59,6 +54,7 @@ struct Mock<EccFwInterface> : public EccFwInterface {
     ADDMETHOD_NOBASE(fwIfrApplied, ze_result_t, ZE_RESULT_SUCCESS, (bool &ifrStatus));
     ADDMETHOD_NOBASE(fwSupportedDiagTests, ze_result_t, ZE_RESULT_SUCCESS, (std::vector<std::string> & supportedDiagTests));
     ADDMETHOD_NOBASE(fwRunDiagTests, ze_result_t, ZE_RESULT_SUCCESS, (std::string & osDiagType, zes_diag_result_t *pResult));
+    ADDMETHOD_NOBASE(fwDeviceInit, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(fwGetMemoryErrorCount, ze_result_t, ZE_RESULT_SUCCESS, (zes_ras_error_type_t category, uint32_t subDeviceCount, uint32_t subDeviceId, uint64_t &count));
     ADDMETHOD_NOBASE_VOIDRETURN(getDeviceSupportedFwTypes, (std::vector<std::string> & fwTypes));
 

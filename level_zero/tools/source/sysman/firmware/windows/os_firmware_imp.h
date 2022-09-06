@@ -14,7 +14,6 @@ namespace L0 {
 class FirmwareUtil;
 class WddmFirmwareImp : public OsFirmware {
   public:
-    bool isFirmwareSupported(void) override;
     void osGetFwProperties(zes_firmware_properties_t *pProperties) override;
     ze_result_t osFirmwareFlash(void *pImage, uint32_t size) override;
     ze_result_t getFirmwareVersion(std::string fwType, zes_firmware_properties_t *pProperties);
@@ -24,7 +23,6 @@ class WddmFirmwareImp : public OsFirmware {
 
   protected:
     FirmwareUtil *pFwInterface = nullptr;
-    bool isFWInitialized = false;
     std::string osFwType;
 };
 

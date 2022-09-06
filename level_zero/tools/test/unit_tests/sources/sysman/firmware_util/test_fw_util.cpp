@@ -17,7 +17,8 @@ namespace L0 {
 namespace ult {
 
 static uint32_t mockFwUtilDeviceCloseCallCount = 0;
-bool MockOsLibrary::mockLoad = true;
+bool MockFwUtilOsLibrary::mockLoad = true;
+bool MockFwUtilOsLibrary::getNonNullProcAddr = false;
 
 TEST(FwUtilDeleteTest, GivenLibraryWasNotSetWhenFirmwareUtilInterfaceIsDeletedThenLibraryFunctionIsNotAccessed) {
 
@@ -53,20 +54,32 @@ TEST(FwUtilDeleteTest, GivenLibraryWasSetWhenFirmwareUtilInterfaceIsDeletedThenL
 
     FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp(0, 0, 0, 0);
     // Prepare dummy OsLibrary for library, since no access is expected
-    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(new MockOsLibrary());
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(new MockFwUtilOsLibrary());
     delete pFwUtilImp;
     EXPECT_EQ(mockFwUtilDeviceCloseCallCount, 1u);
 }
 
 TEST(FwUtilTest, GivenLibraryWasSetWhenCreatingFirmwareUtilInterfaceAndGetProcAddressFailsThenFirmwareUtilInterfaceIsNotCreated) {
-    FirmwareUtilImp::osLibraryLoadFunction = L0::ult::MockOsLibrary::load;
+    FirmwareUtilImp::osLibraryLoadFunction = L0::ult::MockFwUtilOsLibrary::load;
+    FirmwareUtil *pFwUtil = FirmwareUtil::create(0, 0, 0, 0);
+    EXPECT_EQ(pFwUtil, nullptr);
+}
+
+TEST(FwUtilTest, GivenLibraryWasSetWhenCreatingFirmwareUtilInterfaceAndIgscDeviceIterCreateFailsThenFirmwareUtilInterfaceIsNotCreated) {
+
+    if (!sysmanUltsEnable) {
+        GTEST_SKIP();
+    }
+
+    L0::ult::MockFwUtilOsLibrary::getNonNullProcAddr = false;
+    FirmwareUtilImp::osLibraryLoadFunction = L0::ult::MockFwUtilOsLibrary::load;
     FirmwareUtil *pFwUtil = FirmwareUtil::create(0, 0, 0, 0);
     EXPECT_EQ(pFwUtil, nullptr);
 }
 
 TEST(FwUtilTest, GivenLibraryWasNotSetWhenCreatingFirmwareUtilInterfaceThenFirmwareUtilInterfaceIsNotCreated) {
-    L0::ult::MockOsLibrary::mockLoad = false;
-    FirmwareUtilImp::osLibraryLoadFunction = L0::ult::MockOsLibrary::load;
+    L0::ult::MockFwUtilOsLibrary::mockLoad = false;
+    FirmwareUtilImp::osLibraryLoadFunction = L0::ult::MockFwUtilOsLibrary::load;
     FirmwareUtil *pFwUtil = FirmwareUtil::create(0, 0, 0, 0);
     EXPECT_EQ(pFwUtil, nullptr);
 }

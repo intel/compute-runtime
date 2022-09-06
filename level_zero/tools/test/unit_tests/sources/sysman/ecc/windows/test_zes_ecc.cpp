@@ -79,22 +79,6 @@ TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsAbsentWhenCallingEcc
     delete tempEccImp;
 }
 
-TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwDeviceInitFailsThenVerifyApiCallReturnFailure) {
-    ze_bool_t eccConfigurable = true;
-    ze_bool_t eccAvailable = true;
-    pMockFwInterface->mockFwDeviceInit = ZE_RESULT_ERROR_UNKNOWN;
-
-    EccImp *tempEccImp = new EccImp(pOsSysman);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, tempEccImp->deviceEccAvailable(&eccAvailable));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, tempEccImp->deviceEccConfigurable(&eccConfigurable));
-
-    zes_device_ecc_desc_t newState = {};
-    zes_device_ecc_properties_t props = {};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, tempEccImp->setEccState(&newState, &props));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, tempEccImp->getEccState(&props));
-    delete tempEccImp;
-}
-
 TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwGetEccConfigFailsWhenCallingzesDeviceEccConfigurableAndAvailableThenVerifyApiCallReturnsFailure) {
     ze_bool_t eccConfigurable = true;
     ze_bool_t eccAvailable = true;

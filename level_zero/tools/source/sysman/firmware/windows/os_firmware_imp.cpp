@@ -32,14 +32,6 @@ ze_result_t WddmFirmwareImp::osFirmwareFlash(void *pImage, uint32_t size) {
     return pFwInterface->flashFirmware(osFwType, pImage, size);
 }
 
-bool WddmFirmwareImp::isFirmwareSupported(void) {
-    if (pFwInterface != nullptr) {
-        isFWInitialized = ((ZE_RESULT_SUCCESS == pFwInterface->fwDeviceInit()) ? true : false);
-        return this->isFWInitialized;
-    }
-    return false;
-}
-
 WddmFirmwareImp::WddmFirmwareImp(OsSysman *pOsSysman, const std::string &fwType) : osFwType(fwType) {
     WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     pFwInterface = pWddmSysmanImp->getFwUtilInterface();

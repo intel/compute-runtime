@@ -26,9 +26,7 @@ void OsDiagnostics::getSupportedDiagTestsFromFW(void *pOsSysman, std::vector<std
     if (IGFX_PVC == SysmanDeviceImp::getProductFamily(pLinuxSysmanImp->getDeviceHandle())) {
         FirmwareUtil *pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
         if (pFwInterface != nullptr) {
-            if (ZE_RESULT_SUCCESS == static_cast<FirmwareUtil *>(pFwInterface)->fwDeviceInit()) {
-                static_cast<FirmwareUtil *>(pFwInterface)->fwSupportedDiagTests(supportedDiagTests);
-            }
+            static_cast<FirmwareUtil *>(pFwInterface)->fwSupportedDiagTests(supportedDiagTests);
         }
     }
 }

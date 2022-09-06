@@ -23,11 +23,7 @@ void FirmwareHandleContext::releaseFwHandles() {
 }
 void FirmwareHandleContext::createHandle(const std::string &fwType) {
     Firmware *pFirmware = new FirmwareImp(pOsSysman, fwType);
-    if (pFirmware->isFirmwareEnabled == true) {
-        handleList.push_back(pFirmware);
-    } else {
-        delete pFirmware;
-    }
+    handleList.push_back(pFirmware);
 }
 
 void FirmwareHandleContext::init() {

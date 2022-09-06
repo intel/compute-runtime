@@ -65,7 +65,7 @@ TEST(LinuxFwStatusExtTest, GivenIFRWasSetWhenFirmwareUtilChecksIFRThenIFRStatusI
 
     FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp(0, 0, 0, 0);
     bool mockStatus = false;
-    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(new MockOsLibrary());
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(new MockFwUtilOsLibrary());
     auto ret = pFwUtilImp->fwIfrApplied(mockStatus);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     EXPECT_TRUE(mockStatus);
@@ -86,7 +86,7 @@ TEST(LinuxFwStatusExtTest, GivenStatusCallFailsWhenFirmwareUtilChecksIFRThenStat
 
     FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp(0, 0, 0, 0);
     bool mockStatus = false;
-    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(new MockOsLibrary());
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(new MockFwUtilOsLibrary());
     auto ret = pFwUtilImp->fwIfrApplied(mockStatus);
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, ret);
     EXPECT_FALSE(mockStatus);
@@ -118,7 +118,7 @@ TEST(LinuxFwRunDiagTest, GivenValidSupportedDiagnosticsTestsParamWhenFirmwareUti
 
     FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp(0, 0, 0, 0);
     std::vector<std::string> supportedDiagTests;
-    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(new MockOsLibrary());
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(new MockFwUtilOsLibrary());
     auto ret = pFwUtilImp->fwSupportedDiagTests(supportedDiagTests);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     EXPECT_STREQ("ARRAY_AND_SCAN", supportedDiagTests.at(0).c_str());
@@ -263,8 +263,7 @@ TEST(LinuxFwEccTest, GivenGetProcAddrCallFailsWhenFirmwareUtilChecksEccGetAndSet
     uint8_t device = 0;
     uint8_t function = 0;
     FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp(domain, bus, device, function);
-    auto mockLib = new MockOsLibrary();
-    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(mockLib);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(new MockFwUtilOsLibrary());
     uint8_t currentState = 0;
     uint8_t pendingState = 0;
     uint8_t newState = 0;

@@ -279,7 +279,9 @@ void LinuxSysmanImp::releaseDeviceResources() {
 void LinuxSysmanImp::reInitSysmanDeviceResources() {
     getSysmanDeviceImp()->updateSubDeviceHandlesLocally();
     createPmtHandles();
-    createFwUtilInterface();
+    if (!diagnosticsReset) {
+        createFwUtilInterface();
+    }
     if (getSysmanDeviceImp()->pRasHandleContext->isRasInitDone()) {
         getSysmanDeviceImp()->pRasHandleContext->init(getSysmanDeviceImp()->deviceHandles);
     }

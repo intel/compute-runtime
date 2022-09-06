@@ -26,11 +26,6 @@ ze_result_t EccImp::getEccFwUtilInterface(FirmwareUtil *&pFwUtil) {
     if (pFwUtil == nullptr) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    ze_result_t result = pFwUtil->fwDeviceInit();
-    if (result != ZE_RESULT_SUCCESS) {
-        pFwUtil = nullptr;
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
     return ZE_RESULT_SUCCESS;
 }
 

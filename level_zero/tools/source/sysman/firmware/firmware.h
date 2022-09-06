@@ -31,7 +31,6 @@ class Firmware : _zes_firmware_handle_t {
     static Firmware *fromHandle(zes_firmware_handle_t handle) {
         return static_cast<Firmware *>(handle);
     }
-    bool isFirmwareEnabled = false;
 };
 
 struct FirmwareHandleContext {

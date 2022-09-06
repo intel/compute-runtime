@@ -167,15 +167,6 @@ TEST_F(ZesDiagnosticsFixture, GivenComponentCountZeroWhenCallingzesDeviceEnumDia
     }
 }
 
-TEST_F(ZesDiagnosticsFixture, GivenFailedFirmwareInitializationWhenInitializingDiagnosticsContextThenexpectNoHandles) {
-    pMockDiagFwInterface->mockFwInitResult = ZE_RESULT_ERROR_UNINITIALIZED;
-    clearAndReinitHandles();
-    pSysmanDeviceImp->pDiagnosticsHandleContext->init();
-
-    EXPECT_EQ(0u, pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.size());
-    pMockDiagFwInterface->setFwInitRetVal(ZE_RESULT_SUCCESS);
-}
-
 TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGettingDiagnosticsPropertiesThenCallSucceeds) {
 
     clearAndReinitHandles();
