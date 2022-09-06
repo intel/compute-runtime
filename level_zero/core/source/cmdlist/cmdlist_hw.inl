@@ -1463,7 +1463,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryPrefetch(const voi
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendUnalignedFillKernel(bool isStateless, uint32_t unalignedSize, AlignedAllocationData dstAllocation, const void *pattern, Event *signalEvent, CmdListKernelLaunchParams launchParams) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendUnalignedFillKernel(bool isStateless, uint32_t unalignedSize, const AlignedAllocationData &dstAllocation, const void *pattern, Event *signalEvent, const CmdListKernelLaunchParams &launchParams) {
     Kernel *builtinFunction = nullptr;
     if (isStateless) {
         builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferImmediateLeftOverStateless);

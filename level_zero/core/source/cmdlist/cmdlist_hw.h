@@ -231,10 +231,10 @@ struct CommandListCoreFamily : CommandListImp {
 
     ze_result_t appendUnalignedFillKernel(bool isStateless,
                                           uint32_t unalignedSize,
-                                          AlignedAllocationData dstAllocation,
+                                          const AlignedAllocationData &dstAllocation,
                                           const void *pattern,
                                           Event *signalEvent,
-                                          CmdListKernelLaunchParams launchParams);
+                                          const CmdListKernelLaunchParams &launchParams);
 
     ze_result_t prepareIndirectParams(const ze_group_count_t *threadGroupDimensions);
     void updateStreamProperties(Kernel &kernel, bool isMultiOsContextCapable, bool isCooperative);
