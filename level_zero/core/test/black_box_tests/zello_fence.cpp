@@ -54,8 +54,8 @@ void createModule(ze_context_handle_t &context, ze_module_handle_t &module, ze_d
 }
 
 void createKernel(ze_module_handle_t &module, ze_kernel_handle_t &kernel,
-                  uint32_t numThreads, uint32_t sizex, uint32_t sizey,
-                  uint32_t sizez) {
+                  uint32_t numThreads, uint32_t &sizeX, uint32_t &sizeY,
+                  uint32_t &sizeZ) {
 
     ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
     kernelDesc.pKernelName = "increment_by_one";
@@ -64,9 +64,9 @@ void createKernel(ze_module_handle_t &module, ze_kernel_handle_t &kernel,
     SUCCESS_OR_TERMINATE(zeKernelGetProperties(kernel, &kernProps));
     printKernelProperties(kernProps, kernelDesc.pKernelName);
 
-    uint32_t groupSizeX = sizex;
-    uint32_t groupSizeY = sizey;
-    uint32_t groupSizeZ = sizey;
+    uint32_t groupSizeX = sizeX;
+    uint32_t groupSizeY = sizeY;
+    uint32_t groupSizeZ = sizeZ;
     SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(kernel, numThreads, 1U, 1U, &groupSizeX, &groupSizeY, &groupSizeZ));
     SUCCESS_OR_TERMINATE_BOOL(numThreads % groupSizeX == 0);
     if (verbose) {
@@ -74,6 +74,10 @@ void createKernel(ze_module_handle_t &module, ze_kernel_handle_t &kernel,
                   << ")" << std::endl;
     }
     SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
+
+    sizeX = groupSizeX;
+    sizeY = groupSizeY;
+    sizeZ = groupSizeZ;
 }
 
 bool testFence(ze_context_handle_t &context, ze_device_handle_t &device) {
