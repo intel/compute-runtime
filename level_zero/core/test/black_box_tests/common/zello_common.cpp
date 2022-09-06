@@ -8,6 +8,7 @@
 #include "zello_common.h"
 
 #include <bitset>
+#include <iomanip>
 
 bool verbose;
 
@@ -326,13 +327,18 @@ void teardown(ze_context_handle_t context, ze_command_queue_handle_t cmdQueue) {
 }
 
 void printDeviceProperties(const ze_device_properties_t &props) {
+    auto fillChar = std::cout.fill();
+    auto widthSize = static_cast<int>(std::cout.width());
+
     if (verbose) {
         std::cout << "Device : "
                   << "\n"
                   << " * name : " << props.name << "\n"
                   << " * type : " << ((props.type == ZE_DEVICE_TYPE_GPU) ? "GPU" : "FPGA") << "\n"
-                  << " * vendorId : " << std::hex << props.vendorId << "\n"
-                  << " * deviceId : " << std::hex << props.deviceId << "\n"
+                  << std::setw(4) << std::setfill('0')
+                  << " * vendorId : 0x" << std::hex << props.vendorId << "\n"
+                  << " * deviceId : 0x" << std::hex << props.deviceId << "\n"
+                  << std::setw(widthSize) << std::setfill(fillChar)
                   << " * subdeviceId : " << std::dec << props.subdeviceId << "\n"
                   << " * coreClockRate : " << props.coreClockRate << "\n"
                   << " * maxMemAllocSize : " << props.maxMemAllocSize << "\n"
@@ -350,8 +356,10 @@ void printDeviceProperties(const ze_device_properties_t &props) {
     } else {
         std::cout << "Device : \n"
                   << " * name : " << props.name << "\n"
-                  << " * vendorId : " << std::hex << props.vendorId << "\n"
-                  << " * deviceId : " << std::hex << props.deviceId << std::dec << "\n";
+                  << std::setw(4) << std::setfill('0')
+                  << " * vendorId : 0x" << std::hex << props.vendorId << "\n"
+                  << " * deviceId : 0x" << std::hex << props.deviceId << std::dec << "\n"
+                  << std::setw(widthSize) << std::setfill(fillChar);
     }
 }
 
