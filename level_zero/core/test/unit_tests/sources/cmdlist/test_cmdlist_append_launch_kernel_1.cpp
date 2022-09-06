@@ -152,6 +152,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
         device->getNEODevice(),
         kernel.get(),
         threadGroupDimensions,
+        nullptr,
         PreemptionMode::MidBatch,
         0,
         false,

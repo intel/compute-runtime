@@ -239,6 +239,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         neoDevice,                                                // device
         kernel,                                                   // dispatchInterface
         reinterpret_cast<const void *>(threadGroupDimensions),    // threadGroupDimensions
+        &additionalCommands,                                      // additionalCommands
         commandListPreemptionMode,                                // preemptionMode
         this->partitionCount,                                     // partitionCount
         launchParams.isIndirect,                                  // isIndirect
@@ -251,8 +252,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         isHostSignalScopeEvent,                                   // isHostScopeSignalEvent
         isKernelUsingSystemAllocation,                            // isKernelUsingSystemAllocation
         cmdListType == CommandListType::TYPE_IMMEDIATE,           // isKernelDispatchedFromImmediateCmdList
-        engineGroupType == NEO::EngineGroupType::RenderCompute,   // isRcs
-        &additionalCommands                                       // additionalCommands
+        engineGroupType == NEO::EngineGroupType::RenderCompute    // isRcs
     };
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs, getLogicalStateHelper());
     this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;

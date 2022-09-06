@@ -42,6 +42,7 @@ class CommandEncodeStatesFixture : public DeviceFixture {
             device,                   // device
             dispatchInterface,        // dispatchInterface
             threadGroupDimensions,    // threadGroupDimensions
+            nullptr,                  // additionalCommands
             PreemptionMode::Disabled, // preemptionMode
             1,                        // partitionCount
             false,                    // isIndirect

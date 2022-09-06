@@ -37,6 +37,7 @@ struct EncodeDispatchKernelArgs {
     Device *device = nullptr;
     DispatchKernelEncoderI *dispatchInterface = nullptr;
     const void *threadGroupDimensions = nullptr;
+    std::list<void *> *additionalCommands = nullptr;
     PreemptionMode preemptionMode = PreemptionMode::Initial;
     uint32_t partitionCount = 0u;
     bool isIndirect = false;
@@ -50,7 +51,6 @@ struct EncodeDispatchKernelArgs {
     bool isKernelUsingSystemAllocation = false;
     bool isKernelDispatchedFromImmediateCmdList = false;
     bool isRcs = false;
-    std::list<void *> *additionalCommands = nullptr;
 };
 
 struct EncodeWalkerArgs {
