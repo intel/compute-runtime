@@ -8,6 +8,7 @@
 #include "opencl/source/command_queue/command_queue.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/engine_node_helper.h"
@@ -60,7 +61,7 @@ CommandQueue *CommandQueue::create(Context *context,
 }
 
 CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_properties *properties, bool internalUsage)
-    : context(context), device(device) {
+    : context(context), device(device), isInternalUsage(internalUsage) {
     if (context) {
         context->incRefInternal();
     }
@@ -90,6 +91,10 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
         if (!deferCmdQBcsInitialization) {
             this->constructBcsEngine(internalUsage);
         }
+
+        if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getDevice().getL0Debugger()) {
+            device->getDevice().getL0Debugger()->notifyCommandQueueCreated(&device->getDevice());
+        }
     }
 
     storeProperties(properties);
@@ -114,6 +119,10 @@ CommandQueue::~CommandQueue() {
         }
 
         this->releaseMainCopyEngine();
+
+        if (NEO::Debugger::isDebugEnabled(isInternalUsage) && device->getDevice().getL0Debugger()) {
+            device->getDevice().getL0Debugger()->notifyCommandQueueDestroyed(&device->getDevice());
+        }
     }
 
     timestampPacketContainer.reset();
@@ -159,11 +168,10 @@ void CommandQueue::initializeGpgpu() const {
 
 void CommandQueue::initializeGpgpuInternals() const {
     auto &hwInfo = device->getDevice().getHardwareInfo();
-    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
     if (device->getDevice().getDebugger() && !this->gpgpuEngine->commandStreamReceiver->getDebugSurfaceAllocation()) {
-        auto maxDbgSurfaceSize = hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
+        auto maxDbgSurfaceSize = NEO::SipKernel::getSipKernel(device->getDevice()).getStateSaveAreaSize(&device->getDevice());
         auto debugSurface = this->gpgpuEngine->commandStreamReceiver->allocateDebugSurface(maxDbgSurfaceSize);
         memset(debugSurface->getUnderlyingBuffer(), 0, debugSurface->getUnderlyingBufferSize());
 

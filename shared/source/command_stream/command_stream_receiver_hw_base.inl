@@ -537,7 +537,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         makeResident(*SipKernel::getSipKernel(device).getSipAllocation());
     }
 
-    if (sourceLevelDebuggerActive && debugSurface) {
+    if (debuggingEnabled && debugSurface) {
         makeResident(*debugSurface);
     }
 

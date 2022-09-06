@@ -416,7 +416,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     std::array<CopyEngineState, bcsInfoMaskSize> bcsStates = {};
 
     bool perfCountersEnabled = false;
-
+    bool isInternalUsage = false;
     bool isCopyOnly = false;
     bool bcsAllowed = false;
     bool bcsInitialized = false;

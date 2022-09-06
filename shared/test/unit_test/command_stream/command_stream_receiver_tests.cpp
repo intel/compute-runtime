@@ -404,6 +404,11 @@ TEST_F(CommandStreamReceiverTest, GivenNoParamatersWhenMakingResidentThenResiden
     EXPECT_EQ(0u, residencyAllocations.size());
 }
 
+TEST_F(CommandStreamReceiverTest, WhenDebugSurfaceIsAllocatedThenCorrectTypeIsSet) {
+    auto allocation = commandStreamReceiver->allocateDebugSurface(1024);
+    EXPECT_EQ(AllocationType::DEBUG_CONTEXT_SAVE_AREA, allocation->getAllocationType());
+}
+
 TEST_F(CommandStreamReceiverTest, givenForced32BitAddressingWhenDebugSurfaceIsAllocatedThenRegularAllocationIsReturned) {
     auto *memoryManager = commandStreamReceiver->getMemoryManager();
     memoryManager->setForce32BitAllocations(true);
