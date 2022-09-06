@@ -7,6 +7,7 @@
 
 #include "level_zero/core/source/module/module_imp.h"
 
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/compiler_interface/linker.h"
@@ -35,7 +36,6 @@
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/module/module_build_log.h"
 
-#include "compiler_options.h"
 #include "program_debug_data.h"
 
 #include <list>
@@ -51,6 +51,7 @@ NEO::ConstStringRef greaterThan4GbRequired = "-ze-opt-greater-than-4GB-buffer-re
 NEO::ConstStringRef hasBufferOffsetArg = "-ze-intel-has-buffer-offset-arg";
 NEO::ConstStringRef debugKernelEnable = "-ze-kernel-debug-enable";
 NEO::ConstStringRef profileFlags = "-zet-profile-flags";
+NEO::ConstStringRef optLargeRegisterFile = "-ze-opt-large-register-file";
 } // namespace BuildOptions
 
 ModuleTranslationUnit::ModuleTranslationUnit(L0::Device *device)
@@ -680,10 +681,10 @@ void ModuleImp::createBuildOptions(const char *pBuildFlags, std::string &apiOpti
         moveBuildOption(apiOptions, apiOptions, NEO::CompilerOptions::optDisable, BuildOptions::optDisable);
         moveBuildOption(internalBuildOptions, apiOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired, BuildOptions::greaterThan4GbRequired);
         moveBuildOption(internalBuildOptions, apiOptions, NEO::CompilerOptions::allowZebin, NEO::CompilerOptions::allowZebin);
+        moveBuildOption(internalBuildOptions, apiOptions, NEO::CompilerOptions::largeGrf, BuildOptions::optLargeRegisterFile);
 
         moveOptLevelOption(apiOptions, apiOptions);
         moveProfileFlagsOption(apiOptions, apiOptions);
-        createBuildExtraOptions(apiOptions, internalBuildOptions);
     }
     if (NEO::ApiSpecificConfig::getBindlessConfiguration()) {
         NEO::CompilerOptions::concatenateAppend(internalBuildOptions, NEO::CompilerOptions::bindlessMode.str());

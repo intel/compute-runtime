@@ -7,6 +7,7 @@
 
 #include "offline_compiler_tests.h"
 
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/compiler_interface/oclc_extensions.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
@@ -23,7 +24,6 @@
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "compiler_options.h"
 #include "environment.h"
 #include "gtest/gtest.h"
 #include "mock/mock_argument_helper.h"

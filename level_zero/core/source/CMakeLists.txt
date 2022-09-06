@@ -83,7 +83,6 @@ set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/module/module.h
     ${CMAKE_CURRENT_SOURCE_DIR}/module/module_build_log.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/module/module_build_log.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/module${BRANCH_DIR_SUFFIX}module_extra_options.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/module/module_imp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/module/module_imp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/printf_handler/printf_handler.cpp

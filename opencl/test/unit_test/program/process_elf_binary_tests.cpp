@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/elf/elf.h"
@@ -22,7 +23,6 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
-#include "compiler_options.h"
 #include "gtest/gtest.h"
 
 #include <cstring>

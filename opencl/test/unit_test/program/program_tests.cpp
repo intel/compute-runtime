@@ -9,6 +9,7 @@
 
 #include "shared/source/ail/ail_configuration.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
@@ -52,7 +53,6 @@
 #include "opencl/test/unit_test/program/program_with_source.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
-#include "compiler_options.h"
 #include "gtest/gtest.h"
 
 #include <map>
@@ -3399,4 +3399,96 @@ TEST_F(ProgramTests, givenValidZebinWithKernelCallingExternalFunctionThenUpdateK
     ASSERT_EQ(2U, program->buildInfos[rootDeviceIndex].kernelInfoArray.size());
     auto &kernelInfo = program->buildInfos[rootDeviceIndex].kernelInfoArray[0];
     EXPECT_EQ(zebin.barrierCount, kernelInfo->kernelDescriptor.kernelAttributes.barrierCount);
+}
+
+TEST(ProgramInternalOptionsTests, givenProgramWhenPossibleInternalOptionsCheckedThenLargeGRFOptionIsPresent) {
+    MockClDevice device{new MockDevice()};
+    MockProgram program(toClDeviceVector(device));
+    auto &optsToExtract = program.internalOptionsToExtract;
+    EXPECT_EQ(1U, std::count(optsToExtract.begin(), optsToExtract.end(), CompilerOptions::largeGrf));
+}
+
+TEST(ProgramInternalOptionsTests, givenProgramWhenPossibleInternalOptionsCheckedThenDefaultGRFOptionIsPresent) {
+    MockClDevice device{new MockDevice()};
+    MockProgram program(toClDeviceVector(device));
+    auto &optsToExtract = program.internalOptionsToExtract;
+    EXPECT_EQ(1U, std::count(optsToExtract.begin(), optsToExtract.end(), CompilerOptions::defaultGrf));
+}
+
+TEST(ProgramInternalOptionsTests, givenProgramWhenPossibleInternalOptionsCheckedThenNumThreadsPerUsIsPresent) {
+    MockClDevice clDevice{new MockDevice()};
+    clDevice.device.deviceInfo.threadsPerEUConfigs = {2U, 3U};
+    MockProgram program(toClDeviceVector(clDevice));
+
+    auto &optionsToExtract = program.internalOptionsToExtract;
+    EXPECT_TRUE(std::find(optionsToExtract.begin(), optionsToExtract.end(), CompilerOptions::numThreadsPerEu) != optionsToExtract.end());
+
+    const char *allowedThreadPerEuCounts[] = {"2", "3"};
+    for (auto allowedThreadPerEuCount : allowedThreadPerEuCounts) {
+        std::string buildOptions = CompilerOptions::concatenate(CompilerOptions::numThreadsPerEu, allowedThreadPerEuCount);
+        std::string expectedOutput = buildOptions;
+        std::string internalOptions;
+        program.extractInternalOptions(buildOptions, internalOptions);
+        EXPECT_EQ(expectedOutput, internalOptions);
+    }
+
+    const char *notAllowedThreadPerEuCounts[] = {"1", "4"};
+    for (auto notAllowedThreadPerEuCount : notAllowedThreadPerEuCounts) {
+        std::string buildOptions = CompilerOptions::concatenate(CompilerOptions::numThreadsPerEu, notAllowedThreadPerEuCount);
+        std::string internalOptions;
+        program.extractInternalOptions(buildOptions, internalOptions);
+        EXPECT_EQ("", internalOptions);
+    }
+}
+
+TEST(ProgramInternalOptionsTests, givenProgramWhenForceLargeGrfCompilationModeIsSetThenBuildOptionIsAdded) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForceLargeGrfCompilationMode.set(true);
+
+    MockClDevice device{new MockDevice()};
+    MockProgram program(toClDeviceVector(device));
+    auto internalOptions = program.getInternalOptions();
+    EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::largeGrf)) << internalOptions;
+    program.applyAdditionalOptions(internalOptions);
+    EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::largeGrf)) << internalOptions;
+
+    size_t internalOptionsSize = internalOptions.size();
+    program.applyAdditionalOptions(internalOptions);
+    EXPECT_EQ(internalOptionsSize, internalOptions.size());
+}
+
+TEST(ProgramInternalOptionsTests, givenProgramWhenForceDefaultGrfCompilationModeIsSetThenBuildOptionIsAdded) {
+    DebugManagerStateRestore stateRestorer;
+    DebugManager.flags.ForceDefaultGrfCompilationMode.set(true);
+
+    MockClDevice device{new MockDevice()};
+    MockProgram program(toClDeviceVector(device));
+    auto internalOptions = program.getInternalOptions();
+    EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::defaultGrf)) << internalOptions;
+    program.applyAdditionalOptions(internalOptions);
+    EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::defaultGrf)) << internalOptions;
+
+    size_t internalOptionsSize = internalOptions.size();
+    program.applyAdditionalOptions(internalOptions);
+    EXPECT_EQ(internalOptionsSize, internalOptions.size());
+}
+
+TEST(ProgramInternalOptionsTests, givenProgramWhenForceDefaultGrfCompilationModeIsSetThenLargeGrfOptionIsRemoved) {
+    DebugManagerStateRestore stateRestorer;
+    DebugManager.flags.ForceDefaultGrfCompilationMode.set(true);
+
+    MockClDevice device{new MockDevice()};
+    MockProgram program(toClDeviceVector(device));
+    auto internalOptions = program.getInternalOptions();
+    CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::largeGrf);
+    EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::defaultGrf)) << internalOptions;
+    EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::largeGrf)) << internalOptions;
+
+    program.applyAdditionalOptions(internalOptions);
+    EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::defaultGrf)) << internalOptions;
+    EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::largeGrf)) << internalOptions;
+
+    size_t internalOptionsSize = internalOptions.size();
+    program.applyAdditionalOptions(internalOptions);
+    EXPECT_EQ(internalOptionsSize, internalOptions.size());
 }

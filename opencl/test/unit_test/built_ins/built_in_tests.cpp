@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -43,7 +44,6 @@
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
-#include "compiler_options.h"
 #include "gtest/gtest.h"
 #include "os_inc.h"
 #include "test_traits_common.h"

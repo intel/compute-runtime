@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
@@ -20,8 +21,6 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/program/program_from_binary.h"
-
-#include "compiler_options.h"
 
 using namespace NEO;
 using namespace ::testing;

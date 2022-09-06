@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/compiler_interface/compiler_options/compiler_options.h"
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
 #include "shared/source/device_binary_format/ar/ar_decoder.h"
 #include "shared/source/device_binary_format/ar/ar_encoder.h"

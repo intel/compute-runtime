@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/compiler_interface/compiler_options/compiler_options.h"
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/gen12lp/hw_cmds_rkl.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"

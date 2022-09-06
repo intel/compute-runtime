@@ -435,6 +435,8 @@ DECLARE_DEBUG_VARIABLE(bool, AllowUnrestrictedSize, false, "Allow allocating mem
 DECLARE_DEBUG_VARIABLE(bool, ForceDefaultThreadArbitrationPolicyIfNotSpecified, false, "When executing kernel without thread arbitration hint specified, ensure the default setting is used")
 DECLARE_DEBUG_VARIABLE(bool, ForceAllResourcesUncached, false, "When set, all memory operations for all resources are forced to UC. This overrides all caching-related debug variables and globally disables all caches")
 DECLARE_DEBUG_VARIABLE(bool, EnableDebuggerMmapMemoryAccess, false, "Mmap used to access memory by debug api, valid only on Linux OS")
+DECLARE_DEBUG_VARIABLE(bool, ForceDefaultGrfCompilationMode, false, "Adds build option -cl-intel-128-GRF-per-thread to force kernel compilation in Default-GRF mode")
+DECLARE_DEBUG_VARIABLE(bool, ForceLargeGrfCompilationMode, false, "Adds build option -cl-intel-256-GRF-per-thread to force kernel compilation in Large-GRF mode")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceOCLVersion, 0, "Force specific OpenCL API version")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceOCL21FeaturesSupport, -1, "-1: default, 0: disable, 1:enable. Force support of OpenCL 2.0 and OpenCL 2.1 API features")
 DECLARE_DEBUG_VARIABLE(int32_t, ForcePreemptionMode, -1, "Keep this variable in sync with PreemptionMode enum. -1 - devices default mode, 1 - disable, 2 - midBatch, 3 - threadGroup, 4 - midThread")

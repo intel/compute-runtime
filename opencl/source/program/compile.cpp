@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/compiler_interface/compiler_interface.h"
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/elf/elf.h"
@@ -19,7 +20,6 @@
 #include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/platform/platform.h"
 
-#include "compiler_options.h"
 #include "program.h"
 
 #include <cstring>

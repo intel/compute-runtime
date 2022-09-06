@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/test/common/device_binary_format/elf/elf_tests_data.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -20,7 +21,6 @@
 #include "opencl/test/unit_test/program/program_from_binary.h"
 #include "opencl/test/unit_test/program/program_tests.h"
 
-#include "compiler_options.h"
 #include "gtest/gtest.h"
 #include "program_debug_data.h"
 

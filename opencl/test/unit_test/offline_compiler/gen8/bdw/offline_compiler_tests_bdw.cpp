@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/compiler_interface/compiler_options/compiler_options.h"
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/gen8/hw_cmds_bdw.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/test_files.h"

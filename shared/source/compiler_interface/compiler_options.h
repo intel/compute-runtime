@@ -38,6 +38,9 @@ constexpr ConstStringRef enableImageSupport = "-D__IMAGE_SUPPORT__=1";
 constexpr ConstStringRef optLevel = "-ze-opt-level=O";
 constexpr ConstStringRef excludeIrFromZebin = "-exclude-ir-from-zebin";
 constexpr ConstStringRef noRecompiledFromIr = "-Wno-recompiled-from-ir";
+constexpr ConstStringRef defaultGrf = "-cl-intel-128-GRF-per-thread";
+constexpr ConstStringRef largeGrf = "-cl-intel-256-GRF-per-thread";
+constexpr ConstStringRef numThreadsPerEu = "-cl-intel-reqd-eu-thread-count";
 
 constexpr size_t nullterminateSize = 1U;
 constexpr size_t spaceSeparatorSize = 1U;

@@ -7,6 +7,7 @@
 
 #include "mock_compilers.h"
 
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_inc_base.h"
@@ -16,7 +17,6 @@
 #include "shared/test/common/mocks/mock_sip.h"
 
 #include "cif/macros/enable.h"
-#include "compiler_options.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
 

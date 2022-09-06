@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/compiler_interface/oclc_extensions.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
@@ -31,8 +32,6 @@
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/platform/platform.h"
-
-#include "compiler_options.h"
 
 #include <sstream>
 
@@ -498,6 +497,48 @@ void Program::prependFilePathToOptions(const std::string &filename) {
         // Add "-s" flag first so it will be ignored by clang in case the options already have this flag set.
         options = std::string("-s ") + filename + " " + options;
     }
+}
+
+void Program::applyAdditionalOptions(std::string &internalOptions) {
+    size_t pos;
+    if (DebugManager.flags.ForceLargeGrfCompilationMode.get()) {
+        pos = internalOptions.find(CompilerOptions::largeGrf.data());
+        if (pos == std::string::npos) {
+            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::largeGrf);
+        }
+    } else if (DebugManager.flags.ForceDefaultGrfCompilationMode.get()) {
+        pos = internalOptions.find(CompilerOptions::defaultGrf.data());
+        if (pos == std::string::npos) {
+            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::defaultGrf.data());
+        }
+        pos = internalOptions.find(CompilerOptions::largeGrf.data());
+        if (pos != std::string::npos) {
+            internalOptions.erase(pos, CompilerOptions::largeGrf.size());
+        }
+    }
+}
+
+const std::vector<ConstStringRef> Program::internalOptionsToExtract = {CompilerOptions::gtpinRera,
+                                                                       CompilerOptions::defaultGrf,
+                                                                       CompilerOptions::largeGrf,
+                                                                       CompilerOptions::greaterThan4gbBuffersRequired,
+                                                                       CompilerOptions::numThreadsPerEu};
+
+bool Program::isFlagOption(ConstStringRef option) {
+    if (option == CompilerOptions::numThreadsPerEu) {
+        return false;
+    }
+    return true;
+}
+
+bool Program::isOptionValueValid(ConstStringRef option, ConstStringRef value) {
+    if (option == CompilerOptions::numThreadsPerEu) {
+        const auto &threadCounts = clDevices[0]->getSharedDeviceInfo().threadsPerEUConfigs;
+        if (std::find(threadCounts.begin(), threadCounts.end(), atoi(value.data())) != threadCounts.end()) {
+            return true;
+        }
+    }
+    return false;
 }
 
 const ClDeviceVector &Program::getDevicesInProgram() const {

@@ -9,7 +9,7 @@
 
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/offline_compiler/source/ocloc_error_code.h"
-#include "shared/source/compiler_interface/compiler_options/compiler_options_base.h"
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/device_binary_format/ar/ar.h"
 #include "shared/source/device_binary_format/ar/ar_decoder.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/ail/ail_configuration.h"
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/constants.h"
@@ -15,8 +16,6 @@
 #include "opencl/source/context/context.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/program.h"
-
-#include "compiler_options.h"
 
 namespace NEO {
 

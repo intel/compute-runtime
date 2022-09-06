@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/file_io.h"
@@ -20,7 +21,6 @@
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
 #include "CL/cl.h"
-#include "compiler_options.h"
 
 #include <type_traits>
 

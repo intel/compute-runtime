@@ -10,6 +10,7 @@
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
 
@@ -23,8 +24,6 @@
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/program/program.h"
-
-#include "compiler_options.h"
 
 #include <cstdint>
 #include <sstream>

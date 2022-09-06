@@ -33,6 +33,8 @@ extern NEO::ConstStringRef greaterThan4GbRequired;
 extern NEO::ConstStringRef hasBufferOffsetArg;
 extern NEO::ConstStringRef debugKernelEnable;
 extern NEO::ConstStringRef profileFlags;
+extern NEO::ConstStringRef optLargeRegisterFile;
+
 } // namespace BuildOptions
 
 struct ModuleTranslationUnit {
@@ -112,7 +114,6 @@ struct ModuleImp : public Module {
     uint32_t getMaxGroupSize() const override { return maxGroupSize; }
 
     void createBuildOptions(const char *pBuildFlags, std::string &buildOptions, std::string &internalBuildOptions);
-    void createBuildExtraOptions(std::string &buildOptions, std::string &internalBuildOptions);
     bool moveOptLevelOption(std::string &dstOptionsSet, std::string &srcOptionSet);
     bool moveProfileFlagsOption(std::string &dstOptionsSet, std::string &srcOptionSet);
     void updateBuildLog(NEO::Device *neoDevice);

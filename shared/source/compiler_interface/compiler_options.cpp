@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "compiler_options_base.h"
+#include "shared/source/compiler_interface/compiler_options.h"
 
 #include <cstring>
 

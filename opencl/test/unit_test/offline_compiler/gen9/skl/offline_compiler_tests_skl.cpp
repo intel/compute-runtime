@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/compiler_interface/compiler_options/compiler_options.h"
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gen9/hw_cmds_skl.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

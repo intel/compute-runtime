@@ -10,7 +10,8 @@ set(OCLOC_NAME "ocloc")
 set(OCLOC_FOLDER_NAME "offline_compiler")
 
 set(CLOC_LIB_SRCS_LIB
-    ${NEO_SHARED_DIRECTORY}/compiler_interface/compiler_options/compiler_options_base.cpp
+    ${NEO_SHARED_DIRECTORY}/compiler_interface/compiler_options.cpp
+    ${NEO_SHARED_DIRECTORY}/compiler_interface/compiler_options.h
     ${NEO_SHARED_DIRECTORY}/compiler_interface/create_main.cpp
     ${NEO_SHARED_DIRECTORY}/compiler_interface/oclc_extensions.cpp
     ${NEO_SHARED_DIRECTORY}/compiler_interface/oclc_extensions.h
