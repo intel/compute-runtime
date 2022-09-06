@@ -76,6 +76,8 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
 
     auto &hwHelper = devices[0]->getHwHelper();
 
+    useDeviceAlloc |= !NEO::HwInfoConfig::get(devices[0]->getHwInfo().platform.eProductFamily)->isDcFlushAllowed();
+
     eventAlignment = static_cast<uint32_t>(hwHelper.getTimestampPacketAllocatorAlignment());
     eventSize = static_cast<uint32_t>(alignUp(EventPacketsCount::eventPackets * hwHelper.getSingleTimestampPacketSize(), eventAlignment));
 
