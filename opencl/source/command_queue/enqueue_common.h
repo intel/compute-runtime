@@ -1155,35 +1155,20 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlitSplit(MultiDispatchInfo &dispatchIn
     TimestampPacketContainer previousEnqueueNode;
     previousEnqueueNode.swapNodes(*this->timestampPacketContainer);
 
-    auto srcOffset = dispatchInfo.peekBuiltinOpParams().srcOffset;
-    auto dstOffset = dispatchInfo.peekBuiltinOpParams().dstOffset;
-    auto size = dispatchInfo.peekBuiltinOpParams().size;
+    auto srcOffset = dispatchInfo.peekBuiltinOpParams().srcOffset.x;
+    auto dstOffset = dispatchInfo.peekBuiltinOpParams().dstOffset.x;
+    auto size = dispatchInfo.peekBuiltinOpParams().size.x;
     auto remainingSize = size;
 
     for (size_t i = 0; i < copyEngines.size(); i++) {
-        auto localSizeX = remainingSize.x / (copyEngines.size() - i);
-        auto localSizeY = remainingSize.y / (copyEngines.size() - i);
-        auto localSizeZ = remainingSize.z / (copyEngines.size() - i);
-
+        auto localSize = remainingSize / (copyEngines.size() - i);
         auto localParams = dispatchInfo.peekBuiltinOpParams();
-
-        localParams.size.x = localSizeX;
-        localParams.size.y = localSizeY;
-        localParams.size.z = localSizeZ;
-
-        localParams.srcOffset.x = (srcOffset.x + size.x - remainingSize.x);
-        localParams.srcOffset.y = (srcOffset.y + size.y - remainingSize.y);
-        localParams.srcOffset.z = (srcOffset.z + size.z - remainingSize.z);
-
-        localParams.dstOffset.x = (dstOffset.x + size.x - remainingSize.x);
-        localParams.dstOffset.y = (dstOffset.y + size.y - remainingSize.y);
-        localParams.dstOffset.z = (dstOffset.z + size.z - remainingSize.z);
+        localParams.size.x = localSize;
+        localParams.srcOffset.x = (srcOffset + size - remainingSize);
+        localParams.dstOffset.x = (dstOffset + size - remainingSize);
 
         dispatchInfo.setBuiltinOpParams(localParams);
-
-        remainingSize.x -= localSizeX;
-        remainingSize.y -= localSizeY;
-        remainingSize.z -= localSizeZ;
+        remainingSize -= localSize;
 
         this->timestampPacketContainer->assignAndIncrementNodesRefCounts(previousEnqueueNode);
 
