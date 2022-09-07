@@ -12,6 +12,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
+#include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/device/device.h"
 
 #include <map>
@@ -117,6 +118,8 @@ struct DeviceImp : public Device {
     DriverHandle *driverHandle = nullptr;
     CommandList *pageFaultCommandList = nullptr;
     ze_pci_speed_ext_t pciMaxSpeed = {-1, -1, -1};
+
+    BcsSplit bcsSplit;
 
     bool resourcesReleased = false;
     void releaseResources();

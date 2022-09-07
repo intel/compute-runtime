@@ -147,6 +147,9 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         commandList->csr = csr;
         commandList->isTbxMode = (csr->getType() == NEO::CommandStreamReceiverType::CSR_TBX) || (csr->getType() == NEO::CommandStreamReceiverType::CSR_TBX_WITH_AUB);
         commandList->commandListPreemptionMode = device->getDevicePreemptionMode();
+
+        deviceImp->bcsSplit.setupDevice(productFamily, internalUsage, desc, csr);
+
         return commandList;
     }
 

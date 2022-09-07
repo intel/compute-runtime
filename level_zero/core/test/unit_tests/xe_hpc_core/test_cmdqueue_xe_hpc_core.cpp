@@ -140,5 +140,129 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenLinkedCopyEngineOrdinalWhenCreatingThe
     L0::Context::fromHandle(hContext)->destroy();
 }
 
+HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateThenSplitCmdQAreCreated, IsXeHpcCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SplitBcsCopy.set(1);
+
+    ze_result_t returnValue;
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.featureTable.ftrBcsInfo = 0b111111111;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    auto testNeoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    auto testL0Device = std::unique_ptr<L0::Device>(L0::Device::create(driverHandle.get(), testNeoDevice, false, &returnValue));
+
+    ze_command_queue_desc_t cmdQueueDesc = {};
+    cmdQueueDesc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::Copy));
+
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::Copy, returnValue));
+    ASSERT_NE(nullptr, commandList);
+    EXPECT_NE(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs.size(), 0u);
+}
+
+HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndSplitBcsMaskWhenCreateImmediateThenGivenCountOfSplitCmdQAreCreated, IsXeHpcCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SplitBcsCopy.set(1);
+    DebugManager.flags.SplitBcsMask.set(0b11001);
+
+    ze_result_t returnValue;
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.featureTable.ftrBcsInfo = 0b111111111;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    auto testNeoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    auto testL0Device = std::unique_ptr<L0::Device>(L0::Device::create(driverHandle.get(), testNeoDevice, false, &returnValue));
+
+    ze_command_queue_desc_t cmdQueueDesc = {};
+    cmdQueueDesc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::Copy));
+
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::Copy, returnValue));
+    ASSERT_NE(nullptr, commandList);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs.size(), 3u);
+}
+
+HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateThenInitializeCmdQsOnce, IsXeHpcCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SplitBcsCopy.set(1);
+
+    ze_result_t returnValue;
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.featureTable.ftrBcsInfo = 0b111111111;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    auto testNeoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    auto testL0Device = std::unique_ptr<L0::Device>(L0::Device::create(driverHandle.get(), testNeoDevice, false, &returnValue));
+
+    ze_command_queue_desc_t cmdQueueDesc = {};
+    cmdQueueDesc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::Copy));
+
+    {
+        DebugManager.flags.SplitBcsMask.set(0b11001);
+        std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::Copy, returnValue));
+        ASSERT_NE(nullptr, commandList);
+        EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs.size(), 3u);
+    }
+    {
+        DebugManager.flags.SplitBcsMask.set(0b110);
+        std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::Copy, returnValue));
+        ASSERT_NE(nullptr, commandList);
+        EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs.size(), 3u);
+    }
+}
+
+HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateInternalThenSplitCmdQArenotCreated, IsXeHpcCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SplitBcsCopy.set(1);
+
+    ze_result_t returnValue;
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.featureTable.ftrBcsInfo = 0b111111111;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    auto testNeoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    auto testL0Device = std::unique_ptr<L0::Device>(L0::Device::create(driverHandle.get(), testNeoDevice, false, &returnValue));
+
+    ze_command_queue_desc_t cmdQueueDesc = {};
+    cmdQueueDesc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::Copy));
+
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, true, NEO::EngineGroupType::Copy, returnValue));
+    ASSERT_NE(nullptr, commandList);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs.size(), 0u);
+}
+
+HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateLinkedThenSplitCmdQAreNotCreated, IsXeHpcCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SplitBcsCopy.set(1);
+
+    ze_result_t returnValue;
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.featureTable.ftrBcsInfo = 0b111111111;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    auto testNeoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    auto testL0Device = std::unique_ptr<L0::Device>(L0::Device::create(driverHandle.get(), testNeoDevice, false, &returnValue));
+
+    ze_command_queue_desc_t cmdQueueDesc = {};
+    cmdQueueDesc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::LinkedCopy));
+
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::Copy, returnValue));
+    ASSERT_NE(nullptr, commandList);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs.size(), 0u);
+}
+
+HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopySetZeroWhenCreateImmediateThenSplitCmdQAreNotCreated, IsXeHpcCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SplitBcsCopy.set(0);
+
+    ze_result_t returnValue;
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.featureTable.ftrBcsInfo = 0b111111111;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    auto testNeoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    auto testL0Device = std::unique_ptr<L0::Device>(L0::Device::create(driverHandle.get(), testNeoDevice, false, &returnValue));
+
+    ze_command_queue_desc_t cmdQueueDesc = {};
+    cmdQueueDesc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::Copy));
+
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::Copy, returnValue));
+    ASSERT_NE(nullptr, commandList);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs.size(), 0u);
+}
+
 } // namespace ult
 } // namespace L0

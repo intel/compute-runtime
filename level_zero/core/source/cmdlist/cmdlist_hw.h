@@ -160,6 +160,7 @@ struct CommandListCoreFamily : CommandListImp {
     ze_result_t reserveSpace(size_t size, void **ptr) override;
     ze_result_t reset() override;
     ze_result_t executeCommandListImmediate(bool performMigration) override;
+    ze_result_t executeCommandListImmediateImpl(bool performMigration, L0::CommandQueue *cmdQImmediate);
     size_t getReserveSshSize();
 
   protected:

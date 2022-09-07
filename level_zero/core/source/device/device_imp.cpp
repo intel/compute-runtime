@@ -56,7 +56,7 @@ bool releaseFP64Override();
 
 namespace L0 {
 
-DeviceImp::DeviceImp() = default;
+DeviceImp::DeviceImp() : bcsSplit(*this){};
 
 DriverHandle *DeviceImp::getDriverHandle() {
     return this->driverHandle;
@@ -1123,6 +1123,9 @@ void DeviceImp::releaseResources() {
     if (resourcesReleased) {
         return;
     }
+
+    this->bcsSplit.releaseResources();
+
     if (neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.get() &&
         !neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger->isLegacy()) {
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.reset(nullptr);

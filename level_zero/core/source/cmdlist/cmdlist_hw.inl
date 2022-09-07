@@ -162,11 +162,16 @@ void CommandListCoreFamily<gfxCoreFamily>::createLogicalStateHelper() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeCommandListImmediate(bool performMigration) {
+    return executeCommandListImmediateImpl(performMigration, this->cmdQImmediate);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeCommandListImmediateImpl(bool performMigration, L0::CommandQueue *cmdQImmediate) {
     this->close();
     ze_command_list_handle_t immediateHandle = this->toHandle();
 
     this->commandContainer.removeDuplicatesFromResidencyContainer();
-    const auto commandListExecutionResult = this->cmdQImmediate->executeCommandLists(1, &immediateHandle, nullptr, performMigration);
+    const auto commandListExecutionResult = cmdQImmediate->executeCommandLists(1, &immediateHandle, nullptr, performMigration);
     if (commandListExecutionResult == ZE_RESULT_ERROR_DEVICE_LOST) {
         return commandListExecutionResult;
     }
@@ -174,7 +179,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeCommandListImmediate(bo
     if (this->isCopyOnly() && !this->isSyncModeQueue && !this->isTbxMode) {
         this->commandContainer.currentLinearStreamStartOffset = this->commandContainer.getCommandStream()->getUsed();
     } else {
-        const auto synchronizationResult = this->cmdQImmediate->synchronize(std::numeric_limits<uint64_t>::max());
+        const auto synchronizationResult = cmdQImmediate->synchronize(std::numeric_limits<uint64_t>::max());
         if (synchronizationResult == ZE_RESULT_ERROR_DEVICE_LOST) {
             return synchronizationResult;
         }
