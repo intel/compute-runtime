@@ -150,6 +150,9 @@ class WslComputeHelperUmKmDataTranslator : public UmKmDataTranslator {
             case 37:
                 prod = IGFX_ALDERLAKE_P;
                 break;
+            case 38:
+                prod = IGFX_ALDERLAKE_N;
+                break;
             }
             dst.GfxPlatform.eProductFamily = static_cast<PRODUCT_FAMILY>(prod);
         }
