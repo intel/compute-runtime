@@ -119,8 +119,7 @@ HWTEST2_F(CommandQueueProgramSBATest, whenCreatingCommandQueueThenItIsInitialize
     commandQueue->destroy();
 }
 
-HWTEST2_F(CommandQueueProgramSBATest,
-          whenProgrammingStateBaseAddressWithcontainsStatelessUncachedResourceThenCorrectMocsAreSet, CommandQueueSBASupport) {
+HWTEST2_F(CommandQueueProgramSBATest, whenProgrammingStateBaseAddressWithStatelessUncachedResourceThenCorrectMocsAreSet, CommandQueueSBASupport) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     ze_command_queue_desc_t desc = {};
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
@@ -128,13 +127,23 @@ HWTEST2_F(CommandQueueProgramSBATest,
     auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr.get(), &desc);
     commandQueue->initialize(false, false);
 
-    uint32_t alignedSize = 4096u;
-    NEO::LinearStream child(commandQueue->commandStream->getSpace(alignedSize), alignedSize);
+    auto &commandStream = commandQueue->commandStream;
+    auto alignedSize = commandQueue->estimateStateBaseAddressCmdSize();
+    NEO::LinearStream child(commandStream->getSpace(alignedSize), alignedSize);
 
-    commandQueue->programStateBaseAddress(0u, true, child, true);
-    auto pSbaCmd = static_cast<STATE_BASE_ADDRESS *>(commandQueue->commandStream->getSpace(sizeof(STATE_BASE_ADDRESS)));
+    auto cachedMOCSAllowed = false;
+    commandQueue->programStateBaseAddress(0u, true, child, cachedMOCSAllowed);
+    GenCmdList commands;
+    ASSERT_TRUE(CmdParse<FamilyType>::parseCommandBuffer(
+        commands,
+        commandStream->getCpuBase(),
+        commandStream->getUsed()));
+
+    auto itor = find<STATE_BASE_ADDRESS *>(commands.begin(), commands.end());
+    ASSERT_NE(itor, commands.end());
+
+    auto pSbaCmd = static_cast<STATE_BASE_ADDRESS *>(*itor);
     uint32_t statelessMocsIndex = pSbaCmd->getStatelessDataPortAccessMemoryObjectControlState();
-
     auto gmmHelper = device->getNEODevice()->getGmmHelper();
     uint32_t expectedMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
     EXPECT_EQ(statelessMocsIndex, expectedMocs);
