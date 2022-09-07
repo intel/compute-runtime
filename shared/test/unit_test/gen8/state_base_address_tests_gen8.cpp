@@ -29,6 +29,7 @@ BDWTEST_F(SbaTest, givenUsedBindlessBuffersWhenAppendStateBaseAddressParametersI
         nullptr,                               // ioh
         &ssh,                                  // ssh
         nullptr,                               // gmmHelper
+        nullptr,                               // hwInfo
         0,                                     // statelessMocsIndex
         MemoryCompressionState::NotApplicable, // memoryCompressionState
         false,                                 // setInstructionStateBaseAddress
@@ -65,6 +66,7 @@ BDWTEST_F(SbaTest,
         nullptr,                               // ioh
         &ssh,                                  // ssh
         nullptr,                               // gmmHelper
+        nullptr,                               // hwInfo
         0,                                     // statelessMocsIndex
         MemoryCompressionState::NotApplicable, // memoryCompressionState
         false,                                 // setInstructionStateBaseAddress

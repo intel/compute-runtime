@@ -18,6 +18,7 @@
 #include "shared/source/helpers/interlocked_max.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/state_base_address.h"
+#include "shared/source/helpers/state_base_address_bdw_and_later.inl"
 #include "shared/source/os_interface/os_context.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
@@ -41,7 +42,6 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
     NEO::EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStream, hwInfo, isRcs);
     NEO::EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStream, {}, true, hwInfo, isRcs);
 
-    auto sbaCmdBuf = NEO::StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStream);
     STATE_BASE_ADDRESS sbaCmd;
 
     bool useGlobalSshAndDsh = NEO::ApiSpecificConfig::getBindlessConfiguration();
@@ -65,6 +65,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         nullptr,                                          // ioh
         nullptr,                                          // ssh
         neoDevice->getGmmHelper(),                        // gmmHelper
+        &hwInfo,                                          // hwInfo
         (device->getMOCS(cachedMOCSAllowed, false) >> 1), // statelessMocsIndex
         NEO::MemoryCompressionState::NotApplicable,       // memoryCompressionState
         true,                                             // setInstructionStateBaseAddress
@@ -77,8 +78,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         isDebuggerActive                                  // isDebuggerActive
     };
 
-    NEO::StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(stateBaseAddressHelperArgs);
-    *sbaCmdBuf = sbaCmd;
+    NEO::StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStream(stateBaseAddressHelperArgs, commandStream);
 
     bool sbaTrackingEnabled = (NEO::Debugger::isDebugEnabled(this->internalUsage) && device->getL0Debugger());
     NEO::EncodeStateBaseAddress<GfxFamily>::setSbaTrackingForL0DebuggerIfEnabled(sbaTrackingEnabled, *neoDevice, commandStream, sbaCmd);

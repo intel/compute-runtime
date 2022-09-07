@@ -17,6 +17,7 @@
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/helpers/state_base_address.h"
+#include "shared/source/helpers/state_base_address_bdw_and_later.inl"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "shared/source/kernel/implicit_args.h"
 
@@ -403,6 +404,7 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
         ioh,                                                // ioh
         ssh,                                                // ssh
         gmmHelper,                                          // gmmHelper
+        &hwInfo,                                            // hwInfo
         args.statelessMocsIndex,                            // statelessMocsIndex
         NEO::MemoryCompressionState::NotApplicable,         // memoryCompressionState
         false,                                              // setInstructionStateBaseAddress
@@ -415,10 +417,8 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
         isDebuggerActive                                    // isDebuggerActive
     };
 
-    StateBaseAddressHelper<Family>::programStateBaseAddress(stateBaseAddressHelperArgs);
-
-    auto cmdSpace = StateBaseAddressHelper<Family>::getSpaceForSbaCmd(*args.container->getCommandStream());
-    *cmdSpace = args.sbaCmd;
+    StateBaseAddressHelper<Family>::programStateBaseAddressIntoCommandStream(stateBaseAddressHelperArgs,
+                                                                             *args.container->getCommandStream());
 
     EncodeWA<Family>::encodeAdditionalPipelineSelect(*args.container->getCommandStream(), {}, false, hwInfo, args.isRcs);
 }

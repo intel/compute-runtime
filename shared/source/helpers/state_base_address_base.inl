@@ -15,6 +15,15 @@
 #include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {
+
+template <typename GfxFamily>
+void StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStreamBase(StateBaseAddressHelperArgs<GfxFamily> &args,
+                                                                                     NEO::LinearStream &commandStream) {
+    StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(args);
+    auto cmdSpace = StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStream);
+    *cmdSpace = *args.stateBaseAddressCmd;
+}
+
 template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     StateBaseAddressHelperArgs<GfxFamily> &args) {

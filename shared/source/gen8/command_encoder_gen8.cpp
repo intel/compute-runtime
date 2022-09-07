@@ -15,6 +15,7 @@ using Family = NEO::Gen8Family;
 #include "shared/source/command_container/command_encoder_bdw_and_later.inl"
 #include "shared/source/command_container/encode_compute_mode_bdw_and_later.inl"
 #include "shared/source/command_container/image_surface_state/compression_params_bdw_and_later.inl"
+#include "shared/source/helpers/state_base_address_bdw.inl"
 
 namespace NEO {
 

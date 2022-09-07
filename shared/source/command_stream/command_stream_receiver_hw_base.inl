@@ -401,7 +401,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         }
 
         auto stateBaseAddressCmdOffset = commandStreamCSR.getUsed();
-        auto stateBaseAddressCmdBuffer = StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStreamCSR);
         auto instructionHeapBaseAddress = getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, getMemoryManager()->isLocalMemoryUsedForIsa(rootDeviceIndex));
         uint64_t indirectObjectStateBaseAddress = getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, ioh->getGraphicsAllocation()->isAllocatedInLocalMemoryPool());
 
@@ -418,6 +417,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             ioh,                                          // ioh
             ssh,                                          // ssh
             device.getGmmHelper(),                        // gmmHelper
+            &hwInfo,                                      // hwInfo
             mocsIndex,                                    // statelessMocsIndex
             memoryCompressionState,                       // memoryCompressionState
             true,                                         // setInstructionStateBaseAddress
@@ -430,13 +430,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             debuggingEnabled || device.isDebuggerActive() // isDebuggerActive
         };
 
-        StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(args);
-
-        if (stateBaseAddressCmdBuffer) {
-            *stateBaseAddressCmdBuffer = stateBaseAddressCmd;
-        }
-
-        programAdditionalStateBaseAddress(commandStreamCSR, stateBaseAddressCmd, device);
+        StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStream(args, commandStreamCSR);
 
         bool sbaTrackingEnabled = (debuggingEnabled && !device.getDebugger()->isLegacy());
         NEO::EncodeStateBaseAddress<GfxFamily>::setSbaTrackingForL0DebuggerIfEnabled(sbaTrackingEnabled,
@@ -1315,9 +1309,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::updateTagFromWait() {
         flushTagUpdate();
     }
 }
-
-template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::programAdditionalStateBaseAddress(LinearStream &csr, typename GfxFamily::STATE_BASE_ADDRESS &cmd, Device &device) {}
 
 template <typename GfxFamily>
 inline MemoryCompressionState CommandStreamReceiverHw<GfxFamily>::getMemoryCompressionState(bool auxTranslationRequired, const HardwareInfo &hwInfo) const {

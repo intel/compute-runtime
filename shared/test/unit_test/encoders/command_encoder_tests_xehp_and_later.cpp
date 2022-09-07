@@ -226,6 +226,7 @@ HWTEST2_F(XeHpAndLaterSbaTest, givenMemoryCompressionEnabledWhenAppendingSbaThen
             nullptr,                                            // ioh
             &ssh,                                               // ssh
             pDevice->getRootDeviceEnvironment().getGmmHelper(), // gmmHelper
+            nullptr,                                            // hwInfo
             0,                                                  // statelessMocsIndex
             memoryCompressionState,                             // memoryCompressionState
             false,                                              // setInstructionStateBaseAddress
@@ -260,6 +261,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpAndLaterSbaTest, givenNonZeroInternalHeapBaseAd
         nullptr,                                            // ioh
         &ssh,                                               // ssh
         pDevice->getRootDeviceEnvironment().getGmmHelper(), // gmmHelper
+        nullptr,                                            // hwInfo
         0,                                                  // statelessMocsIndex
         MemoryCompressionState::NotApplicable,              // memoryCompressionState
         false,                                              // setInstructionStateBaseAddress

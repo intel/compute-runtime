@@ -14,6 +14,7 @@ using Family = NEO::XeHpgCoreFamily;
 #include "shared/source/command_stream/command_stream_receiver_hw_xehp_and_later.inl"
 #include "shared/source/helpers/blit_commands_helper_xehp_and_later.inl"
 #include "shared/source/helpers/populate_factory.h"
+#include "shared/source/helpers/state_base_address_xehp_and_later.inl"
 #include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {
@@ -39,18 +40,6 @@ MemoryCompressionState CommandStreamReceiverHw<Family>::getMemoryCompressionStat
         memoryCompressionState = auxTranslationRequired ? MemoryCompressionState::Disabled : MemoryCompressionState::Enabled;
     }
     return memoryCompressionState;
-}
-
-template <>
-void CommandStreamReceiverHw<Family>::programAdditionalStateBaseAddress(LinearStream &csr, typename Family::STATE_BASE_ADDRESS &cmd, Device &device) {
-    using STATE_BASE_ADDRESS = Family::STATE_BASE_ADDRESS;
-
-    auto &hwInfo = *device.getRootDeviceEnvironment().getHardwareInfo();
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    if (hwInfoConfig.isAdditionalStateBaseAddressWARequired(hwInfo)) {
-        auto cmdSpace = StateBaseAddressHelper<Family>::getSpaceForSbaCmd(csr);
-        *cmdSpace = cmd;
-    }
 }
 
 template class CommandStreamReceiverHw<Family>;

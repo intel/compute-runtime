@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver_hw_base.inl"
 #include "shared/source/helpers/address_patch.h"
+#include "shared/source/helpers/state_base_address_bdw_and_later.inl"
 
 namespace NEO {
 

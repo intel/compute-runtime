@@ -26,6 +26,7 @@
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/helpers/state_base_address.h"
+#include "shared/source/helpers/state_base_address_xehp_and_later.inl"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "shared/source/kernel/implicit_args.h"
 #include "shared/source/kernel/kernel_descriptor.h"
@@ -511,6 +512,7 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
         ioh,                                                // ioh
         ssh,                                                // ssh
         gmmHelper,                                          // gmmHelper
+        &args.container->getDevice()->getHardwareInfo(),    // hwInfo
         args.statelessMocsIndex,                            // statelessMocsIndex
         NEO::MemoryCompressionState::NotApplicable,         // memoryCompressionState
         true,                                               // setInstructionStateBaseAddress
@@ -523,17 +525,8 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
         isDebuggerActive                                    // isDebuggerActive
     };
 
-    StateBaseAddressHelper<Family>::programStateBaseAddress(stateBaseAddressHelperArgs);
-
-    auto cmdSpace = StateBaseAddressHelper<Family>::getSpaceForSbaCmd(*args.container->getCommandStream());
-    *cmdSpace = args.sbaCmd;
-
-    auto &hwInfo = device.getHardwareInfo();
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    if (hwInfoConfig.isAdditionalStateBaseAddressWARequired(hwInfo)) {
-        cmdSpace = StateBaseAddressHelper<Family>::getSpaceForSbaCmd(*args.container->getCommandStream());
-        *cmdSpace = args.sbaCmd;
-    }
+    StateBaseAddressHelper<Family>::programStateBaseAddressIntoCommandStream(stateBaseAddressHelperArgs,
+                                                                             *args.container->getCommandStream());
 
     if (args.container->isHeapDirty(HeapType::SURFACE_STATE)) {
         auto heap = args.container->getIndirectHeap(HeapType::SURFACE_STATE);

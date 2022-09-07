@@ -34,6 +34,7 @@ struct StateBaseAddressHelperArgs {
     const IndirectHeap *ioh = nullptr;
     const IndirectHeap *ssh = nullptr;
     GmmHelper *gmmHelper = nullptr;
+    const HardwareInfo *hwInfo = nullptr;
 
     uint32_t statelessMocsIndex = 0;
     MemoryCompressionState memoryCompressionState;
@@ -55,6 +56,8 @@ struct StateBaseAddressHelper {
     static STATE_BASE_ADDRESS *getSpaceForSbaCmd(LinearStream &cmdStream);
 
     static void programStateBaseAddress(StateBaseAddressHelperArgs<GfxFamily> &args);
+    static inline void programStateBaseAddressIntoCommandStream(StateBaseAddressHelperArgs<GfxFamily> &args,
+                                                                LinearStream &commandStream);
 
     static void appendIohParameters(StateBaseAddressHelperArgs<GfxFamily> &args);
 
@@ -68,5 +71,9 @@ struct StateBaseAddressHelper {
     static void programBindingTableBaseAddress(LinearStream &commandStream, uint64_t baseAddress, uint32_t sizeInPages, GmmHelper *gmmHelper);
 
     static uint32_t getMaxBindlessSurfaceStates();
+
+  private:
+    static inline void programStateBaseAddressIntoCommandStreamBase(StateBaseAddressHelperArgs<GfxFamily> &args,
+                                                                    LinearStream &commandStream);
 };
 } // namespace NEO

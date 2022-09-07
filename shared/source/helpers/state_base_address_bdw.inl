@@ -20,4 +20,7 @@ uint32_t StateBaseAddressHelper<GfxFamily>::getMaxBindlessSurfaceStates() {
     return 0;
 }
 
+template <>
+void StateBaseAddressHelper<Gen8Family>::programStateBaseAddress(StateBaseAddressHelperArgs<Gen8Family> &args);
+
 } // namespace NEO

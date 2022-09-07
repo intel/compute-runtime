@@ -34,6 +34,7 @@ HWTEST2_F(SbaTest, WhenAppendStateBaseAddressParametersIsCalledThenSBACmdHasBind
         nullptr,                               // ioh
         &ssh,                                  // ssh
         nullptr,                               // gmmHelper
+        nullptr,                               // hwInfo
         0,                                     // statelessMocsIndex
         MemoryCompressionState::NotApplicable, // memoryCompressionState
         false,                                 // setInstructionStateBaseAddress
@@ -77,6 +78,7 @@ HWTEST2_F(SbaTest, WhenProgramStateBaseAddressParametersIsCalledThenSBACmdHasBin
         nullptr,                               // ioh
         &ssh,                                  // ssh
         pDevice->getGmmHelper(),               // gmmHelper
+        nullptr,                               // hwInfo
         0,                                     // statelessMocsIndex
         MemoryCompressionState::NotApplicable, // memoryCompressionState
         false,                                 // setInstructionStateBaseAddress
@@ -120,6 +122,7 @@ HWTEST2_F(SbaTest,
         nullptr,                               // ioh
         &ssh,                                  // ssh
         pDevice->getGmmHelper(),               // gmmHelper
+        nullptr,                               // hwInfo
         0,                                     // statelessMocsIndex
         MemoryCompressionState::NotApplicable, // memoryCompressionState
         false,                                 // setInstructionStateBaseAddress
@@ -163,6 +166,7 @@ HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenProgramStateBas
         nullptr,                               // ioh
         nullptr,                               // ssh
         pDevice->getGmmHelper(),               // gmmHelper
+        nullptr,                               // hwInfo
         0,                                     // statelessMocsIndex
         MemoryCompressionState::NotApplicable, // memoryCompressionState
         false,                                 // setInstructionStateBaseAddress
@@ -219,6 +223,7 @@ HWTEST2_F(SbaForBindlessTests,
         nullptr,                               // ioh
         nullptr,                               // ssh
         pDevice->getGmmHelper(),               // gmmHelper
+        nullptr,                               // hwInfo
         0,                                     // statelessMocsIndex
         MemoryCompressionState::NotApplicable, // memoryCompressionState
         false,                                 // setInstructionStateBaseAddress
@@ -276,6 +281,7 @@ HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenPassingIndirect
         nullptr,                               // ioh
         nullptr,                               // ssh
         pDevice->getGmmHelper(),               // gmmHelper
+        nullptr,                               // hwInfo
         0,                                     // statelessMocsIndex
         MemoryCompressionState::NotApplicable, // memoryCompressionState
         false,                                 // setInstructionStateBaseAddress
@@ -314,6 +320,7 @@ HWTEST2_F(SbaTest, givenSbaWhenOverrideBindlessSurfaceBaseIsFalseThenBindlessSur
         nullptr,                                            // ioh
         nullptr,                                            // ssh
         pDevice->getRootDeviceEnvironment().getGmmHelper(), // gmmHelper
+        nullptr,                                            // hwInfo
         0,                                                  // statelessMocsIndex
         MemoryCompressionState::NotApplicable,              // memoryCompressionState
         false,                                              // setInstructionStateBaseAddress
@@ -354,6 +361,7 @@ HWTEST2_F(SbaTest, givenGlobalBindlessBaseAddressWhenSshIsPassedThenBindlessSurf
         nullptr,                               // ioh
         &ssh,                                  // ssh
         pDevice->getGmmHelper(),               // gmmHelper
+        nullptr,                               // hwInfo
         0,                                     // statelessMocsIndex
         MemoryCompressionState::NotApplicable, // memoryCompressionState
         false,                                 // setInstructionStateBaseAddress
@@ -393,6 +401,7 @@ HWTEST2_F(SbaTest, givenSurfaceStateHeapWhenNotUsingGlobalHeapBaseThenBindlessSu
         nullptr,                               // ioh
         &ssh,                                  // ssh
         pDevice->getGmmHelper(),               // gmmHelper
+        nullptr,                               // hwInfo
         0,                                     // statelessMocsIndex
         MemoryCompressionState::NotApplicable, // memoryCompressionState
         false,                                 // setInstructionStateBaseAddress
@@ -427,6 +436,7 @@ HWTEST2_F(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSetti
         nullptr,                               // ioh
         &ssh,                                  // ssh
         pDevice->getGmmHelper(),               // gmmHelper
+        nullptr,                               // hwInfo
         0,                                     // statelessMocsIndex
         MemoryCompressionState::NotApplicable, // memoryCompressionState
         false,                                 // setInstructionStateBaseAddress
@@ -466,6 +476,7 @@ HWTEST2_F(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSetti
         nullptr,                               // ioh
         &ssh,                                  // ssh
         pDevice->getGmmHelper(),               // gmmHelper
+        nullptr,                               // hwInfo
         0,                                     // statelessMocsIndex
         MemoryCompressionState::NotApplicable, // memoryCompressionState
         false,                                 // setInstructionStateBaseAddress
@@ -545,6 +556,7 @@ HWTEST2_F(SbaTest, givenDebugFlagSetWhenAppendingSbaThenProgramCorrectL1CachePol
         nullptr,                                            // ioh
         &ssh,                                               // ssh
         pDevice->getRootDeviceEnvironment().getGmmHelper(), // gmmHelper
+        nullptr,                                            // hwInfo
         0,                                                  // statelessMocsIndex
         MemoryCompressionState::NotApplicable,              // memoryCompressionState
         false,                                              // setInstructionStateBaseAddress
@@ -626,6 +638,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, SbaTest, whenGeneralStateBaseAddressIsProgrammedThen
         &ioh,                                  // ioh
         &ssh,                                  // ssh
         gmmHelper,                             // gmmHelper
+        nullptr,                               // hwInfo
         0,                                     // statelessMocsIndex
         MemoryCompressionState::NotApplicable, // memoryCompressionState
         true,                                  // setInstructionStateBaseAddress
@@ -658,6 +671,7 @@ HWTEST_F(SbaTest, givenNonZeroGeneralStateBaseAddressWhenProgrammingIsDisabledTh
         &ioh,                                  // ioh
         &ssh,                                  // ssh
         pDevice->getGmmHelper(),               // gmmHelper
+        nullptr,                               // hwInfo
         0,                                     // statelessMocsIndex
         MemoryCompressionState::NotApplicable, // memoryCompressionState
         true,                                  // setInstructionStateBaseAddress
@@ -692,6 +706,7 @@ HWTEST_F(SbaTest, givenNonZeroInternalHeapBaseAddressWhenProgrammingIsDisabledTh
         &ioh,                                  // ioh
         &ssh,                                  // ssh
         pDevice->getGmmHelper(),               // gmmHelper
+        nullptr,                               // hwInfo
         0,                                     // statelessMocsIndex
         MemoryCompressionState::NotApplicable, // memoryCompressionState
         false,                                 // setInstructionStateBaseAddress
@@ -732,6 +747,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, SbaTest, givenSbaProgrammingWhenHeapsAreNotProvidedT
         nullptr,                               // ioh
         nullptr,                               // ssh
         gmmHelper,                             // gmmHelper
+        nullptr,                               // hwInfo
         0,                                     // statelessMocsIndex
         MemoryCompressionState::NotApplicable, // memoryCompressionState
         true,                                  // setInstructionStateBaseAddress
@@ -792,6 +808,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, SbaTest,
         nullptr,                               // ioh
         nullptr,                               // ssh
         gmmHelper,                             // gmmHelper
+        nullptr,                               // hwInfo
         0,                                     // statelessMocsIndex
         MemoryCompressionState::NotApplicable, // memoryCompressionState
         true,                                  // setInstructionStateBaseAddress

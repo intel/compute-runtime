@@ -66,6 +66,7 @@ DG2TEST_F(Dg2SbaTest, givenSpecificProductFamilyWhenAppendingSbaThenProgramCorre
         nullptr,                                            // ioh
         &ssh,                                               // ssh
         pDevice->getRootDeviceEnvironment().getGmmHelper(), // gmmHelper
+        nullptr,                                            // hwInfo
         0,                                                  // statelessMocsIndex
         MemoryCompressionState::NotApplicable,              // memoryCompressionState
         false,                                              // setInstructionStateBaseAddress
@@ -100,6 +101,7 @@ DG2TEST_F(Dg2SbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProgrammedThen
         nullptr,                                            // ioh
         &ssh,                                               // ssh
         pDevice->getRootDeviceEnvironment().getGmmHelper(), // gmmHelper
+        nullptr,                                            // hwInfo
         0,                                                  // statelessMocsIndex
         MemoryCompressionState::NotApplicable,              // memoryCompressionState
         false,                                              // setInstructionStateBaseAddress

@@ -14,6 +14,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/state_base_address.h"
+#include "shared/source/helpers/state_base_address_xehp_and_later.inl"
 #include "shared/source/os_interface/hw_info_config.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
@@ -41,7 +42,6 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         bool isRcs = this->getCsr()->isRcs();
 
         NEO::EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStream, hwInfo, isRcs);
-        auto sbaCmdBuf = NEO::StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStream);
         auto isDebuggerActive = neoDevice->isDebuggerActive() || neoDevice->getDebugger() != nullptr;
 
         STATE_BASE_ADDRESS sbaCmd;
@@ -56,6 +56,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
             nullptr,                                          // ioh
             nullptr,                                          // ssh
             neoDevice->getGmmHelper(),                        // gmmHelper
+            &hwInfo,                                          // hwInfo
             (device->getMOCS(cachedMOCSAllowed, false) >> 1), // statelessMocsIndex
             NEO::MemoryCompressionState::NotApplicable,       // memoryCompressionState
             true,                                             // setInstructionStateBaseAddress
@@ -67,15 +68,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
             false,                                            // overrideSurfaceStateBaseAddress
             isDebuggerActive                                  // isDebuggerActive
         };
-
-        NEO::StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(stateBaseAddressHelperArgs);
-        *sbaCmdBuf = sbaCmd;
-
-        auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-        if (hwInfoConfig.isAdditionalStateBaseAddressWARequired(hwInfo)) {
-            sbaCmdBuf = NEO::StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStream);
-            *sbaCmdBuf = sbaCmd;
-        }
+        NEO::StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStream(stateBaseAddressHelperArgs, commandStream);
 
         bool sbaTrackingEnabled = (NEO::Debugger::isDebugEnabled(this->internalUsage) && device->getL0Debugger());
         NEO::EncodeStateBaseAddress<GfxFamily>::setSbaTrackingForL0DebuggerIfEnabled(sbaTrackingEnabled,

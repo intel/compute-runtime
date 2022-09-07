@@ -622,6 +622,7 @@ XE_HPC_CORETEST_F(XeHpcSbaTest, givenSpecificProductFamilyWhenAppendingSbaThenPr
         nullptr,                                            // ioh
         &ssh,                                               // ssh
         pDevice->getRootDeviceEnvironment().getGmmHelper(), // gmmHelper
+        nullptr,                                            // hwInfo
         0,                                                  // statelessMocsIndex
         MemoryCompressionState::NotApplicable,              // memoryCompressionState
         false,                                              // setInstructionStateBaseAddress
@@ -652,6 +653,7 @@ XE_HPC_CORETEST_F(XeHpcSbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProg
         nullptr,                                            // ioh
         &ssh,                                               // ssh
         pDevice->getRootDeviceEnvironment().getGmmHelper(), // gmmHelper
+        nullptr,                                            // hwInfo
         0,                                                  // statelessMocsIndex
         MemoryCompressionState::NotApplicable,              // memoryCompressionState
         false,                                              // setInstructionStateBaseAddress
