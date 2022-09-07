@@ -21,6 +21,7 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_create_tests.cpp
                  ${NEO_IGDRCL_WINDOWS_DLL_TESTS_TARGET_OBJECTS}
+                 ${NEO_SHARED_DIRECTORY}/dll/device_dll.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/direct_submission_controller_enabled.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/get_devices.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/windows/os_interface.cpp

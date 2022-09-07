@@ -16,6 +16,7 @@ set(RUNTIME_SRCS_DLL_BASE
     ${NEO_SHARED_DIRECTORY}/dll/create_deferred_deleter.cpp
     ${NEO_SHARED_DIRECTORY}/dll/create_memory_manager_${DRIVER_MODEL}.cpp
     ${NEO_SHARED_DIRECTORY}/dll/create_tbx_sockets.cpp
+    ${NEO_SHARED_DIRECTORY}/dll/device_dll.cpp
     ${NEO_SHARED_DIRECTORY}/dll/direct_submission_controller_enabled.cpp
     ${NEO_SHARED_DIRECTORY}/dll/source_level_debugger_dll.cpp
     ${NEO_SHARED_DIRECTORY}/dll/get_devices.cpp

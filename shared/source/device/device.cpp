@@ -397,7 +397,8 @@ uint64_t Device::getProfilingTimerClock() {
 
 bool Device::isBcsSplitSupported() {
     auto bcsSplit = HwInfoConfig::get(getHardwareInfo().platform.eProductFamily)->isBlitSplitEnqueueWARequired(getHardwareInfo()) &&
-                    ApiSpecificConfig::isBcsSplitWaSupported();
+                    ApiSpecificConfig::isBcsSplitWaSupported() &&
+                    Device::isBlitSplitEnabled();
 
     if (DebugManager.flags.SplitBcsCopy.get() != -1) {
         bcsSplit = DebugManager.flags.SplitBcsCopy.get();

@@ -106,6 +106,7 @@ class Device : public ReferenceTrackedObject<Device> {
     bool isFullRangeSvm() const {
         return getRootDeviceEnvironment().isFullRangeSvm();
     }
+    static bool isBlitSplitEnabled();
     bool isBcsSplitSupported();
     bool areSharedSystemAllocationsAllowed() const;
     template <typename SpecializedDeviceT>
