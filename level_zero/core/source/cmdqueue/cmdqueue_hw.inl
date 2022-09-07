@@ -120,14 +120,16 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeInitial(ctx, phCommandLists, numCommandLists);
 
     this->csr->getResidencyAllocations().reserve(ctx.spaceForResidency);
-
     this->handleScratchSpaceAndUpdateGSBAStateDirtyFlag(ctx);
     this->setFrontEndStateProperties(ctx);
 
     linearStreamSizeEstimate += this->estimateLinearStreamSizeComplementary(ctx, phCommandLists, numCommandLists);
     linearStreamSizeEstimate += this->computePreemptionSize(ctx, phCommandLists, numCommandLists);
     linearStreamSizeEstimate += this->computeDebuggerCmdsSize(ctx);
-    linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(this->device->getHwInfo(), false);
+
+    if (ctx.isDispatchTaskCountPostSyncRequired) {
+        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(this->device->getHwInfo(), false);
+    }
 
     NEO::LinearStream child(nullptr);
     if (const auto ret = this->makeAlignedChildStreamAndSetGpuBase(child, linearStreamSizeEstimate); ret != ZE_RESULT_SUCCESS) {
@@ -546,7 +548,7 @@ void CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeInitial(
-    CommandListExecutionContext &ctx,
+    const CommandListExecutionContext &ctx,
     ze_command_list_handle_t *phCommandLists,
     uint32_t numCommandLists) {
 

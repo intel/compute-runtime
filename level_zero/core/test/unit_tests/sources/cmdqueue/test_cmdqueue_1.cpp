@@ -377,6 +377,51 @@ HWTEST2_F(CommandQueueCreate, givenGpuHangInReservingLinearStreamWhenExecutingCo
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct MockCommandQueueHwEstimateSizeTest : public MockCommandQueueHw<gfxCoreFamily> {
+
+    MockCommandQueueHwEstimateSizeTest(L0::Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc)
+        : MockCommandQueueHw<gfxCoreFamily>(device, csr, desc) {}
+
+    ze_result_t makeAlignedChildStreamAndSetGpuBase(NEO::LinearStream &child, size_t requiredSize) override {
+        requiredSizeCalled = requiredSize;
+        return ZE_RESULT_ERROR_DEVICE_LOST;
+    }
+
+    bool isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, bool containsAnyRegularCmdList) const override {
+        return dispatchTaskCountPostSyncRequired;
+    }
+    bool dispatchTaskCountPostSyncRequired = false;
+    size_t requiredSizeCalled = 0u;
+};
+
+HWTEST2_F(CommandQueueCreate, GivenDispatchTaskCountPostSyncRequiredWhenExecuteCommandListsThenEstimatedSizeIsCorrect, IsAtLeastSkl) {
+    const ze_command_queue_desc_t desc = {};
+    auto commandQueue = new MockCommandQueueHwEstimateSizeTest<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
+    commandQueue->initialize(false, false);
+
+    ze_result_t returnValue;
+    auto commandList = std::unique_ptr<CommandList>(whiteboxCast(
+        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    ASSERT_NE(nullptr, commandList);
+
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    commandQueue->dispatchTaskCountPostSyncRequired = false;
+    commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
+    auto estimatedSizeWithoutBarrier = commandQueue->requiredSizeCalled;
+
+    commandQueue->dispatchTaskCountPostSyncRequired = true;
+    commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
+    auto estimatedSizeWithtBarrier = commandQueue->requiredSizeCalled;
+
+    auto sizeForBarrier = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(device->getHwInfo(), false);
+    EXPECT_GT(sizeForBarrier, 0u);
+
+    EXPECT_EQ(estimatedSizeWithtBarrier, estimatedSizeWithoutBarrier + sizeForBarrier);
+
+    commandQueue->destroy();
+}
+
 HWTEST_F(CommandQueueCreate, givenUpdateTaskCountFromWaitAndRegularCmdListWhenDispatchTaskCountWriteThenPipeControlFlushed) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;

@@ -110,8 +110,8 @@ struct CommandQueueHw : public CommandQueueImp {
                                               ze_command_list_handle_t *phCommandLists,
                                               uint32_t numCommandLists,
                                               ze_fence_handle_t hFence);
-    inline bool isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, bool containsAnyRegularCmdList) const;
-    inline size_t estimateLinearStreamSizeInitial(CommandListExecutionContext &ctx,
+    MOCKABLE_VIRTUAL bool isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, bool containsAnyRegularCmdList) const;
+    inline size_t estimateLinearStreamSizeInitial(const CommandListExecutionContext &ctx,
                                                   ze_command_list_handle_t *phCommandLists,
                                                   uint32_t numCommandLists);
     inline void setFrontEndStateProperties(CommandListExecutionContext &ctx);
@@ -119,7 +119,7 @@ struct CommandQueueHw : public CommandQueueImp {
     inline size_t estimateLinearStreamSizeComplementary(CommandListExecutionContext &ctx,
                                                         ze_command_list_handle_t *phCommandLists,
                                                         uint32_t numCommandLists);
-    inline ze_result_t makeAlignedChildStreamAndSetGpuBase(NEO::LinearStream &child, size_t requiredSize);
+    MOCKABLE_VIRTUAL ze_result_t makeAlignedChildStreamAndSetGpuBase(NEO::LinearStream &child, size_t requiredSize);
     inline void allocateGlobalFenceAndMakeItResident();
     inline void allocateWorkPartitionAndMakeItResident();
     inline void allocateTagsManagerHeapsAndMakeThemResidentIfSWTagsEnabled(NEO::LinearStream &commandStream);
