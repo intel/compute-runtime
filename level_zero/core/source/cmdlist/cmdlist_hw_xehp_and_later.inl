@@ -225,8 +225,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
     }
 
-    auto isMultiOsContextCapable = (this->partitionCount > 1) && !launchParams.isCooperative;
-    updateStreamProperties(*kernel, isMultiOsContextCapable, launchParams.isCooperative);
+    updateStreamProperties(*kernel, launchParams.isCooperative);
 
     KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
     this->containsStatelessUncachedResource |= kernelImp->getKernelRequiresUncachedMocs();
@@ -279,7 +278,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         args.numAvailableDevices = neoDevice->getNumGenericSubDevices();
         args.allocation = device->getDebugSurface();
         args.gmmHelper = neoDevice->getGmmHelper();
-        args.useGlobalAtomics = kernelImp->getKernelDescriptor().kernelAttributes.flags.useGlobalAtomics;
+        args.useGlobalAtomics = kernelDescriptor.kernelAttributes.flags.useGlobalAtomics;
         args.areMultipleSubDevicesInContext = args.numAvailableDevices > 1;
         args.implicitScaling = this->partitionCount > 1;
         args.isDebuggerActive = true;

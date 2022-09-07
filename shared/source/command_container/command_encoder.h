@@ -262,8 +262,15 @@ template <typename GfxFamily>
 struct EncodeStateBaseAddress {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
     static void encode(EncodeStateBaseAddressArgs<GfxFamily> &args);
-    static void setSbaAddressesForDebugger(NEO::Debugger::SbaAddresses &sbaAddress, const STATE_BASE_ADDRESS &sbaCmd);
     static size_t getRequiredSizeForStateBaseAddress(Device &device, CommandContainer &container, bool isRcs);
+    static void setSbaTrackingForL0DebuggerIfEnabled(bool trackingEnabled,
+                                                     Device &device,
+                                                     LinearStream &commandStream,
+                                                     STATE_BASE_ADDRESS &sbaCmd,
+                                                     const bool skipCheck);
+
+  protected:
+    static void setSbaAddressesForDebugger(NEO::Debugger::SbaAddresses &sbaAddress, const STATE_BASE_ADDRESS &sbaCmd);
 };
 
 template <typename GfxFamily>

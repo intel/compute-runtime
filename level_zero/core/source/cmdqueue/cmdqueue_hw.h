@@ -125,9 +125,9 @@ struct CommandQueueHw : public CommandQueueImp {
     inline void allocateTagsManagerHeapsAndMakeThemResidentIfSWTagsEnabled(NEO::LinearStream &commandStream);
     inline void makeSbaTrackingBufferResidentIfL0DebuggerEnabled(bool isDebugEnabled);
     inline void programCommandQueueDebugCmdsForSourceLevelOrL0DebuggerIfEnabled(bool isDebugEnabled, NEO::LinearStream &commandStream);
-    inline void programSbaWithUpdatedGsbaIfDirty(CommandListExecutionContext &ctx,
-                                                 ze_command_list_handle_t hCommandList,
-                                                 NEO::LinearStream &commandStream);
+    inline void programStateBaseAddressWithGsbaIfDirty(CommandListExecutionContext &ctx,
+                                                       ze_command_list_handle_t hCommandList,
+                                                       NEO::LinearStream &commandStream);
     inline void programCsrBaseAddressIfPreemptionModeInitial(bool isPreemptionModeInitial, NEO::LinearStream &commandStream);
     inline void programStateSip(bool isStateSipRequired, NEO::LinearStream &commandStream);
     inline void updateOneCmdListPreemptionModeAndCtxStatePreemption(CommandListExecutionContext &ctx,

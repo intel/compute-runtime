@@ -344,11 +344,11 @@ HWTEST2_F(CommandListCreate, GivenComputeModePropertiesWhenUpdateStreamPropertie
     auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x100;
-    pCommandList->updateStreamProperties(kernel, false, false);
+    pCommandList->updateStreamProperties(kernel, false);
     EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
     EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
     const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x80;
-    pCommandList->updateStreamProperties(kernel, false, false);
+    pCommandList->updateStreamProperties(kernel, false);
     EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
     EXPECT_FALSE(pCommandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
 }
@@ -372,11 +372,11 @@ HWTEST2_F(CommandListCreate, GivenComputeModePropertiesWhenUpdateStreamPropertie
     auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x100;
-    pCommandList->updateStreamProperties(kernel, false, false);
+    pCommandList->updateStreamProperties(kernel, false);
     EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
     EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
     const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x80;
-    pCommandList->updateStreamProperties(kernel, false, false);
+    pCommandList->updateStreamProperties(kernel, false);
     EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
     EXPECT_FALSE(pCommandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
 }

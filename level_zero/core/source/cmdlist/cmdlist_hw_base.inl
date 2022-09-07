@@ -122,7 +122,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     std::list<void *> additionalCommands;
 
-    updateStreamProperties(*kernel, false, launchParams.isCooperative);
+    updateStreamProperties(*kernel, launchParams.isCooperative);
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
         0,                                                     // eventAddress
         neoDevice,                                             // device
@@ -160,7 +160,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         args.numAvailableDevices = neoDevice->getNumGenericSubDevices();
         args.allocation = device->getDebugSurface();
         args.gmmHelper = neoDevice->getGmmHelper();
-        args.useGlobalAtomics = kernelImp->getKernelDescriptor().kernelAttributes.flags.useGlobalAtomics;
+        args.useGlobalAtomics = kernelDescriptor.kernelAttributes.flags.useGlobalAtomics;
         args.areMultipleSubDevicesInContext = false;
         args.isDebuggerActive = true;
         NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);

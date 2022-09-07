@@ -2314,7 +2314,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::prepareIndirectParams(const ze
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel, bool isMultiOsContextCapable, bool isCooperative) {
+void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel, bool isCooperative) {
     using VFE_STATE_TYPE = typename GfxFamily::VFE_STATE_TYPE;
 
     auto &hwInfo = device->getHwInfo();
@@ -2415,12 +2415,12 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
         isRcs};
     NEO::EncodeStateBaseAddress<GfxFamily>::encode(encodeStateBaseAddressArgs);
 
-    if (NEO::Debugger::isDebugEnabled(this->internalUsage) && device->getL0Debugger()) {
-        NEO::Debugger::SbaAddresses sbaAddresses = {};
-        NEO::EncodeStateBaseAddress<GfxFamily>::setSbaAddressesForDebugger(sbaAddresses, sba);
-
-        device->getL0Debugger()->captureStateBaseAddress(*commandContainer.getCommandStream(), sbaAddresses);
-    }
+    bool sbaTrackingEnabled = NEO::Debugger::isDebugEnabled(this->internalUsage) && device->getL0Debugger();
+    NEO::EncodeStateBaseAddress<GfxFamily>::setSbaTrackingForL0DebuggerIfEnabled(sbaTrackingEnabled,
+                                                                                 *this->device->getNEODevice(),
+                                                                                 *container.getCommandStream(),
+                                                                                 sba,
+                                                                                 false);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

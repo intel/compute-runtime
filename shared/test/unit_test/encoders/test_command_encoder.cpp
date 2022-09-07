@@ -82,6 +82,15 @@ HWTEST2_F(CommandEncoderTest, givenIclLpWhenGettingRequiredSizeForStateBaseAddre
     EXPECT_EQ(size, 88ul);
 }
 
+template <typename Family>
+struct L0DebuggerSbaAddressSetter : public EncodeStateBaseAddress<Family> {
+    using STATE_BASE_ADDRESS = typename Family::STATE_BASE_ADDRESS;
+
+    void proxySetSbaAddressesForDebugger(NEO::Debugger::SbaAddresses &sbaAddress, const STATE_BASE_ADDRESS &sbaCmd) {
+        EncodeStateBaseAddress<Family>::setSbaAddressesForDebugger(sbaAddress, sbaCmd);
+    }
+};
+
 HWTEST2_F(CommandEncoderTest, givenSbaCommandWhenGettingSbaAddressesForDebuggerThenCorrectValuesAreReturned, IsAtMostXeHpgCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
@@ -91,7 +100,8 @@ HWTEST2_F(CommandEncoderTest, givenSbaCommandWhenGettingSbaAddressesForDebuggerT
     cmd.setGeneralStateBaseAddress(0x1236000);
 
     NEO::Debugger::SbaAddresses sbaAddress = {};
-    EncodeStateBaseAddress<FamilyType>::setSbaAddressesForDebugger(sbaAddress, cmd);
+    auto setter = L0DebuggerSbaAddressSetter<FamilyType>{};
+    setter.proxySetSbaAddressesForDebugger(sbaAddress, cmd);
     EXPECT_EQ(0x1234000u, sbaAddress.InstructionBaseAddress);
     EXPECT_EQ(0x1235000u, sbaAddress.SurfaceStateBaseAddress);
     EXPECT_EQ(0x1236000u, sbaAddress.GeneralStateBaseAddress);

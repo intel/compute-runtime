@@ -240,7 +240,7 @@ struct CommandListCoreFamily : CommandListImp {
                                           const CmdListKernelLaunchParams &launchParams);
 
     ze_result_t prepareIndirectParams(const ze_group_count_t *threadGroupDimensions);
-    void updateStreamProperties(Kernel &kernel, bool isMultiOsContextCapable, bool isCooperative);
+    void updateStreamProperties(Kernel &kernel, bool isCooperative);
     void clearCommandsToPatch();
 
     void applyMemoryRangesBarrier(uint32_t numRanges, const size_t *pRangeSizes,

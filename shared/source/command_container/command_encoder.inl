@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
@@ -320,6 +321,25 @@ inline void EncodeSetMMIO<Family>::encodeIMM(LinearStream &cmdStream, uint32_t o
                                offset,
                                data,
                                remap);
+}
+
+template <typename Family>
+inline void EncodeStateBaseAddress<Family>::setSbaTrackingForL0DebuggerIfEnabled(bool trackingEnabled,
+                                                                                 Device &device,
+                                                                                 LinearStream &commandStream,
+                                                                                 STATE_BASE_ADDRESS &sbaCmd,
+                                                                                 const bool skipCheck) {
+    if (!trackingEnabled) {
+        return;
+    }
+
+    NEO::Debugger::SbaAddresses sbaAddresses = {};
+    NEO::EncodeStateBaseAddress<Family>::setSbaAddressesForDebugger(sbaAddresses, sbaCmd);
+    if (skipCheck) {
+        device.getL0Debugger()->programSbaTrackingCommands(commandStream, sbaAddresses);
+    } else {
+        device.getL0Debugger()->captureStateBaseAddress(commandStream, sbaAddresses);
+    }
 }
 
 template <typename Family>

@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/xe_hp_core/hw_cmds.h"
-#include "shared/source/xe_hp_core/hw_info.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.inl"
 #include "level_zero/core/source/cmdqueue/cmdqueue_xe_hp_core_and_later.inl"

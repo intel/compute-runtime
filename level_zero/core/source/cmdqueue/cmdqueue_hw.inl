@@ -144,7 +144,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
 
     this->programPipelineSelectIfGpgpuDisabled(child);
     this->programCommandQueueDebugCmdsForSourceLevelOrL0DebuggerIfEnabled(ctx.isDebugEnabled, child);
-    this->programSbaWithUpdatedGsbaIfDirty(ctx, phCommandLists[0], child);
+    this->programStateBaseAddressWithGsbaIfDirty(ctx, phCommandLists[0], child);
     this->programCsrBaseAddressIfPreemptionModeInitial(ctx.isPreemptionModeInitial, child);
     this->programStateSip(ctx.stateSipRequired, child);
     this->makePreemptionAllocationResidentForModeMidThread(ctx.isDevicePreemptionModeMidThread);
@@ -716,7 +716,7 @@ void CommandQueueHw<gfxCoreFamily>::programCommandQueueDebugCmdsForSourceLevelOr
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::programSbaWithUpdatedGsbaIfDirty(
+void CommandQueueHw<gfxCoreFamily>::programStateBaseAddressWithGsbaIfDirty(
     CommandListExecutionContext &ctx,
     ze_command_list_handle_t hCommandList,
     NEO::LinearStream &cmdStream) {

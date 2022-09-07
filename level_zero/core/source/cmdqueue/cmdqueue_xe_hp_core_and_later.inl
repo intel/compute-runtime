@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
@@ -76,13 +77,12 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
             *sbaCmdBuf = sbaCmd;
         }
 
-        if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger()) {
-
-            NEO::Debugger::SbaAddresses sbaAddresses = {};
-            NEO::EncodeStateBaseAddress<GfxFamily>::setSbaAddressesForDebugger(sbaAddresses, sbaCmd);
-
-            device->getL0Debugger()->programSbaTrackingCommands(commandStream, sbaAddresses);
-        }
+        bool sbaTrackingEnabled = (NEO::Debugger::isDebugEnabled(this->internalUsage) && device->getL0Debugger());
+        NEO::EncodeStateBaseAddress<GfxFamily>::setSbaTrackingForL0DebuggerIfEnabled(sbaTrackingEnabled,
+                                                                                     *neoDevice,
+                                                                                     commandStream,
+                                                                                     sbaCmd,
+                                                                                     true);
 
         auto heap = neoDevice->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::GLOBAL_SSH);
         NEO::StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(

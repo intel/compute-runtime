@@ -440,11 +440,12 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
         programAdditionalStateBaseAddress(commandStreamCSR, stateBaseAddressCmd, device);
 
-        if (debuggingEnabled && !device.getDebugger()->isLegacy()) {
-            NEO::Debugger::SbaAddresses sbaAddresses = {};
-            NEO::EncodeStateBaseAddress<GfxFamily>::setSbaAddressesForDebugger(sbaAddresses, stateBaseAddressCmd);
-            device.getDebugger()->captureStateBaseAddress(commandStreamCSR, sbaAddresses);
-        }
+        bool sbaTrackingEnabled = (debuggingEnabled && !device.getDebugger()->isLegacy());
+        NEO::EncodeStateBaseAddress<GfxFamily>::setSbaTrackingForL0DebuggerIfEnabled(sbaTrackingEnabled,
+                                                                                     device,
+                                                                                     commandStreamCSR,
+                                                                                     stateBaseAddressCmd,
+                                                                                     false);
 
         if (sshDirty) {
             bindingTableBaseAddressRequired = true;

@@ -79,17 +79,13 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
 
     NEO::StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(stateBaseAddressHelperArgs);
     *sbaCmdBuf = sbaCmd;
-    csr->setGSBAStateDirty(false);
 
-    if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger()) {
-
-        NEO::Debugger::SbaAddresses sbaAddresses = {};
-        NEO::EncodeStateBaseAddress<GfxFamily>::setSbaAddressesForDebugger(sbaAddresses, sbaCmd);
-
-        device->getL0Debugger()->programSbaTrackingCommands(commandStream, sbaAddresses);
-    }
+    bool sbaTrackingEnabled = (NEO::Debugger::isDebugEnabled(this->internalUsage) && device->getL0Debugger());
+    NEO::EncodeStateBaseAddress<GfxFamily>::setSbaTrackingForL0DebuggerIfEnabled(sbaTrackingEnabled, *neoDevice, commandStream, sbaCmd, true);
 
     NEO::EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStream, {}, false, hwInfo, isRcs);
+
+    csr->setGSBAStateDirty(false);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

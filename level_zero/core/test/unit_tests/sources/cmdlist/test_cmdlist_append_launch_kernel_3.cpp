@@ -363,11 +363,11 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenUpdateStreamPropertiesIsCalledThenR
     int32_t expectedDisableOverdispatch = hwInfoConfig.isDisableOverdispatchAvailable(*defaultHwInfo) ? 1 : 0;
     expectedDisableOverdispatch = hwInfoConfig.getFrontEndPropertyDisableOverDispatchSupport() ? expectedDisableOverdispatch : -1;
 
-    pCommandList->updateStreamProperties(kernel, false, false);
+    pCommandList->updateStreamProperties(kernel, false);
     EXPECT_EQ(expectedDisableOverdispatch, pCommandList->requiredStreamState.frontEndState.disableOverdispatch.value);
     EXPECT_EQ(expectedDisableOverdispatch, pCommandList->finalStreamState.frontEndState.disableOverdispatch.value);
 
-    pCommandList->updateStreamProperties(kernel, false, false);
+    pCommandList->updateStreamProperties(kernel, false);
     EXPECT_EQ(expectedDisableOverdispatch, pCommandList->requiredStreamState.frontEndState.disableOverdispatch.value);
     EXPECT_EQ(expectedDisableOverdispatch, pCommandList->finalStreamState.frontEndState.disableOverdispatch.value);
 }
