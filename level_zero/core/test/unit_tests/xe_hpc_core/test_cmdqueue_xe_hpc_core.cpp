@@ -94,13 +94,13 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsF
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
     auto commandListHandle = commandList->toHandle();
     commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
-    auto used = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter1stExecute = commandQueue->commandStream->getUsed();
     commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
-    auto sizeUsed2 = commandQueue->commandStream->getUsed();
+    auto usedSpaceOn2ndExecute = commandQueue->commandStream->getUsed() - usedSpaceAfter1stExecute;
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), used), sizeUsed2));
+    auto cmdBufferAddress = ptrOffset(commandQueue->commandStream->getCpuBase(), usedSpaceAfter1stExecute);
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdBufferAddress, usedSpaceOn2ndExecute));
 
     auto itor = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(cmdList.begin(), cmdList.end());
     EXPECT_EQ(cmdList.end(), itor);

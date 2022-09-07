@@ -159,23 +159,23 @@ HWTEST2_F(CommandQueueProgramSBATest,
     auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr.get(), &desc);
     commandQueue->initialize(false, false);
 
-    uint32_t alignedSize = 4096u;
+    auto alignedSize = commandQueue->estimateStateBaseAddressCmdSize();
     NEO::LinearStream child(commandQueue->commandStream->getSpace(alignedSize), alignedSize);
 
     commandQueue->programStateBaseAddress(0u, true, child, true);
-
     auto usedSpaceAfter = commandQueue->commandStream->getUsed();
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, commandQueue->commandStream->getCpuBase(), usedSpaceAfter));
 
     auto itor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
 
     auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*itor);
     EXPECT_EQ(cmdSba->getBindlessSurfaceStateBaseAddressModifyEnable(), true);
-    EXPECT_EQ(cmdSba->getBindlessSurfaceStateBaseAddress(), neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->getBindlessHeapsHelper()->getGlobalHeapsBase());
+
+    auto globalHeapsBase = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->getBindlessHeapsHelper()->getGlobalHeapsBase();
+    EXPECT_EQ(globalHeapsBase, cmdSba->getBindlessSurfaceStateBaseAddress());
 
     auto surfaceStateCount = StateBaseAddressHelper<FamilyType>::getMaxBindlessSurfaceStates();
     EXPECT_EQ(surfaceStateCount, cmdSba->getBindlessSurfaceStateSize());
@@ -200,7 +200,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
     auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr.get(), &desc);
     commandQueue->initialize(false, false);
 
-    uint32_t alignedSize = 4096u;
+    auto alignedSize = commandQueue->estimateStateBaseAddressCmdSize();
     NEO::LinearStream child(commandQueue->commandStream->getSpace(alignedSize), alignedSize);
 
     commandQueue->programStateBaseAddress(0u, true, child, true);
@@ -208,14 +208,14 @@ HWTEST2_F(CommandQueueProgramSBATest,
     auto usedSpaceAfter = commandQueue->commandStream->getUsed();
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, commandQueue->commandStream->getCpuBase(), usedSpaceAfter));
 
     auto itor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
 
     auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*itor);
-    EXPECT_NE(cmdSba->getBindlessSurfaceStateBaseAddress(), neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->getBindlessHeapsHelper()->getGlobalHeapsBase());
+    EXPECT_NE(cmdSba->getBindlessSurfaceStateBaseAddress(),
+              neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->getBindlessHeapsHelper()->getGlobalHeapsBase());
 
     commandQueue->destroy();
 }
