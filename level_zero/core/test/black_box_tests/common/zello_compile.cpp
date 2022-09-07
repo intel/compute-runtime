@@ -7,7 +7,7 @@
 
 #include "zello_compile.h"
 
-#include "shared/offline_compiler/source/ocloc_api.h"
+#include "ocloc_api.h"
 
 std::vector<uint8_t> compileToSpirV(const std::string &src, const std::string &options, std::string &outCompilerLog) {
     std::vector<uint8_t> ret;

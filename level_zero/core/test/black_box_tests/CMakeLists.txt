@@ -16,8 +16,12 @@ add_library(${L0_BLACK_BOX_TEST_SHARED_LIB} STATIC
             ${CMAKE_CURRENT_SOURCE_DIR}/common/zello_compile.h
 )
 
+if(NOT DEFINED L0_BLACK_BOX_OCLOC_HEADER_DIR)
+  set(L0_BLACK_BOX_OCLOC_HEADER_DIR "${NEO_SOURCE_DIR}/shared/offline_compiler/source")
+endif()
+
 target_link_libraries(${L0_BLACK_BOX_TEST_SHARED_LIB} PUBLIC ocloc_lib)
-target_include_directories(${L0_BLACK_BOX_TEST_SHARED_LIB} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/common)
+target_include_directories(${L0_BLACK_BOX_TEST_SHARED_LIB} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/common ${L0_BLACK_BOX_OCLOC_HEADER_DIR})
 
 set_target_properties(${L0_BLACK_BOX_TEST_SHARED_LIB} PROPERTIES FOLDER ${L0_BLACK_BOX_TEST_PROJECT_FOLDER})
 
