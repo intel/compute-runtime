@@ -11,8 +11,10 @@
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/utilities/const_stringref.h"
 
-#include <inttypes.h>
-#include <stddef.h>
+#include <array>
+#include <cinttypes>
+#include <cstddef>
+#include <optional>
 
 namespace NEO {
 
@@ -120,6 +122,7 @@ constexpr ConstStringRef globalHostAccessTable("global_host_access_table");
 constexpr ConstStringRef functions("functions");
 
 namespace Kernel {
+constexpr ConstStringRef attributes("user_attributes");
 constexpr ConstStringRef name("name");
 constexpr ConstStringRef executionEnv("execution_env");
 constexpr ConstStringRef debugEnv("debug_env");
@@ -158,6 +161,16 @@ constexpr ConstStringRef roundRobin("round_robin");
 constexpr ConstStringRef roundRobinStall("round_robin_stall");
 } // namespace ThreadSchedulingMode
 } // namespace ExecutionEnv
+
+namespace Attributes {
+constexpr ConstStringRef intelReqdSubgroupSize("intel_reqd_sub_group_size");
+constexpr ConstStringRef intelReqdWorkgroupWalkOrder("intel_reqd_workgroup_walk_order");
+constexpr ConstStringRef reqdWorkgroupSize("reqd_work_group_size");
+constexpr ConstStringRef invalidKernel("invalid_kernel");
+constexpr ConstStringRef vecTypeHint("vec_type_hint");
+constexpr ConstStringRef workgroupSizeHint("work_group_size_hint");
+constexpr ConstStringRef hintSuffix("_hint");
+} // namespace Attributes
 
 namespace DebugEnv {
 constexpr ConstStringRef debugSurfaceBTI("sip_surface_bti");
@@ -428,6 +441,32 @@ struct ExperimentalPropertiesBaseT {
 };
 
 } // namespace ExecutionEnv
+
+namespace Attributes {
+using IntelReqdSubgroupSizeT = int32_t;
+using IntelReqdWorkgroupWalkOrder = std::array<int32_t, 3>;
+using ReqdWorkgroupSizeT = std::array<int32_t, 3>;
+using InvalidKernelT = ConstStringRef;
+using WorkgroupSizeHint = std::array<int32_t, 3>;
+using VecTypeHintT = ConstStringRef;
+
+namespace Defaults {
+constexpr IntelReqdSubgroupSizeT intelReqdSubgroupSize = 0;
+constexpr IntelReqdWorkgroupWalkOrder intelReqdWorkgroupWalkOrder = {0, 0, 0};
+constexpr ReqdWorkgroupSizeT reqdWorkgroupSize = {0, 0, 0};
+constexpr WorkgroupSizeHint workgroupSizeHint = {0, 0, 0};
+} // namespace Defaults
+
+struct AttributesBaseT {
+    std::optional<IntelReqdSubgroupSizeT> intelReqdSubgroupSize;
+    std::optional<IntelReqdWorkgroupWalkOrder> intelReqdWorkgroupWalkOrder;
+    std::optional<ReqdWorkgroupSizeT> reqdWorkgroupSize;
+    std::optional<InvalidKernelT> invalidKernel;
+    std::optional<WorkgroupSizeHint> workgroupSizeHint;
+    std::optional<VecTypeHintT> vecTypeHint;
+    std::vector<std::pair<ConstStringRef, ConstStringRef>> otherHints;
+};
+} // namespace Attributes
 
 namespace DebugEnv {
 using DebugSurfaceBTIT = int32_t;

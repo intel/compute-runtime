@@ -1124,6 +1124,51 @@ kernels:
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : wrong size of collection required_work_group_size in context of : some_kernel. Got : 2 expected : 3\n", errors.c_str());
 }
 
+TEST(ReadZeInfoAttributes, GivenValidYamlEntriesThenSetProperMembers) {
+    NEO::ConstStringRef yaml = R"===(---
+kernels:         
+  - name:            some_kernel
+    user_attributes:
+      intel_reqd_sub_group_size: 16
+      intel_reqd_workgroup_walk_order: [0, 1, 2]
+      reqd_work_group_size: [256, 2, 1]
+      vec_type_hint:   uint
+      work_group_size_hint: [256, 2, 1]
+      new_user_hint: new_user_hint_value
+      invalid_kernel: invalid_kernel_reason
+...
+)===";
+
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    ASSERT_TRUE(success);
+    auto &attributeNd = *parser.findNodeWithKeyDfs(NEO::Elf::ZebinKernelMetadata::Tags::Kernel::attributes);
+    std::string errors;
+    std::string warnings;
+    NEO::Elf::ZebinKernelMetadata::Types::Kernel::Attributes::AttributesBaseT attributes;
+    auto err = NEO::readZeInfoAttributes(parser, attributeNd, attributes, "some_kernel", errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_EQ(16, attributes.intelReqdSubgroupSize.value());
+    EXPECT_EQ(0, attributes.intelReqdWorkgroupWalkOrder.value()[0]);
+    EXPECT_EQ(1, attributes.intelReqdWorkgroupWalkOrder.value()[1]);
+    EXPECT_EQ(2, attributes.intelReqdWorkgroupWalkOrder.value()[2]);
+    EXPECT_EQ(256, attributes.reqdWorkgroupSize.value()[0]);
+    EXPECT_EQ(2, attributes.reqdWorkgroupSize.value()[1]);
+    EXPECT_EQ(1, attributes.reqdWorkgroupSize.value()[2]);
+    EXPECT_TRUE(equals(attributes.vecTypeHint.value(), "uint"));
+    EXPECT_EQ(256, attributes.workgroupSizeHint.value()[0]);
+    EXPECT_EQ(2, attributes.workgroupSizeHint.value()[1]);
+    EXPECT_EQ(1, attributes.workgroupSizeHint.value()[2]);
+    ASSERT_EQ(1U, attributes.otherHints.size());
+    EXPECT_TRUE(equals(attributes.otherHints[0].first, "new_user_hint"));
+    EXPECT_TRUE(equals(attributes.otherHints[0].second, "new_user_hint_value"));
+    EXPECT_TRUE(equals(attributes.invalidKernel.value(), "invalid_kernel_reason"));
+}
+
 TEST(ReadZeInfoDebugEnvironment, givenValidYamlEntryThenSetProperMembers) {
     NEO::ConstStringRef yaml = R"===(---
 kernels:         
@@ -1450,6 +1495,90 @@ kernels:
     auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_STREQ("Missing source offset value for element in argByValue\n", errors.c_str());
+}
+
+TEST(PopulateKernelDescriptor, GivenKernelAttributesWhenPopulatingKernelDescriptorThenKernelLanguageSourcesAreSetAccordingly) {
+    NEO::ConstStringRef yaml = R"===(---
+kernels:         
+  - name:            some_kernel
+    execution_env:
+        simd_size: 8
+    user_attributes:
+      intel_reqd_sub_group_size: 16
+      intel_reqd_workgroup_walk_order: [0, 1, 2]
+      reqd_work_group_size: [256, 2, 1]
+      vec_type_hint:   uint
+      work_group_size_hint: [256, 2, 1]
+      new_user_hint: new_user_hint_value
+...
+)===";
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    NEO::ZebinSections zebinSections;
+    std::string errors, warnings;
+
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(yaml, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_TRUE(errors.empty()) << errors;
+
+    EXPECT_STREQ("new_user_hint(new_user_hint_value) intel_reqd_sub_group_size(16) intel_reqd_workgroup_walk_order(0, 1, 2) reqd_work_group_size(256, 2, 1) work_group_size_hint(256, 2, 1) vec_type_hint(uint)", programInfo.kernelInfos[0]->kernelDescriptor.kernelMetadata.kernelLanguageAttributes.c_str());
+    EXPECT_FALSE(programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.flags.isInvalid);
+}
+
+TEST(PopulateKernelSourceAttributes, GivenInvalidKernelAttributeWhenPopulatingKernelSourceAttributesThenKernelIsInvalidFlagIsSet) {
+    NEO::KernelDescriptor kd;
+    NEO::Elf::ZebinKernelMetadata::Types::Kernel::Attributes::AttributesBaseT attributes;
+    attributes.invalidKernel = "reason";
+    auto err = populateKernelSourceAttributes(kd, attributes);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(kd.kernelAttributes.flags.isInvalid);
+    EXPECT_STREQ("invalid_kernel(reason)", kd.kernelMetadata.kernelLanguageAttributes.c_str());
+}
+
+TEST(PopulateKernelDescriptor, GivenUnknownAttributeWhenPopulatingKernelDescriptorThenErrorIsReturned) {
+    NEO::ConstStringRef yaml = R"===(---
+kernels:         
+  - name:            some_kernel
+    execution_env:
+        simd_size: 8
+    user_attributes:
+      unknown_attribute: unkown_attribute_value
+...
+)===";
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    NEO::ZebinSections zebinSections;
+    std::string errors, warnings;
+
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(yaml, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unknown attribute entry \"unknown_attribute\" in context of some_kernel\n", errors.c_str());
 }
 
 TEST(ReadZeInfoEnumChecked, GivenInvalidNodeThenFail) {
