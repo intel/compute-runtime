@@ -18,7 +18,7 @@ URL: https://github.com/intel/compute-runtime
 Source0: %{url}/archive/%{version}/compute-runtime-%{version}.tar.xz
 Source1: copyright
 
-BuildRequires: make libva-devel gcc-c++ cmake
+BuildRequires: libva-devel gcc-c++ cmake ninja-build make
 BuildRequires: intel-gmmlib-devel
 BuildRequires: intel-igc-opencl-devel
 
@@ -42,20 +42,21 @@ exposing hardware capabilities to applications.
 mkdir build
 cd build
 %cmake .. \
+   -GNinja \
    -DNEO_VERSION_BUILD=%{build_id} \
    -DCMAKE_BUILD_TYPE=Release \
    -DNEO_BUILD_WITH_OCL=FALSE \
-   -DNEO_SKIP_UNIT_TESTS=1 \
+   -DNEO_SKIP_UNIT_TESTS=TRUE \
    -DNEO_ENABLE_i915_PRELIM_DETECTION=TRUE \
    -DRELEASE_WITH_REGKEYS=%{NEO_RELEASE_WITH_REGKEYS} \
-   -DCMAKE_INSTALL_PREFIX=/usr \
    -DL0_INSTALL_UDEV_RULES=1 \
-   -DUDEV_RULES_DIR=/etc/udev/rules.d/
-%make_build
+   -DUDEV_RULES_DIR=/etc/udev/rules.d/ \
+   -DCMAKE_VERBOSE_MAKEFILE=FALSE
+%ninja_build
 
 %install
 cd build
-%make_install
+%ninja_install
 
 #Remove OpenCL files before installing
 rm -rf %{buildroot}%{_libdir}/intel-opencl/

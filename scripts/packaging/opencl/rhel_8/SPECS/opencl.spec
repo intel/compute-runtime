@@ -24,7 +24,7 @@ Source1: copyright
 Requires:      intel-gmmlib
 Requires:      intel-igc-opencl
 
-BuildRequires: make libva-devel gcc-c++ cmake
+BuildRequires: libva-devel gcc-c++ cmake ninja-build make
 BuildRequires: intel-gmmlib-devel
 BuildRequires: intel-igc-opencl-devel
 
@@ -46,6 +46,7 @@ Intel(R) Graphics Compute Runtime for OpenCL(TM) is a open source project to con
 mkdir build
 cd build
 %cmake .. \
+   -GNinja \
    -DNEO_OCL_VERSION_MAJOR=%{NEO_OCL_VERSION_MAJOR} \
    -DNEO_OCL_VERSION_MINOR=%{NEO_OCL_VERSION_MINOR} \
    -DNEO_VERSION_BUILD=%{NEO_OCL_VERSION_BUILD} \
@@ -53,13 +54,13 @@ cd build
    -DBUILD_WITH_L0=FALSE \
    -DNEO_SKIP_UNIT_TESTS=TRUE \
    -DNEO_ENABLE_i915_PRELIM_DETECTION=TRUE \
-   -DCMAKE_INSTALL_PREFIX=/usr \
-   -DRELEASE_WITH_REGKEYS=%{NEO_RELEASE_WITH_REGKEYS}
-%make_build
+   -DRELEASE_WITH_REGKEYS=%{NEO_RELEASE_WITH_REGKEYS} \
+   -DCMAKE_VERBOSE_MAKEFILE=FALSE
+%ninja_build
 
 %install
 cd build
-%make_install
+%ninja_install
 chmod +x %{buildroot}/%{_libdir}/intel-opencl/libigdrcl.so
 chmod +x %{buildroot}/%{_libdir}/libocloc.so
 rm -f %{buildroot}/%{_libdir}/intel-opencl/libigdrcl.so.debug

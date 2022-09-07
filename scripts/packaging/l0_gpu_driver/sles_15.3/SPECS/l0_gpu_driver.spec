@@ -28,7 +28,7 @@ Source0: %{url}/archive/%{version}/compute-runtime-%{version}.tar.xz
 Source1: copyright
 
 ExclusiveArch:  x86_64
-BuildRequires:  cmake make gcc-c++
+BuildRequires:  cmake gcc-c++ ninja make
 #BuildRequires:  libva-devel
 BuildRequires:  libigdgmm%{?name_suffix}-devel
 BuildRequires:  libigdfcl%{?name_suffix}-devel
@@ -52,21 +52,21 @@ exposing hardware capabilities to applications.
 
 %build
 %cmake .. \
+   -GNinja \
    -DNEO_VERSION_BUILD=%{build_id} \
    -DCMAKE_BUILD_TYPE=%{build_type} \
-   -DCMAKE_INSTALL_PREFIX=/usr \
    -DNEO_BUILD_WITH_OCL=FALSE \
    -DNEO_SKIP_UNIT_TESTS=TRUE \
    -DNEO_ENABLE_i915_PRELIM_DETECTION=TRUE \
    -DRELEASE_WITH_REGKEYS=%{NEO_RELEASE_WITH_REGKEYS} \
    -DL0_INSTALL_UDEV_RULES=1 \
    -DUDEV_RULES_DIR=/etc/udev/rules.d/ \
-   -Wno-dev
-%make_build
+   -DCMAKE_VERBOSE_MAKEFILE=FALSE
+%ninja_build
 
 %install
 cd build
-%make_install
+%ninja_install
 
 #Remove OpenCL files before installing
 rm -rf %{buildroot}%{_libdir}/intel-opencl/
