@@ -6289,5 +6289,135 @@ TEST_F(DebugApiLinuxMultitileTest, givenApiThreadAndMultipleTilesWhenGettingDevi
     EXPECT_EQ(1u, deviceIndex);
 }
 
+struct AffinityMaskMultipleSubdevices : DebugApiLinuxMultiDeviceFixture {
+    void setUp() {
+        DebugManager.flags.ZE_AFFINITY_MASK.set("0.0,0.1,0.3");
+        MultipleDevicesWithCustomHwInfo::numSubDevices = 4;
+        DebugApiLinuxMultiDeviceFixture::setUp();
+    }
+
+    void tearDown() {
+        MultipleDevicesWithCustomHwInfo::tearDown();
+    }
+    DebugManagerStateRestore restorer;
+};
+
+using AffinityMaskMultipleSubdevicesTest = Test<AffinityMaskMultipleSubdevices>;
+
+TEST_F(AffinityMaskMultipleSubdevicesTest, givenApiThreadAndMultipleTilesWhenConvertingToPhysicalThenCorrectValuesReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto debugSession = std::make_unique<MockDebugSessionLinux>(config, deviceImp, 10);
+
+    ze_device_thread_t thread = {2 * sliceCount - 1, 0, 0, 0};
+
+    uint32_t deviceIndex = debugSession->getDeviceIndexFromApiThread(thread);
+    EXPECT_EQ(1u, deviceIndex);
+
+    auto convertedThread = debugSession->convertToPhysicalWithinDevice(thread, deviceIndex);
+
+    EXPECT_EQ(1u, deviceIndex);
+    EXPECT_EQ(sliceCount - 1, convertedThread.slice);
+    EXPECT_EQ(thread.subslice, convertedThread.subslice);
+    EXPECT_EQ(thread.eu, convertedThread.eu);
+    EXPECT_EQ(thread.thread, convertedThread.thread);
+
+    thread = {3 * sliceCount - 1, 0, 0, 0};
+
+    deviceIndex = debugSession->getDeviceIndexFromApiThread(thread);
+    EXPECT_EQ(3u, deviceIndex);
+
+    convertedThread = debugSession->convertToPhysicalWithinDevice(thread, deviceIndex);
+
+    EXPECT_EQ(3u, deviceIndex);
+    EXPECT_EQ(sliceCount - 1, convertedThread.slice);
+    EXPECT_EQ(thread.subslice, convertedThread.subslice);
+    EXPECT_EQ(thread.eu, convertedThread.eu);
+    EXPECT_EQ(thread.thread, convertedThread.thread);
+
+    thread = {sliceCount - 1, 0, 0, 0};
+
+    deviceIndex = debugSession->getDeviceIndexFromApiThread(thread);
+    EXPECT_EQ(0u, deviceIndex);
+
+    convertedThread = debugSession->convertToPhysicalWithinDevice(thread, deviceIndex);
+
+    EXPECT_EQ(0u, deviceIndex);
+    EXPECT_EQ(sliceCount - 1, convertedThread.slice);
+    EXPECT_EQ(thread.subslice, convertedThread.subslice);
+    EXPECT_EQ(thread.eu, convertedThread.eu);
+    EXPECT_EQ(thread.thread, convertedThread.thread);
+
+    thread.slice = UINT32_MAX;
+    deviceIndex = debugSession->getDeviceIndexFromApiThread(thread);
+    EXPECT_EQ(UINT32_MAX, deviceIndex);
+}
+
+TEST_F(AffinityMaskMultipleSubdevicesTest, GivenEventWithAckFlagAndTileNotWithinBitfieldWhenHandlingEventForISAThenIsaIsNotStoredInMapAndEventIsAcked) {
+    uint64_t isaGpuVa = 0x345000;
+    uint64_t isaSize = 0x2000;
+    uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
+    prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
+
+    auto debugSession = std::make_unique<MockDebugSessionLinux>(zet_debug_config_t{1234}, deviceImp, 10);
+    auto handler = new MockIoctlHandler;
+    debugSession->ioctlHandler.reset(handler);
+
+    vmBindIsa->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
+    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE | PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK;
+    vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 3 * sizeof(typeOfUUID);
+    vmBindIsa->base.seqno = 20u;
+    vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
+    vmBindIsa->va_start = isaGpuVa;
+    vmBindIsa->va_length = isaSize;
+    vmBindIsa->vm_handle = 5;
+    vmBindIsa->num_uuids = 1;
+
+    auto *uuids = reinterpret_cast<typeOfUUID *>(ptrOffset(vmBindIsaData, sizeof(prelim_drm_i915_debug_event_vm_bind)));
+
+    typeOfUUID uuidsTemp[1];
+    uuidsTemp[0] = static_cast<typeOfUUID>(6);
+    debugSession->clientHandleToConnection[debugSession->clientHandle]->uuidMap[6].classIndex = NEO::DrmResourceClass::Isa;
+    debugSession->clientHandleToConnection[debugSession->clientHandle]->vmToTile[vmBindIsa->vm_handle] = 2;
+    memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
+
+    debugSession->handleEvent(&vmBindIsa->base);
+    EXPECT_EQ(0u, debugSession->clientHandleToConnection[debugSession->clientHandle]->isaMap[0].size());
+    EXPECT_EQ(0u, debugSession->clientHandleToConnection[debugSession->clientHandle]->isaMap[2].size());
+    EXPECT_EQ(vmBindIsa->base.seqno, handler->debugEventAcked.seqno);
+}
+
+TEST_F(AffinityMaskMultipleSubdevicesTest, GivenAttEventForTileNotWithinBitfieldWhenHandlingEventThenEventIsSkipped) {
+    auto debugSession = std::make_unique<MockDebugSessionLinux>(zet_debug_config_t{1234}, deviceImp, 10);
+
+    uint64_t ctxHandle = 2;
+    uint64_t vmHandle = 7;
+    uint64_t lrcHandle = 8;
+
+    debugSession->clientHandleToConnection[debugSession->clientHandle]->contextsCreated[ctxHandle].vm = vmHandle;
+    debugSession->clientHandleToConnection[debugSession->clientHandle]->lrcToContextHandle[lrcHandle] = ctxHandle;
+    debugSession->clientHandleToConnection[debugSession->clientHandle]->vmToTile[vmHandle] = 2;
+
+    prelim_drm_i915_debug_event_eu_attention attEvent = {};
+    attEvent.base.type = PRELIM_DRM_I915_DEBUG_EVENT_EU_ATTENTION;
+    attEvent.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_STATE_CHANGE;
+    attEvent.base.size = sizeof(prelim_drm_i915_debug_event_eu_attention);
+    attEvent.bitmask_size = 0;
+    attEvent.client_handle = MockDebugSessionLinux::mockClientHandle;
+    attEvent.lrc_handle = lrcHandle;
+    attEvent.flags = 0;
+
+    auto engineInfo = mockDrm->getEngineInfo();
+    auto ci = engineInfo->getEngineInstance(2, hwInfo.capabilityTable.defaultEngineType);
+    attEvent.ci.engine_class = ci->engineClass;
+    attEvent.ci.engine_instance = ci->engineInstance;
+
+    ze_device_thread_t thread = {0, 0, 0, UINT32_MAX};
+    debugSession->pendingInterrupts.push_back(std::pair<ze_device_thread_t, bool>(thread, false));
+
+    debugSession->handleEvent(&attEvent.base);
+    EXPECT_FALSE(debugSession->triggerEvents);
+}
+
 } // namespace ult
 } // namespace L0

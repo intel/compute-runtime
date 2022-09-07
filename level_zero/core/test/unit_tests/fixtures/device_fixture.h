@@ -134,7 +134,7 @@ struct MultipleDevicesWithCustomHwInfo {
     std::unique_ptr<UltDeviceFactory> deviceFactory;
 
     const uint32_t numRootDevices = 1u;
-    const uint32_t numSubDevices = 2u;
+    uint32_t numSubDevices = 2u;
 };
 
 struct SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl : public MultiDeviceFixture {

@@ -267,6 +267,10 @@ struct DebugSessionLinux : DebugSessionImp {
     virtual uint64_t getSbaBufferGpuVa(uint64_t memoryHandle);
     void printContextVms();
 
+    bool isTileWithinDeviceBitfield(uint32_t tileIndex) {
+        return connectedDevice->getNEODevice()->getDeviceBitfield().test(tileIndex);
+    }
+
     ThreadHelper internalEventThread;
     std::mutex internalEventThreadMutex;
     std::condition_variable internalEventCondition;

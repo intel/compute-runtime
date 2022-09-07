@@ -41,9 +41,10 @@ void DebugSession::createEuThreads() {
 
             for (uint32_t tileIndex = 0; tileIndex < subDeviceCount; tileIndex++) {
 
-                if (isSubDevice) {
+                if (isSubDevice || subDeviceCount == 1) {
                     tileIndex = Math::log2(static_cast<uint32_t>(connectedDevice->getNEODevice()->getDeviceBitfield().to_ulong()));
                 }
+
                 for (uint32_t sliceID = 0; sliceID < hwInfo.gtSystemInfo.MaxSlicesSupported; sliceID++) {
                     for (uint32_t subsliceID = 0; subsliceID < numSubslicesPerSlice; subsliceID++) {
                         for (uint32_t euID = 0; euID < numEuPerSubslice; euID++) {
@@ -57,16 +58,21 @@ void DebugSession::createEuThreads() {
                         }
                     }
                 }
+
+                if (isSubDevice || subDeviceCount == 1) {
+                    break;
+                }
             }
         }
     }
 }
 
 uint32_t DebugSession::getDeviceIndexFromApiThread(ze_device_thread_t thread) {
-    uint32_t deviceIndex = 0;
     auto &hwInfo = connectedDevice->getHwInfo();
     auto deviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
     auto deviceBitfield = connectedDevice->getNEODevice()->getDeviceBitfield();
+
+    uint32_t deviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
 
     if (connectedDevice->getNEODevice()->isSubDevice()) {
         deviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
@@ -502,7 +508,7 @@ ze_result_t DebugSessionImp::resume(ze_device_thread_t thread) {
     ze_result_t retVal = ZE_RESULT_SUCCESS;
 
     if (singleDevice) {
-        uint32_t deviceIndex = 0;
+        uint32_t deviceIndex = Math::log2(static_cast<uint32_t>(connectedDevice->getNEODevice()->getDeviceBitfield().to_ulong()));
 
         if (connectedDevice->getNEODevice()->isSubDevice()) {
             deviceIndex = Math::log2(static_cast<uint32_t>(connectedDevice->getNEODevice()->getDeviceBitfield().to_ulong()));

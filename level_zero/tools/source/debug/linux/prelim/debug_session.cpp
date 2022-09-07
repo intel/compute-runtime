@@ -761,8 +761,8 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
 
     if (vmBind->num_uuids > 0 && vmBind->base.size > sizeof(prelim_drm_i915_debug_event_vm_bind)) {
         auto vmHandle = vmBind->vm_handle;
-        uint32_t index = 0;
         auto connection = clientHandleToConnection[vmBind->client_handle].get();
+        uint32_t index = 0;
         const auto uuid = vmBind->uuids[index];
         const auto tileIndex = tileSessionsEnabled ? connection->vmToTile[vmHandle] : 0;
 
@@ -794,7 +794,9 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
             }
         }
 
-        if (connection->uuidMap[uuid].classIndex == NEO::DrmResourceClass::Isa) {
+        bool handleEvent = isTileWithinDeviceBitfield(connection->vmToTile[vmBind->vm_handle]);
+
+        if (handleEvent && connection->uuidMap[uuid].classIndex == NEO::DrmResourceClass::Isa) {
             PRINT_DEBUGGER_INFO_LOG("ISA vm_handle = %llu, tileIndex = %lu", (uint64_t)vmHandle, tileIndex);
 
             const auto isaUuidHandle = connection->uuidMap[uuid].handle;
@@ -1096,6 +1098,10 @@ void DebugSessionLinux::handleAttentionEvent(prelim_drm_i915_debug_event_eu_atte
 
     auto vmHandle = clientConnection->contextsCreated[contextHandle].vm;
     if (vmHandle == invalidHandle) {
+        return;
+    }
+
+    if (!connectedDevice->getNEODevice()->getDeviceBitfield().test(tileIndex)) {
         return;
     }
 
@@ -1617,13 +1623,13 @@ uint64_t DebugSessionLinux::getContextStateSaveAreaGpuVa(uint64_t memoryHandle) 
 }
 
 uint32_t DebugSessionLinux::getDeviceIndexFromApiThread(ze_device_thread_t thread) {
-    uint32_t deviceIndex = 0;
+    auto deviceBitfield = connectedDevice->getNEODevice()->getDeviceBitfield();
+    uint32_t deviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
     auto deviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
     const auto &topologyMap = DrmHelper::getTopologyMap(connectedDevice);
 
     if (connectedDevice->getNEODevice()->isSubDevice()) {
-        auto deviceBitfield = connectedDevice->getNEODevice()->getDeviceBitfield();
-        return Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
+        return deviceIndex;
     }
 
     if (deviceCount > 1) {
@@ -1633,10 +1639,12 @@ uint32_t DebugSessionLinux::getDeviceIndexFromApiThread(ze_device_thread_t threa
         } else {
             uint32_t sliceId = thread.slice;
             for (uint32_t i = 0; i < topologyMap.size(); i++) {
-                if (sliceId < topologyMap.at(i).sliceIndices.size()) {
-                    deviceIndex = i;
+                if (deviceBitfield.test(i)) {
+                    if (sliceId < topologyMap.at(i).sliceIndices.size()) {
+                        deviceIndex = i;
+                    }
+                    sliceId = sliceId - static_cast<uint32_t>(topologyMap.at(i).sliceIndices.size());
                 }
-                sliceId = sliceId - static_cast<uint32_t>(topologyMap.at(i).sliceIndices.size());
             }
         }
     }

@@ -1380,17 +1380,19 @@ bool DeviceImp::toPhysicalSliceId(const NEO::TopologyMap &topologyMap, uint32_t 
     if (topologyMap.size() == subDeviceCount && !isSubdevice) {
         uint32_t sliceId = slice;
         for (uint32_t i = 0; i < topologyMap.size(); i++) {
-            if (sliceId < topologyMap.at(i).sliceIndices.size()) {
-                slice = topologyMap.at(i).sliceIndices[sliceId];
+            if (deviceBitfield.test(i)) {
+                if (sliceId < topologyMap.at(i).sliceIndices.size()) {
+                    slice = topologyMap.at(i).sliceIndices[sliceId];
 
-                if (topologyMap.at(i).sliceIndices.size() == 1) {
-                    uint32_t subsliceId = subslice;
-                    subslice = topologyMap.at(i).subsliceIndices[subsliceId];
+                    if (topologyMap.at(i).sliceIndices.size() == 1) {
+                        uint32_t subsliceId = subslice;
+                        subslice = topologyMap.at(i).subsliceIndices[subsliceId];
+                    }
+                    deviceIndex = i;
+                    return true;
                 }
-                deviceIndex = i;
-                return true;
+                sliceId = sliceId - static_cast<uint32_t>(topologyMap.at(i).sliceIndices.size());
             }
-            sliceId = sliceId - static_cast<uint32_t>(topologyMap.at(i).sliceIndices.size());
         }
     } else if (isSubdevice) {
         UNRECOVERABLE_IF(!deviceBitfield.any());
@@ -1425,7 +1427,9 @@ bool DeviceImp::toApiSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slic
         uint32_t apiSliceId = 0;
         if (!isSubdevice) {
             for (uint32_t devId = 0; devId < deviceIndex; devId++) {
-                apiSliceId += static_cast<uint32_t>(topologyMap.at(devId).sliceIndices.size());
+                if (deviceBitfield.test(devId)) {
+                    apiSliceId += static_cast<uint32_t>(topologyMap.at(devId).sliceIndices.size());
+                }
             }
         }
 

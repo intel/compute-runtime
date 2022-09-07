@@ -2634,6 +2634,214 @@ TEST_F(MultipleDevicesTest, givenTopologyForTwoSubdevicesWhenGettingPhysicalSlic
     EXPECT_EQ(1u, deviceIndex);
 }
 
+struct MultipleDevicesAffinityTest : MultipleDevicesFixture<-1> {
+    void SetUp() override {
+        DebugManager.flags.ZE_AFFINITY_MASK.set("0.1,1.0");
+        MultipleDevicesFixture<-1>::SetUp();
+    }
+
+    void TearDown() override {
+        MultipleDevicesFixture<-1>::TearDown();
+    }
+
+    DebugManagerStateRestore restorer;
+};
+TEST_F(MultipleDevicesAffinityTest, givenAffinityMaskRootDeviceCorrespondingToTileWhenGettingPhysicalSliceIdThenCorrectSliceIdAndDeviceIndexIsReturned) {
+    ASSERT_EQ(2u, driverHandle->devices.size());
+
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+    auto hwInfo = device0->getHwInfo();
+
+    uint32_t subDeviceCount = numSubDevices;
+    std::vector<ze_device_handle_t> subDevices0(subDeviceCount);
+    auto res = device0->getSubDevices(&subDeviceCount, subDevices0.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(0u, subDeviceCount);
+
+    L0::DeviceImp *deviceImp0 = static_cast<DeviceImp *>(device0);
+    L0::DeviceImp *deviceImp1 = static_cast<DeviceImp *>(device1);
+
+    NEO::TopologyMap map;
+    TopologyMapping mapping;
+
+    mapping.sliceIndices.resize(hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i + 5;
+    }
+
+    mapping.subsliceIndices.resize(hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.subsliceIndices[i] = i;
+    }
+
+    map[0] = mapping;
+
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i + 10;
+    }
+    map[1] = mapping;
+
+    uint32_t sliceId = 0;
+    uint32_t subsliceId = 1;
+    uint32_t deviceIndex = 0;
+    auto ret = deviceImp0->toPhysicalSliceId(map, sliceId, subsliceId, deviceIndex);
+
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(10u, sliceId);
+    EXPECT_EQ(1u, subsliceId);
+    EXPECT_EQ(1u, deviceIndex);
+
+    sliceId = 0;
+    subsliceId = 1;
+    deviceIndex = 100;
+    ret = deviceImp1->toPhysicalSliceId(map, sliceId, subsliceId, deviceIndex);
+
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(5u, sliceId);
+    EXPECT_EQ(1u, subsliceId);
+    EXPECT_EQ(0u, deviceIndex);
+}
+
+TEST_F(MultipleDevicesAffinityTest, givenAffinityMaskRootDeviceCorrespondingToTileWhenGettingApiSliceIdThenCorrectSliceIdsReturned) {
+    ASSERT_EQ(2u, driverHandle->devices.size());
+
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+    auto hwInfo = device0->getHwInfo();
+
+    uint32_t subDeviceCount = numSubDevices;
+    std::vector<ze_device_handle_t> subDevices0(subDeviceCount);
+    auto res = device0->getSubDevices(&subDeviceCount, subDevices0.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(0u, subDeviceCount);
+
+    L0::DeviceImp *deviceImp0 = static_cast<DeviceImp *>(device0);
+    L0::DeviceImp *deviceImp1 = static_cast<DeviceImp *>(device1);
+
+    NEO::TopologyMap map;
+    TopologyMapping mapping;
+
+    mapping.sliceIndices.resize(hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i;
+    }
+
+    mapping.subsliceIndices.resize(hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.subsliceIndices[i] = i;
+    }
+
+    map[0] = mapping;
+
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i + 10;
+    }
+    map[1] = mapping;
+
+    uint32_t sliceId = 10;
+    uint32_t subsliceId = 0;
+    uint32_t tileIndex = 1;
+    auto ret = deviceImp0->toApiSliceId(map, sliceId, subsliceId, tileIndex);
+
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(0u, sliceId);
+
+    sliceId = 0;
+    tileIndex = 0;
+    ret = deviceImp1->toApiSliceId(map, sliceId, subsliceId, tileIndex);
+
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(0u, sliceId);
+}
+
+TEST_F(MultipleDevicesAffinityTest, givenAffinityMaskRootDeviceCorrespondingToTileWhenMappingToAndFromApiAndPhysicalSliceIdThenIdsAreMatching) {
+    ASSERT_EQ(2u, driverHandle->devices.size());
+
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+    auto hwInfo = device0->getHwInfo();
+
+    uint32_t subDeviceCount = numSubDevices;
+    std::vector<ze_device_handle_t> subDevices0(subDeviceCount);
+    auto res = device0->getSubDevices(&subDeviceCount, subDevices0.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(0u, subDeviceCount);
+
+    L0::DeviceImp *deviceImp0 = static_cast<DeviceImp *>(device0);
+    L0::DeviceImp *deviceImp1 = static_cast<DeviceImp *>(device1);
+
+    NEO::TopologyMap map;
+    TopologyMapping mapping;
+
+    mapping.sliceIndices.resize(hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i;
+    }
+
+    mapping.subsliceIndices.resize(hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.subsliceIndices[i] = i + 10;
+    }
+    map[0] = mapping;
+
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i + 1;
+    }
+    map[1] = mapping;
+
+    uint32_t tileIndex = 1;
+
+    ze_device_properties_t deviceProperties = {};
+    deviceImp0->getProperties(&deviceProperties);
+
+    for (uint32_t i = 0; i < deviceProperties.numSlices; i++) {
+        uint32_t sliceId = i;
+        uint32_t subsliceId = deviceProperties.numSubslicesPerSlice / 2;
+        auto ret = deviceImp0->toPhysicalSliceId(map, sliceId, subsliceId, tileIndex);
+
+        EXPECT_TRUE(ret);
+        EXPECT_EQ(i + 1, sliceId);
+        EXPECT_EQ(1u, tileIndex);
+        if (mapping.sliceIndices.size() == 1) {
+            EXPECT_EQ(deviceProperties.numSubslicesPerSlice / 2 + 10u, subsliceId);
+        } else {
+            EXPECT_EQ(deviceProperties.numSubslicesPerSlice / 2, subsliceId);
+        }
+
+        ret = deviceImp0->toApiSliceId(map, sliceId, subsliceId, tileIndex);
+
+        EXPECT_TRUE(ret);
+        EXPECT_EQ(i, sliceId);
+        EXPECT_EQ(deviceProperties.numSubslicesPerSlice / 2, subsliceId);
+    }
+
+    deviceImp1->getProperties(&deviceProperties);
+
+    tileIndex = 0;
+    for (uint32_t i = 0; i < deviceProperties.numSlices; i++) {
+        uint32_t sliceId = i;
+        uint32_t subsliceId = deviceProperties.numSubslicesPerSlice - 1;
+        auto ret = deviceImp1->toPhysicalSliceId(map, sliceId, subsliceId, tileIndex);
+
+        EXPECT_TRUE(ret);
+
+        EXPECT_EQ(i, sliceId);
+        EXPECT_EQ(0u, tileIndex);
+        if (mapping.sliceIndices.size() == 1) {
+            EXPECT_EQ(deviceProperties.numSubslicesPerSlice - 1 + 10u, subsliceId);
+        } else {
+            EXPECT_EQ(deviceProperties.numSubslicesPerSlice - 1, subsliceId);
+        }
+
+        ret = deviceImp1->toApiSliceId(map, sliceId, subsliceId, tileIndex);
+
+        EXPECT_TRUE(ret);
+        EXPECT_EQ(i, sliceId);
+        EXPECT_EQ(deviceProperties.numSubslicesPerSlice - 1, subsliceId);
+    }
+}
+
 TEST_F(MultipleDevicesTest, givenInvalidApiSliceIdWhenGettingPhysicalSliceIdThenFalseIsReturned) {
     L0::Device *device0 = driverHandle->devices[0];
     auto hwInfo = device0->getHwInfo();

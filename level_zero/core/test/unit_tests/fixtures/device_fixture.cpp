@@ -117,11 +117,15 @@ void MultipleDevicesWithCustomHwInfo::setUp() {
     hwInfo.gtSystemInfo.MaxSubSlicesSupported = sliceCount * subsliceCount;
     hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = sliceCount * subsliceCount;
 
-    hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = 1;
+    ASSERT_FALSE(numSubDevices == 0 || numSubDevices > 4);
+
+    hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = numSubDevices > 0;
     hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = numSubDevices;
-    hwInfo.gtSystemInfo.MultiTileArchInfo.Tile0 = 1;
-    hwInfo.gtSystemInfo.MultiTileArchInfo.Tile1 = 1;
-    hwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = 3;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.Tile0 = numSubDevices >= 1;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.Tile1 = numSubDevices >= 2;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.Tile2 = numSubDevices >= 3;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.Tile3 = numSubDevices == 4;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = static_cast<uint8_t>(maxNBitValue(numSubDevices));
 
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(&hwInfo);
