@@ -44,7 +44,7 @@ PVCTEST_F(PvcHwInfoConfig, givenHwInfoConfigWhenAskedIfPipeControlPriorToNonPipe
     const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
 
     EXPECT_TRUE(isBasicWARequired);
-    EXPECT_TRUE(isExtendedWARequired);
+    EXPECT_FALSE(isExtendedWARequired);
 }
 
 PVCTEST_F(PvcHwInfoConfig, givenPvcHwInfoConfigWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {

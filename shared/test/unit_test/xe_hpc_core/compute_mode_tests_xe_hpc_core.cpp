@@ -378,13 +378,13 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenComputeModeProgrammingThenCorrectCo
     auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*pipeControlIterator);
 
     EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
-    EXPECT_TRUE(pipeControlCmd->getAmfsFlushEnable());
+    EXPECT_FALSE(pipeControlCmd->getAmfsFlushEnable());
     EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
-    EXPECT_TRUE(pipeControlCmd->getInstructionCacheInvalidateEnable());
-    EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
+    EXPECT_FALSE(pipeControlCmd->getInstructionCacheInvalidateEnable());
+    EXPECT_FALSE(pipeControlCmd->getTextureCacheInvalidationEnable());
     EXPECT_TRUE(pipeControlCmd->getUnTypedDataPortCacheFlush());
-    EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
-    EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
+    EXPECT_FALSE(pipeControlCmd->getConstantCacheInvalidationEnable());
+    EXPECT_FALSE(pipeControlCmd->getStateCacheInvalidationEnable());
 
     auto stateComputeModeCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
     expectedScmCmd.setMaskBits(stateComputeModeCmd->getMaskBits());
@@ -437,6 +437,39 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenProgramExtendedPipeControlPriorToNo
     auto stateComputeModeCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
     expectedScmCmd.setMaskBits(stateComputeModeCmd->getMaskBits());
     EXPECT_TRUE(memcmp(&expectedScmCmd, stateComputeModeCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
+}
+
+HWTEST2_F(XeHpcComputeModeRequirements, givenProgramExtendedPipeControlPriorToNonPipelinedStateCommandEnabledWhenaddPipeControlBefore3dStateIsCalledThenCorrectCommandsAreAdded, IsXeHpcCore) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(true);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    setUpImpl<FamilyType>(&hwInfo);
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    char buff[1024] = {0};
+    LinearStream stream(buff, 1024);
+    flags.usePerDssBackedBuffer = true;
+    getCsrHw<FamilyType>()->addPipeControlBefore3dState(stream, flags);
+
+    auto startOffset = getCsrHw<FamilyType>()->commandStream.getUsed();
+
+    HardwareParse hwParser;
+
+    hwParser.parseCommands<FamilyType>(stream, startOffset);
+
+    auto pipeControlIterator = find<PIPE_CONTROL *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*pipeControlIterator);
+
+    EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
+    EXPECT_TRUE(pipeControlCmd->getAmfsFlushEnable());
+    EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
+    EXPECT_TRUE(pipeControlCmd->getInstructionCacheInvalidateEnable());
+    EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
+    EXPECT_TRUE(pipeControlCmd->getUnTypedDataPortCacheFlush());
+    EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
+    EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
 }
 
 HWTEST2_F(XeHpcComputeModeRequirements, GivenSingleCCSEnabledSetupThenCorrectCommandsAreAdded, IsXeHpcCore) {

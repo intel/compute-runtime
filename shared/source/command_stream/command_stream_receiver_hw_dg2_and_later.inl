@@ -49,6 +49,14 @@ size_t CommandStreamReceiverHw<Family>::getCmdSizeForPerDssBackedBuffer(const Ha
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBefore3dState(LinearStream &commandStream, DispatchFlags &dispatchFlags) {
+    if (!dispatchFlags.usePerDssBackedBuffer) {
+        return;
+    }
+
+    if (isPerDssBackedBufferSent) {
+        return;
+    }
+
     auto &hwInfo = peekHwInfo();
     auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
     const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
@@ -57,9 +65,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBefore3dState(Line
     PipeControlArgs args;
     args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
 
-    if (isExtendedWARequired && dispatchFlags.usePerDssBackedBuffer && !isPerDssBackedBufferSent) {
+    if (isExtendedWARequired) {
         DEBUG_BREAK_IF(perDssBackedBuffer == nullptr);
-
         NEO::EncodeWA<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(commandStream, args, hwInfo, isRcs());
     }
 }
