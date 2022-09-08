@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,6 +61,7 @@ void UltDeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &execution
             executionEnvironment.rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
         }
     }
+    executionEnvironment.parseAffinityMask();
     executionEnvironment.calculateMaxOsContextCount();
     DeviceFactory::createMemoryManagerFunc(executionEnvironment);
 }
