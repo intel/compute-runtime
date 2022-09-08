@@ -220,4 +220,9 @@ inline bool HwHelperHw<GfxFamily>::preferInternalBcsEngine() const {
     return preferInternalBcsEngine;
 }
 
+template <typename GfxFamily>
+uint32_t HwHelperHw<GfxFamily>::getMinimalScratchSpaceSize() const {
+    return 64U;
+}
+
 } // namespace NEO

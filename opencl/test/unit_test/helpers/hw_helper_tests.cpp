@@ -1506,3 +1506,13 @@ HWTEST2_F(HwHelperTest, GivenModifiedGtSystemInfoAndXeHpOrXeHpgCoreWhenCallingCa
         EXPECT_EQ(expectedThreadCount, result);
     }
 }
+
+HWTEST2_F(HwHelperTest, givenAtMostGen12lpPlatformWhenGettingMinimalScratchSpaceSizeThen1024IsReturned, IsAtMostGen12lp) {
+    const auto &hwHelper = HwHelper::get(renderCoreFamily);
+    EXPECT_EQ(1024U, hwHelper.getMinimalScratchSpaceSize());
+}
+
+HWTEST2_F(HwHelperTest, givenAtLeastXeHpPlatformWhenGettingMinimalScratchSpaceSizeThen64IsReturned, IsAtLeastXeHpCore) {
+    const auto &hwHelper = HwHelper::get(renderCoreFamily);
+    EXPECT_EQ(64U, hwHelper.getMinimalScratchSpaceSize());
+}

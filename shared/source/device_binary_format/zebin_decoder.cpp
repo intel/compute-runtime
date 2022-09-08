@@ -15,6 +15,7 @@
 #include "shared/source/device_binary_format/elf/zebin_elf.h"
 #include "shared/source/device_binary_format/elf/zeinfo_enum_lookup.h"
 #include "shared/source/device_binary_format/yaml/yaml_parser.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/program/kernel_info.h"
@@ -1018,11 +1019,16 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
     return DecodeError::Success;
 }
 
-NEO::DecodeError populateKernelDescriptor(const NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::PerThreadMemoryBufferBaseT &src, NEO::KernelDescriptor &dst,
+NEO::DecodeError populateKernelDescriptor(const NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::PerThreadMemoryBufferBaseT &src, NEO::KernelDescriptor &dst, uint32_t minScratchSpaceSize,
                                           std::string &outErrReason, std::string &outWarning) {
     using namespace NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer;
     using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::AllocationType;
     using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::MemoryUsage;
+    if (src.size <= 0) {
+        outErrReason.append("DeviceBinaryFormat::Zebin : Invalid per-thread memory buffer allocation size (size must be greater than 0) in context of : " + dst.kernelMetadata.kernelName + ".\n");
+        return DecodeError::InvalidBinary;
+    }
+
     auto size = src.size;
     if (src.isSimtThread) {
         size *= dst.kernelAttributes.simdSize;
@@ -1048,7 +1054,9 @@ NEO::DecodeError populateKernelDescriptor(const NEO::Elf::ZebinKernelMetadata::T
             outErrReason.append("DeviceBinaryFormat::Zebin : Invalid duplicated scratch buffer entry " + std::to_string(src.slot) + " in context of : " + dst.kernelMetadata.kernelName + ".\n");
             return DecodeError::InvalidBinary;
         }
-        dst.kernelAttributes.perThreadScratchSize[src.slot] = size;
+        uint32_t scratchSpaceSize = std::max(static_cast<uint32_t>(size), minScratchSpaceSize);
+        scratchSpaceSize = Math::isPow2(scratchSpaceSize) ? scratchSpaceSize : Math::nextPowerOfTwo(scratchSpaceSize);
+        dst.kernelAttributes.perThreadScratchSize[src.slot] = scratchSpaceSize;
         break;
     }
     return DecodeError::Success;
@@ -1206,7 +1214,7 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<N
     }
 
     for (const auto &memBuff : perThreadMemoryBuffers) {
-        auto decodeErr = populateKernelDescriptor(memBuff, kernelDescriptor, outErrReason, outWarning);
+        auto decodeErr = populateKernelDescriptor(memBuff, kernelDescriptor, dst.minScratchSpaceSize, outErrReason, outWarning);
         if (DecodeError::Success != decodeErr) {
             return decodeErr;
         }
@@ -1439,6 +1447,7 @@ DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ProgramInfo
 
     dst.decodedElf = elf;
     dst.grfSize = src.targetDevice.grfSize;
+    dst.minScratchSpaceSize = src.targetDevice.minScratchSpaceSize;
 
     if (false == zebinSections.globalDataSections.empty()) {
         dst.globalVariables.initData = zebinSections.globalDataSections[0]->data.begin();

@@ -7,6 +7,7 @@
 
 #include "shared/source/device_binary_format/device_binary_formats.h"
 
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
@@ -29,6 +30,7 @@ TargetDevice targetDeviceFromHwInfo(const HardwareInfo &hwInfo) {
     targetDevice.stepping = hwInfo.platform.usRevId;
     targetDevice.maxPointerSizeInBytes = sizeof(uintptr_t);
     targetDevice.grfSize = hwInfo.capabilityTable.grfSize;
+    targetDevice.minScratchSpaceSize = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getMinimalScratchSpaceSize();
     return targetDevice;
 }
 } // namespace NEO

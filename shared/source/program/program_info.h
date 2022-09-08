@@ -47,6 +47,7 @@ struct ProgramInfo {
     std::vector<KernelInfo *> kernelInfos;
     Elf::Elf<Elf::EI_CLASS_64> decodedElf;
     uint32_t grfSize = 32U;
+    uint32_t minScratchSpaceSize = 0U;
 };
 
 size_t getMaxInlineSlmNeeded(const ProgramInfo &programInfo);
