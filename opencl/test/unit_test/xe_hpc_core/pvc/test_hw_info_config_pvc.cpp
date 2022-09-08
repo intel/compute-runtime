@@ -43,7 +43,7 @@ PVCTEST_F(PvcHwInfoConfig, givenHwInfoConfigWhenAskedIfPipeControlPriorToNonPipe
 
     const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
 
-    EXPECT_TRUE(isBasicWARequired);
+    EXPECT_FALSE(isBasicWARequired);
     EXPECT_FALSE(isExtendedWARequired);
 }
 
@@ -64,7 +64,7 @@ PVCTEST_F(PvcHwInfoConfig, givenHwInfoConfigAndProgramExtendedPipeControlPriorTo
     const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
 
     EXPECT_FALSE(isExtendedWARequired);
-    EXPECT_TRUE(isBasicWARequired);
+    EXPECT_FALSE(isBasicWARequired);
 }
 
 using PvcHwInfo = ::testing::Test;
