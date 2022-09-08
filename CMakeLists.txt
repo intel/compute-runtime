@@ -482,7 +482,11 @@ message(STATUS "i915 includes dir: ${I915_HEADERS_DIR}")
 # Enable/Disable BuiltIns compilation during build
 set(COMPILE_BUILT_INS TRUE CACHE BOOL "Enable built-in kernels compilation")
 if(NOT DEFINED NEO_KERNELS_BIN_DIR)
-  get_filename_component(NEO_KERNELS_BIN_DIR "${NEO_SOURCE_DIR}/../kernels_bin/" ABSOLUTE)
+  if(WIN32)
+    get_filename_component(NEO_KERNELS_BIN_DIR "${NEO_SOURCE_DIR}/../kernels_bin/windows" ABSOLUTE)
+  else()
+    get_filename_component(NEO_KERNELS_BIN_DIR "${NEO_SOURCE_DIR}/../kernels_bin/linux" ABSOLUTE)
+  endif()
 endif()
 
 # Changing the default executable and library output directories
