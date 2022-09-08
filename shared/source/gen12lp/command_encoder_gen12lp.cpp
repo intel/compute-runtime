@@ -27,7 +27,8 @@ namespace NEO {
 template <>
 size_t EncodeWA<Family>::getAdditionalPipelineSelectSize(Device &device, bool isRcs) {
     size_t size = 0;
-    if (isRcs) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(device.getHardwareInfo().platform.eProductFamily);
+    if (isRcs && hwInfoConfig.is3DPipelineSelectWARequired()) {
         size += 2 * PreambleHelper<Family>::getCmdSizeForPipelineSelect(device.getHardwareInfo());
     }
     return size;

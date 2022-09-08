@@ -27,12 +27,19 @@ class MyCommandStreamReceiverMock : public MockCommandStreamReceiver {
     }
 };
 
-GEN12LPTEST_F(Gen12LpCommandEncodeTest, givenGen12LpPlatformWhenDefaultEngineIsRcsThenAdditionalPipelineSelectSizeEqualTwoPipelineSelectSize) {
+GEN12LPTEST_F(Gen12LpCommandEncodeTest, WhenDefaultEngineIsRcsAnd3DPipelineSelectWaRequiredThenAdditionalPipelineSelectSizeEqualsTwoPipelineSelectSize) {
     MockDevice device;
     auto csr = std::make_unique<MyCommandStreamReceiverMock<true>>(*device.getExecutionEnvironment(), 0, device.getDeviceBitfield());
     auto oldCsr = device.getDefaultEngine().commandStreamReceiver;
     device.getDefaultEngine().commandStreamReceiver = csr.get();
-    EXPECT_EQ(2 * PreambleHelper<FamilyType>::getCmdSizeForPipelineSelect(device.getHardwareInfo()), EncodeWA<FamilyType>::getAdditionalPipelineSelectSize(device, csr->isRcs()));
+
+    auto &hwInfoConfig = *HwInfoConfig::get(device.getHardwareInfo().platform.eProductFamily);
+    if (hwInfoConfig.is3DPipelineSelectWARequired()) {
+        EXPECT_EQ(2 * PreambleHelper<FamilyType>::getCmdSizeForPipelineSelect(device.getHardwareInfo()), EncodeWA<FamilyType>::getAdditionalPipelineSelectSize(device, csr->isRcs()));
+    } else {
+        EXPECT_EQ(0u, EncodeWA<FamilyType>::getAdditionalPipelineSelectSize(device, csr->isRcs()));
+    }
+
     device.getDefaultEngine().commandStreamReceiver = oldCsr;
 }
 
