@@ -1315,13 +1315,13 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
     return patIndex;
 }
 
-int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleId, BufferObject *bo, bool bind) {
-    auto vmId = drm->getVirtualMemoryAddressSpace(vmHandleId);
-    auto ioctlHelper = drm->getIoctlHelper();
+int Drm::changeBufferObjectBinding(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo, bool bind) {
+    auto vmId = this->getVirtualMemoryAddressSpace(vmHandleId);
+    auto ioctlHelper = this->getIoctlHelper();
 
     uint64_t flags = 0u;
 
-    if (drm->isPerContextVMRequired()) {
+    if (this->isPerContextVMRequired()) {
         auto osContextLinux = static_cast<const OsContextLinux *>(osContext);
         UNRECOVERABLE_IF(osContextLinux->getDrmVmIds().size() <= vmHandleId);
         vmId = osContextLinux->getDrmVmIds()[vmHandleId];
@@ -1336,7 +1336,7 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
         bool bindCapture = bo->isMarkedForCapture();
         bool bindImmediate = bo->isImmediateBindingRequired();
         bool bindMakeResident = false;
-        if (drm->useVMBindImmediate()) {
+        if (this->useVMBindImmediate()) {
             bindMakeResident = bo->isExplicitResidencyRequired();
             bindImmediate = true;
         }
@@ -1368,7 +1368,7 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
 
         VmBindExtSetPatT vmBindExtSetPat{};
 
-        if (drm->isVmBindPatIndexProgrammingSupported()) {
+        if (this->isVmBindPatIndexProgrammingSupported()) {
             UNRECOVERABLE_IF(bo->peekPatIndex() == CommonConstants::unsupportedPatIndex);
             ioctlHelper->fillVmBindExtSetPat(vmBindExtSetPat, bo->peekPatIndex(), castToUint64(extensions.get()));
             vmBind.extensions = castToUint64(vmBindExtSetPat);
@@ -1381,13 +1381,13 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
 
             VmBindExtUserFenceT vmBindExtUserFence{};
 
-            if (drm->useVMBindImmediate()) {
-                lock = drm->lockBindFenceMutex();
+            if (this->useVMBindImmediate()) {
+                lock = this->lockBindFenceMutex();
 
-                if (!drm->hasPageFaultSupport() || bo->isExplicitResidencyRequired()) {
+                if (!this->hasPageFaultSupport() || bo->isExplicitResidencyRequired()) {
                     auto nextExtension = vmBind.extensions;
-                    auto address = castToUint64(drm->getFenceAddr(vmHandleId));
-                    auto value = drm->getNextFenceVal(vmHandleId);
+                    auto address = castToUint64(this->getFenceAddr(vmHandleId));
+                    auto value = this->getNextFenceVal(vmHandleId);
 
                     ioctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, address, value, nextExtension);
                     vmBind.extensions = castToUint64(vmBindExtUserFence);
@@ -1400,7 +1400,7 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
                 break;
             }
 
-            drm->setNewResourceBoundToVM(vmHandleId);
+            this->setNewResourceBoundToVM(vmHandleId);
         } else {
             vmBind.handle = 0u;
             ret = ioctlHelper->vmUnbind(vmBind);
@@ -1415,16 +1415,18 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
 }
 
 int Drm::bindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo) {
-    auto ret = changeBufferObjectBinding(this, osContext, vmHandleId, bo, true);
+    auto ret = changeBufferObjectBinding(osContext, vmHandleId, bo, true);
     if (ret != 0) {
-        static_cast<DrmMemoryOperationsHandlerBind *>(this->rootDeviceEnvironment.memoryOperationsInterface.get())->evictUnusedAllocations(false, false);
-        ret = changeBufferObjectBinding(this, osContext, vmHandleId, bo, true);
+        do {
+            static_cast<DrmMemoryOperationsHandlerBind *>(this->rootDeviceEnvironment.memoryOperationsInterface.get())->evictUnusedAllocations(false, false);
+            ret = changeBufferObjectBinding(osContext, vmHandleId, bo, true);
+        } while (ret != 0 && getErrno() == ENXIO);
     }
     return ret;
 }
 
 int Drm::unbindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo) {
-    return changeBufferObjectBinding(this, osContext, vmHandleId, bo, false);
+    return changeBufferObjectBinding(osContext, vmHandleId, bo, false);
 }
 
 int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {

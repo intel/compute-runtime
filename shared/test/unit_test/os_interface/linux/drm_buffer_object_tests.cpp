@@ -55,14 +55,14 @@ TEST_F(DrmBufferObjectTest, GivenDetectedGpuHangDuringEvictUnusedAllocationsWhen
 }
 
 TEST_F(DrmBufferObjectTest, WhenSettingTilingThenCallSucceeds) {
-    mock->ioctl_expected.total = 1; //set_tiling
+    mock->ioctl_expected.total = 1; // set_tiling
     auto tilingY = mock->getIoctlHelper()->getDrmParamValue(DrmParam::TilingY);
     auto ret = bo->setTiling(tilingY, 0);
     EXPECT_TRUE(ret);
 }
 
 TEST_F(DrmBufferObjectTest, WhenSettingSameTilingThenCallSucceeds) {
-    mock->ioctl_expected.total = 0; //set_tiling
+    mock->ioctl_expected.total = 0; // set_tiling
     auto tilingY = mock->getIoctlHelper()->getDrmParamValue(DrmParam::TilingY);
     bo->tilingMode = tilingY;
     auto ret = bo->setTiling(tilingY, 0);
@@ -70,7 +70,7 @@ TEST_F(DrmBufferObjectTest, WhenSettingSameTilingThenCallSucceeds) {
 }
 
 TEST_F(DrmBufferObjectTest, GivenInvalidTilingWhenSettingTilingThenCallFails) {
-    mock->ioctl_expected.total = 1; //set_tiling
+    mock->ioctl_expected.total = 1; // set_tiling
     auto tilingY = mock->getIoctlHelper()->getDrmParamValue(DrmParam::TilingY);
     mock->ioctl_res = -1;
     auto ret = bo->setTiling(tilingY, 0);
@@ -91,7 +91,7 @@ TEST_F(DrmBufferObjectTest, givenAddressThatWhenSizeIsAddedCrosses32BitBoundaryW
     bo->setAddress(((uint64_t)1u << 32) - 0x1000u);
     bo->setSize(0x1000);
     bo->fillExecObject(execObject, osContext.get(), 0, 1);
-    //base address + size > size of 32bit address space
+    // base address + size > size of 32bit address space
     EXPECT_TRUE(execObject.has48BAddressSupportFlag());
 }
 
@@ -102,7 +102,7 @@ TEST_F(DrmBufferObjectTest, givenAddressThatWhenSizeIsAddedWithin32BitBoundaryWh
     bo->setAddress(((uint64_t)1u << 32) - 0x1000u);
     bo->setSize(0xFFF);
     bo->fillExecObject(execObject, osContext.get(), 0, 1);
-    //base address + size < size of 32bit address space
+    // base address + size < size of 32bit address space
     EXPECT_TRUE(execObject.has48BAddressSupportFlag());
 }
 
@@ -465,6 +465,136 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindSucceedsThenPr
     EXPECT_STREQ(unbindOutput.c_str(), "unbind BO-0 from VM 0, drmVmId = 1, range: 0 - 0, size: 0, result: 0\n");
 }
 
+TEST(DrmBufferObject, givenBufferObjectWhenFirstChangeBufferObjectBindingReturnSuccessThenItsNotCalledAnyMore) {
+    struct DrmMockToSucceedBindBufferObject : public DrmMock {
+        DrmMockToSucceedBindBufferObject(RootDeviceEnvironment &rootDeviceEnvironment)
+            : DrmMock(rootDeviceEnvironment) {}
+        int changeBufferObjectBinding(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo, bool bind) override {
+            changeBufferObjectBindingCalled++;
+            return changeBufferObjectBindingCalled >= 1 ? 0 : -1;
+        }
+        uint32_t changeBufferObjectBindingCalled = 0;
+    };
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->setDebuggingEnabled();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->calculateMaxOsContextCount();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    auto drm = std::make_unique<DrmMockToSucceedBindBufferObject>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto drmPtr = drm.get();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm.get()));
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm.release(), 0u);
+    std::unique_ptr<Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment.release(), 0));
+    auto osContextCount = device->getExecutionEnvironment()->memoryManager->getRegisteredEnginesCount();
+    MockBufferObject bo(drmPtr, 3, 0, 0, osContextCount);
+    auto contextId = device->getExecutionEnvironment()->memoryManager->getRegisteredEnginesCount() / 2;
+    auto osContext = device->getExecutionEnvironment()->memoryManager->getRegisteredEngines()[contextId].osContext;
+    auto ret = drmPtr->bindBufferObject(osContext, 0, &bo);
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(drmPtr->changeBufferObjectBindingCalled, 1u);
+}
+
+TEST(DrmBufferObject, givenBufferObjectWhenSecondChangeBufferObjectBindingReturnSuccessThenItsNotCalledAnyMore) {
+    struct DrmMockToSucceedBindBufferObject : public DrmMock {
+        DrmMockToSucceedBindBufferObject(RootDeviceEnvironment &rootDeviceEnvironment)
+            : DrmMock(rootDeviceEnvironment) {}
+        int changeBufferObjectBinding(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo, bool bind) override {
+            changeBufferObjectBindingCalled++;
+            return changeBufferObjectBindingCalled >= 2 ? 0 : -1;
+        }
+        uint32_t changeBufferObjectBindingCalled = 0;
+    };
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->setDebuggingEnabled();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->calculateMaxOsContextCount();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    auto drm = std::make_unique<DrmMockToSucceedBindBufferObject>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto drmPtr = drm.get();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm.get()));
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm.release(), 0u);
+    std::unique_ptr<Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment.release(), 0));
+    auto osContextCount = device->getExecutionEnvironment()->memoryManager->getRegisteredEnginesCount();
+    MockBufferObject bo(drmPtr, 3, 0, 0, osContextCount);
+    auto contextId = device->getExecutionEnvironment()->memoryManager->getRegisteredEnginesCount() / 2;
+    auto osContext = device->getExecutionEnvironment()->memoryManager->getRegisteredEngines()[contextId].osContext;
+    auto ret = drmPtr->bindBufferObject(osContext, 0, &bo);
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(drmPtr->changeBufferObjectBindingCalled, 2u);
+}
+
+TEST(DrmBufferObject, givenBufferObjectWhenSecondChangeBufferObjectBindingReturnFailAndErrnoIsNotENXIOThenItsNotCalledAnyMore) {
+    struct DrmMockToSucceedBindBufferObject : public DrmMock {
+        DrmMockToSucceedBindBufferObject(RootDeviceEnvironment &rootDeviceEnvironment)
+            : DrmMock(rootDeviceEnvironment) {}
+        int changeBufferObjectBinding(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo, bool bind) override {
+            changeBufferObjectBindingCalled++;
+            return changeBufferObjectBindingCalled >= 3 ? 0 : -1;
+        }
+        int getErrno() override {
+            return EINTR;
+        }
+        uint32_t changeBufferObjectBindingCalled = 0;
+    };
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->setDebuggingEnabled();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->calculateMaxOsContextCount();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    auto drm = std::make_unique<DrmMockToSucceedBindBufferObject>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto drmPtr = drm.get();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm.get()));
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm.release(), 0u);
+    std::unique_ptr<Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment.release(), 0));
+    auto osContextCount = device->getExecutionEnvironment()->memoryManager->getRegisteredEnginesCount();
+    MockBufferObject bo(drmPtr, 3, 0, 0, osContextCount);
+    auto contextId = device->getExecutionEnvironment()->memoryManager->getRegisteredEnginesCount() / 2;
+    auto osContext = device->getExecutionEnvironment()->memoryManager->getRegisteredEngines()[contextId].osContext;
+    auto ret = drmPtr->bindBufferObject(osContext, 0, &bo);
+    EXPECT_EQ(ret, -1);
+    EXPECT_EQ(drmPtr->changeBufferObjectBindingCalled, 2u);
+}
+
+TEST(DrmBufferObject, givenBufferObjectWhenSecondChangeBufferObjectBindingReturnFailAndErrnoIsENXIOThenItsCalledUntillSuccess) {
+    struct DrmMockToSucceedBindBufferObject : public DrmMock {
+        DrmMockToSucceedBindBufferObject(RootDeviceEnvironment &rootDeviceEnvironment)
+            : DrmMock(rootDeviceEnvironment) {}
+        int changeBufferObjectBinding(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo, bool bind) override {
+            changeBufferObjectBindingCalled++;
+            return changeBufferObjectBindingCalled >= 3 ? 0 : -1;
+        }
+        int getErrno() override {
+            return ENXIO;
+        }
+        uint32_t changeBufferObjectBindingCalled = 0;
+    };
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->setDebuggingEnabled();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->calculateMaxOsContextCount();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    auto drm = std::make_unique<DrmMockToSucceedBindBufferObject>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto drmPtr = drm.get();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm.get()));
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm.release(), 0u);
+    std::unique_ptr<Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment.release(), 0));
+    auto osContextCount = device->getExecutionEnvironment()->memoryManager->getRegisteredEnginesCount();
+    MockBufferObject bo(drmPtr, 3, 0, 0, osContextCount);
+    auto contextId = device->getExecutionEnvironment()->memoryManager->getRegisteredEnginesCount() / 2;
+    auto osContext = device->getExecutionEnvironment()->memoryManager->getRegisteredEngines()[contextId].osContext;
+    auto ret = drmPtr->bindBufferObject(osContext, 0, &bo);
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(drmPtr->changeBufferObjectBindingCalled, 3u);
+}
+
 TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindFailsThenPrintDebugInformationAboutBOBindingResultWithErrno) {
     struct DrmMockToFailBindBufferObject : public DrmMock {
         DrmMockToFailBindBufferObject(RootDeviceEnvironment &rootDeviceEnvironment)
@@ -618,4 +748,66 @@ TEST_F(DrmBufferObjectTest, whenBoRequiresExplicitResidencyThenTheCorrespondingQ
         bo.requireExplicitResidency(required);
         EXPECT_EQ(required, bo.isExplicitResidencyRequired());
     }
+}
+
+template <int errnoToReturn, int callsToSuccess>
+class MyDrmMockCustom : public DrmMockCustom {
+  public:
+    MyDrmMockCustom(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockCustom(rootDeviceEnvironment) {
+        errnoValue = errnoToReturn;
+    }
+    int ioctl(DrmIoctl request, void *arg) override {
+        ioctlCalledTimes++;
+        return ioctlCalledTimes >= callsToSuccess ? 0 : -1;
+    };
+    int ioctlCalledTimes = 0;
+};
+using MyDrmMockBufferObjectFixture = DrmBufferObjectFixture<MyDrmMockCustom<0, 1>>;
+using MyDrmBufferObjectTest = Test<MyDrmMockBufferObjectFixture>;
+
+TEST_F(MyDrmBufferObjectTest, givenDrmWhenFirstIoctlReturnSuccessThenDoNotRetry) {
+    ExecObject execObjectsStorage = {};
+    auto ret = bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage, 0, 0);
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(mock->ioctlCalledTimes, 1);
+}
+
+using MyDrmMockBufferObjectFixtureRetryOnce = DrmBufferObjectFixture<MyDrmMockCustom<0, 2>>;
+using MyDrmBufferObjectTestRetryOnce = Test<MyDrmMockBufferObjectFixtureRetryOnce>;
+
+TEST_F(MyDrmBufferObjectTestRetryOnce, givenDrmWhenFirstIoctlReturnFailThenRetry) {
+    ExecObject execObjectsStorage = {};
+    auto ret = bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage, 0, 0);
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(mock->ioctlCalledTimes, 2);
+}
+
+using MyDrmMockBufferObjectFixtureRetryTwice = DrmBufferObjectFixture<MyDrmMockCustom<0, 3>>;
+using MyDrmBufferObjectTestRetryTwice = Test<MyDrmMockBufferObjectFixtureRetryTwice>;
+
+TEST_F(MyDrmBufferObjectTestRetryTwice, givenDrmWhenSecondIoctlReturnFailThenRetry) {
+    ExecObject execObjectsStorage = {};
+    auto ret = bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage, 0, 0);
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(mock->ioctlCalledTimes, 3);
+}
+
+using MyDrmMockBufferObjectFixtureThreeTimes = DrmBufferObjectFixture<MyDrmMockCustom<ESRCH, 4>>;
+using MyDrmBufferObjectTestRetryThreeTimes = Test<MyDrmMockBufferObjectFixtureThreeTimes>;
+
+TEST_F(MyDrmBufferObjectTestRetryThreeTimes, givenDrmWhenThirdIoctlReturnFailAndErrnoIsNoENXIOThenDoNotRetry) {
+    ExecObject execObjectsStorage = {};
+    auto ret = bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage, 0, 0);
+    EXPECT_EQ(ret, ESRCH);
+    EXPECT_EQ(mock->ioctlCalledTimes, 3);
+}
+
+using MyDrmMockBufferObjectFixtureThreeTimesWithENXIO = DrmBufferObjectFixture<MyDrmMockCustom<ENXIO, 4>>;
+using MyDrmBufferObjectTestRetryThreeTimesWithENXIO = Test<MyDrmMockBufferObjectFixtureThreeTimesWithENXIO>;
+
+TEST_F(MyDrmBufferObjectTestRetryThreeTimesWithENXIO, givenDrmWhenThirdIoctlReturnFailAndErrnoIsENXIOThenDoNotRetry) {
+    ExecObject execObjectsStorage = {};
+    auto ret = bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage, 0, 0);
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(mock->ioctlCalledTimes, 4);
 }
