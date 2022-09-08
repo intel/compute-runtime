@@ -754,7 +754,7 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
     } else if (driverInfo) {
         name.assign(driverInfo->getDeviceName(name).c_str());
     }
-    memcpy_s(pDeviceProperties->name, name.length(), name.c_str(), name.length());
+    memcpy_s(pDeviceProperties->name, ZE_MAX_DEVICE_NAME, name.c_str(), name.length() + 1);
 
     return ZE_RESULT_SUCCESS;
 }
