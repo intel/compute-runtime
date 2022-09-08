@@ -182,7 +182,7 @@ TEST_F(ModuleOnlineCompiled, WhenCreatingFromNativeBinaryThenGenBinaryIsReturned
 TEST_F(ModuleOnlineCompiled, GivenKernelThenThreadGroupParametersAreCorrect) {
     ze_kernel_desc_t kernelDesc = {};
 
-    kernelDesc.pKernelName = "memcpy_bytes";
+    kernelDesc.pKernelName = "memcpy_bytes_attr";
 
     ze_result_t res = ZE_RESULT_SUCCESS;
     auto kernel = std::unique_ptr<Kernel>(whiteboxCast(Kernel::create(
@@ -200,7 +200,7 @@ TEST_F(ModuleOnlineCompiled, GivenKernelThenThreadGroupParametersAreCorrect) {
 
 TEST_F(ModuleOnlineCompiled, GivenKernelThenCorrectPropertiesAreReturned) {
     ze_kernel_desc_t kernelDesc = {};
-    kernelDesc.pKernelName = "memcpy_bytes";
+    kernelDesc.pKernelName = "memcpy_bytes_attr";
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto kernel = std::unique_ptr<Kernel>(whiteboxCast(Kernel::create(
@@ -240,21 +240,6 @@ TEST_F(ModuleOnlineCompiled, GivenKernelThenCorrectPropertiesAreReturned) {
 }
 
 TEST_F(ModuleOnlineCompiled, GivenKernelThenCorrectAttributesAreReturned) {
-    std::string testFile;
-    retrieveBinaryKernelFilenameApiSpecific(testFile, "test_kernel_", ".bin");
-
-    size_t size = 0;
-    auto src = loadDataFromFile(testFile.c_str(), size);
-    ze_module_desc_t moduleDesc = {};
-    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
-    moduleDesc.inputSize = size;
-    ASSERT_NE(0u, size);
-    ASSERT_NE(nullptr, src);
-
-    auto module = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(device, nullptr, ModuleType::User));
-    module->initialize(&moduleDesc, device->getNEODevice());
-
     ze_kernel_desc_t kernelDesc = {};
     kernelDesc.pKernelName = "memcpy_bytes_attr";
 
@@ -270,7 +255,7 @@ TEST_F(ModuleOnlineCompiled, GivenKernelThenCorrectAttributesAreReturned) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(0u, indirectFlags);
 
-    const char attributeString[] = "work_group_size_hint(1,1,1)";
+    const char attributeString[] = "work_group_size_hint(1, 1, 1)";
     uint32_t strSize = 0;
 
     result = kernel->getSourceAttributes(&strSize, nullptr);

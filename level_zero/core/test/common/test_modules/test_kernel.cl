@@ -60,8 +60,3 @@ kernel void memcpy_bytes(__global char *dst, const __global char *src) {
     unsigned int gid = get_global_id(0);
     dst[gid] = src[gid];
 }
-
-kernel __attribute__((work_group_size_hint(1, 1, 1))) void memcpy_bytes_attr(__global char *dst, const __global char *src) {
-    unsigned int gid = get_global_id(0);
-    dst[gid] = src[gid];
-}

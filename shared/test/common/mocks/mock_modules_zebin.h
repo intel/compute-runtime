@@ -200,7 +200,9 @@ kernels:
         arg_index:       3
       - bti_value:       5
         arg_index:       4
-  - name:            memcpy_bytes
+  - name:            memcpy_bytes_attr
+    user_attributes:
+      work_group_size_hint: [1,1,1]
     execution_env:
       grf_count:       128
       has_no_stateless_write: true

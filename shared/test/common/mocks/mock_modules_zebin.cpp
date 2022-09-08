@@ -181,7 +181,7 @@ ZebinWithL0TestCommonModule::ZebinWithL0TestCommonModule(const NEO::HardwareInfo
     const uint8_t testKernelMemcpyBytesData[0x2c0] = {0u};
 
     elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "test", testKernelData);
-    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "memcpy_bytes", testKernelMemcpyBytesData);
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "memcpy_bytes_attr", testKernelMemcpyBytesData);
     elfEncoder.appendSection(NEO::Elf::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, zeInfo);
 
     const uint8_t testAdditionalSectionsData[0x10] = {0u};
