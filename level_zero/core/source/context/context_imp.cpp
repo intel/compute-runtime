@@ -12,6 +12,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include "level_zero/api/driver_experimental/public/zex_memory.h"
+#include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/event/event.h"
@@ -683,13 +684,21 @@ ze_result_t ContextImp::createCommandQueue(ze_device_handle_t hDevice,
 ze_result_t ContextImp::createCommandList(ze_device_handle_t hDevice,
                                           const ze_command_list_desc_t *desc,
                                           ze_command_list_handle_t *commandList) {
-    return L0::Device::fromHandle(hDevice)->createCommandList(desc, commandList);
+    auto ret = L0::Device::fromHandle(hDevice)->createCommandList(desc, commandList);
+    if (*commandList) {
+        L0::CommandList::fromHandle(*commandList)->hContext = this->toHandle();
+    }
+    return ret;
 }
 
 ze_result_t ContextImp::createCommandListImmediate(ze_device_handle_t hDevice,
                                                    const ze_command_queue_desc_t *desc,
                                                    ze_command_list_handle_t *commandList) {
-    return L0::Device::fromHandle(hDevice)->createCommandListImmediate(desc, commandList);
+    auto ret = L0::Device::fromHandle(hDevice)->createCommandListImmediate(desc, commandList);
+    if (*commandList) {
+        L0::CommandList::fromHandle(*commandList)->hContext = this->toHandle();
+    }
+    return ret;
 }
 
 ze_result_t ContextImp::activateMetricGroups(zet_device_handle_t hDevice,

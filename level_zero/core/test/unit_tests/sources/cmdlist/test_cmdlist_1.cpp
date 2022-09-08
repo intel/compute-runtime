@@ -31,9 +31,20 @@ TEST_F(ContextCommandListCreate, whenCreatingCommandListFromContextThenSuccessIs
 
     ze_result_t result = context->createCommandList(device, &desc, &hCommandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(Context::fromHandle(CommandList::fromHandle(hCommandList)->hContext), context);
 
     L0::CommandList *commandList = L0::CommandList::fromHandle(hCommandList);
     commandList->destroy();
+}
+
+TEST_F(ContextCommandListCreate, givenInvalidDescWhenCreatingCommandListFromContextThenErrorIsReturned) {
+    ze_command_list_desc_t desc = {};
+    desc.commandQueueGroupOrdinal = 0xffff;
+    ze_command_list_handle_t hCommandList = {};
+
+    ze_result_t result = context->createCommandList(device, &desc, &hCommandList);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(CommandList::fromHandle(hCommandList), nullptr);
 }
 
 TEST_F(ContextCommandListCreate, whenCreatingCommandListImmediateFromContextThenSuccessIsReturned) {
@@ -42,9 +53,20 @@ TEST_F(ContextCommandListCreate, whenCreatingCommandListImmediateFromContextThen
 
     ze_result_t result = context->createCommandListImmediate(device, &desc, &hCommandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(Context::fromHandle(CommandList::fromHandle(hCommandList)->hContext), context);
 
     L0::CommandList *commandList = L0::CommandList::fromHandle(hCommandList);
     commandList->destroy();
+}
+
+TEST_F(ContextCommandListCreate, givenInvalidDescWhenCreatingCommandListImmediateFromContextThenErrorIsReturned) {
+    ze_command_queue_desc_t desc = {};
+    desc.ordinal = 0xffff;
+    ze_command_list_handle_t hCommandList = {};
+
+    ze_result_t result = context->createCommandListImmediate(device, &desc, &hCommandList);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(CommandList::fromHandle(hCommandList), nullptr);
 }
 
 HWTEST2_F(ContextCommandListCreate, givenImmediateCmdListWhenGettingLogicalStateHelperThenReturnFromCsr, MatchAny) {

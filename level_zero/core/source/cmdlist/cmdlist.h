@@ -278,6 +278,7 @@ struct CommandList : _ze_command_list_handle_t {
     void makeResidentAndMigrate(bool);
     void migrateSharedAllocations();
 
+    ze_context_handle_t hContext = nullptr;
     std::vector<Kernel *> printfFunctionContainer;
     CommandQueue *cmdQImmediate = nullptr;
     NEO::CommandStreamReceiver *csr = nullptr;
