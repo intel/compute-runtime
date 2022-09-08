@@ -78,7 +78,7 @@ DG2TEST_F(Dg2SbaTest, givenSpecificProductFamilyWhenAppendingSbaThenProgramCorre
         false                                               // isDebuggerActive
     };
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP, sbaCmd.getL1CachePolicyL1CacheControl());
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB, sbaCmd.getL1CachePolicyL1CacheControl());
 
     args.isDebuggerActive = true;
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
