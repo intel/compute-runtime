@@ -891,6 +891,7 @@ struct CommandListCreateWithBcs : public CommandListCreate {
     void SetUp() override {
         VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
         defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+        defaultHwInfo->featureTable.ftrBcsInfo.set(0, true);
         CommandListCreate::SetUp();
     }
 };
@@ -1239,6 +1240,47 @@ TEST_F(CommandListCreateWithBcs, givenQueueDescriptionwhenCreatingImmediateComma
             ASSERT_EQ(ZE_RESULT_SUCCESS, result);
         }
     }
+}
+
+HWTEST2_F(CommandListCreateWithBcs,
+          givenInternalImmediateCommandListCreatedAsLinkedCopyWhenUsingInternalCopyEngineThenSelectCopyTypeCommandList, IsAtLeastXeHpCore) {
+    const ze_command_queue_desc_t queueDesc = {};
+    bool internalEngine = true;
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily,
+                                                                              device,
+                                                                              &queueDesc,
+                                                                              internalEngine,
+                                                                              NEO::EngineGroupType::LinkedCopy,
+                                                                              returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList->cmdQImmediate);
+    auto internalCopyEngine = neoDevice->getInternalCopyEngine();
+    EXPECT_NE(nullptr, internalCopyEngine);
+    EXPECT_EQ(cmdQueue->getCsr(), internalCopyEngine->commandStreamReceiver);
+    EXPECT_TRUE(commandList->isCopyOnly());
+}
+
+HWTEST2_F(CommandListCreateWithBcs, givenForceFlushTaskEnabledWhenCreatingCommandListUsingLinkedCopyThenFlushTaskModeNotUsed, IsAtLeastXeHpCore) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
+
+    const ze_command_queue_desc_t queueDesc = {};
+    bool internalEngine = false;
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily,
+                                                                              device,
+                                                                              &queueDesc,
+                                                                              internalEngine,
+                                                                              NEO::EngineGroupType::LinkedCopy,
+                                                                              returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    EXPECT_TRUE(commandList->isCopyOnly());
+    EXPECT_FALSE(commandList->isFlushTaskSubmissionEnabled);
 }
 
 HWTEST2_F(CommandListCreate, whenGettingCommandsToPatchThenCorrectValuesAreReturned, IsAtLeastSkl) {

@@ -97,17 +97,20 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
     CommandListImp *commandList = nullptr;
     returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
 
-    NEO::EngineGroupType engineType = engineGroupType;
-
     if (allocator) {
         NEO::CommandStreamReceiver *csr = nullptr;
         auto deviceImp = static_cast<DeviceImp *>(device);
+        const auto &hwInfo = device->getHwInfo();
+        auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
         if (internalUsage) {
-            if (NEO::EngineGroupType::Copy == engineType && deviceImp->getActiveDevice()->getInternalCopyEngine()) {
+            if (NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType) && deviceImp->getActiveDevice()->getInternalCopyEngine()) {
                 csr = deviceImp->getActiveDevice()->getInternalCopyEngine()->commandStreamReceiver;
             } else {
-                csr = deviceImp->getActiveDevice()->getInternalEngine().commandStreamReceiver;
-                engineType = NEO::EngineGroupType::RenderCompute;
+                auto internalEngine = deviceImp->getActiveDevice()->getInternalEngine();
+                csr = internalEngine.commandStreamReceiver;
+                auto internalEngineType = internalEngine.getEngineType();
+                auto internalEngineUsage = internalEngine.getEngineUsage();
+                engineGroupType = hwHelper.getEngineGroupType(internalEngineType, internalEngineUsage, hwInfo);
             }
         } else {
             returnValue = device->getCsrForOrdinalAndIndex(&csr, desc->ordinal, desc->index);
@@ -122,21 +125,20 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         commandList->internalUsage = internalUsage;
         commandList->cmdListType = CommandListType::TYPE_IMMEDIATE;
         commandList->isSyncModeQueue = (desc->mode == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS);
-        if (!(NEO::EngineGroupType::Copy == engineType) && !internalUsage) {
-            const auto &hwInfo = device->getHwInfo();
-            commandList->isFlushTaskSubmissionEnabled = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily).isPlatformFlushTaskEnabled(hwInfo);
+        if ((!NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType)) && !internalUsage) {
+            commandList->isFlushTaskSubmissionEnabled = hwHelper.isPlatformFlushTaskEnabled(hwInfo);
             if (NEO::DebugManager.flags.EnableFlushTaskSubmission.get() != -1) {
                 commandList->isFlushTaskSubmissionEnabled = !!NEO::DebugManager.flags.EnableFlushTaskSubmission.get();
             }
         }
-        returnValue = commandList->initialize(device, engineType, desc->flags);
+        returnValue = commandList->initialize(device, engineGroupType, desc->flags);
         if (returnValue != ZE_RESULT_SUCCESS) {
             commandList->destroy();
             commandList = nullptr;
             return commandList;
         }
 
-        auto commandQueue = CommandQueue::create(productFamily, device, csr, desc, NEO::EngineGroupType::Copy == engineType, internalUsage, returnValue);
+        auto commandQueue = CommandQueue::create(productFamily, device, csr, desc, commandList->isCopyOnly(), internalUsage, returnValue);
         if (!commandQueue) {
             commandList->destroy();
             commandList = nullptr;
