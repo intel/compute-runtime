@@ -1017,7 +1017,15 @@ NEO::SubmissionStatus CommandQueueHw<gfxCoreFamily>::prepareAndSubmitBatchBuffer
         *(MI_BATCH_BUFFER_END *)buffer = GfxFamily::cmdInitBatchBufferEnd;
     }
 
-    if (this->alignedChildStreamPadding) {
+    if (ctx.isNEODebuggerActive(this->device) || NEO::DebugManager.flags.EnableSWTags.get()) {
+        auto leftoverSpace = outerCommandStream.getUsed() - innerCommandStream.getUsed();
+        leftoverSpace -= ptrDiff(innerCommandStream.getCpuBase(), outerCommandStream.getCpuBase());
+
+        if (leftoverSpace > 0) {
+            auto memory = innerCommandStream.getSpace(leftoverSpace);
+            memset(memory, 0, leftoverSpace);
+        }
+    } else if (this->alignedChildStreamPadding) {
         void *paddingPtr = innerCommandStream.getSpace(this->alignedChildStreamPadding);
         memset(paddingPtr, 0, this->alignedChildStreamPadding);
     }

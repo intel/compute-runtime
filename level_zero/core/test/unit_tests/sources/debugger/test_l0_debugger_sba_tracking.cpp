@@ -330,6 +330,35 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenSbaB
     commandList->destroy();
 }
 
+HWTEST2_F(L0DebuggerTest, givenDebugerEnabledWhenPrepareAndSubmitBatchBufferThenLeftoverIsZeroed, Gen12Plus) {
+    ze_command_queue_desc_t queueDesc = {};
+    std::unique_ptr<MockCommandQueueHw<gfxCoreFamily>, Deleter> commandQueue(new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc));
+    commandQueue->initialize(false, false);
+
+    auto &commandStream = commandQueue->commandStream;
+    auto estimatedSize = 4096u;
+    NEO::LinearStream linearStream(commandStream->getSpace(estimatedSize), estimatedSize);
+    // fill with random data
+    memset(commandStream->getCpuBase(), 0xD, estimatedSize);
+
+    typename MockCommandQueueHw<gfxCoreFamily>::CommandListExecutionContext ctx{};
+    ctx.isDebugEnabled = true;
+
+    commandQueue->prepareAndSubmitBatchBuffer(ctx, linearStream);
+
+    // MI_BATCH_BUFFER END is added during prepareAndSubmitBatchBuffer
+    auto offsetInBytes = sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
+    auto isLeftoverZeroed = true;
+    for (auto i = offsetInBytes; i < estimatedSize; i++) {
+        uint8_t *data = reinterpret_cast<uint8_t *>(commandStream->getCpuBase());
+        if (data[i] != 0) {
+            isLeftoverZeroed = false;
+            break;
+        }
+    }
+    EXPECT_TRUE(isLeftoverZeroed);
+}
+
 INSTANTIATE_TEST_CASE_P(SBAModesForDebugger, L0DebuggerParameterizedTests, ::testing::Values(0, 1));
 
 struct L0DebuggerSingleAddressSpace : public Test<L0DebuggerHwFixture> {

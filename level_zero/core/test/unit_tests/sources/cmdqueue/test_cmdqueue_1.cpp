@@ -377,6 +377,39 @@ HWTEST2_F(CommandQueueCreate, givenGpuHangInReservingLinearStreamWhenExecutingCo
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
 }
 
+HWTEST2_F(CommandQueueCreate, givenSwTagsEnabledWhenPrepareAndSubmitBatchBufferThenLeftoverIsZeroed, IsAtLeastSkl) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EnableSWTags.set(1);
+    const ze_command_queue_desc_t desc = {};
+    auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
+    commandQueue->initialize(false, false);
+    ze_result_t returnValue;
+    auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    ASSERT_NE(nullptr, commandList);
+    auto &commandStream = commandQueue->commandStream;
+
+    auto estimatedSize = 4096u;
+    NEO::LinearStream linearStream(commandStream->getSpace(estimatedSize), estimatedSize);
+    // fill with random data
+    memset(commandStream->getCpuBase(), 0xD, estimatedSize);
+    typename MockCommandQueueHw<gfxCoreFamily>::CommandListExecutionContext ctx{};
+
+    commandQueue->prepareAndSubmitBatchBuffer(ctx, linearStream);
+
+    // MI_BATCH_BUFFER END will be added during prepareAndSubmitBatchBuffer
+    auto offsetInBytes = sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
+    auto isLeftoverZeroed = true;
+    for (auto i = offsetInBytes; i < estimatedSize; i++) {
+        uint8_t *data = reinterpret_cast<uint8_t *>(commandStream->getCpuBase());
+        if (data[i] != 0) {
+            isLeftoverZeroed = false;
+            break;
+        }
+    }
+    EXPECT_TRUE(isLeftoverZeroed);
+    commandQueue->destroy();
+}
+
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct MockCommandQueueHwEstimateSizeTest : public MockCommandQueueHw<gfxCoreFamily> {
 

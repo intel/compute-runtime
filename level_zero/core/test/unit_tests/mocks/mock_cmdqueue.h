@@ -61,6 +61,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     using BaseClass = ::L0::CommandQueueHw<gfxCoreFamily>;
     using BaseClass::commandStream;
+    using BaseClass::prepareAndSubmitBatchBuffer;
     using BaseClass::printfFunctionContainer;
     using L0::CommandQueue::activeSubDevices;
     using L0::CommandQueue::internalUsage;
@@ -68,6 +69,7 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     using L0::CommandQueue::partitionCount;
     using L0::CommandQueue::preemptionCmdSyncProgramming;
     using L0::CommandQueueImp::csr;
+    using typename BaseClass::CommandListExecutionContext;
 
     MockCommandQueueHw(L0::Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc) : L0::CommandQueueHw<gfxCoreFamily>(device, csr, desc) {
     }
