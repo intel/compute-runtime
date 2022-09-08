@@ -119,6 +119,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     NEO::Device *neoDevice = device->getNEODevice();
 
+    auto localMemSize = static_cast<uint32_t>(neoDevice->getDeviceInfo().localMemSize);
+    auto slmTotalSize = kernelImp->getSlmTotalSize();
+    if (slmTotalSize > 0 && localMemSize < slmTotalSize) {
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
+
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
         neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::KernelNameTag>(
             *commandContainer.getCommandStream(),

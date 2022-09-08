@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,46 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenValidParametersWhenExecutingKernelThenS
         event);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(clEnqueueNDRangeKernelTests, GivenKernelWithSlmSizeExceedingLocalMemorySizeWhenExecutingKernelThenOutOfResourcesIsReturned) {
+    cl_uint workDim = 1;
+    size_t globalWorkOffset[3] = {0, 0, 0};
+    size_t globalWorkSize[3] = {1, 1, 1};
+    size_t localWorkSize[3] = {1, 1, 1};
+    cl_uint numEventsInWaitList = 0;
+    cl_event *eventWaitList = nullptr;
+    cl_event *event = nullptr;
+
+    auto localMemSize = static_cast<uint32_t>(pDevice->getDevice().getDeviceInfo().localMemSize);
+
+    pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize = localMemSize - 10u;
+    retVal = clEnqueueNDRangeKernel(
+        pCommandQueue,
+        pMultiDeviceKernel,
+        workDim,
+        globalWorkOffset,
+        globalWorkSize,
+        localWorkSize,
+        numEventsInWaitList,
+        eventWaitList,
+        event);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize = localMemSize + 10u;
+    retVal = clEnqueueNDRangeKernel(
+        pCommandQueue,
+        pMultiDeviceKernel,
+        workDim,
+        globalWorkOffset,
+        globalWorkSize,
+        localWorkSize,
+        numEventsInWaitList,
+        eventWaitList,
+        event);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
 }
 
 TEST_F(clEnqueueNDRangeKernelTests, GivenQueueIncapableWhenExecutingKernelThenInvalidOperationIsReturned) {

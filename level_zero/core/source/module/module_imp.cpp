@@ -759,6 +759,16 @@ ze_result_t ModuleImp::createKernel(const ze_kernel_desc_t *desc,
         *kernelHandle = kernel->toHandle();
     }
 
+    auto localMemSize = static_cast<uint32_t>(this->getDevice()->getNEODevice()->getDeviceInfo().localMemSize);
+
+    for (const auto &kernelImmutableData : this->getKernelImmutableDataVector()) {
+        auto slmInlineSize = kernelImmutableData->getDescriptor().kernelAttributes.slmInlineSize;
+        if (slmInlineSize > 0 && localMemSize < slmInlineSize) {
+            res = ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+            break;
+        }
+    }
+
     return res;
 }
 

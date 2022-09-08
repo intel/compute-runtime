@@ -179,6 +179,30 @@ TEST_P(KernelImpSuggestGroupSize, WhenSuggestingGroupThenProperGroupSizeChosen) 
     EXPECT_EQ(0U, size % groupSize[2]);
 }
 
+TEST_P(KernelImpSuggestGroupSize, WhenSlmSizeExceedsLocalMemorySizeAndSuggestingGroupSizeThenOutOfDeviceMemoryIsReturned) {
+    WhiteBox<KernelImmutableData> funcInfo = {};
+    NEO::KernelDescriptor descriptor;
+    funcInfo.kernelDescriptor = &descriptor;
+
+    Mock<Module> module(device, nullptr);
+
+    uint32_t size = GetParam();
+
+    Mock<Kernel> function;
+    function.kernelImmData = &funcInfo;
+    function.module = &module;
+    uint32_t groupSize[3];
+    EXPECT_EQ(ZE_RESULT_SUCCESS, function.KernelImp::suggestGroupSize(size, 1, 1, groupSize, groupSize + 1, groupSize + 2));
+
+    auto localMemSize = static_cast<uint32_t>(device->getNEODevice()->getDeviceInfo().localMemSize);
+
+    funcInfo.kernelDescriptor->kernelAttributes.slmInlineSize = localMemSize - 10u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, function.KernelImp::suggestGroupSize(size, 1, 1, groupSize, groupSize + 1, groupSize + 2));
+
+    funcInfo.kernelDescriptor->kernelAttributes.slmInlineSize = localMemSize + 10u;
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, function.KernelImp::suggestGroupSize(size, 1, 1, groupSize, groupSize + 1, groupSize + 2));
+}
+
 TEST_F(KernelImp, GivenInvalidValuesWhenSettingGroupSizeThenInvalidArgumentErrorIsReturned) {
     Mock<Kernel> kernel;
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, kernel.KernelImp::setGroupSize(0U, 1U, 1U));

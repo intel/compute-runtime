@@ -241,6 +241,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     this->containsStatelessUncachedResource |= kernelImp->getKernelRequiresUncachedMocs();
     this->requiresQueueUncachedMocs |= kernelImp->getKernelRequiresQueueUncachedMocs();
 
+    auto localMemSize = static_cast<uint32_t>(neoDevice->getDeviceInfo().localMemSize);
+    auto slmTotalSize = kernelImp->getSlmTotalSize();
+    if (slmTotalSize > 0 && localMemSize < slmTotalSize) {
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
+
     std::list<void *> additionalCommands;
 
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{

@@ -101,6 +101,13 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
             pKernel = nullptr;
         }
 
+        auto localMemSize = static_cast<uint32_t>(clDevice.getDevice().getDeviceInfo().localMemSize);
+        auto slmInlineSize = kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize;
+
+        if (slmInlineSize > 0 && localMemSize < slmInlineSize) {
+            retVal = CL_OUT_OF_RESOURCES;
+        }
+
         if (errcodeRet) {
             *errcodeRet = retVal;
         }

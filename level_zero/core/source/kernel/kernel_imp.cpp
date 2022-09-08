@@ -352,6 +352,10 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
         uint32_t numThreadsPerSubSlice = (uint32_t)deviceInfo.maxNumEUsPerSubSlice * deviceInfo.numThreadsPerEU;
         uint32_t localMemSize = (uint32_t)deviceInfo.localMemSize;
 
+        if (this->getSlmTotalSize() > 0 && localMemSize < this->getSlmTotalSize()) {
+            return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+        }
+
         NEO::WorkSizeInfo wsInfo(maxWorkGroupSize, kernelImmData->getDescriptor().kernelAttributes.usesBarriers(), simd, this->getSlmTotalSize(),
                                  hwInfo, numThreadsPerSubSlice, localMemSize,
                                  usesImages, false, kernelImmData->getDescriptor().kernelAttributes.flags.requiresDisabledEUFusion);

@@ -3507,6 +3507,16 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
     }
 
     Kernel *pKernel = pMultiDeviceKernel->getKernel(pCommandQueue->getDevice().getRootDeviceIndex());
+
+    auto localMemSize = static_cast<uint32_t>(pCommandQueue->getDevice().getDeviceInfo().localMemSize);
+    auto slmInlineSize = pKernel->getDescriptor().kernelAttributes.slmInlineSize;
+
+    if (slmInlineSize > 0 && localMemSize < slmInlineSize) {
+        retVal = CL_OUT_OF_RESOURCES;
+        TRACING_EXIT(ClEnqueueNdRangeKernel, &retVal);
+        return retVal;
+    }
+
     if ((pKernel->getExecutionType() != KernelExecutionType::Default) ||
         pKernel->usesSyncBuffer()) {
         retVal = CL_INVALID_KERNEL;

@@ -2977,7 +2977,8 @@ TEST_F(KernelMultiRootDeviceTest, givenKernelWithPrivateSurfaceWhenInitializeThe
     }
 }
 
-TEST(KernelCreateTest, whenInitFailedThenReturnNull) {
+class KernelCreateTest : public ::testing::Test {
+  protected:
     struct MockProgram {
         ClDeviceVector getDevices() {
             ClDeviceVector deviceVector;
@@ -2986,16 +2987,43 @@ TEST(KernelCreateTest, whenInitFailedThenReturnNull) {
         }
         void getSource(std::string &) {}
         MockClDevice mDevice{new MockDevice};
-    } mockProgram;
+    };
+
     struct MockKernel {
         MockKernel(MockProgram *, const KernelInfo &, ClDevice &) {}
         int initialize() { return -1; };
     };
 
-    KernelInfo info;
+    MockProgram mockProgram{};
+};
+
+TEST_F(KernelCreateTest, whenInitFailedThenReturnNull) {
+    KernelInfo info{};
     info.kernelDescriptor.kernelAttributes.gpuPointerSize = 8;
 
     auto ret = Kernel::create<MockKernel>(&mockProgram, info, mockProgram.mDevice, nullptr);
+    EXPECT_EQ(nullptr, ret);
+}
+
+TEST_F(KernelCreateTest, whenSlmSizeExceedsLocalMemorySizeThenReturnOutOfResources) {
+    KernelInfo info{};
+    cl_int retVal{};
+
+    auto localMemSize = static_cast<uint32_t>(mockProgram.mDevice.getDevice().getDeviceInfo().localMemSize);
+
+    info.kernelDescriptor.kernelAttributes.slmInlineSize = localMemSize - 10u;
+    auto ret = Kernel::create<MockKernel>(&mockProgram, info, mockProgram.mDevice, &retVal);
+    EXPECT_EQ(nullptr, ret);
+    EXPECT_NE(CL_OUT_OF_RESOURCES, retVal);
+
+    retVal = 0;
+
+    info.kernelDescriptor.kernelAttributes.slmInlineSize = localMemSize + 10u;
+    ret = Kernel::create<MockKernel>(&mockProgram, info, mockProgram.mDevice, &retVal);
+    EXPECT_EQ(nullptr, ret);
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
+
+    ret = Kernel::create<MockKernel>(&mockProgram, info, mockProgram.mDevice, nullptr);
     EXPECT_EQ(nullptr, ret);
 }
 
