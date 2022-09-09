@@ -18,7 +18,7 @@ struct Device;
 
 namespace ult {
 
-struct MultiTileCommandListAppendLaunchFunctionFixture : public MultiDeviceModuleFixture {
+struct MultiTileCommandListAppendLaunchKernelFixture : public MultiDeviceModuleFixture {
     void setUp();
     void tearDown();
 
@@ -28,7 +28,7 @@ struct MultiTileCommandListAppendLaunchFunctionFixture : public MultiDeviceModul
     VariableBackup<bool> backup{&NEO::ImplicitScaling::apiSupport, true};
 };
 
-struct MultiTileImmediateCommandListAppendLaunchFunctionFixture : public MultiDeviceModuleFixture {
+struct MultiTileImmediateCommandListAppendLaunchKernelFixture : public MultiDeviceModuleFixture {
     void setUp();
     void tearDown();
 

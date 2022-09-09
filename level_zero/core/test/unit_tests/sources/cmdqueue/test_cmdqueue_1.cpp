@@ -63,7 +63,7 @@ TEST_F(CommandQueueCreate, whenCreatingCommandQueueThenItIsInitialized) {
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 }
 
-TEST_F(CommandQueueCreate, whenSynchronizeByPollingTaskCountThenCallsPrintOutputOnPrintfFunctionsStoredAndClearsFunctionContainer) {
+TEST_F(CommandQueueCreate, whenSynchronizeByPollingTaskCountThenCallsPrintOutputOnPrintfKernelsStoredAndClearsKernelContainer) {
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
@@ -76,12 +76,12 @@ TEST_F(CommandQueueCreate, whenSynchronizeByPollingTaskCountThenCallsPrintOutput
 
     Mock<Kernel> kernel1, kernel2;
 
-    commandQueue->printfFunctionContainer.push_back(&kernel1);
-    commandQueue->printfFunctionContainer.push_back(&kernel2);
+    commandQueue->printfKernelContainer.push_back(&kernel1);
+    commandQueue->printfKernelContainer.push_back(&kernel2);
 
     commandQueue->synchronizeByPollingForTaskCount(0u);
 
-    EXPECT_EQ(0u, commandQueue->printfFunctionContainer.size());
+    EXPECT_EQ(0u, commandQueue->printfKernelContainer.size());
     EXPECT_EQ(1u, kernel1.printPrintfOutputCalledTimes);
     EXPECT_EQ(1u, kernel2.printPrintfOutputCalledTimes);
 
@@ -255,9 +255,9 @@ HWTEST_F(CommandQueueCreate, given100CmdListsWhenExecutingThenCommandStreamIsNot
     auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     ASSERT_NE(nullptr, commandList);
 
-    ze_group_count_t dispatchFunctionArguments{1, 1, 1};
+    ze_group_count_t dispatchKernelArguments{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
-    commandList->appendLaunchKernel(kernel.toHandle(), &dispatchFunctionArguments, nullptr, 0, nullptr, launchParams);
+    commandList->appendLaunchKernel(kernel.toHandle(), &dispatchKernelArguments, nullptr, 0, nullptr, launchParams);
 
     const size_t numHandles = 100;
     ze_command_list_handle_t cmdListHandles[numHandles];
@@ -305,9 +305,9 @@ HWTEST_F(CommandQueueCreate, givenLogicalStateHelperWhenExecutingThenMergeStates
     auto commandList = std::unique_ptr<L0::ult::CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     commandList->nonImmediateLogicalStateHelper.reset(mockCmdListLogicalStateHelper);
 
-    ze_group_count_t dispatchFunctionArguments{1, 1, 1};
+    ze_group_count_t dispatchKernelArguments{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
-    commandList->appendLaunchKernel(kernel.toHandle(), &dispatchFunctionArguments, nullptr, 0, nullptr, launchParams);
+    commandList->appendLaunchKernel(kernel.toHandle(), &dispatchKernelArguments, nullptr, 0, nullptr, launchParams);
 
     ze_command_list_handle_t cmdListHandles = commandList->toHandle();
 
@@ -341,9 +341,9 @@ HWTEST_F(CommandQueueCreate, givenLogicalStateHelperAndImmediateCmdListWhenExecu
 
     auto commandList = std::unique_ptr<L0::ult::CommandList>(whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue)));
 
-    ze_group_count_t dispatchFunctionArguments{1, 1, 1};
+    ze_group_count_t dispatchKernelArguments{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
-    commandList->appendLaunchKernel(kernel.toHandle(), &dispatchFunctionArguments, nullptr, 0, nullptr, launchParams);
+    commandList->appendLaunchKernel(kernel.toHandle(), &dispatchKernelArguments, nullptr, 0, nullptr, launchParams);
 
     ze_command_list_handle_t cmdListHandles = commandList->toHandle();
 
@@ -367,9 +367,9 @@ HWTEST2_F(CommandQueueCreate, givenGpuHangInReservingLinearStreamWhenExecutingCo
     auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     ASSERT_NE(nullptr, commandList);
 
-    ze_group_count_t dispatchFunctionArguments{1, 1, 1};
+    ze_group_count_t dispatchKernelArguments{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
-    commandList->appendLaunchKernel(kernel.toHandle(), &dispatchFunctionArguments, nullptr, 0, nullptr, launchParams);
+    commandList->appendLaunchKernel(kernel.toHandle(), &dispatchKernelArguments, nullptr, 0, nullptr, launchParams);
 
     ze_command_list_handle_t cmdListHandles[1] = {commandList->toHandle()};
 

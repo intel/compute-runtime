@@ -30,15 +30,15 @@ CommandList::~CommandList() {
     if (this->cmdListType == CommandListType::TYPE_REGULAR || !this->isFlushTaskSubmissionEnabled) {
         removeHostPtrAllocations();
     }
-    printfFunctionContainer.clear();
+    printfKernelContainer.clear();
 }
 
-void CommandList::storePrintfFunction(Kernel *kernel) {
-    auto it = std::find(this->printfFunctionContainer.begin(), this->printfFunctionContainer.end(),
+void CommandList::storePrintfKernel(Kernel *kernel) {
+    auto it = std::find(this->printfKernelContainer.begin(), this->printfKernelContainer.end(),
                         kernel);
 
-    if (it == this->printfFunctionContainer.end()) {
-        this->printfFunctionContainer.push_back(kernel);
+    if (it == this->printfKernelContainer.end()) {
+        this->printfKernelContainer.push_back(kernel);
     }
 }
 
@@ -131,7 +131,7 @@ void CommandList::eraseResidencyContainerEntry(NEO::GraphicsAllocation *allocati
     }
 }
 
-NEO::PreemptionMode CommandList::obtainFunctionPreemptionMode(Kernel *kernel) {
+NEO::PreemptionMode CommandList::obtainKernelPreemptionMode(Kernel *kernel) {
     NEO::PreemptionFlags flags = NEO::PreemptionHelper::createPreemptionLevelFlags(*device->getNEODevice(), &kernel->getImmutableData()->getDescriptor());
     return NEO::PreemptionHelper::taskPreemptionMode(device->getDevicePreemptionMode(), flags);
 }

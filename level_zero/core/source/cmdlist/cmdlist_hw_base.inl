@@ -44,7 +44,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     appendEventForProfiling(event, true, false);
-    const auto functionImmutableData = kernel->getImmutableData();
+    const auto kernelImmutableData = kernel->getImmutableData();
     auto perThreadScratchSize = std::max<std::uint32_t>(this->getCommandListPerThreadScratchSize(),
                                                         kernel->getImmutableData()->getDescriptor().kernelAttributes.perThreadScratchSize[0]);
     this->setCommandListPerThreadScratchSize(perThreadScratchSize);
@@ -52,7 +52,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     auto slmEnable = (kernel->getImmutableData()->getDescriptor().kernelAttributes.slmInlineSize > 0);
     this->setCommandListSLMEnable(slmEnable);
 
-    auto kernelPreemptionMode = obtainFunctionPreemptionMode(kernel);
+    auto kernelPreemptionMode = obtainKernelPreemptionMode(kernel);
     commandListPreemptionMode = std::min(commandListPreemptionMode, kernelPreemptionMode);
 
     kernel->patchGlobalOffset();
@@ -169,14 +169,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     appendSignalEventPostWalker(event, false);
 
-    commandContainer.addToResidencyContainer(functionImmutableData->getIsaGraphicsAllocation());
+    commandContainer.addToResidencyContainer(kernelImmutableData->getIsaGraphicsAllocation());
     auto &residencyContainer = kernel->getResidencyContainer();
     for (auto resource : residencyContainer) {
         commandContainer.addToResidencyContainer(resource);
     }
 
-    if (functionImmutableData->getDescriptor().kernelAttributes.flags.usesPrintf) {
-        storePrintfFunction(kernel);
+    if (kernelImmutableData->getDescriptor().kernelAttributes.flags.usesPrintf) {
+        storePrintfKernel(kernel);
     }
 
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::DebugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {

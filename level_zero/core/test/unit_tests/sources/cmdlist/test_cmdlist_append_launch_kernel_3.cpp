@@ -128,12 +128,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenAppendLaunchMult
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
     ze_result_t returnValue;
     auto commandList = std::unique_ptr<L0::CommandList>(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
-    const ze_kernel_handle_t launchFn = kernel->toHandle();
+    const ze_kernel_handle_t launchKernels = kernel->toHandle();
     uint32_t *numLaunchArgs;
     ze_device_mem_alloc_desc_t deviceDesc = {};
     auto result = context->allocDeviceMem(
         device->toHandle(), &deviceDesc, 16384u, 4096u, reinterpret_cast<void **>(&numLaunchArgs));
-    result = commandList->appendLaunchMultipleKernelsIndirect(1, &launchFn, numLaunchArgs, nullptr, nullptr, 0, nullptr);
+    result = commandList->appendLaunchMultipleKernelsIndirect(1, &launchKernels, numLaunchArgs, nullptr, nullptr, 0, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     *numLaunchArgs = 0;
     auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
@@ -156,13 +156,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenAppendLaunchMult
     using MI_MATH = typename FamilyType::MI_MATH;
     ze_result_t returnValue;
     auto commandList = std::unique_ptr<L0::CommandList>(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
-    const ze_kernel_handle_t launchFn[3] = {kernel->toHandle(), kernel->toHandle(), kernel->toHandle()};
+    const ze_kernel_handle_t launchKernels[3] = {kernel->toHandle(), kernel->toHandle(), kernel->toHandle()};
     uint32_t *numLaunchArgs;
     const uint32_t numKernels = 3;
     ze_device_mem_alloc_desc_t deviceDesc = {};
     auto result = context->allocDeviceMem(
         device->toHandle(), &deviceDesc, 16384u, 4096u, reinterpret_cast<void **>(&numLaunchArgs));
-    result = commandList->appendLaunchMultipleKernelsIndirect(numKernels, launchFn, numLaunchArgs, nullptr, nullptr, 0, nullptr);
+    result = commandList->appendLaunchMultipleKernelsIndirect(numKernels, launchKernels, numLaunchArgs, nullptr, nullptr, 0, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     *numLaunchArgs = 2;
     auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
@@ -710,9 +710,9 @@ HWTEST_F(CommandListAppendLaunchKernelWithImplicitArgs, givenIndirectDispatchWit
     context->freeMem(alloc);
 }
 
-using MultiTileImmediateCommandListAppendLaunchFunctionXeHpCoreTest = Test<MultiTileImmediateCommandListAppendLaunchFunctionFixture>;
+using MultiTileImmediateCommandListAppendLaunchKernelXeHpCoreTest = Test<MultiTileImmediateCommandListAppendLaunchKernelFixture>;
 
-HWTEST2_F(MultiTileImmediateCommandListAppendLaunchFunctionXeHpCoreTest, givenImplicitScalingWhenUsingImmediateCommandListThenDoNotAddSelfCleanup, IsAtLeastXeHpCore) {
+HWTEST2_F(MultiTileImmediateCommandListAppendLaunchKernelXeHpCoreTest, givenImplicitScalingWhenUsingImmediateCommandListThenDoNotAddSelfCleanup, IsAtLeastXeHpCore) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
@@ -775,7 +775,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendLaunchFunctionXeHpCoreTest, givenIm
     EXPECT_EQ(cmdList.end(), itorSemaphoreWait);
 }
 
-HWTEST2_F(MultiTileImmediateCommandListAppendLaunchFunctionXeHpCoreTest, givenImplicitScalingWhenUsingImmediateCommandListWithoutFlushTaskThenUseSecondaryBuffer, IsAtLeastXeHpCore) {
+HWTEST2_F(MultiTileImmediateCommandListAppendLaunchKernelXeHpCoreTest, givenImplicitScalingWhenUsingImmediateCommandListWithoutFlushTaskThenUseSecondaryBuffer, IsAtLeastXeHpCore) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;

@@ -163,7 +163,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
-    ze_kernel_handle_t hKernel, const ze_group_count_t *threadGroupDimensions,
+    ze_kernel_handle_t kernelHandle, const ze_group_count_t *threadGroupDimensions,
     ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
     const CmdListKernelLaunchParams &launchParams) {
 
@@ -171,7 +171,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
         checkAvailableSpace();
     }
 
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(hKernel, threadGroupDimensions,
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(kernelHandle, threadGroupDimensions,
                                                                         hSignalEvent, numWaitEvents, phWaitEvents,
                                                                         launchParams);
     return flushImmediate(ret, true);
@@ -179,13 +179,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernelIndirect(
-    ze_kernel_handle_t hKernel, const ze_group_count_t *pDispatchArgumentsBuffer,
+    ze_kernel_handle_t kernelHandle, const ze_group_count_t *pDispatchArgumentsBuffer,
     ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
 
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace();
     }
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(hKernel, pDispatchArgumentsBuffer,
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(kernelHandle, pDispatchArgumentsBuffer,
                                                                                 hSignalEvent, numWaitEvents, phWaitEvents);
     return flushImmediate(ret, true);
 }

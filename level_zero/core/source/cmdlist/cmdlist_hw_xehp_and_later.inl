@@ -134,7 +134,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     NEO::Device *neoDevice = device->getNEODevice();
 
     UNRECOVERABLE_IF(kernel == nullptr);
-    const auto functionImmutableData = kernel->getImmutableData();
+    const auto kernelImmutableData = kernel->getImmutableData();
     auto &kernelDescriptor = kernel->getKernelDescriptor();
     if (kernelDescriptor.kernelAttributes.flags.isInvalid) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -142,8 +142,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     commandListPerThreadScratchSize = std::max<uint32_t>(commandListPerThreadScratchSize, kernelDescriptor.kernelAttributes.perThreadScratchSize[0]);
     commandListPerThreadPrivateScratchSize = std::max<uint32_t>(commandListPerThreadPrivateScratchSize, kernelDescriptor.kernelAttributes.perThreadScratchSize[1]);
 
-    auto functionPreemptionMode = obtainFunctionPreemptionMode(kernel);
-    commandListPreemptionMode = std::min(commandListPreemptionMode, functionPreemptionMode);
+    auto kernelPreemptionMode = obtainKernelPreemptionMode(kernel);
+    commandListPreemptionMode = std::min(commandListPreemptionMode, kernelPreemptionMode);
 
     kernel->patchGlobalOffset();
     if (launchParams.isIndirect && threadGroupDimensions) {
@@ -287,9 +287,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
         *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateSpace) = surfaceState;
     }
-    // Attach Function residency to our CommandList residency
+    // Attach kernel residency to our CommandList residency
     {
-        commandContainer.addToResidencyContainer(functionImmutableData->getIsaGraphicsAllocation());
+        commandContainer.addToResidencyContainer(kernelImmutableData->getIsaGraphicsAllocation());
         auto &residencyContainer = kernel->getResidencyContainer();
         for (auto resource : residencyContainer) {
             commandContainer.addToResidencyContainer(resource);
@@ -299,7 +299,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     // Store PrintfBuffer from a kernel
     {
         if (kernelDescriptor.kernelAttributes.flags.usesPrintf) {
-            storePrintfFunction(kernel);
+            storePrintfKernel(kernel);
         }
     }
 

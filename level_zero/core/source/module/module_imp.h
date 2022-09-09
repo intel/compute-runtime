@@ -89,7 +89,7 @@ struct ModuleImp : public Module {
     ze_result_t destroy() override;
 
     ze_result_t createKernel(const ze_kernel_desc_t *desc,
-                             ze_kernel_handle_t *phFunction) override;
+                             ze_kernel_handle_t *kernelHandle) override;
 
     ze_result_t getNativeBinary(size_t *pSize, uint8_t *pModuleNativeBinary) override;
 
@@ -107,7 +107,7 @@ struct ModuleImp : public Module {
 
     ze_result_t getDebugInfo(size_t *pDebugDataSize, uint8_t *pDebugData) override;
 
-    const KernelImmutableData *getKernelImmutableData(const char *functionName) const override;
+    const KernelImmutableData *getKernelImmutableData(const char *kernelName) const override;
 
     const std::vector<std::unique_ptr<KernelImmutableData>> &getKernelImmutableDataVector() const override { return kernelImmDatas; }
 

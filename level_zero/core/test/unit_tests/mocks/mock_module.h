@@ -43,11 +43,11 @@ struct Mock<Module> : public Module {
     Mock(::L0::Device *device, ModuleBuildLog *moduleBuildLog, ModuleType type) : WhiteBox(device, moduleBuildLog, type) {}
     Mock(::L0::Device *device, ModuleBuildLog *moduleBuildLog) : Mock(device, moduleBuildLog, ModuleType::User){};
 
-    ADDMETHOD_NOBASE(createKernel, ze_result_t, ZE_RESULT_SUCCESS, (const ze_kernel_desc_t *desc, ze_kernel_handle_t *phFunction));
+    ADDMETHOD_NOBASE(createKernel, ze_result_t, ZE_RESULT_SUCCESS, (const ze_kernel_desc_t *desc, ze_kernel_handle_t *kernelHandle));
     ADDMETHOD_NOBASE(destroy, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(getFunctionPointer, ze_result_t, ZE_RESULT_SUCCESS, (const char *pKernelName, void **pfnFunction));
     ADDMETHOD_NOBASE(getNativeBinary, ze_result_t, ZE_RESULT_SUCCESS, (size_t * pSize, uint8_t *pModuleNativeBinary));
-    ADDMETHOD_CONST_NOBASE(getKernelImmutableData, const L0::KernelImmutableData *, nullptr, (const char *functionName));
+    ADDMETHOD_CONST_NOBASE(getKernelImmutableData, const L0::KernelImmutableData *, nullptr, (const char *kernelName));
     ADDMETHOD_CONST_NOBASE(getMaxGroupSize, uint32_t, 256, ());
     ADDMETHOD_NOBASE(getKernelNames, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t * pCount, const char **pNames));
     ADDMETHOD_NOBASE(performDynamicLink, ze_result_t, ZE_RESULT_SUCCESS,
@@ -91,7 +91,7 @@ struct MockModule : public L0::ModuleImp {
 
     ~MockModule() override = default;
 
-    const KernelImmutableData *getKernelImmutableData(const char *functionName) const override {
+    const KernelImmutableData *getKernelImmutableData(const char *kernelName) const override {
         return kernelImmData;
     }
 

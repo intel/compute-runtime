@@ -20,9 +20,9 @@ struct MockDeviceForRebuildBuilins : public Mock<DeviceImp> {
         MockModuleForRebuildBuiltins(Device *device, ModuleType type) : ModuleImp(device, nullptr, type) {}
 
         ze_result_t createKernel(const ze_kernel_desc_t *desc,
-                                 ze_kernel_handle_t *phFunction) override {
+                                 ze_kernel_handle_t *kernelHandle) override {
 
-            *phFunction = new Mock<Kernel>();
+            *kernelHandle = new Mock<Kernel>();
             return ZE_RESULT_SUCCESS;
         }
     };

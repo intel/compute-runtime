@@ -193,8 +193,8 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfUsedWhenAppendedToC
     auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(1u, commandList->getPrintfFunctionContainer().size());
-    EXPECT_EQ(kernel.get(), commandList->getPrintfFunctionContainer()[0]);
+    EXPECT_EQ(1u, commandList->getPrintfKernelContainer().size());
+    EXPECT_EQ(kernel.get(), commandList->getPrintfKernelContainer()[0]);
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfUsedWhenAppendedToCommandListMultipleTimesThenKernelIsStoredOnce) {
@@ -208,12 +208,12 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfUsedWhenAppendedToC
     auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(1u, commandList->getPrintfFunctionContainer().size());
-    EXPECT_EQ(kernel.get(), commandList->getPrintfFunctionContainer()[0]);
+    EXPECT_EQ(1u, commandList->getPrintfKernelContainer().size());
+    EXPECT_EQ(kernel.get(), commandList->getPrintfKernelContainer()[0]);
 
     result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(1u, commandList->getPrintfFunctionContainer().size());
+    EXPECT_EQ(1u, commandList->getPrintfKernelContainer().size());
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, WhenAppendingMultipleTimesThenSshIsNotDepletedButReallocated) {
@@ -617,8 +617,8 @@ HWTEST_F(CommandListAppendLaunchKernel, givenCommandListWhenResetCalledThenState
               commandList->commandContainer.getResidencyContainer().size());
     ASSERT_EQ(commandListControl->commandContainer.getDeallocationContainer().size(),
               commandList->commandContainer.getDeallocationContainer().size());
-    ASSERT_EQ(commandListControl->getPrintfFunctionContainer().size(),
-              commandList->getPrintfFunctionContainer().size());
+    ASSERT_EQ(commandListControl->getPrintfKernelContainer().size(),
+              commandList->getPrintfKernelContainer().size());
     ASSERT_EQ(commandListControl->commandContainer.getCommandStream()->getUsed(), commandList->commandContainer.getCommandStream()->getUsed());
     ASSERT_EQ(commandListControl->commandContainer.slmSize, commandList->commandContainer.slmSize);
 

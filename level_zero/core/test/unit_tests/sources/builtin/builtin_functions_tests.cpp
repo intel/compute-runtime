@@ -200,8 +200,8 @@ HWTEST_F(TestBuiltinFunctionsLibImplDefault, givenRebuildPrecompiledKernelsDebug
             MockModuleForRebuildBuiltins(Device *device) : ModuleImp(device, nullptr, ModuleType::Builtin) {}
 
             ze_result_t createKernel(const ze_kernel_desc_t *desc,
-                                     ze_kernel_handle_t *phFunction) override {
-                *phFunction = nullptr;
+                                     ze_kernel_handle_t *kernelHandle) override {
+                *kernelHandle = nullptr;
                 return ZE_RESULT_SUCCESS;
             }
         };

@@ -152,16 +152,16 @@ ze_result_t CommandQueueImp::synchronizeByPollingForTaskCount(uint64_t timeout) 
     return ZE_RESULT_SUCCESS;
 }
 
-void CommandQueueImp::printFunctionsPrintfOutput() {
-    size_t size = this->printfFunctionContainer.size();
+void CommandQueueImp::printKernelsPrintfOutput() {
+    size_t size = this->printfKernelContainer.size();
     for (size_t i = 0; i < size; i++) {
-        this->printfFunctionContainer[i]->printPrintfOutput();
+        this->printfKernelContainer[i]->printPrintfOutput();
     }
-    this->printfFunctionContainer.clear();
+    this->printfKernelContainer.clear();
 }
 
 void CommandQueueImp::postSyncOperations() {
-    printFunctionsPrintfOutput();
+    printKernelsPrintfOutput();
 
     if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger() && NEO::DebugManager.flags.DebuggerLogBitmask.get()) {
         device->getL0Debugger()->printTrackedAddresses(csr->getOsContext().getContextId());

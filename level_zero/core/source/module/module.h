@@ -33,7 +33,7 @@ struct Module : _ze_module_handle_t {
     virtual Device *getDevice() const = 0;
 
     virtual ze_result_t createKernel(const ze_kernel_desc_t *desc,
-                                     ze_kernel_handle_t *phFunction) = 0;
+                                     ze_kernel_handle_t *kernelHandle) = 0;
     virtual ze_result_t destroy() = 0;
     virtual ze_result_t getNativeBinary(size_t *pSize, uint8_t *pModuleNativeBinary) = 0;
     virtual ze_result_t getFunctionPointer(const char *pKernelName, void **pfnFunction) = 0;
@@ -45,7 +45,7 @@ struct Module : _ze_module_handle_t {
                                            ze_module_handle_t *phModules,
                                            ze_module_build_log_handle_t *phLinkLog) = 0;
 
-    virtual const KernelImmutableData *getKernelImmutableData(const char *functionName) const = 0;
+    virtual const KernelImmutableData *getKernelImmutableData(const char *kernelName) const = 0;
     virtual const std::vector<std::unique_ptr<KernelImmutableData>> &getKernelImmutableDataVector() const = 0;
     virtual uint32_t getMaxGroupSize() const = 0;
     virtual bool isDebugEnabled() const = 0;

@@ -87,14 +87,14 @@ struct CommandQueueImp : public CommandQueue {
 
     ze_result_t synchronizeByPollingForTaskCount(uint64_t timeout);
 
-    void printFunctionsPrintfOutput();
+    void printKernelsPrintfOutput();
 
     void postSyncOperations();
 
     CommandBufferManager buffers;
     NEO::HeapContainer heapContainer;
     ze_command_queue_desc_t desc;
-    std::vector<Kernel *> printfFunctionContainer;
+    std::vector<Kernel *> printfKernelContainer;
 
     Device *device = nullptr;
     NEO::CommandStreamReceiver *csr = nullptr;

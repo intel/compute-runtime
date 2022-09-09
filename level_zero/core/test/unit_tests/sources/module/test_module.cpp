@@ -529,7 +529,7 @@ HWTEST_F(ModuleTest, GivenIncorrectNameWhenCreatingKernelThenResultErrorInvalidA
     ze_kernel_handle_t kernelHandle;
 
     ze_kernel_desc_t kernelDesc = {};
-    kernelDesc.pKernelName = "nonexistent_function";
+    kernelDesc.pKernelName = "nonexistent_kernel";
 
     ze_result_t res = module->createKernel(&kernelDesc, &kernelHandle);
 

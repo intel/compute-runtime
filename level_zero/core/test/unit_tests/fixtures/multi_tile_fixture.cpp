@@ -12,7 +12,7 @@
 namespace L0 {
 namespace ult {
 
-void MultiTileCommandListAppendLaunchFunctionFixture::setUp() {
+void MultiTileCommandListAppendLaunchKernelFixture::setUp() {
     DebugManager.flags.EnableImplicitScaling.set(1);
 
     MultiDeviceFixture::numRootDevices = 1u;
@@ -35,14 +35,14 @@ void MultiTileCommandListAppendLaunchFunctionFixture::setUp() {
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 }
 
-void MultiTileCommandListAppendLaunchFunctionFixture::tearDown() {
+void MultiTileCommandListAppendLaunchKernelFixture::tearDown() {
     commandList->destroy();
     contextImp->destroy();
 
     MultiDeviceModuleFixture::tearDown();
 }
 
-void MultiTileImmediateCommandListAppendLaunchFunctionFixture::setUp() {
+void MultiTileImmediateCommandListAppendLaunchKernelFixture::setUp() {
     DebugManager.flags.EnableImplicitScaling.set(1);
 
     MultiDeviceFixture::numRootDevices = 1u;
@@ -61,7 +61,7 @@ void MultiTileImmediateCommandListAppendLaunchFunctionFixture::setUp() {
     contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));
 }
 
-void MultiTileImmediateCommandListAppendLaunchFunctionFixture::tearDown() {
+void MultiTileImmediateCommandListAppendLaunchKernelFixture::tearDown() {
     contextImp->destroy();
 
     MultiDeviceModuleFixture::tearDown();

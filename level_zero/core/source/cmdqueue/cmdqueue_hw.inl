@@ -909,9 +909,9 @@ void CommandQueueHw<gfxCoreFamily>::collectPrintfContentsFromAllCommandsLists(
 
     for (auto i = 0u; i < numCommandLists; ++i) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
-        this->printfFunctionContainer.insert(this->printfFunctionContainer.end(),
-                                             commandList->getPrintfFunctionContainer().begin(),
-                                             commandList->getPrintfFunctionContainer().end());
+        this->printfKernelContainer.insert(this->printfKernelContainer.end(),
+                                           commandList->getPrintfKernelContainer().begin(),
+                                           commandList->getPrintfKernelContainer().end());
     }
 }
 

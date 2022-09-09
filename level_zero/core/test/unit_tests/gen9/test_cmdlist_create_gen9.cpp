@@ -27,9 +27,9 @@ class CommandListCreateGen9 : public DeviceFixture, public testing::Test {
     void SetUp() override {
         DeviceFixture::setUp();
 
-        dispatchFunctionArguments.groupCountX = 1u;
-        dispatchFunctionArguments.groupCountY = 2u;
-        dispatchFunctionArguments.groupCountZ = 3u;
+        dispatchKernelArguments.groupCountX = 1u;
+        dispatchKernelArguments.groupCountY = 2u;
+        dispatchKernelArguments.groupCountZ = 3u;
     }
 
     void TearDown() override {
@@ -44,18 +44,18 @@ class CommandListCreateGen9 : public DeviceFixture, public testing::Test {
     }
 
     std::vector<void *> isaBuffers;
-    ze_group_count_t dispatchFunctionArguments;
+    ze_group_count_t dispatchKernelArguments;
     void *buffer = nullptr;
 
-    void initializeFunction(WhiteBox<::L0::Kernel> &function,
-                            WhiteBox<::L0::KernelImmutableData> &functionData,
-                            L0::Device *device) {
+    void initializeKernel(WhiteBox<::L0::Kernel> &kernel,
+                          WhiteBox<::L0::KernelImmutableData> &kernelData,
+                          L0::Device *device) {
 
         uint32_t isaSize = 4096;
         void *isaBuffer = malloc(isaSize);
         isaBuffers.push_back(isaBuffer);
 
-        functionData.device = device;
+        kernelData.device = device;
         if (!buffer) {
             buffer = alignedMalloc(isaSize, 64);
         }
@@ -70,22 +70,22 @@ class CommandListCreateGen9 : public DeviceFixture, public testing::Test {
         if (isaBuffer != nullptr) {
             memcpy_s(allocation->getUnderlyingBuffer(), allocation->getUnderlyingBufferSize(), isaBuffer, isaSize);
         }
-        functionData.isaGraphicsAllocation.reset(allocation);
+        kernelData.isaGraphicsAllocation.reset(allocation);
 
         uint32_t crossThreadDataSize = 128;
 
-        function.crossThreadData.reset(new uint8_t[crossThreadDataSize]);
-        function.crossThreadDataSize = crossThreadDataSize;
+        kernel.crossThreadData.reset(new uint8_t[crossThreadDataSize]);
+        kernel.crossThreadDataSize = crossThreadDataSize;
 
         uint32_t perThreadDataSize = 128;
 
-        function.perThreadDataForWholeThreadGroup = static_cast<uint8_t *>(alignedMalloc(perThreadDataSize, 32));
-        function.perThreadDataSize = perThreadDataSize;
+        kernel.perThreadDataForWholeThreadGroup = static_cast<uint8_t *>(alignedMalloc(perThreadDataSize, 32));
+        kernel.perThreadDataSize = perThreadDataSize;
 
-        function.kernelImmData = &functionData;
+        kernel.kernelImmData = &kernelData;
     }
-    void cleanupFunction(WhiteBox<::L0::KernelImmutableData> &functionData) {
-        functionData.isaGraphicsAllocation.reset(nullptr);
+    void cleanupKernel(WhiteBox<::L0::KernelImmutableData> &kernelData) {
+        kernelData.isaGraphicsAllocation.reset(nullptr);
     }
 };
 
@@ -102,99 +102,99 @@ GEN9TEST_F(CommandListCreateGen9, WhenGettingCommandListPreemptionModeThenMatche
 }
 
 GEN9TEST_F(CommandListCreateGen9, GivenDisabledMidThreadPreemptionWhenLaunchingKernelThenThreadGroupModeSet) {
-    WhiteBox<::L0::KernelImmutableData> funcInfoThreadGroupData = {};
+    WhiteBox<::L0::KernelImmutableData> kernelInfoThreadGroupData = {};
     NEO::KernelDescriptor kernelDescriptor;
-    funcInfoThreadGroupData.kernelDescriptor = &kernelDescriptor;
-    WhiteBox<::L0::Kernel> functionThreadGroup;
+    kernelInfoThreadGroupData.kernelDescriptor = &kernelDescriptor;
+    WhiteBox<::L0::Kernel> kernelThreadGroup;
 
-    funcInfoThreadGroupData.kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption = 1;
+    kernelInfoThreadGroupData.kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption = 1;
 
-    initializeFunction(functionThreadGroup, funcInfoThreadGroupData, device);
+    initializeKernel(kernelThreadGroup, kernelInfoThreadGroupData, device);
 
     ze_result_t returnValue;
     auto commandList = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     EXPECT_EQ(NEO::PreemptionMode::MidThread, commandList->getCommandListPreemptionMode());
 
     CmdListKernelLaunchParams launchParams = {};
-    commandList->appendLaunchKernel(functionThreadGroup.toHandle(),
-                                    &dispatchFunctionArguments, nullptr, 0, nullptr, launchParams);
+    commandList->appendLaunchKernel(kernelThreadGroup.toHandle(),
+                                    &dispatchKernelArguments, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(NEO::PreemptionMode::ThreadGroup, commandList->getCommandListPreemptionMode());
 
     auto result = commandList->close();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(NEO::PreemptionMode::ThreadGroup, commandList->getCommandListPreemptionMode());
-    cleanupFunction(funcInfoThreadGroupData);
+    cleanupKernel(kernelInfoThreadGroupData);
     delete commandList;
 }
 
 GEN9TEST_F(CommandListCreateGen9, GivenUsesFencesForReadWriteImagesWhenLaunchingKernelThenMidBatchModeSet) {
-    WhiteBox<::L0::KernelImmutableData> funcInfoMidBatchData = {};
+    WhiteBox<::L0::KernelImmutableData> kernelInfoMidBatchData = {};
     NEO::KernelDescriptor kernelDescriptor;
-    funcInfoMidBatchData.kernelDescriptor = &kernelDescriptor;
-    WhiteBox<::L0::Kernel> functionMidBatch;
+    kernelInfoMidBatchData.kernelDescriptor = &kernelDescriptor;
+    WhiteBox<::L0::Kernel> kernelMidBatch;
 
-    funcInfoMidBatchData.kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption = 1;
-    funcInfoMidBatchData.kernelDescriptor->kernelAttributes.flags.usesFencesForReadWriteImages = 1;
+    kernelInfoMidBatchData.kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption = 1;
+    kernelInfoMidBatchData.kernelDescriptor->kernelAttributes.flags.usesFencesForReadWriteImages = 1;
 
     device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.flags.waDisableLSQCROPERFforOCL = true;
 
-    initializeFunction(functionMidBatch, funcInfoMidBatchData, device);
+    initializeKernel(kernelMidBatch, kernelInfoMidBatchData, device);
 
     ze_result_t returnValue;
     auto commandList = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     EXPECT_EQ(NEO::PreemptionMode::MidThread, commandList->getCommandListPreemptionMode());
 
     CmdListKernelLaunchParams launchParams = {};
-    commandList->appendLaunchKernel(functionMidBatch.toHandle(),
-                                    &dispatchFunctionArguments, nullptr, 0, nullptr, launchParams);
+    commandList->appendLaunchKernel(kernelMidBatch.toHandle(),
+                                    &dispatchKernelArguments, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(NEO::PreemptionMode::MidBatch, commandList->getCommandListPreemptionMode());
 
     auto result = commandList->close();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(NEO::PreemptionMode::MidBatch, commandList->getCommandListPreemptionMode());
-    cleanupFunction(funcInfoMidBatchData);
+    cleanupKernel(kernelInfoMidBatchData);
     delete commandList;
 }
 
 GEN9TEST_F(CommandListCreateGen9, WhenCommandListHasLowerPreemptionLevelThenDoNotIncreaseAgain) {
-    WhiteBox<::L0::KernelImmutableData> funcInfoThreadGroupData = {};
+    WhiteBox<::L0::KernelImmutableData> kernelInfoThreadGroupData = {};
     NEO::KernelDescriptor kernelDescriptor;
-    funcInfoThreadGroupData.kernelDescriptor = &kernelDescriptor;
-    WhiteBox<::L0::Kernel> functionThreadGroup;
+    kernelInfoThreadGroupData.kernelDescriptor = &kernelDescriptor;
+    WhiteBox<::L0::Kernel> kernelThreadGroup;
 
-    funcInfoThreadGroupData.kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption = 1;
+    kernelInfoThreadGroupData.kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption = 1;
 
-    initializeFunction(functionThreadGroup, funcInfoThreadGroupData, device);
+    initializeKernel(kernelThreadGroup, kernelInfoThreadGroupData, device);
 
-    WhiteBox<::L0::KernelImmutableData> funcInfoMidThreadData = {};
+    WhiteBox<::L0::KernelImmutableData> kernelInfoMidThreadData = {};
     NEO::KernelDescriptor kernelDescriptor2;
-    funcInfoMidThreadData.kernelDescriptor = &kernelDescriptor2;
+    kernelInfoMidThreadData.kernelDescriptor = &kernelDescriptor2;
 
-    WhiteBox<::L0::Kernel> functionMidThread;
+    WhiteBox<::L0::Kernel> kernelMidThread;
 
-    initializeFunction(functionMidThread, funcInfoMidThreadData, device);
+    initializeKernel(kernelMidThread, kernelInfoMidThreadData, device);
 
     ze_result_t returnValue;
     auto commandList = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     EXPECT_EQ(NEO::PreemptionMode::MidThread, commandList->getCommandListPreemptionMode());
 
     CmdListKernelLaunchParams launchParams = {};
-    commandList->appendLaunchKernel(functionThreadGroup.toHandle(),
-                                    &dispatchFunctionArguments, nullptr, 0, nullptr, launchParams);
+    commandList->appendLaunchKernel(kernelThreadGroup.toHandle(),
+                                    &dispatchKernelArguments, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(NEO::PreemptionMode::ThreadGroup, commandList->getCommandListPreemptionMode());
 
-    commandList->appendLaunchKernel(functionMidThread.toHandle(),
-                                    &dispatchFunctionArguments, nullptr, 0, nullptr, launchParams);
+    commandList->appendLaunchKernel(kernelMidThread.toHandle(),
+                                    &dispatchKernelArguments, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(NEO::PreemptionMode::ThreadGroup, commandList->getCommandListPreemptionMode());
 
     auto result = commandList->close();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(NEO::PreemptionMode::ThreadGroup, commandList->getCommandListPreemptionMode());
-    cleanupFunction(funcInfoThreadGroupData);
-    cleanupFunction(funcInfoMidThreadData);
+    cleanupKernel(kernelInfoThreadGroupData);
+    cleanupKernel(kernelInfoMidThreadData);
     delete commandList;
 }
 } // namespace ult

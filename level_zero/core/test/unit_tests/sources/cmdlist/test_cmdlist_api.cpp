@@ -72,11 +72,11 @@ TEST(zeCommandListAppendWriteGlobalTimestamp, whenCalledThenRedirectedToObject) 
 TEST(zeCommandListAppendLaunchKernel, whenCalledThenRedirectedToObject) {
     MockCommandList commandList;
     Mock<::L0::Kernel> kernel;
-    ze_group_count_t dispatchFunctionArguments;
+    ze_group_count_t dispatchKernelArguments;
 
     auto result =
         zeCommandListAppendLaunchKernel(commandList.toHandle(), kernel.toHandle(),
-                                        &dispatchFunctionArguments, nullptr, 0, nullptr);
+                                        &dispatchKernelArguments, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 TEST(zeCommandListAppendEventReset, whenCalledThenRedirectedToObject) {

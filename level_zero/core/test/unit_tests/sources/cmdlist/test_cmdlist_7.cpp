@@ -262,14 +262,14 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenSignalEventWhenAppendLaunchMultipl
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
-    const ze_kernel_handle_t launchFn = kernel->toHandle();
+    const ze_kernel_handle_t launchKernels = kernel->toHandle();
     uint32_t *numLaunchArgs;
     ze_device_mem_alloc_desc_t deviceDesc = {};
     returnValue = context->allocDeviceMem(
         device->toHandle(), &deviceDesc, 16384u, 4096u, reinterpret_cast<void **>(&numLaunchArgs));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    returnValue = commandList->appendLaunchMultipleKernelsIndirect(1, &launchFn, numLaunchArgs, nullptr, event->toHandle(), 0, nullptr);
+    returnValue = commandList->appendLaunchMultipleKernelsIndirect(1, &launchKernels, numLaunchArgs, nullptr, event->toHandle(), 0, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(event->toHandle(), commandList->appendEventMultipleKernelIndirectEventHandleValue);
 

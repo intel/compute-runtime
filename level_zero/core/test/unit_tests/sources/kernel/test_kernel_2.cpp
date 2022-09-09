@@ -20,26 +20,26 @@ TEST_F(KernelImp, GivenCrossThreadDataThenIsCorrectlyPatchedWithGlobalWorkSizeAn
     uint32_t *crossThreadData =
         reinterpret_cast<uint32_t *>(alignedMalloc(sizeof(uint32_t[6]), 32));
 
-    WhiteBox<::L0::KernelImmutableData> funcInfo = {};
+    WhiteBox<::L0::KernelImmutableData> kernelInfo = {};
     NEO::KernelDescriptor descriptor;
-    funcInfo.kernelDescriptor = &descriptor;
-    funcInfo.kernelDescriptor->payloadMappings.dispatchTraits.globalWorkSize[0] = 0 * sizeof(uint32_t);
-    funcInfo.kernelDescriptor->payloadMappings.dispatchTraits.globalWorkSize[1] = 1 * sizeof(uint32_t);
-    funcInfo.kernelDescriptor->payloadMappings.dispatchTraits.globalWorkSize[2] = 2 * sizeof(uint32_t);
-    funcInfo.kernelDescriptor->payloadMappings.dispatchTraits.numWorkGroups[0] = 3 * sizeof(uint32_t);
-    funcInfo.kernelDescriptor->payloadMappings.dispatchTraits.numWorkGroups[1] = 4 * sizeof(uint32_t);
-    funcInfo.kernelDescriptor->payloadMappings.dispatchTraits.numWorkGroups[2] = 5 * sizeof(uint32_t);
+    kernelInfo.kernelDescriptor = &descriptor;
+    kernelInfo.kernelDescriptor->payloadMappings.dispatchTraits.globalWorkSize[0] = 0 * sizeof(uint32_t);
+    kernelInfo.kernelDescriptor->payloadMappings.dispatchTraits.globalWorkSize[1] = 1 * sizeof(uint32_t);
+    kernelInfo.kernelDescriptor->payloadMappings.dispatchTraits.globalWorkSize[2] = 2 * sizeof(uint32_t);
+    kernelInfo.kernelDescriptor->payloadMappings.dispatchTraits.numWorkGroups[0] = 3 * sizeof(uint32_t);
+    kernelInfo.kernelDescriptor->payloadMappings.dispatchTraits.numWorkGroups[1] = 4 * sizeof(uint32_t);
+    kernelInfo.kernelDescriptor->payloadMappings.dispatchTraits.numWorkGroups[2] = 5 * sizeof(uint32_t);
 
-    Mock<Kernel> function;
-    function.kernelImmData = &funcInfo;
-    function.crossThreadData.reset(reinterpret_cast<uint8_t *>(crossThreadData));
-    function.crossThreadDataSize = sizeof(uint32_t[6]);
-    function.groupSize[0] = 2;
-    function.groupSize[1] = 3;
-    function.groupSize[2] = 5;
+    Mock<Kernel> kernel;
+    kernel.kernelImmData = &kernelInfo;
+    kernel.crossThreadData.reset(reinterpret_cast<uint8_t *>(crossThreadData));
+    kernel.crossThreadDataSize = sizeof(uint32_t[6]);
+    kernel.groupSize[0] = 2;
+    kernel.groupSize[1] = 3;
+    kernel.groupSize[2] = 5;
 
-    function.KernelImp::setGroupCount(7, 11, 13);
-    auto crossThread = function.KernelImp::getCrossThreadData();
+    kernel.KernelImp::setGroupCount(7, 11, 13);
+    auto crossThread = kernel.KernelImp::getCrossThreadData();
     ASSERT_NE(nullptr, crossThread);
     const uint32_t *globalWorkSizes = reinterpret_cast<const uint32_t *>(crossThread);
     EXPECT_EQ(2U * 7U, globalWorkSizes[0]);
@@ -51,30 +51,30 @@ TEST_F(KernelImp, GivenCrossThreadDataThenIsCorrectlyPatchedWithGlobalWorkSizeAn
     EXPECT_EQ(11U, numGroups[1]);
     EXPECT_EQ(13U, numGroups[2]);
 
-    function.crossThreadData.release();
+    kernel.crossThreadData.release();
     alignedFree(crossThreadData);
 }
 
 TEST_F(KernelImp, givenExecutionMaskWithoutReminderWhenProgrammingItsValueThenSetValidNumberOfBits) {
     NEO::KernelDescriptor descriptor = {};
-    WhiteBox<KernelImmutableData> funcInfo = {};
-    funcInfo.kernelDescriptor = &descriptor;
+    WhiteBox<KernelImmutableData> kernelInfo = {};
+    kernelInfo.kernelDescriptor = &descriptor;
 
     Mock<Module> module(device, nullptr);
-    Mock<Kernel> function;
-    function.kernelImmData = &funcInfo;
-    function.module = &module;
+    Mock<Kernel> kernel;
+    kernel.kernelImmData = &kernelInfo;
+    kernel.module = &module;
 
     const std::array<uint32_t, 4> testedSimd = {{1, 8, 16, 32}};
 
     for (auto simd : testedSimd) {
         descriptor.kernelAttributes.simdSize = simd;
-        function.KernelImp::setGroupSize(simd, 1, 1);
+        kernel.KernelImp::setGroupSize(simd, 1, 1);
 
         if (simd == 1) {
-            EXPECT_EQ(maxNBitValue(32), function.KernelImp::getThreadExecutionMask());
+            EXPECT_EQ(maxNBitValue(32), kernel.KernelImp::getThreadExecutionMask());
         } else {
-            EXPECT_EQ(maxNBitValue(simd), function.KernelImp::getThreadExecutionMask());
+            EXPECT_EQ(maxNBitValue(simd), kernel.KernelImp::getThreadExecutionMask());
         }
     }
 }
@@ -82,20 +82,20 @@ TEST_F(KernelImp, givenExecutionMaskWithoutReminderWhenProgrammingItsValueThenSe
 TEST_F(KernelImp, WhenSuggestingGroupSizeThenClampToMaxGroupSize) {
     DebugManagerStateRestore restorer;
 
-    WhiteBox<KernelImmutableData> funcInfo = {};
+    WhiteBox<KernelImmutableData> kernelInfo = {};
     NEO::KernelDescriptor descriptor;
-    funcInfo.kernelDescriptor = &descriptor;
+    kernelInfo.kernelDescriptor = &descriptor;
 
     NEO::DebugManager.flags.EnableComputeWorkSizeND.set(false);
 
     Mock<Module> module(device, nullptr);
     module.getMaxGroupSizeResult = 8;
 
-    Mock<Kernel> function;
-    function.kernelImmData = &funcInfo;
-    function.module = &module;
+    Mock<Kernel> kernel;
+    kernel.kernelImmData = &kernelInfo;
+    kernel.module = &module;
     uint32_t groupSize[3];
-    function.KernelImp::suggestGroupSize(256, 1, 1, groupSize, groupSize + 1, groupSize + 2);
+    kernel.KernelImp::suggestGroupSize(256, 1, 1, groupSize, groupSize + 1, groupSize + 2);
     EXPECT_EQ(8U, groupSize[0]);
     EXPECT_EQ(1U, groupSize[1]);
     EXPECT_EQ(1U, groupSize[2]);
@@ -118,9 +118,9 @@ INSTANTIATE_TEST_CASE_P(, KernelImpSuggestGroupSize,
 TEST_P(KernelImpSuggestGroupSize, WhenSuggestingGroupThenProperGroupSizeChosen) {
     DebugManagerStateRestore restorer;
 
-    WhiteBox<KernelImmutableData> funcInfo = {};
+    WhiteBox<KernelImmutableData> kernelInfo = {};
     NEO::KernelDescriptor descriptor;
-    funcInfo.kernelDescriptor = &descriptor;
+    kernelInfo.kernelDescriptor = &descriptor;
 
     NEO::DebugManager.flags.EnableComputeWorkSizeND.set(false);
 
@@ -128,105 +128,105 @@ TEST_P(KernelImpSuggestGroupSize, WhenSuggestingGroupThenProperGroupSizeChosen) 
 
     uint32_t size = GetParam();
 
-    Mock<Kernel> function;
-    function.kernelImmData = &funcInfo;
-    function.module = &module;
+    Mock<Kernel> kernel;
+    kernel.kernelImmData = &kernelInfo;
+    kernel.module = &module;
     uint32_t groupSize[3];
-    function.KernelImp::suggestGroupSize(size, 1, 1, groupSize, groupSize + 1, groupSize + 2);
+    kernel.KernelImp::suggestGroupSize(size, 1, 1, groupSize, groupSize + 1, groupSize + 2);
     EXPECT_EQ(0U, size % groupSize[0]);
     EXPECT_EQ(0U, 1U % groupSize[1]);
     EXPECT_EQ(0U, 1U % groupSize[2]);
 
-    function.KernelImp::suggestGroupSize(size, size, 1, groupSize, groupSize + 1, groupSize + 2);
+    kernel.KernelImp::suggestGroupSize(size, size, 1, groupSize, groupSize + 1, groupSize + 2);
     EXPECT_EQ(0U, size % groupSize[0]);
     EXPECT_EQ(0U, size % groupSize[1]);
     EXPECT_EQ(0U, 1U % groupSize[2]);
 
-    function.KernelImp::suggestGroupSize(size, size, size, groupSize, groupSize + 1,
-                                         groupSize + 2);
+    kernel.KernelImp::suggestGroupSize(size, size, size, groupSize, groupSize + 1,
+                                       groupSize + 2);
     EXPECT_EQ(0U, size % groupSize[0]);
     EXPECT_EQ(0U, size % groupSize[1]);
     EXPECT_EQ(0U, size % groupSize[2]);
 
-    function.KernelImp::suggestGroupSize(size, 1, 1, groupSize, groupSize + 1, groupSize + 2);
+    kernel.KernelImp::suggestGroupSize(size, 1, 1, groupSize, groupSize + 1, groupSize + 2);
     EXPECT_EQ(0U, size % groupSize[0]);
     EXPECT_EQ(0U, 1U % groupSize[1]);
     EXPECT_EQ(0U, 1U % groupSize[2]);
 
-    function.KernelImp::suggestGroupSize(1, size, 1, groupSize, groupSize + 1, groupSize + 2);
+    kernel.KernelImp::suggestGroupSize(1, size, 1, groupSize, groupSize + 1, groupSize + 2);
     EXPECT_EQ(0U, 1U % groupSize[0]);
     EXPECT_EQ(0U, size % groupSize[1]);
     EXPECT_EQ(0U, 1U % groupSize[2]);
 
-    function.KernelImp::suggestGroupSize(1, 1, size, groupSize, groupSize + 1, groupSize + 2);
+    kernel.KernelImp::suggestGroupSize(1, 1, size, groupSize, groupSize + 1, groupSize + 2);
     EXPECT_EQ(0U, 1U % groupSize[0]);
     EXPECT_EQ(0U, 1U % groupSize[1]);
     EXPECT_EQ(0U, size % groupSize[2]);
 
-    function.KernelImp::suggestGroupSize(1, size, size, groupSize, groupSize + 1, groupSize + 2);
+    kernel.KernelImp::suggestGroupSize(1, size, size, groupSize, groupSize + 1, groupSize + 2);
     EXPECT_EQ(0U, 1U % groupSize[0]);
     EXPECT_EQ(0U, size % groupSize[1]);
     EXPECT_EQ(0U, size % groupSize[2]);
 
-    function.KernelImp::suggestGroupSize(size, 1, size, groupSize, groupSize + 1, groupSize + 2);
+    kernel.KernelImp::suggestGroupSize(size, 1, size, groupSize, groupSize + 1, groupSize + 2);
     EXPECT_EQ(0U, size % groupSize[0]);
     EXPECT_EQ(0U, 1U % groupSize[1]);
     EXPECT_EQ(0U, size % groupSize[2]);
 }
 
 TEST_F(KernelImp, GivenInvalidValuesWhenSettingGroupSizeThenInvalidArgumentErrorIsReturned) {
-    Mock<Kernel> function;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, function.KernelImp::setGroupSize(0U, 1U, 1U));
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, function.KernelImp::setGroupSize(1U, 0U, 1U));
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, function.KernelImp::setGroupSize(1U, 1U, 0U));
+    Mock<Kernel> kernel;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, kernel.KernelImp::setGroupSize(0U, 1U, 1U));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, kernel.KernelImp::setGroupSize(1U, 0U, 1U));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, kernel.KernelImp::setGroupSize(1U, 1U, 0U));
 }
 
 TEST_F(KernelImp, givenSetGroupSizeWithGreaterGroupSizeThanAllowedThenCorrectErrorCodeIsReturned) {
-    WhiteBox<KernelImmutableData> funcInfo = {};
+    WhiteBox<KernelImmutableData> kernelInfo = {};
     NEO::KernelDescriptor descriptor;
-    funcInfo.kernelDescriptor = &descriptor;
+    kernelInfo.kernelDescriptor = &descriptor;
 
     Mock<Module> module(device, nullptr);
-    Mock<Kernel> function;
-    function.kernelImmData = &funcInfo;
-    function.module = &module;
+    Mock<Kernel> kernel;
+    kernel.kernelImmData = &kernelInfo;
+    kernel.module = &module;
 
     uint32_t maxGroupSizeX = static_cast<uint32_t>(device->getDeviceInfo().maxWorkItemSizes[0]);
     uint32_t maxGroupSizeY = static_cast<uint32_t>(device->getDeviceInfo().maxWorkItemSizes[1]);
     uint32_t maxGroupSizeZ = static_cast<uint32_t>(device->getDeviceInfo().maxWorkItemSizes[2]);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION, function.KernelImp::setGroupSize(maxGroupSizeX, maxGroupSizeY, maxGroupSizeZ));
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION, function.KernelImp::setGroupSize(maxGroupSizeX + 1U, 1U, 1U));
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION, function.KernelImp::setGroupSize(1U, maxGroupSizeY + 1U, 1U));
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION, function.KernelImp::setGroupSize(1U, 1U, maxGroupSizeZ + 1U));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION, kernel.KernelImp::setGroupSize(maxGroupSizeX, maxGroupSizeY, maxGroupSizeZ));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION, kernel.KernelImp::setGroupSize(maxGroupSizeX + 1U, 1U, 1U));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION, kernel.KernelImp::setGroupSize(1U, maxGroupSizeY + 1U, 1U));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION, kernel.KernelImp::setGroupSize(1U, 1U, maxGroupSizeZ + 1U));
 }
 
 TEST_F(KernelImp, GivenNumChannelsZeroWhenSettingGroupSizeThenLocalIdsNotGenerated) {
-    WhiteBox<KernelImmutableData> funcInfo = {};
+    WhiteBox<KernelImmutableData> kernelInfo = {};
     NEO::KernelDescriptor descriptor;
-    funcInfo.kernelDescriptor = &descriptor;
+    kernelInfo.kernelDescriptor = &descriptor;
 
     Mock<Module> module(device, nullptr);
-    Mock<Kernel> function;
-    function.kernelImmData = &funcInfo;
-    function.module = &module;
+    Mock<Kernel> kernel;
+    kernel.kernelImmData = &kernelInfo;
+    kernel.module = &module;
 
-    function.KernelImp::setGroupSize(16U, 16U, 1U);
+    kernel.KernelImp::setGroupSize(16U, 16U, 1U);
     std::vector<char> memBefore;
     {
         auto perThreadData =
-            reinterpret_cast<const char *>(function.KernelImp::getPerThreadData());
+            reinterpret_cast<const char *>(kernel.KernelImp::getPerThreadData());
         memBefore.assign(perThreadData,
-                         perThreadData + function.KernelImp::getPerThreadDataSize());
+                         perThreadData + kernel.KernelImp::getPerThreadDataSize());
     }
 
-    function.KernelImp::setGroupSize(8U, 32U, 1U);
+    kernel.KernelImp::setGroupSize(8U, 32U, 1U);
     std::vector<char> memAfter;
     {
         auto perThreadData =
-            reinterpret_cast<const char *>(function.KernelImp::getPerThreadData());
+            reinterpret_cast<const char *>(kernel.KernelImp::getPerThreadData());
         memAfter.assign(perThreadData,
-                        perThreadData + function.KernelImp::getPerThreadDataSize());
+                        perThreadData + kernel.KernelImp::getPerThreadDataSize());
     }
 
     EXPECT_EQ(memAfter, memBefore);
@@ -253,12 +253,12 @@ class KernelImpSuggestMaxCooperativeGroupCountTests : public KernelImp {
     uint32_t dssCount;
     uint32_t availableSlm;
     uint32_t maxBarrierCount;
-    WhiteBox<::L0::KernelImmutableData> funcInfo;
+    WhiteBox<::L0::KernelImmutableData> kernelInfo;
     NEO::KernelDescriptor kernelDescriptor;
 
     void SetUp() override {
         KernelImp::SetUp();
-        funcInfo.kernelDescriptor = &kernelDescriptor;
+        kernelInfo.kernelDescriptor = &kernelDescriptor;
         auto &hardwareInfo = device->getHwInfo();
         auto &hwHelper = device->getHwHelper();
         availableThreadCount = hwHelper.calculateAvailableThreadCount(hardwareInfo, numGrf);
@@ -270,16 +270,16 @@ class KernelImpSuggestMaxCooperativeGroupCountTests : public KernelImp {
         availableSlm = dssCount * KB * hardwareInfo.capabilityTable.slmSize;
         maxBarrierCount = static_cast<uint32_t>(hwHelper.getMaxBarrierRegisterPerSlice());
 
-        funcInfo.kernelDescriptor->kernelAttributes.simdSize = simd;
-        funcInfo.kernelDescriptor->kernelAttributes.numGrfRequired = numGrf;
+        kernelInfo.kernelDescriptor->kernelAttributes.simdSize = simd;
+        kernelInfo.kernelDescriptor->kernelAttributes.numGrfRequired = numGrf;
     }
 
     uint32_t getMaxWorkGroupCount() {
-        funcInfo.kernelDescriptor->kernelAttributes.slmInlineSize = usedSlm;
-        funcInfo.kernelDescriptor->kernelAttributes.barrierCount = usesBarriers;
+        kernelInfo.kernelDescriptor->kernelAttributes.slmInlineSize = usedSlm;
+        kernelInfo.kernelDescriptor->kernelAttributes.barrierCount = usesBarriers;
 
         Mock<Kernel> kernel;
-        kernel.kernelImmData = &funcInfo;
+        kernel.kernelImmData = &kernelInfo;
         auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::User);
         kernel.module = module.get();
 

@@ -110,7 +110,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
         ~MockModule() override {
         }
 
-        const KernelImmutableData *getKernelImmutableData(const char *functionName) const override {
+        const KernelImmutableData *getKernelImmutableData(const char *kernelName) const override {
             return mockKernelImmData;
         }
 

@@ -10,7 +10,7 @@
 namespace L0 {
 namespace ult {
 
-void onEnterCommandListAppendLaunchFunction(
+void onEnterCommandListAppendLaunchKernel(
     ze_command_list_append_launch_kernel_params_t *params,
     ze_result_t result,
     void *pTracerUserData,
@@ -18,7 +18,7 @@ void onEnterCommandListAppendLaunchFunction(
     int a = 0;
     a++;
 }
-void onExitCommandListAppendLaunchFunction(
+void onExitCommandListAppendLaunchKernel(
     ze_command_list_append_launch_kernel_params_t *params,
     ze_result_t result,
     void *pTracerUserData,
@@ -168,8 +168,8 @@ TEST_F(ZeApiTracingCoreTests, WhenCreateTracerAndsetCallbacksAndEnableTracingAnd
     zet_core_callbacks_t prologCbs = {};
     zet_core_callbacks_t epilogCbs = {};
 
-    prologCbs.CommandList.pfnAppendLaunchKernelCb = onEnterCommandListAppendLaunchFunction;
-    epilogCbs.CommandList.pfnAppendLaunchKernelCb = onExitCommandListAppendLaunchFunction;
+    prologCbs.CommandList.pfnAppendLaunchKernelCb = onEnterCommandListAppendLaunchKernel;
+    epilogCbs.CommandList.pfnAppendLaunchKernelCb = onExitCommandListAppendLaunchKernel;
 
     result = zetTracerExpSetPrologues(apiTracerHandle, &prologCbs);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

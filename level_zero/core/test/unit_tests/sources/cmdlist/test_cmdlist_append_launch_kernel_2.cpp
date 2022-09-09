@@ -1276,9 +1276,9 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenDebugToggleSetWhenUpdateStreamProp
     EXPECT_EQ(defaultThreadArbitrationPolicy, pCommandList->finalStreamState.stateComputeMode.threadArbitrationPolicy.value);
 }
 
-using MultiTileCommandListAppendLaunchFunctionXeHpCoreTest = Test<MultiTileCommandListAppendLaunchFunctionFixture>;
+using MultiTileCommandListAppendLaunchKernelXeHpCoreTest = Test<MultiTileCommandListAppendLaunchKernelFixture>;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListAppendLaunchFunctionXeHpCoreTest, givenImplicitScalingEnabledWhenAppendingKernelWithEventThenAllEventPacketsAreUsed) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenImplicitScalingEnabledWhenAppendingKernelWithEventThenAllEventPacketsAreUsed) {
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC;
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
@@ -1307,7 +1307,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListAppendLaunchFunctionXeHpCoreTes
     EXPECT_EQ(4u, commandList->partitionCount);
 }
 
-HWTEST2_F(MultiTileCommandListAppendLaunchFunctionXeHpCoreTest, givenCooperativeKernelWhenAppendingKernelsThenDoNotUseImplicitScaling, IsAtLeastXeHpCore) {
+HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenCooperativeKernelWhenAppendingKernelsThenDoNotUseImplicitScaling, IsAtLeastXeHpCore) {
     ze_group_count_t groupCount{1, 1, 1};
 
     auto commandListWithNonCooperativeKernel = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
@@ -1342,7 +1342,7 @@ HWTEST2_F(MultiTileCommandListAppendLaunchFunctionXeHpCoreTest, givenCooperative
     EXPECT_TRUE(cmd->getWorkloadPartitionEnable());
 }
 
-HWTEST2_F(MultiTileCommandListAppendLaunchFunctionXeHpCoreTest,
+HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest,
           givenRegularCommandListWhenSynchronizationRequiredThenExpectJumpingBbStartCommandToSecondary, IsAtLeastXeHpCore) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;

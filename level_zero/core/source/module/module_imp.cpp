@@ -664,9 +664,9 @@ void ModuleImp::passDebugData() {
     }
 }
 
-const KernelImmutableData *ModuleImp::getKernelImmutableData(const char *functionName) const {
+const KernelImmutableData *ModuleImp::getKernelImmutableData(const char *kernelName) const {
     for (auto &kernelImmData : kernelImmDatas) {
-        if (kernelImmData->getDescriptor().kernelMetadata.kernelName.compare(functionName) == 0) {
+        if (kernelImmData->getDescriptor().kernelMetadata.kernelName.compare(kernelName) == 0) {
             return kernelImmData.get();
         }
     }
@@ -742,7 +742,7 @@ void ModuleImp::updateBuildLog(NEO::Device *neoDevice) {
 }
 
 ze_result_t ModuleImp::createKernel(const ze_kernel_desc_t *desc,
-                                    ze_kernel_handle_t *phFunction) {
+                                    ze_kernel_handle_t *kernelHandle) {
     ze_result_t res;
     if (!isFullyLinked) {
         return ZE_RESULT_ERROR_INVALID_MODULE_UNLINKED;
@@ -750,7 +750,7 @@ ze_result_t ModuleImp::createKernel(const ze_kernel_desc_t *desc,
     auto kernel = Kernel::create(productFamily, this, desc, &res);
 
     if (res == ZE_RESULT_SUCCESS) {
-        *phFunction = kernel->toHandle();
+        *kernelHandle = kernel->toHandle();
     }
 
     return res;
