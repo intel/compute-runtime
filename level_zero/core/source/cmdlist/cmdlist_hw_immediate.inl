@@ -15,6 +15,7 @@
 #include "shared/source/memory_manager/prefetch_manager.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
+#include "level_zero/core/source/device/bcs_split.h"
 
 namespace L0 {
 
@@ -215,8 +216,18 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace();
     }
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptr, srcptr, size, hSignalEvent,
-                                                                      numWaitEvents, phWaitEvents);
+
+    ze_result_t ret;
+
+    if (this->isBcsSplitNeeded) {
+        ret = static_cast<DeviceImp *>(this->device)->bcsSplit.appendSplitCall(this, dstptr, srcptr, size, hSignalEvent, [&](void *dstptrParam, const void *srcptrParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
+            return CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptrParam, srcptrParam, sizeParam, hSignalEventParam, numWaitEvents, phWaitEvents);
+        });
+    } else {
+        ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptr, srcptr, size, hSignalEvent,
+                                                                     numWaitEvents, phWaitEvents);
+    }
+
     return flushImmediate(ret, true);
 }
 

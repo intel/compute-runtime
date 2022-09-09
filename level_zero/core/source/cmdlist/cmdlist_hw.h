@@ -156,6 +156,7 @@ struct CommandListCoreFamily : CommandListImp {
                                             uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
     void appendMultiPartitionPrologue(uint32_t partitionDataSize) override;
     void appendMultiPartitionEpilogue() override;
+    void appendEventForProfilingAllWalkers(Event *event, bool beforeWalker);
 
     ze_result_t reserveSpace(size_t size, void **ptr) override;
     ze_result_t reset() override;
@@ -249,7 +250,6 @@ struct CommandListCoreFamily : CommandListImp {
     void appendWriteKernelTimestamp(Event *event, bool beforeWalker, bool maskLsb, bool workloadPartition);
     void adjustWriteKernelTimestamp(uint64_t globalAddress, uint64_t contextAddress, bool maskLsb, uint32_t mask, bool workloadPartition);
     void appendEventForProfiling(Event *event, bool beforeWalker, bool workloadPartition);
-    void appendEventForProfilingAllWalkers(Event *event, bool beforeWalker);
     void appendEventForProfilingCopyCommand(Event *event, bool beforeWalker);
     void appendSignalEventPostWalker(Event *event, bool workloadPartition);
     virtual void programStateBaseAddress(NEO::CommandContainer &container, bool genericMediaStateClearRequired);

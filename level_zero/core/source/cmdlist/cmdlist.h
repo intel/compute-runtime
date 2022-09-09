@@ -293,6 +293,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool isTbxMode = false;
     bool commandListSLMEnabled = false;
     bool requiresQueueUncachedMocs = false;
+    bool isBcsSplitNeeded = false;
 
   protected:
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize);

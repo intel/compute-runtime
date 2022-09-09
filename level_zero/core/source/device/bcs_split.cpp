@@ -15,17 +15,20 @@
 
 namespace L0 {
 
-void BcsSplit::setupDevice(uint32_t productFamily, bool internalUsage, const ze_command_queue_desc_t *desc, NEO::CommandStreamReceiver *csr) {
+bool BcsSplit::setupDevice(uint32_t productFamily, bool internalUsage, const ze_command_queue_desc_t *desc, NEO::CommandStreamReceiver *csr) {
+    auto initializeBcsSplit = this->device.getNEODevice()->isBcsSplitSupported() &&
+                              csr->getOsContext().getEngineType() == aub_stream::EngineType::ENGINE_BCS &&
+                              !internalUsage;
+
+    if (!initializeBcsSplit) {
+        return false;
+    }
+
     static std::mutex bcsSplitInitMutex;
     std::lock_guard<std::mutex> lock(bcsSplitInitMutex);
 
-    auto initializeBcsSplit = this->device.getNEODevice()->isBcsSplitSupported() &&
-                              csr->getOsContext().getEngineType() == aub_stream::EngineType::ENGINE_BCS &&
-                              !internalUsage &&
-                              this->cmdQs.empty();
-
-    if (!initializeBcsSplit) {
-        return;
+    if (!this->cmdQs.empty()) {
+        return true;
     }
 
     if (NEO::DebugManager.flags.SplitBcsMask.get() > 0) {
@@ -48,6 +51,8 @@ void BcsSplit::setupDevice(uint32_t productFamily, bool internalUsage, const ze_
             this->cmdQs.push_back(commandQueue);
         }
     }
+
+    return true;
 }
 
 void BcsSplit::releaseResources() {
