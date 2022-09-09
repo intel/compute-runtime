@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <cerrno>
 #include <cstring>
+#include <new>
 #include <sys/ioctl.h>
 
 namespace NEO {
@@ -231,9 +232,17 @@ bool IoctlHelperPrelim20::completionFenceExtensionSupported(const bool isVmBindA
 }
 
 std::unique_ptr<uint8_t[]> IoctlHelperPrelim20::prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) {
-    std::unique_ptr<prelim_drm_i915_vm_bind_ext_uuid[]> extensions;
-    extensions = std::make_unique<prelim_drm_i915_vm_bind_ext_uuid[]>(bindExtHandles.size());
-    memset(extensions.get(), 0, sizeof(prelim_drm_i915_vm_bind_ext_uuid) * bindExtHandles.size());
+    static_assert(std::is_trivially_destructible_v<prelim_drm_i915_vm_bind_ext_uuid>,
+                  "Storage must be allowed to be reused without calling the destructor!");
+
+    static_assert(alignof(prelim_drm_i915_vm_bind_ext_uuid) <= __STDCPP_DEFAULT_NEW_ALIGNMENT__,
+                  "Alignment of a buffer returned via new[] operator must allow storing the required type!");
+
+    const auto bufferSize{sizeof(prelim_drm_i915_vm_bind_ext_uuid) * bindExtHandles.size()};
+    std::unique_ptr<uint8_t[]> extensionsBuffer{new uint8_t[bufferSize]};
+
+    auto extensions = new (extensionsBuffer.get()) prelim_drm_i915_vm_bind_ext_uuid[bindExtHandles.size()];
+    std::memset(extensionsBuffer.get(), 0, bufferSize);
 
     extensions[0].uuid_handle = bindExtHandles[0];
     extensions[0].base.name = PRELIM_I915_VM_BIND_EXT_UUID;
@@ -243,7 +252,7 @@ std::unique_ptr<uint8_t[]> IoctlHelperPrelim20::prepareVmBindExt(const StackVec<
         extensions[i].uuid_handle = bindExtHandles[i];
         extensions[i].base.name = PRELIM_I915_VM_BIND_EXT_UUID;
     }
-    return std::unique_ptr<uint8_t[]>(reinterpret_cast<uint8_t *>(extensions.release()));
+    return extensionsBuffer;
 }
 
 uint64_t IoctlHelperPrelim20::getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) {
