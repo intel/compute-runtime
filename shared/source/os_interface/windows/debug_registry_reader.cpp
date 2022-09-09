@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,7 +82,7 @@ int64_t RegistryReader::getSetting(const char *settingName, int64_t defaultValue
     if (readSettingFromEnv) {
         const char *envValue = getenv(settingName);
         if (envValue) {
-            value = atoi(envValue);
+            value = atoll(envValue);
         }
     }
 

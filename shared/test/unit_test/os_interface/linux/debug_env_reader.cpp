@@ -65,6 +65,20 @@ TEST_F(DebugEnvReaderTests, GivenSetVariableThenSetValueIsReturned) {
     }
 }
 
+TEST_F(DebugEnvReaderTests, givenMaxInt64AsEnvWhenGetSettingThenProperValueIsReturned) {
+    const char *testingVariableName = "TestingVariable";
+    const char *testingVariableValue = "9223372036854775807";
+    int64_t expectedValue = 9223372036854775807;
+    int64_t defaultValue = 0;
+
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    std::unordered_map<std::string, std::string> mockableEnvs = {{testingVariableName, testingVariableValue}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    EXPECT_EQ(expectedValue, evr->getSetting(testingVariableName, defaultValue));
+    EXPECT_EQ(1u, IoFunctions::mockGetenvCalled);
+}
+
 TEST_F(DebugEnvReaderTests, GivenUnsetVariableThenDefaultValueIsReturned) {
     int32_t ret;
     std::string retString;
