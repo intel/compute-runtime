@@ -28,7 +28,7 @@ namespace ult {
 
 struct ActiveDebuggerFixture {
     void setUp() {
-        NEO::MockCompilerEnableGuard mock(true);
+
         ze_result_t returnValue;
         auto executionEnvironment = new NEO::ExecutionEnvironment();
         auto mockBuiltIns = new MockBuiltins();

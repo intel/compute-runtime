@@ -164,7 +164,7 @@ struct SVMAllocsManagerContextMock : public NEO::SVMAllocsManager {
 
 struct ContextHostAllocTests : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
         auto executionEnvironment = new NEO::ExecutionEnvironment;
         auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);

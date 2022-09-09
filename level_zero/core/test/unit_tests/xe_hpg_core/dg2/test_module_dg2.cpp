@@ -21,7 +21,6 @@ namespace ult {
 using KernelDebugSurfaceDG2Test = Test<ModuleFixture>;
 
 HWTEST2_F(KernelDebugSurfaceDG2Test, givenDebuggerWhenKernelInitializeCalledThenCachePolicyIsWBP, IsDG2) {
-    NEO::MockCompilerEnableGuard mock(true);
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     auto debugger = MockDebuggerL0Hw<FamilyType>::allocate(neoDevice);
@@ -77,7 +76,6 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenDebuggerWhenKernelInitializeCalledThen
 }
 
 HWTEST2_F(KernelDebugSurfaceDG2Test, givenNoDebuggerButDebuggerActiveSetWhenPatchWithImplicitSurfaceCalledThenCachePolicyIsWBP, IsDG2) {
-    NEO::MockCompilerEnableGuard mock(true);
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     const_cast<DeviceInfo &>(neoDevice->getDeviceInfo()).debuggerActive = true;

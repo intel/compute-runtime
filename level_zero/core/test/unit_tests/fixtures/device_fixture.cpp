@@ -96,7 +96,7 @@ void MultiDeviceFixture::tearDown() {
 }
 
 void MultipleDevicesWithCustomHwInfo::setUp() {
-    NEO::MockCompilerEnableGuard mock(true);
+
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
 
     std::vector<std::unique_ptr<NEO::Device>> devices;
@@ -151,7 +151,6 @@ void SingleRootMultiSubDeviceFixture::setUp() {
     neoDevice = device->getNEODevice();
 }
 void SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl::setUp() {
-    DebugManagerStateRestore restorer;
     DebugManager.flags.EnableImplicitScaling.set(implicitScaling);
     DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
@@ -216,7 +215,7 @@ void SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl::tearDown() {
 }
 
 void GetMemHandlePtrTestFixture::setUp() {
-    NEO::MockCompilerEnableGuard mock(true);
+
     neoDevice =
         NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
     auto mockBuiltIns = new MockBuiltins();

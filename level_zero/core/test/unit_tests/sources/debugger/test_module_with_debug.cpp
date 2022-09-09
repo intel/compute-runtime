@@ -28,7 +28,7 @@ namespace L0 {
 namespace ult {
 using DeviceWithDebuggerEnabledTest = Test<ActiveDebuggerFixture>;
 TEST_F(DeviceWithDebuggerEnabledTest, givenDebuggingEnabledWhenModuleIsCreatedThenDebugOptionsAreUsed) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
     debugger->isOptDisabled = true;
@@ -54,7 +54,6 @@ TEST_F(DeviceWithDebuggerEnabledTest, GivenDebugVarDebuggerOptDisableZeroWhenOpt
     DebugManagerStateRestore dgbRestorer;
     NEO::DebugManager.flags.DebuggerOptDisable.set(0);
 
-    NEO::MockCompilerEnableGuard mock(true);
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
     debugger->isOptDisabled = true;
@@ -78,7 +77,6 @@ TEST_F(DeviceWithDebuggerEnabledTest, GivenDebugVarDebuggerOptDisableOneWhenOptD
     DebugManagerStateRestore dgbRestorer;
     NEO::DebugManager.flags.DebuggerOptDisable.set(1);
 
-    NEO::MockCompilerEnableGuard mock(true);
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
     debugger->isOptDisabled = false;
@@ -99,7 +97,7 @@ TEST_F(DeviceWithDebuggerEnabledTest, GivenDebugVarDebuggerOptDisableOneWhenOptD
 };
 
 TEST_F(DeviceWithDebuggerEnabledTest, GivenDebuggeableKernelWhenModuleIsInitializedThenDebugEnabledIsTrue) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
 
@@ -132,7 +130,7 @@ TEST_F(DeviceWithDebuggerEnabledTest, GivenDebuggeableKernelWhenModuleIsInitiali
 }
 
 TEST_F(DeviceWithDebuggerEnabledTest, GivenNonDebuggeableKernelWhenModuleIsInitializedThenDebugEnabledIsFalse) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
 
@@ -164,7 +162,7 @@ TEST_F(DeviceWithDebuggerEnabledTest, GivenNonDebuggeableKernelWhenModuleIsIniti
 using ModuleWithSLDTest = Test<ModuleFixture>;
 
 TEST_F(ModuleWithSLDTest, GivenNoDebugDataWhenInitializingModuleThenRelocatedDebugDataIsNotCreated) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
     auto debugger = new MockActiveSourceLevelDebugger(new MockOsLibrary);
@@ -206,7 +204,7 @@ TEST_F(ModuleWithSLDTest, GivenNoDebugDataWhenInitializingModuleThenRelocatedDeb
 }
 
 TEST_F(ModuleWithSLDTest, GivenDebugDataWithSingleRelocationWhenInitializingModuleThenRelocatedDebugDataIsNotCreated) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
     auto debugger = new MockActiveSourceLevelDebugger(new MockOsLibrary);
@@ -254,7 +252,7 @@ TEST_F(ModuleWithSLDTest, GivenDebugDataWithSingleRelocationWhenInitializingModu
 }
 
 TEST_F(ModuleWithSLDTest, GivenDebugDataWithMultipleRelocationsWhenInitializingModuleThenRelocatedDebugDataIsCreated) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
     auto debugger = new MockActiveSourceLevelDebugger(new MockOsLibrary);
@@ -314,7 +312,7 @@ TEST_F(ModuleWithZebinAndSLDTest, GivenZebinThenCreateDebugZebinAndPassToSLD) {
 using KernelDebugSurfaceTest = Test<ModuleFixture>;
 
 HWTEST_F(KernelDebugSurfaceTest, givenDebuggerAndBindfulKernelWhenAppendingKernelToCommandListThenBindfulSurfaceStateForDebugSurfaceIsProgrammed) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     auto debugger = MockDebuggerL0Hw<FamilyType>::allocate(neoDevice);
@@ -379,7 +377,7 @@ HWTEST_F(KernelDebugSurfaceTest, givenDebuggerAndBindfulKernelWhenAppendingKerne
 
 using ModuleWithDebuggerL0Test = Test<L0DebuggerHwFixture>;
 TEST_F(ModuleWithDebuggerL0Test, givenDebuggingEnabledWhenModuleIsCreatedThenDebugOptionsAreNotUsed) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
 
@@ -423,7 +421,7 @@ TEST_F(KernelInitializeTest, givenDebuggingEnabledWhenKernelsAreInitializedThenA
 using ModuleWithDebuggerL0MultiTileTest = Test<SingleRootMultiSubDeviceFixture>;
 
 HWTEST_F(ModuleWithDebuggerL0MultiTileTest, GivenSubDeviceWhenCreatingModuleThenModuleCreateIsNotifiedWithCorrectDevice) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
     neoDevice->getExecutionEnvironment()->setDebuggingEnabled();
@@ -474,7 +472,7 @@ HWTEST_F(ModuleWithDebuggerL0MultiTileTest, GivenSubDeviceWhenCreatingModuleThen
 }
 
 HWTEST_F(ModuleWithDebuggerL0Test, GivenDebugDataWithRelocationsWhenInitializingModuleThenRegisterElfWithRelocatedElfAndModuleCreateNotified) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
 
@@ -519,7 +517,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenDebugDataWithRelocationsWhenInitializing
 }
 
 HWTEST_F(ModuleWithDebuggerL0Test, GivenDebugDataWithoutRelocationsWhenInitializingModuleThenRegisterElfWithUnrelocatedElfAndModuleCreateNotified) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
 
@@ -570,7 +568,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenDebugDataWithoutRelocationsWhenInitializ
 }
 
 HWTEST_F(ModuleWithDebuggerL0Test, GivenNoDebugDataWhenInitializingModuleThenDoNotRegisterElfAndNotifyModuleCreate) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
 
@@ -606,7 +604,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenNoDebugDataWhenInitializingModuleThenDoN
 using ModuleWithZebinAndL0DebuggerTest = Test<L0DebuggerHwFixture>;
 
 HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinDebugDataWhenInitializingModuleThenRegisterElfAndNotifyModuleCreate) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
     uint8_t binary[10];
@@ -644,7 +642,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinDebugDataWhenInitializingMo
 }
 
 HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinNoDebugDataWhenInitializingModuleThenDoNotRegisterElfAndDoNotNotifyModuleCreate) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
 
@@ -664,7 +662,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinNoDebugDataWhenInitializing
 }
 
 HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinWhenModuleIsInitializedAndDestroyedThenModuleHandleIsAttachedAndRemoved) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
     uint8_t binary[10];
@@ -710,7 +708,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinWhenModuleIsInitializedAndD
 }
 
 HWTEST_F(ModuleWithDebuggerL0Test, GivenNonZebinBinaryWhenDestroyModuleThenModuleDestroyNotified) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     auto cip = std::make_unique<NEO::MockCompilerInterfaceCaptureBuildOptions>();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface = std::move(cip);
 
@@ -758,7 +756,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenNonZebinBinaryWhenDestroyModuleThenModul
 }
 
 HWTEST_F(ModuleWithDebuggerL0Test, GivenNoDebugDataWhenDestroyingModuleThenNotifyModuleDestroy) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     auto cip = std::make_unique<NEO::MockCompilerInterfaceCaptureBuildOptions>();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface = std::move(cip);
 
@@ -792,7 +790,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenNoDebugDataWhenDestroyingModuleThenNotif
 }
 
 HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenModuleDebugHandleZeroWhenInitializingAndDestoryingModuleThenHandleIsNotPassedToDebugger) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
     uint8_t binary[10];
@@ -837,7 +835,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenModuleDebugHandleZeroWhenInitial
 using NotifyModuleLoadTest = Test<ModuleFixture>;
 
 HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleIsCreatedAndFullyLinkedThenIsaAllocationsAreCopiedAndResidentOnlyForUserModules) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
 
@@ -895,7 +893,7 @@ HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleIsCreatedAndFullyL
 }
 
 HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleWithUnresolvedSymbolsIsCreatedThenIsaAllocationsAreNotCopiedAndNotResident) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
 
@@ -943,7 +941,7 @@ HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleWithUnresolvedSymb
 }
 
 HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleWithUnresolvedSymbolsIsDynamicallyLinkedThenIsaAllocationsAreCopiedAndMadeResident) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
 

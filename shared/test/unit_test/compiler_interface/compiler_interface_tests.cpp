@@ -617,7 +617,6 @@ TEST(TranslateTest, whenAnyArgIsNullThenNullptrIsReturnedAndTranslatorIsNotInvok
 }
 
 TEST(LoadCompilerTest, whenEverythingIsOkThenReturnsTrueAndValidOutputs) {
-    MockCompilerEnableGuard mock;
     std::unique_ptr<NEO::OsLibrary> retLib;
     CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
     bool retVal = loadCompiler<IGC::IgcOclDeviceCtx>("", retLib, retMain);
@@ -627,7 +626,6 @@ TEST(LoadCompilerTest, whenEverythingIsOkThenReturnsTrueAndValidOutputs) {
 }
 
 TEST(LoadCompilerTest, whenCouldNotLoadLibraryThenReturnFalseAndNullOutputs) {
-    MockCompilerEnableGuard mock;
     std::unique_ptr<NEO::OsLibrary> retLib;
     CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
     bool retVal = loadCompiler<IGC::IgcOclDeviceCtx>("_falseName.notRealLib", retLib, retMain);
@@ -639,7 +637,6 @@ TEST(LoadCompilerTest, whenCouldNotLoadLibraryThenReturnFalseAndNullOutputs) {
 TEST(LoadCompilerTest, whenCreateMainFailsThenReturnFalseAndNullOutputs) {
     NEO::failCreateCifMain = true;
 
-    MockCompilerEnableGuard mock;
     std::unique_ptr<NEO::OsLibrary> retLib;
     CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
     bool retVal = loadCompiler<IGC::IgcOclDeviceCtx>("", retLib, retMain);
@@ -651,7 +648,7 @@ TEST(LoadCompilerTest, whenCreateMainFailsThenReturnFalseAndNullOutputs) {
 }
 
 TEST(LoadCompilerTest, whenEntrypointInterfaceIsNotCompatibleThenReturnFalseAndNullOutputs) {
-    MockCompilerEnableGuard mock;
+
     std::unique_ptr<NEO::OsLibrary> retLib;
     CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
     bool retVal = loadCompiler<IGC::GTSystemInfo>("", retLib, retMain);
@@ -664,7 +661,6 @@ TEST(LoadCompilerTest, GivenZebinIgnoreIcbeVersionDebugFlagThenIgnoreIgcsIcbeVer
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.ZebinIgnoreIcbeVersion.set(true);
 
-    MockCompilerEnableGuard mock;
     std::unique_ptr<NEO::OsLibrary> retLib;
     CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
     bool retVal = loadCompiler<IGC::IgcOclDeviceCtx>("", retLib, retMain);

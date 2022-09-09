@@ -135,7 +135,7 @@ TEST_F(MemoryIPCTests,
 
 struct MemoryGetIpcHandleTest : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();
         neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);

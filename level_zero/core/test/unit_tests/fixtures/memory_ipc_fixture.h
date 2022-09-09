@@ -106,7 +106,7 @@ struct ContextFdMock : public L0::ContextImp {
 
 struct MemoryExportImportTest : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();
         neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
@@ -215,7 +215,7 @@ struct ContextMemHandleMock : public L0::ContextImp {
 
 struct MemoryExportImportWSLTest : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();
         neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
@@ -314,7 +314,7 @@ struct ContextHandleMock : public L0::ContextImp {
 
 struct MemoryExportImportWinHandleTest : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();
         neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
@@ -557,7 +557,7 @@ struct ContextIpcMock : public L0::ContextImp {
 
 struct MemoryOpenIpcHandleTest : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         neoDevice =
             NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();
@@ -689,7 +689,6 @@ struct MemoryExportImportImplicitScalingTest : public ::testing::Test {
         DebugManagerStateRestore restorer;
         DebugManager.flags.EnableImplicitScaling.set(1);
 
-        NEO::MockCompilerEnableGuard mock(true);
         neoDevice =
             NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();

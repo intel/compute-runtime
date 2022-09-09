@@ -106,7 +106,7 @@ HWTEST_F(ModuleTest, givenBuiltinModuleWhenCreatedThenCorrectAllocationTypeIsUse
 }
 
 HWTEST_F(ModuleTest, givenBlitterAvailableWhenCopyingPatchedSegmentsThenIsaIsTransferredToAllocationWithBlitter) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     auto hwInfo = *NEO::defaultHwInfo;
     hwInfo.featureTable.flags.ftrLocalMemory = true;
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(&hwInfo, 0u);
@@ -1653,7 +1653,7 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolsNotPresentInAnoth
 
 using ModuleDynamicLinkTest = Test<ModuleFixture>;
 TEST_F(ModuleDynamicLinkTest, givenUnresolvedSymbolsWhenModuleIsCreatedThenIsaAllocationsAreNotCopied) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
 
@@ -2514,7 +2514,6 @@ TEST_F(ModuleTest, GivenInjectInternalBuildOptionsWhenBuildingUserModuleThenInte
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.InjectInternalBuildOptions.set(" -abc");
 
-    NEO::MockCompilerEnableGuard mock(true);
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
 
@@ -2537,7 +2536,6 @@ TEST_F(ModuleTest, GivenInjectInternalBuildOptionsWhenBuildingBuiltinModuleThenI
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.InjectInternalBuildOptions.set(" -abc");
 
-    NEO::MockCompilerEnableGuard mock(true);
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
 

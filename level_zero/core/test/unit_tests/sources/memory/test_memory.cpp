@@ -783,7 +783,7 @@ struct ContextZexPointerMock : public ContextImp {
 
 struct ZexHostPointerTests : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         neoDevice =
             NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();
@@ -906,7 +906,7 @@ struct SVMAllocsManagerFreeExtMock : public NEO::SVMAllocsManager {
 
 struct FreeExtTests : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         neoDevice =
             NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();
@@ -1028,7 +1028,7 @@ struct SVMAllocsManagerOutOFMemoryMock : public NEO::SVMAllocsManager {
 
 struct OutOfMemoryTests : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         neoDevice =
             NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();
@@ -1104,7 +1104,7 @@ struct ContextRelaxedSizeMock : public ContextImp {
 
 struct MemoryRelaxedSizeTests : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         neoDevice =
             NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();
@@ -1615,7 +1615,7 @@ struct ContextFailFdMock : public L0::ContextImp {
 
 struct MemoryExportImportFailTest : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();
         neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
@@ -2099,7 +2099,6 @@ TEST_F(ImageFdExportImportTest,
 
 struct MultipleDevicePeerAllocationFailTest : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
 
         std::vector<std::unique_ptr<NEO::Device>> devices;
         NEO::ExecutionEnvironment *executionEnvironment = new NEO::ExecutionEnvironment();
@@ -2182,7 +2181,7 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
 
     void SetUp() override {
         DebugManagerStateRestore restorer;
-        NEO::MockCompilerEnableGuard mock(true);
+
         DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
         VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
 
@@ -2942,7 +2941,7 @@ TEST_F(MultipleDevicePeerAllocationTest,
 
 struct MemoryFailedOpenIpcHandleTest : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         neoDevice =
             NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();
@@ -2980,7 +2979,7 @@ struct MemoryFailedOpenIpcHandleImplicitScalingTest : public ::testing::Test {
     void SetUp() override {
         DebugManagerStateRestore restorer;
         DebugManager.flags.EnableImplicitScaling.set(1);
-        NEO::MockCompilerEnableGuard mock(true);
+
         neoDevice =
             NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();
@@ -3258,7 +3257,7 @@ TEST_F(MemoryTest, givenCallToCheckMemoryAccessFromDeviceWithValidHostAllocation
 
 struct MemoryBitfieldTest : testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
@@ -3301,7 +3300,7 @@ struct MemoryBitfieldTest : testing::Test {
 };
 
 TEST_F(MemoryBitfieldTest, givenDeviceWithValidBitfieldWhenAllocatingDeviceMemoryThenPassProperBitfield) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     ze_device_mem_alloc_desc_t deviceDesc = {};
     auto result = context->allocDeviceMem(device->toHandle(),
                                           &deviceDesc,
@@ -3312,7 +3311,7 @@ TEST_F(MemoryBitfieldTest, givenDeviceWithValidBitfieldWhenAllocatingDeviceMemor
     EXPECT_NE(nullptr, ptr);
 }
 TEST(MemoryBitfieldTests, givenDeviceWithValidBitfieldWhenAllocatingSharedMemoryThenPassProperBitfield) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     DebugManagerStateRestore restorer;
     size_t size = 10;
     size_t alignment = 1u;
@@ -3377,7 +3376,7 @@ TEST(MemoryBitfieldTests, givenDeviceWithValidBitfieldWhenAllocatingSharedMemory
 
 struct AllocHostMemoryTest : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         std::vector<std::unique_ptr<NEO::Device>> devices;
         NEO::ExecutionEnvironment *executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
@@ -3724,7 +3723,7 @@ struct SVMAllocsManagerSharedAllocFailMock : public NEO::SVMAllocsManager {
 
 struct SharedAllocFailTests : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         neoDevice =
             NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();
@@ -3796,7 +3795,7 @@ struct ContextMultiDeviceMock : public L0::ContextImp {
 
 struct SharedAllocMultiDeviceTests : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
         auto executionEnvironment = new NEO::ExecutionEnvironment;
         auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
@@ -3872,7 +3871,7 @@ TEST_F(SharedAllocMultiDeviceTests, whenAllocatinSharedMemoryWithNonNullDeviceIn
 template <int32_t enableWalkerPartition>
 struct MemAllocMultiSubDeviceTests : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         DebugManager.flags.EnableWalkerPartition.set(enableWalkerPartition);
         DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
         auto executionEnvironment = new NEO::ExecutionEnvironment;

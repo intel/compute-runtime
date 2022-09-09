@@ -26,7 +26,7 @@ namespace ult {
 
 struct HostPointerManagerFixure {
     void setUp() {
-        NEO::MockCompilerEnableGuard mock(true);
+
         NEO::DeviceVector devices;
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();

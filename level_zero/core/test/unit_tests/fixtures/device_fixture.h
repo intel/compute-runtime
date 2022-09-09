@@ -31,7 +31,7 @@ namespace ult {
 class MockBuiltins;
 
 struct DeviceFixture {
-    NEO::MockCompilerEnableGuard compilerMock = NEO::MockCompilerEnableGuard(true);
+
     void setUp();
     void tearDown();
     void setupWithExecutionEnvironment(NEO::ExecutionEnvironment &executionEnvironment);
@@ -65,7 +65,7 @@ struct DriverHandleGetMemHandlePtrMock : public L0::DriverHandleImp {
 };
 
 struct GetMemHandlePtrTestFixture {
-    NEO::MockCompilerEnableGuard compilerMock = NEO::MockCompilerEnableGuard(true);
+
     void setUp();
     void tearDown();
     NEO::MemoryManager *prevMemoryManager = nullptr;
@@ -79,7 +79,7 @@ struct GetMemHandlePtrTestFixture {
 struct PageFaultDeviceFixture {
     PageFaultDeviceFixture();
     ~PageFaultDeviceFixture();
-    NEO::MockCompilerEnableGuard compilerMock = NEO::MockCompilerEnableGuard(true);
+
     void setUp();
     void tearDown();
 
@@ -93,7 +93,7 @@ struct PageFaultDeviceFixture {
 };
 
 struct MultiDeviceFixture {
-    NEO::MockCompilerEnableGuard compilerMock = NEO::MockCompilerEnableGuard(true);
+
     void setUp();
     void tearDown();
 
@@ -140,7 +140,6 @@ struct MultipleDevicesWithCustomHwInfo {
 struct SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl : public MultiDeviceFixture {
 
     SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl(uint32_t copyEngineCount, uint32_t implicitScaling) : implicitScaling(implicitScaling), expectedCopyEngineCount(copyEngineCount){};
-    NEO::MockCompilerEnableGuard compilerMock = NEO::MockCompilerEnableGuard(true);
 
     DebugManagerStateRestore restorer;
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;

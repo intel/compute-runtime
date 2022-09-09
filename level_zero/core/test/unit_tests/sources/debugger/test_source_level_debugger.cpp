@@ -28,7 +28,7 @@ namespace ult {
 using CommandQueueDebugCommandsTest = Test<ActiveDebuggerFixture>;
 
 HWTEST2_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsExecutedThenKernelDebugCommandsAreAdded, IsAtMostGen12lp) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, deviceL0, device->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
@@ -256,7 +256,7 @@ struct TwoSubDevicesDebuggerEnabledTest : public ActiveDebuggerFixture, public :
 };
 
 TEST_F(TwoSubDevicesDebuggerEnabledTest, givenDebuggingEnabledWhenSubDevicesAreCreatedThenDebugSurfaceFromRootDeviceIsSet) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     auto subDevice0 = static_cast<L0::DeviceImp *>(deviceL0)->subDevices[0];
     auto subDevice1 = static_cast<L0::DeviceImp *>(deviceL0)->subDevices[1];
 
@@ -268,7 +268,6 @@ TEST_F(TwoSubDevicesDebuggerEnabledTest, givenDebuggingEnabledWhenSubDevicesAreC
 }
 
 TEST_F(TwoSubDevicesDebuggerEnabledTest, givenDebuggingEnabledWhenSubDevicesAreCreatedThenDebugSurfaceIsProperlyInitialized) {
-    NEO::MockCompilerEnableGuard mock(true);
 
     auto debugSurface = deviceL0->getDebugSurface();
 

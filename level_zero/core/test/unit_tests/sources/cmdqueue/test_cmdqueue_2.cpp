@@ -700,7 +700,7 @@ TEST_F(CommandQueueInitTests, whenDestroyCommandQueueThenStoreCommandBuffersAsRe
 
 struct DeviceWithDualStorage : Test<DeviceFixture> {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         DebugManager.flags.EnableLocalMemory.set(1);
         DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(1);
         DeviceFixture::setUp();

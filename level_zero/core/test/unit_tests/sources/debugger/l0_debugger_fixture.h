@@ -22,7 +22,7 @@ namespace ult {
 
 struct L0DebuggerFixture {
     void setUp() {
-        NEO::MockCompilerEnableGuard mock(true);
+
         auto executionEnvironment = new NEO::ExecutionEnvironment();
         auto mockBuiltIns = new NEO::MockBuiltins();
         executionEnvironment->prepareRootDeviceEnvironments(1);

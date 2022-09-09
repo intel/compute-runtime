@@ -53,7 +53,7 @@ namespace L0 {
 namespace ult {
 
 TEST(L0DeviceTest, givenNonExistingFclWhenCreatingDeviceThenCompilerInterfaceIsCreated) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     VariableBackup<const char *> frontEndDllName(&Os::frontEndDllName);
     Os::frontEndDllName = "_fake_fcl1_so";
 
@@ -163,7 +163,7 @@ TEST(L0DeviceTest, givenMultipleMaskedSubDevicesWhenCreatingL0DeviceThenDontAddD
 }
 
 TEST(L0DeviceTest, givenMidThreadPreemptionWhenCreatingDeviceThenSipKernelIsInitialized) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     VariableBackup<bool> mockSipCalled(&NEO::MockSipData::called, false);
     VariableBackup<NEO::SipKernelType> mockSipCalledType(&NEO::MockSipData::calledType, NEO::SipKernelType::COUNT);
@@ -186,7 +186,7 @@ TEST(L0DeviceTest, givenMidThreadPreemptionWhenCreatingDeviceThenSipKernelIsInit
 }
 
 TEST(L0DeviceTest, givenDebuggerEnabledButIGCNotReturnsSSAHThenSSAHIsNotCopied) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     auto mockBuiltIns = new MockBuiltins();
     mockBuiltIns->stateSaveAreaHeader.clear();
@@ -273,7 +273,7 @@ TEST(L0DeviceTest, givenDeviceWithoutAnyCompilerLibraryThenInvalidDependencyRetu
 }
 
 TEST(L0DeviceTest, givenFilledTopologyWhenGettingApiSliceThenCorrectSliceIdIsReturned) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
     auto hwInfo = *NEO::defaultHwInfo;
 
@@ -318,7 +318,7 @@ TEST(L0DeviceTest, givenFilledTopologyWhenGettingApiSliceThenCorrectSliceIdIsRet
 }
 
 TEST(L0DeviceTest, givenFilledTopologyForZeroSubDeviceWhenGettingApiSliceForHigherSubDevicesThenFalseIsReturned) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
     auto hwInfo = *NEO::defaultHwInfo;
 
@@ -350,7 +350,7 @@ TEST(L0DeviceTest, givenFilledTopologyForZeroSubDeviceWhenGettingApiSliceForHigh
 }
 
 TEST(L0DeviceTest, givenInvalidPhysicalSliceIdWhenGettingApiSliceIdThenFalseIsReturned) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
     auto hwInfo = *NEO::defaultHwInfo;
 
@@ -382,7 +382,7 @@ TEST(L0DeviceTest, givenInvalidPhysicalSliceIdWhenGettingApiSliceIdThenFalseIsRe
 }
 
 TEST(L0DeviceTest, givenInvalidApiSliceIdWhenGettingPhysicalSliceIdThenFalseIsReturned) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
     auto hwInfo = *NEO::defaultHwInfo;
 
@@ -415,7 +415,7 @@ TEST(L0DeviceTest, givenInvalidApiSliceIdWhenGettingPhysicalSliceIdThenFalseIsRe
 }
 
 TEST(L0DeviceTest, givenEmptyTopologyWhenGettingApiSliceIdThenFalseIsReturned) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
     auto hwInfo = *NEO::defaultHwInfo;
 
@@ -434,7 +434,7 @@ TEST(L0DeviceTest, givenEmptyTopologyWhenGettingApiSliceIdThenFalseIsReturned) {
 }
 
 TEST(L0DeviceTest, givenDeviceWithoutSubDevicesWhenGettingPhysicalSliceIdThenCorrectValuesAreReturned) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
     auto hwInfo = *NEO::defaultHwInfo;
 
@@ -470,7 +470,7 @@ TEST(L0DeviceTest, givenDeviceWithoutSubDevicesWhenGettingPhysicalSliceIdThenCor
 }
 
 TEST(L0DeviceTest, givenTopologyNotAvaialbleWhenGettingPhysicalSliceIdThenFalseIsReturned) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
     auto hwInfo = *NEO::defaultHwInfo;
 
@@ -492,7 +492,7 @@ TEST(L0DeviceTest, givenTopologyNotAvaialbleWhenGettingPhysicalSliceIdThenFalseI
 }
 
 TEST(L0DeviceTest, givenSingleSliceTopologyWhenConvertingToApiIdsThenSubsliceIdsAreRemapped) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
     auto hwInfo = *NEO::defaultHwInfo;
 
@@ -544,7 +544,7 @@ TEST(L0DeviceTest, givenSingleSliceTopologyWhenConvertingToApiIdsThenSubsliceIds
 }
 
 TEST(L0DeviceTest, givenSingleSliceTopologyWhenConvertingToPhysicalIdsThenSubsliceIdsAreRemapped) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
     auto hwInfo = *NEO::defaultHwInfo;
 
@@ -600,7 +600,6 @@ TEST(L0DeviceTest, givenSingleSliceTopologyWhenConvertingToPhysicalIdsThenSubsli
 
 struct DeviceTest : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
         DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), rootDeviceIndex);
         execEnv = neoDevice->getExecutionEnvironment();
@@ -1172,7 +1171,7 @@ struct DeviceHwInfoTest : public ::testing::Test {
     }
 
     void setDriverAndDevice() {
-        NEO::MockCompilerEnableGuard mock(true);
+
         std::vector<std::unique_ptr<NEO::Device>> devices;
         neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0);
         EXPECT_NE(neoDevice, nullptr);
@@ -1781,7 +1780,7 @@ struct MockMemoryManagerMultiDevice : public MemoryManagerMock {
 template <int32_t enablePartitionWalker>
 struct MultipleDevicesFixture : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         DebugManager.flags.EnableWalkerPartition.set(enablePartitionWalker);
         DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
         VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
@@ -2054,7 +2053,7 @@ TEST_F(DeviceTests, WhenGettingMemoryAccessPropertiesThenSuccessIsReturned) {
 template <bool p2pAccessDevice0, bool p2pAtomicAccessDevice0, bool p2pAccessDevice1, bool p2pAtomicAccessDevice1>
 struct MultipleDevicesP2PFixture : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
 
         std::vector<std::unique_ptr<NEO::Device>> devices;
@@ -3231,7 +3230,7 @@ TEST(zeDevice, givenValidImagePropertiesStructWhenGettingImagePropertiesThenSucc
 
 TEST(zeDevice, givenImagesSupportedWhenGettingImagePropertiesThenValidValuesAreReturned) {
     ze_result_t errorValue;
-    NEO::MockCompilerEnableGuard mock(true);
+
     DriverHandleImp driverHandle{};
     NEO::MockDevice *neoDevice = (NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
     auto device = std::unique_ptr<L0::Device>(Device::create(&driverHandle, neoDevice, false, &errorValue));
@@ -3262,7 +3261,7 @@ TEST(zeDevice, givenImagesSupportedWhenGettingImagePropertiesThenValidValuesAreR
 
 TEST(zeDevice, givenNoImagesSupportedWhenGettingImagePropertiesThenZeroValuesAreReturned) {
     ze_result_t errorValue;
-    NEO::MockCompilerEnableGuard mock(true);
+
     DriverHandleImp driverHandle{};
     NEO::MockDevice *neoDevice = (NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
     auto device = std::unique_ptr<L0::Device>(Device::create(&driverHandle, neoDevice, false, &errorValue));

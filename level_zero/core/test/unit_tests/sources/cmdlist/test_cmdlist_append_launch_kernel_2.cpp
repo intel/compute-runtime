@@ -25,7 +25,7 @@ namespace L0 {
 namespace ult {
 struct CommandListAppendLaunchKernelSWTags : public Test<ModuleFixture> {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         NEO::DebugManager.flags.EnableSWTags.set(true);
         ModuleFixture::setUp();
     }
@@ -35,7 +35,7 @@ struct CommandListAppendLaunchKernelSWTags : public Test<ModuleFixture> {
 
 struct CommandListDualStorage : public Test<ModuleFixture> {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         DebugManager.flags.EnableLocalMemory.set(1);
         DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(1);
         ModuleFixture::setUp();

@@ -199,7 +199,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
 
 struct ModuleFixture : public DeviceFixture {
     void setUp() {
-        NEO::MockCompilerEnableGuard mock(true);
+
         DeviceFixture::setUp();
         createModuleFromMockBinary();
     }
@@ -371,7 +371,7 @@ struct ModuleWithZebinFixture : public DeviceFixture {
         const char strings[12] = "Hello olleH";
     };
     void setUp() {
-        NEO::MockCompilerEnableGuard mock(true);
+
         DeviceFixture::setUp();
         module = std::make_unique<MockModuleWithZebin>(device);
     }

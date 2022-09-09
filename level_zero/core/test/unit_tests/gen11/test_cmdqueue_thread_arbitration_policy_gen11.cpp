@@ -22,7 +22,7 @@ namespace ult {
 
 struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         ze_result_t returnValue = ZE_RESULT_SUCCESS;
         auto executionEnvironment = new NEO::ExecutionEnvironment();
         auto mockBuiltIns = new MockBuiltins();

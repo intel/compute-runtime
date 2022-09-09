@@ -24,7 +24,7 @@ namespace ult {
 
 struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         ze_result_t returnValue = ZE_RESULT_SUCCESS;
         auto executionEnvironment = new NEO::ExecutionEnvironment();
         auto mockBuiltIns = new MockBuiltins();
@@ -169,7 +169,7 @@ HWTEST2_F(CommandQueueThreadArbitrationPolicyTests,
 
 struct CommandQueueGroupMultiDeviceFixture : public MultiDeviceFixture {
     void setUp() {
-        NEO::MockCompilerEnableGuard mock(true);
+
         MultiDeviceFixture::setUp();
         uint32_t count = 1;
         ze_device_handle_t hDevice;

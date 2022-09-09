@@ -83,7 +83,7 @@ class MemoryManagerEventPoolFailMock : public NEO::MemoryManager {
 
 struct EventPoolFailTests : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         neoDevice =
             NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();
@@ -1760,7 +1760,7 @@ TEST_F(EventPoolCreateSingleDevice, whenCreatingEventPoolWithNoDevicesThenEventP
 
 struct EventPoolCreateNegativeTest : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         for (uint32_t i = 0; i < numRootDevices; i++) {

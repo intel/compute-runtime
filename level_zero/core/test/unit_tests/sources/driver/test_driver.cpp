@@ -103,7 +103,7 @@ TEST_F(DriverVersionTest, WhenGettingDriverVersionThenExpectedDriverVersionIsRet
 }
 
 TEST_F(DriverVersionTest, givenCallToGetDriverPropertiesThenUuidIsSet) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     ze_driver_properties_t properties;
     ze_result_t res = driverHandle->getProperties(&properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -123,7 +123,7 @@ TEST_F(DriverVersionTest, givenCallToGetDriverPropertiesThenUuidIsSet) {
 }
 
 TEST_F(DriverVersionTest, whenCallingGetDriverPropertiesRepeatedlyThenTheSameUuidIsReturned) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     ze_driver_properties_t properties;
     ze_result_t res = driverHandle->getProperties(&properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -245,7 +245,7 @@ HWTEST_F(ImportNTHandle, givenNotExistingNTHandleWhenCreatingDeviceMemoryThenErr
 }
 
 TEST(DriverTestFamilySupport, whenInitializingDriverOnSupportedFamilyThenDriverIsCreated) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     ze_result_t returnValue;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
@@ -274,7 +274,7 @@ TEST(DriverTestFamilySupport, whenInitializingDriverOnNotSupportedFamilyThenDriv
 }
 
 TEST(DriverTest, givenNullEnvVariableWhenCreatingDriverThenEnableProgramDebuggingIsFalse) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     ze_result_t returnValue;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
@@ -295,7 +295,7 @@ TEST(DriverTest, givenNullEnvVariableWhenCreatingDriverThenEnableProgramDebuggin
 }
 
 TEST(DriverImpTest, givenDriverImpWhenInitializedThenEnvVariablesAreRead) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
 
@@ -313,7 +313,7 @@ TEST(DriverImpTest, givenDriverImpWhenInitializedThenEnvVariablesAreRead) {
 }
 
 TEST(DriverImpTest, givenMissingMetricApiDependenciesWhenInitializingDriverImpThenGlobalDriverHandleIsNull) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
     const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
@@ -334,7 +334,7 @@ TEST(DriverImpTest, givenMissingMetricApiDependenciesWhenInitializingDriverImpTh
 }
 
 TEST(DriverImpTest, givenEnabledProgramDebuggingWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsTrue) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
 
@@ -356,7 +356,7 @@ TEST(DriverImpTest, givenEnabledProgramDebuggingWhenCreatingExecutionEnvironment
 }
 
 TEST(DriverImpTest, givenNoProgramDebuggingEnvVarWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsFalse) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
 
@@ -374,7 +374,7 @@ TEST(DriverImpTest, givenNoProgramDebuggingEnvVarWhenCreatingExecutionEnvironmen
 }
 
 TEST(DriverTest, givenProgramDebuggingEnvVarNonZeroWhenCreatingDriverThenEnableProgramDebuggingIsSetTrue) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     ze_result_t returnValue;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
@@ -416,7 +416,7 @@ TEST(DriverTest, givenInvalidCompilerEnvironmentThenDependencyUnavailableErrorIs
 
 struct DriverTestMultipleFamilySupport : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
 
         deviceFactory = std::make_unique<UltDeviceFactory>(numRootDevices, numSubDevices);
@@ -439,7 +439,7 @@ struct DriverTestMultipleFamilySupport : public ::testing::Test {
 };
 
 TEST_F(DriverTestMultipleFamilySupport, whenInitializingDriverWithArrayOfDevicesThenDriverIsInitializedOnlyWithThoseSupported) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     ze_result_t returnValue;
     auto driverHandle = DriverHandle::create(std::move(devices), L0EnvVariables{}, &returnValue);
     EXPECT_NE(nullptr, driverHandle);
@@ -457,7 +457,7 @@ TEST_F(DriverTestMultipleFamilySupport, whenInitializingDriverWithArrayOfDevices
 
 struct DriverTestMultipleFamilyNoSupport : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
 
         NEO::ExecutionEnvironment *executionEnvironment = new NEO::ExecutionEnvironment();
@@ -480,7 +480,7 @@ struct DriverTestMultipleFamilyNoSupport : public ::testing::Test {
 };
 
 TEST_F(DriverTestMultipleFamilyNoSupport, whenInitializingDriverWithArrayOfNotSupportedDevicesThenDriverIsNull) {
-    NEO::MockCompilerEnableGuard mock(true);
+
     ze_result_t returnValue;
     auto driverHandle = DriverHandle::create(std::move(devices), L0EnvVariables{}, &returnValue);
     EXPECT_EQ(nullptr, driverHandle);
@@ -492,7 +492,7 @@ struct MaskArray {
 
 struct DriverHandleTest : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         ze_result_t returnValue;
         NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
         hwInfo.capabilityTable.levelZeroSupported = true;
