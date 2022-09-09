@@ -151,7 +151,7 @@ void LinuxMemoryImp::getHbmFrequency(PRODUCT_FAMILY productFamily, unsigned shor
         // For IGFX_XE_HP HBM frequency would be 2.8 GT/s = 2.8 * 1000 * 1000 * 1000 T/s = 2800000000 T/s
         hbmFrequency = 2.8 * gigaUnitTransferToUnitTransfer;
     } else if (productFamily == IGFX_PVC) {
-        if (stepping == REVISION_B) {
+        if (stepping >= REVISION_B) {
             const std::string baseDir = "gt/gt" + std::to_string(subdeviceId) + "/";
             // Calculating bandwidth based on HBM max frequency
             const std::string hbmRP0FreqFile = baseDir + "mem_RP0_freq_mhz";
