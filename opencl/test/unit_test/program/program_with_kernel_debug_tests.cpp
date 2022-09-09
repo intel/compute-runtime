@@ -141,7 +141,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompi
     cl_int retVal = pProgram->compile(pProgram->getDevices(), nullptr,
                                       0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(startsWith(pProgram->getOptions(), "-s debugFileName"));
+    EXPECT_TRUE(startsWith(pProgram->getOptions(), "-s \"debugFileName\""));
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompiledWithCmCOptionThenDashSFilenameIsNotPrepended) {
@@ -194,7 +194,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuilt
 
     cl_int retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(startsWith(pProgram->getOptions(), "-s debugFileName"));
+    EXPECT_TRUE(startsWith(pProgram->getOptions(), "-s \"debugFileName\""));
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltWithCmCOptionThenDashSFilenameIsNotPrepended) {

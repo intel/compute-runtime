@@ -32,6 +32,11 @@ bool contains(const std::string &options, ConstStringRef optionToFind) {
     return contains(options.c_str(), optionToFind);
 }
 
+std::string wrapInQuotes(const std::string &stringToWrap) {
+    std::string quoteEscape{"\""};
+    return std::string{quoteEscape + stringToWrap + quoteEscape};
+}
+
 TokenizedString tokenize(ConstStringRef src, char sperator) {
     TokenizedString ret;
     const char *it = src.begin();
