@@ -35,8 +35,6 @@ int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OS
     DG2::adjustHardwareInfo(hwInfo);
     enableBlitterOperationsSupport(hwInfo);
 
-    adjustRcsExposure(hwInfo);
-
     auto &kmdNotifyProperties = hwInfo->capabilityTable.kmdNotifyProperties;
     kmdNotifyProperties.enableKmdNotify = true;
     kmdNotifyProperties.delayKmdNotifyMicroseconds = 150;
