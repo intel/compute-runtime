@@ -50,7 +50,9 @@ struct Gen9 {
     };
 
     struct PipelineSelectStateSupport {
-        static constexpr bool commandSupport = true;
+        static constexpr bool modeSelected = true;
+        static constexpr bool mediaSamplerDopClockGate = true;
+        static constexpr bool systolicMode = false;
     };
 
     struct PreemptionDebugSupport {

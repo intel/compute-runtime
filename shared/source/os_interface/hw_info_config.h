@@ -19,15 +19,16 @@ enum PRODUCT_CONFIG : uint32_t;
 
 namespace NEO {
 
-struct HardwareInfo;
 struct FrontEndPropertiesSupport;
+struct HardwareInfo;
+struct PipelineSelectArgs;
+struct PipelineSelectPropertiesSupport;
 struct StateComputeModeProperties;
 struct StateComputeModePropertiesSupport;
-struct PipelineSelectArgs;
-class OSInterface;
 class HwInfoConfig;
 class GraphicsAllocation;
 class MemoryManager;
+class OSInterface;
 enum class DriverModelType;
 
 extern HwInfoConfig *hwInfoConfigFactory[IGFX_MAX_PRODUCT];
@@ -160,8 +161,13 @@ class HwInfoConfig {
     virtual bool getPreemptionDbgPropertyStateSipSupport() const = 0;
     virtual bool getPreemptionDbgPropertyCsrSurfaceSupport() const = 0;
 
+    virtual bool getPipelineSelectPropertyModeSelectedSupport() const = 0;
+    virtual bool getPipelineSelectPropertyMediaSamplerDopClockGateSupport() const = 0;
+    virtual bool getPipelineSelectPropertySystolicModeSupport() const = 0;
+
     virtual void fillScmPropertiesSupportStructure(StateComputeModePropertiesSupport &propertiesSupport) = 0;
     virtual void fillFrontEndPropertiesSupportStructure(FrontEndPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) = 0;
+    virtual void fillPipelineSelectPropertiesSupportStructure(PipelineSelectPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) = 0;
 
     MOCKABLE_VIRTUAL ~HwInfoConfig() = default;
 
@@ -291,6 +297,10 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool getPreemptionDbgPropertyStateSipSupport() const override;
     bool getPreemptionDbgPropertyCsrSurfaceSupport() const override;
 
+    bool getPipelineSelectPropertyModeSelectedSupport() const override;
+    bool getPipelineSelectPropertyMediaSamplerDopClockGateSupport() const override;
+    bool getPipelineSelectPropertySystolicModeSupport() const override;
+
     void fillScmPropertiesSupportStructure(StateComputeModePropertiesSupport &propertiesSupport) override;
     void fillFrontEndPropertiesSupportStructure(FrontEndPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) override;
 
@@ -304,6 +314,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool getHostMemCapabilitiesSupported(const HardwareInfo *hwInfo);
     LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
     void fillScmPropertiesSupportStructureBase(StateComputeModePropertiesSupport &propertiesSupport) override;
+    void fillPipelineSelectPropertiesSupportStructure(PipelineSelectPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) override;
 };
 
 template <PRODUCT_FAMILY gfxProduct>

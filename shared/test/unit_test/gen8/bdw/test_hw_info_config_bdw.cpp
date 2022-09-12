@@ -126,4 +126,8 @@ BDWTEST_F(BdwHwInfo, givenHwInfoConfigWhenGetCommandsStreamPropertiesSupportThen
     EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyDisableEuFusionSupport());
     EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyDisableOverDispatchSupport());
     EXPECT_FALSE(hwInfoConfig.getFrontEndPropertySingleSliceDispatchCcsModeSupport());
+
+    EXPECT_TRUE(hwInfoConfig.getPipelineSelectPropertyModeSelectedSupport());
+    EXPECT_FALSE(hwInfoConfig.getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
+    EXPECT_FALSE(hwInfoConfig.getPipelineSelectPropertySystolicModeSupport());
 }

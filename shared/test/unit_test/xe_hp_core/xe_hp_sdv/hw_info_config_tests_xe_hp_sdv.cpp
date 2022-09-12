@@ -46,4 +46,8 @@ XEHPTEST_F(HwInfoConfigTestXeHpSdv, givenHwInfoConfigWhenGetCommandsStreamProper
     EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyDisableEuFusionSupport());
     EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyDisableOverDispatchSupport());
     EXPECT_TRUE(hwInfoConfig.getFrontEndPropertySingleSliceDispatchCcsModeSupport());
+
+    EXPECT_TRUE(hwInfoConfig.getPipelineSelectPropertyModeSelectedSupport());
+    EXPECT_TRUE(hwInfoConfig.getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
+    EXPECT_TRUE(hwInfoConfig.getPipelineSelectPropertySystolicModeSupport());
 }

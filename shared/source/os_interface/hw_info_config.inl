@@ -624,4 +624,29 @@ void HwInfoConfigHw<gfxProduct>::fillFrontEndPropertiesSupportStructure(FrontEnd
     propertiesSupport.singleSliceDispatchCcsMode = getFrontEndPropertySingleSliceDispatchCcsModeSupport();
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::getPipelineSelectPropertyModeSelectedSupport() const {
+    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
+    return GfxProduct::PipelineSelectStateSupport::modeSelected;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::getPipelineSelectPropertyMediaSamplerDopClockGateSupport() const {
+    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
+    return GfxProduct::PipelineSelectStateSupport::mediaSamplerDopClockGate;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::getPipelineSelectPropertySystolicModeSupport() const {
+    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
+    return GfxProduct::PipelineSelectStateSupport::systolicMode;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+void HwInfoConfigHw<gfxProduct>::fillPipelineSelectPropertiesSupportStructure(PipelineSelectPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) {
+    propertiesSupport.modeSelected = getPipelineSelectPropertyModeSelectedSupport();
+    propertiesSupport.mediaSamplerDopClockGate = getPipelineSelectPropertyMediaSamplerDopClockGateSupport();
+    propertiesSupport.systolicMode = getPipelineSelectPropertySystolicModeSupport();
+}
+
 } // namespace NEO

@@ -116,4 +116,8 @@ PVCTEST_F(PVCHwInfoConfig, givenHwInfoConfigWhenGetCommandsStreamPropertiesSuppo
     EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyDisableEuFusionSupport());
     EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyDisableOverDispatchSupport());
     EXPECT_TRUE(hwInfoConfig.getFrontEndPropertySingleSliceDispatchCcsModeSupport());
+
+    EXPECT_TRUE(hwInfoConfig.getPipelineSelectPropertyModeSelectedSupport());
+    EXPECT_FALSE(hwInfoConfig.getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
+    EXPECT_TRUE(hwInfoConfig.getPipelineSelectPropertySystolicModeSupport());
 }

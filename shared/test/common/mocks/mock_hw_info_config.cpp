@@ -438,7 +438,9 @@ struct UnknownProduct {
     };
 
     struct PipelineSelectStateSupport {
-        static constexpr bool commandSupport = false;
+        static constexpr bool modeSelected = false;
+        static constexpr bool mediaSamplerDopClockGate = false;
+        static constexpr bool systolicMode = false;
     };
 
     struct PreemptionDebugSupport {

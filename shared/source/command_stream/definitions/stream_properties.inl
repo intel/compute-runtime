@@ -68,4 +68,26 @@ struct FrontEndProperties {
     bool propertiesSupportLoaded = false;
 };
 
+struct PipelineSelectPropertiesSupport {
+    bool modeSelected = false;
+    bool mediaSamplerDopClockGate = false;
+    bool systolicMode = false;
+};
+
+struct PipelineSelectProperties {
+    StreamProperty modeSelected{};
+    StreamProperty mediaSamplerDopClockGate{};
+    StreamProperty systolicMode{};
+
+    void setProperties(bool modeSelected, bool mediaSamplerDopClockGate, bool systolicMode, const HardwareInfo &hwInfo);
+    void setProperties(const PipelineSelectProperties &properties);
+    bool isDirty() const;
+
+  protected:
+    void clearIsDirty();
+
+    PipelineSelectPropertiesSupport pipelineSelectPropertiesSupport = {};
+    bool propertiesSupportLoaded = false;
+};
+
 } // namespace NEO

@@ -119,7 +119,7 @@ void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableEUF
         this->disableEUFusion.set(disableEUFusion);
     }
 
-    if (frontEndPropertiesSupport.disableOverdispatch) {
+    if (this->frontEndPropertiesSupport.disableOverdispatch) {
         this->disableOverdispatch.set(disableOverdispatch);
     }
 
@@ -159,4 +159,44 @@ void FrontEndProperties::clearIsDirty() {
     disableOverdispatch.isDirty = false;
     singleSliceDispatchCcsMode.isDirty = false;
     computeDispatchAllWalkerEnable.isDirty = false;
+}
+
+void PipelineSelectProperties::setProperties(bool modeSelected, bool mediaSamplerDopClockGate, bool systolicMode, const HardwareInfo &hwInfo) {
+    if (this->propertiesSupportLoaded == false) {
+        auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+        hwInfoConfig.fillPipelineSelectPropertiesSupportStructure(this->pipelineSelectPropertiesSupport, hwInfo);
+        this->propertiesSupportLoaded = true;
+    }
+
+    clearIsDirty();
+
+    if (this->pipelineSelectPropertiesSupport.modeSelected) {
+        this->modeSelected.set(modeSelected);
+    }
+
+    if (this->pipelineSelectPropertiesSupport.mediaSamplerDopClockGate) {
+        this->mediaSamplerDopClockGate.set(mediaSamplerDopClockGate);
+    }
+
+    if (this->pipelineSelectPropertiesSupport.systolicMode) {
+        this->systolicMode.set(systolicMode);
+    }
+}
+
+void PipelineSelectProperties::setProperties(const PipelineSelectProperties &properties) {
+    clearIsDirty();
+
+    modeSelected.set(properties.modeSelected.value);
+    mediaSamplerDopClockGate.set(properties.mediaSamplerDopClockGate.value);
+    systolicMode.set(properties.systolicMode.value);
+}
+
+bool PipelineSelectProperties::isDirty() const {
+    return modeSelected.isDirty || mediaSamplerDopClockGate.isDirty || systolicMode.isDirty;
+}
+
+void PipelineSelectProperties::clearIsDirty() {
+    modeSelected.isDirty = false;
+    mediaSamplerDopClockGate.isDirty = false;
+    systolicMode.isDirty = false;
 }

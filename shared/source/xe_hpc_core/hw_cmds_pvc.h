@@ -52,7 +52,9 @@ struct PVC : public XeHpcCoreFamily {
     };
 
     struct PipelineSelectStateSupport {
-        static constexpr bool commandSupport = true;
+        static constexpr bool modeSelected = true;
+        static constexpr bool mediaSamplerDopClockGate = false;
+        static constexpr bool systolicMode = true;
     };
 
     struct PreemptionDebugSupport {

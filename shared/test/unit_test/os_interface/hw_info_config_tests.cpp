@@ -532,3 +532,14 @@ HWTEST_F(HwInfoConfigTest, WhenFillingFrontEndPropertiesSupportThenExpectUseCorr
     EXPECT_EQ(hwInfoConfig->getFrontEndPropertyDisableOverDispatchSupport(), frontEndPropertiesSupport.disableOverdispatch);
     EXPECT_EQ(hwInfoConfig->getFrontEndPropertySingleSliceDispatchCcsModeSupport(), frontEndPropertiesSupport.singleSliceDispatchCcsMode);
 }
+
+HWTEST_F(HwInfoConfigTest, WhenFillingPipelineSelectPropertiesSupportThenExpectUseCorrectGetters) {
+    PipelineSelectPropertiesSupport pipelineSelectPropertiesSupport = {};
+
+    auto hwInfoConfig = HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+
+    hwInfoConfig->fillPipelineSelectPropertiesSupportStructure(pipelineSelectPropertiesSupport, pInHwInfo);
+    EXPECT_EQ(hwInfoConfig->getPipelineSelectPropertyModeSelectedSupport(), pipelineSelectPropertiesSupport.modeSelected);
+    EXPECT_EQ(hwInfoConfig->getPipelineSelectPropertyMediaSamplerDopClockGateSupport(), pipelineSelectPropertiesSupport.mediaSamplerDopClockGate);
+    EXPECT_EQ(hwInfoConfig->getPipelineSelectPropertySystolicModeSupport(), pipelineSelectPropertiesSupport.systolicMode);
+}

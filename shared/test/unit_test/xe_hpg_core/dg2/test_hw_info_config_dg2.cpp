@@ -96,4 +96,8 @@ DG2TEST_F(TestDg2HwInfoConfig, givenHwInfoConfigWhenGetCommandsStreamPropertiesS
     EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyDisableEuFusionSupport());
     EXPECT_TRUE(hwInfoConfig.getFrontEndPropertyDisableOverDispatchSupport());
     EXPECT_TRUE(hwInfoConfig.getFrontEndPropertySingleSliceDispatchCcsModeSupport());
+
+    EXPECT_TRUE(hwInfoConfig.getPipelineSelectPropertyModeSelectedSupport());
+    EXPECT_FALSE(hwInfoConfig.getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
+    EXPECT_TRUE(hwInfoConfig.getPipelineSelectPropertySystolicModeSupport());
 }

@@ -24,6 +24,12 @@ struct ADLP : public Gen12LpFamily {
     static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig);
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
     static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
+
+    struct PipelineSelectStateSupport {
+        static constexpr bool modeSelected = true;
+        static constexpr bool mediaSamplerDopClockGate = true;
+        static constexpr bool systolicMode = true;
+    };
 };
 
 class AdlpHwConfig : public ADLP {

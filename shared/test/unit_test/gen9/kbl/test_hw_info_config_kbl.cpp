@@ -146,4 +146,8 @@ KBLTEST_F(KblHwInfo, givenHwInfoConfigWhenGetCommandsStreamPropertiesSupportThen
     EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyDisableEuFusionSupport());
     EXPECT_FALSE(hwInfoConfig.getFrontEndPropertyDisableOverDispatchSupport());
     EXPECT_FALSE(hwInfoConfig.getFrontEndPropertySingleSliceDispatchCcsModeSupport());
+
+    EXPECT_TRUE(hwInfoConfig.getPipelineSelectPropertyModeSelectedSupport());
+    EXPECT_TRUE(hwInfoConfig.getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
+    EXPECT_FALSE(hwInfoConfig.getPipelineSelectPropertySystolicModeSupport());
 }

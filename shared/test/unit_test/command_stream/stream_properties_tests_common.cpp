@@ -22,6 +22,11 @@ struct MockFrontEndProperties : public FrontEndProperties {
     using FrontEndProperties::propertiesSupportLoaded;
 };
 
+struct MockPipelineSelectProperties : public PipelineSelectProperties {
+    using PipelineSelectProperties::pipelineSelectPropertiesSupport;
+    using PipelineSelectProperties::propertiesSupportLoaded;
+};
+
 TEST(StreamPropertiesTests, whenPropertyValueIsChangedThenProperStateIsSet) {
     NEO::StreamProperty streamProperty;
 
@@ -191,11 +196,15 @@ void verifyIsDirty() {
 }
 
 TEST(StreamPropertiesTests, givenVariousStatesOfStateComputeModePropertiesWhenIsDirtyIsQueriedThenCorrectValueIsReturned) {
-    verifyIsDirty<StateComputeModeProperties, &getAllStateComputeModeProperties>();
+    verifyIsDirty<StateComputeModeProperties, getAllStateComputeModeProperties>();
 }
 
 TEST(StreamPropertiesTests, givenVariousStatesOfFrontEndPropertiesWhenIsDirtyIsQueriedThenCorrectValueIsReturned) {
     verifyIsDirty<FrontEndProperties, getAllFrontEndProperties>();
+}
+
+TEST(StreamPropertiesTests, givenVariousStatesOfPipelineSelectPropertiesWhenIsDirtyIsQueriedThenCorrectValueIsReturned) {
+    verifyIsDirty<PipelineSelectProperties, getAllPipelineSelectProperties>();
 }
 
 template <typename PropertiesT, getAllPropertiesFunctionPtr<PropertiesT> getAllProperties>
@@ -242,6 +251,10 @@ TEST(StreamPropertiesTests, givenOtherFrontEndPropertiesStructWhenSetPropertiesI
     verifySettingPropertiesFromOtherStruct<FrontEndProperties, getAllFrontEndProperties>();
 }
 
+TEST(StreamPropertiesTests, givenOtherPipelineSelectPropertiesStructWhenSetPropertiesIsCalledThenCorrectValuesAreSet) {
+    verifySettingPropertiesFromOtherStruct<PipelineSelectProperties, getAllPipelineSelectProperties>();
+}
+
 TEST(StreamPropertiesTests, givenSingleDispatchCcsFrontEndPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
     FrontEndPropertiesSupport fePropertiesSupport{};
     auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
@@ -268,4 +281,57 @@ TEST(StreamPropertiesTests, givenSingleDispatchCcsFrontEndPropertyWhenSettingPro
     feProperties.setPropertySingleSliceDispatchCcsMode(engineInstancedDevice, *defaultHwInfo);
     EXPECT_TRUE(feProperties.singleSliceDispatchCcsMode.isDirty);
     EXPECT_EQ(engineInstancedDevice, feProperties.singleSliceDispatchCcsMode.value);
+}
+
+TEST(StreamPropertiesTests, whenSettingPipelineSelectPropertiesThenCorrectValueIsSet) {
+    StreamProperties properties;
+
+    PipelineSelectPropertiesSupport pipelineSelectPropertiesSupport = {};
+    auto hwInfoConfig = HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    hwInfoConfig->fillPipelineSelectPropertiesSupportStructure(pipelineSelectPropertiesSupport, *defaultHwInfo);
+
+    for (auto modeSelected : ::testing::Bool()) {
+        for (auto mediaSamplerDopClockGate : ::testing::Bool()) {
+            for (auto systolicMode : ::testing::Bool()) {
+                properties.pipelineSelect.setProperties(modeSelected, mediaSamplerDopClockGate, systolicMode, *defaultHwInfo);
+
+                if (pipelineSelectPropertiesSupport.modeSelected) {
+                    EXPECT_EQ(modeSelected, properties.pipelineSelect.modeSelected.value);
+                } else {
+                    EXPECT_EQ(-1, properties.pipelineSelect.modeSelected.value);
+                }
+                if (pipelineSelectPropertiesSupport.mediaSamplerDopClockGate) {
+                    EXPECT_EQ(mediaSamplerDopClockGate, properties.pipelineSelect.mediaSamplerDopClockGate.value);
+                } else {
+                    EXPECT_EQ(-1, properties.pipelineSelect.mediaSamplerDopClockGate.value);
+                }
+                if (pipelineSelectPropertiesSupport.systolicMode) {
+                    EXPECT_EQ(systolicMode, properties.pipelineSelect.systolicMode.value);
+                } else {
+                    EXPECT_EQ(-1, properties.pipelineSelect.systolicMode.value);
+                }
+            }
+        }
+    }
+}
+
+TEST(StreamPropertiesTests, givenModeSelectPipelineSelectPropertyNotSupportedWhenSettingPropertyAndCheckIfDirtyThenExpectCleanState) {
+    MockPipelineSelectProperties pipeProperties{};
+    pipeProperties.propertiesSupportLoaded = true;
+    pipeProperties.pipelineSelectPropertiesSupport.modeSelected = false;
+    pipeProperties.pipelineSelectPropertiesSupport.mediaSamplerDopClockGate = true;
+    pipeProperties.pipelineSelectPropertiesSupport.systolicMode = true;
+
+    constexpr bool constState = false;
+    bool changingState = false;
+    pipeProperties.setProperties(changingState, constState, constState, *defaultHwInfo);
+
+    // expect dirty as media and systolic changes from initial registered
+    EXPECT_TRUE(pipeProperties.isDirty());
+
+    changingState = !changingState;
+    pipeProperties.setProperties(changingState, constState, constState, *defaultHwInfo);
+
+    // expect clean as changed modeSelected is not supported
+    EXPECT_FALSE(pipeProperties.isDirty());
 }
