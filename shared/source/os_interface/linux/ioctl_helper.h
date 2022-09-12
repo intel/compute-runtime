@@ -68,6 +68,7 @@ class IoctlHelper {
     static std::unique_ptr<IoctlHelper> get(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion, const std::string &drmVersion, Drm &drm);
     virtual uint32_t ioctl(DrmIoctl request, void *arg);
 
+    virtual bool initialize() = 0;
     virtual bool isVmBindAvailable() = 0;
     virtual uint32_t createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) = 0;
     virtual CacheRegion closAlloc() = 0;
@@ -142,6 +143,7 @@ class IoctlHelperUpstream : public IoctlHelper {
   public:
     using IoctlHelper::IoctlHelper;
 
+    bool initialize() override;
     bool isVmBindAvailable() override;
     uint32_t createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) override;
     CacheRegion closAlloc() override;
@@ -205,6 +207,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
   public:
     using IoctlHelper::IoctlHelper;
 
+    bool initialize() override;
     bool isVmBindAvailable() override;
     uint32_t createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) override;
     CacheRegion closAlloc() override;

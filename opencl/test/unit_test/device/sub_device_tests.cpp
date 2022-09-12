@@ -307,9 +307,7 @@ TEST(SubDevicesTest, whenCreatingEngineInstancedSubDeviceThenSetCorrectSubdevice
         using RootDevice::RootDevice;
     };
 
-    auto executionEnvironment = new ExecutionEnvironment();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    auto executionEnvironment = new MockExecutionEnvironment();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     DeviceFactory::createMemoryManagerFunc(*executionEnvironment);
 
@@ -326,9 +324,7 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
     bool createDevices(uint32_t numGenericSubDevices, uint32_t numCcs) {
         DebugManager.flags.CreateMultipleSubDevices.set(numGenericSubDevices);
 
-        auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-        executionEnvironment->prepareRootDeviceEnvironments(1);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+        auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
         auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();

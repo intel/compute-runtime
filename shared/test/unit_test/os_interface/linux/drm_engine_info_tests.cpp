@@ -8,24 +8,23 @@
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 
 #include "gtest/gtest.h"
 
 using namespace NEO;
 
 TEST(DrmTest, whenQueryingEngineInfoThenSingleIoctlIsCalled) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     EXPECT_NE(nullptr, drm);
 
     drm->queryEngineInfo();
-    EXPECT_EQ(1u + drm->virtualMemoryIds.size(), drm->ioctlCallsCount);
+    EXPECT_EQ(1u + drm->getBaseIoctlCalls(), drm->ioctlCallsCount);
 }
 
 TEST(EngineInfoTest, givenEngineInfoQuerySupportedWhenQueryingEngineInfoThenEngineInfoIsCreatedWithEngines) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmMockEngine>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
 
@@ -33,7 +32,7 @@ TEST(EngineInfoTest, givenEngineInfoQuerySupportedWhenQueryingEngineInfoThenEngi
         {{0, 0}, 0, 0}};
     drm->memoryInfo.reset(new MemoryInfo(memRegions, *drm));
     drm->queryEngineInfo();
-    EXPECT_EQ(2u + drm->virtualMemoryIds.size(), drm->ioctlCallsCount);
+    EXPECT_EQ(2u + drm->getBaseIoctlCalls(), drm->ioctlCallsCount);
     auto engineInfo = drm->getEngineInfo();
 
     ASSERT_NE(nullptr, engineInfo);
@@ -41,21 +40,19 @@ TEST(EngineInfoTest, givenEngineInfoQuerySupportedWhenQueryingEngineInfoThenEngi
 }
 
 TEST(EngineInfoTest, whenQueryingEngineInfoWithoutMemoryInfoThenEngineInfoCreated) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmMockEngine>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
 
     drm->queryEngineInfo();
-    EXPECT_EQ(2u + drm->virtualMemoryIds.size(), drm->ioctlCallsCount);
+    EXPECT_EQ(2u + drm->getBaseIoctlCalls(), drm->ioctlCallsCount);
     auto engineInfo = drm->getEngineInfo();
 
     ASSERT_NE(nullptr, engineInfo);
 }
 
 TEST(EngineInfoTest, whenCreateEngineInfoWithRcsThenCorrectHwInfoSet) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmMockEngine>(*executionEnvironment->rootDeviceEnvironments[0]);
     auto ioctlHelper = drm->getIoctlHelper();
 
@@ -75,8 +72,7 @@ TEST(EngineInfoTest, whenCreateEngineInfoWithRcsThenCorrectHwInfoSet) {
 }
 
 TEST(EngineInfoTest, whenCreateEngineInfoWithCcsThenCorrectHwInfoSet) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmMockEngine>(*executionEnvironment->rootDeviceEnvironments[0]);
     auto ioctlHelper = drm->getIoctlHelper();
 
@@ -97,8 +93,7 @@ TEST(EngineInfoTest, whenCreateEngineInfoWithCcsThenCorrectHwInfoSet) {
 }
 
 TEST(EngineInfoTest, whenGetEngineInstanceAndTileThenCorrectValuesReturned) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmMockEngine>(*executionEnvironment->rootDeviceEnvironments[0]);
     auto ioctlHelper = drm->getIoctlHelper();
 
@@ -148,8 +143,7 @@ TEST(EngineInfoTest, whenGetEngineInstanceAndTileThenCorrectValuesReturned) {
 }
 
 TEST(EngineInfoTest, whenCreateEngineInfoAndInvalidQueryThenNoEnginesSet) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmMockEngine>(*executionEnvironment->rootDeviceEnvironments[0]);
     auto ioctlHelper = drm->getIoctlHelper();
 
@@ -183,8 +177,7 @@ TEST(EngineInfoTest, whenCreateEngineInfoAndInvalidQueryThenNoEnginesSet) {
 }
 
 TEST(EngineInfoTest, whenEmptyEngineInfoCreatedThen0TileReturned) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmMockEngine>(*executionEnvironment->rootDeviceEnvironments[0]);
     auto ioctlHelper = drm->getIoctlHelper();
 

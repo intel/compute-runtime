@@ -137,6 +137,10 @@ class DrmMock : public Drm {
         return bindAvailable;
     }
 
+    uint32_t getBaseIoctlCalls() {
+        return ioctlCallsForHelperInitialization + static_cast<uint32_t>(virtualMemoryIds.size());
+    }
+
     static const int mockFd = 33;
 
     bool failRetTopology = false;
@@ -229,7 +233,7 @@ class DrmMock : public Drm {
     bool expectIoctlCallsOnDestruction = false;
     uint32_t expectedIoctlCallsOnDestruction = 0u;
 
-    virtual int handleRemainingRequests(DrmIoctl request, void *arg) { return -1; }
+    virtual int handleRemainingRequests(DrmIoctl request, void *arg);
 
     struct WaitUserFenceParams {
         uint32_t ctxId;
@@ -267,6 +271,7 @@ class DrmMock : public Drm {
         }
         return storedGetDeviceMemoryPhysicalSizeInBytesStatus;
     }
+    static uint32_t ioctlCallsForHelperInitialization;
 };
 
 class DrmMockNonFailing : public DrmMock {

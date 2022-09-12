@@ -14,6 +14,10 @@
 
 namespace NEO {
 
+bool IoctlHelperUpstream::initialize() {
+    return true;
+}
+
 bool IoctlHelperUpstream::isVmBindAvailable() {
     return false;
 }

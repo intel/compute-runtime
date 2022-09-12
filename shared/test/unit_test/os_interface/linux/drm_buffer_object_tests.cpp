@@ -12,6 +12,7 @@
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/linux/mock_drm_wrappers.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm_helper.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 #include "shared/test/common/os_interface/linux/drm_buffer_object_fixture.h"
@@ -519,8 +520,7 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindFailsThenPrint
 }
 
 TEST(DrmBufferObject, whenBindExtHandleAddedThenItIsStored) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     MockBufferObject bo(&drm, 3, 0, 0, 1);
@@ -534,8 +534,7 @@ TEST(DrmBufferObject, whenBindExtHandleAddedThenItIsStored) {
 }
 
 TEST(DrmBufferObject, whenMarkForCapturedCalledThenIsMarkedForCaptureReturnsTrue) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     MockBufferObject bo(&drm, 3, 0, 0, 1);

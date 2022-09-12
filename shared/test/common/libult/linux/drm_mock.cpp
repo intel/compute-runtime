@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/linux/i915.h"
 
 #include "gtest/gtest.h"
+#include "ioctl_helper_init_calls.inl"
 
 #include <cstring>
 

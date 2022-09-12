@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 
 #include "gtest/gtest.h"
 
@@ -15,9 +16,7 @@ using namespace NEO;
 struct DrmDebugTest : public ::testing::Test {
   public:
     void SetUp() override {
-        executionEnvironment = std::make_unique<ExecutionEnvironment>();
-        executionEnvironment->prepareRootDeviceEnvironments(1);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+        executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     }
 
     void TearDown() override {

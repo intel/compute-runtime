@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/unit_test/os_interface/linux/hw_info_config_linux_tests.h"
 
 using namespace NEO;
@@ -47,8 +48,7 @@ class IcllpHwInfoTests : public ::testing::Test {};
 typedef ::testing::Types<IcllpHw1x8x8, IcllpHw1x4x8, IcllpHw1x6x8> icllpTestTypes;
 TYPED_TEST_CASE(IcllpHwInfoTests, icllpTestTypes);
 TYPED_TEST(IcllpHwInfoTests, WhenGettingSystemInfoThenParamsAreValid) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();

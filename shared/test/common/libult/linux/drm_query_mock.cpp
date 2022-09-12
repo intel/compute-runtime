@@ -20,7 +20,7 @@ DrmQueryMock::DrmQueryMock(RootDeviceEnvironment &rootDeviceEnvironment, const H
     this->ioctlHelper = std::make_unique<IoctlHelperPrelim20>(*this);
 
     EXPECT_TRUE(queryMemoryInfo());
-    EXPECT_EQ(2u + virtualMemoryIds.size(), ioctlCallsCount);
+    EXPECT_EQ(2u + getBaseIoctlCalls(), ioctlCallsCount);
     ioctlCallsCount = 0;
 }
 

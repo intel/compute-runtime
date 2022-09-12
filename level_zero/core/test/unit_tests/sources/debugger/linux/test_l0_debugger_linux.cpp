@@ -120,12 +120,9 @@ TEST_F(L0DebuggerLinuxTest, givenLinuxOSWhenL0DebuggerIsCreatedAddressModeIsNotS
 }
 
 TEST(L0DebuggerLinux, givenVmBindAndPerContextVmEnabledInDrmWhenInitializingDebuggingInOsThenRegisterResourceClassesIsCalled) {
-    auto executionEnvironment = std::make_unique<NEO::ExecutionEnvironment>();
+    auto executionEnvironment = std::make_unique<NEO::MockExecutionEnvironment>();
 
-    executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->setDebuggingEnabled();
-
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     executionEnvironment->initializeMemoryManager();
     auto osInterface = new OSInterface();
     auto drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -142,12 +139,9 @@ TEST(L0DebuggerLinux, givenVmBindAndPerContextVmEnabledInDrmWhenInitializingDebu
 }
 
 TEST(L0DebuggerLinux, givenVmBindNotAvailableInDrmWhenInitializingDebuggingInOsThenRegisterResourceClassesIsNotCalled) {
-    auto executionEnvironment = std::make_unique<NEO::ExecutionEnvironment>();
+    auto executionEnvironment = std::make_unique<NEO::MockExecutionEnvironment>();
 
-    executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->setDebuggingEnabled();
-
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     executionEnvironment->initializeMemoryManager();
     auto osInterface = new OSInterface();
     auto drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -164,12 +158,9 @@ TEST(L0DebuggerLinux, givenVmBindNotAvailableInDrmWhenInitializingDebuggingInOsT
 }
 
 TEST(L0DebuggerLinux, givenPerContextVmNotEnabledWhenInitializingDebuggingInOsThenRegisterResourceClassesIsNotCalled) {
-    auto executionEnvironment = std::make_unique<NEO::ExecutionEnvironment>();
+    auto executionEnvironment = std::make_unique<NEO::MockExecutionEnvironment>();
 
-    executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->setDebuggingEnabled();
-
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     executionEnvironment->initializeMemoryManager();
     auto osInterface = new OSInterface();
     auto drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);

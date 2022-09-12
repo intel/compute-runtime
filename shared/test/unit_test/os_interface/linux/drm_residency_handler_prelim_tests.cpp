@@ -26,6 +26,7 @@
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -932,8 +933,7 @@ TEST(DrmResidencyHandlerTests, givenSupportedVmBindAndDebugFlagUseVmBindWhenQuer
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseVmBind.set(1);
 
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.context.vmBindQueryValue = 1;
     EXPECT_FALSE(drm.bindAvailable);
@@ -951,8 +951,7 @@ TEST(DrmResidencyHandlerTests, givenDebugFlagUseVmBindWhenQueryingIsVmBindAvaila
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseVmBind.set(1);
 
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     EXPECT_FALSE(drm.bindAvailable);
     drm.context.vmBindQueryReturn = -1;
@@ -975,8 +974,7 @@ TEST(DrmResidencyHandlerTests, givenDebugFlagUseVmBindSetDefaultAndBindAvailable
     DebugManager.flags.UseVmBind.set(-1);
     VariableBackup<bool> disableBindBackup(&disableBindDefaultInTests, false);
 
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.context.vmBindQueryValue = 1;
     drm.context.vmBindQueryReturn = 0;
@@ -996,8 +994,7 @@ TEST(DrmResidencyHandlerTests, givenDebugFlagUseVmBindSetDefaultWhenQueryingIsVm
     DebugManager.flags.UseVmBind.set(-1);
     VariableBackup<bool> disableBindBackup(&disableBindDefaultInTests, false);
 
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.context.vmBindQueryValue = 1;
     drm.context.vmBindQueryReturn = -1;
@@ -1014,8 +1011,7 @@ TEST(DrmResidencyHandlerTests, givenDebugFlagUseVmBindSetDefaultWhenQueryingIsVm
     DebugManager.flags.UseVmBind.set(-1);
     VariableBackup<bool> disableBindBackup(&disableBindDefaultInTests, false);
 
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.context.vmBindQueryValue = 0;
     drm.context.vmBindQueryReturn = 0;

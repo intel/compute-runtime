@@ -10,6 +10,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/linux/drm_mock_cache_info.h"
 
 #include "gtest/gtest.h"
@@ -17,8 +18,7 @@
 using namespace NEO;
 
 TEST(DrmCacheInfoTest, givenCacheRegionsExistsWhenCallingSetUpCacheInfoThenCacheInfoIsCreatedAndReturnsMaxReservationCacheLimits) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     auto &hwHelper = HwHelper::get(drm.context.hwInfo->platform.eRenderCoreFamily);
@@ -51,8 +51,7 @@ TEST(DrmCacheInfoTest, givenCacheRegionsExistsWhenCallingSetUpCacheInfoThenCache
 TEST(DrmCacheInfoTest, givenDebugFlagSetWhenCallingSetUpCacheInfoThenCacheInfoIsCreatedWithoutValues) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.ClosEnabled.set(0);
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     drm.setupCacheInfo(*defaultHwInfo.get());
@@ -65,8 +64,7 @@ TEST(DrmCacheInfoTest, givenDebugFlagSetWhenCallingSetUpCacheInfoThenCacheInfoIs
 }
 
 TEST(DrmCacheInfoTest, givenCacheInfoCreatedWhenGetCacheRegionSucceedsToReserveCacheRegionThenReturnTrue) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
 
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     CacheInfo cacheInfo(drm, 32 * MemoryConstants::kiloByte, 2, 32);
@@ -78,8 +76,7 @@ TEST(DrmCacheInfoTest, givenCacheInfoCreatedWhenGetCacheRegionSucceedsToReserveC
 }
 
 TEST(DrmCacheInfoTest, givenCacheInfoCreatedWhenGetCacheRegionFailsToReserveCacheRegionThenReturnFalse) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
 
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     CacheInfo cacheInfo(drm, 32 * MemoryConstants::kiloByte, 2, 32);
@@ -92,8 +89,7 @@ TEST(DrmCacheInfoTest, givenCacheInfoCreatedWhenGetCacheRegionFailsToReserveCach
 }
 
 TEST(DrmCacheInfoTest, givenCacheInfoWithReservedCacheRegionWhenGetCacheRegionIsCalledForReservedCacheRegionThenReturnTrue) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
 
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     CacheInfo cacheInfo(drm, 32 * MemoryConstants::kiloByte, 2, 32);
@@ -107,8 +103,7 @@ TEST(DrmCacheInfoTest, givenCacheInfoWithReservedCacheRegionWhenGetCacheRegionIs
 }
 
 TEST(DrmCacheInfoTest, givenCacheInfoCreatedWhenGetCacheRegionIsCalledForReservableRegionsWithRegionSizesInverselyProportionalToNumCacheRegionsThenReturnTrue) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
 
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     CacheInfo cacheInfo(drm, 32 * MemoryConstants::kiloByte, 2, 32);
@@ -127,8 +122,7 @@ TEST(DrmCacheInfoTest, givenCacheInfoWhenSpecificNumCacheWaysIsRequestedThenRese
     DebugManagerStateRestore restorer;
     DebugManager.flags.ClosNumCacheWays.set(maxNumCacheWays / 2);
 
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
 
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     MockCacheInfo cacheInfo(drm, 32 * MemoryConstants::kiloByte, 2, maxNumCacheWays);
@@ -147,8 +141,7 @@ TEST(DrmCacheInfoTest, givenCacheInfoWhenSpecificNumCacheWaysIsRequestedThenRese
 TEST(DrmCacheInfoTest, givenCacheInfoWhenNumCacheWaysIsExceededThenDontReserveCacheRegion) {
     constexpr uint16_t maxNumCacheWays = 32;
 
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
 
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     MockCacheInfo cacheInfo(drm, 32 * MemoryConstants::kiloByte, 2, maxNumCacheWays);
@@ -162,8 +155,7 @@ TEST(DrmCacheInfoTest, givenCacheInfoWhenNumCacheWaysIsExceededThenDontReserveCa
 }
 
 TEST(DrmCacheInfoTest, givenCacheInfoCreatedWhenFreeCacheRegionIsCalledForNonReservedRegionThenItFails) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
 
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     MockCacheInfo cacheInfo(drm, 32 * MemoryConstants::kiloByte, 2, 32);

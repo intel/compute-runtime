@@ -9,6 +9,7 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_compilers.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
@@ -24,11 +25,9 @@ struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
     void SetUp() override {
 
         ze_result_t returnValue = ZE_RESULT_SUCCESS;
-        auto executionEnvironment = new NEO::ExecutionEnvironment();
+        auto executionEnvironment = new NEO::MockExecutionEnvironment();
         auto mockBuiltIns = new MockBuiltins();
-        executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
         neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u);

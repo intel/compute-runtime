@@ -25,5 +25,7 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}/directory_linux.cpp
   )
 
+  target_include_directories(neo_libult_common PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX})
+
   add_subdirectories()
 endif()

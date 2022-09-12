@@ -11,6 +11,7 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -689,10 +690,7 @@ struct EngineInstancedDeviceExecuteTests : public ::testing::Test {
     bool createDevices(uint32_t numGenericSubDevices, uint32_t numCcs) {
         DebugManager.flags.CreateMultipleSubDevices.set(numGenericSubDevices);
 
-        auto executionEnvironment = std::make_unique<NEO::ExecutionEnvironment>();
-        executionEnvironment->prepareRootDeviceEnvironments(1);
-
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+        auto executionEnvironment = std::make_unique<NEO::MockExecutionEnvironment>();
         auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
         hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = numCcs;
         hwInfo->featureTable.flags.ftrCCSNode = (numCcs > 0);

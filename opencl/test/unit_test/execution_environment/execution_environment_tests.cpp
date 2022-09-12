@@ -240,8 +240,6 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     auto gmmHelper = new GmmHelperMock(destructorId, defaultHwInfo.get());
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     executionEnvironment->rootDeviceEnvironments[0]->gmmHelper = std::unique_ptr<GmmHelperMock>(gmmHelper);
     executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OsInterfaceMock>(destructorId);
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<MemoryOperationsHandlerMock>(destructorId);

@@ -1058,6 +1058,7 @@ void Drm::setupIoctlHelper(const PRODUCT_FAMILY productFamily) {
         getPrelimVersion(prelimVersion);
         auto drmVersion = Drm::getDrmVersion(getFileDescriptor());
         this->ioctlHelper = IoctlHelper::get(productFamily, prelimVersion, drmVersion, *this);
+        this->ioctlHelper->initialize();
     }
 }
 

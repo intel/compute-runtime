@@ -628,9 +628,7 @@ struct CommandQueueInitTests : public ::testing::Test {
     void SetUp() override {
         DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
 
-        auto executionEnvironment = new NEO::ExecutionEnvironment();
-        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+        auto executionEnvironment = new NEO::MockExecutionEnvironment(defaultHwInfo.get(), true, numRootDevices);
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
         memoryManager = new MyMemoryManager(*executionEnvironment);

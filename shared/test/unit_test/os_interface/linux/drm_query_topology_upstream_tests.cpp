@@ -8,17 +8,14 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
 
 TEST(DrmQueryTopologyTest, GivenDrmWhenQueryingTopologyInfoCorrectMaxValuesAreSet) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-
-    *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo() = *NEO::defaultHwInfo.get();
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     Drm::QueryTopologyData topologyData = {};
@@ -35,10 +32,7 @@ TEST(DrmQueryTopologyTest, GivenDrmWhenQueryingTopologyInfoCorrectMaxValuesAreSe
 }
 
 TEST(DrmQueryTopologyTest, givenDrmWhenGettingSliceMappingsThenCorrectMappingReturned) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-
-    *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo() = *NEO::defaultHwInfo.get();
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drmMock{*executionEnvironment->rootDeviceEnvironments[0]};
 
     Drm::QueryTopologyData topologyData = {};

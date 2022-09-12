@@ -138,6 +138,7 @@ class HwInfoConfig {
     virtual void adjustNumberOfCcs(HardwareInfo &hwInfo) const = 0;
     virtual bool isPrefetcherDisablingInDirectSubmissionRequired() const = 0;
     virtual bool isStatefulAddressingModeSupported() const = 0;
+    virtual bool isPlatformQuerySupported() const = 0;
 
     virtual bool getFrontEndPropertyScratchSizeSupport() const = 0;
     virtual bool getFrontEndPropertyPrivateScratchSizeSupport() const = 0;
@@ -273,6 +274,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     void adjustNumberOfCcs(HardwareInfo &hwInfo) const override;
     bool isPrefetcherDisablingInDirectSubmissionRequired() const override;
     bool isStatefulAddressingModeSupported() const override;
+    bool isPlatformQuerySupported() const override;
 
     bool getFrontEndPropertyScratchSizeSupport() const override;
     bool getFrontEndPropertyPrivateScratchSizeSupport() const override;

@@ -9,6 +9,7 @@
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/mock_source_level_debugger.h"
@@ -30,14 +31,12 @@ struct ActiveDebuggerFixture {
     void setUp() {
 
         ze_result_t returnValue;
-        auto executionEnvironment = new NEO::ExecutionEnvironment();
+        auto executionEnvironment = new NEO::MockExecutionEnvironment();
         auto mockBuiltIns = new MockBuiltins();
-        executionEnvironment->prepareRootDeviceEnvironments(1);
 
-        hwInfo = *defaultHwInfo.get();
+        hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
 
         executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
         auto isHexadecimalArrayPrefered = HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred();

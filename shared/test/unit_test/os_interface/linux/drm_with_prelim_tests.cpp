@@ -44,8 +44,7 @@ class DrmPrelimMock : public DrmMock {
 class IoctlHelperPrelimFixture : public ::testing::Test {
   public:
     void SetUp() override {
-        executionEnvironment = std::make_unique<ExecutionEnvironment>();
-        executionEnvironment->prepareRootDeviceEnvironments(1);
+        executionEnvironment = std::make_unique<MockExecutionEnvironment>();
         drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
         drm->ioctlHelper = std::make_unique<IoctlHelperPrelim20>(*drm);
     }

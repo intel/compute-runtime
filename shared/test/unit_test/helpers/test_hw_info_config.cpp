@@ -191,3 +191,8 @@ HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenIsStatefulAddressingModeSupport
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     EXPECT_TRUE(hwInfoConfig.isStatefulAddressingModeSupported());
 }
+
+HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenIsPlatformQueryNotSupportedThenReturnFalse, IsAtMostDg2) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    EXPECT_FALSE(hwInfoConfig.isPlatformQuerySupported());
+}
