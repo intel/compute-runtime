@@ -15,6 +15,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 
 namespace L0 {
 namespace ult {
@@ -182,6 +183,14 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenAppendingEventResetThenEve
             std::find(std::begin(residencyContainer), std::end(residencyContainer), alloc);
         EXPECT_NE(itor, std::end(residencyContainer));
     }
+}
+
+HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenAppendingEventResetThenIsCompletedResetted) {
+    MockEvent event;
+    event.isCompleted = true;
+    auto result = commandList->appendEventReset(event.toHandle());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(event.isCompleted);
 }
 
 HWTEST2_F(CommandListAppendEventReset, givenImmediateCmdlistWhenAppendingEventResetThenCommandsAreExecuted, IsAtLeastSkl) {

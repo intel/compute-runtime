@@ -114,6 +114,10 @@ struct Event : _ze_event_handle_t {
         l3FlushAppliedOnKernel.set(kernelCount - 1);
     }
 
+    void resetCompletion() {
+        this->isCompleted = false;
+    }
+
     uint64_t globalStartTS;
     uint64_t globalEndTS;
     uint64_t contextStartTS;
@@ -143,6 +147,7 @@ struct Event : _ze_event_handle_t {
 
     bool isTimestampEvent = false;
     bool usingContextEndOffset = false;
+    std::atomic<bool> isCompleted{false};
 };
 
 template <typename TagSizeT>

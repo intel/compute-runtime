@@ -365,6 +365,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
         packetsToReset = EventPacketsCount::eventPackets;
     }
     event->resetPackets();
+    event->resetCompletion();
     commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
     const auto &hwInfo = this->device->getHwInfo();
     if (isCopyOnly()) {

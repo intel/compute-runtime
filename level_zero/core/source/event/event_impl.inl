@@ -140,6 +140,7 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets() {
             }
         }
     }
+    isCompleted = true;
     this->csr->getInternalAllocationStorage()->cleanAllocationList(this->csr->peekTaskCount(), NEO::AllocationUsage::TEMPORARY_ALLOCATION);
     return ZE_RESULT_SUCCESS;
 }
@@ -155,7 +156,11 @@ ze_result_t EventImp<TagSizeT>::queryStatus() {
     }
     this->csr->downloadAllocations();
     this->csr->downloadAllocation(*eventPool->getAllocation().getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex()));
-    return queryStatusEventPackets();
+    if (isCompleted == true) {
+        return ZE_RESULT_SUCCESS;
+    } else {
+        return queryStatusEventPackets();
+    }
 }
 
 template <typename TagSizeT>
@@ -275,6 +280,7 @@ ze_result_t EventImp<TagSizeT>::reset() {
     }
     hostEventSetValue(Event::STATE_INITIAL);
     resetPackets();
+    resetCompletion();
     this->l3FlushAppliedOnKernel.reset();
     return ZE_RESULT_SUCCESS;
 }

@@ -67,6 +67,7 @@ struct Mock<EventPool> : public EventPool {
 
 class MockEvent : public ::L0::Event {
   public:
+    using ::L0::Event::isCompleted;
     using ::L0::Event::l3FlushAppliedOnKernel;
     MockEvent() {
         mockAllocation.reset(new NEO::MockGraphicsAllocation(0,

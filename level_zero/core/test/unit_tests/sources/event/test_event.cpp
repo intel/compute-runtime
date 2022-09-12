@@ -2190,5 +2190,85 @@ HWTEST_F(EventTests,
     event->destroy();
 }
 
+TEST_F(EventTests, WhenQueryingStatusWithoutResetThenCompletionDataNotChanged) {
+    auto event = std::unique_ptr<L0::EventImp<uint32_t>>(static_cast<L0::EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool,
+                                                                                                                           &eventDesc,
+                                                                                                                           device)));
+    auto result = event->hostSignal();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
+
+    for (auto j = 0u; j < event->getKernelCount(); j++) {
+        for (auto i = 0u; i < event->kernelEventCompletionData[j].getPacketsUsed(); i++) {
+            if (event->isUsingContextEndOffset()) {
+                EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_SIGNALED), event->kernelEventCompletionData[j].getContextEndValue(i));
+            } else {
+                EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_SIGNALED), event->kernelEventCompletionData[j].getContextStartValue(i));
+            }
+        }
+    }
+
+    size_t eventCompletionOffset = event->getContextStartOffset();
+    if (event->isUsingContextEndOffset()) {
+        eventCompletionOffset = event->getContextEndOffset();
+    }
+
+    uint32_t *eventAddress = static_cast<uint32_t *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
+    *eventAddress = Event::STATE_INITIAL;
+
+    EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
+    for (auto j = 0u; j < event->getKernelCount(); j++) {
+        for (auto i = 0u; i < event->kernelEventCompletionData[j].getPacketsUsed(); i++) {
+            if (event->isUsingContextEndOffset()) {
+                EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_SIGNALED), event->kernelEventCompletionData[j].getContextEndValue(i));
+            } else {
+                EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_SIGNALED), event->kernelEventCompletionData[j].getContextStartValue(i));
+            }
+        }
+    }
+}
+
+TEST_F(EventTests, WhenQueryingStatusAfterResetThenCompletionDataChanged) {
+    auto event = std::unique_ptr<L0::EventImp<uint32_t>>(static_cast<L0::EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool,
+                                                                                                                           &eventDesc,
+                                                                                                                           device)));
+    auto result = event->hostSignal();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
+
+    for (auto j = 0u; j < event->getKernelCount(); j++) {
+        for (auto i = 0u; i < event->kernelEventCompletionData[j].getPacketsUsed(); i++) {
+            if (event->isUsingContextEndOffset()) {
+                EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_SIGNALED), event->kernelEventCompletionData[j].getContextEndValue(i));
+            } else {
+                EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_SIGNALED), event->kernelEventCompletionData[j].getContextStartValue(i));
+            }
+        }
+    }
+
+    event->resetCompletion();
+    result = event->hostSignal();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    size_t eventCompletionOffset = event->getContextStartOffset();
+    if (event->isUsingContextEndOffset()) {
+        eventCompletionOffset = event->getContextEndOffset();
+    }
+
+    uint32_t *eventAddress = static_cast<uint32_t *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
+    *eventAddress = Event::STATE_INITIAL;
+
+    EXPECT_EQ(event->queryStatus(), ZE_RESULT_NOT_READY);
+    for (auto j = 0u; j < event->getKernelCount(); j++) {
+        for (auto i = 0u; i < event->kernelEventCompletionData[j].getPacketsUsed(); i++) {
+            if (event->isUsingContextEndOffset()) {
+                EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->kernelEventCompletionData[j].getContextEndValue(i));
+            } else {
+                EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->kernelEventCompletionData[j].getContextStartValue(i));
+            }
+        }
+    }
+}
+
 } // namespace ult
 } // namespace L0
