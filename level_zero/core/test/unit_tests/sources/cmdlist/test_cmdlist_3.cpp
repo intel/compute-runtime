@@ -1359,8 +1359,9 @@ HWTEST2_F(CommandListCreate, givenNonEmptyCommandsToPatchWhenClearCommandsToPatc
 }
 
 template <NEO::AllocationType AllocType>
-class MyDeviceMock : public Mock<Device> {
+class MyDeviceMock : public Mock<DeviceImp> {
   public:
+    using Mock<L0::DeviceImp>::Mock;
     NEO::GraphicsAllocation *allocateMemoryFromHostPtr(const void *buffer, size_t size, bool hostCopyAllowed) override {
         auto alloc = std::make_unique<NEO::MockGraphicsAllocation>(const_cast<void *>(buffer), reinterpret_cast<uintptr_t>(buffer), size);
         alloc->allocationType = AllocType;
@@ -1372,7 +1373,7 @@ class MyDeviceMock : public Mock<Device> {
 };
 
 HWTEST2_F(CommandListCreate, givenHostPtrAllocAllocWhenInternalMemCreatedThenNewAllocAddedToDealocationContainer, IsAtLeastSkl) {
-    auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::INTERNAL_HOST_MEMORY>>();
+    auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::INTERNAL_HOST_MEMORY>>(device->getNEODevice(), execEnv);
     myDevice->neoDevice = device->getNEODevice();
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(myDevice.get(), NEO::EngineGroupType::Copy, 0u);
@@ -1387,7 +1388,7 @@ HWTEST2_F(CommandListCreate, givenHostPtrAllocAllocWhenInternalMemCreatedThenNew
 }
 
 HWTEST2_F(CommandListCreate, givenHostPtrAllocAllocWhenExternalMemCreatedThenNewAllocAddedToHostPtrMap, IsAtLeastSkl) {
-    auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::EXTERNAL_HOST_PTR>>();
+    auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::EXTERNAL_HOST_PTR>>(device->getNEODevice(), execEnv);
     myDevice->neoDevice = device->getNEODevice();
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(myDevice.get(), NEO::EngineGroupType::Copy, 0u);
@@ -1402,7 +1403,7 @@ HWTEST2_F(CommandListCreate, givenHostPtrAllocAllocWhenExternalMemCreatedThenNew
 }
 
 HWTEST2_F(CommandListCreate, givenGetAlignedAllocationWhenInternalMemWithinDifferentAllocThenReturnNewAlloc, IsAtLeastSkl) {
-    auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::INTERNAL_HOST_MEMORY>>();
+    auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::INTERNAL_HOST_MEMORY>>(device->getNEODevice(), execEnv);
     myDevice->neoDevice = device->getNEODevice();
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(myDevice.get(), NEO::EngineGroupType::Copy, 0u);
@@ -1416,7 +1417,7 @@ HWTEST2_F(CommandListCreate, givenGetAlignedAllocationWhenInternalMemWithinDiffe
     commandList->commandContainer.getDeallocationContainer().clear();
 }
 HWTEST2_F(CommandListCreate, givenGetAlignedAllocationWhenExternalMemWithinDifferentAllocThenReturnPreviouslyAllocatedMem, IsAtLeastSkl) {
-    auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::EXTERNAL_HOST_PTR>>();
+    auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::EXTERNAL_HOST_PTR>>(device->getNEODevice(), execEnv);
     myDevice->neoDevice = device->getNEODevice();
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(myDevice.get(), NEO::EngineGroupType::Copy, 0u);

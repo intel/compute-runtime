@@ -60,4 +60,69 @@ void BcsSplit::releaseResources() {
         cmdQ->destroy();
     }
 }
+
+BcsSplit::Events::~Events() {
+    for (auto &markerEvent : this->marker) {
+        markerEvent->destroy();
+    }
+    for (auto &subcopyEvent : this->subcopy) {
+        subcopyEvent->destroy();
+    }
+    for (auto &pool : this->pools) {
+        pool->destroy();
+    }
+}
+
+size_t BcsSplit::Events::obtainForSplit(Context *context, size_t maxEventCountInPool) {
+    for (size_t i = 0; i < this->marker.size(); i++) {
+        auto ret = this->marker[i]->queryStatus();
+        if (ret == ZE_RESULT_SUCCESS) {
+            this->marker[i]->reset();
+            for (size_t j = 0; j < this->bcsSplit.cmdQs.size(); j++) {
+                this->subcopy[i * this->bcsSplit.cmdQs.size() + j]->reset();
+            }
+            return i;
+        }
+    }
+
+    return this->allocateNew(context, maxEventCountInPool);
+}
+
+size_t BcsSplit::Events::allocateNew(Context *context, size_t maxEventCountInPool) {
+    const size_t neededEvents = this->bcsSplit.cmdQs.size() + 1;
+
+    if (this->pools.empty() ||
+        this->createdFromLatestPool + neededEvents > maxEventCountInPool) {
+        ze_result_t result;
+        ze_event_pool_desc_t desc{};
+        desc.stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC;
+        desc.count = static_cast<uint32_t>(maxEventCountInPool);
+        auto hDevice = this->bcsSplit.device.toHandle();
+        auto pool = EventPool::create(this->bcsSplit.device.getDriverHandle(), context, 1, &hDevice, &desc, result);
+        this->pools.push_back(pool);
+        this->createdFromLatestPool = 0u;
+    }
+
+    auto pool = this->pools[this->pools.size() - 1];
+    ze_event_desc_t desc{};
+    desc.stype = ZE_STRUCTURE_TYPE_EVENT_DESC;
+    desc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
+    for (size_t i = 0; i < neededEvents; i++) {
+        desc.index = static_cast<uint32_t>(this->createdFromLatestPool++);
+        if (i == neededEvents - 1) {
+            desc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+        }
+
+        ze_event_handle_t hEvent;
+        pool->createEvent(&desc, &hEvent);
+
+        if (i == neededEvents - 1) {
+            this->marker.push_back(Event::fromHandle(hEvent));
+        } else {
+            this->subcopy.push_back(Event::fromHandle(hEvent));
+        }
+    }
+
+    return this->marker.size() - 1;
+}
 } // namespace L0

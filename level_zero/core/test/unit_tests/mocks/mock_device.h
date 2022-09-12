@@ -101,7 +101,11 @@ struct Mock<L0::DeviceImp> : public L0::DeviceImp {
     using Base = L0::DeviceImp;
     using Base::adjustCommandQueueDesc;
     using Base::debugSession;
+    using Base::getNEODevice;
     using Base::implicitScalingCapable;
+    using Base::neoDevice;
+
+    Mock() = default;
 
     explicit Mock(NEO::Device *device, NEO::ExecutionEnvironment *execEnv) {
         device->incRefInternal();

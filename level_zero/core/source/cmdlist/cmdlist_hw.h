@@ -157,6 +157,7 @@ struct CommandListCoreFamily : CommandListImp {
     void appendMultiPartitionPrologue(uint32_t partitionDataSize) override;
     void appendMultiPartitionEpilogue() override;
     void appendEventForProfilingAllWalkers(Event *event, bool beforeWalker);
+    ze_result_t addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
 
     ze_result_t reserveSpace(size_t size, void **ptr) override;
     ze_result_t reset() override;
@@ -259,7 +260,6 @@ struct CommandListCoreFamily : CommandListImp {
     size_t estimateBufferSizeMultiTileBarrier(const NEO::HardwareInfo &hwInfo);
     uint64_t getInputBufferSize(NEO::ImageType imageType, uint64_t bytesPerPixel, const ze_image_region_t *region);
     MOCKABLE_VIRTUAL AlignedAllocationData getAlignedAllocation(Device *device, const void *buffer, uint64_t bufferSize, bool hostCopyAllowed);
-    ze_result_t addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
     void addFlushRequiredCommand(bool flushOperationRequired, Event *signalEvent);
 
     virtual void createLogicalStateHelper();
