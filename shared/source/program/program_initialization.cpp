@@ -39,14 +39,16 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
         rootDeviceIndices.push_back(rootDeviceIndex);
         std::map<uint32_t, DeviceBitfield> subDeviceBitfields;
         subDeviceBitfields.insert({rootDeviceIndex, deviceBitfield});
-        auto ptr = svmAllocManager->createSVMAlloc(size, svmProps, rootDeviceIndices, subDeviceBitfields);
+        NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, rootDeviceIndices, subDeviceBitfields);
+        unifiedMemoryProperties.device = &device;
+        auto ptr = svmAllocManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
         DEBUG_BREAK_IF(ptr == nullptr);
         if (ptr == nullptr) {
             return nullptr;
         }
-        auto svmAlloc = svmAllocManager->getSVMAlloc(ptr);
-        UNRECOVERABLE_IF(svmAlloc == nullptr);
-        gpuAllocation = svmAlloc->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+        auto usmAlloc = svmAllocManager->getSVMAlloc(ptr);
+        UNRECOVERABLE_IF(usmAlloc == nullptr);
+        gpuAllocation = usmAlloc->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
     } else {
         auto allocationType = constant ? AllocationType::CONSTANT_SURFACE : AllocationType::GLOBAL_SURFACE;
         gpuAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex,

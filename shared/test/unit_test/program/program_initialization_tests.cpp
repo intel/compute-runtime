@@ -62,7 +62,7 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedTh
     device.getMemoryManager()->freeGraphicsMemory(alloc);
 }
 
-TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreExportedThenMemoryIsAllocatedAsSvmAllocation) {
+TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreExportedThenMemoryIsAllocatedAsUsmDeviceAllocation) {
     MockDevice device{};
     REQUIRE_SVM_OR_SKIP(&device);
     MockMemoryManager memoryManager;
@@ -77,10 +77,11 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreExportedThenM
 
     alloc = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), true /* constant */, &linkerInputExportGlobalConstants, initData.data());
     ASSERT_NE(nullptr, alloc);
-    ASSERT_EQ(initData.size(), alloc->getUnderlyingBufferSize());
+    ASSERT_EQ(MemoryConstants::pageSize64k, alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
     ASSERT_NE(nullptr, svmAllocsManager.getSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(alloc->getGpuAddress()))));
-    EXPECT_FALSE(alloc->isMemObjectsAllocationWithWritableFlags());
+    EXPECT_TRUE(alloc->isMemObjectsAllocationWithWritableFlags());
+    EXPECT_EQ(DEVICE_UNIFIED_MEMORY, svmAllocsManager.getSVMAlloc(reinterpret_cast<void *>(alloc->getGpuAddress()))->memoryType);
     svmAllocsManager.freeSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(alloc->getGpuAddress())));
 
     alloc = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), true /* constant */, &linkerInputExportGlobalVariables, initData.data());
@@ -99,10 +100,11 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreExportedThenM
 
     alloc = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), false /* constant */, &linkerInputExportGlobalVariables, initData.data());
     ASSERT_NE(nullptr, alloc);
-    ASSERT_EQ(initData.size(), alloc->getUnderlyingBufferSize());
+    ASSERT_EQ(MemoryConstants::pageSize64k, alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
     EXPECT_NE(nullptr, svmAllocsManager.getSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(alloc->getGpuAddress()))));
     EXPECT_TRUE(alloc->isMemObjectsAllocationWithWritableFlags());
+    EXPECT_EQ(DEVICE_UNIFIED_MEMORY, svmAllocsManager.getSVMAlloc(reinterpret_cast<void *>(alloc->getGpuAddress()))->memoryType);
     svmAllocsManager.freeSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(alloc->getGpuAddress())));
 }
 
@@ -178,26 +180,6 @@ TEST(AllocateGlobalSurfaceTest, WhenGlobalsAreNotExportedAndAllocationFailsThenG
     EXPECT_EQ(nullptr, alloc);
 
     alloc = allocateGlobalsSurface(nullptr /* svmAllocsManager */, device, initData.size(), false /* constant */, &emptyLinkerInput, initData.data());
-    EXPECT_EQ(nullptr, alloc);
-}
-
-TEST(AllocateGlobalSurfaceTest, WhenGlobalsAreExportedAndAllocationFailsThenGracefullyReturnsNullptr) {
-    MockDevice device{};
-    MockMemoryManager memoryManager{*device.getExecutionEnvironment()};
-    MockSVMAllocsManager svmAllocsManager(&memoryManager, false);
-    memoryManager.failInAllocateWithSizeAndAlignment = true;
-    WhiteBox<LinkerInput> linkerInputExportGlobalVariables;
-    WhiteBox<LinkerInput> linkerInputExportGlobalConstants;
-    linkerInputExportGlobalVariables.traits.exportsGlobalVariables = true;
-    linkerInputExportGlobalConstants.traits.exportsGlobalConstants = true;
-    std::vector<uint8_t> initData;
-    initData.resize(64, 7U);
-    GraphicsAllocation *alloc = nullptr;
-
-    alloc = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), true /* constant */, &linkerInputExportGlobalConstants, initData.data());
-    EXPECT_EQ(nullptr, alloc);
-
-    alloc = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), false /* constant */, &linkerInputExportGlobalVariables, initData.data());
     EXPECT_EQ(nullptr, alloc);
 }
 
