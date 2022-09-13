@@ -293,11 +293,10 @@ void CommandContainer::closeAndAllocateNextCommandBuffer() {
 void CommandContainer::prepareBindfulSsh() {
     if (ApiSpecificConfig::getBindlessConfiguration()) {
         if (allocationIndirectHeaps[IndirectHeap::Type::SURFACE_STATE] == nullptr) {
-            size_t alignedSize = alignUp<size_t>(totalCmdBufferSize, MemoryConstants::pageSize64k);
-            constexpr size_t heapSize = 65536u;
+            constexpr size_t heapSize = MemoryConstants::pageSize64k;
             allocationIndirectHeaps[IndirectHeap::Type::SURFACE_STATE] = heapHelper->getHeapAllocation(IndirectHeap::Type::SURFACE_STATE,
                                                                                                        heapSize,
-                                                                                                       alignedSize,
+                                                                                                       MemoryConstants::pageSize64k,
                                                                                                        device->getRootDeviceIndex());
             UNRECOVERABLE_IF(!allocationIndirectHeaps[IndirectHeap::Type::SURFACE_STATE]);
             residencyContainer.push_back(allocationIndirectHeaps[IndirectHeap::Type::SURFACE_STATE]);

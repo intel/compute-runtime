@@ -793,3 +793,17 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenCloseAndAllocateNextCommandBuf
     cmdContainer.closeAndAllocateNextCommandBuffer();
     EXPECT_EQ(cmdContainer.getCmdBufferAllocations().size(), 2u);
 }
+
+TEST_F(CommandContainerTest, GivenCmdContainerWhenContainerIsInitializedThenSurfaceStateIndirectHeapSizeIsCorrect) {
+
+    class MyCommandContainer : public CommandContainer {
+      public:
+        using CommandContainer::allocationIndirectHeaps;
+    };
+
+    MyCommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice, nullptr, true);
+    auto size = cmdContainer.allocationIndirectHeaps[IndirectHeap::Type::SURFACE_STATE]->getUnderlyingBufferSize();
+    constexpr size_t expectedHeapSize = MemoryConstants::pageSize64k;
+    EXPECT_EQ(expectedHeapSize, size);
+}
