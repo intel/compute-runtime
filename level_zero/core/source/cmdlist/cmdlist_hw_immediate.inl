@@ -219,7 +219,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
 
     ze_result_t ret;
 
-    if (this->isBcsSplitNeeded) {
+    if (this->isAppendSplitNeeded(dstptr, srcptr, size)) {
         ret = static_cast<DeviceImp *>(this->device)->bcsSplit.appendSplitCall(this, dstptr, srcptr, size, hSignalEvent, [&](void *dstptrParam, const void *srcptrParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
             return CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptrParam, srcptrParam, sizeParam, hSignalEventParam, numWaitEvents, phWaitEvents);
         });

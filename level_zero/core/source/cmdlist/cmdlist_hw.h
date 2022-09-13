@@ -243,6 +243,8 @@ struct CommandListCoreFamily : CommandListImp {
     void updateStreamProperties(Kernel &kernel, bool isCooperative);
     void clearCommandsToPatch();
 
+    bool isAppendSplitNeeded(void *dstPtr, const void *srcPtr, size_t size);
+
     void applyMemoryRangesBarrier(uint32_t numRanges, const size_t *pRangeSizes,
                                   const void **pRanges);
 
