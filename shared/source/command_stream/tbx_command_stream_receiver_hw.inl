@@ -516,7 +516,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::processEviction() {
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) {
+bool TbxCommandStreamReceiverHw<GfxFamily>::processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) {
     for (auto &gfxAllocation : allocationsForResidency) {
         if (dumpTbxNonWritable) {
             this->setTbxWritable(true, *gfxAllocation);
@@ -529,6 +529,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::processResidency(const ResidencyCont
     }
 
     dumpTbxNonWritable = false;
+    return true;
 }
 
 template <typename GfxFamily>

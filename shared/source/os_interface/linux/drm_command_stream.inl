@@ -171,11 +171,7 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBu
         this->getMemoryManager()->peekGemCloseWorker()->push(bb);
     }
 
-    if (ret) {
-        return SubmissionStatus::FAILED;
-    }
-
-    return SubmissionStatus::SUCCESS;
+    return ret;
 }
 
 template <typename GfxFamily>
@@ -246,14 +242,18 @@ int DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, ui
 }
 
 template <typename GfxFamily>
-void DrmCommandStreamReceiver<GfxFamily>::processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) {
-
+bool DrmCommandStreamReceiver<GfxFamily>::processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) {
+    bool ret = 0;
     if ((!drm->isVmBindAvailable()) || (DebugManager.flags.PassBoundBOToExec.get() == 1)) {
         for (auto &alloc : inputAllocationsForResidency) {
             auto drmAlloc = static_cast<DrmAllocation *>(alloc);
-            drmAlloc->makeBOsResident(osContext, handleId, &this->residency, false);
+            ret = drmAlloc->makeBOsResident(osContext, handleId, &this->residency, false);
+            if (ret != 0) {
+                break;
+            }
         }
     }
+    return ret == 0;
 }
 
 template <typename GfxFamily>

@@ -599,6 +599,44 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
     mm->freeGraphicsMemory(commandBuffer);
 }
 
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenFailingProcessResidencyWhenFlushingThenFlushReturnsOutOfMemory) {
+    auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    LinearStream cs(commandBuffer);
+    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+
+    auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    executionEnvironment->rootDeviceEnvironments[csr->getRootDeviceIndex()]->memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocation, 1));
+
+    static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->callBaseProcessResidency = false;
+    static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->processResidencyResult = false;
+
+    SubmissionStatus ret = csr->flush(batchBuffer, csr->getResidencyAllocations());
+    EXPECT_EQ(SubmissionStatus::OUT_OF_MEMORY, ret);
+    mm->freeGraphicsMemory(allocation);
+    mm->freeGraphicsMemory(commandBuffer);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenFailingExecWhenFlushingThenFlushReturnsFailed) {
+    auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    LinearStream cs(commandBuffer);
+    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+
+    auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    executionEnvironment->rootDeviceEnvironments[csr->getRootDeviceIndex()]->memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocation, 1));
+
+    static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->callBaseExec = false;
+    static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->execResult = -1;
+
+    SubmissionStatus ret = csr->flush(batchBuffer, csr->getResidencyAllocations());
+    EXPECT_EQ(SubmissionStatus::FAILED, ret);
+    mm->freeGraphicsMemory(allocation);
+    mm->freeGraphicsMemory(commandBuffer);
+}
+
 struct DrmCommandStreamDirectSubmissionTest : public DrmCommandStreamEnhancedTest {
     template <typename GfxFamily>
     void setUpT() {

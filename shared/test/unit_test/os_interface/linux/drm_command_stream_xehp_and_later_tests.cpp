@@ -101,8 +101,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
 
     uint64_t expectedCompletionGpuAddress = testCsr->getTagAllocation()->getGpuAddress() + Drm::completionFenceOffset + testCsr->postSyncWriteOffset;
 
-    int ret = testCsr->flushInternal(batchBuffer, testCsr->getResidencyAllocations());
-    EXPECT_EQ(0, ret);
+    SubmissionStatus ret = testCsr->flushInternal(batchBuffer, testCsr->getResidencyAllocations());
+    EXPECT_EQ(SubmissionStatus::SUCCESS, ret);
 
     EXPECT_EQ(expectedCompletionGpuAddress, bo.receivedCompletionGpuAddress);
     EXPECT_EQ(testCsr->latestSentTaskCount, bo.receivedCompletionValue);

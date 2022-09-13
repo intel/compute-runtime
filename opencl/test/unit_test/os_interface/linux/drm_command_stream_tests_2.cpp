@@ -1403,8 +1403,8 @@ struct MockMergeResidencyContainerMemoryOperationsHandler : public DrmMemoryOper
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMakeResidentWithinOsContextFailsThenFlushReturnsError) {
     struct MockDrmCsr : public DrmCommandStreamReceiver<FamilyType> {
         using DrmCommandStreamReceiver<FamilyType>::DrmCommandStreamReceiver;
-        int flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) override {
-            return 0;
+        SubmissionStatus flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) override {
+            return SubmissionStatus::SUCCESS;
         }
     };
 
@@ -1435,8 +1435,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMakeResidentWithinOsContex
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMakeResidentWithinOsContextOutOfMemoryThenFlushReturnsError) {
     struct MockDrmCsr : public DrmCommandStreamReceiver<FamilyType> {
         using DrmCommandStreamReceiver<FamilyType>::DrmCommandStreamReceiver;
-        int flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) override {
-            return 0;
+        SubmissionStatus flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) override {
+            return SubmissionStatus::SUCCESS;
         }
     };
 
@@ -1467,8 +1467,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMakeResidentWithinOsContex
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMergeWithResidencyContainerFailsThenFlushReturnsError) {
     struct MockDrmCsr : public DrmCommandStreamReceiver<FamilyType> {
         using DrmCommandStreamReceiver<FamilyType>::DrmCommandStreamReceiver;
-        int flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) override {
-            return 0;
+        SubmissionStatus flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) override {
+            return SubmissionStatus::SUCCESS;
         }
     };
 
@@ -1498,8 +1498,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMergeWithResidencyContaine
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMergeWithResidencyContainerReturnsOutOfMemoryThenFlushReturnsError) {
     struct MockDrmCsr : public DrmCommandStreamReceiver<FamilyType> {
         using DrmCommandStreamReceiver<FamilyType>::DrmCommandStreamReceiver;
-        int flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) override {
-            return 0;
+        SubmissionStatus flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) override {
+            return SubmissionStatus::SUCCESS;
         }
     };
 
@@ -1533,11 +1533,11 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenNoAllocsInMemoryOperationH
 
     struct MockDrmCsr : public DrmCommandStreamReceiver<FamilyType> {
         using DrmCommandStreamReceiver<FamilyType>::DrmCommandStreamReceiver;
-        int flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) override {
+        SubmissionStatus flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) override {
             auto memoryOperationsInterface = static_cast<MockDrmMemoryOperationsHandler *>(this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]->memoryOperationsInterface.get());
             EXPECT_TRUE(memoryOperationsInterface->mutex.try_lock());
             memoryOperationsInterface->mutex.unlock();
-            return 0;
+            return SubmissionStatus::SUCCESS;
         }
     };
 
@@ -1565,10 +1565,10 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocsInMemoryOperationHan
 
     struct MockDrmCsr : public DrmCommandStreamReceiver<FamilyType> {
         using DrmCommandStreamReceiver<FamilyType>::DrmCommandStreamReceiver;
-        int flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) override {
+        SubmissionStatus flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) override {
             auto memoryOperationsInterface = static_cast<MockDrmMemoryOperationsHandler *>(this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]->memoryOperationsInterface.get());
             EXPECT_FALSE(memoryOperationsInterface->mutex.try_lock());
-            return 0;
+            return SubmissionStatus::SUCCESS;
         }
     };
 

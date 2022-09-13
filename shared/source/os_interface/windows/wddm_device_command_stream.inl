@@ -76,16 +76,20 @@ SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchB
     allocationsForResidency.push_back(batchBuffer.commandBufferAllocation);
     batchBuffer.commandBufferAllocation->updateResidencyTaskCount(this->taskCount, this->osContext->getContextId());
     perfLogResidencyVariadicLog(wddm->getResidencyLogger(), "Wddm CSR processing residency set: %zu\n", allocationsForResidency.size());
-    this->processResidency(allocationsForResidency, 0u);
+
+    bool ret = this->processResidency(allocationsForResidency, 0u);
+    if (ret == false) {
+        return SubmissionStatus::OUT_OF_MEMORY;
+    }
     if (this->directSubmission.get()) {
-        bool ret = this->directSubmission->dispatchCommandBuffer(batchBuffer, *(this->flushStamp.get()));
+        ret = this->directSubmission->dispatchCommandBuffer(batchBuffer, *(this->flushStamp.get()));
         if (ret == false) {
             return SubmissionStatus::FAILED;
         }
         return SubmissionStatus::SUCCESS;
     }
     if (this->blitterDirectSubmission.get()) {
-        bool ret = this->blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *(this->flushStamp.get()));
+        ret = this->blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *(this->flushStamp.get()));
         if (ret == false) {
             return SubmissionStatus::FAILED;
         }
@@ -129,9 +133,8 @@ SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchB
 }
 
 template <typename GfxFamily>
-void WddmCommandStreamReceiver<GfxFamily>::processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) {
-    [[maybe_unused]] bool success = static_cast<OsContextWin *>(this->osContext)->getResidencyController().makeResidentResidencyAllocations(allocationsForResidency);
-    DEBUG_BREAK_IF(!success);
+bool WddmCommandStreamReceiver<GfxFamily>::processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) {
+    return static_cast<OsContextWin *>(this->osContext)->getResidencyController().makeResidentResidencyAllocations(allocationsForResidency);
 }
 
 template <typename GfxFamily>

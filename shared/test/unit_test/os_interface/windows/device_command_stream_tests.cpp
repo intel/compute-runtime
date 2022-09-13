@@ -306,6 +306,22 @@ TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledThenCoherencyRequiredFl
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
+TEST_F(WddmCommandStreamTest, givenFailureFromMakeResidentWhenFlushingThenOutOfMemoryIsReturned) {
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+
+    wddm->makeResidentNumberOfBytesToTrim = 4 * 4096;
+    wddm->makeResidentStatus = false;
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+    SubmissionStatus retVal = csr->flush(batchBuffer, csr->getResidencyAllocations());
+
+    EXPECT_EQ(SubmissionStatus::OUT_OF_MEMORY, retVal);
+
+    memoryManager->freeGraphicsMemory(commandBuffer);
+}
+
 struct WddmPreemptionHeaderFixture {
     void setUp() {
         executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);

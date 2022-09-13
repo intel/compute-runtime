@@ -11,11 +11,18 @@
 namespace NEO {
 
 template <typename GfxFamily>
-int DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) {
-    this->processResidency(allocationsForResidency, 0u);
+SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) {
+    bool processResidencySuccess = this->processResidency(allocationsForResidency, 0u);
+    if (processResidencySuccess == false) {
+        return SubmissionStatus::OUT_OF_MEMORY;
+    }
+
     int ret = this->exec(batchBuffer, 0u, static_cast<const OsContextLinux *>(osContext)->getDrmContextIds()[0], 0);
 
-    return ret;
+    if (ret) {
+        return SubmissionStatus::FAILED;
+    }
+    return SubmissionStatus::SUCCESS;
 }
 
 template <typename GfxFamily>

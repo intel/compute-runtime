@@ -1599,6 +1599,17 @@ TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentFailThenExpectTrimR
     EXPECT_FALSE(logger->makeResidentCall);
 }
 
+TEST_F(WddmTest, GivenInvalidHandleAndCantTrimFurtherSetToTrueWhenCallingMakeResidentThenFalseIsReturned) {
+    wddm->callBaseMakeResident = true;
+
+    D3DKMT_HANDLE handle = INVALID_HANDLE;
+    uint64_t bytesToTrim = 4 * 4096;
+
+    bool retVal = wddm->makeResident(&handle, 1, true, &bytesToTrim, 0x1000);
+
+    EXPECT_FALSE(retVal);
+}
+
 TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenEnterWaitCalledThenExpectInternalFlagOn) {
     if (!NEO::wddmResidencyLoggingAvailable) {
         GTEST_SKIP();

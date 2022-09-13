@@ -485,7 +485,7 @@ bool Wddm::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantT
     makeResident.NumAllocations = count;
     makeResident.PriorityList = &priority;
     makeResident.Flags.CantTrimFurther = cantTrimFurther ? 1 : 0;
-    makeResident.Flags.MustSucceed = cantTrimFurther ? 1 : 0;
+    makeResident.Flags.MustSucceed = 0;
 
     status = getGdi()->makeResident(&makeResident);
     if (status == STATUS_PENDING) {
@@ -498,9 +498,10 @@ bool Wddm::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantT
     } else {
         DEBUG_BREAK_IF(true);
         perfLogResidencyTrimRequired(residencyLogger.get(), makeResident.NumBytesToTrim);
-        if (numberOfBytesToTrim != nullptr)
+        if (numberOfBytesToTrim != nullptr) {
             *numberOfBytesToTrim = makeResident.NumBytesToTrim;
-        UNRECOVERABLE_IF(cantTrimFurther);
+        }
+        return false;
     }
 
     kmDafListener->notifyMakeResident(featureTable->flags.ftrKmdDaf, getAdapter(), device, handles, count, getGdi()->escape);

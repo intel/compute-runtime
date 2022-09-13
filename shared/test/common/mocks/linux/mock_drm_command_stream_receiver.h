@@ -73,6 +73,20 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
         return this->submissionAggregator.get();
     }
 
+    bool processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override {
+        if (callBaseProcessResidency) {
+            return DrmCommandStreamReceiver<GfxFamily>::processResidency(allocationsForResidency, handleId);
+        }
+        return processResidencyResult;
+    }
+
+    int exec(const BatchBuffer &batchBuffer, uint32_t vmHandleId, uint32_t drmContextId, uint32_t index) override {
+        if (callBaseExec) {
+            return DrmCommandStreamReceiver<GfxFamily>::exec(batchBuffer, vmHandleId, drmContextId, index);
+        }
+        return execResult;
+    }
+
     void overrideSubmissionAggregator(SubmissionAggregator *newSubmissionsAggregator) {
         this->submissionAggregator.reset(newSubmissionsAggregator);
     }
@@ -105,11 +119,11 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
         }
     }
 
-    int flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) override {
+    SubmissionStatus flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) override {
         if (callHwFlush) {
             return DrmCommandStreamReceiver<GfxFamily>::flushInternal(batchBuffer, allocationsForResidency);
         }
-        return 0;
+        return SubmissionStatus::SUCCESS;
     }
 
     void readBackAllocation(void *source) override {
@@ -119,6 +133,10 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
 
     void *latestReadBackAddress = nullptr;
     bool callHwFlush = true;
+    bool callBaseProcessResidency = true;
+    bool processResidencyResult = true;
+    bool callBaseExec = true;
+    int execResult = 0;
 };
 
 template <typename GfxFamily>

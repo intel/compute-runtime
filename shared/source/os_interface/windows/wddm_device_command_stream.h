@@ -26,7 +26,7 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
     ~WddmCommandStreamReceiver() override;
 
     SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
-    void processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override;
+    bool processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override;
     void processEviction() override;
     bool waitForFlushStamp(FlushStamp &flushStampToWait) override;
 

@@ -13,7 +13,7 @@
 namespace NEO {
 
 template <typename GfxFamily>
-int DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) {
+SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) {
     if (drm->useVMBindImmediate()) {
         auto osContextLinux = static_cast<OsContextLinux *>(this->osContext);
         osContextLinux->waitForPagingFence();
@@ -28,25 +28,29 @@ int DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchBuffer &batchB
                 tileIterator = contextIndex = DebugManager.flags.ForceExecutionTile.get();
             }
 
-            this->processResidency(allocationsForResidency, tileIterator);
+            bool processResidencySuccess = this->processResidency(allocationsForResidency, tileIterator);
+            if (processResidencySuccess == false) {
+                return SubmissionStatus::OUT_OF_MEMORY;
+            }
+
             if (DebugManager.flags.PrintDeviceAndEngineIdOnSubmission.get()) {
                 printf("%u: Drm Submission of contextIndex: %u, with context id %u\n", SysCalls::getProcessId(), contextIndex, drmContextIds[contextIndex]);
             }
 
             int ret = this->exec(batchBuffer, tileIterator, drmContextIds[contextIndex], contextIndex);
             if (ret) {
-                return ret;
+                return SubmissionStatus::FAILED;
             }
 
             contextIndex++;
 
             if (DebugManager.flags.EnableWalkerPartition.get() == 0 || batchBuffer.useSingleSubdevice) {
-                return 0;
+                return SubmissionStatus::SUCCESS;
             }
         }
     }
 
-    return 0;
+    return SubmissionStatus::SUCCESS;
 }
 
 template <typename GfxFamily>

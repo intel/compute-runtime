@@ -42,7 +42,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
 
-    void processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override;
+    bool processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override;
 
     void makeResidentExternal(AllocationView &allocationView);
     void makeNonResidentExternal(uint64_t gpuAddress);
