@@ -768,6 +768,28 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenContainerIsInitializedThenStre
     EXPECT_EQ(cmdContainer.getCommandStream()->getMaxAvailableSpace(), alignedSize - CommandContainer::cmdBufferReservedSize);
 }
 
+TEST_F(CommandContainerTest, GivenCmdContainerAndDebugFlagWhenContainerIsInitializedThenStreamSizeEqualsAlignedTotalCmdBuffSizeDecreasedOfReservedSize) {
+    DebugManagerStateRestore restorer;
+
+    class MyCommandContainer : public CommandContainer {
+      public:
+        using CommandContainer::getTotalCmdBufferSize;
+    };
+
+    DebugManager.flags.OverrideCmdListCmdBufferSizeInKb.set(0);
+    MyCommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice, nullptr, true);
+    size_t alignedSize = alignUp<size_t>(cmdContainer.getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
+    EXPECT_EQ(cmdContainer.getCommandStream()->getMaxAvailableSpace(), alignedSize - MyCommandContainer::cmdBufferReservedSize);
+
+    auto newSizeInKB = 512;
+    DebugManager.flags.OverrideCmdListCmdBufferSizeInKb.set(newSizeInKB);
+    MyCommandContainer cmdContainer2;
+    cmdContainer2.initialize(pDevice, nullptr, true);
+    alignedSize = alignUp<size_t>(cmdContainer.getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
+    EXPECT_EQ(cmdContainer2.getCommandStream()->getMaxAvailableSpace(), alignedSize - MyCommandContainer::cmdBufferReservedSize);
+}
+
 TEST_F(CommandContainerTest, givenCmdContainerWhenAlocatingNextCmdBufferThenStreamSizeEqualAlignedTotalCmdBuffSizeDecreasedOfReservedSize) {
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, true);

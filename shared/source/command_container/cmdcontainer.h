@@ -128,6 +128,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     std::vector<GraphicsAllocation *> deallocationContainer;
 
     bool isFlushTaskUsedForImmediate = false;
+    size_t getTotalCmdBufferSize();
 };
 
 } // namespace NEO
