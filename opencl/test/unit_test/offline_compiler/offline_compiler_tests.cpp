@@ -3141,7 +3141,7 @@ TEST(OclocCompile, givenFormatFlagWithKnownFormatPassedThenEnforceSpecifiedForma
     ocloc.internalOptions.clear();
     retVal = ocloc.initialize(argvEnforcedFormatPatchtokens.size(), argvEnforcedFormatPatchtokens);
     ASSERT_EQ(0, retVal);
-    EXPECT_FALSE(hasSubstr(ocloc.internalOptions, std::string{CompilerOptions::allowZebin}));
+    EXPECT_TRUE(hasSubstr(ocloc.internalOptions, std::string{CompilerOptions::disableZebin}));
 }
 
 TEST(OclocCompile, givenFormatFlagWithUnknownFormatPassedThenPrintWarning) {

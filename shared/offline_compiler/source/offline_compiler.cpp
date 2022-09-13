@@ -1170,6 +1170,7 @@ void OfflineCompiler::enforceFormat(std::string &format) {
     if (format == "zebin") {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::allowZebin);
     } else if (format == "patchtokens") {
+        CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::disableZebin);
     } else {
         argHelper->printf("Invalid format passed: %s. Ignoring.\n", format.c_str());
     }

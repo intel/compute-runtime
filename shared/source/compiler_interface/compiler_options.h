@@ -34,6 +34,7 @@ constexpr ConstStringRef uniformWorkgroupSize = "-cl-uniform-work-group-size";
 constexpr ConstStringRef forceEmuInt32DivRem = "-cl-intel-force-emu-int32divrem";
 constexpr ConstStringRef forceEmuInt32DivRemSP = "-cl-intel-force-emu-sp-int32divrem";
 constexpr ConstStringRef allowZebin = "-cl-intel-allow-zebin";
+constexpr ConstStringRef disableZebin = "-cl-intel-disable-zebin";
 constexpr ConstStringRef enableImageSupport = "-D__IMAGE_SUPPORT__=1";
 constexpr ConstStringRef optLevel = "-ze-opt-level=O";
 constexpr ConstStringRef excludeIrFromZebin = "-exclude-ir-from-zebin";
