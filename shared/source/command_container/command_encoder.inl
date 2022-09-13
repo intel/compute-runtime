@@ -327,19 +327,14 @@ template <typename Family>
 inline void EncodeStateBaseAddress<Family>::setSbaTrackingForL0DebuggerIfEnabled(bool trackingEnabled,
                                                                                  Device &device,
                                                                                  LinearStream &commandStream,
-                                                                                 STATE_BASE_ADDRESS &sbaCmd,
-                                                                                 const bool skipCheck) {
+                                                                                 STATE_BASE_ADDRESS &sbaCmd) {
     if (!trackingEnabled) {
         return;
     }
 
     NEO::Debugger::SbaAddresses sbaAddresses = {};
     NEO::EncodeStateBaseAddress<Family>::setSbaAddressesForDebugger(sbaAddresses, sbaCmd);
-    if (skipCheck) {
-        device.getL0Debugger()->programSbaTrackingCommands(commandStream, sbaAddresses);
-    } else {
-        device.getL0Debugger()->captureStateBaseAddress(commandStream, sbaAddresses);
-    }
+    device.getL0Debugger()->captureStateBaseAddress(commandStream, sbaAddresses);
 }
 
 template <typename Family>

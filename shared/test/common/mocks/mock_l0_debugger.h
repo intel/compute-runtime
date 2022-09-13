@@ -26,7 +26,6 @@ class MockDebuggerL0 : public NEO::DebuggerL0 {
         return 0;
     }
 
-    void programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) override{};
     size_t getSbaAddressLoadCommandsSize() override { return 0; };
     void programSbaAddressLoad(NEO::LinearStream &cmdStream, uint64_t sbaGpuVa) override{};
 };
@@ -54,11 +53,6 @@ class MockDebuggerL0Hw : public NEO::DebuggerL0Hw<GfxFamily> {
     size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override {
         getSbaTrackingCommandsSizeCount++;
         return NEO::DebuggerL0Hw<GfxFamily>::getSbaTrackingCommandsSize(trackedAddressCount);
-    }
-
-    void programSbaTrackingCommands(NEO::LinearStream &cmdStream, const NEO::Debugger::SbaAddresses &sba) override {
-        programSbaTrackingCommandsCount++;
-        NEO::DebuggerL0Hw<GfxFamily>::programSbaTrackingCommands(cmdStream, sba);
     }
 
     void registerElf(NEO::DebugData *debugData, NEO::GraphicsAllocation *isaAllocation) override {
@@ -112,7 +106,6 @@ class MockDebuggerL0Hw : public NEO::DebuggerL0Hw<GfxFamily> {
     }
 
     uint32_t captureStateBaseAddressCount = 0;
-    uint32_t programSbaTrackingCommandsCount = 0;
     uint32_t getSbaTrackingCommandsSizeCount = 0;
     uint32_t registerElfCount = 0;
     uint32_t commandQueueCreatedCount = 0;

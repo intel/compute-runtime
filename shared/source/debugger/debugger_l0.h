@@ -89,7 +89,6 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
         return sbaTrackingGpuVa.address;
     }
 
-    void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba) override;
     void printTrackedAddresses(uint32_t contextId);
     MOCKABLE_VIRTUAL void registerElf(NEO::DebugData *debugData, NEO::GraphicsAllocation *isaAllocation);
     MOCKABLE_VIRTUAL void notifyCommandQueueCreated(NEO::Device *device);
@@ -100,7 +99,6 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
     MOCKABLE_VIRTUAL void registerAllocationType(GraphicsAllocation *allocation);
     void initSbaTrackingMode();
 
-    virtual void programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) = 0;
     virtual size_t getSbaAddressLoadCommandsSize() = 0;
     virtual void programSbaAddressLoad(NEO::LinearStream &cmdStream, uint64_t sbaGpuVa) = 0;
 
@@ -118,11 +116,6 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
     };
 
   protected:
-    static bool isAnyTrackedAddressChanged(SbaAddresses sba) {
-        return sba.GeneralStateBaseAddress != 0 ||
-               sba.SurfaceStateBaseAddress != 0 ||
-               sba.BindlessSurfaceStateBaseAddress != 0;
-    }
     static bool initDebuggingInOs(NEO::OSInterface *osInterface);
 
     void initialize();
@@ -148,8 +141,8 @@ class DebuggerL0Hw : public DebuggerL0 {
   public:
     static DebuggerL0 *allocate(NEO::Device *device);
 
+    void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba) override;
     size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override;
-    void programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) override;
     size_t getSbaAddressLoadCommandsSize() override;
     void programSbaAddressLoad(NEO::LinearStream &cmdStream, uint64_t sbaGpuVa) override;
 

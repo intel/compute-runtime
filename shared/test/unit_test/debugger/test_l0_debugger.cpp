@@ -361,7 +361,7 @@ HWTEST_F(PerContextAddressSpaceL0DebuggerTest, givenCanonizedGpuVasWhenProgrammi
     sbaAddresses.DynamicStateBaseAddress = dsba;
     sbaAddresses.BindlessSurfaceStateBaseAddress = ssba;
 
-    debugger->programSbaTrackingCommands(cmdStream, sbaAddresses);
+    debugger->captureStateBaseAddress(cmdStream, sbaAddresses);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream.getCpuBase(), cmdStream.getUsed()));
@@ -450,7 +450,7 @@ HWTEST_F(PerContextAddressSpaceL0DebuggerTest, givenNonZeroGpuVasWhenProgramming
     sbaAddresses.DynamicStateBaseAddress = dsba;
     sbaAddresses.BindlessSurfaceStateBaseAddress = ssba;
 
-    debugger->programSbaTrackingCommands(cmdStream, sbaAddresses);
+    debugger->captureStateBaseAddress(cmdStream, sbaAddresses);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream.getCpuBase(), cmdStream.getUsed()));
@@ -623,7 +623,7 @@ HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenZeroGpuVasWhenProgrammingSbaTr
     sbaAddresses.GeneralStateBaseAddress = gsba;
     sbaAddresses.SurfaceStateBaseAddress = ssba;
 
-    debugger->programSbaTrackingCommands(cmdStream, sbaAddresses);
+    debugger->captureStateBaseAddress(cmdStream, sbaAddresses);
 
     EXPECT_EQ(0u, cmdStream.getUsed());
 }

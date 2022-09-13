@@ -266,8 +266,7 @@ struct EncodeStateBaseAddress {
     static void setSbaTrackingForL0DebuggerIfEnabled(bool trackingEnabled,
                                                      Device &device,
                                                      LinearStream &commandStream,
-                                                     STATE_BASE_ADDRESS &sbaCmd,
-                                                     const bool skipCheck);
+                                                     STATE_BASE_ADDRESS &sbaCmd);
 
   protected:
     static void setSbaAddressesForDebugger(NEO::Debugger::SbaAddresses &sbaAddress, const STATE_BASE_ADDRESS &sbaCmd);

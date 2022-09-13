@@ -130,12 +130,6 @@ DebuggerL0 ::~DebuggerL0() {
     device->getMemoryManager()->freeGraphicsMemory(moduleDebugArea);
 }
 
-void DebuggerL0::captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba) {
-    if (DebuggerL0::isAnyTrackedAddressChanged(sba)) {
-        programSbaTrackingCommands(cmdStream, sba);
-    }
-}
-
 void DebuggerL0::notifyModuleLoadAllocations(Device *device, const StackVec<NEO::GraphicsAllocation *, 32> &allocs) {
     NEO::MemoryOperationsHandler *memoryOperationsIface = device->getRootDeviceEnvironment().memoryOperationsInterface.get();
     if (memoryOperationsIface) {

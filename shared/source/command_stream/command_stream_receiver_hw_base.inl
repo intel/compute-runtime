@@ -444,8 +444,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         NEO::EncodeStateBaseAddress<GfxFamily>::setSbaTrackingForL0DebuggerIfEnabled(sbaTrackingEnabled,
                                                                                      device,
                                                                                      commandStreamCSR,
-                                                                                     stateBaseAddressCmd,
-                                                                                     false);
+                                                                                     stateBaseAddressCmd);
 
         if (sshDirty) {
             bindingTableBaseAddressRequired = true;
