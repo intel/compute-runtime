@@ -83,7 +83,7 @@ void EncodeSurfaceState<Family>::encodeExtraBufferParams(EncodeSurfaceStateArgs 
 }
 
 template <>
-bool EncodeSurfaceState<Family>::doBindingTablePrefetch() {
+bool EncodeSurfaceState<Family>::isBindingTablePrefetchPreferred() {
     return false;
 }
 

@@ -297,9 +297,6 @@ void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTO
 template <>
 void EncodeDispatchKernel<Family>::adjustBindingTablePrefetch(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t samplerCount, uint32_t bindingTableEntryCount) {
     auto enablePrefetch = EncodeSurfaceState<Family>::doBindingTablePrefetch();
-    if (DebugManager.flags.ForceBtpPrefetchMode.get() != -1) {
-        enablePrefetch = static_cast<bool>(DebugManager.flags.ForceBtpPrefetchMode.get());
-    }
 
     if (enablePrefetch) {
         interfaceDescriptor.setBindingTableEntryCount(std::min(bindingTableEntryCount, 31u));

@@ -21,7 +21,7 @@ using Family = NEO::Gen11Family;
 namespace NEO {
 
 template <>
-bool EncodeSurfaceState<Family>::doBindingTablePrefetch() {
+bool EncodeSurfaceState<Family>::isBindingTablePrefetchPreferred() {
     return false;
 }
 

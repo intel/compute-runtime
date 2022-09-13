@@ -304,6 +304,7 @@ struct EncodeSurfaceState {
 
     static void getSshAlignedPointer(uintptr_t &ptr, size_t &offset);
     static bool doBindingTablePrefetch();
+    static bool isBindingTablePrefetchPreferred();
 
     static size_t pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap, size_t bindingTableCount,
                                                    const void *srcKernelSsh, size_t srcKernelSshSize,

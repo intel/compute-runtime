@@ -628,7 +628,7 @@ size_t EncodeMiFlushDW<Family>::getMiFlushDwWaSize() {
 }
 
 template <typename Family>
-bool EncodeSurfaceState<Family>::doBindingTablePrefetch() {
+bool EncodeSurfaceState<Family>::isBindingTablePrefetchPreferred() {
     return false;
 }
 

@@ -32,33 +32,38 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenFunctionWhenBind
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
-    createKernel();
+    for (auto debugKey : {-1, 0, 1}) {
+        DebugManagerStateRestore restore;
+        DebugManager.flags.ForceBtpPrefetchMode.set(debugKey);
 
-    ze_group_count_t groupCount{1, 1, 1};
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
-    CmdListKernelLaunchParams launchParams = {};
-    commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+        createKernel();
 
-    auto commandStream = commandList->commandContainer.getCommandStream();
+        ze_group_count_t groupCount{1, 1, 1};
+        ze_result_t returnValue;
+        std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+        CmdListKernelLaunchParams launchParams = {};
+        commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
 
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, commandStream->getCpuBase(), commandStream->getUsed()));
+        auto commandStream = commandList->commandContainer.getCommandStream();
 
-    auto itorMIDL = find<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(itorMIDL, cmdList.end());
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, commandStream->getCpuBase(), commandStream->getUsed()));
 
-    auto cmd = genCmdCast<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(*itorMIDL);
-    ASSERT_NE(cmd, nullptr);
+        auto itorMIDL = find<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(cmdList.begin(), cmdList.end());
+        ASSERT_NE(itorMIDL, cmdList.end());
 
-    auto dsh = NEO::ApiSpecificConfig::getBindlessConfiguration() ? device->getNEODevice()->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH) : commandList->commandContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
-    auto idd = static_cast<INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(dsh->getCpuBase(), cmd->getInterfaceDescriptorDataStartAddress()));
+        auto cmd = genCmdCast<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(*itorMIDL);
+        ASSERT_NE(cmd, nullptr);
 
-    if (NEO::EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {
-        uint32_t numArgs = kernel->kernelImmData->getDescriptor().payloadMappings.bindingTable.numEntries;
-        EXPECT_EQ(numArgs, idd->getBindingTableEntryCount());
-    } else {
-        EXPECT_EQ(0u, idd->getBindingTableEntryCount());
+        auto dsh = NEO::ApiSpecificConfig::getBindlessConfiguration() ? device->getNEODevice()->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH) : commandList->commandContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+        auto idd = static_cast<INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(dsh->getCpuBase(), cmd->getInterfaceDescriptorDataStartAddress()));
+
+        if (NEO::EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {
+            uint32_t numArgs = kernel->kernelImmData->getDescriptor().payloadMappings.bindingTable.numEntries;
+            EXPECT_EQ(numArgs, idd->getBindingTableEntryCount());
+        } else {
+            EXPECT_EQ(0u, idd->getBindingTableEntryCount());
+        }
     }
 }
 

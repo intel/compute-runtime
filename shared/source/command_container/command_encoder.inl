@@ -676,11 +676,17 @@ void EncodeIndirectParams<Family>::setWorkDimIndirect(CommandContainer &containe
 }
 
 template <typename Family>
+bool EncodeSurfaceState<Family>::doBindingTablePrefetch() {
+    auto enableBindingTablePrefetech = isBindingTablePrefetchPreferred();
+    if (DebugManager.flags.ForceBtpPrefetchMode.get() != -1) {
+        enableBindingTablePrefetech = static_cast<bool>(DebugManager.flags.ForceBtpPrefetchMode.get());
+    }
+    return enableBindingTablePrefetech;
+}
+
+template <typename Family>
 void EncodeDispatchKernel<Family>::adjustBindingTablePrefetch(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t samplerCount, uint32_t bindingTableEntryCount) {
     auto enablePrefetch = EncodeSurfaceState<Family>::doBindingTablePrefetch();
-    if (DebugManager.flags.ForceBtpPrefetchMode.get() != -1) {
-        enablePrefetch = static_cast<bool>(DebugManager.flags.ForceBtpPrefetchMode.get());
-    }
 
     if (enablePrefetch) {
         interfaceDescriptor.setSamplerCount(static_cast<typename INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT>((samplerCount + 3) / 4));

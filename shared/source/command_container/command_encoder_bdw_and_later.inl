@@ -482,7 +482,7 @@ inline void EncodeSurfaceState<GfxFamily>::encodeExtraBufferParams(EncodeSurface
 }
 
 template <typename GfxFamily>
-bool EncodeSurfaceState<GfxFamily>::doBindingTablePrefetch() {
+bool EncodeSurfaceState<GfxFamily>::isBindingTablePrefetchPreferred() {
     return true;
 }
 
