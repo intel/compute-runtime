@@ -16,7 +16,7 @@ bool ApiSpecificConfig::isStatelessCompressionSupported() {
 }
 
 bool ApiSpecificConfig::isBcsSplitWaSupported() {
-    return false;
+    return true;
 }
 
 bool ApiSpecificConfig::getHeapConfiguration() {
