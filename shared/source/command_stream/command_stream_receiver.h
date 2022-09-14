@@ -471,6 +471,7 @@ class CommandStreamReceiver {
     bool useGpuIdleImplicitFlush = false;
     bool lastSentUseGlobalAtomics = false;
     bool useNotifyEnableForPostSync = false;
+    bool systolicModeConfigurable = false;
 };
 
 typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(bool withAubDump,

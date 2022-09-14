@@ -119,4 +119,19 @@ uint32_t PreambleHelper<GfxFamily>::getScratchSizeValueToProgramMediaVfeState(ui
     return valueToProgram;
 }
 
+template <typename GfxFamily>
+bool PreambleHelper<GfxFamily>::isSystolicModeConfigurable(const HardwareInfo &hwInfo) {
+    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    return hwInfoConfig.isSystolicModeConfigurable(hwInfo);
+}
+
+template <typename GfxFamily>
+bool PreambleHelper<GfxFamily>::isSystolicPipelineSelectModeChanged(bool lastSystolicPipelineSelectMode, bool newSystolicPipelineSelectMode,
+                                                                    const HardwareInfo &hwInfo) {
+    if (PreambleHelper<GfxFamily>::isSystolicModeConfigurable(hwInfo)) {
+        return lastSystolicPipelineSelectMode != newSystolicPipelineSelectMode;
+    }
+    return false;
+}
+
 } // namespace NEO

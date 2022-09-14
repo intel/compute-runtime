@@ -207,9 +207,6 @@ uint32_t HwInfoConfigHw<gfxProduct>::getAubStreamSteppingFromHwRevId(const Hardw
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void HwInfoConfigHw<gfxProduct>::setAdditionalPipelineSelectFields(void *pipelineSelectCmd, const PipelineSelectArgs &pipelineSelectArgs, const HardwareInfo &hwInfo) {}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool HwInfoConfigHw<gfxProduct>::isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const {
     return false;
 }
@@ -357,13 +354,8 @@ bool HwInfoConfigHw<gfxProduct>::programAllStateComputeCommandFields() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isSystolicPipelineSelectModeChanged(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool HwInfoConfigHw<gfxProduct>::isSystolicModeConfigurable(const HardwareInfo &hwInfo) const {
-    return false;
+    return getPipelineSelectPropertySystolicModeSupport();
 }
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -646,7 +638,7 @@ template <PRODUCT_FAMILY gfxProduct>
 void HwInfoConfigHw<gfxProduct>::fillPipelineSelectPropertiesSupportStructure(PipelineSelectPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) {
     propertiesSupport.modeSelected = getPipelineSelectPropertyModeSelectedSupport();
     propertiesSupport.mediaSamplerDopClockGate = getPipelineSelectPropertyMediaSamplerDopClockGateSupport();
-    propertiesSupport.systolicMode = getPipelineSelectPropertySystolicModeSupport();
+    propertiesSupport.systolicMode = isSystolicModeConfigurable(hwInfo);
 }
 
 } // namespace NEO

@@ -153,10 +153,6 @@ std::string HwInfoConfigHw<IGFX_UNKNOWN>::getDeviceMemoryName() const {
 }
 
 template <>
-void HwInfoConfigHw<IGFX_UNKNOWN>::setAdditionalPipelineSelectFields(void *pipelineSelectCmd, const PipelineSelectArgs &pipelineSelectArgs, const HardwareInfo &hwInfo) {
-}
-
-template <>
 bool HwInfoConfigHw<IGFX_UNKNOWN>::isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const {
     return false;
 }
@@ -302,16 +298,6 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isFlushTaskAllowed() const {
 
 template <>
 bool HwInfoConfigHw<IGFX_UNKNOWN>::programAllStateComputeCommandFields() const {
-    return false;
-}
-
-template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isSystolicPipelineSelectModeChanged(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isSystolicModeConfigurable(const HardwareInfo &hwInfo) const {
     return false;
 }
 

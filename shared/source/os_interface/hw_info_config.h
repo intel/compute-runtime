@@ -78,7 +78,6 @@ class HwInfoConfig {
     virtual uint32_t getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const = 0;
-    virtual void setAdditionalPipelineSelectFields(void *pipelineSelectCmd, const PipelineSelectArgs &pipelineSelectArgs, const HardwareInfo &hwInfo) = 0;
     virtual bool isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool overrideGfxPartitionLayoutForWsl() const = 0;
     virtual std::string getDeviceMemoryName() const = 0;
@@ -109,7 +108,6 @@ class HwInfoConfig {
     virtual bool getUuid(Device *device, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) const = 0;
     virtual bool isFlushTaskAllowed() const = 0;
     virtual bool programAllStateComputeCommandFields() const = 0;
-    virtual bool isSystolicPipelineSelectModeChanged(const HardwareInfo &hwInfo) const = 0;
     virtual bool isSystolicModeConfigurable(const HardwareInfo &hwInfo) const = 0;
     virtual bool isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const = 0;
@@ -215,7 +213,6 @@ class HwInfoConfigHw : public HwInfoConfig {
     AOT::PRODUCT_CONFIG getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const override;
     uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const override;
     uint32_t getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const override;
-    void setAdditionalPipelineSelectFields(void *pipelineSelectCmd, const PipelineSelectArgs &pipelineSelectArgs, const HardwareInfo &hwInfo) override;
     bool isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const override;
     std::string getDeviceMemoryName() const override;
     bool isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const override;
@@ -245,7 +242,6 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool getUuid(Device *device, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) const override;
     bool isFlushTaskAllowed() const override;
     bool programAllStateComputeCommandFields() const override;
-    bool isSystolicPipelineSelectModeChanged(const HardwareInfo &hwInfo) const override;
     bool isSystolicModeConfigurable(const HardwareInfo &hwInfo) const override;
     bool isComputeDispatchAllWalkerEnableInComputeWalkerRequired(const HardwareInfo &hwInfo) const override;
     bool isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const override;

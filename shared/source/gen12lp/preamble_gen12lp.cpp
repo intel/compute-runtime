@@ -50,11 +50,15 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
     auto mask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits;
     auto pipeline = pipelineSelectArgs.is3DPipelineRequired ? PIPELINE_SELECT::PIPELINE_SELECTION_3D : PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU;
 
-    pipelineSelectCmd.setMaskBits(mask);
     pipelineSelectCmd.setPipelineSelection(pipeline);
     pipelineSelectCmd.setMediaSamplerDopClockGateEnable(!pipelineSelectArgs.mediaSamplerRequired);
 
-    HwInfoConfig::get(hwInfo.platform.eProductFamily)->setAdditionalPipelineSelectFields(&pipelineSelectCmd, pipelineSelectArgs, hwInfo);
+    if (PreambleHelper<Family>::isSystolicModeConfigurable(hwInfo)) {
+        mask |= pipelineSelectSystolicModeEnableMaskBits;
+        pipelineSelectCmd.setSpecialModeEnable(pipelineSelectArgs.systolicPipelineSelectMode);
+    }
+
+    pipelineSelectCmd.setMaskBits(mask);
 
     *cmdSpace = pipelineSelectCmd;
 }

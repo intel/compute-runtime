@@ -83,6 +83,12 @@ ADLPTEST_F(AdlpHwInfo, givenHwInfoConfigWhenGettingEvictIfNecessaryFlagSupported
     EXPECT_TRUE(hwInfoConfig.isEvictionIfNecessaryFlagSupported());
 }
 
+ADLPTEST_F(AdlpHwInfo, givenHwInfoConfigWhenIsSystolicModeConfigurabledThenTrueIsReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    EXPECT_TRUE(hwInfoConfig.isSystolicModeConfigurable(hwInfo));
+}
+
 ADLPTEST_F(AdlpHwInfo, givenHwInfoConfigWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {
     HardwareInfo hwInfo = *defaultHwInfo;
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);

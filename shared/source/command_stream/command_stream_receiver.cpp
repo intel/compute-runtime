@@ -73,6 +73,8 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
         this->activePartitions = subDeviceCount;
         this->staticWorkPartitioningEnabled = true;
     }
+
+    this->systolicModeConfigurable = HwInfoConfig::get(hwInfo.platform.eProductFamily)->isSystolicModeConfigurable(hwInfo);
 }
 
 CommandStreamReceiver::~CommandStreamReceiver() {

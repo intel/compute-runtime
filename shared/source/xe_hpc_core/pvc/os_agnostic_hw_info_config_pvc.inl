@@ -88,11 +88,6 @@ bool HwInfoConfigHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareIn
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isSystolicPipelineSelectModeChanged(const HardwareInfo &hwInfo) const {
-    return PVC::isAtMostXtA0(hwInfo);
-}
-
-template <>
 bool HwInfoConfigHw<gfxProduct>::isSystolicModeConfigurable(const HardwareInfo &hwInfo) const {
     return PVC::isAtMostXtA0(hwInfo);
 }

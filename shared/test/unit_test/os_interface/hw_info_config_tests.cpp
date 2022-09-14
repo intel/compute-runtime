@@ -541,5 +541,5 @@ HWTEST_F(HwInfoConfigTest, WhenFillingPipelineSelectPropertiesSupportThenExpectU
     hwInfoConfig->fillPipelineSelectPropertiesSupportStructure(pipelineSelectPropertiesSupport, pInHwInfo);
     EXPECT_EQ(hwInfoConfig->getPipelineSelectPropertyModeSelectedSupport(), pipelineSelectPropertiesSupport.modeSelected);
     EXPECT_EQ(hwInfoConfig->getPipelineSelectPropertyMediaSamplerDopClockGateSupport(), pipelineSelectPropertiesSupport.mediaSamplerDopClockGate);
-    EXPECT_EQ(hwInfoConfig->getPipelineSelectPropertySystolicModeSupport(), pipelineSelectPropertiesSupport.systolicMode);
+    EXPECT_EQ(hwInfoConfig->isSystolicModeConfigurable(pInHwInfo), pipelineSelectPropertiesSupport.systolicMode);
 }

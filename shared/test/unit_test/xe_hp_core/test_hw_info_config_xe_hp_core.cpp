@@ -151,3 +151,9 @@ XEHPTEST_F(TestXeHPHwInfoConfig, givenHwInfoConfigWhenGetProductConfigThenCorrec
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     EXPECT_EQ(hwInfoConfig.getProductConfigFromHwInfo(hwInfo), AOT::XEHP_SDV);
 }
+
+XEHPTEST_F(TestXeHPHwInfoConfig, givenHwInfoConfigWhenIsSystolicModeConfigurabledThenTrueIsReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    EXPECT_TRUE(hwInfoConfig.isSystolicModeConfigurable(hwInfo));
+}

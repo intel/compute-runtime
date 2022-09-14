@@ -83,8 +83,10 @@ PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenRevisionBAndAboveWhenLast
         {0x6, false},
         {0x7, false},
     };
+    auto hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
     for (auto &testInput : testInputs) {
         hwInfo->platform.usRevId = testInput.revId;
+        commandStreamReceiver.systolicModeConfigurable = hwInfoConfig->isSystolicModeConfigurable(*hwInfo);
         commandStreamReceiver.isPreambleSent = true;
         commandStreamReceiver.lastMediaSamplerConfig = false;
 

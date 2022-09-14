@@ -47,20 +47,6 @@ void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, c
     }
 }
 
-template <>
-bool PreambleHelper<Family>::isSystolicModeConfigurable(const HardwareInfo &hwInfo) {
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    return hwInfoConfig.isSystolicModeConfigurable(hwInfo);
-}
-
-template <>
-bool PreambleHelper<Family>::isSystolicPipelineSelectModeChanged(bool lastSystolicPipelineSelectMode, bool newSystolicPipelineSelectMode,
-                                                                 const HardwareInfo &hwInfo) {
-
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    return (lastSystolicPipelineSelectMode != newSystolicPipelineSelectMode) && hwInfoConfig.isSystolicPipelineSelectModeChanged(hwInfo);
-}
-
 template struct PreambleHelper<Family>;
 
 } // namespace NEO

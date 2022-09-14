@@ -77,14 +77,4 @@ size_t PreambleHelper<GfxFamily>::getVFECommandsSize() {
 template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::appendProgramPipelineSelect(typename GfxFamily::PIPELINE_SELECT &cmd, bool isSystolicModeSelected, const HardwareInfo &hwInfo) {}
 
-template <typename GfxFamily>
-bool PreambleHelper<GfxFamily>::isSystolicModeConfigurable(const HardwareInfo &hwInfo) {
-    return false;
-}
-
-template <typename GfxFamily>
-bool PreambleHelper<GfxFamily>::isSystolicPipelineSelectModeChanged(bool lastSystolicPipelineSelectMode, bool newSystolicPipelineSelectMode,
-                                                                    const HardwareInfo &hwInfo) {
-    return false;
-}
 } // namespace NEO

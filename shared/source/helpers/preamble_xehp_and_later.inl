@@ -22,9 +22,6 @@
 
 namespace NEO {
 
-template <>
-bool PreambleHelper<Family>::isSystolicModeConfigurable(const HardwareInfo &hwInfo);
-
 template <typename Family>
 void PreambleHelper<Family>::appendProgramPipelineSelect(typename Family::PIPELINE_SELECT &cmd, bool isSystolicModeSelected, const HardwareInfo &hwInfo) {
     auto mask = cmd.getMaskBits();
