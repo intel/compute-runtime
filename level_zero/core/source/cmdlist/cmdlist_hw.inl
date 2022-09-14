@@ -1269,20 +1269,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
         callId = neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount;
     }
 
-    size_t dstSize = 0;
-    size_t srcSize = 0;
-
-    if (srcRegion->depth > 1) {
-        uint32_t hostPtrDstOffset = dstRegion->originX + ((dstRegion->originY) * dstPitch) + ((dstRegion->originZ) * dstSlicePitch);
-        uint32_t hostPtrSrcOffset = srcRegion->originX + ((srcRegion->originY) * srcPitch) + ((srcRegion->originZ) * srcSlicePitch);
-        dstSize = (dstRegion->width * dstRegion->height * dstRegion->depth) + hostPtrDstOffset;
-        srcSize = (srcRegion->width * srcRegion->height * srcRegion->depth) + hostPtrSrcOffset;
-    } else {
-        uint32_t hostPtrDstOffset = dstRegion->originX + ((dstRegion->originY) * dstPitch);
-        uint32_t hostPtrSrcOffset = srcRegion->originX + ((srcRegion->originY) * srcPitch);
-        dstSize = (dstRegion->width * dstRegion->height) + hostPtrDstOffset;
-        srcSize = (srcRegion->width * srcRegion->height) + hostPtrSrcOffset;
-    }
+    size_t dstSize = this->getTotalSizeForCopyRegion(dstRegion, dstPitch, dstSlicePitch);
+    size_t srcSize = this->getTotalSizeForCopyRegion(srcRegion, srcPitch, srcSlicePitch);
 
     auto dstAllocationStruct = getAlignedAllocation(this->device, dstPtr, dstSize, false);
     auto srcAllocationStruct = getAlignedAllocation(this->device, srcPtr, srcSize, true);
@@ -2384,6 +2372,17 @@ void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
         }
     }
     commandsToPatch.clear();
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+inline size_t CommandListCoreFamily<gfxCoreFamily>::getTotalSizeForCopyRegion(const ze_copy_region_t *region, uint32_t pitch, uint32_t slicePitch) {
+    if (region->depth > 1) {
+        uint32_t offset = region->originX + ((region->originY) * pitch) + ((region->originZ) * slicePitch);
+        return (region->width * region->height * region->depth) + offset;
+    } else {
+        uint32_t offset = region->originX + ((region->originY) * pitch);
+        return (region->width * region->height) + offset;
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

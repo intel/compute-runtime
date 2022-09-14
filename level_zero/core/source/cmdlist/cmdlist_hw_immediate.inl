@@ -220,7 +220,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     ze_result_t ret;
 
     if (this->isAppendSplitNeeded(dstptr, srcptr, size)) {
-        ret = static_cast<DeviceImp *>(this->device)->bcsSplit.appendSplitCall(this, dstptr, srcptr, size, hSignalEvent, [&](void *dstptrParam, const void *srcptrParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
+        ret = static_cast<DeviceImp *>(this->device)->bcsSplit.appendSplitCall<gfxCoreFamily, void *, const void *>(this, dstptr, srcptr, size, hSignalEvent, [&](void *dstptrParam, const void *srcptrParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
             return CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptrParam, srcptrParam, sizeParam, hSignalEventParam, numWaitEvents, phWaitEvents);
         });
     } else {
@@ -248,9 +248,28 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace();
     }
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(dstPtr, dstRegion, dstPitch, dstSlicePitch,
-                                                                            srcPtr, srcRegion, srcPitch, srcSlicePitch,
-                                                                            hSignalEvent, numWaitEvents, phWaitEvents);
+
+    ze_result_t ret;
+
+    if (this->isAppendSplitNeeded(dstPtr, srcPtr, this->getTotalSizeForCopyRegion(dstRegion, dstPitch, dstSlicePitch))) {
+        ret = static_cast<DeviceImp *>(this->device)->bcsSplit.appendSplitCall<gfxCoreFamily, uint32_t, uint32_t>(this, dstRegion->originX, srcRegion->originX, dstRegion->width, hSignalEvent, [&](uint32_t dstOriginXParam, uint32_t srcOriginXParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
+            ze_copy_region_t dstRegionLocal = {};
+            ze_copy_region_t srcRegionLocal = {};
+            memcpy(&dstRegionLocal, dstRegion, sizeof(ze_copy_region_t));
+            memcpy(&srcRegionLocal, srcRegion, sizeof(ze_copy_region_t));
+            dstRegionLocal.originX = dstOriginXParam;
+            dstRegionLocal.width = static_cast<uint32_t>(sizeParam);
+            srcRegionLocal.originX = srcOriginXParam;
+            srcRegionLocal.width = static_cast<uint32_t>(sizeParam);
+            return CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(dstPtr, &dstRegionLocal, dstPitch, dstSlicePitch,
+                                                                                srcPtr, &srcRegionLocal, srcPitch, srcSlicePitch,
+                                                                                hSignalEventParam, numWaitEvents, phWaitEvents);
+        });
+    } else {
+        ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(dstPtr, dstRegion, dstPitch, dstSlicePitch,
+                                                                           srcPtr, srcRegion, srcPitch, srcSlicePitch,
+                                                                           hSignalEvent, numWaitEvents, phWaitEvents);
+    }
     return flushImmediate(ret, true);
 }
 

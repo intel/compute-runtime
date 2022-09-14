@@ -47,13 +47,13 @@ struct BcsSplit {
     std::vector<CommandQueue *> cmdQs;
     NEO::BcsInfoMask engines = NEO::EngineHelpers::oddLinkedCopyEnginesMask;
 
-    template <GFXCORE_FAMILY gfxCoreFamily>
+    template <GFXCORE_FAMILY gfxCoreFamily, typename T, typename K>
     ze_result_t appendSplitCall(CommandListCoreFamilyImmediate<gfxCoreFamily> *cmdList,
-                                void *dstptr,
-                                const void *srcptr,
+                                T dstptr,
+                                K srcptr,
                                 size_t size,
                                 ze_event_handle_t hSignalEvent,
-                                std::function<ze_result_t(void *, const void *, size_t, ze_event_handle_t)> appendCall) {
+                                std::function<ze_result_t(T, K, size_t, ze_event_handle_t)> appendCall) {
         ze_result_t result = ZE_RESULT_SUCCESS;
 
         if (hSignalEvent) {
