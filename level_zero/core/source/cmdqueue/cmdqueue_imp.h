@@ -17,6 +17,8 @@
 
 #include <vector>
 
+struct UnifiedMemoryControls;
+
 namespace NEO {
 class LinearStream;
 class GraphicsAllocation;
@@ -81,6 +83,7 @@ struct CommandQueueImp : public CommandQueue {
     MOCKABLE_VIRTUAL NEO::WaitStatus reserveLinearStreamSize(size_t size);
     ze_command_queue_mode_t getSynchronousMode() const;
     virtual bool getPreemptionCmdProgramming() = 0;
+    void handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::recursive_mutex> &lockForIndirect) override;
 
   protected:
     MOCKABLE_VIRTUAL NEO::SubmissionStatus submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,

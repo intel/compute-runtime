@@ -256,4 +256,21 @@ NEO::WaitStatus CommandQueueImp::CommandBufferManager::switchBuffers(NEO::Comman
     return waitStatus;
 }
 
+void CommandQueueImp::handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::recursive_mutex> &lockForIndirect) {
+    NEO::Device *neoDevice = this->device->getNEODevice();
+    auto svmAllocsManager = this->device->getDriverHandle()->getSvmAllocsManager();
+    auto submitAsPack = this->device->getDriverHandle()->getMemoryManager()->allowIndirectAllocationsAsPack(neoDevice->getRootDeviceIndex());
+    if (NEO::DebugManager.flags.MakeIndirectAllocationsResidentAsPack.get() != -1) {
+        submitAsPack = !!NEO::DebugManager.flags.MakeIndirectAllocationsResidentAsPack.get();
+    }
+
+    if (submitAsPack) {
+        svmAllocsManager->makeIndirectAllocationsResident(*(this->csr), this->csr->peekTaskCount() + 1u);
+    } else {
+        lockForIndirect = this->device->getDriverHandle()->getSvmAllocsManager()->obtainOwnership();
+        svmAllocsManager->addInternalAllocationsToResidencyContainer(neoDevice->getRootDeviceIndex(),
+                                                                     this->csr->getResidencyAllocations(),
+                                                                     unifiedMemoryControls.generateMask());
+    }
+}
 } // namespace L0

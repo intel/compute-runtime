@@ -217,8 +217,6 @@ struct CommandList : _ze_command_list_handle_t {
         return indirectAllocationsAllowed;
     }
 
-    void handleIndirectAllocationResidency();
-
     NEO::PreemptionMode obtainKernelPreemptionMode(Kernel *kernel);
 
     std::vector<Kernel *> &getPrintfKernelContainer() {

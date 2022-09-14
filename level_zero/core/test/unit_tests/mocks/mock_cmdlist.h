@@ -132,6 +132,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 struct MockCommandListImmediate : public CommandListCoreFamilyImmediate<gfxCoreFamily> {
     using CommandListCoreFamilyImmediate<gfxCoreFamily>::requiredStreamState;
     using CommandListCoreFamilyImmediate<gfxCoreFamily>::containsAnyKernel;
+    using CommandListCoreFamilyImmediate<gfxCoreFamily>::indirectAllocationsAllowed;
 };
 
 template <>

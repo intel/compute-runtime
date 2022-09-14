@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -645,6 +646,53 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryFillInUsmDeviceThenB
 TEST(CommandList, whenAsMutableIsCalledNullptrIsReturned) {
     MockCommandList cmdList;
     EXPECT_EQ(nullptr, cmdList.asMutable());
+}
+
+class MockCommandQueueIndirectAccess : public Mock<CommandQueue> {
+  public:
+    MockCommandQueueIndirectAccess(L0::Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc) : Mock(device, csr, desc) {}
+    void handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::recursive_mutex> &lockForIndirect) override {
+        handleIndirectAllocationResidencyCalledTimes++;
+    }
+    uint32_t handleIndirectAllocationResidencyCalledTimes = 0;
+};
+
+HWTEST2_F(CommandListTest, givenCmdListWithIndirectAccessWhenExecutingCommandListImmediateWithFlushTaskThenHandleIndirectAccessCalled, IsAtLeastSkl) {
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
+
+    MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
+    MockCommandQueueIndirectAccess mockCommandQueue(device, &mockCommandStreamReceiver, &desc);
+
+    auto oldCommandQueue = commandList->cmdQImmediate;
+    commandList->cmdQImmediate = &mockCommandQueue;
+    commandListImmediate.indirectAllocationsAllowed = true;
+    commandListImmediate.executeCommandListImmediateWithFlushTask(false);
+    EXPECT_EQ(mockCommandQueue.handleIndirectAllocationResidencyCalledTimes, 1u);
+    commandList->cmdQImmediate = oldCommandQueue;
+}
+
+HWTEST2_F(CommandListTest, givenCmdListWithNoIndirectAccessWhenExecutingCommandListImmediateWithFlushTaskThenHandleIndirectAccessNotCalled, IsAtLeastSkl) {
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
+
+    MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
+    MockCommandQueueIndirectAccess mockCommandQueue(device, &mockCommandStreamReceiver, &desc);
+
+    auto oldCommandQueue = commandList->cmdQImmediate;
+    commandList->cmdQImmediate = &mockCommandQueue;
+    commandListImmediate.indirectAllocationsAllowed = false;
+    commandListImmediate.executeCommandListImmediateWithFlushTask(false);
+    EXPECT_EQ(mockCommandQueue.handleIndirectAllocationResidencyCalledTimes, 0u);
+    commandList->cmdQImmediate = oldCommandQueue;
 }
 
 } // namespace ult
