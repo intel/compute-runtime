@@ -587,5 +587,11 @@ HWTEST2_F(L0HwHelperTest, GivenNonMultiTilePlatformsWhenCheckingL0HelperForMulti
     EXPECT_FALSE(L0::L0HwHelperHw<FamilyType>::get().multiTileCapablePlatform());
 }
 
+HWTEST2_F(L0HwHelperTest, whenAlwaysAllocateEventInLocalMemCalledThenReturnFalse, IsNotXeHpcCore) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    auto &l0HwHelper = L0::L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    EXPECT_FALSE(l0HwHelper.alwaysAllocateEventInLocalMem());
+}
+
 } // namespace ult
 } // namespace L0

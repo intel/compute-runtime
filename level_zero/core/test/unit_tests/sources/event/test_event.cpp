@@ -272,6 +272,11 @@ TEST_F(EventPoolCreate, GivenDeviceThenEventPoolIsCreated) {
     auto eventPool = EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc, result);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_NE(nullptr, eventPool);
+    if (L0HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily).alwaysAllocateEventInLocalMem()) {
+        EXPECT_EQ(NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER, eventPool->getAllocation().getAllocationType());
+    } else {
+        EXPECT_EQ(NEO::AllocationType::BUFFER_HOST_MEMORY, eventPool->getAllocation().getAllocationType());
+    }
     eventPool->destroy();
 }
 
@@ -283,12 +288,6 @@ class MemoryManagerEventPoolIPCMock : public NEO::MockMemoryManager {
         alloc->isShareableHostMemory = true;
         multiGraphicsAllocation.addAllocation(alloc);
         return reinterpret_cast<void *>(alloc->getUnderlyingBuffer());
-    };
-    void freeGraphicsMemoryImpl(NEO::GraphicsAllocation *gfxAllocation) override {
-        delete gfxAllocation;
-    };
-    void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation, bool isImportedAllocation) override {
-        delete gfxAllocation;
     };
     char buffer[64];
     NEO::MockGraphicsAllocation *alloc;
@@ -331,7 +330,9 @@ TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolThenHandleAndNum
     driverHandle->setMemoryManager(curMemoryManager);
 }
 
-TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolWhenHostShareableMemoryIsFalseThenUnsuportedIsReturned) {
+using EventPoolCreateMultiDevice = Test<MultiDeviceFixture>;
+
+TEST_F(EventPoolCreateMultiDevice, whenGettingIpcHandleForEventPoolWhenHostShareableMemoryIsFalseThenUnsuportedIsReturned) {
     uint32_t numEvents = 4;
     ze_event_pool_desc_t eventPoolDesc = {
         ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
@@ -339,9 +340,16 @@ TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolWhenHostShareabl
         ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_IPC,
         numEvents};
 
-    auto deviceHandle = device->toHandle();
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    auto eventPool = EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc, result);
+    uint32_t deviceCount = 0;
+    ze_result_t result = zeDeviceGet(driverHandle.get(), &deviceCount, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(deviceCount, numRootDevices);
+
+    ze_device_handle_t *devices = new ze_device_handle_t[deviceCount];
+    result = zeDeviceGet(driverHandle.get(), &deviceCount, devices);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto eventPool = EventPool::create(driverHandle.get(), context, deviceCount, devices, &eventPoolDesc, result);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, eventPool);
 
@@ -351,6 +359,7 @@ TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolWhenHostShareabl
 
     res = eventPool->destroy();
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    delete[] devices;
 }
 
 TEST_F(EventPoolIPCHandleTests, whenOpeningIpcHandleForEventPoolThenEventPoolIsCreatedAndEventSizesAreTheSame) {
@@ -1191,11 +1200,15 @@ TEST_F(TimestampEventCreate, givenSingleTimestampEventThenAllocationSizeCreatedF
               minTimestampEventAllocation);
 }
 
-TEST_F(TimestampEventCreate, givenTimestampEventThenAllocationsIsOfPacketTagBufferType) {
+TEST_F(TimestampEventCreate, givenTimestampEventThenAllocationsIsDependentIfAllocationOnLocalMemAllowed) {
     auto allocation = &eventPool->getAllocation();
     ASSERT_NE(nullptr, allocation);
 
-    EXPECT_EQ(NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, allocation->getAllocationType());
+    if (L0HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily).alwaysAllocateEventInLocalMem()) {
+        EXPECT_EQ(NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER, allocation->getAllocationType());
+    } else {
+        EXPECT_EQ(NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, allocation->getAllocationType());
+    }
 }
 
 TEST_F(TimestampEventCreate, givenEventTimestampWhenPacketCountIsSetThenCorrectOffsetIsReturned) {
@@ -1582,8 +1595,6 @@ TEST_F(TimestampEventCreate, givenEventWhenQueryKernelTimestampThenNotReadyRetur
     EXPECT_EQ(0u, resultTimestamp.global.kernelStart);
     EXPECT_EQ(0u, resultTimestamp.global.kernelEnd);
 }
-
-using EventPoolCreateMultiDevice = Test<MultiDeviceFixture>;
 
 TEST_F(EventPoolCreateMultiDevice, givenReturnSubDevicesAsApiDevicesWhenCallZeGetDevicesThenSubDevicesAreReturnedAsSeparateDevices) {
     DebugManagerStateRestore restorer;

@@ -21,5 +21,9 @@ XE_HPC_CORETEST_F(L0HwHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForMultiTil
     EXPECT_TRUE(L0::L0HwHelperHw<FamilyType>::get().multiTileCapablePlatform());
 }
 
+XE_HPC_CORETEST_F(L0HwHelperTestXeHpc, GivenHpcPlatformsWhenAlwaysAllocateEventInLocalMemCalledThenReturnTrue) {
+    EXPECT_TRUE(L0::L0HwHelperHw<FamilyType>::get().alwaysAllocateEventInLocalMem());
+}
+
 } // namespace ult
 } // namespace L0

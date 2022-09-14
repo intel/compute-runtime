@@ -27,6 +27,11 @@ bool L0HwHelperHw<Family>::multiTileCapablePlatform() const {
     return true;
 }
 
+template <>
+bool L0HwHelperHw<Family>::alwaysAllocateEventInLocalMem() const {
+    return true;
+}
+
 template class L0HwHelperHw<Family>;
 
 } // namespace L0

@@ -112,4 +112,9 @@ bool L0HwHelperHw<GfxFamily>::forceDefaultUsmCompressionSupport() const {
     return false;
 }
 
+template <typename gfxProduct>
+bool L0HwHelperHw<gfxProduct>::alwaysAllocateEventInLocalMem() const {
+    return false;
+}
+
 } // namespace L0
