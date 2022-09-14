@@ -61,6 +61,11 @@ if [ "${BUILD_SRPM}" == "1" ]; then
     cp $COPYRIGHT $BUILD_DIR/SOURCES/
     cp $SPEC_SRC $BUILD_DIR/SPECS/
 
+    if [ -d "$I915_HEADERS_DIR" ]; then
+        tar -c -I 'xz -6 -T0' -f $BUILD_DIR/SOURCES/uapi.tar.xz -C $REPO_DIR --transform "s,${I915_HEADERS_DIR:1},uapi," $I915_HEADERS_DIR
+        perl -pi -e "s;^%global I915_HEADERS_DIR .*;%global I915_HEADERS_DIR %{_builddir}/uapi;" $SPEC
+    fi
+
     PATCH_SPEC="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/patch_spec.sh"
 
     if [ -f "$PATCH_SPEC" ]; then

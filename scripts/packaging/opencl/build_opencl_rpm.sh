@@ -61,20 +61,26 @@ if [ "${BUILD_SRPM}" == "1" ]; then
     cp $COPYRIGHT $BUILD_DIR/SOURCES/
     cp $SPEC_SRC $BUILD_DIR/SPECS/
 
+    if [ -d "$I915_HEADERS_DIR" ]; then
+        tar -c -I 'xz -6 -T0' -f $BUILD_DIR/SOURCES/uapi.tar.xz -C $REPO_DIR --transform "s,${I915_HEADERS_DIR:1},uapi," $I915_HEADERS_DIR
+        perl -pi -e "s;^%global I915_HEADERS_DIR .*;%global I915_HEADERS_DIR %{_builddir}/uapi;" $SPEC
+    fi
+
     PATCH_SPEC="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/patch_spec.sh"
 
     if [ -f "$PATCH_SPEC" ]; then
         source "$PATCH_SPEC"
     fi
+
     if [ -z "${BRANCH_SUFFIX}" ]; then
         sed -i '/^Epoch: /d' ${SPEC}
     fi
 
     # Update spec file with new version
-    perl -pi -e "s/^%global NEO_OCL_VERSION_MAJOR .*/%global NEO_OCL_VERSION_MAJOR ${NEO_OCL_VERSION_MAJOR}/" $BUILD_DIR/SPECS/opencl.spec
-    perl -pi -e "s/^%global NEO_OCL_VERSION_MINOR .*/%global NEO_OCL_VERSION_MINOR ${NEO_OCL_VERSION_MINOR}/" $BUILD_DIR/SPECS/opencl.spec
-    perl -pi -e "s/^%global NEO_OCL_VERSION_BUILD .*/%global NEO_OCL_VERSION_BUILD ${NEO_OCL_VERSION_BUILD}/" $BUILD_DIR/SPECS/opencl.spec
-    perl -pi -e "s/^%global NEO_RELEASE_WITH_REGKEYS .*/%global NEO_RELEASE_WITH_REGKEYS ${RELEASE_WITH_REGKEYS}/" $BUILD_DIR/SPECS/opencl.spec
+    perl -pi -e "s/^%global NEO_OCL_VERSION_MAJOR .*/%global NEO_OCL_VERSION_MAJOR ${NEO_OCL_VERSION_MAJOR}/" $SPEC
+    perl -pi -e "s/^%global NEO_OCL_VERSION_MINOR .*/%global NEO_OCL_VERSION_MINOR ${NEO_OCL_VERSION_MINOR}/" $SPEC
+    perl -pi -e "s/^%global NEO_OCL_VERSION_BUILD .*/%global NEO_OCL_VERSION_BUILD ${NEO_OCL_VERSION_BUILD}/" $SPEC
+    perl -pi -e "s/^%global NEO_RELEASE_WITH_REGKEYS .*/%global NEO_RELEASE_WITH_REGKEYS ${RELEASE_WITH_REGKEYS}/" $SPEC
     perl -pi -e "s/^%global rel .*/%global rel ${RELEASE}/" $SPEC
     perl -pi -e "s/^%global ver .*/%global ver ${VERSION}/" $SPEC
 

@@ -5,6 +5,7 @@
 %global rel xxx
 %global build_id xxx
 %global NEO_RELEASE_WITH_REGKEYS FALSE
+%global I915_HEADERS_DIR %{nil}
 
 %define gmmlib_sover 12
 %define igc_sover 1
@@ -26,6 +27,9 @@ License: MIT
 URL: https://github.com/intel/compute-runtime
 Source0: %{url}/archive/%{version}/compute-runtime.tar.xz
 Source1: copyright
+%if "%{I915_HEADERS_DIR}" != ""
+Source2: uapi.tar.xz
+%endif
 
 ExclusiveArch:  x86_64
 BuildRequires:  cmake gcc-c++ ninja make
@@ -48,7 +52,11 @@ exposing hardware capabilities to applications.
 %debug_package %{nil}
 
 %prep
+%if "%{I915_HEADERS_DIR}" == ""
 %autosetup -p1 -n compute-runtime
+%else
+%autosetup -p1 -n compute-runtime -b 2
+%endif
 
 %build
 %cmake .. \
@@ -61,7 +69,8 @@ exposing hardware capabilities to applications.
    -DRELEASE_WITH_REGKEYS=%{NEO_RELEASE_WITH_REGKEYS} \
    -DL0_INSTALL_UDEV_RULES=1 \
    -DUDEV_RULES_DIR=/etc/udev/rules.d/ \
-   -DCMAKE_VERBOSE_MAKEFILE=FALSE
+   -DCMAKE_VERBOSE_MAKEFILE=FALSE \
+   -DI915_HEADERS_DIR=$(realpath %{I915_HEADERS_DIR})
 %ninja_build
 
 %install

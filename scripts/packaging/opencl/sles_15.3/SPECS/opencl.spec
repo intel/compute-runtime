@@ -7,6 +7,7 @@
 %global NEO_OCL_VERSION_MINOR xxx
 %global NEO_OCL_VERSION_BUILD xxx
 %global NEO_RELEASE_WITH_REGKEYS FALSE
+%global I915_HEADERS_DIR %{nil}
 
 %define gmmlib_sover 12
 %define igc_sover 1
@@ -28,6 +29,9 @@ Group:          System Environment/Libraries
 Url:            https://github.com/intel/compute-runtime
 Source0:        %{url}/archive/%{version}/compute-runtime.tar.xz
 Source1:        copyright
+%if "%{I915_HEADERS_DIR}" != ""
+Source2:        uapi.tar.xz
+%endif
 
 ExclusiveArch:  x86_64
 BuildRequires:  cmake gcc-c++ ninja make
@@ -50,7 +54,11 @@ Summary:        ocloc package for opencl
 %debug_package %{nil}
 
 %prep
+%if "%{I915_HEADERS_DIR}" == ""
 %autosetup -p1 -n compute-runtime
+%else
+%autosetup -p1 -n compute-runtime -b 2
+%endif
 
 %build
 %cmake .. \
@@ -63,7 +71,8 @@ Summary:        ocloc package for opencl
    -DNEO_SKIP_UNIT_TESTS=TRUE \
    -DNEO_ENABLE_i915_PRELIM_DETECTION=TRUE \
    -DRELEASE_WITH_REGKEYS=%{NEO_RELEASE_WITH_REGKEYS} \
-   -DCMAKE_VERBOSE_MAKEFILE=FALSE
+   -DCMAKE_VERBOSE_MAKEFILE=FALSE \
+   -DI915_HEADERS_DIR=$(realpath %{I915_HEADERS_DIR})
 %ninja_build
 
 %install
