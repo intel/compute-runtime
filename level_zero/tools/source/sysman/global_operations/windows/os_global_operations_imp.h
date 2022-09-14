@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ namespace L0 {
 class KmdSysManager;
 class WddmGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMovableClass {
   public:
-    void getSerialNumber(char (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) override;
+    bool getSerialNumber(char (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) override;
     void getBoardNumber(char (&boardNumber)[ZES_STRING_PROPERTY_SIZE]) override;
     void getBrandName(char (&brandName)[ZES_STRING_PROPERTY_SIZE]) override;
     void getModelName(char (&modelName)[ZES_STRING_PROPERTY_SIZE]) override;

@@ -146,7 +146,7 @@ static std::string modifyPathOnLevel(std::string realPciPath, uint8_t nLevel) {
     }
     return realPciPath;
 }
-std::string getPciRootPortDirectoryPath(std::string realPciPath) {
+std::string LinuxSysmanImp::getPciRootPortDirectoryPath(std::string realPciPath) {
     // the rootport is always the first pci folder after the pcie slot.
     //    +-[0000:89]-+-00.0
     // |           +-00.1

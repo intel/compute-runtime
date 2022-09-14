@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ namespace L0 {
 
 class OsGlobalOperations {
   public:
-    virtual void getSerialNumber(char (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) = 0;
+    virtual bool getSerialNumber(char (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) = 0;
     virtual void getBoardNumber(char (&boardNumber)[ZES_STRING_PROPERTY_SIZE]) = 0;
     virtual void getBrandName(char (&brandName)[ZES_STRING_PROPERTY_SIZE]) = 0;
     virtual void getModelName(char (&modelName)[ZES_STRING_PROPERTY_SIZE]) = 0;
