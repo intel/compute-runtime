@@ -221,7 +221,11 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValue(TagSizeT eventVal) {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::hostSignal() {
-    return hostEventSetValue(Event::STATE_SIGNALED);
+    auto status = hostEventSetValue(Event::STATE_SIGNALED);
+    if (status == ZE_RESULT_SUCCESS) {
+        isCompleted = true;
+    }
+    return status;
 }
 
 template <typename TagSizeT>

@@ -205,9 +205,9 @@ struct EventImp : public Event {
   protected:
     ze_result_t calculateProfilingData();
     ze_result_t queryStatusEventPackets();
-    ze_result_t hostEventSetValue(TagSizeT eventValue);
+    MOCKABLE_VIRTUAL ze_result_t hostEventSetValue(TagSizeT eventValue);
     ze_result_t hostEventSetValueTimestamps(TagSizeT eventVal);
-    void assignKernelEventCompletionData(void *address);
+    MOCKABLE_VIRTUAL void assignKernelEventCompletionData(void *address);
 };
 
 struct EventPool : _ze_event_pool_handle_t {
