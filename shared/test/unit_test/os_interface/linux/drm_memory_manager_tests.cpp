@@ -3533,6 +3533,29 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledAndSingleInstanceIsaW
     EXPECT_EQ(1u, drm.unregisterCalledCount);
 }
 
+TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenIsaIsRegisteredThenDeviceBitfieldIsPassedAsPayload) {
+    DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::MaxSize); i++) {
+        drm.classHandles.push_back(i);
+    }
+
+    drm.registeredClass = DrmResourceClass::MaxSize;
+
+    MockBufferObject bo(&drm, 3, 0, 0, 1);
+    MockDrmAllocation allocation(AllocationType::KERNEL_ISA, MemoryPool::LocalMemory);
+    allocation.storageInfo.subDeviceBitfield = 1 << 3;
+    allocation.bufferObjects[0] = &bo;
+    allocation.registerBOBindExtHandle(&drm);
+    EXPECT_EQ(1u, bo.bindExtHandles.size());
+
+    EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
+
+    EXPECT_EQ(sizeof(uint32_t), drm.registeredDataSize);
+    uint32_t *data = reinterpret_cast<uint32_t *>(drm.registeredData);
+    EXPECT_EQ(static_cast<uint32_t>(allocation.storageInfo.subDeviceBitfield.to_ulong()), *data);
+}
+
 TEST_F(DrmAllocationTests, givenDrmAllocationWhenSetCacheRegionIsCalledForDefaultRegionThenReturnTrue) {
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 

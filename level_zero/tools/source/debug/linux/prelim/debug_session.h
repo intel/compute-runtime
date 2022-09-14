@@ -109,6 +109,7 @@ struct DebugSessionLinux : DebugSessionImp {
         uint64_t vmHandle;
         bool tileInstanced = false;
         bool perKernelModule = true;
+        NEO::DeviceBitfield deviceBitfield;
 
         uint64_t moduleBegin;
         uint64_t moduleEnd;
@@ -251,14 +252,16 @@ struct DebugSessionLinux : DebugSessionImp {
     ze_result_t readGpuMemory(uint64_t vmHandle, char *output, size_t size, uint64_t gpuVa) override;
     ze_result_t writeGpuMemory(uint64_t vmHandle, const char *input, size_t size, uint64_t gpuVa) override;
     ze_result_t getISAVMHandle(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t &vmHandle);
+    bool getIsaInfoForAllInstances(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t vmHandles[], ze_result_t &status);
+
     ze_result_t getElfOffset(const zet_debug_memory_space_desc_t *desc, size_t size, const char *&elfData, uint64_t &offset);
     ze_result_t readElfSpace(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer,
                              const char *&elfData, const uint64_t offset);
     virtual bool tryReadElf(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, ze_result_t &status);
 
-    bool tryWriteIsa(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer, ze_result_t &status);
-    bool tryReadIsa(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, ze_result_t &status);
-    virtual bool tryAccessIsa(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, bool write, ze_result_t &status);
+    bool tryWriteIsa(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer, ze_result_t &status);
+    bool tryReadIsa(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, ze_result_t &status);
+    virtual bool tryAccessIsa(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, bool write, ze_result_t &status);
     ze_result_t accessDefaultMemForThreadAll(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, bool write);
 
     MOCKABLE_VIRTUAL int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize);
@@ -269,6 +272,32 @@ struct DebugSessionLinux : DebugSessionImp {
 
     bool isTileWithinDeviceBitfield(uint32_t tileIndex) {
         return connectedDevice->getNEODevice()->getDeviceBitfield().test(tileIndex);
+    }
+
+    bool checkAllOtherTileIsaAllocationsPresent(uint32_t tileIndex, uint64_t isaVa) {
+        bool allInstancesPresent = true;
+        for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
+            if (i != tileIndex && connectedDevice->getNEODevice()->getDeviceBitfield().test(i)) {
+                if (clientHandleToConnection[clientHandle]->isaMap[i].find(isaVa) == clientHandleToConnection[clientHandle]->isaMap[i].end()) {
+                    allInstancesPresent = false;
+                    break;
+                }
+            }
+        }
+        return allInstancesPresent;
+    }
+
+    bool checkAllOtherTileIsaAllocationsRemoved(uint32_t tileIndex, uint64_t isaVa) {
+        bool allInstancesRemoved = true;
+        for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
+            if (i != tileIndex && connectedDevice->getNEODevice()->getDeviceBitfield().test(i)) {
+                if (clientHandleToConnection[clientHandle]->isaMap[i].find(isaVa) != clientHandleToConnection[clientHandle]->isaMap[i].end()) {
+                    allInstancesRemoved = false;
+                    break;
+                }
+            }
+        }
+        return allInstancesRemoved;
     }
 
     ThreadHelper internalEventThread;
@@ -337,8 +366,8 @@ struct TileDebugSessionLinux : DebugSessionLinux {
         return rootDebugSession->tryReadElf(desc, size, buffer, status);
     }
 
-    bool tryAccessIsa(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, bool write, ze_result_t &status) override {
-        return rootDebugSession->tryAccessIsa(deviceIndex, desc, size, buffer, write, status);
+    bool tryAccessIsa(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, bool write, ze_result_t &status) override {
+        return rootDebugSession->tryAccessIsa(deviceBitfield, desc, size, buffer, write, status);
     }
 
     bool ackIsaEvents(uint32_t deviceIndex, uint64_t isaVa) override {

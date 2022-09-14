@@ -196,8 +196,14 @@ void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
     }
 
     if (resourceClass != DrmResourceClass::MaxSize) {
-        uint64_t gpuAddress = getGpuAddress();
-        auto handle = drm->registerResource(resourceClass, &gpuAddress, sizeof(gpuAddress));
+        auto handle = 0;
+        if (resourceClass == DrmResourceClass::Isa) {
+            auto deviceBitfiled = static_cast<uint32_t>(this->storageInfo.subDeviceBitfield.to_ulong());
+            handle = drm->registerResource(resourceClass, &deviceBitfiled, sizeof(deviceBitfiled));
+        } else {
+            uint64_t gpuAddress = getGpuAddress();
+            handle = drm->registerResource(resourceClass, &gpuAddress, sizeof(gpuAddress));
+        }
         registeredBoBindHandles.push_back(handle);
 
         auto &bos = getBOs();

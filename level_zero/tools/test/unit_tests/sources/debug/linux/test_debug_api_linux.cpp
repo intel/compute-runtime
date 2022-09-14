@@ -1491,7 +1491,6 @@ TEST_F(DebugApiLinuxTest, GivenCanonizedAddressWhenGettingIsaVmHandleThenCorrect
     }
 
     uint64_t vmHandle = 0;
-
     auto retVal = session->getISAVMHandle(0, &desc, isaSize, vmHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
     EXPECT_EQ(3u, vmHandle);
@@ -6287,6 +6286,428 @@ TEST_F(DebugApiLinuxMultitileTest, givenApiThreadAndMultipleTilesWhenGettingDevi
     thread = {sliceCount - 1, 0, 0, 0};
     deviceIndex = debugSession->getDeviceIndexFromApiThread(thread);
     EXPECT_EQ(1u, deviceIndex);
+}
+
+struct DebugApiLinuxMultiDeviceVmBindFixture : public DebugApiLinuxMultiDeviceFixture, public MockDebugSessionLinuxHelper {
+    void setUp() {
+        DebugApiLinuxMultiDeviceFixture::setUp();
+
+        zet_debug_config_t config = {};
+        config.pid = 0x1234;
+
+        session = std::make_unique<MockDebugSessionLinux>(config, deviceImp, 10);
+        ASSERT_NE(nullptr, session);
+        session->clientHandle = MockDebugSessionLinux::mockClientHandle;
+
+        handler = new MockIoctlHandler;
+        session->ioctlHandler.reset(handler);
+
+        setupSessionClassHandlesAndUuidMap(session.get());
+        setupVmToTile(session.get());
+    }
+
+    void tearDown() {
+        DebugApiLinuxMultiDeviceFixture::tearDown();
+    }
+
+    MockIoctlHandler *handler = nullptr;
+    std::unique_ptr<MockDebugSessionLinux> session;
+};
+
+using DebugApiLinuxMultiDeviceVmBindTest = Test<DebugApiLinuxMultiDeviceVmBindFixture>;
+
+TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenHandlingVmBindCreateEventsThenModuleLoadIsTriggeredAfterAllInstancesEventsReceived) {
+
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    addIsaVmBindEvent(session.get(), vm0, true, true);
+
+    EXPECT_EQ(1u, session->clientHandleToConnection[session->clientHandle]->isaMap[0].size());
+    EXPECT_EQ(0u, session->clientHandleToConnection[session->clientHandle]->isaMap[1].size());
+    EXPECT_EQ(20u, handler->debugEventAcked.seqno);
+
+    EXPECT_EQ(0u, session->apiEvents.size());
+
+    addIsaVmBindEvent(session.get(), vm1, true, true);
+
+    EXPECT_EQ(1u, session->apiEvents.size());
+
+    zet_debug_event_t event;
+    auto result = session->readEvent(0, &event);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_LOAD, event.type);
+    EXPECT_EQ(isaGpuVa, event.info.module.load);
+}
+
+TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenHandlingVmBindDestroyEventsThenModuleUnloadIsTriggeredAfterAllInstancesEventsReceived) {
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    addIsaVmBindEvent(session.get(), vm0, false, true);
+    addIsaVmBindEvent(session.get(), vm1, false, true);
+
+    EXPECT_EQ(1u, session->clientHandleToConnection[session->clientHandle]->isaMap[0].size());
+    EXPECT_EQ(1u, session->clientHandleToConnection[session->clientHandle]->isaMap[1].size());
+
+    auto numberOfEvents = session->apiEvents.size();
+
+    addIsaVmBindEvent(session.get(), vm0, false, false);
+    EXPECT_EQ(numberOfEvents, session->apiEvents.size());
+
+    addIsaVmBindEvent(session.get(), vm1, false, false);
+
+    auto numberOfAllEvents = session->apiEvents.size();
+    EXPECT_EQ(numberOfEvents + 1, numberOfAllEvents);
+
+    zet_debug_event_t event;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    while (numberOfAllEvents--) {
+        result = session->readEvent(0, &event);
+        if (result != ZE_RESULT_SUCCESS) {
+            break;
+        }
+    }
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD, event.type);
+    EXPECT_EQ(isaGpuVa, event.info.module.load);
+}
+
+TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingAndReadingIsaMemoryThenOnlyWritesAreMirrored) {
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    addIsaVmBindEvent(session.get(), vm0, false, true);
+    addIsaVmBindEvent(session.get(), vm1, false, true);
+
+    EXPECT_EQ(1u, session->clientHandleToConnection[session->clientHandle]->isaMap[0].size());
+    EXPECT_EQ(1u, session->clientHandleToConnection[session->clientHandle]->isaMap[1].size());
+
+    ze_device_thread_t thread = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX};
+    zet_debug_memory_space_desc_t desc;
+    desc.address = isaGpuVa;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    uint8_t buffer[16];
+    handler->pwriteRetVal = 16;
+    auto result = session->writeMemory(thread, &desc, 16, buffer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(2, handler->pwriteCalled);
+
+    handler->preadRetVal = 16;
+    result = session->readMemory(thread, &desc, 16, buffer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(1, handler->preadCalled);
+}
+
+TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingMemoryFailsThenErrorIsReturned) {
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    addIsaVmBindEvent(session.get(), vm0, false, true);
+    addIsaVmBindEvent(session.get(), vm1, false, true);
+
+    ze_device_thread_t thread = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX};
+    zet_debug_memory_space_desc_t desc;
+    desc.address = isaGpuVa;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    uint8_t buffer[16];
+    handler->pwriteRetVal = -1;
+    auto result = session->writeMemory(thread, &desc, 16, buffer);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+
+    EXPECT_EQ(1, handler->pwriteCalled);
+}
+
+TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenSingleIsaWithInvalidVmWhenReadingIsaMemoryThenErrorUninitializedIsReturned) {
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+
+    uint32_t devices = static_cast<uint32_t>(neoDevice->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
+    prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
+
+    vmBindIsa->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
+    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    vmBindIsa->base.flags |= PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK;
+
+    vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 3 * sizeof(typeOfUUID);
+    vmBindIsa->base.seqno = 20u;
+    vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
+    vmBindIsa->va_start = isaGpuVa;
+    vmBindIsa->va_length = isaSize;
+    vmBindIsa->vm_handle = MockDebugSessionLinux::invalidHandle;
+    vmBindIsa->num_uuids = 2;
+
+    auto *uuids = reinterpret_cast<typeOfUUID *>(ptrOffset(vmBindIsaData, sizeof(prelim_drm_i915_debug_event_vm_bind)));
+
+    typeOfUUID uuidsTemp[2];
+    uuidsTemp[0] = static_cast<typeOfUUID>(isaUUID);
+    uuidsTemp[1] = static_cast<typeOfUUID>(elfUUID);
+
+    memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
+
+    session->handleEvent(&vmBindIsa->base);
+
+    ze_device_thread_t thread = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX};
+    zet_debug_memory_space_desc_t desc;
+    desc.address = isaGpuVa;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    uint8_t buffer[16];
+
+    handler->preadRetVal = 16;
+    auto result = session->readMemory(thread, &desc, 16, buffer);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, result);
+
+    EXPECT_EQ(0, handler->preadCalled);
+}
+
+TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaAndSingleInstanceWhenGettingIsaInfoThenIsaTrueAndErrorUninitializedIsReturned) {
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    addIsaVmBindEvent(session.get(), vm1, false, true);
+
+    EXPECT_EQ(1u, session->clientHandleToConnection[session->clientHandle]->isaMap[1].size());
+
+    zet_debug_memory_space_desc_t desc;
+    desc.address = isaGpuVa;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    uint64_t vm[4];
+    ze_result_t status = ZE_RESULT_SUCCESS;
+    auto isIsa = session->getIsaInfoForAllInstances(devices, &desc, 16, vm, status);
+
+    EXPECT_TRUE(isIsa);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, status);
+}
+
+TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenNoIsaWhenGettingIsaInfoThenFalseReturned) {
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+
+    zet_debug_memory_space_desc_t desc;
+    desc.address = isaGpuVa;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    uint64_t vm[4];
+    ze_result_t status = ZE_RESULT_SUCCESS;
+    auto isIsa = session->getIsaInfoForAllInstances(devices, &desc, 16, vm, status);
+
+    EXPECT_FALSE(isIsa);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, status);
+}
+
+TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenIsaWhenGettingIsaInfoForWrongAddressThenErrorUninitializedReturned) {
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    addIsaVmBindEvent(session.get(), vm0, false, true);
+
+    EXPECT_EQ(1u, session->clientHandleToConnection[session->clientHandle]->isaMap[0].size());
+
+    uint64_t vm[4];
+    ze_result_t status = ZE_RESULT_SUCCESS;
+    zet_debug_memory_space_desc_t desc;
+    desc.address = isaGpuVa - 0x1000;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+    auto isIsa = session->getIsaInfoForAllInstances(devices, &desc, 16, vm, status);
+
+    EXPECT_FALSE(isIsa);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, status);
+
+    desc.address = isaGpuVa + isaSize + 0x1000;
+    isIsa = session->getIsaInfoForAllInstances(devices, &desc, 16, vm, status);
+
+    EXPECT_FALSE(isIsa);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, status);
+}
+
+TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingAndReadingWrongIsaRangeThenErrorInvalidArgReturned) {
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    addIsaVmBindEvent(session.get(), vm0, false, true);
+
+    EXPECT_EQ(1u, session->clientHandleToConnection[session->clientHandle]->isaMap[0].size());
+
+    ze_device_thread_t thread = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX};
+    zet_debug_memory_space_desc_t desc;
+    desc.address = isaGpuVa;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    uint8_t buffer[16];
+    auto result = session->writeMemory(thread, &desc, isaSize * 2, buffer);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    EXPECT_EQ(0, handler->pwriteCalled);
+
+    result = session->readMemory(thread, &desc, isaSize * 2, buffer);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    EXPECT_EQ(0, handler->preadCalled);
+}
+
+TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenSingleMemoryIsaWhenWritingAndReadingThenOnlyOneInstanceIsWrittenAndRead) {
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+
+    uint32_t devices = static_cast<uint32_t>(neoDevice->getSubDevice(1)->getDeviceBitfield().to_ulong());
+    EXPECT_EQ(1u, neoDevice->getSubDevice(1)->getDeviceBitfield().count());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
+    prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
+
+    vmBindIsa->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
+    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    vmBindIsa->base.flags |= PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK;
+
+    vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 3 * sizeof(typeOfUUID);
+    vmBindIsa->base.seqno = 20u;
+    vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
+    vmBindIsa->va_start = isaGpuVa;
+    vmBindIsa->va_length = isaSize;
+    vmBindIsa->vm_handle = vm1;
+    vmBindIsa->num_uuids = 2;
+
+    auto *uuids = reinterpret_cast<typeOfUUID *>(ptrOffset(vmBindIsaData, sizeof(prelim_drm_i915_debug_event_vm_bind)));
+
+    typeOfUUID uuidsTemp[2];
+    uuidsTemp[0] = static_cast<typeOfUUID>(isaUUID);
+    uuidsTemp[1] = static_cast<typeOfUUID>(elfUUID);
+
+    memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
+
+    session->handleEvent(&vmBindIsa->base);
+
+    EXPECT_EQ(1u, session->clientHandleToConnection[session->clientHandle]->isaMap[1].size());
+
+    ze_device_thread_t thread = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX};
+    zet_debug_memory_space_desc_t desc;
+    desc.address = isaGpuVa;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    uint8_t buffer[16];
+    handler->pwriteRetVal = 16;
+    auto result = session->writeMemory(thread, &desc, 16, buffer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(1, handler->pwriteCalled);
+
+    handler->preadRetVal = 16;
+    result = session->readMemory(thread, &desc, 16, buffer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(1, handler->preadCalled);
 }
 
 struct AffinityMaskMultipleSubdevices : DebugApiLinuxMultiDeviceFixture {

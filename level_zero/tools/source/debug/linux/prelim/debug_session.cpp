@@ -764,12 +764,15 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
         auto connection = clientHandleToConnection[vmBind->client_handle].get();
         uint32_t index = 0;
         const auto uuid = vmBind->uuids[index];
-        const auto tileIndex = tileSessionsEnabled ? connection->vmToTile[vmHandle] : 0;
 
         if (connection->uuidMap.find(uuid) == connection->uuidMap.end()) {
             PRINT_DEBUGGER_ERROR_LOG("Unknown UUID handle = %llu\n", (uint64_t)uuid);
             return;
         }
+
+        DEBUG_BREAK_IF(connection->vmToTile.find(vmHandle) == connection->vmToTile.end() && connection->uuidMap[uuid].classIndex == NEO::DrmResourceClass::Isa);
+        const auto tileIndex = connection->vmToTile[vmHandle];
+
         PRINT_DEBUGGER_INFO_LOG("UUID handle = %llu class index = %d\n", (uint64_t)vmBind->uuids[index], (int)clientHandleToConnection[vmBind->client_handle]->uuidMap[vmBind->uuids[index]].classIndex);
 
         auto classUuid = connection->uuidMap[uuid].classHandle;
@@ -794,7 +797,7 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
             }
         }
 
-        bool handleEvent = isTileWithinDeviceBitfield(connection->vmToTile[vmBind->vm_handle]);
+        bool handleEvent = isTileWithinDeviceBitfield(tileIndex);
 
         if (handleEvent && connection->uuidMap[uuid].classIndex == NEO::DrmResourceClass::Isa) {
             PRINT_DEBUGGER_INFO_LOG("ISA vm_handle = %llu, tileIndex = %lu", (uint64_t)vmHandle, tileIndex);
@@ -803,6 +806,7 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
             bool perKernelModules = true;
             int moduleUUIDindex = -1;
             bool tileInstanced = false;
+            bool allInstancesEventsReceived = true;
 
             for (uint32_t uuidIter = 1; uuidIter < vmBind->num_uuids; uuidIter++) {
                 if (connection->uuidMap[vmBind->uuids[uuidIter]].classIndex == NEO::DrmResourceClass::L0ZebinModule) {
@@ -820,6 +824,10 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                 auto &isaMap = connection->isaMap[tileIndex];
                 auto &elfMap = connection->elfMap;
 
+                uint32_t deviceBitfield = 0;
+                memcpy_s(&deviceBitfield, sizeof(uint32_t), connection->uuidMap[uuid].data.get(), connection->uuidMap[uuid].dataSize);
+                NEO::DeviceBitfield devices(deviceBitfield);
+
                 auto isa = std::make_unique<IsaAllocation>();
                 isa->bindInfo = {vmBind->va_start, vmBind->va_length};
                 isa->vmHandle = vmHandle;
@@ -828,6 +836,7 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                 isa->moduleEnd = 0;
                 isa->tileInstanced = tileInstanced;
                 isa->perKernelModule = perKernelModules;
+                isa->deviceBitfield = devices;
 
                 for (index = 1; index < vmBind->num_uuids; index++) {
                     if (connection->uuidMap[vmBind->uuids[index]].classIndex == NEO::DrmResourceClass::Elf) {
@@ -893,14 +902,20 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                             static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent, nullptr);
                         }
                     } else {
-                        pushApiEvent(debugEvent, nullptr);
+
+                        if (devices.count() > 1) {
+                            allInstancesEventsReceived = checkAllOtherTileIsaAllocationsPresent(tileIndex, vmBind->va_start);
+                        }
+                        if (allInstancesEventsReceived) {
+                            pushApiEvent(debugEvent, nullptr);
+                        }
                     }
                 }
             }
 
             if (createEvent) {
                 std::lock_guard<std::mutex> lock(asyncThreadMutex);
-                if (!connection->isaMap[tileIndex][vmBind->va_start]->moduleLoadEventAck && perKernelModules) {
+                if (allInstancesEventsReceived && !connection->isaMap[tileIndex][vmBind->va_start]->moduleLoadEventAck && perKernelModules) {
                     PRINT_DEBUGGER_INFO_LOG("Add event to ack, seqno = %llu", (uint64_t)vmBind->base.seqno);
                     connection->isaMap[tileIndex][vmBind->va_start]->ackEvents.push_back(vmBind->base);
                     shouldAckEvent = false;
@@ -931,7 +946,13 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                             static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->removeModule(debugEvent.info.module);
                             static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent, nullptr);
                         } else {
-                            pushApiEvent(debugEvent, nullptr);
+                            bool notifyEvent = true;
+                            if (isa->deviceBitfield.count() > 1) {
+                                notifyEvent = checkAllOtherTileIsaAllocationsRemoved(tileIndex, vmBind->va_start);
+                            }
+                            if (notifyEvent) {
+                                pushApiEvent(debugEvent, nullptr);
+                            }
                         }
                     }
                     std::unique_lock<std::mutex> memLock(asyncThreadMutex);
@@ -1319,6 +1340,55 @@ ze_result_t DebugSessionLinux::getISAVMHandle(uint32_t deviceIndex, const zet_de
     return status;
 }
 
+bool DebugSessionLinux::getIsaInfoForAllInstances(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t vmHandles[], ze_result_t &status) {
+    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+    auto accessVA = gmmHelper->decanonize(desc->address);
+
+    status = ZE_RESULT_ERROR_UNINITIALIZED;
+
+    bool tileInstancedIsa = false;
+    bool invalidIsaRange = false;
+    uint32_t isaFound = 0;
+
+    for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
+        vmHandles[i] = invalidHandle;
+
+        if (deviceBitfield.test(i)) {
+
+            auto &isaMap = clientHandleToConnection[clientHandle]->isaMap[i];
+            if (isaMap.size() > 0) {
+                uint64_t baseVa;
+                uint64_t ceilVa;
+                for (const auto &isa : isaMap) {
+                    baseVa = isa.second->bindInfo.gpuVa;
+                    ceilVa = isa.second->bindInfo.gpuVa + isa.second->bindInfo.size;
+                    if (accessVA >= baseVa && accessVA < ceilVa) {
+                        isaFound++;
+                        if (accessVA + size > ceilVa) {
+                            invalidIsaRange = true;
+                        } else {
+                            vmHandles[i] = isa.second->vmHandle;
+                        }
+                        tileInstancedIsa = isa.second->tileInstanced;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    if (invalidIsaRange) {
+        status = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    } else if (isaFound > 0) {
+        if ((tileInstancedIsa && deviceBitfield.count() == isaFound) ||
+            !tileInstancedIsa) {
+            status = ZE_RESULT_SUCCESS;
+        }
+    }
+
+    return isaFound > 0;
+}
+
 void DebugSessionLinux::printContextVms() {
     if (NEO::DebugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_INFO) {
         PRINT_DEBUGGER_LOG(stdout, "\nINFO: Context - VM map: ", "");
@@ -1391,9 +1461,7 @@ ze_result_t DebugSessionLinux::readMemory(ze_device_thread_t thread, const zet_d
         return status;
     }
 
-    uint32_t deviceIndex = connectedDevice->getNEODevice()->isSubDevice() ? Math::log2(static_cast<uint32_t>(connectedDevice->getNEODevice()->getDeviceBitfield().to_ulong())) : 0;
-
-    bool isa = tryReadIsa(deviceIndex, desc, size, buffer, status);
+    bool isa = tryReadIsa(connectedDevice->getNEODevice()->getDeviceBitfield(), desc, size, buffer, status);
     if (isa) {
         return status;
     }
@@ -1422,9 +1490,9 @@ ze_result_t DebugSessionLinux::writeMemory(ze_device_thread_t thread, const zet_
         return status;
     }
 
-    uint32_t deviceIndex = connectedDevice->getNEODevice()->isSubDevice() ? Math::log2(static_cast<uint32_t>(connectedDevice->getNEODevice()->getDeviceBitfield().to_ulong())) : 0;
+    auto deviceBitfield = connectedDevice->getNEODevice()->getDeviceBitfield();
 
-    bool isa = tryWriteIsa(deviceIndex, desc, size, buffer, status);
+    bool isa = tryWriteIsa(deviceBitfield, desc, size, buffer, status);
     if (isa) {
         return status;
     }
@@ -1442,43 +1510,90 @@ ze_result_t DebugSessionLinux::writeMemory(ze_device_thread_t thread, const zet_
     return writeGpuMemory(threadVmHandle, static_cast<const char *>(buffer), size, desc->address);
 }
 
-bool DebugSessionLinux::tryWriteIsa(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer, ze_result_t &status) {
-    return tryAccessIsa(deviceIndex, desc, size, const_cast<void *>(buffer), true, status);
+bool DebugSessionLinux::tryWriteIsa(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer, ze_result_t &status) {
+    return tryAccessIsa(deviceBitfield, desc, size, const_cast<void *>(buffer), true, status);
 }
 
-bool DebugSessionLinux::tryReadIsa(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, ze_result_t &status) {
-    return tryAccessIsa(deviceIndex, desc, size, buffer, false, status);
+bool DebugSessionLinux::tryReadIsa(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, ze_result_t &status) {
+    return tryAccessIsa(deviceBitfield, desc, size, buffer, false, status);
 }
 
-bool DebugSessionLinux::tryAccessIsa(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, bool write, ze_result_t &status) {
+bool DebugSessionLinux::tryAccessIsa(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, bool write, ze_result_t &status) {
     status = ZE_RESULT_ERROR_NOT_AVAILABLE;
-    uint64_t vmHandle = invalidHandle;
+    uint64_t vmHandle[NEO::EngineLimits::maxHandleCount] = {invalidHandle};
+    uint32_t deviceIndex = Math::getMinLsbSet(static_cast<uint32_t>(deviceBitfield.to_ulong()));
+
     bool isaAccess = false;
+
+    auto checkIfAnyFailed = [](const auto &result) { return result != ZE_RESULT_SUCCESS; };
+
     {
         std::lock_guard<std::mutex> memLock(asyncThreadMutex);
 
-        status = getISAVMHandle(deviceIndex, desc, size, vmHandle);
-        if (status == ZE_RESULT_SUCCESS) {
-            isaAccess = true;
-        } else if (status == ZE_RESULT_ERROR_INVALID_ARGUMENT) {
-            return true;
+        if (deviceBitfield.count() == 1) {
+            status = getISAVMHandle(deviceIndex, desc, size, vmHandle[deviceIndex]);
+            if (status == ZE_RESULT_SUCCESS) {
+                isaAccess = true;
+            }
+            if (status == ZE_RESULT_ERROR_INVALID_ARGUMENT) {
+                return true;
+            }
+        } else {
+            isaAccess = getIsaInfoForAllInstances(deviceBitfield, desc, size, vmHandle, status);
         }
     }
 
-    if (isaAccess) {
+    if (isaAccess && status == ZE_RESULT_SUCCESS) {
 
-        if (vmHandle != invalidHandle) {
-            if (write) {
-                status = writeGpuMemory(vmHandle, static_cast<char *>(buffer), size, desc->address);
+        if (write) {
+            if (deviceBitfield.count() == 1) {
+                if (vmHandle[deviceIndex] != invalidHandle) {
+                    status = writeGpuMemory(vmHandle[deviceIndex], static_cast<char *>(buffer), size, desc->address);
+                } else {
+                    status = ZE_RESULT_ERROR_UNINITIALIZED;
+                }
             } else {
-                status = readGpuMemory(vmHandle, static_cast<char *>(buffer), size, desc->address);
+                std::vector<ze_result_t> results(NEO::EngineLimits::maxHandleCount);
+
+                for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
+                    results[i] = ZE_RESULT_SUCCESS;
+
+                    if (deviceBitfield.test(i) && vmHandle[i] != invalidHandle) {
+                        results[i] = writeGpuMemory(vmHandle[i], static_cast<char *>(buffer), size, desc->address);
+
+                        if (results[i] != ZE_RESULT_SUCCESS) {
+                            break;
+                        }
+                    }
+                }
+
+                const bool anyFailed = std::any_of(results.begin(), results.end(), checkIfAnyFailed);
+
+                if (anyFailed) {
+                    status = ZE_RESULT_ERROR_UNKNOWN;
+                }
             }
         } else {
-            status = ZE_RESULT_ERROR_UNINITIALIZED;
+
+            if (deviceBitfield.count() > 1) {
+                for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
+                    if (vmHandle[i] != invalidHandle) {
+                        deviceIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            if (vmHandle[deviceIndex] != invalidHandle) {
+                status = readGpuMemory(vmHandle[deviceIndex], static_cast<char *>(buffer), size, desc->address);
+            } else {
+                status = ZE_RESULT_ERROR_UNINITIALIZED;
+            }
         }
     }
     return isaAccess;
 }
+
 ze_result_t DebugSessionLinux::accessDefaultMemForThreadAll(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, bool write) {
     auto status = ZE_RESULT_ERROR_UNINITIALIZED;
     std::vector<uint64_t> allVms;
@@ -1578,8 +1693,15 @@ ze_result_t DebugSessionLinux::acknowledgeEvent(const zet_debug_event_t *event) 
     }
 
     if (apiEventToAck.type == ZET_DEBUG_EVENT_TYPE_MODULE_LOAD) {
-
-        if (ackIsaEvents(0, apiEventToAck.info.module.load)) {
+        bool allIsaAcked = true;
+        for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
+            if (connectedDevice->getNEODevice()->getDeviceBitfield().test(i)) {
+                if (!ackIsaEvents(i, apiEventToAck.info.module.load)) {
+                    allIsaAcked = false;
+                }
+            }
+        }
+        if (allIsaAcked) {
             return ZE_RESULT_SUCCESS;
         }
     }

@@ -261,6 +261,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     using L0::DebugSessionLinux::eventsToAck;
     using L0::DebugSessionLinux::extractVaFromUuidString;
     using L0::DebugSessionLinux::fd;
+    using L0::DebugSessionLinux::getIsaInfoForAllInstances;
     using L0::DebugSessionLinux::getISAVMHandle;
     using L0::DebugSessionLinux::getRegisterSetProperties;
     using L0::DebugSessionLinux::getSbaBufferGpuVa;
