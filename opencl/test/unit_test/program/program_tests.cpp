@@ -1410,6 +1410,9 @@ HWTEST_F(PatchTokenTests, givenKernelRequiringConstantAllocationWhenMakeResident
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto pKernelInfo = pProgram->getKernelInfo("test", rootDeviceIndex);
+    if (pKernelInfo->kernelDescriptor.kernelAttributes.binaryFormat == NEO::DeviceBinaryFormat::Zebin) {
+        GTEST_SKIP();
+    }
 
     ASSERT_NE(nullptr, pProgram->getConstantSurface(pClDevice->getRootDeviceIndex()));
 
@@ -1685,6 +1688,9 @@ TEST_F(ProgramWithDebugSymbolsTests, GivenProgramCreatedWithDashGOptionWhenGetti
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     ArrayRef<const uint8_t> archive(reinterpret_cast<const uint8_t *>(testBinary.get()), size);
+    if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(archive)) {
+        GTEST_SKIP();
+    }
     auto productAbbreviation = hardwarePrefix[pDevice->getHardwareInfo().platform.eProductFamily];
 
     HardwareInfo copyHwInfo = pDevice->getHardwareInfo();
@@ -2283,6 +2289,10 @@ TEST_F(ProgramTests, GivenFailingGenBinaryProgramWhenRebuildingBinaryThenInvalid
     size_t binarySize = 0;
     auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
     EXPECT_NE(0u, binarySize);
+
+    if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>({reinterpret_cast<const uint8_t *>(pBinary.get()), binarySize})) {
+        GTEST_SKIP();
+    }
 
     // Create program from loaded binary
     retVal = program->createProgramFromBinary(pBinary.get(), binarySize, *pClDevice);

@@ -181,6 +181,13 @@ TEST(ArgDescriptorIsReadOnly, GivenPointerArgWhenConstantAddressSpaceThenReturns
     EXPECT_FALSE(arg.isReadOnly());
 }
 
+TEST(ArgDescriptorIsReadOnly, GivenPointerArgWhenAccessQualifierIsReadOnlyThenReturnsTrue) {
+    NEO::ArgDescriptor arg;
+    arg.as<NEO::ArgDescPointer>(true);
+    arg.getTraits().accessQualifier = NEO::KernelArgMetadata::AccessReadOnly;
+    EXPECT_TRUE(arg.isReadOnly());
+}
+
 TEST(ArgDescriptorIsReadOnly, GivenSamplerArgThenReturnsTrue) {
     NEO::ArgDescriptor arg;
     arg.as<NEO::ArgDescSampler>(true);

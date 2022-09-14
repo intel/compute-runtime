@@ -161,7 +161,9 @@ struct ArgDescriptor final {
         case ArgTImage:
             return (KernelArgMetadata::AccessReadOnly == traits.accessQualifier);
         case ArgTPointer:
-            return (KernelArgMetadata::AddrConstant == traits.addressQualifier) || (traits.typeQualifiers.constQual);
+            return (KernelArgMetadata::AddrConstant == traits.addressQualifier) ||
+                   (KernelArgMetadata::AccessReadOnly == traits.accessQualifier) ||
+                   traits.typeQualifiers.constQual;
         }
     }
 

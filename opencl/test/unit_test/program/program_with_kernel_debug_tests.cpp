@@ -55,8 +55,11 @@ TEST(ProgramFromBinary, givenBinaryWithDebugDataWhenCreatingProgramFromBinaryThe
 
     size_t binarySize = 0;
     auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
-    cl_int retVal = program->createProgramFromBinary(pBinary.get(), binarySize, *device);
+    if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>({reinterpret_cast<const uint8_t *>(pBinary.get()), binarySize})) {
+        GTEST_SKIP();
+    }
 
+    cl_int retVal = program->createProgramFromBinary(pBinary.get(), binarySize, *device);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, program->getDebugData(device->getRootDeviceIndex()));
     EXPECT_NE(0u, program->getDebugDataSize(device->getRootDeviceIndex()));
@@ -303,11 +306,12 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinke
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenProgramWithKernelDebugEnabledWhenBuiltThenPatchTokenAllocateSipSurfaceHasSizeGreaterThanZero) {
-    auto &refBin = pProgram->buildInfos[pDevice->getRootDeviceIndex()].unpackedDeviceBinary;
-    auto refBinSize = pProgram->buildInfos[pDevice->getRootDeviceIndex()].unpackedDeviceBinarySize;
-    if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(refBin.get(), refBinSize))) {
+    auto &devBinary = pProgram->buildInfos[pDevice->getRootDeviceIndex()].packedDeviceBinary;
+    auto devBinarySize = pProgram->buildInfos[pDevice->getRootDeviceIndex()].packedDeviceBinarySize;
+    if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(devBinary.get(), devBinarySize))) {
         GTEST_SKIP();
     }
+
     auto retVal = pProgram->build(pProgram->getDevices(), CompilerOptions::debugKernelEnable.data(), false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
