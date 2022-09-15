@@ -7,6 +7,7 @@
 
 #include "offline_compiler_tests.h"
 
+#include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/compiler_interface/oclc_extensions.h"
@@ -1685,6 +1686,99 @@ TEST_F(OfflineCompilerTests, GivenLlvmTextWhenBuildingThenBuildSucceeds) {
     EXPECT_TRUE(compilerOutputExists("copybuffer", "bin"));
 
     delete pOfflineCompiler;
+}
+
+TEST_F(OfflineCompilerTests, WhenGenFileFlagIsNotProvidedThenGenFileIsNotCreated) {
+    uint32_t numOutputs = 0u;
+    uint64_t *lenOutputs = nullptr;
+    uint8_t **dataOutputs = nullptr;
+    char **nameOutputs = nullptr;
+    std::string filePath = clFiles + "copybuffer.cl";
+
+    bool isSpvFile = false;
+    bool isGenFile = false;
+    bool isBinFile = false;
+
+    const char *argv[] = {
+        "ocloc",
+        "-q",
+        "-file",
+        filePath.c_str(),
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             &numOutputs, &dataOutputs, &lenOutputs, &nameOutputs);
+
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(numOutputs, 3u);
+
+    for (unsigned int i = 0; i < numOutputs; i++) {
+        std::string nameOutput(nameOutputs[i]);
+        if (nameOutput.find(".spv") != std::string::npos) {
+            isSpvFile = true;
+        }
+        if (nameOutput.find(".gen") != std::string::npos) {
+            isGenFile = true;
+        }
+        if (nameOutput.find(".bin") != std::string::npos) {
+            isBinFile = true;
+        }
+    }
+
+    EXPECT_TRUE(isSpvFile);
+    EXPECT_FALSE(isGenFile);
+    EXPECT_TRUE(isBinFile);
+}
+
+TEST_F(OfflineCompilerTests, WhenGenFileFlagIsProvidedThenGenFileIsCreated) {
+    uint32_t numOutputs = 0u;
+    uint64_t *lenOutputs = nullptr;
+    uint8_t **dataOutputs = nullptr;
+    char **nameOutputs = nullptr;
+    std::string filePath = clFiles + "copybuffer.cl";
+
+    bool isSpvFile = false;
+    bool isGenFile = false;
+    bool isBinFile = false;
+
+    const char *argv[] = {
+        "ocloc",
+        "-q",
+        "-gen_file",
+        "-file",
+        filePath.c_str(),
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             &numOutputs, &dataOutputs, &lenOutputs, &nameOutputs);
+
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(numOutputs, 4u);
+
+    for (unsigned int i = 0; i < numOutputs; i++) {
+        std::string nameOutput(nameOutputs[i]);
+        if (nameOutput.find(".spv") != std::string::npos) {
+            isSpvFile = true;
+        }
+        if (nameOutput.find(".gen") != std::string::npos) {
+            isGenFile = true;
+        }
+        if (nameOutput.find(".bin") != std::string::npos) {
+            isBinFile = true;
+        }
+    }
+
+    EXPECT_TRUE(isSpvFile);
+    EXPECT_TRUE(isGenFile);
+    EXPECT_TRUE(isBinFile);
 }
 
 TEST_F(OfflineCompilerTests, WhenFclNotNeededThenDontLoadIt) {
