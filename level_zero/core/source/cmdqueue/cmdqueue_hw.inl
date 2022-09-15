@@ -1018,14 +1018,8 @@ NEO::SubmissionStatus CommandQueueHw<gfxCoreFamily>::prepareAndSubmitBatchBuffer
         *(MI_BATCH_BUFFER_END *)buffer = GfxFamily::cmdInitBatchBufferEnd;
     }
 
-    if (ctx.isNEODebuggerActive(this->device) || NEO::DebugManager.flags.EnableSWTags.get()) {
-        auto leftoverSpace = outerCommandStream.getUsed() - innerCommandStream.getUsed();
-        leftoverSpace -= ptrDiff(innerCommandStream.getCpuBase(), outerCommandStream.getCpuBase());
-
-        if (leftoverSpace > 0) {
-            auto memory = innerCommandStream.getSpace(leftoverSpace);
-            memset(memory, 0, leftoverSpace);
-        }
+    if (ctx.isNEODebuggerActive(this->device) || NEO::DebugManager.flags.EnableSWTags.get() || isCleanLeftoverMemoryRequired()) {
+        cleanLeftoverMemory(outerCommandStream, innerCommandStream);
     } else if (this->alignedChildStreamPadding) {
         void *paddingPtr = innerCommandStream.getSpace(this->alignedChildStreamPadding);
         memset(paddingPtr, 0, this->alignedChildStreamPadding);
@@ -1035,6 +1029,22 @@ NEO::SubmissionStatus CommandQueueHw<gfxCoreFamily>::prepareAndSubmitBatchBuffer
                              csr->getResidencyAllocations(),
                              endingCmd,
                              ctx.anyCommandListWithCooperativeKernels);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandQueueHw<gfxCoreFamily>::isCleanLeftoverMemoryRequired() {
+    return false;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::cleanLeftoverMemory(NEO::LinearStream &outerCommandStream, NEO::LinearStream &innerCommandStream) {
+
+    auto leftoverSpace = outerCommandStream.getUsed() - innerCommandStream.getUsed();
+    leftoverSpace -= ptrDiff(innerCommandStream.getCpuBase(), outerCommandStream.getCpuBase());
+    if (leftoverSpace > 0) {
+        auto memory = innerCommandStream.getSpace(leftoverSpace);
+        memset(memory, 0, leftoverSpace);
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
