@@ -160,6 +160,7 @@ struct CommandQueueHw : public CommandQueueImp {
     inline void updateTaskCountAndPostSync(bool isDispatchTaskCountPostSyncRequired);
     inline ze_result_t waitForCommandQueueCompletionAndCleanHeapContainer();
     inline ze_result_t handleSubmissionAndCompletionResults(NEO::SubmissionStatus submitRet, ze_result_t completionRet);
+    inline void updatePipelineSelectState(CommandList *commandList);
 
     size_t alignedChildStreamPadding{};
 };

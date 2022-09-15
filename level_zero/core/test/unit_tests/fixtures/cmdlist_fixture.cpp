@@ -71,13 +71,13 @@ void MultiTileCommandListFixtureInit::setUpParams(bool createImmediate, bool cre
     event = std::unique_ptr<Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 }
 
-void MultiReturnCommandListFixture::setUp() {
-    DebugManager.flags.MultiReturnPointCommandList.set(1);
-
+void ModuleMutableCommandListFixture::setUp(uint32_t revision) {
     ModuleImmutableDataFixture::setUp();
 
-    auto revId = NEO::HwInfoConfig::get(device->getHwInfo().platform.eProductFamily)->getHwRevIdFromStepping(REVISION_B, device->getHwInfo());
-    neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usRevId = revId;
+    if (revision != 0) {
+        auto revId = NEO::HwInfoConfig::get(device->getHwInfo().platform.eProductFamily)->getHwRevIdFromStepping(revision, device->getHwInfo());
+        neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usRevId = revId;
+    }
 
     ze_result_t returnValue;
 
@@ -105,12 +105,17 @@ void MultiReturnCommandListFixture::setUp() {
     createKernel(kernel.get());
 }
 
-void MultiReturnCommandListFixture::tearDown() {
+void ModuleMutableCommandListFixture::tearDown() {
     commandQueue->destroy();
     commandList.reset(nullptr);
     kernel.reset(nullptr);
     mockKernelImmData.reset(nullptr);
     ModuleImmutableDataFixture::tearDown();
+}
+
+void MultiReturnCommandListFixture::setUp() {
+    DebugManager.flags.MultiReturnPointCommandList.set(1);
+    ModuleMutableCommandListFixture::setUp(REVISION_B);
 }
 
 } // namespace ult

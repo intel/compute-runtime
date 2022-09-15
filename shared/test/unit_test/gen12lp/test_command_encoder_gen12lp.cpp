@@ -8,6 +8,7 @@
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/pipeline_select_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -148,4 +149,60 @@ using Gen12lpCommandEncodeTest = testing::Test;
 
 GEN12LPTEST_F(Gen12lpCommandEncodeTest, givenBcsCommandsHelperWhenMiArbCheckWaRequiredThenReturnTrue) {
     EXPECT_FALSE(BlitCommandsHelper<FamilyType>::miArbCheckWaRequired());
+}
+
+GEN12LPTEST_F(CommandEncodeStatesTest, givenGen12LpPlatformWhenAdjustPipelineSelectIsCalledThenPipelineIsDispatched) {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+
+    auto &hwInfo = pDevice->getHardwareInfo();
+    size_t barrierSize = 0;
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierlPriorToPipelineSelectWaRequired(hwInfo)) {
+        barrierSize = MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false);
+    }
+
+    auto &cmdStream = *cmdContainer->getCommandStream();
+
+    cmdContainer->systolicModeSupport = false;
+    descriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = true;
+    auto sizeUsed = cmdStream.getUsed();
+    void *ptr = ptrOffset(cmdStream.getCpuBase(), (barrierSize + sizeUsed));
+
+    NEO::EncodeComputeMode<FamilyType>::adjustPipelineSelect(*cmdContainer, descriptor);
+    auto pipelineSelectCmd = genCmdCast<PIPELINE_SELECT *>(ptr);
+    ASSERT_NE(nullptr, pipelineSelectCmd);
+
+    auto mask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits;
+
+    EXPECT_EQ(mask, pipelineSelectCmd->getMaskBits());
+    EXPECT_EQ(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU, pipelineSelectCmd->getPipelineSelection());
+    EXPECT_EQ(true, pipelineSelectCmd->getMediaSamplerDopClockGateEnable());
+    EXPECT_EQ(false, pipelineSelectCmd->getSpecialModeEnable());
+
+    cmdContainer->systolicModeSupport = true;
+    sizeUsed = cmdStream.getUsed();
+    ptr = ptrOffset(cmdStream.getCpuBase(), (barrierSize + sizeUsed));
+
+    NEO::EncodeComputeMode<FamilyType>::adjustPipelineSelect(*cmdContainer, descriptor);
+    pipelineSelectCmd = genCmdCast<PIPELINE_SELECT *>(ptr);
+    ASSERT_NE(nullptr, pipelineSelectCmd);
+
+    mask |= pipelineSelectSystolicModeEnableMaskBits;
+
+    EXPECT_EQ(mask, pipelineSelectCmd->getMaskBits());
+    EXPECT_EQ(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU, pipelineSelectCmd->getPipelineSelection());
+    EXPECT_EQ(true, pipelineSelectCmd->getMediaSamplerDopClockGateEnable());
+    EXPECT_EQ(true, pipelineSelectCmd->getSpecialModeEnable());
+
+    descriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = false;
+    sizeUsed = cmdStream.getUsed();
+    ptr = ptrOffset(cmdStream.getCpuBase(), (barrierSize + sizeUsed));
+
+    NEO::EncodeComputeMode<FamilyType>::adjustPipelineSelect(*cmdContainer, descriptor);
+    pipelineSelectCmd = genCmdCast<PIPELINE_SELECT *>(ptr);
+    ASSERT_NE(nullptr, pipelineSelectCmd);
+
+    EXPECT_EQ(mask, pipelineSelectCmd->getMaskBits());
+    EXPECT_EQ(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU, pipelineSelectCmd->getPipelineSelection());
+    EXPECT_EQ(true, pipelineSelectCmd->getMediaSamplerDopClockGateEnable());
+    EXPECT_EQ(false, pipelineSelectCmd->getSpecialModeEnable());
 }

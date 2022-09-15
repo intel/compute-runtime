@@ -17,6 +17,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/tag_allocator.h"
+#include "shared/test/common/fixtures/command_stream_receiver_fixture.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
@@ -2115,4 +2116,41 @@ TEST_F(CommandStreamReceiverTest, givenPreemptionSentIsInitialWhenSettingPreempt
     mode = PreemptionMode::ThreadGroup;
     commandStreamReceiver->setPreemptionMode(mode);
     EXPECT_EQ(mode, commandStreamReceiver->getPreemptionMode());
+}
+
+using CommandStreamReceiverHwTests = Test<CommandStreamReceiverFixture>;
+using SystolicSupport = IsWithinProducts<IGFX_XE_HP_SDV, IGFX_PVC>;
+HWTEST2_F(CommandStreamReceiverHwTests, givenSystolicModeChangedWhenFlushTaskCalledThenSystolicStateIsUpdated, SystolicSupport) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    StreamProperties &streamProperties = commandStreamReceiver.getStreamProperties();
+
+    commandStreamReceiver.isPreambleSent = true;
+    commandStreamReceiver.lastMediaSamplerConfig = false;
+
+    flushTaskFlags.pipelineSelectArgs.systolicPipelineSelectMode = true;
+    flushTaskFlags.pipelineSelectArgs.mediaSamplerRequired = false;
+
+    commandStreamReceiver.flushTask(commandStream,
+                                    0,
+                                    &dsh,
+                                    &ioh,
+                                    &ssh,
+                                    taskLevel,
+                                    flushTaskFlags,
+                                    *pDevice);
+    EXPECT_EQ(true, commandStreamReceiver.lastSystolicPipelineSelectMode);
+    EXPECT_EQ(1, streamProperties.pipelineSelect.systolicMode.value);
+
+    flushTaskFlags.pipelineSelectArgs.systolicPipelineSelectMode = false;
+
+    commandStreamReceiver.flushTask(commandStream,
+                                    0,
+                                    &dsh,
+                                    &ioh,
+                                    &ssh,
+                                    taskLevel,
+                                    flushTaskFlags,
+                                    *pDevice);
+    EXPECT_EQ(false, commandStreamReceiver.lastSystolicPipelineSelectMode);
+    EXPECT_EQ(0, streamProperties.pipelineSelect.systolicMode.value);
 }

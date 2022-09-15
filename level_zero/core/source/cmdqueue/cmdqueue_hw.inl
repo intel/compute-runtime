@@ -164,6 +164,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     for (auto i = 0u; i < numCommandLists; ++i) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
         this->updateOneCmdListPreemptionModeAndCtxStatePreemption(ctx, commandList->getCommandListPreemptionMode(), child);
+        this->updatePipelineSelectState(commandList);
         this->programOneCmdListFrontEndIfDirty(ctx, commandList, child);
 
         this->patchCommands(*commandList, this->csr->getScratchSpaceController()->getScratchPatchAddress());
@@ -1085,6 +1086,17 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::handleSubmissionAndCompletionResults(
     }
 
     return completionRet;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::updatePipelineSelectState(CommandList *commandList) {
+    auto &streamProperties = this->csr->getStreamProperties();
+
+    auto &requiredStreamState = commandList->getRequiredStreamState();
+    auto &finalStreamState = commandList->getFinalStreamState();
+
+    streamProperties.pipelineSelect.setProperties(requiredStreamState.pipelineSelect);
+    streamProperties.pipelineSelect.setProperties(finalStreamState.pipelineSelect);
 }
 
 } // namespace L0

@@ -148,16 +148,23 @@ void validateTimestampRegisters(GenCmdList &cmdList,
     startIt = itor;
 }
 
-struct MultiReturnCommandListFixture : public ModuleImmutableDataFixture {
-    void setUp();
+struct ModuleMutableCommandListFixture : public ModuleImmutableDataFixture {
+    void setUp() {
+        setUp(0u);
+    }
+    void setUp(uint32_t revision);
     void tearDown();
-
-    DebugManagerStateRestore restorer;
 
     std::unique_ptr<MockImmutableData> mockKernelImmData;
     std::unique_ptr<L0::ult::CommandList> commandList;
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     L0::ult::CommandQueue *commandQueue;
+};
+
+struct MultiReturnCommandListFixture : public ModuleMutableCommandListFixture {
+    void setUp();
+
+    DebugManagerStateRestore restorer;
 };
 
 } // namespace ult
