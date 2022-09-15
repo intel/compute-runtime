@@ -99,7 +99,6 @@ struct MultiDeviceFixture {
 
     DebugManagerStateRestore restorer;
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
-    std::vector<NEO::Device *> devices;
     uint32_t numRootDevices = 4u;
     uint32_t numSubDevices = 2u;
     L0::ContextImp *context = nullptr;

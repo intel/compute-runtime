@@ -132,10 +132,11 @@ struct DeviceImp : public Device {
     void createSysmanHandle(bool isSubDevice);
     void populateSubDeviceCopyEngineGroups();
     bool isQueueGroupOrdinalValid(uint32_t ordinal);
+    void setFabricVertex(FabricVertex *inFabricVertex) { fabricVertex = inFabricVertex; }
 
     using CmdListCreateFunPtrT = L0::CommandList *(*)(uint32_t, Device *, NEO::EngineGroupType, ze_command_list_flags_t, ze_result_t &);
     CmdListCreateFunPtrT getCmdListCreateFunc(const ze_command_list_desc_t *desc);
-    std::unique_ptr<FabricVertex> fabricVertex;
+    FabricVertex *fabricVertex = nullptr;
 
     ze_result_t queryDeviceLuid(ze_device_luid_ext_properties_t *deviceLuidProperties);
     ze_result_t setDeviceLuid(ze_device_luid_ext_properties_t *deviceLuidProperties);

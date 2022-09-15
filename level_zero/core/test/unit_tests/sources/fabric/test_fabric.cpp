@@ -54,20 +54,28 @@ TEST_F(FabricVertexFixture, givenDevicesAreCreatedWhenzeFabricVertexGetSubVertic
 
 TEST_F(FabricVertexFixture, givenFabricVerticesAreCreatedWhenzeFabricVertexGetPropertiesExpIsCalledThenValidPropertiesAreReturned) {
 
+    // Delete existing fabric vertices
+    for (auto fabricVertex : driverHandle->fabricVertices) {
+        delete fabricVertex;
+    }
+    driverHandle->fabricVertices.clear();
+
     // Setup pci address for all devices
     for (auto l0Device : driverHandle->devices) {
         auto deviceImp = static_cast<L0::DeviceImp *>(l0Device);
+
         for (auto l0SubDevice : deviceImp->subDevices) {
+
             auto subDeviceImp = static_cast<L0::DeviceImp *>(l0SubDevice);
             NEO::DriverInfoMock *driverInfo = new DriverInfoMock();
             driverInfo->setPciBusInfo({0, 1, 2, 3});
             subDeviceImp->driverInfo.reset(driverInfo);
-            subDeviceImp->fabricVertex.reset(FabricVertex::createFromDevice(l0SubDevice));
         }
+
         NEO::DriverInfoMock *driverInfo = new DriverInfoMock();
         driverInfo->setPciBusInfo({0, 1, 2, 3});
         deviceImp->driverInfo.reset(driverInfo);
-        deviceImp->fabricVertex.reset(FabricVertex::createFromDevice(l0Device));
+        driverHandle->fabricVertices.push_back(FabricVertex::createFromDevice(l0Device));
     }
 
     uint32_t count = 0;
@@ -127,6 +135,28 @@ TEST_F(FabricVertexFixture, givenFabricVerticesAreCreatedWhenzeFabricVertexGetPr
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeDevicePciGetPropertiesExt(hDevice, &pciProperties));
         verifyProperties(vertexProperties, deviceProperties, pciProperties);
     }
+}
+
+TEST(FabricEngineInstanceTest, GivenEngineInstancedDeviceWhenFabricVerticesAreCreatedThenSkipCreationForEngineInstanced) {
+
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(&hwInfo, 0u);
+    std::vector<std::unique_ptr<NEO::Device>> devices(1);
+    devices[0].reset(static_cast<NEO::Device *>(NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, executionEnvironment, 0u)));
+
+    auto mockDevice = static_cast<NEO::MockDevice *>(devices[0].get());
+    NEO::SubDevice *subDevice = static_cast<NEO::SubDevice *>(mockDevice->createEngineInstancedSubDevice(0, defaultHwInfo->capabilityTable.defaultEngineType));
+    mockDevice->subdevices.push_back(subDevice);
+
+    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    ze_result_t res = driverHandle->initialize(std::move(devices));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_EQ(driverHandle->fabricVertices.size(), 1u);
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->fabricVertices[0]->getSubVertices(&count, nullptr));
+    EXPECT_EQ(count, 0u);
 }
 
 } // namespace ult

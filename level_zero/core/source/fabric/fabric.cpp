@@ -10,13 +10,39 @@
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/fabric/fabric_device_interface.h"
 
 namespace L0 {
 
+FabricVertex::~FabricVertex() {
+
+    for (auto subVertex : subVertices) {
+        delete subVertex;
+    }
+    subVertices.clear();
+}
+
 FabricVertex *FabricVertex::createFromDevice(Device *device) {
+
+    // Fabric Vertices are not created for engine instanced devices
+    if (device->getNEODevice()->isEngineInstanced()) {
+        return nullptr;
+    }
 
     auto fabricVertex = new FabricVertex();
     UNRECOVERABLE_IF(fabricVertex == nullptr);
+
+    auto deviceImpl = static_cast<DeviceImp *>(device);
+    for (auto &subDevice : deviceImpl->subDevices) {
+        auto subVertex = FabricVertex::createFromDevice(subDevice);
+        if (subVertex == nullptr) {
+            continue;
+        }
+        auto subDeviceImpl = static_cast<DeviceImp *>(subDevice);
+        subDeviceImpl->setFabricVertex(subVertex);
+        fabricVertex->subVertices.push_back(subVertex);
+    }
+
     ze_device_properties_t deviceProperties = {};
     ze_pci_ext_properties_t pciProperties = {};
 
@@ -42,31 +68,36 @@ FabricVertex *FabricVertex::createFromDevice(Device *device) {
         fabricVertex->properties.address.function = pciProperties.address.function;
     }
 
+    fabricVertex->pFabricDeviceInterface = FabricDeviceInterface::createFabricDeviceInterface(*fabricVertex);
+    UNRECOVERABLE_IF(fabricVertex->pFabricDeviceInterface == nullptr);
+
+    fabricVertex->pFabricDeviceInterface->enumerate();
+
     return fabricVertex;
 }
 
 ze_result_t FabricVertex::getSubVertices(uint32_t *pCount, ze_fabric_vertex_handle_t *phSubvertices) {
 
-    auto deviceImp = static_cast<DeviceImp *>(device);
+    uint32_t subVertexCount = static_cast<uint32_t>(subVertices.size());
     if (*pCount == 0) {
-        *pCount = deviceImp->numSubDevices;
+        *pCount = subVertexCount;
         return ZE_RESULT_SUCCESS;
     }
 
-    *pCount = std::min(deviceImp->numSubDevices, *pCount);
+    *pCount = std::min(subVertexCount, *pCount);
     for (uint32_t index = 0; index < *pCount; index++) {
-        auto subDeviceImp = static_cast<DeviceImp *>(deviceImp->subDevices[index]);
-        phSubvertices[index] = subDeviceImp->fabricVertex->toHandle();
+        phSubvertices[index] = subVertices[index]->toHandle();
     }
+
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t FabricVertex::getProperties(ze_fabric_vertex_exp_properties_t *pVertexProperties) {
+ze_result_t FabricVertex::getProperties(ze_fabric_vertex_exp_properties_t *pVertexProperties) const {
     *pVertexProperties = properties;
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t FabricVertex::getDevice(ze_device_handle_t *phDevice) {
+ze_result_t FabricVertex::getDevice(ze_device_handle_t *phDevice) const {
 
     *phDevice = device->toHandle();
     return ZE_RESULT_SUCCESS;

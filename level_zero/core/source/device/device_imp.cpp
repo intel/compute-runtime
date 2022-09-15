@@ -1099,8 +1099,6 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
 
     device->populateSubDeviceCopyEngineGroups();
 
-    device->fabricVertex = std::unique_ptr<FabricVertex>(FabricVertex::createFromDevice(device));
-
     return device;
 }
 

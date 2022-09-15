@@ -159,6 +159,12 @@ DriverHandleImp::~DriverHandleImp() {
     for (auto &device : this->devices) {
         delete device;
     }
+
+    for (auto &fabricVertex : this->fabricVertices) {
+        delete fabricVertex;
+    }
+    this->fabricVertices.clear();
+
     if (this->svmAllocsManager) {
         delete this->svmAllocsManager;
         this->svmAllocsManager = nullptr;
@@ -230,6 +236,14 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
 
     if (NEO::DebugManager.flags.EnableHostPointerImport.get() != 0) {
         createHostPointerManager();
+    }
+
+    for (auto &device : this->devices) {
+
+        auto deviceImpl = static_cast<DeviceImp *>(device);
+        auto fabricVertex = FabricVertex::createFromDevice(device);
+        deviceImpl->setFabricVertex(fabricVertex);
+        this->fabricVertices.push_back(fabricVertex);
     }
 
     return ZE_RESULT_SUCCESS;
@@ -621,23 +635,16 @@ ze_result_t DriverHandleImp::checkMemoryAccessFromDevice(Device *device, const v
 
 ze_result_t DriverHandleImp::fabricVertexGetExp(uint32_t *pCount, ze_fabric_vertex_handle_t *phVertices) {
 
-    uint32_t deviceCount = 0;
-    getDevice(&deviceCount, nullptr);
-
+    uint32_t fabricVertexCount = static_cast<uint32_t>(this->fabricVertices.size());
     if (*pCount == 0) {
-        *pCount = deviceCount;
+        *pCount = fabricVertexCount;
         return ZE_RESULT_SUCCESS;
     }
 
-    std::vector<ze_device_handle_t> deviceHandles;
-    deviceHandles.resize(deviceCount);
-    getDevice(&deviceCount, deviceHandles.data());
-
-    *pCount = std::min(deviceCount, *pCount);
+    *pCount = std::min(fabricVertexCount, *pCount);
 
     for (uint32_t index = 0; index < *pCount; index++) {
-        auto deviceImp = static_cast<DeviceImp *>(deviceHandles[index]);
-        phVertices[index] = deviceImp->fabricVertex->toHandle();
+        phVertices[index] = this->fabricVertices[index]->toHandle();
     }
 
     return ZE_RESULT_SUCCESS;
