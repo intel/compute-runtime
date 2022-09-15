@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,14 @@ L0HwHelper *l0HwHelperFactory[IGFX_MAX_CORE] = {};
 
 L0HwHelper &L0HwHelper::get(GFXCORE_FAMILY gfxCore) {
     return *l0HwHelperFactory[gfxCore];
+}
+
+bool L0HwHelper::enableMultiReturnPointCommandList() {
+    constexpr bool defaultValue = false;
+    if (NEO::DebugManager.flags.MultiReturnPointCommandList.get() != -1) {
+        return !!NEO::DebugManager.flags.MultiReturnPointCommandList.get();
+    }
+    return defaultValue;
 }
 
 } // namespace L0

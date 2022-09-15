@@ -17,6 +17,7 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
 #include "igfxfmid.h"
@@ -26,9 +27,7 @@
 namespace L0 {
 
 CommandList::CommandList(uint32_t numIddsPerBlock) : commandContainer(numIddsPerBlock) {
-    if (NEO::DebugManager.flags.MultiReturnPointCommandList.get() != -1) {
-        multiReturnPointCommandList = !!NEO::DebugManager.flags.MultiReturnPointCommandList.get();
-    }
+    multiReturnPointCommandList = L0HwHelper::enableMultiReturnPointCommandList();
 }
 
 CommandListAllocatorFn commandListFactory[IGFX_MAX_PRODUCT] = {};

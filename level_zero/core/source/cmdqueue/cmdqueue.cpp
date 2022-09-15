@@ -19,6 +19,7 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/source/kernel/kernel.h"
 
 #include "igfxfmid.h"
@@ -39,10 +40,7 @@ CommandQueueImp::CommandQueueImp(Device *device, NEO::CommandStreamReceiver *csr
         useKmdWaitFunction = !!(overrideUseKmdWaitFunction);
     }
 
-    int overrideMultiReturnPointCommandList = NEO::DebugManager.flags.MultiReturnPointCommandList.get();
-    if (overrideMultiReturnPointCommandList != -1) {
-        multiReturnPointCommandList = !!(overrideMultiReturnPointCommandList);
-    }
+    multiReturnPointCommandList = L0HwHelper::enableMultiReturnPointCommandList();
 }
 
 ze_result_t CommandQueueImp::destroy() {
