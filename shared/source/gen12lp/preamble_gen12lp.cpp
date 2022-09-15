@@ -53,7 +53,7 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
     pipelineSelectCmd.setPipelineSelection(pipeline);
     pipelineSelectCmd.setMediaSamplerDopClockGateEnable(!pipelineSelectArgs.mediaSamplerRequired);
 
-    if (PreambleHelper<Family>::isSystolicModeConfigurable(hwInfo)) {
+    if (pipelineSelectArgs.systolicPipelineSelectSupport) {
         mask |= pipelineSelectSystolicModeEnableMaskBits;
         pipelineSelectCmd.setSpecialModeEnable(pipelineSelectArgs.systolicPipelineSelectMode);
     }

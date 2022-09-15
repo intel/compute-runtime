@@ -74,7 +74,4 @@ size_t PreambleHelper<GfxFamily>::getVFECommandsSize() {
     return sizeof(MEDIA_VFE_STATE) + sizeof(PIPE_CONTROL);
 }
 
-template <typename GfxFamily>
-void PreambleHelper<GfxFamily>::appendProgramPipelineSelect(typename GfxFamily::PIPELINE_SELECT &cmd, bool isSystolicModeSelected, const HardwareInfo &hwInfo) {}
-
 } // namespace NEO

@@ -12,5 +12,6 @@ struct PipelineSelectArgs {
     bool systolicPipelineSelectMode = false;
     bool mediaSamplerRequired = false;
     bool is3DPipelineRequired = false;
+    bool systolicPipelineSelectSupport = false;
 };
 } // namespace NEO

@@ -319,6 +319,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool containsStatelessUncachedResource = false;
     bool performMemoryPrefetch = false;
     bool multiReturnPointCommandList = false;
+    bool systolicModeSupport = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

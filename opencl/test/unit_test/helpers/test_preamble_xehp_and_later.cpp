@@ -542,27 +542,22 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, RenderSurfaceStateXeHPAndLaterTests, givenSpecificP
 
 using PipelineSelectTest = ::testing::Test;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, PipelineSelectTest, whenCallingIsSystolicPipelineSelectModeChangedThenReturnCorrectValue) {
-    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
-    bool oldPipelineSelectSystolicMode = true;
-    bool newPipelineSelectSystolicMode = false;
-
-    auto result = PreambleHelper<FamilyType>::isSystolicPipelineSelectModeChanged(oldPipelineSelectSystolicMode, newPipelineSelectSystolicMode, *defaultHwInfo);
-    EXPECT_TRUE(result);
-}
-
 HWTEST2_F(PipelineSelectTest, WhenProgramPipelineSelectThenProperMaskIsSet, IsWithinXeGfxFamily) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     PIPELINE_SELECT cmd = FamilyType::cmdInitPipelineSelect;
     LinearStream pipelineSelectStream(&cmd, sizeof(cmd));
-    PreambleHelper<FamilyType>::programPipelineSelect(&pipelineSelectStream, {}, *defaultHwInfo);
+
+    PipelineSelectArgs pipelineArgs = {};
+    pipelineArgs.systolicPipelineSelectSupport = PreambleHelper<FamilyType>::isSystolicModeConfigurable(*defaultHwInfo);
+
+    PreambleHelper<FamilyType>::programPipelineSelect(&pipelineSelectStream, pipelineArgs, *defaultHwInfo);
 
     auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits;
     if constexpr (FamilyType::isUsingMediaSamplerDopClockGate) {
         expectedMask |= pipelineSelectMediaSamplerDopClockGateMaskBits;
     }
 
-    if (PreambleHelper<FamilyType>::isSystolicModeConfigurable(*defaultHwInfo)) {
+    if (pipelineArgs.systolicPipelineSelectSupport) {
         expectedMask |= pipelineSelectSystolicModeEnableMaskBits;
     }
 

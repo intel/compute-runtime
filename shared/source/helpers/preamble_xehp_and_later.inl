@@ -23,23 +23,6 @@
 namespace NEO {
 
 template <typename Family>
-void PreambleHelper<Family>::appendProgramPipelineSelect(typename Family::PIPELINE_SELECT &cmd, bool isSystolicModeSelected, const HardwareInfo &hwInfo) {
-    auto mask = cmd.getMaskBits();
-
-    if (PreambleHelper<Family>::isSystolicModeConfigurable(hwInfo)) {
-        cmd.setSystolicModeEnable(isSystolicModeSelected);
-        mask |= pipelineSelectSystolicModeEnableMaskBits;
-    }
-
-    if (DebugManager.flags.OverrideSystolicPipelineSelect.get() != -1) {
-        cmd.setSystolicModeEnable(DebugManager.flags.OverrideSystolicPipelineSelect.get());
-        mask |= pipelineSelectSystolicModeEnableMaskBits;
-    }
-
-    cmd.setMaskBits(mask);
-}
-
-template <typename Family>
 void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
                                                    const PipelineSelectArgs &pipelineSelectArgs,
                                                    const HardwareInfo &hwInfo) {
@@ -67,9 +50,22 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
         mask |= pipelineSelectMediaSamplerDopClockGateMaskBits;
         cmd.setMediaSamplerDopClockGateEnable(!pipelineSelectArgs.mediaSamplerRequired);
     }
-    cmd.setMaskBits(mask);
 
-    appendProgramPipelineSelect(cmd, pipelineSelectArgs.systolicPipelineSelectMode, hwInfo);
+    bool systolicSupport = pipelineSelectArgs.systolicPipelineSelectSupport;
+    bool systolicValue = pipelineSelectArgs.systolicPipelineSelectMode;
+    int32_t overrideSystolic = DebugManager.flags.OverrideSystolicPipelineSelect.get();
+
+    if (overrideSystolic != -1) {
+        systolicSupport = true;
+        systolicValue = !!overrideSystolic;
+    }
+
+    if (systolicSupport) {
+        cmd.setSystolicModeEnable(systolicValue);
+        mask |= pipelineSelectSystolicModeEnableMaskBits;
+    }
+
+    cmd.setMaskBits(mask);
 
     *cmdBuffer = cmd;
 

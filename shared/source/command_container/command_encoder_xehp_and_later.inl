@@ -66,7 +66,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     }
 
     bool systolicModeRequired = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode;
-    if (PreambleHelper<Family>::isSystolicPipelineSelectModeChanged(container.lastPipelineSelectModeRequired, systolicModeRequired, hwInfo)) {
+    if (container.systolicModeSupport && (container.lastPipelineSelectModeRequired != systolicModeRequired)) {
         container.lastPipelineSelectModeRequired = systolicModeRequired;
         EncodeComputeMode<Family>::adjustPipelineSelect(container, kernelDescriptor);
     }
@@ -594,16 +594,15 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
 
 template <typename Family>
 void EncodeComputeMode<Family>::adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor) {
-    using PIPELINE_SELECT = typename Family::PIPELINE_SELECT;
-    auto pipelineSelectCmd = Family::cmdInitPipelineSelect;
-    auto isSystolicModeSelected = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode;
+    auto &hwInfo = container.getDevice()->getHardwareInfo();
 
-    PreambleHelper<Family>::appendProgramPipelineSelect(pipelineSelectCmd, isSystolicModeSelected, container.getDevice()->getHardwareInfo());
+    PipelineSelectArgs pipelineSelectArgs;
+    pipelineSelectArgs.systolicPipelineSelectMode = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode;
+    pipelineSelectArgs.systolicPipelineSelectSupport = container.systolicModeSupport;
 
-    pipelineSelectCmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
-
-    auto buffer = container.getCommandStream()->getSpace(sizeof(pipelineSelectCmd));
-    *(decltype(pipelineSelectCmd) *)buffer = pipelineSelectCmd;
+    PreambleHelper<Family>::programPipelineSelect(container.getCommandStream(),
+                                                  pipelineSelectArgs,
+                                                  hwInfo);
 }
 
 template <typename Family>

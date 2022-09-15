@@ -125,13 +125,4 @@ bool PreambleHelper<GfxFamily>::isSystolicModeConfigurable(const HardwareInfo &h
     return hwInfoConfig.isSystolicModeConfigurable(hwInfo);
 }
 
-template <typename GfxFamily>
-bool PreambleHelper<GfxFamily>::isSystolicPipelineSelectModeChanged(bool lastSystolicPipelineSelectMode, bool newSystolicPipelineSelectMode,
-                                                                    const HardwareInfo &hwInfo) {
-    if (PreambleHelper<GfxFamily>::isSystolicModeConfigurable(hwInfo)) {
-        return lastSystolicPipelineSelectMode != newSystolicPipelineSelectMode;
-    }
-    return false;
-}
-
 } // namespace NEO

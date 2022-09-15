@@ -27,6 +27,7 @@ ADLPTEST_F(PreambleHelperTestsAdlp, givenSystolicPipelineSelectModeDisabledWhenP
 
     DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
     flags.pipelineSelectArgs.systolicPipelineSelectMode = false;
+    flags.pipelineSelectArgs.systolicPipelineSelectSupport = PreambleHelper<FamilyType>::isSystolicModeConfigurable(ADLP::hwInfo);
 
     auto *pCmd = static_cast<PIPELINE_SELECT *>(stream.getSpace(0));
     PreambleHelper<FamilyType>::programPipelineSelect(&stream, flags.pipelineSelectArgs, ADLP::hwInfo);
@@ -46,6 +47,7 @@ ADLPTEST_F(PreambleHelperTestsAdlp, givenSystolicPipelineSelectModeEnabledWhenPr
 
     DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
     flags.pipelineSelectArgs.systolicPipelineSelectMode = true;
+    flags.pipelineSelectArgs.systolicPipelineSelectSupport = PreambleHelper<FamilyType>::isSystolicModeConfigurable(ADLP::hwInfo);
 
     auto *pCmd = static_cast<PIPELINE_SELECT *>(stream.getSpace(0));
     PreambleHelper<FamilyType>::programPipelineSelect(&stream, flags.pipelineSelectArgs, ADLP::hwInfo);

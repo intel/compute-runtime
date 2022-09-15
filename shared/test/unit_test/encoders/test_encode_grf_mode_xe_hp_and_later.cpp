@@ -88,12 +88,16 @@ HWTEST2_F(CommandEncodeStatesTest, givenLargeGrfModeDisabledThenExpectedCommands
     auto cmdAddedSize = usedSpaceAfter - usedSpaceBefore;
     EXPECT_EQ(expectedCmdSize, cmdAddedSize);
 
+    constexpr uint32_t expectedMask = NEO::pipelineSelectSystolicModeEnableMaskBits | NEO::pipelineSelectMediaSamplerDopClockGateMaskBits | NEO::pipelineSelectEnablePipelineSelectMaskBits;
+
     auto expectedPsCmd = FamilyType::cmdInitPipelineSelect;
     expectedPsCmd.setSystolicModeEnable(false);
-    expectedPsCmd.setMaskBits(NEO::pipelineSelectSystolicModeEnableMaskBits);
+    expectedPsCmd.setMaskBits(expectedMask);
+    expectedPsCmd.setMediaSamplerDopClockGateEnable(true);
     expectedPsCmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
 
-    auto psCmd = reinterpret_cast<PIPELINE_SELECT *>(ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), usedSpaceBefore));
+    auto psCmd = genCmdCast<PIPELINE_SELECT *>(ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), usedSpaceBefore));
+    ASSERT_NE(nullptr, psCmd);
     EXPECT_TRUE(memcmp(&expectedPsCmd, psCmd, sizeof(PIPELINE_SELECT)) == 0);
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
@@ -101,7 +105,8 @@ HWTEST2_F(CommandEncodeStatesTest, givenLargeGrfModeDisabledThenExpectedCommands
     expectedScmCmd.setForceNonCoherent(FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask);
 
-    auto scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), (usedSpaceBefore + sizeof(PIPELINE_SELECT))));
+    auto scmCmd = genCmdCast<STATE_COMPUTE_MODE *>(ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), (usedSpaceBefore + sizeof(PIPELINE_SELECT))));
+    ASSERT_NE(nullptr, scmCmd);
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
@@ -188,12 +193,16 @@ HWTEST2_F(CommandEncodeStatesTest, givenLargeGrfModeEnabledThenExpectedCommandsA
     auto cmdAddedSize = usedSpaceAfter - usedSpaceBefore;
     EXPECT_EQ(expectedCmdSize, cmdAddedSize);
 
+    constexpr uint32_t expectedMask = NEO::pipelineSelectSystolicModeEnableMaskBits | NEO::pipelineSelectMediaSamplerDopClockGateMaskBits | NEO::pipelineSelectEnablePipelineSelectMaskBits;
+
     auto expectedPsCmd = FamilyType::cmdInitPipelineSelect;
     expectedPsCmd.setSystolicModeEnable(true);
-    expectedPsCmd.setMaskBits(pipelineSelectSystolicModeEnableMaskBits);
+    expectedPsCmd.setMaskBits(expectedMask);
+    expectedPsCmd.setMediaSamplerDopClockGateEnable(true);
     expectedPsCmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
 
-    auto psCmd = reinterpret_cast<PIPELINE_SELECT *>(ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), usedSpaceBefore));
+    auto psCmd = genCmdCast<PIPELINE_SELECT *>(ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), usedSpaceBefore));
+    ASSERT_NE(nullptr, psCmd);
     EXPECT_TRUE(memcmp(&expectedPsCmd, psCmd, sizeof(PIPELINE_SELECT)) == 0);
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
@@ -201,7 +210,8 @@ HWTEST2_F(CommandEncodeStatesTest, givenLargeGrfModeEnabledThenExpectedCommandsA
     expectedScmCmd.setForceNonCoherent(FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask);
 
-    auto scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), (usedSpaceBefore + sizeof(PIPELINE_SELECT))));
+    auto scmCmd = genCmdCast<STATE_COMPUTE_MODE *>(ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), (usedSpaceBefore + sizeof(PIPELINE_SELECT))));
+    ASSERT_NE(nullptr, scmCmd);
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
@@ -226,12 +236,16 @@ HWTEST2_F(CommandEncodeStatesTest, givenLargeGrfModeEnabledAndDisabledThenExpect
     auto cmdAddedSize = usedSpaceAfter - usedSpaceBefore;
     EXPECT_EQ(expectedCmdSize, cmdAddedSize);
 
+    constexpr uint32_t expectedMask = NEO::pipelineSelectSystolicModeEnableMaskBits | NEO::pipelineSelectMediaSamplerDopClockGateMaskBits | NEO::pipelineSelectEnablePipelineSelectMaskBits;
+
     auto expectedPsCmd = FamilyType::cmdInitPipelineSelect;
     expectedPsCmd.setSystolicModeEnable(true);
-    expectedPsCmd.setMaskBits(NEO::pipelineSelectSystolicModeEnableMaskBits);
+    expectedPsCmd.setMaskBits(expectedMask);
+    expectedPsCmd.setMediaSamplerDopClockGateEnable(true);
     expectedPsCmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
 
-    auto psCmd = reinterpret_cast<PIPELINE_SELECT *>(ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), usedSpaceBefore));
+    auto psCmd = genCmdCast<PIPELINE_SELECT *>(ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), usedSpaceBefore));
+    ASSERT_NE(nullptr, psCmd);
     EXPECT_TRUE(memcmp(&expectedPsCmd, psCmd, sizeof(PIPELINE_SELECT)) == 0);
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
@@ -239,7 +253,8 @@ HWTEST2_F(CommandEncodeStatesTest, givenLargeGrfModeEnabledAndDisabledThenExpect
     expectedScmCmd.setForceNonCoherent(FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask);
 
-    auto scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), (usedSpaceBefore + sizeof(PIPELINE_SELECT))));
+    auto scmCmd = genCmdCast<STATE_COMPUTE_MODE *>(ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), (usedSpaceBefore + sizeof(PIPELINE_SELECT))));
+    ASSERT_NE(nullptr, scmCmd);
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 
     // Disable Large GRF Mode
@@ -257,10 +272,12 @@ HWTEST2_F(CommandEncodeStatesTest, givenLargeGrfModeEnabledAndDisabledThenExpect
 
     expectedPsCmd = FamilyType::cmdInitPipelineSelect;
     expectedPsCmd.setSystolicModeEnable(true);
-    expectedPsCmd.setMaskBits(NEO::pipelineSelectSystolicModeEnableMaskBits);
+    expectedPsCmd.setMaskBits(expectedMask);
+    expectedPsCmd.setMediaSamplerDopClockGateEnable(true);
     expectedPsCmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
 
-    psCmd = reinterpret_cast<PIPELINE_SELECT *>(ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), usedSpaceBefore));
+    psCmd = genCmdCast<PIPELINE_SELECT *>(ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), usedSpaceBefore));
+    ASSERT_NE(nullptr, psCmd);
     EXPECT_TRUE(memcmp(&expectedPsCmd, psCmd, sizeof(PIPELINE_SELECT)) == 0);
 
     expectedScmCmd = FamilyType::cmdInitStateComputeMode;
@@ -268,6 +285,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenLargeGrfModeEnabledAndDisabledThenExpect
     expectedScmCmd.setForceNonCoherent(FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask);
 
-    scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), (usedSpaceBefore + sizeof(PIPELINE_SELECT))));
+    scmCmd = genCmdCast<STATE_COMPUTE_MODE *>(ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), (usedSpaceBefore + sizeof(PIPELINE_SELECT))));
+    ASSERT_NE(nullptr, scmCmd);
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }

@@ -35,7 +35,6 @@ struct PreambleHelper {
     static void programPipelineSelect(LinearStream *pCommandStream,
                                       const PipelineSelectArgs &pipelineSelectArgs,
                                       const HardwareInfo &hwInfo);
-    static void appendProgramPipelineSelect(typename GfxFamily::PIPELINE_SELECT &cmd, bool isSystolicModeSelected, const HardwareInfo &hwInfo);
     static void programPreemption(LinearStream *pCommandStream, Device &device, GraphicsAllocation *preemptionCsr, LogicalStateHelper *logicalStateHelper);
     static void addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, EngineGroupType engineGroupType);
     static void appendProgramVFEState(const HardwareInfo &hwInfo, const StreamProperties &streamProperties, void *cmd);
@@ -57,8 +56,6 @@ struct PreambleHelper {
     static uint32_t getL3Config(const HardwareInfo &hwInfo, bool useSLM);
     static bool isL3Configurable(const HardwareInfo &hwInfo);
     static bool isSystolicModeConfigurable(const HardwareInfo &hwInfo);
-    static bool isSystolicPipelineSelectModeChanged(bool lastSystolicPipelineSelectMode, bool newSystolicPipelineSelectMode,
-                                                    const HardwareInfo &hwInfo);
     static size_t getAdditionalCommandsSize(const Device &device);
     static std::vector<int32_t> getSupportedThreadArbitrationPolicies();
     static size_t getVFECommandsSize();

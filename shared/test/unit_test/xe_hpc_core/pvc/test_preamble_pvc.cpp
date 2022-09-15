@@ -65,9 +65,12 @@ PVCTEST_F(PreamblePipelineSelectState, givenRevisionBAndAboveWhenCallingProgramP
         {0x6, false},
         {0x7, false},
     };
+    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
     for (auto &testInput : testInputs) {
         LinearStream linearStream(&gfxAllocation);
         hwInfo->platform.usRevId = testInput.revId;
+        pipelineArgs.systolicPipelineSelectSupport = hwInfoConfig.isSystolicModeConfigurable(*hwInfo);
+
         PreambleHelper<FamilyType>::programPipelineSelect(&linearStream, pipelineArgs, *hwInfo);
         parseCommands<FamilyType>(linearStream);
 

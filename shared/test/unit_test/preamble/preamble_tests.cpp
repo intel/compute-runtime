@@ -260,14 +260,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, WhenIsSystolicModeConfigurableThenRetu
     EXPECT_FALSE(result);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, WhenAppendProgramPipelineSelectThenNothingChanged) {
-    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
-    PIPELINE_SELECT cmd = FamilyType::cmdInitPipelineSelect;
-    cmd.setMaskBits(pipelineSelectEnablePipelineSelectMaskBits);
-    PreambleHelper<FamilyType>::appendProgramPipelineSelect(cmd, true, *defaultHwInfo);
-    EXPECT_EQ(pipelineSelectEnablePipelineSelectMaskBits, cmd.getMaskBits());
-}
-
 HWTEST_F(PreambleTest, givenSetForceSemaphoreDelayBetweenWaitsWhenProgramSemaphoreDelayThenSemaWaitPollRegisterIsProgrammed) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     DebugManagerStateRestore debugManagerStateRestore;
