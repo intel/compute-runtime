@@ -227,7 +227,6 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
         ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptr, srcptr, size, hSignalEvent,
                                                                      numWaitEvents, phWaitEvents);
     }
-
     return flushImmediate(ret, true);
 }
 
@@ -320,7 +319,20 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
         checkAvailableSpace();
     }
 
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(dstAllocation, srcAllocation, size, flushHost);
+    ze_result_t ret;
+
+    if (this->isAppendSplitNeeded(dstAllocation->getMemoryPool(), srcAllocation->getMemoryPool(), size)) {
+        uintptr_t dstAddress = static_cast<uintptr_t>(dstAllocation->getGpuAddress());
+        uintptr_t srcAddress = static_cast<uintptr_t>(srcAllocation->getGpuAddress());
+        ret = static_cast<DeviceImp *>(this->device)->bcsSplit.appendSplitCall<gfxCoreFamily, uintptr_t, uintptr_t>(this, dstAddress, srcAddress, size, nullptr, [&](uintptr_t dstAddressParam, uintptr_t srcAddressParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
+            this->appendMemoryCopyBlit(dstAddressParam, dstAllocation, 0u,
+                                       srcAddressParam, srcAllocation, 0u,
+                                       sizeParam);
+            return this->appendSignalEvent(hSignalEventParam);
+        });
+    } else {
+        ret = CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(dstAllocation, srcAllocation, size, flushHost);
+    }
     return flushImmediate(ret, false);
 }
 

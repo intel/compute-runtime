@@ -10,6 +10,7 @@
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/vec.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
+#include "shared/source/memory_manager/memory_pool.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/cmdlist/cmdlist_imp.h"
@@ -245,6 +246,7 @@ struct CommandListCoreFamily : CommandListImp {
 
     size_t getTotalSizeForCopyRegion(const ze_copy_region_t *region, uint32_t pitch, uint32_t slicePitch);
     bool isAppendSplitNeeded(void *dstPtr, const void *srcPtr, size_t size);
+    bool isAppendSplitNeeded(NEO::MemoryPool dstPool, NEO::MemoryPool srcPool, size_t size);
 
     void applyMemoryRangesBarrier(uint32_t numRanges, const size_t *pRangeSizes,
                                   const void **pRanges);

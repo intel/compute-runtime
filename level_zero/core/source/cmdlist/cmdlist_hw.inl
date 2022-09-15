@@ -2391,17 +2391,22 @@ inline size_t CommandListCoreFamily<gfxCoreFamily>::getTotalSizeForCopyRegion(co
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(void *dstPtr, const void *srcPtr, size_t size) {
-    constexpr size_t minimalSizeForBcsSplit = 4 * MemoryConstants::megaByte;
-
     auto dstAllocationStruct = getAlignedAllocation(this->device, dstPtr, size, false);
     auto srcAllocationStruct = getAlignedAllocation(this->device, srcPtr, size, true);
     auto dstMemoryPool = dstAllocationStruct.alloc->getMemoryPool();
     auto srcMemoryPool = srcAllocationStruct.alloc->getMemoryPool();
 
+    return this->isAppendSplitNeeded(dstMemoryPool, srcMemoryPool, size);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+inline bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(NEO::MemoryPool dstPool, NEO::MemoryPool srcPool, size_t size) {
+    constexpr size_t minimalSizeForBcsSplit = 4 * MemoryConstants::megaByte;
+
     return this->isBcsSplitNeeded &&
            size >= minimalSizeForBcsSplit &&
-           ((!NEO::MemoryPoolHelper::isSystemMemoryPool(dstMemoryPool) && NEO::MemoryPoolHelper::isSystemMemoryPool(srcMemoryPool)) ||
-            (!NEO::MemoryPoolHelper::isSystemMemoryPool(srcMemoryPool) && NEO::MemoryPoolHelper::isSystemMemoryPool(dstMemoryPool)));
+           ((!NEO::MemoryPoolHelper::isSystemMemoryPool(dstPool) && NEO::MemoryPoolHelper::isSystemMemoryPool(srcPool)) ||
+            (!NEO::MemoryPoolHelper::isSystemMemoryPool(srcPool) && NEO::MemoryPoolHelper::isSystemMemoryPool(dstPool)));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
