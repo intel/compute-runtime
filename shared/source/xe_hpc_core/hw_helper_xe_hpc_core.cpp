@@ -73,8 +73,8 @@ const EngineInstancesContainer HwHelperHw<Family>::getGpgpuEngineInstances(const
             if (hwInfo.featureTable.ftrBcsInfo.test(i)) {
                 auto engineType = static_cast<aub_stream::EngineType>((i - 1) + aub_stream::ENGINE_BCS1); // Link copy engine
                 engines.push_back({engineType, EngineUsage::Regular});
-                if (i == 2) {
-                    engines.push_back({engineType, EngineUsage::Internal}); // BCS2 for internal usage
+                if (i == 3) {
+                    engines.push_back({engineType, EngineUsage::Internal}); // BCS3 for internal usage
                 }
             }
         }

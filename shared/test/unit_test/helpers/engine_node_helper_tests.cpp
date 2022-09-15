@@ -128,6 +128,6 @@ TEST(EngineNodeHelperTest, givenLinkCopyEnginesAndInternalUsageEnabledWhenGettin
     DeviceBitfield deviceBitfield = 0b11;
     hwInfo.featureTable.ftrBcsInfo = 0b111;
     auto isInternalUsage = true;
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS2, EngineHelpers::getBcsEngineType(hwInfo, deviceBitfield, selectorCopyEngine, isInternalUsage));
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS2, EngineHelpers::getBcsEngineType(hwInfo, deviceBitfield, selectorCopyEngine, isInternalUsage));
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS3, EngineHelpers::getBcsEngineType(hwInfo, deviceBitfield, selectorCopyEngine, isInternalUsage));
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS3, EngineHelpers::getBcsEngineType(hwInfo, deviceBitfield, selectorCopyEngine, isInternalUsage));
 }

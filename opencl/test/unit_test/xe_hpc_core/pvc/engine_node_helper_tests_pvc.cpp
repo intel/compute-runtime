@@ -54,8 +54,8 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenPvcBaseDieA0AndTile1WhenGettingBcsEngin
 
     {
         auto internalUsage = true;
-        EXPECT_EQ(ENGINE_BCS2, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, internalUsage));
-        EXPECT_EQ(ENGINE_BCS2, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, internalUsage));
+        EXPECT_EQ(ENGINE_BCS3, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, internalUsage));
+        EXPECT_EQ(ENGINE_BCS3, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, internalUsage));
     }
     {
         auto internalUsage = false;
@@ -245,7 +245,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenNotAllCopyEnginesWhenSettingEngineTable
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
     hwInfo.featureTable.ftrBcsInfo.set(0, false);
-    hwInfo.featureTable.ftrBcsInfo.set(2, false);
+    hwInfo.featureTable.ftrBcsInfo.set(3, false);
     hwInfo.featureTable.ftrBcsInfo.set(7, false);
     hwInfo.featureTable.ftrBcsInfo.set(8, false);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -270,7 +270,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenNotAllCopyEnginesWhenSettingEngineTable
         {aub_stream::ENGINE_CCS, true, false},
         {aub_stream::ENGINE_CCS, true, false},
         {aub_stream::ENGINE_BCS1, false, true},
-        {aub_stream::ENGINE_BCS3, false, true},
+        {aub_stream::ENGINE_BCS2, false, true},
         {aub_stream::ENGINE_BCS4, false, true},
         {aub_stream::ENGINE_BCS5, false, true},
         {aub_stream::ENGINE_BCS6, false, true},
@@ -314,7 +314,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenOneCcsEnabledWhenGetEnginesCalledThenCr
         {aub_stream::ENGINE_BCS, false, true},
         {aub_stream::ENGINE_BCS1, false, true},
         {aub_stream::ENGINE_BCS2, false, true},
-        {aub_stream::ENGINE_BCS2, false, true},
+        {aub_stream::ENGINE_BCS3, false, true},
         {aub_stream::ENGINE_BCS3, false, true},
         {aub_stream::ENGINE_BCS4, false, true},
         {aub_stream::ENGINE_BCS5, false, true},
@@ -364,7 +364,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenCccsAsDefaultEngineWhenGetEnginesCalled
         {aub_stream::ENGINE_BCS, false, true},
         {aub_stream::ENGINE_BCS1, false, true},
         {aub_stream::ENGINE_BCS2, false, true},
-        {aub_stream::ENGINE_BCS2, false, true},
+        {aub_stream::ENGINE_BCS3, false, true},
         {aub_stream::ENGINE_BCS3, false, true},
         {aub_stream::ENGINE_BCS4, false, true},
         {aub_stream::ENGINE_BCS5, false, true},
@@ -414,7 +414,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, whenGetGpgpuEnginesThenReturnTwoCccsEnginesA
         {aub_stream::ENGINE_BCS, false, true},
         {aub_stream::ENGINE_BCS1, false, true},
         {aub_stream::ENGINE_BCS2, false, true},
-        {aub_stream::ENGINE_BCS2, false, true},
+        {aub_stream::ENGINE_BCS3, false, true},
         {aub_stream::ENGINE_BCS3, false, true},
         {aub_stream::ENGINE_BCS4, false, true},
         {aub_stream::ENGINE_BCS5, false, true},
@@ -464,7 +464,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, whenGetGpgpuEnginesThenReturnTwoCccsEnginesA
         {aub_stream::ENGINE_BCS, false, true},
         {aub_stream::ENGINE_BCS1, false, true},
         {aub_stream::ENGINE_BCS2, false, true},
-        {aub_stream::ENGINE_BCS2, false, true},
+        {aub_stream::ENGINE_BCS3, false, true},
         {aub_stream::ENGINE_BCS3, false, true},
         {aub_stream::ENGINE_BCS4, false, true},
         {aub_stream::ENGINE_BCS5, false, true},
