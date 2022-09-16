@@ -68,6 +68,7 @@ append_sources_from_properties(neo_libult_common_SRCS_ENABLE_TESTED_HW NEO_SRCS_
 set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/aub_command_stream_receiver_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/command_stream_receiver_fixture.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/command_stream_receiver_fixture.inl
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/command_stream_receiver_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/device_fixture.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/device_fixture.h

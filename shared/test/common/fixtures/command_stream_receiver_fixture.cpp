@@ -32,6 +32,7 @@ void CommandStreamReceiverFixture::setUp() {
 
     flushTaskFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
 }
+
 void CommandStreamReceiverFixture::tearDown() {
     DeviceFixture::tearDown();
 

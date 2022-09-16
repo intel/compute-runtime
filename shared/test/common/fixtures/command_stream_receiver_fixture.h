@@ -31,3 +31,8 @@ struct CommandStreamReceiverFixture : public NEO::DeviceFixture {
 
     uint32_t taskLevel = 2;
 };
+
+struct CommandStreamReceiverSystolicFixture : public CommandStreamReceiverFixture {
+    template <typename FamilyType>
+    void testBody();
+};

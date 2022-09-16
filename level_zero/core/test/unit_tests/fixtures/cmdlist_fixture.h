@@ -167,5 +167,9 @@ struct MultiReturnCommandListFixture : public ModuleMutableCommandListFixture {
     DebugManagerStateRestore restorer;
 };
 
+struct CmdListPipelineSelectStateFixture : public ModuleMutableCommandListFixture {
+    void testBody();
+};
+
 } // namespace ult
 } // namespace L0
