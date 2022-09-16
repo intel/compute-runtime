@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,7 @@ struct HardwareContext {
     virtual ~HardwareContext() = default;
     virtual void writeMemory2(AllocationParams allocationParams) = 0;
     virtual void writeMMIO(uint32_t offset, uint32_t value) = 0;
+    virtual void pollForFenceCompletion() = 0;
 };
 
 } // namespace aub_stream

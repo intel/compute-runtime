@@ -11,13 +11,13 @@
 
 namespace aub_stream {
 
-struct PageInfo {
+struct PhysicalAllocationInfo {
     uint64_t physicalAddress;
     size_t size;
-    bool isLocalMemory;
     uint32_t memoryBank;
+    size_t pageSize;
 };
 
-static_assert(std::is_pod<PageInfo>::value, "PageInfo is not POD type");
+static_assert(std::is_pod<PhysicalAllocationInfo>::value, "PhysicalAllocationInfo is not POD type");
 
 } // namespace aub_stream

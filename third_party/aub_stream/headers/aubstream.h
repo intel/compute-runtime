@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <ostream>
 #include <vector>
+#include <type_traits>
 
 namespace aub_stream {
 
@@ -23,6 +24,16 @@ struct SurfaceInfo {
     uint32_t tilingType;
     bool compressed;
     uint32_t dumpType;
+    bool useClearValue;
+    uint32_t clearColorType;
+    uint32_t auxEncodingFormat;
+    uint32_t auxSurfaceWidth;
+    uint32_t auxSurfaceHeight;
+    uint32_t auxSurfacePitch;
+    uint32_t auxSurfaceQPitch;
+    uint32_t auxSurfaceTilingType;
+    uint64_t clearColorAddress;
+    uint64_t auxSurfaceAddress;
 };
 
 namespace surftype {
@@ -48,7 +59,13 @@ namespace mode {
 constexpr uint32_t aubFile = 0;
 constexpr uint32_t tbx = 1;
 constexpr uint32_t aubFileAndTbx = 2;
+constexpr uint32_t tbxShm = 3;
 } // namespace mode
+
+namespace clearColorType {
+constexpr uint32_t immediate = 0;
+constexpr uint32_t address = 1;
+} // namespace clearColorType
 
 using MMIOPair = std::pair<uint32_t, uint32_t>;
 using MMIOList = std::vector<MMIOPair>;
@@ -57,5 +74,7 @@ extern "C" void injectMMIOList(MMIOList mmioList);
 extern "C" void setTbxServerPort(uint16_t port);
 extern "C" void setTbxServerIp(std::string server);
 extern "C" void setTbxFrontdoorMode(bool frontdoor);
+
+static_assert(std::is_pod<SurfaceInfo>::value, "SurfaceInfo is not POD type");
 
 } // namespace aub_stream

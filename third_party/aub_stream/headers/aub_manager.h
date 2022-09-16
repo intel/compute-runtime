@@ -1,21 +1,34 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "page_info.h"
-
 #include <cstdint>
 #include <string>
 #include <vector>
+#include "page_info.h"
+#include "shared_mem_info.h"
+#include "physical_allocation_info.h"
 
 namespace aub_stream {
 
 struct AllocationParams;
 struct HardwareContext;
+
+struct AubManagerOptions {
+    uint32_t productFamily{};
+    uint32_t devicesCount{};
+    uint64_t memoryBankSize{};
+    uint32_t stepping{};
+    bool localMemorySupported{};
+    uint32_t mode{};
+    uint64_t gpuAddressSpace{};
+    SharedMemoryInfo sharedMemoryInfo{};
+    bool throwOnError{};
+};
 
 class AubManager {
   public:
@@ -41,6 +54,13 @@ class AubManager {
                               bool localMemorySupported, uint32_t streamMode, uint64_t gpuAddressSpace);
 
     virtual void writeMemory2(AllocationParams allocationParams) = 0;
+    static AubManager *create(uint32_t productFamily, uint32_t devicesCount, uint64_t memoryBankSize, uint32_t stepping,
+                              bool localMemorySupported, uint32_t streamMode, uint64_t gpuAddressSpace, SharedMemoryInfo sharedMemoryInfo);
+
+    static AubManager *create(const struct AubManagerOptions &options);
+
+    virtual bool reservePhysicalMemory(AllocationParams allocationParams, PhysicalAllocationInfo &physicalAllocInfo) = 0;
+    virtual bool mapGpuVa(uint64_t gfxAddress, size_t size, PhysicalAllocationInfo physicalAllocInfo) = 0;
 };
 
 } // namespace aub_stream

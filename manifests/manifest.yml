@@ -3,7 +3,7 @@ components:
     branch: master
     dest_dir: aub_stream
     repository: https://github.com/intel/aubstream
-    revision: 11f846a14596f2ac5152055052d52baaa3721320
+    revision: 8b27837933ee24a307ca90243f99699f592e2753
     type: git
   gmmlib:
     dest_dir: gmmlib
