@@ -1372,7 +1372,9 @@ TEST_F(OfflineCompilerTests, givenExcludeIrArgumentWhenCompilingKernelThenIrShou
         clFiles + "copybuffer.cl",
         "-exclude_ir",
         "-device",
-        gEnvironment->devicePrefix.c_str()};
+        gEnvironment->devicePrefix.c_str(),
+        "--format",
+        "patchtokens"};
 
     MockOfflineCompiler mockOfflineCompiler{};
     mockOfflineCompiler.initialize(argv.size(), argv);
@@ -1604,7 +1606,9 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingThenBuildSucceeds) {
         "-file",
         clFiles + "copybuffer.cl",
         "-device",
-        gEnvironment->devicePrefix.c_str()};
+        gEnvironment->devicePrefix.c_str(),
+        "--format",
+        "patchtokens"};
 
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
 
@@ -1644,7 +1648,9 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingWithDeviceConfigValueThenBuild
         "-file",
         clFiles + "copybuffer.cl",
         "-device",
-        configStr};
+        configStr,
+        "--format",
+        "patchtokens"};
 
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
 
@@ -1672,7 +1678,9 @@ TEST_F(OfflineCompilerTests, GivenLlvmTextWhenBuildingThenBuildSucceeds) {
         clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str(),
-        "-llvm_text"};
+        "-llvm_text",
+        "--format",
+        "patchtokens"};
 
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
 
@@ -1848,7 +1856,9 @@ TEST_F(OfflineCompilerTests, GivenCppFileWhenBuildingThenBuildSucceeds) {
         clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str(),
-        "-cpp_file"};
+        "-cpp_file",
+        "--format",
+        "patchtokens"};
 
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
 
