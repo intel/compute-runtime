@@ -36,8 +36,8 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenPipelin
     auto commandQueue = whiteboxCast(CommandQueue::create(
         productFamily,
         device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, returnValue));
-    ASSERT_NE(nullptr, commandQueue->commandStream);
-    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+    ASSERT_NE(nullptr, commandQueue);
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
@@ -46,12 +46,12 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenPipelin
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
 
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
     auto itorVFE = find<MEDIA_VFE_STATE *>(cmdList.begin(), cmdList.end());
@@ -77,8 +77,8 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenStateBa
     auto commandQueue = whiteboxCast(CommandQueue::create(
         productFamily,
         device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, returnValue));
-    ASSERT_NE(nullptr, commandQueue->commandStream);
-    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+    ASSERT_NE(nullptr, commandQueue);
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
@@ -87,12 +87,12 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenStateBa
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto itorSba = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
@@ -125,8 +125,8 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenMidThre
     auto commandQueue = whiteboxCast(CommandQueue::create(
         productFamily,
         device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, returnValue));
-    ASSERT_NE(nullptr, commandQueue->commandStream);
-    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+    ASSERT_NE(nullptr, commandQueue);
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     auto commandList = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     commandList->commandListPreemptionMode = NEO::PreemptionMode::MidThread;
@@ -138,12 +138,12 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenMidThre
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
     using STATE_SIP = typename FamilyType::STATE_SIP;
     using GPGPU_CSR_BASE_ADDRESS = typename FamilyType::GPGPU_CSR_BASE_ADDRESS;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
@@ -172,8 +172,8 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, GivenCmdListsWithDifferentPreemp
     auto commandQueue = whiteboxCast(CommandQueue::create(
         productFamily,
         device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, returnValue));
-    ASSERT_NE(nullptr, commandQueue->commandStream);
-    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+    ASSERT_NE(nullptr, commandQueue);
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     auto commandListMidThread = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     commandListMidThread->commandListPreemptionMode = NEO::PreemptionMode::MidThread;
@@ -189,12 +189,12 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, GivenCmdListsWithDifferentPreemp
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, commandQueue->commandStream->getCpuBase(), usedSpaceAfter));
+        cmdList, commandQueue->commandStream.getCpuBase(), usedSpaceAfter));
     using STATE_SIP = typename FamilyType::STATE_SIP;
     using GPGPU_CSR_BASE_ADDRESS = typename FamilyType::GPGPU_CSR_BASE_ADDRESS;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;

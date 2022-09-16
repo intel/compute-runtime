@@ -938,7 +938,7 @@ HWTEST2_F(MultiReturnCommandListTest,
 
     EXPECT_EQ(3u, cmdListBuffers.size());
 
-    auto &cmdQueueStream = *commandQueue->commandStream;
+    auto &cmdQueueStream = commandQueue->commandStream;
     size_t usedBefore = cmdQueueStream.getUsed();
 
     auto cmdListHandle = commandList->toHandle();
@@ -1186,7 +1186,7 @@ HWTEST2_F(MultiReturnCommandListTest,
 
     EXPECT_EQ(3u, cmdListBuffers.size());
 
-    auto &cmdQueueStream = *commandQueue->commandStream;
+    auto &cmdQueueStream = commandQueue->commandStream;
     size_t usedBefore = cmdQueueStream.getUsed();
 
     auto cmdListHandle = commandList->toHandle();

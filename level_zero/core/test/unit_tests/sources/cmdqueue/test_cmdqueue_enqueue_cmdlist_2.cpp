@@ -79,14 +79,14 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, whenUsingFenceThenLastPipeC
     ze_result_t returnValue;
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
-    ASSERT_NE(nullptr, commandQueue->commandStream);
+    ASSERT_NE(nullptr, commandQueue);
 
     ze_fence_desc_t fenceDesc = {};
 
     auto fence = whiteboxCast(Fence::create(commandQueue, &fenceDesc));
     ze_fence_handle_t fenceHandle = fence->toHandle();
 
-    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle(),
@@ -96,12 +96,12 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, whenUsingFenceThenLastPipeC
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
 
     auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     size_t pipeControlsPostSyncNumber = 0u;
@@ -139,18 +139,18 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingS
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    ASSERT_NE(nullptr, commandQueue->commandStream);
+    ASSERT_NE(nullptr, commandQueue);
 
-    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
     returnValue = commandQueue->executeCommandLists(1, &commandList, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList,
-        ptrOffset(commandQueue->commandStream->getCpuBase(), usedSpaceBefore),
+        ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceBefore),
         usedSpaceAfter - usedSpaceBefore));
 
     auto pipelineSelect = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
@@ -164,17 +164,17 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingS
 
     auto commandQueue2 = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    ASSERT_NE(nullptr, commandQueue2->commandStream);
+    ASSERT_NE(nullptr, commandQueue2);
 
-    usedSpaceBefore = commandQueue2->commandStream->getUsed();
+    usedSpaceBefore = commandQueue2->commandStream.getUsed();
     returnValue = commandQueue2->executeCommandLists(1, &commandList, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    usedSpaceAfter = commandQueue2->commandStream->getUsed();
+    usedSpaceAfter = commandQueue2->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList,
-        ptrOffset(commandQueue2->commandStream->getCpuBase(), usedSpaceBefore),
+        ptrOffset(commandQueue2->commandStream.getCpuBase(), usedSpaceBefore),
         usedSpaceAfter - usedSpaceBefore));
 
     pipelineSelect = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
@@ -201,18 +201,18 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingS
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    ASSERT_NE(nullptr, commandQueue->commandStream);
+    ASSERT_NE(nullptr, commandQueue);
 
-    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
     returnValue = commandQueue->executeCommandLists(1, &commandList, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList,
-        ptrOffset(commandQueue->commandStream->getCpuBase(), usedSpaceBefore),
+        ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceBefore),
         usedSpaceAfter - usedSpaceBefore));
 
     auto loadRegisterImmList = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
@@ -232,17 +232,17 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingS
 
     auto commandQueue2 = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    ASSERT_NE(nullptr, commandQueue2->commandStream);
+    ASSERT_NE(nullptr, commandQueue2);
 
-    usedSpaceBefore = commandQueue2->commandStream->getUsed();
+    usedSpaceBefore = commandQueue2->commandStream.getUsed();
     returnValue = commandQueue2->executeCommandLists(1, &commandList, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    usedSpaceAfter = commandQueue2->commandStream->getUsed();
+    usedSpaceAfter = commandQueue2->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList,
-        ptrOffset(commandQueue2->commandStream->getCpuBase(), usedSpaceBefore),
+        ptrOffset(commandQueue2->commandStream.getCpuBase(), usedSpaceBefore),
         usedSpaceAfter - usedSpaceBefore));
 
     loadRegisterImmList = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
@@ -272,7 +272,7 @@ struct PauseOnGpuTests : public Test<ModuleFixture> {
         ze_command_queue_desc_t queueDesc = {};
         ze_result_t returnValue;
         commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
-        ASSERT_NE(nullptr, commandQueue->commandStream);
+        ASSERT_NE(nullptr, commandQueue);
 
         commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue);
         commandListHandle = commandList->toHandle();

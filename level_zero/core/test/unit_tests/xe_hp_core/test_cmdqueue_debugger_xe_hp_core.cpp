@@ -40,7 +40,7 @@ XEHPTEST_F(CommandQueueDebugCommandsForSldXeHP, givenSteppingA0OrBWhenGlobalSipI
         hwInfo.platform.usRevId = revision;
 
         auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, deviceL0, device->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
-        ASSERT_NE(nullptr, commandQueue->commandStream);
+        ASSERT_NE(nullptr, commandQueue);
 
         ze_command_list_handle_t commandLists[] = {
             CommandList::create(productFamily, deviceL0, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
@@ -51,14 +51,14 @@ XEHPTEST_F(CommandQueueDebugCommandsForSldXeHP, givenSteppingA0OrBWhenGlobalSipI
         std::vector<MI_LOAD_REGISTER_IMM *> globalSip;
 
         for (uint32_t execCount = 0; execCount < 2; execCount++) {
-            auto startPointer = ptrOffset(commandQueue->commandStream->getCpuBase(), commandQueue->commandStream->getUsed());
-            auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+            auto startPointer = ptrOffset(commandQueue->commandStream.getCpuBase(), commandQueue->commandStream.getUsed());
+            auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
             auto result = commandQueue->executeCommandLists(1, commandLists, nullptr, true);
             ASSERT_EQ(ZE_RESULT_SUCCESS, result);
             commandQueue->synchronize(0);
 
-            auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+            auto usedSpaceAfter = commandQueue->commandStream.getUsed();
             EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
 
             GenCmdList cmdList;
@@ -119,7 +119,7 @@ XEHPTEST_F(CommandQueueDebugCommandsDebuggerL0XeHP, givenSteppingA0OrBWhenGlobal
         hwInfo.platform.usRevId = revision;
 
         auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
-        ASSERT_NE(nullptr, commandQueue->commandStream);
+        ASSERT_NE(nullptr, commandQueue);
 
         ze_command_list_handle_t commandLists[] = {
             CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
@@ -128,14 +128,14 @@ XEHPTEST_F(CommandQueueDebugCommandsDebuggerL0XeHP, givenSteppingA0OrBWhenGlobal
         std::vector<MI_LOAD_REGISTER_IMM *> globalSip;
 
         for (uint32_t execCount = 0; execCount < 2; execCount++) {
-            auto startPointer = ptrOffset(commandQueue->commandStream->getCpuBase(), commandQueue->commandStream->getUsed());
-            auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+            auto startPointer = ptrOffset(commandQueue->commandStream.getCpuBase(), commandQueue->commandStream.getUsed());
+            auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
             auto result = commandQueue->executeCommandLists(1, commandLists, nullptr, true);
             ASSERT_EQ(ZE_RESULT_SUCCESS, result);
             commandQueue->synchronize(0);
 
-            auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+            auto usedSpaceAfter = commandQueue->commandStream.getUsed();
             EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
 
             GenCmdList cmdList;

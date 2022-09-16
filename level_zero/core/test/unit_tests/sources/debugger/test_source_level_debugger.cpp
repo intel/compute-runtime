@@ -32,9 +32,9 @@ HWTEST2_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsE
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, deviceL0, device->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
-    ASSERT_NE(nullptr, commandQueue->commandStream);
+    ASSERT_NE(nullptr, commandQueue);
 
-    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, deviceL0, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
@@ -43,12 +43,12 @@ HWTEST2_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsE
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
@@ -81,9 +81,9 @@ HWTEST2_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsE
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, deviceL0, device->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
-    ASSERT_NE(nullptr, commandQueue->commandStream);
+    ASSERT_NE(nullptr, commandQueue);
 
-    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, deviceL0, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
@@ -92,7 +92,7 @@ HWTEST2_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsE
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     size_t debugModeRegisterCount = 0;
@@ -101,7 +101,7 @@ HWTEST2_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsE
     {
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-            cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+            cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
 
         auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
 
@@ -124,13 +124,13 @@ HWTEST2_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsE
     result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter2 = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter2 = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter2, usedSpaceAfter);
 
     {
         GenCmdList cmdList2;
         ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-            cmdList2, ptrOffset(commandQueue->commandStream->getCpuBase(), usedSpaceAfter), usedSpaceAfter2 - usedSpaceAfter));
+            cmdList2, ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceAfter), usedSpaceAfter2 - usedSpaceAfter));
 
         auto miLoadImm2 = findAll<MI_LOAD_REGISTER_IMM *>(cmdList2.begin(), cmdList2.end());
 
@@ -175,12 +175,12 @@ HWTEST2_F(SLDebuggerInternalUsageTest, givenDebuggingEnabledWhenInternalCmdQIsUs
         CommandList::createImmediate(productFamily, deviceL0, &queueDesc, true, NEO::EngineGroupType::RenderCompute, returnValue)->toHandle()};
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
 
-    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     size_t debugModeRegisterCount = 0;
@@ -189,7 +189,7 @@ HWTEST2_F(SLDebuggerInternalUsageTest, givenDebuggingEnabledWhenInternalCmdQIsUs
     {
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-            cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+            cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
 
         auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
 

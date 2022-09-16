@@ -43,10 +43,10 @@ TEST_F(CommandQueueCreate, whenCreatingCommandQueueThenItIsInitialized) {
     ASSERT_NE(nullptr, commandQueue);
 
     size_t commandStreamSize = MemoryConstants::kiloByte * 128u;
-    ASSERT_NE(nullptr, commandQueue->commandStream);
-    EXPECT_EQ(commandStreamSize, commandQueue->commandStream->getMaxAvailableSpace());
-    EXPECT_EQ(commandQueue->buffers.getCurrentBufferAllocation(), commandQueue->commandStream->getGraphicsAllocation());
-    EXPECT_LT(0u, commandQueue->commandStream->getAvailableSpace());
+    ASSERT_NE(nullptr, commandQueue);
+    EXPECT_EQ(commandStreamSize, commandQueue->commandStream.getMaxAvailableSpace());
+    EXPECT_EQ(commandQueue->buffers.getCurrentBufferAllocation(), commandQueue->commandStream.getGraphicsAllocation());
+    EXPECT_LT(0u, commandQueue->commandStream.getAvailableSpace());
 
     EXPECT_EQ(csr.get(), commandQueue->getCsr());
     EXPECT_EQ(device, commandQueue->getDevice());
@@ -101,9 +101,9 @@ HWTEST_F(CommandQueueCreate, givenGpuHangOnSecondReserveWhenReservingLinearStrea
                                                           false,
                                                           returnValue));
 
-    size_t maxSize = commandQueue->commandStream->getMaxAvailableSpace();
+    size_t maxSize = commandQueue->commandStream.getMaxAvailableSpace();
 
-    auto firstAllocation = commandQueue->commandStream->getGraphicsAllocation();
+    auto firstAllocation = commandQueue->commandStream.getGraphicsAllocation();
     EXPECT_EQ(firstAllocation, commandQueue->buffers.getCurrentBufferAllocation());
 
     uint32_t currentTaskCount = 33u;
@@ -111,7 +111,7 @@ HWTEST_F(CommandQueueCreate, givenGpuHangOnSecondReserveWhenReservingLinearStrea
     csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
     csr.waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::Ready;
 
-    commandQueue->commandStream->getSpace(maxSize - 16u);
+    commandQueue->commandStream.getSpace(maxSize - 16u);
     commandQueue->buffers.setCurrentFlushStamp(121u, 121u);
     size_t nextSize = 32u;
 
@@ -119,7 +119,7 @@ HWTEST_F(CommandQueueCreate, givenGpuHangOnSecondReserveWhenReservingLinearStrea
     EXPECT_EQ(NEO::WaitStatus::Ready, waitStatus);
 
     csr.waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::GpuHang;
-    commandQueue->commandStream->getSpace(maxSize - 32u);
+    commandQueue->commandStream.getSpace(maxSize - 32u);
     commandQueue->buffers.setCurrentFlushStamp(128u, 128u);
     nextSize = 64u;
 
@@ -142,45 +142,45 @@ HWTEST_F(CommandQueueCreate, whenReserveLinearStreamThenBufferAllocationSwitched
                                                           false,
                                                           returnValue));
 
-    size_t maxSize = commandQueue->commandStream->getMaxAvailableSpace();
+    size_t maxSize = commandQueue->commandStream.getMaxAvailableSpace();
 
-    auto firstAllocation = commandQueue->commandStream->getGraphicsAllocation();
+    auto firstAllocation = commandQueue->commandStream.getGraphicsAllocation();
     EXPECT_EQ(firstAllocation, commandQueue->buffers.getCurrentBufferAllocation());
 
     uint32_t currentTaskCount = 33u;
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
 
-    commandQueue->commandStream->getSpace(maxSize - 16u);
+    commandQueue->commandStream.getSpace(maxSize - 16u);
     commandQueue->buffers.setCurrentFlushStamp(121u, 121u);
     size_t nextSize = 16u + 16u;
 
     waitStatus = commandQueue->reserveLinearStreamSize(nextSize);
     EXPECT_EQ(NEO::WaitStatus::Ready, waitStatus);
 
-    auto secondAllocation = commandQueue->commandStream->getGraphicsAllocation();
+    auto secondAllocation = commandQueue->commandStream.getGraphicsAllocation();
     EXPECT_EQ(secondAllocation, commandQueue->buffers.getCurrentBufferAllocation());
     EXPECT_NE(firstAllocation, secondAllocation);
     EXPECT_EQ(csr.latestWaitForCompletionWithTimeoutTaskCount, currentTaskCount);
 
-    commandQueue->commandStream->getSpace(maxSize - 16u);
+    commandQueue->commandStream.getSpace(maxSize - 16u);
     commandQueue->buffers.setCurrentFlushStamp(244u, 244u);
 
     waitStatus = commandQueue->reserveLinearStreamSize(nextSize);
     EXPECT_EQ(NEO::WaitStatus::Ready, waitStatus);
 
-    auto thirdAllocation = commandQueue->commandStream->getGraphicsAllocation();
+    auto thirdAllocation = commandQueue->commandStream.getGraphicsAllocation();
     EXPECT_EQ(thirdAllocation, commandQueue->buffers.getCurrentBufferAllocation());
     EXPECT_EQ(thirdAllocation, firstAllocation);
     EXPECT_NE(thirdAllocation, secondAllocation);
     EXPECT_EQ(csr.latestWaitForCompletionWithTimeoutTaskCount, 121u);
 
-    commandQueue->commandStream->getSpace(maxSize - 16u);
+    commandQueue->commandStream.getSpace(maxSize - 16u);
 
     waitStatus = commandQueue->reserveLinearStreamSize(nextSize);
     EXPECT_EQ(NEO::WaitStatus::Ready, waitStatus);
 
-    auto fourthAllocation = commandQueue->commandStream->getGraphicsAllocation();
+    auto fourthAllocation = commandQueue->commandStream.getGraphicsAllocation();
     EXPECT_EQ(fourthAllocation, commandQueue->buffers.getCurrentBufferAllocation());
     EXPECT_EQ(fourthAllocation, secondAllocation);
     EXPECT_NE(fourthAllocation, firstAllocation);
@@ -216,12 +216,12 @@ TEST_F(CommandQueueCreate, whenCmdBuffersAllocationsAreCreatedThenSizeIsNotLessT
                                                           false,
                                                           returnValue));
 
-    size_t maxSize = commandQueue->commandStream->getMaxAvailableSpace();
+    size_t maxSize = commandQueue->commandStream.getMaxAvailableSpace();
 
     auto sizeFirstBuffer = commandQueue->buffers.getCurrentBufferAllocation()->getUnderlyingBufferSize();
     EXPECT_LE(maxSize, sizeFirstBuffer);
 
-    commandQueue->commandStream->getSpace(maxSize - 16u);
+    commandQueue->commandStream.getSpace(maxSize - 16u);
     size_t nextSize = 16u + 16u;
 
     const auto waitStatus = commandQueue->reserveLinearStreamSize(nextSize);
@@ -265,9 +265,9 @@ HWTEST_F(CommandQueueCreate, given100CmdListsWhenExecutingThenCommandStreamIsNot
         cmdListHandles[i] = commandList->toHandle();
     }
 
-    auto sizeBefore = commandQueue->commandStream->getUsed();
+    auto sizeBefore = commandQueue->commandStream.getUsed();
     commandQueue->executeCommandLists(numHandles, cmdListHandles, nullptr, false);
-    auto sizeAfter = commandQueue->commandStream->getUsed();
+    auto sizeAfter = commandQueue->commandStream.getUsed();
     EXPECT_LT(sizeBefore, sizeAfter);
 
     size_t streamSizeMinimum =
@@ -389,9 +389,9 @@ HWTEST2_F(CommandQueueCreate, givenSwTagsEnabledWhenPrepareAndSubmitBatchBufferT
     auto &commandStream = commandQueue->commandStream;
 
     auto estimatedSize = 4096u;
-    NEO::LinearStream linearStream(commandStream->getSpace(estimatedSize), estimatedSize);
+    NEO::LinearStream linearStream(commandStream.getSpace(estimatedSize), estimatedSize);
     // fill with random data
-    memset(commandStream->getCpuBase(), 0xD, estimatedSize);
+    memset(commandStream.getCpuBase(), 0xD, estimatedSize);
     typename MockCommandQueueHw<gfxCoreFamily>::CommandListExecutionContext ctx{};
 
     commandQueue->prepareAndSubmitBatchBuffer(ctx, linearStream);
@@ -400,7 +400,7 @@ HWTEST2_F(CommandQueueCreate, givenSwTagsEnabledWhenPrepareAndSubmitBatchBufferT
     auto offsetInBytes = sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     auto isLeftoverZeroed = true;
     for (auto i = offsetInBytes; i < estimatedSize; i++) {
-        uint8_t *data = reinterpret_cast<uint8_t *>(commandStream->getCpuBase());
+        uint8_t *data = reinterpret_cast<uint8_t *>(commandStream.getCpuBase());
         if (data[i] != 0) {
             isLeftoverZeroed = false;
             break;
@@ -480,7 +480,7 @@ HWTEST_F(CommandQueueCreate, givenUpdateTaskCountFromWaitAndRegularCmdListWhenDi
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), commandQueue->commandStream->getUsed()));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), commandQueue->commandStream.getUsed()));
 
     auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     bool pipeControlsPostSync = false;
@@ -520,7 +520,7 @@ HWTEST_F(CommandQueueCreate, givenUpdateTaskCountFromWaitAndImmediateCmdListWhen
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), commandQueue->commandStream->getUsed()));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), commandQueue->commandStream.getUsed()));
 
     auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     bool pipeControlsPostSync = false;
@@ -556,8 +556,8 @@ HWTEST_F(CommandQueueCreate, givenContainerWithAllocationsWhenResidencyContainer
     EXPECT_EQ(ret, NEO::SubmissionStatus::SUCCESS);
     EXPECT_EQ((peekTaskCountBefore + 1), commandQueue->csr->peekTaskCount());
     EXPECT_EQ((flushedTaskCountBefore + 1), commandQueue->csr->peekLatestFlushedTaskCount());
-    EXPECT_EQ(commandQueue->commandStream->getGraphicsAllocation()->getTaskCount(commandQueue->csr->getOsContext().getContextId()), commandQueue->csr->peekTaskCount());
-    EXPECT_EQ(commandQueue->commandStream->getGraphicsAllocation()->getResidencyTaskCount(commandQueue->csr->getOsContext().getContextId()), commandQueue->csr->peekTaskCount());
+    EXPECT_EQ(commandQueue->commandStream.getGraphicsAllocation()->getTaskCount(commandQueue->csr->getOsContext().getContextId()), commandQueue->csr->peekTaskCount());
+    EXPECT_EQ(commandQueue->commandStream.getGraphicsAllocation()->getResidencyTaskCount(commandQueue->csr->getOsContext().getContextId()), commandQueue->csr->peekTaskCount());
     commandQueue->destroy();
 }
 
@@ -580,8 +580,8 @@ HWTEST_F(CommandQueueCreate, givenCommandStreamReceiverFailsThenSubmitBatchBuffe
     EXPECT_EQ(ret, NEO::SubmissionStatus::FAILED);
     EXPECT_EQ(peekTaskCountBefore, commandQueue->csr->peekTaskCount());
     EXPECT_EQ(flushedTaskCountBefore, commandQueue->csr->peekLatestFlushedTaskCount());
-    EXPECT_EQ(commandQueue->commandStream->getGraphicsAllocation()->getTaskCount(commandQueue->csr->getOsContext().getContextId()), commandQueue->csr->peekTaskCount());
-    EXPECT_EQ(commandQueue->commandStream->getGraphicsAllocation()->getResidencyTaskCount(commandQueue->csr->getOsContext().getContextId()), commandQueue->csr->peekTaskCount());
+    EXPECT_EQ(commandQueue->commandStream.getGraphicsAllocation()->getTaskCount(commandQueue->csr->getOsContext().getContextId()), commandQueue->csr->peekTaskCount());
+    EXPECT_EQ(commandQueue->commandStream.getGraphicsAllocation()->getResidencyTaskCount(commandQueue->csr->getOsContext().getContextId()), commandQueue->csr->peekTaskCount());
     commandQueue->destroy();
 }
 
@@ -618,7 +618,7 @@ TEST_F(CommandQueueCreate, whenCommandQueueCreatedThenExpectLinearStreamInitiali
     ASSERT_NE(commandQueue, nullptr);
 
     size_t commandStreamSize = MemoryConstants::kiloByte * 128u;
-    EXPECT_EQ(commandStreamSize, commandQueue->commandStream->getMaxAvailableSpace());
+    EXPECT_EQ(commandStreamSize, commandQueue->commandStream.getMaxAvailableSpace());
 
     size_t expectedCommandBufferAllocationSize = commandStreamSize + MemoryConstants::cacheLineSize + NEO::CSRequirements::csOverfetchSize;
     expectedCommandBufferAllocationSize = alignUp(expectedCommandBufferAllocationSize, MemoryConstants::pageSize64k);
@@ -1274,16 +1274,16 @@ HWTEST2_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThen
     auto commandListHandle0 = commandList0->toHandle();
     auto commandListHandle1 = commandList1->toHandle();
 
-    ASSERT_NE(nullptr, commandQueue->commandStream);
+    ASSERT_NE(nullptr, commandQueue);
 
     commandQueue->executeCommandLists(1, &commandListHandle0, nullptr, false);
     commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false);
 
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
 
     GenCmdList cmdList1;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList1, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList1, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
 
     auto mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList1.begin(), cmdList1.end());
     auto gsbaStates = findAll<STATE_BASE_ADDRESS *>(cmdList1.begin(), cmdList1.end());
@@ -1320,11 +1320,11 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false);
     EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
 
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
 
     auto mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList.begin(), cmdList.end());
     auto gsbaStates = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
@@ -1350,11 +1350,11 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     commandQueue1->executeCommandLists(1, &commandListHandle1, nullptr, false);
     EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
 
-    usedSpaceAfter = commandQueue1->commandStream->getUsed();
+    usedSpaceAfter = commandQueue1->commandStream.getUsed();
 
     GenCmdList cmdList1;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList1, ptrOffset(commandQueue1->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList1, ptrOffset(commandQueue1->commandStream.getCpuBase(), 0), usedSpaceAfter));
 
     mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList1.begin(), cmdList1.end());
     gsbaStates = findAll<STATE_BASE_ADDRESS *>(cmdList1.begin(), cmdList1.end());
@@ -1392,11 +1392,11 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false);
     EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
 
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
 
     auto mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList.begin(), cmdList.end());
     auto gsbaStates = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
@@ -1422,11 +1422,11 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     commandQueue1->executeCommandLists(1, &commandListHandle1, nullptr, false);
     EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
 
-    usedSpaceAfter = commandQueue1->commandStream->getUsed();
+    usedSpaceAfter = commandQueue1->commandStream.getUsed();
 
     GenCmdList cmdList1;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList1, ptrOffset(commandQueue1->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList1, ptrOffset(commandQueue1->commandStream.getCpuBase(), 0), usedSpaceAfter));
 
     mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList1.begin(), cmdList1.end());
     gsbaStates = findAll<STATE_BASE_ADDRESS *>(cmdList1.begin(), cmdList1.end());
@@ -1464,11 +1464,11 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false);
     EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
 
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
 
     auto mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList.begin(), cmdList.end());
     auto gsbaStates = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
@@ -1494,11 +1494,11 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     commandQueue1->executeCommandLists(1, &commandListHandle1, nullptr, false);
     EXPECT_EQ(1024u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
 
-    usedSpaceAfter = commandQueue1->commandStream->getUsed();
+    usedSpaceAfter = commandQueue1->commandStream.getUsed();
 
     GenCmdList cmdList1;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList1, ptrOffset(commandQueue1->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList1, ptrOffset(commandQueue1->commandStream.getCpuBase(), 0), usedSpaceAfter));
 
     mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList1.begin(), cmdList1.end());
     gsbaStates = findAll<STATE_BASE_ADDRESS *>(cmdList1.begin(), cmdList1.end());
@@ -1536,11 +1536,11 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false);
     EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
 
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
 
     auto mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList.begin(), cmdList.end());
     auto gsbaStates = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
@@ -1565,11 +1565,11 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     commandQueue1->executeCommandLists(1, &commandListHandle1, nullptr, false);
     EXPECT_EQ(2048u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
 
-    usedSpaceAfter = commandQueue1->commandStream->getUsed();
+    usedSpaceAfter = commandQueue1->commandStream.getUsed();
 
     GenCmdList cmdList1;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList1, ptrOffset(commandQueue1->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList1, ptrOffset(commandQueue1->commandStream.getCpuBase(), 0), usedSpaceAfter));
 
     mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList1.begin(), cmdList1.end());
     gsbaStates = findAll<STATE_BASE_ADDRESS *>(cmdList1.begin(), cmdList1.end());
@@ -1606,11 +1606,11 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false);
     EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadPrivateScratchSize());
 
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
 
     auto mediaVfeStates = findAll<CFE_STATE *>(cmdList.begin(), cmdList.end());
 
@@ -1633,11 +1633,11 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     commandQueue1->executeCommandLists(1, &commandListHandle1, nullptr, false);
     EXPECT_EQ(2048u, csr->getScratchSpaceController()->getPerThreadPrivateScratchSize());
 
-    usedSpaceAfter = commandQueue1->commandStream->getUsed();
+    usedSpaceAfter = commandQueue1->commandStream.getUsed();
 
     GenCmdList cmdList1;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList1, ptrOffset(commandQueue1->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList1, ptrOffset(commandQueue1->commandStream.getCpuBase(), 0), usedSpaceAfter));
 
     mediaVfeStates = findAll<CFE_STATE *>(cmdList1.begin(), cmdList1.end());
 
@@ -1667,11 +1667,11 @@ HWTEST_F(ExecuteCommandListTests, givenDirectSubmissionEnabledWhenExecutingCmdLi
 
     commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
 
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
 
     auto bbStartCmds = findAll<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
 
@@ -1709,11 +1709,11 @@ HWTEST_F(ExecuteCommandListTests, givenDirectSubmissionEnabledAndDebugFlagSetWhe
 
     commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
 
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
 
     auto bbStartCmds = findAll<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
 

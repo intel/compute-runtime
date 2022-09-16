@@ -470,12 +470,12 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSynchronousCommandQueueWhenTagUpdateF
     returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     size_t executionConsumedSize = usedSpaceAfter - usedSpaceBefore;
@@ -484,7 +484,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSynchronousCommandQueueWhenTagUpdateF
 
     GenCmdList cmdList;
     ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList,
-                                          ptrOffset(commandQueue->commandStream->getCpuBase(), usedSpaceBefore),
+                                          ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceBefore),
                                           executionConsumedSize));
 
     auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
@@ -751,22 +751,22 @@ HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAnd
     auto deviceImp = static_cast<DeviceImp *>(device);
     auto pageFaultCmdQueue = whiteboxCast(deviceImp->pageFaultCommandList->cmdQImmediate);
 
-    auto sizeBefore = commandQueue->commandStream->getUsed();
-    auto pageFaultSizeBefore = pageFaultCmdQueue->commandStream->getUsed();
+    auto sizeBefore = commandQueue->commandStream.getUsed();
+    auto pageFaultSizeBefore = pageFaultCmdQueue->commandStream.getUsed();
     auto handle = commandList->toHandle();
     commandQueue->executeCommandLists(1, &handle, nullptr, true);
-    auto sizeAfter = commandQueue->commandStream->getUsed();
-    auto pageFaultSizeAfter = pageFaultCmdQueue->commandStream->getUsed();
+    auto sizeAfter = commandQueue->commandStream.getUsed();
+    auto pageFaultSizeAfter = pageFaultCmdQueue->commandStream.getUsed();
     EXPECT_LT(sizeBefore, sizeAfter);
     EXPECT_LT(pageFaultSizeBefore, pageFaultSizeAfter);
 
     GenCmdList commands;
-    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(commandQueue->commandStream->getCpuBase(), 0),
+    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(commandQueue->commandStream.getCpuBase(), 0),
                                              sizeAfter);
     auto count = findAll<CFE_STATE *>(commands.begin(), commands.end()).size();
     EXPECT_EQ(0u, count);
 
-    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(pageFaultCmdQueue->commandStream->getCpuBase(), 0),
+    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(pageFaultCmdQueue->commandStream.getCpuBase(), 0),
                                              pageFaultSizeAfter);
     count = findAll<CFE_STATE *>(commands.begin(), commands.end()).size();
     EXPECT_EQ(1u, count);

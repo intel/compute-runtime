@@ -58,9 +58,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::createFence(const ze_fence_desc_t *de
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandQueueHw<gfxCoreFamily>::destroy() {
-    if (commandStream) {
-        delete commandStream;
-        commandStream = nullptr;
+    if (commandStream.getCpuBase() != nullptr) {
+        commandStream.replaceGraphicsAllocation(nullptr);
+        commandStream.replaceBuffer(nullptr, 0);
     }
     buffers.destroy(this->getDevice());
     if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger()) {
@@ -659,8 +659,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::makeAlignedChildStreamAndSetGpuBase(N
         return ZE_RESULT_ERROR_DEVICE_LOST;
     }
 
-    child.replaceBuffer(this->commandStream->getSpace(alignedSize), alignedSize);
-    child.setGpuBase(ptrOffset(this->commandStream->getGpuBase(), this->commandStream->getUsed() - alignedSize));
+    child.replaceBuffer(this->commandStream.getSpace(alignedSize), alignedSize);
+    child.setGpuBase(ptrOffset(this->commandStream.getGpuBase(), this->commandStream.getUsed() - alignedSize));
     this->alignedChildStreamPadding = alignedSize - requiredSize;
     return ZE_RESULT_SUCCESS;
 }
@@ -1001,7 +1001,7 @@ NEO::SubmissionStatus CommandQueueHw<gfxCoreFamily>::prepareAndSubmitBatchBuffer
 
     using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
 
-    auto &outerCommandStream = *this->commandStream;
+    auto &outerCommandStream = this->commandStream;
 
     void *endingCmd = nullptr;
     if (ctx.isDirectSubmissionEnabled) {

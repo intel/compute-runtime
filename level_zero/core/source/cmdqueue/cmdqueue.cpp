@@ -55,10 +55,9 @@ ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal) {
     if (returnValue == ZE_RESULT_SUCCESS) {
         NEO::GraphicsAllocation *bufferAllocation = buffers.getCurrentBufferAllocation();
         UNRECOVERABLE_IF(bufferAllocation == nullptr);
-        commandStream = new NEO::LinearStream(bufferAllocation->getUnderlyingBuffer(),
-                                              defaultQueueCmdBufferSize);
-        UNRECOVERABLE_IF(commandStream == nullptr);
-        commandStream->replaceGraphicsAllocation(bufferAllocation);
+        commandStream.replaceBuffer(bufferAllocation->getUnderlyingBuffer(),
+                                    defaultQueueCmdBufferSize);
+        commandStream.replaceGraphicsAllocation(bufferAllocation);
         isCopyOnlyCommandQueue = copyOnly;
         preemptionCmdSyncProgramming = getPreemptionCmdProgramming();
         activeSubDevices = static_cast<uint32_t>(csr->getOsContext().getDeviceBitfield().count());
@@ -75,14 +74,13 @@ ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal) {
 NEO::WaitStatus CommandQueueImp::reserveLinearStreamSize(size_t size) {
     auto waitStatus{NEO::WaitStatus::Ready};
 
-    UNRECOVERABLE_IF(commandStream == nullptr);
-    if (commandStream->getAvailableSpace() < size) {
+    if (commandStream.getAvailableSpace() < size) {
         waitStatus = buffers.switchBuffers(csr);
 
         NEO::GraphicsAllocation *nextBufferAllocation = buffers.getCurrentBufferAllocation();
-        commandStream->replaceBuffer(nextBufferAllocation->getUnderlyingBuffer(),
-                                     defaultQueueCmdBufferSize);
-        commandStream->replaceGraphicsAllocation(nextBufferAllocation);
+        commandStream.replaceBuffer(nextBufferAllocation->getUnderlyingBuffer(),
+                                    defaultQueueCmdBufferSize);
+        commandStream.replaceGraphicsAllocation(nextBufferAllocation);
     }
 
     return waitStatus;
@@ -92,18 +90,18 @@ NEO::SubmissionStatus CommandQueueImp::submitBatchBuffer(size_t offset, NEO::Res
                                                          bool isCooperative) {
     UNRECOVERABLE_IF(csr == nullptr);
 
-    NEO::BatchBuffer batchBuffer(commandStream->getGraphicsAllocation(), offset, 0u, nullptr, false, false,
+    NEO::BatchBuffer batchBuffer(commandStream.getGraphicsAllocation(), offset, 0u, nullptr, false, false,
                                  NEO::QueueThrottle::HIGH, NEO::QueueSliceCount::defaultSliceCount,
-                                 commandStream->getUsed(), commandStream, endingCmdPtr, isCooperative);
+                                 commandStream.getUsed(), &commandStream, endingCmdPtr, isCooperative);
 
-    commandStream->getGraphicsAllocation()->updateTaskCount(csr->peekTaskCount() + 1, csr->getOsContext().getContextId());
-    commandStream->getGraphicsAllocation()->updateResidencyTaskCount(csr->peekTaskCount() + 1, csr->getOsContext().getContextId());
+    commandStream.getGraphicsAllocation()->updateTaskCount(csr->peekTaskCount() + 1, csr->getOsContext().getContextId());
+    commandStream.getGraphicsAllocation()->updateResidencyTaskCount(csr->peekTaskCount() + 1, csr->getOsContext().getContextId());
 
     csr->setActivePartitions(partitionCount);
     auto ret = csr->submitBatchBuffer(batchBuffer, csr->getResidencyAllocations());
     if (ret != NEO::SubmissionStatus::SUCCESS) {
-        commandStream->getGraphicsAllocation()->updateTaskCount(csr->peekTaskCount(), csr->getOsContext().getContextId());
-        commandStream->getGraphicsAllocation()->updateResidencyTaskCount(csr->peekTaskCount(), csr->getOsContext().getContextId());
+        commandStream.getGraphicsAllocation()->updateTaskCount(csr->peekTaskCount(), csr->getOsContext().getContextId());
+        commandStream.getGraphicsAllocation()->updateResidencyTaskCount(csr->peekTaskCount(), csr->getOsContext().getContextId());
         return ret;
     }
 

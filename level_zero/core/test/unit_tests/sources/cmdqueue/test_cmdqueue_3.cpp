@@ -83,7 +83,7 @@ HWTEST2_F(CommandQueueProgramSBATest, whenCreatingCommandQueueThenItIsInitialize
     commandQueue->initialize(false, false);
 
     uint32_t alignedSize = 4096u;
-    NEO::LinearStream child(commandQueue->commandStream->getSpace(alignedSize), alignedSize);
+    NEO::LinearStream child(commandQueue->commandStream.getSpace(alignedSize), alignedSize);
 
     auto &hwHelper = HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
     const bool isaInLocalMemory = !hwHelper.useSystemMemoryPlacementForISA(neoDevice->getHardwareInfo());
@@ -129,15 +129,15 @@ HWTEST2_F(CommandQueueProgramSBATest, whenProgrammingStateBaseAddressWithStatele
 
     auto &commandStream = commandQueue->commandStream;
     auto alignedSize = commandQueue->estimateStateBaseAddressCmdSize();
-    NEO::LinearStream child(commandStream->getSpace(alignedSize), alignedSize);
+    NEO::LinearStream child(commandStream.getSpace(alignedSize), alignedSize);
 
     auto cachedMOCSAllowed = false;
     commandQueue->programStateBaseAddress(0u, true, child, cachedMOCSAllowed);
     GenCmdList commands;
     ASSERT_TRUE(CmdParse<FamilyType>::parseCommandBuffer(
         commands,
-        commandStream->getCpuBase(),
-        commandStream->getUsed()));
+        commandStream.getCpuBase(),
+        commandStream.getUsed()));
 
     auto itor = find<STATE_BASE_ADDRESS *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
@@ -169,13 +169,13 @@ HWTEST2_F(CommandQueueProgramSBATest,
     commandQueue->initialize(false, false);
 
     auto alignedSize = commandQueue->estimateStateBaseAddressCmdSize();
-    NEO::LinearStream child(commandQueue->commandStream->getSpace(alignedSize), alignedSize);
+    NEO::LinearStream child(commandQueue->commandStream.getSpace(alignedSize), alignedSize);
 
     commandQueue->programStateBaseAddress(0u, true, child, true);
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, commandQueue->commandStream->getCpuBase(), usedSpaceAfter));
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, commandQueue->commandStream.getCpuBase(), usedSpaceAfter));
 
     auto itor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
@@ -210,14 +210,14 @@ HWTEST2_F(CommandQueueProgramSBATest,
     commandQueue->initialize(false, false);
 
     auto alignedSize = commandQueue->estimateStateBaseAddressCmdSize();
-    NEO::LinearStream child(commandQueue->commandStream->getSpace(alignedSize), alignedSize);
+    NEO::LinearStream child(commandQueue->commandStream.getSpace(alignedSize), alignedSize);
 
     commandQueue->programStateBaseAddress(0u, true, child, true);
 
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, commandQueue->commandStream->getCpuBase(), usedSpaceAfter));
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, commandQueue->commandStream.getCpuBase(), usedSpaceAfter));
 
     auto itor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
@@ -763,7 +763,7 @@ HWTEST2_F(EngineInstancedDeviceExecuteTests, givenEngineInstancedDeviceWhenExecu
     commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
 
     GenCmdList cmdList;
-    FamilyType::PARSE::parseCommandBuffer(cmdList, commandQueue->commandStream->getCpuBase(), commandQueue->commandStream->getUsed());
+    FamilyType::PARSE::parseCommandBuffer(cmdList, commandQueue->commandStream.getCpuBase(), commandQueue->commandStream.getUsed());
 
     auto cfeStates = findAll<CFE_STATE *>(cmdList.begin(), cmdList.end());
 

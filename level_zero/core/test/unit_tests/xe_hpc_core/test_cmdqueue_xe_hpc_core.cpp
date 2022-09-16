@@ -68,10 +68,10 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsT
 
     auto globalFence = csr->getGlobalFenceAllocation();
 
-    auto used = commandQueue->commandStream->getUsed();
+    auto used = commandQueue->commandStream.getUsed();
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, commandQueue->commandStream->getCpuBase(), used));
+        cmdList, commandQueue->commandStream.getCpuBase(), used));
 
     auto itor = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
@@ -94,12 +94,12 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsF
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
     auto commandListHandle = commandList->toHandle();
     commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
-    auto usedSpaceAfter1stExecute = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter1stExecute = commandQueue->commandStream.getUsed();
     commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
-    auto usedSpaceOn2ndExecute = commandQueue->commandStream->getUsed() - usedSpaceAfter1stExecute;
+    auto usedSpaceOn2ndExecute = commandQueue->commandStream.getUsed() - usedSpaceAfter1stExecute;
 
     GenCmdList cmdList;
-    auto cmdBufferAddress = ptrOffset(commandQueue->commandStream->getCpuBase(), usedSpaceAfter1stExecute);
+    auto cmdBufferAddress = ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceAfter1stExecute);
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdBufferAddress, usedSpaceOn2ndExecute));
 
     auto itor = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(cmdList.begin(), cmdList.end());

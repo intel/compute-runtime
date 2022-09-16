@@ -32,8 +32,8 @@ XE_HPG_CORETEST_F(CommandQueueExecuteCommandListsXeHpgCore, WhenExecutingCmdList
     auto commandQueue = whiteboxCast(CommandQueue::create(
         productFamily,
         device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, returnValue));
-    ASSERT_NE(nullptr, commandQueue->commandStream);
-    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+    ASSERT_NE(nullptr, commandQueue);
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
@@ -42,12 +42,12 @@ XE_HPG_CORETEST_F(CommandQueueExecuteCommandListsXeHpgCore, WhenExecutingCmdList
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
 
     using CFE_STATE = typename FamilyType::CFE_STATE;
     auto itorCFE = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
@@ -73,8 +73,8 @@ XE_HPG_CORETEST_F(CommandQueueExecuteCommandListsXeHpgCore, WhenExecutingCmdList
     auto commandQueue = whiteboxCast(CommandQueue::create(
         productFamily,
         device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, returnValue));
-    ASSERT_NE(nullptr, commandQueue->commandStream);
-    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+    ASSERT_NE(nullptr, commandQueue);
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
@@ -83,12 +83,12 @@ XE_HPG_CORETEST_F(CommandQueueExecuteCommandListsXeHpgCore, WhenExecutingCmdList
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto itorSba = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());

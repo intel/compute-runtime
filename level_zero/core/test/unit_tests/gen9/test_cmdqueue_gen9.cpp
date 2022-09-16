@@ -57,7 +57,7 @@ struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
                                                          false,
                                                          false,
                                                          returnValue));
-        ASSERT_NE(nullptr, commandQueue->commandStream);
+        ASSERT_NE(nullptr, commandQueue);
 
         commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue);
         ASSERT_NE(nullptr, commandList);
@@ -79,18 +79,18 @@ struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
 HWTEST2_F(CommandQueueThreadArbitrationPolicyTests,
           whenCommandListIsExecutedThenDefaultRoundRobinThreadArbitrationPolicyIsUsed,
           IsGen9) {
-    size_t usedSpaceBefore = commandQueue->commandStream->getUsed();
+    size_t usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     ze_command_list_handle_t hCommandList = commandList->toHandle();
     auto result = commandQueue->executeCommandLists(1, &hCommandList, nullptr, true);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    size_t usedSpaceAfter = commandQueue->commandStream->getUsed();
+    size_t usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
@@ -110,18 +110,18 @@ HWTEST2_F(CommandQueueThreadArbitrationPolicyTests,
           IsGen9) {
     DebugManager.flags.OverrideThreadArbitrationPolicy.set(0);
 
-    size_t usedSpaceBefore = commandQueue->commandStream->getUsed();
+    size_t usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     ze_command_list_handle_t hCommandList = commandList->toHandle();
     auto result = commandQueue->executeCommandLists(1, &hCommandList, nullptr, true);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    size_t usedSpaceAfter = commandQueue->commandStream->getUsed();
+    size_t usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
@@ -141,18 +141,18 @@ HWTEST2_F(CommandQueueThreadArbitrationPolicyTests,
           IsGen9) {
     DebugManager.flags.OverrideThreadArbitrationPolicy.set(1);
 
-    size_t usedSpaceBefore = commandQueue->commandStream->getUsed();
+    size_t usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     ze_command_list_handle_t hCommandList = commandList->toHandle();
     auto result = commandQueue->executeCommandLists(1, &hCommandList, nullptr, true);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    size_t usedSpaceAfter = commandQueue->commandStream->getUsed();
+    size_t usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());

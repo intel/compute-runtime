@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/command_container/cmdcontainer.h"
+#include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/completion_stamp.h"
@@ -98,7 +99,7 @@ struct CommandQueueImp : public CommandQueue {
 
     Device *device = nullptr;
     NEO::CommandStreamReceiver *csr = nullptr;
-    NEO::LinearStream *commandStream = nullptr;
+    NEO::LinearStream commandStream{};
 
     std::atomic<uint32_t> taskCount{0};
 
