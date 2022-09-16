@@ -7,10 +7,11 @@
 
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
-#include "shared/source/xe_hpg_core/hw_cmds.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+
+#include "hw_cmds_xe_hpg_core_base.h"
 
 using namespace NEO;
 
