@@ -16,6 +16,7 @@
 #include "shared/source/program/program_info.h"
 #include "shared/source/program/program_initialization.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
+#include "shared/source/utilities/time_measure_wrapper.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
@@ -135,6 +136,26 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const
     }
     DBG_LOG(PrintRelocations, NEO::constructRelocationsDebugMessage(this->getSymbols(pDevice->getRootDeviceIndex())));
     return CL_SUCCESS;
+}
+
+cl_int Program::processGenBinaries(const ClDeviceVector &clDevices, std::unordered_map<uint32_t, BuildPhase> &phaseReached) {
+    cl_int retVal = CL_SUCCESS;
+    for (auto &clDevice : clDevices) {
+        if (BuildPhase::BinaryProcessing == phaseReached[clDevice->getRootDeviceIndex()]) {
+            continue;
+        }
+        if (DebugManager.flags.PrintProgramBinaryProcessingTime.get()) {
+            retVal = TimeMeasureWrapper::functionExecution(*this, &Program::processGenBinary, *clDevice);
+        } else {
+            retVal = processGenBinary(*clDevice);
+        }
+
+        if (retVal != CL_SUCCESS) {
+            break;
+        }
+        phaseReached[clDevice->getRootDeviceIndex()] = BuildPhase::BinaryProcessing;
+    }
+    return retVal;
 }
 
 cl_int Program::processGenBinary(const ClDevice &clDevice) {

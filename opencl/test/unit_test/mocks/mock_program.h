@@ -47,6 +47,7 @@ class MockProgram : public Program {
     using Program::linkBinary;
     using Program::options;
     using Program::packDeviceBinary;
+    using Program::processGenBinaries;
     using Program::Program;
     using Program::requiresRebuild;
     using Program::setBuildStatus;

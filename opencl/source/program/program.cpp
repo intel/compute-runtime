@@ -192,10 +192,9 @@ cl_int Program::createProgramFromBinary(
                 this->options += " " + NEO::CompilerOptions::allowZebin.str();
             }
 
-            if (false == singleDeviceBinary.debugData.empty()) {
-                this->buildInfos[rootDeviceIndex].debugData = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.debugData.begin()), singleDeviceBinary.debugData.size());
-                this->buildInfos[rootDeviceIndex].debugDataSize = singleDeviceBinary.debugData.size();
-            }
+            this->buildInfos[rootDeviceIndex].debugData = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.debugData.begin()), singleDeviceBinary.debugData.size());
+            this->buildInfos[rootDeviceIndex].debugDataSize = singleDeviceBinary.debugData.size();
+
             bool forceRebuildBuiltInFromIr = isBuiltIn && DebugManager.flags.RebuildPrecompiledKernels.get();
             if ((false == singleDeviceBinary.deviceBinary.empty()) && (false == forceRebuildBuiltInFromIr)) {
                 this->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy<char>(reinterpret_cast<const char *>(singleDeviceBinary.deviceBinary.begin()), singleDeviceBinary.deviceBinary.size());
