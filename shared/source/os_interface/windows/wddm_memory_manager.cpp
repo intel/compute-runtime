@@ -749,6 +749,26 @@ bool WddmMemoryManager::createWddmAllocation(WddmAllocation *allocation, void *r
     return mapGpuVirtualAddress(allocation, requiredGpuPtr);
 }
 
+AddressRange WddmMemoryManager::reserveGpuAddress(const void *requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) {
+    uint64_t gpuVa = 0u;
+    *reservedOnRootDeviceIndex = 0;
+    size_t reservedSize = 0;
+    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < rootDeviceIndices.size(); rootDeviceIndex++) {
+        auto gfxPartition = getGfxPartition(rootDeviceIndex);
+        gpuVa = getWddm(rootDeviceIndex).reserveGpuVirtualAddress(reinterpret_cast<uint64_t>(requiredStartAddress), gfxPartition->getHeapMinimalAddress(HeapIndex::HEAP_STANDARD64KB), gfxPartition->getHeapLimit(HeapIndex::HEAP_STANDARD64KB), size);
+        if (gpuVa != 0u) {
+            *reservedOnRootDeviceIndex = rootDeviceIndex;
+            reservedSize = size;
+            break;
+        }
+    }
+    return AddressRange{gpuVa, reservedSize};
+}
+
+void WddmMemoryManager::freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) {
+    getWddm(rootDeviceIndex).freeGpuVirtualAddress(addressRange.address, addressRange.size);
+}
+
 bool WddmMemoryManager::mapGpuVaForOneHandleAllocation(WddmAllocation *allocation, const void *preferredGpuVirtualAddress) {
     D3DGPU_VIRTUAL_ADDRESS addressToMap = castToUint64(preferredGpuVirtualAddress);
     auto heapIndex = selectHeap(allocation, preferredGpuVirtualAddress != nullptr, is32bit || executionEnvironment.rootDeviceEnvironments[allocation->getRootDeviceIndex()]->isFullRangeSvm(), allocation->allocInFrontWindowPool);
@@ -795,7 +815,7 @@ bool WddmMemoryManager::mapMultiHandleAllocationWithRetry(WddmAllocation *alloca
         allocation->getGpuAddressToModify() = addressToMap;
     } else {
         allocation->reservedSizeForGpuVirtualAddress = alignUp(alignedSize, MemoryConstants::pageSize64k);
-        allocation->reservedGpuVirtualAddress = wddm.reserveGpuVirtualAddress(gfxPartition->getHeapMinimalAddress(heapIndex), gfxPartition->getHeapLimit(heapIndex),
+        allocation->reservedGpuVirtualAddress = wddm.reserveGpuVirtualAddress(0ull, gfxPartition->getHeapMinimalAddress(heapIndex), gfxPartition->getHeapLimit(heapIndex),
                                                                               allocation->reservedSizeForGpuVirtualAddress);
         auto gmmHelper = getGmmHelper(allocation->getRootDeviceIndex());
         allocation->getGpuAddressToModify() = gmmHelper->canonize(allocation->reservedGpuVirtualAddress);

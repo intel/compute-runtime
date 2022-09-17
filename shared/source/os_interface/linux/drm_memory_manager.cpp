@@ -1156,8 +1156,19 @@ uint32_t DrmMemoryManager::getRootDeviceIndex(const Drm *drm) {
     return CommonConstants::unspecifiedDeviceIndex;
 }
 
-AddressRange DrmMemoryManager::reserveGpuAddress(size_t size, uint32_t rootDeviceIndex) {
-    auto gpuVa = acquireGpuRange(size, rootDeviceIndex, HeapIndex::HEAP_STANDARD);
+AddressRange DrmMemoryManager::reserveGpuAddress(const void *requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) {
+    uint64_t gpuVa = 0u;
+    *reservedOnRootDeviceIndex = 0;
+    if (requiredStartAddress) {
+        return AddressRange{0, 0};
+    }
+    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < rootDeviceIndices.size(); rootDeviceIndex++) {
+        gpuVa = acquireGpuRange(size, rootDeviceIndex, HeapIndex::HEAP_STANDARD);
+        if (gpuVa != 0u) {
+            *reservedOnRootDeviceIndex = rootDeviceIndex;
+            break;
+        }
+    }
     return AddressRange{gpuVa, size};
 }
 

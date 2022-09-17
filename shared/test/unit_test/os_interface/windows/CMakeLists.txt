@@ -28,6 +28,7 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_shared_allocations_test.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_special_heap_test.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_reservation_tests.cpp
   )
 endif()
 

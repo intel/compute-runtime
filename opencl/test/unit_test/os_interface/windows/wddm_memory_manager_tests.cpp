@@ -564,12 +564,15 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValueOnSomeOfMultipleEngine
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenGpuAddressIsReservedAndFreedThenAddressRangeIsZero) {
-    auto addressRange = memoryManager->reserveGpuAddress(MemoryConstants::pageSize, 0);
+TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenGpuAddressIsReservedAndFreedThenAddressRangeIsNonZero) {
+    RootDeviceIndicesContainer rootDevices;
+    rootDevices.push_back(0);
+    uint32_t rootDeviceIndexReserved = 1;
+    auto addressRange = memoryManager->reserveGpuAddress(nullptr, MemoryConstants::pageSize64k, rootDevices, &rootDeviceIndexReserved);
     auto gmmHelper = memoryManager->getGmmHelper(0);
-
-    EXPECT_EQ(0u, gmmHelper->decanonize(addressRange.address));
-    EXPECT_EQ(0u, addressRange.size);
+    EXPECT_EQ(0u, rootDeviceIndexReserved);
+    EXPECT_NE(0u, gmmHelper->decanonize(addressRange.address));
+    EXPECT_EQ(MemoryConstants::pageSize64k, addressRange.size);
 
     memoryManager->freeGpuAddress(addressRange, 0);
 }

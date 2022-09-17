@@ -283,7 +283,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenAllocationSmallerUnderlyingThanAlignedSiz
 TEST_F(Wddm20WithMockGdiDllTests, givenReserveCallWhenItIsCalledWithProperParamtersThenAddressInRangeIsReturend) {
     auto sizeAlignedTo64Kb = 64 * KB;
 
-    auto reservationAddress = wddm->reserveGpuVirtualAddress(wddm->getGfxPartition().Heap32[0].Base,
+    auto reservationAddress = wddm->reserveGpuVirtualAddress(0ull, wddm->getGfxPartition().Heap32[0].Base,
                                                              wddm->getGfxPartition().Heap32[0].Limit,
                                                              sizeAlignedTo64Kb);
 

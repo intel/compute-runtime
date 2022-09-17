@@ -51,7 +51,10 @@ void DebuggerL0::initialize() {
                                          device->getDeviceBitfield()};
 
     if (!singleAddressSpaceSbaTracking) {
-        sbaTrackingGpuVa = device->getMemoryManager()->reserveGpuAddress(MemoryConstants::pageSize, device->getRootDeviceIndex());
+        RootDeviceIndicesContainer rootDevices;
+        rootDevices.push_back(device->getRootDeviceIndex());
+        uint32_t rootDeviceIndexReserved = 0;
+        sbaTrackingGpuVa = device->getMemoryManager()->reserveGpuAddress(nullptr, MemoryConstants::pageSize, rootDevices, &rootDeviceIndexReserved);
         properties.gpuAddress = sbaTrackingGpuVa.address;
     }
 

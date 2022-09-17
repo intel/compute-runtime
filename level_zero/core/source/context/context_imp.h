@@ -162,6 +162,7 @@ struct ContextImp : Context {
 
   protected:
     bool isAllocationSuitableForCompression(const StructuresLookupTable &structuresLookupTable, Device &device, size_t allocSize);
+    size_t getPageSizeRequired(size_t size);
 
     std::map<uint32_t, ze_device_handle_t> devices;
     std::vector<ze_device_handle_t> deviceHandles;

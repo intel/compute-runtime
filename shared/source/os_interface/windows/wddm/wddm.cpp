@@ -558,11 +558,13 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
     return ret;
 }
 
-D3DGPU_VIRTUAL_ADDRESS Wddm::reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS minimumAddress,
+D3DGPU_VIRTUAL_ADDRESS Wddm::reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS baseAddress,
+                                                      D3DGPU_VIRTUAL_ADDRESS minimumAddress,
                                                       D3DGPU_VIRTUAL_ADDRESS maximumAddress,
                                                       D3DGPU_SIZE_T size) {
     UNRECOVERABLE_IF(size % MemoryConstants::pageSize64k);
     D3DDDI_RESERVEGPUVIRTUALADDRESS reserveGpuVirtualAddress = {};
+    reserveGpuVirtualAddress.BaseAddress = baseAddress;
     reserveGpuVirtualAddress.MinimumAddress = minimumAddress;
     reserveGpuVirtualAddress.MaximumAddress = maximumAddress;
     reserveGpuVirtualAddress.hPagingQueue = this->pagingQueue;

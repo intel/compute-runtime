@@ -788,7 +788,7 @@ TEST_F(ContextTest, whenGettingDriverThenDriverIsRetrievedSuccessfully) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-TEST_F(ContextTest, whenCallingVirtualMemInterfacesThenUnsupportedIsReturned) {
+TEST_F(ContextTest, whenCallingVirtualMemInterfacesThenSuccessIsReturned) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
@@ -798,13 +798,17 @@ TEST_F(ContextTest, whenCallingVirtualMemInterfacesThenUnsupportedIsReturned) {
     ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
 
     void *pStart = 0x0;
-    size_t size = 0u;
+    size_t size = 4096u;
     void *ptr = nullptr;
-    res = contextImp->reserveVirtualMem(pStart, size, &ptr);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, res);
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->reserveVirtualMem(pStart, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_GT((int)driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().size(), 0);
 
-    res = contextImp->freeVirtualMem(ptr, size);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, res);
+    res = contextImp->freeVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -871,6 +875,16 @@ TEST_F(ContextTest, whenCallingMappingVirtualInterfacesThenUnsupportedIsReturned
 
     ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
 
+    void *pStart = 0x0;
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->reserveVirtualMem(pStart, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_GT((int)driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().size(), 0);
+
     ze_physical_mem_desc_t descMem = {};
     ze_physical_mem_handle_t mem = {};
     res = contextImp->createPhysicalMem(device, &descMem, &mem);
@@ -878,24 +892,298 @@ TEST_F(ContextTest, whenCallingMappingVirtualInterfacesThenUnsupportedIsReturned
 
     ze_memory_access_attribute_t access = {};
     size_t offset = 0;
-    void *ptr = nullptr;
-    size_t size = 0;
-    res = contextImp->mapVirtualMem(ptr, size, mem, offset, access);
+    res = contextImp->mapVirtualMem(ptr, pagesize, mem, offset, access);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, res);
 
-    res = contextImp->setVirtualMemAccessAttribute(ptr, size, access);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, res);
+    res = contextImp->setVirtualMemAccessAttribute(ptr, pagesize, access);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     ze_memory_access_attribute_t outAccess = {};
     size_t outSize = 0;
-    res = contextImp->getVirtualMemAccessAttribute(ptr, size, &outAccess, &outSize);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, res);
+    res = contextImp->getVirtualMemAccessAttribute(ptr, pagesize, &outAccess, &outSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(pagesize, outSize);
 
-    res = contextImp->unMapVirtualMem(ptr, size);
+    res = contextImp->unMapVirtualMem(ptr, pagesize);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, res);
 
     res = contextImp->destroyPhysicalMem(mem);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, res);
+
+    res = contextImp->freeVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenCallingVirtualMemorySetAttributeWithValidEnumerationsThenSuccessisReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    void *pStart = 0x0;
+    size_t size = 4096;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->reserveVirtualMem(pStart, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_GT((int)driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().size(), 0);
+
+    std::vector<ze_memory_access_attribute_t> memoryAccessFlags = {
+        ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE, ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY,
+        ZE_MEMORY_ACCESS_ATTRIBUTE_NONE};
+
+    ze_memory_access_attribute_t access = {ZE_MEMORY_ACCESS_ATTRIBUTE_NONE};
+    ze_memory_access_attribute_t previousAccess = {};
+    size_t outSize = 0;
+    for (auto accessFlags : memoryAccessFlags) {
+        previousAccess = access;
+        res = contextImp->setVirtualMemAccessAttribute(ptr, pagesize, accessFlags);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = contextImp->getVirtualMemAccessAttribute(ptr, pagesize, &access, &outSize);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        EXPECT_EQ(outSize, pagesize);
+        EXPECT_NE(previousAccess, access);
+        EXPECT_EQ(accessFlags, access);
+    }
+
+    res = contextImp->getVirtualMemAccessAttribute(ptr, pagesize, &access, &outSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->freeVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenCallingVirtualMemorySetAttributeWithInvalidValuesThenFailureReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    void *pStart = 0x0;
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->reserveVirtualMem(pStart, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_GT((int)driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().size(), 0);
+
+    ze_memory_access_attribute_t access = {ZE_MEMORY_ACCESS_ATTRIBUTE_FORCE_UINT32};
+    res = contextImp->setVirtualMemAccessAttribute(ptr, pagesize, access);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ENUMERATION, res);
+
+    res = contextImp->setVirtualMemAccessAttribute(pStart, pagesize, access);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+
+    res = contextImp->freeVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenCallingVirtualMemoryGetAttributeWithInvalidValuesThenFailureReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    void *pStart = 0x0;
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->reserveVirtualMem(pStart, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_GT((int)driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().size(), 0);
+
+    size_t outSize = 0;
+    ze_memory_access_attribute_t access = {ZE_MEMORY_ACCESS_ATTRIBUTE_NONE};
+    res = contextImp->getVirtualMemAccessAttribute(pStart, pagesize, &access, &outSize);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+
+    res = contextImp->freeVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenCallingVirtualMemoryFreeWithInvalidValuesThenFailuresReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    void *pStart = 0x0;
+    size_t size = 4096u;
+    size_t invalidSize = 10u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->reserveVirtualMem(pStart, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_GT((int)driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().size(), 0);
+
+    res = contextImp->freeVirtualMem(ptr, invalidSize);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+
+    res = contextImp->freeVirtualMem(pStart, pagesize);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+
+    res = contextImp->freeVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenCallingVirtualMemoryReservationWithInvalidArgumentsThenFailureReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    void *pStart = 0x0;
+    size_t size = 64u;
+    void *ptr = nullptr;
+    res = contextImp->reserveVirtualMem(pStart, size, &ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, res);
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    pStart = reinterpret_cast<void *>(0x1234);
+    res = contextImp->reserveVirtualMem(pStart, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+class ReserveMemoryManagerMock : public NEO::MemoryManager {
+  public:
+    ReserveMemoryManagerMock(NEO::ExecutionEnvironment &executionEnvironment) : NEO::MemoryManager(executionEnvironment) {}
+    NEO::GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override { return nullptr; }
+    NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override { return nullptr; }
+    void addAllocationToHostPtrManager(NEO::GraphicsAllocation *memory) override{};
+    void removeAllocationFromHostPtrManager(NEO::GraphicsAllocation *memory) override{};
+    NEO::GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override { return nullptr; };
+    AllocationStatus populateOsHandles(NEO::OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override { return AllocationStatus::Success; };
+    void cleanOsHandles(NEO::OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override{};
+    void freeGraphicsMemoryImpl(NEO::GraphicsAllocation *gfxAllocation) override{};
+    void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation, bool isImportedAllocation) override{};
+    uint64_t getSystemSharedMemory(uint32_t rootDeviceIndex) override { return 0; };
+    uint64_t getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) override { return 0; };
+    double getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceIndex) override { return 0; }
+    AddressRange reserveGpuAddress(const void *requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) override {
+        if (failReserveGpuAddress) {
+            return {};
+        }
+        return AddressRange{reinterpret_cast<uint64_t>(requiredStartAddress), size};
+    }
+    void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override{};
+    NEO::GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const NEO::AllocationData &allocationData) override { return nullptr; };
+    NEO::GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const NEO::AllocationData &allocationData) override { return nullptr; };
+    NEO::GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const NEO::AllocationData &allocationData) override { return nullptr; };
+    NEO::GraphicsAllocation *allocateUSMHostGraphicsMemory(const NEO::AllocationData &allocationData) override { return nullptr; };
+    NEO::GraphicsAllocation *allocateGraphicsMemory64kb(const NEO::AllocationData &allocationData) override { return nullptr; };
+    NEO::GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const NEO::AllocationData &allocationData, bool useLocalMemory) override { return nullptr; };
+    NEO::GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const NEO::AllocationData &allocationData, AllocationStatus &status) override { return nullptr; };
+    NEO::GraphicsAllocation *allocateGraphicsMemoryWithGpuVa(const NEO::AllocationData &allocationData) override { return nullptr; };
+
+    NEO::GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const NEO::AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override { return nullptr; };
+    NEO::GraphicsAllocation *allocateMemoryByKMD(const NEO::AllocationData &allocationData) override { return nullptr; };
+    void *lockResourceImpl(NEO::GraphicsAllocation &graphicsAllocation) override { return nullptr; };
+    void unlockResourceImpl(NEO::GraphicsAllocation &graphicsAllocation) override{};
+
+    bool failReserveGpuAddress = true;
+};
+
+TEST_F(ContextTest, whenCallingVirtualMemReserveWithPStartWithSuccessfulAllocationThenSuccessReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    void *pStart = reinterpret_cast<void *>(0x1234);
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    ReserveMemoryManagerMock *ReserveMemoryManager = new ReserveMemoryManagerMock(*neoDevice->executionEnvironment);
+    auto memoryManager = driverHandle->getMemoryManager();
+    ReserveMemoryManager->failReserveGpuAddress = false;
+    NEO::MemoryManager *mockingMemoryManager = (NEO::MemoryManager *)ReserveMemoryManager;
+    driverHandle->setMemoryManager(mockingMemoryManager);
+    res = contextImp->reserveVirtualMem(pStart, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_GT((int)mockingMemoryManager->getVirtualMemoryReservationMap().size(), 0);
+    res = contextImp->freeVirtualMem(ptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    driverHandle->setMemoryManager(memoryManager);
+    delete ReserveMemoryManager;
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenCallingVirtualMemoryReservationWhenOutOfMemoryThenOutOfMemoryReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    void *pStart = 0x0;
+    size_t size = 0u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    NEO::MemoryManager *failingReserveMemoryManager = new ReserveMemoryManagerMock(*neoDevice->executionEnvironment);
+    auto memoryManager = driverHandle->getMemoryManager();
+    driverHandle->setMemoryManager(failingReserveMemoryManager);
+    res = contextImp->reserveVirtualMem(pStart, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, res);
+    pStart = reinterpret_cast<void *>(0x1234);
+    res = contextImp->reserveVirtualMem(pStart, pagesize, &ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, res);
+    driverHandle->setMemoryManager(memoryManager);
+    delete failingReserveMemoryManager;
 
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);

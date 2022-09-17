@@ -52,6 +52,13 @@ struct AddressRange {
     size_t size;
 };
 
+struct VirtualMemoryReservation {
+    AddressRange virtualAddressRange;
+    MemoryFlags flags;
+    bool mapped;
+    uint32_t rootDeviceIndex;
+};
+
 constexpr size_t paddingBufferSize = 2 * MemoryConstants::megaByte;
 
 namespace MemoryTransferHelper {
@@ -211,7 +218,7 @@ class MemoryManager {
     GmmHelper *getGmmHelper(uint32_t rootDeviceIndex) {
         return executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper();
     }
-    virtual AddressRange reserveGpuAddress(size_t size, uint32_t rootDeviceIndex) = 0;
+    virtual AddressRange reserveGpuAddress(const void *requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) = 0;
     virtual void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) = 0;
     static HeapIndex selectInternalHeap(bool useLocalMemory) { return useLocalMemory ? HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY : HeapIndex::HEAP_INTERNAL; }
     static HeapIndex selectExternalHeap(bool useLocalMemory) { return useLocalMemory ? HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY : HeapIndex::HEAP_EXTERNAL; }
@@ -264,6 +271,8 @@ class MemoryManager {
 
     std::unordered_map<std::string, KernelAllocationInfo> &getKernelAllocationMap() { return this->kernelAllocationMap; };
     [[nodiscard]] std::unique_lock<std::mutex> lockKernelAllocationMap() { return std::unique_lock<std::mutex>(this->kernelAllocationMutex); };
+    std::map<void *, VirtualMemoryReservation *> &getVirtualMemoryReservationMap() { return this->virtualMemoryReservationMap; };
+    [[nodiscard]] std::unique_lock<std::mutex> lockVirtualMemoryReservationMap() { return std::unique_lock<std::mutex>(this->virtualMemoryReservationMapMutex); };
 
   protected:
     bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr, const StorageInfo &storageInfo);
@@ -329,6 +338,8 @@ class MemoryManager {
     std::vector<bool> isaInLocalMemory;
     std::unordered_map<std::string, KernelAllocationInfo> kernelAllocationMap;
     std::mutex kernelAllocationMutex;
+    std::map<void *, VirtualMemoryReservation *> virtualMemoryReservationMap;
+    std::mutex virtualMemoryReservationMapMutex;
 };
 
 std::unique_ptr<DeferredDeleter> createDeferredDeleter();

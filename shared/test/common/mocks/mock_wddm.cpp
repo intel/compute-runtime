@@ -292,9 +292,13 @@ VOID *WddmMock::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback
     return Wddm::registerTrimCallback(callback, residencyController);
 }
 
-D3DGPU_VIRTUAL_ADDRESS WddmMock::reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_SIZE_T size) {
+D3DGPU_VIRTUAL_ADDRESS WddmMock::reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS baseAddress, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_SIZE_T size) {
     reserveGpuVirtualAddressResult.called++;
-    return Wddm::reserveGpuVirtualAddress(minimumAddress, maximumAddress, size);
+    if (failReserveGpuVirtualAddress) {
+        D3DGPU_VIRTUAL_ADDRESS nullAddress = {};
+        return nullAddress;
+    }
+    return Wddm::reserveGpuVirtualAddress(baseAddress, minimumAddress, maximumAddress, size);
 }
 
 uint64_t *WddmMock::getPagingFenceAddress() {
