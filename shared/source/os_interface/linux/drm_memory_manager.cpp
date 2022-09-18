@@ -1229,7 +1229,7 @@ uint64_t DrmMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t
 }
 
 bool DrmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy) {
-    if (graphicsAllocation->getUnderlyingBuffer()) {
+    if (graphicsAllocation->getUnderlyingBuffer() || !isLocalMemorySupported(graphicsAllocation->getRootDeviceIndex())) {
         return MemoryManager::copyMemoryToAllocation(graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy);
     }
     return copyMemoryToAllocationBanks(graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy, maxNBitValue(graphicsAllocation->storageInfo.getNumBanks()));

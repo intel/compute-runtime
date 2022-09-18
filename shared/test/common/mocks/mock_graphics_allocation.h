@@ -20,7 +20,6 @@ class MockGraphicsAllocation : public MemoryAllocation {
     using MemoryAllocation::allocationOffset;
     using MemoryAllocation::allocationType;
     using MemoryAllocation::aubInfo;
-    using MemoryAllocation::cpuPtr;
     using MemoryAllocation::gpuAddress;
     using MemoryAllocation::MemoryAllocation;
     using MemoryAllocation::memoryPool;
