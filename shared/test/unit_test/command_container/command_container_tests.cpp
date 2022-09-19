@@ -236,6 +236,30 @@ TEST_F(CommandContainerTest, givenCmdContainerWithAllocsListWhenAllocateAndReset
     allocList.freeAllGraphicsAllocations(pDevice);
 }
 
+TEST_F(CommandContainerTest, givenReusableAllocationsAndRemoveUserFenceInCmdlistResetAndDestroyFlagWhenAllocateAndResetThenHandleFenceCompletionIsNotCalled) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.RemoveUserFenceInCmdlistResetAndDestroy.set(1);
+
+    AllocationsList allocList;
+    auto cmdContainer = std::make_unique<CommandContainer>();
+    cmdContainer->initialize(pDevice, &allocList, true);
+    auto &cmdBufferAllocs = cmdContainer->getCmdBufferAllocations();
+    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    EXPECT_EQ(0u, memoryManager->handleFenceCompletionCalled);
+    EXPECT_EQ(cmdBufferAllocs.size(), 1u);
+    cmdContainer->allocateNextCommandBuffer();
+    EXPECT_EQ(cmdBufferAllocs.size(), 2u);
+
+    cmdContainer->reset();
+    EXPECT_EQ(0u, memoryManager->handleFenceCompletionCalled);
+    cmdContainer->allocateNextCommandBuffer();
+    EXPECT_EQ(cmdBufferAllocs.size(), 2u);
+
+    cmdContainer.reset();
+    EXPECT_EQ(0u, memoryManager->handleFenceCompletionCalled);
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
 TEST_F(CommandContainerTest, givenCommandContainerDuringInitWhenAllocateHeapMemoryFailsThenErrorIsReturned) {
     CommandContainer cmdContainer;
     auto tempMemoryManager = pDevice->executionEnvironment->memoryManager.release();

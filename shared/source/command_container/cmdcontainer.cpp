@@ -52,6 +52,10 @@ CommandContainer::CommandContainer() {
     }
 
     residencyContainer.reserve(startingResidencyContainerSize);
+
+    if (DebugManager.flags.RemoveUserFenceInCmdlistResetAndDestroy.get() != -1) {
+        isHandleFenceCompletionRequired = !static_cast<bool>(DebugManager.flags.RemoveUserFenceInCmdlistResetAndDestroy.get());
+    }
 }
 
 CommandContainer::CommandContainer(uint32_t maxNumAggregatedIdds) : CommandContainer() {
@@ -248,8 +252,12 @@ IndirectHeap *CommandContainer::getHeapWithRequiredSizeAndAlignment(HeapType hea
 void CommandContainer::handleCmdBufferAllocations(size_t startIndex) {
     for (size_t i = startIndex; i < cmdBufferAllocations.size(); i++) {
         if (this->reusableAllocationList) {
-            this->device->getMemoryManager()->handleFenceCompletion(cmdBufferAllocations[i]);
+
+            if (isHandleFenceCompletionRequired) {
+                this->device->getMemoryManager()->handleFenceCompletion(cmdBufferAllocations[i]);
+            }
             reusableAllocationList->pushFrontOne(*cmdBufferAllocations[i]);
+
         } else {
             this->device->getMemoryManager()->freeGraphicsMemory(cmdBufferAllocations[i]);
         }

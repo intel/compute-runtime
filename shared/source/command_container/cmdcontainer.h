@@ -110,6 +110,8 @@ class CommandContainer : public NonCopyableOrMovableClass {
     bool systolicModeSupport = false;
 
   protected:
+    size_t getTotalCmdBufferSize();
+
     void *iddBlock = nullptr;
     Device *device = nullptr;
     AllocationsList *reusableAllocationList = nullptr;
@@ -129,7 +131,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     std::vector<GraphicsAllocation *> deallocationContainer;
 
     bool isFlushTaskUsedForImmediate = false;
-    size_t getTotalCmdBufferSize();
+    bool isHandleFenceCompletionRequired = true;
 };
 
 } // namespace NEO
