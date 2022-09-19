@@ -2671,6 +2671,35 @@ struct Demarshaller<TOK_S_GMM_GFX_PARTITIONING> {
                     }
                     WCH_ASSERT(tokSVM == tokSVMEnd);
                 } break;
+                case TOK_FS_GMM_GFX_PARTITIONING__TR: {
+                    const TokenHeader *tokTR = varLen->getValue<TokenHeader>();
+                    const TokenHeader *tokTREnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
+                    while (tokTR < tokTREnd) {
+                        if (false == tokTR->flags.flag4IsVariableLength) {
+                            switch (tokTR->id) {
+                            default:
+                                if (tokTR->flags.flag3IsMandatory) {
+                                    return false;
+                                }
+                                break;
+                            case TOK_FBQ_GMM_GFX_PARTITIONING__ANONYMOUS7117__BASE: {
+                                dst.TR.Base = readTokValue<decltype(dst.TR.Base)>(*tokTR);
+                            } break;
+                            case TOK_FBQ_GMM_GFX_PARTITIONING__ANONYMOUS7117__LIMIT: {
+                                dst.TR.Limit = readTokValue<decltype(dst.TR.Limit)>(*tokTR);
+                            } break;
+                            };
+                            tokTR = tokTR + 1 + tokTR->valueDwordCount;
+                        } else {
+                            auto varLen = reinterpret_cast<const TokenVariableLength *>(tokTR);
+                            if (tokTR->flags.flag3IsMandatory) {
+                                return false;
+                            }
+                            tokTR = tokTR + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
+                        }
+                    }
+                    WCH_ASSERT(tokTR == tokTREnd);
+                } break;
                 case TOK_FS_GMM_GFX_PARTITIONING__HEAP32: {
                     uint32_t arrayElementIdHeap32 = varLen->arrayElementId;
                     const TokenHeader *tokHeap32 = varLen->getValue<TokenHeader>();

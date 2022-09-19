@@ -171,7 +171,7 @@ typedef struct __GMM_GFX_PARTITIONING {
         Reserved0,
         Reserved1,
         SVM,
-        Reserved2,
+        TR,
         Heap32[4];
 } GMM_GFX_PARTITIONING;
 

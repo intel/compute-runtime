@@ -200,12 +200,18 @@ bool Wddm::configureDeviceAddressSpace() {
             return false;
         }
         if (gfxPartition.Standard64KB.Limit <= maxUsmSize) {
+            uintptr_t usmLowPartMax = gfxPartition.Heap32[0].Base;
+            for (const auto &usmMaxAddr : {gfxPartition.Standard.Base, gfxPartition.Standard64KB.Base, gfxPartition.TR.Base}) {
+                if (usmMaxAddr != 0) {
+                    usmLowPartMax = std::min(usmLowPartMax, usmMaxAddr);
+                }
+            }
             // reserved cpu address range splits USM into 2 partitions
             struct {
                 uint64_t minAddr;
                 uint64_t maxAddr;
-            } usmRanges[] = {{usmBase, gfxPartition.Heap32->Base},
-                             {gfxPartition.Standard64KB.Limit, maxUsmSize}};
+            } usmRanges[] = {{usmBase, usmLowPartMax},
+                             {alignUp(gfxPartition.Standard64KB.Limit, MemoryConstants::pageSize64k), maxUsmSize}};
 
             bool usmGpuRangeIsReserved = true;
             for (const auto &usmRange : usmRanges) {
