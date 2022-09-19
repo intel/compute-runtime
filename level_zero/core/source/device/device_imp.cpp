@@ -1093,6 +1093,8 @@ void DeviceImp::releaseResources() {
         return;
     }
 
+    UNRECOVERABLE_IF(neoDevice == nullptr);
+
     this->bcsSplit.releaseResources();
 
     if (neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.get() &&
@@ -1131,10 +1133,8 @@ void DeviceImp::releaseResources() {
         }
     }
 
-    if (neoDevice) {
-        neoDevice->decRefInternal();
-        neoDevice = nullptr;
-    }
+    neoDevice->decRefInternal();
+    neoDevice = nullptr;
 
     resourcesReleased = true;
 }
