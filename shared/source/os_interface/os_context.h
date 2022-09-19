@@ -46,6 +46,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     bool isDefaultContext() const { return defaultContext; }
     void setDefaultContext(bool value) { defaultContext = value; }
     bool isDirectSubmissionActive() { return directSubmissionActive; }
+    bool isDebuggableContext() { return debuggableContext; }
     void setDirectSubmissionActive() { directSubmissionActive = true; }
 
     bool isDirectSubmissionAvailable(const HardwareInfo &hwInfo, bool &submitOnInit);
@@ -71,6 +72,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     bool directSubmissionActive = false;
     std::once_flag contextInitializedFlag = {};
     bool contextInitialized = false;
+    bool debuggableContext = false;
     bool engineInstancedDevice = false;
     uint8_t powerHintValue = 0;
 };

@@ -11,6 +11,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_host_ptr_manager.h"
+#include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 namespace NEO {
@@ -386,6 +387,19 @@ class MockMemoryManagerOsAgnosticContext : public MockMemoryManager {
     OsContext *createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver,
                                           const EngineDescriptor &engineDescriptor) override {
         auto osContext = new OsContext(0, engineDescriptor);
+        osContext->incRefInternal();
+        registeredEngines.emplace_back(commandStreamReceiver, osContext);
+        return osContext;
+    }
+};
+
+class MockMemoryManagerWithDebuggableOsContext : public MockMemoryManager {
+  public:
+    MockMemoryManagerWithDebuggableOsContext(NEO::ExecutionEnvironment &executionEnvironment) : MockMemoryManager(executionEnvironment) {}
+    OsContext *createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver,
+                                          const EngineDescriptor &engineDescriptor) override {
+        auto osContext = new MockOsContext(0, engineDescriptor);
+        osContext->debuggableContext = true;
         osContext->incRefInternal();
         registeredEngines.emplace_back(commandStreamReceiver, osContext);
         return osContext;

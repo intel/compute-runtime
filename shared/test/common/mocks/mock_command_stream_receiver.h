@@ -168,6 +168,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         }
         return isLocked;
     }
+    void initializeDeviceWithFirstSubmission() override {}
 
     static constexpr size_t tagSize = 256;
     static volatile uint32_t mockTagAddress[tagSize];

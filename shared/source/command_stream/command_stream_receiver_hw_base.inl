@@ -1466,4 +1466,13 @@ template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::createKernelArgsBufferAllocation() {
 }
 
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::initializeDeviceWithFirstSubmission() {
+    auto lock = obtainUniqueOwnership();
+
+    auto &commandStream = getCS(EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferEndSize());
+    auto commandStreamStart = commandStream.getUsed();
+    this->flushSmallTask(commandStream, commandStreamStart);
+}
+
 } // namespace NEO

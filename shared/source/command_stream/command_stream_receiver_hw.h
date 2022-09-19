@@ -138,6 +138,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getCmdsSizeForComputeBarrierCommand() const override {
         return getCmdSizeForStallingNoPostSyncCommands();
     }
+    void initializeDeviceWithFirstSubmission() override;
 
   protected:
     void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags);

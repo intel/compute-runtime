@@ -360,6 +360,8 @@ class CommandStreamReceiver {
         lastPreemptionMode = value;
     }
 
+    virtual void initializeDeviceWithFirstSubmission() = 0;
+
   protected:
     void cleanupResources();
     void printDeviceIndex();

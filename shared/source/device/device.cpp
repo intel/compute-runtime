@@ -364,6 +364,10 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
 
     if (isDefaultEngine) {
         defaultEngineIndex = deviceCsrIndex;
+
+        if (osContext->isDebuggableContext()) {
+            commandStreamReceiver->initializeDeviceWithFirstSubmission();
+        }
     }
 
     if (preemptionMode == PreemptionMode::MidThread && !commandStreamReceiver->createPreemptionAllocation()) {

@@ -536,3 +536,32 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZexNumberOfCssEnvVariableSetAmbig
         EXPECT_EQ(defaultHwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled, computeEngineGroup.engines.size());
     }
 }
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenDebuggableOsContextWhenDeviceCreatesEnginesThenDeviceIsInitializedWithFirstSubmission) {
+    auto hwInfo = *defaultHwInfo;
+    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0);
+
+    MockExecutionEnvironment executionEnvironment(&hwInfo);
+    executionEnvironment.memoryManager.reset(new MockMemoryManagerWithDebuggableOsContext(executionEnvironment));
+    executionEnvironment.incRefInternal();
+
+    UltDeviceFactory deviceFactory{1, 0, executionEnvironment};
+
+    auto device = deviceFactory.rootDevices[0];
+    auto csr = device->allEngines[device->defaultEngineIndex].commandStreamReceiver;
+    EXPECT_EQ(1u, csr->peekLatestSentTaskCount());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenNonDebuggableOsContextWhenDeviceCreatesEnginesThenDeviceIsNotInitializedWithFirstSubmission) {
+    auto hwInfo = *defaultHwInfo;
+    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0);
+
+    MockExecutionEnvironment executionEnvironment(&hwInfo);
+    executionEnvironment.incRefInternal();
+
+    UltDeviceFactory deviceFactory{1, 0, executionEnvironment};
+
+    auto device = deviceFactory.rootDevices[0];
+    auto csr = device->allEngines[device->defaultEngineIndex].commandStreamReceiver;
+    EXPECT_EQ(0u, csr->peekLatestSentTaskCount());
+}
