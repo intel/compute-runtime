@@ -77,6 +77,7 @@ class CommandStreamReceiver {
     };
 
     using MutexType = std::recursive_mutex;
+    using TimeType = std::chrono::high_resolution_clock::time_point;
     CommandStreamReceiver(ExecutionEnvironment &executionEnvironment,
                           uint32_t rootDeviceIndex,
                           const DeviceBitfield deviceBitfield);
@@ -325,6 +326,7 @@ class CommandStreamReceiver {
     const RootDeviceEnvironment &peekRootDeviceEnvironment() const;
 
     MOCKABLE_VIRTUAL bool isGpuHangDetected() const;
+    MOCKABLE_VIRTUAL bool checkGpuHangDetected(TimeType currentTime, TimeType &lastHangCheckTime) const;
 
     uint64_t getCompletionAddress() const {
         uint64_t completionFenceAddress = castToUint64(const_cast<uint32_t *>(getTagAddress()));

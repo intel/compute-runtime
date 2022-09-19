@@ -1206,14 +1206,18 @@ WaitStatus CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *pri
         }
     }
 
-    auto waitedOnTimestamps = waitForTimestamps(activeBcsStates, taskCount);
+    auto waitStatus = WaitStatus::NotReady;
+    auto waitedOnTimestamps = waitForTimestamps(activeBcsStates, taskCount, waitStatus);
+    if (waitStatus == WaitStatus::GpuHang) {
+        return WaitStatus::GpuHang;
+    }
 
     TimestampPacketContainer nodesToRelease;
     if (deferredTimestampPackets) {
         deferredTimestampPackets->swapNodes(nodesToRelease);
     }
 
-    const auto waitStatus = waitUntilComplete(taskCount, activeBcsStates, flushStamp->peekStamp(), false, cleanTemporaryAllocationsList, waitedOnTimestamps);
+    waitStatus = waitUntilComplete(taskCount, activeBcsStates, flushStamp->peekStamp(), false, cleanTemporaryAllocationsList, waitedOnTimestamps);
 
     if (printfHandler) {
         if (!printfHandler->printEnqueueOutput()) {

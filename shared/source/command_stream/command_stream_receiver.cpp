@@ -354,8 +354,19 @@ WaitStatus CommandStreamReceiver::waitForCompletionWithTimeout(const WaitParams 
     return retCode;
 }
 
+bool CommandStreamReceiver::checkGpuHangDetected(TimeType currentTime, TimeType &lastHangCheckTime) const {
+    std::chrono::microseconds elapsedTimeSinceGpuHangCheck = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - lastHangCheckTime);
+
+    if (elapsedTimeSinceGpuHangCheck.count() >= gpuHangCheckPeriod.count()) {
+        lastHangCheckTime = currentTime;
+        if (isGpuHangDetected()) {
+            return true;
+        }
+    }
+    return false;
+}
+
 WaitStatus CommandStreamReceiver::baseWaitFunction(volatile uint32_t *pollAddress, const WaitParams &params, uint32_t taskCountToWait) {
-    std::chrono::microseconds elapsedTimeSinceGpuHangCheck{0};
     std::chrono::high_resolution_clock::time_point waitStartTime, lastHangCheckTime, currentTime;
     int64_t timeDiff = 0;
 
@@ -376,13 +387,8 @@ WaitStatus CommandStreamReceiver::baseWaitFunction(volatile uint32_t *pollAddres
             }
 
             currentTime = std::chrono::high_resolution_clock::now();
-            elapsedTimeSinceGpuHangCheck = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - lastHangCheckTime);
-
-            if (elapsedTimeSinceGpuHangCheck.count() >= gpuHangCheckPeriod.count()) {
-                lastHangCheckTime = currentTime;
-                if (isGpuHangDetected()) {
-                    return WaitStatus::GpuHang;
-                }
+            if (checkGpuHangDetected(currentTime, lastHangCheckTime)) {
+                return WaitStatus::GpuHang;
             }
 
             if (params.enableTimeout) {
