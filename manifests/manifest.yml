@@ -27,7 +27,7 @@ components:
     branch: master
     dest_dir: infra
     fetch_tags: true
-    revision: v4172
+    revision: v4185
     type: git
   internal:
     branch: master
@@ -56,6 +56,18 @@ components:
     branch: libva
     revision: 2.2.0
     repository: https://github.com/intel/libva.git
+  metrics-discovery:
+    dest_dir: metrics/discovery
+    type: git
+    branch: metrics-discovery
+    revision: deb09bd1a9238619e25578b2a043eaf6fe124301-1
+    repository: https://github.com/intel/metrics-discovery.git
+  metrics-library:
+    dest_dir: metrics/library
+    type: git
+    branch: metrics-library
+    revision: 03976e9219d5eb4e768f698431c9e1a65c012aaa-1
+    repository: https://github.com/intel/metrics-library.git
   wdk:
     dest_dir: wdk
     type: git
