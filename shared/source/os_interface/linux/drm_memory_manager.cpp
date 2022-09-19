@@ -1495,7 +1495,7 @@ BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(Drm *drm, Gmm *
     uint32_t handle = 0;
     uint32_t ret = 0;
 
-    auto banks = std::bitset<32>(memoryBanks);
+    auto banks = std::bitset<4>(memoryBanks);
     if (banks.count() > 1) {
         ret = memoryInfo->createGemExtWithMultipleRegions(memoryBanks, size, handle);
     } else {

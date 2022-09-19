@@ -125,7 +125,7 @@ uint32_t MemoryInfo::createGemExtWithSingleRegion(uint32_t memoryBanks, size_t a
 
 uint32_t MemoryInfo::createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle) {
     auto pHwInfo = this->drm.getRootDeviceEnvironment().getHardwareInfo();
-    auto banks = std::bitset<32>(memoryBanks);
+    auto banks = std::bitset<4>(memoryBanks);
     MemRegionsVec memRegions{};
     size_t currentBank = 0;
     size_t i = 0;

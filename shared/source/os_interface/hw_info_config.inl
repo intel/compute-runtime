@@ -120,7 +120,7 @@ bool HwInfoConfigHw<gfxProduct>::getConcurrentAccessMemCapabilitiesSupported(Usm
     auto supported = false;
 
     if (DebugManager.flags.EnableUsmConcurrentAccessSupport.get() > 0) {
-        auto capabilityBitset = std::bitset<32>(DebugManager.flags.EnableUsmConcurrentAccessSupport.get());
+        auto capabilityBitset = std::bitset<4>(DebugManager.flags.EnableUsmConcurrentAccessSupport.get());
         supported = capabilityBitset.test(static_cast<uint32_t>(capability));
     }
 

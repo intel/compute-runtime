@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ namespace NEO {
 class CommandStreamReceiver;
 class ExecutionEnvironment;
 
-using DeviceBitfield = std::bitset<32>;
+using DeviceBitfield = std::bitset<4>;
 
 extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment,
                                                   uint32_t rootDeviceIndex,

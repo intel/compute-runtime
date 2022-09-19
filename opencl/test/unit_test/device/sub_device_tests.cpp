@@ -158,11 +158,11 @@ TEST(SubDevicesTest, givenClDeviceWithSubDevicesWhenSubDeviceInternalRefCountsAr
 
 TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceCreationFailThenWholeDeviceIsDestroyed) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(10);
+    DebugManager.flags.CreateMultipleSubDevices.set(4);
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.incRefInternal();
-    executionEnvironment.memoryManager.reset(new FailMemoryManager(10, executionEnvironment));
+    executionEnvironment.memoryManager.reset(new FailMemoryManager(4, executionEnvironment));
     auto device = Device::create<RootDevice>(&executionEnvironment, 0u);
     EXPECT_EQ(nullptr, device);
 }

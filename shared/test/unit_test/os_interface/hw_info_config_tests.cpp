@@ -62,9 +62,9 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenGettingMemoryCapabilitiesThenCor
 
     auto hwInfoConfig = HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
 
-    for (auto capabilityBitmask : {0, 0b0001, 0b0010, 0b0100, 0b1000, 0b1111, 0b10000}) {
+    for (auto capabilityBitmask : {0, 0b0001, 0b0010, 0b0100, 0b1000, 0b1111}) {
         DebugManager.flags.EnableUsmConcurrentAccessSupport.set(capabilityBitmask);
-        std::bitset<32> capabilityBitset(capabilityBitmask);
+        std::bitset<4> capabilityBitset(capabilityBitmask);
 
         auto hostMemCapabilities = hwInfoConfig->getHostMemCapabilities(&pInHwInfo);
         if (hostMemCapabilities > 0) {

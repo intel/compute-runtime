@@ -14,7 +14,7 @@
 namespace NEO {
 struct EngineControl;
 using EngineControlContainer = std::vector<EngineControl>;
-using DeviceBitfield = std::bitset<32>;
+using DeviceBitfield = std::bitset<4>;
 class Device;
 using DeviceVector = std::vector<std::unique_ptr<Device>>;
 

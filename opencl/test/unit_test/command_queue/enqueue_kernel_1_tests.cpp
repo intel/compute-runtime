@@ -1548,10 +1548,10 @@ HWTEST_F(EnqueueKernelTest, givenContextWithSeveralDevicesWhenEnqueueKernelThenD
     clEnqueueNDRangeKernel(this->pCmdQ, mockKernel.mockMultiDeviceKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.areMultipleSubDevicesInContext);
 
-    context->deviceBitfields[rootDeviceIndex].set(7, true);
+    context->deviceBitfields[rootDeviceIndex].set(3, true);
     clEnqueueNDRangeKernel(this->pCmdQ, mockKernel.mockMultiDeviceKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_TRUE(mockCsr->passedDispatchFlags.areMultipleSubDevicesInContext);
-    context->deviceBitfields[rootDeviceIndex].set(7, false);
+    context->deviceBitfields[rootDeviceIndex].set(3, false);
 }
 
 HWTEST_F(EnqueueKernelTest, givenNonVMEKernelWhenEnqueueKernelThenDispatchFlagsDoesntHaveMediaSamplerRequired) {

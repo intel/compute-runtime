@@ -56,7 +56,7 @@ void LocalMemoryUsageBankSelector::reserveOnBank(uint32_t bankIndex, uint64_t al
 }
 
 void LocalMemoryUsageBankSelector::updateUsageInfo(uint32_t memoryBanks, uint64_t allocationSize, bool reserve) {
-    auto banks = std::bitset<32>(memoryBanks);
+    auto banks = std::bitset<4>(memoryBanks);
     for (uint32_t bankIndex = 0; bankIndex < banks.size() && bankIndex < banksCount; bankIndex++) {
         if (banks.test(bankIndex)) {
             if (reserve) {

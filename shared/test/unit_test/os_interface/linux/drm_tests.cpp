@@ -705,7 +705,7 @@ TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextsThenImplicitVmIdPer
     EXPECT_EQ(2u, drmMock.receivedContextParamRequestCount);
 
     auto &drmVmIds = osContext.getDrmVmIds();
-    EXPECT_EQ(32u, drmVmIds.size());
+    EXPECT_EQ(4u, drmVmIds.size());
 
     EXPECT_EQ(20u, drmVmIds[0]);
 }
@@ -718,7 +718,7 @@ TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextForSubDeviceThenImpl
     DrmMock drmMock(rootEnv);
     EXPECT_TRUE(drmMock.requirePerContextVM);
 
-    drmMock.storedRetValForVmId = 20;
+    drmMock.storedRetValForVmId = 4;
     DeviceBitfield deviceBitfield(1 << 3);
 
     OsContextLinux osContext(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor(deviceBitfield));
@@ -726,9 +726,9 @@ TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextForSubDeviceThenImpl
     EXPECT_EQ(2u, drmMock.receivedContextParamRequestCount);
 
     auto &drmVmIds = osContext.getDrmVmIds();
-    EXPECT_EQ(32u, drmVmIds.size());
+    EXPECT_EQ(4u, drmVmIds.size());
 
-    EXPECT_EQ(20u, drmVmIds[3]);
+    EXPECT_EQ(4u, drmVmIds[3]);
 
     EXPECT_EQ(0u, drmVmIds[0]);
     EXPECT_EQ(0u, drmVmIds[2]);
@@ -742,7 +742,7 @@ TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextsForRootDeviceThenIm
     DrmMock drmMock(rootEnv);
     EXPECT_TRUE(drmMock.requirePerContextVM);
 
-    drmMock.storedRetValForVmId = 20;
+    drmMock.storedRetValForVmId = 4;
     DeviceBitfield deviceBitfield(1 | 1 << 1);
 
     OsContextLinux osContext(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor(deviceBitfield));
@@ -750,13 +750,12 @@ TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextsForRootDeviceThenIm
     EXPECT_EQ(2 * 2u, drmMock.receivedContextParamRequestCount);
 
     auto &drmVmIds = osContext.getDrmVmIds();
-    EXPECT_EQ(32u, drmVmIds.size());
+    EXPECT_EQ(4u, drmVmIds.size());
 
-    EXPECT_EQ(20u, drmVmIds[0]);
-    EXPECT_EQ(20u, drmVmIds[1]);
+    EXPECT_EQ(4u, drmVmIds[0]);
+    EXPECT_EQ(4u, drmVmIds[1]);
 
     EXPECT_EQ(0u, drmVmIds[2]);
-    EXPECT_EQ(0u, drmVmIds[31]);
 }
 
 TEST(DrmTest, givenNoPerContextVmsDrmWhenCreatingOsContextsThenVmIdIsNotQueriedAndStored) {
