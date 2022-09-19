@@ -11,8 +11,6 @@
 
 #include "level_zero/core/source/device/device_imp.h"
 
-#include <mutex>
-
 namespace L0 {
 
 bool BcsSplit::setupDevice(uint32_t productFamily, bool internalUsage, const ze_command_queue_desc_t *desc, NEO::CommandStreamReceiver *csr) {
@@ -24,8 +22,9 @@ bool BcsSplit::setupDevice(uint32_t productFamily, bool internalUsage, const ze_
         return false;
     }
 
-    static std::mutex bcsSplitInitMutex;
-    std::lock_guard<std::mutex> lock(bcsSplitInitMutex);
+    std::lock_guard<std::mutex> lock(this->mtx);
+
+    this->clientCount++;
 
     if (!this->cmdQs.empty()) {
         return true;
@@ -56,21 +55,20 @@ bool BcsSplit::setupDevice(uint32_t productFamily, bool internalUsage, const ze_
 }
 
 void BcsSplit::releaseResources() {
-    for (auto cmdQ : cmdQs) {
-        cmdQ->destroy();
+    std::lock_guard<std::mutex> lock(this->mtx);
+    this->clientCount--;
+
+    if (this->clientCount == 0u) {
+        for (auto cmdQ : cmdQs) {
+            cmdQ->destroy();
+        }
+        cmdQs.clear();
+        this->events.releaseResources();
     }
 }
 
 BcsSplit::Events::~Events() {
-    for (auto &markerEvent : this->marker) {
-        markerEvent->destroy();
-    }
-    for (auto &subcopyEvent : this->subcopy) {
-        subcopyEvent->destroy();
-    }
-    for (auto &pool : this->pools) {
-        pool->destroy();
-    }
+    this->releaseResources();
 }
 
 size_t BcsSplit::Events::obtainForSplit(Context *context, size_t maxEventCountInPool) {
@@ -124,5 +122,19 @@ size_t BcsSplit::Events::allocateNew(Context *context, size_t maxEventCountInPoo
     }
 
     return this->marker.size() - 1;
+}
+void BcsSplit::Events::releaseResources() {
+    for (auto &markerEvent : this->marker) {
+        markerEvent->destroy();
+    }
+    marker.clear();
+    for (auto &subcopyEvent : this->subcopy) {
+        subcopyEvent->destroy();
+    }
+    subcopy.clear();
+    for (auto &pool : this->pools) {
+        pool->destroy();
+    }
+    pools.clear();
 }
 } // namespace L0

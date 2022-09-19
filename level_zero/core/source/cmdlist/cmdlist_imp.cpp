@@ -34,6 +34,10 @@ CommandListAllocatorFn commandListFactory[IGFX_MAX_PRODUCT] = {};
 CommandListAllocatorFn commandListFactoryImmediate[IGFX_MAX_PRODUCT] = {};
 
 ze_result_t CommandListImp::destroy() {
+    if (this->isBcsSplitNeeded) {
+        static_cast<DeviceImp *>(this->device)->bcsSplit.releaseResources();
+    }
+
     if (this->cmdListType == CommandListType::TYPE_IMMEDIATE && this->isFlushTaskSubmissionEnabled && !this->isSyncModeQueue) {
         auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
         this->csr->waitForCompletionWithTimeout(NEO::WaitParams{false, false, timeoutMicroseconds}, this->csr->peekTaskCount());

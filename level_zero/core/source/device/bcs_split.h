@@ -16,6 +16,7 @@
 #include "level_zero/core/source/event/event.h"
 
 #include <functional>
+#include <mutex>
 #include <vector>
 
 namespace NEO {
@@ -28,6 +29,9 @@ struct DeviceImp;
 
 struct BcsSplit {
     DeviceImp &device;
+    uint32_t clientCount = 0u;
+
+    std::mutex mtx;
 
     struct Events {
         BcsSplit &bcsSplit;
@@ -39,6 +43,8 @@ struct BcsSplit {
 
         size_t obtainForSplit(Context *context, size_t maxEventCountInPool);
         size_t allocateNew(Context *context, size_t maxEventCountInPool);
+
+        void releaseResources();
 
         Events(BcsSplit &bcsSplit) : bcsSplit(bcsSplit){};
         ~Events();

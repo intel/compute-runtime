@@ -157,6 +157,18 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateThenSpl
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::Copy, returnValue));
     ASSERT_NE(nullptr, commandList);
     EXPECT_NE(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs.size(), 0u);
+
+    std::unique_ptr<L0::CommandList> commandList2(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::Copy, returnValue));
+    ASSERT_NE(nullptr, commandList2);
+    EXPECT_NE(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs.size(), 0u);
+
+    commandList->destroy();
+    commandList.release();
+    EXPECT_NE(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs.size(), 0u);
+
+    commandList2->destroy();
+    commandList2.release();
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs.size(), 0u);
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndSplitBcsMaskWhenCreateImmediateThenGivenCountOfSplitCmdQAreCreated, IsXeHpcCore) {
@@ -193,18 +205,20 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateThenIni
     ze_command_queue_desc_t cmdQueueDesc = {};
     cmdQueueDesc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::Copy));
 
-    {
-        DebugManager.flags.SplitBcsMask.set(0b11001);
-        std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::Copy, returnValue));
-        ASSERT_NE(nullptr, commandList);
-        EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs.size(), 3u);
-    }
-    {
-        DebugManager.flags.SplitBcsMask.set(0b110);
-        std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::Copy, returnValue));
-        ASSERT_NE(nullptr, commandList);
-        EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs.size(), 3u);
-    }
+    DebugManager.flags.SplitBcsMask.set(0b11001);
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::Copy, returnValue));
+    ASSERT_NE(nullptr, commandList);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs.size(), 3u);
+
+    DebugManager.flags.SplitBcsMask.set(0b110);
+    std::unique_ptr<L0::CommandList> commandList2(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::Copy, returnValue));
+    ASSERT_NE(nullptr, commandList2);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs.size(), 3u);
+
+    commandList->destroy();
+    commandList.release();
+    commandList2->destroy();
+    commandList2.release();
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateInternalThenSplitCmdQArenotCreated, IsXeHpcCore) {
