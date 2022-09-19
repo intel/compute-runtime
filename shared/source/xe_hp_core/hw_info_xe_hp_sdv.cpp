@@ -17,10 +17,6 @@ namespace NEO {
 
 const char *HwMapper<IGFX_XE_HP_SDV>::abbreviation = "xe_hp_sdv";
 
-bool isSimulationXEHP(unsigned short deviceId) {
-    return false;
-};
-
 const PLATFORM XE_HP_SDV::platform = {
     IGFX_XE_HP_SDV,
     PCH_UNKNOWN,
@@ -44,7 +40,6 @@ const RuntimeCapabilityTable XE_HP_SDV::capabilityTable{
     0,                                                         // sharedSystemMemCapabilities
     83.333,                                                    // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                                 // requiredPreemptionSurfaceSize
-    &isSimulationXEHP,                                         // isSimulation
     "core",                                                    // platformType
     "",                                                        // deviceName
     PreemptionMode::ThreadGroup,                               // defaultPreemptionMode

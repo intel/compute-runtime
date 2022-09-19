@@ -15,10 +15,6 @@ namespace NEO {
 
 const char *HwMapper<IGFX_KABYLAKE>::abbreviation = "kbl";
 
-bool isSimulationKBL(unsigned short deviceId) {
-    return false;
-};
-
 const PLATFORM KBL::platform = {
     IGFX_KABYLAKE,
     PCH_UNKNOWN,
@@ -39,7 +35,6 @@ const RuntimeCapabilityTable KBL::capabilityTable{
     0,                                             // sharedSystemMemCapabilities
     83.333,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
-    &isSimulationKBL,                              // isSimulation
     "core",                                        // platformType
     "",                                            // deviceName
     PreemptionMode::MidThread,                     // defaultPreemptionMode

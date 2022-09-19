@@ -16,10 +16,6 @@ namespace NEO {
 
 const char *HwMapper<IGFX_DG2>::abbreviation = "dg2";
 
-bool isSimulationDG2(unsigned short deviceId) {
-    return false;
-};
-
 const PLATFORM DG2::platform = {
     IGFX_DG2,
     PCH_UNKNOWN,
@@ -44,7 +40,6 @@ const RuntimeCapabilityTable DG2::capabilityTable{
     0,                                                         // sharedSystemMemCapabilities
     83.333,                                                    // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                                 // requiredPreemptionSurfaceSize
-    &isSimulationDG2,                                          // isSimulation
     "dg2",                                                     // platformType
     "",                                                        // deviceName
     PreemptionMode::ThreadGroup,                               // defaultPreemptionMode

@@ -15,14 +15,6 @@ namespace NEO {
 
 const char *HwMapper<IGFX_ICELAKE_LP>::abbreviation = "icllp";
 
-bool isSimulationICLLP(unsigned short deviceId) {
-    switch (deviceId) {
-    case IICL_LP_GT1_MOB_DEVICE_F0_ID:
-        return true;
-    }
-    return false;
-};
-
 const PLATFORM ICLLP::platform = {
     IGFX_ICELAKE_LP,
     PCH_UNKNOWN,
@@ -43,7 +35,6 @@ const RuntimeCapabilityTable ICLLP::capabilityTable{
     0,                                               // sharedSystemMemCapabilities
     83.333,                                          // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                       // requiredPreemptionSurfaceSize
-    &isSimulationICLLP,                              // isSimulation
     "lp",                                            // platformType
     "",                                              // deviceName
     PreemptionMode::MidThread,                       // defaultPreemptionMode

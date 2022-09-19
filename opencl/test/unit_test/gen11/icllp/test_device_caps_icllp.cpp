@@ -40,25 +40,6 @@ ICLLPTEST_F(IcllpTest, WhenCheckingCapsThenCorrectlyRoundedDivideSqrtIsNotSuppor
     EXPECT_EQ(0u, caps.singleFpConfig & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
 }
 
-ICLLPTEST_F(IcllpTest, WhenCheckingSimulationCapThenResultIsCorrect) {
-    unsigned short iclLpSimulationIds[2] = {
-        IICL_LP_GT1_MOB_DEVICE_F0_ID,
-        0, // default, non-simulation
-    };
-    NEO::MockDevice *mockDevice = nullptr;
-
-    for (auto id : iclLpSimulationIds) {
-        mockDevice = createWithUsDeviceId(id);
-        ASSERT_NE(mockDevice, nullptr);
-
-        if (id == 0)
-            EXPECT_FALSE(mockDevice->isSimulation());
-        else
-            EXPECT_TRUE(mockDevice->isSimulation());
-        delete mockDevice;
-    }
-}
-
 ICLLPTEST_F(IcllpTest, GivenICLLPWhenCheckftr64KBpagesThenFalse) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftr64KBpages);
 }

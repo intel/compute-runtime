@@ -44,25 +44,3 @@ BXTTEST_F(BxtDeviceCaps, WhenCheckftr64KBpagesThenFalse) {
 BXTTEST_F(BxtDeviceCaps, WhenCheckFtrSupportsInteger64BitAtomicsThenReturnFalse) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
 }
-
-typedef Test<ClDeviceFixture> BxtUsDeviceIdTest;
-
-BXTTEST_F(BxtUsDeviceIdTest, WhenCheckingIsSimulationThenTrueReturnedOnlyForSimulationId) {
-    unsigned short bxtSimulationIds[3] = {
-        0x9906,
-        0x9907,
-        0, // default, non-simulation
-    };
-    NEO::MockDevice *mockDevice = nullptr;
-
-    for (auto id : bxtSimulationIds) {
-        mockDevice = createWithUsDeviceId(id);
-        ASSERT_NE(mockDevice, nullptr);
-
-        if (id == 0)
-            EXPECT_FALSE(mockDevice->isSimulation());
-        else
-            EXPECT_TRUE(mockDevice->isSimulation());
-        delete mockDevice;
-    }
-}

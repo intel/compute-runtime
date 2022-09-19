@@ -15,14 +15,6 @@ namespace NEO {
 
 const char *HwMapper<IGFX_TIGERLAKE_LP>::abbreviation = "tgllp";
 
-bool isSimulationTGLLP(unsigned short deviceId) {
-    switch (deviceId) {
-    case 0xFF20:
-        return true;
-    }
-    return false;
-};
-
 const PLATFORM TGLLP::platform = {
     IGFX_TIGERLAKE_LP,
     PCH_UNKNOWN,
@@ -44,7 +36,6 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     0,                                               // sharedSystemMemCapabilities
     83.333,                                          // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                       // requiredPreemptionSurfaceSize
-    &isSimulationTGLLP,                              // isSimulation
     "lp",                                            // platformType
     "",                                              // deviceName
     PreemptionMode::MidThread,                       // defaultPreemptionMode

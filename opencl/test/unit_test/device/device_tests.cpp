@@ -197,24 +197,6 @@ TEST_F(DeviceTest, givenDeviceWithThreadsPerEUConfigsWhenQueryingEuThreadCountsT
     EXPECT_EQ(456U, euThreadCounts[1]);
 }
 
-HWTEST_F(DeviceTest, givenNoHwCsrTypeAndModifiedDefaultEngineIndexWhenIsSimulationIsCalledThenTrueIsReturned) {
-    EXPECT_FALSE(pDevice->isSimulation());
-    auto csr = TbxCommandStreamReceiver::create("", false, *pDevice->executionEnvironment, 0, 1);
-    pDevice->defaultEngineIndex = 1;
-    pDevice->resetCommandStreamReceiver(csr);
-
-    EXPECT_TRUE(pDevice->isSimulation());
-
-    std::array<CommandStreamReceiverType, 3> exptectedEngineTypes = {CommandStreamReceiverType::CSR_HW,
-                                                                     CommandStreamReceiverType::CSR_TBX,
-                                                                     CommandStreamReceiverType::CSR_HW};
-
-    for (uint32_t i = 0u; i < 3u; ++i) {
-        auto engineType = pDevice->allEngines[i].commandStreamReceiver->getType();
-        EXPECT_EQ(exptectedEngineTypes[i], engineType);
-    }
-}
-
 TEST_F(DeviceTest, givenRootDeviceWithSubDevicesWhenCreatingThenRootDeviceContextIsInitialized) {
     DebugManagerStateRestore restore{};
     DebugManager.flags.DeferOsContextInitialization.set(1);
@@ -279,49 +261,6 @@ TEST(DeviceCreation, GiveNonExistingFclWhenCreatingDeviceThenCompilerInterfaceIs
 
     auto compilerInterface = mockDevice->getCompilerInterface();
     ASSERT_EQ(nullptr, compilerInterface);
-}
-
-TEST(DeviceCreation, givenSelectedAubCsrInDebugVarsWhenDeviceIsCreatedThenIsSimulationReturnsTrue) {
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_AUB);
-
-    VariableBackup<UltHwConfig> backup(&ultHwConfig);
-    ultHwConfig.useHwCsr = true;
-    auto mockDevice = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
-    EXPECT_TRUE(mockDevice->isSimulation());
-}
-
-TEST(DeviceCreation, givenSelectedTbxCsrInDebugVarsWhenDeviceIsCreatedThenIsSimulationReturnsTrue) {
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_TBX);
-
-    VariableBackup<UltHwConfig> backup(&ultHwConfig);
-    ultHwConfig.useHwCsr = true;
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
-    EXPECT_TRUE(device->isSimulation());
-}
-
-TEST(DeviceCreation, givenSelectedTbxWithAubCsrInDebugVarsWhenDeviceIsCreatedThenIsSimulationReturnsTrue) {
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_TBX_WITH_AUB);
-
-    VariableBackup<UltHwConfig> backup(&ultHwConfig);
-    ultHwConfig.useHwCsr = true;
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
-    EXPECT_TRUE(device->isSimulation());
-}
-
-TEST(DeviceCreation, givenHwWithAubCsrInDebugVarsWhenDeviceIsCreatedThenIsSimulationReturnsFalse) {
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_HW_WITH_AUB);
-
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
-    EXPECT_FALSE(device->isSimulation());
-}
-
-TEST(DeviceCreation, givenDefaultHwCsrInDebugVarsWhenDeviceIsCreatedThenIsSimulationReturnsFalse) {
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
-    EXPECT_FALSE(device->isSimulation());
 }
 
 TEST(DeviceCreation, givenDeviceWhenItIsCreatedThenOsContextIsRegistredInMemoryManager) {
@@ -507,17 +446,6 @@ HWTEST_F(DeviceTest, givenDebugFlagWhenCreatingRootDeviceWithoutSubDevicesThenWo
         UltDeviceFactory deviceFactory{1, 1};
         EXPECT_EQ(nullptr, deviceFactory.rootDevices[0]->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation());
     }
-}
-
-TEST(DeviceCreation, givenFtrSimulationModeFlagTrueWhenNoOtherSimulationFlagsArePresentThenIsSimulationReturnsTrue) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrSimulationMode = true;
-
-    bool simulationFromDeviceId = hwInfo.capabilityTable.isSimulation(hwInfo.platform.usDeviceID);
-    EXPECT_FALSE(simulationFromDeviceId);
-
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(&hwInfo));
-    EXPECT_TRUE(device->isSimulation());
 }
 
 TEST(DeviceCreation, givenDeviceWhenCheckingGpgpuEnginesCountThenNumberGreaterThanZeroIsReturned) {

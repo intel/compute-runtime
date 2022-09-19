@@ -17,10 +17,6 @@ namespace NEO {
 
 const char *HwMapper<IGFX_PVC>::abbreviation = "pvc";
 
-bool isSimulationPVC(unsigned short deviceId) {
-    return false;
-};
-
 const PLATFORM PVC::platform = {
     IGFX_PVC,
     PCH_UNKNOWN,
@@ -53,7 +49,6 @@ const RuntimeCapabilityTable PVC::capabilityTable{
     0,                                                         // sharedSystemMemCapabilities
     83.333,                                                    // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                                 // requiredPreemptionSurfaceSize
-    &isSimulationPVC,                                          // isSimulation
     "pvc",                                                     // platformType
     "",                                                        // deviceName
     PreemptionMode::ThreadGroup,                               // defaultPreemptionMode

@@ -15,15 +15,6 @@ namespace NEO {
 
 const char *HwMapper<IGFX_BROXTON>::abbreviation = "bxt";
 
-bool isSimulationBXT(unsigned short deviceId) {
-    switch (deviceId) {
-    case IBXT_A_DEVICE_F0_ID:
-    case IBXT_C_DEVICE_F0_ID:
-        return true;
-    }
-    return false;
-};
-
 const PLATFORM BXT::platform = {
     IGFX_BROXTON,
     PCH_UNKNOWN,
@@ -44,7 +35,6 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     0,                                             // sharedSystemMemCapabilities
     52.083,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
-    &isSimulationBXT,                              // isSimulation
     "lp",                                          // platformType
     "",                                            // deviceName
     PreemptionMode::MidThread,                     // defaultPreemptionMode

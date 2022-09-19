@@ -15,13 +15,6 @@ namespace NEO {
 
 const char *HwMapper<IGFX_LAKEFIELD>::abbreviation = "lkf";
 
-bool isSimulationLKF(unsigned short deviceId) {
-    switch (deviceId) {
-    case ILKF_1x8x8_DESK_DEVICE_F0_ID:
-        return true;
-    }
-    return false;
-};
 const PLATFORM LKF::platform = {
     IGFX_LAKEFIELD,
     PCH_UNKNOWN,
@@ -42,7 +35,6 @@ const RuntimeCapabilityTable LKF::capabilityTable{
     0,                                             // sharedSystemMemCapabilities
     83.333,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
-    &isSimulationLKF,                              // isSimulation
     "lp",                                          // platformType
     "",                                            // deviceName
     PreemptionMode::MidThread,                     // defaultPreemptionMode

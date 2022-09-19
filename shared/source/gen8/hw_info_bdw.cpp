@@ -15,18 +15,6 @@ namespace NEO {
 
 const char *HwMapper<IGFX_BROADWELL>::abbreviation = "bdw";
 
-bool isSimulationBDW(unsigned short deviceId) {
-    switch (deviceId) {
-    case IBDW_GT0_DESK_DEVICE_F0_ID:
-    case IBDW_GT1_DESK_DEVICE_F0_ID:
-    case IBDW_GT2_DESK_DEVICE_F0_ID:
-    case IBDW_GT3_DESK_DEVICE_F0_ID:
-    case IBDW_GT4_DESK_DEVICE_F0_ID:
-        return true;
-    }
-    return false;
-};
-
 const PLATFORM BDW::platform = {
     IGFX_BROADWELL,
     PCH_UNKNOWN,
@@ -47,7 +35,6 @@ const RuntimeCapabilityTable BDW::capabilityTable{
     0,                                                 // sharedSystemMemCapabilities
     80,                                                // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                         // requiredPreemptionSurfaceSize
-    &isSimulationBDW,                                  // isSimulation
     "core",                                            // platformType
     "",                                                // deviceName
     PreemptionMode::Disabled,                          // defaultPreemptionMode

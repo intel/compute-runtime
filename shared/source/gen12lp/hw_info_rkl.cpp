@@ -15,10 +15,6 @@ namespace NEO {
 
 const char *HwMapper<IGFX_ROCKETLAKE>::abbreviation = "rkl";
 
-bool isSimulationRKL(unsigned short deviceId) {
-    return false;
-};
-
 const PLATFORM RKL::platform = {
     IGFX_ROCKETLAKE,
     PCH_UNKNOWN,
@@ -40,7 +36,6 @@ const RuntimeCapabilityTable RKL::capabilityTable{
     0,                                               // sharedSystemMemCapabilities
     83.333,                                          // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                       // requiredPreemptionSurfaceSize
-    &isSimulationRKL,                                // isSimulation
     "lp",                                            // platformType
     "",                                              // deviceName
     PreemptionMode::MidThread,                       // defaultPreemptionMode

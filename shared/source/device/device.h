@@ -89,7 +89,6 @@ class Device : public ReferenceTrackedObject<Device> {
     double getProfilingTimerResolution();
     uint64_t getProfilingTimerClock();
     double getPlatformHostTimerResolution() const;
-    bool isSimulation() const;
     GFXCORE_FAMILY getRenderCoreFamily() const;
     PerformanceCounters *getPerformanceCounters() { return performanceCounters.get(); }
     PreemptionMode getPreemptionMode() const { return preemptionMode; }

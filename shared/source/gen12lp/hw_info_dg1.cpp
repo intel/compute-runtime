@@ -16,17 +16,6 @@ namespace NEO {
 
 const char *HwMapper<IGFX_DG1>::abbreviation = "dg1";
 
-bool isSimulationDG1(unsigned short deviceId) {
-    switch (deviceId) {
-    case 0x4905:
-    case 0x4906:
-    case 0x4907:
-        return true;
-    }
-
-    return false;
-};
-
 const PLATFORM DG1::platform = {
     IGFX_DG1,
     PCH_UNKNOWN,
@@ -48,7 +37,6 @@ const RuntimeCapabilityTable DG1::capabilityTable{
     0,                                             // sharedSystemMemCapabilities
     83.333,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
-    &isSimulationDG1,                              // isSimulation
     "lp",                                          // platformType
     "",                                            // deviceName
     PreemptionMode::MidThread,                     // defaultPreemptionMode

@@ -15,10 +15,6 @@ namespace NEO {
 
 const char *HwMapper<IGFX_ALDERLAKE_S>::abbreviation = "adls";
 
-bool isSimulationADLS(unsigned short deviceId) {
-    return false;
-};
-
 const PLATFORM ADLS::platform = {
     IGFX_ALDERLAKE_S,
     PCH_UNKNOWN,
@@ -40,7 +36,6 @@ const RuntimeCapabilityTable ADLS::capabilityTable{
     0,                                              // sharedSystemMemCapabilities
     83.333,                                         // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                      // requiredPreemptionSurfaceSize
-    &isSimulationADLS,                              // isSimulation
     "lp",                                           // platformType
     "",                                             // deviceName
     PreemptionMode::MidThread,                      // defaultPreemptionMode

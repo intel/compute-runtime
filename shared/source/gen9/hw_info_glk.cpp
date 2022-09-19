@@ -15,10 +15,6 @@ namespace NEO {
 
 const char *HwMapper<IGFX_GEMINILAKE>::abbreviation = "glk";
 
-bool isSimulationGLK(unsigned short deviceId) {
-    return false;
-};
-
 const PLATFORM GLK::platform = {
     IGFX_GEMINILAKE,
     PCH_UNKNOWN,
@@ -39,7 +35,6 @@ const RuntimeCapabilityTable GLK::capabilityTable{
     0,                                             // sharedSystemMemCapabilities
     52.083,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
-    &isSimulationGLK,                              // isSimulation
     "lp",                                          // platformType
     "",                                            // deviceName
     PreemptionMode::MidThread,                     // defaultPreemptionMode

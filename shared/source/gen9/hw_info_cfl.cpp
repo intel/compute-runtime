@@ -15,10 +15,6 @@ namespace NEO {
 
 const char *HwMapper<IGFX_COFFEELAKE>::abbreviation = "cfl";
 
-bool isSimulationCFL(unsigned short deviceId) {
-    return false;
-};
-
 const PLATFORM CFL::platform = {
     IGFX_COFFEELAKE,
     PCH_UNKNOWN,
@@ -39,7 +35,6 @@ const RuntimeCapabilityTable CFL::capabilityTable{
     0,                                             // sharedSystemMemCapabilities
     83.333,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
-    &isSimulationCFL,                              // isSimulation
     "core",                                        // platformType
     "",                                            // deviceName
     PreemptionMode::MidThread,                     // defaultPreemptionMode

@@ -15,13 +15,6 @@ namespace NEO {
 
 const char *HwMapper<IGFX_ELKHARTLAKE>::abbreviation = "ehl";
 
-bool isSimulationEHL(unsigned short deviceId) {
-    switch (deviceId) {
-    case IEHL_1x4x8_SUPERSKU_DEVICE_A0_ID:
-        return true;
-    }
-    return false;
-};
 const PLATFORM EHL::platform = {
     IGFX_ELKHARTLAKE,
     PCH_UNKNOWN,
@@ -42,7 +35,6 @@ const RuntimeCapabilityTable EHL::capabilityTable{
     0,                                             // sharedSystemMemCapabilities
     83.333,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
-    &isSimulationEHL,                              // isSimulation
     "lp",                                          // platformType
     "",                                            // deviceName
     PreemptionMode::MidThread,                     // defaultPreemptionMode

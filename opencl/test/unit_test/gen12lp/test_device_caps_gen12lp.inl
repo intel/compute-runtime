@@ -113,31 +113,10 @@ GEN12LPTEST_F(Gen12LpDeviceCaps, givenGen12LpDeviceWhenCheckingPipesSupportThenF
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.supportsPipes);
 }
 
-using TglLpUsDeviceIdTest = Test<ClDeviceFixture>;
-
-HWTEST2_F(TglLpUsDeviceIdTest, WhenCheckingSimulationCapThenResultIsCorrect, IsTGLLP) {
-    unsigned short tglLpSimulationIds[2] = {
-        0xFF20,
-        0, // default, non-simulation
-    };
-    NEO::MockDevice *mockDevice = nullptr;
-
-    for (auto id : tglLpSimulationIds) {
-        mockDevice = createWithUsDeviceId(id);
-        ASSERT_NE(mockDevice, nullptr);
-
-        if (id == 0)
-            EXPECT_FALSE(mockDevice->isSimulation());
-        else
-            EXPECT_TRUE(mockDevice->isSimulation());
-        delete mockDevice;
-    }
-}
-
-HWTEST2_F(TglLpUsDeviceIdTest, GivenTGLLPWhenCheckftr64KBpagesThenTrue, IsTGLLP) {
+HWTEST2_F(Gen12LpDeviceCaps, GivenTGLLPWhenCheckftr64KBpagesThenTrue, IsTGLLP) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftr64KBpages);
 }
 
-HWTEST2_F(TglLpUsDeviceIdTest, givenGen12lpWhenCheckFtrSupportsInteger64BitAtomicsThenReturnTrue, IsTGLLP) {
+HWTEST2_F(Gen12LpDeviceCaps, givenGen12lpWhenCheckFtrSupportsInteger64BitAtomicsThenReturnTrue, IsTGLLP) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
 }

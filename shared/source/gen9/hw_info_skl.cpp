@@ -15,18 +15,6 @@ namespace NEO {
 
 const char *HwMapper<IGFX_SKYLAKE>::abbreviation = "skl";
 
-bool isSimulationSKL(unsigned short deviceId) {
-    switch (deviceId) {
-    case ISKL_GT0_DESK_DEVICE_F0_ID:
-    case ISKL_GT1_DESK_DEVICE_F0_ID:
-    case ISKL_GT2_DESK_DEVICE_F0_ID:
-    case ISKL_GT3_DESK_DEVICE_F0_ID:
-    case ISKL_GT4_DESK_DEVICE_F0_ID:
-        return true;
-    }
-    return false;
-};
-
 const PLATFORM SKL::platform = {
     IGFX_SKYLAKE,
     PCH_UNKNOWN,
@@ -47,7 +35,6 @@ const RuntimeCapabilityTable SKL::capabilityTable{
     0,                                             // sharedSystemMemCapabilities
     83.333,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
-    &isSimulationSKL,                              // isSimulation
     "core",                                        // platformType
     "",                                            // deviceName
     PreemptionMode::MidThread,                     // defaultPreemptionMode

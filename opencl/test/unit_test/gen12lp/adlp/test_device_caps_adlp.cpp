@@ -6,31 +6,13 @@
  */
 
 #include "shared/source/gen12lp/hw_cmds_adlp.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-
 using namespace NEO;
 
-using AdlpUsDeviceIdTest = Test<ClDeviceFixture>;
-
-ADLPTEST_F(AdlpUsDeviceIdTest, GivenNonZeroIdThenIsSimulationIsTrue) {
-    unsigned short simulationIds[] = {
-        0, // default, non-simulation
-    };
-
-    for (auto id : simulationIds) {
-        auto mockDevice = std::unique_ptr<MockDevice>(createWithUsDeviceId(id));
-        ASSERT_NE(mockDevice.get(), nullptr);
-
-        if (id == 0) {
-            EXPECT_FALSE(mockDevice->isSimulation());
-        } else {
-            EXPECT_TRUE(mockDevice->isSimulation());
-        }
-    }
-}
+using AdlpUsDeviceIdTest = Test<DeviceFixture>;
 
 ADLPTEST_F(AdlpUsDeviceIdTest, givenADLPWhenCheckFtrSupportsInteger64BitAtomicsThenReturnFalse) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
