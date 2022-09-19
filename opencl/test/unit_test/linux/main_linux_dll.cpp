@@ -115,29 +115,6 @@ TEST_F(DrmSimpleTests, GivenTwoOpenableDevicesWhenDiscoverDevicesThenCreateTwoHw
     EXPECT_EQ(2u, hwDeviceIds.size());
 }
 
-TEST_F(DrmSimpleTests, GivenSelectedNotExistingDeviceUsingForceDeviceIdFlagWhenGetDeviceFdThenFail) {
-    DebugManagerStateRestore stateRestore;
-    DebugManager.flags.ForceDeviceId.set("invalid");
-    openFull = nullptr; // open shouldn't be called
-    ExecutionEnvironment executionEnvironment;
-    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
-    EXPECT_TRUE(hwDeviceIds.empty());
-}
-
-TEST_F(DrmSimpleTests, GivenSelectedExistingDeviceUsingForceDeviceIdFlagWhenGetDeviceFdThenReturnFd) {
-    DebugManagerStateRestore stateRestore;
-    DebugManager.flags.ForceDeviceId.set("0000:00:02.0");
-    VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
-    openFull = openWithCounter;
-    openCounter = 10;
-    ExecutionEnvironment executionEnvironment;
-    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
-    EXPECT_EQ(1u, hwDeviceIds.size());
-    EXPECT_NE(nullptr, hwDeviceIds[0].get());
-    EXPECT_STREQ("/dev/dri/by-path/platform-4010000000.pcie-pci-0000:00:02.0-render", lastOpenedPath.c_str());
-    EXPECT_EQ(9, openCounter); // only one opened file
-}
-
 TEST_F(DrmSimpleTests, GivenSelectedNotExistingDeviceUsingFilterBdfWhenGetDeviceFdThenFail) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.FilterBdfPath.set("invalid");

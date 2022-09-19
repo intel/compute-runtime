@@ -25,8 +25,7 @@ bool canUseAdapterBasedOnDriverDesc(const char *driverDescription) {
 }
 
 bool isAllowedDeviceId(uint32_t deviceId) {
-    return DeviceFactory::isAllowedDeviceId(deviceId, DebugManager.flags.FilterDeviceId.get()) &&
-           DeviceFactory::isAllowedDeviceId(deviceId, DebugManager.flags.ForceDeviceId.get());
+    return DeviceFactory::isAllowedDeviceId(deviceId, DebugManager.flags.FilterDeviceId.get());
 }
 
 } // namespace NEO

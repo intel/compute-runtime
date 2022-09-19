@@ -526,11 +526,6 @@ std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironme
                     continue;
                 }
             }
-            if (DebugManager.flags.ForceDeviceId.get() != "unk") {
-                if (devicePathView.find(DebugManager.flags.ForceDeviceId.get().c_str()) == std::string::npos) {
-                    continue;
-                }
-            }
             int fileDescriptor = SysCalls::open(file->c_str(), O_RDWR);
             appendHwDeviceId(hwDeviceIds, fileDescriptor, pciPath.c_str());
             if (!hwDeviceIds.empty() && hwDeviceIds.size() == numRootDevices) {

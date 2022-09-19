@@ -130,28 +130,6 @@ TEST(IsAllowedDeviceId, whenDebugKeyNotSetThenReturnTrue) {
     EXPECT_TRUE(NEO::isAllowedDeviceId(0xdeadbeef));
 }
 
-TEST(IsAllowedDeviceId, whenForceDeviceIdDebugKeySetThenExpectSpecificValue) {
-    DebugManagerStateRestore rest;
-    DebugManager.flags.ForceDeviceId.set("167");
-    EXPECT_FALSE(NEO::isAllowedDeviceId(0xdeadbeef));
-
-    DebugManager.flags.ForceDeviceId.set("1678");
-    EXPECT_FALSE(NEO::isAllowedDeviceId(0x167));
-
-    DebugManager.flags.ForceDeviceId.set("167");
-    EXPECT_TRUE(NEO::isAllowedDeviceId(0x167));
-}
-
-TEST(IsAllowedDeviceId, whenForceDeviceIdDebugKeySetThenTreatAsHex) {
-    DebugManagerStateRestore rest;
-
-    DebugManager.flags.ForceDeviceId.set("167");
-    EXPECT_FALSE(NEO::isAllowedDeviceId(167));
-
-    DebugManager.flags.ForceDeviceId.set("167");
-    EXPECT_TRUE(NEO::isAllowedDeviceId(0x167));
-}
-
 TEST(IsAllowedDeviceId, whenFilterDeviceIdDebugKeySetThenExpectSpecificValue) {
     DebugManagerStateRestore rest;
     DebugManager.flags.FilterDeviceId.set("167");

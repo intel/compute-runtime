@@ -1383,15 +1383,6 @@ TEST_F(Wddm20Tests, givenWddmWhenDiscoverDevicesAndFilterDeviceIdIsTheSameAsTheE
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
 }
 
-TEST_F(Wddm20Tests, givenWddmWhenDiscoverDevicesAndForceDeviceIdIsTheSameAsTheExistingDeviceThenReturnTheAdapter) {
-    DebugManagerStateRestore stateRestore;
-    DebugManager.flags.ForceDeviceId.set("1234"); // Existing device Id
-    ExecutionEnvironment executionEnvironment;
-    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
-    EXPECT_EQ(1u, hwDeviceIds.size());
-    EXPECT_NE(nullptr, hwDeviceIds[0].get());
-}
-
 TEST_F(WddmTest, WhenFeatureFlagHwQueueIsDisabledThenReturnWddm20Version) {
     wddm->featureTable->flags.ftrWddmHwQueues = 0;
     EXPECT_EQ(WddmVersion::WDDM_2_0, wddm->getWddmVersion());

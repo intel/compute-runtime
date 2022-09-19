@@ -368,23 +368,6 @@ TEST(DeviceFactory, givenNonHwModeSelectedWhenIsHwModeSelectedIsCalledThenFalseI
     }
 }
 
-TEST(DiscoverDevices, whenDiscoverDevicesAndForceDeviceIdIsDifferentFromTheExistingDeviceThenReturnNullptr) {
-    DebugManagerStateRestore stateRestore;
-    DebugManager.flags.ForceDeviceId.set("invalid");
-    ExecutionEnvironment executionEnviornment;
-    auto hwDeviceIds = OSInterface::discoverDevices(executionEnviornment);
-    EXPECT_TRUE(hwDeviceIds.empty());
-}
-
-TEST(DiscoverDevices, whenDiscoverDevicesAndForceDeviceIdIsDifferentFromTheExistingDeviceThenPrepareDeviceEnvironmentsReturnsFalse) {
-    DebugManagerStateRestore stateRestore;
-    DebugManager.flags.ForceDeviceId.set("invalid");
-    ExecutionEnvironment executionEnviornment;
-
-    auto result = DeviceFactory::prepareDeviceEnvironments(executionEnviornment);
-    EXPECT_FALSE(result);
-}
-
 TEST(DiscoverDevices, whenDiscoverDevicesAndFilterDifferentFromTheExistingDeviceThenReturnNullptr) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.FilterDeviceId.set("invalid");
