@@ -225,8 +225,6 @@ ze_result_t CommandQueueImp::CommandBufferManager::initialize(Device *device, si
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
 
-    memset(buffers[BUFFER_ALLOCATION::FIRST]->getUnderlyingBuffer(), 0, buffers[BUFFER_ALLOCATION::FIRST]->getUnderlyingBufferSize());
-    memset(buffers[BUFFER_ALLOCATION::SECOND]->getUnderlyingBuffer(), 0, buffers[BUFFER_ALLOCATION::SECOND]->getUnderlyingBufferSize());
     flushId[BUFFER_ALLOCATION::FIRST] = std::make_pair(0u, 0u);
     flushId[BUFFER_ALLOCATION::SECOND] = std::make_pair(0u, 0u);
     return ZE_RESULT_SUCCESS;
