@@ -116,4 +116,9 @@ std::vector<GenCmdList::iterator> UnitTestHelper<GfxFamily>::findAllMidThreadPre
     return emptyList;
 }
 
+template <typename GfxFamily>
+bool UnitTestHelper<GfxFamily>::getSystolicFlagValueFromPipelineSelectCommand(const typename GfxFamily::PIPELINE_SELECT &pipelineSelectCmd) {
+    return pipelineSelectCmd.getSystolicModeEnable();
+}
+
 } // namespace NEO

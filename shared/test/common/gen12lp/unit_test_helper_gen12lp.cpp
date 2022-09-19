@@ -56,5 +56,10 @@ bool UnitTestHelper<Family>::getDisableFusionStateFromFrontEndCommand(const type
     return feCmd.getDisableSlice0Subslice2();
 }
 
+template <>
+bool UnitTestHelper<Family>::getSystolicFlagValueFromPipelineSelectCommand(const typename Family::PIPELINE_SELECT &pipelineSelectCmd) {
+    return pipelineSelectCmd.getSpecialModeEnable();
+}
+
 template struct UnitTestHelper<Family>;
 } // namespace NEO

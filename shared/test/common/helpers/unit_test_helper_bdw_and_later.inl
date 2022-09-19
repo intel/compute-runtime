@@ -87,4 +87,9 @@ std::vector<GenCmdList::iterator> UnitTestHelper<GfxFamily>::findAllMidThreadPre
     return findAll<typename GfxFamily::GPGPU_CSR_BASE_ADDRESS *>(begin, end);
 }
 
+template <typename GfxFamily>
+bool UnitTestHelper<GfxFamily>::getSystolicFlagValueFromPipelineSelectCommand(const typename GfxFamily::PIPELINE_SELECT &pipelineSelectCmd) {
+    return false;
+}
+
 } // namespace NEO
