@@ -153,28 +153,26 @@ void Wddm::setPlatformSupportEvictIfNecessaryFlag(const HwInfoConfig &hwInfoConf
 bool Wddm::buildTopologyMapping() {
     auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
 
-    bool ret = true;
     UNRECOVERABLE_IF(hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount > 1);
     TopologyMapping mapping;
     if (!translateTopologyInfo(mapping)) {
-        ret = false;
-        return ret;
+        PRINT_DEBUGGER_ERROR_LOG("translateTopologyInfo Failed\n", "");
+        return false;
     }
     this->topologyMap[0] = mapping;
 
-    return ret;
+    return true;
 }
 
 bool Wddm::translateTopologyInfo(TopologyMapping &mapping) {
     int sliceCount = 0;
     int subSliceCount = 0;
-    uint32_t dualSubSliceCount = 0;
     int euCount = 0;
     std::vector<int> sliceIndices;
     auto gtSystemInfo = rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo;
     sliceIndices.reserve(gtSystemInfo.SliceCount);
 
-    for (uint32_t x = 0; x < gtSystemInfo.MaxSlicesSupported; x++) {
+    for (uint32_t x = 0; x < GT_MAX_SLICE; x++) {
         if (!gtSystemInfo.SliceInfo[x].Enabled) {
             continue;
         }
@@ -191,7 +189,6 @@ bool Wddm::translateTopologyInfo(TopologyMapping &mapping) {
                 subSliceIndex += 2;
                 continue;
             }
-            dualSubSliceCount++;
 
             for (uint32_t y = 0; y < GT_MAX_SUBSLICE_PER_DSS; y++) {
                 subSliceIndex++;
@@ -218,7 +215,7 @@ bool Wddm::translateTopologyInfo(TopologyMapping &mapping) {
     if (sliceCount != 1) {
         mapping.subsliceIndices.clear();
     }
-
+    PRINT_DEBUGGER_INFO_LOG("Topology Mapping: sliceCount=%d subSliceCount=%d euCount=%d\n", sliceCount, subSliceCount, euCount);
     return (sliceCount && subSliceCount && euCount);
 }
 

@@ -159,6 +159,33 @@ TEST_F(WddmTests, givenDebugFlagForceEvictOnlyIfNecessaryAllValuesThenForceSetti
     EXPECT_EQ(1, wddm->forceEvictOnlyIfNecessary);
 }
 
+TEST_F(WddmTests, GivengtSystemInfoSliceInfoHasEnabledSlicesAtHigherIndicesThenExpectTopologyMapCreateAndReturnTrue) {
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = 2;
+    defaultHwInfo.get()->gtSystemInfo.SliceCount = 1; // Only one slice enabled
+
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].Enabled = false;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[1].Enabled = false;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[2].Enabled = false;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[3].Enabled = true;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[3].DualSubSliceEnabledCount = 1;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[3].DSSInfo[0].Enabled = true;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[3].DSSInfo[0].SubSlice[0].Enabled = true;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[3].DSSInfo[0].SubSlice[0].EuEnabledCount = 4;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[3].DSSInfo[0].SubSlice[1].Enabled = true;
+    defaultHwInfo.get()->gtSystemInfo.SliceInfo[3].DSSInfo[0].SubSlice[1].EuEnabledCount = 4;
+
+    const HardwareInfo *hwInfo = defaultHwInfo.get();
+    std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo->platform,
+                                                         &hwInfo->gtSystemInfo,
+                                                         hwInfo->capabilityTable.gpuAddressSpace));
+
+    wddm->rootDeviceEnvironment.executionEnvironment.setDebuggingEnabled();
+    EXPECT_TRUE(wddm->init());
+    const auto &topologyMap = wddm->getTopologyMap();
+    EXPECT_EQ(topologyMap.size(), 1u);
+}
+
 TEST_F(WddmTests, GivenProperTopologyDataAndDebugFlagsEnabledWhenInitializingWddmThenExpectTopologyMapCreateAndReturnTrue) {
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = 10;
