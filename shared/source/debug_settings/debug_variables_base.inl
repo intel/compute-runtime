@@ -424,9 +424,12 @@ DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalSetWalkerPartitionCount, 0, "Experim
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalSetWalkerPartitionType, -1, "Experimental implementation: Set COMPUTE_WALKER Partition Type. Valid values for types from 1 to 3")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalEnableCustomLocalMemoryAlignment, 0, "Align local memory allocations to a given value. Works only with allocations at least as big as the value.  0: no effect, 2097152: 2 megabytes, 1073741824: 1 gigabyte")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalEnableDeviceAllocationCache, -1, "Experimentally enable allocation cache.")
+DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalH2DCpuCopyThreshold, -1, "Override default treshold (in bytes) for H2D CPU copy.")
+DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalD2HCpuCopyThreshold, -1, "Override default treshold (in bytes) for D2H CPU copy.")
 DECLARE_DEBUG_VARIABLE(bool, ExperimentalEnableSourceLevelDebugger, false, "Experimentally enable source level debugger.")
 DECLARE_DEBUG_VARIABLE(bool, ExperimentalEnableL0DebuggerForOpenCL, false, "Experimentally enable debugging OCL with L0 Debug API.")
 DECLARE_DEBUG_VARIABLE(bool, ExperimentalEnableTileAttach, false, "Experimentally enable attaching to tiles (subdevices).")
+DECLARE_DEBUG_VARIABLE(bool, ExperimentalCopyThroughLock, false, "Experimentally copy memory through locked ptr.")
 
 /*DRIVER TOGGLES*/
 DECLARE_DEBUG_VARIABLE(bool, UseMaxSimdSizeToDeduceMaxWorkgroupSize, false, "With this flag on, max workgroup size is deduced using SIMD32 instead of SIMD8, this causes the max wkg size to be 4 times bigger")

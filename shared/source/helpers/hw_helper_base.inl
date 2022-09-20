@@ -718,4 +718,9 @@ bool HwHelperHw<GfxFamily>::isPatIndexFallbackWaRequired() const {
     return false;
 }
 
+template <typename gfxProduct>
+bool HwHelperHw<gfxProduct>::copyThroughLockedPtrEnabled() const {
+    return false;
+}
+
 } // namespace NEO

@@ -13,6 +13,7 @@
 #include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/prefetch_manager.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/source/device/bcs_split.h"
@@ -226,6 +227,14 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     }
 
     ze_result_t ret;
+
+    NEO::SvmAllocationData *srcAllocData = nullptr;
+    NEO::SvmAllocationData *dstAllocData = nullptr;
+    bool srcAllocFound = this->device->getDriverHandle()->findAllocationDataForRange(const_cast<void *>(srcptr), size, &srcAllocData);
+    bool dstAllocFound = this->device->getDriverHandle()->findAllocationDataForRange(dstptr, size, &dstAllocData);
+    if (preferCopyThroughLockedPtr(dstAllocData, dstAllocFound, srcAllocData, srcAllocFound, size)) {
+        return performCpuMemcpy(dstptr, srcptr, size, dstAllocFound, hSignalEvent, numWaitEvents, phWaitEvents);
+    }
 
     if (this->isAppendSplitNeeded(dstptr, srcptr, size)) {
         ret = static_cast<DeviceImp *>(this->device)->bcsSplit.appendSplitCall<gfxCoreFamily, void *, const void *>(this, dstptr, srcptr, size, hSignalEvent, [&](void *dstptrParam, const void *srcptrParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
@@ -459,6 +468,93 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
         }
     }
     return inputRet;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(NEO::SvmAllocationData *dstAlloc, bool dstFound, NEO::SvmAllocationData *srcAlloc, bool srcFound, size_t size) {
+    size_t h2DThreshold = 2 * MemoryConstants::megaByte;
+    size_t d2HThreshold = 1 * MemoryConstants::kiloByte;
+    if (NEO::DebugManager.flags.ExperimentalH2DCpuCopyThreshold.get() != -1) {
+        h2DThreshold = NEO::DebugManager.flags.ExperimentalH2DCpuCopyThreshold.get();
+    }
+    if (NEO::DebugManager.flags.ExperimentalD2HCpuCopyThreshold.get() != -1) {
+        d2HThreshold = NEO::DebugManager.flags.ExperimentalD2HCpuCopyThreshold.get();
+    }
+    if (NEO::HwHelper::get(this->device->getHwInfo().platform.eRenderCoreFamily).copyThroughLockedPtrEnabled()) {
+        return (!srcFound && isAllocUSMDeviceMemory(dstAlloc, dstFound) && size <= h2DThreshold) ||
+               (!dstFound && isAllocUSMDeviceMemory(srcAlloc, srcFound) && size <= d2HThreshold);
+    }
+    return false;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isAllocUSMDeviceMemory(NEO::SvmAllocationData *alloc, bool allocFound) {
+    return allocFound && (alloc->memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(void *dstptr, const void *srcptr, size_t size, bool isDstDeviceMemory, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+
+    bool needsBarrier = (numWaitEvents > 0);
+    if (needsBarrier) {
+        this->appendBarrier(nullptr, numWaitEvents, phWaitEvents);
+    }
+
+    bool needsFlushTagUpdate = this->latestFlushedBarrierCounter < this->barrierCounter;
+    if (needsFlushTagUpdate) {
+        this->csr->flushTagUpdate();
+    }
+
+    Event *signalEvent = nullptr;
+    if (hSignalEvent) {
+        signalEvent = Event::fromHandle(hSignalEvent);
+    }
+
+    const void *cpuMemcpySrcPtr = nullptr;
+    void *cpuMemcpyDstPtr = nullptr;
+    if (isDstDeviceMemory) {
+        cpuMemcpySrcPtr = srcptr;
+        cpuMemcpyDstPtr = obtainLockedPtrFromDevice(dstptr, size);
+    } else {
+        cpuMemcpySrcPtr = obtainLockedPtrFromDevice(const_cast<void *>(srcptr), size);
+        cpuMemcpyDstPtr = dstptr;
+    }
+
+    if (needsFlushTagUpdate) {
+        auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
+        const auto waitStatus = this->csr->waitForCompletionWithTimeout(NEO::WaitParams{false, false, timeoutMicroseconds}, this->csr->peekTaskCount());
+        if (waitStatus == NEO::WaitStatus::GpuHang) {
+            return ZE_RESULT_ERROR_DEVICE_LOST;
+        }
+        this->latestFlushedBarrierCounter = this->barrierCounter;
+    }
+
+    if (signalEvent) {
+        signalEvent->setGpuStartTimestamp();
+    }
+
+    memcpy_s(cpuMemcpyDstPtr, size, cpuMemcpySrcPtr, size);
+
+    if (signalEvent) {
+        signalEvent->setGpuEndTimestamp();
+        signalEvent->hostSignal();
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void *CommandListCoreFamilyImmediate<gfxCoreFamily>::obtainLockedPtrFromDevice(void *ptr, size_t size) {
+    NEO::SvmAllocationData *allocData = nullptr;
+    auto allocFound = this->device->getDriverHandle()->findAllocationDataForRange(ptr, size, &allocData);
+    UNRECOVERABLE_IF(!allocFound);
+
+    auto alloc = allocData->gpuAllocations.getGraphicsAllocation(this->device->getRootDeviceIndex());
+    if (!alloc->isLocked()) {
+        this->device->getDriverHandle()->getMemoryManager()->lockResource(alloc);
+    }
+    auto gpuAddress = allocData->gpuAllocations.getGraphicsAllocation(this->device->getRootDeviceIndex())->getGpuAddress();
+    auto offset = ptrDiff(ptr, gpuAddress);
+    return ptrOffset(alloc->getLockedPtr(), offset);
 }
 
 } // namespace L0

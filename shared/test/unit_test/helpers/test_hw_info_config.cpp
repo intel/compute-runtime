@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/compiler_hw_info_config.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
@@ -195,4 +196,9 @@ HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenIsStatefulAddressingModeSupport
 HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenIsPlatformQueryNotSupportedThenReturnFalse, IsAtMostDg2) {
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     EXPECT_FALSE(hwInfoConfig.isPlatformQuerySupported());
+}
+
+HWTEST_F(HwInfoConfigTest, givenHwHelperWhenCallCopyThroughLockedPtrEnabledThenReturnFalse) {
+    HwHelper &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    EXPECT_FALSE(hwHelper.copyThroughLockedPtrEnabled());
 }

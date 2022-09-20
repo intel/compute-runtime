@@ -65,6 +65,8 @@ struct Event : _ze_event_handle_t {
     void *getHostAddress() { return hostAddress; }
     virtual void setPacketsInUse(uint32_t value) = 0;
     uint32_t getCurrKernelDataIndex() const { return kernelCount - 1; }
+    virtual void setGpuStartTimestamp() = 0;
+    virtual void setGpuEndTimestamp() = 0;
 
     size_t getContextStartOffset() const {
         return contextStartOffset;
@@ -143,6 +145,10 @@ struct Event : _ze_event_handle_t {
     size_t singlePacketSize = 0u;
     size_t eventPoolOffset = 0u;
 
+    size_t cpuStartTimestamp = 0u;
+    size_t gpuStartTimestamp = 0u;
+    size_t gpuEndTimestamp = 0u;
+
     uint32_t kernelCount = 1u;
 
     bool isTimestampEvent = false;
@@ -195,6 +201,8 @@ struct EventImp : public Event {
     uint32_t getPacketsInUse() override;
     uint32_t getPacketsUsedInLastKernel() override;
     void setPacketsInUse(uint32_t value) override;
+    void setGpuStartTimestamp() override;
+    void setGpuEndTimestamp() override;
 
     std::unique_ptr<KernelEventCompletionData<TagSizeT>[]> kernelEventCompletionData;
 

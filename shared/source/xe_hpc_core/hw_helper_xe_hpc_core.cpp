@@ -442,6 +442,11 @@ bool HwHelperHw<Family>::isPatIndexFallbackWaRequired() const {
     return true;
 }
 
+template <>
+bool HwHelperHw<Family>::copyThroughLockedPtrEnabled() const {
+    return DebugManager.flags.ExperimentalCopyThroughLock.get();
+}
+
 } // namespace NEO
 
 #include "shared/source/helpers/hw_helper_pvc_and_later.inl"

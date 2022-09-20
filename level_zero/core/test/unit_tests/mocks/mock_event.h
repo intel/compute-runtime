@@ -67,8 +67,11 @@ struct Mock<EventPool> : public EventPool {
 
 class MockEvent : public ::L0::Event {
   public:
+    using ::L0::Event::gpuEndTimestamp;
+    using ::L0::Event::gpuStartTimestamp;
     using ::L0::Event::isCompleted;
     using ::L0::Event::l3FlushAppliedOnKernel;
+
     MockEvent() {
         mockAllocation.reset(new NEO::MockGraphicsAllocation(0,
                                                              NEO::AllocationType::INTERNAL_HOST_MEMORY,
@@ -119,7 +122,8 @@ class MockEvent : public ::L0::Event {
     void resetPackets() override {}
     void setPacketsInUse(uint32_t value) override {}
     uint64_t getPacketAddress(L0::Device *) override { return 0; }
-
+    void setGpuStartTimestamp() override {}
+    void setGpuEndTimestamp() override {}
     std::unique_ptr<NEO::GraphicsAllocation> mockAllocation;
 };
 

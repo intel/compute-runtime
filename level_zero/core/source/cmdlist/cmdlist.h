@@ -323,6 +323,9 @@ struct CommandList : _ze_command_list_handle_t {
     bool multiReturnPointCommandList = false;
     bool systolicModeSupport = false;
     bool pipelineSelectStateTracking = false;
+
+    std::atomic<uint32_t> barrierCounter{0u};
+    uint32_t latestFlushedBarrierCounter = 0u;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);
