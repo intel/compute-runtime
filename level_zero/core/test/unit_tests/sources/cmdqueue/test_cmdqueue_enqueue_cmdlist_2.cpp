@@ -552,5 +552,21 @@ HWTEST2_F(CmdListPipelineSelectStateTest,
     testBodyShareStateImmediateRegular<FamilyType>();
 }
 
+using CmdListThreadArbitrationTest = Test<CmdListThreadArbitrationFixture>;
+
+using ThreadArbitrationSupport = IsProduct<IGFX_PVC>;
+HWTEST2_F(CmdListThreadArbitrationTest,
+          givenAppendThreadArbitrationKernelToCommandListWhenExecutingCommandListThenStateComputeModeStateIsTrackedCorrectly, ThreadArbitrationSupport) {
+    testBody<FamilyType>();
+}
+
+using CmdListLargeGrfTest = Test<CmdListLargeGrfFixture>;
+
+using LargeGrfSupport = IsAnyProducts<IGFX_XE_HP_SDV, IGFX_DG2, IGFX_PVC>;
+HWTEST2_F(CmdListLargeGrfTest,
+          givenAppendLargeGrfKernelToCommandListWhenExecutingCommandListThenStateComputeModeStateIsTrackedCorrectly, LargeGrfSupport) {
+    testBody<FamilyType>();
+}
+
 } // namespace ult
 } // namespace L0

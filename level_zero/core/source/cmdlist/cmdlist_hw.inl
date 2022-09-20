@@ -2320,8 +2320,13 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
     if (!containsAnyKernel) {
         requiredStreamState.frontEndState.setProperties(isCooperative, kernelAttributes.flags.requiresDisabledEUFusion, true, -1, hwInfo);
         requiredStreamState.pipelineSelect.setProperties(true, false, kernelAttributes.flags.usesSystolicPipelineSelectMode, hwInfo);
-        finalStreamState = requiredStreamState;
-        requiredStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), hwInfo);
+        if (this->stateComputeModeTracking) {
+            requiredStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), hwInfo);
+            finalStreamState = requiredStreamState;
+        } else {
+            finalStreamState = requiredStreamState;
+            requiredStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), hwInfo);
+        }
         containsAnyKernel = true;
     }
 

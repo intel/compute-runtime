@@ -37,6 +37,7 @@ struct WhiteBox<::L0::CommandQueue> : public ::L0::CommandQueueImp {
     using CommandQueue::multiReturnPointCommandList;
     using CommandQueue::partitionCount;
     using CommandQueue::pipelineSelectStateTracking;
+    using CommandQueue::stateComputeModeTracking;
 
     WhiteBox(Device *device, NEO::CommandStreamReceiver *csr,
              const ze_command_queue_desc_t *desc);
@@ -70,6 +71,7 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     using L0::CommandQueue::partitionCount;
     using L0::CommandQueue::pipelineSelectStateTracking;
     using L0::CommandQueue::preemptionCmdSyncProgramming;
+    using L0::CommandQueue::stateComputeModeTracking;
     using L0::CommandQueueImp::csr;
     using typename BaseClass::CommandListExecutionContext;
 

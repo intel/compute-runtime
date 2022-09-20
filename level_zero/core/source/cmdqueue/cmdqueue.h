@@ -69,6 +69,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     bool internalUsage = false;
     bool multiReturnPointCommandList = false;
     bool pipelineSelectStateTracking = false;
+    bool stateComputeModeTracking = false;
 };
 
 using CommandQueueAllocatorFn = CommandQueue *(*)(Device *device, NEO::CommandStreamReceiver *csr,

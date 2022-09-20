@@ -126,5 +126,10 @@ void CmdListPipelineSelectStateFixture::setUp() {
     ModuleMutableCommandListFixture::setUp();
 }
 
+void CmdListStateComputeModeStateFixture::setUp() {
+    DebugManager.flags.EnableStateComputeModeTracking.set(1);
+    ModuleMutableCommandListFixture::setUp();
+}
+
 } // namespace ult
 } // namespace L0

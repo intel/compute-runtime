@@ -101,5 +101,21 @@ struct CmdListPipelineSelectStateFixture : public ModuleMutableCommandListFixtur
     DebugManagerStateRestore restorer;
 };
 
+struct CmdListStateComputeModeStateFixture : public ModuleMutableCommandListFixture {
+    void setUp();
+
+    DebugManagerStateRestore restorer;
+};
+
+struct CmdListThreadArbitrationFixture : public CmdListStateComputeModeStateFixture {
+    template <typename FamilyType>
+    void testBody();
+};
+
+struct CmdListLargeGrfFixture : public CmdListStateComputeModeStateFixture {
+    template <typename FamilyType>
+    void testBody();
+};
+
 } // namespace ult
 } // namespace L0
