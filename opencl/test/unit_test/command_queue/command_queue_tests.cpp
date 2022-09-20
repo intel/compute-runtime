@@ -2640,6 +2640,36 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenC
     EXPECT_TRUE(osContext.isInitialized());
 }
 
+TEST_F(MultiTileFixture, givenMultiSubDeviceAndCommandQueueUsingMainCopyEngineWhenReleaseMainCopyEngineThenDeviceAndSubdeviceSelectorReset) {
+    REQUIRE_BLITTER_OR_SKIP(defaultHwInfo.get());
+
+    auto device = platform()->getClDevice(0);
+    auto subDevice = device->getSubDevice(0);
+
+    const cl_device_id deviceId = device;
+    auto returnStatus = CL_SUCCESS;
+    auto context = clCreateContext(nullptr, 1, &deviceId, nullptr, nullptr, &returnStatus);
+    EXPECT_EQ(CL_SUCCESS, returnStatus);
+    EXPECT_NE(nullptr, context);
+
+    auto commandQueue = clCreateCommandQueueWithProperties(context, device, nullptr, &returnStatus);
+    EXPECT_EQ(CL_SUCCESS, returnStatus);
+    EXPECT_NE(nullptr, commandQueue);
+
+    auto neoQueue = castToObject<CommandQueue>(commandQueue);
+
+    device->getSelectorCopyEngine().isMainUsed.store(true);
+    subDevice->getSelectorCopyEngine().isMainUsed.store(true);
+
+    neoQueue->releaseMainCopyEngine();
+
+    EXPECT_FALSE(device->getSelectorCopyEngine().isMainUsed.load());
+    EXPECT_FALSE(subDevice->getSelectorCopyEngine().isMainUsed.load());
+
+    clReleaseCommandQueue(commandQueue);
+    clReleaseContext(context);
+}
+
 TEST_F(MultiTileFixture, givenSubDeviceWhenQueueIsCreatedThenItContainsProperDevice) {
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;

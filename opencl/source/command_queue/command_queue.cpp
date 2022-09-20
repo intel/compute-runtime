@@ -355,7 +355,9 @@ CommandStreamReceiver &CommandQueue::selectCsrForHostPtrAllocation(bool split, C
 
 void CommandQueue::releaseMainCopyEngine() {
     if (auto mainBcs = bcsEngines[0]; mainBcs != nullptr) {
-        auto &selectorCopyEngine = device->getNearestGenericSubDevice(0)->getSelectorCopyEngine();
+        auto &selectorCopyEngineSubDevice = device->getNearestGenericSubDevice(0)->getSelectorCopyEngine();
+        EngineHelpers::releaseBcsEngineType(mainBcs->getEngineType(), selectorCopyEngineSubDevice);
+        auto &selectorCopyEngine = device->getSelectorCopyEngine();
         EngineHelpers::releaseBcsEngineType(mainBcs->getEngineType(), selectorCopyEngine);
     }
 }
