@@ -12,15 +12,12 @@
 #include <level_zero/ze_api.h>
 
 #include <atomic>
-#include <mutex>
 
 struct _ze_command_queue_handle_t {};
 
 namespace NEO {
 class CommandStreamReceiver;
 }
-
-struct UnifiedMemoryControls;
 
 namespace L0 {
 struct Device;
@@ -51,8 +48,6 @@ struct CommandQueue : _ze_command_queue_handle_t {
     static CommandQueue *fromHandle(ze_command_queue_handle_t handle) {
         return static_cast<CommandQueue *>(handle);
     }
-
-    virtual void handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::recursive_mutex> &lockForIndirect) = 0;
 
     ze_command_queue_handle_t toHandle() { return this; }
 

@@ -163,6 +163,28 @@ void CommandList::migrateSharedAllocations() {
     }
 }
 
+void CommandList::handleIndirectAllocationResidency() {
+    bool indirectAllocationsAllowed = this->hasIndirectAllocationsAllowed();
+    NEO::Device *neoDevice = this->device->getNEODevice();
+    if (indirectAllocationsAllowed) {
+        auto svmAllocsManager = this->device->getDriverHandle()->getSvmAllocsManager();
+        auto submitAsPack = this->device->getDriverHandle()->getMemoryManager()->allowIndirectAllocationsAsPack(neoDevice->getRootDeviceIndex());
+        if (NEO::DebugManager.flags.MakeIndirectAllocationsResidentAsPack.get() != -1) {
+            submitAsPack = !!NEO::DebugManager.flags.MakeIndirectAllocationsResidentAsPack.get();
+        }
+
+        if (submitAsPack) {
+            svmAllocsManager->makeIndirectAllocationsResident(*(this->csr), this->csr->peekTaskCount() + 1u);
+        } else {
+            UnifiedMemoryControls unifiedMemoryControls = this->getUnifiedMemoryControls();
+
+            svmAllocsManager->addInternalAllocationsToResidencyContainer(neoDevice->getRootDeviceIndex(),
+                                                                         this->commandContainer.getResidencyContainer(),
+                                                                         unifiedMemoryControls.generateMask());
+        }
+    }
+}
+
 bool CommandList::setupTimestampEventForMultiTile(Event *signalEvent) {
     if (this->partitionCount > 1 &&
         signalEvent) {

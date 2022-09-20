@@ -173,18 +173,17 @@ class SVMAllocsManager {
     MOCKABLE_VIRTUAL void insertSvmMapOperation(void *regionSvmPtr, size_t regionSize, void *baseSvmPtr, size_t offset, bool readOnlyMap);
     void removeSvmMapOperation(const void *regionSvmPtr);
     SvmMapOperation *getSvmMapOperation(const void *regionPtr);
-    MOCKABLE_VIRTUAL void addInternalAllocationsToResidencyContainer(uint32_t rootDeviceIndex,
-                                                                     ResidencyContainer &residencyContainer,
-                                                                     uint32_t requestedTypesMask);
+    void addInternalAllocationsToResidencyContainer(uint32_t rootDeviceIndex,
+                                                    ResidencyContainer &residencyContainer,
+                                                    uint32_t requestedTypesMask);
     void makeInternalAllocationsResident(CommandStreamReceiver &commandStreamReceiver, uint32_t requestedTypesMask);
     void *createUnifiedAllocationWithDeviceStorage(size_t size, const SvmAllocationProperties &svmProperties, const UnifiedMemoryProperties &unifiedMemoryProperties);
     void freeSvmAllocationWithDeviceStorage(SvmAllocationData *svmData);
     bool hasHostAllocations();
     std::atomic<uint32_t> allocationsCounter = 0;
-    MOCKABLE_VIRTUAL void makeIndirectAllocationsResident(CommandStreamReceiver &commandStreamReceiver, uint32_t taskCount);
+    void makeIndirectAllocationsResident(CommandStreamReceiver &commandStreamReceiver, uint32_t taskCount);
     void prepareIndirectAllocationForDestruction(SvmAllocationData *);
     void prefetchMemory(Device &device, SvmAllocationData &svmData);
-    std::unique_lock<std::recursive_mutex> obtainOwnership();
 
     std::map<CommandStreamReceiver *, InternalAllocationsTracker> indirectAllocationsResidency;
 
@@ -204,9 +203,9 @@ class SVMAllocsManager {
     MapBasedAllocationTracker SVMAllocs;
     MapOperationsTracker svmMapOperations;
     MemoryManager *memoryManager;
+    std::shared_mutex mtx;
     bool multiOsContextSupport;
     SvmAllocationCache usmDeviceAllocationsCache;
     bool usmDeviceAllocationsCacheEnabled = false;
-    std::recursive_mutex mtx;
 };
 } // namespace NEO

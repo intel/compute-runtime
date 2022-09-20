@@ -19,7 +19,6 @@ namespace ult {
 template <>
 struct WhiteBox<::L0::DriverHandle> : public ::L0::DriverHandleImp {
     using ::L0::DriverHandleImp::enableProgramDebugging;
-    using ::L0::DriverHandleImp::svmAllocsManager;
 };
 
 using DriverHandle = WhiteBox<::L0::DriverHandle>;

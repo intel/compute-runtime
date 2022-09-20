@@ -93,6 +93,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     }
 
     this->device->activateMetricGroups();
+
     if (this->isCopyOnlyCommandQueue) {
         ret = this->executeCommandListsCopyOnly(ctx, numCommandLists, phCommandLists, hFence);
     } else {
@@ -116,13 +117,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     this->setupCmdListsAndContextParams(ctx, phCommandLists, numCommandLists, hFence);
     ctx.isDirectSubmissionEnabled = this->csr->isDirectSubmissionEnabled();
 
-    std::unique_lock<std::recursive_mutex> lockForIndirect;
-    if (ctx.hasIndirectAccess) {
-        handleIndirectAllocationResidency(ctx.unifiedMemoryControls, lockForIndirect);
-    }
-
     size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeInitial(ctx, phCommandLists, numCommandLists);
 
+    this->csr->getResidencyAllocations().reserve(ctx.spaceForResidency);
     this->handleScratchSpaceAndUpdateGSBAStateDirtyFlag(ctx);
     this->setFrontEndStateProperties(ctx);
 
@@ -446,12 +443,6 @@ CommandQueueHw<gfxCoreFamily>::CommandListExecutionContext::CommandListExecution
         if (commandList->isMemoryPrefetchRequested()) {
             this->performMemoryPrefetch = true;
         }
-        hasIndirectAccess |= commandList->hasIndirectAllocationsAllowed();
-        if (commandList->hasIndirectAllocationsAllowed()) {
-            unifiedMemoryControls.indirectDeviceAllocationsAllowed |= commandList->getUnifiedMemoryControls().indirectDeviceAllocationsAllowed;
-            unifiedMemoryControls.indirectHostAllocationsAllowed |= commandList->getUnifiedMemoryControls().indirectHostAllocationsAllowed;
-            unifiedMemoryControls.indirectSharedAllocationsAllowed |= commandList->getUnifiedMemoryControls().indirectSharedAllocationsAllowed;
-        }
     }
     this->isDevicePreemptionModeMidThread = device->getDevicePreemptionMode() == NEO::PreemptionMode::MidThread;
     this->stateSipRequired = (this->isPreemptionModeInitial && this->isDevicePreemptionModeMidThread) ||
@@ -531,8 +522,10 @@ void CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
 
         commandList->csr = this->csr;
+        commandList->handleIndirectAllocationResidency();
 
         ctx.containsAnyRegularCmdList |= commandList->cmdListType == CommandList::CommandListType::TYPE_REGULAR;
+        ctx.spaceForResidency += commandList->commandContainer.getResidencyContainer().size();
         if (!isCopyOnlyCommandQueue) {
             ctx.perThreadScratchSpaceSize = std::max(ctx.perThreadScratchSpaceSize, commandList->getCommandListPerThreadScratchSize());
             ctx.perThreadPrivateScratchSize = std::max(ctx.perThreadPrivateScratchSize, commandList->getCommandListPerThreadPrivateScratchSize());
