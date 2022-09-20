@@ -84,6 +84,27 @@ ze_result_t zeFabricVertexGetDeviceExp(
     return L0::FabricVertex::fromHandle(hVertex)->getDevice(phDevice);
 }
 
+ze_result_t zeDeviceGetFabricVertexExp(ze_device_handle_t hDevice, ze_fabric_vertex_handle_t *phVertex) {
+
+    return L0::Device::fromHandle(hDevice)->getFabricVertex(phVertex);
+}
+
+ze_result_t zeFabricEdgeGetExp(ze_fabric_vertex_handle_t hVertexA, ze_fabric_vertex_handle_t hVertexB,
+                               uint32_t *pCount, ze_fabric_edge_handle_t *phEdges) {
+
+    return L0::FabricVertex::fromHandle(hVertexA)->edgeGet(hVertexB, pCount, phEdges);
+}
+
+ze_result_t zeFabricEdgeGetVerticesExp(ze_fabric_edge_handle_t hEdge, ze_fabric_vertex_handle_t *phVertexA,
+                                       ze_fabric_vertex_handle_t *phVertexB) {
+    return L0::FabricEdge::fromHandle(hEdge)->getVertices(phVertexA, phVertexB);
+}
+
+ze_result_t zeFabricEdgeGetPropertiesExp(ze_fabric_edge_handle_t hEdge,
+                                         ze_fabric_edge_exp_properties_t *pEdgeProperties) {
+    return L0::FabricEdge::fromHandle(hEdge)->getProperties(pEdgeProperties);
+}
+
 } // namespace L0
 
 extern "C" {
@@ -159,6 +180,37 @@ zeFabricVertexGetDeviceExp(
     ze_fabric_vertex_handle_t hVertex,
     ze_device_handle_t *phDevice) {
     return L0::zeFabricVertexGetDeviceExp(hVertex, phDevice);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeDeviceGetFabricVertexExp(
+    ze_device_handle_t hDevice,
+    ze_fabric_vertex_handle_t *phVertex) {
+    return L0::zeDeviceGetFabricVertexExp(hDevice, phVertex);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeFabricEdgeGetExp(
+    ze_fabric_vertex_handle_t hVertexA,
+    ze_fabric_vertex_handle_t hVertexB,
+    uint32_t *pCount,
+    ze_fabric_edge_handle_t *phEdges) {
+    return L0::zeFabricEdgeGetExp(hVertexA, hVertexB, pCount, phEdges);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeFabricEdgeGetVerticesExp(
+    ze_fabric_edge_handle_t hEdge,
+    ze_fabric_vertex_handle_t *phVertexA,
+    ze_fabric_vertex_handle_t *phVertexB) {
+    return L0::zeFabricEdgeGetVerticesExp(hEdge, phVertexA, phVertexB);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeFabricEdgeGetPropertiesExp(
+    ze_fabric_edge_handle_t hEdge,
+    ze_fabric_edge_exp_properties_t *pEdgeProperties) {
+    return L0::zeFabricEdgeGetPropertiesExp(hEdge, pEdgeProperties);
 }
 
 } // extern "C"

@@ -45,6 +45,51 @@ ze_result_t FabricDeviceIaf::enumerate() {
     return result;
 }
 
+bool FabricDeviceIaf::getEdgeProperty(FabricVertex *neighborVertex, ze_fabric_edge_exp_properties_t &edgeProperty) {
+
+    bool isConnected = false;
+
+    std::vector<ze_fabric_edge_exp_properties_t> subDeviceEdgeProperties = {};
+    for (auto &subDeviceIaf : subDeviceIafs) {
+
+        ze_fabric_edge_exp_properties_t subDeviceEdgeProperty = {};
+        bool isSubdeviceConnected = subDeviceIaf->getEdgeProperty(neighborVertex, subDeviceEdgeProperty);
+        if (isSubdeviceConnected) {
+            subDeviceEdgeProperties.push_back(subDeviceEdgeProperty);
+        }
+    }
+
+    if (subDeviceEdgeProperties.size() > 0) {
+
+        ze_uuid_t &uuid = edgeProperty.uuid;
+        std::memset(uuid.id, 0, ZE_MAX_UUID_SIZE);
+
+        // Copy current device fabric and attach id
+        memcpy_s(&uuid.id[0], 4, &subDeviceEdgeProperties[0].uuid.id[0], 4);
+        // Use 255 (impossible tile (attach) id to identify root device)
+        uuid.id[4] = 255;
+        // Copy neighboring device fabric id
+        memcpy_s(&uuid.id[8], 4, &subDeviceEdgeProperties[0].uuid.id[8], 4);
+        memcpy_s(&uuid.id[12], 1, &subDeviceEdgeProperties[0].uuid.id[12], 1);
+
+        uint32_t accumulatedBandwidth = 0;
+        for (const auto &subEdgeProperty : subDeviceEdgeProperties) {
+            accumulatedBandwidth += subEdgeProperty.bandwidth;
+        }
+
+        memcpy_s(edgeProperty.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, "XeLink", 7);
+        edgeProperty.bandwidth = accumulatedBandwidth;
+        edgeProperty.bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
+        edgeProperty.latency = 0;
+        edgeProperty.latencyUnit = ZE_LATENCY_UNIT_UNKNOWN;
+        edgeProperty.duplexity = ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX;
+
+        isConnected = true;
+    }
+
+    return isConnected;
+}
+
 FabricSubDeviceIaf::FabricSubDeviceIaf(Device *device) : device(device) {
     pIafNlApi = std::make_unique<IafNlApi>();
     UNRECOVERABLE_IF(nullptr == pIafNlApi);
@@ -146,26 +191,111 @@ ze_result_t FabricSubDeviceIaf::getConnection(IafPort &port, FabricPortConnectio
     return ZE_RESULT_SUCCESS;
 }
 
+bool FabricSubDeviceIaf::getEdgeProperty(FabricSubDeviceIaf *pNeighbourInterface,
+                                         ze_fabric_edge_exp_properties_t &edgeProperty) {
+    bool isConnected = false;
+    uint32_t accumulatedBandwidth = 0;
+    for (auto &connection : connections) {
+        if (connection.neighbourGuid == pNeighbourInterface->guid) {
+            accumulatedBandwidth += connection.bandwidthInBytesPerNanoSecond;
+        }
+    }
+
+    if (accumulatedBandwidth != 0) {
+        ze_uuid_t &uuid = edgeProperty.uuid;
+        DEBUG_BREAK_IF(pNeighbourInterface->connections.size() == 0);
+
+        std::memset(uuid.id, 0, ZE_MAX_UUID_SIZE);
+        memcpy_s(&uuid.id[0], 4, &connections[0].currentid.fabricId, 4);
+        memcpy_s(&uuid.id[4], 1, &connections[0].currentid.attachId, 1);
+
+        // Considering the neighboring port is attached on a subdevice, fabricId and attachId could be used from
+        // any of the connection
+        memcpy_s(&uuid.id[8], 4, &pNeighbourInterface->connections[0].currentid.fabricId, 4);
+        memcpy_s(&uuid.id[12], 1, &pNeighbourInterface->connections[0].currentid.attachId, 1);
+
+        memcpy_s(edgeProperty.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, "XeLink", 7);
+        edgeProperty.bandwidth = accumulatedBandwidth;
+        edgeProperty.bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
+        edgeProperty.latency = 0;
+        edgeProperty.latencyUnit = ZE_LATENCY_UNIT_UNKNOWN;
+        edgeProperty.duplexity = ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX;
+        isConnected = true;
+    }
+
+    return isConnected;
+}
+
+bool FabricSubDeviceIaf::getEdgeProperty(FabricVertex *neighborVertex,
+                                         ze_fabric_edge_exp_properties_t &edgeProperty) {
+
+    ze_uuid_t &uuid = edgeProperty.uuid;
+    bool isConnected = false;
+    uint32_t accumulatedBandwidth = 0;
+    DeviceImp *neighborDeviceImp = static_cast<DeviceImp *>(neighborVertex->device);
+
+    // If the neighbor is a root device
+    if (neighborDeviceImp->isSubdevice == false) {
+
+        std::vector<ze_fabric_edge_exp_properties_t> subEdgeProperties = {};
+
+        FabricDeviceIaf *deviceIaf = static_cast<FabricDeviceIaf *>(neighborVertex->pFabricDeviceInterfaces[FabricDeviceInterface::Type::Iaf].get());
+        // Get the edges to the neighbors subVertices
+        for (auto &subDeviceIaf : deviceIaf->subDeviceIafs) {
+            ze_fabric_edge_exp_properties_t edgeProperty = {};
+            bool subDevicesConnected = getEdgeProperty(subDeviceIaf.get(), edgeProperty);
+            if (subDevicesConnected) {
+                subEdgeProperties.push_back(edgeProperty);
+            }
+        }
+
+        // Add an edge for this subVertex to the neighbor root
+        if (subEdgeProperties.size() > 0) {
+
+            std::memset(uuid.id, 0, ZE_MAX_UUID_SIZE);
+            // Copy current device fabric and attach id
+            memcpy_s(&uuid.id[0], 4, &subEdgeProperties[0].uuid.id[0], 4);
+            memcpy_s(&uuid.id[4], 1, &subEdgeProperties[0].uuid.id[4], 1);
+            // Copy neighboring device fabric id
+            memcpy_s(&uuid.id[8], 4, &subEdgeProperties[0].uuid.id[8], 4);
+            // Use 255 (impossible tile (attach) id to identify root device)
+            uuid.id[12] = 255;
+
+            for (const auto &subEdgeProperty : subEdgeProperties) {
+                accumulatedBandwidth += subEdgeProperty.bandwidth;
+            }
+
+            memcpy_s(edgeProperty.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, "XeLink", 7);
+            edgeProperty.bandwidth = accumulatedBandwidth;
+            edgeProperty.bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
+            edgeProperty.latency = 0;
+            edgeProperty.latencyUnit = ZE_LATENCY_UNIT_UNKNOWN;
+            edgeProperty.duplexity = ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX;
+
+            isConnected = true;
+        }
+    } else {
+        FabricSubDeviceIaf *pNeighbourInterface =
+            static_cast<FabricSubDeviceIaf *>(neighborVertex->pFabricDeviceInterfaces[FabricDeviceInterface::Type::Iaf].get());
+        isConnected = getEdgeProperty(pNeighbourInterface, edgeProperty);
+    }
+
+    return isConnected;
+}
+
 void FabricSubDeviceIaf::setIafNlApi(IafNlApi *iafNlApi) {
     pIafNlApi.reset(iafNlApi);
 }
 
-std::unique_ptr<FabricDeviceInterface> FabricDeviceInterface::createFabricDeviceInterface(const FabricVertex &fabricVertex) {
+std::unique_ptr<FabricDeviceInterface> FabricDeviceInterface::createFabricDeviceInterfaceIaf(const FabricVertex *fabricVertex) {
 
-    ze_fabric_vertex_exp_properties_t vertexProperties = {};
-    fabricVertex.getProperties(&vertexProperties);
+    DeviceImp *deviceImp = static_cast<DeviceImp *>(fabricVertex->device);
 
-    ze_device_handle_t hDevice = nullptr;
-    fabricVertex.getDevice(&hDevice);
-    DEBUG_BREAK_IF(hDevice == nullptr);
-
-    DeviceImp *deviceImp = static_cast<DeviceImp *>(hDevice);
-    Device *device = static_cast<Device *>(hDevice);
     if (deviceImp->isSubdevice) {
-        return std::unique_ptr<FabricDeviceInterface>(new (std::nothrow) FabricSubDeviceIaf(device));
+        return std::unique_ptr<FabricDeviceInterface>(new (std::nothrow) FabricSubDeviceIaf(fabricVertex->device));
     }
 
-    return std::unique_ptr<FabricDeviceInterface>(new (std::nothrow) FabricDeviceIaf(device));
+    return std::unique_ptr<FabricDeviceInterface>(new (std::nothrow) FabricDeviceIaf(fabricVertex->device));
 }
 
 } // namespace L0

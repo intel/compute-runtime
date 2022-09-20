@@ -11,10 +11,28 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/fabric/fabric.h"
+#include "level_zero/core/source/fabric/fabric_device_interface.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
 namespace L0 {
+class FabricDeviceMdfi;
 namespace ult {
+
+class MockFabricDeviceInterface {
+
+    ze_result_t enumerate() { return ZE_RESULT_SUCCESS; }
+    bool getEdgeProperty(FabricVertex *neighborVertex, ze_fabric_edge_exp_properties_t &edgeProperty) {
+
+        if (mockEdgeProperties.size() > mockEdgePropertiesCounter) {
+            edgeProperty = mockEdgeProperties[mockEdgePropertiesCounter];
+        }
+        return getEdgePropertyResult;
+    }
+
+    std::vector<ze_fabric_edge_exp_properties_t> mockEdgeProperties = {};
+    uint32_t mockEdgePropertiesCounter = 0;
+    bool getEdgePropertyResult = true;
+};
 
 using FabricVertexFixture = Test<MultiDeviceFixture>;
 
@@ -157,6 +175,118 @@ TEST(FabricEngineInstanceTest, GivenEngineInstancedDeviceWhenFabricVerticesAreCr
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->fabricVertices[0]->getSubVertices(&count, nullptr));
     EXPECT_EQ(count, 0u);
+}
+
+TEST_F(FabricVertexFixture, GivenDevicesAreCreatedWhenZeDeviceGetFabricVertexExpIsCalledThenExpectValidVertices) {
+
+    for (auto l0Device : driverHandle->devices) {
+        ze_fabric_vertex_handle_t hVertex = nullptr;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeDeviceGetFabricVertexExp(l0Device->toHandle(), &hVertex));
+        EXPECT_NE(hVertex, nullptr);
+
+        auto deviceImp = static_cast<L0::DeviceImp *>(l0Device);
+        for (auto l0SubDevice : deviceImp->subDevices) {
+            EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeDeviceGetFabricVertexExp(l0SubDevice->toHandle(), &hVertex));
+            EXPECT_NE(hVertex, nullptr);
+        }
+    }
+}
+
+TEST_F(FabricVertexFixture, GivenDevicesAreCreatedWhenFabricVertexIsNotSetToDeviceThenZeDeviceGetFabricVertexExpReturnsError) {
+    auto l0Device = driverHandle->devices[0];
+    auto deviceImp = static_cast<L0::DeviceImp *>(l0Device);
+    deviceImp->setFabricVertex(nullptr);
+
+    ze_fabric_vertex_handle_t hVertex = nullptr;
+    EXPECT_EQ(ZE_RESULT_EXP_ERROR_DEVICE_IS_NOT_VERTEX, L0::zeDeviceGetFabricVertexExp(l0Device->toHandle(), &hVertex));
+    EXPECT_EQ(hVertex, nullptr);
+}
+
+using FabricEdgeFixture = Test<MultiDeviceFixture>;
+
+TEST_F(FabricEdgeFixture, GivenFabricVerticesAreCreatedWhenZeFabricEdgeGetExpIsCalledThenReturnSuccess) {
+
+    // Delete existing fabric edges
+    for (auto edge : driverHandle->fabricEdges) {
+        delete edge;
+    }
+    driverHandle->fabricEdges.clear();
+
+    ze_fabric_edge_exp_properties_t dummyProperties = {};
+    driverHandle->fabricEdges.push_back(FabricEdge::create(driverHandle->fabricVertices[0], driverHandle->fabricVertices[1], dummyProperties));
+    driverHandle->fabricEdges.push_back(FabricEdge::create(driverHandle->fabricVertices[0], driverHandle->fabricVertices[1], dummyProperties));
+    driverHandle->fabricEdges.push_back(FabricEdge::create(driverHandle->fabricVertices[0], driverHandle->fabricVertices[1], dummyProperties));
+
+    std::vector<ze_fabric_edge_handle_t> edgeHandles(10);
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(driverHandle->fabricVertices[0]->toHandle(),
+                                                        driverHandle->fabricVertices[1]->toHandle(),
+                                                        &count,
+                                                        edgeHandles.data()));
+    EXPECT_EQ(count, 3u);
+    count = 2;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(driverHandle->fabricVertices[1]->toHandle(),
+                                                        driverHandle->fabricVertices[0]->toHandle(),
+                                                        &count,
+                                                        edgeHandles.data()));
+}
+
+TEST_F(FabricEdgeFixture, GivenFabricEdgesAreCreatedWhenZeFabricEdgeGetVerticesExpIsCalledThenReturnCorrectVertices) {
+
+    // Delete existing fabric edges
+    for (auto edge : driverHandle->fabricEdges) {
+        delete edge;
+    }
+    driverHandle->fabricEdges.clear();
+
+    ze_fabric_edge_exp_properties_t dummyProperties = {};
+    driverHandle->fabricEdges.push_back(FabricEdge::create(driverHandle->fabricVertices[0], driverHandle->fabricVertices[1], dummyProperties));
+
+    std::vector<ze_fabric_edge_handle_t> edgeHandles(10);
+    uint32_t count = 1;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(driverHandle->fabricVertices[1]->toHandle(),
+                                                        driverHandle->fabricVertices[0]->toHandle(),
+                                                        &count,
+                                                        edgeHandles.data()));
+    ze_fabric_vertex_handle_t hVertexA = nullptr;
+    ze_fabric_vertex_handle_t hVertexB = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetVerticesExp(edgeHandles[0], &hVertexA, &hVertexB));
+    EXPECT_EQ(hVertexA, driverHandle->fabricVertices[0]);
+    EXPECT_EQ(hVertexB, driverHandle->fabricVertices[1]);
+}
+
+TEST_F(FabricEdgeFixture, GivenFabricEdgesAreCreatedWhenZeFabricEdgeGetPropertiesExpIsCalledThenReturnCorrectProperties) {
+
+    // Delete existing fabric edges
+    for (auto edge : driverHandle->fabricEdges) {
+        delete edge;
+    }
+    driverHandle->fabricEdges.clear();
+
+    ze_fabric_edge_exp_properties_t properties = {};
+    properties.bandwidth = 10;
+    properties.latency = 20;
+    driverHandle->fabricEdges.push_back(FabricEdge::create(driverHandle->fabricVertices[0], driverHandle->fabricVertices[1], properties));
+
+    std::vector<ze_fabric_edge_handle_t> edgeHandles(10);
+    uint32_t count = 1;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(driverHandle->fabricVertices[1]->toHandle(),
+                                                        driverHandle->fabricVertices[0]->toHandle(),
+                                                        &count,
+                                                        edgeHandles.data()));
+    ze_fabric_edge_exp_properties_t getProperties = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edgeHandles[0], &getProperties));
+    EXPECT_EQ(getProperties.bandwidth, 10u);
+    EXPECT_EQ(getProperties.latency, 20u);
+}
+
+TEST_F(FabricEdgeFixture, GivenMdfiLinksAreAvailableWhenEdgesAreCreatedThenVerifyThatBiDirectionalEdgesAreNotCreated) {
+
+    auto &fabricSubVertex1 = driverHandle->fabricVertices[0]->subVertices[1];
+    auto fabricDeviceMdfi = static_cast<FabricDeviceMdfi *>(fabricSubVertex1->pFabricDeviceInterfaces[FabricDeviceInterface::Type::Mdfi].get());
+
+    ze_fabric_edge_exp_properties_t unusedProperty = {};
+    EXPECT_FALSE(fabricDeviceMdfi->getEdgeProperty(driverHandle->fabricVertices[0]->subVertices[0], unusedProperty));
 }
 
 } // namespace ult

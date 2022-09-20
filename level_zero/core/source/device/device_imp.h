@@ -116,6 +116,7 @@ struct DeviceImp : public Device {
     std::vector<Device *> subDevices;
     std::unordered_map<uint32_t, bool> crossAccessEnabledDevices;
     DriverHandle *driverHandle = nullptr;
+    FabricVertex *fabricVertex = nullptr;
     CommandList *pageFaultCommandList = nullptr;
     ze_pci_speed_ext_t pciMaxSpeed = {-1, -1, -1};
 
@@ -136,7 +137,7 @@ struct DeviceImp : public Device {
 
     using CmdListCreateFunPtrT = L0::CommandList *(*)(uint32_t, Device *, NEO::EngineGroupType, ze_command_list_flags_t, ze_result_t &);
     CmdListCreateFunPtrT getCmdListCreateFunc(const ze_command_list_desc_t *desc);
-    FabricVertex *fabricVertex = nullptr;
+    ze_result_t getFabricVertex(ze_fabric_vertex_handle_t *phVertex) const override;
 
     ze_result_t queryDeviceLuid(ze_device_luid_ext_properties_t *deviceLuidProperties);
     ze_result_t setDeviceLuid(ze_device_luid_ext_properties_t *deviceLuidProperties);

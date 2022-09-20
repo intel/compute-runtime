@@ -135,6 +135,7 @@ struct Device : _ze_device_handle_t {
     virtual ze_result_t getCsrForLowPriority(NEO::CommandStreamReceiver **csr) = 0;
     virtual NEO::GraphicsAllocation *obtainReusableAllocation(size_t requiredSize, NEO::AllocationType type) = 0;
     virtual void storeReusableAllocation(NEO::GraphicsAllocation &alloc) = 0;
+    virtual ze_result_t getFabricVertex(ze_fabric_vertex_handle_t *phVertex) const = 0;
 
   protected:
     NEO::Device *neoDevice = nullptr;

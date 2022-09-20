@@ -8,6 +8,7 @@ set(L0_SRCS_FABRIC
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/fabric.h
     ${CMAKE_CURRENT_SOURCE_DIR}/fabric_device_interface.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/fabric_device_mdfi.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/fabric.cpp
 )
 

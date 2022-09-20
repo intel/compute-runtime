@@ -54,6 +54,7 @@ set(TEST_TARGETS
     zello_world_gpu
     zello_world_jitc_ocloc
     zello_world_usm
+    zello_fabric
 )
 
 include_directories(common)

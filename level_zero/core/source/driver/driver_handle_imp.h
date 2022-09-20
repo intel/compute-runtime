@@ -19,6 +19,7 @@
 namespace L0 {
 class HostPointerManager;
 struct FabricVertex;
+struct FabricEdge;
 
 struct DriverHandleImp : public DriverHandle {
     ~DriverHandleImp() override;
@@ -78,6 +79,8 @@ struct DriverHandleImp : public DriverHandle {
                                 NEO::GraphicsAllocation *alloc,
                                 NEO::SvmAllocationData *allocData,
                                 Device *device);
+    ze_result_t fabricEdgeGetExp(ze_fabric_vertex_handle_t hVertexA, ze_fabric_vertex_handle_t hVertexB,
+                                 uint32_t *pCount, ze_fabric_edge_handle_t *phEdges);
 
     std::unique_ptr<HostPointerManager> hostPointerManager;
     // Experimental functions
@@ -88,6 +91,7 @@ struct DriverHandleImp : public DriverHandle {
 
     std::vector<Device *> devices;
     std::vector<FabricVertex *> fabricVertices;
+    std::vector<FabricEdge *> fabricEdges;
     // Spec extensions
     const std::vector<std::pair<std::string, uint32_t>> extensionsSupported = {
         {ZE_FLOAT_ATOMICS_EXT_NAME, ZE_FLOAT_ATOMICS_EXT_VERSION_CURRENT},

@@ -10,6 +10,7 @@
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/fabric/fabric_device_interface.h"
 
 namespace L0 {
@@ -68,10 +69,12 @@ FabricVertex *FabricVertex::createFromDevice(Device *device) {
         fabricVertex->properties.address.function = pciProperties.address.function;
     }
 
-    fabricVertex->pFabricDeviceInterface = FabricDeviceInterface::createFabricDeviceInterface(*fabricVertex);
-    UNRECOVERABLE_IF(fabricVertex->pFabricDeviceInterface == nullptr);
+    fabricVertex->pFabricDeviceInterfaces[FabricDeviceInterface::Type::Iaf] = FabricDeviceInterface::createFabricDeviceInterfaceIaf(fabricVertex);
+    fabricVertex->pFabricDeviceInterfaces[FabricDeviceInterface::Type::Mdfi] = FabricDeviceInterface::createFabricDeviceInterfaceMdfi(fabricVertex);
 
-    fabricVertex->pFabricDeviceInterface->enumerate();
+    for (auto const &fabricDeviceInterface : fabricVertex->pFabricDeviceInterfaces) {
+        fabricDeviceInterface.second->enumerate();
+    }
 
     return fabricVertex;
 }
@@ -101,6 +104,48 @@ ze_result_t FabricVertex::getDevice(ze_device_handle_t *phDevice) const {
 
     *phDevice = device->toHandle();
     return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t FabricVertex::edgeGet(ze_fabric_vertex_handle_t hVertexB,
+                                  uint32_t *pCount, ze_fabric_edge_handle_t *phEdges) {
+    DriverHandleImp *driverHandleImp = static_cast<L0::DriverHandleImp *>(device->getDriverHandle());
+    return driverHandleImp->fabricEdgeGetExp(this->toHandle(), hVertexB, pCount, phEdges);
+}
+
+FabricEdge *FabricEdge::create(FabricVertex *vertexA, FabricVertex *vertexB, ze_fabric_edge_exp_properties_t &properties) {
+
+    FabricEdge *edge = new FabricEdge();
+    edge->vertexA = vertexA;
+    edge->vertexB = vertexB;
+    edge->properties = properties;
+    return edge;
+}
+
+void FabricEdge::createEdgesFromVertices(const std::vector<FabricVertex *> &vertices, std::vector<FabricEdge *> &edges) {
+
+    // Get all vertices and sub-vertices
+    std::vector<FabricVertex *> allVertices = {};
+    for (auto &fabricVertex : vertices) {
+        allVertices.push_back(fabricVertex);
+        for (auto &fabricSubVertex : fabricVertex->subVertices) {
+            allVertices.push_back(fabricSubVertex);
+        }
+    }
+
+    // Get edges between all vertices
+    for (uint32_t vertexAIndex = 0; vertexAIndex < allVertices.size(); vertexAIndex++) {
+        for (uint32_t vertexBIndex = vertexAIndex + 1; vertexBIndex < allVertices.size(); vertexBIndex++) {
+            ze_fabric_edge_exp_properties_t edgeProperty = {};
+
+            for (auto const &fabricDeviceInterface : allVertices[vertexAIndex]->pFabricDeviceInterfaces) {
+                bool isConnected =
+                    fabricDeviceInterface.second->getEdgeProperty(allVertices[vertexBIndex], edgeProperty);
+                if (isConnected) {
+                    edges.push_back(create(allVertices[vertexAIndex], allVertices[vertexBIndex], edgeProperty));
+                }
+            }
+        }
+    }
 }
 
 } // namespace L0

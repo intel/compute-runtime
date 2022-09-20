@@ -248,6 +248,22 @@ zeGetDeviceProcAddrTable(
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
+zeGetDeviceExpProcAddrTable(
+    ze_api_version_t version,
+    ze_device_exp_dditable_t *pDdiTable) {
+    if (nullptr == pDdiTable)
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    pDdiTable->pfnGetFabricVertexExp = L0::zeDeviceGetFabricVertexExp;
+    driver_ddiTable.core_ddiTable.DeviceExp = *pDdiTable;
+    return result;
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetCommandQueueProcAddrTable(
     ze_api_version_t version,
     ze_command_queue_dditable_t *pDdiTable) {
@@ -644,5 +660,24 @@ zeGetFabricVertexExpProcAddrTable(
     pDdiTable->pfnGetPropertiesExp = L0::zeFabricVertexGetPropertiesExp;
     pDdiTable->pfnGetDeviceExp = L0::zeFabricVertexGetDeviceExp;
     driver_ddiTable.core_ddiTable.FabricVertexExp = *pDdiTable;
+    return result;
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeGetFabricEdgeExpProcAddrTable(
+    ze_api_version_t version,
+    ze_fabric_edge_exp_dditable_t *pDdiTable) {
+
+    if (nullptr == pDdiTable)
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    pDdiTable->pfnGetExp = L0::zeFabricEdgeGetExp;
+    pDdiTable->pfnGetVerticesExp = L0::zeFabricEdgeGetVerticesExp;
+    pDdiTable->pfnGetPropertiesExp = L0::zeFabricEdgeGetPropertiesExp;
+    driver_ddiTable.core_ddiTable.FabricEdgeExp = *pDdiTable;
     return result;
 }

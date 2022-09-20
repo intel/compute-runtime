@@ -1480,4 +1480,13 @@ NEO::EngineGroupType DeviceImp::getEngineGroupTypeForOrdinal(uint32_t ordinal) c
     return engineGroupType;
 }
 
+ze_result_t DeviceImp::getFabricVertex(ze_fabric_vertex_handle_t *phVertex) const {
+    if (fabricVertex == nullptr) {
+        return ZE_RESULT_EXP_ERROR_DEVICE_IS_NOT_VERTEX;
+    }
+
+    *phVertex = fabricVertex->toHandle();
+    return ZE_RESULT_SUCCESS;
+}
+
 } // namespace L0

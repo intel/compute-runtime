@@ -67,4 +67,23 @@ ze_result_t zeFabricVertexGetDeviceExp(
     ze_fabric_vertex_handle_t hVertex,
     ze_device_handle_t *phDevice);
 
+ze_result_t zeDeviceGetFabricVertexExp(
+    ze_device_handle_t hDevice,
+    ze_fabric_vertex_handle_t *phVertex);
+
+ze_result_t zeFabricEdgeGetExp(
+    ze_fabric_vertex_handle_t hVertexA,
+    ze_fabric_vertex_handle_t hVertexB,
+    uint32_t *pCount,
+    ze_fabric_edge_handle_t *phEdges);
+
+ze_result_t zeFabricEdgeGetVerticesExp(
+    ze_fabric_edge_handle_t hEdge,
+    ze_fabric_vertex_handle_t *phVertexA,
+    ze_fabric_vertex_handle_t *phVertexB);
+
+ze_result_t zeFabricEdgeGetPropertiesExp(
+    ze_fabric_edge_handle_t hEdge,
+    ze_fabric_edge_exp_properties_t *pEdgeProperties);
+
 } // namespace L0

@@ -31,6 +31,7 @@ class FabricDeviceIaf : public FabricDeviceInterface {
     FabricDeviceIaf(Device *device);
     ~FabricDeviceIaf() override = default;
     ze_result_t enumerate() override;
+    bool getEdgeProperty(FabricVertex *neighborVertex, ze_fabric_edge_exp_properties_t &edgeProperty) override;
     std::vector<std::unique_ptr<FabricSubDeviceIaf>> subDeviceIafs = {};
 
   protected:
@@ -44,14 +45,16 @@ class FabricSubDeviceIaf : public FabricDeviceInterface {
     ~FabricSubDeviceIaf() override = default;
     ze_result_t enumerate() override;
     void setIafNlApi(IafNlApi *iafNlApi);
+    bool getEdgeProperty(FabricVertex *neighborVertex, ze_fabric_edge_exp_properties_t &edgeProperty) override;
     std::vector<FabricPortConnection> connections = {};
+    uint64_t guid = 0ull;
 
   protected:
+    bool getEdgeProperty(FabricSubDeviceIaf *pNeighbourInterface,
+                         ze_fabric_edge_exp_properties_t &edgeProperty);
     ze_result_t getConnection(IafPort &port, FabricPortConnection &connection);
-
     std::unique_ptr<IafNlApi> pIafNlApi = nullptr;
     Device *device = nullptr;
-    uint64_t guid = 0ull;
 };
 
 } // namespace L0
