@@ -141,6 +141,9 @@ class BufferObject {
 
     static constexpr int gpuHangDetected{-7171};
 
+    uint32_t getOsContextId(OsContext *osContext);
+    std::vector<std::array<bool, EngineLimits::maxHandleCount>> bindInfo;
+
   protected:
     MOCKABLE_VIRTUAL MemoryOperationsStatus evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded);
 
@@ -158,7 +161,6 @@ class BufferObject {
     bool requiresImmediateBinding = false;
     bool requiresExplicitResidency = false;
 
-    uint32_t getOsContextId(OsContext *osContext);
     MOCKABLE_VIRTUAL void fillExecObject(ExecObject &execObject, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId);
     void printBOBindingResult(OsContext *osContext, uint32_t vmHandleId, bool bind, int retVal);
 
@@ -170,7 +172,6 @@ class BufferObject {
     CacheRegion cacheRegion = CacheRegion::Default;
     CachePolicy cachePolicy = CachePolicy::WriteBack;
 
-    std::vector<std::array<bool, EngineLimits::maxHandleCount>> bindInfo;
     StackVec<uint32_t, 2> bindExtHandles;
 
     bool colourWithBind = false;

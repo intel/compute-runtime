@@ -47,16 +47,21 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentWithinOsConte
 
         for (auto gfxAllocation = gfxAllocations.begin(); gfxAllocation != gfxAllocations.end(); gfxAllocation++) {
             auto drmAllocation = static_cast<DrmAllocation *>(*gfxAllocation);
+            auto bo = drmAllocation->storageInfo.getNumBanks() > 1 ? drmAllocation->getBOs()[drmIterator] : drmAllocation->getBO();
 
-            int result = drmAllocation->makeBOsResident(osContext, drmIterator, nullptr, true);
-            if (result) {
-                return MemoryOperationsStatus::OUT_OF_MEMORY;
+            if (!bo->bindInfo[bo->getOsContextId(osContext)][drmIterator]) {
+                int result = drmAllocation->makeBOsResident(osContext, drmIterator, nullptr, true);
+                if (result) {
+                    return MemoryOperationsStatus::OUT_OF_MEMORY;
+                }
             }
+
             if (!evictable) {
                 drmAllocation->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, osContext->getContextId());
             }
         }
     }
+
     return MemoryOperationsStatus::SUCCESS;
 }
 

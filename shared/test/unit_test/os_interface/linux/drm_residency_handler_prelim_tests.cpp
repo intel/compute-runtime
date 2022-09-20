@@ -402,6 +402,8 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenMakeBOsResidentFailsThenMakeResi
 
     auto size = 1024u;
     BufferObjects bos;
+    BufferObject mockBo(mock, 3, 1, 0, 1);
+    bos.push_back(&mockBo);
 
     auto allocation = new MockDrmAllocationBOsResident(0, AllocationType::UNKNOWN, bos, nullptr, 0u, size, MemoryPool::LocalMemory);
     auto graphicsAllocation = static_cast<GraphicsAllocation *>(allocation);
