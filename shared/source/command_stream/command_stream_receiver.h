@@ -392,6 +392,7 @@ class CommandStreamReceiver {
 
     LinearStream commandStream;
     StreamProperties streamProperties{};
+    FrontEndPropertiesSupport feSupportFlags{};
 
     // offset for debug state is 1kbyte, tag writes can use multiple offsets for multiple partitions and each offset can vary per platform
     const uint64_t debugPauseStateAddressOffset = MemoryConstants::kiloByte;

@@ -231,6 +231,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiver::clearColorAllocation;
     using CommandStreamReceiver::commandStream;
     using CommandStreamReceiver::dispatchMode;
+    using CommandStreamReceiver::feSupportFlags;
     using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiver::isPreambleSent;
     using CommandStreamReceiver::latestFlushedTaskCount;

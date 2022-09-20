@@ -177,6 +177,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void unregisterDirectSubmissionFromController();
     constexpr bool isGlobalAtomicsProgrammingRequired(bool currentValue) const;
     void createKernelArgsBufferAllocation() override;
+    void handleFrontEndStateTransition(DispatchFlags &dispatchFlags);
 
     HeapDirtyState dshState;
     HeapDirtyState iohState;

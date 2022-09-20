@@ -74,7 +74,9 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
         this->staticWorkPartitioningEnabled = true;
     }
 
-    this->systolicModeConfigurable = HwInfoConfig::get(hwInfo.platform.eProductFamily)->isSystolicModeConfigurable(hwInfo);
+    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    this->systolicModeConfigurable = hwInfoConfig->isSystolicModeConfigurable(hwInfo);
+    hwInfoConfig->fillFrontEndPropertiesSupportStructure(feSupportFlags, hwInfo);
 }
 
 CommandStreamReceiver::~CommandStreamReceiver() {

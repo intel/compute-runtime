@@ -38,6 +38,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::getCmdSizeForPrologue;
     using BaseClass::getScratchPatchAddress;
     using BaseClass::getScratchSpaceController;
+    using BaseClass::handleFrontEndStateTransition;
     using BaseClass::indirectHeap;
     using BaseClass::iohState;
     using BaseClass::isBlitterDirectSubmissionEnabled;
@@ -80,6 +81,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::downloadAllocationImpl;
     using BaseClass::CommandStreamReceiver::executionEnvironment;
     using BaseClass::CommandStreamReceiver::experimentalCmdBuffer;
+    using BaseClass::CommandStreamReceiver::feSupportFlags;
     using BaseClass::CommandStreamReceiver::flushStamp;
     using BaseClass::CommandStreamReceiver::globalFenceAllocation;
     using BaseClass::CommandStreamReceiver::gpuHangCheckPeriod;
@@ -91,6 +93,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::isEnginePrologueSent;
     using BaseClass::CommandStreamReceiver::isPreambleSent;
     using BaseClass::CommandStreamReceiver::isStateSipSent;
+    using BaseClass::CommandStreamReceiver::lastAdditionalKernelExecInfo;
     using BaseClass::CommandStreamReceiver::lastKernelExecutionType;
     using BaseClass::CommandStreamReceiver::lastMediaSamplerConfig;
     using BaseClass::CommandStreamReceiver::lastMemoryCompressionState;

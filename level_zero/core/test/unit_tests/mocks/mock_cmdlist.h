@@ -146,6 +146,7 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandListImp {
     using BaseClass::commandListPreemptionMode;
     using BaseClass::csr;
     using BaseClass::initialize;
+    using BaseClass::isFlushTaskSubmissionEnabled;
     using BaseClass::multiReturnPointCommandList;
     using BaseClass::nonImmediateLogicalStateHelper;
     using BaseClass::partitionCount;

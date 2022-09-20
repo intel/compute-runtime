@@ -97,6 +97,8 @@ void ModuleMutableCommandListFixture::setUp(uint32_t revision) {
     NEO::EngineGroupType engineGroupType = NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily).getEngineGroupType(neoDevice->getDefaultEngine().getEngineType(), neoDevice->getDefaultEngine().getEngineUsage(), device->getHwInfo());
 
     commandList.reset(whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue)));
+    commandListImmediate.reset(whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, engineGroupType, returnValue)));
+    commandListImmediate->isFlushTaskSubmissionEnabled = true;
 
     mockKernelImmData = std::make_unique<MockImmutableData>(0u);
     createModuleFromMockBinary(0u, false, mockKernelImmData.get());
@@ -108,6 +110,7 @@ void ModuleMutableCommandListFixture::setUp(uint32_t revision) {
 void ModuleMutableCommandListFixture::tearDown() {
     commandQueue->destroy();
     commandList.reset(nullptr);
+    commandListImmediate.reset(nullptr);
     kernel.reset(nullptr);
     mockKernelImmData.reset(nullptr);
     ModuleImmutableDataFixture::tearDown();

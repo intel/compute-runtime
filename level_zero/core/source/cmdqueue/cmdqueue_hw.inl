@@ -622,18 +622,16 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeInitial(
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::setFrontEndStateProperties(CommandListExecutionContext &ctx) {
     const auto &hwInfo = this->device->getHwInfo();
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    auto disableOverdispatch = hwInfoConfig.isDisableOverdispatchAvailable(hwInfo);
 
     auto isEngineInstanced = csr->getOsContext().isEngineInstanced();
     auto &streamProperties = this->csr->getStreamProperties();
     if (!frontEndTrackingEnabled()) {
         streamProperties.frontEndState.setProperties(ctx.anyCommandListWithCooperativeKernels, ctx.anyCommandListRequiresDisabledEUFusion,
-                                                     disableOverdispatch, isEngineInstanced, hwInfo);
+                                                     true, isEngineInstanced, hwInfo);
+        ctx.frontEndStateDirty |= (streamProperties.frontEndState.isDirty() && !this->csr->getLogicalStateHelper());
     } else {
         ctx.engineInstanced = isEngineInstanced;
     }
-    ctx.frontEndStateDirty |= (streamProperties.frontEndState.isDirty() && !this->csr->getLogicalStateHelper());
     ctx.frontEndStateDirty |= csr->getMediaVFEStateDirty();
 }
 

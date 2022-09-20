@@ -153,6 +153,7 @@ struct UltCommandStreamReceiverTest
         commandStreamReceiver.lastSentUseGlobalAtomics = false;
         commandStreamReceiver.streamProperties.stateComputeMode.setProperties(0, GrfConfig::DefaultGrfNumber,
                                                                               hwHelper.getDefaultThreadArbitrationPolicy(), pDevice->getPreemptionMode(), *defaultHwInfo);
+        commandStreamReceiver.streamProperties.frontEndState.setProperties(false, false, false, -1, *defaultHwInfo);
 
         auto logicalStateHelper = commandStreamReceiver.getLogicalStateHelper();
 

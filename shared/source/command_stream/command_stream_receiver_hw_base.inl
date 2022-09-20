@@ -308,13 +308,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     }
 
     if (!logicalStateHelper) {
-        if (dispatchFlags.additionalKernelExecInfo != AdditionalKernelExecInfo::NotApplicable && lastAdditionalKernelExecInfo != dispatchFlags.additionalKernelExecInfo) {
-            setMediaVFEStateDirty(true);
-        }
-
-        if (dispatchFlags.kernelExecutionType != KernelExecutionType::NotApplicable && lastKernelExecutionType != dispatchFlags.kernelExecutionType) {
-            setMediaVFEStateDirty(true);
-        }
+        handleFrontEndStateTransition(dispatchFlags);
     }
 
     auto &commandStreamCSR = this->getCS(getRequiredCmdStreamSizeAligned(dispatchFlags, device));
@@ -970,14 +964,14 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
             lastKernelExecutionType = dispatchFlags.kernelExecutionType;
         }
         auto &hwInfo = peekHwInfo();
+
+        auto isCooperative = dispatchFlags.kernelExecutionType == KernelExecutionType::Concurrent;
+        auto disableOverdispatch = (dispatchFlags.additionalKernelExecInfo != AdditionalKernelExecInfo::NotSet);
+        streamProperties.frontEndState.setProperties(isCooperative, dispatchFlags.disableEUFusion, disableOverdispatch, osContext->isEngineInstanced(), hwInfo);
+
         auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
         auto engineGroupType = hwHelper.getEngineGroupType(getOsContext().getEngineType(), getOsContext().getEngineUsage(), hwInfo);
         auto pVfeState = PreambleHelper<GfxFamily>::getSpaceForVfeState(&csr, hwInfo, engineGroupType);
-        auto disableOverdispatch = hwInfoConfig.isDisableOverdispatchAvailable(hwInfo) &&
-                                   (dispatchFlags.additionalKernelExecInfo != AdditionalKernelExecInfo::NotSet);
-        streamProperties.frontEndState.setProperties(lastKernelExecutionType == KernelExecutionType::Concurrent,
-                                                     dispatchFlags.disableEUFusion, disableOverdispatch, osContext->isEngineInstanced(), hwInfo);
         PreambleHelper<GfxFamily>::programVfeState(
             pVfeState, hwInfo, requiredScratchSize, getScratchPatchAddress(),
             maxFrontEndThreads, streamProperties, logicalStateHelper.get());
@@ -1475,6 +1469,31 @@ void CommandStreamReceiverHw<GfxFamily>::initializeDeviceWithFirstSubmission() {
     auto &commandStream = getCS(EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferEndSize());
     auto commandStreamStart = commandStream.getUsed();
     this->flushSmallTask(commandStream, commandStreamStart);
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::handleFrontEndStateTransition(DispatchFlags &dispatchFlags) {
+    if (streamProperties.frontEndState.disableOverdispatch.value != -1) {
+        lastAdditionalKernelExecInfo = streamProperties.frontEndState.disableOverdispatch.value == 1 ? AdditionalKernelExecInfo::DisableOverdispatch : AdditionalKernelExecInfo::NotSet;
+    }
+    if (streamProperties.frontEndState.computeDispatchAllWalkerEnable.value != -1) {
+        lastKernelExecutionType = streamProperties.frontEndState.computeDispatchAllWalkerEnable.value == 1 ? KernelExecutionType::Concurrent : KernelExecutionType::Default;
+    }
+
+    if (dispatchFlags.additionalKernelExecInfo != AdditionalKernelExecInfo::NotApplicable && lastAdditionalKernelExecInfo != dispatchFlags.additionalKernelExecInfo &&
+        feSupportFlags.disableOverdispatch) {
+        setMediaVFEStateDirty(true);
+    }
+
+    if (dispatchFlags.kernelExecutionType != KernelExecutionType::NotApplicable && lastKernelExecutionType != dispatchFlags.kernelExecutionType &&
+        feSupportFlags.computeDispatchAllWalker) {
+        setMediaVFEStateDirty(true);
+    }
+
+    if ((streamProperties.frontEndState.disableEUFusion.value == -1 || dispatchFlags.disableEUFusion != !!streamProperties.frontEndState.disableEUFusion.value) &&
+        feSupportFlags.disableEuFusion) {
+        setMediaVFEStateDirty(true);
+    }
 }
 
 } // namespace NEO

@@ -1384,5 +1384,251 @@ HWTEST2_F(MultiReturnCommandListTest,
     }
 }
 
+HWTEST2_F(MultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsrWhenAppendingKernelOnBothRegularFirstThenFrontEndStateIsNotChanged, IsAtLeastSkl) {
+    using VFE_STATE_TYPE = typename FamilyType::VFE_STATE_TYPE;
+    NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
+    NEO::HwInfoConfig::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
+
+    EXPECT_TRUE(commandList->multiReturnPointCommandList);
+    EXPECT_TRUE(commandListImmediate->multiReturnPointCommandList);
+
+    auto &regularCmdListStream = *commandList->commandContainer.getCommandStream();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresDisabledEUFusion = 1;
+
+    size_t usedBefore = regularCmdListStream.getUsed();
+    ze_result_t result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t usedAfter = regularCmdListStream.getUsed();
+
+    auto &regularCmdListRequiredState = commandList->getRequiredStreamState();
+    auto &regularCmdListFinalState = commandList->getFinalStreamState();
+
+    if (fePropertiesSupport.disableEuFusion) {
+        EXPECT_EQ(1, regularCmdListRequiredState.frontEndState.disableEUFusion.value);
+        EXPECT_EQ(1, regularCmdListFinalState.frontEndState.disableEUFusion.value);
+    } else {
+        EXPECT_EQ(-1, regularCmdListRequiredState.frontEndState.disableEUFusion.value);
+        EXPECT_EQ(-1, regularCmdListFinalState.frontEndState.disableEUFusion.value);
+    }
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(regularCmdListStream.getCpuBase(), usedBefore),
+        (usedAfter - usedBefore)));
+    auto feStateCmds = findAll<VFE_STATE_TYPE *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(0u, feStateCmds.size());
+
+    auto &cmdQueueStream = commandQueue->commandStream;
+    auto cmdListHandle = commandList->toHandle();
+
+    usedBefore = cmdQueueStream.getUsed();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    usedAfter = cmdQueueStream.getUsed();
+
+    auto cmdQueueCsr = commandQueue->getCsr();
+    auto &csrProperties = cmdQueueCsr->getStreamProperties();
+
+    if (fePropertiesSupport.disableEuFusion) {
+        EXPECT_EQ(1, csrProperties.frontEndState.disableEUFusion.value);
+    } else {
+        EXPECT_EQ(-1, csrProperties.frontEndState.disableEUFusion.value);
+    }
+
+    cmdList.clear();
+    feStateCmds.clear();
+
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdQueueStream.getCpuBase(), usedBefore),
+        (usedAfter - usedBefore)));
+    feStateCmds = findAll<VFE_STATE_TYPE *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(1u, feStateCmds.size());
+    auto &feState = *genCmdCast<VFE_STATE_TYPE *>(*feStateCmds[0]);
+    if (fePropertiesSupport.disableEuFusion) {
+        EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
+    } else {
+        EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
+    }
+
+    auto &immediateCmdListStream = *commandListImmediate->commandContainer.getCommandStream();
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &csrStream = ultCsr.commandStream;
+
+    size_t csrUsedBefore = csrStream.getUsed();
+    usedBefore = immediateCmdListStream.getUsed();
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    usedAfter = immediateCmdListStream.getUsed();
+    size_t csrUsedAfter = csrStream.getUsed();
+
+    auto &immediateCmdListRequiredState = commandListImmediate->getRequiredStreamState();
+    auto &immediateCmdListFinalState = commandListImmediate->getFinalStreamState();
+
+    if (fePropertiesSupport.disableEuFusion) {
+        EXPECT_EQ(1, immediateCmdListRequiredState.frontEndState.disableEUFusion.value);
+        EXPECT_EQ(1, immediateCmdListFinalState.frontEndState.disableEUFusion.value);
+    } else {
+        EXPECT_EQ(-1, immediateCmdListRequiredState.frontEndState.disableEUFusion.value);
+        EXPECT_EQ(-1, immediateCmdListFinalState.frontEndState.disableEUFusion.value);
+    }
+
+    cmdList.clear();
+    feStateCmds.clear();
+
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(immediateCmdListStream.getCpuBase(), usedBefore),
+        (usedAfter - usedBefore)));
+    feStateCmds = findAll<VFE_STATE_TYPE *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(0u, feStateCmds.size());
+
+    auto immediateCsr = commandListImmediate->csr;
+    EXPECT_EQ(cmdQueueCsr, immediateCsr);
+
+    if (fePropertiesSupport.disableEuFusion) {
+        EXPECT_EQ(1, csrProperties.frontEndState.disableEUFusion.value);
+    } else {
+        EXPECT_EQ(-1, csrProperties.frontEndState.disableEUFusion.value);
+    }
+
+    cmdList.clear();
+    feStateCmds.clear();
+
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
+        (csrUsedAfter - csrUsedBefore)));
+    feStateCmds = findAll<VFE_STATE_TYPE *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(0u, feStateCmds.size());
+}
+
+HWTEST2_F(MultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsrWhenAppendingKernelOnBothImmediateFirstThenFrontEndStateIsNotChanged, IsAtLeastSkl) {
+    using VFE_STATE_TYPE = typename FamilyType::VFE_STATE_TYPE;
+    NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
+    NEO::HwInfoConfig::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
+
+    EXPECT_TRUE(commandList->multiReturnPointCommandList);
+    EXPECT_TRUE(commandListImmediate->multiReturnPointCommandList);
+
+    auto cmdQueueCsr = commandQueue->getCsr();
+    auto &csrProperties = cmdQueueCsr->getStreamProperties();
+
+    auto immediateCsr = commandListImmediate->csr;
+    EXPECT_EQ(cmdQueueCsr, immediateCsr);
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresDisabledEUFusion = 1;
+
+    auto &immediateCmdListStream = *commandListImmediate->commandContainer.getCommandStream();
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &csrStream = ultCsr.commandStream;
+
+    size_t csrUsedBefore = csrStream.getUsed();
+    size_t usedBefore = immediateCmdListStream.getUsed();
+    ze_result_t result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t usedAfter = immediateCmdListStream.getUsed();
+    size_t csrUsedAfter = csrStream.getUsed();
+
+    auto &immediateCmdListRequiredState = commandListImmediate->getRequiredStreamState();
+    auto &immediateCmdListFinalState = commandListImmediate->getFinalStreamState();
+
+    if (fePropertiesSupport.disableEuFusion) {
+        EXPECT_EQ(1, immediateCmdListRequiredState.frontEndState.disableEUFusion.value);
+        EXPECT_EQ(1, immediateCmdListFinalState.frontEndState.disableEUFusion.value);
+    } else {
+        EXPECT_EQ(-1, immediateCmdListRequiredState.frontEndState.disableEUFusion.value);
+        EXPECT_EQ(-1, immediateCmdListFinalState.frontEndState.disableEUFusion.value);
+    }
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(immediateCmdListStream.getCpuBase(), usedBefore),
+        (usedAfter - usedBefore)));
+    auto feStateCmds = findAll<VFE_STATE_TYPE *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(0u, feStateCmds.size());
+
+    if (fePropertiesSupport.disableEuFusion) {
+        EXPECT_EQ(1, csrProperties.frontEndState.disableEUFusion.value);
+    } else {
+        EXPECT_EQ(-1, csrProperties.frontEndState.disableEUFusion.value);
+    }
+
+    cmdList.clear();
+    feStateCmds.clear();
+
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
+        (csrUsedAfter - csrUsedBefore)));
+    feStateCmds = findAll<VFE_STATE_TYPE *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(1u, feStateCmds.size());
+    auto &feState = *genCmdCast<VFE_STATE_TYPE *>(*feStateCmds[0]);
+    if (fePropertiesSupport.disableEuFusion) {
+        EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
+    } else {
+        EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
+    }
+
+    auto &regularCmdListStream = *commandList->commandContainer.getCommandStream();
+
+    usedBefore = regularCmdListStream.getUsed();
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    usedAfter = regularCmdListStream.getUsed();
+
+    auto &regularCmdListRequiredState = commandList->getRequiredStreamState();
+    auto &regularCmdListFinalState = commandList->getFinalStreamState();
+
+    if (fePropertiesSupport.disableEuFusion) {
+        EXPECT_EQ(1, regularCmdListRequiredState.frontEndState.disableEUFusion.value);
+        EXPECT_EQ(1, regularCmdListFinalState.frontEndState.disableEUFusion.value);
+    } else {
+        EXPECT_EQ(-1, regularCmdListRequiredState.frontEndState.disableEUFusion.value);
+        EXPECT_EQ(-1, regularCmdListFinalState.frontEndState.disableEUFusion.value);
+    }
+
+    cmdList.clear();
+    feStateCmds.clear();
+
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(regularCmdListStream.getCpuBase(), usedBefore),
+        (usedAfter - usedBefore)));
+    feStateCmds = findAll<VFE_STATE_TYPE *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(0u, feStateCmds.size());
+
+    auto &cmdQueueStream = commandQueue->commandStream;
+    auto cmdListHandle = commandList->toHandle();
+
+    usedBefore = cmdQueueStream.getUsed();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    usedAfter = cmdQueueStream.getUsed();
+
+    if (fePropertiesSupport.disableEuFusion) {
+        EXPECT_EQ(1, csrProperties.frontEndState.disableEUFusion.value);
+    } else {
+        EXPECT_EQ(-1, csrProperties.frontEndState.disableEUFusion.value);
+    }
+
+    cmdList.clear();
+    feStateCmds.clear();
+
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdQueueStream.getCpuBase(), usedBefore),
+        (usedAfter - usedBefore)));
+    feStateCmds = findAll<VFE_STATE_TYPE *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(0u, feStateCmds.size());
+}
+
 } // namespace ult
 } // namespace L0

@@ -75,6 +75,7 @@ struct ModuleMutableCommandListFixture : public ModuleImmutableDataFixture {
 
     std::unique_ptr<MockImmutableData> mockKernelImmData;
     std::unique_ptr<L0::ult::CommandList> commandList;
+    std::unique_ptr<L0::ult::CommandList> commandListImmediate;
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     L0::ult::CommandQueue *commandQueue;
 };

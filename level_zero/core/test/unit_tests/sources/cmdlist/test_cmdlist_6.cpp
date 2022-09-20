@@ -76,7 +76,7 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     NEO::FrontEndPropertiesSupport frontEndPropertiesSupport = {};
     hwInfoConfig.fillFrontEndPropertiesSupportStructure(frontEndPropertiesSupport, device->getHwInfo());
 
-    int expectedDisableOverdispatch = hwInfoConfig.isDisableOverdispatchAvailable(*defaultHwInfo);
+    int expectedDisableOverdispatch = frontEndPropertiesSupport.disableOverdispatch;
     int32_t expectedIsCoherencyRequired = scmPropertiesSupport.coherencyRequired ? hwHelper.forceNonGpuCoherencyWA(true) : -1;
     int expectedLargeGrfMode = scmPropertiesSupport.largeGrfMode ? 1 : -1;
     int expectedThreadArbitrationPolicy = scmPropertiesSupport.threadArbitrationPolicy ? NEO::ThreadArbitrationPolicy::RoundRobin : -1;

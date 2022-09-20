@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/basic_math.h"
@@ -2417,6 +2418,8 @@ HWTEST_F(KernelExecutionTypesTests, givenKernelWithDifferentExecutionTypeWhileDo
     auto pKernel = mockKernelWithInternals.mockKernel;
     size_t gws[3] = {63, 0, 0};
     auto &mockCsr = device->getUltCommandStreamReceiver<FamilyType>();
+
+    mockCsr.feSupportFlags.computeDispatchAllWalker = true;
 
     pKernel->setKernelExecutionType(CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL);
     mockCmdQ->enqueueKernel(pKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
