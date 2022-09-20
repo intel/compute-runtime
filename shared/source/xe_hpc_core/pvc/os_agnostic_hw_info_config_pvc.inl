@@ -181,6 +181,11 @@ bool HwInfoConfigHw<gfxProduct>::isComputeDispatchAllWalkerEnableInComputeWalker
 }
 
 template <>
+bool HwInfoConfigHw<gfxProduct>::isCopyEngineSelectorEnabled(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <>
 uint32_t HwInfoConfigHw<gfxProduct>::getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const {
     return PVC::isXlA0(hwInfo) ? 8u : 16u;
 }

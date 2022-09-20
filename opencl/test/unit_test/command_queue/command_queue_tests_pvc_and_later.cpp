@@ -25,6 +25,8 @@ using namespace NEO;
 using CommandQueuePvcAndLaterTests = ::testing::Test;
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenMultipleBcsEnginesWhenGetBcsCommandStreamReceiverIsCalledThenReturnProperCsrs, IsAtLeastXeHpcCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableCopyEngineSelector.set(1);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -52,6 +54,8 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenMultipleBcsEnginesWhenGetBcsCommand
 }
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenAdditionalBcsWhenCreatingCommandQueueThenUseCorrectEngine, IsAtLeastXeHpcCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableCopyEngineSelector.set(1);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -86,6 +90,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenAdditionalBcsWhenCreatingCommandQue
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenDeferCmdQBcsInitializationEnabledWhenCreateCommandQueueThenBcsCountIsZero, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableCopyEngineSelector.set(1);
     DebugManager.flags.DeferCmdQBcsInitialization.set(1u);
 
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -106,6 +111,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenDeferCmdQBcsInitializationEnabledWh
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, whenConstructBcsEnginesForSplitThenContainsMultipleBcsEngines, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableCopyEngineSelector.set(1);
     DebugManager.flags.DeferCmdQBcsInitialization.set(1u);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
@@ -131,6 +137,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, whenConstructBcsEnginesForSplitThenConta
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenSplitBcsMaskWhenConstructBcsEnginesForSplitThenContainsGivenBcsEngines, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableCopyEngineSelector.set(1);
     std::bitset<bcsInfoMaskSize> bcsMask = 0b100110101;
     DebugManager.flags.DeferCmdQBcsInitialization.set(1u);
     DebugManager.flags.SplitBcsMask.set(static_cast<int>(bcsMask.to_ulong()));
@@ -162,6 +169,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenSplitBcsMaskWhenConstructBcsEngines
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, whenSelectCsrForHostPtrAllocationThenReturnProperEngine, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableCopyEngineSelector.set(1);
     DebugManager.flags.DeferCmdQBcsInitialization.set(1u);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
@@ -187,6 +195,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, whenSelectCsrForHostPtrAllocationThenRet
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, whenPrepareHostPtrSurfaceForSplitThenSetTaskCountsToZero, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableCopyEngineSelector.set(1);
     DebugManager.flags.DeferCmdQBcsInitialization.set(1u);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
@@ -240,6 +249,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, whenPrepareHostPtrSurfaceForSplitThenSet
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenDeferCmdQBcsInitializationDisabledWhenCreateCommandQueueThenBcsIsInitialized, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableCopyEngineSelector.set(1);
     DebugManager.flags.DeferCmdQBcsInitialization.set(0u);
 
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -259,6 +269,8 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenDeferCmdQBcsInitializationDisabledW
 }
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenQueueWithMainBcsIsReleasedWhenNewQueueIsCreatedThenMainBcsCanBeUsedAgain, IsAtLeastXeHpcCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableCopyEngineSelector.set(1);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -292,7 +304,8 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenQueueWithMainBcsIsReleasedWhenNewQu
 }
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenCooperativeEngineUsageHintAndCcsWhenCreatingCommandQueueThenCreateQueueWithCooperativeEngine, IsAtLeastXeHpcCore) {
-    DebugManagerStateRestore restore;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableCopyEngineSelector.set(1);
     DebugManager.flags.EngineUsageHint.set(static_cast<int32_t>(EngineUsage::Cooperative));
 
     auto hwInfo = *defaultHwInfo;
@@ -325,6 +338,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenCooperativeEngineUsageHintAndCcsWhe
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenDeferCmdQGpgpuInitializationEnabledWhenCreateCommandQueueThenGpgpuIsNullptr, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableCopyEngineSelector.set(1);
     DebugManager.flags.DeferCmdQGpgpuInitialization.set(1u);
 
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -343,6 +357,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenDeferCmdQGpgpuInitializationEnabled
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenDeferCmdQGpgpuInitializationDisabledWhenCreateCommandQueueThenGpgpuIsnotNullptr, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableCopyEngineSelector.set(1);
     DebugManager.flags.DeferCmdQGpgpuInitialization.set(0u);
 
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -361,6 +376,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenDeferCmdQGpgpuInitializationDisable
 
 struct BcsCsrSelectionCommandQueueTests : ::testing::Test {
     void SetUp() override {
+        DebugManager.flags.EnableCopyEngineSelector.set(1);
         HardwareInfo hwInfo = *::defaultHwInfo;
         hwInfo.capabilityTable.blitterOperationsSupported = true;
         hwInfo.featureTable.ftrBcsInfo = maxNBitValue(bcsInfoMaskSize);
@@ -398,6 +414,7 @@ struct BcsCsrSelectionCommandQueueTests : ::testing::Test {
     MockDevice *device;
     std::unique_ptr<MockClDevice> clDevice;
     std::unique_ptr<MockContext> context;
+    DebugManagerStateRestore restorer;
 };
 
 HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenBcsSelectedWithQueueFamiliesWhenSelectingCsrThenSelectProperBcs, IsAtLeastXeHpcCore) {

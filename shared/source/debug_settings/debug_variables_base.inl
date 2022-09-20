@@ -391,6 +391,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideNotifyEnableForTagUpdatePostSync, -1, "-
 DECLARE_DEBUG_VARIABLE(int32_t, EnableCmdQRoundRobindEngineAssign, -1, "-1: default, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, CmdQRoundRobindEngineAssignBitfield, -1, "-1: default, >0: bitfield with supported engines")
 DECLARE_DEBUG_VARIABLE(int32_t, CmdQRoundRobindEngineAssignNTo1, -1, "-1: default, >0: assign same engine to N queues")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableCopyEngineSelector, -1, "Do not choose only main copy engine, -1: default, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableCmdQRoundRobindBcsEngineAssign, -1, "-1: default, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableCmdQRoundRobindBcsEngineAssignLimit, -1, "-1: default, >=0: round robin limit")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableCmdQRoundRobindBcsEngineAssignStartingValue, -1, "-1: default, >=0: round robin starting point")

@@ -18,8 +18,36 @@
 using namespace NEO;
 using EngineNodeHelperPvcTests = ::Test<ClDeviceFixture>;
 
+PVCTEST_F(EngineNodeHelperPvcTests, WhenGetBcsEngineTypeIsCalledWithoutSelectorEnabledForPVCThenCorrectBcsEngineIsReturned) {
+    using namespace aub_stream;
+
+    auto pHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto deviceBitfield = pDevice->getDeviceBitfield();
+
+    pHwInfo->featureTable.ftrBcsInfo = 1;
+    auto &selectorCopyEngine = pDevice->getNearestGenericSubDevice(0)->getSelectorCopyEngine();
+    selectorCopyEngine.isMainUsed.store(true);
+    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
+
+    pHwInfo->featureTable.ftrBcsInfo = 0b111;
+    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
+
+    pHwInfo->featureTable.ftrBcsInfo = 0b11;
+    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
+
+    pHwInfo->featureTable.ftrBcsInfo = 0b101;
+    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(ENGINE_BCS, EngineHelpers::getBcsEngineType(*pHwInfo, deviceBitfield, selectorCopyEngine, false));
+}
+
 PVCTEST_F(EngineNodeHelperPvcTests, WhenGetBcsEngineTypeIsCalledForPVCThenCorrectBcsEngineIsReturned) {
     using namespace aub_stream;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableCopyEngineSelector.set(1);
 
     auto pHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto deviceBitfield = pDevice->getDeviceBitfield();
@@ -46,6 +74,8 @@ PVCTEST_F(EngineNodeHelperPvcTests, WhenGetBcsEngineTypeIsCalledForPVCThenCorrec
 
 PVCTEST_F(EngineNodeHelperPvcTests, givenPvcBaseDieA0AndTile1WhenGettingBcsEngineTypeThenDoNotUseBcs1) {
     using namespace aub_stream;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableCopyEngineSelector.set(1);
 
     auto pHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     pHwInfo->featureTable.ftrBcsInfo = 0b11111;
@@ -75,7 +105,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenCccsDisabledButDebugVariableSetWhenGetG
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
 
-    DebugManagerStateRestore restore;
+    DebugManagerStateRestore restorer;
     DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS));
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));

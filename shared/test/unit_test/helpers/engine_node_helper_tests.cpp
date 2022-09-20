@@ -74,6 +74,8 @@ TEST(EngineNodeHelperTest, givenInvalidEngineTypeWhenGettingStringRepresentation
 }
 
 TEST(EngineNodeHelperTest, givenLinkCopyEnginesSupportedWhenGettingBcsEngineTypeThenFirstReturnMainCopyEngineAndThenRoundRobinBetweenLinkEngines) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableCopyEngineSelector.set(1);
     SelectorCopyEngine selectorCopyEngine{};
     HardwareInfo hwInfo = *::defaultHwInfo;
     DeviceBitfield deviceBitfield = 0b11;
@@ -89,6 +91,8 @@ TEST(EngineNodeHelperTest, givenLinkCopyEnginesSupportedWhenGettingBcsEngineType
 }
 
 TEST(EngineNodeHelperTest, givenMainBcsEngineIsReleasedWhenGettingBcsEngineTypeThenItCanBeReturnedAgain) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableCopyEngineSelector.set(1);
     SelectorCopyEngine selectorCopyEngine{};
     HardwareInfo hwInfo = *::defaultHwInfo;
     DeviceBitfield deviceBitfield = 0b11;
@@ -106,6 +110,8 @@ TEST(EngineNodeHelperTest, givenMainBcsEngineIsReleasedWhenGettingBcsEngineTypeT
 }
 
 TEST(EngineNodeHelperTest, givenLinkBcsEngineIsReleasedWhenGettingBcsEngineTypeThenItDoesNotAffectFurtherSelections) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableCopyEngineSelector.set(1);
     SelectorCopyEngine selectorCopyEngine{};
     HardwareInfo hwInfo = *::defaultHwInfo;
     DeviceBitfield deviceBitfield = 0b11;
@@ -123,6 +129,8 @@ TEST(EngineNodeHelperTest, givenLinkBcsEngineIsReleasedWhenGettingBcsEngineTypeT
 }
 
 TEST(EngineNodeHelperTest, givenLinkCopyEnginesAndInternalUsageEnabledWhenGettingBcsEngineThenUseBcs2only) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableCopyEngineSelector.set(1);
     SelectorCopyEngine selectorCopyEngine{};
     HardwareInfo hwInfo = *::defaultHwInfo;
     DeviceBitfield deviceBitfield = 0b11;

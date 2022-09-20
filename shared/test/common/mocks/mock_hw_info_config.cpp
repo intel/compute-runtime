@@ -307,6 +307,11 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isComputeDispatchAllWalkerEnableInComputeWalk
 }
 
 template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isCopyEngineSelectorEnabled(const HardwareInfo &hwInfo) const {
+    return true;
+}
+
+template <>
 bool HwInfoConfigHw<IGFX_UNKNOWN>::isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
     return false;
 }

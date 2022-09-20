@@ -109,9 +109,17 @@ aub_stream::EngineType getBcsEngineType(const HardwareInfo &hwInfo, const Device
         return aub_stream::ENGINE_BCS3;
     }
 
-    const bool isMainCopyEngineAlreadyUsed = selectorCopyEngine.isMainUsed.exchange(true);
-    if (isMainCopyEngineAlreadyUsed) {
-        return selectLinkCopyEngine(hwInfo, deviceBitfield, selectorCopyEngine.selector);
+    auto enableSelector = HwInfoConfig::get(hwInfo.platform.eProductFamily)->isCopyEngineSelectorEnabled(hwInfo);
+
+    if (DebugManager.flags.EnableCopyEngineSelector.get() != -1) {
+        enableSelector = DebugManager.flags.EnableCopyEngineSelector.get();
+    }
+
+    if (enableSelector) {
+        const bool isMainCopyEngineAlreadyUsed = selectorCopyEngine.isMainUsed.exchange(true);
+        if (isMainCopyEngineAlreadyUsed) {
+            return selectLinkCopyEngine(hwInfo, deviceBitfield, selectorCopyEngine.selector);
+        }
     }
 
     return aub_stream::ENGINE_BCS;

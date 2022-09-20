@@ -53,6 +53,12 @@ PVCTEST_F(PvcHwInfoConfig, givenPvcHwInfoConfigWhenCheckDirectSubmissionSupporte
     EXPECT_TRUE(hwInfoConfig.isDirectSubmissionSupported(hwInfo));
 }
 
+PVCTEST_F(PvcHwInfoConfig, givenPvcHwInfoConfigWhenCheckCopyEngineSelectorEnabledThenFalseIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    auto hwInfo = *defaultHwInfo;
+    EXPECT_FALSE(hwInfoConfig.isCopyEngineSelectorEnabled(hwInfo));
+}
+
 PVCTEST_F(PvcHwInfoConfig, givenHwInfoConfigAndProgramExtendedPipeControlPriorToNonPipelinedStateCommandDisabledWhenAskedIfPipeControlPriorToNonPipelinedStateCommandsWARequiredThenFalseIsReturned) {
     DebugManagerStateRestore restore;
     DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(0);
