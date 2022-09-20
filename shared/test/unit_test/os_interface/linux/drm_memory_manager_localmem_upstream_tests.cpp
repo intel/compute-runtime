@@ -121,7 +121,8 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWhenCreateBuffer
                                                                                             gpuAddress,
                                                                                             size,
                                                                                             (1 << (MemoryBanks::getBankForLocalMemory(0) - 1)),
-                                                                                            1));
+                                                                                            1,
+                                                                                            -1));
     ASSERT_NE(nullptr, bo);
     EXPECT_EQ(1u, mock->ioctlCallsCount);
     EXPECT_EQ(1u, mock->createExt.handle);
@@ -441,7 +442,8 @@ class DrmMemoryManagerLocalMemoryMemoryBankMock : public TestedDrmMemoryManager 
                                                    uint64_t gpuAddress,
                                                    size_t size,
                                                    uint32_t memoryBanks,
-                                                   size_t maxOsContextCount) override {
+                                                   size_t maxOsContextCount,
+                                                   int32_t pairHandle) override {
         memoryBankIsOne = (memoryBanks == 1) ? true : false;
         return nullptr;
     }

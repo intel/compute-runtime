@@ -18,11 +18,15 @@ bool IoctlHelperUpstream::initialize() {
     return true;
 }
 
+bool IoctlHelperUpstream::isSetPairAvailable() {
+    return false;
+}
+
 bool IoctlHelperUpstream::isVmBindAvailable() {
     return false;
 }
 
-uint32_t IoctlHelperUpstream::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) {
+uint32_t IoctlHelperUpstream::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) {
     uint32_t regionsSize = static_cast<uint32_t>(memClassInstances.size());
     std::vector<drm_i915_gem_memory_class_instance> regions(regionsSize);
     for (uint32_t i = 0; i < regionsSize; i++) {

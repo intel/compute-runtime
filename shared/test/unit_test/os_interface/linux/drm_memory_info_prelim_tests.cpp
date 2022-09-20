@@ -371,7 +371,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemWithExtensionsThenRetu
     auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
     ASSERT_NE(nullptr, memoryInfo);
 
-    auto ret = memoryInfo->createGemExt(memClassInstance, 1024, handle, {});
+    auto ret = memoryInfo->createGemExt(memClassInstance, 1024, handle, {}, -1);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -395,7 +395,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithSingleRegionThe
 
     auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
     ASSERT_NE(nullptr, memoryInfo);
-    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle);
+    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, -1);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -405,6 +405,35 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithSingleRegionThe
     ASSERT_EQ(1u, createExt->memoryRegions.size());
     EXPECT_EQ(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, createExt->memoryRegions[0].memoryClass);
     EXPECT_EQ(1024u, drm->context.receivedCreateGemExt->size);
+}
+
+TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithPairHandleThenReturnCorrectValues) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableLocalMemory.set(1);
+
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[0].probedSize = 8 * GB;
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[1].probedSize = 16 * GB;
+
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->context.setPairQueryValue = 1;
+    drm->context.setPairQueryReturn = 1;
+
+    uint32_t pairHandle = 0;
+    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
+    ASSERT_NE(nullptr, memoryInfo);
+    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, pairHandle, -1);
+    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(1u, drm->ioctlCallsCount);
+
+    uint32_t handle = 0;
+    ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, pairHandle);
+    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(2u, drm->ioctlCallsCount);
 }
 
 TEST(MemoryInfo, givenMemoryInfoWithRegionsAndPrivateBOSupportWhenCreatingGemExtWithSingleRegionThenValidVmIdIsSet) {
@@ -426,7 +455,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsAndPrivateBOSupportWhenCreatingGemExt
     ASSERT_NE(nullptr, memoryInfo);
 
     uint32_t handle = 0;
-    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle);
+    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, -1);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -456,7 +485,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsAndNoPrivateBOSupportWhenCreatingGemE
     ASSERT_NE(nullptr, memoryInfo);
 
     uint32_t handle = 0;
-    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle);
+    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, -1);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -485,7 +514,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsAndPrivateBOSupportedAndIsPerContextV
     ASSERT_NE(nullptr, memoryInfo);
 
     uint32_t handle = 0;
-    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle);
+    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, -1);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);

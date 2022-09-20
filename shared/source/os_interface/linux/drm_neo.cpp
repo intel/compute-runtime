@@ -1263,6 +1263,15 @@ void Drm::waitForBind(uint32_t vmHandleId) {
     waitUserFence(0u, castToUint64(&this->pagingFence[vmHandleId]), this->fenceVal[vmHandleId], ValueWidth::U64, -1, ioctlHelper->getWaitUserFenceSoftFlag());
 }
 
+bool Drm::isSetPairAvailable() {
+    std::call_once(checkBindOnce, [this]() {
+        int ret = ioctlHelper->isSetPairAvailable();
+        setPairAvailable = ret;
+    });
+
+    return setPairAvailable;
+}
+
 bool Drm::isVmBindAvailable() {
     std::call_once(checkBindOnce, [this]() {
         int ret = ioctlHelper->isVmBindAvailable();

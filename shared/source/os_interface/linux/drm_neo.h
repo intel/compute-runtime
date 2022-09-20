@@ -157,6 +157,9 @@ class Drm : public DriverModel {
     void setDirectSubmissionActive(bool value) { this->directSubmissionActive = value; }
     bool isDirectSubmissionActive() const { return this->directSubmissionActive; }
 
+    MOCKABLE_VIRTUAL bool isSetPairAvailable();
+    MOCKABLE_VIRTUAL bool getSetPairAvailable() { return setPairAvailable; }
+
     bool useVMBindImmediate() const;
 
     MOCKABLE_VIRTUAL bool isVmBindAvailable();
@@ -338,6 +341,7 @@ class Drm : public DriverModel {
     bool requirePerContextVM = false;
     bool bindAvailable = false;
     bool directSubmissionActive = false;
+    bool setPairAvailable = false;
     bool contextDebugSupported = false;
     bool pageFaultSupported = false;
     bool completionFenceSupported = false;

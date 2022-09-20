@@ -48,6 +48,10 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
             vmBindQueryCalled++;
             *gp->value = vmBindQueryValue;
             return vmBindQueryReturn;
+        } else if (gp->param == PRELIM_I915_PARAM_HAS_SET_PAIR) {
+            setPairQueryCalled++;
+            *gp->value = setPairQueryValue;
+            return setPairQueryReturn;
         }
     } break;
     case DrmIoctl::GemContextGetparam: {
@@ -158,9 +162,18 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
 
         prelim_drm_i915_gem_create_ext_vm_private *vmPrivateExt = nullptr;
         if (extension->base.next_extension != 0) {
-            vmPrivateExt = reinterpret_cast<prelim_drm_i915_gem_create_ext_vm_private *>(extension->base.next_extension);
-            if (vmPrivateExt->base.name != PRELIM_I915_GEM_CREATE_EXT_VM_PRIVATE) {
-                return EINVAL;
+
+            prelim_drm_i915_gem_create_ext_setparam *pairSetparamRegion = nullptr;
+            pairSetparamRegion = reinterpret_cast<prelim_drm_i915_gem_create_ext_setparam *>(extension->base.next_extension);
+            if (pairSetparamRegion->base.name == PRELIM_I915_GEM_CREATE_EXT_SETPARAM) {
+                if ((pairSetparamRegion->base.name & PRELIM_I915_PARAM_SET_PAIR) == 0) {
+                    return EINVAL;
+                }
+            } else {
+                vmPrivateExt = reinterpret_cast<prelim_drm_i915_gem_create_ext_vm_private *>(extension->base.next_extension);
+                if (vmPrivateExt->base.name != PRELIM_I915_GEM_CREATE_EXT_VM_PRIVATE) {
+                    return EINVAL;
+                }
             }
         }
 

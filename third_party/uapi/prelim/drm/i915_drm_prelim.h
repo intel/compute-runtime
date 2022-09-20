@@ -248,6 +248,10 @@ struct prelim_drm_i915_gem_context_create_ext_clone {
 
 /* Recoverable pagefault support */
 #define PRELIM_I915_PARAM_HAS_PAGE_FAULT	(PRELIM_I915_PARAM | 7)
+
+/* Implicit scale support */
+#define PRELIM_I915_PARAM_HAS_SET_PAIR	(PRELIM_I915_PARAM | 8)
+
 /* End getparam */
 
 struct prelim_drm_i915_gem_create_ext {
@@ -301,6 +305,7 @@ struct prelim_drm_i915_gem_object_param {
  *	.param = PRELIM_I915_OBJECT_PARAM | PRELIM_I915_PARAM_MEMORY_REGIONS
  */
 #define PRELIM_I915_PARAM_MEMORY_REGIONS ((1 << 16) | 0x1)
+#define PRELIM_I915_PARAM_SET_PAIR ((1 << 17) | 0x1)
 	__u64 param;
 
 	/* Data value or pointer */

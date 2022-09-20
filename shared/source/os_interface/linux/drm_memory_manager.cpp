@@ -1487,7 +1487,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
 }
 
 BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(Drm *drm, Gmm *gmm, AllocationType allocationType, uint64_t gpuAddress,
-                                                                 size_t size, uint32_t memoryBanks, size_t maxOsContextCount) {
+                                                                 size_t size, uint32_t memoryBanks, size_t maxOsContextCount, int32_t pairHandle) {
     auto memoryInfo = drm->getMemoryInfo();
     if (!memoryInfo) {
         return nullptr;
@@ -1500,7 +1500,7 @@ BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(Drm *drm, Gmm *
     if (banks.count() > 1) {
         ret = memoryInfo->createGemExtWithMultipleRegions(memoryBanks, size, handle);
     } else {
-        ret = memoryInfo->createGemExtWithSingleRegion(memoryBanks, size, handle);
+        ret = memoryInfo->createGemExtWithSingleRegion(memoryBanks, size, handle, pairHandle);
     }
 
     if (ret != 0) {
@@ -1536,6 +1536,8 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
     }
     allocation->setNumHandles(handles);
 
+    int32_t pairHandle = -1;
+
     for (auto handleId = 0u; handleId < handles; handleId++, currentBank++) {
         if (currentBank == banksCnt) {
             currentBank = 0;
@@ -1554,13 +1556,19 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
         }
         auto gmm = allocation->getGmm(handleId);
         auto boSize = alignUp(gmm->gmmResourceInfo->getSizeAllocation(), MemoryConstants::pageSize64k);
-        bos[handleId] = createBufferObjectInMemoryRegion(drm, gmm, allocation->getAllocationType(), boAddress, boSize, memoryBanks, maxOsContextCount);
+        bos[handleId] = createBufferObjectInMemoryRegion(drm, gmm, allocation->getAllocationType(), boAddress, boSize, memoryBanks, maxOsContextCount, pairHandle);
         if (nullptr == bos[handleId]) {
             return false;
         }
         allocation->getBufferObjectToModify(currentBank + iterationOffset) = bos[handleId];
         if (storageInfo.multiStorage) {
             boAddress += boSize;
+        }
+
+        // only support pairing of handles with PRELIM_I915_PARAM_SET_PAIR for implicit scaling scenarios, which
+        // have 2 handles
+        if (AllocationType::BUFFER == allocation->getAllocationType() && handles == 2 && drm->getSetPairAvailable()) {
+            pairHandle = bos[handleId]->peekHandle();
         }
     }
 
@@ -1672,7 +1680,7 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
 
         auto pointerDiff = ptrDiff(cpuPointer, cpuBasePointer);
         std::unique_ptr<BufferObject, BufferObject::Deleter> bo(this->createBufferObjectInMemoryRegion(&drm, nullptr, allocationData.type,
-                                                                                                       reinterpret_cast<uintptr_t>(cpuPointer), alignedSize, 0u, maxOsContextCount));
+                                                                                                       reinterpret_cast<uintptr_t>(cpuPointer), alignedSize, 0u, maxOsContextCount, -1));
 
         if (!bo) {
             this->munmapFunction(cpuBasePointer, totalSizeToAlloc);
@@ -1801,7 +1809,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     createMemoryRegionsForSharedAllocation(*pHwInfo, *memoryInfo, allocationData, memRegions);
 
     uint32_t handle = 0;
-    auto ret = memoryInfo->createGemExt(memRegions, size, handle, {});
+    auto ret = memoryInfo->createGemExt(memRegions, size, handle, {}, -1);
 
     if (ret) {
         return nullptr;

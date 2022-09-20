@@ -238,3 +238,12 @@ bool DrmMockCustom::isVmBindAvailable() {
         return isVmBindAvailableCall.returnValue;
     }
 }
+
+bool DrmMockCustom::getSetPairAvailable() {
+    getSetPairAvailableCall.called++;
+    if (getSetPairAvailableCall.callParent) {
+        return Drm::getSetPairAvailable();
+    } else {
+        return getSetPairAvailableCall.returnValue;
+    }
+}

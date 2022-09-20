@@ -127,6 +127,8 @@ class DrmMockCustom : public Drm {
 
     int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags) override;
 
+    bool getSetPairAvailable() override;
+
     bool isVmBindAvailable() override;
 
     bool completionFenceSupport() override {
@@ -161,6 +163,7 @@ class DrmMockCustom : public Drm {
     IoctlResExt NONE = {-1, 0};
 
     WaitUserFenceCall waitUserFenceCall{};
+    IsVmBindAvailableCall getSetPairAvailableCall{};
     IsVmBindAvailableCall isVmBindAvailableCall{};
 
     std::atomic<int> ioctl_res;

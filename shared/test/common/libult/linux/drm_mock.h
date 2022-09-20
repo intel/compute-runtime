@@ -46,6 +46,7 @@ class DrmMock : public Drm {
     using Drm::queryAndSetVmBindPatIndexProgrammingSupport;
     using Drm::queryDeviceIdAndRevision;
     using Drm::requirePerContextVM;
+    using Drm::setPairAvailable;
     using Drm::setupIoctlHelper;
     using Drm::sliceCountChangeSupported;
     using Drm::systemInfo;
@@ -137,6 +138,20 @@ class DrmMock : public Drm {
         return bindAvailable;
     }
 
+    bool isSetPairAvailable() override {
+        if (callBaseIsSetPairAvailable) {
+            return Drm::isSetPairAvailable();
+        }
+        return setPairAvailable;
+    }
+
+    bool getSetPairAvailable() override {
+        if (callBaseGetSetPairAvailable) {
+            return Drm::getSetPairAvailable();
+        }
+        return setPairAvailable;
+    }
+
     uint32_t getBaseIoctlCalls() {
         return ioctlCallsForHelperInitialization + static_cast<uint32_t>(virtualMemoryIds.size());
     }
@@ -175,6 +190,8 @@ class DrmMock : public Drm {
     bool allowDebugAttachCallBase = false;
     bool callBaseCreateDrmContext = true;
     bool callBaseIsVmBindAvailable = false;
+    bool callBaseIsSetPairAvailable = false;
+    bool callBaseGetSetPairAvailable = false;
 
     bool capturedCooperativeContextRequest = false;
 

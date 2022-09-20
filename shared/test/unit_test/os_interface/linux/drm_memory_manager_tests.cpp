@@ -4233,7 +4233,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemor
     auto gpuAddress = 0x1234u;
     auto size = MemoryConstants::pageSize;
 
-    auto bo = std::unique_ptr<BufferObject>(memoryManager->createBufferObjectInMemoryRegion(&memoryManager->getDrm(0), nullptr, AllocationType::BUFFER, gpuAddress, size, MemoryBanks::MainBank, 1));
+    auto bo = std::unique_ptr<BufferObject>(memoryManager->createBufferObjectInMemoryRegion(&memoryManager->getDrm(0), nullptr, AllocationType::BUFFER, gpuAddress, size, MemoryBanks::MainBank, 1, -1));
     EXPECT_EQ(nullptr, bo);
 }
 
@@ -4241,7 +4241,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemor
     auto gpuAddress = 0x1234u;
     auto size = 0u;
 
-    auto bo = std::unique_ptr<BufferObject>(memoryManager->createBufferObjectInMemoryRegion(&memoryManager->getDrm(0), nullptr, AllocationType::BUFFER, gpuAddress, size, MemoryBanks::MainBank, 1));
+    auto bo = std::unique_ptr<BufferObject>(memoryManager->createBufferObjectInMemoryRegion(&memoryManager->getDrm(0), nullptr, AllocationType::BUFFER, gpuAddress, size, MemoryBanks::MainBank, 1, -1));
     EXPECT_EQ(nullptr, bo);
 }
 
@@ -4261,6 +4261,90 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenUseKmdMi
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
 
     EXPECT_EQ(allocData.storageInfo.memoryBanks, static_cast<MockedMemoryInfo *>(mock->getMemoryInfo())->banks);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenMemoryAllocationWithNoSetPairAndOneHandleAndCommandBufferTypeThenNoPairHandleIsPassed) {
+    VariableBackup<bool> backupSetPairCallParent{&mock->getSetPairAvailableCall.callParent, false};
+    VariableBackup<bool> backupSetPairReturnValue{&mock->getSetPairAvailableCall.returnValue, true};
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.type = AllocationType::COMMAND_BUFFER;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+    allocData.storageInfo.memoryBanks = 0b01;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+
+    EXPECT_EQ(-1, static_cast<MockedMemoryInfo *>(mock->getMemoryInfo())->pairHandlePassed);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenMemoryAllocationWithSetPairAndOneHandleThenThenNoPairHandleIsPassed) {
+    VariableBackup<bool> backupSetPairCallParent{&mock->getSetPairAvailableCall.callParent, false};
+    VariableBackup<bool> backupSetPairReturnValue{&mock->getSetPairAvailableCall.returnValue, true};
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.type = AllocationType::BUFFER;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+    allocData.storageInfo.memoryBanks = 0b01;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+
+    EXPECT_EQ(-1, static_cast<MockedMemoryInfo *>(mock->getMemoryInfo())->pairHandlePassed);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenMemoryAllocationWithSetPairAndTwoHandlesThenPairHandleIsPassed) {
+    VariableBackup<bool> backupSetPairCallParent{&mock->getSetPairAvailableCall.callParent, false};
+    VariableBackup<bool> backupSetPairReturnValue{&mock->getSetPairAvailableCall.returnValue, true};
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.type = AllocationType::BUFFER;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+    allocData.storageInfo.memoryBanks = 0b11;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+
+    EXPECT_NE(-1, static_cast<MockedMemoryInfo *>(mock->getMemoryInfo())->pairHandlePassed);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenMemoryAllocationWithNoSetPairAndTwoHandlesThenPairHandleIsPassed) {
+    VariableBackup<bool> backupSetPairCallParent{&mock->getSetPairAvailableCall.callParent, false};
+    VariableBackup<bool> backupSetPairReturnValue{&mock->getSetPairAvailableCall.returnValue, false};
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.type = AllocationType::BUFFER;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+    allocData.storageInfo.memoryBanks = 0b11;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+
+    EXPECT_EQ(-1, static_cast<MockedMemoryInfo *>(mock->getMemoryInfo())->pairHandlePassed);
 
     memoryManager->freeGraphicsMemory(allocation);
 }

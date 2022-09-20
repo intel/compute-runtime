@@ -1085,3 +1085,45 @@ TEST(DrmResidencyHandlerTests, givenDebugFlagUseVmBindSetDefaultWhenQueryingIsVm
     EXPECT_FALSE(drm.bindAvailable);
     EXPECT_EQ(1u, drm.context.vmBindQueryCalled);
 }
+
+TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndNoSupportAvailableThenExpectedValueIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.context.setPairQueryValue = 0;
+    drm.context.setPairQueryReturn = 0;
+    EXPECT_FALSE(drm.setPairAvailable);
+
+    EXPECT_EQ(0u, drm.context.setPairQueryCalled);
+    drm.callBaseIsSetPairAvailable = true;
+    EXPECT_FALSE(drm.isSetPairAvailable());
+    EXPECT_FALSE(drm.setPairAvailable);
+    EXPECT_EQ(1u, drm.context.setPairQueryCalled);
+}
+
+TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndSupportAvailableThenExpectedValueIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.context.setPairQueryValue = 1;
+    drm.context.setPairQueryReturn = 0;
+    EXPECT_FALSE(drm.setPairAvailable);
+
+    EXPECT_EQ(0u, drm.context.setPairQueryCalled);
+    drm.callBaseIsSetPairAvailable = true;
+    EXPECT_TRUE(drm.isSetPairAvailable());
+    EXPECT_TRUE(drm.setPairAvailable);
+    EXPECT_EQ(1u, drm.context.setPairQueryCalled);
+}
+
+TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndFailureInQueryThenValueIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.context.setPairQueryValue = 1;
+    drm.context.setPairQueryReturn = 1;
+    EXPECT_FALSE(drm.setPairAvailable);
+
+    EXPECT_EQ(0u, drm.context.setPairQueryCalled);
+    drm.callBaseIsSetPairAvailable = true;
+    EXPECT_FALSE(drm.isSetPairAvailable());
+    EXPECT_FALSE(drm.setPairAvailable);
+    EXPECT_EQ(1u, drm.context.setPairQueryCalled);
+}

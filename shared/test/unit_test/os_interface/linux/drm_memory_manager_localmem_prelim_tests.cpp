@@ -57,7 +57,8 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenDrmMemoryManagerWithPrelimSup
                                                                                             gpuAddress,
                                                                                             size,
                                                                                             (1 << (MemoryBanks::getBankForLocalMemory(0) - 1)),
-                                                                                            1));
+                                                                                            1,
+                                                                                            -1));
     ASSERT_NE(nullptr, bo);
 
     EXPECT_EQ(1u, mock->ioctlCallsCount);
@@ -1253,7 +1254,8 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenPrintBOCreateDestroyResultFla
                                                                                             gpuAddress,
                                                                                             size,
                                                                                             (1 << (MemoryBanks::getBankForLocalMemory(0) - 1)),
-                                                                                            1));
+                                                                                            1,
+                                                                                            -1));
     EXPECT_NE(nullptr, bo);
 
     std::string output = testing::internal::GetCapturedStdout();

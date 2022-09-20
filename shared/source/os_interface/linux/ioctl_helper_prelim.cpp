@@ -24,6 +24,18 @@
 
 namespace NEO {
 
+bool IoctlHelperPrelim20::isSetPairAvailable() {
+    int setPairSupported = 0;
+    GetParam getParam{};
+    getParam.param = PRELIM_I915_PARAM_HAS_SET_PAIR;
+    getParam.value = &setPairSupported;
+    int retVal = IoctlHelper::ioctl(DrmIoctl::Getparam, &getParam);
+    if (retVal) {
+        return false;
+    }
+    return setPairSupported;
+}
+
 bool IoctlHelperPrelim20::isVmBindAvailable() {
     int vmBindSupported = 0;
     GetParam getParam{};
@@ -36,7 +48,7 @@ bool IoctlHelperPrelim20::isVmBindAvailable() {
     return vmBindSupported;
 }
 
-uint32_t IoctlHelperPrelim20::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) {
+uint32_t IoctlHelperPrelim20::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) {
     uint32_t regionsSize = static_cast<uint32_t>(memClassInstances.size());
     std::vector<prelim_drm_i915_gem_memory_class_instance> regions(regionsSize);
     for (uint32_t i = 0; i < regionsSize; i++) {
@@ -53,10 +65,24 @@ uint32_t IoctlHelperPrelim20::createGemExt(const MemRegionsVec &memClassInstance
     setparamRegion.param = regionParam;
 
     prelim_drm_i915_gem_create_ext_vm_private vmPrivate{};
+    prelim_drm_i915_gem_create_ext_setparam pairSetparamRegion{};
+
     if (vmId != std::nullopt) {
         vmPrivate.base.name = PRELIM_I915_GEM_CREATE_EXT_VM_PRIVATE;
         vmPrivate.vm_id = vmId.value();
+    }
+
+    if (pairHandle != -1) {
+        pairSetparamRegion.base.name = PRELIM_I915_GEM_CREATE_EXT_SETPARAM;
+        pairSetparamRegion.param.param = PRELIM_I915_OBJECT_PARAM | PRELIM_I915_PARAM_SET_PAIR;
+        pairSetparamRegion.param.data = pairHandle;
+    }
+
+    if (vmId != std::nullopt) {
+        vmPrivate.base.next_extension = reinterpret_cast<uintptr_t>(&pairSetparamRegion);
         setparamRegion.base.next_extension = reinterpret_cast<uintptr_t>(&vmPrivate);
+    } else if (pairHandle != -1) {
+        setparamRegion.base.next_extension = reinterpret_cast<uintptr_t>(&pairSetparamRegion);
     }
 
     prelim_drm_i915_gem_create_ext createExt{};

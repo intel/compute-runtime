@@ -98,6 +98,10 @@ struct DrmMockPrelimContext {
     uint64_t receivedSetContextParamCtxId{0};
     uint64_t receivedContextCreateExtSetParamRunaloneCount{0};
 
+    size_t setPairQueryCalled{0};
+    int setPairQueryValue{0};
+    int setPairQueryReturn{0};
+
     size_t vmBindQueryCalled{0};
     int vmBindQueryValue{0};
     int vmBindQueryReturn{0};
