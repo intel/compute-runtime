@@ -54,6 +54,8 @@ struct CommandQueue : _ze_command_queue_handle_t {
     bool peekIsCopyOnlyCommandQueue() const { return this->isCopyOnlyCommandQueue; }
 
   protected:
+    bool frontEndTrackingEnabled() const;
+
     uint32_t partitionCount = 1;
     uint32_t activeSubDevices = 1;
     bool preemptionCmdSyncProgramming = true;

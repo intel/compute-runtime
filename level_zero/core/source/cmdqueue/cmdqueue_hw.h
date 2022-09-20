@@ -36,9 +36,13 @@ struct CommandQueueHw : public CommandQueueImp {
     size_t estimateStateBaseAddressCmdSize();
     MOCKABLE_VIRTUAL void programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSize, NEO::LinearStream &commandStream, NEO::StreamProperties &streamProperties);
 
-    MOCKABLE_VIRTUAL size_t estimateFrontEndCmdSizeForMultipleCommandLists(bool isFrontEndStateDirty, uint32_t numCommandLists,
-                                                                           ze_command_list_handle_t *phCommandLists, int32_t engineInstanced);
+    MOCKABLE_VIRTUAL size_t estimateFrontEndCmdSizeForMultipleCommandLists(bool &isFrontEndStateDirty, int32_t engineInstanced, CommandList *commandList,
+                                                                           NEO::StreamProperties &csrStateCopy,
+                                                                           const NEO::StreamProperties &cmdListRequired,
+                                                                           const NEO::StreamProperties &cmdListFinal);
     size_t estimateFrontEndCmdSize();
+    size_t estimateFrontEndCmdSize(bool isFrontEndDirty);
+
     size_t estimatePipelineSelect();
     void programPipelineSelectIfGpgpuDisabled(NEO::LinearStream &commandStream);
 
@@ -141,14 +145,15 @@ struct CommandQueueHw : public CommandQueueImp {
     inline void encodeKernelArgsBufferAndMakeItResident();
     inline void writeCsrStreamInlineIfLogicalStateHelperAvailable(NEO::LinearStream &commandStream);
     inline void programOneCmdListFrontEndIfDirty(CommandListExecutionContext &ctx,
-                                                 CommandList *commandList,
-                                                 NEO::LinearStream &commandStream);
+                                                 NEO::LinearStream &commandStream, NEO::StreamProperties &csrState,
+                                                 const NEO::StreamProperties &cmdListRequired, const NEO::StreamProperties &cmdListFinal);
     inline void programOneCmdListBatchBufferStart(CommandList *commandList, NEO::LinearStream &commandStream);
     inline void programOneCmdListBatchBufferStart(CommandList *commandList, NEO::LinearStream &commandStream, CommandListExecutionContext &ctx);
     inline void mergeOneCmdListPipelinedState(CommandList *commandList);
     inline void programFrontEndAndClearDirtyFlag(bool shouldFrontEndBeProgrammed,
                                                  CommandListExecutionContext &ctx,
-                                                 NEO::LinearStream &commandStream);
+                                                 NEO::LinearStream &commandStream,
+                                                 NEO::StreamProperties &csrState);
     inline void collectPrintfContentsFromAllCommandsLists(ze_command_list_handle_t *phCommandLists, uint32_t numCommandLists);
     inline void migrateSharedAllocationsIfRequested(bool isMigrationRequested, ze_command_list_handle_t hCommandList);
     inline void prefetchMemoryIfRequested(bool &isMemoryPrefetchRequested);

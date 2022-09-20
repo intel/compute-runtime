@@ -153,9 +153,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
 
     this->programActivePartitionConfig(ctx.isProgramActivePartitionConfigRequired, child);
     this->encodeKernelArgsBufferAndMakeItResident();
-
+    auto &csrStateProperties = csr->getStreamProperties();
     bool shouldProgramVfe = this->csr->getLogicalStateHelper() && ctx.frontEndStateDirty;
-    this->programFrontEndAndClearDirtyFlag(shouldProgramVfe, ctx, child);
+    this->programFrontEndAndClearDirtyFlag(shouldProgramVfe, ctx, child, csrStateProperties);
 
     this->writeCsrStreamInlineIfLogicalStateHelperAvailable(child);
 
@@ -163,9 +163,12 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
 
     for (auto i = 0u; i < numCommandLists; ++i) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
+        auto &requiredStreamState = commandList->getRequiredStreamState();
+        auto &finalStreamState = commandList->getFinalStreamState();
+
         this->updateOneCmdListPreemptionModeAndCtxStatePreemption(ctx, commandList->getCommandListPreemptionMode(), child);
         this->updatePipelineSelectState(commandList);
-        this->programOneCmdListFrontEndIfDirty(ctx, commandList, child);
+        this->programOneCmdListFrontEndIfDirty(ctx, child, csrStateProperties, requiredStreamState, finalStreamState);
 
         this->patchCommands(*commandList, this->csr->getScratchSpaceController()->getScratchPatchAddress());
         this->programOneCmdListBatchBufferStart(commandList, child, ctx);
@@ -278,30 +281,27 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::validateCommandListsParams(
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::programOneCmdListFrontEndIfDirty(
     CommandListExecutionContext &ctx,
-    CommandList *commandList,
-    NEO::LinearStream &cmdStream) {
+    NEO::LinearStream &cmdStream,
+    NEO::StreamProperties &csrState,
+    const NEO::StreamProperties &cmdListRequired,
+    const NEO::StreamProperties &cmdListFinal) {
 
-    bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
-    auto &streamProperties = this->csr->getStreamProperties();
     bool shouldProgramVfe = ctx.frontEndStateDirty;
 
     ctx.cmdListBeginState.frontEndState = {};
 
-    if (isPatchingVfeStateAllowed || this->multiReturnPointCommandList) {
-        auto &requiredStreamState = commandList->getRequiredStreamState();
-        streamProperties.frontEndState.setProperties(requiredStreamState.frontEndState);
-        streamProperties.frontEndState.setPropertySingleSliceDispatchCcsMode(ctx.engineInstanced, device->getHwInfo());
+    if (frontEndTrackingEnabled()) {
+        csrState.frontEndState.setProperties(cmdListRequired.frontEndState);
+        csrState.frontEndState.setPropertySingleSliceDispatchCcsMode(ctx.engineInstanced, device->getHwInfo());
 
-        shouldProgramVfe |= streamProperties.frontEndState.isDirty();
+        shouldProgramVfe |= csrState.frontEndState.isDirty();
     }
 
-    ctx.cmdListBeginState.frontEndState.setProperties(streamProperties.frontEndState);
+    ctx.cmdListBeginState.frontEndState.setProperties(csrState.frontEndState);
+    this->programFrontEndAndClearDirtyFlag(shouldProgramVfe, ctx, cmdStream, csrState);
 
-    this->programFrontEndAndClearDirtyFlag(shouldProgramVfe, ctx, cmdStream);
-
-    if (isPatchingVfeStateAllowed || this->multiReturnPointCommandList) {
-        auto &finalStreamState = commandList->getFinalStreamState();
-        streamProperties.frontEndState.setProperties(finalStreamState.frontEndState);
+    if (frontEndTrackingEnabled()) {
+        csrState.frontEndState.setProperties(cmdListFinal.frontEndState);
     }
 }
 
@@ -309,7 +309,8 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::programFrontEndAndClearDirtyFlag(
     bool shouldFrontEndBeProgrammed,
     CommandListExecutionContext &ctx,
-    NEO::LinearStream &cmdStream) {
+    NEO::LinearStream &cmdStream,
+    NEO::StreamProperties &csrState) {
 
     if (!shouldFrontEndBeProgrammed) {
         return;
@@ -318,7 +319,7 @@ void CommandQueueHw<gfxCoreFamily>::programFrontEndAndClearDirtyFlag(
     programFrontEnd(scratchSpaceController->getScratchPatchAddress(),
                     scratchSpaceController->getPerThreadScratchSpaceSize(),
                     cmdStream,
-                    csr->getStreamProperties());
+                    csrState);
     ctx.frontEndStateDirty = false;
 }
 
@@ -346,35 +347,39 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateFrontEndCmdSize() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandQueueHw<gfxCoreFamily>::estimateFrontEndCmdSize(bool isFrontEndDirty) {
+    if (!frontEndTrackingEnabled()) {
+        return isFrontEndDirty * estimateFrontEndCmdSize();
+    }
+    return 0;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateFrontEndCmdSizeForMultipleCommandLists(
-    bool isFrontEndStateDirty, uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists, int32_t engineInstanced) {
+    bool &isFrontEndStateDirty, int32_t engineInstanced, CommandList *commandList,
+    NEO::StreamProperties &csrStateCopy,
+    const NEO::StreamProperties &cmdListRequired,
+    const NEO::StreamProperties &cmdListFinal) {
+
+    if (!frontEndTrackingEnabled()) {
+        return 0;
+    }
 
     auto singleFrontEndCmdSize = estimateFrontEndCmdSize();
-    bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
-    if (!isPatchingVfeStateAllowed && !this->multiReturnPointCommandList) {
-        return isFrontEndStateDirty * singleFrontEndCmdSize;
-    }
-
-    auto streamPropertiesCopy = csr->getStreamProperties();
     size_t estimatedSize = 0;
 
-    for (size_t i = 0; i < numCommandLists; i++) {
-        auto commandList = CommandList::fromHandle(phCommandLists[i]);
-        auto &requiredStreamState = commandList->getRequiredStreamState();
-        streamPropertiesCopy.frontEndState.setProperties(requiredStreamState.frontEndState);
-        streamPropertiesCopy.frontEndState.setPropertySingleSliceDispatchCcsMode(engineInstanced, device->getHwInfo());
-        if (isFrontEndStateDirty || streamPropertiesCopy.frontEndState.isDirty()) {
-            estimatedSize += singleFrontEndCmdSize;
-            isFrontEndStateDirty = false;
-        }
-        if (this->multiReturnPointCommandList) {
-            uint32_t frontEndChanges = commandList->getReturnPointsSize();
-            estimatedSize += (frontEndChanges * singleFrontEndCmdSize);
-            estimatedSize += (frontEndChanges * NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferStartSize());
-        }
-        auto &finalStreamState = commandList->getFinalStreamState();
-        streamPropertiesCopy.frontEndState.setProperties(finalStreamState.frontEndState);
+    csrStateCopy.frontEndState.setProperties(cmdListRequired.frontEndState);
+    csrStateCopy.frontEndState.setPropertySingleSliceDispatchCcsMode(engineInstanced, device->getHwInfo());
+    if (isFrontEndStateDirty || csrStateCopy.frontEndState.isDirty()) {
+        estimatedSize += singleFrontEndCmdSize;
+        isFrontEndStateDirty = false;
     }
+    if (this->multiReturnPointCommandList) {
+        uint32_t frontEndChanges = commandList->getReturnPointsSize();
+        estimatedSize += (frontEndChanges * singleFrontEndCmdSize);
+        estimatedSize += (frontEndChanges * NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferStartSize());
+    }
+    csrStateCopy.frontEndState.setProperties(cmdListFinal.frontEndState);
 
     return estimatedSize;
 }
@@ -608,8 +613,7 @@ void CommandQueueHw<gfxCoreFamily>::setFrontEndStateProperties(CommandListExecut
 
     auto isEngineInstanced = csr->getOsContext().isEngineInstanced();
     auto &streamProperties = this->csr->getStreamProperties();
-    bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
-    if (!isPatchingVfeStateAllowed && !this->multiReturnPointCommandList) {
+    if (!frontEndTrackingEnabled()) {
         streamProperties.frontEndState.setProperties(ctx.anyCommandListWithCooperativeKernels, ctx.anyCommandListRequiresDisabledEUFusion,
                                                      disableOverdispatch, isEngineInstanced, hwInfo);
     } else {
@@ -641,7 +645,20 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
         linearStreamSizeEstimate += estimatePipelineSelect();
     }
 
-    linearStreamSizeEstimate += estimateFrontEndCmdSizeForMultipleCommandLists(ctx.frontEndStateDirty, numCommandLists, phCommandLists, ctx.engineInstanced);
+    linearStreamSizeEstimate += estimateFrontEndCmdSize(ctx.frontEndStateDirty);
+
+    if (frontEndTrackingEnabled()) {
+        bool frontEndStateDirtyCopy = ctx.frontEndStateDirty;
+        auto streamPropertiesCopy = csr->getStreamProperties();
+        for (uint32_t i = 0; i < numCommandLists; i++) {
+            auto cmdList = CommandList::fromHandle(phCommandLists[i]);
+            auto &requiredStreamState = cmdList->getRequiredStreamState();
+            auto &finalStreamState = cmdList->getFinalStreamState();
+
+            linearStreamSizeEstimate += estimateFrontEndCmdSizeForMultipleCommandLists(frontEndStateDirtyCopy, ctx.engineInstanced, cmdList,
+                                                                                       streamPropertiesCopy, requiredStreamState, finalStreamState);
+        }
+    }
 
     if (ctx.gsbaStateDirty) {
         linearStreamSizeEstimate += estimateStateBaseAddressCmdSize();
@@ -1032,11 +1049,6 @@ NEO::SubmissionStatus CommandQueueHw<gfxCoreFamily>::prepareAndSubmitBatchBuffer
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandQueueHw<gfxCoreFamily>::isCleanLeftoverMemoryRequired() {
-    return false;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::cleanLeftoverMemory(NEO::LinearStream &outerCommandStream, NEO::LinearStream &innerCommandStream) {
 
     auto leftoverSpace = outerCommandStream.getUsed() - innerCommandStream.getUsed();
@@ -1107,6 +1119,11 @@ void CommandQueueHw<gfxCoreFamily>::updatePipelineSelectState(CommandList *comma
 
     streamProperties.pipelineSelect.setProperties(requiredStreamState.pipelineSelect);
     streamProperties.pipelineSelect.setProperties(finalStreamState.pipelineSelect);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandQueueHw<gfxCoreFamily>::isCleanLeftoverMemoryRequired() {
+    return false;
 }
 
 } // namespace L0

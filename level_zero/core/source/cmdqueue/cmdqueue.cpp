@@ -28,6 +28,10 @@ namespace L0 {
 
 CommandQueueAllocatorFn commandQueueFactory[IGFX_MAX_PRODUCT] = {};
 
+bool CommandQueue::frontEndTrackingEnabled() const {
+    return NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get() || this->multiReturnPointCommandList;
+}
+
 CommandQueueImp::CommandQueueImp(Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc)
     : desc(*desc), device(device), csr(csr) {
     int overrideCmdQueueSyncMode = NEO::DebugManager.flags.OverrideCmdQueueSynchronousMode.get();
