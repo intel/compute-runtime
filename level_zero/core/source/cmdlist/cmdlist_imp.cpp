@@ -28,6 +28,7 @@ namespace L0 {
 
 CommandList::CommandList(uint32_t numIddsPerBlock) : commandContainer(numIddsPerBlock) {
     multiReturnPointCommandList = L0HwHelper::enableMultiReturnPointCommandList();
+    pipelineSelectStateTracking = L0HwHelper::enablePipelineSelectStateTracking();
 }
 
 CommandListAllocatorFn commandListFactory[IGFX_MAX_PRODUCT] = {};

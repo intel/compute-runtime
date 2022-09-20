@@ -118,66 +118,9 @@ void MultiReturnCommandListFixture::setUp() {
     ModuleMutableCommandListFixture::setUp(REVISION_B);
 }
 
-void CmdListPipelineSelectStateFixture::testBody() {
-    const ze_group_count_t groupCount{1, 1, 1};
-    CmdListKernelLaunchParams launchParams = {};
-
-    auto &cmdlistRequiredState = commandList->getRequiredStreamState();
-    auto &cmdListFinalState = commandList->getFinalStreamState();
-
-    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 1;
-    auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    EXPECT_EQ(1, cmdlistRequiredState.pipelineSelect.systolicMode.value);
-    EXPECT_EQ(1, cmdListFinalState.pipelineSelect.systolicMode.value);
-
-    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 0;
-    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    EXPECT_EQ(1, cmdlistRequiredState.pipelineSelect.systolicMode.value);
-    EXPECT_EQ(0, cmdListFinalState.pipelineSelect.systolicMode.value);
-
-    commandList->close();
-
-    auto &csrState = commandQueue->csr->getStreamProperties();
-
-    auto commandListHandle = commandList->toHandle();
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    EXPECT_EQ(0, csrState.pipelineSelect.systolicMode.value);
-
-    commandList->reset();
-
-    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 1;
-    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    EXPECT_EQ(1, cmdlistRequiredState.pipelineSelect.systolicMode.value);
-    EXPECT_EQ(1, cmdListFinalState.pipelineSelect.systolicMode.value);
-
-    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 0;
-    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    EXPECT_EQ(1, cmdlistRequiredState.pipelineSelect.systolicMode.value);
-    EXPECT_EQ(0, cmdListFinalState.pipelineSelect.systolicMode.value);
-
-    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 1;
-    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    EXPECT_EQ(1, cmdlistRequiredState.pipelineSelect.systolicMode.value);
-    EXPECT_EQ(1, cmdListFinalState.pipelineSelect.systolicMode.value);
-
-    commandList->close();
-
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    EXPECT_EQ(1, csrState.pipelineSelect.systolicMode.value);
+void CmdListPipelineSelectStateFixture::setUp() {
+    DebugManager.flags.EnablePipelineSelectTracking.set(1);
+    ModuleMutableCommandListFixture::setUp();
 }
 
 } // namespace ult

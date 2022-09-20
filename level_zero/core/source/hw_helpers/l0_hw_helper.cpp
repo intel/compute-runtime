@@ -23,4 +23,12 @@ bool L0HwHelper::enableMultiReturnPointCommandList() {
     return defaultValue;
 }
 
+bool L0HwHelper::enablePipelineSelectStateTracking() {
+    constexpr bool defaultValue = false;
+    if (NEO::DebugManager.flags.EnablePipelineSelectTracking.get() != -1) {
+        return !!NEO::DebugManager.flags.EnablePipelineSelectTracking.get();
+    }
+    return defaultValue;
+}
+
 } // namespace L0

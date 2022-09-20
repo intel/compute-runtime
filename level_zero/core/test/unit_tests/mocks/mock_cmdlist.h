@@ -63,6 +63,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::multiReturnPointCommandList;
     using BaseClass::partitionCount;
     using BaseClass::patternAllocations;
+    using BaseClass::pipelineSelectStateTracking;
     using BaseClass::requiredStreamState;
     using BaseClass::unifiedMemoryControls;
     using BaseClass::updateStreamProperties;
@@ -123,6 +124,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::isFlushTaskSubmissionEnabled;
     using BaseClass::multiReturnPointCommandList;
     using BaseClass::partitionCount;
+    using BaseClass::pipelineSelectStateTracking;
     using BaseClass::requiredStreamState;
 
     WhiteBox() : BaseClass(BaseClass::defaultNumIddsPerBlock) {}
@@ -147,6 +149,7 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandListImp {
     using BaseClass::multiReturnPointCommandList;
     using BaseClass::nonImmediateLogicalStateHelper;
     using BaseClass::partitionCount;
+    using BaseClass::pipelineSelectStateTracking;
 
     WhiteBox(Device *device);
     ~WhiteBox() override;

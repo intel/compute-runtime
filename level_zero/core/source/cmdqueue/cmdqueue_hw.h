@@ -44,7 +44,6 @@ struct CommandQueueHw : public CommandQueueImp {
     size_t estimateFrontEndCmdSize();
     size_t estimateFrontEndCmdSize(bool isFrontEndDirty);
 
-    size_t estimatePipelineSelect();
     void programPipelineSelectIfGpgpuDisabled(NEO::LinearStream &commandStream);
 
     MOCKABLE_VIRTUAL void handleScratchSpace(NEO::HeapContainer &heapContainer,
@@ -171,7 +170,16 @@ struct CommandQueueHw : public CommandQueueImp {
     inline void updateTaskCountAndPostSync(bool isDispatchTaskCountPostSyncRequired);
     inline ze_result_t waitForCommandQueueCompletionAndCleanHeapContainer();
     inline ze_result_t handleSubmissionAndCompletionResults(NEO::SubmissionStatus submitRet, ze_result_t completionRet);
-    inline void updatePipelineSelectState(CommandList *commandList);
+    inline size_t estimatePipelineSelectCmdSizeForMultipleCommandLists(NEO::StreamProperties &csrStateCopy,
+                                                                       const NEO::StreamProperties &cmdListRequired,
+                                                                       const NEO::StreamProperties &cmdListFinal,
+                                                                       bool &gpgpuEnabled);
+    inline size_t estimatePipelineSelectCmdSize();
+    inline void programOneCmdListPipelineSelect(CommandList *commandList,
+                                                NEO::LinearStream &commandStream,
+                                                NEO::StreamProperties &csrState,
+                                                const NEO::StreamProperties &cmdListRequired,
+                                                const NEO::StreamProperties &cmdListFinal);
 
     size_t alignedChildStreamPadding{};
 };

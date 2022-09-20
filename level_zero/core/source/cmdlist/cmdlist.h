@@ -276,6 +276,10 @@ struct CommandList : _ze_command_list_handle_t {
     void makeResidentAndMigrate(bool);
     void migrateSharedAllocations();
 
+    bool getSystolicModeSupport() const {
+        return systolicModeSupport;
+    }
+
     ze_context_handle_t hContext = nullptr;
     std::vector<Kernel *> printfKernelContainer;
     CommandQueue *cmdQImmediate = nullptr;
@@ -318,6 +322,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool performMemoryPrefetch = false;
     bool multiReturnPointCommandList = false;
     bool systolicModeSupport = false;
+    bool pipelineSelectStateTracking = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

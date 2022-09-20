@@ -261,6 +261,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     }
 
     auto newL3Config = PreambleHelper<GfxFamily>::getL3Config(hwInfo, dispatchFlags.useSLM);
+
+    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectSupport = this->systolicModeConfigurable;
     auto isSystolicPipelineSelectModeChanged = (this->lastSystolicPipelineSelectMode != dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode) && this->systolicModeConfigurable;
 
     auto requiresCoherency = hwHelper.forceNonGpuCoherencyWA(dispatchFlags.requiresCoherency);

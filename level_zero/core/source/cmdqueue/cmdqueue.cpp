@@ -45,6 +45,7 @@ CommandQueueImp::CommandQueueImp(Device *device, NEO::CommandStreamReceiver *csr
     }
 
     multiReturnPointCommandList = L0HwHelper::enableMultiReturnPointCommandList();
+    pipelineSelectStateTracking = L0HwHelper::enablePipelineSelectStateTracking();
 }
 
 ze_result_t CommandQueueImp::destroy() {

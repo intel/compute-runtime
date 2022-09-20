@@ -62,7 +62,6 @@ void CommandStreamReceiverHw<GfxFamily>::programPipelineSelect(LinearStream &com
     if (csrSizeRequestFlags.mediaSamplerConfigChanged || csrSizeRequestFlags.systolicPipelineSelectMode || !isPreambleSent) {
         auto &hwInfo = peekHwInfo();
         if (!isPipelineSelectAlreadyProgrammed()) {
-            pipelineSelectArgs.systolicPipelineSelectSupport = this->systolicModeConfigurable;
             PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, pipelineSelectArgs, hwInfo);
         }
         this->lastMediaSamplerConfig = pipelineSelectArgs.mediaSamplerRequired;
