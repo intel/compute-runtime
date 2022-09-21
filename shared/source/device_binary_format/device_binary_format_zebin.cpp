@@ -11,22 +11,12 @@
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/zebin_elf.h"
 #include "shared/source/device_binary_format/zebin_decoder.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
 
 #include <tuple>
 
 namespace NEO {
-
-template <>
-bool isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(const ArrayRef<const uint8_t> binary) {
-    auto header = Elf::decodeElfFileHeader<Elf::EI_CLASS_64>(binary);
-    if (nullptr == header) {
-        return false;
-    }
-
-    return header->type == NEO::Elf::ET_REL ||
-           header->type == NEO::Elf::ET_ZEBIN_EXE;
-}
 
 template <>
 SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice &requestedTargetDevice,
@@ -84,6 +74,31 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(cons
     }
 
     return ret;
+}
+
+void prepareLinkerInputForZebin(ProgramInfo &programInfo, Elf::Elf<Elf::EI_CLASS_64> &elf) {
+    programInfo.prepareLinkerInputStorage();
+
+    LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
+    for (uint32_t id = 0; id < static_cast<uint32_t>(programInfo.kernelInfos.size()); id++) {
+        nameToKernelId[programInfo.kernelInfos[id]->kernelDescriptor.kernelMetadata.kernelName] = id;
+    }
+    programInfo.linkerInput->decodeElfSymbolTableAndRelocations(elf, nameToKernelId);
+}
+
+template <>
+DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning) {
+    auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(src.deviceBinary, outErrReason, outWarning);
+    if (nullptr == elf.elfFileHeader) {
+        return DecodeError::InvalidBinary;
+    }
+
+    dst.grfSize = src.targetDevice.grfSize;
+    dst.minScratchSpaceSize = src.targetDevice.minScratchSpaceSize;
+    auto decodeError = decodeZebin(dst, elf, outErrReason, outWarning);
+    prepareLinkerInputForZebin(dst, elf);
+
+    return decodeError;
 }
 
 } // namespace NEO

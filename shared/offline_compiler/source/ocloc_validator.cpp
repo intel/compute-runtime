@@ -8,7 +8,7 @@
 #include "shared/offline_compiler/source/ocloc_validator.h"
 
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
-#include "shared/source/device_binary_format/device_binary_formats.h"
+#include "shared/source/device_binary_format/zebin_decoder.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
 
@@ -28,7 +28,6 @@ namespace Ocloc {
 
 int validate(const std::vector<std::string> &args, OclocArgHelper *argHelper) {
     NEO::ProgramInfo programInfo;
-    NEO::SingleDeviceBinary deviceBinary;
     std::string errors;
     std::string warnings;
     UNRECOVERABLE_IF(nullptr == argHelper)
@@ -51,13 +50,14 @@ int validate(const std::vector<std::string> &args, OclocArgHelper *argHelper) {
     auto fileData = argHelper->readBinaryFile(fileName);
     argHelper->printf("Validating : %s (%zd bytes).\n", fileName.c_str(), fileData.size());
 
-    deviceBinary.deviceBinary = deviceBinary.deviceBinary.fromAny(fileData.data(), fileData.size());
-    if (false == NEO::isDeviceBinaryFormat<DeviceBinaryFormat::Zebin>(deviceBinary.deviceBinary)) {
+    auto deviceBinary = ArrayRef<const uint8_t>::fromAny(fileData.data(), fileData.size());
+    if (false == NEO::isDeviceBinaryFormat<DeviceBinaryFormat::Zebin>(deviceBinary)) {
         argHelper->printf("Input is not a Zebin file (not elf or wrong elf object file type)\n");
         return -2;
     }
 
-    auto decodeResult = NEO::decodeSingleDeviceBinary<DeviceBinaryFormat::Zebin>(programInfo, deviceBinary, errors, warnings);
+    auto elf = NEO::Elf::decodeElf<NEO::Elf::EI_CLASS_64>(deviceBinary, errors, warnings);
+    auto decodeResult = NEO::decodeZebin(programInfo, elf, errors, warnings);
     if (false == warnings.empty()) {
         argHelper->printf("Validator detected potential problems :\n%s\n", warnings.c_str());
     }

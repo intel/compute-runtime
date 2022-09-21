@@ -121,4 +121,6 @@ NEO::DecodeError populateZeInfoVersion(NEO::Elf::ZebinKernelMetadata::Types::Ver
 NEO::DecodeError populateExternalFunctionsMetadata(NEO::ProgramInfo &dst, NEO::Yaml::YamlParser &yamlParser, const NEO::Yaml::Node &functionNd, std::string &outErrReason, std::string &outWarning);
 
 NEO::DecodeError populateKernelSourceAttributes(NEO::KernelDescriptor &dst, NEO::Elf::ZebinKernelMetadata::Types::Kernel::Attributes::AttributesBaseT &attributes);
+
+NEO::DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> &elf, std::string &outErrReason, std::string &outWarning);
 } // namespace NEO

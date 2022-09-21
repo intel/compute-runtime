@@ -26,6 +26,10 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/device_binary_format/elf/elf_encoder.cpp
     ${NEO_SHARED_DIRECTORY}/device_binary_format/elf/elf_encoder.h
     ${NEO_SHARED_DIRECTORY}/device_binary_format/elf/ocl_elf.h
+    ${NEO_SHARED_DIRECTORY}/device_binary_format/device_binary_formats.h
+    ${NEO_SHARED_DIRECTORY}/device_binary_format/yaml/yaml_parser.cpp
+    ${NEO_SHARED_DIRECTORY}/device_binary_format/zebin_decoder.cpp
+    ${NEO_SHARED_DIRECTORY}/device_binary_format/zebin_decoder.h
     ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}devices.inl
     ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}devices_additional.inl
     ${NEO_SHARED_DIRECTORY}/dll/devices/devices_base.inl
@@ -88,9 +92,6 @@ set(CLOC_LIB_SRCS_LIB
     ${OCLOC_DIRECTORY}/source/queries.h
     ${OCLOC_DIRECTORY}/source/utilities/get_git_version_info.h
     ${OCLOC_DIRECTORY}/source/utilities/get_git_version_info.cpp
-    ${NEO_SOURCE_DIR}/shared/source/device_binary_format/device_binary_format_zebin.cpp
-    ${NEO_SOURCE_DIR}/shared/source/device_binary_format/zebin_decoder.cpp
-    ${NEO_SOURCE_DIR}/shared/source/device_binary_format/yaml/yaml_parser.cpp
     ${NEO_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}aot_config_headers/platforms.h
 )
 

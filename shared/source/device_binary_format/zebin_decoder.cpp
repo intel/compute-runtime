@@ -26,6 +26,17 @@
 
 namespace NEO {
 
+template <>
+bool isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(const ArrayRef<const uint8_t> binary) {
+    auto header = Elf::decodeElfFileHeader<Elf::EI_CLASS_64>(binary);
+    if (nullptr == header) {
+        return false;
+    }
+
+    return header->type == NEO::Elf::ET_REL ||
+           header->type == NEO::Elf::ET_ZEBIN_EXE;
+}
+
 bool validateTargetDevice(const Elf::Elf<Elf::EI_CLASS_64> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning) {
     GFXCORE_FAMILY gfxCore = IGFX_UNKNOWN_CORE;
     PRODUCT_FAMILY productFamily = IGFX_UNKNOWN;
@@ -1427,13 +1438,7 @@ NEO::DecodeError populateKernelSourceAttributes(NEO::KernelDescriptor &dst, NEO:
     return DecodeError::Success;
 }
 
-template <>
-DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning) {
-    auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(src.deviceBinary, outErrReason, outWarning);
-    if (nullptr == elf.elfFileHeader) {
-        return DecodeError::InvalidBinary;
-    }
-
+NEO::DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> &elf, std::string &outErrReason, std::string &outWarning) {
     ZebinSections zebinSections;
     auto extractError = extractZebinSections(elf, zebinSections, outErrReason, outWarning);
     if (DecodeError::Success != extractError) {
@@ -1444,10 +1449,6 @@ DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ProgramInfo
     if (DecodeError::Success != extractError) {
         return extractError;
     }
-
-    dst.decodedElf = elf;
-    dst.grfSize = src.targetDevice.grfSize;
-    dst.minScratchSpaceSize = src.targetDevice.minScratchSpaceSize;
 
     if (false == zebinSections.globalDataSections.empty()) {
         dst.globalVariables.initData = zebinSections.globalDataSections[0]->data.begin();
