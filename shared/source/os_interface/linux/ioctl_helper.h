@@ -129,9 +129,9 @@ class IoctlHelper {
 
     std::string getDrmParamStringBase(DrmParam param) const;
     std::string getIoctlStringBase(DrmIoctl ioctlRequest) const;
-    std::string getFileForMaxGpuFrequency() const;
-    std::string getFileForMaxGpuFrequencyOfSubDevice(int subDeviceId) const;
-    std::string getFileForMaxMemoryFrequencyOfSubDevice(int subDeviceId) const;
+    virtual std::string getFileForMaxGpuFrequency() const;
+    virtual std::string getFileForMaxGpuFrequencyOfSubDevice(int subDeviceId) const;
+    virtual std::string getFileForMaxMemoryFrequencyOfSubDevice(int subDeviceId) const;
 
     uint32_t getFlagsForPrimeHandleToFd() const;
 
