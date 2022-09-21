@@ -304,6 +304,7 @@ class SysmanDevicePowerFixture : public SysmanDeviceFixture {
     FsAccess *pFsAccessOriginal = nullptr;
     OsPower *pOsPowerOriginal = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
+    std::map<uint32_t, L0::PlatformMonitoringTech *> pmtMapOriginal;
     void SetUp() override {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
@@ -323,6 +324,8 @@ class SysmanDevicePowerFixture : public SysmanDeviceFixture {
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
+        pmtMapOriginal = pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject;
+        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.clear();
         for (auto &deviceHandle : deviceHandles) {
             ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
             Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
@@ -338,6 +341,8 @@ class SysmanDevicePowerFixture : public SysmanDeviceFixture {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
+        pLinuxSysmanImp->releasePmtObject();
+        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject = pmtMapOriginal;
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
         SysmanDeviceFixture::TearDown();

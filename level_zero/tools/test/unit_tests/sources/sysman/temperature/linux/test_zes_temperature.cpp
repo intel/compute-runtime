@@ -265,6 +265,7 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
     FsAccess *pFsAccessOriginal = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
     PRODUCT_FAMILY productFamily;
+    std::map<uint32_t, L0::PlatformMonitoringTech *> pmtMapOriginal;
     void SetUp() override {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
@@ -283,6 +284,8 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
 
+        pmtMapOriginal = pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject;
+        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.clear();
         for (auto &deviceHandle : deviceHandles) {
             ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
             Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
@@ -302,6 +305,8 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
+        pLinuxSysmanImp->releasePmtObject();
+        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject = pmtMapOriginal;
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
         SysmanDeviceFixture::TearDown();
     }

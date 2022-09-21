@@ -43,11 +43,6 @@ TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDoma
     EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, powerHandleComponentCount);
 }
-TEST_F(SysmanDeviceFixture, GivenComponentCountZeroWhenEnumeratingPowerDomainsWhenhwmonInterfaceDoesNotExistThenZeroCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
-    uint32_t count = 0;
-    EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, 0u);
-}
 
 TEST_F(SysmanDevicePowerFixture, GivenInvalidComponentCountWhenEnumeratingPowerDomainsWhenhwmonInterfaceExistsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
     uint32_t count = 0;
