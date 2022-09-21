@@ -11,7 +11,7 @@ namespace L0 {
 namespace ult {
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Context.pfnCreate = [](ze_driver_handle_t hContext, const ze_context_desc_t *desc, ze_context_handle_t *phContext) { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Context.pfnCreateCb = genericPrologCallbackPtr;
@@ -25,7 +25,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextCreateTracingWrapperWithOneSe
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Context.pfnDestroy = [](ze_context_handle_t hContext) { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Context.pfnDestroyCb = genericPrologCallbackPtr;
@@ -39,7 +39,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextDestroyTracingWrapperWithOneS
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextGetStatusTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Context.pfnGetStatus = [](ze_context_handle_t hContext) { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Context.pfnGetStatusCb = genericPrologCallbackPtr;
@@ -53,7 +53,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextGetStatusTracingWrapperWithOn
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextSystemBarrierTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Context.pfnSystemBarrier = [](ze_context_handle_t hContext, ze_device_handle_t hDevice) { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Context.pfnSystemBarrierCb = genericPrologCallbackPtr;
@@ -67,7 +67,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextSystemBarrierTracingWrapperWi
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextMakeMemoryResidentTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Context.pfnMakeMemoryResident = [](ze_context_handle_t hContext, ze_device_handle_t hDevice, void *ptr, size_t size) { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Context.pfnMakeMemoryResidentCb = genericPrologCallbackPtr;
@@ -81,7 +81,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextMakeMemoryResidentTracingWrap
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextEvictMemoryTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Context.pfnEvictMemory = [](ze_context_handle_t hContext, ze_device_handle_t hDevice, void *ptr, size_t size) { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Context.pfnEvictMemoryCb = genericPrologCallbackPtr;
@@ -95,7 +95,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextEvictMemoryTracingWrapperWith
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextMakeImageResidentTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Context.pfnMakeImageResident = [](ze_context_handle_t hContext, ze_device_handle_t hDevice, ze_image_handle_t hImage) { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Context.pfnMakeImageResidentCb = genericPrologCallbackPtr;
@@ -109,7 +109,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextMakeImageResidentTracingWrapp
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextEvictImageTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Context.pfnEvictImage = [](ze_context_handle_t hContext, ze_device_handle_t hDevice, ze_image_handle_t hImage) { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Context.pfnEvictImageCb = genericPrologCallbackPtr;
@@ -137,7 +137,7 @@ struct {
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
        WhenCallingContextMakeMemoryResidentTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     MakeMemoryResident_args.hContext0 = generateRandomHandle<ze_context_handle_t>();
@@ -303,7 +303,7 @@ struct {
 } EvictMemory_args;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingContextEvictMemoryTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     EvictMemory_args.hContext0 = generateRandomHandle<ze_context_handle_t>();
@@ -465,7 +465,7 @@ struct {
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
        WhenCallingContextMakeImageResidentTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     MakeImageResident_args.hContext0 = generateRandomHandle<ze_context_handle_t>();
@@ -620,7 +620,7 @@ struct {
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
        WhenCallingContextMakeImageResidentTracingWrapperWithMultiplefPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     EvictImage_args.hContext0 = generateRandomHandle<ze_context_handle_t>();

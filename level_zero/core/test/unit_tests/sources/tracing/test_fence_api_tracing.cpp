@@ -11,7 +11,7 @@ namespace L0 {
 namespace ult {
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Fence.pfnCreate =
         [](ze_command_queue_handle_t hCommandQueue, const ze_fence_desc_t *desc, ze_fence_handle_t *phFence) { return ZE_RESULT_SUCCESS; };
     ze_fence_handle_t fence = {};
@@ -28,7 +28,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceCreateTracingWrapperWithOneSetO
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Fence.pfnDestroy =
         [](ze_fence_handle_t hFence) { return ZE_RESULT_SUCCESS; };
 
@@ -43,7 +43,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceDestroyTracingWrapperWithOneSet
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceHostSynchronizeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Fence.pfnHostSynchronize =
         [](ze_fence_handle_t hFence, uint64_t timeout) { return ZE_RESULT_SUCCESS; };
     prologCbs.Fence.pfnHostSynchronizeCb = genericPrologCallbackPtr;
@@ -57,7 +57,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceHostSynchronizeTracingWrapperWi
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceQueryStatusTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Fence.pfnQueryStatus =
         [](ze_fence_handle_t hFence) { return ZE_RESULT_SUCCESS; };
     prologCbs.Fence.pfnQueryStatusCb = genericPrologCallbackPtr;
@@ -71,7 +71,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceQueryStatusTracingWrapperWithOn
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceResetTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Fence.pfnReset =
         [](ze_fence_handle_t hFence) { return ZE_RESULT_SUCCESS; };
     prologCbs.Fence.pfnResetCb = genericPrologCallbackPtr;
@@ -97,7 +97,7 @@ struct {
 } fence_create_args;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceCreateTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     fence_create_args.hCommandQueue0 = generateRandomHandle<ze_command_queue_handle_t>();
@@ -333,7 +333,7 @@ struct {
 } fence_destroy_args;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceDestroyTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     fence_destroy_args.hFence0 = generateRandomHandle<ze_fence_handle_t>();
@@ -464,7 +464,7 @@ struct {
 } fence_host_synchronize_args;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceHostSynchronizeTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     fence_host_synchronize_args.hFence0 = generateRandomHandle<ze_fence_handle_t>();
@@ -603,7 +603,7 @@ struct {
 } fence_query_status_args;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceQueryStatusTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     fence_query_status_args.hFence0 = generateRandomHandle<ze_fence_handle_t>();
@@ -732,7 +732,7 @@ struct {
 } fence_reset_args;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceResetTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     fence_reset_args.hFence0 = generateRandomHandle<ze_fence_handle_t>();

@@ -40,16 +40,16 @@ extern NEO::ConstStringRef optLargeRegisterFile;
 struct ModuleTranslationUnit {
     ModuleTranslationUnit(L0::Device *device);
     virtual ~ModuleTranslationUnit();
-    MOCKABLE_VIRTUAL bool buildFromSpirV(const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions,
-                                         const ze_module_constants_t *pConstants);
-    MOCKABLE_VIRTUAL bool staticLinkSpirV(std::vector<const char *> inputSpirVs, std::vector<uint32_t> inputModuleSizes, const char *buildOptions, const char *internalBuildOptions,
-                                          std::vector<const ze_module_constants_t *> specConstants);
-    MOCKABLE_VIRTUAL bool createFromNativeBinary(const char *input, size_t inputSize);
-    MOCKABLE_VIRTUAL bool processUnpackedBinary();
+    MOCKABLE_VIRTUAL ze_result_t buildFromSpirV(const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions,
+                                                const ze_module_constants_t *pConstants);
+    MOCKABLE_VIRTUAL ze_result_t staticLinkSpirV(std::vector<const char *> inputSpirVs, std::vector<uint32_t> inputModuleSizes, const char *buildOptions, const char *internalBuildOptions,
+                                                 std::vector<const ze_module_constants_t *> specConstants);
+    MOCKABLE_VIRTUAL ze_result_t createFromNativeBinary(const char *input, size_t inputSize);
+    MOCKABLE_VIRTUAL ze_result_t processUnpackedBinary();
     std::vector<uint8_t> generateElfFromSpirV(std::vector<const char *> inputSpirVs, std::vector<uint32_t> inputModuleSizes);
     bool processSpecConstantInfo(NEO::CompilerInterface *compilerInterface, const ze_module_constants_t *pConstants, const char *input, uint32_t inputSize);
     std::string generateCompilerOptions(const char *buildOptions, const char *internalBuildOptions);
-    MOCKABLE_VIRTUAL bool compileGenBinary(NEO::TranslationInput inputArgs, bool staticLink);
+    MOCKABLE_VIRTUAL ze_result_t compileGenBinary(NEO::TranslationInput inputArgs, bool staticLink);
     void updateBuildLog(const std::string &newLogEntry);
     void processDebugData();
     L0::Device *device = nullptr;
@@ -122,7 +122,7 @@ struct ModuleImp : public Module {
 
     MOCKABLE_VIRTUAL bool linkBinary();
 
-    bool initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice);
+    ze_result_t initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice);
 
     bool isDebugEnabled() const override;
 

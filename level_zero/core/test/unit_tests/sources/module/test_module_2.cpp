@@ -31,8 +31,8 @@ class ModuleOnlineCompiled : public DeviceFixture, public testing::Test {
         modDesc.format = ZE_MODULE_FORMAT_NATIVE;
         modDesc.inputSize = static_cast<uint32_t>(src.size());
         modDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
-
-        module.reset(whiteboxCast(Module::create(device, &modDesc, nullptr, ModuleType::User)));
+        ze_result_t result = ZE_RESULT_SUCCESS;
+        module.reset(whiteboxCast(Module::create(device, &modDesc, nullptr, ModuleType::User, &result)));
         ASSERT_NE(nullptr, module);
     }
 
@@ -172,8 +172,8 @@ TEST_F(ModuleOnlineCompiled, WhenCreatingFromNativeBinaryThenGenBinaryIsReturned
     modDesc.format = ZE_MODULE_FORMAT_NATIVE;
     modDesc.inputSize = binarySize;
     modDesc.pInputModule = reinterpret_cast<const uint8_t *>(storage.get());
-
-    L0::Module *moduleFromNativeBinary = Module::create(device, &modDesc, nullptr, ModuleType::User);
+    ze_result_t initResult = ZE_RESULT_SUCCESS;
+    L0::Module *moduleFromNativeBinary = Module::create(device, &modDesc, nullptr, ModuleType::User, &initResult);
     EXPECT_NE(nullptr, moduleFromNativeBinary);
 
     delete moduleFromNativeBinary;
@@ -291,8 +291,9 @@ TEST_F(ModuleTests, givenLargeGrfFlagSetWhenCreatingModuleThenOverrideInternalFl
 
     module.translationUnit.reset(mockTranslationUnit);
 
-    bool success = module.initialize(&moduleDesc, neoDevice);
-    EXPECT_TRUE(success);
+    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+    result = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-intel-256-GRF-per-thread"), std::string::npos);
     EXPECT_EQ(pMockCompilerInterface->inputInternalOptions.find("-cl-intel-128-GRF-per-thread"), std::string::npos);
@@ -319,8 +320,9 @@ TEST_F(ModuleTests, givenDefaultGrfFlagSetWhenCreatingModuleThenOverrideInternal
 
     module.translationUnit.reset(mockTranslationUnit);
 
-    bool success = module.initialize(&moduleDesc, neoDevice);
-    EXPECT_TRUE(success);
+    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+    result = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     EXPECT_EQ(pMockCompilerInterface->inputInternalOptions.find("-cl-intel-256-GRF-per-thread"), std::string::npos);
     EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-intel-128-GRF-per-thread"), std::string::npos);

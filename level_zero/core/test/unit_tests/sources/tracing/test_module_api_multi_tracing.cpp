@@ -47,7 +47,7 @@ static bool moduleCreateDescCompare(const ze_module_desc_t *phIpc0, const ze_mod
 }
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     module_create_args.hContext0 = generateRandomHandle<ze_context_handle_t>();
@@ -386,7 +386,7 @@ struct {
 } module_destroy_args;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleDestroyTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     module_destroy_args.hModule0 = generateRandomHandle<ze_module_handle_t>();
@@ -539,7 +539,7 @@ static bool moduleGetNativeBinaryNativeBinaryCompare(uint8_t *binary0, uint8_t *
 }
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBinaryTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     module_get_native_binary_args.hModule0 = generateRandomHandle<ze_module_handle_t>();

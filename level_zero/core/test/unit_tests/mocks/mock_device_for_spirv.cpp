@@ -41,8 +41,8 @@ ze_result_t MockDeviceForSpv<useImagesBuiltins, isStateless>::createModule(const
         moduleDesc.inputSize = size;
 
         ModuleBuildLog *moduleBuildLog = nullptr;
-
-        mockModulePtr.reset(Module::create(this, &moduleDesc, moduleBuildLog, ModuleType::Builtin));
+        ze_result_t result = ZE_RESULT_SUCCESS;
+        mockModulePtr.reset(Module::create(this, &moduleDesc, moduleBuildLog, ModuleType::Builtin, &result));
         wasModuleCreated = true;
         useImagesBuiltins_prev = useImagesBuiltins;
         isStateless_prev = isStateless;

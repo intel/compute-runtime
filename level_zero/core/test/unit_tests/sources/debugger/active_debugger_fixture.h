@@ -47,6 +47,7 @@ struct ActiveDebuggerFixture {
         debugger = new MockActiveSourceLevelDebugger(new MockOsLibrary);
         executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(debugger);
         executionEnvironment->initializeMemoryManager();
+        executionEnvironment->setDebuggingEnabled();
 
         device = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u);
         device->setDebuggerActive(true);

@@ -179,8 +179,9 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
                                               mockKernelImmData);
 
         module->type = isInternal ? ModuleType::Builtin : ModuleType::User;
-        bool result = module->initialize(&moduleDesc, device->getNEODevice());
-        EXPECT_TRUE(result);
+        ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+        result = module->initialize(&moduleDesc, device->getNEODevice());
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     }
 
     void createKernel(MockKernel *kernel) {
@@ -218,8 +219,8 @@ struct ModuleFixture : public DeviceFixture {
         moduleDesc.inputSize = src.size();
 
         ModuleBuildLog *moduleBuildLog = nullptr;
-
-        module.reset(Module::create(device, &moduleDesc, moduleBuildLog, type));
+        ze_result_t result = ZE_RESULT_SUCCESS;
+        module.reset(Module::create(device, &moduleDesc, moduleBuildLog, type, &result));
     }
 
     void createKernel() {
@@ -261,10 +262,11 @@ struct MultiDeviceModuleFixture : public MultiDeviceFixture {
         moduleDesc.inputSize = src.size();
 
         ModuleBuildLog *moduleBuildLog = nullptr;
+        ze_result_t result = ZE_RESULT_SUCCESS;
 
         modules[rootDeviceIndex].reset(Module::create(device,
                                                       &moduleDesc,
-                                                      moduleBuildLog, ModuleType::User));
+                                                      moduleBuildLog, ModuleType::User, &result));
     }
 
     void createKernel(uint32_t rootDeviceIndex) {

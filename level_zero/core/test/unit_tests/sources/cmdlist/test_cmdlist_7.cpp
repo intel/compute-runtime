@@ -443,7 +443,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenAppendingMemoryCopyWit
 HWTEST2_F(CommandListCreate, givenCommandListAndHostPointersWhenMemoryCopyCalledThenPipeControlWithDcFlushAdded, IsAtLeastSkl) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList0(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     ASSERT_NE(nullptr, commandList0);
 
@@ -490,7 +490,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     kernel->setGlobalOffsetExp(1, 2, 3);
     kernel->patchGlobalOffset();
 
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
     ASSERT_NE(nullptr, commandList);
     commandList->isFlushTaskSubmissionEnabled = true;
@@ -533,7 +533,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     kernel->setGlobalOffsetExp(1, 2, 3);
     kernel->patchGlobalOffset();
 
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
     ASSERT_NE(nullptr, commandList);
     commandList->isFlushTaskSubmissionEnabled = true;

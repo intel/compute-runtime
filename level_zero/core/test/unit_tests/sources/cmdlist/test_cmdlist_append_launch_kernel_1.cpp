@@ -386,7 +386,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyTh
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     Mock<::L0::Kernel> kernel;
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandListBase(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto usedSpaceBefore = commandListBase->commandContainer.getCommandStream()->getUsed();
@@ -438,7 +438,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyAn
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     Mock<::L0::Kernel> kernel;
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 

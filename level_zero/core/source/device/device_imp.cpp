@@ -371,14 +371,14 @@ ze_result_t DeviceImp::createModule(const ze_module_desc_t *desc, ze_module_hand
         moduleBuildLog = ModuleBuildLog::create();
         *buildLog = moduleBuildLog->toHandle();
     }
-    auto modulePtr = Module::create(this, desc, moduleBuildLog, type);
-    if (modulePtr == nullptr) {
-        return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto modulePtr = Module::create(this, desc, moduleBuildLog, type, &result);
+    if (modulePtr != nullptr) {
+        *module = modulePtr;
     }
 
-    *module = modulePtr;
-
-    return ZE_RESULT_SUCCESS;
+    return result;
 }
 
 ze_result_t DeviceImp::getComputeProperties(ze_device_compute_properties_t *pComputeProperties) {
@@ -1008,16 +1008,16 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     auto debugSurfaceSize = hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
     std::vector<char> stateSaveAreaHeader;
 
-    if (neoDevice->getCompilerInterface()) {
-        if (neoDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread || neoDevice->getDebugger()) {
+    if (neoDevice->getDebugger() || neoDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread) {
+        if (neoDevice->getCompilerInterface()) {
             bool ret = NEO::SipKernel::initSipKernel(NEO::SipKernel::getSipKernelType(*neoDevice), *neoDevice);
             UNRECOVERABLE_IF(!ret);
 
             stateSaveAreaHeader = NEO::SipKernel::getSipKernel(*neoDevice).getStateSaveAreaHeader();
             debugSurfaceSize = NEO::SipKernel::getSipKernel(*neoDevice).getStateSaveAreaSize(neoDevice);
+        } else {
+            *returnValue = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
         }
-    } else {
-        *returnValue = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
 
     const bool allocateDebugSurface = (device->getL0Debugger() || neoDevice->getDeviceInfo().debuggerActive) && !isSubDevice;

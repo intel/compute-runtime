@@ -11,7 +11,7 @@ namespace L0 {
 namespace ult {
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingEventCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Event.pfnCreate =
         [](ze_event_pool_handle_t hEventPool, const ze_event_desc_t *desc, ze_event_handle_t *phEvent) { return ZE_RESULT_SUCCESS; };
     ze_event_handle_t event = {};
@@ -28,7 +28,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingEventCreateTracingWrapperWithOneSetO
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingEventDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Event.pfnDestroy =
         [](ze_event_handle_t hEvent) { return ZE_RESULT_SUCCESS; };
 
@@ -43,7 +43,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingEventDestroyTracingWrapperWithOneSet
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingEventHostSignalTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Event.pfnHostSignal =
         [](ze_event_handle_t hEvent) { return ZE_RESULT_SUCCESS; };
     prologCbs.Event.pfnHostSignalCb = genericPrologCallbackPtr;
@@ -57,7 +57,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingEventHostSignalTracingWrapperWithOne
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingEventHostSynchronizeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Event.pfnHostSynchronize =
         [](ze_event_handle_t hEvent, uint64_t timeout) { return ZE_RESULT_SUCCESS; };
     prologCbs.Event.pfnHostSynchronizeCb = genericPrologCallbackPtr;
@@ -71,7 +71,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingEventHostSynchronizeTracingWrapperWi
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingEventQueryStatusTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Event.pfnQueryStatus =
         [](ze_event_handle_t hEvent) { return ZE_RESULT_SUCCESS; };
     prologCbs.Event.pfnQueryStatusCb = genericPrologCallbackPtr;
@@ -85,7 +85,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingEventQueryStatusTracingWrapperWithOn
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingEventHostResetTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Event.pfnHostReset =
         [](ze_event_handle_t hEvent) { return ZE_RESULT_SUCCESS; };
     prologCbs.Event.pfnHostResetCb = genericPrologCallbackPtr;
@@ -99,7 +99,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingEventHostResetTracingWrapperWithOneS
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingEventPoolCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.EventPool.pfnCreate =
         [](ze_context_handle_t hContext,
            const ze_event_pool_desc_t *desc,
@@ -117,7 +117,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingEventPoolCreateTracingWrapperWithOne
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingEventPoolDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.EventPool.pfnDestroy =
         [](ze_event_pool_handle_t hEventPool) { return ZE_RESULT_SUCCESS; };
     prologCbs.EventPool.pfnDestroyCb = genericPrologCallbackPtr;
@@ -131,7 +131,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingEventPoolDestroyTracingWrapperWithOn
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingEventPoolGetIpcHandleTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.EventPool.pfnGetIpcHandle =
         [](ze_event_pool_handle_t hEventPool, ze_ipc_event_pool_handle_t *phIpc) { return ZE_RESULT_SUCCESS; };
     ze_ipc_event_pool_handle_t phIpc;
@@ -147,7 +147,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingEventPoolGetIpcHandleTracingWrapperW
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingEventPoolOpenIpcHandleTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.EventPool.pfnOpenIpcHandle =
         [](ze_context_handle_t hDriver,
            ze_ipc_event_pool_handle_t hIpc,
@@ -166,7 +166,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingEventPoolOpenIpcHandleTracingWrapper
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingEventPoolCloseIpcHandleTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.EventPool.pfnCloseIpcHandle =
         [](ze_event_pool_handle_t hEventPool) { return ZE_RESULT_SUCCESS; };
     prologCbs.EventPool.pfnCloseIpcHandleCb = genericPrologCallbackPtr;
@@ -182,7 +182,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingEventPoolCloseIpcHandleTracingWrappe
 // Command List API with Events
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendSignalEventTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.CommandList.pfnAppendSignalEvent =
         [](ze_command_list_handle_t hCommandList, ze_event_handle_t hEvent) { return ZE_RESULT_SUCCESS; };
     prologCbs.CommandList.pfnAppendSignalEventCb = genericPrologCallbackPtr;
@@ -196,7 +196,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendSignalEventTracingW
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendWaitOnEventsTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.CommandList.pfnAppendWaitOnEvents =
         [](ze_command_list_handle_t hCommandList, uint32_t numEvents, ze_event_handle_t *phEvents) { return ZE_RESULT_SUCCESS; };
 
@@ -213,7 +213,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendWaitOnEventsTracing
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendEventResetTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.CommandList.pfnAppendEventReset =
         [](ze_command_list_handle_t hCommandList, ze_event_handle_t hEvent) { return ZE_RESULT_SUCCESS; };
 
@@ -228,7 +228,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendEventResetTracingWr
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingEventQueryKernelTimestampTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Event.pfnQueryKernelTimestamp =
         [](ze_event_handle_t hEvent, ze_kernel_timestamp_result_t *dstptr) { return ZE_RESULT_SUCCESS; };
 

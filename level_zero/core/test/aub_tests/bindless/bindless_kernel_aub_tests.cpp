@@ -54,8 +54,9 @@ struct L0BindlessAub : Test<AUBFixtureL0> {
         moduleDesc.pBuildFlags = "";
 
         module = new ModuleImp(device, nullptr, ModuleType::User);
-        bool success = module->initialize(&moduleDesc, device->getNEODevice());
-        ASSERT_TRUE(success);
+        ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+        result = module->initialize(&moduleDesc, device->getNEODevice());
+        ASSERT_EQ(result, ZE_RESULT_SUCCESS);
     }
     DebugManagerStateRestore restorer;
     ModuleImp *module = nullptr;

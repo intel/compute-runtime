@@ -26,7 +26,7 @@ enum class ModuleType {
 
 struct Module : _ze_module_handle_t {
 
-    static Module *create(Device *device, const ze_module_desc_t *desc, ModuleBuildLog *moduleBuildLog, ModuleType type);
+    static Module *create(Device *device, const ze_module_desc_t *desc, ModuleBuildLog *moduleBuildLog, ModuleType type, ze_result_t *result);
 
     virtual ~Module() = default;
 

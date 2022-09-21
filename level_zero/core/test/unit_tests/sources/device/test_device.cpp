@@ -233,7 +233,7 @@ TEST(L0DeviceTest, givenDisabledPreemptionWhenCreatingDeviceThenSipKernelIsNotIn
     EXPECT_FALSE(NEO::MockSipData::called);
 }
 
-TEST(L0DeviceTest, givenDeviceWithoutIGCCompilerLibraryThenInvalidDependencyReturned) {
+TEST(L0DeviceTest, givenDeviceWithoutIGCCompilerLibraryThenInvalidDependencyIsNotReturned) {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
 
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
@@ -243,15 +243,16 @@ TEST(L0DeviceTest, givenDeviceWithoutIGCCompilerLibraryThenInvalidDependencyRetu
 
     auto oldIgcDllName = Os::igcDllName;
     Os::igcDllName = "_invalidIGC";
-
+    auto mockDevice = reinterpret_cast<NEO::MockDevice *>(neoDevice.get());
+    mockDevice->setPreemptionMode(NEO::PreemptionMode::Initial);
     auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
-    EXPECT_EQ(returnValue, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
     Os::igcDllName = oldIgcDllName;
 }
 
-TEST(L0DeviceTest, givenDeviceWithoutAnyCompilerLibraryThenInvalidDependencyReturned) {
+TEST(L0DeviceTest, givenDeviceWithoutAnyCompilerLibraryThenInvalidDependencyIsNotReturned) {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
 
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
@@ -263,6 +264,51 @@ TEST(L0DeviceTest, givenDeviceWithoutAnyCompilerLibraryThenInvalidDependencyRetu
     auto oldIgcDllName = Os::igcDllName;
     Os::frontEndDllName = "_invalidFCL";
     Os::igcDllName = "_invalidIGC";
+    auto mockDevice = reinterpret_cast<NEO::MockDevice *>(neoDevice.get());
+    mockDevice->setPreemptionMode(NEO::PreemptionMode::Initial);
+
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
+    ASSERT_NE(nullptr, device);
+    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
+
+    Os::igcDllName = oldIgcDllName;
+    Os::frontEndDllName = oldFclDllName;
+}
+
+TEST(L0DeviceTest, givenDeviceWithoutIGCCompilerLibraryAndMidThreadPremptionThenInvalidDependencyIsReturned) {
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto hwInfo = *NEO::defaultHwInfo;
+
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+
+    auto oldIgcDllName = Os::igcDllName;
+    Os::igcDllName = "_invalidIGC";
+    auto mockDevice = reinterpret_cast<NEO::MockDevice *>(neoDevice.get());
+    mockDevice->setPreemptionMode(NEO::PreemptionMode::MidThread);
+
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
+    ASSERT_NE(nullptr, device);
+    EXPECT_EQ(returnValue, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+
+    Os::igcDllName = oldIgcDllName;
+}
+
+TEST(L0DeviceTest, givenDeviceWithoutAnyCompilerLibraryAndMidThreadPremptionThenInvalidDependencyIsReturned) {
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto hwInfo = *NEO::defaultHwInfo;
+
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+
+    auto oldFclDllName = Os::frontEndDllName;
+    auto oldIgcDllName = Os::igcDllName;
+    Os::frontEndDllName = "_invalidFCL";
+    Os::igcDllName = "_invalidIGC";
+    auto mockDevice = reinterpret_cast<NEO::MockDevice *>(neoDevice.get());
+    mockDevice->setPreemptionMode(NEO::PreemptionMode::MidThread);
 
     auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
@@ -3229,7 +3275,7 @@ TEST(DevicePropertyFlagDiscreteDeviceTest, givenDiscreteDeviceThenCorrectDeviceP
 
 TEST(zeDevice, givenValidImagePropertiesStructWhenGettingImagePropertiesThenSuccessIsReturned) {
     Mock<Device> device;
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     ze_device_image_properties_t imageProperties;
 
     result = zeDeviceGetImageProperties(device.toHandle(), &imageProperties);

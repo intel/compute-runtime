@@ -669,8 +669,9 @@ TEST_F(KernelImmutableDataTests, givenInternalModuleWhenKernelIsCreatedIsaIsNotC
     moduleMock->kernelImmData = &kernelMock.immutableData;
 
     size_t previouscopyMemoryToAllocationCalledTimes = mockMemoryManager->copyMemoryToAllocationCalledTimes;
-    auto result = moduleMock->initialize(&moduleDesc, neoDevice);
-    EXPECT_TRUE(result);
+    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+    result = moduleMock->initialize(&moduleDesc, neoDevice);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     size_t expectedPreviouscopyMemoryToAllocationCalledTimes = previouscopyMemoryToAllocationCalledTimes;
 
     EXPECT_EQ(expectedPreviouscopyMemoryToAllocationCalledTimes, mockMemoryManager->copyMemoryToAllocationCalledTimes);
@@ -708,8 +709,9 @@ TEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenCont
                                                                                        ModuleType::User,
                                                                                        perHwThreadPrivateMemorySizeRequested,
                                                                                        mockKernelImmData.get());
-    bool result = moduleWithPrivateMemory->initialize(&moduleDesc, device->getNEODevice());
-    EXPECT_TRUE(result);
+    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+    result = moduleWithPrivateMemory->initialize(&moduleDesc, device->getNEODevice());
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernelWithPrivateMemory;
     kernelWithPrivateMemory = std::make_unique<ModuleImmutableDataFixture::MockKernel>(moduleWithPrivateMemory.get());
@@ -726,8 +728,9 @@ TEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenCont
                                                                                           ModuleType::User,
                                                                                           perHwThreadPrivateMemorySizeRequested,
                                                                                           mockKernelImmDataForModuleWithoutPrivateMemory.get());
+    result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     result = moduleWithoutPrivateMemory->initialize(&moduleDesc, device->getNEODevice());
-    EXPECT_TRUE(result);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernelWithoutPrivateMemory;
     kernelWithoutPrivateMemory = std::make_unique<ModuleImmutableDataFixture::MockKernel>(moduleWithoutPrivateMemory.get());
@@ -748,6 +751,7 @@ TEST_F(KernelImmutableDataTests, givenKernelWithPrivateMemoryBiggerThanGlobalMem
     moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
     moduleDesc.inputSize = src.size();
     ModuleBuildLog *moduleBuildLog = nullptr;
+    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
 
     uint32_t perHwThreadPrivateMemorySizeRequested = std::numeric_limits<uint32_t>::max();
     std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
@@ -756,8 +760,8 @@ TEST_F(KernelImmutableDataTests, givenKernelWithPrivateMemoryBiggerThanGlobalMem
                                                                       ModuleType::User,
                                                                       perHwThreadPrivateMemorySizeRequested,
                                                                       mockKernelImmData.get());
-    bool result = module->initialize(&moduleDesc, device->getNEODevice());
-    EXPECT_TRUE(result);
+    result = module->initialize(&moduleDesc, device->getNEODevice());
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_TRUE(module->shouldAllocatePrivateMemoryPerDispatch());
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;

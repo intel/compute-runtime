@@ -398,6 +398,9 @@ TEST(DriverTest, givenProgramDebuggingEnvVarNonZeroWhenCreatingDriverThenEnableP
 TEST(DriverTest, givenInvalidCompilerEnvironmentThenDependencyUnavailableErrorIsReturned) {
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "1"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
     DriverImp driverImp;
@@ -549,7 +552,7 @@ TEST_F(DriverHandleTest,
 }
 
 TEST_F(DriverHandleTest, givenInitializedDriverWhenZeDriverGetIsCalledThenDriverHandleIsObtained) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     uint32_t count = 0;
     result = zeDriverGet(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -564,7 +567,7 @@ TEST_F(DriverHandleTest, givenInitializedDriverWhenZeDriverGetIsCalledThenDriver
 }
 
 TEST_F(DriverHandleTest, givenInitializedDriverWhenZeDriverGetIsCalledThenGlobalDriverHandleIsObtained) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     uint32_t count = 1;
     ze_driver_handle_t hDriverHandle = reinterpret_cast<ze_driver_handle_t>(&hDriverHandle);
@@ -576,7 +579,7 @@ TEST_F(DriverHandleTest, givenInitializedDriverWhenZeDriverGetIsCalledThenGlobal
 }
 
 TEST_F(DriverHandleTest, givenInitializedDriverWhenGetDeviceIsCalledThenOneDeviceIsObtained) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     uint32_t count = 1;
 
     ze_device_handle_t device;
@@ -604,7 +607,7 @@ TEST_F(DriverHandleTest, givenValidDriverHandleWhenGetSvmAllocManagerIsCalledThe
 }
 
 TEST(zeDriverHandleGetProperties, whenZeDriverGetPropertiesIsCalledThenGetPropertiesIsCalled) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     Mock<DriverHandle> driverHandle;
     ze_driver_properties_t properties;
     ze_result_t expectedResult = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
@@ -616,7 +619,7 @@ TEST(zeDriverHandleGetProperties, whenZeDriverGetPropertiesIsCalledThenGetProper
 }
 
 TEST(zeDriverHandleGetApiVersion, whenZeDriverGetApiIsCalledThenGetApiVersionIsCalled) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     Mock<DriverHandle> driverHandle;
     ze_api_version_t version;
     ze_result_t expectedResult = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
@@ -628,7 +631,7 @@ TEST(zeDriverHandleGetApiVersion, whenZeDriverGetApiIsCalledThenGetApiVersionIsC
 }
 
 TEST(zeDriverGetIpcProperties, whenZeDriverGetIpcPropertiesIsCalledThenGetIPCPropertiesIsCalled) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     Mock<DriverHandle> driverHandle;
     ze_driver_ipc_properties_t ipcProperties;
     ze_result_t expectedResult = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;

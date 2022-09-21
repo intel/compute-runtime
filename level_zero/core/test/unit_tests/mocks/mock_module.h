@@ -61,13 +61,13 @@ struct MockModuleTranslationUnit : public L0::ModuleTranslationUnit {
     MockModuleTranslationUnit(L0::Device *device) : L0::ModuleTranslationUnit(device) {
     }
 
-    bool processUnpackedBinary() override {
-        return true;
+    ze_result_t processUnpackedBinary() override {
+        return ZE_RESULT_SUCCESS;
     }
 
-    bool compileGenBinary(NEO::TranslationInput inputArgs, bool staticLink) override {
+    ze_result_t compileGenBinary(NEO::TranslationInput inputArgs, bool staticLink) override {
         if (unpackedDeviceBinarySize && unpackedDeviceBinary) {
-            return true;
+            return ZE_RESULT_SUCCESS;
         } else {
             return ModuleTranslationUnit::compileGenBinary(inputArgs, staticLink);
         }

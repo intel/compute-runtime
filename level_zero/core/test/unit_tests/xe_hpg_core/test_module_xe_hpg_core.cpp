@@ -51,8 +51,9 @@ HWTEST2_F(KernelPropertyTest, givenDG2WhenGetInternalOptionsThenWriteBackBuildOp
     auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
     rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);
     MockModuleTranslationUnit moduleTu(this->device);
-    auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
-    EXPECT_TRUE(ret);
+    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+    result = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-store-cache-default=7 -cl-load-cache-default=4"), std::string::npos);
 }
 

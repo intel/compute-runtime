@@ -74,7 +74,7 @@ class ZeApiTracingRuntimeTests : public ZeAPITracingCoreTestsFixture, public ::t
     void *userData;
 
     void SetUp() override {
-        ze_result_t result;
+        ze_result_t result = ZE_RESULT_SUCCESS;
 
         ZeAPITracingCoreTestsFixture::setUp();
         userData = &defaultUserData;
@@ -85,7 +85,7 @@ class ZeApiTracingRuntimeTests : public ZeAPITracingCoreTestsFixture, public ::t
     }
 
     void TearDown() override {
-        ze_result_t result;
+        ze_result_t result = ZE_RESULT_SUCCESS;
 
         result = zetTracerExpSetEnabled(apiTracerHandle, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -95,7 +95,7 @@ class ZeApiTracingRuntimeTests : public ZeAPITracingCoreTestsFixture, public ::t
     }
 
     void setTracerCallbacksAndEnableTracer() {
-        ze_result_t result;
+        ze_result_t result = ZE_RESULT_SUCCESS;
         result = zetTracerExpSetPrologues(apiTracerHandle, &prologCbs);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -134,7 +134,7 @@ class ZeApiTracingRuntimeMultipleArgumentsTests : public ZeAPITracingCoreTestsFi
     void *pUserData3;
 
     void SetUp() override {
-        ze_result_t result;
+        ze_result_t result = ZE_RESULT_SUCCESS;
 
         ZeAPITracingCoreTestsFixture::setUp();
 
@@ -164,7 +164,7 @@ class ZeApiTracingRuntimeMultipleArgumentsTests : public ZeAPITracingCoreTestsFi
     }
 
     void TearDown() override {
-        ze_result_t result;
+        ze_result_t result = ZE_RESULT_SUCCESS;
         result = zetTracerExpSetEnabled(apiTracerHandle0, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         result = zetTracerExpDestroy(apiTracerHandle0);
@@ -189,7 +189,7 @@ class ZeApiTracingRuntimeMultipleArgumentsTests : public ZeAPITracingCoreTestsFi
     }
 
     void setTracerCallbacksAndEnableTracer() {
-        ze_result_t result;
+        ze_result_t result = ZE_RESULT_SUCCESS;
 
         /* Both prolog and epilog, pass instance data from prolog to epilog */
         result = zetTracerExpSetPrologues(apiTracerHandle0, &prologCbs0);

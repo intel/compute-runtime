@@ -2175,8 +2175,8 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
         moduleDesc.inputSize = src.size();
 
         ModuleBuildLog *moduleBuildLog = nullptr;
-
-        module.reset(Module::create(device, &moduleDesc, moduleBuildLog, type));
+        ze_result_t result = ZE_RESULT_SUCCESS;
+        module.reset(Module::create(device, &moduleDesc, moduleBuildLog, type, &result));
     }
 
     void SetUp() override {

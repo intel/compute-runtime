@@ -145,7 +145,7 @@ void onExitCommandListCloseWithoutUserDataAndReadInstanceData(
 }
 
 TEST(ZeApiTracingCoreTestsNoSetup, WhenCreateTracerAndNoZetInitThenReturnFailure) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     zet_tracer_exp_handle_t apiTracerHandle;
     zet_tracer_exp_desc_t tracerDesc = {};
@@ -155,7 +155,7 @@ TEST(ZeApiTracingCoreTestsNoSetup, WhenCreateTracerAndNoZetInitThenReturnFailure
 }
 
 TEST_F(ZeApiTracingCoreTests, WhenCreateTracerAndsetCallbacksAndEnableTracingAndDisableTracingAndDestroyTracerThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     zet_tracer_exp_handle_t apiTracerHandle;
     zet_tracer_exp_desc_t tracerDesc = {};
@@ -189,7 +189,7 @@ TEST_F(ZeApiTracingCoreTests, WhenCreateTracerAndsetCallbacksAndEnableTracingAnd
 
 TEST_F(ZeApiTracingCoreTests, WhenCallingTracerWrapperWithOnePrologAndNoEpilogWithUserDataAndUserDataMatchingInPrologThenReturnSuccess) {
     MockCommandList commandList;
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     int userData = 5;
     ze_command_list_close_params_t tracerParams;
     zet_core_callbacks_t prologCbs = {};
@@ -213,7 +213,7 @@ TEST_F(ZeApiTracingCoreTests, WhenCallingTracerWrapperWithOnePrologAndNoEpilogWi
 
 TEST_F(ZeApiTracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsWithUserDataAndUserDataMatchingInPrologAndEpilogThenReturnSuccess) {
     MockCommandList commandList;
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     int userData = 5;
     ze_command_list_close_params_t tracerParams;
     zet_core_callbacks_t prologCbs = {};
@@ -243,7 +243,7 @@ TEST_F(ZeApiTracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsW
 
 TEST_F(ZeApiTracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsWithUserDataAndInstanceDataUserDataMatchingInPrologAndEpilogThenReturnSuccess) {
     MockCommandList commandList;
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     int userData = 5;
     ze_command_list_close_params_t tracerParams;
     zet_core_callbacks_t prologCbs = {};
@@ -273,7 +273,7 @@ TEST_F(ZeApiTracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsW
 
 TEST_F(ZeApiTracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsWithInstanceDataThenReturnSuccess) {
     MockCommandList commandList;
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     ze_command_list_close_params_t tracerParams;
     zet_core_callbacks_t prologCbs = {};
     zet_core_callbacks_t epilogCbs = {};
@@ -302,7 +302,7 @@ TEST_F(ZeApiTracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsW
 
 TEST_F(ZeApiTracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsWithRecursionHandledThenSuccessIsReturned) {
     MockCommandList commandList;
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     int userData = 5;
     ze_command_list_close_params_t tracerParams;
     zet_core_callbacks_t prologCbs = {};
