@@ -53,7 +53,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
     }
 
     TakeOwnershipWrapper<CommandQueue> queueOwnership(*this);
-    auto commandStreamReceieverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
+    auto commandStreamReceiverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
 
     auto blockQueue = false;
     auto taskLevel = 0u;
@@ -80,7 +80,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
                                         eventBuilder);
     }
 
-    commandStreamReceieverOwnership.unlock();
+    commandStreamReceiverOwnership.unlock();
     queueOwnership.unlock();
 
     // read/write buffers are always blocking

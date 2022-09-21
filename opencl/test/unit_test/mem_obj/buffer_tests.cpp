@@ -586,7 +586,9 @@ TEST(Buffer, givenZeroFlagsNoSharedContextAndCompressedBuffersDisabledWhenAlloca
     EXPECT_EQ(AllocationType::BUFFER, type);
 }
 
-TEST(Buffer, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInSystemMemoryPoolThenAllocationIsWrittenByEnqueueWriteBuffer) {
+TEST(Buffer, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInSystemMemoryPoolAndCopyOnCpuDisabledThenAllocationIsWrittenByEnqueueWriteBuffer) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CopyHostPtrOnCpu.set(0);
     ExecutionEnvironment *executionEnvironment = MockClDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
 
     auto *memoryManager = new MockMemoryManagerFailFirstAllocation(*executionEnvironment);
@@ -1802,6 +1804,134 @@ HWTEST_F(BufferHwFromDeviceTests, givenMultiGraphicsAllocationWhenCreateBufferHw
     EXPECT_EQ(buffer->getMultiGraphicsAllocation().getGraphicsAllocation(device->getRootDeviceIndex()), multiGraphicsAllocation.getGraphicsAllocation(device->getRootDeviceIndex()));
 
     alignedFree(ptr);
+}
+
+TEST(BufferCreateTests, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInSystemMemoryPoolAndCopyOnCpuEnabledThenAllocationIsWrittenUsingLockedPointerIfAllowed) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessAllowed));
+
+    auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get());
+    auto memoryManager = new MockMemoryManager(true, *executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
+
+    MockClDevice device(new MockDevice(executionEnvironment, mockRootDeviceIndex));
+    ASSERT_TRUE(device.createEngines());
+    MockContext context(&device, true);
+    auto commandQueue = new MockCommandQueue(context);
+    context.setSpecialQueue(commandQueue, mockRootDeviceIndex);
+    constexpr size_t smallBufferSize = Buffer::maxBufferSizeForCopyOnCpu;
+    constexpr size_t bigBufferSize = smallBufferSize + 1;
+    char memory[smallBufferSize];
+    char bigMemory[bigBufferSize];
+
+    {
+        // cpu copy allowed
+        cl_int retVal;
+        cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
+        auto writeBufferCounter = commandQueue->writeBufferCounter;
+        size_t lockResourceCalled = memoryManager->lockResourceCalled;
+
+        std::unique_ptr<Buffer> buffer(Buffer::create(&context, flags, sizeof(memory), memory, retVal));
+        ASSERT_NE(nullptr, buffer.get());
+        EXPECT_EQ(commandQueue->writeBufferCounter, writeBufferCounter);
+        EXPECT_EQ(memoryManager->lockResourceCalled, lockResourceCalled + 1);
+    }
+    {
+        // buffer size over threshold -> cpu copy disallowed
+        cl_int retVal;
+        cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
+        auto writeBufferCounter = commandQueue->writeBufferCounter;
+        size_t lockResourceCalled = memoryManager->lockResourceCalled;
+
+        std::unique_ptr<Buffer> buffer(Buffer::create(&context, flags, sizeof(bigMemory), bigMemory, retVal));
+        ASSERT_NE(nullptr, buffer.get());
+        EXPECT_EQ(commandQueue->writeBufferCounter, writeBufferCounter + 1);
+        EXPECT_EQ(memoryManager->lockResourceCalled, lockResourceCalled);
+    }
+    {
+        // uses implicit scaling -> cpu copy disallowed
+        DebugManagerStateRestore subTestRestorer;
+        DebugManager.flags.EnableWalkerPartition.set(1);
+        cl_int retVal;
+        cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
+        auto writeBufferCounter = commandQueue->writeBufferCounter;
+        size_t lockResourceCalled = memoryManager->lockResourceCalled;
+
+        std::unique_ptr<Buffer> buffer(Buffer::create(&context, flags, sizeof(bigMemory), bigMemory, retVal));
+        ASSERT_NE(nullptr, buffer.get());
+        EXPECT_EQ(commandQueue->writeBufferCounter, writeBufferCounter + 1);
+        EXPECT_EQ(memoryManager->lockResourceCalled, lockResourceCalled);
+    }
+    {
+        // debug flag disabled -> cpu copy disallowed
+        DebugManagerStateRestore subTestRestorer;
+        DebugManager.flags.CopyHostPtrOnCpu.set(0);
+        cl_int retVal;
+        cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
+        auto writeBufferCounter = commandQueue->writeBufferCounter;
+        size_t lockResourceCalled = memoryManager->lockResourceCalled;
+
+        std::unique_ptr<Buffer> buffer(Buffer::create(&context, flags, sizeof(memory), memory, retVal));
+        ASSERT_NE(nullptr, buffer.get());
+        EXPECT_EQ(commandQueue->writeBufferCounter, writeBufferCounter + 1);
+        EXPECT_EQ(memoryManager->lockResourceCalled, lockResourceCalled);
+    }
+    {
+        // debug flag enabled -> cpu copy forced
+        DebugManagerStateRestore subTestRestorer;
+        DebugManager.flags.CopyHostPtrOnCpu.set(1);
+        cl_int retVal;
+        cl_mem_flags flags = CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR;
+        auto writeBufferCounter = commandQueue->writeBufferCounter;
+        size_t lockResourceCalled = memoryManager->lockResourceCalled;
+
+        std::unique_ptr<Buffer> buffer(Buffer::create(&context, flags, sizeof(bigMemory), bigMemory, retVal));
+        ASSERT_NE(nullptr, buffer.get());
+        EXPECT_EQ(commandQueue->writeBufferCounter, writeBufferCounter);
+        EXPECT_EQ(memoryManager->lockResourceCalled, lockResourceCalled + 1);
+    }
+    {
+        // local memory cpu access disallowed -> cpu copy disallowed
+        DebugManagerStateRestore subTestRestorer;
+        DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
+        cl_int retVal;
+        cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
+        auto writeBufferCounter = commandQueue->writeBufferCounter;
+        size_t lockResourceCalled = memoryManager->lockResourceCalled;
+
+        std::unique_ptr<Buffer> buffer(Buffer::create(&context, flags, sizeof(memory), memory, retVal));
+        ASSERT_NE(nullptr, buffer.get());
+        EXPECT_EQ(commandQueue->writeBufferCounter, writeBufferCounter + 1);
+        EXPECT_EQ(memoryManager->lockResourceCalled, lockResourceCalled);
+    }
+    memoryManager->localMemorySupported[mockRootDeviceIndex] = false;
+    {
+        // buffer not in local memory -> locked pointer not used
+        cl_int retVal;
+        cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
+        auto writeBufferCounter = commandQueue->writeBufferCounter;
+        size_t lockResourceCalled = memoryManager->lockResourceCalled;
+
+        std::unique_ptr<Buffer> buffer(Buffer::create(&context, flags, sizeof(memory), memory, retVal));
+        ASSERT_NE(nullptr, buffer.get());
+        EXPECT_EQ(commandQueue->writeBufferCounter, writeBufferCounter);
+        EXPECT_EQ(memoryManager->lockResourceCalled, lockResourceCalled);
+    }
+    {
+        // compressed buffer, not in local memory -> locked pointer not used
+        DebugManagerStateRestore subTestRestorer;
+        DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+        DebugManager.flags.OverrideBufferSuitableForRenderCompression.set(1);
+        cl_int retVal;
+        cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
+        auto writeBufferCounter = commandQueue->writeBufferCounter;
+        size_t lockResourceCalled = memoryManager->lockResourceCalled;
+
+        std::unique_ptr<Buffer> buffer(Buffer::create(&context, flags, sizeof(memory), memory, retVal));
+        ASSERT_NE(nullptr, buffer.get());
+        EXPECT_EQ(commandQueue->writeBufferCounter, writeBufferCounter + 1);
+        EXPECT_EQ(memoryManager->lockResourceCalled, lockResourceCalled);
+    }
 }
 
 class BufferL3CacheTests : public ::testing::TestWithParam<uint64_t> {

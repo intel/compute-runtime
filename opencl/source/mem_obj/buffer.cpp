@@ -7,6 +7,7 @@
 
 #include "opencl/source/mem_obj/buffer.h"
 
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -410,19 +411,33 @@ Buffer *Buffer::create(Context *context,
                 auto &device = pBuffer->getContext()->getDevice(0u)->getDevice();
                 auto &hwInfo = device.getHardwareInfo();
                 auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-                auto blitMemoryToAllocationResult = BlitOperationResult::Unsupported;
-
-                if (hwInfoConfig->isBlitterFullySupported(hwInfo) && isLocalMemory) {
-                    blitMemoryToAllocationResult = BlitHelperFunctions::blitMemoryToAllocation(device, allocationInfo.memory, pBuffer->getOffset(), hostPtr, {size, 1, 1});
+                bool copyOnCpuAllowed = false == ImplicitScalingHelper::isImplicitScalingEnabled(device.getDeviceBitfield(), true) &&
+                                        size <= Buffer::maxBufferSizeForCopyOnCpu &&
+                                        !isCompressionEnabled &&
+                                        hwInfoConfig->getLocalMemoryAccessMode(hwInfo) != LocalMemoryAccessMode::CpuAccessDisallowed;
+                if (DebugManager.flags.CopyHostPtrOnCpu.get() != -1) {
+                    copyOnCpuAllowed = DebugManager.flags.CopyHostPtrOnCpu.get() == 1;
                 }
+                if (auto lockedPointer = copyOnCpuAllowed ? device.getMemoryManager()->lockResource(allocationInfo.memory) : nullptr) {
+                    memcpy_s(ptrOffset(lockedPointer, pBuffer->getOffset()), size, hostPtr, size);
+                    allocationInfo.memory->setAubWritable(true, GraphicsAllocation::defaultBank);
+                    allocationInfo.memory->setTbxWritable(true, GraphicsAllocation::defaultBank);
+                    copyExecuted = true;
+                } else {
+                    auto blitMemoryToAllocationResult = BlitOperationResult::Unsupported;
 
-                if (blitMemoryToAllocationResult != BlitOperationResult::Success) {
-                    auto cmdQ = context->getSpecialQueue(rootDeviceIndex);
-                    if (CL_SUCCESS != cmdQ->enqueueWriteBuffer(pBuffer, CL_TRUE, 0, size, hostPtr, allocationInfo.mapAllocation, 0, nullptr, nullptr)) {
-                        errcodeRet = CL_OUT_OF_RESOURCES;
+                    if (hwInfoConfig->isBlitterFullySupported(hwInfo) && isLocalMemory) {
+                        blitMemoryToAllocationResult = BlitHelperFunctions::blitMemoryToAllocation(device, allocationInfo.memory, pBuffer->getOffset(), hostPtr, {size, 1, 1});
                     }
+
+                    if (blitMemoryToAllocationResult != BlitOperationResult::Success) {
+                        auto cmdQ = context->getSpecialQueue(rootDeviceIndex);
+                        if (CL_SUCCESS != cmdQ->enqueueWriteBuffer(pBuffer, CL_TRUE, 0, size, hostPtr, allocationInfo.mapAllocation, 0, nullptr, nullptr)) {
+                            errcodeRet = CL_OUT_OF_RESOURCES;
+                        }
+                    }
+                    copyExecuted = true;
                 }
-                copyExecuted = true;
             } else {
                 memcpy_s(allocationInfo.memory->getUnderlyingBuffer(), size, hostPtr, size);
                 copyExecuted = true;
