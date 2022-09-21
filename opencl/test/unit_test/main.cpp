@@ -168,14 +168,6 @@ int main(int argc, char **argv) {
     }
 #endif
 
-    {
-        std::string envVar = std::string("NEO_") + executionName + "_DISABLE_TEST_ALARM";
-        char *envValue = getenv(envVar.c_str());
-        if (envValue != nullptr) {
-            enableAlarm = false;
-        }
-    }
-
     ::testing::InitGoogleTest(&argc, argv);
     HardwareInfo hwInfoForTests = DEFAULT_TEST_PLATFORM::hwInfo;
 

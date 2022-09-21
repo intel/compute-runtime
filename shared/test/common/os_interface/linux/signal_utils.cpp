@@ -16,7 +16,8 @@ std::string lastTest("");
 
 namespace NEO {
 extern const unsigned int ultIterationMaxTime;
-}
+extern const char *executionName;
+} // namespace NEO
 
 int newStdOut = -1;
 
@@ -25,7 +26,7 @@ void handleSIGABRT(int signal) {
     if (newStdOut != -1) {
         dup2(newStdOut, 1);
     }
-    std::cout << "SIGABRT on: " << lastTest << std::endl;
+    std::cout << "SIGABRT in " << NEO::executionName << ", on: " << lastTest << std::endl;
     if (sigaction(SIGABRT, &oldSigAbrt, nullptr) == -1) {
         std::cout << "FATAL: cannot fatal SIGABRT handler" << std::endl;
         std::cout << "FATAL: try SEGV" << std::endl;
@@ -43,7 +44,7 @@ void handleSIGALRM(int signal) {
     if (newStdOut != -1) {
         dup2(newStdOut, 1);
     }
-    std::cout << "Tests timeout: ";
+    std::cout << "Tests timeout in " << NEO::executionName << ", ";
     if (clock_gettime(CLOCK_MONOTONIC_RAW, &alrmTimeSpec) == 0) {
         auto deltaSec = alrmTimeSpec.tv_sec - startTimeSpec.tv_sec;
         std::cout << " after: " << deltaSec << " seconds";
@@ -56,7 +57,7 @@ void handleSIGSEGV(int signal) {
     if (newStdOut != -1) {
         dup2(newStdOut, 1);
     }
-    std::cout << "SIGSEGV on: " << lastTest << std::endl;
+    std::cout << "SIGSEGV in " << NEO::executionName << ", on: " << lastTest << std::endl;
     abort();
 }
 
@@ -78,6 +79,14 @@ int setAbrt(bool enableAbrt) {
 
 int setAlarm(bool enableAlarm) {
     std::cout << "enable SIGALRM handler: " << enableAlarm << std::endl;
+    if (enableAlarm) {
+        std::string envVar = std::string("NEO_") + NEO::executionName + "_DISABLE_TEST_ALARM";
+        char *envValue = getenv(envVar.c_str());
+        if (envValue != nullptr) {
+            enableAlarm = false;
+            std::cout << "WARNING: SIGALRM handler disabled by environment variable: " << envVar << std::endl;
+        }
+    }
     if (enableAlarm) {
         if (clock_gettime(CLOCK_MONOTONIC_RAW, &startTimeSpec)) {
             startTimeSpec.tv_sec = 0;

@@ -175,14 +175,6 @@ int main(int argc, char **argv) {
 
     applyWorkarounds();
 
-    {
-        std::string envVar = std::string("NEO_") + executionName + "_DISABLE_TEST_ALARM";
-        char *envValue = getenv(envVar.c_str());
-        if (envValue != nullptr) {
-            enableAlarm = false;
-        }
-    }
-
     testing::InitGoogleMock(&argc, argv);
 
     NEO::HardwareInfo hwInfoForTests = NEO::DEFAULT_TEST_PLATFORM::hwInfo;
