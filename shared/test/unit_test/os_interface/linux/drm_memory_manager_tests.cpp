@@ -21,6 +21,7 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gfx_partition.h"
 #include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm_client_context_base.h"
 #include "shared/test/common/os_interface/linux/drm_memory_manager_fixture.h"
 #include "shared/test/common/os_interface/linux/drm_mock_cache_info.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -4836,6 +4837,51 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenPatIndex
         EXPECT_EQ(expectedIndex, drmAllocation->getBO()->peekPatIndex());
     } else {
         EXPECT_EQ(CommonConstants::unsupportedPatIndex, drmAllocation->getBO()->peekPatIndex());
+    }
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenCompressedAndCachableAllocationWhenQueryingPatIndexThenPassCorrectParams) {
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = 1;
+    allocData.flags.allocateMemory = true;
+    allocData.type = AllocationType::BUFFER;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    EXPECT_NE(nullptr, allocation);
+
+    auto drmAllocation = static_cast<DrmAllocation *>(allocation);
+    ASSERT_NE(nullptr, drmAllocation->getBO());
+
+    auto isVmBindPatIndexProgrammingSupported = HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isVmBindPatIndexProgrammingSupported();
+
+    if (isVmBindPatIndexProgrammingSupported) {
+        auto mockClientContext = static_cast<MockGmmClientContextBase *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmClientContext());
+        auto gmm = allocation->getDefaultGmm();
+
+        {
+            gmm->isCompressionEnabled = true;
+            gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable = 1;
+
+            mock->getPatIndex(allocation->getDefaultGmm(), allocation->getAllocationType(), CacheRegion::Default, CachePolicy::WriteBack, false);
+
+            EXPECT_TRUE(mockClientContext->passedCachableSettingForGetPatIndexQuery);
+            EXPECT_TRUE(mockClientContext->passedCompressedSettingForGetPatIndexQuery);
+        }
+
+        {
+            gmm->isCompressionEnabled = false;
+            gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable = 0;
+
+            mock->getPatIndex(allocation->getDefaultGmm(), allocation->getAllocationType(), CacheRegion::Default, CachePolicy::WriteBack, false);
+
+            EXPECT_FALSE(mockClientContext->passedCachableSettingForGetPatIndexQuery);
+            EXPECT_FALSE(mockClientContext->passedCompressedSettingForGetPatIndexQuery);
+        }
     }
 
     memoryManager->freeGraphicsMemory(allocation);

@@ -79,4 +79,13 @@ void GmmClientContext::setGmmDeviceInfo(GMM_DEVICE_INFO *deviceInfo) {
     clientContext->GmmSetDeviceInfo(deviceInfo);
 }
 
+uint32_t GmmClientContext::cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GMM_RESOURCE_USAGE_TYPE usage, bool compressed, bool cachable) {
+    bool outValue = compressed;
+    uint32_t patIndex = clientContext->CachePolicyGetPATIndex(gmmResourceInfo, usage, &outValue, cachable);
+
+    DEBUG_BREAK_IF(outValue != compressed);
+
+    return patIndex;
+}
+
 } // namespace NEO

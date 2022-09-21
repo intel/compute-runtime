@@ -18,7 +18,7 @@ class MockGmmClientContextBase : public GmmClientContext {
     };
 
     MEMORY_OBJECT_CONTROL_STATE cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GMM_RESOURCE_USAGE_TYPE usage) override;
-    uint32_t cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GMM_RESOURCE_USAGE_TYPE usage) override;
+    uint32_t cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GMM_RESOURCE_USAGE_TYPE usage, bool compressed, bool cachable) override;
     GMM_RESOURCE_INFO *createResInfoObject(GMM_RESCREATE_PARAMS *pCreateParams) override;
     GMM_RESOURCE_INFO *copyResInfoObject(GMM_RESOURCE_INFO *pSrcRes) override;
     void destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo) override;
@@ -31,6 +31,9 @@ class MockGmmClientContextBase : public GmmClientContext {
     uint32_t getSurfaceStateCompressionFormatCalled = 0u;
     uint32_t getMediaSurfaceStateCompressionFormatCalled = 0u;
     bool returnErrorOnPatIndexQuery = false;
+
+    bool passedCompressedSettingForGetPatIndexQuery = false;
+    bool passedCachableSettingForGetPatIndexQuery = false;
 
   protected:
     using GmmClientContext::GmmClientContext;

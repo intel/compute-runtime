@@ -1313,13 +1313,17 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
 
     GMM_RESOURCE_INFO *resourceInfo = nullptr;
     GMM_RESOURCE_USAGE_TYPE usageType = CacheSettingsHelper::getGmmUsageType(allocationType, false, *hwInfo);
+    bool cachable = !CacheSettingsHelper::isUncachedType(usageType);
+    bool compressed = false;
 
     if (gmm) {
         resourceInfo = gmm->gmmResourceInfo->peekGmmResourceInfo();
         usageType = gmm->resourceParams.Usage;
+        compressed = gmm->isCompressionEnabled;
+        cachable = gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable;
     }
 
-    uint64_t patIndex = rootDeviceEnvironment.getGmmClientContext()->cachePolicyGetPATIndex(resourceInfo, usageType);
+    uint64_t patIndex = rootDeviceEnvironment.getGmmClientContext()->cachePolicyGetPATIndex(resourceInfo, usageType, compressed, cachable);
 
     if (DebugManager.flags.ClosEnabled.get() != -1) {
         closEnabled = !!DebugManager.flags.ClosEnabled.get();
