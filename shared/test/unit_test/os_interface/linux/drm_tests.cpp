@@ -1481,6 +1481,15 @@ TEST(IoctlHelperTest, whenGettingDrmParamValueThenProperValueIsReturned) {
     EXPECT_THROW(ioctlHelper->getDrmParamValueBase(DrmParam::EngineClassCompute), std::runtime_error);
 }
 
+TEST(IoctlHelperTest, whenGettingFileNameForFrequencyFilesThenProperStringIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto ioctlHelper = drm.getIoctlHelper();
+    EXPECT_STREQ("/gt_max_freq_mhz", ioctlHelper->getFileForMaxGpuFrequency().c_str());
+    EXPECT_STREQ("/gt/gt2/rps_max_freq_mhz", ioctlHelper->getFileForMaxGpuFrequencyOfSubDevice(2).c_str());
+    EXPECT_STREQ("/gt/gt1/mem_RP0_freq_mhz", ioctlHelper->getFileForMaxMemoryFrequencyOfSubDevice(1).c_str());
+}
+
 TEST(DistanceInfoTest, givenDistanceInfosWhenAssignRegionsFromDistancesThenCorrectRegionsSet) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};

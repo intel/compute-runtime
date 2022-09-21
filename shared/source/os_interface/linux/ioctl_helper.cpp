@@ -357,4 +357,16 @@ std::string IoctlHelper::getIoctlStringBase(DrmIoctl ioctlRequest) const {
     }
 }
 
+std::string IoctlHelper::getFileForMaxGpuFrequency() const {
+    return "/gt_max_freq_mhz";
+}
+
+std::string IoctlHelper::getFileForMaxGpuFrequencyOfSubDevice(int subDeviceId) const {
+    return "/gt/gt" + std::to_string(subDeviceId) + "/rps_max_freq_mhz";
+}
+
+std::string IoctlHelper::getFileForMaxMemoryFrequencyOfSubDevice(int subDeviceId) const {
+    return "/gt/gt" + std::to_string(subDeviceId) + "/mem_RP0_freq_mhz";
+}
+
 } // namespace NEO

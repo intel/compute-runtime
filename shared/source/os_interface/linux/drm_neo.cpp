@@ -792,7 +792,7 @@ bool Drm::isDebugAttachAvailable() {
 
 int getMaxGpuFrequencyOfDevice(Drm &drm, std::string &sysFsPciPath, int &maxGpuFrequency) {
     maxGpuFrequency = 0;
-    std::string clockSysFsPath = sysFsPciPath + "/gt_max_freq_mhz";
+    std::string clockSysFsPath = sysFsPciPath + drm.getIoctlHelper()->getFileForMaxGpuFrequency();
 
     std::ifstream ifs(clockSysFsPath.c_str(), std::ifstream::in);
     if (ifs.fail()) {
@@ -806,7 +806,7 @@ int getMaxGpuFrequencyOfDevice(Drm &drm, std::string &sysFsPciPath, int &maxGpuF
 
 int getMaxGpuFrequencyOfSubDevice(Drm &drm, std::string &sysFsPciPath, int subDeviceId, int &maxGpuFrequency) {
     maxGpuFrequency = 0;
-    std::string clockSysFsPath = sysFsPciPath + "/gt/gt" + std::to_string(subDeviceId) + "/rps_max_freq_mhz";
+    std::string clockSysFsPath = sysFsPciPath + drm.getIoctlHelper()->getFileForMaxGpuFrequencyOfSubDevice(subDeviceId);
 
     std::ifstream ifs(clockSysFsPath.c_str(), std::ifstream::in);
     if (ifs.fail()) {
@@ -837,7 +837,7 @@ int Drm::getMaxGpuFrequency(HardwareInfo &hwInfo, int &maxGpuFrequency) {
 }
 
 bool Drm::getDeviceMemoryMaxClockRateInMhz(uint32_t tileId, uint32_t &clkRate) {
-    const std::string relativefilePath = "/gt/gt" + std::to_string(tileId) + "/mem_RP0_freq_mhz";
+    const std::string relativefilePath = ioctlHelper->getFileForMaxMemoryFrequencyOfSubDevice(tileId);
     std::string readString(64, '\0');
     errno = 0;
     if (readSysFsAsString(relativefilePath, readString) == false) {
