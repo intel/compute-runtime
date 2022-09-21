@@ -52,7 +52,7 @@ exposing hardware capabilities to applications.
 
 %build
 %cmake .. \
-   -GNinja \
+   -GNinja ${NEO_BUILD_EXTRA_OPTS} \
    -DNEO_VERSION_BUILD=%{build_id} \
    -DCMAKE_BUILD_TYPE=%{build_type} \
    -DNEO_BUILD_WITH_OCL=FALSE \

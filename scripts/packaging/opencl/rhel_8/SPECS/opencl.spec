@@ -46,7 +46,7 @@ Intel(R) Graphics Compute Runtime for OpenCL(TM) is a open source project to con
 mkdir build
 cd build
 %cmake .. \
-   -GNinja \
+   -GNinja ${NEO_BUILD_EXTRA_OPTS} \
    -DNEO_OCL_VERSION_MAJOR=%{NEO_OCL_VERSION_MAJOR} \
    -DNEO_OCL_VERSION_MINOR=%{NEO_OCL_VERSION_MINOR} \
    -DNEO_VERSION_BUILD=%{NEO_OCL_VERSION_BUILD} \
