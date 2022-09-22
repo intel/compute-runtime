@@ -316,7 +316,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenCall
 
     EXPECT_TRUE(aubCsr.addAubCommentCalled);
     EXPECT_TRUE(mockAubManager->addCommentCalled);
-    EXPECT_STREQ(comment, mockAubManager->receivedComment.c_str());
+    EXPECT_STREQ(comment, mockAubManager->receivedComments.c_str());
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenCallingInsertAubWaitInstructionThenCallPollForCompletion) {
@@ -752,7 +752,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenInit
     aubCsr->initFile(fileName);
 
     std::string commentWithDriverVersion = "driver version: " + std::string(driverVersion);
-    EXPECT_EQ(mockAubManager->receivedComment, commentWithDriverVersion);
+    EXPECT_EQ(mockAubManager->receivedComments, commentWithDriverVersion);
 }
 
 HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenNoPatchInfoDataObjectsThenCommentsAreEmpty) {
@@ -993,4 +993,26 @@ HWTEST_F(AubFileStreamTests, givenGenerateAubFilePerProcessIdDebugFlagAndAubComm
     std::stringstream strExtendedFileName;
     strExtendedFileName << "_1_aubfile_PID_" << SysCalls::getProcessId() << ".aub";
     EXPECT_NE(std::string::npos, fullName.find(strExtendedFileName.str()));
+}
+
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenInitFileIsCalledThenCommentWithNonDefaultFlagsAreAdded) {
+    DebugManagerStateRestore stateRestore;
+
+    DebugManager.flags.MakeAllBuffersResident.set(1);
+    DebugManager.flags.ZE_AFFINITY_MASK.set("non-default");
+
+    auto mockAubManager = std::make_unique<MockAubManager>();
+    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
+
+    aubCsr->aubManager = mockAubManager.get();
+
+    std::string fileName = "file_name.aub";
+    aubCsr->initFile(fileName);
+
+    std::string expectedAddedComments = std::string("driver version: ") + std::string(driverVersion) +
+                                        std::string("Non-default value of debug variable: MakeAllBuffersResident = 1") +
+                                        std::string("Non-default value of debug variable: ZE_AFFINITY_MASK = non-default");
+
+    EXPECT_EQ(expectedAddedComments, mockAubManager->receivedComments);
 }

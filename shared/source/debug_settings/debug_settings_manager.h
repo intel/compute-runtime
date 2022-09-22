@@ -120,15 +120,17 @@ class DebugSettingsManager {
         return (disabled() && PURGE_DEBUG_KEY_NAMES) ? "" : key;
     }
 
+    void getStringWithFlags(std::string &allFlags, std::string &changedFlags) const;
+
   protected:
     std::unique_ptr<SettingsReader> readerImpl;
-
     bool isLoopAtDriverInitEnabled() const {
         auto loopingEnabled = flags.LoopAtDriverInit.get();
         return loopingEnabled;
     }
     template <typename DataType>
-    static void dumpNonDefaultFlag(const char *variableName, const DataType &variableValue, const DataType &defaultValue);
+    static void dumpNonDefaultFlag(const char *variableName, const DataType &variableValue, const DataType &defaultValuep, std::ostringstream &ostring);
+
     void dumpFlags() const;
     static const char *settingsDumpFileName;
 };

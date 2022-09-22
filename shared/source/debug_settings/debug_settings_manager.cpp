@@ -60,11 +60,38 @@ void DebugSettingsManager<DebugLevel>::getHardwareInfoOverride(std::string &hwIn
 
 template <DebugFunctionalityLevel DebugLevel>
 template <typename DataType>
-void DebugSettingsManager<DebugLevel>::dumpNonDefaultFlag(const char *variableName, const DataType &variableValue, const DataType &defaultValue) {
+void DebugSettingsManager<DebugLevel>::dumpNonDefaultFlag(const char *variableName, const DataType &variableValue, const DataType &defaultValue, std::ostringstream &ostring) {
     if (variableValue != defaultValue) {
         const auto variableStringValue = toString(variableValue);
-        PRINT_DEBUG_STRING(true, stdout, "Non-default value of debug variable: %s = %s\n", variableName, variableStringValue.c_str());
+        ostring << "Non-default value of debug variable: " << variableName << " = " << variableStringValue.c_str() << '\n';
     }
+}
+
+template <DebugFunctionalityLevel DebugLevel>
+void DebugSettingsManager<DebugLevel>::getStringWithFlags(std::string &allFlags, std::string &changedFlags) const {
+    std::ostringstream allFlagsStream;
+    allFlagsStream.str("");
+
+    std::ostringstream changedFlagsStream;
+    changedFlagsStream.str("");
+
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                       \
+    allFlagsStream << getNonReleaseKeyName(#variableName) << " = " << flags.variableName.get() << '\n'; \
+    dumpNonDefaultFlag<dataType>(getNonReleaseKeyName(#variableName), flags.variableName.get(), defaultValue, changedFlagsStream);
+
+    if (registryReadAvailable() || isDebugKeysReadEnabled()) {
+#include "debug_variables.inl"
+    }
+#undef DECLARE_DEBUG_VARIABLE
+
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
+    allFlagsStream << #variableName << " = " << flags.variableName.get() << '\n'; \
+    dumpNonDefaultFlag<dataType>(#variableName, flags.variableName.get(), defaultValue, changedFlagsStream);
+#include "release_variables.inl"
+#undef DECLARE_DEBUG_VARIABLE
+
+    allFlags = allFlagsStream.str();
+    changedFlags = changedFlagsStream.str();
 }
 
 template <DebugFunctionalityLevel DebugLevel>
@@ -76,20 +103,13 @@ void DebugSettingsManager<DebugLevel>::dumpFlags() const {
     std::ofstream settingsDumpFile{settingsDumpFileName, std::ios::out};
     DEBUG_BREAK_IF(!settingsDumpFile.good());
 
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                         \
-    settingsDumpFile << getNonReleaseKeyName(#variableName) << " = " << flags.variableName.get() << '\n'; \
-    dumpNonDefaultFlag<dataType>(getNonReleaseKeyName(#variableName), flags.variableName.get(), defaultValue);
+    std::string allFlags;
+    std::string changedFlags;
 
-    if (registryReadAvailable() || isDebugKeysReadEnabled()) {
-#include "debug_variables.inl"
-    }
-#undef DECLARE_DEBUG_VARIABLE
+    getStringWithFlags(allFlags, changedFlags);
+    PRINT_DEBUG_STRING(true, stdout, "%s", changedFlags.c_str());
 
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)   \
-    settingsDumpFile << #variableName << " = " << flags.variableName.get() << '\n'; \
-    dumpNonDefaultFlag<dataType>(#variableName, flags.variableName.get(), defaultValue);
-#include "release_variables.inl"
-#undef DECLARE_DEBUG_VARIABLE
+    settingsDumpFile << allFlags;
 }
 
 template <DebugFunctionalityLevel DebugLevel>

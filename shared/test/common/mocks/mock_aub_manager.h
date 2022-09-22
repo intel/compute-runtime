@@ -108,7 +108,7 @@ class MockAubManager : public aub_stream::AubManager {
     }
 
     void addComment(const char *message) override {
-        receivedComment.assign(message);
+        receivedComments.append(message);
         addCommentCalled = true;
     }
 
@@ -150,7 +150,7 @@ class MockAubManager : public aub_stream::AubManager {
     bool getFileNameCalled = false;
     bool isPaused = false;
     bool addCommentCalled = false;
-    std::string receivedComment = "";
+    std::string receivedComments = "";
     bool writeMemory2Called = false;
     bool writePageTableEntriesCalled = false;
     bool writePhysicalMemoryPagesCalled = false;

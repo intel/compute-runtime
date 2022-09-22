@@ -27,6 +27,7 @@
 #include "shared/source/helpers/neo_driver_version.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/helpers/string_helpers.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
@@ -132,6 +133,15 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initFile(const std::string &fileName
             std::ostringstream str;
             str << "driver version: " << driverVersion;
             aubManager->addComment(str.str().c_str());
+
+            std::string strWithNonDefaultFlags;
+            std::string strWithAllFlags;
+
+            DebugManager.getStringWithFlags(strWithAllFlags, strWithNonDefaultFlags);
+            auto vectorWithNonDefaultFlags = StringHelpers::split(strWithNonDefaultFlags, "\n");
+            for (auto &comment : vectorWithNonDefaultFlags) {
+                aubManager->addComment((comment).c_str());
+            }
         }
         return;
     }
