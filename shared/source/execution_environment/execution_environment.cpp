@@ -200,20 +200,35 @@ void ExecutionEnvironment::parseAffinityMask() {
     rootDeviceEnvironments.swap(filteredEnvironments);
 }
 
-void ExecutionEnvironment::adjustCcsCount() const {
+void ExecutionEnvironment::adjustCcsCountImpl(RootDeviceEnvironment *rootDeviceEnvironment) const {
+    auto hwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
+    auto hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
+    hwInfoConfig->adjustNumberOfCcs(*hwInfo);
+}
+
+void ExecutionEnvironment::adjustCcsCount() {
     parseCcsCountLimitations();
 
-    for (auto &rootDeviceEnvironment : rootDeviceEnvironments) {
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex < rootDeviceEnvironments.size(); rootDeviceIndex++) {
+        auto &rootDeviceEnvironment = rootDeviceEnvironments[rootDeviceIndex];
         UNRECOVERABLE_IF(!rootDeviceEnvironment);
         if (!rootDeviceEnvironment->isNumberOfCcsLimited()) {
-            auto hwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
-            auto hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
-            hwInfoConfig->adjustNumberOfCcs(*hwInfo);
+            adjustCcsCountImpl(rootDeviceEnvironment.get());
         }
     }
 }
 
-void ExecutionEnvironment::parseCcsCountLimitations() const {
+void ExecutionEnvironment::adjustCcsCount(const uint32_t rootDeviceIndex) const {
+    auto &rootDeviceEnvironment = rootDeviceEnvironments[rootDeviceIndex];
+    UNRECOVERABLE_IF(!rootDeviceEnvironment);
+    if (rootDeviceNumCcsMap.find(rootDeviceIndex) != rootDeviceNumCcsMap.end()) {
+        rootDeviceEnvironment->limitNumberOfCcs(rootDeviceNumCcsMap.at(rootDeviceIndex));
+    } else {
+        adjustCcsCountImpl(rootDeviceEnvironment.get());
+    }
+}
+
+void ExecutionEnvironment::parseCcsCountLimitations() {
     const auto &numberOfCcsString = DebugManager.flags.ZEX_NUMBER_OF_CCS.get();
 
     if (numberOfCcsString.compare("default") == 0 ||
@@ -232,6 +247,7 @@ void ExecutionEnvironment::parseCcsCountLimitations() const {
         if (rootDeviceIndex < numRootDevices) {
             if (subEntries.size() > 1) {
                 uint32_t maxCcsCount = StringHelpers::toUint32t(subEntries[1]);
+                rootDeviceNumCcsMap.insert({rootDeviceIndex, maxCcsCount});
                 rootDeviceEnvironments[rootDeviceIndex]->limitNumberOfCcs(maxCcsCount);
             }
         }

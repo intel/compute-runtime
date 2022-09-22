@@ -199,6 +199,7 @@ static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<HardwareInf
                                                   sizeof(std::vector<RootDeviceEnvironment>) +
                                                   sizeof(std::unique_ptr<OsEnvironment>) +
                                                   sizeof(std::unique_ptr<DirectSubmissionController>) +
+                                                  sizeof(std::unordered_map<uint32_t, uint32_t>) +
                                                   sizeof(bool) +
                                                   (is64bit ? 23 : 15),
               "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");

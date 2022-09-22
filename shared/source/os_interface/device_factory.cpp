@@ -176,7 +176,12 @@ bool DeviceFactory::prepareDeviceEnvironment(ExecutionEnvironment &executionEnvi
 
     // HwDeviceIds should contain only one entry corresponding to osPciPath
     UNRECOVERABLE_IF(hwDeviceIds.size() > 1);
-    return initHwDeviceIdResources(executionEnvironment, std::move(hwDeviceIds[0]), rootDeviceIndex);
+    if (!initHwDeviceIdResources(executionEnvironment, std::move(hwDeviceIds[0]), rootDeviceIndex)) {
+        return false;
+    }
+
+    executionEnvironment.adjustCcsCount(rootDeviceIndex);
+    return true;
 }
 
 std::unique_ptr<Device> DeviceFactory::createDevice(ExecutionEnvironment &executionEnvironment, std::string &osPciPath, const uint32_t rootDeviceIndex) {
