@@ -23,8 +23,10 @@ ProgramInfo::~ProgramInfo() {
 KernelInfo::~KernelInfo() {
     delete[] crossThreadData;
 }
+} // namespace NEO
 
 namespace Ocloc {
+using namespace NEO;
 
 int validate(const std::vector<std::string> &args, OclocArgHelper *argHelper) {
     NEO::ProgramInfo programInfo;
@@ -95,5 +97,3 @@ int validate(const std::vector<std::string> &args, OclocArgHelper *argHelper) {
 }
 
 } // namespace Ocloc
-
-} // namespace NEO

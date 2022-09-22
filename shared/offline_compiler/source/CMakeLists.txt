@@ -81,6 +81,8 @@ set(CLOC_LIB_SRCS_LIB
     ${OCLOC_DIRECTORY}/source/ocloc_fcl_facade.h
     ${OCLOC_DIRECTORY}/source/ocloc_igc_facade.cpp
     ${OCLOC_DIRECTORY}/source/ocloc_igc_facade.h
+    ${OCLOC_DIRECTORY}/source/ocloc_interface.cpp
+    ${OCLOC_DIRECTORY}/source/ocloc_interface.h
     ${OCLOC_DIRECTORY}/source/ocloc_validator.cpp
     ${OCLOC_DIRECTORY}/source/ocloc_validator.h
     ${OCLOC_DIRECTORY}/source/offline_compiler.cpp

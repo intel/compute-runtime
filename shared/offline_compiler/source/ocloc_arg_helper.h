@@ -135,7 +135,6 @@ class OclocArgHelper {
         return os.str();
     }
 
-    bool areQuotesRequired(const std::string_view &argName);
     std::string returnProductNameForDevice(unsigned short deviceId);
     std::unique_ptr<ProductConfigHelper> productConfigHelper;
 };

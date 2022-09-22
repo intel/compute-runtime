@@ -289,8 +289,8 @@ TEST(OclocApiTests, givenInputOptionsAndInternalOptionsWhenCmdlineIsPrintedThenB
                              nullptr, nullptr, nullptr, nullptr);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_NE(retVal, NEO::OclocErrorCode::SUCCESS);
-    EXPECT_TRUE(output.find("Command was: ocloc -q -file test_files/IDoNotExist.cl -device "s +
-                            gEnvironment->devicePrefix.c_str() +
+    EXPECT_TRUE(output.find("Command was: ocloc -q -file test_files/IDoNotExist.cl -device " +
+                            gEnvironment->devicePrefix +
                             " -options \"-D DEBUG -cl-kernel-arg-info\" -internal_options \"-internalOption1 -internal-option-2\"") != std::string::npos);
 
     size_t quotesCount = std::count(output.begin(), output.end(), '\"');
@@ -315,8 +315,8 @@ TEST(OclocApiTests, givenInputOptionsCalledOptionsWhenCmdlineIsPrintedThenQuotes
                              nullptr, nullptr, nullptr, nullptr);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_NE(retVal, NEO::OclocErrorCode::SUCCESS);
-    EXPECT_TRUE(output.find("Command was: ocloc -q -file test_files/IDoNotExist.cl -device "s +
-                            gEnvironment->devicePrefix.c_str() +
+    EXPECT_TRUE(output.find("Command was: ocloc -q -file test_files/IDoNotExist.cl -device " +
+                            gEnvironment->devicePrefix +
                             " -options \"-options\" -internal_options \"-internalOption\"") != std::string::npos);
 
     size_t quotesCount = std::count(output.begin(), output.end(), '\"');
@@ -656,18 +656,6 @@ TEST(OclocApiTests, GivenNonexistentFileWhenValidateIsInvokedThenErrorIsPrinted)
 
     const std::string expectedErrorMessage{"Error : Input file missing : some_special_nonexistent_file.gen\n"};
     EXPECT_EQ(expectedErrorMessage, output);
-}
-
-TEST(OclocApiTests, GivenZeroArgumentsWhenOclocIsInvokedThenHelpIsPrinted) {
-    testing::internal::CaptureStdout();
-    int retVal = oclocInvoke(0, nullptr,
-                             0, nullptr, nullptr, nullptr,
-                             0, nullptr, nullptr, nullptr,
-                             nullptr, nullptr, nullptr, nullptr);
-
-    const auto output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(NEO::OclocErrorCode::INVALID_COMMAND_LINE, retVal);
-    EXPECT_FALSE(output.empty());
 }
 
 TEST(OclocApiTests, GivenCommandWithoutArgsWhenOclocIsInvokedThenHelpIsPrinted) {

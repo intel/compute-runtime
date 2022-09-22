@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,10 +12,7 @@
 
 class OclocArgHelper;
 
-namespace NEO {
 namespace Ocloc {
 
 int validate(const std::vector<std::string> &args, OclocArgHelper *argHelper);
 }
-
-} // namespace NEO

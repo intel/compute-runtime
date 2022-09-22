@@ -633,12 +633,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
     bool compile32 = false;
     bool compile64 = false;
 
-    if (numArgs < 2) {
-        showHelp = true;
-        return INVALID_COMMAND_LINE;
-    }
-
-    for (uint32_t argIndex = 1; argIndex < numArgs; argIndex++) {
+    for (uint32_t argIndex = 1; argIndex < argv.size(); argIndex++) {
         const auto &currArg = argv[argIndex];
         const bool hasMoreArgs = (argIndex + 1 < numArgs);
         if ("compile" == currArg) {

@@ -200,10 +200,6 @@ void OclocArgHelper::saveOutput(const std::string &filename, const std::ostream 
     }
 }
 
-bool OclocArgHelper::areQuotesRequired(const std::string_view &argName) {
-    return argName == "-options" || argName == "-internal_options";
-}
-
 bool OclocArgHelper::setAcronymForDeviceId(std::string &device) {
     auto product = returnProductNameForDevice(std::stoi(device, 0, 16));
     if (!product.empty()) {

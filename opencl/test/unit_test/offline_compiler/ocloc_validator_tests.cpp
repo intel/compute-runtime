@@ -17,7 +17,7 @@ TEST(OclocValidate, WhenFileArgIsMissingThenFail) {
     std::map<std::string, std::string> files;
     MockOclocArgHelper argHelper{files};
     argHelper.getPrinterRef() = MessagePrinter(true);
-    int res = NEO::Ocloc::validate({}, &argHelper);
+    int res = Ocloc::validate({}, &argHelper);
     EXPECT_EQ(-1, res);
     std::string oclocStdout = argHelper.getPrinterRef().getLog().str();
     EXPECT_STREQ("Error : Mandatory argument -file is missing.\n", oclocStdout.c_str());
@@ -27,7 +27,7 @@ TEST(OclocValidate, WhenInputFileIsMissingThenFail) {
     MockOclocArgHelper::FilesMap files;
     MockOclocArgHelper argHelper{files};
     argHelper.getPrinterRef() = MessagePrinter(true);
-    int res = NEO::Ocloc::validate({"-file", "src.gen"}, &argHelper);
+    int res = Ocloc::validate({"-file", "src.gen"}, &argHelper);
     EXPECT_EQ(-1, res);
     std::string oclocStdout = argHelper.getPrinterRef().getLog().str();
     EXPECT_STREQ("Error : Input file missing : src.gen\n", oclocStdout.c_str());
@@ -37,7 +37,7 @@ TEST(OclocValidate, WhenInputFileIsAvailableThenLogItsSize) {
     MockOclocArgHelper::FilesMap files{{"src.gen", "01234567"}};
     MockOclocArgHelper argHelper{files};
     argHelper.getPrinterRef() = MessagePrinter(true);
-    int res = NEO::Ocloc::validate({"-file", "src.gen"}, &argHelper);
+    int res = Ocloc::validate({"-file", "src.gen"}, &argHelper);
     EXPECT_NE(0, res);
     std::string oclocStdout = argHelper.getPrinterRef().getLog().str();
     EXPECT_NE(nullptr, strstr(oclocStdout.c_str(), "Validating : src.gen (8 bytes).\n")) << oclocStdout;
@@ -47,7 +47,7 @@ TEST(OclocValidate, WhenInputFileIsNotZebinThenFail) {
     MockOclocArgHelper::FilesMap files{{"src.gen", "01234567"}};
     MockOclocArgHelper argHelper{files};
     argHelper.getPrinterRef() = MessagePrinter(true);
-    int res = NEO::Ocloc::validate({"-file", "src.gen"}, &argHelper);
+    int res = Ocloc::validate({"-file", "src.gen"}, &argHelper);
     EXPECT_EQ(-2, res);
     std::string oclocStdout = argHelper.getPrinterRef().getLog().str();
     EXPECT_NE(nullptr, strstr(oclocStdout.c_str(), "Input is not a Zebin file (not elf or wrong elf object file type)")) << oclocStdout;
@@ -59,7 +59,7 @@ TEST(OclocValidate, WhenInputIsValidZebinThenReturnSucceed) {
                                                                                 reinterpret_cast<const char *>(zebin.storage.data()) + zebin.storage.size())}};
     MockOclocArgHelper argHelper{files};
     argHelper.getPrinterRef() = MessagePrinter(true);
-    int res = NEO::Ocloc::validate({"-file", "src.gen"}, &argHelper);
+    int res = Ocloc::validate({"-file", "src.gen"}, &argHelper);
     std::string oclocStdout = argHelper.getPrinterRef().getLog().str();
     EXPECT_EQ(0, res) << oclocStdout;
 }
@@ -70,7 +70,7 @@ TEST(OclocValidate, WhenInputIsValid32BitZebinThenReturnSucceed) {
                                                                                 reinterpret_cast<const char *>(zebin.storage.data()) + zebin.storage.size())}};
     MockOclocArgHelper argHelper{files};
     argHelper.getPrinterRef() = MessagePrinter(true);
-    int res = NEO::Ocloc::validate({"-file", "src.gen"}, &argHelper);
+    int res = Ocloc::validate({"-file", "src.gen"}, &argHelper);
     std::string oclocStdout = argHelper.getPrinterRef().getLog().str();
     EXPECT_EQ(0, res) << oclocStdout;
 }
@@ -82,7 +82,7 @@ TEST(OclocValidate, WhenWarningsEmitedThenRedirectsThemToStdout) {
                                                                                 reinterpret_cast<const char *>(zebin.storage.data()) + zebin.storage.size())}};
     MockOclocArgHelper argHelper{files};
     argHelper.getPrinterRef() = MessagePrinter(true);
-    int res = NEO::Ocloc::validate({"-file", "src.gen"}, &argHelper);
+    int res = Ocloc::validate({"-file", "src.gen"}, &argHelper);
     std::string oclocStdout = argHelper.getPrinterRef().getLog().str();
     EXPECT_EQ(0, res) << oclocStdout;
     EXPECT_NE(nullptr, strstr(oclocStdout.c_str(), "Validator detected potential problems :\nDeviceBinaryFormat::Zebin : Expected at least one .ze_info section, got 0")) << oclocStdout;
@@ -97,7 +97,7 @@ TEST(OclocValidate, WhenErrorsEmitedThenRedirectsThemToStdout) {
                                                                                 reinterpret_cast<const char *>(zebin.storage.data()) + zebin.storage.size())}};
     MockOclocArgHelper argHelper{files};
     argHelper.getPrinterRef() = MessagePrinter(true);
-    int res = NEO::Ocloc::validate({"-file", "src.gen"}, &argHelper);
+    int res = Ocloc::validate({"-file", "src.gen"}, &argHelper);
     std::string oclocStdout = argHelper.getPrinterRef().getLog().str();
     EXPECT_EQ(static_cast<int>(NEO::DecodeError::InvalidBinary), res) << oclocStdout;
     EXPECT_NE(nullptr, strstr(oclocStdout.c_str(), "Validator detected errors :\nNEO::Yaml : Could not parse line : [1] : [kernels ] <-- parser position on error. Reason : Vector data type expects to have at least one value starting with -")) << oclocStdout;
