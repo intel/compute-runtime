@@ -9,6 +9,8 @@
 
 #include "shared/source/memory_manager/memory_manager.h"
 
+#include "level_zero/core/source/driver/driver_handle.h"
+
 #include "sysman/linux/os_sysman_imp.h"
 
 namespace L0 {
