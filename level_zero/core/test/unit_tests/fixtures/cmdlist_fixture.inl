@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 
@@ -363,6 +364,216 @@ void CmdListPipelineSelectStateFixture::testBody() {
         pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
         EXPECT_EQ(0u, pipelineSelectList.size());
     }
+}
+
+template <typename FamilyType>
+void CmdListPipelineSelectStateFixture::testBodyShareStateRegularImmediate() {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+
+    const ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    void *currentBuffer = nullptr;
+
+    auto &regularCmdlistRequiredState = commandList->getRequiredStreamState();
+    auto &regularCmdListFinalState = commandList->getFinalStreamState();
+    auto &csrState = commandQueue->csr->getStreamProperties();
+
+    auto commandListHandle = commandList->toHandle();
+
+    auto &regularCommandListStream = *commandList->commandContainer.getCommandStream();
+    auto &cmdQueueStream = commandQueue->commandStream;
+
+    GenCmdList cmdList;
+    std::vector<GenCmdList::iterator> pipelineSelectList;
+    size_t sizeBefore = 0;
+    size_t sizeAfter = 0;
+    auto result = ZE_RESULT_SUCCESS;
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 1;
+
+    sizeBefore = regularCommandListStream.getUsed();
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    sizeAfter = regularCommandListStream.getUsed();
+
+    EXPECT_EQ(1, regularCmdlistRequiredState.pipelineSelect.systolicMode.value);
+    EXPECT_EQ(1, regularCmdListFinalState.pipelineSelect.systolicMode.value);
+
+    currentBuffer = ptrOffset(regularCommandListStream.getCpuBase(), sizeBefore);
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                      currentBuffer,
+                                                      (sizeAfter - sizeBefore)));
+    pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(0u, pipelineSelectList.size());
+
+    cmdList.clear();
+    pipelineSelectList.clear();
+    commandList->close();
+
+    sizeBefore = cmdQueueStream.getUsed();
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    sizeAfter = cmdQueueStream.getUsed();
+
+    EXPECT_EQ(1, csrState.pipelineSelect.systolicMode.value);
+
+    currentBuffer = ptrOffset(cmdQueueStream.getCpuBase(), sizeBefore);
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                      currentBuffer,
+                                                      (sizeAfter - sizeBefore)));
+    pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(1u, pipelineSelectList.size());
+
+    auto pipelineSelectCmd = genCmdCast<PIPELINE_SELECT *>(*pipelineSelectList[0]);
+    EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getSystolicFlagValueFromPipelineSelectCommand(*pipelineSelectCmd));
+
+    cmdList.clear();
+    pipelineSelectList.clear();
+
+    auto &immediateCmdListStream = *commandListImmediate->commandContainer.getCommandStream();
+    EXPECT_EQ(commandQueue->csr, commandListImmediate->csr);
+
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &csrStream = ultCsr.commandStream;
+
+    size_t csrUsedBefore = csrStream.getUsed();
+    sizeBefore = immediateCmdListStream.getUsed();
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    sizeAfter = immediateCmdListStream.getUsed();
+    size_t csrUsedAfter = csrStream.getUsed();
+
+    auto &immediateCmdListRequiredState = commandListImmediate->getRequiredStreamState();
+    auto &immediateCmdListFinalState = commandListImmediate->getFinalStreamState();
+
+    EXPECT_EQ(1, immediateCmdListRequiredState.pipelineSelect.systolicMode.value);
+    EXPECT_EQ(1, immediateCmdListFinalState.pipelineSelect.systolicMode.value);
+
+    currentBuffer = ptrOffset(immediateCmdListStream.getCpuBase(), sizeBefore);
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                      currentBuffer,
+                                                      (sizeAfter - sizeBefore)));
+    pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(0u, pipelineSelectList.size());
+
+    cmdList.clear();
+    pipelineSelectList.clear();
+
+    EXPECT_EQ(1, csrState.pipelineSelect.systolicMode.value);
+
+    currentBuffer = ptrOffset(csrStream.getCpuBase(), csrUsedBefore);
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                      currentBuffer,
+                                                      (csrUsedAfter - csrUsedBefore)));
+    pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(0u, pipelineSelectList.size());
+}
+
+template <typename FamilyType>
+void CmdListPipelineSelectStateFixture::testBodyShareStateImmediateRegular() {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+
+    const ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    void *currentBuffer = nullptr;
+
+    auto &immediateCmdListRequiredState = commandListImmediate->getRequiredStreamState();
+    auto &immediateCmdListFinalState = commandListImmediate->getFinalStreamState();
+
+    auto &immediateCmdListStream = *commandListImmediate->commandContainer.getCommandStream();
+
+    auto &csrState = commandQueue->csr->getStreamProperties();
+
+    EXPECT_EQ(commandQueue->csr, commandListImmediate->csr);
+
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &csrStream = ultCsr.commandStream;
+
+    GenCmdList cmdList;
+    std::vector<GenCmdList::iterator> pipelineSelectList;
+    size_t sizeBefore = 0;
+    size_t sizeAfter = 0;
+    auto result = ZE_RESULT_SUCCESS;
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSystolicPipelineSelectMode = 1;
+
+    size_t csrUsedBefore = csrStream.getUsed();
+    sizeBefore = immediateCmdListStream.getUsed();
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    sizeAfter = immediateCmdListStream.getUsed();
+    size_t csrUsedAfter = csrStream.getUsed();
+
+    EXPECT_EQ(1, immediateCmdListRequiredState.pipelineSelect.systolicMode.value);
+    EXPECT_EQ(1, immediateCmdListFinalState.pipelineSelect.systolicMode.value);
+
+    currentBuffer = ptrOffset(immediateCmdListStream.getCpuBase(), sizeBefore);
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                      currentBuffer,
+                                                      (sizeAfter - sizeBefore)));
+    pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(0u, pipelineSelectList.size());
+
+    cmdList.clear();
+    pipelineSelectList.clear();
+
+    EXPECT_EQ(1, csrState.pipelineSelect.systolicMode.value);
+
+    currentBuffer = ptrOffset(csrStream.getCpuBase(), csrUsedBefore);
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                      currentBuffer,
+                                                      (csrUsedAfter - csrUsedBefore)));
+    pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(1u, pipelineSelectList.size());
+
+    auto pipelineSelectCmd = genCmdCast<PIPELINE_SELECT *>(*pipelineSelectList[0]);
+    EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getSystolicFlagValueFromPipelineSelectCommand(*pipelineSelectCmd));
+
+    cmdList.clear();
+    pipelineSelectList.clear();
+
+    auto &regularCmdlistRequiredState = commandList->getRequiredStreamState();
+    auto &regularCmdListFinalState = commandList->getFinalStreamState();
+
+    auto commandListHandle = commandList->toHandle();
+
+    auto &regularCommandListStream = *commandList->commandContainer.getCommandStream();
+    auto &cmdQueueStream = commandQueue->commandStream;
+
+    sizeBefore = regularCommandListStream.getUsed();
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    sizeAfter = regularCommandListStream.getUsed();
+
+    EXPECT_EQ(1, regularCmdlistRequiredState.pipelineSelect.systolicMode.value);
+    EXPECT_EQ(1, regularCmdListFinalState.pipelineSelect.systolicMode.value);
+
+    currentBuffer = ptrOffset(regularCommandListStream.getCpuBase(), sizeBefore);
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                      currentBuffer,
+                                                      (sizeAfter - sizeBefore)));
+    pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(0u, pipelineSelectList.size());
+
+    cmdList.clear();
+    pipelineSelectList.clear();
+    commandList->close();
+
+    sizeBefore = cmdQueueStream.getUsed();
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    sizeAfter = cmdQueueStream.getUsed();
+
+    EXPECT_EQ(1, csrState.pipelineSelect.systolicMode.value);
+
+    currentBuffer = ptrOffset(cmdQueueStream.getCpuBase(), sizeBefore);
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                      currentBuffer,
+                                                      (sizeAfter - sizeBefore)));
+    pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(0u, pipelineSelectList.size());
 }
 
 } // namespace ult

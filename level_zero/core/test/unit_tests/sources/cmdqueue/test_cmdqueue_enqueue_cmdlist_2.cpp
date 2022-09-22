@@ -536,9 +536,20 @@ HWTEST_F(PauseOnGpuTests, givenPauseModeSetToBeforeAndAfterWhenDispatchingThenIn
 using CmdListPipelineSelectStateTest = Test<CmdListPipelineSelectStateFixture>;
 
 using SystolicSupport = IsAnyProducts<IGFX_ALDERLAKE_P, IGFX_XE_HP_SDV, IGFX_DG2, IGFX_PVC>;
+
 HWTEST2_F(CmdListPipelineSelectStateTest,
           givenAppendSystolicKernelToCommandListWhenExecutingCommandListThenPipelineSelectStateIsTrackedCorrectly, SystolicSupport) {
     testBody<FamilyType>();
+}
+
+HWTEST2_F(CmdListPipelineSelectStateTest,
+          givenCmdQueueAndImmediateCmdListUseSameCsrWhenAppendingSystolicKernelOnBothRegularFirstThenPipelineSelectStateIsNotChanged, SystolicSupport) {
+    testBodyShareStateRegularImmediate<FamilyType>();
+}
+
+HWTEST2_F(CmdListPipelineSelectStateTest,
+          givenCmdQueueAndImmediateCmdListUseSameCsrWhenAppendingSystolicKernelOnBothImmediateFirstThenPipelineSelectStateIsNotChanged, SystolicSupport) {
+    testBodyShareStateImmediateRegular<FamilyType>();
 }
 
 } // namespace ult

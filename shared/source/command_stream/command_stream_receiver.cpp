@@ -75,8 +75,8 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
     }
 
     auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    this->systolicModeConfigurable = hwInfoConfig->isSystolicModeConfigurable(hwInfo);
     hwInfoConfig->fillFrontEndPropertiesSupportStructure(feSupportFlags, hwInfo);
+    hwInfoConfig->fillPipelineSelectPropertiesSupportStructure(pipelineSupportFlags, hwInfo);
 }
 
 CommandStreamReceiver::~CommandStreamReceiver() {

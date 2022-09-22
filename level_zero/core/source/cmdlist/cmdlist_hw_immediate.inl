@@ -48,6 +48,11 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::updateDispatchFlagsWithRequi
     dispatchFlags.numGrfRequired = (requiredStateComputeMode.largeGrfMode.value == 1) ? GrfConfig::LargeGrfNumber
                                                                                       : GrfConfig::DefaultGrfNumber;
     dispatchFlags.threadArbitrationPolicy = requiredStateComputeMode.threadArbitrationPolicy.value;
+
+    const auto &requiredPipelineSelect = this->requiredStreamState.pipelineSelect;
+    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = requiredPipelineSelect.systolicMode.value != -1
+                                                                      ? !!requiredPipelineSelect.systolicMode.value
+                                                                      : false;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

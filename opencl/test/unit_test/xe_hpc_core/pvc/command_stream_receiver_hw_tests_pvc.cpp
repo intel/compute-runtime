@@ -86,14 +86,19 @@ PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenRevisionBAndAboveWhenLast
     auto hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
     for (auto &testInput : testInputs) {
         hwInfo->platform.usRevId = testInput.revId;
-        commandStreamReceiver.systolicModeConfigurable = hwInfoConfig->isSystolicModeConfigurable(*hwInfo);
+        hwInfoConfig->fillPipelineSelectPropertiesSupportStructure(commandStreamReceiver.pipelineSupportFlags, *hwInfo);
         commandStreamReceiver.isPreambleSent = true;
         commandStreamReceiver.lastMediaSamplerConfig = false;
+        commandStreamReceiver.lastSystolicPipelineSelectMode = false;
+        commandStreamReceiver.streamProperties.pipelineSelect.systolicMode.value = -1;
 
         flushTask(commandStreamReceiver);
 
-        EXPECT_EQ(testInput.expectedValue, commandStreamReceiver.lastSystolicPipelineSelectMode);
-        commandStreamReceiver.lastSystolicPipelineSelectMode = false;
+        if (testInput.expectedValue) {
+            EXPECT_TRUE(commandStreamReceiver.lastSystolicPipelineSelectMode);
+        } else {
+            EXPECT_FALSE(commandStreamReceiver.lastSystolicPipelineSelectMode);
+        }
     }
 }
 

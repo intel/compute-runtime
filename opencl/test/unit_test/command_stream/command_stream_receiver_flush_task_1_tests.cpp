@@ -724,6 +724,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenPreambleSentAndMediaSamplerRe
 }
 HWTEST2_F(CommandStreamReceiverFlushTaskTests, GivenPreambleSentAndMediaSamplerRequirementChangedWhenFlushingTaskThenPipelineSelectIsSent, IsAtMostXeHpcCore) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = true;
     commandStreamReceiver.isPreambleSent = true;
     commandStreamReceiver.lastMediaSamplerConfig = 1;
     flushTask(commandStreamReceiver);

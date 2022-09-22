@@ -393,6 +393,7 @@ class CommandStreamReceiver {
     LinearStream commandStream;
     StreamProperties streamProperties{};
     FrontEndPropertiesSupport feSupportFlags{};
+    PipelineSelectPropertiesSupport pipelineSupportFlags{};
 
     // offset for debug state is 1kbyte, tag writes can use multiple offsets for multiple partitions and each offset can vary per platform
     const uint64_t debugPauseStateAddressOffset = MemoryConstants::kiloByte;
@@ -476,7 +477,6 @@ class CommandStreamReceiver {
     bool useGpuIdleImplicitFlush = false;
     bool lastSentUseGlobalAtomics = false;
     bool useNotifyEnableForPostSync = false;
-    bool systolicModeConfigurable = false;
 };
 
 typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(bool withAubDump,

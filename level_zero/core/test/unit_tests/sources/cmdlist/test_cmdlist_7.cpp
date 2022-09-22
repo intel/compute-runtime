@@ -1414,6 +1414,8 @@ HWTEST2_F(MultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsr
         EXPECT_EQ(-1, regularCmdListFinalState.frontEndState.disableEUFusion.value);
     }
 
+    commandList->close();
+
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList,
@@ -1597,6 +1599,7 @@ HWTEST2_F(MultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsr
 
     cmdList.clear();
     feStateCmds.clear();
+    commandList->close();
 
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList,

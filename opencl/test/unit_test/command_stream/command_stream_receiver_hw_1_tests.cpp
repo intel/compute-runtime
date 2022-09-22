@@ -647,13 +647,15 @@ HWTEST2_F(CommandStreamReceiverHwTest, whenProgramVFEStateIsCalledThenCorrectCom
         {
             mockCsr->getStreamProperties().frontEndState = {};
             auto flags = DispatchFlagsHelper::createDefaultDispatchFlags();
+            flags.additionalKernelExecInfo = AdditionalKernelExecInfo::DisableOverdispatch;
+
             LinearStream commandStream{&memory, sizeof(memory)};
             mockCsr->mediaVfeStateDirty = true;
             mockCsr->programVFEState(commandStream, flags, 10);
-            auto pCommand = reinterpret_cast<CFE_STATE *>(&memory);
+            auto cfeState = reinterpret_cast<CFE_STATE *>(&memory);
 
             auto expectedDisableOverdispatch = hwInfoConfig.isDisableOverdispatchAvailable(*pHwInfo);
-            EXPECT_EQ(expectedDisableOverdispatch, pCommand->getComputeOverdispatchDisable());
+            EXPECT_EQ(expectedDisableOverdispatch, cfeState->getComputeOverdispatchDisable());
         }
         {
             auto flags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -661,8 +663,9 @@ HWTEST2_F(CommandStreamReceiverHwTest, whenProgramVFEStateIsCalledThenCorrectCom
             LinearStream commandStream{&memory, sizeof(memory)};
             mockCsr->mediaVfeStateDirty = true;
             mockCsr->programVFEState(commandStream, flags, 10);
-            auto pCommand = reinterpret_cast<CFE_STATE *>(&memory);
-            EXPECT_FALSE(pCommand->getComputeOverdispatchDisable());
+            auto cfeState = reinterpret_cast<CFE_STATE *>(&memory);
+
+            EXPECT_FALSE(cfeState->getComputeOverdispatchDisable());
         }
     }
 }
@@ -1643,4 +1646,98 @@ HWTEST_F(UltCommandStreamReceiverTest, givenFrontEndStateInitedWhenTransitionFro
     commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
     EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
     commandStreamReceiver.setMediaVFEStateDirty(false);
+}
+
+HWTEST_F(UltCommandStreamReceiverTest, givenPipelineSelectStateNotInitedWhenTransitionPipelineSelectPropertiesThenExpectCorrectValuesStored) {
+    auto dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    commandStreamReceiver.pipelineSupportFlags.systolicMode = false;
+    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = true;
+
+    dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = false;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
+
+    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = false;
+    commandStreamReceiver.lastMediaSamplerConfig = -1;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
+
+    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = true;
+    commandStreamReceiver.lastMediaSamplerConfig = 0;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
+
+    dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = true;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
+
+    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = false;
+    commandStreamReceiver.pipelineSupportFlags.systolicMode = true;
+
+    commandStreamReceiver.lastSystolicPipelineSelectMode = false;
+    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = true;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.csrSizeRequestFlags.systolicPipelineSelectMode);
+
+    commandStreamReceiver.pipelineSupportFlags.systolicMode = false;
+    commandStreamReceiver.lastSystolicPipelineSelectMode = false;
+    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = true;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.csrSizeRequestFlags.systolicPipelineSelectMode);
+
+    commandStreamReceiver.pipelineSupportFlags.systolicMode = true;
+    commandStreamReceiver.lastSystolicPipelineSelectMode = false;
+    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = false;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.csrSizeRequestFlags.systolicPipelineSelectMode);
+}
+
+HWTEST_F(UltCommandStreamReceiverTest,
+         givenPipelineSelectStateInitedWhenTransitionPipelineSelectPropertiesThenExpectCorrectValuesStored) {
+    auto dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    commandStreamReceiver.pipelineSupportFlags.systolicMode = false;
+    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = true;
+
+    commandStreamReceiver.streamProperties.pipelineSelect.mediaSamplerDopClockGate.value = 1;
+    commandStreamReceiver.lastMediaSamplerConfig = -1;
+    dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = false;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
+
+    commandStreamReceiver.streamProperties.pipelineSelect.mediaSamplerDopClockGate.value = 0;
+    dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = true;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
+
+    commandStreamReceiver.streamProperties.pipelineSelect.mediaSamplerDopClockGate.value = 0;
+    commandStreamReceiver.lastMediaSamplerConfig = 1;
+    dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = false;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
+
+    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = false;
+    commandStreamReceiver.pipelineSupportFlags.systolicMode = true;
+
+    commandStreamReceiver.streamProperties.pipelineSelect.systolicMode.value = 1;
+    commandStreamReceiver.lastSystolicPipelineSelectMode = false;
+    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = false;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.csrSizeRequestFlags.systolicPipelineSelectMode);
+
+    commandStreamReceiver.streamProperties.pipelineSelect.systolicMode.value = 0;
+    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = true;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.csrSizeRequestFlags.systolicPipelineSelectMode);
+
+    commandStreamReceiver.streamProperties.pipelineSelect.systolicMode.value = 0;
+    commandStreamReceiver.lastSystolicPipelineSelectMode = true;
+    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = false;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.csrSizeRequestFlags.systolicPipelineSelectMode);
 }

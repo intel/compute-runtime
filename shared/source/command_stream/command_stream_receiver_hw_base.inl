@@ -262,8 +262,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     auto newL3Config = PreambleHelper<GfxFamily>::getL3Config(hwInfo, dispatchFlags.useSLM);
 
-    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectSupport = this->systolicModeConfigurable;
-    auto isSystolicPipelineSelectModeChanged = (this->lastSystolicPipelineSelectMode != dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode) && this->systolicModeConfigurable;
+    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectSupport = this->pipelineSupportFlags.systolicMode;
+    handlePipelineSelectStateTransition(dispatchFlags);
 
     auto requiresCoherency = hwHelper.forceNonGpuCoherencyWA(dispatchFlags.requiresCoherency);
     this->streamProperties.stateComputeMode.setProperties(requiresCoherency, dispatchFlags.numGrfRequired,
@@ -271,8 +271,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     csrSizeRequestFlags.l3ConfigChanged = this->lastSentL3Config != newL3Config;
     csrSizeRequestFlags.preemptionRequestChanged = this->lastPreemptionMode != dispatchFlags.preemptionMode;
-    csrSizeRequestFlags.mediaSamplerConfigChanged = this->lastMediaSamplerConfig != static_cast<int8_t>(dispatchFlags.pipelineSelectArgs.mediaSamplerRequired);
-    csrSizeRequestFlags.systolicPipelineSelectMode = isSystolicPipelineSelectModeChanged;
 
     csrSizeRequestFlags.activePartitionsChanged = isProgramActivePartitionConfigRequired();
 
@@ -1494,6 +1492,21 @@ void CommandStreamReceiverHw<GfxFamily>::handleFrontEndStateTransition(DispatchF
         feSupportFlags.disableEuFusion) {
         setMediaVFEStateDirty(true);
     }
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::handlePipelineSelectStateTransition(DispatchFlags &dispatchFlags) {
+    if (streamProperties.pipelineSelect.mediaSamplerDopClockGate.value != -1) {
+        this->lastMediaSamplerConfig = static_cast<int8_t>(streamProperties.pipelineSelect.mediaSamplerDopClockGate.value);
+    }
+    if (streamProperties.pipelineSelect.systolicMode.value != -1) {
+        this->lastSystolicPipelineSelectMode = !!streamProperties.pipelineSelect.systolicMode.value;
+    }
+
+    csrSizeRequestFlags.mediaSamplerConfigChanged =
+        (this->lastMediaSamplerConfig != static_cast<int8_t>(dispatchFlags.pipelineSelectArgs.mediaSamplerRequired)) && this->pipelineSupportFlags.mediaSamplerDopClockGate;
+    csrSizeRequestFlags.systolicPipelineSelectMode =
+        (this->lastSystolicPipelineSelectMode != !!dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode) && this->pipelineSupportFlags.systolicMode;
 }
 
 } // namespace NEO

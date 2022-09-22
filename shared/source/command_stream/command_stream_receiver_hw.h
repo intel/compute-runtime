@@ -178,6 +178,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     constexpr bool isGlobalAtomicsProgrammingRequired(bool currentValue) const;
     void createKernelArgsBufferAllocation() override;
     void handleFrontEndStateTransition(DispatchFlags &dispatchFlags);
+    void handlePipelineSelectStateTransition(DispatchFlags &dispatchFlags);
 
     HeapDirtyState dshState;
     HeapDirtyState iohState;

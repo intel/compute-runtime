@@ -92,6 +92,12 @@ struct CmdListPipelineSelectStateFixture : public ModuleMutableCommandListFixtur
     template <typename FamilyType>
     void testBody();
 
+    template <typename FamilyType>
+    void testBodyShareStateRegularImmediate();
+
+    template <typename FamilyType>
+    void testBodyShareStateImmediateRegular();
+
     DebugManagerStateRestore restorer;
 };
 
