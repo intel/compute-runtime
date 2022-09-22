@@ -428,6 +428,7 @@ void SVMAllocsManager::freeSVMAllocImpl(void *ptr, bool blocking, SvmAllocationD
     if (pageFaultManager) {
         pageFaultManager->removeAllocation(ptr);
     }
+    std::unique_lock<std::mutex> lockForIndirect(mtxForIndirectAccess);
     std::unique_lock<std::shared_mutex> lock(mtx);
     if (svmData->gpuAllocations.getAllocationType() == AllocationType::SVM_ZERO_COPY) {
         freeZeroCopySvmAllocation(svmData);
@@ -685,5 +686,7 @@ void SVMAllocsManager::prefetchMemory(Device &device, SvmAllocationData &svmData
         memoryManager->setMemPrefetch(gfxAllocation, subDeviceId, device.getRootDeviceIndex());
     }
 }
-
+std::unique_lock<std::mutex> SVMAllocsManager::obtainOwnership() {
+    return std::unique_lock<std::mutex>(mtxForIndirectAccess);
+}
 } // namespace NEO

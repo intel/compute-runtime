@@ -11,6 +11,7 @@ namespace NEO {
 struct MockSVMAllocsManager : public SVMAllocsManager {
   public:
     using SVMAllocsManager::memoryManager;
+    using SVMAllocsManager::mtxForIndirectAccess;
     using SVMAllocsManager::multiOsContextSupport;
     using SVMAllocsManager::SVMAllocs;
     using SVMAllocsManager::SVMAllocsManager;

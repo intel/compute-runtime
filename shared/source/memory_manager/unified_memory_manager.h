@@ -173,17 +173,18 @@ class SVMAllocsManager {
     MOCKABLE_VIRTUAL void insertSvmMapOperation(void *regionSvmPtr, size_t regionSize, void *baseSvmPtr, size_t offset, bool readOnlyMap);
     void removeSvmMapOperation(const void *regionSvmPtr);
     SvmMapOperation *getSvmMapOperation(const void *regionPtr);
-    void addInternalAllocationsToResidencyContainer(uint32_t rootDeviceIndex,
-                                                    ResidencyContainer &residencyContainer,
-                                                    uint32_t requestedTypesMask);
+    MOCKABLE_VIRTUAL void addInternalAllocationsToResidencyContainer(uint32_t rootDeviceIndex,
+                                                                     ResidencyContainer &residencyContainer,
+                                                                     uint32_t requestedTypesMask);
     void makeInternalAllocationsResident(CommandStreamReceiver &commandStreamReceiver, uint32_t requestedTypesMask);
     void *createUnifiedAllocationWithDeviceStorage(size_t size, const SvmAllocationProperties &svmProperties, const UnifiedMemoryProperties &unifiedMemoryProperties);
     void freeSvmAllocationWithDeviceStorage(SvmAllocationData *svmData);
     bool hasHostAllocations();
     std::atomic<uint32_t> allocationsCounter = 0;
-    void makeIndirectAllocationsResident(CommandStreamReceiver &commandStreamReceiver, uint32_t taskCount);
+    MOCKABLE_VIRTUAL void makeIndirectAllocationsResident(CommandStreamReceiver &commandStreamReceiver, uint32_t taskCount);
     void prepareIndirectAllocationForDestruction(SvmAllocationData *);
     void prefetchMemory(Device &device, SvmAllocationData &svmData);
+    std::unique_lock<std::mutex> obtainOwnership();
 
     std::map<CommandStreamReceiver *, InternalAllocationsTracker> indirectAllocationsResidency;
 
@@ -204,6 +205,7 @@ class SVMAllocsManager {
     MapOperationsTracker svmMapOperations;
     MemoryManager *memoryManager;
     std::shared_mutex mtx;
+    std::mutex mtxForIndirectAccess;
     bool multiOsContextSupport;
     SvmAllocationCache usmDeviceAllocationsCache;
     bool usmDeviceAllocationsCacheEnabled = false;

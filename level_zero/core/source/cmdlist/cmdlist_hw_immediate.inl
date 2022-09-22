@@ -92,7 +92,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
 
     auto lockCSR = this->csr->obtainUniqueOwnership();
 
-    this->handleIndirectAllocationResidency();
+    std::unique_lock<std::mutex> lockForIndirect;
+    if (this->hasIndirectAllocationsAllowed()) {
+        this->cmdQImmediate->handleIndirectAllocationResidency(this->getUnifiedMemoryControls(), lockForIndirect);
+    }
 
     this->csr->setRequiredScratchSizes(this->getCommandListPerThreadScratchSize(), this->getCommandListPerThreadPrivateScratchSize());
 

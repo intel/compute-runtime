@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/unified_memory/unified_memory.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 
@@ -93,15 +94,17 @@ struct CommandQueueHw : public CommandQueueImp {
         bool isMigrationRequested{};
         bool isDirectSubmissionEnabled{};
         bool isDispatchTaskCountPostSyncRequired{};
+        bool hasIndirectAccess{};
+        UnifiedMemoryControls unifiedMemoryControls;
     };
 
     ze_result_t validateCommandListsParams(CommandListExecutionContext &ctx,
                                            ze_command_list_handle_t *phCommandLists,
                                            uint32_t numCommandLists);
-    inline ze_result_t executeCommandListsRegular(CommandListExecutionContext &ctx,
-                                                  uint32_t numCommandLists,
-                                                  ze_command_list_handle_t *phCommandLists,
-                                                  ze_fence_handle_t hFence);
+    ze_result_t executeCommandListsRegular(CommandListExecutionContext &ctx,
+                                           uint32_t numCommandLists,
+                                           ze_command_list_handle_t *phCommandLists,
+                                           ze_fence_handle_t hFence);
     inline ze_result_t executeCommandListsCopyOnly(CommandListExecutionContext &ctx,
                                                    uint32_t numCommandLists,
                                                    ze_command_list_handle_t *phCommandLists,
