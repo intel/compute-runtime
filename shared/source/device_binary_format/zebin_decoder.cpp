@@ -28,16 +28,20 @@ namespace NEO {
 
 template <>
 bool isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(const ArrayRef<const uint8_t> binary) {
-    auto header = Elf::decodeElfFileHeader<Elf::EI_CLASS_64>(binary);
-    if (nullptr == header) {
-        return false;
-    }
-
-    return header->type == NEO::Elf::ET_REL ||
-           header->type == NEO::Elf::ET_ZEBIN_EXE;
+    auto isValidZebinHeader = [](auto header) {
+        return header != nullptr &&
+               (header->type == NEO::Elf::ET_REL ||
+                header->type == NEO::Elf::ET_ZEBIN_EXE);
+    };
+    return Elf::isElf<Elf::EI_CLASS_32>(binary)
+               ? isValidZebinHeader(Elf::decodeElfFileHeader<Elf::EI_CLASS_32>(binary))
+               : isValidZebinHeader(Elf::decodeElfFileHeader<Elf::EI_CLASS_64>(binary));
 }
 
-bool validateTargetDevice(const Elf::Elf<Elf::EI_CLASS_64> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning) {
+template bool validateTargetDevice<Elf::EI_CLASS_32>(const Elf::Elf<Elf::EI_CLASS_32> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning);
+template bool validateTargetDevice<Elf::EI_CLASS_64>(const Elf::Elf<Elf::EI_CLASS_64> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning);
+template <Elf::ELF_IDENTIFIER_CLASS numBits>
+bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning) {
     GFXCORE_FAMILY gfxCore = IGFX_UNKNOWN_CORE;
     PRODUCT_FAMILY productFamily = IGFX_UNKNOWN;
     Elf::ZebinTargetFlags targetMetadata = {};
@@ -104,7 +108,8 @@ DecodeError validateZeInfoVersion(const Elf::ZebinKernelMetadata::Types::Version
     return DecodeError::Success;
 }
 
-DecodeError getIntelGTNotes(const Elf::Elf<Elf::EI_CLASS_64> &elf, std::vector<Elf::IntelGTNote> &intelGTNotes, std::string &outErrReason, std::string &outWarning) {
+template <Elf::ELF_IDENTIFIER_CLASS numBits>
+DecodeError getIntelGTNotes(const Elf::Elf<numBits> &elf, std::vector<Elf::IntelGTNote> &intelGTNotes, std::string &outErrReason, std::string &outWarning) {
     for (size_t i = 0; i < elf.sectionHeaders.size(); i++) {
         auto section = elf.sectionHeaders[i];
         if (Elf::SHT_NOTE == section.header->type && Elf::SectionsNamesZebin::noteIntelGT == elf.getSectionName(static_cast<uint32_t>(i))) {
@@ -148,7 +153,8 @@ DecodeError getIntelGTNotes(const Elf::Elf<Elf::EI_CLASS_64> &elf, std::vector<E
     return DecodeError::Success;
 }
 
-DecodeError extractZebinSections(NEO::Elf::Elf<Elf::EI_CLASS_64> &elf, ZebinSections &out, std::string &outErrReason, std::string &outWarning) {
+template <Elf::ELF_IDENTIFIER_CLASS numBits>
+DecodeError extractZebinSections(NEO::Elf::Elf<numBits> &elf, ZebinSections<numBits> &out, std::string &outErrReason, std::string &outWarning) {
     if ((elf.elfFileHeader->shStrNdx >= elf.sectionHeaders.size()) || (NEO::Elf::SHN_UNDEF == elf.elfFileHeader->shStrNdx)) {
         outErrReason.append("DeviceBinaryFormat::Zebin : Invalid or missing shStrNdx in elf header\n");
         return DecodeError::InvalidBinary;
@@ -247,7 +253,10 @@ bool validateZebinSectionsCountExactly(const ContainerT &sectionsContainer, Cons
     return false;
 }
 
-DecodeError validateZebinSectionsCount(const ZebinSections &sections, std::string &outErrReason, std::string &outWarning) {
+template DecodeError validateZebinSectionsCount<Elf::EI_CLASS_32>(const ZebinSections<Elf::EI_CLASS_32> &sections, std::string &outErrReason, std::string &outWarning);
+template DecodeError validateZebinSectionsCount<Elf::EI_CLASS_64>(const ZebinSections<Elf::EI_CLASS_64> &sections, std::string &outErrReason, std::string &outWarning);
+template <Elf::ELF_IDENTIFIER_CLASS numBits>
+DecodeError validateZebinSectionsCount(const ZebinSections<numBits> &sections, std::string &outErrReason, std::string &outWarning) {
     bool valid = validateZebinSectionsCountAtMost(sections.zeInfoSections, NEO::Elf::SectionsNamesZebin::zeInfo, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.globalDataSections, NEO::Elf::SectionsNamesZebin::dataGlobal, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.constDataSections, NEO::Elf::SectionsNamesZebin::dataConst, 1U, outErrReason, outWarning);
@@ -1073,7 +1082,8 @@ NEO::DecodeError populateKernelDescriptor(const NEO::Elf::ZebinKernelMetadata::T
     return DecodeError::Success;
 }
 
-NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> &elf, NEO::ZebinSections &zebinSections,
+template <Elf::ELF_IDENTIFIER_CLASS numBits>
+NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, NEO::ZebinSections<numBits> &zebinSections,
                                           NEO::Yaml::YamlParser &yamlParser, const NEO::Yaml::Node &kernelNd, std::string &outErrReason, std::string &outWarning) {
     auto kernelInfo = std::make_unique<NEO::KernelInfo>();
     auto &kernelDescriptor = kernelInfo->kernelDescriptor;
@@ -1312,7 +1322,7 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<N
         kernelDescriptor.generatedHeaps.resize(kernelDescriptor.generatedHeaps.size() + generatedDshSize);
     }
 
-    ZebinSections::SectionHeaderData *correspondingTextSegment = nullptr;
+    typename ZebinSections<numBits>::SectionHeaderData *correspondingTextSegment = nullptr;
     auto sectionHeaderNamesData = elf.sectionHeaders[elf.elfFileHeader->shStrNdx].data;
     ConstStringRef sectionHeaderNamesString(reinterpret_cast<const char *>(sectionHeaderNamesData.begin()), sectionHeaderNamesData.size());
     for (auto *textSection : zebinSections.textKernelSections) {
@@ -1438,8 +1448,11 @@ NEO::DecodeError populateKernelSourceAttributes(NEO::KernelDescriptor &dst, NEO:
     return DecodeError::Success;
 }
 
-NEO::DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> &elf, std::string &outErrReason, std::string &outWarning) {
-    ZebinSections zebinSections;
+template NEO::DecodeError decodeZebin<Elf::EI_CLASS_32>(ProgramInfo &dst, NEO::Elf::Elf<Elf::EI_CLASS_32> &elf, std::string &outErrReason, std::string &outWarning);
+template NEO::DecodeError decodeZebin<Elf::EI_CLASS_64>(ProgramInfo &dst, NEO::Elf::Elf<Elf::EI_CLASS_64> &elf, std::string &outErrReason, std::string &outWarning);
+template <Elf::ELF_IDENTIFIER_CLASS numBits>
+NEO::DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std::string &outErrReason, std::string &outWarning) {
+    ZebinSections<numBits> zebinSections;
     auto extractError = extractZebinSections(elf, zebinSections, outErrReason, outWarning);
     if (DecodeError::Success != extractError) {
         return extractError;

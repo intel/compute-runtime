@@ -617,7 +617,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinDebugDataWhenInitializingMo
     auto kernelInfo = std::make_unique<KernelInfo>();
     kernelInfo->heapInfo.KernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
-    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram::kernelName;
+    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
 
     auto kernelImmutableData = ::std::make_unique<KernelImmutableData>(device);
     kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);
@@ -629,7 +629,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinDebugDataWhenInitializingMo
     kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);
     moduleMock->kernelImmDatas.push_back(std::move(kernelImmutableData));
 
-    auto zebin = ZebinTestData::ValidEmptyProgram();
+    auto zebin = ZebinTestData::ValidEmptyProgram<>();
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
     moduleMock->translationUnit->unpackedDeviceBinarySize = zebin.storage.size();
     moduleMock->translationUnit->unpackedDeviceBinary.reset(new char[zebin.storage.size()]);
@@ -675,7 +675,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinWhenModuleIsInitializedAndD
     auto kernelInfo = std::make_unique<KernelInfo>();
     kernelInfo->heapInfo.KernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
-    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram::kernelName;
+    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
 
     auto kernelImmutableData = ::std::make_unique<KernelImmutableData>(device);
     kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);
@@ -683,7 +683,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinWhenModuleIsInitializedAndD
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
     moduleMock->kernelImmDatas.push_back(std::move(kernelImmutableData));
 
-    auto zebin = ZebinTestData::ValidEmptyProgram();
+    auto zebin = ZebinTestData::ValidEmptyProgram<>();
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
     moduleMock->translationUnit->unpackedDeviceBinarySize = zebin.storage.size();
     moduleMock->translationUnit->unpackedDeviceBinary.reset(new char[zebin.storage.size()]);
@@ -803,7 +803,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenModuleDebugHandleZeroWhenInitial
     auto kernelInfo = std::make_unique<KernelInfo>();
     kernelInfo->heapInfo.KernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
-    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram::kernelName;
+    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
 
     auto kernelImmutableData = ::std::make_unique<KernelImmutableData>(device);
     kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);
@@ -811,7 +811,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenModuleDebugHandleZeroWhenInitial
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
     moduleMock->kernelImmDatas.push_back(std::move(kernelImmutableData));
 
-    auto zebin = ZebinTestData::ValidEmptyProgram();
+    auto zebin = ZebinTestData::ValidEmptyProgram<>();
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
     moduleMock->translationUnit->unpackedDeviceBinarySize = zebin.storage.size();
     moduleMock->translationUnit->unpackedDeviceBinary.reset(new char[zebin.storage.size()]);

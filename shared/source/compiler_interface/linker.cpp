@@ -164,7 +164,10 @@ void LinkerInput::addElfTextSegmentRelocation(RelocationInfo relocationInfo, uin
     outRelocInfo.push_back(std::move(relocationInfo));
 }
 
-void LinkerInput::decodeElfSymbolTableAndRelocations(Elf::Elf<Elf::EI_CLASS_64> &elf, const SectionNameToSegmentIdMap &nameToSegmentId) {
+template void LinkerInput::decodeElfSymbolTableAndRelocations<Elf::EI_CLASS_32>(Elf::Elf<Elf::EI_CLASS_32> &elf, const SectionNameToSegmentIdMap &nameToSegmentId);
+template void LinkerInput::decodeElfSymbolTableAndRelocations<Elf::EI_CLASS_64>(Elf::Elf<Elf::EI_CLASS_64> &elf, const SectionNameToSegmentIdMap &nameToSegmentId);
+template <Elf::ELF_IDENTIFIER_CLASS numBits>
+void LinkerInput::decodeElfSymbolTableAndRelocations(Elf::Elf<numBits> &elf, const SectionNameToSegmentIdMap &nameToSegmentId) {
     symbols.reserve(elf.getSymbols().size());
     for (auto &symbol : elf.getSymbols()) {
         auto bind = elf.extractSymbolBind(symbol);

@@ -116,7 +116,9 @@ struct LinkerInput {
     void addDataRelocationInfo(const RelocationInfo &relocationInfo);
 
     void addElfTextSegmentRelocation(RelocationInfo relocationInfo, uint32_t instructionsSegmentId);
-    void decodeElfSymbolTableAndRelocations(Elf::Elf<Elf::EI_CLASS_64> &elf, const SectionNameToSegmentIdMap &nameToSegmentId);
+
+    template <Elf::ELF_IDENTIFIER_CLASS numBits>
+    void decodeElfSymbolTableAndRelocations(Elf::Elf<numBits> &elf, const SectionNameToSegmentIdMap &nameToSegmentId);
 
     const Traits &getTraits() const {
         return traits;

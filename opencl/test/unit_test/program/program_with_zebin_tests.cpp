@@ -40,7 +40,7 @@ TEST_F(ProgramWithZebinFixture, givenZebinSegmentsThenSegmentsArePopulated) {
     };
     checkGPUSeg(program->buildInfos[rootDeviceIndex].constantSurface, segments.constData);
     checkGPUSeg(program->buildInfos[rootDeviceIndex].globalSurface, segments.varData);
-    checkGPUSeg(program->getKernelInfoArray(rootDeviceIndex)[0]->getGraphicsAllocation(), segments.nameToSegMap[ZebinTestData::ValidEmptyProgram::kernelName]);
+    checkGPUSeg(program->getKernelInfoArray(rootDeviceIndex)[0]->getGraphicsAllocation(), segments.nameToSegMap[ZebinTestData::ValidEmptyProgram<>::kernelName]);
 
     EXPECT_EQ(reinterpret_cast<uintptr_t>(program->buildInfos[rootDeviceIndex].constStringSectionData.initData), segments.stringData.address);
     EXPECT_EQ(reinterpret_cast<const char *>(program->buildInfos[rootDeviceIndex].constStringSectionData.initData), strings);

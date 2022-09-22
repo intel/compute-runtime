@@ -26,7 +26,7 @@ void ProgramWithZebinFixture::TearDown() {
 }
 
 void ProgramWithZebinFixture::addEmptyZebin(NEO::MockProgram *program) {
-    auto zebin = ZebinTestData::ValidEmptyProgram();
+    auto zebin = ZebinTestData::ValidEmptyProgram<>();
 
     program->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = zebin.storage.size();
     program->buildInfos[rootDeviceIndex].unpackedDeviceBinary.reset(new char[zebin.storage.size()]);
@@ -36,7 +36,7 @@ void ProgramWithZebinFixture::addEmptyZebin(NEO::MockProgram *program) {
 
 void ProgramWithZebinFixture::populateProgramWithSegments(NEO::MockProgram *program) {
     kernelInfo = std::make_unique<KernelInfo>();
-    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram::kernelName;
+    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
     mockAlloc = std::make_unique<MockGraphicsAllocation>();
     kernelInfo->kernelAllocation = mockAlloc.get();
 

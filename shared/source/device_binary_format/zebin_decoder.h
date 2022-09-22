@@ -20,8 +20,9 @@ namespace NEO {
 
 constexpr NEO::Elf::ZebinKernelMetadata::Types::Version zeInfoDecoderVersion{1, 15};
 
+template <Elf::ELF_IDENTIFIER_CLASS numBits = Elf::EI_CLASS_64>
 struct ZebinSections {
-    using SectionHeaderData = NEO::Elf::Elf<Elf::EI_CLASS_64>::SectionHeaderAndData;
+    using SectionHeaderData = typename NEO::Elf::Elf<numBits>::SectionHeaderAndData;
     StackVec<SectionHeaderData *, 32> textKernelSections;
     StackVec<SectionHeaderData *, 1> zeInfoSections;
     StackVec<SectionHeaderData *, 1> globalDataSections;
@@ -46,12 +47,17 @@ struct ZeInfoKernelSections {
     UniqueNode experimentalPropertiesNd;
 };
 
-bool validateTargetDevice(const Elf::Elf<Elf::EI_CLASS_64> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning);
-DecodeError validateZeInfoVersion(const Elf::ZebinKernelMetadata::Types::Version &receivedZeInfoVersion, std::string &outErrReason, std::string &outWarning);
-DecodeError getIntelGTNotes(const Elf::Elf<Elf::EI_CLASS_64> &elf, std::vector<Elf::IntelGTNote> &intelGTNotes, std::string &outErrReason, std::string &outWarning);
+template <Elf::ELF_IDENTIFIER_CLASS numBits>
+bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning);
 
-DecodeError extractZebinSections(NEO::Elf::Elf<Elf::EI_CLASS_64> &elf, ZebinSections &out, std::string &outErrReason, std::string &outWarning);
-DecodeError validateZebinSectionsCount(const ZebinSections &sections, std::string &outErrReason, std::string &outWarning);
+DecodeError validateZeInfoVersion(const Elf::ZebinKernelMetadata::Types::Version &receivedZeInfoVersion, std::string &outErrReason, std::string &outWarning);
+template <Elf::ELF_IDENTIFIER_CLASS numBits>
+DecodeError getIntelGTNotes(const Elf::Elf<numBits> &elf, std::vector<Elf::IntelGTNote> &intelGTNotes, std::string &outErrReason, std::string &outWarning);
+
+template <Elf::ELF_IDENTIFIER_CLASS numBits>
+DecodeError extractZebinSections(NEO::Elf::Elf<numBits> &elf, ZebinSections<numBits> &out, std::string &outErrReason, std::string &outWarning);
+template <Elf::ELF_IDENTIFIER_CLASS numBits>
+DecodeError validateZebinSectionsCount(const ZebinSections<numBits> &sections, std::string &outErrReason, std::string &outWarning);
 void extractZeInfoKernelSections(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &kernelNd, ZeInfoKernelSections &outZeInfoKernelSections, ConstStringRef context, std::string &outWarning);
 DecodeError validateZeInfoKernelSectionsCount(const ZeInfoKernelSections &outZeInfoKernelSections, std::string &outErrReason, std::string &outWarning);
 DecodeError readZeInfoExecutionEnvironment(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node,
@@ -110,7 +116,8 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
 NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::PayloadArgumentBaseT &src, NEO::KernelDescriptor &dst, uint32_t &crossThreadDataSize,
                                        std::string &outErrReason, std::string &outWarning);
 
-NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> &elf, NEO::ZebinSections &zebinSections,
+template <Elf::ELF_IDENTIFIER_CLASS numBits>
+NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, NEO::ZebinSections<numBits> &zebinSections,
                                           NEO::Yaml::YamlParser &yamlParser, const NEO::Yaml::Node &kernelNd, std::string &outErrReason, std::string &outWarning);
 
 NEO::DecodeError readZeInfoVersionFromZeInfo(NEO::Elf::ZebinKernelMetadata::Types::Version &dst,
@@ -122,5 +129,7 @@ NEO::DecodeError populateExternalFunctionsMetadata(NEO::ProgramInfo &dst, NEO::Y
 
 NEO::DecodeError populateKernelSourceAttributes(NEO::KernelDescriptor &dst, NEO::Elf::ZebinKernelMetadata::Types::Kernel::Attributes::AttributesBaseT &attributes);
 
-NEO::DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> &elf, std::string &outErrReason, std::string &outWarning);
+template <Elf::ELF_IDENTIFIER_CLASS numBits>
+NEO::DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std::string &outErrReason, std::string &outWarning);
+
 } // namespace NEO

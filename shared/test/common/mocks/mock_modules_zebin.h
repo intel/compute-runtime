@@ -33,15 +33,16 @@ enum class appendElfAdditionalSection {
     CONSTANT_STRING
 };
 
+template <NEO::Elf::ELF_IDENTIFIER_CLASS numBits = NEO::Elf::EI_CLASS_64>
 struct ValidEmptyProgram {
     static constexpr char kernelName[19] = "valid_empty_kernel";
 
     ValidEmptyProgram();
     void recalcPtr();
-    NEO::Elf::ElfSectionHeader<NEO::Elf::EI_CLASS_64> &appendSection(uint32_t sectionType, NEO::ConstStringRef sectionLabel, const ArrayRef<const uint8_t> sectionData);
+    NEO::Elf::ElfSectionHeader<numBits> &appendSection(uint32_t sectionType, NEO::ConstStringRef sectionLabel, const ArrayRef<const uint8_t> sectionData);
     void removeSection(uint32_t sectionType, NEO::ConstStringRef sectionLabel);
 
-    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> *elfHeader;
+    NEO::Elf::ElfFileHeader<numBits> *elfHeader;
     std::vector<uint8_t> storage;
 };
 

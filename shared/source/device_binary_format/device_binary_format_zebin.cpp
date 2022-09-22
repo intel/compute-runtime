@@ -76,7 +76,8 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(cons
     return ret;
 }
 
-void prepareLinkerInputForZebin(ProgramInfo &programInfo, Elf::Elf<Elf::EI_CLASS_64> &elf) {
+template <Elf::ELF_IDENTIFIER_CLASS numBits>
+void prepareLinkerInputForZebin(ProgramInfo &programInfo, Elf::Elf<numBits> &elf) {
     programInfo.prepareLinkerInputStorage();
 
     LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
@@ -86,19 +87,25 @@ void prepareLinkerInputForZebin(ProgramInfo &programInfo, Elf::Elf<Elf::EI_CLASS
     programInfo.linkerInput->decodeElfSymbolTableAndRelocations(elf, nameToKernelId);
 }
 
-template <>
-DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning) {
-    auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(src.deviceBinary, outErrReason, outWarning);
+template <Elf::ELF_IDENTIFIER_CLASS numBits>
+DecodeError decodeSingleZebin(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning) {
+    auto elf = Elf::decodeElf<numBits>(src.deviceBinary, outErrReason, outWarning);
     if (nullptr == elf.elfFileHeader) {
         return DecodeError::InvalidBinary;
     }
 
     dst.grfSize = src.targetDevice.grfSize;
     dst.minScratchSpaceSize = src.targetDevice.minScratchSpaceSize;
-    auto decodeError = decodeZebin(dst, elf, outErrReason, outWarning);
-    prepareLinkerInputForZebin(dst, elf);
-
+    auto decodeError = decodeZebin<numBits>(dst, elf, outErrReason, outWarning);
+    prepareLinkerInputForZebin<numBits>(dst, elf);
     return decodeError;
+}
+
+template <>
+DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning) {
+    return Elf::isElf<Elf::EI_CLASS_32>(src.deviceBinary)
+               ? decodeSingleZebin<Elf::EI_CLASS_32>(dst, src, outErrReason, outWarning)
+               : decodeSingleZebin<Elf::EI_CLASS_64>(dst, src, outErrReason, outWarning);
 }
 
 } // namespace NEO

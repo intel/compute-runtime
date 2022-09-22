@@ -64,6 +64,17 @@ TEST(OclocValidate, WhenInputIsValidZebinThenReturnSucceed) {
     EXPECT_EQ(0, res) << oclocStdout;
 }
 
+TEST(OclocValidate, WhenInputIsValid32BitZebinThenReturnSucceed) {
+    ZebinTestData::ValidEmptyProgram<NEO::Elf::EI_CLASS_32> zebin;
+    MockOclocArgHelper::FilesMap files{{"src.gen", MockOclocArgHelper::FileData(reinterpret_cast<const char *>(zebin.storage.data()),
+                                                                                reinterpret_cast<const char *>(zebin.storage.data()) + zebin.storage.size())}};
+    MockOclocArgHelper argHelper{files};
+    argHelper.getPrinterRef() = MessagePrinter(true);
+    int res = NEO::Ocloc::validate({"-file", "src.gen"}, &argHelper);
+    std::string oclocStdout = argHelper.getPrinterRef().getLog().str();
+    EXPECT_EQ(0, res) << oclocStdout;
+}
+
 TEST(OclocValidate, WhenWarningsEmitedThenRedirectsThemToStdout) {
     ZebinTestData::ValidEmptyProgram zebin;
     zebin.removeSection(NEO::Elf::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);

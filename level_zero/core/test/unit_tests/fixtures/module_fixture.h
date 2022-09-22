@@ -295,7 +295,7 @@ struct ModuleWithZebinFixture : public DeviceFixture {
         MockImmutableData(L0::Device *device) {
 
             auto mockKernelDescriptor = new NEO::KernelDescriptor;
-            mockKernelDescriptor->kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram::kernelName;
+            mockKernelDescriptor->kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
             kernelDescriptor = mockKernelDescriptor;
             this->device = device;
             auto ptr = reinterpret_cast<void *>(0x1234);
@@ -357,7 +357,7 @@ struct ModuleWithZebinFixture : public DeviceFixture {
         }
 
         void addEmptyZebin() {
-            auto zebin = ZebinTestData::ValidEmptyProgram();
+            auto zebin = ZebinTestData::ValidEmptyProgram<>();
 
             translationUnit->unpackedDeviceBinarySize = zebin.storage.size();
             translationUnit->unpackedDeviceBinary.reset(new char[zebin.storage.size()]);

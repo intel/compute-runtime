@@ -56,8 +56,15 @@ int validate(const std::vector<std::string> &args, OclocArgHelper *argHelper) {
         return -2;
     }
 
-    auto elf = NEO::Elf::decodeElf<NEO::Elf::EI_CLASS_64>(deviceBinary, errors, warnings);
-    auto decodeResult = NEO::decodeZebin(programInfo, elf, errors, warnings);
+    NEO::DecodeError decodeResult;
+    if (NEO::Elf::isElf<NEO::Elf::EI_CLASS_32>(deviceBinary)) {
+        auto elf = NEO::Elf::decodeElf<NEO::Elf::EI_CLASS_32>(deviceBinary, errors, warnings);
+        decodeResult = NEO::decodeZebin(programInfo, elf, errors, warnings);
+    } else {
+        auto elf = NEO::Elf::decodeElf<NEO::Elf::EI_CLASS_64>(deviceBinary, errors, warnings);
+        decodeResult = NEO::decodeZebin(programInfo, elf, errors, warnings);
+    }
+
     if (false == warnings.empty()) {
         argHelper->printf("Validator detected potential problems :\n%s\n", warnings.c_str());
     }

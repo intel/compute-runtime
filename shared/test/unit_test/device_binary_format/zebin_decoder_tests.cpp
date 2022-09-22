@@ -2109,6 +2109,19 @@ kernels:
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read size from : [eight] in context of : some_kernel\n", errors.c_str());
 }
 
+TEST(DecodeSingleDeviceBinaryZebin, GivenValid32BitZebinThenReturnSuccess) {
+    NEO::ProgramInfo programInfo;
+    NEO::SingleDeviceBinary singleBinary;
+    ZebinTestData::ValidEmptyProgram<Elf::EI_CLASS_32> zebin;
+    singleBinary.deviceBinary = {zebin.storage.data(), zebin.storage.size()};
+    std::string decodeErrors;
+    std::string decodeWarnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings);
+    EXPECT_EQ(NEO::DecodeError::Success, error);
+    EXPECT_TRUE(decodeWarnings.empty());
+    EXPECT_TRUE(decodeErrors.empty());
+}
+
 TEST(DecodeSingleDeviceBinaryZebin, GivenInvalidElfThenReturnError) {
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
@@ -5384,7 +5397,7 @@ class IntelGTNotesFixture : public ::testing::Test {
         }
     }
 
-    ZebinTestData::ValidEmptyProgram zebin;
+    ZebinTestData::ValidEmptyProgram<> zebin;
 };
 
 TEST_F(IntelGTNotesFixture, WhenGettingIntelGTNotesGivenValidIntelGTNotesSectionThenReturnsIntelGTNotes) {

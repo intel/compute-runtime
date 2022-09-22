@@ -20,6 +20,12 @@
 extern PRODUCT_FAMILY productFamily;
 extern GFXCORE_FAMILY renderCoreFamily;
 
+TEST(IsDeviceBinaryFormatZebin, GivenValid32BitExecutableBinaryThenReturnTrue) {
+    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_32> zebin;
+    zebin.type = NEO::Elf::ET_ZEBIN_EXE;
+    EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U)));
+}
+
 TEST(IsDeviceBinaryFormatZebin, GivenValidExecutableTypeBinaryThenReturnTrue) {
     NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> zebin;
     zebin.type = NEO::Elf::ET_ZEBIN_EXE;

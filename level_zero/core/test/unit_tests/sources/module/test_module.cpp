@@ -3118,7 +3118,7 @@ TEST_F(ModuleWithZebinTest, givenZebinSegmentsThenSegmentsArePopulated) {
     };
     checkGPUSeg(module->translationUnit->globalConstBuffer, segments.constData);
     checkGPUSeg(module->translationUnit->globalConstBuffer, segments.varData);
-    checkGPUSeg(module->kernelImmDatas[0]->getIsaGraphicsAllocation(), segments.nameToSegMap[ZebinTestData::ValidEmptyProgram::kernelName]);
+    checkGPUSeg(module->kernelImmDatas[0]->getIsaGraphicsAllocation(), segments.nameToSegMap[ZebinTestData::ValidEmptyProgram<>::kernelName]);
 
     EXPECT_EQ(reinterpret_cast<uintptr_t>(module->translationUnit->programInfo.globalStrings.initData), segments.stringData.address);
     EXPECT_EQ(module->translationUnit->programInfo.globalStrings.size, segments.stringData.size);

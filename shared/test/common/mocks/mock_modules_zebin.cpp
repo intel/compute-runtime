@@ -12,9 +12,16 @@
 #include "shared/source/helpers/compiler_hw_info_config.h"
 
 namespace ZebinTestData {
+using ELF_IDENTIFIER_CLASS = NEO::Elf::ELF_IDENTIFIER_CLASS;
 
-ValidEmptyProgram::ValidEmptyProgram() {
-    NEO::Elf::ElfEncoder<> enc;
+template struct ValidEmptyProgram<ELF_IDENTIFIER_CLASS::EI_CLASS_32>;
+template struct ValidEmptyProgram<ELF_IDENTIFIER_CLASS::EI_CLASS_64>;
+
+template ValidEmptyProgram<ELF_IDENTIFIER_CLASS::EI_CLASS_32>::ValidEmptyProgram();
+template ValidEmptyProgram<ELF_IDENTIFIER_CLASS::EI_CLASS_64>::ValidEmptyProgram();
+template <ELF_IDENTIFIER_CLASS numBits>
+ValidEmptyProgram<numBits>::ValidEmptyProgram() {
+    NEO::Elf::ElfEncoder<numBits> enc;
     enc.getElfFileHeader().type = NEO::Elf::ET_ZEBIN_EXE;
     enc.getElfFileHeader().machine = productFamily;
     auto zeInfo = std::string{"---\nversion : \'" + versionToString(NEO::zeInfoDecoderVersion) + "\'" + "\nkernels : \n  - name : " + kernelName + "\n    execution_env : \n      simd_size  : 32\n      grf_count : 128\n...\n"};
@@ -24,14 +31,18 @@ ValidEmptyProgram::ValidEmptyProgram() {
     recalcPtr();
 }
 
-void ValidEmptyProgram::recalcPtr() {
-    elfHeader = reinterpret_cast<NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> *>(storage.data());
+template <ELF_IDENTIFIER_CLASS numBits>
+void ValidEmptyProgram<numBits>::recalcPtr() {
+    elfHeader = reinterpret_cast<NEO::Elf::ElfFileHeader<numBits> *>(storage.data());
 }
 
-NEO::Elf::ElfSectionHeader<NEO::Elf::EI_CLASS_64> &ValidEmptyProgram::appendSection(uint32_t sectionType, NEO::ConstStringRef sectionLabel, const ArrayRef<const uint8_t> sectionData) {
+template NEO::Elf::ElfSectionHeader<ELF_IDENTIFIER_CLASS::EI_CLASS_32> &ValidEmptyProgram<ELF_IDENTIFIER_CLASS::EI_CLASS_32>::appendSection(uint32_t sectionType, NEO::ConstStringRef sectionLabel, const ArrayRef<const uint8_t> sectionData);
+template NEO::Elf::ElfSectionHeader<ELF_IDENTIFIER_CLASS::EI_CLASS_64> &ValidEmptyProgram<ELF_IDENTIFIER_CLASS::EI_CLASS_64>::appendSection(uint32_t sectionType, NEO::ConstStringRef sectionLabel, const ArrayRef<const uint8_t> sectionData);
+template <ELF_IDENTIFIER_CLASS numBits>
+NEO::Elf::ElfSectionHeader<numBits> &ValidEmptyProgram<numBits>::appendSection(uint32_t sectionType, NEO::ConstStringRef sectionLabel, const ArrayRef<const uint8_t> sectionData) {
     std::string err, warn;
-    auto decoded = NEO::Elf::decodeElf(storage, err, warn);
-    NEO::Elf::ElfEncoder<NEO::Elf::EI_CLASS_64> enc;
+    auto decoded = NEO::Elf::decodeElf<numBits>(storage, err, warn);
+    NEO::Elf::ElfEncoder<numBits> enc;
     enc.getElfFileHeader() = *decoded.elfFileHeader;
     int sectionIt = 0;
     auto sectionHeaderNamesData = decoded.sectionHeaders[decoded.elfFileHeader->shStrNdx].data;
@@ -54,21 +65,24 @@ NEO::Elf::ElfSectionHeader<NEO::Elf::EI_CLASS_64> &ValidEmptyProgram::appendSect
     enc.appendSection(sectionType, sectionLabel, sectionData);
     storage = enc.encode();
     recalcPtr();
-    decoded = NEO::Elf::decodeElf(storage, err, warn);
+    decoded = NEO::Elf::decodeElf<numBits>(storage, err, warn);
     sectionHeaderNamesData = decoded.sectionHeaders[decoded.elfFileHeader->shStrNdx].data;
     sectionHeaderNamesString = NEO::ConstStringRef(reinterpret_cast<const char *>(sectionHeaderNamesData.begin()), sectionHeaderNamesData.size());
     for (const auto &section : decoded.sectionHeaders) {
         if ((sectionType == section.header->type) && (sectionLabel == sectionHeaderNamesString.data() + section.header->name)) {
-            return const_cast<NEO::Elf::ElfSectionHeader<NEO::Elf::EI_CLASS_64> &>(*section.header);
+            return const_cast<NEO::Elf::ElfSectionHeader<numBits> &>(*section.header);
         }
     }
     UNREACHABLE();
 }
 
-void ValidEmptyProgram::removeSection(uint32_t sectionType, NEO::ConstStringRef sectionLabel) {
+template void ValidEmptyProgram<ELF_IDENTIFIER_CLASS::EI_CLASS_32>::removeSection(uint32_t sectionType, NEO::ConstStringRef sectionLabel);
+template void ValidEmptyProgram<ELF_IDENTIFIER_CLASS::EI_CLASS_64>::removeSection(uint32_t sectionType, NEO::ConstStringRef sectionLabel);
+template <ELF_IDENTIFIER_CLASS numBits>
+void ValidEmptyProgram<numBits>::removeSection(uint32_t sectionType, NEO::ConstStringRef sectionLabel) {
     std::string err, warn;
-    auto decoded = NEO::Elf::decodeElf(storage, err, warn);
-    NEO::Elf::ElfEncoder<NEO::Elf::EI_CLASS_64> enc;
+    auto decoded = NEO::Elf::decodeElf<numBits>(storage, err, warn);
+    NEO::Elf::ElfEncoder<numBits> enc;
     enc.getElfFileHeader() = *decoded.elfFileHeader;
     int sectionIt = 0;
     auto sectionHeaderNamesData = decoded.sectionHeaders[decoded.elfFileHeader->shStrNdx].data;
