@@ -583,8 +583,14 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
         this->translationUnit->shouldSuppressRebuildWarning = NEO::CompilerOptions::extract(NEO::CompilerOptions::noRecompiledFromIr, buildFlagsInput);
         this->createBuildOptions(buildFlagsInput.c_str(), buildOptions, internalBuildOptions);
 
-        if (type == ModuleType::User && NEO::DebugManager.flags.InjectInternalBuildOptions.get() != "unk") {
-            NEO::CompilerOptions::concatenateAppend(internalBuildOptions, NEO::DebugManager.flags.InjectInternalBuildOptions.get());
+        if (type == ModuleType::User) {
+            if (NEO::DebugManager.flags.InjectInternalBuildOptions.get() != "unk") {
+                NEO::CompilerOptions::concatenateAppend(internalBuildOptions, NEO::DebugManager.flags.InjectInternalBuildOptions.get());
+            }
+
+            if (NEO::DebugManager.flags.InjectApiBuildOptions.get() != "unk") {
+                NEO::CompilerOptions::concatenateAppend(buildOptions, NEO::DebugManager.flags.InjectApiBuildOptions.get());
+            }
         }
 
         if (desc->format == ZE_MODULE_FORMAT_NATIVE) {

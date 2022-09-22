@@ -84,6 +84,7 @@ DECLARE_DEBUG_VARIABLE(std::string, FilterDeviceId, std::string("unk"), "Device 
 DECLARE_DEBUG_VARIABLE(std::string, FilterBdfPath, std::string("unk"), "Linux-only, BDF path filter, only matching paths will be opened. Ignored when unk.")
 DECLARE_DEBUG_VARIABLE(std::string, LoadBinarySipFromFile, std::string("unk"), "Select binary file to load SIP kernel raw binary. When file named *_header.* exists, it is used as header")
 DECLARE_DEBUG_VARIABLE(std::string, InjectInternalBuildOptions, std::string("unk"), "Appends internal build options string to user modules")
+DECLARE_DEBUG_VARIABLE(std::string, InjectApiBuildOptions, std::string("unk"), "Appends api build options string to user modules")
 DECLARE_DEBUG_VARIABLE(std::string, OverrideDeviceName, std::string("unk"), "Device name to override")
 DECLARE_DEBUG_VARIABLE(int64_t, OverrideMultiStoragePlacement, -1, "-1: disable, 0+: tile mask, each bit corresponds to tile")
 DECLARE_DEBUG_VARIABLE(int64_t, ForceCompressionDisabledForCompressedBlitCopies, -1, "-1: default, 0: disabled, 1: enabled. If compression is required, set AUX_CCS_E, but force CompressionEnable filed. 0 should result in uncompressed read/write")

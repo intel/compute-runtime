@@ -2889,6 +2889,28 @@ TEST_F(ModuleTest, GivenInjectInternalBuildOptionsWhenBuildingUserModuleThenInte
     EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, "-abc"));
 };
 
+TEST_F(ModuleTest, GivenInjectApiBuildOptionsWhenBuildingUserModuleThenApiOptionsAreAppended) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.InjectApiBuildOptions.set(" -abc");
+
+    auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
+
+    uint8_t binary[10];
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = binary;
+    moduleDesc.inputSize = 10;
+
+    ModuleBuildLog *moduleBuildLog = nullptr;
+
+    auto module = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(device, moduleBuildLog, ModuleType::User));
+    ASSERT_NE(nullptr, module.get());
+    module->initialize(&moduleDesc, device->getNEODevice());
+
+    EXPECT_TRUE(CompilerOptions::contains(cip->buildOptions, "-abc"));
+};
+
 TEST_F(ModuleTest, GivenInjectInternalBuildOptionsWhenBuildingBuiltinModuleThenInternalOptionsAreNotAppended) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.InjectInternalBuildOptions.set(" -abc");
