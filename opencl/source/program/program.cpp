@@ -498,25 +498,6 @@ void Program::prependFilePathToOptions(const std::string &filename) {
     }
 }
 
-void Program::applyAdditionalOptions(std::string &internalOptions) {
-    size_t pos;
-    if (DebugManager.flags.ForceLargeGrfCompilationMode.get()) {
-        pos = internalOptions.find(CompilerOptions::largeGrf.data());
-        if (pos == std::string::npos) {
-            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::largeGrf);
-        }
-    } else if (DebugManager.flags.ForceDefaultGrfCompilationMode.get()) {
-        pos = internalOptions.find(CompilerOptions::defaultGrf.data());
-        if (pos == std::string::npos) {
-            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::defaultGrf.data());
-        }
-        pos = internalOptions.find(CompilerOptions::largeGrf.data());
-        if (pos != std::string::npos) {
-            internalOptions.erase(pos, CompilerOptions::largeGrf.size());
-        }
-    }
-}
-
 const std::vector<ConstStringRef> Program::internalOptionsToExtract = {CompilerOptions::gtpinRera,
                                                                        CompilerOptions::defaultGrf,
                                                                        CompilerOptions::largeGrf,

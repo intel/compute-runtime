@@ -743,6 +743,8 @@ void ModuleImp::createBuildOptions(const char *pBuildFlags, std::string &apiOpti
         moveBuildOption(internalBuildOptions, apiOptions, NEO::CompilerOptions::allowZebin, NEO::CompilerOptions::allowZebin);
         moveBuildOption(internalBuildOptions, apiOptions, NEO::CompilerOptions::largeGrf, BuildOptions::optLargeRegisterFile);
 
+        NEO::CompilerOptions::applyAdditionalOptions(internalBuildOptions);
+
         moveOptLevelOption(apiOptions, apiOptions);
         moveProfileFlagsOption(apiOptions, apiOptions);
         this->libraryExportRequired = moveBuildOption(apiOptions, apiOptions, BuildOptions::enableLibraryCompile, BuildOptions::enableLibraryCompile);

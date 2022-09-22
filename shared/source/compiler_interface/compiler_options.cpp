@@ -7,6 +7,8 @@
 
 #include "shared/source/compiler_interface/compiler_options.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
+
 #include <cstring>
 
 namespace NEO {
@@ -49,6 +51,25 @@ TokenizedString tokenize(ConstStringRef src, char sperator) {
     }
     return ret;
 };
+
+void applyAdditionalOptions(std::string &internalOptions) {
+    size_t pos;
+    if (DebugManager.flags.ForceLargeGrfCompilationMode.get()) {
+        pos = internalOptions.find(CompilerOptions::largeGrf.data());
+        if (pos == std::string::npos) {
+            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::largeGrf);
+        }
+    } else if (DebugManager.flags.ForceDefaultGrfCompilationMode.get()) {
+        pos = internalOptions.find(CompilerOptions::defaultGrf.data());
+        if (pos == std::string::npos) {
+            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::defaultGrf.data());
+        }
+        pos = internalOptions.find(CompilerOptions::largeGrf.data());
+        if (pos != std::string::npos) {
+            internalOptions.erase(pos, CompilerOptions::largeGrf.size());
+        }
+    }
+}
 
 } // namespace CompilerOptions
 } // namespace NEO

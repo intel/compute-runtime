@@ -305,7 +305,6 @@ class Program : public BaseObject<_cl_program> {
     void extractInternalOptions(const std::string &options, std::string &internalOptions);
     MOCKABLE_VIRTUAL bool isFlagOption(ConstStringRef option);
     MOCKABLE_VIRTUAL bool isOptionValueValid(ConstStringRef option, ConstStringRef value);
-    MOCKABLE_VIRTUAL void applyAdditionalOptions(std::string &internalOptions);
 
     MOCKABLE_VIRTUAL bool appendKernelDebugOptions(ClDevice &clDevice, std::string &internalOptions);
     void notifyDebuggerWithSourceCode(ClDevice &clDevice, std::string &filename);

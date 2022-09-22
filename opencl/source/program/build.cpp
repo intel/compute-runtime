@@ -65,7 +65,7 @@ cl_int Program::build(
 
             const bool shouldSuppressRebuildWarning{CompilerOptions::extract(CompilerOptions::noRecompiledFromIr, options)};
             extractInternalOptions(options, internalOptions);
-            applyAdditionalOptions(internalOptions);
+            CompilerOptions::applyAdditionalOptions(internalOptions);
 
             CompilerInterface *pCompilerInterface = defaultDevice.getCompilerInterface();
             if (!pCompilerInterface) {

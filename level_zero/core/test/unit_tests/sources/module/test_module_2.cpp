@@ -270,5 +270,61 @@ TEST_F(ModuleOnlineCompiled, GivenKernelThenCorrectAttributesAreReturned) {
     free(attributes);
 }
 
+TEST_F(ModuleTests, givenLargeGrfFlagSetWhenCreatingModuleThenOverrideInternalFlags) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceLargeGrfCompilationMode.set(true);
+
+    auto pMockCompilerInterface = new MockCompilerInterface;
+    auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
+    rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);
+
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
+    const auto &src = zebinData->storage;
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = src.data();
+    moduleDesc.inputSize = src.size();
+
+    auto mockTranslationUnit = new MockModuleTranslationUnit(device);
+    Module module(device, nullptr, ModuleType::User);
+
+    module.translationUnit.reset(mockTranslationUnit);
+
+    bool success = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_TRUE(success);
+
+    EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-intel-256-GRF-per-thread"), std::string::npos);
+    EXPECT_EQ(pMockCompilerInterface->inputInternalOptions.find("-cl-intel-128-GRF-per-thread"), std::string::npos);
+}
+
+TEST_F(ModuleTests, givenDefaultGrfFlagSetWhenCreatingModuleThenOverrideInternalFlags) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceDefaultGrfCompilationMode.set(true);
+
+    auto pMockCompilerInterface = new MockCompilerInterface;
+    auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
+    rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);
+
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
+    const auto &src = zebinData->storage;
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = src.data();
+    moduleDesc.inputSize = src.size();
+
+    auto mockTranslationUnit = new MockModuleTranslationUnit(device);
+    Module module(device, nullptr, ModuleType::User);
+
+    module.translationUnit.reset(mockTranslationUnit);
+
+    bool success = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_TRUE(success);
+
+    EXPECT_EQ(pMockCompilerInterface->inputInternalOptions.find("-cl-intel-256-GRF-per-thread"), std::string::npos);
+    EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-intel-128-GRF-per-thread"), std::string::npos);
+}
+
 } // namespace ult
 } // namespace L0

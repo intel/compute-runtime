@@ -179,5 +179,7 @@ bool contains(const std::string &options, ConstStringRef optionToFind);
 
 using TokenizedString = StackVec<ConstStringRef, 32>;
 TokenizedString tokenize(ConstStringRef src, char sperator = ' ');
+
+void applyAdditionalOptions(std::string &internalOptions);
 } // namespace CompilerOptions
 } // namespace NEO
