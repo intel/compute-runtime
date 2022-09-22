@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
@@ -28,12 +29,19 @@ PVCTEST_F(PvcHwInfoConfig, givenPvcWhenCallingGetDeviceMemoryNameThenHbmIsReturn
 }
 
 PVCTEST_F(PvcHwInfoConfig, givenHwInfoConfigWhenAdditionalKernelExecInfoSupportCheckedThenCorrectValueIsReturned) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     auto hwInfo = *defaultHwInfo;
     EXPECT_FALSE(hwInfoConfig.isDisableOverdispatchAvailable(hwInfo));
 
+    FrontEndPropertiesSupport fePropertiesSupport{};
+    hwInfoConfig.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, hwInfo);
+    EXPECT_FALSE(fePropertiesSupport.disableOverdispatch);
+
     hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
     EXPECT_TRUE(hwInfoConfig.isDisableOverdispatchAvailable(hwInfo));
+
+    hwInfoConfig.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, hwInfo);
+    EXPECT_TRUE(fePropertiesSupport.disableOverdispatch);
 }
 
 PVCTEST_F(PvcHwInfoConfig, givenHwInfoConfigWhenAskedIfPipeControlPriorToNonPipelinedStateCommandsWARequiredThenTrueIsReturned) {

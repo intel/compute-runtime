@@ -645,6 +645,7 @@ HWTEST2_F(CommandStreamReceiverHwTest, whenProgramVFEStateIsCalledThenCorrectCom
         pHwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, *pHwInfo);
 
         {
+            mockCsr->getStreamProperties().frontEndState = {};
             auto flags = DispatchFlagsHelper::createDefaultDispatchFlags();
             LinearStream commandStream{&memory, sizeof(memory)};
             mockCsr->mediaVfeStateDirty = true;

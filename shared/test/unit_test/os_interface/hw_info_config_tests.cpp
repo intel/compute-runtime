@@ -529,7 +529,7 @@ HWTEST_F(HwInfoConfigTest, WhenFillingFrontEndPropertiesSupportThenExpectUseCorr
     hwInfoConfig->fillFrontEndPropertiesSupportStructure(frontEndPropertiesSupport, pInHwInfo);
     EXPECT_EQ(hwInfoConfig->isComputeDispatchAllWalkerEnableInCfeStateRequired(pInHwInfo), frontEndPropertiesSupport.computeDispatchAllWalker);
     EXPECT_EQ(hwInfoConfig->getFrontEndPropertyDisableEuFusionSupport(), frontEndPropertiesSupport.disableEuFusion);
-    EXPECT_EQ(hwInfoConfig->getFrontEndPropertyDisableOverDispatchSupport(), frontEndPropertiesSupport.disableOverdispatch);
+    EXPECT_EQ(hwInfoConfig->isDisableOverdispatchAvailable(pInHwInfo), frontEndPropertiesSupport.disableOverdispatch);
     EXPECT_EQ(hwInfoConfig->getFrontEndPropertySingleSliceDispatchCcsModeSupport(), frontEndPropertiesSupport.singleSliceDispatchCcsMode);
 }
 

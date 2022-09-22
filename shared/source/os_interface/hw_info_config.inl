@@ -218,7 +218,7 @@ std::string HwInfoConfigHw<gfxProduct>::getDeviceMemoryName() const {
 
 template <PRODUCT_FAMILY gfxProduct>
 bool HwInfoConfigHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
-    return false;
+    return getFrontEndPropertyDisableOverDispatchSupport();
 }
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -622,7 +622,7 @@ template <PRODUCT_FAMILY gfxProduct>
 void HwInfoConfigHw<gfxProduct>::fillFrontEndPropertiesSupportStructure(FrontEndPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) {
     propertiesSupport.computeDispatchAllWalker = isComputeDispatchAllWalkerEnableInCfeStateRequired(hwInfo);
     propertiesSupport.disableEuFusion = getFrontEndPropertyDisableEuFusionSupport();
-    propertiesSupport.disableOverdispatch = getFrontEndPropertyDisableOverDispatchSupport();
+    propertiesSupport.disableOverdispatch = isDisableOverdispatchAvailable(hwInfo);
     propertiesSupport.singleSliceDispatchCcsMode = getFrontEndPropertySingleSliceDispatchCcsModeSupport();
 }
 
