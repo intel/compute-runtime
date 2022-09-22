@@ -44,7 +44,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         break;
 
     case CL_PROGRAM_BINARIES: {
-        auto requiredSize = clDevices.size() * sizeof(const unsigned char **);
+        auto requiredSize = clDevices.size() * sizeof(unsigned char *);
         if (!paramValue) {
             retSize = requiredSize;
             srcSize = 0u;
@@ -75,7 +75,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         }
 
         pSrc = binarySizes.data();
-        retSize = srcSize = binarySizes.size() * sizeof(cl_device_id);
+        retSize = srcSize = binarySizes.size() * sizeof(size_t);
         break;
 
     case CL_PROGRAM_KERNEL_NAMES:
