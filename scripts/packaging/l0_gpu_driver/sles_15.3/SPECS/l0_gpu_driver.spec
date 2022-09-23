@@ -45,7 +45,7 @@ libraries. Level Zero offers fine-grain control over accelerators capabilities,
 delivering a simplified and low-latency interface to hardware, and efficiently
 exposing hardware capabilities to applications.
 
-%debug_package
+%debug_package %{nil}
 
 %prep
 %autosetup -p1 -n compute-runtime-%{version}
@@ -68,19 +68,19 @@ exposing hardware capabilities to applications.
 cd build
 %ninja_install
 
-#Remove OpenCL files before installing
-rm -rf %{buildroot}%{_libdir}/intel-opencl/
-rm -rf %{buildroot}%{_sysconfdir}/OpenCL/
-rm -rf %{buildroot}%{_bindir}/ocloc
-rm -rf %{buildroot}%{_libdir}/libocloc.so
-rm -rf %{buildroot}%{_includedir}/ocloc_api.h
+#Remove OpenCL files
+rm -rvf %{buildroot}%{_libdir}/intel-opencl/
+rm -rvf %{buildroot}%{_sysconfdir}/OpenCL/
+rm -rvf %{buildroot}%{_bindir}/ocloc
+rm -rvf %{buildroot}%{_libdir}/libocloc.so
+rm -rvf %{buildroot}%{_includedir}/ocloc_api.h
 #Remove debug files
-rm -f %{buildroot}/%{_libdir}/intel-opencl/libigdrcl.so.debug
-rm -f %{buildroot}/%{_libdir}/libocloc.so.debug
-rm -rf %{buildroot}/usr/lib/debug/
+rm -vf %{buildroot}/%{_libdir}/intel-opencl/libigdrcl.so.debug
+rm -vf %{buildroot}/%{_libdir}/libocloc.so.debug
+rm -rvf %{buildroot}/usr/lib/debug/
 #insert license into package
 mkdir -p %{buildroot}/usr/share/doc/intel-level-zero-gpu%{?name_suffix}/
-cp -pR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-level-zero-gpu%{?name_suffix}/.
+cp -pvR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-level-zero-gpu%{?name_suffix}/.
 
 %files -n intel-level-zero-gpu%{?name_suffix}
 %defattr(-,root,root)

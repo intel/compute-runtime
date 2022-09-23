@@ -61,16 +61,17 @@ cd build
 %install
 cd build
 %ninja_install
+
 chmod +x %{buildroot}/%{_libdir}/intel-opencl/libigdrcl.so
 chmod +x %{buildroot}/%{_libdir}/libocloc.so
-rm -f %{buildroot}/%{_libdir}/intel-opencl/libigdrcl.so.debug
-rm -f %{buildroot}/%{_libdir}/libocloc.so.debug
-rm -rf %{buildroot}/usr/lib/debug/
+rm -vf %{buildroot}/%{_libdir}/intel-opencl/libigdrcl.so.debug
+rm -vf %{buildroot}/%{_libdir}/libocloc.so.debug
+rm -rvf %{buildroot}/usr/lib/debug/
 #insert license into package
 mkdir -p %{buildroot}/usr/share/doc/intel-opencl/
-cp -pR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-opencl/.
+cp -pvR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-opencl/.
 mkdir -p %{buildroot}/usr/share/doc/intel-ocloc/
-cp -pR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-ocloc/.
+cp -pvR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-ocloc/.
 
 %files
 %defattr(-,root,root)

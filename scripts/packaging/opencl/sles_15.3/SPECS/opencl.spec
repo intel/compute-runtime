@@ -47,7 +47,7 @@ the GEN graphics hardware architecture.
 Summary:        ocloc package for opencl
 %description -n intel-ocloc%{?name_suffix}
 
-%debug_package
+%debug_package %{nil}
 
 %prep
 %autosetup -p1 -n compute-runtime-%{version}
@@ -69,16 +69,17 @@ Summary:        ocloc package for opencl
 %install
 cd build
 %ninja_install
+
 chmod +x %{buildroot}/%{_libdir}/intel-opencl/libigdrcl.so
-rm -f %{buildroot}/%{_libdir}/intel-opencl/libigdrcl.so.debug
-rm -f %{buildroot}/%{_libdir}/libocloc.so.debug
-rm -rf %{buildroot}/usr/lib/debug/
+rm -vf %{buildroot}/%{_libdir}/intel-opencl/libigdrcl.so.debug
+rm -vf %{buildroot}/%{_libdir}/libocloc.so.debug
+rm -rvf %{buildroot}/usr/lib/debug/
 
 #insert license into package
 mkdir -p %{buildroot}/usr/share/doc/intel-opencl%{?name_suffix}/
-cp -pR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-opencl%{?name_suffix}/.
+cp -pvR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-opencl%{?name_suffix}/.
 mkdir -p %{buildroot}/usr/share/doc/intel-ocloc%{?name_suffix}/
-cp -pR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-ocloc%{?name_suffix}/.
+cp -pvR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-ocloc%{?name_suffix}/.
 
 %files -n intel-opencl%{?name_suffix}
 %defattr(-,root,root)

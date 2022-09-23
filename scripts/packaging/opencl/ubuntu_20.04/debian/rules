@@ -33,3 +33,6 @@ override_dh_install:
 
 override_dh_builddeb:
 	dh_builddeb -- -Zxz
+
+override_dh_auto_test:
+	echo "ULTs already executed"

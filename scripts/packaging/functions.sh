@@ -15,6 +15,6 @@ get_api_version() {
     API_RPM_MODEL_LINK="1"
     if [ "${COMPONENT_MODEL}" != "ci" ]; then
         API_DEB_MODEL_LINK="~${COMPONENT_MODEL:-unknown}${BUILD_ID:-0}"
-        API_RPM_MODEL_LINK=".${COMPONENT_MODEL:-unknown}${BUILD_ID:-0}"
+        API_RPM_MODEL_LINK="${COMPONENT_MODEL:-unknown}${BUILD_ID:-0}"
     fi
 }

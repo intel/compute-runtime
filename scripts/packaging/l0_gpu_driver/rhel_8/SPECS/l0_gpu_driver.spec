@@ -58,19 +58,19 @@ cd build
 cd build
 %ninja_install
 
-#Remove OpenCL files before installing
-rm -rf %{buildroot}%{_libdir}/intel-opencl/
-rm -rf %{buildroot}%{_sysconfdir}/OpenCL/
-rm -rf %{buildroot}%{_bindir}/ocloc
-rm -rf %{buildroot}%{_libdir}/libocloc.so
-rm -rf %{buildroot}%{_includedir}/ocloc_api.h
+#Remove OpenCL files
+rm -rvf %{buildroot}%{_libdir}/intel-opencl/
+rm -rvf %{buildroot}%{_sysconfdir}/OpenCL/
+rm -rvf %{buildroot}%{_bindir}/ocloc
+rm -rvf %{buildroot}%{_libdir}/libocloc.so
+rm -rvf %{buildroot}%{_includedir}/ocloc_api.h
 #Remove debug files
-rm -f %{buildroot}/%{_libdir}/intel-opencl/libigdrcl.so.debug
-rm -f %{buildroot}/%{_libdir}/libocloc.so.debug
-rm -rf %{buildroot}/usr/lib/debug/
+rm -vf %{buildroot}/%{_libdir}/intel-opencl/libigdrcl.so.debug
+rm -vf %{buildroot}/%{_libdir}/libocloc.so.debug
+rm -rvf %{buildroot}/usr/lib/debug/
 #insert license into package
 mkdir -p %{buildroot}/usr/share/doc/intel-level-zero-gpu/
-cp -pR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-level-zero-gpu/.
+cp -pvR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-level-zero-gpu/.
 
 %files
 %defattr(-,root,root)
