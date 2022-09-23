@@ -38,6 +38,12 @@ uint32_t GmmHelper::getMOCS(uint32_t type) const {
     return static_cast<uint32_t>(mocs.DwordValue);
 }
 
+void GmmHelper::applyMocsEncryptionBit(uint32_t &index) {
+    if (DebugManager.flags.ForceStatelessMocsEncryptionBit.get() == 1) {
+        index |= 1;
+    }
+}
+
 GmmHelper::GmmHelper(OSInterface *osInterface, const HardwareInfo *pHwInfo) : hwInfo(pHwInfo) {
     auto hwInfoAddressWidth = Math::log2(hwInfo->capabilityTable.gpuAddressSpace + 1);
     addressWidth = std::max(hwInfoAddressWidth, 48u);

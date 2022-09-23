@@ -86,8 +86,14 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
         setSbaStatelessCompressionParams<GfxFamily>(args.stateBaseAddressCmd, args.memoryCompressionState);
     }
 
-    if (args.stateBaseAddressCmd->getStatelessDataPortAccessMemoryObjectControlState() == args.gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) && DebugManager.flags.ForceL1Caching.get() != 0) {
-        args.stateBaseAddressCmd->setStatelessDataPortAccessMemoryObjectControlState(args.gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
+    bool l3MocsEnabled = (args.stateBaseAddressCmd->getStatelessDataPortAccessMemoryObjectControlState() >> 1) == (args.gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
+    bool constMocsAllowed = (l3MocsEnabled && (DebugManager.flags.ForceL1Caching.get() != 0));
+
+    if (constMocsAllowed) {
+        auto constMocsIndex = args.gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
+        GmmHelper::applyMocsEncryptionBit(constMocsIndex);
+
+        args.stateBaseAddressCmd->setStatelessDataPortAccessMemoryObjectControlState(constMocsIndex);
     }
 
     appendExtraCacheSettings(args);

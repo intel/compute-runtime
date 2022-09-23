@@ -122,7 +122,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInBatch
     mockCsr.getCS(1024u);
     auto &csrCommandStream = mockCsr.commandStream;
 
-    //we do level change that will emit PPC, fill all the space so only BB end fits.
+    // we do level change that will emit PPC, fill all the space so only BB end fits.
     taskLevel++;
     auto ppcSize = MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false);
     auto fillSize = MemoryConstants::cacheLineSize - ppcSize - sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
@@ -516,7 +516,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushAfterThenSend
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenStaleCqWhenFlushingTaskThenCompletionStampIsValid) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    //simulate our CQ is stale for 10 TL's
+    // simulate our CQ is stale for 10 TL's
     commandStreamReceiver.taskLevel = taskLevel + 10;
 
     auto completionStamp = flushTask(commandStreamReceiver);
@@ -572,6 +572,25 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, WhenFlushingTas
 
     EXPECT_EQ(l3CacheOnMocs, cmd.getStatelessDataPortAccessMemoryObjectControlState());
     EXPECT_EQ(stateHeapMocs, cmd.getInstructionMemoryObjectControlState());
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDebugVariableSetWhenProgrammingSbaThenSetStatelessMocsEncryptionBit) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceStatelessMocsEncryptionBit.set(1);
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    flushTask(commandStreamReceiver);
+
+    auto &commandStreamCSR = commandStreamReceiver.commandStream;
+    parseCommands<FamilyType>(commandStreamCSR, 0);
+    HardwareParse::findHardwareCommands<FamilyType>();
+
+    ASSERT_NE(nullptr, cmdStateBaseAddress);
+    auto cmd = reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStateBaseAddress);
+
+    EXPECT_EQ(1u, cmd->getStatelessDataPortAccessMemoryObjectControlState() & 1);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStateBaseAddressWhenItIsRequiredThenThereIsPipeControlPriorToItWithTextureCacheFlush) {
@@ -1072,7 +1091,7 @@ HWTEST_F(CommandStreamReceiverCQFlushTaskTests, WhenGettingCsThenReturnCsWithEno
     auto currentUsed = commandStream.getUsed();
     EXPECT_EQ(0u, currentUsed % MemoryConstants::cacheLineSize);
 
-    //depending on the size of commands we may need whole additional cacheline for alignment
+    // depending on the size of commands we may need whole additional cacheline for alignment
     if (currentUsed != expectedSize) {
         EXPECT_EQ(expectedSize - MemoryConstants::cacheLineSize, currentUsed);
     } else {

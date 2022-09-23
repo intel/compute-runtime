@@ -64,6 +64,8 @@ void StateBaseAddressHelper<Gen8Family>::programStateBaseAddress(
 
     args.statelessMocsIndex = args.statelessMocsIndex << 1;
 
+    GmmHelper::applyMocsEncryptionBit(args.statelessMocsIndex);
+
     args.stateBaseAddressCmd->setStatelessDataPortAccessMemoryObjectControlState(args.statelessMocsIndex);
 
     appendStateBaseAddressParameters(args, true);

@@ -93,6 +93,8 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
 
     args.statelessMocsIndex = args.statelessMocsIndex << 1;
 
+    GmmHelper::applyMocsEncryptionBit(args.statelessMocsIndex);
+
     args.stateBaseAddressCmd->setStatelessDataPortAccessMemoryObjectControlState(args.statelessMocsIndex);
 
     appendStateBaseAddressParameters(args, overrideBindlessSurfaceStateBase);

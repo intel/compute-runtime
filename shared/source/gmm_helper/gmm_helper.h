@@ -22,6 +22,7 @@ class GmmHelper {
 
     const HardwareInfo *getHardwareInfo();
     uint32_t getMOCS(uint32_t type) const;
+    static void applyMocsEncryptionBit(uint32_t &index);
     void forceAllResourcesUncached() { allResourcesUncached = true; };
 
     static constexpr uint64_t maxPossiblePitch = (1ull << 31);

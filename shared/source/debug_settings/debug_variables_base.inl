@@ -219,6 +219,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideCmdListCmdBufferSizeInKb, -1, "-1: defau
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideL1CachePolicyInSurfaceStateAndStateless, -1, "-1: default, >=0 : following policy will be programmed in render surface state (for regular buffers) and stateless L1 caching")
 DECLARE_DEBUG_VARIABLE(int32_t, PlaformSupportEvictIfNecessaryFlag, -1, "-1: default - platform specific, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceEvictOnlyIfNecessaryFlag, -1, "-1: default - driver selects when to use, 0: force never use this flag, 1: force always use this flag")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceStatelessMocsEncryptionBit, -1, "-1: default - 1: set encryption bit")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
