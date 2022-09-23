@@ -358,7 +358,7 @@ TEST(DebugSession, givenAllStoppedThreadsWhenAreRequestedThreadsStoppedCalledThe
     Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<DebugSessionMock>(config, &deviceImp);
-
+    sessionMock->initialize();
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
         EuThread::ThreadId thread(0, 0, 0, 0, i);
         sessionMock->allThreads[thread]->stopThread(1u);
@@ -377,7 +377,7 @@ TEST(DebugSession, givenSomeStoppedThreadsWhenAreRequestedThreadsStoppedCalledTh
     Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<DebugSessionMock>(config, &deviceImp);
-
+    sessionMock->initialize();
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
         EuThread::ThreadId thread(0, 0, 0, 0, i);
         if (i % 2) {
@@ -412,6 +412,7 @@ TEST(DebugSession, givenDifferentCombinationsOfThreadsAndMemoryTypeCheckExpected
     Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<DebugSessionMock>(config, &deviceImp);
+    sessionMock->initialize();
     ze_device_thread_t thread = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX};
     zet_debug_memory_space_desc_t desc;
     desc.address = 0x1000;

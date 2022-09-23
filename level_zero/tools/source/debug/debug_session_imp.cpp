@@ -26,42 +26,38 @@ DebugSession::DebugSession(const zet_debug_config_t &config, Device *device) : c
 void DebugSession::createEuThreads() {
     if (connectedDevice) {
 
-        bool isRootDevice = !connectedDevice->getNEODevice()->isSubDevice();
         bool isSubDevice = connectedDevice->getNEODevice()->isSubDevice();
 
-        if ((isRootDevice && NEO::DebugManager.flags.ExperimentalEnableTileAttach.get() == 0) ||
-            (isSubDevice && NEO::DebugManager.flags.ExperimentalEnableTileAttach.get() == 1)) {
-            auto &hwInfo = connectedDevice->getHwInfo();
-            const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
-            const uint32_t numEuPerSubslice = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
-            const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
-            uint32_t subDeviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
+        auto &hwInfo = connectedDevice->getHwInfo();
+        const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
+        const uint32_t numEuPerSubslice = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
+        const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
+        uint32_t subDeviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
 
-            UNRECOVERABLE_IF(isSubDevice && subDeviceCount > 1);
+        UNRECOVERABLE_IF(isSubDevice && subDeviceCount > 1);
 
-            for (uint32_t tileIndex = 0; tileIndex < subDeviceCount; tileIndex++) {
+        for (uint32_t tileIndex = 0; tileIndex < subDeviceCount; tileIndex++) {
 
-                if (isSubDevice || subDeviceCount == 1) {
-                    tileIndex = Math::log2(static_cast<uint32_t>(connectedDevice->getNEODevice()->getDeviceBitfield().to_ulong()));
-                }
+            if (isSubDevice || subDeviceCount == 1) {
+                tileIndex = Math::log2(static_cast<uint32_t>(connectedDevice->getNEODevice()->getDeviceBitfield().to_ulong()));
+            }
 
-                for (uint32_t sliceID = 0; sliceID < hwInfo.gtSystemInfo.MaxSlicesSupported; sliceID++) {
-                    for (uint32_t subsliceID = 0; subsliceID < numSubslicesPerSlice; subsliceID++) {
-                        for (uint32_t euID = 0; euID < numEuPerSubslice; euID++) {
+            for (uint32_t sliceID = 0; sliceID < hwInfo.gtSystemInfo.MaxSlicesSupported; sliceID++) {
+                for (uint32_t subsliceID = 0; subsliceID < numSubslicesPerSlice; subsliceID++) {
+                    for (uint32_t euID = 0; euID < numEuPerSubslice; euID++) {
 
-                            for (uint32_t threadID = 0; threadID < numThreadsPerEu; threadID++) {
+                        for (uint32_t threadID = 0; threadID < numThreadsPerEu; threadID++) {
 
-                                EuThread::ThreadId thread = {tileIndex, sliceID, subsliceID, euID, threadID};
+                            EuThread::ThreadId thread = {tileIndex, sliceID, subsliceID, euID, threadID};
 
-                                allThreads[uint64_t(thread)] = std::make_unique<EuThread>(thread);
-                            }
+                            allThreads[uint64_t(thread)] = std::make_unique<EuThread>(thread);
                         }
                     }
                 }
+            }
 
-                if (isSubDevice || subDeviceCount == 1) {
-                    break;
-                }
+            if (isSubDevice || subDeviceCount == 1) {
+                break;
             }
         }
     }

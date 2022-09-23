@@ -888,10 +888,11 @@ ze_result_t DeviceImp::getDebugProperties(zet_device_debug_properties_t *pDebugP
     }
 
     bool tileAttach = NEO::DebugManager.flags.ExperimentalEnableTileAttach.get();
-    if (isDebugAttachAvailable && (isSubdevice == tileAttach)) {
-        pDebugProperties->flags = zet_device_debug_property_flag_t::ZET_DEVICE_DEBUG_PROPERTY_FLAG_ATTACH;
-    } else {
-        pDebugProperties->flags = 0;
+    pDebugProperties->flags = 0;
+    if (isDebugAttachAvailable) {
+        if ((isSubdevice && tileAttach) || !isSubdevice) {
+            pDebugProperties->flags = zet_device_debug_property_flag_t::ZET_DEVICE_DEBUG_PROPERTY_FLAG_ATTACH;
+        }
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -1306,10 +1307,10 @@ DebugSession *DeviceImp::getDebugSession(const zet_debug_config_t &config) {
     return debugSession.get();
 }
 
-DebugSession *DeviceImp::createDebugSession(const zet_debug_config_t &config, ze_result_t &result) {
+DebugSession *DeviceImp::createDebugSession(const zet_debug_config_t &config, ze_result_t &result, bool isRootAttach) {
     if (!this->isSubdevice) {
         if (debugSession.get() == nullptr) {
-            auto session = DebugSession::create(config, this, result);
+            auto session = DebugSession::create(config, this, result, isRootAttach);
             debugSession.reset(session);
         } else {
             result = ZE_RESULT_SUCCESS;
@@ -1320,7 +1321,7 @@ DebugSession *DeviceImp::createDebugSession(const zet_debug_config_t &config, ze
 
         auto session = rootL0Device->getDebugSession(config);
         if (!session) {
-            session = rootL0Device->createDebugSession(config, result);
+            session = rootL0Device->createDebugSession(config, result, isRootAttach);
         }
 
         if (result == ZE_RESULT_SUCCESS) {

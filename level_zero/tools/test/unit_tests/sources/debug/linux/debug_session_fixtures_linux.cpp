@@ -62,7 +62,9 @@ void DebugApiLinuxMultiDeviceFixture::setUp() {
 }
 
 TileDebugSessionLinux *MockDebugSessionLinux::createTileSession(const zet_debug_config_t &config, L0::Device *device, L0::DebugSessionImp *rootDebugSession) {
-    return new MockTileDebugSessionLinux(config, device, rootDebugSession);
+    auto tileSession = new MockTileDebugSessionLinux(config, device, rootDebugSession);
+    tileSession->initialize();
+    return tileSession;
 }
 } // namespace ult
 } // namespace L0

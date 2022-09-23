@@ -25,12 +25,11 @@ struct DebugSession : _zet_debug_session_handle_t {
     virtual ~DebugSession() = default;
     DebugSession() = delete;
 
-    static DebugSession *create(const zet_debug_config_t &config, Device *device, ze_result_t &result);
+    static DebugSession *create(const zet_debug_config_t &config, Device *device, ze_result_t &result, bool isRootAttach);
 
     static DebugSession *fromHandle(zet_debug_session_handle_t handle) { return static_cast<DebugSession *>(handle); }
     inline zet_debug_session_handle_t toHandle() { return this; }
 
-    void createEuThreads();
     virtual bool closeConnection() = 0;
     virtual ze_result_t initialize() = 0;
 
@@ -85,6 +84,11 @@ struct DebugSession : _zet_debug_session_handle_t {
     virtual void detachTileDebugSession(DebugSession *tileSession) = 0;
     virtual bool areAllTileDebugSessionDetached() = 0;
 
+    virtual void setAttachMode(bool isRootAttach) = 0;
+    void setAttached() { attached = true; }
+    void setDetached() { attached = false; }
+    bool isAttached() { return attached; }
+
     struct ThreadHelper {
         void close() {
             threadActive.store(false);
@@ -105,6 +109,8 @@ struct DebugSession : _zet_debug_session_handle_t {
 
   protected:
     DebugSession(const zet_debug_config_t &config, Device *device);
+    void createEuThreads();
+
     virtual void startAsyncThread() = 0;
 
     virtual bool isBindlessSystemRoutine();
@@ -121,6 +127,7 @@ struct DebugSession : _zet_debug_session_handle_t {
 
     Device *connectedDevice = nullptr;
     std::map<uint64_t, std::unique_ptr<EuThread>> allThreads;
+    bool attached = false;
 };
 
 } // namespace L0

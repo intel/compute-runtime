@@ -100,7 +100,7 @@ struct Device : _ze_device_handle_t {
     virtual uint32_t getPlatformInfo() const = 0;
     virtual MetricDeviceContext &getMetricDeviceContext() = 0;
     virtual DebugSession *getDebugSession(const zet_debug_config_t &config) = 0;
-    virtual DebugSession *createDebugSession(const zet_debug_config_t &config, ze_result_t &result) = 0;
+    virtual DebugSession *createDebugSession(const zet_debug_config_t &config, ze_result_t &result, bool isRootAttach) = 0;
     virtual void removeDebugSession() = 0;
 
     virtual ze_result_t activateMetricGroupsDeferred(uint32_t count,

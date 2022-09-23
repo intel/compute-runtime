@@ -294,6 +294,21 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     MockDebugSessionLinux(const zet_debug_config_t &config, L0::Device *device, int debugFd) : DebugSessionLinux(config, device, debugFd) {
         clientHandleToConnection[mockClientHandle].reset(new ClientConnection);
         clientHandle = mockClientHandle;
+        createEuThreads();
+    }
+
+    ze_result_t initialize() override {
+        if (initializeRetVal != ZE_RESULT_FORCE_UINT32) {
+            bool isRootDevice = !connectedDevice->getNEODevice()->isSubDevice();
+            if (isRootDevice && !tileAttachEnabled) {
+                createEuThreads();
+            }
+            createTileSessionsIfEnabled();
+
+            clientHandle = mockClientHandle;
+            return initializeRetVal;
+        }
+        return DebugSessionLinux::initialize();
     }
 
     std::unordered_map<uint64_t, std::pair<std::string, uint32_t>> &getClassHandleToIndex() {
@@ -392,6 +407,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
 
     TileDebugSessionLinux *createTileSession(const zet_debug_config_t &config, L0::Device *device, L0::DebugSessionImp *rootDebugSession) override;
 
+    ze_result_t initializeRetVal = ZE_RESULT_FORCE_UINT32;
     bool allThreadsStopped = false;
     int64_t returnTimeDiff = -1;
     static constexpr uint64_t mockClientHandle = 1;

@@ -23,13 +23,14 @@ DebugSessionWindows::~DebugSessionWindows() {
     closeAsyncThread();
 }
 
-DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *device, ze_result_t &result) {
-    if (!device->getOsInterface().isDebugAttachAvailable()) {
+DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *device, ze_result_t &result, bool isRootAttach) {
+    if (!device->getOsInterface().isDebugAttachAvailable() || !isRootAttach) {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         return nullptr;
     }
 
     auto debugSession = createDebugSessionHelper(config, device, 0);
+    debugSession->setAttachMode(isRootAttach);
     result = debugSession->initialize();
     if (result != ZE_RESULT_SUCCESS) {
         debugSession->closeConnection();

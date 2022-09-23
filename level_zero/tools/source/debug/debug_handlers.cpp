@@ -20,7 +20,7 @@ std::mutex debugSessionMutex;
 ze_result_t debugAttach(zet_device_handle_t hDevice, const zet_debug_config_t *config, zet_debug_session_handle_t *phDebug) {
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    if (!L0::Device::fromHandle(hDevice)->getNEODevice()->isSubDevice() && NEO::DebugManager.flags.ExperimentalEnableTileAttach.get()) {
+    if (L0::Device::fromHandle(hDevice)->getNEODevice()->isSubDevice() && !NEO::DebugManager.flags.ExperimentalEnableTileAttach.get()) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -35,10 +35,25 @@ ze_result_t debugAttach(zet_device_handle_t hDevice, const zet_debug_config_t *c
     auto session = L0::Device::fromHandle(hDevice)->getDebugSession(*config);
 
     std::unique_lock<std::mutex> lock(debugSessionMutex);
-    if (!session) {
-        session = L0::Device::fromHandle(hDevice)->createDebugSession(*config, result);
+
+    auto rootSession = L0::Device::fromHandle(hDevice)->getNEODevice()->getRootDevice()->getSpecializedDevice<DeviceImp>()->getDebugSession(*config);
+
+    // If root device with active TileSessions or
+    // subdevice with root device attached - fail
+    if ((!L0::Device::fromHandle(hDevice)->getNEODevice()->isSubDevice() && session && !session->areAllTileDebugSessionDetached()) ||
+        (L0::Device::fromHandle(hDevice)->getNEODevice()->isSubDevice() && rootSession && rootSession->isAttached())) {
+        result = ZE_RESULT_ERROR_NOT_AVAILABLE;
+        *phDebug = nullptr;
+        return result;
     }
+
+    if (!session) {
+        bool isRootAttach = !L0::Device::fromHandle(hDevice)->getNEODevice()->isSubDevice();
+        session = L0::Device::fromHandle(hDevice)->createDebugSession(*config, result, isRootAttach);
+    }
+
     if (session) {
+        session->setAttached();
         *phDebug = session->toHandle();
     }
     return result;
@@ -58,6 +73,7 @@ ze_result_t debugDetach(zet_debug_session_handle_t hDebug) {
             auto rootL0Device = device->getNEODevice()->getRootDevice()->getSpecializedDevice<DeviceImp>();
             zet_debug_config_t dummy = {};
             auto rootSession = rootL0Device->getDebugSession(dummy);
+            session->setDetached();
             rootSession->detachTileDebugSession(session);
 
             if (rootSession->areAllTileDebugSessionDetached()) {

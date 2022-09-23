@@ -428,7 +428,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalH2DCpuCopyThreshold, -1, "Override d
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalD2HCpuCopyThreshold, -1, "Override default treshold (in bytes) for D2H CPU copy.")
 DECLARE_DEBUG_VARIABLE(bool, ExperimentalEnableSourceLevelDebugger, false, "Experimentally enable source level debugger.")
 DECLARE_DEBUG_VARIABLE(bool, ExperimentalEnableL0DebuggerForOpenCL, false, "Experimentally enable debugging OCL with L0 Debug API.")
-DECLARE_DEBUG_VARIABLE(bool, ExperimentalEnableTileAttach, false, "Experimentally enable attaching to tiles (subdevices).")
+DECLARE_DEBUG_VARIABLE(bool, ExperimentalEnableTileAttach, true, "Experimentally enable attaching to tiles (subdevices).")
 DECLARE_DEBUG_VARIABLE(bool, ExperimentalCopyThroughLock, false, "Experimentally copy memory through locked ptr.")
 
 /*DRIVER TOGGLES*/

@@ -461,17 +461,42 @@ TEST_F(DebugApiWindowsTest, givenDebugAttachIsNotAvailableWhenGetDebugProperties
     EXPECT_EQ(0u, debugProperties.flags);
 }
 
+TEST_F(DebugApiWindowsTest, givenSubDeviceWhenDebugAttachCalledThenUnsupportedErrorIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    deviceImp.isSubdevice = true;
+
+    auto mockWddm = new WddmEuDebugInterfaceMock(*neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    mockWddm->debugAttachAvailable = false;
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockWddm));
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto session = DebugSession::create(config, &deviceImp, result, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+    EXPECT_EQ(nullptr, session);
+
+    result = ZE_RESULT_SUCCESS;
+    mockWddm->debugAttachAvailable = true;
+    session = DebugSession::create(config, &deviceImp, result, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+    EXPECT_EQ(nullptr, session);
+}
+
 TEST_F(DebugApiWindowsTest, GivenRootDeviceWhenDebugSessionIsCreatedForTheSecondTimeThenSuccessIsReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto sessionMock = device->createDebugSession(config, result);
+    auto sessionMock = device->createDebugSession(config, result, true);
     ASSERT_NE(nullptr, sessionMock);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto sessionMock2 = device->createDebugSession(config, result);
+    auto sessionMock2 = device->createDebugSession(config, result, true);
     EXPECT_EQ(sessionMock, sessionMock2);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }

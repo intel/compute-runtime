@@ -34,7 +34,6 @@ struct DebugSessionImp : DebugSession {
 
     DebugSessionImp(const zet_debug_config_t &config, Device *device) : DebugSession(config, device) {
         tileAttachEnabled = NEO::DebugManager.flags.ExperimentalEnableTileAttach.get();
-        createEuThreads();
     }
 
     ze_result_t interrupt(ze_device_thread_t thread) override;
@@ -47,6 +46,12 @@ struct DebugSessionImp : DebugSession {
     DebugSession *attachTileDebugSession(Device *device) override;
     void detachTileDebugSession(DebugSession *tileSession) override;
     bool areAllTileDebugSessionDetached() override;
+
+    void setAttachMode(bool isRootAttach) override {
+        if (isRootAttach) {
+            tileAttachEnabled = false;
+        }
+    }
 
     virtual void attachTile() = 0;
     virtual void detachTile() = 0;

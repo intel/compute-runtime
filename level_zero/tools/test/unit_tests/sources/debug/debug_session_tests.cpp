@@ -63,7 +63,13 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::tileAttachEnabled;
     using L0::DebugSessionImp::tileSessions;
 
-    MockDebugSession(const zet_debug_config_t &config, L0::Device *device) : DebugSessionImp(config, device) {
+    MockDebugSession(const zet_debug_config_t &config, L0::Device *device) : MockDebugSession(config, device, true) {}
+
+    MockDebugSession(const zet_debug_config_t &config, L0::Device *device, bool rootAttach) : DebugSessionImp(config, device) {
+        setAttachMode(rootAttach);
+        if (rootAttach) {
+            createEuThreads();
+        }
     }
 
     ~MockDebugSession() override {
@@ -2346,41 +2352,10 @@ TEST(DebugSessionTest, GivenRootDeviceAndTileAttachWhenDebugSessionIsCreatedThen
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
-    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp, false);
     ASSERT_NE(nullptr, sessionMock);
 
     EXPECT_EQ(0u, sessionMock->allThreads.size());
-}
-
-TEST(DebugSessionTest, GivenSubDeviceAndTileAttachWhenDebugSessionIsCreatedThenThreadsAreCreated) {
-    DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(1);
-
-    zet_debug_config_t config = {};
-    config.pid = 0x1234;
-    auto hwInfo = *NEO::defaultHwInfo.get();
-
-    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    neoDevice->incRefInternal();
-
-    auto subDevice = NEO::Device::create<NEO::MockSubDevice>(neoDevice->getExecutionEnvironment(), 0, *neoDevice);
-    subDevice->incRefInternal();
-    {
-        auto deviceImp = std::make_unique<Mock<L0::DeviceImp>>(subDevice, subDevice->getExecutionEnvironment());
-
-        auto sessionMock = std::make_unique<MockDebugSession>(config, deviceImp.get());
-        ASSERT_NE(nullptr, sessionMock);
-
-        const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
-        const uint32_t numEuPerSubslice = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
-        const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
-
-        auto total = hwInfo.gtSystemInfo.MaxSlicesSupported * numSubslicesPerSlice * numEuPerSubslice * numThreadsPerEu;
-
-        EXPECT_EQ(total, sessionMock->allThreads.size());
-    }
-    delete subDevice;
-    delete neoDevice;
 }
 
 TEST_F(MultiTileDebugSessionTest, GivenSubDeviceAndTileAttachWhenRootDeviceDebugSessionCreateFailsThenTileAttachFails) {
@@ -2409,7 +2384,7 @@ TEST_F(MultiTileDebugSessionTest, GivenSubDeviceAndTileAttachWhenRootDeviceDebug
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, retVal);
 }
 
-TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenGettingDebugPropertiesThenDebugAttachIsSetForSubdevices) {
+TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenGettingDebugPropertiesThenDebugAttachIsSetForRootAndSubdevices) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(1);
 
@@ -2434,7 +2409,7 @@ TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenGettingDebugProperti
     auto result = zetDeviceGetDebugProperties(device->toHandle(), &debugProperties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(0u, debugProperties.flags);
+    EXPECT_EQ(zet_device_debug_property_flag_t::ZET_DEVICE_DEBUG_PROPERTY_FLAG_ATTACH, debugProperties.flags);
 
     result = zetDeviceGetDebugProperties(subDevice0->toHandle(), &debugProperties);
 
@@ -2447,7 +2422,7 @@ TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenGettingDebugProperti
     EXPECT_EQ(zet_device_debug_property_flag_t::ZET_DEVICE_DEBUG_PROPERTY_FLAG_ATTACH, debugProperties.flags);
 }
 
-TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenAttachingToRootDeviceThenErrorIsReturned) {
+TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenAttachingToRootDeviceThenTileAttachIsDisabledAndSuccessIsReturned) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(1);
 
@@ -2456,11 +2431,18 @@ TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenAttachingToRootDevic
     zet_debug_session_handle_t debugSession = nullptr;
 
     L0::Device *device = driverHandle->devices[0];
+    auto deviceImp = static_cast<DeviceImp *>(device);
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(new OsInterfaceWithDebugAttach);
+    auto sessionMock = new MockDebugSession(config, device, true);
+    sessionMock->initialize();
+    deviceImp->setDebugSession(sessionMock);
 
     auto result = zetDebugAttach(device->toHandle(), &config, &debugSession);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, debugSession);
+    EXPECT_TRUE(sessionMock->isAttached());
+    EXPECT_FALSE(sessionMock->tileAttachEnabled);
 }
 
 TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenAttachingToTileDevicesThenDebugSessionForRootIsCreatedAndTileSessionsAreReturned) {
@@ -2476,7 +2458,7 @@ TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenAttachingToTileDevic
     auto deviceImp = static_cast<DeviceImp *>(device);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(new OsInterfaceWithDebugAttach);
 
-    auto sessionMock = new MockDebugSession(config, device);
+    auto sessionMock = new MockDebugSession(config, device, false);
     sessionMock->initialize();
     deviceImp->setDebugSession(sessionMock);
 
@@ -2491,6 +2473,7 @@ TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenAttachingToTileDevic
 
     EXPECT_TRUE(sessionMock->tileSessions[0].second);
     EXPECT_EQ(sessionMock->tileSessions[0].first, L0::DebugSession::fromHandle(debugSession0));
+    EXPECT_TRUE(sessionMock->tileSessions[0].first->isAttached());
 
     EXPECT_NE(nullptr, deviceImp->getDebugSession(config));
 
@@ -2502,6 +2485,8 @@ TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenAttachingToTileDevic
 
     EXPECT_TRUE(sessionMock->tileSessions[1].second);
     EXPECT_EQ(sessionMock->tileSessions[1].first, L0::DebugSession::fromHandle(debugSession1));
+    EXPECT_TRUE(sessionMock->tileSessions[1].first->isAttached());
+
     EXPECT_TRUE(tileSession1->attachTileCalled);
     EXPECT_FALSE(tileSession1->detachTileCalled);
 
@@ -2510,6 +2495,7 @@ TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenAttachingToTileDevic
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, deviceImp->getDebugSession(config));
     EXPECT_FALSE(sessionMock->tileSessions[1].second);
+    EXPECT_FALSE(sessionMock->tileSessions[1].first->isAttached());
 
     EXPECT_TRUE(tileSession1->detachTileCalled);
     ASSERT_EQ(1u, sessionMock->cleanRootSessionDeviceIndices.size());
@@ -2533,7 +2519,7 @@ TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenTileAttachFailsDurin
     auto deviceImp = static_cast<DeviceImp *>(device);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(new OsInterfaceWithDebugAttach);
 
-    auto sessionMock = new MockDebugSession(config, device);
+    auto sessionMock = new MockDebugSession(config, device, false);
     sessionMock->initialize();
     deviceImp->setDebugSession(sessionMock);
 
@@ -2542,9 +2528,70 @@ TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenTileAttachFailsDurin
     auto subDevice0 = neoDevice->getSubDevice(0)->getSpecializedDevice<Device>();
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    auto debugSession = subDevice0->createDebugSession(config, result);
+    auto debugSession = subDevice0->createDebugSession(config, result, false);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
     EXPECT_EQ(nullptr, debugSession);
 }
+
+TEST_F(MultiTileDebugSessionTest, givenAttachedTileDeviceWhenAttachingToRootDeviceThenErrorIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(1);
+
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    zet_debug_session_handle_t debugSession0 = nullptr, debugSession1 = nullptr;
+
+    L0::Device *device = driverHandle->devices[0];
+    auto neoDevice = device->getNEODevice();
+    auto deviceImp = static_cast<DeviceImp *>(device);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(new OsInterfaceWithDebugAttach);
+
+    auto sessionMock = new MockDebugSession(config, device, false);
+    sessionMock->initialize();
+    deviceImp->setDebugSession(sessionMock);
+
+    auto subDevice0 = neoDevice->getSubDevice(0)->getSpecializedDevice<Device>();
+    auto result = zetDebugAttach(subDevice0->toHandle(), &config, &debugSession0);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, debugSession0);
+
+    result = zetDebugAttach(deviceImp->toHandle(), &config, &debugSession1);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+
+    result = zetDebugDetach(debugSession0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MultiTileDebugSessionTest, givenAttachedRootDeviceWhenAttachingToTiletDeviceThenErrorIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(1);
+
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    zet_debug_session_handle_t debugSession0 = nullptr, debugSessionRoot = nullptr;
+
+    L0::Device *device = driverHandle->devices[0];
+    auto neoDevice = device->getNEODevice();
+    auto deviceImp = static_cast<DeviceImp *>(device);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(new OsInterfaceWithDebugAttach);
+
+    auto sessionMock = new MockDebugSession(config, device, true);
+    sessionMock->initialize();
+    deviceImp->setDebugSession(sessionMock);
+
+    auto subDevice0 = neoDevice->getSubDevice(0)->getSpecializedDevice<Device>();
+
+    auto result = zetDebugAttach(deviceImp->toHandle(), &config, &debugSessionRoot);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zetDebugAttach(subDevice0->toHandle(), &config, &debugSession0);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+    EXPECT_EQ(nullptr, debugSession0);
+
+    result = zetDebugDetach(debugSessionRoot);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
 } // namespace ult
 } // namespace L0

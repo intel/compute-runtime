@@ -50,7 +50,7 @@ DebugSessionLinux::~DebugSessionLinux() {
     closeFd();
 }
 
-DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *device, ze_result_t &result) {
+DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *device, ze_result_t &result, bool isRootAttach) {
     if (device->getOsInterface().isDebugAttachAvailable()) {
         struct prelim_drm_i915_debugger_open_param open = {};
         open.pid = config.pid;
@@ -62,6 +62,7 @@ DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *dev
                                     open.pid, open.events, debugFd);
 
             auto debugSession = createDebugSessionHelper(config, device, debugFd);
+            debugSession->setAttachMode(isRootAttach);
             result = debugSession->initialize();
 
             if (result != ZE_RESULT_SUCCESS) {
@@ -245,6 +246,10 @@ ze_result_t DebugSessionLinux::initialize() {
         return ZE_RESULT_NOT_READY;
     }
 
+    bool isRootDevice = !connectedDevice->getNEODevice()->isSubDevice();
+    if (isRootDevice && !tileAttachEnabled) {
+        createEuThreads();
+    }
     createTileSessionsIfEnabled();
     startInternalEventsThread();
 
@@ -292,7 +297,9 @@ void DebugSessionLinux::createTileSessionsIfEnabled() {
 }
 
 TileDebugSessionLinux *DebugSessionLinux::createTileSession(const zet_debug_config_t &config, Device *device, DebugSessionImp *rootDebugSession) {
-    return new TileDebugSessionLinux(config, device, rootDebugSession);
+    auto tileSession = new TileDebugSessionLinux(config, device, rootDebugSession);
+    tileSession->initialize();
+    return tileSession;
 }
 
 void *DebugSessionLinux::asyncThreadFunction(void *arg) {

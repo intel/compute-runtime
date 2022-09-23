@@ -75,7 +75,7 @@ struct DeviceImp : public Device {
     MetricDeviceContext &getMetricDeviceContext() override;
     DebugSession *getDebugSession(const zet_debug_config_t &config) override;
     void setDebugSession(DebugSession *session);
-    DebugSession *createDebugSession(const zet_debug_config_t &config, ze_result_t &result) override;
+    DebugSession *createDebugSession(const zet_debug_config_t &config, ze_result_t &result, bool isRootAttach) override;
     void removeDebugSession() override;
 
     uint32_t getMaxNumHwThreads() const override;

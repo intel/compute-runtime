@@ -328,7 +328,10 @@ struct TileDebugSessionLinux : DebugSessionLinux {
     ~TileDebugSessionLinux() override = default;
 
     bool closeConnection() override { return true; }
-    ze_result_t initialize() override { return ZE_RESULT_SUCCESS; }
+    ze_result_t initialize() override {
+        createEuThreads();
+        return ZE_RESULT_SUCCESS;
+    }
 
     bool insertModule(zet_debug_event_info_module_t module);
     bool removeModule(zet_debug_event_info_module_t module);

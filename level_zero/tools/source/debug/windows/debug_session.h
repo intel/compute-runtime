@@ -22,7 +22,9 @@
 namespace L0 {
 
 struct DebugSessionWindows : DebugSessionImp {
-    DebugSessionWindows(const zet_debug_config_t &config, Device *device) : DebugSessionImp(config, device), processId(config.pid) {}
+    DebugSessionWindows(const zet_debug_config_t &config, Device *device) : DebugSessionImp(config, device), processId(config.pid) {
+        createEuThreads();
+    }
     ~DebugSessionWindows() override;
 
     ze_result_t initialize() override;

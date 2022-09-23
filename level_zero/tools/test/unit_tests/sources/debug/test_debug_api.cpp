@@ -113,7 +113,10 @@ TEST_F(DebugApiTest, givenStateSaveAreaHeaderUnavailableWhenGettingDebugProperti
     EXPECT_EQ(0u, debugProperties.flags);
 }
 
-TEST_F(DebugApiTest, givenSubDeviceWhenDebugAttachIsAvaialbleThenGetPropertiesReturnsNoFlag) {
+TEST_F(DebugApiTest, givenTileAttachedDisabledAndSubDeviceWhenDebugAttachIsAvaialbleThenGetPropertiesReturnsNoFlag) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(0);
+
     zet_device_debug_properties_t debugProperties = {};
     debugProperties.flags = ZET_DEVICE_DEBUG_PROPERTY_FLAG_FORCE_UINT32;
 
@@ -316,7 +319,10 @@ TEST(DebugSessionTest, givenDeviceWithDebugSessionWhenRemoveCalledThenSessionIsN
     EXPECT_EQ(nullptr, deviceImp.debugSession.get());
 }
 
-TEST(DebugSessionTest, givenSubDeviceWhenCreatingSessionThenNullptrReturned) {
+TEST(DebugSessionTest, givenTileAttachDisabledAndSubDeviceWhenCreatingSessionThenNullptrReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(0);
+
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -325,9 +331,31 @@ TEST(DebugSessionTest, givenSubDeviceWhenCreatingSessionThenNullptrReturned) {
     deviceImp.isSubdevice = true;
 
     ze_result_t result = ZE_RESULT_ERROR_DEVICE_LOST;
-    auto session = deviceImp.createDebugSession(config, result);
+    auto session = deviceImp.createDebugSession(config, result, false);
 
     EXPECT_EQ(nullptr, session);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+TEST(DebugSessionTest, givenTileAttachDisabledAndSubDeviceWhenDebugAttachCalledThenErrorReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(0);
+
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto neoDevice = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    neoDevice->incRefInternal();
+    auto neoSubdevice = std::unique_ptr<NEO::SubDevice>(neoDevice->createSubDevice(0));
+
+    auto deviceImp = std::make_unique<Mock<L0::DeviceImp>>(neoSubdevice.get(), neoSubdevice->getExecutionEnvironment());
+    deviceImp->isSubdevice = true;
+
+    ze_result_t result = ZE_RESULT_ERROR_DEVICE_LOST;
+    zet_debug_session_handle_t debugSession = nullptr;
+    result = zetDebugAttach(deviceImp->toHandle(), &config, &debugSession);
+
+    EXPECT_EQ(nullptr, debugSession);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
@@ -345,7 +373,7 @@ TEST(DebugSessionTest, givenRootDeviceWhenCreatingSessionThenResultReturnedIsCor
     deviceImp.isSubdevice = false;
 
     ze_result_t result = ZE_RESULT_ERROR_DEVICE_LOST;
-    auto session = deviceImp.createDebugSession(config, result);
+    auto session = deviceImp.createDebugSession(config, result, true);
 
     EXPECT_EQ(nullptr, session);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);

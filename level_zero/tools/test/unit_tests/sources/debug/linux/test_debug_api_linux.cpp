@@ -16,6 +16,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/mocks/mock_sip.h"
@@ -52,6 +53,8 @@ extern uint32_t munmapFuncCalled;
 
 namespace L0 {
 namespace ult {
+
+extern CreateDebugSessionHelperFunc createDebugSessionFunc;
 
 TEST(IoctlHandler, GivenHandlerWhenPreadCalledThenSysCallIsCalled) {
     L0::DebugSessionLinux::IoctlHandler handler;
@@ -549,7 +552,7 @@ TEST_F(DebugApiLinuxTest, GivenSuccessfulInitializationWhenCreatingDebugSessionT
     mockDrm->baseErrno = false;
     mockDrm->errnoRetVal = 0;
 
-    auto session = std::unique_ptr<DebugSession>(DebugSession::create(config, device, result));
+    auto session = std::unique_ptr<DebugSession>(DebugSession::create(config, device, result, !device->getNEODevice()->isSubDevice()));
 
     EXPECT_NE(nullptr, session);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -563,12 +566,12 @@ TEST_F(DebugApiLinuxTest, GivenRootDeviceWhenDebugSessionIsCreatedForTheSecondTi
     config.pid = 0x1234;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto sessionMock = device->createDebugSession(config, result);
+    auto sessionMock = device->createDebugSession(config, result, true);
     ASSERT_NE(nullptr, sessionMock);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto sessionMock2 = device->createDebugSession(config, result);
+    auto sessionMock2 = device->createDebugSession(config, result, true);
     EXPECT_EQ(sessionMock, sessionMock2);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
@@ -899,7 +902,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerLogsWhenOpenDebuggerFailsThenCorrectMessa
     mockDrm->errnoRetVal = 22;
     ::testing::internal::CaptureStderr();
 
-    auto session = DebugSession::create(config, device, result);
+    auto session = DebugSession::create(config, device, result, !device->getNEODevice()->isSubDevice());
 
     EXPECT_EQ(nullptr, session);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
@@ -916,25 +919,25 @@ TEST_F(DebugApiLinuxTest, WhenOpenDebuggerFailsThenCorrectErrorIsReturned) {
     mockDrm->context.debuggerOpenRetval = -1;
     mockDrm->baseErrno = false;
     mockDrm->errnoRetVal = EBUSY;
-    auto session = DebugSession::create(config, device, result);
+    auto session = DebugSession::create(config, device, result, !device->getNEODevice()->isSubDevice());
 
     EXPECT_EQ(nullptr, session);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 
     mockDrm->errnoRetVal = ENODEV;
-    session = DebugSession::create(config, device, result);
+    session = DebugSession::create(config, device, result, !device->getNEODevice()->isSubDevice());
 
     EXPECT_EQ(nullptr, session);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 
     mockDrm->errnoRetVal = EACCES;
-    session = DebugSession::create(config, device, result);
+    session = DebugSession::create(config, device, result, !device->getNEODevice()->isSubDevice());
 
     EXPECT_EQ(nullptr, session);
     EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, result);
 
     mockDrm->errnoRetVal = ESRCH;
-    session = DebugSession::create(config, device, result);
+    session = DebugSession::create(config, device, result, !device->getNEODevice()->isSubDevice());
 
     EXPECT_EQ(nullptr, session);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
@@ -954,7 +957,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerLogsWhenOpenDebuggerSucceedsThenCorrectMe
     mockDrm->errnoRetVal = 0;
     ::testing::internal::CaptureStdout();
 
-    auto session = std::unique_ptr<DebugSession>(DebugSession::create(config, device, result));
+    auto session = std::unique_ptr<DebugSession>(DebugSession::create(config, device, result, !device->getNEODevice()->isSubDevice()));
 
     EXPECT_NE(nullptr, session);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -2147,7 +2150,7 @@ TEST_F(DebugApiLinuxTest, givenErrorReturnedFromInitializeWhenDebugSessionIsCrea
     config.pid = 0;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto session = DebugSession::create(config, device, result);
+    auto session = DebugSession::create(config, device, result, !device->getNEODevice()->isSubDevice());
     EXPECT_EQ(nullptr, session);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 }
@@ -6211,6 +6214,112 @@ TEST_F(DebugApiRegistersAccessTest, givenWriteSbaRegistersCalledThenErrorInvalid
 }
 
 using DebugApiLinuxMultitileTest = Test<DebugApiLinuxMultiDeviceFixture>;
+
+TEST_F(DebugApiLinuxMultitileTest, GivenRootDeviceAndTileAttachDisabledWhenDebugSessionInitializedThenEuThreadsAreCreated) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(0);
+
+    zet_debug_config_t config = {};
+
+    auto session = std::make_unique<MockDebugSessionLinux>(config, deviceImp, 1);
+    auto handler = new MockIoctlHandler;
+    handler->pollRetVal = 1;
+    session->ioctlHandler.reset(handler);
+    session->allThreads.clear();
+
+    prelim_drm_i915_debug_event_client client = {};
+
+    client.base.type = PRELIM_DRM_I915_DEBUG_EVENT_CLIENT;
+    client.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    client.base.size = sizeof(prelim_drm_i915_debug_event_client);
+    client.handle = 1;
+    handler->eventQueue.push({reinterpret_cast<char *>(&client), static_cast<uint64_t>(client.base.size)});
+
+    session->initialize();
+
+    EXPECT_NE(0u, session->allThreads.size());
+    EXPECT_FALSE(session->tileAttachEnabled);
+    EXPECT_FALSE(session->tileSessionsEnabled);
+}
+
+TEST_F(DebugApiLinuxMultitileTest, GivenRootDeviceAndRootAttachModeWhenDebugSessionInitializedThenEuThreadsAreCreated) {
+    zet_debug_config_t config = {};
+
+    auto session = std::make_unique<MockDebugSessionLinux>(config, deviceImp, 1);
+    auto handler = new MockIoctlHandler;
+    handler->pollRetVal = 1;
+    session->ioctlHandler.reset(handler);
+    session->allThreads.clear();
+    session->setAttachMode(true);
+
+    prelim_drm_i915_debug_event_client client = {};
+
+    client.base.type = PRELIM_DRM_I915_DEBUG_EVENT_CLIENT;
+    client.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    client.base.size = sizeof(prelim_drm_i915_debug_event_client);
+    client.handle = 1;
+    handler->eventQueue.push({reinterpret_cast<char *>(&client), static_cast<uint64_t>(client.base.size)});
+
+    session->initialize();
+
+    EXPECT_NE(0u, session->allThreads.size());
+    EXPECT_FALSE(session->tileAttachEnabled);
+    EXPECT_FALSE(session->tileSessionsEnabled);
+}
+
+TEST_F(DebugApiLinuxMultitileTest, GivenRootDeviceWhenDebugAttachCalledThenRootSessionIsCreatedAndTileAttachDisabled) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    zet_debug_session_handle_t debugSession = nullptr;
+
+    VariableBackup<CreateDebugSessionHelperFunc> mockCreateDebugSessionBackup(&L0::ult::createDebugSessionFunc, [](const zet_debug_config_t &config, L0::Device *device, int debugFd) -> DebugSession * {
+        auto session = new MockDebugSessionLinux(config, device, debugFd);
+        session->initializeRetVal = ZE_RESULT_SUCCESS;
+        return session;
+    });
+
+    auto result = zetDebugAttach(deviceImp->toHandle(), &config, &debugSession);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, debugSession);
+
+    EXPECT_TRUE(deviceImp->getDebugSession(config)->isAttached());
+
+    auto session = static_cast<MockDebugSessionLinux *>(deviceImp->getDebugSession(config));
+    EXPECT_FALSE(session->tileAttachEnabled);
+
+    result = zetDebugAttach(deviceImp->subDevices[0]->toHandle(), &config, &debugSession);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+
+    zetDebugDetach(debugSession);
+}
+
+TEST_F(DebugApiLinuxMultitileTest, GivenSubDeviceWhenDebugAttachCalledThenTileSessionsAreCreatedAndRootCannotBeAttached) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    zet_debug_session_handle_t debugSession = nullptr;
+    zet_debug_session_handle_t debugSessionRoot = nullptr;
+
+    VariableBackup<CreateDebugSessionHelperFunc> mockCreateDebugSessionBackup(&L0::ult::createDebugSessionFunc, [](const zet_debug_config_t &config, L0::Device *device, int debugFd) -> DebugSession * {
+        auto session = new MockDebugSessionLinux(config, device, debugFd);
+        session->initializeRetVal = ZE_RESULT_SUCCESS;
+        return session;
+    });
+
+    auto result = zetDebugAttach(deviceImp->subDevices[0]->toHandle(), &config, &debugSession);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, debugSession);
+
+    EXPECT_FALSE(deviceImp->getDebugSession(config)->isAttached());
+
+    auto session = static_cast<MockDebugSessionLinux *>(deviceImp->getDebugSession(config));
+    EXPECT_TRUE(session->tileAttachEnabled);
+
+    result = zetDebugAttach(deviceImp->toHandle(), &config, &debugSessionRoot);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+    EXPECT_EQ(nullptr, debugSessionRoot);
+
+    zetDebugDetach(debugSession);
+}
 
 TEST_F(DebugApiLinuxMultitileTest, GivenMultitileDeviceWhenCallingResumeThenThreadsFromBothTilesAreResumed) {
     zet_debug_config_t config = {};
