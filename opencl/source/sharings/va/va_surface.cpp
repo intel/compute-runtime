@@ -36,6 +36,8 @@ bool VASurface::isSupportedPackedFormat(uint32_t imageFourcc) {
     switch (imageFourcc) {
     case VA_FOURCC_YUY2:
         return true;
+    case VA_FOURCC_Y210:
+        return true;
     default:
         return false;
     }
@@ -286,6 +288,16 @@ const ClSurfaceFormatInfo *VASurface::getExtendedSurfaceFormatInfo(uint32_t form
                                                             1,
                                                             2}};
         return &formatInfoYUY2;
+    }
+    if (formatFourCC == VA_FOURCC_Y210) {
+        static const ClSurfaceFormatInfo formatInfoY210 = {{CL_RGBA, CL_UNORM_INT16},
+                                                           {GMM_RESOURCE_FORMAT::GMM_FORMAT_Y210,
+                                                            static_cast<GFX3DSTATE_SURFACEFORMAT>(GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM),
+                                                            0,
+                                                            4,
+                                                            2,
+                                                            8}};
+        return &formatInfoY210;
     }
 
     return nullptr;

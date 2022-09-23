@@ -291,17 +291,19 @@ TEST_F(VaSharingTests, givenSupportedFourccFormatWhenIsSupportedPlanarFormatThen
 
 TEST_F(VaSharingTests, givenSupportedPackedFormatWhenIsSupportedPlanarFormatThenFailIsReturned) {
     EXPECT_FALSE(VASurface::isSupportedPlanarFormat(VA_FOURCC_YUY2));
+    EXPECT_FALSE(VASurface::isSupportedPlanarFormat(VA_FOURCC_Y210));
 }
 
 TEST_F(VaSharingTests, givenSupportedFourccFormatWhenIsSupportedPackedFormatThenSuccessIsReturned) {
     EXPECT_TRUE(VASurface::isSupportedPackedFormat(VA_FOURCC_YUY2));
+    EXPECT_TRUE(VASurface::isSupportedPackedFormat(VA_FOURCC_Y210));
 }
 
 TEST_F(VaSharingTests, givenSupportedPlanarFormatWhenIsSupportedPackedFormatThenFailIsReturned) {
     EXPECT_FALSE(VASurface::isSupportedPackedFormat(VA_FOURCC_NV12));
 }
 
-TEST_F(VaSharingTests, givenValidSurfaceWhenGetSurfaceDescriptionThenCLSuccessIsReturnedAndDataAreSet) {
+TEST_F(VaSharingTests, givenValidYUY2SurfaceWhenGetSurfaceDescriptionThenCLSuccessIsReturnedAndDataAreSet) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableExtendedVaFormats.set(true);
     vaSharing->sharingFunctions.haveExportSurfaceHandle = true;
@@ -324,7 +326,30 @@ TEST_F(VaSharingTests, givenValidSurfaceWhenGetSurfaceDescriptionThenCLSuccessIs
     EXPECT_FALSE(surfaceInfo.imgInfo.linearStorage);
 }
 
-TEST_F(VaSharingTests, givenValidSurfaceWithInvalidPlaneNumberWhenGetSurfaceDescriptionThenFailIsReturned) {
+TEST_F(VaSharingTests, givenValidY210SurfaceWhenGetSurfaceDescriptionThenCLSuccessIsReturnedAndDataAreSet) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableExtendedVaFormats.set(true);
+    vaSharing->sharingFunctions.haveExportSurfaceHandle = true;
+
+    vaSharing->sharingFunctions.mockVaSurfaceDesc.fourcc = VA_FOURCC_Y210;
+    vaSharing->sharingFunctions.mockVaSurfaceDesc.objects[0] = {8, 98304, I915_FORMAT_MOD_Y_TILED};
+    vaSharing->sharingFunctions.mockVaSurfaceDesc.num_layers = 1;
+    vaSharing->sharingFunctions.mockVaSurfaceDesc.layers[0] = {DRM_FORMAT_Y210, 1, {}, {0, 0, 0, 0}, {256, 0, 0, 0}};
+    vaSharing->sharingFunctions.mockVaSurfaceDesc.width = 24;
+    vaSharing->sharingFunctions.mockVaSurfaceDesc.height = 24;
+    vaSharing->sharingFunctions.derivedImageFormatBpp = 32;
+    vaSharing->sharingFunctions.derivedImageFormatFourCC = VA_FOURCC_Y210;
+
+    SharedSurfaceInfo surfaceInfo{};
+    EXPECT_EQ(VA_STATUS_SUCCESS, VASurface::getSurfaceDescription(surfaceInfo, &vaSharing->sharingFunctions, &vaSurfaceId));
+    EXPECT_EQ(vaSharing->sharingFunctions.mockVaSurfaceDesc.height, surfaceInfo.imgInfo.imgDesc.imageWidth);
+    EXPECT_EQ(vaSharing->sharingFunctions.mockVaSurfaceDesc.width, surfaceInfo.imgInfo.imgDesc.imageHeight);
+    EXPECT_EQ(static_cast<uint32_t>(vaSharing->sharingFunctions.mockVaSurfaceDesc.objects[0].fd), surfaceInfo.sharedHandle);
+    EXPECT_EQ(vaSharing->sharingFunctions.mockVaSurfaceDesc.fourcc, surfaceInfo.imageFourcc);
+    EXPECT_FALSE(surfaceInfo.imgInfo.linearStorage);
+}
+
+TEST_F(VaSharingTests, givenValidYUY2SurfaceWithInvalidPlaneNumberWhenGetSurfaceDescriptionThenFailIsReturned) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableExtendedVaFormats.set(true);
     vaSharing->sharingFunctions.haveExportSurfaceHandle = true;
@@ -337,6 +362,25 @@ TEST_F(VaSharingTests, givenValidSurfaceWithInvalidPlaneNumberWhenGetSurfaceDesc
     vaSharing->sharingFunctions.mockVaSurfaceDesc.height = 24;
     vaSharing->sharingFunctions.derivedImageFormatBpp = 16;
     vaSharing->sharingFunctions.derivedImageFormatFourCC = VA_FOURCC_YUY2;
+
+    SharedSurfaceInfo surfaceInfo{};
+    surfaceInfo.plane = 1;
+    EXPECT_EQ(VA_STATUS_ERROR_INVALID_PARAMETER, VASurface::getSurfaceDescription(surfaceInfo, &vaSharing->sharingFunctions, &vaSurfaceId));
+}
+
+TEST_F(VaSharingTests, givenValidY210SurfaceWithInvalidPlaneNumberWhenGetSurfaceDescriptionThenFailIsReturned) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableExtendedVaFormats.set(true);
+    vaSharing->sharingFunctions.haveExportSurfaceHandle = true;
+
+    vaSharing->sharingFunctions.mockVaSurfaceDesc.fourcc = VA_FOURCC_Y210;
+    vaSharing->sharingFunctions.mockVaSurfaceDesc.objects[0] = {8, 98304, I915_FORMAT_MOD_Y_TILED};
+    vaSharing->sharingFunctions.mockVaSurfaceDesc.num_layers = 1;
+    vaSharing->sharingFunctions.mockVaSurfaceDesc.layers[0] = {DRM_FORMAT_Y210, 1, {}, {0, 0, 0, 0}, {256, 0, 0, 0}};
+    vaSharing->sharingFunctions.mockVaSurfaceDesc.width = 24;
+    vaSharing->sharingFunctions.mockVaSurfaceDesc.height = 24;
+    vaSharing->sharingFunctions.derivedImageFormatBpp = 32;
+    vaSharing->sharingFunctions.derivedImageFormatFourCC = VA_FOURCC_Y210;
 
     SharedSurfaceInfo surfaceInfo{};
     surfaceInfo.plane = 1;
@@ -378,7 +422,8 @@ TEST_F(VaSharingTests, givenValidPlanarSurfaceWithPlaneSetWhenGetSurfaceDescript
     EXPECT_EQ(surfaceInfo.imageOffset, vaSharing->sharingFunctions.mockVaSurfaceDesc.layers[2].offset[0]);
     EXPECT_EQ(surfaceInfo.imagePitch, vaSharing->sharingFunctions.mockVaSurfaceDesc.layers[2].pitch[0]);
 }
-TEST_F(VaSharingTests, givenValidSurfaceWhenGetSurfaceDescriptionWithDeriveImageThenCLSuccessIsReturnedAndDataAreSet) {
+
+TEST_F(VaSharingTests, givenValidYUY2SurfaceWhenGetSurfaceDescriptionWithDeriveImageThenCLSuccessIsReturnedAndDataAreSet) {
     vaSharing->sharingFunctions.derivedImageFormatBpp = 16;
     vaSharing->sharingFunctions.derivedImageFormatFourCC = VA_FOURCC_YUY2;
     vaSharing->sharingFunctions.derivedImageHeight = 24;
@@ -389,6 +434,23 @@ TEST_F(VaSharingTests, givenValidSurfaceWhenGetSurfaceDescriptionWithDeriveImage
     EXPECT_EQ(vaSharing->sharingFunctions.derivedImageHeight, surfaceInfo.imgInfo.imgDesc.imageWidth);
     EXPECT_EQ(vaSharing->sharingFunctions.derivedImageWidth, surfaceInfo.imgInfo.imgDesc.imageHeight);
     EXPECT_EQ(static_cast<uint32_t>(vaSharing->sharingFunctions.derivedImageFormatFourCC), surfaceInfo.imageFourcc);
+}
+
+TEST_F(VaSharingTests, givenValidY210SurfaceWhenGetSurfaceDescriptionWithDeriveImageThenCLSuccessIsReturnedAndDataAreSet) {
+    vaSharing->sharingFunctions.derivedImageFormatBpp = 32;
+    vaSharing->sharingFunctions.derivedImageFormatFourCC = VA_FOURCC_Y210;
+    vaSharing->sharingFunctions.derivedImageHeight = 24;
+    vaSharing->sharingFunctions.derivedImageWidth = 24;
+
+    SharedSurfaceInfo surfaceInfo{};
+    EXPECT_EQ(VA_STATUS_SUCCESS, VASurface::getSurfaceDescription(surfaceInfo, &vaSharing->sharingFunctions, &vaSurfaceId));
+    EXPECT_EQ(vaSharing->sharingFunctions.derivedImageHeight, surfaceInfo.imgInfo.imgDesc.imageWidth);
+    EXPECT_EQ(vaSharing->sharingFunctions.derivedImageWidth, surfaceInfo.imgInfo.imgDesc.imageHeight);
+    EXPECT_EQ(static_cast<uint32_t>(vaSharing->sharingFunctions.derivedImageFormatFourCC), surfaceInfo.imageFourcc);
+}
+
+TEST(VASurface, givenSupportedY210PackedFormatWhenCheckingIfSupportedThenSurfaceDescIsReturned) {
+    EXPECT_NE(nullptr, VASurface::getExtendedSurfaceFormatInfo(VA_FOURCC_Y210));
 }
 
 TEST_F(VaSharingTests, givenValidSurfaceWithInvalidPlaneNumberWhenGetSurfaceDescriptionWithDeriveImageThenFailIsReturned) {
@@ -1111,6 +1173,7 @@ TEST_F(ApiVaSharingTests, givenSupportedImageTypeWhenGettingSupportedVAApiFormat
     supportedFormats.push_back(std::make_unique<VAImageFormat>(VAImageFormat{VA_FOURCC_P010, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0}));
     supportedFormats.push_back(std::make_unique<VAImageFormat>(VAImageFormat{VA_FOURCC_P016, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0}));
     supportedFormats.push_back(std::make_unique<VAImageFormat>(VAImageFormat{VA_FOURCC_YUY2, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0}));
+    supportedFormats.push_back(std::make_unique<VAImageFormat>(VAImageFormat{VA_FOURCC_Y210, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0}));
 
     for (auto flag : flags) {
 
@@ -1126,7 +1189,7 @@ TEST_F(ApiVaSharingTests, givenSupportedImageTypeWhenGettingSupportedVAApiFormat
                 &numImageFormats);
 
             EXPECT_EQ(CL_SUCCESS, result);
-            EXPECT_EQ(4u, numImageFormats);
+            EXPECT_EQ(5u, numImageFormats);
             int i = 0;
             for (auto &format : supportedFormats) {
                 EXPECT_EQ(format->fourcc, vaApiFormats[i++].fourcc);
@@ -1152,7 +1215,7 @@ TEST_F(ApiVaSharingTests, givenZeroNumEntriesWhenGettingSupportedVAApiFormatsThe
             &numImageFormats);
 
         EXPECT_EQ(CL_SUCCESS, result);
-        EXPECT_EQ(4u, numImageFormats);
+        EXPECT_EQ(5u, numImageFormats);
     }
 }
 
