@@ -712,4 +712,10 @@ uint64_t HwHelperHw<GfxFamily>::getPatIndex(CacheRegion cacheRegion, CachePolicy
 
     return -1;
 }
+
+template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::isPatIndexFallbackWaRequired() const {
+    return false;
+}
+
 } // namespace NEO

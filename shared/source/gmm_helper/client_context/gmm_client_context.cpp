@@ -79,8 +79,4 @@ void GmmClientContext::setGmmDeviceInfo(GMM_DEVICE_INFO *deviceInfo) {
     clientContext->GmmSetDeviceInfo(deviceInfo);
 }
 
-uint32_t GmmClientContext::cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GMM_RESOURCE_USAGE_TYPE usage) {
-    return clientContext->CachePolicyGetPATIndex(gmmResourceInfo, usage, nullptr, false);
-}
-
 } // namespace NEO

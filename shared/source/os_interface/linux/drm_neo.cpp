@@ -1304,13 +1304,11 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
 
     uint64_t patIndex = rootDeviceEnvironment.getGmmClientContext()->cachePolicyGetPATIndex(resourceInfo, usageType);
 
-    UNRECOVERABLE_IF(patIndex == static_cast<uint64_t>(GMM_PAT_ERROR));
-
     if (DebugManager.flags.ClosEnabled.get() != -1) {
         closEnabled = !!DebugManager.flags.ClosEnabled.get();
     }
 
-    if (closEnabled) {
+    if (patIndex == static_cast<uint64_t>(GMM_PAT_ERROR) || closEnabled || hwHelper.isPatIndexFallbackWaRequired()) {
         patIndex = hwHelper.getPatIndex(cacheRegion, cachePolicy);
     }
 

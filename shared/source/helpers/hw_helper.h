@@ -156,6 +156,7 @@ class HwHelper {
     virtual size_t getBatchBufferEndSize() const = 0;
     virtual const void *getBatchBufferEndReference() const = 0;
     virtual bool isPlatformFlushTaskEnabled(const NEO::HardwareInfo &hwInfo) const = 0;
+    virtual bool isPatIndexFallbackWaRequired() const = 0;
     virtual uint32_t getMinimalScratchSpaceSize() const = 0;
 
   protected:
@@ -396,6 +397,7 @@ class HwHelperHw : public HwHelper {
     size_t getBatchBufferEndSize() const override;
     const void *getBatchBufferEndReference() const override;
     bool isPlatformFlushTaskEnabled(const NEO::HardwareInfo &hwInfo) const override;
+    bool isPatIndexFallbackWaRequired() const override;
     uint32_t getMinimalScratchSpaceSize() const override;
 
   protected:
