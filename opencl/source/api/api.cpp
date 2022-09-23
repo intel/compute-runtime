@@ -4740,7 +4740,7 @@ cl_int CL_API_CALL clEnqueueSVMMemFill(cl_command_queue commandQueue,
     API_ENTER(&retVal);
 
     DBG_LOG_INPUTS("commandQueue", commandQueue,
-                   "svmPtr", NEO::fileLoggerInstance().infoPointerToString(svmPtr, size),
+                   "svmPtr", svmPtr,
                    "pattern", NEO::fileLoggerInstance().infoPointerToString(pattern, patternSize),
                    "patternSize", patternSize,
                    "size", size,
