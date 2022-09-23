@@ -164,6 +164,7 @@ TEST_F(WddmTests, givenDebugFlagForceEvictOnlyIfNecessaryAllValuesThenForceSetti
 TEST_F(WddmTests, GivengtSystemInfoSliceInfoHasEnabledSlicesAtHigherIndicesThenExpectTopologyMapCreateAndReturnTrue) {
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = 2;
+    defaultHwInfo.get()->gtSystemInfo.IsDynamicallyPopulated = true;
     defaultHwInfo.get()->gtSystemInfo.SliceCount = 1; // Only one slice enabled
 
     defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].Enabled = false;
@@ -191,6 +192,7 @@ TEST_F(WddmTests, GivengtSystemInfoSliceInfoHasEnabledSlicesAtHigherIndicesThenE
 TEST_F(WddmTests, GivenProperTopologyDataAndDebugFlagsEnabledWhenInitializingWddmThenExpectTopologyMapCreateAndReturnTrue) {
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = 10;
+    defaultHwInfo.get()->gtSystemInfo.IsDynamicallyPopulated = true;
     defaultHwInfo.get()->gtSystemInfo.SliceCount = 1; // Only one slice enabled
 
     defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].Enabled = true;
@@ -216,6 +218,7 @@ TEST_F(WddmTests, GivenNoSubsliceEnabledAndDebugFlagsEnabledWhenInitializingWddm
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = 10;
     defaultHwInfo.get()->gtSystemInfo.SliceCount = 1; // Only one slice enabled
+    defaultHwInfo.get()->gtSystemInfo.IsDynamicallyPopulated = true;
     defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DualSubSliceEnabledCount = 1;
     defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[0].Enabled = true;
     defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[0].SubSlice[0].Enabled = false;
@@ -236,6 +239,7 @@ TEST_F(WddmTests, GivenProperTopologyDataWhenQueryingTopologyThenExpectTrue) {
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo.get()->gtSystemInfo.MultiTileArchInfo.TileCount = 1;
     defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = 10;
+    defaultHwInfo.get()->gtSystemInfo.IsDynamicallyPopulated = true;
     defaultHwInfo.get()->gtSystemInfo.SliceCount = 1; // Only one slice enabled
 
     defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].Enabled = true;
@@ -272,6 +276,7 @@ TEST_F(WddmTests, GivenMoreThanOneEnabledSliceWhenQueryingTopologyThenExpectTrue
     defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = 10;
     defaultHwInfo.get()->gtSystemInfo.SliceCount = 2;
     defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].Enabled = false;
+    defaultHwInfo.get()->gtSystemInfo.IsDynamicallyPopulated = true;
 
     uint32_t index = 1;
     for (uint32_t enabledSliceCount = 0; enabledSliceCount < defaultHwInfo.get()->gtSystemInfo.SliceCount; enabledSliceCount++) {
@@ -303,6 +308,7 @@ TEST_F(WddmTests, GivenNoSubsliceEnabledWhenQueryingTopologyThenExpectFalse) {
     defaultHwInfo.get()->gtSystemInfo.MultiTileArchInfo.TileCount = 1;
     defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = 10;
     defaultHwInfo.get()->gtSystemInfo.SliceCount = 1;
+    defaultHwInfo.get()->gtSystemInfo.IsDynamicallyPopulated = true;
 
     defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DualSubSliceEnabledCount = 1;
     // Lets say, DSS 0 is disabled and dss 1 is enabled, thus overall DSS enable count is 1
@@ -320,6 +326,7 @@ TEST_F(WddmTests, GivenNoEuThreadsEnabledWhenQueryingTopologyThenExpectFalse) {
     defaultHwInfo.get()->gtSystemInfo.MultiTileArchInfo.TileCount = 1;
     defaultHwInfo.get()->gtSystemInfo.MaxSlicesSupported = 10;
     defaultHwInfo.get()->gtSystemInfo.SliceCount = 1;
+    defaultHwInfo.get()->gtSystemInfo.IsDynamicallyPopulated = true;
 
     defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DualSubSliceEnabledCount = 1;
     defaultHwInfo.get()->gtSystemInfo.SliceInfo[0].DSSInfo[0].Enabled = true;

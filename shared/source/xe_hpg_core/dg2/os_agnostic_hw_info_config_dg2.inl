@@ -158,13 +158,7 @@ bool HwInfoConfigHw<gfxProduct>::isTile64With3DSurfaceOnBCSSupported(const Hardw
 
 template <>
 uint32_t HwInfoConfigHw<gfxProduct>::computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const {
-    auto highestEnabledSlice = 0;
-    for (int highestSlice = GT_MAX_SLICE - 1; highestSlice >= 0; highestSlice--) {
-        if (hwInfo.gtSystemInfo.SliceInfo[highestSlice].Enabled) {
-            highestEnabledSlice = highestSlice + 1;
-            break;
-        }
-    }
+    const uint32_t highestEnabledSlice = NEO::HwHelper::getHighestEnabledSlice(hwInfo);
 
     auto subSlicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
     auto maxSubSlice = highestEnabledSlice * subSlicesPerSlice;

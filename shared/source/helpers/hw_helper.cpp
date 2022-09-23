@@ -66,4 +66,18 @@ uint32_t HwHelper::getSubDevicesCount(const HardwareInfo *pHwInfo) {
     }
 }
 
+uint32_t HwHelper::getHighestEnabledSlice(const HardwareInfo &hwInfo) {
+    uint32_t highestEnabledSlice = 0;
+    if (!hwInfo.gtSystemInfo.IsDynamicallyPopulated) {
+        return hwInfo.gtSystemInfo.MaxSlicesSupported;
+    }
+    for (int highestSlice = GT_MAX_SLICE - 1; highestSlice >= 0; highestSlice--) {
+        if (hwInfo.gtSystemInfo.SliceInfo[highestSlice].Enabled) {
+            highestEnabledSlice = highestSlice + 1;
+            break;
+        }
+    }
+    return highestEnabledSlice;
+}
+
 } // namespace NEO

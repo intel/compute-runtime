@@ -171,8 +171,10 @@ bool Wddm::translateTopologyInfo(TopologyMapping &mapping) {
     std::vector<int> sliceIndices;
     auto gtSystemInfo = rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo;
     sliceIndices.reserve(gtSystemInfo.SliceCount);
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    const uint32_t highestEnabledSlice = NEO::HwHelper::getHighestEnabledSlice(*hwInfo);
 
-    for (uint32_t x = 0; x < GT_MAX_SLICE; x++) {
+    for (uint32_t x = 0; x < std::max(highestEnabledSlice, hwInfo->gtSystemInfo.MaxSlicesSupported); x++) {
         if (!gtSystemInfo.SliceInfo[x].Enabled) {
             continue;
         }

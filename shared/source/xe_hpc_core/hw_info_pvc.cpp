@@ -207,7 +207,7 @@ void PvcHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
         gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b11;
 
         hwInfo->featureTable.ftrBcsInfo = 1;
-
+        gtSysInfo->IsDynamicallyPopulated = true;
         for (uint32_t slice = 0; slice < gtSysInfo->SliceCount; slice++) {
             gtSysInfo->SliceInfo[slice].Enabled = true;
         }

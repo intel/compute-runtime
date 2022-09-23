@@ -12,11 +12,12 @@ void L0HwHelperHw<Family>::getAttentionBitmaskForSingleThreads(const std::vector
     const uint32_t bytesPerEu = alignUp(numThreadsPerEu, 8) / 8;
     const uint32_t numEuPerSubslice = std::min(hwInfo.gtSystemInfo.MaxEuPerSubSlice, 8u);
     const uint32_t threadsSizePerSlice = numSubslicesPerSlice * numEuPerSubslice * bytesPerEu;
+    const uint32_t highestEnabledSlice = NEO::HwHelper::getHighestEnabledSlice(hwInfo);
 
     const uint32_t eusPerRow = 4;
     const uint32_t numberOfRows = 2;
 
-    bitmaskSize = hwInfo.gtSystemInfo.MaxSubSlicesSupported * numEuPerSubslice * bytesPerEu;
+    bitmaskSize = std::max(highestEnabledSlice, hwInfo.gtSystemInfo.MaxSlicesSupported) * numSubslicesPerSlice * numEuPerSubslice * bytesPerEu;
     bitmask = std::make_unique<uint8_t[]>(bitmaskSize);
 
     memset(bitmask.get(), 0, bitmaskSize);
@@ -43,11 +44,12 @@ std::vector<EuThread::ThreadId> L0HwHelperHw<Family>::getThreadsFromAttentionBit
     const uint32_t threadsSizePerSubSlice = numEuPerSubslice * bytesPerEu;
     const uint32_t eusPerRow = 4;
     const uint32_t numberOfRows = 2;
+    const uint32_t highestEnabledSlice = NEO::HwHelper::getHighestEnabledSlice(hwInfo);
 
     UNRECOVERABLE_IF(bytesPerEu != 1);
     std::vector<EuThread::ThreadId> threads;
 
-    for (uint32_t slice = 0; slice < hwInfo.gtSystemInfo.MaxSlicesSupported; slice++) {
+    for (uint32_t slice = 0; slice < std::max(highestEnabledSlice, hwInfo.gtSystemInfo.MaxSlicesSupported); slice++) {
         for (uint32_t subslice = 0; subslice < numSubslicesPerSlice; subslice++) {
 
             size_t subSliceOffset = slice * threadsSizePerSlice + subslice * threadsSizePerSubSlice;

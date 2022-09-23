@@ -296,7 +296,6 @@ int main(int argc, char **argv) {
     gtSystemInfo.MaxEuPerSubSlice       = std::max(gtSystemInfo.MaxEuPerSubSlice, euPerSubSlice);
     gtSystemInfo.MaxSlicesSupported     = std::max(gtSystemInfo.MaxSlicesSupported, gtSystemInfo.SliceCount);
     gtSystemInfo.MaxSubSlicesSupported  = std::max(gtSystemInfo.MaxSubSlicesSupported, gtSystemInfo.SubSliceCount);
-    gtSystemInfo.IsDynamicallyPopulated = false;
     // clang-format on
 
     // Platforms with uninitialized factory are not supported

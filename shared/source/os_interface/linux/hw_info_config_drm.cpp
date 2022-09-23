@@ -110,6 +110,7 @@ int HwInfoConfig::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo 
     gtSystemInfo->MaxSubSlicesSupported = std::max(static_cast<uint32_t>(topologyData.maxSubSliceCount * topologyData.maxSliceCount), gtSystemInfo->MaxSubSlicesSupported);
     gtSystemInfo->MaxSlicesSupported = topologyData.maxSliceCount;
 
+    gtSystemInfo->IsDynamicallyPopulated = true;
     for (uint32_t slice = 0; slice < gtSystemInfo->SliceCount; slice++) {
         gtSystemInfo->SliceInfo[slice].Enabled = true;
     }

@@ -51,7 +51,6 @@ DG2TEST_F(HwInfoConfigTestDg2, givenDg2ConfigWhenSetupHardwareInfoThenGtSystemIn
     Dg2HwConfig::setupHardwareInfo(&hwInfo, false);
     EXPECT_EQ(8u, gtSystemInfo.CsrSizeInMb);
     EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
-    EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
 }
 
 DG2TEST_F(HwInfoConfigTestDg2, givenG10DevIdWhenAdditionalKernelExecInfoSupportCheckedThenCorrectValueIsReturned) {
@@ -392,6 +391,7 @@ DG2TEST_F(HwInfoConfigTestDg2, givenDg2WhenSetForceNonCoherentThenProperFlagSet)
 DG2TEST_F(HwInfoConfigTestDg2, givenEnabledSliceInNonStandardConfigWhenComputeUnitsUsedForScratchThenProperCalculationIsReturned) {
     HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &testSysInfo = hwInfo.gtSystemInfo;
+    testSysInfo.IsDynamicallyPopulated = true;
     for (int i = 0; i < GT_MAX_SLICE; i++) {
         testSysInfo.SliceInfo[i].Enabled = false;
     }
@@ -411,6 +411,7 @@ DG2TEST_F(HwInfoConfigTestDg2, givenEnabledSliceInNonStandardConfigWhenComputeUn
 DG2TEST_F(HwInfoConfigTestDg2, givenNotEnabledSliceWhenComputeUnitsUsedForScratchThenThrowUnrecoverableIf) {
     HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &testSysInfo = hwInfo.gtSystemInfo;
+    testSysInfo.IsDynamicallyPopulated = true;
     for (int i = 0; i < GT_MAX_SLICE; i++) {
         testSysInfo.SliceInfo[i].Enabled = false;
     }

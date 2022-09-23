@@ -178,7 +178,7 @@ void Dg2HwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
         gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
 
         hwInfo->featureTable.ftrBcsInfo = 1;
-
+        gtSysInfo->IsDynamicallyPopulated = true;
         for (uint32_t slice = 0; slice < gtSysInfo->SliceCount; slice++) {
             gtSysInfo->SliceInfo[slice].Enabled = true;
         }

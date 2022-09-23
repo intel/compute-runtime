@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -373,8 +374,43 @@ HWTEST_F(L0HwHelperTest, givenBitmaskWithAttentionBitsForHalfOfThreadsWhenGettin
     }
 }
 
-using PlatformsWithFusedEus = IsWithinGfxCore<IGFX_GEN12LP_CORE, IGFX_XE_HP_CORE>;
+using PlatformsWithFusedEus = IsWithinGfxCore<IGFX_GEN12LP_CORE, IGFX_XE_HPG_CORE>;
 using L0HwHelperFusedEuTest = ::testing::Test;
+
+HWTEST2_F(L0HwHelperFusedEuTest, givenDynamicallyPopulatesSliceInfoGreaterThanMaxSlicesSupportedThenBitmasksAreCorrect, PlatformsWithFusedEus) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    auto &l0HwHelper = L0::L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    if (hwInfo.gtSystemInfo.MaxEuPerSubSlice <= 8) {
+        GTEST_SKIP();
+    }
+
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t size = 0;
+
+    hwInfo.gtSystemInfo.IsDynamicallyPopulated = true;
+    hwInfo.gtSystemInfo.MaxSlicesSupported = 2;
+    for (int i = 0; i < GT_MAX_SLICE; i++) {
+        hwInfo.gtSystemInfo.SliceInfo[i].Enabled = false;
+    }
+    hwInfo.gtSystemInfo.SliceInfo[2].Enabled = true;
+    hwInfo.gtSystemInfo.SliceInfo[3].Enabled = true;
+
+    std::vector<EuThread::ThreadId> threadsWithAtt;
+    threadsWithAtt.push_back({0, 2, 0, 0, 0});
+    threadsWithAtt.push_back({0, 3, 0, 0, 0});
+    l0HwHelper.getAttentionBitmaskForSingleThreads(threadsWithAtt, hwInfo, bitmask, size);
+    const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
+    const uint32_t numEuPerSubslice = std::min(hwInfo.gtSystemInfo.MaxEuPerSubSlice, 8u);
+    const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
+    const uint32_t bytesPerEu = alignUp(numThreadsPerEu, 8) / 8;
+    auto expected_size = 4 * numSubslicesPerSlice * numEuPerSubslice * bytesPerEu;
+    EXPECT_EQ(size, expected_size);
+
+    auto threads = l0HwHelper.getThreadsFromAttentionBitmask(hwInfo, 0, bitmask.get(), size);
+    ASSERT_EQ(threads.size(), 4u);
+    EXPECT_EQ(threads[0], threadsWithAtt[0]);
+    EXPECT_EQ(threads[2], threadsWithAtt[1]);
+}
 
 HWTEST2_F(L0HwHelperFusedEuTest, givenBitmaskWithAttentionBitsForSingleThreadWhenGettingThreadsThenThreadForTwoEUsReturned, PlatformsWithFusedEus) {
     auto hwInfo = *NEO::defaultHwInfo.get();

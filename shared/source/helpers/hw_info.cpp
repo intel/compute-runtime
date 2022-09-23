@@ -75,6 +75,7 @@ void setHwInfoValuesFromConfig(const uint64_t hwInfoConfig, HardwareInfo &hwInfo
     hwInfoIn.gtSystemInfo.SubSliceCount = subSlicePerSliceCount * sliceCount;
     hwInfoIn.gtSystemInfo.DualSubSliceCount = subSlicePerSliceCount * sliceCount;
     hwInfoIn.gtSystemInfo.EUCount = euPerSubSliceCount * subSlicePerSliceCount * sliceCount;
+    hwInfoIn.gtSystemInfo.IsDynamicallyPopulated = true;
     for (uint32_t slice = 0; slice < hwInfoIn.gtSystemInfo.SliceCount; slice++) {
         hwInfoIn.gtSystemInfo.SliceInfo[slice].Enabled = true;
     }

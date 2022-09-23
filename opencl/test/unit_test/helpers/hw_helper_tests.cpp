@@ -1516,3 +1516,27 @@ HWTEST2_F(HwHelperTest, givenAtLeastXeHpPlatformWhenGettingMinimalScratchSpaceSi
     const auto &hwHelper = HwHelper::get(renderCoreFamily);
     EXPECT_EQ(64U, hwHelper.getMinimalScratchSpaceSize());
 }
+
+TEST(HwHelperTests, whenIsDynamicallyPopulatedisFalseThengetHighestEnabledSliceReturnsMaxSlicesSupported) {
+    auto hwInfo = *defaultHwInfo;
+
+    hwInfo.gtSystemInfo.IsDynamicallyPopulated = false;
+    hwInfo.gtSystemInfo.MaxSlicesSupported = 4;
+    const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto maxSlice = hwHelper.getHighestEnabledSlice(hwInfo);
+    EXPECT_EQ(maxSlice, hwInfo.gtSystemInfo.MaxSlicesSupported);
+}
+
+TEST(HwHelperTests, whenIsDynamicallyPopulatedisTrueThengetHighestEnabledSliceReturnsHighestEnabledSliceInfo) {
+    auto hwInfo = *defaultHwInfo;
+
+    hwInfo.gtSystemInfo.IsDynamicallyPopulated = true;
+    hwInfo.gtSystemInfo.MaxSlicesSupported = 4;
+    for (int i = 0; i < GT_MAX_SLICE; i++) {
+        hwInfo.gtSystemInfo.SliceInfo[i].Enabled = false;
+    }
+    hwInfo.gtSystemInfo.SliceInfo[6].Enabled = true;
+    const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto maxSlice = hwHelper.getHighestEnabledSlice(hwInfo);
+    EXPECT_EQ(maxSlice, 7u);
+}
