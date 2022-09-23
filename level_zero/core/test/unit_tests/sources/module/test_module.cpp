@@ -2178,7 +2178,7 @@ kernels:
     EXPECT_NE(nullptr, moduleTuValid.programInfo.linkerInput.get());
 }
 
-TEST_F(ModuleTranslationUnitTest, WhenCreatingFromZeBinaryAndGlobalsAreExportedThenTheirAllocationTypeIsSVM) {
+TEST_F(ModuleTranslationUnitTest, WhenCreatingFromZeBinaryAndGlobalsAreExportedThenTheirAllocationTypeIsUSMDevice) {
     std::string zeInfo = std::string("version :\'") + versionToString(zeInfoDecoderVersion) + R"===('
 kernels:
     - name : kernel
@@ -2217,8 +2217,14 @@ kernels:
              zebin.data(), zebin.size());
     auto retVal = moduleTu.processUnpackedBinary();
     EXPECT_TRUE(retVal);
-    EXPECT_EQ(AllocationType::SVM_ZERO_COPY, moduleTu.globalConstBuffer->getAllocationType());
-    EXPECT_EQ(AllocationType::SVM_ZERO_COPY, moduleTu.globalVarBuffer->getAllocationType());
+    EXPECT_EQ(AllocationType::BUFFER, moduleTu.globalConstBuffer->getAllocationType());
+    EXPECT_EQ(AllocationType::BUFFER, moduleTu.globalVarBuffer->getAllocationType());
+
+    auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
+    auto globalConstBufferAllocType = svmAllocsManager->getSVMAlloc(reinterpret_cast<void *>(moduleTu.globalConstBuffer->getGpuAddress()))->memoryType;
+    auto globalVarBufferAllocType = svmAllocsManager->getSVMAlloc(reinterpret_cast<void *>(moduleTu.globalVarBuffer->getGpuAddress()))->memoryType;
+    EXPECT_EQ(DEVICE_UNIFIED_MEMORY, globalConstBufferAllocType);
+    EXPECT_EQ(DEVICE_UNIFIED_MEMORY, globalVarBufferAllocType);
 }
 
 HWTEST_F(ModuleTranslationUnitTest, WhenBuildOptionsAreNullThenReuseExistingOptions) {
