@@ -187,6 +187,26 @@ TEST_F(CommandContainerTest, givenEnabledLocalMemoryAndIsaInSystemMemoryWhenCmdC
     EXPECT_EQ(instructionHeapBaseAddress, cmdContainer.getInstructionHeapBaseAddress());
 }
 
+TEST_F(CommandContainerTest, givenForceDefaultHeapSizeWhenCmdContainerIsInitializedThenHeapIsCreatedWithProperSize) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceDefaultHeapSize.set(32); // in KB
+
+    auto executionEnvironment = new NEO::ExecutionEnvironment();
+    const size_t numDevices = 1;
+    executionEnvironment->prepareRootDeviceEnvironments(numDevices);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
+    auto device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
+
+    CommandContainer cmdContainer;
+    auto status = cmdContainer.initialize(device.get(), nullptr, true);
+    EXPECT_EQ(CommandContainer::ErrorCode::SUCCESS, status);
+
+    auto indirectHeap = cmdContainer.getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT);
+    EXPECT_EQ(indirectHeap->getAvailableSpace(), 32 * MemoryConstants::kiloByte);
+}
+
 TEST_F(CommandContainerTest, givenCommandContainerDuringInitWhenAllocateGfxMemoryFailsThenErrorIsReturned) {
     CommandContainer cmdContainer;
     pDevice->executionEnvironment->memoryManager.reset(new FailMemoryManager(0, *pDevice->executionEnvironment));

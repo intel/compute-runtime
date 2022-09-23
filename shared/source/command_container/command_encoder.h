@@ -75,7 +75,7 @@ struct EncodeDispatchKernel {
     static void setGrfInfo(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, uint32_t numGrf, const size_t &sizeCrossThreadData,
                            const size_t &sizePerThreadData, const HardwareInfo &hwInfo);
 
-    static void *getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset);
+    static void *getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset, const HardwareInfo &hwInfo);
 
     static bool isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels,
                                                     const size_t *lws,

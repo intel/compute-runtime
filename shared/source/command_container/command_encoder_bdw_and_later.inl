@@ -203,8 +203,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     }
 
     uint32_t numIDD = 0u;
-    void *ptr = getInterfaceDescriptor(container, numIDD);
-    memcpy_s(ptr, sizeof(idd), &idd, sizeof(idd));
+    void *iddPtr = getInterfaceDescriptor(container, numIDD, hwInfo);
 
     cmd.setIndirectDataStartAddress(static_cast<uint32_t>(offsetThreadData));
     cmd.setIndirectDataLength(sizeThreadData);
@@ -232,6 +231,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     auto threadGroupCount = cmd.getThreadGroupIdXDimension() * cmd.getThreadGroupIdYDimension() * cmd.getThreadGroupIdZDimension();
     EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(idd, hwInfo, threadGroupCount, kernelDescriptor.kernelAttributes.numGrfRequired);
+
+    memcpy_s(iddPtr, sizeof(idd), &idd, sizeof(idd));
 
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::DebugManager.flags.PauseOnEnqueue.get(), args.device->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
         void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(hwInfo, false));

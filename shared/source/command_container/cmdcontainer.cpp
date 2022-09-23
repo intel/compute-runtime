@@ -86,7 +86,10 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
         addToResidencyContainer(cmdBufferAllocation);
     }
     if (requireHeaps) {
-        constexpr size_t heapSize = 65536u;
+        size_t heapSize = 65536u;
+        if (DebugManager.flags.ForceDefaultHeapSize.get() != -1) {
+            heapSize = DebugManager.flags.ForceDefaultHeapSize.get() * MemoryConstants::kiloByte;
+        }
         heapHelper = std::unique_ptr<HeapHelper>(new HeapHelper(device->getMemoryManager(), device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage(), device->getNumGenericSubDevices() > 1u));
 
         for (uint32_t i = 0; i < IndirectHeap::Type::NUM_TYPES; i++) {
@@ -186,22 +189,7 @@ size_t CommandContainer::getTotalCmdBufferSize() {
 
 void *CommandContainer::getHeapSpaceAllowGrow(HeapType heapType,
                                               size_t size) {
-    auto indirectHeap = getIndirectHeap(heapType);
-
-    if (immediateCmdListSharedHeap(heapType)) {
-        UNRECOVERABLE_IF(indirectHeap == nullptr);
-        UNRECOVERABLE_IF(indirectHeap->getAvailableSpace() < size);
-    } else {
-        if (indirectHeap->getAvailableSpace() < size) {
-            size_t newSize = indirectHeap->getUsed() + indirectHeap->getAvailableSpace();
-            newSize *= 2;
-            newSize = std::max(newSize, indirectHeap->getAvailableSpace() + size);
-            newSize = alignUp(newSize, MemoryConstants::pageSize);
-            this->createAndAssignNewHeap(heapType, newSize);
-        }
-    }
-
-    return indirectHeap->getSpace(size);
+    return getHeapWithRequiredSizeAndAlignment(heapType, size, 0)->getSpace(size);
 }
 
 IndirectHeap *CommandContainer::getHeapWithRequiredSizeAndAlignment(HeapType heapType, size_t sizeRequired, size_t alignment) {
@@ -219,6 +207,7 @@ IndirectHeap *CommandContainer::getHeapWithRequiredSizeAndAlignment(HeapType hea
     } else {
         if (indirectHeap->getAvailableSpace() < sizeRequested) {
             size_t newSize = indirectHeap->getUsed() + indirectHeap->getAvailableSpace();
+            newSize = std::max(newSize, indirectHeap->getAvailableSpace() + sizeRequested);
             newSize = alignUp(newSize, MemoryConstants::pageSize);
             auto oldAlloc = getIndirectHeapAllocation(heapType);
             this->createAndAssignNewHeap(heapType, newSize);
