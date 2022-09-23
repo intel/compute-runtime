@@ -884,7 +884,6 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListBatchBufferStart(CommandLis
 
     auto &returnPoints = commandList->getReturnPoints();
     uint32_t returnPointsSize = commandList->getReturnPointsSize();
-    uint32_t cmdBufferProgress = 0;
     uint32_t returnPointIdx = 0;
 
     for (size_t iter = 0; iter < cmdBufferCount; iter++) {
@@ -896,7 +895,7 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListBatchBufferStart(CommandLis
         NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&cmdStream, startOffset, true);
         if (returnPointsSize > 0) {
             bool cmdBufferHasRestarts = std::find_if(
-                                            std::next(returnPoints.begin(), cmdBufferProgress),
+                                            std::next(returnPoints.begin(), returnPointIdx),
                                             returnPoints.end(),
                                             [allocation](CmdListReturnPoint &retPt) {
                                                 return retPt.currentCmdBuffer == allocation;
@@ -914,7 +913,6 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListBatchBufferStart(CommandLis
                                                                                          true);
                     returnPointIdx++;
                 }
-                cmdBufferProgress++;
             }
         }
     }
