@@ -886,7 +886,6 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
 
 struct AppendMemoryLockedCopyFixture : public DeviceFixture {
     void setUp() {
-        DebugManager.flags.ExperimentalCopyThroughLock.set(1);
         DeviceFixture::setUp();
 
         nonUsmHostPtr = new char[sz];
@@ -1074,6 +1073,23 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCpuMemcpyWith
 
     uint32_t waitForFlushTagUpdateCalled = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->waitForCompletionWithTimeoutTaskCountCalled;
     EXPECT_EQ(waitForFlushTagUpdateCalled, 1u);
+}
+
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendBarrierThenSetBarrierCalled, IsXeHpcCore) {
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+
+    EXPECT_FALSE(cmdList.barrierCalled);
+
+    cmdList.appendBarrier(nullptr, 0, nullptr);
+
+    EXPECT_TRUE(cmdList.barrierCalled);
+
+    auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    EXPECT_FALSE(cmdList.barrierCalled);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
