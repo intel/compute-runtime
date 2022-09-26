@@ -854,6 +854,7 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                             DEBUG_BREAK_IF(module.elfUuidHandle != 0 && connection->uuidMap[vmBind->uuids[index]].ptr != connection->uuidMap[module.elfUuidHandle].ptr);
 
                             module.elfUuidHandle = vmBind->uuids[index];
+                            module.deviceBitfield = devices;
                         }
                     }
                 }
@@ -994,8 +995,14 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                         debugEvent.info.module.moduleEnd = connection->uuidMap[module.elfUuidHandle].ptr + connection->uuidMap[module.elfUuidHandle].dataSize;
 
                         if (!tileSessionsEnabled) {
-                            pushApiEvent(debugEvent, &vmBind->base);
-                            shouldAckEvent = false;
+                            bool allInstancesEventsReceived = true;
+                            if (module.deviceBitfield.count() > 1) {
+                                allInstancesEventsReceived = checkAllOtherTileModuleSegmentsPresent(tileIndex, module);
+                            }
+                            if (allInstancesEventsReceived) {
+                                pushApiEvent(debugEvent, &vmBind->base);
+                                shouldAckEvent = false;
+                            }
                         } else {
 
                             auto tileAttached = static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->insertModule(debugEvent.info.module);
@@ -1031,7 +1038,13 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                             }
 
                         } else {
-                            pushApiEvent(debugEvent, nullptr);
+                            bool notifyEvent = true;
+                            if (module.deviceBitfield.count() > 1) {
+                                notifyEvent = checkAllOtherTileModuleSegmentsRemoved(tileIndex, module);
+                            }
+                            if (notifyEvent) {
+                                pushApiEvent(debugEvent, nullptr);
+                            }
                         }
                         module.loadAddresses[tileIndex].clear();
                     }

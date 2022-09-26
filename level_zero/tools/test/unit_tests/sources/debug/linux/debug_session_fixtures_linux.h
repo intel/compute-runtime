@@ -600,7 +600,7 @@ struct MockDebugSessionLinuxHelper {
     }
 
     void addIsaVmBindEvent(MockDebugSessionLinux *session, uint64_t vm, bool ack, bool create) {
-        uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
+        uint64_t vmBindIsaData[(sizeof(prelim_drm_i915_debug_event_vm_bind) + 3 * sizeof(typeOfUUID) + sizeof(uint64_t)) / sizeof(uint64_t)];
         prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
 
         vmBindIsa->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
@@ -630,6 +630,39 @@ struct MockDebugSessionLinuxHelper {
 
         memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
 
+        session->handleEvent(&vmBindIsa->base);
+    }
+
+    void addZebinVmBindEvent(MockDebugSessionLinux *session, uint64_t vm, bool ack, bool create, uint64_t kernelIndex) {
+        uint64_t vmBindIsaData[(sizeof(prelim_drm_i915_debug_event_vm_bind) + 4 * sizeof(typeOfUUID) + sizeof(uint64_t)) / sizeof(uint64_t)];
+        prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
+
+        vmBindIsa->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
+        if (create) {
+            vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+        } else {
+            vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_DESTROY;
+        }
+
+        if (ack) {
+            vmBindIsa->base.flags |= PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK;
+        }
+
+        vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 4 * sizeof(typeOfUUID);
+        vmBindIsa->base.seqno = 10;
+        vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
+        vmBindIsa->va_start = kernelIndex == 0 ? isaGpuVa : isaGpuVa + isaSize;
+        vmBindIsa->va_length = isaSize;
+        vmBindIsa->vm_handle = vm;
+        vmBindIsa->num_uuids = 4;
+        auto *uuids = reinterpret_cast<typeOfUUID *>(ptrOffset(vmBindIsaData, sizeof(prelim_drm_i915_debug_event_vm_bind)));
+        typeOfUUID uuidsTemp[4];
+        uuidsTemp[0] = static_cast<typeOfUUID>(isaUUID);
+        uuidsTemp[1] = static_cast<typeOfUUID>(cookieUUID);
+        uuidsTemp[2] = static_cast<typeOfUUID>(elfUUID);
+        uuidsTemp[3] = static_cast<typeOfUUID>(zebinModuleUUID);
+
+        memcpy_s(uuids, 4 * sizeof(typeOfUUID), uuidsTemp, sizeof(uuidsTemp));
         session->handleEvent(&vmBindIsa->base);
     }
 

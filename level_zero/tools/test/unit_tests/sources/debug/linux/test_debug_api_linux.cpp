@@ -6507,6 +6507,99 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenHandlingVmBi
     EXPECT_EQ(isaGpuVa, event.info.module.load);
 }
 
+TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindCreateEventsThenModuleLoadIsTriggeredAfterAllInstancesEventsReceived) {
+
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    addZebinVmBindEvent(session.get(), vm0, true, true, 0);
+    addZebinVmBindEvent(session.get(), vm0, true, true, 1);
+    EXPECT_EQ(2u, session->clientHandleToConnection[session->clientHandle]->isaMap[0].size());
+    EXPECT_EQ(0u, session->clientHandleToConnection[session->clientHandle]->isaMap[1].size());
+    EXPECT_EQ(10u, handler->debugEventAcked.seqno);
+    EXPECT_EQ(0u, session->apiEvents.size());
+
+    addZebinVmBindEvent(session.get(), vm1, true, true, 0);
+    addZebinVmBindEvent(session.get(), vm1, true, true, 1);
+
+    EXPECT_EQ(1u, session->apiEvents.size());
+
+    zet_debug_event_t event;
+    auto result = session->readEvent(0, &event);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_LOAD, event.type);
+    EXPECT_EQ(isaGpuVa, event.info.module.load);
+}
+
+TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindDestroyEventsThenModuleUnloadIsTriggeredAfterAllInstancesEventsReceived) {
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    // VM BIND events for 2 kernels from zebin in vm0 - tile0
+    addZebinVmBindEvent(session.get(), vm0, true, true, 0);
+    addZebinVmBindEvent(session.get(), vm0, true, true, 1);
+
+    EXPECT_EQ(2u, session->clientHandleToConnection[session->clientHandle]->isaMap[0].size());
+    EXPECT_EQ(0u, session->clientHandleToConnection[session->clientHandle]->isaMap[1].size());
+
+    // VM BIND events for 2 kernels from zebin in vm1 - tile0
+    addZebinVmBindEvent(session.get(), vm1, true, true, 0);
+    addZebinVmBindEvent(session.get(), vm1, true, true, 1);
+    EXPECT_EQ(2u, session->clientHandleToConnection[session->clientHandle]->isaMap[1].size());
+
+    auto numberOfEvents = session->apiEvents.size();
+
+    // remove all VM BINDs
+    addZebinVmBindEvent(session.get(), vm1, false, false, 0);
+    EXPECT_EQ(numberOfEvents, session->apiEvents.size());
+    addZebinVmBindEvent(session.get(), vm1, false, false, 1);
+    EXPECT_EQ(numberOfEvents, session->apiEvents.size());
+    addZebinVmBindEvent(session.get(), vm0, false, false, 0);
+    EXPECT_EQ(numberOfEvents, session->apiEvents.size());
+    addZebinVmBindEvent(session.get(), vm0, false, false, 1);
+
+    // MODULE UNLOAD after all unbinds
+    auto numberOfAllEvents = session->apiEvents.size();
+    EXPECT_EQ(numberOfEvents + 1, numberOfAllEvents);
+
+    zet_debug_event_t event;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    while (numberOfAllEvents--) {
+        result = session->readEvent(0, &event);
+        if (result != ZE_RESULT_SUCCESS) {
+            break;
+        }
+    }
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD, event.type);
+    EXPECT_EQ(isaGpuVa, event.info.module.load);
+}
+
 TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingAndReadingIsaMemoryThenOnlyWritesAreMirrored) {
     auto handler = new MockIoctlHandler;
     session->ioctlHandler.reset(handler);

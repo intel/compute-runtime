@@ -124,6 +124,7 @@ struct DebugSessionLinux : DebugSessionImp {
         std::unordered_set<uint64_t> loadAddresses[NEO::EngineLimits::maxHandleCount];
         uint64_t elfUuidHandle;
         uint32_t segmentCount;
+        NEO::DeviceBitfield deviceBitfield;
         int segmentVmBindCounter[NEO::EngineLimits::maxHandleCount];
     };
 
@@ -292,6 +293,32 @@ struct DebugSessionLinux : DebugSessionImp {
         for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
             if (i != tileIndex && connectedDevice->getNEODevice()->getDeviceBitfield().test(i)) {
                 if (clientHandleToConnection[clientHandle]->isaMap[i].find(isaVa) != clientHandleToConnection[clientHandle]->isaMap[i].end()) {
+                    allInstancesRemoved = false;
+                    break;
+                }
+            }
+        }
+        return allInstancesRemoved;
+    }
+
+    bool checkAllOtherTileModuleSegmentsPresent(uint32_t tileIndex, const Module &module) {
+        bool allInstancesPresent = true;
+        for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
+            if (i != tileIndex && connectedDevice->getNEODevice()->getDeviceBitfield().test(i)) {
+                if (module.loadAddresses[i].size() != module.segmentCount) {
+                    allInstancesPresent = false;
+                    break;
+                }
+            }
+        }
+        return allInstancesPresent;
+    }
+
+    bool checkAllOtherTileModuleSegmentsRemoved(uint32_t tileIndex, const Module &module) {
+        bool allInstancesRemoved = true;
+        for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
+            if (i != tileIndex && connectedDevice->getNEODevice()->getDeviceBitfield().test(i)) {
+                if (module.loadAddresses[i].size() != 0) {
                     allInstancesRemoved = false;
                     break;
                 }
