@@ -75,7 +75,8 @@ Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, ClDevice &c
     } else {
         maxKernelWorkGroupSize = static_cast<uint32_t>(deviceInfo.maxWorkGroupSize);
     }
-    slmTotalSize = kernelInfoArg.kernelDescriptor.kernelAttributes.slmInlineSize;
+
+    slmTotalSize = slmTotalSum = kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize;
 }
 
 Kernel::~Kernel() {
@@ -527,7 +528,7 @@ cl_int Kernel::getWorkGroupInfo(cl_kernel_work_group_info paramName,
     struct size_t3 {
         size_t val[3];
     } requiredWorkGroupSize;
-    cl_ulong localMemorySize;
+    size_t totalLocalMemorySize = static_cast<size_t>(slmTotalSum);
     const auto &kernelDescriptor = kernelInfo.kernelDescriptor;
     size_t preferredWorkGroupSizeMultiple = 0;
     cl_ulong scratchSize;
@@ -558,9 +559,8 @@ cl_int Kernel::getWorkGroupInfo(cl_kernel_work_group_info paramName,
         break;
 
     case CL_KERNEL_LOCAL_MEM_SIZE:
-        localMemorySize = kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize;
-        srcSize = sizeof(localMemorySize);
-        pSrc = &localMemorySize;
+        srcSize = sizeof(totalLocalMemorySize);
+        pSrc = &totalLocalMemorySize;
         break;
 
     case CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE:
@@ -1375,6 +1375,14 @@ cl_int Kernel::setArgLocal(uint32_t argIndexIn,
     }
 
     slmTotalSize = kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize + alignUp(slmOffset, KB);
+
+    uint32_t slmSum = 0;
+    for (const auto &kernelArg : kernelArguments) {
+        if (kernelArg.type == SLM_OBJ) {
+            slmSum += static_cast<uint32_t>(kernelArg.size);
+        }
+    }
+    slmTotalSum = kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize + alignUp(slmSum, KB);
 
     return CL_SUCCESS;
 }
