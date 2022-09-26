@@ -46,6 +46,7 @@ set(TEST_TARGETS
     zello_dyn_local_arg
     zello_events
     zello_fence
+    zello_fill
     zello_function_pointers_cl
     zello_host_pointer
     zello_image
