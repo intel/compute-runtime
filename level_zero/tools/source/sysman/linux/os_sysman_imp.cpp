@@ -327,8 +327,11 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
     if (ZE_RESULT_SUCCESS != result) {
         return result;
     }
-
-    this->pSleepFunctionSecs(10); // Sleep for 10seconds to make sure that the config spaces of all devices are saved correctly
+    if (diagnosticsReset) {
+        this->pSleepFunctionSecs(30); // Sleep for 30seconds to make sure that the config spaces of all devices are saved correctly after IFR
+    } else {
+        this->pSleepFunctionSecs(10); // Sleep for 10seconds to make sure that the config spaces of all devices are saved correctly
+    }
     rootPortPath = getPciRootPortDirectoryPath(gtDevicePath);
 
     int fd, ret = 0;
@@ -355,7 +358,11 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
     if (ZE_RESULT_SUCCESS != result) {
         return result;
     }
-    this->pSleepFunctionSecs(10); // Sleep for 10seconds, allows the rescan to complete on all devices attached to the root port.
+    if (diagnosticsReset) {
+        this->pSleepFunctionSecs(30); // Sleep for 30seconds to make sure that the config spaces of all devices are saved correctly after IFR
+    } else {
+        this->pSleepFunctionSecs(10); // Sleep for 10seconds, allows the rescan to complete on all devices attached to the root port.
+    }
     return result;
 }
 
