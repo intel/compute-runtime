@@ -253,18 +253,18 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchCooperativeKernel(ze_kernel_handle_t kernelHandle,
                                                                                 const ze_group_count_t *launchKernelArgs,
-                                                                                ze_event_handle_t hSignalEvent,
+                                                                                ze_event_handle_t signalEvent,
                                                                                 uint32_t numWaitEvents,
-                                                                                ze_event_handle_t *phWaitEvents) {
+                                                                                ze_event_handle_t *waitEventHandles) {
 
-    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents);
+    ze_result_t ret = addEventsToCmdList(numWaitEvents, waitEventHandles);
     if (ret) {
         return ret;
     }
 
     Event *event = nullptr;
-    if (hSignalEvent) {
-        event = Event::fromHandle(hSignalEvent);
+    if (signalEvent) {
+        event = Event::fromHandle(signalEvent);
     }
 
     CmdListKernelLaunchParams launchParams = {};
