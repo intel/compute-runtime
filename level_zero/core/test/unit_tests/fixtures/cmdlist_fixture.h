@@ -78,6 +78,7 @@ struct ModuleMutableCommandListFixture : public ModuleImmutableDataFixture {
     std::unique_ptr<L0::ult::CommandList> commandListImmediate;
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     L0::ult::CommandQueue *commandQueue;
+    NEO::EngineGroupType engineGroupType;
 };
 
 struct MultiReturnCommandListFixture : public ModuleMutableCommandListFixture {
@@ -115,6 +116,12 @@ struct CmdListThreadArbitrationFixture : public CmdListStateComputeModeStateFixt
 struct CmdListLargeGrfFixture : public CmdListStateComputeModeStateFixture {
     template <typename FamilyType>
     void testBody();
+};
+
+struct ImmediateCmdListSharedHeapsFixture : public ModuleMutableCommandListFixture {
+    void setUp();
+
+    DebugManagerStateRestore restorer;
 };
 
 } // namespace ult

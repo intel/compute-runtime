@@ -30,6 +30,7 @@ class IndirectHeap;
 class LogicalStateHelper;
 class Gmm;
 struct HardwareInfo;
+struct KernelInfo;
 struct StateComputeModeProperties;
 
 struct EncodeDispatchKernelArgs {
@@ -112,6 +113,10 @@ struct EncodeDispatchKernel {
     static void adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder, const HardwareInfo &hwInfo);
 
     static constexpr bool shouldUpdateGlobalAtomics(bool &currentVal, bool refVal, bool updateCurrent);
+
+    static size_t getSizeRequiredDsh(const KernelInfo &kernelInfo);
+    static size_t getSizeRequiredSsh(const KernelInfo &kernelInfo);
+    inline static uint32_t additionalSizeRequiredDsh();
 };
 
 template <typename GfxFamily>
@@ -121,8 +126,8 @@ struct EncodeStates {
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
     using SAMPLER_BORDER_COLOR_STATE = typename GfxFamily::SAMPLER_BORDER_COLOR_STATE;
 
-    static const uint32_t alignIndirectStatePointer = MemoryConstants::cacheLineSize;
-    static const size_t alignInterfaceDescriptorData = MemoryConstants::cacheLineSize;
+    static constexpr uint32_t alignIndirectStatePointer = MemoryConstants::cacheLineSize;
+    static constexpr size_t alignInterfaceDescriptorData = MemoryConstants::cacheLineSize;
 
     static uint32_t copySamplerState(IndirectHeap *dsh,
                                      uint32_t samplerStateOffset,

@@ -17,6 +17,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
@@ -1323,4 +1324,68 @@ HWTEST_F(BindlessCommandEncodeStatesTest, givenBindlessModeDisabledelWithSampler
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs, nullptr);
 
     EXPECT_EQ(std::find(cmdContainer->getResidencyContainer().begin(), cmdContainer->getResidencyContainer().end(), pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH)->getGraphicsAllocation()), cmdContainer->getResidencyContainer().end());
+}
+
+HWTEST_F(CommandEncodeStatesTest, givenKernelInfoWhenGettingRequiredDshSpaceThenReturnCorrectValues) {
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+
+    size_t additionalSize = UnitTestHelper<FamilyType>::getAdditionalDshSize();
+    size_t expectedSize = alignUp(additionalSize, EncodeStates<FamilyType>::alignInterfaceDescriptorData);
+
+    // no samplers
+    kernelInfo.kernelDescriptor.payloadMappings.samplerTable.numSamplers = 0;
+    size_t size = EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(kernelInfo);
+    EXPECT_EQ(expectedSize, size);
+
+    // two samplers, no border color state
+    kernelInfo.kernelDescriptor.payloadMappings.samplerTable.numSamplers = 2;
+    kernelInfo.kernelDescriptor.payloadMappings.samplerTable.tableOffset = 0;
+    kernelInfo.kernelDescriptor.payloadMappings.samplerTable.borderColor = 0;
+
+    // align samplers
+    size_t alignedSamplers = alignUp(2 * sizeof(SAMPLER_STATE), INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE);
+
+    // additional IDD for requiring platforms
+    if (additionalSize > 0) {
+        expectedSize = alignUp(alignedSamplers + additionalSize, EncodeStates<FamilyType>::alignInterfaceDescriptorData);
+    } else {
+        expectedSize = alignedSamplers;
+    }
+
+    size = EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(kernelInfo);
+    EXPECT_EQ(expectedSize, size);
+
+    // three samplers, border color state
+    kernelInfo.kernelDescriptor.payloadMappings.samplerTable.numSamplers = 3;
+    kernelInfo.kernelDescriptor.payloadMappings.samplerTable.tableOffset = 32;
+
+    // align border color state and samplers
+    alignedSamplers = alignUp(alignUp(32, EncodeStates<FamilyType>::alignIndirectStatePointer) + 3 * sizeof(SAMPLER_STATE), INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE);
+
+    // additional IDD for requiring platforms
+    if (additionalSize > 0) {
+        expectedSize = alignUp(alignedSamplers + additionalSize, EncodeStates<FamilyType>::alignInterfaceDescriptorData);
+    } else {
+        expectedSize = alignedSamplers;
+    }
+    size = EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(kernelInfo);
+    EXPECT_EQ(expectedSize, size);
+}
+
+HWTEST_F(CommandEncodeStatesTest, givenKernelInfoWhenGettingRequiredSshSpaceThenReturnCorrectValues) {
+    using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    // no surface states
+    kernelInfo.heapInfo.SurfaceStateHeapSize = 0;
+    size_t size = EncodeDispatchKernel<FamilyType>::getSizeRequiredSsh(kernelInfo);
+    EXPECT_EQ(0u, size);
+
+    // two surface states and BTI indices
+    kernelInfo.heapInfo.SurfaceStateHeapSize = 2 * sizeof(RENDER_SURFACE_STATE) + 2 * sizeof(uint32_t);
+    size_t expectedSize = alignUp(kernelInfo.heapInfo.SurfaceStateHeapSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+
+    size = EncodeDispatchKernel<FamilyType>::getSizeRequiredSsh(kernelInfo);
+    EXPECT_EQ(expectedSize, size);
 }

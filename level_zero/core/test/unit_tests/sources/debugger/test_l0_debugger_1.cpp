@@ -15,6 +15,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/sources/debugger/l0_debugger_fixture.h"
@@ -568,6 +569,65 @@ HWTEST2_F(L0DebuggerTest, givenXeHpOrXeHpgCoreAndDebugIsActiveThenDisableL3Cache
 }
 
 INSTANTIATE_TEST_CASE_P(SBAModesForDebugger, L0DebuggerParameterizedTests, ::testing::Values(0, 1));
+
+struct MockKernelImmutableData : public KernelImmutableData {
+    using KernelImmutableData::isaGraphicsAllocation;
+    using KernelImmutableData::kernelDescriptor;
+    using KernelImmutableData::kernelInfo;
+
+    MockKernelImmutableData(L0::Device *device) : KernelImmutableData(device) {}
+};
+
+HWTEST2_F(L0DebuggerTest, givenFlushTaskSubmissionAndSharedHeapsEnabledWhenAppendingKernelUsingNewHeapThenDebugSurfaceIsProgrammedOnce, IsAtLeastGen12lp) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::DebugManager.flags.EnableImmediateCmdListHeapSharing.set(1);
+
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_TRUE(commandList->isFlushTaskSubmissionEnabled);
+    EXPECT_TRUE(commandList->immediateCmdListHeapSharing);
+
+    auto kernelInfo = std::make_unique<NEO::KernelInfo>();
+    auto kernelDescriptor = std::make_unique<NEO::KernelDescriptor>();
+    auto kernelImmData = std::make_unique<MockKernelImmutableData>(device);
+
+    kernelImmData->kernelInfo = kernelInfo.get();
+    kernelImmData->kernelDescriptor = kernelDescriptor.get();
+    kernelImmData->isaGraphicsAllocation.reset(new MockGraphicsAllocation());
+
+    Mock<::L0::Kernel> kernel;
+    kernel.kernelImmData = kernelImmData.get();
+
+    CmdListKernelLaunchParams launchParams = {};
+    ze_group_count_t groupCount{1, 1, 1};
+    returnValue = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto csrHeap = &commandList->csr->getIndirectHeap(NEO::HeapType::SURFACE_STATE, 0);
+    ASSERT_NE(nullptr, csrHeap);
+
+    auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(csrHeap->getCpuBase());
+    ASSERT_NE(debugSurfaceState, nullptr);
+    auto debugSurface = static_cast<::L0::DeviceImp *>(device)->getDebugSurface();
+    ASSERT_NE(debugSurface, nullptr);
+    ASSERT_EQ(debugSurface->getGpuAddress(), debugSurfaceState->getSurfaceBaseAddress());
+
+    memset(debugSurfaceState, 0, sizeof(*debugSurfaceState));
+
+    returnValue = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ASSERT_EQ(0u, debugSurfaceState->getSurfaceBaseAddress());
+
+    kernelImmData->isaGraphicsAllocation.reset(nullptr);
+    commandList->destroy();
+}
 
 } // namespace ult
 } // namespace L0

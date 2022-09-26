@@ -96,6 +96,9 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
             if (!hardwareInfo.capabilityTable.supportsImages && IndirectHeap::Type::DYNAMIC_STATE == i) {
                 continue;
             }
+            if (immediateCmdListSharedHeap(static_cast<HeapType>(i))) {
+                continue;
+            }
             allocationIndirectHeaps[i] = heapHelper->getHeapAllocation(i,
                                                                        heapSize,
                                                                        alignedSize,
@@ -185,32 +188,40 @@ void *CommandContainer::getHeapSpaceAllowGrow(HeapType heapType,
                                               size_t size) {
     auto indirectHeap = getIndirectHeap(heapType);
 
-    if (indirectHeap->getAvailableSpace() < size) {
-        size_t newSize = indirectHeap->getUsed() + indirectHeap->getAvailableSpace();
-        newSize *= 2;
-        newSize = std::max(newSize, indirectHeap->getAvailableSpace() + size);
-        newSize = alignUp(newSize, MemoryConstants::pageSize);
-        auto oldAlloc = getIndirectHeapAllocation(heapType);
-        auto newAlloc = getHeapHelper()->getHeapAllocation(heapType, newSize, MemoryConstants::pageSize, device->getRootDeviceIndex());
-        UNRECOVERABLE_IF(!oldAlloc);
-        UNRECOVERABLE_IF(!newAlloc);
-        auto oldBase = indirectHeap->getHeapGpuBase();
-        indirectHeap->replaceGraphicsAllocation(newAlloc);
-        indirectHeap->replaceBuffer(newAlloc->getUnderlyingBuffer(),
-                                    newAlloc->getUnderlyingBufferSize());
-        auto newBase = indirectHeap->getHeapGpuBase();
-        getResidencyContainer().push_back(newAlloc);
-        getDeallocationContainer().push_back(oldAlloc);
-        setIndirectHeapAllocation(heapType, newAlloc);
-        if (oldBase != newBase) {
-            setHeapDirty(heapType);
+    if (immediateCmdListSharedHeap(heapType)) {
+        UNRECOVERABLE_IF(indirectHeap == nullptr);
+        UNRECOVERABLE_IF(indirectHeap->getAvailableSpace() < size);
+        getResidencyContainer().push_back(indirectHeap->getGraphicsAllocation());
+    } else {
+        if (indirectHeap->getAvailableSpace() < size) {
+            size_t newSize = indirectHeap->getUsed() + indirectHeap->getAvailableSpace();
+            newSize *= 2;
+            newSize = std::max(newSize, indirectHeap->getAvailableSpace() + size);
+            newSize = alignUp(newSize, MemoryConstants::pageSize);
+            auto oldAlloc = getIndirectHeapAllocation(heapType);
+            auto newAlloc = getHeapHelper()->getHeapAllocation(heapType, newSize, MemoryConstants::pageSize, device->getRootDeviceIndex());
+            UNRECOVERABLE_IF(!oldAlloc);
+            UNRECOVERABLE_IF(!newAlloc);
+            auto oldBase = indirectHeap->getHeapGpuBase();
+            indirectHeap->replaceGraphicsAllocation(newAlloc);
+            indirectHeap->replaceBuffer(newAlloc->getUnderlyingBuffer(),
+                                        newAlloc->getUnderlyingBufferSize());
+            auto newBase = indirectHeap->getHeapGpuBase();
+            getResidencyContainer().push_back(newAlloc);
+            getDeallocationContainer().push_back(oldAlloc);
+            setIndirectHeapAllocation(heapType, newAlloc);
+            if (oldBase != newBase) {
+                setHeapDirty(heapType);
+            }
         }
     }
+
     return indirectHeap->getSpace(size);
 }
 
 IndirectHeap *CommandContainer::getHeapWithRequiredSizeAndAlignment(HeapType heapType, size_t sizeRequired, size_t alignment) {
     auto indirectHeap = getIndirectHeap(heapType);
+    UNRECOVERABLE_IF(indirectHeap == nullptr);
     auto sizeRequested = sizeRequired;
 
     auto heapBuffer = indirectHeap->getSpace(0);
@@ -218,27 +229,32 @@ IndirectHeap *CommandContainer::getHeapWithRequiredSizeAndAlignment(HeapType hea
         sizeRequested += alignment;
     }
 
-    if (indirectHeap->getAvailableSpace() < sizeRequested) {
-        size_t newSize = indirectHeap->getUsed() + indirectHeap->getAvailableSpace();
-        newSize = alignUp(newSize, MemoryConstants::pageSize);
-        auto oldAlloc = getIndirectHeapAllocation(heapType);
-        auto newAlloc = getHeapHelper()->getHeapAllocation(heapType, newSize, MemoryConstants::pageSize, device->getRootDeviceIndex());
-        UNRECOVERABLE_IF(!oldAlloc);
-        UNRECOVERABLE_IF(!newAlloc);
-        auto oldBase = indirectHeap->getHeapGpuBase();
-        indirectHeap->replaceGraphicsAllocation(newAlloc);
-        indirectHeap->replaceBuffer(newAlloc->getUnderlyingBuffer(),
-                                    newAlloc->getUnderlyingBufferSize());
-        auto newBase = indirectHeap->getHeapGpuBase();
-        getResidencyContainer().push_back(newAlloc);
-        getDeallocationContainer().push_back(oldAlloc);
-        setIndirectHeapAllocation(heapType, newAlloc);
-        if (oldBase != newBase) {
-            setHeapDirty(heapType);
-        }
-        if (heapType == HeapType::SURFACE_STATE) {
-            indirectHeap->getSpace(reservedSshSize);
-            sshAllocations.push_back(oldAlloc);
+    if (immediateCmdListSharedHeap(heapType)) {
+        UNRECOVERABLE_IF(indirectHeap->getAvailableSpace() < sizeRequested);
+        getResidencyContainer().push_back(indirectHeap->getGraphicsAllocation());
+    } else {
+        if (indirectHeap->getAvailableSpace() < sizeRequested) {
+            size_t newSize = indirectHeap->getUsed() + indirectHeap->getAvailableSpace();
+            newSize = alignUp(newSize, MemoryConstants::pageSize);
+            auto oldAlloc = getIndirectHeapAllocation(heapType);
+            auto newAlloc = getHeapHelper()->getHeapAllocation(heapType, newSize, MemoryConstants::pageSize, device->getRootDeviceIndex());
+            UNRECOVERABLE_IF(!oldAlloc);
+            UNRECOVERABLE_IF(!newAlloc);
+            auto oldBase = indirectHeap->getHeapGpuBase();
+            indirectHeap->replaceGraphicsAllocation(newAlloc);
+            indirectHeap->replaceBuffer(newAlloc->getUnderlyingBuffer(),
+                                        newAlloc->getUnderlyingBufferSize());
+            auto newBase = indirectHeap->getHeapGpuBase();
+            getResidencyContainer().push_back(newAlloc);
+            getDeallocationContainer().push_back(oldAlloc);
+            setIndirectHeapAllocation(heapType, newAlloc);
+            if (oldBase != newBase) {
+                setHeapDirty(heapType);
+            }
+            if (heapType == HeapType::SURFACE_STATE) {
+                indirectHeap->getSpace(reservedSshSize);
+                sshAllocations.push_back(oldAlloc);
+            }
         }
     }
 
@@ -329,7 +345,19 @@ void CommandContainer::prepareBindfulSsh() {
 }
 
 IndirectHeap *CommandContainer::getIndirectHeap(HeapType heapType) {
-    return indirectHeaps[heapType].get();
+    if (immediateCmdListSharedHeap(heapType)) {
+        return heapType == HeapType::SURFACE_STATE ? sharedSshCsrHeap : sharedDshCsrHeap;
+    } else {
+        return indirectHeaps[heapType].get();
+    }
+}
+
+void CommandContainer::ensureHeapSizePrepared(size_t sshRequiredSize, size_t dshRequiredSize) {
+    sharedSshCsrHeap = &immediateCmdListCsr->getIndirectHeap(HeapType::SURFACE_STATE, sshRequiredSize);
+
+    if (dshRequiredSize > 0) {
+        sharedDshCsrHeap = &immediateCmdListCsr->getIndirectHeap(HeapType::DYNAMIC_STATE, dshRequiredSize);
+    }
 }
 
 } // namespace NEO

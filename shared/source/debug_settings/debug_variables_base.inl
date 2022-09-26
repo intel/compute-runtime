@@ -407,6 +407,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableDrmCompletionFence, -1, "Enables DRM compl
 DECLARE_DEBUG_VARIABLE(int32_t, UseDrmCompletionFenceForAllAllocations, -1, "Uses DRM completion fence for all allocations, -1:default (disabled), 0:disable, 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableChipsetUniqueUUID, -1, "Enables retrieving chipset unique UUID using telemetry, -1:default (disabled), 0:disable, 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableFlushTaskSubmission, -1, "Driver uses csr flushTask for immediate commandlist submissions, -1:default (enabled), 0:disabled, 1:enabled")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableImmediateCmdListHeapSharing, -1, "Immediate command lists using flush task use current csr heap instead private cmd list heap, -1:default (disabled), 0:disabled, 1:enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableBcsSwControlWa, -1, "Enable BCS WA via BCSSWCONTROL MMIO. -1: default, 0: disabled, 1: if src in system mem, 2: if dst in system mem, 3: if src and dst in system mem, 4: always")
 
 /* IMPLICIT SCALING */

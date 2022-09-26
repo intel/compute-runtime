@@ -21,10 +21,10 @@ constexpr size_t maxImmediateCommandSize = 4 * MemoryConstants::kiloByte;
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFamily> {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using BaseClass = CommandListCoreFamily<gfxCoreFamily>;
-    using BaseClass::executeCommandListImmediate;
-
     using BaseClass::BaseClass;
+    using BaseClass::executeCommandListImmediate;
 
     ze_result_t appendLaunchKernel(ze_kernel_handle_t kernelHandle,
                                    const ze_group_count_t *threadGroupDimensions,

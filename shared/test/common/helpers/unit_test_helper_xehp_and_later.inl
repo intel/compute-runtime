@@ -121,4 +121,9 @@ bool UnitTestHelper<GfxFamily>::getSystolicFlagValueFromPipelineSelectCommand(co
     return pipelineSelectCmd.getSystolicModeEnable();
 }
 
+template <typename GfxFamily>
+size_t UnitTestHelper<GfxFamily>::getAdditionalDshSize() {
+    return 0;
+}
+
 } // namespace NEO

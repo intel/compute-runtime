@@ -139,6 +139,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     if (kernelDescriptor.kernelAttributes.flags.isInvalid) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
+    if (this->immediateCmdListHeapSharing) {
+        auto kernelInfo = kernelImmutableData->getKernelInfo();
+        commandContainer.ensureHeapSizePrepared(
+            NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredSsh(*kernelInfo),
+            NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredDsh(*kernelInfo));
+    }
     commandListPerThreadScratchSize = std::max<uint32_t>(commandListPerThreadScratchSize, kernelDescriptor.kernelAttributes.perThreadScratchSize[0]);
     commandListPerThreadPrivateScratchSize = std::max<uint32_t>(commandListPerThreadPrivateScratchSize, kernelDescriptor.kernelAttributes.perThreadScratchSize[1]);
 
@@ -265,7 +271,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
     }
 
-    if (neoDevice->getDebugger()) {
+    if (neoDevice->getDebugger() && !this->immediateCmdListHeapSharing) {
         auto *ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
         auto surfaceStateSpace = neoDevice->getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh);
         auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;

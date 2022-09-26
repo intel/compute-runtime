@@ -1092,7 +1092,9 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
         device->getSourceLevelDebugger()
             ->notifyNewDevice(osInterface ? osInterface->getDriverModel()->getDeviceHandle() : 0);
     }
-    device->createSysmanHandle(isSubDevice);
+    if (device->getNEODevice()->getAllEngines()[0].commandStreamReceiver->getType() == NEO::CommandStreamReceiverType::CSR_HW) {
+        device->createSysmanHandle(isSubDevice);
+    }
     device->resourcesReleased = false;
 
     device->populateSubDeviceCopyEngineGroups();

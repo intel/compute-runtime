@@ -126,11 +126,15 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
       public:
         using KernelImp::crossThreadData;
         using KernelImp::crossThreadDataSize;
+        using KernelImp::dynamicStateHeapData;
+        using KernelImp::dynamicStateHeapDataSize;
         using KernelImp::kernelArgHandlers;
         using KernelImp::kernelHasIndirectAccess;
         using KernelImp::kernelRequiresGenerationOfLocalIdsByRuntime;
         using KernelImp::privateMemoryGraphicsAllocation;
         using KernelImp::requiredWorkgroupOrder;
+        using KernelImp::surfaceStateHeapData;
+        using KernelImp::surfaceStateHeapDataSize;
 
         MockKernel(MockModule *mockModule) : WhiteBox<L0::KernelImp>(mockModule) {
         }

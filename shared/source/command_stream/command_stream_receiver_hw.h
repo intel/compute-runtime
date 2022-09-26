@@ -140,6 +140,10 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     }
     void initializeDeviceWithFirstSubmission() override;
 
+    HeapDirtyState &getSshState() {
+        return sshState;
+    }
+
   protected:
     void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags);
     void programL3(LinearStream &csr, uint32_t &newL3Config);

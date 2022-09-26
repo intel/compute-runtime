@@ -45,6 +45,8 @@ struct WhiteBox<::L0::Kernel> : public ::L0::KernelImp {
     using ::L0::KernelImp::createPrintfBuffer;
     using ::L0::KernelImp::crossThreadData;
     using ::L0::KernelImp::crossThreadDataSize;
+    using ::L0::KernelImp::dynamicStateHeapData;
+    using ::L0::KernelImp::dynamicStateHeapDataSize;
     using ::L0::KernelImp::groupSize;
     using ::L0::KernelImp::kernelImmData;
     using ::L0::KernelImp::kernelRequiresGenerationOfLocalIdsByRuntime;
@@ -76,6 +78,8 @@ struct WhiteBoxKernelHw : public KernelHw<gfxCoreFamily> {
     using ::L0::KernelImp::createPrintfBuffer;
     using ::L0::KernelImp::crossThreadData;
     using ::L0::KernelImp::crossThreadDataSize;
+    using ::L0::KernelImp::dynamicStateHeapData;
+    using ::L0::KernelImp::dynamicStateHeapDataSize;
     using ::L0::KernelImp::groupSize;
     using ::L0::KernelImp::kernelImmData;
     using ::L0::KernelImp::kernelRequiresGenerationOfLocalIdsByRuntime;

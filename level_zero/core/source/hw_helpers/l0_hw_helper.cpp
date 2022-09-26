@@ -39,4 +39,12 @@ bool L0HwHelper::enableStateComputeModeTracking() {
     return defaultValue;
 }
 
+bool L0HwHelper::enableImmediateCmdListHeapSharing(bool cmdlistSupport) {
+    bool enabled = false;
+    if (NEO::DebugManager.flags.EnableImmediateCmdListHeapSharing.get() != -1) {
+        return !!NEO::DebugManager.flags.EnableImmediateCmdListHeapSharing.get();
+    }
+    return enabled;
+}
+
 } // namespace L0

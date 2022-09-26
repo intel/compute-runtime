@@ -5,6 +5,10 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
+#include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -714,6 +718,166 @@ HWTEST2_F(CommandListTest, givenCmdListWithNoIndirectAccessWhenExecutingCommandL
     commandListImmediate.executeCommandListImmediateWithFlushTask(false);
     EXPECT_EQ(mockCommandQueue.handleIndirectAllocationResidencyCalledTimes, 0u);
     commandList->cmdQImmediate = oldCommandQueue;
+}
+
+using ImmediateCmdListSharedHeapsTest = Test<ImmediateCmdListSharedHeapsFixture>;
+HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedHeapsWhenDispatchingKernelThenExpectSingleSbaCommandAndHeapsReused, IsAtLeastSkl) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+    using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
+    auto &hwInfo = device->getHwInfo();
+
+    uint32_t expectedSbaCount = 1;
+    auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    if (hwInfoConfig.isAdditionalStateBaseAddressWARequired(hwInfo)) {
+        expectedSbaCount++;
+    }
+
+    bool dshPresent = hwInfo.capabilityTable.supportsImages || NEO::UnitTestHelper<FamilyType>::getAdditionalDshSize() > 0;
+
+    if (dshPresent) {
+        mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.numSamplers = 2;
+        mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.tableOffset = sizeof(SAMPLER_BORDER_COLOR_STATE);
+        mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.borderColor = 0;
+
+        kernel->dynamicStateHeapDataSize = static_cast<uint32_t>(sizeof(SAMPLER_STATE) * 2 + mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.tableOffset);
+        kernel->dynamicStateHeapData.reset(new uint8_t[kernel->dynamicStateHeapDataSize]);
+
+        mockKernelImmData->mockKernelDescriptor->payloadMappings.samplerTable = mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable;
+    }
+
+    mockKernelImmData->kernelInfo->heapInfo.SurfaceStateHeapSize = static_cast<uint32_t>(sizeof(RENDER_SURFACE_STATE) + sizeof(uint32_t));
+    mockKernelImmData->mockKernelDescriptor->payloadMappings.bindingTable.numEntries = 1;
+    mockKernelImmData->mockKernelDescriptor->payloadMappings.bindingTable.tableOffset = 0x40;
+    mockKernelImmData->mockKernelDescriptor->kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindfulAndStateless;
+
+    kernel->surfaceStateHeapDataSize = mockKernelImmData->kernelInfo->heapInfo.SurfaceStateHeapSize;
+    kernel->surfaceStateHeapData.reset(new uint8_t[kernel->surfaceStateHeapDataSize]);
+
+    EXPECT_TRUE(commandListImmediate->isFlushTaskSubmissionEnabled);
+    EXPECT_TRUE(commandListImmediate->immediateCmdListHeapSharing);
+
+    auto &cmdContainer = commandListImmediate->commandContainer;
+    EXPECT_EQ(1u, cmdContainer.getNumIddPerBlock());
+    EXPECT_TRUE(cmdContainer.immediateCmdListSharedHeap(HeapType::DYNAMIC_STATE));
+    EXPECT_TRUE(cmdContainer.immediateCmdListSharedHeap(HeapType::SURFACE_STATE));
+
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &csrStream = ultCsr.commandStream;
+
+    const ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = ZE_RESULT_SUCCESS;
+
+    auto csrDshHeap = &ultCsr.getIndirectHeap(HeapType::DYNAMIC_STATE, MemoryConstants::pageSize64k);
+    auto csrSshHeap = &ultCsr.getIndirectHeap(HeapType::SURFACE_STATE, MemoryConstants::pageSize64k);
+
+    size_t dshUsed = csrDshHeap->getUsed();
+    size_t sshUsed = csrSshHeap->getUsed();
+
+    size_t csrUsedBefore = csrStream.getUsed();
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t csrUsedAfter = csrStream.getUsed();
+
+    NEO::IndirectHeap *containerDshHeap = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
+    NEO::IndirectHeap *containerSshHeap = cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE);
+
+    if (dshPresent) {
+        EXPECT_EQ(csrDshHeap, containerDshHeap);
+    } else {
+        EXPECT_EQ(nullptr, containerDshHeap);
+    }
+    EXPECT_EQ(csrSshHeap, containerSshHeap);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
+        (csrUsedAfter - csrUsedBefore)));
+    auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCount, sbaCmds.size());
+
+    auto &sbaCmd = *genCmdCast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+    if (dshPresent) {
+        EXPECT_TRUE(sbaCmd.getDynamicStateBaseAddressModifyEnable());
+        EXPECT_EQ(csrDshHeap->getHeapGpuBase(), sbaCmd.getDynamicStateBaseAddress());
+    } else {
+        EXPECT_FALSE(sbaCmd.getDynamicStateBaseAddressModifyEnable());
+        EXPECT_EQ(0u, sbaCmd.getDynamicStateBaseAddress());
+    }
+    EXPECT_TRUE(sbaCmd.getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(csrSshHeap->getHeapGpuBase(), sbaCmd.getSurfaceStateBaseAddress());
+
+    dshUsed = csrDshHeap->getUsed() - dshUsed;
+    sshUsed = csrSshHeap->getUsed() - sshUsed;
+    if (dshPresent) {
+        EXPECT_LT(0u, dshUsed);
+    } else {
+        EXPECT_EQ(0u, dshUsed);
+    }
+    EXPECT_LT(0u, sshUsed);
+
+    size_t dshEstimated = NEO::EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(*kernel->getImmutableData()->getKernelInfo());
+    size_t sshEstimated = NEO::EncodeDispatchKernel<FamilyType>::getSizeRequiredSsh(*kernel->getImmutableData()->getKernelInfo());
+
+    EXPECT_GE(dshEstimated, dshUsed);
+    EXPECT_GE(sshEstimated, sshUsed);
+
+    ze_command_queue_desc_t queueDesc{};
+    queueDesc.ordinal = 0u;
+    queueDesc.index = 0u;
+    queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+
+    std::unique_ptr<L0::ult::CommandList> commandListImmediateCoexisting;
+    commandListImmediateCoexisting.reset(whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, engineGroupType, result)));
+
+    auto &cmdContainerCoexisting = commandListImmediateCoexisting->commandContainer;
+    EXPECT_EQ(1u, cmdContainerCoexisting.getNumIddPerBlock());
+    EXPECT_TRUE(cmdContainerCoexisting.immediateCmdListSharedHeap(HeapType::DYNAMIC_STATE));
+    EXPECT_TRUE(cmdContainerCoexisting.immediateCmdListSharedHeap(HeapType::SURFACE_STATE));
+
+    dshUsed = csrDshHeap->getUsed();
+    sshUsed = csrSshHeap->getUsed();
+
+    csrUsedBefore = csrStream.getUsed();
+    result = commandListImmediateCoexisting->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    csrUsedAfter = csrStream.getUsed();
+
+    auto containerDshHeapCoexisting = cmdContainerCoexisting.getIndirectHeap(HeapType::DYNAMIC_STATE);
+    auto containerSshHeapCoexisting = cmdContainerCoexisting.getIndirectHeap(HeapType::SURFACE_STATE);
+
+    if (dshPresent) {
+        EXPECT_EQ(csrDshHeap, containerDshHeapCoexisting);
+    } else {
+        EXPECT_EQ(nullptr, containerDshHeapCoexisting);
+    }
+    EXPECT_EQ(csrSshHeap, containerSshHeapCoexisting);
+
+    cmdList.clear();
+    sbaCmds.clear();
+
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
+        (csrUsedAfter - csrUsedBefore)));
+    sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(0u, sbaCmds.size());
+
+    dshUsed = csrDshHeap->getUsed() - dshUsed;
+    sshUsed = csrSshHeap->getUsed() - sshUsed;
+
+    if (dshPresent) {
+        EXPECT_LT(0u, dshUsed);
+    } else {
+        EXPECT_EQ(0u, dshUsed);
+    }
+    EXPECT_LT(0u, sshUsed);
+
+    EXPECT_GE(dshEstimated, dshUsed);
+    EXPECT_GE(sshEstimated, sshUsed);
 }
 
 } // namespace ult

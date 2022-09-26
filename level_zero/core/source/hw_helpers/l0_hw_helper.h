@@ -33,6 +33,7 @@ class L0HwHelper {
     static bool enableFrontEndStateTracking();
     static bool enablePipelineSelectStateTracking();
     static bool enableStateComputeModeTracking();
+    static bool enableImmediateCmdListHeapSharing(bool cmdlistSupport);
     virtual void setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupT &group) const = 0;
     virtual L0::Event *createEvent(L0::EventPool *eventPool, const ze_event_desc_t *desc, L0::Device *device) const = 0;
 

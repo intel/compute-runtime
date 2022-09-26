@@ -59,6 +59,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::getAllocationFromHostPtrMap;
     using BaseClass::getHostPtrAlloc;
     using BaseClass::hostPtrMap;
+    using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::indirectAllocationsAllowed;
     using BaseClass::initialize;
     using BaseClass::partitionCount;
@@ -123,6 +124,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::csr;
     using BaseClass::finalStreamState;
     using BaseClass::frontEndStateTracking;
+    using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::isFlushTaskSubmissionEnabled;
     using BaseClass::partitionCount;
     using BaseClass::pipelineSelectStateTracking;
@@ -134,9 +136,11 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct MockCommandListImmediate : public CommandListCoreFamilyImmediate<gfxCoreFamily> {
-    using CommandListCoreFamilyImmediate<gfxCoreFamily>::requiredStreamState;
-    using CommandListCoreFamilyImmediate<gfxCoreFamily>::containsAnyKernel;
-    using CommandListCoreFamilyImmediate<gfxCoreFamily>::indirectAllocationsAllowed;
+    using BaseClass = CommandListCoreFamilyImmediate<gfxCoreFamily>;
+    using BaseClass::containsAnyKernel;
+    using BaseClass::immediateCmdListHeapSharing;
+    using BaseClass::indirectAllocationsAllowed;
+    using BaseClass::requiredStreamState;
 };
 
 template <>
@@ -148,6 +152,7 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandListImp {
     using BaseClass::commandListPreemptionMode;
     using BaseClass::csr;
     using BaseClass::frontEndStateTracking;
+    using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::initialize;
     using BaseClass::isFlushTaskSubmissionEnabled;
     using BaseClass::nonImmediateLogicalStateHelper;

@@ -342,7 +342,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (stallingCommandsOnNextFlushRequired) {
         programStallingCommandsForBarrier(commandStreamCSR, dispatchFlags);
     }
-    const bool hasDsh = hwInfo.capabilityTable.supportsImages;
+    const bool hasDsh = hwInfo.capabilityTable.supportsImages && dsh != nullptr;
     bool dshDirty = hasDsh ? dshState.updateAndCheck(dsh) : false;
     bool iohDirty = iohState.updateAndCheck(ioh);
     bool sshDirty = sshState.updateAndCheck(ssh);

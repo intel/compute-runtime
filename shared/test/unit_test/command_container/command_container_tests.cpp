@@ -18,26 +18,17 @@ using namespace NEO;
 
 constexpr uint32_t defaultNumIddsPerBlock = 64;
 
-class CommandContainerTest : public DeviceFixture,
-                             public ::testing::Test {
+using CommandContainerFixture = DeviceFixture;
+using CommandContainerTest = Test<CommandContainerFixture>;
 
+class MyMockCommandContainer : public CommandContainer {
   public:
-    void SetUp() override {
-        ::testing::Test::SetUp();
-        DeviceFixture::setUp();
-    }
-    void TearDown() override {
-        DeviceFixture::tearDown();
-        ::testing::Test::TearDown();
-    }
+    using CommandContainer::allocationIndirectHeaps;
+    using CommandContainer::dirtyHeaps;
+    using CommandContainer::getTotalCmdBufferSize;
 };
 
 struct CommandContainerHeapStateTests : public ::testing::Test {
-    class MyMockCommandContainer : public CommandContainer {
-      public:
-        using CommandContainer::dirtyHeaps;
-    };
-
     MyMockCommandContainer myCommandContainer;
 };
 
@@ -795,23 +786,18 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenContainerIsInitializedThenStre
 TEST_F(CommandContainerTest, GivenCmdContainerAndDebugFlagWhenContainerIsInitializedThenStreamSizeEqualsAlignedTotalCmdBuffSizeDecreasedOfReservedSize) {
     DebugManagerStateRestore restorer;
 
-    class MyCommandContainer : public CommandContainer {
-      public:
-        using CommandContainer::getTotalCmdBufferSize;
-    };
-
     DebugManager.flags.OverrideCmdListCmdBufferSizeInKb.set(0);
-    MyCommandContainer cmdContainer;
+    MyMockCommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, true);
     size_t alignedSize = alignUp<size_t>(cmdContainer.getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
-    EXPECT_EQ(cmdContainer.getCommandStream()->getMaxAvailableSpace(), alignedSize - MyCommandContainer::cmdBufferReservedSize);
+    EXPECT_EQ(cmdContainer.getCommandStream()->getMaxAvailableSpace(), alignedSize - MyMockCommandContainer::cmdBufferReservedSize);
 
     auto newSizeInKB = 512;
     DebugManager.flags.OverrideCmdListCmdBufferSizeInKb.set(newSizeInKB);
-    MyCommandContainer cmdContainer2;
+    MyMockCommandContainer cmdContainer2;
     cmdContainer2.initialize(pDevice, nullptr, true);
     alignedSize = alignUp<size_t>(cmdContainer.getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
-    EXPECT_EQ(cmdContainer2.getCommandStream()->getMaxAvailableSpace(), alignedSize - MyCommandContainer::cmdBufferReservedSize);
+    EXPECT_EQ(cmdContainer2.getCommandStream()->getMaxAvailableSpace(), alignedSize - MyMockCommandContainer::cmdBufferReservedSize);
 }
 
 TEST_F(CommandContainerTest, givenCmdContainerWhenAlocatingNextCmdBufferThenStreamSizeEqualAlignedTotalCmdBuffSizeDecreasedOfReservedSize) {
@@ -841,15 +827,68 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenCloseAndAllocateNextCommandBuf
 }
 
 TEST_F(CommandContainerTest, GivenCmdContainerWhenContainerIsInitializedThenSurfaceStateIndirectHeapSizeIsCorrect) {
-
-    class MyCommandContainer : public CommandContainer {
-      public:
-        using CommandContainer::allocationIndirectHeaps;
-    };
-
-    MyCommandContainer cmdContainer;
+    MyMockCommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, true);
     auto size = cmdContainer.allocationIndirectHeaps[IndirectHeap::Type::SURFACE_STATE]->getUnderlyingBufferSize();
     constexpr size_t expectedHeapSize = MemoryConstants::pageSize64k;
     EXPECT_EQ(expectedHeapSize, size);
+}
+
+TEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWithoutEnsuringSpaceThenExpectNullptrReturnedOrUnrecoverable) {
+    CommandContainer cmdContainer;
+    cmdContainer.setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
+    cmdContainer.setNumIddPerBlock(1);
+    auto code = cmdContainer.initialize(pDevice, nullptr, true);
+    EXPECT_EQ(CommandContainer::ErrorCode::SUCCESS, code);
+
+    EXPECT_EQ(nullptr, cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE));
+    EXPECT_EQ(nullptr, cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE));
+
+    EXPECT_THROW(cmdContainer.getHeapSpaceAllowGrow(HeapType::DYNAMIC_STATE, 0), std::exception);
+    EXPECT_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, 0, 0), std::exception);
+
+    EXPECT_THROW(cmdContainer.getHeapSpaceAllowGrow(HeapType::SURFACE_STATE, 0), std::exception);
+    EXPECT_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, 0, 0), std::exception);
+
+    cmdContainer.ensureHeapSizePrepared(0, 0);
+
+    EXPECT_EQ(nullptr, cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE));
+    EXPECT_NE(nullptr, cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE));
+
+    EXPECT_THROW(cmdContainer.getHeapSpaceAllowGrow(HeapType::DYNAMIC_STATE, 0), std::exception);
+    EXPECT_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, 0, 0), std::exception);
+
+    EXPECT_NO_THROW(cmdContainer.getHeapSpaceAllowGrow(HeapType::SURFACE_STATE, 0));
+    EXPECT_NO_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, 0, 0));
+
+    cmdContainer.ensureHeapSizePrepared(4 * MemoryConstants::kiloByte, 4 * MemoryConstants::kiloByte);
+
+    auto dshHeap = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
+    EXPECT_NE(nullptr, dshHeap);
+    auto sshHeap = cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE);
+    EXPECT_NE(nullptr, sshHeap);
+
+    size_t sizeUsedDsh = dshHeap->getUsed();
+    size_t sizeUsedSsh = sshHeap->getUsed();
+
+    void *dshPtr = cmdContainer.getHeapSpaceAllowGrow(HeapType::DYNAMIC_STATE, 64);
+    void *sshPtr = cmdContainer.getHeapSpaceAllowGrow(HeapType::SURFACE_STATE, 64);
+
+    EXPECT_EQ(ptrOffset(dshHeap->getCpuBase(), sizeUsedDsh), dshPtr);
+    EXPECT_EQ(ptrOffset(sshHeap->getCpuBase(), sizeUsedSsh), sshPtr);
+
+    auto alignedHeapDsh = cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, 128, 128);
+    auto alignedHeapSsh = cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, 128, 128);
+
+    EXPECT_EQ(dshHeap, alignedHeapDsh);
+    EXPECT_EQ(sshHeap, alignedHeapSsh);
+
+    dshHeap->getSpace(dshHeap->getAvailableSpace() - 32);
+    sshHeap->getSpace(sshHeap->getAvailableSpace() - 32);
+
+    EXPECT_THROW(cmdContainer.getHeapSpaceAllowGrow(HeapType::DYNAMIC_STATE, 64), std::exception);
+    EXPECT_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, 64, 64), std::exception);
+
+    EXPECT_THROW(cmdContainer.getHeapSpaceAllowGrow(HeapType::SURFACE_STATE, 64), std::exception);
+    EXPECT_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, 64, 64), std::exception);
 }

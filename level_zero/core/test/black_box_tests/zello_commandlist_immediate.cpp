@@ -385,6 +385,11 @@ int main(int argc, char *argv[]) {
     verbose = isVerbose(argc, argv);
     bool useSyncQueue = isSyncQueueEnabled(argc, argv);
     bool commandListShared = isCommandListShared(argc, argv);
+    bool commandListCoexist = isParamEnabled(argc, argv, "-o", "--coexists");
+    if (commandListCoexist) {
+        std::cerr << "Command List coexists between tests" << std::endl;
+        commandListShared = false;
+    }
     bool aubMode = isAubMode(argc, argv);
 
     ze_context_handle_t context = nullptr;
@@ -410,18 +415,43 @@ int main(int argc, char *argv[]) {
         SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device0, &cmdQueueDesc, &cmdList));
     }
 
+    ze_command_list_handle_t cmdListStandardMemoryCopy = nullptr;
+    ze_command_list_handle_t cmdListMemoryCopyRegion = nullptr;
+    ze_command_list_handle_t cmdListLaunchGpuKernel = nullptr;
+    if (commandListCoexist) {
+        ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+        cmdQueueDesc.pNext = nullptr;
+        cmdQueueDesc.flags = 0;
+        cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+        cmdQueueDesc.ordinal = getCommandQueueOrdinal(device0);
+        cmdQueueDesc.index = 0;
+        selectQueueMode(cmdQueueDesc, useSyncQueue);
+
+        SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device0, &cmdQueueDesc, &cmdListStandardMemoryCopy));
+        SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device0, &cmdQueueDesc, &cmdListMemoryCopyRegion));
+        SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device0, &cmdQueueDesc, &cmdListLaunchGpuKernel));
+
+        cmdList = cmdListStandardMemoryCopy;
+    }
+
     std::string currentTest;
     currentTest = "Standard Memory Copy";
     testAppendMemoryCopy(context, device0, useSyncQueue, outputValidationSuccessful, cmdList);
     printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
 
     if (outputValidationSuccessful || aubMode) {
+        if (commandListCoexist) {
+            cmdList = cmdListMemoryCopyRegion;
+        }
         currentTest = "Memory Copy Region";
         testAppendMemoryCopyRegion(context, device0, useSyncQueue, outputValidationSuccessful, cmdList);
         printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
     }
 
     if (outputValidationSuccessful || aubMode) {
+        if (commandListCoexist) {
+            cmdList = cmdListLaunchGpuKernel;
+        }
         currentTest = "Launch GPU Kernel";
         testAppendGpuKernel(context, device0, useSyncQueue, outputValidationSuccessful, cmdList);
         printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
@@ -429,6 +459,11 @@ int main(int argc, char *argv[]) {
 
     if (commandListShared) {
         SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
+    }
+    if (commandListCoexist) {
+        SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListStandardMemoryCopy));
+        SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListMemoryCopyRegion));
+        SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListLaunchGpuKernel));
     }
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));

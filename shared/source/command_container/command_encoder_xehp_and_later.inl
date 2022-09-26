@@ -127,13 +127,13 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     PreemptionHelper::programInterfaceDescriptorDataPreemption<Family>(&idd, args.preemptionMode);
 
     if constexpr (Family::supportsSampler) {
-        auto heap = ApiSpecificConfig::getBindlessConfiguration() ? args.device->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH) : container.getIndirectHeap(HeapType::DYNAMIC_STATE);
-        UNRECOVERABLE_IF(!heap);
-
         uint32_t samplerStateOffset = 0;
         uint32_t samplerCount = 0;
 
         if (kernelDescriptor.payloadMappings.samplerTable.numSamplers > 0) {
+            auto heap = ApiSpecificConfig::getBindlessConfiguration() ? args.device->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH) : container.getIndirectHeap(HeapType::DYNAMIC_STATE);
+            UNRECOVERABLE_IF(!heap);
+
             samplerCount = kernelDescriptor.payloadMappings.samplerTable.numSamplers;
             samplerStateOffset = EncodeStates<Family>::copySamplerState(
                 heap, kernelDescriptor.payloadMappings.samplerTable.tableOffset,
@@ -767,5 +767,10 @@ inline void EncodeStoreMMIO<Family>::appendFlags(MI_STORE_REGISTER_MEM *storeReg
 
 template <typename Family>
 void EncodeDispatchKernel<Family>::adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder, const HardwareInfo &hwInfo) {}
+
+template <typename Family>
+uint32_t EncodeDispatchKernel<Family>::additionalSizeRequiredDsh() {
+    return 0u;
+}
 
 } // namespace NEO

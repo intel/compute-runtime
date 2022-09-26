@@ -2124,3 +2124,27 @@ using SystolicSupport = IsAnyProducts<IGFX_ALDERLAKE_P, IGFX_XE_HP_SDV, IGFX_DG2
 HWTEST2_F(CommandStreamReceiverSystolicTests, givenSystolicModeChangedWhenFlushTaskCalledThenSystolicStateIsUpdated, SystolicSupport) {
     testBody<FamilyType>();
 }
+
+HWTEST_F(CommandStreamReceiverTest, givenSshDirtyStateWhenUpdatingStateWithNewHeapThenExpectDirtyStateTrue) {
+    MockGraphicsAllocation allocation{};
+    allocation.gpuAddress = 0xABC000;
+    allocation.size = 0x1000;
+
+    IndirectHeap dummyHeap(&allocation, false);
+
+    auto dirtyStateCopy = static_cast<CommandStreamReceiverHw<FamilyType> *>(commandStreamReceiver)->getSshState();
+
+    bool check = dirtyStateCopy.updateAndCheck(&dummyHeap);
+    EXPECT_TRUE(check);
+
+    check = dirtyStateCopy.updateAndCheck(&dummyHeap);
+    EXPECT_FALSE(check);
+
+    auto dirtyState = static_cast<CommandStreamReceiverHw<FamilyType> *>(commandStreamReceiver)->getSshState();
+
+    check = dirtyState.updateAndCheck(&dummyHeap);
+    EXPECT_TRUE(check);
+
+    check = dirtyState.updateAndCheck(&dummyHeap);
+    EXPECT_FALSE(check);
+}

@@ -92,4 +92,9 @@ bool UnitTestHelper<GfxFamily>::getSystolicFlagValueFromPipelineSelectCommand(co
     return false;
 }
 
+template <typename GfxFamily>
+size_t UnitTestHelper<GfxFamily>::getAdditionalDshSize() {
+    return sizeof(typename GfxFamily::INTERFACE_DESCRIPTOR_DATA);
+}
+
 } // namespace NEO

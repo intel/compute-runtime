@@ -27,6 +27,7 @@
 #include "shared/source/kernel/implicit_args.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/program/kernel_info.h"
 
 #include "encode_surface_state.inl"
 
@@ -697,6 +698,39 @@ void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCR
 
 template <typename Family>
 constexpr bool EncodeDispatchKernel<Family>::shouldUpdateGlobalAtomics(bool &currentVal, bool refVal, bool updateCurrent) { return false; }
+
+template <typename Family>
+size_t EncodeDispatchKernel<Family>::getSizeRequiredDsh(const KernelInfo &kernelInfo) {
+    using INTERFACE_DESCRIPTOR_DATA = typename Family::INTERFACE_DESCRIPTOR_DATA;
+    constexpr auto samplerStateSize = sizeof(typename Family::SAMPLER_STATE);
+    const auto numSamplers = kernelInfo.kernelDescriptor.payloadMappings.samplerTable.numSamplers;
+    const auto additionalDshSize = additionalSizeRequiredDsh();
+    if (numSamplers == 0U) {
+        return alignUp(additionalDshSize, EncodeStates<Family>::alignInterfaceDescriptorData);
+    }
+
+    size_t size = kernelInfo.kernelDescriptor.payloadMappings.samplerTable.tableOffset -
+                  kernelInfo.kernelDescriptor.payloadMappings.samplerTable.borderColor;
+    size = alignUp(size, EncodeStates<Family>::alignIndirectStatePointer);
+
+    size += numSamplers * samplerStateSize;
+    size = alignUp(size, INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE);
+
+    if (additionalDshSize > 0) {
+        size += additionalDshSize;
+        size = alignUp(size, EncodeStates<Family>::alignInterfaceDescriptorData);
+    }
+
+    return size;
+}
+
+template <typename Family>
+size_t EncodeDispatchKernel<Family>::getSizeRequiredSsh(const KernelInfo &kernelInfo) {
+    using BINDING_TABLE_STATE = typename Family::BINDING_TABLE_STATE;
+    size_t requiredSshSize = kernelInfo.heapInfo.SurfaceStateHeapSize;
+    requiredSshSize = alignUp(requiredSshSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+    return requiredSshSize;
+}
 
 template <typename Family>
 void EncodeIndirectParams<Family>::setGlobalWorkSizeIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], uint64_t crossThreadAddress, const uint32_t *lws) {

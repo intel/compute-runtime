@@ -127,6 +127,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         UNRECOVERABLE_IF(nullptr == csr);
 
         commandList = static_cast<CommandListImp *>((*allocator)(CommandList::commandListimmediateIddsPerBlock));
+        commandList->csr = csr;
         commandList->internalUsage = internalUsage;
         commandList->cmdListType = CommandListType::TYPE_IMMEDIATE;
         commandList->isSyncModeQueue = (desc->mode == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS);
@@ -135,6 +136,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
             if (NEO::DebugManager.flags.EnableFlushTaskSubmission.get() != -1) {
                 commandList->isFlushTaskSubmissionEnabled = !!NEO::DebugManager.flags.EnableFlushTaskSubmission.get();
             }
+            commandList->immediateCmdListHeapSharing = L0HwHelper::enableImmediateCmdListHeapSharing(commandList->isFlushTaskSubmissionEnabled);
         }
         returnValue = commandList->initialize(device, engineGroupType, desc->flags);
         if (returnValue != ZE_RESULT_SUCCESS) {
@@ -151,7 +153,6 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         }
 
         commandList->cmdQImmediate = commandQueue;
-        commandList->csr = csr;
         commandList->isTbxMode = (csr->getType() == NEO::CommandStreamReceiverType::CSR_TBX) || (csr->getType() == NEO::CommandStreamReceiverType::CSR_TBX_WITH_AUB);
         commandList->commandListPreemptionMode = device->getDevicePreemptionMode();
 

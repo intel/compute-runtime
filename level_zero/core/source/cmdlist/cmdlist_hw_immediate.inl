@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -141,6 +143,32 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
         UNRECOVERABLE_IF(!NEO::Debugger::isDebugEnabled(this->internalUsage));
         this->csr->makeResident(*this->device->getL0Debugger()->getSbaTrackingBuffer(this->csr->getOsContext().getContextId()));
         this->csr->makeResident(*this->device->getDebugSurface());
+    }
+
+    NEO::Device *neoDevice = this->device->getNEODevice();
+    if (neoDevice->getDebugger() && this->immediateCmdListHeapSharing) {
+        auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(this->csr);
+        auto sshStateCopy = csrHw->getSshState();
+        bool sshDirty = sshStateCopy.updateAndCheck(ssh);
+
+        if (sshDirty) {
+            auto surfaceStateSpace = neoDevice->getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh);
+            auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
+
+            NEO::EncodeSurfaceStateArgs args;
+            args.outMemory = &surfaceState;
+            args.graphicsAddress = this->device->getDebugSurface()->getGpuAddress();
+            args.size = this->device->getDebugSurface()->getUnderlyingBufferSize();
+            args.mocs = this->device->getMOCS(false, false);
+            args.numAvailableDevices = neoDevice->getNumGenericSubDevices();
+            args.allocation = this->device->getDebugSurface();
+            args.gmmHelper = neoDevice->getGmmHelper();
+            args.useGlobalAtomics = false;
+            args.areMultipleSubDevicesInContext = false;
+            args.isDebuggerActive = true;
+            NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
+            *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateSpace) = surfaceState;
+        }
     }
 
     auto completionStamp = this->csr->flushTask(

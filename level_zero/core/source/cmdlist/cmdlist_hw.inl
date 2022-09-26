@@ -135,6 +135,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
         commandContainer.setFlushTaskUsedForImmediate(this->isFlushTaskSubmissionEnabled);
     }
 
+    if (this->immediateCmdListHeapSharing) {
+        commandContainer.setImmediateCmdListCsr(this->csr);
+        commandContainer.setNumIddPerBlock(1);
+    }
+
     commandContainer.setReservedSshSize(getReserveSshSize());
     DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
     auto returnValue = commandContainer.initialize(deviceImp->getActiveDevice(), deviceImp->allocationsForReuse.get(), !isCopyOnly());

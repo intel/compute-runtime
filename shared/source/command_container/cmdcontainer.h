@@ -17,6 +17,7 @@
 #include <vector>
 
 namespace NEO {
+class CommandStreamReceiver;
 class Device;
 class GraphicsAllocation;
 class LinearStream;
@@ -94,13 +95,20 @@ class CommandContainer : public NonCopyableOrMovableClass {
     void setIddBlock(void *iddBlock) { this->iddBlock = iddBlock; }
     void *getIddBlock() { return iddBlock; }
     uint32_t getNumIddPerBlock() const { return numIddsPerBlock; }
+    void setNumIddPerBlock(uint32_t value) { numIddsPerBlock = value; }
     void setReservedSshSize(size_t reserveSize) {
         reservedSshSize = reserveSize;
     }
 
     bool getFlushTaskUsedForImmediate() const { return isFlushTaskUsedForImmediate; }
     void setFlushTaskUsedForImmediate(bool flushTaskUsedForImmediate) { isFlushTaskUsedForImmediate = flushTaskUsedForImmediate; }
-
+    void setImmediateCmdListCsr(CommandStreamReceiver *newValue) {
+        this->immediateCmdListCsr = newValue;
+    }
+    bool immediateCmdListSharedHeap(HeapType heapType) {
+        return (this->immediateCmdListCsr != nullptr && (heapType == HeapType::DYNAMIC_STATE || heapType == HeapType::SURFACE_STATE));
+    }
+    void ensureHeapSizePrepared(size_t sshRequiredSize, size_t dshRequiredSize);
     HeapContainer sshAllocations;
     uint64_t currentLinearStreamStartOffset = 0u;
     uint32_t slmSize = std::numeric_limits<uint32_t>::max();
@@ -129,6 +137,9 @@ class CommandContainer : public NonCopyableOrMovableClass {
     Device *device = nullptr;
     AllocationsList *reusableAllocationList = nullptr;
     size_t reservedSshSize = 0;
+    CommandStreamReceiver *immediateCmdListCsr = nullptr;
+    IndirectHeap *sharedSshCsrHeap = nullptr;
+    IndirectHeap *sharedDshCsrHeap = nullptr;
 
     uint32_t dirtyHeaps = std::numeric_limits<uint32_t>::max();
     uint32_t numIddsPerBlock = 64;
