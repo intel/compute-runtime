@@ -57,7 +57,7 @@ if [ "${BUILD_SRPM}" == "1" ]; then
     #setup rpm build tree
     rm -rf $BUILD_DIR
     mkdir -p $BUILD_DIR/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
-    tar -c -I 'xz -6 -T0' -f $BUILD_DIR/SOURCES/compute-runtime-$VERSION.tar.xz -C $REPO_DIR --transform "s,${REPO_DIR:1},compute-runtime-$VERSION," --exclude=.git\* $REPO_DIR
+    tar -c -I 'xz -6 -T0' -f $BUILD_DIR/SOURCES/compute-runtime.tar.xz -C $REPO_DIR --transform "s,${REPO_DIR:1},compute-runtime," --exclude=.git\* $REPO_DIR
     cp $COPYRIGHT $BUILD_DIR/SOURCES/
     cp $SPEC_SRC $BUILD_DIR/SPECS/
 
@@ -98,7 +98,7 @@ if [ "${BUILD_RPM}" == "1" ]; then
   if [ "${LOG_CCACHE_STATS}" == "1" ]; then
     ccache -z
   fi
-  export CCACHE_BASEDIR=$(readlink -m $BUILD_DIR/BUILD/compute-runtime-${VERSION}/)
+  export CCACHE_BASEDIR=$(readlink -m $BUILD_DIR/BUILD/compute-runtime/)
   rpmbuild --rebuild ${REPO_DIR}/../output/SRPMS/intel-opencl-${VERSION}*.src.rpm "${build_args[@]}"
   if [ "${LOG_CCACHE_STATS}" == "1" ]; then
     ccache -s

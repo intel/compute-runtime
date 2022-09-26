@@ -26,7 +26,7 @@ Summary:        Intel(R) Graphics Compute Runtime for OpenCL(TM)
 License:        MIT
 Group:          System Environment/Libraries
 Url:            https://github.com/intel/compute-runtime
-Source0:        %{url}/archive/%{version}/compute-runtime-%{version}.tar.xz
+Source0:        %{url}/archive/%{version}/compute-runtime.tar.xz
 Source1:        copyright
 
 ExclusiveArch:  x86_64
@@ -50,7 +50,7 @@ Summary:        ocloc package for opencl
 %debug_package %{nil}
 
 %prep
-%autosetup -p1 -n compute-runtime-%{version}
+%autosetup -p1 -n compute-runtime
 
 %build
 %cmake .. \

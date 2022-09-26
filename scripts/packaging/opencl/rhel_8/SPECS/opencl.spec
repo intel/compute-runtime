@@ -18,7 +18,7 @@ Summary: Intel(R) Graphics Compute Runtime for OpenCL(TM)
 Group: System Environment/Libraries
 License: MIT
 URL: https://github.com/intel/compute-runtime
-Source0: %{url}/archive/%{version}/compute-runtime-%{version}.tar.xz
+Source0: %{url}/archive/%{version}/compute-runtime.tar.xz
 Source1: copyright
 
 Requires:      intel-gmmlib
@@ -40,7 +40,7 @@ Intel(R) Graphics Compute Runtime for OpenCL(TM) is a open source project to con
 %define debug_package %{nil}
 
 %prep
-%autosetup -p1 -n compute-runtime-%{ver}
+%autosetup -p1 -n compute-runtime
 
 %build
 mkdir build
