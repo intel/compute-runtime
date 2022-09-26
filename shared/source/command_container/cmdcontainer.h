@@ -112,23 +112,26 @@ class CommandContainer : public NonCopyableOrMovableClass {
   protected:
     size_t getTotalCmdBufferSize();
 
+    GraphicsAllocation *allocationIndirectHeaps[HeapType::NUM_TYPES] = {};
+    std::unique_ptr<IndirectHeap> indirectHeaps[HeapType::NUM_TYPES];
+
+    CmdBufferContainer cmdBufferAllocations;
+    ResidencyContainer residencyContainer;
+    std::vector<GraphicsAllocation *> deallocationContainer;
+
+    std::unique_ptr<HeapHelper> heapHelper;
+    std::unique_ptr<LinearStream> commandStream;
+
+    uint64_t instructionHeapBaseAddress = 0u;
+    uint64_t indirectObjectHeapBaseAddress = 0u;
+
     void *iddBlock = nullptr;
     Device *device = nullptr;
     AllocationsList *reusableAllocationList = nullptr;
-    std::unique_ptr<HeapHelper> heapHelper;
-
-    CmdBufferContainer cmdBufferAllocations;
-    GraphicsAllocation *allocationIndirectHeaps[HeapType::NUM_TYPES] = {};
-    uint64_t instructionHeapBaseAddress = 0u;
-    uint64_t indirectObjectHeapBaseAddress = 0u;
-    uint32_t dirtyHeaps = std::numeric_limits<uint32_t>::max();
-    uint32_t numIddsPerBlock = 64;
     size_t reservedSshSize = 0;
 
-    std::unique_ptr<LinearStream> commandStream;
-    std::unique_ptr<IndirectHeap> indirectHeaps[HeapType::NUM_TYPES];
-    ResidencyContainer residencyContainer;
-    std::vector<GraphicsAllocation *> deallocationContainer;
+    uint32_t dirtyHeaps = std::numeric_limits<uint32_t>::max();
+    uint32_t numIddsPerBlock = 64;
 
     bool isFlushTaskUsedForImmediate = false;
     bool isHandleFenceCompletionRequired = true;

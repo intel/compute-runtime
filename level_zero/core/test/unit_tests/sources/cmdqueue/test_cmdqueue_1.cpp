@@ -1798,7 +1798,7 @@ TEST_F(CommandQueueCreate, givenOverrideCmdQueueSyncModeToSynchronousWhenCommand
     commandQueue->destroy();
 }
 
-TEST_F(CommandQueueCreate, givenCreatedCommandQueueWhenGettingMultiReturnPointFlagThenDefaultValuseIsFalse) {
+TEST_F(CommandQueueCreate, givenCreatedCommandQueueWhenGettingTrackingFlagsThenDefaultValuseIsFalse) {
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
@@ -1811,7 +1811,9 @@ TEST_F(CommandQueueCreate, givenCreatedCommandQueueWhenGettingMultiReturnPointFl
 
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
     ASSERT_NE(nullptr, commandQueue);
-    EXPECT_FALSE(commandQueue->multiReturnPointCommandList);
+    EXPECT_FALSE(commandQueue->frontEndStateTracking);
+    EXPECT_FALSE(commandQueue->pipelineSelectStateTracking);
+    EXPECT_FALSE(commandQueue->stateComputeModeTracking);
 
     commandQueue->destroy();
 }

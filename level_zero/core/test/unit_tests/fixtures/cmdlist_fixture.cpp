@@ -117,7 +117,7 @@ void ModuleMutableCommandListFixture::tearDown() {
 }
 
 void MultiReturnCommandListFixture::setUp() {
-    DebugManager.flags.MultiReturnPointCommandList.set(1);
+    DebugManager.flags.EnableFrontEndTracking.set(1);
     ModuleMutableCommandListFixture::setUp(REVISION_B);
 }
 

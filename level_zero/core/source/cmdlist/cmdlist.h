@@ -67,6 +67,7 @@ struct CommandList : _ze_command_list_handle_t {
         CommandType type = Invalid;
     };
     using CommandsToPatch = StackVec<CommandToPatch, 16>;
+    using CmdListReturnPoints = StackVec<CmdListReturnPoint, 32>;
 
     virtual ze_result_t close() = 0;
     virtual ze_result_t destroy() = 0;
@@ -265,7 +266,7 @@ struct CommandList : _ze_command_list_handle_t {
         return commandsToPatch;
     }
 
-    std::vector<CmdListReturnPoint> &getReturnPoints() {
+    CmdListReturnPoints &getReturnPoints() {
         return returnPoints;
     }
 
@@ -305,7 +306,7 @@ struct CommandList : _ze_command_list_handle_t {
     std::map<const void *, NEO::GraphicsAllocation *> hostPtrMap;
     std::vector<NEO::GraphicsAllocation *> ownedPrivateAllocations;
     std::vector<NEO::GraphicsAllocation *> patternAllocations;
-    std::vector<CmdListReturnPoint> returnPoints;
+    CmdListReturnPoints returnPoints;
 
     NEO::StreamProperties requiredStreamState{};
     NEO::StreamProperties finalStreamState{};
@@ -320,7 +321,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool containsCooperativeKernelsFlag = false;
     bool containsStatelessUncachedResource = false;
     bool performMemoryPrefetch = false;
-    bool multiReturnPointCommandList = false;
+    bool frontEndStateTracking = false;
     bool systolicModeSupport = false;
     bool pipelineSelectStateTracking = false;
     bool stateComputeModeTracking = false;

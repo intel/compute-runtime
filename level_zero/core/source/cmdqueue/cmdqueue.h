@@ -67,7 +67,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     bool commandQueueDebugCmdsProgrammed = false;
     bool isCopyOnlyCommandQueue = false;
     bool internalUsage = false;
-    bool multiReturnPointCommandList = false;
+    bool frontEndStateTracking = false;
     bool pipelineSelectStateTracking = false;
     bool stateComputeModeTracking = false;
 };

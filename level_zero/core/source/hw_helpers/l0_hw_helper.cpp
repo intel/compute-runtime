@@ -15,10 +15,10 @@ L0HwHelper &L0HwHelper::get(GFXCORE_FAMILY gfxCore) {
     return *l0HwHelperFactory[gfxCore];
 }
 
-bool L0HwHelper::enableMultiReturnPointCommandList() {
+bool L0HwHelper::enableFrontEndStateTracking() {
     constexpr bool defaultValue = false;
-    if (NEO::DebugManager.flags.MultiReturnPointCommandList.get() != -1) {
-        return !!NEO::DebugManager.flags.MultiReturnPointCommandList.get();
+    if (NEO::DebugManager.flags.EnableFrontEndTracking.get() != -1) {
+        return !!NEO::DebugManager.flags.EnableFrontEndTracking.get();
     }
     return defaultValue;
 }

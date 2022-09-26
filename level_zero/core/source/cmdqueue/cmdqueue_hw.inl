@@ -391,7 +391,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateFrontEndCmdSizeForMultipleCommandL
         estimatedSize += singleFrontEndCmdSize;
         isFrontEndStateDirty = false;
     }
-    if (this->multiReturnPointCommandList) {
+    if (this->frontEndStateTracking) {
         uint32_t frontEndChanges = commandList->getReturnPointsSize();
         estimatedSize += (frontEndChanges * singleFrontEndCmdSize);
         estimatedSize += (frontEndChanges * NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferStartSize());
@@ -1164,8 +1164,9 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListPipelineSelect(CommandList 
     csrState.pipelineSelect.setProperties(cmdListRequired.pipelineSelect);
 
     if (!preambleSet || csrState.pipelineSelect.isDirty()) {
+        bool systolic = csrState.pipelineSelect.systolicMode.value == 1 ? true : false;
         NEO::PipelineSelectArgs args = {
-            !!csrState.pipelineSelect.systolicMode.value,
+            systolic,
             false,
             false,
             commandList->getSystolicModeSupport()};

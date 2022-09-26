@@ -123,9 +123,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->commandListPreemptionMode = device->getDevicePreemptionMode();
     this->engineGroupType = engineGroupType;
     this->flags = flags;
-    if (this->multiReturnPointCommandList) {
-        this->returnPoints.reserve(32);
-    }
+
     auto &hwInfo = device->getHwInfo();
     this->systolicModeSupport = NEO::PreambleHelper<GfxFamily>::isSystolicModeConfigurable(hwInfo);
 
@@ -2352,7 +2350,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
             NEO::PreambleHelper<GfxFamily>::programVfeState(pVfeState, hwInfo, 0, 0, device->getMaxNumHwThreads(), finalStreamState, nullptr);
             commandsToPatch.push_back({pVfeStateAddress, pVfeState, CommandToPatch::FrontEndState});
         }
-        if (this->multiReturnPointCommandList) {
+        if (this->frontEndStateTracking) {
             auto &stream = *commandContainer.getCommandStream();
             NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferEnd(stream);
 

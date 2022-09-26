@@ -30,7 +30,7 @@ struct EventPool;
 class L0HwHelper {
   public:
     static L0HwHelper &get(GFXCORE_FAMILY gfxCore);
-    static bool enableMultiReturnPointCommandList();
+    static bool enableFrontEndStateTracking();
     static bool enablePipelineSelectStateTracking();
     static bool enableStateComputeModeTracking();
     virtual void setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupT &group) const = 0;

@@ -477,7 +477,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, UsmInitialPlacement, -1, "-1: default, 0: optimi
 DECLARE_DEBUG_VARIABLE(int32_t, ForceHostPointerImport, -1, "-1: default, 0: disable, 1: enable, Forces the driver to import every host pointer coming into driver, WARNING this is not spec compliant.")
 DECLARE_DEBUG_VARIABLE(int32_t, ProgramExtendedPipeControlPriorToNonPipelinedStateCommand, -1, "-1: default, 0: disable, 1: enable, Program additional extended version of PIPE CONTROL command before non pipelined state command")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideDrmRegion, -1, "-1: disable, 0+: override to given memory region for all allocations")
-DECLARE_DEBUG_VARIABLE(int32_t, MultiReturnPointCommandList, -1, "-1: default: disabled, 0: disabled, 1: enabled. This flag creates multiple return point from List to Queue for Front End reconfiguration on Queue buffer for single List")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableFrontEndTracking, -1, "-1: default: disabled, 0: disabled, 1: enabled. This flag creates multiple return point from List to Queue for Front End reconfiguration on Queue buffer for single List")
 DECLARE_DEBUG_VARIABLE(int32_t, EnablePipelineSelectTracking, -1, "-1: default: disabled, 0: disabled, 1: enabled. This flag enables optimization that limits number of pipeline select dispatched by command lists")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableStateComputeModeTracking, -1, "-1: default: disabled, 0: disabled, 1: enabled. This flag enables tracking state compute mode changes in command lists")
 /* Binary Cache */

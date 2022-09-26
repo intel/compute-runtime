@@ -27,7 +27,7 @@
 namespace L0 {
 
 CommandList::CommandList(uint32_t numIddsPerBlock) : commandContainer(numIddsPerBlock) {
-    multiReturnPointCommandList = L0HwHelper::enableMultiReturnPointCommandList();
+    frontEndStateTracking = L0HwHelper::enableFrontEndStateTracking();
     pipelineSelectStateTracking = L0HwHelper::enablePipelineSelectStateTracking();
     stateComputeModeTracking = L0HwHelper::enableStateComputeModeTracking();
 }

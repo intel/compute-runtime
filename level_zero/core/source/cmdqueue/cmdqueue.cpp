@@ -29,7 +29,7 @@ namespace L0 {
 CommandQueueAllocatorFn commandQueueFactory[IGFX_MAX_PRODUCT] = {};
 
 bool CommandQueue::frontEndTrackingEnabled() const {
-    return NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get() || this->multiReturnPointCommandList;
+    return NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get() || this->frontEndStateTracking;
 }
 
 CommandQueueImp::CommandQueueImp(Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc)
@@ -44,7 +44,7 @@ CommandQueueImp::CommandQueueImp(Device *device, NEO::CommandStreamReceiver *csr
         useKmdWaitFunction = !!(overrideUseKmdWaitFunction);
     }
 
-    multiReturnPointCommandList = L0HwHelper::enableMultiReturnPointCommandList();
+    frontEndStateTracking = L0HwHelper::enableFrontEndStateTracking();
     pipelineSelectStateTracking = L0HwHelper::enablePipelineSelectStateTracking();
     stateComputeModeTracking = L0HwHelper::enableStateComputeModeTracking();
 }

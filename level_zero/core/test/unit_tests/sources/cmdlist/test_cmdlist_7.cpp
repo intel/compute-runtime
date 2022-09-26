@@ -558,12 +558,12 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
 
 using MultiReturnCommandListTest = Test<MultiReturnCommandListFixture>;
 
-HWTEST2_F(MultiReturnCommandListTest, givenMultiReturnIsUsedWhenPropertyDisableEuFusionSupportedThenExpectReturnPointsAndBbEndProgramming, IsAtLeastSkl) {
+HWTEST2_F(MultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPropertyDisableEuFusionSupportedThenExpectReturnPointsAndBbEndProgramming, IsAtLeastSkl) {
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
     NEO::HwInfoConfig::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
 
-    EXPECT_TRUE(commandList->multiReturnPointCommandList);
+    EXPECT_TRUE(commandList->frontEndStateTracking);
 
     auto &cmdStream = *commandList->commandContainer.getCommandStream();
     auto &cmdBuffers = commandList->commandContainer.getCmdBufferAllocations();
@@ -724,12 +724,12 @@ HWTEST2_F(MultiReturnCommandListTest, givenMultiReturnIsUsedWhenPropertyDisableE
     }
 }
 
-HWTEST2_F(MultiReturnCommandListTest, givenMultiReturnIsUsedWhenPropertyComputeDispatchAllWalkerSupportedThenExpectReturnPointsAndBbEndProgramming, IsAtLeastSkl) {
+HWTEST2_F(MultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPropertyComputeDispatchAllWalkerSupportedThenExpectReturnPointsAndBbEndProgramming, IsAtLeastSkl) {
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
     NEO::HwInfoConfig::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
 
-    EXPECT_TRUE(commandList->multiReturnPointCommandList);
+    EXPECT_TRUE(commandList->frontEndStateTracking);
 
     NEO::DebugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
 
@@ -886,7 +886,7 @@ HWTEST2_F(MultiReturnCommandListTest, givenMultiReturnIsUsedWhenPropertyComputeD
 }
 
 HWTEST2_F(MultiReturnCommandListTest,
-          givenMultiReturnCmdListIsExecutedWhenPropertyDisableEuFusionSupportedThenExpectFrontEndProgrammingInCmdQueue, IsAtLeastSkl) {
+          givenFrontEndTrackingCmdListIsExecutedWhenPropertyDisableEuFusionSupportedThenExpectFrontEndProgrammingInCmdQueue, IsAtLeastSkl) {
     using VFE_STATE_TYPE = typename FamilyType::VFE_STATE_TYPE;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
@@ -894,8 +894,8 @@ HWTEST2_F(MultiReturnCommandListTest,
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
     NEO::HwInfoConfig::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
 
-    EXPECT_TRUE(commandList->multiReturnPointCommandList);
-    EXPECT_TRUE(commandQueue->multiReturnPointCommandList);
+    EXPECT_TRUE(commandList->frontEndStateTracking);
+    EXPECT_TRUE(commandQueue->frontEndStateTracking);
 
     auto &cmdListStream = *commandList->commandContainer.getCommandStream();
     auto &cmdListBuffers = commandList->commandContainer.getCmdBufferAllocations();
@@ -1135,7 +1135,7 @@ HWTEST2_F(MultiReturnCommandListTest,
 }
 
 HWTEST2_F(MultiReturnCommandListTest,
-          givenMultiReturnCmdListIsExecutedWhenPropertyComputeDispatchAllWalkerSupportedThenExpectFrontEndProgrammingInCmdQueue, IsAtLeastSkl) {
+          givenFrontEndTrackingCmdListIsExecutedWhenPropertyComputeDispatchAllWalkerSupportedThenExpectFrontEndProgrammingInCmdQueue, IsAtLeastSkl) {
     using VFE_STATE_TYPE = typename FamilyType::VFE_STATE_TYPE;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
@@ -1145,8 +1145,8 @@ HWTEST2_F(MultiReturnCommandListTest,
 
     NEO::DebugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
 
-    EXPECT_TRUE(commandList->multiReturnPointCommandList);
-    EXPECT_TRUE(commandQueue->multiReturnPointCommandList);
+    EXPECT_TRUE(commandList->frontEndStateTracking);
+    EXPECT_TRUE(commandQueue->frontEndStateTracking);
 
     auto &cmdListStream = *commandList->commandContainer.getCommandStream();
     auto &cmdListBuffers = commandList->commandContainer.getCmdBufferAllocations();
@@ -1389,8 +1389,8 @@ HWTEST2_F(MultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsr
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
     NEO::HwInfoConfig::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
 
-    EXPECT_TRUE(commandList->multiReturnPointCommandList);
-    EXPECT_TRUE(commandListImmediate->multiReturnPointCommandList);
+    EXPECT_TRUE(commandList->frontEndStateTracking);
+    EXPECT_TRUE(commandListImmediate->frontEndStateTracking);
 
     auto &regularCmdListStream = *commandList->commandContainer.getCommandStream();
 
@@ -1514,8 +1514,8 @@ HWTEST2_F(MultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsr
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
     NEO::HwInfoConfig::get(productFamily)->fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
 
-    EXPECT_TRUE(commandList->multiReturnPointCommandList);
-    EXPECT_TRUE(commandListImmediate->multiReturnPointCommandList);
+    EXPECT_TRUE(commandList->frontEndStateTracking);
+    EXPECT_TRUE(commandListImmediate->frontEndStateTracking);
 
     auto cmdQueueCsr = commandQueue->getCsr();
     auto &csrProperties = cmdQueueCsr->getStreamProperties();

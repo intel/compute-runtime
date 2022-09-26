@@ -70,6 +70,16 @@ struct CommandQueueHw : public CommandQueueImp {
 
         inline bool isNEODebuggerActive(Device *device);
 
+        NEO::StreamProperties cmdListBeginState{};
+
+        size_t spaceForResidency = 0;
+        NEO::PreemptionMode preemptionMode{};
+        NEO::PreemptionMode statePreemption{};
+        uint32_t perThreadScratchSpaceSize = 0;
+        uint32_t perThreadPrivateScratchSize = 0;
+        int32_t engineInstanced = -1;
+        UnifiedMemoryControls unifiedMemoryControls{};
+
         bool anyCommandListWithCooperativeKernels = false;
         bool anyCommandListWithoutCooperativeKernels = false;
         bool anyCommandListRequiresDisabledEUFusion = false;
@@ -78,13 +88,6 @@ struct CommandQueueHw : public CommandQueueImp {
         bool containsAnyRegularCmdList = false;
         bool gsbaStateDirty = false;
         bool frontEndStateDirty = false;
-        size_t spaceForResidency = 0;
-        NEO::StreamProperties cmdListBeginState{};
-        NEO::PreemptionMode preemptionMode{};
-        NEO::PreemptionMode statePreemption{};
-        uint32_t perThreadScratchSpaceSize = 0;
-        uint32_t perThreadPrivateScratchSize = 0;
-        int32_t engineInstanced = -1;
         const bool isPreemptionModeInitial{false};
         bool isDevicePreemptionModeMidThread{};
         bool isDebugEnabled{};
@@ -94,7 +97,6 @@ struct CommandQueueHw : public CommandQueueImp {
         bool isDirectSubmissionEnabled{};
         bool isDispatchTaskCountPostSyncRequired{};
         bool hasIndirectAccess{};
-        UnifiedMemoryControls unifiedMemoryControls;
     };
 
     ze_result_t validateCommandListsParams(CommandListExecutionContext &ctx,

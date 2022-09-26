@@ -54,13 +54,13 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::estimateBufferSizeMultiTileBarrier;
     using BaseClass::finalStreamState;
     using BaseClass::flags;
+    using BaseClass::frontEndStateTracking;
     using BaseClass::getAlignedAllocation;
     using BaseClass::getAllocationFromHostPtrMap;
     using BaseClass::getHostPtrAlloc;
     using BaseClass::hostPtrMap;
     using BaseClass::indirectAllocationsAllowed;
     using BaseClass::initialize;
-    using BaseClass::multiReturnPointCommandList;
     using BaseClass::partitionCount;
     using BaseClass::patternAllocations;
     using BaseClass::pipelineSelectStateTracking;
@@ -122,8 +122,8 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::commandsToPatch;
     using BaseClass::csr;
     using BaseClass::finalStreamState;
+    using BaseClass::frontEndStateTracking;
     using BaseClass::isFlushTaskSubmissionEnabled;
-    using BaseClass::multiReturnPointCommandList;
     using BaseClass::partitionCount;
     using BaseClass::pipelineSelectStateTracking;
     using BaseClass::requiredStreamState;
@@ -147,9 +147,9 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandListImp {
     using BaseClass::commandContainer;
     using BaseClass::commandListPreemptionMode;
     using BaseClass::csr;
+    using BaseClass::frontEndStateTracking;
     using BaseClass::initialize;
     using BaseClass::isFlushTaskSubmissionEnabled;
-    using BaseClass::multiReturnPointCommandList;
     using BaseClass::nonImmediateLogicalStateHelper;
     using BaseClass::partitionCount;
     using BaseClass::pipelineSelectStateTracking;
