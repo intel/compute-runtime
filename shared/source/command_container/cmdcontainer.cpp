@@ -272,8 +272,9 @@ void CommandContainer::handleCmdBufferAllocations(size_t startIndex) {
             if (isHandleFenceCompletionRequired) {
                 this->device->getMemoryManager()->handleFenceCompletion(cmdBufferAllocations[i]);
             }
-            reusableAllocationList->pushFrontOne(*cmdBufferAllocations[i]);
-
+            if (!this->reusableAllocationList->peekContains(*cmdBufferAllocations[i])) {
+                reusableAllocationList->pushFrontOne(*cmdBufferAllocations[i]);
+            }
         } else {
             this->device->getMemoryManager()->freeGraphicsMemory(cmdBufferAllocations[i]);
         }
@@ -281,22 +282,14 @@ void CommandContainer::handleCmdBufferAllocations(size_t startIndex) {
 }
 
 GraphicsAllocation *CommandContainer::obtainNextCommandBufferAllocation() {
-    size_t alignedSize = alignUp<size_t>(this->getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
 
     GraphicsAllocation *cmdBufferAllocation = nullptr;
     if (this->reusableAllocationList) {
+        size_t alignedSize = alignUp<size_t>(this->getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
         cmdBufferAllocation = this->reusableAllocationList->detachAllocation(alignedSize, nullptr, nullptr, AllocationType::COMMAND_BUFFER).release();
     }
     if (!cmdBufferAllocation) {
-        AllocationProperties properties{device->getRootDeviceIndex(),
-                                        true /* allocateMemory*/,
-                                        alignedSize,
-                                        AllocationType::COMMAND_BUFFER,
-                                        (device->getNumGenericSubDevices() > 1u) /* multiOsContextCapable */,
-                                        false,
-                                        device->getDeviceBitfield()};
-
-        cmdBufferAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+        cmdBufferAllocation = this->allocateCommandBuffer();
     }
 
     return cmdBufferAllocation;
@@ -308,13 +301,7 @@ void CommandContainer::allocateNextCommandBuffer() {
 
     cmdBufferAllocations.push_back(cmdBufferAllocation);
 
-    size_t alignedSize = alignUp<size_t>(this->getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
-    commandStream->replaceBuffer(cmdBufferAllocation->getUnderlyingBuffer(), alignedSize - cmdBufferReservedSize);
-    commandStream->replaceGraphicsAllocation(cmdBufferAllocation);
-
-    if (!getFlushTaskUsedForImmediate()) {
-        addToResidencyContainer(cmdBufferAllocation);
-    }
+    setCmdBuffer(cmdBufferAllocation);
 }
 
 void CommandContainer::closeAndAllocateNextCommandBuffer() {
@@ -359,6 +346,43 @@ void CommandContainer::ensureHeapSizePrepared(size_t sshRequiredSize, size_t dsh
     if (dshRequiredSize > 0) {
         sharedDshCsrHeap = &immediateCmdListCsr->getIndirectHeap(HeapType::DYNAMIC_STATE, dshRequiredSize);
     }
+}
+
+GraphicsAllocation *CommandContainer::reuseExistingCmdBuffer() {
+    size_t alignedSize = alignUp<size_t>(this->getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
+    auto cmdBufferAllocation = this->reusableAllocationList->detachAllocation(alignedSize, nullptr, this->immediateCmdListCsr, AllocationType::COMMAND_BUFFER).release();
+    return cmdBufferAllocation;
+}
+
+void CommandContainer::addCurrentCommandBufferToReusableAllocationList() {
+    auto taskCount = this->immediateCmdListCsr->peekTaskCount() + 1;
+    auto osContextId = this->immediateCmdListCsr->getOsContext().getContextId();
+    commandStream->getGraphicsAllocation()->updateTaskCount(taskCount, osContextId);
+    commandStream->getGraphicsAllocation()->updateResidencyTaskCount(taskCount, osContextId);
+    this->reusableAllocationList->pushTailOne(*this->commandStream->getGraphicsAllocation());
+}
+
+void CommandContainer::setCmdBuffer(GraphicsAllocation *cmdBuffer) {
+    size_t alignedSize = alignUp<size_t>(this->getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
+    commandStream->replaceBuffer(cmdBuffer->getUnderlyingBuffer(), alignedSize - cmdBufferReservedSize);
+    commandStream->replaceGraphicsAllocation(cmdBuffer);
+
+    if (!getFlushTaskUsedForImmediate()) {
+        addToResidencyContainer(cmdBuffer);
+    }
+}
+
+GraphicsAllocation *CommandContainer::allocateCommandBuffer() {
+    size_t alignedSize = alignUp<size_t>(this->getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
+    AllocationProperties properties{device->getRootDeviceIndex(),
+                                    true /* allocateMemory*/,
+                                    alignedSize,
+                                    AllocationType::COMMAND_BUFFER,
+                                    (device->getNumGenericSubDevices() > 1u) /* multiOsContextCapable */,
+                                    false,
+                                    device->getDeviceBitfield()};
+
+    return device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
 }
 
 } // namespace NEO

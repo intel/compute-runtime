@@ -30,7 +30,16 @@ NEO::LogicalStateHelper *CommandListCoreFamilyImmediate<gfxCoreFamily>::getLogic
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAvailableSpace() {
     if (this->commandContainer.getCommandStream()->getAvailableSpace() < maxImmediateCommandSize) {
-        this->commandContainer.allocateNextCommandBuffer();
+
+        auto alloc = this->commandContainer.reuseExistingCmdBuffer();
+        this->commandContainer.addCurrentCommandBufferToReusableAllocationList();
+
+        if (!alloc) {
+            alloc = this->commandContainer.allocateCommandBuffer();
+            this->commandContainer.getCmdBufferAllocations().push_back(alloc);
+        }
+        this->commandContainer.setCmdBuffer(alloc);
+        this->csr->flushTagUpdate();
         this->cmdListCurrentStartOffset = 0;
     }
 }

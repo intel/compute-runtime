@@ -157,6 +157,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         commandList->commandListPreemptionMode = device->getDevicePreemptionMode();
 
         commandList->isBcsSplitNeeded = deviceImp->bcsSplit.setupDevice(productFamily, internalUsage, desc, csr);
+        commandList->commandContainer.setImmediateCmdListCsr(csr);
 
         return commandList;
     }

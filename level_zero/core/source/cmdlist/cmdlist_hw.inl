@@ -141,7 +141,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     }
 
     if (this->immediateCmdListHeapSharing) {
-        commandContainer.setImmediateCmdListCsr(this->csr);
+        commandContainer.enableHeapSharing();
         commandContainer.setNumIddPerBlock(1);
     }
 

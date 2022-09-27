@@ -105,10 +105,17 @@ class CommandContainer : public NonCopyableOrMovableClass {
     void setImmediateCmdListCsr(CommandStreamReceiver *newValue) {
         this->immediateCmdListCsr = newValue;
     }
+    void enableHeapSharing() { heapSharingEnabled = true; }
     bool immediateCmdListSharedHeap(HeapType heapType) {
-        return (this->immediateCmdListCsr != nullptr && (heapType == HeapType::DYNAMIC_STATE || heapType == HeapType::SURFACE_STATE));
+        return (heapSharingEnabled && (heapType == HeapType::DYNAMIC_STATE || heapType == HeapType::SURFACE_STATE));
     }
     void ensureHeapSizePrepared(size_t sshRequiredSize, size_t dshRequiredSize);
+
+    GraphicsAllocation *reuseExistingCmdBuffer();
+    GraphicsAllocation *allocateCommandBuffer();
+    void setCmdBuffer(GraphicsAllocation *cmdBuffer);
+    void addCurrentCommandBufferToReusableAllocationList();
+
     HeapContainer sshAllocations;
     uint64_t currentLinearStreamStartOffset = 0u;
     uint32_t slmSize = std::numeric_limits<uint32_t>::max();
@@ -146,6 +153,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
     bool isFlushTaskUsedForImmediate = false;
     bool isHandleFenceCompletionRequired = false;
+    bool heapSharingEnabled = false;
 };
 
 } // namespace NEO

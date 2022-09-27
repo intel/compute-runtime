@@ -827,6 +827,72 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenCloseAndAllocateNextCommandBuf
     EXPECT_EQ(cmdContainer.getCmdBufferAllocations().size(), 2u);
 }
 
+TEST_F(CommandContainerTest, givenCmdContainerWhenSetCmdBufferThenCmdBufferSetCorrectly) {
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice, nullptr, true);
+
+    AllocationProperties properties{pDevice->getRootDeviceIndex(),
+                                    true /* allocateMemory*/,
+                                    2048,
+                                    AllocationType::COMMAND_BUFFER,
+                                    (pDevice->getNumGenericSubDevices() > 1u) /* multiOsContextCapable */,
+                                    false,
+                                    pDevice->getDeviceBitfield()};
+
+    auto alloc = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+    cmdContainer.setCmdBuffer(alloc);
+    EXPECT_EQ(cmdContainer.getCommandStream()->getGraphicsAllocation(), alloc);
+    pDevice->getMemoryManager()->freeGraphicsMemory(alloc);
+}
+
+TEST_F(CommandContainerTest, givenCmdContainerWhenReuseExistingCmdBufferWithoutAnyAllocationInListThenReturnNullptr) {
+    auto cmdContainer = std::make_unique<CommandContainer>();
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, false);
+    auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
+    cmdContainer->setImmediateCmdListCsr(csr);
+
+    EXPECT_EQ(cmdContainer->reuseExistingCmdBuffer(), nullptr);
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+HWTEST_F(CommandContainerTest, givenCmdContainerWhenReuseExistingCmdBufferWithAllocationInListAndCsrTaskCountLowerThanAllocationThenReturnNullptr) {
+    auto cmdContainer = std::make_unique<CommandContainer>();
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    *csr.tagAddress = 0u;
+
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, false);
+    cmdContainer->setImmediateCmdListCsr(&csr);
+    cmdContainer->getCmdBufferAllocations()[0]->updateTaskCount(10, 0);
+    cmdContainer->addCurrentCommandBufferToReusableAllocationList();
+
+    EXPECT_EQ(cmdContainer->reuseExistingCmdBuffer(), nullptr);
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+HWTEST_F(CommandContainerTest, givenCmdContainerWhenReuseExistingCmdBufferWithAllocationInListAndCsrTaskCountSameAsAllocationThenReturnAlloc) {
+    auto cmdContainer = std::make_unique<CommandContainer>();
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    *csr.tagAddress = 10u;
+
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, false);
+    cmdContainer->setImmediateCmdListCsr(&csr);
+
+    cmdContainer->getCmdBufferAllocations()[0]->updateTaskCount(10, 0);
+    cmdContainer->addCurrentCommandBufferToReusableAllocationList();
+
+    EXPECT_NE(cmdContainer->reuseExistingCmdBuffer(), nullptr);
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
 TEST_F(CommandContainerTest, GivenCmdContainerWhenContainerIsInitializedThenSurfaceStateIndirectHeapSizeIsCorrect) {
     MyMockCommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, true);
@@ -837,6 +903,7 @@ TEST_F(CommandContainerTest, GivenCmdContainerWhenContainerIsInitializedThenSurf
 
 HWTEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWithoutEnsuringSpaceThenExpectNullptrReturnedOrUnrecoverable) {
     CommandContainer cmdContainer;
+    cmdContainer.enableHeapSharing();
     cmdContainer.setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
     cmdContainer.setNumIddPerBlock(1);
     auto code = cmdContainer.initialize(pDevice, nullptr, true);
