@@ -2054,12 +2054,6 @@ TEST_F(DebugApiLinuxTest, WhenCallingWriteMemoryForExpectedFailureCasesThenError
 
     retVal = session->writeMemory(thread, &desc, size, output);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
-
-    session->ensureThreadStopped(thread);
-    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM;
-    desc.address = 0x10000000;
-    retVal = session->writeMemory(thread, &desc, size, output);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, retVal);
 }
 
 TEST_F(DebugApiLinuxTest, GivenErrorFromVmOpenWhenCallingReadGpuMemoryThenCloseIsNotCalledAndErrorReturned) {
@@ -6408,6 +6402,9 @@ TEST_F(DebugApiRegistersAccessTest, GivenSipNotUpdatingSipCmdThenAccessToSlmFail
     session->ensureThreadStopped(thread);
 
     auto retVal = session->readMemory(thread, &desc, bufferSize, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
+
+    retVal = session->writeMemory(thread, &desc, bufferSize, output);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
 }
 

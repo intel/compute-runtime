@@ -16,8 +16,6 @@
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/include/zet_intel_gpu_debug.h"
 
-#include "common/StateSaveAreaHeader.h"
-
 namespace L0 {
 
 DebugSession::DebugSession(const zet_debug_config_t &config, Device *device) : connectedDevice(device) {
@@ -1262,7 +1260,6 @@ ze_result_t DebugSessionImp::waitForCmdReady(EuThread::ThreadId threadId, uint16
 ze_result_t DebugSessionImp::readSLMMemory(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
     ze_result_t status;
     SIP::sip_command sipCommand = {0};
-    char *output = static_cast<char *>(buffer);
 
     status = waitForCmdReady(threadId, sipRetryCount);
     if (status != ZE_RESULT_SUCCESS) {
@@ -1271,7 +1268,7 @@ ze_result_t DebugSessionImp::readSLMMemory(EuThread::ThreadId threadId, const ze
 
     uint64_t offset = desc->address & maxNBitValue(slmAddressSpaceTag);
 
-    // SIP accesses SLM in read units of slmSendBytesSize at offset units of the same size
+    // SIP accesses SLM in units of slmSendBytesSize at offset units of the same size
     uint32_t offsetUnits = static_cast<uint32_t>(std::ceil(static_cast<float>(offset) / slmSendBytesSize));
     uint32_t frontPadding = offset % slmSendBytesSize;
     uint32_t remainingSlmSendUnits = static_cast<uint32_t>(std::ceil(static_cast<float>(size) / slmSendBytesSize));
@@ -1283,12 +1280,11 @@ ze_result_t DebugSessionImp::readSLMMemory(EuThread::ThreadId threadId, const ze
         }
     }
 
-    uint32_t maxUnitsPerLoop = EXCHANGE_BUFFER_SIZE / slmSendBytesSize;
     uint32_t loops = static_cast<uint32_t>(std::ceil(static_cast<float>(remainingSlmSendUnits) / maxUnitsPerLoop));
 
-    char *tmpBuffer = new char[remainingSlmSendUnits * slmSendBytesSize];
+    std::unique_ptr<char[]> tmpBuffer(new char[remainingSlmSendUnits * slmSendBytesSize]);
     uint32_t readUnits = 0;
-    uint32_t bytesAlreadRead = 0;
+    uint32_t bytesAlreadyRead = 0;
 
     sipCommand.offset = offsetUnits;
 
@@ -1305,38 +1301,114 @@ ze_result_t DebugSessionImp::readSLMMemory(EuThread::ThreadId threadId, const ze
 
         status = cmdRegisterAccessHelper(threadId, sipCommand, true);
         if (status != ZE_RESULT_SUCCESS) {
-            delete[] tmpBuffer;
             return status;
         }
 
         status = resumeImp(std::vector<EuThread::ThreadId>{threadId}, threadId.tileIndex);
         if (status != ZE_RESULT_SUCCESS) {
-            delete[] tmpBuffer;
             return status;
         }
 
         status = waitForCmdReady(threadId, sipRetryCount);
         if (status != ZE_RESULT_SUCCESS) {
-            delete[] tmpBuffer;
             return status;
         }
 
         status = cmdRegisterAccessHelper(threadId, sipCommand, false);
         if (status != ZE_RESULT_SUCCESS) {
-            delete[] tmpBuffer;
             return status;
         }
 
-        memcpy_s(tmpBuffer + bytesAlreadRead, readUnits * slmSendBytesSize, sipCommand.buffer, readUnits * slmSendBytesSize);
+        memcpy_s(tmpBuffer.get() + bytesAlreadyRead, readUnits * slmSendBytesSize, sipCommand.buffer, readUnits * slmSendBytesSize);
 
         remainingSlmSendUnits -= readUnits;
         sipCommand.offset += readUnits;
-        bytesAlreadRead += readUnits * slmSendBytesSize;
+        bytesAlreadyRead += readUnits * slmSendBytesSize;
     }
 
-    memcpy_s(output, size, tmpBuffer + frontPadding, size);
+    memcpy_s(buffer, size, tmpBuffer.get() + frontPadding, size);
 
-    delete[] tmpBuffer;
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t DebugSessionImp::writeSLMMemory(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) {
+    ze_result_t status;
+    SIP::sip_command sipCommand = {0};
+
+    uint64_t offset = desc->address & maxNBitValue(slmAddressSpaceTag);
+    // SIP accesses SLM in units of slmSendBytesSize at offset units of the same size
+    uint32_t offsetUnits = static_cast<uint32_t>(std::ceil(static_cast<float>(offset) / slmSendBytesSize));
+    uint32_t frontPadding = offset % slmSendBytesSize;
+    uint32_t remainingSlmSendUnits = static_cast<uint32_t>(std::ceil(static_cast<float>(size) / slmSendBytesSize));
+    size_t tailPadding = (size % slmSendBytesSize) ? slmSendBytesSize - (size % slmSendBytesSize) : 0;
+
+    if (frontPadding) {
+        offsetUnits--;
+
+        if ((size + frontPadding) > (remainingSlmSendUnits * slmSendBytesSize)) {
+            remainingSlmSendUnits++;
+        }
+    }
+
+    std::unique_ptr<char[]> tmpBuffer(new char[remainingSlmSendUnits * slmSendBytesSize]);
+
+    if ((frontPadding || tailPadding)) {
+
+        zet_debug_memory_space_desc_t allignedDesc = *desc;
+        allignedDesc.address = desc->address - frontPadding;
+        size_t allignedSize = remainingSlmSendUnits * slmSendBytesSize;
+
+        status = readSLMMemory(threadId, &allignedDesc, allignedSize, tmpBuffer.get());
+        if (status != ZE_RESULT_SUCCESS) {
+            return status;
+        }
+    }
+
+    memcpy_s(tmpBuffer.get() + frontPadding, size, buffer, size);
+
+    status = waitForCmdReady(threadId, sipRetryCount);
+    if (status != ZE_RESULT_SUCCESS) {
+        return status;
+    }
+
+    uint32_t loops = static_cast<uint32_t>(std::ceil(static_cast<float>(remainingSlmSendUnits) / maxUnitsPerLoop));
+
+    uint32_t writeUnits = 0;
+    uint32_t bytesAlreadyWritten = 0;
+
+    sipCommand.offset = offsetUnits;
+
+    for (uint32_t loop = 0; loop < loops; loop++) {
+
+        if (remainingSlmSendUnits >= maxUnitsPerLoop) {
+            writeUnits = maxUnitsPerLoop;
+        } else {
+            writeUnits = remainingSlmSendUnits;
+        }
+
+        sipCommand.command = static_cast<uint32_t>(NEO::SipKernel::COMMAND::SLM_WRITE);
+        sipCommand.size = static_cast<uint32_t>(writeUnits);
+        memcpy_s(sipCommand.buffer, writeUnits * slmSendBytesSize, tmpBuffer.get() + bytesAlreadyWritten, writeUnits * slmSendBytesSize);
+
+        status = cmdRegisterAccessHelper(threadId, sipCommand, true);
+        if (status != ZE_RESULT_SUCCESS) {
+            return status;
+        }
+
+        status = resumeImp(std::vector<EuThread::ThreadId>{threadId}, threadId.tileIndex);
+        if (status != ZE_RESULT_SUCCESS) {
+            return status;
+        }
+
+        status = waitForCmdReady(threadId, sipRetryCount);
+        if (status != ZE_RESULT_SUCCESS) {
+            return status;
+        }
+
+        remainingSlmSendUnits -= writeUnits;
+        sipCommand.offset += writeUnits;
+        bytesAlreadyWritten += writeUnits * slmSendBytesSize;
+    }
 
     return ZE_RESULT_SUCCESS;
 }

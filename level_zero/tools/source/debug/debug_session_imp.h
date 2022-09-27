@@ -11,6 +11,8 @@
 
 #include "level_zero/tools/source/debug/debug_session.h"
 
+#include "common/StateSaveAreaHeader.h"
+
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
@@ -80,6 +82,8 @@ struct DebugSessionImp : DebugSession {
     virtual ze_result_t writeGpuMemory(uint64_t memoryHandle, const char *input, size_t size, uint64_t gpuVa) = 0;
     ze_result_t readSLMMemory(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc,
                               size_t size, void *buffer);
+    ze_result_t writeSLMMemory(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc,
+                               size_t size, const void *buffer);
 
     ze_result_t validateThreadAndDescForMemoryAccess(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc);
 
@@ -160,6 +164,7 @@ struct DebugSessionImp : DebugSession {
     constexpr static uint16_t slmAddressSpaceTag = 28;
     constexpr static uint16_t slmSendBytesSize = 16;
     constexpr static uint16_t sipRetryCount = 10;
+    uint32_t maxUnitsPerLoop = EXCHANGE_BUFFER_SIZE / slmSendBytesSize;
 };
 
 } // namespace L0
