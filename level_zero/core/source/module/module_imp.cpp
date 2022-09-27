@@ -286,6 +286,10 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
         }
 
         bool rebuild = NEO::DebugManager.flags.RebuildPrecompiledKernels.get() && irBinarySize != 0;
+        rebuild |= NEO::isRebuiltToPatchtokensRequired(device->getNEODevice(), archive, this->options, this->isBuiltIn);
+        if (rebuild && irBinarySize == 0) {
+            return ZE_RESULT_ERROR_INVALID_NATIVE_BINARY;
+        }
         if ((false == singleDeviceBinary.deviceBinary.empty()) && (false == rebuild)) {
             this->unpackedDeviceBinary = makeCopy<char>(reinterpret_cast<const char *>(singleDeviceBinary.deviceBinary.begin()), singleDeviceBinary.deviceBinary.size());
             this->unpackedDeviceBinarySize = singleDeviceBinary.deviceBinary.size();
@@ -521,6 +525,7 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
     } else {
         std::string buildFlagsInput{desc->pBuildFlags != nullptr ? desc->pBuildFlags : ""};
         this->translationUnit->shouldSuppressRebuildWarning = NEO::CompilerOptions::extract(NEO::CompilerOptions::noRecompiledFromIr, buildFlagsInput);
+        this->translationUnit->isBuiltIn = this->type == ModuleType::Builtin ? true : false;
         this->createBuildOptions(buildFlagsInput.c_str(), buildOptions, internalBuildOptions);
 
         if (type == ModuleType::User) {

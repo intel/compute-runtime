@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/compiler_interface/compiler_options.h"
+#include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/test/common/device_binary_format/elf/elf_tests_data.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -13,7 +14,9 @@
 #include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/kernel_filename_helper.h"
 #include "shared/test/common/libult/global_environment.h"
+#include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/mocks/mock_source_level_debugger.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/program_fixture.h"
@@ -40,6 +43,56 @@ TEST_F(ProgramTests, givenProgramObjectWhenEnableKernelDebugIsCalledThenProgramH
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     program.enableKernelDebug();
     EXPECT_TRUE(program.isKernelDebugEnabled());
+}
+
+class ZebinFallbackToPatchtokensLegacyDebugger : public ProgramTests {
+  public:
+    void SetUp() override {
+        ProgramTests::SetUp();
+        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, mockRootDeviceIndex));
+        const auto &hwInfo = device->getHardwareInfo();
+        zebin.elfHeader->machine = hwInfo.platform.eProductFamily;
+    }
+    void TearDown() override {
+        ProgramTests::TearDown();
+    }
+    ZebinTestData::ValidEmptyProgram<> zebin;
+    std::unique_ptr<MockClDevice> device;
+};
+
+HWTEST_F(ZebinFallbackToPatchtokensLegacyDebugger, WhenCreatingProgramFromNonBuiltinZeBinaryWithSpirvDataIncludedAndLegacyDebuggerAttachedThenSuccessIsReturnedAndRebuildFromPTIsRequired) {
+    if (sizeof(void *) != 8U) {
+        GTEST_SKIP();
+    }
+    const uint8_t mockSpvData[0x10]{0};
+    zebin.appendSection(Elf::SHT_ZEBIN_SPIRV, Elf::SectionsNamesZebin::spv, mockSpvData);
+
+    std::unique_ptr<MockProgram> program;
+    device->executionEnvironment->rootDeviceEnvironments[mockRootDeviceIndex]->debugger.reset(new MockActiveSourceLevelDebugger);
+    ASSERT_NE(nullptr, device->getSourceLevelDebugger());
+
+    program = std::make_unique<MockProgram>(toClDeviceVector(*device));
+    auto retVal = program->createProgramFromBinary(zebin.storage.data(), zebin.storage.size(), *device.get());
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_FALSE(program->isCreatedFromBinary);
+
+    EXPECT_TRUE(program->requiresRebuild);
+    EXPECT_FALSE(CompilerOptions::contains(program->options, CompilerOptions::allowZebin));
+}
+
+HWTEST_F(ZebinFallbackToPatchtokensLegacyDebugger, WhenCreatingProgramFromNonBuiltinZeBinaryWithoutSpirvDataIncludedAndLegacyDebuggerAttachedThenErrorIsReturned) {
+    if (sizeof(void *) != 8U) {
+        GTEST_SKIP();
+    }
+    std::unique_ptr<MockProgram> program;
+    device->executionEnvironment->rootDeviceEnvironments[mockRootDeviceIndex]->debugger.reset(new MockActiveSourceLevelDebugger);
+    ASSERT_NE(nullptr, device->getSourceLevelDebugger());
+
+    program = std::make_unique<MockProgram>(toClDeviceVector(*device));
+
+    ASSERT_EQ(0u, program->irBinarySize);
+    auto retVal = program->createProgramFromBinary(zebin.storage.data(), zebin.storage.size(), *device.get());
+    EXPECT_EQ(CL_INVALID_BINARY, retVal);
 }
 
 class ProgramWithKernelDebuggingTest : public ProgramFixture,

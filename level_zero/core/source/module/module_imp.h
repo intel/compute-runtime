@@ -77,6 +77,7 @@ struct ModuleTranslationUnit {
     std::vector<char *> alignedvIsas;
 
     NEO::specConstValuesMap specConstantsValues;
+    bool isBuiltIn{false};
 };
 
 struct ModuleImp : public Module {

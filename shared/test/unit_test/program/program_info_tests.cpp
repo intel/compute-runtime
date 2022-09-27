@@ -7,6 +7,9 @@
 
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_modules_zebin.h"
+#include "shared/test/common/mocks/mock_source_level_debugger.h"
 
 #include "gtest/gtest.h"
 
@@ -56,4 +59,45 @@ TEST(RequiresLocalMemoryWindowVA, GivenProgramWithKernelsWhenSomeOfKernelRequire
     programInfo.kernelInfos = {new NEO::KernelInfo(), new NEO::KernelInfo(), new NEO::KernelInfo()};
     programInfo.kernelInfos[1]->kernelDescriptor.payloadMappings.implicitArgs.localMemoryStatelessWindowStartAddres = 0U;
     EXPECT_TRUE(NEO::requiresLocalMemoryWindowVA(programInfo));
+}
+
+TEST(RequiresRebuildWithPatchtokens, givenLegacyDebuggerAttachedAndZebinaryFormatNonBuiltinBinaryWhenCheckingForRebuildRequirementThenReturnTrueAndFallbackToPatchtokens) {
+    ZebinTestData::ValidEmptyProgram<> zebin;
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    device->getRootDeviceEnvironmentRef().debugger.reset(new MockActiveSourceLevelDebugger);
+    std::string options{NEO::CompilerOptions::allowZebin};
+    bool isBuiltIn{false};
+
+    bool rebuildRequired = isRebuiltToPatchtokensRequired(device.get(), ArrayRef<const uint8_t>::fromAny(zebin.storage.data(), zebin.storage.size()), options, isBuiltIn);
+    EXPECT_TRUE(rebuildRequired);
+    EXPECT_FALSE(NEO::CompilerOptions::contains(options, NEO::CompilerOptions::allowZebin));
+    EXPECT_TRUE(NEO::CompilerOptions::contains(options, NEO::CompilerOptions::disableZebin));
+}
+
+TEST(RequiresRebuildWithPatchtokens, givenNoLegacyDebuggerAttachedOrNonZebinaryFormatOrBuiltinBinaryWhenCheckingForRebuildRequirementThenReturnFalseAndDoNotFallback) {
+    ZebinTestData::ValidEmptyProgram<> zebin;
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    device->getRootDeviceEnvironmentRef().debugger.reset(new MockActiveSourceLevelDebugger);
+    std::string options{NEO::CompilerOptions::allowZebin};
+    bool isBuiltIn{true};
+
+    bool rebuildRequired = isRebuiltToPatchtokensRequired(device.get(), ArrayRef<const uint8_t>::fromAny(zebin.storage.data(), zebin.storage.size()), options, isBuiltIn);
+    EXPECT_FALSE(rebuildRequired);
+    EXPECT_TRUE(NEO::CompilerOptions::contains(options, NEO::CompilerOptions::allowZebin));
+
+    isBuiltIn = false;
+    device->getRootDeviceEnvironmentRef().debugger.reset(nullptr);
+    rebuildRequired = isRebuiltToPatchtokensRequired(device.get(), ArrayRef<const uint8_t>::fromAny(zebin.storage.data(), zebin.storage.size()), options, isBuiltIn);
+    EXPECT_FALSE(rebuildRequired);
+    EXPECT_TRUE(NEO::CompilerOptions::contains(options, NEO::CompilerOptions::allowZebin));
+
+    device->getRootDeviceEnvironmentRef().debugger.reset(new MockActiveSourceLevelDebugger);
+    for (auto idx = 0; idx < 4; idx++) {
+        zebin.elfHeader->identity.magic[idx] = 0;
+    } //broken header - zebinary format will not be detected
+    rebuildRequired = isRebuiltToPatchtokensRequired(device.get(), ArrayRef<const uint8_t>::fromAny(zebin.storage.data(), zebin.storage.size()), options, isBuiltIn);
+    EXPECT_FALSE(rebuildRequired);
+    EXPECT_TRUE(NEO::CompilerOptions::contains(options, NEO::CompilerOptions::allowZebin));
 }

@@ -24,6 +24,7 @@
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
+#include "shared/test/common/mocks/mock_source_level_debugger.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/context/context.h"
@@ -2330,6 +2331,23 @@ HWTEST_F(ModuleTranslationUnitTest, WithNoCompilerWhenCallingStaticLinkSpirVThen
     EXPECT_EQ(result, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
     Os::igcDllName = oldIgcDllName;
     Os::frontEndDllName = oldFclDllName;
+}
+
+HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromZeBinaryWithoutSpirvDataIncludedAndLegacyDebuggerAttachedThenReturnError) {
+    if (false == device->getHwInfo().capabilityTable.debuggerSupported) {
+        GTEST_SKIP();
+    }
+    ZebinTestData::ValidEmptyProgram<> zebin;
+    const auto &hwInfo = device->getNEODevice()->getHardwareInfo();
+    zebin.elfHeader->machine = hwInfo.platform.eProductFamily;
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[mockRootDeviceIndex]->debugger.reset(new MockActiveSourceLevelDebugger);
+    EXPECT_NE(nullptr, neoDevice->getSourceLevelDebugger());
+
+    MockModuleTU moduleTu{device};
+    ASSERT_EQ(0u, moduleTu.irBinarySize);
+    auto result = moduleTu.createFromNativeBinary(reinterpret_cast<const char *>(zebin.storage.data()), zebin.storage.size());
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NATIVE_BINARY, result);
 }
 
 HWTEST_F(ModuleTranslationUnitTest, WhenBuildOptionsAreNullThenReuseExistingOptions) {
