@@ -192,6 +192,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
         this->mergeOneCmdListPipelinedState(commandList);
     }
 
+    this->updateBaseAddressState(CommandList::fromHandle(phCommandLists[numCommandLists - 1]));
     this->collectPrintfContentsFromAllCommandsLists(phCommandLists, numCommandLists);
     this->migrateSharedAllocationsIfRequested(ctx.isMigrationRequested, phCommandLists[0]);
     this->prefetchMemoryIfRequested(ctx.performMemoryPrefetch);
@@ -1224,6 +1225,20 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateComputeModeForCommandLis
                                                                                         false, device->getHwInfo(), isRcs, this->getCsr()->getDcFlushSupport(), nullptr);
     }
     csrState.stateComputeMode.setProperties(cmdListFinal.stateComputeMode);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::updateBaseAddressState(CommandList *lastCommandList) {
+    auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(csr);
+    auto dsh = lastCommandList->commandContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+    if (dsh != nullptr) {
+        csrHw->getDshState().updateAndCheck(dsh);
+    }
+
+    auto ssh = lastCommandList->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    if (ssh != nullptr) {
+        csrHw->getSshState().updateAndCheck(ssh);
+    }
 }
 
 } // namespace L0

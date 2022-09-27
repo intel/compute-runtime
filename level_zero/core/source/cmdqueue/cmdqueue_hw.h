@@ -191,6 +191,8 @@ struct CommandQueueHw : public CommandQueueImp {
                                                               const NEO::StreamProperties &cmdListRequired,
                                                               const NEO::StreamProperties &cmdListFinal);
 
+    inline void updateBaseAddressState(CommandList *lastCommandList);
+
     size_t alignedChildStreamPadding{};
 };
 

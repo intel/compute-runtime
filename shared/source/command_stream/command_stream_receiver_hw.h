@@ -141,6 +141,9 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     }
     void initializeDeviceWithFirstSubmission() override;
 
+    HeapDirtyState &getDshState() {
+        return dshState;
+    }
     HeapDirtyState &getSshState() {
         return sshState;
     }

@@ -2218,6 +2218,30 @@ HWTEST_F(CommandStreamReceiverTest, givenSshDirtyStateWhenUpdatingStateWithNewHe
     EXPECT_FALSE(check);
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenDshDirtyStateWhenUpdatingStateWithNewHeapThenExpectDirtyStateTrue) {
+    MockGraphicsAllocation allocation{};
+    allocation.gpuAddress = 0xABCD00;
+    allocation.size = 0x1000;
+
+    IndirectHeap dummyHeap(&allocation, false);
+
+    auto dirtyStateCopy = static_cast<CommandStreamReceiverHw<FamilyType> *>(commandStreamReceiver)->getDshState();
+
+    bool check = dirtyStateCopy.updateAndCheck(&dummyHeap);
+    EXPECT_TRUE(check);
+
+    check = dirtyStateCopy.updateAndCheck(&dummyHeap);
+    EXPECT_FALSE(check);
+
+    auto dirtyState = static_cast<CommandStreamReceiverHw<FamilyType> *>(commandStreamReceiver)->getDshState();
+
+    check = dirtyState.updateAndCheck(&dummyHeap);
+    EXPECT_TRUE(check);
+
+    check = dirtyState.updateAndCheck(&dummyHeap);
+    EXPECT_FALSE(check);
+}
+
 using CommandStreamReceiverHwTest = Test<CommandStreamReceiverFixture>;
 
 HWTEST2_F(CommandStreamReceiverHwTest, givenSshHeapNotProvidedWhenFlushTaskPerformedThenSbaProgammedSurfaceBaseAddressToZero, IsAtLeastXeHpCore) {
