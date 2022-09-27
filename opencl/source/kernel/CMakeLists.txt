@@ -12,7 +12,6 @@ set(RUNTIME_SRCS_KERNEL
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_info_cl.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_objects_for_aux_translation.h
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}kernel_extra.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/multi_device_kernel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/multi_device_kernel.h
 )

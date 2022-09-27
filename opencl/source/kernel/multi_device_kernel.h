@@ -66,7 +66,7 @@ class MultiDeviceKernel : public BaseObject<_cl_kernel> {
     void clearUnifiedMemoryExecInfo();
     int setKernelThreadArbitrationPolicy(uint32_t propertyValue);
     cl_int setKernelExecutionType(cl_execution_info_kernel_type_intel executionType);
-    int32_t setAdditionalKernelExecInfoWithParam(uint32_t paramName, size_t paramValueSize, const void *paramValue);
+    int32_t setOverdispatchParam(size_t paramValueSize, const void *paramValue);
     void storeKernelArgAllocIdMemoryManagerCounter(uint32_t argIndex, uint32_t allocIdMemoryManagerCounter);
     Program *getProgram() const { return program; }
     const KernelInfoContainer &getKernelInfos() const { return kernelInfos; }
