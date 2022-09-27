@@ -314,6 +314,22 @@ ze_result_t LinuxSysmanImp::initDevice() {
 
     return ZE_RESULT_SUCCESS;
 }
+// function to clear Hot-Plug interrupt enable bit in the slot control register
+// this is required to prevent interrupts from being raised in the warm reset path.
+void LinuxSysmanImp::clearHPIE(int fd) {
+    uint8_t value = 0x00;
+    uint8_t resetValue = 0x00;
+    uint8_t offset = 0x0;
+    this->preadFunction(fd, &offset, 0x01, PCI_CAPABILITY_LIST);
+    // Bottom two bits of capability pointer register are reserved and
+    // software should mask these bits to get pointer to capability list.
+    // PCI_EXP_SLTCTL - offset for slot control register.
+    offset = (offset & 0xfc) + PCI_EXP_SLTCTL;
+    this->preadFunction(fd, &value, 0x01, offset);
+    resetValue = value & (~PCI_EXP_SLTCTL_HPIE);
+    this->pwriteFunction(fd, &resetValue, 0x01, offset);
+    this->pSleepFunctionSecs(10); // Sleep for 10seconds just to make sure the change is propagated.
+}
 
 // A 'warm reset' is a conventional reset that is triggered across a PCI express link.
 // A warm reset is triggered either when a link is forced into electrical idle or
@@ -322,6 +338,15 @@ ze_result_t LinuxSysmanImp::initDevice() {
 // in the bridge control register in the PCI configuration space of the bridge port upstream of the device.
 ze_result_t LinuxSysmanImp::osWarmReset() {
     std::string rootPortPath;
+    rootPortPath = getPciRootPortDirectoryPath(gtDevicePath);
+
+    int fd = 0;
+    std::string configFilePath = rootPortPath + '/' + "config";
+    fd = this->openFunction(configFilePath.c_str(), O_RDWR);
+    if (fd < 0) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
     std::string cardBusPath = getPciCardBusDirectoryPath(gtDevicePath);
     ze_result_t result = pFsAccess->write(cardBusPath + '/' + "remove", "1");
     if (ZE_RESULT_SUCCESS != result) {
@@ -332,27 +357,19 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
     } else {
         this->pSleepFunctionSecs(10); // Sleep for 10seconds to make sure that the config spaces of all devices are saved correctly
     }
-    rootPortPath = getPciRootPortDirectoryPath(gtDevicePath);
 
-    int fd, ret = 0;
-    unsigned int offset = PCI_BRIDGE_CONTROL; // Bridge control offset in Header of PCI config space
-    unsigned int value = 0x00;
-    unsigned int resetValue = 0x00;
-    std::string configFilePath = rootPortPath + '/' + "config";
-    fd = this->openFunction(configFilePath.c_str(), O_RDWR);
-    if (fd < 0) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
+    clearHPIE(fd);
+
+    uint8_t offset = PCI_BRIDGE_CONTROL; // Bridge control offset in Header of PCI config space
+    uint8_t value = 0x00;
+    uint8_t resetValue = 0x00;
+
     this->preadFunction(fd, &value, 0x01, offset);
     resetValue = value | PCI_BRIDGE_CTL_BUS_RESET;
     this->pwriteFunction(fd, &resetValue, 0x01, offset);
     this->pSleepFunctionSecs(10); // Sleep for 10seconds just to make sure the change is propagated.
     this->pwriteFunction(fd, &value, 0x01, offset);
     this->pSleepFunctionSecs(10); // Sleep for 10seconds to make sure the change is propagated. before rescan is done.
-    ret = this->closeFunction(fd);
-    if (ret < 0) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
 
     result = pFsAccess->write(rootPortPath + '/' + "rescan", "1");
     if (ZE_RESULT_SUCCESS != result) {
@@ -363,6 +380,12 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
     } else {
         this->pSleepFunctionSecs(10); // Sleep for 10seconds, allows the rescan to complete on all devices attached to the root port.
     }
+
+    int ret = this->closeFunction(fd);
+    if (ret < 0) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
     return result;
 }
 
