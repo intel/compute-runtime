@@ -15,18 +15,6 @@
 namespace NEO {
 
 template <typename GfxFamily>
-void StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStream(StateBaseAddressHelperArgs<GfxFamily> &args,
-                                                                                 NEO::LinearStream &commandStream) {
-    StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStreamBase(args, commandStream);
-
-    auto &hwInfoConfig = *HwInfoConfig::get(args.hwInfo->platform.eProductFamily);
-    if (hwInfoConfig.isAdditionalStateBaseAddressWARequired(*args.hwInfo)) {
-        auto cmdSpace = StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStream);
-        *cmdSpace = *args.stateBaseAddressCmd;
-    }
-}
-
-template <typename GfxFamily>
 void setSbaStatelessCompressionParams(typename GfxFamily::STATE_BASE_ADDRESS *stateBaseAddress, MemoryCompressionState memoryCompressionState) {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 

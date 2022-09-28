@@ -17,11 +17,16 @@
 namespace NEO {
 
 template <typename GfxFamily>
-void StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStreamBase(StateBaseAddressHelperArgs<GfxFamily> &args,
-                                                                                     NEO::LinearStream &commandStream) {
+void StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStream(StateBaseAddressHelperArgs<GfxFamily> &args, NEO::LinearStream &commandStream) {
     StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(args);
     auto cmdSpace = StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStream);
     *cmdSpace = *args.stateBaseAddressCmd;
+
+    auto &hwInfoConfig = *HwInfoConfig::get(args.hwInfo->platform.eProductFamily);
+    if (hwInfoConfig.isAdditionalStateBaseAddressWARequired(*args.hwInfo)) {
+        auto cmdSpace = StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStream);
+        *cmdSpace = *args.stateBaseAddressCmd;
+    }
 }
 
 template <typename GfxFamily>

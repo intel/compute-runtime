@@ -31,10 +31,4 @@ void StateBaseAddressHelper<GfxFamily>::appendIohParameters(StateBaseAddressHelp
 template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::appendExtraCacheSettings(StateBaseAddressHelperArgs<GfxFamily> &args) {}
 
-template <typename GfxFamily>
-void StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStream(StateBaseAddressHelperArgs<GfxFamily> &args,
-                                                                                 NEO::LinearStream &commandStream) {
-    programStateBaseAddressIntoCommandStreamBase(args, commandStream);
-}
-
 } // namespace NEO
