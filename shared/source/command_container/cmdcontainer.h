@@ -134,7 +134,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     uint32_t numIddsPerBlock = 64;
 
     bool isFlushTaskUsedForImmediate = false;
-    bool isHandleFenceCompletionRequired = true;
+    bool isHandleFenceCompletionRequired = false;
 };
 
 } // namespace NEO

@@ -219,7 +219,7 @@ TEST_F(CommandContainerTest, givenCmdContainerWithAllocsListWhenAllocateAndReset
     auto cmdBuffer1 = cmdBufferAllocs[1];
 
     cmdContainer->reset();
-    EXPECT_EQ(memoryManager->handleFenceCompletionCalled, 1u);
+    EXPECT_EQ(memoryManager->handleFenceCompletionCalled, 0u);
     EXPECT_EQ(cmdBufferAllocs.size(), 1u);
     EXPECT_EQ(cmdBufferAllocs[0], cmdBuffer0);
     EXPECT_FALSE(allocList.peekIsEmpty());
@@ -231,14 +231,14 @@ TEST_F(CommandContainerTest, givenCmdContainerWithAllocsListWhenAllocateAndReset
     EXPECT_TRUE(allocList.peekIsEmpty());
 
     cmdContainer.reset();
-    EXPECT_EQ(memoryManager->handleFenceCompletionCalled, 3u);
+    EXPECT_EQ(memoryManager->handleFenceCompletionCalled, 0u);
     EXPECT_FALSE(allocList.peekIsEmpty());
     allocList.freeAllGraphicsAllocations(pDevice);
 }
 
-TEST_F(CommandContainerTest, givenReusableAllocationsAndRemoveUserFenceInCmdlistResetAndDestroyFlagWhenAllocateAndResetThenHandleFenceCompletionIsNotCalled) {
+TEST_F(CommandContainerTest, givenReusableAllocationsAndRemoveUserFenceInCmdlistResetAndDestroyFlagWhenAllocateAndResetThenHandleFenceCompletionIsCalled) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.RemoveUserFenceInCmdlistResetAndDestroy.set(1);
+    DebugManager.flags.RemoveUserFenceInCmdlistResetAndDestroy.set(0);
 
     AllocationsList allocList;
     auto cmdContainer = std::make_unique<CommandContainer>();
@@ -251,12 +251,12 @@ TEST_F(CommandContainerTest, givenReusableAllocationsAndRemoveUserFenceInCmdlist
     EXPECT_EQ(cmdBufferAllocs.size(), 2u);
 
     cmdContainer->reset();
-    EXPECT_EQ(0u, memoryManager->handleFenceCompletionCalled);
+    EXPECT_EQ(1u, memoryManager->handleFenceCompletionCalled);
     cmdContainer->allocateNextCommandBuffer();
     EXPECT_EQ(cmdBufferAllocs.size(), 2u);
 
     cmdContainer.reset();
-    EXPECT_EQ(0u, memoryManager->handleFenceCompletionCalled);
+    EXPECT_EQ(3u, memoryManager->handleFenceCompletionCalled);
     allocList.freeAllGraphicsAllocations(pDevice);
 }
 
