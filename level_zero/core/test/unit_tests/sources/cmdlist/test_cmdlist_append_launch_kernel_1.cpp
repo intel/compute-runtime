@@ -784,5 +784,41 @@ HWTEST_F(CommandListAppendLaunchKernel, givenInvalidEventListWhenAppendLaunchCoo
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
 }
 
+HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendLaunchCooperativeKernelUsingFlushTaskThenExpectCorrectExecuteCall, IsAtLeastSkl) {
+    createKernel();
+
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.isFlushTaskSubmissionEnabled = true;
+    cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    cmdList.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+
+    ze_group_count_t groupCount{1, 1, 1};
+    ze_result_t returnValue;
+
+    returnValue = cmdList.appendLaunchCooperativeKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
+    EXPECT_EQ(0u, cmdList.executeCommandListImmediateCalledCount);
+    EXPECT_EQ(1u, cmdList.executeCommandListImmediateWithFlushTaskCalledCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendLaunchCooperativeKernelNotUsingFlushTaskThenExpectCorrectExecuteCall, IsAtLeastSkl) {
+    createKernel();
+
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.isFlushTaskSubmissionEnabled = false;
+    cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    cmdList.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+
+    ze_group_count_t groupCount{1, 1, 1};
+    ze_result_t returnValue;
+
+    returnValue = cmdList.appendLaunchCooperativeKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
+    EXPECT_EQ(1u, cmdList.executeCommandListImmediateCalledCount);
+    EXPECT_EQ(0u, cmdList.executeCommandListImmediateWithFlushTaskCalledCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+}
+
 } // namespace ult
 } // namespace L0

@@ -118,6 +118,12 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                           uint32_t numWaitEvents,
                                           ze_event_handle_t *phWaitEvents) override;
 
+    ze_result_t appendLaunchCooperativeKernel(ze_kernel_handle_t kernelHandle,
+                                              const ze_group_count_t *launchKernelArgs,
+                                              ze_event_handle_t signalEvent,
+                                              uint32_t numWaitEvents,
+                                              ze_event_handle_t *waitEventHandles) override;
+
     MOCKABLE_VIRTUAL ze_result_t executeCommandListImmediateWithFlushTask(bool performMigration);
 
     void checkAvailableSpace();
