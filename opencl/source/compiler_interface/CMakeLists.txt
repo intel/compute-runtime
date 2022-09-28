@@ -1,12 +1,12 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 set(RUNTIME_SRCS_COMPILER_INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/default_cl_cache_config.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/default_cache_config.cpp
 )
 
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE
