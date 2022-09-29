@@ -2110,22 +2110,30 @@ struct DrmCommandStreamEnhancedPrelimTest : public DrmCommandStreamEnhancedTempl
         dbgState.reset();
     }
 
+    template <typename FamilyType>
+    void setUpT() {
+        DrmCommandStreamEnhancedTemplate<DrmMockCustomPrelim>::setUpT<FamilyType>();
+
+        this->commandBuffer = this->mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{this->csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+        LinearStream cs(commandBuffer);
+        CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
+        EncodeNoop<FamilyType>::alignToCacheLine(cs);
+        this->batchBuffer = BatchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+        this->allocation = this->mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+        this->csr->makeResident(*this->allocation);
+    }
+
     DebugManagerStateRestore restorer;
+    GraphicsAllocation *commandBuffer;
+    GraphicsAllocation *allocation;
+    BatchBuffer batchBuffer;
 };
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedPrelimTest, givenUseVmBindSetWhenFlushThenAllocIsBoundAndNotPassedToExec) {
-    auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
-    LinearStream cs(commandBuffer);
-    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
-    EncodeNoop<FamilyType>::alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
-
-    auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
-    csr->makeResident(*allocation);
 
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 
-    const auto execObjectRequirements = [&allocation](const auto &execObject) {
+    const auto execObjectRequirements = [allocation = this->allocation](const auto &execObject) {
         auto mockExecObject = static_cast<const MockExecObject &>(execObject);
         return (mockExecObject.getHandle() == 0 &&
                 mockExecObject.getOffset() == static_cast<DrmAllocation *>(allocation)->getBO()->peekAddress());
@@ -2134,66 +2142,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedPrelimTest, givenUseVmBindSetWhenFlus
     auto &residency = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->execObjectsStorage;
     EXPECT_TRUE(std::find_if(residency.begin(), residency.end(), execObjectRequirements) == residency.end());
     EXPECT_EQ(residency.size(), 1u);
-
-    residency.clear();
-
-    mm->freeGraphicsMemory(allocation);
-    mm->freeGraphicsMemory(commandBuffer);
-}
-
-HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedPrelimTest, givenUseVmBindAndPassBoundBOToExecSetToFalseWhenFlushThenAllocIsBoundOnly) {
-    DebugManager.flags.PassBoundBOToExec.set(0u);
-
-    auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
-    LinearStream cs(commandBuffer);
-    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
-    EncodeNoop<FamilyType>::alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
-
-    auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
-    csr->makeResident(*allocation);
-
-    csr->flush(batchBuffer, csr->getResidencyAllocations());
-
-    const auto execObjectRequirements = [&allocation](const auto &execObject) {
-        auto mockExecObject = static_cast<const MockExecObject &>(execObject);
-        return (mockExecObject.getHandle() == 0 &&
-                mockExecObject.getOffset() == static_cast<DrmAllocation *>(allocation)->getBO()->peekAddress());
-    };
-
-    auto &residency = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->execObjectsStorage;
-    EXPECT_FALSE(std::find_if(residency.begin(), residency.end(), execObjectRequirements) != residency.end());
-    EXPECT_EQ(residency.size(), 1u);
-
-    residency.clear();
-
-    mm->freeGraphicsMemory(allocation);
-    mm->freeGraphicsMemory(commandBuffer);
-}
-
-HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedPrelimTest, givenUseVmBindAndPassBoundBOToExecSetToTrueWhenFlushThenAllocIsBoundAndPassedToExec) {
-    DebugManager.flags.PassBoundBOToExec.set(1u);
-
-    auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
-    LinearStream cs(commandBuffer);
-    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
-    EncodeNoop<FamilyType>::alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
-
-    auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
-    csr->makeResident(*allocation);
-
-    csr->flush(batchBuffer, csr->getResidencyAllocations());
-
-    const auto execObjectRequirements = [&allocation](const auto &execObject) {
-        auto mockExecObject = static_cast<const MockExecObject &>(execObject);
-        return (mockExecObject.getHandle() == 0 &&
-                mockExecObject.getOffset() == static_cast<DrmAllocation *>(allocation)->getBO()->peekAddress());
-    };
-
-    auto &residency = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->execObjectsStorage;
-    EXPECT_TRUE(std::find_if(residency.begin(), residency.end(), execObjectRequirements) != residency.end());
-    EXPECT_EQ(residency.size(), 2u);
 
     residency.clear();
 

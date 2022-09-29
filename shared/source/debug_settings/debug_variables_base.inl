@@ -468,7 +468,6 @@ DECLARE_DEBUG_VARIABLE(int64_t, ForceNonSystemMemoryPlacement, 0, "0: default,  
 DECLARE_DEBUG_VARIABLE(int64_t, ForceUncachedGmmUsageType, 0, "0: default,  >0: (bitmask) for given Graphics Allocation Type, force uncached gmm resource type")
 DECLARE_DEBUG_VARIABLE(int64_t, DisableIndirectAccess, -1, "0: default,  0: Use indirect access settings provided by application, 1: Disable indirect access and ignore settings provided by application")
 DECLARE_DEBUG_VARIABLE(int32_t, UseVmBind, -1, "Use new residency model on Linux (requires kernel support), -1: default, 0: disabled, 1: enabled")
-DECLARE_DEBUG_VARIABLE(int32_t, PassBoundBOToExec, -1, "Pass bound BOs to exec call to keep dependencies")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableStaticPartitioning, -1, "Divide workload into partitions during dispatch, -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, UpdateTaskCountFromWait, -1, " Do not update task count after each enqueue, but send update request while wait, -1: default(disabled), 0: disabled, 1: enabled on gpgpu engine with direct submission, 2: enabled on any direct submission, 3: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableTimestampWaitForQueues, -1, "Wait on queues using timestamps, -1: default(disabled), 0: disabled, 1: enabled where UpdateTaskCountFromWait enabled, 2: enabled on gpgpu engine with direct submission, 3: enabled on any direct submission, 4: enabled")
