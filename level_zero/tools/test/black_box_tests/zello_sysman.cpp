@@ -280,7 +280,7 @@ std::string getEngineFlagType(zes_engine_type_flags_t engineFlag) {
         {ZES_ENGINE_TYPE_FLAG_RENDER, "ZES_ENGINE_TYPE_FLAG_RENDER"}};
     auto i = mgetEngineType.find(engineFlag);
     if (i == mgetEngineType.end())
-        return "NOT SUPPORTED MODE Engine avalialbe";
+        return "No supported engine type flag available";
     else
         return mgetEngineType.at(engineFlag);
 }
@@ -360,7 +360,7 @@ std::string getTemperatureSensorType(zes_temp_sensors_t type) {
         {ZES_TEMP_SENSORS_MEMORY_MIN, "ZES_TEMP_SENSORS_MEMORY_MIN"}};
     auto i = mgetSensorType.find(type);
     if (i == mgetSensorType.end())
-        return "NOT SUPPORTED MODE Engine avalialbe";
+        return "No supported temperature type available";
     else
         return mgetSensorType.at(type);
 }
@@ -727,7 +727,7 @@ std::string getEngineType(zes_engine_group_t engineGroup) {
         {ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE, "ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE"}};
     auto i = mgetEngineType.find(engineGroup);
     if (i == mgetEngineType.end())
-        return "NOT SUPPORTED MODE Engine avalialbe";
+        return "No supported engine group type available";
     else
         return mgetEngineType.at(engineGroup);
 }
