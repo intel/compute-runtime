@@ -7,6 +7,7 @@
 
 #include "printf_handler.h"
 
+#include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -15,15 +16,13 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/program/print_formatter.h"
 
-#include "opencl/source/cl_device/cl_device.h"
-#include "opencl/source/context/context.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
 
 namespace NEO {
 
-PrintfHandler::PrintfHandler(ClDevice &deviceArg) : device(deviceArg) {
+PrintfHandler::PrintfHandler(Device &deviceArg) : device(deviceArg) {
     printfSurfaceInitialDataSizePtr = std::make_unique<uint32_t>();
     *printfSurfaceInitialDataSizePtr = sizeof(uint32_t);
 }
@@ -32,21 +31,15 @@ PrintfHandler::~PrintfHandler() {
     device.getMemoryManager()->freeGraphicsMemory(printfSurface);
 }
 
-PrintfHandler *PrintfHandler::create(const MultiDispatchInfo &multiDispatchInfo, ClDevice &device) {
+PrintfHandler *PrintfHandler::create(const MultiDispatchInfo &multiDispatchInfo, Device &device) {
     if (multiDispatchInfo.usesStatelessPrintfSurface()) {
         return new PrintfHandler(device);
-    }
-    auto mainKernel = multiDispatchInfo.peekMainKernel();
-    if (mainKernel != nullptr) {
-        if (mainKernel->getImplicitArgs()) {
-            return new PrintfHandler(device);
-        }
     }
     return nullptr;
 }
 
 void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) {
-    auto printfSurfaceSize = device.getSharedDeviceInfo().printfBufferSize;
+    auto printfSurfaceSize = device.getDeviceInfo().printfBufferSize;
     if (printfSurfaceSize == 0) {
         return;
     }
@@ -58,22 +51,19 @@ void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) 
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
     MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *printfSurface),
-                                                     device.getDevice(), printfSurface, 0, printfSurfaceInitialDataSizePtr.get(),
+                                                     device, printfSurface, 0, printfSurfaceInitialDataSizePtr.get(),
                                                      sizeof(*printfSurfaceInitialDataSizePtr.get()));
 
-    if (kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.usesPrintf) {
-
-        const auto &printfSurfaceArg = kernel->getKernelInfo().kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress;
-        auto printfPatchAddress = ptrOffset(reinterpret_cast<uintptr_t *>(kernel->getCrossThreadData()), printfSurfaceArg.stateless);
-        patchWithRequiredSize(printfPatchAddress, printfSurfaceArg.pointerSize, (uintptr_t)printfSurface->getGpuAddressToPatch());
-        if (isValidOffset(printfSurfaceArg.bindful)) {
-            auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(kernel->getSurfaceStateHeap()), printfSurfaceArg.bindful);
-            void *addressToPatch = printfSurface->getUnderlyingBuffer();
-            size_t sizeToPatch = printfSurface->getUnderlyingBufferSize();
-            Buffer::setSurfaceState(&device.getDevice(), surfaceState, false, false, sizeToPatch, addressToPatch, 0, printfSurface, 0, 0,
-                                    kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics,
-                                    kernel->areMultipleSubDevicesInContext());
-        }
+    const auto &printfSurfaceArg = kernel->getKernelInfo().kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress;
+    auto printfPatchAddress = ptrOffset(reinterpret_cast<uintptr_t *>(kernel->getCrossThreadData()), printfSurfaceArg.stateless);
+    patchWithRequiredSize(printfPatchAddress, printfSurfaceArg.pointerSize, (uintptr_t)printfSurface->getGpuAddressToPatch());
+    if (isValidOffset(printfSurfaceArg.bindful)) {
+        auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(kernel->getSurfaceStateHeap()), printfSurfaceArg.bindful);
+        void *addressToPatch = printfSurface->getUnderlyingBuffer();
+        size_t sizeToPatch = printfSurface->getUnderlyingBufferSize();
+        Buffer::setSurfaceState(&device, surfaceState, false, false, sizeToPatch, addressToPatch, 0, printfSurface, 0, 0,
+                                kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics,
+                                kernel->areMultipleSubDevicesInContext());
     }
     auto pImplicitArgs = kernel->getImplicitArgs();
     if (pImplicitArgs) {
@@ -107,7 +97,7 @@ bool PrintfHandler::printEnqueueOutput() {
                                                             printfSurface->getGpuAddress(),
                                                             0, 0, 0, Vec3<size_t>(printfOutputSize, 0, 0), 0, 0, 0, 0));
 
-        const auto newTaskCount = bcsEngine.commandStreamReceiver->flushBcsTask(blitPropertiesContainer, true, false, device.getDevice());
+        const auto newTaskCount = bcsEngine.commandStreamReceiver->flushBcsTask(blitPropertiesContainer, true, false, device);
         if (!newTaskCount) {
             return false;
         }

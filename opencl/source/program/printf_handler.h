@@ -7,18 +7,20 @@
 
 #pragma once
 
-#include "shared/source/command_stream/command_stream_receiver.h"
-
-#include "opencl/source/kernel/kernel.h"
+#include <cstdint>
+#include <memory>
 
 namespace NEO {
 
-class ClDevice;
+class CommandStreamReceiver;
+class Kernel;
+class GraphicsAllocation;
+class Device;
 struct MultiDispatchInfo;
 
 class PrintfHandler {
   public:
-    static PrintfHandler *create(const MultiDispatchInfo &multiDispatchInfo, ClDevice &deviceArg);
+    static PrintfHandler *create(const MultiDispatchInfo &multiDispatchInfo, Device &deviceArg);
 
     MOCKABLE_VIRTUAL ~PrintfHandler();
 
@@ -31,10 +33,10 @@ class PrintfHandler {
     }
 
   protected:
-    PrintfHandler(ClDevice &device);
+    PrintfHandler(Device &device);
 
     std::unique_ptr<uint32_t> printfSurfaceInitialDataSizePtr;
-    ClDevice &device;
+    Device &device;
     Kernel *kernel = nullptr;
     GraphicsAllocation *printfSurface = nullptr;
 };

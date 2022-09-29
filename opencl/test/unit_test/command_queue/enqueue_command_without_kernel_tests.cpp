@@ -435,7 +435,7 @@ HWTEST_F(DispatchFlagsTests, givenMockKernelWhenSettingAdditionalKernelExecInfoT
     auto pKernel = mockKernelWithInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(device.get(), pKernel);
 
-    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *device.get()));
+    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, device->getDevice()));
     IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
     mockCmdQ->allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 4096u, dsh);
     mockCmdQ->allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 4096u, ioh);

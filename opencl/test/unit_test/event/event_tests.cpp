@@ -567,7 +567,7 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
     pKernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
 
     MockMultiDispatchInfo multiDispatchInfo(pClDevice, pKernel);
-    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *pClDevice));
+    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *pDevice));
     printfHandler->prepareDispatch(multiDispatchInfo);
     auto surface = printfHandler->getSurface();
 
@@ -619,7 +619,7 @@ TEST_F(InternalsEventTest, givenGpuHangOnCmdQueueWaitFunctionAndBlockedKernelWit
     pKernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
 
     MockMultiDispatchInfo multiDispatchInfo(pClDevice, pKernel);
-    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *pClDevice));
+    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *pDevice));
     printfHandler.get()->prepareDispatch(multiDispatchInfo);
     auto surface = printfHandler.get()->getSurface();
 
@@ -668,7 +668,7 @@ TEST_F(InternalsEventTest, givenGpuHangOnPrintingEnqueueOutputAndBlockedKernelWi
     pKernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
 
     MockMultiDispatchInfo multiDispatchInfo(pClDevice, pKernel);
-    std::unique_ptr<MockPrintfHandler> printfHandler(new MockPrintfHandler(*pClDevice));
+    std::unique_ptr<MockPrintfHandler> printfHandler(new MockPrintfHandler(*pDevice));
     printfHandler.get()->prepareDispatch(multiDispatchInfo);
     auto surface = printfHandler.get()->getSurface();
 

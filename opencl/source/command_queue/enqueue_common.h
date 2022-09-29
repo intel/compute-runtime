@@ -408,7 +408,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
     TagNodeBase *hwPerfCounter = nullptr;
     getClFileLogger().dumpKernelArgs(&multiDispatchInfo);
 
-    printfHandler.reset(PrintfHandler::create(multiDispatchInfo, *device));
+    printfHandler.reset(PrintfHandler::create(multiDispatchInfo, device->getDevice()));
     if (printfHandler) {
         printfHandler->prepareDispatch(multiDispatchInfo);
     }

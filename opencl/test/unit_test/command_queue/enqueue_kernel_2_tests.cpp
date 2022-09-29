@@ -630,13 +630,11 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
     MockKernelWithInternals mockKernel(*pClDevice);
     std::string testString = "test";
     mockKernel.kernelInfo.addToPrintfStringsMap(0, testString);
-    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesPrintf = false;
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesPrintf = true;
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesStringMapForPrintf = true;
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Patchtokens;
-    UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(mockKernel.kernelInfo.kernelDescriptor);
-    mockKernel.mockKernel->pImplicitArgs = std::make_unique<ImplicitArgs>();
-    *mockKernel.mockKernel->pImplicitArgs = {};
-
+    mockKernel.kernelInfo.setBufferAddressingMode(KernelDescriptor::Stateless);
+    mockKernel.kernelInfo.setPrintfSurface(sizeof(uintptr_t), 8);
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
 
@@ -671,7 +669,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
     EXPECT_STREQ("test", output.c_str());
 }
 
-HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWithStringMapDisbaledAndImplicitArgsBlockedByEventWhenEventUnblockedThenOutputPrinted) {
+HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWithStringMapDisbaledAndImplicitArgsBlockedByEventWhenEventUnblockedThenNoOutputPrinted) {
     auto userEvent = makeReleaseable<UserEvent>(context);
 
     MockKernelWithInternals mockKernel(*pClDevice);
@@ -705,9 +703,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWithStringMapDisbaledAndI
 
     auto pOutEvent = castToObject<Event>(outEvent);
 
-    auto printfAllocation = reinterpret_cast<uint32_t *>(static_cast<CommandComputeKernel *>(pOutEvent->peekCommand())->peekPrintfHandler()->getSurface()->getUnderlyingBuffer());
-    printfAllocation[0] = 8;
-    printfAllocation[1] = 0;
+    EXPECT_EQ(nullptr, static_cast<CommandComputeKernel *>(pOutEvent->peekCommand())->peekPrintfHandler());
 
     pOutEvent->release();
 
@@ -715,7 +711,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWithStringMapDisbaledAndI
     userEvent->setStatus(CL_COMPLETE);
     std::string output = testing::internal::GetCapturedStdout();
 
-    EXPECT_STREQ("test", output.c_str());
+    EXPECT_STREQ("", output.c_str());
 }
 
 INSTANTIATE_TEST_CASE_P(EnqueueKernel,

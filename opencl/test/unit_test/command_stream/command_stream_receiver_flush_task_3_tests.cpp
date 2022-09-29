@@ -1138,7 +1138,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenGpuHangOnPrintEnqueueOutputWh
 
     const auto blockedQueue{false};
     const auto cleanTemporaryAllocationsList{false};
-    MockPrintfHandler printfHandler(*pClDevice);
+    MockPrintfHandler printfHandler(*pDevice);
 
     const auto waitStatus = commandQueue.waitForAllEngines(blockedQueue, &printfHandler, cleanTemporaryAllocationsList);
     EXPECT_EQ(WaitStatus::GpuHang, waitStatus);

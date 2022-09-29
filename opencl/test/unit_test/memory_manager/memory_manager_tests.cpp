@@ -514,13 +514,6 @@ TEST_F(MemoryAllocatorTest, givenAllocationWithoutFragmentsWhenCallingFreeGraphi
     EXPECT_EQ(1u, memoryManager->handleFenceCompletionCalled);
 }
 
-class MockPrintfHandler : public PrintfHandler {
-  public:
-    static MockPrintfHandler *create(const MultiDispatchInfo &multiDispatchInfo, ClDevice &deviceArg) {
-        return (MockPrintfHandler *)PrintfHandler::create(multiDispatchInfo, deviceArg);
-    }
-};
-
 TEST_F(MemoryAllocatorTest, givenStatelessKernelWithPrintfWhenPrintfSurfaceIsCreatedThenPrintfSurfaceIsPatchedWithBaseAddressOffset) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockKernelWithInternals kernel(*device);
@@ -529,7 +522,7 @@ TEST_F(MemoryAllocatorTest, givenStatelessKernelWithPrintfWhenPrintfSurfaceIsCre
     kernel.kernelInfo.setBufferAddressingMode(KernelDescriptor::Stateless);
     kernel.kernelInfo.setPrintfSurface(sizeof(uintptr_t), 8);
 
-    auto printfHandler = MockPrintfHandler::create(multiDispatchInfo, *device.get());
+    auto printfHandler = PrintfHandler::create(multiDispatchInfo, device->getDevice());
 
     printfHandler->prepareDispatch(multiDispatchInfo);
 
@@ -552,7 +545,7 @@ HWTEST_F(MemoryAllocatorTest, givenStatefulKernelWithPrintfWhenPrintfSurfaceIsCr
 
     kernel.kernelInfo.setPrintfSurface(sizeof(uintptr_t), 8, 16);
 
-    auto printfHandler = MockPrintfHandler::create(multiDispatchInfo, *device.get());
+    auto printfHandler = PrintfHandler::create(multiDispatchInfo, device->getDevice());
 
     printfHandler->prepareDispatch(multiDispatchInfo);
 
@@ -586,7 +579,7 @@ TEST_F(MemoryAllocatorTest, given32BitDeviceWhenPrintfSurfaceIsCreatedThen32BitA
 
         MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel.mockKernel);
 
-        auto printfHandler = MockPrintfHandler::create(multiDispatchInfo, *device.get());
+        auto printfHandler = PrintfHandler::create(multiDispatchInfo, device->getDevice());
         printfHandler->prepareDispatch(multiDispatchInfo);
 
         uint32_t *ptr32Bit = (uint32_t *)kernel.mockKernel->mockCrossThreadData.data();
