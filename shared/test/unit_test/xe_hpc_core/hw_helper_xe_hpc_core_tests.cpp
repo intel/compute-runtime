@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
@@ -74,7 +75,13 @@ XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenXeHPCPlatformWhenCheckAssignEngine
     EXPECT_EQ(hwHelper.isAssignEngineRoundRobinSupported(hwInfo), HwInfoConfig::get(hwInfo.platform.eProductFamily)->isAssignEngineRoundRobinSupported());
 }
 
-XE_HPC_CORETEST_F(HwHelperTest, givenHwHelperWhenCallCopyThroughLockedPtrEnabledThenReturnTrue) {
+XE_HPC_CORETEST_F(HwHelperTest, givenHwHelperWithFlagSetWhenCallCopyThroughLockedPtrEnabledThenReturnFalse) {
+    DebugManagerStateRestore restore;
     auto &hwHelper = HwHelperHw<FamilyType>::get();
+
+    DebugManager.flags.ExperimentalCopyThroughLock.set(false);
+    EXPECT_FALSE(hwHelper.copyThroughLockedPtrEnabled());
+
+    DebugManager.flags.ExperimentalCopyThroughLock.set(true);
     EXPECT_TRUE(hwHelper.copyThroughLockedPtrEnabled());
 }
