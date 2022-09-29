@@ -206,7 +206,7 @@ struct DebugSessionLinux : DebugSessionImp {
     void startAsyncThread() override;
     void closeAsyncThread();
 
-    void startInternalEventsThread() {
+    MOCKABLE_VIRTUAL void startInternalEventsThread() {
         internalEventThread.thread = NEO::Thread::create(readInternalEventsThreadFunction, reinterpret_cast<void *>(this));
     }
     void closeInternalEventsThread() {
@@ -229,11 +229,12 @@ struct DebugSessionLinux : DebugSessionImp {
     void readInternalEventsAsync();
     MOCKABLE_VIRTUAL std::unique_ptr<uint64_t[]> getInternalEvent();
 
-    void handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *vmBind);
+    bool handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *vmBind);
     void handleContextParamEvent(prelim_drm_i915_debug_event_context_param *contextParam);
     void handleAttentionEvent(prelim_drm_i915_debug_event_eu_attention *attention);
     void handleEnginesEvent(prelim_drm_i915_debug_event_engines *engines);
     virtual bool ackIsaEvents(uint32_t deviceIndex, uint64_t isaVa);
+    MOCKABLE_VIRTUAL void processPendingVmBindEvents();
 
     void attachTile() override {
         UNRECOVERABLE_IF(true);
@@ -332,6 +333,7 @@ struct DebugSessionLinux : DebugSessionImp {
     std::condition_variable internalEventCondition;
     std::queue<std::unique_ptr<uint64_t[]>> internalEventQueue;
     std::vector<std::pair<zet_debug_event_t, prelim_drm_i915_debug_event_ack>> eventsToAck;
+    std::vector<std::unique_ptr<uint64_t[]>> pendingVmBindEvents;
 
     int fd = 0;
     virtual int ioctl(unsigned long request, void *arg);

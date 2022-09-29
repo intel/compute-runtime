@@ -275,6 +275,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     using L0::DebugSessionLinux::ioctlHandler;
     using L0::DebugSessionLinux::newlyStoppedThreads;
     using L0::DebugSessionLinux::pendingInterrupts;
+    using L0::DebugSessionLinux::pendingVmBindEvents;
     using L0::DebugSessionLinux::printContextVms;
     using L0::DebugSessionLinux::pushApiEvent;
     using L0::DebugSessionLinux::readEventImp;
@@ -397,12 +398,24 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
         return L0::DebugSessionLinux::checkThreadIsResumed(threadID);
     }
 
+    void startInternalEventsThread() override {
+        if (synchronousInternalEventRead) {
+            return;
+        }
+        return DebugSessionLinux::startInternalEventsThread();
+    }
+
     std::unique_ptr<uint64_t[]> getInternalEvent() override {
         getInternalEventCounter++;
         if (synchronousInternalEventRead) {
             readInternalEventsAsync();
         }
         return DebugSessionLinux::getInternalEvent();
+    }
+
+    void processPendingVmBindEvents() override {
+        processPendingVmBindEventsCalled++;
+        return DebugSessionLinux::processPendingVmBindEvents();
     }
 
     TileDebugSessionLinux *createTileSession(const zet_debug_config_t &config, L0::Device *device, L0::DebugSessionImp *rootDebugSession) override;
@@ -422,6 +435,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     bool skipcheckThreadIsResumed = true;
     uint32_t checkThreadIsResumedCalled = 0;
     uint32_t interruptedDevice = std::numeric_limits<uint32_t>::max();
+    uint32_t processPendingVmBindEventsCalled = 0;
 
     std::vector<uint32_t> resumedDevices;
     std::vector<std::vector<EuThread::ThreadId>> resumedThreads;

@@ -257,8 +257,12 @@ ze_result_t DebugSessionLinux::initialize() {
     bool eventAvailable = false;
     do {
         auto eventMemory = getInternalEvent();
+        auto debugEvent = reinterpret_cast<prelim_drm_i915_debug_event *>(eventMemory.get());
         if (eventMemory != nullptr) {
-            handleEvent(reinterpret_cast<prelim_drm_i915_debug_event *>(eventMemory.get()));
+            handleEvent(debugEvent);
+            if (debugEvent->type != PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND && pendingVmBindEvents.size() > 0) {
+                processPendingVmBindEvents();
+            }
             eventAvailable = true;
         } else {
             eventAvailable = false;
@@ -385,7 +389,12 @@ std::unique_ptr<uint64_t[]> DebugSessionLinux::getInternalEvent() {
 void DebugSessionLinux::handleEventsAsync() {
     auto eventMemory = getInternalEvent();
     if (eventMemory != nullptr) {
-        handleEvent(reinterpret_cast<prelim_drm_i915_debug_event *>(eventMemory.get()));
+        auto debugEvent = reinterpret_cast<prelim_drm_i915_debug_event *>(eventMemory.get());
+        handleEvent(debugEvent);
+
+        if (debugEvent->type != PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND && pendingVmBindEvents.size() > 0) {
+            processPendingVmBindEvents();
+        }
     }
 }
 
@@ -645,7 +654,21 @@ void DebugSessionLinux::handleEvent(prelim_drm_i915_debug_event *event) {
     case PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND: {
         prelim_drm_i915_debug_event_vm_bind *vmBind = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(event);
 
-        handleVmBindEvent(vmBind);
+        if (!handleVmBindEvent(vmBind)) {
+            if (event->flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) {
+                prelim_drm_i915_debug_event_ack eventToAck = {};
+                eventToAck.type = vmBind->base.type;
+                eventToAck.seqno = vmBind->base.seqno;
+                eventToAck.flags = 0;
+                auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_ACK_EVENT, &eventToAck);
+                PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_ACK_EVENT seqno = %llu ret = %d errno = %d\n", (uint64_t)eventToAck.seqno, ret, ret != 0 ? errno : 0);
+            } else {
+                auto sizeAligned = alignUp(event->size, sizeof(uint64_t));
+                auto pendingEvent = std::make_unique<uint64_t[]>(sizeAligned / sizeof(uint64_t));
+                memcpy_s(pendingEvent.get(), sizeAligned, event, event->size);
+                pendingVmBindEvents.push_back(std::move(pendingEvent));
+            }
+        }
 
     } break;
 
@@ -673,6 +696,20 @@ void DebugSessionLinux::handleEvent(prelim_drm_i915_debug_event *event) {
     default:
         PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_READ_EVENT type: UNHANDLED %d flags = %d size = %llu\n", (int)event->type, (int)event->flags, (uint64_t)event->size);
         break;
+    }
+}
+
+void DebugSessionLinux::processPendingVmBindEvents() {
+    size_t processedEvents = 0;
+    for (size_t index = 0; index < pendingVmBindEvents.size(); index++) {
+        auto debugEvent = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(pendingVmBindEvents[index].get());
+        if (handleVmBindEvent(debugEvent) == false) {
+            break;
+        }
+        processedEvents++;
+    }
+    if (processedEvents > 0) {
+        pendingVmBindEvents.erase(pendingVmBindEvents.begin(), pendingVmBindEvents.begin() + processedEvents);
     }
 }
 
@@ -756,7 +793,7 @@ ze_result_t DebugSessionLinux::readEventImp(prelim_drm_i915_debug_event *drmDebu
     return ZE_RESULT_NOT_READY;
 }
 
-void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *vmBind) {
+bool DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *vmBind) {
 
     PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_READ_EVENT type: PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND flags = %d size = %llu client_handle = %llu vm_handle = %llu va_start = %p va_lenght = %llu num_uuids = %lu\n",
                             (int)vmBind->base.flags, (uint64_t)vmBind->base.size, (uint64_t)vmBind->client_handle, (uint64_t)vmBind->vm_handle, (void *)vmBind->va_start, (uint64_t)vmBind->va_length, (uint32_t)vmBind->num_uuids);
@@ -774,10 +811,15 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
 
         if (connection->uuidMap.find(uuid) == connection->uuidMap.end()) {
             PRINT_DEBUGGER_ERROR_LOG("Unknown UUID handle = %llu\n", (uint64_t)uuid);
-            return;
+            return false;
         }
 
-        DEBUG_BREAK_IF(connection->vmToTile.find(vmHandle) == connection->vmToTile.end() && connection->uuidMap[uuid].classIndex == NEO::DrmResourceClass::Isa);
+        if (connection->vmToTile.find(vmHandle) == connection->vmToTile.end()) {
+            DEBUG_BREAK_IF(connection->vmToTile.find(vmHandle) == connection->vmToTile.end() &&
+                           (connection->uuidMap[uuid].classIndex == NEO::DrmResourceClass::Isa || connection->uuidMap[uuid].classIndex == NEO::DrmResourceClass::ModuleHeapDebugArea));
+            return false;
+        }
+
         const auto tileIndex = connection->vmToTile[vmHandle];
 
         PRINT_DEBUGGER_INFO_LOG("UUID handle = %llu class index = %d\n", (uint64_t)vmBind->uuids[index], (int)clientHandleToConnection[vmBind->client_handle]->uuidMap[vmBind->uuids[index]].classIndex);
@@ -1051,16 +1093,18 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                 }
             }
         }
-    }
 
-    if (shouldAckEvent && (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK)) {
-        prelim_drm_i915_debug_event_ack eventToAck = {};
-        eventToAck.type = vmBind->base.type;
-        eventToAck.seqno = vmBind->base.seqno;
-        eventToAck.flags = 0;
-        auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_ACK_EVENT, &eventToAck);
-        PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_ACK_EVENT seqno = %llu ret = %d errno = %d\n", (uint64_t)eventToAck.seqno, ret, ret != 0 ? errno : 0);
+        if (shouldAckEvent && (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK)) {
+            prelim_drm_i915_debug_event_ack eventToAck = {};
+            eventToAck.type = vmBind->base.type;
+            eventToAck.seqno = vmBind->base.seqno;
+            eventToAck.flags = 0;
+            auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_ACK_EVENT, &eventToAck);
+            PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_ACK_EVENT seqno = %llu ret = %d errno = %d\n", (uint64_t)eventToAck.seqno, ret, ret != 0 ? errno : 0);
+        }
+        return true;
     }
+    return false;
 }
 
 void DebugSessionLinux::handleContextParamEvent(prelim_drm_i915_debug_event_context_param *contextParam) {
