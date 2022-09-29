@@ -292,6 +292,7 @@ ze_result_t EventImp<TagSizeT>::reset() {
     hostEventSetValue(Event::STATE_INITIAL);
     resetPackets();
     resetCompletion();
+
     this->l3FlushAppliedOnKernel.reset();
     return ZE_RESULT_SUCCESS;
 }
@@ -388,6 +389,7 @@ void EventImp<TagSizeT>::resetPackets() {
     cpuStartTimestamp = 0;
     gpuStartTimestamp = 0;
     gpuEndTimestamp = 0;
+    this->csr = this->device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
 }
 
 template <typename TagSizeT>

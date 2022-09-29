@@ -2272,5 +2272,17 @@ TEST_F(EventTests, WhenResetEventThenZeroCpuTimestamps) {
     EXPECT_EQ(event->gpuEndTimestamp, 0u);
 }
 
+TEST_F(EventSynchronizeTest, whenEventSetCsrThenCorrectCsrSet) {
+    auto defaultCsr = neoDevice->getDefaultEngine().commandStreamReceiver;
+    const auto mockCsr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+
+    EXPECT_EQ(event->csr, defaultCsr);
+    event->setCsr(mockCsr.get());
+    EXPECT_EQ(event->csr, mockCsr.get());
+
+    event->reset();
+    EXPECT_EQ(event->csr, defaultCsr);
+}
+
 } // namespace ult
 } // namespace L0

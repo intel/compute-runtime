@@ -98,6 +98,9 @@ struct Event : _ze_event_handle_t {
     bool isUsingContextEndOffset() const {
         return isTimestampEvent || usingContextEndOffset;
     }
+    void setCsr(NEO::CommandStreamReceiver *csr) {
+        this->csr = csr;
+    }
 
     void increaseKernelCount() {
         kernelCount++;

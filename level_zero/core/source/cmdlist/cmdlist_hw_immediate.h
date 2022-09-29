@@ -123,7 +123,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     void checkAvailableSpace();
     void updateDispatchFlagsWithRequiredStreamState(NEO::DispatchFlags &dispatchFlags);
 
-    ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration);
+    ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, ze_event_handle_t signalEvent);
 
     void createLogicalStateHelper() override {}
     NEO::LogicalStateHelper *getLogicalStateHelper() const override;

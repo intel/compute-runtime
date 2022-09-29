@@ -183,7 +183,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(kernelHandle, threadGroupDimensions,
                                                                         hSignalEvent, numWaitEvents, phWaitEvents,
                                                                         launchParams);
-    return flushImmediate(ret, true);
+    return flushImmediate(ret, true, hSignalEvent);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -196,7 +196,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernelInd
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(kernelHandle, pDispatchArgumentsBuffer,
                                                                                 hSignalEvent, numWaitEvents, phWaitEvents);
-    return flushImmediate(ret, true);
+    return flushImmediate(ret, true, hSignalEvent);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -210,7 +210,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(
         checkAvailableSpace();
     }
     ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents);
-    return flushImmediate(ret, true);
+    return flushImmediate(ret, true, hSignalEvent);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -244,7 +244,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
         ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptr, srcptr, size, hSignalEvent,
                                                                      numWaitEvents, phWaitEvents);
     }
-    return flushImmediate(ret, true);
+    return flushImmediate(ret, true, hSignalEvent);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -286,7 +286,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
                                                                            srcPtr, srcRegion, srcPitch, srcSlicePitch,
                                                                            hSignalEvent, numWaitEvents, phWaitEvents);
     }
-    return flushImmediate(ret, true);
+
+    return flushImmediate(ret, true, hSignalEvent);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -300,7 +301,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryFill(void
         checkAvailableSpace();
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(ptr, pattern, patternSize, size, hSignalEvent, numWaitEvents, phWaitEvents);
-    return flushImmediate(ret, true);
+
+    return flushImmediate(ret, true, hSignalEvent);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -312,7 +314,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalEvent(ze_
         checkAvailableSpace();
     }
     ret = CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEvent);
-    return flushImmediate(ret, true);
+    return flushImmediate(ret, true, hSignalEvent);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -324,7 +326,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendEventReset(ze_e
         checkAvailableSpace();
     }
     ret = CommandListCoreFamily<gfxCoreFamily>::appendEventReset(hSignalEvent);
-    return flushImmediate(ret, true);
+    return flushImmediate(ret, true, hSignalEvent);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -350,7 +352,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
     } else {
         ret = CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(dstAllocation, srcAllocation, size, flushHost);
     }
-    return flushImmediate(ret, false);
+    return flushImmediate(ret, false, nullptr);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -359,7 +361,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(ui
         checkAvailableSpace();
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numEvents, phWaitEvents);
-    return flushImmediate(ret, true);
+    return flushImmediate(ret, true, nullptr);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -371,7 +373,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWriteGlobalTime
         checkAvailableSpace();
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(dstptr, hSignalEvent, numWaitEvents, phWaitEvents);
-    return flushImmediate(ret, true);
+
+    return flushImmediate(ret, true, hSignalEvent);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -407,7 +410,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyRegion
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(hDstImage, hSrcImage, pDstRegion, pSrcRegion, hSignalEvent,
                                                                            numWaitEvents, phWaitEvents);
-    return flushImmediate(ret, true);
+    return flushImmediate(ret, true, hSignalEvent);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -424,7 +427,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyFromMe
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(hDstImage, srcPtr, pDstRegion, hSignalEvent,
                                                                                numWaitEvents, phWaitEvents);
-    return flushImmediate(ret, true);
+
+    return flushImmediate(ret, true, hSignalEvent);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -441,7 +445,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyToMemo
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(dstPtr, hSrcImage, pSrcRegion, hSignalEvent,
                                                                              numWaitEvents, phWaitEvents);
-    return flushImmediate(ret, true);
+
+    return flushImmediate(ret, true, hSignalEvent);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -455,17 +460,20 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryRangesBar
         checkAvailableSpace();
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(numRanges, pRangeSizes, pRanges, hSignalEvent, numWaitEvents, phWaitEvents);
-    return flushImmediate(ret, true);
+    return flushImmediate(ret, true, hSignalEvent);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_result_t inputRet, bool performMigration) {
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_result_t inputRet, bool performMigration, ze_event_handle_t signalEvent) {
     if (inputRet == ZE_RESULT_SUCCESS) {
         if (this->isFlushTaskSubmissionEnabled) {
             inputRet = executeCommandListImmediateWithFlushTask(performMigration);
         } else {
             inputRet = executeCommandListImmediate(performMigration);
         }
+    }
+    if (signalEvent) {
+        Event::fromHandle(signalEvent)->setCsr(this->csr);
     }
     return inputRet;
 }

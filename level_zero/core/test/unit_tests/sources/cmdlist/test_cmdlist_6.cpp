@@ -295,6 +295,28 @@ HWTEST2_F(CommandListTest, givenImmediateCommandListWhenAppendMemoryRangesBarrie
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+HWTEST2_F(CommandListTest, givenImmediateCommandListWhenFlushImmediateThenOverrideEventCsr, IsAtLeastSkl) {
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+
+    MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
+    cmdList.csr = event->csr;
+    event->csr = &mockCommandStreamReceiver;
+    cmdList.flushImmediate(ZE_RESULT_SUCCESS, false, event->toHandle());
+    EXPECT_EQ(event->csr, cmdList.csr);
+}
+
 HWTEST2_F(CommandListTest,
           givenComputeCommandListAnd2dRegionWhenMemoryCopyRegionInExternalHostAllocationCalledThenBuiltinFlagAndDestinationAllocSystemIsSet, IsAtLeastSkl) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
