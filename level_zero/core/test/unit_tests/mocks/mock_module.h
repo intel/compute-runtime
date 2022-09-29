@@ -106,6 +106,8 @@ struct MockCompilerInterface : public NEO::CompilerInterface {
         receivedApiOptions = input.apiOptions.begin();
         inputInternalOptions = input.internalOptions.begin();
 
+        cachingPassed = input.allowCaching;
+
         if (failBuild) {
             return NEO::TranslationOutput::ErrorCode::BuildFailure;
         }
@@ -124,6 +126,7 @@ struct MockCompilerInterface : public NEO::CompilerInterface {
     std::string receivedApiOptions;
     std::string inputInternalOptions;
     bool failBuild = false;
+    bool cachingPassed = false;
 };
 template <typename T1, typename T2>
 struct MockCompilerInterfaceWithSpecConstants : public NEO::CompilerInterface {

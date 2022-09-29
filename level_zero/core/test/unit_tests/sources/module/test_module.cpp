@@ -1087,6 +1087,41 @@ HWTEST_F(ModuleLinkingTest, givenRemainingUnresolvedSymbolsDuringLinkingWhenCrea
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_FALSE(module.isFullyLinked);
 }
+
+HWTEST_F(ModuleLinkingTest, givenModuleCompiledThenCachingIsTrue) {
+    auto mockCompiler = new MockCompilerInterface();
+    auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
+
+    auto mockTranslationUnit = new MockModuleTranslationUnit(device);
+
+    auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
+
+    NEO::LinkerInput::RelocationInfo relocation;
+    relocation.symbolName = "unresolved";
+    linkerInput->dataRelocations.push_back(relocation);
+    linkerInput->traits.requiresPatchingOfGlobalVariablesBuffer = true;
+
+    mockTranslationUnit->programInfo.linkerInput = std::move(linkerInput);
+    uint8_t spirvData{};
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = &spirvData;
+    moduleDesc.inputSize = sizeof(spirvData);
+
+    Module module(device, nullptr, ModuleType::User);
+    module.translationUnit.reset(mockTranslationUnit);
+
+    EXPECT_FALSE(mockCompiler->cachingPassed);
+
+    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+    result = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    EXPECT_TRUE(mockCompiler->cachingPassed);
+}
+
 HWTEST_F(ModuleLinkingTest, givenNotFullyLinkedModuleWhenCreatingKernelThenErrorIsReturned) {
     Module module(device, nullptr, ModuleType::User);
     module.isFullyLinked = false;

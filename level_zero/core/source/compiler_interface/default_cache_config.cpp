@@ -5,7 +5,7 @@
  *
  */
 
-#define L0_CACHE_LOCATION "l0_c_cache"
+#define L0_CACHE_LOCATION "l0_cache"
 
 #include "shared/source/compiler_interface/default_cache_config.h"
 
@@ -20,11 +20,11 @@ CompilerCacheConfig getDefaultCompilerCacheConfig() {
     NEO::CompilerCacheConfig ret;
 
     std::string keyName = L0::registryPath;
-    keyName += "l0_c_cache_dir";
+    keyName += "l0_cache_dir";
     std::unique_ptr<NEO::SettingsReader> settingsReader(NEO::SettingsReader::createOsReader(false, keyName));
     ret.cacheDir = settingsReader->getSetting(settingsReader->appSpecificLocation(keyName), static_cast<std::string>(L0_CACHE_LOCATION));
 
-    ret.cacheFileExtension = ".l0_c_cache";
+    ret.cacheFileExtension = ".l0_cache";
 
     return ret;
 }
