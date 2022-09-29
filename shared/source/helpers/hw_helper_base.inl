@@ -13,7 +13,6 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
-#include "shared/source/helpers/flush_specific_cache_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/pipe_control_args.h"
@@ -270,18 +269,16 @@ void MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(void *commandsBu
         return;
     }
 
-    auto flushSpecificCaches = DebugManager.flags.FlushSpecificCache.get() > 0 ? DebugManager.flags.FlushSpecificCache.get() : 0;
-
-    pipeControl.setConstantCacheInvalidationEnable(args.constantCacheInvalidationEnable || FlushSpecificCacheHelper::isConstantCacheInvalidationEnableSet(flushSpecificCaches));
-    pipeControl.setInstructionCacheInvalidateEnable(args.instructionCacheInvalidateEnable || FlushSpecificCacheHelper::isInstructionCacheInvalidateEnableSet(flushSpecificCaches));
-    pipeControl.setPipeControlFlushEnable(args.pipeControlFlushEnable || FlushSpecificCacheHelper::isPipeControlFlushEnableSet(flushSpecificCaches));
-    pipeControl.setRenderTargetCacheFlushEnable(args.renderTargetCacheFlushEnable || FlushSpecificCacheHelper::isRenderTargetCacheFlushEnableSet(flushSpecificCaches));
-    pipeControl.setStateCacheInvalidationEnable(args.stateCacheInvalidationEnable || FlushSpecificCacheHelper::isStateCacheInvalidationEnableSet(flushSpecificCaches));
-    pipeControl.setTextureCacheInvalidationEnable(args.textureCacheInvalidationEnable || FlushSpecificCacheHelper::isTextureCacheInvalidationEnableSet(flushSpecificCaches));
-    pipeControl.setVfCacheInvalidationEnable(args.vfCacheInvalidationEnable || FlushSpecificCacheHelper::isVfCacheInvalidationEnableSet(flushSpecificCaches));
-    pipeControl.setTlbInvalidate(args.tlbInvalidation || FlushSpecificCacheHelper::isTlbInvalidationSet(flushSpecificCaches));
+    pipeControl.setConstantCacheInvalidationEnable(args.constantCacheInvalidationEnable);
+    pipeControl.setInstructionCacheInvalidateEnable(args.instructionCacheInvalidateEnable);
+    pipeControl.setPipeControlFlushEnable(args.pipeControlFlushEnable);
+    pipeControl.setRenderTargetCacheFlushEnable(args.renderTargetCacheFlushEnable);
+    pipeControl.setStateCacheInvalidationEnable(args.stateCacheInvalidationEnable);
+    pipeControl.setTextureCacheInvalidationEnable(args.textureCacheInvalidationEnable);
+    pipeControl.setVfCacheInvalidationEnable(args.vfCacheInvalidationEnable);
+    pipeControl.setTlbInvalidate(args.tlbInvalidation);
     pipeControl.setNotifyEnable(args.notifyEnable);
-    pipeControl.setDcFlushEnable(args.dcFlushEnable || FlushSpecificCacheHelper::isDcFlushEnableSet(flushSpecificCaches));
+    pipeControl.setDcFlushEnable(args.dcFlushEnable);
     pipeControl.setDepthCacheFlushEnable(args.depthCacheFlushEnable);
     pipeControl.setDepthStallEnable(args.depthStallEnable);
     pipeControl.setProtectedMemoryDisable(args.protectedMemoryDisable);

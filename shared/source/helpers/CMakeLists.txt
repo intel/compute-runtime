@@ -60,7 +60,6 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/flat_batch_buffer_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/flat_batch_buffer_helper_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/flat_batch_buffer_helper_hw.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/flush_specific_cache_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/flush_stamp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/flush_stamp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/get_info.h

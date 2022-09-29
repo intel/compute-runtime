@@ -88,7 +88,6 @@ DECLARE_DEBUG_VARIABLE(std::string, InjectApiBuildOptions, std::string("unk"), "
 DECLARE_DEBUG_VARIABLE(std::string, OverrideDeviceName, std::string("unk"), "Device name to override")
 DECLARE_DEBUG_VARIABLE(int64_t, OverrideMultiStoragePlacement, -1, "-1: disable, 0+: tile mask, each bit corresponds to tile")
 DECLARE_DEBUG_VARIABLE(int64_t, ForceCompressionDisabledForCompressedBlitCopies, -1, "-1: default, 0: disabled, 1: enabled. If compression is required, set AUX_CCS_E, but force CompressionEnable filed. 0 should result in uncompressed read/write")
-DECLARE_DEBUG_VARIABLE(int32_t, FlushSpecificCache, -1, "Chooses pipe controls between enqueues flush with specific cache mask. 0: default, 1: dcFlushEnableSet, 2: renderTargetCacheFlushEnableSet, 4: instructionCacheInvalidateEnableSet, 8: textureCacheInvalidationEnableSet, 16: pipeControlFlushEnableSet, 32: vfCacheInvalidationEnableSet, 64: constantCacheInvalidationEnableSet, 128:stateCacheInvalidationEnableSet, 256: tlbInvalidationSet, 512: hdcPipelineFlushSet, 1024: unTypedDataPortCacheFlushSet, 2048: compressionControlSurfaceCcsFlushSet")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceL1Caching, -1, "-1: default, 0: disable, 1: enable, When set to true driver will program L1 cache policy for surface state and stateless accesses")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceAuxTranslationEnabled, -1, "-1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableExperimentalCommandBuffer, 0, "Enables injection of experimental command buffer")

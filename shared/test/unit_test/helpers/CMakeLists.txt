@@ -23,7 +23,6 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/extendable_enum_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/file_io_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/flush_stamp_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/flush_specific_cache_helper_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/get_gpgpu_engines_tests.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/get_info_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/hash_tests.cpp

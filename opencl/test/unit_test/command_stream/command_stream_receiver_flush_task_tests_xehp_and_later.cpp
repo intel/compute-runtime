@@ -306,7 +306,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, wh
     EXPECT_NE(nullptr, bindingTablePoolAlloc);
 }
 
-HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, whenFlushAllCachesVariableIsSetAndAddPipeControlIsCalledThenFieldsAreProperlySet, IsXeHPOrAbove) {
+using isXeHPOrAbove = IsAtLeastProduct<IGFX_XE_HP_SDV>;
+HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, whenFlushAllCachesVariableIsSetAndAddPipeControlIsCalledThenFieldsAreProperlySet, isXeHPOrAbove) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.FlushAllCaches.set(true);

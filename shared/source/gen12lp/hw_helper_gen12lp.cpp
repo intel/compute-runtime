@@ -143,9 +143,7 @@ template <>
 inline void MemorySynchronizationCommands<Family>::setBarrierExtraProperties(void *barrierCmd, PipeControlArgs &args) {
     auto &pipeControl = *reinterpret_cast<typename Family::PIPE_CONTROL *>(barrierCmd);
 
-    auto flushSpecificCaches = DebugManager.flags.FlushSpecificCache.get() > 0 ? DebugManager.flags.FlushSpecificCache.get() : 0;
-
-    pipeControl.setHdcPipelineFlush(args.hdcPipelineFlush || FlushSpecificCacheHelper::isHdcPipelineFlushSet(flushSpecificCaches));
+    pipeControl.setHdcPipelineFlush(args.hdcPipelineFlush);
 
     if (DebugManager.flags.FlushAllCaches.get()) {
         pipeControl.setHdcPipelineFlush(true);
