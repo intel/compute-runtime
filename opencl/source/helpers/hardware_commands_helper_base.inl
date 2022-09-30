@@ -152,7 +152,9 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     interfaceDescriptor.setBindingTablePointer(static_cast<uint32_t>(bindingTablePointer));
 
     if constexpr (GfxFamily::supportsSampler) {
-        interfaceDescriptor.setSamplerStatePointer(static_cast<uint32_t>(offsetSamplerState));
+        if (device.getDeviceInfo().imageSupport) {
+            interfaceDescriptor.setSamplerStatePointer(static_cast<uint32_t>(offsetSamplerState));
+        }
     }
 
     EncodeDispatchKernel<GfxFamily>::adjustBindingTablePrefetch(interfaceDescriptor, numSamplers, bindingTablePrefetchSize);

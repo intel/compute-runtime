@@ -86,7 +86,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
         const LinearStream *dsh,
         const LinearStream *ioh,
         const LinearStream *ssh,
-        uint64_t generalStateBase);
+        uint64_t generalStateBase,
+        bool imagesSupported);
 
     void collectStateBaseAddresIohPatchInfo(uint64_t commandBufferAddress, uint64_t commandOffset, const LinearStream &ioh);
 

@@ -233,7 +233,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCsrWhenCollectState
     uint64_t commandOffset = 0xa;
     uint64_t generalStateBase = 0xff;
 
-    mockCsr->collectStateBaseAddresPatchInfo(baseAddress, commandOffset, &dsh, &ioh, &ssh, generalStateBase);
+    mockCsr->collectStateBaseAddresPatchInfo(baseAddress, commandOffset, &dsh, &ioh, &ssh, generalStateBase, deviceUsesDsh);
 
     ASSERT_EQ(mockHelper->patchInfoDataVector.size(), expectedCallsCount);
 
@@ -242,7 +242,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCsrWhenCollectState
         EXPECT_EQ(patch.sourceAllocationOffset, 0u);
     }
 
-    //DSH
+    // DSH
     if (deviceUsesDsh) {
         PatchInfoData dshPatch = mockHelper->patchInfoDataVector[dshPatchIndex];
         EXPECT_EQ(dshPatch.sourceAllocation, dsh.getGraphicsAllocation()->getGpuAddress());
@@ -250,19 +250,19 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCsrWhenCollectState
     }
 
     if constexpr (TestTraits<gfxCoreFamily>::iohInSbaSupported) {
-        //IOH
+        // IOH
         PatchInfoData iohPatch = mockHelper->patchInfoDataVector[iohPatchIndex];
 
         EXPECT_EQ(iohPatch.sourceAllocation, ioh.getGraphicsAllocation()->getGpuAddress());
         EXPECT_EQ(iohPatch.targetAllocationOffset, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::INDIRECTOBJECTBASEADDRESS_BYTEOFFSET);
     }
 
-    //SSH
+    // SSH
     PatchInfoData sshPatch = mockHelper->patchInfoDataVector[sshPatchIndex];
     EXPECT_EQ(sshPatch.sourceAllocation, ssh.getGraphicsAllocation()->getGpuAddress());
     EXPECT_EQ(sshPatch.targetAllocationOffset, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::SURFACESTATEBASEADDRESS_BYTEOFFSET);
 
-    //GSH
+    // GSH
     PatchInfoData gshPatch = mockHelper->patchInfoDataVector[gshPatchIndex];
     EXPECT_EQ(gshPatch.sourceAllocation, generalStateBase);
     EXPECT_EQ(gshPatch.targetAllocationOffset, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::GENERALSTATEBASEADDRESS_BYTEOFFSET);

@@ -316,7 +316,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithDirtyHeapsWhenSetSta
     auto itorCmd = find<STATE_BASE_ADDRESS *>(commands.begin(), commands.end());
     auto pCmd = genCmdCast<STATE_BASE_ADDRESS *>(*itorCmd);
 
-    if constexpr (FamilyType::supportsSampler) {
+    if (pDevice->getDeviceInfo().imageSupport) {
         EXPECT_EQ(dsh->getHeapGpuBase(), pCmd->getDynamicStateBaseAddress());
     } else {
         EXPECT_EQ(dsh, nullptr);
@@ -356,7 +356,7 @@ HWTEST_F(CommandEncodeStatesTest, givenCommandContainerWhenSetStateBaseAddressCa
     ASSERT_NE(itorCmd, commands.end());
 
     auto cmd = genCmdCast<STATE_BASE_ADDRESS *>(*itorCmd);
-    if constexpr (FamilyType::supportsSampler) {
+    if (pDevice->getDeviceInfo().imageSupport) {
         EXPECT_NE(dsh->getHeapGpuBase(), cmd->getDynamicStateBaseAddress());
     } else {
         EXPECT_EQ(dsh, nullptr);

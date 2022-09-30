@@ -1046,7 +1046,7 @@ NEO::SubmissionStatus CommandQueueHw<gfxCoreFamily>::prepareAndSubmitBatchBuffer
         *(MI_BATCH_BUFFER_END *)buffer = GfxFamily::cmdInitBatchBufferEnd;
     }
 
-    if (ctx.isNEODebuggerActive(this->device) || NEO::DebugManager.flags.EnableSWTags.get() || isCleanLeftoverMemoryRequired()) {
+    if (ctx.isNEODebuggerActive(this->device) || NEO::DebugManager.flags.EnableSWTags.get() || csr->getLogicalStateHelper()) {
         cleanLeftoverMemory(outerCommandStream, innerCommandStream);
     } else if (this->alignedChildStreamPadding) {
         void *paddingPtr = innerCommandStream.getSpace(this->alignedChildStreamPadding);
@@ -1224,11 +1224,6 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateComputeModeForCommandLis
                                                                                         false, device->getHwInfo(), isRcs, nullptr);
     }
     csrState.stateComputeMode.setProperties(cmdListFinal.stateComputeMode);
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandQueueHw<gfxCoreFamily>::isCleanLeftoverMemoryRequired() {
-    return false;
 }
 
 } // namespace L0

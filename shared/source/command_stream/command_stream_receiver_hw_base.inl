@@ -444,7 +444,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, false, hwInfo, isRcs());
 
         if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
-            collectStateBaseAddresPatchInfo(commandStream.getGraphicsAllocation()->getGpuAddress(), stateBaseAddressCmdOffset, dsh, ioh, ssh, newGSHbase);
+            collectStateBaseAddresPatchInfo(commandStream.getGraphicsAllocation()->getGpuAddress(), stateBaseAddressCmdOffset, dsh, ioh, ssh, newGSHbase,
+                                            device.getDeviceInfo().imageSupport);
         }
     }
 
@@ -998,10 +999,11 @@ void CommandStreamReceiverHw<GfxFamily>::collectStateBaseAddresPatchInfo(
     const LinearStream *dsh,
     const LinearStream *ioh,
     const LinearStream *ssh,
-    uint64_t generalStateBase) {
+    uint64_t generalStateBase,
+    bool imagesSupported) {
 
     typedef typename GfxFamily::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
-    if constexpr (GfxFamily::supportsSampler) {
+    if (imagesSupported) {
         PatchInfoData dynamicStatePatchInfo = {dsh->getGraphicsAllocation()->getGpuAddress(), 0u, PatchInfoAllocationType::DynamicStateHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::DYNAMICSTATEBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
         flatBatchBufferHelper->setPatchInfoData(dynamicStatePatchInfo);
     }

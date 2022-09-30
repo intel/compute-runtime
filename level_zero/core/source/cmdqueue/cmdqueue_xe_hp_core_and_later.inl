@@ -14,7 +14,6 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/state_base_address.h"
-#include "shared/source/helpers/state_base_address_xehp_and_later.inl"
 #include "shared/source/os_interface/hw_info_config.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
