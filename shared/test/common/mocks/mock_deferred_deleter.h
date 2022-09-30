@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 namespace NEO {
 class MockDeferredDeleter : public DeferredDeleter {
   public:
+    using DeferredDeleter::run;
     MockDeferredDeleter();
 
     ~MockDeferredDeleter() override;
@@ -60,6 +61,7 @@ class MockDeferredDeleter : public DeferredDeleter {
     std::atomic<int> clearCalled;
 
     int deferDeletionCalled = 0;
+    bool stopAfter3loopsInRun = false;
 
     void forceStop();
 

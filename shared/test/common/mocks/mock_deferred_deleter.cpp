@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/source/memory_manager/deferrable_deletion.h"
 #include "shared/source/os_interface/os_thread.h"
+#include "shared/test/common/mocks/mock_deferrable_deletion.h"
 
 #include "gtest/gtest.h"
 
@@ -51,7 +52,16 @@ bool MockDeferredDeleter::areElementsReleased() {
 }
 
 bool MockDeferredDeleter::shouldStop() {
+
     shouldStopCalled++;
+    if (stopAfter3loopsInRun && shouldStopCalled < 3) {
+        auto deletion = new MockDeferrableDeletion();
+        elementsToRelease++;
+        queue.pushTailOne(*deletion);
+        condition.notify_one();
+
+        return false;
+    }
     return shouldStopCalled > 1;
 }
 
