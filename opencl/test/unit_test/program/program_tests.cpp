@@ -1405,25 +1405,6 @@ class PatchTokenFromBinaryTest : public ProgramSimpleFixture {
 };
 using PatchTokenTests = Test<PatchTokenFromBinaryTest>;
 
-template <typename FamilyType>
-class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
-    using BaseClass = UltCommandStreamReceiver<FamilyType>;
-    using BaseClass::BaseClass;
-
-  public:
-    void makeResident(GraphicsAllocation &graphicsAllocation) override {
-        residency[graphicsAllocation.getUnderlyingBuffer()] = graphicsAllocation.getUnderlyingBufferSize();
-        CommandStreamReceiver::makeResident(graphicsAllocation);
-    }
-
-    void makeNonResident(GraphicsAllocation &graphicsAllocation) override {
-        residency.erase(graphicsAllocation.getUnderlyingBuffer());
-        CommandStreamReceiver::makeNonResident(graphicsAllocation);
-    }
-
-    std::map<const void *, size_t> residency;
-};
-
 TEST_F(PatchTokenTests, WhenBuildingProgramThenGwsIsSet) {
     createProgramFromBinary(pContext, pContext->getDevices(), "kernel_data_param");
 
