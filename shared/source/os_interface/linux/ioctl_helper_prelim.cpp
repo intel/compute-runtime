@@ -655,6 +655,34 @@ bool IoctlHelperPrelim20::checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctl
     return IoctlHelper::checkIfIoctlReinvokeRequired(error, ioctlRequest);
 }
 
+bool IoctlHelperPrelim20::getFabricLatency(uint32_t fabricId, uint32_t &latency) {
+    Query query = {};
+    QueryItem queryItem = {};
+    PrelimI915::prelim_drm_i915_query_fabric_info info = {};
+    info.fabric_id = fabricId;
+
+    queryItem.queryId = PRELIM_DRM_I915_QUERY_FABRIC_INFO;
+    queryItem.length = static_cast<int32_t>(sizeof(info));
+    queryItem.dataPtr = reinterpret_cast<uint64_t>(&info);
+    queryItem.flags = 0;
+
+    query.itemsPtr = reinterpret_cast<uint64_t>(&queryItem);
+    query.numItems = 1;
+    auto ret = IoctlHelper::ioctl(DrmIoctl::Query, &query);
+    if (ret != 0) {
+        return false;
+    }
+
+    if (info.latency < 10) {
+        return false;
+    }
+
+    // Latency is in tenths of path length. 10 == 1 fabric link between src and dst
+    // 1 link = zero hops
+    latency = (info.latency / 10) - 1;
+    return true;
+}
+
 static_assert(sizeof(MemoryClassInstance) == sizeof(prelim_drm_i915_gem_memory_class_instance));
 static_assert(offsetof(MemoryClassInstance, memoryClass) == offsetof(prelim_drm_i915_gem_memory_class_instance, memory_class));
 static_assert(offsetof(MemoryClassInstance, memoryInstance) == offsetof(prelim_drm_i915_gem_memory_class_instance, memory_instance));

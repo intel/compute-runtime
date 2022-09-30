@@ -231,8 +231,30 @@ TEST_F(TestFabricIaf, GivenIafFabricAvailableWhenGetPortsReturnsErrorThenReturnE
     delete subDeviceFabric;
 }
 
+class MockIoctlHelperIafTest : public NEO::IoctlHelperPrelim20 {
+  public:
+    using IoctlHelperPrelim20::IoctlHelperPrelim20;
+    bool getFabricLatency(uint32_t fabricId, uint32_t &latency) override {
+        latency = 1;
+        return mockFabricLatencyReturn;
+    }
+
+    bool mockFabricLatencyReturn = true;
+};
+
 using FabricIafEdgeFixture = Test<MultiDeviceFixture>;
 TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesThenEdgesCreatedAreCorrect) {
+
+    // Setup OsInterface for Devices
+    for (auto &device : driverHandle->devices) {
+        auto executionEnvironment = device->getNEODevice()->getExecutionEnvironment();
+        auto &rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()];
+        auto osInterface = new OSInterface();
+        auto drmMock = new DrmMockResources(*rootDeviceEnvironment);
+        drmMock->ioctlHelper.reset(new MockIoctlHelperIafTest(*drmMock));
+        rootDeviceEnvironment->osInterface.reset(osInterface);
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<Drm>(drmMock));
+    }
 
     //  IAF port connection configuration
     //    Device | SubDevice | Port -- Connected to -- Device | SubDevice | Port
@@ -410,9 +432,9 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 4u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, 0u);
-    EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
-    EXPECT_EQ(strcmp(edgeProperties.model, "XeLink"), 0);
+    EXPECT_EQ(edgeProperties.latency, 1u);
+    EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_HOP);
+    EXPECT_STREQ(edgeProperties.model, "XeLink");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
 
     // Root to Sub-Devices Connection
@@ -424,7 +446,9 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex0->toHandle(), fabricVertex1->subVertices[0], &count, edges.data()));
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 2u);
-    EXPECT_EQ(strcmp(edgeProperties.model, "XeLink"), 0);
+    EXPECT_EQ(edgeProperties.latency, 1u);
+    EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_HOP);
+    EXPECT_STREQ(edgeProperties.model, "XeLink");
 
     count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex0->toHandle(), fabricVertex1->subVertices[1], &count, nullptr));
@@ -433,7 +457,9 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex0->toHandle(), fabricVertex1->subVertices[1], &count, edges.data()));
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 2u);
-    EXPECT_EQ(strcmp(edgeProperties.model, "XeLink"), 0);
+    EXPECT_EQ(edgeProperties.latency, 1u);
+    EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_HOP);
+    EXPECT_STREQ(edgeProperties.model, "XeLink");
 
     // Sub-Devices to Root Connection
     count = 0;
@@ -443,7 +469,9 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex0->subVertices[0], fabricVertex1->toHandle(), &count, edges.data()));
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 2u);
-    EXPECT_EQ(strcmp(edgeProperties.model, "XeLink"), 0);
+    EXPECT_EQ(edgeProperties.latency, 1u);
+    EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_HOP);
+    EXPECT_STREQ(edgeProperties.model, "XeLink");
 
     count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex0->subVertices[1], fabricVertex1->toHandle(), &count, nullptr));
@@ -452,7 +480,7 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex0->subVertices[1], fabricVertex1->toHandle(), &count, edges.data()));
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 2u);
-    EXPECT_EQ(strcmp(edgeProperties.model, "XeLink"), 0);
+    EXPECT_STREQ(edgeProperties.model, "XeLink");
 
     // Sub-Devices to Sub-Devices Connection
     count = 0;
@@ -465,7 +493,7 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_UNKNOWN);
     EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
-    EXPECT_EQ(strcmp(edgeProperties.model, "MDFI"), 0);
+    EXPECT_STREQ(edgeProperties.model, "MDFI");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
 
     count = 0;
@@ -474,7 +502,7 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
     edges.clear();
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex1->subVertices[0], fabricVertex1->subVertices[1], &count, edges.data()));
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
-    EXPECT_EQ(strcmp(edgeProperties.model, "MDFI"), 0);
+    EXPECT_STREQ(edgeProperties.model, "MDFI");
 
     count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex1->subVertices[0], fabricVertex0->subVertices[0], &count, nullptr));
@@ -483,7 +511,9 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex1->subVertices[0], fabricVertex0->subVertices[0], &count, edges.data()));
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 2u);
-    EXPECT_EQ(strcmp(edgeProperties.model, "XeLink"), 0);
+    EXPECT_STREQ(edgeProperties.model, "XeLink");
+    EXPECT_EQ(edgeProperties.latency, 1u);
+    EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_HOP);
 
     count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex1->subVertices[1], fabricVertex0->subVertices[1], &count, nullptr));
@@ -492,7 +522,87 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex1->subVertices[1], fabricVertex0->subVertices[1], &count, edges.data()));
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 2u);
-    EXPECT_EQ(strcmp(edgeProperties.model, "XeLink"), 0);
+    EXPECT_STREQ(edgeProperties.model, "XeLink");
+}
+
+TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenLatencyRequestIoctlFailsThenEdgeLatencyPropertiesAreUnknown) {
+
+    // Setup OsInterface for Devices
+    for (auto &device : driverHandle->devices) {
+        auto executionEnvironment = device->getNEODevice()->getExecutionEnvironment();
+        auto &rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()];
+        auto osInterface = new OSInterface();
+        auto drmMock = new DrmMockResources(*rootDeviceEnvironment);
+        auto mockIoctlHelper = new MockIoctlHelperIafTest(*drmMock);
+        mockIoctlHelper->mockFabricLatencyReturn = false;
+        drmMock->ioctlHelper.reset(mockIoctlHelper);
+        rootDeviceEnvironment->osInterface.reset(osInterface);
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<Drm>(drmMock));
+    }
+
+    //  IAF port connection configuration
+    //    Device | SubDevice | Port -- Connected to -- Device | SubDevice | Port
+    //    0           0       1                           1       0           2
+
+    std::vector<FabricPortConnection> connection_00_10;
+    {
+        FabricPortConnection connection;
+        connection.currentid = IafPortId(0, 0, 1);
+        connection.neighbourPortNumber = 2;
+        connection.neighbourGuid = 0xABC;
+        connection.bandwidthInBytesPerNanoSecond = 1;
+        connection.isDuplex = true;
+        connection_00_10.push_back(connection);
+    }
+
+    std::vector<FabricPortConnection> connection_10_00;
+    {
+        FabricPortConnection connection;
+        connection.currentid = IafPortId(1, 0, 2);
+        connection.neighbourPortNumber = 1;
+        connection.neighbourGuid = 0xA;
+        connection.bandwidthInBytesPerNanoSecond = 1;
+        connection.isDuplex = true;
+        connection_10_00.push_back(connection);
+    }
+
+    auto &fabricVertex0 = driverHandle->fabricVertices[0];
+    {
+        auto fabricDeviceIaf = static_cast<FabricDeviceIaf *>(fabricVertex0->pFabricDeviceInterfaces[FabricDeviceInterface::Type::Iaf].get());
+        auto &fabricSubDeviceIaf0 = fabricDeviceIaf->subDeviceIafs[0];
+        fabricSubDeviceIaf0->connections.clear();
+        fabricSubDeviceIaf0->connections = connection_00_10;
+        fabricSubDeviceIaf0->guid = 0xA;
+    }
+
+    auto fabricVertex1 = static_cast<FabricVertex *>(driverHandle->fabricVertices[1]);
+    {
+        auto fabricDeviceIaf = static_cast<FabricDeviceIaf *>(fabricVertex1->pFabricDeviceInterfaces[FabricDeviceInterface::Type::Iaf].get());
+        auto &fabricSubDeviceIaf0 = fabricDeviceIaf->subDeviceIafs[0];
+        fabricSubDeviceIaf0->connections.clear();
+        fabricSubDeviceIaf0->connections = connection_10_00;
+        fabricSubDeviceIaf0->guid = 0xABC;
+    }
+
+    for (auto &edge : driverHandle->fabricEdges) {
+        delete edge;
+    }
+    driverHandle->fabricEdges.clear();
+    FabricEdge::createEdgesFromVertices(driverHandle->fabricVertices, driverHandle->fabricEdges);
+    uint32_t count = 0;
+    std::vector<ze_fabric_edge_handle_t> edges(30);
+
+    // Root to Root Connection
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex1->toHandle(), fabricVertex0->toHandle(), &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(fabricVertex1->toHandle(), fabricVertex0->toHandle(), &count, edges.data()));
+    ze_fabric_vertex_handle_t vertexA = nullptr, vertexB = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetVerticesExp(edges[0], &vertexA, &vertexB));
+    ze_fabric_edge_exp_properties_t edgeProperties = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
+    EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
+    EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
+    EXPECT_STREQ(edgeProperties.model, "XeLink");
+    EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
 }
 
 } // namespace ult

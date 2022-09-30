@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -347,4 +348,59 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimWhenGettingEuStallPropertiesThenCorrec
 
 TEST_F(IoctlPrelimHelperTests, givenPrelimWhenGettingEuStallFdParameterThenCorrectIoctlValueIsReturned) {
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_I915_PERF_FLAG_FD_EU_STALL), ioctlHelper.getEuStallFdParameter());
+}
+
+class DrmMockIoctl : public DrmMock {
+  public:
+    DrmMockIoctl(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(rootDeviceEnvironment) {
+        rootDeviceEnvironment.setHwInfo(defaultHwInfo.get());
+    }
+    int handleRemainingRequests(DrmIoctl request, void *arg) override {
+        if (request == DrmIoctl::Query) {
+
+            Query *query = static_cast<Query *>(arg);
+            QueryItem *queryItem = reinterpret_cast<QueryItem *>(query->itemsPtr);
+            PrelimI915::prelim_drm_i915_query_fabric_info *info =
+                reinterpret_cast<PrelimI915::prelim_drm_i915_query_fabric_info *>(queryItem->dataPtr);
+
+            info->latency = mockLatency;
+            return mockIoctlReturn;
+        }
+        return 0;
+    }
+    int mockIoctlReturn = 0;
+    uint32_t mockLatency = 10;
+};
+
+TEST(IoctlPrelimHelperFabricLatencyTest, givenPrelimWhenGettingFabricLatencyThenSuccessIsReturned) {
+
+    MockExecutionEnvironment executionEnvironment{};
+    std::unique_ptr<DrmMockIoctl> drm = std::make_unique<DrmMockIoctl>(*executionEnvironment.rootDeviceEnvironments[0]);
+    IoctlHelperPrelim20 ioctlHelper{*drm};
+
+    uint32_t latency = 0, fabricId = 0;
+    EXPECT_TRUE(ioctlHelper.getFabricLatency(fabricId, latency));
+}
+
+TEST(IoctlPrelimHelperFabricLatencyTest, givenPrelimWhenGettingFabricLatencyAndIoctlFailsThenErrorIsReturned) {
+
+    MockExecutionEnvironment executionEnvironment{};
+    std::unique_ptr<DrmMockIoctl> drm = std::make_unique<DrmMockIoctl>(*executionEnvironment.rootDeviceEnvironments[0]);
+    IoctlHelperPrelim20 ioctlHelper{*drm};
+
+    uint32_t latency = 0, fabricId = 0;
+    drm->mockIoctlReturn = 1;
+    EXPECT_FALSE(ioctlHelper.getFabricLatency(fabricId, latency));
+}
+
+TEST(IoctlPrelimHelperFabricLatencyTest, givenPrelimWhenGettingFabricLatencyAndIoctlSetsZeroForLatencyThenErrorIsReturned) {
+
+    MockExecutionEnvironment executionEnvironment{};
+    std::unique_ptr<DrmMockIoctl> drm = std::make_unique<DrmMockIoctl>(*executionEnvironment.rootDeviceEnvironments[0]);
+    IoctlHelperPrelim20 ioctlHelper{*drm};
+
+    uint32_t latency = 0, fabricId = 0;
+    drm->mockIoctlReturn = 0;
+    drm->mockLatency = 0;
+    EXPECT_FALSE(ioctlHelper.getFabricLatency(fabricId, latency));
 }
