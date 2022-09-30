@@ -3711,6 +3711,26 @@ TEST_F(DebugApiLinuxVmBindTest, GivenUnknownVmAndEventWithAckFlagForIsaWhenHandl
     EXPECT_EQ(1u, handler->ackCount);
 }
 
+TEST_F(DebugApiLinuxVmBindTest, GivenUnknownVmAndEventWithoutUuidsWhenHandlingVmBindEventThenEventIsNotPushedToPendingEvents) {
+    uint64_t vmBindIsaData[(sizeof(prelim_drm_i915_debug_event_vm_bind) + sizeof(uint64_t)) / sizeof(uint64_t)];
+    prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
+
+    vmBindIsa->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
+    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind);
+    vmBindIsa->base.seqno = 20u;
+    vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
+    vmBindIsa->va_start = 0x1000;
+    vmBindIsa->va_length = 0x1000;
+    vmBindIsa->vm_handle = 5678;
+    vmBindIsa->num_uuids = 0;
+
+    session->handleEvent(&vmBindIsa->base);
+
+    EXPECT_EQ(0u, session->pendingVmBindEvents.size());
+    EXPECT_EQ(0u, session->processPendingVmBindEventsCalled);
+}
+
 TEST_F(DebugApiLinuxVmBindTest, GivenEventForISAWhenModuleLoadEventAlreadyAckedThenEventIsAckedImmediatelyAndNotPushed) {
     uint64_t isaGpuVa = 0x345000;
     uint64_t isaSize = 0x2000;

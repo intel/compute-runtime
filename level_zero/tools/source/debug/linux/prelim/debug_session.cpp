@@ -816,7 +816,7 @@ bool DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
         }
 
         if (connection->vmToTile.find(vmHandle) == connection->vmToTile.end()) {
-            DEBUG_BREAK_IF(connection->vmToTile.find(vmHandle) == connection->vmToTile.end() &&
+            DEBUG_BREAK_IF(connection->vmToTile.find(vmHandle) == connection->vmToTile.end() && (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) &&
                            (connection->uuidMap[uuid].classIndex == NEO::DrmResourceClass::Isa || connection->uuidMap[uuid].classIndex == NEO::DrmResourceClass::ModuleHeapDebugArea));
             return false;
         }
@@ -1094,18 +1094,17 @@ bool DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                 }
             }
         }
-
-        if (shouldAckEvent && (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK)) {
-            prelim_drm_i915_debug_event_ack eventToAck = {};
-            eventToAck.type = vmBind->base.type;
-            eventToAck.seqno = vmBind->base.seqno;
-            eventToAck.flags = 0;
-            auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_ACK_EVENT, &eventToAck);
-            PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_ACK_EVENT seqno = %llu ret = %d errno = %d\n", (uint64_t)eventToAck.seqno, ret, ret != 0 ? errno : 0);
-        }
-        return true;
     }
-    return false;
+
+    if (shouldAckEvent && (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK)) {
+        prelim_drm_i915_debug_event_ack eventToAck = {};
+        eventToAck.type = vmBind->base.type;
+        eventToAck.seqno = vmBind->base.seqno;
+        eventToAck.flags = 0;
+        auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_ACK_EVENT, &eventToAck);
+        PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_ACK_EVENT seqno = %llu ret = %d errno = %d\n", (uint64_t)eventToAck.seqno, ret, ret != 0 ? errno : 0);
+    }
+    return true;
 }
 
 void DebugSessionLinux::handleContextParamEvent(prelim_drm_i915_debug_event_context_param *contextParam) {
