@@ -330,6 +330,7 @@ class Drm : public DriverModel {
     std::unique_ptr<MemoryInfo> memoryInfo;
 
     std::once_flag checkBindOnce;
+    std::once_flag checkSetPairOnce;
     std::once_flag checkCompletionFenceOnce;
 
     RootDeviceEnvironment &rootDeviceEnvironment;
