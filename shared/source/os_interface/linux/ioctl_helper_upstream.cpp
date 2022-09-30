@@ -235,4 +235,8 @@ std::string IoctlHelperUpstream::getIoctlString(DrmIoctl ioctlRequest) const {
         return getIoctlStringBase(ioctlRequest);
     }
 }
+
+bool IoctlHelperUpstream::getFabricLatency(uint32_t fabricId, uint32_t &latency) {
+    return false;
+}
 } // namespace NEO

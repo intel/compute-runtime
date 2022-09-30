@@ -80,8 +80,8 @@ bool FabricDeviceIaf::getEdgeProperty(FabricVertex *neighborVertex, ze_fabric_ed
         memcpy_s(edgeProperty.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, "XeLink", 7);
         edgeProperty.bandwidth = accumulatedBandwidth;
         edgeProperty.bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
-        edgeProperty.latency = 0;
-        edgeProperty.latencyUnit = ZE_LATENCY_UNIT_UNKNOWN;
+        edgeProperty.latency = subDeviceEdgeProperties[0].latency;
+        edgeProperty.latencyUnit = subDeviceEdgeProperties[0].latencyUnit;
         edgeProperty.duplexity = ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX;
 
         isConnected = true;
@@ -211,14 +211,23 @@ bool FabricSubDeviceIaf::getEdgeProperty(FabricSubDeviceIaf *pNeighbourInterface
 
         // Considering the neighboring port is attached on a subdevice, fabricId and attachId could be used from
         // any of the connection
-        memcpy_s(&uuid.id[8], 4, &pNeighbourInterface->connections[0].currentid.fabricId, 4);
+        auto neighbourFabricId = pNeighbourInterface->connections[0].currentid.fabricId;
+        memcpy_s(&uuid.id[8], 4, &neighbourFabricId, 4);
         memcpy_s(&uuid.id[12], 1, &pNeighbourInterface->connections[0].currentid.attachId, 1);
 
         memcpy_s(edgeProperty.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, "XeLink", 7);
         edgeProperty.bandwidth = accumulatedBandwidth;
         edgeProperty.bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
-        edgeProperty.latency = 0;
+
+        auto &osInterface = device->getNEODevice()->getRootDeviceEnvironment().osInterface;
+        auto pDrm = osInterface->getDriverModel()->as<NEO::Drm>();
+
+        edgeProperty.latency = std::numeric_limits<uint32_t>::max();
         edgeProperty.latencyUnit = ZE_LATENCY_UNIT_UNKNOWN;
+        if (pDrm->getIoctlHelper()->getFabricLatency(neighbourFabricId, edgeProperty.latency) == true) {
+            edgeProperty.latencyUnit = ZE_LATENCY_UNIT_HOP;
+        }
+
         edgeProperty.duplexity = ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX;
         isConnected = true;
     }
@@ -268,8 +277,8 @@ bool FabricSubDeviceIaf::getEdgeProperty(FabricVertex *neighborVertex,
             memcpy_s(edgeProperty.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, "XeLink", 7);
             edgeProperty.bandwidth = accumulatedBandwidth;
             edgeProperty.bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
-            edgeProperty.latency = 0;
-            edgeProperty.latencyUnit = ZE_LATENCY_UNIT_UNKNOWN;
+            edgeProperty.latency = subEdgeProperties[0].latency;
+            edgeProperty.latencyUnit = subEdgeProperties[0].latencyUnit;
             edgeProperty.duplexity = ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX;
 
             isConnected = true;

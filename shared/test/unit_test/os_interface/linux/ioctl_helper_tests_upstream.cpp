@@ -477,3 +477,11 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenInitializingThenTrueIsReturned) 
     IoctlHelperUpstream ioctlHelper{*drm};
     EXPECT_EQ(true, ioctlHelper.initialize());
 }
+
+TEST(IoctlHelperTestsUpstream, givenUpstreamWhenGettingFabricLatencyThenFalseIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    IoctlHelperUpstream ioctlHelper{*drm};
+    uint32_t fabricId = 0, latency = 0;
+    EXPECT_FALSE(ioctlHelper.getFabricLatency(fabricId, latency));
+}
