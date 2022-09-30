@@ -616,12 +616,6 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         if (hwInfo.platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
             internalOptions = CompilerOptions::concatenate(internalOptions, CompilerOptions::debugKernelEnable);
         }
-        if (false == inputFileSpirV && false == CompilerOptions::contains(options, CompilerOptions::generateSourcePath) && false == CompilerOptions::contains(options, CompilerOptions::usesCMCCompiler)) {
-            auto sourcePathStringOption = CompilerOptions::generateSourcePath.str();
-            sourcePathStringOption.append(" ");
-            sourcePathStringOption.append(CompilerOptions::wrapInQuotes(inputFile));
-            options = CompilerOptions::concatenate(options, sourcePathStringOption);
-        }
     }
 
     if (deviceName.empty()) {
