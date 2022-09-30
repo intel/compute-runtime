@@ -68,6 +68,10 @@ inline void LinearStream::setGpuBase(uint64_t gpuAddress) {
 }
 
 inline void *LinearStream::getSpace(size_t size) {
+    if (size == 0u) {
+        return ptrOffset(buffer, sizeUsed);
+    }
+
     if (cmdContainer != nullptr && getAvailableSpace() < batchBufferEndSize + size) {
         UNRECOVERABLE_IF(sizeUsed + batchBufferEndSize > maxAvailableSpace);
         cmdContainer->closeAndAllocateNextCommandBuffer();
