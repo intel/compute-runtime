@@ -1100,6 +1100,37 @@ TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndNoSupportAvaila
     EXPECT_EQ(1u, drm.context.setPairQueryCalled);
 }
 
+TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndVmBindAvailableThenBothExpectedValueIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseVmBind.set(-1);
+    VariableBackup<bool> disableBindBackup(&disableBindDefaultInTests, false);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto hwInfo = drm.getRootDeviceEnvironment().getHardwareInfo();
+    auto hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
+
+    drm.context.setPairQueryValue = 1;
+    drm.context.setPairQueryReturn = 0;
+    EXPECT_FALSE(drm.setPairAvailable);
+    drm.callBaseIsSetPairAvailable = true;
+
+    drm.context.vmBindQueryValue = 1;
+    drm.context.vmBindQueryReturn = 0;
+    EXPECT_FALSE(drm.bindAvailable);
+    drm.callBaseIsVmBindAvailable = true;
+
+    EXPECT_EQ(0u, drm.context.setPairQueryCalled);
+    EXPECT_TRUE(drm.isSetPairAvailable());
+    EXPECT_TRUE(drm.setPairAvailable);
+    EXPECT_EQ(1u, drm.context.setPairQueryCalled);
+
+    EXPECT_EQ(0u, drm.context.vmBindQueryCalled);
+    EXPECT_EQ(drm.isVmBindAvailable(), hwInfoConfig->isNewResidencyModelSupported());
+    EXPECT_EQ(drm.bindAvailable, hwInfoConfig->isNewResidencyModelSupported());
+    EXPECT_EQ(1u, drm.context.vmBindQueryCalled);
+}
+
 TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndSupportAvailableThenExpectedValueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
