@@ -147,26 +147,24 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     int ret = ioctlHelper->execBuffer(&execbuf, completionGpuAddress, completionValue);
 
     if (ret != 0) {
-        do {
-            int err = this->drm->getErrno();
-            if (err == EOPNOTSUPP) {
-                PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_EXECBUFFER2) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
-                return err;
-            }
+        int err = this->drm->getErrno();
+        if (err == EOPNOTSUPP) {
+            PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_EXECBUFFER2) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+            return err;
+        }
 
-            evictUnusedAllocations(false, true);
-            ret = ioctlHelper->execBuffer(&execbuf, completionGpuAddress, completionValue);
+        evictUnusedAllocations(false, true);
+        ret = ioctlHelper->execBuffer(&execbuf, completionGpuAddress, completionValue);
+    }
 
-            if (ret != 0) {
-                const auto status = evictUnusedAllocations(true, true);
-                if (status == MemoryOperationsStatus::GPU_HANG_DETECTED_DURING_OPERATION) {
-                    PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "Error! GPU hang detected in BufferObject::exec(). Returning %d\n", gpuHangDetected);
-                    return gpuHangDetected;
-                }
+    if (ret != 0) {
+        const auto status = evictUnusedAllocations(true, true);
+        if (status == MemoryOperationsStatus::GPU_HANG_DETECTED_DURING_OPERATION) {
+            PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "Error! GPU hang detected in BufferObject::exec(). Returning %d\n", gpuHangDetected);
+            return gpuHangDetected;
+        }
 
-                ret = ioctlHelper->execBuffer(&execbuf, completionGpuAddress, completionValue);
-            }
-        } while (ret != 0 && this->drm->getErrno() == ENXIO);
+        ret = ioctlHelper->execBuffer(&execbuf, completionGpuAddress, completionValue);
     }
 
     if (ret == 0) {

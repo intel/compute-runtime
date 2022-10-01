@@ -129,7 +129,6 @@ class Drm : public DriverModel {
     uint32_t getVirtualMemoryAddressSpace(uint32_t vmId) const;
     MOCKABLE_VIRTUAL int bindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo);
     MOCKABLE_VIRTUAL int unbindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo);
-    MOCKABLE_VIRTUAL int changeBufferObjectBinding(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo, bool bind);
     int setupHardwareInfo(const DeviceDescriptor *, bool);
     void setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo);
     void setupCacheInfo(const HardwareInfo &hwInfo);
