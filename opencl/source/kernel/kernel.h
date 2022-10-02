@@ -519,7 +519,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     uint32_t additionalKernelExecInfo = AdditionalKernelExecInfo::DisableOverdispatch;
     uint32_t maxKernelWorkGroupSize = 0;
     uint32_t slmTotalSize = 0u;
-    uint32_t slmTotalSum = 0u;
     uint32_t sshLocalSize = 0u;
     uint32_t crossThreadDataSize = 0u;
 
