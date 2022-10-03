@@ -207,8 +207,11 @@ struct MockDebugSession : public L0::DebugSessionImp {
     }
 
     bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srMagic) override {
-        srMagic.count = threadStopped ? 1 : 0;
-        return readSystemRoutineIdentRetVal;
+        if (skipReadSystemRoutineIdent) {
+            srMagic.count = threadStopped ? 1 : 0;
+            return readSystemRoutineIdentRetVal;
+        }
+        return DebugSessionImp::readSystemRoutineIdent(thread, vmHandle, srMagic);
     }
 
     bool areRequestedThreadsStopped(ze_device_thread_t thread) override {
@@ -316,6 +319,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     bool skipCheckThreadIsResumed = true;
     uint32_t checkThreadIsResumedCalled = 0;
 
+    bool skipReadSystemRoutineIdent = true;
     std::vector<zet_debug_event_t> events;
     std::vector<uint32_t> interruptedDevices;
     std::vector<uint32_t> resumedDevices;
@@ -758,11 +762,9 @@ TEST(DebugSessionTest, givenThreadsToResumeWhenResumeAccidentallyStoppedThreadsC
     class InternalMockDebugSession : public MockDebugSession {
       public:
         InternalMockDebugSession(const zet_debug_config_t &config, L0::Device *device) : MockDebugSession(config, device) {}
-        ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override {
-            SIP::sr_ident srMagic;
+        bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srMagic) override {
             srMagic.count = counter++;
-            memcpy_s(output, size, reinterpret_cast<void *>(&srMagic), sizeof(srMagic));
-            return readMemoryResult;
+            return true;
         }
 
         int counter = 0;
@@ -992,17 +994,33 @@ TEST(DebugSessionTest, whenCallingCheckThreadIsResumedWithoutSrMagicThenThreadIs
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->skipCheckThreadIsResumed = false;
+    sessionMock->skipReadSystemRoutineIdent = false;
     sessionMock->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
+    {
+        auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(sessionMock->stateSaveAreaHeader.data());
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeader.state_area_offset +
+                    pStateSaveAreaHeader->regHeader.state_save_size * 16;
+        sessionMock->stateSaveAreaHeader.resize(size);
+    }
+
+    auto stateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(sessionMock->stateSaveAreaHeader.data());
     ze_device_thread_t thread = {0, 0, 0, 0};
     EuThread::ThreadId threadId(0, thread);
+
+    auto threadSlotOffset = sessionMock->calculateThreadSlotOffset(threadId);
+    auto srMagicOffset = threadSlotOffset + stateSaveAreaHeader->regHeader.sr_magic_offset;
+    SIP::sr_ident srMagic = {{0}};
+    sessionMock->writeGpuMemory(0, reinterpret_cast<char *>(&srMagic), sizeof(srMagic), reinterpret_cast<uint64_t>(stateSaveAreaHeader) + srMagicOffset);
+
     bool resumed = sessionMock->checkThreadIsResumed(threadId);
 
     EXPECT_TRUE(resumed);
     EXPECT_EQ(1u, sessionMock->checkThreadIsResumedCalled);
 }
 
-TEST(DebugSessionTest, givenErrorFromReadGpuMemoryWhenCallingCheckThreadIsResumedThenThreadIsAssumedRunning) {
+TEST(DebugSessionTest, givenErrorFromReadSystemRoutineIdentWhenCallingCheckThreadIsResumedThenThreadIsAssumedRunning) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
@@ -1013,7 +1031,7 @@ TEST(DebugSessionTest, givenErrorFromReadGpuMemoryWhenCallingCheckThreadIsResume
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->skipCheckThreadIsResumed = false;
-    sessionMock->readMemoryResult = ZE_RESULT_ERROR_UNKNOWN;
+    sessionMock->readSystemRoutineIdentRetVal = false;
     sessionMock->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
     ze_device_thread_t thread = {0, 0, 0, 0};
@@ -1028,11 +1046,9 @@ TEST(DebugSessionTest, givenSrMagicWithCounterLessThanlLastThreadCounterThenThre
     class InternalMockDebugSession : public MockDebugSession {
       public:
         InternalMockDebugSession(const zet_debug_config_t &config, L0::Device *device) : MockDebugSession(config, device) {}
-        ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override {
-            SIP::sr_ident srMagic;
+        bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srMagic) override {
             srMagic.count = 0;
-            memcpy_s(output, size, reinterpret_cast<void *>(&srMagic), sizeof(srMagic));
-            return readMemoryResult;
+            return true;
         }
     };
     zet_debug_config_t config = {};
@@ -1061,11 +1077,9 @@ TEST(DebugSessionTest, givenSrMagicWithCounterEqualToPrevousThenThreadHasNotBeen
     class InternalMockDebugSession : public MockDebugSession {
       public:
         InternalMockDebugSession(const zet_debug_config_t &config, L0::Device *device) : MockDebugSession(config, device) {}
-        ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override {
-            SIP::sr_ident srMagic;
+        bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srMagic) override {
             srMagic.count = 1;
-            memcpy_s(output, size, reinterpret_cast<void *>(&srMagic), sizeof(srMagic));
-            return readMemoryResult;
+            return true;
         }
     };
     zet_debug_config_t config = {};
@@ -1096,11 +1110,9 @@ TEST(DebugSessionTest, givenSrMagicWithCounterBiggerThanPreviousThenThreadIsResu
     class InternalMockDebugSession : public MockDebugSession {
       public:
         InternalMockDebugSession(const zet_debug_config_t &config, L0::Device *device) : MockDebugSession(config, device) {}
-        ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override {
-            SIP::sr_ident srMagic;
+        bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srMagic) override {
             srMagic.count = 3;
-            memcpy_s(output, size, reinterpret_cast<void *>(&srMagic), sizeof(srMagic));
-            return readMemoryResult;
+            return true;
         }
     };
     zet_debug_config_t config = {};
@@ -1131,11 +1143,9 @@ TEST(DebugSessionTest, givenSrMagicWithCounterOverflowingZeroThenThreadIsResumed
     class InternalMockDebugSession : public MockDebugSession {
       public:
         InternalMockDebugSession(const zet_debug_config_t &config, L0::Device *device) : MockDebugSession(config, device) {}
-        ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override {
-            SIP::sr_ident srMagic;
+        bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srMagic) override {
             srMagic.count = 0;
-            memcpy_s(output, size, reinterpret_cast<void *>(&srMagic), sizeof(srMagic));
-            return readMemoryResult;
+            return true;
         }
     };
     zet_debug_config_t config = {};
@@ -1339,31 +1349,13 @@ TEST(DebugSessionTest, GivenBindlessSipVersion2WhenWritingResumeFailsThenErrorIs
     class InternalMockDebugSession : public MockDebugSession {
       public:
         InternalMockDebugSession(const zet_debug_config_t &config, L0::Device *device) : MockDebugSession(config, device) {}
-        ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override {
-            switch (counter) {
-            case 0:
-            case 1:
-                MockDebugSession::readGpuMemory(memoryHandle, output, size, gpuVa);
-                counter++;
-                break;
-            default:
-                SIP::sr_ident srMagic;
-                if (firstEntry) {
-                    srMagic.count = 1;
-                    firstEntry = false;
-                } else {
-                    srMagic.count = 2;
-                }
-                memcpy_s(output, size, reinterpret_cast<void *>(&srMagic), sizeof(srMagic));
-                break;
-            }
-
-            return readMemoryResult;
+        bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srMagic) override {
+            srMagic.count = ++counter;
+            return true;
         }
 
       private:
         int counter = 0;
-        bool firstEntry = true;
     };
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -1396,18 +1388,15 @@ TEST(DebugSessionTest, GivenBindlessSipVersion2WhenResumingThreadThenCheckIfThre
     class InternalMockDebugSession : public MockDebugSession {
       public:
         InternalMockDebugSession(const zet_debug_config_t &config, L0::Device *device) : MockDebugSession(config, device) {}
-        ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override {
-
-            SIP::sr_ident srMagic{};
+        bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srMagic) override {
             if (counter > 5) {
                 srMagic.count = 4;
             } else {
                 srMagic.count = 1;
             }
-            memcpy_s(output, size, reinterpret_cast<void *>(&srMagic), sizeof(srMagic));
 
             counter++;
-            return readMemoryResult;
+            return true;
         }
         int counter = 0;
     };

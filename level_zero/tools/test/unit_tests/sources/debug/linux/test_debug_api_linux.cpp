@@ -6355,7 +6355,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenThreadWhenReadingSystemRoutineIdentThen
     session->ioctlHandler.reset(ioctlHandler);
     EuThread thread({0, 0, 0, 0, 0});
 
-    SIP::sr_ident srIdent = {};
+    SIP::sr_ident srIdent = {{0}};
     auto result = session->readSystemRoutineIdent(&thread, vmHandle, srIdent);
 
     EXPECT_TRUE(result);
@@ -6420,7 +6420,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenNoVmHandleWhenReadingSystemRoutineIdent
 
     EuThread thread({0, 0, 0, 0, 0});
 
-    SIP::sr_ident srIdent = {};
+    SIP::sr_ident srIdent = {{0}};
     auto result = session->readSystemRoutineIdent(&thread, DebugSessionLinux::invalidHandle, srIdent);
 
     EXPECT_FALSE(result);
@@ -6431,7 +6431,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenNoStatSaveAreaWhenReadingSystemRoutineI
     session->ioctlHandler.reset(ioctlHandler);
     EuThread thread({0, 0, 0, 0, 0});
 
-    SIP::sr_ident srIdent = {};
+    SIP::sr_ident srIdent = {{0}};
     auto result = session->readSystemRoutineIdent(&thread, 0x1234u, srIdent);
 
     EXPECT_FALSE(result);
@@ -6450,7 +6450,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenMemReadFailureWhenReadingSystemRoutineI
 
     EuThread thread({0, 0, 0, 0, 0});
 
-    SIP::sr_ident srIdent = {};
+    SIP::sr_ident srIdent = {{0}};
     auto result = session->readSystemRoutineIdent(&thread, vmHandle, srIdent);
 
     EXPECT_FALSE(result);
@@ -6469,7 +6469,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenCSSANotBoundWhenReadingSystemRoutineIde
 
     EuThread thread({0, 0, 0, 0, 0});
 
-    SIP::sr_ident srIdent = {};
+    SIP::sr_ident srIdent = {{0}};
     auto result = session->readSystemRoutineIdent(&thread, 0x1234u, srIdent);
 
     EXPECT_FALSE(result);

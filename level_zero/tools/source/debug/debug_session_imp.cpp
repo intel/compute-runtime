@@ -459,23 +459,10 @@ bool DebugSessionImp::checkThreadIsResumed(const EuThread::ThreadId &threadID) {
     bool resumed = true;
 
     if (stateSaveAreaHeader->versionHeader.version.major >= 2u) {
+        SIP::sr_ident srMagic = {{0}};
         const auto thread = allThreads[threadID].get();
-        auto gpuVa = getContextStateSaveAreaGpuVa(thread->getMemoryHandle());
-        if (gpuVa == 0) {
-            PRINT_DEBUGGER_ERROR_LOG("Failed to get Context State Save Area GPU Virtual Address\n", "");
-            return resumed;
-        }
 
-        auto threadSlotOffset = calculateThreadSlotOffset(thread->getThreadId());
-        auto srMagicOffset = threadSlotOffset + getStateSaveAreaHeader()->regHeader.sr_magic_offset;
-        SIP::sr_ident srMagic;
-        memset(srMagic.magic, 0, sizeof(SIP::sr_ident::magic));
-
-        auto status = readGpuMemory(thread->getMemoryHandle(), reinterpret_cast<char *>(&srMagic), sizeof(srMagic), gpuVa + srMagicOffset);
-        DEBUG_BREAK_IF(status != ZE_RESULT_SUCCESS);
-
-        if (status != ZE_RESULT_SUCCESS || 0 != strcmp(srMagic.magic, "srmagic")) {
-            PRINT_DEBUGGER_ERROR_LOG("checkThreadIsResumed - Failed to read srMagic for thread %s\n", EuThread::toString(threadID).c_str());
+        if (!readSystemRoutineIdent(thread, thread->getMemoryHandle(), srMagic)) {
             return resumed;
         }
 
@@ -649,18 +636,25 @@ bool DebugSessionImp::readSystemRoutineIdent(EuThread *thread, uint64_t memoryHa
     if (gpuVa == 0) {
         return false;
     }
+
     auto threadSlotOffset = calculateThreadSlotOffset(thread->getThreadId());
-    auto srMagicOffset = threadSlotOffset + getStateSaveAreaHeader()->regHeader.sr_magic_offset;
+    auto srMagicOffset = threadSlotOffset + stateSaveAreaHeader->regHeader.sr_magic_offset;
 
     if (ZE_RESULT_SUCCESS != readGpuMemory(memoryHandle, reinterpret_cast<char *>(&srIdent), sizeof(srIdent), gpuVa + srMagicOffset)) {
         return false;
     }
+
+    if (0 != strcmp(srIdent.magic, "srmagic")) {
+        PRINT_DEBUGGER_ERROR_LOG("readSystemRoutineIdent - Failed to read srMagic for thread %s\n", EuThread::toString(thread->getThreadId()).c_str());
+        return false;
+    }
+
     return true;
 }
 
 void DebugSessionImp::markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(EuThread::ThreadId threadId, uint64_t memoryHandle) {
 
-    SIP::sr_ident srMagic = {};
+    SIP::sr_ident srMagic = {{0}};
     srMagic.count = 0;
 
     bool wasStopped = false;
@@ -1115,10 +1109,9 @@ ze_result_t DebugSessionImp::registersAccessHelper(const EuThread *thread, const
 
     auto threadSlotOffset = calculateThreadSlotOffset(thread->getThreadId());
 
-    auto srMagicOffset = threadSlotOffset + getStateSaveAreaHeader()->regHeader.sr_magic_offset;
-    SIP::sr_ident srMagic;
-    memset(srMagic.magic, 0, sizeof(SIP::sr_ident::magic));
+    SIP::sr_ident srMagic = {{0}};
 
+    auto srMagicOffset = threadSlotOffset + getStateSaveAreaHeader()->regHeader.sr_magic_offset;
     readGpuMemory(thread->getMemoryHandle(), reinterpret_cast<char *>(&srMagic), sizeof(srMagic), gpuVa + srMagicOffset);
     if (0 != strcmp(srMagic.magic, "srmagic")) {
         return ZE_RESULT_ERROR_UNKNOWN;

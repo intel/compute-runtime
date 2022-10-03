@@ -300,7 +300,7 @@ TEST_F(DebugApiWindowsAttentionTest, GivenThreadWhenReadingSystemRoutineIdentThe
     mockWddm->srcReadBuffer = session->stateSaveAreaHeader.data();
     mockWddm->srcReadBufferBaseAddress = session->stateSaveAreaVA.load();
 
-    SIP::sr_ident srIdent = {};
+    SIP::sr_ident srIdent = {{0}};
     auto vmHandle = *session->allContexts.begin();
     auto result = session->readSystemRoutineIdent(&thread, vmHandle, srIdent);
 
@@ -343,7 +343,7 @@ TEST_F(DebugApiWindowsAttentionTest, GivenThreadWhenReadingSystemRoutineIdentAnd
     mockWddm->srcReadBuffer = session->stateSaveAreaHeader.data();
     mockWddm->srcReadBufferBaseAddress = session->stateSaveAreaVA.load();
 
-    SIP::sr_ident srIdent = {};
+    SIP::sr_ident srIdent = {{0}};
     auto vmHandle = *session->allContexts.begin();
     auto result = session->readSystemRoutineIdent(&thread, vmHandle, srIdent);
 
@@ -369,7 +369,7 @@ TEST_F(DebugApiWindowsAttentionTest, GivenThreadWhenReadingSystemRoutineIdentAnd
     mockWddm->srcReadBuffer = session->stateSaveAreaHeader.data();
     mockWddm->srcReadBufferBaseAddress = session->stateSaveAreaVA.load();
 
-    SIP::sr_ident srIdent = {};
+    SIP::sr_ident srIdent = {{0}};
     auto vmHandle = *session->allContexts.begin();
     auto result = session->readSystemRoutineIdent(&thread, vmHandle, srIdent);
 
