@@ -2260,21 +2260,4 @@ bool Kernel::graphicsAllocationTypeUseSystemMemory(AllocationType type) {
            (type == AllocationType::SVM_ZERO_COPY);
 }
 
-int32_t Kernel::setOverdispatchParam(size_t paramValueSize, const void *paramValue) {
-    auto &hwInfo = clDevice.getHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-
-    if (!hwInfoConfig.isDisableOverdispatchAvailable(hwInfo)) {
-        return CL_INVALID_VALUE;
-    }
-
-    if (*static_cast<const cl_bool *>(paramValue) == CL_TRUE) {
-        additionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
-        return CL_SUCCESS;
-    }
-
-    additionalKernelExecInfo = AdditionalKernelExecInfo::DisableOverdispatch;
-    return CL_SUCCESS;
-}
-
 } // namespace NEO
