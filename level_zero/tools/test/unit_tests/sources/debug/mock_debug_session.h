@@ -36,7 +36,10 @@ struct DebugSessionMock : public L0::DebugSession {
     using L0::DebugSession::isBindlessSystemRoutine;
 
     DebugSessionMock(const zet_debug_config_t &config, L0::Device *device) : DebugSession(config, device), config(config){};
-    bool closeConnection() override { return true; }
+    bool closeConnection() override {
+        closeConnectionCalled = true;
+        return true;
+    }
     ze_result_t initialize() override {
         if (config.pid == 0) {
             return ZE_RESULT_ERROR_UNKNOWN;
@@ -90,6 +93,7 @@ struct DebugSessionMock : public L0::DebugSession {
 
     zet_debug_config_t config;
     bool asyncThreadStarted = false;
+    bool closeConnectionCalled = false;
 };
 
 } // namespace ult

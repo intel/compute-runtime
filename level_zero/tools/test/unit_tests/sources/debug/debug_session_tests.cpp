@@ -343,6 +343,22 @@ struct MockDebugSession : public L0::DebugSessionImp {
 
 using DebugSessionTest = ::testing::Test;
 
+TEST(DeviceWithDebugSessionTest, GivenDeviceWithDebugSessionWhenCallingReleaseResourcesThenCloseConnectionIsCalled) {
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto hwInfo = *NEO::defaultHwInfo;
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
+    ASSERT_NE(nullptr, device);
+
+    zet_debug_config_t config = {};
+    auto session = new DebugSessionMock(config, device.get());
+    static_cast<DeviceImp *>(device.get())->setDebugSession(session);
+    static_cast<DeviceImp *>(device.get())->releaseResources();
+
+    EXPECT_TRUE(session->closeConnectionCalled);
+}
+
 TEST(DebugSessionTest, givenNullDeviceWhenDebugSessionCreatedThenAllThreadsAreEmpty) {
     auto sessionMock = std::make_unique<MockDebugSession>(zet_debug_config_t{0x1234}, nullptr);
     EXPECT_TRUE(sessionMock->allThreads.empty());

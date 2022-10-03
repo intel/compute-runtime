@@ -1118,6 +1118,11 @@ void DeviceImp::releaseResources() {
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.reset(nullptr);
     }
 
+    // close connection and async threads in debug session before releasing device resources
+    if (debugSession.get()) {
+        debugSession->closeConnection();
+    }
+
     if (this->pageFaultCommandList) {
         this->pageFaultCommandList->destroy();
         this->pageFaultCommandList = nullptr;

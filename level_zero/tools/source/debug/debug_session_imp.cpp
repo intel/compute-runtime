@@ -875,8 +875,8 @@ const SIP::regset_desc *DebugSessionImp::getSbaRegsetDesc() {
 const SIP::regset_desc *DebugSessionImp::typeToRegsetDesc(uint32_t type) {
     auto pStateSaveAreaHeader = getStateSaveAreaHeader();
 
-    DEBUG_BREAK_IF(pStateSaveAreaHeader == nullptr);
     if (pStateSaveAreaHeader == nullptr) {
+        DEBUG_BREAK_IF(pStateSaveAreaHeader == nullptr);
         return nullptr;
     }
 
