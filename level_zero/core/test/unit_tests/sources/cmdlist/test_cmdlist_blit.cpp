@@ -23,7 +23,11 @@ namespace ult {
 template <GFXCORE_FAMILY gfxCoreFamily>
 class MockCommandListForMemFill : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
   public:
-    MockCommandListForMemFill() : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>() {}
+    using BaseClass = WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>;
+
+    MockCommandListForMemFill() : BaseClass() {}
+
+    using BaseClass::getAllocationOffsetForAppendBlitFill;
 
     AlignedAllocationData getAlignedAllocation(L0::Device *device, const void *buffer, uint64_t bufferSize, bool allowHostCopy) override {
         return {0, 0, nullptr, true};
@@ -99,6 +103,44 @@ HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListWhenAppenBlitFillThenCopyBlt
     auto itor = find<XY_COLOR_BLT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
     device->setDriverHandle(driverHandle.get());
+}
+
+HWTEST2_F(AppendMemoryCopy,
+          givenExternalHostPointerAllocationWhenPassedToAppendBlitFillThenProgramDestinationAddressCorrectly,
+          IsAtLeastSkl) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
+
+    L0::Device *device = driverHandle->devices[0];
+
+    size_t size = 1024;
+    auto hostPointer = std::make_unique<uint8_t[]>(size);
+    auto ret = driverHandle->importExternalPointer(hostPointer.get(), MemoryConstants::pageSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto gpuAllocation = device->getDriverHandle()->findHostPointerAllocation(hostPointer.get(), size, 0);
+    ASSERT_NE(nullptr, gpuAllocation);
+    EXPECT_EQ(NEO::AllocationType::EXTERNAL_HOST_PTR, gpuAllocation->getAllocationType());
+
+    MockCommandListForMemFill<gfxCoreFamily> commandList;
+    commandList.initialize(device, NEO::EngineGroupType::Copy, 0u);
+
+    uint32_t pattern = 1;
+    ze_result_t result = commandList.appendMemoryFill(hostPointer.get(), reinterpret_cast<void *>(&pattern), sizeof(pattern), size, nullptr, 0, nullptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0), commandList.commandContainer.getCommandStream()->getUsed()));
+    auto itor = find<XY_COLOR_BLT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+
+    auto cmd = genCmdCast<XY_COLOR_BLT *>(*itor);
+    uint64_t offset = commandList.getAllocationOffsetForAppendBlitFill(hostPointer.get(), *gpuAllocation);
+    EXPECT_EQ(cmd->getDestinationBaseAddress(), ptrOffset(gpuAllocation->getGpuAddress(), offset));
+
+    ret = driverHandle->releaseImportedPointer(hostPointer.get());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
 HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListAndHostPointersWhenMemoryCopyCalledThenPipeControlWithDcFlushAddedIsNotAddedAfterBlitCopy, IsAtLeastSkl) {

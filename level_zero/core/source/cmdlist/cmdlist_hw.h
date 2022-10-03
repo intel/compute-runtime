@@ -265,6 +265,7 @@ struct CommandListCoreFamily : CommandListImp {
     size_t estimateBufferSizeMultiTileBarrier(const NEO::HardwareInfo &hwInfo);
     uint64_t getInputBufferSize(NEO::ImageType imageType, uint64_t bytesPerPixel, const ze_image_region_t *region);
     MOCKABLE_VIRTUAL AlignedAllocationData getAlignedAllocation(Device *device, const void *buffer, uint64_t bufferSize, bool hostCopyAllowed);
+    size_t getAllocationOffsetForAppendBlitFill(void *ptr, NEO::GraphicsAllocation &gpuAllocation);
     void addFlushRequiredCommand(bool flushOperationRequired, Event *signalEvent);
     void handlePostSubmissionState();
 

@@ -1755,7 +1755,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
             }
         }
 
-        uint64_t offset = reinterpret_cast<uint64_t>(static_cast<uint64_t *>(ptr)) - static_cast<uint64_t>(gpuAllocation->getGpuAddress());
+        uint64_t offset = getAllocationOffsetForAppendBlitFill(ptr, *gpuAllocation);
 
         commandContainer.addToResidencyContainer(gpuAllocation);
         uint32_t patternToCommand[4] = {};
@@ -1900,6 +1900,17 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
     }
 
     return {alignedPtr, offset, alloc, hostPointerNeedsFlush};
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+inline size_t CommandListCoreFamily<gfxCoreFamily>::getAllocationOffsetForAppendBlitFill(void *ptr, NEO::GraphicsAllocation &gpuAllocation) {
+    uint64_t offset;
+    if (gpuAllocation.getAllocationType() == NEO::AllocationType::EXTERNAL_HOST_PTR) {
+        offset = castToUint64(ptr) - castToUint64(gpuAllocation.getUnderlyingBuffer()) + gpuAllocation.getAllocationOffset();
+    } else {
+        offset = castToUint64(ptr) - gpuAllocation.getGpuAddress();
+    }
+    return offset;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
