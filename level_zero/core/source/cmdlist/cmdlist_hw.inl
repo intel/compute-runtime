@@ -117,6 +117,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::handlePostSubmissionState() {
+    this->commandContainer.getResidencyContainer().clear();
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO::EngineGroupType engineGroupType,
                                                              ze_command_list_flags_t flags) {
     this->device = device;
@@ -189,6 +194,7 @@ inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeCommandListImmed
 
     if (this->isCopyOnly() && !this->isSyncModeQueue && !this->isTbxMode) {
         this->commandContainer.currentLinearStreamStartOffset = this->commandContainer.getCommandStream()->getUsed();
+        this->handlePostSubmissionState();
     } else {
         const auto synchronizationResult = cmdQImmediate->synchronize(std::numeric_limits<uint64_t>::max());
         if (synchronizationResult == ZE_RESULT_ERROR_DEVICE_LOST) {

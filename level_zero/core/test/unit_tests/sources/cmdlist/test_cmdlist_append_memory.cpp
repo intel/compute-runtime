@@ -178,7 +178,7 @@ HWTEST2_F(AppendMemoryCopy, givenAsyncImmediateCommandListWhenAppendingMemoryCop
 
     EXPECT_EQ(1u, cmdQueue.executeCommandListsCalled);
     EXPECT_EQ(0u, cmdQueue.synchronizeCalled);
-
+    EXPECT_EQ(0u, commandList->commandContainer.getResidencyContainer().size());
     commandList->cmdQImmediate = nullptr;
 }
 

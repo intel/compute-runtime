@@ -193,8 +193,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
     this->cmdListCurrentStartOffset = commandStream->getUsed();
     this->containsAnyKernel = false;
 
-    this->commandContainer.getResidencyContainer().clear();
-
+    this->handlePostSubmissionState();
     return ZE_RESULT_SUCCESS;
 }
 

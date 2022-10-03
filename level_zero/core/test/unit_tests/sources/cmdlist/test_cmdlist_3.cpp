@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -1400,6 +1401,25 @@ HWTEST2_F(CommandListCreate, givenHostPtrAllocAllocWhenExternalMemCreatedThenNew
     EXPECT_NE(alloc, nullptr);
     driverHandle->getMemoryManager()->freeGraphicsMemory(alloc);
     commandList->hostPtrMap.clear();
+}
+
+HWTEST2_F(CommandListCreateWithBcs, givenHostPtrAllocAllocAndImmediateCmdListWhenExternalMemCreatedThenNewAllocAddedToInternalAllocationStorage, IsAtLeastSkl) {
+    auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::EXTERNAL_HOST_PTR>>(device->getNEODevice(), execEnv);
+    myDevice->neoDevice = device->getNEODevice();
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+    commandList->initialize(myDevice.get(), NEO::EngineGroupType::Copy, 0u);
+    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    if (neoDevice->getInternalCopyEngine()) {
+        commandList->csr = neoDevice->getInternalCopyEngine()->commandStreamReceiver;
+    } else {
+        commandList->csr = neoDevice->getInternalEngine().commandStreamReceiver;
+    }
+    auto buffer = std::make_unique<uint8_t>(0x100);
+
+    EXPECT_TRUE(commandList->csr->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
+    auto alloc = commandList->getHostPtrAlloc(buffer.get(), 0x100, true);
+    EXPECT_FALSE(commandList->csr->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
+    EXPECT_EQ(alloc, commandList->csr->getInternalAllocationStorage()->getTemporaryAllocations().peekHead());
 }
 
 HWTEST2_F(CommandListCreate, givenGetAlignedAllocationWhenInternalMemWithinDifferentAllocThenReturnNewAlloc, IsAtLeastSkl) {

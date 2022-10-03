@@ -124,6 +124,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::csr;
     using BaseClass::finalStreamState;
     using BaseClass::frontEndStateTracking;
+    using BaseClass::getHostPtrAlloc;
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::isFlushTaskSubmissionEnabled;
     using BaseClass::partitionCount;

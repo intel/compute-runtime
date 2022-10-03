@@ -241,6 +241,9 @@ struct CommandList : _ze_command_list_handle_t {
     bool isMemoryPrefetchRequested() const {
         return performMemoryPrefetch;
     }
+    bool storeExternalPtrAsTemporary() const {
+        return this->cmdListType == CommandListType::TYPE_IMMEDIATE && (this->isFlushTaskSubmissionEnabled || isCopyOnly());
+    }
 
     enum CommandListType : uint32_t {
         TYPE_REGULAR = 0u,

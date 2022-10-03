@@ -266,6 +266,7 @@ struct CommandListCoreFamily : CommandListImp {
     uint64_t getInputBufferSize(NEO::ImageType imageType, uint64_t bytesPerPixel, const ze_image_region_t *region);
     MOCKABLE_VIRTUAL AlignedAllocationData getAlignedAllocation(Device *device, const void *buffer, uint64_t bufferSize, bool hostCopyAllowed);
     void addFlushRequiredCommand(bool flushOperationRequired, Event *signalEvent);
+    void handlePostSubmissionState();
 
     virtual void createLogicalStateHelper();
 
