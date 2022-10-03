@@ -12,7 +12,15 @@
 
 #include <iostream>
 #include <numeric>
+#ifdef WIN32
+#include <windows.h>
 
+#include <io.h>
+
+#pragma warning(disable : 4996)
+#else
+#include <unistd.h>
+#endif
 const char *source = R"===(
 __kernel void printf_kernel(char byteValue, short shortValue, int intValue, long longValue){
     printf("byte = %hhd\nshort = %hd\nint = %d\nlong = %ld", byteValue, shortValue, intValue, longValue);
@@ -82,6 +90,10 @@ void runPrintfKernel(ze_context_handle_t &context, ze_device_handle_t &device) {
 
 int main(int argc, char *argv[]) {
     verbose = isVerbose(argc, argv);
+    const char *fileName = "zello_printf_output.txt";
+    bool validatePrintfOutput = true;
+    bool printfValidated = false;
+    int stdoutFd = -1;
 
     ze_context_handle_t context = nullptr;
     auto devices = zelloInitContextAndGetDevices(context);
@@ -91,12 +103,55 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
     printDeviceProperties(deviceProperties);
 
+    if (validatePrintfOutput) {
+        // duplicate stdout descriptor
+        stdoutFd = dup(fileno(stdout));
+        auto newFile = freopen(fileName, "w", stdout);
+        if (newFile == nullptr) {
+            std::cout << "Failed in freopen()" << std::endl;
+            abort();
+        }
+    }
+
     runPrintfKernel(context, device);
 
+    if (validatePrintfOutput) {
+        std::string expectedString = "byte = 127\nshort = 32767\nint = 2147483647\nlong = 9223372036854775807";
+        auto sizeOfBuffer = expectedString.size() + 1024;
+        auto kernelOutput = std::make_unique<char[]>(sizeOfBuffer);
+        memset(kernelOutput.get(), 0, sizeOfBuffer);
+        auto kernelOutputFile = fopen(fileName, "r");
+        [[maybe_unused]] auto result = fread(kernelOutput.get(), sizeof(char), sizeOfBuffer - 1, kernelOutputFile);
+        fclose(kernelOutputFile);
+        fflush(stdout);
+        // adjust/reatore stdout to previous descriptor
+        dup2(stdoutFd, fileno(stdout));
+        // close duplicate
+        close(stdoutFd);
+        std::remove(fileName);
+
+        char *foundString = strstr(kernelOutput.get(), expectedString.c_str());
+        if (foundString != nullptr) {
+            printfValidated = true;
+        }
+
+        if (result > 0) {
+            std::cout << "Printf output:\n"
+                      << "\n------------------------------\n"
+                      << kernelOutput.get() << "\n------------------------------\n"
+                      << std::endl;
+        } else {
+            std::cout << "Printf output empty!" << std::endl;
+        }
+    }
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
-    // always pass - no printf capturing
-    std::cout << "\nZello Printf Always PASS " << std::endl;
+    if (validatePrintfOutput && !printfValidated) {
+        std::cout << "\nZello Printf FAILED " << std::endl;
+        return -1;
+    }
+
+    std::cout << "\nZello Printf PASSED " << std::endl;
 
     return 0;
 }
