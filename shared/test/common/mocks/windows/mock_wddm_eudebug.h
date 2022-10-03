@@ -77,6 +77,13 @@ struct WddmEuDebugInterfaceMock : public WddmMock {
             pEscapeInfo->KmEuDbgL0EscapeInfo.ReadEventParams.EventSeqNo = eventQueue[curEvent].seqNo;
             auto paramBuffer = reinterpret_cast<uint8_t *>(pEscapeInfo->KmEuDbgL0EscapeInfo.ReadEventParams.EventParamBufferPtr);
             memcpy_s(paramBuffer, pEscapeInfo->KmEuDbgL0EscapeInfo.ReadEventParams.EventParamsBufferSize, &eventQueue[curEvent].eventParamsBuffer, sizeof(READ_EVENT_PARAMS_BUFFER));
+            if (eventQueue[curEvent].readEventType == DBGUMD_READ_EVENT_EU_ATTN_BIT_SET) {
+                auto bitsetParams = reinterpret_cast<DBGUMD_READ_EVENT_EU_ATTN_BIT_SET_PARAMS *>(pEscapeInfo->KmEuDbgL0EscapeInfo.ReadEventParams.EventParamBufferPtr);
+                auto bitmapDst = reinterpret_cast<uint8_t *>(&bitsetParams->BitmaskArrayPtr);
+                auto bitmapSize = euAttnBitSetPassedParams.bitmapSize;
+                bitsetParams->BitMaskSizeInBytes = bitmapSize;
+                memcpy_s(bitmapDst, bitmapSize, euAttnBitSetPassedParams.bitmap, bitmapSize);
+            }
             return eventQueue[curEvent++].ntStatus;
         }
         case DBGUMD_ACTION_READ_ALLOCATION_DATA: {
@@ -178,6 +185,11 @@ struct WddmEuDebugInterfaceMock : public WddmMock {
         EUDBG_UMD_MODULE_NOTIFICATION param;
         NTSTATUS ntStatus = STATUS_SUCCESS;
     } moduleCreateNotificationPassedParam;
+
+    struct {
+        uint8_t *bitmap;
+        uint32_t bitmapSize;
+    } euAttnBitSetPassedParams;
 
     DBGUMD_ACTION_ACKNOWLEDGE_EVENT_PARAMS acknowledgeEventPassedParam = {0};
 

@@ -150,7 +150,7 @@ ze_result_t DebugSessionWindows::readAndHandleEvent(uint64_t timeoutMs) {
 
     union {
         READ_EVENT_PARAMS_BUFFER eventParamsBuffer;
-        uint8_t rawBytes[READ_EVENT_PARAMS_BUFFER_MIN_SIZE_BYTES] = {0};
+        uint8_t rawBytes[2 * READ_EVENT_PARAMS_BUFFER_MIN_SIZE_BYTES] = {0};
     } eventParamsBuffer;
 
     escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_READ_EVENT;
@@ -228,16 +228,16 @@ ze_result_t DebugSessionWindows::handleModuleCreateEvent(uint32_t seqNo, DBGUMD_
 ze_result_t DebugSessionWindows::handleEuAttentionBitsEvent(DBGUMD_READ_EVENT_EU_ATTN_BIT_SET_PARAMS &euAttentionBitsParams) {
     PRINT_DEBUGGER_INFO_LOG("DBGUMD_READ_EVENT_EU_ATTN_BIT_SET_PARAMS: hContextHandle=0x%llX LRCA=%d BitMaskSizeInBytes=%d BitmaskArrayPtr=0x%llX\n",
                             euAttentionBitsParams.hContextHandle, euAttentionBitsParams.LRCA,
-                            euAttentionBitsParams.BitMaskSizeInBytes, euAttentionBitsParams.BitmaskArrayPtr);
+                            euAttentionBitsParams.BitMaskSizeInBytes, &euAttentionBitsParams.BitmaskArrayPtr);
 
     auto hwInfo = connectedDevice->getHwInfo();
     auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     auto threadsWithAttention = l0HwHelper.getThreadsFromAttentionBitmask(hwInfo, 0u,
-                                                                          reinterpret_cast<uint8_t *>(euAttentionBitsParams.BitmaskArrayPtr),
+                                                                          reinterpret_cast<uint8_t *>(&euAttentionBitsParams.BitmaskArrayPtr),
                                                                           euAttentionBitsParams.BitMaskSizeInBytes);
 
-    printBitmask(reinterpret_cast<uint8_t *>(euAttentionBitsParams.BitmaskArrayPtr), euAttentionBitsParams.BitMaskSizeInBytes);
+    printBitmask(reinterpret_cast<uint8_t *>(&euAttentionBitsParams.BitmaskArrayPtr), euAttentionBitsParams.BitMaskSizeInBytes);
 
     PRINT_DEBUGGER_THREAD_LOG("ATTENTION received for thread count = %d\n", (int)threadsWithAttention.size());
 
