@@ -15,6 +15,7 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
@@ -1798,7 +1799,9 @@ TEST_F(CommandQueueCreate, givenOverrideCmdQueueSyncModeToSynchronousWhenCommand
     commandQueue->destroy();
 }
 
-TEST_F(CommandQueueCreate, givenCreatedCommandQueueWhenGettingTrackingFlagsThenDefaultValuseIsFalse) {
+TEST_F(CommandQueueCreate, givenCreatedCommandQueueWhenGettingTrackingFlagsThenDefaultValuseIsHwSupported) {
+    auto &hwInfo = device->getHwInfo();
+    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
@@ -1813,7 +1816,9 @@ TEST_F(CommandQueueCreate, givenCreatedCommandQueueWhenGettingTrackingFlagsThenD
     ASSERT_NE(nullptr, commandQueue);
     EXPECT_FALSE(commandQueue->frontEndStateTracking);
     EXPECT_FALSE(commandQueue->pipelineSelectStateTracking);
-    EXPECT_FALSE(commandQueue->stateComputeModeTracking);
+
+    bool expectedStateComputeModeTracking = l0HwHelper.platformSupportsStateComputeModeTracking(hwInfo);
+    EXPECT_EQ(expectedStateComputeModeTracking, commandQueue->stateComputeModeTracking);
 
     commandQueue->destroy();
 }
