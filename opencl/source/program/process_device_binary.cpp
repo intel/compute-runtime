@@ -161,7 +161,20 @@ cl_int Program::processGenBinaries(const ClDeviceVector &clDevices, std::unorder
 cl_int Program::processGenBinary(const ClDevice &clDevice) {
     auto rootDeviceIndex = clDevice.getRootDeviceIndex();
     if (nullptr == this->buildInfos[rootDeviceIndex].unpackedDeviceBinary) {
-        return CL_INVALID_BINARY;
+        ArrayRef<const uint8_t> archive(reinterpret_cast<uint8_t *>(this->buildInfos[rootDeviceIndex].packedDeviceBinary.get()), this->buildInfos[rootDeviceIndex].packedDeviceBinarySize);
+        if (isAnyPackedDeviceBinaryFormat(archive)) {
+            std::string outErrReason, outWarning;
+            auto productAbbreviation = NEO::hardwarePrefix[clDevice.getHardwareInfo().platform.eProductFamily];
+            NEO::TargetDevice targetDevice = NEO::targetDeviceFromHwInfo(clDevice.getHardwareInfo());
+
+            auto singleDeviceBinary = unpackSingleDeviceBinary(archive, ConstStringRef(productAbbreviation, strlen(productAbbreviation)), targetDevice, outErrReason, outWarning);
+            auto singleDeviceBinarySize = singleDeviceBinary.deviceBinary.size();
+
+            this->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy<char>(reinterpret_cast<const char *>(singleDeviceBinary.deviceBinary.begin()), singleDeviceBinarySize);
+            this->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = singleDeviceBinarySize;
+        } else {
+            return CL_INVALID_BINARY;
+        }
     }
 
     cleanCurrentKernelInfo(rootDeviceIndex);

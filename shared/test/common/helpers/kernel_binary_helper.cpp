@@ -20,7 +20,7 @@ KernelBinaryHelper::KernelBinaryHelper(const std::string &name, bool appendOptio
     MockCompilerDebugVars igcDebugVars;
 
     retrieveBinaryKernelFilename(fclDebugVars.fileName, name + "_", ".bc");
-    retrieveBinaryKernelFilename(igcDebugVars.fileName, name + "_", ".gen");
+    retrieveBinaryKernelFilename(igcDebugVars.fileName, name + "_", ".bin");
 
     appendBinaryNameSuffix(fclDebugVars.fileNameSuffix);
     appendBinaryNameSuffix(igcDebugVars.fileNameSuffix);

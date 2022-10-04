@@ -22,19 +22,18 @@ function(compile_kernels_gen platform_name_with_type revision_id platform_name s
       set(output_files
           ${outputpath_base}.spv
           ${outputpath_base}.bin
-          ${outputpath_base}.gen
       )
 
       add_custom_command(
                          OUTPUT ${output_files}
-                         COMMAND ${ocloc_cmd_prefix} -gen_file -file ${absolute_filepath} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -revision_id ${revision_id}
+                         COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -revision_id ${revision_id}
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc copy_compiler_files
       )
 
       list(APPEND compiled_kernels_${platform_name_with_type}_${revision_id} ${output_files})
     else()
-      foreach(_file_name "spv" "bin" "gen")
+      foreach(_file_name "spv" "bin")
         set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/${suffix}/${revision_id}/test_files/${NEO_ARCH}/${basename}_${suffix}.${_file_name}")
         add_custom_command(
                            OUTPUT ${outputpath_base}.${_file_name}

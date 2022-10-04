@@ -356,7 +356,7 @@ int main(int argc, char **argv) {
         builtInsFileName = KernelBinaryHelper::BUILT_INS;
     }
     retrieveBinaryKernelFilename(fclDebugVars.fileName, builtInsFileName + "_", ".bc");
-    retrieveBinaryKernelFilename(igcDebugVars.fileName, builtInsFileName + "_", ".gen");
+    retrieveBinaryKernelFilename(igcDebugVars.fileName, builtInsFileName + "_", ".bin");
 
     gEnvironment->setMockFileNames(fclDebugVars.fileName, igcDebugVars.fileName);
     gEnvironment->setDefaultDebugVars(fclDebugVars, igcDebugVars, hwInfoForTests);

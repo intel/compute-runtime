@@ -24,7 +24,7 @@ class Environment : public ::testing::Environment {
     void SetInputFileName( // NOLINT(readability-identifier-naming)
         const std::string filename) {
 
-        retrieveBinaryKernelFilename(igcDebugVars.fileName, filename + "_", ".gen");
+        retrieveBinaryKernelFilename(igcDebugVars.fileName, filename + "_", ".bin");
         retrieveBinaryKernelFilename(fclDebugVars.fileName, filename + "_", ".bc");
 
         NEO::setIgcDebugVars(igcDebugVars);

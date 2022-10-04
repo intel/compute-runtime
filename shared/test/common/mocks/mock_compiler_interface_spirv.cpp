@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 namespace NEO {
 TranslationOutput::ErrorCode MockCompilerInterfaceSpirv::compile(const NEO::Device &device, const TranslationInput &input, TranslationOutput &output) {
     std::string kernelName;
-    retrieveBinaryKernelFilename(kernelName, KernelBinaryHelper::BUILT_INS + "_", ".gen");
+    retrieveBinaryKernelFilename(kernelName, KernelBinaryHelper::BUILT_INS + "_", ".bin");
 
     size_t size = 0;
     auto src = loadDataFromFile(

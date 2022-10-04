@@ -71,26 +71,23 @@ function(compile_builtin core_type platform_type builtin bits builtin_options mo
     )
     set(BINARY_OUTPUT "${OUTPUTDIR}/${mode}_${BASENAME}_${REVISION_ID}_${family_name_with_type}")
     if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
-      set(OUTPUT_FILES_BINARIES
-          ${BINARY_OUTPUT}.gen
-          ${BINARY_OUTPUT}.bin
-      )
+      set(OUTPUT_FILES_BINARIES ${BINARY_OUTPUT}.bin)
       get_filename_component(absolute_filepath_spv ${OUTPUT_FILE_SPV} ABSOLUTE)
       add_custom_command(
                          OUTPUT ${OUTPUT_FILES_BINARIES}
-                         COMMAND ${ocloc_cmd_prefix} -q -gen_file -file ${absolute_filepath_spv} -spirv_input -device ${DEFAULT_SUPPORTED_${core_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -output ${mode}_${BASENAME}_${REVISION_ID} -out_dir ${OUTPUTDIR} -revision_id ${REVISION_ID} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
+                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath_spv} -spirv_input -device ${DEFAULT_SUPPORTED_${core_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -output ${mode}_${BASENAME}_${REVISION_ID} -out_dir ${OUTPUTDIR} -revision_id ${REVISION_ID} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
                          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                          DEPENDS ${OUTPUT_FILE_SPV} ocloc copy_compiler_files
       )
       add_custom_command(
                          OUTPUT ${OUTPUT_FILE_CPP}
-                         COMMAND $<TARGET_FILE:cpp_generate_tool> --file ${BINARY_OUTPUT}.gen --output ${OUTPUT_FILE_CPP} --array ${mode}_${BASENAME} --platform ${family_name_with_type} --revision_id ${REVISION_ID}
+                         COMMAND $<TARGET_FILE:cpp_generate_tool> --file ${BINARY_OUTPUT}.bin --output ${OUTPUT_FILE_CPP} --array ${mode}_${BASENAME} --platform ${family_name_with_type} --revision_id ${REVISION_ID}
                          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                          DEPENDS ${OUTPUT_FILES_BINARIES} $<TARGET_FILE:cpp_generate_tool>
       )
       list(APPEND BUILTINS_COMMANDS "${OUTPUT_FILE_CPP}")
     else()
-      foreach(_file_name "gen" "bin")
+      foreach(_file_name "bin")
         set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/built_ins/${NEO_ARCH}/${core_type_lower}/${mode}_${BASENAME}_${REVISION_ID}_${family_name_with_type}.${_file_name}")
         if(EXISTS ${_file_prebuilt})
           add_custom_command(
