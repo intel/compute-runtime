@@ -43,4 +43,9 @@ bool L0HwHelperHw<Family>::platformSupportsCmdListHeapSharing(const NEO::Hardwar
     return false;
 }
 
+template <typename Family>
+bool L0HwHelperHw<Family>::platformSupportsStateComputeModeTracking(const NEO::HardwareInfo &hwInfo) const {
+    return false;
+}
+
 } // namespace L0

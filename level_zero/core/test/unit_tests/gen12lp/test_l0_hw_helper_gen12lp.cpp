@@ -27,5 +27,10 @@ GEN12LPTEST_F(L0HwHelperTestGen12Lp, GivenGen12LpWhenCheckingL0HelperForCmdListH
     EXPECT_FALSE(L0::L0HwHelperHw<FamilyType>::get().platformSupportsCmdListHeapSharing(hwInfo));
 }
 
+GEN12LPTEST_F(L0HwHelperTestGen12Lp, GivenGen12LpWhenCheckingL0HelperForStateComputeModeTrackingSupportThenReturnFalse) {
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
+    EXPECT_FALSE(L0::L0HwHelperHw<FamilyType>::get().platformSupportsStateComputeModeTracking(hwInfo));
+}
+
 } // namespace ult
 } // namespace L0

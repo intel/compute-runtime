@@ -32,7 +32,7 @@ class L0HwHelper {
     static L0HwHelper &get(GFXCORE_FAMILY gfxCore);
     static bool enableFrontEndStateTracking();
     static bool enablePipelineSelectStateTracking();
-    static bool enableStateComputeModeTracking();
+    static bool enableStateComputeModeTracking(const NEO::HardwareInfo &hwInfo);
     static bool enableImmediateCmdListHeapSharing(const NEO::HardwareInfo &hwInfo, bool cmdlistSupport);
     virtual void setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupT &group) const = 0;
     virtual L0::Event *createEvent(L0::EventPool *eventPool, const ze_event_desc_t *desc, L0::Device *device) const = 0;
@@ -47,6 +47,7 @@ class L0HwHelper {
     virtual bool multiTileCapablePlatform() const = 0;
     virtual bool alwaysAllocateEventInLocalMem() const = 0;
     virtual bool platformSupportsCmdListHeapSharing(const NEO::HardwareInfo &hwInfo) const = 0;
+    virtual bool platformSupportsStateComputeModeTracking(const NEO::HardwareInfo &hwInfo) const = 0;
 
   protected:
     L0HwHelper() = default;
@@ -72,6 +73,7 @@ class L0HwHelperHw : public L0HwHelper {
     bool multiTileCapablePlatform() const override;
     bool alwaysAllocateEventInLocalMem() const override;
     bool platformSupportsCmdListHeapSharing(const NEO::HardwareInfo &hwInfo) const override;
+    bool platformSupportsStateComputeModeTracking(const NEO::HardwareInfo &hwInfo) const override;
 };
 
 } // namespace L0

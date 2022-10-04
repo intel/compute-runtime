@@ -33,12 +33,11 @@ bool L0HwHelper::enablePipelineSelectStateTracking() {
     return defaultValue;
 }
 
-bool L0HwHelper::enableStateComputeModeTracking() {
-    constexpr bool defaultValue = false;
+bool L0HwHelper::enableStateComputeModeTracking(const NEO::HardwareInfo &hwInfo) {
     if (NEO::DebugManager.flags.EnableStateComputeModeTracking.get() != -1) {
         return !!NEO::DebugManager.flags.EnableStateComputeModeTracking.get();
     }
-    return defaultValue;
+    return get(hwInfo.platform.eRenderCoreFamily).platformSupportsStateComputeModeTracking(hwInfo);
 }
 
 bool L0HwHelper::enableImmediateCmdListHeapSharing(const NEO::HardwareInfo &hwInfo, bool cmdlistSupport) {
