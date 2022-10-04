@@ -444,7 +444,10 @@ bool HwHelperHw<Family>::isPatIndexFallbackWaRequired() const {
 
 template <>
 bool HwHelperHw<Family>::copyThroughLockedPtrEnabled() const {
-    return DebugManager.flags.ExperimentalCopyThroughLock.get();
+    if (DebugManager.flags.ExperimentalCopyThroughLock.get() != -1) {
+        return DebugManager.flags.ExperimentalCopyThroughLock.get() == 1;
+    }
+    return true;
 }
 
 } // namespace NEO
