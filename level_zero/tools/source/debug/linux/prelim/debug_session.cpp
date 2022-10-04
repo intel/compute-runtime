@@ -823,7 +823,7 @@ bool DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
 
         const auto tileIndex = connection->vmToTile[vmHandle];
 
-        PRINT_DEBUGGER_INFO_LOG("UUID handle = %llu class index = %d\n", (uint64_t)vmBind->uuids[index], (int)clientHandleToConnection[vmBind->client_handle]->uuidMap[vmBind->uuids[index]].classIndex);
+        PRINT_DEBUGGER_INFO_LOG("UUID handle = %llu class index = %d\n", static_cast<uint64_t>(vmBind->uuids[index]), static_cast<int>(clientHandleToConnection[vmBind->client_handle]->uuidMap[vmBind->uuids[index]].classIndex));
 
         auto classUuid = connection->uuidMap[uuid].classHandle;
 
@@ -850,7 +850,12 @@ bool DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
         bool handleEvent = isTileWithinDeviceBitfield(tileIndex);
 
         if (handleEvent && connection->uuidMap[uuid].classIndex == NEO::DrmResourceClass::Isa) {
-            PRINT_DEBUGGER_INFO_LOG("ISA vm_handle = %llu, tileIndex = %lu", (uint64_t)vmHandle, tileIndex);
+
+            uint32_t deviceBitfield = 0;
+            memcpy_s(&deviceBitfield, sizeof(uint32_t), connection->uuidMap[uuid].data.get(), connection->uuidMap[uuid].dataSize);
+            const NEO::DeviceBitfield devices(deviceBitfield);
+
+            PRINT_DEBUGGER_INFO_LOG("ISA vm_handle = %llu, tileIndex = %lu, deviceBitfield = %llu", vmHandle, tileIndex, devices.to_ulong());
 
             const auto isaUuidHandle = connection->uuidMap[uuid].handle;
             bool perKernelModules = true;
@@ -873,10 +878,6 @@ bool DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
 
                 auto &isaMap = connection->isaMap[tileIndex];
                 auto &elfMap = connection->elfMap;
-
-                uint32_t deviceBitfield = 0;
-                memcpy_s(&deviceBitfield, sizeof(uint32_t), connection->uuidMap[uuid].data.get(), connection->uuidMap[uuid].dataSize);
-                NEO::DeviceBitfield devices(deviceBitfield);
 
                 auto isa = std::make_unique<IsaAllocation>();
                 isa->bindInfo = {vmBind->va_start, vmBind->va_length};
