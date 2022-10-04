@@ -10,6 +10,7 @@
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -834,7 +835,7 @@ TEST_F(CommandContainerTest, GivenCmdContainerWhenContainerIsInitializedThenSurf
     EXPECT_EQ(expectedHeapSize, size);
 }
 
-TEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWithoutEnsuringSpaceThenExpectNullptrReturnedOrUnrecoverable) {
+HWTEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWithoutEnsuringSpaceThenExpectNullptrReturnedOrUnrecoverable) {
     CommandContainer cmdContainer;
     cmdContainer.setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
     cmdContainer.setNumIddPerBlock(1);
@@ -850,7 +851,11 @@ TEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWith
     EXPECT_THROW(cmdContainer.getHeapSpaceAllowGrow(HeapType::SURFACE_STATE, 0), std::exception);
     EXPECT_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, 0, 0), std::exception);
 
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.recursiveLockCounter = 0;
+
     cmdContainer.ensureHeapSizePrepared(0, 0);
+    EXPECT_EQ(1u, ultCsr.recursiveLockCounter);
 
     EXPECT_EQ(nullptr, cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE));
     EXPECT_NE(nullptr, cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE));
@@ -862,6 +867,7 @@ TEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWith
     EXPECT_NO_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, 0, 0));
 
     cmdContainer.ensureHeapSizePrepared(4 * MemoryConstants::kiloByte, 4 * MemoryConstants::kiloByte);
+    EXPECT_EQ(2u, ultCsr.recursiveLockCounter);
 
     auto dshHeap = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
     EXPECT_NE(nullptr, dshHeap);

@@ -353,6 +353,7 @@ IndirectHeap *CommandContainer::getIndirectHeap(HeapType heapType) {
 }
 
 void CommandContainer::ensureHeapSizePrepared(size_t sshRequiredSize, size_t dshRequiredSize) {
+    auto lock = immediateCmdListCsr->obtainUniqueOwnership();
     sharedSshCsrHeap = &immediateCmdListCsr->getIndirectHeap(HeapType::SURFACE_STATE, sshRequiredSize);
 
     if (dshRequiredSize > 0) {
