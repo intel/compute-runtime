@@ -1293,5 +1293,26 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndTimestampFlagN
     EXPECT_NE(resultTimestamp.context.kernelEnd, NEO::MockDeviceTimeWithConstTimestamp::GPU_TIMESTAMP);
 }
 
+using CreateCommandListXeHpcTest = Test<DeviceFixture>;
+
+HWTEST2_F(CreateCommandListXeHpcTest, givenXeHpcPlatformsWhenImmediateCommandListCreatedThenHeapSharingEnabledWithFlushTask, IsXeHpcCore) {
+    std::unique_ptr<L0::ult::CommandList> commandListImmediate;
+
+    auto &hwInfo = device->getHwInfo();
+    auto &defaultEngine = neoDevice->getDefaultEngine();
+
+    auto engineGroupType = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily).getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hwInfo);
+
+    ze_command_queue_desc_t queueDesc{};
+    queueDesc.ordinal = 0u;
+    queueDesc.index = 0u;
+
+    ze_result_t returnValue;
+    commandListImmediate.reset(whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, engineGroupType, returnValue)));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_TRUE(commandListImmediate->isFlushTaskSubmissionEnabled);
+    EXPECT_EQ(commandListImmediate->isFlushTaskSubmissionEnabled, commandListImmediate->immediateCmdListHeapSharing);
+}
+
 } // namespace ult
 } // namespace L0

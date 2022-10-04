@@ -191,7 +191,6 @@ void *CommandContainer::getHeapSpaceAllowGrow(HeapType heapType,
     if (immediateCmdListSharedHeap(heapType)) {
         UNRECOVERABLE_IF(indirectHeap == nullptr);
         UNRECOVERABLE_IF(indirectHeap->getAvailableSpace() < size);
-        getResidencyContainer().push_back(indirectHeap->getGraphicsAllocation());
     } else {
         if (indirectHeap->getAvailableSpace() < size) {
             size_t newSize = indirectHeap->getUsed() + indirectHeap->getAvailableSpace();
@@ -217,7 +216,6 @@ IndirectHeap *CommandContainer::getHeapWithRequiredSizeAndAlignment(HeapType hea
 
     if (immediateCmdListSharedHeap(heapType)) {
         UNRECOVERABLE_IF(indirectHeap->getAvailableSpace() < sizeRequested);
-        getResidencyContainer().push_back(indirectHeap->getGraphicsAllocation());
     } else {
         if (indirectHeap->getAvailableSpace() < sizeRequested) {
             size_t newSize = indirectHeap->getUsed() + indirectHeap->getAvailableSpace();

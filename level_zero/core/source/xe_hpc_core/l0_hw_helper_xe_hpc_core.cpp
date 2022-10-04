@@ -34,7 +34,7 @@ bool L0HwHelperHw<Family>::alwaysAllocateEventInLocalMem() const {
 
 template <>
 bool L0HwHelperHw<Family>::platformSupportsCmdListHeapSharing(const NEO::HardwareInfo &hwInfo) const {
-    return false;
+    return true;
 }
 
 template class L0HwHelperHw<Family>;
