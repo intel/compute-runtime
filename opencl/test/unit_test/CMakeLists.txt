@@ -203,12 +203,12 @@ function(neo_gen_kernels_with_options platform_name_with_type platform_name revi
         foreach(extension "spv" "bin" "gen")
           set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/${suffix}/${revision_id}/test_files/${NEO_ARCH}/${base_filename}_${suffix}.${extension}")
           add_custom_command(
-                             OUTPUT ${outputpath_base}_${suffix}.${extension}
+                             OUTPUT ${outputpath_base}.${extension}
                              COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}
                              COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${outputdir}
           )
 
-          list(APPEND kernels_to_compile_${platform_name_with_type}_${revision_id} ${outputpath_base}_${suffix}.${extension})
+          list(APPEND kernels_to_compile_${platform_name_with_type}_${revision_id} ${outputpath_base}.${extension})
         endforeach()
       endif()
     endforeach()
