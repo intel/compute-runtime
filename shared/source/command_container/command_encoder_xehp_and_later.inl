@@ -529,7 +529,7 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
     StateBaseAddressHelper<Family>::programStateBaseAddressIntoCommandStream(stateBaseAddressHelperArgs,
                                                                              *args.container->getCommandStream());
 
-    if (args.container->isHeapDirty(HeapType::SURFACE_STATE)) {
+    if (args.container->isHeapDirty(HeapType::SURFACE_STATE) && ssh != nullptr) {
         auto heap = args.container->getIndirectHeap(HeapType::SURFACE_STATE);
         StateBaseAddressHelper<Family>::programBindingTableBaseAddress(*args.container->getCommandStream(),
                                                                        *heap,

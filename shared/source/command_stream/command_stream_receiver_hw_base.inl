@@ -345,7 +345,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     const bool hasDsh = hwInfo.capabilityTable.supportsImages && dsh != nullptr;
     bool dshDirty = hasDsh ? dshState.updateAndCheck(dsh) : false;
     bool iohDirty = iohState.updateAndCheck(ioh);
-    bool sshDirty = sshState.updateAndCheck(ssh);
+    bool sshDirty = ssh != nullptr ? sshState.updateAndCheck(ssh) : false;
 
     auto isStateBaseAddressDirty = dshDirty || iohDirty || sshDirty || stateBaseAddressDirty;
 
@@ -504,10 +504,13 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         dshAllocation->setEvictable(false);
     }
     auto iohAllocation = ioh->getGraphicsAllocation();
-    auto sshAllocation = ssh->getGraphicsAllocation();
+
+    if (ssh != nullptr) {
+        auto sshAllocation = ssh->getGraphicsAllocation();
+        this->makeResident(*sshAllocation);
+    }
 
     this->makeResident(*iohAllocation);
-    this->makeResident(*sshAllocation);
     iohAllocation->setEvictable(false);
 
     this->makeResident(*tagAllocation);

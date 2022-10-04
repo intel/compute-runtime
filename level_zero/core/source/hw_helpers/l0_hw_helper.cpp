@@ -42,11 +42,11 @@ bool L0HwHelper::enableStateComputeModeTracking() {
 }
 
 bool L0HwHelper::enableImmediateCmdListHeapSharing(const NEO::HardwareInfo &hwInfo, bool cmdlistSupport) {
-    bool enabled = get(hwInfo.platform.eRenderCoreFamily).platformSupportsCmdListHeapSharing(hwInfo);
     if (NEO::DebugManager.flags.EnableImmediateCmdListHeapSharing.get() != -1) {
         return !!NEO::DebugManager.flags.EnableImmediateCmdListHeapSharing.get();
     }
-    return enabled;
+    bool platformSupport = get(hwInfo.platform.eRenderCoreFamily).platformSupportsCmdListHeapSharing(hwInfo);
+    return platformSupport && cmdlistSupport;
 }
 
 } // namespace L0

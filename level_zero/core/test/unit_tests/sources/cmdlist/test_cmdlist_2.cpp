@@ -10,6 +10,7 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/source/image/image_hw.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -17,6 +18,9 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
 namespace L0 {
+
+extern L0HwHelper *l0HwHelperFactory[IGFX_MAX_CORE];
+
 namespace ult {
 
 using CommandListCreate = Test<DeviceFixture>;
@@ -1248,6 +1252,66 @@ HWTEST2_F(CommandListAppendMemoryCopyBlit, whenAppendMemoryCopyBlitIsAppendedAnd
     auto secondBatchBufferAllocation = commandList->commandContainer.getCommandStream()->getGraphicsAllocation();
 
     EXPECT_NE(firstBatchBufferAllocation, secondBatchBufferAllocation);
+}
+
+template <typename GfxFamily>
+struct MockL0HwHelperSupportsCmdListHeapSharingHw : L0::L0HwHelperHw<GfxFamily> {
+    bool platformSupportsCmdListHeapSharing(const HardwareInfo &hwInfo) const override { return true; }
+};
+
+HWTEST2_F(CommandListCreate, givenPlatformSupportsSharedHeapsWhenImmediateCmdListCreatedWithFlushTaskSetThenSharedHeapsFollowsTheSameSetting, IsAtLeastSkl) {
+    MockL0HwHelperSupportsCmdListHeapSharingHw<FamilyType> mockL0HwHelperSupport;
+    VariableBackup<L0HwHelper *> l0HwHelperFactoryBackup{&L0::l0HwHelperFactory[static_cast<size_t>(device->getHwInfo().platform.eRenderCoreFamily)]};
+    l0HwHelperFactoryBackup = &mockL0HwHelperSupport;
+
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
+
+    ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+    std::unique_ptr<L0::ult::CommandList> commandListImmediate(whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue)));
+    ASSERT_NE(nullptr, commandListImmediate);
+
+    EXPECT_TRUE(commandListImmediate->isFlushTaskSubmissionEnabled);
+    EXPECT_TRUE(commandListImmediate->immediateCmdListHeapSharing);
+
+    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(0);
+
+    commandListImmediate.reset(whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue)));
+    ASSERT_NE(nullptr, commandListImmediate);
+
+    EXPECT_FALSE(commandListImmediate->isFlushTaskSubmissionEnabled);
+    EXPECT_FALSE(commandListImmediate->immediateCmdListHeapSharing);
+}
+
+template <typename GfxFamily>
+struct MockL0HwHelperNoSupportsCmdListHeapSharingHw : L0::L0HwHelperHw<GfxFamily> {
+    bool platformSupportsCmdListHeapSharing(const HardwareInfo &hwInfo) const override { return false; }
+};
+
+HWTEST2_F(CommandListCreate, givenPlatformNotSupportsSharedHeapsWhenImmediateCmdListCreatedWithFlushTaskSetThenSharedHeapsIsNotEnabled, IsAtLeastSkl) {
+    MockL0HwHelperNoSupportsCmdListHeapSharingHw<FamilyType> mockL0HwHelperNoSupport;
+    VariableBackup<L0HwHelper *> l0HwHelperFactoryBackup{&L0::l0HwHelperFactory[static_cast<size_t>(device->getHwInfo().platform.eRenderCoreFamily)]};
+    l0HwHelperFactoryBackup = &mockL0HwHelperNoSupport;
+
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
+
+    ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+    std::unique_ptr<L0::ult::CommandList> commandListImmediate(whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue)));
+    ASSERT_NE(nullptr, commandListImmediate);
+
+    EXPECT_TRUE(commandListImmediate->isFlushTaskSubmissionEnabled);
+    EXPECT_FALSE(commandListImmediate->immediateCmdListHeapSharing);
+
+    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(0);
+
+    commandListImmediate.reset(whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue)));
+    ASSERT_NE(nullptr, commandListImmediate);
+
+    EXPECT_FALSE(commandListImmediate->isFlushTaskSubmissionEnabled);
+    EXPECT_FALSE(commandListImmediate->immediateCmdListHeapSharing);
 }
 
 } // namespace ult

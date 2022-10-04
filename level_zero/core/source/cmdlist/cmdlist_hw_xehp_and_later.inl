@@ -141,9 +141,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
     if (this->immediateCmdListHeapSharing) {
         auto kernelInfo = kernelImmutableData->getKernelInfo();
+        size_t dshSize = 0;
+        if constexpr (GfxFamily::supportsSampler) {
+            dshSize = NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredDsh(*kernelInfo);
+        }
         commandContainer.ensureHeapSizePrepared(
             NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredSsh(*kernelInfo),
-            NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredDsh(*kernelInfo));
+            dshSize);
     }
     commandListPerThreadScratchSize = std::max<uint32_t>(commandListPerThreadScratchSize, kernelDescriptor.kernelAttributes.perThreadScratchSize[0]);
     commandListPerThreadPrivateScratchSize = std::max<uint32_t>(commandListPerThreadPrivateScratchSize, kernelDescriptor.kernelAttributes.perThreadScratchSize[1]);

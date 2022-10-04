@@ -453,3 +453,34 @@ HWTEST2_F(CommandEncodeStatesTest, whenGetCmdSizeForComputeModeThenCorrectValueI
     csr.streamProperties.stateComputeMode.setProperties(false, 0, ThreadArbitrationPolicy::AgeBased, PreemptionMode::Disabled, *defaultHwInfo);
     EXPECT_EQ(expectedScmSize, csr.getCmdSizeForComputeMode());
 }
+
+HWTEST2_F(CommandEncodeStatesTest, givenHeapSharingEnabledWhenRetrievingNotInitializedSshThenExpectCorrectSbaCommand, IsAtLeastXeHpCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
+
+    cmdContainer->enableHeapSharing();
+    cmdContainer->dirtyHeaps = 0;
+    cmdContainer->setHeapDirty(NEO::HeapType::SURFACE_STATE);
+
+    auto gmmHelper = cmdContainer->getDevice()->getRootDeviceEnvironment().getGmmHelper();
+    uint32_t statelessMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
+
+    STATE_BASE_ADDRESS sba;
+    EncodeStateBaseAddressArgs<FamilyType> args = createDefaultEncodeStateBaseAddressArgs<FamilyType>(cmdContainer.get(), sba, statelessMocsIndex);
+
+    EncodeStateBaseAddress<FamilyType>::encode(args);
+
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands,
+                                             cmdContainer->getCommandStream()->getCpuBase(),
+                                             cmdContainer->getCommandStream()->getUsed());
+
+    auto itorCmd = find<STATE_BASE_ADDRESS *>(commands.begin(), commands.end());
+    ASSERT_NE(commands.end(), itorCmd);
+    auto sbaCmd = genCmdCast<STATE_BASE_ADDRESS *>(*itorCmd);
+
+    EXPECT_EQ(0u, sbaCmd->getSurfaceStateBaseAddress());
+
+    itorCmd = find<_3DSTATE_BINDING_TABLE_POOL_ALLOC *>(commands.begin(), commands.end());
+    EXPECT_EQ(commands.end(), itorCmd);
+}

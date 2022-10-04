@@ -2148,3 +2148,37 @@ HWTEST_F(CommandStreamReceiverTest, givenSshDirtyStateWhenUpdatingStateWithNewHe
     check = dirtyState.updateAndCheck(&dummyHeap);
     EXPECT_FALSE(check);
 }
+
+using CommandStreamReceiverHwTest = Test<CommandStreamReceiverFixture>;
+
+HWTEST2_F(CommandStreamReceiverHwTest, givenSshHeapNotProvidedWhenFlushTaskPerformedThenSbaProgammedSurfaceBaseAddressToZero, IsAtLeastXeHpCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    commandStreamReceiver.flushTask(commandStream,
+                                    0,
+                                    &dsh,
+                                    &ioh,
+                                    nullptr,
+                                    taskLevel,
+                                    flushTaskFlags,
+                                    *pDevice);
+
+    auto &cmdStream = commandStreamReceiver.commandStream;
+
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands,
+                                             cmdStream.getCpuBase(),
+                                             cmdStream.getUsed());
+
+    auto itorCmd = find<STATE_BASE_ADDRESS *>(commands.begin(), commands.end());
+    ASSERT_NE(commands.end(), itorCmd);
+    auto sbaCmd = genCmdCast<STATE_BASE_ADDRESS *>(*itorCmd);
+
+    EXPECT_EQ(0u, sbaCmd->getSurfaceStateBaseAddress());
+
+    itorCmd = find<_3DSTATE_BINDING_TABLE_POOL_ALLOC *>(commands.begin(), commands.end());
+    EXPECT_EQ(commands.end(), itorCmd);
+}
