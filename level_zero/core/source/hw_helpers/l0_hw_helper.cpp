@@ -7,6 +7,8 @@
 
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 
+#include "shared/source/helpers/hw_info.h"
+
 namespace L0 {
 
 L0HwHelper *l0HwHelperFactory[IGFX_MAX_CORE] = {};
@@ -39,8 +41,8 @@ bool L0HwHelper::enableStateComputeModeTracking() {
     return defaultValue;
 }
 
-bool L0HwHelper::enableImmediateCmdListHeapSharing(bool cmdlistSupport) {
-    bool enabled = false;
+bool L0HwHelper::enableImmediateCmdListHeapSharing(const NEO::HardwareInfo &hwInfo, bool cmdlistSupport) {
+    bool enabled = get(hwInfo.platform.eRenderCoreFamily).platformSupportsCmdListHeapSharing(hwInfo);
     if (NEO::DebugManager.flags.EnableImmediateCmdListHeapSharing.get() != -1) {
         return !!NEO::DebugManager.flags.EnableImmediateCmdListHeapSharing.get();
     }

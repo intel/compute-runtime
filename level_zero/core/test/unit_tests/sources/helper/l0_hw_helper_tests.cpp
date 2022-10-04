@@ -403,8 +403,8 @@ HWTEST2_F(L0HwHelperFusedEuTest, givenDynamicallyPopulatesSliceInfoGreaterThanMa
     const uint32_t numEuPerSubslice = std::min(hwInfo.gtSystemInfo.MaxEuPerSubSlice, 8u);
     const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
     const uint32_t bytesPerEu = alignUp(numThreadsPerEu, 8) / 8;
-    auto expected_size = 4 * numSubslicesPerSlice * numEuPerSubslice * bytesPerEu;
-    EXPECT_EQ(size, expected_size);
+    auto expectedSize = 4 * numSubslicesPerSlice * numEuPerSubslice * bytesPerEu;
+    EXPECT_EQ(size, expectedSize);
 
     auto threads = l0HwHelper.getThreadsFromAttentionBitmask(hwInfo, 0, bitmask.get(), size);
     ASSERT_EQ(threads.size(), 4u);

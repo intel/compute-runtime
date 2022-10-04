@@ -27,5 +27,10 @@ XEHPTEST_F(L0HwHelperTestXeHp, GivenXeHpWhenCheckingL0HelperForMultiTileCapableP
     EXPECT_TRUE(L0::L0HwHelperHw<FamilyType>::get().multiTileCapablePlatform());
 }
 
+XEHPTEST_F(L0HwHelperTestXeHp, GivenXeHpWhenCheckingL0HelperForCmdListHeapSharingSupportThenReturnFalse) {
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
+    EXPECT_FALSE(L0::L0HwHelperHw<FamilyType>::get().platformSupportsCmdListHeapSharing(hwInfo));
+}
+
 } // namespace ult
 } // namespace L0

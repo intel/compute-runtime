@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -23,6 +24,11 @@ XE_HPC_CORETEST_F(L0HwHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForMultiTil
 
 XE_HPC_CORETEST_F(L0HwHelperTestXeHpc, GivenHpcPlatformsWhenAlwaysAllocateEventInLocalMemCalledThenReturnTrue) {
     EXPECT_TRUE(L0::L0HwHelperHw<FamilyType>::get().alwaysAllocateEventInLocalMem());
+}
+
+XE_HPC_CORETEST_F(L0HwHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForCmdListHeapSharingSupportThenReturnFalse) {
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
+    EXPECT_FALSE(L0::L0HwHelperHw<FamilyType>::get().platformSupportsCmdListHeapSharing(hwInfo));
 }
 
 } // namespace ult

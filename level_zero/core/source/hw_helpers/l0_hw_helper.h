@@ -33,7 +33,7 @@ class L0HwHelper {
     static bool enableFrontEndStateTracking();
     static bool enablePipelineSelectStateTracking();
     static bool enableStateComputeModeTracking();
-    static bool enableImmediateCmdListHeapSharing(bool cmdlistSupport);
+    static bool enableImmediateCmdListHeapSharing(const NEO::HardwareInfo &hwInfo, bool cmdlistSupport);
     virtual void setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupT &group) const = 0;
     virtual L0::Event *createEvent(L0::EventPool *eventPool, const ze_event_desc_t *desc, L0::Device *device) const = 0;
 
@@ -46,6 +46,7 @@ class L0HwHelper {
     virtual std::vector<EuThread::ThreadId> getThreadsFromAttentionBitmask(const NEO::HardwareInfo &hwInfo, uint32_t tile, const uint8_t *bitmask, const size_t bitmaskSize) const = 0;
     virtual bool multiTileCapablePlatform() const = 0;
     virtual bool alwaysAllocateEventInLocalMem() const = 0;
+    virtual bool platformSupportsCmdListHeapSharing(const NEO::HardwareInfo &hwInfo) const = 0;
 
   protected:
     L0HwHelper() = default;
@@ -70,6 +71,7 @@ class L0HwHelperHw : public L0HwHelper {
     std::vector<EuThread::ThreadId> getThreadsFromAttentionBitmask(const NEO::HardwareInfo &hwInfo, uint32_t tile, const uint8_t *bitmask, const size_t bitmaskSize) const override;
     bool multiTileCapablePlatform() const override;
     bool alwaysAllocateEventInLocalMem() const override;
+    bool platformSupportsCmdListHeapSharing(const NEO::HardwareInfo &hwInfo) const override;
 };
 
 } // namespace L0

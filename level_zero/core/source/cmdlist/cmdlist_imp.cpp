@@ -136,7 +136,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
             if (NEO::DebugManager.flags.EnableFlushTaskSubmission.get() != -1) {
                 commandList->isFlushTaskSubmissionEnabled = !!NEO::DebugManager.flags.EnableFlushTaskSubmission.get();
             }
-            commandList->immediateCmdListHeapSharing = L0HwHelper::enableImmediateCmdListHeapSharing(commandList->isFlushTaskSubmissionEnabled);
+            commandList->immediateCmdListHeapSharing = L0HwHelper::enableImmediateCmdListHeapSharing(hwInfo, commandList->isFlushTaskSubmissionEnabled);
         }
         returnValue = commandList->initialize(device, engineGroupType, desc->flags);
         if (returnValue != ZE_RESULT_SUCCESS) {
