@@ -43,11 +43,6 @@ struct DebugSessionLinux : DebugSessionImp {
     ze_result_t writeMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) override;
     ze_result_t acknowledgeEvent(const zet_debug_event_t *event) override;
 
-    uint32_t getDeviceIndexFromApiThread(ze_device_thread_t thread) override;
-    ze_device_thread_t convertToPhysicalWithinDevice(ze_device_thread_t thread, uint32_t deviceIndex) override;
-    EuThread::ThreadId convertToThreadId(ze_device_thread_t thread) override;
-    ze_device_thread_t convertToApi(EuThread::ThreadId threadId) override;
-
     struct IoctlHandler {
         MOCKABLE_VIRTUAL ~IoctlHandler() = default;
         MOCKABLE_VIRTUAL int ioctl(int fd, unsigned long request, void *arg) {

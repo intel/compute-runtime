@@ -93,7 +93,7 @@ TEST(IoctlHandler, GivenHandlerWhenMmapAndMunmapCalledThenRedirectedToSysCall) {
     NEO::SysCalls::munmapFuncCalled = 0;
 }
 
-TEST(DebugSessionTest, GivenDebugSessionWhenExtractingCpuVaFromUuidThenCorrectCpuVaReturned) {
+TEST(DebugSessionLinuxTest, GivenDebugSessionWhenExtractingCpuVaFromUuidThenCorrectCpuVaReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -112,69 +112,7 @@ TEST(DebugSessionTest, GivenDebugSessionWhenExtractingCpuVaFromUuidThenCorrectCp
     EXPECT_EQ(epxectedVa, va);
 }
 
-TEST(DebugSessionTest, WhenConvertingThreadIdsThenDeviceFunctionsAreCalled) {
-    auto hwInfo = *NEO::defaultHwInfo.get();
-    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-
-    auto mockDrm = new DrmQueryMock(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
-
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
-
-    auto sessionMock = std::make_unique<MockDebugSessionLinux>(zet_debug_config_t{0x1234}, &deviceImp, 10);
-    ASSERT_NE(nullptr, sessionMock);
-
-    ze_device_thread_t thread = {0, 0, 0, 0};
-
-    auto threadID = sessionMock->convertToThreadId(thread);
-
-    EXPECT_EQ(0u, threadID.tileIndex);
-    EXPECT_EQ(0u, threadID.slice);
-    EXPECT_EQ(0u, threadID.subslice);
-    EXPECT_EQ(0u, threadID.eu);
-    EXPECT_EQ(0u, threadID.thread);
-
-    auto apiThread = sessionMock->convertToApi(threadID);
-
-    EXPECT_EQ(0u, apiThread.slice);
-    EXPECT_EQ(0u, apiThread.subslice);
-    EXPECT_EQ(0u, apiThread.eu);
-    EXPECT_EQ(0u, apiThread.thread);
-
-    uint32_t deviceIndex = 1;
-
-    auto physicalThread = sessionMock->convertToPhysicalWithinDevice(thread, deviceIndex);
-
-    EXPECT_EQ(1u, deviceIndex);
-    EXPECT_EQ(0u, physicalThread.slice);
-    EXPECT_EQ(0u, physicalThread.subslice);
-    EXPECT_EQ(0u, physicalThread.eu);
-    EXPECT_EQ(0u, physicalThread.thread);
-
-    thread.slice = UINT32_MAX;
-    physicalThread = sessionMock->convertToPhysicalWithinDevice(thread, deviceIndex);
-
-    EXPECT_EQ(1u, deviceIndex);
-    EXPECT_EQ(uint32_t(UINT32_MAX), physicalThread.slice);
-    EXPECT_EQ(0u, physicalThread.subslice);
-    EXPECT_EQ(0u, physicalThread.eu);
-    EXPECT_EQ(0u, physicalThread.thread);
-
-    thread.slice = 0;
-    thread.subslice = UINT32_MAX;
-    thread.eu = 1;
-    thread.thread = 3;
-    physicalThread = sessionMock->convertToPhysicalWithinDevice(thread, deviceIndex);
-
-    EXPECT_EQ(1u, deviceIndex);
-    EXPECT_EQ(0u, physicalThread.slice);
-    EXPECT_EQ(uint32_t(UINT32_MAX), physicalThread.subslice);
-    EXPECT_EQ(1u, physicalThread.eu);
-    EXPECT_EQ(3u, physicalThread.thread);
-}
-
-TEST(DebugSessionTest, WhenConvertingThreadIDsForDeviceWithSingleSliceThenSubsliceIsCorrectlyRemapped) {
+TEST(DebugSessionLinuxTest, WhenConvertingThreadIDsForDeviceWithSingleSliceThenSubsliceIsCorrectlyRemapped) {
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     hwInfo.gtSystemInfo.SliceCount = 1;
@@ -219,7 +157,7 @@ TEST(DebugSessionTest, WhenConvertingThreadIDsForDeviceWithSingleSliceThenSubsli
     EXPECT_EQ(0u, physicalThread.thread);
 }
 
-TEST(DebugSessionTest, WhenConvertingThreadIDsForDeviceWithMultipleSlicesThenSubsliceIsNotRemapped) {
+TEST(DebugSessionLinuxTest, WhenConvertingThreadIDsForDeviceWithMultipleSlicesThenSubsliceIsNotRemapped) {
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     hwInfo.gtSystemInfo.SliceCount = 8;
@@ -264,7 +202,7 @@ TEST(DebugSessionTest, WhenConvertingThreadIDsForDeviceWithMultipleSlicesThenSub
     EXPECT_EQ(0u, physicalThread.thread);
 }
 
-TEST(DebugSessionTest, GivenDeviceWithSingleSliceWhenCallingAreRequestedThreadsStoppedForSliceAllThenCorrectValuesAreReturned) {
+TEST(DebugSessionLinuxTest, GivenDeviceWithSingleSliceWhenCallingAreRequestedThreadsStoppedForSliceAllThenCorrectValuesAreReturned) {
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     hwInfo.gtSystemInfo.SliceCount = 1;
@@ -303,7 +241,7 @@ TEST(DebugSessionTest, GivenDeviceWithSingleSliceWhenCallingAreRequestedThreadsS
     EXPECT_TRUE(stopped);
 }
 
-TEST(DebugSessionTest, WhenEnqueueApiEventCalledThenEventPushed) {
+TEST(DebugSessionLinuxTest, WhenEnqueueApiEventCalledThenEventPushed) {
     auto sessionMock = std::make_unique<MockDebugSessionLinux>(zet_debug_config_t{0x1234}, nullptr, 10);
     sessionMock->clientHandle = MockDebugSessionLinux::mockClientHandle;
     zet_debug_event_t debugEvent = {};
@@ -313,7 +251,7 @@ TEST(DebugSessionTest, WhenEnqueueApiEventCalledThenEventPushed) {
     EXPECT_EQ(1u, sessionMock->apiEvents.size());
 }
 
-TEST(DebugSessionTest, GivenLogsEnabledWhenPrintContextVmsCalledThenMapIsPrinted) {
+TEST(DebugSessionLinuxTest, GivenLogsEnabledWhenPrintContextVmsCalledThenMapIsPrinted) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DebuggerLogBitmask.set(255);
 
@@ -343,7 +281,7 @@ TEST(DebugSessionTest, GivenLogsEnabledWhenPrintContextVmsCalledThenMapIsPrinted
     EXPECT_TRUE(hasSubstr(map, std::string("Context = 1 : 2")));
 }
 
-TEST(DebugSessionTest, GivenLogsDisabledWhenPrintContextVmsCalledThenMapIsiNotPrinted) {
+TEST(DebugSessionLinuxTest, GivenLogsDisabledWhenPrintContextVmsCalledThenMapIsiNotPrinted) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DebuggerLogBitmask.set(0);
 
@@ -371,7 +309,7 @@ TEST(DebugSessionTest, GivenLogsDisabledWhenPrintContextVmsCalledThenMapIsiNotPr
     EXPECT_TRUE(map.empty());
 }
 
-TEST(DebugSessionTest, GivenNullptrEventWhenReadingEventThenErrorNullptrReturned) {
+TEST(DebugSessionLinuxTest, GivenNullptrEventWhenReadingEventThenErrorNullptrReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -382,7 +320,7 @@ TEST(DebugSessionTest, GivenNullptrEventWhenReadingEventThenErrorNullptrReturned
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, result);
 }
 
-TEST(DebugSessionTest, GivenRootDebugSessionWhenCreateTileSessionCalledThenSessionIsCreated) {
+TEST(DebugSessionLinuxTest, GivenRootDebugSessionWhenCreateTileSessionCalledThenSessionIsCreated) {
     auto hwInfo = *NEO::defaultHwInfo.get();
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
 
@@ -404,7 +342,7 @@ TEST(DebugSessionTest, GivenRootDebugSessionWhenCreateTileSessionCalledThenSessi
     EXPECT_NE(nullptr, tileSession);
 }
 
-TEST(DebugSessionTest, GivenRootLinuxSessionWhenCallingTileSepcificFunctionsThenUnrecoverableIsCalled) {
+TEST(DebugSessionLinuxTest, GivenRootLinuxSessionWhenCallingTileSepcificFunctionsThenUnrecoverableIsCalled) {
     auto hwInfo = *NEO::defaultHwInfo.get();
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
 
@@ -7358,7 +7296,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenSingleMemoryIsaWhenWritingAndRea
     EXPECT_EQ(1, handler->preadCalled);
 }
 
-struct AffinityMaskMultipleSubdevices : DebugApiLinuxMultiDeviceFixture {
+struct AffinityMaskMultipleSubdevicesLinux : DebugApiLinuxMultiDeviceFixture {
     void setUp() {
         DebugManager.flags.ZE_AFFINITY_MASK.set("0.0,0.1,0.3");
         MultipleDevicesWithCustomHwInfo::numSubDevices = 4;
@@ -7371,58 +7309,9 @@ struct AffinityMaskMultipleSubdevices : DebugApiLinuxMultiDeviceFixture {
     DebugManagerStateRestore restorer;
 };
 
-using AffinityMaskMultipleSubdevicesTest = Test<AffinityMaskMultipleSubdevices>;
+using AffinityMaskMultipleSubdevicesTestLinux = Test<AffinityMaskMultipleSubdevicesLinux>;
 
-TEST_F(AffinityMaskMultipleSubdevicesTest, givenApiThreadAndMultipleTilesWhenConvertingToPhysicalThenCorrectValuesReturned) {
-    zet_debug_config_t config = {};
-    config.pid = 0x1234;
-    auto debugSession = std::make_unique<MockDebugSessionLinux>(config, deviceImp, 10);
-
-    ze_device_thread_t thread = {2 * sliceCount - 1, 0, 0, 0};
-
-    uint32_t deviceIndex = debugSession->getDeviceIndexFromApiThread(thread);
-    EXPECT_EQ(1u, deviceIndex);
-
-    auto convertedThread = debugSession->convertToPhysicalWithinDevice(thread, deviceIndex);
-
-    EXPECT_EQ(1u, deviceIndex);
-    EXPECT_EQ(sliceCount - 1, convertedThread.slice);
-    EXPECT_EQ(thread.subslice, convertedThread.subslice);
-    EXPECT_EQ(thread.eu, convertedThread.eu);
-    EXPECT_EQ(thread.thread, convertedThread.thread);
-
-    thread = {3 * sliceCount - 1, 0, 0, 0};
-
-    deviceIndex = debugSession->getDeviceIndexFromApiThread(thread);
-    EXPECT_EQ(3u, deviceIndex);
-
-    convertedThread = debugSession->convertToPhysicalWithinDevice(thread, deviceIndex);
-
-    EXPECT_EQ(3u, deviceIndex);
-    EXPECT_EQ(sliceCount - 1, convertedThread.slice);
-    EXPECT_EQ(thread.subslice, convertedThread.subslice);
-    EXPECT_EQ(thread.eu, convertedThread.eu);
-    EXPECT_EQ(thread.thread, convertedThread.thread);
-
-    thread = {sliceCount - 1, 0, 0, 0};
-
-    deviceIndex = debugSession->getDeviceIndexFromApiThread(thread);
-    EXPECT_EQ(0u, deviceIndex);
-
-    convertedThread = debugSession->convertToPhysicalWithinDevice(thread, deviceIndex);
-
-    EXPECT_EQ(0u, deviceIndex);
-    EXPECT_EQ(sliceCount - 1, convertedThread.slice);
-    EXPECT_EQ(thread.subslice, convertedThread.subslice);
-    EXPECT_EQ(thread.eu, convertedThread.eu);
-    EXPECT_EQ(thread.thread, convertedThread.thread);
-
-    thread.slice = UINT32_MAX;
-    deviceIndex = debugSession->getDeviceIndexFromApiThread(thread);
-    EXPECT_EQ(UINT32_MAX, deviceIndex);
-}
-
-TEST_F(AffinityMaskMultipleSubdevicesTest, GivenEventWithAckFlagAndTileNotWithinBitfieldWhenHandlingEventForISAThenIsaIsNotStoredInMapAndEventIsAcked) {
+TEST_F(AffinityMaskMultipleSubdevicesTestLinux, GivenEventWithAckFlagAndTileNotWithinBitfieldWhenHandlingEventForISAThenIsaIsNotStoredInMapAndEventIsAcked) {
     uint64_t isaGpuVa = 0x345000;
     uint64_t isaSize = 0x2000;
     uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
@@ -7456,7 +7345,7 @@ TEST_F(AffinityMaskMultipleSubdevicesTest, GivenEventWithAckFlagAndTileNotWithin
     EXPECT_EQ(vmBindIsa->base.seqno, handler->debugEventAcked.seqno);
 }
 
-TEST_F(AffinityMaskMultipleSubdevicesTest, GivenAttEventForTileNotWithinBitfieldWhenHandlingEventThenEventIsSkipped) {
+TEST_F(AffinityMaskMultipleSubdevicesTestLinux, GivenAttEventForTileNotWithinBitfieldWhenHandlingEventThenEventIsSkipped) {
     auto debugSession = std::make_unique<MockDebugSessionLinux>(zet_debug_config_t{1234}, deviceImp, 10);
 
     uint64_t ctxHandle = 2;

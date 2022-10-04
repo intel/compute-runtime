@@ -21,6 +21,10 @@ namespace L0 {
 DebugSession::DebugSession(const zet_debug_config_t &config, Device *device) : connectedDevice(device) {
 }
 
+const NEO::TopologyMap &DebugSession::getTopologyMap() {
+    return connectedDevice->getOsInterface().getDriverModel()->getTopologyMap();
+};
+
 void DebugSession::createEuThreads() {
     if (connectedDevice) {
 
@@ -62,60 +66,74 @@ void DebugSession::createEuThreads() {
 }
 
 uint32_t DebugSession::getDeviceIndexFromApiThread(ze_device_thread_t thread) {
-    auto &hwInfo = connectedDevice->getHwInfo();
-    auto deviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
     auto deviceBitfield = connectedDevice->getNEODevice()->getDeviceBitfield();
-
     uint32_t deviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
+    auto deviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
+    const auto &topologyMap = getTopologyMap();
 
     if (connectedDevice->getNEODevice()->isSubDevice()) {
-        deviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
-    } else {
-        if (thread.slice != UINT32_MAX) {
-            deviceIndex = thread.slice / hwInfo.gtSystemInfo.SliceCount;
-        } else if (deviceCount > 1) {
+        return deviceIndex;
+    }
+
+    if (deviceCount > 1) {
+
+        if (thread.slice == UINT32_MAX) {
             deviceIndex = UINT32_MAX;
+        } else {
+            uint32_t sliceId = thread.slice;
+            for (uint32_t i = 0; i < topologyMap.size(); i++) {
+                if (deviceBitfield.test(i)) {
+                    if (sliceId < topologyMap.at(i).sliceIndices.size()) {
+                        deviceIndex = i;
+                    }
+                    sliceId = sliceId - static_cast<uint32_t>(topologyMap.at(i).sliceIndices.size());
+                }
+            }
         }
     }
+
     return deviceIndex;
 }
 
 ze_device_thread_t DebugSession::convertToPhysicalWithinDevice(ze_device_thread_t thread, uint32_t deviceIndex) {
-    auto &hwInfo = connectedDevice->getHwInfo();
+    auto deviceImp = static_cast<DeviceImp *>(connectedDevice);
+    const auto &topologyMap = getTopologyMap();
+
+    // set slice for single slice config to allow subslice remapping
+    auto mapping = topologyMap.find(deviceIndex);
+    if (thread.slice == UINT32_MAX && mapping != topologyMap.end() && mapping->second.sliceIndices.size() == 1) {
+        thread.slice = 0;
+    }
 
     if (thread.slice != UINT32_MAX) {
-        thread.slice = thread.slice % hwInfo.gtSystemInfo.SliceCount;
+        if (thread.subslice != UINT32_MAX) {
+            deviceImp->toPhysicalSliceId(topologyMap, thread.slice, thread.subslice, deviceIndex);
+        } else {
+            uint32_t dummy = 0;
+            deviceImp->toPhysicalSliceId(topologyMap, thread.slice, dummy, deviceIndex);
+        }
     }
 
     return thread;
 }
 
 EuThread::ThreadId DebugSession::convertToThreadId(ze_device_thread_t thread) {
-    auto &hwInfo = connectedDevice->getHwInfo();
-    auto deviceBitfield = connectedDevice->getNEODevice()->getDeviceBitfield();
-
-    UNRECOVERABLE_IF(!isSingleThread(thread));
+    auto deviceImp = static_cast<DeviceImp *>(connectedDevice);
+    UNRECOVERABLE_IF(!DebugSession::isSingleThread(thread));
 
     uint32_t deviceIndex = 0;
-    if (connectedDevice->getNEODevice()->isSubDevice()) {
-        deviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
-    } else {
-        deviceIndex = thread.slice / hwInfo.gtSystemInfo.SliceCount;
-        thread.slice = thread.slice % hwInfo.gtSystemInfo.SliceCount;
-    }
+    deviceImp->toPhysicalSliceId(getTopologyMap(), thread.slice, thread.subslice, deviceIndex);
 
     EuThread::ThreadId threadId(deviceIndex, thread.slice, thread.subslice, thread.eu, thread.thread);
     return threadId;
 }
 
 ze_device_thread_t DebugSession::convertToApi(EuThread::ThreadId threadId) {
-    auto &hwInfo = connectedDevice->getHwInfo();
+    auto deviceImp = static_cast<DeviceImp *>(connectedDevice);
 
     ze_device_thread_t thread = {static_cast<uint32_t>(threadId.slice), static_cast<uint32_t>(threadId.subslice), static_cast<uint32_t>(threadId.eu), static_cast<uint32_t>(threadId.thread)};
+    deviceImp->toApiSliceId(getTopologyMap(), thread.slice, thread.subslice, threadId.tileIndex);
 
-    if (!connectedDevice->getNEODevice()->isSubDevice()) {
-        thread.slice = thread.slice + static_cast<uint32_t>(threadId.tileIndex * hwInfo.gtSystemInfo.SliceCount);
-    }
     return thread;
 }
 

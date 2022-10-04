@@ -209,14 +209,12 @@ class Wddm : public DriverModel {
 
     PhyicalDevicePciSpeedInfo getPciSpeedInfo() const override;
     bool buildTopologyMapping();
-    const TopologyMap &getTopologyMap();
 
     uint32_t getAdditionalAdapterInfoOptions() const {
         return additionalAdapterInfoOptions;
     }
 
   protected:
-    TopologyMap topologyMap;
     bool translateTopologyInfo(TopologyMapping &mapping);
 
     Wddm(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);

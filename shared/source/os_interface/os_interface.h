@@ -9,6 +9,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/helpers/topology_map.h"
 #include "shared/source/os_interface/driver_info.h"
 
 #include <cstdint>
@@ -95,9 +96,13 @@ class DriverModel : public NonCopyableClass {
     virtual void cleanup() {}
 
     virtual bool isGpuHangDetected(OsContext &osContext) = 0;
+    const TopologyMap &getTopologyMap() {
+        return topologyMap;
+    };
 
   protected:
     DriverModelType driverModelType;
+    TopologyMap topologyMap;
     bool skipResourceCleanupVar = false;
 };
 

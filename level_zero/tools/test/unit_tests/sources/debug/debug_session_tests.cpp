@@ -68,6 +68,9 @@ struct MockDebugSession : public L0::DebugSessionImp {
     MockDebugSession(const zet_debug_config_t &config, L0::Device *device) : MockDebugSession(config, device, true) {}
 
     MockDebugSession(const zet_debug_config_t &config, L0::Device *device, bool rootAttach) : DebugSessionImp(config, device) {
+        if (device) {
+            topologyMap = DebugSessionMock::buildMockTopology(device);
+        }
         setAttachMode(rootAttach);
         if (rootAttach) {
             createEuThreads();
@@ -297,6 +300,12 @@ struct MockDebugSession : public L0::DebugSessionImp {
         }
         return L0::DebugSessionImp::getTimeDifferenceMilliseconds(time);
     }
+
+    const NEO::TopologyMap &getTopologyMap() override {
+        return this->topologyMap;
+    }
+
+    NEO::TopologyMap topologyMap;
 
     uint32_t interruptImpCalled = 0;
     uint32_t resumeImpCalled = 0;

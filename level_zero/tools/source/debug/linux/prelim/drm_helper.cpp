@@ -35,9 +35,4 @@ const NEO::EngineClassInstance *DrmHelper::getEngineInstance(Device *device, uin
     return engineInfo->getEngineInstance(tile, engineType);
 }
 
-const NEO::TopologyMap &DrmHelper::getTopologyMap(Device *device) {
-    auto drm = device->getOsInterface().getDriverModel()->as<NEO::Drm>();
-    return drm->getTopologyMap();
-}
-
 } // namespace L0

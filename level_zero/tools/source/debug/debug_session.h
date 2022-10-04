@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/debugger/debugger_l0.h"
+#include "shared/source/helpers/topology_map.h"
 #include "shared/source/os_interface/os_thread.h"
 
 #include "level_zero/tools/source/debug/eu_thread.h"
@@ -72,6 +73,8 @@ struct DebugSession : _zet_debug_session_handle_t {
     }
 
     static void printBitmask(uint8_t *bitmask, size_t bitmaskSize);
+
+    MOCKABLE_VIRTUAL const NEO::TopologyMap &getTopologyMap();
 
     virtual uint32_t getDeviceIndexFromApiThread(ze_device_thread_t thread);
     virtual ze_device_thread_t convertToPhysicalWithinDevice(ze_device_thread_t thread, uint32_t deviceIndex);

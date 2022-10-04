@@ -9,7 +9,6 @@
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/common_types.h"
-#include "shared/source/helpers/topology_map.h"
 #include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/cache_info.h"
@@ -229,7 +228,6 @@ class Drm : public DriverModel {
     void setNewResourceBoundToVM(uint32_t vmHandleId);
 
     const std::vector<int> &getSliceMappings(uint32_t deviceIndex);
-    const TopologyMap &getTopologyMap();
 
     static std::vector<std::unique_ptr<HwDeviceId>> discoverDevices(ExecutionEnvironment &executionEnvironment);
     static std::vector<std::unique_ptr<HwDeviceId>> discoverDevice(ExecutionEnvironment &executionEnvironment, std::string &osPciPath);
@@ -306,7 +304,6 @@ class Drm : public DriverModel {
     ADAPTER_BDF adapterBDF{};
     uint32_t pciDomain = 0;
 
-    TopologyMap topologyMap;
     struct IoctlStatisticsEntry {
         long long totalTime = 0;
         uint64_t count = 0;

@@ -221,10 +221,6 @@ bool Wddm::translateTopologyInfo(TopologyMapping &mapping) {
     return (sliceCount && subSliceCount && euCount);
 }
 
-const TopologyMap &Wddm::getTopologyMap() {
-    return topologyMap;
-}
-
 bool Wddm::queryAdapterInfo() {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     ADAPTER_INFO_KMD adapterInfo = {};

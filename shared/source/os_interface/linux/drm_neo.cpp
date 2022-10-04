@@ -762,10 +762,6 @@ const std::vector<int> &Drm::getSliceMappings(uint32_t deviceIndex) {
     return topologyMap[deviceIndex].sliceIndices;
 }
 
-const TopologyMap &Drm::getTopologyMap() {
-    return topologyMap;
-}
-
 int Drm::waitHandle(uint32_t waitHandle, int64_t timeout) {
     UNRECOVERABLE_IF(isVmBindAvailable());
 
