@@ -298,6 +298,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, PreferInternalBcsEngine, -1, "-1: default, 0:dis
 DECLARE_DEBUG_VARIABLE(int32_t, SplitBcsCopy, -1, "-1: default, 0:disabled, 1: enabled. When enqueues copy to main copy engine then split between even linked copy engines")
 DECLARE_DEBUG_VARIABLE(int32_t, SplitBcsMask, 0, "0: default, >0: bitmask: indicates bcs engines for split")
 DECLARE_DEBUG_VARIABLE(int32_t, ReuseKernelBinaries, -1, "-1: default, 0:disabled, 1: enabled. If enabled, driver reuses kernel binaries.")
+DECLARE_DEBUG_VARIABLE(int32_t, SetAmountOfReusableAllocations, -1, "-1: default, 0:disabled, > 1: enabled. If enabled, driver will fill reusable allocation lists with given amount of command buffers and heaps at initialization of immediate command list.")
 
 /*DIRECT SUBMISSION FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDirectSubmission, -1, "-1: default (disabled), 0: disable, 1:enable. Enables direct submission of command buffers bypassing KMD")

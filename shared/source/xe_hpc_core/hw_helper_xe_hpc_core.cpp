@@ -450,6 +450,14 @@ bool HwHelperHw<Family>::copyThroughLockedPtrEnabled() const {
     return true;
 }
 
+template <>
+uint32_t HwHelperHw<Family>::getAmountOfAllocationsToFill() const {
+    if (DebugManager.flags.SetAmountOfReusableAllocations.get() != -1) {
+        return DebugManager.flags.SetAmountOfReusableAllocations.get();
+    }
+    return 1u;
+}
+
 } // namespace NEO
 
 #include "shared/source/helpers/hw_helper_pvc_and_later.inl"

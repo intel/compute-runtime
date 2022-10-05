@@ -1422,3 +1422,14 @@ HWTEST_F(CommandEncodeStatesTest, givenKernelInfoWhenGettingRequiredSshSpaceThen
     size = EncodeDispatchKernel<FamilyType>::getSizeRequiredSsh(kernelInfo);
     EXPECT_EQ(expectedSize, size);
 }
+
+HWTEST_F(CommandEncodeStatesTest, givenCommandContainerWhenIsKernelDispatchedFromImmediateCmdListTrueThenGetHeapWithRequiredSizeAndAlignmentCalled) {
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    uint32_t dims[] = {1, 1, 1};
+    bool requiresUncachedMocs = false;
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+    dispatchArgs.isKernelDispatchedFromImmediateCmdList = true;
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs, nullptr);
+    EXPECT_NE(0u, cmdContainer->getHeapWithRequiredSizeAndAlignmentCalled);
+}

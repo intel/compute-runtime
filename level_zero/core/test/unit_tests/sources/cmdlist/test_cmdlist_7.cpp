@@ -1789,5 +1789,22 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceFo
     EXPECT_EQ(latestFlushedTaskCount + 1, commandList->csr->peekLatestFlushedTaskCount());
 }
 
+HWTEST_F(CommandListCreate, givenCommandListWhenRemoveDeallocationContainerDataThenHeapNotErased) {
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily,
+                                                                     device,
+                                                                     NEO::EngineGroupType::Compute,
+                                                                     0u,
+                                                                     returnValue));
+    auto &cmdContainer = commandList->commandContainer;
+    auto heapAlloc = cmdContainer.getIndirectHeapAllocation(HeapType::INDIRECT_OBJECT);
+    cmdContainer.getDeallocationContainer().push_back(heapAlloc);
+    EXPECT_EQ(cmdContainer.getDeallocationContainer().size(), 1u);
+    commandList->removeDeallocationContainerData();
+    EXPECT_EQ(cmdContainer.getDeallocationContainer().size(), 1u);
+
+    cmdContainer.getDeallocationContainer().clear();
+}
+
 } // namespace ult
 } // namespace L0

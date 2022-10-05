@@ -175,8 +175,12 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         auto heap = container.getIndirectHeap(HeapType::INDIRECT_OBJECT);
         UNRECOVERABLE_IF(!heap);
         heap->align(WALKER_TYPE::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
-
-        auto ptr = container.getHeapSpaceAllowGrow(HeapType::INDIRECT_OBJECT, iohRequiredSize);
+        void *ptr = nullptr;
+        if (args.isKernelDispatchedFromImmediateCmdList) {
+            ptr = container.getHeapWithRequiredSizeAndAlignment(HeapType::INDIRECT_OBJECT, iohRequiredSize, WALKER_TYPE::INDIRECTDATASTARTADDRESS_ALIGN_SIZE)->getSpace(iohRequiredSize);
+        } else {
+            ptr = container.getHeapSpaceAllowGrow(HeapType::INDIRECT_OBJECT, iohRequiredSize);
+        }
         UNRECOVERABLE_IF(!ptr);
         offsetThreadData = (is64bit ? heap->getHeapGpuStartOffset() : heap->getHeapGpuBase()) + static_cast<uint64_t>(heap->getUsed() - sizeThreadData);
 

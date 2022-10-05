@@ -78,3 +78,8 @@ XE_HPC_CORETEST_F(HwHelperTest, givenHwHelperWhenCallCopyThroughLockedPtrEnabled
     auto &hwHelper = HwHelperHw<FamilyType>::get();
     EXPECT_TRUE(hwHelper.copyThroughLockedPtrEnabled());
 }
+
+XE_HPC_CORETEST_F(HwHelperTest, givenHwHelperWhenCallGetAmountOfAllocationsToFillThenReturnTrue) {
+    auto &hwHelper = HwHelperHw<FamilyType>::get();
+    EXPECT_EQ(hwHelper.getAmountOfAllocationsToFill(), 1u);
+}

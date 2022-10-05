@@ -79,7 +79,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
     Device *getDevice() const { return device; }
 
-    IndirectHeap *getHeapWithRequiredSizeAndAlignment(HeapType heapType, size_t sizeRequired, size_t alignment);
+    MOCKABLE_VIRTUAL IndirectHeap *getHeapWithRequiredSizeAndAlignment(HeapType heapType, size_t sizeRequired, size_t alignment);
     void allocateNextCommandBuffer();
     void closeAndAllocateNextCommandBuffer();
 
@@ -115,6 +115,9 @@ class CommandContainer : public NonCopyableOrMovableClass {
     GraphicsAllocation *allocateCommandBuffer();
     void setCmdBuffer(GraphicsAllocation *cmdBuffer);
     void addCurrentCommandBufferToReusableAllocationList();
+
+    void fillReusableAllocationLists();
+    void storeAllocationAndFlushTagUpdate(GraphicsAllocation *allocation);
 
     HeapContainer sshAllocations;
     uint64_t currentLinearStreamStartOffset = 0u;

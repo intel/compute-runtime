@@ -212,3 +212,18 @@ HWTEST_F(HwInfoConfigTest, givenHwHelperWhenFlagSetAndCallCopyThroughLockedPtrEn
     DebugManager.flags.ExperimentalCopyThroughLock.set(1);
     EXPECT_TRUE(hwHelper.copyThroughLockedPtrEnabled());
 }
+
+HWTEST2_F(HwInfoConfigTest, givenHwHelperWhenCallGetAmountOfAllocationsToFillThenReturnFalse, IsNotXeHpcCore) {
+    HwHelper &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    EXPECT_EQ(hwHelper.getAmountOfAllocationsToFill(), 0u);
+}
+
+HWTEST_F(HwInfoConfigTest, givenHwHelperWhenFlagSetAndCallGetAmountOfAllocationsToFillThenReturnCorrectValue) {
+    DebugManagerStateRestore restorer;
+    HwHelper &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    DebugManager.flags.SetAmountOfReusableAllocations.set(0);
+    EXPECT_EQ(hwHelper.getAmountOfAllocationsToFill(), 0u);
+
+    DebugManager.flags.SetAmountOfReusableAllocations.set(1);
+    EXPECT_EQ(hwHelper.getAmountOfAllocationsToFill(), 1u);
+}

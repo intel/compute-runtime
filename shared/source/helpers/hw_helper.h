@@ -160,6 +160,7 @@ class HwHelper {
     virtual bool isPatIndexFallbackWaRequired() const = 0;
     virtual uint32_t getMinimalScratchSpaceSize() const = 0;
     virtual bool copyThroughLockedPtrEnabled() const = 0;
+    virtual uint32_t getAmountOfAllocationsToFill() const = 0;
 
   protected:
     HwHelper() = default;
@@ -402,6 +403,7 @@ class HwHelperHw : public HwHelper {
     bool isPatIndexFallbackWaRequired() const override;
     uint32_t getMinimalScratchSpaceSize() const override;
     bool copyThroughLockedPtrEnabled() const override;
+    uint32_t getAmountOfAllocationsToFill() const override;
 
   protected:
     static const AuxTranslationMode defaultAuxTranslationMode;

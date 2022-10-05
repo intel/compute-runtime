@@ -39,7 +39,6 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAvailableSpace() {
             this->commandContainer.getCmdBufferAllocations().push_back(alloc);
         }
         this->commandContainer.setCmdBuffer(alloc);
-        this->csr->flushTagUpdate();
         this->cmdListCurrentStartOffset = 0;
     }
 }

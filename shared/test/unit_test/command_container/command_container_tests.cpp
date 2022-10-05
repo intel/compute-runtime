@@ -8,6 +8,7 @@
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/memory_manager/allocations_list.h"
+#include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -984,4 +985,134 @@ HWTEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWi
 
     EXPECT_THROW(cmdContainer.getHeapSpaceAllowGrow(HeapType::SURFACE_STATE, 64), std::exception);
     EXPECT_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, 64, 64), std::exception);
+}
+
+struct MockHeapHelper : public HeapHelper {
+  public:
+    using HeapHelper::storageForReuse;
+};
+
+TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsThenAllocListsNotEmpty) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.SetAmountOfReusableAllocations.set(1);
+    auto cmdContainer = std::make_unique<CommandContainer>();
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, true);
+
+    EXPECT_TRUE(allocList.peekIsEmpty());
+    EXPECT_TRUE(reinterpret_cast<MockHeapHelper *>(cmdContainer->getHeapHelper())->storageForReuse->getAllocationsForReuse().peekIsEmpty());
+    cmdContainer->fillReusableAllocationLists();
+    EXPECT_FALSE(allocList.peekIsEmpty());
+    EXPECT_FALSE(reinterpret_cast<MockHeapHelper *>(cmdContainer->getHeapHelper())->storageForReuse->getAllocationsForReuse().peekIsEmpty());
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWithSharedHeapsEnabledThenOnlyOneHeapFilled) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.SetAmountOfReusableAllocations.set(1);
+    auto cmdContainer = std::make_unique<CommandContainer>();
+    AllocationsList allocList;
+    cmdContainer->enableHeapSharing();
+    cmdContainer->initialize(pDevice, &allocList, true);
+
+    auto &reusableHeapsList = reinterpret_cast<MockHeapHelper *>(cmdContainer->getHeapHelper())->storageForReuse->getAllocationsForReuse();
+
+    EXPECT_TRUE(reusableHeapsList.peekIsEmpty());
+    cmdContainer->fillReusableAllocationLists();
+    EXPECT_FALSE(reusableHeapsList.peekIsEmpty());
+    EXPECT_EQ(reusableHeapsList.peekHead()->countThisAndAllConnected(), 1u);
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWithBindlessModeEnabledThenOnlyOneHeapFilled) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.SetAmountOfReusableAllocations.set(1);
+    auto cmdContainer = std::make_unique<CommandContainer>();
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, true);
+
+    auto &reusableHeapsList = reinterpret_cast<MockHeapHelper *>(cmdContainer->getHeapHelper())->storageForReuse->getAllocationsForReuse();
+
+    EXPECT_TRUE(reusableHeapsList.peekIsEmpty());
+
+    DebugManager.flags.UseBindlessMode.set(true);
+    cmdContainer->fillReusableAllocationLists();
+    EXPECT_FALSE(reusableHeapsList.peekIsEmpty());
+    EXPECT_EQ(reusableHeapsList.peekHead()->countThisAndAllConnected(), 1u);
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWithoutHeapsThenAllocListNotEmpty) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.SetAmountOfReusableAllocations.set(1);
+    auto cmdContainer = std::make_unique<CommandContainer>();
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, false);
+
+    EXPECT_TRUE(allocList.peekIsEmpty());
+    cmdContainer->fillReusableAllocationLists();
+    EXPECT_FALSE(allocList.peekIsEmpty());
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWithSpecifiedAmountThenAllocationsCreated) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.SetAmountOfReusableAllocations.set(10);
+    auto cmdContainer = std::make_unique<CommandContainer>();
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, false);
+
+    EXPECT_TRUE(allocList.peekIsEmpty());
+    cmdContainer->fillReusableAllocationLists();
+    EXPECT_EQ(allocList.peekHead()->countThisAndAllConnected(), 10u);
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+TEST_F(CommandContainerTest, givenCmdContainerAndCsrWhenGetHeapWithRequiredSizeAndAlignmentThenReuseAllocationIfAvailable) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.SetAmountOfReusableAllocations.set(1);
+    auto cmdContainer = std::make_unique<CommandContainer>();
+    auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, true);
+    cmdContainer->setImmediateCmdListCsr(csr);
+
+    cmdContainer->fillReusableAllocationLists();
+    auto &reusableHeapsList = reinterpret_cast<MockHeapHelper *>(cmdContainer->getHeapHelper())->storageForReuse->getAllocationsForReuse();
+    auto baseAlloc = cmdContainer->getIndirectHeapAllocation(HeapType::INDIRECT_OBJECT);
+    auto reusableAlloc = reusableHeapsList.peekHead();
+
+    cmdContainer->getIndirectHeap(HeapType::INDIRECT_OBJECT)->getSpace(cmdContainer->getIndirectHeap(HeapType::INDIRECT_OBJECT)->getMaxAvailableSpace());
+    auto heap = cmdContainer->getHeapWithRequiredSizeAndAlignment(HeapType::INDIRECT_OBJECT, 1024, 1024);
+
+    EXPECT_EQ(heap->getGraphicsAllocation(), reusableAlloc);
+    EXPECT_TRUE(reusableHeapsList.peekContains(*baseAlloc));
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsAndFlagDisabledThenAllocListEmpty) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.SetAmountOfReusableAllocations.set(0);
+    auto cmdContainer = std::make_unique<CommandContainer>();
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, false);
+
+    EXPECT_TRUE(allocList.peekIsEmpty());
+    cmdContainer->fillReusableAllocationLists();
+    EXPECT_TRUE(allocList.peekIsEmpty());
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
 }

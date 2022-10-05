@@ -125,7 +125,6 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
         iddBlock = nullptr;
         nextIddInBlock = this->getNumIddPerBlock();
     }
-
     return ErrorCode::SUCCESS;
 }
 
@@ -237,7 +236,11 @@ void CommandContainer::createAndAssignNewHeap(HeapType heapType, size_t size) {
                                 newAlloc->getUnderlyingBufferSize());
     auto newBase = indirectHeap->getHeapGpuBase();
     getResidencyContainer().push_back(newAlloc);
-    getDeallocationContainer().push_back(oldAlloc);
+    if (this->immediateCmdListCsr) {
+        this->storeAllocationAndFlushTagUpdate(oldAlloc);
+    } else {
+        getDeallocationContainer().push_back(oldAlloc);
+    }
     setIndirectHeapAllocation(heapType, newAlloc);
     if (oldBase != newBase) {
         setHeapDirty(heapType);
@@ -334,11 +337,7 @@ GraphicsAllocation *CommandContainer::reuseExistingCmdBuffer() {
 }
 
 void CommandContainer::addCurrentCommandBufferToReusableAllocationList() {
-    auto taskCount = this->immediateCmdListCsr->peekTaskCount() + 1;
-    auto osContextId = this->immediateCmdListCsr->getOsContext().getContextId();
-    commandStream->getGraphicsAllocation()->updateTaskCount(taskCount, osContextId);
-    commandStream->getGraphicsAllocation()->updateResidencyTaskCount(taskCount, osContextId);
-    this->reusableAllocationList->pushTailOne(*this->commandStream->getGraphicsAllocation());
+    this->storeAllocationAndFlushTagUpdate(this->commandStream->getGraphicsAllocation());
 }
 
 void CommandContainer::setCmdBuffer(GraphicsAllocation *cmdBuffer) {
@@ -362,6 +361,60 @@ GraphicsAllocation *CommandContainer::allocateCommandBuffer() {
                                     device->getDeviceBitfield()};
 
     return device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+}
+
+void CommandContainer::fillReusableAllocationLists() {
+    const auto &hardwareInfo = device->getHardwareInfo();
+    auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto amountToFill = hwHelper.getAmountOfAllocationsToFill();
+    if (amountToFill == 0u) {
+        return;
+    }
+
+    for (auto i = 0u; i < amountToFill; i++) {
+        auto allocToReuse = this->allocateCommandBuffer();
+        this->reusableAllocationList->pushTailOne(*allocToReuse);
+        this->getResidencyContainer().push_back(allocToReuse);
+    }
+
+    if (!this->heapHelper) {
+        return;
+    }
+
+    constexpr size_t heapSize = 65536u;
+    size_t alignedSize = alignUp<size_t>(this->getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
+    for (auto i = 0u; i < amountToFill; i++) {
+        for (auto heapType = 0u; heapType < IndirectHeap::Type::NUM_TYPES; heapType++) {
+            if (NEO::ApiSpecificConfig::getBindlessConfiguration() && heapType != IndirectHeap::Type::INDIRECT_OBJECT) {
+                continue;
+            }
+            if (!hardwareInfo.capabilityTable.supportsImages && IndirectHeap::Type::DYNAMIC_STATE == heapType) {
+                continue;
+            }
+            if (immediateCmdListSharedHeap(static_cast<HeapType>(heapType))) {
+                continue;
+            }
+            auto heapToReuse = heapHelper->getHeapAllocation(heapType,
+                                                             heapSize,
+                                                             alignedSize,
+                                                             device->getRootDeviceIndex());
+            this->heapHelper->storeHeapAllocation(heapToReuse);
+        }
+    }
+}
+
+void CommandContainer::storeAllocationAndFlushTagUpdate(GraphicsAllocation *allocation) {
+    auto lock = this->immediateCmdListCsr->obtainUniqueOwnership();
+    auto taskCount = this->immediateCmdListCsr->peekTaskCount() + 1;
+    auto osContextId = this->immediateCmdListCsr->getOsContext().getContextId();
+    allocation->updateTaskCount(taskCount, osContextId);
+    allocation->updateResidencyTaskCount(taskCount, osContextId);
+    if (allocation->getAllocationType() == AllocationType::COMMAND_BUFFER) {
+        this->reusableAllocationList->pushTailOne(*allocation);
+    } else {
+        getHeapHelper()->storeHeapAllocation(allocation);
+    }
+    this->immediateCmdListCsr->flushTagUpdate();
 }
 
 } // namespace NEO
