@@ -126,7 +126,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
   protected:
     size_t getTotalCmdBufferSize();
-
+    void createAndAssignNewHeap(HeapType heapType, size_t size);
     GraphicsAllocation *allocationIndirectHeaps[HeapType::NUM_TYPES] = {};
     std::unique_ptr<IndirectHeap> indirectHeaps[HeapType::NUM_TYPES];
 
