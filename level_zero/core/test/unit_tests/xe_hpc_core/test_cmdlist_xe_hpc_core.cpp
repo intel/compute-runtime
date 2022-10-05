@@ -886,7 +886,6 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
 
 struct AppendMemoryLockedCopyFixture : public DeviceFixture {
     void setUp() {
-        DebugManager.flags.ExperimentalCopyThroughLock.set(1);
         DeviceFixture::setUp();
 
         nonUsmHostPtr = new char[sz];
@@ -917,15 +916,40 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrW
     EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(dstAllocData, dstFound, srcAllocData, srcFound, 1024));
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenIsAllocDeviceMemoryThenReturnCorrectValue, IsXeHpcCore) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenIsSuitableUSMDeviceAllocThenReturnCorrectValue, IsXeHpcCore) {
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     NEO::SvmAllocationData *srcAllocData;
     NEO::SvmAllocationData *dstAllocData;
     auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, &srcAllocData);
     auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, &dstAllocData);
-    EXPECT_FALSE(cmdList.isAllocUSMDeviceMemory(srcAllocData, srcFound));
-    EXPECT_TRUE(cmdList.isAllocUSMDeviceMemory(dstAllocData, dstFound));
+    EXPECT_FALSE(cmdList.isSuitableUSMDeviceAlloc(srcAllocData, srcFound));
+    EXPECT_TRUE(cmdList.isSuitableUSMDeviceAlloc(dstAllocData, dstFound));
+}
+
+struct LocalMemoryMultiSubDeviceFixture : public SingleRootMultiSubDeviceFixture {
+    void setUp() {
+        DebugManager.flags.EnableLocalMemory.set(1);
+        DebugManager.flags.EnableImplicitScaling.set(1);
+        SingleRootMultiSubDeviceFixture::setUp();
+    }
+    DebugManagerStateRestore restore;
+};
+
+using LocalMemoryMultiSubDeviceTest = Test<LocalMemoryMultiSubDeviceFixture>;
+
+HWTEST2_F(LocalMemoryMultiSubDeviceTest, givenImmediateCommandListWhenIsSuitableUSMDeviceAllocWithColouredBufferThenReturnFalse, IsXeHpcCore) {
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+
+    void *devicePtr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    context->allocDeviceMem(device->toHandle(), &deviceDesc, 2 * MemoryConstants::megaByte, 1u, &devicePtr);
+
+    NEO::SvmAllocationData *allocData;
+    auto allocFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 2 * MemoryConstants::megaByte, &allocData);
+    EXPECT_FALSE(cmdList.isSuitableUSMDeviceAlloc(allocData, allocFound));
+    context->freeMem(devicePtr);
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrAndFlagDisabledWhenPreferCopyThroughLockedPtrCalledThenReturnFalse, IsXeHpcCore) {
@@ -1074,6 +1098,23 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCpuMemcpyWith
 
     uint32_t waitForFlushTagUpdateCalled = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.csr)->waitForCompletionWithTimeoutTaskCountCalled;
     EXPECT_EQ(waitForFlushTagUpdateCalled, 1u);
+}
+
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendBarrierThenSetBarrierCalled, IsXeHpcCore) {
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+
+    EXPECT_FALSE(cmdList.barrierCalled);
+
+    cmdList.appendBarrier(nullptr, 0, nullptr);
+
+    EXPECT_TRUE(cmdList.barrierCalled);
+
+    auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    EXPECT_FALSE(cmdList.barrierCalled);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

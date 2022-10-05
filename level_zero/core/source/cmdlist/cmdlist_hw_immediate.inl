@@ -246,6 +246,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(
         checkAvailableSpace();
     }
     ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents);
+
+    this->barrierCalled = true;
     return flushImmediate(ret, true, hSignalEvent);
 }
 
@@ -525,15 +527,16 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(N
         d2HThreshold = NEO::DebugManager.flags.ExperimentalD2HCpuCopyThreshold.get();
     }
     if (NEO::HwHelper::get(this->device->getHwInfo().platform.eRenderCoreFamily).copyThroughLockedPtrEnabled()) {
-        return (!srcFound && isAllocUSMDeviceMemory(dstAlloc, dstFound) && size <= h2DThreshold) ||
-               (!dstFound && isAllocUSMDeviceMemory(srcAlloc, srcFound) && size <= d2HThreshold);
+        return (!srcFound && isSuitableUSMDeviceAlloc(dstAlloc, dstFound) && size <= h2DThreshold) ||
+               (!dstFound && isSuitableUSMDeviceAlloc(srcAlloc, srcFound) && size <= d2HThreshold);
     }
     return false;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isAllocUSMDeviceMemory(NEO::SvmAllocationData *alloc, bool allocFound) {
-    return allocFound && (alloc->memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY);
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isSuitableUSMDeviceAlloc(NEO::SvmAllocationData *alloc, bool allocFound) {
+    return allocFound && (alloc->memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY) &&
+           alloc->gpuAllocations.getGraphicsAllocation(this->device->getRootDeviceIndex())->storageInfo.getNumBanks() == 1;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -544,8 +547,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(void
         this->appendBarrier(nullptr, numWaitEvents, phWaitEvents);
     }
 
-    bool needsFlushTagUpdate = this->latestFlushedBarrierCounter < this->barrierCounter;
-    if (needsFlushTagUpdate) {
+    if (this->barrierCalled) {
         this->csr->flushTagUpdate();
     }
 
@@ -564,13 +566,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(void
         cpuMemcpyDstPtr = dstptr;
     }
 
-    if (needsFlushTagUpdate) {
+    if (this->barrierCalled) {
         auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
         const auto waitStatus = this->csr->waitForCompletionWithTimeout(NEO::WaitParams{false, false, timeoutMicroseconds}, this->csr->peekTaskCount());
         if (waitStatus == NEO::WaitStatus::GpuHang) {
             return ZE_RESULT_ERROR_DEVICE_LOST;
         }
-        this->latestFlushedBarrierCounter = this->barrierCounter;
+        this->barrierCalled = false;
     }
 
     if (signalEvent) {

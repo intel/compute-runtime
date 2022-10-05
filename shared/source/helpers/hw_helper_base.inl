@@ -720,6 +720,9 @@ bool HwHelperHw<GfxFamily>::isPatIndexFallbackWaRequired() const {
 
 template <typename gfxProduct>
 bool HwHelperHw<gfxProduct>::copyThroughLockedPtrEnabled() const {
+    if (DebugManager.flags.ExperimentalCopyThroughLock.get() != -1) {
+        return DebugManager.flags.ExperimentalCopyThroughLock.get() == 1;
+    }
     return false;
 }
 
