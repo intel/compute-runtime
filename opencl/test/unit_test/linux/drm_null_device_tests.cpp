@@ -48,7 +48,7 @@ class DrmNullDeviceTestsFixture {
 
 typedef Test<DrmNullDeviceTestsFixture> DrmNullDeviceTests;
 
-TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENcallGetDeviceIdTHENreturnProperDeviceId) {
+TEST_F(DrmNullDeviceTests, GivenDrmNullDeviceWhenCallGetDeviceIdThenReturnProperDeviceId) {
     int ret = drmNullDevice->queryDeviceIdAndRevision();
     EXPECT_TRUE(ret);
     auto hwInfo = drmNullDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
@@ -56,18 +56,18 @@ TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENcallGetDeviceIdTHENreturnProper
     EXPECT_EQ(revisionId, hwInfo->platform.usRevId);
 }
 
-TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENcallIoctlTHENalwaysSuccess) {
+TEST_F(DrmNullDeviceTests, GivenDrmNullDeviceWhenCallIoctlThenAlwaysSuccess) {
     EXPECT_EQ(drmNullDevice->ioctl(DrmIoctl::GemExecbuffer2, nullptr), 0);
 }
 
-TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENregReadOtherThenTimestampReadTHENalwaysSuccess) {
+TEST_F(DrmNullDeviceTests, GivenDrmNullDeviceWhenRegReadOtherThenTimestampReadThenAlwaysSuccessIsReturned) {
     RegisterRead arg;
 
     arg.offset = 0;
     ASSERT_EQ(drmNullDevice->ioctl(DrmIoctl::RegRead, &arg), 0);
 }
 
-TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENgetGpuTimestamp32bOr64bTHENerror) {
+TEST_F(DrmNullDeviceTests, GivenDrmNullDeviceWhenGetGpuTimestamp32bOr64bThenErrorIsReturned) {
     RegisterRead arg;
 
     arg.offset = REG_GLOBAL_TIMESTAMP_LDW;
@@ -77,7 +77,7 @@ TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENgetGpuTimestamp32bOr64bTHENerro
     ASSERT_EQ(drmNullDevice->ioctl(DrmIoctl::RegRead, &arg), -1);
 }
 
-TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENgetGpuTimestamp36bTHENproperValues) {
+TEST_F(DrmNullDeviceTests, GivenDrmNullDeviceWhenGetGpuTimestamp36bThenProperValuesAreReturned) {
     RegisterRead arg;
 
     arg.offset = REG_GLOBAL_TIMESTAMP_LDW | 1;
