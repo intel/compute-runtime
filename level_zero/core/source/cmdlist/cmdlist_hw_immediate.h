@@ -132,9 +132,6 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     bool isAllocUSMDeviceMemory(NEO::SvmAllocationData *alloc, bool allocFound);
     ze_result_t performCpuMemcpy(void *dstptr, const void *srcptr, size_t size, bool isDstDeviceMemory, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
     void *obtainLockedPtrFromDevice(void *ptr, size_t size);
-
-  protected:
-    std::atomic<bool> barrierCalled{false};
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>

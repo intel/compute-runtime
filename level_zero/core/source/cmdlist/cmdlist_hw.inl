@@ -2517,6 +2517,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
     }
 
     appendSignalEventPostWalker(signalEvent, workloadPartition);
+    this->barrierCounter++;
     return ZE_RESULT_SUCCESS;
 }
 
