@@ -15,7 +15,7 @@ static constexpr uint32_t dummyDeviceBlobData[] = {
     0x01,
     INTEL_HWCONFIG_MAX_DUAL_SUBSLICES_SUPPORTED,
     1,
-    0x02,
+    0x04,
     INTEL_HWCONFIG_MAX_NUM_EU_PER_DSS,
     1,
     0x03,

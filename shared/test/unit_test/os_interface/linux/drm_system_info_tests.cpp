@@ -114,8 +114,7 @@ TEST(DrmSystemInfoTest, givenSystemInfoCreatedFromDeviceBlobWhenQueryingSpecific
     EXPECT_EQ(0x15u, systemInfo.getTotalPsThreads());
     EXPECT_EQ(0x03u, systemInfo.getMaxEuPerDualSubSlice());
     EXPECT_EQ(0x01u, systemInfo.getMaxSlicesSupported());
-    EXPECT_EQ(0x02u, systemInfo.getMaxDualSubSlicesSupported());
-    EXPECT_EQ(0x02u, systemInfo.getMaxDualSubSlicesSupported());
+    EXPECT_EQ(0x04u, systemInfo.getMaxDualSubSlicesSupported());
     EXPECT_EQ(0x17u, systemInfo.getMaxRCS());
     EXPECT_EQ(0x18u, systemInfo.getMaxCCS());
     EXPECT_EQ(0x2Du, systemInfo.getL3BankSizeInKb());
@@ -193,7 +192,7 @@ TEST(DrmSystemInfoTest, givenZeroBankCountWhenCreatingSystemInfoThenUseDualSubsl
 
     EXPECT_EQ(0u, gtSystemInfo.L3BankCount);
 
-    uint64_t expectedL3Size = gtSystemInfo.DualSubSliceCount * drm.getSystemInfo()->getL3BankSizeInKb();
+    uint64_t expectedL3Size = gtSystemInfo.MaxDualSubSlicesSupported * drm.getSystemInfo()->getL3BankSizeInKb();
     uint64_t calculatedL3Size = gtSystemInfo.L3CacheSizeInKb;
 
     EXPECT_EQ(expectedL3Size, calculatedL3Size);
