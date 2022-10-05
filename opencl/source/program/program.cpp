@@ -166,10 +166,7 @@ cl_int Program::createProgramFromBinary(
         auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
         auto productAbbreviation = hardwarePrefix[hwInfo->platform.eProductFamily];
 
-        auto copyHwInfo = *hwInfo;
-        CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily)->adjustHwInfoForIgc(copyHwInfo);
-
-        TargetDevice targetDevice = targetDeviceFromHwInfo(copyHwInfo);
+        TargetDevice targetDevice = targetDeviceFromHwInfo(*hwInfo);
         std::string decodeErrors;
         std::string decodeWarnings;
         auto singleDeviceBinary = unpackSingleDeviceBinary(archive, ConstStringRef(productAbbreviation, strlen(productAbbreviation)), targetDevice,

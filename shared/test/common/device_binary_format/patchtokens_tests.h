@@ -83,13 +83,10 @@ inline uint32_t pushBackArgInfoToken(std::vector<uint8_t> &outStream,
 
 struct ValidEmptyProgram : NEO::PatchTokenBinary::ProgramFromPatchtokens {
     ValidEmptyProgram() {
-        auto copyHwInfo = *NEO::defaultHwInfo;
-        NEO::CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily)->adjustHwInfoForIgc(copyHwInfo);
-
         iOpenCL::SProgramBinaryHeader headerTok = {};
         headerTok.Magic = iOpenCL::MAGIC_CL;
         headerTok.Version = iOpenCL::CURRENT_ICBE_VERSION;
-        headerTok.Device = copyHwInfo.platform.eRenderCoreFamily;
+        headerTok.Device = NEO::defaultHwInfo->platform.eRenderCoreFamily;
         headerTok.GPUPointerSizeInBytes = sizeof(uintptr_t);
         this->decodeStatus = NEO::DecodeError::Success;
 

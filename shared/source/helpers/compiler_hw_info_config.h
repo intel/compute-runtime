@@ -28,7 +28,6 @@ class CompilerHwInfoConfig {
     virtual bool isForceEmuInt32DivRemSPRequired() const = 0;
     virtual bool isStatelessToStatefulBufferOffsetSupported() const = 0;
     virtual bool isForceToStatelessRequired() const = 0;
-    virtual void adjustHwInfoForIgc(HardwareInfo &hwInfo) const = 0;
     virtual void setProductConfigForHwInfo(HardwareInfo &hwInfo, AheadOfTimeConfig config) const = 0;
     virtual const char *getCachingPolicyOptions(bool isDebuggerActive) const = 0;
 };
@@ -45,7 +44,6 @@ class CompilerHwInfoConfigHw : public CompilerHwInfoConfig {
     bool isForceEmuInt32DivRemSPRequired() const override;
     bool isStatelessToStatefulBufferOffsetSupported() const override;
     bool isForceToStatelessRequired() const override;
-    void adjustHwInfoForIgc(HardwareInfo &hwInfo) const override;
     void setProductConfigForHwInfo(HardwareInfo &hwInfo, AheadOfTimeConfig config) const override;
     const char *getCachingPolicyOptions(bool isDebuggerActive) const override;
 

@@ -877,11 +877,8 @@ HWTEST_F(CompilerInterfaceTest, givenNoDbgKeyForceUseDifferentPlatformWhenReques
     auto igcPlatform = devCtx->GetPlatformHandle();
     auto igcSysInfo = devCtx->GetGTSystemInfoHandle();
 
-    HardwareInfo copyHwInfo = device->getHardwareInfo();
-    NEO::CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily)->adjustHwInfoForIgc(copyHwInfo);
-
-    EXPECT_EQ(copyHwInfo.platform.eProductFamily, igcPlatform->GetProductFamily());
-    EXPECT_EQ(copyHwInfo.platform.eRenderCoreFamily, igcPlatform->GetRenderCoreFamily());
+    EXPECT_EQ(device->getHardwareInfo().platform.eProductFamily, igcPlatform->GetProductFamily());
+    EXPECT_EQ(device->getHardwareInfo().platform.eRenderCoreFamily, igcPlatform->GetRenderCoreFamily());
     EXPECT_EQ(device->getHardwareInfo().gtSystemInfo.SliceCount, igcSysInfo->GetSliceCount());
     EXPECT_EQ(device->getHardwareInfo().gtSystemInfo.SubSliceCount, igcSysInfo->GetSubSliceCount());
     EXPECT_EQ(device->getHardwareInfo().gtSystemInfo.EUCount, igcSysInfo->GetEUCount());
@@ -902,11 +899,8 @@ HWTEST_F(CompilerInterfaceTest, givenDbgKeyForceUseDifferentPlatformWhenRequestF
     auto igcPlatform = devCtx->GetPlatformHandle();
     auto igcSysInfo = devCtx->GetGTSystemInfoHandle();
 
-    HardwareInfo copyHwInfo = *hardwareInfoTable[dbgProdFamily];
-    NEO::CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily)->adjustHwInfoForIgc(copyHwInfo);
-
-    EXPECT_EQ(copyHwInfo.platform.eProductFamily, igcPlatform->GetProductFamily());
-    EXPECT_EQ(copyHwInfo.platform.eRenderCoreFamily, igcPlatform->GetRenderCoreFamily());
+    EXPECT_EQ(hardwareInfoTable[dbgProdFamily]->platform.eProductFamily, igcPlatform->GetProductFamily());
+    EXPECT_EQ(hardwareInfoTable[dbgProdFamily]->platform.eRenderCoreFamily, igcPlatform->GetRenderCoreFamily());
     EXPECT_EQ(dbgSystemInfo.SliceCount, igcSysInfo->GetSliceCount());
     EXPECT_EQ(dbgSystemInfo.SubSliceCount, igcSysInfo->GetSubSliceCount());
     EXPECT_EQ(dbgSystemInfo.DualSubSliceCount, igcSysInfo->GetSubSliceCount());

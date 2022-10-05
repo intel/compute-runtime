@@ -2089,15 +2089,14 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildFlagWhenCreatingModuleFromNative
 HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpRequiredTargetProductProperly) {
     ZebinTestData::ValidEmptyProgram emptyProgram;
 
-    NEO::HardwareInfo copyHwInfo = device->getNEODevice()->getHardwareInfo();
-    NEO::CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily)->adjustHwInfoForIgc(copyHwInfo);
+    auto &hwInfo = device->getNEODevice()->getHardwareInfo();
 
-    emptyProgram.elfHeader->machine = copyHwInfo.platform.eProductFamily;
+    emptyProgram.elfHeader->machine = hwInfo.platform.eProductFamily;
     L0::ModuleTranslationUnit moduleTuValid(this->device);
     bool success = moduleTuValid.createFromNativeBinary(reinterpret_cast<const char *>(emptyProgram.storage.data()), emptyProgram.storage.size());
     EXPECT_TRUE(success);
 
-    emptyProgram.elfHeader->machine = copyHwInfo.platform.eProductFamily;
+    emptyProgram.elfHeader->machine = hwInfo.platform.eProductFamily;
     ++emptyProgram.elfHeader->machine;
     L0::ModuleTranslationUnit moduleTuInvalid(this->device);
     success = moduleTuInvalid.createFromNativeBinary(reinterpret_cast<const char *>(emptyProgram.storage.data()), emptyProgram.storage.size());
@@ -2138,10 +2137,9 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpPacked
 HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromZebinThenAppendAllowZebinFlagToBuildOptions) {
     ZebinTestData::ValidEmptyProgram zebin;
 
-    NEO::HardwareInfo copyHwInfo = device->getNEODevice()->getHardwareInfo();
-    NEO::CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily)->adjustHwInfoForIgc(copyHwInfo);
+    auto &hwInfo = device->getNEODevice()->getHardwareInfo();
 
-    zebin.elfHeader->machine = copyHwInfo.platform.eProductFamily;
+    zebin.elfHeader->machine = hwInfo.platform.eProductFamily;
     L0::ModuleTranslationUnit moduleTu(this->device);
     bool success = moduleTu.createFromNativeBinary(reinterpret_cast<const char *>(zebin.storage.data()), zebin.storage.size());
     EXPECT_TRUE(success);
@@ -2166,10 +2164,7 @@ kernels:
     zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
     zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_other_kernel", {});
 
-    NEO::HardwareInfo copyHwInfo = device->getNEODevice()->getHardwareInfo();
-    NEO::CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily)->adjustHwInfoForIgc(copyHwInfo);
-
-    zebin.elfHeader->machine = copyHwInfo.platform.eProductFamily;
+    zebin.elfHeader->machine = device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
 
     L0::ModuleTranslationUnit moduleTuValid(this->device);
     bool success = moduleTuValid.createFromNativeBinary(reinterpret_cast<const char *>(zebin.storage.data()), zebin.storage.size());
@@ -3161,10 +3156,7 @@ TEST_F(ModuleWithZebinTest, givenNonZebinaryFormatWhenGettingDebugInfoThenDebugZ
 HWTEST_F(ModuleWithZebinTest, givenZebinWithKernelCallingExternalFunctionThenUpdateKernelsBarrierCount) {
     ZebinTestData::ZebinWithExternalFunctionsInfo zebin;
 
-    NEO::HardwareInfo copyHwInfo = device->getHwInfo();
-    NEO::CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily)->adjustHwInfoForIgc(copyHwInfo);
-
-    zebin.setProductFamily(static_cast<uint16_t>(copyHwInfo.platform.eProductFamily));
+    zebin.setProductFamily(static_cast<uint16_t>(device->getHwInfo().platform.eProductFamily));
 
     ze_module_desc_t moduleDesc = {};
     moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;

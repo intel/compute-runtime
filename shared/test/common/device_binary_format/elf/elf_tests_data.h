@@ -27,10 +27,7 @@ template <enabledIrFormat irFormat = enabledIrFormat::NONE>
 struct MockElfBinaryPatchtokens {
     MockElfBinaryPatchtokens(const HardwareInfo &hwInfo) : MockElfBinaryPatchtokens(std::string{}, hwInfo){};
     MockElfBinaryPatchtokens(const std::string &buildOptions, const HardwareInfo &hwInfo) {
-        auto copyHwInfo = hwInfo;
-        CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily)->adjustHwInfoForIgc(copyHwInfo);
-
-        mockDevBinaryHeader.Device = copyHwInfo.platform.eRenderCoreFamily;
+        mockDevBinaryHeader.Device = hwInfo.platform.eRenderCoreFamily;
         mockDevBinaryHeader.GPUPointerSizeInBytes = sizeof(void *);
         mockDevBinaryHeader.Version = iOpenCL::CURRENT_ICBE_VERSION;
         constexpr size_t mockDevBinaryDataSize = sizeof(mockDevBinaryHeader) + mockDataSize;

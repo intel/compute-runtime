@@ -22,10 +22,6 @@ bool CompilerHwInfoConfigHw<gfxProduct>::isStatelessToStatefulBufferOffsetSuppor
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void CompilerHwInfoConfigHw<gfxProduct>::adjustHwInfoForIgc(HardwareInfo &hwInfo) const {
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 const char *CompilerHwInfoConfigHw<gfxProduct>::getCachingPolicyOptions(bool isDebuggerActive) const {
     return L1CachePolicyHelper<gfxProduct>::getCachingPolicyOptions(isDebuggerActive);
 };
