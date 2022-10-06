@@ -5096,13 +5096,6 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
         TRACING_EXIT(ClSetKernelExecInfo, &retVal);
         return retVal;
     }
-    case CL_KERNEL_EXEC_INFO_EU_THREAD_OVER_DISPATCH_INTEL: {
-        if ((paramValueSize != sizeof(cl_bool)) || (paramValue == nullptr)) {
-            return CL_INVALID_VALUE;
-        }
-        retVal = pMultiDeviceKernel->setOverdispatchParam(paramValueSize, paramValue);
-        break;
-    }
     default: {
         retVal = CL_INVALID_VALUE;
         break;

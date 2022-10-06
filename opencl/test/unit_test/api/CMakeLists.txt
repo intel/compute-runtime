@@ -124,10 +124,6 @@ set(IGDRCL_SRCS_tests_api
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_unload_platform_compiler_tests.inl
 )
 
-if(TESTS_DG2_AND_LATER)
-  list(APPEND IGDRCL_SRCS_tests_api ${CMAKE_CURRENT_SOURCE_DIR}/api_tests_dg2_and_later.cpp)
-endif()
-
 if(TESTS_PVC_AND_LATER)
   list(APPEND IGDRCL_SRCS_tests_api ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_device_info_pvc_and_later_tests.cpp)
 endif()
