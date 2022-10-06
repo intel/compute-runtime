@@ -502,6 +502,19 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryRangesBar
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchCooperativeKernel(ze_kernel_handle_t kernelHandle,
+                                                                                         const ze_group_count_t *launchKernelArgs,
+                                                                                         ze_event_handle_t signalEvent,
+                                                                                         uint32_t numWaitEvents,
+                                                                                         ze_event_handle_t *waitEventHandles) {
+    if (this->isFlushTaskSubmissionEnabled) {
+        checkAvailableSpace();
+    }
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchCooperativeKernel(kernelHandle, launchKernelArgs, signalEvent, numWaitEvents, waitEventHandles);
+    return flushImmediate(ret, true, signalEvent);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_result_t inputRet, bool performMigration, ze_event_handle_t signalEvent) {
     if (inputRet == ZE_RESULT_SUCCESS) {
         if (this->isFlushTaskSubmissionEnabled) {
