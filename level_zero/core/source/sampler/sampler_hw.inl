@@ -125,7 +125,7 @@ void SamplerCoreFamily<gfxCoreFamily>::copySamplerStateToDSH(void *dynamicStateH
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
 
     auto destSamplerState = ptrOffset(dynamicStateHeap, samplerOffset);
-    auto freeSpace = dynamicStateHeapSize - (samplerOffset + sizeof(SAMPLER_STATE));
+    auto freeSpace = dynamicStateHeapSize - samplerOffset;
     memcpy_s(destSamplerState, freeSpace, &samplerState, sizeof(SAMPLER_STATE));
 }
 

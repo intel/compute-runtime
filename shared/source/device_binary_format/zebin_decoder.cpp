@@ -294,6 +294,8 @@ void extractZeInfoKernelSections(const NEO::Yaml::YamlParser &parser, const NEO:
             outZeInfoKernelSections.perThreadMemoryBuffersNd.push_back(&kernelMetadataNd);
         } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::experimentalProperties == key) {
             outZeInfoKernelSections.experimentalPropertiesNd.push_back(&kernelMetadataNd);
+        } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::inlineSamplers == key) {
+            outZeInfoKernelSections.inlineSamplersNd.push_back(&kernelMetadataNd);
         } else {
             outWarning.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unknown entry \"" + parser.readKey(kernelMetadataNd).str() + "\" in context of : " + context.str() + "\n");
         }
@@ -310,6 +312,7 @@ DecodeError validateZeInfoKernelSectionsCount(const ZeInfoKernelSections &outZeI
     valid &= validateZebinSectionsCountAtMost(outZeInfoKernelSections.bindingTableIndicesNd, NEO::Elf::ZebinKernelMetadata::Tags::Kernel::bindingTableIndices, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(outZeInfoKernelSections.perThreadMemoryBuffersNd, NEO::Elf::ZebinKernelMetadata::Tags::Kernel::perThreadMemoryBuffers, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(outZeInfoKernelSections.experimentalPropertiesNd, NEO::Elf::ZebinKernelMetadata::Tags::Kernel::experimentalProperties, 1U, outErrReason, outWarning);
+    valid &= validateZebinSectionsCountAtMost(outZeInfoKernelSections.inlineSamplersNd, NEO::Elf::ZebinKernelMetadata::Tags::Kernel::inlineSamplers, 1U, outErrReason, outWarning);
 
     return valid ? DecodeError::Success : DecodeError::InvalidBinary;
 }
@@ -579,6 +582,32 @@ DecodeError readZeInfoPayloadArguments(const NEO::Yaml::YamlParser &parser, cons
         }
     }
     return validPayload ? DecodeError::Success : DecodeError::InvalidBinary;
+}
+
+DecodeError readZeInfoInlineSamplers(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node, ZeInfoInlineSamplers &outInlineSamplers, int32_t &outMaxSamplerIndex, ConstStringRef context, std::string &outErrReason, std::string &outWarning) {
+    bool validInlineSamplers = true;
+    for (const auto &inlineSamplerNd : parser.createChildrenRange(node)) {
+        outInlineSamplers.resize(outInlineSamplers.size() + 1);
+        auto &inlineSampler = *outInlineSamplers.rbegin();
+        for (const auto &inlineSamplerMemberNd : parser.createChildrenRange(inlineSamplerNd)) {
+            namespace Tags = NEO::Elf::ZebinKernelMetadata::Tags::Kernel::InlineSamplers;
+            auto key = parser.readKey(inlineSamplerMemberNd);
+            if (Tags::samplerIndex == key) {
+                validInlineSamplers &= readZeInfoValueChecked(parser, inlineSamplerMemberNd, inlineSampler.samplerIndex, context, outErrReason);
+                outMaxSamplerIndex = std::max<int32_t>(outMaxSamplerIndex, inlineSampler.samplerIndex);
+            } else if (Tags::addrMode == key) {
+                validInlineSamplers &= readZeInfoEnumChecked(parser, inlineSamplerMemberNd, inlineSampler.addrMode, context, outErrReason);
+            } else if (Tags::filterMode == key) {
+                validInlineSamplers &= readZeInfoEnumChecked(parser, inlineSamplerMemberNd, inlineSampler.filterMode, context, outErrReason);
+            } else if (Tags::normalized == key) {
+                validInlineSamplers &= readZeInfoValueChecked(parser, inlineSamplerMemberNd, inlineSampler.normalized, context, outErrReason);
+            } else {
+                outWarning.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unknown entry \"" + key.str() + "\" for inline sampler in context of " + context.str() + "\n");
+            }
+        }
+    }
+
+    return validInlineSamplers ? DecodeError::Success : DecodeError::InvalidBinary;
 }
 
 DecodeError readZeInfoBindingTableIndices(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node,
@@ -1045,6 +1074,47 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
     return DecodeError::Success;
 }
 
+NEO::DecodeError populateInlineSamplers(const NEO::Elf::ZebinKernelMetadata::Types::Kernel::InlineSamplers::InlineSamplerBaseT &src, NEO::KernelDescriptor &dst, std::string &outErrReason, std::string &outWarning) {
+    NEO::KernelDescriptor::InlineSampler inlineSampler = {};
+
+    if (src.samplerIndex == -1) {
+        outErrReason.append("DeviceBinaryFormat::Zebin : Invalid inline sampler index (must be >= 0) in context of : " + dst.kernelMetadata.kernelName + ".\n");
+        return DecodeError::InvalidBinary;
+    }
+    inlineSampler.samplerIndex = src.samplerIndex;
+
+    using AddrModeZeInfo = NEO::Elf::ZebinKernelMetadata::Types::Kernel::InlineSamplers::AddrModeT;
+    using AddrModeDescriptor = NEO::KernelDescriptor::InlineSampler::AddrMode;
+    constexpr LookupArray<AddrModeZeInfo, AddrModeDescriptor, 5> addrModes({{{AddrModeZeInfo::None, AddrModeDescriptor::None},
+                                                                             {AddrModeZeInfo::Repeat, AddrModeDescriptor::Repeat},
+                                                                             {AddrModeZeInfo::ClampEdge, AddrModeDescriptor::ClampEdge},
+                                                                             {AddrModeZeInfo::ClampBorder, AddrModeDescriptor::ClampBorder},
+                                                                             {AddrModeZeInfo::Mirror, AddrModeDescriptor::Mirror}}});
+    auto addrMode = addrModes.find(src.addrMode);
+    if (addrMode.has_value() == false) {
+        outErrReason.append("DeviceBinaryFormat::Zebin : Invalid inline sampler addressing mode in context of : " + dst.kernelMetadata.kernelName + "\n");
+        return DecodeError::InvalidBinary;
+    }
+    inlineSampler.addrMode = *addrMode;
+
+    using FilterModeZeInfo = NEO::Elf::ZebinKernelMetadata::Types::Kernel::InlineSamplers::FilterModeT;
+    using FilterModeDescriptor = NEO::KernelDescriptor::InlineSampler::FilterMode;
+    constexpr LookupArray<FilterModeZeInfo, FilterModeDescriptor, 2> filterModes({{{FilterModeZeInfo::Nearest, FilterModeDescriptor::Nearest},
+                                                                                   {FilterModeZeInfo::Linear, FilterModeDescriptor::Linear}}});
+    auto filterMode = filterModes.find(src.filterMode);
+    if (filterMode.has_value() == false) {
+        outErrReason.append("DeviceBinaryFormat::Zebin : Invalid inline sampler filterMode mode in context of : " + dst.kernelMetadata.kernelName + "\n");
+        return DecodeError::InvalidBinary;
+    }
+    inlineSampler.filterMode = *filterMode;
+
+    inlineSampler.isNormalized = src.normalized;
+
+    dst.inlineSamplers.push_back(inlineSampler);
+
+    return DecodeError::Success;
+}
+
 NEO::DecodeError populateKernelDescriptor(const NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::PerThreadMemoryBufferBaseT &src, NEO::KernelDescriptor &dst, uint32_t minScratchSpaceSize,
                                           std::string &outErrReason, std::string &outWarning) {
     using namespace NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer;
@@ -1150,6 +1220,15 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<n
         }
     }
 
+    ZeInfoInlineSamplers inlineSamplers;
+    if (false == zeInfokernelSections.inlineSamplersNd.empty()) {
+        auto decodeErr = readZeInfoInlineSamplers(yamlParser, *zeInfokernelSections.inlineSamplersNd[0], inlineSamplers, maxSamplerIndex,
+                                                  kernelDescriptor.kernelMetadata.kernelName, outErrReason, outWarning);
+        if (DecodeError::Success != decodeErr) {
+            return decodeErr;
+        }
+    }
+
     ZeInfoPerThreadMemoryBuffers perThreadMemoryBuffers;
     if (false == zeInfokernelSections.perThreadMemoryBuffersNd.empty()) {
         auto perThreadMemoryBuffersErr = readZeInfoPerThreadMemoryBuffers(yamlParser, *zeInfokernelSections.perThreadMemoryBuffersNd[0], perThreadMemoryBuffers,
@@ -1235,6 +1314,13 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<n
     uint32_t crossThreadDataSize = 0;
     for (const auto &arg : payloadArguments) {
         auto decodeErr = populateArgDescriptor(arg, kernelDescriptor, crossThreadDataSize, outErrReason, outWarning);
+        if (DecodeError::Success != decodeErr) {
+            return decodeErr;
+        }
+    }
+
+    for (const auto &inlineSampler : inlineSamplers) {
+        auto decodeErr = populateInlineSamplers(inlineSampler, kernelDescriptor, outErrReason, outWarning);
         if (DecodeError::Success != decodeErr) {
             return decodeErr;
         }

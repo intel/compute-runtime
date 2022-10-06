@@ -84,6 +84,8 @@ struct KernelImp : Kernel {
 
     virtual void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) = 0;
 
+    void setInlineSamplers();
+
     ze_result_t initialize(const ze_kernel_desc_t *desc);
 
     const uint8_t *getPerThreadData() const override { return perThreadDataForWholeThreadGroup; }

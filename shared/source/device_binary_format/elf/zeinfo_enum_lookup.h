@@ -166,6 +166,27 @@ constexpr LookupArray<ConstStringRef, ThreadSchedulingMode, 3> lookup({{{ageBase
 static_assert(lookup.size() == ThreadSchedulingMode::ThreadSchedulingModeMax - 1, "Every enum field must be present");
 } // namespace ThreadSchedulingMode
 
+namespace InlineSamplerAddrMode {
+using namespace Tags::Kernel::InlineSamplers::AddrMode;
+using AddrMode = Types::Kernel::InlineSamplers::AddrMode;
+constexpr ConstStringRef name = "inline sampler addressing mode";
+constexpr LookupArray<ConstStringRef, AddrMode, 5> lookup({{{none, AddrMode::None},
+                                                            {repeat, AddrMode::Repeat},
+                                                            {clamp_edge, AddrMode::ClampEdge},
+                                                            {clamp_border, AddrMode::ClampBorder},
+                                                            {mirror, AddrMode::Mirror}}});
+static_assert(lookup.size() == static_cast<size_t>(AddrMode::Max) - 1, "Every enum field must be present");
+} // namespace InlineSamplerAddrMode
+
+namespace InlineSamplerFilterMode {
+using namespace Tags::Kernel::InlineSamplers::FilterMode;
+using FilterMode = Types::Kernel::InlineSamplers::FilterMode;
+constexpr ConstStringRef name = "inline sampler filter mode";
+constexpr LookupArray<ConstStringRef, FilterMode, 2> lookup({{{nearest, FilterMode::Nearest},
+                                                              {linear, FilterMode::Linear}}});
+static_assert(lookup.size() == FilterMode::Max - 1, "Every enum field must be present");
+} // namespace InlineSamplerFilterMode
+
 template <typename T>
 struct EnumLooker {};
 
@@ -221,5 +242,17 @@ template <>
 struct EnumLooker<Types::Kernel::ExecutionEnv::ThreadSchedulingMode> {
     static constexpr ConstStringRef name = ThreadSchedulingMode::name;
     static constexpr auto members = ThreadSchedulingMode::lookup;
+};
+
+template <>
+struct EnumLooker<Types::Kernel::InlineSamplers::AddrMode> {
+    static constexpr ConstStringRef name = InlineSamplerAddrMode::name;
+    static constexpr auto members = InlineSamplerAddrMode::lookup;
+};
+
+template <>
+struct EnumLooker<Types::Kernel::InlineSamplers::FilterMode> {
+    static constexpr ConstStringRef name = InlineSamplerFilterMode::name;
+    static constexpr auto members = InlineSamplerFilterMode::lookup;
 };
 } // namespace NEO::Zebin::ZeInfo::EnumLookup

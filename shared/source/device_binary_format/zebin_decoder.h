@@ -45,6 +45,7 @@ struct ZeInfoKernelSections {
     UniqueNode perThreadPayloadArgumentsNd;
     UniqueNode perThreadMemoryBuffersNd;
     UniqueNode experimentalPropertiesNd;
+    UniqueNode inlineSamplersNd;
 };
 
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
@@ -93,6 +94,13 @@ DecodeError readZeInfoPayloadArguments(const NEO::Yaml::YamlParser &parser, cons
                                        ConstStringRef context,
                                        std::string &outErrReason, std::string &outWarning);
 
+using ZeInfoInlineSamplers = StackVec<NEO::Elf::ZebinKernelMetadata::Types::Kernel::InlineSamplers::InlineSamplerBaseT, 4>;
+DecodeError readZeInfoInlineSamplers(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node,
+                                     ZeInfoInlineSamplers &outInlineSamplers,
+                                     int32_t &outMaxSamplerIndex,
+                                     ConstStringRef context,
+                                     std::string &outErrReason, std::string &outWarning);
+
 using ZeInfoBindingTableIndices = StackVec<NEO::Elf::ZebinKernelMetadata::Types::Kernel::BindingTableEntry::BindingTableEntryBaseT, 32>;
 DecodeError readZeInfoBindingTableIndices(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node,
                                           ZeInfoBindingTableIndices &outBindingTableIndices, ZeInfoBindingTableIndices::value_type &outMaxBindingTableIndex,
@@ -115,6 +123,8 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
 
 NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::PayloadArgumentBaseT &src, NEO::KernelDescriptor &dst, uint32_t &crossThreadDataSize,
                                        std::string &outErrReason, std::string &outWarning);
+
+NEO::DecodeError populateInlineSamplers(const NEO::Elf::ZebinKernelMetadata::Types::Kernel::InlineSamplers::InlineSamplerBaseT &src, NEO::KernelDescriptor &dst, std::string &outErrReason, std::string &outWarning);
 
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
 NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, NEO::ZebinSections<numBits> &zebinSections,

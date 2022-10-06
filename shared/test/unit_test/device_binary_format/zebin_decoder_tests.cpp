@@ -6092,3 +6092,177 @@ kernels:
     ASSERT_FALSE(parseResult);
     EXPECT_STREQ("NEO::Yaml : Could not parse line : [5] : [per_thread_payload_arguments:] <-- parser position on error. Reason : Vector data type expects to have at least one value starting with -\n", errors.c_str());
 }
+
+TEST(PopulateKernelDescriptor, GivenValidInlineSamplersThenPopulateKernelDescriptorSucceeds) {
+    NEO::ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+      inline_samplers:
+        - sampler_index:             0
+          addrmode:     clamp_edge
+          filtermode:   nearest
+          normalized:   true
+...
+)===";
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    std::string errors, warnings;
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    NEO::ZebinSections zebinSections;
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty());
+
+    ASSERT_EQ(1U, programInfo.kernelInfos.size());
+    ASSERT_EQ(1U, programInfo.kernelInfos[0]->kernelDescriptor.inlineSamplers.size());
+    const auto &inlineSampler = programInfo.kernelInfos[0]->kernelDescriptor.inlineSamplers[0];
+    EXPECT_EQ(0U, inlineSampler.samplerIndex);
+    EXPECT_EQ(NEO::KernelDescriptor::InlineSampler::AddrMode::ClampEdge, inlineSampler.addrMode);
+    EXPECT_EQ(NEO::KernelDescriptor::InlineSampler::FilterMode::Nearest, inlineSampler.filterMode);
+    EXPECT_TRUE(inlineSampler.isNormalized);
+}
+
+TEST(PopulateKernelDescriptor, GivenInvalidInlineSamplersEntryThenPopulateKernelDescriptorFails) {
+    NEO::ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+      inline_samplers:
+        - sampler_index:  -1
+          addrmode:       gibberish
+          filtermode:     trash
+          normalized:     dead_beef
+...
+)===";
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    std::string errors, warnings;
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    NEO::ZebinSections zebinSections;
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_FALSE(errors.empty());
+}
+
+TEST(PopulateKernelDescriptor, GivenMissingMemberInInlineSamplersThenPopulateKernelDescriptorFails) {
+    NEO::ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+      inline_samplers:
+        -  addrmode:     clamp_edge
+...
+)===";
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    std::string errors, warnings;
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    NEO::ZebinSections zebinSections;
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+}
+
+TEST(PopulateInlineSamplers, GivenInvalidSamplerIndexThenPopulateInlineSamplersFails) {
+    NEO::KernelDescriptor kd;
+    std::string errors, warnings;
+    NEO::Elf::ZebinKernelMetadata::Types::Kernel::InlineSamplers::InlineSamplerBaseT inlineSamplerSrc;
+    inlineSamplerSrc.samplerIndex = -1;
+    inlineSamplerSrc.addrMode = NEO::Elf::ZebinKernelMetadata::Types::Kernel::InlineSamplers::AddrMode::None;
+    inlineSamplerSrc.filterMode = NEO::Elf::ZebinKernelMetadata::Types::Kernel::InlineSamplers::FilterMode::Nearest;
+    auto err = populateInlineSamplers(inlineSamplerSrc, kd, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_FALSE(errors.empty());
+}
+
+TEST(PopulateInlineSamplers, GivenInvalidAddrModeThenPopulateInlineSamplersFails) {
+    NEO::KernelDescriptor kd;
+    std::string errors, warnings;
+    NEO::Elf::ZebinKernelMetadata::Types::Kernel::InlineSamplers::InlineSamplerBaseT inlineSamplerSrc;
+    inlineSamplerSrc.samplerIndex = 0;
+    inlineSamplerSrc.addrMode = NEO::Elf::ZebinKernelMetadata::Types::Kernel::InlineSamplers::AddrMode::Unknown;
+    inlineSamplerSrc.filterMode = NEO::Elf::ZebinKernelMetadata::Types::Kernel::InlineSamplers::FilterMode::Nearest;
+    auto err = populateInlineSamplers(inlineSamplerSrc, kd, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_FALSE(errors.empty());
+}
+
+TEST(PopulateInlineSamplers, GivenInvalidFilterModeThenPopulateInlineSamplersFails) {
+    NEO::KernelDescriptor kd;
+    std::string errors, warnings;
+    NEO::Elf::ZebinKernelMetadata::Types::Kernel::InlineSamplers::InlineSamplerBaseT inlineSamplerSrc;
+    inlineSamplerSrc.samplerIndex = 0;
+    inlineSamplerSrc.addrMode = NEO::Elf::ZebinKernelMetadata::Types::Kernel::InlineSamplers::AddrMode::None;
+    inlineSamplerSrc.filterMode = NEO::Elf::ZebinKernelMetadata::Types::Kernel::InlineSamplers::FilterMode::Unknown;
+    auto err = populateInlineSamplers(inlineSamplerSrc, kd, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_FALSE(errors.empty());
+}
+
+TEST(ReadZeInfoInlineSamplers, GivenUnknownEntryThenPrintWarning) {
+    NEO::ConstStringRef yaml = R"===(---
+kernels:
+  - name:            some_kernel
+    inline_samplers:
+      -  sampler_index:   0
+         new_entry:       3
+...
+)===";
+
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    ASSERT_TRUE(success);
+    auto &inlineSamplersNode = *parser.findNodeWithKeyDfs("inline_samplers");
+    std::string errors;
+    std::string warnings;
+    ZeInfoInlineSamplers inlineSamplers;
+    int32_t maxSamplerIndex = -1;
+    auto err = NEO::readZeInfoInlineSamplers(parser,
+                                             inlineSamplersNode,
+                                             inlineSamplers,
+                                             maxSamplerIndex,
+                                             "some_kernel",
+                                             errors,
+                                             warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_FALSE(warnings.empty());
+    EXPECT_TRUE(errors.empty()) << errors;
+}

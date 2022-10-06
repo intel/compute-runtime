@@ -709,4 +709,11 @@ struct MatchAny {
     static constexpr bool isMatched() { return true; }
 };
 
+struct SupportsSampler {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return NEO::HwMapper<productFamily>::GfxProduct::supportsSampler;
+    }
+};
+
 #include "common_matchers.h"

@@ -26,6 +26,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/program/kernel_info.h"
+#include "shared/source/utilities/lookup_array.h"
 
 #include "opencl/source/accelerators/intel_accelerator.h"
 #include "opencl/source/accelerators/intel_motion_estimation.h"
@@ -256,6 +257,8 @@ cl_int Kernel::initialize() {
     }
     auto numArgs = explicitArgs.size();
     slmSizes.resize(numArgs);
+
+    this->setInlineSamplers();
 
     this->kernelHasIndirectAccess |= kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgLoad ||
                                      kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgStore ||
@@ -1206,6 +1209,32 @@ bool Kernel::hasRunFinished(TimestampPacketContainer *timestampContainer) {
 
 bool Kernel::isSingleSubdevicePreferred() const {
     return this->singleSubdevicePreferredInCurrentEnqueue || this->usesSyncBuffer();
+}
+
+void Kernel::setInlineSamplers() {
+    for (auto &inlineSampler : getDescriptor().inlineSamplers) {
+        using AddrMode = NEO::KernelDescriptor::InlineSampler::AddrMode;
+        constexpr LookupArray<AddrMode, cl_addressing_mode, 5> addressingModes({{{AddrMode::None, CL_ADDRESS_NONE},
+                                                                                 {AddrMode::Repeat, CL_ADDRESS_REPEAT},
+                                                                                 {AddrMode::ClampEdge, CL_ADDRESS_CLAMP_TO_EDGE},
+                                                                                 {AddrMode::ClampBorder, CL_ADDRESS_CLAMP},
+                                                                                 {AddrMode::Mirror, CL_ADDRESS_MIRRORED_REPEAT}}});
+
+        using FilterMode = NEO::KernelDescriptor::InlineSampler::FilterMode;
+        constexpr LookupArray<FilterMode, cl_filter_mode, 2> filterModes({{{FilterMode::Linear, CL_FILTER_LINEAR},
+                                                                           {FilterMode::Nearest, CL_FILTER_NEAREST}}});
+
+        cl_int errCode = CL_SUCCESS;
+        auto sampler = std::unique_ptr<Sampler>(Sampler::create(&getContext(),
+                                                                static_cast<cl_bool>(inlineSampler.isNormalized),
+                                                                addressingModes.lookUp(inlineSampler.addrMode),
+                                                                filterModes.lookUp(inlineSampler.filterMode),
+                                                                errCode));
+        UNRECOVERABLE_IF(errCode != CL_SUCCESS);
+
+        auto samplerState = ptrOffset(getDynamicStateHeap(), static_cast<size_t>(inlineSampler.getSamplerBindfulOffset()));
+        sampler->setArg(const_cast<void *>(samplerState), clDevice.getHardwareInfo());
+    }
 }
 
 void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {

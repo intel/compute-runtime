@@ -767,6 +767,21 @@ void KernelImp::patchCrossthreadDataWithPrivateAllocation(NEO::GraphicsAllocatio
                              *device->getNEODevice(), kernelAttributes.flags.useGlobalAtomics, device->isImplicitScalingCapable());
 }
 
+void KernelImp::setInlineSamplers() {
+    auto device = module->getDevice();
+    const auto productFamily = device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
+    for (auto &inlineSampler : getKernelDescriptor().inlineSamplers) {
+        ze_sampler_desc_t samplerDesc = {};
+        samplerDesc.addressMode = static_cast<ze_sampler_address_mode_t>(inlineSampler.addrMode);
+        samplerDesc.filterMode = static_cast<ze_sampler_filter_mode_t>(inlineSampler.filterMode);
+        samplerDesc.isNormalized = inlineSampler.isNormalized;
+
+        auto sampler = std::unique_ptr<L0::Sampler>(L0::Sampler::create(productFamily, device, &samplerDesc));
+        UNRECOVERABLE_IF(sampler.get() == nullptr);
+        sampler->copySamplerStateToDSH(dynamicStateHeapData.get(), dynamicStateHeapDataSize, inlineSampler.getSamplerBindfulOffset());
+    }
+}
+
 ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     this->kernelImmData = module->getKernelImmutableData(desc->pKernelName);
     if (this->kernelImmData == nullptr) {
@@ -876,6 +891,8 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     this->createPrintfBuffer();
 
     this->setDebugSurface();
+
+    this->setInlineSamplers();
 
     residencyContainer.insert(residencyContainer.end(), kernelImmData->getResidencyContainer().begin(),
                               kernelImmData->getResidencyContainer().end());

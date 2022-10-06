@@ -3344,3 +3344,27 @@ TEST(KernelTest, givenKernelWithNumThreadsRequiredPatchTokenWhenQueryingEuThread
     EXPECT_EQ(sizeof(cl_uint), paramRetSize);
     EXPECT_EQ(123U, euThreadCount);
 }
+
+HWTEST2_F(KernelTest, GivenInlineSamplersWhenSettingInlineSamplerThenDshIsPatched, SupportsSampler) {
+    auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
+    MockKernelWithInternals kernel(*device);
+
+    auto &inlineSampler = kernel.kernelInfo.kernelDescriptor.inlineSamplers.emplace_back();
+    inlineSampler.addrMode = NEO::KernelDescriptor::InlineSampler::AddrMode::Repeat;
+    inlineSampler.filterMode = NEO::KernelDescriptor::InlineSampler::FilterMode::Nearest;
+    inlineSampler.isNormalized = false;
+
+    std::array<uint8_t, 64 + 16> dsh = {0};
+    kernel.kernelInfo.heapInfo.pDsh = dsh.data();
+    kernel.kernelInfo.heapInfo.DynamicStateHeapSize = static_cast<uint32_t>(dsh.size());
+    kernel.mockKernel->setInlineSamplers();
+
+    using SamplerState = typename FamilyType::SAMPLER_STATE;
+    auto samplerState = reinterpret_cast<const SamplerState *>(dsh.data() + 64U);
+    EXPECT_TRUE(samplerState->getNonNormalizedCoordinateEnable());
+    EXPECT_EQ(SamplerState::TEXTURE_COORDINATE_MODE_WRAP, samplerState->getTcxAddressControlMode());
+    EXPECT_EQ(SamplerState::TEXTURE_COORDINATE_MODE_WRAP, samplerState->getTcyAddressControlMode());
+    EXPECT_EQ(SamplerState::TEXTURE_COORDINATE_MODE_WRAP, samplerState->getTczAddressControlMode());
+    EXPECT_EQ(SamplerState::MIN_MODE_FILTER_NEAREST, samplerState->getMinModeFilter());
+    EXPECT_EQ(SamplerState::MAG_MODE_FILTER_NEAREST, samplerState->getMagModeFilter());
+}

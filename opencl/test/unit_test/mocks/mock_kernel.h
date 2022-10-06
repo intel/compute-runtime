@@ -126,6 +126,7 @@ class MockKernel : public Kernel {
     using Kernel::pImplicitArgs;
     using Kernel::preferredWkgMultipleOffset;
     using Kernel::privateSurface;
+    using Kernel::setInlineSamplers;
     using Kernel::singleSubdevicePreferredInCurrentEnqueue;
     using Kernel::svmAllocationsRequireCacheFlush;
     using Kernel::unifiedMemoryControls;
@@ -261,7 +262,7 @@ class MockKernel : public Kernel {
     KernelInfo *kernelInfoAllocated = nullptr;
 };
 
-//class below have enough internals to service Enqueue operation.
+// class below have enough internals to service Enqueue operation.
 class MockKernelWithInternals {
   public:
     MockKernelWithInternals(const ClDeviceVector &deviceVector, Context *context = nullptr, bool addDefaultArg = false, SPatchExecutionEnvironment execEnv = {}) {

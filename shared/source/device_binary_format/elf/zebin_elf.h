@@ -131,6 +131,7 @@ constexpr ConstStringRef bindingTableIndices("binding_table_indices");
 constexpr ConstStringRef perThreadPayloadArguments("per_thread_payload_arguments");
 constexpr ConstStringRef perThreadMemoryBuffers("per_thread_memory_buffers");
 constexpr ConstStringRef experimentalProperties("experimental_properties");
+constexpr ConstStringRef inlineSamplers("inline_samplers");
 
 namespace ExecutionEnv {
 constexpr ConstStringRef barrierCount("barrier_count");
@@ -190,6 +191,9 @@ constexpr ConstStringRef slmArgAlignment("slm_alignment");
 constexpr ConstStringRef imageType("image_type");
 constexpr ConstStringRef imageTransformable("image_transformable");
 constexpr ConstStringRef samplerType("sampler_type");
+constexpr ConstStringRef addrMode("sampler_desc_addrmode");
+constexpr ConstStringRef filterMode("sampler_desc_filtermode");
+constexpr ConstStringRef normalized("sampler_desc_normalized");
 
 namespace ArgType {
 constexpr ConstStringRef localSize("local_size");
@@ -205,6 +209,7 @@ constexpr ConstStringRef bufferOffset("buffer_offset");
 constexpr ConstStringRef printfBuffer("printf_buffer");
 constexpr ConstStringRef workDimensions("work_dimensions");
 constexpr ConstStringRef implicitArgBuffer("implicit_arg_buffer");
+constexpr ConstStringRef inlineSampler("arg_inline_sampler");
 namespace Image {
 constexpr ConstStringRef width("image_width");
 constexpr ConstStringRef height("image_height");
@@ -249,6 +254,7 @@ constexpr ConstStringRef imageType2DArrayMSAADepth("image_2d_array_msaa_depth");
 constexpr ConstStringRef imageType2DMedia("image_2d_media");
 constexpr ConstStringRef imageType2DMediaBlock("image_2d_media_block");
 } // namespace ImageType
+
 namespace SamplerType {
 constexpr ConstStringRef samplerTypeTexture("texture");
 constexpr ConstStringRef samplerType8x8("sample_8x8");
@@ -263,12 +269,14 @@ constexpr ConstStringRef samplerTypeVD("vd");
 constexpr ConstStringRef samplerTypeVE("ve");
 constexpr ConstStringRef samplerTypeVME("vme");
 } // namespace SamplerType
+
 namespace MemoryAddressingMode {
 constexpr ConstStringRef stateless("stateless");
 constexpr ConstStringRef stateful("stateful");
 constexpr ConstStringRef bindless("bindless");
 constexpr ConstStringRef sharedLocalMemory("slm");
 } // namespace MemoryAddressingMode
+
 namespace AddrSpace {
 constexpr ConstStringRef global("global");
 constexpr ConstStringRef local("local");
@@ -276,6 +284,7 @@ constexpr ConstStringRef constant("constant");
 constexpr ConstStringRef image("image");
 constexpr ConstStringRef sampler("sampler");
 } // namespace AddrSpace
+
 namespace AccessType {
 constexpr ConstStringRef readonly("readonly");
 constexpr ConstStringRef writeonly("writeonly");
@@ -320,6 +329,27 @@ constexpr ConstStringRef hasNonKernelArgLoad("has_non_kernel_arg_load");
 constexpr ConstStringRef hasNonKernelArgStore("has_non_kernel_arg_store");
 constexpr ConstStringRef hasNonKernelArgAtomic("has_non_kernel_arg_atomic");
 } // namespace ExperimentalProperties
+
+namespace InlineSamplers {
+constexpr ConstStringRef samplerIndex("sampler_index");
+constexpr ConstStringRef addrMode("addrmode");
+constexpr ConstStringRef filterMode("filtermode");
+constexpr ConstStringRef normalized("normalized");
+
+namespace AddrMode {
+constexpr ConstStringRef none("none");
+constexpr ConstStringRef repeat("repeat");
+constexpr ConstStringRef clamp_edge("clamp_edge");
+constexpr ConstStringRef clamp_border("clamp_border");
+constexpr ConstStringRef mirror("mirror");
+} // namespace AddrMode
+
+namespace FilterMode {
+constexpr ConstStringRef nearest("nearest");
+constexpr ConstStringRef linear("linear");
+} // namespace FilterMode
+
+} // namespace InlineSamplers
 } // namespace Kernel
 
 namespace GlobalHostAccessTable {
@@ -684,6 +714,44 @@ struct PerThreadMemoryBufferBaseT {
     Slot slot = Defaults::slot;
 };
 } // namespace PerThreadMemoryBuffer
+
+namespace InlineSamplers {
+enum class AddrMode : uint8_t {
+    Unknown,
+    None,
+    Repeat,
+    ClampEdge,
+    ClampBorder,
+    Mirror,
+    Max
+};
+
+enum FilterMode {
+    Unknown,
+    Nearest,
+    Linear,
+    Max
+};
+
+using SamplerIndexT = int32_t;
+using AddrModeT = AddrMode;
+using FilterModeT = FilterMode;
+using NormalizedT = bool;
+
+namespace Defaults {
+constexpr SamplerIndexT samplerIndex = -1;
+constexpr AddrModeT addrMode = AddrMode::Unknown;
+constexpr FilterModeT filterMode = FilterMode::Unknown;
+constexpr NormalizedT normalized = false;
+}; // namespace Defaults
+
+struct InlineSamplerBaseT {
+    SamplerIndexT samplerIndex = Defaults::samplerIndex;
+    AddrModeT addrMode = Defaults::addrMode;
+    FilterModeT filterMode = Defaults::filterMode;
+    NormalizedT normalized = Defaults::normalized;
+};
+} // namespace InlineSamplers
 
 } // namespace Kernel
 
