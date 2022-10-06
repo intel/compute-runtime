@@ -106,6 +106,10 @@ unsigned int getProcessId() {
     return 0xABCEDF;
 }
 
+unsigned long getNumThreads() {
+    return 1;
+}
+
 int access(const char *pathName, int mode) {
     if (allowFakeDevicePath || strcmp(pathName, "/sys/dev/char/226:128") == 0) {
         return 0;

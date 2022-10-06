@@ -207,6 +207,35 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::waitForEventsFromHost() {
+    bool waitForEventsFromHostEnabled = false;
+    if (NEO::DebugManager.flags.EventWaitOnHost.get() != -1) {
+        waitForEventsFromHostEnabled = NEO::DebugManager.flags.EventWaitOnHost.get();
+    }
+    if (!waitForEventsFromHostEnabled) {
+        return false;
+    }
+
+    auto numClients = static_cast<CommandQueueImp *>(this->cmdQImmediate)->getCsr()->getNumClients();
+    auto numClientsLimit = 2u;
+    if (NEO::DebugManager.flags.EventWaitOnHostNumClients.get() != -1) {
+        numClientsLimit = NEO::DebugManager.flags.EventWaitOnHostNumClients.get();
+    }
+    if (numClients < numClientsLimit) {
+        return false;
+    };
+    auto numThreadsLimit = 2u;
+    if (NEO::DebugManager.flags.EventWaitOnHostNumThreads.get() != -1) {
+        numThreadsLimit = NEO::DebugManager.flags.EventWaitOnHostNumThreads.get();
+    }
+    if (this->numThreads < numThreadsLimit) {
+        return false;
+    }
+
+    return true;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
     ze_kernel_handle_t kernelHandle, const ze_group_count_t *threadGroupDimensions,
     ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
@@ -215,7 +244,14 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
     if (this->isFlushTaskSubmissionEnabled) {
         checkAvailableSpace();
     }
-
+    if (waitForEventsFromHost()) {
+        for (uint32_t i = 0; i < numWaitEvents; i++) {
+            auto event = Event::fromHandle(phWaitEvents[i]);
+            event->hostSynchronize(std::numeric_limits<uint64_t>::max());
+        }
+        numWaitEvents = 0u;
+        phWaitEvents = nullptr;
+    }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(kernelHandle, threadGroupDimensions,
                                                                         hSignalEvent, numWaitEvents, phWaitEvents,
                                                                         launchParams);

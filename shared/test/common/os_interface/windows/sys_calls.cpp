@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,10 @@ namespace SysCalls {
 
 unsigned int getProcessId() {
     return 0xABCEDF;
+}
+
+unsigned long getNumThreads() {
+    return 1;
 }
 
 BOOL systemPowerStatusRetVal = 1;

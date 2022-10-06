@@ -806,6 +806,11 @@ TEST(SysCalls, WhenSysCallsFstatCalledThenCallIsRedirectedToOs) {
     EXPECT_EQ(0, result);
 }
 
+TEST(SysCalls, WhenSysCallsGetNumThreadsCalledThenCallIsRedirectedToOs) {
+    auto result = NEO::SysCalls::getNumThreads();
+    EXPECT_GT(result, 0u);
+}
+
 int main(int argc, char **argv) {
     bool useDefaultListener = false;
     bool enableAlarm = true;

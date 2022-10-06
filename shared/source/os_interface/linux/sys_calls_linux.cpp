@@ -25,6 +25,12 @@ unsigned int getProcessId() {
     return getpid();
 }
 
+unsigned long getNumThreads() {
+    struct stat taskStat;
+    stat("/proc/self/task", &taskStat);
+    return taskStat.st_nlink - 2;
+}
+
 int close(int fileDescriptor) {
     return ::close(fileDescriptor);
 }

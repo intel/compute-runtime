@@ -49,6 +49,7 @@ CommandQueueImp::CommandQueueImp(Device *device, NEO::CommandStreamReceiver *csr
 }
 
 ze_result_t CommandQueueImp::destroy() {
+    this->csr->unregisterClient();
     delete this;
     return ZE_RESULT_SUCCESS;
 }
@@ -197,6 +198,7 @@ CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::
     }
     osContext.ensureContextInitialized();
     csr->initDirectSubmission();
+    csr->registerClient();
     return commandQueue;
 }
 

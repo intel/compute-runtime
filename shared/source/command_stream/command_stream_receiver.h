@@ -362,6 +362,16 @@ class CommandStreamReceiver {
 
     virtual void initializeDeviceWithFirstSubmission() = 0;
 
+    uint32_t getNumClients() {
+        return this->numClients.load();
+    }
+    void registerClient() {
+        this->numClients++;
+    }
+    void unregisterClient() {
+        this->numClients--;
+    }
+
   protected:
     void cleanupResources();
     void printDeviceIndex();
@@ -427,6 +437,8 @@ class CommandStreamReceiver {
     std::atomic<uint32_t> latestFlushedTaskCount{0};
     // taskCount - # of tasks submitted
     std::atomic<uint32_t> taskCount{0};
+
+    std::atomic<uint32_t> numClients = 0u;
 
     DispatchMode dispatchMode = DispatchMode::ImmediateDispatch;
     SamplerCacheFlushState samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushNotRequired;

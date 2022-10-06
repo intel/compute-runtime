@@ -290,6 +290,7 @@ struct CommandList : _ze_command_list_handle_t {
     NEO::CommandStreamReceiver *csr = nullptr;
     Device *device = nullptr;
     NEO::PreemptionMode commandListPreemptionMode = NEO::PreemptionMode::Initial;
+    unsigned long numThreads = 1u;
     uint32_t cmdListType = CommandListType::TYPE_REGULAR;
     uint32_t commandListPerThreadScratchSize = 0u;
     uint32_t commandListPerThreadPrivateScratchSize = 0u;

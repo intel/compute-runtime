@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -519,6 +520,129 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
 
     auto ultCsr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     EXPECT_EQ(scratchPerThreadSize, ultCsr->requiredScratchSize);
+}
+
+HWTEST2_F(CmdlistAppendLaunchKernelTests,
+          givenEventWaitOnHostWhenAppendLaunchKernelWithEventWaitListThenHostSynchronize, IsAtLeastXeHpCore) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EventWaitOnHost.set(1);
+    NEO::DebugManager.flags.EventWaitOnHostNumClients.set(0);
+    NEO::DebugManager.flags.EventWaitOnHostNumThreads.set(0);
+
+    constexpr uint32_t scratchPerThreadSize = 0x200;
+    constexpr uint32_t privateScratchPerThreadSize = 0x100;
+
+    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
+    auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
+    kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = false;
+    kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = scratchPerThreadSize;
+    kernelDescriptor->kernelAttributes.perThreadScratchSize[1] = privateScratchPerThreadSize;
+    createModuleFromMockBinary(0u, false, mockKernelImmData.get());
+
+    auto kernel = std::make_unique<MockKernel>(module.get());
+
+    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernel->initialize(&kernelDesc);
+
+    kernel->setGroupSize(4, 5, 6);
+    kernel->setGroupCount(3, 2, 1);
+    kernel->setGlobalOffsetExp(1, 2, 3);
+    kernel->patchGlobalOffset();
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 2;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.wait = 0;
+    eventDesc.signal = 0;
+
+    struct MockEvent : public EventImp<uint32_t> {
+        using EventImp<uint32_t>::hostEventSetValueTimestamps;
+        using EventImp<uint32_t>::isCompleted;
+    };
+    ze_result_t returnValue;
+    std::unique_ptr<EventPool> eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    std::unique_ptr<Event> event = std::unique_ptr<Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+
+    std::array<uint32_t, 8u> timestampData;
+    timestampData.fill(std::numeric_limits<uint32_t>::max());
+    static_cast<MockEvent *>(event.get())->hostEventSetValueTimestamps(0u);
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    ze_command_list_handle_t cmdListHandle;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.ordinal = 0;
+    queueDesc.index = 0;
+    device->createCommandListImmediate(&queueDesc, &cmdListHandle);
+
+    ze_group_count_t groupCount = {3, 2, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    ze_event_handle_t eventHandles[1] = {event->toHandle()};
+    EXPECT_FALSE(static_cast<MockEvent *>(event.get())->isCompleted);
+
+    result = CommandList::fromHandle(cmdListHandle)->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 1, eventHandles, launchParams);
+
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_TRUE(static_cast<MockEvent *>(event.get())->isCompleted);
+
+    CommandList::fromHandle(cmdListHandle)->destroy();
+}
+
+HWTEST2_F(CmdlistAppendLaunchKernelTests,
+          givenEventWaitOnHostNumThreadsHigherThanNumThreadsWhenWaitForEventsFromHostThenReturnFalse, IsAtLeastXeHpCore) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EventWaitOnHost.set(1);
+    NEO::DebugManager.flags.EventWaitOnHostNumClients.set(0);
+    NEO::DebugManager.flags.EventWaitOnHostNumThreads.set(2);
+    EXPECT_EQ(NEO::SysCalls::getNumThreads(), 1u);
+
+    ze_command_list_handle_t cmdListHandle;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.ordinal = 0;
+    queueDesc.index = 0;
+    device->createCommandListImmediate(&queueDesc, &cmdListHandle);
+
+    EXPECT_FALSE(static_cast<L0::CommandListCoreFamilyImmediate<gfxCoreFamily> *>(CommandList::fromHandle(cmdListHandle))->waitForEventsFromHost());
+
+    CommandList::fromHandle(cmdListHandle)->destroy();
+}
+
+HWTEST2_F(CmdlistAppendLaunchKernelTests,
+          givenEventWaitOnHostNumThreadsNotSetWhenWaitForEventsFromHostThenReturnFalse, IsAtLeastXeHpCore) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EventWaitOnHost.set(1);
+    NEO::DebugManager.flags.EventWaitOnHostNumClients.set(0);
+    EXPECT_EQ(NEO::SysCalls::getNumThreads(), 1u);
+
+    ze_command_list_handle_t cmdListHandle;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.ordinal = 0;
+    queueDesc.index = 0;
+    device->createCommandListImmediate(&queueDesc, &cmdListHandle);
+
+    EXPECT_FALSE(static_cast<L0::CommandListCoreFamilyImmediate<gfxCoreFamily> *>(CommandList::fromHandle(cmdListHandle))->waitForEventsFromHost());
+
+    CommandList::fromHandle(cmdListHandle)->destroy();
+}
+
+HWTEST2_F(CmdlistAppendLaunchKernelTests,
+          givenEventWaitOnHostNumClientsNotSetWhenWaitForEventsFromHostThenReturnFalse, IsAtLeastXeHpCore) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EventWaitOnHost.set(1);
+    EXPECT_EQ(NEO::SysCalls::getNumThreads(), 1u);
+
+    ze_command_list_handle_t cmdListHandle;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.ordinal = 0;
+    queueDesc.index = 0;
+    device->createCommandListImmediate(&queueDesc, &cmdListHandle);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(CommandList::fromHandle(cmdListHandle)->cmdQImmediate)->getCsr()->getNumClients(), 1u);
+
+    EXPECT_FALSE(static_cast<L0::CommandListCoreFamilyImmediate<gfxCoreFamily> *>(CommandList::fromHandle(cmdListHandle))->waitForEventsFromHost());
+
+    CommandList::fromHandle(cmdListHandle)->destroy();
 }
 
 HWTEST2_F(CmdlistAppendLaunchKernelTests,

@@ -87,6 +87,23 @@ HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenDefaultValuesAreSet) {
     EXPECT_FALSE(csr.isPreambleSent);
 }
 
+HWTEST_F(CommandStreamReceiverTest, whenRegisterClientThenIncrementClientNum) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto numClients = csr.getNumClients();
+
+    csr.registerClient();
+    EXPECT_EQ(csr.getNumClients(), numClients + 1);
+
+    csr.registerClient();
+    EXPECT_EQ(csr.getNumClients(), numClients + 2);
+
+    csr.unregisterClient();
+    EXPECT_EQ(csr.getNumClients(), numClients + 1);
+
+    csr.unregisterClient();
+    EXPECT_EQ(csr.getNumClients(), numClients);
+}
+
 HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenTimestampTypeIs32b) {
     using ExpectedType = TimestampPackets<typename FamilyType::TimestampPacketType>;
 

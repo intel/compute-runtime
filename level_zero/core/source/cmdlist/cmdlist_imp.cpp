@@ -13,6 +13,7 @@
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/os_interface/sys_calls_common.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/device/device.h"
@@ -157,6 +158,8 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
 
         commandList->isBcsSplitNeeded = deviceImp->bcsSplit.setupDevice(productFamily, internalUsage, desc, csr);
         commandList->commandContainer.setImmediateCmdListCsr(csr);
+
+        commandList->numThreads = NEO::SysCalls::getNumThreads();
 
         return commandList;
     }
