@@ -357,6 +357,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     TimestampPacketContainer *getDeferredTimestampPackets() const { return deferredTimestampPackets.get(); }
 
+    MOCKABLE_VIRTUAL void clearDeferredTimestampPackets();
+
     uint64_t dispatchHints = 0;
 
     bool isTextureCacheFlushNeeded(uint32_t commandType) const;

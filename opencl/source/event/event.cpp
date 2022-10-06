@@ -428,7 +428,9 @@ inline WaitStatus Event::wait(bool blocking, bool useQuickKmdSleep) {
     }
 
     Range<CopyEngineState> states{&bcsState, bcsState.isValid() ? 1u : 0u};
-    const auto waitStatus = cmdQueue->waitUntilComplete(taskCount.load(), states, flushStamp->peekStamp(), useQuickKmdSleep);
+    auto waitStatus = WaitStatus::NotReady;
+    auto waitedOnTimestamps = cmdQueue->waitForTimestamps(states, taskCount.load(), waitStatus);
+    waitStatus = cmdQueue->waitUntilComplete(taskCount.load(), states, flushStamp->peekStamp(), useQuickKmdSleep, true, waitedOnTimestamps);
     if (waitStatus == WaitStatus::GpuHang) {
         return WaitStatus::GpuHang;
     }
@@ -438,6 +440,8 @@ inline WaitStatus Event::wait(bool blocking, bool useQuickKmdSleep) {
 
     auto *allocationStorage = cmdQueue->getGpgpuCommandStreamReceiver().getInternalAllocationStorage();
     allocationStorage->cleanAllocationList(this->taskCount, TEMPORARY_ALLOCATION);
+
+    cmdQueue->clearDeferredTimestampPackets();
 
     return WaitStatus::Ready;
 }

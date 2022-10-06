@@ -1195,6 +1195,13 @@ bool CommandQueue::isWaitForTimestampsEnabled() const {
     return enabled;
 }
 
+void CommandQueue::clearDeferredTimestampPackets() {
+    TimestampPacketContainer nodesToRelease;
+    if (deferredTimestampPackets) {
+        deferredTimestampPackets->swapNodes(nodesToRelease);
+    }
+}
+
 WaitStatus CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler, bool cleanTemporaryAllocationsList) {
     if (blockedQueue) {
         while (isQueueBlocked()) {
@@ -1214,11 +1221,6 @@ WaitStatus CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *pri
         return WaitStatus::GpuHang;
     }
 
-    TimestampPacketContainer nodesToRelease;
-    if (deferredTimestampPackets) {
-        deferredTimestampPackets->swapNodes(nodesToRelease);
-    }
-
     waitStatus = waitUntilComplete(taskCount, activeBcsStates, flushStamp->peekStamp(), false, cleanTemporaryAllocationsList, waitedOnTimestamps);
 
     if (printfHandler) {
@@ -1226,6 +1228,8 @@ WaitStatus CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *pri
             return WaitStatus::GpuHang;
         }
     }
+
+    this->clearDeferredTimestampPackets();
 
     return waitStatus;
 }
