@@ -728,7 +728,6 @@ TEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenCont
                                                                                           ModuleType::User,
                                                                                           perHwThreadPrivateMemorySizeRequested,
                                                                                           mockKernelImmDataForModuleWithoutPrivateMemory.get());
-    result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     result = moduleWithoutPrivateMemory->initialize(&moduleDesc, device->getNEODevice());
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
