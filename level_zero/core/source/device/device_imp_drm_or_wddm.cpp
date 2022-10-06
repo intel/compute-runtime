@@ -5,13 +5,13 @@
  *
  */
 
-#include "level_zero/core/source/device/device_imp.h"
-
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/hw_device_id.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
+
+#include "level_zero/core/source/device/device_imp.h"
 
 namespace L0 {
 
