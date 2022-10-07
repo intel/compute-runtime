@@ -136,6 +136,13 @@ struct DebugApiWindowsFixture : public DeviceFixture {
     void tearDown() {
         DeviceFixture::tearDown();
     }
+
+    void copyBitmaskToEventParams(READ_EVENT_PARAMS_BUFFER *params, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) {
+        auto bitsetParams = reinterpret_cast<DBGUMD_READ_EVENT_EU_ATTN_BIT_SET_PARAMS *>(params);
+        auto bitmapDst = reinterpret_cast<uint8_t *>(&bitsetParams->BitmaskArrayPtr);
+        bitsetParams->BitMaskSizeInBytes = static_cast<uint32_t>(bitmaskSize);
+        memcpy_s(bitmapDst, bitmaskSize, bitmask.get(), bitmaskSize);
+    }
     static constexpr uint8_t bufferSize = 16;
     WddmEuDebugInterfaceMock *mockWddm = nullptr;
 };
@@ -169,8 +176,7 @@ TEST_F(DebugApiWindowsAttentionTest, GivenEuAttentionEventForThreadsWhenHandling
     l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
     mockWddm->numEvents = 1;
     mockWddm->eventQueue[0].readEventType = DBGUMD_READ_EVENT_EU_ATTN_BIT_SET;
-    mockWddm->euAttnBitSetPassedParams.bitmapSize = static_cast<uint32_t>(bitmaskSize);
-    mockWddm->euAttnBitSetPassedParams.bitmap = bitmask.get();
+    copyBitmaskToEventParams(&mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer, bitmask, bitmaskSize);
     sessionMock->wddm = mockWddm;
     sessionMock->debugHandle = MockDebugSessionWindows::mockDebugHandle;
 
@@ -206,8 +212,7 @@ TEST_F(DebugApiWindowsAttentionTest, GivenNoContextWhenHandlingAttentionEventThe
     l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
     mockWddm->numEvents = 1;
     mockWddm->eventQueue[0].readEventType = DBGUMD_READ_EVENT_EU_ATTN_BIT_SET;
-    mockWddm->euAttnBitSetPassedParams.bitmapSize = static_cast<uint32_t>(bitmaskSize);
-    mockWddm->euAttnBitSetPassedParams.bitmap = bitmask.get();
+    copyBitmaskToEventParams(&mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer, bitmask, bitmaskSize);
     sessionMock->wddm = mockWddm;
     sessionMock->debugHandle = MockDebugSessionWindows::mockDebugHandle;
 
@@ -228,8 +233,7 @@ TEST_F(DebugApiWindowsAttentionTest, GivenEuAttentionEventEmptyBitmaskWhenHandli
 
     mockWddm->numEvents = 1;
     mockWddm->eventQueue[0].readEventType = DBGUMD_READ_EVENT_EU_ATTN_BIT_SET;
-    mockWddm->euAttnBitSetPassedParams.bitmapSize = static_cast<uint32_t>(bitmaskSize);
-    mockWddm->euAttnBitSetPassedParams.bitmap = bitmask.get();
+    copyBitmaskToEventParams(&mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer, bitmask, bitmaskSize);
     sessionMock->wddm = mockWddm;
     sessionMock->debugHandle = MockDebugSessionWindows::mockDebugHandle;
 
@@ -254,10 +258,6 @@ TEST_F(DebugApiWindowsAttentionTest, GivenInterruptedThreadsWhenOnlySomeThreadsR
 
     auto sessionMock = std::make_unique<MockDebugSessionWindows>(config, device);
     sessionMock->stoppedThreads[threads[0].packed] = 1;
-    if (hwInfo.gtSystemInfo.MaxEuPerSubSlice > 8) {
-        sessionMock->allThreads[EuThread::ThreadId(0, 0, 0, 4, 0)]->stopThread(1u);
-    }
-
     sessionMock->allContexts.insert(0x12345);
 
     l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
@@ -269,8 +269,7 @@ TEST_F(DebugApiWindowsAttentionTest, GivenInterruptedThreadsWhenOnlySomeThreadsR
 
     mockWddm->numEvents = 1;
     mockWddm->eventQueue[0].readEventType = DBGUMD_READ_EVENT_EU_ATTN_BIT_SET;
-    mockWddm->euAttnBitSetPassedParams.bitmapSize = static_cast<uint32_t>(bitmaskSize);
-    mockWddm->euAttnBitSetPassedParams.bitmap = bitmask.get();
+    copyBitmaskToEventParams(&mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer, bitmask, bitmaskSize);
     sessionMock->wddm = mockWddm;
     sessionMock->debugHandle = MockDebugSessionWindows::mockDebugHandle;
 
