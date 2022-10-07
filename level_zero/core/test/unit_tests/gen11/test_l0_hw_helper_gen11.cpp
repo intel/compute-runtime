@@ -25,5 +25,15 @@ GEN11TEST_F(L0HwHelperTestGen11, GivenGen11WhenCheckingL0HelperForStateComputeMo
     EXPECT_FALSE(L0::L0HwHelperHw<FamilyType>::get().platformSupportsStateComputeModeTracking(hwInfo));
 }
 
+GEN11TEST_F(L0HwHelperTestGen11, GivenGen11WhenCheckingL0HelperForFrontEndTrackingSupportThenReturnFalse) {
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
+    EXPECT_FALSE(L0::L0HwHelperHw<FamilyType>::get().platformSupportsFrontEndTracking(hwInfo));
+}
+
+GEN11TEST_F(L0HwHelperTestGen11, GivenGen11WhenCheckingL0HelperForPipelineSelectTrackingSupportThenReturnFalse) {
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
+    EXPECT_FALSE(L0::L0HwHelperHw<FamilyType>::get().platformSupportsPipelineSelectTracking(hwInfo));
+}
+
 } // namespace ult
 } // namespace L0

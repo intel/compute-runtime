@@ -43,9 +43,6 @@ CommandQueueImp::CommandQueueImp(Device *device, NEO::CommandStreamReceiver *csr
     if (overrideUseKmdWaitFunction != -1) {
         useKmdWaitFunction = !!(overrideUseKmdWaitFunction);
     }
-
-    frontEndStateTracking = L0HwHelper::enableFrontEndStateTracking();
-    pipelineSelectStateTracking = L0HwHelper::enablePipelineSelectStateTracking();
 }
 
 ze_result_t CommandQueueImp::destroy() {
@@ -73,7 +70,10 @@ ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal) {
         if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger()) {
             device->getL0Debugger()->notifyCommandQueueCreated(device->getNEODevice());
         }
-        this->stateComputeModeTracking = L0HwHelper::enableStateComputeModeTracking(device->getHwInfo());
+        auto &hwInfo = device->getHwInfo();
+        this->stateComputeModeTracking = L0HwHelper::enableStateComputeModeTracking(hwInfo);
+        this->frontEndStateTracking = L0HwHelper::enableFrontEndStateTracking(hwInfo);
+        this->pipelineSelectStateTracking = L0HwHelper::enablePipelineSelectStateTracking(hwInfo);
     }
     return returnValue;
 }

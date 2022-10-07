@@ -133,6 +133,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     auto &hwInfo = device->getHwInfo();
     this->systolicModeSupport = NEO::PreambleHelper<GfxFamily>::isSystolicModeConfigurable(hwInfo);
     this->stateComputeModeTracking = L0HwHelper::enableStateComputeModeTracking(hwInfo);
+    this->frontEndStateTracking = L0HwHelper::enableFrontEndStateTracking(hwInfo);
+    this->pipelineSelectStateTracking = L0HwHelper::enablePipelineSelectStateTracking(hwInfo);
 
     if (device->isImplicitScalingCapable() && !this->internalUsage && !isCopyOnly()) {
         this->partitionCount = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count());
