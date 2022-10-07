@@ -133,9 +133,15 @@ DecodeError getIntelGTNotes(const Elf::Elf<numBits> &elf, std::vector<Elf::Intel
                 bool isValidGTNote = Elf::IntelGtNoteOwnerName.size() + 1 == nameSz;
                 isValidGTNote &= Elf::IntelGtNoteOwnerName == ConstStringRef(ownerName, nameSz - 1);
                 if (false == isValidGTNote) {
-                    outWarning.append("DeviceBinaryFormat::Zebin : Invalid owner name : ");
-                    ownerName[nameSz - 1] == '\0' ? outWarning.append(std::string{ownerName, nameSz - 1}) : outWarning.append(ownerName, nameSz);
-                    outWarning.append(" for IntelGTNote - note will not be used.\n");
+                    if (0u == nameSz) {
+                        outWarning.append("DeviceBinaryFormat::Zebin : Empty owner name.\n");
+                    } else {
+                        std::string invalidOwnerName{ownerName, nameSz};
+                        invalidOwnerName.erase(std::remove_if(invalidOwnerName.begin(),
+                                                              invalidOwnerName.end(),
+                                                              [](unsigned char c) { return '\0' == c; }));
+                        outWarning.append("DeviceBinaryFormat::Zebin : Invalid owner name : " + invalidOwnerName + " for IntelGTNote - note will not be used.\n");
+                    }
                     continue;
                 }
                 auto notesData = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(ptrOffset(ownerName, nameSz)), descSz);

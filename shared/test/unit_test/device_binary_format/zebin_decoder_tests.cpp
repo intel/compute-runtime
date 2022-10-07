@@ -5482,21 +5482,16 @@ TEST_F(IntelGTNotesFixture, WhenGettingIntelGTNotesGivenInvalidIntelGTNotesSecti
     EXPECT_EQ(0U, intelGTNotesRead.size());
 }
 
-TEST_F(IntelGTNotesFixture, WhenGettingIntelGTNotesGivenInvalidIntelGTNotesThenTheNoteIsSkipped) {
-    NEO::Elf::ElfNoteSection elfNoteSection = {};
-    elfNoteSection.nameSize = 8u;
-    elfNoteSection.descSize = 4u;
-
-    uint8_t mockDescData[4u]{0};
-    auto sectionDataSize = sizeof(Elf::ElfNoteSection) + elfNoteSection.nameSize + elfNoteSection.descSize;
-
-    const char badOwnerStringTerminated[8] = "badName";
-    const char arr[8]{'b', 'a', 'a', 'd', 'N', 'a', 'm', 'e'};
-    const char *badOwnerStringNotTerminated = arr;
-
-    for (auto &terminated : {true, false}) {
+TEST_F(IntelGTNotesFixture, WhenGettingIntelGTNotesGivenInvalidOwnerNameInIntelGTNotesThenTheNoteIsSkipped) {
+    {
+        NEO::Elf::ElfNoteSection elfNoteSection = {};
+        elfNoteSection.descSize = 4u;
+        elfNoteSection.nameSize = 8u;
+        uint8_t mockDescData[4u]{0};
+        auto sectionDataSize = sizeof(Elf::ElfNoteSection) + elfNoteSection.nameSize + elfNoteSection.descSize;
+        const char badOwnerString[8] = "badName";
         auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
-        terminated ? appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), mockDescData, badOwnerStringTerminated, sectionDataSize) : appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), mockDescData, badOwnerStringNotTerminated, sectionDataSize);
+        appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), mockDescData, badOwnerString, sectionDataSize);
         zebin.appendSection(Elf::SHT_NOTE, Elf::SectionsNamesZebin::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
 
         std::string outErrReason, outWarning;
@@ -5507,11 +5502,34 @@ TEST_F(IntelGTNotesFixture, WhenGettingIntelGTNotesGivenInvalidIntelGTNotesThenT
         std::vector<Elf::IntelGTNote> intelGTNotesRead = {};
         auto decodeError = getIntelGTNotes(elf, intelGTNotesRead, outErrReason, outWarning);
         EXPECT_EQ(DecodeError::Success, decodeError);
-        auto expectedWarning = terminated ? "DeviceBinaryFormat::Zebin : Invalid owner name : badName for IntelGTNote - note will not be used.\n" : "DeviceBinaryFormat::Zebin : Invalid owner name : baadName for IntelGTNote - note will not be used.\n";
+        auto expectedWarning = "DeviceBinaryFormat::Zebin : Invalid owner name : badName for IntelGTNote - note will not be used.\n";
         EXPECT_STREQ(expectedWarning, outWarning.c_str());
         EXPECT_TRUE(outErrReason.empty());
         EXPECT_EQ(0U, intelGTNotesRead.size());
         zebin.removeSection(Elf::SHT_NOTE, Elf::SectionsNamesZebin::noteIntelGT);
+    }
+    {
+        NEO::Elf::ElfNoteSection elfNoteSection = {};
+        elfNoteSection.descSize = 4u;
+        elfNoteSection.nameSize = 0u;
+        uint8_t mockDescData[4u]{0};
+        auto sectionDataSize = sizeof(Elf::ElfNoteSection) + elfNoteSection.nameSize + elfNoteSection.descSize;
+        auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
+        appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), mockDescData, nullptr, sectionDataSize);
+        zebin.appendSection(Elf::SHT_NOTE, Elf::SectionsNamesZebin::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
+
+        std::string outErrReason, outWarning;
+        auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
+        EXPECT_TRUE(outWarning.empty());
+        EXPECT_TRUE(outErrReason.empty());
+
+        std::vector<Elf::IntelGTNote> intelGTNotesRead = {};
+        auto decodeError = getIntelGTNotes(elf, intelGTNotesRead, outErrReason, outWarning);
+        EXPECT_EQ(DecodeError::Success, decodeError);
+        auto expectedWarning = "DeviceBinaryFormat::Zebin : Empty owner name.\n";
+        EXPECT_STREQ(expectedWarning, outWarning.c_str());
+        EXPECT_TRUE(outErrReason.empty());
+        EXPECT_EQ(0U, intelGTNotesRead.size());
     }
 }
 
