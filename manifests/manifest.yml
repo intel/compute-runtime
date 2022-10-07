@@ -66,7 +66,7 @@ components:
     dest_dir: metrics/library
     type: git
     branch: metrics-library
-    revision: 03976e9219d5eb4e768f698431c9e1a65c012aaa-1
+    revision: metrics-library-1.0.114
     repository: https://github.com/intel/metrics-library.git
   wdk:
     dest_dir: wdk

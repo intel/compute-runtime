@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2022 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -153,6 +153,8 @@ enum class StatusCode : uint32_t
     CannotOpenFile,
     ReportContextSwitchLost,
     ReportWithoutWorkload,
+    ContextMismatch,
+    ReportWithEmptyConfiguration,
     // ...
     Last
 };
@@ -735,6 +737,6 @@ using ContextDeleteFunction_1_0 = StatusCode ( ML_STDCALL* ) ( const ContextHand
 //////////////////////////////////////////////////////////////////////////
 #define METRICS_LIBRARY_MAJOR_NUMBER 1
 #define METRICS_LIBRARY_MINOR_NUMBER 0
-#define METRICS_LIBRARY_BUILD_NUMBER 66
+#define METRICS_LIBRARY_BUILD_NUMBER 114
 
 } // namespace MetricsLibraryApi
