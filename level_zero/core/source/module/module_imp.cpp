@@ -351,6 +351,8 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
     }
 
     if (slmNeeded > slmAvailable) {
+        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n",
+                           static_cast<uint32_t>(slmNeeded), static_cast<uint32_t>(slmAvailable));
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     }
 
@@ -765,6 +767,7 @@ ze_result_t ModuleImp::createKernel(const ze_kernel_desc_t *desc,
     for (const auto &kernelImmutableData : this->getKernelImmutableDataVector()) {
         auto slmInlineSize = kernelImmutableData->getDescriptor().kernelAttributes.slmInlineSize;
         if (slmInlineSize > 0 && localMemSize < slmInlineSize) {
+            PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmInlineSize, localMemSize);
             res = ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
             break;
         }

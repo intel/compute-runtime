@@ -124,7 +124,7 @@ int main(int argc, char *argv[]) {
         [[maybe_unused]] auto result = fread(kernelOutput.get(), sizeof(char), sizeOfBuffer - 1, kernelOutputFile);
         fclose(kernelOutputFile);
         fflush(stdout);
-        // adjust/reatore stdout to previous descriptor
+        // adjust/restore stdout to previous descriptor
         dup2(stdoutFd, fileno(stdout));
         // close duplicate
         close(stdoutFd);

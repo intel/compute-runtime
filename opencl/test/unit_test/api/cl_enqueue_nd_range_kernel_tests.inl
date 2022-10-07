@@ -39,7 +39,10 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenValidParametersWhenExecutingKernelThenS
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueNDRangeKernelTests, GivenKernelWithSlmSizeExceedingLocalMemorySizeWhenExecutingKernelThenOutOfResourcesIsReturned) {
+TEST_F(clEnqueueNDRangeKernelTests, GivenKernelWithSlmSizeExceedingLocalMemorySizeWhenExecutingKernelThenDebugMsgErrIsPrintedAndOutOfResourcesIsReturned) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.PrintDebugMessages.set(true);
+
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {1, 1, 1};
@@ -47,6 +50,8 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenKernelWithSlmSizeExceedingLocalMemorySi
     cl_uint numEventsInWaitList = 0;
     cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;
+
+    ::testing::internal::CaptureStderr();
 
     auto localMemSize = static_cast<uint32_t>(pDevice->getDevice().getDeviceInfo().localMemSize);
 
@@ -64,6 +69,11 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenKernelWithSlmSizeExceedingLocalMemorySi
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
+    std::string output = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(std::string(""), output);
+
+    ::testing::internal::CaptureStderr();
+
     pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize = localMemSize + 10u;
     retVal = clEnqueueNDRangeKernel(
         pCommandQueue,
@@ -77,6 +87,11 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenKernelWithSlmSizeExceedingLocalMemorySi
         event);
 
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
+
+    output = testing::internal::GetCapturedStderr();
+    const auto &slmInlineSize = pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize;
+    std::string expectedOutput = "Size of SLM (" + std::to_string(slmInlineSize) + ") larger than available (" + std::to_string(localMemSize) + ")\n";
+    EXPECT_EQ(expectedOutput, output);
 }
 
 TEST_F(clEnqueueNDRangeKernelTests, GivenQueueIncapableWhenExecutingKernelThenInvalidOperationIsReturned) {

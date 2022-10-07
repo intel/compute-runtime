@@ -105,6 +105,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
         auto slmInlineSize = kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize;
 
         if (slmInlineSize > 0 && localMemSize < slmInlineSize) {
+            PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmInlineSize, localMemSize);
             retVal = CL_OUT_OF_RESOURCES;
         }
 

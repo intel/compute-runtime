@@ -3005,9 +3005,14 @@ TEST_F(KernelCreateTest, whenInitFailedThenReturnNull) {
     EXPECT_EQ(nullptr, ret);
 }
 
-TEST_F(KernelCreateTest, whenSlmSizeExceedsLocalMemorySizeThenReturnOutOfResources) {
+TEST_F(KernelCreateTest, whenSlmSizeExceedsLocalMemorySizeThenDebugMsgErrIsPrintedAndOutOfResourcesIsReturned) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.PrintDebugMessages.set(true);
+
     KernelInfo info{};
     cl_int retVal{};
+
+    ::testing::internal::CaptureStderr();
 
     auto localMemSize = static_cast<uint32_t>(mockProgram.mDevice.getDevice().getDeviceInfo().localMemSize);
 
@@ -3016,12 +3021,22 @@ TEST_F(KernelCreateTest, whenSlmSizeExceedsLocalMemorySizeThenReturnOutOfResourc
     EXPECT_EQ(nullptr, ret);
     EXPECT_NE(CL_OUT_OF_RESOURCES, retVal);
 
+    std::string output = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(std::string(""), output);
+
+    ::testing::internal::CaptureStderr();
+
     retVal = 0;
 
     info.kernelDescriptor.kernelAttributes.slmInlineSize = localMemSize + 10u;
     ret = Kernel::create<MockKernel>(&mockProgram, info, mockProgram.mDevice, &retVal);
     EXPECT_EQ(nullptr, ret);
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
+
+    output = testing::internal::GetCapturedStderr();
+    const auto &slmInlineSize = info.kernelDescriptor.kernelAttributes.slmInlineSize;
+    std::string expectedOutput = "Size of SLM (" + std::to_string(slmInlineSize) + ") larger than available (" + std::to_string(localMemSize) + ")\n";
+    EXPECT_EQ(expectedOutput, output);
 
     ret = Kernel::create<MockKernel>(&mockProgram, info, mockProgram.mDevice, nullptr);
     EXPECT_EQ(nullptr, ret);

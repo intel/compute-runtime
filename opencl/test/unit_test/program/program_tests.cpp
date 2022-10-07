@@ -2063,16 +2063,28 @@ TEST_F(ProgramTests, whenCreatingFromZebinThenAppendAllowZebinFlagToBuildOptions
     EXPECT_STREQ(expectedOptions.c_str(), program->options.c_str());
 }
 
-TEST_F(ProgramTests, givenProgramFromGenBinaryWhenSLMSizeIsBiggerThenDeviceLimitThenReturnError) {
+TEST_F(ProgramTests, givenProgramFromGenBinaryWhenSLMSizeIsBiggerThenDeviceLimitThenPrintDebugMsgAndReturnError) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.PrintDebugMessages.set(true);
+
     PatchTokensTestData::ValidProgramWithKernelUsingSlm patchtokensProgram;
     patchtokensProgram.slmMutable->TotalInlineLocalMemorySize = static_cast<uint32_t>(pDevice->getDeviceInfo().localMemSize * 2);
     patchtokensProgram.recalcTokPtr();
     auto program = std::make_unique<MockProgram>(nullptr, false, toClDeviceVector(*pClDevice));
     program->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy(patchtokensProgram.storage.data(), patchtokensProgram.storage.size());
     program->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = patchtokensProgram.storage.size();
+
+    ::testing::internal::CaptureStderr();
+
     auto retVal = program->processGenBinary(*pClDevice);
 
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
+
+    std::string output = testing::internal::GetCapturedStderr();
+    const auto &slmInlineSize = patchtokensProgram.slmMutable->TotalInlineLocalMemorySize;
+    const auto &localMemSize = pDevice->getDeviceInfo().localMemSize;
+    std::string expectedOutput = "Size of SLM (" + std::to_string(slmInlineSize) + ") larger than available (" + std::to_string(localMemSize) + ")\n";
+    EXPECT_EQ(expectedOutput, output);
 }
 
 TEST_F(ProgramTests, givenExistingConstantSurfacesWhenProcessGenBinaryThenCleanupTheSurfaceOnlyForSpecificDevice) {

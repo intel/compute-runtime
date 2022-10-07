@@ -353,6 +353,7 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
         uint32_t localMemSize = (uint32_t)deviceInfo.localMemSize;
 
         if (this->getSlmTotalSize() > 0 && localMemSize < this->getSlmTotalSize()) {
+            PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", this->getSlmTotalSize(), localMemSize);
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
         }
 

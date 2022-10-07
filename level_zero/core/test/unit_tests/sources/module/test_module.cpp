@@ -3046,7 +3046,10 @@ TEST_F(ModuleTests, givenImplicitArgsRelocationAndStackCallsWhenLinkingBuiltinMo
     Kernel::fromHandle(kernelHandle)->destroy();
 }
 
-TEST_F(ModuleTests, givenFullyLinkedModuleAndSlmSizeExceedingLocalMemorySizeWhenCreatingKernelThenOutOfDeviceMemoryIsReturned) {
+TEST_F(ModuleTests, givenFullyLinkedModuleAndSlmSizeExceedingLocalMemorySizeWhenCreatingKernelThenDebugMsgErrIsPrintedAndOutOfDeviceMemoryIsReturned) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.PrintDebugMessages.set(true);
+
     auto pModule = std::make_unique<WhiteBox<Module>>(device, nullptr, ModuleType::Builtin);
     pModule->maxGroupSize = 32;
 
@@ -3057,6 +3060,7 @@ TEST_F(ModuleTests, givenFullyLinkedModuleAndSlmSizeExceedingLocalMemorySizeWhen
 
     auto localMemSize = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceInfo().localMemSize);
     kernelInfo->kernelDescriptor.kernelAttributes.slmInlineSize = localMemSize + 10u;
+    auto slmInlineSizeCopy = kernelInfo->kernelDescriptor.kernelAttributes.slmInlineSize;
 
     std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
     kernelImmData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, true);
@@ -3071,6 +3075,8 @@ TEST_F(ModuleTests, givenFullyLinkedModuleAndSlmSizeExceedingLocalMemorySizeWhen
     auto status = pModule->linkBinary();
     EXPECT_TRUE(status);
 
+    ::testing::internal::CaptureStderr();
+
     ze_kernel_handle_t kernelHandle;
 
     ze_kernel_desc_t kernelDesc = {};
@@ -3079,6 +3085,11 @@ TEST_F(ModuleTests, givenFullyLinkedModuleAndSlmSizeExceedingLocalMemorySizeWhen
     ze_result_t res = pModule->createKernel(&kernelDesc, &kernelHandle);
 
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, res);
+
+    std::string output = testing::internal::GetCapturedStderr();
+    std::string expectedOutput = "Size of SLM (" + std::to_string(slmInlineSizeCopy) + ") larger than available (" + std::to_string(localMemSize) + ")\n";
+    EXPECT_EQ(expectedOutput, output);
+
     Kernel::fromHandle(kernelHandle)->destroy();
 }
 
