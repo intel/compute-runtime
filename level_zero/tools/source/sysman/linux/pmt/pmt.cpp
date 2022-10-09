@@ -153,7 +153,7 @@ ze_result_t PlatformMonitoringTech::init(FsAccess *pFsAccess, const std::string 
                               "Telemetry sysfs entry not available %s\n", guidPath.c_str());
         return result;
     }
-    result = PlatformMonitoringTech::getKeyOffsetMap(guid, keyOffsetMap);
+    result = getKeyOffsetMap(guid, keyOffsetMap);
     if (ZE_RESULT_SUCCESS != result) {
         // We didnt have any entry for this guid in guidToKeyOffsetMap
         return result;

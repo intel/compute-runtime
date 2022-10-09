@@ -16,7 +16,7 @@ namespace L0 {
 class KmdSysManager;
 class WddmGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMovableClass {
   public:
-    bool getSerialNumber(char (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) override;
+    void getSerialNumber(char (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) override;
     void getBoardNumber(char (&boardNumber)[ZES_STRING_PROPERTY_SIZE]) override;
     void getBrandName(char (&brandName)[ZES_STRING_PROPERTY_SIZE]) override;
     void getModelName(char (&modelName)[ZES_STRING_PROPERTY_SIZE]) override;

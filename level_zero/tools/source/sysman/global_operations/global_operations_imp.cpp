@@ -9,10 +9,8 @@
 
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/helpers/string.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/tools/source/sysman/sysman_const.h"
 
 namespace L0 {
 
@@ -74,10 +72,7 @@ void GlobalOperationsImp::init() {
     pOsGlobalOperations->getModelName(sysmanProperties.modelName);
     pOsGlobalOperations->getBrandName(sysmanProperties.brandName);
     pOsGlobalOperations->getBoardNumber(sysmanProperties.boardNumber);
-    memset(sysmanProperties.serialNumber, 0, ZES_STRING_PROPERTY_SIZE);
-    if (!pOsGlobalOperations->getSerialNumber(sysmanProperties.serialNumber)) {
-        memcpy_s(sysmanProperties.serialNumber, ZES_STRING_PROPERTY_SIZE, unknown.c_str(), unknown.length() + 1);
-    }
+    pOsGlobalOperations->getSerialNumber(sysmanProperties.serialNumber);
 }
 void GlobalOperationsImp::initGlobalOperations() {
     std::call_once(initGlobalOpOnce, [this]() {
