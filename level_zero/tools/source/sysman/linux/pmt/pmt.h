@@ -31,12 +31,12 @@ class PlatformMonitoringTech : NEO::NonCopyableOrMovableClass {
     static void create(const std::vector<ze_device_handle_t> &deviceHandles,
                        FsAccess *pFsAccess, std::string &gpuUpstreamPortPath,
                        std::map<uint32_t, L0::PlatformMonitoringTech *> &mapOfSubDeviceIdToPmtObject);
+    static ze_result_t getKeyOffsetMap(std::string guid, std::map<std::string, uint64_t> &keyOffsetMap);
 
   protected:
     static uint32_t rootDeviceTelemNodeIndex;
     std::string telemetryDeviceEntry{};
     std::map<std::string, uint64_t> keyOffsetMap;
-    ze_result_t getKeyOffsetMap(std::string guid, std::map<std::string, uint64_t> &keyOffsetMap);
     ze_result_t init(FsAccess *pFsAccess, const std::string &gpuUpstreamPortPath, PRODUCT_FAMILY productFamily);
     static void doInitPmtObject(FsAccess *pFsAccess, uint32_t subdeviceId, PlatformMonitoringTech *pPmt, const std::string &gpuUpstreamPortPath,
                                 std::map<uint32_t, L0::PlatformMonitoringTech *> &mapOfSubDeviceIdToPmtObject, PRODUCT_FAMILY productFamily);

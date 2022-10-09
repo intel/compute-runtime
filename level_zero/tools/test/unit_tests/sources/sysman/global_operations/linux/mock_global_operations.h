@@ -48,7 +48,7 @@ const std::string driverVersion("5.0.0-37-generic SMP mod_unload");
 const std::string srcVersion("5.0.0-37");
 const std::string ueventWedgedFile("/var/lib/libze_intel_gpu/wedged_file");
 const std::string mockFunctionResetPath("/MOCK_FUNCTION_LEVEL_RESET_PATH");
-const std::string mockDeviceDir("/MOCK_DEVICE_DIR");
+const std::string mockDeviceDir("devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0");
 const std::string mockDeviceName("/MOCK_DEVICE_NAME");
 
 struct GlobalOperationsEngineHandleContext : public EngineHandleContext {

@@ -6,6 +6,8 @@
  */
 
 #include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
 
@@ -178,8 +180,63 @@ class SysmanGlobalOperationsIntegratedFixture : public SysmanGlobalOperationsFix
     }
 };
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzetGlobalOperationsGetPropertiesThenVerifyzetGlobalOperationsGetPropertiesCallSucceeds) {
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesGlobalOperationsGetPropertiesThenVerifyValidPropertiesAreReturned) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        std::map<std::string, std::string> fileNameLinkMap = {
+            {"/sys/dev/char/226:128", "../../devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8a:00.0/drm/renderD128"},
+            {"/sys/class/intel_pmt/telem1", "../../devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0/intel-dvsec-2.1.auto/intel_pmt/telem1/"},
+            {"/sys/class/intel_pmt/telem2", "../../devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0/intel-dvsec-2.1.auto/intel_pmt/telem2/"},
+        };
+        auto it = fileNameLinkMap.find(std::string(path));
+        if (it != fileNameLinkMap.end()) {
+            std::memcpy(buf, it->second.c_str(), it->second.size());
+            return static_cast<int>(it->second.size());
+        }
+        return -1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        std::vector<std::string> supportedFiles = {
+            "/sys/class/intel_pmt/telem1/guid",
+            "/sys/class/intel_pmt/telem1/offset",
+            "/sys/class/intel_pmt/telem1/telem",
+        };
+
+        auto itr = std::find(supportedFiles.begin(), supportedFiles.end(), std::string(pathname));
+        if (itr != supportedFiles.end()) {
+            // skipping "0"
+            return static_cast<int>(std::distance(supportedFiles.begin(), itr)) + 1;
+        }
+        return 0;
+    });
+
+    VariableBackup<decltype(SysCalls::sysCallsPread)> mockPread(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::vector<std::pair<std::string, std::string>> supportedFiles = {
+            {"/sys/class/intel_pmt/telem1/guid", "0x41fe79a5\n"},
+            {"/sys/class/intel_pmt/telem1/offset", "0\n"},
+            {"/sys/class/intel_pmt/telem1/telem", "dummy"},
+        };
+
+        if ((--fd >= 0) && (fd < static_cast<int>(supportedFiles.size()))) {
+            if (supportedFiles[fd].second == "dummy") {
+                uint64_t data = 0x3e8c9dfe1c2e4d5c;
+                memcpy(buf, &data, sizeof(data));
+                return count;
+            }
+            memcpy(buf, supportedFiles[fd].second.c_str(), supportedFiles[fd].second.size());
+            return count;
+        }
+
+        return -1;
+    });
+
+    auto pDrmMock = std::make_unique<DrmMock>((const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
+    auto pOriginalDrm = pLinuxSysmanImp->pDrm;
+    pLinuxSysmanImp->pDrm = pDrmMock.get();
+
     zes_device_properties_t properties;
+    const std::string expectedSerialNumber("0x3e8c9dfe1c2e4d5c");
     ze_result_t result = zesDeviceGetProperties(device, &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -188,8 +245,331 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzetGlobal
     EXPECT_TRUE(0 == vendorIntel.compare(properties.brandName));
     EXPECT_TRUE(0 == driverVersion.compare(properties.driverVersion));
     EXPECT_TRUE(0 == expectedModelName.compare(properties.modelName));
-    EXPECT_TRUE(0 == unknown.compare(properties.serialNumber));
+    EXPECT_TRUE(0 == expectedSerialNumber.compare(properties.serialNumber));
     EXPECT_TRUE(0 == vendorIntel.compare(properties.vendorName));
+    pLinuxSysmanImp->pDrm = pOriginalDrm;
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndReadTelemOffsetFailsWhenCallingzesGlobalOperationsGetPropertiesThenInvalidSerialNumberIsReturned) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        std::map<std::string, std::string> fileNameLinkMap = {
+            {"/sys/dev/char/226:128", "../../devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8a:00.0/drm/renderD128"},
+            {"/sys/class/intel_pmt/telem1", "../../devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0/intel-dvsec-2.1.auto/intel_pmt/telem1/"},
+            {"/sys/class/intel_pmt/telem2", "../../devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0/intel-dvsec-2.1.auto/intel_pmt/telem2/"},
+        };
+        auto it = fileNameLinkMap.find(std::string(path));
+        if (it != fileNameLinkMap.end()) {
+            std::memcpy(buf, it->second.c_str(), it->second.size());
+            return static_cast<int>(it->second.size());
+        }
+        return -1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        std::vector<std::string> supportedFiles = {
+            "/sys/class/intel_pmt/telem1/guid",
+            "/sys/class/intel_pmt/telem1/offset",
+            "/sys/class/intel_pmt/telem1/telem",
+        };
+
+        auto itr = std::find(supportedFiles.begin(), supportedFiles.end(), std::string(pathname));
+        if (itr != supportedFiles.end()) {
+            if (std::string(pathname) == "/sys/class/intel_pmt/telem1/offset") {
+                return 0;
+            }
+            return static_cast<int>(std::distance(supportedFiles.begin(), itr)) + 1;
+        }
+        return 0;
+    });
+
+    VariableBackup<decltype(SysCalls::sysCallsPread)> mockPread(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::vector<std::pair<std::string, std::string>> supportedFiles = {
+            {"/sys/class/intel_pmt/telem1/guid", "0x41fe79a5\n"},
+            {"/sys/class/intel_pmt/telem1/offset", "0\n"},
+            {"/sys/class/intel_pmt/telem1/telem", "dummy"},
+        };
+        if ((--fd >= 0) && (fd < static_cast<int>(supportedFiles.size()))) {
+            if (supportedFiles[fd].second == "dummy") {
+                uint64_t data = 0x3e8c9dfe1c2e4d5c;
+                memcpy(buf, &data, sizeof(data));
+                return count;
+            }
+            memcpy(buf, supportedFiles[fd].second.c_str(), supportedFiles[fd].second.size());
+            return count;
+        }
+
+        return -1;
+    });
+
+    auto pDrmMock = std::make_unique<DrmMock>((const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
+    auto pOriginalDrm = pLinuxSysmanImp->pDrm;
+    pLinuxSysmanImp->pDrm = pDrmMock.get();
+
+    zes_device_properties_t properties;
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(0 == unknown.compare(properties.serialNumber));
+    pLinuxSysmanImp->pDrm = pOriginalDrm;
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndInvalidGuidWhenCallingzesGlobalOperationsGetPropertiesThenInvalidSerialNumberIsReturned) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        std::map<std::string, std::string> fileNameLinkMap = {
+            {"/sys/dev/char/226:128", "../../devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8a:00.0/drm/renderD128"},
+            {"/sys/class/intel_pmt/telem1", "../../devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0/intel-dvsec-2.1.auto/intel_pmt/telem1/"},
+            {"/sys/class/intel_pmt/telem2", "../../devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0/intel-dvsec-2.1.auto/intel_pmt/telem2/"},
+        };
+        auto it = fileNameLinkMap.find(std::string(path));
+        if (it != fileNameLinkMap.end()) {
+            std::memcpy(buf, it->second.c_str(), it->second.size());
+            return static_cast<int>(it->second.size());
+        }
+        return -1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        std::vector<std::string> supportedFiles = {
+            "/sys/class/intel_pmt/telem1/guid",
+            "/sys/class/intel_pmt/telem1/offset",
+            "/sys/class/intel_pmt/telem1/telem",
+        };
+
+        auto itr = std::find(supportedFiles.begin(), supportedFiles.end(), std::string(pathname));
+        if (itr != supportedFiles.end()) {
+            return static_cast<int>(std::distance(supportedFiles.begin(), itr)) + 1;
+        }
+        return 0;
+    });
+
+    VariableBackup<decltype(SysCalls::sysCallsPread)> mockPread(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::vector<std::pair<std::string, std::string>> supportedFiles = {
+            {"/sys/class/intel_pmt/telem1/guid", "Invalidguid\n"},
+            {"/sys/class/intel_pmt/telem1/offset", "0\n"},
+            {"/sys/class/intel_pmt/telem1/telem", "dummy"},
+        };
+
+        if ((--fd >= 0) && (fd < static_cast<int>(supportedFiles.size()))) {
+            if (supportedFiles[fd].second == "dummy") {
+                uint64_t data = 0x3e8c9dfe1c2e4d5c;
+                memcpy(buf, &data, sizeof(data));
+                return count;
+            }
+            memcpy(buf, supportedFiles[fd].second.c_str(), supportedFiles[fd].second.size());
+            return count;
+        }
+
+        return -1;
+    });
+
+    auto pDrmMock = std::make_unique<DrmMock>((const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
+    auto pOriginalDrm = pLinuxSysmanImp->pDrm;
+    pLinuxSysmanImp->pDrm = pDrmMock.get();
+
+    zes_device_properties_t properties;
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(0 == unknown.compare(properties.serialNumber));
+    pLinuxSysmanImp->pDrm = pOriginalDrm;
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndPpinOffsetIsAbsentWhenCallingzesGlobalOperationsGetPropertiesThenInvalidSerialNumberIsReturned) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        std::map<std::string, std::string> fileNameLinkMap = {
+            {"/sys/dev/char/226:128", "../../devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8a:00.0/drm/renderD128"},
+            {"/sys/class/intel_pmt/telem1", "../../devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0/intel-dvsec-2.1.auto/intel_pmt/telem1/"},
+            {"/sys/class/intel_pmt/telem2", "../../devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0/intel-dvsec-2.1.auto/intel_pmt/telem2/"},
+        };
+        auto it = fileNameLinkMap.find(std::string(path));
+        if (it != fileNameLinkMap.end()) {
+            std::memcpy(buf, it->second.c_str(), it->second.size());
+            return static_cast<int>(it->second.size());
+        }
+        return -1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        std::vector<std::string> supportedFiles = {
+            "/sys/class/intel_pmt/telem1/guid",
+            "/sys/class/intel_pmt/telem1/offset",
+            "/sys/class/intel_pmt/telem1/telem",
+        };
+
+        auto itr = std::find(supportedFiles.begin(), supportedFiles.end(), std::string(pathname));
+        if (itr != supportedFiles.end()) {
+            return static_cast<int>(std::distance(supportedFiles.begin(), itr)) + 1;
+        }
+        return 0;
+    });
+
+    VariableBackup<decltype(SysCalls::sysCallsPread)> mockPread(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::vector<std::pair<std::string, std::string>> supportedFiles = {
+            {"/sys/class/intel_pmt/telem1/guid", "0xb15a0edd\n"},
+            {"/sys/class/intel_pmt/telem1/offset", "0\n"},
+            {"/sys/class/intel_pmt/telem1/telem", "dummy"},
+        };
+
+        if ((--fd >= 0) && (fd < static_cast<int>(supportedFiles.size()))) {
+            if (supportedFiles[fd].second == "dummy") {
+                uint64_t data = 0x3e8c9dfe1c2e4d5c;
+                memcpy(buf, &data, sizeof(data));
+                return count;
+            }
+            memcpy(buf, supportedFiles[fd].second.c_str(), supportedFiles[fd].second.size());
+            return count;
+        }
+
+        return -1;
+    });
+
+    auto pDrmMock = std::make_unique<DrmMock>((const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
+    auto pOriginalDrm = pLinuxSysmanImp->pDrm;
+    pLinuxSysmanImp->pDrm = pDrmMock.get();
+
+    zes_device_properties_t properties;
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(0 == unknown.compare(properties.serialNumber));
+    pLinuxSysmanImp->pDrm = pOriginalDrm;
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndReadPpinInfoFailsWhenCallingzesGlobalOperationsGetPropertiesThenInvalidSerialNumberIsReturned) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        std::map<std::string, std::string> fileNameLinkMap = {
+            {"/sys/dev/char/226:128", "../../devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8a:00.0/drm/renderD128"},
+            {"/sys/class/intel_pmt/telem1", "../../devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0/intel-dvsec-2.1.auto/intel_pmt/telem1/"},
+            {"/sys/class/intel_pmt/telem2", "../../devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0/intel-dvsec-2.1.auto/intel_pmt/telem2/"},
+        };
+        auto it = fileNameLinkMap.find(std::string(path));
+        if (it != fileNameLinkMap.end()) {
+            std::memcpy(buf, it->second.c_str(), it->second.size());
+            return static_cast<int>(it->second.size());
+        }
+        return -1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        std::vector<std::string> supportedFiles = {
+            "/sys/class/intel_pmt/telem1/guid",
+            "/sys/class/intel_pmt/telem1/offset",
+            "/sys/class/intel_pmt/telem1/telem",
+        };
+
+        auto itr = std::find(supportedFiles.begin(), supportedFiles.end(), std::string(pathname));
+        if (itr != supportedFiles.end()) {
+            return static_cast<int>(std::distance(supportedFiles.begin(), itr)) + 1;
+        }
+        return 0;
+    });
+
+    VariableBackup<decltype(SysCalls::sysCallsPread)> mockPread(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::vector<std::pair<std::string, std::string>> supportedFiles = {
+            {"/sys/class/intel_pmt/telem1/guid", "0x41fe79a5\n"},
+            {"/sys/class/intel_pmt/telem1/offset", "0\n"},
+            {"/sys/class/intel_pmt/telem1/telem", "dummy"},
+        };
+
+        if ((--fd >= 0) && (fd < static_cast<int>(supportedFiles.size()))) {
+            if (supportedFiles[fd].first == "/sys/class/intel_pmt/telem1/telem") {
+                return 0;
+            }
+            memcpy(buf, supportedFiles[fd].second.c_str(), supportedFiles[fd].second.size());
+            return count;
+        }
+
+        return -1;
+    });
+
+    auto pDrmMock = std::make_unique<DrmMock>((const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
+    auto pOriginalDrm = pLinuxSysmanImp->pDrm;
+    pLinuxSysmanImp->pDrm = pDrmMock.get();
+
+    zes_device_properties_t properties;
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(0 == unknown.compare(properties.serialNumber));
+    pLinuxSysmanImp->pDrm = pOriginalDrm;
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndOpenSysCallFailsWhenCallingzesGlobalOperationsGetPropertiesThenInvalidSerialNumberIsReturned) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        std::map<std::string, std::string> fileNameLinkMap = {
+            {"/sys/dev/char/226:128", "../../devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8a:00.0/drm/renderD128"},
+            {"/sys/class/intel_pmt/telem1", "../../devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0/intel-dvsec-2.1.auto/intel_pmt/telem1/"},
+            {"/sys/class/intel_pmt/telem2", "../../devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0/intel-dvsec-2.1.auto/intel_pmt/telem2/"},
+        };
+        auto it = fileNameLinkMap.find(std::string(path));
+        if (it != fileNameLinkMap.end()) {
+            std::memcpy(buf, it->second.c_str(), it->second.size());
+            return static_cast<int>(it->second.size());
+        }
+        return -1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 0;
+    });
+
+    auto pDrmMock = std::make_unique<DrmMock>((const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
+    auto pOriginalDrm = pLinuxSysmanImp->pDrm;
+    pLinuxSysmanImp->pDrm = pDrmMock.get();
+
+    zes_device_properties_t properties;
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(0 == unknown.compare(properties.serialNumber));
+    pLinuxSysmanImp->pDrm = pOriginalDrm;
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndTelemNodeReadLinkFailsWhenCallingzesGlobalOperationsGetPropertiesThenVerifyInvalidSerialNumberIsReturned) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        std::map<std::string, std::string> fileNameLinkMap = {
+            {"/sys/dev/char/226:128", "../../devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8a:00.0/drm/renderD128"},
+        };
+        auto it = fileNameLinkMap.find(std::string(path));
+        if (it != fileNameLinkMap.end()) {
+            std::memcpy(buf, it->second.c_str(), it->second.size());
+            return static_cast<int>(it->second.size());
+        }
+        return -1;
+    });
+
+    auto pDrmMock = std::make_unique<DrmMock>((const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
+    auto pOriginalDrm = pLinuxSysmanImp->pDrm;
+    pLinuxSysmanImp->pDrm = pDrmMock.get();
+
+    zes_device_properties_t properties;
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(0 == unknown.compare(properties.serialNumber));
+    pLinuxSysmanImp->pDrm = pOriginalDrm;
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndReadLinkFailsWhenCallingzesGlobalOperationsGetPropertiesThenVerifyInvalidSerialNumberIsReturned) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        return -1;
+    });
+
+    auto pDrmMock = std::make_unique<DrmMock>((const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
+    auto pOriginalDrm = pLinuxSysmanImp->pDrm;
+    pLinuxSysmanImp->pDrm = pDrmMock.get();
+
+    zes_device_properties_t properties;
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(0 == unknown.compare(properties.serialNumber));
+    pLinuxSysmanImp->pDrm = pOriginalDrm;
 }
 
 TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDeviceGetPropertiesForCheckingDriverVersionWhenAgmaFileIsAbsentThenVerifyzesDeviceGetPropertiesCallSucceeds) {

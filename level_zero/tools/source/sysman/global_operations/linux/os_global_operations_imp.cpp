@@ -8,6 +8,7 @@
 #include "level_zero/tools/source/sysman/global_operations/linux/os_global_operations_imp.h"
 
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/os_interface/linux/pci_path.h"
 
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/tools/source/sysman/global_operations/global_operations_imp.h"
@@ -41,8 +42,56 @@ static const std::map<int, zes_engine_type_flags_t> engineMap = {
     {3, ZES_ENGINE_TYPE_FLAG_MEDIA},
     {4, ZES_ENGINE_TYPE_FLAG_COMPUTE}};
 
-void LinuxGlobalOperationsImp::getSerialNumber(char (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) {
-    std::strncpy(serialNumber, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
+bool LinuxGlobalOperationsImp::readSerialNumber(std::string_view telemDir, std::array<char, NEO::PmtUtil::guidStringSize> &guidString, const uint64_t offset, char (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) {
+    std::map<std::string, uint64_t> keyOffsetMap;
+    if (ZE_RESULT_SUCCESS == PlatformMonitoringTech::getKeyOffsetMap(guidString.data(), keyOffsetMap)) {
+        auto ppinOffset = keyOffsetMap.find("PPIN");
+        if (ppinOffset != keyOffsetMap.end()) {
+            uint64_t value;
+            ssize_t bytesRead = NEO::PmtUtil::readTelem(telemDir.data(), sizeof(uint64_t), ppinOffset->second + offset, &value);
+            if (bytesRead == sizeof(uint64_t)) {
+                std::ostringstream serialNumberString;
+                serialNumberString << std::hex << std::showbase << value;
+                memcpy_s(serialNumber, ZES_STRING_PROPERTY_SIZE, serialNumberString.str().c_str(), serialNumberString.str().size());
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool LinuxGlobalOperationsImp::getSerialNumber(char (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) {
+    auto pDrm = &pLinuxSysmanImp->getDrm();
+    std::optional<std::string> rootPath = NEO::getPciRootPath(pDrm->getFileDescriptor());
+    if (!rootPath.has_value()) {
+        return false;
+    }
+
+    std::map<uint32_t, std::string> telemPciPath;
+    NEO::PmtUtil::getTelemNodesInPciPath(rootPath.value(), telemPciPath);
+
+    if (telemPciPath.size() < pDevice->getNEODevice()->getNumSubDevices() + 1) {
+        return false;
+    }
+
+    auto iterator = telemPciPath.begin();
+    std::string telemDir = iterator->second;
+
+    std::array<char, NEO::PmtUtil::guidStringSize> guidString;
+    if (!NEO::PmtUtil::readGuid(telemDir, guidString)) {
+        return false;
+    }
+
+    uint64_t offset = ULONG_MAX;
+    if (!NEO::PmtUtil::readOffset(telemDir, offset)) {
+        return false;
+    }
+
+    if (!LinuxGlobalOperationsImp::readSerialNumber(telemDir, guidString, offset, serialNumber)) {
+        return false;
+    }
+
+    return true;
 }
 
 Device *LinuxGlobalOperationsImp::getDevice() {
