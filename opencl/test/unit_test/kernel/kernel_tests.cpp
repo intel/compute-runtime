@@ -3038,8 +3038,13 @@ TEST_F(KernelCreateTest, whenSlmSizeExceedsLocalMemorySizeThenDebugMsgErrIsPrint
     std::string expectedOutput = "Size of SLM (" + std::to_string(slmInlineSize) + ") larger than available (" + std::to_string(localMemSize) + ")\n";
     EXPECT_EQ(expectedOutput, output);
 
+    ::testing::internal::CaptureStderr();
+
     ret = Kernel::create<MockKernel>(&mockProgram, info, mockProgram.mDevice, nullptr);
     EXPECT_EQ(nullptr, ret);
+
+    output = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(expectedOutput, output);
 }
 
 TEST(MultiDeviceKernelCreateTest, whenInitFailedThenReturnNullAndPropagateErrorCode) {
