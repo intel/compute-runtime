@@ -626,6 +626,53 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateS
     EXPECT_EQ(ptr, nullptr);
 }
 
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateKmdMigratedSharedAllocationWithMultipleBOsSetWhenCreateSharedUnifiedMemoryAllocationIsCalledThenKmdMigratedAllocationWithMultipleBOsIsCreated) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseKmdMigration.set(1);
+    DebugManager.flags.CreateKmdMigratedSharedAllocationWithMultipleBOs.set(1);
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
+
+    std::vector<MemoryRegion> regionInfo(3);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+    regionInfo[2].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(1, 0)};
+
+    auto hwInfo = mock->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->gtSystemInfo.MultiTileArchInfo.IsValid = 1;
+    hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount = 2;
+
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->queryEngineInfo();
+
+    SVMAllocsManager unifiedMemoryManager(memoryManager, false);
+
+    auto size = 2 * MemoryConstants::megaByte;
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
+    auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(size, unifiedMemoryProperties, nullptr);
+    EXPECT_NE(ptr, nullptr);
+
+    auto allocation = unifiedMemoryManager.getSVMAlloc(ptr)->gpuAllocations.getDefaultGraphicsAllocation();
+    EXPECT_NE(allocation, nullptr);
+
+    auto drmAllocation = static_cast<DrmAllocation *>(allocation);
+    EXPECT_EQ(ptr, alignUp(drmAllocation->getMmapPtr(), MemoryConstants::pageSize2Mb));
+    EXPECT_EQ(size, drmAllocation->getMmapSize() - MemoryConstants::pageSize2Mb);
+
+    auto &bos = drmAllocation->getBOs();
+    EXPECT_EQ(2u, bos.size());
+
+    auto gpuAddress = castToUint64(ptr);
+    for (auto bo : bos) {
+        EXPECT_NE(0, bo->getHandle());
+        EXPECT_EQ(gpuAddress, bo->peekAddress());
+        EXPECT_EQ(size / 2, bo->peekSize());
+        gpuAddress += size / 2;
+    }
+
+    unifiedMemoryManager.freeSVMAlloc(ptr);
+}
+
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenNoMemoryInfoWhenCreateUnifiedMemoryAllocationThenNullptr) {
     mock->memoryInfo.reset(nullptr);
     mock->ioctlCallsCount = 0;

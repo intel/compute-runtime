@@ -112,6 +112,7 @@ class DrmMemoryManager : public MemoryManager {
     GraphicsAllocation *allocateMemoryByKMD(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override;
     GraphicsAllocation *allocateGraphicsMemoryWithGpuVa(const AllocationData &allocationData) override;
+    GraphicsAllocation *createSharedUnifiedMemoryAllocationLegacy(const AllocationData &allocationData);
     GraphicsAllocation *createSharedUnifiedMemoryAllocation(const AllocationData &allocationData);
 
     void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) override;

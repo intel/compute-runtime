@@ -1803,32 +1803,6 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     auto size = allocationData.size;
     auto alignment = allocationData.alignment;
 
-    auto pHwInfo = drm.getRootDeviceEnvironment().getHardwareInfo();
-
-    MemRegionsVec memRegions;
-    createMemoryRegionsForSharedAllocation(*pHwInfo, *memoryInfo, allocationData, memRegions);
-
-    uint32_t handle = 0;
-    auto ret = memoryInfo->createGemExt(memRegions, size, handle, {}, -1);
-
-    if (ret) {
-        return nullptr;
-    }
-
-    auto patIndex = drm.getPatIndex(nullptr, allocationData.type, CacheRegion::Default, CachePolicy::WriteBack, false);
-
-    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(&drm, patIndex, handle, size, maxOsContextCount));
-
-    if (!ioctlHelper->setVmBoAdvise(bo->peekHandle(), vmAdviseAttribute, nullptr)) {
-        return nullptr;
-    }
-
-    uint64_t mmapOffsetWb = ioctlHelper->getDrmParamValue(DrmParam::MmapOffsetWb);
-    uint64_t offset = 0;
-    if (!retrieveMmapOffsetForBufferObject(allocationData.rootDeviceIndex, *bo, mmapOffsetWb, offset)) {
-        return nullptr;
-    }
-
     auto totalSizeToAlloc = size + alignment;
     auto cpuPointer = this->mmapFunction(0, totalSizeToAlloc, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
@@ -1840,21 +1814,72 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     auto cpuBasePointer = cpuPointer;
     cpuPointer = alignUp(cpuPointer, alignment);
 
-    this->mmapFunction(cpuPointer, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(offset));
+    auto pHwInfo = drm.getRootDeviceEnvironment().getHardwareInfo();
 
-    bo->setAddress(reinterpret_cast<uintptr_t>(cpuPointer));
+    MemRegionsVec memRegions;
+    createMemoryRegionsForSharedAllocation(*pHwInfo, *memoryInfo, allocationData, memRegions);
+
+    BufferObjects bos{};
+    auto currentAddress = cpuPointer;
+    auto remainingSize = size;
+    auto getNumHandles = [](uint32_t numBanks) -> uint32_t {
+        return (numBanks > 1) && (DebugManager.flags.CreateKmdMigratedSharedAllocationWithMultipleBOs.get() > 0) ? numBanks : 1u;
+    };
+
+    auto handles = getNumHandles(allocationData.storageInfo.getNumBanks());
+    for (auto handleId = 0u; handleId < handles; handleId++) {
+        uint32_t handle = 0;
+
+        auto currentSize = alignUp(remainingSize / (handles - handleId), MemoryConstants::pageSize64k);
+        remainingSize -= currentSize;
+
+        auto ret = memoryInfo->createGemExt(memRegions, currentSize, handle, {}, -1);
+
+        if (ret) {
+            this->munmapFunction(cpuPointer, totalSizeToAlloc);
+            return nullptr;
+        }
+
+        auto patIndex = drm.getPatIndex(nullptr, allocationData.type, CacheRegion::Default, CachePolicy::WriteBack, false);
+
+        std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(&drm, patIndex, handle, currentSize, maxOsContextCount));
+
+        if (!ioctlHelper->setVmBoAdvise(bo->peekHandle(), vmAdviseAttribute, nullptr)) {
+            this->munmapFunction(cpuBasePointer, totalSizeToAlloc);
+            return nullptr;
+        }
+
+        uint64_t mmapOffsetWb = ioctlHelper->getDrmParamValue(DrmParam::MmapOffsetWb);
+        uint64_t offset = 0;
+        if (!retrieveMmapOffsetForBufferObject(allocationData.rootDeviceIndex, *bo, mmapOffsetWb, offset)) {
+            this->munmapFunction(cpuBasePointer, totalSizeToAlloc);
+            return nullptr;
+        }
+
+        this->mmapFunction(currentAddress, currentSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(offset));
+
+        bo->setAddress(castToUint64(currentAddress));
+
+        bos.push_back(bo.release());
+
+        currentAddress = reinterpret_cast<void *>(castToUint64(currentAddress) + currentSize);
+    }
 
     auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
-    auto canonizedGpuAddress = gmmHelper->canonize(bo->peekAddress());
-    auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, allocationData.type, bo.get(), cpuPointer, canonizedGpuAddress, size, MemoryPool::System4KBPages);
+    auto canonizedGpuAddress = gmmHelper->canonize(reinterpret_cast<uintptr_t>(cpuPointer));
+    auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, allocationData.type, bos, cpuPointer, canonizedGpuAddress, size, MemoryPool::System4KBPages);
     allocation->setMmapPtr(cpuBasePointer);
     allocation->setMmapSize(totalSizeToAlloc);
     if (!allocation->setCacheRegion(&drm, static_cast<CacheRegion>(allocationData.cacheRegion))) {
-        this->munmapFunction(cpuPointer, totalSizeToAlloc);
+        this->munmapFunction(cpuBasePointer, totalSizeToAlloc);
+        for (auto bo : bos) {
+            delete bo;
+        }
         return nullptr;
     }
-
-    bo.release();
+    if (handles > 1) {
+        allocation->storageInfo = allocationData.storageInfo;
+    }
 
     return allocation.release();
 }
