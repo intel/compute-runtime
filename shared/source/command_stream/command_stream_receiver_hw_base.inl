@@ -627,27 +627,29 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     this->wasSubmittedToSingleSubdevice = dispatchFlags.useSingleSubdevice;
 
-    // check if we are not over the budget, if we are do implicit flush
-    if (getMemoryManager()->isMemoryBudgetExhausted()) {
-        if (this->totalMemoryUsed >= device.getDeviceInfo().globalMemSize / 4) {
-            implicitFlush = true;
+    if (this->dispatchMode == DispatchMode::BatchedDispatch) {
+        // check if we are not over the budget, if we are do implicit flush
+        if (getMemoryManager()->isMemoryBudgetExhausted()) {
+            if (this->totalMemoryUsed >= device.getDeviceInfo().globalMemSize / 4) {
+                implicitFlush = true;
+            }
         }
-    }
 
-    if (DebugManager.flags.PerformImplicitFlushEveryEnqueueCount.get() != -1) {
-        if ((taskCount + 1) % DebugManager.flags.PerformImplicitFlushEveryEnqueueCount.get() == 0) {
-            implicitFlush = true;
+        if (DebugManager.flags.PerformImplicitFlushEveryEnqueueCount.get() != -1) {
+            if ((taskCount + 1) % DebugManager.flags.PerformImplicitFlushEveryEnqueueCount.get() == 0) {
+                implicitFlush = true;
+            }
         }
-    }
 
-    if (this->newResources) {
-        implicitFlush = true;
-        this->newResources = false;
-    }
-    implicitFlush |= checkImplicitFlushForGpuIdle();
+        if (this->newResources) {
+            implicitFlush = true;
+            this->newResources = false;
+        }
+        implicitFlush |= checkImplicitFlushForGpuIdle();
 
-    if (this->dispatchMode == DispatchMode::BatchedDispatch && implicitFlush) {
-        this->flushBatchedSubmissions();
+        if (implicitFlush) {
+            this->flushBatchedSubmissions();
+        }
     }
 
     ++taskCount;
@@ -659,7 +661,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         this->taskLevel,
         flushStamp->peekStamp()};
 
-    this->taskLevel += levelClosed ? 1 : 0;
+    if (levelClosed) {
+        this->taskLevel++;
+    }
 
     return completionStamp;
 }

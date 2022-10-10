@@ -32,3 +32,9 @@ TEST(MemoryManagerTest, givenAllocationWithNullCpuPtrThenMemoryCopyToAllocationR
 
     EXPECT_FALSE(memoryManager.copyMemoryToAllocation(&allocation, offset, nullptr, 0));
 }
+
+TEST(MemoryManagerTest, givenDefaultMemoryManagerWhenItIsAskedForBudgetExhaustionThenFalseIsReturned) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+    EXPECT_FALSE(memoryManager.isMemoryBudgetExhausted());
+}
