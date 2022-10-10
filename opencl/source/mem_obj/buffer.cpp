@@ -414,7 +414,8 @@ Buffer *Buffer::create(Context *context,
                 bool copyOnCpuAllowed = false == ImplicitScalingHelper::isImplicitScalingEnabled(device.getDeviceBitfield(), true) &&
                                         size <= Buffer::maxBufferSizeForCopyOnCpu &&
                                         !isCompressionEnabled &&
-                                        hwInfoConfig->getLocalMemoryAccessMode(hwInfo) != LocalMemoryAccessMode::CpuAccessDisallowed;
+                                        hwInfoConfig->getLocalMemoryAccessMode(hwInfo) != LocalMemoryAccessMode::CpuAccessDisallowed &&
+                                        allocationInfo.memory->storageInfo.isLockable;
                 if (DebugManager.flags.CopyHostPtrOnCpu.get() != -1) {
                     copyOnCpuAllowed = DebugManager.flags.CopyHostPtrOnCpu.get() == 1;
                 }
