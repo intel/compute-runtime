@@ -138,10 +138,12 @@ void CommandStreamReceiver::makeResident(GraphicsAllocation &gfxAllocation) {
             this->getResidencyAllocations().push_back(&gfxAllocation);
         }
 
-        checkForNewResources(submissionTaskCount, gfxAllocation.getTaskCount(osContext->getContextId()), gfxAllocation);
         gfxAllocation.updateTaskCount(submissionTaskCount, osContext->getContextId());
-        if (!gfxAllocation.isResident(osContext->getContextId())) {
-            this->totalMemoryUsed += gfxAllocation.getUnderlyingBufferSize();
+        if (this->dispatchMode == DispatchMode::BatchedDispatch) {
+            checkForNewResources(submissionTaskCount, gfxAllocation.getTaskCount(osContext->getContextId()), gfxAllocation);
+            if (!gfxAllocation.isResident(osContext->getContextId())) {
+                this->totalMemoryUsed += gfxAllocation.getUnderlyingBufferSize();
+            }
         }
     }
     gfxAllocation.updateResidencyTaskCount(submissionTaskCount, osContext->getContextId());
