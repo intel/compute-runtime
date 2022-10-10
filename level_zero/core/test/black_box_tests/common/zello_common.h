@@ -50,6 +50,8 @@ bool isParamEnabled(int argc, char *argv[], const char *shortName, const char *l
 
 int getParamValue(int argc, char *argv[], const char *shortName, const char *longName, int defaultValue);
 
+const char *getParamValue(int argc, char *argv[], const char *shortName, const char *longName, const char *defaultString);
+
 bool isCircularDepTest(int argc, char *argv[]);
 
 bool isVerbose(int argc, char *argv[]);

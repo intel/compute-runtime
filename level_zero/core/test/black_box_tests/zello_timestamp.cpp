@@ -7,6 +7,9 @@
 
 #include "zello_common.h"
 
+#include <functional>
+#include <map>
+
 inline std::vector<uint8_t> loadBinaryFile(const std::string &filePath) {
     std::ifstream stream(filePath, std::ios::binary);
     if (!stream.good()) {
@@ -55,7 +58,8 @@ void createCmdQueueAndCmdList(ze_context_handle_t &context,
     SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDesc, &cmdList));
 }
 
-bool testWriteGlobalTimestamp(ze_context_handle_t &context,
+bool testWriteGlobalTimestamp(int argc, char *argv[],
+                              ze_context_handle_t &context,
                               ze_driver_handle_t &driver,
                               ze_device_handle_t &device) {
     constexpr size_t allocSize = 4096;
@@ -124,7 +128,8 @@ bool testWriteGlobalTimestamp(ze_context_handle_t &context,
     return true;
 }
 
-bool testKernelTimestampHostQuery(ze_context_handle_t &context,
+bool testKernelTimestampHostQuery(int argc, char *argv[],
+                                  ze_context_handle_t &context,
                                   ze_driver_handle_t &driver,
                                   ze_device_handle_t &device) {
 
@@ -228,9 +233,9 @@ bool testKernelTimestampHostQuery(ze_context_handle_t &context,
     return true;
 }
 
-bool testKernelTimestampApendQuery(ze_context_handle_t &context,
-                                   ze_device_handle_t &device,
-                                   ze_device_properties_t devProperties) {
+bool testKernelTimestampAppendQuery(ze_context_handle_t &context,
+                                    ze_device_handle_t &device,
+                                    ze_device_properties_t devProperties) {
 
     ze_command_queue_handle_t cmdQueue;
     ze_command_list_handle_t cmdList;
@@ -348,8 +353,34 @@ bool testKernelTimestampApendQuery(ze_context_handle_t &context,
     return true;
 }
 
+bool testKernelTimestampAppendQueryWithDeviceProperties(int argc, char *argv[],
+                                                        ze_context_handle_t &context,
+                                                        ze_driver_handle_t &driver,
+                                                        ze_device_handle_t &device) {
+    bool result;
+    std::string currentTest;
+    bool aubMode = isAubMode(argc, argv);
+
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
+    printDeviceProperties(deviceProperties);
+
+    currentTest = "Test Append Write of Global Timestamp: Default Device Properties Structure";
+    deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    result = testKernelTimestampAppendQuery(context, device, deviceProperties);
+
+    if (result || aubMode) {
+        currentTest = "Test Append Write of Global Timestamp: V1.2 (and later) Device Properties Structure";
+        deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2};
+        result = testKernelTimestampAppendQuery(context, device, deviceProperties);
+    }
+
+    return result;
+}
+
 bool testKernelTimestampMapToHostTimescale(int argc, char *argv[],
                                            ze_context_handle_t &context,
+                                           ze_driver_handle_t &driver,
                                            ze_device_handle_t &device) {
 
     ze_command_queue_handle_t cmdQueue;
@@ -442,8 +473,8 @@ bool testKernelTimestampMapToHostTimescale(int argc, char *argv[],
     std::cout << "TimestampMaxValueInCycles: " << timestampMaxValueInCycles << " | validBits : " << devProperties.timestampValidBits << "\n";
     std::cout << "timerResolution: " << devProperties.timerResolution << "\n";
 
-    auto convertDeviceTsToNanoseconds = [&devProperties](uint64_t deviceTs) {
-        return static_cast<uint64_t>(deviceTs * devProperties.timerResolution);
+    auto convertDeviceTsToNanoseconds = [&devProperties, &kernelTimestampMaxValueInCycles](uint64_t deviceTs) {
+        return static_cast<uint64_t>((deviceTs & kernelTimestampMaxValueInCycles) * devProperties.timerResolution);
     };
 
     auto getDuration = [](uint64_t startTs, uint64_t endTs, uint32_t timestampValidBits) {
@@ -521,31 +552,30 @@ int main(int argc, char *argv[]) {
     const std::string blackBoxName("Zello Timestamp");
     verbose = isVerbose(argc, argv);
     bool aubMode = isAubMode(argc, argv);
+    using testFunction = std::function<bool(int, char *[],
+                                            ze_context_handle_t &,
+                                            ze_driver_handle_t &,
+                                            ze_device_handle_t &)>;
 
-    ze_context_handle_t context = nullptr;
-    auto devices = zelloInitContextAndGetDevices(context);
-    auto device = devices[0];
+    std::map<std::string, testFunction> supportedTests{};
+    supportedTests["testKernelTimestampMapToHostTimescale"] = testKernelTimestampMapToHostTimescale;
+    supportedTests["testKernelTimestampAppendQueryWithDeviceProperties"] = testKernelTimestampAppendQueryWithDeviceProperties;
+    supportedTests["testWriteGlobalTimestamp"] = testWriteGlobalTimestamp;
+    supportedTests["testKernelTimestampHostQuery"] = testKernelTimestampHostQuery;
 
-    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    printDeviceProperties(deviceProperties);
+    const char *defaultString = "testKernelTimestampAppendQueryWithDeviceProperties";
+    const char *test = getParamValue(argc, argv, "-t", "--test", defaultString);
+    bool result = false;
+    if (supportedTests.find(test) != supportedTests.end()) {
+        ze_context_handle_t context = nullptr;
+        ze_driver_handle_t driverHandle = nullptr;
+        auto devices = zelloInitContextAndGetDevices(context, driverHandle);
+        auto device = devices[0];
 
-    bool result;
-    std::string currentTest;
-
-    currentTest = "Test Append Write of Global Timestamp: Default Device Properties Structure";
-    deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    result = testKernelTimestampApendQuery(context, device, deviceProperties);
-    printResult(aubMode, result, blackBoxName, currentTest);
-
-    if (result || aubMode) {
-        currentTest = "Test Append Write of Global Timestamp: V1.2 (and later) Device Properties Structure";
-        deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2};
-        result = testKernelTimestampApendQuery(context, device, deviceProperties);
-        printResult(aubMode, result, blackBoxName, currentTest);
+        result = supportedTests[test](argc, argv, context, driverHandle, device);
+        SUCCESS_OR_TERMINATE(zeContextDestroy(context));
+        printResult(aubMode, result, blackBoxName, test);
     }
-
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
     result = aubMode ? true : result;
     return result ? 0 : 1;
 }

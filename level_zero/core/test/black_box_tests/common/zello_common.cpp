@@ -42,6 +42,23 @@ int getParamValue(int argc, char *argv[], const char *shortName, const char *lon
     return defaultValue;
 }
 
+const char *getParamValue(int argc, char *argv[], const char *shortName, const char *longName, const char *defaultString) {
+    char **arg = &argv[1];
+    char **argE = &argv[argc];
+
+    for (; arg != argE; ++arg) {
+        if ((0 == strcmp(*arg, shortName)) || (0 == strcmp(*arg, longName))) {
+            arg++;
+            if (arg == argE) {
+                break;
+            }
+            return *arg;
+        }
+    }
+
+    return defaultString;
+}
+
 bool isCircularDepTest(int argc, char *argv[]) {
     bool enabled = isParamEnabled(argc, argv, "-c", "--circular");
     if (enabled == false) {
