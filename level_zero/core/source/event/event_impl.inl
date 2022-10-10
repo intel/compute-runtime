@@ -43,7 +43,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     // do not reset even if it has been imported, since event pool
     // might have been imported after events being already signaled
     if (eventPoolImp->isImportedIpcPool == false) {
-        event->reset();
+        event->resetDeviceCompletionData();
     }
 
     return event;
@@ -285,16 +285,20 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::reset() {
-    kernelCount = EventPacketsCount::maxKernelSplit;
-    for (uint32_t i = 0; i < kernelCount; i++) {
-        kernelEventCompletionData[i].setPacketsUsed(NEO::TimestampPacketSizeControl::preferredPacketCount);
-    }
-    hostEventSetValue(Event::STATE_INITIAL);
-    resetPackets();
-    resetCompletion();
-
+    this->resetCompletion();
+    this->resetDeviceCompletionData();
     this->l3FlushAppliedOnKernel.reset();
     return ZE_RESULT_SUCCESS;
+}
+
+template <typename TagSizeT>
+void EventImp<TagSizeT>::resetDeviceCompletionData() {
+    this->kernelCount = EventPacketsCount::maxKernelSplit;
+    for (uint32_t i = 0; i < kernelCount; i++) {
+        this->kernelEventCompletionData[i].setPacketsUsed(NEO::TimestampPacketSizeControl::preferredPacketCount);
+    }
+    this->hostEventSetValue(Event::STATE_INITIAL);
+    this->resetPackets();
 }
 
 template <typename TagSizeT>

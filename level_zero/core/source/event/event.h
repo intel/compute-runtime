@@ -200,6 +200,7 @@ struct EventImp : public Event {
     uint64_t getGpuAddress(Device *device) override;
 
     void resetPackets() override;
+    void resetDeviceCompletionData();
     uint64_t getPacketAddress(Device *device) override;
     uint32_t getPacketsInUse() override;
     uint32_t getPacketsUsedInLastKernel() override;
