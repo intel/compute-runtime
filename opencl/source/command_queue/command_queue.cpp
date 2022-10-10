@@ -1209,7 +1209,7 @@ WaitStatus CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *pri
     }
 
     auto waitStatus = WaitStatus::NotReady;
-    auto waitedOnTimestamps = waitForTimestamps(activeBcsStates, taskCount, waitStatus);
+    auto waitedOnTimestamps = waitForTimestamps(activeBcsStates, taskCount, waitStatus, this->timestampPacketContainer.get(), this->deferredTimestampPackets.get());
     if (waitStatus == WaitStatus::GpuHang) {
         return WaitStatus::GpuHang;
     }

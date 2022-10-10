@@ -167,14 +167,14 @@ inline bool waitForTimestampsWithinContainer(TimestampPacketContainer *container
 }
 
 template <typename Family>
-bool CommandQueueHw<Family>::waitForTimestamps(Range<CopyEngineState> copyEnginesToWait, uint32_t taskCount, WaitStatus &status) {
+bool CommandQueueHw<Family>::waitForTimestamps(Range<CopyEngineState> copyEnginesToWait, uint32_t taskCount, WaitStatus &status, TimestampPacketContainer *mainContainer, TimestampPacketContainer *deferredContainer) {
     using TSPacketType = typename Family::TimestampPacketType;
     bool waited = false;
 
     if (isWaitForTimestampsEnabled()) {
-        waited = waitForTimestampsWithinContainer<TSPacketType>(timestampPacketContainer.get(), getGpgpuCommandStreamReceiver(), status);
+        waited = waitForTimestampsWithinContainer<TSPacketType>(mainContainer, getGpgpuCommandStreamReceiver(), status);
         if (isOOQEnabled()) {
-            waitForTimestampsWithinContainer<TSPacketType>(deferredTimestampPackets.get(), getGpgpuCommandStreamReceiver(), status);
+            waitForTimestampsWithinContainer<TSPacketType>(deferredContainer, getGpgpuCommandStreamReceiver(), status);
         }
 
         if (waited) {

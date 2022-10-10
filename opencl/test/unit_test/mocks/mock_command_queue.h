@@ -212,10 +212,13 @@ class MockCommandQueue : public CommandQueue {
 
     bool obtainTimestampPacketForCacheFlush(bool isCacheFlushRequired) const override { return isCacheFlushRequired; }
 
-    bool waitForTimestamps(Range<CopyEngineState> copyEnginesToWait, uint32_t taskCount, WaitStatus &status) override { return false; };
+    bool waitForTimestamps(Range<CopyEngineState> copyEnginesToWait, uint32_t taskCount, WaitStatus &status, TimestampPacketContainer *mainContainer, TimestampPacketContainer *deferredContainer) override {
+        waitForTimestampsCalled = true;
+        return false;
+    };
 
     bool releaseIndirectHeapCalled = false;
-
+    bool waitForTimestampsCalled = false;
     cl_int writeBufferRetValue = CL_SUCCESS;
     uint32_t writeBufferCounter = 0;
     bool writeBufferBlocking = false;

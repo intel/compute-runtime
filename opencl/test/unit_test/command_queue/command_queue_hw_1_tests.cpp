@@ -52,7 +52,7 @@ HWTEST_F(CommandQueueHwTest, givenNoTimestampPacketsWhenWaitForTimestampsThenNoW
     auto taskCount = device->getUltCommandStreamReceiver<FamilyType>().peekLatestFlushedTaskCount();
     auto status = WaitStatus::NotReady;
 
-    cmdQ.waitForTimestamps({}, 101u, status);
+    cmdQ.waitForTimestamps({}, 101u, status, cmdQ.timestampPacketContainer.get(), cmdQ.deferredTimestampPackets.get());
 
     EXPECT_EQ(device->getUltCommandStreamReceiver<FamilyType>().peekLatestFlushedTaskCount(), taskCount);
 }
