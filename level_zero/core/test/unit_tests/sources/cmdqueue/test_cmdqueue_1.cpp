@@ -1815,10 +1815,12 @@ TEST_F(CommandQueueCreate, givenCreatedCommandQueueWhenGettingTrackingFlagsThenD
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
     ASSERT_NE(nullptr, commandQueue);
     EXPECT_FALSE(commandQueue->frontEndStateTracking);
-    EXPECT_FALSE(commandQueue->pipelineSelectStateTracking);
 
     bool expectedStateComputeModeTracking = l0HwHelper.platformSupportsStateComputeModeTracking(hwInfo);
     EXPECT_EQ(expectedStateComputeModeTracking, commandQueue->stateComputeModeTracking);
+
+    bool expectedPipelineSelectTracking = l0HwHelper.platformSupportsPipelineSelectTracking(hwInfo);
+    EXPECT_EQ(expectedPipelineSelectTracking, commandQueue->pipelineSelectStateTracking);
 
     commandQueue->destroy();
 }
