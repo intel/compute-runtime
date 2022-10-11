@@ -191,6 +191,7 @@ class DrmMockCustom : public Drm {
     //DRM_IOCTL_PRIME_HANDLE_TO_FD
     uint32_t inputHandle = 0;
     int32_t outputFd = 0;
+    bool incrementOutputFdAfterCall = false;
     int32_t inputFlags = 0;
     //DRM_IOCTL_I915_GEM_USERPTR
     uint32_t returnHandle = 0;
