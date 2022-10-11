@@ -734,4 +734,8 @@ uint32_t HwHelperHw<gfxProduct>::getAmountOfAllocationsToFill() const {
     return 0u;
 }
 
+template <typename gfxProduct>
+bool HwHelperHw<gfxProduct>::isChipsetUniqueUUIDSupported() const {
+    return false;
+}
 } // namespace NEO

@@ -165,7 +165,7 @@ class MockHwInfoConfigHwUuidEnablementTest : public HwInfoConfigHw<gfxProduct> {
     }
 };
 
-HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsDefaultWhenDeviceIsCreatedThenChipsetUniqueUuidUsingTelemetryIsNotUsed, MatchAny) {
+HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsDefaultWhenDeviceIsCreatedThenChipsetUniqueUuidUsingTelemetryIstUsed, MatchAny) {
 
     mockHwInfoConfig.reset(new MockHwInfoConfigHwUuidEnablementTest<productFamily>(true));
     VariableBackup<HwInfoConfig *> backupHwInfoConfig(&hwInfoConfigFactory[productFamily], mockHwInfoConfig.get());
@@ -177,7 +177,12 @@ HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsDefaultWhenDev
     const auto deviceFactory = createDevices(pciBusInfo, 2);
 
     EXPECT_EQ(true, deviceFactory->rootDevices[0]->getUuid(uuid));
-    EXPECT_FALSE(0 == std::memcmp(uuid.data(), expectedUuid.data(), 16));
+
+    if (HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).isChipsetUniqueUUIDSupported()) {
+        EXPECT_TRUE(0 == std::memcmp(uuid.data(), expectedUuid.data(), 16));
+    } else {
+        EXPECT_FALSE(0 == std::memcmp(uuid.data(), expectedUuid.data(), 16));
+    }
 }
 
 HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsEnabledWhenDeviceIsCreatedThenChipsetUniqueUuidUsingTelemetryIsUsed, MatchAny) {
@@ -188,12 +193,15 @@ HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsEnabledWhenDev
     std::array<uint8_t, 16> uuid, expectedUuid;
     uuid.fill(0u);
     expectedUuid.fill(255u);
-
     PhysicalDevicePciBusInfo pciBusInfo(0x00, 0x34, 0xab, 0xcd);
-    const auto deviceFactory = createDevices(pciBusInfo, 2);
 
+    const auto deviceFactory = createDevices(pciBusInfo, 2);
     EXPECT_EQ(true, deviceFactory->rootDevices[0]->getUuid(uuid));
-    EXPECT_TRUE(0 == std::memcmp(uuid.data(), expectedUuid.data(), 16));
+    if (HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).isChipsetUniqueUUIDSupported()) {
+        EXPECT_TRUE(0 == std::memcmp(uuid.data(), expectedUuid.data(), 16));
+    } else {
+        EXPECT_FALSE(0 == std::memcmp(uuid.data(), expectedUuid.data(), 16));
+    }
 }
 
 HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsDisabledWhenDeviceIsCreatedThenChipsetUniqueUuidUsingTelemetryIsNotUsed, MatchAny) {

@@ -161,6 +161,7 @@ class HwHelper {
     virtual uint32_t getMinimalScratchSpaceSize() const = 0;
     virtual bool copyThroughLockedPtrEnabled() const = 0;
     virtual uint32_t getAmountOfAllocationsToFill() const = 0;
+    virtual bool isChipsetUniqueUUIDSupported() const = 0;
 
   protected:
     HwHelper() = default;
@@ -404,6 +405,7 @@ class HwHelperHw : public HwHelper {
     uint32_t getMinimalScratchSpaceSize() const override;
     bool copyThroughLockedPtrEnabled() const override;
     uint32_t getAmountOfAllocationsToFill() const override;
+    bool isChipsetUniqueUUIDSupported() const override;
 
   protected:
     static const AuxTranslationMode defaultAuxTranslationMode;

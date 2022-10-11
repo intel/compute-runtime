@@ -225,4 +225,9 @@ uint32_t HwHelperHw<GfxFamily>::getMinimalScratchSpaceSize() const {
     return 64U;
 }
 
+template <>
+bool HwHelperHw<Family>::isChipsetUniqueUUIDSupported() const {
+    return true;
+}
+
 } // namespace NEO
