@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,6 +40,10 @@ ze_bool_t WddmSchedulerImp::canControlScheduler() {
 }
 
 ze_result_t WddmSchedulerImp::getProperties(zes_sched_properties_t &properties) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t WddmSchedulerImp::setComputeUnitDebugMode(ze_bool_t *pNeedReload) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

@@ -21,6 +21,7 @@ class WddmSchedulerImp : public OsScheduler {
     ze_result_t setHeartbeatInterval(uint64_t heartbeat) override;
     ze_bool_t canControlScheduler() override;
     ze_result_t getProperties(zes_sched_properties_t &properties) override;
+    ze_result_t setComputeUnitDebugMode(ze_bool_t *pNeedReload) override;
 };
 
 } // namespace L0

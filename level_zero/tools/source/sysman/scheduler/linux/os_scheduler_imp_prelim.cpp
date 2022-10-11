@@ -21,6 +21,7 @@ const std::string LinuxSchedulerImp::defaultTimesliceDurationMilliSecs(".default
 const std::string LinuxSchedulerImp::heartbeatIntervalMilliSecs("heartbeat_interval_ms");
 const std::string LinuxSchedulerImp::defaultHeartbeatIntervalMilliSecs(".defaults/heartbeat_interval_ms");
 const std::string LinuxSchedulerImp::engineDir("engine");
+const std::string LinuxSchedulerImp::enableEuDebug("prelim_enable_eu_debug");
 constexpr uint16_t milliSecsToMicroSecs = 1000;
 
 static const std::map<__u16, std::string> i915EngineClassToSysfsEngineMap = {
@@ -206,6 +207,12 @@ ze_result_t LinuxSchedulerImp::setHeartbeatInterval(uint64_t heartbeat) {
 
 ze_bool_t LinuxSchedulerImp::canControlScheduler() {
     return 1;
+}
+
+ze_result_t LinuxSchedulerImp::setComputeUnitDebugMode(ze_bool_t *pNeedReload) {
+    *pNeedReload = false;
+    uint64_t val = 1;
+    return pSysfsAccess->write(enableEuDebug, val);
 }
 
 static ze_result_t getNumEngineTypeAndInstancesForSubDevices(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,

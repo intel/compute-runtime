@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,6 +30,7 @@ class LinuxSchedulerImp : public OsScheduler, NEO::NonCopyableOrMovableClass {
     ze_result_t setHeartbeatInterval(uint64_t heartbeat) override;
     ze_bool_t canControlScheduler() override;
     ze_result_t getProperties(zes_sched_properties_t &properties) override;
+    ze_result_t setComputeUnitDebugMode(ze_bool_t *pNeedReload) override;
     LinuxSchedulerImp() = default;
     LinuxSchedulerImp(OsSysman *pOsSysman, zes_engine_type_flag_t type,
                       std::vector<std::string> &listOfEngines, ze_bool_t isSubdevice, uint32_t subdeviceId);
@@ -50,6 +51,7 @@ class LinuxSchedulerImp : public OsScheduler, NEO::NonCopyableOrMovableClass {
     static const std::string defaultTimesliceDurationMilliSecs;
     static const std::string heartbeatIntervalMilliSecs;
     static const std::string defaultHeartbeatIntervalMilliSecs;
+    static const std::string enableEuDebug;
     std::vector<std::string> listOfEngines = {};
 };
 

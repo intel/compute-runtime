@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include <level_zero/zet_api.h>
+#include <level_zero/zes_api.h>
 
 #include <map>
 #include <string>
@@ -18,6 +18,7 @@ using namespace std;
 
 class OsScheduler {
   public:
+    virtual ze_result_t setComputeUnitDebugMode(ze_bool_t *pNeedReload) = 0;
     virtual ze_result_t getPreemptTimeout(uint64_t &timeout, ze_bool_t getDefault) = 0;
     virtual ze_result_t getTimesliceDuration(uint64_t &timeslice, ze_bool_t getDefault) = 0;
     virtual ze_result_t getHeartbeatInterval(uint64_t &heartbeat, ze_bool_t getDefault) = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@ const std::string LinuxSchedulerImp::timesliceDurationMilliSecs("timeslice_durat
 const std::string LinuxSchedulerImp::defaultTimesliceDurationMilliSecs(".defaults/timeslice_duration_ms");
 const std::string LinuxSchedulerImp::heartbeatIntervalMilliSecs("heartbeat_interval_ms");
 const std::string LinuxSchedulerImp::defaultHeartbeatIntervalMilliSecs(".defaults/heartbeat_interval_ms");
+const std::string LinuxSchedulerImp::enableEuDebug("");
 const std::string LinuxSchedulerImp::engineDir("engine");
 
 ze_result_t LinuxSchedulerImp::getProperties(zes_sched_properties_t &schedProperties) {
@@ -168,6 +169,11 @@ ze_result_t LinuxSchedulerImp::setHeartbeatInterval(uint64_t heartbeat) {
 
 ze_bool_t LinuxSchedulerImp::canControlScheduler() {
     return 1;
+}
+
+ze_result_t LinuxSchedulerImp::setComputeUnitDebugMode(ze_bool_t *pNeedReload) {
+    *pNeedReload = false;
+    return pSysfsAccess->write(enableEuDebug, 1);
 }
 
 static const std::multimap<zes_engine_type_flag_t, std::string> level0EngineTypeToSysfsEngineMap = {

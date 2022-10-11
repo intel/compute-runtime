@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,12 @@ ze_result_t SchedulerImp::setExclusiveMode(ze_bool_t *pNeedReload) {
 }
 
 ze_result_t SchedulerImp::setComputeUnitDebugMode(ze_bool_t *pNeedReload) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    auto result = setExclusiveMode(pNeedReload);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    result = pOsScheduler->setComputeUnitDebugMode(pNeedReload);
+    return result;
 }
 
 ze_result_t SchedulerImp::getCurrentMode(zes_sched_mode_t *pMode) {
