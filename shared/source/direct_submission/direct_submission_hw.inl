@@ -74,6 +74,8 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
 
     createDiagnostic();
     setPostSyncOffset();
+
+    dcFlushRequired = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, *hwInfo);
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -261,7 +263,8 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer() {
     if (disableMonitorFence) {
         TagData currentTagData = {};
         getTagAddressValue(currentTagData);
-        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, *hwInfo, this->useNotifyForPostSync, this->partitionedMode);
+        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, *hwInfo,
+                                         this->useNotifyForPostSync, this->partitionedMode, this->dcFlushRequired);
     }
     Dispatcher::dispatchStopCommandBuffer(ringCommandStream);
 
@@ -330,7 +333,8 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSwitchRingBufferS
     if (disableMonitorFence) {
         TagData currentTagData = {};
         getTagAddressValue(currentTagData);
-        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, *hwInfo, this->useNotifyForPostSync, this->partitionedMode);
+        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, *hwInfo,
+                                         this->useNotifyForPostSync, this->partitionedMode, this->dcFlushRequired);
     }
     Dispatcher::dispatchStartCommandBuffer(ringCommandStream, nextBufferGpuAddress);
 }
@@ -428,7 +432,8 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
     if (!disableMonitorFence) {
         TagData currentTagData = {};
         getTagAddressValue(currentTagData);
-        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, *hwInfo, this->useNotifyForPostSync, this->partitionedMode);
+        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, *hwInfo,
+                                         this->useNotifyForPostSync, this->partitionedMode, this->dcFlushRequired);
     }
 
     dispatchSemaphoreSection(currentQueueWorkCount + 1);

@@ -137,24 +137,25 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     updateStreamProperties(*kernel, launchParams.isCooperative);
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
-        0,                                                     // eventAddress
-        neoDevice,                                             // device
-        kernel,                                                // dispatchInterface
-        reinterpret_cast<const void *>(threadGroupDimensions), // threadGroupDimensions
-        &additionalCommands,                                   // additionalCommands
-        commandListPreemptionMode,                             // preemptionMode
-        0,                                                     // partitionCount
-        launchParams.isIndirect,                               // isIndirect
-        launchParams.isPredicate,                              // isPredicate
-        false,                                                 // isTimestampEvent
-        this->containsStatelessUncachedResource,               // requiresUncachedMocs
-        false,                                                 // useGlobalAtomics
-        internalUsage,                                         // isInternal
-        launchParams.isCooperative,                            // isCooperative
-        false,                                                 // isHostScopeSignalEvent
-        false,                                                 // isKernelUsingSystemAllocation
-        cmdListType == CommandListType::TYPE_IMMEDIATE,        // isKernelDispatchedFromImmediateCmdList
-        engineGroupType == NEO::EngineGroupType::RenderCompute // isRcs
+        0,                                                      // eventAddress
+        neoDevice,                                              // device
+        kernel,                                                 // dispatchInterface
+        reinterpret_cast<const void *>(threadGroupDimensions),  // threadGroupDimensions
+        &additionalCommands,                                    // additionalCommands
+        commandListPreemptionMode,                              // preemptionMode
+        0,                                                      // partitionCount
+        launchParams.isIndirect,                                // isIndirect
+        launchParams.isPredicate,                               // isPredicate
+        false,                                                  // isTimestampEvent
+        this->containsStatelessUncachedResource,                // requiresUncachedMocs
+        false,                                                  // useGlobalAtomics
+        internalUsage,                                          // isInternal
+        launchParams.isCooperative,                             // isCooperative
+        false,                                                  // isHostScopeSignalEvent
+        false,                                                  // isKernelUsingSystemAllocation
+        cmdListType == CommandListType::TYPE_IMMEDIATE,         // isKernelDispatchedFromImmediateCmdList
+        engineGroupType == NEO::EngineGroupType::RenderCompute, // isRcs
+        this->dcFlushSupport                                    // dcFlushEnable
     };
 
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs, getLogicalStateHelper());

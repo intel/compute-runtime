@@ -30,9 +30,10 @@ inline void RenderDispatcher<GfxFamily>::dispatchMonitorFence(LinearStream &cmdB
                                                               uint64_t immediateData,
                                                               const HardwareInfo &hwInfo,
                                                               bool useNotifyEnable,
-                                                              bool partitionedWorkload) {
+                                                              bool partitionedWorkload,
+                                                              bool dcFlushRequired) {
     PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
+    args.dcFlushEnable = dcFlushRequired;
     args.workloadPartitionOffset = partitionedWorkload;
     args.notifyEnable = useNotifyEnable;
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(

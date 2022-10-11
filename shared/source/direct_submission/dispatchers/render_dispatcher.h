@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,8 @@ class RenderDispatcher : public Dispatcher<GfxFamily> {
                                      uint64_t immediateData,
                                      const HardwareInfo &hwInfo,
                                      bool useNotifyEnable,
-                                     bool partitionedWorkload);
+                                     bool partitionedWorkload,
+                                     bool dcFlushRequired);
     static size_t getSizeMonitorFence(const HardwareInfo &hwInfo);
 
     static void dispatchCacheFlush(LinearStream &cmdBuffer, const HardwareInfo &hwInfo, uint64_t address);

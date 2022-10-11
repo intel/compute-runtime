@@ -144,7 +144,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncoderTests, givenPreXeHpPlatformWhenSetupPo
 
     WALKER_TYPE walkerCmd{};
     MockExecutionEnvironment executionEnvironment{};
-    EXPECT_NO_THROW(EncodeDispatchKernel<FamilyType>::setupPostSyncMocs(walkerCmd, *executionEnvironment.rootDeviceEnvironments[0]));
+    EXPECT_NO_THROW(EncodeDispatchKernel<FamilyType>::setupPostSyncMocs(walkerCmd, *executionEnvironment.rootDeviceEnvironments[0], false));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenAtLeastXeHpPlatformWhenSetupPostSyncMocsThenCorrect) {
@@ -153,13 +153,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenAtLeastXeHpPlatformWhenSe
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     rootDeviceEnvironment.initGmm();
+    bool dcFlush = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
 
     {
         WALKER_TYPE walkerCmd{};
-        EncodeDispatchKernel<FamilyType>::setupPostSyncMocs(walkerCmd, rootDeviceEnvironment);
+        EncodeDispatchKernel<FamilyType>::setupPostSyncMocs(walkerCmd, rootDeviceEnvironment, dcFlush);
 
         auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
-        auto expectedMocs = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo) ? gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) : gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+        auto expectedMocs = dcFlush ? gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) : gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
 
         EXPECT_EQ(expectedMocs, walkerCmd.getPostSync().getMocs());
     }
@@ -168,7 +169,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenAtLeastXeHpPlatformWhenSe
         auto expectedMocs = 9u;
         DebugManager.flags.OverridePostSyncMocs.set(expectedMocs);
         WALKER_TYPE walkerCmd{};
-        EncodeDispatchKernel<FamilyType>::setupPostSyncMocs(walkerCmd, rootDeviceEnvironment);
+        EncodeDispatchKernel<FamilyType>::setupPostSyncMocs(walkerCmd, rootDeviceEnvironment, dcFlush);
         EXPECT_EQ(expectedMocs, walkerCmd.getPostSync().getMocs());
     }
 }

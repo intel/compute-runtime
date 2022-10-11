@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,8 @@ inline void BlitterDispatcher<GfxFamily>::dispatchMonitorFence(LinearStream &cmd
                                                                uint64_t immediateData,
                                                                const HardwareInfo &hwInfo,
                                                                bool useNotifyEnable,
-                                                               bool partitionedWorkload) {
+                                                               bool partitionedWorkload,
+                                                               bool dcFlushRequired) {
     MiFlushArgs args;
     args.commandWithPostSync = true;
     args.notifyEnable = useNotifyEnable;

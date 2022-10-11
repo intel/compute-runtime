@@ -52,6 +52,7 @@ struct EncodeDispatchKernelArgs {
     bool isKernelUsingSystemAllocation = false;
     bool isKernelDispatchedFromImmediateCmdList = false;
     bool isRcs = false;
+    bool dcFlushEnable = false;
 };
 
 struct EncodeWalkerArgs {
@@ -108,7 +109,7 @@ struct EncodeDispatchKernel {
 
     static void adjustTimestampPacket(WALKER_TYPE &walkerCmd, const HardwareInfo &hwInfo);
 
-    static void setupPostSyncMocs(WALKER_TYPE &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static void setupPostSyncMocs(WALKER_TYPE &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool dcFlush);
 
     static void adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder, const HardwareInfo &hwInfo);
 
@@ -332,7 +333,7 @@ struct EncodeComputeMode {
     static size_t getCmdSizeForComputeMode(const HardwareInfo &hwInfo, bool hasSharedHandles, bool isRcs);
     static void programComputeModeCommandWithSynchronization(LinearStream &csr, StateComputeModeProperties &properties,
                                                              const PipelineSelectArgs &args, bool hasSharedHandles,
-                                                             const HardwareInfo &hwInfo, bool isRcs, LogicalStateHelper *logicalStateHelper);
+                                                             const HardwareInfo &hwInfo, bool isRcs, bool dcFlush, LogicalStateHelper *logicalStateHelper);
     static void programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const HardwareInfo &hwInfo, LogicalStateHelper *logicalStateHelper);
 
     static void adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor);
@@ -348,7 +349,7 @@ struct EncodeWA {
                                                               const HardwareInfo &hwInfo, bool isRcs);
     static void setAdditionalPipeControlFlagsForNonPipelineStateCommand(PipeControlArgs &args);
 
-    static void addPipeControlBeforeStateBaseAddress(LinearStream &commandStream, const HardwareInfo &hwInfo, bool isRcs);
+    static void addPipeControlBeforeStateBaseAddress(LinearStream &commandStream, const HardwareInfo &hwInfo, bool isRcs, bool dcFlushRequired);
 
     static void adjustCompressionFormatForPlanarImage(uint32_t &compressionFormat, GMM_YUV_PLANE_ENUM plane);
 };

@@ -466,7 +466,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
 
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {};
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));
+    std::unique_ptr<L0::ult::CommandList> commandList(whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue)));
 
     auto &commandContainer = commandList->commandContainer;
     const auto stream = commandContainer.getCommandStream();
@@ -495,7 +495,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
         false,
         false,
         false,
-        false};
+        false,
+        commandList->getDcFlushRequired(true)};
     NEO::EncodeDispatchKernel<FamilyType>::encode(commandContainer, dispatchKernelArgs, nullptr);
 
     auto usedSpaceAfter = commandContainer.getCommandStream()->getUsed();

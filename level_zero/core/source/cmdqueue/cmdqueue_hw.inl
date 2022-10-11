@@ -1221,7 +1221,7 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateComputeModeForCommandLis
 
         bool isRcs = this->getCsr()->isRcs();
         NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommandWithSynchronization(commandStream, csrState.stateComputeMode, pipelineSelectArgs,
-                                                                                        false, device->getHwInfo(), isRcs, nullptr);
+                                                                                        false, device->getHwInfo(), isRcs, this->getCsr()->getDcFlushSupport(), nullptr);
     }
     csrState.stateComputeMode.setProperties(cmdListFinal.stateComputeMode);
 }

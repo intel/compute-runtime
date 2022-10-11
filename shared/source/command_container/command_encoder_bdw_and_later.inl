@@ -172,7 +172,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     if (flush) {
         PipeControlArgs syncArgs;
-        syncArgs.dcFlushEnable = MemorySynchronizationCommands<Family>::getDcFlushEnable(true, hwInfo);
+        syncArgs.dcFlushEnable = args.dcFlushEnable;
         if (dirtyHeaps) {
             syncArgs.hdcPipelineFlush = true;
         }
@@ -467,9 +467,9 @@ inline void EncodeWA<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(L
 
 template <typename GfxFamily>
 inline void EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(LinearStream &commandStream,
-                                                                      const HardwareInfo &hwInfo, bool isRcs) {
+                                                                      const HardwareInfo &hwInfo, bool isRcs, bool dcFlushRequired) {
     PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
+    args.dcFlushEnable = dcFlushRequired;
     args.textureCacheInvalidationEnable = true;
 
     NEO::EncodeWA<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(commandStream, args, hwInfo, isRcs);
@@ -539,7 +539,7 @@ inline void EncodeMiArbCheck<Family>::adjust(MI_ARB_CHECK &miArbCheck) {
 }
 
 template <typename Family>
-void EncodeDispatchKernel<Family>::setupPostSyncMocs(WALKER_TYPE &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {}
+void EncodeDispatchKernel<Family>::setupPostSyncMocs(WALKER_TYPE &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool dcFlush) {}
 
 template <typename Family>
 void EncodeDispatchKernel<Family>::adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder, const HardwareInfo &hwInfo) {}

@@ -383,7 +383,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     // Reprogram state base address if required
     if (isStateBaseAddressDirty || sourceLevelDebuggerActive) {
-        EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStreamCSR, hwInfo, isRcs());
+        EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStreamCSR, hwInfo, isRcs(), this->dcFlushSupport);
         EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, true, hwInfo, isRcs());
 
         uint64_t newGSHbase = 0;
@@ -685,7 +685,7 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
     if (this->streamProperties.stateComputeMode.isDirty()) {
         EncodeComputeMode<GfxFamily>::programComputeModeCommandWithSynchronization(
             stream, this->streamProperties.stateComputeMode, dispatchFlags.pipelineSelectArgs,
-            hasSharedHandles(), hwInfo, isRcs(), logicalStateHelper.get());
+            hasSharedHandles(), hwInfo, isRcs(), this->dcFlushSupport, logicalStateHelper.get());
     }
 }
 

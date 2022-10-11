@@ -216,7 +216,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         args.requiresUncachedMocs) {
 
         PipeControlArgs syncArgs;
-        syncArgs.dcFlushEnable = MemorySynchronizationCommands<Family>::getDcFlushEnable(true, hwInfo);
+        syncArgs.dcFlushEnable = args.dcFlushEnable;
         MemorySynchronizationCommands<Family>::addSingleBarrier(*container.getCommandStream(), syncArgs);
         STATE_BASE_ADDRESS sbaCmd;
         auto gmmHelper = container.getDevice()->getGmmHelper();
@@ -275,7 +275,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         UNRECOVERABLE_IF(!(isAligned<TimestampDestinationAddressAlignment>(args.eventAddress)));
         postSync.setDestinationAddress(args.eventAddress);
 
-        EncodeDispatchKernel<Family>::setupPostSyncMocs(walkerCmd, args.device->getRootDeviceEnvironment());
+        EncodeDispatchKernel<Family>::setupPostSyncMocs(walkerCmd, args.device->getRootDeviceEnvironment(), args.dcFlushEnable);
         EncodeDispatchKernel<Family>::adjustTimestampPacket(walkerCmd, hwInfo);
     }
 
@@ -329,12 +329,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 }
 
 template <typename Family>
-inline void EncodeDispatchKernel<Family>::setupPostSyncMocs(WALKER_TYPE &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
+inline void EncodeDispatchKernel<Family>::setupPostSyncMocs(WALKER_TYPE &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool dcFlush) {
     auto &postSyncData = walkerCmd.getPostSync();
     auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
 
-    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    if (MemorySynchronizationCommands<Family>::getDcFlushEnable(true, hwInfo)) {
+    if (dcFlush) {
         postSyncData.setMocs(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
     } else {
         postSyncData.setMocs(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));

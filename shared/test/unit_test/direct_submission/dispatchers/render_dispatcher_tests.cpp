@@ -62,7 +62,7 @@ HWTEST_F(RenderDispatcherTest, givenRenderWhenAddingMonitorFenceCmdThenExpectPip
     uint64_t gpuVa = 0xFF00FF0000ull;
     uint64_t value = 0x102030;
 
-    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuVa, value, hardwareInfo, false, false);
+    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuVa, value, hardwareInfo, false, false, false);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(cmdBuffer);
@@ -124,7 +124,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, RenderDispatcherTest,
     uint64_t gpuVa = 0xBADA550000ull;
     uint64_t value = 0x102030;
 
-    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuVa, value, hardwareInfo, false, true);
+    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuVa, value, hardwareInfo, false, true, false);
 
     HardwareParse hwParse;
     hwParse.parsePipeControl = true;
@@ -157,7 +157,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, RenderDispatcherTest,
     uint64_t gpuAddress = 0xADD35500ull;
     uint64_t value = 0x102030;
 
-    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuAddress, value, hardwareInfo, true, false);
+    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuAddress, value, hardwareInfo, true, false, false);
 
     HardwareParse hwParse;
     hwParse.parsePipeControl = true;
@@ -173,6 +173,35 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, RenderDispatcherTest,
             EXPECT_EQ(value, pipeControl->getImmediateData());
             EXPECT_TRUE(pipeControl->getNotifyEnable());
             break;
+        }
+    }
+    EXPECT_TRUE(foundMonitorFence);
+}
+
+HWTEST_F(RenderDispatcherTest, givenRenderWithDcFlushFlagTrueWhenAddingMonitorFenceCmdThenExpectPipeControlWithProperAddressAndValueAndDcFlushParameter) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
+
+    uint64_t gpuVa = 0xFF00FF0000ull;
+    uint64_t value = 0x102030;
+
+    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuVa, value, hardwareInfo, false, false, true);
+
+    HardwareParse hwParse;
+    hwParse.parseCommands<FamilyType>(cmdBuffer);
+
+    bool foundMonitorFence = false;
+    for (auto &it : hwParse.cmdList) {
+        PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(it);
+        if (pipeControl) {
+            foundMonitorFence =
+                (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) &&
+                (NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl) == gpuVa) &&
+                (pipeControl->getImmediateData() == value);
+            if (foundMonitorFence) {
+                EXPECT_TRUE(pipeControl->getDcFlushEnable());
+                break;
+            }
         }
     }
     EXPECT_TRUE(foundMonitorFence);

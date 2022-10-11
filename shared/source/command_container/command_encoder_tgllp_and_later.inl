@@ -15,9 +15,9 @@ namespace NEO {
 
 template <>
 void EncodeWA<Family>::addPipeControlBeforeStateBaseAddress(LinearStream &commandStream,
-                                                            const HardwareInfo &hwInfo, bool isRcs) {
+                                                            const HardwareInfo &hwInfo, bool isRcs, bool dcFlushRequired) {
     PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<Family>::getDcFlushEnable(true, hwInfo);
+    args.dcFlushEnable = dcFlushRequired;
     args.textureCacheInvalidationEnable = true;
     args.hdcPipelineFlush = true;
 

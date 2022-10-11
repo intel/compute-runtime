@@ -128,12 +128,12 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithThreadArbitrationPolicySe
     delete (pHint);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenAppendingKernelThenBbEndIsAddedAndNewCmdBufferAllocated, MatchAny) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenAppendingKernelThenBbEndIsAddedAndNewCmdBufferAllocated, IsAtLeastSkl) {
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     createKernel();
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    std::unique_ptr<L0::ult::CommandList> commandList(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
 
     auto &commandContainer = commandList->commandContainer;
     const auto stream = commandContainer.getCommandStream();
@@ -163,8 +163,9 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
         false,
         false,
         false,
-        false};
-    NEO::EncodeDispatchKernel<FamilyType>::encode(commandContainer, dispatchKernelArgs, static_cast<CommandListCoreFamily<gfxCoreFamily> *>(commandList.get())->getLogicalStateHelper());
+        false,
+        commandList->getDcFlushRequired(true)};
+    NEO::EncodeDispatchKernel<FamilyType>::encode(commandContainer, dispatchKernelArgs, commandList->getLogicalStateHelper());
 
     auto usedSpaceAfter = commandContainer.getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, 0u);

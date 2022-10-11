@@ -35,7 +35,7 @@ size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const HardwareInfo &h
 template <typename Family>
 inline void EncodeComputeMode<Family>::programComputeModeCommandWithSynchronization(
     LinearStream &csr, StateComputeModeProperties &properties, const PipelineSelectArgs &args,
-    bool hasSharedHandles, const HardwareInfo &hwInfo, bool isRcs, LogicalStateHelper *logicalStateHelper) {
+    bool hasSharedHandles, const HardwareInfo &hwInfo, bool isRcs, bool dcFlush, LogicalStateHelper *logicalStateHelper) {
 
     NEO::EncodeWA<Family>::encodeAdditionalPipelineSelect(csr, args, true, hwInfo, isRcs);
 
@@ -45,7 +45,7 @@ inline void EncodeComputeMode<Family>::programComputeModeCommandWithSynchronizat
 
     if (isBasicWARequired) {
         PipeControlArgs args;
-        args.dcFlushEnable = MemorySynchronizationCommands<Family>::getDcFlushEnable(true, hwInfo);
+        args.dcFlushEnable = dcFlush;
         NEO::EncodeWA<Family>::addPipeControlPriorToNonPipelinedStateCommand(csr, args, hwInfo, isRcs);
     }
 
