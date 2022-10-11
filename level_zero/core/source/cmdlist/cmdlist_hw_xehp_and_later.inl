@@ -126,7 +126,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                                                                                Event *event,
                                                                                const CmdListKernelLaunchParams &launchParams) {
 
-    const auto &hwInfo = this->device->getHwInfo();
     if (NEO::DebugManager.flags.ForcePipeControlPriorToWalker.get()) {
         NEO::PipeControlArgs args;
         NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
@@ -174,7 +173,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         commandContainer.addToResidencyContainer(eventAlloc);
         bool flushRequired = !!event->signalScope &&
                              !launchParams.isKernelSplitOperation;
-        l3FlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(flushRequired, hwInfo);
+        l3FlushEnable = getDcFlushRequired(flushRequired);
         isTimestampEvent = event->isUsingContextEndOffset();
         eventAddress = event->getPacketAddress(this->device);
         isHostSignalScopeEvent = !!(event->signalScope & ZE_EVENT_SCOPE_FLAG_HOST);
@@ -422,8 +421,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Eve
             if (beforeWalker) {
                 event->zeroKernelCount();
             } else {
-                const auto &hwInfo = this->device->getHwInfo();
-                if (NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(!!event->signalScope, hwInfo)) {
+                if (getDcFlushRequired(!!event->signalScope)) {
                     programEventL3Flush<gfxCoreFamily>(event, this->device, this->partitionCount, this->commandContainer);
                 }
             }

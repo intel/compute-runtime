@@ -175,7 +175,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             auto &hwInfo = device->getNEODevice()->getHardwareInfo();
 
             NEO::PipeControlArgs args;
-            args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
+            args.dcFlushEnable = this->csr->getDcFlushSupport();
 
             auto command = reinterpret_cast<void *>(commandToPatch.pCommand);
             NEO::MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(
@@ -191,7 +191,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             auto &hwInfo = device->getNEODevice()->getHardwareInfo();
 
             NEO::PipeControlArgs args;
-            args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
+            args.dcFlushEnable = this->csr->getDcFlushSupport();
 
             auto command = reinterpret_cast<void *>(commandToPatch.pCommand);
             NEO::MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(

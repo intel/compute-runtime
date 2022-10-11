@@ -307,6 +307,9 @@ struct CommandList : _ze_command_list_handle_t {
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize);
     NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize, bool hostCopyAllowed);
     bool setupTimestampEventForMultiTile(Event *signalEvent);
+    bool getDcFlushRequired(bool externalCondition) const {
+        return externalCondition ? dcFlushSupport : false;
+    }
 
     std::map<const void *, NEO::GraphicsAllocation *> hostPtrMap;
     std::vector<NEO::GraphicsAllocation *> ownedPrivateAllocations;
@@ -327,6 +330,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool containsStatelessUncachedResource = false;
     bool performMemoryPrefetch = false;
     bool frontEndStateTracking = false;
+    bool dcFlushSupport = false;
     bool systolicModeSupport = false;
     bool pipelineSelectStateTracking = false;
     bool stateComputeModeTracking = false;

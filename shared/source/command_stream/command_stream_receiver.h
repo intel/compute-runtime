@@ -372,6 +372,14 @@ class CommandStreamReceiver {
         this->numClients--;
     }
 
+    bool getDcFlushSupport() const {
+        return dcFlushSupport;
+    }
+
+    bool getDcFlushRequired(bool externalCondition) const {
+        return externalCondition ? dcFlushSupport : false;
+    }
+
   protected:
     void cleanupResources();
     void printDeviceIndex();
@@ -489,6 +497,7 @@ class CommandStreamReceiver {
     bool useGpuIdleImplicitFlush = false;
     bool lastSentUseGlobalAtomics = false;
     bool useNotifyEnableForPostSync = false;
+    bool dcFlushSupport = false;
 };
 
 typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(bool withAubDump,

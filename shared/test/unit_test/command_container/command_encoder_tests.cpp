@@ -191,3 +191,9 @@ HWTEST2_F(CommandEncoderTests, givenRequiredWorkGroupOrderWhenCallAdjustWalkOrde
     EncodeDispatchKernel<FamilyType>::adjustWalkOrder(walkerCmd, fakeOrder, *defaultHwInfo);
     EXPECT_EQ(0, memcmp(&walkerOnStart, &walkerCmd, sizeof(WALKER_TYPE))); // no change
 }
+
+HWTEST_F(CommandEncoderTests, givenDcFlushNotRequiredWhenGettingDcFlushValueThenReturnValueIsFalse) {
+    constexpr bool requiredFlag = false;
+    bool helperValue = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(requiredFlag, *defaultHwInfo);
+    EXPECT_FALSE(helperValue);
+}

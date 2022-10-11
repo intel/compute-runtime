@@ -131,6 +131,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->flags = flags;
 
     auto &hwInfo = device->getHwInfo();
+    this->dcFlushSupport = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
     this->systolicModeSupport = NEO::PreambleHelper<GfxFamily>::isSystolicModeConfigurable(hwInfo);
     this->stateComputeModeTracking = L0HwHelper::enableStateComputeModeTracking(hwInfo);
     this->frontEndStateTracking = L0HwHelper::enableFrontEndStateTracking(hwInfo);
@@ -417,7 +418,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
 
         if (appendPipeControlWithPostSync) {
             NEO::PipeControlArgs args;
-            args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(!!event->signalScope, hwInfo);
+            args.dcFlushEnable = getDcFlushRequired(!!event->signalScope);
             NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
                 *commandContainer.getCommandStream(),
                 NEO::PostSyncMode::ImmediateData,
@@ -1107,8 +1108,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
                                                isStateless);
         }
 
-        const auto &hwInfo = this->device->getHwInfo();
-        if (NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo)) {
+        if (this->dcFlushSupport) {
             if (flushHost) {
                 NEO::PipeControlArgs args;
                 args.dcFlushEnable = true;
@@ -1795,7 +1795,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(Event *ev
                                                               args, hwInfo);
         } else {
             NEO::PipeControlArgs args;
-            args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(!!event->signalScope, hwInfo);
+            args.dcFlushEnable = getDcFlushRequired(!!event->signalScope);
             if (this->partitionCount > 1) {
                 args.workloadPartitionOffset = true;
                 event->setPacketsInUse(this->partitionCount);
@@ -1963,7 +1963,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     } else {
         NEO::PipeControlArgs args;
         bool applyScope = !!event->signalScope;
-        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(applyScope, hwInfo);
+        args.dcFlushEnable = getDcFlushRequired(applyScope);
         if (this->partitionCount > 1) {
             event->setPacketsInUse(this->partitionCount);
             args.workloadPartitionOffset = true;
@@ -2021,7 +2021,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 
     const auto &hwInfo = this->device->getHwInfo();
 
-    if (NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo)) {
+    if (this->dcFlushSupport) {
         for (uint32_t i = 0; i < numEvents; i++) {
             auto event = Event::fromHandle(phEvent[i]);
             dcFlushRequired |= !!event->waitScope;
@@ -2128,7 +2128,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event,
         } else {
             const auto &hwInfo = this->device->getHwInfo();
             NEO::PipeControlArgs args;
-            args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(!!event->signalScope, hwInfo);
+            args.dcFlushEnable = getDcFlushRequired(!!event->signalScope);
             NEO::MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(args,
                                                                                       hwInfo);
 
@@ -2533,8 +2533,7 @@ void CommandListCoreFamily<gfxCoreFamily>::addFlushRequiredCommand(bool flushOpe
         flushOperationRequired &= !signalEvent->signalScope;
     }
 
-    const auto &hwInfo = this->device->getHwInfo();
-    if (NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(flushOperationRequired, hwInfo)) {
+    if (getDcFlushRequired(flushOperationRequired)) {
         NEO::PipeControlArgs args;
         args.dcFlushEnable = true;
         NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);

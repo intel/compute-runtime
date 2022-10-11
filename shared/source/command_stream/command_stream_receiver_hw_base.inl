@@ -79,6 +79,8 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment
 
     createScratchSpaceController();
     configurePostSyncWriteOffset();
+
+    this->dcFlushSupport = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
 }
 
 template <typename GfxFamily>
@@ -227,7 +229,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
         auto address = getTagAllocation()->getGpuAddress();
 
-        args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(dispatchFlags.dcFlush, hwInfo);
+        args.dcFlushEnable = getDcFlushRequired(dispatchFlags.dcFlush);
         args.notifyEnable = isUsedNotifyEnableForPostSync();
         args.tlbInvalidation |= dispatchFlags.memoryMigrationRequired;
         args.textureCacheInvalidationEnable |= dispatchFlags.textureCacheFlush;
@@ -786,7 +788,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
             }
 
             // make sure we flush DC if needed
-            if (epiloguePipeControlLocation && MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo)) {
+            if (getDcFlushRequired(epiloguePipeControlLocation)) {
                 lastPipeControlArgs.dcFlushEnable = true;
 
                 if (DebugManager.flags.DisableDcFlushInEpilogue.get()) {
@@ -1221,7 +1223,7 @@ void CommandStreamReceiverHw<GfxFamily>::flushPipeControl() {
     const auto &hwInfo = peekHwInfo();
 
     PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
+    args.dcFlushEnable = this->dcFlushSupport;
     args.notifyEnable = isUsedNotifyEnableForPostSync();
     args.workloadPartitionOffset = isMultiTileOperationEnabled();
 

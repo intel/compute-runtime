@@ -143,7 +143,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(Lin
     auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
     bool debuggingEnabled = device.getDebugger() != nullptr;
     PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
+    args.dcFlushEnable = this->dcFlushSupport;
     const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
     std::ignore = isExtendedWARequired;
 
@@ -197,7 +197,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingPostSyncCommandsF
     auto barrierTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(tagNode);
     const auto &hwInfo = peekHwInfo();
     PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
+    args.dcFlushEnable = this->dcFlushSupport;
     if (isMultiTileOperationEnabled()) {
         args.workloadPartitionOffset = true;
         ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(cmdStream,

@@ -63,7 +63,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBefore3dState(Line
     std::ignore = isBasicWARequired;
 
     PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
+    args.dcFlushEnable = this->dcFlushSupport;
 
     if (isExtendedWARequired) {
         DEBUG_BREAK_IF(perDssBackedBuffer == nullptr);

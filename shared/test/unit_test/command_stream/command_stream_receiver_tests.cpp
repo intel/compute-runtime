@@ -2199,3 +2199,12 @@ HWTEST2_F(CommandStreamReceiverHwTest, givenSshHeapNotProvidedWhenFlushTaskPerfo
     itorCmd = find<_3DSTATE_BINDING_TABLE_POOL_ALLOC *>(commands.begin(), commands.end());
     EXPECT_EQ(commands.end(), itorCmd);
 }
+
+HWTEST_F(CommandStreamReceiverHwTest, givenDcFlushFlagSetWhenGettingCsrFlagValueThenCsrValueMatchesHelperValue) {
+    auto &hwInfo = pDevice->getHardwareInfo();
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    bool csrValue = commandStreamReceiver.getDcFlushSupport();
+    bool helperValue = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, hwInfo);
+    EXPECT_EQ(helperValue, csrValue);
+}
