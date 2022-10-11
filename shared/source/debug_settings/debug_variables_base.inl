@@ -436,6 +436,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalEnableDeviceAllocationCache, -1, "Ex
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalH2DCpuCopyThreshold, -1, "Override default treshold (in bytes) for H2D CPU copy.")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalD2HCpuCopyThreshold, -1, "Override default treshold (in bytes) for D2H CPU copy.")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalCopyThroughLock, -1, "Experimentally copy memory through locked ptr. -1: default 0: disable 1: enable ")
+DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalSmallBufferPoolAllocator, -1, "Experimentally enable pool allocator for clCreateBuffer under 4KB.")
 DECLARE_DEBUG_VARIABLE(bool, ExperimentalEnableSourceLevelDebugger, false, "Experimentally enable source level debugger.")
 DECLARE_DEBUG_VARIABLE(bool, ExperimentalEnableL0DebuggerForOpenCL, false, "Experimentally enable debugging OCL with L0 Debug API.")
 DECLARE_DEBUG_VARIABLE(bool, ExperimentalEnableTileAttach, true, "Experimentally enable attaching to tiles (subdevices).")

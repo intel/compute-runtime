@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -7,6 +7,7 @@
 set(IGDRCL_SRCS_tests_mem_obj
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/buffer_pin_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/buffer_pool_alloc_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/buffer_set_arg_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/buffer_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/buffer_bcs_tests.cpp

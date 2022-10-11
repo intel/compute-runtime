@@ -409,12 +409,16 @@ class MockMemoryManagerWithDebuggableOsContext : public MockMemoryManager {
 class MockMemoryManagerWithCapacity : public MockMemoryManager {
   public:
     MockMemoryManagerWithCapacity(NEO::ExecutionEnvironment &executionEnvironment) : MockMemoryManager(executionEnvironment) {}
-    GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
+    GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties, const void *ptr) override {
         if (this->capacity >= properties.size) {
             this->capacity -= properties.size;
-            return MockMemoryManager::allocateGraphicsMemoryWithProperties(properties);
+            return MockMemoryManager::allocateGraphicsMemoryWithProperties(properties, ptr);
         }
         return nullptr;
+    }
+
+    GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
+        return this->allocateGraphicsMemoryWithProperties(properties, nullptr);
     }
 
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override {

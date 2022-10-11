@@ -47,6 +47,7 @@ class MockBuffer : public MockBufferStorage, public Buffer {
     using Buffer::magic;
     using Buffer::offset;
     using Buffer::size;
+    using MemObj::associatedMemObject;
     using MemObj::context;
     using MemObj::isZeroCopy;
     using MemObj::memObjectType;

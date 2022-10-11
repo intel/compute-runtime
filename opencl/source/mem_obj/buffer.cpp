@@ -175,6 +175,58 @@ Buffer *Buffer::create(Context *context,
                   flags, 0, size, hostPtr, errcodeRet);
 }
 
+bool inline copyHostPointer(Buffer *buffer,
+                            size_t size,
+                            void *hostPtr,
+                            GraphicsAllocation *memory,
+                            GraphicsAllocation *mapAllocation,
+                            uint32_t rootDeviceIndex,
+                            bool isCompressionEnabled,
+                            bool implicitScalingEnabled,
+                            cl_int &errcodeRet) {
+    const bool isLocalMemory = !MemoryPoolHelper::isSystemMemoryPool(memory->getMemoryPool());
+    const bool gpuCopyRequired = isCompressionEnabled || isLocalMemory;
+    if (gpuCopyRequired) {
+        auto context = buffer->getContext();
+        auto &device = context->getDevice(0u)->getDevice();
+        auto &hwInfo = device.getHardwareInfo();
+        auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+        bool copyOnCpuAllowed = implicitScalingEnabled == false &&
+                                size <= Buffer::maxBufferSizeForCopyOnCpu &&
+                                isCompressionEnabled == false &&
+                                hwInfoConfig->getLocalMemoryAccessMode(hwInfo) != LocalMemoryAccessMode::CpuAccessDisallowed &&
+                                memory->storageInfo.isLockable;
+        if (DebugManager.flags.CopyHostPtrOnCpu.get() != -1) {
+            copyOnCpuAllowed = DebugManager.flags.CopyHostPtrOnCpu.get() == 1;
+        }
+        if (auto lockedPointer = copyOnCpuAllowed ? device.getMemoryManager()->lockResource(memory) : nullptr) {
+            memcpy_s(ptrOffset(lockedPointer, buffer->getOffset()), size, hostPtr, size);
+            memory->setAubWritable(true, GraphicsAllocation::defaultBank);
+            memory->setTbxWritable(true, GraphicsAllocation::defaultBank);
+            return true;
+        } else {
+            auto blitMemoryToAllocationResult = BlitOperationResult::Unsupported;
+
+            if (hwInfoConfig->isBlitterFullySupported(hwInfo) && isLocalMemory) {
+                blitMemoryToAllocationResult = BlitHelperFunctions::blitMemoryToAllocation(device, memory, buffer->getOffset(), hostPtr, {size, 1, 1});
+            }
+
+            if (blitMemoryToAllocationResult != BlitOperationResult::Success) {
+                auto cmdQ = context->getSpecialQueue(rootDeviceIndex);
+                if (CL_SUCCESS != cmdQ->enqueueWriteBuffer(buffer, CL_TRUE, buffer->getOffset(), size, hostPtr, mapAllocation, 0, nullptr, nullptr)) {
+                    errcodeRet = CL_OUT_OF_RESOURCES;
+                    return false;
+                }
+            }
+            return true;
+        }
+    } else {
+        memcpy_s(ptrOffset(memory->getUnderlyingBuffer(), buffer->getOffset()), size, hostPtr, size);
+        return true;
+    }
+    return false;
+}
+
 Buffer *Buffer::create(Context *context,
                        const MemoryProperties &memoryProperties,
                        cl_mem_flags flags,
@@ -184,6 +236,47 @@ Buffer *Buffer::create(Context *context,
                        cl_int &errcodeRet) {
 
     errcodeRet = CL_SUCCESS;
+    Context::BufferPoolAllocator &bufferPoolAllocator = context->getBufferPoolAllocator();
+    const bool implicitScalingEnabled = ImplicitScalingHelper::isImplicitScalingEnabled(context->getDevice(0u)->getDeviceBitfield(), true);
+    const bool useHostPtr = memoryProperties.flags.useHostPtr;
+    const bool copyHostPtr = memoryProperties.flags.copyHostPtr;
+    if (implicitScalingEnabled == false &&
+        useHostPtr == false &&
+        memoryProperties.flags.forceHostMemory == false) {
+        cl_int poolAllocRet = CL_SUCCESS;
+        auto bufferFromPool = bufferPoolAllocator.allocateBufferFromPool(memoryProperties,
+                                                                         flags,
+                                                                         flagsIntel,
+                                                                         size,
+                                                                         hostPtr,
+                                                                         poolAllocRet);
+        if (CL_SUCCESS == poolAllocRet) {
+            const bool needsCopy = copyHostPtr;
+            if (needsCopy) {
+                for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
+                    auto graphicsAllocation = bufferFromPool->getGraphicsAllocation(rootDeviceIndex);
+                    auto mapAllocation = bufferFromPool->getMapAllocation(rootDeviceIndex);
+                    bool isCompressionEnabled = graphicsAllocation->isCompressionEnabled();
+                    if (copyHostPointer(bufferFromPool,
+                                        size,
+                                        hostPtr,
+                                        graphicsAllocation,
+                                        mapAllocation,
+                                        rootDeviceIndex,
+                                        isCompressionEnabled,
+                                        implicitScalingEnabled,
+                                        poolAllocRet)) {
+                        break;
+                    }
+                }
+            }
+            if (!needsCopy || poolAllocRet == CL_SUCCESS) {
+                return bufferFromPool;
+            } else {
+                clReleaseMemObject(bufferFromPool);
+            }
+        }
+    }
 
     MemoryManager *memoryManager = context->getMemoryManager();
     UNRECOVERABLE_IF(!memoryManager);
@@ -193,9 +286,6 @@ Buffer *Buffer::create(Context *context,
 
     AllocationInfoType allocationInfos;
     allocationInfos.resize(maxRootDeviceIndex + 1ull);
-
-    const bool useHostPtr = memoryProperties.flags.useHostPtr;
-    const bool copyHostPtr = memoryProperties.flags.copyHostPtr;
 
     void *allocationCpuPtr = nullptr;
     bool forceCopyHostPtr = false;
@@ -404,45 +494,15 @@ Buffer *Buffer::create(Context *context,
         pBuffer->setHostPtrMinSize(size);
 
         if (allocationInfo.copyMemoryFromHostPtr && !copyExecuted) {
-            auto isLocalMemory = !MemoryPoolHelper::isSystemMemoryPool(allocationInfo.memory->getMemoryPool());
-            bool gpuCopyRequired = isCompressionEnabled || isLocalMemory;
-
-            if (gpuCopyRequired) {
-                auto &device = pBuffer->getContext()->getDevice(0u)->getDevice();
-                auto &hwInfo = device.getHardwareInfo();
-                auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-                bool copyOnCpuAllowed = false == ImplicitScalingHelper::isImplicitScalingEnabled(device.getDeviceBitfield(), true) &&
-                                        size <= Buffer::maxBufferSizeForCopyOnCpu &&
-                                        !isCompressionEnabled &&
-                                        hwInfoConfig->getLocalMemoryAccessMode(hwInfo) != LocalMemoryAccessMode::CpuAccessDisallowed &&
-                                        allocationInfo.memory->storageInfo.isLockable;
-                if (DebugManager.flags.CopyHostPtrOnCpu.get() != -1) {
-                    copyOnCpuAllowed = DebugManager.flags.CopyHostPtrOnCpu.get() == 1;
-                }
-                if (auto lockedPointer = copyOnCpuAllowed ? device.getMemoryManager()->lockResource(allocationInfo.memory) : nullptr) {
-                    memcpy_s(ptrOffset(lockedPointer, pBuffer->getOffset()), size, hostPtr, size);
-                    allocationInfo.memory->setAubWritable(true, GraphicsAllocation::defaultBank);
-                    allocationInfo.memory->setTbxWritable(true, GraphicsAllocation::defaultBank);
-                    copyExecuted = true;
-                } else {
-                    auto blitMemoryToAllocationResult = BlitOperationResult::Unsupported;
-
-                    if (hwInfoConfig->isBlitterFullySupported(hwInfo) && isLocalMemory) {
-                        blitMemoryToAllocationResult = BlitHelperFunctions::blitMemoryToAllocation(device, allocationInfo.memory, pBuffer->getOffset(), hostPtr, {size, 1, 1});
-                    }
-
-                    if (blitMemoryToAllocationResult != BlitOperationResult::Success) {
-                        auto cmdQ = context->getSpecialQueue(rootDeviceIndex);
-                        if (CL_SUCCESS != cmdQ->enqueueWriteBuffer(pBuffer, CL_TRUE, 0, size, hostPtr, allocationInfo.mapAllocation, 0, nullptr, nullptr)) {
-                            errcodeRet = CL_OUT_OF_RESOURCES;
-                        }
-                    }
-                    copyExecuted = true;
-                }
-            } else {
-                memcpy_s(allocationInfo.memory->getUnderlyingBuffer(), size, hostPtr, size);
-                copyExecuted = true;
-            }
+            copyExecuted = copyHostPointer(pBuffer,
+                                           size,
+                                           hostPtr,
+                                           allocationInfo.memory,
+                                           allocationInfo.mapAllocation,
+                                           rootDeviceIndex,
+                                           isCompressionEnabled,
+                                           implicitScalingEnabled,
+                                           errcodeRet);
         }
     }
 

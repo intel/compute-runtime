@@ -104,6 +104,7 @@ MemObj::~MemObj() {
         }
         if (associatedMemObject) {
             associatedMemObject->decRefInternal();
+            context->getBufferPoolAllocator().tryFreeFromPoolBuffer(associatedMemObject, this->offset, this->size);
         }
         if (!associatedMemObject) {
             releaseAllocatedMapPtr();
@@ -112,7 +113,10 @@ MemObj::~MemObj() {
 
     destructorCallbacks.invoke(this);
 
-    context->decRefInternal();
+    const bool needDecrementContextRefCount = !context->getBufferPoolAllocator().isPoolBuffer(this);
+    if (needDecrementContextRefCount) {
+        context->decRefInternal();
+    }
 }
 
 cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,

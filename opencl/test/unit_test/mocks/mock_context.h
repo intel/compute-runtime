@@ -33,6 +33,7 @@ class MockContext : public Context {
     using Context::rootDeviceIndices;
     using Context::setupContextType;
     using Context::sharingFunctions;
+    using Context::smallBufferPoolAllocator;
     using Context::specialQueues;
     using Context::svmAllocsManager;
 
@@ -51,6 +52,13 @@ class MockContext : public Context {
     void registerSharingWithId(SharingFunctions *sharing, SharingType sharingId);
     std::unique_ptr<AsyncEventsHandler> &getAsyncEventsHandlerUniquePtr();
     void initializeWithDevices(const ClDeviceVector &devices, bool noSpecialQueue);
+
+    class MockBufferPoolAllocator : public BufferPoolAllocator {
+      public:
+        using BufferPoolAllocator::chunkAllocator;
+        using BufferPoolAllocator::isAggregatedSmallBuffersEnabled;
+        using BufferPoolAllocator::mainStorage;
+    };
 
   private:
     ClDevice *pDevice = nullptr;

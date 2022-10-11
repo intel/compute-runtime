@@ -10,6 +10,7 @@
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/unified_memory/unified_memory.h"
+#include "shared/source/utilities/heap_allocator.h"
 
 #include "opencl/source/cl_device/cl_device_vector.h"
 #include "opencl/source/context/context_type.h"
@@ -17,6 +18,7 @@
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/destructor_callbacks.h"
+#include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/map_operations_handler.h"
 
 #include <map>
@@ -40,6 +42,42 @@ struct OpenCLObjectMapper<_cl_context> {
 
 class Context : public BaseObject<_cl_context> {
   public:
+    class BufferPoolAllocator {
+      public:
+        static constexpr auto aggregatedSmallBuffersPoolSize = 64 * KB;
+        static constexpr auto smallBufferThreshold = 4 * KB;
+        static constexpr auto chunkAlignment = 256u;
+        static constexpr auto startingOffset = chunkAlignment;
+
+        static_assert(aggregatedSmallBuffersPoolSize > smallBufferThreshold, "Largest allowed buffer needs to fit in pool");
+        Buffer *allocateBufferFromPool(const MemoryProperties &memoryProperties,
+                                       cl_mem_flags flags,
+                                       cl_mem_flags_intel flagsIntel,
+                                       size_t size,
+                                       void *hostPtr,
+                                       cl_int &errcodeRet);
+        void tryFreeFromPoolBuffer(MemObj *possiblePoolBuffer, size_t offset, size_t size);
+        void releaseSmallBufferPool();
+
+        inline bool isAggregatedSmallBuffersEnabled() const {
+            constexpr bool enable = false;
+            if (DebugManager.flags.ExperimentalSmallBufferPoolAllocator.get() != -1) {
+                return !!DebugManager.flags.ExperimentalSmallBufferPoolAllocator.get();
+            }
+            return enable;
+        }
+        void initAggregatedSmallBuffers(Context *context);
+
+        bool isPoolBuffer(const MemObj *buffer) const;
+
+      protected:
+        inline bool isSizeWithinThreshold(size_t size) const {
+            return BufferPoolAllocator::smallBufferThreshold >= size;
+        }
+        Buffer *mainStorage{nullptr};
+        std::unique_ptr<HeapAllocator> chunkAllocator;
+        std::mutex mutex;
+    };
     static const cl_ulong objectMagic = 0xA4234321DC002130LL;
 
     bool createImpl(const cl_context_properties *properties,
@@ -58,6 +96,11 @@ class Context : public BaseObject<_cl_context> {
         if (!pContext->createImpl(properties, devices, funcNotify, data, errcodeRet)) {
             delete pContext;
             pContext = nullptr;
+        } else {
+            auto &bufferPoolAllocator = pContext->getBufferPoolAllocator();
+            if (bufferPoolAllocator.isAggregatedSmallBuffersEnabled()) {
+                bufferPoolAllocator.initAggregatedSmallBuffers(pContext);
+            }
         }
         gtpinNotifyContextCreate(pContext);
         return pContext;
@@ -176,6 +219,9 @@ class Context : public BaseObject<_cl_context> {
     const std::map<uint32_t, DeviceBitfield> &getDeviceBitfields() const { return deviceBitfields; };
 
     static Platform *getPlatformFromProperties(const cl_context_properties *properties, cl_int &errcode);
+    BufferPoolAllocator &getBufferPoolAllocator() {
+        return this->smallBufferPoolAllocator;
+    }
 
   protected:
     struct BuiltInKernel {
@@ -211,6 +257,7 @@ class Context : public BaseObject<_cl_context> {
     MapOperationsStorage mapOperationsStorage = {};
     StackVec<CommandQueue *, 1> specialQueues;
     DriverDiagnostics *driverDiagnostics = nullptr;
+    BufferPoolAllocator smallBufferPoolAllocator;
 
     uint32_t maxRootDeviceIndex = std::numeric_limits<uint32_t>::max();
     cl_bool preferD3dSharedResources = 0u;

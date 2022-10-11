@@ -45,6 +45,10 @@ Context::Context(
 Context::~Context() {
     gtpinNotifyContextDestroy((cl_context)this);
 
+    if (smallBufferPoolAllocator.isAggregatedSmallBuffersEnabled()) {
+        smallBufferPoolAllocator.releaseSmallBufferPool();
+    }
+
     delete[] properties;
 
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < specialQueues.size(); rootDeviceIndex++) {
@@ -467,4 +471,65 @@ Platform *Context::getPlatformFromProperties(const cl_context_properties *proper
 bool Context::isSingleDeviceContext() {
     return devices[0]->getNumGenericSubDevices() == 0 && getNumDevices() == 1;
 }
+
+void Context::BufferPoolAllocator::initAggregatedSmallBuffers(Context *context) {
+    static constexpr cl_mem_flags flags{};
+    [[maybe_unused]] cl_int errcodeRet{};
+    this->mainStorage = Buffer::create(context,
+                                       flags,
+                                       BufferPoolAllocator::aggregatedSmallBuffersPoolSize,
+                                       nullptr,
+                                       errcodeRet);
+    if (this->mainStorage) {
+        this->chunkAllocator.reset(new HeapAllocator(BufferPoolAllocator::startingOffset,
+                                                     BufferPoolAllocator::aggregatedSmallBuffersPoolSize,
+                                                     BufferPoolAllocator::chunkAlignment));
+        context->decRefInternal();
+    }
+}
+
+Buffer *Context::BufferPoolAllocator::allocateBufferFromPool(const MemoryProperties &memoryProperties,
+                                                             cl_mem_flags flags,
+                                                             cl_mem_flags_intel flagsIntel,
+                                                             size_t size,
+                                                             void *hostPtr,
+                                                             cl_int &errcodeRet) {
+    errcodeRet = CL_MEM_OBJECT_ALLOCATION_FAILURE;
+    if (this->isAggregatedSmallBuffersEnabled() &&
+        this->isSizeWithinThreshold(size) &&
+        this->mainStorage) {
+        auto lock = std::unique_lock<std::mutex>(this->mutex);
+        cl_buffer_region bufferRegion{};
+        bufferRegion.origin = static_cast<size_t>(this->chunkAllocator->allocate(size));
+        if (bufferRegion.origin == 0) {
+            return nullptr;
+        }
+        bufferRegion.origin -= BufferPoolAllocator::startingOffset;
+        bufferRegion.size = size;
+        auto bufferFromPool = this->mainStorage->createSubBuffer(flags, flagsIntel, &bufferRegion, errcodeRet);
+        bufferFromPool->createFunction = this->mainStorage->createFunction;
+        return bufferFromPool;
+    }
+    return nullptr;
+}
+
+bool Context::BufferPoolAllocator::isPoolBuffer(const MemObj *buffer) const {
+    return this->mainStorage == buffer;
+}
+
+void Context::BufferPoolAllocator::tryFreeFromPoolBuffer(MemObj *possiblePoolBuffer, size_t offset, size_t size) {
+    if (this->isPoolBuffer(possiblePoolBuffer)) {
+        auto lock = std::unique_lock<std::mutex>(this->mutex);
+        DEBUG_BREAK_IF(!this->mainStorage);
+        auto internalBufferAddress = offset + BufferPoolAllocator::startingOffset;
+        this->chunkAllocator->free(internalBufferAddress, size);
+    }
+}
+
+void Context::BufferPoolAllocator::releaseSmallBufferPool() {
+    DEBUG_BREAK_IF(!this->mainStorage);
+    delete this->mainStorage;
+    this->mainStorage = nullptr;
+}
+
 } // namespace NEO

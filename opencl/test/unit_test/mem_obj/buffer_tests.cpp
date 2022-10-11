@@ -1040,7 +1040,7 @@ TEST_P(ValidHostPtr, WhenBufferIsCreatedThenItIsNotResident) {
     EXPECT_FALSE(buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex())->isResident(pDevice->getDefaultEngine().osContext->getContextId()));
 }
 
-TEST_P(ValidHostPtr, WhenBufferIsCreatedThenAddressMatechesOnlyForHostPtr) {
+TEST_P(ValidHostPtr, WhenBufferIsCreatedThenAddressMatchesOnlyForHostPtr) {
     buffer = createBuffer();
     ASSERT_NE(nullptr, buffer);
 
