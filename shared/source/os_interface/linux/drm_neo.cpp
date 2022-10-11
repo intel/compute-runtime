@@ -1055,6 +1055,9 @@ bool Drm::completionFenceSupport() {
         }
 
         completionFenceSupported = support;
+        if (DebugManager.flags.PrintCompletionFenceUsage.get()) {
+            std::cout << "Completion fence supported: " << completionFenceSupported << std::endl;
+        }
     });
     return completionFenceSupported;
 }
@@ -1581,7 +1584,20 @@ void Drm::waitOnUserFences(const OsContextLinux &osContext, uint64_t address, ui
         if (*reinterpret_cast<uint32_t *>(completionFenceCpuAddress) < value) {
             constexpr int64_t timeout = -1;
             constexpr uint16_t flags = 0;
-            waitUserFence(drmContextIds[drmIterator], completionFenceCpuAddress, value, Drm::ValueWidth::U32, timeout, flags);
+            int retVal = waitUserFence(drmContextIds[drmIterator], completionFenceCpuAddress, value, Drm::ValueWidth::U32, timeout, flags);
+
+            if (DebugManager.flags.PrintCompletionFenceUsage.get()) {
+                std::cout << "Completion fence waited."
+                          << " Status: " << retVal
+                          << ", CPU address: " << std::hex << completionFenceCpuAddress << std::dec
+                          << ", current value: " << *reinterpret_cast<uint32_t *>(completionFenceCpuAddress)
+                          << ", wait value: " << value << std::endl;
+            }
+        } else if (DebugManager.flags.PrintCompletionFenceUsage.get()) {
+            std::cout << "Completion fence already completed."
+                      << " CPU address: " << std::hex << completionFenceCpuAddress << std::dec
+                      << ", current value: " << *reinterpret_cast<uint32_t *>(completionFenceCpuAddress)
+                      << ", wait value: " << value << std::endl;
         }
         completionFenceCpuAddress = ptrOffset(completionFenceCpuAddress, postSyncOffset);
     }

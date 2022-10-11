@@ -55,6 +55,13 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(const DirectSubm
             if (drm.completionFenceSupport()) {
                 this->completionFenceSupported = true;
             }
+
+            if (DebugManager.flags.PrintCompletionFenceUsage.get()) {
+                std::cout << "Completion fence for DirectSubmission:"
+                          << " GPU address: " << std::hex << (this->completionFenceAllocation->getGpuAddress() + Drm::completionFenceOffset)
+                          << ", CPU address: " << (castToUint64(this->completionFenceAllocation->getUnderlyingBuffer()) + Drm::completionFenceOffset)
+                          << std::dec << std::endl;
+            }
         }
     }
 }

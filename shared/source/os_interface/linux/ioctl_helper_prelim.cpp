@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <cerrno>
 #include <cstring>
+#include <iostream>
 #include <new>
 #include <sys/ioctl.h>
 
@@ -248,6 +249,12 @@ int IoctlHelperPrelim20::execBuffer(ExecBuffer *execBuffer, uint64_t completionG
         drmExecBuffer.flags |= I915_EXEC_USE_EXTENSIONS;
         drmExecBuffer.num_cliprects = 0;
         drmExecBuffer.cliprects_ptr = castToUint64(&fenceObject);
+
+        if (DebugManager.flags.PrintCompletionFenceUsage.get()) {
+            std::cout << "Completion fence submitted."
+                      << " GPU address: " << std::hex << completionGpuAddress << std::dec
+                      << ", value: " << counterValue << std::endl;
+        }
     }
 
     return IoctlHelper::ioctl(DrmIoctl::GemExecbuffer2, execBuffer);
