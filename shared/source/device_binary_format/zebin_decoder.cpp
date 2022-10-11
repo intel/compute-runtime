@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,6 +25,10 @@
 #include <tuple>
 
 namespace NEO {
+
+void setKernelMiscInfoPosition(ConstStringRef metadata, NEO::ProgramInfo &dst) {
+    dst.kernelMiscInfoPos = metadata.str().find(Elf::ZebinKernelMetadata::Tags::kernelMiscInfo.str());
+}
 
 template <>
 bool isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(const ArrayRef<const uint8_t> binary) {
@@ -1316,7 +1320,6 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<n
 
     if (!payloadArguments.empty()) {
         kernelDescriptor.payloadMappings.explicitArgs.resize(maxArgumentIndex + 1);
-        kernelDescriptor.explicitArgsExtendedMetadata.resize(maxArgumentIndex + 1);
         kernelDescriptor.kernelAttributes.numArgsToPatch = maxArgumentIndex + 1;
     }
 
@@ -1549,6 +1552,112 @@ NEO::DecodeError populateKernelSourceAttributes(NEO::KernelDescriptor &dst, NEO:
     return DecodeError::Success;
 }
 
+NEO::DecodeError readKernelMiscArgumentInfos(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node, KernelMiscArgInfos &kernelMiscArgInfosVec, std::string &outErrReason, std::string &outWarning) {
+    bool validArgInfo = true;
+    for (const auto &argInfoMemberNode : parser.createChildrenRange(node)) {
+        kernelMiscArgInfosVec.resize(kernelMiscArgInfosVec.size() + 1);
+        auto &metadataExtended = *kernelMiscArgInfosVec.rbegin();
+        for (const auto &singleArgInfoMember : parser.createChildrenRange(argInfoMemberNode)) {
+            auto key = parser.readKey(singleArgInfoMember);
+            if (key == Elf::ZebinKernelMetadata::Tags::KernelMiscInfo::ArgsInfo::name) {
+                validArgInfo &= readZeInfoValueChecked(parser, singleArgInfoMember, metadataExtended.argName, Elf::ZebinKernelMetadata::Tags::kernelMiscInfo, outErrReason);
+            } else if (key == Elf::ZebinKernelMetadata::Tags::KernelMiscInfo::ArgsInfo::accessQualifier) {
+                validArgInfo &= readZeInfoValueChecked(parser, singleArgInfoMember, metadataExtended.accessQualifier, Elf::ZebinKernelMetadata::Tags::kernelMiscInfo, outErrReason);
+            } else if (key == Elf::ZebinKernelMetadata::Tags::KernelMiscInfo::ArgsInfo::addressQualifier) {
+                validArgInfo &= readZeInfoValueChecked(parser, singleArgInfoMember, metadataExtended.addressQualifier, Elf::ZebinKernelMetadata::Tags::kernelMiscInfo, outErrReason);
+            } else if (key == Elf::ZebinKernelMetadata::Tags::KernelMiscInfo::ArgsInfo::index) {
+                validArgInfo &= parser.readValueChecked(singleArgInfoMember, metadataExtended.index);
+            } else if (key == Elf::ZebinKernelMetadata::Tags::KernelMiscInfo::ArgsInfo::typeName) {
+                validArgInfo &= readZeInfoValueChecked(parser, singleArgInfoMember, metadataExtended.typeName, Elf::ZebinKernelMetadata::Tags::kernelMiscInfo, outErrReason);
+            } else if (key == Elf::ZebinKernelMetadata::Tags::KernelMiscInfo::ArgsInfo::typeQualifiers) {
+                validArgInfo &= readZeInfoValueChecked(parser, singleArgInfoMember, metadataExtended.typeQualifiers, Elf::ZebinKernelMetadata::Tags::kernelMiscInfo, outErrReason);
+            } else {
+                outWarning.append("DeviceBinaryFormat::Zebin : KernelMiscInfo : Unrecognized argsInfo member " + key.str() + "\n");
+            }
+        }
+    }
+    return validArgInfo ? DecodeError::Success : DecodeError::InvalidBinary;
+}
+
+void populateKernelMiscInfo(KernelDescriptor &dst, KernelMiscArgInfos &kernelMiscArgInfosVec, std::string &outErrReason, std::string &outWarning) {
+    auto populateIfNotEmpty = [](std::string &src, std::string &dst, ConstStringRef context, std::string &warnings) {
+        if (false == src.empty()) {
+            dst = std::move(src);
+        } else {
+            warnings.append("DeviceBinaryFormat::Zebin : KernelMiscInfo : ArgInfo member \"" + context.str() + "\" missing. Ignoring.\n");
+        }
+    };
+
+    dst.explicitArgsExtendedMetadata.resize(kernelMiscArgInfosVec.size());
+    for (auto &srcMetadata : kernelMiscArgInfosVec) {
+        ArgTypeMetadataExtended dstMetadata;
+        populateIfNotEmpty(srcMetadata.argName, dstMetadata.argName, Elf::ZebinKernelMetadata::Tags::KernelMiscInfo::ArgsInfo::name, outWarning);
+        populateIfNotEmpty(srcMetadata.accessQualifier, dstMetadata.accessQualifier, Elf::ZebinKernelMetadata::Tags::KernelMiscInfo::ArgsInfo::accessQualifier, outWarning);
+        populateIfNotEmpty(srcMetadata.addressQualifier, dstMetadata.addressQualifier, Elf::ZebinKernelMetadata::Tags::KernelMiscInfo::ArgsInfo::addressQualifier, outWarning);
+        populateIfNotEmpty(srcMetadata.typeName, dstMetadata.type, Elf::ZebinKernelMetadata::Tags::KernelMiscInfo::ArgsInfo::typeName, outWarning);
+        populateIfNotEmpty(srcMetadata.typeQualifiers, dstMetadata.typeQualifiers, Elf::ZebinKernelMetadata::Tags::KernelMiscInfo::ArgsInfo::typeQualifiers, outWarning);
+
+        dst.explicitArgsExtendedMetadata.at(srcMetadata.index) = std::move(dstMetadata);
+    }
+}
+
+NEO::DecodeError decodeAndPopulateKernelMiscInfo(ProgramInfo &dst, ConstStringRef metadataString, std::string &outErrReason, std::string &outWarning) {
+    if (std::string::npos == dst.kernelMiscInfoPos) {
+        outErrReason.append("DeviceBinaryFormat::Zebin : Position of " + Elf::ZebinKernelMetadata::Tags::kernelMiscInfo.str() + " not set - may be missing in zeInfo.\n");
+        return DecodeError::InvalidBinary;
+    }
+    ConstStringRef kernelMiscInfoString(reinterpret_cast<const char *>(metadataString.begin() + dst.kernelMiscInfoPos), metadataString.size() - dst.kernelMiscInfoPos);
+    NEO::KernelInfo *kernelInfo = nullptr;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(kernelMiscInfoString, outErrReason, outWarning);
+    if (false == parseSuccess) {
+        return DecodeError::InvalidBinary;
+    }
+
+    auto kernelMiscInfoSectionNode = parser.createChildrenRange(*parser.getRoot());
+    auto validMetadata = true;
+    using KernelArgsMiscInfoVec = std::vector<std::pair<std::string, KernelMiscArgInfos>>;
+    KernelArgsMiscInfoVec kernelArgsMiscInfoVec;
+
+    for (const auto &kernelMiscInfoNode : parser.createChildrenRange(*kernelMiscInfoSectionNode.begin())) {
+        std::string kernelName{};
+        KernelMiscArgInfos miscArgInfosVec;
+        for (const auto &kernelMiscInfoNodeMetadata : parser.createChildrenRange(kernelMiscInfoNode)) {
+            auto key = parser.readKey(kernelMiscInfoNodeMetadata);
+            if (key == Elf::ZebinKernelMetadata::Tags::KernelMiscInfo::name) {
+                validMetadata &= readZeInfoValueChecked(parser, kernelMiscInfoNodeMetadata, kernelName, Elf::ZebinKernelMetadata::Tags::kernelMiscInfo, outErrReason);
+            } else if (key == Elf::ZebinKernelMetadata::Tags::KernelMiscInfo::argsInfo) {
+                validMetadata &= (DecodeError::Success == readKernelMiscArgumentInfos(parser, kernelMiscInfoNodeMetadata, miscArgInfosVec, outErrReason, outWarning));
+            } else {
+                outWarning.append("DeviceBinaryFormat::Zebin : Unrecognized entry: " + key.str() + " in " + Elf::ZebinKernelMetadata::Tags::kernelMiscInfo.str() + " zeInfo's section.\n");
+            }
+        }
+        if (kernelName.empty()) {
+            outErrReason.append("DeviceBinaryFormat::Zebin : Error : Missing kernel name in " + Elf::ZebinKernelMetadata::Tags::kernelMiscInfo.str() + " section.\n");
+            validMetadata = false;
+        }
+        kernelArgsMiscInfoVec.emplace_back(std::make_pair(std::move(kernelName), miscArgInfosVec));
+    }
+    if (false == validMetadata) {
+        return DecodeError::InvalidBinary;
+    }
+    for (auto &[kName, miscInfos] : kernelArgsMiscInfoVec) {
+        for (auto dstKernelInfo : dst.kernelInfos) {
+            if (dstKernelInfo->kernelDescriptor.kernelMetadata.kernelName == kName) {
+                kernelInfo = dstKernelInfo;
+                break;
+            }
+        }
+        if (nullptr == kernelInfo) {
+            outErrReason.append("DeviceBinaryFormat::Zebin : Error : Cannot found kernel info for kernel " + kName + ".\n");
+            return DecodeError::InvalidBinary;
+        }
+        populateKernelMiscInfo(kernelInfo->kernelDescriptor, miscInfos, outErrReason, outWarning);
+    }
+    return DecodeError::Success;
+}
+
 template NEO::DecodeError decodeZebin<Elf::EI_CLASS_32>(ProgramInfo &dst, NEO::Elf::Elf<Elf::EI_CLASS_32> &elf, std::string &outErrReason, std::string &outWarning);
 template NEO::DecodeError decodeZebin<Elf::EI_CLASS_64>(ProgramInfo &dst, NEO::Elf::Elf<Elf::EI_CLASS_64> &elf, std::string &outErrReason, std::string &outWarning);
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
@@ -1589,7 +1698,13 @@ NEO::DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std:
     }
 
     auto metadataSectionData = zebinSections.zeInfoSections[0]->data;
+
     ConstStringRef metadataString(reinterpret_cast<const char *>(metadataSectionData.begin()), metadataSectionData.size());
+    setKernelMiscInfoPosition(metadataString, dst);
+    if (std::string::npos != dst.kernelMiscInfoPos) {
+        metadataString = metadataString.substr(static_cast<size_t>(0), dst.kernelMiscInfoPos);
+    }
+
     NEO::Yaml::YamlParser yamlParser;
     bool parseSuccess = yamlParser.parse(metadataString, outErrReason, outWarning);
     if (false == parseSuccess) {

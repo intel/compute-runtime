@@ -146,4 +146,13 @@ NEO::DecodeError populateKernelSourceAttributes(NEO::KernelDescriptor &dst, NEO:
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
 NEO::DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std::string &outErrReason, std::string &outWarning);
 
+void setKernelMiscInfoPosition(ConstStringRef metadata, NEO::ProgramInfo &dst);
+
+using KernelMiscArgInfos = StackVec<NEO::Elf::ZebinKernelMetadata::Types::Miscellaneous::KernelArgMiscInfoT, 32>;
+NEO::DecodeError readKernelMiscArgumentInfos(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node, KernelMiscArgInfos &kernelMiscArgInfosVec, std::string &outErrReason, std::string &outWarning);
+
+void populateKernelMiscInfo(KernelDescriptor &dst, KernelMiscArgInfos &kernelMiscArgInfosVec, std::string &outErrReason, std::string &outWarning);
+
+NEO::DecodeError decodeAndPopulateKernelMiscInfo(ProgramInfo &dst, ConstStringRef metadataString, std::string &outErrReason, std::string &outWarning);
+
 } // namespace NEO

@@ -121,6 +121,7 @@ constexpr ConstStringRef kernels("kernels");
 constexpr ConstStringRef version("version");
 constexpr ConstStringRef globalHostAccessTable("global_host_access_table");
 constexpr ConstStringRef functions("functions");
+constexpr ConstStringRef kernelMiscInfo("kernels_misc_info");
 
 namespace Kernel {
 constexpr ConstStringRef attributes("user_attributes");
@@ -364,6 +365,19 @@ constexpr ConstStringRef name("name");
 constexpr ConstStringRef executionEnv("execution_env");
 using namespace Kernel::ExecutionEnv;
 } // namespace Function
+
+namespace KernelMiscInfo {
+constexpr ConstStringRef name("name");
+constexpr ConstStringRef argsInfo("args_info");
+namespace ArgsInfo {
+constexpr ConstStringRef index("index");
+constexpr ConstStringRef name("name");
+constexpr ConstStringRef addressQualifier("address_qualifier");
+constexpr ConstStringRef accessQualifier("access_qualifier");
+constexpr ConstStringRef typeName("type_name");
+constexpr ConstStringRef typeQualifiers("type_qualifiers");
+} // namespace ArgsInfo
+} // namespace KernelMiscInfo
 
 } // namespace Tags
 
@@ -772,6 +786,20 @@ namespace ExecutionEnv {
 using namespace Kernel::ExecutionEnv;
 }
 } // namespace Function
+
+namespace Miscellaneous {
+using ArgIndexT = uint32_t;
+struct KernelArgMiscInfoT {
+    ArgIndexT index;
+    std::string kernelName;
+    std::string argName;
+    std::string accessQualifier;
+    std::string addressQualifier;
+    std::string typeName;
+    std::string typeQualifiers;
+};
+} // namespace Miscellaneous
+
 } // namespace Types
 
 } // namespace ZebinKernelMetadata
