@@ -308,6 +308,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                           !container.getFlushTaskUsedForImmediate(),
                                                           !args.isKernelDispatchedFromImmediateCmdList,
                                                           false,
+                                                          args.dcFlushEnable,
                                                           workPartitionAllocationGpuVa,
                                                           hwInfo);
     } else {

@@ -51,6 +51,7 @@ struct ImplicitScalingDispatch {
                                  bool useSecondaryBatchBuffer,
                                  bool apiSelfCleanup,
                                  bool usesImages,
+                                 bool dcFlush,
                                  uint64_t workPartitionAllocationGpuVa,
                                  const HardwareInfo &hwInfo);
 

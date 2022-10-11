@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,6 +29,7 @@ struct WalkerPartitionArgs {
     bool emitPipeControlStall = false;
     bool preferredStaticPartitioning = false;
     bool usePostSync = false;
+    bool dcFlushEnable = false;
 };
 
 constexpr uint32_t wparidCCSOffset = 0x221C;

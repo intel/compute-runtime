@@ -573,9 +573,9 @@ void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
     }
 
     if (args.emitPipeControlStall) {
-        NEO::PipeControlArgs args;
-        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
-        programPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, args);
+        NEO::PipeControlArgs pipeControlArgs;
+        pipeControlArgs.dcFlushEnable = args.dcFlushEnable;
+        programPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, pipeControlArgs);
     }
 
     if (args.semaphoreProgrammingRequired) {
@@ -703,9 +703,9 @@ void constructStaticallyPartitionedCommandBuffer(void *cpuPointer,
     }
 
     if (args.emitPipeControlStall) {
-        NEO::PipeControlArgs args;
-        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
-        programPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, args);
+        NEO::PipeControlArgs pipeControlArgs;
+        pipeControlArgs.dcFlushEnable = args.dcFlushEnable;
+        programPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, pipeControlArgs);
     }
 
     // Synchronize tiles after walker

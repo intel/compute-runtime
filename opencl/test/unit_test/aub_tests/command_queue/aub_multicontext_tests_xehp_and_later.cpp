@@ -452,6 +452,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, StaticWalkerPartitionFourTilesTests, givenPreWalker
     testArgs.emitSelfCleanup = false;
     testArgs.staticPartitioning = true;
     testArgs.workPartitionAllocationGpuVa = rootCsr->getWorkPartitionAllocationGpuAddress();
+    testArgs.dcFlushEnable = rootCsr->getDcFlushSupport();
     WalkerPartition::constructStaticallyPartitionedCommandBuffer<FamilyType>(
         taskStreamCpu,
         taskStreamGpu,
@@ -495,7 +496,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, StaticWalkerPartitionFourTilesTests, whenNoPreWalke
     testArgs.emitSelfCleanup = false;
     testArgs.staticPartitioning = true;
     testArgs.workPartitionAllocationGpuVa = rootCsr->getWorkPartitionAllocationGpuAddress();
-
+    testArgs.dcFlushEnable = rootCsr->getDcFlushSupport();
     WalkerPartition::constructStaticallyPartitionedCommandBuffer<FamilyType>(
         taskStreamCpu,
         taskStreamGpu,
