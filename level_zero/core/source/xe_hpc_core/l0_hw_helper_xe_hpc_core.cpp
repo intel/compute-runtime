@@ -47,6 +47,11 @@ bool L0HwHelperHw<Family>::platformSupportsPipelineSelectTracking(const NEO::Har
     return true;
 }
 
+template <>
+bool L0HwHelperHw<Family>::platformSupportsFrontEndTracking(const NEO::HardwareInfo &hwInfo) const {
+    return true;
+}
+
 template class L0HwHelperHw<Family>;
 
 } // namespace L0

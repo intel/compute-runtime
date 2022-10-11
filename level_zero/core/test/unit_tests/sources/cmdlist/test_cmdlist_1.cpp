@@ -2009,13 +2009,15 @@ TEST_F(CommandListCreate, givenCreatedCommandListWhenGettingTrackingFlagsThenDef
     ze_result_t returnValue;
     std::unique_ptr<L0::ult::CommandList> commandList(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     ASSERT_NE(nullptr, commandList.get());
-    EXPECT_FALSE(commandList->frontEndStateTracking);
 
     bool expectedStateComputeModeTracking = l0HwHelper.platformSupportsStateComputeModeTracking(hwInfo);
     EXPECT_EQ(expectedStateComputeModeTracking, commandList->stateComputeModeTracking);
 
     bool expectedPipelineSelectTracking = l0HwHelper.platformSupportsPipelineSelectTracking(hwInfo);
     EXPECT_EQ(expectedPipelineSelectTracking, commandList->pipelineSelectStateTracking);
+
+    bool expectedFrontEndTracking = l0HwHelper.platformSupportsFrontEndTracking(hwInfo);
+    EXPECT_EQ(expectedFrontEndTracking, commandList->frontEndStateTracking);
 }
 
 } // namespace ult

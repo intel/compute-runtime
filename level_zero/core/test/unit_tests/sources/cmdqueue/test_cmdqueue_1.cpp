@@ -284,7 +284,7 @@ HWTEST_F(CommandQueueCreate, given100CmdListsWhenExecutingThenCommandStreamIsNot
     commandQueue->destroy();
 }
 
-HWTEST_F(CommandQueueCreate, givenLogicalStateHelperWhenExecutingThenMergeStates) {
+HWTEST2_F(CommandQueueCreate, givenLogicalStateHelperWhenExecutingThenMergeStates, IsAtMostGen12lp) {
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
 
@@ -322,7 +322,7 @@ HWTEST_F(CommandQueueCreate, givenLogicalStateHelperWhenExecutingThenMergeStates
     commandQueue->destroy();
 }
 
-HWTEST_F(CommandQueueCreate, givenLogicalStateHelperAndImmediateCmdListWhenExecutingThenMergeStates) {
+HWTEST2_F(CommandQueueCreate, givenLogicalStateHelperAndImmediateCmdListWhenExecutingThenMergeStates, IsAtMostGen12lp) {
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
 
@@ -1814,13 +1814,15 @@ TEST_F(CommandQueueCreate, givenCreatedCommandQueueWhenGettingTrackingFlagsThenD
 
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
     ASSERT_NE(nullptr, commandQueue);
-    EXPECT_FALSE(commandQueue->frontEndStateTracking);
 
     bool expectedStateComputeModeTracking = l0HwHelper.platformSupportsStateComputeModeTracking(hwInfo);
     EXPECT_EQ(expectedStateComputeModeTracking, commandQueue->stateComputeModeTracking);
 
     bool expectedPipelineSelectTracking = l0HwHelper.platformSupportsPipelineSelectTracking(hwInfo);
     EXPECT_EQ(expectedPipelineSelectTracking, commandQueue->pipelineSelectStateTracking);
+
+    bool expectedFrontEndTracking = l0HwHelper.platformSupportsFrontEndTracking(hwInfo);
+    EXPECT_EQ(expectedFrontEndTracking, commandQueue->frontEndStateTracking);
 
     commandQueue->destroy();
 }

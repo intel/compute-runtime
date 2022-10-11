@@ -32,6 +32,11 @@ bool L0HwHelperHw<Family>::platformSupportsPipelineSelectTracking(const NEO::Har
     return true;
 }
 
+template <>
+bool L0HwHelperHw<Family>::platformSupportsFrontEndTracking(const NEO::HardwareInfo &hwInfo) const {
+    return true;
+}
+
 // clang-format off
 #include "level_zero/core/source/hw_helpers/l0_hw_helper_tgllp_plus.inl"
 // clang-format on

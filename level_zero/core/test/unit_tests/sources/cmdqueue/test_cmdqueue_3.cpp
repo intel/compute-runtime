@@ -742,7 +742,7 @@ HWTEST2_F(CommandQueueIndirectAllocations, givenCtxWithIndirectAccessWhenExecuti
     ctx.hasIndirectAccess = true;
     ctx.isDispatchTaskCountPostSyncRequired = false;
     auto cmdListHandle = commandList.get()->toHandle();
-    commandQueue->executeCommandListsRegular(ctx, 0, &cmdListHandle, nullptr);
+    commandQueue->executeCommandListsRegular(ctx, 1, &cmdListHandle, nullptr);
     EXPECT_EQ(commandQueue->handleIndirectAllocationResidencyCalledTimes, 1u);
     commandQueue->destroy();
 }
@@ -765,7 +765,7 @@ HWTEST2_F(CommandQueueIndirectAllocations, givenCtxWitNohIndirectAccessWhenExecu
     ctx.hasIndirectAccess = false;
     ctx.isDispatchTaskCountPostSyncRequired = false;
     auto cmdListHandle = commandList.get()->toHandle();
-    commandQueue->executeCommandListsRegular(ctx, 0, &cmdListHandle, nullptr);
+    commandQueue->executeCommandListsRegular(ctx, 1, &cmdListHandle, nullptr);
     EXPECT_EQ(commandQueue->handleIndirectAllocationResidencyCalledTimes, 0u);
     commandQueue->destroy();
 }

@@ -37,9 +37,9 @@ XEHPTEST_F(L0HwHelperTestXeHp, GivenXeHpWhenCheckingL0HelperForStateComputeModeT
     EXPECT_FALSE(L0::L0HwHelperHw<FamilyType>::get().platformSupportsStateComputeModeTracking(hwInfo));
 }
 
-XEHPTEST_F(L0HwHelperTestXeHp, GivenXeHpWhenCheckingL0HelperForFrontEndTrackingSupportThenReturnFalse) {
+XEHPTEST_F(L0HwHelperTestXeHp, GivenXeHpWhenCheckingL0HelperForFrontEndTrackingSupportThenReturnTrue) {
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-    EXPECT_FALSE(L0::L0HwHelperHw<FamilyType>::get().platformSupportsFrontEndTracking(hwInfo));
+    EXPECT_TRUE(L0::L0HwHelperHw<FamilyType>::get().platformSupportsFrontEndTracking(hwInfo));
 }
 
 XEHPTEST_F(L0HwHelperTestXeHp, GivenXeHpWhenCheckingL0HelperForPipelineSelectTrackingSupportThenReturnTrue) {
