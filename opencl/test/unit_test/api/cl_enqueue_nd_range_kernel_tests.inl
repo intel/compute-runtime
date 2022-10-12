@@ -55,7 +55,7 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenKernelWithSlmSizeExceedingLocalMemorySi
 
     auto localMemSize = static_cast<uint32_t>(pDevice->getDevice().getDeviceInfo().localMemSize);
 
-    pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize = localMemSize - 10u;
+    pKernel->setTotalSLMSize(localMemSize - 10u);
     retVal = clEnqueueNDRangeKernel(
         pCommandQueue,
         pMultiDeviceKernel,
@@ -74,7 +74,7 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenKernelWithSlmSizeExceedingLocalMemorySi
 
     ::testing::internal::CaptureStderr();
 
-    pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize = localMemSize + 10u;
+    pKernel->setTotalSLMSize(localMemSize + 10u);
     retVal = clEnqueueNDRangeKernel(
         pCommandQueue,
         pMultiDeviceKernel,
@@ -89,7 +89,7 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenKernelWithSlmSizeExceedingLocalMemorySi
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
 
     output = testing::internal::GetCapturedStderr();
-    const auto &slmInlineSize = pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize;
+    const auto &slmInlineSize = pKernel->getSlmTotalSize();
     std::string expectedOutput = "Size of SLM (" + std::to_string(slmInlineSize) + ") larger than available (" + std::to_string(localMemSize) + ")\n";
     EXPECT_EQ(expectedOutput, output);
 }

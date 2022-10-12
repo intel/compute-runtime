@@ -101,12 +101,14 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
             pKernel = nullptr;
         }
 
-        auto localMemSize = static_cast<uint32_t>(clDevice.getDevice().getDeviceInfo().localMemSize);
-        auto slmInlineSize = kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize;
+        if (pKernel) {
+            auto localMemSize = static_cast<uint32_t>(clDevice.getDevice().getDeviceInfo().localMemSize);
+            auto slmTotalSize = pKernel->getSlmTotalSize();
 
-        if (slmInlineSize > 0 && localMemSize < slmInlineSize) {
-            PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmInlineSize, localMemSize);
-            retVal = CL_OUT_OF_RESOURCES;
+            if (slmTotalSize > 0 && localMemSize < slmTotalSize) {
+                PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmTotalSize, localMemSize);
+                retVal = CL_OUT_OF_RESOURCES;
+            }
         }
 
         if (errcodeRet) {
