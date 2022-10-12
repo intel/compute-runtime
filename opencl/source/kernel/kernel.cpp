@@ -530,7 +530,7 @@ cl_int Kernel::getWorkGroupInfo(cl_kernel_work_group_info paramName,
     struct size_t3 {
         size_t val[3];
     } requiredWorkGroupSize;
-    size_t localMemorySize;
+    cl_ulong localMemorySize;
     const auto &kernelDescriptor = kernelInfo.kernelDescriptor;
     size_t preferredWorkGroupSizeMultiple = 0;
     cl_ulong scratchSize;
@@ -561,7 +561,7 @@ cl_int Kernel::getWorkGroupInfo(cl_kernel_work_group_info paramName,
         break;
 
     case CL_KERNEL_LOCAL_MEM_SIZE:
-        localMemorySize = static_cast<size_t>(this->getSlmTotalSize());
+        localMemorySize = kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize;
         srcSize = sizeof(localMemorySize);
         pSrc = &localMemorySize;
         break;
