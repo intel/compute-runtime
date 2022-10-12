@@ -35,15 +35,16 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidDeviceHandlesAndHwmo
     }
 }
 
-TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerPointerWhenGettingCardPowerDomainWhenhwmonInterfaceExistsAndThenCallSucceds) {
+TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerPointerWhenGettingCardPowerDomainWhenhwmonInterfaceExistsAndThenCallSucceeds) {
     zes_pwr_handle_t phPower = {};
     EXPECT_EQ(zesDeviceGetCardPowerDomain(device->toHandle(), &phPower), ZE_RESULT_SUCCESS);
 }
 
-TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenScanDiectoriesFailAndPmtIsNullForSubDeviceZeroWhenGettingCardPowerThenReturnsFailure) {
+TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenScanDirectoriesFailAndPmtIsNullForSubDeviceZeroWhenGettingCardPowerThenReturnsFailure) {
 
-    EXPECT_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
-        .WillRepeatedly(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
+    pSysfsAccess->mockScanDirEntriesReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+    pSysfsAccess->isRepeated = true;
+
     for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
         delete handle;
     }
