@@ -1148,15 +1148,6 @@ TEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescOrd
     EXPECT_EQ(desc.ordinal, expectedOrdinal);
 }
 
-using InvalidExtensionTest = DeviceTest;
-TEST_F(InvalidExtensionTest, givenInvalidExtensionPropertiesDuringDeviceGetPropertiesThenPropertiesIgnoredWithSuccess) {
-    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    ze_device_properties_t invalidExtendedProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    deviceProperties.pNext = &invalidExtendedProperties;
-    ze_result_t result = device->getProperties(&deviceProperties);
-    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-}
-
 HWTEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescOrdinalAndDescIndexProperlySet) {
     DebugManagerStateRestore restore;
     struct MockHwHelper : NEO::HwHelperHw<FamilyType> {
