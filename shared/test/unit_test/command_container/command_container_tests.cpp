@@ -992,18 +992,25 @@ struct MockHeapHelper : public HeapHelper {
     using HeapHelper::storageForReuse;
 };
 
-TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsThenAllocListsNotEmpty) {
+TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsThenAllocListsNotEmptyAndMadeResident) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.SetAmountOfReusableAllocations.set(1);
     auto cmdContainer = std::make_unique<CommandContainer>();
+    auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
+
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, true);
+    cmdContainer->setImmediateCmdListCsr(csr);
+    auto heapHelper = reinterpret_cast<MockHeapHelper *>(cmdContainer->getHeapHelper());
 
     EXPECT_TRUE(allocList.peekIsEmpty());
-    EXPECT_TRUE(reinterpret_cast<MockHeapHelper *>(cmdContainer->getHeapHelper())->storageForReuse->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_TRUE(heapHelper->storageForReuse->getAllocationsForReuse().peekIsEmpty());
+    auto actualResidencyContainerSize = cmdContainer->getResidencyContainer().size();
     cmdContainer->fillReusableAllocationLists();
     EXPECT_FALSE(allocList.peekIsEmpty());
-    EXPECT_FALSE(reinterpret_cast<MockHeapHelper *>(cmdContainer->getHeapHelper())->storageForReuse->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_FALSE(heapHelper->storageForReuse->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_EQ(heapHelper->storageForReuse->getAllocationsForReuse().peekHead()->getResidencyTaskCount(csr->getOsContext().getContextId()), 1u);
+    EXPECT_EQ(cmdContainer->getResidencyContainer().size(), actualResidencyContainerSize + 1);
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
@@ -1013,9 +1020,12 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWit
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.SetAmountOfReusableAllocations.set(1);
     auto cmdContainer = std::make_unique<CommandContainer>();
+    auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
+
     AllocationsList allocList;
     cmdContainer->enableHeapSharing();
     cmdContainer->initialize(pDevice, &allocList, true);
+    cmdContainer->setImmediateCmdListCsr(csr);
 
     auto &reusableHeapsList = reinterpret_cast<MockHeapHelper *>(cmdContainer->getHeapHelper())->storageForReuse->getAllocationsForReuse();
 
@@ -1031,9 +1041,11 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWit
 TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWithBindlessModeEnabledThenOnlyOneHeapFilled) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.SetAmountOfReusableAllocations.set(1);
+    auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
     auto cmdContainer = std::make_unique<CommandContainer>();
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, true);
+    cmdContainer->setImmediateCmdListCsr(csr);
 
     auto &reusableHeapsList = reinterpret_cast<MockHeapHelper *>(cmdContainer->getHeapHelper())->storageForReuse->getAllocationsForReuse();
 
@@ -1067,8 +1079,10 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWit
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.SetAmountOfReusableAllocations.set(10);
     auto cmdContainer = std::make_unique<CommandContainer>();
+    auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, false);
+    cmdContainer->setImmediateCmdListCsr(csr);
 
     EXPECT_TRUE(allocList.peekIsEmpty());
     cmdContainer->fillReusableAllocationLists();
@@ -1106,8 +1120,10 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsAnd
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.SetAmountOfReusableAllocations.set(0);
     auto cmdContainer = std::make_unique<CommandContainer>();
+    auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, false);
+    cmdContainer->setImmediateCmdListCsr(csr);
 
     EXPECT_TRUE(allocList.peekIsEmpty());
     cmdContainer->fillReusableAllocationLists();
