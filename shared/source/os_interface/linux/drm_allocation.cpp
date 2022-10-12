@@ -38,11 +38,19 @@ std::string DrmAllocation::getAllocationInfoString() const {
 }
 
 uint64_t DrmAllocation::peekInternalHandle(MemoryManager *memoryManager) {
-    return static_cast<uint64_t>((static_cast<DrmMemoryManager *>(memoryManager))->obtainFdFromHandle(getBO()->peekHandle(), this->rootDeviceIndex));
+    if (handles[0] != std::numeric_limits<uint32_t>::max()) {
+        return handles[0];
+    }
+    handles[0] = static_cast<uint64_t>((static_cast<DrmMemoryManager *>(memoryManager))->obtainFdFromHandle(getBO()->peekHandle(), this->rootDeviceIndex));
+    return handles[0];
 }
 
 uint64_t DrmAllocation::peekInternalHandle(MemoryManager *memoryManager, uint32_t handleId) {
-    return static_cast<uint64_t>((static_cast<DrmMemoryManager *>(memoryManager))->obtainFdFromHandle(getBufferObjectToModify(handleId)->peekHandle(), this->rootDeviceIndex));
+    if (handles[handleId] != std::numeric_limits<uint32_t>::max()) {
+        return handles[handleId];
+    }
+    handles[handleId] = static_cast<uint64_t>((static_cast<DrmMemoryManager *>(memoryManager))->obtainFdFromHandle(getBufferObjectToModify(handleId)->peekHandle(), this->rootDeviceIndex));
+    return handles[handleId];
 }
 
 void DrmAllocation::setCachePolicy(CachePolicy memType) {
