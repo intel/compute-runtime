@@ -109,13 +109,16 @@ void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommandsSingleAddressSpace(NEO::
         auto miStoreSbaField = cmdStream.getSpaceForCmd<MI_STORE_DATA_IMM>();
 
         auto gpuVaOfAddress = addressOfSDI + offsetToAddress;
+
         auto gpuVaOfData = addressOfSDI + offsetToData;
-        const auto gpuVaOfDataDWORD1 = gpuVaOfData + 4;
+        const auto gmmHelper = device->getGmmHelper();
+        const auto gpuVaOfDataDWORD1 = gmmHelper->decanonize(gpuVaOfData + 4);
 
         NEO::EncodeStoreMMIO<GfxFamily>::encode(miStoreRegMemLow, CS_GPR_R1, gpuVaOfAddress, false);
         NEO::EncodeStoreMMIO<GfxFamily>::encode(miStoreRegMemHigh, CS_GPR_R1 + 4, gpuVaOfAddress + 4, false);
 
         MI_STORE_DATA_IMM setSbaBufferAddress = GfxFamily::cmdInitStoreDataImm;
+        gpuVaOfData = gmmHelper->decanonize(gpuVaOfData);
         setSbaBufferAddress.setAddress(gpuVaOfData);
         setSbaBufferAddress.setStoreQword(false);
         setSbaBufferAddress.setDataDword0(pair.second & 0xffffffff);

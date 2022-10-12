@@ -188,9 +188,13 @@ HWTEST2_F(SingleAddressSpaceFixture, GivenNonZeroSbaAddressesWhenProgrammingSbaT
 
         itor = find<MI_STORE_DATA_IMM *>(itor, cmdList.end());
         ASSERT_NE(cmdList.end(), itor);
+        auto cmdSdi = genCmdCast<MI_STORE_DATA_IMM *>(*itor);
+        EXPECT_LT(cmdSdi->TheStructure.Common.Address, 0xfffffffffffcuL);
 
         itor = find<MI_STORE_DATA_IMM *>(itor, cmdList.end());
         ASSERT_NE(cmdList.end(), itor);
+        cmdSdi = genCmdCast<MI_STORE_DATA_IMM *>(*itor);
+        EXPECT_LT(cmdSdi->TheStructure.Common.Address, 0xfffffffffffcuL);
 
         itor = find<MI_ARB_CHECK *>(itor, cmdList.end());
         ASSERT_NE(cmdList.end(), itor);
