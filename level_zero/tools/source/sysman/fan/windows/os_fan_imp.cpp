@@ -62,8 +62,45 @@ ze_result_t WddmFanImp::getProperties(zes_fan_properties_t *pProperties) {
 
     return ZE_RESULT_SUCCESS;
 }
+
 ze_result_t WddmFanImp::getConfig(zes_fan_config_t *pConfig) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    KmdSysman::RequestProperty request;
+    KmdSysman::ResponseProperty response;
+
+    request.commandId = KmdSysman::Command::Get;
+    request.componentId = KmdSysman::Component::FanComponent;
+    request.requestId = KmdSysman::Requests::Fans::CurrentNumOfControlPoints;
+
+    ze_result_t status = pKmdSysManager->requestSingle(request, response);
+
+    if (status != ZE_RESULT_SUCCESS) {
+        return status;
+    } else {
+        uint32_t value = 0;
+        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+        if (value == 0) {
+            pConfig->mode = ZES_FAN_SPEED_MODE_DEFAULT;
+        } else {
+            pConfig->mode = ZES_FAN_SPEED_MODE_TABLE;
+            pConfig->speedTable.numPoints = value;
+
+            request.requestId = KmdSysman::Requests::Fans::CurrentFanPoint;
+
+            for (int32_t i = 0; i < pConfig->speedTable.numPoints; i++) {
+                if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
+
+                    FanPoint point = {};
+                    memcpy_s(&point.data, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+
+                    pConfig->speedTable.table[i].speed.speed = point.fanSpeedPercent;
+                    pConfig->speedTable.table[i].speed.units = ZES_FAN_SPEED_UNITS_PERCENT;
+                    pConfig->speedTable.table[i].temperature = point.temperatureDegreesCelsius;
+                }
+            }
+        }
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t WddmFanImp::setDefaultMode() {
@@ -120,7 +157,6 @@ ze_result_t WddmFanImp::setSpeedTableMode(const zes_fan_speed_table_t *pSpeedTab
     }
 
     return pKmdSysManager->requestMultiple(vRequests, vResponses);
-    ;
 }
 
 ze_result_t WddmFanImp::getState(zes_fan_speed_units_t units, int32_t *pSpeed) {

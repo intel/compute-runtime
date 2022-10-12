@@ -18,7 +18,14 @@ class FanKmdSysManager : public Mock<MockKmdSysManager> {};
 
 template <>
 struct Mock<FanKmdSysManager> : public FanKmdSysManager {
-
+    union {
+        struct
+        {
+            uint32_t TemperatureDegreesCelsius : 16;
+            uint32_t FanSpeedPercent : 16;
+        };
+        uint32_t Data;
+    } mockFanTempSpeed;
     uint32_t mockFanMaxPoints = 10;
     uint32_t mockFanCurrentPulses = 523436;
     uint32_t mockFanCurrentFanPoints = 0;
@@ -45,6 +52,20 @@ struct Mock<FanKmdSysManager> : public FanKmdSysManager {
                 pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
             }
         } break;
+        case KmdSysman::Requests::Fans::CurrentNumOfControlPoints: {
+            uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
+            *pValue = mockFanCurrentFanPoints;
+            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outDataSize = sizeof(uint32_t);
+        } break;
+        case KmdSysman::Requests::Fans::CurrentFanPoint: {
+            uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
+            mockFanTempSpeed.FanSpeedPercent = 25;
+            mockFanTempSpeed.TemperatureDegreesCelsius = 50;
+            *pValue = mockFanTempSpeed.Data;
+            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outDataSize = sizeof(uint32_t);
+        } break;
         default: {
             pResponse->outDataSize = 0;
             pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
@@ -68,6 +89,12 @@ struct Mock<FanKmdSysManager> : public FanKmdSysManager {
             } else {
                 pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
             }
+        } break;
+        case KmdSysman::Requests::Fans::CurrentFanPoint: {
+            uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
+            mockFanTempSpeed.Data = *pValue;
+            pResponse->outDataSize = 0;
+            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
         } break;
         default: {
             pResponse->outDataSize = 0;
