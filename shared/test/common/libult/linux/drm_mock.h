@@ -227,6 +227,7 @@ class DrmMock : public Drm {
     int fdToHandleRetVal = 0;
     //DRM_IOCTL_HANDLE_TO_FD
     int32_t outputFd = 0;
+    bool incrementOutputFdAfterCall = false;
     //DRM_IOCTL_I915_GEM_USERPTR
     uint32_t returnHandle = 0;
     uint64_t gpuMemSize = 3u * MemoryConstants::gigaByte;
