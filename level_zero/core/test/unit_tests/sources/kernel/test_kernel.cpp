@@ -117,48 +117,48 @@ TEST_F(SetKernelArgCacheTest, givenValidBufferArgumentWhenSetMultipleTimesThenSe
 
     size_t callCounter = 0u;
 
-    // first setArg - called
+    //first setArg - called
     EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(svmAllocation), &svmAllocation));
     EXPECT_EQ(++callCounter, mockKernel.setArgBufferWithAllocCalled);
 
-    // same setArg but allocationCounter == 0 - called
+    //same setArg but allocationCounter == 0 - called
     EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(svmAllocation), &svmAllocation));
     EXPECT_EQ(++callCounter, mockKernel.setArgBufferWithAllocCalled);
 
-    // same setArg - not called and argInfo.allocationCounter is updated
+    //same setArg - not called and argInfo.allocationCounter is updated
     ++svmAllocsManager->allocationsCounter;
     EXPECT_EQ(0u, mockKernel.kernelArgInfos[0].allocIdMemoryManagerCounter);
     EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(svmAllocation), &svmAllocation));
     EXPECT_EQ(callCounter, mockKernel.setArgBufferWithAllocCalled);
     EXPECT_EQ(svmAllocsManager->allocationsCounter, mockKernel.kernelArgInfos[0].allocIdMemoryManagerCounter);
 
-    // same setArg and allocationCounter - not called
+    //same setArg and allocationCounter - not called
     EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(svmAllocation), &svmAllocation));
     EXPECT_EQ(callCounter, mockKernel.setArgBufferWithAllocCalled);
 
-    // same setArg but different allocId - called
+    //same setArg but different allocId - called
     svmAllocsManager->getSVMAlloc(svmAllocation)->setAllocId(1u);
     ++svmAllocsManager->allocationsCounter;
     EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(svmAllocation), &svmAllocation));
     EXPECT_EQ(++callCounter, mockKernel.setArgBufferWithAllocCalled);
 
-    // different value - called
+    //different value - called
     auto secondSvmAllocation = svmAllocsManager->createSVMAlloc(4096, allocationProperties, context->rootDeviceIndices, context->deviceBitfields);
     EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(secondSvmAllocation), &secondSvmAllocation));
     EXPECT_EQ(++callCounter, mockKernel.setArgBufferWithAllocCalled);
 
-    // nullptr - not called, argInfo is updated
+    //nullptr - not called, argInfo is updated
     EXPECT_FALSE(mockKernel.kernelArgInfos[0].isSetToNullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(nullptr), nullptr));
     EXPECT_EQ(callCounter, mockKernel.setArgBufferWithAllocCalled);
     EXPECT_TRUE(mockKernel.kernelArgInfos[0].isSetToNullptr);
 
-    // nullptr again - not called
+    //nullptr again - not called
     EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(nullptr), nullptr));
     EXPECT_EQ(callCounter, mockKernel.setArgBufferWithAllocCalled);
     EXPECT_TRUE(mockKernel.kernelArgInfos[0].isSetToNullptr);
 
-    // same value as before nullptr - called, argInfo is updated
+    //same value as before nullptr - called, argInfo is updated
     EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(secondSvmAllocation), &secondSvmAllocation));
     EXPECT_EQ(++callCounter, mockKernel.setArgBufferWithAllocCalled);
     EXPECT_FALSE(mockKernel.kernelArgInfos[0].isSetToNullptr);
@@ -2207,7 +2207,6 @@ HWTEST2_F(SetKernelArg, givenImageAndBindfulKernelWhenSetArgImageThenCopySurface
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct MyMockImageMediaBlock : public WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>> {
-    using WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>::imgInfo;
     void copySurfaceStateToSSH(void *surfaceStateHeap, const uint32_t surfaceStateOffset, bool isMediaBlockArg) override {
         isMediaBlockPassedValue = isMediaBlockArg;
     }
@@ -2250,44 +2249,6 @@ HWTEST2_F(SetKernelArg, givenSupportsMediaBlockAndIsMediaBlockImageWhenSetArgIma
         kernel->setArgImage(argIndex, sizeof(imageHW.get()), &handle);
         EXPECT_FALSE(imageHW->isMediaBlockPassedValue);
     }
-}
-
-HWTEST2_F(SetKernelArg, givenSupportsMediaBlockAndIsMediaBlockImagehaveUnsuportedMediaBlockFormatThenSetArgReturnErrCode, ImageSupport) {
-    auto hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    createKernel();
-    auto argIndex = 3u;
-    auto &arg = const_cast<NEO::ArgDescriptor &>(kernel->kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex]);
-    auto imageHW = std::make_unique<MyMockImageMediaBlock<gfxCoreFamily>>();
-    ze_image_desc_t desc = {};
-    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
-    auto ret = imageHW->initialize(device, &desc);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
-    auto handle = imageHW->toHandle();
-
-    hwInfo->capabilityTable.supportsMediaBlock = true;
-    arg.getExtendedTypeInfo().isMediaBlockImage = true;
-    SurfaceFormatInfo surfInfo = {GMM_FORMAT_R32G32B32A32_FLOAT_TYPE, NEO::GFX3DSTATE_SURFACEFORMAT_R32G32B32A32_FLOAT, 0, 4, 4, 16};
-    imageHW.get()->imgInfo.surfaceFormat = &surfInfo;
-    EXPECT_EQ(kernel->setArgImage(argIndex, sizeof(imageHW.get()), &handle), ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT);
-}
-
-HWTEST2_F(SetKernelArg, givenSupportsMediaBlockAndIsMediaBlockImagehaveSuportedMediaBlockFormatThenSetArgReturnSuccess, ImageSupport) {
-    auto hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    createKernel();
-    auto argIndex = 3u;
-    auto &arg = const_cast<NEO::ArgDescriptor &>(kernel->kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex]);
-    auto imageHW = std::make_unique<MyMockImageMediaBlock<gfxCoreFamily>>();
-    ze_image_desc_t desc = {};
-    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
-    auto ret = imageHW->initialize(device, &desc);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
-    auto handle = imageHW->toHandle();
-
-    hwInfo->capabilityTable.supportsMediaBlock = true;
-    arg.getExtendedTypeInfo().isMediaBlockImage = true;
-    SurfaceFormatInfo surfInfo = {GMM_FORMAT_Y216, NEO::GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM, 0, 4, 2, 8};
-    imageHW.get()->imgInfo.surfaceFormat = &surfInfo;
-    EXPECT_EQ(kernel->setArgImage(argIndex, sizeof(imageHW.get()), &handle), ZE_RESULT_SUCCESS);
 }
 
 using ImportHostPointerSetKernelArg = Test<ImportHostPointerModuleFixture>;
