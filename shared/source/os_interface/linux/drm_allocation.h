@@ -40,7 +40,6 @@ class DrmAllocation : public GraphicsAllocation {
     DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, BufferObject *bo, void *ptrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool pool, uint64_t canonizedGpuAddress)
         : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, ptrIn, sizeIn, sharedHandle, pool, MemoryManager::maxOsContextCount, canonizedGpuAddress), bufferObjects(EngineLimits::maxHandleCount) {
         bufferObjects[0] = bo;
-        handles.resize(EngineLimits::maxHandleCount, std::numeric_limits<uint32_t>::max());
     }
 
     DrmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, BufferObject *bo, void *ptrIn, uint64_t canonizedGpuAddress, size_t sizeIn, MemoryPool pool)
@@ -49,7 +48,6 @@ class DrmAllocation : public GraphicsAllocation {
     DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, BufferObject *bo, void *ptrIn, uint64_t canonizedGpuAddress, size_t sizeIn, MemoryPool pool)
         : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, ptrIn, canonizedGpuAddress, 0, sizeIn, pool, MemoryManager::maxOsContextCount), bufferObjects(EngineLimits::maxHandleCount) {
         bufferObjects[0] = bo;
-        handles.resize(EngineLimits::maxHandleCount, std::numeric_limits<uint32_t>::max());
     }
 
     DrmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t canonizedGpuAddress, size_t sizeIn, MemoryPool pool)
@@ -58,7 +56,6 @@ class DrmAllocation : public GraphicsAllocation {
     DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t canonizedGpuAddress, size_t sizeIn, MemoryPool pool)
         : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, ptrIn, canonizedGpuAddress, 0, sizeIn, pool, MemoryManager::maxOsContextCount),
           bufferObjects(bos) {
-        handles.resize(EngineLimits::maxHandleCount, std::numeric_limits<uint32_t>::max());
     }
 
     ~DrmAllocation() override;
@@ -122,7 +119,6 @@ class DrmAllocation : public GraphicsAllocation {
     MemAdviseFlags enabledMemAdviseFlags{};
     StackVec<MemoryToUnmap, 1> memoryToUnmap;
     uint32_t numHandles = 0u;
-    std::vector<uint64_t> handles;
 
     void *mmapPtr = nullptr;
     size_t mmapSize = 0u;

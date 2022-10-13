@@ -124,9 +124,6 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         inputHandle = handleToPrimeParams->handle;
         inputFlags = handleToPrimeParams->flags;
         handleToPrimeParams->fileDescriptor = outputFd;
-        if (incrementOutputFdAfterCall) {
-            outputFd++;
-        }
         ioctl_cnt.handleToPrimeFd++;
     } break;
     case DrmIoctl::GemSetDomain: {

@@ -441,7 +441,7 @@ TEST_F(DrmMemoryManagerTest, WhenAskedAndAllowedAndBigAllocationThenPinAfterAllo
     memoryManager->freeGraphicsMemory(alloc);
 }
 
-TEST_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledThenBoIsReturned) {
+TEST_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledThenBoIsReturend) {
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
@@ -454,32 +454,7 @@ TEST_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledThenBoIsReturned) {
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerTest, whenCallingPeekInternalHandleSeveralTimesThenSameHandleIsReturned) {
-    mock->ioctl_expected.gemUserptr = 1;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 1;
-    mock->ioctl_expected.handleToPrimeFd = 1;
-    uint64_t expectedFd = 1337;
-    mock->outputFd = static_cast<int32_t>(expectedFd);
-    mock->incrementOutputFdAfterCall = true;
-    auto allocation = static_cast<DrmAllocation *>(this->memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(rootDeviceIndex, 10 * MemoryConstants::pageSize, true)));
-    ASSERT_NE(allocation->getBO(), nullptr);
-
-    EXPECT_EQ(mock->outputFd, static_cast<int32_t>(expectedFd));
-    uint64_t handle0 = allocation->peekInternalHandle(this->memoryManager);
-    EXPECT_NE(mock->outputFd, static_cast<int32_t>(expectedFd));
-
-    uint64_t handle1 = allocation->peekInternalHandle(this->memoryManager);
-    uint64_t handle2 = allocation->peekInternalHandle(this->memoryManager);
-
-    ASSERT_EQ(handle0, expectedFd);
-    ASSERT_EQ(handle1, expectedFd);
-    ASSERT_EQ(handle2, expectedFd);
-
-    memoryManager->freeGraphicsMemory(allocation);
-}
-
-TEST_F(DrmMemoryManagerTest, whenPeekInternalHandleWithHandleIdIsCalledThenBoIsReturned) {
+TEST_F(DrmMemoryManagerTest, whenPeekInternalHandleWithHandleIdIsCalledThenBoIsReturend) {
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
@@ -490,32 +465,6 @@ TEST_F(DrmMemoryManagerTest, whenPeekInternalHandleWithHandleIdIsCalledThenBoIsR
 
     uint32_t handleId = 0;
     ASSERT_EQ(allocation->peekInternalHandle(this->memoryManager, handleId), static_cast<uint64_t>(1337));
-
-    memoryManager->freeGraphicsMemory(allocation);
-}
-
-TEST_F(DrmMemoryManagerTest, whenCallingPeekInternalHandleWithIdSeveralTimesThenSameHandleIsReturned) {
-    mock->ioctl_expected.gemUserptr = 1;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 1;
-    mock->ioctl_expected.handleToPrimeFd = 1;
-    uint64_t expectedFd = 1337;
-    mock->outputFd = static_cast<int32_t>(expectedFd);
-    mock->incrementOutputFdAfterCall = true;
-    auto allocation = static_cast<DrmAllocation *>(this->memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(rootDeviceIndex, 10 * MemoryConstants::pageSize, true)));
-    ASSERT_NE(allocation->getBO(), nullptr);
-
-    EXPECT_EQ(mock->outputFd, static_cast<int32_t>(expectedFd));
-    uint32_t handleId = 0;
-    uint64_t handle0 = allocation->peekInternalHandle(this->memoryManager, handleId);
-    EXPECT_NE(mock->outputFd, static_cast<int32_t>(expectedFd));
-
-    uint64_t handle1 = allocation->peekInternalHandle(this->memoryManager, handleId);
-    uint64_t handle2 = allocation->peekInternalHandle(this->memoryManager, handleId);
-
-    ASSERT_EQ(handle0, expectedFd);
-    ASSERT_EQ(handle1, expectedFd);
-    ASSERT_EQ(handle2, expectedFd);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
