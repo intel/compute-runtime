@@ -2437,12 +2437,16 @@ inline size_t CommandListCoreFamily<gfxCoreFamily>::getTotalSizeForCopyRegion(co
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(void *dstPtr, const void *srcPtr, size_t size) {
-    auto dstAllocationStruct = getAlignedAllocation(this->device, dstPtr, size, false);
-    auto srcAllocationStruct = getAlignedAllocation(this->device, srcPtr, size, true);
-    auto dstMemoryPool = dstAllocationStruct.alloc->getMemoryPool();
-    auto srcMemoryPool = srcAllocationStruct.alloc->getMemoryPool();
+    NEO::SvmAllocationData *srcAllocData = nullptr;
+    NEO::SvmAllocationData *dstAllocData = nullptr;
+    bool srcAllocFound = this->device->getDriverHandle()->findAllocationDataForRange(const_cast<void *>(srcPtr), size, &srcAllocData);
+    bool dstAllocFound = this->device->getDriverHandle()->findAllocationDataForRange(dstPtr, size, &dstAllocData);
 
-    return this->isAppendSplitNeeded(dstMemoryPool, srcMemoryPool, size);
+    if (srcAllocFound && dstAllocFound) {
+        return this->isAppendSplitNeeded(dstAllocData->gpuAllocations.getDefaultGraphicsAllocation()->getMemoryPool(), srcAllocData->gpuAllocations.getDefaultGraphicsAllocation()->getMemoryPool(), size);
+    }
+
+    return false;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
