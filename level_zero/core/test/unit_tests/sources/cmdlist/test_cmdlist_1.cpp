@@ -1128,7 +1128,7 @@ TEST_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceForIm
 
     auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(2U, commandList->commandContainer.getCmdBufferAllocations().size());
+    EXPECT_EQ(1U, commandList->commandContainer.getCmdBufferAllocations().size());
 }
 
 HWTEST2_F(CommandListCreate, GivenGpuHangOnSynchronizingWhenCreatingImmediateCommandListAndWaitingOnEventsThenDeviceLostIsReturned, IsSKL) {

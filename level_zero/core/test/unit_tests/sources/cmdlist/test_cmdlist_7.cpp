@@ -1780,12 +1780,12 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceFo
     commandList->commandContainer.getCommandStream()->getGraphicsAllocation()->updateTaskCount(0u, 0u);
     commandList->commandContainer.getCommandStream()->getSpace(useSize);
     reinterpret_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get())->checkAvailableSpace();
-    EXPECT_EQ(2U, commandList->commandContainer.getCmdBufferAllocations().size());
+    EXPECT_EQ(1U, commandList->commandContainer.getCmdBufferAllocations().size());
 
     commandList->commandContainer.getCommandStream()->getSpace(useSize);
     auto latestFlushedTaskCount = commandList->csr->peekLatestFlushedTaskCount();
     reinterpret_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get())->checkAvailableSpace();
-    EXPECT_EQ(2U, commandList->commandContainer.getCmdBufferAllocations().size());
+    EXPECT_EQ(1U, commandList->commandContainer.getCmdBufferAllocations().size());
     EXPECT_EQ(latestFlushedTaskCount + 1, commandList->csr->peekLatestFlushedTaskCount());
 }
 

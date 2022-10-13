@@ -333,10 +333,14 @@ void CommandContainer::ensureHeapSizePrepared(size_t sshRequiredSize, size_t dsh
 GraphicsAllocation *CommandContainer::reuseExistingCmdBuffer() {
     size_t alignedSize = alignUp<size_t>(this->getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
     auto cmdBufferAllocation = this->reusableAllocationList->detachAllocation(alignedSize, nullptr, this->immediateCmdListCsr, AllocationType::COMMAND_BUFFER).release();
+    if (cmdBufferAllocation) {
+        this->cmdBufferAllocations.push_back(cmdBufferAllocation);
+    }
     return cmdBufferAllocation;
 }
 
 void CommandContainer::addCurrentCommandBufferToReusableAllocationList() {
+    this->cmdBufferAllocations.erase(std::find(this->cmdBufferAllocations.begin(), this->cmdBufferAllocations.end(), this->commandStream->getGraphicsAllocation()));
     this->storeAllocationAndFlushTagUpdate(this->commandStream->getGraphicsAllocation());
 }
 

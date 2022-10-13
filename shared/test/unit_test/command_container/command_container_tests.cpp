@@ -879,6 +879,20 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenReuseExistingCmdBufferWithoutA
     allocList.freeAllGraphicsAllocations(pDevice);
 }
 
+TEST_F(CommandContainerTest, givenCmdContainerWhenDestroyCommandContainerThenAllocationListFilledCorrectly) {
+    auto cmdContainer = std::make_unique<CommandContainer>();
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, false);
+    auto alloc = cmdContainer->getCmdBufferAllocations()[0];
+    allocList.pushFrontOne(*alloc);
+    cmdContainer.reset();
+
+    EXPECT_TRUE(allocList.peekContains(*alloc));
+    EXPECT_EQ(allocList.peekHead()->countThisAndAllConnected(), 1u);
+
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
 HWTEST_F(CommandContainerTest, givenCmdContainerWhenReuseExistingCmdBufferWithAllocationInListAndCsrTaskCountLowerThanAllocationThenReturnNullptr) {
     auto cmdContainer = std::make_unique<CommandContainer>();
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -888,7 +902,9 @@ HWTEST_F(CommandContainerTest, givenCmdContainerWhenReuseExistingCmdBufferWithAl
     cmdContainer->initialize(pDevice, &allocList, false);
     cmdContainer->setImmediateCmdListCsr(&csr);
     cmdContainer->getCmdBufferAllocations()[0]->updateTaskCount(10, 0);
+    auto currectContainerSize = cmdContainer->getCmdBufferAllocations().size();
     cmdContainer->addCurrentCommandBufferToReusableAllocationList();
+    EXPECT_EQ(cmdContainer->getCmdBufferAllocations().size(), currectContainerSize - 1);
 
     EXPECT_EQ(cmdContainer->reuseExistingCmdBuffer(), nullptr);
 
@@ -908,7 +924,9 @@ HWTEST_F(CommandContainerTest, givenCmdContainerWhenReuseExistingCmdBufferWithAl
     cmdContainer->getCmdBufferAllocations()[0]->updateTaskCount(10, 0);
     cmdContainer->addCurrentCommandBufferToReusableAllocationList();
 
+    auto currectContainerSize = cmdContainer->getCmdBufferAllocations().size();
     EXPECT_NE(cmdContainer->reuseExistingCmdBuffer(), nullptr);
+    EXPECT_EQ(cmdContainer->getCmdBufferAllocations().size(), currectContainerSize + 1);
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
