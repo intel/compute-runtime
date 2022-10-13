@@ -8,12 +8,8 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/program/print_formatter.h"
-#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-
-#include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "opencl/test/unit_test/mocks/mock_program.h"
+#include "shared/test/common/mocks/mock_kernel_info.h"
 
 #include "gtest/gtest.h"
 
@@ -34,7 +30,6 @@ class PrintFormatterTest : public testing::Test {
 
     MockGraphicsAllocation *data;
     std::unique_ptr<MockKernelInfo> kernelInfo;
-    ClDevice *device;
 
     uint8_t underlyingBuffer[maxPrintfOutputLength];
     uint32_t offset;
@@ -406,6 +401,7 @@ INSTANTIATE_TEST_CASE_P(PrintfDoubleTest,
 
 std::pair<std::string, std::string> specialValues[] = {
     {"%%", "%"},
+    {"%% ", "% "},
     {"nothing%", "nothing"},
 };
 

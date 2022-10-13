@@ -63,6 +63,7 @@ void PrintFormatter::printString(const char *formatString, const std::function<v
             size_t end = i;
             if (end + 1 <= length && formatString[end + 1] == '%') {
                 output[cursor++] = '%';
+                i++;
                 continue;
             }
 

@@ -11,7 +11,6 @@ set(IGDRCL_SRCS_tests_program
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_info_from_patchtokens_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/printf_handler_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/printf_helper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/process_debug_data_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/process_elf_binary_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/process_spir_binary_tests.cpp
@@ -26,11 +25,6 @@ set(IGDRCL_SRCS_tests_program
     ${CMAKE_CURRENT_SOURCE_DIR}/program_with_zebin.h
     ${CMAKE_CURRENT_SOURCE_DIR}/program_with_zebin.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/program_with_zebin_tests.cpp
-)
-
-get_property(NEO_CORE_SRCS_tests_program GLOBAL PROPERTY NEO_CORE_SRCS_tests_program)
-list(APPEND IGDRCL_SRCS_tests_program
-     ${NEO_CORE_SRCS_tests_program}
 )
 
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_program})
