@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ class DeviceTimeWddm : public DeviceTime {
 
   protected:
     MOCKABLE_VIRTUAL bool runEscape(Wddm *wddm, TimeStampDataHeader &escapeInfo);
+    void convertTimestampsFromOaToCsDomain(uint64_t &timestampData, uint64_t freqOA, uint64_t freqCS);
     Wddm *wddm = nullptr;
 };
 

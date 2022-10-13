@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,4 +70,10 @@ uint64_t DeviceTimeWddm::getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) 
     return retVal;
 }
 
+void DeviceTimeWddm::convertTimestampsFromOaToCsDomain(uint64_t &timestampData, uint64_t freqOA, uint64_t freqCS) {
+    if (freqCS > 0) {
+        auto freqRatio = freqOA / freqCS;
+        timestampData /= freqRatio;
+    }
+};
 } // namespace NEO
