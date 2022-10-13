@@ -733,6 +733,110 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNextIddInBlockZeroWhenD
     ASSERT_NE(itorPC, commands.end());
 }
 
+HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNumSamplersOneWhenHeapIsDirtyThenSamplerStateWasCopiedAndStateBaseAddressEncoded) {
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
+    uint32_t numSamplers = 1;
+    SAMPLER_STATE samplerState;
+    memset(&samplerState, 2, sizeof(SAMPLER_STATE));
+
+    uint32_t dims[] = {2, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.numSamplers = numSamplers;
+    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.tableOffset = 0U;
+    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.borderColor = 0U;
+    const uint8_t *dshData = reinterpret_cast<uint8_t *>(&samplerState);
+    dispatchInterface->getDynamicStateHeapDataResult = const_cast<uint8_t *>(dshData);
+
+    bool requiresUncachedMocs = false;
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+
+    auto dshBeforeFlush = cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE);
+    auto &kernelDescriptor = dispatchInterface->getKernelDescriptor();
+    dshBeforeFlush->getSpace(dshBeforeFlush->getAvailableSpace() - NEO::EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(kernelDescriptor, cmdContainer->getNumIddPerBlock()));
+    auto cpuBaseBeforeFlush = dshBeforeFlush->getCpuBase();
+
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs, nullptr);
+
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
+    auto itorSBA = find<STATE_BASE_ADDRESS *>(commands.begin(), commands.end());
+    auto itorPC = find<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(commands.begin(), commands.end());
+    EXPECT_NE(itorSBA, commands.end()); // flush needed
+    EXPECT_NE(itorPC, commands.end());
+
+    auto dshAfterFlush = cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE);
+    EXPECT_NE(cpuBaseBeforeFlush, dshAfterFlush->getCpuBase());
+
+    auto interfaceDescriptorData = static_cast<INTERFACE_DESCRIPTOR_DATA *>(cmdContainer->getIddBlock());
+
+    auto borderColorOffsetInDsh = 0;
+    samplerState.setIndirectStatePointer(static_cast<uint32_t>(borderColorOffsetInDsh));
+
+    auto samplerStateOffset = interfaceDescriptorData->getSamplerStatePointer();
+
+    auto pSmplr = reinterpret_cast<SAMPLER_STATE *>(ptrOffset(dshAfterFlush->getCpuBase(), samplerStateOffset));
+    EXPECT_EQ(memcmp(pSmplr, &samplerState, sizeof(SAMPLER_STATE)), 0);
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNumSamplersOneAndNextIDDInBlockWhenHeapIsDirtyThenSamplerStateWasCopiedAndStateBaseAddressEncoded) {
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
+    uint32_t numSamplers = 1;
+    SAMPLER_STATE samplerState;
+    memset(&samplerState, 2, sizeof(SAMPLER_STATE));
+
+    cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE)->align(EncodeStates<FamilyType>::alignInterfaceDescriptorData);
+    cmdContainer->setIddBlock(cmdContainer->getHeapSpaceAllowGrow(HeapType::DYNAMIC_STATE, sizeof(INTERFACE_DESCRIPTOR_DATA) * cmdContainer->getNumIddPerBlock()));
+    cmdContainer->nextIddInBlock = cmdContainer->getNumIddPerBlock();
+
+    uint32_t dims[] = {2, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.numSamplers = numSamplers;
+    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.tableOffset = 0U;
+    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.borderColor = 0U;
+    const uint8_t *dshData = reinterpret_cast<uint8_t *>(&samplerState);
+    dispatchInterface->getDynamicStateHeapDataResult = const_cast<uint8_t *>(dshData);
+
+    bool requiresUncachedMocs = false;
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+
+    auto dshBeforeFlush = cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE);
+    auto &kernelDescriptor = dispatchInterface->getKernelDescriptor();
+    auto sizeRequiredMinusIDD = dshBeforeFlush->getAvailableSpace() - NEO::EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(kernelDescriptor, cmdContainer->getNumIddPerBlock()) + sizeof(INTERFACE_DESCRIPTOR_DATA) * cmdContainer->getNumIddPerBlock();
+    dshBeforeFlush->getSpace(sizeRequiredMinusIDD);
+    auto cpuBaseBeforeFlush = dshBeforeFlush->getCpuBase();
+    auto usedBefore = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE)->getUsed();
+
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs, nullptr);
+
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
+    auto itorSBA = find<STATE_BASE_ADDRESS *>(commands.begin(), commands.end());
+    auto itorPC = find<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(commands.begin(), commands.end());
+    EXPECT_NE(itorSBA, commands.end()); // flush needed
+    EXPECT_NE(itorPC, commands.end());
+
+    auto dshAfterFlush = cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE);
+    EXPECT_NE(cpuBaseBeforeFlush, dshAfterFlush->getCpuBase());
+
+    auto interfaceDescriptorData = static_cast<INTERFACE_DESCRIPTOR_DATA *>(cmdContainer->getIddBlock());
+
+    auto borderColorOffsetInDsh = usedBefore;
+    samplerState.setIndirectStatePointer(static_cast<uint32_t>(borderColorOffsetInDsh));
+
+    auto samplerStateOffset = interfaceDescriptorData->getSamplerStatePointer();
+
+    auto pSmplr = reinterpret_cast<SAMPLER_STATE *>(ptrOffset(dshAfterFlush->getCpuBase(), samplerStateOffset));
+    EXPECT_EQ(memcmp(pSmplr, &samplerState, sizeof(SAMPLER_STATE)), 0);
+}
+
 HWTEST_F(CommandEncodeStatesTest, givenPauseOnEnqueueSetToNeverWhenEncodingWalkerThenCommandsToPatchAreNotPresent) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.PauseOnEnqueue.set(-1);
@@ -1371,7 +1475,7 @@ HWTEST_F(CommandEncodeStatesTest, givenKernelInfoWhenGettingRequiredDshSpaceThen
 
     // no samplers
     kernelInfo.kernelDescriptor.payloadMappings.samplerTable.numSamplers = 0;
-    size_t size = EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(kernelInfo);
+    size_t size = EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(kernelInfo.kernelDescriptor, 1);
     EXPECT_EQ(expectedSize, size);
 
     // two samplers, no border color state
@@ -1389,7 +1493,7 @@ HWTEST_F(CommandEncodeStatesTest, givenKernelInfoWhenGettingRequiredDshSpaceThen
         expectedSize = alignedSamplers;
     }
 
-    size = EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(kernelInfo);
+    size = EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(kernelInfo.kernelDescriptor, 1);
     EXPECT_EQ(expectedSize, size);
 
     // three samplers, border color state
@@ -1405,7 +1509,7 @@ HWTEST_F(CommandEncodeStatesTest, givenKernelInfoWhenGettingRequiredDshSpaceThen
     } else {
         expectedSize = alignedSamplers;
     }
-    size = EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(kernelInfo);
+    size = EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(kernelInfo.kernelDescriptor, 1);
     EXPECT_EQ(expectedSize, size);
 }
 
