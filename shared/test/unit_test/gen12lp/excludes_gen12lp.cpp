@@ -8,3 +8,4 @@
 #include "shared/test/common/test_macros/hw_test_base.h"
 
 HWTEST_EXCLUDE_PRODUCT(CommandEncodeStatesTest, whenAdjustPipelineSelectIsCalledThenNothingHappens, IGFX_GEN12LP_CORE);
+HWTEST_EXCLUDE_PRODUCT(HwHelperMediaFormatsTest, givenSurfaceFormatWhenIsMediaFormatSupportedThenCorrectValueReturned, IGFX_GEN12LP_CORE);

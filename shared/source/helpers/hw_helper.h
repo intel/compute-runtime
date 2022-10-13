@@ -35,7 +35,7 @@ struct AllocationProperties;
 struct EncodeSurfaceStateArgs;
 struct RootDeviceEnvironment;
 struct PipeControlArgs;
-
+enum GFX3DSTATE_SURFACEFORMAT : unsigned short;
 class HwHelper {
   public:
     static HwHelper &get(GFXCORE_FAMILY gfxCore);
@@ -162,6 +162,7 @@ class HwHelper {
     virtual bool copyThroughLockedPtrEnabled() const = 0;
     virtual uint32_t getAmountOfAllocationsToFill() const = 0;
     virtual bool isChipsetUniqueUUIDSupported() const = 0;
+    virtual bool isSurfaceFormatSupportedForMediaBlockOperation(NEO::GFX3DSTATE_SURFACEFORMAT format) const = 0;
 
   protected:
     HwHelper() = default;
@@ -406,6 +407,7 @@ class HwHelperHw : public HwHelper {
     bool copyThroughLockedPtrEnabled() const override;
     uint32_t getAmountOfAllocationsToFill() const override;
     bool isChipsetUniqueUUIDSupported() const override;
+    bool isSurfaceFormatSupportedForMediaBlockOperation(NEO::GFX3DSTATE_SURFACEFORMAT format) const override;
 
   protected:
     static const AuxTranslationMode defaultAuxTranslationMode;

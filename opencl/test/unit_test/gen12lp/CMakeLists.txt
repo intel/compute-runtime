@@ -20,6 +20,7 @@ if(TESTS_GEN12LP)
       ${CMAKE_CURRENT_SOURCE_DIR}/gen12lp_tests_wrapper.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu_walker_tests_gen12lp.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_gen12lp.inl
+      ${CMAKE_CURRENT_SOURCE_DIR}/image_set_arg_tests_gen12lp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/image_tests_gen12lp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/kernel_tests_gen12lp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/profiling_tests_gen12lp.inl

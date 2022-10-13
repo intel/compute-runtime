@@ -19,6 +19,8 @@ set(IGDRCL_SRCS_tests_fixtures
     ${CMAKE_CURRENT_SOURCE_DIR}/hello_world_kernel_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/image_fixture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/image_fixture.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/image_set_arg_fixture.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/image_set_arg_fixture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_fixture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_data_fixture.cpp

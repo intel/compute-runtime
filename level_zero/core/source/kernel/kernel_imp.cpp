@@ -635,6 +635,12 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
     const auto &arg = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescImage>();
     const auto image = Image::fromHandle(*static_cast<const ze_image_handle_t *>(argVal));
 
+    auto surfFormat = image->getImageInfo().surfaceFormat->GenxSurfaceFormat;
+    auto &hwHelper = NEO::HwHelper::get(this->module->getDevice()->getHwInfo().platform.eRenderCoreFamily);
+    if (isMediaBlockImage && !hwHelper.isSurfaceFormatSupportedForMediaBlockOperation(surfFormat)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT;
+    }
+
     if (kernelImmData->getDescriptor().kernelAttributes.imageAddressingMode == NEO::KernelDescriptor::Bindless) {
         image->copySurfaceStateToSSH(patchBindlessSurfaceState(image->getAllocation(), arg.bindless), 0u, isMediaBlockImage);
     } else {

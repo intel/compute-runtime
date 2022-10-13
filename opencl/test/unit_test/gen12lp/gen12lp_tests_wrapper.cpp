@@ -10,6 +10,7 @@
 #include "opencl/test/unit_test/gen12lp/command_stream_receiver_hw_tests_gen12lp.inl"
 #include "opencl/test/unit_test/gen12lp/enqueue_media_kernel_gen12lp.inl"
 #include "opencl/test/unit_test/gen12lp/hw_helper_tests_gen12lp.inl"
+#include "opencl/test/unit_test/gen12lp/image_set_arg_tests_gen12lp.inl"
 #include "opencl/test/unit_test/gen12lp/image_tests_gen12lp.inl"
 #include "opencl/test/unit_test/gen12lp/kernel_tests_gen12lp.inl"
 #include "opencl/test/unit_test/gen12lp/profiling_tests_gen12lp.inl"

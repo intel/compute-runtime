@@ -21,99 +21,14 @@
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/image.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/fixtures/image_set_arg_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "opencl/test/unit_test/mocks/mock_program.h"
 
 #include "gtest/gtest.h"
 
 using namespace NEO;
 using namespace ::testing;
-
-class ImageSetArgTest : public ClDeviceFixture,
-                        public testing::Test {
-
-  public:
-    ImageSetArgTest() = default;
-
-  protected:
-    template <typename FamilyType>
-    void setupChannels(int imgChannelOrder) {
-        typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
-
-        expectedChannelRed = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED;
-        expectedChannelGreen = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN;
-        expectedChannelBlue = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE;
-
-        if (imgChannelOrder == CL_A) {
-            expectedChannelRed = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO;
-            expectedChannelGreen = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO;
-            expectedChannelBlue = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO;
-        } else if (imgChannelOrder == CL_RA ||
-                   imgChannelOrder == CL_R ||
-                   imgChannelOrder == CL_Rx) {
-            expectedChannelGreen = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO;
-            expectedChannelBlue = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO;
-        } else if (imgChannelOrder == CL_RG ||
-                   imgChannelOrder == CL_RGx) {
-            expectedChannelBlue = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO;
-        }
-    }
-
-    void SetUp() override {
-        ClDeviceFixture::setUp();
-        pKernelInfo = std::make_unique<MockKernelInfo>();
-        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
-
-        // define kernel info
-        pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-        pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
-
-        // setup kernel arg offsets
-        pKernelInfo->addArgImage(0, 0x00);
-        pKernelInfo->addArgImage(1, 0x40);
-
-        program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
-        retVal = CL_INVALID_VALUE;
-        pMultiDeviceKernel = MultiDeviceKernel::create<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), &retVal);
-        pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(rootDeviceIndex));
-        ASSERT_NE(nullptr, pKernel);
-        ASSERT_EQ(CL_SUCCESS, retVal);
-
-        pKernel->setKernelArgHandler(0, &Kernel::setArgImage);
-        pKernel->setKernelArgHandler(1, &Kernel::setArgImage);
-        context = new MockContext(pClDevice);
-        srcImage = Image3dHelper<>::create(context);
-        srcAllocation = srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
-        ASSERT_NE(nullptr, srcImage);
-
-        expectedChannelRed = 0;
-        expectedChannelGreen = 0;
-        expectedChannelBlue = 0;
-    }
-
-    void TearDown() override {
-        delete srcImage;
-        delete pMultiDeviceKernel;
-
-        delete context;
-        ClDeviceFixture::tearDown();
-    }
-
-    cl_int retVal = CL_SUCCESS;
-    MockContext *context;
-    std::unique_ptr<MockProgram> program;
-    MockKernel *pKernel = nullptr;
-    MultiDeviceKernel *pMultiDeviceKernel = nullptr;
-    std::unique_ptr<MockKernelInfo> pKernelInfo;
-    char surfaceStateHeap[0x80] = {};
-    Image *srcImage = nullptr;
-    GraphicsAllocation *srcAllocation = nullptr;
-    int expectedChannelRed;
-    int expectedChannelGreen;
-    int expectedChannelBlue;
-};
 
 HWTEST_F(ImageSetArgTest, WhenSettingKernelArgImageThenSurfaceBaseAddressIsSetCorrectly) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
@@ -841,7 +756,7 @@ HWTEST_F(ImageSetArgTest, GivenImageWithClLuminanceFormatWhenSettingKernelArgThe
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
                   pKernelInfo->argAsImg(0).bindful));
-    //for CL_LUMINANCE format we override channels to RED to be spec compliant.
+    // for CL_LUMINANCE format we override channels to RED to be spec compliant.
     EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, surfaceState->getShaderChannelSelectRed());
     EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, surfaceState->getShaderChannelSelectGreen());
     EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, surfaceState->getShaderChannelSelectBlue());
@@ -914,38 +829,6 @@ HWTEST_F(ImageSetArgTest, givenNonCompressedResourceWhenSettingImgArgThenDontSet
 }
 
 /* cl_intel_media_block_io */
-
-class ImageMediaBlockSetArgTest : public ImageSetArgTest {
-  protected:
-    void SetUp() override {
-        ClDeviceFixture::setUp();
-        pKernelInfo = std::make_unique<MockKernelInfo>();
-        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
-
-        // define kernel info
-        pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-        pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
-
-        // setup kernel arg offsets
-        pKernelInfo->addArgImage(0, 0x00, iOpenCL::IMAGE_MEMORY_OBJECT_2D_MEDIA_BLOCK);
-        pKernelInfo->addArgImage(0, 0x40, iOpenCL::IMAGE_MEMORY_OBJECT_2D_MEDIA_BLOCK);
-
-        program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
-        retVal = CL_INVALID_VALUE;
-        pMultiDeviceKernel = MultiDeviceKernel::create<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), &retVal);
-        pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(rootDeviceIndex));
-        ASSERT_NE(nullptr, pKernel);
-        ASSERT_EQ(CL_SUCCESS, retVal);
-
-        pKernel->setKernelArgHandler(0, &Kernel::setArgImage);
-        pKernel->setKernelArgHandler(1, &Kernel::setArgImage);
-        context = new MockContext(pClDevice);
-        srcImage = Image3dHelper<>::create(context);
-        srcAllocation = srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
-        ASSERT_NE(nullptr, srcImage);
-    }
-};
-
 HWTEST_F(ImageMediaBlockSetArgTest, WhenSettingKernelArgImageThenPropertiesAreCorrect) {
     auto gmmHelper = pDevice->getGmmHelper();
     auto imageMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE);
