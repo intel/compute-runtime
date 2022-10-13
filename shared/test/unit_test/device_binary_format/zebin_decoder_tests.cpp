@@ -5635,6 +5635,32 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidTargetDeviceAndV
     EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning));
 }
 
+TEST(ValidateTargetDevice32BitZebin, Given32BitZebinAndValidIntelGTNotesWhenValidatingTargetDeviceThenReturnTrue) {
+    TargetDevice targetDevice;
+    targetDevice.productFamily = productFamily;
+    targetDevice.coreFamily = renderCoreFamily;
+    targetDevice.maxPointerSizeInBytes = 4;
+    targetDevice.stepping = hardwareInfoTable[productFamily]->platform.usRevId;
+
+    ZebinTestData::ValidEmptyProgram<NEO::Elf::EI_CLASS_32> zebin;
+    zebin.elfHeader->type = Elf::ET_REL;
+    zebin.elfHeader->machine = Elf::ELF_MACHINE::EM_INTELGT;
+
+    Elf::ZebinTargetFlags targetMetadata;
+    targetMetadata.validateRevisionId = true;
+    targetMetadata.minHwRevisionId = targetDevice.stepping;
+    targetMetadata.maxHwRevisionId = targetDevice.stepping;
+    auto currentVersion = versionToString(NEO::zeInfoDecoderVersion);
+    auto intelGTNotesSection = ZebinTestData::createIntelGTNoteSection(productFamily, renderCoreFamily, targetMetadata, currentVersion);
+    zebin.appendSection(Elf::SHT_NOTE, Elf::SectionsNamesZebin::noteIntelGT, intelGTNotesSection);
+    std::string outErrReason, outWarning;
+    auto elf = Elf::decodeElf<Elf::EI_CLASS_32>(zebin.storage, outErrReason, outWarning);
+    EXPECT_TRUE(outWarning.empty());
+    EXPECT_TRUE(outErrReason.empty());
+
+    EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning));
+}
+
 TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidTargetDeviceAndNoNotesThenReturnFalse) {
     TargetDevice targetDevice;
     targetDevice.productFamily = productFamily;

@@ -18,10 +18,11 @@
 
 namespace NEO {
 
-template <>
-SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice &requestedTargetDevice,
-                                                                            std::string &outErrReason, std::string &outWarning) {
-    auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(archive, outErrReason, outWarning);
+template <Elf::ELF_IDENTIFIER_CLASS numBits>
+SingleDeviceBinary unpackSingleZebin(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice &requestedTargetDevice,
+                                     std::string &outErrReason, std::string &outWarning) {
+
+    auto elf = Elf::decodeElf<numBits>(archive, outErrReason, outWarning);
     if (nullptr == elf.elfFileHeader) {
         return {};
     }
@@ -60,7 +61,7 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(cons
                               ? (requestedTargetDevice.coreFamily == static_cast<GFXCORE_FAMILY>(elf.elfFileHeader->machine))
                               : (requestedTargetDevice.productFamily == static_cast<PRODUCT_FAMILY>(elf.elfFileHeader->machine));
         validForTarget &= (0 == flags.validateRevisionId) | ((requestedTargetDevice.stepping >= flags.minHwRevisionId) & (requestedTargetDevice.stepping <= flags.maxHwRevisionId));
-        validForTarget &= (8U == requestedTargetDevice.maxPointerSizeInBytes);
+        validForTarget &= (requestedTargetDevice.maxPointerSizeInBytes >= static_cast<uint32_t>(numBits == Elf::EI_CLASS_32 ? 4 : 8));
     }
 
     if (false == validForTarget) {
@@ -74,6 +75,14 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(cons
     }
 
     return ret;
+}
+
+template <>
+SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice &requestedTargetDevice,
+                                                                            std::string &outErrReason, std::string &outWarning) {
+    return Elf::isElf<Elf::EI_CLASS_32>(archive)
+               ? unpackSingleZebin<Elf::EI_CLASS_32>(archive, requestedProductAbbreviation, requestedTargetDevice, outErrReason, outWarning)
+               : unpackSingleZebin<Elf::EI_CLASS_64>(archive, requestedProductAbbreviation, requestedTargetDevice, outErrReason, outWarning);
 }
 
 template <Elf::ELF_IDENTIFIER_CLASS numBits>

@@ -159,27 +159,32 @@ TEST(UnpackSingleDeviceBinary, GivenArBinaryWithOclElfThenReturnPatchtokensBinar
 }
 
 TEST(UnpackSingleDeviceBinary, GivenZebinThenReturnSelf) {
-    ZebinTestData::ValidEmptyProgram zebinProgram;
+    ZebinTestData::ValidEmptyProgram zebin64BitProgram;
+    ZebinTestData::ValidEmptyProgram<NEO::Elf::EI_CLASS_32> zebin32BitProgram;
+
     auto requestedProductAbbreviation = "unk";
     NEO::TargetDevice requestedTargetDevice;
-    requestedTargetDevice.productFamily = static_cast<PRODUCT_FAMILY>(zebinProgram.elfHeader->machine);
+    requestedTargetDevice.productFamily = static_cast<PRODUCT_FAMILY>(zebin64BitProgram.elfHeader->machine);
     requestedTargetDevice.stepping = 0U;
     requestedTargetDevice.maxPointerSizeInBytes = 8U;
     std::string outErrors;
     std::string outWarnings;
-    auto unpacked = NEO::unpackSingleDeviceBinary(zebinProgram.storage, requestedProductAbbreviation, requestedTargetDevice, outErrors, outWarnings);
-    EXPECT_TRUE(unpacked.buildOptions.empty());
-    EXPECT_TRUE(unpacked.debugData.empty());
-    EXPECT_FALSE(unpacked.deviceBinary.empty());
-    EXPECT_EQ(zebinProgram.storage.data(), unpacked.deviceBinary.begin());
-    EXPECT_EQ(zebinProgram.storage.size(), unpacked.deviceBinary.size());
-    EXPECT_TRUE(unpacked.intermediateRepresentation.empty());
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, unpacked.format);
-    EXPECT_EQ(requestedTargetDevice.coreFamily, unpacked.targetDevice.coreFamily);
-    EXPECT_EQ(requestedTargetDevice.stepping, unpacked.targetDevice.stepping);
-    EXPECT_EQ(8U, unpacked.targetDevice.maxPointerSizeInBytes);
-    EXPECT_TRUE(outWarnings.empty());
-    EXPECT_TRUE(outErrors.empty());
+
+    for (auto zebin : {&zebin64BitProgram.storage, &zebin32BitProgram.storage}) {
+        auto unpacked = NEO::unpackSingleDeviceBinary(*zebin, requestedProductAbbreviation, requestedTargetDevice, outErrors, outWarnings);
+        EXPECT_TRUE(unpacked.buildOptions.empty());
+        EXPECT_TRUE(unpacked.debugData.empty());
+        EXPECT_FALSE(unpacked.deviceBinary.empty());
+        EXPECT_EQ(zebin->data(), unpacked.deviceBinary.begin());
+        EXPECT_EQ(zebin->size(), unpacked.deviceBinary.size());
+        EXPECT_TRUE(unpacked.intermediateRepresentation.empty());
+        EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, unpacked.format);
+        EXPECT_EQ(requestedTargetDevice.coreFamily, unpacked.targetDevice.coreFamily);
+        EXPECT_EQ(requestedTargetDevice.stepping, unpacked.targetDevice.stepping);
+        EXPECT_EQ(8U, unpacked.targetDevice.maxPointerSizeInBytes);
+        EXPECT_TRUE(outWarnings.empty());
+        EXPECT_TRUE(outErrors.empty());
+    }
 }
 
 TEST(IsAnyPackedDeviceBinaryFormat, GivenUnknownFormatThenReturnFalse) {

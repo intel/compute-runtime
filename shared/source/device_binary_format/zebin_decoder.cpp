@@ -93,7 +93,7 @@ bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targ
     validForTarget &= (gfxCore != IGFX_UNKNOWN_CORE) ? targetDevice.coreFamily == gfxCore : true;
     validForTarget &= (productFamily != IGFX_UNKNOWN) ? targetDevice.productFamily == productFamily : true;
     validForTarget &= (0 == targetMetadata.validateRevisionId) | ((targetDevice.stepping >= targetMetadata.minHwRevisionId) & (targetDevice.stepping <= targetMetadata.maxHwRevisionId));
-    validForTarget &= (8U == targetDevice.maxPointerSizeInBytes);
+    validForTarget &= (targetDevice.maxPointerSizeInBytes >= static_cast<uint32_t>(numBits == Elf::EI_CLASS_32 ? 4 : 8));
     return validForTarget;
 }
 
