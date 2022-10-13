@@ -67,10 +67,6 @@ void BcsSplit::releaseResources() {
     }
 }
 
-BcsSplit::Events::~Events() {
-    this->releaseResources();
-}
-
 size_t BcsSplit::Events::obtainForSplit(Context *context, size_t maxEventCountInPool) {
     for (size_t i = 0; i < this->marker.size(); i++) {
         auto ret = this->marker[i]->queryStatus();

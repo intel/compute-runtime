@@ -47,7 +47,6 @@ struct BcsSplit {
         void releaseResources();
 
         Events(BcsSplit &bcsSplit) : bcsSplit(bcsSplit){};
-        ~Events();
     } events;
 
     std::vector<CommandQueue *> cmdQs;
