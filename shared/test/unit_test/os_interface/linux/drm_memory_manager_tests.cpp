@@ -1715,13 +1715,16 @@ TEST_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatShareTheSameBufferOb
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, properties, false, false);
     auto graphicsAllocation2 = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, properties, false, false);
 
+    auto currentResidentSize = testedCsr->getResidencyAllocations().size();
     testedCsr->makeResident(*graphicsAllocation);
     testedCsr->makeResident(*graphicsAllocation2);
-    EXPECT_EQ(2u, testedCsr->getResidencyAllocations().size());
+
+    EXPECT_EQ(currentResidentSize + 2, testedCsr->getResidencyAllocations().size());
+    currentResidentSize = testedCsr->getResidencyAllocations().size();
 
     testedCsr->processResidency(testedCsr->getResidencyAllocations(), 0u);
 
-    EXPECT_EQ(1u, testedCsr->residency.size());
+    EXPECT_EQ(currentResidentSize - 1, testedCsr->residency.size());
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
     memoryManager->freeGraphicsMemory(graphicsAllocation2);
@@ -1739,13 +1742,15 @@ TEST_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatDoesnShareTheSameBuf
     mock->outputHandle++;
     auto graphicsAllocation2 = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, properties, false, false);
 
+    auto currentResidentSize = testedCsr->getResidencyAllocations().size();
     testedCsr->makeResident(*graphicsAllocation);
     testedCsr->makeResident(*graphicsAllocation2);
-    EXPECT_EQ(2u, testedCsr->getResidencyAllocations().size());
+
+    EXPECT_EQ(currentResidentSize + 2u, testedCsr->getResidencyAllocations().size());
 
     testedCsr->processResidency(testedCsr->getResidencyAllocations(), 0u);
 
-    EXPECT_EQ(2u, testedCsr->residency.size());
+    EXPECT_EQ(currentResidentSize + 2u, testedCsr->residency.size());
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
     memoryManager->freeGraphicsMemory(graphicsAllocation2);

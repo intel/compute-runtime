@@ -201,6 +201,13 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return returnWaitForCompletionWithTimeout;
     }
 
+    void fillReusableAllocationsList() override {
+        fillReusableAllocationsListCalled++;
+        if (callBaseFillReusableAllocationsList) {
+            return BaseClass::fillReusableAllocationsList();
+        }
+    }
+
     WaitStatus waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) {
         return waitForCompletionWithTimeout(WaitParams{false, enableTimeout, timeoutMicroseconds}, taskCountToWait);
     }
@@ -358,6 +365,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     uint32_t blitBufferCalled = 0;
     uint32_t createPerDssBackedBufferCalled = 0;
     uint32_t initDirectSubmissionCalled = 0;
+    uint32_t fillReusableAllocationsListCalled = 0;
     int ensureCommandBufferAllocationCalled = 0;
     DispatchFlags recordedDispatchFlags;
     BlitPropertiesContainer receivedBlitProperties = {};
@@ -380,6 +388,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool callBaseWaitForCompletionWithTimeout = true;
     bool shouldFailFlushBatchedSubmissions = false;
     bool shouldFlushBatchedSubmissionsReturnSuccess = false;
+    bool callBaseFillReusableAllocationsList = false;
     WaitStatus returnWaitForCompletionWithTimeout = WaitStatus::Ready;
     std::optional<WaitStatus> waitForTaskCountWithKmdNotifyFallbackReturnValue{};
     bool callBaseFlushBcsTask{true};

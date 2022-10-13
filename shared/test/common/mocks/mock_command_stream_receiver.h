@@ -57,6 +57,11 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         waitForCompletionWithTimeoutCalled++;
         return waitForCompletionWithTimeoutReturnValue;
     }
+
+    void fillReusableAllocationsList() override {
+        fillReusableAllocationsListCalled++;
+    }
+
     SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
 
     void flushTagUpdate() override{};
@@ -175,6 +180,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     std::vector<char> instructionHeapReserveredData;
     int *flushBatchedSubmissionsCallCounter = nullptr;
     uint32_t waitForCompletionWithTimeoutCalled = 0;
+    uint32_t fillReusableAllocationsListCalled = 0;
     uint32_t makeResidentCalledTimes = 0;
     int hostPtrSurfaceCreationMutexLockCount = 0;
     bool multiOsContextCapable = false;

@@ -42,6 +42,7 @@ void DrmMemoryManagerFixture::setUp(DrmMockCustom *mock, bool localMemoryEnabled
     ASSERT_NE(nullptr, executionEnvironment);
     executionEnvironment->incRefInternal();
     DebugManager.flags.DeferOsContextInitialization.set(0);
+    DebugManager.flags.SetAmountOfReusableAllocations.set(0);
 
     environmentWrapper.setCsrType<TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>>();
     allocationData.rootDeviceIndex = rootDeviceIndex;

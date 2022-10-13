@@ -63,7 +63,6 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
         indirectHeap[i] = nullptr;
     }
     internalAllocationStorage = std::make_unique<InternalAllocationStorage>(*this);
-
     const auto &hwInfo = peekHwInfo();
     uint32_t subDeviceCount = static_cast<uint32_t>(deviceBitfield.count());
     bool platformImplicitScaling = HwHelper::get(hwInfo.platform.eRenderCoreFamily).platformSupportsImplicitScaling(hwInfo);
@@ -233,6 +232,17 @@ void CommandStreamReceiver::ensureCommandBufferAllocation(LinearStream &commandS
 
     commandStream.replaceBuffer(allocation->getUnderlyingBuffer(), allocationSize - additionalAllocationSize);
     commandStream.replaceGraphicsAllocation(allocation);
+}
+
+void CommandStreamReceiver::fillReusableAllocationsList() {
+    auto amountToFill = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily).getAmountOfAllocationsToFill();
+    for (auto i = 0u; i < amountToFill; i++) {
+        const AllocationProperties commandStreamAllocationProperties{rootDeviceIndex, true, MemoryConstants::pageSize64k, AllocationType::COMMAND_BUFFER,
+                                                                     isMultiOsContextCapable(), false, osContext->getDeviceBitfield()};
+        auto allocation = this->getMemoryManager()->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
+        getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
+        this->makeResident(*allocation);
+    }
 }
 
 MemoryManager *CommandStreamReceiver::getMemoryManager() const {

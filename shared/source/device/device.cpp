@@ -381,7 +381,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
     if (engineUsage == EngineUsage::Regular) {
         addEngineToEngineGroup(engine);
     }
-
+    commandStreamReceiver->fillReusableAllocationsList();
     commandStreamReceivers.push_back(std::move(commandStreamReceiver));
 
     return true;
