@@ -21,8 +21,7 @@ WalkerPartition::WalkerPartitionArgs prepareWalkerPartitionArgs(uint64_t workPar
                                                                 bool emitSelfCleanup,
                                                                 bool preferStaticPartitioning,
                                                                 bool staticPartitioning,
-                                                                bool useSecondaryBatchBuffer,
-                                                                bool dcFlush) {
+                                                                bool useSecondaryBatchBuffer) {
     WalkerPartition::WalkerPartitionArgs args = {};
 
     args.workPartitionAllocationGpuVa = workPartitionAllocationGpuVa;
@@ -43,8 +42,6 @@ WalkerPartition::WalkerPartitionArgs prepareWalkerPartitionArgs(uint64_t workPar
     args.emitSelfCleanup = ImplicitScalingHelper::isSelfCleanupRequired(args, emitSelfCleanup);
     args.emitBatchBufferEnd = false;
     args.secondaryBatchBuffer = useSecondaryBatchBuffer;
-
-    args.dcFlushEnable = dcFlush;
 
     return args;
 }
@@ -73,7 +70,6 @@ size_t ImplicitScalingDispatch<GfxFamily>::getSize(bool apiSelfCleanup,
                                                                                       apiSelfCleanup,
                                                                                       preferStaticPartitioning,
                                                                                       staticPartitioning,
-                                                                                      false,
                                                                                       false);
 
     return static_cast<size_t>(WalkerPartition::estimateSpaceRequiredInCommandBuffer<GfxFamily>(args));
@@ -87,7 +83,6 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
                                                           bool useSecondaryBatchBuffer,
                                                           bool apiSelfCleanup,
                                                           bool usesImages,
-                                                          bool dcFlush,
                                                           uint64_t workPartitionAllocationGpuVa,
                                                           const HardwareInfo &hwInfo) {
     uint32_t totalProgrammedSize = 0u;
@@ -103,8 +98,7 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
                                                                                       apiSelfCleanup,
                                                                                       preferStaticPartitioning,
                                                                                       staticPartitioning,
-                                                                                      useSecondaryBatchBuffer,
-                                                                                      dcFlush);
+                                                                                      useSecondaryBatchBuffer);
 
     auto dispatchCommandsSize = getSize(apiSelfCleanup, preferStaticPartitioning, devices, {walkerCmd.getThreadGroupIdStartingX(), walkerCmd.getThreadGroupIdStartingY(), walkerCmd.getThreadGroupIdStartingZ()}, {walkerCmd.getThreadGroupIdXDimension(), walkerCmd.getThreadGroupIdYDimension(), walkerCmd.getThreadGroupIdZDimension()});
     void *commandBuffer = commandStream.getSpace(dispatchCommandsSize);

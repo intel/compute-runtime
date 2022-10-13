@@ -125,8 +125,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     auto partitionWalker = ImplicitScalingHelper::isImplicitScalingEnabled(devices, !kernel.isSingleSubdevicePreferred());
 
     if (partitionWalker) {
-        auto csr = commandQueue.getDevice().getDefaultEngine().commandStreamReceiver;
-        const uint64_t workPartitionAllocationGpuVa = csr->getWorkPartitionAllocationGpuAddress();
+        const uint64_t workPartitionAllocationGpuVa = commandQueue.getDevice().getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress();
         uint32_t partitionCount = 0u;
         ImplicitScalingDispatch<GfxFamily>::dispatchCommands(commandStream,
                                                              walkerCmd,
@@ -134,7 +133,6 @@ inline void HardwareInterface<GfxFamily>::programWalker(
                                                              partitionCount,
                                                              false,
                                                              false,
-                                                             csr->getDcFlushSupport(),
                                                              kernel.usesImages(),
                                                              workPartitionAllocationGpuVa,
                                                              hwInfo);

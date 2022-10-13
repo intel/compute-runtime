@@ -1112,7 +1112,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     testArgs.crossTileAtomicSynchronization = true;
     testArgs.emitPipeControlStall = true;
     testArgs.partitionCount = 2u;
-    testArgs.dcFlushEnable = csr.getDcFlushSupport();
     testArgs.tileCount = static_cast<uint32_t>(device->getDeviceBitfield().count());
 
     DebugManager.flags.SynchronizeWalkerInWparidMode.set(0);
@@ -1170,7 +1169,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     testArgs.crossTileAtomicSynchronization = false;
     testArgs.emitPipeControlStall = false;
     testArgs.partitionCount = 2u;
-    testArgs.dcFlushEnable = csr.getDcFlushSupport();
     testArgs.tileCount = static_cast<uint32_t>(device->getDeviceBitfield().count());
 
     DebugManager.flags.SynchronizeWalkerInWparidMode.set(0);
@@ -1243,7 +1241,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), true);
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
-    auto &csr = cmdQ->getUltCommandStreamReceiver();
 
     size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getHardwareInfo()) ? 2 : 1;
 
@@ -1257,7 +1254,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     testArgs.emitPipeControlStall = true;
     testArgs.crossTileAtomicSynchronization = true;
     testArgs.partitionCount = 16u;
-    testArgs.dcFlushEnable = csr.getDcFlushSupport();
     testArgs.tileCount = static_cast<uint32_t>(device->getDeviceBitfield().count());
 
     auto partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs);
@@ -1274,7 +1270,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), false);
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
-    auto &csr = cmdQ->getUltCommandStreamReceiver();
 
     size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getHardwareInfo()) ? 2 : 1;
 
@@ -1288,7 +1283,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     testArgs.emitPipeControlStall = false;
     testArgs.crossTileAtomicSynchronization = false;
     testArgs.partitionCount = 16u;
-    testArgs.dcFlushEnable = csr.getDcFlushSupport();
     testArgs.tileCount = static_cast<uint32_t>(device->getDeviceBitfield().count());
 
     auto partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs);

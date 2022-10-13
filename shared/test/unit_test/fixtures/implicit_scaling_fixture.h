@@ -33,7 +33,6 @@ struct ImplicitScalingFixture : public CommandEncodeStatesFixture {
     DeviceBitfield singleTile;
     DeviceBitfield twoTile;
     void *alignedMemory = nullptr;
-    bool dcFlushFlag = false;
 };
 
 using ImplicitScalingTests = Test<ImplicitScalingFixture>;

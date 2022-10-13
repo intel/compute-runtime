@@ -30,8 +30,6 @@ void ImplicitScalingFixture::setUp() {
     commandStream.replaceGraphicsAllocation(&cmdBufferAlloc);
 
     testHardwareInfo = *defaultHwInfo;
-
-    dcFlushFlag = pDevice->getDefaultEngine().commandStreamReceiver->getDcFlushSupport();
 }
 
 void ImplicitScalingFixture::tearDown() {
