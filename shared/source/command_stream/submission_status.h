@@ -14,7 +14,6 @@ enum class SubmissionStatus : uint32_t {
     SUCCESS = 0,
     FAILED,
     OUT_OF_MEMORY,
-    OUT_OF_HOST_MEMORY,
     UNSUPPORTED,
     DEVICE_UNINITIALIZED,
 };

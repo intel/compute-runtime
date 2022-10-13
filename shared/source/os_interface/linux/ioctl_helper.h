@@ -136,8 +136,6 @@ class IoctlHelper {
 
     uint32_t getFlagsForPrimeHandleToFd() const;
 
-    virtual bool shouldBreakIoctlLoopOnWouldBlock(DrmIoctl ioctlRequest) const;
-
   protected:
     Drm &drm;
 };
@@ -209,7 +207,7 @@ class IoctlHelperImpl : public IoctlHelperUpstream {
 
 class IoctlHelperPrelim20 : public IoctlHelper {
   public:
-    IoctlHelperPrelim20(Drm &drmArg);
+    using IoctlHelper::IoctlHelper;
 
     bool initialize() override;
     bool isSetPairAvailable() override;
@@ -256,7 +254,6 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     int getDrmParamValue(DrmParam drmParam) const override;
     std::string getDrmParamString(DrmParam param) const override;
     std::string getIoctlString(DrmIoctl ioctlRequest) const override;
-    bool shouldBreakIoctlLoopOnWouldBlock(DrmIoctl ioctlRequest) const override;
 };
 
 } // namespace NEO

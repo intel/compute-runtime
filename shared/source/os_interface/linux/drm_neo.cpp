@@ -58,10 +58,6 @@ void Drm::queryAndSetVmBindPatIndexProgrammingSupport() {
 }
 
 int Drm::ioctl(DrmIoctl request, void *arg) {
-    auto shouldBreakIoctlLoopOnWouldBlock = false;
-    if (ioctlHelper) {
-        shouldBreakIoctlLoopOnWouldBlock = ioctlHelper->shouldBreakIoctlLoopOnWouldBlock(request);
-    }
     auto requestValue = getIoctlRequestValue(request, ioctlHelper.get());
     int ret;
     int returnedErrno;
@@ -110,10 +106,6 @@ int Drm::ioctl(DrmIoctl request, void *arg) {
                 printf("IOCTL %s returns %d, errno %d(%s)\n",
                        getIoctlString(request, ioctlHelper.get()).c_str(), ret, returnedErrno, strerror(returnedErrno));
             }
-        }
-
-        if (ret == -1 && returnedErrno == EWOULDBLOCK && shouldBreakIoctlLoopOnWouldBlock) {
-            break;
         }
 
     } while (ret == -1 && (returnedErrno == EINTR || returnedErrno == EAGAIN || returnedErrno == EBUSY || returnedErrno == -EBUSY));

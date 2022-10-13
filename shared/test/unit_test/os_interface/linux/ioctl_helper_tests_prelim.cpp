@@ -10,9 +10,7 @@
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
-#include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
@@ -349,23 +347,4 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimWhenGettingEuStallPropertiesThenCorrec
 
 TEST_F(IoctlPrelimHelperTests, givenPrelimWhenGettingEuStallFdParameterThenCorrectIoctlValueIsReturned) {
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_I915_PERF_FLAG_FD_EU_STALL), ioctlHelper.getEuStallFdParameter());
-}
-TEST_F(IoctlPrelimHelperTests, whenCallingIoctlWithGemExecbufferThenShouldBreakOnWouldBlock) {
-    EXPECT_TRUE(ioctlHelper.shouldBreakIoctlLoopOnWouldBlock(DrmIoctl::GemExecbuffer2));
-    EXPECT_FALSE(ioctlHelper.shouldBreakIoctlLoopOnWouldBlock(DrmIoctl::GemVmBind));
-}
-
-TEST(IoctlPrelimHelperTest, whenCreatingIoctlHelperThenProperFlagsAreSetToFileDescriptor) {
-    MockExecutionEnvironment executionEnvironment{};
-    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
-
-    VariableBackup<decltype(SysCalls::getFileDescriptorFlagsCalled)> backupGetFlags(&SysCalls::getFileDescriptorFlagsCalled, 0);
-    VariableBackup<decltype(SysCalls::setFileDescriptorFlagsCalled)> backupSetFlags(&SysCalls::setFileDescriptorFlagsCalled, 0);
-    VariableBackup<decltype(SysCalls::passedFileDescriptorFlagsToSet)> backupPassedFlags(&SysCalls::passedFileDescriptorFlagsToSet, 0);
-
-    IoctlHelperPrelim20 ioctlHelper{*drm};
-
-    EXPECT_EQ(1, SysCalls::getFileDescriptorFlagsCalled);
-    EXPECT_EQ(1, SysCalls::setFileDescriptorFlagsCalled);
-    EXPECT_EQ((O_RDWR | O_NONBLOCK), SysCalls::passedFileDescriptorFlagsToSet);
 }

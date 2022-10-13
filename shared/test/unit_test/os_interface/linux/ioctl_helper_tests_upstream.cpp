@@ -477,11 +477,3 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenInitializingThenTrueIsReturned) 
     IoctlHelperUpstream ioctlHelper{*drm};
     EXPECT_EQ(true, ioctlHelper.initialize());
 }
-
-TEST(IoctlHelperUpstreamTest, whenCallingIoctlWithGemExecbufferThenShouldNotBreakOnWouldBlock) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    IoctlHelperUpstream ioctlHelper{*drm};
-    EXPECT_FALSE(ioctlHelper.shouldBreakIoctlLoopOnWouldBlock(DrmIoctl::GemExecbuffer2));
-    EXPECT_FALSE(ioctlHelper.shouldBreakIoctlLoopOnWouldBlock(DrmIoctl::GemVmBind));
-}

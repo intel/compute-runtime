@@ -20,14 +20,6 @@
 
 #include <algorithm>
 
-template <typename GfxFamily>
-struct MockDrmCsr : public DrmCommandStreamReceiver<GfxFamily> {
-    using DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver;
-    using DrmCommandStreamReceiver<GfxFamily>::dispatchMode;
-    using DrmCommandStreamReceiver<GfxFamily>::completionFenceValuePointer;
-    using DrmCommandStreamReceiver<GfxFamily>::flushInternal;
-};
-
 class DrmCommandStreamTest : public ::testing::Test {
   public:
     template <typename GfxFamily>
@@ -51,7 +43,7 @@ class DrmCommandStreamTest : public ::testing::Test {
                                                                                                   PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));
         osContext->ensureContextInitialized();
 
-        csr = new MockDrmCsr<GfxFamily>(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerActive);
+        csr = new DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerActive);
         ASSERT_NE(nullptr, csr);
         csr->setupContext(*osContext);
 
