@@ -1823,7 +1823,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     auto currentAddress = cpuPointer;
     auto remainingSize = size;
     auto getNumHandles = [](uint32_t numBanks) -> uint32_t {
-        return (numBanks > 1) && (DebugManager.flags.CreateKmdMigratedSharedAllocationWithMultipleBOs.get() > 0) ? numBanks : 1u;
+        return (numBanks > 1) && (DebugManager.flags.CreateKmdMigratedSharedAllocationWithMultipleBOs.get() != 0) ? numBanks : 1u;
     };
 
     auto handles = getNumHandles(allocationData.storageInfo.getNumBanks());
@@ -1831,7 +1831,9 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
         uint32_t handle = 0;
 
         auto currentSize = alignUp(remainingSize / (handles - handleId), MemoryConstants::pageSize64k);
-        remainingSize -= currentSize;
+        if (currentSize == 0) {
+            break;
+        }
 
         auto ret = memoryInfo->createGemExt(memRegions, currentSize, handle, {}, -1);
 
@@ -1863,6 +1865,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
         bos.push_back(bo.release());
 
         currentAddress = reinterpret_cast<void *>(castToUint64(currentAddress) + currentSize);
+        remainingSize -= currentSize;
     }
 
     auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
