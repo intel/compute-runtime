@@ -1617,6 +1617,46 @@ HWTEST2_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesForMemoryExtProper
     EXPECT_EQ(memExtProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
 }
 
+HWTEST2_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWith2LevelsOfPnextForMemoryExtPropertiesThenPropertiesAreReturned, MatchAny) {
+    uint32_t count = 0;
+    ze_result_t res = device->getMemoryProperties(&count, nullptr);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(1u, count);
+
+    auto hwInfo = *NEO::defaultHwInfo;
+    MockHwInfoConfigHw<productFamily> hwInfoConfig;
+    VariableBackup<HwInfoConfig *> hwInfoConfigFactoryBackup{&NEO::hwInfoConfigFactory[static_cast<size_t>(hwInfo.platform.eProductFamily)]};
+    hwInfoConfigFactoryBackup = &hwInfoConfig;
+
+    ze_device_memory_properties_t memProperties = {};
+    ze_base_properties_t baseProperties{};
+    ze_device_memory_ext_properties_t memExtProperties = {};
+    memExtProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MEMORY_EXT_PROPERTIES;
+    // Setting up the 1st level pNext
+    memProperties.pNext = &baseProperties;
+    // Setting up the 2nd level pNext with device memory properties
+    baseProperties.pNext = &memExtProperties;
+
+    res = device->getMemoryProperties(&count, &memProperties);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(1u, count);
+    const std::array<ze_device_memory_ext_type_t, 5> sysInfoMemType = {
+        ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR4,
+        ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR5,
+        ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
+        ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
+        ZE_DEVICE_MEMORY_EXT_TYPE_GDDR6,
+    };
+
+    auto bandwidthPerNanoSecond = hwInfoConfig.getDeviceMemoryMaxBandWidthInBytesPerSecond(hwInfo, nullptr, 0) / 1000000000;
+
+    EXPECT_EQ(memExtProperties.type, sysInfoMemType[hwInfo.gtSystemInfo.MemoryType]);
+    EXPECT_EQ(memExtProperties.physicalSize, hwInfoConfig.getDeviceMemoryPhysicalSizeInBytes(nullptr, 0));
+    EXPECT_EQ(memExtProperties.readBandwidth, bandwidthPerNanoSecond);
+    EXPECT_EQ(memExtProperties.writeBandwidth, memExtProperties.readBandwidth);
+    EXPECT_EQ(memExtProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
+}
+
 TEST_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWhenPnextIsNonNullAndStypeIsUnSupportedThenNoErrorIsReturned) {
     uint32_t count = 0;
     ze_result_t res = device->getMemoryProperties(&count, nullptr);

@@ -488,10 +488,11 @@ ze_result_t DeviceImp::getMemoryProperties(uint32_t *pCount, ze_device_memory_pr
 
     pMemProperties->flags = 0;
 
-    void *pNext = pMemProperties->pNext;
+    ze_base_properties_t *pNext = static_cast<ze_base_properties_t *>(pMemProperties->pNext);
     while (pNext) {
-        auto extendedProperties = reinterpret_cast<ze_device_memory_ext_properties_t *>(pMemProperties->pNext);
-        if (extendedProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_MEMORY_EXT_PROPERTIES) {
+
+        if (pNext->stype == ZE_STRUCTURE_TYPE_DEVICE_MEMORY_EXT_PROPERTIES) {
+            auto extendedProperties = reinterpret_cast<ze_device_memory_ext_properties_t *>(pNext);
 
             // GT_MEMORY_TYPES map to ze_device_memory_ext_type_t
             const std::array<ze_device_memory_ext_type_t, 5> sysInfoMemType = {
@@ -516,7 +517,7 @@ ze_result_t DeviceImp::getMemoryProperties(uint32_t *pCount, ze_device_memory_pr
             extendedProperties->writeBandwidth = extendedProperties->readBandwidth;
             extendedProperties->bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
         }
-        pNext = const_cast<void *>(extendedProperties->pNext);
+        pNext = static_cast<ze_base_properties_t *>(pNext->pNext);
     }
 
     return ZE_RESULT_SUCCESS;
