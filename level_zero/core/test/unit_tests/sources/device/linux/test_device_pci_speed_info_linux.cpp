@@ -14,7 +14,7 @@
 namespace L0 {
 namespace ult {
 
-void PciSpeedInfoTest::setPciSpeedInfo(NEO::ExecutionEnvironment *executionEnvironment, const NEO::PhyicalDevicePciSpeedInfo &pciSpeedInfo) {
+void PciSpeedInfoTest::setPciSpeedInfo(NEO::ExecutionEnvironment *executionEnvironment, const NEO::PhysicalDevicePciSpeedInfo &pciSpeedInfo) {
     auto driverModel = std::make_unique<NEO::MockDriverModel>();
     driverModel->pciSpeedInfo = pciSpeedInfo;
     driverModel->pciBusInfo = {0, 1, 2, 3};

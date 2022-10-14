@@ -79,7 +79,7 @@ class DriverModel : public NonCopyableClass {
     }
 
     virtual PhysicalDevicePciBusInfo getPciBusInfo() const = 0;
-    virtual PhyicalDevicePciSpeedInfo getPciSpeedInfo() const = 0;
+    virtual PhysicalDevicePciSpeedInfo getPciSpeedInfo() const = 0;
 
     virtual size_t getMaxMemAllocSize() const {
         return std::numeric_limits<size_t>::max();

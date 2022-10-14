@@ -21,21 +21,21 @@ namespace ult {
 class PciSpeedInfoTestDriverModel : public WddmMock {
   public:
     PciSpeedInfoTestDriverModel(RootDeviceEnvironment &rootDeviceEnvironment) : WddmMock(rootDeviceEnvironment) {}
-    void setExpectedPciSpeedInfo(const PhyicalDevicePciSpeedInfo &pciSpeedInfo) {
+    void setExpectedPciSpeedInfo(const PhysicalDevicePciSpeedInfo &pciSpeedInfo) {
         returnedSpeedInfo = pciSpeedInfo;
     }
 
-    PhyicalDevicePciSpeedInfo getPciSpeedInfo() const override {
+    PhysicalDevicePciSpeedInfo getPciSpeedInfo() const override {
         return returnedSpeedInfo;
     }
     PhysicalDevicePciBusInfo getPciBusInfo() const override {
         return NEO::PhysicalDevicePciBusInfo(0, 1, 2, 3);
     }
 
-    PhyicalDevicePciSpeedInfo returnedSpeedInfo = {-1, -1, -1};
+    PhysicalDevicePciSpeedInfo returnedSpeedInfo = {-1, -1, -1};
 };
 
-void PciSpeedInfoTest::setPciSpeedInfo(NEO::ExecutionEnvironment *executionEnvironment, const NEO::PhyicalDevicePciSpeedInfo &pciSpeedInfo) {
+void PciSpeedInfoTest::setPciSpeedInfo(NEO::ExecutionEnvironment *executionEnvironment, const NEO::PhysicalDevicePciSpeedInfo &pciSpeedInfo) {
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(
         std::make_unique<PciSpeedInfoTestDriverModel>(*executionEnvironment->rootDeviceEnvironments[0]));
     PciSpeedInfoTestDriverModel *driverModel = static_cast<PciSpeedInfoTestDriverModel *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel());

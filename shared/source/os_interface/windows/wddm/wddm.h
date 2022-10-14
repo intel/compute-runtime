@@ -207,7 +207,7 @@ class Wddm : public DriverModel {
         return adapterBDF;
     }
 
-    PhyicalDevicePciSpeedInfo getPciSpeedInfo() const override;
+    PhysicalDevicePciSpeedInfo getPciSpeedInfo() const override;
     bool buildTopologyMapping();
 
     uint32_t getAdditionalAdapterInfoOptions() const {

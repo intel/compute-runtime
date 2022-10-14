@@ -288,7 +288,7 @@ TEST_F(DeviceGetCapsTest, whenDriverModelHasLimitationForMaxMemoryAllocationSize
         size_t getMaxMemAllocSize() const override {
             return maxAllocSize;
         }
-        PhyicalDevicePciSpeedInfo getPciSpeedInfo() const override { return {}; }
+        PhysicalDevicePciSpeedInfo getPciSpeedInfo() const override { return {}; }
     };
 
     DebugManagerStateRestore dbgRestorer;

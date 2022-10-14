@@ -33,7 +33,7 @@ struct PhysicalDevicePciBusInfo {
     uint32_t pciFunction = invalidValue;
 };
 
-struct PhyicalDevicePciSpeedInfo {
+struct PhysicalDevicePciSpeedInfo {
     static constexpr int32_t unknown = -1;
     int32_t genVersion = unknown;
     int32_t width = unknown;

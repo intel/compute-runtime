@@ -1485,9 +1485,9 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
     return ret;
 }
 
-PhyicalDevicePciSpeedInfo Drm::getPciSpeedInfo() const {
+PhysicalDevicePciSpeedInfo Drm::getPciSpeedInfo() const {
 
-    PhyicalDevicePciSpeedInfo pciSpeedInfo = {};
+    PhysicalDevicePciSpeedInfo pciSpeedInfo = {};
 
     std::string pathPrefix{};
     bool isIntegratedDevice = rootDeviceEnvironment.getHardwareInfo()->capabilityTable.isIntegratedDevice;
@@ -1516,7 +1516,7 @@ PhyicalDevicePciSpeedInfo Drm::getPciSpeedInfo() const {
         linkWidthStream << pathPrefix << fileName;
 
         int fd = NEO::SysCalls::open(linkWidthStream.str().c_str(), O_RDONLY);
-        if (fd == 0) {
+        if (fd < 0) {
             return false;
         }
         ssize_t bytesRead = NEO::SysCalls::pread(fd, readString.data(), readString.size() - 1, 0);

@@ -292,7 +292,7 @@ class DriverModelMock : public DriverModel {
     PhysicalDevicePciBusInfo getPciBusInfo() const override {
         return {};
     }
-    PhyicalDevicePciSpeedInfo getPciSpeedInfo() const override {
+    PhysicalDevicePciSpeedInfo getPciSpeedInfo() const override {
         return {};
     }
 

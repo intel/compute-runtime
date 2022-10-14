@@ -1200,8 +1200,8 @@ PhysicalDevicePciBusInfo Wddm::getPciBusInfo() const {
     return PhysicalDevicePciBusInfo(0, adapterBDF.Bus, adapterBDF.Device, adapterBDF.Function);
 }
 
-PhyicalDevicePciSpeedInfo Wddm::getPciSpeedInfo() const {
-    PhyicalDevicePciSpeedInfo speedInfo{};
+PhysicalDevicePciSpeedInfo Wddm::getPciSpeedInfo() const {
+    PhysicalDevicePciSpeedInfo speedInfo{};
     return speedInfo;
 }
 
