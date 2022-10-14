@@ -108,6 +108,34 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnableUpdateTaskFromWaitWhenN
     buffer->release();
 }
 
+HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnableUpdateTaskFromWaitWhenEnqueueFillIsMadeThenPipeControlInserted) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UpdateTaskCountFromWait.set(3u);
+    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    MockContext ctx(pClDevice);
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.timestampPacketWriteEnabled = false;
+    CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0, false);
+    size_t tempBuffer[] = {0, 1, 2};
+    size_t dstBuffer[] = {0};
+    cl_int retVal = 0;
+
+    auto buffer = Buffer::create(&ctx, CL_MEM_USE_HOST_PTR, sizeof(tempBuffer), tempBuffer, retVal);
+
+    commandQueue.enqueueFillBuffer(buffer, dstBuffer, 1, 0, sizeof(dstBuffer), 0, nullptr, nullptr);
+
+    auto &commandStreamTask = *commandStreamReceiver.lastFlushedCommandStream;
+
+    cmdList.clear();
+    // Parse command list
+    parseCommands<FamilyType>(commandStreamTask, 0);
+
+    auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itorPC);
+
+    buffer->release();
+}
+
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenTaskCsPassedAsCommandStreamParamWhenFlushingTaskThenCompletionStampIsCorrect) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
