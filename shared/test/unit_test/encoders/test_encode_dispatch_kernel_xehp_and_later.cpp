@@ -1092,6 +1092,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
     dispatchArgs.isInternal = isInternal;
     dispatchArgs.partitionCount = 2;
+    dispatchArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, pDevice->getHardwareInfo());
 
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs, nullptr);
 
@@ -1127,6 +1128,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     args.emitPipeControlStall = true;
     args.partitionCount = dispatchArgs.partitionCount;
     args.emitSelfCleanup = true;
+    args.dcFlushEnable = dispatchArgs.dcFlushEnable;
 
     auto cleanupSectionOffset = WalkerPartition::computeControlSectionOffset<FamilyType>(args);
     uint64_t expectedCleanupGpuVa = cmdContainer->getCommandStream()->getGraphicsAllocation()->getGpuAddress() +

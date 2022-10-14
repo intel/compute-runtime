@@ -30,6 +30,7 @@ struct WalkerPartitionArgs {
     bool preferredStaticPartitioning = false;
     bool usePostSync = false;
     bool pipeControlBeforeCleanupCrossTileSync = false;
+    bool dcFlushEnable = false;
 };
 
 constexpr uint32_t wparidCCSOffset = 0x221C;

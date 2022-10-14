@@ -134,6 +134,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
                                                              false,
                                                              false,
                                                              kernel.usesImages(),
+                                                             queueCsr.getDcFlushSupport(),
                                                              workPartitionAllocationGpuVa,
                                                              hwInfo);
         if (queueCsr.isStaticWorkPartitioningEnabled()) {

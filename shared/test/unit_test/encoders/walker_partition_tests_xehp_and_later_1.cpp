@@ -12,6 +12,8 @@
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerPartitionWhenConstructCommandBufferIsCalledThenBatchBufferIsBeingProgrammed) {
     testArgs.partitionCount = 16u;
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+
     checkForProperCmdBufferAddressOffset = false;
     uint64_t gpuVirtualAddress = 0x8000123000;
     uint64_t postSyncAddress = 0x8000456000;
@@ -157,6 +159,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWhe
     uint64_t cmdBufferGpuAddress = 0x8000123000;
     uint64_t postSyncAddress = 0x8000456000;
     testArgs.workPartitionAllocationGpuVa = 0x8000444000;
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+
     auto walker = createWalker<FamilyType>(postSyncAddress);
 
     uint32_t totalBytesProgrammed{};
@@ -231,6 +235,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWhe
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionAndPreWalkerSyncWhenConstructCommandBufferIsCalledThenBatchBufferIsBeingProgrammed) {
     testArgs.tileCount = 4u;
     testArgs.partitionCount = testArgs.tileCount;
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+
     checkForProperCmdBufferAddressOffset = false;
     testArgs.synchronizeBeforeExecution = true;
     uint64_t cmdBufferGpuAddress = 0x8000123000;
@@ -332,6 +338,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionAnd
     testArgs.crossTileAtomicSynchronization = false;
     testArgs.tileCount = 4u;
     testArgs.partitionCount = testArgs.tileCount;
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+
     checkForProperCmdBufferAddressOffset = false;
     uint64_t cmdBufferGpuAddress = 0x8000123000;
     uint64_t postSyncAddress = 0x8000456000;
@@ -415,6 +423,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
     testArgs.partitionCount = testArgs.tileCount;
     testArgs.emitSelfCleanup = true;
     testArgs.staticPartitioning = true;
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
 
     checkForProperCmdBufferAddressOffset = false;
     uint64_t cmdBufferGpuAddress = 0x8000123000;
@@ -565,6 +574,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
     testArgs.partitionCount = testArgs.tileCount;
     testArgs.emitSelfCleanup = true;
     testArgs.staticPartitioning = true;
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+
     checkForProperCmdBufferAddressOffset = false;
     uint64_t cmdBufferGpuAddress = 0x8000123000;
     uint64_t postSyncAddress = 0x8000456000;
@@ -714,6 +725,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
     testArgs.useAtomicsForSelfCleanup = true;
     testArgs.emitSelfCleanup = true;
     testArgs.staticPartitioning = true;
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+
     checkForProperCmdBufferAddressOffset = false;
     uint64_t cmdBufferGpuAddress = 0x8000123000;
     uint64_t postSyncAddress = 0x8000456000;
@@ -870,6 +883,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
     testArgs.emitSelfCleanup = true;
     testArgs.useAtomicsForSelfCleanup = true;
     testArgs.staticPartitioning = true;
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+
     checkForProperCmdBufferAddressOffset = false;
     uint64_t cmdBufferGpuAddress = 0x8000123000;
     uint64_t postSyncAddress = 0x8000456000;
@@ -1025,6 +1040,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDebugModesForWalkerParti
     testArgs.tileCount = 4u;
     testArgs.partitionCount = 16u;
     testArgs.emitBatchBufferEnd = true;
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
 
     checkForProperCmdBufferAddressOffset = false;
     uint64_t gpuVirtualAddress = 0x8000123000;
@@ -1258,6 +1274,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitionIsPreferr
     testArgs.staticPartitioning = staticPartitioning;
     testArgs.preferredStaticPartitioning = preferredStaticPartitioning;
     testArgs.workPartitionAllocationGpuVa = 0x800BADA55000;
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
 
     auto expectedCommandUsedSize = sizeof(WalkerPartition::LOAD_REGISTER_IMM<FamilyType>) +
                                    sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) * 2 +

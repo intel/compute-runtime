@@ -992,6 +992,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenPredicatedCommandB
     testArgs.synchronizeBeforeExecution = false;
     testArgs.secondaryBatchBuffer = false;
     testArgs.emitSelfCleanup = false;
+    testArgs.dcFlushEnable = NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
 
     WalkerPartition::constructDynamicallyPartitionedCommandBuffer<FamilyType>(
         streamCpuPointer,
