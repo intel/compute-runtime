@@ -47,9 +47,21 @@ struct DebugSessionLinux : DebugSessionImp {
         MOCKABLE_VIRTUAL ~IoctlHandler() = default;
         MOCKABLE_VIRTUAL int ioctl(int fd, unsigned long request, void *arg) {
             int ret = 0;
+            int error = 0;
+            bool shouldRetryIoctl = false;
             do {
+                shouldRetryIoctl = false;
                 ret = NEO::SysCalls::ioctl(fd, request, arg);
-            } while (ret == -1 && (errno == EINTR || errno == EAGAIN || errno == EBUSY));
+                error = errno;
+
+                if (ret == -1) {
+                    shouldRetryIoctl = (error == EINTR || error == EAGAIN || error == EBUSY);
+
+                    if (request == PRELIM_I915_DEBUG_IOCTL_EU_CONTROL) {
+                        shouldRetryIoctl = (error == EINTR || error == EAGAIN);
+                    }
+                }
+            } while (shouldRetryIoctl);
             return ret;
         }
 

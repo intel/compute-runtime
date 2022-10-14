@@ -3025,5 +3025,41 @@ TEST_F(MultiTileDebugSessionTest, givenAttachedRootDeviceWhenAttachingToTiletDev
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+struct AffinityMaskForSingleSubDevice : MultipleDevicesWithCustomHwInfo {
+    void setUp() {
+        DebugManager.flags.ZE_AFFINITY_MASK.set("0.1");
+        MultipleDevicesWithCustomHwInfo::numSubDevices = 2;
+        MultipleDevicesWithCustomHwInfo::setUp();
+    }
+
+    void tearDown() {
+        MultipleDevicesWithCustomHwInfo::tearDown();
+    }
+    DebugManagerStateRestore restorer;
+};
+
+using AffinityMaskForSingleSubDeviceTest = Test<AffinityMaskForSingleSubDevice>;
+
+TEST_F(AffinityMaskForSingleSubDeviceTest, givenDeviceDebugSessionWhenSendingInterruptsThenInterruptIsSentWithCorrectDeviceIndex) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    L0::Device *device = driverHandle->devices[0];
+    L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, deviceImp);
+
+    sessionMock->interruptImpResult = ZE_RESULT_SUCCESS;
+    ze_device_thread_t apiThread = {0, 0, 0, 0};
+
+    auto result = sessionMock->interrupt(apiThread);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    sessionMock->sendInterrupts();
+
+    EXPECT_TRUE(sessionMock->interruptSent);
+    EXPECT_EQ(1u, sessionMock->interruptedDevices[0]);
+}
+
 } // namespace ult
 } // namespace L0

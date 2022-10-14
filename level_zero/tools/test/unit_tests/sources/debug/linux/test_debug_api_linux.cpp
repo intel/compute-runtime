@@ -21,6 +21,7 @@
 #include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
+#include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
@@ -91,6 +92,56 @@ TEST(IoctlHandler, GivenHandlerWhenMmapAndMunmapCalledThenRedirectedToSysCall) {
     EXPECT_EQ(1u, NEO::SysCalls::munmapFuncCalled);
     NEO::SysCalls::mmapFuncCalled = 0;
     NEO::SysCalls::munmapFuncCalled = 0;
+}
+
+TEST(IoctlHandler, GivenHandlerWhenEuControlIoctlFailsWithEBUSYThenIoctlIsNotCalledAgain) {
+    VariableBackup<decltype(SysCalls::sysCallsIoctl)> mockIoctl(&SysCalls::sysCallsIoctl);
+    VariableBackup<int> mockErrno(&errno);
+    int ioctlCount = 0;
+
+    SysCalls::sysCallsIoctl = [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+        auto ioctlCount = reinterpret_cast<int *>(arg);
+        (*ioctlCount)++;
+        if (*ioctlCount < 2) {
+            errno = EBUSY;
+            return -1;
+        }
+        errno = 0;
+        return 0;
+    };
+
+    L0::DebugSessionLinux::IoctlHandler handler;
+
+    auto result = handler.ioctl(0, PRELIM_I915_DEBUG_IOCTL_EU_CONTROL, &ioctlCount);
+    EXPECT_EQ(-1, result);
+    EXPECT_EQ(1, ioctlCount);
+}
+
+TEST(IoctlHandler, GivenHandlerWhenEuControlIoctlFailsWithEAGAINOrEINTRThenIoctlIsCalledAgain) {
+    VariableBackup<decltype(SysCalls::sysCallsIoctl)> mockIoctl(&SysCalls::sysCallsIoctl);
+    VariableBackup<int> mockErrno(&errno);
+    int ioctlCount = 0;
+
+    SysCalls::sysCallsIoctl = [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+        auto ioctlCount = reinterpret_cast<int *>(arg);
+        (*ioctlCount)++;
+        if (*ioctlCount == 1) {
+            errno = EAGAIN;
+            return -1;
+        }
+        if (*ioctlCount == 2) {
+            errno = EINTR;
+            return -1;
+        }
+        errno = 0;
+        return 0;
+    };
+
+    L0::DebugSessionLinux::IoctlHandler handler;
+
+    auto result = handler.ioctl(0, PRELIM_I915_DEBUG_IOCTL_EU_CONTROL, &ioctlCount);
+    EXPECT_EQ(0, result);
+    EXPECT_EQ(3, ioctlCount);
 }
 
 TEST(DebugSessionLinuxTest, GivenDebugSessionWhenExtractingCpuVaFromUuidThenCorrectCpuVaReturned) {

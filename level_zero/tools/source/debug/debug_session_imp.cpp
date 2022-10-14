@@ -564,11 +564,7 @@ void DebugSessionImp::sendInterrupts() {
     auto deviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
 
     if (deviceCount == 1) {
-        uint32_t deviceIndex = 0;
-
-        if (connectedDevice->getNEODevice()->isSubDevice()) {
-            deviceIndex = Math::log2(static_cast<uint32_t>(connectedDevice->getNEODevice()->getDeviceBitfield().to_ulong()));
-        }
+        uint32_t deviceIndex = Math::log2(static_cast<uint32_t>(connectedDevice->getNEODevice()->getDeviceBitfield().to_ulong()));
 
         ze_result_t result;
         {
