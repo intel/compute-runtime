@@ -874,7 +874,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, WhenMakingResidentThenResidency
 
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmittedThenFlushTaskIsProperlyCalled) {
     auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
-    //preemption allocation + sip allocation
+    // preemption allocation + sip allocation
     size_t csrSurfaceCount = 0;
     if (device->getPreemptionMode() == PreemptionMode::MidThread) {
         csrSurfaceCount = 2;
@@ -961,6 +961,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenI
 using WddmSimpleTest = ::testing::Test;
 
 HWTEST_F(WddmSimpleTest, givenDefaultWddmCsrWhenItIsCreatedThenBatchingIsTurnedOn) {
+    DebugManagerStateRestore stateRestore;
     DebugManager.flags.CsrDispatchMode.set(0);
     HardwareInfo *hwInfo = nullptr;
     ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
