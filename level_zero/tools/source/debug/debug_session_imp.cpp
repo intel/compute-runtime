@@ -1282,16 +1282,13 @@ ze_result_t DebugSessionImp::readSLMMemory(EuThread::ThreadId threadId, const ze
 
     uint64_t offset = desc->address & maxNBitValue(slmAddressSpaceTag);
 
-    // SIP accesses SLM in units of slmSendBytesSize at offset units of the same size
-    uint32_t offsetUnits = static_cast<uint32_t>(std::ceil(static_cast<float>(offset) / slmSendBytesSize));
+    // SIP accesses SLM in units of slmSendBytesSize at offset allignment of slmSendBytesSize
     uint32_t frontPadding = offset % slmSendBytesSize;
+    uint64_t alignedOffset = offset - frontPadding;
     uint32_t remainingSlmSendUnits = static_cast<uint32_t>(std::ceil(static_cast<float>(size) / slmSendBytesSize));
 
-    if (frontPadding) {
-        offsetUnits--;
-        if ((size + frontPadding) > (remainingSlmSendUnits * slmSendBytesSize)) {
-            remainingSlmSendUnits++;
-        }
+    if ((size + frontPadding) > (remainingSlmSendUnits * slmSendBytesSize)) {
+        remainingSlmSendUnits++;
     }
 
     uint32_t loops = static_cast<uint32_t>(std::ceil(static_cast<float>(remainingSlmSendUnits) / maxUnitsPerLoop));
@@ -1300,7 +1297,7 @@ ze_result_t DebugSessionImp::readSLMMemory(EuThread::ThreadId threadId, const ze
     uint32_t readUnits = 0;
     uint32_t bytesAlreadyRead = 0;
 
-    sipCommand.offset = offsetUnits;
+    sipCommand.offset = alignedOffset;
 
     for (uint32_t loop = 0; loop < loops; loop++) {
 
@@ -1336,8 +1333,8 @@ ze_result_t DebugSessionImp::readSLMMemory(EuThread::ThreadId threadId, const ze
         memcpy_s(tmpBuffer.get() + bytesAlreadyRead, readUnits * slmSendBytesSize, sipCommand.buffer, readUnits * slmSendBytesSize);
 
         remainingSlmSendUnits -= readUnits;
-        sipCommand.offset += readUnits;
         bytesAlreadyRead += readUnits * slmSendBytesSize;
+        sipCommand.offset += readUnits * slmSendBytesSize;
     }
 
     memcpy_s(buffer, size, tmpBuffer.get() + frontPadding, size);
@@ -1350,29 +1347,25 @@ ze_result_t DebugSessionImp::writeSLMMemory(EuThread::ThreadId threadId, const z
     SIP::sip_command sipCommand = {0};
 
     uint64_t offset = desc->address & maxNBitValue(slmAddressSpaceTag);
-    // SIP accesses SLM in units of slmSendBytesSize at offset units of the same size
-    uint32_t offsetUnits = static_cast<uint32_t>(std::ceil(static_cast<float>(offset) / slmSendBytesSize));
+    // SIP accesses SLM in units of slmSendBytesSize at offset allignment of slmSendBytesSize
     uint32_t frontPadding = offset % slmSendBytesSize;
+    uint64_t alignedOffset = offset - frontPadding;
     uint32_t remainingSlmSendUnits = static_cast<uint32_t>(std::ceil(static_cast<float>(size) / slmSendBytesSize));
     size_t tailPadding = (size % slmSendBytesSize) ? slmSendBytesSize - (size % slmSendBytesSize) : 0;
 
-    if (frontPadding) {
-        offsetUnits--;
-
-        if ((size + frontPadding) > (remainingSlmSendUnits * slmSendBytesSize)) {
-            remainingSlmSendUnits++;
-        }
+    if ((size + frontPadding) > (remainingSlmSendUnits * slmSendBytesSize)) {
+        remainingSlmSendUnits++;
     }
 
     std::unique_ptr<char[]> tmpBuffer(new char[remainingSlmSendUnits * slmSendBytesSize]);
 
     if ((frontPadding || tailPadding)) {
 
-        zet_debug_memory_space_desc_t allignedDesc = *desc;
-        allignedDesc.address = desc->address - frontPadding;
-        size_t allignedSize = remainingSlmSendUnits * slmSendBytesSize;
+        zet_debug_memory_space_desc_t alignedDesc = *desc;
+        alignedDesc.address = desc->address - frontPadding;
+        size_t alignedSize = remainingSlmSendUnits * slmSendBytesSize;
 
-        status = readSLMMemory(threadId, &allignedDesc, allignedSize, tmpBuffer.get());
+        status = readSLMMemory(threadId, &alignedDesc, alignedSize, tmpBuffer.get());
         if (status != ZE_RESULT_SUCCESS) {
             return status;
         }
@@ -1390,7 +1383,7 @@ ze_result_t DebugSessionImp::writeSLMMemory(EuThread::ThreadId threadId, const z
     uint32_t writeUnits = 0;
     uint32_t bytesAlreadyWritten = 0;
 
-    sipCommand.offset = offsetUnits;
+    sipCommand.offset = alignedOffset;
 
     for (uint32_t loop = 0; loop < loops; loop++) {
 
@@ -1420,8 +1413,8 @@ ze_result_t DebugSessionImp::writeSLMMemory(EuThread::ThreadId threadId, const z
         }
 
         remainingSlmSendUnits -= writeUnits;
-        sipCommand.offset += writeUnits;
         bytesAlreadyWritten += writeUnits * slmSendBytesSize;
+        sipCommand.offset += writeUnits * slmSendBytesSize;
     }
 
     return ZE_RESULT_SUCCESS;

@@ -251,13 +251,12 @@ struct MockDebugSession : public L0::DebugSessionImp {
             if (!forceSlmCmdNotReady) {
                 if (cmdRegisterAccessCount == 3) { // SIP restores cmd to READY
 
-                    uint64_t offset = command.offset * slmSendBytesSize;
                     uint32_t size = command.size * slmSendBytesSize;
 
                     if (cmdResgisterWrittenForSLM == static_cast<uint32_t>(NEO::SipKernel::COMMAND::SLM_READ)) {
-                        memcpy_s(command.buffer, size, slMemory + offset, size);
+                        memcpy_s(command.buffer, size, slMemory + command.offset, size);
                     } else if (cmdResgisterWrittenForSLM == static_cast<uint32_t>(NEO::SipKernel::COMMAND::SLM_WRITE)) {
-                        memcpy_s(slMemory + offset, size, command.buffer, size);
+                        memcpy_s(slMemory + command.offset, size, command.buffer, size);
                         cmdRegisterAccessCount = 0;
                         cmdResgisterWrittenForSLM = static_cast<uint32_t>(NEO::SipKernel::COMMAND::RESUME);
                     }
@@ -2185,15 +2184,17 @@ TEST_F(DebugSessionRegistersAccessTest, GivenSipVersion2WhenReadingSLMThenReadis
     }
     memset(output, 0, EXCHANGE_BUFFER_SIZE * 3);
 
-    desc.address = 0x10000005;
+    int offset = 0x05;
+    desc.address = 0x10000000 + offset;
     retVal = session->readSLMMemory(thread0, &desc, readSize, output);
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
     for (i = 0; i < readSize; i++) {
-        EXPECT_EQ(output[i], session->slMemory[i + 0x5]);
+        EXPECT_EQ(output[i], session->slMemory[i + offset]);
     }
     memset(output, 0, EXCHANGE_BUFFER_SIZE * 3);
 
-    desc.address = 0x1000000f;
+    offset = 0x0f;
+    desc.address = 0x10000000 + offset;
     retVal = session->readSLMMemory(thread0, &desc, readSize, output);
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
     for (i = 0; i < readSize; i++) {
@@ -2205,7 +2206,17 @@ TEST_F(DebugSessionRegistersAccessTest, GivenSipVersion2WhenReadingSLMThenReadis
     retVal = session->readSLMMemory(thread0, &desc, readSize, output);
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
     for (i = 0; i < readSize; i++) {
-        EXPECT_EQ(output[i], session->slMemory[i + 0xf]);
+        EXPECT_EQ(output[i], session->slMemory[i + offset]);
+    }
+    memset(output, 0, EXCHANGE_BUFFER_SIZE * 3);
+
+    readSize = 230;
+    offset = 0x0a;
+    desc.address = 0x10000000 + offset;
+    retVal = session->readSLMMemory(thread0, &desc, readSize, output);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+    for (i = 0; i < readSize; i++) {
+        EXPECT_EQ(output[i], session->slMemory[i + offset]);
     }
     memset(output, 0, EXCHANGE_BUFFER_SIZE * 3);
 
@@ -2305,8 +2316,8 @@ TEST_F(DebugSessionRegistersAccessTest, GivenSipVersion2WhenWritingSLMThenWrites
 
     session->skipWriteResumeCommand = false;
 
-    char input1[EXCHANGE_BUFFER_SIZE * 2];
-    memset(input1, 0xff, EXCHANGE_BUFFER_SIZE * 2);
+    char input1[EXCHANGE_BUFFER_SIZE * 3];
+    memset(input1, 0xff, EXCHANGE_BUFFER_SIZE * 3);
 
     int inputSize = 7;
 
@@ -2407,6 +2418,26 @@ TEST_F(DebugSessionRegistersAccessTest, GivenSipVersion2WhenWritingSLMThenWrites
     offset = 0x03;
     desc.address = 0x10000000 + offset;
 
+    retVal = session->writeSLMMemory(thread0, &desc, inputSize, input1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+
+    for (i = 0; i < offset; i++) {
+        EXPECT_EQ(session->slMemory[i], i & 127);
+    }
+    for (i = 0; i < inputSize; i++) {
+        EXPECT_EQ(session->slMemory[i + offset], input1[i]);
+    }
+    for (i = offset + inputSize + 1; i < session->slmSize; i++) {
+        EXPECT_EQ(session->slMemory[i], i & 127);
+    }
+    // Restore SLM content
+    for (i = 0; i < session->slmSize; i++) {
+        session->slMemory[i] = i & 127;
+    }
+
+    inputSize = 230;
+    offset = 0x0a;
+    desc.address = 0x10000000 + offset;
     retVal = session->writeSLMMemory(thread0, &desc, inputSize, input1);
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
 
