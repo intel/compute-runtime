@@ -578,6 +578,34 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenUpdateTaskCountFromWaitWhenFl
     EXPECT_EQ(0u, mockCsr->peekLatestFlushedTaskCount());
 }
 
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenUpdateTaskCountFromWaitEnabledAndHeapAllocationDirtyWhenFlushTaskThenTaskCountIsFlushed) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UpdateTaskCountFromWait.set(3);
+
+    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    pDevice->resetCommandStreamReceiver(mockCsr);
+    mockCsr->useNewResourceImplicitFlush = false;
+    mockCsr->useGpuIdleImplicitFlush = false;
+    mockCsr->heapStorageReqiuresRecyclingTag = true;
+
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+    dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
+    dispatchFlags.guardCommandBufferWithPipeControl = false;
+
+    mockCsr->flushTask(commandStream,
+                       0,
+                       &dsh,
+                       &ioh,
+                       &ssh,
+                       taskLevel,
+                       dispatchFlags,
+                       *pDevice);
+
+    parseCommands<FamilyType>(commandStream);
+    auto itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(itorPipeControl, cmdList.end());
+}
+
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeWhenFlushTaskIsCalledThenFlushedTaskCountIsModifed) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
