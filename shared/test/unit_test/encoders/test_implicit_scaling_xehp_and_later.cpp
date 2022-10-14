@@ -1383,3 +1383,172 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     auto bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(*bbStartList.begin());
     EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
 }
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
+            givenForceNoCleanupWhenBarrierDispatchAndApiRequiresSelfCleanupThenExpectNoSelfCleanupSection) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    DebugManager.flags.ProgramWalkerPartitionSelfCleanup.set(0);
+
+    size_t expectedSize = sizeof(PIPE_CONTROL) +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                          sizeof(MI_BATCH_BUFFER_START) +
+                          sizeof(WalkerPartition::BarrierControlSection);
+
+    size_t estimatedSize = 0;
+    size_t totalBytesProgrammed = 0;
+
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(testHardwareInfo,
+                                                                        true,
+                                                                        false);
+    EXPECT_EQ(expectedSize, estimatedSize);
+
+    PipeControlArgs flushArgs;
+    flushArgs.dcFlushEnable = true;
+    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, testHardwareInfo, 0, 0, true, true);
+    totalBytesProgrammed = commandStream.getUsed();
+    EXPECT_EQ(expectedSize, totalBytesProgrammed);
+
+    HardwareParse hwParser;
+    hwParser.parsePipeControl = true;
+    hwParser.parseCommands<FamilyType>(commandStream, 0);
+    hwParser.findHardwareCommands<FamilyType>();
+
+    auto storeDataImmList = hwParser.getCommandsList<MI_STORE_DATA_IMM>();
+    EXPECT_EQ(0u, storeDataImmList.size());
+
+    EXPECT_EQ(1u, hwParser.pipeControlList.size());
+    auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*hwParser.pipeControlList.begin());
+    EXPECT_TRUE(pipeControl->getDcFlushEnable());
+
+    auto miAtomicList = hwParser.getCommandsList<MI_ATOMIC>();
+    EXPECT_EQ(1u, miAtomicList.size());
+
+    auto miSemaphoreList = hwParser.getCommandsList<MI_SEMAPHORE_WAIT>();
+    EXPECT_EQ(1u, miSemaphoreList.size());
+
+    auto bbStartList = hwParser.getCommandsList<MI_BATCH_BUFFER_START>();
+    EXPECT_EQ(1u, bbStartList.size());
+    auto bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(*bbStartList.begin());
+    EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
+            givenForceSelfCleanupWhenBarrierDispatchAndApiNotRequiresSelfCleanupThenExpectSelfCleanupSection) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    DebugManager.flags.ProgramWalkerPartitionSelfCleanup.set(1);
+
+    size_t expectedSize = sizeof(MI_STORE_DATA_IMM) +
+                          sizeof(PIPE_CONTROL) +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                          sizeof(MI_BATCH_BUFFER_START) +
+                          sizeof(WalkerPartition::BarrierControlSection) +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                          sizeof(MI_STORE_DATA_IMM) +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT);
+
+    size_t estimatedSize = 0;
+    size_t totalBytesProgrammed = 0;
+
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(testHardwareInfo,
+                                                                        false,
+                                                                        false);
+    EXPECT_EQ(expectedSize, estimatedSize);
+
+    PipeControlArgs flushArgs;
+    flushArgs.dcFlushEnable = true;
+    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, testHardwareInfo, 0, 0, false, true);
+    totalBytesProgrammed = commandStream.getUsed();
+    EXPECT_EQ(expectedSize, totalBytesProgrammed);
+
+    HardwareParse hwParser;
+    hwParser.parsePipeControl = true;
+    hwParser.parseCommands<FamilyType>(commandStream, 0);
+    hwParser.findHardwareCommands<FamilyType>();
+
+    auto storeDataImmList = hwParser.getCommandsList<MI_STORE_DATA_IMM>();
+    EXPECT_EQ(2u, storeDataImmList.size());
+
+    EXPECT_EQ(1u, hwParser.pipeControlList.size());
+    auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*hwParser.pipeControlList.begin());
+    EXPECT_TRUE(pipeControl->getDcFlushEnable());
+
+    auto miAtomicList = hwParser.getCommandsList<MI_ATOMIC>();
+    EXPECT_EQ(3u, miAtomicList.size());
+
+    auto miSemaphoreList = hwParser.getCommandsList<MI_SEMAPHORE_WAIT>();
+    EXPECT_EQ(3u, miSemaphoreList.size());
+
+    auto bbStartList = hwParser.getCommandsList<MI_BATCH_BUFFER_START>();
+    EXPECT_EQ(1u, bbStartList.size());
+    auto bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(*bbStartList.begin());
+    EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
+            givenForceAddPipeControlBeforeCleanupCrossTileSyncWhenBarrierDispatchAndApiRequiresSelfCleanupThenExpectSelfCleanupSectionWithExtraPipeControls) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    DebugManager.flags.ProgramStallCommandForSelfCleanup.set(1);
+
+    size_t expectedSize = sizeof(MI_STORE_DATA_IMM) +
+                          sizeof(PIPE_CONTROL) +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                          sizeof(MI_BATCH_BUFFER_START) +
+                          sizeof(WalkerPartition::BarrierControlSection) +
+                          sizeof(PIPE_CONTROL) +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                          sizeof(MI_STORE_DATA_IMM) +
+                          sizeof(PIPE_CONTROL) +
+                          sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT);
+
+    size_t estimatedSize = 0;
+    size_t totalBytesProgrammed = 0;
+
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(testHardwareInfo,
+                                                                        true,
+                                                                        false);
+    EXPECT_EQ(expectedSize, estimatedSize);
+
+    PipeControlArgs flushArgs;
+    flushArgs.dcFlushEnable = true;
+    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, testHardwareInfo, 0, 0, true, true);
+    totalBytesProgrammed = commandStream.getUsed();
+    EXPECT_EQ(expectedSize, totalBytesProgrammed);
+
+    HardwareParse hwParser;
+    hwParser.parsePipeControl = true;
+    hwParser.parseCommands<FamilyType>(commandStream, 0);
+    hwParser.findHardwareCommands<FamilyType>();
+
+    auto storeDataImmList = hwParser.getCommandsList<MI_STORE_DATA_IMM>();
+    EXPECT_EQ(2u, storeDataImmList.size());
+
+    EXPECT_EQ(3u, hwParser.pipeControlList.size());
+    auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*hwParser.pipeControlList.begin());
+    EXPECT_TRUE(pipeControl->getDcFlushEnable());
+
+    auto miAtomicList = hwParser.getCommandsList<MI_ATOMIC>();
+    EXPECT_EQ(3u, miAtomicList.size());
+
+    auto miSemaphoreList = hwParser.getCommandsList<MI_SEMAPHORE_WAIT>();
+    EXPECT_EQ(3u, miSemaphoreList.size());
+
+    auto bbStartList = hwParser.getCommandsList<MI_BATCH_BUFFER_START>();
+    EXPECT_EQ(1u, bbStartList.size());
+    auto bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(*bbStartList.begin());
+    EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+}

@@ -392,9 +392,13 @@ void programTilesSynchronizationWithAtomics(void *&currentBatchBufferPointer,
 }
 
 template <typename GfxFamily>
-uint64_t computeSelfCleanupEndSectionSize(size_t fieldsForCleanupCount, bool useAtomicsForSelfCleanup) {
-    return fieldsForCleanupCount * computeSelfCleanupSectionSize<GfxFamily>(useAtomicsForSelfCleanup) +
-           2 * computeTilesSynchronizationWithAtomicsSectionSize<GfxFamily>();
+uint64_t computeSelfCleanupEndSectionSize(size_t fieldsForCleanupCount, WalkerPartitionArgs &args) {
+    size_t extraSize = 0;
+    if (args.pipeControlBeforeCleanupCrossTileSync) {
+        extraSize += 2 * NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
+    }
+    return fieldsForCleanupCount * computeSelfCleanupSectionSize<GfxFamily>(args.useAtomicsForSelfCleanup) +
+           2 * computeTilesSynchronizationWithAtomicsSectionSize<GfxFamily>() + extraSize;
 }
 
 template <typename GfxFamily>
@@ -403,21 +407,29 @@ void programSelfCleanupEndSection(void *&inputAddress,
                                   uint64_t finalSyncTileCountAddress,
                                   uint64_t baseAddressForCleanup,
                                   size_t fieldsForCleanupCount,
-                                  uint32_t tileCount,
-                                  bool useAtomicsForSelfCleanup) {
+                                  WalkerPartitionArgs &args) {
+    NEO::PipeControlArgs pipeControlArgs;
+    if (args.pipeControlBeforeCleanupCrossTileSync) {
+        programPipeControlCommand<GfxFamily>(inputAddress, totalBytesProgrammed, pipeControlArgs);
+    }
+
     // Synchronize tiles, so the fields are not cleared while still in use
-    programTilesSynchronizationWithAtomics<GfxFamily>(inputAddress, totalBytesProgrammed, finalSyncTileCountAddress, tileCount);
+    programTilesSynchronizationWithAtomics<GfxFamily>(inputAddress, totalBytesProgrammed, finalSyncTileCountAddress, args.tileCount);
 
     for (auto fieldIndex = 0u; fieldIndex < fieldsForCleanupCount; fieldIndex++) {
         const uint64_t addressForCleanup = baseAddressForCleanup + fieldIndex * sizeof(uint32_t);
         programSelfCleanupSection<GfxFamily>(inputAddress,
                                              totalBytesProgrammed,
                                              addressForCleanup,
-                                             useAtomicsForSelfCleanup);
+                                             args.useAtomicsForSelfCleanup);
+    }
+
+    if (args.pipeControlBeforeCleanupCrossTileSync) {
+        programPipeControlCommand<GfxFamily>(inputAddress, totalBytesProgrammed, pipeControlArgs);
     }
 
     // this synchronization point ensures that all tiles finished zeroing and will fairly access control section atomic variables
-    programTilesSynchronizationWithAtomics<GfxFamily>(inputAddress, totalBytesProgrammed, finalSyncTileCountAddress, 2 * tileCount);
+    programTilesSynchronizationWithAtomics<GfxFamily>(inputAddress, totalBytesProgrammed, finalSyncTileCountAddress, 2 * args.tileCount);
 }
 
 template <typename GfxFamily>
@@ -622,8 +634,7 @@ void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
                                                 finalSyncTileCountAddress,
                                                 gpuAddressOfAllocation + controlSectionOffset,
                                                 dynamicPartitioningFieldsForCleanupCount,
-                                                args.tileCount,
-                                                args.useAtomicsForSelfCleanup);
+                                                args);
     }
 
     if (args.emitBatchBufferEnd) {
@@ -739,8 +750,7 @@ void constructStaticallyPartitionedCommandBuffer(void *cpuPointer,
                                                 finalSyncTileCountAddress,
                                                 gpuAddressOfAllocation + controlSectionOffset,
                                                 staticPartitioningFieldsForCleanupCount,
-                                                args.tileCount,
-                                                args.useAtomicsForSelfCleanup);
+                                                args);
     }
 }
 
@@ -750,12 +760,12 @@ uint64_t estimateSpaceRequiredInCommandBuffer(WalkerPartitionArgs &args) {
     if (args.staticPartitioning) {
         size += computeStaticPartitioningControlSectionOffset<GfxFamily>(args);
         size += isStartAndControlSectionRequired<GfxFamily>(args) ? sizeof(StaticPartitioningControlSection) : 0u;
-        size += args.emitSelfCleanup ? computeSelfCleanupEndSectionSize<GfxFamily>(staticPartitioningFieldsForCleanupCount, args.useAtomicsForSelfCleanup) : 0u;
+        size += args.emitSelfCleanup ? computeSelfCleanupEndSectionSize<GfxFamily>(staticPartitioningFieldsForCleanupCount, args) : 0u;
     } else {
         size += computeControlSectionOffset<GfxFamily>(args);
         size += sizeof(BatchBufferControlData);
         size += args.emitBatchBufferEnd ? sizeof(BATCH_BUFFER_END<GfxFamily>) : 0u;
-        size += args.emitSelfCleanup ? computeSelfCleanupEndSectionSize<GfxFamily>(dynamicPartitioningFieldsForCleanupCount, args.useAtomicsForSelfCleanup) : 0u;
+        size += args.emitSelfCleanup ? computeSelfCleanupEndSectionSize<GfxFamily>(dynamicPartitioningFieldsForCleanupCount, args) : 0u;
     }
     return size;
 }
@@ -785,7 +795,7 @@ uint64_t estimateBarrierSpaceRequiredInCommandBuffer(WalkerPartitionArgs &args,
     uint64_t size = computeBarrierControlSectionOffset<GfxFamily>(args, hwInfo) +
                     sizeof(BarrierControlSection);
     if (args.emitSelfCleanup) {
-        size += computeSelfCleanupEndSectionSize<GfxFamily>(barrierControlSectionFieldsForCleanupCount, args.useAtomicsForSelfCleanup);
+        size += computeSelfCleanupEndSectionSize<GfxFamily>(barrierControlSectionFieldsForCleanupCount, args);
     }
     return size;
 }
@@ -829,8 +839,7 @@ void constructBarrierCommandBuffer(void *cpuPointer,
                                                 finalSyncTileCountField,
                                                 gpuAddressOfAllocation + controlSectionOffset,
                                                 barrierControlSectionFieldsForCleanupCount,
-                                                args.tileCount,
-                                                args.useAtomicsForSelfCleanup);
+                                                args);
     }
 }
 

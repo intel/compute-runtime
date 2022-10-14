@@ -100,4 +100,12 @@ bool ImplicitScalingHelper::isPipeControlStallRequired(bool defaultEmitPipeContr
     return defaultEmitPipeControl;
 }
 
+bool ImplicitScalingHelper::pipeControlBeforeCleanupAtomicSyncRequired() {
+    int overrideUsePipeControl = DebugManager.flags.ProgramStallCommandForSelfCleanup.get();
+    if (overrideUsePipeControl != -1) {
+        return !!(overrideUsePipeControl);
+    }
+    return false;
+}
+
 } // namespace NEO

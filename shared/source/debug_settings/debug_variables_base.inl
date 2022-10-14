@@ -424,6 +424,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, SynchronizeWithSemaphores, -1, "-1: default (dis
 DECLARE_DEBUG_VARIABLE(int32_t, UseCrossAtomicSynchronization, -1, "-1: default (enabled), 1: Cross Tile Atomic Synchronization present 0: Cross tile atomic synchronization disabled")
 DECLARE_DEBUG_VARIABLE(int32_t, UseAtomicsForSelfCleanupSection, -1, "-1: default (disabled), 0: use store data op, 1: use atomic op")
 DECLARE_DEBUG_VARIABLE(int32_t, ProgramWalkerPartitionSelfCleanup, -1, "-1: default (API dependent), 0: Do not program self cleanup, 1: program self cleanup")
+DECLARE_DEBUG_VARIABLE(int32_t, ProgramStallCommandForSelfCleanup, -1, "-1: default (disabled), 0: Do not add extra PIPE_CONTROL for each self cleanup x-tile sync, 1: Add extra PIPE_CONTROL for each self cleanup x-tile sync")
 DECLARE_DEBUG_VARIABLE(int32_t, WparidRegisterProgramming, -1, "-1: default (enabled), 0: do not program wparid register, 1: programming wparid register")
 DECLARE_DEBUG_VARIABLE(int32_t, UsePipeControlAfterPartitionedWalker, -1, "-1: default (enabled), 0: do not add PipeControl, 1: add PipeControl")
 

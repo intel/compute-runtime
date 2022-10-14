@@ -32,6 +32,7 @@ struct ImplicitScalingHelper {
     static bool isSelfCleanupRequired(const WalkerPartition::WalkerPartitionArgs &args, bool apiSelfCleanup);
     static bool isWparidRegisterInitializationRequired();
     static bool isPipeControlStallRequired(bool defaultEmitPipeControl);
+    static bool pipeControlBeforeCleanupAtomicSyncRequired();
 };
 
 template <typename GfxFamily>
