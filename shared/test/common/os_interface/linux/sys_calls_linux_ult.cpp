@@ -31,6 +31,7 @@ int closeFuncArgPassed = 0;
 int closeFuncRetVal = 0;
 int dlOpenFlags = 0;
 bool dlOpenCalled = 0;
+bool getNumThreadsCalled = false;
 constexpr int fakeFileDescriptor = 123;
 bool makeFakeDevicePath = false;
 bool allowFakeDevicePath = false;
@@ -107,6 +108,7 @@ unsigned int getProcessId() {
 }
 
 unsigned long getNumThreads() {
+    getNumThreadsCalled = true;
     return 1;
 }
 

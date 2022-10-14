@@ -24,6 +24,12 @@
 
 #include "test_traits_common.h"
 
+namespace NEO {
+namespace SysCalls {
+extern bool getNumThreadsCalled;
+}
+} // namespace NEO
+
 namespace L0 {
 namespace ult {
 
@@ -641,6 +647,23 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     EXPECT_EQ(static_cast<CommandQueueImp *>(CommandList::fromHandle(cmdListHandle)->cmdQImmediate)->getCsr()->getNumClients(), 1u);
 
     EXPECT_FALSE(static_cast<L0::CommandListCoreFamilyImmediate<gfxCoreFamily> *>(CommandList::fromHandle(cmdListHandle))->waitForEventsFromHost());
+
+    CommandList::fromHandle(cmdListHandle)->destroy();
+}
+
+HWTEST2_F(CmdlistAppendLaunchKernelTests,
+          givenEventWaitOnHostDisabledWhenCreateImmediateCmdListThenDoNotObtainThreadCount, IsAtLeastXeHpCore) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EventWaitOnHost.set(0);
+    NEO::SysCalls::getNumThreadsCalled = false;
+
+    ze_command_list_handle_t cmdListHandle;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.ordinal = 0;
+    queueDesc.index = 0;
+    device->createCommandListImmediate(&queueDesc, &cmdListHandle);
+
+    EXPECT_FALSE(NEO::SysCalls::getNumThreadsCalled);
 
     CommandList::fromHandle(cmdListHandle)->destroy();
 }

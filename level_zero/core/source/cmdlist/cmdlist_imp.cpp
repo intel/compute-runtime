@@ -158,7 +158,9 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         commandList->commandContainer.setImmediateCmdListCsr(csr);
         commandList->commandContainer.fillReusableAllocationLists();
 
-        commandList->numThreads = NEO::SysCalls::getNumThreads();
+        if (commandList->isWaitForEventsFromHostEnabled()) {
+            commandList->numThreads = NEO::SysCalls::getNumThreads();
+        }
 
         return commandList;
     }

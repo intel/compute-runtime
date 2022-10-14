@@ -207,10 +207,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::waitForEventsFromHost() {
-    bool waitForEventsFromHostEnabled = false;
-    if (NEO::DebugManager.flags.EventWaitOnHost.get() != -1) {
-        waitForEventsFromHostEnabled = NEO::DebugManager.flags.EventWaitOnHost.get();
-    }
+    bool waitForEventsFromHostEnabled = this->isWaitForEventsFromHostEnabled();
     if (!waitForEventsFromHostEnabled) {
         return false;
     }

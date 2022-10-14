@@ -30,6 +30,7 @@ uint32_t regOpenKeySuccessCount = 0u;
 uint32_t regQueryValueSuccessCount = 0u;
 uint64_t regQueryValueExpectedData = 0ull;
 const HKEY validHkey = reinterpret_cast<HKEY>(0);
+bool getNumThreadsCalled = false;
 
 HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName) {
     if (mockCreateEventClb) {

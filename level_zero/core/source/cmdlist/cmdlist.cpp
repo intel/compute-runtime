@@ -75,6 +75,14 @@ NEO::GraphicsAllocation *CommandList::getAllocationFromHostPtrMap(const void *bu
     return nullptr;
 }
 
+bool CommandList::isWaitForEventsFromHostEnabled() {
+    bool waitForEventsFromHostEnabled = false;
+    if (NEO::DebugManager.flags.EventWaitOnHost.get() != -1) {
+        waitForEventsFromHostEnabled = NEO::DebugManager.flags.EventWaitOnHost.get();
+    }
+    return waitForEventsFromHostEnabled;
+}
+
 NEO::GraphicsAllocation *CommandList::getHostPtrAlloc(const void *buffer, uint64_t bufferSize, bool hostCopyAllowed) {
     NEO::GraphicsAllocation *alloc = getAllocationFromHostPtrMap(buffer, bufferSize);
     if (alloc) {
