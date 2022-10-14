@@ -879,20 +879,6 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenReuseExistingCmdBufferWithoutA
     allocList.freeAllGraphicsAllocations(pDevice);
 }
 
-TEST_F(CommandContainerTest, givenCmdContainerWhenDestroyCommandContainerThenAllocationListFilledCorrectly) {
-    auto cmdContainer = std::make_unique<CommandContainer>();
-    AllocationsList allocList;
-    cmdContainer->initialize(pDevice, &allocList, false);
-    auto alloc = cmdContainer->getCmdBufferAllocations()[0];
-    allocList.pushFrontOne(*alloc);
-    cmdContainer.reset();
-
-    EXPECT_TRUE(allocList.peekContains(*alloc));
-    EXPECT_EQ(allocList.peekHead()->countThisAndAllConnected(), 1u);
-
-    allocList.freeAllGraphicsAllocations(pDevice);
-}
-
 HWTEST_F(CommandContainerTest, givenCmdContainerWhenReuseExistingCmdBufferWithAllocationInListAndCsrTaskCountLowerThanAllocationThenReturnNullptr) {
     auto cmdContainer = std::make_unique<CommandContainer>();
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();

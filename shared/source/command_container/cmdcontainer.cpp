@@ -254,9 +254,8 @@ void CommandContainer::handleCmdBufferAllocations(size_t startIndex) {
             if (isHandleFenceCompletionRequired) {
                 this->device->getMemoryManager()->handleFenceCompletion(cmdBufferAllocations[i]);
             }
-            if (!this->reusableAllocationList->peekContains(*cmdBufferAllocations[i])) {
-                reusableAllocationList->pushFrontOne(*cmdBufferAllocations[i]);
-            }
+
+            reusableAllocationList->pushFrontOne(*cmdBufferAllocations[i]);
         } else {
             this->device->getMemoryManager()->freeGraphicsMemory(cmdBufferAllocations[i]);
         }
