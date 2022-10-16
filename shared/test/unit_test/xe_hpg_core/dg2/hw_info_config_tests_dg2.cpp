@@ -19,6 +19,16 @@ using namespace NEO;
 
 using HwInfoConfigTestDg2 = ::testing::Test;
 
+DG2TEST_F(HwInfoConfigTestDg2, whenConvertingTimestampsToCsDomainThenGpuTicksAreShifted) {
+    auto hwInfoConfig = HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    uint64_t gpuTicks = 0x12345u;
+
+    auto expectedGpuTicks = gpuTicks >> 1;
+
+    hwInfoConfig->convertTimestampsFromOaToCsDomain(gpuTicks);
+    EXPECT_EQ(expectedGpuTicks, gpuTicks);
+}
+
 DG2TEST_F(HwInfoConfigTestDg2, givenDg2ConfigWhenSetupHardwareInfoBaseThenGtSystemInfoIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;

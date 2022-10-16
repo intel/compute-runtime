@@ -60,6 +60,7 @@ class HwInfoConfig {
     virtual uint64_t getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) = 0;
     virtual void getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) = 0;
     virtual std::vector<int32_t> getKernelSupportedThreadArbitrationPolicies() = 0;
+    virtual void convertTimestampsFromOaToCsDomain(uint64_t &timestampData) = 0;
     virtual uint32_t getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) = 0;
     virtual uint64_t getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) = 0;
     virtual uint64_t getDeviceMemoryMaxBandWidthInBytesPerSecond(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) = 0;
@@ -195,6 +196,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     uint64_t getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) override;
     void getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) override;
     std::vector<int32_t> getKernelSupportedThreadArbitrationPolicies() override;
+    void convertTimestampsFromOaToCsDomain(uint64_t &timestampData) override;
     uint32_t getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) override;
     uint64_t getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) override;
     uint64_t getDeviceMemoryMaxBandWidthInBytesPerSecond(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) override;

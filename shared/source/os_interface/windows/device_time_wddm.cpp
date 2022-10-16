@@ -70,10 +70,4 @@ uint64_t DeviceTimeWddm::getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) 
     return retVal;
 }
 
-void DeviceTimeWddm::convertTimestampsFromOaToCsDomain(uint64_t &timestampData, uint64_t freqOA, uint64_t freqCS) {
-    if (freqCS > 0) {
-        auto freqRatio = freqOA / freqCS;
-        timestampData /= freqRatio;
-    }
-};
 } // namespace NEO

@@ -19,6 +19,10 @@ void HwInfoConfigHw<IGFX_UNKNOWN>::adjustSamplerState(void *sampler, const Hardw
 }
 
 template <>
+void HwInfoConfigHw<IGFX_UNKNOWN>::convertTimestampsFromOaToCsDomain(uint64_t &timestampData) {
+}
+
+template <>
 uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const {
     return 0;
 }

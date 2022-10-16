@@ -170,6 +170,11 @@ uint32_t HwInfoConfigHw<gfxProduct>::computeMaxNeededSubSliceSpace(const Hardwar
 }
 
 template <>
+void HwInfoConfigHw<gfxProduct>::convertTimestampsFromOaToCsDomain(uint64_t &timestampData) {
+    timestampData >>= 1;
+}
+
+template <>
 bool HwInfoConfigHw<gfxProduct>::isFlushTaskAllowed() const {
     return true;
 }

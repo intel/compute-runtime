@@ -196,6 +196,14 @@ TEST_F(HwInfoConfigTest, givenInvalidHwInfoWhenParsingHwInfoConfigThenErrorIsRet
     EXPECT_FALSE(success);
 }
 
+HWTEST_F(HwInfoConfigTest, whenConvertingTimestampsToCsDomainThenNothingIsChanged) {
+    auto hwInfoConfig = HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    uint64_t timestampData = 0x1234;
+    uint64_t initialData = timestampData;
+    hwInfoConfig->convertTimestampsFromOaToCsDomain(timestampData);
+    EXPECT_EQ(initialData, timestampData);
+}
+
 HWTEST_F(HwInfoConfigTest, whenOverrideGfxPartitionLayoutForWslThenReturnFalse) {
     auto hwInfoConfig = HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
     EXPECT_FALSE(hwInfoConfig->overrideGfxPartitionLayoutForWsl());

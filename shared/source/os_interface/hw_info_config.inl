@@ -43,6 +43,9 @@ std::vector<int32_t> HwInfoConfigHw<gfxProduct>::getKernelSupportedThreadArbitra
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+void HwInfoConfigHw<gfxProduct>::convertTimestampsFromOaToCsDomain(uint64_t &timestampData){};
+
+template <PRODUCT_FAMILY gfxProduct>
 void HwInfoConfigHw<gfxProduct>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {}
 
 template <PRODUCT_FAMILY gfxProduct>

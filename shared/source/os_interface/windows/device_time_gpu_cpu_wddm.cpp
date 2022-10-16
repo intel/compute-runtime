@@ -21,7 +21,9 @@ bool DeviceTimeWddm::getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) {
     TimeStampDataHeader escapeInfo = {};
 
     if (runEscape(wddm, escapeInfo)) {
-        convertTimestampsFromOaToCsDomain(escapeInfo.m_Data.m_Out.gpuPerfTicks, escapeInfo.m_Data.m_Out.gpuPerfFreq, static_cast<uint64_t>(wddm->getTimestampFrequency()));
+        auto productFamily = wddm->getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily;
+        auto *hwInfoConfig = HwInfoConfig::get(productFamily);
+        hwInfoConfig->convertTimestampsFromOaToCsDomain(escapeInfo.m_Data.m_Out.gpuPerfTicks);
         double cpuNanoseconds = escapeInfo.m_Data.m_Out.cpuPerfTicks *
                                 (1000000000.0 / escapeInfo.m_Data.m_Out.cpuPerfFreq);
 
