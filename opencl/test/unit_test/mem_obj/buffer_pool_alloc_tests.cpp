@@ -20,12 +20,12 @@ using PoolAllocator = Context::BufferPoolAllocator;
 using MockBufferPoolAllocator = MockContext::MockBufferPoolAllocator;
 
 template <int32_t poolBufferFlag = -1, bool failMainStorageAllocation = false>
-class aggregatedSmallBuffersTestTemplate : public ::testing::Test {
+class AggregatedSmallBuffersTestTemplate : public ::testing::Test {
     void SetUp() override {
-        this->SetUpImpl();
+        this->setUpImpl();
     }
 
-    void SetUpImpl() {
+    void setUpImpl() {
         DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(poolBufferFlag);
         this->deviceFactory = std::make_unique<UltClDeviceFactory>(1, 0);
         this->device = deviceFactory->rootDevices[0];
@@ -64,13 +64,13 @@ class aggregatedSmallBuffersTestTemplate : public ::testing::Test {
     DebugManagerStateRestore restore;
 };
 
-using aggregatedSmallBuffersDefaultTest = aggregatedSmallBuffersTestTemplate<-1>;
+using aggregatedSmallBuffersDefaultTest = AggregatedSmallBuffersTestTemplate<-1>;
 
 TEST_F(aggregatedSmallBuffersDefaultTest, givenAggregatedSmallBuffersDefaultWhenCheckIfEnabledThenReturnFalse) {
     EXPECT_FALSE(poolAllocator->isAggregatedSmallBuffersEnabled());
 }
 
-using aggregatedSmallBuffersDisabledTest = aggregatedSmallBuffersTestTemplate<0>;
+using aggregatedSmallBuffersDisabledTest = AggregatedSmallBuffersTestTemplate<0>;
 
 TEST_F(aggregatedSmallBuffersDisabledTest, givenAggregatedSmallBuffersDisabledWhenBufferCreateCalledThenDoNotUsePool) {
     ASSERT_FALSE(poolAllocator->isAggregatedSmallBuffersEnabled());
@@ -82,7 +82,7 @@ TEST_F(aggregatedSmallBuffersDisabledTest, givenAggregatedSmallBuffersDisabledWh
     EXPECT_EQ(poolAllocator->mainStorage, nullptr);
 }
 
-using aggregatedSmallBuffersEnabledTest = aggregatedSmallBuffersTestTemplate<1>;
+using aggregatedSmallBuffersEnabledTest = AggregatedSmallBuffersTestTemplate<1>;
 
 TEST_F(aggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndSizeLargerThanThresholdWhenBufferCreateCalledThenDoNotUsePool) {
     ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled());
@@ -216,7 +216,7 @@ TEST_F(aggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndS
     }
 }
 
-using aggregatedSmallBuffersEnabledTestDoNotRunSetup = aggregatedSmallBuffersTestTemplate<1, true>;
+using aggregatedSmallBuffersEnabledTestDoNotRunSetup = AggregatedSmallBuffersTestTemplate<1, true>;
 
 TEST_F(aggregatedSmallBuffersEnabledTestDoNotRunSetup, givenAggregatedSmallBuffersEnabledAndSizeEqualToThresholdWhenBufferCreateCalledButPoolCreateFailedThenDoNotUsePool) {
     ASSERT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled());
@@ -229,7 +229,7 @@ TEST_F(aggregatedSmallBuffersEnabledTestDoNotRunSetup, givenAggregatedSmallBuffe
 }
 
 template <int32_t poolBufferFlag = -1>
-class aggregatedSmallBuffersApiTestTemplate : public ::testing::Test {
+class AggregatedSmallBuffersApiTestTemplate : public ::testing::Test {
     void SetUp() override {
         DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(poolBufferFlag);
         this->deviceFactory = std::make_unique<UltClDeviceFactory>(1, 0);
@@ -253,12 +253,12 @@ class aggregatedSmallBuffersApiTestTemplate : public ::testing::Test {
     DebugManagerStateRestore restore;
 };
 
-using aggregatedSmallBuffersDefaultApiTest = aggregatedSmallBuffersApiTestTemplate<-1>;
+using aggregatedSmallBuffersDefaultApiTest = AggregatedSmallBuffersApiTestTemplate<-1>;
 TEST_F(aggregatedSmallBuffersDefaultApiTest, givenNoBufferCreatedWhenReleasingContextThenDoNotLeakMemory) {
     EXPECT_EQ(clReleaseContext(context), CL_SUCCESS);
 }
 
-using aggregatedSmallBuffersEnabledApiTest = aggregatedSmallBuffersApiTestTemplate<1>;
+using aggregatedSmallBuffersEnabledApiTest = AggregatedSmallBuffersApiTestTemplate<1>;
 TEST_F(aggregatedSmallBuffersEnabledApiTest, givenNoBufferCreatedWhenReleasingContextThenDoNotLeakMemory) {
     EXPECT_EQ(clReleaseContext(context), CL_SUCCESS);
 }
