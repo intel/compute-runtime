@@ -194,6 +194,7 @@ class DrmMock : public Drm {
     bool callBaseGetSetPairAvailable = false;
 
     bool capturedCooperativeContextRequest = false;
+    bool incrementVmId = false;
 
     uint32_t passedContextDebugId = std::numeric_limits<uint32_t>::max();
     std::vector<ResetStats> resetStatsToReturn{};

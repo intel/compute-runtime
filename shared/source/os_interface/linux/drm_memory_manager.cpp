@@ -497,7 +497,9 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(con
     if (validateHostPtrMemory) {
         auto boPtr = bo.get();
         auto vmHandleId = Math::getMinLsbSet(static_cast<uint32_t>(allocationData.storageInfo.subDeviceBitfield.to_ulong()));
-        int result = pinBBs.at(rootDeviceIndex)->validateHostPtr(&boPtr, 1, registeredEngines[defaultEngineIndex[rootDeviceIndex]].osContext, vmHandleId, getDefaultDrmContextId(rootDeviceIndex));
+        auto defaultContext = getDefaultEngineContext(rootDeviceIndex, allocationData.storageInfo.subDeviceBitfield);
+
+        int result = pinBBs.at(rootDeviceIndex)->validateHostPtr(&boPtr, 1, defaultContext, vmHandleId, static_cast<OsContextLinux *>(defaultContext)->getDrmContextIds()[0]);
         if (result != 0) {
             unreference(bo.release(), true);
             releaseGpuRange(reinterpret_cast<void *>(gpuVirtualAddress), alignedSize, rootDeviceIndex);

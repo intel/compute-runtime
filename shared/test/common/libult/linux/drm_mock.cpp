@@ -181,6 +181,9 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
 
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_VM) {
             static_cast<GemContextParam *>(arg)->value = this->storedRetValForVmId;
+            if (incrementVmId) {
+                this->storedRetValForVmId++;
+            }
             return 0u;
         }
     }

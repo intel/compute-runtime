@@ -878,6 +878,21 @@ bool MemoryManager::isLocalMemoryUsedForIsa(uint32_t rootDeviceIndex) {
     return isaInLocalMemory[rootDeviceIndex];
 }
 
+OsContext *MemoryManager::getDefaultEngineContext(uint32_t rootDeviceIndex, DeviceBitfield subdevicesBitfield) {
+    OsContext *defaultContext = nullptr;
+    for (auto engineIndex = 0u; engineIndex < this->getRegisteredEnginesCount(); engineIndex++) {
+        OsContext *engine = this->getRegisteredEngines()[engineIndex].osContext;
+        if (engine->isDefaultContext() && engine->getDeviceBitfield() == subdevicesBitfield) {
+            defaultContext = engine;
+            break;
+        }
+    }
+    if (!defaultContext) {
+        defaultContext = registeredEngines[defaultEngineIndex[rootDeviceIndex]].osContext;
+    }
+    return defaultContext;
+}
+
 bool MemoryTransferHelper::transferMemoryToAllocation(bool useBlitter, const Device &device, GraphicsAllocation *dstAllocation, size_t dstOffset, const void *srcMemory, size_t srcSize) {
     if (useBlitter) {
         if (BlitHelperFunctions::blitMemoryToAllocation(device, dstAllocation, dstOffset, srcMemory, {srcSize, 1, 1}) == BlitOperationResult::Success) {
