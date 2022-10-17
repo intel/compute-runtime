@@ -165,7 +165,7 @@ TEST(localWorkSizeTest, given2DimWorkGroupAndSimdEqual8AndNoBarriersWhenComputeC
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
 
-    //wsInfo maxWorkGroupSize, hasBariers, simdSize, slmTotalSize, hardwareInfo, numThreadsPerSubSlice, localMemorySize, imgUsed, yTiledSurface, disableEUFusion
+    // wsInfo maxWorkGroupSize, hasBariers, simdSize, slmTotalSize, hardwareInfo, numThreadsPerSubSlice, localMemorySize, imgUsed, yTiledSurface, disableEUFusion
     WorkSizeInfo wsInfo(256, 0u, 8, 0u, defaultHwInfo.get(), 32u, 0u, false, false, false);
     uint32_t workDim = 2;
     size_t workGroup[3] = {10003, 10003, 1};
@@ -185,7 +185,7 @@ TEST(localWorkSizeTest, given2DimWorkGroupAndSimdEqual8AndNoBarriersWhenComputeC
 }
 
 TEST(localWorkSizeTest, given1DimWorkGroupAndSimdEqual8WhenComputeCalledThenLocalGroupComputed) {
-    //wsInfo maxWorkGroupSize, hasBariers, simdSize, slmTotalSize, hardwareInfo, numThreadsPerSubSlice, localMemorySize, imgUsed, yTiledSurface, disableEUFusion
+    // wsInfo maxWorkGroupSize, hasBariers, simdSize, slmTotalSize, hardwareInfo, numThreadsPerSubSlice, localMemorySize, imgUsed, yTiledSurface, disableEUFusion
     WorkSizeInfo wsInfo(256, 0u, 8, 0u, defaultHwInfo.get(), 32u, 0u, false, false, false);
     uint32_t workDim = 1;
     size_t workGroup[3] = {6144, 1, 1};
@@ -656,8 +656,8 @@ TEST(localWorkSizeTest, GivenUseStrictRatioWhenLwsIsBeingComputedThenWgsIsCalcul
     workGroup[0] = 194;
     workGroup[1] = 234;
     NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
-    EXPECT_EQ(workGroupSize[0], 2u);
-    EXPECT_EQ(workGroupSize[1], 117u);
+    EXPECT_EQ(workGroupSize[0], 97u);
+    EXPECT_EQ(workGroupSize[1], 2u);
     EXPECT_EQ(workGroupSize[2], 1u);
 
     workGroup[0] = 100;
@@ -694,15 +694,17 @@ TEST(localWorkSizeTest, GivenUseBarriersWhenLwsIsBeingComputedThenWgsIsCalculate
     wsInfo.yTiledSurfaces = false;
     wsInfo.imgUsed = false;
     NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
-    EXPECT_EQ(workGroupSize[0], 2u);
-    EXPECT_EQ(workGroupSize[1], 78u);
+    EXPECT_EQ(workGroupSize[0], 194u);
+    EXPECT_EQ(workGroupSize[1], 1u);
     EXPECT_EQ(workGroupSize[2], 1u);
+
     wsInfo.useRatio = false;
     wsInfo.useStrictRatio = false;
-
+    workDim = 3;
+    workGroup[2] = 4;
     NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
-    EXPECT_EQ(workGroupSize[0], 2u);
-    EXPECT_EQ(workGroupSize[1], 78u);
+    EXPECT_EQ(workGroupSize[0], 194u);
+    EXPECT_EQ(workGroupSize[1], 1u);
     EXPECT_EQ(workGroupSize[2], 1u);
 }
 
