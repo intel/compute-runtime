@@ -1483,7 +1483,7 @@ TEST_F(OfflineCompilerTests, givenExcludeIrArgumentAndExcludeIrFromZebinInternal
     EXPECT_EQ(firstExcludeIrFromZebin, lastExcludeIrFromZebin);
 }
 
-TEST_F(OfflineCompilerTests, givenExcludeIrArgumentWhenCompilingKernelThenIrShouldBeExcluded) {
+TEST_F(OfflineCompilerTests, givenExcludeIrArgumentWhenGeneratingElfBinaryFromPatchtokensThenIrSectionIsNotPresent) {
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
@@ -1497,8 +1497,17 @@ TEST_F(OfflineCompilerTests, givenExcludeIrArgumentWhenCompilingKernelThenIrShou
     MockOfflineCompiler mockOfflineCompiler{};
     mockOfflineCompiler.initialize(argv.size(), argv);
 
-    const auto buildResult{mockOfflineCompiler.build()};
-    ASSERT_EQ(OclocErrorCode::SUCCESS, buildResult);
+    std::vector<uint8_t> storage;
+    iOpenCL::SProgramBinaryHeader headerTok = {};
+    headerTok.Magic = iOpenCL::MAGIC_CL;
+    headerTok.Version = iOpenCL::CURRENT_ICBE_VERSION;
+    headerTok.GPUPointerSizeInBytes = sizeof(uintptr_t);
+
+    storage.insert(storage.end(), reinterpret_cast<uint8_t *>(&headerTok), reinterpret_cast<uint8_t *>(&headerTok) + sizeof(iOpenCL::SProgramBinaryHeader));
+    mockOfflineCompiler.genBinary = new char[storage.size()];
+    mockOfflineCompiler.genBinarySize = storage.size();
+    memcpy_s(mockOfflineCompiler.genBinary, mockOfflineCompiler.genBinarySize, storage.data(), storage.size());
+    mockOfflineCompiler.generateElfBinary();
 
     std::string errorReason{};
     std::string warning{};
