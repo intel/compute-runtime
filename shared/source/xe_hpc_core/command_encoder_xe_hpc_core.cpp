@@ -37,7 +37,7 @@ void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCR
     if (hwInfoConfig.isDisableOverdispatchAvailable(hwInfo)) {
         interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
 
-        if (hwInfo.gtSystemInfo.SliceCount % 2 == 0) {
+        if (hwInfo.gtSystemInfo.MaxDualSubSlicesSupported == hwInfo.gtSystemInfo.DualSubSliceCount) {
             UNRECOVERABLE_IF(numGrf == 0u);
 
             constexpr uint32_t maxThreadsInTGForTGDispatchSize8 = 16u;
