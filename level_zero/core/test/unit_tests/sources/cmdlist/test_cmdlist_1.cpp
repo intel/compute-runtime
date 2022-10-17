@@ -1093,16 +1093,15 @@ HWTEST2_F(CommandListCreate, GivenGpuHangOnExecutingCommandListsWhenCreatingImme
     ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csr);
 
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
-    Mock<CommandQueue> mockCommandQueue(device, &mockCommandStreamReceiver, &desc);
-    mockCommandQueue.executeCommandListsResult = ZE_RESULT_ERROR_DEVICE_LOST;
+    mockCommandStreamReceiver.waitForCompletionWithTimeoutReturnValue = WaitStatus::GpuHang;
 
-    auto oldCommandQueue = commandList->cmdQImmediate;
-    commandList->cmdQImmediate = &mockCommandQueue;
+    const auto oldCsr = commandList->csr;
+    commandList->csr = &mockCommandStreamReceiver;
 
     returnValue = commandList->appendWaitOnEvents(1, &event);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
 
-    commandList->cmdQImmediate = oldCommandQueue;
+    commandList->csr = oldCsr;
 }
 
 TEST_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceForImmediateCommandThenNextCommandBufferIsUsed) {
@@ -1167,16 +1166,14 @@ HWTEST2_F(CommandListCreate, GivenGpuHangOnSynchronizingWhenCreatingImmediateCom
     ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csr);
 
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
-    Mock<CommandQueue> mockCommandQueue(device, &mockCommandStreamReceiver, &desc);
-    mockCommandQueue.synchronizeResult = ZE_RESULT_ERROR_DEVICE_LOST;
-
-    auto oldCommandQueue = commandList->cmdQImmediate;
-    commandList->cmdQImmediate = &mockCommandQueue;
+    mockCommandStreamReceiver.waitForCompletionWithTimeoutReturnValue = WaitStatus::GpuHang;
+    const auto oldCsr = commandList->csr;
+    commandList->csr = &mockCommandStreamReceiver;
 
     returnValue = commandList->appendWaitOnEvents(1, &event);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
 
-    commandList->cmdQImmediate = oldCommandQueue;
+    commandList->csr = oldCsr;
 }
 
 HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppendingEventResetThenDeviceLostIsReturned) {

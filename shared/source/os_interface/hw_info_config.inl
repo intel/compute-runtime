@@ -345,7 +345,7 @@ bool HwInfoConfigHw<gfxProduct>::getUuid(Device *device, std::array<uint8_t, HwI
 
 template <PRODUCT_FAMILY gfxProduct>
 bool HwInfoConfigHw<gfxProduct>::isFlushTaskAllowed() const {
-    return false;
+    return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

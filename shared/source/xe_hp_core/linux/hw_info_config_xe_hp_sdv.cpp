@@ -79,10 +79,5 @@ uint32_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInf
     return 2800u;
 }
 
-template <>
-bool HwInfoConfigHw<gfxProduct>::isFlushTaskAllowed() const {
-    return false;
-}
-
 template class HwInfoConfigHw<gfxProduct>;
 } // namespace NEO
