@@ -144,7 +144,7 @@ struct Context : _ze_context_handle_t {
                                                      size_t size,
                                                      ze_memory_access_attribute_t *access,
                                                      size_t *outSize) = 0;
-    virtual ze_result_t openEventPoolIpcHandle(ze_ipc_event_pool_handle_t hIpc,
+    virtual ze_result_t openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &hIpc,
                                                ze_event_pool_handle_t *phEventPool) = 0;
     virtual ze_result_t createEventPool(const ze_event_pool_desc_t *desc,
                                         uint32_t numDevices,

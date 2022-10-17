@@ -556,7 +556,7 @@ ze_result_t EventPoolImp::getIpcHandle(ze_ipc_event_pool_handle_t *pIpcHandle) {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t ContextImp::openEventPoolIpcHandle(ze_ipc_event_pool_handle_t hIpc,
+ze_result_t ContextImp::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &hIpc,
                                                ze_event_pool_handle_t *phEventPool) {
     uint64_t handle = 0u;
     memcpy_s(&handle, sizeof(int), hIpc.data, sizeof(int));
