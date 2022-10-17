@@ -10,3 +10,5 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/test_kernel_2.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_sampler_patch_value.cpp
 )
+
+add_subdirectories()
