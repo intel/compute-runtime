@@ -1499,7 +1499,8 @@ HWTEST_F(QueueFamilyNameTest, givenTooBigQueueFamilyNameWhenGettingQueueFamilyNa
     EXPECT_ANY_THROW(device->getQueueFamilyName(name, EngineGroupType::MaxEngineGroups));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceGetCapsTest, givenSysInfoWhenDeviceCreatedThenMaxWorkGroupCalculatedCorrectly) {
+using isPreGen12 = IsBeforeGfxCore<IGFX_GEN12_CORE>;
+HWTEST2_F(DeviceGetCapsTest, givenSysInfoWhenDeviceCreatedThenMaxWorkGroupSizeIsCalculatedCorrectly, isPreGen12) {
     HardwareInfo myHwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
     PLATFORM &myPlatform = myHwInfo.platform;
@@ -1510,11 +1511,31 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceGetCapsTest, givenSysInfoWhenDeviceCreatedThen
     mySysInfo.ThreadCount = 16 * 8;
     myPlatform.usRevId = 0x4;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
-    auto minSimd = 8;
+    auto &hwHelper = HwHelper::get(myHwInfo.platform.eRenderCoreFamily);
+    auto minSimd = hwHelper.getMinimalSIMDSize();
 
-    auto expectedWG = (mySysInfo.ThreadCount / mySysInfo.EUCount) * (mySysInfo.EUCount / mySysInfo.SubSliceCount) * minSimd;
+    size_t expectedWGSize = (mySysInfo.ThreadCount / mySysInfo.SubSliceCount) * minSimd;
 
-    EXPECT_EQ(expectedWG, device->sharedDeviceInfo.maxWorkGroupSize);
+    EXPECT_EQ(expectedWGSize, device->sharedDeviceInfo.maxWorkGroupSize);
+}
+
+using isGen12Plus = IsAtLeastGfxCore<IGFX_GEN12_CORE>;
+HWTEST2_F(DeviceGetCapsTest, givenSysInfoWhenDeviceCreatedThenMaxWorkGroupSizeIsCalculatedCorrectly, isGen12Plus) {
+    HardwareInfo myHwInfo = *defaultHwInfo;
+    GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
+    PLATFORM &myPlatform = myHwInfo.platform;
+
+    mySysInfo.EUCount = 16;
+    mySysInfo.SubSliceCount = 4;
+    mySysInfo.DualSubSliceCount = 2;
+    mySysInfo.ThreadCount = 16 * 8;
+    myPlatform.usRevId = 0x4;
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
+    auto &hwHelper = HwHelper::get(myHwInfo.platform.eRenderCoreFamily);
+    auto minSimd = hwHelper.getMinimalSIMDSize();
+
+    size_t expectedWGSize = (mySysInfo.ThreadCount / mySysInfo.DualSubSliceCount) * minSimd;
+    EXPECT_EQ(expectedWGSize, device->sharedDeviceInfo.maxWorkGroupSize);
 }
 
 HWTEST_F(DeviceGetCapsTest, givenDSSDifferentThanZeroWhenDeviceCreatedThenDualSubSliceCountIsDifferentThanSubSliceCount) {

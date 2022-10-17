@@ -24,3 +24,8 @@ void HwInfoConfigHw<gfxProduct>::adjustSamplerState(void *sampler, const Hardwar
         samplerState->setLowQualityFilter(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE);
     }
 }
+
+template <>
+uint32_t HwInfoConfigHw<gfxProduct>::getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const {
+    return getMaxThreadsForWorkgroup(hwInfo, maxNumEUsPerDualSubSlice);
+}
