@@ -7,6 +7,7 @@
 
 #include "level_zero/tools/source/sysman/memory/linux/os_memory_imp_prelim.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/system_info.h"
@@ -92,6 +93,7 @@ ze_result_t LinuxMemoryImp::getVFIDString(std::string &vfID) {
     std::string key = "VF0_VFID";
     auto result = pPmt->readValue(key, vf0VfIdVal);
     if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for VF0_VFID is returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
 
@@ -99,6 +101,7 @@ ze_result_t LinuxMemoryImp::getVFIDString(std::string &vfID) {
     key = "VF1_VFID";
     result = pPmt->readValue(key, vf1VfIdVal);
     if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for VF1_VFID is returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
 
@@ -108,6 +111,7 @@ ze_result_t LinuxMemoryImp::getVFIDString(std::string &vfID) {
     // Lets assume and report this as a error condition
     if (((vf0VfIdVal == 0) && (vf1VfIdVal == 0)) ||
         ((vf0VfIdVal > 0) && (vf1VfIdVal > 0))) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() VF0 returning 0x%x and VF1 returning 0x%x as both should not be the same \n", __FUNCTION__, vf0VfIdVal, vf1VfIdVal);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
@@ -132,6 +136,7 @@ ze_result_t LinuxMemoryImp::readMcChannelCounters(uint64_t &readCounters, uint64
             std::string readCounterKey = nameOfCounters[counterIndex] + "[" + std::to_string(mcChannelIndex) + "]";
             result = pPmt->readValue(readCounterKey, val);
             if (result != ZE_RESULT_SUCCESS) {
+                NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterKey returning error:0x%x \n", __FUNCTION__, result);
                 return result;
             }
             counterValues[counterIndex] += val;
@@ -175,6 +180,7 @@ ze_result_t LinuxMemoryImp::getBandwidthForDg2(zes_mem_bandwidth_t *pBandwidth) 
     pBandwidth->maxBandwidth = 0;
     ze_result_t result = readMcChannelCounters(pBandwidth->readCounter, pBandwidth->writeCounter);
     if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readMcChannelCounters returning error:0x%x  \n", __FUNCTION__, result);
         return result;
     }
     pBandwidth->maxBandwidth = 0u;
@@ -182,6 +188,7 @@ ze_result_t LinuxMemoryImp::getBandwidthForDg2(zes_mem_bandwidth_t *pBandwidth) 
     uint64_t timeStampVal = 0;
     result = pPmt->readValue(timeStamp, timeStampVal);
     if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for timeStamp returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
     pBandwidth->timestamp = timeStampVal * 1e-8; // Convert timeStamp into seconds
@@ -201,6 +208,7 @@ ze_result_t LinuxMemoryImp::getHbmBandwidth(uint32_t numHbmModules, zes_mem_band
     std::string vfId = "";
     result = getVFIDString(vfId);
     if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():getVFIDString returning error:0x%x while retriving VFID string \n", __FUNCTION__, result);
         return result;
     }
     auto &hwInfo = pDevice->getNEODevice()->getHardwareInfo();
@@ -212,6 +220,7 @@ ze_result_t LinuxMemoryImp::getHbmBandwidth(uint32_t numHbmModules, zes_mem_band
         std::string readCounterKey = vfId + "_HBM" + std::to_string(hbmModuleIndex) + "_READ";
         result = pPmt->readValue(readCounterKey, counterValue);
         if (result != ZE_RESULT_SUCCESS) {
+            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterKey returning error:0x%x \n", __FUNCTION__, result);
             return result;
         }
         pBandwidth->readCounter += counterValue;
@@ -221,6 +230,7 @@ ze_result_t LinuxMemoryImp::getHbmBandwidth(uint32_t numHbmModules, zes_mem_band
         std::string writeCounterKey = vfId + "_HBM" + std::to_string(hbmModuleIndex) + "_WRITE";
         result = pPmt->readValue(writeCounterKey, counterValue);
         if (result != ZE_RESULT_SUCCESS) {
+            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for writeCounterKey returning error:0x%x \n", __FUNCTION__, result);
             return result;
         }
         pBandwidth->writeCounter += counterValue;
@@ -230,6 +240,7 @@ ze_result_t LinuxMemoryImp::getHbmBandwidth(uint32_t numHbmModules, zes_mem_band
     std::string timeStamp = vfId + "_TIMESTAMP_L";
     result = pPmt->readValue(timeStamp, timeStampL);
     if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for timeStampL returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
 
@@ -237,6 +248,7 @@ ze_result_t LinuxMemoryImp::getHbmBandwidth(uint32_t numHbmModules, zes_mem_band
     timeStamp = vfId + "_TIMESTAMP_H";
     result = pPmt->readValue(timeStamp, timeStampH);
     if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for timeStampH returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
     pBandwidth->timestamp = timeStampH;
