@@ -91,7 +91,7 @@ struct Context : _ze_context_handle_t {
         void **pptr) = 0;
 
     virtual ze_result_t openIpcMemHandle(ze_device_handle_t hDevice,
-                                         ze_ipc_mem_handle_t handle,
+                                         const ze_ipc_mem_handle_t &handle,
                                          ze_ipc_memory_flags_t flags,
                                          void **ptr) = 0;
     virtual ze_result_t getMemAllocProperties(const void *ptr,
