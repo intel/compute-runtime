@@ -1613,6 +1613,35 @@ TEST_F(DebugApiWindowsTest, WhenCallingReadMemoryForExpectedFailureCasesThenErro
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
 }
 
+TEST_F(DebugApiWindowsTest, GivenSipNotUpdatingSipCmdThenAccessToSlmFailsGracefully) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+
+    SIP::version version = {2, 0, 0};
+    initStateSaveArea(session->stateSaveAreaHeader, version);
+    session->stateSaveAreaVA = reinterpret_cast<uint64_t>(session->stateSaveAreaHeader.data());
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+
+    mockWddm->srcReadBuffer = mockWddm->dstWriteBuffer = session->stateSaveAreaHeader.data();
+    mockWddm->srcReadBufferBaseAddress = mockWddm->dstWriteBufferBaseAddress = session->stateSaveAreaVA;
+    session->wddm = mockWddm;
+
+    ze_device_thread_t thread = {0, 0, 0, 0};
+    session->allThreads[EuThread::ThreadId(0, thread)]->stopThread(1u);
+
+    zet_debug_memory_space_desc_t desc;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM;
+    desc.address = 0x10000000;
+
+    char output[bufferSize];
+
+    auto retVal = session->readMemory(thread, &desc, bufferSize, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
+
+    retVal = session->writeMemory(thread, &desc, bufferSize, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
+}
+
 TEST_F(DebugApiWindowsTest, GivenModuleDebugAreaVaWhenReadingModuleDebugAreaThenGpuMemoryIsRead) {
     auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
     ASSERT_NE(nullptr, session);

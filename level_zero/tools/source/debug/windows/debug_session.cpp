@@ -456,9 +456,17 @@ ze_result_t DebugSessionWindows::readMemory(ze_device_thread_t thread, const zet
         return status;
     }
 
-    if (desc->type != ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    if (desc->type == ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT) {
+        status = readDefaultMemory(thread, desc, size, buffer);
+    } else {
+        auto threadId = convertToThreadId(thread);
+        status = readSLMMemory(threadId, desc, size, buffer);
     }
+
+    return status;
+}
+
+ze_result_t DebugSessionWindows::readDefaultMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
 
     if (isVAElf(desc, size)) {
         return readElfSpace(desc, size, buffer);
@@ -493,9 +501,17 @@ ze_result_t DebugSessionWindows::writeMemory(ze_device_thread_t thread, const ze
         return status;
     }
 
-    if (desc->type != ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    if (desc->type == ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT) {
+        status = writeDefaultMemory(thread, desc, size, buffer);
+    } else {
+        auto threadId = convertToThreadId(thread);
+        status = writeSLMMemory(threadId, desc, size, buffer);
     }
+
+    return status;
+}
+
+ze_result_t DebugSessionWindows::writeDefaultMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) {
 
     uint64_t memoryHandle = DebugSessionWindows::invalidHandle;
 
