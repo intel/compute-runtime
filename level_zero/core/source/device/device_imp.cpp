@@ -358,9 +358,13 @@ ze_result_t DeviceImp::createImage(const ze_image_desc_t *desc, ze_image_handle_
 ze_result_t DeviceImp::createSampler(const ze_sampler_desc_t *desc,
                                      ze_sampler_handle_t *sampler) {
     auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
-    *sampler = Sampler::create(productFamily, this, desc);
 
-    return ZE_RESULT_SUCCESS;
+    *sampler = Sampler::create(productFamily, this, desc);
+    if (*sampler == nullptr) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    } else {
+        return ZE_RESULT_SUCCESS;
+    }
 }
 
 ze_result_t DeviceImp::createModule(const ze_module_desc_t *desc, ze_module_handle_t *module,
