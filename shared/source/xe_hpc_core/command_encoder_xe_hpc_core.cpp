@@ -35,35 +35,31 @@ void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCR
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
     if (hwInfoConfig.isDisableOverdispatchAvailable(hwInfo)) {
-        interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
+        UNRECOVERABLE_IF(numGrf == 0u);
 
-        if (hwInfo.gtSystemInfo.MaxDualSubSlicesSupported == hwInfo.gtSystemInfo.DualSubSliceCount) {
-            UNRECOVERABLE_IF(numGrf == 0u);
+        constexpr uint32_t maxThreadsInTGForTGDispatchSize8 = 16u;
+        constexpr uint32_t maxThreadsInTGForTGDispatchSize4 = 32u;
+        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        uint32_t availableThreadCount = hwHelper.calculateAvailableThreadCount(hwInfo, numGrf);
+        uint32_t numberOfThreadsInThreadGroup = interfaceDescriptor.getNumberOfThreadsInGpgpuThreadGroup();
+        uint32_t dispatchedTotalThreadCount = numberOfThreadsInThreadGroup * threadGroupCount;
 
-            constexpr uint32_t maxThreadsInTGForTGDispatchSize8 = 16u;
-            constexpr uint32_t maxThreadsInTGForTGDispatchSize4 = 32u;
-            auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-            uint32_t availableThreadCount = hwHelper.calculateAvailableThreadCount(hwInfo, numGrf);
-            uint32_t numberOfThreadsInThreadGroup = interfaceDescriptor.getNumberOfThreadsInGpgpuThreadGroup();
-            uint32_t dispatchedTotalThreadCount = numberOfThreadsInThreadGroup * threadGroupCount;
+        UNRECOVERABLE_IF(numberOfThreadsInThreadGroup == 0u);
 
-            UNRECOVERABLE_IF(numberOfThreadsInThreadGroup == 0u);
+        if (dispatchedTotalThreadCount <= availableThreadCount) {
+            interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
+        } else if (numberOfThreadsInThreadGroup <= maxThreadsInTGForTGDispatchSize8) {
+            interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8);
+        } else if (numberOfThreadsInThreadGroup <= maxThreadsInTGForTGDispatchSize4) {
+            interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_4);
+        } else {
+            interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2);
+        }
 
-            if (dispatchedTotalThreadCount <= availableThreadCount) {
-                interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
-            } else if (numberOfThreadsInThreadGroup <= maxThreadsInTGForTGDispatchSize8) {
-                interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8);
-            } else if (numberOfThreadsInThreadGroup <= maxThreadsInTGForTGDispatchSize4) {
-                interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_4);
-            } else {
-                interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2);
-            }
-
-            uint32_t exponent = INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1 - interfaceDescriptor.getThreadGroupDispatchSize();
-            uint32_t threadGroupDispatchSize = 1u << exponent;
-            if ((dispatchedTotalThreadCount % (numberOfThreadsInThreadGroup * threadGroupDispatchSize)) != 0) {
-                interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
-            }
+        uint32_t exponent = INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1 - interfaceDescriptor.getThreadGroupDispatchSize();
+        uint32_t threadGroupDispatchSize = 1u << exponent;
+        if ((dispatchedTotalThreadCount % (numberOfThreadsInThreadGroup * threadGroupDispatchSize)) != 0) {
+            interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
         }
     }
 

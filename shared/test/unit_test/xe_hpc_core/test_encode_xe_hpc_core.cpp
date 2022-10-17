@@ -510,27 +510,6 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenCleanHeapsAndSlmNotChangedAndU
               (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED)));
 }
 
-XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenInterfaceDescriptorDataAndNonSymmetricalSkuWhenAdjustInterfaceDescriptorDataIsCalledThenThreadGroupDispatchSizeIsCorrectlySet) {
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-
-    INTERFACE_DESCRIPTOR_DATA iddArg = FamilyType::cmdInitInterfaceDescriptorData;
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-    auto hwInfo = pDevice->getHardwareInfo();
-    hwInfo.gtSystemInfo.DualSubSliceCount = 32u;
-
-    for (const auto &revision : {REVISION_A0, REVISION_B}) {
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, hwInfo);
-
-        EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, hwInfo, 0, 0);
-
-        if (hwInfoConfig.isDisableOverdispatchAvailable(hwInfo)) {
-            EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1, iddArg.getThreadGroupDispatchSize());
-        } else {
-            EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8, iddArg.getThreadGroupDispatchSize());
-        }
-    }
-}
-
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDispatchSizeSmallerOrEqualToAvailableThreadCountWhenAdjustInterfaceDescriptorDataIsCalledThenThreadGroupDispatchSizeIsCorrectlySet) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
@@ -569,11 +548,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupWh
 
         EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, hwInfo, threadGroupCount, numGrf);
 
-        if (hwInfo.gtSystemInfo.MaxDualSubSlicesSupported == hwInfo.gtSystemInfo.DualSubSliceCount) {
-            EXPECT_EQ(expectedThreadGroupDispatchSize, iddArg.getThreadGroupDispatchSize());
-        } else {
-            EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1, iddArg.getThreadGroupDispatchSize());
-        }
+        EXPECT_EQ(expectedThreadGroupDispatchSize, iddArg.getThreadGroupDispatchSize());
     }
 }
 
