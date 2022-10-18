@@ -262,7 +262,7 @@ TEST_F(KernelDataTest, GivenExecutionEnvironmentNoReqdWorkGroupSizeWhenBuildingT
     EXPECT_EQ_VAL(0, pKernelInfo->kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0]);
     EXPECT_EQ_VAL(0, pKernelInfo->kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1]);
     EXPECT_EQ_VAL(0, pKernelInfo->kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2]);
-    EXPECT_FALSE(pKernelInfo->hasIndirectStatelessAccess);
+    EXPECT_FALSE(pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess);
 }
 
 TEST_F(KernelDataTest, GivenExecutionEnvironmentWhenBuildingThenProgramIsCorrect) {
@@ -294,7 +294,7 @@ TEST_F(KernelDataTest, GivenExecutionEnvironmentWhenBuildingThenProgramIsCorrect
     EXPECT_EQ(32u, pKernelInfo->kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0]);
     EXPECT_EQ(16u, pKernelInfo->kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1]);
     EXPECT_EQ(8u, pKernelInfo->kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2]);
-    EXPECT_TRUE(pKernelInfo->hasIndirectStatelessAccess);
+    EXPECT_TRUE(pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess);
     EXPECT_EQ(KernelDescriptor::BindfulAndStateless, pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode);
 }
 

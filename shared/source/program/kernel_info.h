@@ -114,7 +114,6 @@ struct KernelInfo {
     const BuiltinDispatchInfoBuilder *builtinDispatchBuilder = nullptr;
     uint32_t systemKernelOffset = 0;
     uint64_t kernelId = 0;
-    bool hasIndirectStatelessAccess = false;
     bool isKernelHeapSubstituted = false;
     GraphicsAllocation *kernelAllocation = nullptr;
     DebugData debugData;

@@ -162,6 +162,7 @@ constexpr ConstStringRef ageBased("age_based");
 constexpr ConstStringRef roundRobin("round_robin");
 constexpr ConstStringRef roundRobinStall("round_robin_stall");
 } // namespace ThreadSchedulingMode
+constexpr ConstStringRef indirectStatelessCount("indirect_stateless_count");
 } // namespace ExecutionEnv
 
 namespace Attributes {
@@ -409,6 +410,7 @@ using SlmSizeT = int32_t;
 using SubgroupIndependentForwardProgressT = bool;
 using WorkgroupWalkOrderDimensionsT = int32_t[3];
 using ThreadSchedulingModeT = ThreadSchedulingMode;
+using IndirectStatelessCountT = int32_t;
 
 namespace Defaults {
 constexpr BarrierCountT barrierCount = 0;
@@ -434,6 +436,7 @@ constexpr SlmSizeT slmSize = 0;
 constexpr SubgroupIndependentForwardProgressT subgroupIndependentForwardProgress = false;
 constexpr WorkgroupWalkOrderDimensionsT workgroupWalkOrderDimensions = {0, 1, 2};
 constexpr ThreadSchedulingModeT threadSchedulingMode = ThreadSchedulingModeUnknown;
+constexpr IndirectStatelessCountT indirectStatelessCount = 0;
 } // namespace Defaults
 
 constexpr ConstStringRef required[] = {
@@ -463,6 +466,7 @@ struct ExecutionEnvBaseT {
     SubgroupIndependentForwardProgressT subgroupIndependentForwardProgress = Defaults::subgroupIndependentForwardProgress;
     WorkgroupWalkOrderDimensionsT workgroupWalkOrderDimensions{Defaults::workgroupWalkOrderDimensions[0], Defaults::workgroupWalkOrderDimensions[1], Defaults::workgroupWalkOrderDimensions[2]};
     ThreadSchedulingModeT threadSchedulingMode = Defaults::threadSchedulingMode;
+    IndirectStatelessCountT indirectStatelessCount = Defaults::indirectStatelessCount;
 };
 
 struct ExperimentalPropertiesBaseT {

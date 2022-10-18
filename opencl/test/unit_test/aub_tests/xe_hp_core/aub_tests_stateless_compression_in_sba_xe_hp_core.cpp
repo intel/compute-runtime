@@ -262,7 +262,7 @@ struct UmStatelessCompressionInSBA : public KernelAUBFixture<StatelessKernelWith
         DebugManager.flags.NodeOrdinal.set(GetParam());
         DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
         KernelAUBFixture<StatelessKernelWithIndirectAccessFixture>::setUp();
-        EXPECT_TRUE(multiDeviceKernel->getKernel(rootDeviceIndex)->getKernelInfo().hasIndirectStatelessAccess);
+        EXPECT_TRUE(multiDeviceKernel->getKernel(rootDeviceIndex)->getKernelInfo().kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess);
     }
 
     void TearDown() override {

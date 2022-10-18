@@ -157,6 +157,7 @@ struct KernelDescriptor {
         bool hasNonKernelArgLoad = true;
         bool hasNonKernelArgStore = true;
         bool hasNonKernelArgAtomic = true;
+        bool hasIndirectStatelessAccess = false;
 
         AddressingMode bufferAddressingMode = BindfulAndStateless;
         AddressingMode imageAddressingMode = Bindful;

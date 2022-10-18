@@ -1004,6 +1004,7 @@ kernels:
           - 1
           - 2 
         thread_scheduling_mode: age_based
+        indirect_stateless_count: 2
 ...
 )===";
 
@@ -1046,6 +1047,7 @@ kernels:
     EXPECT_EQ(2, execEnv.workgroupWalkOrderDimensions[2]);
     using ThreadSchedulingMode = NEO::Elf::ZebinKernelMetadata::Types::Kernel::ExecutionEnv::ThreadSchedulingMode;
     EXPECT_EQ(ThreadSchedulingMode::ThreadSchedulingModeAgeBased, execEnv.threadSchedulingMode);
+    EXPECT_EQ(2, execEnv.indirectStatelessCount);
 }
 
 TEST(ReadZeInfoExecutionEnvironment, GivenUnknownEntryThenEmmitsWarning) {
@@ -3784,7 +3786,8 @@ kernels:
         work_group_walk_order_dimensions:
           - 0
           - 1
-          - 2 
+          - 2
+        indirect_stateless_count : 2
 )===";
     NEO::ProgramInfo programInfo;
     ZebinTestData::ValidEmptyProgram zebin;
@@ -3831,6 +3834,7 @@ kernels:
     EXPECT_EQ(0U, kernelDescriptor.kernelAttributes.workgroupWalkOrder[0]);
     EXPECT_EQ(1U, kernelDescriptor.kernelAttributes.workgroupWalkOrder[1]);
     EXPECT_EQ(2U, kernelDescriptor.kernelAttributes.workgroupWalkOrder[2]);
+    EXPECT_TRUE(kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess);
 }
 
 TEST(PopulateArgDescriptorPerThreadPayload, GivenArgTypeLocalIdWhenOffsetIsNonZeroThenFail) {

@@ -271,7 +271,7 @@ struct XeHpgCoreUmStatelessCompressionInSBA : public KernelAUBFixture<StatelessK
         if (!device->getHardwareInfo().featureTable.flags.ftrLocalMemory) {
             GTEST_SKIP();
         }
-        EXPECT_TRUE(multiDeviceKernel->getKernel(rootDeviceIndex)->getKernelInfo().hasIndirectStatelessAccess);
+        EXPECT_TRUE(multiDeviceKernel->getKernel(rootDeviceIndex)->getKernelInfo().kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess);
     }
 
     void TearDown() override {

@@ -1991,7 +1991,7 @@ bool Kernel::hasDirectStatelessAccessToHostMemory() const {
 }
 
 bool Kernel::hasIndirectStatelessAccessToHostMemory() const {
-    if (!kernelInfo.hasIndirectStatelessAccess) {
+    if (!kernelInfo.kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess) {
         return false;
     }
 

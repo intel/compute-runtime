@@ -430,11 +430,12 @@ TEST_F(KernelArgBufferTest, givenInvalidKernelObjWhenHasDirectStatelessAccessToH
 
 TEST_F(KernelArgBufferTest, givenKernelWithIndirectStatelessAccessWhenHasIndirectStatelessAccessToHostMemoryIsCalledThenReturnTrueForHostMemoryAllocations) {
     KernelInfo kernelInfo;
-    EXPECT_FALSE(kernelInfo.hasIndirectStatelessAccess);
+    auto &kernelDescriptor = kernelInfo.kernelDescriptor;
+    EXPECT_FALSE(kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess);
 
     MockKernel kernelWithNoIndirectStatelessAccess(pProgram, kernelInfo, *pClDevice);
     EXPECT_FALSE(kernelWithNoIndirectStatelessAccess.hasIndirectStatelessAccessToHostMemory());
-    kernelInfo.hasIndirectStatelessAccess = true;
+    kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = true;
 
     MockKernel kernelWithNoIndirectHostAllocations(pProgram, kernelInfo, *pClDevice);
     EXPECT_FALSE(kernelWithNoIndirectHostAllocations.hasIndirectStatelessAccessToHostMemory());
@@ -458,7 +459,8 @@ TEST_F(KernelArgBufferTest, givenKernelWithIndirectStatelessAccessWhenHasIndirec
 
 TEST_F(KernelArgBufferTest, givenKernelExecInfoWithIndirectStatelessAccessWhenHasIndirectStatelessAccessToHostMemoryIsCalledThenReturnTrueForHostMemoryAllocations) {
     KernelInfo kernelInfo;
-    kernelInfo.hasIndirectStatelessAccess = true;
+    auto &kernelDescriptor = kernelInfo.kernelDescriptor;
+    kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = true;
 
     MockKernel mockKernel(pProgram, kernelInfo, *pClDevice);
     EXPECT_FALSE(mockKernel.unifiedMemoryControls.indirectHostAllocationsAllowed);
@@ -612,7 +614,7 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithNoIndirectS
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
-    pKernelInfo->hasIndirectStatelessAccess = false;
+    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
 
     MockGraphicsAllocation gfxAllocation;
     gfxAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
@@ -632,7 +634,7 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectSta
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
-    pKernelInfo->hasIndirectStatelessAccess = true;
+    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = true;
 
     const auto allocationTypes = {AllocationType::BUFFER,
                                   AllocationType::BUFFER_HOST_MEMORY};
@@ -669,7 +671,7 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectSta
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
-    pKernelInfo->hasIndirectStatelessAccess = true;
+    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = true;
 
     constexpr std::array<AllocationTypeHelper, 4> allocationTypes = {{{AllocationType::BUFFER, false},
                                                                       {AllocationType::BUFFER, true},
