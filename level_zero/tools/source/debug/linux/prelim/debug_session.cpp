@@ -255,23 +255,29 @@ ze_result_t DebugSessionLinux::initialize() {
     startInternalEventsThread();
 
     bool allEventsCollected = false;
-    bool eventAvailable = false;
+    bool eventAvailable = true;
+    float timeDelta = 0;
+    float timeStart = clock();
     do {
-        auto eventMemory = getInternalEvent();
-        auto debugEvent = reinterpret_cast<prelim_drm_i915_debug_event *>(eventMemory.get());
-        if (eventMemory != nullptr) {
-            handleEvent(debugEvent);
-            if (debugEvent->type != PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND && pendingVmBindEvents.size() > 0) {
-                processPendingVmBindEvents();
+        if (internalThreadHasStarted) {
+            auto eventMemory = getInternalEvent();
+            auto debugEvent = reinterpret_cast<prelim_drm_i915_debug_event *>(eventMemory.get());
+            if (eventMemory != nullptr) {
+                handleEvent(debugEvent);
+                if (debugEvent->type != PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND && pendingVmBindEvents.size() > 0) {
+                    processPendingVmBindEvents();
+                }
+                eventAvailable = true;
+            } else {
+                eventAvailable = false;
             }
-            eventAvailable = true;
+            allEventsCollected = checkAllEventsCollected();
         } else {
-            eventAvailable = false;
+            timeDelta = float(clock() - timeStart) / CLOCKS_PER_SEC;
         }
+    } while ((eventAvailable && !allEventsCollected) && timeDelta < 0.5);
 
-        allEventsCollected = checkAllEventsCollected();
-
-    } while (eventAvailable && !allEventsCollected);
+    internalThreadHasStarted = false;
 
     if (clientHandleClosed == clientHandle && clientHandle != invalidClientHandle) {
         return ZE_RESULT_ERROR_DEVICE_LOST;
@@ -334,6 +340,7 @@ void *DebugSessionLinux::asyncThreadFunction(void *arg) {
 void *DebugSessionLinux::readInternalEventsThreadFunction(void *arg) {
     DebugSessionLinux *self = reinterpret_cast<DebugSessionLinux *>(arg);
     PRINT_DEBUGGER_INFO_LOG("Debugger internal event thread started\n", "");
+    self->internalThreadHasStarted = true;
 
     while (self->internalEventThread.threadActive) {
         self->readInternalEventsAsync();

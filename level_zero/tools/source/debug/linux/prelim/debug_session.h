@@ -357,6 +357,7 @@ struct DebugSessionLinux : DebugSessionImp {
     uint64_t euControlInterruptSeqno[NEO::EngineLimits::maxHandleCount];
 
     std::unordered_map<uint64_t, std::unique_ptr<ClientConnection>> clientHandleToConnection;
+    std::atomic<bool> internalThreadHasStarted{false};
 };
 
 struct TileDebugSessionLinux : DebugSessionLinux {

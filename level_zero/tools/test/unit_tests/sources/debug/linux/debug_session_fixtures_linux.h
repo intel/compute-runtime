@@ -400,6 +400,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
 
     void startInternalEventsThread() override {
         if (synchronousInternalEventRead) {
+            internalThreadHasStarted = true;
             return;
         }
         return DebugSessionLinux::startInternalEventsThread();
