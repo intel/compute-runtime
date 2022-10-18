@@ -514,7 +514,7 @@ Buffer *Context::BufferPoolAllocator::allocateBufferFromPool(const MemoryPropert
 }
 
 bool Context::BufferPoolAllocator::isPoolBuffer(const MemObj *buffer) const {
-    return this->mainStorage == buffer;
+    return buffer != nullptr && this->mainStorage == buffer;
 }
 
 void Context::BufferPoolAllocator::tryFreeFromPoolBuffer(MemObj *possiblePoolBuffer, size_t offset, size_t size) {

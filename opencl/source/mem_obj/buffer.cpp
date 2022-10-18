@@ -613,6 +613,14 @@ Buffer *Buffer::createSubBuffer(cl_mem_flags flags,
                                 const cl_buffer_region *region,
                                 cl_int &errcodeRet) {
     DEBUG_BREAK_IF(nullptr == createFunction);
+    if (this->context->getBufferPoolAllocator().isPoolBuffer(associatedMemObject)) {
+        Buffer *poolBuffer = static_cast<Buffer *>(associatedMemObject);
+        auto regionWithAdditionalOffset = *region;
+        regionWithAdditionalOffset.origin += this->offset;
+        auto buffer = poolBuffer->createSubBuffer(flags, flagsIntel, &regionWithAdditionalOffset, errcodeRet);
+        buffer->isSubBufferFromPool = true;
+        return buffer;
+    }
     MemoryProperties memoryProperties =
         ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &this->context->getDevice(0)->getDevice());
 

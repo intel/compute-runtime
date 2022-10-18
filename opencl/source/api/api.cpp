@@ -786,13 +786,15 @@ cl_mem CL_API_CALL clCreateSubBuffer(cl_mem buffer,
             break;
         }
 
+        if (parentBuffer->isSubBuffer() == true) {
+            if (!parentBuffer->getContext()->getBufferPoolAllocator().isPoolBuffer(parentBuffer->getAssociatedMemObject()) || parentBuffer->isSubBufferFromPool) {
+                retVal = CL_INVALID_MEM_OBJECT;
+                break;
+            }
+        }
+
         cl_mem_flags parentFlags = parentBuffer->getFlags();
         cl_mem_flags_intel parentFlagsIntel = parentBuffer->getFlagsIntel();
-
-        if (parentBuffer->isSubBuffer() == true) {
-            retVal = CL_INVALID_MEM_OBJECT;
-            break;
-        }
 
         /* Check whether flag is valid. */
         if (((flags & CL_MEM_HOST_READ_ONLY) && (flags & CL_MEM_HOST_NO_ACCESS)) ||

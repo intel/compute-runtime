@@ -156,6 +156,9 @@ class MemObj : public BaseObject<_cl_mem> {
         }
         return associatedMemObject->getHighestRootMemObj();
     }
+    MemObj *getAssociatedMemObject() {
+        return associatedMemObject;
+    }
 
   protected:
     void getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);

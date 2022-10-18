@@ -325,8 +325,6 @@ TEST_F(aggregatedSmallBuffersEnabledApiTest, givenSubBufferNotFromPoolAndAggrega
 }
 
 TEST_F(aggregatedSmallBuffersEnabledApiTest, givenCopyHostPointerWhenCreatingBufferThenUsePoolAndCopyHostPointer) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(1);
     flags |= CL_MEM_COPY_HOST_PTR;
     unsigned char dataToCopy[PoolAllocator::smallBufferThreshold];
     dataToCopy[0] = 123;
@@ -352,6 +350,92 @@ TEST_F(aggregatedSmallBuffersEnabledApiTest, givenCopyHostPointerWhenCreatingBuf
     EXPECT_EQ(retVal, CL_SUCCESS);
 
     EXPECT_EQ(context->getRefInternalCount(), contextRefCountBefore);
+
+    EXPECT_EQ(clReleaseContext(context), CL_SUCCESS);
+}
+
+using aggregatedSmallBuffersSubBufferApiTest = aggregatedSmallBuffersEnabledApiTest;
+
+TEST_F(aggregatedSmallBuffersSubBufferApiTest, givenBufferFromPoolWhenCreateSubBufferCalledThenItSucceeds) {
+    cl_mem notUsedBuffer = clCreateBuffer(clContext, flags, size, hostPtr, &retVal);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_NE(notUsedBuffer, nullptr);
+
+    cl_mem buffer = clCreateBuffer(clContext, flags, size, hostPtr, &retVal);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    ASSERT_NE(buffer, nullptr);
+    MockBuffer *mockBuffer = static_cast<MockBuffer *>(buffer);
+    EXPECT_GT(mockBuffer->offset, 0u);
+
+    cl_buffer_region region{};
+    region.size = 1;
+    region.origin = size / 2;
+    cl_mem subBuffer = clCreateSubBuffer(buffer, flags, CL_BUFFER_CREATE_TYPE_REGION, &region, &retVal);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    ASSERT_NE(subBuffer, nullptr);
+    MockBuffer *mockSubBuffer = static_cast<MockBuffer *>(subBuffer);
+    EXPECT_EQ(mockSubBuffer->offset, mockBuffer->offset + region.origin);
+    MockBufferPoolAllocator *mockBufferPoolAllocator = static_cast<MockBufferPoolAllocator *>(&context->getBufferPoolAllocator());
+    EXPECT_EQ(mockSubBuffer->associatedMemObject, mockBufferPoolAllocator->mainStorage);
+
+    retVal = clReleaseMemObject(subBuffer);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+
+    retVal = clReleaseMemObject(buffer);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+
+    retVal = clReleaseMemObject(notUsedBuffer);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+
+    EXPECT_EQ(clReleaseContext(context), CL_SUCCESS);
+}
+
+TEST_F(aggregatedSmallBuffersSubBufferApiTest, givenBufferFromPoolWhenCreateSubBufferCalledWithRegionOutsideBufferThenItFails) {
+    cl_mem buffer = clCreateBuffer(clContext, flags, size, hostPtr, &retVal);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    ASSERT_NE(buffer, nullptr);
+
+    cl_buffer_region region{};
+    region.size = size + 1;
+    region.origin = 0;
+    cl_mem subBuffer = clCreateSubBuffer(buffer, flags, CL_BUFFER_CREATE_TYPE_REGION, &region, &retVal);
+    EXPECT_EQ(retVal, CL_INVALID_VALUE);
+    EXPECT_EQ(subBuffer, nullptr);
+
+    region.size = 1;
+    region.origin = PoolAllocator::smallBufferThreshold;
+    subBuffer = clCreateSubBuffer(buffer, flags, CL_BUFFER_CREATE_TYPE_REGION, &region, &retVal);
+    EXPECT_EQ(retVal, CL_INVALID_VALUE);
+    EXPECT_EQ(subBuffer, nullptr);
+
+    retVal = clReleaseMemObject(buffer);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+
+    EXPECT_EQ(clReleaseContext(context), CL_SUCCESS);
+}
+
+TEST_F(aggregatedSmallBuffersSubBufferApiTest, givenSubBufferFromBufferFromPoolWhenCreateSubBufferCalledThenItFails) {
+    cl_mem buffer = clCreateBuffer(clContext, flags, size, hostPtr, &retVal);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    ASSERT_NE(buffer, nullptr);
+
+    cl_buffer_region region{};
+    region.size = 1;
+    region.origin = size / 2;
+    cl_mem subBuffer = clCreateSubBuffer(buffer, flags, CL_BUFFER_CREATE_TYPE_REGION, &region, &retVal);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    ASSERT_NE(subBuffer, nullptr);
+
+    region.origin = 0;
+    cl_mem subSubBuffer = clCreateSubBuffer(subBuffer, flags, CL_BUFFER_CREATE_TYPE_REGION, &region, &retVal);
+    EXPECT_EQ(retVal, CL_INVALID_MEM_OBJECT);
+    EXPECT_EQ(subSubBuffer, nullptr);
+
+    retVal = clReleaseMemObject(subBuffer);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+
+    retVal = clReleaseMemObject(buffer);
+    EXPECT_EQ(retVal, CL_SUCCESS);
 
     EXPECT_EQ(clReleaseContext(context), CL_SUCCESS);
 }
