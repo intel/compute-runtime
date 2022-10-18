@@ -165,7 +165,9 @@ ze_result_t DebugSessionWindows::readAndHandleEvent(uint64_t timeoutMs) {
     }
 
     if (DBGUMD_RETURN_ESCAPE_SUCCESS != escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus) {
-        PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_READ_EVENT: Failed - Status: 0x%llX EscapeReturnStatus: %d\n", status, escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+        if (DBGUMD_RETURN_READ_EVENT_TIMEOUT_EXPIRED != escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus) {
+            PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_READ_EVENT: Failed - Status: 0x%llX EscapeReturnStatus: %d\n", status, escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+        }
         return DebugSessionWindows::translateEscapeReturnStatusToZeResult(escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
     }
 

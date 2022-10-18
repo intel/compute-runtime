@@ -733,6 +733,20 @@ TEST_F(DebugApiWindowsTest, givenEscapeReturnStatusFailedWhenReadAndHandleEventC
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, session->readAndHandleEvent(100));
 }
 
+TEST_F(DebugApiWindowsTest, givenEscapeReturnTimeoutWhenReadAndHandleEventCalledThenNothingIsLogged) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
+    session->wddm = mockWddm;
+    ::testing::internal::CaptureStdout();
+    mockWddm->numEvents = 1;
+    mockWddm->eventQueue[0].escapeReturnStatus = DBGUMD_RETURN_READ_EVENT_TIMEOUT_EXPIRED;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, session->readAndHandleEvent(100));
+    auto errorMessage = ::testing::internal::GetCapturedStdout();
+    EXPECT_EQ(std::string(""), errorMessage);
+}
+
 TEST_F(DebugApiWindowsTest, givenUnknownEventTypeWhenReadAndHandleEventCalledThenResultUnknownIsReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
