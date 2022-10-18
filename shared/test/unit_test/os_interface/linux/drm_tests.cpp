@@ -1404,6 +1404,36 @@ TEST(DrmWrapperTest, WhenGettingDrmParamValueStringThenProperStringIsReturned) {
     EXPECT_THROW(getDrmParamString(DrmParam::EngineClassRender, &ioctlHelper), std::runtime_error);
 }
 
+TEST(DrmWrapperTest, givenEAgainOrEIntrOrEBusyWhenCheckingIfReinvokeRequiredThenTrueIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    MockIoctlHelper ioctlHelper{drm};
+    EXPECT_TRUE(checkIfIoctlReinvokeRequired(EAGAIN, DrmIoctl::Getparam, &ioctlHelper));
+    EXPECT_TRUE(checkIfIoctlReinvokeRequired(EINTR, DrmIoctl::Getparam, &ioctlHelper));
+    EXPECT_TRUE(checkIfIoctlReinvokeRequired(EBUSY, DrmIoctl::Getparam, &ioctlHelper));
+    EXPECT_TRUE(checkIfIoctlReinvokeRequired(-EBUSY, DrmIoctl::Getparam, &ioctlHelper));
+}
+
+TEST(DrmWrapperTest, givenNoIoctlHelperAndEAgainOrEIntrOrEBusyWhenCheckingIfReinvokeRequiredThenTrueIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    EXPECT_TRUE(checkIfIoctlReinvokeRequired(EAGAIN, DrmIoctl::Getparam, nullptr));
+    EXPECT_TRUE(checkIfIoctlReinvokeRequired(EINTR, DrmIoctl::Getparam, nullptr));
+    EXPECT_TRUE(checkIfIoctlReinvokeRequired(EBUSY, DrmIoctl::Getparam, nullptr));
+    EXPECT_TRUE(checkIfIoctlReinvokeRequired(-EBUSY, DrmIoctl::Getparam, nullptr));
+}
+
+TEST(DrmWrapperTest, givenErrorWhenCheckingIfReinvokeRequiredThenFalseIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    MockIoctlHelper ioctlHelper{drm};
+    EXPECT_FALSE(checkIfIoctlReinvokeRequired(ENOENT, DrmIoctl::Getparam, &ioctlHelper));
+    EXPECT_FALSE(checkIfIoctlReinvokeRequired(ENOENT, DrmIoctl::Getparam, nullptr));
+}
+
 TEST(IoctlHelperTest, whenGettingDrmParamValueThenProperValueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};

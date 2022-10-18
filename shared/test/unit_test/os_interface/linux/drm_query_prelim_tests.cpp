@@ -206,6 +206,68 @@ TEST(DrmQueryTest, WhenCallingIsDebugAttachAvailableThenReturnValueIsTrue) {
     EXPECT_TRUE(drm.isDebugAttachAvailable());
 }
 
+TEST(DrmPrelimTest, GivenDebuggerOpenIoctlWhenErrorEbusyReturnedThenErrorIsReturnedWithoutReinvokingIoctl) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.allowDebugAttachCallBase = true;
+
+    VariableBackup<decltype(SysCalls::sysCallsIoctl)> mockIoctl(&SysCalls::sysCallsIoctl, [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+        return -1;
+    });
+    DrmDebuggerOpen open = {};
+    open.pid = 1;
+    open.events = 0;
+    drm.context.debuggerOpenRetval = -1;
+    drm.errnoRetVal = EBUSY;
+
+    auto ret = drm.Drm::ioctl(DrmIoctl::DebuggerOpen, &open);
+    EXPECT_EQ(-1, ret);
+}
+
+TEST(DrmPrelimTest, GivenDebuggerOpenIoctlWhenErrorEAgainOrEIntrReturnedThenIoctlIsCalledAgain) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.allowDebugAttachCallBase = true;
+    drm.baseErrno = false;
+
+    DrmDebuggerOpen open = {};
+    open.pid = 1;
+    open.events = 0;
+
+    {
+        VariableBackup<decltype(SysCalls::sysCallsIoctl)> mockIoctl(&SysCalls::sysCallsIoctl, [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+            static int callCount = 3;
+            if (callCount > 0) {
+                callCount--;
+                return -1;
+            }
+            return 0;
+        });
+
+        drm.errnoRetVal = EAGAIN;
+
+        auto ret = drm.Drm::ioctl(DrmIoctl::DebuggerOpen, &open);
+        EXPECT_EQ(0, ret);
+    }
+
+    {
+        VariableBackup<decltype(SysCalls::sysCallsIoctl)> mockIoctl(&SysCalls::sysCallsIoctl, [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+            static int callCount = 3;
+            if (callCount > 0) {
+                callCount--;
+                return -1;
+            }
+            return 0;
+        });
+
+        drm.ioctlCallsCount = 0;
+        drm.errnoRetVal = EINTR;
+
+        auto ret = drm.Drm::ioctl(DrmIoctl::DebuggerOpen, &open);
+        EXPECT_EQ(0, ret);
+    }
+}
+
 struct BufferObjectMock : public BufferObject {
     using BufferObject::BufferObject;
     using BufferObject::fillExecObject;

@@ -29,6 +29,13 @@ unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest, IoctlHelper *ioctlHelpe
     }
 }
 
+bool checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest, IoctlHelper *ioctlHelper) {
+    if (ioctlHelper) {
+        return ioctlHelper->checkIfIoctlReinvokeRequired(error, ioctlRequest);
+    }
+    return (error == EINTR || error == EAGAIN || error == EBUSY || error == -EBUSY);
+}
+
 int getDrmParamValue(DrmParam drmParam, IoctlHelper *ioctlHelper) {
     if (ioctlHelper) {
         return ioctlHelper->getDrmParamValue(drmParam);

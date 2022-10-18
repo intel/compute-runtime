@@ -207,6 +207,14 @@ struct DrmVersion {
     char *desc;
 };
 
+struct DrmDebuggerOpen {
+    uint64_t pid;
+    uint32_t flags;
+    uint32_t version;
+    uint64_t events;
+    uint64_t extensions;
+};
+
 enum class DrmIoctl {
     GemExecbuffer2,
     GemWait,
@@ -299,5 +307,6 @@ unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest, IoctlHelper *ioctlHelpe
 int getDrmParamValue(DrmParam drmParam, IoctlHelper *ioctlHelper);
 std::string getDrmParamString(DrmParam param, IoctlHelper *ioctlHelper);
 std::string getIoctlString(DrmIoctl ioctlRequest, IoctlHelper *ioctlHelper);
+bool checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest, IoctlHelper *ioctlHelper);
 
 } // namespace NEO

@@ -60,7 +60,7 @@ void Drm::queryAndSetVmBindPatIndexProgrammingSupport() {
 int Drm::ioctl(DrmIoctl request, void *arg) {
     auto requestValue = getIoctlRequestValue(request, ioctlHelper.get());
     int ret;
-    int returnedErrno;
+    int returnedErrno = 0;
     SYSTEM_ENTER();
     do {
         auto measureTime = DebugManager.flags.PrintIoctlTimes.get();
@@ -78,7 +78,9 @@ int Drm::ioctl(DrmIoctl request, void *arg) {
         }
         ret = SysCalls::ioctl(getFileDescriptor(), requestValue, arg);
 
-        returnedErrno = errno;
+        if (ret != 0) {
+            returnedErrno = getErrno();
+        }
 
         if (measureTime) {
             end = std::chrono::steady_clock::now();
@@ -108,7 +110,7 @@ int Drm::ioctl(DrmIoctl request, void *arg) {
             }
         }
 
-    } while (ret == -1 && (returnedErrno == EINTR || returnedErrno == EAGAIN || returnedErrno == EBUSY || returnedErrno == -EBUSY));
+    } while (ret == -1 && checkIfIoctlReinvokeRequired(returnedErrno, request, ioctlHelper.get()));
     SYSTEM_LEAVE(request);
     return ret;
 }

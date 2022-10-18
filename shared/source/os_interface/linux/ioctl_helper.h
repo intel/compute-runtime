@@ -114,6 +114,7 @@ class IoctlHelper {
     virtual std::string getDrmParamString(DrmParam param) const = 0;
     virtual std::string getIoctlString(DrmIoctl ioctlRequest) const = 0;
 
+    virtual bool checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const;
     virtual std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo);
 
     virtual uint32_t createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex);
@@ -254,6 +255,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     int getDrmParamValue(DrmParam drmParam) const override;
     std::string getDrmParamString(DrmParam param) const override;
     std::string getIoctlString(DrmIoctl ioctlRequest) const override;
+    bool checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const override;
 };
 
 } // namespace NEO

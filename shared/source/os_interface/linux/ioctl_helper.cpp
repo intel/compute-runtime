@@ -369,4 +369,7 @@ std::string IoctlHelper::getFileForMaxMemoryFrequencyOfSubDevice(int subDeviceId
     return "/gt/gt" + std::to_string(subDeviceId) + "/mem_RP0_freq_mhz";
 }
 
+bool IoctlHelper::checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const {
+    return (error == EINTR || error == EAGAIN || error == EBUSY || error == -EBUSY);
+}
 } // namespace NEO
