@@ -109,7 +109,7 @@ struct DebugSessionImp : DebugSession {
     ze_result_t registersAccessHelper(const EuThread *thread, const SIP::regset_desc *regdesc,
                                       uint32_t start, uint32_t count, void *pRegisterValues, bool write);
     MOCKABLE_VIRTUAL ze_result_t cmdRegisterAccessHelper(const EuThread::ThreadId &threadId, SIP::sip_command &command, bool write);
-    ze_result_t waitForCmdReady(EuThread::ThreadId threadId, uint16_t retryCount);
+    MOCKABLE_VIRTUAL ze_result_t waitForCmdReady(EuThread::ThreadId threadId, uint16_t retryCount);
 
     const SIP::regset_desc *typeToRegsetDesc(uint32_t type);
     uint32_t getRegisterSize(uint32_t type);
