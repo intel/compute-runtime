@@ -654,7 +654,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
     result = commandList->appendPageFaultCopy(dstAllocation, srcAllocation, size, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
-    EXPECT_TRUE(commandList->usedKernelLaunchParams.isKernelSplitOperation);
+    EXPECT_FALSE(commandList->usedKernelLaunchParams.isKernelSplitOperation);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
 
     GenCmdList commands;
@@ -1144,7 +1144,8 @@ class MockAppendMemoryLockedCopyTestImmediateCmdList : public MockCommandListImm
                                              uint64_t srcOffset, uint64_t size,
                                              uint64_t elementSize, Builtin builtin,
                                              Event *signalEvent,
-                                             bool isStateless) override {
+                                             bool isStateless,
+                                             CmdListKernelLaunchParams &launchParams) override {
         appendMemoryCopyKernelWithGACalled++;
         return ZE_RESULT_SUCCESS;
     }

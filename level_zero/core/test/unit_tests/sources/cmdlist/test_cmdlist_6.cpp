@@ -575,7 +575,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInExternalHostAl
 
     commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
-    EXPECT_TRUE(commandList->usedKernelLaunchParams.isKernelSplitOperation);
+    EXPECT_FALSE(commandList->usedKernelLaunchParams.isKernelSplitOperation);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
 }
 
@@ -593,7 +593,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInUsmHostAllocat
 
     commandList->appendMemoryCopy(dstBuffer, srcPtr, 8, nullptr, 0, nullptr);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
-    EXPECT_TRUE(commandList->usedKernelLaunchParams.isKernelSplitOperation);
+    EXPECT_FALSE(commandList->usedKernelLaunchParams.isKernelSplitOperation);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
 
     context->freeMem(dstBuffer);
@@ -617,7 +617,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInUsmDeviceAlloc
 
     commandList->appendMemoryCopy(dstBuffer, srcPtr, 8, nullptr, 0, nullptr);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
-    EXPECT_TRUE(commandList->usedKernelLaunchParams.isKernelSplitOperation);
+    EXPECT_FALSE(commandList->usedKernelLaunchParams.isKernelSplitOperation);
     EXPECT_FALSE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
 
     context->freeMem(dstBuffer);
@@ -638,7 +638,12 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryFillInUsmHostThenBui
 
     commandList->appendMemoryFill(dstBuffer, pattern, patternSize, allocSize, nullptr, 0, nullptr);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
-    EXPECT_TRUE(commandList->usedKernelLaunchParams.isKernelSplitOperation);
+    EXPECT_FALSE(commandList->usedKernelLaunchParams.isKernelSplitOperation);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
+
+    commandList->appendMemoryFill(dstBuffer, pattern, 1, allocSize, nullptr, 0, nullptr);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_FALSE(commandList->usedKernelLaunchParams.isKernelSplitOperation);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
 
     context->freeMem(dstBuffer);
@@ -662,6 +667,43 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryFillInUsmDeviceThenB
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     commandList->appendMemoryFill(dstBuffer, pattern, patternSize, size, nullptr, 0, nullptr);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_FALSE(commandList->usedKernelLaunchParams.isKernelSplitOperation);
+    EXPECT_FALSE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
+
+    commandList->appendMemoryFill(dstBuffer, pattern, 1, size, nullptr, 0, nullptr);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_FALSE(commandList->usedKernelLaunchParams.isKernelSplitOperation);
+    EXPECT_FALSE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
+
+    context->freeMem(dstBuffer);
+}
+
+HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryFillRequiresMultiKernelsThenSplitFlagIsSet, IsAtLeastSkl) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+
+    constexpr size_t patternSize = 8;
+    uint8_t pattern[patternSize] = {1, 2, 3, 4};
+
+    constexpr size_t size = 4096u;
+    constexpr size_t alignment = 4096u;
+    void *dstBuffer = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(),
+                                          &deviceDesc,
+                                          size, alignment, &dstBuffer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    constexpr size_t fillSize = size - 1;
+
+    commandList->appendMemoryFill(dstBuffer, pattern, patternSize, fillSize, nullptr, 0, nullptr);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isKernelSplitOperation);
+    EXPECT_FALSE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
+
+    commandList->appendMemoryFill(dstBuffer, pattern, 1, fillSize, nullptr, 0, nullptr);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isKernelSplitOperation);
     EXPECT_FALSE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);

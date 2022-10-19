@@ -65,6 +65,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::initialize;
     using BaseClass::partitionCount;
     using BaseClass::patternAllocations;
+    using BaseClass::pipeControlMultiKernelEventSync;
     using BaseClass::pipelineSelectStateTracking;
     using BaseClass::requiredStreamState;
     using BaseClass::stateComputeModeTracking;
@@ -130,6 +131,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::isFlushTaskSubmissionEnabled;
     using BaseClass::partitionCount;
+    using BaseClass::pipeControlMultiKernelEventSync;
     using BaseClass::pipelineSelectStateTracking;
     using BaseClass::requiredStreamState;
     using BaseClass::stateComputeModeTracking;
@@ -143,6 +145,7 @@ struct MockCommandListImmediate : public CommandListCoreFamilyImmediate<gfxCoreF
     using BaseClass::containsAnyKernel;
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::indirectAllocationsAllowed;
+    using BaseClass::pipeControlMultiKernelEventSync;
     using BaseClass::requiredStreamState;
 };
 
@@ -422,8 +425,9 @@ class MockAppendMemoryCopy : public CommandListCoreFamily<gfxCoreFamily> {
                uint64_t srcOffset, uint64_t size,
                uint64_t elementSize, Builtin builtin,
                Event *signalEvent,
-               bool isStateless),
-              (dstPtr, dstPtrAlloc, dstOffset, srcPtr, srcPtrAlloc, srcOffset, size, elementSize, builtin, signalEvent, isStateless));
+               bool isStateless,
+               CmdListKernelLaunchParams &launchParams),
+              (dstPtr, dstPtrAlloc, dstOffset, srcPtr, srcPtrAlloc, srcOffset, size, elementSize, builtin, signalEvent, isStateless, launchParams));
 
     ADDMETHOD_NOBASE(appendMemoryCopyBlit, ze_result_t, ZE_RESULT_SUCCESS,
                      (uintptr_t dstPtr,

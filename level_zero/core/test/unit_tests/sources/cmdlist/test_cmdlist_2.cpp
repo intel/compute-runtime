@@ -50,7 +50,8 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
                                              uint64_t elementSize,
                                              Builtin builtin,
                                              Event *signalEvent,
-                                             bool isStateless) override {
+                                             bool isStateless,
+                                             CmdListKernelLaunchParams &launchParams) override {
         appendMemoryCopyKernelWithGACalledTimes++;
         if (isStateless) {
             appendMemoryCopyKernelWithGAStatelessCalledTimes++;

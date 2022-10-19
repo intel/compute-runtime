@@ -62,7 +62,7 @@ struct BcsSplit {
         ze_result_t result = ZE_RESULT_SUCCESS;
 
         if (hSignalEvent) {
-            cmdList->appendEventForProfilingAllWalkers(Event::fromHandle(hSignalEvent), true);
+            cmdList->appendEventForProfilingAllWalkers(Event::fromHandle(hSignalEvent), true, true);
         }
 
         auto markerEventIndex = this->events.obtainForSplit(Context::fromHandle(cmdList->hContext), MemoryConstants::pageSize64k / sizeof(typename CommandListCoreFamilyImmediate<gfxCoreFamily>::GfxFamily::TimestampPacketType));
@@ -86,10 +86,10 @@ struct BcsSplit {
         }
 
         cmdList->addEventsToCmdList(static_cast<uint32_t>(this->cmdQs.size()), eventHandles.data());
-        cmdList->appendEventForProfilingAllWalkers(this->events.marker[markerEventIndex], false);
+        cmdList->appendEventForProfilingAllWalkers(this->events.marker[markerEventIndex], false, true);
 
         if (hSignalEvent) {
-            cmdList->appendEventForProfilingAllWalkers(Event::fromHandle(hSignalEvent), false);
+            cmdList->appendEventForProfilingAllWalkers(Event::fromHandle(hSignalEvent), false, true);
         }
 
         return result;

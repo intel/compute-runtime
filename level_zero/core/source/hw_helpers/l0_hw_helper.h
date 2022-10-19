@@ -34,6 +34,7 @@ class L0HwHelper {
     static bool enablePipelineSelectStateTracking(const NEO::HardwareInfo &hwInfo);
     static bool enableStateComputeModeTracking(const NEO::HardwareInfo &hwInfo);
     static bool enableImmediateCmdListHeapSharing(const NEO::HardwareInfo &hwInfo, bool cmdlistSupport);
+    static bool usePipeControlMultiKernelEventSync(const NEO::HardwareInfo &hwInfo);
     virtual void setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupT &group) const = 0;
     virtual L0::Event *createEvent(L0::EventPool *eventPool, const ze_event_desc_t *desc, L0::Device *device) const = 0;
 

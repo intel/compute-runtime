@@ -171,13 +171,20 @@ void CommandList::migrateSharedAllocations() {
     }
 }
 
-bool CommandList::setupTimestampEventForMultiTile(Event *signalEvent) {
+bool CommandList::isTimestampEventForMultiTile(Event *signalEvent) {
     if (this->partitionCount > 1 &&
         signalEvent) {
         if (signalEvent->isEventTimestampFlagSet()) {
-            signalEvent->setPacketsInUse(this->partitionCount);
             return true;
         }
+    }
+    return false;
+}
+
+bool CommandList::setupTimestampEventForMultiTile(Event *signalEvent) {
+    if (isTimestampEventForMultiTile(signalEvent)) {
+        signalEvent->setPacketsInUse(this->partitionCount);
+        return true;
     }
     return false;
 }

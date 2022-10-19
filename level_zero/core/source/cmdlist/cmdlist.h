@@ -308,6 +308,7 @@ struct CommandList : _ze_command_list_handle_t {
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize);
     NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize, bool hostCopyAllowed);
     bool setupTimestampEventForMultiTile(Event *signalEvent);
+    bool isTimestampEventForMultiTile(Event *signalEvent);
     bool getDcFlushRequired(bool externalCondition) const {
         return externalCondition ? dcFlushSupport : false;
     }

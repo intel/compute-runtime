@@ -404,25 +404,31 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(Kernel
                                                                           Event *event,
                                                                           const CmdListKernelLaunchParams &launchParams) {
     if (event) {
-        event->increaseKernelCount();
+        if (this->pipeControlMultiKernelEventSync && launchParams.isKernelSplitOperation) {
+            event = nullptr;
+        } else {
+            event->increaseKernelCount();
+        }
     }
     return appendLaunchKernelWithParams(kernel, threadGroupDimensions, event, launchParams);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Event *event, bool beforeWalker) {
-    if (isCopyOnly()) {
+void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Event *event, bool beforeWalker, bool singlePacketEvent) {
+    if (isCopyOnly() || singlePacketEvent) {
         if (beforeWalker) {
-            appendEventForProfiling(event, true, false);
+            bool workloadPartition = setupTimestampEventForMultiTile(event);
+            appendEventForProfiling(event, true, workloadPartition);
         } else {
-            appendSignalEventPostWalker(event, false);
+            bool workloadPartition = isTimestampEventForMultiTile(event);
+            appendSignalEventPostWalker(event, workloadPartition);
         }
     } else {
         if (event) {
             if (beforeWalker) {
                 event->zeroKernelCount();
             } else {
-                if (getDcFlushRequired(!!event->signalScope)) {
+                if (event->getKernelCount() > 1 && getDcFlushRequired(!!event->signalScope)) {
                     programEventL3Flush<gfxCoreFamily>(event, this->device, this->partitionCount, this->commandContainer);
                 }
             }

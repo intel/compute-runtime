@@ -43,6 +43,17 @@ struct AlignedAllocationData {
     bool needsFlush = false;
 };
 
+struct CmdListFillKernelArguments {
+    size_t mainOffset = 0;
+    size_t mainGroupSize = 0;
+    size_t groups = 0;
+    size_t rightOffset = 0;
+    size_t patternOffsetRemainder = 0;
+    uint32_t leftRemainingBytes = 0;
+    uint32_t rightRemainingBytes = 0;
+    uint32_t patternSizeInEls = 0;
+};
+
 struct EventPool;
 struct Event;
 
@@ -157,7 +168,7 @@ struct CommandListCoreFamily : CommandListImp {
                                             uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
     void appendMultiPartitionPrologue(uint32_t partitionDataSize) override;
     void appendMultiPartitionEpilogue() override;
-    void appendEventForProfilingAllWalkers(Event *event, bool beforeWalker);
+    void appendEventForProfilingAllWalkers(Event *event, bool beforeWalker, bool singlePacketEvent);
     ze_result_t addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
 
     ze_result_t reserveSpace(size_t size, void **ptr) override;
@@ -173,7 +184,8 @@ struct CommandListCoreFamily : CommandListImp {
                                                               uint64_t srcOffset, uint64_t size,
                                                               uint64_t elementSize, Builtin builtin,
                                                               Event *signalEvent,
-                                                              bool isStateless);
+                                                              bool isStateless,
+                                                              CmdListKernelLaunchParams &launchParams);
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyBlit(uintptr_t dstPtr,
                                                       NEO::GraphicsAllocation *dstPtrAlloc,
@@ -270,9 +282,15 @@ struct CommandListCoreFamily : CommandListImp {
     void handlePostSubmissionState();
 
     virtual void createLogicalStateHelper();
+    void setupFillKernelArguments(size_t baseOffset,
+                                  size_t patternSize,
+                                  size_t dstSize,
+                                  CmdListFillKernelArguments &outArguments,
+                                  Kernel *kernel);
 
     size_t cmdListCurrentStartOffset = 0;
     bool containsAnyKernel = false;
+    bool pipeControlMultiKernelEventSync = false;
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>

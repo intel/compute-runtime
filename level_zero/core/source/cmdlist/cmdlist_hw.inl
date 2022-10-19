@@ -136,6 +136,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->stateComputeModeTracking = L0HwHelper::enableStateComputeModeTracking(hwInfo);
     this->frontEndStateTracking = L0HwHelper::enableFrontEndStateTracking(hwInfo);
     this->pipelineSelectStateTracking = L0HwHelper::enablePipelineSelectStateTracking(hwInfo);
+    this->pipeControlMultiKernelEventSync = L0HwHelper::usePipeControlMultiKernelEventSync(hwInfo);
 
     if (device->isImplicitScalingCapable() && !this->internalUsage && !isCopyOnly()) {
         this->partitionCount = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count());
@@ -926,7 +927,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(v
                                                                                uint64_t elementSize,
                                                                                Builtin builtin,
                                                                                Event *signalEvent,
-                                                                               bool isStateless) {
+                                                                               bool isStateless,
+                                                                               CmdListKernelLaunchParams &launchParams) {
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
 
@@ -957,8 +959,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(v
     ze_group_count_t dispatchKernelArgs{groups, 1u, 1u};
 
     auto dstAllocationType = dstPtrAlloc->getAllocationType();
-    CmdListKernelLaunchParams launchParams = {};
-    launchParams.isKernelSplitOperation = true;
     launchParams.isBuiltInKernel = true;
     launchParams.isDestinationAllocationInSystemMemory =
         (dstAllocationType == NEO::AllocationType::BUFFER_HOST_MEMORY) ||
@@ -1088,6 +1088,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
                                     srcAddress, srcAllocation, 0u,
                                     size);
     } else {
+        CmdListKernelLaunchParams launchParams = {};
+        launchParams.isKernelSplitOperation = rightSize > 1;
         ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAddress),
                                            dstAllocation, 0,
                                            reinterpret_cast<void *>(&srcAddress),
@@ -1096,7 +1098,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
                                            middleElSize,
                                            Builtin::CopyBufferToBufferMiddle,
                                            nullptr,
-                                           isStateless);
+                                           isStateless,
+                                           launchParams);
         if (ret == ZE_RESULT_SUCCESS && rightSize) {
             ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAddress),
                                                dstAllocation, size - rightSize,
@@ -1105,7 +1108,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
                                                rightSize, 1UL,
                                                Builtin::CopyBufferToBufferSide,
                                                nullptr,
-                                               isStateless);
+                                               isStateless,
+                                               launchParams);
         }
 
         if (this->dcFlushSupport) {
@@ -1183,7 +1187,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         signalEvent = Event::fromHandle(hSignalEvent);
     }
 
-    appendEventForProfilingAllWalkers(signalEvent, true);
+    uint32_t kernelCounter = leftSize > 0 ? 1 : 0;
+    kernelCounter += middleSizeBytes > 0 ? 1 : 0;
+    kernelCounter += rightSize > 0 ? 1 : 0;
+
+    CmdListKernelLaunchParams launchParams = {};
+
+    launchParams.isKernelSplitOperation = kernelCounter > 1;
+    bool singlePipeControlPacket = this->pipeControlMultiKernelEventSync && launchParams.isKernelSplitOperation;
+
+    appendEventForProfilingAllWalkers(signalEvent, true, singlePipeControlPacket);
 
     if (ret == ZE_RESULT_SUCCESS && leftSize) {
         Builtin copyKernel = Builtin::CopyBufferToBufferSide;
@@ -1203,7 +1216,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                leftSize, 1UL,
                                                copyKernel,
                                                signalEvent,
-                                               isStateless);
+                                               isStateless,
+                                               launchParams);
         }
     }
 
@@ -1226,7 +1240,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                middleElSize,
                                                copyKernel,
                                                signalEvent,
-                                               isStateless);
+                                               isStateless,
+                                               launchParams);
         }
     }
 
@@ -1248,11 +1263,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                rightSize, 1UL,
                                                copyKernel,
                                                signalEvent,
-                                               isStateless);
+                                               isStateless,
+                                               launchParams);
         }
     }
 
-    appendEventForProfilingAllWalkers(signalEvent, false);
+    appendEventForProfilingAllWalkers(signalEvent, false, singlePipeControlPacket);
     addFlushRequiredCommand(dstAllocationStruct.needsFlush, signalEvent);
 
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
@@ -1564,86 +1580,70 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     }
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
 
-    CmdListKernelLaunchParams launchParams = {};
-    launchParams.isKernelSplitOperation = true;
-    launchParams.isBuiltInKernel = true;
-    launchParams.isDestinationAllocationInSystemMemory = hostPointerNeedsFlush;
+    Kernel *builtinKernel = nullptr;
     if (patternSize == 1) {
-        size_t middleSize = size;
-        uint32_t leftRemainder = sizeof(uint32_t) - (dstAllocation.offset % sizeof(uint32_t));
-        if (dstAllocation.offset % sizeof(uint32_t) != 0 && leftRemainder <= size) {
-            res = appendUnalignedFillKernel(isStateless, leftRemainder, dstAllocation, pattern, signalEvent, launchParams);
-            if (res) {
-                return res;
-            }
-            middleSize -= leftRemainder;
-            dstAllocation.offset += leftRemainder;
-        }
-        Kernel *builtinKernel = nullptr;
-
         if (isStateless) {
             builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferImmediateStateless);
         } else {
             builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferImmediate);
         }
-        const auto dataTypeSize = sizeof(uint32_t) * 4;
-        size_t adjustedSize = middleSize / dataTypeSize;
-        size_t groupSizeX = device->getDeviceInfo().maxWorkGroupSize;
-        if (groupSizeX > adjustedSize && adjustedSize > 0) {
-            groupSizeX = adjustedSize;
+    } else {
+        if (isStateless) {
+            builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferMiddleStateless);
+        } else {
+            builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferMiddle);
         }
-        if (builtinKernel->setGroupSize(static_cast<uint32_t>(groupSizeX), 1u, 1u)) {
+    }
+
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.isBuiltInKernel = true;
+    launchParams.isDestinationAllocationInSystemMemory = hostPointerNeedsFlush;
+
+    CmdListFillKernelArguments fillArguments = {};
+    setupFillKernelArguments(dstAllocation.offset, patternSize, size, fillArguments, builtinKernel);
+
+    launchParams.isKernelSplitOperation = (fillArguments.leftRemainingBytes > 0 || fillArguments.rightRemainingBytes > 0);
+    bool singlePipeControlPacket = this->pipeControlMultiKernelEventSync && launchParams.isKernelSplitOperation;
+
+    appendEventForProfilingAllWalkers(signalEvent, true, singlePipeControlPacket);
+
+    if (patternSize == 1) {
+        if (fillArguments.leftRemainingBytes > 0) {
+            res = appendUnalignedFillKernel(isStateless, fillArguments.leftRemainingBytes, dstAllocation, pattern, signalEvent, launchParams);
+            if (res) {
+                return res;
+            }
+        }
+
+        if (builtinKernel->setGroupSize(static_cast<uint32_t>(fillArguments.mainGroupSize), 1u, 1u)) {
             DEBUG_BREAK_IF(true);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
 
-        size_t groups = adjustedSize / groupSizeX;
-        uint32_t remainingBytes = static_cast<uint32_t>((adjustedSize % groupSizeX) * dataTypeSize +
-                                                        middleSize % dataTypeSize);
-        ze_group_count_t dispatchKernelArgs{static_cast<uint32_t>(groups), 1u, 1u};
+        ze_group_count_t dispatchKernelArgs{static_cast<uint32_t>(fillArguments.groups), 1u, 1u};
 
         uint32_t value = 0;
         memset(&value, *reinterpret_cast<const unsigned char *>(pattern), 4);
         builtinKernel->setArgBufferWithAlloc(0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
-        builtinKernel->setArgumentValue(1, sizeof(dstAllocation.offset), &dstAllocation.offset);
+        builtinKernel->setArgumentValue(1, sizeof(fillArguments.mainOffset), &fillArguments.mainOffset);
         builtinKernel->setArgumentValue(2, sizeof(value), &value);
-
-        appendEventForProfilingAllWalkers(signalEvent, true);
 
         res = appendLaunchKernelSplit(builtinKernel, &dispatchKernelArgs, signalEvent, launchParams);
         if (res) {
             return res;
         }
 
-        if (remainingBytes) {
-            dstAllocation.offset += (middleSize - remainingBytes);
-            res = appendUnalignedFillKernel(isStateless, remainingBytes, dstAllocation, pattern, signalEvent, launchParams);
+        if (fillArguments.rightRemainingBytes > 0) {
+            dstAllocation.offset = fillArguments.rightOffset;
+            res = appendUnalignedFillKernel(isStateless, fillArguments.rightRemainingBytes, dstAllocation, pattern, signalEvent, launchParams);
             if (res) {
                 return res;
             }
         }
     } else {
-
-        Kernel *builtinKernel = nullptr;
-        if (isStateless) {
-            builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferMiddleStateless);
-        } else {
-            builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferMiddle);
-        }
-        size_t middleElSize = sizeof(uint32_t);
-        size_t adjustedSize = size / middleElSize;
-        uint32_t groupSizeX = static_cast<uint32_t>(adjustedSize);
-        uint32_t groupSizeY = 1, groupSizeZ = 1;
-        builtinKernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ);
-        builtinKernel->setGroupSize(groupSizeX, groupSizeY, groupSizeZ);
-
-        uint32_t groups = static_cast<uint32_t>(adjustedSize) / groupSizeX;
-        uint32_t remainingBytes = static_cast<uint32_t>((adjustedSize % groupSizeX) * middleElSize +
-                                                        size % middleElSize);
+        builtinKernel->setGroupSize(static_cast<uint32_t>(fillArguments.mainGroupSize), 1, 1);
 
         size_t patternAllocationSize = alignUp(patternSize, MemoryConstants::cacheLineSize);
-        uint32_t patternSizeInEls = static_cast<uint32_t>(patternAllocationSize / middleElSize);
-
         auto patternGfxAlloc = device->obtainReusableAllocation(patternAllocationSize, NEO::AllocationType::FILL_PATTERN);
         if (patternGfxAlloc == nullptr) {
             patternGfxAlloc = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getNEODevice()->getRootDeviceIndex(),
@@ -1666,22 +1666,21 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
             patternAllocOffset += patternSizeToCopy;
         } while (patternAllocOffset < patternAllocationSize);
+
         builtinKernel->setArgBufferWithAlloc(0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
         builtinKernel->setArgumentValue(1, sizeof(dstAllocation.offset), &dstAllocation.offset);
         builtinKernel->setArgBufferWithAlloc(2, reinterpret_cast<uintptr_t>(patternGfxAllocPtr), patternGfxAlloc);
-        builtinKernel->setArgumentValue(3, sizeof(patternSizeInEls), &patternSizeInEls);
+        builtinKernel->setArgumentValue(3, sizeof(fillArguments.patternSizeInEls), &fillArguments.patternSizeInEls);
 
-        appendEventForProfilingAllWalkers(signalEvent, true);
-
-        ze_group_count_t dispatchKernelArgs{groups, 1u, 1u};
+        ze_group_count_t dispatchKernelArgs{static_cast<uint32_t>(fillArguments.groups), 1u, 1u};
         res = appendLaunchKernelSplit(builtinKernel, &dispatchKernelArgs, signalEvent, launchParams);
         if (res) {
             return res;
         }
 
-        if (remainingBytes) {
-            uint32_t dstOffsetRemainder = groups * groupSizeX * static_cast<uint32_t>(middleElSize);
-            uint64_t patternOffsetRemainder = (groupSizeX * groups & (patternSizeInEls - 1)) * middleElSize;
+        if (fillArguments.rightRemainingBytes > 0) {
+            uint32_t dstOffsetRemainder = static_cast<uint32_t>(fillArguments.rightOffset);
+            uint64_t patternOffsetRemainder = fillArguments.patternOffsetRemainder;
 
             Kernel *builtinKernelRemainder;
             if (isStateless) {
@@ -1690,7 +1689,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                 builtinKernelRemainder = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferRightLeftover);
             }
 
-            builtinKernelRemainder->setGroupSize(remainingBytes, 1u, 1u);
+            builtinKernelRemainder->setGroupSize(fillArguments.rightRemainingBytes, 1u, 1u);
             ze_group_count_t dispatchKernelArgs{1u, 1u, 1u};
 
             builtinKernelRemainder->setArgBufferWithAlloc(0,
@@ -1711,7 +1710,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         }
     }
 
-    appendEventForProfilingAllWalkers(signalEvent, false);
+    appendEventForProfilingAllWalkers(signalEvent, false, singlePipeControlPacket);
     addFlushRequiredCommand(hostPointerNeedsFlush, signalEvent);
 
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
@@ -2541,6 +2540,59 @@ void CommandListCoreFamily<gfxCoreFamily>::addFlushRequiredCommand(bool flushOpe
         NEO::PipeControlArgs args;
         args.dcFlushEnable = true;
         NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::setupFillKernelArguments(size_t baseOffset,
+                                                                    size_t patternSize,
+                                                                    size_t dstSize,
+                                                                    CmdListFillKernelArguments &outArguments,
+                                                                    Kernel *kernel) {
+    if (patternSize == 1) {
+        size_t middleSize = dstSize;
+        outArguments.mainOffset = baseOffset;
+        outArguments.leftRemainingBytes = sizeof(uint32_t) - (baseOffset % sizeof(uint32_t));
+        if (baseOffset % sizeof(uint32_t) != 0 && outArguments.leftRemainingBytes <= dstSize) {
+            middleSize -= outArguments.leftRemainingBytes;
+            outArguments.mainOffset += outArguments.leftRemainingBytes;
+        } else {
+            outArguments.leftRemainingBytes = 0;
+        }
+
+        const auto dataTypeSize = sizeof(uint32_t) * 4;
+        size_t adjustedSize = middleSize / dataTypeSize;
+        outArguments.mainGroupSize = this->device->getDeviceInfo().maxWorkGroupSize;
+        if (outArguments.mainGroupSize > adjustedSize && adjustedSize > 0) {
+            outArguments.mainGroupSize = adjustedSize;
+        }
+
+        outArguments.groups = adjustedSize / outArguments.mainGroupSize;
+        outArguments.rightRemainingBytes = static_cast<uint32_t>((adjustedSize % outArguments.mainGroupSize) * dataTypeSize +
+                                                                 middleSize % dataTypeSize);
+
+        if (outArguments.rightRemainingBytes > 0) {
+            outArguments.rightOffset = outArguments.mainOffset + (middleSize - outArguments.rightRemainingBytes);
+        }
+    } else {
+        size_t middleElSize = sizeof(uint32_t);
+        size_t adjustedSize = dstSize / middleElSize;
+        uint32_t groupSizeX = static_cast<uint32_t>(adjustedSize);
+        uint32_t groupSizeY = 1, groupSizeZ = 1;
+        kernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ);
+        outArguments.mainGroupSize = groupSizeX;
+
+        outArguments.groups = static_cast<uint32_t>(adjustedSize) / outArguments.mainGroupSize;
+        outArguments.rightRemainingBytes = static_cast<uint32_t>((adjustedSize % outArguments.mainGroupSize) * middleElSize +
+                                                                 dstSize % middleElSize);
+
+        size_t patternAllocationSize = alignUp(patternSize, MemoryConstants::cacheLineSize);
+        outArguments.patternSizeInEls = static_cast<uint32_t>(patternAllocationSize / middleElSize);
+
+        if (outArguments.rightRemainingBytes > 0) {
+            outArguments.rightOffset = outArguments.groups * outArguments.mainGroupSize * middleElSize;
+            outArguments.patternOffsetRemainder = (outArguments.mainGroupSize * outArguments.groups & (outArguments.patternSizeInEls - 1)) * middleElSize;
+        }
     }
 }
 

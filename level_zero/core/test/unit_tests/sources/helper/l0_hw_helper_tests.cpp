@@ -629,5 +629,11 @@ HWTEST2_F(L0HwHelperTest, whenAlwaysAllocateEventInLocalMemCalledThenReturnFalse
     EXPECT_FALSE(l0HwHelper.alwaysAllocateEventInLocalMem());
 }
 
+TEST_F(L0HwHelperTest, givenL0HelperWhenGettingDefaultValueForUsePipeControlMultiKernelEventSyncThenReturnFalse) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    bool defaultValue = L0::L0HwHelper::usePipeControlMultiKernelEventSync(hwInfo);
+    EXPECT_FALSE(defaultValue);
+}
+
 } // namespace ult
 } // namespace L0

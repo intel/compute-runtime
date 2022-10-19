@@ -46,4 +46,11 @@ bool L0HwHelper::enableImmediateCmdListHeapSharing(const NEO::HardwareInfo &hwIn
     return platformSupport && cmdlistSupport;
 }
 
+bool L0HwHelper::usePipeControlMultiKernelEventSync(const NEO::HardwareInfo &hwInfo) {
+    if (NEO::DebugManager.flags.UsePipeControlMultiKernelEventSync.get() != -1) {
+        return !!NEO::DebugManager.flags.UsePipeControlMultiKernelEventSync.get();
+    }
+    return false;
+}
+
 } // namespace L0
