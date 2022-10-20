@@ -744,19 +744,6 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
         }
     }
 
-    if (pDeviceProperties->pNext) {
-        ze_base_desc_t *extendedDesc = reinterpret_cast<ze_base_desc_t *>(pDeviceProperties->pNext);
-        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EU_COUNT_EXT) {
-            ze_eu_count_ext_t *zeEuCountDesc = reinterpret_cast<ze_eu_count_ext_t *>(extendedDesc);
-            uint32_t numTotalEUs = hardwareInfo.gtSystemInfo.MaxEuPerSubSlice * hardwareInfo.gtSystemInfo.SubSliceCount * hardwareInfo.gtSystemInfo.SliceCount;
-
-            if (isImplicitScalingCapable()) {
-                numTotalEUs *= neoDevice->getNumGenericSubDevices();
-            }
-            zeEuCountDesc->numTotalEUs = numTotalEUs;
-        }
-    }
-
     return ZE_RESULT_SUCCESS;
 }
 
