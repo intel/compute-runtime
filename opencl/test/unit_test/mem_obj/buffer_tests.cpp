@@ -12,7 +12,6 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
-#include "shared/test/common/helpers/raii_hw_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
@@ -1807,17 +1806,8 @@ HWTEST_F(BufferHwFromDeviceTests, givenMultiGraphicsAllocationWhenCreateBufferHw
     alignedFree(ptr);
 }
 
-using BufferCreateTests = BufferTests;
-
-HWTEST_F(BufferCreateTests, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInSystemMemoryPoolAndCopyOnCpuEnabledThenAllocationIsWrittenUsingLockedPointerIfAllowed) {
+TEST(BufferCreateTests, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInSystemMemoryPoolAndCopyOnCpuEnabledThenAllocationIsWrittenUsingLockedPointerIfAllowed) {
     DebugManagerStateRestore restorer;
-    struct MockHwHelperHw : HwHelperHw<FamilyType> {
-        void setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const override {
-            allocationData.storageInfo.isLockable = setIsLockable;
-        }
-        bool setIsLockable = false;
-    };
-
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessAllowed));
 
     auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get());
@@ -1840,22 +1830,11 @@ HWTEST_F(BufferCreateTests, givenClMemCopyHostPointerPassedToBufferCreateWhenAll
         cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
         auto writeBufferCounter = commandQueue->writeBufferCounter;
         size_t lockResourceCalled = memoryManager->lockResourceCalled;
-        RAIIHwHelperFactory<MockHwHelperHw> overrideHwHelper{defaultHwInfo->platform.eRenderCoreFamily};
-        overrideHwHelper.mockHwHelper.setIsLockable = true;
 
-        std::unique_ptr<Buffer> bufferWhenLockAllowed(Buffer::create(&context, flags, sizeof(memory), memory, retVal));
-        ASSERT_NE(nullptr, bufferWhenLockAllowed.get());
+        std::unique_ptr<Buffer> buffer(Buffer::create(&context, flags, sizeof(memory), memory, retVal));
+        ASSERT_NE(nullptr, buffer.get());
         EXPECT_EQ(commandQueue->writeBufferCounter, writeBufferCounter);
         EXPECT_EQ(memoryManager->lockResourceCalled, lockResourceCalled + 1);
-
-        writeBufferCounter = commandQueue->writeBufferCounter;
-        lockResourceCalled = memoryManager->lockResourceCalled;
-        overrideHwHelper.mockHwHelper.setIsLockable = false;
-
-        std::unique_ptr<Buffer> bufferWhenLockNotAllowed(Buffer::create(&context, flags, sizeof(memory), memory, retVal));
-        ASSERT_NE(nullptr, bufferWhenLockNotAllowed.get());
-        EXPECT_EQ(commandQueue->writeBufferCounter, writeBufferCounter + 1);
-        EXPECT_EQ(memoryManager->lockResourceCalled, lockResourceCalled);
     }
     {
         // buffer size over threshold -> cpu copy disallowed
@@ -1863,20 +1842,9 @@ HWTEST_F(BufferCreateTests, givenClMemCopyHostPointerPassedToBufferCreateWhenAll
         cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
         auto writeBufferCounter = commandQueue->writeBufferCounter;
         size_t lockResourceCalled = memoryManager->lockResourceCalled;
-        RAIIHwHelperFactory<MockHwHelperHw> overrideHwHelper{defaultHwInfo->platform.eRenderCoreFamily};
-        overrideHwHelper.mockHwHelper.setIsLockable = true;
 
-        std::unique_ptr<Buffer> bufferWhenLockAllowed(Buffer::create(&context, flags, sizeof(bigMemory), bigMemory, retVal));
-        ASSERT_NE(nullptr, bufferWhenLockAllowed.get());
-        EXPECT_EQ(commandQueue->writeBufferCounter, writeBufferCounter + 1);
-        EXPECT_EQ(memoryManager->lockResourceCalled, lockResourceCalled);
-
-        writeBufferCounter = commandQueue->writeBufferCounter;
-        lockResourceCalled = memoryManager->lockResourceCalled;
-        overrideHwHelper.mockHwHelper.setIsLockable = false;
-
-        std::unique_ptr<Buffer> bufferWhenLockNotAllowed(Buffer::create(&context, flags, sizeof(bigMemory), bigMemory, retVal));
-        ASSERT_NE(nullptr, bufferWhenLockNotAllowed.get());
+        std::unique_ptr<Buffer> buffer(Buffer::create(&context, flags, sizeof(bigMemory), bigMemory, retVal));
+        ASSERT_NE(nullptr, buffer.get());
         EXPECT_EQ(commandQueue->writeBufferCounter, writeBufferCounter + 1);
         EXPECT_EQ(memoryManager->lockResourceCalled, lockResourceCalled);
     }
