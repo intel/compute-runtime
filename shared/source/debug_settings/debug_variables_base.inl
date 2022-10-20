@@ -221,6 +221,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, PlaformSupportEvictIfNecessaryFlag, -1, "-1: def
 DECLARE_DEBUG_VARIABLE(int32_t, ForceEvictOnlyIfNecessaryFlag, -1, "-1: default - driver selects when to use, 0: force never use this flag, 1: force always use this flag")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceStatelessMocsEncryptionBit, -1, "-1: default - 1: set encryption bit")
 DECLARE_DEBUG_VARIABLE(int32_t, CopyHostPtrOnCpu, -1, "-1: default, 0: disable, 1:enable, In clCreateBuffer with CL_MEM_COPY_HOST_PTR, copy memory using locked ptr on cpu")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceZeDeviceCanAccessPerReturnValue, -1, "-1: default, 0: zeDeviceCanAccessPeer always return false 1: zeDeviceCanAccessPeer always return true")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

@@ -72,6 +72,11 @@ ze_result_t DeviceImp::canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *
     DeviceImp *pPeerDevice = static_cast<DeviceImp *>(Device::fromHandle(hPeerDevice));
     uint32_t peerRootDeviceIndex = pPeerDevice->getNEODevice()->getRootDeviceIndex();
 
+    if (NEO::DebugManager.flags.ForceZeDeviceCanAccessPerReturnValue.get() != -1) {
+        *value = !!NEO::DebugManager.flags.ForceZeDeviceCanAccessPerReturnValue.get();
+        return ZE_RESULT_SUCCESS;
+    }
+
     if (this->crossAccessEnabledDevices.find(peerRootDeviceIndex) != this->crossAccessEnabledDevices.end()) {
         *value = this->crossAccessEnabledDevices[peerRootDeviceIndex];
     } else if (this->getNEODevice()->getRootDeviceIndex() == peerRootDeviceIndex) {

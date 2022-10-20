@@ -2369,6 +2369,22 @@ TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTwoRootDevicesFromSameFa
     EXPECT_TRUE(canAccess);
 }
 
+TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTwoRootDevicesFromSameFamilyThenCanAccessPeerReturnsValueBasingOnDebugVariable) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceZeDeviceCanAccessPerReturnValue.set(0);
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    ze_bool_t canAccess = false;
+    ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_FALSE(canAccess);
+    DebugManager.flags.ForceZeDeviceCanAccessPerReturnValue.set(1);
+    res = device0->canAccessPeer(device1->toHandle(), &canAccess);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_TRUE(canAccess);
+}
+
 TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenCanAccessPeerCalledTwiceThenCanAccessPeerReturnsSameValueEachTime) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
