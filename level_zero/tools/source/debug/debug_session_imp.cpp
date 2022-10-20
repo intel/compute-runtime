@@ -1261,7 +1261,7 @@ ze_result_t DebugSessionImp::waitForCmdReady(EuThread::ThreadId threadId, uint16
         if (sipCommand.command == static_cast<uint32_t>(NEO::SipKernel::COMMAND::READY)) {
             break;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
     }
 
     if (sipCommand.command != static_cast<uint32_t>(NEO::SipKernel::COMMAND::READY)) {
