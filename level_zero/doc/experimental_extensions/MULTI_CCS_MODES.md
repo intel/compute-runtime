@@ -27,8 +27,8 @@ Depending on their execution patterns, applications may benefit more from using 
 - A single process job may benefit from using 1 CCS with access to all EUs.
 - A two-process job per tile with uniform work may benefit more from using 2 CCSs, with half of EUs assigned to each.
 - A two-process job per tile with non-uniform work may benefit from using 1 CCS with access to all EUs.
-- A two-process job per tile with uniform work may benefit more from using 2 CCSs, with a quarter of EUs assigned to each.
-- A two-process job per tile with non uniform work may benefit from using 1 CCS with access to all EUs.
+- A four-process job per tile with uniform work may benefit more from using 4 CCSs, with a quarter of EUs assigned to each.
+- A four-process job per tile with non uniform work may benefit from using 1 CCS with access to all EUs.
 
 To help applications select the best mode that fits their needs, Level Zero driver is introducing a new driver experimental environment variable, named `ZEX_NUMBER_OF_CCS`. This environment variable is read at `zeInit()` time, after reading `ZE_AFFINITY_MASK`, and allows users to select one of the following modes:
 
