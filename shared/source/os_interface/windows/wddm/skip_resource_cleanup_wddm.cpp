@@ -9,7 +9,7 @@
 
 namespace NEO {
 
-bool Wddm::isDriverAvaliable() {
+bool Wddm::isDriverAvailable() {
     return true;
 }
 

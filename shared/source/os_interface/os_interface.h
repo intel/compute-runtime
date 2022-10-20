@@ -85,7 +85,7 @@ class DriverModel : public NonCopyableClass {
         return std::numeric_limits<size_t>::max();
     }
 
-    virtual bool isDriverAvaliable() {
+    virtual bool isDriverAvailable() {
         return true;
     }
 

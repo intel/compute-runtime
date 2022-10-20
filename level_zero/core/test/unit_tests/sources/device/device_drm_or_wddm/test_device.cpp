@@ -48,7 +48,7 @@ class MockDriverModelWDDMLUID : public NEO::Wddm {
         return true;
     }
 
-    bool isDriverAvaliable() override {
+    bool isDriverAvailable() override {
         return false;
     }
 

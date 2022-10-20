@@ -1141,7 +1141,7 @@ TEST(DrmQueryTest, GivenRpsMaxFreqFileDoesntExistWhenFrequencyIsQueriedThenFallb
 TEST(DrmTest, whenCheckedIfResourcesCleanupCanBeSkippedThenReturnsFalse) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
-    EXPECT_TRUE(pDrm->isDriverAvaliable());
+    EXPECT_TRUE(pDrm->isDriverAvailable());
     EXPECT_FALSE(pDrm->skipResourceCleanup());
     delete pDrm;
 }

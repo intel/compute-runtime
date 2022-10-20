@@ -75,7 +75,7 @@ TEST_F(WddmTests, givenWddmWhenPassesIncorrectHandleToVerifyNTHandleThenReturnFa
 TEST_F(WddmTests, whenCheckedIfResourcesCleanupCanBeSkippedThenReturnsFalse) {
     init();
     EXPECT_FALSE(wddm->skipResourceCleanup());
-    EXPECT_TRUE(wddm->isDriverAvaliable());
+    EXPECT_TRUE(wddm->isDriverAvailable());
 }
 
 TEST_F(WddmTests, whenCheckedIfDebugAttachAvailableThenReturnsFalse) {

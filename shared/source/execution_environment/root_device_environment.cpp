@@ -87,7 +87,7 @@ GmmClientContext *RootDeviceEnvironment::getGmmClientContext() const {
 
 void RootDeviceEnvironment::prepareForCleanup() const {
     if (osInterface && osInterface->getDriverModel()) {
-        osInterface->getDriverModel()->isDriverAvaliable();
+        osInterface->getDriverModel()->isDriverAvailable();
     }
 }
 

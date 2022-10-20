@@ -44,6 +44,8 @@ Platform::Platform(ExecutionEnvironment &executionEnvironmentIn) : executionEnvi
 }
 
 Platform::~Platform() {
+    executionEnvironment.prepareForCleanup();
+
     for (auto clDevice : this->clDevices) {
         clDevice->getDevice().getRootDeviceEnvironmentRef().debugger.reset(nullptr);
         clDevice->decRefInternal();
