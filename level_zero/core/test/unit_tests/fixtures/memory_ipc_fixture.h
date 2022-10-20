@@ -387,7 +387,7 @@ struct ContextGetIpcHandleMock : public L0::ContextImp {
 class MemoryManagerIpcMock : public NEO::MemoryManager {
   public:
     MemoryManagerIpcMock(NEO::ExecutionEnvironment &executionEnvironment) : NEO::MemoryManager(executionEnvironment) {}
-    NEO::GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(std::vector<osHandle> handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override { return nullptr; }
+    NEO::GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override { return nullptr; }
     NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override { return nullptr; }
     void addAllocationToHostPtrManager(NEO::GraphicsAllocation *memory) override{};
     void removeAllocationFromHostPtrManager(NEO::GraphicsAllocation *memory) override{};
@@ -490,7 +490,7 @@ class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
     }
-    NEO::GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(std::vector<osHandle> handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override {
+    NEO::GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override {
         if (failOnCreateGraphicsAllocationFromSharedHandle) {
             return nullptr;
         }
@@ -656,7 +656,7 @@ class MemoryManagerIpcImplicitScalingMock : public NEO::MemoryManager {
         return alloc;
     }
 
-    NEO::GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(std::vector<osHandle> handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override {
+    NEO::GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override {
         if (failOnCreateGraphicsAllocationFromSharedHandle) {
             return nullptr;
         }

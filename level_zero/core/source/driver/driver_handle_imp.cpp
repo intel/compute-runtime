@@ -513,7 +513,7 @@ void *DriverHandleImp::importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flag
     return reinterpret_cast<void *>(alloc->getGpuAddress());
 }
 
-void *DriverHandleImp::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, std::vector<NEO::osHandle> handles, NEO::GraphicsAllocation **pAlloc) {
+void *DriverHandleImp::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, const std::vector<NEO::osHandle> &handles, NEO::GraphicsAllocation **pAlloc) {
     NEO::AllocationProperties unifiedMemoryProperties{neoDevice->getRootDeviceIndex(),
                                                       MemoryConstants::pageSize,
                                                       NEO::AllocationType::BUFFER,

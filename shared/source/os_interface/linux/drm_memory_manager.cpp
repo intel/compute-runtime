@@ -680,7 +680,7 @@ BufferObject *DrmMemoryManager::findAndReferenceSharedBufferObject(int boHandle,
     return bo;
 }
 
-GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleSharedHandles(std::vector<osHandle> handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) {
+GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) {
     BufferObjects bos;
     std::vector<size_t> sizes;
     size_t totalSize = 0;

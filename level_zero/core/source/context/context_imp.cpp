@@ -508,6 +508,8 @@ ze_result_t ContextImp::openIpcMemHandles(ze_device_handle_t hDevice,
                                           ze_ipc_memory_flags_t flags,
                                           void **pptr) {
     std::vector<NEO::osHandle> handles;
+    handles.reserve(numIpcHandles);
+
     for (uint32_t i = 0; i < numIpcHandles; i++) {
         uint64_t handle = 0;
         memcpy_s(&handle,
