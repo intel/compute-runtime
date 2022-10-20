@@ -363,6 +363,43 @@ struct MockDebugSession : public L0::DebugSessionImp {
 
 using DebugSessionTest = ::testing::Test;
 
+TEST(DeviceWithDebugSessionTest, GivenDSSWhenCreatingThreadsThenAllThreadsHasCorrectValuesMapped) {
+
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 8;
+    hwInfo.gtSystemInfo.MaxSubSlicesSupported = 64;
+    hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = 32;
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSession>(zet_debug_config_t{0x1234}, &deviceImp);
+    const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxDualSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
+
+    EXPECT_EQ(1u, sessionMock->allThreads.count(EuThread::ThreadId(0, 0, numSubslicesPerSlice - 1, 0, 0)));
+
+    EXPECT_EQ(0u, sessionMock->allThreads.count(EuThread::ThreadId(0, 0, numSubslicesPerSlice + 1, 0, 0)));
+
+    EXPECT_EQ(1u, sessionMock->allThreads.count(EuThread::ThreadId(0, 0, numSubslicesPerSlice - 1, 7, 0)));
+
+    EXPECT_EQ(1u, sessionMock->allThreads.count(EuThread::ThreadId(0, 0, numSubslicesPerSlice - 1, 15, 0)));
+}
+
+TEST(DeviceWithDebugSessionTest, GivenMaxDualSubslicesIsZeroWhenCreatingThreadsThenAllThreadsIsCorrectSize) {
+
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 8;
+    hwInfo.gtSystemInfo.MaxSubSlicesSupported = 64;
+    hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = 0;
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSession>(zet_debug_config_t{0x1234}, &deviceImp);
+    const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
+
+    EXPECT_EQ(1u, sessionMock->allThreads.count(EuThread::ThreadId(0, 0, numSubslicesPerSlice - 1, 0, 0)));
+    EXPECT_EQ(0u, sessionMock->allThreads.count(EuThread::ThreadId(0, 0, numSubslicesPerSlice + 1, 0, 0)));
+}
+
 TEST(DeviceWithDebugSessionTest, GivenDeviceWithDebugSessionWhenCallingReleaseResourcesThenCloseConnectionIsCalled) {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
