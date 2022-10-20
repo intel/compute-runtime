@@ -851,7 +851,7 @@ kernels_misc_info:
     auto res = decodeAndPopulateKernelMiscInfo(programInfo, kernelMiscInfo, outErrors, outWarnings);
     EXPECT_EQ(DecodeError::InvalidBinary, res);
 
-    auto expectedError{"DeviceBinaryFormat::Zebin : Error : Cannot found kernel info for kernel some_kernel.\n"};
+    auto expectedError{"DeviceBinaryFormat::Zebin : Error : Cannot find kernel info for kernel some_kernel.\n"};
     EXPECT_STREQ(outErrors.c_str(), expectedError);
 }
 

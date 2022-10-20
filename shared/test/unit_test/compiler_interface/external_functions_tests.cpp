@@ -144,7 +144,7 @@ TEST_F(ExternalFunctionsTests, GivenLoopWhenResolvingExtFuncDependenciesThenRetu
     addFuncDependency("fun1", "fun0");
     set();
     auto error = resolveExtFuncDependencies(extFuncInfo, funcNameToId, functionDependencies);
-    EXPECT_EQ(ERROR_LOOP_DETECKTED, error);
+    EXPECT_EQ(ERROR_LOOP_DETECTED, error);
 }
 
 TEST_F(ExternalFunctionsTests, GivenMissingExtFuncInLookupMapWhenResolvingKernelDependenciesThenReturnError) {

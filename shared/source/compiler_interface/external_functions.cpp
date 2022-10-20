@@ -61,7 +61,7 @@ uint32_t resolveExtFuncDependencies(ExternalFunctionInfosT externalFunctionInfos
     DependencyResolver depResolver(dependencies);
     auto resolved = depResolver.resolveDependencies();
     if (depResolver.hasLoop()) {
-        return ERROR_LOOP_DETECKTED;
+        return ERROR_LOOP_DETECTED;
     }
     for (auto calleeId : resolved) {
         const auto callee = externalFunctionInfos[calleeId];

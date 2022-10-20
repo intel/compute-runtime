@@ -20,7 +20,7 @@ enum ExternalFunctionResolveError : uint32_t {
     RESOLVE_SUCCESS = 0,
     ERROR_EXTERNAL_FUNCTION_INFO_MISSING,
     ERROR_KERNEL_DESCRIPTOR_MISSING,
-    ERROR_LOOP_DETECKTED
+    ERROR_LOOP_DETECTED
 };
 
 struct ExternalFunctionInfo {

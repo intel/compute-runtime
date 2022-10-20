@@ -1650,7 +1650,7 @@ NEO::DecodeError decodeAndPopulateKernelMiscInfo(ProgramInfo &dst, ConstStringRe
             }
         }
         if (nullptr == kernelInfo) {
-            outErrReason.append("DeviceBinaryFormat::Zebin : Error : Cannot found kernel info for kernel " + kName + ".\n");
+            outErrReason.append("DeviceBinaryFormat::Zebin : Error : Cannot find kernel info for kernel " + kName + ".\n");
             return DecodeError::InvalidBinary;
         }
         populateKernelMiscInfo(kernelInfo->kernelDescriptor, miscInfos, outErrReason, outWarning);
