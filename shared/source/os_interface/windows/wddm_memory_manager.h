@@ -107,7 +107,7 @@ class WddmMemoryManager : public MemoryManager {
     GraphicsAllocation *createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle, AllocationType allocationType, uint32_t rootDeviceIndex);
     static bool validateAllocation(WddmAllocation *alloc);
     MOCKABLE_VIRTUAL bool createWddmAllocation(WddmAllocation *allocation, void *requiredGpuPtr);
-    MOCKABLE_VIRTUAL bool mapGpuVirtualAddress(WddmAllocation *graphicsAllocation, const void *requiredGpuPtr);
+    bool mapGpuVirtualAddress(WddmAllocation *graphicsAllocation, const void *requiredGpuPtr);
     bool mapGpuVaForOneHandleAllocation(WddmAllocation *graphicsAllocation, const void *requiredGpuPtr);
     bool mapMultiHandleAllocationWithRetry(WddmAllocation *allocation, const void *requiredGpuPtr);
     bool createGpuAllocationsWithRetry(WddmAllocation *graphicsAllocation);
