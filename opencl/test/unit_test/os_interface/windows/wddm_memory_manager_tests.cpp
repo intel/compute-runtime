@@ -20,6 +20,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/execution_environment_helper.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_deferred_deleter.h"
@@ -170,6 +171,18 @@ TEST(WddmMemoryManagerWithDeferredDeleterTest, givenWmmWhenAsyncDeleterIsEnabled
         DebugManager.flags.EnableDeferredDeleter.set(actualDeleterFlag);
     }
     executionEnvironment->decRefInternal();
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenAllocateGraphicsMemoryWithPropertiesCalledWithDebugSurfaceTypeThenDebugSurfaceIsCreatedAndZerod) {
+    AllocationProperties debugSurfaceProperties{0, true, MemoryConstants::pageSize, AllocationType::DEBUG_CONTEXT_SAVE_AREA, false, false, 0b1011};
+    auto debugSurface = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(debugSurfaceProperties));
+    EXPECT_NE(nullptr, debugSurface);
+
+    auto mem = debugSurface->getUnderlyingBuffer();
+    auto size = debugSurface->getUnderlyingBufferSize();
+
+    EXPECT_TRUE(memoryZeroed(mem, size));
+    memoryManager->freeGraphicsMemory(debugSurface);
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemoryIsCalledThenMemoryPoolIsSystem4KBPages) {

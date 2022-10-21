@@ -238,6 +238,8 @@ GraphicsAllocation *WddmMemoryManager::allocateSystemMemoryAndCreateGraphicsAllo
         return allocateHugeGraphicsMemory(allocationData, true);
     }
     void *pSysMem = allocateSystemMemory(sizeAligned, newAlignment);
+    zeroCpuMemoryIfRequested(allocationData, pSysMem, sizeAligned);
+
     Gmm *gmm = nullptr;
 
     if (pSysMem == nullptr) {
