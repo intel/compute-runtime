@@ -29,9 +29,9 @@ XE_HPG_CORETEST_F(L0HwHelperTestXeHpg, GivenXeHpgWhenCheckingL0HelperForMultiTil
     EXPECT_FALSE(L0::L0HwHelperHw<FamilyType>::get().multiTileCapablePlatform());
 }
 
-XE_HPG_CORETEST_F(L0HwHelperTestXeHpg, GivenXeHpgWhenCheckingL0HelperForCmdListHeapSharingSupportThenReturnFalse) {
+XE_HPG_CORETEST_F(L0HwHelperTestXeHpg, GivenXeHpgWhenCheckingL0HelperForCmdListHeapSharingSupportThenReturnTrue) {
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-    EXPECT_FALSE(L0::L0HwHelperHw<FamilyType>::get().platformSupportsCmdListHeapSharing(hwInfo));
+    EXPECT_TRUE(L0::L0HwHelperHw<FamilyType>::get().platformSupportsCmdListHeapSharing(hwInfo));
 }
 
 XE_HPG_CORETEST_F(L0HwHelperTestXeHpg, GivenXeHpgcWhenCheckingL0HelperForStateComputeModeTrackingSupportThenReturnFalse) {

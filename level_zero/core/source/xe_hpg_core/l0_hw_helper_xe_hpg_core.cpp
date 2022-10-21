@@ -28,6 +28,11 @@ bool L0HwHelperHw<Family>::isResumeWARequired() {
 }
 
 template <>
+bool L0HwHelperHw<Family>::platformSupportsCmdListHeapSharing(const NEO::HardwareInfo &hwInfo) const {
+    return true;
+}
+
+template <>
 bool L0HwHelperHw<Family>::platformSupportsPipelineSelectTracking(const NEO::HardwareInfo &hwInfo) const {
     return true;
 }
