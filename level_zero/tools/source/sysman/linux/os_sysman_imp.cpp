@@ -7,6 +7,7 @@
 
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 
+#include "shared/source/helpers/sleep.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/device_factory.h"
 
@@ -328,7 +329,7 @@ void LinuxSysmanImp::clearHPIE(int fd) {
     this->preadFunction(fd, &value, 0x01, offset);
     resetValue = value & (~PCI_EXP_SLTCTL_HPIE);
     this->pwriteFunction(fd, &resetValue, 0x01, offset);
-    this->pSleepFunctionSecs(10); // Sleep for 10seconds just to make sure the change is propagated.
+    NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds just to make sure the change is propagated.
 }
 
 // A 'warm reset' is a conventional reset that is triggered across a PCI express link.
@@ -353,9 +354,9 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
         return result;
     }
     if (diagnosticsReset) {
-        this->pSleepFunctionSecs(30); // Sleep for 30seconds to make sure that the config spaces of all devices are saved correctly after IFR
+        NEO::sleep(std::chrono::seconds(30)); // Sleep for 30seconds to make sure that the config spaces of all devices are saved correctly after IFR
     } else {
-        this->pSleepFunctionSecs(10); // Sleep for 10seconds to make sure that the config spaces of all devices are saved correctly
+        NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds to make sure that the config spaces of all devices are saved correctly
     }
 
     clearHPIE(fd);
@@ -367,18 +368,18 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
     this->preadFunction(fd, &value, 0x01, offset);
     resetValue = value | PCI_BRIDGE_CTL_BUS_RESET;
     this->pwriteFunction(fd, &resetValue, 0x01, offset);
-    this->pSleepFunctionSecs(10); // Sleep for 10seconds just to make sure the change is propagated.
+    NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds just to make sure the change is propagated.
     this->pwriteFunction(fd, &value, 0x01, offset);
-    this->pSleepFunctionSecs(10); // Sleep for 10seconds to make sure the change is propagated. before rescan is done.
+    NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds to make sure the change is propagated. before rescan is done.
 
     result = pFsAccess->write(rootPortPath + '/' + "rescan", "1");
     if (ZE_RESULT_SUCCESS != result) {
         return result;
     }
     if (diagnosticsReset) {
-        this->pSleepFunctionSecs(30); // Sleep for 30seconds to make sure that the config spaces of all devices are saved correctly after IFR
+        NEO::sleep(std::chrono::seconds(30)); // Sleep for 30seconds to make sure that the config spaces of all devices are saved correctly after IFR
     } else {
-        this->pSleepFunctionSecs(10); // Sleep for 10seconds, allows the rescan to complete on all devices attached to the root port.
+        NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds, allows the rescan to complete on all devices attached to the root port.
     }
 
     int ret = this->closeFunction(fd);
@@ -418,7 +419,7 @@ ze_result_t LinuxSysmanImp::osColdReset() {
             if (ZE_RESULT_SUCCESS != result) {
                 return result;
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Sleep for 100 milliseconds just to make sure, 1 ms is defined as part of spec
+            NEO::sleep(std::chrono::milliseconds(100));                   // Sleep for 100 milliseconds just to make sure, 1 ms is defined as part of spec
             result = pFsAccess->write((slotPath + slot + "/power"), "1"); // turn on power
             if (ZE_RESULT_SUCCESS != result) {
                 return result;

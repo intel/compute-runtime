@@ -118,6 +118,8 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/register_offsets.h
     ${CMAKE_CURRENT_SOURCE_DIR}/registered_method_dispatcher.h
     ${CMAKE_CURRENT_SOURCE_DIR}/simd_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/sleep.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/sleep.h
     ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address.h
     ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_bdw.inl

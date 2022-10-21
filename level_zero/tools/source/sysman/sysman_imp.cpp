@@ -7,6 +7,8 @@
 
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
+#include "shared/source/helpers/sleep.h"
+
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/tools/source/sysman/ecc/ecc_imp.h"
@@ -213,9 +215,4 @@ ze_result_t SysmanDeviceImp::deviceSetEccState(const zes_device_ecc_desc_t *newS
     return pEcc->setEccState(newState, pState);
 }
 
-namespace SysmanUtils {
-void sleep(int64_t seconds) {
-    std::this_thread::sleep_for(std::chrono::seconds(seconds));
-}
-} // namespace SysmanUtils
 } // namespace L0

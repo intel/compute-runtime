@@ -25,7 +25,6 @@ class LinuxDiagnosticsImp : public OsDiagnostics, NEO::NonCopyableOrMovableClass
     LinuxDiagnosticsImp(OsSysman *pOsSysman, const std::string &diagTests);
     ~LinuxDiagnosticsImp() override = default;
     std::string osDiagType = "unknown";
-    decltype(&L0::SysmanUtils::sleep) pSleepFunctionSecs = L0::SysmanUtils::sleep;
 
   protected:
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;

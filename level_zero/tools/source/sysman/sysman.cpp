@@ -7,6 +7,8 @@
 
 #include "level_zero/tools/source/sysman/sysman.h"
 
+#include "shared/source/helpers/sleep.h"
+
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
@@ -68,7 +70,7 @@ ze_result_t DriverHandleImp::sysmanEventsListen(
         if (gotSysmanEvent) {
             break;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Sleep for 10 milliseconds before next check of events
+        NEO::sleep(std::chrono::milliseconds(10)); // Sleep for 10 milliseconds before next check of events
     } while ((L0::steadyClock::now() <= timeToExitLoop));
 
     return ZE_RESULT_SUCCESS;
@@ -94,7 +96,7 @@ ze_result_t DriverHandleImp::sysmanEventsListenEx(
         if (gotSysmanEvent) {
             break;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Sleep for 10 milliseconds before next check of events
+        NEO::sleep(std::chrono::milliseconds(10)); // Sleep for 10 milliseconds before next check of events
     } while ((L0::steadyClock::now() <= timeToExitLoop));
 
     return ZE_RESULT_SUCCESS;

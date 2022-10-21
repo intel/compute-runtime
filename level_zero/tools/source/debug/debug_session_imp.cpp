@@ -10,6 +10,7 @@
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/sleep.h"
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/core/source/device/device_imp.h"
@@ -1264,7 +1265,7 @@ ze_result_t DebugSessionImp::waitForCmdReady(EuThread::ThreadId threadId, uint16
         if (sipCommand.command == static_cast<uint32_t>(NEO::SipKernel::COMMAND::READY)) {
             break;
         }
-        std::this_thread::sleep_for(std::chrono::microseconds(100));
+        NEO::sleep(std::chrono::microseconds(100));
     }
 
     if (sipCommand.command != static_cast<uint32_t>(NEO::SipKernel::COMMAND::READY)) {

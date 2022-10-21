@@ -504,8 +504,6 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenQuiescentFailsConti
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
 
-    pPublicLinuxDiagnosticsImp->pSleepFunctionSecs = mockSleepFunctionSecs;
-
     pMockSysfsAccess->setErrorAfterCount(12, ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
     EXPECT_EQ(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE, pPublicLinuxDiagnosticsImp->waitForQuiescentCompletion());
 }
@@ -532,7 +530,6 @@ TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetThen
     pLinuxSysmanImp->closeFunction = closeMockDiag;
     pLinuxSysmanImp->preadFunction = preadMockDiag;
     pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
-    pLinuxSysmanImp->pSleepFunctionSecs = mockSleepFunctionSecs;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxSysmanImp->osWarmReset());
 }
@@ -543,7 +540,6 @@ TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetfrom
     pLinuxSysmanImp->closeFunction = closeMockDiag;
     pLinuxSysmanImp->preadFunction = preadMockDiag;
     pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
-    pLinuxSysmanImp->pSleepFunctionSecs = mockSleepFunctionSecs;
     pLinuxSysmanImp->diagnosticsReset = true;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxSysmanImp->osWarmReset());
@@ -555,7 +551,6 @@ TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetAndR
     pLinuxSysmanImp->closeFunction = closeMockDiag;
     pLinuxSysmanImp->preadFunction = preadMockDiag;
     pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
-    pLinuxSysmanImp->pSleepFunctionSecs = mockSleepFunctionSecs;
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxSysmanImp->osWarmReset());
 }
@@ -566,7 +561,6 @@ TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetAndR
     pLinuxSysmanImp->closeFunction = closeMockDiagFail;
     pLinuxSysmanImp->preadFunction = preadMockDiag;
     pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
-    pLinuxSysmanImp->pSleepFunctionSecs = mockSleepFunctionSecs;
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxSysmanImp->osWarmReset());
 }
@@ -577,7 +571,6 @@ TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetAndC
     pLinuxSysmanImp->closeFunction = closeMockDiag;
     pLinuxSysmanImp->preadFunction = preadMockDiag;
     pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
-    pLinuxSysmanImp->pSleepFunctionSecs = mockSleepFunctionSecs;
 
     pMockFsAccess->mockWriteError = ZE_RESULT_ERROR_NOT_AVAILABLE;
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxSysmanImp->osWarmReset());
@@ -589,7 +582,6 @@ TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetAndR
     pLinuxSysmanImp->closeFunction = closeMockDiag;
     pLinuxSysmanImp->preadFunction = preadMockDiag;
     pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
-    pLinuxSysmanImp->pSleepFunctionSecs = mockSleepFunctionSecs;
 
     pMockFsAccess->checkErrorAfterCount = 1;
     pMockFsAccess->mockWriteError = ZE_RESULT_ERROR_NOT_AVAILABLE;

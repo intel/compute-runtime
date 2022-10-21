@@ -108,10 +108,11 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/global_environment.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/io_functions.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/options_unit_tests.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/sleep.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/source_level_debugger_library.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/source_level_debugger_library.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/source_level_debugger_ult.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/ult_aub_command_stream_receiver.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/ult_command_stream_receiver.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_memory_manager.cpp

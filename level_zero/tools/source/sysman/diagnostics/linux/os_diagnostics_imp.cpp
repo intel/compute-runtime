@@ -7,6 +7,7 @@
 
 #include "level_zero/tools/source/sysman/diagnostics/linux/os_diagnostics_imp.h"
 
+#include "shared/source/helpers/sleep.h"
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/core/source/device/device_imp.h"
@@ -84,7 +85,7 @@ ze_result_t LinuxDiagnosticsImp::waitForQuiescentCompletion() {
         result = pSysfsAccess->write(quiescentGpuFile, intVal);
         if (ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE == result) {
             count++;
-            this->pSleepFunctionSecs(1); // Sleep for 1second every loop, gives enough time for KMD to clear all allocations and wedge the system
+            NEO::sleep(std::chrono::seconds(1)); // Sleep for 1second every loop, gives enough time for KMD to clear all allocations and wedge the system
             auto processResult = gpuProcessCleanup();
             if (ZE_RESULT_SUCCESS != processResult) {
                 return processResult;
