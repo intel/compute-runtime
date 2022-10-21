@@ -180,6 +180,25 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
 }
 
 template <typename GfxFamily>
+void HardwareCommandsHelper<GfxFamily>::programPerThreadData(
+    bool localIdsGenerationByRuntime,
+    size_t &sizePerThreadData,
+    size_t &sizePerThreadDataTotal,
+    LinearStream &ioh,
+    const Kernel &kernel,
+    const size_t localWorkSize[3]) {
+    if (localIdsGenerationByRuntime) {
+        Vec3<uint16_t> group = {static_cast<uint16_t>(localWorkSize[0]),
+                                static_cast<uint16_t>(localWorkSize[1]),
+                                static_cast<uint16_t>(localWorkSize[2])};
+        sizePerThreadData = kernel.getLocalIdsSizePerThread();
+        sizePerThreadDataTotal = kernel.getLocalIdsSizeForGroup(group);
+        auto dest = ioh.getSpace(sizePerThreadDataTotal);
+        kernel.setLocalIdsForGroup(group, dest);
+    }
+}
+
+template <typename GfxFamily>
 size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     LinearStream &commandStream,
     IndirectHeap &dsh,
@@ -199,8 +218,6 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     const Device &device) {
 
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
-
-    auto rootDeviceIndex = device.getRootDeviceIndex();
 
     DEBUG_BREAK_IF(simd != 1 && simd != 8 && simd != 16 && simd != 32);
     auto inlineDataProgrammingRequired = HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(kernel);
@@ -228,7 +245,6 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
 
     auto localWorkItems = localWorkSize[0] * localWorkSize[1] * localWorkSize[2];
     auto threadsPerThreadGroup = static_cast<uint32_t>(getThreadsPerWG(simd, localWorkItems));
-    auto numChannels = static_cast<uint32_t>(kernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels);
 
     uint32_t sizeCrossThreadData = kernel.getCrossThreadDataSize();
 
@@ -240,16 +256,12 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     size_t sizePerThreadData = 0;
 
     HardwareCommandsHelper<GfxFamily>::programPerThreadData(
-        sizePerThreadData,
         localIdsGenerationByRuntime,
-        ioh,
-        simd,
-        numChannels,
-        localWorkSize,
-        kernel,
+        sizePerThreadData,
         sizePerThreadDataTotal,
-        localWorkItems,
-        rootDeviceIndex);
+        ioh,
+        kernel,
+        localWorkSize);
 
     uint64_t offsetInterfaceDescriptor = offsetInterfaceDescriptorTable + interfaceDescriptorIndex * sizeof(INTERFACE_DESCRIPTOR_DATA);
 
@@ -294,23 +306,6 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     walkerCmd->setIndirectDataLength(indirectDataLength);
 
     return offsetCrossThreadData;
-}
-
-template <typename GfxFamily>
-void HardwareCommandsHelper<GfxFamily>::updatePerThreadDataTotal(
-    size_t &sizePerThreadData,
-    uint32_t &simd,
-    uint32_t &numChannels,
-    size_t &sizePerThreadDataTotal,
-    size_t &localWorkItems) {
-    uint32_t grfSize = sizeof(typename GfxFamily::GRF);
-    sizePerThreadData = getPerThreadSizeLocalIDs(simd, grfSize, numChannels);
-
-    uint32_t localIdSizePerThread = PerThreadDataHelper::getLocalIdSizePerThread(simd, grfSize, numChannels);
-    localIdSizePerThread = std::max(localIdSizePerThread, grfSize);
-
-    sizePerThreadDataTotal = getThreadsPerWG(simd, localWorkItems) * localIdSizePerThread;
-    DEBUG_BREAK_IF(sizePerThreadDataTotal == 0); // Hardware requires at least 1 GRF of perThreadData for each thread in thread group
 }
 
 template <typename GfxFamily>

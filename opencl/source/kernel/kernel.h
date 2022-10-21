@@ -40,6 +40,7 @@ class ImageTransformer;
 class Surface;
 class PrintfHandler;
 class MultiDeviceKernel;
+class LocalIdsCache;
 
 class Kernel : public ReferenceTrackedObject<Kernel> {
   public:
@@ -417,6 +418,10 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
         return isDestinationAllocationInSystemMemory;
     }
 
+    void setLocalIdsForGroup(const Vec3<uint16_t> &groupSize, void *destination) const;
+    size_t getLocalIdsSizeForGroup(const Vec3<uint16_t> &groupSize) const;
+    size_t getLocalIdsSizePerThread() const;
+
   protected:
     struct KernelConfig {
         Vec3<size_t> gws;
@@ -481,6 +486,9 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
 
     bool hasTunningFinished(KernelSubmissionData &submissionData);
     bool hasRunFinished(TimestampPacketContainer *timestampContainer);
+
+    void initializeLocalIdsCache();
+    std::unique_ptr<LocalIdsCache> localIdsCache;
 
     UnifiedMemoryControls unifiedMemoryControls{};
 

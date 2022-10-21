@@ -117,6 +117,7 @@ class MockKernel : public Kernel {
     using Kernel::kernelSubmissionMap;
     using Kernel::kernelSvmGfxAllocations;
     using Kernel::kernelUnifiedMemoryGfxAllocations;
+    using Kernel::localIdsCache;
     using Kernel::maxKernelWorkGroupSize;
     using Kernel::maxWorkGroupSizeForCrossThreadData;
     using Kernel::numberOfBindingTableStates;
@@ -137,6 +138,7 @@ class MockKernel : public Kernel {
 
     MockKernel(Program *programArg, const KernelInfo &kernelInfoArg, ClDevice &clDeviceArg)
         : Kernel(programArg, kernelInfoArg, clDeviceArg) {
+        initializeLocalIdsCache();
     }
 
     ~MockKernel() override {
@@ -281,6 +283,7 @@ class MockKernelWithInternals {
         kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
         kernelInfo.setCrossThreadDataSize(sizeof(crossThreadData));
         kernelInfo.setLocalIds({1, 1, 1});
+        kernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels = 3;
 
         if (context == nullptr) {
             mockContext = new MockContext(deviceVector);

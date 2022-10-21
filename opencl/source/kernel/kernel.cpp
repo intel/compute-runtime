@@ -22,6 +22,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
+#include "shared/source/kernel/local_ids_cache.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
@@ -312,6 +313,10 @@ cl_int Kernel::initialize() {
 
     if (usingImages && !usingBuffers) {
         usingImagesOnly = true;
+    }
+
+    if (kernelDescriptor.kernelAttributes.numLocalIdChannels > 0) {
+        initializeLocalIdsCache();
     }
 
     return CL_SUCCESS;
@@ -2291,6 +2296,31 @@ bool Kernel::graphicsAllocationTypeUseSystemMemory(AllocationType type) {
            (type == AllocationType::EXTERNAL_HOST_PTR) ||
            (type == AllocationType::SVM_CPU) ||
            (type == AllocationType::SVM_ZERO_COPY);
+}
+
+void Kernel::initializeLocalIdsCache() {
+    auto workgroupDimensionsOrder = getDescriptor().kernelAttributes.workgroupDimensionsOrder;
+    std::array<uint8_t, 3> wgDimOrder = {workgroupDimensionsOrder[0],
+                                         workgroupDimensionsOrder[1],
+                                         workgroupDimensionsOrder[2]};
+    auto simdSize = getDescriptor().kernelAttributes.simdSize;
+    auto grfSize = static_cast<uint8_t>(getDevice().getHardwareInfo().capabilityTable.grfSize);
+    localIdsCache = std::make_unique<LocalIdsCache>(4, wgDimOrder, simdSize, grfSize, usingImagesOnly);
+}
+
+void Kernel::setLocalIdsForGroup(const Vec3<uint16_t> &groupSize, void *destination) const {
+    UNRECOVERABLE_IF(localIdsCache.get() == nullptr);
+    localIdsCache->setLocalIdsForGroup(groupSize, destination);
+}
+
+size_t Kernel::getLocalIdsSizeForGroup(const Vec3<uint16_t> &groupSize) const {
+    UNRECOVERABLE_IF(localIdsCache.get() == nullptr);
+    return localIdsCache->getLocalIdsSizeForGroup(groupSize);
+}
+
+size_t Kernel::getLocalIdsSizePerThread() const {
+    UNRECOVERABLE_IF(localIdsCache.get() == nullptr);
+    return localIdsCache->getLocalIdsSizePerThread();
 }
 
 } // namespace NEO

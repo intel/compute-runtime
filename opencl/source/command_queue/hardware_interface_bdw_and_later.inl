@@ -90,7 +90,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         walkerArgs.preemptionMode,
         &walkerCmd,
         nullptr,
-        true,
+        kernelUsesLocalIds,
         commandQueue.getDevice());
 
     GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(&walkerCmd, kernel.getKernelInfo().kernelDescriptor,

@@ -22,7 +22,6 @@ set(IGDRCL_SRCS_tests_helpers
     ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_properties_helpers_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mipmap_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/per_thread_data_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/queue_helpers_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ray_tracing_helper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sampler_helpers_tests.cpp

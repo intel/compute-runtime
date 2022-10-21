@@ -63,15 +63,16 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     auto threadGroupCount = static_cast<uint32_t>(walkerArgs.numberOfWorkgroups->x * walkerArgs.numberOfWorkgroups->y * walkerArgs.numberOfWorkgroups->z);
     uint32_t requiredWalkOrder = 0u;
 
-    bool localIdsGenerationByRuntime = EncodeDispatchKernel<GfxFamily>::isRuntimeLocalIdsGenerationRequired(
-        numChannels,
-        walkerArgs.localWorkSizes,
-        std::array<uint8_t, 3>{{kernelInfo.kernelDescriptor.kernelAttributes.workgroupWalkOrder[0],
-                                kernelInfo.kernelDescriptor.kernelAttributes.workgroupWalkOrder[1],
-                                kernelInfo.kernelDescriptor.kernelAttributes.workgroupWalkOrder[2]}},
-        kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresWorkgroupWalkOrder,
-        requiredWalkOrder,
-        simd);
+    auto kernelUsesLocalIds = HardwareCommandsHelper<GfxFamily>::kernelUsesLocalIds(kernel);
+    bool localIdsGenerationByRuntime = kernelUsesLocalIds && EncodeDispatchKernel<GfxFamily>::isRuntimeLocalIdsGenerationRequired(
+                                                                 numChannels,
+                                                                 walkerArgs.localWorkSizes,
+                                                                 std::array<uint8_t, 3>{{kernelInfo.kernelDescriptor.kernelAttributes.workgroupWalkOrder[0],
+                                                                                         kernelInfo.kernelDescriptor.kernelAttributes.workgroupWalkOrder[1],
+                                                                                         kernelInfo.kernelDescriptor.kernelAttributes.workgroupWalkOrder[2]}},
+                                                                 kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresWorkgroupWalkOrder,
+                                                                 requiredWalkOrder,
+                                                                 simd);
 
     bool inlineDataProgrammingRequired = HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(kernel);
     auto idd = &walkerCmd.getInterfaceDescriptor();
@@ -83,7 +84,6 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     }
 
     auto isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
-    auto kernelUsesLocalIds = HardwareCommandsHelper<GfxFamily>::kernelUsesLocalIds(kernel);
 
     const auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
     if (auto kernelAllocation = kernelInfo.getGraphicsAllocation()) {

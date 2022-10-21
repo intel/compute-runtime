@@ -684,10 +684,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
 
     auto &kd = kernel->kernelInfo.kernelDescriptor;
     kd.kernelAttributes.flags.passInlineData = true;
-    kd.kernelAttributes.localId[0] = 1;
-    kd.kernelAttributes.localId[1] = 0;
-    kd.kernelAttributes.localId[2] = 0;
-    kd.kernelAttributes.numLocalIdChannels = 1;
 
     kernel->mockKernel->setCrossThreadData(crossThreadDataGrf, sizeof(INLINE_DATA));
 
@@ -722,7 +718,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
 
     uint32_t simd = kernel->mockKernel->getKernelInfo().getMaxSimdSize();
     // only X is present
-    auto sizePerThreadData = getPerThreadSizeLocalIDs(simd, sizeGrf, 1);
+    auto sizePerThreadData = getPerThreadSizeLocalIDs(simd, sizeGrf);
     sizePerThreadData = std::max(sizePerThreadData, sizeGrf);
     size_t perThreadTotalDataSize = getThreadsPerWG(simd, lws[0]) * sizePerThreadData;
 
@@ -825,7 +821,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
 
     uint32_t simd = kernel->mockKernel->getKernelInfo().getMaxSimdSize();
     // only X is present
-    uint32_t localIdSizePerThread = PerThreadDataHelper::getLocalIdSizePerThread(simd, sizeGrf, 1);
+    uint32_t localIdSizePerThread = getPerThreadSizeLocalIDs(simd, sizeGrf);
     localIdSizePerThread = std::max(localIdSizePerThread, sizeGrf);
     auto sizePerThreadData = getThreadsPerWG(simd, lws[0]) * localIdSizePerThread;
 
@@ -840,7 +836,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     memoryManager->freeGraphicsMemory(kernel->kernelInfo.kernelAllocation);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlineDataEnabledWhenNoLocalIdsUsedThenExpectCrossThreadDataInWalkerAndNoEmitLocalFieldSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenKernelWithoutLocalIdsAndPassInlineDataEnabledWhenNoHWGenerationOfLocalIdsUsedThenExpectCrossThreadDataInWalkerAndNoEmitLocalFieldSet) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
@@ -851,9 +847,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
 
     auto &kd = kernel->kernelInfo.kernelDescriptor;
     kd.kernelAttributes.flags.passInlineData = true;
-    kd.kernelAttributes.localId[0] = 0;
-    kd.kernelAttributes.localId[1] = 0;
-    kd.kernelAttributes.localId[2] = 0;
     kd.kernelAttributes.numLocalIdChannels = 0;
 
     kernel->mockKernel->setCrossThreadData(crossThreadDataGrf, sizeof(INLINE_DATA));
@@ -878,11 +871,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
 
     EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), crossThreadDataGrf, sizeof(INLINE_DATA)));
 
-    uint32_t simd = kernel->mockKernel->getKernelInfo().getMaxSimdSize();
-    // only X is present
-    auto sizePerThreadData = getPerThreadSizeLocalIDs(simd, 1);
-    sizePerThreadData = std::max(sizePerThreadData, sizeGrf);
-    size_t perThreadTotalDataSize = getThreadsPerWG(simd, lws[0]) * sizePerThreadData;
+    size_t perThreadTotalDataSize = 0U;
     uint32_t expectedIndirectDataLength = static_cast<uint32_t>(perThreadTotalDataSize);
     expectedIndirectDataLength = alignUp(expectedIndirectDataLength, COMPUTE_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
     EXPECT_EQ(expectedIndirectDataLength, walker->getIndirectDataLength());
@@ -902,9 +891,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
 
     auto &kd = kernel->kernelInfo.kernelDescriptor;
     kd.kernelAttributes.flags.passInlineData = true;
-    kd.kernelAttributes.localId[0] = 0;
-    kd.kernelAttributes.localId[1] = 0;
-    kd.kernelAttributes.localId[2] = 0;
     kd.kernelAttributes.numLocalIdChannels = 0;
 
     kernel->mockKernel->setCrossThreadData(crossThreadDataTwoGrf, sizeof(INLINE_DATA) * 2);
@@ -931,11 +917,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     void *payloadData = ih.getCpuBase();
     EXPECT_EQ(0, memcmp(payloadData, &crossThreadDataTwoGrf[sizeof(INLINE_DATA) / sizeof(uint32_t)], sizeof(INLINE_DATA)));
 
-    uint32_t simd = kernel->mockKernel->getKernelInfo().getMaxSimdSize();
-    // only X is present
-    auto sizePerThreadData = getPerThreadSizeLocalIDs(simd, 1);
-    sizePerThreadData = std::max(sizePerThreadData, sizeGrf);
-    size_t perThreadTotalDataSize = getThreadsPerWG(simd, lws[0]) * sizePerThreadData;
+    size_t perThreadTotalDataSize = 0;
 
     // second GRF in indirect
     uint32_t expectedIndirectDataLength = static_cast<uint32_t>(perThreadTotalDataSize + sizeof(INLINE_DATA));

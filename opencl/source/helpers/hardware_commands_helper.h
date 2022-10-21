@@ -90,23 +90,12 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         const Device &device);
 
     static void programPerThreadData(
+        bool localIdsGenerationByRuntime,
         size_t &sizePerThreadData,
-        const bool &localIdsGenerationByRuntime,
+        size_t &sizePerThreadDataTotal,
         LinearStream &ioh,
-        uint32_t &simd,
-        uint32_t &numChannels,
-        const size_t localWorkSize[3],
-        Kernel &kernel,
-        size_t &sizePerThreadDataTotal,
-        size_t &localWorkItems,
-        uint32_t rootDeviceIndex);
-
-    static void updatePerThreadDataTotal(
-        size_t &sizePerThreadData,
-        uint32_t &simd,
-        uint32_t &numChannels,
-        size_t &sizePerThreadDataTotal,
-        size_t &localWorkItems);
+        const Kernel &kernel,
+        const size_t localWorkSize[3]);
 
     static size_t getSizeRequiredCS();
     static size_t getSizeRequiredForCacheFlush(const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress);

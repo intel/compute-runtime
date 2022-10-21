@@ -259,13 +259,18 @@ struct PerformanceHintEnqueueKernelBadSizeTest : public PerformanceHintEnqueueKe
 
 struct PerformanceHintEnqueueKernelPrintfTest : public PerformanceHintEnqueueTest,
                                                 public ProgramFixture {
+    class KernelWhitebox : public Kernel {
+      public:
+        using Kernel::initializeLocalIdsCache;
+    };
 
     void SetUp() override {
         PerformanceHintEnqueueTest::SetUp();
         createProgramFromBinary(context, context->getDevices(), "printf");
         retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
         ASSERT_EQ(CL_SUCCESS, retVal);
-        kernel = Kernel::create(pProgram, pProgram->getKernelInfoForKernel("test"), *context->getDevice(0), &retVal);
+        kernel = static_cast<KernelWhitebox *>(Kernel::create(pProgram, pProgram->getKernelInfoForKernel("test"), *context->getDevice(0), &retVal));
+        kernel->initializeLocalIdsCache();
 
         globalWorkGroupSize[0] = globalWorkGroupSize[1] = globalWorkGroupSize[2] = 1;
     }
@@ -275,7 +280,7 @@ struct PerformanceHintEnqueueKernelPrintfTest : public PerformanceHintEnqueueTes
         ProgramFixture::tearDown();
         PerformanceHintEnqueueTest::TearDown();
     }
-    Kernel *kernel = nullptr;
+    KernelWhitebox *kernel = nullptr;
     size_t globalWorkGroupSize[3]{};
 };
 

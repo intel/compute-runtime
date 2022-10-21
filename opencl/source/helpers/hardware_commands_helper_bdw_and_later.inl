@@ -75,35 +75,6 @@ void HardwareCommandsHelper<GfxFamily>::sendMediaInterfaceDescriptorLoad(
 }
 
 template <typename GfxFamily>
-void HardwareCommandsHelper<GfxFamily>::programPerThreadData(
-    size_t &sizePerThreadData,
-    const bool &localIdsGenerationByRuntime,
-    LinearStream &ioh,
-    uint32_t &simd,
-    uint32_t &numChannels,
-    const size_t localWorkSize[3],
-    Kernel &kernel,
-    size_t &sizePerThreadDataTotal,
-    size_t &localWorkItems,
-    uint32_t rootDeviceIndex) {
-
-    uint32_t grfSize = sizeof(typename GfxFamily::GRF);
-
-    sendPerThreadData(
-        ioh,
-        simd,
-        grfSize,
-        numChannels,
-        std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSize[0]), static_cast<uint16_t>(localWorkSize[1]), static_cast<uint16_t>(localWorkSize[2])}},
-        std::array<uint8_t, 3>{{kernel.getKernelInfo().kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[0],
-                                kernel.getKernelInfo().kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[1],
-                                kernel.getKernelInfo().kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[2]}},
-        kernel.usesOnlyImages());
-
-    updatePerThreadDataTotal(sizePerThreadData, simd, numChannels, sizePerThreadDataTotal, localWorkItems);
-}
-
-template <typename GfxFamily>
 size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     IndirectHeap &indirectHeap,
     Kernel &kernel,
