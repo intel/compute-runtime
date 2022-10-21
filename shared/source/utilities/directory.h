@@ -13,10 +13,10 @@
 
 namespace NEO {
 
-class Directory {
-  public:
-    static std::vector<std::string> getFiles(const std::string &path);
-};
+namespace Directory {
+std::vector<std::string> getFiles(const std::string &path);
+void createDirectory(const std::string &path);
+} // namespace Directory
 
 inline int parseBdfString(const std::string &pciBDF, uint16_t &domain, uint8_t &bus, uint8_t &device, uint8_t &function) {
     if (strlen(pciBDF.c_str()) == 12) {

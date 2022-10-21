@@ -122,7 +122,7 @@ if(WIN32)
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_inc.h
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_library_win.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_library_win.h
-       ${NEO_SOURCE_DIR}/shared/source/utilities/windows/directory.cpp
+       ${NEO_SHARED_DIRECTORY}/utilities/windows/directory.cpp
   )
 else()
   list(APPEND CLOC_LIB_SRCS_LIB
@@ -131,8 +131,8 @@ else()
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_library_linux.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_library_linux.h
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
+       ${NEO_SHARED_DIRECTORY}/utilities/linux/directory.cpp
        ${OCLOC_DIRECTORY}/source/linux/os_library_ocloc_helper.cpp
-       ${NEO_SOURCE_DIR}/shared/source/utilities/linux/directory.cpp
   )
 endif()
 

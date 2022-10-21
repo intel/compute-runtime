@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,9 +9,11 @@
 
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 
-namespace NEO {
+#include <direct.h>
 
-std::vector<std::string> Directory::getFiles(const std::string &path) {
+namespace NEO::Directory {
+
+std::vector<std::string> getFiles(const std::string &path) {
     std::vector<std::string> files;
     std::string newPath;
 
@@ -37,4 +39,8 @@ std::vector<std::string> Directory::getFiles(const std::string &path) {
     FindClose(hFind);
     return files;
 }
-}; // namespace NEO
+
+void createDirectory(const std::string &path) {
+    _mkdir(path.c_str());
+}
+}; // namespace NEO::Directory

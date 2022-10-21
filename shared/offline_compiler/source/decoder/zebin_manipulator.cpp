@@ -16,6 +16,7 @@
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/zebin_elf.h"
 #include "shared/source/device_binary_format/zebin_decoder.h"
+#include "shared/source/utilities/directory.h"
 
 #include <algorithm>
 
@@ -104,6 +105,7 @@ bool is64BitZebin(OclocArgHelper *argHelper, const std::string &sectionsInfoFile
 BinaryFormats getBinaryFormatForAssemble(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
     auto it = std::find(args.begin(), args.end(), "-dump");
     std::string dump = (it != args.end() && (it + 1) != args.end()) ? *(it + 1) : "dump/";
+    addSlash(dump);
     auto sectionsInfoFilepath = dump + ZebinManipulator::sectionsInfoFilename.str();
     const bool usesZebin = argHelper->fileExists(sectionsInfoFilepath);
     if (usesZebin) {
@@ -165,6 +167,11 @@ ErrorCode ZebinDecoder<numBits>::decode() {
             argHelper->printf("Error while parsing Intel GT Notes section for device.\n");
             return retVal;
         }
+    }
+
+    // Create dump directory if we are not using virtual filesystem
+    if (false == argHelper->outputEnabled()) {
+        Directory::createDirectory(arguments.pathToDump);
     }
 
     auto sectionsInfo = dumpElfSections(elf);

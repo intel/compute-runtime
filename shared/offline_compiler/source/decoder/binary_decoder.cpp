@@ -14,18 +14,11 @@
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/utilities/directory.h"
 
 #include <cstring>
 #include <fstream>
 #include <sstream>
-
-#ifdef _WIN32
-#include <direct.h>
-#define MakeDirectory _mkdir
-#else
-#include <sys/stat.h>
-#define MakeDirectory(dir) mkdir(dir, 0777)
-#endif
 
 template <typename T>
 T readUnaligned(const void *ptr) {
@@ -548,7 +541,7 @@ int BinaryDecoder::validateInput(const std::vector<std::string> &args) {
             argHelper->printf("Warning : Path to dump folder not specificed - using ./dump as default.\n");
             pathToDump = std::string("dump/");
         }
-        MakeDirectory(pathToDump.c_str());
+        NEO::Directory::createDirectory(pathToDump);
     }
     return 0;
 }

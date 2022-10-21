@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,10 +9,12 @@
 
 #include <cstdio>
 #include <dirent.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
-namespace NEO {
+namespace NEO::Directory {
 
-std::vector<std::string> Directory::getFiles(const std::string &path) {
+std::vector<std::string> getFiles(const std::string &path) {
     std::vector<std::string> files;
 
     DIR *dir = opendir(path.c_str());
@@ -37,4 +39,9 @@ std::vector<std::string> Directory::getFiles(const std::string &path) {
     closedir(dir);
     return files;
 }
-}; // namespace NEO
+
+void createDirectory(const std::string &path) {
+    const mode_t mode = 0777; // 777 in base 8
+    mkdir(path.c_str(), mode);
+}
+}; // namespace NEO::Directory
