@@ -119,7 +119,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
 
     std::unique_lock<std::mutex> lockForIndirect;
     if (ctx.hasIndirectAccess) {
-        handleIndirectAllocationResidency(ctx.unifiedMemoryControls, lockForIndirect);
+        handleIndirectAllocationResidency(ctx.unifiedMemoryControls, lockForIndirect, ctx.isMigrationRequested);
     }
 
     size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeInitial(ctx, phCommandLists, numCommandLists);
@@ -563,7 +563,7 @@ void CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
         }
 
         this->partitionCount = std::max(this->partitionCount, commandList->partitionCount);
-        commandList->makeResidentAndMigrate(ctx.isMigrationRequested);
+        makeResidentAndMigrate(ctx.isMigrationRequested, commandList->commandContainer.getResidencyContainer());
     }
 
     ctx.isDispatchTaskCountPostSyncRequired = isDispatchTaskCountPostSyncRequired(hFence, ctx.containsAnyRegularCmdList);

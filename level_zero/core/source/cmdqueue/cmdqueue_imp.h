@@ -83,7 +83,8 @@ struct CommandQueueImp : public CommandQueue {
     MOCKABLE_VIRTUAL NEO::WaitStatus reserveLinearStreamSize(size_t size);
     ze_command_queue_mode_t getSynchronousMode() const;
     virtual bool getPreemptionCmdProgramming() = 0;
-    void handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::mutex> &lockForIndirect) override;
+    void handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::mutex> &lockForIndirect, bool performMigration) override;
+    void makeResidentAndMigrate(bool performMigration, const NEO::ResidencyContainer &residencyContainer) override;
 
   protected:
     MOCKABLE_VIRTUAL NEO::SubmissionStatus submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,

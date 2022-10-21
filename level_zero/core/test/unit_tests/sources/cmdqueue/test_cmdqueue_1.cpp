@@ -1886,7 +1886,7 @@ TEST_F(CommandQueueCreate, givenCommandQueueWhenHandleIndirectAllocationResidenc
     auto mockSvmAllocsManager = std::make_unique<SVMAllocsManagerMock>(device->getDriverHandle()->getMemoryManager());
     reinterpret_cast<WhiteBox<::L0::DriverHandle> *>(device->getDriverHandle())->svmAllocsManager = mockSvmAllocsManager.get();
 
-    commandQueue->handleIndirectAllocationResidency({true, true, true}, lock);
+    commandQueue->handleIndirectAllocationResidency({true, true, true}, lock, false);
     EXPECT_EQ(mockSvmAllocsManager->makeIndirectAllocationsResidentCalledTimes, 1u);
     EXPECT_EQ(mockSvmAllocsManager->addInternalAllocationsToResidencyContainerCalledTimes, 0u);
     reinterpret_cast<WhiteBox<::L0::DriverHandle> *>(device->getDriverHandle())->svmAllocsManager = prevSvmAllocsManager;
@@ -1911,7 +1911,7 @@ TEST_F(CommandQueueCreate, givenCommandQueueWhenHandleIndirectAllocationResidenc
     auto mockSvmAllocsManager = std::make_unique<SVMAllocsManagerMock>(device->getDriverHandle()->getMemoryManager());
     reinterpret_cast<WhiteBox<::L0::DriverHandle> *>(device->getDriverHandle())->svmAllocsManager = mockSvmAllocsManager.get();
 
-    commandQueue->handleIndirectAllocationResidency({true, true, true}, lock);
+    commandQueue->handleIndirectAllocationResidency({true, true, true}, lock, false);
     EXPECT_EQ(mockSvmAllocsManager->makeIndirectAllocationsResidentCalledTimes, 0u);
     EXPECT_EQ(mockSvmAllocsManager->addInternalAllocationsToResidencyContainerCalledTimes, 1u);
     reinterpret_cast<WhiteBox<::L0::DriverHandle> *>(device->getDriverHandle())->svmAllocsManager = prevSvmAllocsManager;
@@ -1937,36 +1937,11 @@ TEST_F(CommandQueueCreate, givenCommandQueueWhenHandleIndirectAllocationResidenc
     auto mockSvmAllocsManager = std::make_unique<SVMAllocsManagerMock>(device->getDriverHandle()->getMemoryManager());
     reinterpret_cast<WhiteBox<::L0::DriverHandle> *>(device->getDriverHandle())->svmAllocsManager = mockSvmAllocsManager.get();
 
-    commandQueue->handleIndirectAllocationResidency({true, true, true}, lock);
+    commandQueue->handleIndirectAllocationResidency({true, true, true}, lock, false);
     std::thread th([&] {
         EXPECT_FALSE(mockSvmAllocsManager->mtxForIndirectAccess.try_lock());
     });
     th.join();
-    reinterpret_cast<WhiteBox<::L0::DriverHandle> *>(device->getDriverHandle())->svmAllocsManager = prevSvmAllocsManager;
-    lock.unlock();
-    commandQueue->destroy();
-}
-
-TEST_F(CommandQueueCreate, givenCommandQueueWhenHandleIndirectAllocationResidencyCalledAndSubmiPackDisabeldThenResidencyContainerFromCsrIsUsed) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.MakeIndirectAllocationsResidentAsPack.set(0);
-    const ze_command_queue_desc_t desc{};
-    ze_result_t returnValue;
-
-    auto prevSvmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
-                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                          &desc,
-                                                          false,
-                                                          false,
-                                                          returnValue));
-    std::unique_lock<std::mutex> lock;
-    auto mockSvmAllocsManager = std::make_unique<SVMAllocsManagerMock>(device->getDriverHandle()->getMemoryManager());
-    reinterpret_cast<WhiteBox<::L0::DriverHandle> *>(device->getDriverHandle())->svmAllocsManager = mockSvmAllocsManager.get();
-
-    commandQueue->handleIndirectAllocationResidency({true, true, true}, lock);
-    EXPECT_EQ(commandQueue->csr->getResidencyAllocations().data(), mockSvmAllocsManager->passedContainer);
     reinterpret_cast<WhiteBox<::L0::DriverHandle> *>(device->getDriverHandle())->svmAllocsManager = prevSvmAllocsManager;
     lock.unlock();
     commandQueue->destroy();

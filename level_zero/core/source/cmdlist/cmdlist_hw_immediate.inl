@@ -110,7 +110,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
 
     std::unique_lock<std::mutex> lockForIndirect;
     if (this->hasIndirectAllocationsAllowed()) {
-        this->cmdQImmediate->handleIndirectAllocationResidency(this->getUnifiedMemoryControls(), lockForIndirect);
+        this->cmdQImmediate->handleIndirectAllocationResidency(this->getUnifiedMemoryControls(), lockForIndirect, performMigration);
     }
 
     this->csr->setRequiredScratchSizes(this->getCommandListPerThreadScratchSize(), this->getCommandListPerThreadPrivateScratchSize());
@@ -123,7 +123,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
         }
     }
 
-    this->makeResidentAndMigrate(performMigration);
+    this->cmdQImmediate->makeResidentAndMigrate(performMigration, this->commandContainer.getResidencyContainer());
 
     if (performMigration) {
         this->migrateSharedAllocations();

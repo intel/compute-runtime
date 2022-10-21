@@ -278,7 +278,6 @@ struct CommandList : _ze_command_list_handle_t {
         return static_cast<uint32_t>(returnPoints.size());
     }
 
-    void makeResidentAndMigrate(bool);
     void migrateSharedAllocations();
 
     bool getSystolicModeSupport() const {

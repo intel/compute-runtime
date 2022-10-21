@@ -718,7 +718,7 @@ TEST(CommandList, whenAsMutableIsCalledNullptrIsReturned) {
 class MockCommandQueueIndirectAccess : public Mock<CommandQueue> {
   public:
     MockCommandQueueIndirectAccess(L0::Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc) : Mock(device, csr, desc) {}
-    void handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::mutex> &lockForIndirect) override {
+    void handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::mutex> &lockForIndirect, bool performMigration) override {
         handleIndirectAllocationResidencyCalledTimes++;
     }
     uint32_t handleIndirectAllocationResidencyCalledTimes = 0;

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/linear_stream.h"
@@ -264,7 +265,7 @@ NEO::WaitStatus CommandQueueImp::CommandBufferManager::switchBuffers(NEO::Comman
     return waitStatus;
 }
 
-void CommandQueueImp::handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::mutex> &lockForIndirect) {
+void CommandQueueImp::handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::mutex> &lockForIndirect, bool performMigration) {
     NEO::Device *neoDevice = this->device->getNEODevice();
     auto svmAllocsManager = this->device->getDriverHandle()->getSvmAllocsManager();
     auto submitAsPack = this->device->getDriverHandle()->getMemoryManager()->allowIndirectAllocationsAsPack(neoDevice->getRootDeviceIndex());
@@ -276,9 +277,23 @@ void CommandQueueImp::handleIndirectAllocationResidency(UnifiedMemoryControls un
         svmAllocsManager->makeIndirectAllocationsResident(*(this->csr), this->csr->peekTaskCount() + 1u);
     } else {
         lockForIndirect = this->device->getDriverHandle()->getSvmAllocsManager()->obtainOwnership();
+        NEO::ResidencyContainer residencyAllocations;
         svmAllocsManager->addInternalAllocationsToResidencyContainer(neoDevice->getRootDeviceIndex(),
-                                                                     this->csr->getResidencyAllocations(),
+                                                                     residencyAllocations,
                                                                      unifiedMemoryControls.generateMask());
+        makeResidentAndMigrate(performMigration, residencyAllocations);
+    }
+}
+
+void CommandQueueImp::makeResidentAndMigrate(bool performMigration, const NEO::ResidencyContainer &residencyContainer) {
+    for (auto alloc : residencyContainer) {
+        csr->makeResident(*alloc);
+        if (performMigration &&
+            (alloc->getAllocationType() == NEO::AllocationType::SVM_GPU ||
+             alloc->getAllocationType() == NEO::AllocationType::SVM_CPU)) {
+            auto pageFaultManager = device->getDriverHandle()->getMemoryManager()->getPageFaultManager();
+            pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(alloc->getGpuAddress()));
+        }
     }
 }
 

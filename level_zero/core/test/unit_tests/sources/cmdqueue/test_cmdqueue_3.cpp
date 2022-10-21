@@ -11,6 +11,7 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -769,10 +770,15 @@ class MockCommandQueueHandleIndirectAllocs : public MockCommandQueueHw<gfxCoreFa
     using typename MockCommandQueueHw<gfxCoreFamily>::CommandListExecutionContext;
     using MockCommandQueueHw<gfxCoreFamily>::executeCommandListsRegular;
     MockCommandQueueHandleIndirectAllocs(L0::Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc) : MockCommandQueueHw<gfxCoreFamily>(device, csr, desc) {}
-    void handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::mutex> &lockForIndirect) override {
+    void handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::mutex> &lockForIndirect, bool performMigration) override {
         handleIndirectAllocationResidencyCalledTimes++;
+        MockCommandQueueHw<gfxCoreFamily>::handleIndirectAllocationResidency(unifiedMemoryControls, lockForIndirect, performMigration);
+    }
+    void makeResidentAndMigrate(bool performMigration, const NEO::ResidencyContainer &residencyContainer) override {
+        makeResidentAndMigrateCalledTimes++;
     }
     uint32_t handleIndirectAllocationResidencyCalledTimes = 0;
+    uint32_t makeResidentAndMigrateCalledTimes = 0;
 };
 
 HWTEST2_F(CommandQueueIndirectAllocations, givenCtxWithIndirectAccessWhenExecutingCommandListImmediateWithFlushTaskThenHandleIndirectAccessCalled, IsAtLeastSkl) {
@@ -820,5 +826,166 @@ HWTEST2_F(CommandQueueIndirectAllocations, givenCtxWitNohIndirectAccessWhenExecu
     EXPECT_EQ(commandQueue->handleIndirectAllocationResidencyCalledTimes, 0u);
     commandQueue->destroy();
 }
+
+HWTEST2_F(CommandQueueIndirectAllocations, givenCommandQueueWhenHandleIndirectAllocationResidencyCalledAndSubmitPackDiasabledThenMakeResidentAndMigrateCalled, IsAtLeastSkl) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.MakeIndirectAllocationsResidentAsPack.set(0);
+
+    ze_command_queue_desc_t desc = {};
+    auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
+    auto commandQueue = new MockCommandQueueHandleIndirectAllocs<gfxCoreFamily>(device, csr, &desc);
+    commandQueue->initialize(false, false);
+    auto ctx = typename MockCommandQueueHandleIndirectAllocs<gfxCoreFamily>::CommandListExecutionContext{nullptr,
+                                                                                                         0,
+                                                                                                         csr->getPreemptionMode(),
+                                                                                                         device,
+                                                                                                         false,
+                                                                                                         csr->isProgramActivePartitionConfigRequired(),
+                                                                                                         false};
+    std::unique_lock<std::mutex> lock;
+
+    commandQueue->handleIndirectAllocationResidency({true, true, true}, lock, false);
+    EXPECT_EQ(commandQueue->makeResidentAndMigrateCalledTimes, 1u);
+    commandQueue->destroy();
+}
+
+using CommandQueueTest = Test<DeviceFixture>;
+
+HWTEST_F(CommandQueueTest, givenCommandQueueWhenMakeResidentAndMigrateWithEmptyResidencyContainerThenMakeResidentWasNotCalled) {
+    MockCommandStreamReceiver csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr.setupContext(*neoDevice->getDefaultEngine().osContext);
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t desc = {};
+    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
+                                                          device,
+                                                          &csr,
+                                                          &desc,
+                                                          true,
+                                                          false,
+                                                          returnValue);
+    ResidencyContainer container;
+    commandQueue->makeResidentAndMigrate(false, container);
+    EXPECT_EQ(csr.makeResidentCalledTimes, 0u);
+    commandQueue->destroy();
+}
+
+HWTEST_F(CommandQueueTest, givenCommandQueueWhenMakeResidentAndMigrateWithTwoAllocsInContainerThenMakeResidentCalledTwice) {
+    MockCommandStreamReceiver csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr.setupContext(*neoDevice->getDefaultEngine().osContext);
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t desc = {};
+    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
+                                                          device,
+                                                          &csr,
+                                                          &desc,
+                                                          true,
+                                                          false,
+                                                          returnValue);
+    ResidencyContainer container;
+    MockGraphicsAllocation mockGA1;
+    MockGraphicsAllocation mockGA2;
+    container.push_back(&mockGA1);
+    container.push_back(&mockGA2);
+    commandQueue->makeResidentAndMigrate(false, container);
+    EXPECT_EQ(csr.makeResidentCalledTimes, 2u);
+    commandQueue->destroy();
+}
+HWTEST_F(CommandQueueTest, givenCommandQueueWhenPerformMigrationIsFalseThenTransferToGpuWasNotCalled) {
+    auto mockPageFaultManager = new MockPageFaultManager();
+    static_cast<MockMemoryManager *>(neoDevice->getExecutionEnvironment()->memoryManager.get())->pageFaultManager.reset(mockPageFaultManager);
+    MockCommandStreamReceiver csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr.setupContext(*neoDevice->getDefaultEngine().osContext);
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t desc = {};
+    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
+                                                          device,
+                                                          &csr,
+                                                          &desc,
+                                                          true,
+                                                          false,
+                                                          returnValue);
+    ResidencyContainer container;
+    MockGraphicsAllocation mockGA;
+    container.push_back(&mockGA);
+    commandQueue->makeResidentAndMigrate(false, container);
+    EXPECT_EQ(mockPageFaultManager->transferToGpuCalled, 0);
+    commandQueue->destroy();
+}
+
+HWTEST_F(CommandQueueTest, givenCommandQueueWhenPerformMigrationIsTrueAndAllocationTypeIsSvmGpuThenTransferToGpuWasCalled) {
+    auto mockPageFaultManager = new MockPageFaultManager();
+    static_cast<MockMemoryManager *>(neoDevice->getExecutionEnvironment()->memoryManager.get())->pageFaultManager.reset(mockPageFaultManager);
+    MockCommandStreamReceiver csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr.setupContext(*neoDevice->getDefaultEngine().osContext);
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t desc = {};
+    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
+                                                          device,
+                                                          &csr,
+                                                          &desc,
+                                                          true,
+                                                          false,
+                                                          returnValue);
+    ResidencyContainer container;
+    MockGraphicsAllocation mockGA;
+    mockGA.allocationType = NEO::AllocationType::SVM_GPU;
+    container.push_back(&mockGA);
+    commandQueue->makeResidentAndMigrate(true, container);
+    EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalled, 1);
+    commandQueue->destroy();
+}
+
+HWTEST_F(CommandQueueTest, givenCommandQueueWhenPerformMigrationIsTrueAndAllocationTypeIsSvmCpuThenTransferToGpuWasCalled) {
+    auto mockPageFaultManager = new MockPageFaultManager();
+    static_cast<MockMemoryManager *>(neoDevice->getExecutionEnvironment()->memoryManager.get())->pageFaultManager.reset(mockPageFaultManager);
+    MockCommandStreamReceiver csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr.setupContext(*neoDevice->getDefaultEngine().osContext);
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t desc = {};
+    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
+                                                          device,
+                                                          &csr,
+                                                          &desc,
+                                                          true,
+                                                          false,
+                                                          returnValue);
+    ResidencyContainer container;
+    MockGraphicsAllocation mockGA;
+    mockGA.allocationType = NEO::AllocationType::SVM_CPU;
+    container.push_back(&mockGA);
+    commandQueue->makeResidentAndMigrate(true, container);
+    EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalled, 1);
+    commandQueue->destroy();
+}
+
+HWTEST_F(CommandQueueTest, givenCommandQueueWhenPerformMigrationIsTrueAndAllocationTypeIsNoSvmTypeThenTransferToGpuWasNotCalled) {
+    auto mockPageFaultManager = new MockPageFaultManager();
+    static_cast<MockMemoryManager *>(neoDevice->getExecutionEnvironment()->memoryManager.get())->pageFaultManager.reset(mockPageFaultManager);
+    MockCommandStreamReceiver csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr.setupContext(*neoDevice->getDefaultEngine().osContext);
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t desc = {};
+    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
+                                                          device,
+                                                          &csr,
+                                                          &desc,
+                                                          true,
+                                                          false,
+                                                          returnValue);
+    ResidencyContainer container;
+    MockGraphicsAllocation mockGA;
+    mockGA.allocationType = NEO::AllocationType::TAG_BUFFER;
+    container.push_back(&mockGA);
+    commandQueue->makeResidentAndMigrate(true, container);
+    EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalled, 0);
+    commandQueue->destroy();
+}
+
 } // namespace ult
 } // namespace L0

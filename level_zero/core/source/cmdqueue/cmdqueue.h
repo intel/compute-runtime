@@ -13,12 +13,15 @@
 
 #include <atomic>
 #include <mutex>
+#include <vector>
 
 struct _ze_command_queue_handle_t {};
 
 namespace NEO {
 class CommandStreamReceiver;
-}
+class GraphicsAllocation;
+using ResidencyContainer = std::vector<GraphicsAllocation *>;
+} // namespace NEO
 
 struct UnifiedMemoryControls;
 
@@ -52,7 +55,8 @@ struct CommandQueue : _ze_command_queue_handle_t {
         return static_cast<CommandQueue *>(handle);
     }
 
-    virtual void handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::mutex> &lockForIndirect) = 0;
+    virtual void handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::mutex> &lockForIndirect, bool performMigration) = 0;
+    virtual void makeResidentAndMigrate(bool performMigration, const NEO::ResidencyContainer &residencyContainer) = 0;
 
     ze_command_queue_handle_t toHandle() { return this; }
 

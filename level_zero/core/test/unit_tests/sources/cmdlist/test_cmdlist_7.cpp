@@ -527,6 +527,10 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     commandList->device = device;
     commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
     commandList->csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    MockCommandQueueHw<gfxCoreFamily> mockCommandQueue(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
+    commandList->cmdQImmediate = &mockCommandQueue;
 
     ze_group_count_t groupCount = {3, 2, 1};
     CmdListKernelLaunchParams launchParams = {};
@@ -537,6 +541,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
 
     auto ultCsr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     EXPECT_EQ(scratchPerThreadSize, ultCsr->requiredScratchSize);
+    commandList->cmdQImmediate = nullptr;
 }
 
 HWTEST2_F(CmdlistAppendLaunchKernelTests,
@@ -710,6 +715,10 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     commandList->device = device;
     commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
     commandList->csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    MockCommandQueueHw<gfxCoreFamily> mockCommandQueue(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
+    commandList->cmdQImmediate = &mockCommandQueue;
 
     ze_group_count_t groupCount = {3, 2, 1};
     CmdListKernelLaunchParams launchParams = {};
@@ -722,6 +731,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     auto ultCsr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     EXPECT_EQ(scratchPerThreadSize, ultCsr->requiredScratchSize);
     EXPECT_EQ(privateScratchPerThreadSize, ultCsr->requiredPrivateScratchSize);
+    commandList->cmdQImmediate = nullptr;
 }
 
 using MultiReturnCommandListTest = Test<MultiReturnCommandListFixture>;

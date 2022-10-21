@@ -144,19 +144,6 @@ NEO::PreemptionMode CommandList::obtainKernelPreemptionMode(Kernel *kernel) {
     return NEO::PreemptionHelper::taskPreemptionMode(device->getDevicePreemptionMode(), flags);
 }
 
-void CommandList::makeResidentAndMigrate(bool performMigration) {
-    for (auto alloc : commandContainer.getResidencyContainer()) {
-        csr->makeResident(*alloc);
-
-        if (performMigration &&
-            (alloc->getAllocationType() == NEO::AllocationType::SVM_GPU ||
-             alloc->getAllocationType() == NEO::AllocationType::SVM_CPU)) {
-            auto pageFaultManager = device->getDriverHandle()->getMemoryManager()->getPageFaultManager();
-            pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(alloc->getGpuAddress()));
-        }
-    }
-}
-
 void CommandList::migrateSharedAllocations() {
     auto deviceImp = static_cast<DeviceImp *>(device);
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(deviceImp->getDriverHandle());
