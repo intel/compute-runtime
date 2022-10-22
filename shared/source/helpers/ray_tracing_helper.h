@@ -24,12 +24,10 @@ class RayTracingHelper : public NonCopyableOrMovableClass {
     static constexpr uint32_t memoryBackedFifoSizePerDss = 8 * KB;
     static constexpr uint32_t maxBvhLevels = 8;
 
-    static size_t getDispatchGlobalSize() {
-        return static_cast<size_t>(alignUp(sizeof(RTDispatchGlobals), MemoryConstants::cacheLineSize));
-    }
-
-    static size_t getRTStackSizePerTile(const Device &device, uint32_t tiles, uint32_t maxBvhLevel, uint32_t extraBytesLocal, uint32_t extraBytesGlobal) {
-        return static_cast<size_t>(getStackSizePerRay(maxBvhLevel, extraBytesLocal) * (getNumRtStacks(device) / tiles) + extraBytesGlobal);
+    static size_t getDispatchGlobalSize(const Device &device, uint32_t maxBvhLevel, uint32_t extraBytesLocal, uint32_t extraBytesGlobal) {
+        return static_cast<size_t>(alignUp(sizeof(RTDispatchGlobals), MemoryConstants::cacheLineSize) +
+                                   getStackSizePerRay(maxBvhLevel, extraBytesLocal) * getNumRtStacks(device) +
+                                   extraBytesGlobal);
     }
 
     static size_t getTotalMemoryBackedFifoSize(const Device &device) {

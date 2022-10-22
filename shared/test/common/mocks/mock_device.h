@@ -168,12 +168,12 @@ class MockDevice : public RootDevice {
         for (unsigned int i = 0; i < rtDispatchGlobalsInfos.size(); i++) {
             auto rtDispatchGlobalsInfo = rtDispatchGlobalsInfos[i];
             if (rtDispatchGlobalsForceAllocation == true && rtDispatchGlobalsInfo != nullptr) {
-                for (unsigned int j = 0; j < rtDispatchGlobalsInfo->rtStacks.size(); j++) {
-                    delete rtDispatchGlobalsInfo->rtStacks[j];
-                    rtDispatchGlobalsInfo->rtStacks[j] = nullptr;
+                for (unsigned int j = 0; j < rtDispatchGlobalsInfo->rtDispatchGlobals.size(); j++) {
+                    delete rtDispatchGlobalsInfo->rtDispatchGlobals[j];
+                    rtDispatchGlobalsInfo->rtDispatchGlobals[j] = nullptr;
                 }
-                delete rtDispatchGlobalsInfo->rtDispatchGlobalsArray;
-                rtDispatchGlobalsInfo->rtDispatchGlobalsArray = nullptr;
+                delete rtDispatchGlobalsInfo->rtDispatchGlobalsArrayAllocation;
+                rtDispatchGlobalsInfo->rtDispatchGlobalsArrayAllocation = nullptr;
                 delete rtDispatchGlobalsInfos[i];
                 rtDispatchGlobalsInfos[i] = nullptr;
             }

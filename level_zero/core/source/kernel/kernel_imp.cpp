@@ -905,7 +905,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
         uint32_t bvhLevels = NEO::RayTracingHelper::maxBvhLevels;
         auto arg = this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.rtDispatchGlobals;
         if (arg.pointerSize == 0) {
-            // application is allocating its own RTDispatchGlobals manually
+            // kernel is allocating its own RTDispatchGlobals manually
             neoDevice->initializeRayTracing(0);
         } else {
             neoDevice->initializeRayTracing(bvhLevels);
@@ -914,18 +914,17 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
                 return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
             }
 
-            for (auto rtStack : rtDispatchGlobalsInfo->rtStacks) {
-                this->residencyContainer.push_back(rtStack);
+            for (auto rtDispatchGlobals : rtDispatchGlobalsInfo->rtDispatchGlobals) {
+                this->residencyContainer.push_back(rtDispatchGlobals);
             }
 
-            auto address = rtDispatchGlobalsInfo->rtDispatchGlobalsArray->getGpuAddressToPatch();
+            auto address = rtDispatchGlobalsInfo->rtDispatchGlobals[0]->getGpuAddressToPatch();
             NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize),
                               arg,
                               static_cast<uintptr_t>(address));
 
-            this->residencyContainer.push_back(rtDispatchGlobalsInfo->rtDispatchGlobalsArray);
+            this->residencyContainer.push_back(neoDevice->getRTMemoryBackedBuffer());
         }
-        this->residencyContainer.push_back(neoDevice->getRTMemoryBackedBuffer());
     }
 
     return ZE_RESULT_SUCCESS;
