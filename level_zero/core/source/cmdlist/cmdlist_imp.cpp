@@ -57,6 +57,10 @@ ze_result_t CommandListImp::appendMetricStreamerMarker(zet_metric_streamer_handl
 }
 
 ze_result_t CommandListImp::appendMetricQueryBegin(zet_metric_query_handle_t hMetricQuery) {
+    if (cmdListType == CommandListType::TYPE_IMMEDIATE && isFlushTaskSubmissionEnabled) {
+        this->device->activateMetricGroups();
+    }
+
     return MetricQuery::fromHandle(hMetricQuery)->appendBegin(*this);
 }
 
