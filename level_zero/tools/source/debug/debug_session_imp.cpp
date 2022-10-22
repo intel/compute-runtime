@@ -32,16 +32,13 @@ void DebugSession::createEuThreads() {
         bool isSubDevice = connectedDevice->getNEODevice()->isSubDevice();
 
         auto &hwInfo = connectedDevice->getHwInfo();
-        const bool useDSS = (hwInfo.gtSystemInfo.MaxDualSubSlicesSupported > 0) &&
-                                    (hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxDualSubSlicesSupported) == 2
-                                ? true
-                                : false;
-        const uint32_t numSubslicesPerSlice = (useDSS ? hwInfo.gtSystemInfo.MaxDualSubSlicesSupported : hwInfo.gtSystemInfo.MaxSubSlicesSupported) / hwInfo.gtSystemInfo.MaxSlicesSupported;
-        const uint32_t numEuPerSubslice = useDSS ? hwInfo.gtSystemInfo.MaxEuPerSubSlice * 2 : hwInfo.gtSystemInfo.MaxEuPerSubSlice;
+        const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
+        const uint32_t numEuPerSubslice = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
         const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
         uint32_t subDeviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
 
         UNRECOVERABLE_IF(isSubDevice && subDeviceCount > 1);
+
         for (uint32_t tileIndex = 0; tileIndex < subDeviceCount; tileIndex++) {
 
             if (isSubDevice || subDeviceCount == 1) {

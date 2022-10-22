@@ -377,58 +377,6 @@ HWTEST_F(L0HwHelperTest, givenBitmaskWithAttentionBitsForHalfOfThreadsWhenGettin
 using PlatformsWithFusedEus = IsWithinGfxCore<IGFX_GEN12LP_CORE, IGFX_XE_HPG_CORE>;
 using L0HwHelperFusedEuTest = ::testing::Test;
 
-HWTEST2_F(L0HwHelperTest, givenBitmaskWithAttentionBitsWithDSSWhenGettingThreadsThenSingleCorrectThreadReturned, PlatformsWithFusedEus) {
-    auto hwInfo = *NEO::defaultHwInfo.get();
-    auto &l0HwHelper = L0::L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 8;
-    hwInfo.gtSystemInfo.MaxSubSlicesSupported = 64;
-    hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = 32;
-
-    std::unique_ptr<uint8_t[]> bitmask;
-    size_t size = 0;
-
-    uint32_t subsliceID = 3;
-
-    std::vector<EuThread::ThreadId> threadsWithAtt;
-    threadsWithAtt.push_back({0, 0, subsliceID, 8, 0});
-
-    l0HwHelper.getAttentionBitmaskForSingleThreads(threadsWithAtt, hwInfo, bitmask, size);
-
-    auto threads = l0HwHelper.getThreadsFromAttentionBitmask(hwInfo, 0, bitmask.get(), size);
-
-    ASSERT_EQ(2u, threads.size());
-
-    EXPECT_EQ(0u, threads[0].slice);
-    EXPECT_EQ(subsliceID, threads[0].subslice);
-    EXPECT_EQ(8u, threads[0].eu);
-    EXPECT_EQ(0u, threads[0].thread);
-    EXPECT_EQ(0u, threads[0].tileIndex);
-
-    EXPECT_EQ(0u, threads[1].slice);
-    EXPECT_EQ(subsliceID, threads[1].subslice);
-    EXPECT_EQ(12u, threads[1].eu);
-    EXPECT_EQ(0u, threads[1].thread);
-    EXPECT_EQ(0u, threads[1].tileIndex);
-
-    hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = 0;
-    l0HwHelper.getAttentionBitmaskForSingleThreads(threadsWithAtt, hwInfo, bitmask, size);
-
-    threads = l0HwHelper.getThreadsFromAttentionBitmask(hwInfo, 0, bitmask.get(), size);
-
-    ASSERT_EQ(2u, threads.size());
-    EXPECT_EQ(0u, threads[0].slice);
-    EXPECT_EQ(subsliceID, threads[0].subslice);
-    EXPECT_EQ(8u, threads[0].eu);
-    EXPECT_EQ(0u, threads[0].thread);
-    EXPECT_EQ(0u, threads[0].tileIndex);
-
-    EXPECT_EQ(0u, threads[1].slice);
-    EXPECT_EQ(subsliceID, threads[1].subslice);
-    EXPECT_EQ(12u, threads[1].eu);
-    EXPECT_EQ(0u, threads[1].thread);
-    EXPECT_EQ(0u, threads[1].tileIndex);
-}
-
 HWTEST2_F(L0HwHelperFusedEuTest, givenDynamicallyPopulatesSliceInfoGreaterThanMaxSlicesSupportedThenBitmasksAreCorrect, PlatformsWithFusedEus) {
     auto hwInfo = *NEO::defaultHwInfo.get();
     auto &l0HwHelper = L0::L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);

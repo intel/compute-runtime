@@ -7,11 +7,7 @@
 
 template <>
 void L0HwHelperHw<Family>::getAttentionBitmaskForSingleThreads(const std::vector<EuThread::ThreadId> &threads, const NEO::HardwareInfo &hwInfo, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) const {
-    const bool useDSS = (hwInfo.gtSystemInfo.MaxDualSubSlicesSupported > 0) &&
-                                (hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxDualSubSlicesSupported) == 2
-                            ? true
-                            : false;
-    const uint32_t numSubslicesPerSlice = (useDSS ? hwInfo.gtSystemInfo.MaxDualSubSlicesSupported : hwInfo.gtSystemInfo.MaxSubSlicesSupported) / hwInfo.gtSystemInfo.MaxSlicesSupported;
+    const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
     const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
     const uint32_t bytesPerEu = alignUp(numThreadsPerEu, 8) / 8;
     const uint32_t numEuPerSubslice = std::min(hwInfo.gtSystemInfo.MaxEuPerSubSlice, 8u);
@@ -40,12 +36,7 @@ void L0HwHelperHw<Family>::getAttentionBitmaskForSingleThreads(const std::vector
 
 template <>
 std::vector<EuThread::ThreadId> L0HwHelperHw<Family>::getThreadsFromAttentionBitmask(const NEO::HardwareInfo &hwInfo, uint32_t tile, const uint8_t *bitmask, const size_t bitmaskSize) const {
-
-    const bool useDSS = (hwInfo.gtSystemInfo.MaxDualSubSlicesSupported > 0) &&
-                                (hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxDualSubSlicesSupported) == 2
-                            ? true
-                            : false;
-    const uint32_t numSubslicesPerSlice = (useDSS ? hwInfo.gtSystemInfo.MaxDualSubSlicesSupported : hwInfo.gtSystemInfo.MaxSubSlicesSupported) / hwInfo.gtSystemInfo.MaxSlicesSupported;
+    const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
     const uint32_t numEuPerSubslice = std::min(hwInfo.gtSystemInfo.MaxEuPerSubSlice, 8u);
     const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
     const uint32_t bytesPerEu = alignUp(numThreadsPerEu, 8) / 8;
