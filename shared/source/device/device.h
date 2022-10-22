@@ -41,8 +41,10 @@ struct EngineGroupT {
 using EngineGroupsT = std::vector<EngineGroupT>;
 
 struct RTDispatchGlobalsInfo {
-    GraphicsAllocation *rtDispatchGlobalsArray = nullptr;
-    std::vector<GraphicsAllocation *> rtStacks; // per tile
+    RTDispatchGlobalsInfo(GraphicsAllocation *rtDispatchGlobalsArrayAllocation)
+        : rtDispatchGlobalsArrayAllocation(rtDispatchGlobalsArrayAllocation){};
+    std::vector<GraphicsAllocation *> rtDispatchGlobals;  // per tile
+    GraphicsAllocation *rtDispatchGlobalsArrayAllocation; // above array as visible from device
 };
 
 class Device : public ReferenceTrackedObject<Device> {

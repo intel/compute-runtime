@@ -33,22 +33,17 @@ TEST(RayTracingHelperTests, whenMemoryBackedFifoSizeIsRequestedThenCorrectValueI
 }
 
 TEST(RayTracingHelperTests, whenGlobalDispatchSizeIsRequestedThenCorrectValueIsReturned) {
-    size_t expectedSize = alignUp(sizeof(RTDispatchGlobals), MemoryConstants::cacheLineSize);
-    size_t size = RayTracingHelper::getDispatchGlobalSize();
-    EXPECT_EQ(expectedSize, size);
-}
-
-TEST(RayTracingHelperTests, whenRTStackSizeIsRequestedThenCorrectValueIsReturned) {
     MockClDevice device{new MockDevice};
     MockContext context(&device);
 
     uint32_t maxBvhLevel = 2;
     uint32_t extraBytesLocal = 20;
     uint32_t extraBytesGlobal = 100;
-    uint32_t tiles = 2;
 
-    size_t expectedSize = RayTracingHelper::getStackSizePerRay(maxBvhLevel, extraBytesLocal) * (RayTracingHelper::getNumRtStacks(device.getDevice()) / tiles) + extraBytesGlobal;
-    size_t size = RayTracingHelper::getRTStackSizePerTile(device.getDevice(), tiles, maxBvhLevel, extraBytesLocal, extraBytesGlobal);
+    size_t expectedSize = alignUp(sizeof(RTDispatchGlobals), MemoryConstants::cacheLineSize) +
+                          (RayTracingHelper::hitInfoSize + RayTracingHelper::bvhStackSize * maxBvhLevel + extraBytesLocal) * RayTracingHelper::getNumRtStacks(device.getDevice()) +
+                          extraBytesGlobal;
+    size_t size = RayTracingHelper::getDispatchGlobalSize(device.getDevice(), maxBvhLevel, extraBytesLocal, extraBytesGlobal);
     EXPECT_EQ(expectedSize, size);
 }
 
