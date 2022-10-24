@@ -1222,7 +1222,7 @@ TEST_F(OfflineCompilerTests, givenIncorrectDeviceIdWithIncorrectHexPatternThenIn
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
-TEST_F(OfflineCompilerTests, givenDebugOptionThenInternalOptionShouldContainKernelDebugEnable) {
+TEST_F(OfflineCompilerTests, givenDebugOptionThenInternalOptionShouldNotContainKernelDebugEnable) {
     if (gEnvironment->devicePrefix == "bdw") {
         GTEST_SKIP();
     }
@@ -1241,7 +1241,7 @@ TEST_F(OfflineCompilerTests, givenDebugOptionThenInternalOptionShouldContainKern
     mockOfflineCompiler->initialize(argv.size(), argv);
 
     std::string internalOptions = mockOfflineCompiler->internalOptions;
-    EXPECT_TRUE(hasSubstr(internalOptions, "-cl-kernel-debug-enable"));
+    EXPECT_FALSE(hasSubstr(internalOptions, "-cl-kernel-debug-enable"));
 }
 
 TEST_F(OfflineCompilerTests, givenDebugOptionAndNonSpirvInputThenOptionsShouldContainDashSOptionAppendedAutomatically) {
@@ -2226,26 +2226,18 @@ TEST(OfflineCompilerTest, GivenCachedBinaryWhenBuildSourceCodeThenSuccessIsRetur
     retVal = mockOfflineCompiler->buildSourceCode();
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    if (gEnvironment->devicePrefix != "bdw") {
-        argv.push_back("-options");
-        argv.push_back("-g");
-        retVal = mockOfflineCompiler->initialize(argv.size(), argv);
-        EXPECT_EQ(CL_SUCCESS, retVal);
+    argv.push_back("-options");
+    argv.push_back("-g");
+    retVal = mockOfflineCompiler->initialize(argv.size(), argv);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 
-        cacheMock = new CompilerCacheMock();
-        cacheMock->numberOfLoadResult = 2u;
-        mockOfflineCompiler->cache.reset(cacheMock);
-        mockOfflineCompiler->overrideBuildIrBinaryStatus = true;
-        mockOfflineCompiler->buildIrBinaryStatus = 1;
-        retVal = mockOfflineCompiler->buildSourceCode();
-        EXPECT_EQ(1, retVal);
-
-        cacheMock->numberOfLoadResult = 3u;
-        retVal = mockOfflineCompiler->buildSourceCode();
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        EXPECT_NE(nullptr, mockOfflineCompiler->debugDataBinary);
-        EXPECT_NE(0u, static_cast<uint32_t>(mockOfflineCompiler->debugDataBinarySize));
-    }
+    cacheMock = new CompilerCacheMock();
+    mockOfflineCompiler->cache.reset(cacheMock);
+    cacheMock->numberOfLoadResult = 3u;
+    retVal = mockOfflineCompiler->buildSourceCode();
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, mockOfflineCompiler->debugDataBinary);
+    EXPECT_NE(0u, static_cast<uint32_t>(mockOfflineCompiler->debugDataBinarySize));
 }
 
 TEST(OfflineCompilerTest, GivenGenBinaryWhenGenerateElfBinaryThenElfIsLoaded) {
