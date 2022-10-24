@@ -213,3 +213,42 @@ TEST_F(MigrationControllerTests, whenHandleMigrationThenProperTagAddressAndTaskC
     EXPECT_EQ(pCsr0->getTagAddress(), migrationSyncData->tagAddress);
     EXPECT_EQ(pCsr0->peekTaskCount() + 1, migrationSyncData->latestTaskCountUsed);
 }
+
+TEST_F(MigrationControllerTests, givenWaitForTimestampsEnabledWhenHandleMigrationIsCalledThenDontSignalTaskCountBasedUsage) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableTimestampWaitForQueues.set(4);
+
+    VariableBackup<decltype(MultiGraphicsAllocation::createMigrationSyncDataFunc)> createFuncBackup{&MultiGraphicsAllocation::createMigrationSyncDataFunc};
+    MultiGraphicsAllocation::createMigrationSyncDataFunc = [](size_t size) -> MigrationSyncData * {
+        return new MockMigrationSyncData(size);
+    };
+
+    std::unique_ptr<Buffer> pBuffer(BufferHelper<>::create(&context));
+    const_cast<MultiGraphicsAllocation &>(pBuffer->getMultiGraphicsAllocation()).setMultiStorage(true);
+
+    ASSERT_TRUE(pBuffer->getMultiGraphicsAllocation().requiresMigrations());
+
+    auto migrationSyncData = static_cast<MockMigrationSyncData *>(pBuffer->getMultiGraphicsAllocation().getMigrationSyncData());
+
+    MigrationController::handleMigration(context, *pCsr0, pBuffer.get());
+
+    EXPECT_EQ(0u, migrationSyncData->signalUsageCalled);
+}
+
+TEST_F(MigrationControllerTests, whenMemoryMigrationForMemoryObjectIsAlreadyInProgressThenDoEarlyReturn) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.set(1);
+
+    std::unique_ptr<Buffer> pBuffer(BufferHelper<>::create(&context));
+
+    ASSERT_TRUE(pBuffer->getMultiGraphicsAllocation().requiresMigrations());
+
+    auto migrationSyncData = static_cast<MockMigrationSyncData *>(pBuffer->getMultiGraphicsAllocation().getMigrationSyncData());
+
+    migrationSyncData->startMigration();
+    EXPECT_TRUE(migrationSyncData->isMigrationInProgress());
+
+    MigrationController::migrateMemory(context, *memoryManager, pBuffer.get(), pCsr1->getRootDeviceIndex());
+
+    EXPECT_TRUE(migrationSyncData->isMigrationInProgress());
+}

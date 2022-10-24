@@ -1689,6 +1689,20 @@ TEST(CommandQueue, givenImageToBufferClCommandWhenCallingBlitEnqueueAllowedThenR
     EXPECT_FALSE(queue.blitEnqueueAllowed(args));
 }
 
+TEST(CommandQueue, givenAllocateBuffersInLocalMemoryForMultiRootDeviceContextsWhenMultiRootDeviceContextIsCreatedThenWhenBlitEnqueueIsNotAllowed) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.set(1);
+
+    MockDefaultContext context{true};
+    MockCommandQueue queue(&context, context.getDevice(0), 0, false);
+    MockGraphicsAllocation alloc{};
+
+    ASSERT_TRUE(context.getRootDeviceIndices().size() > 1);
+
+    CsrSelectionArgs args{CL_COMMAND_READ_BUFFER, &alloc, &alloc, 0u, nullptr};
+    EXPECT_FALSE(queue.blitEnqueueAllowed(args));
+}
+
 template <bool blitter, bool selectBlitterWithQueueFamilies>
 struct CsrSelectionCommandQueueTests : ::testing::Test {
     void SetUp() override {

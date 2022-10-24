@@ -440,6 +440,8 @@ Buffer *Buffer::create(Context *context,
         }
     }
 
+    multiGraphicsAllocation.setMultiStorage(MemoryPropertiesHelper::useMultiStorageForCrossRootDeviceAccess(context->getRootDeviceIndices().size() > 1));
+
     auto rootDeviceIndex = context->getDevice(0u)->getRootDeviceIndex();
     auto &allocationInfo = allocationInfos[rootDeviceIndex];
     auto memoryStorage = multiGraphicsAllocation.getDefaultGraphicsAllocation()->getUnderlyingBuffer();

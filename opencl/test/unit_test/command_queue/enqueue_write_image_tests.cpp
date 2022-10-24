@@ -590,7 +590,7 @@ HWTEST_F(EnqueueWriteImageTest, whenEnqueueWriteImageThenBuiltinKernelIsResolved
 
 HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenEnqueueWriteImageThenKernelRequiresMigration) {
 
-    MockDefaultContext context;
+    MockDefaultContext context{true};
 
     auto pCmdQ1 = createCommandQueue(context.getDevice(0), nullptr, &context);
 
@@ -641,7 +641,7 @@ HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenEnqueueWriteImageTh
 
 HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenEnqueueWriteImageIsCalledMultipleTimesThenEachKernelUsesDifferentImage) {
 
-    MockDefaultContext context;
+    MockDefaultContext context{true};
 
     auto pCmdQ1 = createCommandQueue(context.getDevice(0), nullptr, &context);
 
@@ -723,7 +723,7 @@ HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenEnqueueWriteImageIs
 }
 
 HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueWriteImageIsCalledThenCommandQueueIsFlushed) {
-    MockDefaultContext context;
+    MockDefaultContext context{true};
 
     auto pCmdQ1 = createCommandQueue(context.getDevice(0), nullptr, &context);
 
@@ -745,7 +745,7 @@ HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueWr
 HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueWriteImageIsCalledThenTlbCacheIsInvalidated) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    MockDefaultContext context;
+    MockDefaultContext context{true};
 
     auto pCmdQ1 = createCommandQueue(context.getDevice(0), nullptr, &context);
 

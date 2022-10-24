@@ -21,7 +21,7 @@ class MigrationSyncData : public ReferenceTrackedObject<MigrationSyncData> {
     uint32_t getCurrentLocation() const;
     void startMigration();
     void setCurrentLocation(uint32_t rootDeviceIndex);
-    void signalUsage(volatile uint32_t *tagAddress, uint32_t taskCount);
+    MOCKABLE_VIRTUAL void signalUsage(volatile uint32_t *tagAddress, uint32_t taskCount);
     bool isUsedByTheSameContext(volatile uint32_t *tagAddress) const;
     MOCKABLE_VIRTUAL void waitOnCpu();
     bool isMigrationInProgress() const { return migrationInProgress; }

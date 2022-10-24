@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,11 +21,16 @@ struct MockMigrationSyncData : public MigrationSyncData {
     using MigrationSyncData::latestTaskCountUsed;
     using MigrationSyncData::MigrationSyncData;
     using MigrationSyncData::tagAddress;
+    void signalUsage(volatile uint32_t *tagAddress, uint32_t taskCount) override {
+        signalUsageCalled++;
+        MigrationSyncData::signalUsage(tagAddress, taskCount);
+    }
     void waitOnCpu() override {
         waitOnCpuCalled++;
         MigrationSyncData::waitOnCpu();
     }
 
+    uint32_t signalUsageCalled = 0u;
     uint32_t waitOnCpuCalled = 0u;
 };
 

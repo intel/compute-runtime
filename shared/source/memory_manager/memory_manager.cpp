@@ -20,6 +20,7 @@
 #include "shared/source/helpers/heap_assigner.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/compression_selector.h"
@@ -460,7 +461,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.useMmapObject = properties.useMmapObject;
 
     allocationData.flags.crossRootDeviceAccess = properties.flags.crossRootDeviceAccess;
-    allocationData.flags.useSystemMemory |= properties.flags.crossRootDeviceAccess;
+    allocationData.flags.useSystemMemory |= MemoryPropertiesHelper::useSystemMemoryForCrossRootDeviceAccess(properties.flags.crossRootDeviceAccess);
 
     helper.setExtraAllocationData(allocationData, properties, hwInfo);
     allocationData.flags.useSystemMemory |= properties.flags.forceSystemMemory;

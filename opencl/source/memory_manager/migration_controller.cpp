@@ -27,12 +27,17 @@ void MigrationController::handleMigration(Context &context, CommandStreamReceive
     if (migrationSyncData->getCurrentLocation() != targetRootDeviceIndex) {
         migrateMemory(context, *memoryManager, memObj, targetRootDeviceIndex);
     }
-    migrationSyncData->signalUsage(targetCsr.getTagAddress(), targetCsr.peekTaskCount() + 1);
+    if (!context.getSpecialQueue(targetRootDeviceIndex)->isWaitForTimestampsEnabled()) {
+        migrationSyncData->signalUsage(targetCsr.getTagAddress(), targetCsr.peekTaskCount() + 1);
+    }
 }
 
 void MigrationController::migrateMemory(Context &context, MemoryManager &memoryManager, MemObj *memObj, uint32_t targetRootDeviceIndex) {
     auto &multiGraphicsAllocation = memObj->getMultiGraphicsAllocation();
     auto migrationSyncData = multiGraphicsAllocation.getMigrationSyncData();
+    if (migrationSyncData->isMigrationInProgress()) {
+        return;
+    }
 
     auto sourceRootDeviceIndex = migrationSyncData->getCurrentLocation();
     if (sourceRootDeviceIndex == std::numeric_limits<uint32_t>::max()) {
