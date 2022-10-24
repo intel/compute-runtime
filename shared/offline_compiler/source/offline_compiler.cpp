@@ -562,16 +562,16 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
             std::string oclocOptionsFromFile;
             bool oclocOptionsRead = readOptionsFromFile(oclocOptionsFromFile, oclocOptionsFileName, argHelper);
             if (oclocOptionsRead) {
-                argHelper->printf("Building with ocloc options:\n%s\n", oclocOptionsFromFile.c_str());
+                if (!isQuiet()) {
+                    argHelper->printf("Building with ocloc options:\n%s\n", oclocOptionsFromFile.c_str());
+                }
                 std::istringstream iss(allArgs[0] + " " + oclocOptionsFromFile);
                 std::vector<std::string> tokens{
                     std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>{}};
 
                 retVal = parseCommandLine(tokens.size(), tokens);
                 if (retVal != SUCCESS) {
-                    if (isQuiet()) {
-                        printf("Failed with ocloc options from file:\n%s\n", oclocOptionsFromFile.c_str());
-                    }
+                    argHelper->printf("Failed with ocloc options from file:\n%s\n", oclocOptionsFromFile.c_str());
                     return retVal;
                 }
             }
@@ -732,6 +732,8 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
             cacheDir = argv[argIndex + 1];
             argIndex++;
         } else if ("-q" == currArg) {
+            quiet = true;
+        } else if ("-qq" == currArg) {
             argHelper->getPrinterRef() = MessagePrinter(true);
             quiet = true;
         } else if ("-spv_only" == currArg) {
@@ -1008,7 +1010,9 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
   -force_stos_opt               Will forcibly enable stateless to stateful optimization,
                                 i.e. skip "-cl-intel-greater-than-4GB-buffer-required".
 
-  -q                            Will silence most of output messages.
+  -q                            Will silence output messages (except errors).
+
+  -qq                           Will silence most of output messages.
 
   -spv_only                     Will generate only spirV file.
 
