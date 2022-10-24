@@ -135,14 +135,21 @@ struct SingleValueTestParam {
     T value;
 };
 
+template <class T>
+struct SingleValueTestParamWithHostFormat {
+    std::string format;
+    std::string hostFormat;
+    T value;
+};
+
 typedef SingleValueTestParam<int8_t> Int8Params;
 typedef SingleValueTestParam<uint8_t> Uint8Params;
 typedef SingleValueTestParam<int16_t> Int16Params;
 typedef SingleValueTestParam<uint16_t> Uint16Params;
 typedef SingleValueTestParam<int32_t> Int32Params;
 typedef SingleValueTestParam<uint32_t> Uint32Params;
-typedef SingleValueTestParam<int64_t> Int64Params;
-typedef SingleValueTestParam<uint64_t> Uint64Params;
+typedef SingleValueTestParamWithHostFormat<int64_t> Int64Params;
+typedef SingleValueTestParamWithHostFormat<uint64_t> Uint64Params;
 typedef SingleValueTestParam<float> FloatParams;
 typedef SingleValueTestParam<double> DoubleParams;
 typedef SingleValueTestParam<std::string> StringParams;
@@ -270,6 +277,70 @@ TEST_P(PrintfUint32Test, GivenBufferSizeGreaterThanPrintBufferWhenPrintingThenBu
 INSTANTIATE_TEST_CASE_P(PrintfUint32Test,
                         PrintfUint32Test,
                         ::testing::ValuesIn(uintValues));
+
+Int64Params longValues[] = {
+    {"%lld", "%lld", INT64_MAX},
+    {"%ld", "%lld", INT64_MAX},
+    {"%ld", "%lld", INT64_MIN},
+    {"%lld", "%lld", INT64_MIN},
+    {"%llx", "%llx", INT64_MAX},
+    {"%lx", "%llx", INT64_MAX},
+    {"%lx", "%llx", INT64_MIN},
+    {"%llx", "%llx", INT64_MIN}};
+
+class PrintfInt64Test : public PrintFormatterTest,
+                        public ::testing::WithParamInterface<Int64Params> {};
+
+TEST_P(PrintfInt64Test, GivenFormatContainingIntWhenPrintingThenValueIsInserted) {
+    auto input = GetParam();
+
+    auto stringIndex = injectFormatString(input.format);
+    storeData(stringIndex);
+    injectValue(input.value);
+
+    char referenceOutput[maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
+
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
+
+    snprintf(referenceOutput, sizeof(referenceOutput), input.hostFormat.c_str(), input.value);
+
+    EXPECT_STREQ(referenceOutput, actualOutput);
+}
+
+INSTANTIATE_TEST_CASE_P(PrintfInt64Test,
+                        PrintfInt64Test,
+                        ::testing::ValuesIn(longValues));
+
+Uint64Params ulongValues[] = {
+    {"%llu", "%llu", UINT64_MAX},
+    {"%lu", "%llu", UINT64_MAX},
+    {"%llux", "%llux", UINT64_MAX},
+    {"%lux", "%llux", UINT64_MAX}};
+
+class PrintfUint64Test : public PrintFormatterTest,
+                         public ::testing::WithParamInterface<Uint64Params> {};
+
+TEST_P(PrintfUint64Test, GivenFormatContainingIntWhenPrintingThenValueIsInserted) {
+    auto input = GetParam();
+
+    auto stringIndex = injectFormatString(input.format);
+    storeData(stringIndex);
+    injectValue(input.value);
+
+    char referenceOutput[maxPrintfOutputLength];
+    char actualOutput[maxPrintfOutputLength];
+
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
+
+    snprintf(referenceOutput, sizeof(referenceOutput), input.hostFormat.c_str(), input.value);
+
+    EXPECT_STREQ(referenceOutput, actualOutput);
+}
+
+INSTANTIATE_TEST_CASE_P(PrintfUint64Test,
+                        PrintfUint64Test,
+                        ::testing::ValuesIn(ulongValues));
 
 FloatParams floatValues[] = {
     {"%f", 10.3456f},
@@ -719,21 +790,21 @@ TEST_F(PrintFormatterTest, GivenSpecialVectorWhenPrintingThenAllValuesAreInserte
 TEST_F(PrintFormatterTest, GivenVectorOfLongsWhenPrintingThenAllValuesAreInserted) {
     int channelCount = 2;
 
-    auto stringIndex = injectFormatString("%v2lld");
+    auto stringIndex = injectFormatString("%v2ld");
     storeData(stringIndex);
 
     storeData(PRINTF_DATA_TYPE::VECTOR_LONG);
     // channel count
     storeData(channelCount);
 
-    storeData<int64_t>(1);
-    storeData<int64_t>(2);
+    storeData<int64_t>(100000000000000);
+    storeData<int64_t>(200000000000000);
 
     char actualOutput[maxPrintfOutputLength];
 
     printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
-    EXPECT_STREQ("1,2", actualOutput);
+    EXPECT_STREQ("100000000000000,200000000000000", actualOutput);
 }
 
 TEST_F(PrintFormatterTest, GivenVectorOfFloatsWhenPrintingThenAllValuesAreInserted) {
