@@ -343,7 +343,7 @@ int OfflineCompiler::buildSourceCode() {
         genBinary = cache->loadCachedBinary(genHash, genBinarySize).release();
 
         if (irBinary && genBinary) {
-            if (!CompilerOptions::contains(internalOptions, CompilerOptions::debugKernelEnable))
+            if (!CompilerOptions::contains(options, CompilerOptions::generateDebugInfo))
                 return retVal;
             else {
                 dbgHash = cache->getCachedFileName(getHardwareInfo(), irHash, options, internalOptions);
@@ -613,9 +613,6 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     }
 
     if (CompilerOptions::contains(options, CompilerOptions::generateDebugInfo.str())) {
-        if (hwInfo.platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
-            internalOptions = CompilerOptions::concatenate(internalOptions, CompilerOptions::debugKernelEnable);
-        }
         if (false == inputFileSpirV && false == CompilerOptions::contains(options, CompilerOptions::generateSourcePath) && false == CompilerOptions::contains(options, CompilerOptions::useCMCompiler)) {
             auto sourcePathStringOption = CompilerOptions::generateSourcePath.str();
             sourcePathStringOption.append(" ");
