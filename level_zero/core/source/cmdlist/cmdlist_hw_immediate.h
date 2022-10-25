@@ -141,7 +141,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     bool waitForEventsFromHost();
 
   protected:
-    std::atomic<bool> barrierCalled{false};
+    std::atomic<bool> dependenciesPresent{false};
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>

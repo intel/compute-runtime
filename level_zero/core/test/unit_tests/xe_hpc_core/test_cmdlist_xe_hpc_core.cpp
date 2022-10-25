@@ -1100,21 +1100,38 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCpuMemcpyWith
     EXPECT_EQ(waitForFlushTagUpdateCalled, 1u);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendBarrierThenSetBarrierCalled, IsXeHpcCore) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendBarrierThenSetDependenciesPresent, IsXeHpcCore) {
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
 
-    EXPECT_FALSE(cmdList.barrierCalled);
+    EXPECT_FALSE(cmdList.dependenciesPresent);
 
     cmdList.appendBarrier(nullptr, 0, nullptr);
 
-    EXPECT_TRUE(cmdList.barrierCalled);
+    EXPECT_TRUE(cmdList.dependenciesPresent);
 
     auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    EXPECT_FALSE(cmdList.barrierCalled);
+    EXPECT_FALSE(cmdList.dependenciesPresent);
+}
+
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendWaitOnEventsThenSetDependenciesPresent, IsXeHpcCore) {
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+
+    EXPECT_FALSE(cmdList.dependenciesPresent);
+
+    cmdList.appendWaitOnEvents(0, nullptr);
+
+    EXPECT_TRUE(cmdList.dependenciesPresent);
+
+    auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    EXPECT_FALSE(cmdList.dependenciesPresent);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

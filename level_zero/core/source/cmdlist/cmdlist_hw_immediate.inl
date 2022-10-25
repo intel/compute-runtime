@@ -279,7 +279,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(
     }
     ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents);
 
-    this->barrierCalled = true;
+    this->dependenciesPresent = true;
     return flushImmediate(ret, true, hSignalEvent);
 }
 
@@ -431,6 +431,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(ui
         checkAvailableSpace();
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numEvents, phWaitEvents);
+    this->dependenciesPresent = true;
     return flushImmediate(ret, true, nullptr);
 }
 
@@ -592,7 +593,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(void
         this->appendBarrier(nullptr, numWaitEvents, phWaitEvents);
     }
 
-    if (this->barrierCalled) {
+    if (this->dependenciesPresent) {
         this->csr->flushTagUpdate();
     }
 
@@ -611,13 +612,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(void
         cpuMemcpyDstPtr = dstptr;
     }
 
-    if (this->barrierCalled) {
+    if (this->dependenciesPresent) {
         auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
         const auto waitStatus = this->csr->waitForCompletionWithTimeout(NEO::WaitParams{false, false, timeoutMicroseconds}, this->csr->peekTaskCount());
         if (waitStatus == NEO::WaitStatus::GpuHang) {
             return ZE_RESULT_ERROR_DEVICE_LOST;
         }
-        this->barrierCalled = false;
+        this->dependenciesPresent = false;
     }
 
     if (signalEvent) {
