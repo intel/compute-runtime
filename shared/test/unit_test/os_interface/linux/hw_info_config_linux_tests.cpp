@@ -49,6 +49,13 @@ HWTEST2_F(HwInfoConfigTestLinuxDummy, givenDebugFlagSetWhenEnablingBlitterOperat
     EXPECT_FALSE(hardwareInfo.capabilityTable.blitterOperationsSupported);
 }
 
+HWTEST2_F(HwInfoConfigTestLinuxDummy, givenUnsupportedChipsetUniqueUUIDWhenGettingUuidThenReturnFalse, IsAtMostGen11) {
+    HardwareInfo hardwareInfo = *defaultHwInfo;
+    auto hwInfoConfig = HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+    std::array<uint8_t, HwInfoConfig::uuidSize> id;
+    EXPECT_FALSE(hwInfoConfig->getUuid(nullptr, id));
+}
+
 TEST_F(HwInfoConfigTestLinuxDummy, GivenDummyConfigThenEdramIsDetected) {
     hwConfig.use128MbEdram = true;
     int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);

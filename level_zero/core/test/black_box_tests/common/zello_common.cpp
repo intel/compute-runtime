@@ -366,7 +366,12 @@ void printDeviceProperties(const ze_device_properties_t &props) {
                   << " * numSubslicesPerSlice  : " << props.numSubslicesPerSlice << "\n"
                   << " * numSlices  : " << props.numSlices << "\n"
                   << " * physicalEUSimdWidth  : " << props.physicalEUSimdWidth << "\n"
-                  << " * timerResolution : " << props.timerResolution << "\n";
+                  << " * timerResolution : " << props.timerResolution << "\n"
+                  << " * uuid : ";
+        for (uint32_t i = 0; i < ZE_MAX_UUID_SIZE; i++) {
+            std::cout << std::hex << static_cast<uint32_t>(props.uuid.id[i]) << " ";
+        }
+        std::cout << "\n";
     } else {
         std::cout << "Device : \n"
                   << " * name : " << props.name << "\n"

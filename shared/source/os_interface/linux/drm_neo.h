@@ -258,6 +258,7 @@ class Drm : public DriverModel {
     MOCKABLE_VIRTUAL bool getDeviceMemoryMaxClockRateInMhz(uint32_t tileId, uint32_t &clkRate);
     MOCKABLE_VIRTUAL bool getDeviceMemoryPhysicalSizeInBytes(uint32_t tileId, uint64_t &physicalSize);
     void cleanup() override;
+    bool readSysFsAsString(const std::string &relativeFilePath, std::string &readString);
 
   protected:
     Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
@@ -274,7 +275,6 @@ class Drm : public DriverModel {
     static std::string getDrmVersion(int fileDescriptor);
     bool queryDeviceIdAndRevision();
     bool queryI915DeviceIdAndRevision();
-    bool readSysFsAsString(const std::string &filePath, std::string &readString);
 
 #pragma pack(1)
     struct PCIConfig {
