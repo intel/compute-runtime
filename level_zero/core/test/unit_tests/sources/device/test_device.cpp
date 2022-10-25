@@ -2480,11 +2480,33 @@ TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenCanAccessPeerCalledTwice
     EXPECT_TRUE(canAccess);
 }
 
+TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenQueryPeerStatsCalledThenCanAccessPeerReturnsSameValueEachTime) {
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    GFXCORE_FAMILY device0Family = device0->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
+    GFXCORE_FAMILY device1Family = device1->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
+    EXPECT_EQ(device0Family, device1Family);
+
+    ze_bool_t canAccess = false;
+    ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_TRUE(canAccess);
+
+    res = device0->canAccessPeer(device1->toHandle(), &canAccess);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_TRUE(canAccess);
+}
+
 TEST_F(MultipleDevicesTest, givenDeviceFailsAppendMemoryCopyThenCanAccessPeerReturnsFalse) {
     struct MockDeviceFail : public Mock<DeviceImp> {
         MockDeviceFail(L0::Device *device) : Mock(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
             this->driverHandle = device->getDriverHandle();
             this->commandList.appendMemoryCopyResult = ZE_RESULT_ERROR_UNKNOWN;
+        }
+
+        ze_result_t queryFabricStats(DeviceImp *pPeerDevice, uint32_t &latency, uint32_t &bandwidth) override {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
 
         ze_result_t createCommandQueue(const ze_command_queue_desc_t *desc,
@@ -2530,6 +2552,10 @@ TEST_F(MultipleDevicesTest, givenDeviceFailsExecuteCommandListThenCanAccessPeerR
             this->driverHandle = device->getDriverHandle();
         }
 
+        ze_result_t queryFabricStats(DeviceImp *pPeerDevice, uint32_t &latency, uint32_t &bandwidth) override {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+
         ze_result_t createCommandQueue(const ze_command_queue_desc_t *desc,
                                        ze_command_queue_handle_t *commandQueue) override {
             *commandQueue = &this->commandQueue;
@@ -2553,6 +2579,102 @@ TEST_F(MultipleDevicesTest, givenDeviceFailsExecuteCommandListThenCanAccessPeerR
     ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_FALSE(canAccess);
+    delete device0;
+}
+
+TEST_F(MultipleDevicesTest, givenQueryPeerStatsReturningBandwidthZeroAndDeviceFailsThenCanAccessPeerReturnsFalse) {
+    struct MockDeviceFail : public Mock<DeviceImp> {
+        struct MockCommandQueueImp : public Mock<CommandQueue> {
+            ze_result_t destroy() override {
+                return ZE_RESULT_SUCCESS;
+            }
+
+            ze_result_t executeCommandLists(uint32_t numCommandLists,
+                                            ze_command_list_handle_t *phCommandLists,
+                                            ze_fence_handle_t hFence, bool performMigration) override { return ZE_RESULT_ERROR_UNKNOWN; }
+        };
+
+        MockDeviceFail(L0::Device *device) : Mock(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
+            this->driverHandle = device->getDriverHandle();
+        }
+
+        ze_result_t queryFabricStats(DeviceImp *pPeerDevice, uint32_t &latency, uint32_t &bandwidth) override {
+            bandwidth = 0;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        ze_result_t createCommandQueue(const ze_command_queue_desc_t *desc,
+                                       ze_command_queue_handle_t *commandQueue) override {
+            *commandQueue = &this->commandQueue;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        ze_result_t createCommandList(const ze_command_list_desc_t *desc,
+                                      ze_command_list_handle_t *commandList) override {
+            *commandList = &this->commandList;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        MockCommandList commandList;
+        MockCommandQueueImp commandQueue;
+    };
+
+    MockDeviceFail *device0 = new MockDeviceFail(driverHandle->devices[0]);
+    L0::Device *device1 = driverHandle->devices[1];
+
+    ze_bool_t canAccess = false;
+    ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_FALSE(canAccess);
+    delete device0;
+}
+
+TEST_F(MultipleDevicesTest, givenQueryPeerStatsReturningBandwidthNonZeroAndDeviceDoesFailThenCanAccessPeerReturnsFalse) {
+    struct MockDeviceFail : public Mock<DeviceImp> {
+        struct MockCommandQueueImp : public Mock<CommandQueue> {
+            ze_result_t destroy() override {
+                return ZE_RESULT_SUCCESS;
+            }
+
+            ze_result_t executeCommandLists(uint32_t numCommandLists,
+                                            ze_command_list_handle_t *phCommandLists,
+                                            ze_fence_handle_t hFence, bool performMigration) override {
+                return ZE_RESULT_SUCCESS;
+            }
+        };
+
+        MockDeviceFail(L0::Device *device) : Mock(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
+            this->driverHandle = device->getDriverHandle();
+        }
+
+        ze_result_t queryFabricStats(DeviceImp *pPeerDevice, uint32_t &latency, uint32_t &bandwidth) override {
+            bandwidth = 100;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        ze_result_t createCommandQueue(const ze_command_queue_desc_t *desc,
+                                       ze_command_queue_handle_t *commandQueue) override {
+            *commandQueue = &this->commandQueue;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        ze_result_t createCommandList(const ze_command_list_desc_t *desc,
+                                      ze_command_list_handle_t *commandList) override {
+            *commandList = &this->commandList;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        MockCommandList commandList;
+        MockCommandQueueImp commandQueue;
+    };
+
+    MockDeviceFail *device0 = new MockDeviceFail(driverHandle->devices[0]);
+    L0::Device *device1 = driverHandle->devices[1];
+
+    ze_bool_t canAccess = false;
+    ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_TRUE(canAccess);
     delete device0;
 }
 

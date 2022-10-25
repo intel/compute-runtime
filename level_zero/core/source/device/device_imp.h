@@ -30,6 +30,8 @@ class CacheReservation;
 
 struct DeviceImp : public Device {
     DeviceImp();
+    ze_result_t submitCopyForP2P(ze_device_handle_t hPeerDevice, ze_bool_t *value);
+    MOCKABLE_VIRTUAL ze_result_t queryFabricStats(DeviceImp *pPeerDevice, uint32_t &latency, uint32_t &bandwidth);
     ze_result_t canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *value) override;
     ze_result_t createCommandList(const ze_command_list_desc_t *desc,
                                   ze_command_list_handle_t *commandList) override;

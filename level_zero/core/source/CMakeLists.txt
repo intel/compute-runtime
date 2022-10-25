@@ -95,6 +95,16 @@ set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/sampler/sampler_imp.h
 )
 
+if(UNIX AND NEO_ENABLE_i915_PRELIM_DETECTION)
+  list(APPEND L0_RUNTIME_SOURCES
+       ${CMAKE_CURRENT_SOURCE_DIR}/device/device_imp_drm/device_imp_peer.cpp
+  )
+else()
+  list(APPEND L0_RUNTIME_SOURCES
+       ${CMAKE_CURRENT_SOURCE_DIR}/device/device_imp_peer_stub.cpp
+  )
+endif()
+
 if(SUPPORT_XEHP_AND_LATER)
   list(APPEND L0_RUNTIME_SOURCES
        ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist/cmdlist_hw_xehp_and_later.inl
