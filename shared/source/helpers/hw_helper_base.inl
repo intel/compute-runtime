@@ -713,11 +713,6 @@ uint64_t HwHelperHw<GfxFamily>::getPatIndex(CacheRegion cacheRegion, CachePolicy
     return -1;
 }
 
-template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isPatIndexFallbackWaRequired() const {
-    return false;
-}
-
 template <typename gfxProduct>
 bool HwHelperHw<gfxProduct>::copyThroughLockedPtrEnabled() const {
     if (DebugManager.flags.ExperimentalCopyThroughLock.get() != -1) {

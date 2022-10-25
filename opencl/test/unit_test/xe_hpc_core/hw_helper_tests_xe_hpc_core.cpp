@@ -826,9 +826,3 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCommandBufferAllocationWhenSetExt
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
     EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 8, 1), ClHwHelper::get(renderCoreFamily).getDeviceIpVersion(*defaultHwInfo));
 }
-
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenHwHelperWhenAskingForPatIndexWaThenReturnTrue) {
-    const auto &hwHelper = HwHelper::get(renderCoreFamily);
-
-    EXPECT_TRUE(hwHelper.isPatIndexFallbackWaRequired());
-}

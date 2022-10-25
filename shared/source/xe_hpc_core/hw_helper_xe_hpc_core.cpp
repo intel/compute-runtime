@@ -438,11 +438,6 @@ uint64_t HwHelperHw<Family>::getPatIndex(CacheRegion cacheRegion, CachePolicy ca
 }
 
 template <>
-bool HwHelperHw<Family>::isPatIndexFallbackWaRequired() const {
-    return true;
-}
-
-template <>
 bool HwHelperHw<Family>::copyThroughLockedPtrEnabled() const {
     if (DebugManager.flags.ExperimentalCopyThroughLock.get() != -1) {
         return DebugManager.flags.ExperimentalCopyThroughLock.get() == 1;

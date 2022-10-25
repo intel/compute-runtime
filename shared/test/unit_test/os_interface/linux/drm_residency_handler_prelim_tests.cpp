@@ -833,9 +833,6 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhen
 
         if (debugFlag == 0 || !closSupported || debugFlag == -1) {
             auto expectedIndex = static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::cached);
-            if (hwHelper.isPatIndexFallbackWaRequired()) {
-                expectedIndex = hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteBack);
-            }
 
             EXPECT_EQ(expectedIndex, mock->context.receivedVmBindPatIndex.value());
 
@@ -850,89 +847,29 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhen
     }
 }
 
-HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexErrorWhenVmBindCalledThenSetDefaultPatIndexExtension) {
-    DebugManager.flags.UseVmBind.set(1);
-    mock->bindAvailable = true;
-
-    auto csr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*executionEnvironment, 0, DeviceBitfield(1));
-    auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
-    csr->setupContext(*osContext);
-
-    auto &hwHelper = HwHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eRenderCoreFamily);
-    auto hwInfoConfig = HwInfoConfig::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily);
-
-    bool closSupported = (hwHelper.getNumCacheRegions() > 0);
-    bool patIndexProgrammingSupported = hwInfoConfig->isVmBindPatIndexProgrammingSupported();
-
-    if (!closSupported || !patIndexProgrammingSupported) {
-        GTEST_SKIP();
-    }
-
-    uint64_t gpuAddress = 0x123000;
-    size_t size = 1;
-    BufferObject bo(mock, static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::cached), 0, 1, 1);
-    DrmAllocation allocation(0, 1, AllocationType::BUFFER, &bo, nullptr, gpuAddress, size, MemoryPool::System4KBPages);
-
-    auto allocationPtr = static_cast<GraphicsAllocation *>(&allocation);
-
-    static_cast<MockGmmClientContextBase *>(executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext())->returnErrorOnPatIndexQuery = true;
-
-    for (int32_t debugFlag : {-1, 0, 1}) {
-        DebugManager.flags.ClosEnabled.set(debugFlag);
-
-        mock->context.receivedVmBindPatIndex.reset();
-        mock->context.receivedVmUnbindPatIndex.reset();
-
-        bo.setPatIndex(mock->getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::Default, CachePolicy::WriteBack, false));
-
-        operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1));
-
-        EXPECT_EQ(3u, mock->context.receivedVmBindPatIndex.value());
-
-        operationHandler->evict(device, allocation);
-        EXPECT_EQ(3u, mock->context.receivedVmUnbindPatIndex.value());
-    }
-}
-
-HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexErrorAndUncachedDebugFlagSetWhenVmBindCalledThenSetDefaultPatIndexExtension) {
+HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexErrorAndUncachedDebugFlagSetWhenGetPatIndexCalledThenAbort) {
     DebugManager.flags.UseVmBind.set(1);
     DebugManager.flags.ForceAllResourcesUncached.set(1);
     mock->bindAvailable = true;
-
     auto csr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*executionEnvironment, 0, DeviceBitfield(1));
     auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(*osContext);
-
     auto &hwHelper = HwHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eRenderCoreFamily);
     auto hwInfoConfig = HwInfoConfig::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily);
-
     bool closSupported = (hwHelper.getNumCacheRegions() > 0);
     bool patIndexProgrammingSupported = hwInfoConfig->isVmBindPatIndexProgrammingSupported();
-
     if (!closSupported || !patIndexProgrammingSupported) {
         GTEST_SKIP();
     }
 
     static_cast<MockGmmClientContextBase *>(executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext())->returnErrorOnPatIndexQuery = true;
 
-    mock->context.receivedVmBindPatIndex.reset();
-    mock->context.receivedVmUnbindPatIndex.reset();
-
     uint64_t gpuAddress = 0x123000;
     size_t size = 1;
     BufferObject bo(mock, static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::cached), 0, 1, 1);
     DrmAllocation allocation(0, 1, AllocationType::BUFFER, &bo, nullptr, gpuAddress, size, MemoryPool::System4KBPages);
 
-    bo.setPatIndex(mock->getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::Default, CachePolicy::WriteBack, false));
-
-    auto allocationPtr = static_cast<GraphicsAllocation *>(&allocation);
-
-    operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1));
-
-    EXPECT_EQ(0u, mock->context.receivedVmBindPatIndex.value());
-
-    operationHandler->evict(device, allocation);
-    EXPECT_EQ(0u, mock->context.receivedVmUnbindPatIndex.value());
+    EXPECT_ANY_THROW(mock->getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::Default, CachePolicy::WriteBack, false));
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenUncachedDebugFlagSetWhenVmBindCalledThenSetCorrectPatIndexExtension) {
@@ -946,7 +883,6 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenUncachedDebugFlagSetWhenVmBind
 
     auto timestampStorageAlloc = csr->getTimestampPacketAllocator()->getTag()->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
 
-    auto &hwHelper = HwHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eRenderCoreFamily);
     auto hwInfoConfig = HwInfoConfig::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily);
 
     if (!hwInfoConfig->isVmBindPatIndexProgrammingSupported()) {
@@ -959,9 +895,6 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenUncachedDebugFlagSetWhenVmBind
     operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&timestampStorageAlloc, 1));
 
     auto expectedIndex = static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::uncached);
-    if (hwHelper.isPatIndexFallbackWaRequired()) {
-        expectedIndex = hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::Uncached);
-    }
 
     EXPECT_EQ(expectedIndex, mock->context.receivedVmBindPatIndex.value());
 
