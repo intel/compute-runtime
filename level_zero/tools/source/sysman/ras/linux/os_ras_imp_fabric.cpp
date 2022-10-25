@@ -23,8 +23,20 @@ void LinuxRasSourceFabric::getNodes(std::vector<std::string> &nodes, uint32_t su
     const uint32_t maxPortId = 8;
     nodes.clear();
 
+    const std::string iafPathStringMfd("/sys/module/iaf/drivers/platform:iaf/");
+    const std::string iafPathStringAuxillary("/sys/module/iaf/drivers/auxiliary:iaf/");
+    std::string iafPathString("");
+
+    if (fsAccess->directoryExists(iafPathStringMfd)) {
+        iafPathString = iafPathStringMfd + "iaf.";
+    } else if (fsAccess->directoryExists(iafPathStringAuxillary)) {
+        iafPathString = iafPathStringAuxillary + "i915.iaf.";
+    } else {
+        return;
+    }
+
     for (auto boardStrappedNumber = minBoardStrappedNumber; boardStrappedNumber <= maxBoardStrappedNumber; boardStrappedNumber++) {
-        const auto iafPathString("/sys/module/iaf/drivers/platform:iaf/iaf.");
+
         const auto boardStrappedString(iafPathString + std::to_string(boardStrappedNumber));
         if (!fsAccess->directoryExists(boardStrappedString)) {
             continue;
