@@ -1932,7 +1932,7 @@ TEST_F(OfflineCompilerTests, WhenFclNotNeededThenDontLoadIt) {
     EXPECT_TRUE(offlineCompiler.igcFacade->isInitialized());
 }
 
-TEST_F(OfflineCompilerTests, WhenParsingBinToCharArrayThenCorrectResult) {
+TEST_F(OfflineCompilerTests, WhenParsingBinToCharArrayThenCorrectFileIsGenerated) {
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
@@ -1960,17 +1960,7 @@ TEST_F(OfflineCompilerTests, WhenParsingBinToCharArrayThenCorrectResult) {
                                               "uint32_t SchedulerBinary_" +
                          familyNameWithType + "[10] = {\n"
                                               "    0x40032302, 0x90800756, 0x05340301, 0x66097860, 0x101010ff, 0x40032302, 0x90800756, 0x05340301, \n"
-                                              "    0x66097860, 0xff000000};\n\n"
-                                              "#include \"shared/source/built_ins/registry/built_ins_registry.h\"\n\n"
-                                              "namespace NEO {\n"
-                                              "static RegisterEmbeddedResource registerSchedulerBin(\n"
-                                              "    \"" +
-                         gEnvironment->familyNameWithType + "_0_scheduler.builtin_kernel.bin\",\n"
-                                                            "    (const char *)SchedulerBinary_" +
-                         familyNameWithType + ",\n"
-                                              "    SchedulerBinarySize_" +
-                         familyNameWithType + ");\n"
-                                              "}\n";
+                                              "    0x66097860, 0xff000000};\n";
     EXPECT_EQ(retArray, target);
 
     delete pOfflineCompiler;

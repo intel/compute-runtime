@@ -869,16 +869,6 @@ std::string OfflineCompiler::parseBinAsCharArray(uint8_t *binary, size_t size, s
     }
     out << "};" << std::endl;
 
-    out << std::endl
-        << "#include \"shared/source/built_ins/registry/built_ins_registry.h\"\n"
-        << std::endl;
-    out << "namespace NEO {" << std::endl;
-    out << "static RegisterEmbeddedResource register" << builtinName << "Bin(" << std::endl;
-    out << "    \"" << familyNameWithType << "_0_" << fileName.c_str() << ".builtin_kernel.bin\"," << std::endl;
-    out << "    (const char *)" << builtinName << "Binary_" << familyNameWithType << "," << std::endl;
-    out << "    " << builtinName << "BinarySize_" << familyNameWithType << ");" << std::endl;
-    out << "}" << std::endl;
-
     return out.str();
 }
 
