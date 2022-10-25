@@ -100,6 +100,14 @@ TEST(TbxCommandStreamReceiverTest, givenTbxCommandStreamReceiverWhenTypeIsChecke
     EXPECT_EQ(CommandStreamReceiverType::CSR_TBX, csr->getType());
 }
 
+TEST(TbxCommandStreamReceiverTest, givenTbxCommandStreamReceiverWhenAskingForSkipResourceCleanupThenReturnTrue) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->initializeMemoryManager();
+    std::unique_ptr<CommandStreamReceiver> csr(TbxCommandStreamReceiver::create("", false, *executionEnvironment, 0, 1));
+    EXPECT_NE(nullptr, csr);
+    EXPECT_TRUE(csr->skipResourceCleanup());
+}
+
 HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeResidentIsCalledForGraphicsAllocationThenItShouldPushAllocationForResidencyToCsr) {
     TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
     MemoryManager *memoryManager = tbxCsr->getMemoryManager();
@@ -305,7 +313,7 @@ HWTEST_F(TbxCommandStreamTests, givenNoDbgDeviceIdFlagWhenTbxCsrIsCreatedThenUse
 
 HWTEST_F(TbxCommandStreamTests, givenDbgDeviceIdFlagIsSetWhenTbxCsrIsCreatedThenUseDebugDeviceId) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.OverrideAubDeviceId.set(9); //this is Hsw, not used
+    DebugManager.flags.OverrideAubDeviceId.set(9); // this is Hsw, not used
     std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create("", false, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield())));
     EXPECT_EQ(9u, tbxCsr->aubDeviceId);
 }

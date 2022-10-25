@@ -29,6 +29,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     using AUB = typename AUBFamilyMapper<GfxFamily>::AUB;
     using BaseClass::getParametersForWriteMemory;
     using BaseClass::osContext;
+    using BaseClass::skipResourceCleanupRequired;
 
     uint32_t getMaskAndValueForPollForCompletion() const;
     bool getpollNotEqualValueForPollForCompletion() const;

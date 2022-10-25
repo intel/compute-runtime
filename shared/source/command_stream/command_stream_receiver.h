@@ -500,6 +500,7 @@ class CommandStreamReceiver {
     bool lastSentUseGlobalAtomics = false;
     bool useNotifyEnableForPostSync = false;
     bool dcFlushSupport = false;
+    bool skipResourceCleanupRequired = false;
 };
 
 typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(bool withAubDump,

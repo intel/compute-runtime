@@ -50,6 +50,8 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
     : executionEnvironment(executionEnvironment), rootDeviceIndex(rootDeviceIndex), deviceBitfield(deviceBitfield) {
     residencyAllocations.reserve(startingResidencyContainerSize);
 
+    skipResourceCleanupRequired = (this->getOSInterface() && this->getOSInterface()->getDriverModel() && this->getOSInterface()->getDriverModel()->skipResourceCleanup());
+
     latestSentStatelessMocsConfig = CacheSettings::unknownMocs;
     submissionAggregator.reset(new SubmissionAggregator());
     if (ApiSpecificConfig::getApiType() == ApiSpecificConfig::L0) {
@@ -276,7 +278,7 @@ bool CommandStreamReceiver::isRcs() const {
 }
 
 bool CommandStreamReceiver::skipResourceCleanup() const {
-    return this->getOSInterface() && this->getOSInterface()->getDriverModel() && this->getOSInterface()->getDriverModel()->skipResourceCleanup();
+    return skipResourceCleanupRequired;
 }
 
 bool CommandStreamReceiver::isGpuHangDetected() const {
